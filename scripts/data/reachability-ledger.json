@@ -55,6 +55,18 @@
       "adr_or_issue": null
     },
     {
+      "id": "fund-special-training",
+      "player_verb": "Fund up to two special-training subjects",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applySpecialTrainingCommand"],
+      "main_commands": ["submitSpecialTraining"],
+      "renderer_screen": "screens/fleet/training/FleetTrainingSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/training/FleetTrainingView.test.tsx",
+      "adr_or_issue": null
+    },
+    {
       "id": "organise-divisions",
       "player_verb": "Create, change and dissolve divisions and pick flagships",
       "status": "reachable",

@@ -1,10 +1,18 @@
 import { buildFleetScreenView, type MovementCommand } from "@bluewave/campaign-engine";
+import {
+  isTrainingProficient,
+  TRAINING_DORMANT,
+  TRAINING_SUBJECTS,
+  trainingRefusal,
+} from "@bluewave/campaign";
 import { Effect } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type {
   FleetScreenProjection,
+  FleetTrainingProjection,
   MovementCommandOutcome,
   ShipReadinessOutcome,
+  SpecialTrainingOutcome,
   StationAssignmentOutcome,
 } from "../../shared/fleet-contract.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
@@ -131,6 +139,26 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
         ? undefined
         : { month: record.month, rules: shipBuilding.presence },
     );
+    const fleetManagement = yield* contentArtifact.loadFleetManagementRules();
+    const training: FleetTrainingProjection | undefined =
+      fleetManagement === undefined
+        ? undefined
+        : {
+            maxSubjects: fleetManagement.training.maxSubjects,
+            proficiencyMonths: fleetManagement.training.proficiencyMonths,
+            subjects: TRAINING_SUBJECTS.map((subject) => {
+              const entry = nation.specialTraining?.find((e) => e.subject === subject);
+              return {
+                subject,
+                maintenanceAdderBp: fleetManagement.training.subjects[subject].maintenanceAdderBp,
+                funded: entry !== undefined,
+                fundedMonths: entry?.fundedMonths ?? 0,
+                proficient:
+                  entry !== undefined &&
+                  isTrainingProficient(entry, fleetManagement.training.proficiencyMonths),
+              };
+            }),
+          };
     const projection: FleetScreenProjection = {
       revision: Number(record.state.snapshot.turnNumber),
       month: record.month,
@@ -142,6 +170,7 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
       movementCommands: queuedMovementCommands(record, yield* queue.entries(record.sessionId)),
       presence: view.presence,
       overBaseShips: view.overBaseShips,
+      ...(training === undefined ? {} : { training }),
     };
 
     return { outcome: "success" as const, value: projection, diagnostics: [] };
@@ -266,3 +295,52 @@ export const submitShipReadinessProgram: CommandHandler<"submitShipReadiness"> =
           }
         : result,
   );
+
+export const submitSpecialTrainingProgram: CommandHandler<"submitSpecialTraining"> = (payload) =>
+  Effect.gen(function* () {
+    const contentArtifact = yield* ContentArtifact;
+    const rules = (yield* contentArtifact.loadFleetManagementRules())?.training;
+    if (rules === undefined) {
+      return {
+        outcome: "rejected" as const,
+        reason: TRAINING_DORMANT,
+        diagnostics: ["Special training is not available in this campaign"],
+      };
+    }
+    const refusal = trainingRefusal(payload.subjects, rules);
+    if (refusal !== null) {
+      return {
+        outcome: "rejected" as const,
+        reason: refusal,
+        diagnostics: [`At most ${rules.maxSubjects} subjects can be funded at once`],
+      };
+    }
+    const queued = yield* submitPlayerCommand({
+      sessionId: payload.sessionId,
+      expectedRevision: payload.expectedRevision,
+      transportRequestId: payload.transportRequestId,
+      build: (record) => {
+        const subjects = [...payload.subjects];
+        return {
+          body: {
+            type: "SetSpecialTraining" as const,
+            nationId: record.playerSlotId,
+            subjects,
+          },
+          discriminator: [...subjects].sort().join("\u0000"),
+        };
+      },
+    });
+    const result: BridgeResult<SpecialTrainingOutcome> =
+      queued.outcome === "success"
+        ? {
+            ...queued,
+            value: {
+              commandId: queued.value.commandId,
+              subjects: payload.subjects,
+              appliedOnNextTurn: true,
+            },
+          }
+        : queued;
+    return result;
+  });

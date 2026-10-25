@@ -40,6 +40,7 @@ import {
 } from "./divisionValidation.js";
 import type { BudgetProjectCommand, CommandBody, CommandEnvelope } from "./envelope.js";
 import { validateShipReadinessCommand } from "./readinessCommandValidation.js";
+import { validateSpecialTraining } from "./specialTrainingValidation.js";
 import { validateStationAssignment } from "./stationAssignmentValidation.js";
 import type { LifecycleStepResult } from "./types.js";
 import { rejectValidation } from "./validation.js";
@@ -90,6 +91,8 @@ export function validatePayloadRules(
     return validateStationAssignment(envelope, snapshot, "clear");
   if (envelope.body.type === "SetShipReadiness")
     return validateShipReadinessCommand(envelope, snapshot);
+  if (envelope.body.type === "SetSpecialTraining")
+    return validateSpecialTraining(envelope, snapshot);
   if (envelope.body.type === "HaltConstruction")
     return validateDockyardStatusCommand(envelope, snapshot, "HaltConstruction");
   if (envelope.body.type === "ResumeConstruction")
