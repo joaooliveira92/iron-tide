@@ -241,3 +241,47 @@ export function resolveAccelerationCapacityPressure(
   }
   return { delayedProjectIds, weightedDemand, capacityPressureBp, delayProbabilityBp, decisions };
 }
+
+export const ACCELERATION_POOL_UNDEFINED_UNITS = 0;
+
+export interface AccelerationDemand {
+  readonly normalDemand: number;
+  readonly acceleratedDemand: number;
+}
+
+const DEMAND_EXCLUDED = new Set<ConstructionProject["status"]>(["HALTED", "DELAYED", "COMPLETED"]);
+
+export function accelerationDemandOf(
+  projects: readonly ConstructionProject[],
+  capacityOf: (project: ConstructionProject) => Readonly<Record<string, number>> | undefined,
+  month: string,
+): AccelerationDemand {
+  let normalDemand = 0;
+  let acceleratedDemand = 0;
+  for (const project of projects) {
+    if (DEMAND_EXCLUDED.has(project["status"])) continue;
+    const demand = projectConstructionDemand(project, capacityOf(project), month);
+    if (project["status"] === "ACCELERATED") acceleratedDemand += demand;
+    else normalDemand += demand;
+  }
+  return { normalDemand, acceleratedDemand };
+}
+
+export interface AccelerationPressure {
+  readonly weightedDemand: number;
+  readonly capacityPressureBp: number;
+  readonly delayProbabilityBp: number;
+}
+
+export function accelerationPressureOf(demand: AccelerationDemand): AccelerationPressure {
+  const weightedDemand = weightedConstructionDemand(demand.normalDemand, demand.acceleratedDemand);
+  const capacityPressureBp = constructionCapacityPressureBp(
+    weightedDemand,
+    ACCELERATION_POOL_UNDEFINED_UNITS,
+  );
+  return {
+    weightedDemand,
+    capacityPressureBp,
+    delayProbabilityBp: accelerationDelayProbabilityBp(capacityPressureBp),
+  };
+}

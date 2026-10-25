@@ -89,6 +89,7 @@ const commitments = vi.hoisted(() => ({
           carryingCost: 0,
           foreign: false,
           percentComplete: 40,
+          acceleration: { premiumApplied: false, premiumWork: 21 },
         },
         {
           projectId: "p2",
@@ -99,11 +100,18 @@ const commitments = vi.hoisted(() => ({
           carryingCost: 12,
           foreign: false,
           percentComplete: 10,
+          acceleration: null,
         },
       ],
       drawTotal: 400,
       carryingTotal: 12,
       haltedCount: 1,
+      acceleration: {
+        acceleratedCount: 1,
+        delayChanceBp: 5000,
+        premiumBp: 500,
+        premiumPending: 21,
+      },
     },
     unpaidCostsPrestige: { triggered: true, before: 20, after: 19, sackingThreshold: 16 },
   },
@@ -229,6 +237,9 @@ describe("TreasuryScreen", () => {
     const construction = screen.getByTestId("construction-commitments");
     expect(within(construction).getByText(/up to 412 this month/)).not.toBeNull();
     expect(within(construction).getByText(/1 halted project costs 12 a month/)).not.toBeNull();
+    expect(
+      within(construction).getByRole("button", { name: /Acceleration cost and risk/ }).textContent,
+    ).toMatch(/1 accelerated project.*21 of extra work still to be added, 50% chance of delay/);
     expect(
       within(construction).getByRole("button", { name: /Monitor: Halted, 12 this month/ }),
     ).not.toBeNull();

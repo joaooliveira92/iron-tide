@@ -25,6 +25,18 @@ export interface FleetUpkeep {
   readonly ships: readonly FleetUpkeepShip[];
 }
 
+export interface ProjectAcceleration {
+  readonly premiumWork: number;
+  readonly premiumApplied: boolean;
+}
+
+export interface ConstructionAcceleration {
+  readonly acceleratedCount: number;
+  readonly delayChanceBp: number;
+  readonly premiumBp: number;
+  readonly premiumPending: number;
+}
+
 export interface ConstructionCommitment {
   readonly projectId: string;
   readonly className: string;
@@ -34,6 +46,7 @@ export interface ConstructionCommitment {
   readonly carryingCost: number;
   readonly foreign: boolean;
   readonly percentComplete: number;
+  readonly acceleration: ProjectAcceleration | null;
 }
 
 export interface ConstructionCommitments {
@@ -41,6 +54,7 @@ export interface ConstructionCommitments {
   readonly drawTotal: number;
   readonly carryingTotal: number;
   readonly haltedCount: number;
+  readonly acceleration: ConstructionAcceleration;
 }
 
 export interface UnpaidCostsPrestige {
