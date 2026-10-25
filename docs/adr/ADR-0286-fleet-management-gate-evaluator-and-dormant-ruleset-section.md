@@ -18,6 +18,11 @@ targets of [ADR-0283](ADR-0283-fleet-management-values-and-repair-entry.md); the
    their own tickets.
 3. **Assignment slot.** `ASSIGNMENT_ALLOWED_USES` declares which uses an assignment kind still allows. `FOREIGN_STATION`
    allows `ENTER_BATTLE` only, which is the sail refusal movement already enforced.
+   **Extension point for W-1.** A new assignment kind (trade protection, raider) is added in three places only:
+   the `StationAssignment` union in `stationAssignment.ts`, its entry in `ASSIGNMENT_ALLOWED_USES` (which uses it
+   still allows), and its replay-body and command wiring. A ship holds at most one assignment because the slot is a
+   single optional field; a second assignment is refused with the typed `ALREADY_ASSIGNED` station reason, and the
+   gates report `Assigned` for `HOLD_STATION` and `TAKE_MISSION`. Divisions carry no mission field.
 4. **Dormant section.** An optional ruleset field `fleetManagement`, decoded strictly by `decodeFleetManagementRules`
    (`@bluewave/content-schema`) with excess keys rejected: division cohesion growth and cap, division experience per
    battle and exercise, role and formation change penalties, training proficiency months, subject limit and per-subject
