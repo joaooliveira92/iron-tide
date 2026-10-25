@@ -33,6 +33,7 @@ import {
   validateAgainstSchema,
   type ContentSchema,
   decodeBattleOfferRules,
+  decodeFleetManagementRules,
   decodePresenceRules,
 } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -253,6 +254,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     validateDuplicateIds(validated, collector);
     validatePresenceRules(validated["rulesets"] ?? [], collector);
     validateBattleOfferRules(validated["rulesets"] ?? [], collector);
+    validateFleetManagementRules(validated["rulesets"] ?? [], collector);
     validateMissingReferences(validated, collector);
     validateTechnologyGraph(validated, input, collector);
 
@@ -1202,6 +1204,37 @@ function validateBattleOfferRules(
         stage: "validate",
         entityId: rulesetId,
         remediation: `Author every battleOffers value in ruleset '${rulesetId}', or remove the section to leave it dormant`,
+      },
+    );
+  }
+}
+
+function validateFleetManagementRules(
+  rulesets: readonly unknown[],
+  collector: DiagnosticCollector,
+): void {
+  const carriers = rulesets.filter(
+    (ruleset) => (ruleset as Record<string, unknown>)["fleetManagement"] !== undefined,
+  );
+  if (carriers.length > 1)
+    collector.addError(
+      "FLEET_MANAGEMENT_RULES_AMBIGUOUS",
+      `More than one ruleset carries a fleetManagement section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
+      { stage: "validate" },
+    );
+  for (const ruleset of rulesets) {
+    const record = ruleset as Record<string, unknown>;
+    if (record["fleetManagement"] === undefined) continue;
+    const rulesetId = String(record["id"]);
+    const decoded = decodeFleetManagementRules(record["fleetManagement"]);
+    if (decoded.ok) continue;
+    collector.addError(
+      "FLEET_MANAGEMENT_RULES_INVALID",
+      `Ruleset '${rulesetId}' fleetManagement section is invalid at '${decoded.field}': ${decoded.message}`,
+      {
+        stage: "validate",
+        entityId: rulesetId,
+        remediation: `Author every fleetManagement value in ruleset '${rulesetId}', or remove the section to leave it dormant`,
       },
     );
   }

@@ -130,6 +130,7 @@ export {
 } from "./releaseGate.js";
 export { safePath } from "./safePath.js";
 export { battleOffersFromRulesets } from "./battleOfferRules.js";
+export { fleetManagementFromRulesets } from "./fleetManagementRules.js";
 export { presenceFromRulesets, type PresenceValues } from "./presenceRules.js";
 export { discoverShipBuildingFiles, type ShipBuildingFileGroups } from "./shipBuildingDiscovery.js";
 export { buildFullSurfaceInput } from "./fullSurface.js";

@@ -89,6 +89,7 @@ export {
   type BaseLimitRow,
   type BaseLimitRules,
 } from "./baseLimits.js";
+export * from "./eligibility.js";
 export * from "./stationAssignment.js";
 export * from "./technologyVariation.js";
 export * from "./technologyMaterialization.js";
