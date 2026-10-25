@@ -198,11 +198,11 @@ function designLoadout(design: Design): { platform: string; entries: LoadoutEntr
 }
 
 describe("fittings and sensors through the read path (ship-part-model 05)", () => {
-  it("covers the 573 non-gun, non-tube placements; with 233 guns and 30 tubes that is all 836", () => {
+  it("covers the 593 non-gun, non-tube placements; with 248 guns and 30 tubes that is all 871", () => {
     const all = designs.flatMap((d) => d.draft.placements);
-    expect(all.length).toBe(836);
-    expect(fittingRows.length).toBe(573);
-    expect(gunPlacements.length + 30 + fittingRows.length).toBe(836);
+    expect(all.length).toBe(871);
+    expect(fittingRows.length).toBe(593);
+    expect(gunPlacements.length + 30 + fittingRows.length).toBe(871);
     expect(fittingModel.unread).toEqual([]);
   });
 

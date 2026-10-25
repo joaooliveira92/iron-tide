@@ -462,3 +462,29 @@ gunFamilies:
         - title: navweaps.com US 5-inch/38 (12.7 cm) Mark 12
           archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_5-38_mk12.php
           section: docs/research/e-1-1940s-hull-and-part-values.md sections 1-2
+  - id: gun_dp_6in_47_twin
+    designation: US 6-inch/47 Mark 16 dual-purpose gun in twin turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: BALANCE_TARGET
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0284, ADR-0290. Bore, shell, mass and mount from navweaps.com WNUS_6-47DP_mk16 (SINGLE-SOURCE); the component carries the derivations.
+      sources:
+        - title: navweaps.com US 6-inch/47 (15.2 cm) Mark 16 DP
+          archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_6-47DP_mk16.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md sections 3-4
+  - id: gun_ap_8in_55_triple
+    designation: US 8-inch/55 Mark 16 rapid-fire gun in triple turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: BALANCE_TARGET
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0284, ADR-0290. Bore, shell, mass and mount from navweaps.com WNUS_8-55_mk16 (SINGLE-SOURCE); the component carries the derivations.
+      sources:
+        - title: navweaps.com US 8-inch/55 (20.3 cm) Mark 16
+          archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_8-55_mk16.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md sections 5-6

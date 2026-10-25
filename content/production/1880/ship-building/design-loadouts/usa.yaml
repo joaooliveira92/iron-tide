@@ -401,6 +401,255 @@ designs:
     starterFor: CA
   - header:
       hull:
+        beam: 23000
+        blockCoeffBp: 5250
+        depthToMainDeck: 13000
+        designMarginBp: 300
+        draught: 7920
+        growthReserveBp: 0
+        hullFormId: heavy_cruiser_form
+        lengthWl: 213400
+        limitDisplacementKg: null
+        materialId: mild_steel
+        structuralSchemeId: mixed
+        subdivisionGrade: 2
+        targetDisplacementKg: 20934000
+      machinery:
+        foulingBp: 0
+        fuelCapacityKg: 3006000
+        fuelStationPermille: 500
+        fuelZoneId: CENTRAL_MACHINERY
+        rooms:
+          - shareBp: 6000
+            stationPermille: 450
+            zoneId: CENTRAL_MACHINERY
+          - shareBp: 4000
+            stationPermille: 680
+            zoneId: AFT_SERVICE
+      nation: usa
+      protection:
+        bunkerProtectionBp: 0
+        citadelLengthMm: 115000
+        torpedoWarheadKg: 0
+      requirement:
+        accommodationStandard: STANDARD
+        category: CA
+        crewQualityBp: 10000
+        cruiseSpeedMilliKnots: 15000
+        designThreatId: qf_6in
+        modernizationExpectation: NONE
+        protectionGoal: NONE
+        requiredRangeNm: 9500
+        requiredSpeedMilliKnots: 33000
+    id: starter_ca_usa_1948
+    loadout:
+      entries:
+        - entries:
+            guns:
+              - mountCount: 3
+                params:
+                  rounds: 150
+                part: standard_gun_ap_8in_55_triple
+          id: main_1
+          magazineEntry: mag_fwd
+          mountCount: 1
+          part: gun_ap_8in_55_triple_central_battery_3
+          slot: forecastle.gun_mount
+          stationPermille: 40
+        - entries:
+            guns:
+              - mountCount: 3
+                params:
+                  rounds: 150
+                part: standard_gun_ap_8in_55_triple
+          id: main_2
+          magazineEntry: mag_fwd2
+          mountCount: 1
+          part: gun_ap_8in_55_triple_central_battery_3
+          slot: fwd_magazine.gun_mount
+          stationPermille: 120
+        - entries:
+            guns:
+              - mountCount: 3
+                params:
+                  rounds: 150
+                part: standard_gun_ap_8in_55_triple
+          id: main_3
+          magazineEntry: mag_aft
+          mountCount: 1
+          part: gun_ap_8in_55_triple_central_battery_3
+          slot: aft_magazine.gun_mount
+          stationPermille: 800
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 400
+                part: standard_gun_dp_5in_38_twin
+          id: sec_1
+          magazineEntry: mag_fwd
+          mountCount: 1
+          part: gun_dp_5in_38_twin_turret_x2
+          slot: fwd_service.gun_mount
+          stationPermille: 230
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 400
+                part: standard_gun_dp_5in_38_twin
+          id: sec_2
+          magazineEntry: mag_fwd2
+          mountCount: 1
+          part: gun_dp_5in_38_twin_turret_x2
+          slot: fwd_service.gun_mount
+          stationPermille: 260
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 400
+                part: standard_gun_dp_5in_38_twin
+          id: sec_3
+          magazineEntry: mag_fwd
+          mountCount: 1
+          part: gun_dp_5in_38_twin_turret_x2
+          slot: fwd_magazine.gun_mount
+          stationPermille: 160
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 400
+                part: standard_gun_dp_5in_38_twin
+          id: sec_4
+          magazineEntry: mag_aft2
+          mountCount: 1
+          part: gun_dp_5in_38_twin_turret_x2
+          slot: aft_service.gun_mount
+          stationPermille: 700
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 400
+                part: standard_gun_dp_5in_38_twin
+          id: sec_5
+          magazineEntry: mag_aft
+          mountCount: 1
+          part: gun_dp_5in_38_twin_turret_x2
+          slot: aft_service.gun_mount
+          stationPermille: 730
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 400
+                part: standard_gun_dp_5in_38_twin
+          id: sec_6
+          magazineEntry: mag_aft2
+          mountCount: 1
+          part: gun_dp_5in_38_twin_turret_x2
+          slot: quarterdeck.gun_mount
+          stationPermille: 930
+        - id: mag_fwd
+          mountCount: 1
+          part: magazine_heavy
+          slot: fwd_magazine.magazine
+          stationPermille: 110
+        - id: mag_fwd2
+          mountCount: 1
+          part: magazine_heavy
+          slot: fwd_magazine.magazine
+          stationPermille: 150
+        - id: mag_aft
+          mountCount: 1
+          part: magazine_heavy
+          slot: aft_magazine.magazine
+          stationPermille: 800
+        - id: mag_aft2
+          mountCount: 1
+          part: magazine_heavy
+          slot: aft_magazine.magazine
+          stationPermille: 850
+        - id: rf
+          mountCount: 1
+          part: rangefinder_optical
+          slot: superstructure.sensor
+          stationPermille: 525
+        - id: dyn
+          mountCount: 1
+          part: dynamo_small
+          slot: fwd_service.electrical_plant
+          stationPermille: 200
+        - id: vent
+          mountCount: 1
+          part: ventilation_plant
+          slot: fwd_service.ventilation
+          stationPermille: 210
+        - id: quarters
+          mountCount: 120
+          params:
+            blocks: 120
+          part: quarters_crew
+          slot: fwd_service.accommodation
+          stationPermille: 230
+        - id: quarters_aft
+          mountCount: 120
+          params:
+            blocks: 120
+          part: quarters_crew
+          slot: aft_service.accommodation
+          stationPermille: 720
+        - id: funnel
+          mountCount: 1
+          part: funnel_single
+          slot: superstructure.funnel
+          stationPermille: 630
+        - mountCount: 1
+          params:
+            installedKw: 89484
+          part: hp_steam_geared_turbine
+          slot: central_machinery.propulsion_plant
+          stationPermille: 450
+        - mountCount: 1
+          part: krupp
+          shape:
+            cosObliquityBp: 10000
+            heightMm: 3100
+            lengthMm: 115000
+            thicknessUm: 152000
+          slot: armour.belt_main
+        - mountCount: 1
+          part: krupp
+          shape:
+            cosObliquityBp: 10000
+            heightMm: 19000
+            lengthMm: 115000
+            thicknessUm: 95000
+          slot: armour.deck_main
+        - mountCount: 1
+          part: krupp
+          shape:
+            cosObliquityBp: 10000
+            heightMm: 3000
+            lengthMm: 18000
+            thicknessUm: 203000
+          slot: armour.turret
+        - mountCount: 1
+          part: krupp
+          shape:
+            cosObliquityBp: 10000
+            heightMm: 2400
+            lengthMm: 40000
+            thicknessUm: 152000
+          slot: armour.magazine_box
+      platform: heavy_cruiser_form
+    month: 1948-01
+    name: Heavy cruiser (starter, CA) — United States, 1948
+    starterFor: CA
+  - header:
+      hull:
         beam: 14000
         blockCoeffBp: 5000
         depthToMainDeck: 8000
@@ -514,6 +763,219 @@ designs:
       platform: protected_cruiser_form
     month: 1880-01
     name: Protected cruiser (starter, CL) — United States
+    starterFor: CL
+  - header:
+      hull:
+        beam: 21500
+        blockCoeffBp: 5350
+        depthToMainDeck: 12500
+        designMarginBp: 300
+        draught: 7540
+        growthReserveBp: 0
+        hullFormId: light_cruiser_form
+        lengthWl: 202400
+        limitDisplacementKg: null
+        materialId: mild_steel
+        structuralSchemeId: mixed
+        subdivisionGrade: 2
+        targetDisplacementKg: 17997000
+      machinery:
+        foulingBp: 0
+        fuelCapacityKg: 2400000
+        fuelStationPermille: 500
+        fuelZoneId: CENTRAL_MACHINERY
+        rooms:
+          - shareBp: 6000
+            stationPermille: 450
+            zoneId: CENTRAL_MACHINERY
+          - shareBp: 4000
+            stationPermille: 680
+            zoneId: AFT_SERVICE
+      nation: usa
+      protection:
+        bunkerProtectionBp: 0
+        citadelLengthMm: 110000
+        torpedoWarheadKg: 0
+      requirement:
+        accommodationStandard: STANDARD
+        category: CL
+        crewQualityBp: 10000
+        cruiseSpeedMilliKnots: 15000
+        designThreatId: qf_6in
+        modernizationExpectation: NONE
+        protectionGoal: NONE
+        requiredRangeNm: 7500
+        requiredSpeedMilliKnots: 33000
+    id: starter_cl_usa_1948
+    loadout:
+      entries:
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 300
+                part: standard_gun_dp_6in_47_twin
+          id: main_1
+          magazineEntry: mag_fwd
+          mountCount: 1
+          part: gun_dp_6in_47_twin_turret_x2
+          slot: forecastle.gun_mount
+          stationPermille: 40
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 300
+                part: standard_gun_dp_6in_47_twin
+          id: main_2
+          magazineEntry: mag_fwd2
+          mountCount: 1
+          part: gun_dp_6in_47_twin_turret_x2
+          slot: fwd_magazine.gun_mount
+          stationPermille: 110
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 300
+                part: standard_gun_dp_6in_47_twin
+          id: main_3
+          magazineEntry: mag_fwd
+          mountCount: 1
+          part: gun_dp_6in_47_twin_turret_x2
+          slot: fwd_service.gun_mount
+          stationPermille: 230
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 300
+                part: standard_gun_dp_6in_47_twin
+          id: main_4
+          magazineEntry: mag_aft
+          mountCount: 1
+          part: gun_dp_6in_47_twin_turret_x2
+          slot: aft_service.gun_mount
+          stationPermille: 700
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 300
+                part: standard_gun_dp_6in_47_twin
+          id: main_5
+          magazineEntry: mag_aft2
+          mountCount: 1
+          part: gun_dp_6in_47_twin_turret_x2
+          slot: aft_magazine.gun_mount
+          stationPermille: 800
+        - entries:
+            guns:
+              - mountCount: 2
+                params:
+                  rounds: 300
+                part: standard_gun_dp_6in_47_twin
+          id: main_6
+          magazineEntry: mag_aft
+          mountCount: 1
+          part: gun_dp_6in_47_twin_turret_x2
+          slot: quarterdeck.gun_mount
+          stationPermille: 930
+        - id: mag_fwd
+          mountCount: 1
+          part: magazine_heavy
+          slot: fwd_magazine.magazine
+          stationPermille: 110
+        - id: mag_fwd2
+          mountCount: 1
+          part: magazine_heavy
+          slot: fwd_magazine.magazine
+          stationPermille: 150
+        - id: mag_aft
+          mountCount: 1
+          part: magazine_heavy
+          slot: aft_magazine.magazine
+          stationPermille: 800
+        - id: mag_aft2
+          mountCount: 1
+          part: magazine_heavy
+          slot: aft_magazine.magazine
+          stationPermille: 850
+        - id: rf
+          mountCount: 1
+          part: rangefinder_optical
+          slot: superstructure.sensor
+          stationPermille: 525
+        - id: dyn
+          mountCount: 1
+          part: dynamo_small
+          slot: fwd_service.electrical_plant
+          stationPermille: 200
+        - id: vent
+          mountCount: 1
+          part: ventilation_plant
+          slot: fwd_service.ventilation
+          stationPermille: 210
+        - id: quarters
+          mountCount: 120
+          params:
+            blocks: 120
+          part: quarters_crew
+          slot: fwd_service.accommodation
+          stationPermille: 230
+        - id: quarters_aft
+          mountCount: 120
+          params:
+            blocks: 120
+          part: quarters_crew
+          slot: aft_service.accommodation
+          stationPermille: 720
+        - id: funnel
+          mountCount: 1
+          part: funnel_single
+          slot: superstructure.funnel
+          stationPermille: 630
+        - mountCount: 1
+          params:
+            installedKw: 89484
+          part: hp_steam_geared_turbine
+          slot: central_machinery.propulsion_plant
+          stationPermille: 450
+        - mountCount: 1
+          part: krupp
+          shape:
+            cosObliquityBp: 10000
+            heightMm: 3100
+            lengthMm: 110000
+            thicknessUm: 127000
+          slot: armour.belt_main
+        - mountCount: 1
+          part: krupp
+          shape:
+            cosObliquityBp: 10000
+            heightMm: 18000
+            lengthMm: 110000
+            thicknessUm: 89000
+          slot: armour.deck_main
+        - mountCount: 1
+          part: krupp
+          shape:
+            cosObliquityBp: 10000
+            heightMm: 3000
+            lengthMm: 36000
+            thicknessUm: 165000
+          slot: armour.turret
+        - mountCount: 1
+          part: krupp
+          shape:
+            cosObliquityBp: 10000
+            heightMm: 2400
+            lengthMm: 40000
+            thicknessUm: 127000
+          slot: armour.magazine_box
+      platform: light_cruiser_form
+    month: 1948-01
+    name: Light cruiser (starter, CL) — United States, 1948
     starterFor: CL
   - header:
       hull:

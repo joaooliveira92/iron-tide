@@ -582,17 +582,17 @@ describe("fit over every production design (characterization)", () => {
     ).findings.map((f) => f.id),
   }));
 
-  it("evaluates all 93 designs, 836 placements, 233 gun placements and 30 tube placements", () => {
-    expect(fits).toHaveLength(93);
-    expect(fits.reduce((n, d) => n + d.design.draft.placements.length, 0)).toBe(836);
+  it("evaluates all 95 designs, 871 placements, 248 gun placements and 30 tube placements", () => {
+    expect(fits).toHaveLength(95);
+    expect(fits.reduce((n, d) => n + d.design.draft.placements.length, 0)).toBe(871);
     const slotKinds = fits.flatMap((d) => d.entries.map((e) => e.slot.split(".").at(-1)));
-    expect(slotKinds.filter((k) => k === "gun_mount")).toHaveLength(233);
+    expect(slotKinds.filter((k) => k === "gun_mount")).toHaveLength(248);
     expect(slotKinds.filter((k) => k === "torpedo_launcher")).toHaveLength(30);
   });
 
   it("accepts every design: nothing is excluded, and nothing is rejected silently", () => {
     const status = (s: FitResult["status"]) => results.filter((x) => x.r.status === s).length;
-    expect([status("ACCEPTED"), status("REJECTED"), status("NOT_EVALUABLE")]).toEqual([93, 0, 0]);
+    expect([status("ACCEPTED"), status("REJECTED"), status("NOT_EVALUABLE")]).toEqual([95, 0, 0]);
     for (const { d, r } of results) {
       expect(r.findings, d.design.id).toEqual([]);
       expect(r.dataIssues, d.design.id).toEqual([]);

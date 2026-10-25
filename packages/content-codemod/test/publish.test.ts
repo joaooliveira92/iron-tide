@@ -55,8 +55,8 @@ describe("content codemod publisher (ticket 11c)", () => {
     const read = readStagedSource(stagingDir);
     expect(read.ok).toBe(true);
     if (!read.ok) return;
-    expect(read.value.parts).toHaveLength(319);
-    expect(read.value.designs).toHaveLength(93);
+    expect(read.value.parts).toHaveLength(323);
+    expect(read.value.designs).toHaveLength(95);
     for (const file of listFiles(stagingDir).filter((f) => f.startsWith("parts/"))) {
       const raw = fromYaml(readFileSync(join(stagingDir, file), "utf8"));
       for (const record of (raw as { parts: unknown[] }).parts) {
@@ -102,7 +102,7 @@ describe("content codemod publisher (ticket 11c)", () => {
     expect(republish.ok).toBe(true);
     if (republish.ok) expect(republish.value.noop).toBe(true);
     const reread = readStagedSource(stagingDir);
-    expect(reread.ok && reread.value.designs.length).toBe(93);
+    expect(reread.ok && reread.value.designs.length).toBe(95);
   });
 
   it("refuses unsafe, ambiguous or protected output paths", () => {
@@ -171,7 +171,7 @@ describe("content codemod publisher (ticket 11c)", () => {
     const loaded = loadLegacySource({ contentDir, torpedoDiameterUm, torpedoModels });
     expect(loaded.ok).toBe(true);
     if (!loaded.ok) return;
-    expect(loaded.value.designs).toHaveLength(93);
+    expect(loaded.value.designs).toHaveLength(95);
     expect(loaded.value.sourceFiles.length).toBeGreaterThan(10);
     const fromDisk = planFromLegacy(loaded.value);
     expect(fromDisk.ok).toBe(true);
