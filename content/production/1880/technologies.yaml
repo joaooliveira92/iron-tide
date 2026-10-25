@@ -1151,3 +1151,62 @@
         year: 2023
         page: "121-123"
     note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for quadruple heavy SSM launchers (ADR-0283 D2)."
+- id: "mis_cruise_missile_data_link"
+  name: "Data Link and Cruise-Missile Targeting"
+  category: "LATE"
+  researchFieldId: "MISSILES"
+  prerequisites:
+    - { techId: "mis_quadruple_heavy_ssm" }
+  cost: 400
+  discoveryWeight: 14000
+  year: 1960
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Steam Community guide: Ship Design Guide (1890 to 1970)"
+        section: "community anchor"
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "121-123"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for cruise missiles (ADR-0283 D2); the dossier year for data link is 1960 as well."
+- id: "mis_light_sam"
+  name: "Light Surface-to-Air Missile"
+  category: "LATE"
+  researchFieldId: "MISSILES"
+  prerequisites:
+    - { techId: "mis_medium_heavy_sam" }
+  cost: 400
+  discoveryWeight: 14000
+  year: 1961
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "US Naval Weapons"
+        author: "N. Friedman, 1983"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology."
+- id: "mis_medium_ssm_quadruple"
+  name: "Medium Surface-to-Surface Missile with Quadruple Launchers"
+  category: "LATE"
+  researchFieldId: "MISSILES"
+  prerequisites:
+    - { techId: "mis_cruise_missile_data_link" }
+  cost: 400
+  discoveryWeight: 14000
+  year: 1966
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Steam Community guide: Ship Design Guide (1890 to 1970)"
+        section: "community anchor"
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "121-123"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for quadruple medium SSM launchers; it overrides the 1967 historical-analogue date of the first medium anti-ship missile (ADR-0283 D2)."
