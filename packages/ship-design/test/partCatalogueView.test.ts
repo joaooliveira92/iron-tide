@@ -56,10 +56,10 @@ describe("family-level catalogue view (17b-1)", () => {
     );
   });
 
-  it("selects exactly the legacy family-level catalogue: 47 entries, one per component id", () => {
+  it("selects exactly the legacy family-level catalogue: 49 entries, one per component id", () => {
     const view = buildPartCatalogueView(model);
     expect(view).toHaveLength(components.length);
-    expect(view).toHaveLength(47);
+    expect(view).toHaveLength(49);
     expect(view.map((e) => e.id)).toEqual(legacyCatalogueView(components).map((e) => e.id));
   });
 
