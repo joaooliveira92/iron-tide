@@ -3,6 +3,13 @@ import { Schema } from "effect";
 
 const parseOptions = { onExcessProperty: "error" } as const;
 
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== "object" || Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const nested of Object.values(value)) deepFreeze(nested);
+  return value;
+}
+
 const nonEmptyString = Schema.Trim.check(Schema.isMinLength(1));
 
 const safeInt: Schema.declare<SafeInt> = Schema.declare<SafeInt>(
@@ -354,9 +361,9 @@ export type DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody>
 };
 
 export function parseDomainEventBody(input: unknown): DomainEventBody {
-  return Schema.decodeUnknownSync(DomainEventBodySchema, parseOptions)(input);
+  return deepFreeze(Schema.decodeUnknownSync(DomainEventBodySchema, parseOptions)(input));
 }
 
 export function parseDomainEventEnvelope(input: unknown): DomainEventEnvelope {
-  return Schema.decodeUnknownSync(DomainEventEnvelopeSchema, parseOptions)(input);
+  return deepFreeze(Schema.decodeUnknownSync(DomainEventEnvelopeSchema, parseOptions)(input));
 }
