@@ -259,3 +259,20 @@ https://www.navweaps.com/Weapons_Source_Notes.php (not fetched); (c) owner BALAN
 14. Hull forms: `formBp`, `waterplaneCoeffBp`, `sheerBp`, `volumeFullnessBp`, `deckFullnessBp`, `lcbPermille` for all four, plus length and L/B band edges. Cheapest: (a) hull-weight fractions per ship (as White 1894 served the 1880 forms), else (c) for the five non-weight fields as in 1880.
 15. All-welded hull weight effect: no schema key and no figure. Cheapest: add a scheme key by engineering decision and source one weight comparison from a Society of Naval Architects paper.
 16. 5-inch twin mount year: Mark 38 and Mark 32 dates not on the page; dossier 1945 stands as BALANCE TARGET.
+
+## 12. Cruiser armour and reference outfit (added for the cruiser slice, 2026-10-25)
+
+Source NP (Navypedia, fetched 2026-10-25): us_cr_worcester.htm and us_cr_des_moines.htm. Both agree with the section 10 dimensions.
+
+| Item | Worcester (CL144) | Des Moines (CA134) | Confidence |
+|---|---|---|---|
+| Belt | 127 mm tapering to 76 mm | 152 mm tapering to 102 mm, 3.1 m high | SINGLE-SOURCE |
+| Main deck | 89 mm (upper deck 22-25 mm) | 95 mm (upper deck 25 mm) | SINGLE-SOURCE |
+| Turret face | 165 mm | 203 mm | SINGLE-SOURCE |
+| Magazines | 127-51 mm | not listed | SINGLE-SOURCE, Worcester only |
+| Fuel and endurance | 2,400 t oil, 8,000 nm at 15 kn | 3,006 t oil, 10,500 nm at 15 kn | SINGLE-SOURCE |
+| Armament | 12 x 6-inch/47 in six twin turrets | 9 x 8-inch/55 in three triples, 12 x 5-inch/38 in six twins | class armament, NW-6, NW-8 |
+
+Unsourced and set as `BALANCE TARGET` or `ESTIMATE` in the starters: belt and deck lengths and widths, turret region areas, magazine box size, rounds per gun, moulded
+depth, crew quarters, magazine count and station. Armour is modelled as `krupp` plate, the newest material in the pack. The fitted plant gives 7,868 nm (Worcester) and
+9,855 nm (Des Moines) at 15 kn, short of the sourced ranges, so the starters ask for 7,500 and 9,500 nm.

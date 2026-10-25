@@ -236,7 +236,9 @@ export function runCandidateDesign(
         disposition: t.disposition,
         legacyFixedInstallationKg:
           env.armament.gunMounts.find((m) => String(m.id) === t.legacyMountId)
-            ?.baseInstallationMassKg ?? null,
+            ?.baseInstallationMassKg ??
+          env.components.find((c) => c.id === placement.componentId)?.constants["mount_fixed_kg"] ??
+          null,
       });
     } else {
       const r = translateFittingPlacement({

@@ -1,5 +1,62 @@
 parts:
   - family: gun_mount
+    id: gun_ap_8in_55_triple_central_battery_3
+    lifecycle:
+      availableFrom: 1948-01
+      availableUntil: null
+    name: gun_ap_8in_55_triple_central_battery_3
+    origin:
+      sourceFile: ship-building/components.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0284, ADR-0290. Bore, shell, mass and mount from navweaps.com WNUS_8-55_mk16 (SINGLE-SOURCE); the component carries the derivations.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_8-55_mk16.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md sections 5-6
+          title: navweaps.com US 8-inch/55 (20.3 cm) Mark 16
+    provides: gun_mount
+    quantities:
+      - basis: PER_LOADOUT_ENTRY
+        id: installation_fixed
+        kind: massKg
+        value: 0
+      - basis: PER_CONTAINED_UNIT
+        id: installation_per_gun
+        kind: massKg
+        value: 135267
+      - basis: PER_CONTAINED_UNIT
+        id: mount_cost_per_gun
+        kind: costMicro
+        value: 38648000000
+      - basis: PER_CONTAINED_UNIT
+        id: crew_per_gun
+        kind: crew
+        value: 15
+      - basis: PER_CONTAINED_UNIT
+        id: volume_per_gun
+        kind: volumeLitre
+        value: 457800
+      - basis: PER_CONTAINED_UNIT
+        id: deck_footprint_per_gun
+        kind: deckFootprintMm2
+        value: 71700000
+    revisions: []
+    slots:
+      - accepts:
+          - gun
+        id: guns
+        mountCount:
+          max: 3
+          min: 3
+    spec:
+      compatibleGunFamilies:
+        - gun_ap_8in_55_triple
+      firingArcDeg: 150
+      gunsPerMount: 3
+      mountType: BROADSIDE_BATTERY
+  - family: gun_mount
     id: gun_bl_10in_32_barbette
     lifecycle:
       availableFrom: 1885-01
@@ -3197,6 +3254,64 @@ parts:
       compatibleGunFamilies:
         - gun_dp_5in_38_twin
       compiledMountId: gun_dp_5in_38_twin_turret
+      firingArcDeg: 150
+      gunsPerMount: 2
+      mountType: TURRET
+  - family: gun_mount
+    id: gun_dp_6in_47_twin_turret_x2
+    lifecycle:
+      availableFrom: 1948-01
+      availableUntil: null
+    name: gun_dp_6in_47_twin_turret_x2
+    origin:
+      sourceFile: ship-building/components.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0284, ADR-0290. Bore, shell, mass and mount from navweaps.com WNUS_6-47DP_mk16 (SINGLE-SOURCE); the component carries the derivations.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_6-47DP_mk16.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md sections 3-4
+          title: navweaps.com US 6-inch/47 (15.2 cm) Mark 16 DP
+    provides: gun_mount
+    quantities:
+      - basis: PER_LOADOUT_ENTRY
+        id: installation_fixed
+        kind: massKg
+        value: 0
+      - basis: PER_CONTAINED_UNIT
+        id: installation_per_gun
+        kind: massKg
+        value: 99400
+      - basis: PER_CONTAINED_UNIT
+        id: mount_cost_per_gun
+        kind: costMicro
+        value: 19620000000
+      - basis: PER_CONTAINED_UNIT
+        id: crew_per_gun
+        kind: crew
+        value: 11
+      - basis: PER_CONTAINED_UNIT
+        id: volume_per_gun
+        kind: volumeLitre
+        value: 318000
+      - basis: PER_CONTAINED_UNIT
+        id: deck_footprint_per_gun
+        kind: deckFootprintMm2
+        value: 49800000
+    revisions: []
+    slots:
+      - accepts:
+          - gun
+        id: guns
+        mountCount:
+          max: 2
+          min: 2
+    spec:
+      compatibleGunFamilies:
+        - gun_dp_6in_47_twin
+      compiledMountId: gun_dp_6in_47_twin_turret
       firingArcDeg: 150
       gunsPerMount: 2
       mountType: TURRET

@@ -87,3 +87,30 @@ describe("the 1945 United States destroyer (E-1 1940-1949)", () => {
     expect(r.findings.map((f) => f.id)).toContain("TECH_UNAVAILABLE");
   });
 });
+
+describe("the 1948 United States cruisers (E-1 1940-1949)", () => {
+  const light = byId("starter_cl_usa_1948").draft;
+  const heavy = byId("starter_ca_usa_1948").draft;
+
+  it("classes the Worcester as a light cruiser and the Des Moines as a heavy cruiser", () => {
+    expect(compileDesign(light, earlyContext("1948-01")).naturalClass).toBe("CL");
+    expect(compileDesign(heavy, earlyContext("1948-01")).naturalClass).toBe("CA");
+  });
+
+  it("closes on the sourced full-load displacement and 33 knots", () => {
+    const worcester = compileDesign(light, earlyContext("1948-01"));
+    const desMoines = compileDesign(heavy, earlyContext("1948-01"));
+    expect(Math.abs(worcester.totalKg - 17_997_000)).toBeLessThan(50_000);
+    expect(Math.abs(desMoines.totalKg - 20_934_000)).toBeLessThan(50_000);
+    expect(worcester.machinery?.maxSpeedMilliKnots).toBeGreaterThanOrEqual(32_900);
+    expect(desMoines.machinery?.maxSpeedMilliKnots).toBeGreaterThanOrEqual(32_900);
+  });
+
+  it("is not available before the 1948 turrets", () => {
+    for (const draft of [light, heavy]) {
+      const r = compileDesign(draft, earlyContext("1947-12"));
+      expect(r.valid).toBe(false);
+      expect(r.findings.map((f) => f.id)).toContain("TECH_UNAVAILABLE");
+    }
+  });
+});

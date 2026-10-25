@@ -51,6 +51,9 @@ export const D18_RECLASSIFIED_PLACEMENTS: readonly string[] = [
   "redoutable_1878:main_fwd",
   "sachsen_1878:main_aft",
   "sachsen_1878:main_fwd",
+  "starter_ca_usa_1948:main_1",
+  "starter_ca_usa_1948:main_2",
+  "starter_ca_usa_1948:main_3",
 ];
 
 export const D18_IDENTITY_FIELDS: Readonly<Record<string, string | null>> = {
@@ -67,11 +70,11 @@ export interface Coverage {
 }
 
 export const PINNED_COVERAGE: Coverage = {
-  designs: 93,
-  placements: 836,
-  gunPlacements: 233,
+  designs: 95,
+  placements: 871,
+  gunPlacements: 248,
   tubePlacements: 30,
-  fittingPlacements: 573,
+  fittingPlacements: 593,
 };
 
 export interface DataQualityInventory {
@@ -82,7 +85,7 @@ export interface DataQualityInventory {
 }
 
 export const PINNED_DATA_QUALITY: DataQualityInventory = {
-  centralBatteryPlacements: 9,
+  centralBatteryPlacements: 12,
   launcherVariants: 17,
   waivedLauncherRecords: 5,
   torpedoEntriesAffected: 9,

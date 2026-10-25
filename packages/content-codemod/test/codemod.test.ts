@@ -38,19 +38,19 @@ const categoryOf = (id: string) => components.find((c) => c.id === id)?.category
 
 describe("content codemod planner (ticket 11c)", () => {
   it("migrates the whole catalogue and every design", () => {
-    expect(planned.manifest.records.parts).toBe(319);
-    expect(planned.manifest.records.designs).toBe(93);
-    expect(planned.manifest.records.placements).toBe(836);
-    expect(planned.manifest.records.gunPlacements).toBe(233);
+    expect(planned.manifest.records.parts).toBe(323);
+    expect(planned.manifest.records.designs).toBe(95);
+    expect(planned.manifest.records.placements).toBe(871);
+    expect(planned.manifest.records.gunPlacements).toBe(248);
     expect(planned.manifest.records.tubePlacements).toBe(30);
-    expect(planned.manifest.records.fittingPlacements).toBe(573);
+    expect(planned.manifest.records.fittingPlacements).toBe(593);
     const familyTotal = Object.values(planned.manifest.records.partsByFamily).reduce(
       (a, b) => a + b,
       0,
     );
-    expect(familyTotal).toBe(319);
+    expect(familyTotal).toBe(323);
     expect(planned.manifest.records.partsByFamily.torpedo).toBe(8);
-    expect(planned.designs).toHaveLength(93);
+    expect(planned.designs).toHaveLength(95);
   });
 
   it("generates the eight torpedo parts, including the 1884 Whitehead revision", () => {
@@ -76,10 +76,10 @@ describe("content codemod planner (ticket 11c)", () => {
 
   it("records the three independent data-quality counts, unmixed", () => {
     const dq = planned.manifest.dataQuality;
-    expect(dq.unresolvedArmamentPlacements).toBe(165);
+    expect(dq.unresolvedArmamentPlacements).toBe(180);
     expect(dq.unresolvedMagazineRelationships).toBe(0);
     expect(dq.waivers).toBe(0);
-    expect(dq.centralBatteryPlacements).toBe(9);
+    expect(dq.centralBatteryPlacements).toBe(12);
     expect(dq.launcherVariants).toBe(17);
     expect(dq.waivedLauncherRecords).toBe(5);
     expect(dq.torpedoEntriesAffected).toBe(9);
@@ -218,7 +218,7 @@ describe("content codemod planner (ticket 11c)", () => {
         )
         .map((e) => ({ designId: d.id, entry: e })),
     );
-    expect(batteryEntries).toHaveLength(9);
+    expect(batteryEntries).toHaveLength(12);
     for (const { designId, entry } of batteryEntries) {
       const mount = partsById.get(entry.part)!;
       expect(mount.family).toBe("gun_mount");
@@ -255,6 +255,6 @@ describe("content codemod planner (ticket 11c)", () => {
         WEAPON_GUN.has(categoryOf(placement.componentId) ?? ""),
       ),
     );
-    expect(gunPlacements.length).toBe(233);
+    expect(gunPlacements.length).toBe(248);
   });
 });

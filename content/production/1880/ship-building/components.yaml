@@ -1513,3 +1513,83 @@ components:
       mountType: ABOVE_WATER_TRAINABLE
       torpedoModelId: usn_21in_mk14_1931
     maintenanceMonthlyBp: 15
+  # US 6-inch/47 Mark 16 dual-purpose gun in the twin turret of the Worcester class, E-1 1940-1949 (ADR-0284, ADR-0290;
+  # docs/research/e-1-1940s-hull-and-part-values.md sections 3-4). Sourced (navweaps.com WNUS_6-47DP_mk16, SINGLE-SOURCE): 152 mm bore, 59.0 kg AP shell,
+  # 6,600 kg gun, 212,000 kg twin turret (208.5 tons), 12 rounds per minute, about 300 deg of train, 21 crew per mounting (modelled as 11 per barrel, 22, because the part model needs a whole crew per barrel), service 1948. The charge
+  # (2,542 bp) is DERIVED from 15.0 kg over the AP shell. The turret splits as 99,400 kg per barrel and no fixed mass, so the twin returns 212,000 kg.
+  # Round volume follows the 0.5 mL per gram convention. Mount cost scales gun_qf_6in_40 by mount mass (197,368 micro per kg), volume and footprint
+  # use the 3 L and 470 mm2 per kg conventions of the legacy rows: all BALANCE TARGET. The projectiles are hand-loaded (navweaps.com), so the mount
+  # requires gun_dp_rapid_5in rather than gun_auto_loading_turret (ADR-0284 decision 3).
+  - id: gun_dp_6in_47_twin
+    displayName: "6-inch/47 Mark 16 dual-purpose gun in twin turret"
+    category: MAIN_GUN
+    introduction: { fromMonth: "1948-01", obsoleteMonth: null }
+    requires: [gun_dp_rapid_5in]
+    parameters: { barrels: { min: 2, max: 2, step: 1 }, rounds: { min: 200, max: 1000, step: 50 } }
+    constants:
+      {
+        gun_kg: 6600,
+        mount_per_barrel_kg: 99400,
+        mount_fixed_kg: 0,
+        cost_per_kg_micro: 197000,
+        mount_cost_micro: 19620000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "318000 * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "11 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, medium]
+    deckFootprintMm2: "49800000 * barrels"
+    heightMm: "3200"
+    zCgMm: "6500"
+    fcClass: medium
+    attributes:
+      caliberUm: "152000"
+      shellMassG: "59000"
+      chargeBp: "2542"
+      roundVolumeMl: "37000"
+      rofBaseX100: "1200"
+      beamArcDeg: "150"
+      maxFeedPermille: "300"
+    maintenanceMonthlyBp: 20
+  # US 8-inch/55 Mark 16 rapid-fire gun in the triple turret of the Des Moines class, E-1 1940-1949 (ADR-0284, ADR-0290; research note sections 5-6).
+  # Sourced (navweaps.com WNUS_8-55_mk16, SINGLE-SOURCE): 203 mm bore, 152 kg AP shell, 17,400 kg gun, 458,000 kg triple turret (451 tons), 10 rounds
+  # per minute, about 300 deg of train, about 44 crew (modelled as 15 per barrel, 45), service 1948. The charge (2,296 bp) is DERIVED from 34.9 kg over the AP shell. The turret splits
+  # as 135,267 kg per barrel and no fixed mass (458,001 kg). Mount cost scales gun_bl_92in_315 by mount mass (285,714 micro per kg); round volume,
+  # volume and footprint as the 6-inch row: all BALANCE TARGET. The mount requires gun_auto_loading_turret (ADR-0284 decision 3).
+  - id: gun_ap_8in_55_triple
+    displayName: "8-inch/55 Mark 16 rapid-fire gun in triple turret"
+    category: MAIN_GUN
+    introduction: { fromMonth: "1948-01", obsoleteMonth: null }
+    requires: [gun_auto_loading_turret]
+    parameters: { barrels: { min: 3, max: 3, step: 1 }, rounds: { min: 150, max: 750, step: 50 } }
+    constants:
+      {
+        gun_kg: 17400,
+        mount_per_barrel_kg: 135267,
+        mount_fixed_kg: 0,
+        cost_per_kg_micro: 197000,
+        mount_cost_micro: 38648000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "457800 * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "15 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, heavy]
+    deckFootprintMm2: "71700000 * barrels"
+    heightMm: "3200"
+    zCgMm: "6500"
+    fcClass: heavy
+    attributes:
+      caliberUm: "203000"
+      shellMassG: "152000"
+      chargeBp: "2296"
+      roundVolumeMl: "93450"
+      rofBaseX100: "1000"
+      beamArcDeg: "150"
+      maxFeedPermille: "300"
+    maintenanceMonthlyBp: 20

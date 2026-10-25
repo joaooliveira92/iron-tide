@@ -141,3 +141,35 @@ hullForms:
     deckFullnessBp: 7000
     lcbPermille: 500
     zones: *a1
+  # Light cruiser hull (E-1 1940-1949, ADR-0290). Length band anchored on Worcester (202.4 m wl) and L/B on its 9.41
+  # (docs/research/e-1-1940s-hull-and-part-values.md section 10); band edges, formBp and the five coefficient fields are BALANCE TARGET: waterplane,
+  # sheer, fullness and LCB are copied from destroyer_form, and formBp is fitted so the reference closes on its sourced full-load displacement
+  # with the fitted plant mass, until a hull-weight fraction is sourced.
+  - id: light_cruiser_form
+    lengthMinMm: 190000
+    lengthMaxMm: 210000
+    lbMinX100: 900
+    lbMaxX100: 980
+    formBp: 10409
+    waterplaneCoeffBp: 7200
+    sheerBp: 11000
+    volumeFullnessBp: 5500
+    deckFullnessBp: 7000
+    lcbPermille: 500
+    zones: *a1
+  # Heavy cruiser hull (E-1 1940-1949, ADR-0290). Length band anchored on Des Moines (213.4 m wl) and L/B on its 9.28
+  # (docs/research/e-1-1940s-hull-and-part-values.md section 10); band edges, formBp and the five coefficient fields are BALANCE TARGET: waterplane,
+  # sheer, fullness and LCB are copied from destroyer_form, and formBp is fitted so the reference closes on its sourced full-load displacement
+  # with the fitted plant mass, until a hull-weight fraction is sourced.
+  - id: heavy_cruiser_form
+    lengthMinMm: 205000
+    lengthMaxMm: 225000
+    lbMinX100: 900
+    lbMaxX100: 980
+    formBp: 9743
+    waterplaneCoeffBp: 7200
+    sheerBp: 11000
+    volumeFullnessBp: 5500
+    deckFullnessBp: 7000
+    lcbPermille: 500
+    zones: *a1

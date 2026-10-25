@@ -25,6 +25,8 @@ navalProfiles:
           coast_defence_form,
           pre_dreadnought_form,
           destroyer_form,
+          light_cruiser_form,
+          heavy_cruiser_form,
           merchant_liner_form,
         ]
       domesticPlants: [compound_cylindrical, hp_steam_geared_turbine]
@@ -47,6 +49,7 @@ navalProfiles:
         - { fromMonth: "1880-01", value: 6000000 }
         - { fromMonth: "1885-01", value: 8000000 }
         - { fromMonth: "1890-01", value: 11000000 }
+        - { fromMonth: "1940-01", value: 25000000 }
       heavyGunProduction: DOMESTIC
       armourPlateProduction: DOMESTIC
       provenance:
