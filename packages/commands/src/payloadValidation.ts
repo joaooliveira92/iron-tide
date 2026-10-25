@@ -35,6 +35,7 @@ import {
   validateDissolveDivision,
   validateRelieveOfficer,
   validateRemoveShipFromDivision,
+  validateChangeDivisionDoctrine,
   validateReorderDivisionShips,
 } from "./divisionValidation.js";
 import type { BudgetProjectCommand, CommandBody, CommandEnvelope } from "./envelope.js";
@@ -81,6 +82,8 @@ export function validatePayloadRules(
     return validateChangeDivisionFlagship(envelope, snapshot);
   if (envelope.body.type === "ReorderDivisionShips")
     return validateReorderDivisionShips(envelope, snapshot);
+  if (envelope.body.type === "ChangeDivisionDoctrine")
+    return validateChangeDivisionDoctrine(envelope, snapshot);
   if (envelope.body.type === "AssignForeignStation")
     return validateStationAssignment(envelope, snapshot, "assign");
   if (envelope.body.type === "ClearForeignStation")

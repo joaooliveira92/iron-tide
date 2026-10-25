@@ -188,6 +188,12 @@ export const DivisionCommandBodySchema = Schema.Union([
     shipOrder: Schema.Array(nonEmptyString).check(Schema.isMinLength(1), Schema.isMaxLength(6)),
   }),
   Schema.Struct({
+    type: Schema.Literal("ChangeDivisionDoctrine"),
+    divisionId: nonEmptyString,
+    role: Schema.optional(nonEmptyString),
+    formation: Schema.optional(nonEmptyString),
+  }),
+  Schema.Struct({
     type: Schema.Literal("DissolveDivision"),
     divisionId: nonEmptyString,
   }),

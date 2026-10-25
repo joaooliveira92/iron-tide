@@ -245,13 +245,15 @@ function applyDivisionCommand(ctx: PhaseContext, body: CommandBody): boolean {
     body["type"] === "RemoveShipFromDivision" ||
     body["type"] === "DissolveDivision" ||
     body["type"] === "ChangeDivisionFlagship" ||
-    body["type"] === "ReorderDivisionShips"
+    body["type"] === "ReorderDivisionShips" ||
+    body["type"] === "ChangeDivisionDoctrine"
   ) {
     ctx.snapshot.current = applyDivisionCommandMonth(
       ctx.snapshot.current,
       body,
       ctx.campaignMonth,
       ctx.collector,
+      ctx.fleetManagement?.reorganisationPenalty,
     );
     return true;
   }

@@ -8,7 +8,9 @@ import {
   DIVISION_ROLES,
   isShipOperational,
   VACANT,
+  divisionSpeedAdvisory,
   type CampaignSnapshot,
+  type DivisionDoctrinePenalties,
 } from "@bluewave/campaign";
 
 export interface DivisionShipView {
@@ -29,6 +31,12 @@ export interface DivisionCommanderView {
   readonly skill: number;
 }
 
+export interface DivisionSpeedWarningView {
+  readonly slowestShipName: string;
+  readonly slowestSpeed: number;
+  readonly fastestSpeed: number;
+}
+
 export interface DivisionView {
   readonly divisionId: string;
   readonly role: string;
@@ -42,6 +50,7 @@ export interface DivisionView {
   readonly areaId: string;
   readonly areaName: string;
   readonly ships: readonly DivisionShipView[];
+  readonly speedWarning?: DivisionSpeedWarningView;
 }
 
 export interface DivisionPenalty {
@@ -62,6 +71,8 @@ export interface DivisionScreenView {
     readonly removeShip: DivisionPenalty;
     readonly changeFlagship: DivisionPenalty;
     readonly reorder: DivisionPenalty;
+    readonly changeRole: DivisionPenalty;
+    readonly changeFormation: DivisionPenalty;
   };
 }
 
@@ -75,6 +86,7 @@ const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 export function buildDivisionScreenView(
   snapshot: CampaignSnapshot,
   nationId: string,
+  doctrinePenalties?: DivisionDoctrinePenalties,
 ): DivisionScreenView | null {
   const nation = snapshot.nations.get(nationId);
   if (nation === undefined) return null;
@@ -93,6 +105,9 @@ export function buildDivisionScreenView(
       });
     }
   }
+  const allShipsById = new Map(
+    nation.fleets.flatMap((fleet) => fleet.ships).map((ship) => [ship.id, ship]),
+  );
   const nameOf = (id: string): string => shipsById.get(id)?.name ?? id;
 
   const officersById = new Map((nation.officers ?? []).map((officer) => [officer.id, officer]));
@@ -101,6 +116,7 @@ export function buildDivisionScreenView(
     .sort((a, b) => byId(a.divisionId, b.divisionId))
     .map((division) => {
       const officer = officersById.get(division.commanderOfficerId);
+      const advisory = divisionSpeedAdvisory(division, allShipsById);
       return {
         divisionId: division.divisionId,
         role: division.divisionRole,
@@ -123,6 +139,16 @@ export function buildDivisionScreenView(
         areaId: division.locationAreaId,
         areaName: areaName(division.locationAreaId),
         ships: division.shipOrder.map((shipId) => ({ shipId, name: nameOf(shipId) })),
+        ...(advisory === null
+          ? {}
+          : {
+              speedWarning: {
+                slowestShipName:
+                  allShipsById.get(advisory.slowestShipId)?.name ?? advisory.slowestShipId,
+                slowestSpeed: advisory.slowestSpeed,
+                fastestSpeed: advisory.fastestSpeed,
+              },
+            }),
       };
     });
 
@@ -151,6 +177,8 @@ export function buildDivisionScreenView(
       removeShip: cost(DIVISION_PENALTIES.removeNonFlagship),
       changeFlagship: cost(DIVISION_PENALTIES.flagshipChange),
       reorder: cost(DIVISION_PENALTIES.reorderWithoutFlagship),
+      changeRole: cost(doctrinePenalties?.roleChange ?? { experience: 0, cohesion: 0 }),
+      changeFormation: cost(doctrinePenalties?.formationChange ?? { experience: 0, cohesion: 0 }),
     },
   };
 }

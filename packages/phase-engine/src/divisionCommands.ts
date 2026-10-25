@@ -6,6 +6,8 @@ import type {
 } from "@bluewave/campaign";
 import {
   applyDivisionCommand,
+  applyDivisionDoctrineChange,
+  type DivisionDoctrinePenalties,
   assertDivisionInvariants,
   DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE,
   DIVISION_STATE_INVARIANT_FAILED,
@@ -17,6 +19,7 @@ import {
 import { classifyShip } from "@bluewave/combat/tactical";
 import type {
   AddShipToDivisionCommand,
+  ChangeDivisionDoctrineCommand,
   ChangeDivisionFlagshipCommand,
   CommandBody,
   CreateDivisionCommand,
@@ -64,7 +67,44 @@ export function applyDivisionCommandMonth(
   body: CommandBody,
   campaignMonth: string,
   collector: DiagnosticCollector,
+  doctrinePenalties?: DivisionDoctrinePenalties,
 ): CampaignSnapshot {
+  if (body["type"] === "ChangeDivisionDoctrine") {
+    const cb = body as ChangeDivisionDoctrineCommand;
+    const nation = snapshot["nations"].get(cb["nationId"]);
+    const idx = nation?.["divisions"].findIndex((d) => d["divisionId"] === cb["divisionId"]) ?? -1;
+    if (nation === undefined || idx === -1) {
+      collector.addError(
+        DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE,
+        `Division ${cb["divisionId"]} not found`,
+        { stage: "command-collection" },
+      );
+      return snapshot;
+    }
+    const result = applyDivisionDoctrineChange(
+      nation["divisions"][idx]!,
+      {
+        ...(cb["divisionRole"] === undefined
+          ? {}
+          : { divisionRole: cb["divisionRole"] as PermanentDivision["divisionRole"] }),
+        ...(cb["preferredFormation"] === undefined
+          ? {}
+          : {
+              preferredFormation: cb[
+                "preferredFormation"
+              ] as PermanentDivision["preferredFormation"],
+            }),
+      },
+      campaignMonth,
+      doctrinePenalties,
+    );
+    const divisions = [...nation["divisions"]];
+    divisions[idx] = result.division;
+    const nations = new Map(snapshot["nations"]);
+    nations.set(cb["nationId"], { ...nation, divisions });
+    return { ...snapshot, nations };
+  }
+
   if (body["type"] === "CreateDivision") {
     const cb = body as CreateDivisionCommand;
     const nation = snapshot["nations"].get(cb["nationId"]);

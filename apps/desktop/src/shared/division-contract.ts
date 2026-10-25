@@ -33,6 +33,12 @@ export type DivisionCommandBody =
       readonly divisionId: string;
       readonly shipOrder: readonly string[];
     }
+  | {
+      readonly type: "ChangeDivisionDoctrine";
+      readonly divisionId: string;
+      readonly role?: string;
+      readonly formation?: string;
+    }
   | { readonly type: "DissolveDivision"; readonly divisionId: string };
 
 export type DivisionCommandType = DivisionCommandBody["type"];

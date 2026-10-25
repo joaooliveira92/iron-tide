@@ -25,6 +25,7 @@ export type {
   OrderForeignConstructionCommand,
   RemoveShipFromDivisionCommand,
   ReorderDivisionShipsCommand,
+  ChangeDivisionDoctrineCommand,
   AssignForeignStationCommand,
   SetShipReadinessCommand,
   ClearForeignStationCommand,
