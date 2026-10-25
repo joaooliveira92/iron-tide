@@ -5,7 +5,7 @@ import { join } from "node:path";
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
-import { canonicalSerialize } from "@bluewave/deterministic";
+import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore, restampState } from "@bluewave/persistence";
 import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
@@ -18,13 +18,20 @@ import {
   ReplayFileError,
   decodeReplayFile,
   type LedgerName,
+  type ReplayCommandEnvelope,
   type ReplayFile,
 } from "./format.js";
+
+export interface ScenarioCommand {
+  readonly month: number;
+  readonly body: ReplayCommandEnvelope["body"];
+}
 
 export interface ReplayScenario {
   readonly id: string;
   readonly seed: string;
   readonly months: number;
+  readonly commands?: readonly ScenarioCommand[];
 }
 
 export interface ReplayDivergence {
@@ -144,13 +151,38 @@ export function advance(
 export interface ExecutedMonth {
   readonly turnNumber: number;
   readonly result: MonthResult;
+  readonly commands: readonly ReplayCommandEnvelope[];
+}
+
+export function scenarioEnvelopes(
+  scenario: ReplayScenario,
+  month: number,
+  snapshot: CampaignSnapshot,
+): ReplayCommandEnvelope[] {
+  const snapshotHash = sha256Hex(canonicalSerialize(snapshot));
+  return (scenario.commands ?? [])
+    .filter((command) => command.month === month)
+    .map((command, index) => {
+      const commandId = `${scenario.id}-m${String(month)}-${String(index)}`;
+      return {
+        commandId,
+        version: "0.1.0",
+        expectedSnapshotHash: snapshotHash,
+        idempotencyKey: `ik-${commandId}`,
+        timestamp: "replay-corpus",
+        body: command.body,
+      };
+    });
 }
 
 export function* executeScenario(scenario: ReplayScenario): Generator<ExecutedMonth> {
   let snapshot = production().state.snapshot;
   for (let index = 0; index < scenario.months; index++) {
-    const step = advance(snapshot, scenario.seed);
-    yield { turnNumber: Number(snapshot.turnNumber), result: step.result };
+    const commands = scenarioEnvelopes(scenario, index + 1, snapshot);
+    const step = advance(snapshot, scenario.seed, {
+      commands: () => commands as CommandEnvelope<CommandBody>[],
+    });
+    yield { turnNumber: Number(snapshot.turnNumber), result: step.result, commands };
     snapshot = step.next;
   }
 }
@@ -159,7 +191,7 @@ export function recordReplay(scenario: ReplayScenario): string {
   const { state, contentHash } = production();
   const months: ReplayFile["months"][number][] = [];
   for (const executed of executeScenario(scenario)) {
-    months.push(monthCheckpoint(executed.turnNumber, executed.result));
+    months.push(monthCheckpoint(executed.turnNumber, executed.result, executed.commands));
   }
   const file: ReplayFile = {
     formatVersion: REPLAY_FORMAT_VERSION,
@@ -229,12 +261,12 @@ export function verifyReplay(
   }
   for (const [index, recorded] of file.months.entries()) {
     const month = index + 1;
-    const step = advance(
-      snapshot,
-      file.seed,
-      options.perturb?.month === month ? options.perturb : undefined,
-    );
-    const actual = monthCheckpoint(Number(snapshot.turnNumber), step.result);
+    const perturb = options.perturb?.month === month ? options.perturb : undefined;
+    const step = advance(snapshot, file.seed, {
+      commands: () => recorded.commands as CommandEnvelope<CommandBody>[],
+      ...perturb,
+    });
+    const actual = monthCheckpoint(Number(snapshot.turnNumber), step.result, recorded.commands);
     for (const ledger of LEDGER_ORDER) {
       const difference = firstLedgerDifference(
         recorded.ledgers[ledger].entryHashes,

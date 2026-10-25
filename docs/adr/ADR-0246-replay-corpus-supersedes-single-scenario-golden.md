@@ -104,3 +104,27 @@ blind spot, and the duplicate copy is a drift risk.
 - **Embed the compiled bundle in each replay.** Rejected: it duplicates content and bloats the repository;
   the bundle hash plus the committed pack identifies it.
 - **Reuse the subset snapshot hash.** Rejected for the corpus (Finding C).
+
+## Amendment: format version 2 records command envelopes (ticket #248)
+
+Version 1 wrote an empty `commands` array and executed no commands, so the corpus covered unattended months
+only and its files could not be handed to `ReplayVerifier`. Decision 3 is now met by format version 2.
+
+- Each month carries the ordered command envelopes executed in it, refused ones included, and verification
+  re-executes the recorded envelopes through the real command lifecycle. A dropped or altered envelope
+  diverges in the command ledger or at the snapshot of its month.
+- Envelopes are decoded with the same strict rules as the rest of the file: excess properties are rejected and
+  the body is a closed union (`SetBudgetAllocation`, `SetResearchPriority`, `OrderConstruction`,
+  `SetShipReadiness`, `AssignForeignStation`, `ClearForeignStation`). A new command kind is added to the union
+  deliberately; an unknown body is a decode failure, not a skipped command.
+- A scenario carries a deterministic `commands` plan (month plus body). The recorder builds each envelope
+  against that month's starting snapshot, so a replay is self-contained. Live capture from a desktop session
+  stays out of scope.
+- The decoder reads versions 1 and 2; a version 1 file with commands is refused. The recorder writes version 2.
+  Re-recording a version 1 replay moves only `formatVersion`, so every checkpoint hash is unchanged and no
+  approval is needed. Fuzz digests are unchanged because fuzz checkpoints still hash an empty `commands` array.
+- A recorded month can be fed to `ReplayVerifier` by replaying the earlier months' envelopes to rebuild the
+  month's starting snapshot, then passing that snapshot, the month's envelopes and the month seed.
+- `production-1880-6m-fleet-commands` is the first replay that issues commands. It covers
+  `command_collection` and the readiness and station commands, including two refusals.
+
