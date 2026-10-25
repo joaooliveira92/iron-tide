@@ -1,0 +1,2589 @@
+{
+  "participation": {
+    "active": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "inactive": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "conditional active": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "active with continuation (not checked here)": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "active without instance": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "ACTIVE requires scenarioNationInstanceId",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "inactive with instance": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "INACTIVE must have scenarioNationInstanceId NONE",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "conditional without continuation": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_ALTERNATE_CONTINUITY_DEFINITION",
+          "message": "CONDITIONAL_ACTIVE requires continuationDefinitionId",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "invalid continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Invalid continuityModeId bad",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "invalid participationStatus": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Invalid participationStatus",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "both enums invalid": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Invalid continuityModeId bad",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "invalid enum before later missing field": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Missing contentHash",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "earlier blank before later missing": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "scenarioId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "excess key": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "omitted scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Missing scenarioId",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "null scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "scenarioId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "numeric scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "scenarioId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "empty scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "scenarioId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "blank scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "scenarioId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "omitted playableSlotId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Missing playableSlotId",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "null playableSlotId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "playableSlotId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "numeric playableSlotId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "playableSlotId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "empty playableSlotId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "playableSlotId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "blank playableSlotId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "playableSlotId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "omitted continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Missing continuityModeId",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "null continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "continuityModeId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "numeric continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "continuityModeId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "empty continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "continuityModeId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "blank continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "continuityModeId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "omitted participationStatus": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Missing participationStatus",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "null participationStatus": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "participationStatus must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "numeric participationStatus": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "participationStatus must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "empty participationStatus": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "participationStatus must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "blank participationStatus": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "participationStatus must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "omitted scenarioNationInstanceId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Missing scenarioNationInstanceId",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "null scenarioNationInstanceId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "scenarioNationInstanceId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "numeric scenarioNationInstanceId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "scenarioNationInstanceId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "empty scenarioNationInstanceId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "scenarioNationInstanceId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "blank scenarioNationInstanceId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "scenarioNationInstanceId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "omitted continuationDefinitionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Missing continuationDefinitionId",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "null continuationDefinitionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "continuationDefinitionId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "numeric continuationDefinitionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "continuationDefinitionId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "empty continuationDefinitionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "continuationDefinitionId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "blank continuationDefinitionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "continuationDefinitionId must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "omitted reasonCode": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Missing reasonCode",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "null reasonCode": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "reasonCode must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "numeric reasonCode": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "reasonCode must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "empty reasonCode": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "reasonCode must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "blank reasonCode": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "reasonCode must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "omitted contentHash": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Missing contentHash",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "null contentHash": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "contentHash must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "numeric contentHash": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "contentHash must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "empty contentHash": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "contentHash must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "blank contentHash": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "contentHash must be non-empty string",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "null input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "record must be object",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "undefined input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "record must be object",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "number input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "record must be object",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "string input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "record must be object",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "boolean input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "record must be object",
+          "stage": "continuity"
+        }
+      ]
+    },
+    "array input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_SCENARIO_PARTICIPATION_RECORD",
+          "message": "Missing scenarioId",
+          "stage": "continuity"
+        }
+      ]
+    }
+  },
+  "fleetSetting": {
+    "canonical small": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "canonical standard": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "canonical large": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "canonical very_large": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "other ruleset version": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "unknown settingId (not checked here)": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "excess key": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "rounding CEIL": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "roundingMode must be FLOOR",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "rounding missing and multiplier bad": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Missing fleet-size field roundingMode for standard",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "multiplier bad and rounding bad": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "aiForceTargetMultiplierBp=1 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "first of several bad multipliers": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "sustainableFleetSizeMultiplierBp=1 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "two missing fields": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Missing fleet-size field roundingMode for standard",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "omitted settingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Missing fleet-size field settingId for undefined",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "null settingId": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "omitted navalAppropriationMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Missing fleet-size field navalAppropriationMultiplierBp for standard",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "null navalAppropriationMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "navalAppropriationMultiplierBp=null out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "omitted sustainableFleetSizeMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Missing fleet-size field sustainableFleetSizeMultiplierBp for standard",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "null sustainableFleetSizeMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "sustainableFleetSizeMultiplierBp=null out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "omitted aiForceTargetMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Missing fleet-size field aiForceTargetMultiplierBp for standard",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "null aiForceTargetMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "aiForceTargetMultiplierBp=null out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "omitted generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Missing fleet-size field generatedLegacyFleetScaleMultiplierBp for standard",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "null generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "generatedLegacyFleetScaleMultiplierBp=null out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "omitted roundingMode": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Missing fleet-size field roundingMode for standard",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "null roundingMode": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "roundingMode must be FLOOR",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "omitted rulesetVersion": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Missing fleet-size field rulesetVersion for standard",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "null rulesetVersion": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad below navalAppropriationMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "navalAppropriationMultiplierBp=4999 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad above navalAppropriationMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "navalAppropriationMultiplierBp=20001 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad lower edge navalAppropriationMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad upper edge navalAppropriationMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad fractional navalAppropriationMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad NaN navalAppropriationMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad Infinity navalAppropriationMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "navalAppropriationMultiplierBp=Infinity out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad string navalAppropriationMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "navalAppropriationMultiplierBp=10000 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad null navalAppropriationMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "navalAppropriationMultiplierBp=null out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad undefined navalAppropriationMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "navalAppropriationMultiplierBp=undefined out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad below sustainableFleetSizeMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "sustainableFleetSizeMultiplierBp=4999 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad above sustainableFleetSizeMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "sustainableFleetSizeMultiplierBp=20001 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad lower edge sustainableFleetSizeMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad upper edge sustainableFleetSizeMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad fractional sustainableFleetSizeMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad NaN sustainableFleetSizeMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad Infinity sustainableFleetSizeMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "sustainableFleetSizeMultiplierBp=Infinity out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad string sustainableFleetSizeMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "sustainableFleetSizeMultiplierBp=10000 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad null sustainableFleetSizeMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "sustainableFleetSizeMultiplierBp=null out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad undefined sustainableFleetSizeMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "sustainableFleetSizeMultiplierBp=undefined out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad below aiForceTargetMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "aiForceTargetMultiplierBp=4999 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad above aiForceTargetMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "aiForceTargetMultiplierBp=20001 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad lower edge aiForceTargetMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad upper edge aiForceTargetMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad fractional aiForceTargetMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad NaN aiForceTargetMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad Infinity aiForceTargetMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "aiForceTargetMultiplierBp=Infinity out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad string aiForceTargetMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "aiForceTargetMultiplierBp=10000 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad null aiForceTargetMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "aiForceTargetMultiplierBp=null out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad undefined aiForceTargetMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "aiForceTargetMultiplierBp=undefined out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad below generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "generatedLegacyFleetScaleMultiplierBp=4999 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad above generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "generatedLegacyFleetScaleMultiplierBp=20001 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad lower edge generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad upper edge generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad fractional generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad NaN generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad Infinity generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "generatedLegacyFleetScaleMultiplierBp=Infinity out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad string generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "generatedLegacyFleetScaleMultiplierBp=10000 out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad null generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "generatedLegacyFleetScaleMultiplierBp=null out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "bad undefined generatedLegacyFleetScaleMultiplierBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "generatedLegacyFleetScaleMultiplierBp=undefined out of 5000..20000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "numeric roundingMode": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "roundingMode must be FLOOR",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "numeric rulesetVersion": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "numeric settingId": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "null input": {
+      "threw": "TypeError",
+      "diagnostics": []
+    },
+    "undefined input": {
+      "threw": "TypeError",
+      "diagnostics": []
+    },
+    "number input": {
+      "threw": "TypeError",
+      "diagnostics": []
+    },
+    "string input": {
+      "threw": "TypeError",
+      "diagnostics": []
+    },
+    "boolean input": {
+      "threw": "TypeError",
+      "diagnostics": []
+    },
+    "array input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Missing fleet-size field settingId for undefined",
+          "stage": "fleet-size"
+        }
+      ]
+    }
+  },
+  "fleetList": {
+    "canonical": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "canonical reordered": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "null input": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "fleet size settings must be array",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "undefined input": {
+      "accepted": false,
+      "returnsInput": true,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "fleet size settings must be array",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "number input": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "fleet size settings must be array",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "string input": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "fleet size settings must be array",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "boolean input": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "fleet size settings must be array",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "empty": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Ruleset must define exactly 4 fleet-size settings, got 0",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "three settings": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Ruleset must define exactly 4 fleet-size settings, got 3",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "five settings": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Ruleset must define exactly 4 fleet-size settings, got 5",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "duplicate id with four": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Ruleset missing canonical fleet-size setting very_large",
+          "stage": "fleet-size"
+        },
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "Canonical small must be 7500",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "unknown id with four": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Ruleset missing canonical fleet-size setting very_large",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "canonical value mismatch version 1.0": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "Canonical standard must be 10000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "canonical value mismatch other version": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "mismatch on each multiplier": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "Canonical large must be 12500",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "mismatch on unknown id is ignored": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Ruleset missing canonical fleet-size setting very_large",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "invalid entry and wrong count": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "roundingMode must be FLOOR",
+          "stage": "fleet-size"
+        },
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Ruleset must define exactly 4 fleet-size settings, got 5",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "invalid entry among four": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "roundingMode must be FLOOR",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "two invalid entries": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "roundingMode must be FLOOR",
+          "stage": "fleet-size"
+        },
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "aiForceTargetMultiplierBp=1 out of 5000..20000",
+          "stage": "fleet-size"
+        },
+        {
+          "code": "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",
+          "message": "Canonical standard must be 10000",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "missing field entry among four": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "MISSING_FLEET_SIZE_MULTIPLIER",
+          "message": "Missing fleet-size field rulesetVersion for large",
+          "stage": "fleet-size"
+        }
+      ]
+    },
+    "excess key in an entry": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "null entry": {
+      "threw": "TypeError",
+      "diagnostics": []
+    },
+    "number entry": {
+      "threw": "TypeError",
+      "diagnostics": []
+    }
+  },
+  "research": {
+    "canonical": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "canonical reordered": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "null input": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "research speed must be array",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "undefined input": {
+      "accepted": false,
+      "returnsInput": true,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "research speed must be array",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "number input": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "research speed must be array",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "string input": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "research speed must be array",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "boolean input": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "research speed must be array",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "empty": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Ruleset must define exactly 4 research-speed settings, got 0",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "three settings": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Ruleset must define exactly 4 research-speed settings, got 3",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "five settings": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Ruleset must define exactly 4 research-speed settings, got 5",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "duplicate id with four": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Ruleset missing canonical research-speed setting very_fast",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "unknown id with four": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Invalid research setting warp",
+          "stage": "research-speed"
+        },
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Ruleset missing canonical research-speed setting very_fast",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "below multiplierBp": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Research multiplier 4999 out of 5000..20000",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "above multiplierBp": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Research multiplier 20001 out of 5000..20000",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "lower edge multiplierBp": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "upper edge multiplierBp": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "fractional multiplierBp": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "NaN multiplierBp": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "Infinity multiplierBp": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Research multiplier Infinity out of 5000..20000",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "string multiplierBp": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Research multiplier 10000 out of 5000..20000",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "null multiplierBp": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Research multiplier null out of 5000..20000",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "undefined multiplierBp": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Research multiplier undefined out of 5000..20000",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "multiplier and id both bad": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Research multiplier 1 out of 5000..20000",
+          "stage": "research-speed"
+        },
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Invalid research setting warp",
+          "stage": "research-speed"
+        },
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Ruleset missing canonical research-speed setting slow",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "two entries bad": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Research multiplier 1 out of 5000..20000",
+          "stage": "research-speed"
+        },
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Invalid research setting warp",
+          "stage": "research-speed"
+        },
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Ruleset missing canonical research-speed setting fast",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "numeric settingId": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Invalid research setting 7",
+          "stage": "research-speed"
+        },
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Ruleset missing canonical research-speed setting slow",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "missing settingId": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Invalid research setting undefined",
+          "stage": "research-speed"
+        },
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Ruleset missing canonical research-speed setting slow",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "missing multiplierBp": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Research multiplier undefined out of 5000..20000",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "missing rulesetVersion": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "numeric rulesetVersion": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "excess key in an entry": {
+      "accepted": true,
+      "returnsInput": true,
+      "diagnostics": []
+    },
+    "null entry": {
+      "threw": "TypeError",
+      "diagnostics": []
+    },
+    "number entry": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Research multiplier undefined out of 5000..20000",
+          "stage": "research-speed"
+        },
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Invalid research setting undefined",
+          "stage": "research-speed"
+        },
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Ruleset missing canonical research-speed setting very_fast",
+          "stage": "research-speed"
+        }
+      ]
+    },
+    "array entry": {
+      "accepted": false,
+      "returnsInput": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Research multiplier undefined out of 5000..20000",
+          "stage": "research-speed"
+        },
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Invalid research setting undefined",
+          "stage": "research-speed"
+        },
+        {
+          "code": "INVALID_RESEARCH_SPEED_MULTIPLIER",
+          "message": "Ruleset missing canonical research-speed setting very_fast",
+          "stage": "research-speed"
+        }
+      ]
+    }
+  },
+  "profile": {
+    "canonical none": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "canonical some": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "canonical considerable": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "excess key": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "omitted settingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field settingId",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null settingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Invalid settingId null",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "omitted earliestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field earliestDateShiftMonths",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null earliestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid null..24 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "omitted latestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field latestDateShiftMonths",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null latestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid -24..null (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "omitted effectivenessVariationMinBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field effectivenessVariationMinBp",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null effectivenessVariationMinBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Effectiveness bounds null..10500 outside 8000..12000 or min>max (integers)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "omitted effectivenessVariationMaxBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field effectivenessVariationMaxBp",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null effectivenessVariationMaxBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Effectiveness bounds 9500..null outside 8000..12000 or min>max (integers)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "omitted dateDistributionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field dateDistributionId",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null dateDistributionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Invalid dateDistributionId null",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "omitted effectivenessDistributionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field effectivenessDistributionId",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null effectivenessDistributionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Invalid effectivenessDistributionId null",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "omitted technologyEligibilityPredicateId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field technologyEligibilityPredicateId",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null technologyEligibilityPredicateId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "technologyEligibilityPredicateId must be non-empty string",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "omitted variationFormulaVersion": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field variationFormulaVersion",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null variationFormulaVersion": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "variationFormulaVersion must be non-empty string",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "omitted streamFamily": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field streamFamily",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null streamFamily": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "streamFamily must be setup/technology_variation",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "several omitted fields": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field settingId",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field streamFamily",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "unknown settingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Invalid settingId extreme",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad fractional earliestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid 1.5..24 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad string earliestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid 3..24 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad null earliestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid null..24 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad NaN earliestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid NaN..24 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad Infinity earliestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid Infinity..24 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad above 72 earliestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid 73..24 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad below -72 earliestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid -73..24 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad fractional latestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid -24..1.5 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad string latestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid -24..3 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad null latestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid -24..null (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad NaN latestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid -24..NaN (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad Infinity latestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid -24..Infinity (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad above 72 latestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid -24..73 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad below -72 latestDateShiftMonths": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid -24..-73 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "date shift min above max": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid 10..5 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "date shift at bounds": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "bad fractional effectivenessVariationMinBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Effectiveness bounds 9500.5..10500 outside 8000..12000 or min>max (integers)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad string effectivenessVariationMinBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Effectiveness bounds 9500..10500 outside 8000..12000 or min>max (integers)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad fractional effectivenessVariationMaxBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Effectiveness bounds 9500..9500.5 outside 8000..12000 or min>max (integers)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "bad string effectivenessVariationMaxBp": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Effectiveness bounds 9500..9500 outside 8000..12000 or min>max (integers)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "effectiveness min below 8000": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Effectiveness bounds 7999..10500 outside 8000..12000 or min>max (integers)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "effectiveness max above 12000": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Effectiveness bounds 9500..12001 outside 8000..12000 or min>max (integers)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "effectiveness min above max": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Effectiveness bounds 10500..10000 outside 8000..12000 or min>max (integers)",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "effectiveness at bounds": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "invalid dateDistributionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Invalid dateDistributionId bogus",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "invalid effectivenessDistributionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Invalid effectivenessDistributionId bogus",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "both distribution ids invalid": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Invalid dateDistributionId bogus",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Invalid effectivenessDistributionId bogus",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "wrong streamFamily": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "streamFamily must be setup/technology_variation",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "blank predicate id": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "technologyEligibilityPredicateId must be non-empty string",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "numeric predicate id": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "technologyEligibilityPredicateId must be non-empty string",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "blank formula version": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "variationFormulaVersion must be non-empty string",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "numeric formula version": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "variationFormulaVersion must be non-empty string",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "none with triangular date distribution": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "none must use constant_zero_v1 / constant_10000_v1",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "none with triangular effectiveness distribution": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "none must use constant_zero_v1 / constant_10000_v1",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "some with constant distributions": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "every group broken at once": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Date shift bounds invalid 99..0 (integers within -72..72, min<=max)",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Effectiveness bounds 1..10000 outside 8000..12000 or min>max (integers)",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Invalid dateDistributionId bogus",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "streamFamily must be setup/technology_variation",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "technologyEligibilityPredicateId must be non-empty string",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "none must use constant_zero_v1 / constant_10000_v1",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "profile must be object",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "undefined input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "profile must be object",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "number input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "profile must be object",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "string input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "profile must be object",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "boolean input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "profile must be object",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "array input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field settingId",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field earliestDateShiftMonths",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field latestDateShiftMonths",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field effectivenessVariationMinBp",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field effectivenessVariationMaxBp",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field dateDistributionId",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field effectivenessDistributionId",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field technologyEligibilityPredicateId",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field variationFormulaVersion",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Missing field streamFamily",
+          "stage": "technology-variation"
+        }
+      ]
+    }
+  },
+  "profileList": {
+    "canonical": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "canonical reordered": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "null input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "profiles must be an array",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "undefined input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "profiles must be an array",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "number input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "profiles must be an array",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "string input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "profiles must be an array",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "boolean input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "profiles must be an array",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "empty": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Ruleset must contain exactly 3 profiles, got 0",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "two profiles": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Ruleset must contain exactly 3 profiles, got 2",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "four profiles": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Ruleset must contain exactly 3 profiles, got 4",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "duplicate id with three": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Ruleset missing canonical profile considerable",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "unknown id with three": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Ruleset missing canonical profile considerable",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "invalid profile among three": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "streamFamily must be setup/technology_variation",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "two invalid profiles": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "streamFamily must be setup/technology_variation",
+          "stage": "technology-variation"
+        },
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "streamFamily must be setup/technology_variation",
+          "stage": "technology-variation"
+        }
+      ]
+    },
+    "null entry": {
+      "threw": "TypeError",
+      "diagnostics": []
+    },
+    "number entry": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+          "message": "Ruleset missing canonical profile considerable",
+          "stage": "technology-variation"
+        }
+      ]
+    }
+  }
+}
