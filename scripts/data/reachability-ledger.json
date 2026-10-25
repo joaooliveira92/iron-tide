@@ -416,7 +416,7 @@
       "player_verb": "Command type definitions for budget, halt, resume and acceleration",
       "status": "internal",
       "engine_package": "phase-engine",
-      "engine_modules": ["commandLifecycle"],
+      "engine_modules": ["commandDefinitions"],
       "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
