@@ -1,5 +1,7 @@
 import type { AbsentShipView, BattleHistoryEntry } from "@bluewave/campaign-engine";
 
+import { translate } from "../../lib/strings.js";
+
 export interface BattleHistorySummary {
   readonly played: number;
   readonly won: number;
@@ -41,14 +43,8 @@ export function shipsLabel(count: number): string {
   return count === 1 ? "1 ship" : `${count} ships`;
 }
 
-export const ABSENCE_REASON_LABELS: Readonly<Record<AbsentShipView["reasons"][number], string>> = {
-  UnderConstruction: "still under construction",
-  Unavailable: "out of action in a yard project",
-  WorkingUp: "still working up",
-  InRepair: "under repair",
-  InReserve: "in reserve",
-  Mothballed: "mothballed",
-  InBattle: "committed to another battle",
-  Assigned: "on another assignment",
-  AssignmentForbidsUse: "on an assignment that bars battle",
-};
+export function absenceText(reasons: AbsentShipView["reasons"]): string {
+  return translate("battle.history.absent", {
+    reasons: reasons.map((reason) => translate(`fleet.absence.${reason}`)).join(", "),
+  });
+}

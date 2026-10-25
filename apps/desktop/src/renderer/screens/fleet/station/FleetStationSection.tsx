@@ -50,6 +50,11 @@ function StatusCell({ row }: { readonly row: StationRow }) {
       {row.overBase ? (
         <span className="text-xs font-medium text-foreground">{row.overBaseLabel}</span>
       ) : null}
+      {row.conditions.map((condition) => (
+        <span key={condition.code} className="text-xs font-medium text-foreground">
+          {condition.label}
+        </span>
+      ))}
     </span>
   );
 }

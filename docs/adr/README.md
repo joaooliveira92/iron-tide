@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0296).
+highest existing number + 1 (the next number is ADR-0297).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -142,6 +142,7 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0291 | [ADR-0291-e1-1950s-destroyer-values.md](ADR-0291-e1-1950s-destroyer-values.md) | E-1 1950-1959 destroyer values and the limit of 1950-1970 ship content | accepted | — |
 | 0292 | [ADR-0292-battle-experience-write-back.md](ADR-0292-battle-experience-write-back.md) | Battle aftermath asks the division module for experience through a typed request | accepted | — |
 | 0293 | [ADR-0293-fleet-management-go-live.md](ADR-0293-fleet-management-go-live.md) | Fleet management goes live in the production pack and in every re-execution path | accepted | — |
+| 0296 | [ADR-0296-derived-ship-conditions.md](ADR-0296-derived-ship-conditions.md) | Ship conditions are derived predicates the fleet view carries and the renderer only labels | accepted | — |
 
 ## Foreign stations & presence
 

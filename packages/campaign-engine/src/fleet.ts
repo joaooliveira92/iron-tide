@@ -1,4 +1,9 @@
-import type { CampaignSnapshot, PresenceMeasurementRules } from "@bluewave/campaign";
+import {
+  deriveShipConditions,
+  type CampaignSnapshot,
+  type PresenceMeasurementRules,
+  type ShipCondition,
+} from "@bluewave/campaign";
 import { derivePlayerFacts } from "./player-facts.js";
 import {
   buildPresenceReadout,
@@ -6,6 +11,8 @@ import {
   type PlayerProjectionPresence,
 } from "./projection.js";
 import { compareCodePoints } from "@bluewave/deterministic";
+
+export type { ShipCondition };
 
 export type MovementCommandStatus =
   | "submitted"
@@ -30,6 +37,7 @@ export interface FleetShipView {
   readonly status: string;
   readonly readiness: string;
   readonly crewQuality: number;
+  readonly conditions?: readonly ShipCondition[];
   readonly stationAssignment?: "FOREIGN_STATION" | "EXERCISE";
   readonly stationCode?: "FS" | "EX";
   readonly colonialServiceFitted?: true;
@@ -48,6 +56,11 @@ const READINESS_STATUS_LABEL: Readonly<Record<string, string>> = {
   WORKING_UP: "working_up",
   REPAIR: "repair",
 };
+
+function conditionsOf(ship: Parameters<typeof deriveShipConditions>[0]) {
+  const conditions = deriveShipConditions(ship);
+  return conditions.length === 0 ? {} : { conditions };
+}
 
 export interface FleetDivisionView {
   readonly divisionId: string;
@@ -121,6 +134,7 @@ export function buildFleetScreenView(
       status: READINESS_STATUS_LABEL[ship.readiness] ?? "active",
       readiness: ship.readiness,
       crewQuality: Number(ship.crewQuality),
+      ...conditionsOf(ship),
       ...(ship.stationAssignment === undefined
         ? {}
         : {
