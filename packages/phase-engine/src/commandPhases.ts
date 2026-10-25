@@ -53,7 +53,7 @@ import {
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { applyReviseProject } from "./reviseProject.js";
 import { applyStartRebuild } from "./startRebuild.js";
-import { applyStationAssignmentCommand } from "./stationAssignment.js";
+import { applyShipReadinessCommand, applyStationAssignmentCommand } from "./stationAssignment.js";
 import { applyCancelConstructionProject } from "./cancelConstructionProject.js";
 import { constructionProjectCancelledEvent } from "./events.js";
 
@@ -81,6 +81,7 @@ function applyPlayerCommand(ctx: PhaseContext, body: CommandBody, commandId: str
   if (applyDiplomacyCommand(ctx, body)) return;
   if (applyDivisionCommand(ctx, body)) return;
   if (applyStationAssignmentCommand(ctx, body)) return;
+  if (applyShipReadinessCommand(ctx, body)) return;
   applyConstructionCommand(ctx, body, commandId);
 }
 

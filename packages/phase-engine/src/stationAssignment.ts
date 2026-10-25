@@ -1,8 +1,10 @@
 import type { CampaignSnapshot, NationState, Ship, ShipReadinessState } from "@bluewave/campaign";
 import {
+  READINESS_SET_BY_COMMAND_REASON,
   STATION_ASSIGNED_REASON,
   STATION_CLEARED_BY_COMMAND_REASON,
   STATION_CLEARED_BY_READINESS_REASON,
+  readinessCommandProblems,
   setShipReadiness,
   stationAssignmentProblems,
   withStationAssignment,
@@ -11,6 +13,7 @@ import type {
   AssignForeignStationCommand,
   ClearForeignStationCommand,
   CommandBody,
+  SetShipReadinessCommand,
 } from "@bluewave/commands";
 import type { SafeInt } from "@bluewave/contracts";
 import type { DomainEventEnvelope } from "@bluewave/events";
@@ -128,6 +131,50 @@ export function applyStationAssignmentCommand(ctx: PhaseContext, body: CommandBo
         ctx.nextSeq(),
         ctx.campaignMonth,
       ),
+    );
+  }
+  return true;
+}
+
+export function applyShipReadinessCommand(ctx: PhaseContext, body: CommandBody): boolean {
+  if (body["type"] !== "SetShipReadiness") return false;
+  const command = body as SetShipReadinessCommand;
+  const nation = ctx.snapshot.current["nations"].get(command["nationId"]);
+  if (nation === undefined) {
+    ctx.collector.addError("NATION_NOT_FOUND", `Nation ${command["nationId"]} not found`, {
+      stage: "command-collection",
+    });
+    return true;
+  }
+  const problems = readinessCommandProblems(
+    nation,
+    command["nationId"],
+    command["shipIds"],
+    command["readiness"],
+  );
+  if (problems.length > 0) {
+    ctx.collector.addError(
+      "SHIP_READINESS_REJECTED",
+      `Readiness change no longer applies: ${problems
+        .map((p) => `${p.shipId || "<batch>"}=${p.reason}`)
+        .join(", ")}`,
+      { stage: "command-collection" },
+    );
+    return true;
+  }
+  const sink: StationEventSink = {
+    campaignMonth: ctx.campaignMonth,
+    nextSeq: () => ctx.nextSeq(),
+    append: (event) => ctx.eventLedger.append(event),
+  };
+  for (const shipId of [...command["shipIds"]].sort()) {
+    ctx.snapshot.current = transitionShipReadiness(
+      ctx.snapshot.current,
+      command["nationId"],
+      shipId,
+      command["readiness"],
+      READINESS_SET_BY_COMMAND_REASON,
+      sink,
     );
   }
   return true;

@@ -92,6 +92,27 @@ export function explainStationRejection(
   diagnostics: readonly string[],
   rows: readonly StationRow[],
 ): string[] {
+  return explainRejection(
+    `fleet.station.rejected.${intent}`,
+    "fleet.station.reason",
+    diagnostics,
+    rows,
+  );
+}
+
+export function explainReadinessRejection(
+  diagnostics: readonly string[],
+  rows: readonly StationRow[],
+): string[] {
+  return explainRejection("fleet.readiness.rejected", "fleet.readiness.reason", diagnostics, rows);
+}
+
+function explainRejection(
+  headerKey: string,
+  reasonPrefix: string,
+  diagnostics: readonly string[],
+  rows: readonly StationRow[],
+): string[] {
   const names = new Map(rows.map((row) => [row.shipId, row.name]));
   const lines: string[] = [];
   for (const diagnostic of diagnostics) {
@@ -101,18 +122,18 @@ export function explainStationRejection(
     const pairs = detail.split(", ").map((part) => part.split("="));
     if (pairs.every((pair) => pair.length === 2 && pair[0] !== "" && /^[A-Z_]+$/.test(pair[1]!))) {
       for (const [id, code] of pairs as [string, string][]) {
-        const reasonKey = `fleet.station.reason.${code}`;
+        const reasonKey = `${reasonPrefix}.${code}`;
         const subject = id === "<batch>" ? "" : (names.get(id) ?? id);
         const reason = hasAuthoredMessage(reasonKey)
           ? translate(reasonKey)
-          : format("fleet.station.reason.unknown", { code });
+          : format(`${reasonPrefix}.unknown`, { code });
         lines.push(subject === "" ? reason : `${subject} ${reason}`);
       }
     } else {
       lines.push(diagnostic);
     }
   }
-  return [format(`fleet.station.rejected.${intent}`), ...lines];
+  return [format(headerKey), ...lines];
 }
 
 export interface PresenceRowView {

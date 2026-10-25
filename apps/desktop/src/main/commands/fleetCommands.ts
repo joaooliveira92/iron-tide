@@ -4,6 +4,7 @@ import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type {
   FleetScreenProjection,
   MovementCommandOutcome,
+  ShipReadinessOutcome,
   StationAssignmentOutcome,
 } from "../../shared/fleet-contract.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
@@ -226,6 +227,39 @@ export const submitStationAssignmentProgram: CommandHandler<"submitStationAssign
             value: {
               commandId: result.value.commandId,
               intent: payload.intent,
+              shipCount: payload.shipIds.length,
+              appliedOnNextTurn: true,
+            },
+          }
+        : result,
+  );
+
+export const submitShipReadinessProgram: CommandHandler<"submitShipReadiness"> = (payload) =>
+  Effect.map(
+    submitPlayerCommand({
+      sessionId: payload.sessionId,
+      expectedRevision: payload.expectedRevision,
+      transportRequestId: payload.transportRequestId,
+      build: (record) => {
+        const shipIds = [...payload.shipIds];
+        return {
+          body: {
+            type: "SetShipReadiness" as const,
+            nationId: record.playerSlotId,
+            shipIds,
+            readiness: payload.readiness,
+          },
+          discriminator: `${payload.readiness}\u0000${[...shipIds].sort().join("\u0000")}`,
+        };
+      },
+    }),
+    (result): BridgeResult<ShipReadinessOutcome> =>
+      result.outcome === "success"
+        ? {
+            ...result,
+            value: {
+              commandId: result.value.commandId,
+              readiness: payload.readiness,
               shipCount: payload.shipIds.length,
               appliedOnNextTurn: true,
             },

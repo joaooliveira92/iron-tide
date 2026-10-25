@@ -59,6 +59,20 @@ export interface SubmitStationAssignmentPayload extends CommandEnvelope {
   readonly shipIds: readonly string[];
 }
 
+export type CommandableReadiness = "ACTIVE" | "RESERVE" | "MOTHBALLED";
+
+export interface SubmitShipReadinessPayload extends CommandEnvelope {
+  readonly readiness: CommandableReadiness;
+  readonly shipIds: readonly string[];
+}
+
+export interface ShipReadinessOutcome {
+  readonly commandId: string;
+  readonly readiness: CommandableReadiness;
+  readonly shipCount: number;
+  readonly appliedOnNextTurn: true;
+}
+
 export interface StationAssignmentOutcome {
   readonly commandId: string;
   readonly intent: StationAssignmentIntent;

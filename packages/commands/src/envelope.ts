@@ -42,7 +42,8 @@ export type CommandBody =
   | ChangeDivisionFlagshipCommand
   | ReorderDivisionShipsCommand
   | AssignForeignStationCommand
-  | ClearForeignStationCommand;
+  | ClearForeignStationCommand
+  | SetShipReadinessCommand;
 export interface BudgetProjectCommand {
   type: "budget_project";
   nationId: string;
@@ -223,6 +224,12 @@ export interface AssignForeignStationCommand {
   type: "AssignForeignStation";
   nationId: string;
   shipIds: string[];
+}
+export interface SetShipReadinessCommand {
+  type: "SetShipReadiness";
+  nationId: string;
+  shipIds: string[];
+  readiness: "ACTIVE" | "RESERVE" | "MOTHBALLED";
 }
 export interface ClearForeignStationCommand {
   type: "ClearForeignStation";

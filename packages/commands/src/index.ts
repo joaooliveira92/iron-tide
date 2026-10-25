@@ -26,6 +26,7 @@ export type {
   RemoveShipFromDivisionCommand,
   ReorderDivisionShipsCommand,
   AssignForeignStationCommand,
+  SetShipReadinessCommand,
   ClearForeignStationCommand,
   ResumeConstructionCommand,
   AssignOfficerCommand,
