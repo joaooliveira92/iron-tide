@@ -7,10 +7,26 @@ export function rejected(code: string, stage: string, ...messages: readonly stri
   return { accepted: false, returnsInput: false, diagnostics };
 }
 
+export function rejectedBoolean(
+  code: string,
+  stage: string,
+  ...messages: readonly string[]
+): Observed {
+  const diagnostics: Diagnostic[] = messages.map((message) => ({ code, message, stage }));
+  return { accepted: false, diagnostics };
+}
+
 const RESEARCH = (...messages: readonly string[]) =>
   rejected("INVALID_RESEARCH_SPEED_MULTIPLIER", "research-speed", ...messages);
 
 export const INTENDED_DEVIATIONS: Readonly<Record<string, Readonly<Record<string, Observed>>>> = {
+  participation: {
+    "excess key": rejectedBoolean(
+      "INVALID_SCENARIO_PARTICIPATION_RECORD",
+      "continuity",
+      "unknown field surprise",
+    ),
+  },
   research: {
     "fractional multiplierBp": RESEARCH("Research multiplier 5000.5 out of 5000..20000"),
     "NaN multiplierBp": RESEARCH("Research multiplier NaN out of 5000..20000"),
