@@ -4,6 +4,7 @@ import { loadContentArtifact } from "./contentArtifact.js";
 
 const decodeTechnologies = Schema.decodeUnknownSync(
   Schema.Array(TechnologyPrerequisiteChainSchema),
+  { onExcessProperty: "error" },
 );
 
 let cached: ReadonlyMap<string, string> | null = null;
