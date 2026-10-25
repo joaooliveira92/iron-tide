@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Badge } from "../../../components/ui/badge.js";
 import { Button } from "../../../components/ui/button.js";
 import { Card, CardContent } from "../../../components/ui/card.js";
@@ -5,10 +6,9 @@ import type { TrainingSubjectId } from "../../../../shared/fleet-contract.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
 import {
   adderText,
-  canFundMore,
   fundedSubjects,
   progressText,
-  toggledSubjects,
+  sameSubjects,
   TRAINING_SUBJECT_LABELS,
   type TrainingState,
 } from "./training-model.js";
@@ -34,8 +34,17 @@ export function FleetTrainingView({
   onReload,
 }: FleetTrainingViewProps) {
   const training = state.training;
+  const authoritative = training === null ? [] : fundedSubjects(training);
+  const authoritativeKey = authoritative.join("\u0000");
+  const [draft, setDraft] = useState<TrainingSubjectId[]>(authoritative);
+  const [syncedKey, setSyncedKey] = useState(authoritativeKey);
+  if (syncedKey !== authoritativeKey) {
+    setSyncedKey(authoritativeKey);
+    setDraft(authoritative);
+  }
   if (training === null) return null;
-  const mayFundMore = canFundMore(training);
+  const dirty = !sameSubjects(draft, authoritative);
+  const atLimit = draft.length >= training.maxSubjects;
   return (
     <section
       className="space-y-3 border-t pt-4"
@@ -47,7 +56,7 @@ export function FleetTrainingView({
           Special training
         </h3>
         <Badge variant="secondary" className="text-xs">
-          {fundedSubjects(training).length} of {training.maxSubjects}
+          {authoritative.length} of {training.maxSubjects}
         </Badge>
       </div>
       <p className="text-xs text-muted-foreground">
@@ -81,42 +90,63 @@ export function FleetTrainingView({
       <Card>
         <CardContent className="space-y-2 p-4">
           {training.subjects.map((subject) => {
-            const disabled = busy || (!subject.funded && !mayFundMore);
+            const chosen = draft.includes(subject.subject);
             return (
-              <div
+              <label
                 key={subject.subject}
                 className="flex flex-wrap items-center justify-between gap-2 text-sm"
               >
-                <span className="flex flex-col">
-                  <span className="font-medium">{TRAINING_SUBJECT_LABELS[subject.subject]}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {adderText(subject.maintenanceAdderBp)}
+                <span className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-primary"
+                    checked={chosen}
+                    disabled={busy || (!chosen && atLimit)}
+                    title={
+                      !chosen && atLimit
+                        ? `At most ${training.maxSubjects} subjects can be funded at once`
+                        : undefined
+                    }
+                    onChange={() =>
+                      setDraft((current) =>
+                        chosen
+                          ? current.filter((candidate) => candidate !== subject.subject)
+                          : [...current, subject.subject],
+                      )
+                    }
+                    aria-label={`Fund ${TRAINING_SUBJECT_LABELS[subject.subject]}`}
+                  />
+                  <span className="flex flex-col">
+                    <span className="font-medium">{TRAINING_SUBJECT_LABELS[subject.subject]}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {adderText(subject.maintenanceAdderBp)}
+                    </span>
                   </span>
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {progressText(subject, training.proficiencyMonths)}
                 </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={subject.funded ? "default" : "outline"}
-                  disabled={disabled}
-                  aria-pressed={subject.funded}
-                  aria-label={`${subject.funded ? "Stop funding" : "Fund"} ${TRAINING_SUBJECT_LABELS[subject.subject]}`}
-                  title={
-                    !subject.funded && !mayFundMore
-                      ? `At most ${training.maxSubjects} subjects can be funded at once`
-                      : undefined
-                  }
-                  onClick={() => void onFund(toggledSubjects(training, subject.subject))}
-                >
-                  {subject.funded ? "Stop funding" : "Fund"}
-                </Button>
-              </div>
+              </label>
             );
           })}
         </CardContent>
       </Card>
+
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          disabled={busy || !dirty}
+          onClick={() => void onFund(draft)}
+        >
+          Apply training
+        </Button>
+        {dirty && draft.length < authoritative.length && (
+          <span className="text-xs text-muted-foreground">
+            Dropped subjects lose their progress.
+          </span>
+        )}
+      </div>
     </section>
   );
 }

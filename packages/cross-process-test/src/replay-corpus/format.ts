@@ -48,6 +48,26 @@ const SetShipReadinessBody = Schema.Struct({
   readiness: Schema.Literals(["ACTIVE", "RESERVE", "MOTHBALLED"]),
 });
 
+const SetSpecialTrainingBody = Schema.Struct({
+  type: Schema.Literal("SetSpecialTraining"),
+  nationId: Id,
+  subjects: Schema.Array(Id),
+});
+
+const HoldFleetExerciseBody = Schema.Struct({
+  type: Schema.Literal("HoldFleetExercise"),
+  nationId: Id,
+  shipIds: Schema.Array(Id),
+});
+
+const ChangeDivisionDoctrineBody = Schema.Struct({
+  type: Schema.Literal("ChangeDivisionDoctrine"),
+  nationId: Id,
+  divisionId: Id,
+  divisionRole: Schema.optional(Id),
+  preferredFormation: Schema.optional(Id),
+});
+
 const AssignForeignStationBody = Schema.Struct({
   type: Schema.Literal("AssignForeignStation"),
   nationId: Id,
@@ -65,6 +85,9 @@ export const ReplayCommandBodySchema = Schema.Union([
   SetResearchPriorityBody,
   OrderConstructionBody,
   SetShipReadinessBody,
+  SetSpecialTrainingBody,
+  HoldFleetExerciseBody,
+  ChangeDivisionDoctrineBody,
   AssignForeignStationBody,
   ClearForeignStationBody,
 ]);

@@ -81,7 +81,9 @@ const AREAS = [
     name: "Fleet readiness, command & prestige",
     blurb:
       "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
-    nums: [223, 224, 225, 226, 239, 245, 260, 261, 281, 283, 286, 287, 288, 289, 290, 291, 292],
+    nums: [
+      223, 224, 225, 226, 239, 245, 260, 261, 281, 283, 286, 287, 288, 289, 290, 291, 292, 293,
+    ],
   },
   {
     name: "Foreign stations & presence",

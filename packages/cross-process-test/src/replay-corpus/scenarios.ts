@@ -62,6 +62,45 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
     purpose: "Longest replay: settling into the second year, past rollover and readiness changes.",
   },
   {
+    id: "production-1880-14m-fleet-management",
+    seed: "replay-corpus-fleet-management",
+    months: 14,
+    purpose:
+      "Fleet management live: training to month 12 and a reset, a doctrine change, the annual exercise and cohesion growth.",
+    commands: [
+      {
+        month: 1,
+        body: {
+          type: "SetSpecialTraining",
+          nationId: "austria_hungary",
+          subjects: ["NIGHT_FIGHTING", "GUNNERY"],
+        },
+      },
+      {
+        month: 2,
+        body: {
+          type: "ChangeDivisionDoctrine",
+          nationId: "austria_hungary",
+          divisionId: "div_aut_adriatic",
+          divisionRole: "SUPPORT",
+          preferredFormation: "LINE_ABREAST",
+        },
+      },
+      {
+        month: 3,
+        body: {
+          type: "HoldFleetExercise",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+        },
+      },
+      {
+        month: 13,
+        body: { type: "SetSpecialTraining", nationId: "austria_hungary", subjects: ["GUNNERY"] },
+      },
+    ],
+  },
+  {
     id: "production-1880-6m-fleet-commands",
     seed: "replay-corpus-fleet-commands",
     months: 6,

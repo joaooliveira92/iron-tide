@@ -16,7 +16,11 @@ import {
   verifyReplay,
   type ReplayScenario,
 } from "../src/replay-corpus/index.js";
-import { advance, productionStartSnapshot } from "../src/replay-corpus/corpus.js";
+import {
+  advance,
+  fleetManagementOptions,
+  productionStartSnapshot,
+} from "../src/replay-corpus/corpus.js";
 
 const REPLAY_DIR = resolve(import.meta.dirname, "../../../golden/replays");
 const SCENARIO = REPLAY_SCENARIOS.find((s) => s.id === "production-1880-6m-fleet-commands")!;
@@ -124,6 +128,7 @@ describe("replay format v2: recorded command envelopes", () => {
       hashSnapshot(first.result.finalSnapshot),
       seed,
       original,
+      fleetManagementOptions(),
     );
     expect(result.mismatches).toEqual([]);
     expect(result.match).toBe(true);

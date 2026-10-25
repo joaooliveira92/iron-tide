@@ -391,12 +391,17 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = () =>
       );
       const shipBuilding =
         input === null ? undefined : yield* contentArtifact.loadShipBuildingContent();
+      const fleetManagement =
+        input === null ? undefined : yield* contentArtifact.loadFleetManagementRules();
       const engineOptions =
         shipBuilding === undefined
           ? undefined
           : {
               shipBuilding,
               ...(shipBuilding.presence !== undefined ? { presence: shipBuilding.presence } : {}),
+              ...(fleetManagement !== undefined
+                ? { fleetManagement, playerNationId: metadata.playerSlotId }
+                : {}),
             };
       const result = yield* replay.verify({
         snapshot: executed,

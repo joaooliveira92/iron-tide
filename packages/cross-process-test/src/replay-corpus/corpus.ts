@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type { CampaignSnapshot } from "@bluewave/campaign";
+import { fleetManagementFromRulesets } from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -74,6 +75,16 @@ function production(): ReturnType<typeof compileProductionCampaign> {
   return productionCampaign;
 }
 
+function productionFleetManagement() {
+  const decoded = fleetManagementFromRulesets(production().bundle.rulesets);
+  if (decoded === undefined) return undefined;
+  if (!decoded.ok)
+    throw new ReplayFileError({
+      message: `production fleetManagement section is invalid at '${decoded.field}'`,
+    });
+  return decoded.value;
+}
+
 export function productionStartSnapshot(): CampaignSnapshot {
   return production().state.snapshot;
 }
@@ -122,6 +133,11 @@ export function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
   }
 }
 
+export function fleetManagementOptions() {
+  const fleetManagement = productionFleetManagement();
+  return fleetManagement === undefined ? {} : { fleetManagement };
+}
+
 export function advance(
   snapshot: CampaignSnapshot,
   seed: string,
@@ -132,6 +148,8 @@ export function advance(
     perturb?.commands?.(snapshot) ?? [],
     perturb?.seed?.(monthSeed(seed, snapshot)) ?? monthSeed(seed, snapshot),
     new DiagnosticCollector(),
+    undefined,
+    fleetManagementOptions(),
   );
   perturb?.afterExecute?.(result);
   if (result.outcome === "suspended") {
