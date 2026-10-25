@@ -45,7 +45,8 @@ export type CommandBody =
   | AssignForeignStationCommand
   | ClearForeignStationCommand
   | SetShipReadinessCommand
-  | SetSpecialTrainingCommand;
+  | SetSpecialTrainingCommand
+  | HoldFleetExerciseCommand;
 export interface BudgetProjectCommand {
   type: "budget_project";
   nationId: string;
@@ -244,6 +245,11 @@ export interface SetSpecialTrainingCommand {
   type: "SetSpecialTraining";
   nationId: string;
   subjects: string[];
+}
+export interface HoldFleetExerciseCommand {
+  type: "HoldFleetExercise";
+  nationId: string;
+  shipIds: string[];
 }
 export interface ClearForeignStationCommand {
   type: "ClearForeignStation";

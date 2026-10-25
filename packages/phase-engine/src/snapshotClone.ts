@@ -25,6 +25,7 @@ import type {
   IntelligenceState,
   NationState,
   TrainingSubjectEntry,
+  FleetExerciseRecord,
   Officer,
   PermanentDivision,
   PoliticalState,
@@ -339,6 +340,7 @@ const F = {
     "aircraft",
     "carrierOperations",
     "specialTraining",
+    "fleetExercise",
     "isPlayable",
     "isAI",
   ),
@@ -724,6 +726,10 @@ const cloneNation = (n: NationState): NationState =>
       v === undefined
         ? undefined
         : (v as ForeignContractImpoundmentRecord[]).map(cloneForeignContractImpoundment),
+    fleetExercise: (v) =>
+      v === undefined
+        ? undefined
+        : { ...(v as FleetExerciseRecord), shipIds: [...(v as FleetExerciseRecord).shipIds] },
     specialTraining: (v) =>
       v === undefined ? undefined : (v as TrainingSubjectEntry[]).map((entry) => ({ ...entry })),
   });

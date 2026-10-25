@@ -30,6 +30,7 @@ type Gate = (ship: ShipGateSubject, use: ShipUse) => GateReasonTag | null;
 
 export const ASSIGNMENT_ALLOWED_USES: Readonly<Record<StationAssignment, readonly ShipUse[]>> = {
   FOREIGN_STATION: ["ENTER_BATTLE"],
+  EXERCISE: [],
 };
 
 const underConstruction: Gate = (ship) => (ship.isUnderConstruction ? "UnderConstruction" : null);

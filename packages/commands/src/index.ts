@@ -29,6 +29,7 @@ export type {
   AssignForeignStationCommand,
   SetShipReadinessCommand,
   SetSpecialTrainingCommand,
+  HoldFleetExerciseCommand,
   ClearForeignStationCommand,
   ResumeConstructionCommand,
   AssignOfficerCommand,

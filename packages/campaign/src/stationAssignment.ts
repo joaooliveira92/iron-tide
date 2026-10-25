@@ -2,7 +2,7 @@ import { firstGateReason, type GateReasonTag } from "./eligibility.js";
 import type { Ship } from "./state.js";
 import type { ShipReadinessState } from "./readiness.js";
 
-export const STATION_ASSIGNMENTS = ["FOREIGN_STATION"] as const;
+export const STATION_ASSIGNMENTS = ["FOREIGN_STATION", "EXERCISE"] as const;
 export type StationAssignment = (typeof STATION_ASSIGNMENTS)[number];
 
 export const STATION_ASSIGNMENT_REASONS = [
@@ -77,7 +77,8 @@ function shipProblem(
   intent: StationAssignmentIntent,
 ): StationAssignmentReason | null {
   if (ship === undefined) return "NOT_OWNED";
-  if (intent === "clear") return ship.stationAssignment === undefined ? "NOT_ASSIGNED" : null;
+  if (intent === "clear")
+    return ship.stationAssignment === "FOREIGN_STATION" ? null : "NOT_ASSIGNED";
   const reason = firstGateReason(ship, "HOLD_STATION");
   if (reason !== null) return STATION_REASON_BY_GATE[reason._tag];
   return null;

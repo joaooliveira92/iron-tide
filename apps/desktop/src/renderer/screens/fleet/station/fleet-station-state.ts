@@ -45,6 +45,7 @@ function statusOf(ship: FleetShipView): { code: string; label: string } {
     };
   }
   if (ship.stationCode === "FS") return { code: "FS", label: format("fleet.status.FS") };
+  if (ship.stationCode === "EX") return { code: "EX", label: format("fleet.status.EX") };
   const code = READINESS_CODE[ship.readiness] ?? "AF";
   return { code, label: format(`fleet.status.${code}`) };
 }

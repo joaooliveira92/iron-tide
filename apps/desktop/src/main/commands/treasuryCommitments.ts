@@ -4,7 +4,7 @@ import {
   constructionDrawByProject,
   fleetMaintenanceBreakdown,
   nationIsAtWar,
-  trainingMaintenanceAdderBp,
+  nationMaintenanceAdders,
   type CampaignSnapshot,
   type NationState,
 } from "@bluewave/campaign";
@@ -38,7 +38,7 @@ export function buildTreasuryCommitments(
   const upkeep = fleetMaintenanceBreakdown(
     nation.fleets,
     nationIsAtWar(snapshot.wars.wars, nation.id),
-    trainingMaintenanceAdderBp(nation.specialTraining),
+    nationMaintenanceAdders(nation, month),
   );
   const draws = new Map(
     constructionDrawByProject(nation, snapshot, month).map((entry) => [

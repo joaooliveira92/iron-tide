@@ -67,6 +67,18 @@
       "adr_or_issue": null
     },
     {
+      "id": "hold-fleet-exercise",
+      "player_verb": "Hold the annual fleet exercise with chosen ships",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyFleetExerciseCommand"],
+      "main_commands": ["submitFleetExercise"],
+      "renderer_screen": "screens/fleet/exercise/FleetExerciseSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/exercise/FleetExerciseView.test.tsx",
+      "adr_or_issue": null
+    },
+    {
       "id": "organise-divisions",
       "player_verb": "Create, change and dissolve divisions and pick flagships",
       "status": "reachable",

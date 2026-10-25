@@ -236,6 +236,7 @@ export const EN_US_MESSAGES = {
   "fleet.status.MB": "Mothballed",
   "fleet.status.WU": "Working up",
   "fleet.status.FS": "On foreign station",
+  "fleet.status.EX": "On fleet exercise",
   "fleet.status.repair.one": "In repair for 1 more month",
   "fleet.status.repair.many": "In repair for {n} more months",
   "fleet.status.overBase":
