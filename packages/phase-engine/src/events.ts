@@ -1,6 +1,10 @@
 import type { OutflowSettlement } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
-import type { DomainEventEnvelope, PrestigeChanged as PrestigeChangedBody } from "@bluewave/events";
+import type {
+  DivisionExperienceChanged as DivisionExperienceChangedBody,
+  DomainEventEnvelope,
+  PrestigeChanged as PrestigeChangedBody,
+} from "@bluewave/events";
 import type { LedgerTransactionInput } from "./financial-ledger.js";
 
 export const CURRENT_VERSION = "0.1.0" as const;
@@ -348,6 +352,36 @@ export function prestigeChangedEvent(
       after: change.after,
       delta: change.delta,
       rulesetVersion,
+    },
+    sequenceNumber: seq,
+  };
+}
+
+export function divisionExperienceChangedEvent(
+  nationId: string,
+  divisionId: string,
+  sourceId: string,
+  reasonCode: DivisionExperienceChangedBody["reasonCode"],
+  change: { readonly before: SafeInt; readonly after: SafeInt; readonly delta: SafeInt },
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `DivisionExperienceChanged-${divisionId}-${sourceId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "division",
+    aggregateId: divisionId,
+    eventType: "DivisionExperienceChanged",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "DivisionExperienceChanged",
+      nationId,
+      divisionId,
+      sourceId,
+      reasonCode,
+      before: change.before,
+      after: change.after,
+      delta: change.delta,
     },
     sequenceNumber: seq,
   };

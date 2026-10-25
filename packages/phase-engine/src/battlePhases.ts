@@ -17,6 +17,7 @@ import {
   toCampaignBattleResult,
 } from "./battles.js";
 import { battleAbsencesFor } from "./battleAbsences.js";
+import { applyBattleExperience } from "./battleExperience.js";
 import {
   applyDecline,
   applyEnemyDeclines,
@@ -137,6 +138,10 @@ export function runBattleResolutionPhase(ctx: PhaseContext): PhaseRunOutcome {
     if (ctx.interruption?.suspended !== undefined) return { status: "finish", success: true };
   }
   scoreResolvedBattles(
+    ctx,
+    battles.map((b) => b["id"]),
+  );
+  applyBattleExperience(
     ctx,
     battles.map((b) => b["id"]),
   );

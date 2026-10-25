@@ -181,6 +181,17 @@ export const PrestigeChangedSchema = Schema.Struct({
   rulesetVersion: nonEmptyString,
 });
 
+export const DivisionExperienceChangedSchema = Schema.Struct({
+  kind: Schema.Literal("DivisionExperienceChanged"),
+  nationId: nonEmptyString,
+  divisionId: nonEmptyString,
+  sourceId: nonEmptyString,
+  reasonCode: Schema.Literals(["BATTLE_PARTICIPATION"]),
+  before: nonNegativeSafeInt,
+  after: nonNegativeSafeInt,
+  delta: nonNegativeSafeInt,
+});
+
 export const PrestigeLossRequestedSchema = Schema.Struct({
   kind: Schema.Literal("PrestigeLossRequested"),
   nationId: nonEmptyString,
@@ -255,6 +266,7 @@ export const DomainEventBodySchema = Schema.Union([
   DeclineThresholdReachedSchema,
   EnemyDeclinedBattleSchema,
   PrestigeChangedSchema,
+  DivisionExperienceChangedSchema,
 ]);
 
 export const DomainEventEnvelopeSchema = Schema.Struct({

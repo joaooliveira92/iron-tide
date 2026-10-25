@@ -216,6 +216,17 @@ export interface PrestigeChanged {
   readonly rulesetVersion: string;
 }
 
+export interface DivisionExperienceChanged {
+  readonly kind: "DivisionExperienceChanged";
+  readonly nationId: string;
+  readonly divisionId: string;
+  readonly sourceId: string;
+  readonly reasonCode: "BATTLE_PARTICIPATION";
+  readonly before: SafeInt;
+  readonly after: SafeInt;
+  readonly delta: SafeInt;
+}
+
 export type DomainEventBody =
   | NationBudgetChanged
   | ConstructionProgressed
@@ -239,7 +250,8 @@ export type DomainEventBody =
   | BattleDeclined
   | DeclineThresholdReached
   | EnemyDeclinedBattle
-  | PrestigeChanged;
+  | PrestigeChanged
+  | DivisionExperienceChanged;
 
 export interface DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> {
   readonly eventId: string;

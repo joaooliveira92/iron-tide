@@ -360,6 +360,19 @@
       "note": "The engine changes prestige in the monthly pipeline; the player sees only the header metric."
     },
     {
+      "id": "division-battle-experience",
+      "player_verb": "Divisions gain experience from the battles they fight",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyBattleExperience"],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "adr_or_issue": "#276",
+      "note": "Applied in the monthly pipeline once the fleet-management section is authored (#277); the division screen already shows the value."
+    },
+    {
       "id": "ship-readiness",
       "player_verb": "See and manage ship readiness",
       "status": "dormant-by-decision",
