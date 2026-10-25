@@ -14,6 +14,7 @@ export type {
   DeclineThresholdReached,
   EnemyDeclinedBattle,
   PrestigeChanged,
+  DivisionExperienceChanged,
   BattleOfferAnswered,
   ForeignStationNoRoute,
   ForeignStationShipMoved,

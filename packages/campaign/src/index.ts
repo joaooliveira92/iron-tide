@@ -15,6 +15,7 @@ export * from "./constructionDraw.js";
 export * from "./division.js";
 export * from "./divisionCohesionGrowth.js";
 export * from "./divisionDoctrine.js";
+export * from "./divisionExperience.js";
 export * from "./specialTraining.js";
 export * from "./fleetExercise.js";
 export * from "./designUnits.js";

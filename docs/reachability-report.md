@@ -6,7 +6,7 @@ Rules and statuses: ADR-0267.
 | Status | Rows |
 | --- | --- |
 | reachable | 33 |
-| dormant-by-decision | 11 |
+| dormant-by-decision | 12 |
 | internal | 11 |
 
 ## Reachable
@@ -53,6 +53,7 @@ Rules and statuses: ADR-0267.
 | --- | --- | --- |
 | assign-or-relieve-officer | Assign or relieve an officer | #224 |
 | prestige | See and act on national prestige | #223 |
+| division-battle-experience | Divisions gain experience from the battles they fight | #276 |
 | ship-readiness | See and manage ship readiness | #223 |
 | aircraft-and-carriers | Develop aircraft and operate carriers | #225 |
 | combat-air-combat | Air combat and air defence in a battle | #225 |
