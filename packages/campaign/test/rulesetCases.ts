@@ -287,7 +287,10 @@ export const FLEET_LIST_CASES: readonly RulesetCase[] = [
 export function observeFleetList(input: unknown): Observed {
   return observe((c) => {
     const result = validateFleetSizeSettings(input, c);
-    return { accepted: result !== undefined, returnsInput: result === input };
+    return {
+      accepted: result !== undefined,
+      returnsInput: JSON.stringify(result) === JSON.stringify(input),
+    };
   });
 }
 
@@ -350,7 +353,10 @@ export const RESEARCH_CASES: readonly RulesetCase[] = [
 export function observeResearch(input: unknown): Observed {
   return observe((c) => {
     const result = validateResearchSpeedSettings(input, c);
-    return { accepted: result !== undefined, returnsInput: result === input };
+    return {
+      accepted: result !== undefined,
+      returnsInput: JSON.stringify(result) === JSON.stringify(input),
+    };
   });
 }
 

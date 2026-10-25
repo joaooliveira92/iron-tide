@@ -45,3 +45,13 @@ export function issueKeys(issue: SchemaIssue.Issue): IssueKeys {
   visit(issue, undefined, false);
   return { missing, invalid, unexpected };
 }
+
+export function displayValue(value: unknown): string {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? "[object Object]"
+    : String(value);
+}
+
+export function recordOf(value: object): Readonly<Record<string, unknown>> {
+  return Object.fromEntries(Object.entries(value));
+}

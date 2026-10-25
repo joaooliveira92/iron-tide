@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import * as K from "./rulesetCases.js";
+import { INTENDED_DEVIATIONS } from "./rulesetDeviations.js";
 
 type Recorded = Record<string, Record<string, K.Observed>>;
 
@@ -25,9 +26,15 @@ describe("ruleset validation parity with the recorded legacy validators", () => 
       it("covers every recorded case", () => {
         expect(Object.keys(RECORDED[key] ?? {})).toEqual(cases.map((c) => c.name));
       });
+      it("deviates from the recording only where the schema is stricter", () => {
+        for (const name of Object.keys(INTENDED_DEVIATIONS[key] ?? {})) {
+          expect(RECORDED[key]?.[name]).toBeDefined();
+          expect(INTENDED_DEVIATIONS[key]?.[name]?.accepted).toBe(false);
+        }
+      });
       for (const { name, input } of cases) {
         it(name, () => {
-          expect(observe(input)).toEqual(RECORDED[key]?.[name]);
+          expect(observe(input)).toEqual(INTENDED_DEVIATIONS[key]?.[name] ?? RECORDED[key]?.[name]);
         });
       }
     });
