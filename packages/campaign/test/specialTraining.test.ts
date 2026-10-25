@@ -81,7 +81,7 @@ describe("training maintenance adder", () => {
     expect(adder as number).toBe(5000);
     const fleets = [{ ships: [ship("ACTIVE"), ship("MOTHBALLED")] }];
     const base = nationMonthlyMaintenance(fleets, false) as number;
-    expect(nationMonthlyMaintenance(fleets, false, adder) as number).toBe(base + 5);
+    expect(nationMonthlyMaintenance(fleets, false, { trainingBp: adder }) as number).toBe(base + 5);
     expect(trainingMaintenanceAdderBp(undefined) as number).toBe(0);
   });
 });

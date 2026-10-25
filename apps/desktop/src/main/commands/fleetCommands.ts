@@ -1,5 +1,10 @@
 import { buildFleetScreenView, type MovementCommand } from "@bluewave/campaign-engine";
 import {
+  campaignMonthId,
+  exerciseLimitReached,
+  exerciseMonthAfter,
+  FLEET_EXERCISE_DORMANT,
+  FLEET_EXERCISE_LIMIT_REACHED,
   isTrainingProficient,
   TRAINING_DORMANT,
   TRAINING_SUBJECTS,
@@ -9,6 +14,8 @@ import { Effect } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type {
   FleetScreenProjection,
+  FleetExerciseOutcome,
+  FleetExerciseProjection,
   FleetTrainingProjection,
   MovementCommandOutcome,
   ShipReadinessOutcome,
@@ -116,6 +123,18 @@ function submitMovement(
   });
 }
 
+function exerciseInProgress(nation: {
+  readonly fleetExercise?: { readonly shipIds: readonly string[] };
+  readonly fleets: readonly {
+    readonly ships: readonly { readonly stationAssignment?: string }[];
+  }[];
+}): boolean {
+  return (
+    nation.fleetExercise !== undefined &&
+    nation.fleets.some((fleet) => fleet.ships.some((ship) => ship.stationAssignment === "EXERCISE"))
+  );
+}
+
 export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -159,6 +178,29 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
               };
             }),
           };
+    const snapshot = record.state.snapshot;
+    const exerciseYear = exerciseMonthAfter(
+      campaignMonthId(snapshot.startYear, snapshot.startMonth, Number(snapshot.turnNumber)),
+    ).year;
+    const exercise: FleetExerciseProjection | undefined =
+      fleetManagement === undefined
+        ? undefined
+        : {
+            maxPerCalendarYear: fleetManagement.exercise.maxPerCalendarYear,
+            maintenanceMultiple: fleetManagement.exercise.maintenanceMultiple,
+            experienceGain: fleetManagement.divisionExperience.perExercise,
+            nextExerciseYear: exerciseYear,
+            heldInNextExerciseYear:
+              nation.fleetExercise?.year === exerciseYear ? nation.fleetExercise.yearCount : 0,
+            ...(exerciseInProgress(nation)
+              ? {
+                  scheduled: {
+                    month: nation.fleetExercise!.month,
+                    shipIds: nation.fleetExercise!.shipIds,
+                  },
+                }
+              : {}),
+          };
     const projection: FleetScreenProjection = {
       revision: Number(record.state.snapshot.turnNumber),
       month: record.month,
@@ -171,6 +213,7 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
       presence: view.presence,
       overBaseShips: view.overBaseShips,
       ...(training === undefined ? {} : { training }),
+      ...(exercise === undefined ? {} : { exercise }),
     };
 
     return { outcome: "success" as const, value: projection, diagnostics: [] };
@@ -338,6 +381,61 @@ export const submitSpecialTrainingProgram: CommandHandler<"submitSpecialTraining
             value: {
               commandId: queued.value.commandId,
               subjects: payload.subjects,
+              appliedOnNextTurn: true,
+            },
+          }
+        : queued;
+    return result;
+  });
+
+export const submitFleetExerciseProgram: CommandHandler<"submitFleetExercise"> = (payload) =>
+  Effect.gen(function* () {
+    const sessions = yield* CampaignSessionStore;
+    const record = yield* sessions.get(payload.sessionId);
+    const contentArtifact = yield* ContentArtifact;
+    const rules = (yield* contentArtifact.loadFleetManagementRules())?.exercise;
+    if (rules === undefined) {
+      return {
+        outcome: "rejected" as const,
+        reason: FLEET_EXERCISE_DORMANT,
+        diagnostics: ["Fleet exercises are not available in this campaign"],
+      };
+    }
+    const snapshot = record.state.snapshot;
+    const held = exerciseMonthAfter(
+      campaignMonthId(snapshot.startYear, snapshot.startMonth, Number(snapshot.turnNumber)),
+    );
+    const nation = snapshot.nations.get(record.playerSlotId);
+    if (exerciseLimitReached(nation?.fleetExercise, held.year, rules)) {
+      return {
+        outcome: "rejected" as const,
+        reason: FLEET_EXERCISE_LIMIT_REACHED,
+        diagnostics: [`The fleet exercise for ${held.year} has already been held or scheduled`],
+      };
+    }
+    const queued = yield* submitPlayerCommand({
+      sessionId: payload.sessionId,
+      expectedRevision: payload.expectedRevision,
+      transportRequestId: payload.transportRequestId,
+      build: (current) => {
+        const shipIds = [...payload.shipIds];
+        return {
+          body: {
+            type: "HoldFleetExercise" as const,
+            nationId: current.playerSlotId,
+            shipIds,
+          },
+          discriminator: [...shipIds].sort().join("\u0000"),
+        };
+      },
+    });
+    const result: BridgeResult<FleetExerciseOutcome> =
+      queued.outcome === "success"
+        ? {
+            ...queued,
+            value: {
+              commandId: queued.value.commandId,
+              shipCount: payload.shipIds.length,
               appliedOnNextTurn: true,
             },
           }

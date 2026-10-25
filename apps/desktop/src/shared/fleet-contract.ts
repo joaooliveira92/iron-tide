@@ -32,6 +32,7 @@ export interface FleetScreenProjection {
   readonly presence: PlayerProjectionPresence;
   readonly overBaseShips: readonly FleetOverBaseShip[];
   readonly training?: FleetTrainingProjection;
+  readonly exercise?: FleetExerciseProjection;
 }
 
 export type TrainingSubjectId = "GUNNERY" | "NIGHT_FIGHTING" | "TORPEDO_TACTICS" | "DAMAGE_CONTROL";
@@ -48,6 +49,25 @@ export interface FleetTrainingProjection {
   readonly maxSubjects: number;
   readonly proficiencyMonths: number;
   readonly subjects: readonly FleetTrainingSubjectView[];
+}
+
+export interface FleetExerciseProjection {
+  readonly maxPerCalendarYear: number;
+  readonly maintenanceMultiple: number;
+  readonly experienceGain: number;
+  readonly nextExerciseYear: number;
+  readonly heldInNextExerciseYear: number;
+  readonly scheduled?: { readonly month: string; readonly shipIds: readonly string[] };
+}
+
+export interface SubmitFleetExercisePayload extends CommandEnvelope {
+  readonly shipIds: readonly string[];
+}
+
+export interface FleetExerciseOutcome {
+  readonly commandId: string;
+  readonly shipCount: number;
+  readonly appliedOnNextTurn: true;
 }
 
 export interface SubmitSpecialTrainingPayload extends CommandEnvelope {

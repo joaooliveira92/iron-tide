@@ -3,6 +3,7 @@ import type { CareerResult, PrestigeReasonCode, PrestigeValueSet } from "./prest
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { BattleAbsence } from "./battleAbsence.js";
+import type { FleetExerciseRecord } from "./fleetExercise.js";
 import type { TrainingSubjectEntry } from "./specialTraining.js";
 import type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
 import type { PermanentDivision } from "./division.js";
@@ -372,6 +373,7 @@ export interface NationState {
   aircraft?: Record<string, unknown>;
   carrierOperations?: Record<string, unknown>;
   specialTraining?: TrainingSubjectEntry[];
+  fleetExercise?: FleetExerciseRecord;
   isPlayable: boolean;
   isAI: boolean;
 }

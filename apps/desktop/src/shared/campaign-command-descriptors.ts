@@ -79,6 +79,7 @@ import {
   SubmitDivisionCommandPayloadSchema,
   SubmitMovementCommandPayloadSchema,
   SubmitOfferResponsePayloadSchema,
+  SubmitFleetExercisePayloadSchema,
   SubmitShipReadinessPayloadSchema,
   SubmitSpecialTrainingPayloadSchema,
   SubmitStationAssignmentPayloadSchema,
@@ -115,6 +116,7 @@ import type { DivisionCommandOutcome, DivisionScreenProjection } from "./divisio
 import type {
   FleetScreenProjection,
   MovementCommandOutcome,
+  FleetExerciseOutcome,
   ShipReadinessOutcome,
   SpecialTrainingOutcome,
   StationAssignmentOutcome,
@@ -313,6 +315,10 @@ export const campaignCommandShapes = {
   submitShipReadiness: command(
     SubmitShipReadinessPayloadSchema,
     resultType<ShipReadinessOutcome>(),
+  ),
+  submitFleetExercise: command(
+    SubmitFleetExercisePayloadSchema,
+    resultType<FleetExerciseOutcome>(),
   ),
   submitSpecialTraining: command(
     SubmitSpecialTrainingPayloadSchema,

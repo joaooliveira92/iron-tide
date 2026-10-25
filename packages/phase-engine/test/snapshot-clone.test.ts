@@ -238,6 +238,13 @@ function makeRichSnapshot(): CampaignSnapshot {
   ];
   gbr.aircraft = {} as any;
   gbr.carrierOperations = {} as any;
+  gbr.fleetExercise = {
+    month: "1880-03",
+    year: 1880,
+    yearCount: 1,
+    shipIds: ["g1"],
+    maintenanceAdderBp: 10000,
+  };
   gbr.specialTraining = [{ subject: "GUNNERY", fundedMonths: 1, maintenanceAdderBp: 3000 }];
   gbr.dock = {
     maximumNewConstructionMassKg: 13_000_000,

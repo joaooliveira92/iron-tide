@@ -323,7 +323,8 @@ export class CommandLifecycle {
     if (
       body.type === "AssignForeignStation" ||
       body.type === "ClearForeignStation" ||
-      body.type === "SetShipReadiness"
+      body.type === "SetShipReadiness" ||
+      body.type === "HoldFleetExercise"
     )
       return {
         type: "success",

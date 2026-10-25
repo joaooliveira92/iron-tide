@@ -46,7 +46,7 @@ export interface PlayerProjectionShip {
   readonly designId: string;
   readonly readiness: string;
   readonly crewQuality: number;
-  readonly stationAssignment?: "FOREIGN_STATION";
+  readonly stationAssignment?: "FOREIGN_STATION" | "EXERCISE";
   readonly colonialServiceFitted?: true;
   readonly overBase?: true;
   readonly displacementTons?: number;

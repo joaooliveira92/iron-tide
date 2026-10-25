@@ -3,6 +3,7 @@ import { growDivisionCohesion, readinessAfterCrewRamp, rampCrewQuality } from "@
 import { SafeInt } from "@bluewave/contracts";
 import { shipReadinessChangedEvent } from "./events.js";
 import type { PhaseContext } from "./pipeline.js";
+import { completeFleetExerciseForMonth } from "./fleetExercise.js";
 import { advanceSpecialTrainingForMonth } from "./specialTraining.js";
 
 export const WORKING_UP_COMPLETE_REASON = "WORKING_UP_COMPLETE" as const;
@@ -102,4 +103,5 @@ export function applyReadinessEvolution(ctx: PhaseContext): void {
   if (changed) ctx.snapshot.write("nations", updatedNations);
   growDivisionCohesionForMonth(ctx);
   advanceSpecialTrainingForMonth(ctx);
+  completeFleetExerciseForMonth(ctx);
 }

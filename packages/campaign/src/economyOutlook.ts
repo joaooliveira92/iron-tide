@@ -7,8 +7,7 @@ import {
   runwayMonths,
   settleOutflow,
 } from "./economy.js";
-import { nationIsAtWar, nationMonthlyMaintenance } from "./maintenance.js";
-import { trainingMaintenanceAdderBp } from "./specialTraining.js";
+import { nationIsAtWar, nationMaintenanceAdders, nationMonthlyMaintenance } from "./maintenance.js";
 import { eligibleResearchFields, technologyCatalogueOf } from "./researchEligibility.js";
 import type { CampaignSnapshot, NationState } from "./state.js";
 import { campaignMonthId } from "./timeline.js";
@@ -99,7 +98,7 @@ export function economyOutlook(
   const maintenance = nationMonthlyMaintenance(
     nation["fleets"],
     nationIsAtWar(snapshot["wars"]["wars"], nationId),
-    trainingMaintenanceAdderBp(nation["specialTraining"]),
+    nationMaintenanceAdders(nation, month),
   );
   const obligations = nation["expenses"];
   const cap = researchCap(revenue);
