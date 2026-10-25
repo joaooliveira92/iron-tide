@@ -1,21 +1,19 @@
-import type { ReactNode } from "react";
+import { useState } from "react";
+import { ChevronsRight, OctagonAlert } from "lucide-react";
 
 import { advanceMonth } from "@bluewave/campaign";
 import type { StrategicPriority } from "@bluewave/campaign-engine";
 
-import { Button } from "./ui/button.js";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog.js";
-import { Badge } from "./ui/badge.js";
-import { SEVERITY_VARIANT } from "../lib/priorities.js";
+import { cn } from "../lib/utils.js";
 import { usePresentationFormat } from "../shell/usePresentationFormat.js";
-import { formatMonth, formatOptional } from "./preTurnReviewFormat.js";
+import { Button } from "./ui/button.js";
+import { Dialog, DialogContent } from "./ui/dialog.js";
+import { Slipways } from "./pre-turn-review/Slipways.js";
+import { TransitHeader } from "./pre-turn-review/TransitHeader.js";
+import { TreasuryLedger } from "./pre-turn-review/TreasuryLedger.js";
+import { WatchList } from "./pre-turn-review/WatchList.js";
+import { formatMonth } from "./preTurnReviewFormat.js";
+import { reviewVerdict, type VerdictKind } from "./preTurnReviewModel.js";
 import { usePreTurnReviewData, type PreTurnReviewData } from "./usePreTurnReviewData.js";
 
 export interface PreTurnReviewCampaign {
@@ -33,80 +31,36 @@ export interface PreTurnReviewDialogViewProps {
   readonly saveMessage: string | null;
   readonly committing: boolean;
   readonly onAdvance: () => Promise<void>;
+  readonly onOpenPriority?: (priority: StrategicPriority) => void;
 }
 
-interface ReviewStat {
-  readonly label: string;
-  readonly value: ReactNode;
-}
+const ADVANCE_STYLE: Readonly<Record<VerdictKind, string>> = {
+  clear:
+    "bg-admiralty-accent text-admiralty-accent-foreground hover:bg-admiralty-accent/90 focus-visible:ring-admiralty-accent",
+  caution:
+    "bg-admiralty-accent text-admiralty-accent-foreground hover:bg-admiralty-accent/90 focus-visible:ring-admiralty-accent",
+  hold: "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive",
+};
 
-function ReviewStatGrid({ stats }: { readonly stats: readonly ReviewStat[] }) {
+function SaveLamp({
+  saving,
+  message,
+}: {
+  readonly saving: boolean;
+  readonly message: string | null;
+}) {
+  const text = saving ? "Saving…" : (message ?? "Saved");
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {stats.map((stat) => (
-        <div key={stat.label}>
-          <p className="text-xs text-muted-foreground">{stat.label}</p>
-          <p className="font-medium">{stat.value}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-const MAX_SHOWN_WARNINGS = 5;
-
-function UnresolvedWarnings({ priorities }: { readonly priorities: readonly StrategicPriority[] }) {
-  return (
-    <div>
-      <p className="text-xs font-medium text-muted-foreground">Unresolved warnings</p>
-      {priorities.length === 0 ? (
-        <p className="mt-1 text-xs text-muted-foreground">
-          The Admiralty has identified no urgent concerns.
-        </p>
-      ) : (
-        <div className="mt-1 space-y-1.5">
-          {priorities.slice(0, MAX_SHOWN_WARNINGS).map((priority) => (
-            <div
-              key={priority.id}
-              className="flex items-center justify-between rounded border px-2 py-1.5"
-            >
-              <div>
-                <p className="text-xs font-medium">{priority.title}</p>
-                <p className="text-xs text-muted-foreground">{priority.summary}</p>
-              </div>
-              <Badge variant={SEVERITY_VARIANT[priority.severity]}>{priority.severity}</Badge>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface ReviewFooterProps {
-  readonly advanceLabel: string;
-  readonly canAdvance: boolean;
-  readonly committing: boolean;
-  readonly onCancel: () => void;
-  readonly onAdvance: () => Promise<void>;
-}
-
-function ReviewFooter({
-  advanceLabel,
-  canAdvance,
-  committing,
-  onCancel,
-  onAdvance,
-}: ReviewFooterProps) {
-  return (
-    <DialogFooter>
-      <Button variant="outline" onClick={onCancel} disabled={committing}>
-        Cancel
-      </Button>
-      <Button onClick={() => void onAdvance()} disabled={!canAdvance}>
-        {committing ? "Advancing…" : advanceLabel}
-      </Button>
-    </DialogFooter>
+    <p role="status" className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+      <span
+        aria-hidden="true"
+        className={cn(
+          "size-2 shrink-0 rounded-full",
+          saving ? "animate-pulse bg-warning" : "bg-success",
+        )}
+      />
+      <span className="truncate">{text}</span>
+    </p>
   );
 }
 
@@ -119,65 +73,102 @@ export function PreTurnReviewDialogView({
   saveMessage,
   committing,
   onAdvance,
+  onOpenPriority,
 }: PreTurnReviewDialogViewProps) {
-  const { priorities, constructionCount, expectedCompletions, researchSpend, loading } = data;
   const format = usePresentationFormat();
-
   const nextMonth = advanceMonth(campaign.month.year, campaign.month.month, 1);
-  const advanceLabel = `Advance to ${formatMonth(nextMonth)}`;
+  const verdict = reviewVerdict(data.priorities, data.economy);
   const canAdvance = !committing && !saving;
+  const [confirming, setConfirming] = useState(false);
+  const holding = verdict.kind === "hold";
+  const advanceLabel = `Advance to ${formatMonth(nextMonth)}`;
 
-  const stats: readonly ReviewStat[] = [
-    { label: "Current date", value: formatMonth(campaign.month) },
-    { label: "Next date", value: formatMonth(nextMonth) },
-    { label: "Available funds", value: format.money(campaign.treasury) },
-    {
-      label: "Projected surplus / deficit",
-      value: format.money(campaign.projectedSurplusDeficit),
-    },
-    {
-      label: "Active construction projects",
-      value: formatOptional(constructionCount, loading, format.count),
-    },
-    {
-      label: "Expected completions",
-      value: formatOptional(expectedCompletions, loading, format.count),
-    },
-    {
-      label: "Current research spending",
-      value: formatOptional(researchSpend, loading, format.money),
-    },
-    { label: "Save status", value: saving ? "Saving…" : (saveMessage ?? "Saved") },
-  ];
+  const changeOpen = (next: boolean) => {
+    if (!next) setConfirming(false);
+    onOpenChange(next);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Pre-turn review</DialogTitle>
-          <DialogDescription>
-            Review the current strategic state before advancing the campaign month. All figures are
-            from real campaign state.
-          </DialogDescription>
-        </DialogHeader>
+    <Dialog open={open} onOpenChange={changeOpen}>
+      <DialogContent className="max-h-[calc(100vh-2rem)] max-w-4xl gap-0 overflow-y-auto p-0 sm:rounded-xl">
+        <TransitHeader
+          current={formatMonth(campaign.month)}
+          next={formatMonth(nextMonth)}
+          verdict={verdict}
+        />
 
-        <div className="space-y-4 text-sm">
-          <ReviewStatGrid stats={stats} />
-          <UnresolvedWarnings priorities={priorities} />
-          {committing && (
-            <p className="text-xs text-muted-foreground">
-              Advancing… the commit is synchronous and cannot be cancelled mid-resolution.
-            </p>
-          )}
+        <div className="grid divide-border/70 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:divide-x">
+          <TreasuryLedger
+            economy={data.economy}
+            loading={data.loading}
+            fallbackTreasury={campaign.treasury}
+            fallbackNet={campaign.projectedSurplusDeficit}
+            format={format}
+          />
+          <div className="divide-y divide-border/70">
+            <Slipways
+              pipeline={data.pipeline}
+              economy={data.economy}
+              constructionCount={data.constructionCount}
+              expectedCompletions={data.expectedCompletions}
+              researchSpend={data.researchSpend}
+              loading={data.loading}
+              format={format}
+            />
+            <WatchList
+              priorities={data.priorities}
+              loading={data.loading}
+              onOpen={onOpenPriority}
+            />
+          </div>
         </div>
 
-        <ReviewFooter
-          advanceLabel={advanceLabel}
-          canAdvance={canAdvance}
-          committing={committing}
-          onCancel={() => onOpenChange(false)}
-          onAdvance={onAdvance}
-        />
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 bg-muted/30 px-6 py-3">
+          <div className="min-w-0">
+            {confirming ? (
+              <p
+                role="alert"
+                className="flex items-center gap-2 text-xs font-medium text-destructive"
+              >
+                <OctagonAlert aria-hidden="true" className="size-4 shrink-0" />
+                {verdict.detail}. Advance regardless?
+              </p>
+            ) : (
+              <SaveLamp saving={saving} message={saveMessage} />
+            )}
+            {committing && (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Advancing… the commit is synchronous and cannot be cancelled mid-resolution.
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => (confirming ? setConfirming(false) : changeOpen(false))}
+              disabled={committing}
+            >
+              {confirming ? "Go back" : "Cancel"}
+            </Button>
+            <Button
+              className={cn("min-w-44 font-display", ADVANCE_STYLE[verdict.kind])}
+              onClick={() => {
+                if (holding && !confirming) setConfirming(true);
+                else void onAdvance();
+              }}
+              disabled={!canAdvance}
+            >
+              {committing ? (
+                "Advancing…"
+              ) : (
+                <>
+                  {confirming ? `${advanceLabel} anyway` : advanceLabel}
+                  <ChevronsRight aria-hidden="true" />
+                </>
+              )}
+            </Button>
+          </div>
+        </footer>
       </DialogContent>
     </Dialog>
   );

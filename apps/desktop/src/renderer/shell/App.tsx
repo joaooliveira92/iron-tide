@@ -243,6 +243,10 @@ function CampaignShellApplication({
             saving={shell.state.saving}
             saveMessage={shell.state.saveMessage}
             committing={shell.state.committing}
+            onOpenPriority={(priority) => {
+              setReviewOpen(false);
+              shell.actions.selectScreen(priority.destination);
+            }}
             onAdvance={async () => {
               setReviewOpen(false);
               await shell.actions.advanceMonth();
