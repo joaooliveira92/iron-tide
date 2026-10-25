@@ -1,4 +1,5 @@
-import { isShipOperational, type Ship } from "./state.js";
+import { firstGateReason, type GateReasonTag } from "./eligibility.js";
+import type { Ship } from "./state.js";
 import type { ShipReadinessState } from "./readiness.js";
 
 export const STATION_ASSIGNMENTS = ["FOREIGN_STATION"] as const;
@@ -59,16 +60,26 @@ export function stationAssignmentProblems(
   return problems;
 }
 
+const STATION_REASON_BY_GATE: Readonly<Record<GateReasonTag, StationAssignmentReason>> = {
+  UnderConstruction: "UNDER_CONSTRUCTION",
+  Unavailable: "NOT_OPERATIONAL",
+  WorkingUp: "NOT_ACTIVE",
+  InRepair: "NOT_ACTIVE",
+  InReserve: "NOT_ACTIVE",
+  Mothballed: "NOT_ACTIVE",
+  InBattle: "NOT_ACTIVE",
+  Assigned: "ALREADY_ASSIGNED",
+  AssignmentForbidsUse: "ALREADY_ASSIGNED",
+};
+
 function shipProblem(
   ship: Ship | undefined,
   intent: StationAssignmentIntent,
 ): StationAssignmentReason | null {
   if (ship === undefined) return "NOT_OWNED";
   if (intent === "clear") return ship.stationAssignment === undefined ? "NOT_ASSIGNED" : null;
-  if (ship.isUnderConstruction) return "UNDER_CONSTRUCTION";
-  if (!isShipOperational(ship)) return "NOT_OPERATIONAL";
-  if (ship.readiness !== "ACTIVE") return "NOT_ACTIVE";
-  if (ship.stationAssignment !== undefined) return "ALREADY_ASSIGNED";
+  const reason = firstGateReason(ship, "HOLD_STATION");
+  if (reason !== null) return STATION_REASON_BY_GATE[reason._tag];
   return null;
 }
 

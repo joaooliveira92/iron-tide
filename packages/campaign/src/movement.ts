@@ -1,4 +1,5 @@
-import { isShipOperational, type CampaignSnapshot } from "./state.js";
+import { evaluateShipGates, type GateReasonTag, type ShipGateSubject } from "./eligibility.js";
+import type { CampaignSnapshot } from "./state.js";
 
 export interface FleetMoveProblem {
   readonly code:
@@ -22,18 +23,20 @@ export function fleetMoveProblem(
   const fleet = nation.fleets.find((f) => f.id === fleetId);
   if (!fleet)
     return { code: "INVALID_COMMAND_PAYLOAD", message: `Fleet ${fleetId} is not ${nationId}'s` };
-  const stationed = fleet.ships.find((s) => s.stationAssignment !== undefined);
+  const stationed = fleet.ships.find((s) => hasSailGate(s, "AssignmentForbidsUse"));
   if (stationed !== undefined)
     return {
       code: "FOREIGN_STATION_ASSIGNED",
       message: `${stationed.name} is on foreign station and is routed by the month; clear its assignment before ordering fleet ${fleet.name} to move`,
     };
-  if (!fleet.ships.some((s) => isShipOperational(s)))
+  if (
+    !fleet.ships.some((s) => !hasSailGate(s, "UnderConstruction") && !hasSailGate(s, "Unavailable"))
+  )
     return {
       code: "SHIP_NOT_OPERATIONAL",
       message: `Fleet ${fleet.name} has no commissioned ship`,
     };
-  const unavailable = fleet.ships.find((s) => s.availability === "UNAVAILABLE");
+  const unavailable = fleet.ships.find((s) => hasSailGate(s, "Unavailable"));
   if (unavailable !== undefined)
     return {
       code: "SHIP_UNAVAILABLE",
@@ -57,4 +60,8 @@ export function fleetMoveProblem(
       message: `${target.name} is not directly connected to ${fleet.locationAreaId}`,
     };
   return null;
+}
+
+function hasSailGate(ship: ShipGateSubject, tag: GateReasonTag): boolean {
+  return evaluateShipGates(ship, "SAIL").some((reason) => reason._tag === tag);
 }
