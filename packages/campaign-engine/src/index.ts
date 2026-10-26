@@ -9,6 +9,7 @@ export * from "./economy-explanations.js";
 export * from "./fleet.js";
 export * from "./fleet-explanations.js";
 export * from "./ledger-reconciliation.js";
+export * from "./report-explanations.js";
 export * from "./opening-briefing.js";
 export * from "./player-facts.js";
 export * from "./priorities.js";

@@ -1,10 +1,32 @@
 import { prioritySeveritySchema, strategicPriorityTypeSchema } from "@bluewave/campaign-engine";
+import type { ExplanationTree } from "@bluewave/events";
 import { Schema } from "effect";
 import { int, nonEmptyString, nonNegativeInt } from "./schema-primitives.js";
 
 const ReportMonthSchema = Schema.Struct({
   year: nonNegativeInt,
   month: nonNegativeInt,
+});
+
+const ExplanationSourceSchema = Schema.Struct({
+  kind: Schema.Literals(["ruleset", "content", "manual", "code"]),
+  ref: nonEmptyString,
+});
+
+const ExplanationTreeSchema: Schema.Codec<ExplanationTree> = Schema.Struct({
+  formulaId: nonEmptyString,
+  formulaVersion: nonEmptyString,
+  inputs: Schema.Record(Schema.String, Schema.Union([Schema.Number, Schema.String])),
+  intermediate: Schema.Record(Schema.String, Schema.Number),
+  result: Schema.Number,
+  unit: Schema.optional(nonEmptyString),
+  operation: Schema.optional(
+    Schema.Literals(["identity", "add", "subtract", "multiply", "divide", "round", "clamp"]),
+  ),
+  source: Schema.optional(ExplanationSourceSchema),
+  children: Schema.optional(
+    Schema.Array(Schema.suspend((): Schema.Codec<ExplanationTree> => ExplanationTreeSchema)),
+  ),
 });
 
 const MonthlyReportLedgerRowSchema = Schema.Struct({
@@ -40,6 +62,7 @@ const MonthlyReportTreasurySchema = Schema.Struct({
   ledgerRows: Schema.Array(MonthlyReportLedgerRowSchema),
   obligationExpense: Schema.optional(int),
   reconciliation: Schema.optional(MonthlyReportReconciliationSchema),
+  treasuryExplanation: Schema.optional(ExplanationTreeSchema),
 });
 
 const MonthlyReportShipSchema = Schema.Struct({

@@ -269,5 +269,38 @@ describe("construction explanations", () => {
     const tree = entry.readout?.scheduleExplanation;
     expect(Number(tree?.result)).toBe(entry.readout?.remainingMonths);
     expect(tree?.children?.map((child) => Number(child.result))).toEqual([6, 1]);
+
+    const instalment = entry.readout?.instalmentExplanation;
+    expect(Number(instalment?.result)).toBe(entry.readout?.monthlyInstalmentUnits);
+    expect(instalment?.children?.map((child) => [child.formulaId, Number(child.result)])).toEqual([
+      ["construction_instalment.slipway", 1],
+    ]);
+
+    const cost = entry.readout?.costExplanation;
+    expect(Number(cost?.result)).toBe(entry.readout?.totalCostUnits);
+    expect(cost?.children?.map((child) => [child.formulaId, Number(child.result)])).toEqual([
+      ["construction_cost.slipway", 10],
+    ]);
+  });
+
+  it("omits the instalment and cost trees when the project has no package breakdown or draw", () => {
+    const snapshot = fixtureSnapshot(
+      [
+        fixtureNation({
+          id: "uk",
+          constructionProjects: [
+            fixtureConstructionProject({
+              totalWork: SafeInt(10),
+              completedWork: SafeInt(4),
+              capacityUnits: { slipway: SafeInt(1) },
+            }),
+          ],
+        }),
+      ],
+      [fixtureDesign("uk", "design-1")],
+    );
+    const entry = buildConstructionProjectQueueWithReadouts(snapshot, "uk", "1880-01", null)[0]!;
+    expect(entry.readout?.instalmentExplanation).toBeDefined();
+    expect(entry.readout?.costExplanation).toBeUndefined();
   });
 });

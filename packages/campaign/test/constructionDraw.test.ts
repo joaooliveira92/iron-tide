@@ -1,6 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
-import { monthlyAbsorbable } from "../src/constructionDraw.js";
+import { monthlyAbsorbable, monthlyAbsorbableDetail } from "../src/constructionDraw.js";
 import type { ConstructionPackage, ConstructionProject } from "../src/state.js";
 
 function pkg(
@@ -117,5 +117,40 @@ describe("monthlyAbsorbable", () => {
       packages: [pkg("hull", "slipway", 100), pkg("launch", "slipway", 20, ["hull"])],
     });
     expect(monthlyAbsorbable(p, undefined, "1880-01")).toBe(100);
+  });
+});
+
+describe("monthlyAbsorbableDetail", () => {
+  it("reports the same draw as monthlyAbsorbable, split across the lines that did the work", () => {
+    const p = project({
+      totalWork: SafeInt(140),
+      packages: [pkg("hull", "slipway", 100), pkg("machinery", "machinery", 40)],
+    });
+    const detail = monthlyAbsorbableDetail(p, { slipway: 10, machinery: 5 }, "1880-01");
+    expect(detail.amount).toBe(monthlyAbsorbable(p, { slipway: 10, machinery: 5 }, "1880-01"));
+    expect(detail.remainingWork).toBe(140);
+    expect(detail.appliedByLine.slipway).toBe(10);
+    expect(detail.appliedByLine.machinery).toBe(5);
+    expect(detail.appliedByLine.quay).toBe(0);
+  });
+
+  it("reports an unbounded single-figure draw with no line split", () => {
+    const detail = monthlyAbsorbableDetail(
+      project({ completedWork: SafeInt(40) }),
+      undefined,
+      "1880-01",
+    );
+    expect(detail.amount).toBe(60);
+    expect(detail.appliedByLine.slipway).toBe(0);
+  });
+
+  it("reports no work for a completed project", () => {
+    const detail = monthlyAbsorbableDetail(
+      project({ completedWork: SafeInt(100) }),
+      { slipway: 10 },
+      "1880-01",
+    );
+    expect(detail.amount).toBe(0);
+    expect(detail.remainingWork).toBe(0);
   });
 });

@@ -1,7 +1,7 @@
 import {
   advanceMonth,
   monthId,
-  monthlyAbsorbable,
+  monthlyAbsorbableDetail,
   umsToKnots,
   type CampaignSnapshot,
   type CompiledDesignVersion as CompiledEngineDesignVersion,
@@ -12,7 +12,11 @@ import {
 import type { ExplanationTree } from "@bluewave/events";
 import type { CompiledDesignVersion } from "./design.js";
 import { compareCodePoints } from "@bluewave/deterministic";
-import { explainConstructionSchedule } from "./construction-explanations.js";
+import {
+  explainConstructionCost,
+  explainConstructionInstalment,
+  explainConstructionSchedule,
+} from "./construction-explanations.js";
 
 const CONSTRUCTION_SHIP_TYPE_LABELS: Readonly<Record<string, string>> = {
   battleship: "battleship",
@@ -137,12 +141,14 @@ export interface ConstructionProjectReadout {
   readonly launchMonth: string | null;
   readonly scheduleBasis: ConstructionScheduleBasis;
   readonly scheduleUnavailableReason: ConstructionScheduleUnavailableReason | null;
+  readonly scheduleExplanation?: ExplanationTree;
+  readonly instalmentExplanation?: ExplanationTree;
+  readonly costExplanation?: ExplanationTree;
 }
 
 export interface ConstructionProjectReadoutView extends ConstructionProjectReadout {
   readonly delayReasonCode?: string;
   readonly haltedCarryingCostUnits: number | null;
-  readonly scheduleExplanation?: ExplanationTree;
 }
 
 export interface ConstructionProjectForeignSchedule {
@@ -244,6 +250,10 @@ export function constructionProjectReadout(
 ): ConstructionProjectReadout {
   const totalCostUnits = Number(project.totalWork);
   const remainingWork = Math.max(0, totalCostUnits - Number(project.completedWork));
+  const costExplanation =
+    project.packages === undefined
+      ? undefined
+      : explainConstructionCost(totalCostUnits, project.packages);
 
   if (remainingWork <= 0) {
     return {
@@ -253,6 +263,7 @@ export function constructionProjectReadout(
       launchMonth: null,
       scheduleBasis: foreign === undefined ? "YARD_CAPACITY" : "FOREIGN_CONTRACT",
       scheduleUnavailableReason: null,
+      ...(costExplanation === undefined ? {} : { costExplanation }),
     };
   }
 
@@ -264,6 +275,7 @@ export function constructionProjectReadout(
       launchMonth: null,
       scheduleBasis: "UNAVAILABLE",
       scheduleUnavailableReason: "FOREIGN_CONTRACT_MISSING",
+      ...(costExplanation === undefined ? {} : { costExplanation }),
     };
   }
 
@@ -285,6 +297,7 @@ export function constructionProjectReadout(
         : null,
       scheduleBasis: "FOREIGN_CONTRACT",
       scheduleUnavailableReason: null,
+      ...(costExplanation === undefined ? {} : { costExplanation }),
     };
   }
 
@@ -300,11 +313,13 @@ export function constructionProjectReadout(
       scheduleUnavailableReason: UNAVAILABLE_SCHEDULE_STATUSES.has(project.status)
         ? project.status
         : "REVISION_HOLD",
+      ...(costExplanation === undefined ? {} : { costExplanation }),
     };
   }
 
   const capacityUnits = project.capacityUnits ?? design?.constructionPlan?.capacityUnits;
-  const monthlyInstalmentUnits = monthlyAbsorbable(project, capacityUnits, campaignMonth);
+  const detail = monthlyAbsorbableDetail(project, capacityUnits, campaignMonth);
+  const monthlyInstalmentUnits = detail.amount;
   const remainingMonths =
     remainingWork <= 0 || monthlyInstalmentUnits <= 0
       ? 0
@@ -316,6 +331,18 @@ export function constructionProjectReadout(
     launchMonth: remainingMonths <= 0 ? null : addMonths(campaignMonth, remainingMonths),
     scheduleBasis: "YARD_CAPACITY",
     scheduleUnavailableReason: null,
+    ...(costExplanation === undefined ? {} : { costExplanation }),
+    ...(monthlyInstalmentUnits > 0
+      ? {
+          instalmentExplanation: explainConstructionInstalment(detail),
+          scheduleExplanation: explainConstructionSchedule(
+            totalCostUnits,
+            Number(project.completedWork),
+            monthlyInstalmentUnits,
+            remainingMonths,
+          ),
+        }
+      : {}),
   };
 }
 
@@ -367,18 +394,6 @@ export function buildConstructionProjectQueueWithReadouts(
           ? {}
           : { delayReasonCode: project.delayReasonCode }),
         haltedCarryingCostUnits: project.status === "HALTED" ? haltedCarryingCostUnits : null,
-        ...(readout.scheduleBasis === "YARD_CAPACITY" &&
-        readout.monthlyInstalmentUnits > 0 &&
-        readout.remainingMonths > 0
-          ? {
-              scheduleExplanation: explainConstructionSchedule(
-                readout.totalCostUnits,
-                Number(project.completedWork),
-                readout.monthlyInstalmentUnits,
-                readout.remainingMonths,
-              ),
-            }
-          : {}),
       },
     };
   });

@@ -14,13 +14,17 @@ const training = (funded: Record<string, number> = {}): FleetTrainingProjection 
       ["TORPEDO_TACTICS", 2000],
       ["DAMAGE_CONTROL", 2000],
     ] as const
-  ).map(([subject, maintenanceAdderBp]) => ({
-    subject,
-    maintenanceAdderBp,
-    funded: subject in funded,
-    fundedMonths: funded[subject] ?? 0,
-    proficient: (funded[subject] ?? 0) >= 12,
-  })),
+  ).map(([subject, maintenanceAdderBp]) => {
+    const fundedMonths = funded[subject] ?? 0;
+    return {
+      subject,
+      maintenanceAdderBp,
+      funded: subject in funded,
+      fundedMonths,
+      monthsToProficiency: Math.max(0, 12 - fundedMonths),
+      proficient: fundedMonths >= 12,
+    };
+  }),
 });
 
 const stateOf = (projection: FleetTrainingProjection | null): TrainingState => ({
@@ -59,6 +63,70 @@ describe("FleetTrainingView", () => {
     expect(screen.getAllByText("Not funded")).toHaveLength(3);
     expect((screen.getByLabelText("Fund Gunnery") as HTMLInputElement).checked).toBe(true);
     expect(apply().disabled).toBe(true);
+  });
+
+  it("shows the maintenance-adder and months-to-proficiency explanations when supplied", () => {
+    const base = training({ GUNNERY: 5 });
+    const projection = {
+      ...base,
+      subjects: base.subjects.map((subject) =>
+        subject.subject === "GUNNERY"
+          ? {
+              ...subject,
+              maintenanceAdderExplanation: {
+                formulaId: "fleet_training_adder",
+                formulaVersion: "fleet_v1",
+                inputs: { baseAdderBp: 3000, nationMultiplierBp: 10000 },
+                intermediate: {},
+                result: 3000,
+                unit: "bp",
+                children: [
+                  {
+                    formulaId: "fleet_training_adder.base",
+                    formulaVersion: "fleet_v1",
+                    inputs: { amount: 3000 },
+                    intermediate: {},
+                    result: 3000,
+                    unit: "bp",
+                  },
+                ],
+              },
+              progressExplanation: {
+                formulaId: "fleet_training_progress",
+                formulaVersion: "fleet_v1",
+                inputs: { fundedMonths: 5, proficiencyMonths: 12 },
+                intermediate: {},
+                result: 7,
+                unit: "months",
+                children: [
+                  {
+                    formulaId: "fleet_training_progress.proficiency",
+                    formulaVersion: "fleet_v1",
+                    inputs: { amount: 12 },
+                    intermediate: {},
+                    result: 12,
+                    unit: "months",
+                  },
+                  {
+                    formulaId: "fleet_training_progress.funded",
+                    formulaVersion: "fleet_v1",
+                    inputs: { amount: 5 },
+                    intermediate: {},
+                    result: -5,
+                    unit: "months",
+                  },
+                ],
+              },
+            }
+          : subject,
+      ),
+    };
+    renderView(projection);
+    expect(screen.getByText("Maintenance adder 30%")).toBeTruthy();
+    expect(screen.getByText("Base subject adder")).toBeTruthy();
+    expect(screen.getByText("Proficient in 7 months")).toBeTruthy();
+    expect(screen.getByText("Proficiency threshold")).toBeTruthy();
+    expect(screen.getByText("Months funded")).toBeTruthy();
   });
 
   it("lets two subjects be chosen before sending the whole set once", () => {
