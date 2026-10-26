@@ -5,7 +5,14 @@ import { fileURLToPath } from "node:url";
 import { Result } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 
-import { executeScenario, saveAndLoad, verifyReplay } from "../src/replay-corpus/corpus.js";
+import {
+  advance,
+  executeScenario,
+  saveAndLoad,
+  scenarioEnvelopes,
+  startSnapshot,
+  verifyReplay,
+} from "../src/replay-corpus/corpus.js";
 import { REPLAY_SCENARIOS, decodeReplayFile, recordReplay } from "../src/replay-corpus/index.js";
 
 const REPLAY_DIR = resolve(fileURLToPath(new URL(".", import.meta.url)), "../../../golden/replays");
@@ -86,5 +93,34 @@ describe("war-bearing replay", () => {
   it("is checked in byte-for-byte", () => {
     const checkedIn = readFileSync(resolve(REPLAY_DIR, `${scenario.id}.replay.json`), "utf8");
     expect(recordReplay(scenario)).toBe(checkedIn);
+  });
+
+  it("fights the same war differently when the player's gunnery training is proficient", () => {
+    const damageAfterMonthTwo = (trained: boolean) => {
+      let snapshot = startSnapshot(scenario.setup);
+      if (trained) {
+        const nations = new Map(snapshot.nations);
+        const nation = nations.get("austria_hungary")!;
+        nations.set("austria_hungary", {
+          ...nation,
+          specialTraining: [{ subject: "GUNNERY", fundedMonths: 12, maintenanceAdderBp: 3_000 }],
+        });
+        snapshot = { ...snapshot, nations };
+      }
+      let report: unknown;
+      for (let month = 1; month <= 2; month++) {
+        const commands = scenarioEnvelopes(scenario, month, snapshot);
+        const step = advance(
+          snapshot,
+          scenario.seed,
+          { commands: () => commands as never },
+          scenario.playerNationId,
+        );
+        snapshot = step.next;
+        report = step.result.finalSnapshot.wars.battles.at(-1)?.result;
+      }
+      return JSON.stringify(report);
+    };
+    expect(damageAfterMonthTwo(true)).not.toBe(damageAfterMonthTwo(false));
   });
 });

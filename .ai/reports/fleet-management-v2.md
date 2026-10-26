@@ -52,7 +52,7 @@ balance targets of ADR-0283, adopted under the owner's standing delegation on ma
   `fleet.absence.*` and `battle.history.absent*` message-catalogue keys (`battle-history-state.test.ts`), not a private label
   map. No second locale exists yet, so translation itself is untested.
 - **Story 49** (every shown number traces to an explanation tree): training, exercise and doctrine costs are stated in text, not as explanation trees.
-- **Story 34 and the training effect**: proficiency is tracked and costs maintenance, but its battle effect (`effectBp`) is carried in the ruleset and not read by combat (ADR-0283 follows up).
+- **Story 34 and the training effect**: gunnery proficiency now raises the nation's battle accuracy (ADR-0301; `battle-training.test.ts`, `project.test.ts`, `replay-war.test.ts`). Night fighting, torpedo tactics and damage control have no combat seam yet, so their `effectBp` stays unread.
 - **Absences and battle experience replay scenario**: delivered after go-live by ADR-0295. `production-1880-4m-adriatic-war`
   fights a battle from month 2 on armed hulls, records `aut_tegetthoff` as absent for `WorkingUp` and grants the division
   experience once per battle (`replay-war.test.ts`). The setup arms hulls as a fixture; no production value changed.

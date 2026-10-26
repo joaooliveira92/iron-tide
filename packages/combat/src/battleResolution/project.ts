@@ -53,6 +53,7 @@ export interface AutoResolverNation {
   designs: Map<string, CompiledDesignVersion>;
   divisions: PermanentDivision[];
   officers?: Officer[];
+  gunneryTrainingBp?: number;
 }
 
 export interface ProjectBattleInput {
@@ -72,6 +73,15 @@ export interface ProjectBattleOutput {
   units: TacticalShipUnit[];
   designs: Record<string, CompiledDesignVersion>;
   torpedoes?: TorpedoContext;
+}
+
+function trainingAccuracyBp(
+  unit: TacticalShipUnit,
+  attacker: AutoResolverNation,
+  defender: AutoResolverNation,
+): number {
+  const nation = unit.sideId === "ATTACKER" ? attacker : defender;
+  return 10_000 + (nation.gunneryTrainingBp ?? 0);
 }
 
 function commanderAccuracyBp(
@@ -227,6 +237,7 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
       accuracyFactors: {
         ...neutralAccuracyFactors(GUNNERY_ACCURACY_BASE_BP),
         officer: commanderAccuracyBp(u, attacker, defender),
+        training: trainingAccuracyBp(u, attacker, defender),
         ...(isContesting ? { ownManeuver: contestedOwnManeuverBp! } : {}),
       },
       state: withGunneryStateHash({

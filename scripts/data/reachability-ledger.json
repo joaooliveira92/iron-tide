@@ -59,7 +59,7 @@
       "player_verb": "Fund up to two special-training subjects",
       "status": "reachable",
       "engine_package": "phase-engine",
-      "engine_modules": [],
+      "engine_modules": ["battleTraining"],
       "engine_symbols": ["applySpecialTrainingCommand"],
       "main_commands": ["submitSpecialTraining"],
       "renderer_screen": "screens/fleet/training/FleetTrainingSection.tsx",
