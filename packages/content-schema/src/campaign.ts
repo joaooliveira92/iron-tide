@@ -18,7 +18,7 @@ export const CampaignDesignSchema = Schema.Struct({
   normalizedArmorUm: Schema.optional(nonNegativeInt),
 });
 
-const FleetShipSchema = Schema.Struct({
+export const FleetShipSchema = Schema.Struct({
   id: Schema.NonEmptyString,
   name: Schema.NonEmptyString,
   classId: Schema.NonEmptyString,

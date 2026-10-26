@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
-import { projectBattle } from "@bluewave/combat/battleResolution";
+import { NO_TRAINING_EFFECTS, projectBattle } from "@bluewave/combat/battleResolution";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "@bluewave/combat/battleResolution";
 import { TACTICAL_UNIT_PROMOTION_INVALID } from "@bluewave/combat/tactical";
 import { AREA_ID, CAMPAIGN_MONTH, makeNations, makeProjectionManifest } from "./fixtures.js";
@@ -150,5 +150,54 @@ describe("AC-4: tactical projection (manifest + committed ships -> TacticalBattl
     }
     expect(out.units.find((u) => u.sideId === "ATTACKER")!.assetId).toBe("a1");
     expect(out.units.find((u) => u.sideId === "DEFENDER")!.assetId).toBe("d1");
+  });
+
+  it("applies a nation's gunnery training bonus to its own batteries only", () => {
+    const nations = makeNations();
+    const out = projectBattle({
+      manifest: makeProjectionManifest(["a1", "a2", "d1", "d2"]),
+      areaId: AREA_ID,
+      campaignMonth: CAMPAIGN_MONTH,
+      attacker: {
+        ...nations.attacker,
+        trainingEffects: { ...NO_TRAINING_EFFECTS, gunneryBp: 1_000 },
+      },
+      defender: nations.defender,
+      rulesetVersion: RULESET,
+    });
+    const attackerShips = new Set(out.state.forces["ATTACKER"]);
+    expect(out.batteries.length).toBeGreaterThan(0);
+    for (const battery of out.batteries) {
+      expect(battery.accuracyFactors.training).toBe(
+        attackerShips.has(battery.ownerShipId) ? 11_000 : 10_000,
+      );
+    }
+  });
+
+  it("leaves accuracy untouched without a training bonus", () => {
+    const nations = makeNations();
+    const out = projectBattle({
+      manifest: makeProjectionManifest(["a1", "a2", "d1", "d2"]),
+      areaId: AREA_ID,
+      campaignMonth: CAMPAIGN_MONTH,
+      attacker: nations.attacker,
+      defender: nations.defender,
+      rulesetVersion: RULESET,
+    });
+    for (const battery of out.batteries) expect(battery.accuracyFactors.training).toBe(10_000);
+  });
+
+  it("hands each side's training effects to resolution, neutral when absent", () => {
+    const nations = makeNations();
+    const effects = { ...NO_TRAINING_EFFECTS, damageControlBp: 2_000 };
+    const out = projectBattle({
+      manifest: makeProjectionManifest(["a1", "a2", "d1", "d2"]),
+      areaId: AREA_ID,
+      campaignMonth: CAMPAIGN_MONTH,
+      attacker: { ...nations.attacker, trainingEffects: effects },
+      defender: nations.defender,
+      rulesetVersion: RULESET,
+    });
+    expect(out.trainingEffects).toEqual({ ATTACKER: effects, DEFENDER: NO_TRAINING_EFFECTS });
   });
 });

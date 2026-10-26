@@ -3,6 +3,7 @@ import { compareCodePoints } from "@bluewave/deterministic";
 import type { ArmourBalance, ArmourMaterialAvailability, ArmourRegion } from "./armour.js";
 import { armourRegionSlotId } from "./partCompatibility.js";
 import { lifecycleIssue } from "./partLifecycle.js";
+import { designInvariant } from "./errors.js";
 
 export type FlattenedArmourPart = Extract<FlattenedPart, { readonly family: "armour_material" }>;
 
@@ -209,7 +210,7 @@ export function armourRegionFromEntry(
   region: ArmourRegion["region"],
 ): ArmourRegion {
   if (entry.shape === undefined) {
-    throw new Error(`armourPartAdapter: armour entry '${entry.slot}' has no shape`);
+    throw designInvariant(`armourPartAdapter: armour entry '${entry.slot}' has no shape`);
   }
   return {
     region,

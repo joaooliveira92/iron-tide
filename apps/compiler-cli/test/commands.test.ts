@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vite-plus/test";
 import { sep } from "node:path";
 import { SafeInt } from "@bluewave/contracts";
+import { PersistenceCorruptSaveError } from "@bluewave/persistence";
+import { Effect } from "effect";
 
 const fsMocks = vi.hoisted(() => ({
   readFileSync: vi.fn(),
@@ -253,16 +255,26 @@ beforeEach(() => {
     replayedFinalHash: "rh",
     originalFinalHash: "rh",
   });
-  saveStoreMocks.load.mockReturnValue({
-    snapshot: campaignSnapshot,
-    envelope: { bodyHash: "eh" },
-    rawHash: "rh",
-  } as any);
-  saveStoreMocks.loadById.mockReturnValue({
-    snapshot: campaignSnapshot,
-    envelope: { bodyHash: "eh" },
-    rawHash: "rh",
-  } as any);
+  saveStoreMocks.load.mockReturnValue(
+    Effect.succeed({
+      state: {
+        snapshot: campaignSnapshot,
+        envelope: { bodyHash: "eh" },
+        rawHash: "rh",
+      },
+      warnings: [],
+    }),
+  );
+  saveStoreMocks.loadById.mockReturnValue(
+    Effect.succeed({
+      state: {
+        snapshot: campaignSnapshot,
+        envelope: { bodyHash: "eh" },
+        rawHash: "rh",
+      },
+      warnings: [],
+    }),
+  );
   saveStoreMocks.getActiveSaveId.mockReturnValue("save-1");
   saveStoreMocks.getPreviousSaveId.mockReturnValue("save-0");
 });
@@ -830,7 +842,9 @@ describe("Campaign", () => {
     ).toBe("internal-error");
   });
   it("runCampaignLoad validation-error", async () => {
-    saveStoreMocks.load.mockReturnValue(undefined);
+    saveStoreMocks.load.mockReturnValue(
+      Effect.fail(new PersistenceCorruptSaveError({ message: "save did not load" })),
+    );
     expect(
       await runCli(
         runCampaignLoad(
@@ -887,7 +901,9 @@ describe("Campaign", () => {
 
 describe("runTurnExecute", () => {
   it("validation-error if load fails", async () => {
-    saveStoreMocks.load.mockReturnValue(undefined);
+    saveStoreMocks.load.mockReturnValue(
+      Effect.fail(new PersistenceCorruptSaveError({ message: "save did not load" })),
+    );
     expect(
       await runCli(
         runTurnExecute(
@@ -1039,11 +1055,16 @@ describe("runTurnExecute", () => {
   });
   it("uses default-seed if seed empty", async () => {
     phaseMocks.execute.mockClear();
-    saveStoreMocks.load.mockReturnValue({
-      snapshot: campaignSnapshot,
-      envelope: { bodyHash: "eh" },
-      rawHash: "rh",
-    } as any);
+    saveStoreMocks.load.mockReturnValue(
+      Effect.succeed({
+        state: {
+          snapshot: campaignSnapshot,
+          envelope: { bodyHash: "eh" },
+          rawHash: "rh",
+        },
+        warnings: [],
+      }),
+    );
     await runCli(
       runTurnExecute(
         {
@@ -1286,7 +1307,7 @@ describe("runReplay", () => {
         "/s",
       ),
     );
-    expect(saveStoreMocks.loadById).toHaveBeenCalledWith("/s", "save-0", expect.anything());
+    expect(saveStoreMocks.loadById).toHaveBeenCalledWith("/s", "save-0");
     expect(saveStoreMocks.load).not.toHaveBeenCalled();
   });
   it("validation-error no commands file", async () => {

@@ -24,9 +24,9 @@ describe("production part index carries the torpedo family (13a)", () => {
   const bundle = buildProductionBundle();
   const index = bundle.shipBuilding?.partModel?.partIndex;
 
-  it("indexes the eight torpedo parts and the 19 launchers", () => {
+  it("indexes the eight torpedo parts and the 20 launchers", () => {
     expect(index?.byFamily.torpedo).toHaveLength(8);
-    expect(index?.byFamily.torpedo_launcher).toHaveLength(19);
+    expect(index?.byFamily.torpedo_launcher).toHaveLength(20);
     expect(index?.byInterface.torpedo).toEqual(index?.byFamily.torpedo);
   });
 

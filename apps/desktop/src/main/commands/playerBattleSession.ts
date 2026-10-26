@@ -1,4 +1,5 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
+import type { FleetManagementRules } from "@bluewave/content-schema";
 import type { BattleManifest } from "@bluewave/combat";
 import {
   advancePlayerBattleMinute,
@@ -10,6 +11,8 @@ import {
   type AutoResolverNation,
   type PlayerBattleSession,
 } from "@bluewave/combat/battleResolution";
+import { isBluewaveError } from "@bluewave/contracts";
+import { trainingEffectsFor } from "@bluewave/phase-engine";
 import { Effect } from "effect";
 import type {
   AdvancePlayerBattleResult,
@@ -20,6 +23,7 @@ import type {
 import { toCombatOrders } from "../../shared/player-battle-orders.js";
 import type { PlayerBattleStep } from "../playerBattleSidecar.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
+import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { DecisionSource } from "../runtime/decisionSource.js";
 import { PlayerBattleRegistry } from "../runtime/playerBattleRegistry.js";
 import { PendingTurnStore, PlayerBattleStore } from "../runtime/turnSidecarStores.js";
@@ -78,6 +82,7 @@ function nationOf(
   snapshot: CampaignSnapshot,
   nationId: string,
   designs: CampaignSnapshot["designs"],
+  fleetManagement: FleetManagementRules | undefined,
 ): AutoResolverNation {
   const nation = snapshot.nations.get(nationId);
   if (nation === undefined) throw new Error(`No nation ${nationId} in the battle snapshot`);
@@ -87,6 +92,7 @@ function nationOf(
     designs,
     divisions: nation.divisions,
     officers: nation.officers,
+    trainingEffects: trainingEffectsFor(nation, fleetManagement),
   };
 }
 
@@ -102,11 +108,12 @@ function toResultDto(session: PlayerBattleSession): PlayerBattleResultDto {
   };
 }
 
-function projectSession(
+export function projectSession(
   snapshot: CampaignSnapshot,
   battleId: string,
   campaignSeed: string,
   pending: { readonly createdAt: string; readonly playerNationId: string },
+  fleetManagement?: FleetManagementRules,
 ): PlayerBattleSession | PlayerBattleRefusal {
   const manifest = (snapshot.wars.battleManifests ?? []).find(
     (candidate) => candidate.battleId === battleId,
@@ -128,8 +135,8 @@ function projectSession(
       manifest: manifest as BattleManifest,
       areaId: manifest.areaId,
       campaignMonth: pending.createdAt,
-      attacker: nationOf(snapshot, manifest.attackerId, snapshot.designs),
-      defender: nationOf(snapshot, manifest.defenderId, snapshot.designs),
+      attacker: nationOf(snapshot, manifest.attackerId, snapshot.designs, fleetManagement),
+      defender: nationOf(snapshot, manifest.defenderId, snapshot.designs, fleetManagement),
       playerNationId: pending.playerNationId,
       strategicWeather,
       campaignSeed,
@@ -138,12 +145,17 @@ function projectSession(
       rngVersion: manifest.rngVersion,
     });
   } catch (error) {
-    return refuse(
-      "PLAYER_BATTLE_PROJECTION_FAILED",
-      error instanceof Error ? error.message : String(error),
-    );
+    return refuse("PLAYER_BATTLE_PROJECTION_FAILED", projectionFailureReason(error));
   }
 }
+
+export const projectionFailureReason = (error: unknown): string => {
+  if (isBluewaveError(error)) {
+    const { reason } = error.context;
+    return typeof reason === "string" ? reason : error.message;
+  }
+  return error instanceof Error ? error.message : String(error);
+};
 
 const isRefusal = (
   value: PlayerBattleSession | PlayerBattleRefusal,
@@ -184,11 +196,13 @@ export const startPlayerBattle = (input: {
       );
     }
 
+    const fleetManagement = yield* (yield* ContentArtifact).loadFleetManagementRules();
     const projected = projectSession(
       outcome.snapshot,
       input.battleId,
       `${record.campaignSeed}:month:${String(pending.startingRevision)}`,
       pending,
+      fleetManagement,
     );
     if (isRefusal(projected)) return projected;
 

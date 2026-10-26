@@ -1,7 +1,12 @@
+import { createCampaignSnapshotEnvelope } from "@bluewave/campaign";
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
-import { createEnvelope } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
-import { SaveStore, type SaveExtras, type SaveMetadata } from "@bluewave/persistence";
+import {
+  SaveStore,
+  type PersistenceError,
+  type SaveExtras,
+  type SaveMetadata,
+} from "@bluewave/persistence";
 import { Context, Effect, Layer, Result, Schema } from "effect";
 import {
   existsSync,
@@ -29,6 +34,14 @@ function failure(reason: string, error: unknown): CommandFailed {
   });
 }
 
+function persistenceFailure(error: PersistenceError): CommandFailed {
+  const diagnostic = error.toDiagnostic();
+  return new CommandFailed({
+    reason: "LOAD_FAILED",
+    diagnostics: [diagnostic.code, diagnostic.message],
+  });
+}
+
 function writeSessionMetadata(saveDir: string, metadata: SessionMetadata): void {
   const target = join(saveDir, SESSION_METADATA_FILENAME);
   const tmp = `${target}.tmp`;
@@ -40,7 +53,7 @@ function readSessionMetadata(saveDir: string): SessionMetadata | null {
   const target = join(saveDir, SESSION_METADATA_FILENAME);
   if (!existsSync(target)) return null;
   try {
-    const parsed = Schema.decodeUnknownResult(SessionMetadataSchema)(
+    const parsed = Schema.decodeUnknownResult(SessionMetadataSchema, { onExcessProperty: "error" })(
       JSON.parse(readFileSync(target, "utf8")),
     );
     return Result.isSuccess(parsed) ? parsed.success : null;
@@ -50,7 +63,7 @@ function readSessionMetadata(saveDir: string): SessionMetadata | null {
 }
 
 export interface LoadedMonthInput {
-  readonly status: "present" | "missing" | "corrupt";
+  readonly status: "present" | "missing";
   readonly value?: unknown;
 }
 
@@ -122,17 +135,16 @@ export class ProjectStore extends Context.Service<
     readonly load: (
       saveDir: string,
       collector: DiagnosticCollector,
-    ) => Effect.Effect<CampaignState | null, CommandFailed>;
+    ) => Effect.Effect<CampaignState, CommandFailed>;
     readonly list: (saveDir: string) => Effect.Effect<readonly SaveMetadata[], CommandFailed>;
     readonly loadById: (
       saveDir: string,
       saveId: string,
       collector: DiagnosticCollector,
-    ) => Effect.Effect<CampaignState | null, CommandFailed>;
+    ) => Effect.Effect<CampaignState, CommandFailed>;
     readonly loadMonthInput: (
       saveDir: string,
       saveId: string,
-      collector: DiagnosticCollector,
     ) => Effect.Effect<LoadedMonthInput, CommandFailed>;
     readonly getActiveSaveId: (saveDir: string) => Effect.Effect<string | null, CommandFailed>;
     readonly getPreviousSaveId: (saveDir: string) => Effect.Effect<string | null, CommandFailed>;
@@ -168,9 +180,10 @@ export function projectStoreLayer(): Layer.Layer<ProjectStore> {
         catch: (e) => failure("SAVE_FAILED", e),
       }),
     load: (saveDir, collector) =>
-      Effect.try({
-        try: () => store.load(saveDir, collector),
-        catch: (e) => failure("LOAD_FAILED", e),
+      Effect.gen(function* () {
+        const loaded = yield* store.load(saveDir).pipe(Effect.mapError(persistenceFailure));
+        for (const warning of loaded.warnings) collector.add(warning);
+        return loaded.state;
       }),
     list: (saveDir) =>
       Effect.try({
@@ -178,22 +191,22 @@ export function projectStoreLayer(): Layer.Layer<ProjectStore> {
         catch: (e) => failure("LOAD_FAILED", e),
       }),
     loadById: (saveDir, saveId, collector) =>
-      Effect.try({
-        try: () => store.loadById(saveDir, saveId, collector),
-        catch: (e) => failure("LOAD_FAILED", e),
+      Effect.gen(function* () {
+        const loaded = yield* store
+          .loadById(saveDir, saveId)
+          .pipe(Effect.mapError(persistenceFailure));
+        for (const warning of loaded.warnings) collector.add(warning);
+        return loaded.state;
       }),
-    loadMonthInput: (saveDir, saveId, collector) =>
-      Effect.try({
-        try: () => {
-          const stored = store.loadMonthInput(saveDir, saveId, collector);
-          if (stored.status === "present") {
-            return { status: "present" as const, value: stored.value };
-          }
-          return {
-            status: stored.status === "corrupt" ? ("corrupt" as const) : ("missing" as const),
-          };
-        },
-        catch: (e) => failure("LOAD_FAILED", e),
+    loadMonthInput: (saveDir, saveId) =>
+      Effect.gen(function* () {
+        const stored = yield* store
+          .loadMonthInput(saveDir, saveId)
+          .pipe(Effect.mapError(persistenceFailure));
+        if (stored.status === "present") {
+          return { status: "present" as const, value: stored.value };
+        }
+        return { status: "missing" as const };
       }),
     getActiveSaveId: (saveDir) =>
       Effect.try({
@@ -225,8 +238,7 @@ export function projectStoreLayer(): Layer.Layer<ProjectStore> {
     persistConstructionSnapshot: (record, mutate) =>
       Effect.gen(function* () {
         const nextSnapshot = mutate(record.state.snapshot);
-        const nextEnvelope = createEnvelope(
-          "campaign-snapshot",
+        const nextEnvelope = createCampaignSnapshotEnvelope(
           nextSnapshot.compatibilityVersion,
           nextSnapshot,
         );

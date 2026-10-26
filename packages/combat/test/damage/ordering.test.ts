@@ -1,3 +1,4 @@
+import { compareStrings } from "../../src/core/ordering.js";
 import { describe, it, expect } from "vite-plus/test";
 import {
   damageEventOrder,
@@ -132,7 +133,14 @@ describe("AC-4: Canonical ordering (§46)", () => {
     });
     const order = damageEventOrder(a, b);
     expect(order).not.toBe(0);
-    expect(a.recordHash.localeCompare(b.recordHash)).toBe(order);
+    expect(Math.sign(order)).toBe(Math.sign(compareStrings(a.recordHash, b.recordHash)));
+  });
+
+  it("orders source ids by code unit, so an upper-case id precedes a lower-case one", () => {
+    const upper = makeRecord({ sourceId: "Z-BATTERY" });
+    const lower = makeRecord({ sourceId: "a-battery" });
+    expect(damageEventOrder(upper, lower)).toBeLessThan(0);
+    expect(damageEventOrder(lower, upper)).toBeGreaterThan(0);
   });
 
   it("identical records compare as 0", () => {

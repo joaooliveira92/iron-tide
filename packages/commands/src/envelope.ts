@@ -41,8 +41,12 @@ export type CommandBody =
   | DissolveDivisionCommand
   | ChangeDivisionFlagshipCommand
   | ReorderDivisionShipsCommand
+  | ChangeDivisionDoctrineCommand
   | AssignForeignStationCommand
-  | ClearForeignStationCommand;
+  | ClearForeignStationCommand
+  | SetShipReadinessCommand
+  | SetSpecialTrainingCommand
+  | HoldFleetExerciseCommand;
 export interface BudgetProjectCommand {
   type: "budget_project";
   nationId: string;
@@ -218,9 +222,32 @@ export interface ReorderDivisionShipsCommand {
   divisionId: string;
   shipOrder: string[];
 }
+export interface ChangeDivisionDoctrineCommand {
+  type: "ChangeDivisionDoctrine";
+  nationId: string;
+  divisionId: string;
+  divisionRole?: string;
+  preferredFormation?: string;
+}
 
 export interface AssignForeignStationCommand {
   type: "AssignForeignStation";
+  nationId: string;
+  shipIds: string[];
+}
+export interface SetShipReadinessCommand {
+  type: "SetShipReadiness";
+  nationId: string;
+  shipIds: string[];
+  readiness: "ACTIVE" | "RESERVE" | "MOTHBALLED";
+}
+export interface SetSpecialTrainingCommand {
+  type: "SetSpecialTraining";
+  nationId: string;
+  subjects: string[];
+}
+export interface HoldFleetExerciseCommand {
+  type: "HoldFleetExercise";
   nationId: string;
   shipIds: string[];
 }

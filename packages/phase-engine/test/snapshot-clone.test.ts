@@ -238,6 +238,14 @@ function makeRichSnapshot(): CampaignSnapshot {
   ];
   gbr.aircraft = {} as any;
   gbr.carrierOperations = {} as any;
+  gbr.fleetExercise = {
+    month: "1880-03",
+    year: 1880,
+    yearCount: 1,
+    shipIds: ["g1"],
+    maintenanceAdderBp: 10000,
+  };
+  gbr.specialTraining = [{ subject: "GUNNERY", fundedMonths: 1, maintenanceAdderBp: 3000 }];
   gbr.dock = {
     maximumNewConstructionMassKg: 13_000_000,
     maximumMajorRepairMassKg: 13_000_000,
@@ -341,6 +349,7 @@ function makeRichSnapshot(): CampaignSnapshot {
   snapshot.wars.wars = [{ ...makeWar(), endDate: "1881-01" }];
   const battle = makeBattle();
   battle.manifestHash = "manifest-hash";
+  battle.absences = [{ shipId: "g9", reasons: ["Mothballed"] }];
   battle.result = {
     winnerId: DEFENDER_NATION,
     loserId: ATTACKER_NATION,

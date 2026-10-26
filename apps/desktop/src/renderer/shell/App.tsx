@@ -25,6 +25,7 @@ import { type CampaignShellMode, describeMonthCommitFailure } from "./campaign-s
 import { AppFrame } from "./AppFrame.js";
 import { BackgroundLayer } from "./BackgroundLayer.js";
 import { useBackground } from "./BackgroundContext.js";
+import { prioritiesStateFromReads } from "./campaign-reads.js";
 import { CampaignUnavailableView } from "./CampaignUnavailableView.js";
 import { CampaignShellProvider, useCampaignShellContext } from "./CampaignShellContext.js";
 import { GuidedInspectionOverlay } from "./GuidedInspectionOverlay.js";
@@ -34,6 +35,7 @@ import { OfferDialog } from "./interruptions/OfferDialog.js";
 import { DecisionDialog } from "./interruptions/DecisionDialog.js";
 import { PendingTurnRecoveryPrompt } from "./interruptions/PendingTurnRecoveryPrompt.js";
 import { MapSheet } from "./MapSheet.js";
+import { ScreenHeaderProvider } from "./screen-header.js";
 import { SiteHeader } from "./SiteHeader.js";
 import {
   type ActiveView,
@@ -85,7 +87,7 @@ function activeViewFor(mode: CampaignShellMode): ActiveView {
 
 function ActiveCampaignView({ screen }: { readonly screen: Screen }) {
   return (
-    <div className={screen === "overview" ? "h-full font-sans" : "p-8 font-sans"}>
+    <div className={screen === "overview" ? "h-full font-sans" : "p-4 font-sans"}>
       <CampaignScreenOutlet screen={screen} />
     </div>
   );
@@ -123,11 +125,7 @@ function CampaignShellApplication({
         ? null
         : {
             month: shell.state.campaign.month,
-            treasury: shell.state.campaign.treasury,
-            nationName: shell.state.campaign.nationName,
-            projectedSurplusDeficit: shell.state.campaign.projectedSurplusDeficit,
             atWar: shell.state.campaign.atWar,
-            activeAlertsCount: shell.state.campaign.activeAlertsCount,
             prestige: shell.state.campaign.prestige,
             ...(shell.state.campaign.career === undefined
               ? {}
@@ -159,11 +157,23 @@ function CampaignShellApplication({
   const searchTargets =
     shell.state.campaign === null ? EMPTY_SEARCH_TARGETS : CAMPAIGN_SCREEN_SEARCH_TARGETS;
 
+  const briefing = useMemo(
+    () =>
+      shell.state.campaign === null || shell.state.reads === null
+        ? undefined
+        : {
+            state: prioritiesStateFromReads(shell.state.reads),
+            onNavigate: shell.actions.selectScreen,
+          },
+    [shell.state.campaign, shell.state.reads, shell.actions.selectScreen],
+  );
+
   const header = (
     <SiteHeader
       title={headerTitleFor(headerCampaign)}
       activeView={activeView}
       campaign={headerCampaign}
+      {...(briefing === undefined ? {} : { briefing })}
       wizardStep={WIZARD_STEP_COPY[shell.state.mode.kind]}
       back={{
         disabled: !shell.state.canGoBack,
@@ -201,94 +211,102 @@ function CampaignShellApplication({
 
   return (
     <WindowContextProvider value={windowContextValue}>
-      <BackgroundLayer background={background} resolvedTheme={resolvedTheme} />
-      <AppFrame
-        campaignSessionId={shell.state.campaign?.sessionId ?? null}
-        campaignReads={shell.state.reads}
-        screen={shell.state.screen}
-        saveMessage={shell.state.saveMessage}
-        header={header}
-        onSelectScreen={shell.actions.selectScreen}
-      >
-        {content}
-      </AppFrame>
-      <MapSheet />
-      <MonthlyResolutionLoading committing={shell.state.committing} />
-      {shell.state.commitFailure !== null && (
-        <MonthlyResolutionFailure
-          message={describeMonthCommitFailure(shell.state.commitFailure)}
-          onReturn={() => shell.actions.selectScreen("overview")}
-          onRetry={async () => {
-            await shell.actions.advanceMonth();
-          }}
-        />
-      )}
-      {shell.state.campaign !== null && (
-        <PreTurnReviewDialog
-          open={reviewOpen}
-          onOpenChange={setReviewOpen}
-          sessionId={shell.state.campaign.sessionId}
-          campaign={shell.state.campaign}
-          saving={shell.state.saving}
+      <ScreenHeaderProvider>
+        <BackgroundLayer background={background} resolvedTheme={resolvedTheme} />
+        <AppFrame
+          campaignSessionId={shell.state.campaign?.sessionId ?? null}
+          campaignReads={shell.state.reads}
+          screen={shell.state.screen}
           saveMessage={shell.state.saveMessage}
-          committing={shell.state.committing}
-          onAdvance={async () => {
-            setReviewOpen(false);
-            await shell.actions.advanceMonth();
-          }}
-        />
-      )}
-      {shell.state.campaign !== null &&
-        shell.state.interruption !== null &&
-        (shell.state.interruption.unavailable ? (
-          <PendingTurnRecoveryPrompt
-            pending={shell.state.interruption.pending}
-            unavailable
-            onResume={() => undefined}
-            onAbandon={shell.actions.abandonPendingTurn}
+          header={header}
+          onSelectScreen={shell.actions.selectScreen}
+        >
+          {content}
+        </AppFrame>
+        <MapSheet />
+        <MonthlyResolutionLoading committing={shell.state.committing} />
+        {shell.state.commitFailure !== null && (
+          <MonthlyResolutionFailure
+            message={describeMonthCommitFailure(shell.state.commitFailure)}
+            onReturn={() => shell.actions.selectScreen("overview")}
+            onRetry={async () => {
+              await shell.actions.advanceMonth();
+            }}
           />
-        ) : shell.state.interruption.request === null ? (
-          <PendingTurnRecoveryPrompt
-            pending={shell.state.interruption.pending}
-            unavailable={false}
-            onResume={shell.actions.advanceMonth}
-            onAbandon={shell.actions.abandonPendingTurn}
-          />
-        ) : shell.state.interruption.request.kind === "decision" ? (
-          <DecisionDialog
-            request={shell.state.interruption.request}
-            onAnswer={(optionId) =>
-              void shell.actions.answerInterruption({ kind: "decision", optionId })
-            }
-            onAbandon={shell.actions.abandonPendingTurn}
-          />
-        ) : shell.state.interruption.request.kind === "offer" ? (
-          <OfferDialog
-            request={shell.state.interruption.request}
-            onChoose={(choice) => void shell.actions.answerInterruption({ kind: "offer", choice })}
-            onAbandon={shell.actions.abandonPendingTurn}
-          />
-        ) : (
-          <PlayerBattleScreen
-            request={shell.state.interruption.request}
+        )}
+        {shell.state.campaign !== null && (
+          <PreTurnReviewDialog
+            open={reviewOpen}
+            onOpenChange={setReviewOpen}
             sessionId={shell.state.campaign.sessionId}
-            onSubmitResult={(outcome) =>
-              void shell.actions.answerInterruption({ kind: "battle-outcome", outcome })
-            }
-            onAbandon={shell.actions.abandonPendingTurn}
+            campaign={shell.state.campaign}
+            saving={shell.state.saving}
+            saveMessage={shell.state.saveMessage}
+            committing={shell.state.committing}
+            onOpenPriority={(priority) => {
+              setReviewOpen(false);
+              shell.actions.selectScreen(priority.destination);
+            }}
+            onAdvance={async () => {
+              setReviewOpen(false);
+              await shell.actions.advanceMonth();
+            }}
           />
-        ))}
-      {guided.visible && !guided.loading && (
-        <GuidedInspectionOverlay
-          stepIndex={guided.stepIndex}
-          onStepChange={(idx, completed) => {
-            if (completed) void guided.dismiss(idx);
-            else void guided.advance(idx);
-          }}
-          onDismiss={(idx) => void guided.dismiss(idx)}
-          onNavigate={(screenId) => shell.actions.selectScreen(screenId as Screen)}
-        />
-      )}
+        )}
+        {shell.state.campaign !== null &&
+          shell.state.interruption !== null &&
+          (shell.state.interruption.unavailable ? (
+            <PendingTurnRecoveryPrompt
+              pending={shell.state.interruption.pending}
+              unavailable
+              onResume={() => undefined}
+              onAbandon={shell.actions.abandonPendingTurn}
+            />
+          ) : shell.state.interruption.request === null ? (
+            <PendingTurnRecoveryPrompt
+              pending={shell.state.interruption.pending}
+              unavailable={false}
+              onResume={shell.actions.advanceMonth}
+              onAbandon={shell.actions.abandonPendingTurn}
+            />
+          ) : shell.state.interruption.request.kind === "decision" ? (
+            <DecisionDialog
+              request={shell.state.interruption.request}
+              onAnswer={(optionId) =>
+                void shell.actions.answerInterruption({ kind: "decision", optionId })
+              }
+              onAbandon={shell.actions.abandonPendingTurn}
+            />
+          ) : shell.state.interruption.request.kind === "offer" ? (
+            <OfferDialog
+              request={shell.state.interruption.request}
+              onChoose={(choice) =>
+                void shell.actions.answerInterruption({ kind: "offer", choice })
+              }
+              onAbandon={shell.actions.abandonPendingTurn}
+            />
+          ) : (
+            <PlayerBattleScreen
+              request={shell.state.interruption.request}
+              sessionId={shell.state.campaign.sessionId}
+              onSubmitResult={(outcome) =>
+                void shell.actions.answerInterruption({ kind: "battle-outcome", outcome })
+              }
+              onAbandon={shell.actions.abandonPendingTurn}
+            />
+          ))}
+        {guided.visible && !guided.loading && (
+          <GuidedInspectionOverlay
+            stepIndex={guided.stepIndex}
+            onStepChange={(idx, completed) => {
+              if (completed) void guided.dismiss(idx);
+              else void guided.advance(idx);
+            }}
+            onDismiss={(idx) => void guided.dismiss(idx)}
+            onNavigate={(screenId) => shell.actions.selectScreen(screenId as Screen)}
+          />
+        )}
+      </ScreenHeaderProvider>
     </WindowContextProvider>
   );
 }

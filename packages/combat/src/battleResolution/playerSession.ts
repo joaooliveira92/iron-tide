@@ -1,5 +1,7 @@
+import { BluewaveError } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine } from "@bluewave/random";
+import type { ExplanationTree } from "@bluewave/events";
 import type { GunneryBattery } from "../gunnery/resolve.js";
 import { withGunneryStateHash } from "../gunnery/index.js";
 import type { TacticalBattleState } from "../tactical/state.js";
@@ -22,7 +24,10 @@ import {
   projectAirDefenseContext,
   projectSmokeContext,
 } from "./capabilities.js";
+import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { planTorpedoCommands } from "./torpedoDoctrine.js";
+import { explainGunneryAccuracy } from "../gunnery/accuracy-explanation.js";
+import { withNightTraining, type TrainingEffectsBySide } from "./trainingEffects.js";
 import { pursuitOrders } from "./pursuit.js";
 import {
   assignTargetContactIds,
@@ -63,6 +68,7 @@ export interface PlayerBattleShipView {
   readonly maxHitPoints: number;
   readonly damageState: string;
   readonly position: readonly [number, number] | null;
+  readonly gunneryAccuracy?: ExplanationTree;
 }
 
 export interface PlayerBattleDivisionView {
@@ -147,6 +153,7 @@ export interface PlayerBattleSession {
   readonly airCombat: AirCombatContext;
   readonly airDefense: AirDefenseContext;
   readonly units: readonly TacticalShipUnit[];
+  readonly trainingEffects: TrainingEffectsBySide;
   readonly baseOrders: Readonly<
     Record<string, { readonly orderedHeading: number; readonly orderedSpeedBp: number }>
   >;
@@ -196,7 +203,10 @@ export function createPlayerBattleSession(input: CreatePlayerBattleInput): Playe
   const attackerUnits = projection.units.filter((u) => u.sideId === "ATTACKER");
   const defenderUnits = projection.units.filter((u) => u.sideId === "DEFENDER");
   if (attackerUnits.length === 0 || defenderUnits.length === 0) {
-    throw new Error("both sides require at least one committed, promotable ship");
+    throw new BluewaveError(BATTLE_AUTO_RESOLUTION_FAILED, {
+      code: BATTLE_AUTO_RESOLUTION_FAILED,
+      reason: "both sides require at least one committed, promotable ship",
+    });
   }
   const battleSeed = deriveBattleSeed(
     {
@@ -242,6 +252,7 @@ export function createPlayerBattleSession(input: CreatePlayerBattleInput): Playe
     airCombat: projectAirCombatContext(input.manifest, projection.state.battleId),
     airDefense: projectAirDefenseContext(input.manifest, engine),
     units: projection.units,
+    trainingEffects: projection.trainingEffects,
     baseOrders: projection.orders,
     log: [],
     result: null,
@@ -249,7 +260,13 @@ export function createPlayerBattleSession(input: CreatePlayerBattleInput): Playe
 }
 
 function clampSpeedPercent(value: number): number {
-  if (!Number.isInteger(value)) throw new Error("speedPercent must be an integer");
+  if (!Number.isInteger(value)) {
+    throw new BluewaveError(BATTLE_AUTO_RESOLUTION_FAILED, {
+      code: BATTLE_AUTO_RESOLUTION_FAILED,
+      reason: "speedPercent must be an integer",
+      value,
+    });
+  }
   return Math.min(100, Math.max(0, value));
 }
 
@@ -346,6 +363,7 @@ function damageControlFor(
     damage: session.damage,
     movementStates: session.state.movementStates,
     engine,
+    trainingEffects: session.trainingEffects,
   });
 }
 
@@ -369,6 +387,7 @@ function planTorpedoes(session: PlayerBattleSession, torpedoes: TorpedoContext):
       battleState: session.state,
       damage: session.damage,
       units: session.units,
+      trainingEffects: session.trainingEffects,
     }),
   };
 }
@@ -442,7 +461,11 @@ export function advancePlayerBattleMinute(
     observationTime,
     orders: resolveOrders(session, orders),
     ...(engine === undefined ? {} : { engine }),
-    gunnery: [...batteries],
+    gunnery: withNightTraining(
+      batteries,
+      session.trainingEffects,
+      session.weather.components.timeOfDay,
+    ),
     weather: session.weather,
     damage: session.damage,
     ...(preparedTorpedoes === undefined ? {} : { torpedoes: preparedTorpedoes }),
@@ -610,7 +633,18 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
       unitIds: [...division.orderedTacticalUnitIds],
     }),
   );
+  const playerSide = session.attackerId === session.playerNationId ? "ATTACKER" : "DEFENDER";
+  const batteryOf = new Map(
+    withNightTraining(
+      session.batteries,
+      session.trainingEffects,
+      session.weather.components.timeOfDay,
+    )
+      .filter((battery) => battery.sideId === playerSide)
+      .map((battery) => [battery.ownerShipId, battery] as const),
+  );
   const ships: PlayerBattleShipView[] = session.units.map((unit) => {
+    const battery = batteryOf.get(unit.assetId);
     const damageState = session.damage.targets[unit.assetId]?.state;
     const movement: MovementState | undefined = session.state.movementStates?.[unit.assetId];
     return {
@@ -624,6 +658,9 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
       maxHitPoints: unit.maxHitPoints as number,
       damageState: damageState?.terminalStatus ?? "NORMAL",
       position: movement ? [movement.position[0], movement.position[1]] : null,
+      ...(battery === undefined
+        ? {}
+        : { gunneryAccuracy: explainGunneryAccuracy(battery.accuracyFactors) }),
     };
   });
   return {

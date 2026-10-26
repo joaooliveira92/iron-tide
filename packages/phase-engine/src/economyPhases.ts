@@ -3,6 +3,7 @@ import {
   monthlyRevenue,
   nationIsAtWar,
   nationMonthlyMaintenance,
+  nationMaintenanceAdders,
   settleOutflow,
   transitionConstructionProject,
 } from "@bluewave/campaign";
@@ -17,8 +18,9 @@ import { fundConstructionProject } from "./constructionFunding.js";
 import { constructionResumeTarget } from "./constructionHaltResume.js";
 import {
   ACCELERATION_CAPACITY_PRESSURE_DELAY,
+  ACCELERATION_POOL_UNDEFINED_UNITS,
+  accelerationDemandOf,
   constructionWorkStatus,
-  projectConstructionDemand,
   resolveAccelerationCapacityPressure,
 } from "./constructionAcceleration.js";
 import { fundDesignStudies } from "./designStudies.js";
@@ -55,8 +57,6 @@ export function splitLargestRemainder(total: number, weights: readonly number[])
   }
   return base;
 }
-
-export const ACCELERATION_POOL_UNDEFINED_UNITS = 0;
 
 export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
   const { campaignMonth, eventLedger, financialLedger, nextSeq } = ctx;
@@ -157,23 +157,11 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
     const acceleratedProjects = projects.filter((p) => p["status"] === "ACCELERATED");
     let delayedByPressure = new Set<string>();
     if (acceleratedProjects.length > 0) {
-      let normalDemand = 0;
-      let acceleratedDemand = 0;
-      for (const project of projects) {
-        if (
-          project["status"] === "HALTED" ||
-          project["status"] === "DELAYED" ||
-          project["status"] === "COMPLETED"
-        )
-          continue;
-        const demand = projectConstructionDemand(
-          project,
-          capacityOf(designs, project),
-          campaignMonth,
-        );
-        if (project["status"] === "ACCELERATED") acceleratedDemand += demand;
-        else normalDemand += demand;
-      }
+      const { normalDemand, acceleratedDemand } = accelerationDemandOf(
+        projects,
+        (project) => capacityOf(designs, project),
+        campaignMonth,
+      );
       const pressure = resolveAccelerationCapacityPressure({
         nationId,
         campaignMonth,
@@ -497,7 +485,11 @@ export function runMaintenancePhase(ctx: PhaseContext): PhaseRunOutcome {
 
     const atWar = nationIsAtWar(ctx.snapshot.read("wars")["wars"], nationId);
 
-    const totalMaintenance = nationMonthlyMaintenance(nation["fleets"], atWar);
+    const totalMaintenance = nationMonthlyMaintenance(
+      nation["fleets"],
+      atWar,
+      nationMaintenanceAdders(nation, campaignMonth),
+    );
 
     if ((totalMaintenance as number) <= 0) continue;
 

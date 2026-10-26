@@ -34,7 +34,7 @@ export function monthInputOf(
 }
 
 export function parseMonthInput(value: unknown): MonthInput | null {
-  const parsed = Schema.decodeUnknownResult(MonthInputSchema)(value);
+  const parsed = Schema.decodeUnknownResult(MonthInputSchema, { onExcessProperty: "error" })(value);
   return Result.isSuccess(parsed) ? (parsed.success as unknown as MonthInput) : null;
 }
 

@@ -1,0 +1,1618 @@
+From: <Saved by Blink>
+Snapshot-Content-Location: file:///private/var/folders/zf/thh9mn854w3_5zbrfxm_bwyw0000gn/T/effect-use-review-20261024-105829.html
+Subject: Effect use review for Bluewave (iron-tide)
+Date: Sat, 24 Oct 2026 14:01:17 GMT
+MIME-Version: 1.0
+Content-Type: multipart/related;
+	type="text/html";
+	boundary="----MultipartBoundary--EuNm09ejy8bP8MxP7cpLKJ12iCBK448eKuMGmGvbcy----"
+
+
+------MultipartBoundary--EuNm09ejy8bP8MxP7cpLKJ12iCBK448eKuMGmGvbcy----
+Content-Type: text/html
+Content-ID: <frame-90478C73D7194269BD52104491759979@mhtml.blink>
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///private/var/folders/zf/thh9mn854w3_5zbrfxm_bwyw0000gn/T/effect-use-review-20261024-105829.html
+
+<!DOCTYPE html><html lang=3D"en"><head><meta http-equiv=3D"Content-Type" co=
+ntent=3D"text/html; charset=3DUTF-8"><link rel=3D"stylesheet" type=3D"text/=
+css" href=3D"cid:css-02ae5b5d-fbd3-4bcd-8a3c-7423328727a6@mhtml.blink" /><l=
+ink rel=3D"stylesheet" type=3D"text/css" href=3D"cid:css-e267f73d-ff41-4ada=
+-831b-8d0a3938f8b6@mhtml.blink" />
+   =20
+    <meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=
+=3D1">
+    <title>Effect use review for Bluewave (iron-tide)</title>
+   =20
+   =20
+   =20
+  </head>
+  <body class=3D"bg-stone-50 text-slate-900 font-sans antialiased">
+    <main class=3D"max-w-5xl mx-auto px-6 py-12 space-y-12">
+      <header class=3D"space-y-5">
+        <div class=3D"flex flex-wrap items-baseline justify-between gap-3">
+          <h1 class=3D"text-3xl font-semibold tracking-tight">Effect use re=
+view =E2=80=94 Bluewave (iron-tide)</h1>
+          <p class=3D"text-sm text-slate-500 font-mono">2026-10-24 =C2=B7 d=
+ev @ 0b6bc548</p>
+        </div>
+        <p class=3D"text-sm text-slate-600">
+          Scope: <span class=3D"font-mono">packages/campaign</span> =E2=80=
+=94 chosen from <span class=3D"font-mono">dev</span>; excluded
+          <span class=3D"font-mono">persistence</span> and <span class=3D"f=
+ont-mono">combat</span>. Authoritative, runtime-free
+          package (6.5k lines, 39 files). No <span class=3D"font-mono">Effe=
+ct</span> programs exist here; the only runtime-free
+          imports are <span class=3D"font-mono">Data</span>, <span class=3D=
+"font-mono">Schema</span>, <span class=3D"font-mono">Result</span>.
+        </p>
+        <div class=3D"flex flex-wrap gap-1.5 text-[11px] font-mono">
+          <span class=3D"rounded bg-emerald-100 text-emerald-800 px-2 py-0.=
+5">error-management: hits</span>
+          <span class=3D"rounded bg-emerald-100 text-emerald-800 px-2 py-0.=
+5">schema: hits</span>
+          <span class=3D"rounded bg-emerald-100 text-emerald-800 px-2 py-0.=
+5">data-types: hits</span>
+          <span class=3D"rounded bg-emerald-100 text-emerald-800 px-2 py-0.=
+5">behaviour: hits</span>
+          <span class=3D"rounded bg-emerald-100 text-emerald-800 px-2 py-0.=
+5">coding-style: hits</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">s=
+cheduling: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">c=
+oncurrency: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">r=
+esource-management: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">r=
+equirements-management: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">r=
+untime: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">c=
+onfiguration: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">p=
+latform: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">t=
+esting: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">t=
+rait: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">s=
+tream: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">s=
+ink: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">b=
+atching: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">c=
+aching: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">s=
+tate-management: clean</span>
+          <span class=3D"rounded bg-stone-200 text-slate-500 px-2 py-0.5">o=
+bservability: clean</span>
+        </div>
+        <p class=3D"text-xs text-slate-500">
+          Legend: <span class=3D"text-emerald-700">accent =3D hits</span>, =
+grey =3D clean. In code panels,
+          <span class=3D"gone px-1">struck red</span> disappears and <span =
+class=3D"kept px-1">green</span> replaces it.
+        </p>
+      </header>
+
+      <section id=3D"gate-gaps" class=3D"space-y-3">
+        <h2 class=3D"text-xl font-semibold">Gate gaps</h2>
+        <ul class=3D"space-y-1.5 text-sm text-slate-700">
+          <li>
+            <span class=3D"font-mono text-xs bg-stone-200 px-1.5 py-0.5 rou=
+nded">assert-tagged-errors.mjs</span>
+            checks that a class carries a <span class=3D"font-mono">_tag</s=
+pan>, not that tags are unique. Five division
+            invariants all carry <span class=3D"font-mono">"BluewaveError"<=
+/span> and pass.
+          </li>
+          <li>
+            <span class=3D"font-mono text-xs bg-stone-200 px-1.5 py-0.5 rou=
+nded">assert-tagged-errors.mjs</span>
+            only scans <span class=3D"font-mono">class =E2=80=A6 extends Er=
+ror</span> declarations; a thrown
+            <span class=3D"font-mono">Object.assign(new Error(=E2=80=A6), {=
+ code })</span> expression is invisible
+            (<span class=3D"font-mono">src/fleetSize.ts:55</span>).
+          </li>
+          <li>
+            <span class=3D"font-mono text-xs bg-stone-200 px-1.5 py-0.5 rou=
+nded">assert-authoritative-determinism.mjs</span>
+            <span class=3D"font-mono">classifyCall</span> understands <span=
+ class=3D"font-mono">Date.now</span>,
+            <span class=3D"font-mono">Math.random</span>, <span class=3D"fo=
+nt-mono">randomUUID</span>, <span class=3D"font-mono">process.env</span>,
+            <span class=3D"font-mono">parseFloat</span>, filesystem enumera=
+tion =E2=80=94 not <span class=3D"font-mono">.localeCompare(</span>.
+            Twelve authoritative sorts escape it.
+          </li>
+          <li>
+            <span class=3D"font-mono text-xs bg-stone-200 px-1.5 py-0.5 rou=
+nded">assert-boundary-decode.mjs</span> +
+            <span class=3D"font-mono text-xs bg-stone-200 px-1.5 py-0.5 rou=
+nded">verify-no-unknown-casts.mjs</span>
+            miss the campaign boundary assertions <span class=3D"font-mono"=
+>as Record&lt;string, unknown&gt;</span>,
+            <span class=3D"font-mono">as ScenarioDefinition[]</span>, <span=
+ class=3D"font-mono">as FleetSizeSetting[]</span>.
+          </li>
+        </ul>
+      </section>
+
+      <section id=3D"candidates" class=3D"space-y-10">
+        <h2 class=3D"text-xl font-semibold">Candidates</h2>
+
+        <article id=3D"c1" class=3D"rounded-xl border border-stone-200 bg-w=
+hite p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">1. Decode the campaign conf=
+iguration with a strict schema</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-emerald-100 tex=
+t-emerald-800 px-2 py-0.5">Strong</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">bypass + leak</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">schema</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">authoritative</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">golden-hash</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">wire-format</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">runtime-free</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">
+            packages/campaign/src/campaignConfiguration.ts:51 =C2=B7 campai=
+gnSession.ts:26,140,162
+          </p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"gone">const r =3D cfg as Record&lt;string=
+, unknown&gt;;</span>
+<span class=3D"gone">for (const f of CAMPAIGN_CONFIGURATION_FIELDS) {</span=
+>
+<span class=3D"gone">  if (!(f in r) || r[f] =3D=3D null) { c.addError(...)=
+; ok =3D false; }</span>
+<span class=3D"gone">}</span>
+<span class=3D"gone">if (!CANONICAL_SCENARIO_IDS.includes(r["scenarioId"] a=
+s any)) { ... }</span></code></pre>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">const CampaignConfigurationSchema =
+=3D Schema.Struct({</span>
+<span class=3D"kept">  scenarioId: Schema.Literals(CANONICAL_SCENARIO_IDS),=
+</span>
+<span class=3D"kept">  continuityModeId: Schema.Literals(["historical", "al=
+ternate_continuity_v1"]),</span>
+<span class=3D"kept">  fleetSizeSettingId: Schema.Literals(FLEET_SIZE_IDS),=
+</span>
+<span class=3D"kept">  campaignSeed: Schema.String.check(Schema.isPattern(H=
+EX32)),</span>
+<span class=3D"kept">});</span>
+<span class=3D"kept">const decoded =3D Schema.decodeUnknownResult(</span>
+<span class=3D"kept">  CampaignConfigurationSchema, { onExcessProperty: "er=
+ror" })(cfg);</span>
+<span class=3D"kept">if (Result.isFailure(decoded)) { c.addError(...decoded=
+.failure.issue); return false; }</span></code></pre>
+            </div>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> A hand validator accepts excess keys and then asserts <span class=3D"font=
+-mono">cfg as CampaignConfiguration</span>; an unknown key changes <span cl=
+ass=3D"font-mono">hashConfiguration</span> without changing the configurati=
+on.</p>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> One <span class=3D"font-mono">Schema.Struct</span> + <span class=3D"fon=
+t-mono">Schema.Literals</span>, decoded with <span class=3D"font-mono">Sche=
+ma.decodeUnknownResult</span> and <span class=3D"font-mono">{ onExcessPrope=
+rty: "error" }</span> (<span class=3D"font-mono">vendor/effect/src/Schema.t=
+s:3573,5001,1712,16233</span>).</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>Excess key r=
+ejected at the boundary</li><li>Hand validator deletes</li><li>Hash input i=
+s the decoded value</li></ul>
+        </article>
+
+        <article id=3D"c2" class=3D"rounded-xl border border-stone-200 bg-w=
+hite p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">2. Decode scenario definiti=
+ons with a strict schema</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-emerald-100 tex=
+t-emerald-800 px-2 py-0.5">Strong</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">bypass + leak</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">schema</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">authoritative</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">runtime-free</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">packages/campaign/s=
+rc/scenario.ts:13=E2=80=93238</p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"gone">for (const f of REQUIRED) if (!(f i=
+n r)) { c.addError(...); ok =3D false; }</span>
+<span class=3D"gone">if (!isNonEmptyStringArray(r[field])) { ... }</span>
+<span class=3D"gone">if (!ALLOWED_FLEET.has(r["settingId"] as string)) { ..=
+. }</span>
+<span class=3D"gone">return ok ? (input as ScenarioDefinition[]) : undefine=
+d;</span></code></pre>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">const ScenarioSchema =3D Schema.Str=
+uct({</span>
+<span class=3D"kept">  scenarioId: Schema.Literals(CANONICAL_SCENARIO_IDS),=
+</span>
+<span class=3D"kept">  startYear: Schema.Int, startMonth: Schema.Int,</span=
+>
+<span class=3D"kept">  supportedFleetSizeSettingIds: Schema.Array(Schema.Li=
+terals(FLEET_SIZE_IDS)),</span>
+<span class=3D"kept">  ...</span>
+<span class=3D"kept">});</span>
+<span class=3D"kept">const decoded =3D Schema.decodeUnknownResult(</span>
+<span class=3D"kept">  Schema.Array(ScenarioSchema), { onExcessProperty: "e=
+rror" })(input);</span>
+<span class=3D"kept">if (Result.isFailure(decoded)) return undefined;</span=
+>
+<span class=3D"kept">return decoded.success;</span></code></pre>
+            </div>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> A 180-line hand-built validator over <span class=3D"font-mono">Record&lt;=
+string, unknown&gt;</span> accepts excess keys and ends in an assertion.</p=
+>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> <span class=3D"font-mono">Schema.Struct</span>/<span class=3D"font-mono=
+">Schema.Array</span> + <span class=3D"font-mono">Schema.Literals</span>/<s=
+pan class=3D"font-mono">Schema.Int</span>, strict decode (<span class=3D"fo=
+nt-mono">Schema.ts:3573,5001,7925,1712,16233</span>); keep only the duplica=
+te-id and canonical-calendar cross-checks.</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>Excess keys =
+rejected</li><li>Interface duplicates removed</li><li>Validator shrinks to =
+cross-checks</li></ul>
+        </article>
+
+        <article id=3D"c3" class=3D"rounded-xl border border-stone-200 bg-w=
+hite p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">3. Decode the prestige valu=
+e set schema-first</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-amber-100 text-=
+amber-800 px-2 py-0.5">Worth exploring</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">bypass</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">schema</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">wire-format</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">runtime-free</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">packages/campaign/s=
+rc/prestige.ts:263=E2=80=93400</p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"gone">function isRecord(value: unknown): =
+value is Record&lt;string, unknown&gt; { ... }</span>
+<span class=3D"gone">function excessKey(record, allowed, prefix): string | =
+undefined { ... }</span>
+<span class=3D"gone">function readInt(record, key, path, min, max): Prestig=
+eResult&lt;SafeInt, ...&gt; { ... }</span>
+<span class=3D"gone">function decodeRule(raw, index): PrestigeResult&lt;Pre=
+stigeRule, ...&gt; { ... }</span>
+<span class=3D"gone">export interface PrestigeValueSet { ... }</span></code=
+></pre>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">const PrestigeValueSetSchema =3D Sc=
+hema.Struct({</span>
+<span class=3D"kept">  lowerBound: nonNegativeInt, upperBound: nonNegativeI=
+nt,</span>
+<span class=3D"kept">  sackingThreshold: nonNegativeInt,</span>
+<span class=3D"kept">  sackingProbabilityBp: Schema.Int.check(Schema.isBetw=
+een({ minimum: 0, maximum: 10000 })),</span>
+<span class=3D"kept">  rules: Schema.Array(PrestigeRuleSchema),</span>
+<span class=3D"kept">});</span>
+<span class=3D"kept">export type PrestigeValueSet =3D typeof PrestigeValueS=
+etSchema.Type;</span>
+<span class=3D"kept">const decoded =3D Schema.decodeUnknownResult(</span>
+<span class=3D"kept">  PrestigeValueSetSchema, { onExcessProperty: "error" =
+})(raw);</span></code></pre>
+            </div>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> The prestige value set is a complete hand-written schema (<span class=3D"=
+font-mono">isRecord</span>, <span class=3D"font-mono">excessKey</span>, <sp=
+an class=3D"font-mono">readInt</span>, <span class=3D"font-mono">decodeRule=
+</span>) plus duplicate interfaces.</p>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> <span class=3D"font-mono">Schema.Struct</span> + <span class=3D"font-mo=
+no">Schema.Union</span> of rule structs, strict decode (<span class=3D"font=
+-mono">Schema.ts:3573,5001,1712,16233</span>), derive types with <span clas=
+s=3D"font-mono">typeof =E2=80=A6Type</span>; map issues onto the pinned <sp=
+an class=3D"font-mono">error.field</span>/<span class=3D"font-mono">_tag</s=
+pan> surface.</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>One schema, =
+one type</li><li>Decode deletes the readers</li><li>Strictness is declarati=
+ve</li></ul>
+          <p class=3D"text-xs bg-amber-50 text-amber-900 rounded p-2">Wire =
+surface: the pinned <span class=3D"font-mono">PrestigeValueSetInvalid</span=
+> field paths must survive the migration via <span class=3D"font-mono">mapE=
+rror</span>.</p>
+        </article>
+
+        <article id=3D"c4" class=3D"rounded-xl border border-stone-200 bg-w=
+hite p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">4. Replace the ruleset/cont=
+inuity hand validators</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-amber-100 text-=
+amber-800 px-2 py-0.5">Worth exploring</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">bypass + leak</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">schema</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">wire-format</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">runtime-free</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">continuity.ts:5=E2=
+=80=9397 =C2=B7 fleetSize.ts:90=E2=80=93135 =C2=B7 researchSpeed.ts:30=E2=
+=80=9377 =C2=B7 technologyVariation.ts:119=E2=80=93332</p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"gone">const r =3D s as Record&lt;string, =
+unknown&gt;;</span>
+<span class=3D"gone">for (const f of required) if (!(f in r)) { c.addError(=
+...); ok =3D false; }</span>
+<span class=3D"gone">if (typeof r["roundingMode"] !=3D=3D "string") { ... }=
+</span>
+<span class=3D"gone">return ok ? (settings as FleetSizeSetting[]) : undefin=
+ed;</span></code></pre>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">const FleetSizeSettingSchema =3D Sc=
+hema.Struct({</span>
+<span class=3D"kept">  settingId: Schema.Literals(FLEET_SIZE_IDS),</span>
+<span class=3D"kept">  navalAppropriationMultiplierBp: Schema.Int.check(Sch=
+ema.isBetween({ minimum: 0, maximum: 100000 })),</span>
+<span class=3D"kept">  roundingMode: Schema.Literal("FLOOR"),</span>
+<span class=3D"kept">  rulesetVersion: Schema.NonEmptyString,</span>
+<span class=3D"kept">});</span>
+<span class=3D"kept">const decoded =3D Schema.decodeUnknownResult(</span>
+<span class=3D"kept">  Schema.Array(FleetSizeSettingSchema), { onExcessProp=
+erty: "error" })(settings);</span></code></pre>
+            </div>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> Four separate validators re-implement <span class=3D"font-mono">Schema</s=
+pan> over <span class=3D"font-mono">unknown</span>/<span class=3D"font-mono=
+">as Record</span>, accept excess keys, and end with type assertions.</p>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> One <span class=3D"font-mono">Schema.Struct</span> per ruleset with <sp=
+an class=3D"font-mono">Schema.Literals</span>/<span class=3D"font-mono">.ch=
+eck</span>, strict <span class=3D"font-mono">decodeUnknownResult</span> (<s=
+pan class=3D"font-mono">Schema.ts:3573,7702,5001,1712,16233</span>); delete=
+ the <span class=3D"font-mono">as X[]</span> tails.</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>Four validat=
+ors collapse</li><li>Excess keys rejected</li><li>Types derived, not assert=
+ed</li></ul>
+        </article>
+
+        <article id=3D"c5" class=3D"rounded-xl border border-stone-200 bg-w=
+hite p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">5. Decode campaign file row=
+s with the schemas content-schema already ships</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-amber-100 text-=
+amber-800 px-2 py-0.5">Worth exploring</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">bypass</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">schema</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">authoritative</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">runtime-free</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">campaignInput.ts:20=
+=E2=80=9328 =C2=B7 nationCompilation.ts:94=E2=80=93216 =C2=B7 readiness.ts:=
+121=E2=80=93232 =C2=B7 seededConstructions.ts:18=E2=80=9330 =C2=B7 content-=
+schema/src/campaign.ts:12=E2=80=93136</p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"gone">function isNavalProfile(value: unkn=
+own): value is NavalProfile {</span>
+<span class=3D"gone">  if ((value as Record&lt;string, unknown&gt;)["profil=
+es"] =3D=3D=3D undefined) return false;</span>
+<span class=3D"gone">  ...</span>
+<span class=3D"gone">}</span>
+<span class=3D"gone">const row =3D rows.find((e) =3D&gt; (e as Record&lt;st=
+ring, unknown&gt;)["nationId"] =3D=3D=3D nationId) as ...;</span></code></p=
+re>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">const decoded =3D Schema.decodeUnkn=
+ownResult(</span>
+<span class=3D"kept">  Schema.Array(CampaignFleetSchema), { onExcessPropert=
+y: "error" })(rows);</span>
+<span class=3D"kept">if (Result.isFailure(decoded)) return undefined;</span=
+>
+<span class=3D"kept">const profile: NavalProfile =3D ...;</span>
+<span class=3D"kept">if (!Schema.is(NationNavalProfileSchema)(raw)) return =
+undefined;</span></code></pre>
+            </div>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> <span class=3D"font-mono">CampaignFileData</span> is <span class=3D"font-=
+mono">unknown[]</span>; each builder re-invents a validator with <span clas=
+s=3D"font-mono">as Record</span> lookups while <span class=3D"font-mono">@b=
+luewave/content-schema</span> already exports <span class=3D"font-mono">Cam=
+paignFleetSchema</span>, <span class=3D"font-mono">CampaignEconomySchema</s=
+pan>, and siblings.</p>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> Decode once with the sibling schemas and derive the row types; <span cl=
+ass=3D"font-mono">Schema.is(NationNavalProfileSchema)</span> (<span class=
+=3D"font-mono">Schema.ts:1437</span>) replaces <span class=3D"font-mono">is=
+NavalProfile</span>.</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>Duplicate gu=
+ards delete</li><li>One decoder per file row</li><li>Casts leave the hot pa=
+th</li></ul>
+        </article>
+
+        <article id=3D"c6" class=3D"rounded-xl border border-stone-200 bg-w=
+hite p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">6. Give readiness and divis=
+ion seeds the `Result` channel</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-emerald-100 tex=
+t-emerald-800 px-2 py-0.5">Strong</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">bypass</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">data-types</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">runtime-free</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">packages/campaign/s=
+rc/readiness.ts:121=E2=80=93213 =C2=B7 divisions.ts:124=E2=80=93140</p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"gone">export function resolveShipReadines=
+sSeed(record, shipId):</span>
+<span class=3D"gone">  | { readonly ok: true; readonly value: ShipReadiness=
+Seed }</span>
+<span class=3D"gone">  | { readonly ok: false; readonly error: ShipReadines=
+sFailure } {</span>
+<span class=3D"gone">  if (!ALLOWED_SHIP_INPUT_KEYS.has(key))</span>
+<span class=3D"gone">    return { ok: false, error: new ShipReadinessFailur=
+e(...) };</span>
+<span class=3D"gone">  return { ok: true, value: { readiness, crewQuality }=
+ };</span>
+<span class=3D"gone">}</span></code></pre>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">export function resolveShipReadines=
+sSeed(record, shipId):</span>
+<span class=3D"kept">  Result.Result&lt;ShipReadinessSeed, ShipReadinessFai=
+lure&gt; {</span>
+<span class=3D"kept">  if (!ALLOWED_SHIP_INPUT_KEYS.has(key))</span>
+<span class=3D"kept">    return Result.fail(new ShipReadinessFailure(...));=
+</span>
+<span class=3D"kept">  return Result.succeed({ readiness, crewQuality });</=
+span>
+<span class=3D"kept">}</span>
+<span class=3D"kept">// caller</span>
+<span class=3D"kept">Result.match(seed, { onSuccess: push, onFailure: (e) =
+=3D&gt; collector.add(e.toDiagnostic()) });</span></code></pre>
+            </div>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> <span class=3D"font-mono">{ ok: true, value } | { ok: false, error }</spa=
+n> plus the local <span class=3D"font-mono">fail()</span> helper re-impleme=
+nt <span class=3D"font-mono">Result</span>, which is already in the runtime=
+-free allowlist.</p>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> <span class=3D"font-mono">Result.succeed</span>/<span class=3D"font-mon=
+o">Result.fail</span> and <span class=3D"font-mono">Result.match</span> (<s=
+pan class=3D"font-mono">vendor/effect/src/Result.ts:288,316,1218</span>); b=
+oth call sites read by tag instead of <span class=3D"font-mono">.ok</span>.=
+</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>Local union =
+and helper delete</li><li>One failure vocabulary</li><li>Composes with othe=
+r Results</li></ul>
+          <p class=3D"text-xs bg-amber-50 text-amber-900 rounded p-2">Same =
+shape in <span class=3D"font-mono">prestige.ts:129=E2=80=93153</span> (<spa=
+n class=3D"font-mono">PrestigeResult</span>) =E2=80=94 migrate in the same =
+pass so the package names one result type.</p>
+        </article>
+
+        <article id=3D"c7" class=3D"rounded-xl border border-stone-200 bg-w=
+hite p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">7. Make the prestige `_tag`=
+ switch exhaustive</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-amber-100 text-=
+amber-800 px-2 py-0.5">Worth exploring</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">bypass + leak</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">coding-style</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">runtime-free</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">packages/campaign/s=
+rc/nationCompilation.ts:66=E2=80=9390 =C2=B7 prestige.ts:412</p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code>switch (error._tag) {
+  case "PrestigeMissing": raise(missing, ...); break;
+  case "PrestigeNotInteger": raise(notInteger, ...); break;
+  case "PrestigeUnsafeInteger": raise(unsafeInteger, ...); break;
+  case "PrestigeOutOfRange": raise(outOfRange, ...); break;
+<span class=3D"gone">  default: raise(notInteger, `Nation '${nationId}' pre=
+stige is invalid`);</span>
+}</code></pre>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">const PrestigeError =3D Data.tagged=
+Enum&lt;PrestigeError&gt;();</span>
+<span class=3D"kept">PrestigeError.$match(error, {</span>
+<span class=3D"kept">  PrestigeMissing: () =3D&gt; raise(missing, ...),</sp=
+an>
+<span class=3D"kept">  PrestigeRuleMissing: () =3D&gt; raise(valueSetInvali=
+d, ...),</span>
+<span class=3D"kept">  PrestigeDrawInvalid: () =3D&gt; raise(valueSetInvali=
+d, ...),</span>
+<span class=3D"kept">  PrestigeValueSetInvalid: () =3D&gt; raise(valueSetIn=
+valid, ...),</span>
+<span class=3D"kept">  CareerResultInvalid: () =3D&gt; raise(valueSetInvali=
+d, ...),</span>
+<span class=3D"kept">  ...</span>
+<span class=3D"kept">});</span></code></pre>
+            </div>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> The switch handles 4 of 9 <span class=3D"font-mono">PrestigeError</span> =
+tags; every other tag is misreported as <span class=3D"font-mono">notIntege=
+r</span>, so a missing rule or invalid draw is silently relabelled.</p>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> <span class=3D"font-mono">Data.taggedEnum</span> + <span class=3D"font-=
+mono">$match</span> (<span class=3D"font-mono">vendor/effect/src/Data.ts:58=
+6</span>), or an exhaustive switch with no <span class=3D"font-mono">defaul=
+t</span>; a new variant becomes a compile error.</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>Missing case=
+ fails compile</li><li>Codes stop lying</li><li>No default catch-all</li></=
+ul>
+        </article>
+
+        <article id=3D"c8" class=3D"rounded-xl border border-stone-200 bg-w=
+hite p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">8. Give each division invar=
+iant its own `_tag`</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-emerald-100 tex=
+t-emerald-800 px-2 py-0.5">Strong</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">leak</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">error-management</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">authoritative</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">runtime-free</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">division.ts:105=E2=
+=80=93170 =C2=B7 contracts/src/index.ts:57=E2=80=9368 =C2=B7 phase-engine/d=
+ivisionCommands.ts:116,211 =C2=B7 battlePhases.ts:349</p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"gone">throw new BluewaveError(DIVISION_SI=
+ZE_LIMIT_EXCEEDED, {</span>
+<span class=3D"gone">  code: DIVISION_SIZE_LIMIT_EXCEEDED, divisionId, size=
+, max, ...context,</span>
+<span class=3D"gone">});</span>
+<span class=3D"gone">throw new BluewaveError(DIVISION_FLAGSHIP_INVALID, {</=
+span>
+<span class=3D"gone">  code: DIVISION_FLAGSHIP_INVALID, divisionId, flagshi=
+pShipId, ...context,</span>
+<span class=3D"gone">});</span></code></pre>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">class DivisionSizeLimitExceeded ext=
+ends Data.TaggedError(</span>
+<span class=3D"kept">  "DIVISION_SIZE_LIMIT_EXCEEDED",</span>
+<span class=3D"kept">)&lt;{ readonly divisionId: string; readonly size: str=
+ing; readonly max: string }&gt; {}</span>
+<span class=3D"kept">class DivisionFlagshipInvalid extends Data.TaggedError=
+(</span>
+<span class=3D"kept">  "DIVISION_FLAGSHIP_INVALID",</span>
+<span class=3D"kept">)&lt;{ readonly divisionId: string; readonly flagshipS=
+hipId: string }&gt; {}</span>
+<span class=3D"kept">throw new DivisionSizeLimitExceeded({ divisionId, size=
+, max });</span></code></pre>
+            </div>
+          </div>
+          <div class=3D"rounded-lg border border-stone-200 bg-stone-50 p-3"=
+>
+            <pre class=3D"mermaid text-center" data-processed=3D"true"><svg=
+ id=3D"mermaid-1792850415097" width=3D"100%" xmlns=3D"http://www.w3.org/200=
+0/svg" xmlns:xlink=3D"http://www.w3.org/1999/xlink" class=3D"flowchart" sty=
+le=3D"max-width: 1387.8125px;" viewBox=3D"0 0 1387.8125 274" role=3D"graphi=
+cs-document document" aria-roledescription=3D"flowchart-v2"><style>#mermaid=
+-1792850415097{font-family:"trebuchet ms",verdana,arial,sans-serif;font-siz=
+e:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset=
+:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mermaid-1792850415097 .edge-=
+animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animati=
+on:dash 50s linear infinite;stroke-linecap:round;}#mermaid-1792850415097 .e=
+dge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;ani=
+mation:dash 20s linear infinite;stroke-linecap:round;}#mermaid-179285041509=
+7 .error-icon{fill:#552222;}#mermaid-1792850415097 .error-text{fill:#552222=
+;stroke:#552222;}#mermaid-1792850415097 .edge-thickness-normal{stroke-width=
+:1px;}#mermaid-1792850415097 .edge-thickness-thick{stroke-width:3.5px;}#mer=
+maid-1792850415097 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-1792850=
+415097 .edge-thickness-invisible{stroke-width:0;fill:none;}#mermaid-1792850=
+415097 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-1792850415097 .edg=
+e-pattern-dotted{stroke-dasharray:2;}#mermaid-1792850415097 .marker{fill:#6=
+66;stroke:#666;}#mermaid-1792850415097 .marker.cross{stroke:#666;}#mermaid-=
+1792850415097 svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-=
+size:16px;}#mermaid-1792850415097 p{margin:0;}#mermaid-1792850415097 .label=
+{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#000000;}#mermai=
+d-1792850415097 .cluster-label text{fill:#333;}#mermaid-1792850415097 .clus=
+ter-label span{color:#333;}#mermaid-1792850415097 .cluster-label span p{bac=
+kground-color:transparent;}#mermaid-1792850415097 .label text,#mermaid-1792=
+850415097 span{fill:#000000;color:#000000;}#mermaid-1792850415097 .node rec=
+t,#mermaid-1792850415097 .node circle,#mermaid-1792850415097 .node ellipse,=
+#mermaid-1792850415097 .node polygon,#mermaid-1792850415097 .node path{fill=
+:#eee;stroke:#999;stroke-width:1px;}#mermaid-1792850415097 .rough-node .lab=
+el text,#mermaid-1792850415097 .node .label text,#mermaid-1792850415097 .im=
+age-shape .label,#mermaid-1792850415097 .icon-shape .label{text-anchor:midd=
+le;}#mermaid-1792850415097 .node .katex path{fill:#000;stroke:#000;stroke-w=
+idth:1px;}#mermaid-1792850415097 .rough-node .label,#mermaid-1792850415097 =
+.node .label,#mermaid-1792850415097 .image-shape .label,#mermaid-1792850415=
+097 .icon-shape .label{text-align:center;}#mermaid-1792850415097 .node.clic=
+kable{cursor:pointer;}#mermaid-1792850415097 .root .anchor path{fill:#666!i=
+mportant;stroke-width:0;stroke:#666;}#mermaid-1792850415097 .arrowheadPath{=
+fill:#333333;}#mermaid-1792850415097 .edgePaths .path{stroke:#666;stroke-wi=
+dth:1px;}#mermaid-1792850415097 .flowchart-link{stroke:#666;fill:none;}#mer=
+maid-1792850415097 .edgeLabel{background-color:white;text-align:center;}#me=
+rmaid-1792850415097 .edgeLabel p{background-color:white;}#mermaid-179285041=
+5097 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mermai=
+d-1792850415097 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#merma=
+id-1792850415097 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#7070=
+70;stroke-width:1px;}#mermaid-1792850415097 .cluster text{fill:#333;}#merma=
+id-1792850415097 .cluster span{color:#333;}#mermaid-1792850415097 .node .co=
+llapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#mermaid-1792850415=
+097 .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#mermaid=
+-1792850415097 div.mermaidTooltip{position:absolute;text-align:center;max-w=
+idth:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;=
+font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #7=
+07070;border-radius:2px;pointer-events:none;z-index:100;}#mermaid-179285041=
+5097 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#m=
+ermaid-1792850415097 rect.text{fill:none;stroke-width:0;}#mermaid-179285041=
+5097 .icon-shape,#mermaid-1792850415097 .image-shape{background-color:white=
+;text-align:center;}#mermaid-1792850415097 .icon-shape p,#mermaid-179285041=
+5097 .image-shape p{background-color:white;padding:2px;}#mermaid-1792850415=
+097 .icon-shape .label rect,#mermaid-1792850415097 .image-shape .label rect=
+{opacity:0.5;background-color:white;fill:white;}#mermaid-1792850415097 .lab=
+el-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.=
+125em;}#mermaid-1792850415097 .node .label-icon path{fill:currentColor;stro=
+ke:revert;stroke-width:revert;}#mermaid-1792850415097 .node .neo-node{strok=
+e:#999;}#mermaid-1792850415097 [data-look=3D"neo"].node rect,#mermaid-17928=
+50415097 [data-look=3D"neo"].cluster rect,#mermaid-1792850415097 [data-look=
+=3D"neo"].node polygon{stroke:url(#mermaid-1792850415097-gradient);filter:d=
+rop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1792850415097 [data-=
+look=3D"neo"].swimlane.cluster rect{filter:none;}#mermaid-1792850415097 [da=
+ta-look=3D"neo"].node path{stroke:url(#mermaid-1792850415097-gradient);stro=
+ke-width:1px;}#mermaid-1792850415097 [data-look=3D"neo"].node .outer-path{f=
+ilter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mermaid-1792850415097=
+ [data-look=3D"neo"].node .neo-line path{stroke:#999;filter:none;}#mermaid-=
+1792850415097 [data-look=3D"neo"].node circle{stroke:url(#mermaid-179285041=
+5097-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#merma=
+id-1792850415097 [data-look=3D"neo"].node circle .state-start{fill:#000000;=
+}#mermaid-1792850415097 [data-look=3D"neo"].icon-shape .icon{fill:url(#merm=
+aid-1792850415097-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,18=
+5,1));}#mermaid-1792850415097 [data-look=3D"neo"].icon-shape .icon-neo path=
+{stroke:url(#mermaid-1792850415097-gradient);filter:drop-shadow( 1px 2px 2p=
+x rgba(185,185,185,1));}#mermaid-1792850415097 :root{--mermaid-font-family:=
+"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker id=3D"mermaid-1=
+792850415097_flowchart-v2-pointEnd" class=3D"marker flowchart-v2" viewBox=
+=3D"0 0 10 10" refX=3D"5" refY=3D"5" markerUnits=3D"userSpaceOnUse" markerW=
+idth=3D"8" markerHeight=3D"8" orient=3D"auto"><path d=3D"M 0 0 L 10 5 L 0 1=
+0 z" class=3D"arrowMarkerPath" style=3D"stroke-width: 1; stroke-dasharray: =
+1, 0;"></path></marker><marker id=3D"mermaid-1792850415097_flowchart-v2-poi=
+ntStart" class=3D"marker flowchart-v2" viewBox=3D"0 0 10 10" refX=3D"4.5" r=
+efY=3D"5" markerUnits=3D"userSpaceOnUse" markerWidth=3D"8" markerHeight=3D"=
+8" orient=3D"auto"><path d=3D"M 0 5 L 10 10 L 10 0 z" class=3D"arrowMarkerP=
+ath" style=3D"stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><ma=
+rker id=3D"mermaid-1792850415097_flowchart-v2-pointEnd-margin" class=3D"mar=
+ker flowchart-v2" viewBox=3D"0 0 11.5 14" refX=3D"11.5" refY=3D"7" markerUn=
+its=3D"userSpaceOnUse" markerWidth=3D"10.5" markerHeight=3D"14" orient=3D"a=
+uto"><path d=3D"M 0 0 L 11.5 7 L 0 14 z" class=3D"arrowMarkerPath" style=3D=
+"stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id=3D"me=
+rmaid-1792850415097_flowchart-v2-pointStart-margin" class=3D"marker flowcha=
+rt-v2" viewBox=3D"0 0 11.5 14" refX=3D"1" refY=3D"7" markerUnits=3D"userSpa=
+ceOnUse" markerWidth=3D"11.5" markerHeight=3D"14" orient=3D"auto"><polygon =
+points=3D"0,7 11.5,14 11.5,0" class=3D"arrowMarkerPath" style=3D"stroke-wid=
+th: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id=3D"mermaid-17=
+92850415097_flowchart-v2-circleEnd" class=3D"marker flowchart-v2" viewBox=
+=3D"0 0 10 10" refX=3D"11" refY=3D"5" markerUnits=3D"userSpaceOnUse" marker=
+Width=3D"11" markerHeight=3D"11" orient=3D"auto"><circle cx=3D"5" cy=3D"5" =
+r=3D"5" class=3D"arrowMarkerPath" style=3D"stroke-width: 1; stroke-dasharra=
+y: 1, 0;"></circle></marker><marker id=3D"mermaid-1792850415097_flowchart-v=
+2-circleStart" class=3D"marker flowchart-v2" viewBox=3D"0 0 10 10" refX=3D"=
+-1" refY=3D"5" markerUnits=3D"userSpaceOnUse" markerWidth=3D"11" markerHeig=
+ht=3D"11" orient=3D"auto"><circle cx=3D"5" cy=3D"5" r=3D"5" class=3D"arrowM=
+arkerPath" style=3D"stroke-width: 1; stroke-dasharray: 1, 0;"></circle></ma=
+rker><marker id=3D"mermaid-1792850415097_flowchart-v2-circleEnd-margin" cla=
+ss=3D"marker flowchart-v2" viewBox=3D"0 0 10 10" refY=3D"5" refX=3D"12.25" =
+markerUnits=3D"userSpaceOnUse" markerWidth=3D"14" markerHeight=3D"14" orien=
+t=3D"auto"><circle cx=3D"5" cy=3D"5" r=3D"5" class=3D"arrowMarkerPath" styl=
+e=3D"stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id=
+=3D"mermaid-1792850415097_flowchart-v2-circleStart-margin" class=3D"marker =
+flowchart-v2" viewBox=3D"0 0 10 10" refX=3D"-2" refY=3D"5" markerUnits=3D"u=
+serSpaceOnUse" markerWidth=3D"14" markerHeight=3D"14" orient=3D"auto"><circ=
+le cx=3D"5" cy=3D"5" r=3D"5" class=3D"arrowMarkerPath" style=3D"stroke-widt=
+h: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id=3D"mermaid-1792=
+850415097_flowchart-v2-crossEnd" class=3D"marker cross flowchart-v2" viewBo=
+x=3D"0 0 11 11" refX=3D"12" refY=3D"5.2" markerUnits=3D"userSpaceOnUse" mar=
+kerWidth=3D"11" markerHeight=3D"11" orient=3D"auto"><path d=3D"M 1,1 l 9,9 =
+M 10,1 l -9,9" class=3D"arrowMarkerPath" style=3D"stroke-width: 2; stroke-d=
+asharray: 1, 0;"></path></marker><marker id=3D"mermaid-1792850415097_flowch=
+art-v2-crossStart" class=3D"marker cross flowchart-v2" viewBox=3D"0 0 11 11=
+" refX=3D"-1" refY=3D"5.2" markerUnits=3D"userSpaceOnUse" markerWidth=3D"11=
+" markerHeight=3D"11" orient=3D"auto"><path d=3D"M 1,1 l 9,9 M 10,1 l -9,9"=
+ class=3D"arrowMarkerPath" style=3D"stroke-width: 2; stroke-dasharray: 1, 0=
+;"></path></marker><marker id=3D"mermaid-1792850415097_flowchart-v2-crossEn=
+d-margin" class=3D"marker cross flowchart-v2" viewBox=3D"0 0 15 15" refX=3D=
+"17.7" refY=3D"7.5" markerUnits=3D"userSpaceOnUse" markerWidth=3D"12" marke=
+rHeight=3D"12" orient=3D"auto"><path d=3D"M 1,1 L 14,14 M 1,14 L 14,1" clas=
+s=3D"arrowMarkerPath" style=3D"stroke-width: 2.5;"></path></marker><marker =
+id=3D"mermaid-1792850415097_flowchart-v2-crossStart-margin" class=3D"marker=
+ cross flowchart-v2" viewBox=3D"0 0 15 15" refX=3D"-3.5" refY=3D"7.5" marke=
+rUnits=3D"userSpaceOnUse" markerWidth=3D"12" markerHeight=3D"12" orient=3D"=
+auto"><path d=3D"M 1,1 L 14,14 M 1,14 L 14,1" class=3D"arrowMarkerPath" sty=
+le=3D"stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class=
+=3D"root"><g class=3D"clusters"></g><g class=3D"edgePaths"></g><g class=3D"=
+edgeLabels"></g><g class=3D"nodes"><g class=3D"root" transform=3D"translate=
+(0, 0)"><g class=3D"clusters"><g class=3D"cluster " id=3D"mermaid-179285041=
+5097-now" data-look=3D"classic"><rect style=3D"" x=3D"8" y=3D"8" width=3D"1=
+371.8125" height=3D"258"></rect><g class=3D"cluster-label " transform=3D"tr=
+anslate(662.8828125, 8)"><foreignObject width=3D"62.046875" height=3D"24"><=
+div xmlns=3D"http://www.w3.org/1999/xhtml" style=3D"display: table-cell; wh=
+ite-space: nowrap; line-height: 1.5;"><span class=3D"nodeLabel "><p>one _ta=
+g</p></span></div></foreignObject></g></g></g><g class=3D"edgePaths"><path =
+d=3D"M573.219,82.99L502.878,91.991C432.536,100.993,291.854,118.997,221.513,=
+133.582C151.172,148.167,151.172,159.333,151.172,164.917L151.172,170.5" id=
+=3D"mermaid-1792850415097-L_B_C1_0" class=3D" edge-thickness-normal edge-pa=
+ttern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=
+=3D";" data-edge=3D"true" data-et=3D"edge" data-id=3D"L_B_C1_0" data-points=
+=3D"W3sieCI6NTczLjIxODc1LCJ5Ijo4Mi45ODk3MjMxNjA4NjQzMn0seyJ4IjoxNTEuMTcxODc=
+1LCJ5IjoxMzd9LHsieCI6MTUxLjE3MTg3NSwieSI6MTc0LjV9XQ=3D=3D" data-look=3D"cla=
+ssic" marker-end=3D"url(#mermaid-1792850415097_flowchart-v2-pointEnd)"></pa=
+th><path d=3D"M573.219,93.616L545.15,100.846C517.081,108.077,460.943,122.53=
+9,432.874,135.353C404.805,148.167,404.805,159.333,404.805,164.917L404.805,1=
+70.5" id=3D"mermaid-1792850415097-L_B_C2_0" class=3D" edge-thickness-normal=
+ edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link=
+" style=3D";" data-edge=3D"true" data-et=3D"edge" data-id=3D"L_B_C2_0" data=
+-points=3D"W3sieCI6NTczLjIxODc1LCJ5Ijo5My42MTU2MDQyMzEwMjEyNX0seyJ4Ijo0MDQu=
+ODA0Njg3NSwieSI6MTM3fSx7IngiOjQwNC44MDQ2ODc1LCJ5IjoxNzQuNX1d" data-look=3D"=
+classic" marker-end=3D"url(#mermaid-1792850415097_flowchart-v2-pointEnd)"><=
+/path><path d=3D"M655.188,99.5L655.188,105.75C655.188,112,655.188,124.5,655=
+.188,136.333C655.188,148.167,655.188,159.333,655.188,164.917L655.188,170.5"=
+ id=3D"mermaid-1792850415097-L_B_C3_0" class=3D" edge-thickness-normal edge=
+-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" sty=
+le=3D";" data-edge=3D"true" data-et=3D"edge" data-id=3D"L_B_C3_0" data-poin=
+ts=3D"W3sieCI6NjU1LjE4NzUsInkiOjk5LjV9LHsieCI6NjU1LjE4NzUsInkiOjEzN30seyJ4I=
+jo2NTUuMTg3NSwieSI6MTc0LjV9XQ=3D=3D" data-look=3D"classic" marker-end=3D"ur=
+l(#mermaid-1792850415097_flowchart-v2-pointEnd)"></path><path d=3D"M737.156=
+,91.554L769.74,99.129C802.323,106.703,867.49,121.851,900.073,135.009C932.65=
+6,148.167,932.656,159.333,932.656,164.917L932.656,170.5" id=3D"mermaid-1792=
+850415097-L_B_C4_0" class=3D" edge-thickness-normal edge-pattern-solid edge=
+-thickness-normal edge-pattern-solid flowchart-link" style=3D";" data-edge=
+=3D"true" data-et=3D"edge" data-id=3D"L_B_C4_0" data-points=3D"W3sieCI6NzM3=
+LjE1NjI1LCJ5Ijo5MS41NTQzNDE3MDUxNDY5OH0seyJ4Ijo5MzIuNjU2MjUsInkiOjEzN30seyJ=
+4Ijo5MzIuNjU2MjUsInkiOjE3NC41fV0=3D" data-look=3D"classic" marker-end=3D"ur=
+l(#mermaid-1792850415097_flowchart-v2-pointEnd)"></path><path d=3D"M737.156=
+,81.778L818.465,90.982C899.773,100.186,1062.391,118.593,1143.699,133.38C122=
+5.008,148.167,1225.008,159.333,1225.008,164.917L1225.008,170.5" id=3D"merma=
+id-1792850415097-L_B_C5_0" class=3D" edge-thickness-normal edge-pattern-sol=
+id edge-thickness-normal edge-pattern-solid flowchart-link" style=3D";" dat=
+a-edge=3D"true" data-et=3D"edge" data-id=3D"L_B_C5_0" data-points=3D"W3sieC=
+I6NzM3LjE1NjI1LCJ5Ijo4MS43NzgzMzYwOTgyNzY2fSx7IngiOjEyMjUuMDA3ODEyNSwieSI6M=
+TM3fSx7IngiOjEyMjUuMDA3ODEyNSwieSI6MTc0LjV9XQ=3D=3D" data-look=3D"classic" =
+marker-end=3D"url(#mermaid-1792850415097_flowchart-v2-pointEnd)"></path></g=
+><g class=3D"edgeLabels"><g class=3D"edgeLabel"><g class=3D"label" data-id=
+=3D"L_B_C1_0" transform=3D"translate(0, 0)"><foreignObject width=3D"0" heig=
+ht=3D"0"><div xmlns=3D"http://www.w3.org/1999/xhtml" class=3D"labelBkg" sty=
+le=3D"display: table-cell; white-space: nowrap; line-height: 1.5; max-width=
+: 200px; text-align: center;"><span class=3D"edgeLabel "></span></div></for=
+eignObject></g></g><g class=3D"edgeLabel"><g class=3D"label" data-id=3D"L_B=
+_C2_0" transform=3D"translate(0, 0)"><foreignObject width=3D"0" height=3D"0=
+"><div xmlns=3D"http://www.w3.org/1999/xhtml" class=3D"labelBkg" style=3D"d=
+isplay: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px=
+; text-align: center;"><span class=3D"edgeLabel "></span></div></foreignObj=
+ect></g></g><g class=3D"edgeLabel"><g class=3D"label" data-id=3D"L_B_C3_0" =
+transform=3D"translate(0, 0)"><foreignObject width=3D"0" height=3D"0"><div =
+xmlns=3D"http://www.w3.org/1999/xhtml" class=3D"labelBkg" style=3D"display:=
+ table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-=
+align: center;"><span class=3D"edgeLabel "></span></div></foreignObject></g=
+></g><g class=3D"edgeLabel"><g class=3D"label" data-id=3D"L_B_C4_0" transfo=
+rm=3D"translate(0, 0)"><foreignObject width=3D"0" height=3D"0"><div xmlns=
+=3D"http://www.w3.org/1999/xhtml" class=3D"labelBkg" style=3D"display: tabl=
+e-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align=
+: center;"><span class=3D"edgeLabel "></span></div></foreignObject></g></g>=
+<g class=3D"edgeLabel"><g class=3D"label" data-id=3D"L_B_C5_0" transform=3D=
+"translate(0, 0)"><foreignObject width=3D"0" height=3D"0"><div xmlns=3D"htt=
+p://www.w3.org/1999/xhtml" class=3D"labelBkg" style=3D"display: table-cell;=
+ white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: cente=
+r;"><span class=3D"edgeLabel "></span></div></foreignObject></g></g></g><g =
+class=3D"nodes"><g class=3D"node default  " id=3D"mermaid-1792850415097-flo=
+wchart-B-0" data-look=3D"classic" transform=3D"translate(655.1875, 72.5)"><=
+rect class=3D"basic label-container" style=3D"" x=3D"-81.96875" y=3D"-27" w=
+idth=3D"163.9375" height=3D"54"></rect><g class=3D"label" style=3D"" transf=
+orm=3D"translate(-51.96875, -12)"><rect></rect><foreignObject width=3D"103.=
+9375" height=3D"24"><div xmlns=3D"http://www.w3.org/1999/xhtml" style=3D"di=
+splay: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px;=
+ text-align: center;"><span class=3D"nodeLabel "><p>BluewaveError</p></span=
+></div></foreignObject></g></g><g class=3D"node default  " id=3D"mermaid-17=
+92850415097-flowchart-C1-1" data-look=3D"classic" transform=3D"translate(15=
+1.171875, 201.5)"><rect class=3D"basic label-container" style=3D"" x=3D"-10=
+8.171875" y=3D"-27" width=3D"216.34375" height=3D"54"></rect><g class=3D"la=
+bel" style=3D"" transform=3D"translate(-78.171875, -12)"><rect></rect><fore=
+ignObject width=3D"156.34375" height=3D"24"><div xmlns=3D"http://www.w3.org=
+/1999/xhtml" style=3D"display: table-cell; white-space: nowrap; line-height=
+: 1.5; max-width: 200px; text-align: center;"><span class=3D"nodeLabel "><p=
+>SIZE_LIMIT_EXCEEDED</p></span></div></foreignObject></g></g><g class=3D"no=
+de default  " id=3D"mermaid-1792850415097-flowchart-C2-3" data-look=3D"clas=
+sic" transform=3D"translate(404.8046875, 201.5)"><rect class=3D"basic label=
+-container" style=3D"" x=3D"-95.4609375" y=3D"-27" width=3D"190.921875" hei=
+ght=3D"54"></rect><g class=3D"label" style=3D"" transform=3D"translate(-65.=
+4609375, -12)"><rect></rect><foreignObject width=3D"130.921875" height=3D"2=
+4"><div xmlns=3D"http://www.w3.org/1999/xhtml" style=3D"display: table-cell=
+; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: cent=
+er;"><span class=3D"nodeLabel "><p>FLAGSHIP_INVALID</p></span></div></forei=
+gnObject></g></g><g class=3D"node default  " id=3D"mermaid-1792850415097-fl=
+owchart-C3-5" data-look=3D"classic" transform=3D"translate(655.1875, 201.5)=
+"><rect class=3D"basic label-container" style=3D"" x=3D"-104.921875" y=3D"-=
+27" width=3D"209.84375" height=3D"54"></rect><g class=3D"label" style=3D"" =
+transform=3D"translate(-74.921875, -12)"><rect></rect><foreignObject width=
+=3D"149.84375" height=3D"24"><div xmlns=3D"http://www.w3.org/1999/xhtml" st=
+yle=3D"display: table-cell; white-space: nowrap; line-height: 1.5; max-widt=
+h: 200px; text-align: center;"><span class=3D"nodeLabel "><p>LOCATION_CONFL=
+ICT</p></span></div></foreignObject></g></g><g class=3D"node default  " id=
+=3D"mermaid-1792850415097-flowchart-C4-7" data-look=3D"classic" transform=
+=3D"translate(932.65625, 201.5)"><rect class=3D"basic label-container" styl=
+e=3D"" x=3D"-122.546875" y=3D"-27" width=3D"245.09375" height=3D"54"></rect=
+><g class=3D"label" style=3D"" transform=3D"translate(-92.546875, -12)"><re=
+ct></rect><foreignObject width=3D"185.09375" height=3D"24"><div xmlns=3D"ht=
+tp://www.w3.org/1999/xhtml" style=3D"display: table-cell; white-space: nowr=
+ap; line-height: 1.5; max-width: 200px; text-align: center;"><span class=3D=
+"nodeLabel "><p>SHIP_TYPE_INCOMPATIBLE</p></span></div></foreignObject></g>=
+</g><g class=3D"node default  " id=3D"mermaid-1792850415097-flowchart-C5-9"=
+ data-look=3D"classic" transform=3D"translate(1225.0078125, 201.5)"><rect c=
+lass=3D"basic label-container" style=3D"" x=3D"-119.8046875" y=3D"-27" widt=
+h=3D"239.609375" height=3D"54"></rect><g class=3D"label" style=3D"" transfo=
+rm=3D"translate(-89.8046875, -12)"><rect></rect><foreignObject width=3D"179=
+.609375" height=3D"24"><div xmlns=3D"http://www.w3.org/1999/xhtml" style=3D=
+"display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200=
+px; text-align: center;"><span class=3D"nodeLabel "><p>STATE_INVARIANT_FAIL=
+ED</p></span></div></foreignObject></g></g></g></g></g></g></g><defs><filte=
+r id=3D"mermaid-1792850415097-drop-shadow" height=3D"130%" width=3D"130%"><=
+feDropShadow dx=3D"4" dy=3D"4" stdDeviation=3D"0" flood-opacity=3D"0.06" fl=
+ood-color=3D"#000000"></feDropShadow></filter></defs><defs><filter id=3D"me=
+rmaid-1792850415097-drop-shadow-small" height=3D"150%" width=3D"150%"><feDr=
+opShadow dx=3D"2" dy=3D"2" stdDeviation=3D"0" flood-opacity=3D"0.06" flood-=
+color=3D"#000000"></feDropShadow></filter></defs><linearGradient id=3D"merm=
+aid-1792850415097-gradient" gradientUnits=3D"objectBoundingBox" x1=3D"0%" y=
+1=3D"0%" x2=3D"100%" y2=3D"0%"><stop offset=3D"0%" stop-color=3D"hsl(0, 0%,=
+ 83.3333333333%)" stop-opacity=3D"1"></stop><stop offset=3D"100%" stop-colo=
+r=3D"hsl(0, 0%, 88.9215686275%)" stop-opacity=3D"1"></stop></linearGradient=
+></svg></pre>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> Five failures throw <span class=3D"font-mono">BluewaveError</span>, whose=
+ <span class=3D"font-mono">_tag</span> is always <span class=3D"font-mono">=
+"BluewaveError"</span>; consumers must probe <span class=3D"font-mono">cont=
+ext["code"]</span> and <span class=3D"font-mono">divisionCommands.ts</span>=
+ already relabels all five as <span class=3D"font-mono">DIVISION_STATE_INVA=
+RIANT_FAILED</span>.</p>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> One <span class=3D"font-mono">Data.TaggedError</span> per invariant (<s=
+pan class=3D"font-mono">vendor/effect/src/Data.ts:1124</span>), tag =3D the=
+ stable code; downstream switches on <span class=3D"font-mono">_tag</span>.=
+</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>Failure join=
+s the error channel</li><li>`catchTag` replaces code probes</li><li>Five ta=
+gs, no context lookup</li></ul>
+        </article>
+
+        <article id=3D"c9" class=3D"rounded-xl border border-stone-200 bg-w=
+hite p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">9. Tag the fleet-size viola=
+tion instead of throwing a bare `Error`</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-amber-100 text-=
+amber-800 px-2 py-0.5">Worth exploring</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">leak</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">error-management</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">runtime-free</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">edge</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">packages/campaign/s=
+rc/fleetSize.ts:55=E2=80=9360</p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"gone">throw Object.assign(new Error(`FLEE=
+T_SIZE_TACTICAL_STAT_VIOLATION: ${formulaId}`), {</span>
+<span class=3D"gone">  code: "FLEET_SIZE_TACTICAL_STAT_VIOLATION",</span>
+<span class=3D"gone">});</span></code></pre>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">class FleetSizeTacticalStatViolatio=
+n extends Data.TaggedError(</span>
+<span class=3D"kept">  "FLEET_SIZE_TACTICAL_STAT_VIOLATION",</span>
+<span class=3D"kept">)&lt;{ readonly formulaId: string }&gt; {}</span>
+<span class=3D"kept">throw new FleetSizeTacticalStatViolation({ formulaId }=
+);</span></code></pre>
+            </div>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> The thrown error carries <span class=3D"font-mono">code</span> but no <sp=
+an class=3D"font-mono">_tag</span>; the tag gate only scans class declarati=
+ons, so this escapes it and callers can only match the message.</p>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> <span class=3D"font-mono">Data.TaggedError("FLEET_SIZE_TACTICAL_STAT_VI=
+OLATION")</span> (<span class=3D"font-mono">Data.ts:1124</span>); existing =
+<span class=3D"font-mono">toThrow(=E2=80=A6)</span> tests keep working beca=
+use it extends <span class=3D"font-mono">Error</span>.</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>Failure carr=
+ies a `_tag`</li><li>Gate can see it</li><li>Message matching deletes</li><=
+/ul>
+        </article>
+
+        <article id=3D"c10" class=3D"rounded-xl border border-stone-200 bg-=
+white p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">10. Let `Data.TaggedError` =
+build the transition error</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-amber-100 text-=
+amber-800 px-2 py-0.5">Worth exploring</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">bypass</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">error-management</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">runtime-free</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">packages/campaign/s=
+rc/constructionStatus.ts:76=E2=80=9393</p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"gone">export class ConstructionProjectTra=
+nsitionError extends Error {</span>
+<span class=3D"gone">  readonly _tag =3D "ConstructionProjectTransitionErro=
+r";</span>
+<span class=3D"gone">  static is(value: unknown): value is ConstructionProj=
+ectTransitionError {</span>
+<span class=3D"gone">    return (value as { _tag?: unknown })?._tag =3D=3D=
+=3D "ConstructionProjectTransitionError";</span>
+<span class=3D"gone">  }</span>
+<span class=3D"gone">  readonly code =3D INVALID_DOCKYARD_PROJECT_TRANSITIO=
+N;</span>
+<span class=3D"gone">  constructor(readonly from: ..., readonly to: ...) { =
+super(...); this.name =3D ...; }</span>
+<span class=3D"gone">}</span></code></pre>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">export class ConstructionProjectTra=
+nsitionError extends Data.TaggedError(</span>
+<span class=3D"kept">  "ConstructionProjectTransitionError",</span>
+<span class=3D"kept">)&lt;{ readonly from: ConstructionProjectStatus; reado=
+nly to: ConstructionProjectStatus }&gt; {</span>
+<span class=3D"kept">  readonly code =3D INVALID_DOCKYARD_PROJECT_TRANSITIO=
+N;</span>
+<span class=3D"kept">}</span></code></pre>
+            </div>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> The class hand-rolls <span class=3D"font-mono">_tag</span>, a static <spa=
+n class=3D"font-mono">is</span> guard, <span class=3D"font-mono">name</span=
+>, and <span class=3D"font-mono">super</span> =E2=80=94 exactly what <span =
+class=3D"font-mono">Data.TaggedError</span> generates; the tag gate passes =
+it so the boilerplate persists.</p>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> <span class=3D"font-mono">Data.TaggedError("ConstructionProjectTransiti=
+onError")&lt;{ from; to }&gt;</span> (<span class=3D"font-mono">Data.ts:112=
+4</span>); the class still extends <span class=3D"font-mono">Error</span>, =
+so <span class=3D"font-mono">toThrow(ConstructionProjectTransitionError)</s=
+pan> survives.</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>Hand-written=
+ guard deletes</li><li>Tag is generated</li><li>Same throw identity</li></u=
+l>
+        </article>
+
+        <article id=3D"c11" class=3D"rounded-xl border border-amber-300 bg-=
+amber-50/40 p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">11. Stop ordering authorita=
+tive arrays with `localeCompare` =E2=80=94 decision request</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-slate-200 text-=
+slate-700 px-2 py-0.5">Decision request</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">leak</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">behaviour</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">authoritative</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">golden-hash</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">fleetSize.ts:81,87 =
+=C2=B7 nationCompilation.ts:190,210,299,320,441 =C2=B7 worldCompilation.ts:=
+55,65,75 =C2=B7 politicalCompilation.ts:24,96 =C2=B7 designCompilation.ts:2=
+08 =C2=B7 technologyMaterialization.ts:326</p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"gone">floors.sort((a, b) =3D&gt;</span>
+<span class=3D"gone">  b.rem !=3D=3D a.rem ? b.rem - a.rem : a.id.localeCom=
+pare(b.id));</span>
+<span class=3D"gone">const sorted =3D new Map([...out.entries()].sort((a, b=
+) =3D&gt; a[0].localeCompare(b[0])));</span></code></pre>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">import { compareCodePoints } from "=
+@bluewave/deterministic";</span>
+<span class=3D"kept">floors.sort((a, b) =3D&gt;</span>
+<span class=3D"kept">  b.rem !=3D=3D a.rem ? b.rem - a.rem : compareCodePoi=
+nts(a.id, b.id));</span>
+<span class=3D"kept">const sorted =3D new Map(</span>
+<span class=3D"kept">  [...out.entries()].sort((a, b) =3D&gt; compareCodePo=
+ints(a[0], b[0])));</span></code></pre>
+            </div>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> <span class=3D"font-mono">localeCompare</span> consults the host locale/I=
+CU, so authoritative order can differ across OSes/locales; <span class=3D"f=
+ont-mono">fleetSize.ts:81</span> uses it as the remainder tie-break and <sp=
+an class=3D"font-mono">designCompilation.ts:208</span> takes the sorted fir=
+st member as <span class=3D"font-mono">rootDesignVersionId</span>.</p>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> <span class=3D"font-mono">compareCodePoints</span> from <span class=3D"=
+font-mono">@bluewave/deterministic</span> (already imported by <span class=
+=3D"font-mono">divisions.ts</span>); add <span class=3D"font-mono">.localeC=
+ompare(</span>/<span class=3D"font-mono">.toLocale*</span> to <span class=
+=3D"font-mono">assert-authoritative-determinism.mjs</span> <span class=3D"f=
+ont-mono">classifyCall</span>.</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>Order drops =
+host locale</li><li>Gate closes the hole</li><li>One comparator per key</li=
+></ul>
+          <p class=3D"text-xs bg-amber-100 text-amber-900 rounded p-2">
+            Checked against current 1880 snake-case ids: no observed order =
+difference, so the pin should hold. Re-run
+            <span class=3D"font-mono">verify-golden-hashes</span> and the r=
+eplay corpus; any move is a decision request, not a local fix.
+          </p>
+        </article>
+
+        <article id=3D"c12" class=3D"rounded-xl border border-amber-300 bg-=
+amber-50/40 p-6 space-y-4 shadow-sm">
+          <div class=3D"flex flex-wrap items-center gap-2">
+            <h3 class=3D"text-lg font-semibold">12. The snapshot hash never=
+ sees `Map` fields =E2=80=94 decision request</h3>
+            <span class=3D"text-[11px] font-mono rounded bg-slate-200 text-=
+slate-700 px-2 py-0.5">Decision request</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-100 text-r=
+ose-800 px-2 py-0.5">bypass</span>
+            <span class=3D"text-[11px] font-mono rounded bg-stone-100 text-=
+slate-600 px-2 py-0.5">schema</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">authoritative</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">golden-hash</span>
+            <span class=3D"text-[11px] font-mono rounded bg-rose-50 text-ro=
+se-700 px-2 py-0.5">wire-format</span>
+          </div>
+          <p class=3D"text-xs font-mono text-slate-500">campaign/src/compil=
+er.ts:175=E2=80=93177 =C2=B7 deterministic/src/index.ts:15=E2=80=9333 =C2=
+=B7 campaign/src/state.ts:72,596=E2=80=93601</p>
+          <div class=3D"grid md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">Before</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code>const rawJson =3D canonicalSerialize(snapshot);
+const rawHash =3D sha256Hex(rawJson);
+const envelope =3D createEnvelope("campaign-snapshot", input.compatibilityV=
+ersion, snapshot);
+
+<span class=3D"gone">// deterministic/src/index.ts</span>
+<span class=3D"gone">export function canonicalSerialize(value: unknown): st=
+ring {</span>
+<span class=3D"gone">  return JSON.stringify(value, stableKeySort, 0);</spa=
+n>
+<span class=3D"gone">}</span></code></pre>
+            </div>
+            <div>
+              <p class=3D"font-semibold text-slate-500 mb-1">After</p>
+              <pre class=3D"bg-stone-900 text-stone-100 rounded-lg p-3 over=
+flow-x-auto"><code><span class=3D"kept">const subject =3D hashableSnapshot(=
+snapshot);</span>
+<span class=3D"kept">const rawJson =3D canonicalSerialize(subject);</span>
+<span class=3D"kept">const rawHash =3D sha256Hex(rawJson);</span>
+<span class=3D"kept">const envelope =3D createEnvelope("campaign-snapshot",=
+ input.compatibilityVersion, subject);</span>
+<span class=3D"kept">// hashableSnapshot: Map -&gt; codepoint-sorted record=
+</span></code></pre>
+            </div>
+          </div>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Problem.</span=
+> <span class=3D"font-mono">canonicalSerialize</span> is key-sorting <span =
+class=3D"font-mono">JSON.stringify</span>, which turns a <span class=3D"fon=
+t-mono">Map</span> into <span class=3D"font-mono">{}</span>. <span class=3D=
+"font-mono">CampaignSnapshot.nations</span>, <span class=3D"font-mono">.des=
+igns</span>, <span class=3D"font-mono">.designFamilies</span>, and <span cl=
+ass=3D"font-mono">ResearchState.activeCandidates</span> are Maps, so <span =
+class=3D"font-mono">rawHash</span> and <span class=3D"font-mono">envelope.b=
+odyHash</span> cover none of that state. Changing a nation's treasury leave=
+s the hash identical.</p>
+          <p class=3D"text-sm"><span class=3D"font-semibold">Direction.</sp=
+an> Project Maps to codepoint-sorted records before hashing (precedent: <sp=
+an class=3D"font-mono">phase-engine/src/replay.ts:35=E2=80=9375</span>, <sp=
+an class=3D"font-mono">persistence/src/snapshotSerialization.ts:34</span>),=
+ or make <span class=3D"font-mono">canonicalSerialize</span> Map/Set-aware;=
+ <span class=3D"font-mono">verifyEnvelope</span> must use the same projecti=
+on.</p>
+          <ul class=3D"text-sm list-disc pl-5 space-y-0.5"><li>Hash covers =
+nation state</li><li>Freshness checks see changes</li><li>Envelope and veri=
+fier agree</li></ul>
+          <p class=3D"text-xs bg-amber-100 text-amber-900 rounded p-2">
+            Every <span class=3D"font-mono">rawHash</span>, <span class=3D"=
+font-mono">bodyHash</span>, and consumer of the same
+            <span class=3D"font-mono">canonicalSerialize(snapshot)</span> m=
+oves. Not caught by
+            <span class=3D"font-mono">assert-canonical-serialization.mjs</s=
+pan> (only raw <span class=3D"font-mono">JSON.stringify</span>) or the dete=
+rminism gate.
+            Requires a compatibility decision before any code change.
+          </p>
+        </article>
+      </section>
+
+      <section id=3D"top-recommendation">
+        <h2 class=3D"text-xl font-semibold mb-3">Top recommendation</h2>
+        <div class=3D"rounded-xl border-2 border-emerald-300 bg-emerald-50/=
+60 p-6 space-y-2">
+          <a href=3D"file:///private/var/folders/zf/thh9mn854w3_5zbrfxm_bwy=
+w0000gn/T/effect-use-review-20261024-105829.html#c6" class=3D"text-lg font-=
+semibold text-emerald-900 underline decoration-emerald-400">6. Give readine=
+ss and division seeds the `Result` channel</a>
+          <p class=3D"text-sm text-slate-700">
+            It is the cleanest Effect-owned refactor in the package: <span =
+class=3D"font-mono">Result</span> is already in the
+            allowlist, the local union and <span class=3D"font-mono">fail()=
+</span> delete, and the same shape recurs in
+            <span class=3D"font-mono">prestige.ts</span>. It stays internal=
+, changes no hash, and makes success-or-failure
+            compose the way the rest of the codebase already expects.
+          </p>
+        </div>
+      </section>
+    </main>
+ =20
+
+<div class=3D"mermaidTooltip" style=3D"opacity: 0; position: absolute; text=
+-align: center; max-width: 200px; padding: 2px; font-size: 12px; background=
+: rgb(255, 255, 222); border: 1px solid rgb(51, 51, 51); border-radius: 2px=
+; pointer-events: none; z-index: 100;"></div></body></html>
+------MultipartBoundary--EuNm09ejy8bP8MxP7cpLKJ12iCBK448eKuMGmGvbcy----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: cid:css-e267f73d-ff41-4ada-831b-8d0a3938f8b6@mhtml.blink
+
+@charset "utf-8";
+
+*, ::before, ::after { --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; =
+--tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; -=
+-tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: =
+; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-=
+from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ;=
+ --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-s=
+pacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-widt=
+h: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5=
+); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-sh=
+adow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightne=
+ss: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; =
+--tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --=
+tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale=
+: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opaci=
+ty: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; --tw-contain-size: ;=
+ --tw-contain-layout: ; --tw-contain-paint: ; --tw-contain-style: ; }
+
+::backdrop { --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-trans=
+late-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y=
+: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pin=
+ch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-posit=
+ion: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordi=
+nal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; =
+--tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --=
+tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ri=
+ng-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 =
+#0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw=
+-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-satur=
+ate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdro=
+p-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-b=
+ackdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw=
+-backdrop-saturate: ; --tw-backdrop-sepia: ; --tw-contain-size: ; --tw-cont=
+ain-layout: ; --tw-contain-paint: ; --tw-contain-style: ; }
+
+*, ::after, ::before { box-sizing: border-box; border-width: 0px; border-st=
+yle: solid; border-color: rgb(229, 231, 235); }
+
+::after, ::before { --tw-content: ''; }
+
+:host, html { line-height: 1.5; text-size-adjust: 100%; tab-size: 4; font-f=
+amily: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI=
+ Emoji", "Segoe UI Symbol", "Noto Color Emoji"; font-feature-settings: norm=
+al; font-variation-settings: normal; -webkit-tap-highlight-color: transpare=
+nt; }
+
+body { margin: 0px; line-height: inherit; }
+
+hr { height: 0px; color: inherit; border-top-width: 1px; }
+
+abbr:where([title]) { text-decoration: underline dotted; }
+
+h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
+
+a { color: inherit; text-decoration: inherit; }
+
+b, strong { font-weight: bolder; }
+
+code, kbd, pre, samp { font-family: ui-monospace, SFMono-Regular, Menlo, Mo=
+naco, Consolas, "Liberation Mono", "Courier New", monospace; font-feature-s=
+ettings: normal; font-variation-settings: normal; font-size: 1em; }
+
+small { font-size: 80%; }
+
+sub, sup { font-size: 75%; line-height: 0; position: relative; vertical-ali=
+gn: baseline; }
+
+sub { bottom: -0.25em; }
+
+sup { top: -0.5em; }
+
+table { text-indent: 0px; border-color: inherit; border-collapse: collapse;=
+ }
+
+button, input, optgroup, select, textarea { font-family: inherit; font-feat=
+ure-settings: inherit; font-variation-settings: inherit; font-size: 100%; f=
+ont-weight: inherit; line-height: inherit; letter-spacing: inherit; color: =
+inherit; margin: 0px; padding: 0px; }
+
+button, select { text-transform: none; }
+
+button, input:where([type=3D"button"]), input:where([type=3D"reset"]), inpu=
+t:where([type=3D"submit"]) { appearance: button; background-color: transpar=
+ent; background-image: none; }
+
+progress { vertical-align: baseline; }
+
+::-webkit-inner-spin-button, ::-webkit-outer-spin-button { height: auto; }
+
+[type=3D"search"] { appearance: textfield; outline-offset: -2px; }
+
+::-webkit-search-decoration { appearance: none; }
+
+::-webkit-file-upload-button { appearance: button; font: inherit; }
+
+summary { display: list-item; }
+
+blockquote, dd, dl, figure, h1, h2, h3, h4, h5, h6, hr, p, pre { margin: 0p=
+x; }
+
+fieldset { margin: 0px; padding: 0px; }
+
+legend { padding: 0px; }
+
+menu, ol, ul { list-style: none; margin: 0px; padding: 0px; }
+
+dialog { padding: 0px; }
+
+textarea { resize: vertical; }
+
+input::placeholder, textarea::placeholder { opacity: 1; color: rgb(156, 163=
+, 175); }
+
+[role=3D"button"], button { cursor: pointer; }
+
+:disabled { cursor: default; }
+
+audio, canvas, embed, iframe, img, object, svg, video { display: block; ver=
+tical-align: middle; }
+
+img, video { max-width: 100%; height: auto; }
+
+[hidden]:where(:not([hidden=3D"until-found"])) { display: none; }
+
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+.mb-1 { margin-bottom: 0.25rem; }
+
+.mb-3 { margin-bottom: 0.75rem; }
+
+.flex { display: flex; }
+
+.grid { display: grid; }
+
+.max-w-5xl { max-width: 64rem; }
+
+.list-disc { list-style-type: disc; }
+
+.flex-wrap { flex-wrap: wrap; }
+
+.items-center { align-items: center; }
+
+.items-baseline { align-items: baseline; }
+
+.justify-between { justify-content: space-between; }
+
+.gap-1\.5 { gap: 0.375rem; }
+
+.gap-2 { gap: 0.5rem; }
+
+.gap-3 { gap: 0.75rem; }
+
+.gap-4 { gap: 1rem; }
+
+.space-y-0\.5 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; =
+margin-top: calc(0.125rem * calc(1 - var(--tw-space-y-reverse))); margin-bo=
+ttom: calc(0.125rem * var(--tw-space-y-reverse)); }
+
+.space-y-1\.5 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; =
+margin-top: calc(0.375rem * calc(1 - var(--tw-space-y-reverse))); margin-bo=
+ttom: calc(0.375rem * var(--tw-space-y-reverse)); }
+
+.space-y-10 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; ma=
+rgin-top: calc(2.5rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom=
+: calc(2.5rem * var(--tw-space-y-reverse)); }
+
+.space-y-12 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; ma=
+rgin-top: calc(3rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: =
+calc(3rem * var(--tw-space-y-reverse)); }
+
+.space-y-2 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; mar=
+gin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom:=
+ calc(0.5rem * var(--tw-space-y-reverse)); }
+
+.space-y-3 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; mar=
+gin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom=
+: calc(0.75rem * var(--tw-space-y-reverse)); }
+
+.space-y-4 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; mar=
+gin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: c=
+alc(1rem * var(--tw-space-y-reverse)); }
+
+.space-y-5 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; mar=
+gin-top: calc(1.25rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom=
+: calc(1.25rem * var(--tw-space-y-reverse)); }
+
+.overflow-x-auto { overflow-x: auto; }
+
+.rounded { border-radius: 0.25rem; }
+
+.rounded-lg { border-radius: 0.5rem; }
+
+.rounded-xl { border-radius: 0.75rem; }
+
+.border { border-width: 1px; }
+
+.border-2 { border-width: 2px; }
+
+.border-amber-300 { --tw-border-opacity: 1; border-color: rgb(252 211 77 / =
+var(--tw-border-opacity, 1)); }
+
+.border-emerald-300 { --tw-border-opacity: 1; border-color: rgb(110 231 183=
+ / var(--tw-border-opacity, 1)); }
+
+.border-stone-200 { --tw-border-opacity: 1; border-color: rgb(231 229 228 /=
+ var(--tw-border-opacity, 1)); }
+
+.bg-amber-100 { --tw-bg-opacity: 1; background-color: rgb(254 243 199 / var=
+(--tw-bg-opacity, 1)); }
+
+.bg-amber-50 { --tw-bg-opacity: 1; background-color: rgb(255 251 235 / var(=
+--tw-bg-opacity, 1)); }
+
+.bg-amber-50\/40 { background-color: rgba(255, 251, 235, 0.4); }
+
+.bg-emerald-100 { --tw-bg-opacity: 1; background-color: rgb(209 250 229 / v=
+ar(--tw-bg-opacity, 1)); }
+
+.bg-emerald-50\/60 { background-color: rgba(236, 253, 245, 0.6); }
+
+.bg-rose-100 { --tw-bg-opacity: 1; background-color: rgb(255 228 230 / var(=
+--tw-bg-opacity, 1)); }
+
+.bg-rose-50 { --tw-bg-opacity: 1; background-color: rgb(255 241 242 / var(-=
+-tw-bg-opacity, 1)); }
+
+.bg-slate-200 { --tw-bg-opacity: 1; background-color: rgb(226 232 240 / var=
+(--tw-bg-opacity, 1)); }
+
+.bg-stone-100 { --tw-bg-opacity: 1; background-color: rgb(245 245 244 / var=
+(--tw-bg-opacity, 1)); }
+
+.bg-stone-200 { --tw-bg-opacity: 1; background-color: rgb(231 229 228 / var=
+(--tw-bg-opacity, 1)); }
+
+.bg-stone-50 { --tw-bg-opacity: 1; background-color: rgb(250 250 249 / var(=
+--tw-bg-opacity, 1)); }
+
+.bg-stone-900 { --tw-bg-opacity: 1; background-color: rgb(28 25 23 / var(--=
+tw-bg-opacity, 1)); }
+
+.bg-white { --tw-bg-opacity: 1; background-color: rgb(255 255 255 / var(--t=
+w-bg-opacity, 1)); }
+
+.p-2 { padding: 0.5rem; }
+
+.p-3 { padding: 0.75rem; }
+
+.p-6 { padding: 1.5rem; }
+
+.px-1 { padding-left: 0.25rem; padding-right: 0.25rem; }
+
+.px-1\.5 { padding-left: 0.375rem; padding-right: 0.375rem; }
+
+.px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+
+.py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+
+.py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+
+.pl-5 { padding-left: 1.25rem; }
+
+.text-center { text-align: center; }
+
+.font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Cons=
+olas, "Liberation Mono", "Courier New", monospace; }
+
+.font-sans { font-family: ui-sans-serif, system-ui, sans-serif, "Apple Colo=
+r Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; }
+
+.text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+
+.text-\[11px\] { font-size: 11px; }
+
+.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+
+.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+
+.font-semibold { font-weight: 600; }
+
+.tracking-tight { letter-spacing: -0.025em; }
+
+.text-amber-800 { --tw-text-opacity: 1; color: rgb(146 64 14 / var(--tw-tex=
+t-opacity, 1)); }
+
+.text-amber-900 { --tw-text-opacity: 1; color: rgb(120 53 15 / var(--tw-tex=
+t-opacity, 1)); }
+
+.text-emerald-700 { --tw-text-opacity: 1; color: rgb(4 120 87 / var(--tw-te=
+xt-opacity, 1)); }
+
+.text-emerald-800 { --tw-text-opacity: 1; color: rgb(6 95 70 / var(--tw-tex=
+t-opacity, 1)); }
+
+.text-emerald-900 { --tw-text-opacity: 1; color: rgb(6 78 59 / var(--tw-tex=
+t-opacity, 1)); }
+
+.text-rose-700 { --tw-text-opacity: 1; color: rgb(190 18 60 / var(--tw-text=
+-opacity, 1)); }
+
+.text-rose-800 { --tw-text-opacity: 1; color: rgb(159 18 57 / var(--tw-text=
+-opacity, 1)); }
+
+.text-slate-500 { --tw-text-opacity: 1; color: rgb(100 116 139 / var(--tw-t=
+ext-opacity, 1)); }
+
+.text-slate-600 { --tw-text-opacity: 1; color: rgb(71 85 105 / var(--tw-tex=
+t-opacity, 1)); }
+
+.text-slate-700 { --tw-text-opacity: 1; color: rgb(51 65 85 / var(--tw-text=
+-opacity, 1)); }
+
+.text-slate-900 { --tw-text-opacity: 1; color: rgb(15 23 42 / var(--tw-text=
+-opacity, 1)); }
+
+.text-stone-100 { --tw-text-opacity: 1; color: rgb(245 245 244 / var(--tw-t=
+ext-opacity, 1)); }
+
+.underline { text-decoration-line: underline; }
+
+.decoration-emerald-400 { text-decoration-color: rgb(52, 211, 153); }
+
+.antialiased { -webkit-font-smoothing: antialiased; }
+
+.shadow-sm { --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); --tw-shadow-colore=
+d: 0 1px 2px 0 var(--tw-shadow-color); box-shadow: var(--tw-ring-offset-sha=
+dow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+
+@media (min-width: 768px) {
+  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0px, 1fr)); }
+}
+------MultipartBoundary--EuNm09ejy8bP8MxP7cpLKJ12iCBK448eKuMGmGvbcy----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: cid:css-02ae5b5d-fbd3-4bcd-8a3c-7423328727a6@mhtml.blink
+
+@charset "utf-8";
+
+.leak { stroke: rgb(220, 38, 38); }
+
+.gone { background: rgb(254, 242, 242); color: rgb(153, 27, 27); text-decor=
+ation: line-through; }
+
+.kept { background: rgb(236, 253, 245); color: rgb(6, 95, 70); }
+
+pre { tab-size: 2; }
+------MultipartBoundary--EuNm09ejy8bP8MxP7cpLKJ12iCBK448eKuMGmGvbcy------

@@ -28,7 +28,7 @@ export function DossierHeader({
         >
           <NationEmblem countryId={countryId} />
         </HoverCardTrigger>
-        <HoverCardContent side="top" className="w-auto max-w-64 px-3 py-1.5 text-xs leading-snug">
+        <HoverCardContent side="top" variant="tip">
           {appointmentMessage}
         </HoverCardContent>
       </HoverCard>

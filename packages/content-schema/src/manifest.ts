@@ -18,6 +18,7 @@ export const RulesetManifestSchema = Schema.Struct({
   prestige: Schema.optional(Schema.Unknown),
   presence: Schema.optional(Schema.Unknown),
   battleOffers: Schema.optional(Schema.Unknown),
+  fleetManagement: Schema.optional(Schema.Unknown),
   provenance: Schema.optional(ProvenanceSchema),
 });
 

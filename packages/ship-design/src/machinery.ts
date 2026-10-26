@@ -6,6 +6,7 @@ import { sortFindings } from "./findings.js";
 import { evaluate, type LookupTable } from "./formula/eval.js";
 import { parseFormula } from "./formula/parse.js";
 import { kg, toSafe, type Kg, type Kw, type Litre } from "./units.js";
+import { designInvariant } from "./errors.js";
 
 export interface PropulsionPlant {
   readonly id: string;
@@ -75,7 +76,7 @@ const E9 = 1_000_000_000n;
 function enginePriority(i: MachineryInput): bigint {
   const p = i.enginePriorityBp ?? 0;
   if (!Number.isSafeInteger(p) || p < -10_000 || p > 10_000)
-    throw new Error(`enginePriorityBp must be an integer in -10000..10000, got ${p}`);
+    throw designInvariant(`enginePriorityBp must be an integer in -10000..10000, got ${p}`);
   return BigInt(p);
 }
 
@@ -103,7 +104,7 @@ export function effectiveCoefficientX100(
   speedMilliKnots: number,
 ): number {
   const base = b.cFormX100[i.hullFormId];
-  if (base === undefined) throw new Error(`unknown hull form coefficient '${i.hullFormId}'`);
+  if (base === undefined) throw designInvariant(`unknown hull form coefficient '${i.hullFormId}'`);
   const slr = speedLengthRatioX1000(speedMilliKnots, i.lengthWlMm);
   const excess = BigInt(Math.max(0, slr - b.slr0X1000));
   const penaltyBp = Math.min(

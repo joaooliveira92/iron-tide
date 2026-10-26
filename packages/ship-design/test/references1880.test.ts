@@ -64,3 +64,81 @@ describe("the January-1880 historical reference set", () => {
     expect(r.findings.map((f) => f.id)).toContain("TECH_UNAVAILABLE");
   });
 });
+
+describe("the 1945 United States destroyer (E-1 1940-1949)", () => {
+  const draft = byId("starter_dd_usa_1945").draft;
+
+  it("is a destroyer under the 1940 classification rules and a light cruiser under the base rules", () => {
+    expect(compileDesign(draft, earlyContext("1945-01")).naturalClass).toBe("DD");
+    const base = compileDesign(draft, {
+      ...earlyContext("1945-01"),
+      balance: {
+        ...earlyContext("1945-01").balance,
+        classificationFromMonth: undefined,
+        classification: earlyContext("1939-12").balance.classification,
+      },
+    });
+    expect(base.naturalClass).toBe("CL");
+  });
+
+  it("is not available before its 5-inch twin mount", () => {
+    const r = compileDesign(draft, earlyContext("1944-12"));
+    expect(r.valid).toBe(false);
+    expect(r.findings.map((f) => f.id)).toContain("TECH_UNAVAILABLE");
+  });
+});
+
+describe("the 1948 United States cruisers (E-1 1940-1949)", () => {
+  const light = byId("starter_cl_usa_1948").draft;
+  const heavy = byId("starter_ca_usa_1948").draft;
+
+  it("classes the Worcester as a light cruiser and the Des Moines as a heavy cruiser", () => {
+    expect(compileDesign(light, earlyContext("1948-01")).naturalClass).toBe("CL");
+    expect(compileDesign(heavy, earlyContext("1948-01")).naturalClass).toBe("CA");
+  });
+
+  it("closes on the sourced full-load displacement and 33 knots", () => {
+    const worcester = compileDesign(light, earlyContext("1948-01"));
+    const desMoines = compileDesign(heavy, earlyContext("1948-01"));
+    expect(Math.abs(worcester.totalKg - 17_997_000)).toBeLessThan(50_000);
+    expect(Math.abs(desMoines.totalKg - 20_934_000)).toBeLessThan(50_000);
+    expect(worcester.machinery?.maxSpeedMilliKnots).toBeGreaterThanOrEqual(32_900);
+    expect(desMoines.machinery?.maxSpeedMilliKnots).toBeGreaterThanOrEqual(32_900);
+  });
+
+  it("is not available before the 1948 turrets", () => {
+    for (const draft of [light, heavy]) {
+      const r = compileDesign(draft, earlyContext("1947-12"));
+      expect(r.valid).toBe(false);
+      expect(r.findings.map((f) => f.id)).toContain("TECH_UNAVAILABLE");
+    }
+  });
+});
+
+describe("the 1955 United States destroyer (E-1 1950-1959)", () => {
+  const draft = byId("starter_dd_usa_1955").draft;
+
+  it("is a destroyer under the 1950 classification rules and a light cruiser under the 1940 rules", () => {
+    expect(compileDesign(draft, earlyContext("1955-11")).naturalClass).toBe("DD");
+    const earlier = compileDesign(draft, {
+      ...earlyContext("1955-11"),
+      balance: {
+        ...earlyContext("1955-11").balance,
+        classification: earlyContext("1949-12").balance.classification,
+      },
+    });
+    expect(earlier.naturalClass).toBe("CL");
+  });
+
+  it("closes on the sourced full-load displacement and 33 knots", () => {
+    const r = compileDesign(draft, earlyContext("1955-11"));
+    expect(Math.abs(r.totalKg - 4_916_000)).toBeLessThan(10_000);
+    expect(r.machinery?.maxSpeedMilliKnots).toBeGreaterThanOrEqual(32_900);
+  });
+
+  it("is not available before the 5-inch/54 mount", () => {
+    const r = compileDesign(draft, earlyContext("1953-12"));
+    expect(r.valid).toBe(false);
+    expect(r.findings.map((f) => f.id)).toContain("TECH_UNAVAILABLE");
+  });
+});

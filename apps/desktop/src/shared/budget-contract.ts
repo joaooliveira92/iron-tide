@@ -1,5 +1,75 @@
 import type { CommandEnvelope } from "./bridge-contract.js";
 
+export type CommitmentReadiness = "ACTIVE" | "WORKING_UP" | "RESERVE" | "MOTHBALLED" | "REPAIR";
+
+export interface FleetUpkeepGroup {
+  readonly readiness: CommitmentReadiness;
+  readonly ships: number;
+  readonly cost: number;
+  readonly multiplierBp: number;
+}
+
+export interface FleetUpkeepShip {
+  readonly id: string;
+  readonly name: string;
+  readonly readiness: CommitmentReadiness;
+  readonly cost: number;
+  readonly overBase: boolean;
+}
+
+export interface FleetUpkeep {
+  readonly total: number;
+  readonly atWar: boolean;
+  readonly warSurcharge: number;
+  readonly groups: readonly FleetUpkeepGroup[];
+  readonly ships: readonly FleetUpkeepShip[];
+}
+
+export interface ProjectAcceleration {
+  readonly premiumWork: number;
+  readonly premiumApplied: boolean;
+}
+
+export interface ConstructionAcceleration {
+  readonly acceleratedCount: number;
+  readonly delayChanceBp: number;
+  readonly premiumBp: number;
+  readonly premiumPending: number;
+}
+
+export interface ConstructionCommitment {
+  readonly projectId: string;
+  readonly className: string;
+  readonly shipType: string;
+  readonly status: string;
+  readonly draw: number;
+  readonly carryingCost: number;
+  readonly foreign: boolean;
+  readonly percentComplete: number;
+  readonly acceleration: ProjectAcceleration | null;
+}
+
+export interface ConstructionCommitments {
+  readonly projects: readonly ConstructionCommitment[];
+  readonly drawTotal: number;
+  readonly carryingTotal: number;
+  readonly haltedCount: number;
+  readonly acceleration: ConstructionAcceleration;
+}
+
+export interface UnpaidCostsPrestige {
+  readonly triggered: boolean;
+  readonly before: number;
+  readonly after: number;
+  readonly sackingThreshold: number;
+}
+
+export interface TreasuryCommitments {
+  readonly fleet: FleetUpkeep;
+  readonly construction: ConstructionCommitments;
+  readonly unpaidCostsPrestige: UnpaidCostsPrestige | null;
+}
+
 export interface BudgetScreenProjection {
   readonly revision: number;
   readonly month: { readonly month: number; readonly year: number };
@@ -15,6 +85,7 @@ export interface BudgetScreenProjection {
     readonly rateBp: number;
     readonly cap: number;
   }[];
+  readonly commitments: TreasuryCommitments;
 }
 
 export interface SubmitBudgetAllocationPayload extends CommandEnvelope {

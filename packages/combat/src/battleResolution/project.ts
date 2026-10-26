@@ -47,12 +47,20 @@ import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { projectTorpedoes } from "./torpedoProjection.js";
 import type { TorpedoContext } from "../torpedoes/index.js";
 
+import {
+  NO_TRAINING_EFFECTS,
+  scaleByTrainingBp,
+  type BattleTrainingEffects,
+  type TrainingEffectsBySide,
+} from "./trainingEffects.js";
+
 export interface AutoResolverNation {
   nationId: string;
   ships: Ship[];
   designs: Map<string, CompiledDesignVersion>;
   divisions: PermanentDivision[];
   officers?: Officer[];
+  trainingEffects?: BattleTrainingEffects;
 }
 
 export interface ProjectBattleInput {
@@ -72,6 +80,7 @@ export interface ProjectBattleOutput {
   units: TacticalShipUnit[];
   designs: Record<string, CompiledDesignVersion>;
   torpedoes?: TorpedoContext;
+  trainingEffects: TrainingEffectsBySide;
 }
 
 function commanderAccuracyBp(
@@ -227,6 +236,10 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
       accuracyFactors: {
         ...neutralAccuracyFactors(GUNNERY_ACCURACY_BASE_BP),
         officer: commanderAccuracyBp(u, attacker, defender),
+        training: scaleByTrainingBp(
+          10_000,
+          (u.sideId === "ATTACKER" ? attacker : defender).trainingEffects?.gunneryBp ?? 0,
+        ),
         ...(isContesting ? { ownManeuver: contestedOwnManeuverBp! } : {}),
       },
       state: withGunneryStateHash({
@@ -298,6 +311,10 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
     units,
     designs: unitDesigns,
     ...(torpedoes ? { torpedoes } : {}),
+    trainingEffects: {
+      ATTACKER: attacker.trainingEffects ?? NO_TRAINING_EFFECTS,
+      DEFENDER: defender.trainingEffects ?? NO_TRAINING_EFFECTS,
+    },
   };
 }
 

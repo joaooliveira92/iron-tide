@@ -111,4 +111,55 @@ describe("useStationAssignment", () => {
     expect(result.current.selected).toEqual([]);
     expect(result.current.state.notice).toContain("queued for 1 ship(s)");
   });
+
+  it("words the readiness refusals per ship and sends the readiness command", async () => {
+    mocks.execute.mockImplementation((command: string) =>
+      command === "inspectFleetScreen"
+        ? Promise.resolve({ outcome: "success", value: projection, diagnostics: [] })
+        : Promise.resolve({
+            outcome: "rejected",
+            reason: "SHIP_READINESS_REJECTED",
+            diagnostics: ["Readiness change to RESERVE rejected: b=REPAIR_IN_PROGRESS"],
+          }),
+    );
+    const { result } = renderHook(() => useStationAssignment("s"));
+    await waitFor(() => expect(result.current.rows).toHaveLength(2));
+    act(() => result.current.toggle("b"));
+    let outcome = "";
+    await act(async () => {
+      outcome = await result.current.sendReadiness("RESERVE");
+    });
+    expect(outcome).toBe("rejected");
+    expect(result.current.selected).toEqual(["b"]);
+    expect(result.current.state.notice).toContain("HMS B is under repair");
+    expect(mocks.execute).toHaveBeenCalledWith(
+      "submitShipReadiness",
+      expect.objectContaining({ readiness: "RESERVE", shipIds: ["b"] }),
+    );
+  });
+
+  it("reports the queued readiness change when accepted", async () => {
+    mocks.execute.mockImplementation((command: string) =>
+      command === "inspectFleetScreen"
+        ? Promise.resolve({ outcome: "success", value: projection, diagnostics: [] })
+        : Promise.resolve({
+            outcome: "success",
+            value: {
+              commandId: "c",
+              readiness: "MOTHBALLED",
+              shipCount: 1,
+              appliedOnNextTurn: true,
+            },
+            diagnostics: [],
+          }),
+    );
+    const { result } = renderHook(() => useStationAssignment("s"));
+    await waitFor(() => expect(result.current.rows).toHaveLength(2));
+    act(() => result.current.toggle("a"));
+    await act(async () => {
+      await result.current.sendReadiness("MOTHBALLED");
+    });
+    expect(result.current.selected).toEqual([]);
+    expect(result.current.state.notice).toContain("mothballed queued for 1 ship(s)");
+  });
 });

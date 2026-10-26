@@ -102,6 +102,48 @@ describe("stationRows (manual p.48 codes, all conveyed as text)", () => {
   });
 });
 
+describe("stationRows conditions (fleet management stories 14, 15)", () => {
+  it("labels each derived condition in text, in the order the engine sent them", () => {
+    const [hurt, fit] = stationRows(
+      [
+        division([
+          ship({
+            shipId: "h",
+            conditions: ["UnderStrength", "Detached", "Damaged", "OutOfAction"],
+          }),
+          ship({ shipId: "f" }),
+        ]),
+      ],
+      areaName,
+    );
+    expect(hurt!.conditions).toEqual([
+      { code: "UnderStrength", label: "Understrength" },
+      { code: "Detached", label: "Detached" },
+      { code: "Damaged", label: "Damaged" },
+      { code: "OutOfAction", label: "Out of action" },
+    ]);
+    expect(fit!.conditions).toEqual([]);
+  });
+
+  it("reads a ship in repair as out of action next to its month count", () => {
+    const [repair] = stationRows(
+      [
+        division([
+          ship({
+            shipId: "r",
+            readiness: "REPAIR",
+            repairMonthsRemaining: 2,
+            conditions: ["OutOfAction"],
+          }),
+        ]),
+      ],
+      areaName,
+    );
+    expect(repair).toMatchObject({ statusLabel: "In repair for 2 more months" });
+    expect(repair!.conditions.map((c) => c.label)).toEqual(["Out of action"]);
+  });
+});
+
 describe("toggleSelection", () => {
   it("adds and removes, keeping a stable order", () => {
     expect(toggleSelection([], "a")).toEqual(["a"]);

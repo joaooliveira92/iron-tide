@@ -69,6 +69,7 @@ const DIVISION_TYPES = new Set([
   "RemoveShipFromDivision",
   "ChangeDivisionFlagship",
   "ReorderDivisionShips",
+  "ChangeDivisionDoctrine",
   "DissolveDivision",
 ]);
 
@@ -470,6 +471,43 @@ describe("division commands", () => {
       expect(after.divisions[0]!.ships.map((s) => s.shipId)).toEqual([flagship, third, second]);
       expect(after.divisions[0]!.flagshipShipId).toBe(flagship);
       expect(after.divisions[0]!.cohesion).toBe(cohesionBefore - 3);
+    });
+
+    it("changes a division's role and formation at the ruleset's cohesion cost, with no growth that month", async () => {
+      registerSession("doctrine");
+      const freed = await freeSeededDivisions("doctrine");
+      const { v } = await shipsByArea("doctrine");
+      const flagship = v.unassignedShips[0]!.shipId;
+
+      let rev = freed.revision;
+      await create("doctrine", flagship, { expectedRevision: rev });
+      await commit("doctrine", rev);
+      rev += 1;
+      const before = (await view("doctrine")).divisions[0]!;
+      const target = before.role === "SUPPORT" ? "SCREEN" : "SUPPORT";
+
+      const change = await submitDivisionCommand(
+        payload(
+          "doctrine",
+          {
+            type: "ChangeDivisionDoctrine",
+            divisionId: before.divisionId,
+            role: target,
+            formation: "LINE_ABREAST",
+          },
+          { expectedRevision: rev, transportRequestId: "req-doctrine" },
+        ),
+      );
+      expect(change).toMatchObject({
+        outcome: "success",
+        value: { bodyType: "ChangeDivisionDoctrine", appliedOnNextTurn: true },
+      });
+
+      await commit("doctrine", rev);
+      const after = (await view("doctrine")).divisions[0]!;
+      expect(after.role).toBe(target);
+      expect(after.formation).toBe("LINE_ABREAST");
+      expect(after.cohesion).toBe(before.cohesion - 15);
     });
   });
 });

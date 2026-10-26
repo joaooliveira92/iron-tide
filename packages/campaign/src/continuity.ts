@@ -1,17 +1,64 @@
+import { compareCodePoints } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
-export type ContinuityMode = "historical" | "alternate_continuity_v1";
-export type ParticipationStatus = "ACTIVE" | "INACTIVE" | "CONDITIONAL_ACTIVE";
+import { Result, Schema } from "effect";
+import { displayValue, issueKeys, recordOf } from "./schemaIssueKeys.js";
+export const CONTINUITY_MODE_IDS = ["historical", "alternate_continuity_v1"] as const;
+export type ContinuityMode = (typeof CONTINUITY_MODE_IDS)[number];
+export const PARTICIPATION_STATUSES = ["ACTIVE", "INACTIVE", "CONDITIONAL_ACTIVE"] as const;
+export type ParticipationStatus = (typeof PARTICIPATION_STATUSES)[number];
 export type ParticipantClass = "PLAYABLE_SLOT_INSTANCE" | "AI_ONLY_POWER";
-export interface ScenarioParticipationRecord {
-  scenarioId: string;
-  playableSlotId: string;
-  continuityModeId: ContinuityMode;
-  participationStatus: ParticipationStatus;
-  scenarioNationInstanceId: string;
-  continuationDefinitionId: string;
-  reasonCode: string;
-  contentHash: string;
+
+const nonBlankString = Schema.String.check(Schema.isPattern(/\S/));
+
+const PARTICIPATION_VIOLATIONS = {
+  activeWithoutInstance: {
+    code: "INVALID_SCENARIO_PARTICIPATION_RECORD",
+    message: "ACTIVE requires scenarioNationInstanceId",
+  },
+  inactiveWithInstance: {
+    code: "INVALID_SCENARIO_PARTICIPATION_RECORD",
+    message: "INACTIVE must have scenarioNationInstanceId NONE",
+  },
+  conditionalWithoutContinuation: {
+    code: "MISSING_ALTERNATE_CONTINUITY_DEFINITION",
+    message: "CONDITIONAL_ACTIVE requires continuationDefinitionId",
+  },
+} as const;
+
+function participationViolation(record: {
+  readonly participationStatus: ParticipationStatus;
+  readonly scenarioNationInstanceId: string;
+  readonly continuationDefinitionId: string;
+}): (typeof PARTICIPATION_VIOLATIONS)[keyof typeof PARTICIPATION_VIOLATIONS] | undefined {
+  const { participationStatus: status } = record;
+  if (status === "ACTIVE" && record.scenarioNationInstanceId === "NONE") {
+    return PARTICIPATION_VIOLATIONS.activeWithoutInstance;
+  }
+  if (status === "INACTIVE" && record.scenarioNationInstanceId !== "NONE") {
+    return PARTICIPATION_VIOLATIONS.inactiveWithInstance;
+  }
+  if (status === "CONDITIONAL_ACTIVE" && record.continuationDefinitionId === "NONE") {
+    return PARTICIPATION_VIOLATIONS.conditionalWithoutContinuation;
+  }
+  return undefined;
 }
+
+const ParticipationFieldsSchema = Schema.Struct({
+  scenarioId: nonBlankString,
+  playableSlotId: nonBlankString,
+  continuityModeId: Schema.Literals(CONTINUITY_MODE_IDS),
+  participationStatus: Schema.Literals(PARTICIPATION_STATUSES),
+  scenarioNationInstanceId: nonBlankString,
+  continuationDefinitionId: nonBlankString,
+  reasonCode: nonBlankString,
+  contentHash: nonBlankString,
+});
+
+export const ScenarioParticipationRecordSchema = ParticipationFieldsSchema.check(
+  Schema.makeFilter((record) => participationViolation(record)?.message ?? true),
+);
+
+export type ScenarioParticipationRecord = typeof ScenarioParticipationRecordSchema.Type;
 export interface NationIdentityDefinition {
   nationInstanceId: string;
   playableSlotId: string;
@@ -22,78 +69,70 @@ export interface ContinuationDefinition {
   playableSlotId: string;
   targetScenarioNationInstanceId: string;
 }
+const PARTICIPATION_FIELDS = Object.keys(ParticipationFieldsSchema.fields) as ReadonlyArray<
+  keyof ScenarioParticipationRecord
+>;
+
+const ENUMERATED_FIELDS: ReadonlyArray<string> = ["continuityModeId", "participationStatus"];
+
+const decodeOptions = { errors: "all", onExcessProperty: "error" } as const;
+const decodeParticipation = Schema.decodeUnknownResult(
+  ScenarioParticipationRecordSchema,
+  decodeOptions,
+);
+const decodeParticipationFields = Schema.decodeUnknownResult(
+  ParticipationFieldsSchema,
+  decodeOptions,
+);
+
+const isNonBlank = Schema.is(nonBlankString);
+
 export function validateParticipationRecord(r: unknown, c: DiagnosticCollector) {
+  const stage = { stage: "continuity" } as const;
   if (typeof r !== "object" || r === null) {
-    c.addError("INVALID_SCENARIO_PARTICIPATION_RECORD", "record must be object", {
-      stage: "continuity",
-    });
+    c.addError("INVALID_SCENARIO_PARTICIPATION_RECORD", "record must be object", stage);
     return false;
   }
-  const rec = r as Record<string, unknown>;
-  const req = [
-    "scenarioId",
-    "playableSlotId",
-    "continuityModeId",
-    "participationStatus",
-    "scenarioNationInstanceId",
-    "continuationDefinitionId",
-    "reasonCode",
-    "contentHash",
-  ];
-  for (const f of req) {
-    if (!(f in rec)) {
-      c.addError("INVALID_SCENARIO_PARTICIPATION_RECORD", `Missing ${f}`, { stage: "continuity" });
+  const rec = recordOf(r);
+  const decoded = decodeParticipation(rec);
+  if (Result.isSuccess(decoded)) return true;
+  const keys = issueKeys(decoded.failure.issue);
+
+  for (const f of PARTICIPATION_FIELDS) {
+    if (keys.missing.has(f)) {
+      c.addError("INVALID_SCENARIO_PARTICIPATION_RECORD", `Missing ${f}`, stage);
       return false;
     }
-    if (typeof rec[f] !== "string" || (rec[f] as string).trim() === "") {
-      c.addError("INVALID_SCENARIO_PARTICIPATION_RECORD", `${f} must be non-empty string`, {
-        stage: "continuity",
-      });
+    if (keys.invalid.has(f) && !(ENUMERATED_FIELDS.includes(f) && isNonBlank(rec[f]))) {
+      c.addError("INVALID_SCENARIO_PARTICIPATION_RECORD", `${f} must be non-empty string`, stage);
       return false;
     }
   }
-  if (!["historical", "alternate_continuity_v1"].includes(rec["continuityModeId"] as string)) {
+  if (keys.invalid.has("continuityModeId")) {
     c.addError(
       "INVALID_SCENARIO_PARTICIPATION_RECORD",
-      `Invalid continuityModeId ${String(rec["continuityModeId"])}`,
-      { stage: "continuity" },
+      `Invalid continuityModeId ${displayValue(rec["continuityModeId"])}`,
+      stage,
     );
     return false;
   }
-  if (
-    !["ACTIVE", "INACTIVE", "CONDITIONAL_ACTIVE"].includes(rec["participationStatus"] as string)
-  ) {
-    c.addError("INVALID_SCENARIO_PARTICIPATION_RECORD", "Invalid participationStatus", {
-      stage: "continuity",
-    });
+  if (keys.invalid.has("participationStatus")) {
+    c.addError("INVALID_SCENARIO_PARTICIPATION_RECORD", "Invalid participationStatus", stage);
     return false;
   }
-  const status = rec["participationStatus"] as string;
-  if (status === "ACTIVE" && rec["scenarioNationInstanceId"] === "NONE") {
-    c.addError(
-      "INVALID_SCENARIO_PARTICIPATION_RECORD",
-      "ACTIVE requires scenarioNationInstanceId",
-      { stage: "continuity" },
-    );
+  const [unknownKey] = [...keys.unexpected].sort(compareCodePoints);
+  if (unknownKey !== undefined) {
+    c.addError("INVALID_SCENARIO_PARTICIPATION_RECORD", `unknown field ${unknownKey}`, stage);
     return false;
   }
-  if (status === "INACTIVE" && rec["scenarioNationInstanceId"] !== "NONE") {
-    c.addError(
-      "INVALID_SCENARIO_PARTICIPATION_RECORD",
-      "INACTIVE must have scenarioNationInstanceId NONE",
-      { stage: "continuity" },
-    );
-    return false;
-  }
-  if (status === "CONDITIONAL_ACTIVE" && rec["continuationDefinitionId"] === "NONE") {
-    c.addError(
-      "MISSING_ALTERNATE_CONTINUITY_DEFINITION",
-      "CONDITIONAL_ACTIVE requires continuationDefinitionId",
-      { stage: "continuity" },
-    );
-    return false;
-  }
-  return true;
+  const fields = decodeParticipationFields(rec);
+  const violation = Result.isSuccess(fields) ? participationViolation(fields.success) : undefined;
+  c.addError(
+    violation?.code ?? "INVALID_SCENARIO_PARTICIPATION_RECORD",
+    violation?.message ?? "invalid participation record",
+    stage,
+  );
+  return false;
 }
 function findUniqueParticipationRecord(
   scenarioId: string,

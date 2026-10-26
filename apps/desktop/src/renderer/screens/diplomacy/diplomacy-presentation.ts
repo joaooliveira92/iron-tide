@@ -1,4 +1,8 @@
-import { tensionLabel, type DiplomacyRelationKind } from "@bluewave/campaign-engine";
+import {
+  tensionLabel,
+  type DiplomacyRelationKind,
+  type TensionLabel,
+} from "@bluewave/campaign-engine";
 import type { DeferredFeature } from "../../components/shared/DeferredFeaturesPanel.js";
 import { humanizeId } from "../../lib/humanize-id.js";
 import type { DiplomacyScreenProjection } from "../../../shared/diplomacy-contract.js";
@@ -21,6 +25,145 @@ export const ACTION_LABELS: Readonly<Record<string, string>> = {
   DeclareBlockade: "Blockade",
 };
 
+export type ActionTone = "diplomatic" | "hostile";
+
+export interface ActionBrief {
+  readonly label: string;
+  readonly brief: string;
+  readonly tone: ActionTone;
+}
+
+export const ACTION_BRIEFS: Readonly<Record<DiplomacyActionKind, ActionBrief>> = {
+  FormAlliance: {
+    label: "Form alliance",
+    brief: "Seek a formal alliance",
+    tone: "diplomatic",
+  },
+  BreakAlliance: {
+    label: "Break alliance",
+    brief: "Dissolve the standing alliance",
+    tone: "diplomatic",
+  },
+  FormNonAggressionPact: {
+    label: "Form NAP",
+    brief: "Agree not to attack one another",
+    tone: "diplomatic",
+  },
+  BreakNonAggressionPact: {
+    label: "Break NAP",
+    brief: "Withdraw from the non-aggression pact",
+    tone: "diplomatic",
+  },
+  AcceptPeace: {
+    label: "Accept peace",
+    brief: "End the war on the current terms",
+    tone: "diplomatic",
+  },
+  DeclareBlockade: {
+    label: "Blockade",
+    brief: "Close one strategic area to their shipping",
+    tone: "hostile",
+  },
+  DeclareWar: {
+    label: "Declare war",
+    brief: "Open hostilities when the month advances",
+    tone: "hostile",
+  },
+};
+
+const ACTION_ORDER: readonly DiplomacyActionKind[] = [
+  "FormAlliance",
+  "FormNonAggressionPact",
+  "BreakAlliance",
+  "BreakNonAggressionPact",
+  "DeclareBlockade",
+  "DeclareWar",
+];
+
+export function sortActions(actions: readonly DiplomacyActionKind[]): DiplomacyActionKind[] {
+  return [...actions].sort((a, b) => ACTION_ORDER.indexOf(a) - ACTION_ORDER.indexOf(b));
+}
+
+export interface TensionTone {
+  readonly bar: string;
+  readonly text: string;
+  readonly edge: string;
+  readonly node: string;
+  readonly border: string;
+}
+
+export const TENSION_TONES: Readonly<Record<TensionLabel, TensionTone>> = {
+  cordial: {
+    bar: "bg-success",
+    text: "text-green-700 dark:text-green-400",
+    edge: "bg-success",
+    node: "bg-success text-white",
+    border: "border-success",
+  },
+  neutral: {
+    bar: "bg-muted-foreground/60",
+    text: "text-muted-foreground",
+    edge: "bg-border",
+    node: "bg-muted-foreground text-white",
+    border: "border-muted-foreground",
+  },
+  strained: {
+    bar: "bg-warning",
+    text: "text-amber-700 dark:text-amber-400",
+    edge: "bg-warning",
+    node: "bg-warning text-black",
+    border: "border-warning",
+  },
+  hostile: {
+    bar: "bg-destructive/80",
+    text: "text-destructive",
+    edge: "bg-destructive/80",
+    node: "bg-destructive/85 text-white",
+    border: "border-destructive/85",
+  },
+  war_imminent: {
+    bar: "bg-destructive",
+    text: "text-destructive",
+    edge: "bg-destructive",
+    node: "bg-destructive text-white",
+    border: "border-destructive",
+  },
+};
+
+export const WAR_STATUS_LABELS: Readonly<Record<string, string>> = {
+  ACTIVE: "Active",
+  DECLARED_NOT_ACTIVE: "Declared",
+  ENDED: "Ended",
+};
+
+export type WarStanding = "ahead" | "behind" | "level";
+
+export function warStanding(split: Pick<WarScoreSplit, "yours" | "enemy">): WarStanding {
+  if (split.yours > split.enemy) return "ahead";
+  if (split.yours < split.enemy) return "behind";
+  return "level";
+}
+
+export function monthsBetween(start: string, now: { month: number; year: number }): number {
+  const match = /^(\d{4})-(\d{2})/.exec(start);
+  if (match === null) return 0;
+  const startIndex = Number(match[1]) * 12 + Number(match[2]) - 1;
+  return Math.max(0, now.year * 12 + now.month - 1 - startIndex);
+}
+
+export function durationLabel(months: number): string {
+  if (months === 0) return "this month";
+  if (months < 12) return months === 1 ? "1 month" : `${months} months`;
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  const yearPart = years === 1 ? "1 year" : `${years} years`;
+  return rest === 0 ? yearPart : `${yearPart} ${rest} mo`;
+}
+
+export function capitalizeFirst(text: string): string {
+  return text.length === 0 ? text : text[0]!.toUpperCase() + text.slice(1);
+}
+
 export function tensionBadgeLabel(relation: DiplomacyRelationKind, tension: number): string | null {
   const band = tensionLabel(tension);
   if (band === "neutral" && relation === "neutral") return null;
@@ -41,7 +184,11 @@ export function warScoreSplit(war: {
   const yours = war.playerSide === "attacker" ? war.attackerWarScore : war.defenderWarScore;
   const enemy = war.playerSide === "attacker" ? war.defenderWarScore : war.attackerWarScore;
   const total = Math.max(0, yours) + Math.max(0, enemy);
-  return { yours, enemy, yourShare: total === 0 ? 0.5 : Math.max(0, yours) / total };
+  return {
+    yours,
+    enemy,
+    yourShare: total === 0 ? 0.5 : Math.max(0, yours) / total,
+  };
 }
 
 export function diplomacyLegalActions(row: {
@@ -83,7 +230,7 @@ export function describeDraft(
   const base = `${ACTION_LABELS[draft.kind] ?? draft.kind}`;
   switch (draft.kind) {
     case "AcceptPeace":
-      return `${base} in war ${draft.warId ?? "(unknown)"}`;
+      return `${base} with ${nationName(projection, draft.partnerNationId)}`;
     case "DeclareBlockade":
       return `${base} on ${nationName(projection, draft.partnerNationId)}`;
     default:

@@ -136,3 +136,13 @@ export function researchTransportFailure(
     notice: `TRANSPORT_FAILURE: ${message}`,
   };
 }
+
+export function researchRevertDraft(state: ResearchScreenState): ResearchScreenState {
+  if (
+    state.kind !== "loaded" &&
+    state.kind !== "submitted" &&
+    state.kind !== "rejected-with-revision"
+  )
+    return state;
+  return { ...state, draft: seedDraft(state.projection), notice: null };
+}

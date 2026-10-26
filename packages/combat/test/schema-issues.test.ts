@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
 import { Result, Schema } from "effect";
-import { formatContractIssues } from "@bluewave/combat/core";
+import { decodeContract, formatContractIssues } from "@bluewave/combat/core";
 import { validateAirDefenseSystemDefinition } from "@bluewave/combat/air-defense";
 
 const strict = { onExcessProperty: "error" } as const;
@@ -22,6 +22,83 @@ const Sample = Schema.Struct({
   name: Schema.String.check(Schema.isMinLength(1)),
   nested: Schema.Struct({ x: Schema.String }),
   list: Schema.Array(Schema.String),
+});
+
+describe("decodeContract", () => {
+  const Contract = Schema.Struct({ name: Schema.String, count: Schema.Number });
+
+  it("returns the decoded contract", () => {
+    expect(decodeContract(Contract, "SAMPLE_INVALID", { name: "ok", count: 1 })).toEqual({
+      name: "ok",
+      count: 1,
+    });
+  });
+
+  it("rejects excess properties and preserves the original value", () => {
+    let caught: BluewaveError | undefined;
+    try {
+      decodeContract(Contract, "SAMPLE_INVALID", { name: "ok", count: 1, extra: true });
+    } catch (error) {
+      caught = error as BluewaveError;
+    }
+
+    expect(isBluewaveError(caught)).toBe(true);
+    const context = caught?.context as {
+      code?: string;
+      field?: string;
+      reason?: string;
+      issues?: ReadonlyArray<{ path: string; message: string }>;
+      value?: unknown;
+    };
+    expect(caught?._tag).toBe("BluewaveError");
+    expect(caught?.message).toBe("SAMPLE_INVALID");
+    expect(context.code).toBe("SAMPLE_INVALID");
+    expect(context.field).toBe("extra");
+    expect(context.reason).toBe("Expected no excess property");
+    expect(context.issues).toEqual([{ path: "extra", message: "Expected no excess property" }]);
+    expect(context.value).toEqual({ name: "ok", count: 1, extra: true });
+  });
+
+  it("collects every field issue in declaration order", () => {
+    let caught: BluewaveError | undefined;
+    try {
+      decodeContract(Contract, "SAMPLE_INVALID", { name: 1, count: "no" });
+    } catch (error) {
+      caught = error as BluewaveError;
+    }
+
+    const context = caught?.context as {
+      issues: ReadonlyArray<{ path: string }>;
+      field: string;
+    };
+    expect(context.issues.map((issue) => issue.path)).toEqual(["name", "count"]);
+    expect(context.field).toBe("name");
+  });
+
+  it("supports a custom message, extra context, and omitting the value", () => {
+    let caught: BluewaveError | undefined;
+    try {
+      decodeContract(
+        Contract,
+        "SAMPLE_INVALID",
+        {},
+        {
+          message: "sample contract validation failed",
+          context: { policyId: "sample_v1" },
+          includeValue: false,
+        },
+      );
+    } catch (error) {
+      caught = error as BluewaveError;
+    }
+
+    expect(caught?.message).toBe("sample contract validation failed");
+    expect(caught?.context.policyId).toBe("sample_v1");
+    expect(caught?.context.code).toBe("SAMPLE_INVALID");
+    expect(caught?.context.field).toBe("name");
+    expect("value" in (caught?.context ?? {})).toBe(false);
+    expect(caught?.context.issues).toHaveLength(2);
+  });
 });
 
 describe("formatContractIssues", () => {

@@ -25,12 +25,25 @@
 // class uses; `Data.TaggedError`/`Schema.TaggedError` subclasses are invisible
 // because they carry a `_tag` by construction.
 //
-// Usage: `node scripts/assert-tagged-errors.mjs [--scope engine|surface|all] [--self-test]`
+// A second rule rejects `throw new Error(...)` (and the other built-in error
+// constructors): a thrown plain error carries no `_tag`, so the catching edge can only
+// branch on its message. Existing sites are frozen in a shrink-only baseline keyed by
+// file and content fingerprint (ADR-0106 ratchet pattern); a new throw fails closed.
+//
+// A third rule guards the typed-failure roots (`TYPED_FAILURE_ROOTS`, the runtime-free
+// authoritative packages that return failures as `Result`): any `throw` of something other
+// than a caught identifier, and any `try/catch`, lets a failure leave the typed channel.
+// Existing sites are frozen in `typed-failure-leaks.baseline.json` (shrink-only, same
+// fingerprint scheme as the throw baseline).
+//
+// Usage: `node scripts/assert-tagged-errors.mjs [--scope engine|surface|all] [--self-test] [--write]`
+//   (`--write` reseeds the untagged-throw baseline from the current tree)
 //
 // Wired into `pnpm preflight` (one self-test, then one gate per scope).
 
 import { execFileSync } from "node:child_process";
-import { lstatSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { lstatSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseSync } from "oxc-parser";
 
@@ -94,6 +107,20 @@ export const SCOPES = {
  * @type {Readonly<Record<string, string>>}
  */
 export const ALLOWLIST = {};
+
+const THROW_BASELINE_PATH = "scripts/untagged-throws.baseline.json";
+const LEAK_BASELINE_PATH = "scripts/typed-failure-leaks.baseline.json";
+
+export const TYPED_FAILURE_ROOTS = ["packages/campaign/src"];
+
+const BUILTIN_ERROR_CONSTRUCTORS = new Set([
+  "Error",
+  "EvalError",
+  "RangeError",
+  "ReferenceError",
+  "SyntaxError",
+  "TypeError",
+]);
 
 const SOURCE_RE = /\.(?:[cm]?[jt]s|[jt]sx)$/u;
 const TEST_RE = /(?:^|\/)(?:test|tests|__tests__)\/|\.(?:test|spec)\.[cm]?[jt]sx?$/u;
@@ -274,6 +301,242 @@ export function scanTaggedErrors(repoRoot, roots, allowlist = ALLOWLIST) {
     .filter((finding) => !Object.hasOwn(allowlist, `${finding.file}#${finding.name}`));
 }
 
+function normalizeSource(text) {
+  return text.replace(/\s+/gu, " ").trim();
+}
+
+/**
+ * Find `throw new Error(...)` (and sibling built-ins) in one source file.
+ * @param {string} file repository-relative path (forward slashes)
+ * @param {string} text source contents
+ * @returns {Array<{file: string, line: number, name: string, fingerprint: string}>}
+ */
+export function findUntaggedThrows(file, text) {
+  const normalized = file.replaceAll("\\", "/");
+  const { program, errors } = parseSync(normalized, text);
+  if (errors.length > 0) {
+    throw new Error(
+      `assert-tagged-errors: cannot parse ${normalized}: ${errors[0].message} ` +
+        "(failing closed — an unparsed file could hide an untagged throw)",
+    );
+  }
+  const findings = [];
+  const visit = (node) => {
+    if (node === null || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const child of node) visit(child);
+      return;
+    }
+    if (typeof node.type !== "string") return;
+    if (node.type === "ThrowStatement") {
+      const argument = node.argument;
+      const callee =
+        argument?.type === "NewExpression" || argument?.type === "CallExpression"
+          ? argument.callee
+          : undefined;
+      if (callee?.type === "Identifier" && BUILTIN_ERROR_CONSTRUCTORS.has(callee.name)) {
+        findings.push({
+          file: normalized,
+          line: lineAt(text, node.start),
+          name: callee.name,
+          fingerprint: createHash("sha256")
+            .update(normalizeSource(text.slice(node.start, node.end)))
+            .digest("hex"),
+        });
+      }
+    }
+    for (const key of Object.keys(node)) {
+      if (key === "type" || key === "start" || key === "end" || key === "range") continue;
+      const value = node[key];
+      if (value !== null && typeof value === "object") visit(value);
+    }
+  };
+  visit(program);
+  return findings;
+}
+
+/**
+ * Find typed-failure leaks in one source file: a `throw` of anything but a bare identifier
+ * (a rethrow of a caught value) and every `try` statement with a `catch` handler.
+ * @param {string} file repository-relative path (forward slashes)
+ * @param {string} text source contents
+ * @returns {Array<{file: string, line: number, name: string, fingerprint: string}>}
+ */
+export function findTypedFailureLeaks(file, text) {
+  const normalized = file.replaceAll("\\", "/");
+  const { program, errors } = parseSync(normalized, text);
+  if (errors.length > 0) {
+    throw new Error(
+      `assert-tagged-errors: cannot parse ${normalized}: ${errors[0].message} ` +
+        "(failing closed — an unparsed file could hide a typed-failure leak)",
+    );
+  }
+  const findings = [];
+  const record = (node, name, source) =>
+    findings.push({
+      file: normalized,
+      line: lineAt(text, node.start),
+      name,
+      fingerprint: createHash("sha256").update(normalizeSource(source)).digest("hex"),
+    });
+  const visit = (node) => {
+    if (node === null || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const child of node) visit(child);
+      return;
+    }
+    if (typeof node.type !== "string") return;
+    if (node.type === "ThrowStatement" && node.argument?.type !== "Identifier") {
+      record(node, "throw", text.slice(node.start, node.end));
+    }
+    if (node.type === "TryStatement" && node.handler !== null && node.handler !== undefined) {
+      record(node, "try/catch", text.slice(node.handler.start, node.handler.end));
+    }
+    for (const key of Object.keys(node)) {
+      if (key === "type" || key === "start" || key === "end" || key === "range") continue;
+      const value = node[key];
+      if (value !== null && typeof value === "object") visit(value);
+    }
+  };
+  visit(program);
+  return findings;
+}
+
+/** Scan the typed-failure roots for failures that leave the typed channel. */
+export function scanTypedFailureLeaks(repoRoot, roots = TYPED_FAILURE_ROOTS) {
+  return listGuardedFiles(repoRoot, roots).flatMap((file) =>
+    findTypedFailureLeaks(file, readFileSync(resolve(repoRoot, file), "utf8")),
+  );
+}
+
+function listGuardedFiles(repoRoot, roots) {
+  const isGuarded = (file) =>
+    SOURCE_RE.test(file) &&
+    !TEST_RE.test(file) &&
+    roots.some((prefix) => file.startsWith(`${prefix}/`));
+  return [
+    ...new Set(
+      execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], {
+        cwd: repoRoot,
+        encoding: "utf8",
+        maxBuffer: 16 * 1024 * 1024,
+      })
+        .split("\0")
+        .map((file) => file.replaceAll("\\", "/"))
+        .filter(isGuarded),
+    ),
+  ]
+    .sort()
+    .filter((file) => lstatSync(resolve(repoRoot, file), { throwIfNoEntry: false })?.isFile());
+}
+
+/** Scan the given roots for `throw new Error(...)` sites. */
+export function scanUntaggedThrows(repoRoot, roots) {
+  return listGuardedFiles(repoRoot, roots).flatMap((file) =>
+    findUntaggedThrows(file, readFileSync(resolve(repoRoot, file), "utf8")),
+  );
+}
+
+/** Count throw sites per file and fingerprint in stable code-unit order. */
+export function countThrows(findings) {
+  const byCodeUnit = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+  const counts = {};
+  for (const { file, fingerprint } of findings) {
+    const perFile = (counts[file] ??= {});
+    perFile[fingerprint] = (perFile[fingerprint] ?? 0) + 1;
+  }
+  return Object.fromEntries(
+    Object.entries(counts)
+      .sort(([a], [b]) => byCodeUnit(a, b))
+      .map(([file, perFile]) => [
+        file,
+        Object.fromEntries(Object.entries(perFile).sort(([a], [b]) => byCodeUnit(a, b))),
+      ]),
+  );
+}
+
+function readThrowBaseline(repoRoot, path = THROW_BASELINE_PATH) {
+  try {
+    const value = JSON.parse(readFileSync(resolve(repoRoot, path), "utf8"));
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+      throw new Error("baseline must be a file-to-counts object");
+    }
+    return value;
+  } catch (error) {
+    throw new Error(
+      `assert-tagged-errors: cannot read ${path}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
+ * Subtract the baseline from the observed throw sites.
+ * @param {Array<{file: string, fingerprint: string}>} findings
+ * @param {Readonly<Record<string, Readonly<Record<string, number>>>>} baseline
+ */
+export function unbaselinedThrows(findings, baseline) {
+  const remaining = structuredClone(baseline);
+  const added = [];
+  for (const finding of findings) {
+    const perFile = remaining[finding.file];
+    const allowance = perFile?.[finding.fingerprint] ?? 0;
+    if (perFile !== undefined && allowance > 0) perFile[finding.fingerprint] = allowance - 1;
+    else added.push(finding);
+  }
+  return added;
+}
+
+const THROW_FIXTURES = [
+  { name: "throw new Error fails", source: 'function f() { throw new Error("x"); }', expect: 1 },
+  {
+    name: "throw new TypeError fails",
+    source: 'function f() { throw new TypeError("x"); }',
+    expect: 1,
+  },
+  { name: "throw Error(...) call fails", source: 'function f() { throw Error("x"); }', expect: 1 },
+  {
+    name: "throwing a tagged error passes",
+    source: "function f() { throw new BluewaveError(CODE, { code: CODE }); }",
+    expect: 0,
+  },
+  {
+    name: "rethrowing a caught value passes",
+    source: "try { f(); } catch (e) { throw e; }",
+    expect: 0,
+  },
+  {
+    name: "constructing without throwing passes",
+    source: 'const e = new Error("x"); export default e;',
+    expect: 0,
+  },
+  {
+    name: "two throws are counted independently",
+    source: 'if (a) throw new Error("a"); if (b) throw new RangeError("b");',
+    expect: 2,
+  },
+];
+
+const LEAK_FIXTURES = [
+  {
+    name: "throwing a constructed error fails",
+    source: "function f() { throw new E(); }",
+    expect: 1,
+  },
+  {
+    name: "throwing a stored failure fails",
+    source: "function f(r) { throw r.failure; }",
+    expect: 1,
+  },
+  { name: "try/catch fails", source: "try { f(); } catch (e) { g(e); }", expect: 1 },
+  { name: "rethrowing a caught identifier passes", source: "throw e;", expect: 0 },
+  { name: "try/finally without catch passes", source: "try { f(); } finally { g(); }", expect: 0 },
+  {
+    name: "returning a Result passes",
+    source: "function f() { return Result.fail(new E()); }",
+    expect: 0,
+  },
+];
+
 const FIXTURES = [
   { name: "untagged extends Error fails", source: "class E extends Error {}", expect: 1 },
   {
@@ -333,8 +596,30 @@ const FIXTURES = [
   },
 ];
 
-export function runSelfTest(fixtures = FIXTURES) {
+export function runSelfTest(
+  fixtures = FIXTURES,
+  throwFixtures = THROW_FIXTURES,
+  leakFixtures = LEAK_FIXTURES,
+) {
   let failed = 0;
+  for (const fixture of leakFixtures) {
+    const findings = findTypedFailureLeaks("fixture.ts", fixture.source);
+    const passed = findings.length === fixture.expect;
+    if (!passed) failed += 1;
+    const verdict = passed ? "ok  " : "FAIL";
+    console.log(
+      `  ${verdict} fixture "${fixture.name}": expected ${String(fixture.expect)} finding(s), got ${String(findings.length)}`,
+    );
+  }
+  for (const fixture of throwFixtures) {
+    const findings = findUntaggedThrows("fixture.ts", fixture.source);
+    const passed = findings.length === fixture.expect;
+    if (!passed) failed += 1;
+    const verdict = passed ? "ok  " : "FAIL";
+    console.log(
+      `  ${verdict} fixture "${fixture.name}": expected ${String(fixture.expect)} finding(s), got ${String(findings.length)}`,
+    );
+  }
   for (const fixture of fixtures) {
     const findings = findUntaggedErrors("fixture.ts", fixture.source);
     const passed = findings.length === fixture.expect;
@@ -345,7 +630,11 @@ export function runSelfTest(fixtures = FIXTURES) {
       `  ${verdict} fixture "${fixture.name}": expected ${String(fixture.expect)} finding(s), got ${String(findings.length)}${detail}`,
     );
   }
-  return { ok: failed === 0, failed, total: fixtures.length };
+  return {
+    ok: failed === 0,
+    failed,
+    total: fixtures.length + throwFixtures.length + leakFixtures.length,
+  };
 }
 
 function scopesFromArgs(args) {
@@ -374,6 +663,27 @@ function main() {
   }
 
   const scopes = scopesFromArgs(args);
+  if (args.includes("--write")) {
+    const all = scanUntaggedThrows(
+      root,
+      scopes.flatMap((scope) => SCOPES[scope]),
+    );
+    writeFileSync(
+      resolve(root, THROW_BASELINE_PATH),
+      `${JSON.stringify(countThrows(all), null, 2)}\n`,
+    );
+    console.log(`assert-tagged-errors: throw baseline written with ${String(all.length)} site(s).`);
+    const leaks = scanTypedFailureLeaks(root);
+    writeFileSync(
+      resolve(root, LEAK_BASELINE_PATH),
+      `${JSON.stringify(countThrows(leaks), null, 2)}\n`,
+    );
+    console.log(
+      `assert-tagged-errors: typed-failure baseline written with ${String(leaks.length)} site(s).`,
+    );
+    return;
+  }
+  const throwBaseline = readThrowBaseline(root);
   let count = 0;
   for (const scope of scopes) {
     const roots = SCOPES[scope];
@@ -385,6 +695,42 @@ function main() {
         .join("\n");
       throw new Error(
         `assert-tagged-errors (${scope}): every in-process error needs a stable _tag (RULES.md "Errors").\n` +
+          detail,
+      );
+    }
+  }
+  for (const scope of scopes) {
+    const roots = SCOPES[scope];
+    const prefixes = (file) => roots.some((prefix) => file.startsWith(`${prefix}/`));
+    const scoped = Object.fromEntries(
+      Object.entries(throwBaseline).filter(([file]) => prefixes(file)),
+    );
+    const added = unbaselinedThrows(scanUntaggedThrows(root, roots), scoped);
+    if (added.length > 0) {
+      const detail = added
+        .map((f) => `  ${f.file}:${String(f.line)} — throw new ${f.name}(...) carries no _tag`)
+        .join("\n");
+      throw new Error(
+        `assert-tagged-errors (${scope}): throw a tagged error (BluewaveError with a code, or a Data.TaggedError) so callers discriminate by tag, not message (RULES.md "Errors").\n` +
+          detail,
+      );
+    }
+  }
+  const surfaceRoots = new Set(SCOPES.surface);
+  if (
+    TYPED_FAILURE_ROOTS.every((leakRoot) => surfaceRoots.has(leakRoot)) &&
+    scopes.includes("surface")
+  ) {
+    const leakBaseline = readThrowBaseline(root, LEAK_BASELINE_PATH);
+    const addedLeaks = unbaselinedThrows(scanTypedFailureLeaks(root), leakBaseline);
+    if (addedLeaks.length > 0) {
+      const detail = addedLeaks
+        .map(
+          (f) => `  ${f.file}:${String(f.line)} — ${f.name} lets a failure leave the typed channel`,
+        )
+        .join("\n");
+      throw new Error(
+        `assert-tagged-errors (typed-failure): return the failure as a Result instead of throwing or catching it (RULES.md "Errors").\n` +
           detail,
       );
     }

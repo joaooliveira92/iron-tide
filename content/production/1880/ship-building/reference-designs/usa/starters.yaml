@@ -669,3 +669,582 @@ designs:
           componentId: funnel_single
           zoneId: SUPERSTRUCTURE
           stationPermille: 600
+
+  # Destroyer starter for the United States, 1945 (E-1 1940-1949, ADR-0284). Hull dimensions, 3,460 t full-load displacement (2,616 t standard), 60,000 shp
+  # (44,742 kW), 36.8 kn and 740 t of oil are the Gearing figures of docs/research/e-1-1940s-hull-and-part-values.md section 10
+  # (Navypedia, SINGLE-SOURCE); the gun and tube fit, rounds, quarters and fire-control fit are ESTIMATES, not the class's recorded outfit.
+  - id: starter_dd_usa_1945
+    name: Destroyer (starter, DD) — United States, 1945
+    month: 1945-01
+    starterFor: DD
+    draft:
+      nationId: usa
+      requirement:
+        category: DD
+        requiredSpeedMilliKnots: 36000
+        cruiseSpeedMilliKnots: 20000
+        requiredRangeNm: 4000
+        designThreatId: qf_6in
+        modernizationExpectation: NONE
+        crewQualityBp: 10000
+        accommodationStandard: STANDARD
+        protectionGoal: NONE
+      hull:
+        hullFormId: destroyer_form
+        lengthWl: 116700
+        beam: 12500
+        draught: 4370
+        depthToMainDeck: 7500
+        blockCoeffBp: 5300
+        materialId: mild_steel
+        structuralSchemeId: mixed
+        subdivisionGrade: 2
+        targetDisplacementKg: 3460000
+        limitDisplacementKg: null
+        designMarginBp: 300
+        growthReserveBp: 0
+      machinery:
+        plantId: hp_steam_geared_turbine
+        installedKw: 44742
+        zoneId: CENTRAL_MACHINERY
+        stationPermille: 450
+        fuelCapacityKg: 740000
+        fuelZoneId: CENTRAL_MACHINERY
+        fuelStationPermille: 500
+        foulingBp: 0
+        rooms:
+          - zoneId: CENTRAL_MACHINERY
+            stationPermille: 450
+            shareBp: 6000
+          - zoneId: AFT_SERVICE
+            stationPermille: 680
+            shareBp: 4000
+      armour:
+        regions: []
+        citadelLengthMm: 0
+        torpedoWarheadKg: 0
+        bunkerProtectionBp: 0
+      placements:
+        - instanceId: gun_a
+          componentId: gun_dp_5in_38_twin
+          zoneId: FORECASTLE
+          stationPermille: 40
+          params: { barrels: 2, rounds: 400 }
+          magazineRef: mag_fwd
+        - instanceId: gun_b
+          componentId: gun_dp_5in_38_twin
+          zoneId: FWD_SERVICE
+          stationPermille: 250
+          params: { barrels: 2, rounds: 400 }
+          magazineRef: mag_fwd
+        - instanceId: gun_y
+          componentId: gun_dp_5in_38_twin
+          zoneId: QUARTERDECK
+          stationPermille: 900
+          params: { barrels: 2, rounds: 400 }
+          magazineRef: mag_aft
+        - instanceId: tubes
+          componentId: tube_21in_above_water
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 600
+          params: { tubes: 5 }
+        - instanceId: mag_fwd
+          componentId: magazine_heavy
+          zoneId: FWD_MAGAZINE
+          stationPermille: 130
+        - instanceId: mag_aft
+          componentId: magazine_heavy
+          zoneId: AFT_MAGAZINE
+          stationPermille: 830
+        - instanceId: rf
+          componentId: rangefinder_optical
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 525
+        - instanceId: dyn
+          componentId: dynamo_small
+          zoneId: FWD_SERVICE
+          stationPermille: 200
+        - instanceId: vent
+          componentId: ventilation_plant
+          zoneId: FWD_SERVICE
+          stationPermille: 210
+        - instanceId: quarters
+          componentId: quarters_crew
+          zoneId: FWD_SERVICE
+          stationPermille: 230
+          params: { blocks: 40 }
+        - instanceId: funnel
+          componentId: funnel_single
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 630
+
+  # Light cruiser starter for the United States, 1948 (E-1 1940-1949, ADR-0290). Hull dimensions, 14,700 t standard and 17,997 t full-load displacement,
+  # 120,000 shp (89,484 kW), 33 kn, 2,400 t of oil, 127 mm belt, 89 mm deck, 165 mm turret faces and 127 mm magazines are the Worcester figures of
+  # docs/research/e-1-1940s-hull-and-part-values.md section 10 (Navypedia, SINGLE-SOURCE); six 6-inch twin turrets are the class armament. The armour
+  # lengths and widths, rounds, quarters, moulded depth and fire-control fit are ESTIMATES, not recorded outfit, and the armour is modelled as krupp plate.
+
+  - id: starter_cl_usa_1948
+    name: Light cruiser (starter, CL) — United States, 1948
+    month: 1948-01
+    starterFor: CL
+    draft:
+      nationId: usa
+      requirement:
+        category: CL
+        requiredSpeedMilliKnots: 33000
+        cruiseSpeedMilliKnots: 15000
+        requiredRangeNm: 7500
+        designThreatId: qf_6in
+        modernizationExpectation: NONE
+        crewQualityBp: 10000
+        accommodationStandard: STANDARD
+        protectionGoal: NONE
+      hull:
+        hullFormId: light_cruiser_form
+        lengthWl: 202400
+        beam: 21500
+        draught: 7540
+        depthToMainDeck: 12500
+        blockCoeffBp: 5350
+        materialId: mild_steel
+        structuralSchemeId: mixed
+        subdivisionGrade: 2
+        targetDisplacementKg: 17997000
+        limitDisplacementKg: null
+        designMarginBp: 300
+        growthReserveBp: 0
+      machinery:
+        plantId: hp_steam_geared_turbine
+        installedKw: 89484
+        zoneId: CENTRAL_MACHINERY
+        stationPermille: 450
+        fuelCapacityKg: 2400000
+        fuelZoneId: CENTRAL_MACHINERY
+        fuelStationPermille: 500
+        foulingBp: 0
+        rooms:
+          - zoneId: CENTRAL_MACHINERY
+            stationPermille: 450
+            shareBp: 6000
+          - zoneId: AFT_SERVICE
+            stationPermille: 680
+            shareBp: 4000
+      armour:
+        regions:
+          - {
+              region: BELT_MAIN,
+              thicknessUm: 127000,
+              lengthMm: 110000,
+              heightMm: 3100,
+              materialId: krupp,
+              cosObliquityBp: 10000,
+            }
+          - {
+              region: DECK_MAIN,
+              thicknessUm: 89000,
+              lengthMm: 110000,
+              heightMm: 18000,
+              materialId: krupp,
+              cosObliquityBp: 10000,
+            }
+          - {
+              region: TURRET,
+              thicknessUm: 165000,
+              lengthMm: 36000,
+              heightMm: 3000,
+              materialId: krupp,
+              cosObliquityBp: 10000,
+            }
+          - {
+              region: MAGAZINE_BOX,
+              thicknessUm: 127000,
+              lengthMm: 40000,
+              heightMm: 2400,
+              materialId: krupp,
+              cosObliquityBp: 10000,
+            }
+
+        citadelLengthMm: 110000
+        torpedoWarheadKg: 0
+        bunkerProtectionBp: 0
+      placements:
+        - instanceId: main_1
+          componentId: gun_dp_6in_47_twin
+          zoneId: FORECASTLE
+          stationPermille: 40
+          params: { barrels: 2, rounds: 300 }
+          magazineRef: mag_fwd
+        - instanceId: main_2
+          componentId: gun_dp_6in_47_twin
+          zoneId: FWD_MAGAZINE
+          stationPermille: 110
+          params: { barrels: 2, rounds: 300 }
+          magazineRef: mag_fwd2
+        - instanceId: main_3
+          componentId: gun_dp_6in_47_twin
+          zoneId: FWD_SERVICE
+          stationPermille: 230
+          params: { barrels: 2, rounds: 300 }
+          magazineRef: mag_fwd
+        - instanceId: main_4
+          componentId: gun_dp_6in_47_twin
+          zoneId: AFT_SERVICE
+          stationPermille: 700
+          params: { barrels: 2, rounds: 300 }
+          magazineRef: mag_aft
+        - instanceId: main_5
+          componentId: gun_dp_6in_47_twin
+          zoneId: AFT_MAGAZINE
+          stationPermille: 800
+          params: { barrels: 2, rounds: 300 }
+          magazineRef: mag_aft2
+        - instanceId: main_6
+          componentId: gun_dp_6in_47_twin
+          zoneId: QUARTERDECK
+          stationPermille: 930
+          params: { barrels: 2, rounds: 300 }
+          magazineRef: mag_aft
+        - instanceId: mag_fwd
+          componentId: magazine_heavy
+          zoneId: FWD_MAGAZINE
+          stationPermille: 110
+        - instanceId: mag_fwd2
+          componentId: magazine_heavy
+          zoneId: FWD_MAGAZINE
+          stationPermille: 150
+        - instanceId: mag_aft
+          componentId: magazine_heavy
+          zoneId: AFT_MAGAZINE
+          stationPermille: 800
+        - instanceId: mag_aft2
+          componentId: magazine_heavy
+          zoneId: AFT_MAGAZINE
+          stationPermille: 850
+        - instanceId: rf
+          componentId: rangefinder_optical
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 525
+        - instanceId: dyn
+          componentId: dynamo_small
+          zoneId: FWD_SERVICE
+          stationPermille: 200
+        - instanceId: vent
+          componentId: ventilation_plant
+          zoneId: FWD_SERVICE
+          stationPermille: 210
+        - instanceId: quarters
+          componentId: quarters_crew
+          zoneId: FWD_SERVICE
+          stationPermille: 230
+          params: { blocks: 120 }
+        - instanceId: quarters_aft
+          componentId: quarters_crew
+          zoneId: AFT_SERVICE
+          stationPermille: 720
+          params: { blocks: 120 }
+        - instanceId: funnel
+          componentId: funnel_single
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 630
+
+  # Heavy cruiser starter for the United States, 1948 (E-1 1940-1949, ADR-0290). Hull dimensions, 17,255 t standard and 20,934 t full-load displacement,
+  # 120,000 shp (89,484 kW), 33 kn, 3,006 t of oil, 152 mm belt, 95 mm deck, 203 mm turret faces are the Des Moines figures of
+  # docs/research/e-1-1940s-hull-and-part-values.md section 10 (Navypedia, SINGLE-SOURCE); three 8-inch triple turrets and six 5-inch twin mounts are the
+  # class armament. The armour lengths and widths, rounds, the 7,500 nm range requirement (the sourced 8,000 nm at 15 kn is not reached by the fitted plant), quarters, moulded depth and fire-control fit are ESTIMATES, not recorded outfit.
+
+  - id: starter_ca_usa_1948
+    name: Heavy cruiser (starter, CA) — United States, 1948
+    month: 1948-01
+    starterFor: CA
+    draft:
+      nationId: usa
+      requirement:
+        category: CA
+        requiredSpeedMilliKnots: 33000
+        cruiseSpeedMilliKnots: 15000
+        requiredRangeNm: 9500
+        designThreatId: qf_6in
+        modernizationExpectation: NONE
+        crewQualityBp: 10000
+        accommodationStandard: STANDARD
+        protectionGoal: NONE
+      hull:
+        hullFormId: heavy_cruiser_form
+        lengthWl: 213400
+        beam: 23000
+        draught: 7920
+        depthToMainDeck: 13000
+        blockCoeffBp: 5250
+        materialId: mild_steel
+        structuralSchemeId: mixed
+        subdivisionGrade: 2
+        targetDisplacementKg: 20934000
+        limitDisplacementKg: null
+        designMarginBp: 300
+        growthReserveBp: 0
+      machinery:
+        plantId: hp_steam_geared_turbine
+        installedKw: 89484
+        zoneId: CENTRAL_MACHINERY
+        stationPermille: 450
+        fuelCapacityKg: 3006000
+        fuelZoneId: CENTRAL_MACHINERY
+        fuelStationPermille: 500
+        foulingBp: 0
+        rooms:
+          - zoneId: CENTRAL_MACHINERY
+            stationPermille: 450
+            shareBp: 6000
+          - zoneId: AFT_SERVICE
+            stationPermille: 680
+            shareBp: 4000
+      armour:
+        regions:
+          - {
+              region: BELT_MAIN,
+              thicknessUm: 152000,
+              lengthMm: 115000,
+              heightMm: 3100,
+              materialId: krupp,
+              cosObliquityBp: 10000,
+            }
+          - {
+              region: DECK_MAIN,
+              thicknessUm: 95000,
+              lengthMm: 115000,
+              heightMm: 19000,
+              materialId: krupp,
+              cosObliquityBp: 10000,
+            }
+          - {
+              region: TURRET,
+              thicknessUm: 203000,
+              lengthMm: 18000,
+              heightMm: 3000,
+              materialId: krupp,
+              cosObliquityBp: 10000,
+            }
+          - {
+              region: MAGAZINE_BOX,
+              thicknessUm: 152000,
+              lengthMm: 40000,
+              heightMm: 2400,
+              materialId: krupp,
+              cosObliquityBp: 10000,
+            }
+
+        citadelLengthMm: 115000
+        torpedoWarheadKg: 0
+        bunkerProtectionBp: 0
+      placements:
+        - instanceId: main_1
+          componentId: gun_ap_8in_55_triple
+          zoneId: FORECASTLE
+          stationPermille: 40
+          params: { barrels: 3, rounds: 150 }
+          magazineRef: mag_fwd
+        - instanceId: main_2
+          componentId: gun_ap_8in_55_triple
+          zoneId: FWD_MAGAZINE
+          stationPermille: 120
+          params: { barrels: 3, rounds: 150 }
+          magazineRef: mag_fwd2
+        - instanceId: main_3
+          componentId: gun_ap_8in_55_triple
+          zoneId: AFT_MAGAZINE
+          stationPermille: 800
+          params: { barrels: 3, rounds: 150 }
+          magazineRef: mag_aft
+        - instanceId: sec_1
+          componentId: gun_dp_5in_38_twin
+          zoneId: FWD_SERVICE
+          stationPermille: 230
+          params: { barrels: 2, rounds: 400 }
+          magazineRef: mag_fwd
+        - instanceId: sec_2
+          componentId: gun_dp_5in_38_twin
+          zoneId: FWD_SERVICE
+          stationPermille: 260
+          params: { barrels: 2, rounds: 400 }
+          magazineRef: mag_fwd2
+        - instanceId: sec_3
+          componentId: gun_dp_5in_38_twin
+          zoneId: FWD_MAGAZINE
+          stationPermille: 160
+          params: { barrels: 2, rounds: 400 }
+          magazineRef: mag_fwd
+        - instanceId: sec_4
+          componentId: gun_dp_5in_38_twin
+          zoneId: AFT_SERVICE
+          stationPermille: 700
+          params: { barrels: 2, rounds: 400 }
+          magazineRef: mag_aft2
+        - instanceId: sec_5
+          componentId: gun_dp_5in_38_twin
+          zoneId: AFT_SERVICE
+          stationPermille: 730
+          params: { barrels: 2, rounds: 400 }
+          magazineRef: mag_aft
+        - instanceId: sec_6
+          componentId: gun_dp_5in_38_twin
+          zoneId: QUARTERDECK
+          stationPermille: 930
+          params: { barrels: 2, rounds: 400 }
+          magazineRef: mag_aft2
+        - instanceId: mag_fwd
+          componentId: magazine_heavy
+          zoneId: FWD_MAGAZINE
+          stationPermille: 110
+        - instanceId: mag_fwd2
+          componentId: magazine_heavy
+          zoneId: FWD_MAGAZINE
+          stationPermille: 150
+        - instanceId: mag_aft
+          componentId: magazine_heavy
+          zoneId: AFT_MAGAZINE
+          stationPermille: 800
+        - instanceId: mag_aft2
+          componentId: magazine_heavy
+          zoneId: AFT_MAGAZINE
+          stationPermille: 850
+        - instanceId: rf
+          componentId: rangefinder_optical
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 525
+        - instanceId: dyn
+          componentId: dynamo_small
+          zoneId: FWD_SERVICE
+          stationPermille: 200
+        - instanceId: vent
+          componentId: ventilation_plant
+          zoneId: FWD_SERVICE
+          stationPermille: 210
+        - instanceId: quarters
+          componentId: quarters_crew
+          zoneId: FWD_SERVICE
+          stationPermille: 230
+          params: { blocks: 120 }
+        - instanceId: quarters_aft
+          componentId: quarters_crew
+          zoneId: AFT_SERVICE
+          stationPermille: 720
+          params: { blocks: 120 }
+        - instanceId: funnel
+          componentId: funnel_single
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 630
+
+  # Destroyer starter for the United States, 1955 (E-1 1950-1959, ADR-0291). Hull dimensions, 2,800 t standard and 4,916 t full-load displacement, 70,000 hp
+  # (52,199 kW), 33 kn, 500 t of oil and the three 5-inch/54 single mounts are the Forrest Sherman figures of docs/research/e-1-1940s-hull-and-part-values.md
+  # section 13 (Navypedia, SINGLE-SOURCE); the four 533 mm tubes are those of DD931 and DD932 only. The 76 mm twin AA mounts, the 324 mm ASW tubes and the
+  # Hedgehogs have no part family (#283) and are not modelled. Rounds, quarters, moulded depth and fire-control fit are ESTIMATES, not recorded outfit. The 1,500 nm range requirement is what the plant fitted for the 1945 destroyer returns
+  # at 20 kn on 500 t (1,725 nm); the sourced 4,500 nm is not reached, because the fuel-rate curve is a balance target (ADR-0284 decision 8).
+  - id: starter_dd_usa_1955
+    name: Destroyer (starter, DD) — United States, 1955
+    month: 1955-11
+    starterFor: DD
+    draft:
+      nationId: usa
+      requirement:
+        category: DD
+        requiredSpeedMilliKnots: 33000
+        cruiseSpeedMilliKnots: 20000
+        requiredRangeNm: 1500
+        designThreatId: qf_6in
+        modernizationExpectation: NONE
+        crewQualityBp: 10000
+        accommodationStandard: STANDARD
+        protectionGoal: NONE
+      hull:
+        hullFormId: postwar_destroyer_form
+        lengthWl: 124100
+        beam: 13700
+        draught: 4600
+        depthToMainDeck: 8000
+        blockCoeffBp: 6130
+        materialId: mild_steel
+        structuralSchemeId: mixed
+        subdivisionGrade: 2
+        targetDisplacementKg: 4916000
+        limitDisplacementKg: null
+        designMarginBp: 300
+        growthReserveBp: 0
+      machinery:
+        plantId: hp_steam_geared_turbine
+        installedKw: 52199
+        zoneId: CENTRAL_MACHINERY
+        stationPermille: 450
+        fuelCapacityKg: 500000
+        fuelZoneId: CENTRAL_MACHINERY
+        fuelStationPermille: 500
+        foulingBp: 0
+        rooms:
+          - zoneId: CENTRAL_MACHINERY
+            stationPermille: 450
+            shareBp: 6000
+          - zoneId: AFT_SERVICE
+            stationPermille: 680
+            shareBp: 4000
+      armour:
+        regions: []
+        citadelLengthMm: 0
+        torpedoWarheadKg: 0
+        bunkerProtectionBp: 0
+      placements:
+        - instanceId: gun_a
+          componentId: gun_dp_5in_54_single
+          zoneId: FORECASTLE
+          stationPermille: 40
+          params: { barrels: 1, rounds: 400 }
+          magazineRef: mag_fwd
+        - instanceId: gun_b
+          componentId: gun_dp_5in_54_single
+          zoneId: FWD_SERVICE
+          stationPermille: 250
+          params: { barrels: 1, rounds: 400 }
+          magazineRef: mag_fwd
+        - instanceId: gun_c
+          componentId: gun_dp_5in_54_single
+          zoneId: QUARTERDECK
+          stationPermille: 900
+          params: { barrels: 1, rounds: 400 }
+          magazineRef: mag_aft
+        - instanceId: tubes
+          componentId: tube_21in_above_water
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 600
+          params: { tubes: 4 }
+        - instanceId: mag_fwd
+          componentId: magazine_heavy
+          zoneId: FWD_MAGAZINE
+          stationPermille: 130
+        - instanceId: mag_aft
+          componentId: magazine_heavy
+          zoneId: AFT_MAGAZINE
+          stationPermille: 830
+        - instanceId: rf
+          componentId: rangefinder_optical
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 525
+        - instanceId: dyn
+          componentId: dynamo_small
+          zoneId: FWD_SERVICE
+          stationPermille: 200
+        - instanceId: vent
+          componentId: ventilation_plant
+          zoneId: FWD_SERVICE
+          stationPermille: 210
+        - instanceId: quarters
+          componentId: quarters_crew
+          zoneId: FWD_SERVICE
+          stationPermille: 230
+          params: { blocks: 40 }
+        - instanceId: quarters_aft
+          componentId: quarters_crew
+          zoneId: AFT_SERVICE
+          stationPermille: 720
+          params: { blocks: 40 }
+        - instanceId: funnel
+          componentId: funnel_single
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 630

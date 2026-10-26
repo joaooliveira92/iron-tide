@@ -14,6 +14,7 @@ import {
   PUMPING_PER_TEAM_KG_MIN,
   FIREFIGHTING_PER_TEAM_BP,
 } from "./damageControlConstants.js";
+import { compareStrings } from "../core/ordering.js";
 
 export interface DamageControlAllocation {
   priority: DamageControlPriority;
@@ -144,7 +145,7 @@ export function allocateDamageControl(
   tasks.sort((a, b) => {
     if (a.priorityIndex !== b.priorityIndex) return a.priorityIndex - b.priorityIndex;
     if (b.severityScore !== a.severityScore) return b.severityScore - a.severityScore;
-    return a.targetId.localeCompare(b.targetId);
+    return compareStrings(a.targetId, b.targetId);
   });
 
   const allocations: DamageControlAllocation[] = [];

@@ -53,7 +53,9 @@ import {
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { applyReviseProject } from "./reviseProject.js";
 import { applyStartRebuild } from "./startRebuild.js";
-import { applyStationAssignmentCommand } from "./stationAssignment.js";
+import { applyFleetExerciseCommand } from "./fleetExercise.js";
+import { applySpecialTrainingCommand } from "./specialTraining.js";
+import { applyShipReadinessCommand, applyStationAssignmentCommand } from "./stationAssignment.js";
 import { applyCancelConstructionProject } from "./cancelConstructionProject.js";
 import { constructionProjectCancelledEvent } from "./events.js";
 
@@ -81,6 +83,9 @@ function applyPlayerCommand(ctx: PhaseContext, body: CommandBody, commandId: str
   if (applyDiplomacyCommand(ctx, body)) return;
   if (applyDivisionCommand(ctx, body)) return;
   if (applyStationAssignmentCommand(ctx, body)) return;
+  if (applyShipReadinessCommand(ctx, body)) return;
+  if (applySpecialTrainingCommand(ctx, body)) return;
+  if (applyFleetExerciseCommand(ctx, body)) return;
   applyConstructionCommand(ctx, body, commandId);
 }
 
@@ -244,13 +249,15 @@ function applyDivisionCommand(ctx: PhaseContext, body: CommandBody): boolean {
     body["type"] === "RemoveShipFromDivision" ||
     body["type"] === "DissolveDivision" ||
     body["type"] === "ChangeDivisionFlagship" ||
-    body["type"] === "ReorderDivisionShips"
+    body["type"] === "ReorderDivisionShips" ||
+    body["type"] === "ChangeDivisionDoctrine"
   ) {
     ctx.snapshot.current = applyDivisionCommandMonth(
       ctx.snapshot.current,
       body,
       ctx.campaignMonth,
       ctx.collector,
+      ctx.fleetManagement?.reorganisationPenalty,
     );
     return true;
   }

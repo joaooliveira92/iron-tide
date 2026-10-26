@@ -2,6 +2,9 @@ import type { Bp, Money, SafeInt } from "@bluewave/contracts";
 import type { CareerResult, PrestigeReasonCode, PrestigeValueSet } from "./prestige.js";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
+import type { BattleAbsence } from "./battleAbsence.js";
+import type { FleetExerciseRecord } from "./fleetExercise.js";
+import type { TrainingSubjectEntry } from "./specialTraining.js";
 import type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
 import type { PermanentDivision } from "./division.js";
 import type { Officer } from "./officers.js";
@@ -152,6 +155,7 @@ export interface BattleInstance {
   defenderFleetIds: string[];
   manifestHash?: string;
   result?: BattleResult;
+  absences?: BattleAbsence[];
 }
 
 export interface LostShipRecord {
@@ -368,6 +372,8 @@ export interface NationState {
   foreignContractImpoundments?: ForeignContractImpoundmentRecord[];
   aircraft?: Record<string, unknown>;
   carrierOperations?: Record<string, unknown>;
+  specialTraining?: TrainingSubjectEntry[];
+  fleetExercise?: FleetExerciseRecord;
   isPlayable: boolean;
   isAI: boolean;
 }

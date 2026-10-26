@@ -1,8 +1,8 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createCampaignSnapshotEnvelope } from "@bluewave/campaign";
 import type { CampaignState, CampaignSnapshot, NationState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
-import { createEnvelope } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import { registerCampaignSession } from "../campaignSessions.js";
@@ -80,7 +80,7 @@ export function registerWarSession(sessionId: string, saveDir: string): void {
   if (collector.hasErrors || !output) throw new Error("production pack failed to compile");
   const base = toSaveableState(output.state);
   const snapshot = warSnapshot(base.snapshot);
-  const envelope = createEnvelope("campaign-snapshot", snapshot.compatibilityVersion, snapshot);
+  const envelope = createCampaignSnapshotEnvelope(snapshot.compatibilityVersion, snapshot);
   const state: CampaignState = toSaveableState({
     snapshot,
     envelope,

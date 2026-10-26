@@ -15,7 +15,8 @@ the app surfaces `apps/desktop/src/main` and `apps/compiler-cli`. The desktop
 
 The guarded roots are listed in `RUNTIME_FREE_ROOTS` in the script (every pure
 package plus the renderer-reachable `campaign-engine`). `persistence` and
-`content-compiler` are IO boundaries and are deliberately not listed.
+`content-compiler` are IO boundaries and are deliberately not listed. The `test`
+directory of every listed package is guarded too (`RUNTIME_FREE_TEST_ROOTS`).
 
 ## Running it
 

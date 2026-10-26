@@ -67,9 +67,11 @@ test("Fleet and Diplomacy & War render the honest compiled state", async ({
 
   await navigateTo(page, "Diplomacy & War");
   await expect(page.getByRole("heading", { name: "Diplomacy & War" })).toBeVisible();
+  await page.getByRole("tab", { name: "Battles" }).click();
   await expect(page.getByText("No battles fought yet")).toBeVisible();
   await expect(page.getByText(/Battle history unavailable/)).not.toBeVisible();
 
+  await page.getByRole("tab", { name: "Not modelled" }).click();
   await expect(page.getByText("Not yet modelled by the engine", { exact: true })).toBeVisible();
   await expect(page.getByText(/Trade protection/)).toBeVisible();
 });
@@ -107,6 +109,30 @@ test("a ship is assigned to and cleared from foreign station, and the presence r
   await navigateTo(page, "Fleet");
   await expect(
     page.getByTestId("fleet-station-row-gbr_dreadnought").getByText("On foreign station"),
+  ).toBeVisible();
+});
+
+test("a ship is placed in reserve through the readiness command", async ({
+  e2e,
+  campaignTemplate,
+}) => {
+  const page = e2e.page;
+  await openCampaign(e2e, campaignTemplate);
+  await navigateTo(page, "Fleet");
+
+  const section = page.getByTestId("fleet-station");
+  const row = section.getByTestId("fleet-station-row-gbr_dreadnought");
+  await row.getByRole("checkbox").focus();
+  await page.keyboard.press("Space");
+  await section.getByRole("button", { name: "Place in reserve" }).click();
+  await expect(section.getByTestId("fleet-station-notice")).toContainText(
+    "Readiness change to reserve queued for 1 ship(s)",
+  );
+
+  await advanceMonths(page, 1);
+  await navigateTo(page, "Fleet");
+  await expect(
+    page.getByTestId("fleet-station-row-gbr_dreadnought").getByText("Reserve fleet"),
   ).toBeVisible();
 });
 
@@ -218,7 +244,10 @@ test("a submitted design survives a restart and joins the catalog after its stud
     });
     await advanceMonths(second.page, 4);
     await navigateTo(second.page, "Construction");
-    await second.page.getByRole("tab", { name: /Design Catalog/ }).click();
+    await second.page
+      .getByRole("navigation", { name: "Yard" })
+      .getByRole("button", { name: /^Design catalog/ })
+      .click();
     await expect(second.page.getByText("Arethusa E2E").first()).toBeVisible();
   } finally {
     await teardownHarness(second);

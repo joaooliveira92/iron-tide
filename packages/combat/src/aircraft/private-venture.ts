@@ -17,6 +17,7 @@ import type { AircraftModelDefinition } from "./model.js";
 import { allocateAttributes } from "./attribute-allocation.js";
 import { withAircraftModelDefinitionContentHash } from "./model.js";
 import { createPrivateVentureEvent, type PrivateAircraftVenture_v1 } from "./event-types.js";
+import { compareStrings } from "../core/ordering.js";
 
 export const PRIVATE_VENTURE_STREAM_KEY = "event/month/nation/private_aircraft_venture" as const;
 
@@ -61,7 +62,7 @@ export function checkPrivateVentureEligibility(
     return { eligible: false, reason: "MAX_UNEXPIRED_LIMIT_REACHED" };
   }
 
-  const sortedRoles = [...input.permittedRoles].sort((a, b) => a.localeCompare(b));
+  const sortedRoles = [...input.permittedRoles].sort((a, b) => compareStrings(a, b));
   return { eligible: true, eligibleRoles: sortedRoles };
 }
 

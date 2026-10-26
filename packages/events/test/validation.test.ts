@@ -29,6 +29,23 @@ describe("event validation", () => {
   });
 });
 
+describe("parsed event immutability", () => {
+  it("freezes a parsed envelope and its body", () => {
+    const parsed = parseDomainEventEnvelope(budgetEvent());
+    expect(Object.isFrozen(parsed)).toBe(true);
+    expect(Object.isFrozen(parsed.body)).toBe(true);
+  });
+
+  it("freezes a parsed body", () => {
+    expect(Object.isFrozen(parseDomainEventBody(budgetEvent().body))).toBe(true);
+  });
+
+  it("rejects mutation of a parsed body", () => {
+    const parsed = parseDomainEventEnvelope(budgetEvent());
+    expect(() => Object.assign(parsed.body, { reason: "tampered" })).toThrow(TypeError);
+  });
+});
+
 describe("event validation parity (Zod → Effect Schema)", () => {
   it("serializes a decoded envelope byte-compatibly (field names + ordering)", () => {
     const parsed = parseDomainEventEnvelope(budgetEvent());
@@ -244,6 +261,23 @@ describe("ShipStationAssignmentChanged (S-5 03)", () => {
     expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
     expect(() => parseDomainEventBody({ ...body, shipId: "" })).toThrow();
     expect(parseDomainEventBody(body).kind).toBe("ShipStationAssignmentChanged");
+  });
+});
+
+describe("ShipReadinessChanged", () => {
+  const body = {
+    kind: "ShipReadinessChanged",
+    nationId: "n1",
+    shipId: "s1",
+    fromReadiness: "READY",
+    toReadiness: "DAMAGED",
+    reason: "MAINTENANCE",
+    crewQuality: 3,
+  } as const;
+
+  it("decodes a readiness change and rejects a negative crew quality", () => {
+    expect(parseDomainEventBody(body).kind).toBe("ShipReadinessChanged");
+    expect(() => parseDomainEventBody({ ...body, crewQuality: -1 })).toThrow();
   });
 });
 

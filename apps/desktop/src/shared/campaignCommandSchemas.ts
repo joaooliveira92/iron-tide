@@ -188,6 +188,12 @@ export const DivisionCommandBodySchema = Schema.Union([
     shipOrder: Schema.Array(nonEmptyString).check(Schema.isMinLength(1), Schema.isMaxLength(6)),
   }),
   Schema.Struct({
+    type: Schema.Literal("ChangeDivisionDoctrine"),
+    divisionId: nonEmptyString,
+    role: Schema.optional(nonEmptyString),
+    formation: Schema.optional(nonEmptyString),
+  }),
+  Schema.Struct({
     type: Schema.Literal("DissolveDivision"),
     divisionId: nonEmptyString,
   }),
@@ -259,6 +265,24 @@ export const SubmitStationAssignmentPayloadSchema = Schema.Struct({
   ...CommandEnvelopePayloadSchema.fields,
   intent: Schema.Literals(["assign", "clear"]),
   shipIds: Schema.Array(nonEmptyString).check(Schema.isMinLength(1), Schema.isMaxLength(256)),
+});
+
+export const SubmitShipReadinessPayloadSchema = Schema.Struct({
+  ...CommandEnvelopePayloadSchema.fields,
+  readiness: Schema.Literals(["ACTIVE", "RESERVE", "MOTHBALLED"]),
+  shipIds: Schema.Array(nonEmptyString).check(Schema.isMinLength(1), Schema.isMaxLength(256)),
+});
+
+export const SubmitFleetExercisePayloadSchema = Schema.Struct({
+  ...CommandEnvelopePayloadSchema.fields,
+  shipIds: Schema.Array(nonEmptyString).check(Schema.isMinLength(1), Schema.isMaxLength(256)),
+});
+
+export const SubmitSpecialTrainingPayloadSchema = Schema.Struct({
+  ...CommandEnvelopePayloadSchema.fields,
+  subjects: Schema.Array(
+    Schema.Literals(["GUNNERY", "NIGHT_FIGHTING", "TORPEDO_TACTICS", "DAMAGE_CONTROL"]),
+  ).check(Schema.isMaxLength(4)),
 });
 
 export const SubmitDivisionCommandPayloadSchema = Schema.Struct({

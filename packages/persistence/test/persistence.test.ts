@@ -17,7 +17,7 @@ import type {
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Result } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import {
   COMPATIBILITY_MISMATCH_CODE,
@@ -26,6 +26,7 @@ import {
 } from "../src/compatibility.js";
 import { cleanup, RecoveryManager } from "../src/recovery.js";
 import { SaveStore } from "../src/store.js";
+import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function createFixtureState(): CampaignState {
@@ -80,7 +81,7 @@ describe("SaveStore", () => {
     }
   });
 
-  it("saves and loads a campaign state", () => {
+  it("loads a campaign state as a success effect with no warnings", () => {
     const state = createFixtureState();
     const saveResult = store.save(state, tmpDir);
 
@@ -90,16 +91,14 @@ describe("SaveStore", () => {
     expect(saveResult.metadata.turnNumber).toBe(1);
     expect(saveResult.metadata.campaignId).toBe("test-campaign-001");
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(loaded).not.toBeNull();
-    expect(loaded!["snapshot"]["campaignId"]).toBe("test-campaign-001");
-    expect(loaded!["snapshot"]["turnNumber"]).toBe(1);
-    expect(loaded!["rawHash"]).toBe(state.rawHash);
-    expect(diagnostics.hasErrors).toBe(false);
+    expect(loaded.state["snapshot"]["campaignId"]).toBe("test-campaign-001");
+    expect(loaded.state["snapshot"]["turnNumber"]).toBe(1);
+    expect(loaded.state["rawHash"]).toBe(state.rawHash);
+    expect(loaded.warnings).toEqual([]);
 
-    expect(loaded!["envelope"]["bodyHash"]).toBe(state.envelope.bodyHash);
+    expect(loaded.state["envelope"]["bodyHash"]).toBe(state.envelope.bodyHash);
   });
 
   it("writes the additive INC-13 campaign-list fields at save time and lists them", () => {
@@ -242,27 +241,25 @@ describe("SaveStore", () => {
 
     store.save(state, tmpDir);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded).not.toBeNull();
+    expect(loaded.warnings).toEqual([]);
 
-    expect(loaded!.snapshot.nations).toBeInstanceOf(Map);
-    expect(loaded!.snapshot.nations.size).toBe(1);
-    expect(loaded!.snapshot.nations.get("nation-a")).toEqual(nation);
+    expect(loaded.state.snapshot.nations).toBeInstanceOf(Map);
+    expect(loaded.state.snapshot.nations.size).toBe(1);
+    expect(loaded.state.snapshot.nations.get("nation-a")).toEqual(nation);
 
-    expect(loaded!.snapshot.designs).toBeInstanceOf(Map);
-    expect(loaded!.snapshot.designs.get("design-1")).toEqual(
+    expect(loaded.state.snapshot.designs).toBeInstanceOf(Map);
+    expect(loaded.state.snapshot.designs.get("design-1")).toEqual(
       state.snapshot.designs.get("design-1"),
     );
 
-    expect(loaded!.snapshot.designFamilies).toBeInstanceOf(Map);
-    expect(loaded!.snapshot.designFamilies.get("family-1")).toEqual(
+    expect(loaded.state.snapshot.designFamilies).toBeInstanceOf(Map);
+    expect(loaded.state.snapshot.designFamilies.get("family-1")).toEqual(
       state.snapshot.designFamilies.get("family-1"),
     );
 
-    const loadedNation = loaded!.snapshot.nations.get("nation-a")!;
+    const loadedNation = loaded.state.snapshot.nations.get("nation-a")!;
     expect(loadedNation.research.activeCandidates).toBeInstanceOf(Map);
     expect(loadedNation.research.activeCandidates.get("tech-1")).toBe("candidate-1");
     expect(loadedNation.research.activeCandidates.get("tech-2")).toBe("candidate-2");
@@ -272,14 +269,11 @@ describe("SaveStore", () => {
     const state = createFixtureState();
     const saveResult = store.save(state, tmpDir);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(loaded).not.toBeNull();
-
-    const { rawHash: _rh, ...loadedForHash } = loaded!;
-    expect(sha256Hex(canonicalSerialize(loadedForHash))).toBe(loaded!["rawHash"]);
-    expect(saveResult.hash).toBe(loaded!["rawHash"]);
+    const { rawHash: _rh, ...loadedForHash } = loaded.state;
+    expect(sha256Hex(canonicalSerialize(loadedForHash))).toBe(loaded.state["rawHash"]);
+    expect(saveResult.hash).toBe(loaded.state["rawHash"]);
   });
 
   it("lists available saves with metadata", () => {
@@ -325,11 +319,7 @@ describe("SaveStore", () => {
     const campaignPath = join(tmpDir, pointer["activeSaveId"], "campaign.json");
     writeFileSync(campaignPath, '{"corrupt": true}', "utf8");
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
-
-    expect(loaded).toBeNull();
-    expect(diagnostics.hasErrors).toBe(true);
+    expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
   });
 
   it("rejects saves with incompatible version", () => {
@@ -365,14 +355,12 @@ describe("SaveStore", () => {
 
     store.save(badState, tmpDir);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const error = expectFailureTag(
+      runExit(store.load(tmpDir)),
+      "PERSISTENCE_COMPATIBILITY_MISMATCH",
+    );
 
-    expect(loaded).toBeNull();
-    expect(diagnostics.hasErrors).toBe(true);
-
-    const errorCodes = diagnostics.errors.map((d) => d.code as string);
-    expect(errorCodes).toContain(COMPATIBILITY_MISMATCH_CODE);
+    expect(error.code).toBe(COMPATIBILITY_MISMATCH_CODE);
   });
 
   it("handles cancellation via AbortSignal during save", () => {
@@ -396,11 +384,12 @@ describe("SaveStore", () => {
     const controller = new AbortController();
     controller.abort();
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics, controller.signal);
+    const error = expectFailureTag(
+      runExit(store.load(tmpDir, controller.signal)),
+      "PERSISTENCE_CANCELLED",
+    );
 
-    expect(loaded).toBeNull();
-    expect(diagnostics.hasErrors).toBe(true);
+    expect(error.message).toBe("Load operation was cancelled");
   });
 
   it("maintains pointer integrity after multiple saves", () => {
@@ -460,18 +449,18 @@ describe("SaveStore", () => {
 
     expect(store.getActiveSaveId(tmpDir)).not.toBe(firstSaveId);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.loadById(tmpDir, firstSaveId, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.loadById(tmpDir, firstSaveId)));
 
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded).not.toBeNull();
-    expect(loaded!["snapshot"]["turnNumber"]).toBe(1);
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state["snapshot"]["turnNumber"]).toBe(1);
   });
 
   it("loadById reports a missing save distinctly from a missing directory", () => {
-    const diagnostics = new DiagnosticCollector();
-    expect(store.loadById(tmpDir, "does-not-exist", diagnostics)).toBeNull();
-    expect(diagnostics.hasErrors).toBe(true);
+    const error = expectFailureTag(
+      runExit(store.loadById(tmpDir, "does-not-exist")),
+      "PERSISTENCE_CORRUPT_SAVE",
+    );
+    expect(error.message).toBe("Save id is not a valid identifier");
   });
 
   it("cleans up temp files after successful save", () => {
@@ -485,17 +474,17 @@ describe("SaveStore", () => {
 
 describe("CompatibilityChecker", () => {
   it("accepts matching version", () => {
-    const diagnostics = new DiagnosticCollector();
-    const result = CompatibilityChecker.check(CURRENT_COMPATIBILITY_VERSION, diagnostics);
-    expect(result).toBe(true);
-    expect(diagnostics.hasErrors).toBe(false);
+    const result = CompatibilityChecker.check(CURRENT_COMPATIBILITY_VERSION);
+    expect(Result.isSuccess(result)).toBe(true);
   });
 
   it("rejects mismatched version", () => {
-    const diagnostics = new DiagnosticCollector();
-    const result = CompatibilityChecker.check("0.0.0", diagnostics);
-    expect(result).toBe(false);
-    expect(diagnostics.hasErrors).toBe(true);
+    const result = CompatibilityChecker.check("0.0.0");
+    expect(Result.isFailure(result)).toBe(true);
+    if (Result.isFailure(result)) {
+      expect(result.failure._tag).toBe("PERSISTENCE_COMPATIBILITY_MISMATCH");
+      expect(result.failure.stage).toBe("persistence.load");
+    }
   });
 });
 

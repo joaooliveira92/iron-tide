@@ -1,4 +1,5 @@
-import type { DiagnosticCode, DiagnosticCollector } from "@bluewave/diagnostics";
+import type { DiagnosticCode } from "@bluewave/diagnostics";
+import { Result } from "effect";
 import { COMPATIBILITY_MISMATCH_CODE, PersistenceCompatibilityMismatchError } from "./errors.js";
 
 export { COMPATIBILITY_MISMATCH_CODE } from "./errors.js";
@@ -10,20 +11,18 @@ export const PART_MODEL_COMPATIBILITY_VERSION = "2.0.0";
 export class CompatibilityChecker {
   static check(
     saveVersion: string,
-    diagnostics: DiagnosticCollector,
     currentVersion: string = CURRENT_COMPATIBILITY_VERSION,
-  ): boolean {
+  ): Result.Result<void, PersistenceCompatibilityMismatchError> {
     if (saveVersion !== currentVersion) {
-      diagnostics.add(
+      return Result.fail(
         new PersistenceCompatibilityMismatchError({
           message: `Save compatibility version "${saveVersion}" does not match current engine version "${currentVersion}"`,
           stage: "persistence.load",
           remediation: "Use a compatible save file or migrate the save data.",
-        }).toDiagnostic(),
+        }),
       );
-      return false;
     }
-    return true;
+    return Result.succeed(undefined);
   }
 }
 

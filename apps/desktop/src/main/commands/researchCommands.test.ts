@@ -179,6 +179,19 @@ describe("research commands", () => {
       expect(result.value.currentProjectTechId).toBe(ukResearch.currentProjectTechId ?? null);
     });
 
+    it("carries the full technology chart with authored names from the content artifact", async () => {
+      registerProductionSession("chart-session", resolve(saveRoot, "chart-1"));
+
+      const result = await inspectResearchScreen("chart-session");
+      expect(result.outcome).toBe("success");
+      if (result.outcome !== "success") return;
+
+      const wrought = result.value.technologies.find((t) => t.techId === "hc_wrought_iron_hull");
+      expect(wrought?.name).toBe("Wrought Iron Hull Construction");
+      expect(result.value.technologies.length).toBeGreaterThan(50);
+      expect(result.value.fields.map((f) => f.fieldId)).toContain("HULL_CONSTRUCTION");
+    });
+
     it("returns SESSION_NOT_FOUND for an unknown session", async () => {
       const result = await inspectResearchScreen("no-such-session");
       expect(result.outcome).toBe("error");

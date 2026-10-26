@@ -21,17 +21,17 @@ const entriesOf = (r: EquivalenceReport) =>
 describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
   it("pins the coverage and data-quality inventory", () => {
     const expected = {
-      designs: 92,
-      placements: 825,
-      gunPlacements: 230,
-      tubePlacements: 29,
-      fittingPlacements: 566,
+      designs: 96,
+      placements: 883,
+      gunPlacements: 251,
+      tubePlacements: 31,
+      fittingPlacements: 601,
     };
     expect(report.coverage.baseline).toEqual(expected);
     expect(report.coverage.candidate).toEqual(expected);
     expect(report.coverage.pinned).toEqual(expected);
     expect(report.dataQuality.inventory.observed).toEqual({
-      centralBatteryPlacements: 9,
+      centralBatteryPlacements: 12,
       launcherVariants: 17,
       waivedLauncherRecords: 5,
       torpedoEntriesAffected: 9,
@@ -47,13 +47,13 @@ describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
   it("keeps inherited findings in dataQuality, apart from the differences", () => {
     const { inherited } = report.dataQuality;
     expect(inherited.filter((f) => f.code === "DQ-TORPEDO-001")).toHaveLength(9);
-    expect(inherited.filter((f) => f.code === "DQ-ARMAMENT-001")).toHaveLength(9);
+    expect(inherited.filter((f) => f.code === "DQ-ARMAMENT-001")).toHaveLength(12);
     expect(inherited.every((f) => f.status === "inherited")).toBe(true);
     const rows = report.designs.flatMap((d) => d.rows);
     expect(rows.some((r) => String(r.path).includes("DQ-"))).toBe(false);
   });
 
-  it("pins the nine D17 rows", () => {
+  it("pins the twelve D17 rows", () => {
     const nine = entriesOf(report).filter(
       (e) => e.disposition === "RECLASSIFIED_AS_CENTRAL_BATTERY",
     );
@@ -75,7 +75,7 @@ describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
     }
   });
 
-  it("pins the 29 torpedo rows", () => {
+  it("pins the 31 torpedo rows", () => {
     const tubes = entriesOf(report)
       .filter((e) => e.kind === "tube")
       .map((e) => [e.design, e.instanceId, e.legacyComponentId, e.legacyUnits, e.mountCount])
@@ -83,7 +83,7 @@ describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
     const pinned = [...TORPEDO_ROWS]
       .map((r) => [...r])
       .sort((a, b) => `${a[0]}:${a[1]}`.localeCompare(`${b[0]}:${b[1]}`));
-    expect(tubes).toHaveLength(29);
+    expect(tubes).toHaveLength(31);
     expect(tubes).toEqual(pinned);
   });
 });

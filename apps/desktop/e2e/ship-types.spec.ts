@@ -107,7 +107,10 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
     });
     await advanceMonths(next, 4);
     await navigateTo(next, "Construction");
-    await next.getByRole("tab", { name: "Design Catalog" }).click();
+    await next
+      .getByRole("navigation", { name: "Yard" })
+      .getByRole("button", { name: /^Design catalog/ })
+      .click();
     await next.getByRole("radio", { name: new RegExp(CLASS_NAME) }).click();
     await next.getByRole("button", { name: "Submit Construction Command" }).click();
     await next.getByRole("button", { name: "Confirm order" }).click();
@@ -124,9 +127,15 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
       timeout: 30_000,
     });
     await navigateTo(last, "Construction");
-    await last.getByRole("tab", { name: "Command Ledger" }).click();
+    await last
+      .getByRole("navigation", { name: "Yard" })
+      .getByRole("button", { name: /^Orders/ })
+      .click();
     await expect(last.getByRole("row").filter({ hasText: "submitted" })).toBeVisible();
-    await last.getByRole("tab", { name: "Design Catalog" }).click();
+    await last
+      .getByRole("navigation", { name: "Yard" })
+      .getByRole("button", { name: /^Design catalog/ })
+      .click();
     await expect(last.getByRole("radio", { name: new RegExp(CLASS_NAME) })).toBeVisible();
   } finally {
     await teardownHarness(third);

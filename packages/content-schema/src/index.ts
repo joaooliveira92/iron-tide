@@ -44,8 +44,14 @@ export {
   CampaignEconomySchema,
   CampaignFleetSchema,
   CampaignResearchSchema,
+  FleetShipSchema,
 } from "./campaign.js";
-export { ContentBundleSchema, type CompiledContentBundle } from "./content-bundle.js";
+export {
+  CampaignCollectionsSchema,
+  ContentBundleSchema,
+  type CampaignCollections,
+  type CompiledContentBundle,
+} from "./content-bundle.js";
 export type { ContentPack, PackManifest, RulesetManifest } from "./manifest.js";
 export { PackManifestSchema, RulesetManifestSchema } from "./manifest.js";
 export type {
@@ -157,6 +163,15 @@ export type { NationNavalProfileData } from "./naval-profile.js";
 export { NavalProfileCatalogueSchema, NationNavalProfileSchema } from "./naval-profile.js";
 export type { Provenance } from "./provenance.js";
 export { DerivationSchema, ProvenanceSchema, SourceReferenceSchema } from "./provenance.js";
+export type {
+  FleetManagementRules,
+  FleetManagementRulesDecoded,
+} from "./fleet-management-rules.js";
+export {
+  FLEET_TRAINING_SUBJECTS,
+  FleetManagementRulesSchema,
+  decodeFleetManagementRules,
+} from "./fleet-management-rules.js";
 export type { BattleOfferRules, BattleOfferRulesDecoded } from "./battle-offer-rules.js";
 export { BattleOfferRulesSchema, decodeBattleOfferRules } from "./battle-offer-rules.js";
 export type { PresenceRules, PresenceRulesDecoded } from "./presence-rules.js";

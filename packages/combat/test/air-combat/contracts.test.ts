@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { BluewaveError } from "@bluewave/contracts";
+import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
 import { Result, Schema } from "effect";
 import {
   AirCombatPolicy_v1,
@@ -7,6 +7,7 @@ import {
   validateAllAirCombatContracts,
 } from "@bluewave/combat/air-combat";
 import {
+  AIR_COMBAT_INVARIANT_FAILED,
   AIR_COMBAT_BASIS_POINTS,
   AIR_COMBAT_EXCHANGE_FACTOR_KEYS,
   AIR_COMBAT_RULESET_VERSION,
@@ -91,6 +92,51 @@ describe("AC-20: air_combat_v1 contract", () => {
 
   it("validateAirCombatContract throws BluewaveError on invalid input", () => {
     expect(() => validateAirCombatContract({})).toThrow(BluewaveError);
+  });
+
+  it("rejects an excess property with the preserved error contract", () => {
+    let caught: unknown;
+    try {
+      validateAirCombatContract({ ...makeValidPolicy(), extra: true });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(isBluewaveError(caught)).toBe(true);
+    const error = caught as BluewaveError;
+    expect(error._tag).toBe("BluewaveError");
+    expect(error.message).toBe(AIR_COMBAT_INVARIANT_FAILED);
+    expect(error.context.code).toBe(AIR_COMBAT_INVARIANT_FAILED);
+    expect(error.context.field).toBe("extra");
+    expect(error.context.reason).toBe("Expected no excess property");
+    expect(error.context.issues).toEqual([
+      { path: "extra", message: "Expected no excess property" },
+    ]);
+  });
+
+  it("reports every missing factor in declaration order", () => {
+    let caught: unknown;
+    try {
+      validateAirCombatContract({});
+    } catch (error) {
+      caught = error;
+    }
+
+    const issues = (caught as BluewaveError).context.issues as ReadonlyArray<{ path: string }>;
+    expect(issues.map((issue) => issue.path)).toEqual([
+      "rulesetVersion",
+      "formulaVersion",
+      "basisPoints",
+      "factorKeys",
+      "disruptionMinBp",
+      "altitudeNeutralBp",
+      "altitudeAdvantageBp",
+      "altitudeDisadvantageBp",
+      "surpriseFirstPassBp",
+      "surpriseSubsequentBp",
+      "numericalMinBp",
+      "destroyedDamageRatioBp",
+    ]);
   });
 
   it("validateAllAirCombatContracts passes (calls all registered validators)", () => {

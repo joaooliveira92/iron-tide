@@ -41,6 +41,7 @@ const ships = [
     readiness: "REPAIR",
     crewQuality: 80,
     repairMonthsRemaining: 2,
+    conditions: ["OutOfAction" as const],
   },
 ];
 
@@ -64,6 +65,7 @@ function make(
     outcomeUnknown: false,
     onToggle: vi.fn(),
     onSend: vi.fn(() => Promise.resolve("accepted" as CommandOutcome)),
+    onSendReadiness: vi.fn(() => Promise.resolve("accepted" as CommandOutcome)),
     onRetry: vi.fn(),
     onReload: vi.fn(),
     ...props,
@@ -85,6 +87,14 @@ describe("FleetStationView (S-5 09)", () => {
     expect(dread.getByText("Short range", { exact: false })).toBeTruthy();
     const rep = within(screen.getByTestId("fleet-station-row-rep"));
     expect(rep.getByText("In repair for 2 more months")).toBeTruthy();
+  });
+
+  it("shows a ship's derived conditions as text beside its status", () => {
+    render(<FleetStationView {...make()} />);
+    const rep = within(screen.getByTestId("fleet-station-row-rep"));
+    expect(rep.getByText("Out of action")).toBeTruthy();
+    const dread = within(screen.getByTestId("fleet-station-row-dread"));
+    expect(dread.queryByText("Out of action")).toBeNull();
   });
 
   it("selects ships by keyboard-operable checkboxes and sends assign or clear for the selection", async () => {

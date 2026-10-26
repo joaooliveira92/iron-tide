@@ -2,6 +2,8 @@ import { DIRECTION_FIXED, directionBp, speedBpKnotsToUmS } from "../movement/nei
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import {
+  computeTorpedoSolutionQuality,
+  neutralTorpedoSolutionFactors,
   EMPTY_TUBE,
   compiledTorpedoOf,
   type TorpedoContext,
@@ -9,9 +11,17 @@ import {
 } from "../torpedoes/index.js";
 import type { DamageContext } from "../damage/minuteDamage.js";
 import { AUTO_TORPEDO_DEPTH_M } from "./torpedoProjection.js";
+import { effectsOf, scaleByTrainingBp, type TrainingEffectsBySide } from "./trainingEffects.js";
 
 const UM_PER_M = 1_000_000;
 const PREDICTION_SECONDS = 60;
+const AUTO_SOLUTION_BASE_BP = 8_000;
+
+export function autoSolutionQualityBp(torpedoTacticsBp: number): number {
+  return computeTorpedoSolutionQuality(
+    neutralTorpedoSolutionFactors(scaleByTrainingBp(AUTO_SOLUTION_BASE_BP, torpedoTacticsBp)),
+  ).solutionQualityBp;
+}
 
 export function planTorpedoCommands(input: {
   battleId: string;
@@ -19,8 +29,9 @@ export function planTorpedoCommands(input: {
   battleState: TacticalBattleState;
   damage: DamageContext;
   units: readonly TacticalShipUnit[];
+  trainingEffects?: TrainingEffectsBySide;
 }): TorpedoLaunchCommand[] {
-  const { battleId, torpedoes, battleState, damage, units } = input;
+  const { battleId, torpedoes, battleState, damage, units, trainingEffects } = input;
   const movement = battleState.movementStates ?? {};
   const contactPos = new Map(
     (battleState.contacts ?? []).map((c) => {
@@ -96,7 +107,9 @@ export function planTorpedoCommands(input: {
         targetCombatValueBp: 5_000,
         targetSizeBp: 5_000,
         targetEstimatedRangeM: best.alongM,
-        solutionQualityBp: 8_000,
+        solutionQualityBp: autoSolutionQualityBp(
+          effectsOf(trainingEffects, wiring.sideId).torpedoTacticsBp,
+        ),
         remainingTotalAmmunition: loaded,
         friendlyLauncherCount: 1,
         overkillEstimateBp: 0,

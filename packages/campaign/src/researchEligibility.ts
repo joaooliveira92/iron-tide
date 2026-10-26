@@ -66,3 +66,30 @@ export function eligibleResearchFields(
   }
   return fields;
 }
+
+const NEUTRAL_TIMING_BP = 10_000;
+
+export function historicalTimingModifierBp(
+  availabilityMonth: SafeInt | undefined,
+  turnNumber: SafeInt,
+): number {
+  const monthsAfter = (turnNumber as number) - ((availabilityMonth ?? SafeInt(0)) as number);
+  if (monthsAfter > 60) return 12_500;
+  if (monthsAfter >= 0) return NEUTRAL_TIMING_BP;
+  if (monthsAfter >= -24) return 8_000;
+  if (monthsAfter >= -60) return 5_000;
+  return NEUTRAL_TIMING_BP;
+}
+
+export function discoveryDrawWeight(
+  baseWeight: SafeInt,
+  availabilityMonth: SafeInt | undefined,
+  turnNumber: SafeInt,
+): SafeInt {
+  const adjusted = SafeInt.div(
+    SafeInt.mul(baseWeight, SafeInt(historicalTimingModifierBp(availabilityMonth, turnNumber))),
+    SafeInt(10_000),
+    "floor",
+  );
+  return (adjusted as number) < 1 ? SafeInt.ONE : adjusted;
+}

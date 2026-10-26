@@ -725,7 +725,7 @@ describe("Engineering status strip", () => {
     render(<ShipbuildingWorkspace />);
     fireEvent.click(trigger("displacement"));
     const title = screen.getByText("Weight breakdown");
-    const body = title.parentElement!;
+    const body = title.closest<HTMLElement>("[data-open]")!;
     expect(within(body).getByText("Hull")).toBeTruthy();
     expect(within(body).getByText("Machinery")).toBeTruthy();
     expect(within(body).getByText("Current")).toBeTruthy();
@@ -736,7 +736,7 @@ describe("Engineering status strip", () => {
   it("opens a cost breakdown on clicking cost", () => {
     render(<ShipbuildingWorkspace />);
     fireEvent.click(trigger("cost"));
-    const body = screen.getByText("Cost breakdown").parentElement!;
+    const body = screen.getByText("Cost breakdown").closest<HTMLElement>("[data-open]")!;
     expect(within(body).getByText("Hull")).toBeTruthy();
     expect(within(body).getByText("Total")).toBeTruthy();
   });
@@ -744,14 +744,14 @@ describe("Engineering status strip", () => {
   it("opens the stability causes on clicking stability", () => {
     render(<ShipbuildingWorkspace />);
     fireEvent.click(trigger("stability"));
-    const body = screen.getByText("Stability causes").parentElement!;
+    const body = screen.getByText("Stability causes").closest<HTMLElement>("[data-open]")!;
     expect(within(body).getByText("GM")).toBeTruthy();
   });
 
   it("distinguishes committed from reserved weight when available weight is hovered", () => {
     render(<ShipbuildingWorkspace />);
     fireEvent.mouseEnter(trigger("remaining"));
-    const body = screen.getByText("Available weight").parentElement!;
+    const body = screen.getByText("Available weight").closest<HTMLElement>("[data-open]")!;
     expect(within(body).getByText("Committed")).toBeTruthy();
     expect(within(body).getByText("Reserved")).toBeTruthy();
     expect(within(body).getByText("Free")).toBeTruthy();

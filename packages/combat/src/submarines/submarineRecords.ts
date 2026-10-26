@@ -1,6 +1,7 @@
 import { SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { submarineStrategicAssetPolicyId } from "./constants.js";
+import { compareStrings } from "../core/ordering.js";
 
 export interface SubmarineOperationsRecord {
   month: SafeInt;
@@ -32,15 +33,15 @@ export function withSubmarineOperationsRecordHash(
 }
 
 export function orderWarsById(warIds: readonly string[]): readonly string[] {
-  return [...warIds].sort((a, b) => a.localeCompare(b));
+  return [...warIds].sort((a, b) => compareStrings(a, b));
 }
 
 export function orderAreasById(areaIds: readonly string[]): readonly string[] {
-  return [...areaIds].sort((a, b) => a.localeCompare(b));
+  return [...areaIds].sort((a, b) => compareStrings(a, b));
 }
 
 export function orderSubmarineAssetsById(assetIds: readonly string[]): readonly string[] {
-  return [...assetIds].sort((a, b) => a.localeCompare(b));
+  return [...assetIds].sort((a, b) => compareStrings(a, b));
 }
 
 export function orderMissionsByPriority(
@@ -55,23 +56,23 @@ export function orderMissionsByPriority(
 }
 
 export function orderTargetsById(targetIds: readonly string[]): readonly string[] {
-  return [...targetIds].sort((a, b) => a.localeCompare(b));
+  return [...targetIds].sort((a, b) => compareStrings(a, b));
 }
 
 export function orderBattleAllocationsById(battleIds: readonly string[]): readonly string[] {
-  return [...battleIds].sort((a, b) => a.localeCompare(b));
+  return [...battleIds].sort((a, b) => compareStrings(a, b));
 }
 
 export function orderAswContactsById(contactIds: readonly string[]): readonly string[] {
-  return [...contactIds].sort((a, b) => a.localeCompare(b));
+  return [...contactIds].sort((a, b) => compareStrings(a, b));
 }
 
 export function orderFriendlyFireChecksById(
   checks: readonly { contactId: string; submarineAssetId: string }[],
 ): readonly { contactId: string; submarineAssetId: string }[] {
   return [...checks].sort((a, b) => {
-    const byContact = a.contactId.localeCompare(b.contactId);
+    const byContact = compareStrings(a.contactId, b.contactId);
     if (byContact !== 0) return byContact;
-    return a.submarineAssetId.localeCompare(b.submarineAssetId);
+    return compareStrings(a.submarineAssetId, b.submarineAssetId);
   });
 }

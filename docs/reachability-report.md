@@ -5,8 +5,8 @@ Rules and statuses: ADR-0267.
 
 | Status | Rows |
 | --- | --- |
-| reachable | 30 |
-| dormant-by-decision | 11 |
+| reachable | 33 |
+| dormant-by-decision | 12 |
 | internal | 11 |
 
 ## Reachable
@@ -16,6 +16,9 @@ Rules and statuses: ADR-0267.
 | set-research-priority | Set a research priority for a technology field | `screens/research/ResearchScreen.tsx` | `apps/desktop/src/renderer/screens/research/ResearchScreen.test.tsx` |
 | move-fleet | Order a fleet along a route, one hop a month | `screens/fleet/FleetScreen.tsx` | `apps/desktop/src/main/commands/fleetCommands.test.ts` |
 | assign-station | Assign a fleet to a foreign station | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
+| set-ship-readiness | Set a ship to active, reserve or mothballed | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
+| fund-special-training | Fund up to two special-training subjects | `screens/fleet/training/FleetTrainingSection.tsx` | `apps/desktop/src/renderer/screens/fleet/training/FleetTrainingView.test.tsx` |
+| hold-fleet-exercise | Hold the annual fleet exercise with chosen ships | `screens/fleet/exercise/FleetExerciseSection.tsx` | `apps/desktop/src/renderer/screens/fleet/exercise/FleetExerciseView.test.tsx` |
 | organise-divisions | Create, change and dissolve divisions and pick flagships | `screens/fleet/organization/FleetOrganizationSection.tsx` | `apps/desktop/src/main/commands/divisionCommands.test.ts` |
 | set-budget-allocation | Set the budget allocation across spending categories | `screens/treasury/TreasuryScreen.tsx` | `apps/desktop/src/renderer/screens/treasury/components/BudgetPolicyPanel.test.tsx` |
 | submit-design | Draw a ship design and submit it for construction | `components/design-workspace/panels/SubmitPanel.tsx` | `apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx` |
@@ -50,14 +53,15 @@ Rules and statuses: ADR-0267.
 | --- | --- | --- |
 | assign-or-relieve-officer | Assign or relieve an officer | #224 |
 | prestige | See and act on national prestige | #223 |
+| division-battle-experience | Divisions gain experience from the battles they fight | #276 |
 | ship-readiness | See and manage ship readiness | #223 |
-| aircraft-and-carriers | Develop aircraft and operate carriers | #225 |
-| combat-air-combat | Air combat and air defence in a battle | #225 |
-| combat-carrier-operations | Carrier operations in a battle | #225 |
-| combat-mines | Mine laying, sweeping and pressure | #225 |
-| combat-submarines | Submarine operations | #225 |
-| combat-coastal-defense | Coastal defence batteries and mine pressure | #225 |
-| combat-smoke | Smokescreens and funnel smoke | #225 |
+| aircraft-and-carriers | Develop aircraft and operate carriers | ADR-0300 |
+| combat-air-combat | Air combat and air defence in a battle | ADR-0300 |
+| combat-carrier-operations | Carrier operations in a battle | ADR-0300 |
+| combat-mines | Mine laying, sweeping and pressure | ADR-0300 |
+| combat-submarines | Submarine operations | ADR-0300 |
+| combat-coastal-defense | Coastal defence batteries and mine pressure | ADR-0300 |
+| combat-smoke | Smokescreens and funnel smoke | ADR-0300 |
 | debug-battle-sandbox | Generate, resolve and replay battles in the tactical sandbox and simulation screens | #226 |
 
 ## Internal

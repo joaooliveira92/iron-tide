@@ -1,11 +1,14 @@
 /* @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { WindowState } from "../../shared/bridge-contract.js";
 import { SidebarProvider } from "../components/ui/sidebar.js";
 import { BridgeProvider } from "../lib/bridge-context.js";
 import { PreferencesProvider } from "../lib/preferences-context.js";
 import { createPreferencesBridgeStub } from "../lib/preferences-test-bridge.js";
+import { PageHeader } from "../components/shared/PageHeader.js";
+import { ScreenHeaderProvider } from "./screen-header.js";
 import { SiteHeader, type SiteHeaderProps } from "./SiteHeader.js";
 import type { HeaderCampaign } from "./site-header-state.js";
 import { ThemeProvider } from "./ThemeContext.js";
@@ -15,10 +18,6 @@ import { WindowContextProvider } from "./WindowContext.js";
 const campaign: HeaderCampaign = {
   prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
   month: { year: 1900, month: 1 },
-  treasury: 24_500_000,
-  nationName: "United Kingdom",
-  projectedSurplusDeficit: 1_500_000,
-  activeAlertsCount: null,
   atWar: false,
 };
 
@@ -62,7 +61,11 @@ describe("SiteHeader", () => {
     cleanup();
   });
 
-  async function renderHeader(platform: NodeJS.Platform = "linux", props: SiteHeaderProps = {}) {
+  async function renderHeader(
+    platform: NodeJS.Platform = "linux",
+    props: SiteHeaderProps = {},
+    screenContent: ReactNode = null,
+  ) {
     windowCtx = windowContext(platform);
     const stub = createPreferencesBridgeStub();
     const result = render(
@@ -71,7 +74,10 @@ describe("SiteHeader", () => {
           <SidebarProvider>
             <WindowContextProvider value={windowCtx}>
               <ThemeProvider>
-                <SiteHeader {...props} />
+                <ScreenHeaderProvider>
+                  <SiteHeader {...props} />
+                  {screenContent}
+                </ScreenHeaderProvider>
               </ThemeProvider>
             </WindowContextProvider>
           </SidebarProvider>
@@ -95,6 +101,30 @@ describe("SiteHeader", () => {
 
     expect(screen.getByText("Active database (SQLite)")).toBeTruthy();
     expect(screen.getByText("Ready for operation")).toBeTruthy();
+  });
+
+  it("collapses to one row when a screen with no toolbar takes over the title", async () => {
+    const { container } = await renderHeader(
+      "linux",
+      { activeView: "playing", campaign },
+      <PageHeader title="Fleet" />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Fleet" })).toBeTruthy();
+    expect(container.querySelector("header")?.className).toContain("h-14");
+    const [compactMonth] = screen.getAllByText("January 1900");
+    expect(compactMonth?.closest("div.hidden")).toBeNull();
+  });
+
+  it("keeps the second row for a screen that supplies a toolbar", async () => {
+    const { container } = await renderHeader(
+      "linux",
+      { activeView: "playing", campaign },
+      <PageHeader title="Fleet" actions={<button type="button">Do it</button>} />,
+    );
+
+    expect(container.querySelector("header")?.className).toContain("h-24");
+    expect(screen.getByRole("button", { name: "Do it" })).toBeTruthy();
   });
 
   it("disables back and forward navigation when the history cannot move", async () => {
@@ -185,33 +215,19 @@ describe("SiteHeader", () => {
     expect(onActionClick).toHaveBeenCalledWith("validate");
   });
 
-  it("renders the campaign secondary row from the campaign projection", async () => {
+  it("renders the campaign status in the secondary row", async () => {
     await renderHeader("linux", { activeView: "playing", campaign });
 
     expect(screen.getByText("Armed peace")).toBeTruthy();
-    expect(screen.getByText(/24,500k NC/)).toBeTruthy();
   });
 
-  it("renders the INC-1 header fields: nation name and projected balance", async () => {
+  it("drops the metrics the status strip already shows", async () => {
     await renderHeader("linux", { activeView: "playing", campaign });
 
-    expect(screen.getByText("Nation:")).toBeTruthy();
-    expect(screen.getByText(/United Kingdom/)).toBeTruthy();
-    expect(screen.getByText("Projected balance:")).toBeTruthy();
-    expect(screen.getByText(/1,500k NC/)).toBeTruthy();
-  });
-
-  it("omits the alert-count slot until the INC-2 projection lands", async () => {
-    await renderHeader("linux", { activeView: "playing", campaign });
-
+    expect(screen.queryByText("Nation:")).toBeNull();
+    expect(screen.queryByText("Projected balance:")).toBeNull();
     expect(screen.queryByText("Alerts:")).toBeNull();
-  });
-
-  it("shows real prestige in the header instead of a placeholder", async () => {
-    await renderHeader("linux", { activeView: "playing", campaign });
-
-    expect(screen.getByText("Prestige:")).toBeTruthy();
-    expect(screen.getByText("20")).toBeTruthy();
+    expect(screen.queryByText("Prestige:")).toBeNull();
     expect(screen.queryByRole("status")).toBeNull();
   });
 
@@ -241,14 +257,33 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("status").textContent).toContain("12 — sacked");
   });
 
-  it("renders the alert count once the forward-wired slot is populated", async () => {
+  it("puts the priorities briefing in the secondary row", async () => {
+    const onNavigate = vi.fn();
     await renderHeader("linux", {
       activeView: "playing",
-      campaign: { ...campaign, activeAlertsCount: 4 },
+      campaign,
+      briefing: {
+        state: {
+          status: "ready",
+          priorities: [
+            {
+              id: "a",
+              type: "high_foreign_tension",
+              severity: "warning",
+              title: "High foreign tension",
+              summary: "Tension with france is 9.",
+              reason: "r",
+              destination: "diplomacy",
+              fingerprint: "a",
+            },
+          ],
+        },
+        onNavigate,
+      },
     });
 
-    expect(screen.getByText("Alerts:")).toBeTruthy();
-    expect(screen.getByText("4")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /High foreign tension/ }));
+    expect(onNavigate).toHaveBeenCalledWith("diplomacy");
   });
 
   it("renders the advance-month button on the right for an active campaign", async () => {

@@ -1,7 +1,6 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
@@ -95,12 +94,7 @@ describe("compileCampaign", () => {
     expect(result.outcome).toBe("success");
 
     const store = new SaveStore();
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(saveDir, diagnostics);
-
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded).not.toBeNull();
-    if (!loaded) return;
+    const loaded = Effect.runSync(store.load(saveDir)).state;
 
     expect(loaded.snapshot.nations).toBeInstanceOf(Map);
     expect(loaded.snapshot.nations.size).toBe(14);

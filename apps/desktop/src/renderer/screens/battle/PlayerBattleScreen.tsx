@@ -10,6 +10,7 @@ import {
 } from "../../../shared/player-battle-orders.js";
 import { usePreferences } from "../../lib/preferences-context.js";
 import { formatMeasurement, UM_PER_NAUTICAL_MILE } from "../../lib/presentation-format/index.js";
+import { AccuracyDisclosure } from "./AccuracyDisclosure.js";
 import { usePlayerBattle } from "./usePlayerBattle.js";
 
 export function PlayerBattleScreen({
@@ -177,7 +178,7 @@ export function PlayerBattleScreen({
                               <li
                                 key={unitId}
                                 data-testid={`battle-ship-${unitId}`}
-                                className="flex justify-between gap-2"
+                                className="flex flex-wrap justify-between gap-x-2"
                               >
                                 <span>
                                   {ship.name}{" "}
@@ -189,6 +190,12 @@ export function PlayerBattleScreen({
                                   {ship.damageState === "NORMAL" ? "" : "▼ "}
                                   {ship.hitPoints}/{ship.maxHitPoints} {ship.damageState}
                                 </span>
+                                {ship.gunneryAccuracy === undefined ? null : (
+                                  <AccuracyDisclosure
+                                    tree={ship.gunneryAccuracy}
+                                    locale={preferences.formattingLocale}
+                                  />
+                                )}
                               </li>
                             );
                           })}

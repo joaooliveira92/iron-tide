@@ -28,13 +28,25 @@
 // re-validates every envelope at issue time. The scope still ratchets: a NEW
 // `JSON.parse(...) as T` in `compiler-cli` fails closed.
 //
-// Usage: `node scripts/assert-boundary-decode.mjs [--scope compiler|desktop|cli|persistence|all] [--self-test] [--strict]`
+// A second rule (`--scope decode-options`) guards the decode itself: `Schema.Struct`
+// strips excess keys by default, so every `Schema.decode*(schema, options)` in the
+// first-party sources must pass `onExcessProperty: "error"` (inline, or through a
+// same-file constant that sets it). A decode with no options, or options that do not
+// reject excess keys, silently drops unknown fields. Existing sites are frozen in a
+// shrink-only baseline keyed by file and content fingerprint. The remaining baseline is
+// deliberate: renderer crash reports stay tolerant, command rows and sidecars choose their
+// own options, the content manifest/lock tolerate extra keys (pinned by test), and the
+// save-header probe stays lenient (ADR-0278 §4).
+//
+// Usage: `node scripts/assert-boundary-decode.mjs [--scope compiler|desktop|cli|persistence|decode-options|all] [--self-test] [--strict] [--write]`
+//   (`--write` reseeds the decode-options baseline from the current tree)
 //   (`--strict` fails on a stale allowlist entry; CI is always strict)
 //
 // Wired into `pnpm preflight` (one self-test, then one gate per scope).
 
 import { execFileSync } from "node:child_process";
-import { lstatSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { lstatSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseSync } from "oxc-parser";
 
@@ -78,6 +90,29 @@ export const ALLOWLIST = {
     },
   },
 };
+
+const DECODE_OPTIONS_BASELINE_PATH = "scripts/schema-decode-options.baseline.json";
+
+/** First-party source roots whose Schema decodes must reject excess properties. */
+export const DECODE_OPTION_ROOT_RE =
+  /^(?:packages\/[^/]+\/src|apps\/compiler-cli\/src|apps\/desktop\/src\/(?:main|preload|shared))\//u;
+
+const SCHEMA_DECODERS = new Set([
+  "decode",
+  "decodeEffect",
+  "decodeExit",
+  "decodeOption",
+  "decodePromise",
+  "decodeResult",
+  "decodeSync",
+  "decodeUnknown",
+  "decodeUnknownEffect",
+  "decodeUnknownExit",
+  "decodeUnknownOption",
+  "decodeUnknownPromise",
+  "decodeUnknownResult",
+  "decodeUnknownSync",
+]);
 
 const SOURCE_RE = /\.(?:[cm]?[jt]s|[jt]sx)$/u;
 const TEST_RE = /(?:^|\/)(?:test|tests|__tests__)\/|\.(?:test|spec)\.[cm]?[jt]sx?$/u;
@@ -297,6 +332,275 @@ export function scanBoundaryDecodeCasts(repoRoot, roots, allowlist = ALLOWLIST, 
   return kept;
 }
 
+function memberProperty(node) {
+  if (node?.type !== "MemberExpression") return undefined;
+  if (node.computed !== true) return node.property?.name;
+  return typeof node.property?.value === "string" ? node.property.value : undefined;
+}
+
+function stripWrappers(node) {
+  let current = node;
+  while (
+    current !== null &&
+    typeof current === "object" &&
+    (current.type === "TSAsExpression" ||
+      current.type === "TSSatisfiesExpression" ||
+      current.type === "TSNonNullExpression" ||
+      current.type === "ParenthesizedExpression")
+  ) {
+    current = current.expression;
+  }
+  return current;
+}
+
+function propertyName(property) {
+  const key = property?.key;
+  if (key?.type === "Identifier") return key.name;
+  if (key?.type === "Literal" && typeof key.value === "string") return key.value;
+  return undefined;
+}
+
+function rejectsExcess(objectNode, strictNames = new Set()) {
+  const object = stripWrappers(objectNode);
+  if (object?.type !== "ObjectExpression") return false;
+  return object.properties.some(
+    (property) =>
+      (property.type === "Property" &&
+        propertyName(property) === "onExcessProperty" &&
+        stripWrappers(property.value)?.type === "Literal" &&
+        stripWrappers(property.value).value === "error") ||
+      (property.type === "SpreadElement" &&
+        property.argument?.type === "Identifier" &&
+        strictNames.has(property.argument.name)),
+  );
+}
+
+/**
+ * Names of top-level constants whose object literal rejects excess properties, so a
+ * spread of an imported strict option set (`{ ...CONTENT_DECODE_OPTIONS, errors: "all" }`)
+ * resolves.
+ * @param {string} file
+ * @param {string} text
+ * @returns {Set<string>}
+ */
+export function strictOptionNames(file, text) {
+  const { program } = parseSync(file.replaceAll("\\", "/"), text);
+  const names = new Set();
+  for (const statement of program.body) {
+    const declaration =
+      statement.type === "ExportNamedDeclaration" ? statement.declaration : statement;
+    if (declaration?.type !== "VariableDeclaration") continue;
+    for (const declarator of declaration.declarations) {
+      if (
+        declarator.id?.type === "Identifier" &&
+        declarator.init &&
+        rejectsExcess(declarator.init)
+      ) {
+        names.add(declarator.id.name);
+      }
+    }
+  }
+  return names;
+}
+
+/**
+ * Find `Schema.decode*` calls whose options do not reject excess properties.
+ * @param {string} file repository-relative path (forward slashes)
+ * @param {string} text source contents
+ * @returns {Array<{file: string, line: number, snippet: string, fingerprint: string}>}
+ */
+export function findLooseSchemaDecodes(file, text, strictNames = new Set()) {
+  const normalized = file.replaceAll("\\", "/");
+  const { program, errors } = parseSync(normalized, text);
+  if (errors.length > 0) {
+    throw new Error(
+      `assert-boundary-decode: cannot parse ${normalized}: ${errors[0].message} ` +
+        "(failing closed — an unparsed file could hide a loose decode)",
+    );
+  }
+  const optionConstants = new Map();
+  const collect = (node) => {
+    if (node === null || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const child of node) collect(child);
+      return;
+    }
+    if (typeof node.type !== "string") return;
+    if (node.type === "VariableDeclarator" && node.id?.type === "Identifier" && node.init) {
+      optionConstants.set(node.id.name, rejectsExcess(node.init, strictNames));
+    }
+    for (const key of Object.keys(node)) {
+      if (key === "type" || key === "start" || key === "end" || key === "range") continue;
+      const value = node[key];
+      if (value !== null && typeof value === "object") collect(value);
+    }
+  };
+  collect(program);
+  const knownStrict = new Set([
+    ...strictNames,
+    ...[...optionConstants].filter(([, strict]) => strict).map(([name]) => name),
+  ]);
+
+  const findings = [];
+  const visit = (node) => {
+    if (node === null || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const child of node) visit(child);
+      return;
+    }
+    if (typeof node.type !== "string") return;
+    if (
+      node.type === "CallExpression" &&
+      node.callee?.type === "MemberExpression" &&
+      node.callee.object?.type === "Identifier" &&
+      node.callee.object.name === "Schema" &&
+      SCHEMA_DECODERS.has(memberProperty(node.callee) ?? "")
+    ) {
+      const options = stripWrappers(node.arguments?.[1]);
+      const strict =
+        options?.type === "Identifier"
+          ? optionConstants.get(options.name) === true
+          : rejectsExcess(options, knownStrict);
+      if (!strict) {
+        const callee = text.slice(node.callee.start, node.callee.end);
+        findings.push({
+          file: normalized,
+          line: lineAt(text, node.start),
+          snippet: normalize(
+            `${callee}(${options === undefined ? "<no options>" : "<loose options>"})`,
+          ),
+          fingerprint: createHash("sha256")
+            .update(normalize(text.slice(node.start, node.end)))
+            .digest("hex"),
+        });
+      }
+    }
+    for (const key of Object.keys(node)) {
+      if (key === "type" || key === "start" || key === "end" || key === "range") continue;
+      const value = node[key];
+      if (value !== null && typeof value === "object") visit(value);
+    }
+  };
+  visit(program);
+  return findings;
+}
+
+/** Scan every first-party source file for loose Schema decodes. */
+export function scanLooseSchemaDecodes(repoRoot) {
+  const files = [
+    ...new Set(
+      execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], {
+        cwd: repoRoot,
+        encoding: "utf8",
+        maxBuffer: 16 * 1024 * 1024,
+      })
+        .split("\0")
+        .map((file) => file.replaceAll("\\", "/"))
+        .filter(
+          (file) => SOURCE_RE.test(file) && !TEST_RE.test(file) && DECODE_OPTION_ROOT_RE.test(file),
+        ),
+    ),
+  ]
+    .sort()
+    .filter((file) => lstatSync(resolve(repoRoot, file), { throwIfNoEntry: false })?.isFile());
+  const texts = new Map(files.map((file) => [file, readFileSync(resolve(repoRoot, file), "utf8")]));
+  const strictNames = new Set(
+    [...texts].flatMap(([file, text]) => [...strictOptionNames(file, text)]),
+  );
+  return files.flatMap((file) => findLooseSchemaDecodes(file, texts.get(file), strictNames));
+}
+
+/** Count loose decodes per file and fingerprint in stable code-unit order. */
+export function countLooseDecodes(findings) {
+  const byCodeUnit = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+  const counts = {};
+  for (const { file, fingerprint } of findings) {
+    const perFile = (counts[file] ??= {});
+    perFile[fingerprint] = (perFile[fingerprint] ?? 0) + 1;
+  }
+  return Object.fromEntries(
+    Object.entries(counts)
+      .sort(([a], [b]) => byCodeUnit(a, b))
+      .map(([file, perFile]) => [
+        file,
+        Object.fromEntries(Object.entries(perFile).sort(([a], [b]) => byCodeUnit(a, b))),
+      ]),
+  );
+}
+
+/** Subtract the baseline from the observed loose decodes. */
+export function unbaselinedDecodes(findings, baseline) {
+  const remaining = structuredClone(baseline);
+  const added = [];
+  for (const finding of findings) {
+    const perFile = remaining[finding.file];
+    const allowance = perFile?.[finding.fingerprint] ?? 0;
+    if (perFile !== undefined && allowance > 0) perFile[finding.fingerprint] = allowance - 1;
+    else added.push(finding);
+  }
+  return added;
+}
+
+const DECODE_FIXTURES = [
+  {
+    name: "a decode with no options fails",
+    source: "const r = Schema.decodeUnknownResult(S)(v);",
+    expect: 1,
+  },
+  {
+    name: "a decode with options that omit onExcessProperty fails",
+    source: "const r = Schema.decodeUnknownResult(S, { errors: 'all' })(v);",
+    expect: 1,
+  },
+  {
+    name: "onExcessProperty ignore fails",
+    source: "const r = Schema.decodeUnknownSync(S, { onExcessProperty: 'ignore' })(v);",
+    expect: 1,
+  },
+  {
+    name: "inline onExcessProperty error passes",
+    source: "const r = Schema.decodeUnknownResult(S, { onExcessProperty: 'error' })(v);",
+    expect: 0,
+  },
+  {
+    name: "a same-file strict options constant passes",
+    source:
+      "const opts = { onExcessProperty: 'error', errors: 'all' } as const;\nconst r = Schema.decodeUnknownResult(S, opts)(v);",
+    expect: 0,
+  },
+  {
+    name: "a same-file loose options constant fails",
+    source: "const opts = { errors: 'all' };\nconst r = Schema.decodeUnknownResult(S, opts)(v);",
+    expect: 1,
+  },
+  {
+    name: "options from another module's member fail closed",
+    source: "const r = Schema.decodeUnknownResult(S, config.opts)(v);",
+    expect: 1,
+  },
+  {
+    name: "a spread of a same-file strict options constant passes",
+    source:
+      "const base = { onExcessProperty: 'error' } as const;\nconst r = Schema.decodeUnknownResult(S, { ...base, errors: 'all' })(v);",
+    expect: 0,
+  },
+  {
+    name: "a spread of an unknown options value fails",
+    source: "const r = Schema.decodeUnknownResult(S, { ...other, errors: 'all' })(v);",
+    expect: 1,
+  },
+  {
+    name: "an encode call is not a decode",
+    source: "const r = Schema.encodeUnknownResult(S)(v);",
+    expect: 0,
+  },
+  {
+    name: "an unrelated decode member is ignored",
+    source: "const r = codec.decode(v);",
+    expect: 0,
+  },
+];
+
 const FIXTURES = [
   { name: "boundary cast fails", source: "const x = JSON.parse(s) as Foo;", expect: 1 },
   {
@@ -323,8 +627,16 @@ const FIXTURES = [
   },
 ];
 
-export function runSelfTest(fixtures = FIXTURES) {
+export function runSelfTest(fixtures = FIXTURES, decodeFixtures = DECODE_FIXTURES) {
   let failed = 0;
+  for (const fixture of decodeFixtures) {
+    const findings = findLooseSchemaDecodes("fixture.ts", fixture.source);
+    const passed = findings.length === fixture.expect;
+    if (!passed) failed += 1;
+    console.log(
+      `  ${passed ? "ok  " : "FAIL"} fixture "${fixture.name}": expected ${String(fixture.expect)} finding(s), got ${String(findings.length)}`,
+    );
+  }
   for (const fixture of fixtures) {
     const findings = findBoundaryDecodeCasts("fixture.ts", fixture.source);
     const passed = findings.length === fixture.expect;
@@ -333,13 +645,14 @@ export function runSelfTest(fixtures = FIXTURES) {
       `  ${passed ? "ok  " : "FAIL"} fixture "${fixture.name}": expected ${String(fixture.expect)} finding(s), got ${String(findings.length)}`,
     );
   }
-  return { ok: failed === 0, failed, total: fixtures.length };
+  return { ok: failed === 0, failed, total: fixtures.length + decodeFixtures.length };
 }
 
 function scopesFromArgs(args) {
   const index = args.indexOf("--scope");
   const value = index === -1 ? "all" : (args[index + 1] ?? "all");
   if (value === "all") return Object.keys(SCOPES);
+  if (value === "decode-options") return [];
   if (!Object.hasOwn(SCOPES, value)) {
     throw new Error(
       `assert-boundary-decode: unknown scope "${value}" (expected ${Object.keys(SCOPES).join(", ")})`,
@@ -361,6 +674,36 @@ function main() {
     }
     console.log(`assert-boundary-decode: self-test ok (${String(total)} fixtures)`);
     return;
+  }
+
+  const scopeIndex = args.indexOf("--scope");
+  const scopeArg = scopeIndex === -1 ? "all" : (args[scopeIndex + 1] ?? "all");
+  if (args.includes("--write")) {
+    const all = scanLooseSchemaDecodes(root);
+    writeFileSync(
+      resolve(root, DECODE_OPTIONS_BASELINE_PATH),
+      `${JSON.stringify(countLooseDecodes(all), null, 2)}\n`,
+    );
+    console.log(
+      `assert-boundary-decode: decode-options baseline written with ${String(all.length)} site(s).`,
+    );
+    return;
+  }
+  if (scopeArg === "decode-options" || scopeArg === "all") {
+    const baseline = JSON.parse(readFileSync(resolve(root, DECODE_OPTIONS_BASELINE_PATH), "utf8"));
+    const added = unbaselinedDecodes(scanLooseSchemaDecodes(root), baseline);
+    if (added.length > 0) {
+      const detail = added.map((f) => `  ${f.file}:${String(f.line)} — ${f.snippet}`).join("\n");
+      throw new Error(
+        'assert-boundary-decode (decode-options): Schema decodes must pass { onExcessProperty: "error" } ' +
+          '(AGENTS.md "Schema and boundaries"); the default strips excess keys.\n' +
+          detail,
+      );
+    }
+    if (scopeArg === "decode-options") {
+      console.log("assert-boundary-decode: ok (every Schema decode rejects excess properties)");
+      return;
+    }
   }
 
   const strict = args.includes("--strict") || isStrictEnvironment();

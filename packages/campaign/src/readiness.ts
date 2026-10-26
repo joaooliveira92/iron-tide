@@ -1,5 +1,7 @@
 import { SafeInt } from "@bluewave/contracts";
+import { FleetShipSchema } from "@bluewave/content-schema";
 import type { Diagnostic, DiagnosticCode } from "@bluewave/diagnostics";
+import { Data, Result } from "effect";
 
 export const SHIP_READINESS_STATES = [
   "ACTIVE",
@@ -91,15 +93,12 @@ export function deriveCrewQuality(readiness: ShipReadinessState): SafeInt {
   return readiness === "ACTIVE" ? ACTIVE_CREW_CEILING : LAID_UP_CREW_CEILING;
 }
 
-export class ShipReadinessFailure {
-  readonly _tag = "ShipReadinessFailure";
-  constructor(
-    readonly code: DiagnosticCode,
-    readonly shipId: string,
-    readonly message: string,
-    readonly remediation: string,
-  ) {}
-
+export class ShipReadinessFailure extends Data.TaggedError("ShipReadinessFailure")<{
+  readonly code: DiagnosticCode;
+  readonly shipId: string;
+  readonly message: string;
+  readonly remediation: string;
+}> {
   toDiagnostic(): Diagnostic {
     return {
       code: this.code,
@@ -121,20 +120,17 @@ export interface ShipReadinessSeed {
 export function resolveShipReadinessSeed(
   record: Record<string, unknown>,
   shipId: string,
-):
-  | { readonly ok: true; readonly value: ShipReadinessSeed }
-  | { readonly ok: false; readonly error: ShipReadinessFailure } {
+): Result.Result<ShipReadinessSeed, ShipReadinessFailure> {
   for (const key of Object.keys(record)) {
     if (!ALLOWED_SHIP_INPUT_KEYS.has(key)) {
-      return {
-        ok: false,
-        error: new ShipReadinessFailure(
-          SHIP_READINESS_CODES.excessKey,
+      return Result.fail(
+        new ShipReadinessFailure({
+          code: SHIP_READINESS_CODES.excessKey,
           shipId,
-          `Ship '${shipId}' has unknown key '${key}'`,
-          `Remove '${key}' from the ship record`,
-        ),
-      };
+          message: `Ship '${shipId}' has unknown key '${key}'`,
+          remediation: `Remove '${key}' from the ship record`,
+        }),
+      );
     }
   }
 
@@ -145,15 +141,14 @@ export function resolveShipReadinessSeed(
   } else if (isShipReadinessState(rawReadiness)) {
     readiness = rawReadiness;
   } else {
-    return {
-      ok: false,
-      error: new ShipReadinessFailure(
-        SHIP_READINESS_CODES.unknownState,
+    return Result.fail(
+      new ShipReadinessFailure({
+        code: SHIP_READINESS_CODES.unknownState,
         shipId,
-        `Ship '${shipId}' has an unknown readiness state`,
-        `Use one of ${SHIP_READINESS_STATES.join(", ")}`,
-      ),
-    };
+        message: `Ship '${shipId}' has an unknown readiness state`,
+        remediation: `Use one of ${SHIP_READINESS_STATES.join(", ")}`,
+      }),
+    );
   }
 
   const rawCrewQuality = record["crewQuality"];
@@ -168,15 +163,14 @@ export function resolveShipReadinessSeed(
   ) {
     crewQuality = SafeInt(rawCrewQuality);
   } else {
-    return {
-      ok: false,
-      error: new ShipReadinessFailure(
-        SHIP_READINESS_CODES.crewQuality,
+    return Result.fail(
+      new ShipReadinessFailure({
+        code: SHIP_READINESS_CODES.crewQuality,
         shipId,
-        `Ship '${shipId}' crew quality must be an integer in ${String(CREW_QUALITY_MIN)}..${String(CREW_QUALITY_MAX)}`,
-        `Set crewQuality to an integer in ${String(CREW_QUALITY_MIN)}..${String(CREW_QUALITY_MAX)}`,
-      ),
-    };
+        message: `Ship '${shipId}' crew quality must be an integer in ${String(CREW_QUALITY_MIN)}..${String(CREW_QUALITY_MAX)}`,
+        remediation: `Set crewQuality to an integer in ${String(CREW_QUALITY_MIN)}..${String(CREW_QUALITY_MAX)}`,
+      }),
+    );
   }
 
   const rawRepairMonths = record["repairMonthsRemaining"];
@@ -190,43 +184,27 @@ export function resolveShipReadinessSeed(
     ) {
       repairMonthsRemaining = SafeInt(rawRepairMonths);
     } else {
-      return {
-        ok: false,
-        error: new ShipReadinessFailure(
-          SHIP_READINESS_CODES.repairMonths,
+      return Result.fail(
+        new ShipReadinessFailure({
+          code: SHIP_READINESS_CODES.repairMonths,
           shipId,
-          `Ship '${shipId}' repairMonthsRemaining must be an integer in 0..${String(REPAIR_MONTHS_MAX)}`,
-          `Set repairMonthsRemaining to an integer in 0..${String(REPAIR_MONTHS_MAX)}`,
-        ),
-      };
+          message: `Ship '${shipId}' repairMonthsRemaining must be an integer in 0..${String(REPAIR_MONTHS_MAX)}`,
+          remediation: `Set repairMonthsRemaining to an integer in 0..${String(REPAIR_MONTHS_MAX)}`,
+        }),
+      );
     }
   }
 
-  return {
-    ok: true,
-    value: {
-      readiness,
-      crewQuality,
-      ...(repairMonthsRemaining === undefined ? {} : { repairMonthsRemaining }),
-    },
-  };
+  return Result.succeed({
+    readiness,
+    crewQuality,
+    ...(repairMonthsRemaining === undefined ? {} : { repairMonthsRemaining }),
+  });
 }
 
-const ALLOWED_SHIP_INPUT_KEYS = new Set([
-  "id",
-  "name",
-  "classId",
-  "designVersionId",
-  "hitPoints",
-  "maxHitPoints",
-  "speed",
-  "firepower",
-  "armor",
-  "isUnderConstruction",
-  "constructionProgress",
-  "constructionTotalWork",
-  "inBattleId",
-  "readiness",
-  "crewQuality",
-  "repairMonthsRemaining",
+const RUNTIME_ONLY_SHIP_KEYS = ["repairMonthsRemaining"] as const;
+
+const ALLOWED_SHIP_INPUT_KEYS: ReadonlySet<string> = new Set([
+  ...Object.keys(FleetShipSchema.fields),
+  ...RUNTIME_ONLY_SHIP_KEYS,
 ]);

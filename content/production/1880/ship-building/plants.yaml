@@ -126,3 +126,32 @@ plants:
       obsoleteMonth: null
     requires:
       - mac_compound_engine
+  # High-pressure geared steam turbine plant (E-1 1940-1949, ADR-0284), oil-fired, 650 psi / 850 F (Naval Historical Review, Dec 1981;
+  # other sites say 600 psi). Reference installation 60,000 shp (44,742 kW) on two shafts in Fletcher and Gearing; maxKw is the Iowa
+  # total of 212,000 shp (158,084 kW) so the later cruiser and battleship slices need no new plant (docs/research/e-1-1940s-hull-and-part-values.md
+  # section 9). The mass, volume, fuel-rate curve, reliability and minimum power are BALANCE TARGET: no source gives them. Copying the
+  # nearest plant's mass (114 kg/kW) would outweigh the destroyer, so the mass and volume are fitted so the Gearing reference closes on its
+  # 3,460 t full load and fits its zones; the fuel curve has the shape of the existing curves (load in bp of installed power).
+  - id: hp_steam_geared_turbine
+    fuelType: OIL
+    weightMilliKgPerKw: 18000
+    volumeLitrePerKw: 20
+    sfcGramPerKwh:
+      points:
+        - - 0
+          - 510
+        - - 2000
+          - 445
+        - - 6000
+          - 400
+        - - 10000
+          - 425
+    reliabilityBp: 9000
+    minKw: 2000
+    maxKw: 158084
+    introduction:
+      fromMonth: 1940-01
+      obsoleteMonth: null
+    requires:
+      - mac_high_pressure_steam
+      - mac_improved_geared_turbines

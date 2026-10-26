@@ -96,7 +96,11 @@ export function diplomacyBeginPeace(
   const opponent = war.playerSide === "attacker" ? war.defenderId : war.attackerId;
   return {
     ...state,
-    draftCommand: { kind: "AcceptPeace", partnerNationId: opponent, warId: war.warId },
+    draftCommand: {
+      kind: "AcceptPeace",
+      partnerNationId: opponent,
+      warId: war.warId,
+    },
     notice: null,
   };
 }
@@ -206,9 +210,15 @@ export function diplomacyDraftToCommand(draft: DiplomacyDraftCommand): Diplomacy
     case "BreakAlliance":
       return { type: "BreakAlliance", partnerNationId: draft.partnerNationId };
     case "FormNonAggressionPact":
-      return { type: "FormNonAggressionPact", partnerNationId: draft.partnerNationId };
+      return {
+        type: "FormNonAggressionPact",
+        partnerNationId: draft.partnerNationId,
+      };
     case "BreakNonAggressionPact":
-      return { type: "BreakNonAggressionPact", partnerNationId: draft.partnerNationId };
+      return {
+        type: "BreakNonAggressionPact",
+        partnerNationId: draft.partnerNationId,
+      };
     case "DeclareBlockade":
       return draft.areaId !== undefined
         ? {

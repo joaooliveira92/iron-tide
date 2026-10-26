@@ -449,3 +449,55 @@ gunFamilies:
           title: navypedia.org Austro-Hungarian class pages (ah_bb_kaiser_max)
         - sourceId: von-muller-1879
           title: H. von Müller, Die Entwickelung der preußischen Küsten- und Schiffs-Artillerie 1860-1878 (1879) / Mitteilungen aus dem Gebiete des Seewesens 1875
+  - id: gun_dp_5in_38_twin
+    designation: US 5-inch/38 Mark 12 dual-purpose gun in Mark 38 twin mount
+    category: SECONDARY_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: BALANCE_TARGET
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0284. Bore, shell, mass and mount from navweaps.com WNUS_5-38_mk12 (SINGLE-SOURCE); the component carries the derivations.
+      sources:
+        - title: navweaps.com US 5-inch/38 (12.7 cm) Mark 12
+          archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_5-38_mk12.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md sections 1-2
+  - id: gun_dp_6in_47_twin
+    designation: US 6-inch/47 Mark 16 dual-purpose gun in twin turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: BALANCE_TARGET
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0284, ADR-0290. Bore, shell, mass and mount from navweaps.com WNUS_6-47DP_mk16 (SINGLE-SOURCE); the component carries the derivations.
+      sources:
+        - title: navweaps.com US 6-inch/47 (15.2 cm) Mark 16 DP
+          archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_6-47DP_mk16.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md sections 3-4
+  - id: gun_ap_8in_55_triple
+    designation: US 8-inch/55 Mark 16 rapid-fire gun in triple turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: BALANCE_TARGET
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0284, ADR-0290. Bore, shell, mass and mount from navweaps.com WNUS_8-55_mk16 (SINGLE-SOURCE); the component carries the derivations.
+      sources:
+        - title: navweaps.com US 8-inch/55 (20.3 cm) Mark 16
+          archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_8-55_mk16.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md sections 5-6
+  - id: gun_dp_5in_54_single
+    designation: US 5-inch/54 Mark 18 dual-purpose gun in Mark 42 single mount
+    category: SECONDARY_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: BALANCE_TARGET
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0291. Bore, projectile, mass and mount from navweaps.com WNUS_5-54_mk42 (SINGLE-SOURCE); the component carries the derivations.
+      sources:
+        - title: navweaps.com US 5-inch/54 (12.7 cm) Mark 18 and Mark 42 mount
+          archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_5-54_mk42.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md section 13

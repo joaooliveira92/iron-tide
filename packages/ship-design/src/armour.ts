@@ -4,6 +4,7 @@ import { placementTarget, sortFindings } from "./findings.js";
 import { evaluate, type LookupTable } from "./formula/eval.js";
 import { parseFormula } from "./formula/parse.js";
 import { toSafe } from "./units.js";
+import { designInvariant } from "./errors.js";
 
 export const ARMOUR_REGIONS = [
   "BELT_MAIN",
@@ -75,7 +76,7 @@ const fmt = (n: number) => groupedInteger(n);
 
 export function regionWeightKg(r: ArmourRegion, b: ArmourBalance): number {
   if (r.thicknessUm < 0 || r.lengthMm < 0 || r.heightMm < 0)
-    throw new Error("armour dimensions must be >= 0");
+    throw designInvariant("armour dimensions must be >= 0");
   const area = BigInt(r.lengthMm) * BigInt(r.heightMm);
   const num =
     area *
@@ -89,7 +90,7 @@ export function regionWeightKg(r: ArmourRegion, b: ArmourBalance): number {
 
 function effectiveThicknessUm(r: ArmourRegion, b: ArmourBalance): number {
   const eff = b.materialEffBp[r.materialId];
-  if (eff === undefined) throw new Error(`unknown armour material '${r.materialId}'`);
+  if (eff === undefined) throw designInvariant(`unknown armour material '${r.materialId}'`);
   return toSafe(
     "effectiveThickness",
     (BigInt(r.thicknessUm) * BigInt(eff) * BigInt(r.cosObliquityBp)) / (BP * BP),
@@ -101,7 +102,7 @@ export function penetrationMarginBp(
   threat: ThreatProfile,
   b: ArmourBalance,
 ): number {
-  if (threat.penetrationUm <= 0) throw new Error("threat penetration must be > 0");
+  if (threat.penetrationUm <= 0) throw designInvariant("threat penetration must be > 0");
   const effective = BigInt(effectiveThicknessUm(r, b));
   const pen = BigInt(threat.penetrationUm);
   const raw = ((effective - pen) * BP) / pen;
@@ -152,7 +153,8 @@ const clampBp = (v: number, lo = 0, hi = 10_000) => Math.max(lo, Math.min(hi, v)
 export function compileArmour(input: ArmourInput, b: ArmourBalance): ArmourResult {
   const findings: Finding[] = [];
   const designThreat = input.threats.find((t) => t.id === input.designThreatId);
-  if (!designThreat) throw new Error(`design threat '${input.designThreatId}' not in threats`);
+  if (!designThreat)
+    throw designInvariant(`design threat '${input.designThreatId}' not in threats`);
 
   const regions = [...input.regions].sort((x, y) =>
     x.region < y.region ? -1 : x.region > y.region ? 1 : 0,

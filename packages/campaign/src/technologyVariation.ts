@@ -1,22 +1,86 @@
-import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Result, Schema } from "effect";
+import { displayValue, issueKeys, recordOf } from "./schemaIssueKeys.js";
 
 export type VariationId = "none" | "some" | "considerable";
 export const VARIATION_IDS = ["none", "some", "considerable"] as const;
-export interface TechnologyVariationProfile {
-  settingId: VariationId;
-  earliestDateShiftMonths: number;
-  latestDateShiftMonths: number;
-  effectivenessVariationMinBp: number;
-  effectivenessVariationMaxBp: number;
-  dateDistributionId: string;
-  effectivenessDistributionId: string;
-  technologyEligibilityPredicateId: string;
-  variationFormulaVersion: string;
-  streamFamily: string;
-}
-export const RNG_ALGORITHM_VERSION = "1";
+export const DATE_DISTRIBUTION_IDS = [
+  "constant_zero_v1",
+  "symmetric_triangular_integer_v1",
+] as const;
+export const EFFECTIVENESS_DISTRIBUTION_IDS = [
+  "constant_10000_v1",
+  "symmetric_triangular_integer_v1",
+] as const;
 export const STREAM_FAMILY = "setup/technology_variation";
+
+const DATE_SHIFT_MAX = 72;
+const EFFECTIVENESS_MIN_BP = 8000;
+const EFFECTIVENESS_MAX_BP = 12000;
+
+const nonBlankString = Schema.String.check(Schema.isPattern(/\S/));
+const dateShiftMonths = Schema.Int.check(
+  Schema.isBetween({ minimum: -DATE_SHIFT_MAX, maximum: DATE_SHIFT_MAX }),
+);
+const effectivenessBp = Schema.Int.check(
+  Schema.isBetween({ minimum: EFFECTIVENESS_MIN_BP, maximum: EFFECTIVENESS_MAX_BP }),
+);
+
+const TechnologyVariationProfileFieldsSchema = Schema.Struct({
+  settingId: Schema.Literals(VARIATION_IDS),
+  earliestDateShiftMonths: dateShiftMonths,
+  latestDateShiftMonths: dateShiftMonths,
+  effectivenessVariationMinBp: effectivenessBp,
+  effectivenessVariationMaxBp: effectivenessBp,
+  dateDistributionId: Schema.Literals(DATE_DISTRIBUTION_IDS),
+  effectivenessDistributionId: Schema.Literals(EFFECTIVENESS_DISTRIBUTION_IDS),
+  technologyEligibilityPredicateId: nonBlankString,
+  variationFormulaVersion: nonBlankString,
+  streamFamily: Schema.Literal(STREAM_FAMILY),
+});
+
+type ProfileFields = typeof TechnologyVariationProfileFieldsSchema.Type;
+
+function shiftOrderViolated(
+  p: Pick<ProfileFields, "earliestDateShiftMonths" | "latestDateShiftMonths">,
+) {
+  return p.earliestDateShiftMonths > p.latestDateShiftMonths;
+}
+
+function effectivenessOrderViolated(
+  p: Pick<ProfileFields, "effectivenessVariationMinBp" | "effectivenessVariationMaxBp">,
+) {
+  return p.effectivenessVariationMinBp > p.effectivenessVariationMaxBp;
+}
+
+function noneProfileInconsistent(
+  p: Pick<ProfileFields, "settingId" | "dateDistributionId" | "effectivenessDistributionId">,
+) {
+  return (
+    p.settingId === "none" &&
+    (p.dateDistributionId !== "constant_zero_v1" ||
+      p.effectivenessDistributionId !== "constant_10000_v1")
+  );
+}
+
+export const TechnologyVariationProfileSchema = TechnologyVariationProfileFieldsSchema.check(
+  Schema.makeFilter(
+    (p) =>
+      !shiftOrderViolated(p) || "earliestDateShiftMonths must not exceed latestDateShiftMonths",
+  ),
+  Schema.makeFilter(
+    (p) =>
+      !effectivenessOrderViolated(p) ||
+      "effectivenessVariationMinBp must not exceed effectivenessVariationMaxBp",
+  ),
+  Schema.makeFilter(
+    (p) => !noneProfileInconsistent(p) || "none must use constant_zero_v1 / constant_10000_v1",
+  ),
+);
+
+export type TechnologyVariationProfile = typeof TechnologyVariationProfileSchema.Type;
+export const RNG_ALGORITHM_VERSION = "1";
 export const CANONICAL_TECH_PROFILES: TechnologyVariationProfile[] = [
   {
     settingId: "none",
@@ -113,188 +177,105 @@ export function computeTechnologyManifestHash(parts: TechnologyManifestHashParts
   );
 }
 
-const ALLOWED_DATE_DIST = new Set(["constant_zero_v1", "symmetric_triangular_integer_v1"]);
-const ALLOWED_EFF_DIST = new Set(["constant_10000_v1", "symmetric_triangular_integer_v1"]);
+const PROFILE_STAGE = { stage: "technology-variation" } as const;
+const PROFILE_CODE = "INVALID_TECHNOLOGY_VARIATION_PROFILE";
 
-const REQUIRED_PROFILE_FIELDS = [
-  "settingId",
-  "earliestDateShiftMonths",
-  "latestDateShiftMonths",
-  "effectivenessVariationMinBp",
-  "effectivenessVariationMaxBp",
-  "dateDistributionId",
-  "effectivenessDistributionId",
-  "technologyEligibilityPredicateId",
-  "variationFormulaVersion",
-  "streamFamily",
-] as const;
+const PROFILE_FIELDS = Object.keys(TechnologyVariationProfileFieldsSchema.fields) as ReadonlyArray<
+  keyof ProfileFields
+>;
 
-function hasRequiredProfileFields(r: Record<string, unknown>, c: DiagnosticCollector): boolean {
-  let ok = true;
-  for (const f of REQUIRED_PROFILE_FIELDS)
-    if (!(f in r)) {
-      c.addError("INVALID_TECHNOLOGY_VARIATION_PROFILE", `Missing field ${f}`, {
-        stage: "technology-variation",
-      });
-      ok = false;
-    }
-  return ok;
+const decodeProfile = Schema.decodeUnknownResult(TechnologyVariationProfileSchema, {
+  errors: "all",
+  onExcessProperty: "error",
+});
+
+function isNumber(value: unknown): value is number {
+  return typeof value === "number";
 }
 
-function validateProfileSettingId(r: Record<string, unknown>, c: DiagnosticCollector): boolean {
-  if (!["none", "some", "considerable"].includes(r["settingId"] as string)) {
-    c.addError(
-      "INVALID_TECHNOLOGY_VARIATION_PROFILE",
-      `Invalid settingId ${String(r["settingId"])}`,
-      { stage: "technology-variation" },
-    );
-    return false;
-  }
-  return true;
-}
-
-function validateProfileDateBounds(r: Record<string, unknown>, c: DiagnosticCollector): boolean {
-  const minD = r["earliestDateShiftMonths"] as number;
-  const maxD = r["latestDateShiftMonths"] as number;
-  if (
-    !Number.isInteger(minD) ||
-    !Number.isInteger(maxD) ||
-    !Number.isFinite(minD) ||
-    !Number.isFinite(maxD) ||
-    Math.abs(minD) > 72 ||
-    Math.abs(maxD) > 72 ||
-    minD > maxD
-  ) {
-    c.addError(
-      "INVALID_TECHNOLOGY_VARIATION_PROFILE",
-      `Date shift bounds invalid ${String(minD)}..${String(maxD)} (integers within -72..72, min<=max)`,
-      { stage: "technology-variation" },
-    );
-    return false;
-  }
-  return true;
-}
-
-function validateProfileEffectivenessBounds(
-  r: Record<string, unknown>,
+function reportProfileFailure(
+  row: Readonly<Record<string, unknown>>,
+  keys: ReturnType<typeof issueKeys>,
   c: DiagnosticCollector,
-): boolean {
-  const minE = r["effectivenessVariationMinBp"] as number;
-  const maxE = r["effectivenessVariationMaxBp"] as number;
-  if (
-    !Number.isInteger(minE) ||
-    !Number.isInteger(maxE) ||
-    !Number.isFinite(minE) ||
-    !Number.isFinite(maxE) ||
-    minE < 8000 ||
-    maxE > 12000 ||
-    minE > maxE
-  ) {
-    c.addError(
-      "INVALID_TECHNOLOGY_VARIATION_PROFILE",
-      `Effectiveness bounds ${String(minE)}..${String(maxE)} outside 8000..12000 or min>max (integers)`,
-      { stage: "technology-variation" },
-    );
-    return false;
-  }
-  return true;
-}
+): void {
+  const add = (message: string) => c.addError(PROFILE_CODE, message, PROFILE_STAGE);
+  const rejected = (field: string) => keys.invalid.has(field);
 
-function validateProfileDistributionIds(
-  r: Record<string, unknown>,
-  c: DiagnosticCollector,
-): boolean {
-  let ok = true;
-  if (!ALLOWED_DATE_DIST.has(r["dateDistributionId"] as string)) {
-    c.addError(
-      "INVALID_TECHNOLOGY_VARIATION_PROFILE",
-      `Invalid dateDistributionId ${String(r["dateDistributionId"])}`,
-      { stage: "technology-variation" },
-    );
-    ok = false;
-  }
-  if (!ALLOWED_EFF_DIST.has(r["effectivenessDistributionId"] as string)) {
-    c.addError(
-      "INVALID_TECHNOLOGY_VARIATION_PROFILE",
-      `Invalid effectivenessDistributionId ${String(r["effectivenessDistributionId"])}`,
-      { stage: "technology-variation" },
-    );
-    ok = false;
-  }
-  return ok;
-}
+  if (rejected("settingId")) add(`Invalid settingId ${displayValue(row["settingId"])}`);
 
-function validateProfileMetadata(r: Record<string, unknown>, c: DiagnosticCollector): boolean {
-  let ok = true;
-  if ((r["streamFamily"] as string) !== STREAM_FAMILY) {
-    c.addError("INVALID_TECHNOLOGY_VARIATION_PROFILE", `streamFamily must be ${STREAM_FAMILY}`, {
-      stage: "technology-variation",
-    });
-    ok = false;
-  }
+  const minD = row["earliestDateShiftMonths"];
+  const maxD = row["latestDateShiftMonths"];
   if (
-    typeof r["technologyEligibilityPredicateId"] !== "string" ||
-    (r["technologyEligibilityPredicateId"] as string).trim() === ""
+    rejected("earliestDateShiftMonths") ||
+    rejected("latestDateShiftMonths") ||
+    (isNumber(minD) &&
+      isNumber(maxD) &&
+      shiftOrderViolated({ earliestDateShiftMonths: minD, latestDateShiftMonths: maxD }))
   ) {
-    c.addError(
-      "INVALID_TECHNOLOGY_VARIATION_PROFILE",
-      "technologyEligibilityPredicateId must be non-empty string",
-      { stage: "technology-variation" },
+    add(
+      `Date shift bounds invalid ${displayValue(minD)}..${displayValue(maxD)} (integers within -${DATE_SHIFT_MAX}..${DATE_SHIFT_MAX}, min<=max)`,
     );
-    ok = false;
   }
-  if (
-    typeof r["variationFormulaVersion"] !== "string" ||
-    (r["variationFormulaVersion"] as string).trim() === ""
-  ) {
-    c.addError(
-      "INVALID_TECHNOLOGY_VARIATION_PROFILE",
-      "variationFormulaVersion must be non-empty string",
-      { stage: "technology-variation" },
-    );
-    ok = false;
-  }
-  return ok;
-}
 
-function validateProfileNoneConsistency(
-  r: Record<string, unknown>,
-  c: DiagnosticCollector,
-): boolean {
+  const minE = row["effectivenessVariationMinBp"];
+  const maxE = row["effectivenessVariationMaxBp"];
   if (
-    r["settingId"] === "none" &&
-    (r["dateDistributionId"] !== "constant_zero_v1" ||
-      r["effectivenessDistributionId"] !== "constant_10000_v1")
+    rejected("effectivenessVariationMinBp") ||
+    rejected("effectivenessVariationMaxBp") ||
+    (isNumber(minE) &&
+      isNumber(maxE) &&
+      effectivenessOrderViolated({
+        effectivenessVariationMinBp: minE,
+        effectivenessVariationMaxBp: maxE,
+      }))
   ) {
-    c.addError(
-      "INVALID_TECHNOLOGY_VARIATION_PROFILE",
-      "none must use constant_zero_v1 / constant_10000_v1",
-      { stage: "technology-variation" },
+    add(
+      `Effectiveness bounds ${displayValue(minE)}..${displayValue(maxE)} outside ${EFFECTIVENESS_MIN_BP}..${EFFECTIVENESS_MAX_BP} or min>max (integers)`,
     );
-    return false;
   }
-  return true;
+
+  if (rejected("dateDistributionId")) {
+    add(`Invalid dateDistributionId ${displayValue(row["dateDistributionId"])}`);
+  }
+  if (rejected("effectivenessDistributionId")) {
+    add(`Invalid effectivenessDistributionId ${displayValue(row["effectivenessDistributionId"])}`);
+  }
+  if (rejected("streamFamily")) add(`streamFamily must be ${STREAM_FAMILY}`);
+  if (rejected("technologyEligibilityPredicateId")) {
+    add("technologyEligibilityPredicateId must be non-empty string");
+  }
+  if (rejected("variationFormulaVersion")) add("variationFormulaVersion must be non-empty string");
+
+  if (
+    row["settingId"] === "none" &&
+    (row["dateDistributionId"] !== "constant_zero_v1" ||
+      row["effectivenessDistributionId"] !== "constant_10000_v1")
+  ) {
+    add("none must use constant_zero_v1 / constant_10000_v1");
+  }
+  for (const key of [...keys.unexpected].sort(compareCodePoints)) add(`unknown field ${key}`);
 }
 
 export function validateTechnologyVariationProfile(p: unknown, c: DiagnosticCollector): boolean {
-  const r = p as Record<string, unknown>;
-  if (typeof r !== "object" || r === null) {
-    c.addError("INVALID_TECHNOLOGY_VARIATION_PROFILE", "profile must be object", {
-      stage: "technology-variation",
-    });
+  if (typeof p !== "object" || p === null) {
+    c.addError(PROFILE_CODE, "profile must be object", PROFILE_STAGE);
     return false;
   }
-  if (!hasRequiredProfileFields(r, c)) return false;
+  const row = recordOf(p);
+  const decoded = decodeProfile(row);
+  if (Result.isSuccess(decoded)) return true;
+  const keys = issueKeys(decoded.failure.issue);
 
-  const results = [
-    validateProfileSettingId(r, c),
-    validateProfileDateBounds(r, c),
-    validateProfileEffectivenessBounds(r, c),
-    validateProfileDistributionIds(r, c),
-    validateProfileMetadata(r, c),
-    validateProfileNoneConsistency(r, c),
-  ];
-  return results.every(Boolean);
+  let anyMissing = false;
+  for (const field of PROFILE_FIELDS) {
+    if (keys.missing.has(field)) {
+      c.addError(PROFILE_CODE, `Missing field ${field}`, PROFILE_STAGE);
+      anyMissing = true;
+    }
+  }
+  if (anyMissing) return false;
+  reportProfileFailure(row, keys, c);
+  return false;
 }
 
 export function validateTechnologyVariationProfiles(
@@ -302,27 +283,25 @@ export function validateTechnologyVariationProfiles(
   c: DiagnosticCollector,
 ): boolean {
   if (!Array.isArray(profiles)) {
-    c.addError("INVALID_TECHNOLOGY_VARIATION_PROFILE", "profiles must be an array", {
-      stage: "technology-variation",
-    });
+    c.addError(PROFILE_CODE, "profiles must be an array", PROFILE_STAGE);
     return false;
   }
   if (profiles.length !== VARIATION_IDS.length) {
     c.addError(
-      "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+      PROFILE_CODE,
       `Ruleset must contain exactly ${VARIATION_IDS.length} profiles, got ${profiles.length}`,
-      { stage: "technology-variation" },
+      PROFILE_STAGE,
     );
     return false;
   }
-  const ids = new Set((profiles as TechnologyVariationProfile[]).map((p) => p.settingId));
+  const ids = new Set(
+    profiles.map((p) =>
+      typeof p === "object" && p !== null ? recordOf(p)["settingId"] : undefined,
+    ),
+  );
   for (const id of VARIATION_IDS) {
     if (!ids.has(id)) {
-      c.addError(
-        "INVALID_TECHNOLOGY_VARIATION_PROFILE",
-        `Ruleset missing canonical profile ${id}`,
-        { stage: "technology-variation" },
-      );
+      c.addError(PROFILE_CODE, `Ruleset missing canonical profile ${id}`, PROFILE_STAGE);
       return false;
     }
   }

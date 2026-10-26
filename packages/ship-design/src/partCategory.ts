@@ -1,5 +1,6 @@
 import type { FlattenedPart } from "@bluewave/content-schema";
 import type { ComponentCategory } from "./component.js";
+import { designInvariant } from "./errors.js";
 
 type FittingInterface = Extract<FlattenedPart, { readonly family: "fitting" }>["provides"];
 
@@ -81,6 +82,6 @@ function fail(code: PartCategoryFailureCode, partId: string, message: string): P
 
 export function partCategoryOrThrow(part: FlattenedPart): ComponentCategory {
   const result = partCategory(part);
-  if (!result.ok) throw new Error(`${result.failure.code}: ${result.failure.message}`);
+  if (!result.ok) throw designInvariant(`${result.failure.code}: ${result.failure.message}`);
   return result.category;
 }

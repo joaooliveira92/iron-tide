@@ -229,7 +229,7 @@ describe("StatusStripView", () => {
   it("opens a full card for a budget line on keyboard focus and links it to the bar", async () => {
     await renderStrip();
     const budget = screen.getByRole("group", { name: "Budget" });
-    const label = within(budget).getByText("Maintenance");
+    const label = within(budget).getByText("Maintenance").closest("[data-row]") as HTMLElement;
     act(() => {
       label.focus();
     });
@@ -245,7 +245,11 @@ describe("StatusStripView", () => {
     await renderStrip(1200);
     const outlook = screen.getByRole("group", { name: "Outlook" });
     act(() => {
-      within(outlook).getByText("Monthly balance (projected)").focus();
+      (
+        within(outlook)
+          .getByText("Monthly balance (projected)")
+          .closest("[data-row]") as HTMLElement
+      ).focus();
     });
     expect(await screen.findByText("Balance breakdown")).toBeTruthy();
     const steps = [...document.querySelectorAll("[data-step]")].map((el) =>
@@ -259,7 +263,7 @@ describe("StatusStripView", () => {
     async function openMaintenance() {
       await renderStrip();
       const budget = screen.getByRole("group", { name: "Budget" });
-      const label = within(budget).getByText("Maintenance");
+      const label = within(budget).getByText("Maintenance").closest("[data-row]") as HTMLElement;
       act(() => {
         label.focus();
       });
@@ -356,7 +360,7 @@ describe("StatusStripView", () => {
     );
     await act(async () => {});
     act(() => {
-      screen.getByText("Ships on foreign stations").focus();
+      (screen.getByText("Ships on foreign stations").closest("[data-row]") as HTMLElement).focus();
     });
     expect(await screen.findByText("Foreign stations")).toBeTruthy();
     expect(screen.getByText("17,880 t of 30,000 t")).toBeTruthy();
@@ -400,7 +404,7 @@ describe("StatusStripView", () => {
     );
     await act(async () => {});
     act(() => {
-      screen.getByText("Ships on foreign stations").focus();
+      (screen.getByText("Ships on foreign stations").closest("[data-row]") as HTMLElement).focus();
     });
     expect(await screen.findByText("tonnage unknown")).toBeTruthy();
     expect(screen.getByText(/partial total would mislead/i)).toBeTruthy();
@@ -443,7 +447,7 @@ describe("StatusStripView", () => {
       await renderWith(trend);
       const outlook = screen.getByRole("group", { name: "Outlook" });
       act(() => {
-        within(outlook).getByText("Treasury").focus();
+        (within(outlook).getByText("Treasury").closest("[data-row]") as HTMLElement).focus();
       });
       const spark = await screen.findByRole("img", { name: /^Treasury: 3 points from Jan 1880/ });
       expect(spark.getAttribute("aria-label")).toContain("latest 1,015 NC");
@@ -454,7 +458,11 @@ describe("StatusStripView", () => {
       await renderWith(trend);
       const outlook = screen.getByRole("group", { name: "Outlook" });
       act(() => {
-        within(outlook).getByText("Monthly balance (projected)").focus();
+        (
+          within(outlook)
+            .getByText("Monthly balance (projected)")
+            .closest("[data-row]") as HTMLElement
+        ).focus();
       });
       expect(await screen.findByText("Actual net, last 2 months")).toBeTruthy();
       const spark = screen.getByRole("img", { name: /^Actual monthly net: 2 points/ });
@@ -474,7 +482,7 @@ describe("StatusStripView", () => {
       const outlook = screen.getByRole("group", { name: "Outlook" });
       expect(outlook.querySelector("[data-trend-delta]")).toBeNull();
       act(() => {
-        within(outlook).getByText("Treasury").focus();
+        (within(outlook).getByText("Treasury").closest("[data-row]") as HTMLElement).focus();
       });
       await screen.findByText("Next month end");
       expect(document.querySelector("[data-trend]")).toBeNull();

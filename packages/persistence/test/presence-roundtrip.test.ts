@@ -4,12 +4,12 @@ import { join } from "node:path";
 import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Result, Schema } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { StorablePossessionSchema } from "../src/schemas.js";
 import { SaveStore } from "../src/store.js";
+import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function nation(seeded: boolean): NationState {
@@ -114,27 +114,24 @@ describe("S-5 02 home area and possessions save/load parity", () => {
   it("round-trips the home area and the possession ownership with an identical snapshot and hash", () => {
     const saved = state(true);
     store.save(saved, tmpDir);
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded).not.toBeNull();
-    expect(loaded!.rawHash).toBe(saved.rawHash);
-    expect(canonicalSerialize(loaded!.snapshot)).toBe(canonicalSerialize(saved.snapshot));
-    expect(loaded!.snapshot.nations.get("uk")!.homeAreaId).toBe("area-1");
-    expect(loaded!.snapshot.world.possessions?.map((p) => p.id)).toEqual(["poss_a", "poss_b"]);
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state.rawHash).toBe(saved.rawHash);
+    expect(canonicalSerialize(loaded.state.snapshot)).toBe(canonicalSerialize(saved.snapshot));
+    expect(loaded.state.snapshot.nations.get("uk")!.homeAreaId).toBe("area-1");
+    expect(loaded.state.snapshot.world.possessions?.map((p) => p.id)).toEqual(["poss_a", "poss_b"]);
   });
 
   it("loads a snapshot that predates the home area and possessions (both stay absent)", () => {
     const saved = state(false);
     store.save(saved, tmpDir);
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded!.rawHash).toBe(saved.rawHash);
-    expect(loaded!.snapshot.world.possessions).toBeUndefined();
-    expect(loaded!.snapshot.nations.get("uk")!.homeAreaId).toBeUndefined();
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state.rawHash).toBe(saved.rawHash);
+    expect(loaded.state.snapshot.world.possessions).toBeUndefined();
+    expect(loaded.state.snapshot.nations.get("uk")!.homeAreaId).toBeUndefined();
   });
 });
 
@@ -186,8 +183,6 @@ describe("S-5 02 persisted possession schema", () => {
     };
     raw.snapshot.world.possessions = [{ id: "", nationId: "uk", areaId: "area-1" }];
     writeFileSync(file, JSON.stringify(raw));
-    const diagnostics = new DiagnosticCollector();
-    expect(store.load(tmpDir, diagnostics)).toBeNull();
-    expect(diagnostics.hasErrors).toBe(true);
+    expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
   });
 });

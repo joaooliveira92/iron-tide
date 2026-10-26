@@ -4,6 +4,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { BATTLE_OPPORTUNITY_INELIGIBLE, BATTLE_MONTHLY_LIMIT_REACHED } from "./reasonCodes.js";
 import type { BattleMissionType } from "./mission.js";
 import { getMission, REACHABLE_MISSION_SUBSET_V1 } from "./mission.js";
+import { compareStrings } from "../core/ordering.js";
 
 export const OPPORTUNITY_REACHABILITY_V1 = "opportunity_reachability_v1" as const;
 
@@ -107,10 +108,10 @@ export function determineMissionOpportunities(
   }
 
   opportunities.sort((a, b) => {
-    if (a.warId !== b.warId) return a.warId.localeCompare(b.warId);
-    if (a.areaId !== b.areaId) return a.areaId.localeCompare(b.areaId);
+    if (a.warId !== b.warId) return compareStrings(a.warId, b.warId);
+    if (a.areaId !== b.areaId) return compareStrings(a.areaId, b.areaId);
     if (a.missionPriority !== b.missionPriority) return a.missionPriority - b.missionPriority;
-    return a.opportunityId.localeCompare(b.opportunityId);
+    return compareStrings(a.opportunityId, b.opportunityId);
   });
 
   const perArea = new Map<string, number>();

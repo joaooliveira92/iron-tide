@@ -1,3 +1,4 @@
+import { BluewaveError } from "@bluewave/contracts";
 import { describe, it, expect } from "vite-plus/test";
 import { buildYards, yardCapacityFor, yardFits, yardMisfits } from "../src/yards.js";
 import { LINE_IDS } from "../src/index.js";
@@ -20,8 +21,8 @@ describe("yard capacity (ADR-0067 section 6)", () => {
     expect(yardCapacityFor({ ...fac("c", 1), maxDisplacementKg: 1_500 }, 1).slipway).toBe(1);
   });
   it("rejects a non-positive or non-integer rate", () => {
-    expect(() => yardCapacityFor(fac("a", 1), 0)).toThrow(RangeError);
-    expect(() => yardCapacityFor(fac("a", 1), 1.5)).toThrow(RangeError);
+    expect(() => yardCapacityFor(fac("a", 1), 0)).toThrow(BluewaveError);
+    expect(() => yardCapacityFor(fac("a", 1), 1.5)).toThrow(BluewaveError);
   });
   it("orders yards by capacity then id, whatever the input order", () => {
     const fs = [fac("z", 9_000), fac("b", 3_000), fac("a", 3_000)];

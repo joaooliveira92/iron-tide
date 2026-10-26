@@ -1,5 +1,6 @@
 import { checkedMul, roundToInt } from "@bluewave/contracts";
 import { DOCK_MASS_LIMIT_KEYS, type DockMassLimitKey } from "./dock.js";
+import { designInvariant } from "./errors.js";
 
 export const DOCK_EXPANSION_POLICY_ID = "dock_expansion_v1" as const;
 
@@ -83,7 +84,7 @@ export function isPermittedDockExpansionDurationMonths(months: number): boolean 
 
 export function assertPermittedDockExpansionDurationMonths(months: number): void {
   if (!isPermittedDockExpansionDurationMonths(months))
-    throw new RangeError(
+    throw designInvariant(
       `baseDurationMonths ${String(months)} is outside the permitted ${String(
         DOCK_EXPANSION_PERMITTED_MIN_DURATION_MONTHS,
       )}..${String(DOCK_EXPANSION_PERMITTED_MAX_DURATION_MONTHS)} range`,
@@ -95,11 +96,11 @@ export function dockExpansionFinalDurationMonths(
   durationMultiplierBp: number,
 ): number {
   if (!Number.isSafeInteger(baseDurationMonths) || baseDurationMonths <= 0)
-    throw new RangeError(
+    throw designInvariant(
       `baseDurationMonths must be a positive safe integer, got ${String(baseDurationMonths)}`,
     );
   if (!Number.isSafeInteger(durationMultiplierBp) || durationMultiplierBp <= 0)
-    throw new RangeError(
+    throw designInvariant(
       `durationMultiplierBp must be a positive safe integer, got ${String(durationMultiplierBp)}`,
     );
   const scaled = roundToInt(checkedMul(baseDurationMonths, durationMultiplierBp) / 10_000, "ceil");
@@ -111,12 +112,14 @@ export function dockExpansionFinalDurationMonths(
 
 export function raiseDockLimitsByStep(limits: DockMassLimits, stepKg: number): DockMassLimits {
   if (!Number.isSafeInteger(stepKg) || stepKg <= 0)
-    throw new RangeError(`expansion stepKg must be a positive safe integer, got ${String(stepKg)}`);
+    throw designInvariant(
+      `expansion stepKg must be a positive safe integer, got ${String(stepKg)}`,
+    );
   const raised = {} as Record<DockMassLimitKey, number>;
   for (const key of DOCK_MASS_LIMIT_KEYS) {
     const value = limits[key];
     if (!Number.isSafeInteger(value) || value <= 0)
-      throw new RangeError(
+      throw designInvariant(
         `dock limit ${key} must be a positive safe integer, got ${String(value)}`,
       );
     raised[key] = checkedAddSafe(key, value, stepKg);
@@ -127,6 +130,6 @@ export function raiseDockLimitsByStep(limits: DockMassLimits, stepKg: number): D
 function checkedAddSafe(label: string, value: number, step: number): number {
   const result = value + step;
   if (!Number.isSafeInteger(result))
-    throw new RangeError(`${label} + step overflowed the safe-integer range`);
+    throw designInvariant(`${label} + step overflowed the safe-integer range`);
   return result;
 }

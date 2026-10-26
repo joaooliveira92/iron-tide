@@ -1,4 +1,5 @@
 import { UM_PER_INCH, UM_PER_KNOT } from "./units.js";
+import { designInvariant } from "./errors.js";
 
 export const CLASSIFIED_SHIP_TYPES = ["BB", "B", "CA", "AMC", "CL", "DD", "KE"] as const;
 export type ClassifiedShipType = (typeof CLASSIFIED_SHIP_TYPES)[number];
@@ -442,10 +443,54 @@ export const CLASSIFICATION_RULE_KEYS = [
 
 export function classificationRulesFromRecord(raw: unknown): ClassificationRules {
   if (raw === null || typeof raw !== "object")
-    throw new Error("classification rules must be an object");
+    throw designInvariant("classification rules must be an object");
   const rec = raw as Record<string, unknown>;
   for (const k of CLASSIFICATION_RULE_KEYS)
     if (typeof rec[k] !== "number" || !Number.isFinite(rec[k]))
-      throw new Error(`classification rules '${k}' must be a finite number`);
+      throw designInvariant(`classification rules '${k}' must be a finite number`);
   return raw as ClassificationRules;
+}
+
+export interface ClassificationEra {
+  readonly fromMonth: string;
+  readonly classification: ClassificationRules;
+}
+
+const ERA_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+export function classificationErasFromRecord(raw: unknown): readonly ClassificationEra[] {
+  if (!Array.isArray(raw)) throw designInvariant("classificationFromMonth must be a list");
+  let previous = "";
+  return raw.map((entry: unknown) => {
+    if (entry === null || typeof entry !== "object")
+      throw designInvariant("classificationFromMonth entries must be objects");
+    const rec = entry as Record<string, unknown>;
+    const fromMonth = rec["fromMonth"];
+    if (typeof fromMonth !== "string" || !ERA_MONTH.test(fromMonth))
+      throw designInvariant("classificationFromMonth fromMonth must be YYYY-MM");
+    if (fromMonth <= previous)
+      throw designInvariant("classificationFromMonth must be in ascending order of fromMonth");
+    previous = fromMonth;
+    try {
+      return { fromMonth, classification: classificationRulesFromRecord(rec["classification"]) };
+    } catch (e) {
+      throw designInvariant(
+        `classificationFromMonth ${fromMonth}: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+  });
+}
+
+export function classificationRulesForMonth(
+  balance: {
+    readonly classification?: ClassificationRules;
+    readonly classificationFromMonth?: readonly ClassificationEra[];
+  },
+  month: string,
+): ClassificationRules | undefined {
+  let rules = balance.classification;
+  for (const era of balance.classificationFromMonth ?? []) {
+    if (era.fromMonth <= month) rules = era.classification;
+  }
+  return rules;
 }

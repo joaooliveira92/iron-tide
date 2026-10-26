@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
-import type { CommitMonthResponse } from "@bluewave/campaign-engine";
+import { buildPlayerProjection, type CommitMonthResponse } from "@bluewave/campaign-engine";
 import { createEnvelope } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
@@ -66,7 +66,10 @@ describe("budget allocation", () => {
     restartRuntime();
   });
 
-  function registerSession(sessionId: string): CampaignState {
+  function registerSession(
+    sessionId: string,
+    mutate: (snapshot: CampaignSnapshot) => void = () => undefined,
+  ): CampaignState {
     const collector = new DiagnosticCollector();
     const output = compileProductionCampaignFromArtifact(
       GENERATED_ARTIFACT,
@@ -76,6 +79,7 @@ describe("budget allocation", () => {
     expect(collector.hasErrors).toBe(false);
     if (!output) throw new Error("production pack failed to compile");
     const snapshot: CampaignSnapshot = structuredClone(output.state.snapshot);
+    mutate(snapshot);
     const state: CampaignState = {
       snapshot,
       envelope: createEnvelope("campaign-snapshot", snapshot.compatibilityVersion, snapshot),
@@ -117,6 +121,53 @@ describe("budget allocation", () => {
       appropriationRateMaxBp: 5000,
       researchBudgetMin: 0,
       researchBudgetMax: 1000,
+    });
+  });
+
+  it("projects fleet upkeep and construction commitments that reconcile to the economy outlook", async () => {
+    const state = registerSession("b");
+    const result = await inspectBudgetScreen("b");
+    if (result.outcome !== "success") throw new Error(result.reason);
+    const { fleet, construction, unpaidCostsPrestige } = result.value.commitments;
+    const projection = buildPlayerProjection(state, "uk", { month: 1, year: 1880 });
+    expect(fleet.total).toBe(projection?.economy.maintenanceCost);
+    expect(fleet.groups.reduce((sum, group) => sum + group.cost, 0)).toBe(fleet.total);
+    expect(fleet.ships.reduce((sum, ship) => sum + ship.cost, 0)).toBe(fleet.total);
+    expect(fleet.ships.map((ship) => ship.cost)).toEqual(
+      fleet.ships.map((ship) => ship.cost).sort((a, b) => b - a),
+    );
+    expect(construction.drawTotal).toBe(projection?.economy.plannedConstruction);
+    expect(unpaidCostsPrestige).not.toBeNull();
+    expect(unpaidCostsPrestige?.triggered).toBe(false);
+    expect(unpaidCostsPrestige?.after).toBeLessThanOrEqual(unpaidCostsPrestige?.before ?? 0);
+  });
+
+  it("prices acceleration: the premium on the remaining work and the engine's delay chance", async () => {
+    registerSession("b", (snapshot) => {
+      const project = snapshot.nations.get("uk")?.constructionProjects[0];
+      if (project === undefined) throw new Error("expected a seeded UK construction project");
+      project.status = "ACCELERATED";
+    });
+    const result = await inspectBudgetScreen("b");
+    if (result.outcome !== "success") throw new Error(result.reason);
+    const { acceleration, projects } = result.value.commitments.construction;
+    const accelerated = projects.filter((project) => project.acceleration !== null);
+    expect(accelerated).toHaveLength(1);
+    expect(acceleration.acceleratedCount).toBe(1);
+    expect(acceleration.premiumBp).toBe(500);
+    expect(acceleration.premiumPending).toBe(accelerated[0]?.acceleration?.premiumWork);
+    expect(acceleration.premiumPending).toBeGreaterThan(0);
+    expect(acceleration.delayChanceBp).toBe(5000);
+  });
+
+  it("reports no acceleration cost when nothing is accelerated", async () => {
+    registerSession("b");
+    const result = await inspectBudgetScreen("b");
+    if (result.outcome !== "success") throw new Error(result.reason);
+    expect(result.value.commitments.construction.acceleration).toMatchObject({
+      acceleratedCount: 0,
+      delayChanceBp: 0,
+      premiumPending: 0,
     });
   });
 

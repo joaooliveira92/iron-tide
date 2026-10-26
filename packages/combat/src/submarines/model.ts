@@ -413,7 +413,7 @@ export const SHIPPED_SUBMARINE_TYPE_DEFINITIONS: readonly SubmarineTypeDefinitio
     missionEligibility: LONG_MISSIONS,
     baseSupportRequirement: "OPTIONAL",
     tacticalProjectionId: "tactical_projection_long_range_v1",
-    technologyPrerequisiteIds: ["long_range_submarine_technology"],
+    technologyPrerequisiteIds: ["sub_ww1_ocean_boat"],
     contentVersion: submarineTypesPolicyId,
   }),
   withSubmarineTypeDefinitionContentHash({

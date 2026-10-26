@@ -64,6 +64,52 @@ function snapshot(fleets: FleetState[], divisions: PermanentDivision[]) {
   });
 }
 
+describe("buildDivisionScreenView: doctrine", () => {
+  const fleets = (slow: number) => [
+    fleet("f_home", "home", [
+      ship("s1", "HMS Alexandra", { speed: SafeInt(17) }),
+      ship("s2", "HMS Dreadnought", { speed: SafeInt(slow) }),
+    ]),
+  ];
+
+  it("prices a role or formation change from the ruleset and shows none while dormant", () => {
+    const withRules = buildDivisionScreenView(
+      snapshot(fleets(17), [division({ divisionId: "div_1" })]),
+      "uk",
+      {
+        roleChange: { cohesion: 10, experience: 2 },
+        formationChange: { cohesion: 5, experience: 0 },
+      },
+    )!;
+    expect(withRules.penalties.changeRole).toEqual({ experience: 2, cohesion: 10 });
+    expect(withRules.penalties.changeFormation).toEqual({ experience: 0, cohesion: 5 });
+
+    const dormant = buildDivisionScreenView(
+      snapshot(fleets(17), [division({ divisionId: "div_1" })]),
+      "uk",
+    )!;
+    expect(dormant.penalties.changeRole).toEqual({ experience: 0, cohesion: 0 });
+    expect(dormant.penalties.changeFormation).toEqual({ experience: 0, cohesion: 0 });
+  });
+
+  it("derives a speed warning from the members' speeds and omits it for equal speeds", () => {
+    const mismatched = buildDivisionScreenView(
+      snapshot(fleets(12), [division({ divisionId: "div_1" })]),
+      "uk",
+    )!;
+    expect(mismatched.divisions[0]!.speedWarning).toEqual({
+      slowestShipName: "HMS Dreadnought",
+      slowestSpeed: 12,
+      fastestSpeed: 17,
+    });
+    const uniform = buildDivisionScreenView(
+      snapshot(fleets(17), [division({ divisionId: "div_1" })]),
+      "uk",
+    )!;
+    expect(uniform.divisions[0]!.speedWarning).toBeUndefined();
+  });
+});
+
 describe("buildDivisionScreenView", () => {
   it("returns null for an unknown nation", () => {
     expect(buildDivisionScreenView(snapshot([], []), "nobody")).toBeNull();
@@ -190,6 +236,8 @@ describe("buildDivisionScreenView", () => {
       removeShip: { experience: 3, cohesion: 5 },
       changeFlagship: { experience: 5, cohesion: 10 },
       reorder: { experience: 0, cohesion: 3 },
+      changeRole: { experience: 0, cohesion: 0 },
+      changeFormation: { experience: 0, cohesion: 0 },
     });
   });
 

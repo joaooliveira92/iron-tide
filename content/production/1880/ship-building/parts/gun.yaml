@@ -4445,6 +4445,81 @@ parts:
       weaponCategory: SECONDARY_GUN
   - capabilities:
       - kind: ammunition_feed
+        maxFeedPermille: 300
+      - class: heavy
+        kind: fire_control_class
+    engineering:
+      maintenance:
+        monthlyBpOfCost: 20
+      physical:
+        centreOfGravity:
+          datum: PART_BASE
+          zMm: 6500
+        envelopeHeightMm: 3200
+      power:
+        consumption:
+          - basis: PER_PART_UNIT
+            id: power
+            kind: powerKw
+            value: 1
+    entryUnits:
+      max: 3
+      min: 3
+      step: 1
+    family: gun
+    id: standard_gun_ap_8in_55_triple
+    lifecycle:
+      availableFrom: 1948-01
+      availableUntil: null
+      requires:
+        - gun_auto_loading_turret
+    metadata:
+      displayName: 8-inch/55 Mark 16 rapid-fire gun in triple turret
+      tags:
+        - gun
+        - heavy
+    name: US 8-inch/55 Mark 16 rapid-fire gun in triple turret
+    origin:
+      sourceFile: ship-building/components.yaml
+    parameters:
+      rounds:
+        max: 750
+        min: 150
+        step: 50
+    provenance:
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0284, ADR-0290. Bore, shell, mass and mount from navweaps.com WNUS_8-55_mk16 (SINGLE-SOURCE); the component carries the derivations.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_8-55_mk16.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md sections 5-6
+          title: navweaps.com US 8-inch/55 (20.3 cm) Mark 16
+    provides: gun
+    quantities:
+      - basis: PER_PART_UNIT
+        id: gun_mass
+        kind: massKg
+        value: 17400
+      - basis: PER_PART_UNIT
+        id: gun_cost
+        kind: costMicro
+        value: 3427800000
+    revisions: []
+    spec:
+      beamArcDeg: 150
+      calibreUm: 203000
+      gunFamily: gun_ap_8in_55_triple
+      gunMassKg: 17400
+      mechanicalRateOfFireRoundsPerMinuteX100: 1000
+      propellantChargeBp: 2296
+      roundVolumeMl: 93450
+      shellMassG: 152000
+      supportedMountTypes:
+        - TURRET
+      weaponCategory: MAIN_GUN
+  - capabilities:
+      - kind: ammunition_feed
         maxFeedPermille: 250
       - class: heavy
         kind: fire_control_class
@@ -5483,6 +5558,231 @@ parts:
       supportedMountTypes:
         - BARBETTE
       weaponCategory: SECONDARY_GUN
+  - capabilities:
+      - kind: ammunition_feed
+        maxFeedPermille: 300
+      - class: medium
+        kind: fire_control_class
+    engineering:
+      maintenance:
+        monthlyBpOfCost: 20
+      physical:
+        centreOfGravity:
+          datum: PART_BASE
+          zMm: 6000
+        envelopeHeightMm: 2200
+      power:
+        consumption:
+          - basis: PER_PART_UNIT
+            id: power
+            kind: powerKw
+            value: 1
+    entryUnits:
+      max: 2
+      min: 2
+      step: 1
+    family: gun
+    id: standard_gun_dp_5in_38_twin
+    lifecycle:
+      availableFrom: 1945-01
+      availableUntil: null
+      requires:
+        - gun_dp_rapid_5in
+    metadata:
+      displayName: 5-inch/38 dual-purpose gun in Mark 38 twin mount
+      tags:
+        - gun
+        - medium
+    name: US 5-inch/38 Mark 12 dual-purpose gun in Mark 38 twin mount
+    origin:
+      sourceFile: ship-building/components.yaml
+    parameters:
+      rounds:
+        max: 800
+        min: 200
+        step: 50
+    provenance:
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0284. Bore, shell, mass and mount from navweaps.com WNUS_5-38_mk12 (SINGLE-SOURCE); the component carries the derivations.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_5-38_mk12.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md sections 1-2
+          title: navweaps.com US 5-inch/38 (12.7 cm) Mark 12
+    provides: gun
+    quantities:
+      - basis: PER_PART_UNIT
+        id: gun_mass
+        kind: massKg
+        value: 1810
+      - basis: PER_PART_UNIT
+        id: gun_cost
+        kind: costMicro
+        value: 356570000
+    revisions: []
+    spec:
+      beamArcDeg: 150
+      calibreUm: 127000
+      gunFamily: gun_dp_5in_38_twin
+      gunMassKg: 1810
+      mechanicalRateOfFireRoundsPerMinuteX100: 1500
+      propellantChargeBp: 2800
+      roundVolumeMl: 16000
+      shellMassG: 25000
+      supportedMountTypes:
+        - TURRET
+      weaponCategory: SECONDARY_GUN
+  - capabilities:
+      - kind: ammunition_feed
+        maxFeedPermille: 300
+      - class: medium
+        kind: fire_control_class
+    engineering:
+      maintenance:
+        monthlyBpOfCost: 20
+      physical:
+        centreOfGravity:
+          datum: PART_BASE
+          zMm: 6000
+        envelopeHeightMm: 2200
+      power:
+        consumption:
+          - basis: PER_PART_UNIT
+            id: power
+            kind: powerKw
+            value: 1
+    entryUnits:
+      max: 1
+      min: 1
+      step: 1
+    family: gun
+    id: standard_gun_dp_5in_54_single
+    lifecycle:
+      availableFrom: 1954-01
+      availableUntil: null
+      requires:
+        - gun_dp_rapid_5in
+    metadata:
+      displayName: 5-inch/54 Mark 18 dual-purpose gun in Mark 42 single mount
+      tags:
+        - gun
+        - medium
+    name: US 5-inch/54 Mark 18 dual-purpose gun in Mark 42 single mount
+    origin:
+      sourceFile: ship-building/components.yaml
+    parameters:
+      rounds:
+        max: 800
+        min: 200
+        step: 50
+    provenance:
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0291. Bore, projectile, mass and mount from navweaps.com WNUS_5-54_mk42 (SINGLE-SOURCE); the component carries the derivations.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_5-54_mk42.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md section 13
+          title: navweaps.com US 5-inch/54 (12.7 cm) Mark 18 and Mark 42 mount
+    provides: gun
+    quantities:
+      - basis: PER_PART_UNIT
+        id: gun_mass
+        kind: massKg
+        value: 2550
+      - basis: PER_PART_UNIT
+        id: gun_cost
+        kind: costMicro
+        value: 502350000
+    revisions: []
+    spec:
+      beamArcDeg: 150
+      calibreUm: 127000
+      gunFamily: gun_dp_5in_54_single
+      gunMassKg: 2550
+      mechanicalRateOfFireRoundsPerMinuteX100: 4000
+      propellantChargeBp: 2604
+      roundVolumeMl: 19820
+      shellMassG: 31450
+      supportedMountTypes:
+        - TURRET
+      weaponCategory: SECONDARY_GUN
+  - capabilities:
+      - kind: ammunition_feed
+        maxFeedPermille: 300
+      - class: medium
+        kind: fire_control_class
+    engineering:
+      maintenance:
+        monthlyBpOfCost: 20
+      physical:
+        centreOfGravity:
+          datum: PART_BASE
+          zMm: 6500
+        envelopeHeightMm: 3200
+      power:
+        consumption:
+          - basis: PER_PART_UNIT
+            id: power
+            kind: powerKw
+            value: 1
+    entryUnits:
+      max: 2
+      min: 2
+      step: 1
+    family: gun
+    id: standard_gun_dp_6in_47_twin
+    lifecycle:
+      availableFrom: 1948-01
+      availableUntil: null
+      requires:
+        - gun_dp_rapid_5in
+    metadata:
+      displayName: 6-inch/47 Mark 16 dual-purpose gun in twin turret
+      tags:
+        - gun
+        - medium
+    name: US 6-inch/47 Mark 16 dual-purpose gun in twin turret
+    origin:
+      sourceFile: ship-building/components.yaml
+    parameters:
+      rounds:
+        max: 1000
+        min: 200
+        step: 50
+    provenance:
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0284, ADR-0290. Bore, shell, mass and mount from navweaps.com WNUS_6-47DP_mk16 (SINGLE-SOURCE); the component carries the derivations.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_6-47DP_mk16.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md sections 3-4
+          title: navweaps.com US 6-inch/47 (15.2 cm) Mark 16 DP
+    provides: gun
+    quantities:
+      - basis: PER_PART_UNIT
+        id: gun_mass
+        kind: massKg
+        value: 6600
+      - basis: PER_PART_UNIT
+        id: gun_cost
+        kind: costMicro
+        value: 1300200000
+    revisions: []
+    spec:
+      beamArcDeg: 150
+      calibreUm: 152000
+      gunFamily: gun_dp_6in_47_twin
+      gunMassKg: 6600
+      mechanicalRateOfFireRoundsPerMinuteX100: 1200
+      propellantChargeBp: 2542
+      roundVolumeMl: 37000
+      shellMassG: 59000
+      supportedMountTypes:
+        - TURRET
+      weaponCategory: MAIN_GUN
   - capabilities:
       - kind: ammunition_feed
         maxFeedPermille: 400

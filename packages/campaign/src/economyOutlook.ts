@@ -7,7 +7,7 @@ import {
   runwayMonths,
   settleOutflow,
 } from "./economy.js";
-import { nationIsAtWar, nationMonthlyMaintenance } from "./maintenance.js";
+import { nationIsAtWar, nationMaintenanceAdders, nationMonthlyMaintenance } from "./maintenance.js";
 import { eligibleResearchFields, technologyCatalogueOf } from "./researchEligibility.js";
 import type { CampaignSnapshot, NationState } from "./state.js";
 import { campaignMonthId } from "./timeline.js";
@@ -35,6 +35,7 @@ export interface EconomyOutlook {
   readonly plannedConstruction: number;
   readonly projectedNet: number;
   readonly shortfall: number;
+  readonly obligationShortfall: number;
   readonly status: EconomyStatus;
   readonly monthEndTreasury: number;
   readonly runwayMonths?: number;
@@ -42,30 +43,54 @@ export interface EconomyOutlook {
 
 const TERMINAL_OR_HELD = new Set(["COMPLETED", "CANCELLED", "HALTED", "DELAYED"]);
 
+export interface ConstructionDraw {
+  readonly projectId: string;
+  readonly draw: number;
+}
+
+export function constructionDrawByProject(
+  nation: NationState,
+  snapshot: CampaignSnapshot,
+  month: string,
+): readonly ConstructionDraw[] {
+  const draws: ConstructionDraw[] = [];
+  for (const project of nation["constructionProjects"]) {
+    if (TERMINAL_OR_HELD.has(project["status"])) continue;
+    if (project["foreignContractId"] !== undefined) continue;
+    draws.push({
+      projectId: project["id"],
+      draw: monthlyAbsorbable(
+        project,
+        project["capacityUnits"] ??
+          snapshot["designs"].get(project["designVersionId"])?.["constructionPlan"]?.[
+            "capacityUnits"
+          ],
+        month,
+      ),
+    });
+  }
+  return draws;
+}
+
 function plannedConstructionOf(
   nation: NationState,
   snapshot: CampaignSnapshot,
   month: string,
 ): number {
-  let total = 0;
-  for (const project of nation["constructionProjects"]) {
-    if (TERMINAL_OR_HELD.has(project["status"])) continue;
-    if (project["foreignContractId"] !== undefined) continue;
-    total += monthlyAbsorbable(
-      project,
-      project["capacityUnits"] ??
-        snapshot["designs"].get(project["designVersionId"])?.["constructionPlan"]?.[
-          "capacityUnits"
-        ],
-      month,
-    );
-  }
-  return total;
+  return constructionDrawByProject(nation, snapshot, month).reduce(
+    (total, entry) => total + entry.draw,
+    0,
+  );
+}
+
+export interface EconomyOutlookOptions {
+  readonly carryingCostPerHaltedProject?: number;
 }
 
 export function economyOutlook(
   snapshot: CampaignSnapshot,
   nationId: string,
+  options: EconomyOutlookOptions = {},
 ): EconomyOutlook | undefined {
   const nation = snapshot["nations"].get(nationId);
   if (nation === undefined) return undefined;
@@ -79,6 +104,7 @@ export function economyOutlook(
   const maintenance = nationMonthlyMaintenance(
     nation["fleets"],
     nationIsAtWar(snapshot["wars"]["wars"], nationId),
+    nationMaintenanceAdders(nation, month),
   );
   const obligations = nation["expenses"];
   const cap = researchCap(revenue);
@@ -99,14 +125,22 @@ export function economyOutlook(
   const net = monthlyNetBeforeConstruction({ revenue, obligations, maintenance, research });
 
   let funds = SafeInt.add(nation["treasury"], revenue);
+  const haltedCount = nation["constructionProjects"].filter((p) => p["status"] === "HALTED").length;
+  const carrying = settleOutflow(
+    SafeInt((options.carryingCostPerHaltedProject ?? 0) * haltedCount),
+    funds,
+  );
+  funds = SafeInt.sub(funds, carrying.paid);
+  let shortfall: SafeInt = carrying.shortfall;
+  let obligationShortfall: SafeInt = SafeInt.ZERO;
   const constructionRoom = SafeInt.sub(funds, obligations);
   const construction = SafeInt(Math.min(planned, Math.max(0, constructionRoom as number)));
   funds = SafeInt.sub(funds, construction);
-  let shortfall = SafeInt.ZERO;
   for (const outflow of [maintenance, obligations, research]) {
     const settlement = settleOutflow(outflow, funds);
     funds = SafeInt.sub(funds, settlement.paid);
     shortfall = SafeInt.add(shortfall, settlement.shortfall);
+    if (outflow === obligations) obligationShortfall = settlement.shortfall;
   }
 
   const runway = runwayMonths(nation["treasury"], net);
@@ -122,6 +156,7 @@ export function economyOutlook(
     projectedNet: net as number,
     status: economyStatus(net as number, revenue as number),
     shortfall: shortfall as number,
+    obligationShortfall: obligationShortfall as number,
     monthEndTreasury: Math.max(0, funds as number),
     ...(runway === undefined ? {} : { runwayMonths: runway }),
   };

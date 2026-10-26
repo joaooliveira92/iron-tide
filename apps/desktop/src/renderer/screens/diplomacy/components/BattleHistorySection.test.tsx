@@ -36,6 +36,33 @@ describe("BattleHistorySection", () => {
     debugFlag.on = false;
   });
 
+  it("explains each absent ship with its ordered reasons and no ship ids", () => {
+    render(
+      <BattleHistorySection
+        state={{
+          status: "ready",
+          history: {
+            battles: [
+              entry({
+                absentShips: [
+                  {
+                    shipId: "uk_9",
+                    shipName: "HMS Agamemnon",
+                    reasons: ["Unavailable", "InRepair"],
+                  },
+                ],
+              }),
+            ],
+          },
+        }}
+      />,
+    );
+    expect(screen.getByLabelText("Ships absent from this battle")).toBeTruthy();
+    expect(screen.getByText("HMS Agamemnon")).toBeTruthy();
+    expect(screen.getByText("absent: out of action in a yard project, under repair")).toBeTruthy();
+    expect(screen.queryByText(/uk_9/)).toBeNull();
+  });
+
   it("shows loading and error states honestly", () => {
     const { rerender } = render(<BattleHistorySection state={{ status: "loading" }} />);
     expect(screen.getByText(/Loading battle history/)).toBeTruthy();
@@ -114,14 +141,19 @@ describe("BattleHistorySection", () => {
     const { rerender } = render(
       <BattleHistorySection state={{ status: "ready", history: { battles: [withShips] } }} />,
     );
-    const list = screen.getByRole("list", { name: "Ships lost in this battle" });
+    const list = screen.getByRole("list", {
+      name: "Ships lost in this battle",
+    });
     expect(list.textContent).toContain("HMS Valiant");
     expect(list.textContent).toContain("sunk by torpedo");
     expect(screen.queryByText(/before ship records were kept/)).toBeNull();
 
     rerender(
       <BattleHistorySection
-        state={{ status: "ready", history: { battles: [entry({ lostShips: [] })] } }}
+        state={{
+          status: "ready",
+          history: { battles: [entry({ lostShips: [] })] },
+        }}
       />,
     );
     expect(screen.getByText(/before ship records were kept/)).toBeTruthy();

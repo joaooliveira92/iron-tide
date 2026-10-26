@@ -1,5 +1,6 @@
+import { compareCodePoints } from "@bluewave/deterministic";
+import type { CampaignDiplomacy } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
-import { toStr } from "./campaignInput.js";
 import type { DiplomaticRelation, NationState, PoliticalState, WarState } from "./state.js";
 
 export function buildWarState(): WarState {
@@ -21,7 +22,7 @@ function enforcePairRegistry(
   seen: Set<string>,
   nations: Map<string, NationState>,
 ): void {
-  const nationIds = [...nations.keys()].sort((a, b) => a.localeCompare(b));
+  const nationIds = [...nations.keys()].sort((a, b) => compareCodePoints(a, b));
   for (let i = 0; i < nationIds.length; i++) {
     for (let j = i + 1; j < nationIds.length; j++) {
       const a = nationIds[i]!;
@@ -43,7 +44,7 @@ function enforcePairRegistry(
 }
 
 export function buildPoliticalState(
-  diplomacyData: unknown[],
+  diplomacyData: readonly CampaignDiplomacy[],
   nations: Map<string, NationState>,
   collector: DiagnosticCollector,
 ): PoliticalState {
@@ -51,9 +52,8 @@ export function buildPoliticalState(
   const seen = new Set<string>();
 
   for (const r of diplomacyData) {
-    const rRec = r as Record<string, unknown>;
-    const nationA = toStr(rRec["nationA"], "");
-    const nationB = toStr(rRec["nationB"], "");
+    const nationA = r.nationA;
+    const nationB = r.nationB;
     if (nationA === nationB) {
       collector.addError(
         "INVALID_DIPLOMATIC_PAIR_REGISTRY",
@@ -62,22 +62,9 @@ export function buildPoliticalState(
       );
       continue;
     }
-    const relation = (rRec["relation"] as DiplomaticRelation["relation"]) ?? "neutral";
-
-    let tension = 5;
-    const authoredTension = rRec["tension"];
-    if (typeof authoredTension === "number") {
-      if (authoredTension < 0 || authoredTension > 10) {
-        collector.addError(
-          "TENSION_OUT_OF_RANGE",
-          `Tension ${authoredTension} for pair ${nationA}/${nationB} is outside 0..10`,
-          { stage: "campaign-compile" },
-        );
-      } else {
-        tension = authoredTension;
-      }
-    }
-    const nap = rRec["nap"] === true;
+    const relation = r.relation;
+    const tension = r.tension ?? 5;
+    const nap = r.nap === true;
 
     relations.push({
       nationA,
@@ -85,7 +72,7 @@ export function buildPoliticalState(
       relation,
       tension,
       nap,
-      since: toStr(rRec["since"], "1880-01"),
+      since: r.since ?? "1880-01",
     });
     seen.add(pairKey(nationA, nationB));
   }
@@ -93,7 +80,7 @@ export function buildPoliticalState(
   enforcePairRegistry(relations, seen, nations);
 
   relations.sort((a, b) =>
-    pairKey(a.nationA, a.nationB).localeCompare(pairKey(b.nationA, b.nationB)),
+    compareCodePoints(pairKey(a.nationA, a.nationB), pairKey(b.nationA, b.nationB)),
   );
   return { relations, shells: {} };
 }

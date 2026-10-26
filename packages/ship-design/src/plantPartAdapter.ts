@@ -4,6 +4,7 @@ import type { MachineryPlan } from "./compileShared.js";
 import type { PropulsionPlant } from "./machinery.js";
 import { compatibilitySlotId } from "./partCompatibility.js";
 import { lifecycleIssue } from "./partLifecycle.js";
+import { designInvariant } from "./errors.js";
 
 export type FlattenedPlantPart = Extract<FlattenedPart, { readonly family: "propulsion_plant" }>;
 
@@ -106,7 +107,7 @@ export function buildPlantPartModel(input: {
 export function propulsionPlantFromPart(part: FlattenedPlantPart): PropulsionPlant {
   const range = part.parameters?.[INSTALLED_KW];
   if (range === undefined) {
-    throw new Error(`plantPartAdapter: plant part '${part.id}' declares no ${INSTALLED_KW}`);
+    throw designInvariant(`plantPartAdapter: plant part '${part.id}' declares no ${INSTALLED_KW}`);
   }
   const { lifecycle, spec } = part;
   return {
@@ -195,7 +196,7 @@ export function machineryPlanFromEntry(
 ): MachineryPlan {
   const installedKw = t.entry.params?.[INSTALLED_KW];
   if (installedKw === undefined || t.entry.stationPermille === undefined) {
-    throw new Error(
+    throw designInvariant(
       `plantPartAdapter: machinery entry of '${t.designId}' lost its power or station`,
     );
   }

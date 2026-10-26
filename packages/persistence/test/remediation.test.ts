@@ -11,7 +11,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { RecoveryManager } from "../src/recovery.js";
@@ -19,6 +18,7 @@ import type { SigFile } from "../src/schemas.js";
 import { toStorableSnapshot } from "../src/snapshotSerialization.js";
 import { SaveStore } from "../src/store.js";
 import { minimalCampaignState } from "./campaign-state-fixture.js";
+import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 
 describe("persistence remediation", () => {
   let tmpDir: string;
@@ -45,16 +45,14 @@ describe("persistence remediation", () => {
         "",
         "..",
       ]) {
-        const d = new DiagnosticCollector();
-        expect(store.loadById(tmpDir, bad, d)).toBeNull();
-        expect(d.errors.some((e) => e.code === "PERSISTENCE_CORRUPT_SAVE")).toBe(true);
+        expectFailureTag(runExit(store.loadById(tmpDir, bad)), "PERSISTENCE_CORRUPT_SAVE");
       }
     });
 
     it("still loads a valid id", () => {
       store.save(minimalCampaignState(), tmpDir);
       const id = store.getActiveSaveId(tmpDir)!;
-      expect(store.loadById(tmpDir, id, new DiagnosticCollector())).not.toBeNull();
+      unwrapSuccess(runExit(store.loadById(tmpDir, id)));
     });
   });
 
@@ -67,16 +65,15 @@ describe("persistence remediation", () => {
       sig.serializedHash = "f".repeat(64);
       writeFileSync(sigPath, JSON.stringify(sig, null, 2), "utf8");
 
-      const diagnostics = new DiagnosticCollector();
-      expect(store.load(tmpDir, diagnostics)).toBeNull();
-      expect(diagnostics.errors.some((e) => e.code === "PERSISTENCE_CORRUPT_SAVE")).toBe(true);
+      const error = expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
+      expect(error.message).toBe("Save signature does not match serialized content");
     });
 
     it("rejects a save whose signature was deleted", () => {
       store.save(minimalCampaignState(), tmpDir);
       const id = store.getActiveSaveId(tmpDir)!;
       writeFileSync(join(tmpDir, id, "campaign.sig.json"), "", "utf8");
-      expect(store.load(tmpDir, new DiagnosticCollector())).toBeNull();
+      expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
     });
 
     it("rejects a semantically-modified campaign.json", () => {
@@ -87,9 +84,7 @@ describe("persistence remediation", () => {
       data.snapshot.turnNumber = 99;
       writeFileSync(campaignPath, JSON.stringify(data), "utf8");
 
-      const diagnostics = new DiagnosticCollector();
-      expect(store.load(tmpDir, diagnostics)).toBeNull();
-      expect(diagnostics.errors.some((e) => e.code === "PERSISTENCE_CORRUPT_SAVE")).toBe(true);
+      expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
     });
 
     it("rejects campaign.json whose hashes were recomputed but whose signature is stale", () => {
@@ -110,9 +105,7 @@ describe("persistence remediation", () => {
       data.rawHash = sha256Hex(canonicalSerialize({ snapshot: state.snapshot, envelope }));
       writeFileSync(campaignPath, JSON.stringify(data, null, 2), "utf8");
 
-      const diagnostics = new DiagnosticCollector();
-      expect(store.load(tmpDir, diagnostics)).toBeNull();
-      expect(diagnostics.errors.some((e) => e.code === "PERSISTENCE_CORRUPT_SAVE")).toBe(true);
+      expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
     });
 
     it("loads a legacy save with no signature file, emitting a validation warning", () => {
@@ -120,18 +113,16 @@ describe("persistence remediation", () => {
       const id = store.getActiveSaveId(tmpDir)!;
       rmSync(join(tmpDir, id, "campaign.sig.json"));
 
-      const diagnostics = new DiagnosticCollector();
-      expect(store.load(tmpDir, diagnostics)).not.toBeNull();
-      expect(diagnostics.hasErrors).toBe(false);
-      expect(diagnostics.warnings.some((w) => w.code === "PERSISTENCE_UNSIGNED_SAVE")).toBe(true);
+      const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+      expect(loaded.warnings).toHaveLength(1);
+      expect(loaded.warnings[0]!.code).toBe("PERSISTENCE_UNSIGNED_SAVE");
+      expect(loaded.warnings[0]!.severity).toBe("warning");
     });
 
     it("round-trips a normally signed save with no false rejection or warning", () => {
       store.save(minimalCampaignState(), tmpDir);
-      const diagnostics = new DiagnosticCollector();
-      expect(store.load(tmpDir, diagnostics)).not.toBeNull();
-      expect(diagnostics.hasErrors).toBe(false);
-      expect(diagnostics.warnings).toHaveLength(0);
+      const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+      expect(loaded.warnings).toHaveLength(0);
     });
   });
 
@@ -188,8 +179,8 @@ describe("persistence remediation", () => {
       const meta = JSON.parse(readFileSync(join(tmpDir, id, "metadata.json"), "utf8")) as {
         snapshotHash: string;
       };
-      const loaded = store.loadById(tmpDir, id, new DiagnosticCollector())!;
-      const recomputed = sha256Hex(canonicalSerialize(toStorableSnapshot(loaded.snapshot)));
+      const loaded = unwrapSuccess(runExit(store.loadById(tmpDir, id)));
+      const recomputed = sha256Hex(canonicalSerialize(toStorableSnapshot(loaded.state.snapshot)));
       expect(recomputed).toBe(meta.snapshotHash);
     });
 
@@ -218,7 +209,7 @@ describe("persistence remediation", () => {
         const files = readdirSync(join(tmpDir, id)).sort();
         expect(files).toEqual(["campaign.json", "campaign.sig.json", "metadata.json"]);
       }
-      expect(store.load(tmpDir, new DiagnosticCollector())).not.toBeNull();
+      unwrapSuccess(runExit(store.load(tmpDir)));
     });
   });
 

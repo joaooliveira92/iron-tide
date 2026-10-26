@@ -1,11 +1,19 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { SafeInt } from "@bluewave/contracts";
+import { createEnvelope } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { buildContentBundleArtifact, type CompilerInput } from "@bluewave/content-compiler";
 import { FIXTURE_RULESETS_YAML, nationYaml, nationsYaml } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import { CampaignCompiler, type CampaignCompilerInput } from "../src/compiler-public.js";
+import {
+  hashableCampaignSnapshot,
+  hashCampaignSnapshot,
+  verifyCampaignSnapshotEnvelope,
+} from "../src/snapshotHash.js";
+import type { CampaignSnapshot, NationState } from "../src/state.js";
 
 function createFixtureDir(): { path: string; cleanup: () => void } {
   const dir = resolve(tmpdir(), `bw-campaign-${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -799,5 +807,75 @@ describe("CampaignCompiler decoded-bundle path (ticket 07 / CAH-LEG-1)", () => {
     } finally {
       fixture.cleanup();
     }
+  });
+});
+
+describe("campaign snapshot hashing", () => {
+  function compiledState() {
+    const fixture = createFixtureDir();
+    try {
+      writeContentFixture(fixture.path);
+      const output = compileFixture(
+        fixture.path,
+        new DiagnosticCollector(),
+        new AbortController().signal,
+      );
+      if (output === undefined) throw new Error("fixture campaign failed to compile");
+      return output.state;
+    } finally {
+      fixture.cleanup();
+    }
+  }
+
+  function withNation(snapshot: CampaignSnapshot, patch: Partial<NationState>): CampaignSnapshot {
+    const nations = new Map(snapshot.nations);
+    const [id, nation] = [...nations.entries()][0]!;
+    nations.set(id, { ...nation, ...patch });
+    return { ...snapshot, nations };
+  }
+
+  const state = compiledState();
+
+  it("projects Map fields to records so their contents reach the hash", () => {
+    const hashable = hashableCampaignSnapshot(state.snapshot) as Record<string, unknown>;
+    expect(hashable["nations"]).not.toBeInstanceOf(Map);
+    expect(Object.keys(hashable["nations"] as object)).toEqual(
+      [...state.snapshot.nations.keys()].sort(),
+    );
+  });
+
+  it("changes when a nation's treasury changes", () => {
+    const first = [...state.snapshot.nations.values()][0]!;
+    const changed = withNation(state.snapshot, { treasury: SafeInt(Number(first.treasury) + 1) });
+    expect(hashCampaignSnapshot(changed)).not.toBe(hashCampaignSnapshot(state.snapshot));
+  });
+
+  it("changes when a design family is added", () => {
+    const designFamilies = new Map(state.snapshot.designFamilies);
+    designFamilies.set("zz-family", { familyId: "zz-family" } as never);
+    expect(hashCampaignSnapshot({ ...state.snapshot, designFamilies })).not.toBe(
+      hashCampaignSnapshot(state.snapshot),
+    );
+  });
+
+  it("is independent of Map insertion order", () => {
+    const reversed = new Map([...state.snapshot.nations.entries()].reverse());
+    expect(hashCampaignSnapshot({ ...state.snapshot, nations: reversed })).toBe(
+      hashCampaignSnapshot(state.snapshot),
+    );
+  });
+
+  it("still accepts an envelope that was stamped before Map fields were hashed", () => {
+    const legacy = createEnvelope("campaign-snapshot", "0.1.0", state.snapshot);
+    expect(legacy.bodyHash).not.toBe(state.envelope.bodyHash);
+    expect(verifyCampaignSnapshotEnvelope(legacy, state.snapshot)).toBe(true);
+  });
+
+  it("gives the compiled rawHash and an envelope that verifies only the same state", () => {
+    expect(state.rawHash).toBe(hashCampaignSnapshot(state.snapshot));
+    expect(verifyCampaignSnapshotEnvelope(state.envelope, state.snapshot)).toBe(true);
+    const first = [...state.snapshot.nations.values()][0]!;
+    const changed = withNation(state.snapshot, { treasury: SafeInt(Number(first.treasury) + 1) });
+    expect(verifyCampaignSnapshotEnvelope(state.envelope, changed)).toBe(false);
   });
 });

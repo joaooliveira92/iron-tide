@@ -1,6 +1,7 @@
 import { hashWithContext } from "@bluewave/deterministic";
 import {
   battleOffersFromRulesets,
+  fleetManagementFromRulesets,
   presenceFromRulesets,
   type ShipBuildingCatalogue,
 } from "@bluewave/content-compiler";
@@ -44,7 +45,7 @@ function loadShipBuilding(): LoadedShipBuilding {
     plants: catalogue.plants as unknown as PropulsionPlant[],
     hullForms: catalogue.hullForms as HullFormRecord[],
     balance: catalogue.balance as ShipBuildingData["balance"],
-    technologies: bundle.technologies as { id: string; year: number }[],
+    technologies: [...bundle.technologies] as { id: string; year: number }[],
     navalProfiles: catalogue.navalProfiles as unknown as NationNavalProfile[],
     armament: catalogue.armament as unknown as AuthoredArmamentContent,
     referenceDesigns: catalogue.referenceDesigns as RawReferenceDesign[],
@@ -75,6 +76,26 @@ export function loadBattleOfferRules(): BattleOfferRules | undefined {
   const { bundle } = readContentArtifact(resolveGeneratedContentDir());
   battleOffers = { rules: battleOffersFromRulesets(bundle.rulesets) };
   return battleOffers.rules;
+}
+
+type FleetManagementRules = Extract<
+  NonNullable<ReturnType<typeof fleetManagementFromRulesets>>,
+  { readonly ok: true }
+>["value"];
+
+let fleetManagement: { readonly rules: FleetManagementRules | undefined } | null = null;
+
+export function loadFleetManagementRules(): FleetManagementRules | undefined {
+  if (fleetManagement !== null) return fleetManagement.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const decoded = fleetManagementFromRulesets(bundle.rulesets);
+  if (decoded !== undefined && !decoded.ok)
+    throw new ContentArtifactError(
+      "CONTENT_ARTIFACT_INVALID",
+      `ruleset fleetManagement section is invalid at '${decoded.field}': ${decoded.message}`,
+    );
+  fleetManagement = { rules: decoded?.value };
+  return fleetManagement.rules;
 }
 
 export function loadShipBuildingData(): ShipBuildingData {

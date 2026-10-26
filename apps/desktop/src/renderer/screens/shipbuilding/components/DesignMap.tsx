@@ -3,6 +3,7 @@ import { cn } from "../../../lib/utils.js";
 import { plural } from "../../../components/design-workspace/index.js";
 import { SECTION_ORDER, type DesignSectionId } from "../design-sections.js";
 import type { SectionStatus } from "../section-status.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 export interface DesignMapProps {
   readonly active: DesignSectionId;
@@ -40,34 +41,36 @@ export function DesignMap({ active, statuses, onSelect, footer }: DesignMapProps
           const { mark, meaning, tone } = statusMark(statuses[id]);
           return (
             <li key={id}>
-              <button
-                type="button"
-                aria-label={`${label}, ${meaning}`}
-                title={`${label}: ${meaning}`}
-                aria-current={active === id ? "location" : undefined}
-                data-active={active === id}
-                data-status={statuses[id].kind}
-                onClick={() => onSelect(id)}
-                className={cn(
-                  "relative flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm outline-none",
-                  "max-xl:justify-center max-xl:px-0",
-                  "hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring",
-                  "data-[active=true]:bg-accent data-[active=true]:font-medium",
-                )}
-              >
-                <Icon aria-hidden="true" className="size-4 shrink-0" />
-                <span className="truncate max-xl:sr-only">{label}</span>
-                <span
-                  aria-hidden="true"
+              <Tip label={`${label}: ${meaning}`}>
+                <button
+                  type="button"
+                  aria-label={`${label}, ${meaning}`}
+
+                  aria-current={active === id ? "location" : undefined}
+                  data-active={active === id}
+                  data-status={statuses[id].kind}
+                  onClick={() => onSelect(id)}
                   className={cn(
-                    "ml-auto flex min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold tabular-nums",
-                    "max-xl:absolute max-xl:top-0 max-xl:right-0 max-xl:ml-0 max-xl:min-w-4 max-xl:text-[0.625rem]",
-                    tone,
+                    "relative flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm outline-none",
+                    "max-xl:justify-center max-xl:px-0",
+                    "hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                    "data-[active=true]:bg-accent data-[active=true]:font-medium",
                   )}
                 >
-                  {mark}
-                </span>
-              </button>
+                  <Icon aria-hidden="true" className="size-4 shrink-0" />
+                  <span className="truncate max-xl:sr-only">{label}</span>
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "ml-auto flex min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold tabular-nums",
+                      "max-xl:absolute max-xl:top-0 max-xl:right-0 max-xl:ml-0 max-xl:min-w-4 max-xl:text-[0.625rem]",
+                      tone,
+                    )}
+                  >
+                    {mark}
+                  </span>
+                </button>
+              </Tip>
             </li>
           );
         })}

@@ -28,13 +28,13 @@ export const BUNDLE_GENERATED_BY =
 
 export interface ContentPackArtifact {
   manifest: unknown;
-  rulesets: unknown[];
-  nations: unknown[];
-  areas: unknown[];
-  routes: unknown[];
-  possessions: unknown[];
-  ports: unknown[];
-  technologies: unknown[];
+  rulesets: readonly unknown[];
+  nations: readonly unknown[];
+  areas: readonly unknown[];
+  routes: readonly unknown[];
+  possessions: readonly unknown[];
+  ports: readonly unknown[];
+  technologies: readonly unknown[];
 }
 
 export function contentPackFromArtifact(artifact: ContentPackArtifact): ContentPack {

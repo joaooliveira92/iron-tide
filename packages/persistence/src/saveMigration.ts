@@ -8,20 +8,15 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, dirname, join } from "node:path";
+import { createCampaignSnapshotEnvelope, verifyCampaignSnapshotEnvelope } from "@bluewave/campaign";
 import type { CampaignState } from "@bluewave/campaign";
-import {
-  canonicalSerialize,
-  createEnvelope,
-  sha256Hex,
-  verifyEnvelope,
-} from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { Result, Schema } from "effect";
 import { CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
 import { readSaveMetadata } from "./fileDecode.js";
 import { SaveHeaderSchema } from "./schemas.js";
 import { toStorableSnapshot } from "./snapshotSerialization.js";
-import { SaveStore } from "./store.js";
+import { loadByIdResult } from "./store.js";
 
 export interface SaveMigrationStep {
   readonly from: string;
@@ -74,13 +69,13 @@ export function detectSaveVersion(raw: unknown): string | null {
 
 export function restampState(state: CampaignState, to: string): CampaignState {
   const snapshot = { ...state.snapshot, compatibilityVersion: to };
-  const envelope = createEnvelope("campaign-snapshot", to, snapshot);
+  const envelope = createCampaignSnapshotEnvelope(to, snapshot);
   const rawHash = sha256Hex(canonicalSerialize({ snapshot, envelope }));
   return { snapshot, envelope, rawHash };
 }
 
 function verifyMigratedState(state: CampaignState): boolean {
-  if (!verifyEnvelope(state.envelope, state.snapshot)) return false;
+  if (!verifyCampaignSnapshotEnvelope(state.envelope, state.snapshot)) return false;
   const expected = sha256Hex(
     canonicalSerialize({ snapshot: state.snapshot, envelope: state.envelope }),
   );
@@ -130,15 +125,15 @@ export function migrateSaveDirectory(
     };
   }
 
-  const diagnostics = new DiagnosticCollector();
-  const state = new SaveStore(from).loadById(dirname(savePath), basename(savePath), diagnostics);
-  if (state === null) {
+  const loaded = loadByIdResult(dirname(savePath), basename(savePath), from);
+  if (Result.isFailure(loaded)) {
     return {
       status: "refused",
       kind: "malformed",
-      reason: diagnostics.errors.map((d) => d.message).join("; ") || "save did not load",
+      reason: loaded.failure.message || "save did not load",
     };
   }
+  const state = loaded.success.state;
   const metadata = readSaveMetadata(join(savePath, METADATA_FILE));
   if (metadata === null) {
     return {

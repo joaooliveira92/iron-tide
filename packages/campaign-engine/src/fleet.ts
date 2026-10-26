@@ -1,10 +1,18 @@
-import type { CampaignSnapshot, PresenceMeasurementRules } from "@bluewave/campaign";
+import {
+  deriveShipConditions,
+  type CampaignSnapshot,
+  type PresenceMeasurementRules,
+  type ShipCondition,
+} from "@bluewave/campaign";
 import { derivePlayerFacts } from "./player-facts.js";
 import {
   buildPresenceReadout,
   type PlayerProjectionMonth,
   type PlayerProjectionPresence,
 } from "./projection.js";
+import { compareCodePoints } from "@bluewave/deterministic";
+
+export type { ShipCondition };
 
 export type MovementCommandStatus =
   | "submitted"
@@ -29,8 +37,9 @@ export interface FleetShipView {
   readonly status: string;
   readonly readiness: string;
   readonly crewQuality: number;
-  readonly stationAssignment?: "FOREIGN_STATION";
-  readonly stationCode?: "FS";
+  readonly conditions?: readonly ShipCondition[];
+  readonly stationAssignment?: "FOREIGN_STATION" | "EXERCISE";
+  readonly stationCode?: "FS" | "EX";
   readonly colonialServiceFitted?: true;
   readonly colonialCode?: "c";
   readonly repairMonthsRemaining?: number;
@@ -47,6 +56,11 @@ const READINESS_STATUS_LABEL: Readonly<Record<string, string>> = {
   WORKING_UP: "working_up",
   REPAIR: "repair",
 };
+
+function conditionsOf(ship: Parameters<typeof deriveShipConditions>[0]) {
+  const conditions = deriveShipConditions(ship);
+  return conditions.length === 0 ? {} : { conditions };
+}
 
 export interface FleetDivisionView {
   readonly divisionId: string;
@@ -120,9 +134,13 @@ export function buildFleetScreenView(
       status: READINESS_STATUS_LABEL[ship.readiness] ?? "active",
       readiness: ship.readiness,
       crewQuality: Number(ship.crewQuality),
+      ...conditionsOf(ship),
       ...(ship.stationAssignment === undefined
         ? {}
-        : { stationAssignment: ship.stationAssignment, stationCode: "FS" as const }),
+        : {
+            stationAssignment: ship.stationAssignment,
+            stationCode: ship.stationAssignment === "EXERCISE" ? ("EX" as const) : ("FS" as const),
+          }),
       ...(ship.readiness === "REPAIR" && ship.repairMonthsRemaining !== undefined
         ? { repairMonthsRemaining: Number(ship.repairMonthsRemaining) }
         : {}),
@@ -139,13 +157,13 @@ export function buildFleetScreenView(
 
   const areas: FleetArea[] = snapshot.world.areas
     .map((area) => ({ id: area.id, name: area.name }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 
   const areaEdges: FleetAreaEdge[] = snapshot.world.routes
     .map((route) => ({ fromAreaId: route.from, toAreaId: route.to }))
     .sort((a, b) => {
-      const byFrom = a.fromAreaId.localeCompare(b.fromAreaId);
-      return byFrom !== 0 ? byFrom : a.toAreaId.localeCompare(b.toAreaId);
+      const byFrom = compareCodePoints(a.fromAreaId, b.fromAreaId);
+      return byFrom !== 0 ? byFrom : compareCodePoints(a.toAreaId, b.toAreaId);
     });
 
   const ports: FleetPort[] = [...facts.ports];
@@ -153,7 +171,7 @@ export function buildFleetScreenView(
   const overBaseShips: FleetOverBaseShip[] = facts.ships
     .filter(({ ship }) => ship.overBase !== undefined)
     .map(({ ship }) => ({ shipId: ship.id, name: ship.name, areaId: ship.locationAreaId }))
-    .sort((a, b) => a.shipId.localeCompare(b.shipId));
+    .sort((a, b) => compareCodePoints(a.shipId, b.shipId));
 
   return {
     divisions,

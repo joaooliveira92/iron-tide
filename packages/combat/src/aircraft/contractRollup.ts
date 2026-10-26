@@ -1,4 +1,7 @@
-import { SHIPPED_AIRCRAFT_CONTRACT, validateAircraftModelDefinitionContract } from "./contracts.js";
+import {
+  makeValidAircraftModelDefinition_v1,
+  validateAircraftModelDefinitionContract,
+} from "./contracts.js";
 
 export interface AircraftContractEntry {
   policyId: string;
@@ -9,7 +12,7 @@ export interface AircraftContractEntry {
 export const SHIPPED_AIRCRAFT_CONTRACTS: readonly AircraftContractEntry[] = [
   {
     policyId: "aircraft_model_definition_v1",
-    shippedContract: SHIPPED_AIRCRAFT_CONTRACT.modelDefinition,
+    shippedContract: makeValidAircraftModelDefinition_v1(),
     validate: validateAircraftModelDefinitionContract,
   },
 ] as const;

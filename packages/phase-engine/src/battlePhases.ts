@@ -16,6 +16,9 @@ import {
   resolveShipStrength,
   toCampaignBattleResult,
 } from "./battles.js";
+import { battleAbsencesFor } from "./battleAbsences.js";
+import { trainingEffectsFor } from "./battleTraining.js";
+import { applyBattleExperience } from "./battleExperience.js";
 import {
   applyDecline,
   applyEnemyDeclines,
@@ -67,6 +70,17 @@ export function runBattleGenerationPhase(ctx: PhaseContext): PhaseRunOutcome {
     const manifest = generationResult.manifests[i]!;
     const attackerFleetIds = fleetsInArea(manifest.attackerId, manifest.areaId);
     const defenderFleetIds = fleetsInArea(manifest.defenderId, manifest.areaId);
+    const absences =
+      ctx.fleetManagement !== undefined &&
+      ctx.playerNationId !== undefined &&
+      (manifest.attackerId === ctx.playerNationId || manifest.defenderId === ctx.playerNationId)
+        ? battleAbsencesFor(
+            ctx.snapshot.current,
+            ctx.playerNationId,
+            manifest,
+            generationResult.manifests,
+          )
+        : [];
     return {
       id: battleId,
       phase: "pending" as const,
@@ -76,6 +90,7 @@ export function runBattleGenerationPhase(ctx: PhaseContext): PhaseRunOutcome {
       attackerFleetIds,
       defenderFleetIds,
       manifestHash: manifest.manifestHash,
+      ...(absences.length === 0 ? {} : { absences }),
     };
   });
 
@@ -124,6 +139,10 @@ export function runBattleResolutionPhase(ctx: PhaseContext): PhaseRunOutcome {
     if (ctx.interruption?.suspended !== undefined) return { status: "finish", success: true };
   }
   scoreResolvedBattles(
+    ctx,
+    battles.map((b) => b["id"]),
+  );
+  applyBattleExperience(
     ctx,
     battles.map((b) => b["id"]),
   );
@@ -307,6 +326,7 @@ function resolveViaTacticalAuto(
         designs: ctx.snapshot.current["designs"],
         divisions: attacker["divisions"],
         officers: attacker["officers"],
+        trainingEffects: trainingEffectsFor(attacker, ctx.fleetManagement),
       },
       defender: {
         nationId: defender["id"],
@@ -314,6 +334,7 @@ function resolveViaTacticalAuto(
         designs: ctx.snapshot.current["designs"],
         divisions: defender["divisions"],
         officers: defender["officers"],
+        trainingEffects: trainingEffectsFor(defender, ctx.fleetManagement),
       },
       strategicWeather,
       campaignSeed: ctx.rng.seed(),

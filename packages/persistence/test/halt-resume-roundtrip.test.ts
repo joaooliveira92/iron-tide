@@ -9,10 +9,10 @@ import type {
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function project(status: ConstructionProject["status"], id: string): ConstructionProject {
@@ -105,10 +105,9 @@ describe("halted / delayed construction status persistence (INC-3)", () => {
   it("round-trips HALTED and DELAYED project statuses through save/load", () => {
     const saved = state();
     store.save(saved, tmpDir);
-    const loaded = store.load(tmpDir, new DiagnosticCollector());
-    expect(loaded).not.toBeNull();
-    const projects = loaded!.snapshot.nations.get("uk")!.constructionProjects;
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    const projects = loaded.state.snapshot.nations.get("uk")!.constructionProjects;
     expect(projects.map((p) => p.status).sort()).toEqual(["DELAYED", "HALTED"]);
-    expect(loaded!.rawHash).toBe(saved.rawHash);
+    expect(loaded.state.rawHash).toBe(saved.rawHash);
   });
 });

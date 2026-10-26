@@ -1,14 +1,13 @@
 import { readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 import {
   COMPATIBILITY_MISMATCH_CODE,
   CURRENT_COMPATIBILITY_VERSION,
 } from "../src/compatibility.js";
-import { CORRUPT_SAVE_CODE } from "../src/errors.js";
 import { SaveStore } from "../src/store.js";
+import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 
 const corpusDir = join(dirname(fileURLToPath(import.meta.url)), "fixtures", "save-corpus");
 
@@ -18,17 +17,7 @@ const versions = readdirSync(corpusDir, { withFileTypes: true })
   .sort();
 
 describe("save-compatibility corpus (ADR-0113 §5)", () => {
-  let store: SaveStore;
-  let diagnostics: DiagnosticCollector;
-
-  beforeEach(() => {
-    store = new SaveStore();
-    diagnostics = new DiagnosticCollector();
-  });
-
-  afterEach(() => {
-    diagnostics = new DiagnosticCollector();
-  });
+  const store = new SaveStore();
 
   it("contains a fixture for the current release version", () => {
     expect(versions).toContain(CURRENT_COMPATIBILITY_VERSION);
@@ -39,19 +28,18 @@ describe("save-compatibility corpus (ADR-0113 §5)", () => {
 
     if (version === CURRENT_COMPATIBILITY_VERSION) {
       it(`loads the released ${version} save`, () => {
-        const loaded = store.load(dir, diagnostics);
+        const loaded = unwrapSuccess(runExit(store.load(dir)));
 
-        expect(diagnostics.hasErrors).toBe(false);
-        expect(loaded).not.toBeNull();
-        expect(loaded?.snapshot.compatibilityVersion).toBe(CURRENT_COMPATIBILITY_VERSION);
+        expect(loaded.state.snapshot.compatibilityVersion).toBe(CURRENT_COMPATIBILITY_VERSION);
       });
     } else {
       it(`rejects the superseded ${version} save with the stable mismatch code`, () => {
-        const loaded = store.load(dir, diagnostics);
+        const error = expectFailureTag(
+          runExit(store.load(dir)),
+          "PERSISTENCE_COMPATIBILITY_MISMATCH",
+        );
 
-        expect(loaded).toBeNull();
-        expect(diagnostics.errors.map((d) => d.code)).toEqual([COMPATIBILITY_MISMATCH_CODE]);
-        expect(diagnostics.errors.some((d) => d.code === CORRUPT_SAVE_CODE)).toBe(false);
+        expect(error.code).toBe(COMPATIBILITY_MISMATCH_CODE);
       });
     }
   }

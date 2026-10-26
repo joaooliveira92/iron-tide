@@ -61,4 +61,146 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
     months: 15,
     purpose: "Longest replay: settling into the second year, past rollover and readiness changes.",
   },
+  {
+    id: "production-1880-14m-fleet-management",
+    seed: "replay-corpus-fleet-management",
+    months: 14,
+    purpose:
+      "Fleet management live: training to month 12 and a reset, a doctrine change, the annual exercise and cohesion growth.",
+    commands: [
+      {
+        month: 1,
+        body: {
+          type: "SetSpecialTraining",
+          nationId: "austria_hungary",
+          subjects: ["NIGHT_FIGHTING", "GUNNERY"],
+        },
+      },
+      {
+        month: 2,
+        body: {
+          type: "ChangeDivisionDoctrine",
+          nationId: "austria_hungary",
+          divisionId: "div_aut_adriatic",
+          divisionRole: "SUPPORT",
+          preferredFormation: "LINE_ABREAST",
+        },
+      },
+      {
+        month: 3,
+        body: {
+          type: "HoldFleetExercise",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+        },
+      },
+      {
+        month: 13,
+        body: { type: "SetSpecialTraining", nationId: "austria_hungary", subjects: ["GUNNERY"] },
+      },
+    ],
+  },
+  {
+    id: "production-1880-6m-fleet-commands",
+    seed: "replay-corpus-fleet-commands",
+    months: 6,
+    purpose:
+      "Half year of player fleet commands: reserve, refused work-up hull, reactivate, station, refused mothball, clear, mothball.",
+    commands: [
+      {
+        month: 1,
+        body: {
+          type: "SetShipReadiness",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+          readiness: "RESERVE",
+        },
+      },
+      {
+        month: 1,
+        body: {
+          type: "SetShipReadiness",
+          nationId: "austria_hungary",
+          shipIds: ["aut_tegetthoff"],
+          readiness: "RESERVE",
+        },
+      },
+      {
+        month: 3,
+        body: {
+          type: "SetShipReadiness",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+          readiness: "ACTIVE",
+        },
+      },
+      {
+        month: 4,
+        body: {
+          type: "AssignForeignStation",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+        },
+      },
+      {
+        month: 5,
+        body: {
+          type: "SetShipReadiness",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+          readiness: "MOTHBALLED",
+        },
+      },
+      {
+        month: 5,
+        body: {
+          type: "ClearForeignStation",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+        },
+      },
+      {
+        month: 6,
+        body: {
+          type: "SetShipReadiness",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+          readiness: "MOTHBALLED",
+        },
+      },
+    ],
+  },
+  {
+    id: "production-1880-4m-adriatic-war",
+    seed: "replay-corpus-adriatic-war",
+    months: 4,
+    playerNationId: "austria_hungary",
+    setup: "armed-adriatic-war",
+    purpose:
+      "Austria-Hungary at war with Italy on armed hulls: a work-up hull recorded as absent from the fleet battle, then battle experience for the division.",
+    commands: [
+      {
+        month: 1,
+        body: { type: "DeclareWar", nationId: "austria_hungary", targetNationId: "italy" },
+      },
+      {
+        month: 1,
+        body: {
+          type: "MoveFleet",
+          nationId: "austria_hungary",
+          fleetId: "fleet_aut_adriatic",
+          toAreaId: "sea_mediterranean_c",
+        },
+      },
+      {
+        month: 2,
+        body: {
+          type: "MoveFleet",
+          nationId: "austria_hungary",
+          fleetId: "fleet_aut_adriatic",
+          toAreaId: "ita_tyrrhenian_coast",
+        },
+      },
+    ],
+  },
 ];

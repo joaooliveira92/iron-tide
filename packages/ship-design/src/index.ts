@@ -53,7 +53,12 @@ export {
   type PlacementSpec,
   type ShipContext,
 } from "./compileShared.js";
-export { compileTorpedo } from "./compileTorpedo.js";
+export {
+  compileTorpedo,
+  type CompileTorpedoFailure,
+  type CompileTorpedoFailureCode,
+  type CompileTorpedoResult,
+} from "./compileTorpedo.js";
 export { COMPONENT_CATEGORIES, type ComponentCategory, type ComponentDef } from "./component.js";
 export {
   advanceConstructionMonth,
@@ -142,7 +147,10 @@ export {
   type NationProfileBrief,
   resolveNavalProfile,
 } from "./nationProfile.js";
-export { resolveNationalConstruction } from "./nationalConstruction.js";
+export {
+  resolveNationalConstruction,
+  tryResolveNationalConstruction,
+} from "./nationalConstruction.js";
 export { researchPriorityAllocation } from "./nationalResearch.js";
 export { buildPartCatalogue, PART_SOURCE_FIELDS, type SourceCatalogue } from "./partCatalogue.js";
 export {
@@ -188,7 +196,7 @@ export {
   revisionFactsOf,
 } from "./revision.js";
 export { draftChangeKinds, progressFromWork } from "./revisionDiff.js";
-export { seededConstructionPlan } from "./seededPlan.js";
+export { seededConstructionPlan, trySeededConstructionPlan } from "./seededPlan.js";
 export {
   buildShipBuildingContent,
   type RawReferenceDesign,

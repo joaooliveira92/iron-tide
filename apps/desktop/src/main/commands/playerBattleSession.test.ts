@@ -1,3 +1,4 @@
+import { BluewaveError } from "@bluewave/contracts";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -8,7 +9,9 @@ import { clearCampaignSessionsForTest } from "../campaignSessions.js";
 import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import type { PlayerBattleSave } from "../playerBattleSidecar.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
+import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { ContentArtifact, contentArtifactLayer } from "../runtime/contentArtifact.js";
+import { DecisionSource } from "../runtime/decisionSource.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import {
   pendingTurnStoreMemoryLayer,
@@ -22,7 +25,12 @@ import {
   finishPlayerBattleProgram,
   startPlayerBattleProgram,
 } from "./playerBattle.js";
-import { startPlayerBattle } from "./playerBattleSession.js";
+import {
+  projectSession,
+  projectionFailureReason,
+  startPlayerBattle,
+} from "./playerBattleSession.js";
+import { runTurnTransaction } from "./turnTransaction.js";
 import { registerWarSession } from "./warSessionFixture.js";
 
 const withOffers = Layer.effect(
@@ -120,6 +128,43 @@ describe("player battle session over in-memory sidecar stores", () => {
     if (outcome.kind !== "started") throw new Error(outcome.reason);
     return outcome.resume;
   };
+
+  it("refuses with the tagged failure's reason when the committed fleets no longer hold the battle's ships", async () => {
+    const a = app(memoryStores());
+    const battleId = await acceptedBattle(a);
+
+    const refusal = await a.runtime.runPromise(
+      Effect.gen(function* () {
+        const record = yield* (yield* CampaignSessionStore).get(SESSION);
+        const pending = yield* (yield* PendingTurnStore).load(record.saveDir);
+        if (pending === null) throw new Error("expected a pending turn");
+        const outcome = yield* runTurnTransaction({
+          sessionId: SESSION,
+          expectedRevision: pending.startingRevision,
+          recordedInputs: pending.recordedInputs,
+          pendingDecisions: yield* (yield* DecisionSource).pendingDecisions(SESSION),
+          allowInterruptions: true,
+        });
+        if (outcome.kind !== "suspended") throw new Error("expected a suspended turn");
+        const emptied = new Map(
+          [...outcome.snapshot.nations].map(([id, nation]) => [id, { ...nation, fleets: [] }]),
+        );
+        return projectSession(
+          { ...outcome.snapshot, nations: emptied },
+          battleId,
+          `${record.campaignSeed}:month:${String(pending.startingRevision)}`,
+          pending,
+        );
+      }),
+    );
+
+    expect(refusal).toEqual({
+      kind: "refused",
+      reason: "PLAYER_BATTLE_PROJECTION_FAILED",
+      diagnostics: ["manifest persistent asset not found in either nation's committed ships"],
+    });
+    await a.runtime.dispose();
+  });
 
   it("starts fresh, advances a minute, fights to the end and finishes", async () => {
     const a = app(memoryStores());
@@ -227,5 +272,22 @@ describe("player battle session over in-memory sidecar stores", () => {
     expect(started.view.minute).toBe(0);
     expect(stillThere.kind).toBe("none");
     await a.runtime.dispose();
+  });
+});
+
+describe("projection failure reason", () => {
+  const reason = "both sides require at least one committed, promotable ship";
+
+  it("reads the reason from a tagged combat failure", () => {
+    const failure = new BluewaveError("BATTLE_AUTO_RESOLUTION_FAILED", {
+      code: "BATTLE_AUTO_RESOLUTION_FAILED",
+      reason,
+    });
+    expect(projectionFailureReason(failure)).toBe(reason);
+  });
+
+  it("falls back to the message for an untagged error and stringifies other values", () => {
+    expect(projectionFailureReason(new Error("boom"))).toBe("boom");
+    expect(projectionFailureReason("plain")).toBe("plain");
   });
 });

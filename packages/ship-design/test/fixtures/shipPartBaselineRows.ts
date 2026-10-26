@@ -16,6 +16,9 @@ export const D17_ROWS: readonly (readonly [
   ["mesudiye_1875", "main_fwd", "gun_rml_10in_18ton", 6, 1, 6, "BARBETTE"],
   ["mesudiye_1875", "main_aft", "gun_rml_10in_18ton", 6, 1, 6, "BARBETTE"],
   ["mesudiye_1875", "sec", "gun_rml_7in_7ton", 3, 1, 3, "BARBETTE"],
+  ["starter_ca_usa_1948", "main_1", "gun_ap_8in_55_triple", 3, 1, 3, "TURRET"],
+  ["starter_ca_usa_1948", "main_2", "gun_ap_8in_55_triple", 3, 1, 3, "TURRET"],
+  ["starter_ca_usa_1948", "main_3", "gun_ap_8in_55_triple", 3, 1, 3, "TURRET"],
 ];
 
 export const TORPEDO_ROWS: readonly (readonly [string, string, string, number, number])[] = [
@@ -47,5 +50,7 @@ export const TORPEDO_ROWS: readonly (readonly [string, string, string, number, n
   ["starter_torpedo_gunboat_1880", "tubes", "tube_14in_above_water", 4, 4],
   ["alexandra_1877", "tubes", "tube_14in_above_water", 4, 4],
   ["starter_dd_usa_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_dd_usa_1945", "tubes", "tube_21in_above_water", 5, 5],
+  ["starter_dd_usa_1955", "tubes", "tube_21in_above_water", 4, 4],
   ["tb2_1879", "tubes", "tube_14in_above_water", 1, 1],
 ];

@@ -265,7 +265,9 @@ describe("fit over production launchers (ticket 04 hand-over)", () => {
   it("fits every production launcher with the torpedo it loads", () => {
     for (const part of launchers) {
       const torpedo = loadedTorpedoOf(part.id);
-      const r = launcherFit(part, torpedo, true);
+      const month =
+        part.lifecycle.availableFrom > "1890-01" ? part.lifecycle.availableFrom : "1890-01";
+      const r = launcherFit(part, torpedo, true, month);
       expect(r.status, part.id).toBe("ACCEPTED");
       expect(r.waivers.length === 1, part.id).toBe(part.legacyExceptions !== undefined);
     }
@@ -580,17 +582,17 @@ describe("fit over every production design (characterization)", () => {
     ).findings.map((f) => f.id),
   }));
 
-  it("evaluates all 92 designs, 825 placements, 230 gun placements and 29 tube placements", () => {
-    expect(fits).toHaveLength(92);
-    expect(fits.reduce((n, d) => n + d.design.draft.placements.length, 0)).toBe(825);
+  it("evaluates all 96 designs, 883 placements, 251 gun placements and 31 tube placements", () => {
+    expect(fits).toHaveLength(96);
+    expect(fits.reduce((n, d) => n + d.design.draft.placements.length, 0)).toBe(883);
     const slotKinds = fits.flatMap((d) => d.entries.map((e) => e.slot.split(".").at(-1)));
-    expect(slotKinds.filter((k) => k === "gun_mount")).toHaveLength(230);
-    expect(slotKinds.filter((k) => k === "torpedo_launcher")).toHaveLength(29);
+    expect(slotKinds.filter((k) => k === "gun_mount")).toHaveLength(251);
+    expect(slotKinds.filter((k) => k === "torpedo_launcher")).toHaveLength(31);
   });
 
   it("accepts every design: nothing is excluded, and nothing is rejected silently", () => {
     const status = (s: FitResult["status"]) => results.filter((x) => x.r.status === s).length;
-    expect([status("ACCEPTED"), status("REJECTED"), status("NOT_EVALUABLE")]).toEqual([92, 0, 0]);
+    expect([status("ACCEPTED"), status("REJECTED"), status("NOT_EVALUABLE")]).toEqual([96, 0, 0]);
     for (const { d, r } of results) {
       expect(r.findings, d.design.id).toEqual([]);
       expect(r.dataIssues, d.design.id).toEqual([]);

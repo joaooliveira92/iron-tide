@@ -79,6 +79,9 @@ import {
   SubmitDivisionCommandPayloadSchema,
   SubmitMovementCommandPayloadSchema,
   SubmitOfferResponsePayloadSchema,
+  SubmitFleetExercisePayloadSchema,
+  SubmitShipReadinessPayloadSchema,
+  SubmitSpecialTrainingPayloadSchema,
   SubmitStationAssignmentPayloadSchema,
   WriteDrawingBoardDraftPayloadSchema,
 } from "./campaignCommandSchemas.js";
@@ -113,6 +116,9 @@ import type { DivisionCommandOutcome, DivisionScreenProjection } from "./divisio
 import type {
   FleetScreenProjection,
   MovementCommandOutcome,
+  FleetExerciseOutcome,
+  ShipReadinessOutcome,
+  SpecialTrainingOutcome,
   StationAssignmentOutcome,
 } from "./fleet-contract.js";
 import type { NewGameOptions } from "./new-game-contract.js";
@@ -305,6 +311,18 @@ export const campaignCommandShapes = {
   submitStationAssignment: command(
     SubmitStationAssignmentPayloadSchema,
     resultType<StationAssignmentOutcome>(),
+  ),
+  submitShipReadiness: command(
+    SubmitShipReadinessPayloadSchema,
+    resultType<ShipReadinessOutcome>(),
+  ),
+  submitFleetExercise: command(
+    SubmitFleetExercisePayloadSchema,
+    resultType<FleetExerciseOutcome>(),
+  ),
+  submitSpecialTraining: command(
+    SubmitSpecialTrainingPayloadSchema,
+    resultType<SpecialTrainingOutcome>(),
   ),
   replaceMovementCommand: command(
     ReplaceMovementCommandPayloadSchema,

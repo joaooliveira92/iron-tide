@@ -16,6 +16,9 @@ export type RequestKind =
   | "order-foreign"
   | "assign-station"
   | "clear-station"
+  | "set-readiness"
+  | "set-training"
+  | "hold-exercise"
   | "authorize-dock-expansion"
   | "advance-battle"
   | "finish-battle";

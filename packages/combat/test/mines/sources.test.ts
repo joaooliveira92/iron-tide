@@ -15,7 +15,7 @@ function validSource(overrides: Partial<MineSource> = {}): MineSource {
     sourceId: "port_soroka",
     layingParticipantId: "USSR",
     technologyReadiness: true,
-    availableTechnologyIds: ["magnetic_mine_technology", "acoustic_mine_technology"],
+    availableTechnologyIds: ["m_asw_influence_mine"],
     availableMineCount: SafeInt(400),
     hasAccess: true,
     hasControl: true,

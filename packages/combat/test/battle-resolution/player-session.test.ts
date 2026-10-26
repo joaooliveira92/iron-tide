@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
-import { resolveBattleAuto, type BattleResolutionResult } from "@bluewave/combat/battleResolution";
+import {
+  NO_TRAINING_EFFECTS,
+  resolveBattleAuto,
+  type BattleResolutionResult,
+} from "@bluewave/combat/battleResolution";
 import {
   advancePlayerBattleMinute,
   createPlayerBattleSession,
@@ -11,7 +15,18 @@ import {
 } from "@bluewave/combat/battleResolution";
 import { ATTACKER_NATION, makeAutoInput, makeNations } from "./fixtures.js";
 import type { PermanentDivision } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { BluewaveError, isBluewaveError, SafeInt } from "@bluewave/contracts";
+import { BATTLE_AUTO_RESOLUTION_FAILED } from "@bluewave/combat/battleResolution";
+
+function capture(run: () => unknown): BluewaveError {
+  try {
+    run();
+  } catch (error) {
+    if (isBluewaveError(error)) return error;
+    throw error;
+  }
+  throw new Error("expected the call to throw");
+}
 
 function division(divisionId: string, nationId: string, shipOrder: string[]): PermanentDivision {
   return {
@@ -100,6 +115,42 @@ describe("T-2 player battle session", () => {
     expect(playerBattleSessionHash(finished)).toBe(playerBattleSessionHash(player()));
   });
 
+  it("explains the accuracy of the player's own gunned ships and never the enemy's", () => {
+    const view = playerBattleView(createPlayerBattleSession(makePlayerInput()));
+    const own = view.ships.filter((ship) => ship.sideId === "ATTACKER");
+    const enemy = view.ships.filter((ship) => ship.sideId === "DEFENDER");
+    expect(own.length).toBeGreaterThan(0);
+    for (const ship of own) {
+      expect(ship.gunneryAccuracy?.formulaId).toBe("gunnery_accuracy");
+      expect(ship.gunneryAccuracy?.unit).toBe("bp");
+    }
+    for (const ship of enemy) expect(ship).not.toHaveProperty("gunneryAccuracy");
+  });
+
+  it("shows the training bonus as a factor of the accuracy it explains", () => {
+    const base = makePlayerInput();
+    const trained = {
+      ...base,
+      attacker: {
+        ...base.attacker,
+        trainingEffects: { ...NO_TRAINING_EFFECTS, gunneryBp: 1_000 },
+      },
+    };
+    const plain = playerBattleView(createPlayerBattleSession(base));
+    const view = playerBattleView(createPlayerBattleSession(trained));
+    const shipId = view.ships.find((ship) => ship.sideId === "ATTACKER")!.shipId;
+    const explained = (v: typeof view) =>
+      v.ships.find((ship) => ship.shipId === shipId)!.gunneryAccuracy!;
+    const training = explained(view).children?.find(
+      (c) => c.formulaId === "gunnery_accuracy.training",
+    );
+    expect(training?.inputs["multiplierBp"]).toBe(11_000);
+    expect(
+      explained(plain).children?.some((c) => c.formulaId === "gunnery_accuracy.training"),
+    ).toBeFalsy();
+    expect(Number(explained(view).result)).toBeGreaterThan(Number(explained(plain).result));
+  });
+
   it("exposes a structured view with objectives, ships and divisions", () => {
     const session = createPlayerBattleSession(makePlayerInput());
     const view = playerBattleView(session);
@@ -128,13 +179,34 @@ describe("T-2 player battle session", () => {
   });
 
   it("enforces integer speed percentages", () => {
-    const session = createPlayerBattleSession(makePlayerInput());
+    const session = createPlayerBattleSession(inputWithDivisions());
     const division = session.state.divisions[0];
-    if (!division) return;
+    if (!division) throw new Error("fixture must produce a division");
     expect(() =>
       advancePlayerBattleMinute(session, {
         divisions: { [division.tacticalDivisionId]: { stance: "ENGAGE", speedPercent: 50.5 } },
       }),
-    ).toThrow("speedPercent must be an integer");
+    ).toThrow(BluewaveError);
+    const failure = capture(() =>
+      advancePlayerBattleMinute(session, {
+        divisions: { [division.tacticalDivisionId]: { stance: "ENGAGE", speedPercent: 50.5 } },
+      }),
+    );
+    expect(failure.context.code).toBe(BATTLE_AUTO_RESOLUTION_FAILED);
+    expect(failure.context.reason).toBe("speedPercent must be an integer");
+  });
+
+  it("tags the failure when a side has no promotable ship", () => {
+    const input = makePlayerInput();
+    const failure = capture(() =>
+      createPlayerBattleSession({
+        ...input,
+        manifest: { ...input.manifest, persistentAssets: [] },
+      }),
+    );
+    expect(failure.context.code).toBe(BATTLE_AUTO_RESOLUTION_FAILED);
+    expect(failure.context.reason).toBe(
+      "both sides require at least one committed, promotable ship",
+    );
   });
 });

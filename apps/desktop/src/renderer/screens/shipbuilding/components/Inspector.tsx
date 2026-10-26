@@ -3,6 +3,7 @@ import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { Button } from "../../../components/ui/button.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs.js";
 import type { LocalTab } from "../design-sections.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 export interface InspectorProps {
   readonly title: string;
@@ -34,17 +35,19 @@ export function Inspector({
         data-collapsed="true"
         className="flex h-full min-h-0 flex-col items-center gap-2 border-l bg-background py-2"
       >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Show inspector"
-          aria-keyshortcuts={TOGGLE_SHORTCUT}
-          title="Show inspector (⌘/Ctrl+B)"
-          onClick={onToggleCollapsed}
-        >
-          <PanelRightOpen aria-hidden="true" className="size-4" />
-        </Button>
+        <Tip label="Show inspector (⌘/Ctrl+B)">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Show inspector"
+            aria-keyshortcuts={TOGGLE_SHORTCUT}
+
+            onClick={onToggleCollapsed}
+          >
+            <PanelRightOpen aria-hidden="true" className="size-4" />
+          </Button>
+        </Tip>
         <span
           aria-hidden="true"
           className="text-xs text-muted-foreground [writing-mode:vertical-rl]"
@@ -73,18 +76,20 @@ export function Inspector({
           ))}
         </ol>
         {onToggleCollapsed !== undefined && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="shrink-0"
-            aria-label="Hide inspector"
-            aria-keyshortcuts={TOGGLE_SHORTCUT}
-            title="Hide inspector (⌘/Ctrl+B)"
-            onClick={onToggleCollapsed}
-          >
-            <PanelRightClose aria-hidden="true" className="size-4" />
-          </Button>
+          <Tip label="Hide inspector (⌘/Ctrl+B)">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="shrink-0"
+              aria-label="Hide inspector"
+              aria-keyshortcuts={TOGGLE_SHORTCUT}
+
+              onClick={onToggleCollapsed}
+            >
+              <PanelRightClose aria-hidden="true" className="size-4" />
+            </Button>
+          </Tip>
         )}
       </nav>
       <Tabs

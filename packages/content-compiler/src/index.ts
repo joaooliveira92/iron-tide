@@ -44,42 +44,42 @@ export interface CompilerInput {
 }
 
 export interface ShipBuildingCatalogue {
-  components: unknown[];
-  plants: unknown[];
-  hullForms: unknown[];
+  components: readonly unknown[];
+  plants: readonly unknown[];
+  hullForms: readonly unknown[];
   balance: unknown;
-  navalProfiles: unknown[];
+  navalProfiles: readonly unknown[];
   armament: {
-    gunFamilies: unknown[];
-    gunModels: unknown[];
-    gunMounts: unknown[];
-    ammunition: unknown[];
+    gunFamilies: readonly unknown[];
+    gunModels: readonly unknown[];
+    gunMounts: readonly unknown[];
+    ammunition: readonly unknown[];
   };
-  referenceDesigns: unknown[];
+  referenceDesigns: readonly unknown[];
   partModel?: CompiledPartModel;
-  designLoadouts?: unknown[];
+  designLoadouts?: readonly unknown[];
 }
 
 export interface CampaignCollections {
-  fleets: unknown[];
-  economies: unknown[];
-  constructions: unknown[];
-  diplomacy: unknown[];
-  research: unknown[];
-  designs: unknown[];
-  divisions?: unknown[];
+  fleets: readonly unknown[];
+  economies: readonly unknown[];
+  constructions: readonly unknown[];
+  diplomacy: readonly unknown[];
+  research: readonly unknown[];
+  designs: readonly unknown[];
+  divisions?: readonly unknown[];
 }
 
 export interface ContentBundle {
   generatedBy: string;
   manifest: unknown;
-  rulesets: unknown[];
-  nations: unknown[];
-  areas: unknown[];
-  routes: unknown[];
-  possessions: unknown[];
-  ports: unknown[];
-  technologies: unknown[];
+  rulesets: readonly unknown[];
+  nations: readonly unknown[];
+  areas: readonly unknown[];
+  routes: readonly unknown[];
+  possessions: readonly unknown[];
+  ports: readonly unknown[];
+  technologies: readonly unknown[];
   shipBuilding?: ShipBuildingCatalogue;
   campaign?: CampaignCollections;
   presentation?: PresentationContent;
@@ -130,6 +130,7 @@ export {
 } from "./releaseGate.js";
 export { safePath } from "./safePath.js";
 export { battleOffersFromRulesets } from "./battleOfferRules.js";
+export { fleetManagementFromRulesets } from "./fleetManagementRules.js";
 export { presenceFromRulesets, type PresenceValues } from "./presenceRules.js";
 export { discoverShipBuildingFiles, type ShipBuildingFileGroups } from "./shipBuildingDiscovery.js";
 export { buildFullSurfaceInput } from "./fullSurface.js";

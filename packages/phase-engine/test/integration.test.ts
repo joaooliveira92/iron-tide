@@ -12,7 +12,9 @@ import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence"
 import {
   FIXTURE_RULESETS_YAML,
   buildFixtureContentBundle,
+  failureTag,
   nationsYaml,
+  runSync,
 } from "@bluewave/test-support";
 import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
 import {
@@ -266,10 +268,7 @@ describe("Full-slice integration", () => {
       const saveResult = store.save(saveableState, saveDir);
       expect(saveResult.hash).toHaveLength(64);
 
-      const loadDiag = new DiagnosticCollector();
-      const loaded = store.load(saveDir, loadDiag);
-      expect(loaded).not.toBeNull();
-      expect(loadDiag.hasErrors).toBe(false);
+      expect(runSync(store.load(saveDir)).warnings).toEqual([]);
     } finally {
       rmSync(saveDir, { recursive: true, force: true });
     }
@@ -620,12 +619,7 @@ describe("Full-slice integration", () => {
       const originalContent = readFileSync(corruptStatePath, "utf8");
       writeFileSync(corruptStatePath, originalContent.replace(/"[^"]+"/g, '"corrupted"'), "utf8");
 
-      const loadDiag = new DiagnosticCollector();
-      const loaded = store.load(saveDir, loadDiag);
-      expect(loaded).toBeNull();
-
-      const corruptDiags = loadDiag.all.filter((d) => d.code === "PERSISTENCE_CORRUPT_SAVE");
-      expect(corruptDiags.length).toBeGreaterThanOrEqual(1);
+      expect(failureTag(store.load(saveDir))).toBe("PERSISTENCE_CORRUPT_SAVE");
     } finally {
       rmSync(saveDir, { recursive: true, force: true });
     }
@@ -649,10 +643,7 @@ describe("Full-slice integration", () => {
       const pointer = store.getActiveSaveId(saveDir);
       expect(pointer).not.toBeNull();
 
-      const loadDiag = new DiagnosticCollector();
-      const loaded = store.load(saveDir, loadDiag);
-      expect(loaded).not.toBeNull();
-      expect(loadDiag.hasErrors).toBe(false);
+      expect(runSync(store.load(saveDir)).warnings).toEqual([]);
 
       const loadedPtr = store.getActiveSaveId(saveDir);
       expect(loadedPtr).toBe(pointer);

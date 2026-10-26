@@ -11,9 +11,10 @@ const ZERO = "ZERO_MONTHLY_REVENUE";
 const codes = (c: DiagnosticCollector): string[] => c.all.map((d) => d.code as string);
 
 type NationRow = { id: string; name: string };
+type EconomyRows = Parameters<typeof buildNationStates>[2];
 type Economy = { nationId: string; treasury: number; income: number; expenses: number };
 
-function compile(nations: NationRow[], economies: unknown[]): DiagnosticCollector {
+function compile(nations: NationRow[], economies: EconomyRows): DiagnosticCollector {
   const pack = {
     nations: nations.map(({ id, name }) => ({ id, name, tag: id, isPlayable: true, prestige: 20 })),
   } as ContentPack;
@@ -128,7 +129,7 @@ describe("ZERO_MONTHLY_REVENUE through the compiler", () => {
   });
 
   it("is unchanged by relabelling a nation's display name or its canonical id", () => {
-    const rows = (id: string): unknown[] => [
+    const rows = (id: string): EconomyRows => [
       { nationId: id, treasury: 50, income: 3, expenses: 4 },
     ];
     const baseline = codes(compile([{ id: "alpha", name: "Alpha" }], rows("alpha")));
@@ -138,19 +139,19 @@ describe("ZERO_MONTHLY_REVENUE through the compiler", () => {
 });
 
 describe("shipped 1880 pack", () => {
-  const read = (file: string): unknown[] =>
+  const read = <T>(file: string): T =>
     parse(
       readFileSync(new URL(`../../../content/production/1880/${file}`, import.meta.url), "utf8"),
-    ) as unknown[];
+    ) as T;
 
   it("compiles without ZERO_MONTHLY_REVENUE, identically on repeated runs", () => {
     const run = (): DiagnosticCollector => {
-      const pack = { nations: read("countries.yaml") } as ContentPack;
+      const pack = { nations: read<ContentPack["nations"]>("countries.yaml") } as ContentPack;
       const collector = new DiagnosticCollector();
       buildNationStates(
         pack,
         [],
-        read("economies.yaml"),
+        read<EconomyRows>("economies.yaml"),
         [],
         [],
         [],

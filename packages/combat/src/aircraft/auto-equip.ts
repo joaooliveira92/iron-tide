@@ -3,6 +3,7 @@ import { AIRCRAFT_BASIS_POINTS_PER_UNIT, type AircraftType } from "./constants.j
 import { SQUADRON_AUTO_EQUIP_UNAVAILABLE } from "./reasonCodes.js";
 import type { AircraftModelDefinition } from "./model.js";
 import type { SquadronState } from "./state.js";
+import { compareStrings } from "../core/ordering.js";
 
 export const AUTO_EQUIP_STRENGTH_THRESHOLD_BP = 7_500 as const;
 
@@ -68,11 +69,11 @@ export function selectAutoEquipModel(input: AutoEquipSelectionInput): AutoEquipS
       if (roleFitB !== roleFitA) return roleFitB - roleFitA;
       const genA = a.introductionMonth;
       const genB = b.introductionMonth;
-      if (genB !== genA) return genB.localeCompare(genA);
+      if (genB !== genA) return compareStrings(genB, genA);
       const burdenA = SafeInt.add(a.productionWork, a.maintenanceRequirement);
       const burdenB = SafeInt.add(b.productionWork, b.maintenanceRequirement);
       if (Number(burdenB) !== Number(burdenA)) return Number(burdenA) - Number(burdenB);
-      return a.aircraftModelId.localeCompare(b.aircraftModelId);
+      return compareStrings(a.aircraftModelId, b.aircraftModelId);
     });
 
   return { selectedModel: ranked[0] ?? null };

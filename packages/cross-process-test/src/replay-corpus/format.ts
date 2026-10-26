@@ -1,6 +1,10 @@
 import { Data, Result, Schema, SchemaIssue } from "effect";
 
-export const REPLAY_FORMAT_VERSION = 1;
+export const REPLAY_FORMAT_VERSION = 2;
+export const SUPPORTED_REPLAY_FORMAT_VERSIONS = [1, 2] as const;
+
+export const REPLAY_SETUP_IDS = ["armed-adriatic-war"] as const;
+export type ReplaySetupId = (typeof REPLAY_SETUP_IDS)[number];
 
 const Hash = Schema.String.check(Schema.isPattern(/^[0-9a-f]{64}$/));
 const Count = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0));
@@ -16,9 +20,110 @@ const LedgerCheckpoint = Schema.Struct({
   ),
 );
 
+const Id = Schema.NonEmptyString;
+const Money = Schema.Int;
+
+const SetBudgetAllocationBody = Schema.Struct({
+  type: Schema.Literal("SetBudgetAllocation"),
+  nationId: Id,
+  appropriationRateBp: Money,
+  researchBudget: Money,
+});
+
+const SetResearchPriorityBody = Schema.Struct({
+  type: Schema.Literal("SetResearchPriority"),
+  nationId: Id,
+  fieldPriorities: Schema.Record(Schema.String, Money),
+  exactTechId: Schema.optional(Id),
+});
+
+const OrderConstructionBody = Schema.Struct({
+  type: Schema.Literal("OrderConstruction"),
+  nationId: Id,
+  designVersionId: Id,
+  quantity: Schema.Int,
+});
+
+const SetShipReadinessBody = Schema.Struct({
+  type: Schema.Literal("SetShipReadiness"),
+  nationId: Id,
+  shipIds: Schema.Array(Id),
+  readiness: Schema.Literals(["ACTIVE", "RESERVE", "MOTHBALLED"]),
+});
+
+const SetSpecialTrainingBody = Schema.Struct({
+  type: Schema.Literal("SetSpecialTraining"),
+  nationId: Id,
+  subjects: Schema.Array(Id),
+});
+
+const HoldFleetExerciseBody = Schema.Struct({
+  type: Schema.Literal("HoldFleetExercise"),
+  nationId: Id,
+  shipIds: Schema.Array(Id),
+});
+
+const ChangeDivisionDoctrineBody = Schema.Struct({
+  type: Schema.Literal("ChangeDivisionDoctrine"),
+  nationId: Id,
+  divisionId: Id,
+  divisionRole: Schema.optional(Id),
+  preferredFormation: Schema.optional(Id),
+});
+
+const AssignForeignStationBody = Schema.Struct({
+  type: Schema.Literal("AssignForeignStation"),
+  nationId: Id,
+  shipIds: Schema.Array(Id),
+});
+
+const ClearForeignStationBody = Schema.Struct({
+  type: Schema.Literal("ClearForeignStation"),
+  nationId: Id,
+  shipIds: Schema.Array(Id),
+});
+
+const DeclareWarBody = Schema.Struct({
+  type: Schema.Literal("DeclareWar"),
+  nationId: Id,
+  targetNationId: Id,
+});
+
+const MoveFleetBody = Schema.Struct({
+  type: Schema.Literal("MoveFleet"),
+  nationId: Id,
+  fleetId: Id,
+  toAreaId: Id,
+});
+
+export const ReplayCommandBodySchema = Schema.Union([
+  SetBudgetAllocationBody,
+  SetResearchPriorityBody,
+  OrderConstructionBody,
+  SetShipReadinessBody,
+  SetSpecialTrainingBody,
+  HoldFleetExerciseBody,
+  ChangeDivisionDoctrineBody,
+  AssignForeignStationBody,
+  ClearForeignStationBody,
+  DeclareWarBody,
+  MoveFleetBody,
+]);
+
+export const ReplayCommandEnvelopeSchema = Schema.Struct({
+  commandId: Id,
+  version: Id,
+  expectedSnapshotHash: Hash,
+  idempotencyKey: Id,
+  timestamp: Schema.String,
+  body: ReplayCommandBodySchema,
+});
+
+export type ReplayCommandEnvelope = typeof ReplayCommandEnvelopeSchema.Type;
+
 const MonthCheckpoint = Schema.Struct({
   turnNumber: Count,
-  commands: Schema.Array(Schema.Never),
+  commands: Schema.Array(ReplayCommandEnvelopeSchema),
   snapshotHash: Hash,
   ledgers: Schema.Struct({
     command: LedgerCheckpoint,
@@ -29,7 +134,7 @@ const MonthCheckpoint = Schema.Struct({
 });
 
 export const ReplayFileSchema = Schema.Struct({
-  formatVersion: Schema.Literal(REPLAY_FORMAT_VERSION),
+  formatVersion: Schema.Literals(SUPPORTED_REPLAY_FORMAT_VERSIONS),
   scenarioId: Schema.String,
   rulesetVersion: Schema.String,
   compatibilityVersion: Schema.String,
@@ -39,8 +144,12 @@ export const ReplayFileSchema = Schema.Struct({
     kind: Schema.Literal("production-pack"),
     pack: Schema.String,
     snapshotHash: Hash,
+    setup: Schema.optionalKey(Schema.Literals(REPLAY_SETUP_IDS)),
   }),
-  engineOptions: Schema.Struct({ kind: Schema.Literal("default") }),
+  engineOptions: Schema.Union([
+    Schema.Struct({ kind: Schema.Literal("default") }),
+    Schema.Struct({ kind: Schema.Literal("player"), playerNationId: Schema.String }),
+  ]),
   months: Schema.Array(MonthCheckpoint),
 });
 
@@ -64,10 +173,10 @@ export function decodeReplayFile(text: string): Result.Result<ReplayFile, Replay
   }
   if (typeof raw === "object" && raw !== null && "formatVersion" in raw) {
     const version = raw.formatVersion;
-    if (version !== REPLAY_FORMAT_VERSION) {
+    if (!(SUPPORTED_REPLAY_FORMAT_VERSIONS as readonly unknown[]).includes(version)) {
       return Result.fail(
         new ReplayFileError({
-          message: `Unsupported replay format version ${JSON.stringify(version)}; this build reads version ${String(REPLAY_FORMAT_VERSION)}`,
+          message: `Unsupported replay format version ${JSON.stringify(version)}; this build reads versions ${SUPPORTED_REPLAY_FORMAT_VERSIONS.join(", ")}`,
         }),
       );
     }
@@ -80,6 +189,17 @@ export function decodeReplayFile(text: string): Result.Result<ReplayFile, Replay
     });
     return Result.fail(
       new ReplayFileError({ message: `Replay file failed validation: ${issues.join("; ")}` }),
+    );
+  }
+  if (
+    decoded.success.formatVersion === 1 &&
+    decoded.success.months.some((m) => m.commands.length > 0)
+  ) {
+    return Result.fail(
+      new ReplayFileError({
+        message:
+          "Replay file failed validation: months.commands: format version 1 records no commands",
+      }),
     );
   }
   return Result.succeed(decoded.success);

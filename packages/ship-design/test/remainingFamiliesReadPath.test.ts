@@ -198,11 +198,11 @@ function designLoadout(design: Design): { platform: string; entries: LoadoutEntr
 }
 
 describe("fittings and sensors through the read path (ship-part-model 05)", () => {
-  it("covers the 566 non-gun, non-tube placements; with 230 guns and 29 tubes that is all 825", () => {
+  it("covers the 601 non-gun, non-tube placements; with 251 guns and 31 tubes that is all 883", () => {
     const all = designs.flatMap((d) => d.draft.placements);
-    expect(all.length).toBe(825);
-    expect(fittingRows.length).toBe(566);
-    expect(gunPlacements.length + 29 + fittingRows.length).toBe(825);
+    expect(all.length).toBe(883);
+    expect(fittingRows.length).toBe(601);
+    expect(gunPlacements.length + 31 + fittingRows.length).toBe(883);
     expect(fittingModel.unread).toEqual([]);
   });
 
@@ -689,7 +689,7 @@ describe("gun and launcher crew, volume and footprint (ship-part-model 05 over 0
         .filter((p) => categoryOf(p.componentId) === "TORPEDO_TUBE")
         .map((placement) => ({ design, placement })),
     );
-    expect(tubeRows.length).toBe(29);
+    expect(tubeRows.length).toBe(31);
     for (const { design, placement } of tubeRows) {
       const profile = present(
         navalProfiles.find((p) => p.nationId === design.draft.nationId),
@@ -769,11 +769,12 @@ describe("gun and launcher crew, volume and footprint (ship-part-model 05 over 0
 });
 
 describe("propulsion plants as parametric parts (ship-part-model 05)", () => {
-  it("reads the five plants with installed power as their one parameter and no quantity components", () => {
+  it("reads the six plants with installed power as their one parameter and no quantity components", () => {
     expect(plantModel.unread).toEqual([]);
     expect(plantModel.parts.map((p) => p.id)).toEqual([
       "compound_cylindrical",
       "compound_locomotive_tb",
+      "hp_steam_geared_turbine",
       "locomotive_boiler_tb",
       "triple_expansion_cylindrical",
       "triple_expansion_watertube",

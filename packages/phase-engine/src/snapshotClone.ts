@@ -24,6 +24,8 @@ import type {
   FleetState,
   IntelligenceState,
   NationState,
+  TrainingSubjectEntry,
+  FleetExerciseRecord,
   Officer,
   PermanentDivision,
   PoliticalState,
@@ -337,6 +339,8 @@ const F = {
     "foreignContractImpoundments",
     "aircraft",
     "carrierOperations",
+    "specialTraining",
+    "fleetExercise",
     "isPlayable",
     "isAI",
   ),
@@ -402,6 +406,7 @@ const F = {
     "defenderFleetIds",
     "manifestHash",
     "result",
+    "absences",
   ),
   BattleResult: fields<BattleResult>()(
     "winnerId",
@@ -721,6 +726,12 @@ const cloneNation = (n: NationState): NationState =>
       v === undefined
         ? undefined
         : (v as ForeignContractImpoundmentRecord[]).map(cloneForeignContractImpoundment),
+    fleetExercise: (v) =>
+      v === undefined
+        ? undefined
+        : { ...(v as FleetExerciseRecord), shipIds: [...(v as FleetExerciseRecord).shipIds] },
+    specialTraining: (v) =>
+      v === undefined ? undefined : (v as TrainingSubjectEntry[]).map((entry) => ({ ...entry })),
   });
 const cloneBattleResult = (r: BattleResult): BattleResult =>
   recordClone(r, F.BattleResult, {
@@ -732,6 +743,13 @@ const cloneBattleResult = (r: BattleResult): BattleResult =>
 const cloneBattle = (b: BattleInstance): BattleInstance =>
   recordClone(b, F.BattleInstance, {
     result: (v) => (v === undefined ? undefined : cloneBattleResult(v as BattleResult)),
+    absences: (v) =>
+      v === undefined
+        ? undefined
+        : (v as NonNullable<BattleInstance["absences"]>).map((a) => ({
+            shipId: a.shipId,
+            reasons: [...a.reasons],
+          })),
   });
 const cloneManifest = (m: BattleManifest): BattleManifest =>
   recordClone(m, F.BattleManifest, {

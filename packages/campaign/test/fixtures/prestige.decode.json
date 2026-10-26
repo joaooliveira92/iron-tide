@@ -1,0 +1,1470 @@
+{
+  "base": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "production value set": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 1000,
+      "sackingThreshold": 16,
+      "sackingProbabilityBp": 1000,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 300
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 1
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "valid DECLINED_BATTLE PROPORTIONAL_LOSS": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        },
+        "DECLINED_BATTLE": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 100
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON", "DECLINED_BATTLE"]
+  },
+  "valid DECLINED_BATTLE FIXED_GAIN": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        },
+        "DECLINED_BATTLE": {
+          "kind": "FIXED_GAIN",
+          "amount": 3
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON", "DECLINED_BATTLE"]
+  },
+  "valid DECLINED_BATTLE FIXED_LOSS": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        },
+        "DECLINED_BATTLE": {
+          "kind": "FIXED_LOSS",
+          "amount": 3
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON", "DECLINED_BATTLE"]
+  },
+  "DECLINED_BATTLE undefined": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "rules in another order": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "threshold at lowerBound": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 0,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "threshold at upperBound": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 100,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "probability zero": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 0,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "probability whole": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 10000,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "basisPoints zero": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 0
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "basisPoints whole": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 10000
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "amount zero": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 0
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "amount equals span": {
+    "ok": true,
+    "value": {
+      "lowerBound": 0,
+      "upperBound": 100,
+      "sackingThreshold": 10,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 100
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "nonzero lowerBound": {
+    "ok": true,
+    "value": {
+      "lowerBound": 10,
+      "upperBound": 60,
+      "sackingThreshold": 20,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 50
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  },
+  "null input": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "",
+      "message": "must be a record"
+    }
+  },
+  "undefined input": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "",
+      "message": "must be a record"
+    }
+  },
+  "number input": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "",
+      "message": "must be a record"
+    }
+  },
+  "string input": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "",
+      "message": "must be a record"
+    }
+  },
+  "array input": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "",
+      "message": "must be a record"
+    }
+  },
+  "empty object": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "Missing key"
+    }
+  },
+  "excess top-level key": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "extra",
+      "message": "Expected no excess property"
+    }
+  },
+  "two excess keys": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "zeta",
+      "message": "Expected no excess property"
+    }
+  },
+  "excess key before invalid field": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "extra",
+      "message": "Expected no excess property"
+    }
+  },
+  "omitted lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "Missing key"
+    }
+  },
+  "omitted upperBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "Missing key"
+    }
+  },
+  "omitted sackingThreshold": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "Missing key"
+    }
+  },
+  "omitted sackingProbabilityBp": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "Missing key"
+    }
+  },
+  "omitted rules": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules",
+      "message": "Missing key"
+    }
+  },
+  "undefined lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "Expected number"
+    }
+  },
+  "null lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "Expected number"
+    }
+  },
+  "string lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "Expected number"
+    }
+  },
+  "float lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "must be a safe integer"
+    }
+  },
+  "NaN lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "must be a safe integer"
+    }
+  },
+  "Infinity lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "must be a safe integer"
+    }
+  },
+  "unsafe lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "must be a safe integer"
+    }
+  },
+  "negative lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "must be from 0 to 9007199254740991"
+    }
+  },
+  "object lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "Expected number"
+    }
+  },
+  "undefined upperBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "Expected number"
+    }
+  },
+  "null upperBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "Expected number"
+    }
+  },
+  "string upperBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "Expected number"
+    }
+  },
+  "float upperBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "must be a safe integer"
+    }
+  },
+  "NaN upperBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "must be a safe integer"
+    }
+  },
+  "Infinity upperBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "must be a safe integer"
+    }
+  },
+  "unsafe upperBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "must be a safe integer"
+    }
+  },
+  "negative upperBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "must be from 0 to 9007199254740991"
+    }
+  },
+  "object upperBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "Expected number"
+    }
+  },
+  "undefined sackingThreshold": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "Expected number"
+    }
+  },
+  "null sackingThreshold": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "Expected number"
+    }
+  },
+  "string sackingThreshold": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "Expected number"
+    }
+  },
+  "float sackingThreshold": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "must be a safe integer"
+    }
+  },
+  "NaN sackingThreshold": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "must be a safe integer"
+    }
+  },
+  "Infinity sackingThreshold": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "must be a safe integer"
+    }
+  },
+  "unsafe sackingThreshold": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "must be a safe integer"
+    }
+  },
+  "negative sackingThreshold": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "must be from 0 to 9007199254740991"
+    }
+  },
+  "object sackingThreshold": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "Expected number"
+    }
+  },
+  "undefined sackingProbabilityBp": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "Expected number"
+    }
+  },
+  "null sackingProbabilityBp": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "Expected number"
+    }
+  },
+  "string sackingProbabilityBp": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "Expected number"
+    }
+  },
+  "float sackingProbabilityBp": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "must be a safe integer"
+    }
+  },
+  "NaN sackingProbabilityBp": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "must be a safe integer"
+    }
+  },
+  "Infinity sackingProbabilityBp": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "must be a safe integer"
+    }
+  },
+  "unsafe sackingProbabilityBp": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "must be a safe integer"
+    }
+  },
+  "negative sackingProbabilityBp": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "must be from 0 to 10000"
+    }
+  },
+  "object sackingProbabilityBp": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "Expected number"
+    }
+  },
+  "probability above whole": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "must be from 0 to 10000"
+    }
+  },
+  "upperBound equals lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "must be greater than lowerBound"
+    }
+  },
+  "upperBound below lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "upperBound",
+      "message": "must be greater than lowerBound"
+    }
+  },
+  "threshold below lowerBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "must be from 20 to 100"
+    }
+  },
+  "threshold above upperBound": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingThreshold",
+      "message": "must be from 0 to 100"
+    }
+  },
+  "lowerBound and upperBound both invalid": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "lowerBound",
+      "message": "Expected number"
+    }
+  },
+  "ordering failure before invalid probability": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "Expected number"
+    }
+  },
+  "threshold failure before invalid probability": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "Expected number"
+    }
+  },
+  "invalid probability before invalid rules": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "sackingProbabilityBp",
+      "message": "must be from 0 to 10000"
+    }
+  },
+  "ordering failure before invalid rules": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules",
+      "message": "Expected object"
+    }
+  },
+  "rules undefined": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules",
+      "message": "Expected object"
+    }
+  },
+  "rules null": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules",
+      "message": "Expected object"
+    }
+  },
+  "rules array": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules",
+      "message": "Expected object"
+    }
+  },
+  "rules string": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules",
+      "message": "Expected object"
+    }
+  },
+  "rules with excess code": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.OTHER",
+      "message": "Expected no excess property"
+    }
+  },
+  "excess code before invalid rule": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.OTHER",
+      "message": "Expected no excess property"
+    }
+  },
+  "missing UNPAID_FUNDS": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS",
+      "message": "Missing key"
+    }
+  },
+  "undefined UNPAID_FUNDS": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "missing BATTLE_LOST": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_LOST",
+      "message": "Missing key"
+    }
+  },
+  "undefined BATTLE_LOST": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_LOST",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "missing BATTLE_WON": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON",
+      "message": "Missing key"
+    }
+  },
+  "undefined BATTLE_WON": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "null rule UNPAID_FUNDS": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "array rule UNPAID_FUNDS": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "string rule UNPAID_FUNDS": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "number rule UNPAID_FUNDS": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "rule without kind UNPAID_FUNDS": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "rule with unknown kind UNPAID_FUNDS": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "rule with numeric kind UNPAID_FUNDS": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "unknown kind with excess key UNPAID_FUNDS": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "null rule DECLINED_BATTLE": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... } | undefined"
+    }
+  },
+  "array rule DECLINED_BATTLE": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... } | undefined"
+    }
+  },
+  "string rule DECLINED_BATTLE": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... } | undefined"
+    }
+  },
+  "number rule DECLINED_BATTLE": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... } | undefined"
+    }
+  },
+  "rule without kind DECLINED_BATTLE": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "rule with unknown kind DECLINED_BATTLE": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "rule with numeric kind DECLINED_BATTLE": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "unknown kind with excess key DECLINED_BATTLE": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "excess key in PROPORTIONAL_LOSS rule": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.extra",
+      "message": "Expected no excess property"
+    }
+  },
+  "excess key before invalid value in PROPORTIONAL_LOSS rule": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.amount",
+      "message": "Expected no excess property"
+    }
+  },
+  "excess key in optional PROPORTIONAL_LOSS rule": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.extra",
+      "message": "Expected no excess property"
+    }
+  },
+  "excess key in FIXED_GAIN rule": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.extra",
+      "message": "Expected no excess property"
+    }
+  },
+  "excess key before invalid value in FIXED_GAIN rule": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "Expected no excess property"
+    }
+  },
+  "excess key in optional FIXED_GAIN rule": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.extra",
+      "message": "Expected no excess property"
+    }
+  },
+  "excess key in FIXED_LOSS rule": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.extra",
+      "message": "Expected no excess property"
+    }
+  },
+  "excess key before invalid value in FIXED_LOSS rule": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "Expected no excess property"
+    }
+  },
+  "excess key in optional FIXED_LOSS rule": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.extra",
+      "message": "Expected no excess property"
+    }
+  },
+  "undefined basisPoints": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "Expected number"
+    }
+  },
+  "undefined FIXED_GAIN amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON.amount",
+      "message": "Expected number"
+    }
+  },
+  "undefined FIXED_LOSS amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.amount",
+      "message": "Expected number"
+    }
+  },
+  "null basisPoints": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "Expected number"
+    }
+  },
+  "null FIXED_GAIN amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON.amount",
+      "message": "Expected number"
+    }
+  },
+  "null FIXED_LOSS amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.amount",
+      "message": "Expected number"
+    }
+  },
+  "string basisPoints": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "Expected number"
+    }
+  },
+  "string FIXED_GAIN amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON.amount",
+      "message": "Expected number"
+    }
+  },
+  "string FIXED_LOSS amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.amount",
+      "message": "Expected number"
+    }
+  },
+  "float basisPoints": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "must be a safe integer"
+    }
+  },
+  "float FIXED_GAIN amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON.amount",
+      "message": "must be a safe integer"
+    }
+  },
+  "float FIXED_LOSS amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.amount",
+      "message": "must be a safe integer"
+    }
+  },
+  "NaN basisPoints": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "must be a safe integer"
+    }
+  },
+  "NaN FIXED_GAIN amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON.amount",
+      "message": "must be a safe integer"
+    }
+  },
+  "NaN FIXED_LOSS amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.amount",
+      "message": "must be a safe integer"
+    }
+  },
+  "Infinity basisPoints": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "must be a safe integer"
+    }
+  },
+  "Infinity FIXED_GAIN amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON.amount",
+      "message": "must be a safe integer"
+    }
+  },
+  "Infinity FIXED_LOSS amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.amount",
+      "message": "must be a safe integer"
+    }
+  },
+  "unsafe basisPoints": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "must be a safe integer"
+    }
+  },
+  "unsafe FIXED_GAIN amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON.amount",
+      "message": "must be a safe integer"
+    }
+  },
+  "unsafe FIXED_LOSS amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.amount",
+      "message": "must be a safe integer"
+    }
+  },
+  "negative basisPoints": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "must be from 0 to 10000"
+    }
+  },
+  "negative FIXED_GAIN amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON.amount",
+      "message": "must be from 0 to 9007199254740991"
+    }
+  },
+  "negative FIXED_LOSS amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.amount",
+      "message": "must be from 0 to 9007199254740991"
+    }
+  },
+  "object basisPoints": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "Expected number"
+    }
+  },
+  "object FIXED_GAIN amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON.amount",
+      "message": "Expected number"
+    }
+  },
+  "object FIXED_LOSS amount": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.amount",
+      "message": "Expected number"
+    }
+  },
+  "basisPoints above whole": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.basisPoints",
+      "message": "must be from 0 to 10000"
+    }
+  },
+  "FIXED_GAIN above span": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON.amount",
+      "message": "must be from 0 to 100"
+    }
+  },
+  "FIXED_LOSS above span": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.DECLINED_BATTLE.amount",
+      "message": "must be from 0 to 100"
+    }
+  },
+  "FIXED_GAIN amount with basisPoints key": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON.basisPoints",
+      "message": "Expected no excess property"
+    }
+  },
+  "PROPORTIONAL_LOSS with amount key": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS.amount",
+      "message": "Expected no excess property"
+    }
+  },
+  "first required rule wins": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.UNPAID_FUNDS",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "required rule before invalid optional": {
+    "ok": false,
+    "error": {
+      "tag": "PrestigeValueSetInvalid",
+      "field": "rules.BATTLE_WON",
+      "message": "Expected { readonly \"kind\": \"PROPORTIONAL_LOSS\", ... } | { readonly \"kind\": \"FIXED_GAIN\", ... } | { readonly \"kind\": \"FIXED_LOSS\", ... }"
+    }
+  },
+  "span-dependent amount with moved bounds": {
+    "ok": true,
+    "value": {
+      "lowerBound": 10,
+      "upperBound": 20,
+      "sackingThreshold": 15,
+      "sackingProbabilityBp": 2500,
+      "rules": {
+        "UNPAID_FUNDS": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 500
+        },
+        "BATTLE_LOST": {
+          "kind": "PROPORTIONAL_LOSS",
+          "basisPoints": 1000
+        },
+        "BATTLE_WON": {
+          "kind": "FIXED_GAIN",
+          "amount": 2
+        }
+      }
+    },
+    "ruleKeys": ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]
+  }
+}

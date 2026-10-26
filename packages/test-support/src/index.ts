@@ -1,13 +1,14 @@
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
-import {
-  buildContentBundleArtifact,
-  type CompilerInput,
-  type ContentBundle,
-} from "@bluewave/content-compiler";
-import type { BattleOfferRules } from "@bluewave/content-schema";
+import { buildContentBundleArtifact, type CompilerInput } from "@bluewave/content-compiler";
+import type {
+  BattleOfferRules,
+  CompiledContentBundle,
+  FleetManagementRules,
+} from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Effect, Exit, Result } from "effect";
 
 export interface FixtureDir {
   path: string;
@@ -348,7 +349,7 @@ export function buildFixtureContentBundle(
   input: CompilerInput,
   signal: AbortSignal,
   collector: DiagnosticCollector,
-): { bundle: ContentBundle; contentHash: string } {
+): { bundle: CompiledContentBundle; contentHash: string } {
   const artifact = buildContentBundleArtifact(input, signal, collector);
   if (!artifact) {
     throw new Error(
@@ -384,8 +385,54 @@ export const FIXTURE_BATTLE_OFFER_RULES: BattleOfferRules = {
   },
 };
 
+const fixtureTrainingSubject = (maintenanceAdderBp: number) => ({
+  maintenanceAdderBp,
+  effectBp: 1_000,
+});
+
+export const FIXTURE_FLEET_MANAGEMENT_RULES: FleetManagementRules = {
+  sectionVersion: 1,
+  divisionCohesion: { monthlyGrowth: 2, cap: 90 },
+  divisionExperience: { perBattle: 3, perExercise: 5 },
+  reorganisationPenalty: {
+    roleChange: { cohesion: 10, experience: 0 },
+    formationChange: { cohesion: 5, experience: 0 },
+  },
+  training: {
+    proficiencyMonths: 12,
+    maxSubjects: 2,
+    subjects: {
+      GUNNERY: fixtureTrainingSubject(3_000),
+      NIGHT_FIGHTING: fixtureTrainingSubject(2_000),
+      TORPEDO_TACTICS: fixtureTrainingSubject(2_000),
+      DAMAGE_CONTROL: fixtureTrainingSubject(2_000),
+    },
+  },
+  exercise: { maintenanceMultiple: 2, maxPerCalendarYear: 1 },
+  provenance: {
+    sourceStatus: "BALANCE_TARGET",
+    confidence: "LOW",
+    kind: "balance_adjustment",
+    sources: [],
+    note: "Fixture-class value for tests only.",
+  },
+};
+
 export function fixtureBattleOfferRules(
   estimateModel: BattleOfferRules["estimateModel"],
 ): BattleOfferRules {
   return { ...FIXTURE_BATTLE_OFFER_RULES, estimateModel };
+}
+
+export function runSync<A, E>(effect: Effect.Effect<A, E>): A {
+  return Effect.runSync(effect);
+}
+
+export function failureTag<A, E extends { readonly _tag: string }>(
+  effect: Effect.Effect<A, E>,
+): E["_tag"] | "success" | "defect" {
+  const exit = Effect.runSyncExit(effect);
+  if (Exit.isSuccess(exit)) return "success";
+  const found = Exit.findError(exit);
+  return Result.isSuccess(found) ? found.success._tag : "defect";
 }

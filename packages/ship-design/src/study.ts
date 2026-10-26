@@ -1,5 +1,6 @@
 import type { CompiledDesign, DesignDraft } from "./compile.js";
 import type { PropulsionPlant } from "./machinery.js";
+import { designInvariant } from "./errors.js";
 
 export interface StudyBalance {
   readonly costBp: number;
@@ -50,7 +51,7 @@ const ceilDiv = (a: number, b: number) => Math.floor((a + b - 1) / b);
 
 export function studyTerms(designCostUnits: number, derived: boolean, b: StudyBalance): StudyTerms {
   if (!Number.isSafeInteger(designCostUnits) || designCostUnits < 0)
-    throw new RangeError(`design cost must be a non-negative integer, got ${designCostUnits}`);
+    throw designInvariant(`design cost must be a non-negative integer, got ${designCostUnits}`);
   const baseStudyWork = b.baseWorkMonths;
   const baseStudyCost = Math.max(b.minFinalCost, ceilDiv(designCostUnits * b.costBp, 10_000));
   const discountBp = derived ? b.derivedDiscountBp : 0;

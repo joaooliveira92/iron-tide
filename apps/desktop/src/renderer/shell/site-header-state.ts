@@ -13,16 +13,12 @@ export interface CampaignMonth {
 
 export interface HeaderCampaign {
   readonly month: CampaignMonth;
-  readonly treasury: number;
-  readonly nationName: string;
-  readonly projectedSurplusDeficit: number;
   readonly atWar: boolean;
-  readonly activeAlertsCount: number | null;
   readonly prestige: PlayerProjection["prestige"];
   readonly career?: PlayerProjection["career"];
 }
 
-export type MetricIcon = "budget" | "prestige" | "tension" | "nation" | "alerts" | "balance";
+export type MetricIcon = "prestige";
 
 export interface HeaderMetric {
   readonly icon: MetricIcon;
@@ -117,7 +113,7 @@ export function describeSecondaryRow(
     case "playing":
       return {
         kind: "campaign",
-        metrics: campaignMetrics(campaign, format),
+        metrics: campaignMetrics(campaign),
         status:
           campaign?.atWar === true
             ? translate("shell.header.campaign.atWar")
@@ -175,45 +171,7 @@ function prestigeMetric(campaign: HeaderCampaign | null): HeaderMetric {
   };
 }
 
-function campaignMetrics(
-  campaign: HeaderCampaign | null,
-  format: PresentationFormat,
-): readonly HeaderMetric[] {
-  return [
-    {
-      icon: "nation",
-      label: translate("shell.header.metric.nation"),
-      value: campaign === null ? NO_VALUE : campaign.nationName,
-      placeholder: campaign === null,
-    },
-    {
-      icon: "budget",
-      label: translate("shell.header.metric.budget"),
-      value: campaign === null ? NO_VALUE : formatTreasury(campaign.treasury, format),
-      placeholder: campaign === null,
-    },
-    {
-      icon: "balance",
-      label: translate("shell.header.metric.balance"),
-      value:
-        campaign === null ? NO_VALUE : formatTreasury(campaign.projectedSurplusDeficit, format),
-      placeholder: campaign === null,
-    },
-    {
-      icon: "alerts",
-      label: translate("shell.header.metric.alerts"),
-      value:
-        campaign === null || campaign.activeAlertsCount === null
-          ? NO_VALUE
-          : String(campaign.activeAlertsCount),
-      placeholder: campaign === null || campaign.activeAlertsCount === null,
-    },
-    prestigeMetric(campaign),
-    {
-      icon: "tension",
-      label: translate("shell.header.metric.tension"),
-      value: NO_VALUE,
-      placeholder: true,
-    },
-  ];
+function campaignMetrics(campaign: HeaderCampaign | null): readonly HeaderMetric[] {
+  const prestige = prestigeMetric(campaign);
+  return prestige.alert === true ? [prestige] : [];
 }

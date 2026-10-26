@@ -4,10 +4,10 @@ import { join } from "node:path";
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function state(): CampaignState {
@@ -53,20 +53,18 @@ describe("SaveStore month input", () => {
     const input = { commands: [{ id: "c1", body: { b: 2, a: 1 } }], contentHash: "abc" };
     const { metadata } = store.save(state(), dir, undefined, { monthInput: input });
     expect(metadata.monthInputHash).toBe(sha256Hex(canonicalSerialize(input)));
-    const d = new DiagnosticCollector();
-    expect(store.loadMonthInput(dir, metadata.saveId, d)).toEqual({
+    expect(unwrapSuccess(runExit(store.loadMonthInput(dir, metadata.saveId)))).toEqual({
       status: "present",
       value: input,
     });
-    expect(d.all).toHaveLength(0);
-    expect(store.loadById(dir, metadata.saveId, new DiagnosticCollector())).not.toBeNull();
+    expect(unwrapSuccess(runExit(store.loadById(dir, metadata.saveId))).warnings).toHaveLength(0);
   });
 
   it("is absent on a save written without one (older saves, compile saves)", () => {
     const store = new SaveStore();
     const { metadata } = store.save(state(), dir);
     expect(metadata.monthInputHash).toBeUndefined();
-    expect(store.loadMonthInput(dir, metadata.saveId, new DiagnosticCollector())).toEqual({
+    expect(unwrapSuccess(runExit(store.loadMonthInput(dir, metadata.saveId)))).toEqual({
       status: "absent",
     });
   });
@@ -75,13 +73,16 @@ describe("SaveStore month input", () => {
     const store = new SaveStore();
     const { metadata, savePath } = store.save(state(), dir, undefined, { monthInput: { n: 1 } });
     writeFileSync(join(savePath, "month-input.json"), canonicalSerialize({ n: 2 }), "utf8");
-    const d = new DiagnosticCollector();
-    expect(store.loadMonthInput(dir, metadata.saveId, d).status).toBe("corrupt");
-    expect(d.all[0]?.message).toMatch(/does not match its hash/);
-    rmSync(join(savePath, "month-input.json"));
-    expect(store.loadMonthInput(dir, metadata.saveId, new DiagnosticCollector()).status).toBe(
-      "corrupt",
+    const error = expectFailureTag(
+      runExit(store.loadMonthInput(dir, metadata.saveId)),
+      "PERSISTENCE_CORRUPT_SAVE",
     );
-    expect(store.loadMonthInput(dir, "../x", new DiagnosticCollector()).status).toBe("corrupt");
+    expect(error.message).toMatch(/does not match its hash/);
+    rmSync(join(savePath, "month-input.json"));
+    expectFailureTag(
+      runExit(store.loadMonthInput(dir, metadata.saveId)),
+      "PERSISTENCE_CORRUPT_SAVE",
+    );
+    expectFailureTag(runExit(store.loadMonthInput(dir, "../x")), "PERSISTENCE_CORRUPT_SAVE");
   });
 });

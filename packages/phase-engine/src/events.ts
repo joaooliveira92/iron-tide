@@ -1,6 +1,10 @@
 import type { OutflowSettlement } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
-import type { DomainEventEnvelope, PrestigeChanged as PrestigeChangedBody } from "@bluewave/events";
+import type {
+  DivisionExperienceChanged as DivisionExperienceChangedBody,
+  DomainEventEnvelope,
+  PrestigeChanged as PrestigeChangedBody,
+} from "@bluewave/events";
 import type { LedgerTransactionInput } from "./financial-ledger.js";
 
 export const CURRENT_VERSION = "0.1.0" as const;
@@ -264,9 +268,9 @@ export function battleDeclinedEvent(
   battleId: string,
   missionType: string,
   areaId: string,
-  victoryPointCost: number,
-  opponentCredit: number,
-  declineCount: number,
+  victoryPointCost: SafeInt,
+  opponentCredit: SafeInt,
+  declineCount: SafeInt,
   seq: SafeInt,
   campaignMonth: string,
 ): DomainEventEnvelope {
@@ -298,7 +302,7 @@ export function enemyDeclinedBattleEvent(
   battleId: string,
   missionType: string,
   areaId: string,
-  enemyVictoryPointCost: number,
+  enemyVictoryPointCost: SafeInt,
   seq: SafeInt,
   campaignMonth: string,
 ): DomainEventEnvelope {
@@ -353,11 +357,41 @@ export function prestigeChangedEvent(
   };
 }
 
+export function divisionExperienceChangedEvent(
+  nationId: string,
+  divisionId: string,
+  sourceId: string,
+  reasonCode: DivisionExperienceChangedBody["reasonCode"],
+  change: { readonly before: SafeInt; readonly after: SafeInt; readonly delta: SafeInt },
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `DivisionExperienceChanged-${divisionId}-${sourceId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "division",
+    aggregateId: divisionId,
+    eventType: "DivisionExperienceChanged",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "DivisionExperienceChanged",
+      nationId,
+      divisionId,
+      sourceId,
+      reasonCode,
+      before: change.before,
+      after: change.after,
+      delta: change.delta,
+    },
+    sequenceNumber: seq,
+  };
+}
+
 export function declineThresholdReachedEvent(
   nationId: string,
   battleId: string,
-  count: number,
-  threshold: number,
+  count: SafeInt,
+  threshold: SafeInt,
   scope: "WAR" | "NATION" | "CAMPAIGN",
   rulesetVersion: string,
   seq: SafeInt,

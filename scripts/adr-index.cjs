@@ -37,7 +37,7 @@ const AREAS = [
   {
     name: "Scope & horizon",
     blurb: "The sole 1880 start, the 1970 authored horizon, and the ten-nation roster.",
-    nums: [201, 204, 205, 214, 282, 283],
+    nums: [201, 204, 205, 214, 282, 283, 284],
   },
   {
     name: "Values, currency & language",
@@ -58,13 +58,15 @@ const AREAS = [
   {
     name: "Process & documentation",
     blurb: "Concurrent-agent worktree coordination and repository process rules.",
-    nums: [220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 278, 279, 280],
+    nums: [
+      220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 278, 279, 280, 295, 299, 300,
+    ],
   },
   {
     name: "Scenario content & research",
     blurb:
       "Legality, consistency and authored posture of the 1880 scenario's starting content and research state.",
-    nums: [212, 213, 228, 229],
+    nums: [212, 213, 228, 229, 285],
   },
   {
     name: "Campaign economy",
@@ -75,13 +77,16 @@ const AREAS = [
   {
     name: "Turns, interruptions & save/resume",
     blurb: "Turn identity, the suspend/resume interruption model, and strict save-file decoding.",
-    nums: [222, 235, 278],
+    nums: [222, 235, 278, 285],
   },
   {
     name: "Fleet readiness, command & prestige",
     blurb:
       "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
-    nums: [223, 224, 225, 226, 239, 245, 260, 261, 281],
+    nums: [
+      223, 224, 225, 226, 239, 245, 260, 261, 281, 283, 286, 287, 288, 289, 290, 291, 292, 293, 296,
+      297, 298, 301, 302, 303, 304,
+    ],
   },
   {
     name: "Foreign stations & presence",
@@ -106,7 +111,7 @@ const AREAS = [
   {
     name: "Engine architecture",
     blurb: "Package interfaces, seams and module depth across the engine.",
-    nums: [271, 272, 273, 276, 277],
+    nums: [271, 272, 273, 276, 277, 294],
   },
 ];
 

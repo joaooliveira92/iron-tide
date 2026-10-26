@@ -1,6 +1,7 @@
 import type {
   BudgetCommandOutcome,
   BudgetScreenProjection,
+  TreasuryCommitments,
 } from "../../../shared/budget-contract.js";
 import type { RequestLifecycle } from "../../lib/command-screen-workflow.js";
 
@@ -9,6 +10,7 @@ export interface BudgetPolicyState extends RequestLifecycle {
   readonly researchBudget: number;
   readonly bounds: BudgetScreenProjection["bounds"];
   readonly researchCaps: BudgetScreenProjection["researchCaps"];
+  readonly commitments: TreasuryCommitments | null;
 }
 
 export function initialBudgetPolicyState(): BudgetPolicyState {
@@ -23,6 +25,7 @@ export function initialBudgetPolicyState(): BudgetPolicyState {
       researchBudgetMax: 0,
     },
     researchCaps: [],
+    commitments: null,
     pendingRequest: null,
     requiresRefresh: false,
     notice: null,
@@ -37,6 +40,7 @@ export function projectBudgetPolicy(
     researchBudget: projection.researchBudget,
     bounds: projection.bounds,
     researchCaps: projection.researchCaps,
+    commitments: projection.commitments,
   };
 }
 

@@ -91,10 +91,10 @@ function readWorkflowTexts() {
 if (process.argv[1] && import.meta.filename === process.argv[1]) {
   try {
     const { scripts } = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8"));
-    if (typeof scripts?.check !== "string") {
-      throw new Error("root package.json has no `check` script");
+    if (typeof scripts?.["check:steps"] !== "string") {
+      throw new Error("root package.json has no `check:steps` script");
     }
-    const steps = parseCheckSteps(scripts.check);
+    const steps = parseCheckSteps(scripts["check:steps"]);
     const uncovered = findUncoveredSteps({ steps, workflowTexts: readWorkflowTexts() });
     if (uncovered.length > 0) {
       for (const step of uncovered) {

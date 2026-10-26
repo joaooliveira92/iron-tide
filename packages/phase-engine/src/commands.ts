@@ -6,13 +6,13 @@ import type {
 } from "@bluewave/campaign";
 import {
   applyCommanderChange,
-  ConstructionProjectTransitionError,
   DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE,
   fleetMoveProblem,
   isTerminalConstructionProjectStatus,
   monthlyRevenue,
   researchCap,
   transitionConstructionProject,
+  tryTransitionConstructionProject,
   VACANT,
 } from "@bluewave/campaign";
 import type {
@@ -37,6 +37,7 @@ import {
 } from "@bluewave/ship-design";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Result } from "effect";
 import { buildDesignVersion, pricingFor } from "./designVersion.js";
 import { startDesignStudy, studyExists } from "./designStudies.js";
 import { fundConstructionProject } from "./constructionFunding.js";
@@ -471,19 +472,15 @@ function setProjectStatus(
   collector: DiagnosticCollector,
   clearDelayReason = false,
 ): CampaignSnapshot {
-  let updated: ConstructionProject;
-  try {
-    updated = transitionConstructionProject(project, to);
-  } catch (error) {
-    if (ConstructionProjectTransitionError.is(error)) {
-      collector.addError("INVALID_DOCKYARD_PROJECT_TRANSITION", error.message, {
-        stage: "command_collection",
-        entityId: project["id"],
-      });
-      return currentSnapshot;
-    }
-    throw error;
+  const transitioned = tryTransitionConstructionProject(project, to);
+  if (Result.isFailure(transitioned)) {
+    collector.addError("INVALID_DOCKYARD_PROJECT_TRANSITION", transitioned.failure.message, {
+      stage: "command_collection",
+      entityId: project["id"],
+    });
+    return currentSnapshot;
   }
+  let updated: ConstructionProject = transitioned.success;
   if (updated === project) return currentSnapshot;
   if (clearDelayReason) {
     const cleared: ConstructionProject = { ...updated };

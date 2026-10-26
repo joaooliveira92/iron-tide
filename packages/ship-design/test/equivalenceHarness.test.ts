@@ -46,7 +46,7 @@ const codes = (r: EquivalenceReport) =>
     .map((f) => f.code);
 
 describe("equivalence harness over current content (ticket 08)", () => {
-  it("covers 92/92 designs and 825/825 placements, and the pinned slices", () => {
+  it("covers 96/96 designs and 883/883 placements, and the pinned slices", () => {
     expect(report.schema).toBe(EQUIVALENCE_REPORT_SCHEMA);
     expect(report.coverage.baseline).toEqual(PINNED_COVERAGE);
     expect(report.coverage.candidate).toEqual(PINNED_COVERAGE);
@@ -66,7 +66,7 @@ describe("equivalence harness over current content (ticket 08)", () => {
     expect(result.semantic).toEqual([]);
   });
 
-  it("reclassifies only the D18 identity paths of the nine, with old and new values", () => {
+  it("reclassifies only the D18 identity paths of the twelve, with old and new values", () => {
     const rows = report.designs.flatMap((d) => d.rows.filter((r) => r.status === "reclassified"));
     expect(rows.length).toBeGreaterThan(0);
     for (const r of rows) {
@@ -76,7 +76,7 @@ describe("equivalence harness over current content (ticket 08)", () => {
     const nine = report.designs.flatMap((d) =>
       d.entries.filter((e) => e.disposition === "RECLASSIFIED_AS_CENTRAL_BATTERY"),
     );
-    expect(nine).toHaveLength(9);
+    expect(nine).toHaveLength(12);
     const perDesign = report.designs
       .map((d) => [
         d.designId,
@@ -88,6 +88,7 @@ describe("equivalence harness over current content (ticket 08)", () => {
       ["mesudiye_1875", 3],
       ["redoutable_1878", 2],
       ["sachsen_1878", 2],
+      ["starter_ca_usa_1948", 3],
     ]);
     const paths = new Set(rows.map((r) => r.path.replace(/\[[^\]]*\]/, "[]")));
     expect([...paths].every((p) => /\.(mountType|mountId)$/.test(p))).toBe(true);
@@ -98,7 +99,7 @@ describe("equivalence harness over current content (ticket 08)", () => {
   });
 
   it("keeps data quality separate with independent armament, magazine and waiver counts", () => {
-    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(162);
+    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(183);
     expect(
       report.dataQuality.unresolvedGunPlacements.every(
         (u) => u.code === "PART_READ_PATH_NO_FIRST_CLASS_ARMAMENT",

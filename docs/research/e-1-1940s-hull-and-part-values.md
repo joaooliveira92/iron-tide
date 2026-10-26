@@ -1,0 +1,298 @@
+# E-1 research: 1940-1949 hull forms and part values
+
+## Status
+
+- Prepared for ticket #254 under decision request 0041, Option A. Date of pass: 2026-10-23.
+- Scope: destroyer, light cruiser, heavy cruiser and battleship hull forms; 5-inch DP, 6-inch and 8-inch automatic-loading guns and
+  mounts; a 21-inch acoustic homing torpedo and its launcher; a high-pressure steam plant; all-welded hull construction.
+- Every value below was read on the cited page during this pass. Conway's, Friedman and the official OP pamphlets were not reachable
+  online, so no value is cited to them; where the dossier names them they stay as the cheapest way to close a gap.
+- Labels follow the pack convention: VERIFIED (two sources agree), SINGLE-SOURCE, DERIVED (arithmetic shown), BALANCE TARGET
+  (ADR-0213, ADR-0283 D2), UNSOURCED (nothing found; not authorable). Schema units are um, g, mL and milli-knots.
+- The only 193x parts in the pack are four torpedoes, all `BALANCE_TARGET`. No 5"/38 or 6"/47 gun exists in the pack although both
+  entered service before 1940.
+
+Sources (all fetched 2026-10-23): NW-5 https://www.navweaps.com/Weapons/WNUS_5-38_mk12.php; NW-6
+https://www.navweaps.com/Weapons/WNUS_6-47DP_mk16.php; NW-8 https://www.navweaps.com/Weapons/WNUS_8-55_mk16.php; NW-TW
+https://www.navweaps.com/Weapons/WTUS_WWII.php; NW-TP https://www.navweaps.com/Weapons/WTUS_PostWWII.php; NW-TG
+https://www.navweaps.com/Weapons/WTGER_WWII.php; NP (Navypedia, secondary) https://www.navypedia.org/ships/usa/us_dd_gearing.htm,
+us_cr_worcester.htm, us_cr_des_moines.htm, us_bb_iowa.htm; NS (NavSource) https://www.navsource.net/archives/05/445.htm,
+04/144/04144.htm, 04/134/04134.htm; DHF https://destroyerhistory.org/fletcherclass/index.asp?pid=200 (quotes Friedman); NHSA
+https://navyhistory.au/the-fletcher-class-destroyers/ (Naval Historical Review, Dec 1981).
+
+## 1. 5-inch/38 dual-purpose gun (US Mark 12)
+
+Gun-model and part spec fields. Source NW-5 unless stated.
+
+| Field | Value | Unit | Source | Confidence |
+|---|---|---|---|---|
+| caliberUm | 127,000 | um | NW-5 "5"/38 (12.7 cm) Mark 12" | SINGLE-SOURCE |
+| barrelLengthCalibers | 38 | cal | NW-5 designation; bore 190 in | SINGLE-SOURCE |
+| gunMassKg | 1,810 | kg | NW-5 "Gun Weight 3,990 lbs. (1,810 kg) without breech"; with-breech weight not on page | SINGLE-SOURCE, partial |
+| nominalMuzzleVelocity | 792 new, 762 average | m/s | NW-5 "2,600 fps (792 mps)", "2,500 fps (762 mps)" | SINGLE-SOURCE |
+| mechanicalRateOfFireX100 | 1,200-1,500 pedestal mounts; 1,500-2,200 base-ring mounts with hoists | rpm x100 | NW-5 "12-15", "15-22 rounds per minute" | SINGLE-SOURCE (range, not a point) |
+| shellMassG | 25,000 | g | NW-5 AAC Mark 35 "55.18 lbs. (25.0 kg)"; Common Mark 32 24.5 kg | SINGLE-SOURCE |
+| propellantChargeBp | 2,760-2,812 | bp | DERIVED: charge 6.9-7.03 kg over shell 25.0 kg, assuming the field is charge over shell mass (convention inferred from existing rows, not confirmed) | DERIVED |
+| introductionMonth | design c.1932, service 1934; DP twin mounts to 1945 | year | NW-5 "Date In Service 1934"; dossier D3 gives 1945 for the mount | VERIFIED year; mount year BALANCE TARGET |
+| roundVolumeMl | none | mL | NW-5 gives case 127 x 679 mm and projectile 20.75 in but no complete-round volume | UNSOURCED |
+| reliabilityBp | none | bp | NW-5 says only "highly reliable, robust and accurate" (1945 BuOrd report) | UNSOURCED |
+| gun cost | none | micro | no source on either page | UNSOURCED |
+
+Count: 8 sourced or derived, 3 unsourced.
+
+## 2. 5-inch twin mounts (Mark 32 / Mark 38, destroyers and cruisers)
+
+| Field | Value | Unit | Source | Confidence |
+|---|---|---|---|---|
+| gunCount | 2 | n | NW-5 "twin mounting" | SINGLE-SOURCE |
+| total mount mass | Mk 38 Mod 0 43,409; Mk 32 Mod 0 47,899; Mk 32 Mod 4 54,598 | kg | NW-5 "Mark 38 Mod 0: 95,700 lbs. (43,409 kg)" and Mk 32 lines | SINGLE-SOURCE |
+| elevationMinDeg / MaxDeg | -15 / +85 | deg | NW-5 "Twin mounts (all except Mark 22): -15 / +85 degrees" | SINGLE-SOURCE |
+| firingArcDeg | 284-330 destroyers; about 300 bow/stern and 160 broadside on cruisers | deg | NW-5 train notes | SINGLE-SOURCE, depends on position |
+| mass split, topWeightKg, supportedArmorMm, hullSpaceUsageLitre, stabilityContributionKgM, modifiers, protection, vulnerability, crew, cost | none | - | total only (guns included or not is unstated); crew positions named without counts | UNSOURCED |
+| introductionMonth (mount) | 1945 | year | dossier D3, ADR-0283 D2; Mk 38 date not on the page | BALANCE TARGET |
+
+Count: 5 sourced, 12 unsourced (base split, per-gun split, topWeight, armour, hull space, stability, rate modifier, ammo modifier,
+protection, vulnerability, crew, cost).
+
+## 3. 6-inch automatic-loading gun (US 6"/47 DP Mark 16, Worcester)
+
+Source NW-6 (DP page) unless stated. The page does not describe loading as fully automatic: "Projectiles are manually loaded into the
+tray, and powder cases are mechanically loaded." The "automatic-loading" label in the dossier is therefore SINGLE-SOURCE
+(Friedman, Postwar Naval Revolution) and not confirmed here.
+
+| Field | Value | Unit | Source | Confidence |
+|---|---|---|---|---|
+| caliberUm | 152,000 | um | NW-6 "6"/47" | SINGLE-SOURCE |
+| barrelLengthCalibers | 47 (bore 282.3 in = 7.169 m) | cal | NW-6 | SINGLE-SOURCE |
+| gunMassKg | 6,600 | kg | NW-6 "Gun weight: 6.5 tons (6.6 mt)" | SINGLE-SOURCE |
+| nominalMuzzleVelocity | AP 762; HC 812 | m/s | NW-6 "2,500 fps (762 mps)", "2,665 fps (812 mps)" | SINGLE-SOURCE |
+| mechanicalRateOfFireX100 | 1,200 | rpm x100 | NW-6 "Rate of fire: 12 rounds per minute" (non-DP 6"/47: 8-10) | SINGLE-SOURCE |
+| shellMassG | AP 59,000; HC 47,600 | g | NW-6 projectile list | SINGLE-SOURCE |
+| propellantChargeBp | 2,542 (AP) / 3,151 (HC) | bp | DERIVED: charge 15.0 kg over 59.0 kg; over 47.6 kg; same convention caveat as section 1 | DERIVED |
+| introductionMonth | 1948 | year | NW-6 "In service: 1948"; matches dossier 1948 | VERIFIED |
+| reliabilityBp | none | bp | NW-6 only says "did not prove reliable in service"; no rate | UNSOURCED |
+| roundVolumeMl, gun cost | none | - | no complete-round figure on the page | UNSOURCED |
+
+Count: 8 sourced or derived, 3 unsourced.
+
+## 4. 6-inch twin turret (Mark 16 DP, Worcester class)
+
+| Field | Value | Unit | Source | Confidence |
+|---|---|---|---|---|
+| gunCount | 2 | n | NW-6 | SINGLE-SOURCE |
+| total mount mass | 208.5 tons (212 mt) | t | NW-6 "Weight: 208.5 tons (212 mt)" | SINGLE-SOURCE |
+| elevationMinDeg / MaxDeg | -5 / +78 | deg | NW-6 | SINGLE-SOURCE |
+| firingArcDeg | about 300 (train +150/-150) | deg | NW-6 | SINGLE-SOURCE |
+| crew | 21 per mounting | persons | NW-6 "21 per mounting (10 ... 11 ...)" | SINGLE-SOURCE |
+| introductionMonth | 1948 | year | NW-6 | VERIFIED with section 3 |
+| mass split, topWeightKg, hullSpaceUsageLitre, stabilityContributionKgM, supportedArmorMm, modifiers, protection, vulnerability, cost | none | - | total only; armour given for Cleveland, not Worcester | UNSOURCED |
+
+Count: 7 sourced, 10 unsourced.
+
+## 5. 8-inch automatic-loading gun (US 8"/55 RF Mark 16, Des Moines)
+
+Source NW-8.
+
+| Field | Value | Unit | Source | Confidence |
+|---|---|---|---|---|
+| caliberUm | 203,000 | um | NW-8 "8"/55 (20.3 cm)" | SINGLE-SOURCE |
+| barrelLengthCalibers | 55 (bore 440.1 in = 11.179 m) | cal | NW-8 | SINGLE-SOURCE |
+| gunMassKg | 17,400 | kg | NW-8 "Gun weight: 17.14 tons (17.4 mt)" | SINGLE-SOURCE |
+| nominalMuzzleVelocity | AP 762; HC 823 | m/s | NW-8 "2,500 fps (762 mps)", "2,700 fps (823 mps)" | SINGLE-SOURCE |
+| mechanicalRateOfFireX100 | 1,000 | rpm x100 | NW-8 "Rate of fire: 10 rounds per minute" | SINGLE-SOURCE |
+| shellMassG | AP 152,000; HC and SP Common 118,000 | g | NW-8 "335 lbs (152 kg)", "260 lbs (118 kg)" | SINGLE-SOURCE |
+| propellantChargeBp | 2,296 (AP) / 2,958 (HC) | bp | DERIVED: charge 34.9 kg over 152 kg; over 118 kg; caveat as section 1 | DERIVED |
+| introductionMonth | 1948 | year | NW-8 "Service entry: 1948"; matches dossier 1948 | VERIFIED |
+| reliabilityBp, roundVolumeMl, gun cost | none | - | not on the page | UNSOURCED |
+
+Count: 8 sourced or derived, 3 unsourced.
+
+## 6. 8-inch triple turret (Mark 16, Des Moines class)
+
+| Field | Value | Unit | Source | Confidence |
+|---|---|---|---|---|
+| gunCount | 3 | n | NW-8 "Guns per mount: 3" | SINGLE-SOURCE |
+| total mount mass | 451 tons (458 mt) | t | NW-8 | SINGLE-SOURCE |
+| elevationMinDeg / MaxDeg | -5 / +41 | deg | NW-8 | SINGLE-SOURCE |
+| firingArcDeg | about 300 (train +-150) | deg | NW-8 | SINGLE-SOURCE |
+| crew | about 44 | persons | NW-8 | SINGLE-SOURCE |
+| introductionMonth | 1948 | year | NW-8 | VERIFIED with section 5 |
+| mass split, topWeightKg, hullSpaceUsageLitre, stabilityContributionKgM, supportedArmorMm, modifiers, protection, vulnerability, cost | none | - | not on the page | UNSOURCED |
+
+Count: 7 sourced, 10 unsourced.
+
+## 7. 21-inch acoustic homing torpedo
+
+Surprise: no 21-inch acoustic homer was in service before 1945 and none for surface-ship tubes before 1949. The 1943 US homers
+(Mark 24, Mark 27) are 19-inch; the Mark 28 (1945, 21-inch, 1,270 kg, 265 kg HBX, 4,000 yd at 19.6 kn) is submarine-only (NW-TW); the
+German T5 (1943, 21-inch, 7.186 m, 200 kg Hexanite, 5,700 m at 24-25 kn) is submarine-only with no weight given (NW-TG). The Mark 35 is
+used here.
+
+Mark 35 values from NW-TP.
+
+| Field | Value | Unit | Source | Confidence |
+|---|---|---|---|---|
+| diameterUm | 533,000 | um | NW-TP heading "Mark 35 (21" / 53.3 cm)" | SINGLE-SOURCE |
+| massKg | 803 | kg | NW-TP "1,770 lbs. (803 kg)" | SINGLE-SOURCE |
+| warheadExplosiveMassKg | 122.5 | kg | NW-TP "270 lbs. (122.5 kg) HBX" | SINGLE-SOURCE |
+| warheadType | HBX | enum | NW-TP | SINGLE-SOURCE (HBX may not be an existing enum value) |
+| propulsionType | electric battery, seawater | enum | NW-TP "Electric-battery, seawater" | SINGLE-SOURCE |
+| guidanceCapability | active and passive acoustic, spiral search | enum | NW-TP | SINGLE-SOURCE |
+| speedSettings | one setting: 15,000 yd (13,710 m) at 27 kn (27,000 milli-knots) | m, mkn | NW-TP | SINGLE-SOURCE |
+| launchTypes | submarines and surface ships | text | NW-TP "Launch platform"; tube type not stated | SINGLE-SOURCE, partial |
+| introductionMonth | 1949 (design 1946) | year | NW-TP | SINGLE-SOURCE |
+| warheadExplosiveEquivalentMassKg | none | kg | no HBX-to-TNT equivalence on the page | UNSOURCED |
+| minimumArmingDistanceM | none | m | NW-TP: not covered | UNSOURCED |
+| reliabilityBp | none | bp | NW-TP: not covered | UNSOURCED |
+| tubeHitHazardPolicy | none | enum | not covered | UNSOURCED |
+
+Count: 10 sourced, 4 unsourced.
+
+## 8. Torpedo launcher (21-inch)
+
+Only the bore and the dossier year were established; the launcher itself was not researched in this pass.
+
+| Field | Value | Unit | Source | Confidence |
+|---|---|---|---|---|
+| boreDiameterUm | 533,400 | um | DERIVED: 21 in x 25,400; NW-TP gives 21 in / 53.3 cm | DERIVED |
+| launchType | not stated for the Mark 35 | enum | NW-TP names platforms only | UNSOURCED |
+| tube_mass, stowed_torpedo_mass (803 kg is sourced for the torpedo), tube_cost, tube_crew, tube_volume, tube_deck_footprint | none | - | no tube data fetched | UNSOURCED |
+
+Count: 1 sourced, 7 unsourced (launchType and the six tube quantities, the stowed mass being the Mark 35 mass once the launcher
+holds one).
+
+## 9. High-pressure steam plant (Fletcher and Gearing era)
+
+| Field | Value | Unit | Source | Confidence |
+|---|---|---|---|---|
+| fuelType | oil | enum | NP Gearing "740 t of oil" | SINGLE-SOURCE |
+| steam conditions (no schema field) | 650 psi / 850 F | psi, F | NHSA "650 psi with a final steam temperature of 850F" | SINGLE-SOURCE; other sites say 600 psi, not fetched |
+| reference installed power | 60,000 shp (44,742 kW) per ship, two shafts, four boilers | shp | VERIFIED: NS (Fletcher), DHF "Designed Shaft Horsepower: 60,000", NP (Gearing) | VERIFIED |
+| maxKw ceiling candidates | 44,742 destroyer; 89,484 cruisers (120,000 shp, four shafts, NS, NP); 158,084 battleship (212,000 shp, NP Iowa) | kW | DERIVED at 0.7457 kW per shp | DERIVED, ship totals not per-plant limits |
+| introduction.fromMonth | 1940 | year | dossier "High-pressure steam plant 1940", ADR-0283 D2 | BALANCE TARGET |
+| weightMilliKgPerKw | none | - | no plant weight found; NHSA says only "machinery could be made lighter" | UNSOURCED |
+| volumeLitrePerKw | none | - | none | UNSOURCED |
+| sfcGramPerKwh curve | none | - | no fuel-rate data found; 740 t fuel and 4,500 nm at 20 kn (NP) lack the power at 20 kn | UNSOURCED |
+| reliabilityBp | none | - | none | UNSOURCED |
+| minKw | none | - | none | UNSOURCED |
+
+Count: 3 sourced or derived (fuel type, maxKw ceilings, year as balance target), 5 unsourced.
+
+## 10. Hull forms
+
+Reference ships fetched. Lengths in metres from NP unless noted; draught is full load.
+
+| Ship (role) | Std displacement | Length wl / oa | Beam | Draught | Power | Speed | Source |
+|---|---|---|---|---|---|---|---|
+| Gearing DD | 2,616 t | 116.7 / 119.0 m | 12.5 m | 4.37 m | 60,000 shp | 36.8 kn | NP Gearing, SINGLE-SOURCE |
+| Fletcher DD | 2,050 t normal | 112.5 pp (369 ft) / 114.7 m (376 ft 5.5 in) | 12.0 m (39 ft 4.5 in) | 4.09 m mean (13 ft 5 in) | 60,000 shp | 38 kn | DHF; oa and shp agree with NS: VERIFIED |
+| Worcester CL | 14,700 t | 202.4 / 207.1 m | 21.5 m | 7.54 m | 120,000 hp | 33 kn | NP; NS agrees on 14,700 t, 679 ft 6 in oa: VERIFIED |
+| Des Moines CA | 17,255 t | 213.4 / 218.4 m | 23.0 m | 7.92 m | 120,000 hp | 33 kn | NP; NS gives 716 ft 6 in oa and 76 ft 4 in beam (23.3 m), a 0.3 m beam discrepancy |
+| Iowa BB | 48,110 t | 262.1 / 270.4 m | 33.0 m | 11.0 m | 212,000 shp | 32.5 kn | NP Iowa, SINGLE-SOURCE |
+
+Derived (seawater 1,025 kg/m3 from `balance.yaml`; NP full-load displacement Gearing 3,460 t, Worcester 17,997 t, Des Moines 20,934 t, Iowa 57,540 t):
+
+| Ship | L/B | B/T | Block coefficient at full load |
+|---|---|---|---|
+| Gearing | 9.34 | 2.86 | 0.530 |
+| Worcester | 9.41 | 2.85 | 0.535 |
+| Des Moines | 9.28 | 2.90 | 0.525 |
+| Iowa | 7.94 | 3.00 | 0.590 |
+
+Fields per form (destroyer, light cruiser, heavy cruiser, battleship), identical status for all four:
+
+| Field | Status | How |
+|---|---|---|
+| lengthMinMm, lengthMaxMm | anchored | the reference lengths above; the band edges are an owner choice, UNSOURCED |
+| lbMinX100, lbMaxX100 | anchored | reference L/B above; band edges are an owner choice, UNSOURCED |
+| formBp | UNSOURCED | the pack fits it to a published hull-weight fraction at reference dimensions (hull.ts `hullStructureWeight`); no hull-structure weight for any ship above was found |
+| waterplaneCoeffBp, sheerBp, volumeFullnessBp, deckFullnessBp, lcbPermille | UNSOURCED | no source on any page gives them; the 1880 forms label the same fields BALANCE TARGET |
+| zones | reuse | the shared gameplay abstraction (`zones: *a1`), not historical data |
+| blockCoeffBp (HullSpec, per design) | DERIVED | the block coefficients above, for the reference designs only |
+
+Count per form: 0 coefficient fields sourced, 4 band fields anchored but needing an owner choice, 6 coefficient fields unsourced.
+
+## 11. All-welded hull construction
+
+| Field | Value | Source | Confidence |
+|---|---|---|---|
+| availability year | 1941 | dossier row "All-welded hull construction 1941", ADR-0283 D2 | BALANCE TARGET |
+| hull-weight effect | none | no schema key models welding: `ship.hull.schemeBp` holds transverse, mixed and longitudinal only, `materialBp` holds iron, mild steel, high tensile | UNSOURCED |
+
+Count: 1 sourced year, 1 unsourced effect. Weight-saving leads (a 1937 USNI Proceedings article returned HTTP 403; 11 % and 66.5 t figures appeared only in search summaries)
+are not values.
+
+## Tally
+
+| Item | Sourced or derived | Unsourced |
+|---|---|---|
+| 5-inch gun | 8 | 3 |
+| 5-inch twin mount | 5 | 12 |
+| 6-inch gun | 8 | 3 |
+| 6-inch turret | 7 | 10 |
+| 8-inch gun | 8 | 3 |
+| 8-inch turret | 7 | 10 |
+| 21-inch torpedo | 10 | 4 |
+| Torpedo launcher | 1 | 7 |
+| Steam plant | 3 | 5 |
+| Hull form, each of 4 | 0 (4 anchored) | 6 plus 4 band edges |
+| All-welded hull | 1 | 1 |
+
+## Unsourced values for owner decision
+
+Routes: (a) Friedman's US Destroyers, US Cruisers and US Battleships and Conway's 1922-1946; (b) the Ordnance Pamphlets listed at
+https://www.navweaps.com/Weapons_Source_Notes.php (not fetched); (c) owner BALANCE TARGET with a recorded derivation (ADR-0213).
+
+1. `roundVolumeMl`, three guns: no complete-round figure. Cheapest: owner accepts a case-plus-projectile convention (dimensions are on the pages), labelled DERIVED.
+2. `reliabilityBp`, three guns and the torpedo: no rate published. Cheapest: (c), anchored on the 1930s torpedo rows.
+3. Gun costs, mount costs and launcher cost: no price on any page. Cheapest: (a), else (c) scaled by mass.
+4. 5-inch `gunMassKg` with breech: page gives "without breech" only. Cheapest: (b).
+5. Mount `baseInstallationMassKg`/`perGunInstallationMassKg`, three mounts: totals only. Cheapest: owner picks a convention.
+6. Mount `topWeightKg`, `hullSpaceUsageLitre`, `stabilityContributionKgM`, `supportedArmorMm`, three mounts: unpublished. Cheapest: (a), else (c).
+7. Mount `rateOfFireModifierBp`, `ammunitionHandlingModifierBp`, `crewProtection`, `vulnerability`: gameplay modifiers. Cheapest: (c).
+8. 5-inch twin mount crew: no count. Cheapest: (b).
+9. 5-inch rate-of-fire point value: pages give ranges. Cheapest: owner picks a bound.
+10. Torpedo `warheadExplosiveEquivalentMassKg`, `minimumArmingDistanceM`, `tubeHitHazardPolicy`: absent. Cheapest: an HBX equivalence from an explosives reference; (c) for the others.
+11. Torpedo choice: the dossier's 1943 homer does not fit a 21-inch surface-ship tube. Owner confirms Mark 35 (1949), Mark 28 (1945, submarine only) or T5 (1943, submarine only).
+12. Launcher `launchType`, tube mass, crew, volume, deck footprint: not researched. Cheapest: (a), Friedman's tube sections.
+13. Steam plant `weightMilliKgPerKw`, `volumeLitrePerKw`, `sfcGramPerKwh`, `reliabilityBp`, `minKw`: none found; also settle 600 versus 650 psi. Cheapest: (a) machinery tables.
+14. Hull forms: `formBp`, `waterplaneCoeffBp`, `sheerBp`, `volumeFullnessBp`, `deckFullnessBp`, `lcbPermille` for all four, plus length and L/B band edges. Cheapest: (a) hull-weight fractions per ship (as White 1894 served the 1880 forms), else (c) for the five non-weight fields as in 1880.
+15. All-welded hull weight effect: no schema key and no figure. Cheapest: add a scheme key by engineering decision and source one weight comparison from a Society of Naval Architects paper.
+16. 5-inch twin mount year: Mark 38 and Mark 32 dates not on the page; dossier 1945 stands as BALANCE TARGET.
+
+## 12. Cruiser armour and reference outfit (added for the cruiser slice, 2026-10-25)
+
+Source NP (Navypedia, fetched 2026-10-25): us_cr_worcester.htm and us_cr_des_moines.htm. Both agree with the section 10 dimensions.
+
+| Item | Worcester (CL144) | Des Moines (CA134) | Confidence |
+|---|---|---|---|
+| Belt | 127 mm tapering to 76 mm | 152 mm tapering to 102 mm, 3.1 m high | SINGLE-SOURCE |
+| Main deck | 89 mm (upper deck 22-25 mm) | 95 mm (upper deck 25 mm) | SINGLE-SOURCE |
+| Turret face | 165 mm | 203 mm | SINGLE-SOURCE |
+| Magazines | 127-51 mm | not listed | SINGLE-SOURCE, Worcester only |
+| Fuel and endurance | 2,400 t oil, 8,000 nm at 15 kn | 3,006 t oil, 10,500 nm at 15 kn | SINGLE-SOURCE |
+| Armament | 12 x 6-inch/47 in six twin turrets | 9 x 8-inch/55 in three triples, 12 x 5-inch/38 in six twins | class armament, NW-6, NW-8 |
+
+Unsourced and set as `BALANCE TARGET` or `ESTIMATE` in the starters: belt and deck lengths and widths, turret region areas, magazine box size, rounds per gun, moulded
+depth, crew quarters, magazine count and station. Armour is modelled as `krupp` plate, the newest material in the pack. The fitted plant gives 7,868 nm (Worcester) and
+9,855 nm (Des Moines) at 15 kn, short of the sourced ranges, so the starters ask for 7,500 and 9,500 nm.
+
+## 13. 1955 destroyer and 5-inch/54 gun (added for the 1950-1959 slice, 2026-10-25)
+
+Sources: NP (Navypedia) us_dd_forrest_sherman.htm and NW-54 https://www.navweaps.com/Weapons/WNUS_5-54_mk42.php, both fetched 2026-10-25.
+
+| Item | Value | Source | Confidence |
+|---|---|---|---|
+| Displacement | 2,800 t standard, 4,916 t full load | NP | SINGLE-SOURCE |
+| Length, beam, draught | 124.1 m wl (127.6 m oa), 13.7 m, 4.60 m | NP | SINGLE-SOURCE |
+| Power, speed | 70,000 hp (52,199 kW), 33 kn | NP | SINGLE-SOURCE |
+| Fuel, range | 500 t oil, 4,500 nm at 20 kn | NP | SINGLE-SOURCE |
+| Guns | 3 x 5-inch/54 Mark 42 single | NP, NW-54 | SINGLE-SOURCE |
+| Tubes | 4 x 533 mm on DD931 and DD932 only; 2 x 3 x 324 mm Mark 32 on all | NP | SINGLE-SOURCE |
+| 5-inch/54 gun | 127 mm bore, 270 in barrel, 2,550 kg, 808 m/s | NW-54 | SINGLE-SOURCE |
+| Mark 42 mount | 58,586 kg without ammunition (66,193 kg loaded), 40 rpm as designed, about 300 deg train, 20 crew (Mod 0), service 1954 | NW-54 | SINGLE-SOURCE |
+| Projectile, charge | 31.45 kg HC Mark 41, 8.19 kg charge (2,604 bp, DERIVED) | NW-54 | SINGLE-SOURCE, DERIVED |
+| Block coefficient | 0.613 at full load | DERIVED from the dimensions with seawater at 1,025 kg/m3 | DERIVED |
+
+Unsourced and set as `BALANCE_TARGET` or `ESTIMATE`: the mount split, cost, round volume, volume and footprint; the hull-form coefficients and `formBp`; rounds,
+quarters, moulded depth and the fire-control fit. Unmodelled for lack of a part family: 76 mm twin AA, 324 mm ASW tubes, Hedgehog.

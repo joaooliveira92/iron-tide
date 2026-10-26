@@ -44,7 +44,7 @@ describe("EARLY-band content integrity", () => {
   it("every component, plant and hull form passes its schema", () => {
     expect(components.length).toBeGreaterThanOrEqual(20);
     expect(plants.length).toBeGreaterThanOrEqual(3);
-    expect(hullRecords).toHaveLength(5);
+    expect(hullRecords).toHaveLength(9);
   });
   it("the catalogue lints clean against the real 1880 technology ids", () => {
     expect(lintCatalogue(components, techIds)).toEqual([]);
@@ -61,7 +61,7 @@ describe("EARLY-band content integrity", () => {
         .filter((c) => c.category === "TORPEDO_TUBE")
         .map((c) => c.torpedoMount?.mountType ?? "")
         .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
-    ).toEqual(["ABOVE_WATER_TRAINABLE", "UNDERWATER_FIXED"]);
+    ).toEqual(["ABOVE_WATER_TRAINABLE", "ABOVE_WATER_TRAINABLE", "UNDERWATER_FIXED"]);
     expect(plants.length).toBeGreaterThanOrEqual(3);
     for (const m of ["compound", "steel", "nickel_steel", "harvey"])
       expect(ship.armour.materialEffBp[m]).toBeGreaterThan(0);
@@ -93,7 +93,11 @@ describe("EARLY-band content integrity", () => {
     const forms = hullFormsFromRecords(hullRecords);
     expect(Object.keys(forms).sort()).toEqual([
       "coast_defence_form",
+      "destroyer_form",
+      "heavy_cruiser_form",
+      "light_cruiser_form",
       "merchant_liner_form",
+      "postwar_destroyer_form",
       "pre_dreadnought_form",
       "protected_cruiser_form",
       "torpedo_boat_form",

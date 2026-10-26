@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0284).
+highest existing number + 1 (the next number is ADR-0305).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -24,7 +24,8 @@ The sole 1880 start, the 1970 authored horizon, and the ten-nation roster.
 | 0205 | [ADR-0205-nine-playable-nations.md](ADR-0205-nine-playable-nations.md) | Nine playable nations; the rest AI-only behind a readiness gate | superseded | ADR-0214 |
 | 0214 | [ADR-0214-ten-playable-nations-usa.md](ADR-0214-ten-playable-nations-usa.md) | Ten playable nations; the USA joins the 1880 playable roster | accepted | — |
 | 0282 | [ADR-0282-authored-horizon-through-1970.md](ADR-0282-authored-horizon-through-1970.md) | Authored horizon through 1970; no empty scenario IDs | accepted | — |
-| 0283 | [ADR-0283-e1-1940-1970-content-decisions.md](ADR-0283-e1-1940-1970-content-decisions.md) | E-1 1940-1970 content decisions | accepted | — |
+| 0283 | [ADR-0283-fleet-management-values-and-repair-entry.md](ADR-0283-fleet-management-values-and-repair-entry.md) | Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope | accepted | — |
+| 0284 | [ADR-0284-e1-1940s-ship-and-part-values.md](ADR-0284-e1-1940s-ship-and-part-values.md) | E-1 1940-1949 ship and part values | accepted | — |
 
 ## Values, currency & language
 
@@ -83,6 +84,9 @@ Concurrent-agent worktree coordination and repository process rules.
 | 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
 | 0279 | [ADR-0279-replay-approvals-carry-a-change-class.md](ADR-0279-replay-approvals-carry-a-change-class.md) | Replay approvals carry a verified change class | accepted | — |
 | 0280 | [ADR-0280-property-based-replay-scenarios.md](ADR-0280-property-based-replay-scenarios.md) | Property-based replay scenarios use fast-check as a test-only dependency | accepted | — |
+| 0295 | [ADR-0295-war-bearing-replay-scenarios.md](ADR-0295-war-bearing-replay-scenarios.md) | A replay scenario may name a player nation and a deterministic start setup so the corpus fights a battle | accepted | — |
+| 0299 | [ADR-0299-gate-runs-serialise-across-worktrees.md](ADR-0299-gate-runs-serialise-across-worktrees.md) | `pnpm check` serialises across worktrees and reports machine load | accepted | — |
+| 0300 | [ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md](ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md) | Unreachable combat modules are wired by their roadmap owner and stay dormant until then | accepted | — |
 
 ## Scenario content & research
 
@@ -94,6 +98,7 @@ Legality, consistency and authored posture of the 1880 scenario's starting conte
 | 0213 | [ADR-0213-opening-posture-balance-choices.md](ADR-0213-opening-posture-balance-choices.md) | The 1880 opening posture is authored canon; magnitudes are balance choices | accepted | — |
 | 0228 | [ADR-0228-combat-classifier-1880-ruleset-v2.md](ADR-0228-combat-classifier-1880-ruleset-v2.md) | The combat ship-type classifier aligns to the 1880 classification ruleset v2 | accepted | — |
 | 0229 | [ADR-0229-technology-year-global-designer-unlock.md](ADR-0229-technology-year-global-designer-unlock.md) | Technology `year` is the global designer unlock year, not a research claim | accepted | — |
+| 0285 | [ADR-0285-research-workspace-projection.md](ADR-0285-research-workspace-projection.md) | The research screen reads a technology-chart projection, and the draw weight has one home | accepted | — |
 
 ## Campaign economy
 
@@ -113,6 +118,7 @@ Turn identity, the suspend/resume interruption model, and strict save-file decod
 | 0222 | [ADR-0222-turn-identity-stable-across-resume.md](ADR-0222-turn-identity-stable-across-resume.md) | A turn's interruption identity is stable across suspend and resume | accepted | — |
 | 0235 | [ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md](ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md) | Main-owned recent campaigns and reopen allow-list | accepted | — |
 | 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
+| 0285 | [ADR-0285-research-workspace-projection.md](ADR-0285-research-workspace-projection.md) | The research screen reads a technology-chart projection, and the draw weight has one home | accepted | — |
 
 ## Fleet readiness, command & prestige
 
@@ -129,6 +135,22 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0260 | [ADR-0260-prestige-application-and-unpaid-funds-source.md](ADR-0260-prestige-application-and-unpaid-funds-source.md) | Prestige application seam and the unpaid-funds source | accepted | — |
 | 0261 | [ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md](ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) | A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code | accepted | — |
 | 0281 | [ADR-0281-sacking-phase-and-terminal-career.md](ADR-0281-sacking-phase-and-terminal-career.md) | The sacking phase and the terminal career | accepted | — |
+| 0283 | [ADR-0283-fleet-management-values-and-repair-entry.md](ADR-0283-fleet-management-values-and-repair-entry.md) | Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope | accepted | — |
+| 0286 | [ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md](ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md) | Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section | accepted | — |
+| 0287 | [ADR-0287-battle-absence-record.md](ADR-0287-battle-absence-record.md) | A battle record explains the player's absent ships with gate reasons | accepted | — |
+| 0288 | [ADR-0288-monthly-division-cohesion-growth.md](ADR-0288-monthly-division-cohesion-growth.md) | Division cohesion grows monthly through a pure rule applied after readiness evolution | accepted | — |
+| 0289 | [ADR-0289-division-doctrine-command-and-speed-advisory.md](ADR-0289-division-doctrine-command-and-speed-advisory.md) | Role and formation changes are one division command priced from the ruleset; speed mismatch is a derived advisory | accepted | — |
+| 0290 | [ADR-0290-special-training-program.md](ADR-0290-special-training-program.md) | Special training is a nation program whose maintenance adder feeds the shared calculator | accepted | — |
+| 0291 | [ADR-0291-e1-1950s-destroyer-values.md](ADR-0291-e1-1950s-destroyer-values.md) | E-1 1950-1959 destroyer values and the limit of 1950-1970 ship content | accepted | — |
+| 0292 | [ADR-0292-battle-experience-write-back.md](ADR-0292-battle-experience-write-back.md) | Battle aftermath asks the division module for experience through a typed request | accepted | — |
+| 0293 | [ADR-0293-fleet-management-go-live.md](ADR-0293-fleet-management-go-live.md) | Fleet management goes live in the production pack and in every re-execution path | accepted | — |
+| 0296 | [ADR-0296-derived-ship-conditions.md](ADR-0296-derived-ship-conditions.md) | Ship conditions are derived predicates the fleet view carries and the renderer only labels | accepted | — |
+| 0297 | [ADR-0297-engine-reads-catalogue-technology-ids.md](ADR-0297-engine-reads-catalogue-technology-ids.md) | The engine reads the catalogue's technology id where one matches, and leaves the rest named | accepted | — |
+| 0298 | [ADR-0298-command-lifecycle-records-are-scaffolding.md](ADR-0298-command-lifecycle-records-are-scaffolding.md) | Hash-chained command-lifecycle records, settlement branches and the spec-rule helpers are scaffolding, not shipped | accepted | — |
+| 0301 | [ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md](ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) | Proficient gunnery training raises the nation's gunnery accuracy in battle | accepted | — |
+| 0302 | [ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md](ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md) | All four training subjects reach battle through one per-side effects record | accepted | — |
+| 0303 | [ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md](ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) | Training cost differences and exercise tension are generic ruleset data | accepted | — |
+| 0304 | [ADR-0304-explanation-trees-for-displayed-numbers.md](ADR-0304-explanation-trees-for-displayed-numbers.md) | Displayed numbers carry an explanation tree; gunnery accuracy is the first slice | accepted | — |
 
 ## Foreign stations & presence
 
@@ -187,6 +209,7 @@ Package interfaces, seams and module depth across the engine.
 | 0273 | [ADR-0273-shared-command-contract-split-by-concern.md](ADR-0273-shared-command-contract-split-by-concern.md) | The shared command contract is split by concern | accepted | — |
 | 0276 | [ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md](ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md) | UI-state writes are field patches merged once, in main | accepted | — |
 | 0277 | [ADR-0277-exact-duplicate-pure-helpers-live-in-core.md](ADR-0277-exact-duplicate-pure-helpers-live-in-core.md) | Exact-duplicate pure helpers live in combat core | accepted | — |
+| 0294 | [ADR-0294-event-body-types-derive-from-schemas.md](ADR-0294-event-body-types-derive-from-schemas.md) | Event body types derive from their Effect schemas | accepted | — |
 
 ## Archive
 

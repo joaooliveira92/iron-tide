@@ -1,3 +1,4 @@
+import { BluewaveError } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import {
   advanceConstructionMonth,
@@ -222,9 +223,9 @@ describe("scalePlanToUnits", () => {
     expect(month.progress["hull"]).toBe(tiny.packages.find((p) => p.id === "hull")!.totalWork);
   });
   it("rejects nonsense", () => {
-    expect(() => scalePlanToUnits(plan, -1)).toThrow(RangeError);
-    expect(() => scalePlanToUnits(plan, 1.5)).toThrow(RangeError);
-    expect(() => scalePlanToUnits({ packages: [], totalWork: 0 }, 5)).toThrow(RangeError);
+    expect(() => scalePlanToUnits(plan, -1)).toThrow(BluewaveError);
+    expect(() => scalePlanToUnits(plan, 1.5)).toThrow(BluewaveError);
+    expect(() => scalePlanToUnits({ packages: [], totalWork: 0 }, 5)).toThrow(BluewaveError);
   });
 });
 
@@ -241,7 +242,7 @@ describe("capacityInUnits", () => {
     expect(small.armour_plate).toBe(0);
   });
   it("rejects a plan with no work", () => {
-    expect(() => capacityInUnits(micro, { packages: [], totalWork: 0 }, 5)).toThrow(RangeError);
+    expect(() => capacityInUnits(micro, { packages: [], totalWork: 0 }, 5)).toThrow(BluewaveError);
   });
 });
 

@@ -1,6 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
-import { economyOutlook } from "../src/economyOutlook.js";
+import { constructionDrawByProject, economyOutlook } from "../src/economyOutlook.js";
 import type { CampaignSnapshot, ConstructionProject, NationState } from "../src/state.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
@@ -231,5 +231,53 @@ describe("economyOutlook", () => {
     )!;
     expect(o.shortfall).toBe(1);
     expect(o.monthEndTreasury).toBe(0);
+  });
+});
+
+describe("constructionDrawByProject", () => {
+  it("lists what each live project can absorb this month and skips held and foreign projects", () => {
+    const n = nation({
+      constructionProjects: [
+        project({ id: "live" }),
+        project({ id: "halted", status: "HALTED" }),
+        project({ id: "foreign", foreignContractId: "fc" }),
+      ],
+    });
+    const draw = constructionDrawByProject(n, snapshot(n), "1880-01");
+    expect(draw.map((d) => [d.projectId, d.draw])).toEqual([["live", 40]]);
+  });
+});
+
+describe("economyOutlook with halted projects", () => {
+  const halted = (id: string) => project({ id, status: "HALTED" });
+
+  it("charges each halted project's carrying cost before anything else", () => {
+    const n = nation({ constructionProjects: [halted("h1"), halted("h2")] });
+    const without = economyOutlook(snapshot(n), "n")!;
+    const carried = economyOutlook(snapshot(n), "n", { carryingCostPerHaltedProject: 20 })!;
+    expect(without.monthEndTreasury - carried.monthEndTreasury).toBe(40);
+    expect(carried.shortfall).toBe(0);
+    expect(carried.projectedNet).toBe(without.projectedNet);
+  });
+
+  it("leaves less room for construction once carrying costs are paid", () => {
+    const live = project({ id: "live" });
+    const n = nation({
+      treasury: SafeInt(0),
+      constructionProjects: [live, halted("h1")],
+    });
+    const free = economyOutlook(snapshot(n), "n")!;
+    const carried = economyOutlook(snapshot(n), "n", { carryingCostPerHaltedProject: 30 })!;
+    expect(free.plannedConstruction).toBe(carried.plannedConstruction);
+    expect(carried.monthEndTreasury).toBeLessThan(free.monthEndTreasury);
+  });
+
+  it("counts an unpayable carrying cost as shortfall, and reports unpaid obligations on their own", () => {
+    const n = nation({ treasury: SafeInt(10), constructionProjects: [halted("h1")] });
+    const o = economyOutlook(snapshot(n), "n", { carryingCostPerHaltedProject: 500 })!;
+    expect(o.shortfall).toBeGreaterThan(0);
+    expect(o.obligationShortfall).toBe(38);
+    const calm = economyOutlook(snapshot(nation({})), "n")!;
+    expect(calm.obligationShortfall).toBe(0);
   });
 });

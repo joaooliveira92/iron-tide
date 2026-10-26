@@ -1,6 +1,9 @@
+import { compareCodePoints } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Result, Schema } from "effect";
 import { FLEET_SIZE_IDS } from "./fleetSize.js";
 import { RESEARCH_IDS } from "./researchSpeed.js";
+import { issueKeys } from "./schemaIssueKeys.js";
 import { VARIATION_IDS } from "./technologyVariation.js";
 export const CANONICAL_SCENARIO_IDS = [
   "scen_1880",
@@ -10,23 +13,34 @@ export const CANONICAL_SCENARIO_IDS = [
   "scen_1960",
 ] as const;
 export type ScenarioId = (typeof CANONICAL_SCENARIO_IDS)[number];
-export interface ScenarioDefinition {
-  scenarioId: ScenarioId;
-  startYear: number;
-  startMonth: number;
-  endYear: number;
-  endMonth: number;
-  scenarioContentHash: string;
-  participationManifestId: string;
-  continuityManifestId: string;
-  supportedFleetSizeSettingIds: string[];
-  supportedResearchSpeedSettingIds: string[];
-  supportedTechnologyVariationSettingIds: string[];
-  supportedHistoricalBudgetOptionIds: string[];
-  supportedLegacyFleetModeIds: string[];
-  supportedTacticalRealismModeIds: string[];
-  supportedDifficultyProfileIds: string[];
-}
+const nonBlankString = Schema.String.check(Schema.isPattern(/\S/));
+
+const ScenarioIdSchema = Schema.Literals(CANONICAL_SCENARIO_IDS);
+const FleetSizeIdSchema = Schema.Literals(FLEET_SIZE_IDS);
+const ResearchSpeedIdSchema = Schema.Literals(RESEARCH_IDS);
+const TechnologyVariationIdSchema = Schema.Literals(VARIATION_IDS);
+const NonBlankStringListSchema = Schema.NonEmptyArray(nonBlankString);
+
+export const ScenarioDefinitionSchema = Schema.Struct({
+  scenarioId: ScenarioIdSchema,
+  startYear: Schema.Int,
+  startMonth: Schema.Int,
+  endYear: Schema.Int,
+  endMonth: Schema.Int,
+  scenarioContentHash: Schema.String,
+  participationManifestId: Schema.String,
+  continuityManifestId: Schema.String,
+  supportedFleetSizeSettingIds: Schema.NonEmptyArray(FleetSizeIdSchema),
+  supportedResearchSpeedSettingIds: Schema.NonEmptyArray(ResearchSpeedIdSchema),
+  supportedTechnologyVariationSettingIds: Schema.NonEmptyArray(TechnologyVariationIdSchema),
+  supportedHistoricalBudgetOptionIds: NonBlankStringListSchema,
+  supportedLegacyFleetModeIds: NonBlankStringListSchema,
+  supportedTacticalRealismModeIds: NonBlankStringListSchema,
+  supportedDifficultyProfileIds: NonBlankStringListSchema,
+});
+
+export type ScenarioDefinition = typeof ScenarioDefinitionSchema.Type;
+
 const YEAR_OF: Record<string, number> = {
   scen_1880: 1880,
   scen_1900: 1900,
@@ -34,167 +48,176 @@ const YEAR_OF: Record<string, number> = {
   scen_1935: 1935,
   scen_1960: 1960,
 };
-const ALLOWED_FLEET = new Set<string>(FLEET_SIZE_IDS);
-const ALLOWED_RESEARCH = new Set<string>(RESEARCH_IDS);
-const ALLOWED_VARIATION = new Set<string>(VARIATION_IDS);
-export const CANONICAL_SCENARIOS: ScenarioDefinition[] = CANONICAL_SCENARIO_IDS.map((id) => ({
-  scenarioId: id,
-  startYear: YEAR_OF[id]!,
-  startMonth: 1,
-  endYear: 1970,
-  endMonth: 12,
-  scenarioContentHash: "a".repeat(64),
-  participationManifestId: `participation_${id}`,
-  continuityManifestId: `continuity_${id}`,
-  supportedFleetSizeSettingIds: ["small", "standard", "large", "very_large"],
-  supportedResearchSpeedSettingIds: ["slow", "standard", "fast", "very_fast"],
-  supportedTechnologyVariationSettingIds: ["none", "some", "considerable"],
-  supportedHistoricalBudgetOptionIds: ["standard", "historical"],
-  supportedLegacyFleetModeIds: ["historical", "generated", "disabled"],
-  supportedTacticalRealismModeIds: ["standard", "realistic", "not_applicable"],
-  supportedDifficultyProfileIds: ["easy", "normal", "hard", "very_hard"],
-}));
-const REQUIRED = [
-  "scenarioId",
-  "startYear",
-  "startMonth",
-  "endYear",
-  "endMonth",
-  "scenarioContentHash",
-  "participationManifestId",
-  "continuityManifestId",
-  "supportedFleetSizeSettingIds",
-  "supportedResearchSpeedSettingIds",
-  "supportedTechnologyVariationSettingIds",
+export const CANONICAL_SCENARIOS: ScenarioDefinition[] = CANONICAL_SCENARIO_IDS.map(
+  (id): ScenarioDefinition => ({
+    scenarioId: id,
+    startYear: YEAR_OF[id]!,
+    startMonth: 1,
+    endYear: 1970,
+    endMonth: 12,
+    scenarioContentHash: "a".repeat(64),
+    participationManifestId: `participation_${id}`,
+    continuityManifestId: `continuity_${id}`,
+    supportedFleetSizeSettingIds: ["small", "standard", "large", "very_large"],
+    supportedResearchSpeedSettingIds: ["slow", "standard", "fast", "very_fast"],
+    supportedTechnologyVariationSettingIds: ["none", "some", "considerable"],
+    supportedHistoricalBudgetOptionIds: ["standard", "historical"],
+    supportedLegacyFleetModeIds: ["historical", "generated", "disabled"],
+    supportedTacticalRealismModeIds: ["standard", "realistic", "not_applicable"],
+    supportedDifficultyProfileIds: ["easy", "normal", "hard", "very_hard"],
+  }),
+);
+const STAGE = { stage: "scenario-validation" } as const;
+
+const REQUIRED = Object.keys(ScenarioDefinitionSchema.fields) as ReadonlyArray<
+  keyof ScenarioDefinition
+>;
+
+const ENUMERATED_LISTS = [
+  ["supportedFleetSizeSettingIds", Schema.is(FleetSizeIdSchema)],
+  ["supportedResearchSpeedSettingIds", Schema.is(ResearchSpeedIdSchema)],
+  ["supportedTechnologyVariationSettingIds", Schema.is(TechnologyVariationIdSchema)],
+] as const;
+
+const FREE_LISTS = [
   "supportedHistoricalBudgetOptionIds",
   "supportedLegacyFleetModeIds",
   "supportedTacticalRealismModeIds",
   "supportedDifficultyProfileIds",
 ] as const;
 
-function isNonEmptyStringArray(v: unknown): boolean {
-  return (
-    Array.isArray(v) && v.length > 0 && v.every((e) => typeof e === "string" && e.trim() !== "")
-  );
+const TEXT_FIELDS = [
+  "scenarioContentHash",
+  "participationManifestId",
+  "continuityManifestId",
+] as const;
+
+const decodeScenario = Schema.decodeUnknownResult(ScenarioDefinitionSchema, {
+  errors: "all",
+  onExcessProperty: "error",
+});
+
+const isScenarioId = Schema.is(ScenarioIdSchema);
+const isNonBlankStringList = Schema.is(NonBlankStringListSchema);
+
+function describeScenarioId(value: unknown): string {
+  return typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+    ? String(value)
+    : "unknown";
 }
 
-function hasRequiredScenarioFields(r: Record<string, unknown>, c: DiagnosticCollector): boolean {
-  let ok = true;
-  for (const f of REQUIRED) {
-    if (!(f in r)) {
-      c.addError(
-        "INVALID_SCENARIO_DEFINITION",
-        `Missing field ${f} in scenario ${(r["scenarioId"] as string) ?? "unknown"}`,
-        { stage: "scenario-validation" },
-      );
-      ok = false;
-    }
-  }
-  return ok;
-}
-
-function registerScenarioId(
-  r: Record<string, unknown>,
-  seen: Set<string>,
+function reportCalendar(
+  r: Readonly<Record<string, unknown>>,
+  id: ScenarioId,
   c: DiagnosticCollector,
-): string | undefined {
-  const id = r["scenarioId"] as string;
-  if (typeof id !== "string" || !CANONICAL_SCENARIO_IDS.includes(id as ScenarioId)) {
-    c.addError("INVALID_SCENARIO_DEFINITION", `Invalid scenarioId ${String(id)}`, {
-      stage: "scenario-validation",
-    });
-    return undefined;
-  }
-  if (seen.has(id)) {
-    c.addError("INVALID_SCENARIO_DEFINITION", `Duplicate scenarioId ${id}`, {
-      stage: "scenario-validation",
-    });
-  }
-  seen.add(id);
-  return id;
-}
-
-function validateScenarioCalendar(
-  r: Record<string, unknown>,
-  id: string,
-  c: DiagnosticCollector,
-): boolean {
-  let ok = true;
+) {
   const exp = YEAR_OF[id]!;
   if (r["startYear"] !== exp || r["startMonth"] !== 1) {
     c.addError(
       "INVALID_SCENARIO_DEFINITION",
       `Scenario ${id} must start January ${exp}, got ${String(r["startYear"])}-${String(r["startMonth"])}`,
-      { stage: "scenario-validation" },
+      STAGE,
     );
-    ok = false;
   }
   if (r["endYear"] !== 1970 || r["endMonth"] !== 12) {
     c.addError(
       "INVALID_SCENARIO_DEFINITION",
       `Scenario ${id} must end December 1970, got ${String(r["endYear"])}-${String(r["endMonth"])}`,
-      { stage: "scenario-validation" },
+      STAGE,
     );
-    ok = false;
   }
-  return ok;
 }
 
-function validateScenarioSupportedFields(
-  r: Record<string, unknown>,
-  id: string,
+function reportSupportedLists(
+  r: Readonly<Record<string, unknown>>,
+  id: ScenarioId,
+  rejected: ReadonlySet<string>,
   c: DiagnosticCollector,
-): boolean {
-  let ok = true;
-  const checks: Array<[string, Set<string>]> = [
-    ["supportedFleetSizeSettingIds", ALLOWED_FLEET],
-    ["supportedResearchSpeedSettingIds", ALLOWED_RESEARCH],
-    ["supportedTechnologyVariationSettingIds", ALLOWED_VARIATION],
-  ];
-  for (const [field, allowed] of checks) {
-    const v = r[field];
-    if (!isNonEmptyStringArray(v)) {
-      c.addError("INVALID_SCENARIO_DEFINITION", `${id}: ${field} must be non-empty string array`, {
-        stage: "scenario-validation",
-      });
-      ok = false;
-    } else {
-      for (const e of v as string[])
-        if (!allowed.has(e)) {
-          c.addError("INVALID_SCENARIO_DEFINITION", `${id}: ${field} contains invalid value ${e}`, {
-            stage: "scenario-validation",
-          });
-          ok = false;
-        }
+) {
+  for (const [field, isAllowed] of ENUMERATED_LISTS) {
+    if (!rejected.has(field)) continue;
+    const value = r[field];
+    if (!isNonBlankStringList(value)) {
+      c.addError(
+        "INVALID_SCENARIO_DEFINITION",
+        `${id}: ${field} must be non-empty string array`,
+        STAGE,
+      );
+      continue;
+    }
+    for (const entry of value) {
+      if (!isAllowed(entry)) {
+        c.addError(
+          "INVALID_SCENARIO_DEFINITION",
+          `${id}: ${field} contains invalid value ${entry}`,
+          STAGE,
+        );
+      }
     }
   }
-  for (const field of [
-    "supportedHistoricalBudgetOptionIds",
-    "supportedLegacyFleetModeIds",
-    "supportedTacticalRealismModeIds",
-    "supportedDifficultyProfileIds",
-  ]) {
-    if (!isNonEmptyStringArray(r[field])) {
-      c.addError("INVALID_SCENARIO_DEFINITION", `${id}: ${field} must be non-empty string array`, {
-        stage: "scenario-validation",
-      });
-      ok = false;
+  for (const field of FREE_LISTS) {
+    if (rejected.has(field)) {
+      c.addError(
+        "INVALID_SCENARIO_DEFINITION",
+        `${id}: ${field} must be non-empty string array`,
+        STAGE,
+      );
     }
   }
-  return ok;
 }
 
 function validateScenarioRecord(
-  r: Record<string, unknown>,
+  record: object,
   seen: Set<string>,
   c: DiagnosticCollector,
-): boolean {
-  let ok = hasRequiredScenarioFields(r, c);
-  const id = registerScenarioId(r, seen, c);
-  if (id === undefined) return false;
-  if (!validateScenarioCalendar(r, id, c)) ok = false;
-  if (!validateScenarioSupportedFields(r, id, c)) ok = false;
-  return ok;
+): ScenarioDefinition | undefined {
+  const r: Readonly<Record<string, unknown>> = Object.fromEntries(Object.entries(record));
+  const errorsBefore = c.errors.length;
+  const decoded = decodeScenario(r);
+  const keys = Result.isSuccess(decoded) ? undefined : issueKeys(decoded.failure.issue);
+  let ok = Result.isSuccess(decoded);
+
+  for (const field of REQUIRED) {
+    if (keys?.missing.has(field) === true) {
+      c.addError(
+        "INVALID_SCENARIO_DEFINITION",
+        `Missing field ${field} in scenario ${describeScenarioId(r["scenarioId"])}`,
+        STAGE,
+      );
+    }
+  }
+
+  const rawId = r["scenarioId"];
+  if (!isScenarioId(rawId)) {
+    c.addError("INVALID_SCENARIO_DEFINITION", `Invalid scenarioId ${String(rawId)}`, STAGE);
+    return undefined;
+  }
+  if (seen.has(rawId)) {
+    c.addError("INVALID_SCENARIO_DEFINITION", `Duplicate scenarioId ${rawId}`, STAGE);
+  }
+  seen.add(rawId);
+
+  reportCalendar(r, rawId, c);
+  if (keys !== undefined) {
+    const rejected = new Set([...keys.missing, ...keys.invalid]);
+    reportSupportedLists(r, rawId, rejected, c);
+    for (const field of TEXT_FIELDS) {
+      if (keys.invalid.has(field)) {
+        c.addError("INVALID_SCENARIO_DEFINITION", `${rawId}: ${field} must be a string`, STAGE);
+      }
+    }
+    for (const key of [...keys.unexpected].sort(compareCodePoints)) {
+      c.addError("INVALID_SCENARIO_DEFINITION", `${rawId}: unknown field ${key}`, STAGE);
+    }
+  }
+
+  if (!ok || c.errors.length > errorsBefore) {
+    if (c.errors.length === errorsBefore) {
+      c.addError("INVALID_SCENARIO_DEFINITION", `${rawId}: invalid scenario definition`, STAGE);
+    }
+    return undefined;
+  }
+  return Result.isSuccess(decoded) ? decoded.success : undefined;
 }
 
 export function validateScenarios(
@@ -202,40 +225,37 @@ export function validateScenarios(
   c: DiagnosticCollector,
 ): ScenarioDefinition[] | undefined {
   if (!Array.isArray(input)) {
-    c.addError("INVALID_SCENARIO_DEFINITION", "Scenarios must be an array", {
-      stage: "scenario-validation",
-    });
+    c.addError("INVALID_SCENARIO_DEFINITION", "Scenarios must be an array", STAGE);
     return undefined;
   }
   if (input.length !== 5) {
     c.addError(
       "INVALID_SCENARIO_DEFINITION",
       `Canonical pack must define exactly 5 scenarios, got ${input.length}`,
-      { stage: "scenario-validation" },
+      STAGE,
     );
     return undefined;
   }
+  const accepted: ScenarioDefinition[] = [];
   let ok = true;
   const seen = new Set<string>();
   for (const s of input) {
     if (typeof s !== "object" || s === null) {
-      c.addError("INVALID_SCENARIO_DEFINITION", "scenario must be object", {
-        stage: "scenario-validation",
-      });
+      c.addError("INVALID_SCENARIO_DEFINITION", "scenario must be object", STAGE);
       ok = false;
       continue;
     }
-    if (!validateScenarioRecord(s as Record<string, unknown>, seen, c)) ok = false;
+    const scenario = validateScenarioRecord(s, seen, c);
+    if (scenario === undefined) ok = false;
+    else accepted.push(scenario);
   }
   for (const id of CANONICAL_SCENARIO_IDS) {
     if (!seen.has(id)) {
-      c.addError("INVALID_SCENARIO_DEFINITION", `Missing canonical scenario ${id}`, {
-        stage: "scenario-validation",
-      });
+      c.addError("INVALID_SCENARIO_DEFINITION", `Missing canonical scenario ${id}`, STAGE);
       ok = false;
     }
   }
-  return ok ? (input as ScenarioDefinition[]) : undefined;
+  return ok ? accepted : undefined;
 }
 export function getScenarioById(id: ScenarioId): ScenarioDefinition | undefined {
   return CANONICAL_SCENARIOS.find((s) => s.scenarioId === id);

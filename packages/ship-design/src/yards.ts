@@ -1,5 +1,6 @@
 import type { Facility } from "./compileShared.js";
 import { LINE_IDS, type LineId } from "./construction.js";
+import { designInvariant } from "./errors.js";
 
 export interface Yard {
   readonly facility: Facility;
@@ -18,7 +19,7 @@ export function yardCapacityFor(
   workPerTonneMonth: number,
 ): Record<LineId, number> {
   if (!Number.isSafeInteger(workPerTonneMonth) || workPerTonneMonth <= 0)
-    throw new RangeError(
+    throw designInvariant(
       `yardWorkPerTonneMonth must be a positive integer, got ${workPerTonneMonth}`,
     );
   const work = Math.floor((facility.maxDisplacementKg * workPerTonneMonth) / 1000);

@@ -1,7 +1,16 @@
-import type { ContentPack } from "@bluewave/content-schema";
+import { compareCodePoints } from "@bluewave/deterministic";
+import type {
+  CampaignConstruction,
+  CampaignDivision,
+  CampaignEconomy,
+  CampaignFleet,
+  CampaignResearch,
+  ContentPack,
+  Nation,
+} from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
-import { toSafeIntOpt, toStr } from "./campaignInput.js";
+import { Option, Result } from "effect";
 import { buildSeededDivisions } from "./divisions.js";
 import {
   incomeFitsEconomicBase,
@@ -31,32 +40,15 @@ import type {
   TechnologyProgress,
 } from "./state.js";
 
-function isNationPlayable(
-  id: string,
-  countryRec: Record<string, unknown>,
-  collector: DiagnosticCollector,
-): boolean {
-  const flag = countryRec["isPlayable"];
-  if (typeof flag !== "boolean") {
-    collector.addError(
-      "CAMPAIGN-ISPLAYABLE",
-      `Nation '${id}' is missing the required isPlayable flag`,
-      { stage: "campaign-compile", entityId: id },
-    );
-    return false;
-  }
-  return flag;
-}
-
 function readNationPrestige(
   nationId: string,
   authored: unknown,
   prestigeRules: PrestigeValueSet,
   collector: DiagnosticCollector,
-): SafeInt {
+): Option.Option<SafeInt> {
   const resolved = resolveNationPrestige(authored, prestigeRules);
-  if (resolved.ok) return resolved.value;
-  const { error } = resolved;
+  if (Result.isSuccess(resolved)) return Option.some(resolved.success);
+  const error = resolved.failure;
   const raise = (
     code: (typeof PRESTIGE_COMPILE_CODES)[keyof typeof PRESTIGE_COMPILE_CODES],
     message: string,
@@ -85,10 +77,12 @@ function readNationPrestige(
         `Nation '${nationId}' prestige ${String(error.value)} is outside the ruleset bounds ${String(error.lowerBound)} to ${String(error.upperBound)}`,
       );
       break;
-    default:
-      raise(PRESTIGE_COMPILE_CODES.notInteger, `Nation '${nationId}' prestige is invalid`);
+    default: {
+      const unhandled: never = error;
+      return unhandled;
+    }
   }
-  return SafeInt(0);
+  return Option.none();
 }
 
 interface EconomyRow {
@@ -99,13 +93,11 @@ interface EconomyRow {
 }
 
 function readEconomyRow(
-  economiesData: unknown[],
+  economiesData: readonly CampaignEconomy[],
   nationId: string,
   collector: DiagnosticCollector,
 ): EconomyRow {
-  const row = economiesData.find((e) => (e as Record<string, unknown>)["nationId"] === nationId) as
-    | Record<string, unknown>
-    | undefined;
+  const row = economiesData.find((e) => e.nationId === nationId);
   const none = { treasury: SafeInt(0), income: SafeInt(0), expenses: SafeInt(0), valid: false };
   if (row === undefined) {
     collector.addError("ECONOMY_ROW_MISSING", `Nation '${nationId}' has no economy row`, {
@@ -114,9 +106,8 @@ function readEconomyRow(
     });
     return none;
   }
-  const valid = (v: unknown, min: number): v is number =>
-    typeof v === "number" && Number.isSafeInteger(v) && v >= min;
-  if (!(valid(row["treasury"], 0) && valid(row["income"], 1) && valid(row["expenses"], 0))) {
+  const valid = (v: number, min: number): boolean => Number.isSafeInteger(v) && v >= min;
+  if (!(valid(row.treasury, 0) && valid(row.income, 1) && valid(row.expenses, 0))) {
     collector.addError(
       "ECONOMY_VALUE_INVALID",
       `Nation '${nationId}' economy needs integer treasury >= 0, income > 0 and expenses >= 0`,
@@ -125,9 +116,9 @@ function readEconomyRow(
     return none;
   }
   return {
-    treasury: SafeInt(row["treasury"] as number),
-    income: SafeInt(row["income"] as number),
-    expenses: SafeInt(row["expenses"] as number),
+    treasury: SafeInt(row.treasury),
+    income: SafeInt(row.income),
+    expenses: SafeInt(row.expenses),
     valid: true,
   };
 }
@@ -151,71 +142,59 @@ export function checkStartRevenue(
   );
 }
 
-function buildShips(fleet: Record<string, unknown>, collector: DiagnosticCollector): Ship[] {
-  const shipsRaw = fleet["ships"];
-  if (!Array.isArray(shipsRaw)) return [];
-  const nationId = toStr(fleet["nationId"], "");
-  const locationAreaId = toStr(fleet["locationAreaId"], "");
-
+function buildShips(fleet: CampaignFleet, collector: DiagnosticCollector): Ship[] {
   const ships: Ship[] = [];
-  for (const s of shipsRaw) {
-    const record = s as Record<string, unknown>;
-    const id = toStr(record["id"], "");
-    const seed = resolveShipReadinessSeed(record, id);
-    if (!seed.ok) {
-      collector.add(seed.error.toDiagnostic());
+  for (const record of fleet.ships) {
+    const seed = resolveShipReadinessSeed(record, record.id);
+    if (Result.isFailure(seed)) {
+      collector.add(seed.failure.toDiagnostic());
       continue;
     }
     ships.push({
-      id,
-      name: toStr(record["name"], ""),
-      classId: toStr(record["classId"], ""),
-      nationId,
-      locationAreaId,
-      designVersionId: toStr(record["designVersionId"], ""),
-      hitPoints: toSafeIntOpt(record["hitPoints"], SafeInt(100)),
-      maxHitPoints: toSafeIntOpt(record["maxHitPoints"], SafeInt(100)),
-      speed: toSafeIntOpt(record["speed"], SafeInt(10)),
-      firepower: toSafeIntOpt(record["firepower"], SafeInt(10)),
-      armor: toSafeIntOpt(record["armor"], SafeInt(10)),
-      isUnderConstruction: record["isUnderConstruction"] === true,
-      constructionProgress: toSafeIntOpt(record["constructionProgress"], SafeInt(0)),
-      constructionTotalWork: toSafeIntOpt(record["constructionTotalWork"], SafeInt(0)),
-      readiness: seed.value.readiness,
-      crewQuality: seed.value.crewQuality,
-      repairMonthsRemaining: seed.value.repairMonthsRemaining,
-      inBattleId: typeof record["inBattleId"] === "string" ? record["inBattleId"] : undefined,
+      id: record.id,
+      name: record.name,
+      classId: record.classId,
+      nationId: fleet.nationId,
+      locationAreaId: fleet.locationAreaId,
+      designVersionId: record.designVersionId ?? "",
+      hitPoints: SafeInt(record.hitPoints),
+      maxHitPoints: SafeInt(record.maxHitPoints),
+      speed: SafeInt(record.speed),
+      firepower: SafeInt(record.firepower),
+      armor: SafeInt(record.armor),
+      isUnderConstruction: record.isUnderConstruction,
+      constructionProgress: SafeInt(record.constructionProgress),
+      constructionTotalWork: SafeInt(record.constructionTotalWork),
+      readiness: seed.success.readiness,
+      crewQuality: seed.success.crewQuality,
+      repairMonthsRemaining: seed.success.repairMonthsRemaining,
+      inBattleId: record.inBattleId,
     });
   }
-  return ships.sort((a, b) => a.id.localeCompare(b.id));
+  return ships.sort((a, b) => compareCodePoints(a.id, b.id));
 }
 
 function buildFleets(
-  fleetsData: unknown[],
+  fleetsData: readonly CampaignFleet[],
   nationId: string,
   collector: DiagnosticCollector,
 ): FleetState[] {
   return fleetsData
-    .filter((f) => (f as Record<string, unknown>)["nationId"] === nationId)
-    .map((f) => {
-      const fRec = f as Record<string, unknown>;
-      return {
-        id: toStr(fRec["id"], ""),
-        nationId: toStr(fRec["nationId"], ""),
-        name: toStr(fRec["name"], ""),
-        locationAreaId: toStr(fRec["locationAreaId"], ""),
-        ships: buildShips(fRec, collector),
-      };
-    })
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .filter((f) => f.nationId === nationId)
+    .map((f) => ({
+      id: f.id,
+      nationId: f.nationId,
+      name: f.name,
+      locationAreaId: f.locationAreaId,
+      ships: buildShips(f, collector),
+    }))
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 }
 
-function buildResearch(researchData: unknown[], nationId: string): ResearchState {
-  const nationResearch = researchData.find(
-    (r) => (r as Record<string, unknown>)["nationId"] === nationId,
-  ) as Record<string, unknown> | undefined;
+function buildResearch(researchData: readonly CampaignResearch[], nationId: string): ResearchState {
+  const nationResearch = researchData.find((r) => r.nationId === nationId);
 
-  if (!nationResearch)
+  if (nationResearch === undefined)
     return {
       nationId,
       technologies: [],
@@ -225,87 +204,59 @@ function buildResearch(researchData: unknown[], nationId: string): ResearchState
       discoveredTechs: [],
     };
 
-  const techs: TechnologyProgress[] = [];
-  const techsRaw = nationResearch["technologies"];
-  if (Array.isArray(techsRaw)) {
-    for (const t of techsRaw) {
-      const tRec = t as Record<string, unknown>;
-      techs.push({
-        techId: toStr(tRec["techId"], ""),
-        investedPoints: toSafeIntOpt(tRec["investedPoints"], SafeInt(0)),
-        completed: tRec["completed"] === true,
-      });
-    }
-  }
+  const techs: TechnologyProgress[] = nationResearch.technologies.map((t) => ({
+    techId: t.techId,
+    investedPoints: SafeInt(t.investedPoints),
+    completed: t.completed,
+  }));
 
   const fieldPriorities: Record<string, SafeInt> = {};
-  const fieldPrioritiesRaw = nationResearch["fieldPriorities"];
-  if (fieldPrioritiesRaw && typeof fieldPrioritiesRaw === "object") {
-    for (const [key, val] of Object.entries(fieldPrioritiesRaw as Record<string, unknown>)) {
-      fieldPriorities[key] = toSafeIntOpt(val, SafeInt(1));
-    }
+  for (const [key, val] of Object.entries(nationResearch.fieldPriorities ?? {})) {
+    fieldPriorities[key] = SafeInt(val ?? 1);
   }
 
-  const activeCandidatesRaw = nationResearch["activeCandidates"];
-  const activeCandidates = new Map<string, string>();
-  if (activeCandidatesRaw && typeof activeCandidatesRaw === "object") {
-    for (const [key, val] of Object.entries(activeCandidatesRaw as Record<string, unknown>)) {
-      if (typeof val === "string") {
-        activeCandidates.set(key, val);
-      }
-    }
-  }
-
-  const discoveredTechsRaw = nationResearch["discoveredTechs"];
-  const discoveredTechs: string[] = [];
-  if (Array.isArray(discoveredTechsRaw)) {
-    for (const t of discoveredTechsRaw) {
-      discoveredTechs.push(toStr(t));
-    }
-  }
+  const activeCandidates = new Map(Object.entries(nationResearch.activeCandidates ?? {}));
+  const discoveredTechs = [...(nationResearch.discoveredTechs ?? [])];
 
   return {
     nationId,
     technologies: techs,
-    currentProjectTechId:
-      typeof nationResearch["currentProjectTechId"] === "string"
-        ? nationResearch["currentProjectTechId"]
-        : undefined,
+    currentProjectTechId: nationResearch.currentProjectTechId,
     fieldPriorities,
-    researchBudget: toSafeIntOpt(nationResearch["researchBudget"], SafeInt(0)),
+    researchBudget: SafeInt(nationResearch.researchBudget),
     activeCandidates,
     discoveredTechs,
   };
 }
 
-function buildConstructions(constructionsData: unknown[], nationId: string): ConstructionProject[] {
+function buildConstructions(
+  constructionsData: readonly CampaignConstruction[],
+  nationId: string,
+): ConstructionProject[] {
   return constructionsData
-    .filter((c) => (c as Record<string, unknown>)["nationId"] === nationId)
-    .map((c) => {
-      const cRec = c as Record<string, unknown>;
-      return {
-        id: toStr(cRec["id"], ""),
-        type: (cRec["type"] as "ship" | "building" | "technology") ?? "ship",
-        projectType: "NEW_CONSTRUCTION" as const,
-        targetId: toStr(cRec["targetId"], ""),
-        designVersionId: toStr(cRec["designVersionId"], ""),
-        totalWork: toSafeIntOpt(cRec["totalWork"], SafeInt(100)),
-        completedWork: toSafeIntOpt(cRec["completedWork"], SafeInt(0)),
-        paidWork: toSafeIntOpt(cRec["paidWork"], SafeInt(0)),
-        status: (cRec["status"] as "PLANNED" | "AUTHORIZED" | "ACTIVE" | "COMPLETED") ?? "PLANNED",
-        startedAt: toStr(cRec["startedAt"], "1880-01"),
-      };
-    })
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .filter((c) => c.nationId === nationId)
+    .map((c) => ({
+      id: c.id,
+      type: c.type,
+      projectType: "NEW_CONSTRUCTION" as const,
+      targetId: c.targetId,
+      designVersionId: c.designVersionId ?? "",
+      totalWork: SafeInt(c.totalWork),
+      completedWork: SafeInt(c.completedWork),
+      paidWork: SafeInt(c.paidWork),
+      status: c.status,
+      startedAt: c.startedAt,
+    }))
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 }
 
 export function buildNationStates(
   pack: ContentPack,
-  fleetsData: unknown[],
-  economiesData: unknown[],
-  constructionsData: unknown[],
-  researchData: unknown[],
-  divisionsData: unknown[],
+  fleetsData: readonly CampaignFleet[],
+  economiesData: readonly CampaignEconomy[],
+  constructionsData: readonly CampaignConstruction[],
+  researchData: readonly CampaignResearch[],
+  divisionsData: readonly CampaignDivision[],
   rulesetVersion: string,
   creationMonth: string,
   prestigeRules: PrestigeValueSet,
@@ -314,25 +265,23 @@ export function buildNationStates(
   const nations = new Map<string, NationState>();
   let structuralDeficits = 0;
 
-  const sortedNations = [...(pack.nations ?? [])].sort((a, b) => {
-    const aId = toStr((a as Record<string, unknown>)["id"], "");
-    const bId = toStr((b as Record<string, unknown>)["id"], "");
-    return aId.localeCompare(bId);
-  });
+  const sortedNations: readonly Nation[] = [...pack.nations].sort((a, b) =>
+    compareCodePoints(a.id, b.id),
+  );
 
   for (const nation of sortedNations) {
-    const countryRec = nation as Record<string, unknown>;
-    const id = toStr(countryRec["id"], "");
+    const id = nation.id;
 
-    const isPlayable = isNationPlayable(id, countryRec, collector);
-    const prestige = readNationPrestige(id, countryRec["prestige"], prestigeRules, collector);
+    const isPlayable = nation.isPlayable;
+    const prestige = readNationPrestige(id, nation.prestige, prestigeRules, collector);
+    if (Option.isNone(prestige)) continue;
 
     const fleets = buildFleets(fleetsData, id, collector);
     const research = buildResearch(researchData, id);
     const constructions = buildConstructions(constructionsData, id);
     const officers = buildOfficerRoster(id);
     const divisions = buildSeededDivisions(
-      divisionsData.filter((d) => (d as Record<string, unknown>)["nationId"] === id),
+      divisionsData.filter((d) => d.nationId === id),
       { nationId: id, fleets, officers, rulesetVersion, creationMonth },
       collector,
     );
@@ -395,16 +344,16 @@ export function buildNationStates(
 
     nations.set(id, {
       id,
-      name: toStr(countryRec["name"], ""),
-      tag: toStr(countryRec["tag"], ""),
+      name: nation.name,
+      tag: nation.tag,
       treasury,
       income,
       expenses,
       baseResources,
       navalAppropriationRateBp: startRate,
       maintenanceCost: SafeInt(0),
-      prestige,
-      ...(typeof countryRec["homeArea"] === "string" ? { homeAreaId: countryRec["homeArea"] } : {}),
+      prestige: prestige.value,
+      ...(nation.homeArea !== undefined ? { homeAreaId: nation.homeArea } : {}),
       fleets,
       divisions,
       officers,
@@ -438,6 +387,6 @@ export function buildSlots(nations: Map<string, NationState>): CampaignSlot[] {
   for (const [id, nation] of nations) {
     slots.push({ nationId: id, type: nation.isPlayable ? "playable" : "ai" });
   }
-  slots.sort((a, b) => a.nationId.localeCompare(b.nationId));
+  slots.sort((a, b) => compareCodePoints(a.nationId, b.nationId));
   return slots;
 }

@@ -9,7 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "../../../components/ui/table.js";
-import type { StationAssignmentIntent } from "../../../../shared/fleet-contract.js";
+import type {
+  CommandableReadiness,
+  StationAssignmentIntent,
+} from "../../../../shared/fleet-contract.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
 import { translate } from "../../../lib/strings.js";
 import {
@@ -31,6 +34,7 @@ export interface FleetStationViewProps {
   readonly outcomeUnknown: boolean;
   readonly onToggle: (shipId: string) => void;
   readonly onSend: (intent: StationAssignmentIntent) => Promise<CommandOutcome>;
+  readonly onSendReadiness: (readiness: CommandableReadiness) => Promise<CommandOutcome>;
   readonly onRetry: () => void;
   readonly onReload: () => void;
 }
@@ -46,6 +50,11 @@ function StatusCell({ row }: { readonly row: StationRow }) {
       {row.overBase ? (
         <span className="text-xs font-medium text-foreground">{row.overBaseLabel}</span>
       ) : null}
+      {row.conditions.map((condition) => (
+        <span key={condition.code} className="text-xs font-medium text-foreground">
+          {condition.label}
+        </span>
+      ))}
     </span>
   );
 }
@@ -144,6 +153,7 @@ export function FleetStationView({
   outcomeUnknown,
   onToggle,
   onSend,
+  onSendReadiness,
   onRetry,
   onReload,
 }: FleetStationViewProps) {
@@ -277,6 +287,19 @@ export function FleetStationView({
         >
           {translate("fleet.station.action.clear")}
         </Button>
+        {(["ACTIVE", "RESERVE", "MOTHBALLED"] as const).map((readiness) => (
+          <Button
+            key={readiness}
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={none || busy}
+            data-testid={`fleet-readiness-${readiness.toLowerCase()}`}
+            onClick={() => void onSendReadiness(readiness)}
+          >
+            {translate(`fleet.readiness.action.${readiness}`)}
+          </Button>
+        ))}
         <span className="text-xs text-muted-foreground" aria-live="polite">
           {none
             ? translate("fleet.station.selectedNone")
@@ -302,6 +325,7 @@ export function FleetStationSection({ sessionId }: { readonly sessionId: string 
       outcomeUnknown={station.request.outcomeUnknown}
       onToggle={station.toggle}
       onSend={station.send}
+      onSendReadiness={station.sendReadiness}
       onRetry={station.request.retry}
       onReload={() => void station.loadScreen()}
     />

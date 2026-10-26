@@ -1,5 +1,4 @@
-import { BluewaveError } from "@bluewave/contracts";
-import { Result, Schema } from "effect";
+import { Schema } from "effect";
 import {
   AIR_COMBAT_ALTITUDE_ADVANTAGE_BP,
   AIR_COMBAT_ALTITUDE_DISADVANTAGE_BP,
@@ -14,7 +13,7 @@ import {
   AIR_COMBAT_SURPRISE_FIRST_PASS_BP,
   AIR_COMBAT_SURPRISE_SUBSEQUENT_BP,
 } from "./constants.js";
-import { formatContractIssues } from "../schema-issues.js";
+import { decodeContract } from "../schema-issues.js";
 import { AIR_COMBAT_INVARIANT_FAILED } from "./reasonCodes.js";
 
 export const AirCombatPolicy_v1 = Schema.Struct({
@@ -42,17 +41,7 @@ export const AirCombatPolicy_v1 = Schema.Struct({
 export type AirCombatPolicyContract = typeof AirCombatPolicy_v1.Type;
 
 export function validateAirCombatContract(value: unknown): AirCombatPolicyContract {
-  const result = Schema.decodeUnknownResult(AirCombatPolicy_v1)(value);
-  if (Result.isFailure(result)) {
-    const first = formatContractIssues(result.failure)[0];
-    throw new BluewaveError(AIR_COMBAT_INVARIANT_FAILED, {
-      code: AIR_COMBAT_INVARIANT_FAILED,
-      field: first?.path ?? "unknown",
-      reason: first?.message ?? "contract validation failed",
-      value,
-    });
-  }
-  return result.success;
+  return decodeContract(AirCombatPolicy_v1, AIR_COMBAT_INVARIANT_FAILED, value);
 }
 
 export const SHIPPED_AIR_COMBAT_CONTRACT = {

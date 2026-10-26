@@ -1,7 +1,6 @@
-import { BluewaveError } from "@bluewave/contracts";
-import type { SafeInt } from "@bluewave/contracts";
-import { Result, Schema } from "effect";
-import { formatContractIssues } from "../schema-issues.js";
+import { SafeInt } from "@bluewave/contracts";
+import { Schema } from "effect";
+import { decodeContract } from "../schema-issues.js";
 import { safeIntSchema as safeInt } from "../safe-int-schema.js";
 import {
   AIRCRAFT_BASING_CLASSES,
@@ -62,17 +61,33 @@ const _assertSafeIntLeaves: [
 export function validateAircraftModelDefinitionContract(
   value: unknown,
 ): AircraftModelDefinitionContract {
-  const result = Schema.decodeUnknownResult(AircraftModelDefinition_v1)(value);
-  if (Result.isFailure(result)) {
-    const first = formatContractIssues(result.failure)[0];
-    throw new BluewaveError(INVALID_AIRCRAFT_MODEL_DEFINITION, {
-      code: INVALID_AIRCRAFT_MODEL_DEFINITION,
-      field: first?.path ?? "unknown",
-      reason: first?.message ?? "contract validation failed",
-      value,
-    });
-  }
-  return result.success;
+  return decodeContract(AircraftModelDefinition_v1, INVALID_AIRCRAFT_MODEL_DEFINITION, value);
+}
+
+export function makeValidAircraftModelDefinition_v1(): AircraftModelDefinitionContract {
+  return {
+    aircraftModelId: "aircraft_model_definition_v1",
+    aircraftType: AIRCRAFT_TYPES[0],
+    ownerOrLicenseHolder: "contract_witness",
+    introductionMonth: "0000-01",
+    speed: SafeInt(0),
+    firepower: SafeInt(0),
+    maneuverability: SafeInt(0),
+    toughness: SafeInt(0),
+    payloadCapacity: SafeInt(0),
+    rangeClass: "contract_witness",
+    rangeDistance: SafeInt(0),
+    eligibleRoleIds: ["contract_witness"],
+    basingRequirementId: AIRCRAFT_BASING_CLASSES[0],
+    carrierSuitable: false,
+    technologyPrerequisiteIds: [],
+    productionWork: SafeInt(0),
+    unitCost: SafeInt(0),
+    maintenanceRequirement: SafeInt(0),
+    crewRequirement: SafeInt(0),
+    contentVersion: "aircraft_model_definition_v1",
+    contentHash: "contract_witness",
+  };
 }
 
 export const SHIPPED_AIRCRAFT_CONTRACT = {

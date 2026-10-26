@@ -81,7 +81,7 @@ export const ScenarioPanel = memo(function ScenarioPanel({
                 >
                   <Copy className="h-3 w-3" />
                 </HoverCardTrigger>
-                <HoverCardContent side="top" className="w-auto px-3 py-1.5 text-xs">
+                <HoverCardContent side="top" variant="tip">
                   <p className="text-[12px]">{copied ? "Copied!" : "Copy full ID"}</p>
                 </HoverCardContent>
               </HoverCard>

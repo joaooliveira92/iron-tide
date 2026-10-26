@@ -1,8 +1,9 @@
 /* @vitest-environment jsdom */
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
+import type { MonthlyReportEntry } from "../../../shared/reports-contract.js";
 import { TreasuryScreen } from "./TreasuryScreen.js";
 
 const projection: PlayerProjection = {
@@ -62,6 +63,75 @@ vi.mock("../../lib/use-campaign-projection.js", () => ({
   useCampaignProjection: () => hookMocks.state(),
 }));
 
+const commitments = vi.hoisted(() => ({
+  value: {
+    fleet: {
+      total: 200,
+      atWar: true,
+      warSurcharge: 25,
+      groups: [
+        { readiness: "ACTIVE", ships: 2, cost: 150, multiplierBp: 10_000 },
+        { readiness: "RESERVE", ships: 1, cost: 50, multiplierBp: 7_500 },
+      ],
+      ships: [
+        { id: "s1", name: "HMS Warrior", readiness: "ACTIVE", cost: 100, overBase: false },
+        { id: "s2", name: "HMS Resolute", readiness: "RESERVE", cost: 50, overBase: true },
+      ],
+    },
+    construction: {
+      projects: [
+        {
+          projectId: "p1",
+          className: "Ironclad",
+          shipType: "Battleship",
+          status: "ACTIVE",
+          draw: 400,
+          carryingCost: 0,
+          foreign: false,
+          percentComplete: 40,
+          acceleration: { premiumApplied: false, premiumWork: 21 },
+        },
+        {
+          projectId: "p2",
+          className: "Monitor",
+          shipType: "Coastal",
+          status: "HALTED",
+          draw: 0,
+          carryingCost: 12,
+          foreign: false,
+          percentComplete: 10,
+          acceleration: null,
+        },
+      ],
+      drawTotal: 400,
+      carryingTotal: 12,
+      haltedCount: 1,
+      acceleration: {
+        acceleratedCount: 1,
+        delayChanceBp: 5000,
+        premiumBp: 500,
+        premiumPending: 21,
+      },
+    },
+    unpaidCostsPrestige: { triggered: true, before: 20, after: 19, sackingThreshold: 16 },
+  },
+}));
+
+const reportsMock = vi.hoisted(() => ({
+  reports: [] as readonly MonthlyReportEntry[],
+}));
+
+vi.mock("../overview/useMonthlyReports.js", () => ({
+  useMonthlyReports: () => ({ reports: reportsMock.reports, loading: false }),
+}));
+
+vi.mock("./hooks/useBudgetPolicyPanel.js", () => ({
+  useBudgetPolicy: () => ({
+    controller: { state: { commitments: commitments.value } },
+    vm: { previewResearch: null, rateChanged: false },
+  }),
+}));
+
 vi.mock("./components/BudgetPolicyPanel.js", () => ({
   BudgetPolicyPanel: () => <div data-testid="budget-policy-panel-stub" />,
 }));
@@ -82,18 +152,19 @@ describe("TreasuryScreen", () => {
       ).getByText("4,000"),
     ).not.toBeNull();
 
-    expect(screen.getAllByText("Fleet maintenance").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText("Research").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText("Fixed obligations").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Fleet maintenance")).not.toBeNull();
+    expect(screen.getByText("Research")).not.toBeNull();
+    expect(screen.getByText("Fixed obligations")).not.toBeNull();
     expect(screen.getByText("Construction (up to)")).not.toBeNull();
     expect(screen.getByText("Committed expenditure")).not.toBeNull();
     expect(screen.getAllByText("500").length).toBeGreaterThanOrEqual(1);
 
-    expect(screen.getByText("Projected net before construction")).not.toBeNull();
-    expect(screen.getByText("Available funds")).not.toBeNull();
-    expect(screen.getByText("Projected month-end funds")).not.toBeNull();
-    expect(screen.getByText("50,000")).not.toBeNull();
-    expect(screen.getByText("53,000")).not.toBeNull();
+    const status = screen.getByRole("region", { name: "Treasury status" });
+    expect(within(status).getByText("Net before construction")).not.toBeNull();
+    expect(within(status).getByText("Available funds")).not.toBeNull();
+    expect(within(status).getByText("Month-end funds")).not.toBeNull();
+    expect(within(status).getByText("50,000")).not.toBeNull();
+    expect(within(status).getByText("53,000")).not.toBeNull();
     expect(screen.getByText("Healthy")).not.toBeNull();
   });
 
@@ -119,7 +190,7 @@ describe("TreasuryScreen", () => {
     };
     hookMocks.state.mockReturnValue({ projection: deficit, loadError: null });
     render(<TreasuryScreen sessionId="ses-1" />);
-    expect(screen.getByText("Critical")).not.toBeNull();
+    expect(screen.getAllByText("Critical").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Shortfall: 40/)).not.toBeNull();
     expect(screen.getByText(/Treasury lasts 12 months/)).not.toBeNull();
     expect(screen.getByText(/no field can take it, so nothing is paid/)).not.toBeNull();
@@ -144,5 +215,136 @@ describe("TreasuryScreen", () => {
     expect(bar.getAttribute("aria-label")).toContain("Research 300");
     expect(bar.getAttribute("aria-label")).toContain("Spending is within income.");
     expect(screen.getByTestId("budget-bar").textContent).toContain("Income");
+  });
+
+  it("opens the fleet upkeep breakdown from the maintenance row", () => {
+    render(<TreasuryScreen sessionId="ses-1" />);
+    fireEvent.click(screen.getByRole("button", { name: /^Fleet maintenance: 200/ }));
+    const upkeep = screen.getByTestId("fleet-upkeep");
+    expect(within(upkeep).getByText(/The fleet costs 200 a month to keep/)).not.toBeNull();
+    expect(within(upkeep).getByText(/At war \+25/)).not.toBeNull();
+    expect(
+      within(upkeep).getByRole("button", { name: /HMS Warrior: 100 a month, Active/ }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("img", { name: /Fleet upkeep by readiness: Active 150, Reserve 50/ }),
+    ).not.toBeNull();
+  });
+
+  it("opens the construction commitments with halted carrying cost called out", () => {
+    render(<TreasuryScreen sessionId="ses-1" />);
+    fireEvent.click(screen.getByRole("button", { name: /^Construction \(up to\)/ }));
+    const construction = screen.getByTestId("construction-commitments");
+    expect(within(construction).getByText(/up to 412 this month/)).not.toBeNull();
+    expect(within(construction).getByText(/1 halted project costs 12 a month/)).not.toBeNull();
+    expect(
+      within(construction).getByRole("button", { name: /Acceleration cost and risk/ }).textContent,
+    ).toMatch(/1 accelerated project.*21 of extra work still to be added, 50% chance of delay/);
+    expect(
+      within(construction).getByRole("button", { name: /Monitor: Halted, 12 this month/ }),
+    ).not.toBeNull();
+  });
+
+  it("warns about the prestige cost only when obligations will go unpaid", () => {
+    render(<TreasuryScreen sessionId="ses-1" />);
+    expect(screen.getByText(/Unpaid obligations also cost prestige: 20 → 19/)).not.toBeNull();
+    expect(screen.getByText(/Dismissal risk begins at 16/)).not.toBeNull();
+    cleanup();
+    const untriggered = {
+      ...commitments.value,
+      unpaidCostsPrestige: { triggered: false, before: 20, after: 19, sackingThreshold: 16 },
+    };
+    const original = commitments.value;
+    commitments.value = untriggered;
+    hookMocks.state.mockReturnValue({
+      projection: { ...projection, economy: { ...projection.economy, shortfall: 40 } },
+      loadError: null,
+    });
+    render(<TreasuryScreen sessionId="ses-1" />);
+    expect(screen.getByText(/Shortfall: 40/)).not.toBeNull();
+    expect(screen.queryByText(/also cost prestige/)).toBeNull();
+    commitments.value = original;
+  });
+
+  describe("history", () => {
+    const month = (
+      turn: number,
+      opening: number,
+      closing: number,
+      ledgerRows: MonthlyReportEntry["treasury"]["ledgerRows"] = [],
+    ): MonthlyReportEntry => ({
+      reportId: `r${turn}`,
+      campaignId: "c",
+      turn,
+      period: { from: { year: 1880, month: turn }, to: { year: 1880, month: turn } },
+      generatedAt: "",
+      treasury: {
+        openingTreasury: opening,
+        closingTreasury: closing,
+        maintenanceCost: 16,
+        constructionSpending: 2,
+        researchExpense: 5,
+        governmentAllocation: 100,
+        netChange: closing - opening,
+        obligationExpense: 38,
+        ledgerRows,
+        reconciliation: {
+          opening,
+          revenue: 100,
+          construction: 2,
+          preservation: 0,
+          maintenance: 16,
+          obligation: 38,
+          research: 5,
+          other: 0,
+          closing,
+        },
+      },
+      construction: { projects: [], completedShips: [], newlyActiveProjectIds: [] },
+      research: { progress: [], discoveries: [] },
+      fleet: { additions: [], totalActiveShips: 0 },
+      priorities: [],
+      battleOutcomes: [],
+    });
+
+    afterEach(() => {
+      reportsMock.reports = [];
+    });
+
+    it("explains that nothing has closed before the first month ends", () => {
+      render(<TreasuryScreen sessionId="ses-1" />);
+      fireEvent.click(screen.getByRole("tab", { name: "History" }));
+      expect(screen.getByTestId("history-empty").textContent).toMatch(/No month has closed yet/);
+    });
+
+    it("charts the closed months, opens the latest ledger, and switches month on click", () => {
+      reportsMock.reports = [
+        month(1, 1000, 1040),
+        month(2, 1040, 1060, [
+          {
+            id: "tx1",
+            description: "Mandatory fixed expenses",
+            phase: "obligation",
+            amount: -30,
+            runningBalance: 1060,
+            requested: 38,
+            shortfall: 8,
+          },
+        ]),
+      ];
+      render(<TreasuryScreen sessionId="ses-1" />);
+      fireEvent.click(screen.getByRole("tab", { name: "History" }));
+      expect(
+        screen.getByText(/Over the last 2 months the treasury went from 1,000 to 1,060/),
+      ).not.toBeNull();
+      const ledger = screen.getByTestId("month-ledger");
+      expect(within(ledger).getByText(/Requested 38, paid 30, left unpaid 8/)).not.toBeNull();
+      expect(within(ledger).getByText(/1,040 → 1,060/)).not.toBeNull();
+
+      fireEvent.click(screen.getByRole("button", { name: /^January 1880: closing 1,040/ }));
+      const first = screen.getByTestId("month-ledger");
+      expect(within(first).getByText(/1,000 → 1,040/)).not.toBeNull();
+      expect(within(first).getByText("No ledger entries were recorded this month.")).not.toBeNull();
+    });
   });
 });

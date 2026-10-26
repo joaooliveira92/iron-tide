@@ -1,5 +1,6 @@
 import type { Finding } from "./findings.js";
 import { shipTarget } from "./findings.js";
+import { designInvariant } from "./errors.js";
 
 export const MAX_AA_DIRECTORS = 4;
 
@@ -65,7 +66,7 @@ export function expandAntiAircraft(
 ): AntiAircraftExpansion {
   if (fit === undefined) return NO_ANTI_AIRCRAFT;
   const problem = antiAircraftFitProblem(fit);
-  if (problem !== null) throw new Error(problem);
+  if (problem !== null) throw designInvariant(problem);
   if (balance === undefined || !antiAircraftAvailable(balance, month)) return NO_ANTI_AIRCRAFT;
   return {
     weightKg:

@@ -7,6 +7,7 @@ import type { FieldWeightsDraft } from "./research-field-priorities.js";
 export function deriveProjectedResearchAllocations(
   researchBudget: number,
   draft: FieldWeightsDraft,
+  eligibleFieldIds: ReadonlySet<string>,
 ): Readonly<Record<string, number>> {
   const result: Record<string, number> = {};
   for (const field of CANONICAL_RESEARCH_FIELD_IDS) {
@@ -16,6 +17,7 @@ export function deriveProjectedResearchAllocations(
 
   const weights: [string, number][] = [];
   for (const field of CANONICAL_RESEARCH_FIELD_IDS) {
+    if (!eligibleFieldIds.has(field)) continue;
     const weight = draft[field];
     if (
       weight === RESEARCH_FIELD_PRIORITY_WEIGHTS.HIGH ||

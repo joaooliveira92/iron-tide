@@ -1,6 +1,6 @@
 import type { ArrangementBalance, ArrangementResult, ZoneDef, ZoneId } from "./arrangement.js";
 import type { ArmourBalance, ArmourRegion, ArmourResult, ThreatProfile } from "./armour.js";
-import type { ClassificationRules } from "./classification.js";
+import type { ClassificationEra, ClassificationRules } from "./classification.js";
 import type { ColonialFittingResult } from "./colonialService.js";
 import type { ComponentCategory, ComponentDef } from "./component.js";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
@@ -123,6 +123,7 @@ export interface ShipBalance {
   readonly crewKgPerHead: number;
   readonly stabilityWindowByCategory: Readonly<Record<string, StabilityWindow>>;
   readonly classification?: ClassificationRules;
+  readonly classificationFromMonth?: readonly ClassificationEra[];
   readonly minReserveBpByExpectation: Readonly<
     Record<DesignRequirement["modernizationExpectation"], number>
   >;

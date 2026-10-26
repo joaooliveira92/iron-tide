@@ -6,6 +6,9 @@ import { MAX_ECONOMIC_BASE, monthlyRevenue } from "../src/economy.js";
 import { buildNationStates } from "../src/nationCompilation.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
+type EconomyRows = Parameters<typeof buildNationStates>[2];
+type ResearchRows = Parameters<typeof buildNationStates>[4];
+
 function pack(ids: string[]): ContentPack {
   const nations = ids.map((id) => ({
     id,
@@ -19,8 +22,8 @@ function pack(ids: string[]): ContentPack {
 
 function compile(
   ids: string[],
-  economies: unknown[],
-  research: unknown[] = [],
+  economies: EconomyRows,
+  research: ResearchRows = [],
 ): { nations: ReturnType<typeof buildNationStates>; collector: DiagnosticCollector } {
   const collector = new DiagnosticCollector();
   const nations = buildNationStates(
@@ -46,7 +49,7 @@ describe("nation economy start state", () => {
     const { nations, collector } = compile(
       ["gb"],
       [{ nationId: "gb", treasury: 500, income: 100, expenses: 38 }],
-      [{ nationId: "gb", researchBudget: 65 }],
+      [{ nationId: "gb", researchBudget: 65, technologies: [] }],
     );
     const gb = nations!.get("gb")!;
     expect(gb.baseResources).toBe(6000);
@@ -150,7 +153,7 @@ describe("nation economy start state", () => {
         { nationId: "a", treasury: 1, income: 100, expenses: 0 },
         { nationId: "b", treasury: 1, income: 100, expenses: 0 },
       ],
-      [{ nationId: "a", researchBudget: 200 }],
+      [{ nationId: "a", researchBudget: 200, technologies: [] }],
     );
     expect(codes(collector, "error")).toContain("RESEARCH_ABOVE_CAP");
   });
@@ -162,7 +165,7 @@ describe("nation economy start state", () => {
         { nationId: "a", treasury: 40, income: 3, expenses: 4 },
         { nationId: "b", treasury: 100, income: 50, expenses: 1 },
       ],
-      [{ nationId: "a", researchBudget: 4 }],
+      [{ nationId: "a", researchBudget: 4, technologies: [] }],
     );
     expect(codes(collector, "error")).toEqual([]);
     expect(codes(collector, "warning")).toContain("STRUCTURAL_DEFICIT");
@@ -185,7 +188,7 @@ describe("economy diagnostic fixtures", () => {
   const fixtures: {
     code: string;
     severity: "error" | "warning";
-    economies: unknown[];
+    economies: EconomyRows;
     ids?: string[];
     with?: string[];
   }[] = [
@@ -241,11 +244,11 @@ describe("economy diagnostic fixtures", () => {
       { nationId: "a", treasury: 40, income: 3, expenses: 4 },
       { nationId: "b", treasury: 100, income: 50, expenses: 1 },
     ];
-    const research = [{ nationId: "a", researchBudget: 4 }];
+    const research = [{ nationId: "a", researchBudget: 4, technologies: [] }];
     const outcome = (relabel: (id: string) => string) => {
       const ids = ["a", "b"].map(relabel);
-      const rename = (rows: Record<string, unknown>[]) =>
-        rows.map((r) => ({ ...r, nationId: relabel(r["nationId"] as string) }));
+      const rename = <T extends { readonly nationId: string }>(rows: readonly T[]): T[] =>
+        rows.map((r) => ({ ...r, nationId: relabel(r.nationId) }));
       const { nations, collector } = compile(ids, rename(economies), rename(research));
       const byRole = (role: string) => nations!.get(relabel(role))!;
       return {
@@ -263,7 +266,7 @@ describe("standing research share and cap (compiler)", () => {
     const { nations, collector } = compile(
       ["a"],
       [{ nationId: "a", treasury: 1, income, expenses: 0 }],
-      [{ nationId: "a", researchBudget: annual }],
+      [{ nationId: "a", researchBudget: annual, technologies: [] }],
     );
     return { nation: nations!.get("a")!, collector };
   };

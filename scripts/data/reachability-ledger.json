@@ -43,6 +43,42 @@
       "adr_or_issue": null
     },
     {
+      "id": "set-ship-readiness",
+      "player_verb": "Set a ship to active, reserve or mothballed",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyShipReadinessCommand"],
+      "main_commands": ["submitShipReadiness"],
+      "renderer_screen": "screens/fleet/station/FleetStationSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx",
+      "adr_or_issue": null
+    },
+    {
+      "id": "fund-special-training",
+      "player_verb": "Fund up to two special-training subjects",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": ["battleTraining"],
+      "engine_symbols": ["applySpecialTrainingCommand"],
+      "main_commands": ["submitSpecialTraining"],
+      "renderer_screen": "screens/fleet/training/FleetTrainingSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/training/FleetTrainingView.test.tsx",
+      "adr_or_issue": null
+    },
+    {
+      "id": "hold-fleet-exercise",
+      "player_verb": "Hold the annual fleet exercise with chosen ships",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyFleetExerciseCommand"],
+      "main_commands": ["submitFleetExercise"],
+      "renderer_screen": "screens/fleet/exercise/FleetExerciseSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/exercise/FleetExerciseView.test.tsx",
+      "adr_or_issue": null
+    },
+    {
       "id": "organise-divisions",
       "player_verb": "Create, change and dissolve divisions and pick flagships",
       "status": "reachable",
@@ -324,6 +360,19 @@
       "note": "The engine changes prestige in the monthly pipeline; the player sees only the header metric."
     },
     {
+      "id": "division-battle-experience",
+      "player_verb": "Divisions gain experience from the battles they fight",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyBattleExperience"],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "adr_or_issue": "#276",
+      "note": "Applied in the monthly pipeline once the fleet-management section is authored (#277); the division screen already shows the value."
+    },
+    {
       "id": "ship-readiness",
       "player_verb": "See and manage ship readiness",
       "status": "dormant-by-decision",
@@ -346,7 +395,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225",
+      "adr_or_issue": "ADR-0300",
       "note": "Both run in the monthly pipeline; no airbase, aircraft or carrier surface exists."
     },
     {
@@ -367,7 +416,7 @@
       "player_verb": "Command type definitions for budget, halt, resume and acceleration",
       "status": "internal",
       "engine_package": "phase-engine",
-      "engine_modules": ["commandLifecycle"],
+      "engine_modules": ["commandDefinitions"],
       "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
@@ -449,7 +498,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225",
+      "adr_or_issue": "ADR-0300",
       "note": "Contexts are supplied empty: the campaign battle manifest never declares air groups or installations."
     },
     {
@@ -462,7 +511,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225"
+      "adr_or_issue": "ADR-0300"
     },
     {
       "id": "combat-mines",
@@ -474,7 +523,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225"
+      "adr_or_issue": "ADR-0300"
     },
     {
       "id": "combat-submarines",
@@ -486,7 +535,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225"
+      "adr_or_issue": "ADR-0300"
     },
     {
       "id": "combat-coastal-defense",
@@ -498,7 +547,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225",
+      "adr_or_issue": "ADR-0300",
       "note": "Exported as a subpath seam but not referenced outside the module."
     },
     {
@@ -511,7 +560,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225",
+      "adr_or_issue": "ADR-0300",
       "note": "Projected into every battle but the campaign manifest declares no smoke source."
     },
     {

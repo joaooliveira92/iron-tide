@@ -6,6 +6,7 @@ import {
   type ArmourRegionId,
   type RegionSizing,
 } from "./armour.js";
+import { designInvariant } from "./errors.js";
 
 export const ARMOUR_SCHEME_IDS = [
   "FLAT_DECK_ON_BELT",
@@ -78,7 +79,7 @@ export function applyArmourScheme(
   materialId: string,
 ): ArmourRegion[] {
   const scheme = ARMOUR_SCHEMES.find((s) => s.id === schemeId);
-  if (scheme === undefined) throw new Error(`unknown armour scheme '${schemeId}'`);
+  if (scheme === undefined) throw designInvariant(`unknown armour scheme '${schemeId}'`);
   const fitted: ReadonlySet<ArmourRegionId> = new Set(scheme.layout);
   const kept = regions.filter((r) => !SCHEME_FAMILY.has(r.region) || fitted.has(r.region));
   const have = new Set(kept.map((r) => r.region));

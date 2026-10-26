@@ -10,11 +10,13 @@ export interface PackageRow {
   readonly label: string;
   readonly percent: number;
   readonly state: PackageState;
+  readonly dependsOn: readonly string[];
 }
 
 export interface ProjectRow {
   readonly projectId: string;
   readonly className: string;
+  readonly shipType: string;
   readonly status: ConstructionProjectQueueEntry["status"];
   readonly percent: number;
   readonly yard: string | null;
@@ -36,6 +38,7 @@ const PACKAGE_LABEL: Readonly<Record<string, string>> = {
 };
 
 const words = (id: string) => id.replaceAll("_", " ");
+const packageLabel = (kind: string) => PACKAGE_LABEL[kind] ?? words(kind.toLowerCase());
 const percentOf = (done: number, total: number) =>
   total <= 0 ? 0 : Math.max(0, Math.min(100, Math.floor((done * 100) / total)));
 
@@ -55,14 +58,16 @@ export function projectRow(entry: ConstructionProjectQueueEntry): ProjectRow {
       const ready = p.dependsOn.every((d) => complete(d));
       return {
         id: p.id,
-        label: PACKAGE_LABEL[p.kind] ?? words(p.kind.toLowerCase()),
+        label: packageLabel(p.kind),
         percent: percentOf(p.doneWork, p.totalWork),
         state: done ? "done" : p.doneWork > 0 ? "active" : ready ? "ready" : "waiting",
+        dependsOn: p.dependsOn.map((d) => packageLabel(byId.get(d)?.kind ?? d)),
       };
     });
   return {
     projectId: entry.projectId,
     className: entry.className,
+    shipType: entry.shipType,
     status: entry.status,
     percent: percentOf(entry.completedWork, entry.totalWork),
     yard: entry.yardId === undefined ? null : words(entry.yardId),

@@ -1,3 +1,4 @@
+import { designInvariant } from "./errors.js";
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 export function isMonth(month: string): boolean {
@@ -6,7 +7,7 @@ export function isMonth(month: string): boolean {
 
 function monthIndex(month: string): number {
   if (!MONTH_RE.test(month)) {
-    throw new Error(`partLifecycle: '${month}' is not a YYYY-MM month`);
+    throw designInvariant(`partLifecycle: '${month}' is not a YYYY-MM month`);
   }
   return Number(month.slice(0, 4)) * 12 + (Number(month.slice(5, 7)) - 1);
 }

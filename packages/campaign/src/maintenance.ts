@@ -1,5 +1,8 @@
 import { SafeInt } from "@bluewave/contracts";
+import { exerciseMaintenanceAdderBp } from "./fleetExercise.js";
 import type { ShipReadinessState } from "./readiness.js";
+import { trainingMaintenanceAdderBp } from "./specialTraining.js";
+import type { NationState } from "./state.js";
 
 export const MAINTENANCE_FORMULA_ID = "maintenance_v2";
 export const MAINTENANCE_FORMULA_VERSION = "2.0.0";
@@ -10,6 +13,14 @@ export const MAINTENANCE_RESERVE_MULTIPLIER_BP = SafeInt(7_500);
 export const MAINTENANCE_MOTHBALLED_MULTIPLIER_BP = SafeInt(5_000);
 export const MAINTENANCE_REPAIR_MULTIPLIER_BP = SafeInt(20_000);
 export const MAINTENANCE_WARTIME_MULTIPLIER_BP = SafeInt(12_500);
+
+const SHIP_READINESS_STATES_BY_COST_ORDER = [
+  "ACTIVE",
+  "WORKING_UP",
+  "RESERVE",
+  "MOTHBALLED",
+  "REPAIR",
+] as const satisfies readonly ShipReadinessState[];
 
 const MULTIPLIER_BP: Record<ShipReadinessState, SafeInt> = {
   ACTIVE: MAINTENANCE_ACTIVE_MULTIPLIER_BP,
@@ -65,17 +76,68 @@ export function shipMonthlyMaintenanceCost(
   );
 }
 
+export interface MaintainedShip {
+  readonly hitPoints: SafeInt;
+  readonly readiness: ShipReadinessState;
+  readonly stationAssignment?: string;
+  readonly overBase?: { readonly maintenanceAdderBp: SafeInt };
+}
+
+export interface MaintenanceAdders {
+  readonly trainingBp?: SafeInt;
+  readonly exerciseBp?: SafeInt;
+}
+
 export interface MaintainedFleet {
-  readonly ships: readonly {
-    readonly hitPoints: SafeInt;
-    readonly readiness: ShipReadinessState;
-    readonly overBase?: { readonly maintenanceAdderBp: SafeInt };
-  }[];
+  readonly ships: readonly MaintainedShip[];
+}
+
+export interface NamedMaintainedShip extends MaintainedShip {
+  readonly id: string;
+  readonly name: string;
+}
+
+export interface ReadinessMaintenanceGroup {
+  readonly readiness: ShipReadinessState;
+  readonly ships: number;
+  readonly cost: number;
+  readonly multiplierBp: number;
+}
+
+export interface ShipMaintenanceLine {
+  readonly id: string;
+  readonly name: string;
+  readonly readiness: ShipReadinessState;
+  readonly cost: number;
+  readonly overBase: boolean;
+}
+
+export interface FleetMaintenanceBreakdown {
+  readonly total: number;
+  readonly atWar: boolean;
+  readonly warSurcharge: number;
+  readonly groups: readonly ReadinessMaintenanceGroup[];
+  readonly ships: readonly ShipMaintenanceLine[];
+}
+
+function shipAdderBp(
+  ship: MaintainedShip,
+  adders: MaintenanceAdders | undefined,
+): SafeInt | undefined {
+  let total = ship.overBase?.maintenanceAdderBp;
+  if (adders === undefined || ship.readiness !== "ACTIVE") return total;
+  const add = (value: SafeInt | undefined) => {
+    if (value !== undefined) total = total === undefined ? value : SafeInt.add(total, value);
+  };
+  add(adders.trainingBp);
+  if (ship.stationAssignment === "EXERCISE") add(adders.exerciseBp);
+  return total;
 }
 
 export function nationMonthlyMaintenance(
   fleets: readonly MaintainedFleet[],
   atWar: boolean,
+  adders?: MaintenanceAdders,
 ): SafeInt {
   let total = SafeInt.ZERO;
   for (const fleet of fleets)
@@ -86,8 +148,60 @@ export function nationMonthlyMaintenance(
           ship.hitPoints,
           ship.readiness,
           atWar,
-          ship.overBase?.maintenanceAdderBp,
+          shipAdderBp(ship, adders),
         ),
       );
   return total;
+}
+
+export function fleetMaintenanceBreakdown(
+  fleets: readonly { readonly ships: readonly NamedMaintainedShip[] }[],
+  atWar: boolean,
+  adders?: MaintenanceAdders,
+): FleetMaintenanceBreakdown {
+  const ships: ShipMaintenanceLine[] = [];
+  let peaceTotal = 0;
+  for (const fleet of fleets)
+    for (const ship of fleet.ships) {
+      const adder = shipAdderBp(ship, adders);
+      const cost = Number(shipMonthlyMaintenanceCost(ship.hitPoints, ship.readiness, atWar, adder));
+      peaceTotal += Number(
+        shipMonthlyMaintenanceCost(ship.hitPoints, ship.readiness, false, adder),
+      );
+      ships.push({
+        id: ship.id,
+        name: ship.name,
+        readiness: ship.readiness,
+        cost,
+        overBase: ship.overBase !== undefined,
+      });
+    }
+  const total = ships.reduce((sum, ship) => sum + ship.cost, 0);
+  const groups = SHIP_READINESS_STATES_BY_COST_ORDER.map((readiness) => {
+    const members = ships.filter((ship) => ship.readiness === readiness);
+    return {
+      readiness,
+      ships: members.length,
+      cost: members.reduce((sum, ship) => sum + ship.cost, 0),
+      multiplierBp: Number(maintenanceMultiplierBp(readiness)),
+    };
+  });
+  return {
+    total,
+    atWar,
+    warSurcharge: total - peaceTotal,
+    groups,
+    ships: [...ships].sort((a, b) => b.cost - a.cost || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)),
+  };
+}
+
+export function nationMaintenanceAdders(
+  nation: Pick<NationState, "specialTraining" | "fleetExercise">,
+  month: string,
+): MaintenanceAdders {
+  const exerciseBp = exerciseMaintenanceAdderBp(nation.fleetExercise, month);
+  return {
+    trainingBp: trainingMaintenanceAdderBp(nation.specialTraining),
+    ...(exerciseBp === undefined ? {} : { exerciseBp }),
+  };
 }

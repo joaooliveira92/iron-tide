@@ -1,7 +1,6 @@
-import { BluewaveError } from "@bluewave/contracts";
 import type { SafeInt } from "@bluewave/contracts";
-import { Result, Schema } from "effect";
-import { formatContractIssues } from "../schema-issues.js";
+import { Schema } from "effect";
+import { decodeContract } from "../schema-issues.js";
 import { safeIntSchema as safeInt } from "../safe-int-schema.js";
 import {
   CARRIER_CLASSIFICATIONS,
@@ -46,17 +45,7 @@ function parseContract<A>(
   value: unknown,
   code: string,
 ): A {
-  const result = Schema.decodeUnknownResult(schema)(value);
-  if (Result.isFailure(result)) {
-    const first = formatContractIssues(result.failure)[0];
-    throw new BluewaveError(code, {
-      code,
-      field: first?.path ?? "unknown",
-      reason: first?.message ?? "contract validation failed",
-      value,
-    });
-  }
-  return result.success;
+  return decodeContract(schema, code, value);
 }
 
 const catapultDefinitionSchema = Schema.Struct({

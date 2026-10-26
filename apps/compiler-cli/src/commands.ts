@@ -252,7 +252,10 @@ const parseArtifactPair = (
   | { readonly ok: true; readonly value: ArtifactInspect }
   | { readonly ok: false; readonly message: string } => {
   try {
-    const decoded = Schema.decodeUnknownResult(CanonicalEnvelopeSchema)(JSON.parse(envelopeJson));
+    const decoded = Schema.decodeUnknownResult(
+      CanonicalEnvelopeSchema,
+      STRICT_DECODE_OPTIONS,
+    )(JSON.parse(envelopeJson));
     if (Result.isFailure(decoded)) {
       return { ok: false, message: describeSchemaFailure(decoded.failure) };
     }
@@ -327,9 +330,10 @@ export const runCompare = (options: CliOptions): Effect.Effect<ExitCategory, nev
       let envelope: CanonicalEnvelope;
       try {
         artifact = JSON.parse(artifactJson);
-        const decoded = Schema.decodeUnknownResult(CanonicalEnvelopeSchema)(
-          JSON.parse(envelopeJson),
-        );
+        const decoded = Schema.decodeUnknownResult(
+          CanonicalEnvelopeSchema,
+          STRICT_DECODE_OPTIONS,
+        )(JSON.parse(envelopeJson));
         if (Result.isFailure(decoded)) {
           return { ok: false as const, message: describeSchemaFailure(decoded.failure) };
         }
@@ -584,9 +588,15 @@ export const runCampaignLoad = (
   Effect.gen(function* () {
     const collector = new DiagnosticCollector();
     const store = new SaveStore();
-    const state = store.load(saveDir, collector);
+    const loaded = yield* Effect.result(store.load(saveDir));
+    if (Result.isFailure(loaded)) {
+      collector.add(loaded.failure.toDiagnostic());
+      yield* printDiagnostics(collector, options.outputMode);
+      return "validation-error";
+    }
+    for (const warning of loaded.success.warnings) collector.add(warning);
     yield* printDiagnostics(collector, options.outputMode);
-    if (!state) return "validation-error";
+    const state = loaded.success.state;
     if (options.outputMode === "json") {
       yield* printResult(
         JSON.stringify({
@@ -613,11 +623,14 @@ export const runBattleGenerate = (
   Effect.gen(function* () {
     const collector = new DiagnosticCollector();
     const store = new SaveStore();
-    const state = store.load(saveDir, collector);
-    if (!state) {
+    const loaded = yield* Effect.result(store.load(saveDir));
+    if (Result.isFailure(loaded)) {
+      collector.add(loaded.failure.toDiagnostic());
       yield* printDiagnostics(collector, options.outputMode);
       return "validation-error";
     }
+    for (const warning of loaded.success.warnings) collector.add(warning);
+    const state = loaded.success.state;
     const snapshot = reviveCampaignSnapshot(state.snapshot);
     const campaignMonth = options.campaignMonth ?? String(snapshot.turnNumber);
     const rulesetVersion = options.rulesetVersion ?? snapshot.rulesetVersion;
@@ -893,11 +906,14 @@ export const runTurnExecute = (
     const fs = yield* CliFileSystem;
     const collector = new DiagnosticCollector();
     const store = new SaveStore();
-    const state = store.load(saveDir, collector);
-    if (!state) {
+    const loaded = yield* Effect.result(store.load(saveDir));
+    if (Result.isFailure(loaded)) {
+      collector.add(loaded.failure.toDiagnostic());
       yield* printDiagnostics(collector, options.outputMode);
       return "validation-error";
     }
+    for (const warning of loaded.success.warnings) collector.add(warning);
+    const state = loaded.success.state;
     const revivedSnapshot = reviveCampaignSnapshot(state.snapshot);
     const executor = new MonthExecutor();
     const randomSeed = options.seed || "default-seed";
@@ -997,11 +1013,14 @@ export const runReplay = (
       );
       return "validation-error";
     }
-    const state = store.loadById(saveDir, previousSaveId, collector);
-    if (!state) {
+    const loaded = yield* Effect.result(store.loadById(saveDir, previousSaveId));
+    if (Result.isFailure(loaded)) {
+      collector.add(loaded.failure.toDiagnostic());
       yield* printDiagnostics(collector, options.outputMode);
       return "validation-error";
     }
+    for (const warning of loaded.success.warnings) collector.add(warning);
+    const state = loaded.success.state;
     const savePath = join(saveDir, activeSaveId);
     const commandsPath = join(savePath, "commands.json");
     const ledgerPath = join(savePath, "command-ledger.json");
@@ -1029,9 +1048,10 @@ export const runReplay = (
     const ledgerText = yield* readFileOption(fs, ledgerPath);
     let originalLedgerData: ReadonlyArray<unknown>;
     try {
-      originalLedgerData = Schema.decodeUnknownSync(Schema.Array(Schema.Unknown))(
-        JSON.parse(ledgerText ?? ""),
-      );
+      originalLedgerData = Schema.decodeUnknownSync(
+        Schema.Array(Schema.Unknown),
+        STRICT_DECODE_OPTIONS,
+      )(JSON.parse(ledgerText ?? ""));
     } catch {
       yield* printResult(`Failed to parse command ledger file: ${ledgerPath}`);
       return "internal-error";
@@ -1041,6 +1061,7 @@ export const runReplay = (
     try {
       const finalHashData = Schema.decodeUnknownSync(
         Schema.Struct({ finalSnapshotHash: Schema.String }),
+        STRICT_DECODE_OPTIONS,
       )(JSON.parse(finalHashText ?? ""));
       expectedFinalHash = finalHashData.finalSnapshotHash;
     } catch {
@@ -1252,9 +1273,10 @@ export const runContentGate = (options: CliOptions): Effect.Effect<ExitCategory,
     if (yield* fs.exists(allowlistPath)) {
       const allowlistText = yield* readFileOption(fs, allowlistPath);
       try {
-        const parsed = Schema.decodeUnknownSync(PlaceholderAllowlistFileSchema)(
-          JSON.parse(allowlistText ?? ""),
-        );
+        const parsed = Schema.decodeUnknownSync(
+          PlaceholderAllowlistFileSchema,
+          STRICT_DECODE_OPTIONS,
+        )(JSON.parse(allowlistText ?? ""));
         if (Array.isArray(parsed.allow)) allowlist = parsed.allow as PlaceholderAllowlistEntry[];
       } catch {
         collector.addError(

@@ -1,4 +1,5 @@
 import { SafeInt } from "@bluewave/contracts";
+import type { ShipReadinessState } from "../src/readiness.js";
 import { describe, expect, it } from "vite-plus/test";
 import {
   MAINTENANCE_ACTIVE_MULTIPLIER_BP,
@@ -8,6 +9,7 @@ import {
   MAINTENANCE_REPAIR_MULTIPLIER_BP,
   MAINTENANCE_RESERVE_MULTIPLIER_BP,
   MAINTENANCE_WORKING_UP_MULTIPLIER_BP,
+  fleetMaintenanceBreakdown,
   maintenanceMultiplierBp,
   nationIsAtWar,
   nationMonthlyMaintenance,
@@ -109,5 +111,53 @@ describe("S-5 08 over-base maintenance adder (ticket 82)", () => {
       ],
     };
     expect(nationMonthlyMaintenance([fleet], false)).toBe(10 + 15);
+  });
+});
+
+describe("fleetMaintenanceBreakdown", () => {
+  const fleet = (
+    ships: readonly { id: string; hitPoints: number; readiness: ShipReadinessState }[],
+  ) => [
+    {
+      ships: ships.map((s) => ({
+        id: s.id,
+        name: `HMS ${s.id}`,
+        hitPoints: SafeInt(s.hitPoints),
+        readiness: s.readiness,
+      })),
+    },
+  ];
+
+  it("groups cost by readiness and reconciles to the nation total", () => {
+    const fleets = fleet([
+      { id: "a", hitPoints: 100, readiness: "ACTIVE" },
+      { id: "b", hitPoints: 200, readiness: "ACTIVE" },
+      { id: "c", hitPoints: 100, readiness: "RESERVE" },
+      { id: "d", hitPoints: 100, readiness: "MOTHBALLED" },
+    ]);
+    const breakdown = fleetMaintenanceBreakdown(fleets, false);
+    expect(breakdown.total).toBe(Number(nationMonthlyMaintenance(fleets, false)));
+    expect(breakdown.groups.map((g) => [g.readiness, g.ships, g.cost, g.multiplierBp])).toEqual([
+      ["ACTIVE", 2, 30, 10_000],
+      ["WORKING_UP", 0, 0, 10_000],
+      ["RESERVE", 1, 7, 7_500],
+      ["MOTHBALLED", 1, 5, 5_000],
+      ["REPAIR", 0, 0, 20_000],
+    ]);
+    expect(breakdown.warSurcharge).toBe(0);
+  });
+
+  it("lists ships by cost, dearest first, and reports the wartime surcharge on active ships", () => {
+    const fleets = fleet([
+      { id: "a", hitPoints: 100, readiness: "ACTIVE" },
+      { id: "b", hitPoints: 400, readiness: "ACTIVE" },
+      { id: "c", hitPoints: 100, readiness: "RESERVE" },
+    ]);
+    const peace = fleetMaintenanceBreakdown(fleets, false);
+    const war = fleetMaintenanceBreakdown(fleets, true);
+    expect(war.ships.map((s) => s.id)).toEqual(["b", "a", "c"]);
+    expect(war.total).toBe(Number(nationMonthlyMaintenance(fleets, true)));
+    expect(war.warSurcharge).toBe(war.total - peace.total);
+    expect(war.warSurcharge).toBeGreaterThan(0);
   });
 });

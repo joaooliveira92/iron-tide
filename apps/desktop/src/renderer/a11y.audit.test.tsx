@@ -21,7 +21,7 @@ import { NewGameFleetMethodScreen } from "./screens/new-game/NewGameFleetMethodS
 import { defaultFleetMethod } from "./screens/new-game/new-game-fleet-method-screen-state.js";
 import { OptionsScreen } from "./screens/options/OptionsScreen.js";
 import { PrioritiesCard } from "./screens/overview/PrioritiesCard.js";
-import { BudgetBar } from "./screens/treasury/components/BudgetBar.js";
+import { FlowBar } from "./screens/treasury/components/FlowBar.js";
 import { BackgroundProvider } from "./shell/BackgroundContext.js";
 import { BottomNav } from "./shell/BottomNav.js";
 import { DensityProvider } from "./shell/DensityContext.js";
@@ -110,6 +110,8 @@ describe("accessibility audit (axe-core)", () => {
         removeShip: { experience: 3, cohesion: 5 },
         changeFlagship: { experience: 5, cohesion: 10 },
         reorder: { experience: 0, cohesion: 3 },
+        changeRole: { experience: 0, cohesion: 10 },
+        changeFormation: { experience: 0, cohesion: 5 },
       },
       unassignedShips: [
         {
@@ -146,9 +148,12 @@ describe("accessibility audit (axe-core)", () => {
     );
   });
 
-  it("Treasury budget bar", async () => {
+  it("Treasury flow bar", async () => {
     await audit(
-      <BudgetBar
+      <FlowBar
+        previewResearch={null}
+        active={null}
+        onActive={noop}
         breakdown={{
           income: 20,
           obligations: 0,

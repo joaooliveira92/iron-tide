@@ -14,7 +14,8 @@
     "@bluewave/content-schema": "workspace:*",
     "@bluewave/contracts": "workspace:*",
     "@bluewave/deterministic": "workspace:*",
-    "@bluewave/random": "workspace:*"
+    "@bluewave/random": "workspace:*",
+    "effect": "workspace:*"
   },
   "scripts": {
     "build": "tsc -b",

@@ -18,7 +18,7 @@ import { MonthExecutor } from "../src/index.js";
 import {
   SET_ACCELERATION_COMMAND_DEFINITION,
   SET_ACCELERATION_COMMAND_TYPE_ID,
-} from "../src/commandLifecycle.js";
+} from "../src/commandDefinitions.js";
 import {
   ACCELERATION_CAPACITY_PRESSURE_WEIGHT_BP,
   ACCELERATION_CAPACITY_PRESSURE_DELAY,
@@ -30,7 +30,9 @@ import {
   acceleratedRemainingWork,
   accelerationDelayEligible,
   accelerationDelayProbabilityBp,
+  accelerationDemandOf,
   accelerationExcessPressureBp,
+  accelerationPressureOf,
   accelerationPremiumAlreadyApplied,
   accelerationPremiumWork,
   applyAccelerationPremium,
@@ -279,6 +281,35 @@ describe("acceleration capacity pressure arithmetic (SB3-R9, SB3-R10)", () => {
     expect(outcome.delayedProjectIds.length).toBe(
       outcome.decisions.filter((d) => d.outcome === "DELAYED").length,
     );
+  });
+});
+
+describe("accelerationDemandOf and accelerationPressureOf", () => {
+  const none = () => undefined;
+
+  it("splits live demand into normal and accelerated, skipping halted, delayed and finished projects", () => {
+    const demand = accelerationDemandOf(
+      [
+        project({ id: "a", status: "ACTIVE", totalWork: 200 }),
+        project({ id: "b", status: "ACCELERATED", totalWork: 200, completedWork: 50 }),
+        project({ id: "c", status: "HALTED" }),
+        project({ id: "d", status: "DELAYED" }),
+        project({ id: "e", status: "COMPLETED" }),
+      ],
+      none,
+      "1880-02",
+    );
+    expect(demand).toEqual({ normalDemand: 200, acceleratedDemand: 150 });
+  });
+
+  it("reads the engine's own pressure: no capacity pool is defined, so any demand hits the delay cap", () => {
+    const pressure = accelerationPressureOf({ normalDemand: 200, acceleratedDemand: 150 });
+    expect(pressure.weightedDemand).toBe(weightedConstructionDemand(200, 150));
+    expect(pressure.delayProbabilityBp).toBe(ACCELERATION_DELAY_PROBABILITY_CAP_BP);
+    expect(accelerationPressureOf({ normalDemand: 0, acceleratedDemand: 0 })).toMatchObject({
+      capacityPressureBp: 0,
+      delayProbabilityBp: 0,
+    });
   });
 });
 

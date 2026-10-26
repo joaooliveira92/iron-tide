@@ -3,6 +3,7 @@ import type {
   FleetOverBaseShip,
   FleetShipView,
   PlayerProjectionPresence,
+  ShipCondition,
 } from "../../../../shared/fleet-contract.js";
 import { hasAuthoredMessage, translate } from "../../../lib/strings.js";
 
@@ -18,6 +19,11 @@ export interface StationFlag {
   readonly label: string;
 }
 
+export interface StationCondition {
+  readonly code: ShipCondition;
+  readonly label: string;
+}
+
 export interface StationRow {
   readonly shipId: string;
   readonly name: string;
@@ -27,6 +33,7 @@ export interface StationRow {
   readonly overBase: boolean;
   readonly overBaseLabel: string;
   readonly flags: readonly StationFlag[];
+  readonly conditions: readonly StationCondition[];
 }
 
 const READINESS_CODE: Readonly<Record<string, "AF" | "RF" | "MB" | "WU">> = {
@@ -45,6 +52,7 @@ function statusOf(ship: FleetShipView): { code: string; label: string } {
     };
   }
   if (ship.stationCode === "FS") return { code: "FS", label: format("fleet.status.FS") };
+  if (ship.stationCode === "EX") return { code: "EX", label: format("fleet.status.EX") };
   const code = READINESS_CODE[ship.readiness] ?? "AF";
   return { code, label: format(`fleet.status.${code}`) };
 }
@@ -55,6 +63,13 @@ function flagsOf(ship: FleetShipView): StationFlag[] {
   if (ship.crampedCode === "a") flags.push({ code: "a", label: format("fleet.flag.a") });
   if (ship.rangeCode === "S") flags.push({ code: "S", label: format("fleet.flag.S") });
   return flags;
+}
+
+function conditionsOf(ship: FleetShipView): StationCondition[] {
+  return (ship.conditions ?? []).map((code) => ({
+    code,
+    label: format(`fleet.condition.${code}`),
+  }));
 }
 
 export function stationRows(
@@ -73,6 +88,7 @@ export function stationRows(
         overBase: ship.overBaseCode === "*",
         overBaseLabel: format("fleet.status.overBase"),
         flags: flagsOf(ship),
+        conditions: conditionsOf(ship),
       };
     }),
   );
@@ -92,6 +108,27 @@ export function explainStationRejection(
   diagnostics: readonly string[],
   rows: readonly StationRow[],
 ): string[] {
+  return explainRejection(
+    `fleet.station.rejected.${intent}`,
+    "fleet.station.reason",
+    diagnostics,
+    rows,
+  );
+}
+
+export function explainReadinessRejection(
+  diagnostics: readonly string[],
+  rows: readonly StationRow[],
+): string[] {
+  return explainRejection("fleet.readiness.rejected", "fleet.readiness.reason", diagnostics, rows);
+}
+
+function explainRejection(
+  headerKey: string,
+  reasonPrefix: string,
+  diagnostics: readonly string[],
+  rows: readonly StationRow[],
+): string[] {
   const names = new Map(rows.map((row) => [row.shipId, row.name]));
   const lines: string[] = [];
   for (const diagnostic of diagnostics) {
@@ -101,18 +138,18 @@ export function explainStationRejection(
     const pairs = detail.split(", ").map((part) => part.split("="));
     if (pairs.every((pair) => pair.length === 2 && pair[0] !== "" && /^[A-Z_]+$/.test(pair[1]!))) {
       for (const [id, code] of pairs as [string, string][]) {
-        const reasonKey = `fleet.station.reason.${code}`;
+        const reasonKey = `${reasonPrefix}.${code}`;
         const subject = id === "<batch>" ? "" : (names.get(id) ?? id);
         const reason = hasAuthoredMessage(reasonKey)
           ? translate(reasonKey)
-          : format("fleet.station.reason.unknown", { code });
+          : format(`${reasonPrefix}.unknown`, { code });
         lines.push(subject === "" ? reason : `${subject} ${reason}`);
       }
     } else {
       lines.push(diagnostic);
     }
   }
-  return [format(`fleet.station.rejected.${intent}`), ...lines];
+  return [format(headerKey), ...lines];
 }
 
 export interface PresenceRowView {

@@ -1446,3 +1446,190 @@ components:
       beamArcDeg: "150"
       maxFeedPermille: "280"
     maintenanceMonthlyBp: 20
+  # --- E-1 1940-1949 (ADR-0284) ---------------------------------------------------------------------------------------------
+  # US 5-inch/38 Mark 12 in the Mark 38 twin dual-purpose mount (docs/research/e-1-1940s-hull-and-part-values.md sections 1-2).
+  # Sourced (navweaps.com WNUS_5-38_mk12, SINGLE-SOURCE): 127 mm bore, 25.0 kg shell, 1,810 kg gun without breech, Mk 38 Mod 0 mount
+  # 43,409 kg with two guns, rate 15-22 rpm for base-ring mounts with hoists (the lower bound is used, BALANCE TARGET), arc about 300 deg
+  # on a destroyer. The charge (2,800 bp) is DERIVED from 6.9-7.03 kg over the shell. The mount splits as 19,894 kg per barrel and no
+  # fixed mass, so the twin returns 43,408 kg. Round volume follows the 0.5 mL per gram convention of the QF rows. Cost, crew, power,
+  # volume, footprint, height and maintenance are BALANCE TARGET copied from gun_qf_6in_40, the nearest medium gun. The 1945 date is the
+  # dossier's mount date (ADR-0283 D2); the gun itself entered service in 1934.
+  - id: gun_dp_5in_38_twin
+    displayName: "5-inch/38 dual-purpose gun in Mark 38 twin mount"
+    category: SECONDARY_GUN
+    introduction: { fromMonth: "1945-01", obsoleteMonth: null }
+    requires: [gun_dp_rapid_5in]
+    parameters: { barrels: { min: 2, max: 2, step: 1 }, rounds: { min: 200, max: 800, step: 50 } }
+    constants:
+      {
+        gun_kg: 1810,
+        mount_per_barrel_kg: 19894,
+        mount_fixed_kg: 0,
+        cost_per_kg_micro: 197000,
+        mount_cost_micro: 1500000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "30600 * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "3 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, medium]
+    deckFootprintMm2: "4794000 * barrels"
+    heightMm: "2200"
+    zCgMm: "6000"
+    fcClass: medium
+    attributes:
+      caliberUm: "127000"
+      shellMassG: "25000"
+      chargeBp: "2800"
+      roundVolumeMl: "16000"
+      rofBaseX100: "1500"
+      beamArcDeg: "150"
+      maxFeedPermille: "300"
+    maintenanceMonthlyBp: 20
+  # 21-inch tubes for the Mark 14 torpedo (usn_21in_mk14_1931), E-1 1940-1949 (ADR-0284). The torpedo mass 1,361 kg is the sourced Mark 14
+  # part value. The tube mass, stowage, volume, cost and crew scale tube_14in_above_water by the bore ratio squared (533/356 = 2.24, rounded to
+  # 2.2): BALANCE TARGET, no source gives a 21-inch tube. One torpedo per tube: the destroyers of the era carried no reloads in the mount.
+  - id: tube_21in_above_water
+    displayName: "21-inch torpedo tube, above-water trainable quintuple-capable carriage"
+    category: TORPEDO_TUBE
+    introduction: { fromMonth: "1931-01", obsoleteMonth: null }
+    requires: [torp_21in_ww1]
+    parameters: { tubes: { min: 1, max: 10, step: 1 } }
+    constants:
+      { tube_kg: 3080, torpedo_kg: 1361, torpedoes_per_tube: 1, cost_per_tube_micro: 1540000000 }
+    weightKg: "(tube_kg + torpedo_kg * torpedoes_per_tube) * tubes"
+    volumeLitre: "(5500 + 1300 * torpedoes_per_tube) * tubes"
+    costMicro: "cost_per_tube_micro * tubes"
+    crew: "3 * tubes"
+    powerKw: "0"
+    upgradePath: []
+    tags: [torpedo]
+    deckFootprintMm2: "5500000 * tubes"
+    heightMm: "1800"
+    zCgMm: "4800"
+    torpedoMount:
+      mountType: ABOVE_WATER_TRAINABLE
+      torpedoModelId: usn_21in_mk14_1931
+    maintenanceMonthlyBp: 15
+  # US 6-inch/47 Mark 16 dual-purpose gun in the twin turret of the Worcester class, E-1 1940-1949 (ADR-0284, ADR-0290;
+  # docs/research/e-1-1940s-hull-and-part-values.md sections 3-4). Sourced (navweaps.com WNUS_6-47DP_mk16, SINGLE-SOURCE): 152 mm bore, 59.0 kg AP shell,
+  # 6,600 kg gun, 212,000 kg twin turret (208.5 tons), 12 rounds per minute, about 300 deg of train, 21 crew per mounting (modelled as 11 per barrel, 22, because the part model needs a whole crew per barrel), service 1948. The charge
+  # (2,542 bp) is DERIVED from 15.0 kg over the AP shell. The turret splits as 99,400 kg per barrel and no fixed mass, so the twin returns 212,000 kg.
+  # Round volume follows the 0.5 mL per gram convention. Mount cost scales gun_qf_6in_40 by mount mass (197,368 micro per kg), volume and footprint
+  # use the 3 L and 470 mm2 per kg conventions of the legacy rows: all BALANCE TARGET. The projectiles are hand-loaded (navweaps.com), so the mount
+  # requires gun_dp_rapid_5in rather than gun_auto_loading_turret (ADR-0284 decision 3).
+  - id: gun_dp_6in_47_twin
+    displayName: "6-inch/47 Mark 16 dual-purpose gun in twin turret"
+    category: MAIN_GUN
+    introduction: { fromMonth: "1948-01", obsoleteMonth: null }
+    requires: [gun_dp_rapid_5in]
+    parameters: { barrels: { min: 2, max: 2, step: 1 }, rounds: { min: 200, max: 1000, step: 50 } }
+    constants:
+      {
+        gun_kg: 6600,
+        mount_per_barrel_kg: 99400,
+        mount_fixed_kg: 0,
+        cost_per_kg_micro: 197000,
+        mount_cost_micro: 19620000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "318000 * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "11 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, medium]
+    deckFootprintMm2: "49800000 * barrels"
+    heightMm: "3200"
+    zCgMm: "6500"
+    fcClass: medium
+    attributes:
+      caliberUm: "152000"
+      shellMassG: "59000"
+      chargeBp: "2542"
+      roundVolumeMl: "37000"
+      rofBaseX100: "1200"
+      beamArcDeg: "150"
+      maxFeedPermille: "300"
+    maintenanceMonthlyBp: 20
+  # US 8-inch/55 Mark 16 rapid-fire gun in the triple turret of the Des Moines class, E-1 1940-1949 (ADR-0284, ADR-0290; research note sections 5-6).
+  # Sourced (navweaps.com WNUS_8-55_mk16, SINGLE-SOURCE): 203 mm bore, 152 kg AP shell, 17,400 kg gun, 458,000 kg triple turret (451 tons), 10 rounds
+  # per minute, about 300 deg of train, about 44 crew (modelled as 15 per barrel, 45), service 1948. The charge (2,296 bp) is DERIVED from 34.9 kg over the AP shell. The turret splits
+  # as 135,267 kg per barrel and no fixed mass (458,001 kg). Mount cost scales gun_bl_92in_315 by mount mass (285,714 micro per kg); round volume,
+  # volume and footprint as the 6-inch row: all BALANCE TARGET. The mount requires gun_auto_loading_turret (ADR-0284 decision 3).
+  - id: gun_ap_8in_55_triple
+    displayName: "8-inch/55 Mark 16 rapid-fire gun in triple turret"
+    category: MAIN_GUN
+    introduction: { fromMonth: "1948-01", obsoleteMonth: null }
+    requires: [gun_auto_loading_turret]
+    parameters: { barrels: { min: 3, max: 3, step: 1 }, rounds: { min: 150, max: 750, step: 50 } }
+    constants:
+      {
+        gun_kg: 17400,
+        mount_per_barrel_kg: 135267,
+        mount_fixed_kg: 0,
+        cost_per_kg_micro: 197000,
+        mount_cost_micro: 38648000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "457800 * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "15 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, heavy]
+    deckFootprintMm2: "71700000 * barrels"
+    heightMm: "3200"
+    zCgMm: "6500"
+    fcClass: heavy
+    attributes:
+      caliberUm: "203000"
+      shellMassG: "152000"
+      chargeBp: "2296"
+      roundVolumeMl: "93450"
+      rofBaseX100: "1000"
+      beamArcDeg: "150"
+      maxFeedPermille: "300"
+    maintenanceMonthlyBp: 20
+  # US 5-inch/54 Mark 18 gun in the Mark 42 single mount, E-1 1950-1959 (ADR-0291; docs/research/e-1-1940s-hull-and-part-values.md section 13). Sourced
+  # (navweaps.com WNUS_5-54_mk42, SINGLE-SOURCE): 127 mm bore, 31.45 kg HC projectile, 2,550 kg gun, 58,586 kg mount without ammunition and fluids, 40 rounds per
+  # minute as designed, about 300 deg of train, 20 crew in the original Mod 0, service 1954. The charge (2,604 bp) is DERIVED from 8.19 kg over the projectile. The
+  # mount splits as 56,036 kg per barrel and no fixed mass (58,586 kg). Round volume follows the 0.5 mL per gram convention; mount cost scales gun_qf_6in_40 by
+  # mount mass (197,368 micro per kg); volume and footprint use the 3 L and 470 mm2 per kg conventions: all BALANCE TARGET. The gun predates nothing, so it requires
+  # gun_dp_rapid_5in like the 5-inch/38 mount.
+  - id: gun_dp_5in_54_single
+    displayName: "5-inch/54 Mark 18 dual-purpose gun in Mark 42 single mount"
+    category: SECONDARY_GUN
+    introduction: { fromMonth: "1954-01", obsoleteMonth: null }
+    requires: [gun_dp_rapid_5in]
+    parameters: { barrels: { min: 1, max: 1, step: 1 }, rounds: { min: 200, max: 800, step: 50 } }
+    constants:
+      {
+        gun_kg: 2550,
+        mount_per_barrel_kg: 56036,
+        mount_fixed_kg: 0,
+        cost_per_kg_micro: 197000,
+        mount_cost_micro: 11060000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "175800 * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "20 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, medium]
+    deckFootprintMm2: "27500000 * barrels"
+    heightMm: "2200"
+    zCgMm: "6000"
+    fcClass: medium
+    attributes:
+      caliberUm: "127000"
+      shellMassG: "31450"
+      chargeBp: "2604"
+      roundVolumeMl: "19820"
+      rofBaseX100: "4000"
+      beamArcDeg: "150"
+      maxFeedPermille: "300"
+    maintenanceMonthlyBp: 20

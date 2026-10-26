@@ -3,6 +3,7 @@ import { placementTarget, sortFindings } from "./findings.js";
 import { evaluate, type LookupTable } from "./formula/eval.js";
 import { parseFormula } from "./formula/parse.js";
 import { toSafe } from "./units.js";
+import { designInvariant } from "./errors.js";
 
 export type MountSide = "CENTRE" | "PORT" | "STBD";
 
@@ -80,7 +81,7 @@ export function compileWeapons(
 
   for (const m of sorted) {
     if (m.barrels < 1 || m.roundsPerBarrel < 0)
-      throw new Error(`mount ${m.instanceId}: invalid barrels/rounds`);
+      throw designInvariant(`mount ${m.instanceId}: invalid barrels/rounds`);
     const rounds = BigInt(m.barrels) * BigInt(m.roundsPerBarrel);
     const massG = rounds * BigInt(m.shellMassG) * (BP + BigInt(m.chargeBp));
     const mass = (massG + BP * 1000n - 1n) / (BP * 1000n);

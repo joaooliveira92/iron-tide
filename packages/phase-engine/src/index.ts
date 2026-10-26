@@ -14,7 +14,7 @@ export {
   SET_ACCELERATION_COMMAND_DEFINITION,
   SET_ACCELERATION_COMMAND_SCHEMA_VERSION,
   SET_ACCELERATION_COMMAND_TYPE_ID,
-} from "./commandLifecycle.js";
+} from "./commandDefinitions.js";
 export {
   CONSTRUCTION_RESUMED_AWAITING_CAPACITY,
   CONSTRUCTION_RESUMED_NO_CAPACITY_RECORD,
@@ -30,6 +30,7 @@ export {
   ACCELERATION_DELAY_PROBABILITY_CAP_BP,
   ACCELERATION_DELAY_THRESHOLD_BP,
   ACCELERATION_NOT_ALLOWED,
+  ACCELERATION_POOL_UNDEFINED_UNITS,
   ACCELERATION_PREMIUM_ALREADY_APPLIED,
   ACCELERATION_PRESSURE_CONTINUED,
   ACCELERATION_STREAM_FAMILY,
@@ -38,11 +39,13 @@ export {
   CONSTRUCTION_ACCELERATION_POLICY_ID,
   accelerateCapacityUnits,
   acceleratedRemainingWork,
+  accelerationDemandOf,
   accelerationDelayEligible,
   accelerationDelayProbabilityBp,
   accelerationExcessPressureBp,
   accelerationPremiumAlreadyApplied,
   accelerationPremiumWork,
+  accelerationPressureOf,
   applyAccelerationPremium,
   constructionAccelerationAllowed,
   constructionCapacityPressureBp,
@@ -51,7 +54,9 @@ export {
   projectConstructionDemand,
   resolveAccelerationCapacityPressure,
   weightedConstructionDemand,
+  type AccelerationDemand,
   type AccelerationPremiumResult,
+  type AccelerationPressure,
   type AccelerationPressureInput,
   type AccelerationPressureOutcome,
 } from "./constructionAcceleration.js";
@@ -340,3 +345,4 @@ export {
   type MountStyleContent,
   type RefitCatalogueEntry,
 } from "./refitRules.js";
+export { trainingEffectsFor } from "./battleTraining.js";

@@ -8,6 +8,7 @@ import {
   type PackageProgress,
 } from "./construction.js";
 import type { BuildProgress } from "./revision.js";
+import { designInvariant } from "./errors.js";
 
 const doneOn = (progress: PackageProgress, id: string) => progress[id] ?? 0;
 
@@ -59,8 +60,8 @@ export { isConstructionComplete };
 
 export function scalePlanToUnits(plan: ConstructionPlan, totalUnits: number): ConstructionPlan {
   if (!Number.isSafeInteger(totalUnits) || totalUnits < 0)
-    throw new RangeError(`totalUnits must be a non-negative integer, got ${totalUnits}`);
-  if (plan.totalWork <= 0) throw new RangeError("a plan with no work cannot be scaled");
+    throw designInvariant(`totalUnits must be a non-negative integer, got ${totalUnits}`);
+  if (plan.totalWork <= 0) throw designInvariant("a plan with no work cannot be scaled");
   const exact = plan.packages.map((p) => {
     const product = BigInt(p.totalWork) * BigInt(totalUnits);
     return {
@@ -88,7 +89,7 @@ export function capacityInUnits(
   plan: ConstructionPlan,
   totalUnits: number,
 ): Record<LineId, number> {
-  if (plan.totalWork <= 0) throw new RangeError("a plan with no work has no scale");
+  if (plan.totalWork <= 0) throw designInvariant("a plan with no work has no scale");
   return Object.fromEntries(
     LINE_IDS.map((line) => {
       const micro = capacity[line];

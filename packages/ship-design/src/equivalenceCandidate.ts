@@ -33,6 +33,7 @@ import { translateArmourRegion } from "./armourPartAdapter.js";
 import { readPlacements } from "./partCatalogueReaders.js";
 import { translateTubePlacement } from "./torpedoPartAdapter.js";
 import type { LauncherPartModel } from "./torpedoPartAdapter.js";
+import { designInvariant } from "./errors.js";
 
 const WEAPON_GUN = new Set(["MAIN_GUN", "SECONDARY_GUN", "DUAL_PURPOSE_GUN", "AA_WEAPON"]);
 
@@ -102,7 +103,7 @@ export interface CandidateDesign {
 }
 
 const present = <T>(value: T | null | undefined, what: string): T => {
-  if (value === null || value === undefined) throw new Error(`equivalenceCandidate: ${what}`);
+  if (value === null || value === undefined) throw designInvariant(`equivalenceCandidate: ${what}`);
   return value;
 };
 
@@ -235,7 +236,9 @@ export function runCandidateDesign(
         disposition: t.disposition,
         legacyFixedInstallationKg:
           env.armament.gunMounts.find((m) => String(m.id) === t.legacyMountId)
-            ?.baseInstallationMassKg ?? null,
+            ?.baseInstallationMassKg ??
+          env.components.find((c) => c.id === placement.componentId)?.constants["mount_fixed_kg"] ??
+          null,
       });
     } else {
       const r = translateFittingPlacement({

@@ -1,5 +1,7 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCode } from "@bluewave/diagnostics";
+import { Data, Result, Schema } from "effect";
+import { firstIssue } from "./schemaIssueKeys.js";
 
 export const BASIS_POINTS_PER_WHOLE = 10_000;
 
@@ -72,59 +74,43 @@ export interface CareerResult {
   readonly month: CareerMonth;
 }
 
-export class PrestigeNotInteger {
-  readonly _tag = "PrestigeNotInteger";
-  constructor(readonly value: number) {}
-}
+export class PrestigeNotInteger extends Data.TaggedError("PrestigeNotInteger")<{
+  readonly value: number;
+}> {}
 
-export class PrestigeUnsafeInteger {
-  readonly _tag = "PrestigeUnsafeInteger";
-  constructor(readonly value: number) {}
-}
+export class PrestigeUnsafeInteger extends Data.TaggedError("PrestigeUnsafeInteger")<{
+  readonly value: number;
+}> {}
 
-export class PrestigeOutOfRange {
-  readonly _tag = "PrestigeOutOfRange";
-  constructor(
-    readonly value: number,
-    readonly lowerBound: number,
-    readonly upperBound: number,
-  ) {}
-}
+export class PrestigeOutOfRange extends Data.TaggedError("PrestigeOutOfRange")<{
+  readonly value: number;
+  readonly lowerBound: number;
+  readonly upperBound: number;
+}> {}
 
-export class PrestigeMissing {
-  readonly _tag = "PrestigeMissing";
-}
+export class PrestigeMissing extends Data.TaggedError("PrestigeMissing")<{}> {}
 
-export class PrestigeUnknownReason {
-  readonly _tag = "PrestigeUnknownReason";
-  constructor(readonly reason: string) {}
-}
+export class PrestigeUnknownReason extends Data.TaggedError("PrestigeUnknownReason")<{
+  readonly reason: string;
+}> {}
 
-export class PrestigeRuleMissing {
-  readonly _tag = "PrestigeRuleMissing";
-  constructor(readonly reason: string) {}
-}
+export class PrestigeRuleMissing extends Data.TaggedError("PrestigeRuleMissing")<{
+  readonly reason: string;
+}> {}
 
-export class PrestigeDrawInvalid {
-  readonly _tag = "PrestigeDrawInvalid";
-  constructor(readonly draw: number) {}
-}
+export class PrestigeDrawInvalid extends Data.TaggedError("PrestigeDrawInvalid")<{
+  readonly draw: number;
+}> {}
 
-export class PrestigeValueSetInvalid {
-  readonly _tag = "PrestigeValueSetInvalid";
-  constructor(
-    readonly field: string,
-    readonly message: string,
-  ) {}
-}
+export class PrestigeValueSetInvalid extends Data.TaggedError("PrestigeValueSetInvalid")<{
+  readonly field: string;
+  readonly message: string;
+}> {}
 
-export class CareerResultInvalid {
-  readonly _tag = "CareerResultInvalid";
-  constructor(
-    readonly field: string,
-    readonly message: string,
-  ) {}
-}
+export class CareerResultInvalid extends Data.TaggedError("CareerResultInvalid")<{
+  readonly field: string;
+  readonly message: string;
+}> {}
 
 export type PrestigeError =
   | PrestigeNotInteger
@@ -137,20 +123,10 @@ export type PrestigeError =
   | PrestigeValueSetInvalid
   | CareerResultInvalid;
 
-export type PrestigeResult<Value, Error extends PrestigeError = PrestigeError> =
-  | { readonly ok: true; readonly value: Value }
-  | { readonly ok: false; readonly error: Error };
-
-const succeed = <Value>(value: Value): { readonly ok: true; readonly value: Value } => ({
-  ok: true,
-  value,
-});
-const fail = <Error extends PrestigeError>(
-  error: Error,
-): { readonly ok: false; readonly error: Error } => ({
-  ok: false,
-  error,
-});
+export type PrestigeResult<Value, Error extends PrestigeError = PrestigeError> = Result.Result<
+  Value,
+  Error
+>;
 
 function ceilDivBasisPoints(numerator: number): number {
   const remainder = numerator % BASIS_POINTS_PER_WHOLE;
@@ -158,19 +134,36 @@ function ceilDivBasisPoints(numerator: number): number {
   return remainder === 0 ? whole : whole + 1;
 }
 
-function checkInteger(value: number): PrestigeResult<number> {
-  if (!Number.isInteger(value)) return fail(new PrestigeNotInteger(value));
-  if (!Number.isSafeInteger(value)) return fail(new PrestigeUnsafeInteger(value));
-  return succeed(value);
+function checkInteger(
+  value: number,
+): PrestigeResult<number, PrestigeNotInteger | PrestigeUnsafeInteger> {
+  if (!Number.isInteger(value)) return Result.fail(new PrestigeNotInteger({ value }));
+  if (!Number.isSafeInteger(value)) return Result.fail(new PrestigeUnsafeInteger({ value }));
+  return Result.succeed(value);
 }
 
-function checkPrestige(value: number, set: PrestigeValueSet): PrestigeResult<SafeInt> {
+export type NationPrestigeError =
+  | PrestigeMissing
+  | PrestigeNotInteger
+  | PrestigeUnsafeInteger
+  | PrestigeOutOfRange;
+
+function checkPrestige(
+  value: number,
+  set: PrestigeValueSet,
+): PrestigeResult<SafeInt, PrestigeNotInteger | PrestigeUnsafeInteger | PrestigeOutOfRange> {
   const integer = checkInteger(value);
-  if (!integer.ok) return integer;
+  if (Result.isFailure(integer)) return Result.fail(integer.failure);
   if (value < set.lowerBound || value > set.upperBound) {
-    return fail(new PrestigeOutOfRange(value, set.lowerBound, set.upperBound));
+    return Result.fail(
+      new PrestigeOutOfRange({
+        value,
+        lowerBound: set.lowerBound,
+        upperBound: set.upperBound,
+      }),
+    );
   }
-  return succeed(SafeInt(value));
+  return Result.succeed(SafeInt(value));
 }
 
 export function applyPrestigeRule(
@@ -180,21 +173,22 @@ export function applyPrestigeRule(
   rule?: PrestigeRule,
 ): PrestigeResult<PrestigeChange> {
   if (!(PRESTIGE_REASON_CODES as readonly string[]).includes(reason)) {
-    return fail(new PrestigeUnknownReason(String(reason)));
+    return Result.fail(new PrestigeUnknownReason({ reason: String(reason) }));
   }
   const checked = checkPrestige(current, set);
-  if (!checked.ok) return checked;
-  const before = checked.value;
+  if (Result.isFailure(checked)) return Result.fail(checked.failure);
+  const before = checked.success;
   const applied: PrestigeRule | undefined = rule ?? set.rules[reason];
-  if (applied === undefined) return fail(new PrestigeRuleMissing(reason));
+  if (applied === undefined) return Result.fail(new PrestigeRuleMissing({ reason }));
   const rate = applied.kind === "PROPORTIONAL_LOSS" ? applied.basisPoints : applied.amount;
   const rateChecked = checkInteger(rate);
-  if (!rateChecked.ok) return rateChecked;
+  if (Result.isFailure(rateChecked)) return Result.fail(rateChecked.failure);
 
   let target: number;
   if (applied.kind === "PROPORTIONAL_LOSS") {
     const product = before * applied.basisPoints;
-    if (!Number.isSafeInteger(product)) return fail(new PrestigeUnsafeInteger(product));
+    if (!Number.isSafeInteger(product))
+      return Result.fail(new PrestigeUnsafeInteger({ value: product }));
     target = before - ceilDivBasisPoints(product);
   } else if (applied.kind === "FIXED_LOSS") {
     target = before - applied.amount;
@@ -202,7 +196,7 @@ export function applyPrestigeRule(
     target = before + applied.amount;
   }
   const after = Math.min(set.upperBound, Math.max(set.lowerBound, target));
-  return succeed({ before, after: SafeInt(after), delta: SafeInt(after - before) });
+  return Result.succeed({ before, after: SafeInt(after), delta: SafeInt(after - before) });
 }
 
 export function isSackingEligible(current: number, set: PrestigeValueSet): boolean {
@@ -215,14 +209,14 @@ export function resolveSacking(
   draw: () => number,
 ): PrestigeResult<SackingOutcome> {
   const checked = checkPrestige(current, set);
-  if (!checked.ok) return checked;
-  if (!isSackingEligible(checked.value, set)) return succeed({ eligible: false });
+  if (Result.isFailure(checked)) return Result.fail(checked.failure);
+  if (!isSackingEligible(checked.success, set)) return Result.succeed({ eligible: false });
 
   const value = draw();
   if (!Number.isInteger(value) || value < 0 || value >= BASIS_POINTS_PER_WHOLE) {
-    return fail(new PrestigeDrawInvalid(value));
+    return Result.fail(new PrestigeDrawInvalid({ draw: value }));
   }
-  return succeed({
+  return Result.succeed({
     eligible: true,
     draw: SafeInt(value),
     sacked: value < set.sackingProbabilityBp,
@@ -238,21 +232,37 @@ export interface CareerResultInput {
 
 export function buildCareerResult(input: CareerResultInput): PrestigeResult<CareerResult> {
   if (typeof input.nationId !== "string" || input.nationId === "") {
-    return fail(new CareerResultInvalid("nationId", "must be a non-empty string"));
+    return Result.fail(
+      new CareerResultInvalid({ field: "nationId", message: "must be a non-empty string" }),
+    );
   }
   if (!(CAREER_END_REASONS as readonly string[]).includes(input.reason)) {
-    return fail(new CareerResultInvalid("reason", "must be SACKED or CAMPAIGN_END"));
+    return Result.fail(
+      new CareerResultInvalid({ field: "reason", message: "must be SACKED or CAMPAIGN_END" }),
+    );
   }
   if (!Number.isSafeInteger(input.score) || input.score < 0) {
-    return fail(new CareerResultInvalid("score", "must be a non-negative safe integer"));
+    return Result.fail(
+      new CareerResultInvalid({
+        field: "score",
+        message: "must be a non-negative safe integer",
+      }),
+    );
   }
   if (!Number.isSafeInteger(input.month.year)) {
-    return fail(new CareerResultInvalid("month.year", "must be a safe integer"));
+    return Result.fail(
+      new CareerResultInvalid({ field: "month.year", message: "must be a safe integer" }),
+    );
   }
   if (!Number.isInteger(input.month.month) || input.month.month < 1 || input.month.month > 12) {
-    return fail(new CareerResultInvalid("month.month", "must be an integer from 1 to 12"));
+    return Result.fail(
+      new CareerResultInvalid({
+        field: "month.month",
+        message: "must be an integer from 1 to 12",
+      }),
+    );
   }
-  return succeed({
+  return Result.succeed({
     nationId: input.nationId,
     score: SafeInt(input.score),
     reason: input.reason,
@@ -260,143 +270,147 @@ export function buildCareerResult(input: CareerResultInput): PrestigeResult<Care
   });
 }
 
-const VALUE_SET_KEYS = [
-  "lowerBound",
-  "upperBound",
-  "sackingThreshold",
-  "sackingProbabilityBp",
-  "rules",
-] as const;
+const SAFE_INTEGER_MESSAGE = "must be a safe integer";
+
+export function boundedSafeInteger(min: number, max: number) {
+  return Schema.Number.check(
+    Schema.makeFilter((n: number) => Number.isSafeInteger(n) || SAFE_INTEGER_MESSAGE),
+    Schema.makeFilter((n: number) => (n >= min && n <= max) || `must be from ${min} to ${max}`),
+  );
+}
+
+const nonNegativeSafeInteger = boundedSafeInteger(0, Number.MAX_SAFE_INTEGER);
+const basisPointsInteger = boundedSafeInteger(0, BASIS_POINTS_PER_WHOLE);
+
+const ProportionalLossRuleSchema = Schema.Struct({
+  kind: Schema.Literal("PROPORTIONAL_LOSS"),
+  basisPoints: basisPointsInteger,
+});
+const FixedGainRuleSchema = Schema.Struct({
+  kind: Schema.Literal("FIXED_GAIN"),
+  amount: nonNegativeSafeInteger,
+});
+const FixedLossRuleSchema = Schema.Struct({
+  kind: Schema.Literal("FIXED_LOSS"),
+  amount: nonNegativeSafeInteger,
+});
+
+export const PrestigeRuleSchema = Schema.Union([
+  ProportionalLossRuleSchema,
+  FixedGainRuleSchema,
+  FixedLossRuleSchema,
+]);
+
+type DecodedRule = typeof PrestigeRuleSchema.Type;
+
+interface Violation {
+  readonly path: ReadonlyArray<string>;
+  readonly message: string;
+}
+
+function leafMessage(schema: Schema.Top, value: unknown): string | undefined {
+  const decoded = Schema.decodeUnknownResult(schema as Schema.Decoder<unknown>, {
+    onExcessProperty: "error",
+  })(value);
+  if (Result.isSuccess(decoded)) return undefined;
+  return decoded.failure.issue._tag === "InvalidType"
+    ? SAFE_INTEGER_MESSAGE
+    : decoded.failure.message;
+}
+
+function relationViolation(set: {
+  readonly lowerBound: number;
+  readonly upperBound: number;
+  readonly sackingThreshold: number;
+  readonly rules: Readonly<Partial<Record<PrestigeReasonCode, DecodedRule>>>;
+}): Violation | undefined {
+  if (set.upperBound <= set.lowerBound) {
+    return { path: ["upperBound"], message: "must be greater than lowerBound" };
+  }
+  const thresholdMessage = leafMessage(
+    boundedSafeInteger(set.lowerBound, set.upperBound),
+    set.sackingThreshold,
+  );
+  if (thresholdMessage !== undefined) {
+    return { path: ["sackingThreshold"], message: thresholdMessage };
+  }
+  const span = set.upperBound - set.lowerBound;
+  for (const code of [...REQUIRED_PRESTIGE_REASON_CODES, ...OPTIONAL_PRESTIGE_REASON_CODES]) {
+    const rule = set.rules[code];
+    if (rule === undefined || rule.kind === "PROPORTIONAL_LOSS") continue;
+    const message = leafMessage(boundedSafeInteger(0, span), rule.amount);
+    if (message !== undefined) return { path: ["rules", code, "amount"], message };
+  }
+  return undefined;
+}
+
+const PrestigeRulesSchema = Schema.Struct({
+  UNPAID_FUNDS: PrestigeRuleSchema,
+  BATTLE_LOST: PrestigeRuleSchema,
+  BATTLE_WON: PrestigeRuleSchema,
+  DECLINED_BATTLE: Schema.optional(PrestigeRuleSchema),
+});
+
+export const PrestigeValueSetSchema = Schema.Struct({
+  lowerBound: nonNegativeSafeInteger,
+  upperBound: nonNegativeSafeInteger,
+  sackingThreshold: nonNegativeSafeInteger,
+  sackingProbabilityBp: basisPointsInteger,
+  rules: PrestigeRulesSchema,
+}).check(
+  Schema.makeFilter((set) => {
+    const violation = relationViolation(set);
+    return violation === undefined ? true : { path: violation.path, issue: violation.message };
+  }),
+);
+
+const decodeValueSet = Schema.decodeUnknownResult(PrestigeValueSetSchema, {
+  errors: "all",
+  onExcessProperty: "error",
+});
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function invalid(field: string, message: string) {
-  return fail(new PrestigeValueSetInvalid(field, message));
+  return new PrestigeValueSetInvalid({ field, message });
 }
 
-function readInt(
-  record: Record<string, unknown>,
-  key: string,
-  path: string,
-  min: number,
-  max: number,
-): PrestigeResult<SafeInt, PrestigeValueSetInvalid> {
-  const value = record[key];
-  if (value === undefined) return invalid(path, "is required and has no default");
-  if (typeof value !== "number" || !Number.isSafeInteger(value)) {
-    return invalid(path, "must be a safe integer");
-  }
-  if (value < min || value > max) return invalid(path, `must be from ${min} to ${max}`);
-  return succeed(SafeInt(value));
+function brandRule(rule: DecodedRule): PrestigeRule {
+  return rule.kind === "PROPORTIONAL_LOSS"
+    ? { kind: rule.kind, basisPoints: SafeInt(rule.basisPoints) }
+    : { kind: rule.kind, amount: SafeInt(rule.amount) };
 }
 
-function excessKey(
-  record: Record<string, unknown>,
-  allowed: readonly string[],
-  prefix: string,
-): string | undefined {
-  const extra = Object.keys(record).find((key) => !allowed.includes(key));
-  return extra === undefined ? undefined : `${prefix}${extra}`;
-}
-
-function decodeRule(
-  input: unknown,
-  path: string,
-  span: number,
-): PrestigeResult<PrestigeRule, PrestigeValueSetInvalid> {
-  if (!isRecord(input)) return invalid(path, "must be a rule record");
-  if (input["kind"] === "PROPORTIONAL_LOSS") {
-    const extra = excessKey(input, ["kind", "basisPoints"], `${path}.`);
-    if (extra !== undefined) return invalid(extra, "is not a field of a proportional loss rule");
-    const basisPoints = readInt(
-      input,
-      "basisPoints",
-      `${path}.basisPoints`,
-      0,
-      BASIS_POINTS_PER_WHOLE,
-    );
-    return basisPoints.ok
-      ? succeed({ kind: "PROPORTIONAL_LOSS", basisPoints: basisPoints.value })
-      : basisPoints;
-  }
-  if (input["kind"] === "FIXED_GAIN") {
-    const extra = excessKey(input, ["kind", "amount"], `${path}.`);
-    if (extra !== undefined) return invalid(extra, "is not a field of a fixed gain rule");
-    const amount = readInt(input, "amount", `${path}.amount`, 0, span);
-    return amount.ok ? succeed({ kind: "FIXED_GAIN", amount: amount.value }) : amount;
-  }
-  if (input["kind"] === "FIXED_LOSS") {
-    const extra = excessKey(input, ["kind", "amount"], `${path}.`);
-    if (extra !== undefined) return invalid(extra, "is not a field of a fixed loss rule");
-    const amount = readInt(input, "amount", `${path}.amount`, 0, span);
-    return amount.ok ? succeed({ kind: "FIXED_LOSS", amount: amount.value }) : amount;
-  }
-  return invalid(`${path}.kind`, "must be PROPORTIONAL_LOSS, FIXED_GAIN or FIXED_LOSS");
+function brandValueSet(decoded: typeof PrestigeValueSetSchema.Type): PrestigeValueSet {
+  const { DECLINED_BATTLE, ...required } = decoded.rules;
+  return {
+    lowerBound: SafeInt(decoded.lowerBound),
+    upperBound: SafeInt(decoded.upperBound),
+    sackingThreshold: SafeInt(decoded.sackingThreshold),
+    sackingProbabilityBp: SafeInt(decoded.sackingProbabilityBp),
+    rules: {
+      UNPAID_FUNDS: brandRule(required.UNPAID_FUNDS),
+      BATTLE_LOST: brandRule(required.BATTLE_LOST),
+      BATTLE_WON: brandRule(required.BATTLE_WON),
+      ...(DECLINED_BATTLE === undefined ? {} : { DECLINED_BATTLE: brandRule(DECLINED_BATTLE) }),
+    },
+  };
 }
 
 export function decodePrestigeValueSet(
   input: unknown,
 ): PrestigeResult<PrestigeValueSet, PrestigeValueSetInvalid> {
-  if (!isRecord(input)) return invalid("", "must be a record");
-  const extra = excessKey(input, VALUE_SET_KEYS, "");
-  if (extra !== undefined) return invalid(extra, "is not a field of a prestige value set");
-
-  const lowerBound = readInt(input, "lowerBound", "lowerBound", 0, Number.MAX_SAFE_INTEGER);
-  if (!lowerBound.ok) return lowerBound;
-  const upperBound = readInt(input, "upperBound", "upperBound", 0, Number.MAX_SAFE_INTEGER);
-  if (!upperBound.ok) return upperBound;
-  if (upperBound.value <= lowerBound.value) {
-    return invalid("upperBound", "must be greater than lowerBound");
-  }
-  const sackingThreshold = readInt(
-    input,
-    "sackingThreshold",
-    "sackingThreshold",
-    lowerBound.value,
-    upperBound.value,
+  if (!isRecord(input)) return Result.fail(invalid("", "must be a record"));
+  const decoded = decodeValueSet(input);
+  if (Result.isSuccess(decoded)) return Result.succeed(brandValueSet(decoded.success));
+  const location = firstIssue(decoded.failure.issue);
+  return Result.fail(
+    location === undefined
+      ? invalid("", "is not a valid prestige value set")
+      : invalid(location.path, location.message),
   );
-  if (!sackingThreshold.ok) return sackingThreshold;
-  const sackingProbabilityBp = readInt(
-    input,
-    "sackingProbabilityBp",
-    "sackingProbabilityBp",
-    0,
-    BASIS_POINTS_PER_WHOLE,
-  );
-  if (!sackingProbabilityBp.ok) return sackingProbabilityBp;
-
-  const rulesInput = input["rules"];
-  if (rulesInput === undefined) return invalid("rules", "is required and has no default");
-  if (!isRecord(rulesInput)) return invalid("rules", "must be a record");
-  const extraRule = excessKey(rulesInput, PRESTIGE_REASON_CODES, "rules.");
-  if (extraRule !== undefined) return invalid(extraRule, "is not a prestige reason code");
-
-  const span = upperBound.value - lowerBound.value;
-  const rules: Partial<Record<PrestigeReasonCode, PrestigeRule>> = {};
-  for (const code of REQUIRED_PRESTIGE_REASON_CODES) {
-    const rule = rulesInput[code];
-    if (rule === undefined) return invalid(`rules.${code}`, "is required and has no default");
-    const decoded = decodeRule(rule, `rules.${code}`, span);
-    if (!decoded.ok) return decoded;
-    rules[code] = decoded.value;
-  }
-  for (const code of OPTIONAL_PRESTIGE_REASON_CODES) {
-    const rule = rulesInput[code];
-    if (rule === undefined) continue;
-    const decoded = decodeRule(rule, `rules.${code}`, span);
-    if (!decoded.ok) return decoded;
-    rules[code] = decoded.value;
-  }
-
-  return succeed({
-    lowerBound: lowerBound.value,
-    upperBound: upperBound.value,
-    sackingThreshold: sackingThreshold.value,
-    sackingProbabilityBp: sackingProbabilityBp.value,
-    rules: rules as PrestigeValueSet["rules"],
-  });
 }
 
 export const PRESTIGE_COMPILE_CODES = {
@@ -412,8 +426,9 @@ export const PRESTIGE_COMPILE_CODES = {
 export function resolveNationPrestige(
   authored: unknown,
   set: PrestigeValueSet,
-): PrestigeResult<SafeInt> {
-  if (authored === undefined) return fail(new PrestigeMissing());
-  if (typeof authored !== "number") return fail(new PrestigeNotInteger(Number.NaN));
+): PrestigeResult<SafeInt, NationPrestigeError> {
+  if (authored === undefined) return Result.fail(new PrestigeMissing());
+  if (typeof authored !== "number")
+    return Result.fail(new PrestigeNotInteger({ value: Number.NaN }));
   return checkPrestige(authored, set);
 }

@@ -26,7 +26,7 @@ function LegendChip({ entry }: { readonly entry: LegendEntry }) {
             {entry.label}
           </Badge>
         </HoverCardTrigger>
-        <HoverCardContent side="top" className="w-auto max-w-64 px-3 py-1.5 text-xs">
+        <HoverCardContent side="top" variant="tip">
           {entry.tooltip}
         </HoverCardContent>
       </HoverCard>

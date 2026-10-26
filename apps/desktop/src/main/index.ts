@@ -95,6 +95,9 @@ function createWindow(): BrowserWindow {
     minWidth: 960,
     minHeight: 640,
     frame: false,
+    ...(process.platform === "darwin"
+      ? { titleBarStyle: "hidden" as const, trafficLightPosition: { x: 20, y: 21 } }
+      : {}),
     webPreferences: {
       preload: resolve(import.meta.dirname, "../preload/index.mjs"),
       contextIsolation: true,

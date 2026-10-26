@@ -75,6 +75,45 @@
           page: "62, 67, 99"
           section: "Battle offers: force estimate, declining costs victory points and may cost prestige after several declines, the enemy may decline, a friendly support force sometimes joins"
       note: "ADR-0254. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (docs/research/t-1-battle-offer-values.md, decisions 0028-0034)."
+  # The fleet-management section (spec #265). Every value is a Bluewave balance decision recorded by ADR-0283 under the
+  # owner's standing delegation on map #193; only the twelve-month proficiency, the limit of two subjects, the training
+  # maintenance percentages and the doubled exercise maintenance (manual p.53) are sourced. Retuning is a ruleset version
+  # change with replay re-approval. Removing this section returns the pack to the dormant behaviour.
+  fleetManagement:
+    sectionVersion: 1
+    divisionCohesion:
+      monthlyGrowth: 2
+      cap: 90
+    divisionExperience:
+      perBattle: 3
+      perExercise: 5
+    reorganisationPenalty:
+      roleChange: { cohesion: 10, experience: 0 }
+      formationChange: { cohesion: 5, experience: 0 }
+    training:
+      proficiencyMonths: 12
+      maxSubjects: 2
+      nationCostMultiplierBp:
+        japan: 8000
+      subjects:
+        GUNNERY: { maintenanceAdderBp: 3000, effectBp: 1000 }
+        NIGHT_FIGHTING: { maintenanceAdderBp: 2000, effectBp: 1000 }
+        TORPEDO_TACTICS: { maintenanceAdderBp: 2000, effectBp: 1000 }
+        DAMAGE_CONTROL: { maintenanceAdderBp: 2000, effectBp: 1000 }
+    exercise:
+      maintenanceMultiple: 2
+      maxPerCalendarYear: 1
+    provenance:
+      sourceStatus: "BALANCE_TARGET"
+      confidence: "LOW"
+      kind: "balance_adjustment"
+      sources:
+        - title: "Rule the Waves 3 manual"
+          author: "Naval War Simulations / Matrix Games"
+          year: 2023
+          page: "51, 53, 55"
+          section: "Special training takes twelve months, at most two subjects, with maintenance surcharges; an annual fleet exercise costs twice the active maintenance; division experience has a slight impact on crew quality in battle"
+      note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (docs/research/fleet-management-values.md). ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence."
   # The foreign-station and presence section (S-5, spec #73). Every value is a Bluewave balance decision recorded by
   # ADR-0266 (decision requests 0016-0023 and 0026, Option C); only the 1.5x colonial-service multiplier (manual p.46) is
   # sourced and it lives in code. The manual (pp.42, 45, 46) says each quantity exists and supplies no number. Retuning is a

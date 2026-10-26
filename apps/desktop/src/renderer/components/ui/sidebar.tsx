@@ -496,7 +496,7 @@ const SidebarMenuButton = ({
     <HoverCard>
       <HoverCardTrigger render={buttonElement} />
       {state === "collapsed" && !isMobile && (
-        <HoverCardContent side="right" className="w-auto max-w-64 px-3 py-1.5 text-xs">
+        <HoverCardContent side="right" variant="tip">
           {tooltip}
         </HoverCardContent>
       )}

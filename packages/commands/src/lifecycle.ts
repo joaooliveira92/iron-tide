@@ -311,7 +311,8 @@ export class CommandLifecycle {
       body.type === "RemoveShipFromDivision" ||
       body.type === "DissolveDivision" ||
       body.type === "ChangeDivisionFlagship" ||
-      body.type === "ReorderDivisionShips"
+      body.type === "ReorderDivisionShips" ||
+      body.type === "ChangeDivisionDoctrine"
     )
       return {
         type: "success",
@@ -319,12 +320,24 @@ export class CommandLifecycle {
         snapshotHash,
         result: { nationId: body.nationId, divisionId: body.divisionId },
       };
-    if (body.type === "AssignForeignStation" || body.type === "ClearForeignStation")
+    if (
+      body.type === "AssignForeignStation" ||
+      body.type === "ClearForeignStation" ||
+      body.type === "SetShipReadiness" ||
+      body.type === "HoldFleetExercise"
+    )
       return {
         type: "success",
         commandId: envelope.commandId,
         snapshotHash,
         result: { nationId: body.nationId, shipIds: [...body.shipIds] },
+      };
+    if (body.type === "SetSpecialTraining")
+      return {
+        type: "success",
+        commandId: envelope.commandId,
+        snapshotHash,
+        result: { nationId: body.nationId, subjects: [...body.subjects] },
       };
     const b = body as BudgetProjectCommand;
     return {

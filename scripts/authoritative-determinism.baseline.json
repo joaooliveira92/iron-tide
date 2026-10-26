@@ -2,20 +2,12 @@
   "packages/campaign-engine/src/archetype.ts": {
     "0d906aab1fd7f09ee09fee99a84ebb0df94298075ad313f18a98c3abff906a32": 2
   },
-  "packages/campaign-engine/src/opening-briefing.ts": {
-    "31282d434f08f273535bda61a0c2d038ce1e75b7a279a0d07903366c19a74872": 1,
-    "d7d7dd87e2c2f623bcc8ae38aae2f2ce898344c8011fc5d5c65647e8efe6891d": 1,
-    "eda9a0f837be9e2580e38eb48ec7e77eb6a939f656654a59d69802af2314e1b1": 2
-  },
   "packages/campaign-engine/src/priorityConstants.ts": {
     "31282d434f08f273535bda61a0c2d038ce1e75b7a279a0d07903366c19a74872": 1
   },
   "packages/campaign/src/warConstants.ts": {
     "9ea97194e5d4cfce3aca8e2b8de89a44c6b11ca1afda9278943937a38c7265b9": 1,
     "d7d7dd87e2c2f623bcc8ae38aae2f2ce898344c8011fc5d5c65647e8efe6891d": 1
-  },
-  "packages/combat/src/autoResolution.ts": {
-    "eda9a0f837be9e2580e38eb48ec7e77eb6a939f656654a59d69802af2314e1b1": 2
   },
   "packages/combat/src/battleResolution/torpedoProjection.ts": {
     "7df86cd182eca1ab33c26ae3cef931c9e3ca77befe0b2c61a5e0065492d36ea5": 1,
@@ -39,6 +31,9 @@
   },
   "packages/combat/src/weather/night-twilight.ts": {
     "9ea97194e5d4cfce3aca8e2b8de89a44c6b11ca1afda9278943937a38c7265b9": 1
+  },
+  "packages/phase-engine/src/research.ts": {
+    "66cf17527e0f22874a79b030547eea532c1cf82d6da8e7043b0bc7c8435e990e": 1
   },
   "packages/ship-design/src/nationalResearch.ts": {
     "3a1b2bae8bde73009468f72868cd76d938b76abca18aee6fb11f2dac8f1c5c5d": 1,

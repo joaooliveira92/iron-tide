@@ -13,7 +13,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
-import { ManagedRuntime } from "effect";
+import { Effect, ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import {
@@ -152,11 +152,7 @@ describe("commitMonth", () => {
       expect(result.outcome).toBe("success");
       if (result.outcome !== "success") return;
 
-      const diagnostics = new DiagnosticCollector();
-      const loaded = new SaveStore().load(saveDir, diagnostics);
-      expect(diagnostics.hasErrors).toBe(false);
-      expect(loaded).not.toBeNull();
-      if (!loaded) return;
+      const loaded = Effect.runSync(new SaveStore().load(saveDir)).state;
 
       expect(Number(loaded.snapshot.turnNumber)).toBe(1);
       const ukLoaded = loaded.snapshot.nations.get("uk")!;
@@ -223,11 +219,11 @@ describe("commitMonth", () => {
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "6a485b928b24f2d31ec4c23886d939a3578c7ae43e5830b2b5445d2e538b8b14",
-        bodyLength: 106394,
+        bodyHash: "ad549b0711dad06121040e7ad9abd23255e5ae5bd4df2a9cae6b3537810ecae3",
+        bodyLength: 209361,
       });
       expect(updated.state.rawHash).toBe(
-        "18e80a3c8be9a0686ee67b891907d55c440f72891268d8f6b9e63b754ddb7937",
+        "4d78a6e9fbdc470670baaa3d798052e031d33ba2ced24ed70bc10cee3bdb6285",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",

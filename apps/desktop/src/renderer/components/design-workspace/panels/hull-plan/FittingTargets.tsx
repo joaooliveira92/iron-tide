@@ -152,10 +152,9 @@ export function FittingTargets({
             <HoverCardContent
               side="top"
               collisionPadding={12}
+              variant={plate === undefined ? "tip" : "card"}
               className={
-                plate === undefined
-                  ? "w-auto max-w-64 px-3 py-1.5 text-xs"
-                  : "w-[26rem] max-w-[min(26rem,calc(100vw-2rem))] p-2"
+                plate === undefined ? undefined : "w-[26rem] max-w-[min(26rem,calc(100vw-2rem))]"
               }
             >
               {plate === undefined ? (

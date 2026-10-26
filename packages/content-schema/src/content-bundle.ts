@@ -50,7 +50,7 @@ const ShipBuildingCatalogueSchema = Schema.Struct({
   designLoadouts: Schema.optional(Schema.Array(ReferenceDesignLoadoutSchema)),
 });
 
-const CampaignCollectionsSchema = Schema.Struct({
+export const CampaignCollectionsSchema = Schema.Struct({
   fleets: Schema.Array(CampaignFleetSchema),
   economies: Schema.Array(CampaignEconomySchema),
   constructions: Schema.Array(CampaignConstructionSchema),
@@ -59,6 +59,8 @@ const CampaignCollectionsSchema = Schema.Struct({
   designs: Schema.Array(CampaignDesignSchema),
   divisions: Schema.optional(Schema.Array(CampaignDivisionSchema)),
 });
+
+export type CampaignCollections = typeof CampaignCollectionsSchema.Type;
 
 export const ContentBundleSchema = Schema.Struct({
   generatedBy: Schema.String,

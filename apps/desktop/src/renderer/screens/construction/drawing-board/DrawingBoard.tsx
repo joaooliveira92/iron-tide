@@ -254,7 +254,7 @@ export function DrawingBoard({
                   >
                     <Icon aria-hidden="true" />
                   </HoverCardTrigger>
-                  <HoverCardContent className="w-auto max-w-64 px-3 py-1.5 text-xs">
+                  <HoverCardContent variant="tip">
                     {name} (
                     {name === "Undo" ? `${SHORTCUT_MOD}Z` : `${SHORTCUT_SHIFT}${SHORTCUT_MOD}Z`})
                   </HoverCardContent>

@@ -79,5 +79,4 @@ export type PersistenceError =
   | PersistenceCorruptSaveError
   | PersistenceMissingSaveError
   | PersistenceCancelledError
-  | PersistenceUnsignedSaveError
   | PersistenceCompatibilityMismatchError;

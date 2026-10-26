@@ -1,13 +1,15 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledTorpedo } from "@bluewave/armament";
+import type { CompileTorpedoFailure } from "@bluewave/ship-design";
 import {
+  type CampaignDesign,
   type DesignTemplate,
   DesignTemplateSchema,
   validateAgainstSchema,
 } from "@bluewave/content-schema";
-import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { canonicalSerialize, sha256Hex, compareCodePoints } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
-import { toSafeIntOpt, toStr } from "./campaignInput.js";
+import { Result } from "effect";
 import { knotsToUms, mmToUm } from "./designUnits.js";
 import type {
   CompiledDesignVersion,
@@ -38,17 +40,32 @@ export function assertFleetDesignLinks(
   return !collector.hasErrors;
 }
 
-export type TorpedoResolver = (torpedoModelId: string) => CompiledTorpedo | undefined;
+export type TorpedoResolver = (
+  torpedoModelId: string,
+) => Result.Result<CompiledTorpedo, readonly CompileTorpedoFailure[]> | undefined;
 
 function mapTorpedoArmament(
   validated: DesignTemplate,
+  designVersionId: string,
+  collector: DiagnosticCollector,
   torpedoOf?: TorpedoResolver,
 ): CompiledTorpedoMount[] | undefined {
-  const armament = validated["torpedoArmament"] as
-    | { mountType: string; tubeCount: number; torpedoModelId: string }[]
-    | undefined;
-  return armament?.map((m) => {
-    const compiledTorpedo = torpedoOf?.(m.torpedoModelId);
+  return validated.torpedoArmament?.map((m) => {
+    const resolved = torpedoOf?.(m.torpedoModelId);
+    let compiledTorpedo: CompiledTorpedo | undefined;
+    if (resolved !== undefined) {
+      if (Result.isSuccess(resolved)) {
+        compiledTorpedo = resolved.success;
+      } else {
+        for (const failure of resolved.failure) {
+          collector.addError(
+            "CAMPAIGN-DESIGN",
+            `Torpedo ${m.torpedoModelId} ${failure.path}: ${failure.message}`,
+            { stage: "campaign-compile", entityId: designVersionId },
+          );
+        }
+      }
+    }
     return {
       mountType: m.mountType,
       tubeCount: SafeInt(m.tubeCount),
@@ -68,25 +85,22 @@ function hashableTorpedoArmament(
   }));
 }
 
-function buildRawDesignRecord(
-  rec: Record<string, unknown>,
-  designVersionId: string,
-): Record<string, unknown> {
+function buildRawDesignRecord(rec: CampaignDesign): Record<string, unknown> {
   return {
-    designId: designVersionId,
-    designFamilyId: rec["designFamilyId"],
-    nationId: rec["nationId"],
-    className: rec["className"],
-    hullType: rec["hullType"],
-    displacementKg: rec["displacementKg"],
-    speedUms: rec["speedUms"],
-    armorBeltUm: rec["armorBeltUm"],
-    mainGuns: rec["mainGuns"],
-    machineryType: rec["machineryType"],
-    hitPoints: rec["hitPoints"],
-    crewComplement: rec["crewComplement"],
-    contentVersion: rec["contentVersion"],
-    ...(rec["torpedoArmament"] !== undefined ? { torpedoArmament: rec["torpedoArmament"] } : {}),
+    designId: rec.designId,
+    designFamilyId: rec.designFamilyId,
+    nationId: rec.nationId,
+    className: rec.className,
+    hullType: rec.hullType,
+    displacementKg: rec.displacementKg,
+    speedUms: rec.speedUms,
+    armorBeltUm: rec.armorBeltUm,
+    mainGuns: rec.mainGuns,
+    machineryType: rec.machineryType,
+    hitPoints: rec.hitPoints,
+    crewComplement: rec.crewComplement,
+    contentVersion: rec.contentVersion,
+    ...(rec.torpedoArmament !== undefined ? { torpedoArmament: rec.torpedoArmament } : {}),
   };
 }
 
@@ -98,16 +112,16 @@ function computeCompiledDesignHash(
   return sha256Hex(
     canonicalSerialize({
       designVersionId,
-      className: validated["className"],
-      nationId: validated["nationId"],
-      hullType: validated["hullType"],
-      displacementKg: validated["displacementKg"],
-      speedUms: validated["speedUms"],
-      armorBeltUm: validated["armorBeltUm"],
-      mainGuns: validated["mainGuns"],
-      machineryType: validated["machineryType"],
-      hitPoints: validated["hitPoints"],
-      crewComplement: validated["crewComplement"],
+      className: validated.className,
+      nationId: validated.nationId,
+      hullType: validated.hullType,
+      displacementKg: validated.displacementKg,
+      speedUms: validated.speedUms,
+      armorBeltUm: validated.armorBeltUm,
+      mainGuns: validated.mainGuns,
+      machineryType: validated.machineryType,
+      hitPoints: validated.hitPoints,
+      crewComplement: validated.crewComplement,
       ...(hashableTorpedoArmament(torpedoArmament)
         ? { torpedoArmament: hashableTorpedoArmament(torpedoArmament) }
         : {}),
@@ -117,60 +131,44 @@ function computeCompiledDesignHash(
 
 function buildCompiledDesign(
   designVersionId: string,
-  rec: Record<string, unknown>,
+  rec: CampaignDesign,
   validated: DesignTemplate,
+  collector: DiagnosticCollector,
   torpedoOf?: TorpedoResolver,
 ): CompiledDesignVersion {
-  const torpedoArmament = mapTorpedoArmament(validated, torpedoOf);
+  const torpedoArmament = mapTorpedoArmament(validated, designVersionId, collector, torpedoOf);
   return {
     designVersionId,
-    designFamilyId: toStr(validated["designFamilyId"], ""),
-    className: validated["className"],
-    nationId: validated["nationId"],
-    hullType: validated["hullType"],
-    normalizedDisplacementKg: toSafeIntOpt(
-      rec["normalizedDisplacementKg"] ?? validated["displacementKg"],
-      SafeInt(0),
-    ),
-    normalizedSpeedUms: toSafeIntOpt(
-      rec["normalizedSpeedUms"] ?? knotsToUms(validated["speedUms"] as number),
-      SafeInt(0),
-    ),
-    normalizedArmorUm: toSafeIntOpt(
-      rec["normalizedArmorUm"] ?? mmToUm(validated["armorBeltUm"] as number),
-      SafeInt(0),
-    ),
-    hitPoints: toSafeIntOpt(validated["hitPoints"], SafeInt(100)),
-    mainGunsCaliber: toSafeIntOpt(
-      validated["mainGuns"]?.["caliber"] === undefined
-        ? undefined
-        : mmToUm(validated["mainGuns"]?.["caliber"] as number),
-      SafeInt(0),
-    ),
-    mainGunsCount: toSafeIntOpt(validated["mainGuns"]?.["count"], SafeInt(0)),
-    machineryType: validated["machineryType"],
-    crewComplement: toSafeIntOpt(validated["crewComplement"], SafeInt(0)),
-    contentVersion: toStr(validated["contentVersion"], "0.1.0"),
+    designFamilyId: validated.designFamilyId ?? "",
+    className: validated.className,
+    nationId: validated.nationId,
+    hullType: validated.hullType,
+    normalizedDisplacementKg: SafeInt(rec.normalizedDisplacementKg ?? validated.displacementKg),
+    normalizedSpeedUms: SafeInt(rec.normalizedSpeedUms ?? knotsToUms(validated.speedUms)),
+    normalizedArmorUm: SafeInt(rec.normalizedArmorUm ?? mmToUm(validated.armorBeltUm)),
+    hitPoints: SafeInt(validated.hitPoints),
+    mainGunsCaliber: SafeInt(mmToUm(validated.mainGuns.caliber)),
+    mainGunsCount: SafeInt(validated.mainGuns.count),
+    machineryType: validated.machineryType,
+    crewComplement: SafeInt(validated.crewComplement),
+    contentVersion: validated.contentVersion ?? "0.1.0",
     compiledHash: computeCompiledDesignHash(designVersionId, validated, torpedoArmament),
     ...(torpedoArmament ? { torpedoArmament } : {}),
   };
 }
 
 export function buildDesignsFromData(
-  designsData: unknown[],
+  designsData: readonly CampaignDesign[],
   collector: DiagnosticCollector,
   torpedoOf?: TorpedoResolver,
 ): Map<string, CompiledDesignVersion> {
   const designs = new Map<string, CompiledDesignVersion>();
 
-  if (!Array.isArray(designsData)) return designs;
-
-  for (const d of designsData) {
-    const rec = d as Record<string, unknown>;
-    const designVersionId = toStr(rec["designVersionId"], toStr(rec["designId"]));
+  for (const rec of designsData) {
+    const designVersionId = rec.designVersionId;
 
     const validated = validateAgainstSchema(
-      buildRawDesignRecord(rec, designVersionId),
+      buildRawDesignRecord(rec),
       DesignTemplateSchema,
       "DesignTemplate",
       "designs.yaml",
@@ -178,40 +176,39 @@ export function buildDesignsFromData(
     );
     if (!validated) continue;
 
-    designs.set(designVersionId, buildCompiledDesign(designVersionId, rec, validated, torpedoOf));
+    designs.set(
+      designVersionId,
+      buildCompiledDesign(designVersionId, rec, validated, collector, torpedoOf),
+    );
   }
 
   return designs;
 }
 
-export function buildDesignFamiliesFromData(designsData: unknown[]): Map<string, DesignFamily> {
+export function buildDesignFamiliesFromData(
+  designsData: readonly CampaignDesign[],
+): Map<string, DesignFamily> {
   const families = new Map<string, DesignFamily>();
 
-  if (!Array.isArray(designsData)) return families;
-
-  const familyMap = new Map<string, { rec: Record<string, unknown>; members: string[] }>();
-  for (const d of designsData) {
-    const rec = d as Record<string, unknown>;
-    const familyId = toStr(rec["designFamilyId"], "");
-    if (!familyId) continue;
-    const designVersionId = toStr(rec["designVersionId"], toStr(rec["designId"]));
+  const familyMap = new Map<string, { rec: CampaignDesign; members: string[] }>();
+  for (const rec of designsData) {
+    const familyId = rec.designFamilyId;
+    if (familyId === undefined) continue;
 
     if (!familyMap.has(familyId)) {
       familyMap.set(familyId, { rec, members: [] });
     }
-    if (designVersionId) {
-      familyMap.get(familyId)!.members.push(designVersionId);
-    }
+    familyMap.get(familyId)!.members.push(rec.designVersionId);
   }
 
   for (const [familyId, data] of familyMap) {
-    data.members.sort((a, b) => a.localeCompare(b));
+    data.members.sort((a, b) => compareCodePoints(a, b));
     families.set(familyId, {
       designFamilyId: familyId,
-      nationId: toStr(data.rec["nationId"], ""),
+      nationId: data.rec.nationId,
       rootDesignVersionId: data.members[0] ?? "",
       memberDesignVersionIds: data.members,
-      familyCreationMonth: toStr(data.rec["familyCreationMonth"], "1880-01"),
+      familyCreationMonth: data.rec.familyCreationMonth ?? "1880-01",
     });
   }
 

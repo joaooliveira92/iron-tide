@@ -84,7 +84,10 @@ function loadedState(): DiplomacyScreenState {
 
 describe("diplomacy screen state", () => {
   it("starts idle and adopts the first projection", () => {
-    expect(initialDiplomacyScreenState()).toEqual({ kind: "idle", revision: 0 });
+    expect(initialDiplomacyScreenState()).toEqual({
+      kind: "idle",
+      revision: 0,
+    });
     const loaded = diplomacyLoadSuccess(fixtureProjection());
     expect(loaded.kind).toBe("loaded");
     if (loaded.kind !== "loaded") return;
@@ -209,26 +212,51 @@ describe("diplomacy screen state", () => {
     if (loaded.kind !== "loaded") return;
     const war = loaded.projection.wars[0]!;
 
-    expect(diplomacyDraftToCommand({ kind: "DeclareWar", partnerNationId: "france" })).toEqual({
+    expect(
+      diplomacyDraftToCommand({
+        kind: "DeclareWar",
+        partnerNationId: "france",
+      }),
+    ).toEqual({
       type: "DeclareWar",
       targetNationId: "france",
     });
     expect(
-      diplomacyDraftToCommand({ kind: "AcceptPeace", partnerNationId: "france", warId: war.warId }),
+      diplomacyDraftToCommand({
+        kind: "AcceptPeace",
+        partnerNationId: "france",
+        warId: war.warId,
+      }),
     ).toEqual({ type: "AcceptPeace", warId: "war_uk_fra" });
-    expect(diplomacyDraftToCommand({ kind: "FormAlliance", partnerNationId: "germany" })).toEqual({
+    expect(
+      diplomacyDraftToCommand({
+        kind: "FormAlliance",
+        partnerNationId: "germany",
+      }),
+    ).toEqual({
       type: "FormAlliance",
       partnerNationId: "germany",
     });
-    expect(diplomacyDraftToCommand({ kind: "BreakAlliance", partnerNationId: "germany" })).toEqual({
+    expect(
+      diplomacyDraftToCommand({
+        kind: "BreakAlliance",
+        partnerNationId: "germany",
+      }),
+    ).toEqual({
       type: "BreakAlliance",
       partnerNationId: "germany",
     });
     expect(
-      diplomacyDraftToCommand({ kind: "FormNonAggressionPact", partnerNationId: "germany" }),
+      diplomacyDraftToCommand({
+        kind: "FormNonAggressionPact",
+        partnerNationId: "germany",
+      }),
     ).toEqual({ type: "FormNonAggressionPact", partnerNationId: "germany" });
     expect(
-      diplomacyDraftToCommand({ kind: "BreakNonAggressionPact", partnerNationId: "germany" }),
+      diplomacyDraftToCommand({
+        kind: "BreakNonAggressionPact",
+        partnerNationId: "germany",
+      }),
     ).toEqual({ type: "BreakNonAggressionPact", partnerNationId: "germany" });
     expect(
       diplomacyDraftToCommand({
@@ -241,9 +269,17 @@ describe("diplomacy screen state", () => {
       targetNationId: "france",
       areaId: "med_gibraltar",
     });
-    expect(diplomacyDraftToCommand({ kind: "AcceptPeace", partnerNationId: "france" })).toBeNull();
     expect(
-      diplomacyDraftToCommand({ kind: "DeclareBlockade", partnerNationId: "france" }),
+      diplomacyDraftToCommand({
+        kind: "AcceptPeace",
+        partnerNationId: "france",
+      }),
+    ).toBeNull();
+    expect(
+      diplomacyDraftToCommand({
+        kind: "DeclareBlockade",
+        partnerNationId: "france",
+      }),
     ).toBeNull();
   });
 

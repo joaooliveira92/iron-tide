@@ -17,6 +17,7 @@ const state: BudgetPolicyState = {
     rateBp: 500 + i * 50,
     cap: Math.floor((Math.floor((120000 * (500 + i * 50)) / 120000) * 1200) / 10000),
   })),
+  commitments: null,
   pendingRequest: null,
   requiresRefresh: false,
   notice: null,

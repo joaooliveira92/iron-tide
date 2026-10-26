@@ -1,8 +1,8 @@
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
-import { advanceMonth, canAdvance } from "@bluewave/campaign";
+import { advanceMonth, canAdvance, createCampaignSnapshotEnvelope } from "@bluewave/campaign";
 import type { CommitMonthResponse } from "@bluewave/campaign-engine";
 import { SafeInt } from "@bluewave/contracts";
-import { createEnvelope, canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
   computeOrderedInputsHash,
@@ -142,6 +142,7 @@ export const runTurnTransaction = (
     const pendingCommands = yield* queue.forExecution(input.sessionId, executionSnapshot);
     const shipBuilding = yield* contentArtifact.loadShipBuildingContent();
     const battleOffers = yield* contentArtifact.loadBattleOfferRules();
+    const fleetManagement = yield* contentArtifact.loadFleetManagementRules();
 
     const recordedInputs = input.recordedInputs ?? [];
     const committedOrderHash = sha256Hex(canonicalSerialize(pendingCommands));
@@ -171,6 +172,9 @@ export const runTurnTransaction = (
         ...(shipBuilding.presence !== undefined ? { presence: shipBuilding.presence } : {}),
         ...(battleOffers !== undefined
           ? { battleOffers, playerNationId: record.playerSlotId }
+          : {}),
+        ...(fleetManagement !== undefined
+          ? { fleetManagement, playerNationId: record.playerSlotId }
           : {}),
         ...(channel !== undefined ? { interruptions: channel } : {}),
       },
@@ -254,8 +258,7 @@ export const runTurnTransaction = (
     };
     const nextMonth = advanceMonth(record.month.year, record.month.month, 1);
 
-    const nextEnvelope = createEnvelope(
-      "campaign-snapshot",
+    const nextEnvelope = createCampaignSnapshotEnvelope(
       nextSnapshot.compatibilityVersion,
       nextSnapshot,
     );

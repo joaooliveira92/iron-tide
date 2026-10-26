@@ -1,4 +1,4 @@
-import { sha256Hex } from "@bluewave/deterministic";
+import { sha256Hex, compareCodePoints } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
   computeTechnologyManifestHash,
@@ -323,7 +323,7 @@ export function materializeTechnologyVariation(
 ): CampaignTechnologyManifest | undefined {
   if (!validateTechnologyVariationProfile(profile, c)) return undefined;
   const cloned = cloneTechnologyDefinitions(techs);
-  const sorted = [...cloned].sort((a, b) => a.technologyId.localeCompare(b.technologyId));
+  const sorted = [...cloned].sort((a, b) => compareCodePoints(a.technologyId, b.technologyId));
 
   if (!normalizeAndValidateTechnologyMetadata(sorted, c)) return undefined;
 

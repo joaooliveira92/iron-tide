@@ -1,4 +1,5 @@
 import type { RandomStream } from "@bluewave/random";
+import { compareStrings } from "../core/ordering.js";
 
 export const OPTIONAL_ASSET_SELECTION_V1 = "optional_asset_selection_v1" as const;
 export const OPTIONAL_ASSET_STREAM =
@@ -33,7 +34,7 @@ export function optionalAssetSelectionV1(
   randomStream: RandomStream,
   maxAssets: number,
 ): string[] {
-  const ordered = [...candidates].sort((a, b) => a.assetId.localeCompare(b.assetId));
+  const ordered = [...candidates].sort((a, b) => compareStrings(a.assetId, b.assetId));
 
   const selected: string[] = [];
   const weights = ordered.map((c) => selectionWeightV1(c));

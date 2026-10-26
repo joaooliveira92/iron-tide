@@ -1,19 +1,11 @@
-import { FlaskConical } from "lucide-react";
-import { ScreenStage } from "../../components/shared/ScreenStage.js";
 import { debugRevisionActions } from "../../components/shared/debugRevisionActions.js";
-import {
-  FieldPrioritiesEditor,
-  InProgressTechnologiesCard,
-  ResearchLoadErrorState,
-  ResearchLoadingState,
-  ResearchNotice,
-  ResearchSummarySections,
-} from "./components/index.js";
+import { ResearchLoadErrorState, ResearchLoadingState } from "./components/index.js";
+import { ResearchWorkspace } from "./ResearchWorkspace.js";
 import { useResearchScreen } from "./hooks/useResearchScreen.js";
 import { buildResearchViewModel } from "./research-view-model.js";
 
 export function ResearchScreen({ sessionId }: { readonly sessionId: string }) {
-  const { state, loadError, setFieldWeight, submit, reload, canSubmit } =
+  const { state, loadError, setFieldWeight, revert, submit, reload, canSubmit } =
     useResearchScreen(sessionId);
 
   if (loadError !== null) {
@@ -24,43 +16,21 @@ export function ResearchScreen({ sessionId }: { readonly sessionId: string }) {
     return <ResearchLoadingState />;
   }
 
-  const busy = state.kind === "submitting";
   const vm = buildResearchViewModel(state);
 
   return (
-    <ScreenStage
-      guidedTarget="research"
-      icon={FlaskConical}
-      title="Research & Technology"
-      description="Set field priorities; the engine applies them on the next turn advance."
-      actions={debugRevisionActions(state.month, state.revision)}
-    >
-      {state.notice !== null && (
-        <ResearchNotice submitted={state.kind === "submitted"} notice={state.notice} />
-      )}
-
-      <ResearchSummarySections
-        researchBudget={vm.researchBudget}
-        annualAllocation={vm.annualAllocation}
-        researchCap={vm.researchCap}
-        budgetNote={vm.budgetNote}
-        currentProjectLabel={vm.currentProjectLabel}
-        discoveredTechs={vm.discoveredTechs}
-      />
-
-      <FieldPrioritiesEditor
-        fields={vm.fields}
-        highCount={vm.highCount}
-        highCap={vm.highCap}
-        highCountValid={vm.highCountValid}
-        dirty={vm.dirty}
-        busy={busy}
+    <div data-guided-target="research">
+      <ResearchWorkspace
+        vm={vm}
+        busy={state.kind === "submitting"}
         canSubmit={canSubmit}
+        submitted={state.kind === "submitted"}
+        notice={state.notice}
+        commandExtras={debugRevisionActions(state.month, state.revision)}
         onSetFieldWeight={setFieldWeight}
-        onSubmit={() => submit()}
+        onRevert={revert}
+        onSubmit={submit}
       />
-
-      <InProgressTechnologiesCard technologies={vm.inProgressTechnologies} />
-    </ScreenStage>
+    </div>
   );
 }

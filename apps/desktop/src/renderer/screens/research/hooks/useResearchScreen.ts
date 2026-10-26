@@ -20,6 +20,7 @@ import {
   initialResearchScreenState,
   researchBeginSubmit,
   researchLoadSuccess,
+  researchRevertDraft,
   researchSubmitRejected,
   researchSubmitSuccess,
   researchTransportFailure,
@@ -29,6 +30,7 @@ export interface UseResearchScreenReturn {
   readonly state: ResearchScreenState;
   readonly loadError: string | null;
   readonly setFieldWeight: (fieldId: string, weight: FieldWeightOption) => void;
+  readonly revert: () => void;
   readonly submit: () => void;
   readonly reload: () => Promise<void>;
   readonly canSubmit: boolean;
@@ -75,6 +77,8 @@ export function useResearchScreen(sessionId: string): UseResearchScreenReturn {
     [updateState],
   );
 
+  const revert = useCallback(() => updateState(researchRevertDraft), [updateState]);
+
   const submit = useCallback(() => {
     const current = stateRef.current;
     if (current.kind !== "loaded" && current.kind !== "submitted") return;
@@ -94,6 +98,7 @@ export function useResearchScreen(sessionId: string): UseResearchScreenReturn {
     state,
     loadError: workflow.loadError,
     setFieldWeight,
+    revert,
     submit,
     reload: loadScreen,
     canSubmit,

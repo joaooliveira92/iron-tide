@@ -155,7 +155,7 @@ test("a clicked status strip card stays pinned, two can be compared, and a click
   await expect(popup("Balance breakdown")).toBeVisible();
   await expect(popup("Over a year")).toBeVisible();
 
-  await popup("Balance breakdown").getByText("Monthly balance", { exact: true }).click();
+  await popup("Balance breakdown").getByText("Monthly appropriation", { exact: true }).click();
   await expect(popup("Over a year")).toBeVisible();
 
   await page.mouse.click(5, 300);

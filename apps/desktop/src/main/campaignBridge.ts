@@ -64,6 +64,9 @@ import {
   inspectFleetScreenProgram,
   replaceMovementCommandProgram,
   submitMovementCommandProgram,
+  submitFleetExerciseProgram,
+  submitShipReadinessProgram,
+  submitSpecialTrainingProgram,
   submitStationAssignmentProgram,
 } from "./commands/fleetCommands.js";
 import {
@@ -140,6 +143,9 @@ export const commandHandlers: CommandHandlers = {
   inspectFleetScreen: inspectFleetScreenProgram,
   submitMovementCommand: submitMovementCommandProgram,
   submitStationAssignment: submitStationAssignmentProgram,
+  submitShipReadiness: submitShipReadinessProgram,
+  submitSpecialTraining: submitSpecialTrainingProgram,
+  submitFleetExercise: submitFleetExerciseProgram,
   replaceMovementCommand: replaceMovementCommandProgram,
   cancelMovementCommand: cancelMovementCommandProgram,
   submitDesignCommand: submitDesignCommandProgram,
@@ -196,7 +202,9 @@ export function createCampaignCommandDispatcher(
 ): (command: string, payload: unknown) => Promise<BridgeResult<unknown>> {
   return async (command, payload) => {
     const program = Effect.gen(function* () {
-      const parsedCommand = Schema.decodeUnknownResult(CommandNameSchema)(command);
+      const parsedCommand = Schema.decodeUnknownResult(CommandNameSchema, {
+        onExcessProperty: "error",
+      })(command);
       if (Result.isFailure(parsedCommand)) {
         return yield* new UnknownCommand({ command });
       }

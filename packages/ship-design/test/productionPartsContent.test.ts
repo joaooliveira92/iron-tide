@@ -72,11 +72,11 @@ const catalogue = partCatalogue({ parts, slotTemplates, platforms });
 const legacyById = new Map(readReferenceDesignEntries().map((d) => [d.id, d] as const));
 
 describe("production parts content → compile (ticket 11d)", () => {
-  it("carries the staged plan: 315 parts, 11 slot templates, 5 platforms, 92 loadouts", () => {
-    expect(parts).toHaveLength(315);
+  it("carries the staged plan: 325 parts, 11 slot templates, 9 platforms, 96 loadouts", () => {
+    expect(parts).toHaveLength(325);
     expect(slotTemplates).toHaveLength(11);
-    expect(platforms).toHaveLength(5);
-    expect(loadouts).toHaveLength(92);
+    expect(platforms).toHaveLength(9);
+    expect(loadouts).toHaveLength(96);
     for (const loadout of loadouts) {
       expect(legacyById.has(loadout.id), loadout.id).toBe(true);
     }
@@ -153,7 +153,7 @@ describe("production parts content → compile (ticket 11d)", () => {
         ).toBeDefined();
       }
     }
-    expect(placements).toBe(825);
+    expect(placements).toBe(883);
   });
 
   it("executes the four D17 designs through the production barrier and pins their central batteries", () => {
