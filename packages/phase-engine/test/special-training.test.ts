@@ -191,6 +191,38 @@ describe("special training program", () => {
     expect(programOf(snapshot)).toBeUndefined();
   });
 
+  it("funds a nation at its ruleset cost multiplier and every other nation at the base adder", () => {
+    const discounted = {
+      fleetManagement: {
+        ...FIXTURE_FLEET_MANAGEMENT_RULES,
+        training: {
+          ...FIXTURE_FLEET_MANAGEMENT_RULES.training,
+          nationCostMultiplierBp: { GBR: 8_000 },
+        },
+      },
+    };
+    const { next } = month(
+      makeSnapshot(FLEET, []),
+      [fund(["NIGHT_FIGHTING", "GUNNERY"])],
+      discounted,
+    );
+    expect(programOf(next)).toEqual([
+      { subject: "GUNNERY", fundedMonths: 1, maintenanceAdderBp: 2_400 },
+      { subject: "NIGHT_FIGHTING", fundedMonths: 1, maintenanceAdderBp: 1_600 },
+    ]);
+    const other = {
+      fleetManagement: {
+        ...discounted.fleetManagement,
+        training: {
+          ...discounted.fleetManagement.training,
+          nationCostMultiplierBp: { FRA: 8_000 },
+        },
+      },
+    };
+    const { next: unlisted } = month(makeSnapshot(FLEET, []), [fund(["GUNNERY"])], other);
+    expect(programOf(unlisted)![0]!.maintenanceAdderBp).toBe(3_000);
+  });
+
   it("is refused while the fleet-management section is dormant", () => {
     const { collector, result } = month(makeSnapshot(FLEET, []), [fund(["GUNNERY"])], {});
     expect(collector.all.map((d) => d.code)).toContain("TRAINING_DORMANT");

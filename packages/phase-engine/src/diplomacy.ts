@@ -1,11 +1,13 @@
 import type {
   BlockadeState,
+  DiplomaticRelation,
   CampaignSnapshot,
   NationState,
   WarDeclaration,
   WarParticipantMembership,
 } from "@bluewave/campaign";
 import {
+  applyExerciseTension,
   BLOCKADE_WAR_SCORE_PER_MONTH,
   NAP_VIOLATION_PENALTY,
   TENSION_PEACE,
@@ -277,16 +279,36 @@ export function settleWar(
   return next;
 }
 
+function applyExerciseTensionForMonth(ctx: PhaseContext): void {
+  const rules = ctx.fleetManagement?.exercise.tension;
+  if (rules === undefined) return;
+  const relations = ctx.snapshot.read("politics")["relations"];
+  let next: readonly DiplomaticRelation[] = relations;
+  for (const [nationId, nation] of [...ctx.snapshot.read("nations")].sort(([a], [b]) =>
+    a < b ? -1 : a > b ? 1 : 0,
+  )) {
+    const record = nation["fleetExercise"];
+    if (record === undefined || record.month !== ctx.campaignMonth) continue;
+    next = applyExerciseTension(next, nationId, record.shipIds.length, rules);
+  }
+  if (next === relations) return;
+  ctx.snapshot.write("politics", {
+    ...ctx.snapshot.read("politics"),
+    relations: [...next],
+  });
+}
+
 export function runDiplomacyPhase(ctx: PhaseContext): PhaseRunOutcome {
   const wars = ctx.snapshot.read("wars");
   const next = resolveDiplomacyWars(wars, ctx.campaignMonth);
   if (next !== wars) ctx.snapshot.write("wars", next);
+  applyExerciseTensionForMonth(ctx);
   return { status: "continue" };
 }
 
 export const diplomacyPhase: MonthPhase = {
   id: "resolve_diplomacy",
   name: "Diplomacy Resolution",
-  permissions: { reads: ["wars"], writes: ["wars"], rng: false },
+  permissions: { reads: ["wars", "nations", "politics"], writes: ["wars", "politics"], rng: false },
   run: runDiplomacyPhase,
 };

@@ -173,6 +173,87 @@ const shipOf = (s: CampaignSnapshot, id: string) =>
 const charge = (s: CampaignSnapshot) =>
   Number(month(s).result.finalSnapshot.nations.get("GBR")!.maintenanceCost);
 
+describe("exercise tension", () => {
+  const relation = (
+    nationB: string,
+    kind: "neutral" | "allied" | "at_war" | "trade_agreement",
+    tension: number,
+  ) => ({ nationA: "GBR", nationB, relation: kind, tension, nap: false, since: "1880-01" });
+
+  const withRelations = (): CampaignSnapshot => {
+    const base = makeSnapshot(ships(), divisions());
+    return {
+      ...base,
+      politics: {
+        ...base.politics,
+        relations: [
+          relation("FRA", "neutral", 5),
+          relation("GER", "allied", 2),
+          relation("RUS", "at_war", 10),
+          relation("ITA", "neutral", 7),
+          relation("USA", "trade_agreement", 4),
+        ],
+      },
+    };
+  };
+
+  const rules = (tension?: { minShips: number; increase: number; ceiling: number }) => ({
+    fleetManagement: {
+      ...FIXTURE_FLEET_MANAGEMENT_RULES,
+      exercise: { ...FIXTURE_FLEET_MANAGEMENT_RULES.exercise, ...(tension ? { tension } : {}) },
+    },
+  });
+
+  const tensions = (s: CampaignSnapshot) =>
+    Object.fromEntries(s.politics.relations.map((r) => [r.nationB, r.tension]));
+
+  const held = (shipIds: string[], options: ReturnType<typeof rules>) => {
+    const scheduled = month(withRelations(), [hold(shipIds)], options);
+    return month(scheduled.next, [], options).next;
+  };
+
+  const TENSION = { minShips: 2, increase: 1, ceiling: 7 };
+
+  it("raises tension with neutral rivals only, never past the ceiling", () => {
+    expect(tensions(held(["s1", "s2"], rules(TENSION)))).toEqual({
+      FRA: 6,
+      GER: 2,
+      RUS: 10,
+      ITA: 7,
+      USA: 4,
+    });
+  });
+
+  it("does nothing for an exercise smaller than the threshold", () => {
+    expect(tensions(held(["s1"], rules(TENSION)))).toEqual({
+      FRA: 5,
+      GER: 2,
+      RUS: 10,
+      ITA: 7,
+      USA: 4,
+    });
+  });
+
+  it("does nothing while the ruleset authors no tension consequence", () => {
+    expect(tensions(held(["s1", "s2"], rules()))).toEqual({
+      FRA: 5,
+      GER: 2,
+      RUS: 10,
+      ITA: 7,
+      USA: 4,
+    });
+  });
+
+  it("applies the consequence once, in the month the exercise is held", () => {
+    const options = rules(TENSION);
+    const scheduled = month(withRelations(), [hold(["s1", "s2"])], options);
+    expect(tensions(scheduled.next).FRA).toBe(5);
+    const afterHeld = month(scheduled.next, [], options);
+    expect(tensions(afterHeld.next).FRA).toBe(6);
+    expect(tensions(month(afterHeld.next, [], options).next).FRA).toBe(6);
+  });
+});
+
 describe("annual fleet exercise", () => {
   it("schedules the exercise for the next month, occupying the slot without charging this month", () => {
     const base = makeSnapshot(ships(), divisions());

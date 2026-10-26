@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0303).
+highest existing number + 1 (the next number is ADR-0304).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -149,6 +149,7 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0298 | [ADR-0298-command-lifecycle-records-are-scaffolding.md](ADR-0298-command-lifecycle-records-are-scaffolding.md) | Hash-chained command-lifecycle records, settlement branches and the spec-rule helpers are scaffolding, not shipped | accepted | — |
 | 0301 | [ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md](ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) | Proficient gunnery training raises the nation's gunnery accuracy in battle | accepted | — |
 | 0302 | [ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md](ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md) | All four training subjects reach battle through one per-side effects record | accepted | — |
+| 0303 | [ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md](ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) | Training cost differences and exercise tension are generic ruleset data | accepted | — |
 
 ## Foreign stations & presence
 

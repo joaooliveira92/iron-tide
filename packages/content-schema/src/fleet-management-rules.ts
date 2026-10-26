@@ -10,6 +10,10 @@ const basisPoints = Schema.Finite.check(
   Schema.isInt(),
   Schema.isBetween({ minimum: 0, maximum: 10_000 }),
 );
+const costMultiplierBp = Schema.Finite.check(
+  Schema.isInt(),
+  Schema.isBetween({ minimum: 5_000, maximum: 10_000 }),
+);
 
 export const FLEET_TRAINING_SUBJECTS = [
   "GUNNERY",
@@ -42,6 +46,9 @@ export const FleetManagementRulesSchema = Schema.Struct({
       Schema.isInt(),
       Schema.isBetween({ minimum: 1, maximum: FLEET_TRAINING_SUBJECTS.length }),
     ),
+    nationCostMultiplierBp: Schema.optionalKey(
+      Schema.Record(Schema.NonEmptyString, costMultiplierBp),
+    ),
     subjects: Schema.Struct({
       GUNNERY: FleetTrainingSubjectSchema,
       NIGHT_FIGHTING: FleetTrainingSubjectSchema,
@@ -52,6 +59,13 @@ export const FleetManagementRulesSchema = Schema.Struct({
   exercise: Schema.Struct({
     maintenanceMultiple: positiveInt,
     maxPerCalendarYear: nonNegativeInt,
+    tension: Schema.optionalKey(
+      Schema.Struct({
+        minShips: positiveInt,
+        increase: Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 5 })),
+        ceiling: Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 9 })),
+      }),
+    ),
   }),
   provenance: ProvenanceSchema,
 });

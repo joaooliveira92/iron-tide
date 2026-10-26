@@ -93,6 +93,8 @@
     training:
       proficiencyMonths: 12
       maxSubjects: 2
+      nationCostMultiplierBp:
+        japan: 8000
       subjects:
         GUNNERY: { maintenanceAdderBp: 3000, effectBp: 1000 }
         NIGHT_FIGHTING: { maintenanceAdderBp: 2000, effectBp: 1000 }
@@ -111,7 +113,7 @@
           year: 2023
           page: "51, 53, 55"
           section: "Special training takes twelve months, at most two subjects, with maintenance surcharges; an annual fleet exercise costs twice the active maintenance; division experience has a slight impact on crew quality in battle"
-      note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (docs/research/fleet-management-values.md)."
+      note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (docs/research/fleet-management-values.md). ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence."
   # The foreign-station and presence section (S-5, spec #73). Every value is a Bluewave balance decision recorded by
   # ADR-0266 (decision requests 0016-0023 and 0026, Option C); only the 1.5x colonial-service multiplier (manual p.46) is
   # sourced and it lives in code. The manual (pp.42, 45, 46) says each quantity exists and supplies no number. Retuning is a
