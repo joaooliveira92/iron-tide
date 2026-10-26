@@ -68,12 +68,38 @@ The batch branch `feat/story-49-area-explanations` adds four area slices through
 `<area>.<formula>.<node>` labels and presentation-formatted values. The manifest ratchet moved from 2.07% to 6.40%
 (13/203 fields).
 
+## Continuation (2026-10-26, #301/#302/#306)
+
+The second batch continues the same contract on the branch `feat/story-49-area-explanations-2`:
+
+- **Construction (#302).** `ConstructionProjectReadout` now also carries `instalmentExplanation`
+  (`construction_instalment`, the applied work split by production line) and `costExplanation`
+  (`construction_cost`, the package total split by line). `monthlyAbsorbableDetail` exposes the per-line
+  applied work so the instalment tree is built from the same draw the schedule uses.
+- **Fleet (#301).** `FleetTrainingSubjectView` carries `maintenanceAdderExplanation` (`fleet_training_adder`)
+  and `progressExplanation` (`fleet_training_progress`, months to proficiency); `FleetExerciseProjection`
+  carries `experienceGainExplanation` (`fleet_exercise_gain`) whose source is the content rule.
+  Crew quality, repair months and accumulated division experience/cohesion stay exempt because the view
+  holds only the current value.
+- **Reports (#306).** `MonthlyReportTreasury` carries `treasuryExplanation` (`report_treasury`) built from
+  the month's `reconcileMonthLedger` result. The reports sidecar schema accepts the optional tree, so old
+  reports decode unchanged.
+
+## Continuation (2026-10-26, #304/#285)
+
+The third batch closes the strategic area's honest gap:
+
+- **Prestige (#304).** `PrestigeLastChange` records the applied rule, the unclamped target and the bounds;
+  `PlayerProjectionPrestige.changeExplanation` carries `prestige_change` (`before + rule + clamp = after`) and the
+  status-strip prestige card shows it in the shared disclosure. See the implementation section of ADR-0307.
+- **Priorities (#285).** Every priority carries a player-readable `advice` sentence beside its engine `reason`; the
+  briefing hover shows the advice first and the trace as the working. It is view/report text, not a numeric tree.
+- **War score and tension (#304)** stay exempt until a contribution record exists (ADR-0307).
+
 ## Not delivered (tracked, not hidden)
 
-- The diplomacy/war/prestige/priorities area (#304) and the turn reports area (#306) remain exempt with their tracking
-  issues. Their displayed numbers are state aggregates without a replayable formula in the view contract (tension, war
-  score, accumulated prestige), so they need a decision on which engine calculation to expose before a tree can be
-  honest. The report lists the areas and their approximate field counts.
+- War score and tension need a stored contribution history before they can carry a tree; the opening briefing
+  reuses the economy/construction/fleet trees. No tree is invented from a total.
 - The ship designer has partial `ExplanationText` findings (ADR-0221) and is tracked by #168; the debug-only screens are not
   player-facing and are not in the manifest.
 

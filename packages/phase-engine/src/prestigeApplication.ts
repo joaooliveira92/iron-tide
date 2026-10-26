@@ -1,4 +1,4 @@
-import { applyPrestigeRule } from "@bluewave/campaign";
+import { applyPrestigeRuleDetail } from "@bluewave/campaign";
 import type { PrestigeChange, PrestigeReasonCode, PrestigeRule } from "@bluewave/campaign";
 import type { NationState } from "@bluewave/campaign";
 import { Result } from "effect";
@@ -31,7 +31,7 @@ export function applyPrestigeChange(
     );
     return undefined;
   }
-  const applied = applyPrestigeRule(nation["prestige"], reason, set, used);
+  const applied = applyPrestigeRuleDetail(nation["prestige"], reason, set, used);
   if (Result.isFailure(applied)) {
     ctx.collector.addError(
       PRESTIGE_APPLICATION_FAILED,
@@ -40,7 +40,8 @@ export function applyPrestigeChange(
     );
     return undefined;
   }
-  const change = applied.success;
+  const detail = applied.success;
+  const change = { before: detail.before, after: detail.after, delta: detail.delta };
   if ((change.delta as number) === 0) return change;
 
   const updatedNation: NationState = {
@@ -52,6 +53,9 @@ export function applyPrestigeChange(
       after: change.after,
       delta: change.delta,
       month: ctx.campaignMonth,
+      appliedRule: detail.appliedRule,
+      unclampedAfter: detail.unclampedAfter,
+      bounds: detail.bounds,
     },
   };
   const updatedNations = new Map(ctx.snapshot.read("nations"));

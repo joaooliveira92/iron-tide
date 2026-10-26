@@ -19,6 +19,7 @@ import {
   explainEconomyRunway,
 } from "./economy-explanations.js";
 import { explainPresenceShortfall } from "./fleet-explanations.js";
+import { explainPrestigeChange } from "./prestige-explanations.js";
 
 export type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign";
 
@@ -118,6 +119,7 @@ export interface PlayerProjectionPrestige {
     readonly delta: number;
     readonly month: string;
   };
+  readonly changeExplanation?: ExplanationTree;
 }
 
 export interface PlayerProjectionCareer {
@@ -179,6 +181,7 @@ function buildPrestige(
   nation: { readonly prestige: number; readonly prestigeLastChange?: PrestigeLastChange },
 ): PlayerProjectionPrestige {
   const last = nation.prestigeLastChange;
+  const changeExplanation = last === undefined ? undefined : explainPrestigeChange(last);
   return {
     current: Number(nation.prestige),
     sackingThreshold: Number(sackingThreshold),
@@ -194,6 +197,7 @@ function buildPrestige(
             month: last.month,
           },
         }),
+    ...(changeExplanation === undefined ? {} : { changeExplanation }),
   };
 }
 

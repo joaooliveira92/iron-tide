@@ -7,6 +7,7 @@ import type {
   MovementCommand,
   PlayerProjectionPresence,
 } from "@bluewave/campaign-engine";
+import type { ExplanationTree } from "@bluewave/events";
 import type { CommandEnvelope } from "./bridge-contract.js";
 
 export type {
@@ -41,8 +42,11 @@ export type TrainingSubjectId = "GUNNERY" | "NIGHT_FIGHTING" | "TORPEDO_TACTICS"
 export interface FleetTrainingSubjectView {
   readonly subject: TrainingSubjectId;
   readonly maintenanceAdderBp: number;
+  readonly maintenanceAdderExplanation?: ExplanationTree;
   readonly funded: boolean;
   readonly fundedMonths: number;
+  readonly monthsToProficiency: number;
+  readonly progressExplanation?: ExplanationTree;
   readonly proficient: boolean;
 }
 
@@ -56,6 +60,7 @@ export interface FleetExerciseProjection {
   readonly maxPerCalendarYear: number;
   readonly maintenanceMultiple: number;
   readonly experienceGain: number;
+  readonly experienceGainExplanation?: ExplanationTree;
   readonly nextExerciseYear: number;
   readonly heldInNextExerciseYear: number;
   readonly scheduled?: { readonly month: string; readonly shipIds: readonly string[] };

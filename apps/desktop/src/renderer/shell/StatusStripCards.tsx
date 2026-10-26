@@ -12,7 +12,10 @@ import {
   Ship,
 } from "lucide-react";
 
+import type { ExplanationTree } from "@bluewave/events";
+
 import { cn } from "../lib/utils.js";
+import { ExplanationDisclosure } from "../components/shared/ExplanationDisclosure.js";
 import {
   CardFoot,
   CardHeader,
@@ -506,10 +509,13 @@ export function TreasuryCard({
 export function PrestigeCard({
   gauge,
   note,
+  explanation,
 }: {
   readonly gauge: PrestigeGauge;
   readonly note: string;
+  readonly explanation?: ExplanationTree;
 }) {
+  const format = usePresentationFormat();
   const margin = gauge.current - gauge.threshold;
   return (
     <>
@@ -554,6 +560,15 @@ export function PrestigeCard({
             </span>
           </div>
         </div>
+        {explanation === undefined ? null : (
+          <ExplanationDisclosure
+            tree={explanation}
+            area="strategic"
+            summaryKey="strategic.prestige_change.summary"
+            format={format}
+            testId="prestige-change-explanation"
+          />
+        )}
       </div>
       <CardFoot>{note}</CardFoot>
     </>

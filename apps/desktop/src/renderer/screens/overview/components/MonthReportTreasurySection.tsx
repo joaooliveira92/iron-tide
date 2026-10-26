@@ -1,4 +1,5 @@
 import type { MonthlyReportTreasury } from "../../../../shared/reports-contract.js";
+import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import { formatCount } from "../../../lib/presentation-format/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
@@ -51,6 +52,15 @@ export function MonthReportTreasurySection({
         <p className="text-muted-foreground">
           {reconciliationText(treasury.reconciliation, format)}
         </p>
+      )}
+      {treasury.treasuryExplanation !== undefined && (
+        <ExplanationDisclosure
+          tree={treasury.treasuryExplanation}
+          area="reports"
+          summaryKey="reports.report_treasury.summary"
+          format={format}
+          testId="month-report-treasury-explanation"
+        />
       )}
       {treasury.ledgerRows.length > 0 && (
         <ul className="text-muted-foreground" aria-label="Financial ledger">

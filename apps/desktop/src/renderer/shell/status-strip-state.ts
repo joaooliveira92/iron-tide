@@ -1,4 +1,5 @@
 import type { PlayerProjection } from "@bluewave/campaign-engine";
+import type { ExplanationTree } from "@bluewave/events";
 
 import { monthName } from "../lib/campaign-month.js";
 import { economyStatusLabel, researchNote } from "../lib/economy-wording.js";
@@ -111,6 +112,7 @@ export interface PrestigeGauge {
 export interface StatusStripModel {
   readonly nationName: string;
   readonly prestige: PrestigeGauge;
+  readonly prestigeExplanation?: ExplanationTree;
   readonly outlook: OutlookDetail;
   readonly stations: StationDetail;
   readonly ports: readonly PortDetail[];
@@ -543,6 +545,9 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
   return {
     nationName: projection.nationName,
     prestige: buildPrestigeGauge(projection.prestige),
+    ...(projection.prestige.changeExplanation === undefined
+      ? {}
+      : { prestigeExplanation: projection.prestige.changeExplanation }),
     outlook: buildOutlook(projection, balanceStatus, balanceTone, researchRemark, format),
     stations: buildStations(projection, areas, format),
     ports: buildPorts(projection),

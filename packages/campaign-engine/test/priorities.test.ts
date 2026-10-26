@@ -327,3 +327,30 @@ describe("priorities projection", () => {
     expect(source).not.toMatch(/toLocaleString|toFixed|Intl\./);
   });
 });
+
+describe("priority advice", () => {
+  it("gives every priority a player-readable sentence alongside the engine trace", () => {
+    const deficit = makeSnapshot({
+      treasury: 1_000_000 as any,
+      baseResources: 7_200_000 as any,
+      navalAppropriationRateBp: 1000 as any,
+      expenses: 100_000 as any,
+      fleets: [],
+      research: {
+        researchBudget: 0 as any,
+        discoveredTechs: [],
+        technologies: [],
+        fieldPriorities: {},
+        activeCandidates: new Map(),
+      },
+      constructionProjects: [],
+    });
+    const priorities = buildPrioritiesProjection(deficit, "gbr");
+    expect(priorities.length).toBeGreaterThan(0);
+    for (const priority of priorities) {
+      expect(priority.advice).toBeTruthy();
+      expect(priority.advice).not.toBe(priority.reason);
+      expect(priority.advice).not.toMatch(/[a-z_]+: .*[<>=]/u);
+    }
+  });
+});

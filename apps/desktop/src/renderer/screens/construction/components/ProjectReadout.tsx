@@ -76,7 +76,9 @@ export const ProjectReadout = memo(function ProjectReadout({
   className = "grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2 lg:grid-cols-4",
 }: ProjectReadoutProps) {
   const format = usePresentationFormat();
-  const explanation = row.readout?.scheduleExplanation;
+  const schedule = row.readout?.scheduleExplanation;
+  const instalment = row.readout?.instalmentExplanation;
+  const cost = row.readout?.costExplanation;
   return (
     <div>
       <ul className={className} aria-label={`${row.className} cost and schedule`}>
@@ -84,9 +86,27 @@ export const ProjectReadout = memo(function ProjectReadout({
           <ReadoutItem key={line.label} label={line.label} value={line.value} />
         ))}
       </ul>
-      {explanation !== undefined && (
+      {instalment !== undefined && (
         <ExplanationDisclosure
-          tree={explanation}
+          tree={instalment}
+          area="construction"
+          summaryKey="construction.construction_instalment.summary"
+          format={format}
+          testId={`construction-instalment-explanation-${row.projectId}`}
+        />
+      )}
+      {cost !== undefined && (
+        <ExplanationDisclosure
+          tree={cost}
+          area="construction"
+          summaryKey="construction.construction_cost.summary"
+          format={format}
+          testId={`construction-cost-explanation-${row.projectId}`}
+        />
+      )}
+      {schedule !== undefined && (
+        <ExplanationDisclosure
+          tree={schedule}
           area="construction"
           summaryKey="construction.construction_schedule.summary"
           format={format}

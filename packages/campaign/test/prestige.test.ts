@@ -4,6 +4,7 @@ import { describe, expect, it } from "vite-plus/test";
 import * as prestigeModule from "../src/prestige.js";
 import {
   applyPrestigeRule,
+  applyPrestigeRuleDetail,
   buildCareerResult,
   CAREER_END_REASONS,
   decodePrestigeValueSet,
@@ -596,5 +597,69 @@ describe("no prestige value ships from this layer", () => {
         `export '${name}' must not be a value set`,
       ).toBe(false);
     }
+  });
+});
+
+describe("applyPrestigeRuleDetail: the applied rule is recorded", () => {
+  const set = fixtureSet();
+
+  it("matches applyPrestigeRule and records the rule, the unclamped target and the bounds", () => {
+    const detail = applyPrestigeRuleDetail(25, "UNPAID_FUNDS", set);
+    expect(Result.isSuccess(detail)).toBe(true);
+    if (!Result.isSuccess(detail)) return;
+    expect(applyPrestigeRule(25, "UNPAID_FUNDS", set)).toEqual(
+      Result.succeed({
+        before: detail.success.before,
+        after: detail.success.after,
+        delta: detail.success.delta,
+      }),
+    );
+    expect(detail.success).toMatchObject({
+      before: 25,
+      after: 23,
+      delta: -2,
+      unclampedAfter: 23,
+      appliedRule: { kind: "PROPORTIONAL_LOSS", basisPoints: 500 },
+      bounds: { lower: 0, upper: 100 },
+    });
+  });
+
+  it("records the fixed gain rule", () => {
+    const detail = applyPrestigeRuleDetail(20, "BATTLE_WON", set);
+    expect(Result.isSuccess(detail) && detail.success).toMatchObject({
+      before: 20,
+      after: 22,
+      delta: 2,
+      appliedRule: { kind: "FIXED_GAIN", amount: 2 },
+    });
+  });
+
+  it("keeps the unclamped target separate from the clamped result", () => {
+    const heavy = fixtureSet({
+      lowerBound: 4,
+      rules: {
+        ...(FIXTURE["rules"] as object),
+        BATTLE_LOST: { kind: "PROPORTIONAL_LOSS", basisPoints: 10_000 },
+      },
+    });
+    const detail = applyPrestigeRuleDetail(9, "BATTLE_LOST", heavy);
+    expect(Result.isSuccess(detail) && detail.success).toMatchObject({
+      before: 9,
+      after: 4,
+      delta: -5,
+      unclampedAfter: 0,
+      bounds: { lower: 4, upper: 100 },
+    });
+  });
+
+  it("records an explicitly supplied rule rather than the value set default", () => {
+    const detail = applyPrestigeRuleDetail(40, "DECLINED_BATTLE", set, {
+      kind: "FIXED_LOSS",
+      amount: 3 as SafeInt,
+    });
+    expect(Result.isSuccess(detail) && detail.success).toMatchObject({
+      after: 37,
+      appliedRule: { kind: "FIXED_LOSS", amount: 3 },
+    });
   });
 });
