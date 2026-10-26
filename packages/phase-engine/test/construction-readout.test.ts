@@ -165,7 +165,7 @@ describe("constructionProjectQueueWithReadouts (SB3-R31)", () => {
     const from = snapshot([project({ designVersionId: "d1" })], new Map([["d1", design(25)]]));
     const entries = constructionProjectQueueWithReadouts(from, "GBR", content, "1880-01");
     const entry = entries.find((e) => e.projectId === "proj-1")!;
-    expect(entry.readout).toEqual({
+    expect(entry.readout).toMatchObject({
       totalCostUnits: 200,
       monthlyInstalmentUnits: 200,
       remainingMonths: 1,
@@ -174,6 +174,8 @@ describe("constructionProjectQueueWithReadouts (SB3-R31)", () => {
       scheduleUnavailableReason: null,
       haltedCarryingCostUnits: null,
     });
+    expect(entry.readout?.scheduleExplanation?.formulaId).toBe("construction_schedule");
+    expect(Number(entry.readout?.scheduleExplanation?.result)).toBe(1);
   });
 
   it("gives a HALTED project the half-mothball carrying cost, and a non-halted one null", () => {
