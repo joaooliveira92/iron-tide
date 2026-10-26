@@ -3,6 +3,9 @@ import { Data, Result, Schema, SchemaIssue } from "effect";
 export const REPLAY_FORMAT_VERSION = 2;
 export const SUPPORTED_REPLAY_FORMAT_VERSIONS = [1, 2] as const;
 
+export const REPLAY_SETUP_IDS = ["armed-adriatic-war"] as const;
+export type ReplaySetupId = (typeof REPLAY_SETUP_IDS)[number];
+
 const Hash = Schema.String.check(Schema.isPattern(/^[0-9a-f]{64}$/));
 const Count = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0));
 
@@ -80,6 +83,19 @@ const ClearForeignStationBody = Schema.Struct({
   shipIds: Schema.Array(Id),
 });
 
+const DeclareWarBody = Schema.Struct({
+  type: Schema.Literal("DeclareWar"),
+  nationId: Id,
+  targetNationId: Id,
+});
+
+const MoveFleetBody = Schema.Struct({
+  type: Schema.Literal("MoveFleet"),
+  nationId: Id,
+  fleetId: Id,
+  toAreaId: Id,
+});
+
 export const ReplayCommandBodySchema = Schema.Union([
   SetBudgetAllocationBody,
   SetResearchPriorityBody,
@@ -90,6 +106,8 @@ export const ReplayCommandBodySchema = Schema.Union([
   ChangeDivisionDoctrineBody,
   AssignForeignStationBody,
   ClearForeignStationBody,
+  DeclareWarBody,
+  MoveFleetBody,
 ]);
 
 export const ReplayCommandEnvelopeSchema = Schema.Struct({
@@ -126,8 +144,12 @@ export const ReplayFileSchema = Schema.Struct({
     kind: Schema.Literal("production-pack"),
     pack: Schema.String,
     snapshotHash: Hash,
+    setup: Schema.optionalKey(Schema.Literals(REPLAY_SETUP_IDS)),
   }),
-  engineOptions: Schema.Struct({ kind: Schema.Literal("default") }),
+  engineOptions: Schema.Union([
+    Schema.Struct({ kind: Schema.Literal("default") }),
+    Schema.Struct({ kind: Schema.Literal("player"), playerNationId: Schema.String }),
+  ]),
   months: Schema.Array(MonthCheckpoint),
 });
 

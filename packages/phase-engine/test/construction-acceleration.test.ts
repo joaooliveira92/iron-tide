@@ -18,7 +18,7 @@ import { MonthExecutor } from "../src/index.js";
 import {
   SET_ACCELERATION_COMMAND_DEFINITION,
   SET_ACCELERATION_COMMAND_TYPE_ID,
-} from "../src/commandLifecycle.js";
+} from "../src/commandDefinitions.js";
 import {
   ACCELERATION_CAPACITY_PRESSURE_WEIGHT_BP,
   ACCELERATION_CAPACITY_PRESSURE_DELAY,

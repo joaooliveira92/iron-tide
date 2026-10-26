@@ -1,9 +1,10 @@
 import { Badge } from "../../../components/ui/badge.js";
 import { humanizeId } from "../../../lib/humanize-id.js";
+import { translate } from "../../../lib/strings.js";
 import { DEBUG_MODE } from "../../../shell/debug-flag.js";
 import type { BattleHistoryState } from "../hooks/useBattleHistory.js";
 import {
-  ABSENCE_REASON_LABELS,
+  absenceText,
   OUTCOME_LABELS,
   shipsLabel,
   summarizeBattleHistory,
@@ -86,13 +87,14 @@ export function BattleHistorySection({ state }: { readonly state: BattleHistoryS
             </ul>
           )}
           {(battle.absentShips ?? []).length > 0 && (
-            <ul className="w-full space-y-0.5 text-xs" aria-label="Ships absent from this battle">
+            <ul
+              className="w-full space-y-0.5 text-xs"
+              aria-label={translate("battle.history.absent.list")}
+            >
               {(battle.absentShips ?? []).map((ship) => (
                 <li key={ship.shipId} className="flex flex-wrap gap-x-2">
                   <span className="font-medium">{ship.shipName}</span>
-                  <span className="text-muted-foreground">
-                    absent: {ship.reasons.map((reason) => ABSENCE_REASON_LABELS[reason]).join(", ")}
-                  </span>
+                  <span className="text-muted-foreground">{absenceText(ship.reasons)}</span>
                 </li>
               ))}
             </ul>

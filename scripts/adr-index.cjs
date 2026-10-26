@@ -58,7 +58,7 @@ const AREAS = [
   {
     name: "Process & documentation",
     blurb: "Concurrent-agent worktree coordination and repository process rules.",
-    nums: [220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 278, 279, 280],
+    nums: [220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 278, 279, 280, 295, 299],
   },
   {
     name: "Scenario content & research",
@@ -82,7 +82,8 @@ const AREAS = [
     blurb:
       "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
     nums: [
-      223, 224, 225, 226, 239, 245, 260, 261, 281, 283, 286, 287, 288, 289, 290, 291, 292, 293,
+      223, 224, 225, 226, 239, 245, 260, 261, 281, 283, 286, 287, 288, 289, 290, 291, 292, 293, 296,
+      297, 298,
     ],
   },
   {

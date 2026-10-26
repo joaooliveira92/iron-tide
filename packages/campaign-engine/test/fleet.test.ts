@@ -153,6 +153,39 @@ describe("buildFleetScreenView", () => {
     expect(home).not.toHaveProperty("stationCode");
   });
 
+  it("lists derived conditions in a fixed order and nothing for a fit ship (fleet mgmt stories 14, 15)", () => {
+    const snapshot = fixtureSnapshot([
+      fixtureNation({
+        id: "uk",
+        fleets: [
+          makeFleet(
+            "fleet_gbr_home",
+            "Home Fleet",
+            [
+              makeShip("fit", "HMS Fit"),
+              makeShip("hurt", "HMS Hurt", {
+                hitPoints: SafeInt(40),
+                crewQuality: SafeInt(55),
+                stationAssignment: "FOREIGN_STATION",
+              }),
+              makeShip("yard", "HMS Yard", {
+                readiness: "REPAIR",
+                repairMonthsRemaining: SafeInt(2),
+              }),
+              makeShip("rebuild", "HMS Rebuild", { availability: "UNAVAILABLE" }),
+            ],
+            "eng_home_coast",
+          ),
+        ],
+      }),
+    ]);
+    const [fit, hurt, yard, rebuild] = buildFleetScreenView(snapshot, "uk").divisions[0]!.ships;
+    expect(fit).not.toHaveProperty("conditions");
+    expect(hurt!.conditions).toEqual(["UnderStrength", "Detached", "Damaged"]);
+    expect(yard!.conditions).toEqual(["OutOfAction"]);
+    expect(rebuild!.conditions).toEqual(["OutOfAction"]);
+  });
+
   it("shows c for a ship fitted for colonial service and nothing extra for others (S-5 04)", () => {
     const snapshot = fixtureSnapshot([
       fixtureNation({

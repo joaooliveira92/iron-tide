@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0295).
+highest existing number + 1 (the next number is ADR-0300).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -84,6 +84,8 @@ Concurrent-agent worktree coordination and repository process rules.
 | 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
 | 0279 | [ADR-0279-replay-approvals-carry-a-change-class.md](ADR-0279-replay-approvals-carry-a-change-class.md) | Replay approvals carry a verified change class | accepted | — |
 | 0280 | [ADR-0280-property-based-replay-scenarios.md](ADR-0280-property-based-replay-scenarios.md) | Property-based replay scenarios use fast-check as a test-only dependency | accepted | — |
+| 0295 | [ADR-0295-war-bearing-replay-scenarios.md](ADR-0295-war-bearing-replay-scenarios.md) | A replay scenario may name a player nation and a deterministic start setup so the corpus fights a battle | accepted | — |
+| 0299 | [ADR-0299-gate-runs-serialise-across-worktrees.md](ADR-0299-gate-runs-serialise-across-worktrees.md) | `pnpm check` serialises across worktrees and reports machine load | accepted | — |
 
 ## Scenario content & research
 
@@ -141,6 +143,9 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0291 | [ADR-0291-e1-1950s-destroyer-values.md](ADR-0291-e1-1950s-destroyer-values.md) | E-1 1950-1959 destroyer values and the limit of 1950-1970 ship content | accepted | — |
 | 0292 | [ADR-0292-battle-experience-write-back.md](ADR-0292-battle-experience-write-back.md) | Battle aftermath asks the division module for experience through a typed request | accepted | — |
 | 0293 | [ADR-0293-fleet-management-go-live.md](ADR-0293-fleet-management-go-live.md) | Fleet management goes live in the production pack and in every re-execution path | accepted | — |
+| 0296 | [ADR-0296-derived-ship-conditions.md](ADR-0296-derived-ship-conditions.md) | Ship conditions are derived predicates the fleet view carries and the renderer only labels | accepted | — |
+| 0297 | [ADR-0297-engine-reads-catalogue-technology-ids.md](ADR-0297-engine-reads-catalogue-technology-ids.md) | The engine reads the catalogue's technology id where one matches, and leaves the rest named | accepted | — |
+| 0298 | [ADR-0298-command-lifecycle-records-are-scaffolding.md](ADR-0298-command-lifecycle-records-are-scaffolding.md) | Hash-chained command-lifecycle records, settlement branches and the spec-rule helpers are scaffolding, not shipped | accepted | — |
 
 ## Foreign stations & presence
 
