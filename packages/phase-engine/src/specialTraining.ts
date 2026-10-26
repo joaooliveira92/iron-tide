@@ -36,6 +36,7 @@ export function applySpecialTrainingCommand(ctx: PhaseContext, body: CommandBody
     nation["specialTraining"],
     command["subjects"] as TrainingSubject[],
     rules,
+    command["nationId"],
   );
   const nations = new Map(ctx.snapshot.current["nations"]);
   const { specialTraining: _previous, ...rest } = nation;

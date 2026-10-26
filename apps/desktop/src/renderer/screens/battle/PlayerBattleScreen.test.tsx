@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
@@ -8,6 +8,7 @@ import {
   DEFAULT_APP_PREFERENCES,
   type AppPreferences,
 } from "../../../shared/preferences-contract.js";
+import { axeViolations } from "../../lib/axe.js";
 import { BridgeProvider } from "../../lib/bridge-context.js";
 import { PreferencesProvider } from "../../lib/preferences-context.js";
 import { PlayerBattleScreen } from "./PlayerBattleScreen.js";
@@ -44,6 +45,32 @@ const VIEW: PlayerBattleView = {
       maxHitPoints: 100,
       damageState: "CRIPPLED",
       position: [0, 0],
+      gunneryAccuracy: {
+        formulaId: "gunnery_accuracy",
+        formulaVersion: "gunnery_accuracy_v1",
+        inputs: { baseAccuracyBp: 6_000 },
+        intermediate: { rawFlooredBp: 5_940 },
+        result: 5_940,
+        unit: "bp",
+        children: [
+          {
+            formulaId: "gunnery_accuracy.crew",
+            formulaVersion: "gunnery_accuracy_v1",
+            inputs: { multiplierBp: 9_000 },
+            intermediate: {},
+            result: 9_000,
+            unit: "bp",
+          },
+          {
+            formulaId: "gunnery_accuracy.training",
+            formulaVersion: "gunnery_accuracy_v1",
+            inputs: { multiplierBp: 11_000 },
+            intermediate: {},
+            result: 11_000,
+            unit: "bp",
+          },
+        ],
+      },
     },
   ],
   divisions: [
@@ -137,6 +164,38 @@ describe("PlayerBattleScreen", () => {
     const row = await screen.findByTestId("battle-ship-s1");
     expect(row.textContent).toContain("CRIPPLED");
     expect(row.textContent).toContain("▼");
+  });
+
+  it("explains a ship's gunnery accuracy in words, behind a keyboard-operable disclosure", async () => {
+    mount(bridgeWith({}, { resumed: false, lastOrders: [] }));
+    const row = await screen.findByTestId("battle-ship-s1");
+    const disclosure = within(row).getByTestId("battle-accuracy");
+    expect(disclosure.tagName).toBe("DETAILS");
+    expect(within(disclosure).getByText("Gunnery accuracy 59.4%")).toBeTruthy();
+    expect(within(disclosure).getByText("Base accuracy 60%")).toBeTruthy();
+    expect(within(disclosure).getByText("Crew quality").nextSibling?.textContent).toBe("-10%");
+    expect(within(disclosure).getByText("Training").nextSibling?.textContent).toBe("+10%");
+  });
+
+  it("passes an automated accessibility audit with the accuracy disclosure open", async () => {
+    mount(bridgeWith({}, { resumed: false, lastOrders: [] }));
+    const row = await screen.findByTestId("battle-ship-s1");
+    const disclosure = within(row).getByTestId("battle-accuracy") as HTMLDetailsElement;
+    disclosure.open = true;
+    const violations = await axeViolations(screen.getByTestId("player-battle"));
+    expect(violations.filter((violation) => !violation.startsWith("region "))).toEqual([]);
+  });
+
+  it("shows no accuracy disclosure for a ship the engine did not explain", async () => {
+    const bridge = bridgeWith({}, { resumed: false, lastOrders: [] });
+    const withoutExplanation: PlayerBattleView = {
+      ...VIEW,
+      ships: VIEW.ships.map(({ gunneryAccuracy: _omitted, ...ship }) => ship),
+    };
+    bridge.campaign.execute.mockImplementation(() => startReply(withoutExplanation, false, []));
+    mount(bridge);
+    const row = await screen.findByTestId("battle-ship-s1");
+    expect(within(row).queryByTestId("battle-accuracy")).toBeNull();
   });
 
   it("lists enemy ships that belong to no division instead of hiding them", async () => {

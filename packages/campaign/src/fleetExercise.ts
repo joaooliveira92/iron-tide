@@ -2,7 +2,7 @@ import { Schema } from "effect";
 import { SafeInt } from "@bluewave/contracts";
 
 import { firstGateReason, type GateReasonTag } from "./eligibility.js";
-import type { NationState, Ship } from "./state.js";
+import type { DiplomaticRelation, NationState, Ship } from "./state.js";
 import { advanceMonth } from "./timeline.js";
 
 export const FLEET_EXERCISE_DORMANT = "FLEET_EXERCISE_DORMANT" as const;
@@ -20,9 +20,31 @@ export const FleetExerciseRecordSchema = Schema.Struct({
 });
 export type FleetExerciseRecord = typeof FleetExerciseRecordSchema.Type;
 
+export interface ExerciseTensionRules {
+  readonly minShips: number;
+  readonly increase: number;
+  readonly ceiling: number;
+}
+
 export interface FleetExerciseRules {
   readonly maintenanceMultiple: number;
   readonly maxPerCalendarYear: number;
+  readonly tension?: ExerciseTensionRules;
+}
+
+export function applyExerciseTension(
+  relations: readonly DiplomaticRelation[],
+  nationId: string,
+  participants: number,
+  rules: ExerciseTensionRules | undefined,
+): readonly DiplomaticRelation[] {
+  if (rules === undefined || participants < rules.minShips) return relations;
+  return relations.map((relation) => {
+    const involved = relation.nationA === nationId || relation.nationB === nationId;
+    if (!involved || relation.relation !== "neutral") return relation;
+    const raised = Math.min(rules.ceiling, relation.tension + rules.increase);
+    return raised > relation.tension ? { ...relation, tension: raised } : relation;
+  });
 }
 
 export type FleetExerciseProblemReason =

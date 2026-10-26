@@ -6,6 +6,7 @@ import {
   FLEET_EXERCISE_DORMANT,
   FLEET_EXERCISE_LIMIT_REACHED,
   isTrainingProficient,
+  trainingAdderBp,
   TRAINING_DORMANT,
   TRAINING_SUBJECTS,
   trainingRefusal,
@@ -169,7 +170,7 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
               const entry = nation.specialTraining?.find((e) => e.subject === subject);
               return {
                 subject,
-                maintenanceAdderBp: fleetManagement.training.subjects[subject].maintenanceAdderBp,
+                maintenanceAdderBp: trainingAdderBp(fleetManagement.training, subject, nation.id),
                 funded: entry !== undefined,
                 fundedMonths: entry?.fundedMonths ?? 0,
                 proficient:

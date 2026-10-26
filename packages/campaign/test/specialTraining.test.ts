@@ -35,6 +35,31 @@ describe("trainingRefusal", () => {
   });
 });
 
+describe("fundSpecialTraining with a nation cost multiplier", () => {
+  const rules: SpecialTrainingRules = { ...RULES, nationCostMultiplierBp: { frugal: 8_000 } };
+
+  it("scales the maintenance adder of a listed nation, flooring", () => {
+    const funded = fundSpecialTraining(undefined, ["GUNNERY", "NIGHT_FIGHTING"], rules, "frugal");
+    expect(funded.map((e) => [e.subject, e.maintenanceAdderBp])).toEqual([
+      ["GUNNERY", 2_400],
+      ["NIGHT_FIGHTING", 1_600],
+    ]);
+  });
+
+  it("leaves every other nation, and a call without a nation, at the ruleset adder", () => {
+    for (const nationId of ["other", undefined]) {
+      const funded = fundSpecialTraining(undefined, ["GUNNERY"], rules, nationId);
+      expect(funded[0]!.maintenanceAdderBp).toBe(3_000);
+    }
+  });
+
+  it("keeps the adder a kept subject was funded at", () => {
+    const first = fundSpecialTraining(undefined, ["GUNNERY"], rules, "frugal");
+    const again = fundSpecialTraining(first, ["GUNNERY"], rules, "frugal");
+    expect(again[0]!.maintenanceAdderBp).toBe(2_400);
+  });
+});
+
 describe("fundSpecialTraining", () => {
   it("orders subjects canonically, starts new ones at zero and keeps the progress of kept ones", () => {
     const first = fundSpecialTraining(undefined, ["NIGHT_FIGHTING", "GUNNERY"], RULES);

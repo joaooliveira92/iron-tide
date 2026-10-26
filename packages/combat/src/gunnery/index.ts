@@ -9,3 +9,4 @@ export * from "./state.js";
 export * from "./salvo.js";
 export * from "./event.js";
 export * from "./resolve.js";
+export * from "./accuracy-explanation.js";

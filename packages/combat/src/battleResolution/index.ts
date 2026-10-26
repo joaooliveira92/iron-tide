@@ -5,6 +5,7 @@ export * from "../damage/minuteDamage.js";
 export * from "./viability.js";
 export * from "../weather/auto-resolution-weather.js";
 export * from "./project.js";
+export * from "./trainingEffects.js";
 export * from "./resolve.js";
 export * from "./capabilities.js";
 export * from "./causeOfLoss.js";

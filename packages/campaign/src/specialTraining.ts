@@ -26,6 +26,22 @@ export interface SpecialTrainingRules {
   readonly proficiencyMonths: number;
   readonly maxSubjects: number;
   readonly subjects: Readonly<Record<TrainingSubject, { readonly maintenanceAdderBp: number }>>;
+  readonly nationCostMultiplierBp?: Readonly<Record<string, number>>;
+}
+
+const NEUTRAL_COST_BP = 10_000;
+
+export function trainingAdderBp(
+  rules: SpecialTrainingRules,
+  subject: TrainingSubject,
+  nationId: string | undefined,
+): number {
+  const base = rules.subjects[subject].maintenanceAdderBp;
+  const multiplier =
+    nationId === undefined
+      ? NEUTRAL_COST_BP
+      : (rules.nationCostMultiplierBp?.[nationId] ?? NEUTRAL_COST_BP);
+  return Math.floor((base * multiplier) / NEUTRAL_COST_BP);
 }
 
 export type TrainingRefusal =
@@ -57,6 +73,7 @@ export function fundSpecialTraining(
   current: readonly TrainingSubjectEntry[] | undefined,
   subjects: readonly TrainingSubject[],
   rules: SpecialTrainingRules,
+  nationId?: string,
 ): TrainingSubjectEntry[] {
   const existing = new Map((current ?? []).map((entry) => [entry.subject, entry]));
   return [...subjects]
@@ -66,7 +83,7 @@ export function fundSpecialTraining(
         existing.get(subject) ?? {
           subject,
           fundedMonths: 0,
-          maintenanceAdderBp: rules.subjects[subject].maintenanceAdderBp,
+          maintenanceAdderBp: trainingAdderBp(rules, subject, nationId),
         },
     );
 }

@@ -89,6 +89,47 @@ describe("fleet-management ruleset section", () => {
     }
   });
 
+  it("accepts a per-nation training cost multiplier within half to full price, keyed by nation id", () => {
+    const c = complete() as Record<string, Record<string, unknown>>;
+    const withMultiplier = (nationCostMultiplierBp: unknown) => ({
+      ...c,
+      training: { ...c["training"], nationCostMultiplierBp },
+    });
+    expect(
+      validate([ruleset(withMultiplier({ nation_a: 8_000, nation_b: 5_000 }))]).hasErrors,
+    ).toBe(false);
+    expect(validate([ruleset(withMultiplier({}))]).hasErrors).toBe(false);
+    for (const bad of [
+      { nation_a: 4_999 },
+      { nation_a: 10_001 },
+      { nation_a: 8_000.5 },
+      { "": 8_000 },
+    ]) {
+      expect(invalid(withMultiplier(bad))).toBe(true);
+    }
+  });
+
+  it("accepts an exercise tension consequence only with a sane threshold, step and peacetime ceiling", () => {
+    const c = complete() as Record<string, Record<string, unknown>>;
+    const withTension = (tension: unknown) => ({
+      ...c,
+      exercise: { ...c["exercise"], tension },
+    });
+    expect(
+      validate([ruleset(withTension({ minShips: 4, increase: 1, ceiling: 7 }))]).hasErrors,
+    ).toBe(false);
+    for (const bad of [
+      { minShips: 0, increase: 1, ceiling: 7 },
+      { minShips: 4, increase: 0, ceiling: 7 },
+      { minShips: 4, increase: 6, ceiling: 7 },
+      { minShips: 4, increase: 1, ceiling: 10 },
+      { minShips: 4, increase: 1, ceiling: 7, surprise: 1 },
+      { minShips: 4, increase: 1 },
+    ]) {
+      expect(invalid(withTension(bad))).toBe(true);
+    }
+  });
+
   it("rejects excess keys at the root and in nested objects", () => {
     expect(invalid(complete({ surprise: 1 }))).toBe(true);
     const c = complete() as Record<string, Record<string, unknown>>;

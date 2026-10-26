@@ -17,6 +17,7 @@ import {
   toCampaignBattleResult,
 } from "./battles.js";
 import { battleAbsencesFor } from "./battleAbsences.js";
+import { trainingEffectsFor } from "./battleTraining.js";
 import { applyBattleExperience } from "./battleExperience.js";
 import {
   applyDecline,
@@ -325,6 +326,7 @@ function resolveViaTacticalAuto(
         designs: ctx.snapshot.current["designs"],
         divisions: attacker["divisions"],
         officers: attacker["officers"],
+        trainingEffects: trainingEffectsFor(attacker, ctx.fleetManagement),
       },
       defender: {
         nationId: defender["id"],
@@ -332,6 +334,7 @@ function resolveViaTacticalAuto(
         designs: ctx.snapshot.current["designs"],
         divisions: defender["divisions"],
         officers: defender["officers"],
+        trainingEffects: trainingEffectsFor(defender, ctx.fleetManagement),
       },
       strategicWeather,
       campaignSeed: ctx.rng.seed(),

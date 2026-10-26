@@ -19,9 +19,10 @@ The catalogue is the player-facing, research-tied, provenance-carrying source, s
 | --- | --- | --- |
 | `early_jet_carrier_operations` | `av_carrier_jet` | the only carrier-borne jet technology |
 | `magnetic_mine_technology`, `acoustic_mine_technology` | `m_asw_influence_mine` | its authored name is "Magnetic and Acoustic Influence Mines" |
+| `long_range_submarine_technology` | `sub_ww1_ocean_boat` | the ocean-going submarine, "Ocean-Going WWI Submarine" |
 
 These ids stay as they are because the catalogue has no counterpart and choosing one would invent a mapping: `modern_jet_carrier_operations`
-(no heavy-jet technology), `controlled_mine_technology`, `long_range_submarine_technology`, `minelaying_submarine_technology`,
+(no heavy-jet technology), `controlled_mine_technology`, `minelaying_submarine_technology`,
 `missile_submarine_technology` (no matching entry; `m_asw_mine_laying` is surface minefield laying), and the aviation ids in
 `hasAviationTech` (no aviation technology). Each needs a sourced catalogue technology first, a content ticket under E-1.
 

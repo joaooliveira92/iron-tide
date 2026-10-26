@@ -42,6 +42,13 @@ import {
 } from "./viability.js";
 import { emptyTelemetry, finalizeTelemetry, type BattleTelemetry } from "./telemetry.js";
 import { createDefaultDamageControlResource } from "../damage/damageControl.js";
+import type { DamageControlResource } from "../damage/damageControlConstants.js";
+import {
+  effectsOf,
+  scaleByTrainingBp,
+  withNightTraining,
+  type TrainingEffectsBySide,
+} from "./trainingEffects.js";
 import type { DamageControlContext } from "../damage/damageControlEngineWiring.js";
 import { DAMAGE_RULESET_VERSION } from "../damage/constants.js";
 import { DAMAGE_CONTROL_KEYED_DRAW } from "../damage/reasonCodes.js";
@@ -152,6 +159,15 @@ export function mergeTargetStates(
   return out;
 }
 
+function trainedDamageControlResource(damageControlBp: number): DamageControlResource {
+  const base = createDefaultDamageControlResource();
+  return {
+    ...base,
+    pumpingCapacity: scaleByTrainingBp(base.pumpingCapacity, damageControlBp),
+    firefightingCapacity: scaleByTrainingBp(base.firefightingCapacity, damageControlBp),
+  };
+}
+
 export function buildDamageControlContexts(input: {
   battleId: string;
   minute: number;
@@ -160,8 +176,11 @@ export function buildDamageControlContexts(input: {
   movementStates: Record<string, MovementState> | undefined;
   engine: RandomEngine;
   randomLedger?: RandomLedger;
+  trainingEffects?: TrainingEffectsBySide;
 }): Record<string, DamageControlContext> {
-  const { battleId, minute, units, damage, movementStates, engine, randomLedger } = input;
+  const { battleId, minute, units, damage, movementStates, engine, randomLedger, trainingEffects } =
+    input;
+  const sideOf = new Map(units.map((u) => [u.assetId, u.sideId]));
   const contexts: Record<string, DamageControlContext> = {};
   const shipIds = units.map((u) => u.assetId).sort();
   for (const shipId of shipIds) {
@@ -204,7 +223,9 @@ export function buildDamageControlContexts(input: {
       designDisplacementKg: target.designDisplacementKg,
       shipType: target.shipType,
       currentSpeedKt: Math.floor(currentSpeedBp / SPEED_BP_SCALE),
-      resources: createDefaultDamageControlResource(),
+      resources: trainedDamageControlResource(
+        effectsOf(trainingEffects, sideOf.get(shipId)).damageControlBp,
+      ),
       keyedRng: scopedRng,
     };
   }
@@ -369,6 +390,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
           battleState,
           damage,
           units: projected.units,
+          trainingEffects: projected.trainingEffects,
         }),
       };
       torpedoSummary.tubesFired += torpedo.commands.reduce((n, c) => n + c.tubeIndexes.length, 0);
@@ -382,6 +404,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       movementStates: battleState.movementStates,
       engine,
       randomLedger: input.randomLedger,
+      trainingEffects: projected.trainingEffects,
     });
 
     const res = advanceMinute({
@@ -396,7 +419,11 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
         baseOrders: projected.orders,
       }),
       engine,
-      gunnery,
+      gunnery: withNightTraining(
+        gunnery,
+        projected.trainingEffects,
+        weatherCtx.components.timeOfDay,
+      ),
       weather: weatherCtx,
       damage,
       ...(torpedo ? { torpedoes: torpedo } : {}),
