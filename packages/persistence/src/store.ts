@@ -17,6 +17,7 @@ import { systemClock, type PersistenceClock } from "./clock.js";
 import { CompatibilityChecker, CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
 import {
   PersistenceInvalidOptionError,
+  PersistenceIoError,
   PersistenceCancelledError,
   PersistenceCompatibilityMismatchError,
   PersistenceCorruptSaveError,
@@ -98,6 +99,17 @@ export type LoadFailure =
 const MONTH_INPUT_FILE = "month-input.json";
 const LOAD_STAGE = "persistence.load";
 const MONTH_INPUT_STAGE = "persistence.loadMonthInput";
+
+const SAVE_STAGE = "persistence.save";
+const LIST_STAGE = "persistence.list";
+const POINTER_STAGE = "persistence.pointer";
+
+function ioError(stage: string, cause: unknown): PersistenceIoError {
+  return new PersistenceIoError({
+    message: cause instanceof Error ? cause.message : String(cause),
+    stage,
+  });
+}
 
 function corruptSave(message: string): PersistenceCorruptSaveError {
   return new PersistenceCorruptSaveError({ message, stage: LOAD_STAGE });
@@ -246,6 +258,49 @@ export class SaveStore {
       }
       throw err;
     }
+  }
+
+  saveEffect(
+    state: CampaignState,
+    saveDir: string,
+    extras: SaveExtras = {},
+    signal?: AbortSignal,
+  ): Effect.Effect<SaveResult, PersistenceCancelledError | PersistenceIoError> {
+    return Effect.try({
+      try: () => this.save(state, saveDir, signal, extras),
+      catch: (cause) =>
+        signal?.aborted === true
+          ? new PersistenceCancelledError({
+              message: "Save operation was cancelled",
+              stage: SAVE_STAGE,
+            })
+          : ioError(SAVE_STAGE, cause),
+    });
+  }
+
+  listEffect(saveDir: string): Effect.Effect<SaveMetadata[], PersistenceIoError> {
+    return Effect.try({
+      try: () => this.list(saveDir),
+      catch: (cause) => ioError(LIST_STAGE, cause),
+    });
+  }
+
+  isCurrentEffect(state: CampaignState, saveDir: string): Effect.Effect<boolean> {
+    return Effect.sync(() => this.isCurrent(state, saveDir));
+  }
+
+  activeSaveIdEffect(saveDir: string): Effect.Effect<string | null, PersistenceIoError> {
+    return Effect.try({
+      try: () => this.getActiveSaveId(saveDir),
+      catch: (cause) => ioError(POINTER_STAGE, cause),
+    });
+  }
+
+  previousSaveIdEffect(saveDir: string): Effect.Effect<string | null, PersistenceIoError> {
+    return Effect.try({
+      try: () => this.getPreviousSaveId(saveDir),
+      catch: (cause) => ioError(POINTER_STAGE, cause),
+    });
   }
 
   load(saveDir: string, signal?: AbortSignal): Effect.Effect<LoadedSave, LoadFailure> {
