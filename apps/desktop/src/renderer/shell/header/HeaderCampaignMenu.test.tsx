@@ -58,4 +58,20 @@ describe("HeaderCampaignMenu", () => {
 
     expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
   });
+  it("places the hover tip beside the button so it cannot cover the menu items", async () => {
+    render(
+      <HeaderCampaignMenu
+        saving={false}
+        onSave={vi.fn()}
+        onCopy={vi.fn()}
+        onCloseCampaign={vi.fn()}
+      />,
+    );
+
+    fireEvent.pointerEnter(screen.getByRole("button", { name: "Campaign menu" }));
+    fireEvent.mouseEnter(screen.getByRole("button", { name: "Campaign menu" }));
+
+    const tip = await screen.findByText("Save, copy or close the campaign");
+    expect(tip.closest("[data-side]")?.getAttribute("data-side")).toBe("left");
+  });
 });
