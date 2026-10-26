@@ -9,8 +9,10 @@ import {
   type ConstructionProjectStatus,
   type ForeignConstructionContract,
 } from "@bluewave/campaign";
+import type { ExplanationTree } from "@bluewave/events";
 import type { CompiledDesignVersion } from "./design.js";
 import { compareCodePoints } from "@bluewave/deterministic";
+import { explainConstructionSchedule } from "./construction-explanations.js";
 
 const CONSTRUCTION_SHIP_TYPE_LABELS: Readonly<Record<string, string>> = {
   battleship: "battleship",
@@ -140,6 +142,7 @@ export interface ConstructionProjectReadout {
 export interface ConstructionProjectReadoutView extends ConstructionProjectReadout {
   readonly delayReasonCode?: string;
   readonly haltedCarryingCostUnits: number | null;
+  readonly scheduleExplanation?: ExplanationTree;
 }
 
 export interface ConstructionProjectForeignSchedule {
@@ -364,6 +367,18 @@ export function buildConstructionProjectQueueWithReadouts(
           ? {}
           : { delayReasonCode: project.delayReasonCode }),
         haltedCarryingCostUnits: project.status === "HALTED" ? haltedCarryingCostUnits : null,
+        ...(readout.scheduleBasis === "YARD_CAPACITY" &&
+        readout.monthlyInstalmentUnits > 0 &&
+        readout.remainingMonths > 0
+          ? {
+              scheduleExplanation: explainConstructionSchedule(
+                readout.totalCostUnits,
+                Number(project.completedWork),
+                readout.monthlyInstalmentUnits,
+                readout.remainingMonths,
+              ),
+            }
+          : {}),
       },
     };
   });

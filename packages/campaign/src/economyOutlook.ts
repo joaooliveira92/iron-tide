@@ -24,6 +24,14 @@ export function economyStatus(net: number, revenue: number): EconomyStatus {
 
 export type ResearchUnfundedReason = "NO_ELIGIBLE_RESEARCH_FIELD" | "ABOVE_CAP";
 
+export interface EconomySettlement {
+  readonly carryingPaid: number;
+  readonly buildingPaid: number;
+  readonly maintenancePaid: number;
+  readonly obligationsPaid: number;
+  readonly researchPaid: number;
+}
+
 export interface EconomyOutlook {
   readonly revenue: number;
   readonly obligations: number;
@@ -39,6 +47,7 @@ export interface EconomyOutlook {
   readonly status: EconomyStatus;
   readonly monthEndTreasury: number;
   readonly runwayMonths?: number;
+  readonly settlement: EconomySettlement;
 }
 
 const TERMINAL_OR_HELD = new Set(["COMPLETED", "CANCELLED", "HALTED", "DELAYED"]);
@@ -136,11 +145,22 @@ export function economyOutlook(
   const constructionRoom = SafeInt.sub(funds, obligations);
   const construction = SafeInt(Math.min(planned, Math.max(0, constructionRoom as number)));
   funds = SafeInt.sub(funds, construction);
-  for (const outflow of [maintenance, obligations, research]) {
+  const paid: Record<"maintenance" | "obligations" | "research", SafeInt> = {
+    maintenance: SafeInt.ZERO,
+    obligations: SafeInt.ZERO,
+    research: SafeInt.ZERO,
+  };
+  const outflows = [
+    ["maintenance", maintenance],
+    ["obligations", obligations],
+    ["research", research],
+  ] as const;
+  for (const [key, outflow] of outflows) {
     const settlement = settleOutflow(outflow, funds);
     funds = SafeInt.sub(funds, settlement.paid);
     shortfall = SafeInt.add(shortfall, settlement.shortfall);
-    if (outflow === obligations) obligationShortfall = settlement.shortfall;
+    paid[key] = settlement.paid;
+    if (key === "obligations") obligationShortfall = settlement.shortfall;
   }
 
   const runway = runwayMonths(nation["treasury"], net);
@@ -159,5 +179,12 @@ export function economyOutlook(
     obligationShortfall: obligationShortfall as number,
     monthEndTreasury: Math.max(0, funds as number),
     ...(runway === undefined ? {} : { runwayMonths: runway }),
+    settlement: {
+      carryingPaid: carrying.paid as number,
+      buildingPaid: construction as number,
+      maintenancePaid: paid.maintenance as number,
+      obligationsPaid: paid.obligations as number,
+      researchPaid: paid.research as number,
+    },
   };
 }

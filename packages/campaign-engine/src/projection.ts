@@ -9,8 +9,16 @@ import {
   type PrestigeLastChange,
   type ResearchUnfundedReason,
 } from "@bluewave/campaign";
+import type { ExplanationTree } from "@bluewave/events";
 import { derivePlayerFacts } from "./player-facts.js";
 import { compareCodePoints } from "@bluewave/deterministic";
+import {
+  explainAppropriation,
+  explainEconomyMonthEnd,
+  explainEconomyNet,
+  explainEconomyRunway,
+} from "./economy-explanations.js";
+import { explainPresenceShortfall } from "./fleet-explanations.js";
 
 export type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign";
 
@@ -33,6 +41,10 @@ export interface PlayerProjectionEconomy {
   readonly status: EconomyStatus;
   readonly monthEndTreasury: number;
   readonly runwayMonths?: number;
+  readonly netExplanation?: ExplanationTree;
+  readonly monthEndExplanation?: ExplanationTree;
+  readonly runwayExplanation?: ExplanationTree;
+  readonly appropriationExplanation?: ExplanationTree;
 }
 
 export interface PlayerProjectionPort {
@@ -74,6 +86,7 @@ export interface PlayerProjectionPresenceArea {
   readonly requiredTons: number;
   readonly presentTons: number;
   readonly shortfallTons: number;
+  readonly shortfallExplanation?: ExplanationTree;
 }
 
 export type PlayerProjectionPresence =
@@ -151,6 +164,12 @@ export function buildPresenceReadout(
         requiredTons,
         presentTons,
         shortfallTons: exempt ? 0 : shortfallTons,
+        shortfallExplanation: explainPresenceShortfall(
+          requiredTons,
+          presentTons,
+          exempt,
+          exempt ? 0 : shortfallTons,
+        ),
       })),
   };
 }
@@ -268,6 +287,16 @@ export function buildPlayerProjection(
       status: outlook.status,
       monthEndTreasury: outlook.monthEndTreasury,
       ...(outlook.runwayMonths === undefined ? {} : { runwayMonths: outlook.runwayMonths }),
+      netExplanation: explainEconomyNet(outlook),
+      monthEndExplanation: explainEconomyMonthEnd(outlook, Number(nation.treasury)),
+      ...(outlook.runwayMonths === undefined
+        ? {}
+        : { runwayExplanation: explainEconomyRunway(outlook, Number(nation.treasury)) }),
+      appropriationExplanation: explainAppropriation(
+        Number(nation.baseResources),
+        Number(nation.navalAppropriationRateBp),
+        outlook.revenue,
+      ),
     },
     prestige: buildPrestige(snapshot.prestigeRules.sackingThreshold, nation),
     ...(snapshot.careerResult === undefined

@@ -1,3 +1,5 @@
+import type { ExplanationTree } from "@bluewave/events";
+
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 import type { TreasuryBreakdown } from "./treasury-summary.js";
 
@@ -16,6 +18,7 @@ export interface TreasuryReadout {
   readonly title: string;
   readonly rows: readonly ReadoutRow[];
   readonly note?: string;
+  readonly explanation?: ExplanationTree;
 }
 
 export function netTone(net: number): ReadoutTone {
@@ -45,6 +48,9 @@ export function treasuryReadouts(
         { label: "Appropriation this month", value: format.count(breakdown.income) },
         { label: "Committed expenditure", value: format.count(breakdown.totalExpenditure) },
       ],
+      ...(breakdown.appropriationExplanation === undefined
+        ? {}
+        : { explanation: breakdown.appropriationExplanation }),
     },
     {
       id: "net",
@@ -60,6 +66,7 @@ export function treasuryReadouts(
         { label: "Projected net", value: signed(net, format) },
       ],
       note: "Construction is charged when a ship is ordered, so it is not in this figure.",
+      ...(breakdown.netExplanation === undefined ? {} : { explanation: breakdown.netExplanation }),
     },
     {
       id: "monthEnd",
@@ -81,6 +88,9 @@ export function treasuryReadouts(
           value: format.count(breakdown.projectedMonthEndFunds),
         },
       ],
+      ...(breakdown.monthEndExplanation === undefined
+        ? {}
+        : { explanation: breakdown.monthEndExplanation }),
     },
   ];
   if (breakdown.runwayMonths !== undefined) {
@@ -94,6 +104,9 @@ export function treasuryReadouts(
         { label: "Available funds", value: format.count(breakdown.availableFunds) },
         { label: "Monthly net", value: signed(net, format) },
       ],
+      ...(breakdown.runwayExplanation === undefined
+        ? {}
+        : { explanation: breakdown.runwayExplanation }),
     });
   }
   return readouts;

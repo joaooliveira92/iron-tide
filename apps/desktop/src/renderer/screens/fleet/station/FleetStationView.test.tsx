@@ -207,6 +207,56 @@ describe("FleetStationView (S-5 09)", () => {
     expect(screen.getByText("None (suspended)")).toBeTruthy();
   });
 
+  it("explains the measured shortfall from required and present tonnage", () => {
+    render(
+      <FleetStationView
+        {...make({
+          presence: {
+            configured: true,
+            exempt: false,
+            areas: [
+              {
+                areaId: "home",
+                requiredTons: 400,
+                presentTons: 150,
+                shortfallTons: 250,
+                shortfallExplanation: {
+                  formulaId: "fleet_presence",
+                  formulaVersion: "fleet_v1",
+                  inputs: { requiredTons: 400, presentTons: 150, exempt: "false" },
+                  intermediate: { rawShortfallTons: 250 },
+                  result: 250,
+                  unit: "tons",
+                  children: [
+                    {
+                      formulaId: "fleet_presence.required",
+                      formulaVersion: "fleet_v1",
+                      inputs: { amount: 400 },
+                      intermediate: {},
+                      result: 400,
+                      unit: "tons",
+                    },
+                    {
+                      formulaId: "fleet_presence.present",
+                      formulaVersion: "fleet_v1",
+                      inputs: { amount: 150 },
+                      intermediate: {},
+                      result: -150,
+                      unit: "tons",
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        })}
+      />,
+    );
+    expect(screen.getByText("Shortfall 250 tons")).toBeTruthy();
+    expect(screen.getByText("Required tonnage")).toBeTruthy();
+    expect(screen.getByText("Present tonnage")).toBeTruthy();
+  });
+
   it("offers retry when the outcome is unknown and reload on a load error", () => {
     const onRetry = vi.fn();
     const onReload = vi.fn();

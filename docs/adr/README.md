@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0306).
+highest existing number + 1 (the next number is ADR-0307).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -211,6 +211,7 @@ Package interfaces, seams and module depth across the engine.
 | 0276 | [ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md](ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md) | UI-state writes are field patches merged once, in main | accepted | — |
 | 0277 | [ADR-0277-exact-duplicate-pure-helpers-live-in-core.md](ADR-0277-exact-duplicate-pure-helpers-live-in-core.md) | Exact-duplicate pure helpers live in combat core | accepted | — |
 | 0294 | [ADR-0294-event-body-types-derive-from-schemas.md](ADR-0294-event-body-types-derive-from-schemas.md) | Event body types derive from their Effect schemas | accepted | — |
+| 0306 | [ADR-0306-campaign-projections-carry-explanation-trees.md](ADR-0306-campaign-projections-carry-explanation-trees.md) | Campaign projections may carry explanation trees; `@bluewave/events` moves to layer 4 | accepted | — |
 
 ## Archive
 

@@ -111,7 +111,7 @@ const AREAS = [
   {
     name: "Engine architecture",
     blurb: "Package interfaces, seams and module depth across the engine.",
-    nums: [271, 272, 273, 276, 277, 294],
+    nums: [271, 272, 273, 276, 277, 294, 306],
   },
 ];
 

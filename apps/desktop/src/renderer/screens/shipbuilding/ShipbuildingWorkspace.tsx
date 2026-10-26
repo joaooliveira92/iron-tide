@@ -658,7 +658,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
             </Inspector>
           </div>
         </div>
-        <EngineeringStatusBar readouts={readouts} />
+        <EngineeringStatusBar readouts={readouts} format={format} />
         <ChoiceProblemDialog
           problem={choiceCheck.problem}
           open={choiceCheck.open}

@@ -306,13 +306,24 @@ describe("buildFleetScreenView", () => {
       },
     });
     expect(buildFleetScreenView(snapshot, "uk").presence).toEqual({ configured: false });
-    expect(
-      buildFleetScreenView(snapshot, "uk", { month: { month: 1, year: 1880 }, rules }).presence,
-    ).toEqual({
-      configured: true,
-      exempt: false,
-      areas: [{ areaId: "india", requiredTons: 200, presentTons: 0, shortfallTons: 200 }],
+    const measured = buildFleetScreenView(snapshot, "uk", {
+      month: { month: 1, year: 1880 },
+      rules,
+    }).presence;
+    expect(measured).toMatchObject({ configured: true, exempt: false });
+    if (!measured.configured) return;
+    expect(measured.areas).toHaveLength(1);
+    expect(measured.areas[0]).toMatchObject({
+      areaId: "india",
+      requiredTons: 200,
+      presentTons: 0,
+      shortfallTons: 200,
     });
+    expect(Number(measured.areas[0]?.shortfallExplanation?.result)).toBe(200);
+    expect(measured.areas[0]?.shortfallExplanation?.children?.map((c) => c.formulaId)).toEqual([
+      "fleet_presence.required",
+      "fleet_presence.present",
+    ]);
     expect(buildFleetScreenView(snapshot, "nobody").presence).toEqual({ configured: false });
   });
 

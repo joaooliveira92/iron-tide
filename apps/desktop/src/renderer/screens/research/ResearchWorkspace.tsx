@@ -173,7 +173,7 @@ export function ResearchWorkspace({
           {tab === "archive" && <ArchivePanel fields={vm.fields} />}
         </Inspector>
       </div>
-      <EngineeringStatusBar readouts={readouts} />
+      <EngineeringStatusBar readouts={readouts} format={format} />
     </div>
   );
 }

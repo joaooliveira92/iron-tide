@@ -3,6 +3,7 @@ import type {
   PlayerProjection,
   ResearchUnfundedReason,
 } from "@bluewave/campaign-engine";
+import type { ExplanationTree } from "@bluewave/events";
 
 export interface TreasuryBreakdown {
   readonly income: number;
@@ -20,6 +21,10 @@ export interface TreasuryBreakdown {
   readonly availableFunds: number;
   readonly projectedMonthEndFunds: number;
   readonly runwayMonths: number | undefined;
+  readonly netExplanation: ExplanationTree | undefined;
+  readonly monthEndExplanation: ExplanationTree | undefined;
+  readonly runwayExplanation: ExplanationTree | undefined;
+  readonly appropriationExplanation: ExplanationTree | undefined;
 }
 
 export function summarizeTreasury(projection: PlayerProjection): TreasuryBreakdown {
@@ -40,5 +45,9 @@ export function summarizeTreasury(projection: PlayerProjection): TreasuryBreakdo
     availableFunds: economy.treasury,
     projectedMonthEndFunds: economy.monthEndTreasury,
     runwayMonths: economy.runwayMonths,
+    netExplanation: economy.netExplanation,
+    monthEndExplanation: economy.monthEndExplanation,
+    runwayExplanation: economy.runwayExplanation,
+    appropriationExplanation: economy.appropriationExplanation,
   };
 }
