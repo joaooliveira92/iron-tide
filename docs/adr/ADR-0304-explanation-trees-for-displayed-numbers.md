@@ -38,6 +38,11 @@ tickets in `.ai/reports/story-49-explanation-inventory.md` track the rest.
    explanation nor an exemption, when an entry is stale, or when the covered percentage falls below
    `minimumCoveredPercentBp`. Each area ticket adds its contract and removes exemptions as it explains numbers; the ratchet
    only moves up. The manifest replaces the one-time inventory as the machine-checked source of coverage.
+8. **Battle numbers beyond accuracy.** The player-battle view also explains the player's torpedo solution
+   (`torpedo_solution`), damage-control pumping and firefighting capacity (`damage_control`), and battle loss
+   (`battle_loss`). Each tree is built from the same calculation the engine uses and is omitted for the enemy side. The battle
+   screen renders them through one generic disclosure whose node labels are `<area>.<formula>.<node>` and whose numbers use the
+   presentation formatters.
 
 ## Not delivered (tracked, not hidden)
 

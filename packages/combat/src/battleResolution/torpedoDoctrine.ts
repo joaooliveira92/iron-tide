@@ -15,7 +15,7 @@ import { effectsOf, scaleByTrainingBp, type TrainingEffectsBySide } from "./trai
 
 const UM_PER_M = 1_000_000;
 const PREDICTION_SECONDS = 60;
-const AUTO_SOLUTION_BASE_BP = 8_000;
+export const AUTO_SOLUTION_BASE_BP = 8_000;
 
 export function autoSolutionQualityBp(torpedoTacticsBp: number): number {
   return computeTorpedoSolutionQuality(

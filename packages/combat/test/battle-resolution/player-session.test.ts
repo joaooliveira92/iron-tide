@@ -127,6 +127,31 @@ describe("T-2 player battle session", () => {
     for (const ship of enemy) expect(ship).not.toHaveProperty("gunneryAccuracy");
   });
 
+  it("explains battle numbers only on the player's own ships", () => {
+    const view = playerBattleView(
+      runPlayerBattleToEnd(createPlayerBattleSession(makePlayerInput()), DEFAULT_ORDERS),
+    );
+    const own = view.ships.filter((ship) => ship.sideId === "ATTACKER");
+    const enemy = view.ships.filter((ship) => ship.sideId === "DEFENDER");
+    for (const ship of enemy) {
+      expect(ship).not.toHaveProperty("torpedoSolution");
+      expect(ship).not.toHaveProperty("damageControl");
+      expect(ship).not.toHaveProperty("loss");
+    }
+    for (const ship of own) {
+      if (ship.torpedoSolution !== undefined) {
+        expect(ship.torpedoSolution.formulaId).toBe("torpedo_solution");
+      }
+      if (ship.damageControl !== undefined) {
+        expect(ship.damageControl.formulaId).toBe("damage_control");
+      }
+      if (ship.loss !== undefined) {
+        expect(ship.loss.formulaId).toBe("battle_loss");
+        expect(Number(ship.loss.result)).toBeGreaterThan(0);
+      }
+    }
+  });
+
   it("shows the training bonus as a factor of the accuracy it explains", () => {
     const base = makePlayerInput();
     const trained = {

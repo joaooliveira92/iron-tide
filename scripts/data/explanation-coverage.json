@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "minimumCoveredPercentBp": 52,
+  "minimumCoveredPercentBp": 207,
   "contracts": [
     {
       "file": "apps/desktop/src/shared/budget-contract.ts",
@@ -578,7 +578,10 @@
       "area": "battle",
       "issue": "#305",
       "covered": {
-        "gunneryAccuracy": "gunnery_accuracy"
+        "gunneryAccuracy": "gunnery_accuracy",
+        "torpedoSolution": "torpedo_solution",
+        "damageControl": "damage_control",
+        "loss": "battle_loss"
       },
       "exempt": {
         "hitPoints": "Not yet explained; #305 covers this area and re-exempts any field it does not explain.",
