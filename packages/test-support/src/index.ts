@@ -1,11 +1,11 @@
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
-import {
-  buildContentBundleArtifact,
-  type CompilerInput,
-  type ContentBundle,
-} from "@bluewave/content-compiler";
-import type { BattleOfferRules, FleetManagementRules } from "@bluewave/content-schema";
+import { buildContentBundleArtifact, type CompilerInput } from "@bluewave/content-compiler";
+import type {
+  BattleOfferRules,
+  CompiledContentBundle,
+  FleetManagementRules,
+} from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Effect, Exit, Result } from "effect";
@@ -349,7 +349,7 @@ export function buildFixtureContentBundle(
   input: CompilerInput,
   signal: AbortSignal,
   collector: DiagnosticCollector,
-): { bundle: ContentBundle; contentHash: string } {
+): { bundle: CompiledContentBundle; contentHash: string } {
   const artifact = buildContentBundleArtifact(input, signal, collector);
   if (!artifact) {
     throw new Error(

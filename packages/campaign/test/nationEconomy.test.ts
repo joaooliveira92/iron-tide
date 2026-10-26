@@ -6,6 +6,9 @@ import { MAX_ECONOMIC_BASE, monthlyRevenue } from "../src/economy.js";
 import { buildNationStates } from "../src/nationCompilation.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
+type EconomyRows = Parameters<typeof buildNationStates>[2];
+type ResearchRows = Parameters<typeof buildNationStates>[4];
+
 function pack(ids: string[]): ContentPack {
   const nations = ids.map((id) => ({
     id,
@@ -19,8 +22,8 @@ function pack(ids: string[]): ContentPack {
 
 function compile(
   ids: string[],
-  economies: unknown[],
-  research: unknown[] = [],
+  economies: EconomyRows,
+  research: ResearchRows = [],
 ): { nations: ReturnType<typeof buildNationStates>; collector: DiagnosticCollector } {
   const collector = new DiagnosticCollector();
   const nations = buildNationStates(
@@ -185,7 +188,7 @@ describe("economy diagnostic fixtures", () => {
   const fixtures: {
     code: string;
     severity: "error" | "warning";
-    economies: unknown[];
+    economies: EconomyRows;
     ids?: string[];
     with?: string[];
   }[] = [
@@ -244,8 +247,8 @@ describe("economy diagnostic fixtures", () => {
     const research = [{ nationId: "a", researchBudget: 4, technologies: [] }];
     const outcome = (relabel: (id: string) => string) => {
       const ids = ["a", "b"].map(relabel);
-      const rename = (rows: Record<string, unknown>[]) =>
-        rows.map((r) => ({ ...r, nationId: relabel(r["nationId"] as string) }));
+      const rename = <T extends { readonly nationId: string }>(rows: readonly T[]): T[] =>
+        rows.map((r) => ({ ...r, nationId: relabel(r.nationId) }));
       const { nations, collector } = compile(ids, rename(economies), rename(research));
       const byRole = (role: string) => nations!.get(relabel(role))!;
       return {
