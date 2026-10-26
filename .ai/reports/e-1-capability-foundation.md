@@ -58,7 +58,7 @@ compiled hash now covers the capability and the first-month AI design study embe
 - Desktop `commitMonth` production snapshot: re-pinned from `ad549b07…`/209361 to
   `a02b4659…`/210074 (rawHash `4d78a6e9…` to `3128b392…`), caused by the capability-bearing
   reference design `majestic_like`; all 11 goldens and all 13 replays are unchanged.
-- Full `pnpm check`: pending the re-run after this pin update.
+- Full `pnpm check`: green on `01e40912` (preflight 49/49, lint, typecheck, build, tests, heavy tests, goldens, determinism, replay corpus, reachability, explanation coverage, 28 desktop E2E).
 
 ## Open work and limits
 
