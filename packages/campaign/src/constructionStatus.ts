@@ -1,4 +1,4 @@
-import { Data, Predicate } from "effect";
+import { Data, Result } from "effect";
 
 export const CONSTRUCTION_PROJECT_STATUSES = [
   "PLANNED",
@@ -88,18 +88,21 @@ export class ConstructionProjectTransitionError extends Data.TaggedError(
   }
 }
 
-export const isConstructionProjectTransitionError = (
-  value: unknown,
-): value is ConstructionProjectTransitionError =>
-  Predicate.isTagged(value, "ConstructionProjectTransitionError");
+export function checkConstructionProjectTransition(
+  from: ConstructionProjectStatus,
+  to: ConstructionProjectStatus,
+): Result.Result<void, ConstructionProjectTransitionError> {
+  return canTransitionConstructionProject(from, to)
+    ? Result.succeed(undefined)
+    : Result.fail(new ConstructionProjectTransitionError({ from, to }));
+}
 
 export function assertConstructionProjectTransition(
   from: ConstructionProjectStatus,
   to: ConstructionProjectStatus,
 ): void {
-  if (!canTransitionConstructionProject(from, to)) {
-    throw new ConstructionProjectTransitionError({ from, to });
-  }
+  const checked = checkConstructionProjectTransition(from, to);
+  if (Result.isFailure(checked)) throw checked.failure;
 }
 
 export function nextConstructionProjectStatus(
@@ -116,4 +119,13 @@ export function transitionConstructionProject<
 >(project: T, to: ConstructionProjectStatus): T {
   const next = nextConstructionProjectStatus(project.status, to);
   return next === undefined ? project : { ...project, status: next };
+}
+
+export function tryTransitionConstructionProject<
+  T extends { readonly status: ConstructionProjectStatus },
+>(project: T, to: ConstructionProjectStatus): Result.Result<T, ConstructionProjectTransitionError> {
+  if (project.status === to) return Result.succeed(project);
+  const checked = checkConstructionProjectTransition(project.status, to);
+  if (Result.isFailure(checked)) return Result.fail(checked.failure);
+  return Result.succeed({ ...project, status: to });
 }

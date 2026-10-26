@@ -15,11 +15,12 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import {
   allocateShipNames,
-  resolveNationalConstruction,
+  tryResolveNationalConstruction,
   shipTypeForHullType,
   type ShipBuildingContent,
   type ShipNameAllocation,
 } from "@bluewave/ship-design";
+import { Result } from "effect";
 import { constructionOrderEligibility } from "./orderEligibility.js";
 import { builderDockRecord } from "./foreignConstruction.js";
 
@@ -123,12 +124,9 @@ function resolveOrderCosts(
   const profile = content?.navalProfileFor(nationId, monthId) ?? null;
   if (profile === null)
     return { costs: projectedConstructionOrderCosts(design), national: undefined };
-  let modifiers;
-  try {
-    modifiers = resolveNationalConstruction(profile, monthId);
-  } catch {
-    return null;
-  }
+  const resolved = tryResolveNationalConstruction(profile, monthId);
+  if (Result.isFailure(resolved)) return null;
+  const modifiers = resolved.success;
   return {
     costs: projectedConstructionOrderCosts(design, modifiers.costMultiplierBp),
     national: {

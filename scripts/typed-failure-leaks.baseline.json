@@ -1,0 +1,14 @@
+{
+  "packages/campaign/src/constructionStatus.ts": {
+    "755769471ffc49377083a31a7ab255029f929ff8207c9723a5186be5ba358aa6": 1
+  },
+  "packages/campaign/src/economy.ts": {
+    "f92605516650ad625cf0015a107c246bee7cc66c5fe6e01aec3ab3790ab5c91c": 1
+  },
+  "packages/campaign/src/fleetSize.ts": {
+    "ce1e4186fa02fc654abb360def848d52d6ff5a47475977b87be1027b42863383": 1
+  },
+  "packages/campaign/src/researchSpeed.ts": {
+    "5d7ab18e7a9ddbae329d29275cc70a7461c09b3f823b3df1778da3c531022e70": 1
+  }
+}

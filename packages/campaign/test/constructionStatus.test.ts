@@ -1,3 +1,4 @@
+import { Result } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import {
   CONSTRUCTION_PROJECT_STATUSES,
@@ -9,6 +10,7 @@ import {
   isTerminalConstructionProjectStatus,
   nextConstructionProjectStatus,
   transitionConstructionProject,
+  tryTransitionConstructionProject,
   type ConstructionProjectStatus,
 } from "../src/index.js";
 
@@ -85,6 +87,21 @@ describe("dockyard project status model (DESIGN-23 section 2)", () => {
       id: "p1",
       status: "HALTED",
     });
+  });
+
+  it("tryTransitionConstructionProject returns the failure instead of throwing", () => {
+    const illegal = tryTransitionConstructionProject(
+      { id: "p1", status: "COMPLETED" as const },
+      "ACTIVE",
+    );
+    expect(Result.isFailure(illegal) ? illegal.failure._tag : undefined).toBe(
+      "ConstructionProjectTransitionError",
+    );
+    const legal = tryTransitionConstructionProject(
+      { id: "p1", status: "ACTIVE" as const },
+      "HALTED",
+    );
+    expect(Result.isSuccess(legal) ? legal.success.status : undefined).toBe("HALTED");
   });
 
   it("throws from transitionConstructionProject on an illegal move", () => {

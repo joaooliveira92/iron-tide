@@ -1,6 +1,6 @@
 ---
 name: improve-effect-use
-description: Scan a codebase for gaps against Effect v4 idioms, present them as a visual HTML report, then grill through whichever one you pick.
+description: Scan a codebase for gaps against Effect v4 idioms, turn them into tickets via to-tickets, then grill through whichever one you pick.
 ---
 
 # Improve Effect Use
@@ -11,7 +11,7 @@ Repo rules outrank every domain file. Read first:
 
 - `AGENTS.md`: "Effect source of truth", "Errors", "Services, layers, composition", "Schema and boundaries".
 - `docs/agents/runtime-free-gate.md`: which packages may import the runtime.
-- `GLOSSARY.md` files and ADRs in the area you touch. Do not re-litigate an ADR; surface a conflict only when the friction is real, and mark it in the card.
+- `GLOSSARY.md` files and ADRs in the area you touch. Do not re-litigate an ADR; surface a conflict only when the friction is real, and mark it in the ticket.
 
 `vendor/effect/src` is the final authority for every API name you cite. `vendor/effect/AGENTS.md` and `vendor/effect/ai-docs/src` show the intended idiom. The model's memory of Effect is v3; trust the source.
 
@@ -58,21 +58,32 @@ Each domain file opens with its **Signals**: greps that show the domain is in pl
 - Where does a test need a real clock, a real file, or the whole app to exercise one service?
 - Where does one concept's lifecycle (acquire, run, release) span several files?
 
-Verify every candidate before it reaches the report. Grep `vendor/effect/src` for each API it names and cite `path:line`. Drop a candidate whose fix would import the runtime into a runtime-free package. Grep the tests and ADR references for a name or comment that pins the opposite behaviour ("strips", "accepts", "open"); when the repo contradicts itself, card a decision request.
+Verify every candidate before it becomes a ticket. Grep `vendor/effect/src` for each API it names and cite `path:line`. Drop a candidate whose fix would import the runtime into a runtime-free package. Grep the tests and ADR references for a name or comment that pins the opposite behaviour ("strips", "accepts", "open"); when the repo contradicts itself, raise a decision request.
 
-### 2. Present candidates as an HTML report
+### 2. Turn candidates into tickets
 
-Write a self-contained HTML file to the OS temp directory so nothing lands in the repo. Resolve the temp dir from `$TMPDIR`, falling back to `/tmp` (or `%TEMP%` on Windows), and write to `<tmpdir>/effect-use-review-<timestamp>.html`. Open it for the user (`xdg-open` on Linux, `open` on macOS, `start` on Windows) and tell them the absolute path.
+Do not write a report file. Hand the verified candidates to [to-tickets](../to-tickets/SKILL.md): read it and follow its process (draft vertical slices, quiz the user, publish to the configured tracker). `to-tickets` is not model-invocable, so read the file rather than calling the Skill tool.
 
-For each candidate, render a card with: files, domain and gap kind, problem, direction, benefits, a before/after code panel, risk tags, and a recommendation strength (`Strong`, `Worth exploring`, `Speculative`). End with a **Top recommendation**. See [HTML-REPORT.md](HTML-REPORT.md) for the scaffold, risk tags, and tone.
+Each candidate becomes one ticket, or an expand–contract sequence when it is a wide refactor. Carry these into the ticket:
 
-A candidate that would change an authoritative hash, a wire format, or a golden artefact is a Stop condition in AGENTS.md. Card it as a decision request, never as `Strong`.
+- **Title**: names the closed gap (e.g. "Give the save store a scoped handle").
+- **What to build**: the gap kind and domain, the problem in one sentence, and the direction naming the Effect API with its `vendor/effect/src/<Module>.ts:line`.
+- **Acceptance criteria**: the channel, lifetime, or test that improves ("Failure joins the error channel", "Requirements shrink to never", "Finalizer runs on interrupt", "Test drops real timers"), plus a red-then-green regression test. Never "cleaner" or "more idiomatic".
+- **Recommendation strength**: `Strong`, `Worth exploring`, or `Speculative`, stated in the quiz. Only `Strong` and `Worth exploring` tickets get `ready-for-agent`.
+- **Risk tags** in the body, where they apply: `authoritative` (feeds authoritative hashes), `golden-hash` (could move a pinned artefact), `wire-format` (changes a frozen schema or envelope), `runtime-free` (stays inside the allowlisted `effect` subset), `edge` (lands in `persistence`, `content-compiler`, `apps/desktop/src/main`, or `apps/compiler-cli`).
+- **ADR conflict**, if any, as one line.
 
-Do NOT write the refactor yet. After the file is written, ask the user: "Which of these would you like to explore?"
+A candidate that would change an authoritative hash, a wire format, or a golden artefact is a Stop condition in AGENTS.md. Never label it `Strong` or `ready-for-agent`; publish it as a decision request using `.ai/templates/decision-request.md`.
+
+List real **gate gaps** (cases an existing gate script misses) as their own ticket naming the gate.
+
+Close the quiz with a **Top recommendation**: the one ticket to start with, and why in one sentence.
+
+Do NOT write the refactor yet. `to-tickets` ends at publishing; when the user picks a ticket to explore, continue below.
 
 ### 3. Grilling loop
 
-Once the user picks a candidate, call the Skill tool with "grilling" to walk the decision tree with them: which channel changes, who owns the lifecycle, what the edge looks like, which tests survive.
+Once the user picks a ticket, call the Skill tool with "grilling" to walk the decision tree with them: which channel changes, who owns the lifecycle, what the edge looks like, which tests survive.
 
 Side effects happen inline as decisions crystallize; call the Skill tool with "domain-modeling" to keep the domain model current:
 

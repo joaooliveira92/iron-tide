@@ -1,6 +1,6 @@
 import {
   applyDivisionCommand,
-  assertDivisionInvariants,
+  checkDivisionInvariants,
   DIVISION_STATE_INVARIANT_FAILED,
   type CampaignSnapshot,
   type FleetState,
@@ -8,6 +8,7 @@ import {
   type PresenceAreaRow,
   type Ship,
 } from "@bluewave/campaign";
+import { Result } from "effect";
 import { divisionAssetsFor } from "./divisionCommands.js";
 import { foreignStationEvents } from "./events.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
@@ -137,22 +138,21 @@ function deployShip(
     if (dissolved) {
       divisions = nation.divisions.filter((d) => d.divisionId !== division.divisionId);
     } else {
-      try {
-        const next = applyDivisionCommand(
-          division,
-          { type: "remove_ship", shipId },
-          month,
-        ).division;
-        assertDivisionInvariants(next, divisionAssetsFor(snapshot, nationId, next.shipOrder), {});
-        divisions = nation.divisions.map((d) => (d.divisionId === division.divisionId ? next : d));
-      } catch (e) {
+      const next = applyDivisionCommand(division, { type: "remove_ship", shipId }, month).division;
+      const invariants = checkDivisionInvariants(
+        next,
+        divisionAssetsFor(snapshot, nationId, next.shipOrder),
+        {},
+      );
+      if (Result.isFailure(invariants)) {
         ctx.collector.addError(
           DIVISION_STATE_INVARIANT_FAILED,
-          `Foreign-station ship ${shipId} cannot leave division ${division.divisionId}: ${(e as Error).message}`,
+          `Foreign-station ship ${shipId} cannot leave division ${division.divisionId}: ${invariants.failure.message}`,
           { stage: "foreign_station_deployment" },
         );
         return;
       }
+      divisions = nation.divisions.map((d) => (d.divisionId === division.divisionId ? next : d));
     }
   }
 

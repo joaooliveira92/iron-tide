@@ -1,12 +1,12 @@
 import type { CampaignSnapshot, ConstructionProject, NationState, Ship } from "@bluewave/campaign";
 import {
-  isConstructionProjectTransitionError,
   isTerminalConstructionProjectStatus,
-  transitionConstructionProject,
+  tryTransitionConstructionProject,
 } from "@bluewave/campaign";
 import type { CancelConstructionProjectCommand } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Result } from "effect";
 
 export const CANCELLATION_WORK_CONSUMED = "CANCELLATION_WORK_CONSUMED" as const;
 
@@ -82,19 +82,15 @@ export function applyCancelConstructionProject(
     return noop(currentSnapshot);
   }
 
-  let cancelledProject: ConstructionProject;
-  try {
-    cancelledProject = transitionConstructionProject(project, "CANCELLED");
-  } catch (error) {
-    if (isConstructionProjectTransitionError(error)) {
-      collector.addError("INVALID_DOCKYARD_PROJECT_TRANSITION", error.message, {
-        stage: "command_collection",
-        entityId: project["id"],
-      });
-      return noop(currentSnapshot);
-    }
-    throw error;
+  const transitioned = tryTransitionConstructionProject(project, "CANCELLED");
+  if (Result.isFailure(transitioned)) {
+    collector.addError("INVALID_DOCKYARD_PROJECT_TRANSITION", transitioned.failure.message, {
+      stage: "command_collection",
+      entityId: project["id"],
+    });
+    return noop(currentSnapshot);
   }
+  const cancelledProject: ConstructionProject = transitioned.success;
 
   const settlement = cancellationSettlement(project);
 

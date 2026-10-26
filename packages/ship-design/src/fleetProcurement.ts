@@ -1,3 +1,4 @@
+import { Result } from "effect";
 import type { CompiledDesign } from "./compile.js";
 import { computeCost, treasuryCostUnits } from "./cost.js";
 import { generateCandidates, type AiEnvironment, type ArchetypeId, type Candidate } from "./ai.js";
@@ -9,7 +10,7 @@ import {
 } from "./nationalDesignPolicy.js";
 import {
   applyNationalConstructionEconomics,
-  resolveNationalConstruction,
+  tryResolveNationalConstruction,
   accessEffect,
   DEFAULT_ACCESS_POLICY,
   type ComponentAccessPolicy,
@@ -267,10 +268,8 @@ export function planProcurementDecision(input: ProcurementInput): ProcurementDec
       noProcurementReason: "no_starter",
     };
 
-  let modifiers;
-  try {
-    modifiers = resolveNationalConstruction(profile, month, accessPolicy);
-  } catch {
+  const resolvedModifiers = tryResolveNationalConstruction(profile, month, accessPolicy);
+  if (Result.isFailure(resolvedModifiers)) {
     return {
       ...baseDecision,
       candidates: [],
@@ -282,6 +281,7 @@ export function planProcurementDecision(input: ProcurementInput): ProcurementDec
       noProcurementReason: "supply_unavailable",
     };
   }
+  const modifiers = resolvedModifiers.success;
 
   const aiEnv: AiEnvironment = content.aiEnvironmentFor(month, profile.nationId);
   const generated: readonly Candidate[] = generateCandidates(aiEnv, {

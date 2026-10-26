@@ -3,7 +3,9 @@ import {
   type NationNavalProfile,
   resolveConstructionModifiers,
 } from "./nationProfile.js";
-import { designInvariant } from "./errors.js";
+import type { BluewaveError } from "@bluewave/contracts";
+import type { Result } from "effect";
+import { designInvariant, designInvariantResult } from "./errors.js";
 
 const BP = 10_000;
 const mulBp = (v: number, bp: number): number => Math.ceil((v * bp) / BP);
@@ -144,6 +146,14 @@ export function resolveNationalConstruction(
       { label: "armour-plate access", costMultiplierBp: armour.costMultiplierBp },
     ],
   };
+}
+
+export function tryResolveNationalConstruction(
+  profile: NationNavalProfile,
+  month: string,
+  policy: ComponentAccessPolicy = DEFAULT_ACCESS_POLICY,
+): Result.Result<NationalConstructionModifiers, BluewaveError> {
+  return designInvariantResult(() => resolveNationalConstruction(profile, month, policy));
 }
 
 export interface ConstructionEconomics {

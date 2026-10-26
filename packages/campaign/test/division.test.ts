@@ -1,11 +1,11 @@
 import { SafeInt } from "@bluewave/contracts";
 import { CAMPAIGN_DIVISION_FORMATIONS, CAMPAIGN_DIVISION_ROLES } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { Option } from "effect";
+import { Option, Result } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import {
   applyDivisionCommand,
-  assertDivisionInvariants,
+  checkDivisionInvariants,
   type CanonicalShipType,
   DD_DIVISION_MAX_SHIPS,
   DIVISION_FLAGSHIP_INVALID,
@@ -58,37 +58,46 @@ function asset(
   return { shipId, shipType, locationAreaId: loc, isUnderConstruction: false };
 }
 
+const failureTag = (checked: Result.Result<void, { readonly _tag: string }>): string | undefined =>
+  Result.isFailure(checked) ? checked.failure._tag : undefined;
+
 describe("PermanentDivision aggregate (AC-2)", () => {
   it("§29.1: size 1..5, or 1..6 when all DD", () => {
     const ok6Dd = makeDivision({ shipOrder: ["a", "b", "c", "d", "e", "f"], flagshipShipId: "a" });
-    expect(() =>
-      assertDivisionInvariants(
-        ok6Dd,
-        ["a", "b", "c", "d", "e", "f"].map((id) => asset(id, "DD")),
+    expect(
+      failureTag(
+        checkDivisionInvariants(
+          ok6Dd,
+          ["a", "b", "c", "d", "e", "f"].map((id) => asset(id, "DD")),
+        ),
       ),
-    ).not.toThrow();
+    ).toBeUndefined();
 
     const ok6Mixed = makeDivision({
       shipOrder: ["a", "b", "c", "d", "e", "f"],
       flagshipShipId: "a",
     });
-    expect(() =>
-      assertDivisionInvariants(
-        ok6Mixed,
-        ["a", "b", "c", "d", "e", "f"].map((id) => asset(id, "BB")),
+    expect(
+      failureTag(
+        checkDivisionInvariants(
+          ok6Mixed,
+          ["a", "b", "c", "d", "e", "f"].map((id) => asset(id, "BB")),
+        ),
       ),
-    ).toThrow(new RegExp(DIVISION_SIZE_LIMIT_EXCEEDED));
+    ).toBe(DIVISION_SIZE_LIMIT_EXCEEDED);
 
     const tooMany = makeDivision({
       shipOrder: ["a", "b", "c", "d", "e", "f", "g"],
       flagshipShipId: "a",
     });
-    expect(() =>
-      assertDivisionInvariants(
-        tooMany,
-        ["a", "b", "c", "d", "e", "f", "g"].map((id) => asset(id, "DD")),
+    expect(
+      failureTag(
+        checkDivisionInvariants(
+          tooMany,
+          ["a", "b", "c", "d", "e", "f", "g"].map((id) => asset(id, "DD")),
+        ),
       ),
-    ).toThrow(new RegExp(DIVISION_SIZE_LIMIT_EXCEEDED));
+    ).toBe(DIVISION_SIZE_LIMIT_EXCEEDED);
   });
 
   it("§29.2: size limit violated -> DIVISION_SIZE_LIMIT_EXCEEDED", () => {
@@ -105,26 +114,30 @@ describe("PermanentDivision aggregate (AC-2)", () => {
 
   it("§29.4 / §4: incompatible mix -> DIVISION_SHIP_TYPE_INCOMPATIBLE", () => {
     const d = makeDivision({ shipOrder: ["a", "b"], flagshipShipId: "a" });
-    expect(() => assertDivisionInvariants(d, [asset("a", "BB"), asset("b", "DD")])).toThrow(
-      new RegExp(DIVISION_SHIP_TYPE_INCOMPATIBLE),
+    expect(failureTag(checkDivisionInvariants(d, [asset("a", "BB"), asset("b", "DD")]))).toBe(
+      DIVISION_SHIP_TYPE_INCOMPATIBLE,
     );
-    expect(() => assertDivisionInvariants(d, [asset("a", "BB"), asset("b", "B")])).not.toThrow();
+    expect(
+      failureTag(checkDivisionInvariants(d, [asset("a", "BB"), asset("b", "B")])),
+    ).toBeUndefined();
   });
 
   it("§29.5: co-location -> DIVISION_LOCATION_CONFLICT", () => {
     const d = makeDivision({ shipOrder: ["a", "b"], flagshipShipId: "a" });
-    expect(() =>
-      assertDivisionInvariants(d, [
-        asset("a", "BB", "area_north_sea"),
-        asset("b", "BB", "area_med"),
-      ]),
-    ).toThrow(new RegExp(DIVISION_LOCATION_CONFLICT));
+    expect(
+      failureTag(
+        checkDivisionInvariants(d, [
+          asset("a", "BB", "area_north_sea"),
+          asset("b", "BB", "area_med"),
+        ]),
+      ),
+    ).toBe(DIVISION_LOCATION_CONFLICT);
   });
 
   it("§29.7-8 / §8: first-in-order flagship, else DIVISION_FLAGSHIP_INVALID", () => {
     const d = makeDivision({ shipOrder: ["a", "b"], flagshipShipId: "b" });
-    expect(() => assertDivisionInvariants(d, [asset("a", "BB"), asset("b", "BB")])).toThrow(
-      new RegExp(DIVISION_FLAGSHIP_INVALID),
+    expect(failureTag(checkDivisionInvariants(d, [asset("a", "BB"), asset("b", "BB")]))).toBe(
+      DIVISION_FLAGSHIP_INVALID,
     );
     expect(Option.getOrNull(divisionCanonicalType(["BB", "B"]))).toBe("BB");
     expect(Option.getOrNull(divisionCanonicalType(["BC", "CA"]))).toBe("BC");
@@ -204,23 +217,17 @@ describe("PermanentDivision aggregate (AC-2)", () => {
 
   it("empty division -> DIVISION_STATE_INVARIANT_FAILED", () => {
     const d = makeDivision({ shipOrder: [], flagshipShipId: "NONE" });
-    expect(() => assertDivisionInvariants(d, [])).toThrow(
-      new RegExp(DIVISION_STATE_INVARIANT_FAILED),
-    );
+    expect(failureTag(checkDivisionInvariants(d, []))).toBe(DIVISION_STATE_INVARIANT_FAILED);
   });
 
   it("each invariant failure carries its own _tag equal to its code", () => {
     const d = makeDivision({ shipOrder: ["a", "b"], flagshipShipId: "a" });
-    try {
-      assertDivisionInvariants(d, [asset("a", "BB"), asset("b", "DD")]);
-      expect(true).toBe(false);
-    } catch (e) {
-      expect(e).toMatchObject({
-        _tag: DIVISION_SHIP_TYPE_INCOMPATIBLE,
-        message: DIVISION_SHIP_TYPE_INCOMPATIBLE,
-        divisionId: d.divisionId,
-      });
-    }
+    const checked = checkDivisionInvariants(d, [asset("a", "BB"), asset("b", "DD")]);
+    expect(Result.isFailure(checked) ? checked.failure : undefined).toMatchObject({
+      _tag: DIVISION_SHIP_TYPE_INCOMPATIBLE,
+      message: DIVISION_SHIP_TYPE_INCOMPATIBLE,
+      divisionId: d.divisionId,
+    });
   });
 });
 
