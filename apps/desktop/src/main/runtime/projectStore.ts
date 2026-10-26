@@ -26,6 +26,7 @@ import {
 } from "../campaignSessionMetadata.js";
 import { toSaveableState } from "../saveHelpers.js";
 import { CommandFailed } from "./commandError.js";
+import { PROVISIONAL_RETAINED_SAVES } from "./saveRetention.js";
 
 function failure(reason: string, error: unknown): CommandFailed {
   return new CommandFailed({
@@ -167,7 +168,7 @@ export class ProjectStore extends Context.Service<
 >()("bluewave/desktop/ProjectStore") {}
 
 export function projectStoreLayer(): Layer.Layer<ProjectStore> {
-  const store = new SaveStore();
+  const store = new SaveStore(undefined, { retainSaves: PROVISIONAL_RETAINED_SAVES });
   return Layer.succeed(ProjectStore, {
     isCurrent: (state, saveDir) =>
       Effect.try({
