@@ -1,3 +1,4 @@
+export { systemClock, type PersistenceClock } from "./clock.js";
 export {
   CompatibilityChecker,
   CompatibilityError,
@@ -12,12 +13,13 @@ export {
   PersistenceCancelledError,
   PersistenceCompatibilityMismatchError,
   PersistenceCorruptSaveError,
+  PersistenceInvalidOptionError,
   PersistenceMissingSaveError,
   PersistenceUnsignedSaveError,
   UNSIGNED_SAVE_CODE,
 } from "./errors.js";
 export type { PersistenceError, PersistenceErrorFields } from "./errors.js";
-export { cleanup, RecoveryManager } from "./recovery.js";
+export { cleanup, RecoveryManager, sweepStaleTemp } from "./recovery.js";
 export {
   detectSaveVersion,
   migrateSaveDirectory,
@@ -38,4 +40,4 @@ export type {
   SaveMetadata,
   SaveResult,
 } from "./store.js";
-export { SaveStore } from "./store.js";
+export { SaveStore, type SaveStoreOptions } from "./store.js";
