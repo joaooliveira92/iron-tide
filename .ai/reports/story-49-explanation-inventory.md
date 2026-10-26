@@ -4,6 +4,10 @@ Spec [#265](https://github.com/joaooliveira92/iron-tide/issues/265) story 49 and
 [#223](https://github.com/joaooliveira92/iron-tide/issues/223). Taken 2026-10-25 on branch `feat/fm-war-replay`. ADR-0304 defines the
 contract and the first slice. **Story 49 is not complete.**
 
+The machine-checked source of truth is now `scripts/data/explanation-coverage.json`, verified by
+`pnpm check:explanation-coverage` (issue #299). The table below is the 2026-10-25 audit that seeded the manifest; the gate reports
+the live percentage and each area ticket removes its exemptions as it lands.
+
 ## Method
 
 A displayed number reaches a screen through a typed view or contract. The count below is the number of `number` or `SafeInt` fields in
@@ -29,7 +33,9 @@ About 200 fields (204 by this count) reach production screens outside the design
 
 ## Next steps, in dependency order
 
-1. **Contract hardening.** Add `operation` and a source reference to `ExplanationTree`, fix the label-key convention, and add a gate that
-   fails when a numeric field of a listed contract has no explanation or recorded exemption. Every area ticket depends on it.
-2. One ticket per area in the table, each delivering a tree for its most consequential numbers first and stating its remaining fields.
-3. The coverage gate then reports a real percentage and replaces this one-time audit.
+1. **Contract hardening (done, #299).** `operation` and `source` are on the tree; node labels follow `<area>.<formula>.<node>`; the
+   coverage gate lists the view contracts and fails on an unclassified field. The manifest starts at 1/190 explained (0.52%) and
+   ratchets up.
+2. One ticket per area in the table, each delivering a tree for its most consequential numbers first, adding its contract to the
+   manifest, and converting exemptions to covered fields.
+3. The gate reports the live percentage; the inventory table stays as the historical audit.

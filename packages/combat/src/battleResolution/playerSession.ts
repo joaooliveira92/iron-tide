@@ -27,7 +27,12 @@ import {
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { planTorpedoCommands } from "./torpedoDoctrine.js";
 import { explainGunneryAccuracy } from "../gunnery/accuracy-explanation.js";
-import { withNightTraining, type TrainingEffectsBySide } from "./trainingEffects.js";
+import { withNightTraining, effectsOf, type TrainingEffectsBySide } from "./trainingEffects.js";
+import {
+  explainBattleLoss,
+  explainDamageControl,
+  explainTorpedoSolution,
+} from "./battle-explanations.js";
 import { pursuitOrders } from "./pursuit.js";
 import {
   assignTargetContactIds,
@@ -69,6 +74,9 @@ export interface PlayerBattleShipView {
   readonly damageState: string;
   readonly position: readonly [number, number] | null;
   readonly gunneryAccuracy?: ExplanationTree;
+  readonly torpedoSolution?: ExplanationTree;
+  readonly damageControl?: ExplanationTree;
+  readonly loss?: ExplanationTree;
 }
 
 export interface PlayerBattleDivisionView {
@@ -634,6 +642,12 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
     }),
   );
   const playerSide = session.attackerId === session.playerNationId ? "ATTACKER" : "DEFENDER";
+  const playerTorpedoShips = new Set(
+    (session.torpedoes?.launchers ?? [])
+      .filter((launcher) => launcher.sideId === playerSide)
+      .map((launcher) => launcher.ownerShipId),
+  );
+  const torpedoTacticsBp = effectsOf(session.trainingEffects, playerSide).torpedoTacticsBp;
   const batteryOf = new Map(
     withNightTraining(
       session.batteries,
@@ -647,6 +661,12 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
     const battery = batteryOf.get(unit.assetId);
     const damageState = session.damage.targets[unit.assetId]?.state;
     const movement: MovementState | undefined = session.state.movementStates?.[unit.assetId];
+    const own = unit.sideId === playerSide;
+    const loss =
+      own && damageState !== undefined
+        ? explainBattleLoss(unit.hitPoints as number, damageState, unit.maxHitPoints as number)
+        : undefined;
+    const lossValue = loss === undefined ? 0 : Number(loss.result);
     return {
       shipId: unit.assetId,
       name: unit.name,
@@ -661,6 +681,11 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
       ...(battery === undefined
         ? {}
         : { gunneryAccuracy: explainGunneryAccuracy(battery.accuracyFactors) }),
+      ...(own && playerTorpedoShips.has(unit.assetId)
+        ? { torpedoSolution: explainTorpedoSolution(torpedoTacticsBp) }
+        : {}),
+      ...(own && lossValue > 0 ? { damageControl: explainDamageControl() } : {}),
+      ...(loss === undefined || lossValue === 0 ? {} : { loss }),
     };
   });
   return {

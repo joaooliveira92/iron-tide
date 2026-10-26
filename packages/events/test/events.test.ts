@@ -1,9 +1,16 @@
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
-import type { DomainEventBody, DomainEventEnvelope, NationBudgetChanged } from "../src/index.js";
+import type {
+  DomainEventBody,
+  DomainEventEnvelope,
+  ExplanationOperation,
+  NationBudgetChanged,
+} from "../src/index.js";
 import {
   EventLedger,
   ExplanationBuilder,
+  InvalidExplanationOperationError,
+  InvalidExplanationSourceError,
   formatExplanation,
   parseDomainEventBody,
   parseDomainEventEnvelope,
@@ -167,6 +174,32 @@ describe("ExplanationTree", () => {
     expect(parent["children"]).toHaveLength(1);
     expect(parent["children"]![0]["formulaId"]).toBe("maintenance");
     expect(parent["children"]![0]["result"]).toBe(SafeInt(50));
+  });
+
+  it("carries an operation and a frozen source reference", () => {
+    const tree = new ExplanationBuilder("gross_income", "1.0.0")
+      .withOperation("multiply")
+      .withSource({ kind: "ruleset", ref: "gross_income_v1" })
+      .withResult(150)
+      .build();
+
+    expect(tree["operation"]).toBe("multiply");
+    expect(tree["source"]).toEqual({ kind: "ruleset", ref: "gross_income_v1" });
+    expect(Object.isFrozen(tree["source"])).toBe(true);
+  });
+
+  it("rejects an unknown operation and an invalid source", () => {
+    expect(() =>
+      new ExplanationBuilder("gross_income", "1.0.0").withOperation(
+        "explode" as ExplanationOperation,
+      ),
+    ).toThrow(InvalidExplanationOperationError);
+    expect(() =>
+      new ExplanationBuilder("gross_income", "1.0.0").withSource({
+        kind: "ruleset",
+        ref: " ",
+      }),
+    ).toThrow(InvalidExplanationSourceError);
   });
 });
 

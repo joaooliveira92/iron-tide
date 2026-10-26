@@ -238,6 +238,10 @@ export default defineConfig({
         command: "node scripts/verify-reachability-ledger.mjs",
         dependsOn: ["gate:git-state"],
       },
+      "gate:explanation-coverage": {
+        command: "node scripts/verify-explanation-coverage.mjs",
+        dependsOn: ["gate:git-state"],
+      },
       "gate:content-placeholder-gate": {
         command: "node scripts/verify-content-gate.mjs",
         dependsOn: ["gate:content-lock"],
@@ -281,6 +285,7 @@ export default defineConfig({
           "gate:content-placeholder-gate",
           "gate:codemod-determinism",
           "gate:reachability-ledger",
+          "gate:explanation-coverage",
         ],
       },
     },

@@ -1,0 +1,764 @@
+{
+  "version": 1,
+  "minimumCoveredPercentBp": 207,
+  "contracts": [
+    {
+      "file": "apps/desktop/src/shared/budget-contract.ts",
+      "type": "FleetUpkeepGroup",
+      "area": "economy",
+      "issue": "#300",
+      "covered": {},
+      "exempt": {
+        "ships": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "cost": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "multiplierBp": "Not yet explained; #300 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/budget-contract.ts",
+      "type": "FleetUpkeepShip",
+      "area": "economy",
+      "issue": "#300",
+      "covered": {},
+      "exempt": {
+        "cost": "Not yet explained; #300 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/budget-contract.ts",
+      "type": "FleetUpkeep",
+      "area": "economy",
+      "issue": "#300",
+      "covered": {},
+      "exempt": {
+        "total": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "warSurcharge": "Not yet explained; #300 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/budget-contract.ts",
+      "type": "UnpaidCostsPrestige",
+      "area": "economy",
+      "issue": "#300",
+      "covered": {},
+      "exempt": {
+        "before": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "after": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "sackingThreshold": "Not yet explained; #300 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/budget-contract.ts",
+      "type": "BudgetScreenProjection",
+      "area": "economy",
+      "issue": "#300",
+      "covered": {},
+      "exempt": {
+        "revision": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "month.month": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "month.year": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "appropriationRateBp": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "researchBudget": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "bounds.appropriationRateMinBp": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "bounds.appropriationRateMaxBp": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "bounds.researchBudgetMin": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "bounds.researchBudgetMax": "Not yet explained; #300 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/ledger-reconciliation.ts",
+      "type": "LedgerReconciliation",
+      "area": "economy",
+      "issue": "#300",
+      "covered": {},
+      "exempt": {
+        "opening": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "revenue": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "construction": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "preservation": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "maintenance": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "obligation": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "research": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "other": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "closing": "Not yet explained; #300 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/projection.ts",
+      "type": "PlayerProjectionEconomy",
+      "area": "economy",
+      "issue": "#300",
+      "covered": {},
+      "exempt": {
+        "treasury": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "monthlyAppropriation": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "shipyardCapacity": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "constructionSpend": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "researchSpend": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "maintenanceCost": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "obligations": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "researchRequested": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "researchCap": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "plannedConstruction": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "projectedNet": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "shortfall": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "monthEndTreasury": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "runwayMonths": "Not yet explained; #300 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/projection.ts",
+      "type": "PlayerProjection",
+      "area": "economy",
+      "issue": "#300",
+      "covered": {},
+      "exempt": {
+        "revision": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "projectedSurplusDeficit": "Not yet explained; #300 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/fleet-contract.ts",
+      "type": "FleetScreenProjection",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "revision": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "month.month": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "month.year": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/fleet-contract.ts",
+      "type": "FleetTrainingSubjectView",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "maintenanceAdderBp": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "fundedMonths": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/fleet-contract.ts",
+      "type": "FleetTrainingProjection",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "maxSubjects": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "proficiencyMonths": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/fleet-contract.ts",
+      "type": "FleetExerciseProjection",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "maxPerCalendarYear": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "maintenanceMultiple": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "experienceGain": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "nextExerciseYear": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "heldInNextExerciseYear": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/division-screen.ts",
+      "type": "DivisionCommanderView",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "skill": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/division-screen.ts",
+      "type": "DivisionSpeedWarningView",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "slowestSpeed": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "fastestSpeed": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/division-screen.ts",
+      "type": "DivisionView",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "experience": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "cohesion": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/division-screen.ts",
+      "type": "DivisionPenalty",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "experience": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "cohesion": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/division-screen.ts",
+      "type": "DivisionScreenView",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "maxShips": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "maxDestroyers": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/fleet.ts",
+      "type": "FleetShipView",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "crewQuality": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "repairMonthsRemaining": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/fleet.ts",
+      "type": "FleetPort",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "capacity": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/projection.ts",
+      "type": "PlayerProjectionPort",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "capacity": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/projection.ts",
+      "type": "PlayerProjectionShip",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "crewQuality": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "displacementTons": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/projection.ts",
+      "type": "PlayerProjectionPresenceArea",
+      "area": "fleet",
+      "issue": "#301",
+      "covered": {},
+      "exempt": {
+        "requiredTons": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "presentTons": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
+        "shortfallTons": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/construction-contract.ts",
+      "type": "ConstructionScreenProjection",
+      "area": "construction",
+      "issue": "#302",
+      "covered": {},
+      "exempt": {
+        "revision": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "month.month": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "month.year": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "economy.treasury": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "economy.monthlyAppropriation": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "economy.shipyardCapacity": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "economy.dockMaxBuildDisplacementKg": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "economy.maxConcurrentConstructionMassKg": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "economy.committedNewConstructionMassKg": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "economy.exemptNewConstructionMassKg": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "economy.dockExpansionDurationMonths": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "economy.dockExpansionNextStepKg": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "workspace.treasuryReserved": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "workspace.capacityReserved": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/construction.ts",
+      "type": "ConstructionOrderCosts",
+      "area": "construction",
+      "issue": "#302",
+      "covered": {},
+      "exempt": {
+        "projectedCost": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "projectedCapacityUnits": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/construction.ts",
+      "type": "ConstructionProjectReadout",
+      "area": "construction",
+      "issue": "#302",
+      "covered": {},
+      "exempt": {
+        "totalCostUnits": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "monthlyInstalmentUnits": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "remainingMonths": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/construction.ts",
+      "type": "ConstructionProjectReadoutView",
+      "area": "construction",
+      "issue": "#302",
+      "covered": {},
+      "exempt": {
+        "haltedCarryingCostUnits": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/construction.ts",
+      "type": "ConstructionProjectQueueEntry",
+      "area": "construction",
+      "issue": "#302",
+      "covered": {},
+      "exempt": {
+        "totalWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "completedWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "paidWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/construction.ts",
+      "type": "ConstructionProjectPackageView",
+      "area": "construction",
+      "issue": "#302",
+      "covered": {},
+      "exempt": {
+        "totalWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "doneWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/budget-contract.ts",
+      "type": "ProjectAcceleration",
+      "area": "construction",
+      "issue": "#302",
+      "covered": {},
+      "exempt": {
+        "premiumWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/budget-contract.ts",
+      "type": "ConstructionAcceleration",
+      "area": "construction",
+      "issue": "#302",
+      "covered": {},
+      "exempt": {
+        "acceleratedCount": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "delayChanceBp": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "premiumBp": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "premiumPending": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/budget-contract.ts",
+      "type": "ConstructionCommitment",
+      "area": "construction",
+      "issue": "#302",
+      "covered": {},
+      "exempt": {
+        "draw": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "carryingCost": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "percentComplete": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/budget-contract.ts",
+      "type": "ConstructionCommitments",
+      "area": "construction",
+      "issue": "#302",
+      "covered": {},
+      "exempt": {
+        "drawTotal": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "carryingTotal": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
+        "haltedCount": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/research.ts",
+      "type": "ResearchInProgressTechnology",
+      "area": "research",
+      "issue": "#303",
+      "covered": {},
+      "exempt": {
+        "investedPoints": "Not yet explained; #303 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/research.ts",
+      "type": "ResearchTechnologyProjection",
+      "area": "research",
+      "issue": "#303",
+      "covered": {},
+      "exempt": {
+        "cost": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "investedPoints": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "availabilityMonth": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "monthsUntilAvailable": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "discoveryWeight": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "timingModifierBp": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "drawWeight": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "drawOddsBp": "Not yet explained; #303 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/research.ts",
+      "type": "ResearchFieldProjection",
+      "area": "research",
+      "issue": "#303",
+      "covered": {},
+      "exempt": {
+        "totalTechs": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "discoveredTechs": "Not yet explained; #303 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/research.ts",
+      "type": "ResearchScreenProjection",
+      "area": "research",
+      "issue": "#303",
+      "covered": {},
+      "exempt": {
+        "turnNumber": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "minimumResearchSpend": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "researchBudget": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "annualAllocation": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "researchCap": "Not yet explained; #303 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/research-contract.ts",
+      "type": "ResearchScreenProjection",
+      "area": "research",
+      "issue": "#303",
+      "covered": {},
+      "exempt": {
+        "revision": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "month.month": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "month.year": "Not yet explained; #303 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/diplomacy.ts",
+      "type": "DiplomacyRelationRow",
+      "area": "strategic",
+      "issue": "#304",
+      "covered": {},
+      "exempt": {
+        "tension": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/diplomacy.ts",
+      "type": "DiplomacyWarRow",
+      "area": "strategic",
+      "issue": "#304",
+      "covered": {},
+      "exempt": {
+        "attackerWarScore": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "defenderWarScore": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/diplomacy-contract.ts",
+      "type": "DiplomacyScreenProjection",
+      "area": "strategic",
+      "issue": "#304",
+      "covered": {},
+      "exempt": {
+        "revision": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "month.month": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "month.year": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/priorities.ts",
+      "type": "RankedPriority",
+      "area": "strategic",
+      "issue": "#304",
+      "covered": {},
+      "exempt": {
+        "financialRisk": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "timeToConsequence": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/opening-briefing.ts",
+      "type": "OpeningBriefingShipClassCount",
+      "area": "strategic",
+      "issue": "#304",
+      "covered": {},
+      "exempt": {
+        "count": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/opening-briefing.ts",
+      "type": "OpeningBriefingRelationsRow",
+      "area": "strategic",
+      "issue": "#304",
+      "covered": {},
+      "exempt": {
+        "tension": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/opening-briefing.ts",
+      "type": "OpeningBriefingProjection",
+      "area": "strategic",
+      "issue": "#304",
+      "covered": {},
+      "exempt": {
+        "stateOfTheNavy.shipsUnderConstruction": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "stateOfTheNavy.mostExpensiveActiveClass.projectedCost": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "stateOfTheNavy.largestDockCapacity": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "stateOfTheNavy.totalMaintenance": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "stateOfTheNavy.constructionCommitted": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "treasury.governmentAllocation": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "treasury.fleetMaintenance": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "treasury.constructionCommitted": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "treasury.researchExpenditure": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "treasury.projectedSurplus": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "treasury.obligations": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "treasury.runwayMonths": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/projection.ts",
+      "type": "PlayerProjectionPrestige",
+      "area": "strategic",
+      "issue": "#304",
+      "covered": {},
+      "exempt": {
+        "current": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "sackingThreshold": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "lastChange.before": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "lastChange.after": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
+        "lastChange.delta": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/projection.ts",
+      "type": "PlayerProjectionCareer",
+      "area": "strategic",
+      "issue": "#304",
+      "covered": {},
+      "exempt": {
+        "score": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/combat/src/battleResolution/playerSession.ts",
+      "type": "PlayerBattleShipView",
+      "area": "battle",
+      "issue": "#305",
+      "covered": {
+        "gunneryAccuracy": "gunnery_accuracy",
+        "torpedoSolution": "torpedo_solution",
+        "damageControl": "damage_control",
+        "loss": "battle_loss"
+      },
+      "exempt": {
+        "hitPoints": "Not yet explained; #305 covers this area and re-exempts any field it does not explain.",
+        "maxHitPoints": "Not yet explained; #305 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/combat/src/battleResolution/playerSession.ts",
+      "type": "PlayerBattleView",
+      "area": "battle",
+      "issue": "#305",
+      "covered": {},
+      "exempt": {
+        "minute": "Not yet explained; #305 covers this area and re-exempts any field it does not explain.",
+        "maxMinutes": "Not yet explained; #305 covers this area and re-exempts any field it does not explain.",
+        "weather.visibilityNm": "Not yet explained; #305 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/combat/src/battleResolution/playerSession.ts",
+      "type": "PlayerBattleEvent",
+      "area": "battle",
+      "issue": "#305",
+      "covered": {},
+      "exempt": {
+        "minute": "Not yet explained; #305 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/battle-history.ts",
+      "type": "BattleHistoryEntry",
+      "area": "battle",
+      "issue": "#305",
+      "covered": {},
+      "exempt": {
+        "sequence": "Not yet explained; #305 covers this area and re-exempts any field it does not explain.",
+        "playerLossCount": "Not yet explained; #305 covers this area and re-exempts any field it does not explain.",
+        "enemyLossCount": "Not yet explained; #305 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "packages/campaign-engine/src/battle-history.ts",
+      "type": "LostShipView",
+      "area": "battle",
+      "issue": "#305",
+      "covered": {},
+      "exempt": {}
+    },
+    {
+      "file": "packages/campaign-engine/src/battle-history.ts",
+      "type": "AbsentShipView",
+      "area": "battle",
+      "issue": "#305",
+      "covered": {},
+      "exempt": {}
+    },
+    {
+      "file": "apps/desktop/src/shared/reports-contract.ts",
+      "type": "MonthlyReportLedgerRow",
+      "area": "reports",
+      "issue": "#306",
+      "covered": {},
+      "exempt": {
+        "amount": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "runningBalance": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "requested": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "shortfall": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/reports-contract.ts",
+      "type": "MonthlyReportTreasury",
+      "area": "reports",
+      "issue": "#306",
+      "covered": {},
+      "exempt": {
+        "openingTreasury": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "closingTreasury": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "maintenanceCost": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "constructionSpending": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "researchExpense": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "governmentAllocation": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "netChange": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "obligationExpense": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/reports-contract.ts",
+      "type": "MonthlyReportConstructionProgress",
+      "area": "reports",
+      "issue": "#306",
+      "covered": {},
+      "exempt": {
+        "previousWork": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "newWork": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/reports-contract.ts",
+      "type": "MonthlyReportResearchProgress",
+      "area": "reports",
+      "issue": "#306",
+      "covered": {},
+      "exempt": {
+        "previousPoints": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "newPoints": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/reports-contract.ts",
+      "type": "MonthlyReportFleet",
+      "area": "reports",
+      "issue": "#306",
+      "covered": {},
+      "exempt": {
+        "totalActiveShips": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/reports-contract.ts",
+      "type": "MonthlyReportEntry",
+      "area": "reports",
+      "issue": "#306",
+      "covered": {},
+      "exempt": {
+        "turn": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/reports-contract.ts",
+      "type": "MonthlyReports",
+      "area": "reports",
+      "issue": "#306",
+      "covered": {},
+      "exempt": {}
+    },
+    {
+      "file": "apps/desktop/src/shared/turn-message-contract.ts",
+      "type": "EffectReferenceDto",
+      "area": "reports",
+      "issue": "#306",
+      "covered": {},
+      "exempt": {
+        "delta": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/turn-message-contract.ts",
+      "type": "InterruptionRequestDto",
+      "area": "reports",
+      "issue": "#306",
+      "covered": {},
+      "exempt": {
+        "ordinal": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/turn-message-contract.ts",
+      "type": "OfferEstimateDto",
+      "area": "reports",
+      "issue": "#306",
+      "covered": {},
+      "exempt": {
+        "strength": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/turn-message-contract.ts",
+      "type": "PendingTurnDto",
+      "area": "reports",
+      "issue": "#306",
+      "covered": {},
+      "exempt": {
+        "startingRevision": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "nextInterruptionOrdinal": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
+        "recordedInputCount": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+      }
+    }
+  ]
+}
