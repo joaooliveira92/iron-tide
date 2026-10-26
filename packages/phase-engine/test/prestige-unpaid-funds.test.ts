@@ -249,6 +249,19 @@ describe("applyPrestigeChange with an explicitly supplied rule (ADR-0261)", () =
     const change = applyPrestigeChange(ctx, "GBR", "DECLINED_BATTLE", fixedLoss);
     expect(change).toMatchObject({ before: 50, after: 47, delta: -3 });
     expect(ctx.currentSnapshot.nations.get("GBR")!.prestige).toBe(47);
+    expect(ctx.currentSnapshot.nations.get("GBR")!.prestigeLastChange).toMatchObject({
+      reasonCode: "DECLINED_BATTLE",
+      before: 50,
+      after: 47,
+      delta: -3,
+      month: "1880-01",
+      appliedRule: { kind: "FIXED_LOSS", amount: 3 },
+      unclampedAfter: 47,
+      bounds: {
+        lower: FIXTURE_PRESTIGE_RULES.lowerBound,
+        upper: FIXTURE_PRESTIGE_RULES.upperBound,
+      },
+    });
     expect(ctx.eventLedger.all.map((e) => e.body)).toEqual([
       {
         kind: "PrestigeChanged",

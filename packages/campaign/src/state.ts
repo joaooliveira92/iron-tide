@@ -1,5 +1,11 @@
 import type { Bp, Money, SafeInt } from "@bluewave/contracts";
-import type { CareerResult, PrestigeReasonCode, PrestigeValueSet } from "./prestige.js";
+import type {
+  AppliedPrestigeRule,
+  CareerResult,
+  PrestigeBounds,
+  PrestigeReasonCode,
+  PrestigeValueSet,
+} from "./prestige.js";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { BattleAbsence } from "./battleAbsence.js";
@@ -589,6 +595,9 @@ export interface PrestigeLastChange {
   after: SafeInt;
   delta: SafeInt;
   month: string;
+  appliedRule?: AppliedPrestigeRule;
+  unclampedAfter?: SafeInt;
+  bounds?: PrestigeBounds;
 }
 
 export interface CampaignSnapshot {

@@ -249,7 +249,9 @@ function PrestigeTile({ model }: { readonly model: StatusStripModel }) {
     <Instrument
       row={row}
       className="col-span-2"
-      card={<PrestigeCard gauge={prestige} note={row.note} />}
+      card={
+        <PrestigeCard gauge={prestige} note={row.note} explanation={model.prestigeExplanation} />
+      }
     >
       <span className="flex items-baseline justify-between gap-2">
         <span className={FIELD_LABEL}>{row.label}</span>
@@ -758,7 +760,9 @@ function PrestigeChip({ model }: { readonly model: StatusStripModel }) {
         "cursor-help",
         prestige.atRisk && "border-destructive/40 bg-destructive/10",
       )}
-      card={<PrestigeCard gauge={prestige} note={row.note} />}
+      card={
+        <PrestigeCard gauge={prestige} note={row.note} explanation={model.prestigeExplanation} />
+      }
     >
       <Crown
         className={cn("size-3.5", prestige.atRisk ? "text-destructive" : "text-admiralty-accent")}
