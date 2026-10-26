@@ -1,18 +1,21 @@
 import { memo, type ReactNode } from "react";
+import { cn } from "@/lib/utils.js";
 
 export interface ScreenHeaderProps {
   readonly icon: ReactNode;
   readonly title: string;
   readonly description: string;
+  readonly className?: string;
 }
 
 export const ScreenHeader = memo(function ScreenHeader({
   icon,
   title,
   description,
+  className,
 }: ScreenHeaderProps) {
   return (
-    <div className="flex items-center gap-3">
+    <div className={cn("flex items-center gap-3", className)}>
       <span aria-hidden="true" className="text-muted-foreground">
         {icon}
       </span>
