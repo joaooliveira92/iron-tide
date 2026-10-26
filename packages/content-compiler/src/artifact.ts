@@ -11,7 +11,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Predicate, Result, Schema } from "effect";
 
 import { Compiler } from "./compiler.js";
-import type { CompilerInput, ContentBundle } from "./index.js";
+import type { CompilerInput } from "./index.js";
 import { BUNDLE_GENERATED_BY } from "./stages/compile.js";
 
 export const CONTENT_BUNDLE_ARTIFACT_KIND = "content-bundle";
@@ -53,7 +53,7 @@ const decodeManifest = Schema.decodeUnknownResult(ContentBundleManifestSchema);
 const decodeLock = Schema.decodeUnknownResult(ContentLockSchema);
 
 export interface ContentBundleArtifact {
-  readonly bundle: ContentBundle;
+  readonly bundle: CompiledContentBundle;
   readonly envelope: {
     readonly algorithm: string;
     readonly artifactKind: string;
@@ -70,7 +70,7 @@ export interface ContentBundleArtifact {
 export type ContentBundleVerification =
   | {
       readonly ok: true;
-      readonly bundle: ContentBundle;
+      readonly bundle: CompiledContentBundle;
       readonly manifest: ContentBundleManifest;
     }
   | { readonly ok: false; readonly code: string; readonly message: string };
@@ -145,7 +145,7 @@ export function verifyContentLock(
 
 function decodeContentBundle(
   value: Record<string, unknown>,
-): { ok: true; bundle: ContentBundle } | { ok: false; message: string } {
+): { ok: true; bundle: CompiledContentBundle } | { ok: false; message: string } {
   const collector = new DiagnosticCollector();
   const decoded = validateAgainstSchema(
     value,
@@ -158,61 +158,7 @@ function decodeContentBundle(
     const first = collector.errors[0]?.message ?? "the bundle does not match its schema";
     return { ok: false, message: first };
   }
-  return { ok: true, bundle: toMutableBundle(decoded) };
-}
-
-function toMutableBundle(decoded: CompiledContentBundle): ContentBundle {
-  const bundle: ContentBundle = {
-    generatedBy: decoded.generatedBy,
-    manifest: decoded.manifest,
-    rulesets: [...decoded.rulesets],
-    nations: [...decoded.nations],
-    areas: [...decoded.areas],
-    routes: [...decoded.routes],
-    possessions: [...decoded.possessions],
-    ports: [...decoded.ports],
-    technologies: [...decoded.technologies],
-  };
-  if (decoded.shipBuilding !== undefined) {
-    const catalogue = decoded.shipBuilding;
-    bundle.shipBuilding = {
-      components: [...catalogue.components],
-      plants: [...catalogue.plants],
-      hullForms: [...catalogue.hullForms],
-      balance: catalogue.balance,
-      navalProfiles: [...catalogue.navalProfiles],
-      armament: {
-        gunFamilies: [...catalogue.armament.gunFamilies],
-        gunModels: [...catalogue.armament.gunModels],
-        gunMounts: [...catalogue.armament.gunMounts],
-        ammunition: [...catalogue.armament.ammunition],
-      },
-      referenceDesigns: [...catalogue.referenceDesigns],
-      ...(catalogue.partModel !== undefined ? { partModel: catalogue.partModel } : {}),
-      ...(catalogue.designLoadouts !== undefined
-        ? { designLoadouts: [...catalogue.designLoadouts] }
-        : {}),
-    };
-  }
-  if (decoded.campaign !== undefined) {
-    const campaign = decoded.campaign;
-    bundle.campaign = {
-      fleets: [...campaign.fleets],
-      economies: [...campaign.economies],
-      constructions: [...campaign.constructions],
-      diplomacy: [...campaign.diplomacy],
-      research: [...campaign.research],
-      designs: [...campaign.designs],
-      ...(campaign.divisions !== undefined ? { divisions: [...campaign.divisions] } : {}),
-    };
-  }
-  if (decoded.presentation !== undefined) {
-    bundle.presentation = decoded.presentation;
-  }
-  if (decoded.ui !== undefined) {
-    bundle.ui = decoded.ui;
-  }
-  return bundle;
+  return { ok: true, bundle: decoded };
 }
 
 export function buildContentBundleArtifact(
@@ -223,10 +169,19 @@ export function buildContentBundleArtifact(
   const output = new Compiler().compile(input, signal, collector);
   if (!output || collector.hasErrors) return undefined;
 
+  const bundle = validateAgainstSchema(
+    output.bundle,
+    ContentBundleSchema,
+    "ContentBundle",
+    CONTENT_ARTIFACT_FILENAME,
+    collector,
+  );
+  if (bundle === undefined) return undefined;
+
   const envelope = createEnvelope(
     CONTENT_BUNDLE_ARTIFACT_KIND,
     CONTENT_BUNDLE_COMPATIBILITY_VERSION,
-    output.bundle,
+    bundle,
   );
   const manifest: ContentBundleManifest = {
     manifestVersion: CONTENT_BUNDLE_MANIFEST_VERSION,
@@ -239,11 +194,11 @@ export function buildContentBundleArtifact(
     bodyLength: envelope.bodyLength,
   };
   return {
-    bundle: output.bundle,
+    bundle,
     envelope,
     manifest,
     contentVersion: output.contentVersion,
-    artifactJson: canonicalSerialize(output.bundle),
+    artifactJson: canonicalSerialize(bundle),
     manifestJson: canonicalSerialize(manifest),
   };
 }

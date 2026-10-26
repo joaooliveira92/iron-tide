@@ -48,13 +48,9 @@ export type TrainingRefusal =
   | typeof TRAINING_SUBJECT_LIMIT_EXCEEDED
   | typeof TRAINING_SUBJECT_INVALID;
 
-const SUBJECT_ORDER: ReadonlyMap<string, number> = new Map(
-  TRAINING_SUBJECTS.map((subject, index) => [subject, index]),
-);
+export const isTrainingSubject = Schema.is(TrainingSubjectEntrySchema.fields.subject);
 
-export function isTrainingSubject(value: unknown): value is TrainingSubject {
-  return typeof value === "string" && SUBJECT_ORDER.has(value);
-}
+const subjectRank = (subject: TrainingSubject) => TRAINING_SUBJECTS.indexOf(subject);
 
 export function trainingRefusal(
   subjects: readonly unknown[],
@@ -77,7 +73,7 @@ export function fundSpecialTraining(
 ): TrainingSubjectEntry[] {
   const existing = new Map((current ?? []).map((entry) => [entry.subject, entry]));
   return [...subjects]
-    .sort((a, b) => (SUBJECT_ORDER.get(a) ?? 0) - (SUBJECT_ORDER.get(b) ?? 0))
+    .sort((a, b) => subjectRank(a) - subjectRank(b))
     .map(
       (subject) =>
         existing.get(subject) ?? {

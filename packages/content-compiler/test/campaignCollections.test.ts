@@ -111,6 +111,64 @@ describe("campaign-file collections through the compiler", () => {
     }
   });
 
+  it("rejects a fleet ship missing a required field instead of defaulting it", () => {
+    const fixture = createFixtureDir();
+    try {
+      writeFixture(
+        fixture.path,
+        "pack.json",
+        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "production", files: {} }),
+      );
+      writeFixture(
+        fixture.path,
+        "fleets.yaml",
+        FLEET_A.replace(
+          "      hitPoints: 40\n      maxHitPoints: 40\n",
+          "      maxHitPoints: 40\n",
+        ),
+      );
+
+      const { output, collector } = compile(fixture.path, {
+        fleetFiles: [resolve(fixture.path, "fleets.yaml")],
+      });
+
+      expect(output).toBeUndefined();
+      const error = collector.errors.find((d) => d.code === "SCHEMA");
+      expect(error?.message).toContain("Fleet");
+      expect(error?.message).toContain("hitPoints");
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  it("rejects an excess campaign field instead of dropping it", () => {
+    const fixture = createFixtureDir();
+    try {
+      writeFixture(
+        fixture.path,
+        "pack.json",
+        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "production", files: {} }),
+      );
+      writeFixture(
+        fixture.path,
+        "fleets.yaml",
+        FLEET_A.replace(
+          "      constructionTotalWork: 0\n",
+          "      constructionTotalWork: 0\n      classQ: 1\n",
+        ),
+      );
+
+      const { output, collector } = compile(fixture.path, {
+        fleetFiles: [resolve(fixture.path, "fleets.yaml")],
+      });
+
+      expect(output).toBeUndefined();
+      expect(collector.errors.map((d) => d.code)).toContain("SCHEMA");
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
   it("omits campaign from the bundle for a content-pack-only input", () => {
     const fixture = createFixtureDir();
     try {

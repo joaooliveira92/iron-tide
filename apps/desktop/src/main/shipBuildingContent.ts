@@ -45,7 +45,7 @@ function loadShipBuilding(): LoadedShipBuilding {
     plants: catalogue.plants as unknown as PropulsionPlant[],
     hullForms: catalogue.hullForms as HullFormRecord[],
     balance: catalogue.balance as ShipBuildingData["balance"],
-    technologies: bundle.technologies as { id: string; year: number }[],
+    technologies: [...bundle.technologies] as { id: string; year: number }[],
     navalProfiles: catalogue.navalProfiles as unknown as NationNavalProfile[],
     armament: catalogue.armament as unknown as AuthoredArmamentContent,
     referenceDesigns: catalogue.referenceDesigns as RawReferenceDesign[],

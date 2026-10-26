@@ -1,4 +1,4 @@
-import { SafeInt } from "@bluewave/contracts";
+import { isBluewaveError, SafeInt } from "@bluewave/contracts";
 import type { ShipBuildingCatalogue } from "@bluewave/content-compiler";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
@@ -73,7 +73,8 @@ function seedProject(
       month: project["startedAt"] === "" ? creationMonth : project["startedAt"],
     });
   } catch (error) {
-    return fail(error instanceof Error ? error.message : "the plan could not be derived");
+    if (!isBluewaveError(error)) throw error;
+    return fail(`${error.message} (${String(error.context["code"])})`);
   }
 
   const profile = resolveNavalProfile(profiles, nationId, creationMonth);
@@ -84,8 +85,9 @@ function seedProject(
         profile,
         creationMonth,
       ).buildTimeMultiplierBp;
-    } catch {
-      return fail(`nation '${nationId}' has no usable national build-time profile`);
+    } catch (error) {
+      if (!isBluewaveError(error)) throw error;
+      return fail(`${error.message} (${String(error.context["code"])})`);
     }
   }
 

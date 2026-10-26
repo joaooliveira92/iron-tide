@@ -1,7 +1,6 @@
 import { compareCodePoints } from "@bluewave/deterministic";
 import type { ContentPack } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
-import { toSafeInt, toSafeIntOpt, toStr } from "./campaignInput.js";
 import type {
   AreaData,
   PortData,
@@ -46,32 +45,32 @@ export function buildWorldState(
   pack: WorldPackSource,
   start: { readonly startYear: number; readonly startMonth: number },
 ): WorldState {
-  const areas: AreaData[] = (pack.areas ?? [])
-    .map((a: Record<string, unknown>) => ({
-      id: toStr(a["id"], ""),
-      name: toStr(a["name"], ""),
-      type: (a["type"] as "land" | "sea" | "coastal") ?? "land",
-      controller: typeof a["controller"] === "string" ? a["controller"] : undefined,
+  const areas: AreaData[] = [...(pack.areas ?? [])]
+    .map((a) => ({
+      id: a.id,
+      name: a.name,
+      type: a.type,
+      controller: a.controller,
     }))
     .sort((a, b) => compareCodePoints(a.id, b.id));
 
-  const routes: RouteData[] = (pack.routes ?? [])
-    .map((r: Record<string, unknown>) => ({
-      id: toStr(r["id"], ""),
-      from: toStr(r["from"], ""),
-      to: toStr(r["to"], ""),
-      type: (r["type"] as "land" | "sea" | "rail") ?? "land",
-      distance: toSafeInt(r["distance"]),
+  const routes: RouteData[] = [...(pack.routes ?? [])]
+    .map((r) => ({
+      id: r.id,
+      from: r.from,
+      to: r.to,
+      type: r.type,
+      distance: SafeInt(r.distance),
     }))
     .sort((a, b) => compareCodePoints(a.id, b.id));
 
-  const ports: PortData[] = (pack.ports ?? [])
-    .map((p: Record<string, unknown>) => ({
-      id: toStr(p["id"], ""),
-      name: toStr(p["name"], ""),
-      areaId: toStr(p["areaId"], ""),
-      nationId: toStr(p["nationId"], ""),
-      level: toSafeIntOpt(p["level"], SafeInt(1)),
+  const ports: PortData[] = [...(pack.ports ?? [])]
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      areaId: p.areaId,
+      nationId: p.nationId,
+      level: SafeInt(p.level ?? 1),
     }))
     .sort((a, b) => compareCodePoints(a.id, b.id));
 

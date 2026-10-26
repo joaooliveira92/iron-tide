@@ -53,7 +53,12 @@ export {
   type PlacementSpec,
   type ShipContext,
 } from "./compileShared.js";
-export { compileTorpedo } from "./compileTorpedo.js";
+export {
+  compileTorpedo,
+  type CompileTorpedoFailure,
+  type CompileTorpedoFailureCode,
+  type CompileTorpedoResult,
+} from "./compileTorpedo.js";
 export { COMPONENT_CATEGORIES, type ComponentCategory, type ComponentDef } from "./component.js";
 export {
   advanceConstructionMonth,

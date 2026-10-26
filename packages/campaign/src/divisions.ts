@@ -1,7 +1,7 @@
 import { SafeInt } from "@bluewave/contracts";
 import { compareCodePoints } from "@bluewave/deterministic";
 import type { Diagnostic, DiagnosticCode, DiagnosticCollector } from "@bluewave/diagnostics";
-import { Result } from "effect";
+import { Data, Result } from "effect";
 
 import {
   DIVISION_FORMATIONS,
@@ -26,15 +26,12 @@ export const DIVISION_SEED_CODES = {
   formation: "CAMPAIGN-DIVISION-FORMATION" as DiagnosticCode,
 } as const;
 
-export class DivisionSeedFailure {
-  readonly _tag = "DivisionSeedFailure";
-  constructor(
-    readonly code: DiagnosticCode,
-    readonly divisionId: string,
-    readonly message: string,
-    readonly remediation: string,
-  ) {}
-
+export class DivisionSeedFailure extends Data.TaggedError("DivisionSeedFailure")<{
+  readonly code: DiagnosticCode;
+  readonly divisionId: string;
+  readonly message: string;
+  readonly remediation: string;
+}> {
   toDiagnostic(): Diagnostic {
     return {
       code: this.code,
@@ -128,7 +125,7 @@ function failure(
   message: string,
   remediation: string,
 ): DivisionSeedFailure {
-  return new DivisionSeedFailure(code, divisionId, message, remediation);
+  return new DivisionSeedFailure({ code, divisionId, message, remediation });
 }
 
 function resolveSeededDivision(

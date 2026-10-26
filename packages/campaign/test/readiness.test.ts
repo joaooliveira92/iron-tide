@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { buildContentBundleArtifact, type CompilerInput } from "@bluewave/content-compiler";
+import { FleetShipSchema } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
   FIXTURE_RULESETS_YAML,
@@ -187,6 +188,22 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
     );
   });
 
+  it("accepts every FleetShipSchema key plus the runtime-only repair counter", () => {
+    const record: Record<string, unknown> = Object.fromEntries(
+      Object.keys(FleetShipSchema.fields).map((key) => [key, "x"]),
+    );
+    Object.assign(record, {
+      id: "ship-a",
+      isUnderConstruction: false,
+      readiness: "ACTIVE",
+      crewQuality: 50,
+    });
+    expect(Result.isSuccess(resolveShipReadinessSeed(record, "ship-a"))).toBe(true);
+    expect(
+      Result.isSuccess(resolveShipReadinessSeed({ ...record, repairMonthsRemaining: 3 }, "ship-a")),
+    ).toBe(true);
+  });
+
   it("rejects an excess key on a ship record", () => {
     const viaContent = compileFleets(
       fleetsYaml(shipYaml("ship-a", { extra: `      classQ: "x"\n` })),
@@ -202,6 +219,8 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
     if (Result.isFailure(seed)) {
       expect(seed.failure._tag).toBe("ShipReadinessFailure");
       expect(seed.failure.code).toBe(SHIP_READINESS_CODES.excessKey);
+      expect(seed.failure).toBeInstanceOf(Error);
+      expect(typeof seed.failure.message).toBe("string");
     }
   });
 });

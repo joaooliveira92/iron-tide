@@ -1,7 +1,7 @@
 import { SafeInt } from "@bluewave/contracts";
 import { CAMPAIGN_DIVISION_FORMATIONS, CAMPAIGN_DIVISION_ROLES } from "@bluewave/content-schema";
 import { sha256Hex, canonicalSerialize } from "@bluewave/deterministic";
-import { Data } from "effect";
+import { Data, Option } from "effect";
 
 export const DIVISION_SIZE_LIMIT_EXCEEDED = "DIVISION_SIZE_LIMIT_EXCEEDED" as const;
 export const DIVISION_SHIP_TYPE_INCOMPATIBLE = "DIVISION_SHIP_TYPE_INCOMPATIBLE" as const;
@@ -72,15 +72,14 @@ export type CanonicalShipType =
   | "KE"
   | "AMC";
 
-export function divisionCanonicalType(shipTypes: CanonicalShipType[]): CanonicalShipType {
-  if (shipTypes.length === 0) return shipTypes[0] as CanonicalShipType;
+export function divisionCanonicalType(
+  shipTypes: readonly CanonicalShipType[],
+): Option.Option<CanonicalShipType> {
   const distinct = [...new Set(shipTypes)];
-  if (distinct.length === 1) return distinct[0]!;
-  if (distinct.includes("BB") && distinct.includes("B")) return "BB";
-  const hasBC = distinct.includes("BC");
-  const hasCA = distinct.includes("CA");
-  if (hasBC && hasCA && distinct.filter((t) => t !== "BC" && t !== "CA").length === 0) return "BC";
-  return distinct[0]!;
+  if (distinct.includes("BB") && distinct.includes("B")) return Option.some("BB");
+  if (distinct.length === 2 && distinct.includes("BC") && distinct.includes("CA"))
+    return Option.some("BC");
+  return Option.fromIterable(distinct);
 }
 
 export function isDivisionTypeCompatible(
