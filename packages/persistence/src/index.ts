@@ -14,6 +14,7 @@ export {
   PersistenceCompatibilityMismatchError,
   PersistenceCorruptSaveError,
   PersistenceInvalidOptionError,
+  PersistenceIoError,
   PersistenceMissingSaveError,
   PersistenceUnsignedSaveError,
   UNSIGNED_SAVE_CODE,
