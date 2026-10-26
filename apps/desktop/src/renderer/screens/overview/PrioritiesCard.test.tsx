@@ -40,6 +40,26 @@ describe("PrioritiesCard", () => {
     expect(screen.getByText("The Admiralty has identified no urgent concerns.")).toBeTruthy();
   });
 
+  it("shows the player-readable advice before the engine trace", () => {
+    render(
+      <PrioritiesCard
+        state={{
+          status: "ready",
+          priorities: [
+            priority({
+              id: "advice",
+              advice: "Spending is projected to exceed naval appropriation.",
+            }),
+          ],
+        }}
+        onNavigate={() => undefined}
+      />,
+    );
+    const row = screen.getByText("Monthly deficit").closest("button") as HTMLElement;
+    expect(row.getAttribute("aria-description")).toContain("Spending is projected");
+    expect(row.getAttribute("aria-description")).toContain("r");
+  });
+
   it("shows severity, title and summary, and links to where the player can act", () => {
     const onNavigate = vi.fn();
     render(

@@ -26,6 +26,7 @@ function PriorityRow({
   const Icon = PRIORITY_TYPE_ICON[priority.type];
   const actionable = priority.destination !== "overview";
   const destination = destinationLabel(priority.destination);
+  const working = [priority.advice, priority.reason].filter(Boolean).join(" ");
 
   const body = (
     <>
@@ -68,7 +69,7 @@ function PriorityRow({
   return (
     <li>
       {actionable ? (
-        <Tip label={priority.reason}>
+        <Tip label={working}>
           <button
             type="button"
 
@@ -84,7 +85,7 @@ function PriorityRow({
           </button>
         </Tip>
       ) : (
-        <div title={priority.reason} className={cn(shared, style.rowStatic)}>
+        <div title={working} className={cn(shared, style.rowStatic)}>
           {body}
         </div>
       )}

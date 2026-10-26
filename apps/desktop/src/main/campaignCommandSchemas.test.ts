@@ -519,6 +519,19 @@ describe("MonthlyReportsSchema", () => {
     expectFailure(MonthlyReportsSchema, { reports: [rest] });
   });
 
+  it("accepts the additive priority advice and still decodes a priority stored without it", () => {
+    const [stored] = VALID_MONTHLY_REPORT.priorities;
+    expectSuccess(MonthlyReportsSchema, { reports: [VALID_MONTHLY_REPORT] });
+    expectSuccess(MonthlyReportsSchema, {
+      reports: [
+        {
+          ...VALID_MONTHLY_REPORT,
+          priorities: [{ ...stored, advice: "Raise research spending." }],
+        },
+      ],
+    });
+  });
+
   it("rejects an unknown priority type or severity (closed enums)", () => {
     expectFailure(MonthlyReportsSchema, {
       reports: [

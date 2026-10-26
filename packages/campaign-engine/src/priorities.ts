@@ -42,10 +42,26 @@ export interface StrategicPriority {
   readonly severity: PrioritySeverity;
   readonly title: string;
   readonly summary: string;
+  readonly advice?: string;
   readonly reason: string;
   readonly destination: StrategicDestinationSection;
   readonly fingerprint: string;
 }
+
+const PRIORITY_ADVICE: Record<StrategicPriorityType, string> = {
+  monthly_deficit:
+    "Spending is projected to exceed naval appropriation. Cut construction or research, or lower the appropriation rate, before the treasury runs down.",
+  critical_cash_reserve:
+    "The treasury cannot cover a month of spending. Release funds or reduce commitments before authorizing anything new.",
+  low_research_spending:
+    "Research is below the Admiralty's minimum share. Raise research spending so the fleet does not fall behind.",
+  construction_near_completion:
+    "A shipyard project is nearly finished. Plan the next order so the yard does not stand idle.",
+  high_foreign_tension:
+    "Tension with a rival is high. Consider diplomacy, and move ships to the threatened station.",
+  no_active_construction:
+    "No yards are building. Authorize a design while funds and capacity allow.",
+};
 
 interface RankedPriority {
   readonly priority: StrategicPriority;
@@ -115,6 +131,7 @@ export function buildPrioritiesProjection(
         severity,
         title: "Monthly deficit",
         summary: `Projected balance ${projectedBalance} — expenditure exceeds naval appropriation.`,
+        advice: PRIORITY_ADVICE.monthly_deficit,
         reason: `monthly_deficit: appropriation ${monthlyAppropriation} − obligations ${obligations} − maintenance ${fleetMaintenance} − research ${researchSpend} = ${projectedBalance}; treasury ${treasury} ${critical ? "insolvent" : "still solvent"}`,
         destination: destinationForType("monthly_deficit"),
         fingerprint,
@@ -135,6 +152,7 @@ export function buildPrioritiesProjection(
           severity: "warning",
           title: "Critical cash reserve",
           summary: `Treasury ${treasury} below one month's expenditure ${threshold}.`,
+          advice: PRIORITY_ADVICE.critical_cash_reserve,
           reason: `critical_cash_reserve: treasury ${treasury} < max(totalMonthlyExpenditure ${totalMonthlyExpenditure}, 1) = ${threshold}`,
           destination: destinationForType("critical_cash_reserve"),
           fingerprint,
@@ -155,6 +173,7 @@ export function buildPrioritiesProjection(
         severity: "warning",
         title: "Low research spending",
         summary: `Research ${researchSpend} is below ${MIN_RESEARCH_SHARE_BP / 100}% of naval appropriation ${monthlyAppropriation}.`,
+        advice: PRIORITY_ADVICE.low_research_spending,
         reason: `low_research_spending: researchSpend ${researchSpend} * 10_000 < monthlyAppropriation ${monthlyAppropriation} * ${MIN_RESEARCH_SHARE_BP}`,
         destination: destinationForType("low_research_spending"),
         fingerprint,
@@ -176,6 +195,7 @@ export function buildPrioritiesProjection(
           severity: "information",
           title: "Construction near completion",
           summary: `Project ${project.id} is ${Math.floor((completed * 100) / total)}% complete — reallocate yards on completion.`,
+          advice: PRIORITY_ADVICE.construction_near_completion,
           reason: `construction_near_completion: project ${project.id} completedWork ${completed} / totalWork ${total} >= ${NEAR_COMPLETION_WORK_RATIO}`,
           destination: destinationForType("construction_near_completion"),
           fingerprint,
@@ -200,6 +220,7 @@ export function buildPrioritiesProjection(
         severity: "warning",
         title: "High foreign tension",
         summary: `Tension with ${partnerId} is ${rel.tension} (high — threshold ${HIGH_TENSION_THRESHOLD}).`,
+        advice: PRIORITY_ADVICE.high_foreign_tension,
         reason: `high_foreign_tension: relation ${rel.nationA}/${rel.nationB} tension ${rel.tension} >= ${HIGH_TENSION_THRESHOLD}`,
         destination: destinationForType("high_foreign_tension"),
         fingerprint,
@@ -224,6 +245,7 @@ export function buildPrioritiesProjection(
             severity: "advisory",
             title: "No active construction",
             summary: "No yards are building — authorize a design while funds and capacity allow.",
+            advice: PRIORITY_ADVICE.no_active_construction,
             reason: `no_active_construction: activeCount 0, treasury ${treasury} >0, shipyardCapacity ${shipyardCapacity} >0, hasEligibleDesign true`,
             destination: destinationForType("no_active_construction"),
             fingerprint,
