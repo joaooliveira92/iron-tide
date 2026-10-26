@@ -173,6 +173,21 @@ describe("resolveArmament — expected errors return findings, never throw", () 
     ]);
   });
 
+  it("blocks a derived ammunition-mass overflow instead of throwing", () => {
+    const r = resolveArmament(
+      gunModel({ shellMassG: Number.MAX_SAFE_INTEGER, propellantChargeBp: 1_000_000 }),
+      mount(),
+      ammunition(),
+      technologyContext(),
+      accessContext(),
+    );
+    expect(r.ok).toBe(false);
+    expect(r.resolved).toBeNull();
+    const overflow = r.findings.find((f) => f.code === "ARMAMENT_ARITHMETIC_OVERFLOW");
+    expect(overflow?.severity).toBe("BLOCKING");
+    expect(overflow?.field).toBe("ammunitionUnitMassG");
+  });
+
   it("blocks a malformed canonical id and an invalid month", () => {
     const r = resolveArmament(
       gunModel({ id: "Bad ID" as never }),

@@ -94,6 +94,7 @@ const RULES: Readonly<Record<string, RuleMeta>> = {
   ARMAMENT_ACCESS_FOREIGN: { settings: "arrangement" },
   ARMAMENT_ACCESS_CONTRADICTION: { settings: "arrangement" },
   ARMAMENT_VALUE_OUT_OF_RANGE: { settings: "arrangement" },
+  ARMAMENT_ARITHMETIC_OVERFLOW: { settings: "arrangement" },
   ARMAMENT_PROVENANCE_PLACEHOLDER: { settings: "arrangement" },
   ARMAMENT_PROVENANCE_MISSING: { settings: "arrangement" },
   ARMAMENT_PROVENANCE_INCONSISTENT: { settings: "arrangement" },

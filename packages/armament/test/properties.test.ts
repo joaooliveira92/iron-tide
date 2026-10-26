@@ -42,6 +42,37 @@ describe("resolveArmament — bounded property fixtures", () => {
     return { caliberUm, shellMassG, chargeBp, rof, gunCount, baseMass, perGunMass, modifiers };
   });
 
+  const extremeCases = Array.from({ length: 200 }, () => ({
+    shellMassG: pick(rng, [764_000, 10 ** 15, Number.MAX_SAFE_INTEGER]),
+    chargeBp: pick(rng, [4_800, 999_999, 1_000_000]),
+    gunMassKg: pick(rng, [5_000, Number.MAX_SAFE_INTEGER]),
+    gunCount: pick(rng, [2, Number.MAX_SAFE_INTEGER]),
+    baseMass: pick(rng, [0, Number.MAX_SAFE_INTEGER]),
+    perGunMass: pick(rng, [0, Number.MAX_SAFE_INTEGER]),
+  }));
+
+  it("never throws across the declared numeric bounds", () => {
+    for (const c of extremeCases) {
+      expect(() =>
+        resolveArmament(
+          gunModel({
+            shellMassG: c.shellMassG,
+            propellantChargeBp: c.chargeBp,
+            gunMassKg: c.gunMassKg,
+          }),
+          mount({
+            gunCount: c.gunCount,
+            baseInstallationMassKg: c.baseMass,
+            perGunInstallationMassKg: c.perGunMass,
+          }),
+          ammunition(),
+          technologyContext(),
+          accessContext(),
+        ),
+      ).not.toThrow();
+    }
+  });
+
   it("never throws and always returns a structured result", () => {
     for (const c of cases) {
       const r = resolveArmament(
