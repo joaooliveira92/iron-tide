@@ -1,7 +1,6 @@
 ---
 name: improve-effect-use
 description: Scan a codebase for gaps against Effect v4 idioms, present them as a visual HTML report, then grill through whichever one you pick.
-disable-model-invocation: true
 ---
 
 # Improve Effect Use

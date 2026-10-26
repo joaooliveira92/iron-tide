@@ -49,7 +49,7 @@ export function RequirementChip({
             <Target aria-hidden="true" className="size-3" />
           </Badge>
         </HoverCardTrigger>
-        <HoverCardContent side="top" className="w-auto max-w-64 px-3 py-1.5 text-xs">
+        <HoverCardContent side="top" variant="tip">
           {summary}
         </HoverCardContent>
       </HoverCard>

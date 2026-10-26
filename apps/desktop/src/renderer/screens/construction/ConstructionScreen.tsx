@@ -340,7 +340,7 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
 
       <div
         data-testid="construction-workspace"
-        className="grid h-[clamp(36rem,calc(100dvh_-_24rem),60rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border bg-background"
+        className="grid h-[clamp(30rem,calc(100svh_-_var(--chrome-top,0px)_-_var(--chrome-bottom,0px)_-_3rem),60rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border bg-background"
         onKeyDownCapture={(event) => {
           if (
             (event.metaKey || event.ctrlKey) &&

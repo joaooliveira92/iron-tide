@@ -4,7 +4,7 @@ import type {
   SecondaryRow,
   WizardStepCopy,
 } from "../site-header-state.js";
-import { describeSecondaryRow } from "../site-header-state.js";
+import { describeSecondaryRow, formatCampaignMonth } from "../site-header-state.js";
 import { usePresentationFormat } from "../usePresentationFormat.js";
 import type { PriorityBriefingProps } from "./secondary-row/PriorityBriefing.js";
 import { CampaignRow } from "./secondary-row/CampaignRow.js";
@@ -25,6 +25,7 @@ export interface SecondaryRowViewProps {
   readonly row: SecondaryRow;
   readonly onActionClick?: ((actionCode: string) => void) | undefined;
   readonly briefing?: PriorityBriefingProps | undefined;
+  readonly monthLabel?: string | undefined;
 }
 
 export function HeaderSecondaryRow({
@@ -40,16 +41,22 @@ export function HeaderSecondaryRow({
       row={describeSecondaryRow(activeView, campaign, format, wizardStep)}
       onActionClick={onActionClick}
       briefing={briefing}
+      monthLabel={campaign === null ? undefined : formatCampaignMonth(campaign.month)}
     />
   );
 }
 
-export function SecondaryRowView({ row, onActionClick, briefing }: SecondaryRowViewProps) {
+export function SecondaryRowView({
+  row,
+  onActionClick,
+  briefing,
+  monthLabel,
+}: SecondaryRowViewProps) {
   switch (row.kind) {
     case "status":
       return <StatusRow row={row} />;
     case "campaign":
-      return <CampaignRow row={row} briefing={briefing} />;
+      return <CampaignRow row={row} briefing={briefing} monthLabel={monthLabel} />;
     case "editor":
       return <EditorRow row={row} onActionClick={onActionClick} />;
     case "wizard":

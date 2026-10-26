@@ -1,4 +1,5 @@
 import { cn } from "../../../lib/utils.js";
+import { SlateBody, SlateFacts, SlateFoot, SlateHeader } from "../../../components/ui/slate.js";
 
 export interface SegmentCardProps {
   readonly swatchClassName?: string;
@@ -18,28 +19,19 @@ export function SegmentCard({
   note = null,
 }: SegmentCardProps) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-4">
-        <span className="flex items-center gap-2 font-medium">
-          {swatchClassName !== undefined && (
-            <span aria-hidden="true" className={cn("size-2.5 rounded-sm", swatchClassName)} />
-          )}
-          {title}
-        </span>
-        <span className="font-medium tabular-nums">{amount}</span>
-      </div>
-      <p className="text-xs text-muted-foreground">{description}</p>
-      {facts.length > 0 && (
-        <dl className="space-y-0.5 border-t pt-2">
-          {facts.map((fact) => (
-            <div key={fact.label} className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">{fact.label}</dt>
-              <dd className="tabular-nums">{fact.value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      {note !== null && <p className="border-t pt-2 text-xs">{note}</p>}
-    </div>
+    <>
+      <SlateHeader
+        title={title}
+        {...(swatchClassName === undefined
+          ? {}
+          : { icon: <span className={cn("size-2.5 rounded-sm", swatchClassName)} /> })}
+        aside={<span className="font-display text-sm font-semibold tabular-nums">{amount}</span>}
+      />
+      <SlateBody>
+        <p className="text-xs text-muted-foreground">{description}</p>
+        {facts.length > 0 && <SlateFacts rows={facts} className="border-t border-border/60 pt-2" />}
+      </SlateBody>
+      {note !== null && <SlateFoot>{note}</SlateFoot>}
+    </>
   );
 }

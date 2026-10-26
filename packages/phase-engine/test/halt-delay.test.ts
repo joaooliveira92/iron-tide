@@ -15,7 +15,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   HALT_CONSTRUCTION_COMMAND_DEFINITION,
   RESUME_CONSTRUCTION_COMMAND_DEFINITION,
-} from "../src/commandLifecycle.js";
+} from "../src/commandDefinitions.js";
 import {
   applyBudgetProject,
   applyHaltConstruction,

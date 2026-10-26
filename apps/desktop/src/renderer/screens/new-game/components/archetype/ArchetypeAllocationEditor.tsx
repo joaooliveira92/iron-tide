@@ -9,6 +9,7 @@ import { Gauge, Minus, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge.js";
 import { Button } from "@/components/ui/button.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card.js";
+import { SlateBody } from "@/components/ui/slate.js";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.js";
 import { Progress } from "@/components/ui/progress.js";
 import { ARCHETYPE_DIMENSION_DESCRIPTORS } from "../../archetype-dimensions.js";
@@ -38,8 +39,12 @@ export function ArchetypeAllocationEditor({
             Points
           </HoverCardTrigger>
           <HoverCardContent className="w-72">
-            Each dimension is between {ARCHETYPE_DIMENSION_MIN} and {ARCHETYPE_DIMENSION_MAX}; the
-            total must equal {ARCHETYPE_POINT_TOTAL}.
+            <SlateBody>
+              <p className="text-xs">
+                Each dimension is between {ARCHETYPE_DIMENSION_MIN} and {ARCHETYPE_DIMENSION_MAX};
+                the total must equal {ARCHETYPE_POINT_TOTAL}.
+              </p>
+            </SlateBody>
           </HoverCardContent>
         </HoverCard>
         {errors.length > 0 ? (

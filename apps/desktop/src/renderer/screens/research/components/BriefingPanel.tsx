@@ -1,6 +1,7 @@
 import { cn } from "../../../lib/utils.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { ResearchBudgetView } from "../research-view-model.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 const PIPELINE = [
   "The budget is paid from the treasury every month.",
@@ -28,12 +29,14 @@ export function BriefingPanel({ budget }: { readonly budget: ResearchBudgetView 
             )}
             style={{ width: `${budget.utilizationPct}%` }}
           />
-          <span
-            aria-hidden="true"
-            title={`Guidance floor ${format.count(budget.floor)}`}
-            className="absolute -top-1 h-4 w-px bg-foreground/60"
-            style={{ left: `${budget.floorPct}%` }}
-          />
+          <Tip label={`Guidance floor ${format.count(budget.floor)}`}>
+            <span
+              aria-hidden="true"
+
+              className="absolute -top-1 h-4 w-px bg-foreground/60"
+              style={{ left: `${budget.floorPct}%` }}
+            />
+          </Tip>
         </div>
         <div className="flex justify-between text-xs text-muted-foreground tabular-nums">
           <span>0</span>

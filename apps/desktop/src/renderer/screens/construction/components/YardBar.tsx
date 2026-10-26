@@ -4,6 +4,7 @@ import { Button } from "../../../components/ui/button.js";
 import { ButtonGroup } from "../../../components/ui/button-group.js";
 import { shipTypeIcon } from "../../../components/design-workspace/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 export interface YardBarProps {
   readonly design: CompiledDesignVersion | null;
@@ -66,15 +67,17 @@ export function YardBar({
             Order a class batch (1–12)
           </Button>
         </ButtonGroup>
-        <Button
-          variant="outline"
-          size="icon-sm"
-          aria-label="Refresh"
-          title="Refresh"
-          onClick={onRefresh}
-        >
-          <RefreshCw aria-hidden="true" />
-        </Button>
+        <Tip label="Refresh">
+          <Button
+            variant="outline"
+            size="icon-sm"
+            aria-label="Refresh"
+
+            onClick={onRefresh}
+          >
+            <RefreshCw aria-hidden="true" />
+          </Button>
+        </Tip>
       </div>
     </div>
   );

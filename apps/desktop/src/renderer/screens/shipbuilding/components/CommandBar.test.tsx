@@ -31,7 +31,7 @@ describe("CommandBar", () => {
     const onStartFromReference = vi.fn();
     render(<CommandBar {...props({ onStartFromReference })} />);
     const button = within(bar()).getByRole("button", { name: /Start from a reference design/ });
-    expect(button.getAttribute("title")).toContain("DD · Torpedo boat");
+    expect(button.getAttribute("aria-description")).toContain("DD · Torpedo boat");
     expect(within(button).getByLabelText("Current type DD")).toBeTruthy();
     fireEvent.click(button);
     expect(onStartFromReference).toHaveBeenCalledOnce();

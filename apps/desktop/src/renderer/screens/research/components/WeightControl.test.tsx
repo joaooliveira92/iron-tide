@@ -43,7 +43,7 @@ describe("WeightControl", () => {
     renderControl({ highBlocked: true });
     const high = screen.getByRole("button", { name: "Gunnery High" });
     expect(high.hasAttribute("disabled")).toBe(true);
-    expect(high.getAttribute("title")).toMatch(/at most 5 fields may be high/i);
+    expect(high.getAttribute("aria-description")).toMatch(/at most 5 fields may be high/i);
     expect(screen.getByRole("button", { name: "Gunnery Low" }).hasAttribute("disabled")).toBe(
       false,
     );

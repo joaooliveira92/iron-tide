@@ -221,8 +221,8 @@ describe("AC-11: Light-jet eligibility", () => {
     expect(determineJetCapability(p)).toBe("NONE");
   });
 
-  it("LIGHT_JET_TECHNOLOGY equals early_jet_carrier_operations", () => {
-    expect(LIGHT_JET_TECHNOLOGY).toBe("early_jet_carrier_operations");
+  it("LIGHT_JET_TECHNOLOGY equals av_carrier_jet", () => {
+    expect(LIGHT_JET_TECHNOLOGY).toBe("av_carrier_jet");
   });
 
   it("LIGHT_JET_MIN_DISPLACEMENT_KG equals 40_000_000", () => {

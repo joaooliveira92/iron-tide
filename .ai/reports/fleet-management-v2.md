@@ -43,13 +43,21 @@ balance targets of ADR-0283, adopted under the owner's standing delegation on ma
 
 ### Gaps, stated plainly
 
-- **Stories 14 and 15** (derived conditions shown on ships: understrength, detached, damaged, out of action) are not covered by any ticket in this set and are not delivered.
-- **Story 44** (reasons in the player's language): reasons render through an English label map in the renderer, not the localised structured explanation data the spec names.
+- **Stories 14 and 15** (derived conditions shown on ships): delivered after go-live by ADR-0296. `deriveShipConditions`
+  (`shipConditions.test.ts`), `FleetShipView.conditions` (`fleet.test.ts`) and the fleet station rows
+  (`fleet-station-state.test.ts`, `FleetStationView.test.tsx`). The "detached by division detail" half of #195 has no stored
+  marker and is not derived. `pnpm snap` confirmed the Fleet screen renders unchanged; the production start has no damaged or
+  understrength ship, so no condition badge was seen in the running app.
+- **Story 44** (reasons in the player's language): delivered after go-live. Absence reasons render through the
+  `fleet.absence.*` and `battle.history.absent*` message-catalogue keys (`battle-history-state.test.ts`), not a private label
+  map. No second locale exists yet, so translation itself is untested.
 - **Story 49** (every shown number traces to an explanation tree): training, exercise and doctrine costs are stated in text, not as explanation trees.
 - **Story 34 and the training effect**: proficiency is tracked and costs maintenance, but its battle effect (`effectBp`) is carried in the ruleset and not read by combat (ADR-0283 follows up).
-- **Absences and battle experience have no replay scenario**: the production start has no war, so the corpus produces no battle. Both are covered at phase-engine level with a fixture war. Replay coverage needs a war scenario.
+- **Absences and battle experience replay scenario**: delivered after go-live by ADR-0295. `production-1880-4m-adriatic-war`
+  fights a battle from month 2 on armed hulls, records `aut_tegetthoff` as absent for `WorkingUp` and grants the division
+  experience once per battle (`replay-war.test.ts`). The setup arms hulls as a fixture; no production value changed.
 - **Japan's discount** and **the exercise tension consequence** are not modelled (ADR-0283).
-- **`pnpm snap`**: verified the doctrine selectors and speed note, the training section through queue, month advance and "1 of 12 months", and the exercise section. A battle report with absent ships was not seen in the running app.
+- **`pnpm snap`**: verified the doctrine selectors and speed note, the training section through queue, month advance and "1 of 12 months", and the exercise section. A battle report with absent ships was not seen in the running app: the production start has no war, and the replay setup is not reachable from the UI.
 
 ## Replay corpus and approvals
 

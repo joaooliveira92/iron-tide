@@ -37,7 +37,7 @@ function ArmourHover({
       <HoverCardContent
         side="top"
         collisionPadding={12}
-        className="w-[26rem] max-w-[min(26rem,calc(100vw-2rem))] p-2"
+        className="w-[26rem] max-w-[min(26rem,calc(100vw-2rem))]"
       >
         <AnatomyCardContent
           plate={anatomy}

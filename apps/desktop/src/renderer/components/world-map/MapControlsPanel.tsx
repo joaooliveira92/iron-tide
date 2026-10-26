@@ -4,6 +4,7 @@ import { CHART } from "./chart-theme.js";
 import { LAYERS, type LayerId, type MapPrototypeState } from "./map-state.js";
 import { PROJECTIONS, type ProjectionId } from "./projection.js";
 import type { AreaTreeRow } from "./area-tree.js";
+import { Tip } from "../../components/ui/tip.js";
 
 export interface MapControlsPanelProps {
   readonly className: string;
@@ -41,21 +42,23 @@ export function MapControlsPanel({
     >
       <div className="flex gap-1">
         {PROJECTIONS.map((option) => (
-          <Button
-            key={option.id}
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={() => onSetProjection(option.id)}
-            title={option.note}
-            className="h-7 px-2 text-xs hover:bg-white/10"
-            style={{
-              background: state.projection === option.id ? "oklch(0.7 0.12 240)" : "transparent",
-              color: state.projection === option.id ? "oklch(0.15 0.02 245)" : CHART.inkDim,
-            }}
-          >
-            {option.name}
-          </Button>
+          <Tip label={option.note}>
+            <Button
+              key={option.id}
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => onSetProjection(option.id)}
+
+              className="h-7 px-2 text-xs hover:bg-white/10"
+              style={{
+                background: state.projection === option.id ? "oklch(0.7 0.12 240)" : "transparent",
+                color: state.projection === option.id ? "oklch(0.15 0.02 245)" : CHART.inkDim,
+              }}
+            >
+              {option.name}
+            </Button>
+          </Tip>
         ))}
       </div>
       <div className="flex flex-wrap gap-1" style={{ maxWidth: 220 }}>

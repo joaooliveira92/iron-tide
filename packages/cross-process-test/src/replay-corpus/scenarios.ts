@@ -170,4 +170,37 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
       },
     ],
   },
+  {
+    id: "production-1880-4m-adriatic-war",
+    seed: "replay-corpus-adriatic-war",
+    months: 4,
+    playerNationId: "austria_hungary",
+    setup: "armed-adriatic-war",
+    purpose:
+      "Austria-Hungary at war with Italy on armed hulls: a work-up hull recorded as absent from the fleet battle, then battle experience for the division.",
+    commands: [
+      {
+        month: 1,
+        body: { type: "DeclareWar", nationId: "austria_hungary", targetNationId: "italy" },
+      },
+      {
+        month: 1,
+        body: {
+          type: "MoveFleet",
+          nationId: "austria_hungary",
+          fleetId: "fleet_aut_adriatic",
+          toAreaId: "sea_mediterranean_c",
+        },
+      },
+      {
+        month: 2,
+        body: {
+          type: "MoveFleet",
+          nationId: "austria_hungary",
+          fleetId: "fleet_aut_adriatic",
+          toAreaId: "ita_tyrrhenian_coast",
+        },
+      },
+    ],
+  },
 ];

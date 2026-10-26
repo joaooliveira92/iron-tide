@@ -11,6 +11,7 @@ import {
 import { NationFlag } from "./NationFlag.js";
 import { DEBUG_MODE } from "../../../shell/debug-flag.js";
 import type { DiplomacyDraftCommand } from "../diplomacy-screen-state.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 export interface OrdersBarProps {
   readonly busy: boolean;
@@ -88,14 +89,12 @@ export function OrdersBar({
         )}
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-2">
-        <span
-          role="note"
-          className="flex items-center gap-1 text-xs text-muted-foreground"
-          title="Orders are applied by the engine on the next turn advance."
-        >
-          <CalendarClock aria-hidden="true" className="size-3.5" />
-          Applied on the next turn advance
-        </span>
+        <Tip label="Orders are applied by the engine on the next turn advance.">
+          <span role="note" className="flex items-center gap-1 text-xs text-muted-foreground">
+            <CalendarClock aria-hidden="true" className="size-3.5" />
+            Applied on the next turn advance
+          </span>
+        </Tip>
         <Button variant="outline" disabled={draft === null || busy} onClick={onClear}>
           <X aria-hidden="true" className="mr-1 size-4" />
           Clear

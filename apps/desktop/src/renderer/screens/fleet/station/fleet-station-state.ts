@@ -3,6 +3,7 @@ import type {
   FleetOverBaseShip,
   FleetShipView,
   PlayerProjectionPresence,
+  ShipCondition,
 } from "../../../../shared/fleet-contract.js";
 import { hasAuthoredMessage, translate } from "../../../lib/strings.js";
 
@@ -18,6 +19,11 @@ export interface StationFlag {
   readonly label: string;
 }
 
+export interface StationCondition {
+  readonly code: ShipCondition;
+  readonly label: string;
+}
+
 export interface StationRow {
   readonly shipId: string;
   readonly name: string;
@@ -27,6 +33,7 @@ export interface StationRow {
   readonly overBase: boolean;
   readonly overBaseLabel: string;
   readonly flags: readonly StationFlag[];
+  readonly conditions: readonly StationCondition[];
 }
 
 const READINESS_CODE: Readonly<Record<string, "AF" | "RF" | "MB" | "WU">> = {
@@ -58,6 +65,13 @@ function flagsOf(ship: FleetShipView): StationFlag[] {
   return flags;
 }
 
+function conditionsOf(ship: FleetShipView): StationCondition[] {
+  return (ship.conditions ?? []).map((code) => ({
+    code,
+    label: format(`fleet.condition.${code}`),
+  }));
+}
+
 export function stationRows(
   divisions: readonly FleetDivisionView[],
   areaName: (areaId: string) => string,
@@ -74,6 +88,7 @@ export function stationRows(
         overBase: ship.overBaseCode === "*",
         overBaseLabel: format("fleet.status.overBase"),
         flags: flagsOf(ship),
+        conditions: conditionsOf(ship),
       };
     }),
   );

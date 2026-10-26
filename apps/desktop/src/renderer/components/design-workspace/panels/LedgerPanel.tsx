@@ -1,5 +1,6 @@
 import type { WorkshopView } from "@bluewave/ship-design";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
+import { SlateBody, SlateFacts, SlateHeader } from "../../ui/slate.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 
@@ -18,12 +19,16 @@ export function LedgerPanel({ view }: { readonly view: WorkshopView }) {
               style={{ width: `${r.shareBp / 100}%`, opacity: 0.35 + (i % 4) * 0.2 }}
               className="bg-primary transition-opacity hover:opacity-100!"
             />
-            <HoverCardContent side="top" className="w-48 space-y-1 p-3 text-sm">
-              <div className="font-medium capitalize">{r.category}</div>
-              <div className="flex justify-between tabular-nums text-muted-foreground">
-                <span>{tonnes(r.kg)}</span>
-                <span>{format.percent(r.shareBp, 1)}</span>
-              </div>
+            <HoverCardContent side="top" className="w-48">
+              <SlateHeader title={r.category} className="capitalize" />
+              <SlateBody>
+                <SlateFacts
+                  rows={[
+                    { label: "Weight", value: tonnes(r.kg) },
+                    { label: "Share", value: format.percent(r.shareBp, 1) },
+                  ]}
+                />
+              </SlateBody>
             </HoverCardContent>
           </HoverCard>
         ))}

@@ -14,9 +14,9 @@ workflow.
   (`check-commit-msgs.cjs`; CI re-runs it in `commit-convention.yml`).
 - **`pnpm preflight`** runs `vp run gates:preflight`, the `gate:*` DAG in
   `vite.config.ts` (ADR-0164).
-- **`pnpm check`** adds format, lint, `lint:effect`, `test:scripts`, licences,
-  typecheck, build, `content:verify`, `test:run`, `test:heavy`, the golden,
-  determinism, equivalence, re-pin and balance checks, and desktop E2E.
+- **`pnpm check`** runs `check:steps` under the `heavy.mjs` lock (ADR-0299): format, lint,
+  `lint:effect`, `test:scripts`, typecheck, build, `content:verify`, tests, golden,
+  determinism, re-pin and balance checks, and E2E.
 
 ## Gates (preflight)
 
@@ -42,7 +42,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `verify-no-upgradepath-refit-readers.mjs` — no `upgradePath`/`supersedes` in refit/production paths.
 - `verify-test-focus.mjs` — no `.only`; `.skip` needs a `test-focus-allow-skip` note.
 - `verify-version-coherence.mjs` — desktop version equals `CURRENT_COMPATIBILITY_VERSION` (ADR-0134).
-- `verify-check-parity.mjs` — every `pnpm check` step is CI-invoked or allowlisted (ADR-0140).
+- `verify-check-parity.mjs` — every `pnpm check:steps` step is CI-invoked or allowlisted (ADR-0140).
 - `verify-reachability-ledger.mjs` — engine capability to desktop path ledger (ADR-0267; `--write` regenerates the report).
 - `verify-tsgo-integration.mjs` — toolchain pins match the installed `@effect/tsgo` set and it is patched (ADR-0139).
 - `verify-vitest-config-parity.mjs` — every package spreads `vitest-shared.mjs`.

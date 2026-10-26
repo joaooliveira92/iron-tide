@@ -7,7 +7,9 @@ import {
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
 import { cn } from "../../../lib/utils.js";
+import { SlateBody, SlateFacts, SlateHeader } from "../../../components/ui/slate.js";
 import type { BudgetKnob } from "../budget-policy-view-model.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 const THUMB =
   "[&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-primary [&::-webkit-slider-thumb]:bg-background [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform hover:[&::-webkit-slider-thumb]:scale-110 active:[&::-webkit-slider-thumb]:scale-125";
@@ -45,22 +47,17 @@ export function DialSlider({ knob, onChange }: DialSliderProps) {
             <Info aria-hidden="true" className="size-3.5 text-muted-foreground" />
           </HoverCardTrigger>
           <HoverCardContent side="left" align="start" className="w-72">
-            <div className="space-y-2">
-              <div className="font-medium">{knob.label}</div>
+            <SlateHeader title={knob.label} />
+            <SlateBody>
               <p className="text-xs text-muted-foreground">{knob.about}</p>
-              <dl className="space-y-0.5 border-t pt-2">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">In force</dt>
-                  <dd className="tabular-nums">{knob.appliedDisplay}</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Range</dt>
-                  <dd className="tabular-nums">
-                    {knob.min} to {knob.max}
-                  </dd>
-                </div>
-              </dl>
-            </div>
+              <SlateFacts
+                className="border-t border-border/60 pt-2"
+                rows={[
+                  { label: "In force", value: knob.appliedDisplay },
+                  { label: "Range", value: `${String(knob.min)} to ${String(knob.max)}` },
+                ]}
+              />
+            </SlateBody>
           </HoverCardContent>
         </HoverCard>
         <div className="flex items-center gap-1">
@@ -95,12 +92,14 @@ export function DialSlider({ knob, onChange }: DialSliderProps) {
           className="absolute left-2 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-primary"
           style={{ width: `calc((100% - ${THUMB_PX}px) * ${at})` }}
         />
-        <div
-          aria-hidden="true"
-          title={`In force: ${knob.appliedDisplay}`}
-          className="absolute top-1/2 h-4 w-px -translate-y-1/2 bg-foreground/70"
-          style={{ left: offset(applied) }}
-        />
+        <Tip label={`In force: ${knob.appliedDisplay}`}>
+          <div
+            aria-hidden="true"
+
+            className="absolute top-1/2 h-4 w-px -translate-y-1/2 bg-foreground/70"
+            style={{ left: offset(applied) }}
+          />
+        </Tip>
         <span
           aria-hidden="true"
           className={cn(

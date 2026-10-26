@@ -33,6 +33,8 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   ShipStationAssignmentChanged: "command_collection",
   PresenceShortfall: "battle_resolution",
   PrestigeLossRequested: "battle_resolution",
+  PrestigeChanged: "battle_resolution",
+  DivisionExperienceChanged: "battle_resolution",
   RevoltPressureRequested: "battle_resolution",
   ShipDetachedToFleet: "battle_resolution",
   ShipRemovedFromDivision: "battle_resolution",

@@ -44,6 +44,7 @@ export interface BudgetAllocation {
   readonly segments: readonly AllocationSegment[];
   readonly committed: { readonly value: string; readonly percent: string };
   readonly overCommitted: boolean;
+  readonly limit: number;
 }
 
 export interface WaterfallStep {
@@ -62,6 +63,8 @@ export interface OutlookDetail {
   readonly treasury: string;
   readonly monthEndTreasury: string;
   readonly runway: string | null;
+  readonly runwayMonths: number | null;
+  readonly monthEndTreasuryValue: number;
   readonly shortfall: string | null;
   readonly research: { readonly requested: string; readonly cap: string; readonly note: string };
 }
@@ -97,8 +100,17 @@ export interface PortDetail {
   readonly fraction: number;
 }
 
+export interface PrestigeGauge {
+  readonly current: number;
+  readonly threshold: number;
+  readonly fraction: number;
+  readonly thresholdFraction: number;
+  readonly atRisk: boolean;
+}
+
 export interface StatusStripModel {
   readonly nationName: string;
+  readonly prestige: PrestigeGauge;
   readonly outlook: OutlookDetail;
   readonly stations: StationDetail;
   readonly ports: readonly PortDetail[];
@@ -220,6 +232,7 @@ function buildAllocation(
     })),
     committed: { value: format.money(committed), percent: percentOf(committed, appropriation) },
     overCommitted: appropriation !== null && committed > Math.max(0, appropriation),
+    limit: scale > 0 ? known(appropriation) / scale : 0,
   };
 }
 
@@ -265,6 +278,8 @@ function buildOutlook(
     },
     treasury: format.money(economy.treasury),
     monthEndTreasury: format.money(economy.monthEndTreasury),
+    runwayMonths: economy.runwayMonths ?? null,
+    monthEndTreasuryValue: economy.monthEndTreasury,
     runway:
       economy.runwayMonths === undefined
         ? null
@@ -353,6 +368,17 @@ function buildPorts(projection: PlayerProjection): readonly PortDetail[] {
       fraction: port.capacity / largest,
     }))
     .toSorted((a, b) => b.capacity - a.capacity || a.id.localeCompare(b.id, "en"));
+}
+
+function buildPrestigeGauge(prestige: PlayerProjection["prestige"]): PrestigeGauge {
+  const scale = Math.max(prestige.current, prestige.sackingThreshold, 1) * 1.5;
+  return {
+    current: prestige.current,
+    threshold: prestige.sackingThreshold,
+    fraction: Math.min(1, Math.max(0, prestige.current / scale)),
+    thresholdFraction: Math.min(1, Math.max(0, prestige.sackingThreshold / scale)),
+    atRisk: prestige.dismissalRisk,
+  };
 }
 
 function signed(value: number): string {
@@ -516,6 +542,7 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
 
   return {
     nationName: projection.nationName,
+    prestige: buildPrestigeGauge(projection.prestige),
     outlook: buildOutlook(projection, balanceStatus, balanceTone, researchRemark, format),
     stations: buildStations(projection, areas, format),
     ports: buildPorts(projection),

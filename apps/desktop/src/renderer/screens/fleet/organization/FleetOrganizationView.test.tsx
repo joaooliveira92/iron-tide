@@ -208,7 +208,7 @@ describe("FleetOrganizationView", () => {
   it("changes flagship and removes a non-flagship ship, stating each cost", () => {
     const { send } = renderView(makeState({ divisions: [division()] }));
     const makeFlagship = screen.getByRole("button", { name: "Make flagship" });
-    expect(makeFlagship.getAttribute("title")).toBe(
+    expect(makeFlagship.getAttribute("aria-description")).toBe(
       "Changing the flagship costs 5 experience and 10 cohesion",
     );
     fireEvent.click(makeFlagship);
@@ -219,7 +219,7 @@ describe("FleetOrganizationView", () => {
     });
 
     const remove = screen.getAllByRole("button", { name: "Remove" });
-    expect(remove[0]?.getAttribute("title")).toBe(
+    expect(remove[0]?.getAttribute("aria-description")).toBe(
       "Removing a ship costs 3 experience and 5 cohesion",
     );
     fireEvent.click(remove[1]!);

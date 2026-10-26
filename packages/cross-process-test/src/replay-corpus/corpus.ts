@@ -21,6 +21,7 @@ import {
   type LedgerName,
   type ReplayCommandEnvelope,
   type ReplayFile,
+  type ReplaySetupId,
 } from "./format.js";
 
 export interface ScenarioCommand {
@@ -33,6 +34,8 @@ export interface ReplayScenario {
   readonly seed: string;
   readonly months: number;
   readonly commands?: readonly ScenarioCommand[];
+  readonly playerNationId?: string;
+  readonly setup?: ReplaySetupId;
 }
 
 export interface ReplayDivergence {
@@ -89,6 +92,39 @@ export function productionStartSnapshot(): CampaignSnapshot {
   return production().state.snapshot;
 }
 
+const ARMED_FIREPOWER = SafeInt(400);
+const COMMISSIONED_SHIP = "aut_tegetthoff";
+const ARMED_NATIONS: readonly string[] = ["austria_hungary", "italy"];
+
+function armedAdriaticWar(snapshot: CampaignSnapshot): CampaignSnapshot {
+  const nations = new Map(snapshot.nations);
+  for (const nationId of ARMED_NATIONS) {
+    const nation = nations.get(nationId);
+    if (nation === undefined) continue;
+    nations.set(nationId, {
+      ...nation,
+      fleets: nation.fleets.map((fleet) => ({
+        ...fleet,
+        ships: fleet.ships.map((ship) => ({
+          ...ship,
+          firepower: ARMED_FIREPOWER,
+          isUnderConstruction: ship.id === COMMISSIONED_SHIP ? false : ship.isUnderConstruction,
+        })),
+      })),
+    });
+  }
+  return { ...snapshot, nations };
+}
+
+const SETUPS: Readonly<Record<ReplaySetupId, (snapshot: CampaignSnapshot) => CampaignSnapshot>> = {
+  "armed-adriatic-war": armedAdriaticWar,
+};
+
+export function startSnapshot(setup?: ReplaySetupId): CampaignSnapshot {
+  const snapshot = production().state.snapshot;
+  return setup === undefined ? snapshot : SETUPS[setup](snapshot);
+}
+
 function monthSeed(seed: string, snapshot: CampaignSnapshot): string {
   return `${seed}:month:${String(snapshot.turnNumber)}`;
 }
@@ -133,15 +169,23 @@ export function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
   }
 }
 
-export function fleetManagementOptions() {
+export function fleetManagementOptions(playerNationId?: string) {
   const fleetManagement = productionFleetManagement();
-  return fleetManagement === undefined ? {} : { fleetManagement };
+  return {
+    ...(fleetManagement === undefined ? {} : { fleetManagement }),
+    ...(playerNationId === undefined ? {} : { playerNationId }),
+  };
+}
+
+export function playerNationOf(engineOptions: ReplayFile["engineOptions"]): string | undefined {
+  return engineOptions.kind === "player" ? engineOptions.playerNationId : undefined;
 }
 
 export function advance(
   snapshot: CampaignSnapshot,
   seed: string,
   perturb?: Omit<ExecutorPerturbation, "month">,
+  playerNationId?: string,
 ) {
   const result = new MonthExecutor().execute(
     perturb?.snapshot?.(snapshot) ?? snapshot,
@@ -149,7 +193,7 @@ export function advance(
     perturb?.seed?.(monthSeed(seed, snapshot)) ?? monthSeed(seed, snapshot),
     new DiagnosticCollector(),
     undefined,
-    fleetManagementOptions(),
+    fleetManagementOptions(playerNationId),
   );
   perturb?.afterExecute?.(result);
   if (result.outcome === "suspended") {
@@ -194,12 +238,15 @@ export function scenarioEnvelopes(
 }
 
 export function* executeScenario(scenario: ReplayScenario): Generator<ExecutedMonth> {
-  let snapshot = production().state.snapshot;
+  let snapshot = startSnapshot(scenario.setup);
   for (let index = 0; index < scenario.months; index++) {
     const commands = scenarioEnvelopes(scenario, index + 1, snapshot);
-    const step = advance(snapshot, scenario.seed, {
-      commands: () => commands as CommandEnvelope<CommandBody>[],
-    });
+    const step = advance(
+      snapshot,
+      scenario.seed,
+      { commands: () => commands as CommandEnvelope<CommandBody>[] },
+      scenario.playerNationId,
+    );
     yield { turnNumber: Number(snapshot.turnNumber), result: step.result, commands };
     snapshot = step.next;
   }
@@ -221,9 +268,13 @@ export function recordReplay(scenario: ReplayScenario): string {
     initial: {
       kind: "production-pack",
       pack: PACK,
-      snapshotHash: fullSnapshotHash(state.snapshot),
+      snapshotHash: fullSnapshotHash(startSnapshot(scenario.setup)),
+      ...(scenario.setup === undefined ? {} : { setup: scenario.setup }),
     },
-    engineOptions: { kind: "default" },
+    engineOptions:
+      scenario.playerNationId === undefined
+        ? { kind: "default" }
+        : { kind: "player", playerNationId: scenario.playerNationId },
     months,
   };
   return `${canonicalSerialize(file)}\n`;
@@ -253,7 +304,7 @@ export function verifyReplay(
   const decoded = decodeReplayFile(text);
   if (Result.isFailure(decoded)) return Result.fail(decoded.failure);
   const file = decoded.success;
-  const { state, contentHash } = production();
+  const { contentHash } = production();
   const fail = (divergence: ReplayDivergence) =>
     Result.succeed<VerifyOutcome>({ ok: false, divergence });
 
@@ -266,7 +317,7 @@ export function verifyReplay(
       actual: contentHash,
     });
   }
-  let snapshot = state.snapshot;
+  let snapshot = startSnapshot(file.initial.setup);
   const initialHash = fullSnapshotHash(snapshot);
   if (initialHash !== file.initial.snapshotHash) {
     return fail({
@@ -280,10 +331,15 @@ export function verifyReplay(
   for (const [index, recorded] of file.months.entries()) {
     const month = index + 1;
     const perturb = options.perturb?.month === month ? options.perturb : undefined;
-    const step = advance(snapshot, file.seed, {
-      commands: () => recorded.commands as CommandEnvelope<CommandBody>[],
-      ...perturb,
-    });
+    const step = advance(
+      snapshot,
+      file.seed,
+      {
+        commands: () => recorded.commands as CommandEnvelope<CommandBody>[],
+        ...perturb,
+      },
+      playerNationOf(file.engineOptions),
+    );
     const actual = monthCheckpoint(Number(snapshot.turnNumber), step.result, recorded.commands);
     for (const ledger of LEDGER_ORDER) {
       const difference = firstLedgerDifference(

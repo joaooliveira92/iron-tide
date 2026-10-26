@@ -18,6 +18,7 @@ export type {
   FleetShipView,
   PlayerProjectionPresence,
   PlayerProjectionPresenceArea,
+  ShipCondition,
 } from "@bluewave/campaign-engine";
 
 export interface FleetScreenProjection {

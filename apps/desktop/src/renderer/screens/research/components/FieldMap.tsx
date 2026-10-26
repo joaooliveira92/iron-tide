@@ -130,7 +130,7 @@ export function FieldMap({
                         : `${field.discoveredTechs}/${field.totalTechs}`}
                     </span>
                   </HoverCardTrigger>
-                  <HoverCardContent side="right" align="start" sideOffset={8} className="w-64 p-3">
+                  <HoverCardContent side="right" align="start" sideOffset={8} className="w-64">
                     <FieldSummary field={field} />
                   </HoverCardContent>
                 </HoverCard>

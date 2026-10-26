@@ -20,22 +20,22 @@ No record in the pack names any of the 14 new ids, so researching them changes n
 
 ## Authored technologies (1940-1949)
 
-| Technology                       | Verdict               | Evidence                                                                                                                                   | Follow-up            |
-| -------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
-| `rad_search_radar`               | Inert                 | Gunnery `radar` accuracy factor is neutral everywhere; no radar part family                                                                | #279, #283           |
-| `rad_gunnery_fire_control_radar` | Inert                 | same                                                                                                                                       | #279, #283           |
-| `rad_blind_fire_director`        | Inert                 | no blind-fire rule reads it                                                                                                                | #279                 |
-| `fc_proximity_fuze`              | Inert                 | air defence runs on empty input in campaign battles                                                                                        | #280                 |
-| `fc_radar_directed_maa`          | Inert                 | `radarDiminishingReturnsBp` never populated from a design                                                                                  | #279, #280           |
-| `gun_dp_rapid_5in`               | Supported (gate only) | gun models can require it; surface gunnery has no AA role for a dual-purpose mount                                                         | #280 for the AA role |
-| `gun_auto_loading_turret`        | Supported (gate only) | gun models can require it                                                                                                                  | none                 |
-| `torp_acoustic_homing`           | Supported (gate only) | torpedo parts can require it; the torpedo model has contact and magnetic fuzes only, no homing                                             | #282                 |
-| `m_asw_influence_mine`           | Inert                 | `combat/src/mines` reads `magnetic_mine_technology` and `acoustic_mine_technology`, not this id; mines are not in the campaign battle path | #278, #282           |
-| `m_asw_ahead_throwing`           | Inert                 | no surface ASW weapon model                                                                                                                | #282                 |
-| `sub_snorkel`                    | Inert                 | submarines are not in the campaign battle path; the snorkel multiplier exists only in `submarines/seaStateProfile.ts`                      | #282                 |
-| `hc_all_welded_hull`             | Supported (gate only) | hull parts can require it; no consumer found that gives it an effect of its own                                                            | none                 |
-| `av_carrier_jet`                 | Inert                 | `determineJetCapability` reads `early_jet_carrier_operations`; the carrier phase never calls it; CV/CVL/AV have `requiresTech: null`       | #278, #280           |
-| `mis_heavy_ssm`                  | Inert                 | no missile model                                                                                                                           | #281                 |
+| Technology                       | Verdict               | Evidence                                                                                                                                    | Follow-up            |
+| -------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `rad_search_radar`               | Inert                 | Gunnery `radar` accuracy factor is neutral everywhere; no radar part family                                                                 | #279, #283           |
+| `rad_gunnery_fire_control_radar` | Inert                 | same                                                                                                                                        | #279, #283           |
+| `rad_blind_fire_director`        | Inert                 | no blind-fire rule reads it                                                                                                                 | #279                 |
+| `fc_proximity_fuze`              | Inert                 | air defence runs on empty input in campaign battles                                                                                         | #280                 |
+| `fc_radar_directed_maa`          | Inert                 | `radarDiminishingReturnsBp` never populated from a design                                                                                   | #279, #280           |
+| `gun_dp_rapid_5in`               | Supported (gate only) | gun models can require it; surface gunnery has no AA role for a dual-purpose mount                                                          | #280 for the AA role |
+| `gun_auto_loading_turret`        | Supported (gate only) | gun models can require it                                                                                                                   | none                 |
+| `torp_acoustic_homing`           | Supported (gate only) | torpedo parts can require it; the torpedo model has contact and magnetic fuzes only, no homing                                              | #282                 |
+| `m_asw_influence_mine`           | Inert                 | `combat/src/mines` now reads this id for magnetic and acoustic mines (ADR-0297); mines are not in the campaign battle path                  | #278, #282           |
+| `m_asw_ahead_throwing`           | Inert                 | no surface ASW weapon model                                                                                                                 | #282                 |
+| `sub_snorkel`                    | Inert                 | submarines are not in the campaign battle path; the snorkel multiplier exists only in `submarines/seaStateProfile.ts`                       | #282                 |
+| `hc_all_welded_hull`             | Supported (gate only) | hull parts can require it; no consumer found that gives it an effect of its own                                                             | none                 |
+| `av_carrier_jet`                 | Inert                 | `determineJetCapability` now reads this id for light jets (ADR-0297); the carrier phase never calls it; CV/CVL/AV have `requiresTech: null` | #278, #280           |
+| `mis_heavy_ssm`                  | Inert                 | no missile model                                                                                                                            | #281                 |
 
 ## Candidates accepted for 1950-1970 (not yet authored)
 

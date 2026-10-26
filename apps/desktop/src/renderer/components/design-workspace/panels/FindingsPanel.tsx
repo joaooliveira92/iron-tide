@@ -17,6 +17,7 @@ import { Alert, AlertAction, AlertDescription, AlertTitle } from "../../ui/alert
 import { Badge } from "../../ui/badge.js";
 import { Button } from "../../ui/button.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
+import { SlateBody, SlateFacts, SlateHeader } from "../../ui/slate.js";
 import { cn } from "../../../lib/utils.js";
 import { formatExplanation } from "../../../lib/presentation-format/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
@@ -46,26 +47,23 @@ function RuleEvidence({ f }: { readonly f: Finding }) {
       >
         Rule {f.id}
       </HoverCardTrigger>
-      <HoverCardContent side="top" className="w-72 space-y-2 text-sm">
-        <div className="font-medium">Evidence</div>
-        <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-xs">
-          <dt className="text-muted-foreground">Formula</dt>
-          <dd className="text-right font-mono">{f.evidence.formulaId}</dd>
-          <dt className="text-muted-foreground">Computed value</dt>
-          <dd className="text-right tabular-nums">{format.count(f.evidence.value)}</dd>
-          <dt className="text-muted-foreground">Limit</dt>
-          <dd className="text-right tabular-nums">{format.count(f.evidence.threshold)}</dd>
-        </dl>
-        {inputs.length > 0 && (
-          <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 border-t pt-2 text-xs">
-            {inputs.map(([k, v]) => (
-              <div key={k} className="contents">
-                <dt className="font-mono text-muted-foreground">{k}</dt>
-                <dd className="text-right tabular-nums">{format.count(v)}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
+      <HoverCardContent side="top" className="w-72">
+        <SlateHeader title="Evidence" />
+        <SlateBody>
+          <SlateFacts
+            rows={[
+              { label: "Formula", value: f.evidence.formulaId },
+              { label: "Computed value", value: format.count(f.evidence.value) },
+              { label: "Limit", value: format.count(f.evidence.threshold) },
+            ]}
+          />
+          {inputs.length > 0 && (
+            <SlateFacts
+              className="border-t border-border/60 pt-2"
+              rows={inputs.map(([k, v]) => ({ label: k, value: format.count(v) }))}
+            />
+          )}
+        </SlateBody>
       </HoverCardContent>
     </HoverCard>
   );

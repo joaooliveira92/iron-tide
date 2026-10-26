@@ -1,8 +1,8 @@
 import { buildStrategicMapView } from "@bluewave/campaign-engine";
 import { Effect } from "effect";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
-import type { CommandHandler } from "../runtime/commandProgram.js";
 import { CommandFailed } from "../runtime/commandError.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 
 export const inspectMapProgram: CommandHandler<"inspectMap"> = (sessionId) =>
   Effect.gen(function* () {
