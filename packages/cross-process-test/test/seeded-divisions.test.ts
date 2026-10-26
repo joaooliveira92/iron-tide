@@ -1,9 +1,10 @@
+import { Result } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  assertDivisionInvariants,
+  checkDivisionInvariants,
   type CanonicalShipType,
   type CompiledDesignVersion,
   type DivisionAssetView,
@@ -92,14 +93,12 @@ describe("seeded 1880 divisions load from the compiled snapshot (N-1 ticket 07)"
     expect(nations.flatMap((n) => n.divisions).length).toBeGreaterThan(0);
   });
 
-  it("every seeded division satisfies assertDivisionInvariants", () => {
+  it("every seeded division satisfies checkDivisionInvariants", () => {
     for (const nation of nations) {
       for (const division of nation.divisions) {
         const assets = divisionAssets(nation.fleets, snapshot.designs, division);
-        expect(
-          () => assertDivisionInvariants(division, assets, { nationId: nation.id }),
-          `division ${division.divisionId}`,
-        ).not.toThrow();
+        const checked = checkDivisionInvariants(division, assets, { nationId: nation.id });
+        expect(Result.isSuccess(checked), `division ${division.divisionId}`).toBe(true);
       }
     }
   });

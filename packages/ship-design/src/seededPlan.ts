@@ -1,6 +1,8 @@
 import { historicalBuildMonths, type ConstructionBalance, type LineId } from "./construction.js";
 import { scalePlanToUnits } from "./constructionProgress.js";
-import { designInvariant } from "./errors.js";
+import type { BluewaveError } from "@bluewave/contracts";
+import type { Result } from "effect";
+import { designInvariant, designInvariantResult } from "./errors.js";
 
 export interface SeededPackage {
   readonly id: string;
@@ -93,4 +95,10 @@ export function seededConstructionPlan(input: SeededPlanInput): SeededConstructi
   } satisfies Record<LineId, number>;
   for (const line of used) capacityUnits[line] = perMonth;
   return { packages, capacityUnits };
+}
+
+export function trySeededConstructionPlan(
+  input: SeededPlanInput,
+): Result.Result<SeededConstructionPlan, BluewaveError> {
+  return designInvariantResult(() => seededConstructionPlan(input));
 }

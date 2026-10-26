@@ -8,7 +8,7 @@ import {
   applyDivisionCommand,
   applyDivisionDoctrineChange,
   type DivisionDoctrinePenalties,
-  assertDivisionInvariants,
+  checkDivisionInvariants,
   DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE,
   DIVISION_STATE_INVARIANT_FAILED,
   INITIAL_DIVISION_COHESION,
@@ -29,12 +29,13 @@ import type {
 } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Result } from "effect";
 
 export function divisionAssetsFor(
   snapshot: CampaignSnapshot,
   nationId: string,
   shipIds: string[],
-): NonNullable<Parameters<typeof assertDivisionInvariants>[1]> {
+): NonNullable<Parameters<typeof checkDivisionInvariants>[1]> {
   const nation = snapshot["nations"].get(nationId);
   if (!nation) return [];
   const all = nation["fleets"].flatMap((f) => f["ships"]);
@@ -151,12 +152,11 @@ export function applyDivisionCommandMonth(
       rulesetVersion: snapshot["rulesetVersion"],
       aggregateHash: "",
     };
-    try {
-      assertDivisionInvariants(division, assets, {});
-    } catch (e) {
+    const invariants = checkDivisionInvariants(division, assets, {});
+    if (Result.isFailure(invariants)) {
       collector.addError(
         DIVISION_STATE_INVARIANT_FAILED,
-        `Division invariant failed: ${(e as Error).message}`,
+        `Division invariant failed: ${invariants.failure.message}`,
         {
           stage: "command-collection",
         },

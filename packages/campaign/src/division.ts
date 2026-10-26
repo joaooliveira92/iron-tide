@@ -1,7 +1,7 @@
 import { SafeInt } from "@bluewave/contracts";
 import { CAMPAIGN_DIVISION_FORMATIONS, CAMPAIGN_DIVISION_ROLES } from "@bluewave/content-schema";
 import { sha256Hex, canonicalSerialize } from "@bluewave/deterministic";
-import { Data, Option } from "effect";
+import { Data, Option, Result } from "effect";
 
 export const DIVISION_SIZE_LIMIT_EXCEEDED = "DIVISION_SIZE_LIMIT_EXCEEDED" as const;
 export const DIVISION_SHIP_TYPE_INCOMPATIBLE = "DIVISION_SHIP_TYPE_INCOMPATIBLE" as const;
@@ -157,49 +157,64 @@ export class DivisionShipTypeIncompatible extends Data.TaggedError(
   }
 }
 
-export function assertDivisionInvariants(
+export type DivisionInvariantError =
+  | DivisionStateInvariantFailed
+  | DivisionSizeLimitExceeded
+  | DivisionFlagshipInvalid
+  | DivisionLocationConflict
+  | DivisionShipTypeIncompatible;
+
+export function checkDivisionInvariants(
   division: PermanentDivision,
   assets: DivisionAssetView[],
   context: Record<string, unknown> = {},
-): void {
+): Result.Result<void, DivisionInvariantError> {
   const shipByType = new Map(assets.map((a) => [a.shipId, a.shipType]));
   const locationByShip = new Map(assets.map((a) => [a.shipId, a.locationAreaId]));
 
   if (division.shipOrder.length === 0) {
-    throw new DivisionStateInvariantFailed({
-      divisionId: division.divisionId,
-      reason: "empty division",
-      context,
-    });
+    return Result.fail(
+      new DivisionStateInvariantFailed({
+        divisionId: division.divisionId,
+        reason: "empty division",
+        context,
+      }),
+    );
   }
 
   const allDd = assets.every((a) => a.shipType === "DD");
   const max = allDd ? DD_DIVISION_MAX_SHIPS : DIVISION_MAX_SHIPS;
   if (division.shipOrder.length < 1 || division.shipOrder.length > max) {
-    throw new DivisionSizeLimitExceeded({
-      divisionId: division.divisionId,
-      size: String(division.shipOrder.length),
-      max: String(max),
-      context,
-    });
+    return Result.fail(
+      new DivisionSizeLimitExceeded({
+        divisionId: division.divisionId,
+        size: String(division.shipOrder.length),
+        max: String(max),
+        context,
+      }),
+    );
   }
 
   if (division.flagshipShipId !== division.shipOrder[0]) {
-    throw new DivisionFlagshipInvalid({
-      divisionId: division.divisionId,
-      flagshipShipId: division.flagshipShipId,
-      expected: division.shipOrder[0],
-      context,
-    });
+    return Result.fail(
+      new DivisionFlagshipInvalid({
+        divisionId: division.divisionId,
+        flagshipShipId: division.flagshipShipId,
+        expected: division.shipOrder[0],
+        context,
+      }),
+    );
   }
 
   const locations = new Set(division.shipOrder.map((id) => locationByShip.get(id)));
   if (locations.size > 1) {
-    throw new DivisionLocationConflict({
-      divisionId: division.divisionId,
-      locations: [...locations],
-      context,
-    });
+    return Result.fail(
+      new DivisionLocationConflict({
+        divisionId: division.divisionId,
+        locations: [...locations],
+        context,
+      }),
+    );
   }
 
   const shipTypes = division.shipOrder.map((id) => shipByType.get(id));
@@ -213,13 +228,17 @@ export function assertDivisionInvariants(
         distinctTypes.filter((t) => t !== "BC" && t !== "CA").length === 0)
     )
   ) {
-    throw new DivisionShipTypeIncompatible({
-      divisionId: division.divisionId,
-      types: [...distinctTypes],
-      context,
-    });
+    return Result.fail(
+      new DivisionShipTypeIncompatible({
+        divisionId: division.divisionId,
+        types: [...distinctTypes],
+        context,
+      }),
+    );
   }
+  return Result.succeed(undefined);
 }
+
 export const DIVISION_PENALTIES = {
   addShip: { experience: -5, cohesion: -10 },
   removeNonFlagship: { experience: -3, cohesion: -5 },

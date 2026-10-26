@@ -672,6 +672,9 @@ importers:
       '@bluewave/random':
         specifier: workspace:*
         version: link:../random
+      effect:
+        specifier: workspace:*
+        version: link:../../vendor/effect
     devDependencies:
       yaml:
         specifier: ^2.9.1

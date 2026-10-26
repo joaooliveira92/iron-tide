@@ -71,9 +71,12 @@ export class FleetSizeTacticalStatViolation extends Data.TaggedError(
   }
 }
 
-export function checkFleetSizeTacticalViolation(formulaId: string) {
-  if (TACTICAL_STATS.has(formulaId.toLowerCase()))
-    throw new FleetSizeTacticalStatViolation({ formulaId });
+export function checkFleetSizeTacticalViolation(
+  formulaId: string,
+): Result.Result<void, FleetSizeTacticalStatViolation> {
+  return TACTICAL_STATS.has(formulaId.toLowerCase())
+    ? Result.fail(new FleetSizeTacticalStatViolation({ formulaId }))
+    : Result.succeed(undefined);
 }
 export function scaleValue(unscaled: number, multiplierBp: number): SafeInt {
   if (!Number.isSafeInteger(unscaled)) {

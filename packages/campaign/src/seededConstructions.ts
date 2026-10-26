@@ -1,10 +1,11 @@
-import { isBluewaveError, SafeInt } from "@bluewave/contracts";
+import { SafeInt, type BluewaveError } from "@bluewave/contracts";
 import type { ShipBuildingCatalogue } from "@bluewave/content-compiler";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Result } from "effect";
 import {
-  resolveNationalConstruction,
   resolveNavalProfile,
-  seededConstructionPlan,
+  tryResolveNationalConstruction,
+  trySeededConstructionPlan,
   type ConstructionBalance,
   type NationNavalProfile,
 } from "@bluewave/ship-design";
@@ -41,6 +42,9 @@ function isSeedable(project: ConstructionProject): boolean {
   );
 }
 
+const failureReason = (error: BluewaveError): string =>
+  `${error.message} (${String(error.context["code"])})`;
+
 function seedProject(
   project: ConstructionProject,
   nationId: string,
@@ -63,32 +67,22 @@ function seedProject(
   const displacementKg = design["normalizedDisplacementKg"] as number;
   if (!(displacementKg > 0)) return fail("its design has no displacement");
 
-  let plan;
-  try {
-    plan = seededConstructionPlan({
-      displacementKg,
-      totalUnits: project["totalWork"] as number,
-      completedUnits: project["completedWork"] as number,
-      balance,
-      month: project["startedAt"] === "" ? creationMonth : project["startedAt"],
-    });
-  } catch (error) {
-    if (!isBluewaveError(error)) throw error;
-    return fail(`${error.message} (${String(error.context["code"])})`);
-  }
+  const planned = trySeededConstructionPlan({
+    displacementKg,
+    totalUnits: project["totalWork"] as number,
+    completedUnits: project["completedWork"] as number,
+    balance,
+    month: project["startedAt"] === "" ? creationMonth : project["startedAt"],
+  });
+  if (Result.isFailure(planned)) return fail(failureReason(planned.failure));
+  const plan = planned.success;
 
   const profile = resolveNavalProfile(profiles, nationId, creationMonth);
   let buildTimeMultiplierBp: number | undefined;
   if (profile !== null) {
-    try {
-      buildTimeMultiplierBp = resolveNationalConstruction(
-        profile,
-        creationMonth,
-      ).buildTimeMultiplierBp;
-    } catch (error) {
-      if (!isBluewaveError(error)) throw error;
-      return fail(`${error.message} (${String(error.context["code"])})`);
-    }
+    const national = tryResolveNationalConstruction(profile, creationMonth);
+    if (Result.isFailure(national)) return fail(failureReason(national.failure));
+    buildTimeMultiplierBp = national.success.buildTimeMultiplierBp;
   }
 
   const packages: ConstructionPackage[] = plan.packages.map((p) => ({
