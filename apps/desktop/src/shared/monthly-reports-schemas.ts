@@ -119,6 +119,7 @@ const StrategicPrioritySchema = Schema.Struct({
   severity: prioritySeveritySchema,
   title: Schema.String,
   summary: Schema.String,
+  advice: Schema.optional(Schema.String),
   reason: Schema.String,
   destination: Schema.Literals(["overview", "construction", "fleet", "research", "diplomacy"]),
   fingerprint: nonEmptyString,

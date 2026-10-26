@@ -85,12 +85,21 @@ The second batch continues the same contract on the branch `feat/story-49-area-e
   the month's `reconcileMonthLedger` result. The reports sidecar schema accepts the optional tree, so old
   reports decode unchanged.
 
+## Continuation (2026-10-26, #304/#285)
+
+The third batch closes the strategic area's honest gap:
+
+- **Prestige (#304).** `PrestigeLastChange` records the applied rule, the unclamped target and the bounds;
+  `PlayerProjectionPrestige.changeExplanation` carries `prestige_change` (`before + rule + clamp = after`) and the
+  status-strip prestige card shows it in the shared disclosure. See the implementation section of ADR-0307.
+- **Priorities (#285).** Every priority carries a player-readable `advice` sentence beside its engine `reason`; the
+  briefing hover shows the advice first and the trace as the working. It is view/report text, not a numeric tree.
+- **War score and tension (#304)** stay exempt until a contribution record exists (ADR-0307).
+
 ## Not delivered (tracked, not hidden)
 
-- The diplomacy/war/prestige/priorities area (#304) remains exempt with its tracking issue. ADR-0307 decides
-  the provenance: prestige needs the applied rule recorded on the last change (the next slice); war score
-  and tension need a stored contribution history; priorities use their existing `reason` trace; the opening
-  briefing reuses the economy/construction/fleet trees. No tree is invented from a total.
+- War score and tension need a stored contribution history before they can carry a tree; the opening briefing
+  reuses the economy/construction/fleet trees. No tree is invented from a total.
 - The ship designer has partial `ExplanationText` findings (ADR-0221) and is tracked by #168; the debug-only screens are not
   player-facing and are not in the manifest.
 

@@ -50,6 +50,26 @@ The batch report left them open rather than inventing provenance.
    written before this ADR decode unchanged and omit the disclosure; the field is not part of any
    authoritative snapshot, replay or save hash.
 
+## Implementation (2026-10-26, batch 3)
+
+`PrestigeLastChange` now records `appliedRule` (the rule actually used, including an explicitly supplied
+declined-battle rule), `unclampedAfter` (the target before the bounds clamp) and `bounds`. Both fields are optional
+and additive: a last change written before this ADR decodes unchanged and simply omits the disclosure, so no
+compatibility bump is required (the precedent is [ADR-0281](ADR-0281-sacking-phase-and-terminal-career.md)). The
+only authoritative writer, `applyPrestigeChange`, records them from `applyPrestigeRuleDetail`, whose arithmetic is
+the same path `applyPrestigeRule` uses.
+
+`explainPrestigeChange` builds `prestige_change` as `before + rule line + clamp line = after`; the result equals
+the stored `after` and the clamp line appears only when the rule left the bounds. `PlayerProjectionPrestige`
+carries it as `changeExplanation` (additive, omitted when absent), and the status-strip prestige card renders it in
+the shared disclosure with `strategic.prestige_change.*` labels. War score, tension and priorities keep their
+exemptions: the first two still have no stored contribution history, and a priority's player-readable text is its
+advice plus its existing trace, not a numeric tree.
+
+`scripts/data/explanation-coverage.json` moves from 19/210 (9.04%) to 20/211 (9.47%). The recorded rule changes
+the snapshot bytes of a month that applies prestige, so the Adriatic-war replay was re-recorded and approved as
+`SERIALIZATION_ONLY`; no gameplay outcome, golden hash or other replay moved.
+
 ## Consequences
 
 - `scripts/data/explanation-coverage.json` covers `report_treasury` and the fleet/construction trees
