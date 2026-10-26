@@ -5,6 +5,8 @@ import {
   advanceSpecialTraining,
   fundSpecialTraining,
   isTrainingProficient,
+  isTrainingSubject,
+  TRAINING_SUBJECTS,
   TrainingSubjectEntrySchema,
   trainingMaintenanceAdderBp,
   trainingRefusal,
@@ -22,6 +24,15 @@ const RULES: SpecialTrainingRules = {
     DAMAGE_CONTROL: { maintenanceAdderBp: 2000 },
   },
 };
+
+describe("isTrainingSubject", () => {
+  it("accepts exactly the declared subjects", () => {
+    for (const subject of TRAINING_SUBJECTS) expect(isTrainingSubject(subject)).toBe(true);
+    for (const bad of ["SEAMANSHIP", "", "gunnery", 1, null, undefined, {}]) {
+      expect(isTrainingSubject(bad)).toBe(false);
+    }
+  });
+});
 
 describe("trainingRefusal", () => {
   it("allows up to the limit and refuses a third, unknown or repeated subject with a typed code", () => {

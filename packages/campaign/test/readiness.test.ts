@@ -202,6 +202,8 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
     if (Result.isFailure(seed)) {
       expect(seed.failure._tag).toBe("ShipReadinessFailure");
       expect(seed.failure.code).toBe(SHIP_READINESS_CODES.excessKey);
+      expect(seed.failure).toBeInstanceOf(Error);
+      expect(typeof seed.failure.message).toBe("string");
     }
   });
 });

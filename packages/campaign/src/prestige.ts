@@ -1,6 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCode } from "@bluewave/diagnostics";
-import { Result, Schema } from "effect";
+import { Data, Result, Schema } from "effect";
 
 export const BASIS_POINTS_PER_WHOLE = 10_000;
 
@@ -73,59 +73,43 @@ export interface CareerResult {
   readonly month: CareerMonth;
 }
 
-export class PrestigeNotInteger {
-  readonly _tag = "PrestigeNotInteger";
-  constructor(readonly value: number) {}
-}
+export class PrestigeNotInteger extends Data.TaggedError("PrestigeNotInteger")<{
+  readonly value: number;
+}> {}
 
-export class PrestigeUnsafeInteger {
-  readonly _tag = "PrestigeUnsafeInteger";
-  constructor(readonly value: number) {}
-}
+export class PrestigeUnsafeInteger extends Data.TaggedError("PrestigeUnsafeInteger")<{
+  readonly value: number;
+}> {}
 
-export class PrestigeOutOfRange {
-  readonly _tag = "PrestigeOutOfRange";
-  constructor(
-    readonly value: number,
-    readonly lowerBound: number,
-    readonly upperBound: number,
-  ) {}
-}
+export class PrestigeOutOfRange extends Data.TaggedError("PrestigeOutOfRange")<{
+  readonly value: number;
+  readonly lowerBound: number;
+  readonly upperBound: number;
+}> {}
 
-export class PrestigeMissing {
-  readonly _tag = "PrestigeMissing";
-}
+export class PrestigeMissing extends Data.TaggedError("PrestigeMissing")<{}> {}
 
-export class PrestigeUnknownReason {
-  readonly _tag = "PrestigeUnknownReason";
-  constructor(readonly reason: string) {}
-}
+export class PrestigeUnknownReason extends Data.TaggedError("PrestigeUnknownReason")<{
+  readonly reason: string;
+}> {}
 
-export class PrestigeRuleMissing {
-  readonly _tag = "PrestigeRuleMissing";
-  constructor(readonly reason: string) {}
-}
+export class PrestigeRuleMissing extends Data.TaggedError("PrestigeRuleMissing")<{
+  readonly reason: string;
+}> {}
 
-export class PrestigeDrawInvalid {
-  readonly _tag = "PrestigeDrawInvalid";
-  constructor(readonly draw: number) {}
-}
+export class PrestigeDrawInvalid extends Data.TaggedError("PrestigeDrawInvalid")<{
+  readonly draw: number;
+}> {}
 
-export class PrestigeValueSetInvalid {
-  readonly _tag = "PrestigeValueSetInvalid";
-  constructor(
-    readonly field: string,
-    readonly message: string,
-  ) {}
-}
+export class PrestigeValueSetInvalid extends Data.TaggedError("PrestigeValueSetInvalid")<{
+  readonly field: string;
+  readonly message: string;
+}> {}
 
-export class CareerResultInvalid {
-  readonly _tag = "CareerResultInvalid";
-  constructor(
-    readonly field: string,
-    readonly message: string,
-  ) {}
-}
+export class CareerResultInvalid extends Data.TaggedError("CareerResultInvalid")<{
+  readonly field: string;
+  readonly message: string;
+}> {}
 
 export type PrestigeError =
   | PrestigeNotInteger
@@ -152,8 +136,8 @@ function ceilDivBasisPoints(numerator: number): number {
 function checkInteger(
   value: number,
 ): PrestigeResult<number, PrestigeNotInteger | PrestigeUnsafeInteger> {
-  if (!Number.isInteger(value)) return Result.fail(new PrestigeNotInteger(value));
-  if (!Number.isSafeInteger(value)) return Result.fail(new PrestigeUnsafeInteger(value));
+  if (!Number.isInteger(value)) return Result.fail(new PrestigeNotInteger({ value }));
+  if (!Number.isSafeInteger(value)) return Result.fail(new PrestigeUnsafeInteger({ value }));
   return Result.succeed(value);
 }
 
@@ -170,7 +154,13 @@ function checkPrestige(
   const integer = checkInteger(value);
   if (Result.isFailure(integer)) return Result.fail(integer.failure);
   if (value < set.lowerBound || value > set.upperBound) {
-    return Result.fail(new PrestigeOutOfRange(value, set.lowerBound, set.upperBound));
+    return Result.fail(
+      new PrestigeOutOfRange({
+        value,
+        lowerBound: set.lowerBound,
+        upperBound: set.upperBound,
+      }),
+    );
   }
   return Result.succeed(SafeInt(value));
 }
@@ -182,13 +172,13 @@ export function applyPrestigeRule(
   rule?: PrestigeRule,
 ): PrestigeResult<PrestigeChange> {
   if (!(PRESTIGE_REASON_CODES as readonly string[]).includes(reason)) {
-    return Result.fail(new PrestigeUnknownReason(String(reason)));
+    return Result.fail(new PrestigeUnknownReason({ reason: String(reason) }));
   }
   const checked = checkPrestige(current, set);
   if (Result.isFailure(checked)) return Result.fail(checked.failure);
   const before = checked.success;
   const applied: PrestigeRule | undefined = rule ?? set.rules[reason];
-  if (applied === undefined) return Result.fail(new PrestigeRuleMissing(reason));
+  if (applied === undefined) return Result.fail(new PrestigeRuleMissing({ reason }));
   const rate = applied.kind === "PROPORTIONAL_LOSS" ? applied.basisPoints : applied.amount;
   const rateChecked = checkInteger(rate);
   if (Result.isFailure(rateChecked)) return Result.fail(rateChecked.failure);
@@ -196,7 +186,8 @@ export function applyPrestigeRule(
   let target: number;
   if (applied.kind === "PROPORTIONAL_LOSS") {
     const product = before * applied.basisPoints;
-    if (!Number.isSafeInteger(product)) return Result.fail(new PrestigeUnsafeInteger(product));
+    if (!Number.isSafeInteger(product))
+      return Result.fail(new PrestigeUnsafeInteger({ value: product }));
     target = before - ceilDivBasisPoints(product);
   } else if (applied.kind === "FIXED_LOSS") {
     target = before - applied.amount;
@@ -222,7 +213,7 @@ export function resolveSacking(
 
   const value = draw();
   if (!Number.isInteger(value) || value < 0 || value >= BASIS_POINTS_PER_WHOLE) {
-    return Result.fail(new PrestigeDrawInvalid(value));
+    return Result.fail(new PrestigeDrawInvalid({ draw: value }));
   }
   return Result.succeed({
     eligible: true,
@@ -240,19 +231,35 @@ export interface CareerResultInput {
 
 export function buildCareerResult(input: CareerResultInput): PrestigeResult<CareerResult> {
   if (typeof input.nationId !== "string" || input.nationId === "") {
-    return Result.fail(new CareerResultInvalid("nationId", "must be a non-empty string"));
+    return Result.fail(
+      new CareerResultInvalid({ field: "nationId", message: "must be a non-empty string" }),
+    );
   }
   if (!(CAREER_END_REASONS as readonly string[]).includes(input.reason)) {
-    return Result.fail(new CareerResultInvalid("reason", "must be SACKED or CAMPAIGN_END"));
+    return Result.fail(
+      new CareerResultInvalid({ field: "reason", message: "must be SACKED or CAMPAIGN_END" }),
+    );
   }
   if (!Number.isSafeInteger(input.score) || input.score < 0) {
-    return Result.fail(new CareerResultInvalid("score", "must be a non-negative safe integer"));
+    return Result.fail(
+      new CareerResultInvalid({
+        field: "score",
+        message: "must be a non-negative safe integer",
+      }),
+    );
   }
   if (!Number.isSafeInteger(input.month.year)) {
-    return Result.fail(new CareerResultInvalid("month.year", "must be a safe integer"));
+    return Result.fail(
+      new CareerResultInvalid({ field: "month.year", message: "must be a safe integer" }),
+    );
   }
   if (!Number.isInteger(input.month.month) || input.month.month < 1 || input.month.month > 12) {
-    return Result.fail(new CareerResultInvalid("month.month", "must be an integer from 1 to 12"));
+    return Result.fail(
+      new CareerResultInvalid({
+        field: "month.month",
+        message: "must be an integer from 1 to 12",
+      }),
+    );
   }
   return Result.succeed({
     nationId: input.nationId,
@@ -369,7 +376,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function invalid(field: string, message: string) {
-  return new PrestigeValueSetInvalid(field, message);
+  return new PrestigeValueSetInvalid({ field, message });
 }
 
 function firstExcessKey(record: Record<string, unknown>, allowed: ReadonlyArray<string>) {
@@ -511,6 +518,7 @@ export function resolveNationPrestige(
   set: PrestigeValueSet,
 ): PrestigeResult<SafeInt, NationPrestigeError> {
   if (authored === undefined) return Result.fail(new PrestigeMissing());
-  if (typeof authored !== "number") return Result.fail(new PrestigeNotInteger(Number.NaN));
+  if (typeof authored !== "number")
+    return Result.fail(new PrestigeNotInteger({ value: Number.NaN }));
   return checkPrestige(authored, set);
 }

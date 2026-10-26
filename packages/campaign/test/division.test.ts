@@ -1,6 +1,7 @@
 import { SafeInt } from "@bluewave/contracts";
 import { CAMPAIGN_DIVISION_FORMATIONS, CAMPAIGN_DIVISION_ROLES } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Option } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import {
   applyDivisionCommand,
@@ -125,8 +126,10 @@ describe("PermanentDivision aggregate (AC-2)", () => {
     expect(() => assertDivisionInvariants(d, [asset("a", "BB"), asset("b", "BB")])).toThrow(
       new RegExp(DIVISION_FLAGSHIP_INVALID),
     );
-    expect(divisionCanonicalType(["BB", "B"])).toBe("BB");
-    expect(divisionCanonicalType(["BC", "CA"])).toBe("BC");
+    expect(Option.getOrNull(divisionCanonicalType(["BB", "B"]))).toBe("BB");
+    expect(Option.getOrNull(divisionCanonicalType(["BC", "CA"]))).toBe("BC");
+    expect(Option.getOrNull(divisionCanonicalType(["DD"]))).toBe("DD");
+    expect(Option.isNone(divisionCanonicalType([]))).toBe(true);
   });
 
   it("§29.10: new division begins at 20 experience / 30 cohesion", () => {

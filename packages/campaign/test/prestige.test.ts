@@ -51,6 +51,30 @@ describe("the closed vocabularies", () => {
   });
 });
 
+describe("prestige failures", () => {
+  it("are tagged Error instances carrying a message", () => {
+    const notInteger = applyPrestigeRule(40, "DECLINED_BATTLE", fixtureSet(), {
+      kind: "FIXED_LOSS",
+      amount: 1.5 as SafeInt,
+    });
+    expect(Result.isFailure(notInteger)).toBe(true);
+    if (Result.isFailure(notInteger)) {
+      expect(notInteger.failure._tag).toBe("PrestigeNotInteger");
+      expect(notInteger.failure).toBeInstanceOf(Error);
+      expect(typeof notInteger.failure.message).toBe("string");
+    }
+
+    const invalid = decodePrestigeValueSet({ ...FIXTURE, extra: 1 });
+    expect(Result.isFailure(invalid)).toBe(true);
+    if (Result.isFailure(invalid)) {
+      expect(invalid.failure._tag).toBe("PrestigeValueSetInvalid");
+      expect(invalid.failure).toBeInstanceOf(Error);
+      expect(invalid.failure.field).toBe("extra");
+      expect(invalid.failure.message.length).toBeGreaterThan(0);
+    }
+  });
+});
+
 describe("decodePrestigeValueSet", () => {
   it("decodes a complete value set", () => {
     const decoded = decodePrestigeValueSet(FIXTURE);
