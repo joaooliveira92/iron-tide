@@ -563,22 +563,21 @@ export const runCampaignSave = (
       return "internal-error";
     }
     const store = new SaveStore();
-    try {
-      const result = store.save(state, saveDir);
-      if (options.outputMode === "json") {
-        yield* printResult(JSON.stringify(result, null, 2));
-      } else {
-        yield* printResult(`Campaign saved`);
-        yield* printResult(`  Save ID: ${result.metadata.saveId}`);
-        yield* printResult(`  Path: ${result.savePath}`);
-        yield* printResult(`  Hash: ${result.hash}`);
-      }
-      return "success";
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      yield* printResult(`Failed to save campaign: ${message}`);
+    const saved = yield* Effect.result(store.saveEffect(state, saveDir));
+    if (Result.isFailure(saved)) {
+      yield* printResult(`Failed to save campaign: ${saved.failure.message}`);
       return "internal-error";
     }
+    const result = saved.success;
+    if (options.outputMode === "json") {
+      yield* printResult(JSON.stringify(result, null, 2));
+    } else {
+      yield* printResult(`Campaign saved`);
+      yield* printResult(`  Save ID: ${result.metadata.saveId}`);
+      yield* printResult(`  Path: ${result.savePath}`);
+      yield* printResult(`  Hash: ${result.hash}`);
+    }
+    return "success";
   });
 
 export const runCampaignLoad = (
@@ -935,7 +934,12 @@ export const runTurnExecute = (
       envelope: newEnvelope,
       rawHash: persistedStateHash(persistableSnapshot, newEnvelope),
     };
-    const saveResult = store.save(newState, saveDir);
+    const savedTurn = yield* Effect.result(store.saveEffect(newState, saveDir));
+    if (Result.isFailure(savedTurn)) {
+      yield* printResult(`Failed to save campaign: ${savedTurn.failure.message}`);
+      return "internal-error";
+    }
+    const saveResult = savedTurn.success;
     const commandsDir = join(saveResult.savePath, "..", saveResult.metadata.saveId);
     const commandsPath = join(commandsDir, "commands.json");
     const ledgerPath = join(commandsDir, "command-ledger.json");
@@ -1001,12 +1005,22 @@ export const runReplay = (
     const fs = yield* CliFileSystem;
     const collector = new DiagnosticCollector();
     const store = new SaveStore();
-    const activeSaveId = store.getActiveSaveId(saveDir);
+    const pointers = yield* Effect.result(
+      Effect.all({
+        active: store.activeSaveIdEffect(saveDir),
+        previous: store.previousSaveIdEffect(saveDir),
+      }),
+    );
+    if (Result.isFailure(pointers)) {
+      yield* printResult(`Failed to read save pointer: ${pointers.failure.message}`);
+      return "internal-error";
+    }
+    const activeSaveId = pointers.success.active;
     if (!activeSaveId) {
       yield* printResult(`No active save found in ${saveDir}`);
       return "validation-error";
     }
-    const previousSaveId = store.getPreviousSaveId(saveDir);
+    const previousSaveId = pointers.success.previous;
     if (!previousSaveId) {
       yield* printResult(
         `No previous save found for ${activeSaveId} in ${saveDir} (nothing to replay from)`,
