@@ -77,7 +77,7 @@ const AREAS = [
   {
     name: "Turns, interruptions & save/resume",
     blurb: "Turn identity, the suspend/resume interruption model, and strict save-file decoding.",
-    nums: [222, 235, 278, 285],
+    nums: [222, 235, 278, 285, 305],
   },
   {
     name: "Fleet readiness, command & prestige",

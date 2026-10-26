@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0305).
+highest existing number + 1 (the next number is ADR-0306).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -119,6 +119,7 @@ Turn identity, the suspend/resume interruption model, and strict save-file decod
 | 0235 | [ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md](ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md) | Main-owned recent campaigns and reopen allow-list | accepted | — |
 | 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
 | 0285 | [ADR-0285-research-workspace-projection.md](ADR-0285-research-workspace-projection.md) | The research screen reads a technology-chart projection, and the draw weight has one home | accepted | — |
+| 0305 | [ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md](ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md) | Saves are retained by an opt-in count with a protected head; Effect-returning persistence methods carry an `Effect` suffix | accepted | — |
 
 ## Fleet readiness, command & prestige
 
