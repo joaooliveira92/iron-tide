@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "minimumCoveredPercentBp": 904,
+  "minimumCoveredPercentBp": 947,
   "contracts": [
     {
       "file": "apps/desktop/src/shared/budget-contract.ts",
@@ -575,13 +575,15 @@
       "type": "PlayerProjectionPrestige",
       "area": "strategic",
       "issue": "#304",
-      "covered": {},
+      "covered": {
+        "changeExplanation": "prestige_change"
+      },
       "exempt": {
-        "current": "Accumulated prestige state; the applied rule is not stored on the last change yet, so a tree would invent the source (ADR-0307).",
+        "current": "Accumulated prestige state; the change tree explains the last movement, not the accumulated total (ADR-0307).",
         "sackingThreshold": "Ruleset constant (prestige sacking threshold); it has no derived formula.",
-        "lastChange.before": "Recorded before value; the applied rule is not stored yet, so ADR-0307 defers the prestige_change tree to the rule-record slice.",
-        "lastChange.after": "Recorded after value; the applied rule is not stored yet, so ADR-0307 defers the prestige_change tree to the rule-record slice.",
-        "lastChange.delta": "Recorded delta; the applied rule is not stored yet, so ADR-0307 defers the prestige_change tree to the rule-record slice."
+        "lastChange.before": "Shown as the \"Prestige before\" line of prestige_change.",
+        "lastChange.after": "Shown as the prestige_change result, equal to the displayed after value.",
+        "lastChange.delta": "Shown as the sum of the rule and clamp lines of prestige_change."
       }
     },
     {

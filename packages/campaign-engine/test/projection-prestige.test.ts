@@ -58,6 +58,29 @@ describe("player projection: prestige and career", () => {
       delta: -1,
       month: "1880-02",
     });
+    expect(projection.prestige.changeExplanation).toBeUndefined();
+  });
+
+  it("explains a recorded last change from the applied rule", () => {
+    const { projection } = projectionWith(
+      19,
+      {},
+      {
+        prestigeLastChange: {
+          reasonCode: "BATTLE_LOST",
+          before: SafeInt(20),
+          after: SafeInt(19),
+          delta: SafeInt(-1),
+          month: "1880-02",
+          appliedRule: { kind: "PROPORTIONAL_LOSS", basisPoints: SafeInt(500) },
+          unclampedAfter: SafeInt(19),
+          bounds: { lower: SafeInt(0), upper: SafeInt(100) },
+        },
+      },
+    );
+    const tree = projection.prestige.changeExplanation;
+    expect(tree?.formulaId).toBe("prestige_change");
+    expect(Number(tree?.result)).toBe(projection.prestige.lastChange?.after);
   });
 
   it("exposes the career result once it exists", () => {

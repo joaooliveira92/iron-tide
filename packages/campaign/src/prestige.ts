@@ -43,6 +43,22 @@ export interface FixedLossRule {
 
 export type PrestigeRule = ProportionalLossRule | FixedGainRule | FixedLossRule;
 
+export type AppliedPrestigeRule =
+  | { readonly kind: "PROPORTIONAL_LOSS"; readonly basisPoints: SafeInt }
+  | { readonly kind: "FIXED_GAIN"; readonly amount: SafeInt }
+  | { readonly kind: "FIXED_LOSS"; readonly amount: SafeInt };
+
+export interface PrestigeBounds {
+  readonly lower: SafeInt;
+  readonly upper: SafeInt;
+}
+
+export interface PrestigeApplicationDetail extends PrestigeChange {
+  readonly appliedRule: AppliedPrestigeRule;
+  readonly unclampedAfter: SafeInt;
+  readonly bounds: PrestigeBounds;
+}
+
 export interface PrestigeValueSet {
   readonly lowerBound: SafeInt;
   readonly upperBound: SafeInt;
@@ -166,12 +182,38 @@ function checkPrestige(
   return Result.succeed(SafeInt(value));
 }
 
-export function applyPrestigeRule(
+function appliedRuleOf(rule: PrestigeRule): AppliedPrestigeRule {
+  switch (rule.kind) {
+    case "PROPORTIONAL_LOSS":
+      return { kind: "PROPORTIONAL_LOSS", basisPoints: rule.basisPoints };
+    case "FIXED_GAIN":
+      return { kind: "FIXED_GAIN", amount: rule.amount };
+    case "FIXED_LOSS":
+      return { kind: "FIXED_LOSS", amount: rule.amount };
+  }
+}
+
+function prestigeTarget(before: SafeInt, applied: PrestigeRule): PrestigeResult<number> {
+  const rate = applied.kind === "PROPORTIONAL_LOSS" ? applied.basisPoints : applied.amount;
+  const rateChecked = checkInteger(rate);
+  if (Result.isFailure(rateChecked)) return Result.fail(rateChecked.failure);
+
+  if (applied.kind === "PROPORTIONAL_LOSS") {
+    const product = before * applied.basisPoints;
+    if (!Number.isSafeInteger(product))
+      return Result.fail(new PrestigeUnsafeInteger({ value: product }));
+    return Result.succeed(before - ceilDivBasisPoints(product));
+  }
+  if (applied.kind === "FIXED_LOSS") return Result.succeed(before - applied.amount);
+  return Result.succeed(before + applied.amount);
+}
+
+export function applyPrestigeRuleDetail(
   current: number,
   reason: PrestigeReasonCode,
   set: PrestigeValueSet,
   rule?: PrestigeRule,
-): PrestigeResult<PrestigeChange> {
+): PrestigeResult<PrestigeApplicationDetail> {
   if (!(PRESTIGE_REASON_CODES as readonly string[]).includes(reason)) {
     return Result.fail(new PrestigeUnknownReason({ reason: String(reason) }));
   }
@@ -180,23 +222,30 @@ export function applyPrestigeRule(
   const before = checked.success;
   const applied: PrestigeRule | undefined = rule ?? set.rules[reason];
   if (applied === undefined) return Result.fail(new PrestigeRuleMissing({ reason }));
-  const rate = applied.kind === "PROPORTIONAL_LOSS" ? applied.basisPoints : applied.amount;
-  const rateChecked = checkInteger(rate);
-  if (Result.isFailure(rateChecked)) return Result.fail(rateChecked.failure);
+  const target = prestigeTarget(before, applied);
+  if (Result.isFailure(target)) return Result.fail(target.failure);
+  const unclampedAfter = target.success;
+  const after = Math.min(set.upperBound, Math.max(set.lowerBound, unclampedAfter));
+  return Result.succeed({
+    before,
+    after: SafeInt(after),
+    delta: SafeInt(after - before),
+    appliedRule: appliedRuleOf(applied),
+    unclampedAfter: SafeInt(unclampedAfter),
+    bounds: { lower: set.lowerBound, upper: set.upperBound },
+  });
+}
 
-  let target: number;
-  if (applied.kind === "PROPORTIONAL_LOSS") {
-    const product = before * applied.basisPoints;
-    if (!Number.isSafeInteger(product))
-      return Result.fail(new PrestigeUnsafeInteger({ value: product }));
-    target = before - ceilDivBasisPoints(product);
-  } else if (applied.kind === "FIXED_LOSS") {
-    target = before - applied.amount;
-  } else {
-    target = before + applied.amount;
-  }
-  const after = Math.min(set.upperBound, Math.max(set.lowerBound, target));
-  return Result.succeed({ before, after: SafeInt(after), delta: SafeInt(after - before) });
+export function applyPrestigeRule(
+  current: number,
+  reason: PrestigeReasonCode,
+  set: PrestigeValueSet,
+  rule?: PrestigeRule,
+): PrestigeResult<PrestigeChange> {
+  const detail = applyPrestigeRuleDetail(current, reason, set, rule);
+  if (Result.isFailure(detail)) return Result.fail(detail.failure);
+  const { before, after, delta } = detail.success;
+  return Result.succeed({ before, after, delta });
 }
 
 export function isSackingEligible(current: number, set: PrestigeValueSet): boolean {

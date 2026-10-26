@@ -12,6 +12,7 @@ export * from "./ledger-reconciliation.js";
 export * from "./report-explanations.js";
 export * from "./opening-briefing.js";
 export * from "./player-facts.js";
+export * from "./prestige-explanations.js";
 export * from "./priorities.js";
 export * from "./priorityConstants.js";
 export * from "./projection.js";
