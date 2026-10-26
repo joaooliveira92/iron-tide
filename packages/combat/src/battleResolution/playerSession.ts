@@ -25,6 +25,7 @@ import {
 } from "./capabilities.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { planTorpedoCommands } from "./torpedoDoctrine.js";
+import { withNightTraining, type TrainingEffectsBySide } from "./trainingEffects.js";
 import { pursuitOrders } from "./pursuit.js";
 import {
   assignTargetContactIds,
@@ -149,6 +150,7 @@ export interface PlayerBattleSession {
   readonly airCombat: AirCombatContext;
   readonly airDefense: AirDefenseContext;
   readonly units: readonly TacticalShipUnit[];
+  readonly trainingEffects: TrainingEffectsBySide;
   readonly baseOrders: Readonly<
     Record<string, { readonly orderedHeading: number; readonly orderedSpeedBp: number }>
   >;
@@ -247,6 +249,7 @@ export function createPlayerBattleSession(input: CreatePlayerBattleInput): Playe
     airCombat: projectAirCombatContext(input.manifest, projection.state.battleId),
     airDefense: projectAirDefenseContext(input.manifest, engine),
     units: projection.units,
+    trainingEffects: projection.trainingEffects,
     baseOrders: projection.orders,
     log: [],
     result: null,
@@ -357,6 +360,7 @@ function damageControlFor(
     damage: session.damage,
     movementStates: session.state.movementStates,
     engine,
+    trainingEffects: session.trainingEffects,
   });
 }
 
@@ -380,6 +384,7 @@ function planTorpedoes(session: PlayerBattleSession, torpedoes: TorpedoContext):
       battleState: session.state,
       damage: session.damage,
       units: session.units,
+      trainingEffects: session.trainingEffects,
     }),
   };
 }
@@ -453,7 +458,11 @@ export function advancePlayerBattleMinute(
     observationTime,
     orders: resolveOrders(session, orders),
     ...(engine === undefined ? {} : { engine }),
-    gunnery: [...batteries],
+    gunnery: withNightTraining(
+      batteries,
+      session.trainingEffects,
+      session.weather.components.timeOfDay,
+    ),
     weather: session.weather,
     damage: session.damage,
     ...(preparedTorpedoes === undefined ? {} : { torpedoes: preparedTorpedoes }),

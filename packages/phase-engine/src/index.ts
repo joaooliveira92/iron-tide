@@ -345,4 +345,4 @@ export {
   type MountStyleContent,
   type RefitCatalogueEntry,
 } from "./refitRules.js";
-export { gunneryTrainingBpFor } from "./battleTraining.js";
+export { trainingEffectsFor } from "./battleTraining.js";

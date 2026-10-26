@@ -12,7 +12,7 @@ import {
   type PlayerBattleSession,
 } from "@bluewave/combat/battleResolution";
 import { isBluewaveError } from "@bluewave/contracts";
-import { gunneryTrainingBpFor } from "@bluewave/phase-engine";
+import { trainingEffectsFor } from "@bluewave/phase-engine";
 import { Effect } from "effect";
 import type {
   AdvancePlayerBattleResult,
@@ -92,7 +92,7 @@ function nationOf(
     designs,
     divisions: nation.divisions,
     officers: nation.officers,
-    gunneryTrainingBp: gunneryTrainingBpFor(nation, fleetManagement),
+    trainingEffects: trainingEffectsFor(nation, fleetManagement),
   };
 }
 

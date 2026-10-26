@@ -17,8 +17,7 @@ and [ADR-0290](ADR-0290-special-training-program.md), for the one subject combat
 
 ## Not delivered
 
-Night fighting has no seam: every campaign battle is projected in daylight. Torpedo tactics and damage control have no matching
-battle factor. Their `effectBp` stays carried and unread until such a seam exists. Japan's discount and the exercise tension
+The other three subjects are delivered by ADR-0302. Japan's discount and the exercise tension
 consequence have no source figure and ADR-0230 forbids nation-name branches, so they stay with the owner.
 
 ## Compatibility
