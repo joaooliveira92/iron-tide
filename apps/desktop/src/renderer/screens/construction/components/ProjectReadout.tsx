@@ -1,5 +1,6 @@
 import { memo } from "react";
 import type { ConstructionScheduleUnavailableReason } from "@bluewave/campaign-engine";
+import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { ProjectRow } from "../project-progress.js";
@@ -75,11 +76,42 @@ export const ProjectReadout = memo(function ProjectReadout({
   className = "grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2 lg:grid-cols-4",
 }: ProjectReadoutProps) {
   const format = usePresentationFormat();
+  const schedule = row.readout?.scheduleExplanation;
+  const instalment = row.readout?.instalmentExplanation;
+  const cost = row.readout?.costExplanation;
   return (
-    <ul className={className} aria-label={`${row.className} cost and schedule`}>
-      {readoutLines(row, format).map((line) => (
-        <ReadoutItem key={line.label} label={line.label} value={line.value} />
-      ))}
-    </ul>
+    <div>
+      <ul className={className} aria-label={`${row.className} cost and schedule`}>
+        {readoutLines(row, format).map((line) => (
+          <ReadoutItem key={line.label} label={line.label} value={line.value} />
+        ))}
+      </ul>
+      {instalment !== undefined && (
+        <ExplanationDisclosure
+          tree={instalment}
+          area="construction"
+          summaryKey="construction.construction_instalment.summary"
+          format={format}
+          testId={`construction-instalment-explanation-${row.projectId}`}
+        />
+      )}
+      {cost !== undefined && (
+        <ExplanationDisclosure
+          tree={cost}
+          area="construction"
+          summaryKey="construction.construction_cost.summary"
+          format={format}
+          testId={`construction-cost-explanation-${row.projectId}`}
+        />
+      )}
+      {schedule !== undefined && (
+        <ExplanationDisclosure
+          tree={schedule}
+          area="construction"
+          summaryKey="construction.construction_schedule.summary"
+          format={format}
+        />
+      )}
+    </div>
   );
 });

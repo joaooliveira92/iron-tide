@@ -10,6 +10,8 @@ import type { ConstructionPackage, ConstructionProject } from "./state.js";
 
 export const ACCELERATION_WORK_RATE_MULTIPLIER_BP = 11_000 as const;
 
+export const CONSTRUCTION_LINE_IDS = LINE_IDS;
+
 const BP = 10_000;
 
 function scaleCapacityUnits(
@@ -75,15 +77,40 @@ export function remainingMonthlyCapacityUnits(
   ) as Record<LineId, number>;
 }
 
-export function monthlyAbsorbable(
+export interface MonthlyAbsorbableDetail {
+  readonly amount: number;
+  readonly remainingWork: number;
+  readonly appliedByLine: Readonly<Record<LineId, number>>;
+  readonly limitedLines: readonly LineId[];
+}
+
+function emptyLineWork(): Record<LineId, number> {
+  return Object.fromEntries(LINE_IDS.map((line) => [line, 0])) as Record<LineId, number>;
+}
+
+export function monthlyAbsorbableDetail(
   project: ConstructionProject,
   capacityUnits: Readonly<Record<string, number>> | undefined,
   month: string,
-): number {
+): MonthlyAbsorbableDetail {
   const remaining = Number(project["totalWork"]) - Number(project["completedWork"]);
-  if (remaining <= 0) return 0;
+  if (remaining <= 0) {
+    return {
+      amount: 0,
+      remainingWork: 0,
+      appliedByLine: emptyLineWork(),
+      limitedLines: [],
+    };
+  }
   const packages = project["packages"];
-  if (packages === undefined) return remaining;
+  if (packages === undefined) {
+    return {
+      amount: remaining,
+      remainingWork: remaining,
+      appliedByLine: emptyLineWork(),
+      limitedLines: [],
+    };
+  }
   const usage = project["monthUsage"];
   const sameMonth = usage !== undefined && usage["month"] === month;
   const startDone: PackageProgress = sameMonth
@@ -105,5 +132,24 @@ export function monthlyAbsorbable(
     startDone,
   );
   const applied = Object.values(step.applied).reduce((sum, work) => sum + work, 0);
-  return Math.min(remaining, applied);
+  const lineById = new Map(packages.map((p) => [p.id, p.line as LineId]));
+  const appliedByLine = emptyLineWork();
+  for (const [id, work] of Object.entries(step.applied)) {
+    const line = lineById.get(id);
+    if (line !== undefined) appliedByLine[line] += work;
+  }
+  return {
+    amount: Math.min(remaining, applied),
+    remainingWork: remaining,
+    appliedByLine,
+    limitedLines: [...step.limitedLines],
+  };
+}
+
+export function monthlyAbsorbable(
+  project: ConstructionProject,
+  capacityUnits: Readonly<Record<string, number>> | undefined,
+  month: string,
+): number {
+  return monthlyAbsorbableDetail(project, capacityUnits, month).amount;
 }

@@ -13,12 +13,13 @@ export function researchReadouts(
     {
       id: "budget",
       label: "Monthly budget",
-      value: format.count(budget.monthly),
+      value: format.count(budget.paid),
       tone: budget.note === null ? "neutral" : "warn",
       breakdown: {
         title: "Standing research spend",
         rows: [
-          { label: "Paid each month", value: format.count(budget.monthly) },
+          { label: "Requested each month", value: format.count(budget.monthly) },
+          { label: "Paid each month", value: format.count(budget.paid) },
           ...(budget.annualAllocation === null
             ? []
             : [
@@ -33,6 +34,35 @@ export function researchReadouts(
         footer: [{ label: "Headroom under the cap", value: format.count(headroom) }],
         causes: budget.note === null ? [] : [budget.note],
       },
+      explanations: [
+        ...(budget.budgetExplanation === undefined
+          ? []
+          : [
+              {
+                tree: budget.budgetExplanation,
+                area: "research",
+                summaryKey: "research.research_budget.summary",
+              },
+            ]),
+        ...(budget.capExplanation === undefined
+          ? []
+          : [
+              {
+                tree: budget.capExplanation,
+                area: "research",
+                summaryKey: "research.research_cap.summary",
+              },
+            ]),
+        ...(budget.floorExplanation === undefined
+          ? []
+          : [
+              {
+                tree: budget.floorExplanation,
+                area: "research",
+                summaryKey: "research.research_floor.summary",
+              },
+            ]),
+      ],
     },
     {
       id: "output",
@@ -95,6 +125,17 @@ export function researchReadouts(
           { label: "Guidance floor", value: format.count(budget.floor) },
         ],
       },
+      ...(budget.floorExplanation === undefined
+        ? {}
+        : {
+            explanations: [
+              {
+                tree: budget.floorExplanation,
+                area: "research",
+                summaryKey: "research.research_floor.summary",
+              },
+            ],
+          }),
     });
   }
 

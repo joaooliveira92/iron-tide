@@ -124,6 +124,59 @@ describe("MonthReportCard", () => {
     expect(card.textContent).toContain("Obligations 2");
   });
 
+  it("renders the treasury explanation from the report's reconciliation components", () => {
+    const treasury = report(2).treasury;
+    render(
+      <MonthReportCard
+        reports={[
+          report(2, {
+            treasury: {
+              ...treasury,
+              treasuryExplanation: {
+                formulaId: "report_treasury",
+                formulaVersion: "report_v1",
+                inputs: { opening: 1000 },
+                intermediate: { netChange: -56 },
+                result: 944,
+                unit: "nc",
+                children: [
+                  {
+                    formulaId: "report_treasury.opening",
+                    formulaVersion: "report_v1",
+                    inputs: { amount: 1000 },
+                    intermediate: {},
+                    result: 1000,
+                    unit: "nc",
+                  },
+                  {
+                    formulaId: "report_treasury.revenue",
+                    formulaVersion: "report_v1",
+                    inputs: { amount: 25 },
+                    intermediate: {},
+                    result: 25,
+                    unit: "nc",
+                  },
+                  {
+                    formulaId: "report_treasury.maintenance",
+                    formulaVersion: "report_v1",
+                    inputs: { amount: -16 },
+                    intermediate: {},
+                    result: -16,
+                    unit: "nc",
+                  },
+                ],
+              },
+            },
+          }),
+        ]}
+      />,
+    );
+    expect(screen.getByText("Treasury closed at 944")).toBeTruthy();
+    expect(screen.getByText("Opening treasury")).toBeTruthy();
+    expect(screen.getByText("Naval appropriation")).toBeTruthy();
+    expect(screen.getByText("Fleet maintenance")).toBeTruthy();
+  });
+
   it("renders the Construction section from real project progress and pre→post deltas", () => {
     render(
       <MonthReportCard

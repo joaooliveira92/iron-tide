@@ -72,6 +72,22 @@ describe("FleetExerciseView", () => {
     expect(onHold).toHaveBeenCalled();
   });
 
+  it("shows the exercise-gain explanation when supplied", () => {
+    renderView(
+      exercise({
+        experienceGainExplanation: {
+          formulaId: "fleet_exercise_gain",
+          formulaVersion: "fleet_v1",
+          inputs: { perExercise: 5 },
+          intermediate: {},
+          result: 5,
+          children: [],
+        },
+      }),
+    );
+    expect(screen.getByText("Exercise gain 5 experience")).toBeTruthy();
+  });
+
   it("disables the order with no ships chosen and everything while busy", () => {
     renderView(exercise(), [row("a")]);
     expect(

@@ -43,7 +43,7 @@ const AREAS = [
     name: "Values, currency & language",
     blurb:
       "Canonical values and the presentation-only units, currency, and language modes over them.",
-    nums: [202, 206, 207, 208, 209, 211, 215, 216, 217, 218, 219, 221],
+    nums: [202, 206, 207, 208, 209, 211, 215, 216, 217, 218, 219, 221, 307],
   },
   {
     name: "Preferences & interfaces",
@@ -111,7 +111,7 @@ const AREAS = [
   {
     name: "Engine architecture",
     blurb: "Package interfaces, seams and module depth across the engine.",
-    nums: [271, 272, 273, 276, 277, 294],
+    nums: [271, 272, 273, 276, 277, 294, 306],
   },
 ];
 

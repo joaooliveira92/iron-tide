@@ -1,5 +1,9 @@
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
-import { buildPrioritiesProjection, reconcileMonthLedger } from "@bluewave/campaign-engine";
+import {
+  buildPrioritiesProjection,
+  explainReportTreasury,
+  reconcileMonthLedger,
+} from "@bluewave/campaign-engine";
 import type { CommitMonthResponse } from "@bluewave/campaign-engine";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import type { LedgerTransaction } from "@bluewave/phase-engine";
@@ -127,6 +131,15 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
   const researchExpense = sumByCategory(input.ledgerEntries, ["RESEARCH_EXPENDITURE"]);
   const governmentAllocation = sumByCategory(input.ledgerEntries, ["NAVAL_APPROPRIATION"]);
   const ships = completedShips(playerNationBefore, playerNationAfter);
+  const reconciliation = reconcileMonthLedger(
+    input.ledgerEntries.map((entry) => ({
+      categoryId: entry.categoryId,
+      debit: Number(entry.debit),
+      credit: Number(entry.credit),
+    })),
+    response.report.openingTreasury,
+    response.report.closingTreasury,
+  );
 
   return {
     reportId: input.reportId,
@@ -153,15 +166,8 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
           : { requested: entry.requested, shortfall: entry.shortfall ?? 0 }),
       })),
       obligationExpense: sumByCategory(input.ledgerEntries, ["OBLIGATION"]),
-      reconciliation: reconcileMonthLedger(
-        input.ledgerEntries.map((entry) => ({
-          categoryId: entry.categoryId,
-          debit: Number(entry.debit),
-          credit: Number(entry.credit),
-        })),
-        response.report.openingTreasury,
-        response.report.closingTreasury,
-      ),
+      reconciliation,
+      treasuryExplanation: explainReportTreasury(reconciliation),
     },
     construction: {
       projects: constructionProgressFromEvents(input.domainEvents, playerNationId),

@@ -8,7 +8,13 @@ import {
   RESEARCH_FIELD_PRIORITY_WEIGHTS,
 } from "../src/research.js";
 import type { CampaignSnapshot } from "@bluewave/campaign";
-import { fixtureNation, fixtureSnapshot, fixtureState } from "./fixtures.js";
+import {
+  baseFor,
+  fixtureCatalogue,
+  fixtureNation,
+  fixtureSnapshot,
+  fixtureState,
+} from "./fixtures.js";
 
 function researchFixture(overrides: Partial<ResearchState> = {}): ResearchState {
   return {
@@ -198,5 +204,53 @@ describe("buildResearchScreenProjection technology chart", () => {
     const byId = new Map((projection?.technologies ?? []).map((t) => [t.techId, t.name]));
     expect(byId.get("hc_b")).toBe("Compound Armor");
     expect(byId.get("hc_c")).toBeNull();
+  });
+});
+
+describe("research explanations", () => {
+  const funded = () => {
+    const nation = fixtureNation({
+      id: "uk",
+      baseResources: baseFor(100),
+      research: researchFixture({ discoveredTechs: [] }),
+    });
+    const snapshot = fixtureSnapshot([nation], [], {
+      world: { areas: [], routes: [], ports: [], technologies: fixtureCatalogue },
+    });
+    const projection = buildResearchScreenProjection(fixtureState(snapshot), "uk", month);
+    if (projection === undefined) throw new Error("projection missing");
+    return projection;
+  };
+
+  it("explains the paid budget from the requested one, and the cap and floor from appropriation", () => {
+    const projection = funded();
+    expect(projection.researchSpend).toBe(60);
+    expect(Number(projection.budgetExplanation?.result)).toBe(projection.researchSpend);
+    expect(Number(projection.budgetExplanation?.children?.[0]?.result)).toBe(
+      projection.researchBudget,
+    );
+    expect(Number(projection.capExplanation?.result)).toBe(projection.researchCap);
+    expect(projection.researchCap).toBe(12);
+    expect(Number(projection.floorExplanation?.result)).toBe(projection.minimumResearchSpend);
+    expect(projection.minimumResearchSpend).toBe(8);
+  });
+
+  it("books the requested budget as unfunded when no field can take it", () => {
+    const nation = fixtureNation({
+      id: "uk",
+      baseResources: baseFor(100),
+      research: researchFixture({ discoveredTechs: [] }),
+    });
+    const projection = buildResearchScreenProjection(
+      fixtureState(fixtureSnapshot([nation])),
+      "uk",
+      month,
+    );
+    expect(projection?.researchSpend).toBe(0);
+    expect(Number(projection?.budgetExplanation?.result)).toBe(0);
+    expect(projection?.budgetExplanation?.children?.map((child) => child.formulaId)).toEqual([
+      "research_budget.requested",
+      "research_budget.unfunded",
+    ]);
   });
 });

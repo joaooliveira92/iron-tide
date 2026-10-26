@@ -337,14 +337,22 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
       { month: 1, year: 1880 },
       rules,
     );
-    expect(projection?.presence).toEqual({
-      configured: true,
-      exempt: false,
-      areas: [
-        { areaId: "cape", requiredTons: 200, presentTons: 0, shortfallTons: 200 },
-        { areaId: "india", requiredTons: 400, presentTons: 200, shortfallTons: 200 },
-      ],
-    });
+    const presence = projection?.presence;
+    expect(presence).toMatchObject({ configured: true, exempt: false });
+    if (presence?.configured !== true) return;
+    expect(
+      presence.areas.map(({ areaId, requiredTons, presentTons, shortfallTons }) => ({
+        areaId,
+        requiredTons,
+        presentTons,
+        shortfallTons,
+      })),
+    ).toEqual([
+      { areaId: "cape", requiredTons: 200, presentTons: 0, shortfallTons: 200 },
+      { areaId: "india", requiredTons: 400, presentTons: 200, shortfallTons: 200 },
+    ]);
+    expect(presence.areas[1]?.shortfallExplanation?.formulaId).toBe("fleet_presence");
+    expect(Number(presence.areas[1]?.shortfallExplanation?.result)).toBe(200);
   });
 
   it("shows the exemption notice and no shortfall while at war and blockaded, and the shortfall again after it lifts (S-5 06)", () => {
@@ -396,16 +404,29 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
         ?.presence;
     };
     const row = { areaId: "india", requiredTons: 200, presentTons: 0 };
-    expect(project([war], [])).toEqual({
+    const atWar = project([war], []);
+    expect(atWar).toMatchObject({
       configured: true,
       exempt: false,
       areas: [{ ...row, shortfallTons: 200 }],
     });
-    expect(project([war], [blockade])).toEqual({
+    if (atWar?.configured === true) {
+      expect(atWar.areas[0]?.shortfallExplanation?.children?.map((c) => c.formulaId)).toEqual([
+        "fleet_presence.required",
+        "fleet_presence.present",
+      ]);
+    }
+    const blockaded = project([war], [blockade]);
+    expect(blockaded).toMatchObject({
       configured: true,
       exempt: true,
       areas: [{ ...row, shortfallTons: 0 }],
     });
+    if (blockaded?.configured === true) {
+      expect(blockaded.areas[0]?.shortfallExplanation?.children?.map((c) => c.formulaId)).toContain(
+        "fleet_presence.exemption",
+      );
+    }
     expect(project([{ ...war, status: "ENDED" }], [blockade])).toMatchObject({ exempt: false });
     expect(project([], [blockade])).toMatchObject({ exempt: false });
   });

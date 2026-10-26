@@ -44,10 +44,53 @@ tickets in `.ai/reports/story-49-explanation-inventory.md` track the rest.
    screen renders them through one generic disclosure whose node labels are `<area>.<formula>.<node>` and whose numbers use the
    presentation formatters.
 
+## Area slices (2026-10-26, #300–#303)
+
+The batch branch `feat/story-49-area-explanations` adds four area slices through the same contract:
+
+- **Economy and budget (#300).** `PlayerProjectionEconomy` carries `netExplanation` (`economy_net`), `monthEndExplanation`
+  (`economy_month_end`), `runwayExplanation` (`economy_runway`, only while the treasury is shrinking) and
+  `appropriationExplanation` (`economy_appropriation`). The month-end tree walks `EconomyOutlook.settlement` — the exact
+  paid amounts the outlook books — so the result equals `monthEndTreasury`. The treasury status popovers show them in the
+  shared disclosure.
+- **Research (#303).** `ResearchScreenProjection` carries `budgetExplanation` (`research_budget`), `capExplanation`
+  (`research_cap`) and `floorExplanation` (`research_floor`). The research status bar shows the paid budget (with the
+  requested budget and the cap in the breakdown) and the explanation in its popover.
+- **Construction and yards (#302).** `ConstructionProjectReadoutView` carries `scheduleExplanation`
+  (`construction_schedule`): months left divided out of the work remaining and the monthly instalment. The project
+  readout shows it under the schedule lines.
+- **Fleet (#301).** `PlayerProjectionPresenceArea` carries `shortfallExplanation` (`fleet_presence`): required tonnage
+  less present tonnage, with a recorded exemption line when a blockade suspends the requirement. The foreign-station
+  table shows it in the shortfall cell.
+
+`explanationLabelKey` moved to `apps/desktop/src/renderer/lib/explanation.ts`; the generic
+`ExplanationDisclosure` (`apps/desktop/src/renderer/components/shared`) renders any area's tree with
+`<area>.<formula>.<node>` labels and presentation-formatted values. The manifest ratchet moved from 2.07% to 6.40%
+(13/203 fields).
+
+## Continuation (2026-10-26, #301/#302/#306)
+
+The second batch continues the same contract on the branch `feat/story-49-area-explanations-2`:
+
+- **Construction (#302).** `ConstructionProjectReadout` now also carries `instalmentExplanation`
+  (`construction_instalment`, the applied work split by production line) and `costExplanation`
+  (`construction_cost`, the package total split by line). `monthlyAbsorbableDetail` exposes the per-line
+  applied work so the instalment tree is built from the same draw the schedule uses.
+- **Fleet (#301).** `FleetTrainingSubjectView` carries `maintenanceAdderExplanation` (`fleet_training_adder`)
+  and `progressExplanation` (`fleet_training_progress`, months to proficiency); `FleetExerciseProjection`
+  carries `experienceGainExplanation` (`fleet_exercise_gain`) whose source is the content rule.
+  Crew quality, repair months and accumulated division experience/cohesion stay exempt because the view
+  holds only the current value.
+- **Reports (#306).** `MonthlyReportTreasury` carries `treasuryExplanation` (`report_treasury`) built from
+  the month's `reconcileMonthLedger` result. The reports sidecar schema accepts the optional tree, so old
+  reports decode unchanged.
+
 ## Not delivered (tracked, not hidden)
 
-- Every area except the battle accuracy slice is exempt in the manifest with its tracking issue (#300–#306). The report lists
-  the areas and their approximate field counts.
+- The diplomacy/war/prestige/priorities area (#304) remains exempt with its tracking issue. ADR-0307 decides
+  the provenance: prestige needs the applied rule recorded on the last change (the next slice); war score
+  and tension need a stored contribution history; priorities use their existing `reason` trace; the opening
+  briefing reuses the economy/construction/fleet trees. No tree is invented from a total.
 - The ship designer has partial `ExplanationText` findings (ADR-0221) and is tracked by #168; the debug-only screens are not
   player-facing and are not in the manifest.
 

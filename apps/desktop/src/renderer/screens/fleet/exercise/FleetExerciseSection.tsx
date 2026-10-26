@@ -1,6 +1,8 @@
 import { Badge } from "../../../components/ui/badge.js";
 import { Button } from "../../../components/ui/button.js";
 import { Card, CardContent } from "../../../components/ui/card.js";
+import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
 import { limitReached, type ExerciseShipRow, type ExerciseState } from "./exercise-model.js";
 import { useFleetExercise } from "./useFleetExercise.js";
@@ -30,6 +32,7 @@ export function FleetExerciseView({
   onRetry,
   onReload,
 }: FleetExerciseViewProps) {
+  const format = usePresentationFormat();
   const exercise = state.exercise;
   if (exercise === null) return null;
   const scheduled = exercise.scheduled;
@@ -55,6 +58,15 @@ export function FleetExerciseView({
         {exercise.maintenanceMultiple} times their active maintenance that month and cannot sail,
         fight or take missions. Their divisions gain {exercise.experienceGain} experience.
       </p>
+      {exercise.experienceGainExplanation !== undefined && (
+        <ExplanationDisclosure
+          tree={exercise.experienceGainExplanation}
+          area="fleet"
+          summaryKey="fleet.fleet_exercise_gain.summary"
+          format={format}
+          testId="fleet-exercise-gain-explanation"
+        />
+      )}
 
       {loadError !== null && (
         <div role="alert" className="space-y-2 rounded-md border border-destructive/50 p-3 text-sm">

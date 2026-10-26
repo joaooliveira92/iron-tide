@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "minimumCoveredPercentBp": 207,
+  "minimumCoveredPercentBp": 904,
   "contracts": [
     {
       "file": "apps/desktop/src/shared/budget-contract.ts",
@@ -88,7 +88,12 @@
       "type": "PlayerProjectionEconomy",
       "area": "economy",
       "issue": "#300",
-      "covered": {},
+      "covered": {
+        "netExplanation": "economy_net",
+        "monthEndExplanation": "economy_month_end",
+        "runwayExplanation": "economy_runway",
+        "appropriationExplanation": "economy_appropriation"
+      },
       "exempt": {
         "treasury": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
         "monthlyAppropriation": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
@@ -134,10 +139,14 @@
       "type": "FleetTrainingSubjectView",
       "area": "fleet",
       "issue": "#301",
-      "covered": {},
+      "covered": {
+        "maintenanceAdderExplanation": "fleet_training_adder",
+        "progressExplanation": "fleet_training_progress"
+      },
       "exempt": {
-        "maintenanceAdderBp": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "fundedMonths": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+        "maintenanceAdderBp": "Explained by maintenanceAdderExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "fundedMonths": "Accumulated monthly counter; progressExplanation explains the months still needed, but the counter itself has no replayable per-month source in the view.",
+        "monthsToProficiency": "Explained by progressExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree."
       }
     },
     {
@@ -147,8 +156,8 @@
       "issue": "#301",
       "covered": {},
       "exempt": {
-        "maxSubjects": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "proficiencyMonths": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+        "maxSubjects": "Content constant (fleet_management.training.maxSubjects); there is no engine calculation to decompose.",
+        "proficiencyMonths": "Content constant (fleet_management.training.proficiencyMonths); it is the threshold used by progressExplanation, not a derived value."
       }
     },
     {
@@ -156,13 +165,15 @@
       "type": "FleetExerciseProjection",
       "area": "fleet",
       "issue": "#301",
-      "covered": {},
+      "covered": {
+        "experienceGainExplanation": "fleet_exercise_gain"
+      },
       "exempt": {
-        "maxPerCalendarYear": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "maintenanceMultiple": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "experienceGain": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "nextExerciseYear": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "heldInNextExerciseYear": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+        "maxPerCalendarYear": "Content constant (fleet_management.exercise.maxPerCalendarYear); there is no engine calculation to decompose.",
+        "maintenanceMultiple": "Content constant (fleet_management.exercise.maintenanceMultiple); there is no engine calculation to decompose.",
+        "experienceGain": "Explained by experienceGainExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "nextExerciseYear": "Calendar projection from the campaign month; the view carries no month arithmetic to decompose.",
+        "heldInNextExerciseYear": "Accumulated annual counter; the view carries no per-exercise history to decompose."
       }
     },
     {
@@ -172,7 +183,7 @@
       "issue": "#301",
       "covered": {},
       "exempt": {
-        "skill": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+        "skill": "Officer skill is compiled content; the view carries only the final value, with no training or experience components to decompose."
       }
     },
     {
@@ -182,8 +193,8 @@
       "issue": "#301",
       "covered": {},
       "exempt": {
-        "slowestSpeed": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "fastestSpeed": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+        "slowestSpeed": "Design speed converted to knots; the view carries neither the micrometre source nor the conversion.",
+        "fastestSpeed": "Design speed converted to knots; the view carries neither the micrometre source nor the conversion."
       }
     },
     {
@@ -193,8 +204,8 @@
       "issue": "#301",
       "covered": {},
       "exempt": {
-        "experience": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "cohesion": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+        "experience": "Accumulated division state (initial value plus edits, exercises and doctrine); the view carries no event history to decompose.",
+        "cohesion": "Accumulated division state (initial value plus edits, monthly growth and doctrine); the view carries no event history to decompose."
       }
     },
     {
@@ -204,8 +215,8 @@
       "issue": "#301",
       "covered": {},
       "exempt": {
-        "experience": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "cohesion": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+        "experience": "Ruleset penalty constant (division doctrine); it is the cost shown to the player, not a derived value.",
+        "cohesion": "Ruleset penalty constant (division doctrine); it is the cost shown to the player, not a derived value."
       }
     },
     {
@@ -215,8 +226,8 @@
       "issue": "#301",
       "covered": {},
       "exempt": {
-        "maxShips": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "maxDestroyers": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+        "maxShips": "Ruleset constant (division size limit); there is no engine calculation to decompose.",
+        "maxDestroyers": "Ruleset constant (destroyer division limit); there is no engine calculation to decompose."
       }
     },
     {
@@ -226,8 +237,8 @@
       "issue": "#301",
       "covered": {},
       "exempt": {
-        "crewQuality": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "repairMonthsRemaining": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+        "crewQuality": "Accumulated readiness-ramp state; the view carries only the current value, so a tree would invent the before/after history.",
+        "repairMonthsRemaining": "Countdown state; the view carries neither the repair start nor its full duration, so a tree would invent the source months."
       }
     },
     {
@@ -257,8 +268,8 @@
       "issue": "#301",
       "covered": {},
       "exempt": {
-        "crewQuality": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "displacementTons": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+        "crewQuality": "Accumulated readiness-ramp state; the projection carries only the current value, so a tree would invent the before/after history.",
+        "displacementTons": "Design displacement converted to tons; the projection does not carry the kilogram source or the divisor."
       }
     },
     {
@@ -266,11 +277,13 @@
       "type": "PlayerProjectionPresenceArea",
       "area": "fleet",
       "issue": "#301",
-      "covered": {},
+      "covered": {
+        "shortfallExplanation": "fleet_presence"
+      },
       "exempt": {
-        "requiredTons": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "presentTons": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
-        "shortfallTons": "Not yet explained; #301 covers this area and re-exempts any field it does not explain."
+        "requiredTons": "Explained by shortfallExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "presentTons": "Explained by shortfallExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "shortfallTons": "Explained by shortfallExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree."
       }
     },
     {
@@ -280,20 +293,20 @@
       "issue": "#302",
       "covered": {},
       "exempt": {
-        "revision": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "month.month": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "month.year": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "economy.treasury": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "economy.monthlyAppropriation": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "economy.shipyardCapacity": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "economy.dockMaxBuildDisplacementKg": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "economy.maxConcurrentConstructionMassKg": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "economy.committedNewConstructionMassKg": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "economy.exemptNewConstructionMassKg": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "economy.dockExpansionDurationMonths": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "economy.dockExpansionNextStepKg": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "workspace.treasuryReserved": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "workspace.capacityReserved": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+        "revision": "Campaign revision metadata, not a derived value.",
+        "month.month": "Campaign month metadata, not a derived value.",
+        "month.year": "Campaign month metadata, not a derived value.",
+        "economy.treasury": "Re-export of the economy treasury; the economy trees are the provenance (ADR-0304).",
+        "economy.monthlyAppropriation": "Re-export of the economy appropriation; economy_appropriation is the provenance.",
+        "economy.shipyardCapacity": "Sum of the nation's port capacities; the ports are the components, with no separate view tree.",
+        "economy.dockMaxBuildDisplacementKg": "Dock possession state; it has no derived formula.",
+        "economy.maxConcurrentConstructionMassKg": "National-capacity rule (dock size × national multiple); the main process computes it without a view tree yet.",
+        "economy.committedNewConstructionMassKg": "Aggregate of per-project reserved mass; the view does not carry the per-project components, so a tree would invent them.",
+        "economy.exemptNewConstructionMassKg": "Aggregate of per-project external capacity; the view does not carry the per-project components, so a tree would invent them.",
+        "economy.dockExpansionDurationMonths": "Content constant (dock expansion duration); there is no engine calculation to decompose.",
+        "economy.dockExpansionNextStepKg": "Content rule (era step); there is no engine calculation to decompose.",
+        "workspace.treasuryReserved": "Sum of queued command reservations; the queue is the provenance, with no separate view tree.",
+        "workspace.capacityReserved": "Sum of queued command reservations; the queue is the provenance, with no separate view tree."
       }
     },
     {
@@ -303,8 +316,8 @@
       "issue": "#302",
       "covered": {},
       "exempt": {
-        "projectedCost": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "projectedCapacityUnits": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+        "projectedCost": "Design cost model or displacement formula; the catalogue shows the result, not its components.",
+        "projectedCapacityUnits": "Design displacement converted to capacity units; the contract carries only the result."
       }
     },
     {
@@ -312,11 +325,15 @@
       "type": "ConstructionProjectReadout",
       "area": "construction",
       "issue": "#302",
-      "covered": {},
+      "covered": {
+        "scheduleExplanation": "construction_schedule",
+        "instalmentExplanation": "construction_instalment",
+        "costExplanation": "construction_cost"
+      },
       "exempt": {
-        "totalCostUnits": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "monthlyInstalmentUnits": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "remainingMonths": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+        "totalCostUnits": "Explained by costExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "monthlyInstalmentUnits": "Explained by instalmentExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "remainingMonths": "Explained by scheduleExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree."
       }
     },
     {
@@ -326,7 +343,7 @@
       "issue": "#302",
       "covered": {},
       "exempt": {
-        "haltedCarryingCostUnits": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+        "haltedCarryingCostUnits": "Accumulated halted-project carrying cost; the view carries no rate or elapsed-month components, so a tree would invent provenance."
       }
     },
     {
@@ -336,9 +353,9 @@
       "issue": "#302",
       "covered": {},
       "exempt": {
-        "totalWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "completedWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "paidWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+        "totalWork": "Project state value; the package breakdown is the source, shown separately on the queue entry.",
+        "completedWork": "Project state value; the package breakdown is the source, shown separately on the queue entry.",
+        "paidWork": "Project state value; it has no derived formula in the view."
       }
     },
     {
@@ -348,8 +365,8 @@
       "issue": "#302",
       "covered": {},
       "exempt": {
-        "totalWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "doneWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+        "totalWork": "Package state value; it has no derived formula.",
+        "doneWork": "Package progress state; it has no derived formula."
       }
     },
     {
@@ -359,7 +376,7 @@
       "issue": "#302",
       "covered": {},
       "exempt": {
-        "premiumWork": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+        "premiumWork": "Acceleration premium state; it has no derived formula in the view."
       }
     },
     {
@@ -369,10 +386,10 @@
       "issue": "#302",
       "covered": {},
       "exempt": {
-        "acceleratedCount": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "delayChanceBp": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "premiumBp": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "premiumPending": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+        "acceleratedCount": "Count of accelerated projects; the count is the provenance.",
+        "delayChanceBp": "Ruleset constant (acceleration delay chance); it has no derived formula.",
+        "premiumBp": "Ruleset constant (acceleration premium); it has no derived formula.",
+        "premiumPending": "Accumulated premium state; it has no derived formula in the view."
       }
     },
     {
@@ -382,9 +399,9 @@
       "issue": "#302",
       "covered": {},
       "exempt": {
-        "draw": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "carryingCost": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "percentComplete": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+        "draw": "Monthly ledger draw for the commitment; the ledger row is the provenance.",
+        "carryingCost": "Monthly carrying cost for the commitment; it has no derived formula in the view.",
+        "percentComplete": "Completed work divided by total work; the queue entry carries both components."
       }
     },
     {
@@ -394,9 +411,9 @@
       "issue": "#302",
       "covered": {},
       "exempt": {
-        "drawTotal": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "carryingTotal": "Not yet explained; #302 covers this area and re-exempts any field it does not explain.",
-        "haltedCount": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
+        "drawTotal": "Sum of the commitment draws; the commitments are the provenance.",
+        "carryingTotal": "Sum of the commitment carrying costs; the commitments are the provenance.",
+        "haltedCount": "Count of halted projects; the count is the provenance."
       }
     },
     {
@@ -442,11 +459,16 @@
       "type": "ResearchScreenProjection",
       "area": "research",
       "issue": "#303",
-      "covered": {},
+      "covered": {
+        "budgetExplanation": "research_budget",
+        "capExplanation": "research_cap",
+        "floorExplanation": "research_floor"
+      },
       "exempt": {
         "turnNumber": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
         "minimumResearchSpend": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
         "researchBudget": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "researchSpend": "Explained by budgetExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
         "annualAllocation": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
         "researchCap": "Not yet explained; #303 covers this area and re-exempts any field it does not explain."
       }
@@ -470,7 +492,7 @@
       "issue": "#304",
       "covered": {},
       "exempt": {
-        "tension": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+        "tension": "Accumulated per-relation state with no stored last-change sources; ADR-0307 keeps it exempt until a contribution record exists."
       }
     },
     {
@@ -480,8 +502,8 @@
       "issue": "#304",
       "covered": {},
       "exempt": {
-        "attackerWarScore": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "defenderWarScore": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+        "attackerWarScore": "Accumulated battle and blockade score; the war state stores only the total, so a tree would invent its contributions (ADR-0307).",
+        "defenderWarScore": "Accumulated battle and blockade score; the war state stores only the total, so a tree would invent its contributions (ADR-0307)."
       }
     },
     {
@@ -503,8 +525,8 @@
       "issue": "#304",
       "covered": {},
       "exempt": {
-        "financialRisk": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "timeToConsequence": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+        "financialRisk": "Internal ranking key, not displayed; the player-readable provenance is StrategicPriority.reason (ADR-0307).",
+        "timeToConsequence": "Internal ranking key, not displayed; the player-readable provenance is StrategicPriority.reason (ADR-0307)."
       }
     },
     {
@@ -514,7 +536,7 @@
       "issue": "#304",
       "covered": {},
       "exempt": {
-        "count": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+        "count": "Count of the nation's ships by class in the opening snapshot; the count itself is the provenance."
       }
     },
     {
@@ -524,7 +546,7 @@
       "issue": "#304",
       "covered": {},
       "exempt": {
-        "tension": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+        "tension": "Opening relation snapshot; the same accumulated tension as DiplomacyRelationRow, with no stored last-change sources (ADR-0307)."
       }
     },
     {
@@ -534,18 +556,18 @@
       "issue": "#304",
       "covered": {},
       "exempt": {
-        "stateOfTheNavy.shipsUnderConstruction": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "stateOfTheNavy.mostExpensiveActiveClass.projectedCost": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "stateOfTheNavy.largestDockCapacity": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "stateOfTheNavy.totalMaintenance": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "stateOfTheNavy.constructionCommitted": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "treasury.governmentAllocation": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "treasury.fleetMaintenance": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "treasury.constructionCommitted": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "treasury.researchExpenditure": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "treasury.projectedSurplus": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "treasury.obligations": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "treasury.runwayMonths": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+        "stateOfTheNavy.shipsUnderConstruction": "Count of the nation's construction projects; the count itself is the provenance.",
+        "stateOfTheNavy.mostExpensiveActiveClass.projectedCost": "Design cost model value; the construction catalogue exposes the calculation, not the briefing.",
+        "stateOfTheNavy.largestDockCapacity": "Dock possession state; it has no derived formula.",
+        "stateOfTheNavy.totalMaintenance": "Re-export of the economy fleet-maintenance projection; that area's tree is the provenance (ADR-0307).",
+        "stateOfTheNavy.constructionCommitted": "Re-export of the economy construction projection; that area's tree is the provenance (ADR-0307).",
+        "treasury.governmentAllocation": "Re-export of the economy appropriation projection; economy_appropriation is the provenance (ADR-0307).",
+        "treasury.fleetMaintenance": "Re-export of the economy fleet-maintenance projection; economy_net is the provenance (ADR-0307).",
+        "treasury.constructionCommitted": "Re-export of the economy construction projection; economy_net is the provenance (ADR-0307).",
+        "treasury.researchExpenditure": "Re-export of the economy research projection; economy_net is the provenance (ADR-0307).",
+        "treasury.projectedSurplus": "Re-export of the economy projected-net projection; economy_net is the provenance (ADR-0307).",
+        "treasury.obligations": "Re-export of the economy obligations projection; economy_net is the provenance (ADR-0307).",
+        "treasury.runwayMonths": "Re-export of the economy runway projection; economy_runway is the provenance (ADR-0307)."
       }
     },
     {
@@ -555,11 +577,11 @@
       "issue": "#304",
       "covered": {},
       "exempt": {
-        "current": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "sackingThreshold": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "lastChange.before": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "lastChange.after": "Not yet explained; #304 covers this area and re-exempts any field it does not explain.",
-        "lastChange.delta": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+        "current": "Accumulated prestige state; the applied rule is not stored on the last change yet, so a tree would invent the source (ADR-0307).",
+        "sackingThreshold": "Ruleset constant (prestige sacking threshold); it has no derived formula.",
+        "lastChange.before": "Recorded before value; the applied rule is not stored yet, so ADR-0307 defers the prestige_change tree to the rule-record slice.",
+        "lastChange.after": "Recorded after value; the applied rule is not stored yet, so ADR-0307 defers the prestige_change tree to the rule-record slice.",
+        "lastChange.delta": "Recorded delta; the applied rule is not stored yet, so ADR-0307 defers the prestige_change tree to the rule-record slice."
       }
     },
     {
@@ -569,7 +591,7 @@
       "issue": "#304",
       "covered": {},
       "exempt": {
-        "score": "Not yet explained; #304 covers this area and re-exempts any field it does not explain."
+        "score": "Final prestige snapshot at career end; the score is the provenance, with no derived formula."
       }
     },
     {
@@ -645,10 +667,10 @@
       "issue": "#306",
       "covered": {},
       "exempt": {
-        "amount": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "runningBalance": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "requested": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "shortfall": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+        "amount": "Ledger row is the source line; treasuryExplanation aggregates the rows by category.",
+        "runningBalance": "Cumulative balance across the ledger rows; the view carries the row sequence but no separate formula.",
+        "requested": "Unfunded request recorded on the ledger row; it has no derived formula.",
+        "shortfall": "Unfunded shortfall recorded on the ledger row; it has no derived formula."
       }
     },
     {
@@ -656,16 +678,18 @@
       "type": "MonthlyReportTreasury",
       "area": "reports",
       "issue": "#306",
-      "covered": {},
+      "covered": {
+        "treasuryExplanation": "report_treasury"
+      },
       "exempt": {
-        "openingTreasury": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "closingTreasury": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "maintenanceCost": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "constructionSpending": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "researchExpense": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "governmentAllocation": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "netChange": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "obligationExpense": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+        "openingTreasury": "Explained by treasuryExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "closingTreasury": "Explained by treasuryExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "maintenanceCost": "Explained by treasuryExplanation (maintenance line); the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "constructionSpending": "Explained by treasuryExplanation (construction line); the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "researchExpense": "Explained by treasuryExplanation (research line); the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "governmentAllocation": "Explained by treasuryExplanation (revenue line); the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "netChange": "Explained by treasuryExplanation (opening and movement lines); the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "obligationExpense": "Explained by treasuryExplanation (obligation line); the numeric field is not itself an ExplanationTree, so the gate counts the tree."
       }
     },
     {
@@ -675,8 +699,8 @@
       "issue": "#306",
       "covered": {},
       "exempt": {
-        "previousWork": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "newWork": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+        "previousWork": "Projection of the ConstructionProgressed event's previousWork; the event is the provenance.",
+        "newWork": "Projection of the ConstructionProgressed event's newWork; the event is the provenance."
       }
     },
     {
@@ -686,8 +710,8 @@
       "issue": "#306",
       "covered": {},
       "exempt": {
-        "previousPoints": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "newPoints": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+        "previousPoints": "Projection of the ResearchProgressed event's previousPoints; the event is the provenance.",
+        "newPoints": "Projection of the ResearchProgressed event's newPoints; the event is the provenance."
       }
     },
     {
@@ -697,7 +721,7 @@
       "issue": "#306",
       "covered": {},
       "exempt": {
-        "totalActiveShips": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+        "totalActiveShips": "Count of active ships in the post-month snapshot; the count itself is the provenance, with no derived formula."
       }
     },
     {
@@ -707,7 +731,7 @@
       "issue": "#306",
       "covered": {},
       "exempt": {
-        "turn": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+        "turn": "Report metadata (the turn the report belongs to), not a derived value."
       }
     },
     {
@@ -725,7 +749,7 @@
       "issue": "#306",
       "covered": {},
       "exempt": {
-        "delta": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+        "delta": "Effect amount carried on the message reference; the message is the provenance, with no separate formula."
       }
     },
     {
@@ -735,7 +759,7 @@
       "issue": "#306",
       "covered": {},
       "exempt": {
-        "ordinal": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+        "ordinal": "Interruption sequence metadata, not a derived value."
       }
     },
     {
@@ -745,7 +769,7 @@
       "issue": "#306",
       "covered": {},
       "exempt": {
-        "strength": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+        "strength": "Battle-offer estimate produced by the offer engine; the offer is the provenance."
       }
     },
     {
@@ -755,9 +779,9 @@
       "issue": "#306",
       "covered": {},
       "exempt": {
-        "startingRevision": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "nextInterruptionOrdinal": "Not yet explained; #306 covers this area and re-exempts any field it does not explain.",
-        "recordedInputCount": "Not yet explained; #306 covers this area and re-exempts any field it does not explain."
+        "startingRevision": "Turn metadata (the revision the pending turn started from), not a derived value.",
+        "nextInterruptionOrdinal": "Turn counter, not a derived value.",
+        "recordedInputCount": "Count of recorded inputs, not a derived value."
       }
     }
   ]

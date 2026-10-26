@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Badge } from "../../../components/ui/badge.js";
 import { Button } from "../../../components/ui/button.js";
 import { Card, CardContent } from "../../../components/ui/card.js";
+import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { TrainingSubjectId } from "../../../../shared/fleet-contract.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
 import {
@@ -33,6 +35,7 @@ export function FleetTrainingView({
   onRetry,
   onReload,
 }: FleetTrainingViewProps) {
+  const format = usePresentationFormat();
   const training = state.training;
   const authoritative = training === null ? [] : fundedSubjects(training);
   const authoritativeKey = authoritative.join("\u0000");
@@ -92,41 +95,64 @@ export function FleetTrainingView({
           {training.subjects.map((subject) => {
             const chosen = draft.includes(subject.subject);
             return (
-              <label
-                key={subject.subject}
-                className="flex flex-wrap items-center justify-between gap-2 text-sm"
-              >
-                <span className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="size-4 accent-primary"
-                    checked={chosen}
-                    disabled={busy || (!chosen && atLimit)}
-                    title={
-                      !chosen && atLimit
-                        ? `At most ${training.maxSubjects} subjects can be funded at once`
-                        : undefined
-                    }
-                    onChange={() =>
-                      setDraft((current) =>
-                        chosen
-                          ? current.filter((candidate) => candidate !== subject.subject)
-                          : [...current, subject.subject],
-                      )
-                    }
-                    aria-label={`Fund ${TRAINING_SUBJECT_LABELS[subject.subject]}`}
-                  />
-                  <span className="flex flex-col">
-                    <span className="font-medium">{TRAINING_SUBJECT_LABELS[subject.subject]}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {adderText(subject.maintenanceAdderBp)}
+              <div key={subject.subject} className="space-y-0.5">
+                <label className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <span className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-primary"
+                      checked={chosen}
+                      disabled={busy || (!chosen && atLimit)}
+                      title={
+                        !chosen && atLimit
+                          ? `At most ${training.maxSubjects} subjects can be funded at once`
+                          : undefined
+                      }
+                      onChange={() =>
+                        setDraft((current) =>
+                          chosen
+                            ? current.filter((candidate) => candidate !== subject.subject)
+                            : [...current, subject.subject],
+                        )
+                      }
+                      aria-label={`Fund ${TRAINING_SUBJECT_LABELS[subject.subject]}`}
+                    />
+                    <span className="flex flex-col">
+                      <span className="font-medium">
+                        {TRAINING_SUBJECT_LABELS[subject.subject]}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {adderText(subject.maintenanceAdderBp)}
+                      </span>
                     </span>
                   </span>
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {progressText(subject, training.proficiencyMonths)}
-                </span>
-              </label>
+                  <span className="text-xs text-muted-foreground">
+                    {progressText(subject, training.proficiencyMonths)}
+                  </span>
+                </label>
+                {subject.maintenanceAdderExplanation !== undefined && (
+                  <div className="pl-6">
+                    <ExplanationDisclosure
+                      tree={subject.maintenanceAdderExplanation}
+                      area="fleet"
+                      summaryKey="fleet.fleet_training_adder.summary"
+                      format={format}
+                      testId={`fleet-training-adder-${subject.subject}`}
+                    />
+                  </div>
+                )}
+                {subject.progressExplanation !== undefined && (
+                  <div className="pl-6">
+                    <ExplanationDisclosure
+                      tree={subject.progressExplanation}
+                      area="fleet"
+                      summaryKey="fleet.fleet_training_progress.summary"
+                      format={format}
+                      testId={`fleet-training-progress-${subject.subject}`}
+                    />
+                  </div>
+                )}
+              </div>
             );
           })}
         </CardContent>

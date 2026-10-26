@@ -8,6 +8,7 @@ import {
   isTrainingSubject,
   TRAINING_SUBJECTS,
   TrainingSubjectEntrySchema,
+  trainingAdderDetail,
   trainingMaintenanceAdderBp,
   trainingRefusal,
   type SpecialTrainingRules,
@@ -68,6 +69,22 @@ describe("fundSpecialTraining with a nation cost multiplier", () => {
     const first = fundSpecialTraining(undefined, ["GUNNERY"], rules, "frugal");
     const again = fundSpecialTraining(first, ["GUNNERY"], rules, "frugal");
     expect(again[0]!.maintenanceAdderBp).toBe(2_400);
+  });
+});
+
+describe("trainingAdderDetail", () => {
+  it("reports the base adder, the nation multiplier and the same result as trainingAdderBp", () => {
+    const rules: SpecialTrainingRules = { ...RULES, nationCostMultiplierBp: { frugal: 8_000 } };
+    expect(trainingAdderDetail(rules, "GUNNERY", "frugal")).toEqual({
+      baseAdderBp: 3_000,
+      nationMultiplierBp: 8_000,
+      adderBp: 2_400,
+    });
+    expect(trainingAdderDetail(rules, "GUNNERY", "other")).toEqual({
+      baseAdderBp: 3_000,
+      nationMultiplierBp: 10_000,
+      adderBp: 3_000,
+    });
   });
 });
 

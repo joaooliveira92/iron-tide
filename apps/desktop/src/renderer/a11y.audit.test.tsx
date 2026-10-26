@@ -170,6 +170,10 @@ describe("accessibility audit (axe-core)", () => {
           availableFunds: 1000,
           projectedMonthEndFunds: 944,
           runwayMonths: undefined,
+          netExplanation: undefined,
+          monthEndExplanation: undefined,
+          runwayExplanation: undefined,
+          appropriationExplanation: undefined,
         }}
       />,
     );

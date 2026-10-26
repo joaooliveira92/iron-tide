@@ -3,6 +3,7 @@ import type {
   LedgerReconciliation,
   StrategicPriority,
 } from "@bluewave/campaign-engine";
+import type { ExplanationTree } from "@bluewave/events";
 
 export interface MonthlyReportLedgerRow {
   readonly id: string;
@@ -25,6 +26,7 @@ export interface MonthlyReportTreasury {
   readonly ledgerRows: readonly MonthlyReportLedgerRow[];
   readonly obligationExpense?: number;
   readonly reconciliation?: LedgerReconciliation;
+  readonly treasuryExplanation?: ExplanationTree;
 }
 
 export interface MonthlyReportConstructionProgress {
