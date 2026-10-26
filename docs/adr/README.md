@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0299).
+highest existing number + 1 (the next number is ADR-0300).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -85,6 +85,7 @@ Concurrent-agent worktree coordination and repository process rules.
 | 0279 | [ADR-0279-replay-approvals-carry-a-change-class.md](ADR-0279-replay-approvals-carry-a-change-class.md) | Replay approvals carry a verified change class | accepted | — |
 | 0280 | [ADR-0280-property-based-replay-scenarios.md](ADR-0280-property-based-replay-scenarios.md) | Property-based replay scenarios use fast-check as a test-only dependency | accepted | — |
 | 0295 | [ADR-0295-war-bearing-replay-scenarios.md](ADR-0295-war-bearing-replay-scenarios.md) | A replay scenario may name a player nation and a deterministic start setup so the corpus fights a battle | accepted | — |
+| 0299 | [ADR-0299-gate-runs-serialise-across-worktrees.md](ADR-0299-gate-runs-serialise-across-worktrees.md) | `pnpm check` serialises across worktrees and reports machine load | accepted | — |
 
 ## Scenario content & research
 
