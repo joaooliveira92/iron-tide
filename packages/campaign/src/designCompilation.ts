@@ -1,5 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledTorpedo } from "@bluewave/armament";
+import type { CompileTorpedoFailure } from "@bluewave/ship-design";
 import {
   type CampaignDesign,
   type DesignTemplate,
@@ -8,6 +9,7 @@ import {
 } from "@bluewave/content-schema";
 import { canonicalSerialize, sha256Hex, compareCodePoints } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Result } from "effect";
 import { knotsToUms, mmToUm } from "./designUnits.js";
 import type {
   CompiledDesignVersion,
@@ -38,14 +40,32 @@ export function assertFleetDesignLinks(
   return !collector.hasErrors;
 }
 
-export type TorpedoResolver = (torpedoModelId: string) => CompiledTorpedo | undefined;
+export type TorpedoResolver = (
+  torpedoModelId: string,
+) => Result.Result<CompiledTorpedo, readonly CompileTorpedoFailure[]> | undefined;
 
 function mapTorpedoArmament(
   validated: DesignTemplate,
+  designVersionId: string,
+  collector: DiagnosticCollector,
   torpedoOf?: TorpedoResolver,
 ): CompiledTorpedoMount[] | undefined {
   return validated.torpedoArmament?.map((m) => {
-    const compiledTorpedo = torpedoOf?.(m.torpedoModelId);
+    const resolved = torpedoOf?.(m.torpedoModelId);
+    let compiledTorpedo: CompiledTorpedo | undefined;
+    if (resolved !== undefined) {
+      if (Result.isSuccess(resolved)) {
+        compiledTorpedo = resolved.success;
+      } else {
+        for (const failure of resolved.failure) {
+          collector.addError(
+            "CAMPAIGN-DESIGN",
+            `Torpedo ${m.torpedoModelId} ${failure.path}: ${failure.message}`,
+            { stage: "campaign-compile", entityId: designVersionId },
+          );
+        }
+      }
+    }
     return {
       mountType: m.mountType,
       tubeCount: SafeInt(m.tubeCount),
@@ -113,9 +133,10 @@ function buildCompiledDesign(
   designVersionId: string,
   rec: CampaignDesign,
   validated: DesignTemplate,
+  collector: DiagnosticCollector,
   torpedoOf?: TorpedoResolver,
 ): CompiledDesignVersion {
-  const torpedoArmament = mapTorpedoArmament(validated, torpedoOf);
+  const torpedoArmament = mapTorpedoArmament(validated, designVersionId, collector, torpedoOf);
   return {
     designVersionId,
     designFamilyId: validated.designFamilyId ?? "",
@@ -155,7 +176,10 @@ export function buildDesignsFromData(
     );
     if (!validated) continue;
 
-    designs.set(designVersionId, buildCompiledDesign(designVersionId, rec, validated, torpedoOf));
+    designs.set(
+      designVersionId,
+      buildCompiledDesign(designVersionId, rec, validated, collector, torpedoOf),
+    );
   }
 
   return designs;

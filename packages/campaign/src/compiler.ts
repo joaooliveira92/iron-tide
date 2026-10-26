@@ -4,7 +4,6 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { type DiagnosticCollector as DiagnosticCollectorType } from "@bluewave/diagnostics";
 import { compileTorpedo } from "@bluewave/ship-design";
-import type { CompiledTorpedo } from "@bluewave/armament";
 import { Result } from "effect";
 import type { CampaignFileData } from "./campaignInput.js";
 import { validateCampaignPreconditions } from "./campaignSession.js";
@@ -12,6 +11,7 @@ import {
   assertFleetDesignLinks,
   buildDesignFamiliesFromData,
   buildDesignsFromData,
+  type TorpedoResolver,
 } from "./designCompilation.js";
 import { buildNationStates, buildSlots } from "./nationCompilation.js";
 import {
@@ -187,16 +187,14 @@ export class CampaignCompiler {
   }
 }
 
-function torpedoResolverFor(
-  bundle: CompiledContentBundle,
-): ((torpedoModelId: string) => CompiledTorpedo | undefined) | undefined {
+function torpedoResolverFor(bundle: CompiledContentBundle): TorpedoResolver | undefined {
   const byId = bundle.shipBuilding?.partModel?.partIndex.byId;
   if (byId === undefined) return undefined;
   return (torpedoModelId: string) => {
     const part = byId[torpedoModelId];
-    const compiled =
-      part !== undefined && part.family === "torpedo" ? compileTorpedo(part, "9999-12") : undefined;
-    return compiled !== undefined && compiled.ok ? compiled.value : undefined;
+    if (part === undefined || part.family !== "torpedo") return undefined;
+    const compiled = compileTorpedo(part, "9999-12");
+    return compiled.ok ? Result.succeed(compiled.value) : Result.fail(compiled.failures);
   };
 }
 

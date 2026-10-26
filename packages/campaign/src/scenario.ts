@@ -175,7 +175,7 @@ function validateScenarioRecord(
   const errorsBefore = c.errors.length;
   const decoded = decodeScenario(r);
   const keys = Result.isSuccess(decoded) ? undefined : issueKeys(decoded.failure.issue);
-  let ok = decoded._tag === "Success";
+  let ok = Result.isSuccess(decoded);
 
   for (const field of REQUIRED) {
     if (keys?.missing.has(field) === true) {
