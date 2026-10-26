@@ -1,6 +1,7 @@
 import { BluewaveError } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine } from "@bluewave/random";
+import type { ExplanationTree } from "@bluewave/events";
 import type { GunneryBattery } from "../gunnery/resolve.js";
 import { withGunneryStateHash } from "../gunnery/index.js";
 import type { TacticalBattleState } from "../tactical/state.js";
@@ -25,6 +26,7 @@ import {
 } from "./capabilities.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { planTorpedoCommands } from "./torpedoDoctrine.js";
+import { explainGunneryAccuracy } from "../gunnery/accuracy-explanation.js";
 import { withNightTraining, type TrainingEffectsBySide } from "./trainingEffects.js";
 import { pursuitOrders } from "./pursuit.js";
 import {
@@ -66,6 +68,7 @@ export interface PlayerBattleShipView {
   readonly maxHitPoints: number;
   readonly damageState: string;
   readonly position: readonly [number, number] | null;
+  readonly gunneryAccuracy?: ExplanationTree;
 }
 
 export interface PlayerBattleDivisionView {
@@ -630,7 +633,18 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
       unitIds: [...division.orderedTacticalUnitIds],
     }),
   );
+  const playerSide = session.attackerId === session.playerNationId ? "ATTACKER" : "DEFENDER";
+  const batteryOf = new Map(
+    withNightTraining(
+      session.batteries,
+      session.trainingEffects,
+      session.weather.components.timeOfDay,
+    )
+      .filter((battery) => battery.sideId === playerSide)
+      .map((battery) => [battery.ownerShipId, battery] as const),
+  );
   const ships: PlayerBattleShipView[] = session.units.map((unit) => {
+    const battery = batteryOf.get(unit.assetId);
     const damageState = session.damage.targets[unit.assetId]?.state;
     const movement: MovementState | undefined = session.state.movementStates?.[unit.assetId];
     return {
@@ -644,6 +658,9 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
       maxHitPoints: unit.maxHitPoints as number,
       damageState: damageState?.terminalStatus ?? "NORMAL",
       position: movement ? [movement.position[0], movement.position[1]] : null,
+      ...(battery === undefined
+        ? {}
+        : { gunneryAccuracy: explainGunneryAccuracy(battery.accuracyFactors) }),
     };
   });
   return {
