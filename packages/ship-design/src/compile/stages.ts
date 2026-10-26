@@ -11,6 +11,7 @@ import {
   type ArmourInput,
   type ArmourResult,
 } from "../armour.js";
+import type { CapabilityData } from "@bluewave/content-schema";
 import type { ComponentDef } from "../component.js";
 import { resolveInstalledWeapon, nationHasArmamentContent } from "../armamentContent.js";
 import {
@@ -50,6 +51,52 @@ import { compileWeapons, type ArcObstacle, type GunMount, type WeaponsResult } f
 import { designInvariant } from "../errors.js";
 
 type AmmoMount = WeaponsResult["mounts"][number];
+
+const FIRE_CONTROL_CLASSES = new Set(["heavy", "medium", "light"]);
+
+function capabilitiesOf(
+  def: ComponentDef,
+  attr: Readonly<Record<string, number>>,
+): readonly CapabilityData[] {
+  const capabilities: CapabilityData[] = [];
+  if (def.fcClass !== undefined && FIRE_CONTROL_CLASSES.has(def.fcClass)) {
+    capabilities.push({
+      kind: "fire_control_class",
+      class: def.fcClass as "heavy" | "medium" | "light",
+    });
+  }
+  const support = (def.fcClasses ?? []).filter((c): c is "heavy" | "medium" | "light" =>
+    FIRE_CONTROL_CLASSES.has(c),
+  );
+  if (support.length > 0 && support.length === def.fcClasses?.length) {
+    capabilities.push({ kind: "fire_control_support", classes: support });
+  }
+  const feed = attr["maxFeedPermille"];
+  if (feed !== undefined && Number.isInteger(feed) && feed >= 0 && feed <= 1000) {
+    capabilities.push({ kind: "ammunition_feed", maxFeedPermille: feed });
+  }
+  const blocked = attr["arcBlockedDeg"];
+  const reach = attr["arcReachPermille"];
+  if (
+    blocked !== undefined &&
+    Number.isInteger(blocked) &&
+    blocked > 0 &&
+    blocked <= 360 &&
+    (reach === undefined || (Number.isInteger(reach) && reach >= 0 && reach <= 1000))
+  ) {
+    capabilities.push({ kind: "arc_obstruction", blockedDeg: blocked, reachPermille: reach ?? 0 });
+  }
+  const damageControl = attr["damageControlBp"];
+  if (
+    damageControl !== undefined &&
+    Number.isInteger(damageControl) &&
+    damageControl >= 0 &&
+    damageControl <= 10_000
+  ) {
+    capabilities.push({ kind: "damage_control", effectBp: damageControl });
+  }
+  return capabilities;
+}
 
 export function resolveDesignComponents(
   draft: DesignDraft,
@@ -186,6 +233,7 @@ export function resolveDesignComponents(
       productionLine: def.productionLine ?? null,
       requires: def.requires,
       torpedoMount: def.torpedoMount ?? null,
+      capabilities: capabilitiesOf(def, attr),
       params,
       weightKg: num(def.weightKg, vars),
       volumeLitre: num(def.volumeLitre, vars),

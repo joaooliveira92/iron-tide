@@ -42,8 +42,8 @@ describe("ShipComponentSchema", () => {
     ])
       expect(decodeOk(ShipComponentSchema, bad)).toBe(false);
   });
-  it("has 29 categories", () => {
-    expect(SHIP_COMPONENT_CATEGORIES).toHaveLength(29);
+  it("has 30 categories", () => {
+    expect(SHIP_COMPONENT_CATEGORIES).toHaveLength(30);
   });
 });
 

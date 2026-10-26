@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import {
   CompiledPartModelSchema,
+  FlattenedPartSchema,
   ShipComponentCatalogueSchema,
   decodeStrict,
 } from "@bluewave/content-schema";
@@ -85,5 +86,59 @@ describe("family-level catalogue view (17b-1)", () => {
     const [entry] = legacyCatalogueView([withZones]);
     expect(entry!.allowedZones).toEqual(["TURRET"]);
     expect(entry!.parameters).toEqual(base.parameters);
+  });
+
+  it("lists the E-1 families in their designer categories", () => {
+    const provenance = {
+      sourceStatus: "VERIFIED",
+      confidence: "HIGH",
+      kind: "historical_fact",
+      sources: [],
+    } as const;
+    const part = (id: string, family: string, provides: string, capabilities: unknown[]) =>
+      decodeStrict(FlattenedPartSchema, {
+        id,
+        family,
+        provides,
+        name: id,
+        lifecycle: { availableFrom: "1940-01" },
+        spec: {},
+        capabilities,
+        quantities: [{ id: "mass", kind: "massKg", value: 100, basis: "PER_PART_UNIT" }],
+        revisions: [],
+        origin: { sourceFile: "ship-building/parts/sensor.yaml" },
+        provenance,
+      });
+    const parts = [
+      part("radar", "radar", "radar", [{ kind: "search_radar", level: 1 }]),
+      part("sonar", "sonar", "sonar", [{ kind: "sonar_detection", level: 1 }]),
+      part("asw", "asw_weapon", "asw_weapon", [{ kind: "asw_attack", level: 1 }]),
+      part("aa", "aa_weapon", "aa_weapon", [{ kind: "aa_engagement", level: 1 }]),
+      part("missile", "missile_launcher", "missile_launcher", [
+        { kind: "missile_launch", missileClass: "heavy_ssm" },
+      ]),
+      part("hangar", "hangar", "hangar", [{ kind: "aircraft_hangar", capacity: 1 }]),
+    ];
+    const model = decodeStrict(CompiledPartModelSchema, {
+      partIndex: {
+        byId: Object.fromEntries(parts.map((p) => [p.id, p])),
+        byInterface: {},
+        byFamily: {},
+        lineage: {},
+        shipTypes: [],
+      },
+      slotTemplates: [],
+      platforms: [],
+    });
+    expect(
+      Object.fromEntries(buildPartCatalogueView(model).map((e) => [e.id, e.category])),
+    ).toEqual({
+      aa: "AA_WEAPON",
+      asw: "ASW_WEAPON",
+      hangar: "AIRCRAFT_FACILITY",
+      missile: "MISSILE_LAUNCHER",
+      radar: "RADAR",
+      sonar: "SONAR",
+    });
   });
 });

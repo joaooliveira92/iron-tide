@@ -1,4 +1,5 @@
 import type { Bp, Money, SafeInt } from "@bluewave/contracts";
+import type { CapabilityData } from "@bluewave/content-schema";
 import type {
   AppliedPrestigeRule,
   CareerResult,
@@ -82,6 +83,8 @@ export interface ResearchState {
   discoveredTechs: string[];
 }
 
+export type DesignCapability = CapabilityData;
+
 export interface CompiledDesignVersion {
   designVersionId: string;
   designFamilyId: string;
@@ -98,6 +101,7 @@ export interface CompiledDesignVersion {
   crewComplement: SafeInt;
   contentVersion: string;
   compiledHash: string;
+  capabilities?: readonly DesignCapability[];
   armament?: readonly CompiledArmamentMount[];
   torpedoArmament?: readonly CompiledTorpedoMount[];
   sourceDraft?: Readonly<Record<string, unknown>>;

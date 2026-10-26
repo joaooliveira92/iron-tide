@@ -50,6 +50,12 @@ function isFamilyLevelPart(part: FlattenedPart): boolean {
       return part.id === `${STANDARD_GUN_PREFIX}${part.spec.gunFamily ?? ""}`;
     case "fitting":
     case "sensor":
+    case "radar":
+    case "sonar":
+    case "asw_weapon":
+    case "aa_weapon":
+    case "missile_launcher":
+    case "hangar":
       return true;
     case "torpedo_launcher":
       return part.origin.prototype === undefined;
@@ -64,6 +70,18 @@ function categoryOf(part: FlattenedPart): ComponentCategory | null {
       return part.spec.weaponCategory ?? null;
     case "sensor":
       return "RANGEFINDER";
+    case "radar":
+      return "RADAR";
+    case "sonar":
+      return "SONAR";
+    case "asw_weapon":
+      return "ASW_WEAPON";
+    case "aa_weapon":
+      return "AA_WEAPON";
+    case "missile_launcher":
+      return "MISSILE_LAUNCHER";
+    case "hangar":
+      return "AIRCRAFT_FACILITY";
     case "torpedo_launcher":
       return "TORPEDO_TUBE";
     case "fitting":

@@ -1,4 +1,4 @@
-import type { CompiledDesignVersion, Ship } from "@bluewave/campaign";
+import type { CompiledDesignVersion, DesignCapability, Ship } from "@bluewave/campaign";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { sha256Hex } from "@bluewave/deterministic";
 import { classifyShip, type CanonicalShipType } from "./shipType.js";
@@ -23,6 +23,7 @@ export interface TacticalShipUnit {
   crewComplement: SafeInt;
   hitPoints: SafeInt;
   maxHitPoints: SafeInt;
+  capabilities?: readonly DesignCapability[];
   sourceStateHash: string;
   provenance: CampaignAssetProvenance;
 }
@@ -103,6 +104,7 @@ export function promoteTacticalUnit(
     crewComplement: design.crewComplement,
     hitPoints: ship.hitPoints,
     maxHitPoints: ship.maxHitPoints,
+    ...(design.capabilities === undefined ? {} : { capabilities: [...design.capabilities] }),
     sourceStateHash: preBattleStateHash,
     provenance,
   };
