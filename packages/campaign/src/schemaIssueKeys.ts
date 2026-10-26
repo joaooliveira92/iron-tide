@@ -1,4 +1,4 @@
-import type { SchemaIssue } from "effect";
+import { SchemaIssue } from "effect";
 
 export interface IssueKeys {
   readonly missing: ReadonlySet<string>;
@@ -44,6 +44,22 @@ export function issueKeys(issue: SchemaIssue.Issue): IssueKeys {
   };
   visit(issue, undefined, false);
   return { missing, invalid, unexpected };
+}
+
+export interface IssueLocation {
+  readonly path: string;
+  readonly message: string;
+}
+
+const formatIssue = SchemaIssue.makeFormatterStandardSchemaV1();
+
+export function firstIssue(issue: SchemaIssue.Issue): IssueLocation | undefined {
+  const [first] = formatIssue(issue).issues;
+  if (first === undefined) return undefined;
+  const path = (first.path ?? [])
+    .filter((key): key is string | number => typeof key === "string" || typeof key === "number")
+    .join(".");
+  return { path, message: first.message };
 }
 
 export function displayValue(value: unknown): string {

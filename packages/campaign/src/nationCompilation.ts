@@ -10,7 +10,7 @@ import type {
 } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
-import { Result } from "effect";
+import { Option, Result } from "effect";
 import { buildSeededDivisions } from "./divisions.js";
 import {
   incomeFitsEconomicBase,
@@ -45,9 +45,9 @@ function readNationPrestige(
   authored: unknown,
   prestigeRules: PrestigeValueSet,
   collector: DiagnosticCollector,
-): SafeInt {
+): Option.Option<SafeInt> {
   const resolved = resolveNationPrestige(authored, prestigeRules);
-  if (Result.isSuccess(resolved)) return resolved.success;
+  if (Result.isSuccess(resolved)) return Option.some(resolved.success);
   const error = resolved.failure;
   const raise = (
     code: (typeof PRESTIGE_COMPILE_CODES)[keyof typeof PRESTIGE_COMPILE_CODES],
@@ -77,8 +77,12 @@ function readNationPrestige(
         `Nation '${nationId}' prestige ${String(error.value)} is outside the ruleset bounds ${String(error.lowerBound)} to ${String(error.upperBound)}`,
       );
       break;
+    default: {
+      const unhandled: never = error;
+      return unhandled;
+    }
   }
-  return SafeInt(0);
+  return Option.none();
 }
 
 interface EconomyRow {
@@ -270,6 +274,7 @@ export function buildNationStates(
 
     const isPlayable = nation.isPlayable;
     const prestige = readNationPrestige(id, nation.prestige, prestigeRules, collector);
+    if (Option.isNone(prestige)) continue;
 
     const fleets = buildFleets(fleetsData, id, collector);
     const research = buildResearch(researchData, id);
@@ -347,7 +352,7 @@ export function buildNationStates(
       baseResources,
       navalAppropriationRateBp: startRate,
       maintenanceCost: SafeInt(0),
-      prestige,
+      prestige: prestige.value,
       ...(nation.homeArea !== undefined ? { homeAreaId: nation.homeArea } : {}),
       fleets,
       divisions,
