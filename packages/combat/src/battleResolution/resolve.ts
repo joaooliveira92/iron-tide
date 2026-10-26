@@ -168,6 +168,16 @@ function trainedDamageControlResource(damageControlBp: number): DamageControlRes
   };
 }
 
+const DESIGN_DAMAGE_CONTROL_MAX_BP = 10_000;
+
+function designDamageControlBp(unit: TacticalShipUnit): number {
+  const bonus = (unit.capabilities ?? []).reduce(
+    (sum, capability) => (capability.kind === "damage_control" ? sum + capability.effectBp : sum),
+    0,
+  );
+  return Math.min(bonus, DESIGN_DAMAGE_CONTROL_MAX_BP);
+}
+
 export function buildDamageControlContexts(input: {
   battleId: string;
   minute: number;
@@ -181,6 +191,7 @@ export function buildDamageControlContexts(input: {
   const { battleId, minute, units, damage, movementStates, engine, randomLedger, trainingEffects } =
     input;
   const sideOf = new Map(units.map((u) => [u.assetId, u.sideId]));
+  const unitOf = new Map(units.map((u) => [u.assetId, u]));
   const contexts: Record<string, DamageControlContext> = {};
   const shipIds = units.map((u) => u.assetId).sort();
   for (const shipId of shipIds) {
@@ -224,7 +235,8 @@ export function buildDamageControlContexts(input: {
       shipType: target.shipType,
       currentSpeedKt: Math.floor(currentSpeedBp / SPEED_BP_SCALE),
       resources: trainedDamageControlResource(
-        effectsOf(trainingEffects, sideOf.get(shipId)).damageControlBp,
+        effectsOf(trainingEffects, sideOf.get(shipId)).damageControlBp +
+          designDamageControlBp(unitOf.get(shipId)!),
       ),
       keyedRng: scopedRng,
     };

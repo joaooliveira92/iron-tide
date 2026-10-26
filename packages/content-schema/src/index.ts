@@ -300,6 +300,7 @@ export {
   LegacyExceptionSchema,
   LoadoutEntrySchema,
   LoadoutSchema,
+  MISSILE_CLASSES,
   NestedLoadoutEntrySchema,
   PART_FAMILIES,
   PART_INTERFACES,

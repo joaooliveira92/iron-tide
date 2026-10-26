@@ -44,6 +44,7 @@ const CATEGORY_META = {
   TERTIARY_GUN: { icon: Target, description: "Light anti-torpedo-boat gun." },
   DUAL_PURPOSE_GUN: { icon: Crosshair, description: "Dual-purpose gun: surface and air." },
   AA_WEAPON: { icon: Target, description: "Anti-aircraft weapon." },
+  ASW_WEAPON: { icon: Waves, description: "Anti-submarine weapon." },
   TORPEDO_TUBE: { icon: Rocket, description: "Torpedo tube." },
   MINE_GEAR: { icon: Bomb, description: "Mines and minelaying gear." },
   AIRCRAFT_FACILITY: { icon: Plane, description: "Aviation facility." },

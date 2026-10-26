@@ -42,6 +42,7 @@ export type {
   ConstructionPlanRecord,
   ConstructionPlanShare,
   ConstructionProject,
+  DesignCapability,
   DesignFamily,
   DiplomaticRelation,
   DockUtilizationMonth,

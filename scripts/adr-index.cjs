@@ -101,7 +101,7 @@ const AREAS = [
     name: "Ship design & construction",
     blurb:
       "The ship-designer model, its armour regions, named schemes, and the design draft schema.",
-    nums: [232, 233, 243, 252],
+    nums: [232, 233, 243, 252, 309],
   },
   {
     name: "World map",
@@ -111,7 +111,7 @@ const AREAS = [
   {
     name: "Engine architecture",
     blurb: "Package interfaces, seams and module depth across the engine.",
-    nums: [271, 272, 273, 276, 277, 294, 306],
+    nums: [271, 272, 273, 276, 277, 294, 306, 308],
   },
 ];
 

@@ -209,6 +209,14 @@ decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
    sources (spec #74).
 6. **0008** closed administratively.
 
+**E-1 capability foundation (2026-10-26): done.** #288 (compiled design capabilities reach
+combat; ADR-0308) and #289-#291 (radar, sonar/ASW and AA/missile/hangar part families and
+capability kinds; ADR-0309) landed on `feat/e1-capability-foundation`. The content lock, all 11
+goldens and all 13 replays are unchanged because no production part uses a new family. Evidence:
+[`.ai/reports/e-1-capability-foundation.md`](reports/e-1-capability-foundation.md). #292, #293,
+#295 and the #278 catalogue-technology tickets now have the seam they need; #296 still waits on
+the W-2 submarine wiring assigned by ADR-0300.
+
 **Immediate next action (2026-10-23):** finish **S-2** (#90-#94), then S-3 (spec under
 `docs/`, decisions 0010/0011 = ADR-0240) and S-4. **F-1** has a spec and brief
 (#231, `.ai/briefs/f-1-strategic-map.md`; requests 0036-0039 resolved). **T-2** has its

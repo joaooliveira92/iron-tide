@@ -21,6 +21,12 @@ export const PART_INTERFACES = [
   "propulsion_plant",
   "armour_material",
   "sensor",
+  "radar",
+  "sonar",
+  "asw_weapon",
+  "aa_weapon",
+  "missile_launcher",
+  "hangar",
   "magazine",
   "funnel",
   "electrical_plant",
@@ -38,6 +44,12 @@ export const PART_FAMILIES = [
   "propulsion_plant",
   "armour_material",
   "sensor",
+  "radar",
+  "sonar",
+  "asw_weapon",
+  "aa_weapon",
+  "missile_launcher",
+  "hangar",
   "fitting",
 ] as const;
 
@@ -283,15 +295,25 @@ export const EngineeringSchema = Schema.Struct({
 
 export const FIRE_CONTROL_CLASSES = ["heavy", "medium", "light"] as const;
 
+export const MISSILE_CLASSES = ["light_ssm", "medium_ssm", "heavy_ssm", "sam", "asm"] as const;
+
 export const CAPABILITY_KINDS = [
+  "aa_engagement",
+  "aircraft_hangar",
   "ammunition_feed",
   "arc_obstruction",
+  "asw_attack",
   "damage_control",
   "fire_control_class",
+  "fire_control_radar",
   "fire_control_support",
+  "missile_launch",
+  "search_radar",
+  "sonar_detection",
 ] as const;
 
 const FireControlClass = Schema.Literals(FIRE_CONTROL_CLASSES);
+const RadarLevel = int.check(Schema.isBetween({ minimum: 1, maximum: 3 }));
 
 export const CapabilitySchema = Schema.Union([
   Schema.Struct({ kind: Schema.Literal("fire_control_class"), class: FireControlClass }),
@@ -308,6 +330,16 @@ export const CapabilitySchema = Schema.Union([
     reachPermille: permille,
   }),
   Schema.Struct({ kind: Schema.Literal("damage_control"), effectBp: bp }),
+  Schema.Struct({ kind: Schema.Literal("search_radar"), level: RadarLevel }),
+  Schema.Struct({ kind: Schema.Literal("fire_control_radar"), level: RadarLevel }),
+  Schema.Struct({ kind: Schema.Literal("sonar_detection"), level: RadarLevel }),
+  Schema.Struct({ kind: Schema.Literal("asw_attack"), level: RadarLevel }),
+  Schema.Struct({ kind: Schema.Literal("aa_engagement"), level: RadarLevel }),
+  Schema.Struct({
+    kind: Schema.Literal("missile_launch"),
+    missileClass: Schema.Literals(MISSILE_CLASSES),
+  }),
+  Schema.Struct({ kind: Schema.Literal("aircraft_hangar"), capacity: positiveInt }),
 ]);
 
 export const CapabilitiesSchema = Schema.Array(CapabilitySchema).check(
@@ -324,6 +356,8 @@ export const CapabilitiesSchema = Schema.Array(CapabilitySchema).check(
 
 export const PART_TAGS = [
   "accommodation",
+  "asw",
+  "aviation",
   "damage_control",
   "electrical",
   "fire_control",
@@ -333,7 +367,10 @@ export const PART_TAGS = [
   "light",
   "magazine",
   "medium",
+  "missile",
+  "radar",
   "smoothbore",
+  "sonar",
   "torpedo",
   "ventilation",
 ] as const;
@@ -580,6 +617,33 @@ const SensorSpecFields = {
   gunCapacity: Schema.optional(positiveInt),
 };
 
+const RadarSpecFields = {
+  rangeNm: Schema.optional(positiveInt),
+  reliabilityBp: Schema.optional(bp),
+};
+
+const SonarSpecFields = {
+  rangeNm: Schema.optional(positiveInt),
+  detectionBp: Schema.optional(bp),
+};
+
+const AswWeaponSpecFields = {
+  rangeM: Schema.optional(positiveInt),
+  attackBp: Schema.optional(bp),
+};
+
+const AaWeaponSpecFields = {
+  calibreUm: Schema.optional(positiveInt),
+};
+
+const MissileLauncherSpecFields = {
+  launchType: Schema.optional(Schema.Literals(["CANISTER", "RAIL", "VERTICAL"])),
+};
+
+const HangarSpecFields = {
+  deckType: Schema.optional(Schema.Literals(["FLIGHT_DECK", "HELICOPTER_DECK"])),
+};
+
 const FittingSpecFields = {
   magazineLitre: Schema.optional(nonNegativeInt),
   flashProtectionBp: Schema.optional(bp),
@@ -595,6 +659,12 @@ const FAMILY_INTERFACES = {
   propulsion_plant: ["propulsion_plant"],
   armour_material: ["armour_material"],
   sensor: ["sensor"],
+  radar: ["radar"],
+  sonar: ["sonar"],
+  asw_weapon: ["asw_weapon"],
+  aa_weapon: ["aa_weapon"],
+  missile_launcher: ["missile_launcher"],
+  hangar: ["hangar"],
   fitting: [
     "magazine",
     "funnel",
@@ -727,6 +797,12 @@ export const PartSchema = Schema.Union([
   partMember("propulsion_plant", PropulsionPlantSpecFields),
   partMember("armour_material", ArmourMaterialSpecFields),
   partMember("sensor", SensorSpecFields),
+  partMember("radar", RadarSpecFields),
+  partMember("sonar", SonarSpecFields),
+  partMember("asw_weapon", AswWeaponSpecFields),
+  partMember("aa_weapon", AaWeaponSpecFields),
+  partMember("missile_launcher", MissileLauncherSpecFields),
+  partMember("hangar", HangarSpecFields),
   partMember("fitting", FittingSpecFields),
 ]).annotate({
   message: `expected a part record whose family is one of ${PART_FAMILIES.join(", ")}`,
@@ -754,6 +830,12 @@ export const FlattenedPartSchema = Schema.Union([
   flattenedMember("propulsion_plant", PropulsionPlantSpecFields),
   flattenedMember("armour_material", ArmourMaterialSpecFields),
   flattenedMember("sensor", SensorSpecFields),
+  flattenedMember("radar", RadarSpecFields),
+  flattenedMember("sonar", SonarSpecFields),
+  flattenedMember("asw_weapon", AswWeaponSpecFields),
+  flattenedMember("aa_weapon", AaWeaponSpecFields),
+  flattenedMember("missile_launcher", MissileLauncherSpecFields),
+  flattenedMember("hangar", HangarSpecFields),
   flattenedMember("fitting", FittingSpecFields),
 ]);
 
