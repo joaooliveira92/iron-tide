@@ -15,6 +15,8 @@ import {
 import type { RandomStream } from "@bluewave/random";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
+export const AVIATION_TECHNOLOGY = "av_early_aviation" as const;
+
 export interface AircraftDevelopmentPhaseInput {
   nations: CampaignSnapshot["nations"];
   campaignMonth: string;
@@ -46,12 +48,7 @@ function getAircraft(nation: NationState): AircraftNationState {
 
 function hasAviationTech(nation: NationState): boolean {
   const r = nation["research"];
-  return (
-    r["discoveredTechs"]?.some(
-      (t: string) =>
-        t === "early_aviation" || t === "aviation" || t === "flight" || t === "basic_aviation",
-    ) ?? false
-  );
+  return r["discoveredTechs"]?.includes(AVIATION_TECHNOLOGY) ?? false;
 }
 
 function processAircraftNation(

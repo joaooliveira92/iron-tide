@@ -81,7 +81,7 @@ function main(): void {
       mineInventory: SafeInt(100),
       requiredInventory: SafeInt(20),
       targetBelligerents: ["nation-enemy"],
-      availableTechnologyIds: new Set(["minelaying_submarine_technology"]),
+      availableTechnologyIds: new Set(["sub_minelaying"]),
     },
   );
 

@@ -1210,3 +1210,112 @@
         year: 2023
         page: "121-123"
     note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for quadruple medium SSM launchers; it overrides the 1967 historical-analogue date of the first medium anti-ship missile (ADR-0283 D2)."
+- id: "av_early_aviation"
+  name: "Early Naval Aviation"
+  category: "PRE_WAR"
+  researchFieldId: "AVIATION"
+  cost: 220
+  discoveryWeight: 9000
+  year: 1912
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Conway's All the World's Fighting Ships 1906-1921"
+        author: "R. Gardiner and A. Gray (eds.)"
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "102-120"
+    note: "ADR-0310. The year is the historical-analogue introduction of ship-borne naval aviation (seaplane carriers and catapult trials); the manual grounds aircraft operations and gives no date. Cost and discovery weight are copied from m_asw_automatic_contact_mine, the nearest PRE_WAR technology, and are Bluewave balance targets. The engine reads this id for the aircraft-development gate (ADR-0297)."
+- id: "cop_heavy_jet_operations"
+  name: "Heavy Jet Carrier Operations"
+  category: "MID_CENTURY"
+  researchFieldId: "CARRIER_OPERATIONS"
+  prerequisites:
+    - { techId: "av_carrier_jet" }
+    - { techId: "cop_angled_deck" }
+    - { techId: "cop_steam_catapult" }
+  cost: 500
+  discoveryWeight: 16000
+  year: 1955
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "The Postwar Naval Revolution"
+        author: "N. Friedman, 1986"
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "102-120"
+    note: "ADR-0310. Year is a historical-analogue balance target for routine heavy jet operation from carriers, after the angled deck and steam catapult anchors (ADR-0283 D2). The manual grounds carrier aircraft operations and gives no date. Cost and discovery weight are copied from cop_steam_catapult, the nearest CARRIER_OPERATIONS technology. The engine reads this id for HEAVY_JET_TECHNOLOGY (ADR-0297)."
+- id: "m_asw_controlled_mine"
+  name: "Controlled Minefields"
+  category: "EARLY"
+  researchFieldId: "MINES_AND_ASW"
+  prerequisites:
+    - { techId: "m_asw_mine_laying" }
+  cost: 150
+  discoveryWeight: 6000
+  year: 1890
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Conway's All the World's Fighting Ships 1860-1905"
+        author: "R. Gardiner (ed.)"
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "33-36, 72-74"
+    note: "ADR-0310. Year is the historical-analogue introduction of electrically command-detonated harbour and coastal minefields; the manual grounds mine warfare and controlled installations and gives no date. Cost and discovery weight are copied from m_asw_automatic_contact_mine, the nearest MINES_AND_ASW technology, and are Bluewave balance targets. The engine reads this id for the controlled defensive mine type (ADR-0297)."
+- id: "sub_minelaying"
+  name: "Minelaying Submarines"
+  category: "PRE_WAR"
+  researchFieldId: "SUBMARINES"
+  prerequisites:
+    - { techId: "sub_diesel_electric" }
+    - { techId: "m_asw_mine_laying" }
+  cost: 380
+  discoveryWeight: 12000
+  year: 1916
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Conway's All the World's Fighting Ships 1906-1921"
+        author: "R. Gardiner and A. Gray (eds.)"
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "33-36, 72-74"
+    note: "ADR-0310. Year is the historical-analogue introduction of purpose-built minelaying submarines; the manual grounds submarine mine laying and gives no date. Cost and discovery weight are copied from sub_ww1_ocean_boat, the nearest SUBMARINES technology, and are Bluewave balance targets. The engine reads this id for the minelaying submarine type and the submarine-laid mine (ADR-0297)."
+- id: "sub_missile"
+  name: "Missile-Carrying Submarines"
+  category: "MID_CENTURY"
+  researchFieldId: "SUBMARINES"
+  prerequisites:
+    - { techId: "sub_streamlined_hull" }
+    - { techId: "mis_heavy_ssm" }
+  cost: 500
+  discoveryWeight: 16000
+  year: 1955
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "US Naval Weapons"
+        author: "N. Friedman, 1983"
+      - title: "Conway's All the World's Fighting Ships 1947-1995"
+        author: "R. Gardiner (ed.)"
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "121-123"
+    note: "ADR-0310. Year is the historical-analogue start of operational missile-carrying submarine patrols, not earlier than the sourced period; the manual grounds missiles and their ship/submarine carriage and gives no date. Cost and discovery weight are copied from sub_streamlined_hull, the nearest SUBMARINES technology, and are Bluewave balance targets. The engine reads this id for the missile submarine type (ADR-0297)."

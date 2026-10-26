@@ -1,6 +1,7 @@
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import {
+  CONTROLLED_MINE_TECHNOLOGY,
   MINE_BASIS_POINTS_PER_UNIT,
   MINE_BATTLE_GENERATION_POLICY_ID,
   MINE_FRIENDLY_FIRE_POLICY_ID,
@@ -17,6 +18,7 @@ import {
   type MineTargetClass,
   type MineType,
 } from "./constants.js";
+import { MINELAYING_SUBMARINE_TECHNOLOGY } from "../submarines/constants.js";
 import { INVALID_MINE_TYPE_DEFINITION } from "./reasonCodes.js";
 
 export const mineTypeDefinitionsContentVersion = "mine_type_definitions_v1" as const;
@@ -349,7 +351,7 @@ export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
   }),
   withMineTypeDefinitionContentHash({
     mineTypeId: "CONTROLLED_DEFENSIVE",
-    technologyPrerequisiteIds: ["controlled_mine_technology"],
+    technologyPrerequisiteIds: [CONTROLLED_MINE_TECHNOLOGY],
     eligibleLayingSourceKinds: [
       "CONTROLLED_NAVAL_BASE",
       "COASTAL_ARTILLERY_OR_CONTROLLED_MINE_INSTALLATION",
@@ -373,7 +375,7 @@ export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
   }),
   withMineTypeDefinitionContentHash({
     mineTypeId: "SUBMARINE_LAID",
-    technologyPrerequisiteIds: ["minelaying_submarine_technology"],
+    technologyPrerequisiteIds: [MINELAYING_SUBMARINE_TECHNOLOGY],
     eligibleLayingSourceKinds: ["MINELAYING_SUBMARINE"],
     baseLayingValue: DEFAULT_BASE_LAYING_VALUE,
     strikeProfile: sharedStrikeProfile(),

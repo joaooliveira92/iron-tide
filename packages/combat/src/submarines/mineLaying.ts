@@ -1,5 +1,5 @@
 import { SafeInt } from "@bluewave/contracts";
-import { type SubmarineType } from "./constants.js";
+import { MINELAYING_SUBMARINE_TECHNOLOGY, type SubmarineType } from "./constants.js";
 import {
   SUBMARINE_MINE_INVENTORY_INSUFFICIENT,
   SUBMARINE_MISSION_INELIGIBLE,
@@ -101,7 +101,7 @@ export function evaluateMineLayingEligibility(
     return reject(SUBMARINE_MISSION_INELIGIBLE, "warState", "nation is not at war");
   }
 
-  for (const prereq of ["minelaying_submarine_technology"]) {
+  for (const prereq of [MINELAYING_SUBMARINE_TECHNOLOGY]) {
     if (!request.availableTechnologyIds.has(prereq)) {
       return reject(
         SUBMARINE_MISSION_INELIGIBLE,

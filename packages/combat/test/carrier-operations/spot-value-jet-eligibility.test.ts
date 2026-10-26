@@ -301,8 +301,8 @@ describe("AC-12: Heavy-jet eligibility", () => {
     expect(determineJetCapability(p)).toBe("NONE");
   });
 
-  it("HEAVY_JET_TECHNOLOGY equals modern_jet_carrier_operations", () => {
-    expect(HEAVY_JET_TECHNOLOGY).toBe("modern_jet_carrier_operations");
+  it("HEAVY_JET_TECHNOLOGY equals cop_heavy_jet_operations", () => {
+    expect(HEAVY_JET_TECHNOLOGY).toBe("cop_heavy_jet_operations");
   });
 
   it("HEAVY_JET_MIN_DISPLACEMENT_KG equals 40_000_000", () => {
