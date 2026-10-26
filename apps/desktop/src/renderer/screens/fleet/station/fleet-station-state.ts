@@ -1,3 +1,4 @@
+import type { ExplanationTree } from "@bluewave/events";
 import type {
   FleetDivisionView,
   FleetOverBaseShip,
@@ -159,6 +160,7 @@ export interface PresenceRowView {
   readonly present: string;
   readonly shortfall: string;
   readonly short: boolean;
+  readonly shortfallExplanation?: ExplanationTree;
 }
 
 export type PresenceReadoutView =
@@ -197,6 +199,9 @@ export function presenceReadout(
           ? tons(row.shortfallTons)
           : format(presence.exempt ? "fleet.presence.suspended" : "fleet.presence.met"),
       short: row.shortfallTons > 0,
+      ...(row.shortfallExplanation === undefined
+        ? {}
+        : { shortfallExplanation: row.shortfallExplanation }),
     })),
     overBase,
   };

@@ -14,7 +14,8 @@
     "@bluewave/campaign": "workspace:*",
     "@bluewave/content-schema": "workspace:*",
     "@bluewave/deterministic": "workspace:*",
-    "effect": "workspace:*"
+    "effect": "workspace:*",
+    "@bluewave/events": "workspace:*"
   },
   "devDependencies": {
     "@bluewave/contracts": "workspace:*"

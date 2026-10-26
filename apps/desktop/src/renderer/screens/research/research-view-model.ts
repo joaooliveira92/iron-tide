@@ -1,3 +1,4 @@
+import type { ExplanationTree } from "@bluewave/events";
 import {
   CANONICAL_RESEARCH_FIELD_IDS,
   MAX_HIGH_PRIORITY_FIELDS,
@@ -68,6 +69,7 @@ export interface ResearchFieldView {
 
 export interface ResearchBudgetView {
   readonly monthly: number;
+  readonly paid: number;
   readonly annualAllocation: number | null;
   readonly cap: number;
   readonly floor: number;
@@ -75,6 +77,9 @@ export interface ResearchBudgetView {
   readonly floorPct: number;
   readonly lowSpending: boolean;
   readonly note: string | null;
+  readonly budgetExplanation?: ExplanationTree;
+  readonly capExplanation?: ExplanationTree;
+  readonly floorExplanation?: ExplanationTree;
 }
 
 export interface ResearchTotals {
@@ -251,6 +256,7 @@ export function buildResearchViewModel(state: ResearchScreenActiveData): Researc
   return {
     budget: {
       monthly: projection.researchBudget,
+      paid: projection.researchSpend,
       annualAllocation: projection.annualAllocation,
       cap: projection.researchCap,
       floor: projection.minimumResearchSpend,
@@ -262,6 +268,15 @@ export function buildResearchViewModel(state: ResearchScreenActiveData): Researc
         researchRequested: projection.researchBudget,
         researchUnfundedReason: projection.unfundedReason ?? undefined,
       }),
+      ...(projection.budgetExplanation === undefined
+        ? {}
+        : { budgetExplanation: projection.budgetExplanation }),
+      ...(projection.capExplanation === undefined
+        ? {}
+        : { capExplanation: projection.capExplanation }),
+      ...(projection.floorExplanation === undefined
+        ? {}
+        : { floorExplanation: projection.floorExplanation }),
     },
     totals: {
       catalogue: projection.technologies.length,

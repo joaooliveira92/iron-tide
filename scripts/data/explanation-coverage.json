@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "minimumCoveredPercentBp": 207,
+  "minimumCoveredPercentBp": 640,
   "contracts": [
     {
       "file": "apps/desktop/src/shared/budget-contract.ts",
@@ -88,7 +88,12 @@
       "type": "PlayerProjectionEconomy",
       "area": "economy",
       "issue": "#300",
-      "covered": {},
+      "covered": {
+        "netExplanation": "economy_net",
+        "monthEndExplanation": "economy_month_end",
+        "runwayExplanation": "economy_runway",
+        "appropriationExplanation": "economy_appropriation"
+      },
       "exempt": {
         "treasury": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
         "monthlyAppropriation": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
@@ -266,7 +271,9 @@
       "type": "PlayerProjectionPresenceArea",
       "area": "fleet",
       "issue": "#301",
-      "covered": {},
+      "covered": {
+        "shortfallExplanation": "fleet_presence"
+      },
       "exempt": {
         "requiredTons": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
         "presentTons": "Not yet explained; #301 covers this area and re-exempts any field it does not explain.",
@@ -324,7 +331,9 @@
       "type": "ConstructionProjectReadoutView",
       "area": "construction",
       "issue": "#302",
-      "covered": {},
+      "covered": {
+        "scheduleExplanation": "construction_schedule"
+      },
       "exempt": {
         "haltedCarryingCostUnits": "Not yet explained; #302 covers this area and re-exempts any field it does not explain."
       }
@@ -442,11 +451,16 @@
       "type": "ResearchScreenProjection",
       "area": "research",
       "issue": "#303",
-      "covered": {},
+      "covered": {
+        "budgetExplanation": "research_budget",
+        "capExplanation": "research_cap",
+        "floorExplanation": "research_floor"
+      },
       "exempt": {
         "turnNumber": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
         "minimumResearchSpend": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
         "researchBudget": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
+        "researchSpend": "Explained by budgetExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
         "annualAllocation": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
         "researchCap": "Not yet explained; #303 covers this area and re-exempts any field it does not explain."
       }

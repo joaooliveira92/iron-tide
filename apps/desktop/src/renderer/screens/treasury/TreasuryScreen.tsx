@@ -50,6 +50,7 @@ export function TreasuryScreen({ sessionId }: TreasuryScreenProps) {
           <BudgetPolicyPanel policy={policy} />
         </div>
         <TreasuryStatusBar
+          format={format}
           readouts={treasuryReadouts(
             breakdown,
             format,

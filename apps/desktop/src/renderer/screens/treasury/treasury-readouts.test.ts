@@ -1,3 +1,4 @@
+import type { ExplanationTree } from "@bluewave/events";
 import { describe, expect, it } from "vite-plus/test";
 
 import { createPresentationFormat } from "../../lib/presentation-format/index.js";
@@ -28,9 +29,61 @@ const breakdown: TreasuryBreakdown = {
   availableFunds: 50000,
   projectedMonthEndFunds: 53000,
   runwayMonths: undefined,
+  netExplanation: undefined,
+  monthEndExplanation: undefined,
+  runwayExplanation: undefined,
+  appropriationExplanation: undefined,
+};
+
+const NET_TREE: ExplanationTree = {
+  formulaId: "economy_net",
+  formulaVersion: "economy_v1",
+  inputs: { appropriation: 4000 },
+  intermediate: { outflow: 500 },
+  result: 3500,
+  unit: "nc",
+  children: [
+    {
+      formulaId: "economy_net.appropriation",
+      formulaVersion: "economy_v1",
+      inputs: { amount: 4000 },
+      intermediate: {},
+      result: 4000,
+      unit: "nc",
+    },
+    {
+      formulaId: "economy_net.research",
+      formulaVersion: "economy_v1",
+      inputs: { amount: 300 },
+      intermediate: {},
+      result: -300,
+      unit: "nc",
+    },
+  ],
 };
 
 describe("treasuryReadouts", () => {
+  it("attaches each explanation to the readout whose number it explains", () => {
+    const readouts = treasuryReadouts(
+      {
+        ...breakdown,
+        netExplanation: NET_TREE,
+        appropriationExplanation: NET_TREE,
+        monthEndExplanation: NET_TREE,
+        runwayExplanation: NET_TREE,
+        runwayMonths: 3,
+      },
+      FORMAT,
+    );
+    expect(readouts.find((r) => r.id === "funds")?.explanation).toBe(NET_TREE);
+    expect(readouts.find((r) => r.id === "net")?.explanation).toBe(NET_TREE);
+    expect(readouts.find((r) => r.id === "monthEnd")?.explanation).toBe(NET_TREE);
+    expect(readouts.find((r) => r.id === "runway")?.explanation).toBe(NET_TREE);
+    expect(treasuryReadouts(breakdown, FORMAT).every((r) => r.explanation === undefined)).toBe(
+      true,
+    );
+  });
+
   it("reads the headline figures and omits the runway when the treasury is not running down", () => {
     const readouts = treasuryReadouts(breakdown, FORMAT);
     expect(readouts.map((r) => [r.id, r.value])).toEqual([

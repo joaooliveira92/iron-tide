@@ -159,3 +159,52 @@ describe("ProjectReadout", () => {
     expect(screen.queryByText("complete")).toBeNull();
   });
 });
+
+describe("ProjectReadout explanation", () => {
+  it("shows the months-left explanation from the schedule readout", () => {
+    render(
+      <ProjectReadout
+        row={row({
+          readout: {
+            totalCostUnits: 640,
+            monthlyInstalmentUnits: 120,
+            remainingMonths: 6,
+            launchMonth: "1880-07",
+            scheduleBasis: "YARD_CAPACITY",
+            scheduleUnavailableReason: null,
+            haltedCarryingCostUnits: null,
+            scheduleExplanation: {
+              formulaId: "construction_schedule",
+              formulaVersion: "construction_v1",
+              inputs: {},
+              intermediate: { remainingWork: 700 },
+              result: 6,
+              unit: "months",
+              children: [
+                {
+                  formulaId: "construction_schedule.remainingWork",
+                  formulaVersion: "construction_v1",
+                  inputs: { amount: 700 },
+                  intermediate: {},
+                  result: 700,
+                  unit: "nc",
+                },
+                {
+                  formulaId: "construction_schedule.instalment",
+                  formulaVersion: "construction_v1",
+                  inputs: { amount: 120 },
+                  intermediate: {},
+                  result: 120,
+                  unit: "nc",
+                },
+              ],
+            },
+          },
+        })}
+      />,
+    );
+    expect(screen.getByText("Ready in 6 months")).toBeTruthy();
+    expect(screen.getByText("Work remaining")).toBeTruthy();
+    expect(screen.getByText("Work per month")).toBeTruthy();
+  });
+});

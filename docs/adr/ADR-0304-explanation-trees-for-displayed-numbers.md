@@ -44,10 +44,36 @@ tickets in `.ai/reports/story-49-explanation-inventory.md` track the rest.
    screen renders them through one generic disclosure whose node labels are `<area>.<formula>.<node>` and whose numbers use the
    presentation formatters.
 
+## Area slices (2026-10-26, #300–#303)
+
+The batch branch `feat/story-49-area-explanations` adds four area slices through the same contract:
+
+- **Economy and budget (#300).** `PlayerProjectionEconomy` carries `netExplanation` (`economy_net`), `monthEndExplanation`
+  (`economy_month_end`), `runwayExplanation` (`economy_runway`, only while the treasury is shrinking) and
+  `appropriationExplanation` (`economy_appropriation`). The month-end tree walks `EconomyOutlook.settlement` — the exact
+  paid amounts the outlook books — so the result equals `monthEndTreasury`. The treasury status popovers show them in the
+  shared disclosure.
+- **Research (#303).** `ResearchScreenProjection` carries `budgetExplanation` (`research_budget`), `capExplanation`
+  (`research_cap`) and `floorExplanation` (`research_floor`). The research status bar shows the paid budget (with the
+  requested budget and the cap in the breakdown) and the explanation in its popover.
+- **Construction and yards (#302).** `ConstructionProjectReadoutView` carries `scheduleExplanation`
+  (`construction_schedule`): months left divided out of the work remaining and the monthly instalment. The project
+  readout shows it under the schedule lines.
+- **Fleet (#301).** `PlayerProjectionPresenceArea` carries `shortfallExplanation` (`fleet_presence`): required tonnage
+  less present tonnage, with a recorded exemption line when a blockade suspends the requirement. The foreign-station
+  table shows it in the shortfall cell.
+
+`explanationLabelKey` moved to `apps/desktop/src/renderer/lib/explanation.ts`; the generic
+`ExplanationDisclosure` (`apps/desktop/src/renderer/components/shared`) renders any area's tree with
+`<area>.<formula>.<node>` labels and presentation-formatted values. The manifest ratchet moved from 2.07% to 6.40%
+(13/203 fields).
+
 ## Not delivered (tracked, not hidden)
 
-- Every area except the battle accuracy slice is exempt in the manifest with its tracking issue (#300–#306). The report lists
-  the areas and their approximate field counts.
+- The diplomacy/war/prestige/priorities area (#304) and the turn reports area (#306) remain exempt with their tracking
+  issues. Their displayed numbers are state aggregates without a replayable formula in the view contract (tension, war
+  score, accumulated prestige), so they need a decision on which engine calculation to expose before a tree can be
+  honest. The report lists the areas and their approximate field counts.
 - The ship designer has partial `ExplanationText` findings (ADR-0221) and is tracked by #168; the debug-only screens are not
   player-facing and are not in the manifest.
 

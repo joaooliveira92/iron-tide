@@ -13,8 +13,10 @@ import type {
   CommandableReadiness,
   StationAssignmentIntent,
 } from "../../../../shared/fleet-contract.js";
+import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
 import { translate } from "../../../lib/strings.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import {
   format,
   presenceReadout,
@@ -75,6 +77,7 @@ function FlagCell({ row, code }: { readonly row: StationRow; readonly code: "c" 
 }
 
 function PresenceReadout({ readout }: { readonly readout: PresenceReadoutView }) {
+  const format = usePresentationFormat();
   return (
     <section className="space-y-3" data-testid="fleet-presence" aria-labelledby="fleet-presence-h">
       <h4 id="fleet-presence-h" className="text-sm font-medium">
@@ -117,6 +120,15 @@ function PresenceReadout({ readout }: { readonly readout: PresenceReadoutView })
                         <TableCell>{row.present}</TableCell>
                         <TableCell className={row.short ? "font-medium" : "text-muted-foreground"}>
                           {row.shortfall}
+                          {row.shortfallExplanation !== undefined && (
+                            <ExplanationDisclosure
+                              tree={row.shortfallExplanation}
+                              area="fleet"
+                              summaryKey="fleet.fleet_presence.summary"
+                              format={format}
+                              testId={`fleet-presence-explanation-${row.areaId}`}
+                            />
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

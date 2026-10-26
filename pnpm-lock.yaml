@@ -340,6 +340,9 @@ importers:
       '@bluewave/deterministic':
         specifier: workspace:*
         version: link:../deterministic
+      '@bluewave/events':
+        specifier: workspace:*
+        version: link:../events
       effect:
         specifier: workspace:*
         version: link:../../vendor/effect

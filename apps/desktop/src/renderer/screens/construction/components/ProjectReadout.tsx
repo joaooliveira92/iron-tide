@@ -1,5 +1,6 @@
 import { memo } from "react";
 import type { ConstructionScheduleUnavailableReason } from "@bluewave/campaign-engine";
+import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { ProjectRow } from "../project-progress.js";
@@ -75,11 +76,22 @@ export const ProjectReadout = memo(function ProjectReadout({
   className = "grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2 lg:grid-cols-4",
 }: ProjectReadoutProps) {
   const format = usePresentationFormat();
+  const explanation = row.readout?.scheduleExplanation;
   return (
-    <ul className={className} aria-label={`${row.className} cost and schedule`}>
-      {readoutLines(row, format).map((line) => (
-        <ReadoutItem key={line.label} label={line.label} value={line.value} />
-      ))}
-    </ul>
+    <div>
+      <ul className={className} aria-label={`${row.className} cost and schedule`}>
+        {readoutLines(row, format).map((line) => (
+          <ReadoutItem key={line.label} label={line.label} value={line.value} />
+        ))}
+      </ul>
+      {explanation !== undefined && (
+        <ExplanationDisclosure
+          tree={explanation}
+          area="construction"
+          summaryKey="construction.construction_schedule.summary"
+          format={format}
+        />
+      )}
+    </div>
   );
 });

@@ -11,8 +11,14 @@ import {
   RESEARCH_FIELD_PRIORITY_WEIGHTS,
 } from "@bluewave/content-schema";
 import type { ResearchState, ResearchUnfundedReason } from "@bluewave/campaign";
+import type { ExplanationTree } from "@bluewave/events";
 import { derivePlayerFacts, isLowResearchSpending } from "./player-facts.js";
 import { MIN_RESEARCH_SHARE_BP } from "./priorityConstants.js";
+import {
+  explainResearchBudget,
+  explainResearchCap,
+  explainResearchFloor,
+} from "./research-explanations.js";
 import type { PlayerProjectionMonth } from "./projection.js";
 import { compareCodePoints } from "@bluewave/deterministic";
 
@@ -62,11 +68,15 @@ export interface ResearchScreenProjection {
   readonly researchBudget: number;
   readonly annualAllocation: number | null;
   readonly researchCap: number;
+  readonly researchSpend: number;
   readonly unfundedReason: ResearchUnfundedReason | null;
   readonly fieldPriorities: Readonly<Record<string, number>>;
   readonly discoveredTechIds: readonly string[];
   readonly inProgressTechnologies: readonly ResearchInProgressTechnology[];
   readonly currentProjectTechId: string | null;
+  readonly budgetExplanation?: ExplanationTree;
+  readonly capExplanation?: ExplanationTree;
+  readonly floorExplanation?: ExplanationTree;
 }
 
 export function buildResearchScreenProjection(
@@ -86,12 +96,14 @@ export function buildResearchScreenProjection(
   }
 
   const { technologies, fields } = projectTechnologyChart(state, research, technologyNames);
+  const minimumResearchSpend = Math.floor((outlook.revenue * MIN_RESEARCH_SHARE_BP) / 10_000);
+  const hasEligibleField = outlook.researchUnfundedReason !== "NO_ELIGIBLE_RESEARCH_FIELD";
 
   return {
     nationId: research.nationId,
     turnNumber: Number(state.snapshot.turnNumber),
     lowSpending: isLowResearchSpending(outlook),
-    minimumResearchSpend: Math.floor((outlook.revenue * MIN_RESEARCH_SHARE_BP) / 10_000),
+    minimumResearchSpend,
     technologies,
     fields,
     researchBudget: Number(research.researchBudget),
@@ -100,9 +112,18 @@ export function buildResearchScreenProjection(
         ? null
         : Number(research.annualResearchAllocation),
     researchCap: outlook.researchCap,
+    researchSpend: outlook.plannedResearch,
     unfundedReason: outlook.researchUnfundedReason ?? null,
     fieldPriorities,
     discoveredTechIds: [...research.discoveredTechs].sort((a, b) => compareCodePoints(a, b)),
+    budgetExplanation: explainResearchBudget(
+      Number(research.researchBudget),
+      outlook.researchCap,
+      outlook.plannedResearch,
+      hasEligibleField,
+    ),
+    capExplanation: explainResearchCap(outlook.revenue, outlook.researchCap),
+    floorExplanation: explainResearchFloor(outlook.revenue, minimumResearchSpend),
     inProgressTechnologies: research.technologies.map((tech) => ({
       techId: tech.techId,
       investedPoints: Number(tech.investedPoints),

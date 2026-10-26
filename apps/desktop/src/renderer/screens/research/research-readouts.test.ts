@@ -20,10 +20,34 @@ function readouts(overrides = {}) {
 }
 
 describe("researchReadouts", () => {
-  it("reports the budget with a breakdown against the cap", () => {
+  it("reports the paid budget with requested and cap in the breakdown", () => {
     const budget = readouts().find((r) => r.id === "budget");
-    expect(budget?.value).toBe("60");
+    expect(budget?.value).toBe("40");
+    expect(budget?.breakdown?.rows).toContainEqual({ label: "Requested each month", value: "60" });
+    expect(budget?.breakdown?.rows).toContainEqual({ label: "Paid each month", value: "40" });
     expect(budget?.breakdown?.footer).toEqual([{ label: "Headroom under the cap", value: "60" }]);
+  });
+
+  it("attaches the domain explanation trees to the budget readout", () => {
+    const tree = {
+      formulaId: "research_cap",
+      formulaVersion: "research_v1",
+      inputs: {},
+      intermediate: {},
+      result: 120,
+      unit: "nc",
+    };
+    const budget = readouts({
+      researchSpend: 40,
+      budgetExplanation: tree,
+      capExplanation: tree,
+      floorExplanation: tree,
+    }).find((r) => r.id === "budget");
+    expect(budget?.explanations?.map((e) => e.summaryKey)).toEqual([
+      "research.research_budget.summary",
+      "research.research_cap.summary",
+      "research.research_floor.summary",
+    ]);
   });
 
   it("reports the projected output and archive progress", () => {
