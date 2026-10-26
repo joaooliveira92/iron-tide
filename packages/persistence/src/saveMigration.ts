@@ -14,6 +14,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { Result, Schema } from "effect";
 import { CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
 import { readSaveMetadata } from "./fileDecode.js";
+import { BACKUP_PREFIX, MIGRATING_SUFFIX } from "./recovery.js";
 import { SaveHeaderSchema } from "./schemas.js";
 import { toStorableSnapshot } from "./snapshotSerialization.js";
 import { loadByIdResult } from "./store.js";
@@ -157,8 +158,11 @@ export function migrateSaveDirectory(
   });
   const serializedHash = sha256Hex(serialized);
   const snapshotHash = sha256Hex(canonicalSerialize(migrated.snapshot));
-  const tmpPath = `${savePath}.migrating`;
-  const backup = join(dirname(savePath), `.tmp_migrated_${basename(savePath)}.from-${from}`);
+  const tmpPath = `${savePath}${MIGRATING_SUFFIX}`;
+  const backup = join(
+    dirname(savePath),
+    `${BACKUP_PREFIX}migrated_${basename(savePath)}.from-${from}`,
+  );
   if (existsSync(tmpPath)) rmSync(tmpPath, { recursive: true, force: true });
   if (existsSync(backup)) {
     return { status: "refused", kind: "unknown", reason: `backup path already exists: ${backup}` };

@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -14,8 +13,11 @@ import type { CampaignState } from "@bluewave/campaign";
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
 import type { Diagnostic } from "@bluewave/diagnostics";
 import { Effect, Result, Schema } from "effect";
+import { systemClock, type PersistenceClock } from "./clock.js";
 import { CompatibilityChecker, CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
 import {
+  PersistenceInvalidOptionError,
+  PersistenceIoError,
   PersistenceCancelledError,
   PersistenceCompatibilityMismatchError,
   PersistenceCorruptSaveError,
@@ -23,7 +25,13 @@ import {
   PersistenceUnsignedSaveError,
 } from "./errors.js";
 import { readPointerFile, readSaveMetadata, readSigFile } from "./fileDecode.js";
-import { cleanup } from "./recovery.js";
+import {
+  BACKUP_PREFIX,
+  cleanup,
+  POINTER_TEMP_FILE,
+  sweepStaleTemp,
+  TEMP_SAVE_PREFIX,
+} from "./recovery.js";
 import {
   decodeStorableCampaignState,
   SaveHeaderSchema,
@@ -92,6 +100,17 @@ const MONTH_INPUT_FILE = "month-input.json";
 const LOAD_STAGE = "persistence.load";
 const MONTH_INPUT_STAGE = "persistence.loadMonthInput";
 
+const SAVE_STAGE = "persistence.save";
+const LIST_STAGE = "persistence.list";
+const POINTER_STAGE = "persistence.pointer";
+
+function ioError(stage: string, cause: unknown): PersistenceIoError {
+  return new PersistenceIoError({
+    message: cause instanceof Error ? cause.message : String(cause),
+    stage,
+  });
+}
+
 function corruptSave(message: string): PersistenceCorruptSaveError {
   return new PersistenceCorruptSaveError({ message, stage: LOAD_STAGE });
 }
@@ -107,10 +126,49 @@ function cancelledLoad(): PersistenceCancelledError {
   });
 }
 
+export interface SaveStoreOptions {
+  readonly retainSaves?: number;
+  readonly clock?: PersistenceClock;
+}
+
 export class SaveStore {
+  private readonly retainSaves: number | undefined;
+  private readonly clock: PersistenceClock;
+
   constructor(
     private readonly currentCompatibilityVersion: string = CURRENT_COMPATIBILITY_VERSION,
-  ) {}
+    options: SaveStoreOptions = {},
+  ) {
+    if (
+      options.retainSaves !== undefined &&
+      (!Number.isSafeInteger(options.retainSaves) || options.retainSaves < 2)
+    ) {
+      throw new PersistenceInvalidOptionError({
+        message: "retainSaves must be a safe integer of at least 2",
+        stage: "persistence.options",
+      });
+    }
+    this.retainSaves = options.retainSaves;
+    this.clock = options.clock ?? systemClock;
+  }
+
+  prune(saveDir: string, retain: number): void {
+    const protectedIds = new Set<string>();
+    const active = this.getActiveSaveId(saveDir);
+    const previous = this.getPreviousSaveId(saveDir);
+    if (active !== null) protectedIds.add(active);
+    if (previous !== null) protectedIds.add(previous);
+    let kept = protectedIds.size;
+    for (const save of this.list(saveDir)) {
+      if (protectedIds.has(save.saveId)) continue;
+      if (kept < retain && isValidSaveId(save.saveId)) {
+        kept += 1;
+        continue;
+      }
+      if (!isValidSaveId(save.saveId)) continue;
+      rmSync(join(saveDir, save.saveId), { recursive: true, force: true });
+    }
+  }
 
   save(
     state: CampaignState,
@@ -122,9 +180,11 @@ export class SaveStore {
       throw createAbortError();
     }
 
-    const saveId = `${Date.now()}-${randomUUID()}`;
+    sweepStaleTemp(saveDir);
+
+    const saveId = `${this.clock.nowMillis()}-${this.clock.uuid()}`;
     const savePath = join(saveDir, saveId);
-    const tmpDir = join(saveDir, `.tmp_${saveId}`);
+    const tmpDir = join(saveDir, `${TEMP_SAVE_PREFIX}${saveId}`);
 
     const { rawHash: _rh, ...stateForHash } = state;
     const storableState = { ...state, snapshot: toStorableSnapshot(state.snapshot) };
@@ -144,7 +204,7 @@ export class SaveStore {
     const metadata: SaveMetadata = {
       saveId,
       previousSaveId,
-      timestamp: new Date().toISOString(),
+      timestamp: this.clock.nowIso(),
       turnNumber: state.snapshot.turnNumber,
       campaignId: state.snapshot.campaignId,
       snapshotHash,
@@ -187,15 +247,60 @@ export class SaveStore {
       }
 
       updatePointer(saveDir, saveId, previousSaveId);
+      if (this.retainSaves !== undefined) this.prune(saveDir, this.retainSaves);
 
       return { savePath, hash: stateHash, metadata };
     } catch (err) {
       cleanup(tmpDir);
+      cleanup(join(saveDir, POINTER_TEMP_FILE));
       if (published && existsSync(savePath)) {
         rmSync(savePath, { recursive: true, force: true });
       }
       throw err;
     }
+  }
+
+  saveEffect(
+    state: CampaignState,
+    saveDir: string,
+    extras: SaveExtras = {},
+    signal?: AbortSignal,
+  ): Effect.Effect<SaveResult, PersistenceCancelledError | PersistenceIoError> {
+    return Effect.try({
+      try: () => this.save(state, saveDir, signal, extras),
+      catch: (cause) =>
+        signal?.aborted === true
+          ? new PersistenceCancelledError({
+              message: "Save operation was cancelled",
+              stage: SAVE_STAGE,
+            })
+          : ioError(SAVE_STAGE, cause),
+    });
+  }
+
+  listEffect(saveDir: string): Effect.Effect<SaveMetadata[], PersistenceIoError> {
+    return Effect.try({
+      try: () => this.list(saveDir),
+      catch: (cause) => ioError(LIST_STAGE, cause),
+    });
+  }
+
+  isCurrentEffect(state: CampaignState, saveDir: string): Effect.Effect<boolean> {
+    return Effect.sync(() => this.isCurrent(state, saveDir));
+  }
+
+  activeSaveIdEffect(saveDir: string): Effect.Effect<string | null, PersistenceIoError> {
+    return Effect.try({
+      try: () => this.getActiveSaveId(saveDir),
+      catch: (cause) => ioError(POINTER_STAGE, cause),
+    });
+  }
+
+  previousSaveIdEffect(saveDir: string): Effect.Effect<string | null, PersistenceIoError> {
+    return Effect.try({
+      try: () => this.getPreviousSaveId(saveDir),
+      catch: (cause) => ioError(POINTER_STAGE, cause),
+    });
   }
 
   load(saveDir: string, signal?: AbortSignal): Effect.Effect<LoadedSave, LoadFailure> {
@@ -233,7 +338,7 @@ export class SaveStore {
       if (!entry.isDirectory()) continue;
 
       const dirName = entry.name;
-      if (dirName.startsWith(".tmp_")) continue;
+      if (dirName.startsWith(TEMP_SAVE_PREFIX) || dirName.startsWith(BACKUP_PREFIX)) continue;
 
       const metaPath = join(saveDir, dirName, "metadata.json");
       const sigPath = join(saveDir, dirName, "campaign.sig.json");
@@ -487,7 +592,7 @@ function updatePointer(saveDir: string, activeSaveId: string, previousSaveId?: s
     activeSaveId,
     ...(previousSaveId !== undefined ? { previousSaveId } : {}),
   };
-  const tmpPath = `${pointerPath}.tmp`;
+  const tmpPath = join(saveDir, POINTER_TEMP_FILE);
   writeFileSync(tmpPath, JSON.stringify(pointer, null, 2), "utf8");
   renameSync(tmpPath, pointerPath);
 }

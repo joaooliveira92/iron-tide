@@ -68,17 +68,33 @@ const saveStoreMocks = vi.hoisted(() => ({
   getActiveSaveId: vi.fn<(saveDir: string) => string | null>(() => "save-1"),
   getPreviousSaveId: vi.fn<(saveDir: string) => string | null>(() => "save-0"),
 }));
-vi.mock("@bluewave/persistence", async (importOriginal) => ({
-  ...(await importOriginal<object>()),
-  SaveStore: class {
-    save = saveStoreMocks.save;
-    load = saveStoreMocks.load;
-    loadById = saveStoreMocks.loadById;
-    getActiveSaveId = saveStoreMocks.getActiveSaveId;
-    getPreviousSaveId = saveStoreMocks.getPreviousSaveId;
-  },
-  CURRENT_COMPATIBILITY_VERSION: "2.0.0",
-}));
+vi.mock("@bluewave/persistence", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@bluewave/persistence")>();
+  const { Effect } = await import("effect");
+  const ioEffect = <A>(run: () => A) =>
+    Effect.try({
+      try: run,
+      catch: (e) =>
+        new actual.PersistenceIoError({ message: e instanceof Error ? e.message : String(e) }),
+    });
+  return {
+    ...actual,
+    SaveStore: class {
+      save = saveStoreMocks.save;
+      load = saveStoreMocks.load;
+      loadById = saveStoreMocks.loadById;
+      getActiveSaveId = saveStoreMocks.getActiveSaveId;
+      getPreviousSaveId = saveStoreMocks.getPreviousSaveId;
+      saveEffect = (...args: Parameters<typeof saveStoreMocks.save>) =>
+        ioEffect(() => saveStoreMocks.save(...args));
+      activeSaveIdEffect = (saveDir: string) =>
+        ioEffect(() => saveStoreMocks.getActiveSaveId(saveDir));
+      previousSaveIdEffect = (saveDir: string) =>
+        ioEffect(() => saveStoreMocks.getPreviousSaveId(saveDir));
+    },
+    CURRENT_COMPATIBILITY_VERSION: "2.0.0",
+  };
+});
 
 const phaseMocks = vi.hoisted(() => ({
   execute: vi.fn(),
