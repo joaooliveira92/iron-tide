@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { buildContentBundleArtifact, type CompilerInput } from "@bluewave/content-compiler";
+import { FleetShipSchema } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
   FIXTURE_RULESETS_YAML,
@@ -185,6 +186,22 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
     expect(nonInteger.collector.errors.map((e) => e.code)).toContain(
       SHIP_READINESS_CODES.crewQuality,
     );
+  });
+
+  it("accepts every FleetShipSchema key plus the runtime-only repair counter", () => {
+    const record: Record<string, unknown> = Object.fromEntries(
+      Object.keys(FleetShipSchema.fields).map((key) => [key, "x"]),
+    );
+    Object.assign(record, {
+      id: "ship-a",
+      isUnderConstruction: false,
+      readiness: "ACTIVE",
+      crewQuality: 50,
+    });
+    expect(Result.isSuccess(resolveShipReadinessSeed(record, "ship-a"))).toBe(true);
+    expect(
+      Result.isSuccess(resolveShipReadinessSeed({ ...record, repairMonthsRemaining: 3 }, "ship-a")),
+    ).toBe(true);
   });
 
   it("rejects an excess key on a ship record", () => {

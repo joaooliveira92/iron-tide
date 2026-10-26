@@ -44,6 +44,7 @@ export {
   CampaignEconomySchema,
   CampaignFleetSchema,
   CampaignResearchSchema,
+  FleetShipSchema,
 } from "./campaign.js";
 export { ContentBundleSchema, type CompiledContentBundle } from "./content-bundle.js";
 export type { ContentPack, PackManifest, RulesetManifest } from "./manifest.js";

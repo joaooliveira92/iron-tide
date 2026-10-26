@@ -1,4 +1,5 @@
 import { SafeInt } from "@bluewave/contracts";
+import { FleetShipSchema } from "@bluewave/content-schema";
 import type { Diagnostic, DiagnosticCode } from "@bluewave/diagnostics";
 import { Data, Result } from "effect";
 
@@ -201,21 +202,9 @@ export function resolveShipReadinessSeed(
   });
 }
 
-const ALLOWED_SHIP_INPUT_KEYS = new Set([
-  "id",
-  "name",
-  "classId",
-  "designVersionId",
-  "hitPoints",
-  "maxHitPoints",
-  "speed",
-  "firepower",
-  "armor",
-  "isUnderConstruction",
-  "constructionProgress",
-  "constructionTotalWork",
-  "inBattleId",
-  "readiness",
-  "crewQuality",
-  "repairMonthsRemaining",
+const RUNTIME_ONLY_SHIP_KEYS = ["repairMonthsRemaining"] as const;
+
+const ALLOWED_SHIP_INPUT_KEYS: ReadonlySet<string> = new Set([
+  ...Object.keys(FleetShipSchema.fields),
+  ...RUNTIME_ONLY_SHIP_KEYS,
 ]);
