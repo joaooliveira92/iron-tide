@@ -1,7 +1,7 @@
 import type { ExplanationTree } from "@bluewave/events";
 import { describe, expect, it } from "vite-plus/test";
 import { hasAuthoredMessage } from "../../lib/strings.js";
-import { accuracyExplanationModel } from "./accuracy-explanation-model.js";
+import { accuracyExplanationModel, explanationLabelKey } from "./accuracy-explanation-model.js";
 
 const child = (key: string, multiplierBp: number): ExplanationTree => ({
   formulaId: `gunnery_accuracy.${key}`,
@@ -67,7 +67,16 @@ describe("accuracy explanation model", () => {
       "glare",
       "targetEvasion",
     ]) {
-      expect(hasAuthoredMessage(`battle.accuracy.factor.${key}`)).toBe(true);
+      const labelKey = explanationLabelKey("battle", `gunnery_accuracy.${key}`);
+      expect(labelKey).toBe(`battle.gunnery_accuracy.${key}`);
+      expect(labelKey.split(".")).toHaveLength(3);
+      expect(hasAuthoredMessage(labelKey)).toBe(true);
     }
+  });
+
+  it("rejects a node id that does not follow the <formula>.<node> convention", () => {
+    expect(() => explanationLabelKey("battle", "gunnery_accuracy")).toThrow();
+    expect(() => explanationLabelKey("battle", "gunnery_accuracy.")).toThrow();
+    expect(() => explanationLabelKey("battle", "a.b.c")).toThrow();
   });
 });

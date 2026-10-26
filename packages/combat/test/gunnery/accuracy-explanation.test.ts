@@ -42,6 +42,16 @@ describe("gunnery accuracy explanation", () => {
     expect(explainGunneryAccuracy(factors({})).children).toBeUndefined();
   });
 
+  it("names the operation and source on every node", () => {
+    const tree = explainGunneryAccuracy(factors({ training: 11_000, crew: 9_000 }));
+    expect(tree.operation).toBe("multiply");
+    expect(tree.source).toEqual({ kind: "ruleset", ref: "gunnery_accuracy_v1" });
+    for (const child of tree.children ?? []) {
+      expect(child.operation).toBe("multiply");
+      expect(child.source).toEqual({ kind: "ruleset", ref: "gunnery_accuracy_v1" });
+    }
+  });
+
   it("records the rounded-down raw result so the chain can be checked by hand", () => {
     const input = factors({ training: 11_000 });
     const tree = explainGunneryAccuracy(input);

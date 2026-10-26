@@ -68,9 +68,10 @@ void test("names every uncovered step, in chain order", () => {
   assert.deepEqual(uncovered, ["lint:effect", "build"]);
 });
 
-void test("the allowlist is seeded with exactly check:golden, check:determinism and check:reachability-ledger", () => {
+void test("the allowlist is seeded with the check steps covered by raw commands", () => {
   assert.deepEqual(Object.keys(ALLOWLIST).sort(), [
     "check:determinism",
+    "check:explanation-coverage",
     "check:golden",
     "check:reachability-ledger",
   ]);

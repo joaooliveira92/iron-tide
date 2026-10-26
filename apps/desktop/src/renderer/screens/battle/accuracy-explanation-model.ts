@@ -1,3 +1,4 @@
+import { BluewaveError } from "@bluewave/contracts";
 import type { ExplanationTree } from "@bluewave/events";
 
 import { formatPercent } from "../../lib/presentation-format/index.js";
@@ -5,7 +6,15 @@ import type { FormattingLocale } from "../../../shared/preferences-contract.js";
 import { translate } from "../../lib/strings.js";
 
 const NEUTRAL_BP = 10_000;
-const FACTOR_PREFIX = "gunnery_accuracy.";
+const LABEL_AREA = "battle";
+
+export function explanationLabelKey(area: string, formulaId: string): string {
+  const segments = formulaId.split(".");
+  if (segments.length !== 2 || segments.some((segment) => segment.length === 0)) {
+    throw new BluewaveError("EXPLANATION_NODE_ID_INVALID", { formulaId });
+  }
+  return `${area}.${segments.join(".")}`;
+}
 
 export interface AccuracyRow {
   readonly key: string;
@@ -32,12 +41,10 @@ export function accuracyExplanationModel(
   locale: FormattingLocale,
 ): AccuracyExplanationModel {
   const rows = (tree.children ?? []).map((child): AccuracyRow => {
-    const key = child.formulaId.startsWith(FACTOR_PREFIX)
-      ? child.formulaId.slice(FACTOR_PREFIX.length)
-      : child.formulaId;
+    const key = child.formulaId.slice(child.formulaId.lastIndexOf(".") + 1);
     return {
       key,
-      label: translate(`battle.accuracy.factor.${key}`),
+      label: translate(explanationLabelKey(LABEL_AREA, child.formulaId)),
       changeText: changeText(Number(child.inputs["multiplierBp"]), locale),
     };
   });
