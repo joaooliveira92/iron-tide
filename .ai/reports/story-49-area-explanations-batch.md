@@ -13,6 +13,9 @@ area tickets now carry domain-built explanation trees on the production screens.
 | #302  | Construction | `ConstructionProjectReadoutView.scheduleExplanation`                                                             | `construction_schedule` (months left = work remaining ÷ monthly instalment)   |
 | #301  | Fleet        | `PlayerProjectionPresenceArea.shortfallExplanation`                                                              | `fleet_presence` (required − present, with a recorded blockade exemption)     |
 
+ADR-0306 lowers `@bluewave/events` to layer 4 of the package graph so `@bluewave/campaign-engine` can
+declare `ExplanationTree` fields without an equal-layer dependency or a duplicated contract.
+
 Each tree is built by the same calculation that produces the displayed value:
 
 - `EconomyOutlook` now returns `settlement` (the paid carrying, construction, maintenance,
