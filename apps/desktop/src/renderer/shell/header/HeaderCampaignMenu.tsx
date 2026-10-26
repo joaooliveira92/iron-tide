@@ -36,7 +36,7 @@ export function HeaderCampaignMenu({
   return (
     <>
       <div ref={rootRef} className="relative">
-        <Tip label={translate("shell.header.campaignMenu.title")}>
+        <Tip label={translate("shell.header.campaignMenu.title")} side="left">
           <Button
             variant="outline"
             aria-label={translate("shell.header.campaignMenu.aria")}
