@@ -395,7 +395,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225",
+      "adr_or_issue": "ADR-0300",
       "note": "Both run in the monthly pipeline; no airbase, aircraft or carrier surface exists."
     },
     {
@@ -498,7 +498,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225",
+      "adr_or_issue": "ADR-0300",
       "note": "Contexts are supplied empty: the campaign battle manifest never declares air groups or installations."
     },
     {
@@ -511,7 +511,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225"
+      "adr_or_issue": "ADR-0300"
     },
     {
       "id": "combat-mines",
@@ -523,7 +523,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225"
+      "adr_or_issue": "ADR-0300"
     },
     {
       "id": "combat-submarines",
@@ -535,7 +535,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225"
+      "adr_or_issue": "ADR-0300"
     },
     {
       "id": "combat-coastal-defense",
@@ -547,7 +547,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225",
+      "adr_or_issue": "ADR-0300",
       "note": "Exported as a subpath seam but not referenced outside the module."
     },
     {
@@ -560,7 +560,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#225",
+      "adr_or_issue": "ADR-0300",
       "note": "Projected into every battle but the campaign manifest declares no smoke source."
     },
     {

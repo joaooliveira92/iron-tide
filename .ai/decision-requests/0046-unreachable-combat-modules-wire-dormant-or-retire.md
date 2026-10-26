@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved by ADR-0300 (Option A, decided under the owner's delegation on 2026-10-25).
 
 ## Trigger
 

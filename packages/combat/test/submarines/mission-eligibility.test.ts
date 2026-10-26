@@ -269,7 +269,7 @@ describe("AC-4: every §6 guard fails closed with SUBMARINE_MISSION_INELIGIBLE",
     expectRejected(verdict, "technology", SUBMARINE_MISSION_INELIGIBLE);
     const withTech: SubmarineMissionEligibilityContext = {
       ...context,
-      availableTechnologyIds: new Set(["long_range_submarine_technology"]),
+      availableTechnologyIds: new Set(["sub_ww1_ocean_boat"]),
     };
     const ok = isSubmarineMissionEligible(
       asset,
