@@ -1,5 +1,7 @@
 import { existsSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { Effect } from "effect";
+import { PersistenceIoError } from "./errors.js";
 import { systemClock, type PersistenceClock } from "./clock.js";
 import { readSaveMetadata } from "./fileDecode.js";
 import type { PointerFile } from "./schemas.js";
@@ -32,7 +34,26 @@ export class RecoveryManager {
       return false;
     }
   }
+
+  static revertEffect(
+    saveDir: string,
+    previousSaveId: string,
+    clock: PersistenceClock = systemClock,
+  ): Effect.Effect<void, PersistenceIoError> {
+    return Effect.suspend(() =>
+      RecoveryManager.revert(saveDir, previousSaveId, clock)
+        ? Effect.void
+        : Effect.fail(
+            new PersistenceIoError({
+              message: `Could not write the reverted pointer in ${saveDir}`,
+              stage: REVERT_STAGE,
+            }),
+          ),
+    );
+  }
 }
+
+export const REVERT_STAGE = "persistence.revert";
 
 export const TEMP_SAVE_PREFIX = ".tmp_";
 export const BACKUP_PREFIX = ".bak_";
