@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0311).
+highest existing number + 1 (the next number is ADR-0312).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -193,6 +193,7 @@ The ship-designer model, its armour regions, named schemes, and the design draft
 | 0243 | [ADR-0243-design-edits-are-guarded-by-the-design-session.md](ADR-0243-design-edits-are-guarded-by-the-design-session.md) | Every design edit is guarded in the design session, and a newly broken design is explained at once | accepted | — |
 | 0252 | [ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md](ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md) | Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values | accepted | — |
 | 0309 | [ADR-0309-e1-part-families-and-capability-kinds.md](ADR-0309-e1-part-families-and-capability-kinds.md) | E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars | accepted | — |
+| 0311 | [ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md](ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) | Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire | accepted | — |
 
 ## World map
 

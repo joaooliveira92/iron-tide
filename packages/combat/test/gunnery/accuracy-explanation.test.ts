@@ -59,6 +59,12 @@ describe("gunnery accuracy explanation", () => {
     expect(tree.result).toBe(6_600);
   });
 
+  it("explains the radar factor from a fire-control radar design as its own child", () => {
+    const tree = explainGunneryAccuracy(factors({ radar: 11_000 }));
+    expect(tree.children?.map((child) => child.formulaId)).toEqual(["gunnery_accuracy.radar"]);
+    expect(tree.children?.[0]?.inputs["multiplierBp"]).toBe(11_000);
+  });
+
   it("is deterministic and lists every canonical key as a possible child id", () => {
     const input = factors(
       Object.fromEntries(GUNNERY_ACCURACY_FACTOR_KEYS.map((key) => [key, 9_500])),

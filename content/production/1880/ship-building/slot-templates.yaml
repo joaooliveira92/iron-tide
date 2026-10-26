@@ -326,39 +326,57 @@ slotTemplates:
   - id: compatibility_sensor
     slots:
       - accepts:
+          - radar
           - sensor
+          - sonar
         id: aft_magazine.sensor
         zone: AFT_MAGAZINE
       - accepts:
+          - radar
           - sensor
+          - sonar
         id: aft_service.sensor
         zone: AFT_SERVICE
       - accepts:
+          - radar
           - sensor
+          - sonar
         id: central_machinery.sensor
         zone: CENTRAL_MACHINERY
       - accepts:
+          - radar
           - sensor
+          - sonar
         id: forecastle.sensor
         zone: FORECASTLE
       - accepts:
+          - radar
           - sensor
+          - sonar
         id: fwd_magazine.sensor
         zone: FWD_MAGAZINE
       - accepts:
+          - radar
           - sensor
+          - sonar
         id: fwd_service.sensor
         zone: FWD_SERVICE
       - accepts:
+          - radar
           - sensor
+          - sonar
         id: mission.sensor
         zone: MISSION
       - accepts:
+          - radar
           - sensor
+          - sonar
         id: quarterdeck.sensor
         zone: QUARTERDECK
       - accepts:
+          - radar
           - sensor
+          - sonar
         id: superstructure.sensor
         zone: SUPERSTRUCTURE
   - id: compatibility_torpedo_launcher

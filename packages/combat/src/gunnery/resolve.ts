@@ -48,6 +48,7 @@ export interface GunneryBattery {
   mountOrdinal?: number;
   commandSource: string;
   baseReloadMs: number;
+  blindFireAllowed?: boolean;
   salvoCount: number;
   preferredType: AmmunitionType;
   permittedTypes?: readonly AmmunitionType[];
@@ -144,7 +145,10 @@ function resolveOneBattery(b: GunneryBattery, ctx: BatteryContext): BatteryOutco
   if (state.targetContactId === NO_TARGET || state.targetContactId === "") {
     return { fired: false, nextState: advanced };
   }
-  validateTargetOrder(state.targetContactId, ctx.contactsMap);
+  const targetTrack = ctx.contactsMap.get(state.targetContactId);
+  const blindFire =
+    b.blindFireAllowed === true && targetTrack !== undefined && targetTrack.confidence <= 0;
+  if (!blindFire) validateTargetOrder(state.targetContactId, ctx.contactsMap);
 
   let currentRangeUm: number | undefined;
   if (ctx.shipPositions) {

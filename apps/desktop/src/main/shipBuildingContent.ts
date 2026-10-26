@@ -2,6 +2,7 @@ import { hashWithContext } from "@bluewave/deterministic";
 import {
   battleOffersFromRulesets,
   fleetManagementFromRulesets,
+  gunneryFromRulesets,
   presenceFromRulesets,
   type ShipBuildingCatalogue,
 } from "@bluewave/content-compiler";
@@ -96,6 +97,17 @@ export function loadFleetManagementRules(): FleetManagementRules | undefined {
     );
   fleetManagement = { rules: decoded?.value };
   return fleetManagement.rules;
+}
+
+type GunneryRules = ReturnType<typeof gunneryFromRulesets>;
+
+let gunneryRules: { readonly rules: GunneryRules | undefined } | null = null;
+
+export function loadGunneryRules(): GunneryRules | undefined {
+  if (gunneryRules !== null) return gunneryRules.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  gunneryRules = { rules: gunneryFromRulesets(bundle.rulesets) };
+  return gunneryRules.rules;
 }
 
 export function loadShipBuildingData(): ShipBuildingData {
