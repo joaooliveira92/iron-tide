@@ -1,4 +1,9 @@
-import { ARMAMENT_BP_ONE, composeBpMultipliers, scaleByBp } from "./arithmetic.js";
+import {
+  ARMAMENT_BP_ONE,
+  composeBpMultipliers,
+  scaleByBp,
+  type ArmamentArithmeticResult,
+} from "./arithmetic.js";
 import {
   type ArmamentEntityRef,
   type ArmamentFindingSeverity,
@@ -183,10 +188,10 @@ function accessStatusOf(
 function composeModifiers(
   mount: GunMountDef,
   ammunition: AmmunitionPattern,
-): {
+): ArmamentArithmeticResult<{
   readonly appliedModifiers: readonly AppliedArmamentModifier[];
   readonly resolvedRateOfFireModifierBp: number;
-} {
+}> {
   const appliedModifiers: AppliedArmamentModifier[] = [];
   if (mount.rateOfFireModifierBp !== undefined) {
     appliedModifiers.push({
@@ -206,10 +211,16 @@ function composeModifiers(
       valueBp: ammunition.rateOfFireModifierBp,
     });
   }
-  return {
-    appliedModifiers,
-    resolvedRateOfFireModifierBp: composeBpMultipliers(appliedModifiers.map((m) => m.valueBp)),
-  };
+  const composed = composeBpMultipliers(appliedModifiers.map((m) => m.valueBp));
+  return composed.ok
+    ? {
+        ok: true,
+        value: {
+          appliedModifiers,
+          resolvedRateOfFireModifierBp: composed.value,
+        },
+      }
+    : composed;
 }
 
 export function resolveArmament(
@@ -464,14 +475,42 @@ export function resolveArmament(
     return { ok: false, resolved: null, findings: sorted };
   }
 
-  const { appliedModifiers, resolvedRateOfFireModifierBp } = composeModifiers(mount, ammunition);
+  const modifiers = composeModifiers(mount, ammunition);
+  if (!modifiers.ok) {
+    findings.push(
+      finding(
+        "BLOCKING",
+        "ARMAMENT_ARITHMETIC_OVERFLOW",
+        mEntity,
+        "resolvedRateOfFireModifierBp",
+        {},
+        modifiers.failure.message,
+      ),
+    );
+    return { ok: false, resolved: null, findings: sortArmamentFindings(findings) };
+  }
+  const { appliedModifiers, resolvedRateOfFireModifierBp } = modifiers.value;
 
   const shellMassG = ammunition.shellMassG ?? gunModel.shellMassG;
   const chargeBp = gunModel.propellantChargeBp;
-  const ammunitionUnitMassG =
-    shellMassG !== undefined && chargeBp !== undefined
-      ? scaleByBp(shellMassG, ARMAMENT_BP_ONE + chargeBp)
-      : undefined;
+  let ammunitionUnitMassG: number | undefined;
+  if (shellMassG !== undefined && chargeBp !== undefined) {
+    const unitMass = scaleByBp(shellMassG, ARMAMENT_BP_ONE + chargeBp);
+    if (!unitMass.ok) {
+      findings.push(
+        finding(
+          "BLOCKING",
+          "ARMAMENT_ARITHMETIC_OVERFLOW",
+          gmEntity,
+          "ammunitionUnitMassG",
+          { shellMassG, propellantChargeBp: chargeBp },
+          unitMass.failure.message,
+        ),
+      );
+      return { ok: false, resolved: null, findings: sortArmamentFindings(findings) };
+    }
+    ammunitionUnitMassG = unitMass.value;
+  }
   const mountStructureMassKg =
     mount.baseInstallationMassKg !== undefined || mount.perGunInstallationMassKg !== undefined
       ? (mount.baseInstallationMassKg ?? 0) + (mount.perGunInstallationMassKg ?? 0) * mount.gunCount
