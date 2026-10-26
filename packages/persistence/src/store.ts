@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -14,8 +13,10 @@ import type { CampaignState } from "@bluewave/campaign";
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
 import type { Diagnostic } from "@bluewave/diagnostics";
 import { Effect, Result, Schema } from "effect";
+import { systemClock, type PersistenceClock } from "./clock.js";
 import { CompatibilityChecker, CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
 import {
+  PersistenceInvalidOptionError,
   PersistenceCancelledError,
   PersistenceCompatibilityMismatchError,
   PersistenceCorruptSaveError,
@@ -23,7 +24,13 @@ import {
   PersistenceUnsignedSaveError,
 } from "./errors.js";
 import { readPointerFile, readSaveMetadata, readSigFile } from "./fileDecode.js";
-import { cleanup } from "./recovery.js";
+import {
+  BACKUP_PREFIX,
+  cleanup,
+  POINTER_TEMP_FILE,
+  sweepStaleTemp,
+  TEMP_SAVE_PREFIX,
+} from "./recovery.js";
 import {
   decodeStorableCampaignState,
   SaveHeaderSchema,
@@ -107,10 +114,49 @@ function cancelledLoad(): PersistenceCancelledError {
   });
 }
 
+export interface SaveStoreOptions {
+  readonly retainSaves?: number;
+  readonly clock?: PersistenceClock;
+}
+
 export class SaveStore {
+  private readonly retainSaves: number | undefined;
+  private readonly clock: PersistenceClock;
+
   constructor(
     private readonly currentCompatibilityVersion: string = CURRENT_COMPATIBILITY_VERSION,
-  ) {}
+    options: SaveStoreOptions = {},
+  ) {
+    if (
+      options.retainSaves !== undefined &&
+      (!Number.isSafeInteger(options.retainSaves) || options.retainSaves < 2)
+    ) {
+      throw new PersistenceInvalidOptionError({
+        message: "retainSaves must be a safe integer of at least 2",
+        stage: "persistence.options",
+      });
+    }
+    this.retainSaves = options.retainSaves;
+    this.clock = options.clock ?? systemClock;
+  }
+
+  prune(saveDir: string, retain: number): void {
+    const protectedIds = new Set<string>();
+    const active = this.getActiveSaveId(saveDir);
+    const previous = this.getPreviousSaveId(saveDir);
+    if (active !== null) protectedIds.add(active);
+    if (previous !== null) protectedIds.add(previous);
+    let kept = protectedIds.size;
+    for (const save of this.list(saveDir)) {
+      if (protectedIds.has(save.saveId)) continue;
+      if (kept < retain && isValidSaveId(save.saveId)) {
+        kept += 1;
+        continue;
+      }
+      if (!isValidSaveId(save.saveId)) continue;
+      rmSync(join(saveDir, save.saveId), { recursive: true, force: true });
+    }
+  }
 
   save(
     state: CampaignState,
@@ -122,9 +168,11 @@ export class SaveStore {
       throw createAbortError();
     }
 
-    const saveId = `${Date.now()}-${randomUUID()}`;
+    sweepStaleTemp(saveDir);
+
+    const saveId = `${this.clock.nowMillis()}-${this.clock.uuid()}`;
     const savePath = join(saveDir, saveId);
-    const tmpDir = join(saveDir, `.tmp_${saveId}`);
+    const tmpDir = join(saveDir, `${TEMP_SAVE_PREFIX}${saveId}`);
 
     const { rawHash: _rh, ...stateForHash } = state;
     const storableState = { ...state, snapshot: toStorableSnapshot(state.snapshot) };
@@ -144,7 +192,7 @@ export class SaveStore {
     const metadata: SaveMetadata = {
       saveId,
       previousSaveId,
-      timestamp: new Date().toISOString(),
+      timestamp: this.clock.nowIso(),
       turnNumber: state.snapshot.turnNumber,
       campaignId: state.snapshot.campaignId,
       snapshotHash,
@@ -187,10 +235,12 @@ export class SaveStore {
       }
 
       updatePointer(saveDir, saveId, previousSaveId);
+      if (this.retainSaves !== undefined) this.prune(saveDir, this.retainSaves);
 
       return { savePath, hash: stateHash, metadata };
     } catch (err) {
       cleanup(tmpDir);
+      cleanup(join(saveDir, POINTER_TEMP_FILE));
       if (published && existsSync(savePath)) {
         rmSync(savePath, { recursive: true, force: true });
       }
@@ -233,7 +283,7 @@ export class SaveStore {
       if (!entry.isDirectory()) continue;
 
       const dirName = entry.name;
-      if (dirName.startsWith(".tmp_")) continue;
+      if (dirName.startsWith(TEMP_SAVE_PREFIX) || dirName.startsWith(BACKUP_PREFIX)) continue;
 
       const metaPath = join(saveDir, dirName, "metadata.json");
       const sigPath = join(saveDir, dirName, "campaign.sig.json");
@@ -487,7 +537,7 @@ function updatePointer(saveDir: string, activeSaveId: string, previousSaveId?: s
     activeSaveId,
     ...(previousSaveId !== undefined ? { previousSaveId } : {}),
   };
-  const tmpPath = `${pointerPath}.tmp`;
+  const tmpPath = join(saveDir, POINTER_TEMP_FILE);
   writeFileSync(tmpPath, JSON.stringify(pointer, null, 2), "utf8");
   renameSync(tmpPath, pointerPath);
 }

@@ -75,6 +75,10 @@ export class PersistenceCompatibilityMismatchError extends Data.TaggedError(
   }
 }
 
+export class PersistenceInvalidOptionError extends Data.TaggedError(
+  "PERSISTENCE_INVALID_OPTION",
+)<PersistenceErrorFields> {}
+
 export type PersistenceError =
   | PersistenceCorruptSaveError
   | PersistenceMissingSaveError
