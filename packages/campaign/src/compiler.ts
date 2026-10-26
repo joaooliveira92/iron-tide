@@ -1,12 +1,12 @@
-import { contentPackFromArtifact, type ContentBundle } from "@bluewave/content-compiler";
-import type { ContentPack } from "@bluewave/content-schema";
+import { contentPackFromArtifact } from "@bluewave/content-compiler";
+import type { CompiledContentBundle, ContentPack } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { type DiagnosticCollector as DiagnosticCollectorType } from "@bluewave/diagnostics";
 import { compileTorpedo } from "@bluewave/ship-design";
 import type { CompiledTorpedo } from "@bluewave/armament";
 import { Result } from "effect";
-import { toStr, type CampaignFileData } from "./campaignInput.js";
+import type { CampaignFileData } from "./campaignInput.js";
 import { validateCampaignPreconditions } from "./campaignSession.js";
 import {
   assertFleetDesignLinks,
@@ -32,7 +32,7 @@ import {
 import { buildWorldState } from "./worldCompilation.js";
 
 export interface CampaignCompilerInput {
-  contentBundle: ContentBundle;
+  contentBundle: CompiledContentBundle;
   contentHash?: string;
   rulesetVersion: string;
   compatibilityVersion: string;
@@ -155,7 +155,7 @@ export class CampaignCompiler {
     const snapshot: CampaignSnapshot = {
       version: "0.1.0",
       turnNumber: SafeInt(0),
-      campaignId: `campaign-${toStr((pack.manifest as Record<string, unknown>)["name"], "unknown")}`,
+      campaignId: `campaign-${pack.manifest.name}`,
       startYear: campaignStart.startYear,
       startMonth: campaignStart.startMonth,
       slots,
@@ -188,7 +188,7 @@ export class CampaignCompiler {
 }
 
 function torpedoResolverFor(
-  bundle: ContentBundle,
+  bundle: CompiledContentBundle,
 ): ((torpedoModelId: string) => CompiledTorpedo | undefined) | undefined {
   const byId = bundle.shipBuilding?.partModel?.partIndex.byId;
   if (byId === undefined) return undefined;
@@ -235,7 +235,7 @@ function resolvePrestigeRules(
   return decoded.success;
 }
 
-function contentPackFromBundle(bundle: ContentBundle): ContentPack {
+function contentPackFromBundle(bundle: CompiledContentBundle): ContentPack {
   return contentPackFromArtifact({
     manifest: bundle.manifest,
     rulesets: bundle.rulesets,
@@ -248,7 +248,7 @@ function contentPackFromBundle(bundle: ContentBundle): ContentPack {
   });
 }
 
-function campaignDataFromBundle(bundle: ContentBundle): CampaignFileData {
+function campaignDataFromBundle(bundle: CompiledContentBundle): CampaignFileData {
   const campaign = bundle.campaign;
   return {
     fleets: campaign?.fleets ?? [],

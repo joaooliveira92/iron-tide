@@ -1,28 +1,19 @@
-import { SafeInt } from "@bluewave/contracts";
-
-export function toSafeInt(value: unknown): SafeInt {
-  if (typeof value === "number") return SafeInt(value);
-  return SafeInt(0);
-}
-
-export function toSafeIntOpt(value: unknown, fallback: SafeInt): SafeInt {
-  if (typeof value === "number") return SafeInt(value);
-  return fallback;
-}
-
-export function toStr(value: unknown, fallback = ""): string {
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  return fallback;
-}
+import type {
+  CampaignConstruction,
+  CampaignDesign,
+  CampaignDiplomacy,
+  CampaignDivision,
+  CampaignEconomy,
+  CampaignFleet,
+  CampaignResearch,
+} from "@bluewave/content-schema";
 
 export interface CampaignFileData {
-  fleets: unknown[];
-  economies: unknown[];
-  constructions: unknown[];
-  diplomacy: unknown[];
-  research: unknown[];
-  designs: unknown[];
-  divisions: unknown[];
+  readonly fleets: readonly CampaignFleet[];
+  readonly economies: readonly CampaignEconomy[];
+  readonly constructions: readonly CampaignConstruction[];
+  readonly diplomacy: readonly CampaignDiplomacy[];
+  readonly research: readonly CampaignResearch[];
+  readonly designs: readonly CampaignDesign[];
+  readonly divisions: readonly CampaignDivision[];
 }
