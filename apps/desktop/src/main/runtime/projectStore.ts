@@ -35,6 +35,10 @@ function failure(reason: string, error: unknown): CommandFailed {
   });
 }
 
+function ioFailure(reason: string): (error: { readonly message: string }) => CommandFailed {
+  return (error) => new CommandFailed({ reason, diagnostics: [error.message] });
+}
+
 function persistenceFailure(error: PersistenceError): CommandFailed {
   const diagnostic = error.toDiagnostic();
   return new CommandFailed({
@@ -170,27 +174,19 @@ export class ProjectStore extends Context.Service<
 export function projectStoreLayer(): Layer.Layer<ProjectStore> {
   const store = new SaveStore(undefined, { retainSaves: PROVISIONAL_RETAINED_SAVES });
   return Layer.succeed(ProjectStore, {
-    isCurrent: (state, saveDir) =>
-      Effect.try({
-        try: () => store.isCurrent(state, saveDir),
-        catch: (e) => failure("SAVE_FAILED", e),
-      }),
+    isCurrent: (state, saveDir) => store.isCurrentEffect(state, saveDir),
     save: (state, saveDir, extras) =>
-      Effect.try({
-        try: () => store.save(state, saveDir, undefined, extras).metadata,
-        catch: (e) => failure("SAVE_FAILED", e),
-      }),
+      store.saveEffect(state, saveDir, extras).pipe(
+        Effect.map((result) => result.metadata),
+        Effect.mapError(ioFailure("SAVE_FAILED")),
+      ),
     load: (saveDir, collector) =>
       Effect.gen(function* () {
         const loaded = yield* store.load(saveDir).pipe(Effect.mapError(persistenceFailure));
         for (const warning of loaded.warnings) collector.add(warning);
         return loaded.state;
       }),
-    list: (saveDir) =>
-      Effect.try({
-        try: () => store.list(saveDir),
-        catch: (e) => failure("LOAD_FAILED", e),
-      }),
+    list: (saveDir) => store.listEffect(saveDir).pipe(Effect.mapError(ioFailure("LOAD_FAILED"))),
     loadById: (saveDir, saveId, collector) =>
       Effect.gen(function* () {
         const loaded = yield* store
@@ -210,15 +206,9 @@ export function projectStoreLayer(): Layer.Layer<ProjectStore> {
         return { status: "missing" as const };
       }),
     getActiveSaveId: (saveDir) =>
-      Effect.try({
-        try: () => store.getActiveSaveId(saveDir),
-        catch: (e) => failure("LOAD_FAILED", e),
-      }),
+      store.activeSaveIdEffect(saveDir).pipe(Effect.mapError(ioFailure("LOAD_FAILED"))),
     getPreviousSaveId: (saveDir) =>
-      Effect.try({
-        try: () => store.getPreviousSaveId(saveDir),
-        catch: (e) => failure("LOAD_FAILED", e),
-      }),
+      store.previousSaveIdEffect(saveDir).pipe(Effect.mapError(ioFailure("LOAD_FAILED"))),
     readSessionMetadata: (saveDir) =>
       Effect.try({
         try: () => readSessionMetadata(saveDir),
@@ -248,12 +238,9 @@ export function projectStoreLayer(): Layer.Layer<ProjectStore> {
           envelope: nextEnvelope,
           rawHash: record.state.rawHash,
         });
-        yield* Effect.try({
-          try: () => {
-            store.save(nextState, record.saveDir);
-          },
-          catch: (e) => failure("SAVE_FAILED", e),
-        });
+        yield* store
+          .saveEffect(nextState, record.saveDir)
+          .pipe(Effect.mapError(ioFailure("SAVE_FAILED")));
         return nextState;
       }),
   });

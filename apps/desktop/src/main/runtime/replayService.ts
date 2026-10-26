@@ -48,7 +48,10 @@ export function replayServiceLayer(): Layer.Layer<ReplayService> {
           request.engineOptions,
         ),
       ),
-    revert: (saveDir, saveId) => Effect.sync(() => RecoveryManager.revert(saveDir, saveId)),
+    revert: (saveDir, saveId) =>
+      RecoveryManager.revertEffect(saveDir, saveId).pipe(
+        Effect.match({ onFailure: () => false, onSuccess: () => true }),
+      ),
     hash: (snapshot) => Effect.sync(() => hashSnapshot(snapshot)),
     promote: (snapshot, slotId) =>
       Effect.sync(() => promotePlayerSlotForExecution(snapshot, slotId)),
