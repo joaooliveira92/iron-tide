@@ -42,8 +42,8 @@ const manifest = (overrides = {}) => ({
   ],
 });
 
-describe("scanContracts", () => {
-  it("finds numeric, explanation and nested numeric fields", () => {
+void describe("scanContracts", () => {
+  void it("finds numeric, explanation and nested numeric fields", () => {
     const fields = scanContracts(source).get("SampleView");
     assert.deepEqual(
       fields.map((field) => `${field.kind}:${field.name}`),
@@ -58,7 +58,7 @@ describe("scanContracts", () => {
     );
   });
 
-  it("scans a type alias with an object literal body", () => {
+  void it("scans a type alias with an object literal body", () => {
     const text = `
 type Other = {
   readonly label: string;
@@ -70,8 +70,8 @@ type Other = {
   });
 });
 
-describe("evaluateCoverage", () => {
-  it("passes when every field is covered or exempt", () => {
+void describe("evaluateCoverage", () => {
+  void it("passes when every field is covered or exempt", () => {
     const result = evaluateCoverage(manifest(), () => source);
     assert.deepEqual(result.problems, []);
     assert.equal(result.covered, 1);
@@ -79,7 +79,7 @@ describe("evaluateCoverage", () => {
     assert.equal(result.total, 6);
   });
 
-  it("fails when a numeric field has no explanation or exemption", () => {
+  void it("fails when a numeric field has no explanation or exemption", () => {
     const incomplete = manifest();
     delete incomplete.contracts[0].exempt.cost;
     const result = evaluateCoverage(incomplete, () => source);
@@ -87,7 +87,7 @@ describe("evaluateCoverage", () => {
     assert.match(result.problems[0], /cost/);
   });
 
-  it("fails on stale covered and exempt fields", () => {
+  void it("fails on stale covered and exempt fields", () => {
     const stale = manifest();
     stale.contracts[0].exempt.removed = "gone";
     stale.contracts[0].covered.missing = "missing_formula";
@@ -96,33 +96,33 @@ describe("evaluateCoverage", () => {
     assert.ok(result.problems.some((problem) => problem.includes("stale covered field")));
   });
 
-  it("fails when a covered field is not an ExplanationTree", () => {
+  void it("fails when a covered field is not an ExplanationTree", () => {
     const wrong = manifest();
     wrong.contracts[0].covered.cost = "cost_formula";
     const result = evaluateCoverage(wrong, () => source);
     assert.ok(result.problems.some((problem) => problem.includes("is not an ExplanationTree")));
   });
 
-  it("fails when the covered percentage drops below the ratchet", () => {
+  void it("fails when the covered percentage drops below the ratchet", () => {
     const ratchet = manifest();
     ratchet.minimumCoveredPercentBp = 5000;
     const result = evaluateCoverage(ratchet, () => source);
     assert.ok(result.problems.some((problem) => problem.includes("coverage dropped")));
   });
 
-  it("fails when a listed contract is missing", () => {
+  void it("fails when a listed contract is missing", () => {
     const missing = manifest({ type: "MissingView" });
     const result = evaluateCoverage(missing, () => source);
     assert.ok(result.problems.some((problem) => problem.includes('contract type "MissingView"')));
   });
 });
 
-describe("validateManifest", () => {
-  it("accepts the committed shape", () => {
+void describe("validateManifest", () => {
+  void it("accepts the committed shape", () => {
     assert.deepEqual(validateManifest(manifest()), []);
   });
 
-  it("rejects unknown keys and empty exemption reasons", () => {
+  void it("rejects unknown keys and empty exemption reasons", () => {
     const invalid = manifest({ extra: true });
     invalid.contracts[0].exempt.cost = "";
     const problems = validateManifest(invalid);
@@ -130,7 +130,7 @@ describe("validateManifest", () => {
     assert.ok(problems.some((problem) => problem.includes('exempt["cost"]')));
   });
 
-  it("rejects duplicate contracts", () => {
+  void it("rejects duplicate contracts", () => {
     const duplicate = manifest();
     duplicate.contracts.push(structuredClone(duplicate.contracts[0]));
     assert.ok(
