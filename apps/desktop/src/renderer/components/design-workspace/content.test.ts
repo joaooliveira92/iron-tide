@@ -3,12 +3,17 @@ import { describe, expect, it } from "vite-plus/test";
 import { catalogueView, loadDrawingBoardContent } from "./content.js";
 
 describe("drawing-board catalogue view (17b-1)", () => {
-  it("builds the read-only catalogue from the parts, equal to the legacy projection", () => {
+  it("builds the read-only catalogue from the parts, equal to the legacy projection for legacy ids", () => {
     const content = loadDrawingBoardContent();
-    expect(catalogueView(content.components, content.partModel)).toEqual(
-      legacyCatalogueView(content.components),
+    const legacyIds = new Set(content.components.map((component) => component.id));
+    const legacy = legacyCatalogueView(content.components);
+    expect(
+      catalogueView(content.components, content.partModel).filter((e) => legacyIds.has(e.id)),
+    ).toEqual(legacy);
+    expect(content.catalogue.filter((e) => legacyIds.has(e.id))).toEqual(legacy);
+    expect(content.catalogue.map((e) => e.id)).toEqual(
+      expect.arrayContaining(["rad_type_286_search", "rad_type_284_fire_control"]),
     );
-    expect(content.catalogue).toEqual(legacyCatalogueView(content.components));
   });
 
   it("falls back to the legacy projection when the pack carries no part model", () => {
