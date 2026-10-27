@@ -375,15 +375,15 @@
     {
       "id": "ship-readiness",
       "player_verb": "See and manage ship readiness",
-      "status": "dormant-by-decision",
+      "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
       "engine_symbols": ["applyReadinessEvolution"],
-      "main_commands": [],
-      "renderer_screen": null,
-      "evidence_test": null,
-      "adr_or_issue": "#223",
-      "note": "Readiness evolves in the monthly pipeline; no readout or control exists."
+      "main_commands": ["submitShipReadiness"],
+      "renderer_screen": "screens/fleet/station/FleetStationSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx",
+      "adr_or_issue": null,
+      "note": "The station table shows AF, RF, MB and WU codes with labels (fleet-station-state.test.ts); selected ships can be placed in reserve or mothballed and the month applies the change."
     },
     {
       "id": "aircraft-and-carriers",
