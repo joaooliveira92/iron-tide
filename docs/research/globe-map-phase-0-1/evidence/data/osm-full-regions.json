@@ -1,0 +1,887 @@
+{
+  "source": "land-polygons-split-4326",
+  "total": 873851,
+  "totalVertices": 79486825,
+  "readMs": 3439,
+  "regions": {
+    "gibraltar_westmed": {
+      "polygons": 508,
+      "vertices": 170711,
+      "buildMs": 22,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 1,
+          "rawBytes": 1354,
+          "gzipBytes": 525
+        },
+        {
+          "z": 1,
+          "tiles": 2,
+          "rawBytes": 2004,
+          "gzipBytes": 964
+        },
+        {
+          "z": 2,
+          "tiles": 2,
+          "rawBytes": 1947,
+          "gzipBytes": 1112
+        },
+        {
+          "z": 3,
+          "tiles": 2,
+          "rawBytes": 2164,
+          "gzipBytes": 1271
+        },
+        {
+          "z": 4,
+          "tiles": 2,
+          "rawBytes": 2680,
+          "gzipBytes": 1707
+        },
+        {
+          "z": 5,
+          "tiles": 2,
+          "rawBytes": 3650,
+          "gzipBytes": 2538
+        },
+        {
+          "z": 6,
+          "tiles": 6,
+          "rawBytes": 6595,
+          "gzipBytes": 5032
+        },
+        {
+          "z": 7,
+          "tiles": 21,
+          "rawBytes": 12604,
+          "gzipBytes": 10233
+        },
+        {
+          "z": 8,
+          "tiles": 61,
+          "rawBytes": 24399,
+          "gzipBytes": 20722
+        },
+        {
+          "z": 9,
+          "tiles": 184,
+          "rawBytes": 46522,
+          "gzipBytes": 42473
+        },
+        {
+          "z": 10,
+          "tiles": 616,
+          "rawBytes": 92299,
+          "gzipBytes": 93537
+        },
+        {
+          "z": 11,
+          "tiles": 2266,
+          "rawBytes": 194360,
+          "gzipBytes": 227268
+        },
+        {
+          "z": 12,
+          "tiles": 8630,
+          "rawBytes": 720447,
+          "gzipBytes": 784636
+        }
+      ]
+    },
+    "english_channel": {
+      "polygons": 8981,
+      "vertices": 1271450,
+      "buildMs": 216,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 1,
+          "rawBytes": 1645,
+          "gzipBytes": 792
+        },
+        {
+          "z": 1,
+          "tiles": 2,
+          "rawBytes": 2878,
+          "gzipBytes": 1587
+        },
+        {
+          "z": 2,
+          "tiles": 2,
+          "rawBytes": 3418,
+          "gzipBytes": 2106
+        },
+        {
+          "z": 3,
+          "tiles": 2,
+          "rawBytes": 4282,
+          "gzipBytes": 2821
+        },
+        {
+          "z": 4,
+          "tiles": 2,
+          "rawBytes": 6663,
+          "gzipBytes": 4484
+        },
+        {
+          "z": 5,
+          "tiles": 4,
+          "rawBytes": 12327,
+          "gzipBytes": 8499
+        },
+        {
+          "z": 6,
+          "tiles": 11,
+          "rawBytes": 23875,
+          "gzipBytes": 16789
+        },
+        {
+          "z": 7,
+          "tiles": 27,
+          "rawBytes": 49571,
+          "gzipBytes": 35191
+        },
+        {
+          "z": 8,
+          "tiles": 75,
+          "rawBytes": 103677,
+          "gzipBytes": 75362
+        },
+        {
+          "z": 9,
+          "tiles": 236,
+          "rawBytes": 199754,
+          "gzipBytes": 150926
+        },
+        {
+          "z": 10,
+          "tiles": 826,
+          "rawBytes": 369693,
+          "gzipBytes": 299806
+        },
+        {
+          "z": 11,
+          "tiles": 2939,
+          "rawBytes": 671365,
+          "gzipBytes": 607589
+        },
+        {
+          "z": 12,
+          "tiles": 11049,
+          "rawBytes": 3301108,
+          "gzipBytes": 2358930
+        }
+      ]
+    },
+    "aegean_bosporus": {
+      "polygons": 11235,
+      "vertices": 1089693,
+      "buildMs": 93,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 1,
+          "rawBytes": 1368,
+          "gzipBytes": 679
+        },
+        {
+          "z": 1,
+          "tiles": 1,
+          "rawBytes": 2051,
+          "gzipBytes": 1084
+        },
+        {
+          "z": 2,
+          "tiles": 1,
+          "rawBytes": 3107,
+          "gzipBytes": 1745
+        },
+        {
+          "z": 3,
+          "tiles": 2,
+          "rawBytes": 6016,
+          "gzipBytes": 3680
+        },
+        {
+          "z": 4,
+          "tiles": 4,
+          "rawBytes": 9549,
+          "gzipBytes": 6223
+        },
+        {
+          "z": 5,
+          "tiles": 4,
+          "rawBytes": 15816,
+          "gzipBytes": 10540
+        },
+        {
+          "z": 6,
+          "tiles": 9,
+          "rawBytes": 32020,
+          "gzipBytes": 22133
+        },
+        {
+          "z": 7,
+          "tiles": 19,
+          "rawBytes": 59185,
+          "gzipBytes": 41840
+        },
+        {
+          "z": 8,
+          "tiles": 57,
+          "rawBytes": 109241,
+          "gzipBytes": 80405
+        },
+        {
+          "z": 9,
+          "tiles": 190,
+          "rawBytes": 192388,
+          "gzipBytes": 150937
+        },
+        {
+          "z": 10,
+          "tiles": 655,
+          "rawBytes": 341657,
+          "gzipBytes": 290772
+        },
+        {
+          "z": 11,
+          "tiles": 2286,
+          "rawBytes": 619527,
+          "gzipBytes": 578946
+        },
+        {
+          "z": 12,
+          "tiles": 8273,
+          "rawBytes": 2805810,
+          "gzipBytes": 2064046
+        }
+      ]
+    },
+    "suez": {
+      "polygons": 49,
+      "vertices": 24801,
+      "buildMs": 2,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 1,
+          "rawBytes": 262,
+          "gzipBytes": 190
+        },
+        {
+          "z": 1,
+          "tiles": 1,
+          "rawBytes": 284,
+          "gzipBytes": 221
+        },
+        {
+          "z": 2,
+          "tiles": 1,
+          "rawBytes": 308,
+          "gzipBytes": 262
+        },
+        {
+          "z": 3,
+          "tiles": 1,
+          "rawBytes": 464,
+          "gzipBytes": 373
+        },
+        {
+          "z": 4,
+          "tiles": 1,
+          "rawBytes": 683,
+          "gzipBytes": 566
+        },
+        {
+          "z": 5,
+          "tiles": 2,
+          "rawBytes": 1147,
+          "gzipBytes": 937
+        },
+        {
+          "z": 6,
+          "tiles": 2,
+          "rawBytes": 1743,
+          "gzipBytes": 1396
+        },
+        {
+          "z": 7,
+          "tiles": 4,
+          "rawBytes": 2856,
+          "gzipBytes": 2389
+        },
+        {
+          "z": 8,
+          "tiles": 9,
+          "rawBytes": 5259,
+          "gzipBytes": 4691
+        },
+        {
+          "z": 9,
+          "tiles": 22,
+          "rawBytes": 8420,
+          "gzipBytes": 7967
+        },
+        {
+          "z": 10,
+          "tiles": 76,
+          "rawBytes": 14858,
+          "gzipBytes": 15412
+        },
+        {
+          "z": 11,
+          "tiles": 292,
+          "rawBytes": 29096,
+          "gzipBytes": 34011
+        },
+        {
+          "z": 12,
+          "tiles": 1096,
+          "rawBytes": 100585,
+          "gzipBytes": 110968
+        }
+      ]
+    },
+    "malacca_singapore": {
+      "polygons": 1629,
+      "vertices": 263640,
+      "buildMs": 19,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 1,
+          "rawBytes": 872,
+          "gzipBytes": 455
+        },
+        {
+          "z": 1,
+          "tiles": 2,
+          "rawBytes": 1847,
+          "gzipBytes": 1060
+        },
+        {
+          "z": 2,
+          "tiles": 2,
+          "rawBytes": 2379,
+          "gzipBytes": 1392
+        },
+        {
+          "z": 3,
+          "tiles": 2,
+          "rawBytes": 2941,
+          "gzipBytes": 1820
+        },
+        {
+          "z": 4,
+          "tiles": 2,
+          "rawBytes": 4614,
+          "gzipBytes": 2892
+        },
+        {
+          "z": 5,
+          "tiles": 4,
+          "rawBytes": 8364,
+          "gzipBytes": 5430
+        },
+        {
+          "z": 6,
+          "tiles": 6,
+          "rawBytes": 14159,
+          "gzipBytes": 9499
+        },
+        {
+          "z": 7,
+          "tiles": 12,
+          "rawBytes": 25560,
+          "gzipBytes": 17862
+        },
+        {
+          "z": 8,
+          "tiles": 33,
+          "rawBytes": 41482,
+          "gzipBytes": 31124
+        },
+        {
+          "z": 9,
+          "tiles": 100,
+          "rawBytes": 68251,
+          "gzipBytes": 55693
+        },
+        {
+          "z": 10,
+          "tiles": 320,
+          "rawBytes": 110294,
+          "gzipBytes": 99801
+        },
+        {
+          "z": 11,
+          "tiles": 1073,
+          "rawBytes": 188047,
+          "gzipBytes": 192434
+        },
+        {
+          "z": 12,
+          "tiles": 3878,
+          "rawBytes": 757467,
+          "gzipBytes": 664218
+        }
+      ]
+    },
+    "hawaii": {
+      "polygons": 141,
+      "vertices": 74329,
+      "buildMs": 6,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 1,
+          "rawBytes": 106,
+          "gzipBytes": 106
+        },
+        {
+          "z": 1,
+          "tiles": 1,
+          "rawBytes": 250,
+          "gzipBytes": 194
+        },
+        {
+          "z": 2,
+          "tiles": 1,
+          "rawBytes": 343,
+          "gzipBytes": 275
+        },
+        {
+          "z": 3,
+          "tiles": 1,
+          "rawBytes": 458,
+          "gzipBytes": 366
+        },
+        {
+          "z": 4,
+          "tiles": 3,
+          "rawBytes": 845,
+          "gzipBytes": 800
+        },
+        {
+          "z": 5,
+          "tiles": 3,
+          "rawBytes": 1088,
+          "gzipBytes": 1011
+        },
+        {
+          "z": 6,
+          "tiles": 3,
+          "rawBytes": 1856,
+          "gzipBytes": 1629
+        },
+        {
+          "z": 7,
+          "tiles": 5,
+          "rawBytes": 3504,
+          "gzipBytes": 2962
+        },
+        {
+          "z": 8,
+          "tiles": 9,
+          "rawBytes": 6904,
+          "gzipBytes": 5774
+        },
+        {
+          "z": 9,
+          "tiles": 18,
+          "rawBytes": 13399,
+          "gzipBytes": 11278
+        },
+        {
+          "z": 10,
+          "tiles": 38,
+          "rawBytes": 24329,
+          "gzipBytes": 21183
+        },
+        {
+          "z": 11,
+          "tiles": 104,
+          "rawBytes": 43310,
+          "gzipBytes": 40314
+        },
+        {
+          "z": 12,
+          "tiles": 305,
+          "rawBytes": 172573,
+          "gzipBytes": 126066
+        }
+      ]
+    },
+    "panama": {
+      "polygons": 259,
+      "vertices": 63896,
+      "buildMs": 5,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 1,
+          "rawBytes": 138,
+          "gzipBytes": 129
+        },
+        {
+          "z": 1,
+          "tiles": 1,
+          "rawBytes": 162,
+          "gzipBytes": 164
+        },
+        {
+          "z": 2,
+          "tiles": 1,
+          "rawBytes": 207,
+          "gzipBytes": 209
+        },
+        {
+          "z": 3,
+          "tiles": 1,
+          "rawBytes": 334,
+          "gzipBytes": 305
+        },
+        {
+          "z": 4,
+          "tiles": 1,
+          "rawBytes": 585,
+          "gzipBytes": 488
+        },
+        {
+          "z": 5,
+          "tiles": 2,
+          "rawBytes": 1481,
+          "gzipBytes": 1125
+        },
+        {
+          "z": 6,
+          "tiles": 2,
+          "rawBytes": 2780,
+          "gzipBytes": 2030
+        },
+        {
+          "z": 7,
+          "tiles": 4,
+          "rawBytes": 5630,
+          "gzipBytes": 4143
+        },
+        {
+          "z": 8,
+          "tiles": 6,
+          "rawBytes": 9738,
+          "gzipBytes": 7215
+        },
+        {
+          "z": 9,
+          "tiles": 16,
+          "rawBytes": 17172,
+          "gzipBytes": 13604
+        },
+        {
+          "z": 10,
+          "tiles": 45,
+          "rawBytes": 29509,
+          "gzipBytes": 25169
+        },
+        {
+          "z": 11,
+          "tiles": 125,
+          "rawBytes": 48024,
+          "gzipBytes": 44809
+        },
+        {
+          "z": 12,
+          "tiles": 414,
+          "rawBytes": 157765,
+          "gzipBytes": 130424
+        }
+      ]
+    },
+    "kiel_danish": {
+      "polygons": 6286,
+      "vertices": 796187,
+      "buildMs": 69,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 1,
+          "rawBytes": 1091,
+          "gzipBytes": 604
+        },
+        {
+          "z": 1,
+          "tiles": 1,
+          "rawBytes": 1620,
+          "gzipBytes": 954
+        },
+        {
+          "z": 2,
+          "tiles": 1,
+          "rawBytes": 2478,
+          "gzipBytes": 1544
+        },
+        {
+          "z": 3,
+          "tiles": 1,
+          "rawBytes": 4232,
+          "gzipBytes": 2671
+        },
+        {
+          "z": 4,
+          "tiles": 2,
+          "rawBytes": 8337,
+          "gzipBytes": 5523
+        },
+        {
+          "z": 5,
+          "tiles": 4,
+          "rawBytes": 15237,
+          "gzipBytes": 10514
+        },
+        {
+          "z": 6,
+          "tiles": 8,
+          "rawBytes": 27519,
+          "gzipBytes": 18950
+        },
+        {
+          "z": 7,
+          "tiles": 16,
+          "rawBytes": 51188,
+          "gzipBytes": 35989
+        },
+        {
+          "z": 8,
+          "tiles": 48,
+          "rawBytes": 95362,
+          "gzipBytes": 69360
+        },
+        {
+          "z": 9,
+          "tiles": 160,
+          "rawBytes": 169085,
+          "gzipBytes": 130310
+        },
+        {
+          "z": 10,
+          "tiles": 549,
+          "rawBytes": 297482,
+          "gzipBytes": 246376
+        },
+        {
+          "z": 11,
+          "tiles": 1951,
+          "rawBytes": 516259,
+          "gzipBytes": 474878
+        },
+        {
+          "z": 12,
+          "tiles": 7214,
+          "rawBytes": 2093635,
+          "gzipBytes": 1656300
+        }
+      ]
+    },
+    "malta": {
+      "polygons": 36,
+      "vertices": 13457,
+      "buildMs": 1,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 1,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 2,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 3,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 4,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 5,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 6,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 7,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 8,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 9,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 10,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 11,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 12,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        }
+      ]
+    },
+    "heligoland": {
+      "polygons": 13,
+      "vertices": 1114,
+      "buildMs": 0,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 1,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 2,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 3,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 4,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 5,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 6,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 7,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 8,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 9,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 10,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 11,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        },
+        {
+          "z": 12,
+          "tiles": 0,
+          "rawBytes": 0,
+          "gzipBytes": 0
+        }
+      ]
+    }
+  },
+  "islandProbes": {
+    "Santorini": true,
+    "Heligoland": false,
+    "Malta": true,
+    "Singapore": true,
+    "Oahu": true,
+    "Gibraltar_peninsula": true
+  },
+  "straitProbes": {
+    "Gibraltar": true,
+    "Dover": true,
+    "Oresund": true,
+    "Bosporus_mid": true,
+    "Dardanelles_narrows": true,
+    "Singapore_Strait": true,
+    "Malacca": true
+  },
+  "canals": {
+    "Suez Canal": {
+      "samples": 2823,
+      "onLand": 748,
+      "fractionLand": 0.265
+    },
+    "Panama Canal": {
+      "samples": 1136,
+      "onLand": 1108,
+      "fractionLand": 0.975
+    }
+  }
+}

@@ -1,0 +1,47 @@
+# Updated ticket plan (G-00 to G-20)
+
+Status vocabulary as in the execution ledger. "Next phase" = authorized to start in Phase 2 given the conditional decision.
+
+| Ticket | Corrected status | Depends on | Evidence | Revised priority | Next phase |
+|---|---|---|---|---|---|
+| G-00 CSP and worker, packaged | **passed-with-limitations** | - | `g-00-packaged-csp-report.md`; commits def63359 | P0 done; add N-05 (Windows/Linux) | yes (done) |
+| G-01 licence and data | **passed-with-limitations**, `requires-legal-review` z > 8 | - | `g-01-...-report.md` | split into G-01a legal, G-01b GSHHG licence, G-01c pinned snapshot + attribution design | G-01a/b yes |
+| G-02 geo-math | **passed** | - | 18 tests, commit 64d9d9e9 | done | yes |
+| G-03 deterministic coast tile bake | **not-started** (measurement scripts only) | G-01 (NE only), G-02 | `g01/measure.mjs` | P1 | yes, NE data only |
+| G-04 protected-feature layer | **not-started** | G-03 | canals absent in all candidates; NE rivers layer has Suez/Panama centrelines | P0 for any option | yes |
+| G-05 glyph pre-bake, OFL font | **in-progress** | - | script + Inter-derived PBFs (untracked); repo lacks Inter licence file | P2; needs licence file | yes |
+| G-06 tile hierarchy and LOD | **not-started** | G-03, G-04 | | P1 | yes |
+| G-07 flagged adapter | **in-progress** (throwaway spike exists; not production) | G-00, G-03 | spike component | P1 | yes |
+| G-08 subdivision tests | **passed-with-limitations** | G-02 | `densify.test.ts` 8 tests; 34/36 area outlines differ up to 191 km | P1; crack/neighbour test still open | yes |
+| G-09 markers, labels, back-side policy | **in-progress, defects found** | G-07 | GL markers remove ghosts; `project()` hit tests and horizon formula unreliable | **P0** | yes |
+| G-10 camera controller | **in-progress** (intent adapter prototype) | G-02, G-07 | replay bit-identical; anchor drift 0.0099 px; globe panning changes zoom | P1 | yes |
+| G-11 routes and overlays | **not-started** | G-07 | rhumb vs great-circle visibly differ over 12,000 km | P1; needs a decision | yes |
+| G-12 cross-GPU harness | **blocked-external** | hardware | `cross-gpu-protocol.md` | P0 | blocks Phase 2 exit |
+| G-13 picking and hit testing | **in-progress** (spike point-queries pass) | G-07, G-09 | 756+864 cases, 0 hard failures | P1 | yes |
+| G-14 accessibility mirror | **in-progress** (foundation viable) | G-07 | keyboard, live region, axe 0 | P1 | yes |
+| G-15 precision hardening | **not-needed so far** | G-12 | deep zoom <= 0.076 px; blend ends z12 | P2 (only if another GPU fails) | conditional |
+| G-16 performance budget tests | **not-started** | G-07 | baseline + candidate numbers; GPU headroom unmeasured | P1 | yes |
+| G-17 visual regression | **not-started** | G-07 | | P1 | yes |
+| G-18 Overview integration behind flag | **out-of-scope** (production) | G-07, G-09, G-10, G-11, G-13, G-14 | | P1 | **no** |
+| G-19 default on | **out-of-scope** | G-18 | | P2 | **no** |
+| G-20 legacy removal | **out-of-scope** | G-19 | | P2 | **no** |
+
+## Newly discovered tickets
+
+| ID | Title | Priority | Notes |
+|---|---|---|---|
+| N-01 | Area edge semantics: densify at bake, decide rhumb vs lon/lat | P0 | 34/36 areas > 1 km, max 191 km; densify to 10 m tolerance preserves legacy outlines |
+| N-02 | Retest the black-window report under automation | P1 | cause probable (zero-height layout in an interim spike build), not proven |
+| N-03 | Pre-baked tiles to remove runtime GeoJSON tiling (zoom-out hitch, startup, vertex-limit warning) | P1 | merges with G-03/G-06 |
+| N-04 | Keep `maplibre-gl` out of shipped `node_modules` (29 MB, 789 files, shipped even with the flag off) | P1 | verify moving to devDependencies |
+| N-05 | Windows/Linux packaged CSP and file:// worker smoke | P0 | blocked-external |
+| N-06 | Inter OFL licence file and reserved-name check before committing glyph PBFs | P2 | |
+| N-07 | OSM ODbL / GSHHG legal review (G-01a/b) | P0 | requires-legal-review |
+| N-08 | Hit-test and indicator authority: pointer-pixel queries + rendered visibility with hysteresis | P0 | replaces `project()` and horizon formula |
+| N-09 | Lifecycle: constant +27 listeners / +97 nodes retained after close | P2 | no growth across 10 cycles |
+| P-01 | GPU headroom measurement (timer queries or tracing) | P1 | uncapped flags are invalid |
+| N-10 | Missing-asset behaviour (worker/glyph/tile removed) | P2 | |
+
+## Stop conditions that remain armed
+
+Any new network dependency; any CSP loosening beyond a documented, narrow, reviewed directive; any authoritative-coordinate change; any dataset whose licence cannot be satisfied; a cross-GPU run that shows > 0.3 px sphere error at z12 or sustained > 20 ms frames on the lowest supported GPU.

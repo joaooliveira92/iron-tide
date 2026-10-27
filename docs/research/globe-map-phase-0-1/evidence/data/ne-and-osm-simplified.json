@@ -1,0 +1,491 @@
+{
+  "datasets": {
+    "ne_110m_land": {
+      "polygons": 127,
+      "vertices": 5143,
+      "shpBytes": 89504,
+      "loadMs": 2
+    },
+    "ne_50m_land": {
+      "polygons": 1421,
+      "vertices": 60669,
+      "shpBytes": 1050332,
+      "loadMs": 9
+    },
+    "ne_10m_land": {
+      "polygons": 6837,
+      "vertices": 446175,
+      "shpBytes": 7166824,
+      "loadMs": 15
+    },
+    "ne_10m_land+minor_islands": {
+      "polygons": 9632,
+      "vertices": 481687,
+      "shpBytes": 7891636,
+      "loadMs": 33
+    },
+    "osm_simplified_land_3857": {
+      "polygons": 68154,
+      "vertices": 1751985,
+      "shpBytes": 31848488,
+      "loadMs": 218
+    }
+  },
+  "probes": {
+    "ne_110m_land": {
+      "islandsRetained": {
+        "Malta": false,
+        "Santorini": false,
+        "Aland_main": false,
+        "Faroes_Streymoy": false,
+        "Azores_SaoMiguel": false,
+        "Oahu": true,
+        "Fiji_VitiLevu": true,
+        "Heligoland": false,
+        "Singapore": true,
+        "Zanzibar": false,
+        "Bahrain": false,
+        "Tsushima": false,
+        "Gibraltar_peninsula": true,
+        "Bermuda": false,
+        "Ascension": false,
+        "Midway_Sand": false,
+        "Kiel_coast_probe": true
+      },
+      "straitsWater": {
+        "Gibraltar": true,
+        "Dover": true,
+        "Oresund": true,
+        "Hormuz": true,
+        "BabElMandeb": true,
+        "Malacca": true,
+        "Singapore_Strait": true,
+        "Sunda": true,
+        "Messina": true,
+        "Bonifacio": true,
+        "Bosporus_mid": true,
+        "Dardanelles_narrows": true,
+        "Kerch": true,
+        "Otranto": true,
+        "Korea_Strait": true,
+        "Lombok": true
+      }
+    },
+    "ne_50m_land": {
+      "islandsRetained": {
+        "Malta": true,
+        "Santorini": true,
+        "Aland_main": true,
+        "Faroes_Streymoy": true,
+        "Azores_SaoMiguel": true,
+        "Oahu": true,
+        "Fiji_VitiLevu": true,
+        "Heligoland": false,
+        "Singapore": true,
+        "Zanzibar": true,
+        "Bahrain": true,
+        "Tsushima": true,
+        "Gibraltar_peninsula": false,
+        "Bermuda": true,
+        "Ascension": true,
+        "Midway_Sand": false,
+        "Kiel_coast_probe": true
+      },
+      "straitsWater": {
+        "Gibraltar": true,
+        "Dover": true,
+        "Oresund": false,
+        "Hormuz": true,
+        "BabElMandeb": true,
+        "Malacca": true,
+        "Singapore_Strait": true,
+        "Sunda": true,
+        "Messina": true,
+        "Bonifacio": true,
+        "Bosporus_mid": true,
+        "Dardanelles_narrows": true,
+        "Kerch": true,
+        "Otranto": true,
+        "Korea_Strait": true,
+        "Lombok": true
+      }
+    },
+    "ne_10m_land": {
+      "islandsRetained": {
+        "Malta": true,
+        "Santorini": true,
+        "Aland_main": true,
+        "Faroes_Streymoy": true,
+        "Azores_SaoMiguel": true,
+        "Oahu": true,
+        "Fiji_VitiLevu": true,
+        "Heligoland": false,
+        "Singapore": true,
+        "Zanzibar": true,
+        "Bahrain": true,
+        "Tsushima": true,
+        "Gibraltar_peninsula": true,
+        "Bermuda": true,
+        "Ascension": true,
+        "Midway_Sand": false,
+        "Kiel_coast_probe": true
+      },
+      "straitsWater": {
+        "Gibraltar": true,
+        "Dover": true,
+        "Oresund": true,
+        "Hormuz": true,
+        "BabElMandeb": true,
+        "Malacca": true,
+        "Singapore_Strait": true,
+        "Sunda": true,
+        "Messina": true,
+        "Bonifacio": true,
+        "Bosporus_mid": true,
+        "Dardanelles_narrows": true,
+        "Kerch": true,
+        "Otranto": true,
+        "Korea_Strait": true,
+        "Lombok": true
+      }
+    },
+    "ne_10m_land+minor_islands": {
+      "islandsRetained": {
+        "Malta": true,
+        "Santorini": true,
+        "Aland_main": true,
+        "Faroes_Streymoy": true,
+        "Azores_SaoMiguel": true,
+        "Oahu": true,
+        "Fiji_VitiLevu": true,
+        "Heligoland": false,
+        "Singapore": true,
+        "Zanzibar": true,
+        "Bahrain": true,
+        "Tsushima": true,
+        "Gibraltar_peninsula": true,
+        "Bermuda": true,
+        "Ascension": true,
+        "Midway_Sand": false,
+        "Kiel_coast_probe": true
+      },
+      "straitsWater": {
+        "Gibraltar": true,
+        "Dover": true,
+        "Oresund": true,
+        "Hormuz": true,
+        "BabElMandeb": true,
+        "Malacca": true,
+        "Singapore_Strait": true,
+        "Sunda": true,
+        "Messina": true,
+        "Bonifacio": true,
+        "Bosporus_mid": true,
+        "Dardanelles_narrows": true,
+        "Kerch": true,
+        "Otranto": true,
+        "Korea_Strait": true,
+        "Lombok": true
+      }
+    },
+    "osm_simplified_land_3857": {
+      "islandsRetained": {
+        "Malta": true,
+        "Santorini": true,
+        "Aland_main": true,
+        "Faroes_Streymoy": true,
+        "Azores_SaoMiguel": true,
+        "Oahu": true,
+        "Fiji_VitiLevu": true,
+        "Heligoland": false,
+        "Singapore": true,
+        "Zanzibar": true,
+        "Bahrain": true,
+        "Tsushima": true,
+        "Gibraltar_peninsula": true,
+        "Bermuda": true,
+        "Ascension": true,
+        "Midway_Sand": false,
+        "Kiel_coast_probe": true
+      },
+      "straitsWater": {
+        "Gibraltar": true,
+        "Dover": true,
+        "Oresund": true,
+        "Hormuz": true,
+        "BabElMandeb": true,
+        "Malacca": true,
+        "Singapore_Strait": true,
+        "Sunda": true,
+        "Messina": true,
+        "Bonifacio": true,
+        "Bosporus_mid": true,
+        "Dardanelles_narrows": true,
+        "Kerch": true,
+        "Otranto": true,
+        "Korea_Strait": true,
+        "Lombok": true
+      }
+    }
+  },
+  "canals": {
+    "ne_110m_land": {
+      "Suez Canal": {
+        "samples": 314,
+        "onLand": 299,
+        "fractionLand": 0.952
+      },
+      "Panama Canal": {
+        "samples": 145,
+        "onLand": 145,
+        "fractionLand": 1
+      }
+    },
+    "ne_50m_land": {
+      "Suez Canal": {
+        "samples": 314,
+        "onLand": 310,
+        "fractionLand": 0.987
+      },
+      "Panama Canal": {
+        "samples": 145,
+        "onLand": 145,
+        "fractionLand": 1
+      }
+    },
+    "ne_10m_land": {
+      "Suez Canal": {
+        "samples": 314,
+        "onLand": 313,
+        "fractionLand": 0.997
+      },
+      "Panama Canal": {
+        "samples": 145,
+        "onLand": 144,
+        "fractionLand": 0.993
+      }
+    },
+    "ne_10m_land+minor_islands": {
+      "Suez Canal": {
+        "samples": 314,
+        "onLand": 313,
+        "fractionLand": 0.997
+      },
+      "Panama Canal": {
+        "samples": 145,
+        "onLand": 144,
+        "fractionLand": 0.993
+      }
+    },
+    "osm_simplified_land_3857": {
+      "Suez Canal": {
+        "samples": 314,
+        "onLand": 76,
+        "fractionLand": 0.242
+      },
+      "Panama Canal": {
+        "samples": 145,
+        "onLand": 142,
+        "fractionLand": 0.979
+      }
+    }
+  },
+  "tiles": {
+    "ne_10m_land": {
+      "maxZoom": 8,
+      "buildMs": 108,
+      "encodeMs": 694,
+      "totalRawBytes": 5932512,
+      "totalGzipBytes": 6223932,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 1,
+          "rawBytes": 34150,
+          "gzipBytes": 20562
+        },
+        {
+          "z": 1,
+          "tiles": 4,
+          "rawBytes": 73191,
+          "gzipBytes": 46051
+        },
+        {
+          "z": 2,
+          "tiles": 16,
+          "rawBytes": 140982,
+          "gzipBytes": 92805
+        },
+        {
+          "z": 3,
+          "tiles": 61,
+          "rawBytes": 240495,
+          "gzipBytes": 168723
+        },
+        {
+          "z": 4,
+          "tiles": 214,
+          "rawBytes": 380709,
+          "gzipBytes": 291316
+        },
+        {
+          "z": 5,
+          "tiles": 694,
+          "rawBytes": 560720,
+          "gzipBytes": 476316
+        },
+        {
+          "z": 6,
+          "tiles": 2319,
+          "rawBytes": 816812,
+          "gzipBytes": 781834
+        },
+        {
+          "z": 7,
+          "tiles": 8060,
+          "rawBytes": 1261666,
+          "gzipBytes": 1372297
+        },
+        {
+          "z": 8,
+          "tiles": 29279,
+          "rawBytes": 2423787,
+          "gzipBytes": 2974028
+        }
+      ],
+      "rssMB": 449
+    },
+    "ne_10m_land+minor_islands": {
+      "maxZoom": 8,
+      "buildMs": 92,
+      "encodeMs": 612,
+      "totalRawBytes": 6282665,
+      "totalGzipBytes": 6234178,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 1,
+          "rawBytes": 34150,
+          "gzipBytes": 20562
+        },
+        {
+          "z": 1,
+          "tiles": 4,
+          "rawBytes": 73225,
+          "gzipBytes": 46062
+        },
+        {
+          "z": 2,
+          "tiles": 16,
+          "rawBytes": 142720,
+          "gzipBytes": 92889
+        },
+        {
+          "z": 3,
+          "tiles": 61,
+          "rawBytes": 253954,
+          "gzipBytes": 169131
+        },
+        {
+          "z": 4,
+          "tiles": 214,
+          "rawBytes": 414732,
+          "gzipBytes": 292141
+        },
+        {
+          "z": 5,
+          "tiles": 694,
+          "rawBytes": 609607,
+          "gzipBytes": 477590
+        },
+        {
+          "z": 6,
+          "tiles": 2319,
+          "rawBytes": 877926,
+          "gzipBytes": 783566
+        },
+        {
+          "z": 7,
+          "tiles": 8060,
+          "rawBytes": 1338879,
+          "gzipBytes": 1374667
+        },
+        {
+          "z": 8,
+          "tiles": 29279,
+          "rawBytes": 2537472,
+          "gzipBytes": 2977570
+        }
+      ],
+      "rssMB": 502
+    },
+    "osm_simplified_land_3857": {
+      "maxZoom": 7,
+      "buildMs": 326,
+      "encodeMs": 486,
+      "totalRawBytes": 11319087,
+      "totalGzipBytes": 8301813,
+      "perZoom": [
+        {
+          "z": 0,
+          "tiles": 1,
+          "rawBytes": 32134,
+          "gzipBytes": 19698
+        },
+        {
+          "z": 1,
+          "tiles": 4,
+          "rawBytes": 76885,
+          "gzipBytes": 47833
+        },
+        {
+          "z": 2,
+          "tiles": 16,
+          "rawBytes": 181843,
+          "gzipBytes": 113743
+        },
+        {
+          "z": 3,
+          "tiles": 61,
+          "rawBytes": 391698,
+          "gzipBytes": 249721
+        },
+        {
+          "z": 4,
+          "tiles": 216,
+          "rawBytes": 828083,
+          "gzipBytes": 542136
+        },
+        {
+          "z": 5,
+          "tiles": 703,
+          "rawBytes": 1663826,
+          "gzipBytes": 1122237
+        },
+        {
+          "z": 6,
+          "tiles": 2365,
+          "rawBytes": 3159409,
+          "gzipBytes": 2235876
+        },
+        {
+          "z": 7,
+          "tiles": 8344,
+          "rawBytes": 4985209,
+          "gzipBytes": 3970569
+        }
+      ],
+      "rssMB": 850
+    }
+  },
+  "canalReference": {
+    "Suez Canal": {
+      "lines": 3,
+      "vertices": 26
+    },
+    "Panama Canal": {
+      "lines": 3,
+      "vertices": 26
+    }
+  }
+}
