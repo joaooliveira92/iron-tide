@@ -2,6 +2,8 @@ import { Handshake } from "lucide-react";
 import { useId, useState, type CSSProperties } from "react";
 import { ScreenStage } from "../../components/shared/ScreenStage.js";
 import { debugRevisionActions } from "../../components/shared/debugRevisionActions.js";
+import { cn } from "../../lib/utils.js";
+import { useScreenHeaderHost } from "../../shell/screen-header.js";
 import { Inspector } from "../shipbuilding/components/Inspector.js";
 import { InspectorResizeHandle } from "../shipbuilding/components/InspectorResizeHandle.js";
 import { INSPECTOR_COLLAPSED_PX } from "../shipbuilding/inspector-layout.js";
@@ -88,6 +90,8 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
 
   const busy = state.kind === "submitting";
   const queued = state.kind === "submitted";
+  const hosted = useScreenHeaderHost();
+  const declaringWar = state.draftCommand?.kind === "DeclareWar" && !queued;
   const vm = buildDiplomacyViewModel(state.projection, state.draftCommand);
   const records = battleRecords(
     battleHistory,
@@ -135,19 +139,53 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
     return <OverviewSummary vm={vm} onSelect={selectNation} />;
   })();
 
+  const ordersBar = (
+    <OrdersBar
+      busy={busy}
+      queued={queued}
+      areas={state.projection.areas}
+      draft={state.draftCommand}
+      draftLabel={vm.draftLabel}
+      draftFlagUrl={vm.draftFlagUrl}
+      canSubmit={canSubmit}
+      onAreaChange={setBlockadeArea}
+      onClear={clearDraft}
+      onApply={submit}
+      inHeader={hosted}
+    />
+  );
+
   return (
     <ScreenStage
       guidedTarget="diplomacy"
       icon={Handshake}
       title="Diplomacy & War"
-      actions={debugRevisionActions(state.month, state.revision)}
+      actions={
+        hosted ? (
+          <>
+            {ordersBar}
+            {debugRevisionActions(state.month, state.revision)}
+          </>
+        ) : (
+          debugRevisionActions(state.month, state.revision)
+        )
+      }
       className="space-y-3"
     >
+      {hosted && declaringWar && (
+        <p role="alert" className="text-xs font-medium text-destructive">
+          Once submitted, a declaration of war cannot be cancelled from this screen. It takes effect
+          when you advance the month.
+        </p>
+      )}
       {state.notice !== null && <DiplomacyNotice submitted={queued} notice={state.notice} />}
 
       <div
         data-testid="diplomacy-workspace"
-        className="grid h-[clamp(30rem,calc(100svh_-_var(--chrome-top,0px)_-_var(--chrome-bottom,0px)_-_3rem),60rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border bg-background"
+        className={cn(
+          "grid h-[clamp(30rem,calc(100svh_-_var(--chrome-top,0px)_-_var(--chrome-bottom,0px)_-_3rem),60rem)] min-h-0 overflow-hidden rounded-lg border bg-background",
+          hosted ? "grid-rows-[minmax(0,1fr)_auto]" : "grid-rows-[auto_minmax(0,1fr)_auto]",
+        )}
         onKeyDownCapture={(event) => {
           if (
             (event.metaKey || event.ctrlKey) &&
@@ -168,18 +206,7 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
           }
         }}
       >
-        <OrdersBar
-          busy={busy}
-          queued={queued}
-          areas={state.projection.areas}
-          draft={state.draftCommand}
-          draftLabel={vm.draftLabel}
-          draftFlagUrl={vm.draftFlagUrl}
-          canSubmit={canSubmit}
-          onAreaChange={setBlockadeArea}
-          onClear={clearDraft}
-          onApply={submit}
-        />
+        {!hosted && ordersBar}
 
         <div
           data-testid="diplomacy-grid"

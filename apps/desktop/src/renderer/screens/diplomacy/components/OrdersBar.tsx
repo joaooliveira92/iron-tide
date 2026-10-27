@@ -24,6 +24,7 @@ export interface OrdersBarProps {
   readonly onAreaChange: (areaId: string) => void;
   readonly onClear: () => void;
   readonly onApply: () => void;
+  readonly inHeader?: boolean;
 }
 
 export function OrdersBar({
@@ -37,22 +38,35 @@ export function OrdersBar({
   onAreaChange,
   onClear,
   onApply,
+  inHeader = false,
 }: OrdersBarProps) {
   const declaringWar = draft?.kind === "DeclareWar" && !queued;
   return (
     <div
       role="group"
       aria-label="Orders"
-      className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b bg-muted/40 px-3 py-2"
+      className={
+        inHeader
+          ? "flex w-full min-w-0 items-center gap-x-4"
+          : "flex flex-wrap items-center gap-x-4 gap-y-2 border-b bg-muted/40 px-3 py-2"
+      }
     >
-      <div className="flex min-w-0 flex-1 basis-[22rem] flex-wrap items-center gap-x-3 gap-y-1">
+      <div
+        className={
+          inHeader
+            ? "flex min-w-0 flex-1 items-center gap-x-3"
+            : "flex min-w-0 flex-1 basis-[22rem] flex-wrap items-center gap-x-3 gap-y-1"
+        }
+      >
         <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
           <ScrollText aria-hidden="true" className="size-4" />
           Next order
         </span>
         {draft === null ? (
           <span className="text-sm text-muted-foreground">
-            Nothing drafted. Pick an action in a nation's dossier.
+            {inHeader
+              ? "Nothing drafted"
+              : "Nothing drafted. Pick an action in a nation's dossier."}
           </span>
         ) : (
           <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
@@ -90,29 +104,43 @@ export function OrdersBar({
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <Tip label="Orders are applied by the engine on the next turn advance.">
-          <span role="note" className="flex items-center gap-1 text-xs text-muted-foreground">
+          <span
+            role="note"
+            aria-label="Applied on the next turn advance"
+            className={
+              inHeader
+                ? "text-muted-foreground"
+                : "flex items-center gap-1 text-xs text-muted-foreground"
+            }
+          >
             <CalendarClock aria-hidden="true" className="size-3.5" />
-            Applied on the next turn advance
+            {!inHeader && "Applied on the next turn advance"}
           </span>
         </Tip>
-        <Button variant="outline" disabled={draft === null || busy} onClick={onClear}>
-          <X aria-hidden="true" className="mr-1 size-4" />
+        <Button
+          variant="outline"
+          className={inHeader ? "h-8 shrink-0 gap-2 px-3" : undefined}
+          disabled={draft === null || busy}
+          onClick={onClear}
+        >
+          <X aria-hidden="true" className={inHeader ? "size-4" : "mr-1 size-4"} />
           Clear
         </Button>
         <Button
+          className={inHeader ? "h-8 shrink-0 gap-2 px-3" : undefined}
           variant={declaringWar ? "destructive" : "default"}
           disabled={!canSubmit || busy}
           onClick={onApply}
         >
           {declaringWar ? (
-            <Swords aria-hidden="true" className="mr-1 size-4" />
+            <Swords aria-hidden="true" className={inHeader ? "size-4" : "mr-1 size-4"} />
           ) : (
-            <Check aria-hidden="true" className="mr-1 size-4" />
+            <Check aria-hidden="true" className={inHeader ? "size-4" : "mr-1 size-4"} />
           )}
           {busy ? "Submitting…" : declaringWar ? "Declare war" : "Submit command"}
         </Button>
       </div>
-      {declaringWar && (
+      {declaringWar && !inHeader && (
         <p role="alert" className="basis-full text-xs font-medium text-destructive">
           Once submitted, a declaration of war cannot be cancelled from this screen. It takes effect
           when you advance the month.

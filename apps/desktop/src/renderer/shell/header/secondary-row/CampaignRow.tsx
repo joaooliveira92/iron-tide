@@ -9,10 +9,9 @@ import { PriorityBriefing, type PriorityBriefingProps } from "./PriorityBriefing
 export interface CampaignRowProps {
   readonly row: CampaignRowModel;
   readonly briefing?: PriorityBriefingProps | undefined;
-  readonly monthLabel?: string | undefined;
 }
 
-export function CampaignRow({ row, briefing, monthLabel }: CampaignRowProps) {
+export function CampaignRow({ row, briefing }: CampaignRowProps) {
   const { spec, bindToolbar } = useScreenHeaderSlot();
   const showBriefing = briefing !== undefined && spec === null;
   return (
@@ -33,14 +32,13 @@ export function CampaignRow({ row, briefing, monthLabel }: CampaignRowProps) {
             </div>
           ))}
       </div>
-      <div className="shrink-0 text-[12px]" style={NO_DRAG}>
-        {spec !== null && monthLabel !== undefined && (
-          <span className="mr-3 font-medium text-foreground">{monthLabel}</span>
-        )}
-        <span>
-          {translate("shell.header.status.prefix")} <span>{row.status}</span>
-        </span>
-      </div>
+      {spec === null && (
+        <div className="shrink-0 text-[12px]" style={NO_DRAG}>
+          <span>
+            {translate("shell.header.status.prefix")} <span>{row.status}</span>
+          </span>
+        </div>
+      )}
     </div>
   );
 }
