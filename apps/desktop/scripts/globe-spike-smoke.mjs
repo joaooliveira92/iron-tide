@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
+import { runPackageGuard } from "./package-guard/run.mjs";
+
 const { values } = parseArgs({
   options: {
     app: {
@@ -47,6 +49,13 @@ try {
 
   const isPackaged = await app.evaluate(({ app: electronApp }) => electronApp.isPackaged);
   check("running the packaged build", isPackaged === true);
+
+  const guard = runPackageGuard("spike", values.app);
+  check(
+    "the spike package holds only the allow-listed spike assets",
+    guard.ok,
+    guard.ok ? "" : guard.output.slice(0, 1500),
+  );
 
   const prefs = await app.evaluate(({ BrowserWindow }) => {
     const [win] = BrowserWindow.getAllWindows();

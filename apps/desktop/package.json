@@ -25,6 +25,7 @@
     "test:e2e:debug": "playwright test --config playwright.debug.config.ts",
     "snap": "node scripts/view.ts",
     "smoke:packaged": "node scripts/packaged-smoke.mjs",
+    "guard:package": "node scripts/package-guard/cli.ts",
     "lint": "vp lint .",
     "lint:fix": "echo 'ok'"
   },

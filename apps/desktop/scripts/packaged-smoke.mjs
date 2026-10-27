@@ -26,6 +26,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
+import { runPackageGuard } from "./package-guard/run.mjs";
+
 const { values } = parseArgs({
   options: {
     app: {
@@ -75,6 +77,13 @@ try {
   }, saveDir);
   const isPackaged = await app.evaluate(({ app: electronApp }) => electronApp.isPackaged);
   check("running the packaged build", isPackaged === true);
+
+  const guard = runPackageGuard("default", values.app);
+  check(
+    "the package holds no globe-spike, map-data or investigation assets",
+    guard.ok,
+    guard.ok ? "" : guard.output.slice(0, 1500),
+  );
 
   // The window may already exist by the time we ask: firstWindow handles both.
   const page = await app.firstWindow();

@@ -16,6 +16,7 @@
     "scripts/view.ts",
     "scripts/snap-*.ts",
     "scripts/map-data/**/*.ts",
+    "scripts/package-guard/**/*.ts",
     "src/renderer/components/globe-spike/densify.ts",
     "src/renderer/components/globe-spike/tilepack.ts",
     "src/renderer/components/world-map/map-geometry.ts",

@@ -1,17 +1,22 @@
 import { cpSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 const GLOBE_SPIKE = process.env.VITE_BLUEWAVE_GLOBE_SPIKE === "true";
 
+const HARNESS_ONLY_FILES = new Set(["validation.json", "protected-resolution.json"]);
+
 const copyGlobeSpikeAssets = {
   name: "bluewave-globe-spike-assets",
   closeBundle() {
     const source = resolve(__dirname, "map-spike-assets");
     if (!GLOBE_SPIKE || !existsSync(source)) return;
-    cpSync(source, resolve(__dirname, "out/renderer/map-spike"), { recursive: true });
+    cpSync(source, resolve(__dirname, "out/renderer/map-spike"), {
+      recursive: true,
+      filter: (path) => !HARNESS_ONLY_FILES.has(basename(path)),
+    });
   },
 };
 
