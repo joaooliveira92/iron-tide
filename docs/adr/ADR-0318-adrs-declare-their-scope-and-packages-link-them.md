@@ -1,4 +1,4 @@
-# ADR-0313: ADRs declare the scopes they govern, and each scope's AGENTS.md links its generated index
+# ADR-0318: ADRs declare the scopes they govern, and each scope's AGENTS.md links its generated index
 
 Applies to: repository
 

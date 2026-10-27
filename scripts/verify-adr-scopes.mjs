@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Prove that every package's nearest AGENTS.md reaches the complete, current set of
-// ADRs that govern it (ADR-0313). Reads each ADR's `Applies to:` line and the
+// ADRs that govern it (ADR-0318). Reads each ADR's `Applies to:` line and the
 // Supersedes/Amends relations, regenerates docs/adr/by-scope/*.md, and fails when a
 // mapping is missing, stale or contradicts the supersession metadata.
 //

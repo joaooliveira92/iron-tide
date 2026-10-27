@@ -20,7 +20,7 @@ and for the exact boundaries of the rule.
 - [ADR-0274](../ADR-0274-scratch-removed-from-tree.md) The frozen `.scratch/` tree is removed.
 - [ADR-0275](../ADR-0275-tsgo-gate-reads-installed-toolchain.md) The tsgo gate checks that root pins equal the installed toolchain versions and that patched binaries keep their `.original` backup.
 - [ADR-0299](../ADR-0299-gate-runs-serialise-across-worktrees.md) Run long gates through `pnpm heavy`, which serialises across worktrees and caps vitest workers at 4.
-- [ADR-0313](../ADR-0313-adrs-declare-their-scope-and-packages-link-them.md) Every ADR has an `Applies to:` line, and every governing `AGENTS.md` links its generated `docs/adr/by-scope` page.
+- [ADR-0318](../ADR-0318-adrs-declare-their-scope-and-packages-link-them.md) Every ADR has an `Applies to:` line, and every governing `AGENTS.md` links its generated `docs/adr/by-scope` page.
 
 ## Superseded (do not follow)
 
