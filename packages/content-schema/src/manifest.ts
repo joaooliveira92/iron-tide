@@ -20,6 +20,7 @@ export const RulesetManifestSchema = Schema.Struct({
   battleOffers: Schema.optional(Schema.Unknown),
   fleetManagement: Schema.optional(Schema.Unknown),
   gunnery: Schema.optional(Schema.Unknown),
+  missiles: Schema.optional(Schema.Unknown),
   provenance: Schema.optional(ProvenanceSchema),
 });
 

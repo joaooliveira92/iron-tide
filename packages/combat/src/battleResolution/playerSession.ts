@@ -10,6 +10,7 @@ import type { TacticalDivision } from "../tactical/division.js";
 import type { MovementState } from "../movement/neighbour.js";
 import type { StrategicWeatherState, WeatherEngineContext } from "../weather/neighbour.js";
 import type { TorpedoContext } from "../torpedoes/index.js";
+import type { MissileContext, MissileRules } from "../missiles/index.js";
 import type { SmokeContext } from "../smoke/engineWiring.js";
 import type { AirCombatContext } from "../air-combat/engineWiring.js";
 import type { AirDefenseContext } from "../air-defense/engineWiring.js";
@@ -135,6 +136,7 @@ export interface CreatePlayerBattleInput {
   readonly formulaVersion: string;
   readonly rngVersion: string;
   readonly gunneryRadar?: GunneryRadarRules;
+  readonly missilesRules?: MissileRules;
   readonly maxMinutes?: number;
 }
 
@@ -159,6 +161,7 @@ export interface PlayerBattleSession {
   readonly damage: DamageContext;
   readonly weather: WeatherEngineContext;
   readonly torpedoes?: TorpedoContext;
+  readonly missiles?: MissileContext;
   readonly smoke: SmokeContext;
   readonly airCombat: AirCombatContext;
   readonly airDefense: AirDefenseContext;
@@ -185,6 +188,7 @@ function project(input: CreatePlayerBattleInput): ProjectedBattle {
     defender: input.defender,
     rulesetVersion: input.rulesetVersion,
     ...(input.gunneryRadar === undefined ? {} : { gunneryRadar: input.gunneryRadar }),
+    ...(input.missilesRules === undefined ? {} : { missilesRules: input.missilesRules }),
   });
   const battleSeed = deriveBattleSeed(
     {
@@ -259,6 +263,7 @@ export function createPlayerBattleSession(input: CreatePlayerBattleInput): Playe
     damage: { ...projection.damage, engine },
     weather: weather.context,
     ...(projection.torpedoes ? { torpedoes: projection.torpedoes } : {}),
+    ...(projection.missiles ? { missiles: projection.missiles } : {}),
     smoke: projectSmokeContext(input.manifest, weather.context.components),
     airCombat: projectAirCombatContext(input.manifest, projection.state.battleId),
     airDefense: projectAirDefenseContext(input.manifest, engine),
@@ -480,6 +485,7 @@ export function advancePlayerBattleMinute(
     weather: session.weather,
     damage: session.damage,
     ...(preparedTorpedoes === undefined ? {} : { torpedoes: preparedTorpedoes }),
+    ...(session.missiles === undefined ? {} : { missiles: session.missiles }),
     ...(damageControl === undefined ? {} : { damageControl }),
     smoke: session.smoke,
     airCombat: session.airCombat,
@@ -523,6 +529,19 @@ export function advancePlayerBattleMinute(
         : preparedTorpedoes.launchers,
     };
   }
+  let nextMissiles = session.missiles;
+  if (nextMissiles !== undefined && (result.missileStates || result.missileSalvos)) {
+    nextMissiles = {
+      ...nextMissiles,
+      launchers: result.missileStates
+        ? nextMissiles.launchers.map((launcher) => {
+            const next = result.missileStates![launcher.launcherId];
+            return next ? { ...launcher, ...next } : launcher;
+          })
+        : nextMissiles.launchers,
+      inFlight: result.missileSalvos ? [...result.missileSalvos] : nextMissiles.inFlight,
+    };
+  }
   const gunneryStates = result.gunneryStates;
   const nextBatteries =
     gunneryStates === undefined
@@ -550,6 +569,7 @@ export function advancePlayerBattleMinute(
     airCombat,
     airDefense,
     ...(nextTorpedoes === undefined ? {} : { torpedoes: nextTorpedoes }),
+    ...(nextMissiles === undefined ? {} : { missiles: nextMissiles }),
     log: [
       ...session.log,
       ...result.events.map((event) => ({
@@ -624,6 +644,7 @@ export function playerBattleSessionHash(session: PlayerBattleSession): string {
       damageTargets: session.damage.targets,
       weather: session.weather.components,
       torpedoes: session.torpedoes ?? null,
+      missiles: session.missiles ?? null,
       smoke: session.smoke,
       airCombat: session.airCombat,
       airDefense: session.airDefense,

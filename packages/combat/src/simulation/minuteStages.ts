@@ -33,6 +33,13 @@ import {
   type TorpedoTrack,
 } from "../torpedoes/index.js";
 import { resolveSmoke, type SmokeCloud, type SmokeEventRecord } from "../smoke/engineWiring.js";
+import type {
+  MissileLauncherState,
+  MissileRecord,
+  MissileSalvoInFlight,
+} from "../missiles/index.js";
+import { resolveMissiles } from "../missiles/index.js";
+import type { GunneryImpact } from "../damage/engineWiring.js";
 import {
   applyDamageControlToState,
   requireDamageDesignSurface,
@@ -84,6 +91,10 @@ export interface MinuteRun {
   torpedoStates?: Record<string, TorpedoLauncherState>;
   torpedoTracks?: readonly TorpedoTrack[];
   torpedoRecords?: readonly TorpedoRecord[];
+  missileRecords?: readonly MissileRecord[];
+  missileStates?: Readonly<Record<string, MissileLauncherState>>;
+  missileSalvos?: readonly MissileSalvoInFlight[];
+  missileImpacts?: Readonly<Record<string, readonly GunneryImpact[]>>;
 }
 
 export function evt(
@@ -312,6 +323,36 @@ export function resolveGunneryStage(run: MinuteRun): void {
   run.salvos = gres.salvos;
 }
 
+export function resolveMissileStage(run: MinuteRun): void {
+  const context = run.input.missiles;
+  if (!context) return;
+  if (context.launchers.length === 0 && context.inFlight.length === 0) return;
+  const targets = run.units.map((unit) => ({
+    shipId: unit.assetId,
+    sideId: unit.sideId,
+    position: run.shipPositions[unit.assetId],
+    operational:
+      (run.input.damage?.targets[unit.assetId]?.state.terminalStatus ?? "NORMAL") === "NORMAL",
+  }));
+  const result = resolveMissiles({
+    battleId: run.battleId,
+    minute: run.minute,
+    context,
+    targets,
+    ...(run.input.engine === undefined ? {} : { engine: run.input.engine }),
+    ...(run.input.damage?.randomLedger === undefined
+      ? {}
+      : { randomLedger: run.input.damage.randomLedger }),
+  });
+  if (result.records.length > 0) run.missileRecords = result.records;
+  if (Object.keys(result.launcherStates).length > 0) run.missileStates = result.launcherStates;
+  if (result.inFlight.length > 0 || context.inFlight.length > 0)
+    run.missileSalvos = result.inFlight;
+  if (!result.changed) return;
+  for (const event of result.events) run.ledger.append(event);
+  if (Object.keys(result.impactsByTarget).length > 0) run.missileImpacts = result.impactsByTarget;
+}
+
 export function resolveDamageStage(run: MinuteRun): void {
   if (!run.input.damage) return;
   const dmgResult = resolveMinuteDamage({
@@ -322,6 +363,7 @@ export function resolveDamageStage(run: MinuteRun): void {
     targets: run.input.damage.targets,
     engine: run.input.damage.engine,
     randomLedger: run.input.damage.randomLedger,
+    ...(run.missileImpacts === undefined ? {} : { extraImpacts: run.missileImpacts }),
   });
   for (const de of dmgResult.events) run.ledger.append(de);
   if (Object.keys(dmgResult.states).length > 0) run.damageStates = dmgResult.states;

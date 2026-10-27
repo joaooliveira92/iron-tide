@@ -176,6 +176,12 @@ export type { BattleOfferRules, BattleOfferRulesDecoded } from "./battle-offer-r
 export { BattleOfferRulesSchema, decodeBattleOfferRules } from "./battle-offer-rules.js";
 export type { GunneryRules, GunneryRulesDecoded } from "./gunnery-rules.js";
 export { GunneryRulesSchema, decodeGunneryRules } from "./gunnery-rules.js";
+export type { MissileClassRules, MissilesRules, MissilesRulesDecoded } from "./missiles-rules.js";
+export {
+  MissileClassRulesSchema,
+  MissilesRulesSchema,
+  decodeMissilesRules,
+} from "./missiles-rules.js";
 export type { PresenceRules, PresenceRulesDecoded } from "./presence-rules.js";
 export { decodePresenceRules, PresenceRulesSchema } from "./presence-rules.js";
 export {

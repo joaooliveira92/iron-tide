@@ -69,6 +69,7 @@
       "ship-building/parts/fitting.yaml",
       "ship-building/parts/gun.yaml",
       "ship-building/parts/gun_mount.yaml",
+      "ship-building/parts/missile_launcher.yaml",
       "ship-building/parts/propulsion_plant.yaml",
       "ship-building/parts/radar.yaml",
       "ship-building/parts/sensor.yaml",

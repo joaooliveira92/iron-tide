@@ -981,7 +981,7 @@
         author: "Naval War Simulations / Matrix Games"
         year: 2023
         page: "121-123"
-    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: no missile combat model exists (#281); see .ai/reports/e-1-era-mechanics-audit.md."
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. ADR-0312 gives it a combat consumer for all three SSM launcher parts."
 - id: "m_asw_improved_sonar"
   name: "Improved Hull-Mounted and Variable-Depth Sonar"
   category: "MID_CENTURY"
