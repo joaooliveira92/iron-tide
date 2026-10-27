@@ -344,6 +344,9 @@ function resolveViaTacticalAuto(
       ...(ctx.engineOptions?.gunneryRules === undefined
         ? {}
         : { gunneryRadar: ctx.engineOptions.gunneryRules.radar }),
+      ...(ctx.engineOptions?.missilesRules === undefined
+        ? {}
+        : { missilesRules: ctx.engineOptions.missilesRules }),
       randomLedger,
     });
 

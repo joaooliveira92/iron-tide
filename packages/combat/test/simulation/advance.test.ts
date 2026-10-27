@@ -5,6 +5,31 @@ import type { MovementState } from "@bluewave/combat/movement";
 import { advanceMinutes, advanceMinute } from "@bluewave/combat/simulation";
 import { computeInitialMovementStates } from "@bluewave/combat/simulation";
 import { SUBSTEPS_PER_MINUTE } from "@bluewave/combat/movement";
+import {
+  withMissileLauncherStateHash,
+  withMissileSalvoHash,
+  type MissileContext,
+  type MissileRules,
+} from "@bluewave/combat/missiles";
+
+const MISSILE_CLASS_RULES = {
+  rangeM: 90_000,
+  flightTimeSeconds: 180,
+  salvoSize: 2,
+  baseHitBp: 4_500,
+  structuralDamage: 3_800,
+  flotationDamage: 2_200,
+  defenceInterceptBp: 3_500,
+  maxSalvosPerBattle: 3,
+};
+
+const MISSILE_RULES: MissileRules = {
+  classes: {
+    light_ssm: MISSILE_CLASS_RULES,
+    medium_ssm: MISSILE_CLASS_RULES,
+    heavy_ssm: MISSILE_CLASS_RULES,
+  },
+};
 
 function unit(id: string, sideId: "ATTACKER" | "DEFENDER", className: string): TacticalShipUnit {
   return {
@@ -127,5 +152,49 @@ describe("AC-12 minute-advance simulation", () => {
     expect(types).toContain("resolve_propulsion_formation");
     expect(types).toContain("resolve_collisions_grounding");
     expect(types).toContain("resolve_sensors_spotting");
+  });
+
+  it("hashes an in-flight missile salvo on a quiet minute", () => {
+    const observationTime = "1900-01-01T00:00:00.000Z";
+    const launcherId = "a1:SSM:heavy_ssm";
+    const launcher = withMissileLauncherStateHash({
+      launcherId,
+      ownerShipId: "a1",
+      sideId: "ATTACKER",
+      missileClass: "heavy_ssm",
+      salvosFired: 3,
+      maxSalvos: 3,
+    });
+    const salvo = withMissileSalvoHash({
+      salvoId: `${launcherId}:1:1`,
+      launcherId,
+      ownerShipId: "a1",
+      sideId: "ATTACKER",
+      missileClass: "heavy_ssm",
+      targetShipId: "d1",
+      launchMinute: 1,
+      impactMinute: 3,
+      missiles: 2,
+    });
+    const missiles: MissileContext = {
+      launchers: [launcher],
+      inFlight: [salvo],
+      rules: MISSILE_RULES,
+    };
+
+    const base = advanceMinute({
+      state: buildTestState(),
+      minute: 2,
+      observationTime,
+    });
+    const quiet = advanceMinute({
+      state: buildTestState(),
+      minute: 2,
+      observationTime,
+      missiles,
+    });
+
+    expect(quiet.missileSalvos?.map((entry) => entry.salvoId)).toEqual([salvo.salvoId]);
+    expect(quiet.minuteHash).not.toBe(base.minuteHash);
   });
 });

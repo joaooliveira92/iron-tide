@@ -285,6 +285,44 @@ slotTemplates:
           - magazine
         id: superstructure.magazine
         zone: SUPERSTRUCTURE
+  - id: compatibility_missile_launcher
+    slots:
+      - accepts:
+          - missile_launcher
+        id: aft_magazine.missile_launcher
+        zone: AFT_MAGAZINE
+      - accepts:
+          - missile_launcher
+        id: aft_service.missile_launcher
+        zone: AFT_SERVICE
+      - accepts:
+          - missile_launcher
+        id: central_machinery.missile_launcher
+        zone: CENTRAL_MACHINERY
+      - accepts:
+          - missile_launcher
+        id: forecastle.missile_launcher
+        zone: FORECASTLE
+      - accepts:
+          - missile_launcher
+        id: fwd_magazine.missile_launcher
+        zone: FWD_MAGAZINE
+      - accepts:
+          - missile_launcher
+        id: fwd_service.missile_launcher
+        zone: FWD_SERVICE
+      - accepts:
+          - missile_launcher
+        id: mission.missile_launcher
+        zone: MISSION
+      - accepts:
+          - missile_launcher
+        id: quarterdeck.missile_launcher
+        zone: QUARTERDECK
+      - accepts:
+          - missile_launcher
+        id: superstructure.missile_launcher
+        zone: SUPERSTRUCTURE
   - id: compatibility_propulsion_plant
     slots:
       - accepts:

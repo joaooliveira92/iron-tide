@@ -230,6 +230,7 @@ export interface ResolveMinuteDamageInput {
   targets: Record<string, DamageTargetContext>;
   engine?: RandomEngine;
   randomLedger?: RandomLedger;
+  extraImpacts?: Readonly<Record<string, readonly GunneryImpact[]>>;
 }
 
 export interface ResolveMinuteDamageOutput {
@@ -266,6 +267,14 @@ export function resolveMinuteDamage(input: ResolveMinuteDamageInput): ResolveMin
     const list = byTarget.get(targetShipId) ?? [];
     list.push(impact);
     byTarget.set(targetShipId, list);
+  }
+
+  for (const [shipId, impacts] of Object.entries(input.extraImpacts ?? {})) {
+    if (impacts.length === 0) continue;
+    if (!targets[shipId]) continue;
+    const list = byTarget.get(shipId) ?? [];
+    list.push(...impacts);
+    byTarget.set(shipId, list);
   }
 
   const shipIds = [...byTarget.keys()].sort();
