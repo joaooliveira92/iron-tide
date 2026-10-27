@@ -10,6 +10,7 @@ import {
   WorktreeRegistryError,
   acquireRegistryLock,
   decodeRegistry,
+  normalizePath,
   readRegistryFile,
   serializeRegistry,
   updateRegistry,
@@ -83,7 +84,7 @@ void test("decodeRegistry requires absolute, canonical paths", () => {
     schemaVersion: 1,
     rows: [row({ path: "/repo/.worktrees/../.worktrees/a" })],
   });
-  assert.equal(decoded.rows[0].path, "/repo/.worktrees/a");
+  assert.equal(decoded.rows[0].path, normalizePath("/repo/.worktrees/a"));
 });
 
 void test("writeRegistryFile replaces atomically and leaves no lock", () => {

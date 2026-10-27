@@ -19,6 +19,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { renderLedger } from "../worktree.mjs";
+import { normalizePath } from "../worktree-registry.mjs";
 
 const SCRIPTS = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPT = join(SCRIPTS, "worktree.mjs");
@@ -344,7 +345,7 @@ void test("two linked worktrees register into one shared registry", () => {
       .sort(),
     ["a", "b"],
   );
-  const root = realpathSync(repo);
+  const root = normalizePath(realpathSync(repo));
   assert.ok(registryRows(repo).every((r) => r.path.startsWith(root)));
   assert.equal(existsSync(join(repo, ".worktrees", "a", ".worktrees", "b")), false);
 });
