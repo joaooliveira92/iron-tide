@@ -12,7 +12,6 @@
   "dependencies": {
     "@bluewave/contracts": "workspace:*",
     "@bluewave/diagnostics": "workspace:*",
-    "@bluewave/deterministic": "workspace:*",
     "@bluewave/content-schema": "workspace:*",
     "@bluewave/content-compiler": "workspace:*",
     "effect": "workspace:*"

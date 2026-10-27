@@ -9,7 +9,6 @@
   "references": [
     { "path": "../contracts" },
     { "path": "../deterministic" },
-    { "path": "../diagnostics" },
     { "path": "../armament" },
     { "path": "../campaign" },
     { "path": "../random" },

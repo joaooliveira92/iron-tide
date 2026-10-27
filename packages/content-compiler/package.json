@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@bluewave/content-schema": "workspace:*",
-    "@bluewave/contracts": "workspace:*",
     "@bluewave/deterministic": "workspace:*",
     "@bluewave/diagnostics": "workspace:*",
     "effect": "workspace:*"

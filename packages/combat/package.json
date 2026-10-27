@@ -96,7 +96,6 @@
   "dependencies": {
     "@bluewave/contracts": "workspace:*",
     "@bluewave/deterministic": "workspace:*",
-    "@bluewave/diagnostics": "workspace:*",
     "@bluewave/armament": "workspace:*",
     "@bluewave/campaign": "workspace:*",
     "@bluewave/random": "workspace:*",

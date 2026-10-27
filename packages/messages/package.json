@@ -16,9 +16,6 @@
     "@bluewave/events": "workspace:*",
     "effect": "workspace:*"
   },
-  "devDependencies": {
-    "@bluewave/test-support": "workspace:*"
-  },
   "scripts": {
     "build": "tsc -b",
     "dev": "tsc -b --watch",

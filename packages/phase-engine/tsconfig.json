@@ -6,6 +6,8 @@
   },
   "include": ["src"],
   "references": [
+    { "path": "../content-schema" },
+    { "path": "../armament" },
     {
       "path": "../contracts"
     },
