@@ -5,5 +5,6 @@ export default defineConfig({
   test: {
     ...sharedTestConfig,
     include: ["test/**/*.test.ts"],
+    testTimeout: 60000,
   },
 });

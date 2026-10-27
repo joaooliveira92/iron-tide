@@ -6,8 +6,8 @@ Rules and statuses: ADR-0267.
 | Status | Rows |
 | --- | --- |
 | reachable | 33 |
-| dormant-by-decision | 13 |
-| internal | 11 |
+| dormant-by-decision | 12 |
+| internal | 14 |
 
 ## Reachable
 
@@ -63,7 +63,6 @@ Rules and statuses: ADR-0267.
 | combat-submarines | Submarine operations | ADR-0300 |
 | combat-coastal-defense | Coastal defence batteries and mine pressure | ADR-0300 |
 | combat-smoke | Smokescreens and funnel smoke | ADR-0300 |
-| debug-battle-sandbox | Generate, resolve and replay battles in the tactical sandbox and simulation screens | #226 |
 
 ## Internal
 
@@ -79,5 +78,8 @@ Rules and statuses: ADR-0267.
 | combat-aircraft-model | Aircraft data model shared by air combat and carriers | - |
 | combat-shared-support | Interface contract, error, reason-code and schema helpers | - |
 | read-content-catalogues | Read drawing-board, presentation and UI catalogue content | `inspectDrawingBoardContent`, `inspectPresentationContent`, `inspectUiCatalogue` |
+| debug-tactical-sandbox | Generate, resolve and replay battles in the debug Tactical Sandbox | `generateBattle`, `resolveBattle`, `resolveTacticalBattle`, `replayBattleBoundary` |
+| debug-simulation-screen | Inspect the turn report and time-lapse through the debug Simulation screen | - |
+| debug-debugging-screen | Inspect AST and wide-event telemetry through the debug Debugging screen | - |
 | debug-battle-drill-seed | Seed a campaign battle drill for end-to-end tests | `seedCampaignBattleDrill` |
 

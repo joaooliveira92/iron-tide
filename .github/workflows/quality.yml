@@ -114,7 +114,7 @@ jobs:
       - run: pnpm check:equivalence
       # The long simulation suites (36-month regression, AI procurement) are
       # excluded from the default per-package run and executed here in isolation
-      # with bounded vitest workers, so parallel turbo load cannot flake a
+      # with bounded vitest workers, so parallel load cannot flake a
       # required check (release-readiness WS4).
       - name: Heavy simulation suites (bounded concurrency)
         run: pnpm test:heavy

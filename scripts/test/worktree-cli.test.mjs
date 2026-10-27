@@ -22,11 +22,13 @@ import { renderLedger } from "../worktree.mjs";
 
 const SCRIPTS = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPT = join(SCRIPTS, "worktree.mjs");
+const REGISTRY = join(SCRIPTS, "worktree-registry.mjs");
 const PATHS_HELPER = join(SCRIPTS, "lib", "paths.mjs");
 
 function installScript(scriptsDir) {
   mkdirSync(join(scriptsDir, "lib"), { recursive: true });
   copyFileSync(SCRIPT, join(scriptsDir, "worktree.mjs"));
+  copyFileSync(REGISTRY, join(scriptsDir, "worktree-registry.mjs"));
   copyFileSync(PATHS_HELPER, join(scriptsDir, "lib", "paths.mjs"));
 }
 const cleanups = [];
@@ -88,6 +90,10 @@ function openWorktree(repo, slug) {
   return path;
 }
 
+function registryFile(repo) {
+  return join(repo, ".git", "ai", "worktrees.json");
+}
+
 function register(repo, rows) {
   const full = rows.map(([slug, branch]) => ({
     slug,
@@ -98,17 +104,26 @@ function register(repo, rows) {
     base: "dev",
     created: "2026-10-18",
     pr: "—",
+    path: join(repo, ".worktrees", slug),
   }));
-  const file = join(repo, ".worktrees", "LEDGER.md");
+  const file = registryFile(repo);
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, renderLedger("# Active worktrees\n", full));
+  writeFileSync(file, `${JSON.stringify({ schemaVersion: 1, rows: full }, null, 2)}\n`);
+}
+
+function registryRows(repo) {
+  const file = registryFile(repo);
+  return existsSync(file) ? JSON.parse(readFileSync(file, "utf8")).rows : [];
 }
 
 function snapshot(repo) {
   return JSON.stringify({
     worktrees: git(repo, "worktree", "list", "--porcelain"),
     branches: git(repo, "for-each-ref", "--format=%(refname) %(objectname)"),
-    ledger: readFileSync(join(repo, ".worktrees", "LEDGER.md"), "utf8"),
+    registry: existsSync(registryFile(repo)) ? readFileSync(registryFile(repo), "utf8") : null,
+    ledger: existsSync(join(repo, ".worktrees", "LEDGER.md"))
+      ? readFileSync(join(repo, ".worktrees", "LEDGER.md"), "utf8")
+      : null,
     status: git(repo, "status", "--porcelain"),
     stash: git(repo, "stash", "list"),
   });
@@ -160,23 +175,30 @@ void test("prune keeps the ledger row of a dirty merged worktree it skips", () =
   const { out } = run(repo, "prune");
   assert.match(out, /skipped a/);
   assert.equal(existsSync(path), true);
-  assert.match(readFileSync(join(repo, ".worktrees", "LEDGER.md"), "utf8"), /\| a \| feat\/a \|/);
+  assert.deepEqual(
+    registryRows(repo).map((r) => r.slug),
+    ["a"],
+  );
 });
 
 void test("prune does not register unregistered survivors in the ledger", () => {
   const repo = makeRepo();
   openWorktree(repo, "r1");
-  const before = readFileSync(join(repo, ".worktrees", "LEDGER.md"), "utf8");
+  const before = snapshot(repo);
   run(repo, "prune");
-  assert.equal(readFileSync(join(repo, ".worktrees", "LEDGER.md"), "utf8"), before);
+  assert.equal(registryRows(repo).length, 0);
+  assert.equal(git(repo, "status", "--porcelain").trim(), "");
+  assert.match(before, /"worktrees":/);
 });
 
 void test("registering a worktree leaves the checkout clean and the ledger shared", () => {
   const repo = makeRepo();
   assert.equal(run(repo, "new", "a").code, 0);
   assert.equal(git(repo, "status", "--porcelain").trim(), "");
-  const ledger = join(repo, ".worktrees", "LEDGER.md");
-  assert.match(readFileSync(ledger, "utf8"), /\| a \| feat\/a \|/);
+  assert.deepEqual(
+    registryRows(repo).map((r) => r.slug),
+    ["a"],
+  );
   installScript(join(repo, ".worktrees", "a", "scripts"));
   const inner = spawnSync(
     "node",
@@ -188,6 +210,7 @@ void test("registering a worktree leaves the checkout clean and the ledger share
   );
   assert.equal(inner.status, 0);
   assert.equal(existsSync(join(repo, ".worktrees", "a", ".worktrees", "LEDGER.md")), false);
+  assert.equal(existsSync(join(repo, ".worktrees", "a", ".git", "ai", "worktrees.json")), false);
 });
 
 // --- fail closed -------------------------------------------------------------
@@ -300,4 +323,86 @@ void test("audit without --no-gh fails loudly when pull requests cannot be read"
   assert.equal(r.code, 2);
   assert.match(r.err, /gh|pull request/i);
   assert.equal(snapshot(repo), before);
+});
+
+// --- shared registry (ADR-0313) ---------------------------------------------
+
+void test("two linked worktrees register into one shared registry", () => {
+  const repo = makeRepo();
+  assert.equal(run(repo, "new", "a").code, 0);
+  installScript(join(repo, ".worktrees", "a", "scripts"));
+  const inner = spawnSync(
+    "node",
+    [join(repo, ".worktrees", "a", "scripts", "worktree.mjs"), "new", "b", "--branch", "feat/b"],
+    { cwd: join(repo, ".worktrees", "a"), encoding: "utf8" },
+  );
+  assert.equal(inner.status, 0, inner.stderr);
+  assert.equal(existsSync(join(repo, ".worktrees", "b")), true);
+  assert.deepEqual(
+    registryRows(repo)
+      .map((r) => r.slug)
+      .sort(),
+    ["a", "b"],
+  );
+  const root = realpathSync(repo);
+  assert.ok(registryRows(repo).every((r) => r.path.startsWith(root)));
+  assert.equal(existsSync(join(repo, ".worktrees", "a", ".worktrees", "b")), false);
+});
+
+void test("malformed registry fails closed without overwriting it", () => {
+  const repo = makeRepo();
+  openWorktree(repo, "a");
+  const file = registryFile(repo);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, "{not json");
+  const before = readFileSync(file, "utf8");
+  const r = run(repo, "list");
+  assert.equal(r.code, 2);
+  assert.match(r.err, /worktree registry/i);
+  assert.equal(readFileSync(file, "utf8"), before);
+});
+
+void test("legacy ledger metadata migrates once and drops phantom rows", () => {
+  const repo = makeRepo();
+  openWorktree(repo, "a");
+  const legacy = join(repo, ".worktrees", "LEDGER.md");
+  writeFileSync(
+    legacy,
+    renderLedger("# Active worktrees\n", [
+      {
+        slug: "a",
+        branch: "research/a",
+        scope: "a",
+        owner: "t",
+        status: "active",
+        base: "dev",
+        created: "2026-10-18",
+        pr: "—",
+      },
+      {
+        slug: "ghost",
+        branch: "feat/ghost",
+        scope: "ghost",
+        owner: "t",
+        status: "active",
+        base: "dev",
+        created: "2026-10-18",
+        pr: "—",
+      },
+    ]),
+  );
+  const r = run(repo, "sync");
+  assert.equal(r.code, 0, r.stderr);
+  assert.deepEqual(
+    registryRows(repo).map((row) => row.slug),
+    ["a"],
+  );
+  assert.equal(existsSync(join(repo, ".worktrees", "a", ".worktrees", "LEDGER.md")), false);
+  assert.match(readFileSync(legacy, "utf8"), /\| ghost \|/);
+  const second = run(repo, "sync");
+  assert.equal(second.code, 0, second.stderr);
+  assert.deepEqual(
+    registryRows(repo).map((row) => row.slug),
+    ["a"],
+  );
 });

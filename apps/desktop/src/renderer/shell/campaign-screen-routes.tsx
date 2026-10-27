@@ -11,16 +11,22 @@ import type {
   CampaignScreenRouteProps,
 } from "./campaign-screen-types.js";
 
-const DebuggingScreen = lazy(() =>
-  import("../screens/debugging/DebuggingScreen.js").then((module) => ({
-    default: module.DebuggingScreen,
-  })),
-);
-const SimulationScreen = lazy(() =>
-  import("../screens/simulation/SimulationScreen.js").then((module) => ({
-    default: module.SimulationScreen,
-  })),
-);
+const DEBUG_MODE = import.meta.env.VITE_BLUEWAVE_DEBUG === "true";
+
+const DebuggingScreen = DEBUG_MODE
+  ? lazy(() =>
+      import("../screens/debugging/DebuggingScreen.js").then((module) => ({
+        default: module.DebuggingScreen,
+      })),
+    )
+  : null;
+const SimulationScreen = DEBUG_MODE
+  ? lazy(() =>
+      import("../screens/simulation/SimulationScreen.js").then((module) => ({
+        default: module.SimulationScreen,
+      })),
+    )
+  : null;
 const ResearchScreen = lazy(() =>
   import("../screens/research/ResearchScreen.js").then((module) => ({
     default: module.ResearchScreen,
@@ -36,11 +42,13 @@ const TreasuryScreen = lazy(() =>
     default: module.TreasuryScreen,
   })),
 );
-const TacticalSandboxScreen = lazy(() =>
-  import("../screens/tactical-sandbox/TacticalSandboxScreen.js").then((module) => ({
-    default: module.TacticalSandboxScreen,
-  })),
-);
+const TacticalSandboxScreen = DEBUG_MODE
+  ? lazy(() =>
+      import("../screens/tactical-sandbox/TacticalSandboxScreen.js").then((module) => ({
+        default: module.TacticalSandboxScreen,
+      })),
+    )
+  : null;
 const MapPrototypeScreen = lazy(() =>
   import("../screens/map-prototype/MapPrototypeScreen.js").then((module) => ({
     default: module.MapPrototypeScreen,
@@ -66,6 +74,7 @@ function SimulationRoute({ sessionId }: CampaignScreenRouteProps) {
     () => void actions.refreshCampaign(sessionId),
     [actions.refreshCampaign, sessionId],
   );
+  if (SimulationScreen === null) return null;
   return (
     <SimulationScreen
       sessionId={sessionId}
@@ -89,10 +98,12 @@ function TreasuryRoute({ sessionId }: CampaignScreenRouteProps) {
 }
 
 function TacticalSandboxRoute({ sessionId }: CampaignScreenRouteProps) {
+  if (TacticalSandboxScreen === null) return null;
   return <TacticalSandboxScreen sessionId={sessionId} />;
 }
 
 function DebuggingRoute({ sessionId }: CampaignScreenRouteProps) {
+  if (DebuggingScreen === null) return null;
   return <DebuggingScreen sessionId={sessionId} />;
 }
 

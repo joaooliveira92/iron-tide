@@ -12,7 +12,6 @@ export default defineConfig({
       ".agents/**",
       ".claude/**",
       ".muse/**",
-      ".turbo/**",
       ".worktrees/**",
       "docs/**",
       "codefetch/**",

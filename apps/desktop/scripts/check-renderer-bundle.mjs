@@ -8,6 +8,7 @@
  * the `yaml` package; `effect` is detected by its `~effect/` namespace string
  * literals, which survive minification (`EffectTypeId` is a property name that
  * minifiers mangle, so it is kept only as a belt-and-braces unminified check).
+ * A production build also rejects the debug-only screen chunks (ADR-0319).
  * Run after `electron-vite build` (wired into the desktop `build` scripts).
  */
 import { readdirSync, readFileSync } from "node:fs";
@@ -17,6 +18,8 @@ const rendererOut = resolve(import.meta.dirname, "../out/renderer");
 // `EffectTypeId` is a property name and is mangled away by minification; the
 // `~effect/` namespace strings are string literals and survive it.
 const MARKERS = ["YAMLParseError", "EffectTypeId", "~effect/"];
+const DEBUG_MARKERS = ["DebuggingScreen", "SimulationScreen", "TacticalSandboxScreen"];
+const DEBUG_BUILD = process.env.VITE_BLUEWAVE_DEBUG === "true";
 
 let files;
 try {
@@ -36,14 +39,21 @@ for (const file of files) {
   for (const marker of MARKERS) {
     if (source.includes(marker)) offenders.push(`${file}: ${marker}`);
   }
+  if (!DEBUG_BUILD) {
+    for (const marker of DEBUG_MARKERS) {
+      if (source.includes(marker)) offenders.push(`${file}: debug-only ${marker}`);
+    }
+  }
 }
 
 if (offenders.length > 0) {
   process.stderr.write(
-    `Renderer bundle still bundles a forbidden runtime (ADR-0105 MIG-EXCL-1):\n${offenders.join(
+    `Renderer bundle still bundles a forbidden runtime or debug-only screen (ADR-0105 MIG-EXCL-1, ADR-0319):\n${offenders.join(
       "\n",
     )}\n`,
   );
   process.exit(1);
 }
-process.stdout.write(`renderer bundle clean: no yaml/effect across ${files.length} chunk(s)\n`);
+process.stdout.write(
+  `renderer bundle clean: no yaml/effect${DEBUG_BUILD ? "" : " or debug-only screens"} across ${files.length} chunk(s)\n`,
+);

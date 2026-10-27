@@ -41,6 +41,7 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0315](../ADR-0315-research-workspace-projection.md) The research screen reads a technology-chart projection, and the draw weight has one home.
 - [ADR-0316](../ADR-0316-special-training-program.md) Special training is a nation program whose maintenance adder feeds the shared calculator.
 - [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot.
+- [ADR-0319](../ADR-0319-debug-screens-stay-internal.md) Debug-only screens stay internal and leave the production renderer bundle.
 
 ## Superseded (do not follow)
 

@@ -16,12 +16,13 @@ and for the exact boundaries of the rule.
 - [ADR-0238](../ADR-0238-golden-repin-commit-time-guard.md) The commit-msg hook refuses a commit that needs a golden re-pin without one; it adds no path exemptions.
 - [ADR-0267](../ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md) Every engine capability maps to a player verb in `scripts/data/reachability-ledger.json` (engine entry, command, screen, evidence test).
 - [ADR-0268](../ADR-0268-code-carries-no-comments.md) Code carries no comments; rationale lives in an ADR or the commit message, and only tool-read comments survive.
-- [ADR-0269](../ADR-0269-worktree-ledger-is-local-untracked-state.md) The worktree ledger is local untracked state in `.worktrees/LEDGER.md`; never edit it by hand.
 - [ADR-0274](../ADR-0274-scratch-removed-from-tree.md) The frozen `.scratch/` tree is removed.
 - [ADR-0275](../ADR-0275-tsgo-gate-reads-installed-toolchain.md) The tsgo gate checks that root pins equal the installed toolchain versions and that patched binaries keep their `.original` backup.
 - [ADR-0299](../ADR-0299-gate-runs-serialise-across-worktrees.md) Run long gates through `pnpm heavy`, which serialises across worktrees and caps vitest workers at 4.
+- [ADR-0313](../ADR-0313-worktree-registry-under-git-common-dir.md) The worktree inventory is a locked registry under the Git common directory.
 - [ADR-0318](../ADR-0318-adrs-declare-their-scope-and-packages-link-them.md) Every ADR has an `Applies to:` line, and every governing `AGENTS.md` links its generated `docs/adr/by-scope` page.
 
 ## Superseded (do not follow)
 
 - [ADR-0220](../ADR-0220-worktree-per-effort-coordination.md) Worktree-per-effort coordination for concurrent agents. Follow ADR-0234.
+- [ADR-0269](../ADR-0269-worktree-ledger-is-local-untracked-state.md) The worktree ledger is local, untracked state. Follow ADR-0313.
