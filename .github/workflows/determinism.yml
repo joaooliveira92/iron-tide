@@ -1,11 +1,15 @@
 name: Determinism Gate
 
-# Pull requests into dev run Ubuntu only. Pull requests into main, manual
+# Pushes to dev and pull requests into dev run Ubuntu only: delivery into dev is
+# a local merge (ADR-0234), so a push trigger is what puts the unit suites and
+# golden hashes under CI on the integration branch. Pull requests into main, manual
 # dispatches, and the nightly run run the full Ubuntu, Windows and macOS matrix.
 # GitHub fires `schedule` only from the default branch's copy of this file, so
 # the nightly run starts once this file reaches main; it checks out dev
 # explicitly rather than the default branch.
 on:
+  push:
+    branches: [dev]
   pull_request:
     branches: [dev, main]
   workflow_dispatch:
@@ -31,7 +35,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ "$EVENT_NAME" = "pull_request" ] && [ "$BASE_REF" = "dev" ]; then
+          if [ "$EVENT_NAME" = "push" ] || { [ "$EVENT_NAME" = "pull_request" ] && [ "$BASE_REF" = "dev" ]; }; then
             echo 'os=["ubuntu-latest"]' >> "$GITHUB_OUTPUT"
           else
             echo 'os=["ubuntu-latest","windows-latest","macos-latest"]' >> "$GITHUB_OUTPUT"
