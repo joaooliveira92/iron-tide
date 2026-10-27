@@ -18,10 +18,14 @@ import { useMapCamera } from "./useMapCamera.js";
 import { useMapPalette } from "./map-palette.js";
 import { useWorldMapModel } from "./useWorldMapModel.js";
 import { EMPTY_LIVE_OVERLAY, type LiveWorldMapOverlay } from "./campaign-map-join.js";
-import { projectionById } from "./projection.js";
+import { projectionById, type ProjectedArea } from "./projection.js";
+import { orderModeMapAreas, pendingRoutes, type MapOrders } from "./map-orders.js";
+import { areaAtPoint } from "./map-hit-test.js";
 import type { AreaTreeRow } from "./area-tree.js";
 import type { MapViewProps } from "./map-contract.js";
 import { cn } from "../../lib/utils.js";
+
+const EMPTY_AREAS: ReadonlySet<string> = new Set();
 
 export interface WorldMapChartProps extends MapViewProps {
   readonly className?: string;
@@ -33,6 +37,15 @@ export interface WorldMapChartProps extends MapViewProps {
   readonly treeDefaultOpen?: boolean;
   readonly initialFocusAreaId?: string | null;
   readonly initialFocusNationId?: string | null;
+  readonly orders?: MapOrders;
+}
+
+interface PickUp {
+  readonly fleetId: string;
+  readonly pointerId: number;
+  readonly startX: number;
+  readonly startY: number;
+  readonly dragging: boolean;
 }
 
 export function WorldMapChart({
@@ -43,7 +56,6 @@ export function WorldMapChart({
   onToggleLayer,
   onSetProjection,
   onSetCentre,
-  onToggleClosedPassages,
   overlay = EMPTY_LIVE_OVERLAY,
   className,
   variant = "full",
@@ -53,9 +65,11 @@ export function WorldMapChart({
   treeDefaultOpen = true,
   initialFocusAreaId = null,
   initialFocusNationId = null,
+  orders,
 }: WorldMapChartProps) {
   const layout = MAP_VARIANT_LAYOUT[variant];
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [pickUp, setPickUp] = useState<PickUp | null>(null);
   const projection = projectionById(state.projection);
   const camera = useMapCamera(projection.width, projection.height, {
     wrapHorizontally: true,
@@ -68,8 +82,55 @@ export function WorldMapChart({
 
   useInitialFocusArea(camera, initialFocusAreaId, projection, state.centre, initialFocusNationId);
 
+  const fleetFor = (fleetId: string | null | undefined) =>
+    fleetId === null || fleetId === undefined
+      ? null
+      : (orders?.fleets.find((fleet) => fleet.fleetId === fleetId) ?? null);
+
+  const activeFleet = fleetFor(pickUp?.fleetId ?? orders?.selectedFleetId);
+  const mode = orderModeMapAreas(activeFleet);
+  const modeActive = pickUp !== null || (orders !== undefined && orders.selectedFleetId !== null);
+  const legalAreas = modeActive ? mode.legal : EMPTY_AREAS;
+  const dimmedAreas = new Set<string>();
+  if (modeActive && mode.active) {
+    const keep = new Set(mode.legal);
+    if (activeFleet?.mapAreaId !== null && activeFleet?.mapAreaId !== undefined) {
+      keep.add(activeFleet.mapAreaId);
+    }
+    for (const area of model.areas) {
+      if (!keep.has(area.id)) dimmedAreas.add(area.id);
+    }
+  }
+  const blockadedAreas = orders?.blockadedMapAreas ?? EMPTY_AREAS;
+  const pending = pendingRoutes(orders?.pending ?? [], (areaId) => model.anchorOf(areaId));
+  const draggableFleets = new Set(
+    (orders?.fleets ?? [])
+      .filter((fleet) => fleet.mapAreaId !== null && fleet.legalDestinations.length > 0)
+      .map((fleet) => fleet.fleetId),
+  );
+
   function handleMapKey(event: React.KeyboardEvent<SVGSVGElement>): void {
     if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (orders !== undefined && (event.key === "f" || event.key === "F")) {
+      const fleets = orders.fleets;
+      if (fleets.length > 0) {
+        const current = fleets.findIndex((fleet) => fleet.fleetId === orders.selectedFleetId);
+        const next = fleets[(current + 1) % fleets.length];
+        if (next !== undefined) {
+          orders.onSelectFleet(next.fleetId);
+          const point = next.mapAreaId === null ? null : model.areasById.get(next.mapAreaId)?.label;
+          if (point !== null && point !== undefined) camera.focusOn(point[0], point[1], 3.5);
+        }
+      }
+      event.preventDefault();
+      return;
+    }
+    if (event.key === "Escape") {
+      setPickUp(null);
+      onSelect(null);
+      event.preventDefault();
+      return;
+    }
     const step = event.shiftKey ? 240 : 80;
     const moves: Record<string, [number, number]> = {
       ArrowLeft: [step, 0],
@@ -90,6 +151,49 @@ export function WorldMapChart({
     if (camera.isDraggingRef.current) return;
     if (shiftKey) onRuler(id);
     else onSelect(id);
+  }
+
+  function handlePointerDown(event: React.PointerEvent<SVGSVGElement>): void {
+    if (orders === undefined || event.button !== 0) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const marker = target.closest("[data-map-fleet]");
+    if (!(marker instanceof Element)) return;
+    const fleetId = marker.getAttribute("data-map-fleet");
+    if (fleetId === null || !draggableFleets.has(fleetId)) return;
+    event.stopPropagation();
+    camera.holdRef.current = true;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setPickUp({
+      fleetId,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      dragging: false,
+    });
+    orders.onSelectFleet(fleetId);
+  }
+
+  function handlePointerMove(event: React.PointerEvent<SVGSVGElement>): void {
+    if (pickUp === null || pickUp.pointerId !== event.pointerId) return;
+    if (pickUp.dragging) return;
+    if (Math.hypot(event.clientX - pickUp.startX, event.clientY - pickUp.startY) < 6) return;
+    setPickUp({ ...pickUp, dragging: true });
+  }
+
+  function handlePointerUp(event: React.PointerEvent<SVGSVGElement>): void {
+    if (pickUp === null || pickUp.pointerId !== event.pointerId) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    const dragging = pickUp.dragging;
+    const fleetId = pickUp.fleetId;
+    camera.holdRef.current = false;
+    setPickUp(null);
+    if (!dragging || orders === undefined) return;
+    const mapAreaId = areaAt(camera, model.areas, projection, event.clientX, event.clientY);
+    if (mapAreaId === null) return;
+    orders.onDrop(fleetId, mapAreaId);
   }
 
   function focusArea(id: string): void {
@@ -147,6 +251,10 @@ export function WorldMapChart({
         aria-label="World map. Arrow keys pan, plus and minus zoom, zero resets."
         tabIndex={0}
         onKeyDown={handleMapKey}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       >
         <g ref={camera.worldRef}>
           <MapLayers
@@ -154,6 +262,12 @@ export function WorldMapChart({
             palette={palette}
             width={projection.width}
             onAreaClick={handleAreaClick}
+            legalAreas={legalAreas}
+            dimmedAreas={dimmedAreas}
+            blockadedAreas={blockadedAreas}
+            pendingOrders={pending}
+            draggableFleets={draggableFleets}
+            selectedFleetId={pickUp?.fleetId ?? orders?.selectedFleetId ?? null}
           />
         </g>
       </svg>
@@ -204,7 +318,18 @@ export function WorldMapChart({
             color: CHART.ink,
           }}
         >
-          <MapLegend showPossessions={state.layers.possessions} showFleets={state.layers.fleets} />
+          <MapLegend
+            showPossessions={state.layers.possessions}
+            showFleets={state.layers.fleets}
+            notes={
+              orders === undefined
+                ? []
+                : [
+                    "Foreign fleet positions are not known: intelligence is not modelled yet.",
+                    "Invasion range is not modelled yet.",
+                  ]
+            }
+          />
           <MapScaleBar camera={camera} worldWidth={projection.width} />
         </div>
       </div>
@@ -269,9 +394,33 @@ export function WorldMapChart({
       <RouteReadout
         className={cn(layout.routeReadout, layout.routeHideWhenEmpty && route === null && "hidden")}
         route={route}
-        respectClosedPassages={state.respectClosedPassages}
-        onToggleClosedPassages={onToggleClosedPassages}
       />
     </div>
   );
+}
+
+function areaAt(
+  camera: ReturnType<typeof useMapCamera>,
+  areas: readonly ProjectedArea[],
+  projection: { readonly width: number },
+  clientX: number,
+  clientY: number,
+): string | null {
+  if (typeof document.elementsFromPoint === "function") {
+    for (const element of document.elementsFromPoint(clientX, clientY)) {
+      const area = element.closest("[data-map-area]");
+      if (area instanceof Element) return area.getAttribute("data-map-area");
+    }
+  }
+  const svg = camera.svgRef.current;
+  const matrix = svg?.getScreenCTM?.();
+  if (svg === null || svg === undefined || matrix === null || matrix === undefined) return null;
+  if (matrix.a === 0 || matrix.d === 0 || typeof svg.createSVGPoint !== "function") return null;
+  const point = svg.createSVGPoint();
+  point.x = clientX;
+  point.y = clientY;
+  const user = point.matrixTransform(matrix.inverse());
+  const { scale, x, y } = camera.getTransform();
+  if (scale === 0) return null;
+  return areaAtPoint(areas, { x: (user.x - x) / scale, y: (user.y - y) / scale }, projection.width);
 }

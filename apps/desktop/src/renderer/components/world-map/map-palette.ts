@@ -14,13 +14,9 @@ export interface MapPalette {
   readonly route: string;
   readonly routeCasing: string;
   readonly lane: string;
-  readonly passageOpenLine: string;
-  readonly passageClosedLine: string;
-  readonly passageOpenFill: string;
-  readonly passageClosedFill: string;
-  readonly passageOpenRing: string;
-  readonly passageClosedRing: string;
-  readonly passageInk: string;
+  readonly orderPending: string;
+  readonly orderLegal: string;
+  readonly blockadeHatch: string;
   readonly strengthTrack: string;
   readonly strengthCasing: string;
   readonly strengthInk: string;
@@ -50,13 +46,9 @@ export const DARK_MAP_PALETTE: MapPalette = {
   route: "oklch(0.85 0.16 85)",
   routeCasing: "oklch(0.2 0 0 / 0.6)",
   lane: "oklch(0.8 0.05 215 / 0.55)",
-  passageOpenLine: "oklch(0.75 0.02 240 / 0.3)",
-  passageClosedLine: "oklch(0.65 0.2 25 / 0.55)",
-  passageOpenFill: "oklch(0.28 0.03 245)",
-  passageClosedFill: "oklch(0.36 0.11 25)",
-  passageOpenRing: "oklch(0.8 0.02 240)",
-  passageClosedRing: "oklch(0.72 0.2 25)",
-  passageInk: "oklch(0.92 0.01 240)",
+  orderPending: "oklch(0.86 0.17 88)",
+  orderLegal: "oklch(0.86 0.16 150)",
+  blockadeHatch: "oklch(0.7 0.2 30 / 0.55)",
   strengthTrack: "oklch(0.15 0.02 245 / 0.55)",
   strengthCasing: "oklch(0.97 0.005 240)",
   strengthInk: "oklch(0.97 0.005 240)",
@@ -86,13 +78,9 @@ export const LIGHT_MAP_PALETTE: MapPalette = {
   route: "oklch(0.55 0.17 55)",
   routeCasing: "oklch(0.98 0.005 240 / 0.85)",
   lane: "oklch(0.42 0.08 235 / 0.6)",
-  passageOpenLine: "oklch(0.45 0.03 245 / 0.4)",
-  passageClosedLine: "oklch(0.55 0.2 25 / 0.7)",
-  passageOpenFill: "oklch(0.97 0.01 245)",
-  passageClosedFill: "oklch(0.93 0.05 25)",
-  passageOpenRing: "oklch(0.4 0.03 245)",
-  passageClosedRing: "oklch(0.5 0.2 25)",
-  passageInk: "oklch(0.25 0.02 250)",
+  orderPending: "oklch(0.5 0.16 62)",
+  orderLegal: "oklch(0.45 0.15 150)",
+  blockadeHatch: "oklch(0.5 0.2 30 / 0.6)",
   strengthTrack: "oklch(0.98 0.005 240 / 0.6)",
   strengthCasing: "oklch(0.2 0.02 250)",
   strengthInk: "oklch(0.2 0.02 250)",
