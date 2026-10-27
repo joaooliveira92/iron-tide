@@ -14,7 +14,7 @@ Rules and statuses: ADR-0267.
 | Row | Player verb | Screen | Evidence |
 | --- | --- | --- | --- |
 | set-research-priority | Set a research priority for a technology field | `screens/research/ResearchScreen.tsx` | `apps/desktop/src/renderer/screens/research/ResearchScreen.test.tsx` |
-| move-fleet | Order a fleet along a route, one hop a month | `screens/fleet/FleetScreen.tsx` | `apps/desktop/src/main/commands/fleetCommands.test.ts` |
+| move-fleet | Order a fleet along a route, one hop a month | `screens/strategic-map/StrategicMapScreen.tsx` | `apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.test.tsx` |
 | assign-station | Assign a fleet to a foreign station | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
 | set-ship-readiness | Set a ship to active, reserve or mothballed | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
 | fund-special-training | Fund up to two special-training subjects | `screens/fleet/training/FleetTrainingSection.tsx` | `apps/desktop/src/renderer/screens/fleet/training/FleetTrainingView.test.tsx` |
@@ -41,7 +41,7 @@ Rules and statuses: ADR-0267.
 | ship-readiness | See and manage ship readiness | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
 | combat-fought-battle | Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under division stance and speed orders | `screens/battle/PlayerBattleScreen.tsx` | `apps/desktop/src/main/commands/battleOfferCommands.test.ts` |
 | read-campaign-overview | Read the campaign overview | `screens/overview/OverviewScreen.tsx` | `apps/desktop/src/main/commands/inspectCampaign.test.ts` |
-| read-world-map | Read the world map (Overview, F1 sheet, Fleet panel) | `components/world-map/WorldMapChart.tsx` | `apps/desktop/src/renderer/components/world-map/WorldMapChart.test.tsx` |
+| read-world-map | Read the world map (Map, Overview, F1, Fleet) | `screens/strategic-map/StrategicMapScreen.tsx` | `apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.test.tsx` |
 | read-battle-history | Read the battle history | `screens/diplomacy/components/BattleHistorySection.tsx` | `apps/desktop/src/renderer/screens/diplomacy/components/BattleHistorySection.test.tsx` |
 | read-priorities | Read strategic priorities | `screens/overview/PrioritiesCard.tsx` | `apps/desktop/src/renderer/screens/overview/PrioritiesCard.test.tsx` |
 | read-opening-briefing | Read the opening briefing | `screens/new-game/NewGameBriefingScreen.tsx` | `apps/desktop/src/renderer/screens/new-game/NewGameBriefingScreen.test.tsx` |

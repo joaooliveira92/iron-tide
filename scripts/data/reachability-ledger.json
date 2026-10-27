@@ -26,9 +26,10 @@
         "replaceMovementCommand",
         "cancelMovementCommand"
       ],
-      "renderer_screen": "screens/fleet/FleetScreen.tsx",
-      "evidence_test": "apps/desktop/src/main/commands/fleetCommands.test.ts",
-      "adr_or_issue": null
+      "renderer_screen": "screens/strategic-map/StrategicMapScreen.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.test.tsx",
+      "adr_or_issue": null,
+      "note": "The map and the Fleet panel share useMovementOrders, so both build the same MoveFleet body."
     },
     {
       "id": "assign-station",
@@ -638,16 +639,16 @@
     },
     {
       "id": "read-world-map",
-      "player_verb": "Read the world map (Overview, F1 sheet, Fleet panel)",
+      "player_verb": "Read the world map (Map, Overview, F1, Fleet)",
       "status": "reachable",
       "engine_package": "campaign-engine",
       "engine_modules": [],
       "engine_symbols": ["buildWorldMapView"],
       "main_commands": ["inspectMap"],
-      "renderer_screen": "components/world-map/WorldMapChart.tsx",
-      "evidence_test": "apps/desktop/src/renderer/components/world-map/WorldMapChart.test.tsx",
+      "renderer_screen": "screens/strategic-map/StrategicMapScreen.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.test.tsx",
       "adr_or_issue": null,
-      "note": "A dedicated production map screen is #222; the map prototype screen stays dev-only."
+      "note": "Compiled campaign state only; the fixture world is deleted."
     },
     {
       "id": "read-battle-history",
