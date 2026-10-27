@@ -41,6 +41,12 @@ test, not delivery.
   `gradient-background-text.tsx` render inline `<style>` elements. Styles cannot
   run code, and scripts stay strict. Removing the exception means moving those
   rules into the stylesheet or adding style nonces.
+- The renderer is sandboxed. The preload is built as CommonJS (`index.cjs`)
+  because a sandboxed preload cannot be an ES module; it only uses
+  `contextBridge` and `ipcRenderer`.
+- IPC handlers are registered through `guardIpc`, which rejects invokes with a
+  tagged `UntrustedSender` error and drops one-way messages unless the sender
+  frame is the trusted entry (same predicate as navigation).
 - Verification: unit tests for the predicates, the installer and the policy
   strings; `e2e/shell-security.spec.ts` drives the built app over `file://`; the
   packaged smoke asserts the same properties against the packaged binary.
@@ -49,5 +55,6 @@ test, not delivery.
 
 - A new permission or external-link feature must add an explicit allow-list entry
   and a test; the default stays denial.
-- Not yet addressed: renderer `sandbox` stays off (the ESM preload requires it),
-  IPC sender-frame validation and Electron fuses.
+- Not yet addressed: Electron fuses. Playwright's `_electron.launch`, which the
+  packaged smoke uses, needs `EnableNodeCliInspectArguments`, so flipping fuses
+  needs a separate fused release build and a smoke strategy for it.

@@ -3,7 +3,7 @@ import { Effect, ManagedRuntime } from "effect";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { applyContentSecurityPolicy } from "./csp.js";
-import { installShellGuards, type ShellTrust } from "./shellGuards.js";
+import { guardIpc, installShellGuards, type ShellTrust } from "./shellGuards.js";
 import { commandHandlers, createCampaignCommandDispatcher } from "./campaignBridge.js";
 import { ContentArtifactError, loadContentArtifact } from "./contentArtifact.js";
 import { createPreferencesBridge } from "./preferences/preferencesBridge.js";
@@ -110,10 +110,10 @@ function createWindow(): BrowserWindow {
       ? { titleBarStyle: "hidden" as const, trafficLightPosition: { x: 20, y: 21 } }
       : {}),
     webPreferences: {
-      preload: resolve(import.meta.dirname, "../preload/index.mjs"),
+      preload: resolve(import.meta.dirname, "../preload/index.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: true,
     },
   });
 
@@ -142,22 +142,23 @@ function createWindow(): BrowserWindow {
 type DesktopMainRuntime = ManagedRuntime.ManagedRuntime<CommandEnv, never>;
 
 function registerIpc(runtime: DesktopMainRuntime): void {
+  const ipc = guardIpc(ipcMain, shellTrust);
   const dispatchCampaignCommand = createCampaignCommandDispatcher(commandHandlers, () => runtime);
-  ipcMain.handle("campaign:execute", (_event, command: string, payload: unknown) =>
+  ipc.handle("campaign:execute", (_event, command: string, payload: unknown) =>
     dispatchCampaignCommand(command, payload),
   );
 
   const preferences = createPreferencesBridge(() => runtime);
-  ipcMain.handle("preferences:read", () => preferences.read());
-  ipcMain.handle("preferences:write", (_event, payload: unknown) => preferences.write(payload));
-  ipcMain.handle("preferences:read-campaign", (_event, sessionId: string) =>
+  ipc.handle("preferences:read", () => preferences.read());
+  ipc.handle("preferences:write", (_event, payload: unknown) => preferences.write(payload));
+  ipc.handle("preferences:read-campaign", (_event, sessionId: string) =>
     preferences.readCampaign(sessionId),
   );
-  ipcMain.handle("preferences:write-campaign", (_event, sessionId: string, payload: unknown) =>
+  ipc.handle("preferences:write-campaign", (_event, sessionId: string, payload: unknown) =>
     preferences.writeCampaign(sessionId, payload),
   );
 
-  ipcMain.on("support:report-crash", (_event, payload: unknown) => {
+  ipc.on("support:report-crash", (_event, payload: unknown) => {
     void runtime.runPromise(
       Effect.gen(function* () {
         const crash = yield* CrashReporter;
@@ -171,7 +172,7 @@ function registerIpc(runtime: DesktopMainRuntime): void {
     );
   });
 
-  ipcMain.handle("window:get-state", (event) => {
+  ipc.handle("window:get-state", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     return {
       platform: process.platform,
@@ -180,16 +181,16 @@ function registerIpc(runtime: DesktopMainRuntime): void {
       minimizable: win?.isMinimizable() ?? true,
     };
   });
-  ipcMain.on("window:minimize", (event) => {
+  ipc.on("window:minimize", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.minimize();
   });
-  ipcMain.on("window:maximize-toggle", (event) => {
+  ipc.on("window:maximize-toggle", (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win === null) return;
     if (win.isMaximized()) win.unmaximize();
     else win.maximize();
   });
-  ipcMain.on("window:close", (event) => {
+  ipc.on("window:close", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.close();
   });
 }

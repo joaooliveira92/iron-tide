@@ -1,3 +1,5 @@
+import { Data } from "effect";
+
 export interface ShellTrust {
   readonly entryUrl: string;
   readonly devOrigin: string | null;
@@ -103,4 +105,38 @@ export function installShellGuards({ app, session, trust }: ShellGuardTargets): 
     isPermissionAllowed(permission, details.requestingUrl ?? requestingOrigin, trust),
   );
   session.setDevicePermissionHandler(() => false);
+}
+
+export class UntrustedSender extends Data.TaggedError("UntrustedSender")<{
+  readonly channel: string;
+}> {}
+
+interface SenderEvent {
+  readonly senderFrame?: { readonly url: string } | null;
+}
+
+type IpcListener<E> = (event: E, ...args: any[]) => unknown;
+
+export interface GuardableIpc<H extends SenderEvent, O extends SenderEvent> {
+  handle(channel: string, listener: IpcListener<H>): void;
+  on(channel: string, listener: IpcListener<O>): unknown;
+}
+
+export function guardIpc<H extends SenderEvent, O extends SenderEvent>(
+  ipc: GuardableIpc<H, O>,
+  trust: ShellTrust,
+): GuardableIpc<H, O> {
+  const trusted = (event: SenderEvent): boolean =>
+    isTrustedNavigation(event.senderFrame?.url ?? "", trust);
+  return {
+    handle: (channel, listener) =>
+      ipc.handle(channel, (event, ...args) => {
+        if (!trusted(event)) throw new UntrustedSender({ channel });
+        return listener(event, ...args);
+      }),
+    on: (channel, listener) =>
+      ipc.on(channel, (event, ...args) => {
+        if (trusted(event)) listener(event, ...args);
+      }),
+  };
 }

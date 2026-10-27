@@ -78,6 +78,18 @@ test.describe("renderer shell security (production loading path)", () => {
     expect(e2e.page.url()).toBe(entry);
   });
 
+  test("the renderer is sandboxed with context isolation and no node integration", async ({
+    e2e,
+  }) => {
+    const prefs = await e2e.app.evaluate(({ BrowserWindow }) => {
+      const { sandbox, contextIsolation, nodeIntegration } =
+        BrowserWindow.getAllWindows()[0]!.webContents.getLastWebPreferences();
+      return { sandbox, contextIsolation, nodeIntegration };
+    });
+    expect(prefs).toEqual({ sandbox: true, contextIsolation: true, nodeIntegration: false });
+    expect(await e2e.page.evaluate(() => typeof require)).toBe("undefined");
+  });
+
   test("a reload of the trusted entry point still works", async ({ e2e }) => {
     await e2e.page.reload();
     await expect(e2e.page.getByText("Bluewave Naval Staff")).toBeVisible();

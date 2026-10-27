@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
   ALLOWED_PERMISSIONS,
+  guardIpc,
   installShellGuards,
   isPermissionAllowed,
   isTrustedNavigation,
@@ -235,5 +236,57 @@ describe("installShellGuards", () => {
     const contents = app.create();
     expect(contents.fire("will-navigate", "http://localhost:5173/")).toBe(false);
     expect(contents.fire("will-navigate", "http://localhost:9999/")).toBe(true);
+  });
+});
+
+describe("guardIpc", () => {
+  interface FakeEvent {
+    readonly senderFrame: { readonly url: string } | null;
+  }
+
+  const build = () => {
+    const handlers = new Map<string, (event: FakeEvent, ...args: any[]) => unknown>();
+    const listeners = new Map<string, (event: FakeEvent, ...args: any[]) => unknown>();
+    const guarded = guardIpc<FakeEvent, FakeEvent>(
+      {
+        handle: (channel, listener) => void handlers.set(channel, listener),
+        on: (channel, listener) => void listeners.set(channel, listener),
+      },
+      packaged,
+    );
+    return { guarded, handlers, listeners };
+  };
+
+  const trustedEvent: FakeEvent = { senderFrame: { url: `${packaged.entryUrl}#/overview` } };
+
+  it("passes a trusted sender through to an invoke handler", () => {
+    const { guarded, handlers } = build();
+    guarded.handle("campaign:execute", (_event, value: string) => `ok:${value}`);
+    const run = handlers.get("campaign:execute") as (event: FakeEvent, value: string) => unknown;
+    expect(run(trustedEvent, "x")).toBe("ok:x");
+  });
+
+  it("rejects an untrusted or missing sender frame with a tagged error", () => {
+    const { guarded, handlers } = build();
+    guarded.handle("campaign:execute", () => "ok");
+    const run = handlers.get("campaign:execute");
+    for (const event of [{ senderFrame: { url: "https://example.com/" } }, { senderFrame: null }]) {
+      let caught: unknown = null;
+      try {
+        run?.(event);
+      } catch (error) {
+        caught = error;
+      }
+      expect(caught).toMatchObject({ _tag: "UntrustedSender", channel: "campaign:execute" });
+    }
+  });
+
+  it("drops one-way messages from an untrusted sender and runs trusted ones", () => {
+    const { guarded, listeners } = build();
+    const calls: string[] = [];
+    guarded.on("window:close", () => void calls.push("close"));
+    listeners.get("window:close")?.({ senderFrame: { url: "https://example.com/" } });
+    listeners.get("window:close")?.(trustedEvent);
+    expect(calls).toEqual(["close"]);
   });
 });
