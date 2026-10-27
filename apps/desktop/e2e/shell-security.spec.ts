@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures.js";
+import { test, expect, expectOverview } from "./fixtures.js";
 import { startNewCampaign } from "./flows.js";
 
 test.describe("renderer shell security (production loading path)", () => {
@@ -30,7 +30,7 @@ test.describe("renderer shell security (production loading path)", () => {
         fetchOutcome = "blocked";
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       return {
         violated,
         inlineScriptRan: Reflect.get(window, "__cspInlineProbe") === true,
@@ -138,9 +138,7 @@ test.describe("renderer shell security (production loading path)", () => {
       });
     });
     await startNewCampaign(e2e.page);
-    await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-      timeout: 30_000,
-    });
+    await expectOverview(e2e.page);
     const violations = await e2e.page.evaluate(() => Reflect.get(window, "__cspViolations"));
     expect(violations).toEqual([]);
   });
