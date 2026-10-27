@@ -1,7 +1,9 @@
 import { app, BrowserWindow, dialog, ipcMain, session } from "electron";
 import { Effect, ManagedRuntime } from "effect";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { applyContentSecurityPolicy } from "./csp.js";
+import { installShellGuards, type ShellTrust } from "./shellGuards.js";
 import { commandHandlers, createCampaignCommandDispatcher } from "./campaignBridge.js";
 import { ContentArtifactError, loadContentArtifact } from "./contentArtifact.js";
 import { createPreferencesBridge } from "./preferences/preferencesBridge.js";
@@ -20,6 +22,15 @@ const isDev = process.env.NODE_ENV === "development" || process.argv.includes("-
 
 const reactDevToolsRequested =
   isDebugModeEnabled() || process.env.VITE_BLUEWAVE_DEVTOOLS === "true";
+
+const DEV_SERVER_ORIGIN = "http://localhost:5173";
+
+const RENDERER_ENTRY = resolve(import.meta.dirname, "../renderer/index.html");
+
+const shellTrust: ShellTrust = {
+  entryUrl: pathToFileURL(RENDERER_ENTRY).href,
+  devOrigin: isDev ? DEV_SERVER_ORIGIN : null,
+};
 
 const QUIT_FLUSH_TIMEOUT_MS = 1_500;
 
@@ -118,11 +129,11 @@ function createWindow(): BrowserWindow {
   win.on("unmaximize", () => win.webContents.send("window:state-changed"));
 
   if (isDev) {
-    void win.loadURL("http://localhost:5173");
+    void win.loadURL(DEV_SERVER_ORIGIN);
     win.webContents.openDevTools();
     if (reactDevToolsRequested) attachDevToolsPageHook(win);
   } else {
-    void win.loadFile(resolve(import.meta.dirname, "../renderer/index.html"));
+    void win.loadFile(RENDERER_ENTRY);
   }
 
   return win;
@@ -252,6 +263,7 @@ if (!app.requestSingleInstanceLock()) {
       }
     }
 
+    installShellGuards({ app, session: session.defaultSession, trust: shellTrust });
     registerIpc(runtime);
     installBoundedShutdown(runtime);
 
