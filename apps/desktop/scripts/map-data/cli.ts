@@ -23,7 +23,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const DESKTOP = resolve(HERE, "..", "..");
 const REPO = resolve(DESKTOP, "..", "..");
 const DEFAULT_CACHE = join(DESKTOP, ".map-data-cache");
-const DEFAULT_OUT = join(DESKTOP, "src", "renderer", "public", "map-spike", "land-tiles");
+const DEFAULT_OUT = join(DESKTOP, "map-spike-assets", "land-tiles");
 
 const { positionals, values } = parseArgs({
   allowPositionals: true,

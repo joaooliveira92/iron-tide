@@ -106,10 +106,7 @@ async function openMode(page, mode) {
 }
 
 const resolution = JSON.parse(
-  await readFile(
-    resolve(root, "src/renderer/public/map-spike/land-tiles/protected-resolution.json"),
-    "utf8",
-  ),
+  await readFile(resolve(root, "map-spike-assets/land-tiles/protected-resolution.json"), "utf8"),
 );
 const catalogue = JSON.parse(
   await readFile(resolve(root, "map-data/protected-features.v1.json"), "utf8"),

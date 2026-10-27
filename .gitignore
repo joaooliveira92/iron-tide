@@ -47,5 +47,5 @@ packages/*/src/**/*.d.ts.map
 !vendor/effect/dist/**
 !vendor/effect-vitest/dist/
 !vendor/effect-vitest/dist/**
-apps/desktop/src/renderer/public/map-spike/
+apps/desktop/map-spike-assets/
 apps/desktop/.map-data-cache/

@@ -1,7 +1,19 @@
+import { cpSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+
+const GLOBE_SPIKE = process.env.VITE_BLUEWAVE_GLOBE_SPIKE === "true";
+
+const copyGlobeSpikeAssets = {
+  name: "bluewave-globe-spike-assets",
+  closeBundle() {
+    const source = resolve(__dirname, "map-spike-assets");
+    if (!GLOBE_SPIKE || !existsSync(source)) return;
+    cpSync(source, resolve(__dirname, "out/renderer/map-spike"), { recursive: true });
+  },
+};
 
 export default defineConfig({
   main: {
@@ -34,9 +46,9 @@ export default defineConfig({
   },
   renderer: {
     root: resolve(__dirname, "src/renderer"),
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), copyGlobeSpikeAssets],
     define: {
-      __GLOBE_SPIKE__: JSON.stringify(process.env.VITE_BLUEWAVE_GLOBE_SPIKE === "true"),
+      __GLOBE_SPIKE__: JSON.stringify(GLOBE_SPIKE),
     },
     build: {
       outDir: resolve(__dirname, "out/renderer"),
