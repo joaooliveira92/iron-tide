@@ -168,7 +168,13 @@ try {
     await settle();
   }
   const tidy = async (waitMs = 0) => {
-    if (!opts.tour) await dismissTour(h.page, waitMs || 1);
+    if (opts.tour) return;
+    const shown = await h.page
+      .getByRole("button", { name: "End inspection" })
+      .waitFor({ timeout: waitMs || 1 })
+      .then(() => true)
+      .catch(() => false);
+    if (shown) await dismissTour(h.page);
   };
   await tidy(1500);
   for (const action of opts.actions) {

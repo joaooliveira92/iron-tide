@@ -1,4 +1,3 @@
-import { Button } from "../ui/button.js";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { CHART } from "./chart-theme.js";
 import type { RouteReading } from "./map-state.js";
@@ -6,16 +5,9 @@ import type { RouteReading } from "./map-state.js";
 export interface RouteReadoutProps {
   readonly className: string;
   readonly route: RouteReading | null;
-  readonly respectClosedPassages: boolean;
-  readonly onToggleClosedPassages: () => void;
 }
 
-export function RouteReadout({
-  className,
-  route,
-  respectClosedPassages,
-  onToggleClosedPassages,
-}: RouteReadoutProps) {
+export function RouteReadout({ className, route }: RouteReadoutProps) {
   const format = usePresentationFormat();
   return (
     <div
@@ -43,16 +35,6 @@ export function RouteReadout({
           <span className="tabular-nums" style={{ color: CHART.inkDim }}>
             ≈{format.number(route.months, { maximumFractionDigits: 1 })} months
           </span>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={onToggleClosedPassages}
-            className="h-6 border px-2 text-xs hover:bg-white/10"
-            style={{ borderColor: "oklch(0.4 0.02 245)", color: CHART.ink }}
-          >
-            {respectClosedPassages ? "avoiding closures" : "ignoring closures"}
-          </Button>
         </div>
       )}
     </div>

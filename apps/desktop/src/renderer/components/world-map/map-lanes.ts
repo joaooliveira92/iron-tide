@@ -1,4 +1,3 @@
-import type { PrototypeEdge } from "./fixture-world.js";
 import type { Point } from "./projection.js";
 
 export interface LaneMark {
@@ -7,29 +6,18 @@ export interface LaneMark {
   readonly to: Point;
 }
 
-export function laneEdges(
-  campaign: readonly { readonly a: string; readonly b: string }[] | null,
-  fixture: readonly PrototypeEdge[],
-): readonly PrototypeEdge[] {
-  if (campaign === null) return fixture;
-  const gates = new Map<string, string>();
-  for (const edge of fixture) {
-    if (edge.passage !== undefined) gates.set([edge.a, edge.b].sort().join("~"), edge.passage);
-  }
-  return campaign.map((lane) => {
-    const passage = gates.get([lane.a, lane.b].sort().join("~"));
-    return passage === undefined ? { a: lane.a, b: lane.b } : { a: lane.a, b: lane.b, passage };
-  });
+export interface LaneEdge {
+  readonly a: string;
+  readonly b: string;
 }
 
 export function buildLanes(
-  edges: readonly PrototypeEdge[],
+  edges: readonly LaneEdge[],
   anchorOf: ReadonlyMap<string, Point>,
   worldWidth: number,
 ): LaneMark[] {
   const lanes = new Map<string, LaneMark>();
   for (const edge of edges) {
-    if (edge.passage !== undefined) continue;
     const [first, second] = edge.a < edge.b ? [edge.a, edge.b] : [edge.b, edge.a];
     const id = `${first}~${second}`;
     if (lanes.has(id)) continue;

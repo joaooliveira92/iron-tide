@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { SEED, test, expect } from "./fixtures.js";
+import { SEED, test, expect, expectOverview } from "./fixtures.js";
 import { advanceMonths, dismissTour, startNewCampaign } from "./flows.js";
 
 interface BridgeResultLike {
@@ -81,9 +81,7 @@ test("declared war → generated battle → resolved and surfaced in campaign st
   page.on("pageerror", (error) => consoleErrors.push(String(error)));
 
   await startNewCampaign(page, { seed: SEED });
-  await expect(page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-    timeout: 30_000,
-  });
+  await expectOverview(page);
   await dismissTour(page);
   const sessionId = await readSessionId(page);
 
@@ -101,10 +99,8 @@ test("declared war → generated battle → resolved and surfaced in campaign st
   await expect(dossier.getByRole("heading", { name: "French Republic" })).toBeVisible();
   await dossier.getByRole("button", { name: /^Declare war/ }).click();
 
-  const orders = page.getByRole("group", { name: "Orders" });
-  const queueAlert = orders.getByRole("alert").filter({ hasText: /cannot be cancelled/ });
-  await expect(queueAlert).toBeVisible();
-  await orders.getByRole("button", { name: "Declare war", exact: true }).click();
+  await expect(page.getByText(/declaration of war cannot be cancelled/)).toBeVisible();
+  await page.getByRole("button", { name: "Declare war", exact: true }).click();
   await expect(page.getByText("Command queued", { exact: true })).toBeVisible();
 
   await advanceMonths(page, 1);

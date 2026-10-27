@@ -4,6 +4,7 @@ import { ConstructionScreen } from "../screens/construction/ConstructionScreen.j
 import { FleetScreen } from "../screens/fleet/FleetScreen.js";
 import { OptionsScreen } from "../screens/options/OptionsScreen.js";
 import { OverviewScreen } from "../screens/overview/OverviewScreen.js";
+import { StrategicMapScreen } from "../screens/strategic-map/StrategicMapScreen.js";
 import { useCampaignShellContext } from "./CampaignShellContext.js";
 import type {
   CampaignScreen,
@@ -49,11 +50,6 @@ const TacticalSandboxScreen = DEBUG_MODE
       })),
     )
   : null;
-const MapPrototypeScreen = lazy(() =>
-  import("../screens/map-prototype/MapPrototypeScreen.js").then((module) => ({
-    default: module.MapPrototypeScreen,
-  })),
-);
 
 function OverviewRoute({ sessionId }: CampaignScreenRouteProps) {
   const { actions } = useCampaignShellContext();
@@ -107,8 +103,8 @@ function DebuggingRoute({ sessionId }: CampaignScreenRouteProps) {
   return <DebuggingScreen sessionId={sessionId} />;
 }
 
-function MapPrototypeRoute() {
-  return <MapPrototypeScreen />;
+function StrategicMapRoute({ sessionId }: CampaignScreenRouteProps) {
+  return <StrategicMapScreen sessionId={sessionId} />;
 }
 
 function CampaignPreferencesRoute({ sessionId }: CampaignScreenRouteProps) {
@@ -132,7 +128,7 @@ export const CAMPAIGN_SCREEN_ROUTES: Readonly<Record<CampaignScreen, CampaignScr
   treasury: TreasuryRoute,
   "tactical-sandbox": TacticalSandboxRoute,
   debugging: DebuggingRoute,
-  "map-prototype": MapPrototypeRoute,
+  "strategic-map": StrategicMapRoute,
   "campaign-preferences": CampaignPreferencesRoute,
   options: OptionsRoute,
 };

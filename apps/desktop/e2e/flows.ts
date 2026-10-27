@@ -9,7 +9,7 @@ export interface NewCampaignOptions {
   readonly seed?: string;
 }
 
-const click = (page: Page, name: string) => page.getByRole("button", { name }).first().click();
+const click = (page: Page, name: string) => page.getByRole("button", { name, exact: true }).click();
 
 export async function reachFleetMethodScreen(
   page: Page,
@@ -54,10 +54,11 @@ export async function advanceMonths(page: Page, count: number): Promise<void> {
   const calendar = page.getByText(/^Bluewave — [A-Za-z]+ \d{4}$/).first();
   for (let i = 0; i < count; i++) {
     const before = await calendar.textContent();
+    expect(before).not.toBeNull();
     await page.getByRole("button", { name: /^advance month$/i }).click();
     await page.getByRole("button", { name: /^advance to /i }).click();
     await page.getByRole("dialog", { name: "Pre-turn review" }).waitFor({ state: "hidden" });
-    await expect(calendar).not.toHaveText(before ?? "");
+    await expect(calendar).not.toHaveText(before!);
   }
 }
 
@@ -68,13 +69,18 @@ export async function openShipbuilding(page: Page): Promise<Locator> {
   return dialog;
 }
 
-export async function dismissTour(page: Page, waitMs = 1500): Promise<boolean> {
-  const end = page.getByRole("button", { name: "End inspection" });
-  const shown = await end
-    .waitFor({ timeout: waitMs })
-    .then(() => true)
-    .catch(() => false);
-  if (!shown) return false;
-  await end.click();
-  return true;
+export async function dismissTour(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "End inspection" }).click();
 }
+
+export async function expandStatusStrip(page: Page): Promise<Locator> {
+  const strip = page.getByRole("region", { name: "Status strip" });
+  if ((await strip.getAttribute("data-expanded")) !== "true") {
+    await strip.getByRole("button", { name: /expand/i }).click();
+    await expect(strip).toHaveAttribute("data-expanded", "true");
+  }
+  return strip;
+}
+
+export const navigateTo = (page: Page, label: string) =>
+  page.getByTestId("bottom-nav").getByRole("button", { name: label, exact: true }).click();

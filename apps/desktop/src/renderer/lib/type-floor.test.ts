@@ -3,12 +3,7 @@ import { join, relative, resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 
 const RENDERER_ROOT = resolve(process.cwd(), "src/renderer");
-const EXEMPT = [
-  "screens/debugging/",
-  "screens/simulation/",
-  "screens/tactical-sandbox/",
-  "screens/map-prototype/",
-];
+const EXEMPT = ["screens/debugging/", "screens/simulation/", "screens/tactical-sandbox/"];
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

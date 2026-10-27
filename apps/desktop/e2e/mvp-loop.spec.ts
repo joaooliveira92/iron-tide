@@ -2,14 +2,19 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Page } from "@playwright/test";
-import { SEED, test, expect, launchHarness, teardownHarness, openCampaign } from "./fixtures.js";
-import { advanceMonths, openShipbuilding, startNewCampaign } from "./flows.js";
+import {
+  SEED,
+  test,
+  expect,
+  expectOverview,
+  relaunchAndOpen,
+  teardownHarness,
+  openCampaign,
+} from "./fixtures.js";
+import { advanceMonths, navigateTo, openShipbuilding, startNewCampaign } from "./flows.js";
 
 const ARCHETYPE = "Shipyard Baron";
 const NATION = "United Kingdom";
-
-const navigateTo = (page: Page, label: string) =>
-  page.getByTestId("bottom-nav").getByRole("button", { name: label, exact: true }).click();
 
 async function openCampaignMenuItem(page: Page, name: string | RegExp) {
   await page.getByRole("button", { name: "Campaign menu" }).click();
@@ -23,9 +28,7 @@ test("New Game compiles a fresh campaign onto Overview", async ({ e2e }) => {
     nation: NATION,
   });
 
-  await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-    timeout: 30_000,
-  });
+  await expectOverview(e2e.page);
 
   await expect(e2e.page.getByText("Bluewave — January 1880")).toBeVisible();
   await expect(
@@ -211,9 +214,7 @@ test("the Campaign menu can save, copy, and close the campaign", async ({
 
   await e2e.retargetDialog(copyDir);
   await page.getByRole("button", { name: "Open Campaign" }).click();
-  await expect(page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-    timeout: 30_000,
-  });
+  await expectOverview(page);
 });
 
 test("a submitted design survives a restart and joins the catalog after its study", async ({
@@ -236,12 +237,8 @@ test("a submitted design survives a restart and joins the catalog after its stud
   await expect(workspace.getByRole("button", { name: "Queued" })).toBeDisabled();
 
   await e2e.app.close();
-  const second = await launchHarness({ saveDir: pkg });
+  const second = await relaunchAndOpen(pkg);
   try {
-    await second.page.getByRole("button", { name: "Open Campaign" }).click();
-    await expect(second.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-      timeout: 30_000,
-    });
     await advanceMonths(second.page, 4);
     await navigateTo(second.page, "Construction");
     await second.page

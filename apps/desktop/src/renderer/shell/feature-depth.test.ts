@@ -17,14 +17,13 @@ describe("click-depth ledger (N-1, N-5)", () => {
   it("covers every always-registered production screen", () => {
     const covered = new Set(FEATURE_DEPTH.map((entry) => entry.screen));
     const production = CAMPAIGN_SCREEN_REGISTRY.filter(
-      (screen) =>
-        !["simulation", "tactical-sandbox", "debugging", "map-prototype"].includes(screen.id),
+      (screen) => !["simulation", "tactical-sandbox", "debugging"].includes(screen.id),
     );
     expect(production.filter((screen) => !covered.has(screen.id)).map((s) => s.id)).toEqual([]);
   });
 
   it("excludes dev-only screens from the ledger (N-3)", () => {
-    const devOnly = ["tactical-sandbox", "debugging", "map-prototype"];
+    const devOnly = ["tactical-sandbox", "debugging"];
     expect(FEATURE_DEPTH.filter((e) => e.screen !== null && devOnly.includes(e.screen))).toEqual(
       [],
     );

@@ -37,7 +37,7 @@ export const SECTION_OF_SCREEN: Readonly<Record<CampaignScreen, SidebarSectionId
   simulation: "developer",
   "tactical-sandbox": "developer",
   debugging: "developer",
-  "map-prototype": "developer",
+  "strategic-map": "operations",
   "campaign-preferences": "settings",
   options: "settings",
 };

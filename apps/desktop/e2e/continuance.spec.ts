@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { test, expect, copyFixturePackage, openCampaign } from "./fixtures.js";
+import { test, expect, copyFixturePackage, expectOverview, openCampaign } from "./fixtures.js";
 
 const CLOSE_MENU_LABEL = "Close campaign…";
 const CLOSE_CONFIRM_LABEL = "Close campaign";
@@ -45,9 +45,7 @@ test("Recent Campaigns reopens a package without prompting the file dialog", asy
     };
   });
   await e2e.page.getByRole("button", { name: pkg.split("/").pop()!, exact: true }).click();
-  await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-    timeout: 30_000,
-  });
+  await expectOverview(e2e.page);
 });
 
 test("Verify and Replay report on a healthy package, which still opens afterwards", async ({
@@ -64,9 +62,7 @@ test("Verify and Replay report on a healthy package, which still opens afterward
   await expect(e2e.page.getByText(/Replay complete/)).toBeVisible();
 
   await e2e.page.getByRole("button", { name: "Open Campaign" }).click();
-  await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-    timeout: 30_000,
-  });
+  await expectOverview(e2e.page);
 });
 
 test("Recover repairs a damaged package", async ({ e2e, advancedCampaignTemplate }) => {
@@ -78,7 +74,5 @@ test("Recover repairs a damaged package", async ({ e2e, advancedCampaignTemplate
   await expect(e2e.page.getByText(/Recovery complete — active revision 0/)).toBeVisible();
 
   await e2e.page.getByRole("button", { name: "Open Campaign" }).click();
-  await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-    timeout: 30_000,
-  });
+  await expectOverview(e2e.page);
 });

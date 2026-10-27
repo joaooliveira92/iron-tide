@@ -20,6 +20,7 @@ export const FEATURE_DEPTH: readonly FeatureDepthEntry[] = [
   { feature: "design-catalog", screen: "construction", path: ["Construction", "Design Catalog"] },
   { feature: "construction-commands", screen: "construction", path: ["Construction", "Commands"] },
   { feature: "fleet-movement", screen: "fleet", path: ["Fleet"] },
+  { feature: "strategic-map", screen: "strategic-map", path: ["Map"] },
   { feature: "research", screen: "research", path: ["Research & Technology"] },
   { feature: "diplomacy", screen: "diplomacy", path: ["Diplomacy & War"] },
   { feature: "treasury", screen: "treasury", path: ["Treasury"] },
