@@ -217,6 +217,26 @@ goldens and all 13 replays are unchanged because no production part uses a new f
 #295 and the #278 catalogue-technology tickets now have the seam they need; #296 still waits on
 the W-2 submarine wiring assigned by ADR-0300.
 
+**T-2 engine foundation (2026-10-27): division orders.** The first T-2 slice landed (#324 map,
+#329 decision; ADR-0321): a strict versioned `DivisionOrderSet` and pure compiler in
+`@bluewave/combat/orders`, with the existing stance wire shape converted losslessly so player
+battles keep their exact behaviour. No golden, replay or compatibility version moved. Course,
+waypoint and speed-preset controls, formation keeping, realism gating, force orders and the
+battle-map screen are still open; `CRUISE` needs a sourced ruleset fraction before it is exposed
+to the player. Next dependency-ordered slice: formation keeping (#328).
+
+**F-1 strategic map (2026-10-27): done.** #222/#231 are closed; the Map screen reads compiled
+campaign state, orders the same `MoveFleet` body as the Fleet screen, and the fixture world is
+unreachable in production. Evidence: `.ai/reports/f-1-strategic-map.md`; Suez/Panama gating and
+invasion range are deferred by DR-0039.
+
+**Backlog blockers as of 2026-10-27.** E-1 combat slices #280/#282/#296 wait on decision request
+0047 (air and AA values) and the W-2 submarine wiring (ADR-0300); #281 has the SSM model and
+remains open only for SAM/ASM. E-1 content #256/#258 wait on decision request 0044; #254 has the
+US 1945 destroyer and 1948 cruisers and still lacks the 1940s battleship and other-nation
+slices. #249/#260 follow those content slices. The T-2 build map is not yet sliced into tickets
+beyond slice 1.
+
 **Immediate next action (2026-10-23):** finish **S-2** (#90-#94), then S-3 (spec under
 `docs/`, decisions 0010/0011 = ADR-0240) and S-4. **F-1** has a spec and brief
 (#231, `.ai/briefs/f-1-strategic-map.md`; requests 0036-0039 resolved). **T-2** has its

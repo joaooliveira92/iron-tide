@@ -1,9 +1,10 @@
 # Milestone T-2N: Tactical navigation (plan)
 
 Plan for the manoeuvring half of SPRINT-PLAN T-2 ("Sandbox promoted: OOB, formations, roles, speed, targeting, force
-orders, three realism modes"). Nothing here is implemented, and no screen is in scope for this plan; slice 6 only
-names the screen contract. Reference: Rule the Waves 3 manual pp. 78-88 and 98-101 (battle map, manoeuvring,
-formations, roles, speed, turns, realism, force orders). Evidence read from `feat/e1-air-missiles`.
+orders, three realism modes"). Slice 1 (the division order model) is implemented under ADR-0321; every other slice
+below is still a plan, and no screen is in scope for this brief except slice 7, which only names the contract.
+Reference: Rule the Waves 3 manual pp. 78-88 and 98-101 (battle map, manoeuvring, formations, roles, speed, turns,
+realism, force orders). Evidence read from `feat/e1-air-missiles`.
 
 ## What navigation means in RTW3
 
@@ -25,26 +26,38 @@ lose ships in poor visibility and at night; heavy ships in line abreast disorder
   `resolveCollisionsGrounding` is a stub that returns an empty record. There is no land, depth, or map in battle.
 - `tactical/division.ts`: formation legality and role eligibility (matches manual p.85, including the 1500 t
   destroyer scout rule), division effects (`formationCohesion`, `signaling`).
-- Player battle: `battleResolution/playerSession.ts` turns a per-division `stance` (ENGAGE, HOLD, away) plus a speed
-  percent into unit orders; `pursuit.ts` supplies headings. The UI (`PlayerBattleScreen.tsx`) exposes only stance and
-  speed. There is no course, waypoint, formation, role, or force order.
+- Player battle: `battleResolution/playerSession.ts` compiles the legacy stance plus speed percent through
+  `@bluewave/combat/orders` (`DivisionOrderSet` -> `UnitOrders`, ADR-0321). The UI (`PlayerBattleScreen.tsx`) still
+  exposes only stance and speed; course, waypoint, formation, role and force orders have no control.
 - Campaign side is separate: F-1 strategic map covers one-hop fleet moves and is out of scope here.
+
+## Progress
+
+**Slice 1: division order model (2026-10-27, ADR-0321).** `@bluewave/combat/orders` now owns a strict,
+versioned `DivisionOrderSet` (stance, course or waypoint; percent, knots or the five presets; formation, role,
+lead division, control, turn-together, issued minute) and a pure compiler to the existing per-ship
+`UnitOrders` with typed issue codes. The legacy stance wire shape converts losslessly, so the player battle
+session compiles through the new model while the rendered controls stay unchanged; stance parity is proven by
+the existing player-battle/auto-resolver byte-for-byte test. `CRUISE` takes an explicit ruleset value and
+reports `DIVISION_ORDER_SPEED_PRESET_UNAVAILABLE` when absent rather than inventing a fraction. Formation, role,
+lead and turn-together fields are carried but not yet applied. No golden, replay or compatibility version
+moved. The next dependency-ordered slice is formation keeping (slice 2, #328).
 
 ## Gaps against the manual
 
-| Manual feature                                      | State                                            |
-| --------------------------------------------------- | ------------------------------------------------ |
-| Division course and speed orders                    | Per-unit heading exists; no division-level order |
-| Formation keeping (4 formations)                    | Station maths only, not wired                    |
-| Roles and lead division behaviour (AI)              | Eligibility only; no behaviour                   |
-| Turn together vs follow-the-leader turns            | Absent                                           |
-| Go-to-point with pause on arrival                   | Absent                                           |
-| AI vs manual division control and realism gating    | Absent                                           |
-| Speed penalties (grates, stokers, breakdown, flood) | Absent (T-3 lists grates and stokers)            |
-| Separation of ships in poor visibility or at night  | Absent                                           |
-| Collision, grounding, land targets                  | Stub                                             |
-| Force orders (flotilla attack, rally, disengage...) | Absent                                           |
-| Pause-on-event, run N minutes                       | Not specified at engine level                    |
+| Manual feature                                      | State                                                            |
+| --------------------------------------------------- | ---------------------------------------------------------------- |
+| Division course and speed orders                    | Versioned order model compiles; UI exposes stance and speed only |
+| Formation keeping (4 formations)                    | Station maths only, not wired                                    |
+| Roles and lead division behaviour (AI)              | Eligibility only; no behaviour                                   |
+| Turn together vs follow-the-leader turns            | Absent                                                           |
+| Go-to-point with pause on arrival                   | Absent                                                           |
+| AI vs manual division control and realism gating    | Absent                                                           |
+| Speed penalties (grates, stokers, breakdown, flood) | Absent (T-3 lists grates and stokers)                            |
+| Separation of ships in poor visibility or at night  | Absent                                                           |
+| Collision, grounding, land targets                  | Stub                                                             |
+| Force orders (flotilla attack, rally, disengage...) | Absent                                                           |
+| Pause-on-event, run N minutes                       | Not specified at engine level                                    |
 
 ## Principles
 
