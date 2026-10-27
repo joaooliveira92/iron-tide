@@ -4,6 +4,7 @@ const CI = Boolean(process.env.CI);
 
 export default defineConfig({
   testDir: "e2e",
+  globalSetup: "./e2e/global-setup.ts",
   testIgnore: "**/*.debug.spec.ts",
   timeout: 120_000,
   expect: { timeout: 15_000 },
