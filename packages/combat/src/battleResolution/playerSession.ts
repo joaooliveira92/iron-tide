@@ -44,9 +44,16 @@ import {
 import { battleLoss, initialDamageState, type DamageContext } from "../damage/minuteDamage.js";
 import { decideBattleEnd, type BattleSide, type ShipViability } from "./viability.js";
 import { headingToward } from "./engagement.js";
+import {
+  DIVISION_STANCES,
+  compileDivisionOrders,
+  divisionOrdersFromLegacy,
+  type DivisionStance,
+  type LegacyDivisionOrders,
+} from "../orders/index.js";
 
-export const PLAYER_BATTLE_STANCES = ["ENGAGE", "HOLD", "WITHDRAW"] as const;
-export type PlayerBattleStance = (typeof PLAYER_BATTLE_STANCES)[number];
+export const PLAYER_BATTLE_STANCES = DIVISION_STANCES;
+export type PlayerBattleStance = DivisionStance;
 
 export interface PlayerBattleDivisionOrder {
   readonly stance: PlayerBattleStance;
@@ -336,34 +343,23 @@ function resolveOrders(
     units: session.units,
     baseOrders: session.baseOrders,
   });
-  const unitDivision = divisionOf(session.state);
-  const out: Record<string, UnitOrders> = {};
-  for (const unit of session.units) {
-    const base = session.baseOrders[unit.assetId];
-    if (!base) continue;
-    const divisionId = unitDivision.get(unit.assetId);
-    const order = divisionId === undefined ? undefined : orders.divisions[divisionId];
-    if (order === undefined || order.stance === "ENGAGE") {
-      const speedPercent = order === undefined ? 100 : clampSpeedPercent(order.speedPercent);
-      const pursuitOrder = pursuit[unit.assetId];
-      out[unit.assetId] = {
-        orderedHeading: pursuitOrder?.orderedHeading ?? base.orderedHeading,
-        orderedSpeedBp: Math.floor((base.orderedSpeedBp * speedPercent) / 100),
-      };
-      continue;
-    }
-    if (order.stance === "HOLD") {
-      out[unit.assetId] = { orderedHeading: base.orderedHeading, orderedSpeedBp: 0 };
-      continue;
-    }
-    const away = headingAway(session, unit);
-    const speedPercent = clampSpeedPercent(order.speedPercent);
-    out[unit.assetId] = {
-      orderedHeading: away ?? base.orderedHeading,
-      orderedSpeedBp: Math.floor((base.orderedSpeedBp * speedPercent) / 100),
+  const escaped: Record<string, { stance: PlayerBattleStance; speedPercent: number }> = {};
+  for (const [divisionId, order] of Object.entries(orders.divisions)) {
+    escaped[divisionId] = {
+      stance: order.stance,
+      speedPercent: clampSpeedPercent(order.speedPercent),
     };
   }
-  return out;
+  const legacy: LegacyDivisionOrders = { divisions: escaped };
+  return compileDivisionOrders({
+    orders: divisionOrdersFromLegacy(legacy, session.state.divisions),
+    units: session.units,
+    divisions: session.state.divisions,
+    baseOrders: session.baseOrders,
+    movement: session.state.movementStates ?? {},
+    pursuit,
+    headingAway: (unit) => headingAway(session, unit),
+  }).unitOrders;
 }
 
 function damageControlFor(

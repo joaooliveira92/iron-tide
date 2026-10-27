@@ -480,14 +480,15 @@
         "movement",
         "weather",
         "damage",
-        "torpedoes"
+        "torpedoes",
+        "orders"
       ],
       "engine_symbols": [],
       "main_commands": ["startPlayerBattle", "advancePlayerBattle", "finishPlayerBattle"],
       "renderer_screen": "screens/battle/PlayerBattleScreen.tsx",
       "evidence_test": "apps/desktop/src/main/commands/battleOfferCommands.test.ts",
       "adr_or_issue": null,
-      "note": "The player orders stance and speed per division; fire control and torpedo doctrine are automatic."
+      "note": "The player orders stance and speed per division; the stance wire shape compiles through the versioned division order model, and fire control and torpedo doctrine are automatic."
     },
     {
       "id": "combat-air-combat",

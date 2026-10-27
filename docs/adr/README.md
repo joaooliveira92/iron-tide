@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0321).
+highest existing number + 1 (the next number is ADR-0322).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -224,6 +224,7 @@ Package interfaces, seams and module depth across the engine.
 | 0308 | [ADR-0308-e1-compiled-design-capabilities-reach-combat.md](ADR-0308-e1-compiled-design-capabilities-reach-combat.md) | Compiled design capabilities reach combat and are decoded strictly | accepted | — |
 | 0312 | [ADR-0312-surface-to-surface-missile-combat-module.md](ADR-0312-surface-to-surface-missile-combat-module.md) | Surface-to-surface missile salvos are a deterministic combat module | accepted | — |
 | 0320 | [ADR-0320-electron-shell-navigation-permission-and-csp-policy.md](ADR-0320-electron-shell-navigation-permission-and-csp-policy.md) | Electron shell navigation, permission and CSP policy | accepted | — |
+| 0321 | [ADR-0321-division-order-model.md](ADR-0321-division-order-model.md) | Divisions receive a versioned order model, with stance as a lossless preset | accepted | — |
 
 ## Archive
 

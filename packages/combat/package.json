@@ -64,6 +64,10 @@
       "types": "./src/movement/index.ts",
       "default": "./dist/movement/index.js"
     },
+    "./orders": {
+      "types": "./src/orders/index.ts",
+      "default": "./dist/orders/index.js"
+    },
     "./simulation": {
       "types": "./src/simulation/index.ts",
       "default": "./dist/simulation/index.js"
