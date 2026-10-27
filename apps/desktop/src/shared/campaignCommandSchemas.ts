@@ -194,6 +194,15 @@ export const DivisionCommandBodySchema = Schema.Union([
     formation: Schema.optional(nonEmptyString),
   }),
   Schema.Struct({
+    type: Schema.Literal("AssignOfficer"),
+    divisionId: nonEmptyString,
+    officerId: nonEmptyString,
+  }),
+  Schema.Struct({
+    type: Schema.Literal("RelieveOfficer"),
+    divisionId: nonEmptyString,
+  }),
+  Schema.Struct({
     type: Schema.Literal("DissolveDivision"),
     divisionId: nonEmptyString,
   }),

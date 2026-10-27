@@ -45,6 +45,7 @@ function makeState(over: Partial<DivisionOrganizationState> = {}): DivisionOrgan
       addShip: { experience: 5, cohesion: 10 },
       removeShip: { experience: 3, cohesion: 5 },
       changeFlagship: { experience: 5, cohesion: 10 },
+      changeCommander: { experience: 5, cohesion: 10 },
       reorder: { experience: 0, cohesion: 3 },
       changeRole: { experience: 0, cohesion: 10 },
       changeFormation: { experience: 0, cohesion: 5 },
@@ -358,6 +359,70 @@ describe("FleetOrganizationView", () => {
     expect(send).toHaveBeenCalledWith({ type: "DissolveDivision", divisionId: "div_1" });
   });
 
+  it("assigns an available officer to a vacant command", () => {
+    const { send } = renderView(
+      makeState({
+        divisions: [division()],
+        officers: [
+          { officerId: "off_1", name: "Edmund Harcourt", rank: "CAPTAIN", skill: 41 },
+          {
+            officerId: "off_2",
+            name: "Charles Wyndham",
+            rank: "COMMODORE",
+            skill: 63,
+            divisionId: "div_9",
+          },
+        ],
+      }),
+    );
+    const select = screen.getByLabelText(
+      "Commander of Core division — HMS Alexandra",
+    ) as HTMLSelectElement;
+    expect([...select.options].map((option) => option.textContent)).toEqual([
+      "Captain Edmund Harcourt · command rating 41",
+    ]);
+    fireEvent.change(select, { target: { value: "off_1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Assign commander" }));
+    expect(send).toHaveBeenCalledWith({
+      type: "AssignOfficer",
+      divisionId: "div_1",
+      officerId: "off_1",
+    });
+  });
+
+  it("shows the appointed commander and relieves them at the engine's stated cost", () => {
+    const { send } = renderView(
+      makeState({
+        divisions: [
+          division({
+            commanderVacant: false,
+            commander: {
+              officerId: "off_1",
+              name: "Edmund Harcourt",
+              rank: "CAPTAIN",
+              skill: 41,
+            },
+          }),
+        ],
+        officers: [
+          {
+            officerId: "off_1",
+            name: "Edmund Harcourt",
+            rank: "CAPTAIN",
+            skill: 41,
+            divisionId: "div_1",
+          },
+        ],
+      }),
+    );
+    expect(screen.getByText(/Captain Edmund Harcourt · command rating 41/)).toBeTruthy();
+    expect(
+      screen.queryByRole("combobox", { name: "Commander of Core division — HMS Alexandra" }),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Relieve commander" }));
+    expect(send).toHaveBeenCalledWith({ type: "RelieveOfficer", divisionId: "div_1" });
+  });
+
   it("disables every action while a request is in flight", () => {
     renderView(
       makeState({
@@ -366,7 +431,13 @@ describe("FleetOrganizationView", () => {
       }),
       { busy: true },
     );
-    for (const name of ["Create division", "Add ship", "Make flagship", "Dissolve division"]) {
+    for (const name of [
+      "Create division",
+      "Add ship",
+      "Make flagship",
+      "Assign commander",
+      "Dissolve division",
+    ]) {
       expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(true);
     }
   });

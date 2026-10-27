@@ -336,15 +336,15 @@
     {
       "id": "assign-or-relieve-officer",
       "player_verb": "Assign or relieve an officer",
-      "status": "dormant-by-decision",
+      "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
       "engine_symbols": ["applyOfficerCommand"],
-      "main_commands": [],
-      "renderer_screen": null,
-      "evidence_test": null,
-      "adr_or_issue": "#224",
-      "note": "No desktop command emits an officer command; officers are only reachable through divisions."
+      "main_commands": ["inspectDivisionScreen", "submitDivisionCommand"],
+      "renderer_screen": "screens/fleet/organization/FleetOrganizationSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/organization/FleetOrganizationView.test.tsx",
+      "adr_or_issue": null,
+      "note": "The fleet organization card lists the officer corps, assigns an unassigned officer to a vacant command and relieves an appointed one."
     },
     {
       "id": "prestige",

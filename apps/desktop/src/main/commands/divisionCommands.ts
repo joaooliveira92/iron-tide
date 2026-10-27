@@ -153,6 +153,23 @@ const DIVISION_COMMANDS: {
       ...(command.formation === undefined ? {} : { preferredFormation: command.formation }),
     }),
   }),
+  AssignOfficer: planWith<"AssignOfficer">({
+    discriminator: (command) => `${command.divisionId}\u0000${command.officerId}`,
+    toEngineBody: (command, context) => ({
+      type: "AssignOfficer",
+      nationId: context.nationId,
+      divisionId: command.divisionId,
+      officerId: command.officerId,
+    }),
+  }),
+  RelieveOfficer: planWith<"RelieveOfficer">({
+    discriminator: (command) => command.divisionId,
+    toEngineBody: (command, context) => ({
+      type: "RelieveOfficer",
+      nationId: context.nationId,
+      divisionId: command.divisionId,
+    }),
+  }),
   DissolveDivision: planWith<"DissolveDivision">({
     discriminator: (command) => command.divisionId,
     toEngineBody: (command, context) => ({

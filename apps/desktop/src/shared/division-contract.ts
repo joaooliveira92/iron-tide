@@ -39,6 +39,12 @@ export type DivisionCommandBody =
       readonly role?: string;
       readonly formation?: string;
     }
+  | {
+      readonly type: "AssignOfficer";
+      readonly divisionId: string;
+      readonly officerId: string;
+    }
+  | { readonly type: "RelieveOfficer"; readonly divisionId: string }
   | { readonly type: "DissolveDivision"; readonly divisionId: string };
 
 export type DivisionCommandType = DivisionCommandBody["type"];

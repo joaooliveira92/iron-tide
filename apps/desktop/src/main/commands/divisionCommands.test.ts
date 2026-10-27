@@ -71,6 +71,8 @@ const DIVISION_TYPES = new Set([
   "ReorderDivisionShips",
   "ChangeDivisionDoctrine",
   "DissolveDivision",
+  "AssignOfficer",
+  "RelieveOfficer",
 ]);
 
 describe("division commands", () => {
@@ -508,6 +510,125 @@ describe("division commands", () => {
       expect(after.role).toBe(target);
       expect(after.formation).toBe("LINE_ABREAST");
       expect(after.cohesion).toBe(before.cohesion - 15);
+    });
+
+    it("assigns an officer to a division and relieves them again through the engine", async () => {
+      registerSession("officers");
+      const freed = await freeSeededDivisions("officers");
+      expect(freed.officers.length).toBeGreaterThan(0);
+      const officer = freed.officers[0]!;
+      expect(officer.divisionId).toBeUndefined();
+
+      const flagship = freed.unassignedShips[0]!.shipId;
+      await create("officers", flagship, { expectedRevision: freed.revision });
+      await commit("officers", freed.revision);
+
+      const founded = await view("officers");
+      expect(founded.divisions[0]!.commanderVacant).toBe(true);
+
+      const assign = await submitDivisionCommand(
+        payload(
+          "officers",
+          {
+            type: "AssignOfficer",
+            divisionId: founded.divisions[0]!.divisionId,
+            officerId: officer.officerId,
+          },
+          { expectedRevision: founded.revision, transportRequestId: "req-assign" },
+        ),
+      );
+      expect(assign).toMatchObject({
+        outcome: "success",
+        value: { bodyType: "AssignOfficer", appliedOnNextTurn: true },
+      });
+
+      await commit("officers", founded.revision);
+      const commanded = await view("officers");
+      expect(commanded.divisions[0]!.commander).toEqual({
+        officerId: officer.officerId,
+        name: officer.name,
+        rank: officer.rank,
+        skill: officer.skill,
+      });
+      expect(
+        commanded.officers.find((candidate) => candidate.officerId === officer.officerId),
+      ).toMatchObject({ divisionId: founded.divisions[0]!.divisionId });
+
+      const relieve = await submitDivisionCommand(
+        payload(
+          "officers",
+          { type: "RelieveOfficer", divisionId: founded.divisions[0]!.divisionId },
+          { expectedRevision: commanded.revision, transportRequestId: "req-relieve" },
+        ),
+      );
+      expect(relieve).toMatchObject({
+        outcome: "success",
+        value: { bodyType: "RelieveOfficer", appliedOnNextTurn: true },
+      });
+
+      await commit("officers", commanded.revision);
+      const relieved = await view("officers");
+      expect(relieved.divisions[0]!.commanderVacant).toBe(true);
+      expect(
+        relieved.officers.find((candidate) => candidate.officerId === officer.officerId)
+          ?.divisionId,
+      ).toBeUndefined();
+    });
+
+    it("refuses to give one officer two divisions", async () => {
+      registerSession("officer-twice");
+      const freed = await freeSeededDivisions("officer-twice");
+      const officer = freed.officers[0]!;
+      const [first, second] = [freed.unassignedShips[0]!.shipId, freed.unassignedShips[1]!.shipId];
+
+      let rev = freed.revision;
+      await create("officer-twice", first, { expectedRevision: rev });
+      await commit("officer-twice", rev);
+      rev += 1;
+      const withFirst = await view("officer-twice");
+      const firstDivision = withFirst.divisions[0]!.divisionId;
+      await submitDivisionCommand(
+        payload(
+          "officer-twice",
+          { type: "AssignOfficer", divisionId: firstDivision, officerId: officer.officerId },
+          { expectedRevision: rev, transportRequestId: "req-first" },
+        ),
+      );
+      await commit("officer-twice", rev);
+      rev += 1;
+
+      await submitDivisionCommand(
+        payload(
+          "officer-twice",
+          { type: "CreateDivision", flagshipShipId: second, role: "CORE", formation: "LINE_AHEAD" },
+          { expectedRevision: rev, transportRequestId: "req-second-div" },
+        ),
+      );
+      await commit("officer-twice", rev);
+      rev += 1;
+      const withSecond = await view("officer-twice");
+      const secondDivision = withSecond.divisions.find(
+        (division) => division.divisionId !== firstDivision,
+      )!;
+
+      const conflict = await submitDivisionCommand(
+        payload(
+          "officer-twice",
+          {
+            type: "AssignOfficer",
+            divisionId: secondDivision.divisionId,
+            officerId: officer.officerId,
+          },
+          { expectedRevision: rev, transportRequestId: "req-conflict" },
+        ),
+      );
+      expect(conflict).toMatchObject({ outcome: "rejected", reason: "INVALID_COMMAND_PAYLOAD" });
+      expect(
+        (await view("officer-twice")).officers.find(
+          (candidate) => candidate.officerId === officer.officerId,
+        )?.divisionId,
+      ).toBe(firstDivision);
+      expect(queued("officer-twice")).toEqual([]);
     });
   });
 });

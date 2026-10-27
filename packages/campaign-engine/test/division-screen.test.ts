@@ -1,6 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
-import type { FleetState, PermanentDivision, Ship } from "@bluewave/campaign";
+import type { FleetState, Officer, PermanentDivision, Ship } from "@bluewave/campaign";
 import { VACANT } from "@bluewave/campaign";
 import { buildDivisionScreenView } from "../src/division-screen.js";
 import { fixtureNation, fixtureSnapshot } from "./fixtures.js";
@@ -51,17 +51,21 @@ function division(over: Partial<PermanentDivision> & { divisionId: string }): Pe
   };
 }
 
-function snapshot(fleets: FleetState[], divisions: PermanentDivision[]) {
-  return fixtureSnapshot([fixtureNation({ id: "uk", name: "Britain", fleets, divisions })], [], {
-    world: {
-      areas: [
-        { id: "home", name: "English Home Waters", type: "coastal" },
-        { id: "malta", name: "Malta", type: "coastal" },
-      ],
-      routes: [],
-      ports: [],
-    } as never,
-  });
+function snapshot(fleets: FleetState[], divisions: PermanentDivision[], officers: Officer[] = []) {
+  return fixtureSnapshot(
+    [fixtureNation({ id: "uk", name: "Britain", fleets, divisions, officers })],
+    [],
+    {
+      world: {
+        areas: [
+          { id: "home", name: "English Home Waters", type: "coastal" },
+          { id: "malta", name: "Malta", type: "coastal" },
+        ],
+        routes: [],
+        ports: [],
+      } as never,
+    },
+  );
 }
 
 describe("buildDivisionScreenView: doctrine", () => {
@@ -220,6 +224,50 @@ describe("buildDivisionScreenView", () => {
     expect(view.unassignedShips.map((s) => s.shipId)).toEqual(["s1", "s3"]);
   });
 
+  it("lists the officer corps with the division each officer commands", () => {
+    const view = buildDivisionScreenView(
+      snapshot(
+        [],
+        [
+          division({ divisionId: "div_2", commanderOfficerId: "off_uk_3" }),
+          division({ divisionId: "div_1", commanderOfficerId: "off_uk_1" }),
+        ],
+        [
+          { id: "off_uk_3", name: "Hugh Fairfax", rank: "REAR_ADMIRAL", skill: SafeInt(88) },
+          { id: "off_uk_1", name: "Edmund Harcourt", rank: "CAPTAIN", skill: SafeInt(41) },
+          { id: "off_uk_2", name: "Charles Wyndham", rank: "COMMODORE", skill: SafeInt(63) },
+        ],
+      ),
+      "uk",
+    )!;
+    expect(view.officers).toEqual([
+      {
+        officerId: "off_uk_1",
+        name: "Edmund Harcourt",
+        rank: "CAPTAIN",
+        skill: 41,
+        divisionId: "div_1",
+      },
+      {
+        officerId: "off_uk_2",
+        name: "Charles Wyndham",
+        rank: "COMMODORE",
+        skill: 63,
+      },
+      {
+        officerId: "off_uk_3",
+        name: "Hugh Fairfax",
+        rank: "REAR_ADMIRAL",
+        skill: 88,
+        divisionId: "div_2",
+      },
+    ]);
+  });
+
+  it("reports an empty officer corps when the nation has none", () => {
+    expect(buildDivisionScreenView(snapshot([], []), "uk")!.officers).toEqual([]);
+  });
+
   it("exposes the engine's roles, formations and size limits instead of hard-coding them in the UI", () => {
     const view = buildDivisionScreenView(snapshot([], []), "uk")!;
     expect(view.roles).toEqual(["INDEPENDENT", "CORE", "SUPPORT", "SCOUT", "SCREEN", "PATROL"]);
@@ -235,6 +283,7 @@ describe("buildDivisionScreenView", () => {
       addShip: { experience: 5, cohesion: 10 },
       removeShip: { experience: 3, cohesion: 5 },
       changeFlagship: { experience: 5, cohesion: 10 },
+      changeCommander: { experience: 5, cohesion: 10 },
       reorder: { experience: 0, cohesion: 3 },
       changeRole: { experience: 0, cohesion: 0 },
       changeFormation: { experience: 0, cohesion: 0 },
