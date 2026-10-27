@@ -1,5 +1,7 @@
 # ADR-0258: The enemy declines a battle with the player
 
+Applies to: phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Implements ticket

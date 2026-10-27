@@ -1,5 +1,7 @@
 # ADR-0265: The BattleDeclined event carries the running decline count
 
+Applies to: events, phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Closes review item R14 of the T-1 battle-offer work (spec

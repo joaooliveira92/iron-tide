@@ -1,5 +1,7 @@
 # ADR-0223: S-1 readiness, crew and maintenance values are centralized ruleset constants
 
+Applies to: content, campaign, phase-engine
+
 ## Status
 
 Accepted (2026-10-17). Resolves decision request

@@ -1,5 +1,7 @@
 # ADR-0239: S-2 prestige values: the grounded model plus labelled balance targets
 
+Applies to: content, campaign, cross-process-test
+
 ## Status
 
 Accepted (2026-10-19). Resolves decision request

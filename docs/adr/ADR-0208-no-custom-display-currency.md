@@ -1,5 +1,7 @@
 # ADR-0208: Custom display currency excluded from the initial release
 
+Applies to: desktop
+
 ## Status
 
 Accepted (2026-10-15). New record of decision DR-008; no prior ADR file existed for

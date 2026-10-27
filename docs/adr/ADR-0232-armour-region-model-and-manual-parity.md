@@ -1,5 +1,7 @@
 # ADR-0232: Armour region model and manual parity
 
+Applies to: combat, content-schema, ship-design, desktop
+
 ## Status
 
 Accepted (2026-10-18). Records the armour decisions of the wayfinder map

@@ -1,5 +1,7 @@
 # ADR-0282: Authored horizon through 1970; no empty scenario IDs
 
+Applies to: content, campaign, cross-process-test
+
 ## Status
 
 Accepted (2026-10-23).

@@ -1,5 +1,7 @@
 # ADR-0229: Technology `year` is the global designer unlock year, not a research claim
 
+Applies to: content-schema, ship-design, phase-engine
+
 ## Status
 
 Accepted (2026-10-17). Records decision D4 of the N-3 map (#42), closed on

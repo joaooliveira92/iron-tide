@@ -1,4 +1,6 @@
-# ADR-0285: The research screen reads a technology-chart projection, and the draw weight has one home
+# ADR-0315: The research screen reads a technology-chart projection, and the draw weight has one home
+
+Applies to: campaign, desktop
 
 ## Status
 

@@ -1,5 +1,7 @@
 # ADR-0244: Nation borders are baked clipped to the map's coastline
 
+Applies to: desktop
+
 ## Status
 
 Accepted (2026-10-20).

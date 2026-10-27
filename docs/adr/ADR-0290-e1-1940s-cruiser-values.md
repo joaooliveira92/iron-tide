@@ -1,5 +1,7 @@
 # ADR-0290: E-1 1940-1949 cruiser values
 
+Applies to: content, ship-design
+
 ## Status
 
 Accepted (2026-10-25). Slice 2 of ticket #254, under the owner's standing delegation of unsourced values to the implementing agent

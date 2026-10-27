@@ -31,8 +31,10 @@ contract → ADRs → milestone brief → local conventions. On a genuine confli
 - Standing standards docs carry a word ceiling in `scripts/doc-budgets.manifest.json`; ratchet down, justify any raise, and add
   new standing docs to the manifest.
 - Record decisions that constrain architecture, determinism, compatibility,
-  persistence, security, or replacement cost as ADRs; regenerate the index with
-  `pnpm adr:index`.
+  persistence, security, or replacement cost as ADRs with an `Applies to:` line;
+  `pnpm adr:index` regenerates the indexes. Read the ADRs for your scope, not the
+  whole index: [repository-wide](docs/adr/by-scope/repository.md) plus the link in
+  your package's `AGENTS.md`.
 
 ## Determinism (the core invariant)
 

@@ -1,5 +1,7 @@
 # ADR-0205: Nine playable nations; the rest AI-only behind a readiness gate
 
+Applies to: content, campaign, desktop
+
 ## Status
 
 Superseded by: ADR-0214. Originally accepted 2026-10-15 as new record of decision

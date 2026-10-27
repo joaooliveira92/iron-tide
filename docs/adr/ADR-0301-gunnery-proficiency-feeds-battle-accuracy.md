@@ -1,9 +1,11 @@
 # ADR-0301: Proficient gunnery training raises the nation's gunnery accuracy in battle
 
+Applies to: combat, phase-engine
+
 ## Status
 
-Accepted (2026-10-25). Delivers the "proficiency effect in combat" follow-up of [ADR-0283](ADR-0283-fleet-management-values-and-repair-entry.md)
-and [ADR-0290](ADR-0290-special-training-program.md), for the one subject combat can express today. The owner delegated the choice.
+Accepted (2026-10-25). Delivers the "proficiency effect in combat" follow-up of [ADR-0314](ADR-0314-fleet-management-values-and-repair-entry.md)
+and [ADR-0316](ADR-0316-special-training-program.md), for the one subject combat can express today. The owner delegated the choice.
 
 ## Decision
 
@@ -12,7 +14,7 @@ and [ADR-0290](ADR-0290-special-training-program.md), for the one subject combat
 - `AutoResolverNation.gunneryTrainingBp` carries it into combat. Projection sets each main battery's existing `training` accuracy
   factor to `10_000 + gunneryTrainingBp` for the battery's own side; the factor was neutral before. The month's auto-resolution and
   the desktop player-battle session both pass it.
-- Training stays derived and unstored; stopping the program removes the bonus the same month, as ADR-0290 already resets
+- Training stays derived and unstored; stopping the program removes the bonus the same month, as ADR-0316 already resets
   the counter.
 
 ## Not delivered

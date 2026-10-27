@@ -1,5 +1,9 @@
 # ADR-0278: Save files decode strictly, campaign.json included
 
+Applies to: persistence
+
+Rule: Save files decode strictly with `onExcessProperty: "error"`; only the save-header probe stays lenient.
+
 ## Status
 
 Accepted (2026-10-23).

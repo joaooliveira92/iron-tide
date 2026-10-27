@@ -1,5 +1,7 @@
 # ADR-0251: The fleet screen shows manual p.48 status, assigns foreign station, and reads presence from the projection
 
+Applies to: campaign-engine, desktop
+
 ## Status
 
 Accepted (2026-10-21). Implements ticket [#83](https://github.com/joaooliveira92/iron-tide/issues/83) (S-5 09, spec

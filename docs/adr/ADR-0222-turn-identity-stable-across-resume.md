@@ -1,5 +1,9 @@
 # ADR-0222: A turn's interruption identity is stable across suspend and resume
 
+Applies to: campaign, persistence, phase-engine
+
+Rule: A turn's identity hashes its pre-execution input set, never the inputs accumulated while suspended.
+
 ## Status
 
 Accepted (2026-10-16). Implements the resume model of the turn-messages effort (`.scratch/turn-messages/spec.md`, D-12) and fixes a latent defect that made every resume fail.

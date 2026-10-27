@@ -1,8 +1,12 @@
 # ADR-0277: Exact-duplicate pure helpers live in combat core
 
+Applies to: combat
+
 ## Status
 
-Accepted (2026-10-23). Amends ADR-0271 (its first consequence: duplicated helpers stay behind separate seams).
+Accepted (2026-10-23).
+
+Amends: ADR-0271 (its first consequence: duplicated helpers stay behind separate seams).
 
 ## Context
 

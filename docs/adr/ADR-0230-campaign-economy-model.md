@@ -1,5 +1,7 @@
 # ADR-0230: Campaign economy model — one appropriation, one ledger, one set of calculators
 
+Applies to: content, campaign, phase-engine
+
 ## Status
 
 Accepted (2026-10-18). Records the locked model of the wayfinder map

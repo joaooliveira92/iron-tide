@@ -1,5 +1,9 @@
 # ADR-0279: Replay approvals carry a verified change class
 
+Applies to: cross-process-test
+
+Rule: Every replay approval carries a verified `changeClass`; unexpected nondeterminism is a failure and is never approved.
+
 ## Status
 
 Accepted (2026-10-23). Amends ADR-0246 (its approval entry shape; the hash binding, append-only rule and CI-only-verifies rule are unchanged).

@@ -1,4 +1,6 @@
-# ADR-0283: Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope
+# ADR-0314: Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope
+
+Applies to: content, campaign
 
 ## Status
 

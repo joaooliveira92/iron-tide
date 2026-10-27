@@ -1,5 +1,7 @@
 # ADR-0213: The 1880 opening posture is authored canon; magnitudes are balance choices
 
+Applies to: content
+
 ## Status
 
 Accepted (2026-10-15). New record of decision DR-013; no prior ADR file existed

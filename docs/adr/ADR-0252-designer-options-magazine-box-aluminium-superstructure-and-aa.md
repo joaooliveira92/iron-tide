@@ -1,5 +1,7 @@
 # ADR-0252: Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values
 
+Applies to: content, desktop, ship-design
+
 ## Status
 
 Accepted (2026-10-20). Follows the owner's walkthrough of the RTW3 ship-design screen

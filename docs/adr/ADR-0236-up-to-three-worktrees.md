@@ -1,5 +1,9 @@
 # ADR-0236: Up to three concurrent worktrees
 
+Applies to: repository
+
+Rule: Superseded in effect by ADR-0237's cap of five; one session per checkout and one short-lived branch per worktree still apply.
+
 ## Status
 
 Accepted (2026-10-19).

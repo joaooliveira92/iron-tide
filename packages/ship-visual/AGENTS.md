@@ -1,6 +1,6 @@
 # @bluewave/ship-visual
 
-**Role:** Presentation-only ship visual parts (ADR-0148). See `README.md` for catalog regeneration.
+**Role:** Presentation-only ship visual parts. See `README.md` for catalog regeneration.
 
 **Class:** runtime-free
 
@@ -10,5 +10,7 @@
 
 - Nothing it produces may enter authoritative state or hashes.
 - The generated catalog must match `content/ship-visual/parts.yaml`.
+
+**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/ship-visual.md), with superseded records marked.
 
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/ship-visual test`.

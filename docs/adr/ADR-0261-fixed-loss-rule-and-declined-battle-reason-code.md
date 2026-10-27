@@ -1,5 +1,7 @@
 # ADR-0261: A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code
 
+Applies to: phase-engine, campaign, persistence
+
 ## Status
 
 Accepted (2026-10-21). Seam extension for T-1 [#115](https://github.com/joaooliveira92/iron-tide/issues/115) (spec

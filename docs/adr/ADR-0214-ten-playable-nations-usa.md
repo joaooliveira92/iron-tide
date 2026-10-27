@@ -1,5 +1,7 @@
 # ADR-0214: Ten playable nations; the USA joins the 1880 playable roster
 
+Applies to: content, desktop, ai, content-compiler, compiler-cli
+
 ## Status
 
 Accepted (2026-10-16). New record of decision DR-014.

@@ -1,5 +1,7 @@
 # ADR-0233: Designer draft-schema v2 and canonical vocabulary
 
+Applies to: content-schema, ship-design, desktop
+
 ## Status
 
 Accepted (2026-10-18). Records the model fields and vocabulary added by the

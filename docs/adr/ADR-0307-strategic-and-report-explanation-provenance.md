@@ -1,5 +1,7 @@
 # ADR-0307: Provenance for strategic-area and monthly-report explanations
 
+Applies to: campaign, campaign-engine, desktop
+
 ## Status
 
 Accepted (2026-10-26). Continues [ADR-0304](ADR-0304-explanation-trees-for-displayed-numbers.md) for

@@ -1,5 +1,7 @@
 # ADR-0256: Declining a battle offer: terminal record, released ships, victory-point cost
 
+Applies to: desktop, messages, phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Implements ticket

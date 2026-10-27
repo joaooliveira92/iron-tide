@@ -11,4 +11,6 @@
 - Reject non-integers and unsafe integers at construction; never widen to `number` arithmetic.
 - Rounding mode is always explicit.
 
+**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/contracts.md), with superseded records marked.
+
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/contracts test`.

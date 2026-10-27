@@ -1,6 +1,6 @@
 # Fleet-management v2 value grounding
 
-Ticket #267, spec #265. Companion to ADR-0283.
+Ticket #267, spec #265. Companion to ADR-0314.
 
 ## Sourced (manual)
 

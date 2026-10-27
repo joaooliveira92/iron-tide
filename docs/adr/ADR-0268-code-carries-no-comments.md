@@ -1,5 +1,9 @@
 # ADR-0268: Code carries no comments
 
+Applies to: repository
+
+Rule: Code carries no comments; rationale lives in an ADR or the commit message, and only tool-read comments survive.
+
 ## Status
 
 Accepted (2026-10-22).

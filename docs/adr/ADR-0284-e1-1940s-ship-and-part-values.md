@@ -1,5 +1,7 @@
 # ADR-0284: E-1 1940-1949 ship and part values
 
+Applies to: content, ship-design
+
 ## Status
 
 Accepted (2026-10-23). The owner delegated the open decisions of decision request

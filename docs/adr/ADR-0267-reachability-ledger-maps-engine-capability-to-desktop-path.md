@@ -1,5 +1,9 @@
 # ADR-0267: The reachability ledger maps engine capability to desktop path
 
+Applies to: repository
+
+Rule: Every engine capability maps to a player verb in `scripts/data/reachability-ledger.json` (engine entry, command, screen, evidence test).
+
 ## Status
 
 Accepted (2026-10-21). Implements ticket [#228](https://github.com/joaooliveira92/iron-tide/issues/228) of epic

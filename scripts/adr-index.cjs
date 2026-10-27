@@ -37,7 +37,7 @@ const AREAS = [
   {
     name: "Scope & horizon",
     blurb: "The sole 1880 start, the 1970 authored horizon, and the ten-nation roster.",
-    nums: [201, 204, 205, 214, 282, 283, 284],
+    nums: [201, 204, 205, 214, 282, 283, 284, 290, 291],
   },
   {
     name: "Values, currency & language",
@@ -59,14 +59,14 @@ const AREAS = [
     name: "Process & documentation",
     blurb: "Concurrent-agent worktree coordination and repository process rules.",
     nums: [
-      220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 278, 279, 280, 295, 299, 300,
+      220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 278, 279, 280, 295, 299, 300, 313,
     ],
   },
   {
     name: "Scenario content & research",
     blurb:
       "Legality, consistency and authored posture of the 1880 scenario's starting content and research state.",
-    nums: [212, 213, 228, 229, 285, 310],
+    nums: [212, 213, 228, 229, 315, 310],
   },
   {
     name: "Campaign economy",
@@ -84,7 +84,7 @@ const AREAS = [
     blurb:
       "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
     nums: [
-      223, 224, 225, 226, 239, 245, 260, 261, 281, 283, 286, 287, 288, 289, 290, 291, 292, 293, 296,
+      223, 224, 225, 226, 239, 245, 260, 261, 281, 314, 286, 287, 288, 289, 316, 317, 292, 293, 296,
       297, 298, 301, 302, 303, 304,
     ],
   },
@@ -157,6 +157,11 @@ function load() {
   if (cache) return cache;
   const records = [...scanDir(ADR_DIR, "active"), ...scanDir(ARCHIVE_DIR, "archived")];
   const adrs = new Map(records.map((r) => [r.n, r]));
+  if (adrs.size !== records.length) {
+    const seen = new Set();
+    const dupes = records.filter((r) => seen.has(r.n) || !seen.add(r.n)).map((r) => pad(r.n));
+    throw new Error(`ADR numbers used by more than one file: ${[...new Set(dupes)].join(", ")}`);
+  }
 
   // Every ADR sits in exactly the location its ARCHIVED membership implies.
   for (const r of records) {
@@ -269,6 +274,7 @@ if (require.main === module) {
   const archiveTarget = path.join(ARCHIVE_DIR, "README.md");
   fs.writeFileSync(mainTarget, buildIndex());
   fs.writeFileSync(archiveTarget, buildArchiveIndex());
+  require("./lib/adr-scope.cjs").writeScopePages(ROOT);
   console.log(
     `adr-index: wrote ${path.relative(ROOT, mainTarget)} and ${path.relative(ROOT, archiveTarget)}`,
   );

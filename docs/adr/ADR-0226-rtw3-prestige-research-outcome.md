@@ -1,5 +1,7 @@
 # ADR-0226: RTW3 prestige research outcome — the model is grounded, the production values are not
 
+Applies to: content, campaign
+
 ## Status
 
 Accepted (2026-10-17). Records the product of decision

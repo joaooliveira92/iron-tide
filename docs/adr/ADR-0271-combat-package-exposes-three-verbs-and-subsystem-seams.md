@@ -1,5 +1,9 @@
 # ADR-0271: The combat package exposes three verbs and subsystem seams
 
+Applies to: combat, phase-engine
+
+Rule: `@bluewave/combat` exports only `resolve`, `advance`, `generate` and the contract types at its root; subsystems are subpath seams.
+
 ## Status
 
 Accepted (2026-10-22).

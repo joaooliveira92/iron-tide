@@ -1,5 +1,7 @@
 # ADR-0308: Compiled design capabilities reach combat and are decoded strictly
 
+Applies to: armament, combat, content-schema, ship-design
+
 ## Status
 
 Accepted (2026-10-26) for [#288](https://github.com/joaooliveira92/iron-tide/issues/288), part of

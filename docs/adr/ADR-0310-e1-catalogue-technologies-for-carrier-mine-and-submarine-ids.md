@@ -1,5 +1,7 @@
 # ADR-0310: E-1 catalogue technologies for carrier, mine and submarine engine ids
 
+Applies to: combat, content, phase-engine
+
 ## Status
 
 Accepted (2026-10-26) for [#294](https://github.com/joaooliveira92/iron-tide/issues/294),

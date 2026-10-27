@@ -1,5 +1,7 @@
 # ADR-0291: E-1 1950-1959 destroyer values and the limit of 1950-1970 ship content
 
+Applies to: content, ship-design
+
 ## Status
 
 Accepted (2026-10-25). Ticket #256 under the owner's standing delegation of unsourced values to the implementing agent

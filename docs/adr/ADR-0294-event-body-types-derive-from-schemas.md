@@ -1,5 +1,9 @@
 # ADR-0294: Event body types derive from their Effect schemas
 
+Applies to: events, messages, phase-engine
+
+Rule: Event body types derive from their Effect schemas; no hand-mirrored interfaces and no boundary casts.
+
 ## Status
 
 Accepted (2026-10-25). Records the `packages/events` schema-ownership decision from the

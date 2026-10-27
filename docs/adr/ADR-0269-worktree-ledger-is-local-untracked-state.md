@@ -1,5 +1,9 @@
 # ADR-0269: The worktree ledger is local, untracked state
 
+Applies to: repository
+
+Rule: The worktree ledger is local untracked state in `.worktrees/LEDGER.md`; never edit it by hand.
+
 ## Status
 
 Accepted (2026-10-22). Amends ADR-0220.

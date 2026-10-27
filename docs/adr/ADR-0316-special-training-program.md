@@ -1,10 +1,12 @@
-# ADR-0290: Special training is a nation program whose maintenance adder feeds the shared calculator
+# ADR-0316: Special training is a nation program whose maintenance adder feeds the shared calculator
+
+Applies to: campaign, commands, desktop, phase-engine
 
 ## Status
 
 Accepted (2026-10-25). Implements ticket [#274](https://github.com/joaooliveira92/iron-tide/issues/274) of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265), decision #200. Values are the balance targets of
-[ADR-0283](ADR-0283-fleet-management-values-and-repair-entry.md); the section is
+[ADR-0314](ADR-0314-fleet-management-values-and-repair-entry.md); the section is
 [ADR-0286](ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md).
 
 ## Decision

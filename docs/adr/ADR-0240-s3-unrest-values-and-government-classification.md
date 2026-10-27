@@ -1,5 +1,7 @@
 # ADR-0240: S-3 unrest and economy values are researched then tunable; government type derives from political system
 
+Applies to: content, campaign
+
 ## Status
 
 Accepted (2026-10-19). Resolves decision requests

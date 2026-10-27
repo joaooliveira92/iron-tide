@@ -1,5 +1,7 @@
 # ADR-0220: Worktree-per-effort coordination for concurrent agents
 
+Applies to: repository
+
 ## Status
 
 Superseded by: ADR-0234. Originally accepted 2026-10-16. Defines how several orchestrator sessions run at once

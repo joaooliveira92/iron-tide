@@ -1,5 +1,7 @@
 # ADR-0273: The shared command contract is split by concern
 
+Applies to: commands, desktop
+
 ## Status
 
 Accepted (2026-10-22).

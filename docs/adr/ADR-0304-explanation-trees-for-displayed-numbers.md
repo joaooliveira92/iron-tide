@@ -1,5 +1,7 @@
 # ADR-0304: Displayed numbers carry an explanation tree; gunnery accuracy is the first slice
 
+Applies to: combat, desktop, events
+
 ## Status
 
 Accepted (2026-10-25), amended 2026-10-26 by [#299](https://github.com/joaooliveira92/iron-tide/issues/299). Starts

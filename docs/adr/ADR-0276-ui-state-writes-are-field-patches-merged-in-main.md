@@ -1,5 +1,9 @@
 # ADR-0276: UI-state writes are field patches merged once, in main
 
+Applies to: desktop, persistence
+
+Rule: UI-state writes are field-level patches merged once, in the main process.
+
 ## Status
 
 Accepted (2026-10-22). Extends ADR-0273; does not supersede it.

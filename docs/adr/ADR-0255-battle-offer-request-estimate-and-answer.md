@@ -1,5 +1,7 @@
 # ADR-0255: The battle offer: request shape, estimate, accept and delegate, typed refusals
 
+Applies to: desktop, events, messages, phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Implements ticket

@@ -1,5 +1,7 @@
 # ADR-0264: The T-1 battle-offer state keeps compatibility version 4.0.0
 
+Applies to: content, persistence
+
 ## Status
 
 Accepted (2026-10-21). Closes the R15 assessment of spec

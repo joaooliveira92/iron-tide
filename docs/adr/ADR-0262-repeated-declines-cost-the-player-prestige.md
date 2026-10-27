@@ -1,5 +1,7 @@
 # ADR-0262: Repeated declines cost the player prestige through the S-2 seam
 
+Applies to: campaign, phase-engine, content
+
 ## Status
 
 Accepted (2026-10-21). Implements ticket

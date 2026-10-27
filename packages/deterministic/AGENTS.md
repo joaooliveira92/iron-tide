@@ -11,4 +11,6 @@
 - Changing canonical encoding or key ordering moves every hash: treat it as a compatibility change and follow golden repinning.
 - Never rely on JS insertion order.
 
+**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/deterministic.md), with superseded records marked.
+
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/deterministic test`.

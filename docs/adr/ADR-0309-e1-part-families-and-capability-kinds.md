@@ -1,5 +1,7 @@
 # ADR-0309: E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars
 
+Applies to: combat, content-schema, ship-design
+
 ## Status
 
 Accepted (2026-10-26) for [#289](https://github.com/joaooliveira92/iron-tide/issues/289),

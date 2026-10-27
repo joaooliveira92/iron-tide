@@ -1,5 +1,7 @@
 # ADR-0312: Surface-to-surface missile salvos are a deterministic combat module
 
+Applies to: combat, content
+
 ## Status
 
 Accepted (2026-10-26) for [#293](https://github.com/joaooliveira92/iron-tide/issues/293), part of

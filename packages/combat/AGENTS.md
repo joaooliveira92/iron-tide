@@ -12,4 +12,6 @@
 - Outcome changes move goldens: follow golden repinning.
 - `src/missiles` is surface-to-surface only (ADR-0312); values come from the optional `missiles` ruleset block, and without it the module is dormant.
 
+**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/combat.md), with superseded records marked.
+
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/combat test`.

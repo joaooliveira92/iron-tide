@@ -1,5 +1,7 @@
 # ADR-0287: A battle record explains the player's absent ships with gate reasons
 
+Applies to: campaign, phase-engine
+
 ## Status
 
 Accepted (2026-10-25). Implements ticket

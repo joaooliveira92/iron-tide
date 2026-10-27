@@ -1,11 +1,13 @@
 # ADR-0292: Battle aftermath asks the division module for experience through a typed request
 
+Applies to: campaign, phase-engine
+
 ## Status
 
 Accepted (2026-10-25). Implements ticket [#276](https://github.com/joaooliveira92/iron-tide/issues/276) of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265), decision #203. The seam follows the typed-request style of
 [ADR-0248](ADR-0248-blockade-exemption-and-typed-penalty-requests.md) and the prestige seam; values are the balance targets of
-[ADR-0283](ADR-0283-fleet-management-values-and-repair-entry.md).
+[ADR-0314](ADR-0314-fleet-management-values-and-repair-entry.md).
 
 ## Decision
 

@@ -1,5 +1,7 @@
 # ADR-0207: Budget Points (BP) as an abstract display unit
 
+Applies to: contracts, desktop
+
 ## Status
 
 Accepted (2026-10-15). New record of decision DR-007; no prior ADR file existed for

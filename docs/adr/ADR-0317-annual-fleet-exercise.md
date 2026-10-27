@@ -1,12 +1,14 @@
-# ADR-0291: The annual fleet exercise is scheduled for the next month and held through the assignment slot
+# ADR-0317: The annual fleet exercise is scheduled for the next month and held through the assignment slot
+
+Applies to: campaign, commands, desktop, phase-engine
 
 ## Status
 
 Accepted (2026-10-25). Implements ticket [#275](https://github.com/joaooliveira92/iron-tide/issues/275) of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265), decisions #199 and #200. Values are the balance targets of
-[ADR-0283](ADR-0283-fleet-management-values-and-repair-entry.md); the section is
+[ADR-0314](ADR-0314-fleet-management-values-and-repair-entry.md); the section is
 [ADR-0286](ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md); the maintenance seam is
-[ADR-0290](ADR-0290-special-training-program.md).
+[ADR-0316](ADR-0316-special-training-program.md).
 
 ## Decision
 

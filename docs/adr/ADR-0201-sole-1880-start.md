@@ -1,5 +1,7 @@
 # ADR-0201: Sole 1880 start
 
+Applies to: content, campaign
+
 ## Status
 
 Accepted (2026-10-15). New record of decision DR-001; no prior ADR file existed for

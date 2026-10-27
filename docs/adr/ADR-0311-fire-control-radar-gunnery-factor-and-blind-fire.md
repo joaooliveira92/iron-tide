@@ -1,5 +1,7 @@
 # ADR-0311: Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire
 
+Applies to: combat, content, content-schema, ship-design
+
 ## Status
 
 Accepted (2026-10-26) for [#292](https://github.com/joaooliveira92/iron-tide/issues/292), part of

@@ -1,5 +1,9 @@
 # ADR-0202: Canonical internal values, presentation-only units and currency
 
+Applies to: repository
+
+Rule: Stored and authoritative values are canonical and unit-agnostic; units and currency convert only at the presentation boundary and are never persisted as formatted text.
+
 ## Status
 
 Accepted (2026-10-15). New record of decision DR-002; no prior ADR file existed for

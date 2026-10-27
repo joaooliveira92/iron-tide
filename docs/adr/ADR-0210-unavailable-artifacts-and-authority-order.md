@@ -1,5 +1,9 @@
 # ADR-0210: Unavailable artifacts are unverified legacy references; authority order
 
+Applies to: repository
+
+Rule: Artifacts that never existed in reachable history are unverified legacy references; never recreate them from their filenames.
+
 ## Status
 
 Accepted (2026-10-15). New record of decision DR-010; no prior ADR file existed for

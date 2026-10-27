@@ -1,5 +1,7 @@
 # ADR-0263: The battle-offer section goes live on the production pack
 
+Applies to: content
+
 ## Status
 
 Accepted (2026-10-21). Implements ticket

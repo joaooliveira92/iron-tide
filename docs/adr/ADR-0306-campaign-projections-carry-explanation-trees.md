@@ -1,5 +1,7 @@
 # ADR-0306: Campaign projections may carry explanation trees; `@bluewave/events` moves to layer 4
 
+Applies to: campaign-engine, desktop, events
+
 ## Status
 
 Accepted (2026-10-26). Unblocks the area slices of [ADR-0304](ADR-0304-explanation-trees-for-displayed-numbers.md)

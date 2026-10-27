@@ -1,5 +1,7 @@
 # ADR-0274: The frozen `.scratch/` tree is removed
 
+Applies to: repository
+
 ## Status
 
 Accepted (2026-10-22). Amends ADR-0227.
