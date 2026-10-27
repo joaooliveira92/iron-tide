@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "configurationSha256": "7fa8b5e91cd8b44afbd0619f3e6bcc735b7d0f5ebb3aa0e068c62fef2e2e1cd4",
+  "packSha256": "40e1c5e9b729c0bfd5cf909c252e1fb5ae54bc1a3f9ec8e4dd8ba16beb64bfa4",
+  "packBytes": 4092995,
+  "levels": [
+    {
+      "zoom": 0,
+      "tiles": 1,
+      "bytes": 29788,
+      "sha256": "fba9a6ec2632c6c423f678cdd3c2d6e8f45066a40b339bfe0ecedd1ecfa52bb7"
+    },
+    {
+      "zoom": 1,
+      "tiles": 4,
+      "bytes": 65020,
+      "sha256": "0a0d7637b20fa164eb5934f9159ddad7d9f503777ae4f6635b953a3235264298"
+    },
+    {
+      "zoom": 2,
+      "tiles": 16,
+      "bytes": 129408,
+      "sha256": "29d36604cc4c51c09c422cc54880cf4b76fedffb97e9a525f95876fd03ebaace"
+    },
+    {
+      "zoom": 3,
+      "tiles": 64,
+      "bytes": 231407,
+      "sha256": "909870508742a0bed7ba0df6a468403dd7d0565b4728f91abc67f80bb003b27a"
+    },
+    {
+      "zoom": 4,
+      "tiles": 244,
+      "bytes": 398085,
+      "sha256": "1af290d0c1760171968567ca0cb28e75e2b3b01c4b736b2ef28366669a12bafd"
+    },
+    {
+      "zoom": 5,
+      "tiles": 856,
+      "bytes": 622103,
+      "sha256": "aa370f776839a8774d44b1541a41edcf7eebc9352a7ee41ba760785eb7c878b6"
+    },
+    {
+      "zoom": 6,
+      "tiles": 2772,
+      "bytes": 909538,
+      "sha256": "381e1faecc17240e7d6a151c5c099cba18fdeb214f4a4159a14144e128f7faa5"
+    },
+    {
+      "zoom": 7,
+      "tiles": 9284,
+      "bytes": 1389846,
+      "sha256": "14688acec6ba4e52df450729e93b413c772ddb2561dfa251d66b0c1b24d1c49b"
+    }
+  ],
+  "note": "Regenerate with: pnpm --filter @bluewave/desktop map-data bake --write-expected. Valid for the toolchain versions recorded in the generated manifest."
+}

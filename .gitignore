@@ -48,3 +48,4 @@ packages/*/src/**/*.d.ts.map
 !vendor/effect-vitest/dist/
 !vendor/effect-vitest/dist/**
 apps/desktop/src/renderer/public/map-spike/
+apps/desktop/.map-data-cache/
