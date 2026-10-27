@@ -137,6 +137,7 @@ function selfTest() {
     references: new Set(extra.refs ?? []),
   });
   const leaf = pkg("packages/leaf", "@bluewave/leaf", {});
+  /** @type {Array<[string, ReturnType<typeof pkg>[], number]>} */
   const cases = [
     [
       "coherent",
@@ -216,7 +217,7 @@ function selfTest() {
     ...importedSiblings(
       'import x from "@bluewave/a/sub"; vi.mock("@bluewave/b"); await import("@bluewave/c")',
     ),
-  ].sort();
+  ].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   const specsOk = specs.join() === "@bluewave/a,@bluewave/b,@bluewave/c";
   failed ||= !specsOk;
   console.log(

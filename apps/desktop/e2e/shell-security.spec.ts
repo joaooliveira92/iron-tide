@@ -82,9 +82,15 @@ test.describe("renderer shell security (production loading path)", () => {
     e2e,
   }) => {
     const prefs = await e2e.app.evaluate(({ BrowserWindow }) => {
-      const { sandbox, contextIsolation, nodeIntegration } =
-        BrowserWindow.getAllWindows()[0]!.webContents.getLastWebPreferences();
-      return { sandbox, contextIsolation, nodeIntegration };
+      const contents = BrowserWindow.getAllWindows()[0]!.webContents;
+      const prefs: Record<string, unknown> = Object(
+        Reflect.apply(Reflect.get(contents, "getLastWebPreferences"), contents, []),
+      );
+      return {
+        sandbox: prefs.sandbox,
+        contextIsolation: prefs.contextIsolation,
+        nodeIntegration: prefs.nodeIntegration,
+      };
     });
     expect(prefs).toEqual({ sandbox: true, contextIsolation: true, nodeIntegration: false });
     expect(await e2e.page.evaluate(() => typeof require)).toBe("undefined");
