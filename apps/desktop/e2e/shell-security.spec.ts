@@ -102,6 +102,10 @@ test.describe("renderer shell security (production loading path)", () => {
   });
 
   test("permissions are denied except clipboard write", async ({ e2e }) => {
+    await e2e.page.bringToFront();
+    await e2e.app.evaluate(({ BrowserWindow }) => {
+      BrowserWindow.getAllWindows()[0]?.focus();
+    });
     const outcome = await e2e.page.evaluate(async () => {
       const notification = await Notification.requestPermission();
       const geolocation = await new Promise<number>((resolve) => {
