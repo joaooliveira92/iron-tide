@@ -5,8 +5,8 @@ Rules and statuses: ADR-0267.
 
 | Status | Rows |
 | --- | --- |
-| reachable | 33 |
-| dormant-by-decision | 12 |
+| reachable | 34 |
+| dormant-by-decision | 11 |
 | internal | 14 |
 
 ## Reachable
@@ -37,6 +37,7 @@ Rules and statuses: ADR-0267.
 | declare-blockade | Declare a blockade of a nation in an area | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | advance-month | Advance the campaign month and answer interruptions | `shell/App.tsx` | `apps/desktop/src/renderer/shell/useCampaignShell.test.ts` |
 | fight-or-decline-battle | Accept or decline a battle offer and fight it with division stance and speed orders | `screens/battle/PlayerBattleScreen.tsx` | `apps/desktop/src/renderer/shell/App.test.tsx` |
+| assign-or-relieve-officer | Assign or relieve an officer | `screens/fleet/organization/FleetOrganizationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/organization/FleetOrganizationView.test.tsx` |
 | combat-fought-battle | Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under division stance and speed orders | `screens/battle/PlayerBattleScreen.tsx` | `apps/desktop/src/main/commands/battleOfferCommands.test.ts` |
 | read-campaign-overview | Read the campaign overview | `screens/overview/OverviewScreen.tsx` | `apps/desktop/src/main/commands/inspectCampaign.test.ts` |
 | read-world-map | Read the world map (Overview, F1 sheet, Fleet panel) | `components/world-map/WorldMapChart.tsx` | `apps/desktop/src/renderer/components/world-map/WorldMapChart.test.tsx` |
@@ -51,7 +52,6 @@ Rules and statuses: ADR-0267.
 
 | Row | Player verb | Decision |
 | --- | --- | --- |
-| assign-or-relieve-officer | Assign or relieve an officer | #224 |
 | prestige | See and act on national prestige | #223 |
 | division-battle-experience | Divisions gain experience from the battles they fight | #276 |
 | ship-readiness | See and manage ship readiness | #223 |
