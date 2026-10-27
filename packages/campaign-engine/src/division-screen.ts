@@ -37,6 +37,14 @@ export interface DivisionSpeedWarningView {
   readonly fastestSpeed: number;
 }
 
+export interface DivisionOfficerView {
+  readonly officerId: string;
+  readonly name: string;
+  readonly rank: string;
+  readonly skill: number;
+  readonly divisionId?: string;
+}
+
 export interface DivisionView {
   readonly divisionId: string;
   readonly role: string;
@@ -61,6 +69,7 @@ export interface DivisionPenalty {
 export interface DivisionScreenView {
   readonly divisions: readonly DivisionView[];
   readonly unassignedShips: readonly UnassignedShipView[];
+  readonly officers: readonly DivisionOfficerView[];
   readonly roles: readonly string[];
   readonly formations: readonly string[];
   readonly maxShips: number;
@@ -70,6 +79,7 @@ export interface DivisionScreenView {
     readonly addShip: DivisionPenalty;
     readonly removeShip: DivisionPenalty;
     readonly changeFlagship: DivisionPenalty;
+    readonly changeCommander: DivisionPenalty;
     readonly reorder: DivisionPenalty;
     readonly changeRole: DivisionPenalty;
     readonly changeFormation: DivisionPenalty;
@@ -152,6 +162,26 @@ export function buildDivisionScreenView(
       };
     });
 
+  const commandByOfficer = new Map<string, string>();
+  for (const division of nation.divisions) {
+    if (division.commanderOfficerId !== VACANT) {
+      commandByOfficer.set(division.commanderOfficerId, division.divisionId);
+    }
+  }
+
+  const officers: DivisionOfficerView[] = [...(nation.officers ?? [])]
+    .sort((a, b) => byId(a.id, b.id))
+    .map((officer) => {
+      const divisionId = commandByOfficer.get(officer.id);
+      return {
+        officerId: officer.id,
+        name: officer.name,
+        rank: officer.rank,
+        skill: Number(officer.skill),
+        ...(divisionId === undefined ? {} : { divisionId }),
+      };
+    });
+
   const assigned = new Set(nation.divisions.flatMap((division) => division.shipOrder));
   const unassignedShips: UnassignedShipView[] = [...shipsById.entries()]
     .filter(([shipId]) => !assigned.has(shipId))
@@ -167,6 +197,7 @@ export function buildDivisionScreenView(
   return {
     divisions,
     unassignedShips,
+    officers,
     roles: DIVISION_ROLES,
     formations: DIVISION_FORMATIONS,
     maxShips: DIVISION_MAX_SHIPS,
@@ -176,6 +207,7 @@ export function buildDivisionScreenView(
       addShip: cost(DIVISION_PENALTIES.addShip),
       removeShip: cost(DIVISION_PENALTIES.removeNonFlagship),
       changeFlagship: cost(DIVISION_PENALTIES.flagshipChange),
+      changeCommander: cost(DIVISION_PENALTIES.commanderChange),
       reorder: cost(DIVISION_PENALTIES.reorderWithoutFlagship),
       changeRole: cost(doctrinePenalties?.roleChange ?? { experience: 0, cohesion: 0 }),
       changeFormation: cost(doctrinePenalties?.formationChange ?? { experience: 0, cohesion: 0 }),

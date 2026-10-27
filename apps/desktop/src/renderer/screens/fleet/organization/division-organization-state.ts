@@ -1,4 +1,5 @@
 import type {
+  DivisionOfficerView,
   DivisionPenalty,
   DivisionScreenView,
   DivisionView,
@@ -14,6 +15,7 @@ import { humanizeId } from "../../../lib/humanize-id.js";
 export interface DivisionOrganizationState extends RequestLifecycle {
   readonly divisions: readonly DivisionView[];
   readonly unassignedShips: readonly UnassignedShipView[];
+  readonly officers: readonly DivisionOfficerView[];
   readonly roles: readonly string[];
   readonly formations: readonly string[];
   readonly maxShips: number;
@@ -26,6 +28,7 @@ export function initialDivisionOrganizationState(): DivisionOrganizationState {
     revision: 0,
     divisions: [],
     unassignedShips: [],
+    officers: [],
     roles: [],
     formations: [],
     maxShips: 5,
@@ -34,6 +37,7 @@ export function initialDivisionOrganizationState(): DivisionOrganizationState {
       addShip: { experience: 0, cohesion: 0 },
       removeShip: { experience: 0, cohesion: 0 },
       changeFlagship: { experience: 0, cohesion: 0 },
+      changeCommander: { experience: 0, cohesion: 0 },
       reorder: { experience: 0, cohesion: 0 },
       changeRole: { experience: 0, cohesion: 0 },
       changeFormation: { experience: 0, cohesion: 0 },
@@ -50,6 +54,7 @@ export function projectDivisionOrganization(
   return {
     divisions: projection.divisions,
     unassignedShips: projection.unassignedShips,
+    officers: projection.officers,
     roles: projection.roles,
     formations: projection.formations,
     maxShips: projection.maxShips,
@@ -65,6 +70,8 @@ const COMMAND_LABELS: Record<DivisionCommandOutcome["bodyType"], string> = {
   ChangeDivisionFlagship: "Change flagship",
   ReorderDivisionShips: "Reorder ships",
   ChangeDivisionDoctrine: "Change role or formation",
+  AssignOfficer: "Assign commander",
+  RelieveOfficer: "Relieve commander",
   DissolveDivision: "Dissolve division",
 };
 

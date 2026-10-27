@@ -25,6 +25,7 @@ import {
 } from "../../../components/motion/sortable-list.js";
 import type { DivisionCommandBody } from "../../../../shared/division-contract.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
+import { humanizeId } from "../../../lib/humanize-id.js";
 import {
   canRemoveShip,
   costText,
@@ -64,6 +65,11 @@ export function DivisionCard({ division, state, busy, send }: DivisionCardProps)
     ? toAdd
     : (addable[0]?.shipId ?? "");
   const title = divisionTitle(division);
+  const availableOfficers = state.officers.filter((officer) => officer.divisionId === undefined);
+  const [officerDraft, setOfficerDraft] = useState("");
+  const selectedOfficer = availableOfficers.some((officer) => officer.officerId === officerDraft)
+    ? officerDraft
+    : (availableOfficers[0]?.officerId ?? "");
 
   const [roleDraft, setRoleDraft] = useState(division.role);
   const [formationDraft, setFormationDraft] = useState(division.formation);
@@ -109,6 +115,61 @@ export function DivisionCard({ division, state, busy, send }: DivisionCardProps)
             )}
           </div>
         </div>
+
+        {division.commander === undefined ? (
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+              Commander
+              <select
+                aria-label={`Commander of ${title}`}
+                className={SELECT_CLASS}
+                value={selectedOfficer}
+                disabled={busy || availableOfficers.length === 0}
+                onChange={(event) => setOfficerDraft(event.target.value)}
+              >
+                {availableOfficers.length === 0 && <option value="">No officer available</option>}
+                {availableOfficers.map((officer) => (
+                  <option key={officer.officerId} value={officer.officerId}>
+                    {humanizeId(officer.rank)} {officer.name} · command rating {officer.skill}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={busy || selectedOfficer === ""}
+              onClick={() =>
+                send({
+                  type: "AssignOfficer",
+                  divisionId: division.divisionId,
+                  officerId: selectedOfficer,
+                })
+              }
+            >
+              Assign commander
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-end gap-3">
+            <span className="text-xs text-muted-foreground">
+              {humanizeId(division.commander.rank)} {division.commander.name} · command rating{" "}
+              {division.commander.skill}
+            </span>
+            <Tip label={`Relieving a commander ${costText(state.penalties.changeCommander)}`}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() => send({ type: "RelieveOfficer", divisionId: division.divisionId })}
+              >
+                Relieve commander
+              </Button>
+            </Tip>
+          </div>
+        )}
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Meter label="Experience" value={division.experience} />
