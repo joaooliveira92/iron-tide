@@ -2,14 +2,11 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Locator, Page } from "@playwright/test";
-import { test, expect, launchHarness, teardownHarness, openCampaign } from "./fixtures.js";
-import { advanceMonths, openShipbuilding } from "./flows.js";
+import { test, expect, relaunchAndOpen, teardownHarness, openCampaign } from "./fixtures.js";
+import { advanceMonths, navigateTo, openShipbuilding } from "./flows.js";
 
 const CLASS_NAME = "Predread E2E";
 const BATTLESHIP = "Pre-dreadnought battleship (B)";
-
-const navigateTo = (page: Page, label: string) =>
-  page.getByTestId("bottom-nav").getByRole("button", { name: label, exact: true }).click();
 
 async function openRoster(page: Page, workspace: Locator): Promise<Locator> {
   await workspace.getByRole("button", { name: "Start from a reference design" }).click();
@@ -70,11 +67,12 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
   const roster = await openRoster(page, workspace);
   await selectRosterOption(roster, BATTLESHIP);
   const replace = page.getByRole("button", { name: "Replace my design" });
-  if (await replace.isVisible().catch(() => false)) await replace.click();
-  await workspace
+  const className = workspace
     .getByRole("group", { name: "Design commands" })
-    .getByRole("textbox", { name: "Class name" })
-    .fill(CLASS_NAME);
+    .getByRole("textbox", { name: "Class name" });
+  await replace.or(className).first().waitFor();
+  if (await replace.isVisible()) await replace.click();
+  await className.fill(CLASS_NAME);
   await expect(workspace.getByText("Can be submitted")).toBeVisible();
 
   await workspace.getByRole("button", { name: /^Protection, / }).click();
@@ -98,13 +96,9 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
   await expect(workspace.getByRole("button", { name: "Queued" })).toBeDisabled();
 
   await e2e.app.close();
-  const second = await launchHarness({ saveDir: pkg });
+  const second = await relaunchAndOpen(pkg);
   try {
     const next = second.page;
-    await next.getByRole("button", { name: "Open Campaign" }).click();
-    await expect(next.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-      timeout: 30_000,
-    });
     await advanceMonths(next, 4);
     await navigateTo(next, "Construction");
     await next
@@ -119,13 +113,9 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
     await teardownHarness(second);
   }
 
-  const third = await launchHarness({ saveDir: pkg });
+  const third = await relaunchAndOpen(pkg);
   try {
     const last = third.page;
-    await last.getByRole("button", { name: "Open Campaign" }).click();
-    await expect(last.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-      timeout: 30_000,
-    });
     await navigateTo(last, "Construction");
     await last
       .getByRole("navigation", { name: "Yard" })

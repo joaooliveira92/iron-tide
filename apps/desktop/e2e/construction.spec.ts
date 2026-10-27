@@ -1,9 +1,6 @@
 import type { Page } from "@playwright/test";
 import { test, expect, openCampaign } from "./fixtures.js";
-import { advanceMonths } from "./flows.js";
-
-const navigateTo = (page: Page, label: string) =>
-  page.getByTestId("bottom-nav").getByRole("button", { name: label, exact: true }).click();
+import { advanceMonths, navigateTo } from "./flows.js";
 
 const openYardPlace = (page: Page, name: RegExp) =>
   page.getByRole("navigation", { name: "Yard" }).getByRole("button", { name }).click();
