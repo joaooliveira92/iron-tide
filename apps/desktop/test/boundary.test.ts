@@ -12,9 +12,8 @@ describe("Electron boundary", () => {
     const headers = applyContentSecurityPolicy({ "X-Frame-Options": ["DENY"] });
     expect(headers["Content-Security-Policy"]).toEqual([CONTENT_SECURITY_POLICY]);
     expect(CONTENT_SECURITY_POLICY).toBe(
-      "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:",
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
     );
-    expect(CONTENT_SECURITY_POLICY).not.toContain("script-src");
     expect(headers["X-Frame-Options"]).toEqual(["DENY"]);
   });
 
