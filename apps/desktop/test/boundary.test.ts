@@ -12,9 +12,8 @@ describe("Electron boundary", () => {
     const headers = applyContentSecurityPolicy({ "X-Frame-Options": ["DENY"] });
     expect(headers["Content-Security-Policy"]).toEqual([CONTENT_SECURITY_POLICY]);
     expect(CONTENT_SECURITY_POLICY).toBe(
-      "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:",
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
     );
-    expect(CONTENT_SECURITY_POLICY).not.toContain("script-src");
     expect(headers["X-Frame-Options"]).toEqual(["DENY"]);
   });
 
@@ -36,24 +35,24 @@ describe("Electron boundary", () => {
   it("registers only the allow-listed IPC handlers in the main process", () => {
     const mainSource = readFileSync(resolve(__dirname, "../src/main/index.ts"), "utf8");
     const allowedHandle = [
-      'ipcMain.handle("campaign:execute"',
-      'ipcMain.handle("window:get-state"',
-      'ipcMain.handle("preferences:read"',
-      'ipcMain.handle("preferences:write"',
-      'ipcMain.handle("preferences:read-campaign"',
-      'ipcMain.handle("preferences:write-campaign"',
+      'ipc.handle("campaign:execute"',
+      'ipc.handle("window:get-state"',
+      'ipc.handle("preferences:read"',
+      'ipc.handle("preferences:write"',
+      'ipc.handle("preferences:read-campaign"',
+      'ipc.handle("preferences:write-campaign"',
     ];
     const allowedOn = [
-      'ipcMain.on("window:minimize"',
-      'ipcMain.on("window:maximize-toggle"',
-      'ipcMain.on("window:close"',
-      'ipcMain.on("support:report-crash"',
+      'ipc.on("window:minimize"',
+      'ipc.on("window:maximize-toggle"',
+      'ipc.on("window:close"',
+      'ipc.on("support:report-crash"',
     ];
     for (const handler of [...allowedHandle, ...allowedOn]) {
       expect(mainSource).toContain(handler);
     }
-    const registeredHandle = mainSource.match(/ipcMain\.handle\("[^"]+"/g) ?? [];
-    const registeredOn = mainSource.match(/ipcMain\.on\("[^"]+"/g) ?? [];
+    const registeredHandle = mainSource.match(/ipc\.handle\("[^"]+"/g) ?? [];
+    const registeredOn = mainSource.match(/ipc\.on\("[^"]+"/g) ?? [];
     expect(registeredHandle.length).toBe(allowedHandle.length);
     expect(registeredOn.length).toBe(allowedOn.length);
   });

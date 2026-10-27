@@ -7,7 +7,6 @@
   },
   "include": ["src"],
   "references": [
-    { "path": "../contracts" },
     { "path": "../diagnostics" },
     { "path": "../deterministic" },
     { "path": "../content-schema" }

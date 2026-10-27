@@ -3,7 +3,7 @@
 `scripts/change-scope.mjs` prints a versioned, machine-readable report of the
 paths a change touches between a base ref and a head ref — committed paths plus
 staged, unstaged, and untracked worktree paths. It exists so change-based
-filtering (for example `turbo run … --filter='[<base>]'` in CI) reads one
+filtering (for example a CI job choosing which suites to run) reads one
 deterministic source instead of ad-hoc `git diff` parsing.
 
 ```sh

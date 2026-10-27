@@ -30,7 +30,7 @@ the operator explicitly asks to edit. You never commit on `dev`/`main`.
    code area, aggregated into a single plan.
 2. **Frame the swarm.** Partition the authored code into N slices, roughly by
    size, excluding `vendor/**`, `repos/**`, `**/dist/**`, `**/node_modules/**`,
-   `**/.turbo/**`, and `content/generated/**`. A reasonable default split:
+   and `content/generated/**`. A reasonable default split:
    `packages/combat`; `apps/desktop`; `packages/ship-design` + `ship-visual` +
    `armament`; the remaining `packages/*`; and `apps/compiler-cli` + `scripts`.
    Adjust N to the repo today. Use the **`swarm`** skill's phases

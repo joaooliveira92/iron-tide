@@ -10,7 +10,6 @@
     }
   },
   "dependencies": {
-    "@bluewave/contracts": "workspace:*",
     "@noble/hashes": "^2.4.0"
   },
   "scripts": {

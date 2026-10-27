@@ -15,7 +15,7 @@ Code carries no comments, so the default bucket is **DELETE**.
 
 - Work only the slice your brief named. Never widen it.
 - Never flag comments in `vendor/**`, `repos/**`, `**/dist/**`,
-  `**/node_modules/**`, `**/.turbo/**`, or `content/generated/**`.
+  `**/node_modules/**`, or `content/generated/**`.
 - Your brief names the paths (or a glob). If it does not, take the current diff
   against the base branch.
 
