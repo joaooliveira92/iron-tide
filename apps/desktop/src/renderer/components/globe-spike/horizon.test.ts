@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { cameraAltitudeMetres } from "./geo-math.js";
+import { lonLatToSphere } from "./geo-math.js";
 import {
+  HORIZON_TOLERANCE_RADIANS,
+  cameraDistanceInSphereRadii,
+  cameraPositionInSphereRadii,
+  classifyHorizon,
   edgeIndicator,
   horizonAngleRadians,
+  horizonMarginRadians,
   initialBearingDegrees,
   isBeyondHorizon,
+  projectionMode,
+  type GlobeCamera,
+  type LonLat,
 } from "./horizon.js";
 
 describe("horizon", () => {
@@ -71,5 +80,162 @@ describe("bearings and edge indicators", () => {
       expect(result.y).toBeGreaterThanOrEqual(24 - 1e-9);
       expect(result.y).toBeLessThanOrEqual(576 + 1e-9);
     }
+  });
+});
+
+function segmentReachesPointUnobstructed(camera: GlobeCamera, point: LonLat): boolean {
+  const cam = cameraPositionInSphereRadii(camera);
+  const p = lonLatToSphere(point[0], point[1]);
+  const dx = p[0] - cam[0];
+  const dy = p[1] - cam[1];
+  const dz = p[2] - cam[2];
+  const a = dx * dx + dy * dy + dz * dz;
+  const b = 2 * (cam[0] * dx + cam[1] * dy + cam[2] * dz);
+  const c = cam[0] * cam[0] + cam[1] * cam[1] + cam[2] * cam[2] - 1;
+  const discriminant = b * b - 4 * a * c;
+  if (discriminant < 0) return false;
+  const nearRoot = (-b - Math.sqrt(discriminant)) / (2 * a);
+  return nearRoot >= 1 - 1e-9;
+}
+
+function lcg(seed: number): () => number {
+  let state = seed;
+  return () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+describe("globe horizon visibility", () => {
+  const base: GlobeCamera = {
+    centre: [10, 30],
+    zoom: 2,
+    pitchDegrees: 0,
+    bearingDegrees: 0,
+    viewportHeightPx: 868,
+  };
+
+  it("matches the closed-form cone for a camera straight above the centre", () => {
+    const distance = cameraDistanceInSphereRadii(base);
+    const expected = Math.acos(1 / (1 + distance));
+    const sub: LonLat = [10, 30];
+    expect(horizonMarginRadians(base, sub)).toBeCloseTo(-expected, 12);
+    const onLimb: LonLat = [10, 30 + (expected * 180) / Math.PI];
+    expect(horizonMarginRadians(base, onLimb)).toBeCloseTo(0, 12);
+  });
+
+  it("has a camera distance that follows the documented zoom and field-of-view relation", () => {
+    const doubled = cameraDistanceInSphereRadii({ ...base, zoom: base.zoom + 1 });
+    expect(doubled).toBeCloseTo(cameraDistanceInSphereRadii(base) / 2, 12);
+    const wide = cameraDistanceInSphereRadii({ ...base, fovRadians: 1.2 });
+    const narrow = cameraDistanceInSphereRadii({ ...base, fovRadians: 0.5 });
+    expect(narrow).toBeGreaterThan(wide);
+  });
+
+  it("is invariant to bearing when the camera looks straight down", () => {
+    const margins = [0, 77, 181, 359].map((bearingDegrees) =>
+      horizonMarginRadians({ ...base, bearingDegrees }, [100, -20]),
+    );
+    for (const margin of margins) expect(margin).toBeCloseTo(margins[0] ?? 0, 12);
+  });
+
+  it("moves the visible cap away from the centre when the camera is pitched", () => {
+    const flat = cameraPositionInSphereRadii(base);
+    const pitched = cameraPositionInSphereRadii({ ...base, pitchDegrees: 60 });
+    const flatDirection = lonLatToSphere(10, 30);
+    const cosine =
+      (pitched[0] * flatDirection[0] +
+        pitched[1] * flatDirection[1] +
+        pitched[2] * flatDirection[2]) /
+      Math.hypot(pitched[0], pitched[1], pitched[2]);
+    expect(Math.acos(cosine)).toBeGreaterThan(0.05);
+    expect(Math.hypot(...flat)).not.toBeCloseTo(Math.hypot(...pitched), 3);
+  });
+
+  it("disagrees with the centre-only cone by more than a degree at 60 degrees of pitch", () => {
+    const pitched = { ...base, zoom: 1.4, pitchDegrees: 60 };
+    const legacyAltitude = cameraDistanceInSphereRadii(pitched) * 6371008.8;
+    let widestDisagreementDegrees = 0;
+    for (let bearing = 0; bearing < 360; bearing += 5) {
+      const camera = { ...pitched, bearingDegrees: bearing };
+      for (let angle = 40; angle <= 100; angle += 0.25) {
+        const radians = (bearing * Math.PI) / 180;
+        const point: LonLat = [
+          10 + angle * Math.sin(radians),
+          Math.max(-89, Math.min(89, 30 + angle * Math.cos(radians))),
+        ];
+        const legacyBeyond = isBeyondHorizon(camera.centre, point, legacyAltitude);
+        const exactBeyond = classifyHorizon(camera, point) === "back";
+        if (legacyBeyond !== exactBeyond) {
+          widestDisagreementDegrees = Math.max(
+            widestDisagreementDegrees,
+            Math.abs((horizonMarginRadians(camera, point) * 180) / Math.PI),
+          );
+        }
+      }
+    }
+    expect(widestDisagreementDegrees).toBeGreaterThan(1);
+  });
+
+  it("agrees with an independent ray-casting test across altitudes, latitudes, bearings, pitches and fields of view", () => {
+    const next = lcg(20260427);
+    let checked = 0;
+    let transitional = 0;
+    for (let index = 0; index < 4000; index++) {
+      const camera: GlobeCamera = {
+        centre: [next() * 360 - 180, next() * 170 - 85],
+        zoom: next() * 10,
+        pitchDegrees: next() * 60,
+        bearingDegrees: next() * 360,
+        viewportHeightPx: 400 + next() * 1200,
+        fovRadians: ((20 + next() * 50) * Math.PI) / 180,
+      };
+      const point: LonLat = [next() * 360 - 180, next() * 178 - 89];
+      const margin = horizonMarginRadians(camera, point);
+      if (Math.abs(margin) < 1e-7) {
+        transitional += 1;
+        continue;
+      }
+      const reference = segmentReachesPointUnobstructed(camera, point);
+      expect(margin < 0).toBe(reference);
+      checked += 1;
+    }
+    expect(checked).toBeGreaterThan(3900);
+    expect(transitional).toBeLessThan(100);
+  });
+
+  it("classifies front, horizon and back around the tolerance", () => {
+    const distance = cameraDistanceInSphereRadii(base);
+    const limbDegrees = (Math.acos(1 / (1 + distance)) * 180) / Math.PI;
+    const toleranceDegrees = (HORIZON_TOLERANCE_RADIANS * 180) / Math.PI;
+    expect(classifyHorizon(base, [10, 30 + limbDegrees - 2 * toleranceDegrees])).toBe("front");
+    expect(classifyHorizon(base, [10, 30 + limbDegrees])).toBe("horizon");
+    expect(classifyHorizon(base, [10, 30 + limbDegrees + 2 * toleranceDegrees])).toBe("back");
+    expect(classifyHorizon(base, [-170, -30])).toBe("back");
+    expect(classifyHorizon(base, [10, 30])).toBe("front");
+  });
+
+  it("changes class monotonically while a point rotates across the limb", () => {
+    let previous = -1;
+    let flips = 0;
+    const order = { front: 0, horizon: 1, back: 2 } as const;
+    for (let step = 0; step <= 2000; step++) {
+      const longitude = 10 + step * 0.05;
+      const current = order[classifyHorizon(base, [longitude, 30])];
+      if (previous !== -1 && current !== previous) flips += 1;
+      previous = current;
+      if (longitude > 190) break;
+    }
+    expect(flips).toBeLessThanOrEqual(2);
+  });
+
+  it("separates the geometric horizon from the projection mode", () => {
+    expect(projectionMode(3)).toBe("globe");
+    expect(projectionMode(11)).toBe("globe");
+    expect(projectionMode(11.5)).toBe("transition");
+    expect(projectionMode(12)).toBe("planar");
+    const deep = { ...base, zoom: 12.5 };
+    expect(classifyHorizon(deep, [10.01, 30.01])).toBe("front");
+    expect(classifyHorizon(deep, [190, -30])).toBe("back");
   });
 });

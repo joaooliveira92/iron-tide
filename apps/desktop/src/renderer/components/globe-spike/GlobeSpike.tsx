@@ -11,7 +11,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent }
 
 import { formatFixed } from "../../lib/presentation-format/index.js";
 import { useCoastline } from "../world-map/useCoastline.js";
-import { cameraAltitudeMetres, greatCircleAngleRadians } from "./geo-math.js";
 import { GlobeSpikeError } from "./globe-spike-errors.js";
 import { GLOBE_SPIKE_FAIL_HASH } from "./globe-spike-flag.js";
 import {
@@ -22,10 +21,12 @@ import {
   type GeoFeatureCollection,
 } from "./globe-spike-scene.js";
 import {
+  classifyHorizon,
   edgeIndicator,
-  horizonAngleRadians,
+  horizonMarginRadians,
   initialBearingDegrees,
-  isBeyondHorizon,
+  type GlobeCamera,
+  type HorizonClass,
 } from "./horizon.js";
 import { MapEntityList, type MapEntity } from "./MapEntityList.js";
 import {
@@ -86,6 +87,7 @@ export interface GlobeSpikeApi {
   readonly horizonPrediction: () => readonly {
     readonly id: string;
     readonly beyondHorizon: boolean;
+    readonly horizonClass: HorizonClass;
     readonly marginDegrees: number;
     readonly visible: boolean;
     readonly renderedAnywhere: boolean;
@@ -512,30 +514,29 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
       },
       horizonPrediction: () => {
         const centre = active.getCenter();
-        const altitude = cameraAltitudeMetres(
-          active.getZoom(),
-          centre.lat,
-          active.getContainer().clientHeight,
-        );
+        const camera: GlobeCamera = {
+          centre: [centre.lng, centre.lat],
+          zoom: active.getZoom(),
+          pitchDegrees: active.getPitch(),
+          bearingDegrees: active.getBearing(),
+          viewportHeightPx: active.getContainer().clientHeight,
+        };
         const rendered = new Set<string>();
         for (const feature of active.queryRenderedFeatures({ layers: ["markers"] })) {
           const id = feature.properties?.id;
           if (typeof id === "string") rendered.add(id);
         }
-        return SPIKE_MARKERS.map((entry) => ({
-          id: entry.id,
-          beyondHorizon: isBeyondHorizon(
-            [centre.lng, centre.lat],
-            [entry.lon, entry.lat],
-            altitude,
-          ),
-          marginDegrees:
-            (greatCircleAngleRadians([centre.lng, centre.lat], [entry.lon, entry.lat]) -
-              horizonAngleRadians(altitude)) *
-            (180 / Math.PI),
-          visible: markerHit(entry.id),
-          renderedAnywhere: rendered.has(entry.id),
-        }));
+        return SPIKE_MARKERS.map((entry) => {
+          const marginRadians = horizonMarginRadians(camera, [entry.lon, entry.lat]);
+          return {
+            id: entry.id,
+            beyondHorizon: classifyHorizon(camera, [entry.lon, entry.lat]) === "back",
+            horizonClass: classifyHorizon(camera, [entry.lon, entry.lat]),
+            marginDegrees: marginRadians * (180 / Math.PI),
+            visible: markerHit(entry.id),
+            renderedAnywhere: rendered.has(entry.id),
+          };
+        });
       },
       pickAreas: (x, y) => {
         const hits: MapGeoJSONFeature[] = active.queryRenderedFeatures([x, y], {
