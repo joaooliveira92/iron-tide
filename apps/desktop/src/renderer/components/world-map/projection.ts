@@ -87,6 +87,7 @@ export const WORLD_WRAP_TURNS: readonly number[] = [-1, 0, 1];
 export interface ProjectedArea {
   readonly id: string;
   readonly path: string;
+  readonly ring: readonly Point[];
   readonly label: Point;
   readonly centroid: Point;
   readonly bounds: { readonly width: number; readonly height: number };
@@ -131,6 +132,7 @@ export function projectAreas(
     return {
       id: area.id,
       path: ringToPath(ring, projection),
+      ring: ring.map((point: Point) => projection.project(point[0], point[1])),
       label: projection.project(wrapLongitude(area.label[0], centre), area.label[1]),
       centroid: projection.project(centroidLonLat[0], centroidLonLat[1]),
       bounds: {

@@ -15,7 +15,6 @@ function renderChart() {
       onToggleLayer={noop}
       onSetProjection={noop}
       onSetCentre={noop}
-      onToggleClosedPassages={noop}
     />,
   );
 }
@@ -62,14 +61,13 @@ describe("WorldMapChart", () => {
         onToggleLayer={noop}
         onSetProjection={noop}
         onSetCentre={noop}
-        onToggleClosedPassages={noop}
       />,
     );
     const areas = [...container.querySelectorAll('path[role="button"]')];
     expect(areas.length).toBe(36);
     for (const area of areas) {
       expect(area.getAttribute("aria-label")).toMatch(
-        /: (held by .+|unclaimed), (no fleets|\d+ fleets?)(, strength \d+ ships? \(.+\))?$/,
+        /: (held by .+|unclaimed), (no fleets|\d+ fleets?)(, strength \d+ ships? \(.+\))?(, no campaign data)?$/,
       );
       expect(area.getAttribute("tabindex")).toBe("0");
     }
@@ -95,7 +93,6 @@ describe("WorldMapChart", () => {
           onToggleLayer={noop}
           onSetProjection={noop}
           onSetCentre={noop}
-          onToggleClosedPassages={noop}
         />,
       );
     }
@@ -133,7 +130,6 @@ describe("WorldMapChart", () => {
           onToggleLayer={noop}
           onSetProjection={noop}
           onSetCentre={noop}
-          onToggleClosedPassages={noop}
         />,
       );
       expect(container.querySelector('[data-testid="map-minimap"]')).toBeNull();
@@ -155,7 +151,6 @@ describe("WorldMapChart", () => {
           onToggleLayer={noop}
           onSetProjection={noop}
           onSetCentre={noop}
-          onToggleClosedPassages={noop}
         />,
       );
     }
@@ -223,7 +218,6 @@ describe("WorldMapChart", () => {
           onToggleLayer={noop}
           onSetProjection={noop}
           onSetCentre={noop}
-          onToggleClosedPassages={noop}
         />,
       );
       return onSelect;
@@ -239,7 +233,6 @@ describe("WorldMapChart", () => {
           onToggleLayer={noop}
           onSetProjection={noop}
           onSetCentre={noop}
-          onToggleClosedPassages={noop}
         />,
       );
       expect(screen.getByRole("list", { name: "Areas by region" })).toBeTruthy();

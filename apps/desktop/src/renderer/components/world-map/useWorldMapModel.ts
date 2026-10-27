@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { AREAS, AREAS_BY_ID, EDGES, PASSAGES_BY_ID, type AreaControl } from "./fixture-world.js";
+import { AREAS, AREAS_BY_ID } from "./map-geometry.js";
 import { EMPTY_LIVE_OVERLAY, type LiveWorldMapOverlay } from "./campaign-map-join.js";
 import { campaignNationHue } from "../../content/presentationContent.js";
 import { buildOwnershipRows, describeArea, type AreaOwnershipRow } from "./map-a11y.js";
 import { campaignTreeRows, type AreaTreeRow } from "./area-tree.js";
-import type { AreaSummary, MapPrototypeState, RouteReading } from "./map-state.js";
+import type { AreaControl, AreaSummary, MapPrototypeState, RouteReading } from "./map-state.js";
 import {
   WORLD_WRAP_TURNS,
   projectAreas,
@@ -23,7 +23,7 @@ import {
 import { layoutLabels, type PlacedLabel } from "./map-label-layout.js";
 import { buildGraticule } from "./map-graticule.js";
 import { separateGlyphs } from "./map-glyph-layout.js";
-import { buildLanes, laneEdges, type LaneMark } from "./map-lanes.js";
+import { buildLanes, type LaneMark } from "./map-lanes.js";
 import {
   buildRegionStrengths,
   compactGlyphs,
@@ -36,20 +36,7 @@ import type { MapPalette } from "./map-palette.js";
 import type { MapCamera } from "./useMapCamera.js";
 import type { BorderSet } from "./CoastlineCanvas.js";
 import { BORDERS_1880 } from "./borders-1880-data.js";
-import {
-  campaignWorldMapSource,
-  fixtureWorldMapSource,
-  type WorldMapSource,
-} from "./world-map-source.js";
-
-export interface PassageMark {
-  readonly id: string;
-  readonly from: readonly [number, number];
-  readonly to: readonly [number, number];
-  readonly mid: readonly [number, number];
-  readonly open: boolean;
-  readonly kind: "canal" | "strait";
-}
+import { campaignWorldMapSource, type WorldMapSource } from "./world-map-source.js";
 
 export interface WorldMapModel {
   readonly state: MapPrototypeState;
@@ -61,7 +48,6 @@ export interface WorldMapModel {
   readonly borderSets: readonly BorderSet[];
   readonly portMarks: readonly PortMark[];
   readonly fleetMarks: readonly FleetMark[];
-  readonly passageMarks: readonly PassageMark[];
   readonly lanes: readonly LaneMark[];
   readonly strengths: readonly RegionStrength[];
   readonly glyphOffsets: ReadonlyMap<string, number>;
@@ -102,11 +88,7 @@ export function useWorldMapModel({
   camera,
   rootRef,
 }: WorldMapModelInput): WorldMapModel {
-  const source = useMemo<WorldMapSource>(
-    () =>
-      overlay.source === "campaign" ? campaignWorldMapSource(overlay) : fixtureWorldMapSource(),
-    [overlay],
-  );
+  const source = useMemo<WorldMapSource>(() => campaignWorldMapSource(overlay), [overlay]);
 
   const areas = useMemo(
     () => projectAreas(AREAS, projection, state.centre),
@@ -163,7 +145,7 @@ export function useWorldMapModel({
   const lanes = useMemo(
     () =>
       buildLanes(
-        laneEdges(overlay.lanes, EDGES),
+        overlay.lanes ?? [],
         new Map([...areasById].map(([id, area]) => [id, area.label] as const)),
         projection.width,
       ),
@@ -210,26 +192,6 @@ export function useWorldMapModel({
   }, [strengths, areasById, compact, viewVersion]);
   const anchorOf = useMemo(() => (areaId: string) => areasById.get(areaId)?.label, [areasById]);
 
-  const passageMarks = useMemo<PassageMark[]>(() => {
-    const marks: PassageMark[] = [];
-    for (const edge of EDGES) {
-      if (edge.passage === undefined) continue;
-      const from = areasById.get(edge.a)?.label;
-      const to = areasById.get(edge.b)?.label;
-      const passage = PASSAGES_BY_ID.get(edge.passage);
-      if (from === undefined || to === undefined || passage === undefined) continue;
-      marks.push({
-        id: passage.id,
-        from,
-        to,
-        mid: [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2],
-        open: passage.open,
-        kind: passage.kind,
-      });
-    }
-    return marks;
-  }, [areasById]);
-
   const placedLabels = useMemo<PlacedLabel[]>(() => {
     if (!state.layers.labels) return [];
     const svg = camera.svgRef.current;
@@ -242,11 +204,9 @@ export function useWorldMapModel({
       flags: {
         possessions: state.layers.possessions,
         fleets: state.layers.fleets,
-        passages: state.layers.passages,
       },
       portMarks,
       fleetMarks,
-      passageAnchors: passageMarks.map((mark) => mark.mid),
       strengthMarks: strengths.flatMap((region) => {
         const at = areasById.get(region.areaId)?.label;
         if (at === undefined) return [];
@@ -271,7 +231,6 @@ export function useWorldMapModel({
   }, [
     areas,
     fleetMarks,
-    passageMarks,
     portMarks,
     projection,
     state.centre,
@@ -359,7 +318,6 @@ export function useWorldMapModel({
     borderSets,
     portMarks,
     fleetMarks,
-    passageMarks,
     lanes,
     strengths,
     compactGlyphs: compact,

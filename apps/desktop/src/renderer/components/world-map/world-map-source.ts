@@ -1,19 +1,5 @@
-import {
-  AREAS,
-  FLEETS,
-  POSSESSIONS,
-  type AreaControl,
-  type AreaId,
-  type NationId,
-} from "./fixture-world.js";
-import {
-  areaControl,
-  nationFill,
-  nationName,
-  nationStroke,
-  summariseArea,
-  type AreaSummary,
-} from "./map-state.js";
+import { AREAS, AREAS_BY_ID, type AreaId, type NationId } from "./map-geometry.js";
+import type { AreaControl, AreaSummary } from "./map-state.js";
 import type { FleetPlacement, PossessionPlacement } from "./map-markers.js";
 import { campaignNationHue, campaignNationLabel } from "../../content/presentationContent.js";
 import {
@@ -40,48 +26,29 @@ export interface WorldMapSource {
 const UNCLAIMED_FILL = (alpha: number): string => `oklch(0.55 0 0 / ${alpha * 0.35})`;
 const UNCLAIMED_STROKE = "oklch(0.6 0 0 / 0.5)";
 
-function fixturePorts(): PossessionPlacement[] {
-  return POSSESSIONS.map((possession) => ({
-    id: possession.id,
-    name: possession.name,
-    at: possession.at,
-    owner: possession.owner,
-    base: possession.base,
-  }));
-}
-
-function fixtureFleets(): FleetPlacement[] {
-  return FLEETS.map((fleet) => ({
-    id: fleet.id,
-    area: fleet.area,
-    ships: fleet.ships,
-    owner: fleet.owner,
-  }));
-}
-
-export function fixtureWorldMapSource(): WorldMapSource {
-  const control = areaControl();
-  const possessionCounts = new Map<AreaId, number>();
-  for (const [id, held] of control) possessionCounts.set(id, held.possessions);
-
-  return {
-    live: false,
-    playerNationId: null,
-    campaignAreas: null,
-    control,
-    ports: fixturePorts(),
-    fleets: fixtureFleets(),
-    possessionCounts,
-    unavailable: new Set(),
-    fillFor: nationFill,
-    strokeFor: nationStroke,
-    nameFor: nationName,
-    summarise: summariseArea,
-  };
+function neighboursOf(
+  lanes: readonly { readonly a: AreaId; readonly b: AreaId }[] | null,
+): ReadonlyMap<AreaId, readonly AreaId[]> {
+  const neighbours = new Map<AreaId, AreaId[]>();
+  for (const lane of lanes ?? []) {
+    if (lane.a === lane.b) continue;
+    for (const [from, to] of [
+      [lane.a, lane.b],
+      [lane.b, lane.a],
+    ] as const) {
+      const list = neighbours.get(from) ?? [];
+      if (!list.includes(to)) list.push(to);
+      neighbours.set(from, list);
+    }
+  }
+  for (const list of neighbours.values()) list.sort((left, right) => (left < right ? -1 : 1));
+  return neighbours;
 }
 
 export function campaignWorldMapSource(overlay: LiveWorldMapOverlay): WorldMapSource {
-  const control = new Map<AreaId, AreaControl>(areaControl());
+  const adjacent = neighboursOf(overlay.lanes);
+
+  const control = new Map<AreaId, AreaControl>();
   for (const [area, owner] of overlay.ownership) {
     control.set(area, { owner, contested: false, possessions: 0 });
   }
@@ -118,7 +85,7 @@ export function campaignWorldMapSource(overlay: LiveWorldMapOverlay): WorldMapSo
   }
 
   return {
-    live: true,
+    live: overlay.source === "campaign",
     playerNationId: overlay.playerNationId,
     campaignAreas: overlay.campaignAreas,
     control,
@@ -136,14 +103,14 @@ export function campaignWorldMapSource(overlay: LiveWorldMapOverlay): WorldMapSo
       nation === null ? UNCLAIMED_STROKE : `oklch(0.74 0.17 ${campaignNationHue(nation)})`,
     nameFor: (nation) => (nation === null ? "Unclaimed" : campaignNationLabel(nation)),
     summarise: (id) => {
-      const fixture = summariseArea(id);
-      if (fixture === null) return null;
+      const geometry = AREAS_BY_ID.get(id);
+      if (geometry === undefined) return null;
       const owner = overlay.ownership.get(id) ?? null;
       const ports = overlay.ports.filter((port) => port.area === id);
       const fleets = overlay.fleets.filter((fleet) => fleet.area === id);
       return {
         id,
-        name: fixture.name,
+        name: geometry.name,
         control: { owner, contested: false, possessions: 0 },
         possessions: ports.map((port) => ({ id: port.id, name: port.name, owner: port.nation })),
         fleets: fleets.map((fleet) => ({
@@ -152,7 +119,10 @@ export function campaignWorldMapSource(overlay: LiveWorldMapOverlay): WorldMapSo
           owner: fleet.nation,
           ships: fleet.ships,
         })),
-        neighbours: fixture.neighbours,
+        neighbours: (adjacent.get(id) ?? []).map((neighbour) => ({
+          id: neighbour,
+          name: AREAS_BY_ID.get(neighbour)?.name ?? neighbour,
+        })),
       };
     },
   };

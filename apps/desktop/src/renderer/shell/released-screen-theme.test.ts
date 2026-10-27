@@ -13,7 +13,6 @@ const EXCLUDED_SEGMENTS = [
   "/screens/debugging/",
   "/screens/simulation/",
   "/screens/tactical-sandbox/",
-  "/screens/map-prototype/",
   ".test.",
 ];
 

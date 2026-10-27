@@ -64,13 +64,6 @@ export function AreaInspector({ className, summary, nameFor, onSelect }: AreaIns
                   onClick={() => onSelect(neighbour.id)}
                 >
                   {neighbour.name}
-                  {neighbour.passage !== null && (
-                    <span style={{ color: neighbour.open ? CHART.inkDim : "oklch(0.72 0.2 25)" }}>
-                      {" "}
-                      via {neighbour.passage}
-                      {neighbour.open ? "" : " (closed)"}
-                    </span>
-                  )}
                 </button>
               </li>
             ))}

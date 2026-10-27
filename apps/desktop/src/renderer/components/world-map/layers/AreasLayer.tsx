@@ -1,4 +1,4 @@
-import type { AreaControl } from "../fixture-world.js";
+import type { AreaControl } from "../map-state.js";
 import type { ProjectedArea } from "../projection.js";
 
 export interface AreasLayerProps {
@@ -19,6 +19,9 @@ export interface AreasLayerProps {
   readonly describe: (id: string) => string;
   readonly fillFor: (nation: string | null, alpha: number) => string;
   readonly onAreaClick: (id: string, shiftKey: boolean) => void;
+  readonly legal: ReadonlySet<string>;
+  readonly dimmed: ReadonlySet<string>;
+  readonly blockaded: ReadonlySet<string>;
 }
 
 export function AreasLayer({
@@ -39,6 +42,9 @@ export function AreasLayer({
   describe,
   fillFor,
   onAreaClick,
+  legal,
+  dimmed,
+  blockaded,
 }: AreasLayerProps) {
   const interactive = turn === 0;
   return (
@@ -48,6 +54,9 @@ export function AreasLayer({
         const isSelected = selected === area.id;
         const onRouteLeg = routeSet.has(area.id);
         const noData = unavailable.has(area.id);
+        const isLegal = legal.has(area.id);
+        const isDimmed = dimmed.has(area.id);
+        const isBlockaded = blockaded.has(area.id);
         return (
           <path
             key={area.id}
@@ -61,12 +70,21 @@ export function AreasLayer({
                     ? areaWashSelected
                     : areaWash
             }
-            stroke={isSelected ? selectedEdge : onRouteLeg ? route : areaEdge}
-            strokeWidth={isSelected ? 2.5 : onRouteLeg ? 2 : 0.9}
+            stroke={
+              isLegal ? selectedEdge : isSelected ? selectedEdge : onRouteLeg ? route : areaEdge
+            }
+            strokeWidth={isLegal || isSelected ? 2.5 : onRouteLeg ? 2 : 0.9}
             vectorEffect="non-scaling-stroke"
-            strokeDasharray={noData ? "2 4" : held?.contested === true ? "6 4" : undefined}
+            strokeDasharray={
+              noData || isBlockaded ? "2 4" : held?.contested === true ? "6 4" : undefined
+            }
             data-unavailable={noData ? "" : undefined}
-            className="cursor-pointer outline-none transition-[fill] duration-150 motion-reduce:transition-none hover:[stroke:var(--map-hover)] hover:stroke-[2] focus-visible:[stroke:var(--map-focus)] focus-visible:stroke-[3]"
+            data-blockade={isBlockaded ? "" : undefined}
+            data-legal={isLegal ? "" : undefined}
+            data-map-area={interactive ? area.id : undefined}
+            className={`cursor-pointer outline-none transition-[fill,opacity] duration-150 motion-reduce:transition-none hover:[stroke:var(--map-hover)] hover:stroke-[2] focus-visible:[stroke:var(--map-focus)] focus-visible:stroke-[3] ${
+              isDimmed ? "opacity-35" : ""
+            }`}
             role={interactive ? "button" : undefined}
             tabIndex={interactive ? 0 : undefined}
             aria-hidden={interactive ? undefined : true}

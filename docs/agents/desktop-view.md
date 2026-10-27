@@ -37,8 +37,10 @@ fixture DTO directly.
 ## Screens and shell
 
 Screens live in `src/renderer/screens/` (campaign-list, overview, fleet, treasury,
-research, construction, shipbuilding, diplomacy, tactical-map, …) and are
-registered through a screen registry/routes. Debug-only screens (simulation,
+research, construction, shipbuilding, diplomacy, strategic-map, tactical-map, …) and are
+registered through a screen registry/routes. The strategic map reads the compiled
+campaign only (`inspectMap.strategic`), orders fleets through the shared
+`useMovementOrders` payload builder, and carries no fixture world. Debug-only screens (simulation,
 tactical-sandbox, debugging) are gated behind the build-time debug flag and absent
 from release builds.
 

@@ -24,7 +24,6 @@ const EXEMPT_DIRS = [
   "screens/debugging/",
   "screens/simulation/",
   "screens/tactical-sandbox/",
-  "screens/map-prototype/",
 ];
 
 /** Ad-hoc formatting the single module owns. */

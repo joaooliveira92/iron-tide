@@ -1,6 +1,6 @@
 import type { WorldMapView } from "@bluewave/campaign-engine";
 import { fixtureAreaId } from "../../content/presentationContent.js";
-import { AREAS_BY_ID, type AreaId, type NationId } from "./fixture-world.js";
+import { AREAS_BY_ID, type AreaId, type NationId } from "./map-geometry.js";
 
 export interface LiveWorldMapOverlay {
   readonly ownership: ReadonlyMap<AreaId, NationId | null>;
