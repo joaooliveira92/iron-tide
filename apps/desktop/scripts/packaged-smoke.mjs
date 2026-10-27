@@ -192,6 +192,41 @@ try {
     unexpectedConsoleErrors[0]?.slice(0, 200),
   );
 
+  // --- Shell policy in the packaged binary: the renderer's CSP is enforced over
+  // file:// and renderer-created windows are denied. Run after the console-error
+  // assertion because a blocked probe deliberately logs CSP violations.
+  const shell = await page.evaluate(async () => {
+    const violated = [];
+    document.addEventListener("securitypolicyviolation", (event) =>
+      violated.push(event.violatedDirective),
+    );
+    const script = document.createElement("script");
+    script.textContent = "window.__cspInlineProbe = true;";
+    document.head.append(script);
+    const base = document.createElement("base");
+    base.href = "https://example.com/";
+    document.head.append(base);
+    base.remove();
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    return {
+      violated,
+      inlineScriptRan: window.__cspInlineProbe === true,
+      windowOpened: window.open("https://example.com/") !== null,
+    };
+  });
+  check(
+    "packaged CSP blocks inline scripts",
+    !shell.inlineScriptRan && shell.violated.includes("script-src-elem"),
+    String(shell.violated),
+  );
+  check("packaged CSP locks base-uri", shell.violated.includes("base-uri"), String(shell.violated));
+  check("packaged shell denies renderer-created windows", shell.windowOpened === false);
+  check(
+    "packaged shell keeps a single window",
+    app.windows().length === 1,
+    String(app.windows().length),
+  );
+
   // --- Crash support bundle (ADR-0133 hardening): force a real uncaught renderer
   // error in the packaged binary and assert the local-only bundle is written.
   // Done after the pageerror assertions above so the deliberate crash does not
