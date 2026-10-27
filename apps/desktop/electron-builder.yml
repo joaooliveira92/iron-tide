@@ -10,6 +10,8 @@ files:
   - "!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,CHANGELOG.md,README.md}"
   - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
   - "!{tsconfig.tsbuildinfo,.gitignore}"
+  - "!.map-data-cache/**"
+  - "!map-data/**"
 # Content ships as application resources (resolved from process.resourcesPath,
 # see src/main/contentPack.ts), not by a repo-root walk. The compiled artifact is
 # the only runtime content boundary (ADR-0122/ADR-0124): the campaign compiler

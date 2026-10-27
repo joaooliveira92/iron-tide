@@ -5,3 +5,7 @@ export class GlobeSpikeError extends Error {
 export class GeoMathError extends Error {
   readonly _tag = "GeoMathError";
 }
+
+export class BakedTilesError extends Error {
+  readonly _tag = "BakedTilesError";
+}

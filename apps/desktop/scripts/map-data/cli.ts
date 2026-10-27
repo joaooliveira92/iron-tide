@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 import { MapDataError } from "./errors.ts";
+import { TilePack, encodeTilePack } from "../../src/renderer/components/globe-spike/tilepack.ts";
 import {
   MANIFEST_FILE,
   PACK_FILE,
@@ -96,6 +97,29 @@ async function main(): Promise<number> {
     }
     return result.ok ? 0 : 1;
   }
+  if (command === "fixtures") {
+    const bytes = new Uint8Array(await readFile(join(out, PACK_FILE)));
+    const pack = TilePack.parse(bytes);
+    const tiles = [...pack.entries()]
+      .filter((entry) => entry.z <= 3)
+      .map((entry) => ({ z: entry.z, x: entry.x, y: entry.y, data: pack.read(entry).slice() }));
+    const small = encodeTilePack(tiles);
+    const manifest = JSON.parse(await readFile(join(out, MANIFEST_FILE), "utf8")) as {
+      sizes: { packBytes: number };
+      integrity: { packSha256: string };
+    };
+    manifest.integrity.packSha256 = sha256Hex(small);
+    manifest.sizes.packBytes = small.length;
+    const corrupt = small.slice();
+    corrupt[corrupt.length - 3] = (corrupt[corrupt.length - 3] ?? 0) ^ 0xa5;
+    const target = `${out}-corrupt`;
+    await rm(target, { recursive: true, force: true });
+    await mkdir(target, { recursive: true });
+    await writeFile(join(target, PACK_FILE), corrupt);
+    await writeFile(join(target, MANIFEST_FILE), `${JSON.stringify(manifest, null, 2)}\n`);
+    console.log(`fixture: ${target} (${corrupt.length} bytes, one byte flipped after hashing)`);
+    return 0;
+  }
   if (command === "verify") {
     const inputs = await loadInputs(MAP_DATA);
     const result = await verifyOutput(out, inputs);
@@ -149,7 +173,7 @@ async function main(): Promise<number> {
     return identical ? 0 : 1;
   }
   console.log(
-    "usage: node scripts/map-data/cli.ts <fetch|bake|verify|determinism> [--cache dir] [--out dir] [--write-expected]",
+    "usage: node scripts/map-data/cli.ts <fetch|bake|verify|determinism|fixtures> [--cache dir] [--out dir] [--write-expected]",
   );
   return command === "help" ? 0 : 2;
 }

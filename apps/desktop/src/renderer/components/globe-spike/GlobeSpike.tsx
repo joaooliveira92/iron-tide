@@ -1,8 +1,12 @@
 import {
   LngLat,
   Map as MapLibreMap,
+  addProtocol,
+  removeProtocol,
   setWorkerUrl,
+  type LayerSpecification,
   type MapGeoJSONFeature,
+  type SourceSpecification,
   type StyleSpecification,
 } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
@@ -10,12 +14,16 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { formatFixed } from "../../lib/presentation-format/index.js";
-import { useCoastline } from "../world-map/useCoastline.js";
+import {
+  BAKED_PROTOCOL,
+  createBakedTileLoader,
+  tileUrlTemplate,
+  type BakedTiles,
+} from "./baked-tiles.js";
 import { GlobeSpikeError } from "./globe-spike-errors.js";
-import { GLOBE_SPIKE_FAIL_HASH } from "./globe-spike-flag.js";
+import { GLOBE_SPIKE_FAIL_HASH, landModeFromHash } from "./globe-spike-flag.js";
 import {
   SPIKE_MARKERS,
-  coastlineCollection,
   markerCollection,
   routeCollection,
   type GeoFeatureCollection,
@@ -28,7 +36,9 @@ import {
   type GlobeCamera,
   type HorizonClass,
 } from "./horizon.js";
+import { MAP_CONTAINER_STYLE, hasRenderableSize } from "./map-container.js";
 import { MapEntityList, type MapEntity } from "./MapEntityList.js";
+import { useLandPlan, type LandPlan } from "./use-land-plan.js";
 import {
   areaCollection,
   areaIds,
@@ -78,7 +88,13 @@ export interface GlobeSpikeApi {
     readonly centre: readonly [number, number];
     readonly globeness: number | null;
     readonly idle: boolean;
+    readonly land: LandStatus;
   };
+  readonly samplePixels: (
+    points: readonly (readonly [number, number])[],
+  ) => readonly (readonly [number, number, number])[];
+  readonly bakedDiagnostics: () => BakedTiles["diagnostics"] | null;
+  readonly markerRenderedPixels: (id: string) => Promise<number>;
   readonly project: (id: string) => readonly [number, number] | null;
   readonly projectLonLat: (lon: number, lat: number) => readonly [number, number];
   readonly unproject: (x: number, y: number) => readonly [number, number];
@@ -119,6 +135,34 @@ declare global {
   }
 }
 
+export interface LandStatus {
+  readonly source: "baked" | "runtime";
+  readonly tileMaxZoom: number | null;
+  readonly fitForPurposeMaxZoom: number | null;
+  readonly overscaled: boolean;
+  readonly fallbackReason: string | null;
+}
+
+function landStatus(plan: LandPlan, zoom: number): LandStatus {
+  if (plan.kind === "baked") {
+    const { zoom: range } = plan.tiles.manifest;
+    return {
+      source: "baked",
+      tileMaxZoom: range.tileMax,
+      fitForPurposeMaxZoom: range.fitForPurposeMax,
+      overscaled: zoom > range.fitForPurposeMax,
+      fallbackReason: null,
+    };
+  }
+  return {
+    source: "runtime",
+    tileMaxZoom: null,
+    fitForPurposeMaxZoom: null,
+    overscaled: false,
+    fallbackReason: plan.kind === "runtime" ? plan.reason : null,
+  };
+}
+
 export interface GlobeSpikeProps {
   readonly onFail: (reason: string) => void;
 }
@@ -139,13 +183,62 @@ function baseDirectory(): string {
   return href.slice(0, href.lastIndexOf("/") + 1);
 }
 
-function buildStyle(coast: GeoFeatureCollection): StyleSpecification {
+type ReadyPlan = Exclude<LandPlan, { readonly kind: "loading" } | { readonly kind: "failed" }>;
+
+function landSource(plan: ReadyPlan): SourceSpecification {
+  if (plan.kind === "runtime") {
+    return { type: "geojson", data: plan.coast as never, maxzoom: 10, tolerance: 0.2 };
+  }
+  const { manifest } = plan.tiles;
+  return {
+    type: "vector",
+    tiles: [tileUrlTemplate()],
+    minzoom: manifest.zoom.tileMin,
+    maxzoom: manifest.zoom.tileMax,
+    bounds: [...manifest.bounds],
+    scheme: "xyz",
+  };
+}
+
+function landLayers(plan: ReadyPlan): LayerSpecification[] {
+  const sourceLayer =
+    plan.kind === "baked" ? { "source-layer": plan.tiles.manifest.layers.land } : {};
+  const layers: LayerSpecification[] = [
+    {
+      id: "land",
+      type: "fill",
+      source: "land",
+      ...sourceLayer,
+      paint: { "fill-color": "#33473b" },
+    },
+    {
+      id: "land-line",
+      type: "line",
+      source: "land",
+      ...sourceLayer,
+      paint: { "line-color": "#9cc2ae", "line-width": 0.8 },
+    },
+  ];
+  if (plan.kind === "baked") {
+    layers.push({
+      id: "protected-water",
+      type: "line",
+      source: "land",
+      "source-layer": plan.tiles.manifest.layers.protected,
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": "#0b2a3f", "line-width": ["get", "width"] },
+    });
+  }
+  return layers;
+}
+
+function buildStyle(plan: ReadyPlan): StyleSpecification {
   return {
     version: 8,
     glyphs: `${baseDirectory()}map-spike/glyphs/{fontstack}/{range}.pbf`,
     projection: { type: "globe" },
     sources: {
-      land: { type: "geojson", data: coast as never, maxzoom: 10, tolerance: 0.2 },
+      land: landSource(plan),
       areas: { type: "geojson", data: areaCollection(true) as never, maxzoom: 22, tolerance: 0 },
       areaLabels: { type: "geojson", data: areaLabelCollection() as never },
       markers: { type: "geojson", data: markerCollection() as never, maxzoom: 22, tolerance: 0 },
@@ -154,13 +247,7 @@ function buildStyle(coast: GeoFeatureCollection): StyleSpecification {
     },
     layers: [
       { id: "ocean", type: "background", paint: { "background-color": "#0b2a3f" } },
-      { id: "land", type: "fill", source: "land", paint: { "fill-color": "#33473b" } },
-      {
-        id: "land-line",
-        type: "line",
-        source: "land",
-        paint: { "line-color": "#9cc2ae", "line-width": 0.8 },
-      },
+      ...landLayers(plan),
       {
         id: "areas-fill",
         type: "fill",
@@ -269,7 +356,8 @@ function nextFrame(): Promise<void> {
 }
 
 export function GlobeSpike({ onFail }: GlobeSpikeProps) {
-  const coastline = useCoastline();
+  const landMode = useMemo(() => landModeFromHash(window.location.hash), []);
+  const plan = useLandPlan(landMode);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [statusText, setStatusText] = useState("starting");
@@ -279,15 +367,12 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
     null,
   );
   const selectedRef = useRef<string | null>(null);
-  const coast = useMemo(
-    () => (coastline.status === "ready" ? coastlineCollection(coastline.polygons) : null),
-    [coastline],
-  );
+  const [notice, setNotice] = useState<string | null>(null);
   const list = useMemo(entities, []);
 
   useEffect(() => {
-    if (coastline.status === "error") onFail(coastline.message);
-  }, [coastline, onFail]);
+    if (plan.kind === "failed") onFail(plan.reason);
+  }, [plan, onFail]);
 
   const reducedMotion = useCallback(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -371,16 +456,30 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
 
   useEffect(() => {
     const container = containerRef.current;
-    if (container === null || coast === null) return;
+    if (container === null || plan.kind === "loading" || plan.kind === "failed") return;
+    if (!hasRenderableSize(container.clientWidth, container.clientHeight)) {
+      onFail("map container has no renderable size");
+      return;
+    }
     let map: MapLibreMap | null = null;
+    let registeredProtocol = false;
     try {
       if (window.location.hash === GLOBE_SPIKE_FAIL_HASH) {
         throw new GlobeSpikeError("forced spike failure");
       }
       setWorkerUrl(new URL(workerUrl, document.baseURI).href);
+      if (plan.kind === "baked") {
+        addProtocol(BAKED_PROTOCOL, createBakedTileLoader(plan.tiles.pack, plan.tiles.diagnostics));
+        registeredProtocol = true;
+      }
+      setNotice(
+        plan.kind === "runtime" && plan.reason !== null
+          ? `Offline tile pack unavailable (${plan.reason}). Using runtime coastline tiling.`
+          : null,
+      );
       map = new MapLibreMap({
         container,
-        style: buildStyle(coast),
+        style: buildStyle(plan),
         center: [10, 30],
         zoom: 1.4,
         maxZoom: 22,
@@ -389,6 +488,7 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
         canvasContextAttributes: { preserveDrawingBuffer: true, antialias: true },
       });
     } catch (error) {
+      if (registeredProtocol) removeProtocol(BAKED_PROTOCOL);
       onFail(error instanceof Error ? error.message : String(error));
       return;
     }
@@ -398,7 +498,12 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
     const mapErrors: string[] = [];
     active.on("idle", () => {
       idle = true;
-      setStatusText(`idle z=${formatFixed(active.getZoom(), { locale: "en-US", digits: 2 })}`);
+      const zoom = active.getZoom();
+      const limited =
+        plan.kind === "baked" && zoom > plan.tiles.manifest.zoom.fitForPurposeMax
+          ? ` coast detail limited to z${plan.tiles.manifest.zoom.fitForPurposeMax}`
+          : "";
+      setStatusText(`idle z=${formatFixed(zoom, { locale: "en-US", digits: 2 })}${limited}`);
     });
     active.on("movestart", () => {
       idle = false;
@@ -408,6 +513,11 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
       const message = event.error?.message ?? "unknown";
       mapErrors.push(message);
       setStatusText(`error ${message}`);
+      if (plan.kind === "baked" && plan.tiles.diagnostics.failures.length > 0) {
+        setNotice(
+          `${plan.tiles.diagnostics.failures.length} coastline tiles failed integrity checks.`,
+        );
+      }
     });
 
     const markerEntry = (id: string) => SPIKE_MARKERS.find((candidate) => candidate.id === id);
@@ -487,7 +597,54 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
           centre: [centre.lng, centre.lat] as const,
           globeness: readGlobeness(active),
           idle: idle && active.loaded(),
+          land: landStatus(plan, active.getZoom()),
         };
+      },
+      samplePixels: (points) => {
+        const source = active.getCanvas();
+        const scale = source.width / active.getContainer().clientWidth;
+        const copy = document.createElement("canvas");
+        copy.width = source.width;
+        copy.height = source.height;
+        const context = copy.getContext("2d", { willReadFrequently: true });
+        if (context === null) return [];
+        context.drawImage(source, 0, 0);
+        return points.map(([x, y]) => {
+          const { data } = context.getImageData(Math.round(x * scale), Math.round(y * scale), 1, 1);
+          return [data[0] ?? 0, data[1] ?? 0, data[2] ?? 0] as const;
+        });
+      },
+      bakedDiagnostics: () => (plan.kind === "baked" ? plan.tiles.diagnostics : null),
+      markerRenderedPixels: async (id) => {
+        active.setFilter("markers", ["==", ["get", "id"], id]);
+        for (let frame = 0; frame < 2; frame++) {
+          await new Promise<void>((resolve) => {
+            active.once("render", () => resolve());
+            active.triggerRepaint();
+          });
+        }
+        await nextFrame();
+        const source = active.getCanvas();
+        const copy = document.createElement("canvas");
+        copy.width = Math.max(1, Math.floor(source.width / 4));
+        copy.height = Math.max(1, Math.floor(source.height / 4));
+        const context = copy.getContext("2d", { willReadFrequently: true });
+        let count = 0;
+        if (context !== null) {
+          context.drawImage(source, 0, 0, copy.width, copy.height);
+          const { data } = context.getImageData(0, 0, copy.width, copy.height);
+          for (let index = 0; index < data.length; index += 4) {
+            if (
+              (data[index] ?? 0) > 200 &&
+              (data[index + 1] ?? 0) > 170 &&
+              (data[index + 2] ?? 0) < 140
+            ) {
+              count++;
+            }
+          }
+        }
+        active.setFilter("markers", null);
+        return count;
       },
       project: (id) => {
         const entry = markerEntry(id);
@@ -658,8 +815,9 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
       delete window.__globeSpike;
       mapRef.current = null;
       active.remove();
+      if (registeredProtocol) removeProtocol(BAKED_PROTOCOL);
     };
-  }, [coast, onFail, refreshIndicator, select]);
+  }, [plan, onFail, refreshIndicator, select]);
 
   const selectedName = SPIKE_MARKERS.find((candidate) => candidate.id === selectedId)?.name ?? "";
 
@@ -672,11 +830,20 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
         tabIndex={0}
         onKeyDown={onKeyDown}
         className="absolute inset-0"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+        style={MAP_CONTAINER_STYLE}
       />
       <div className="absolute left-2 top-2 rounded bg-black/70 p-2 font-mono text-xs text-white">
         <span data-testid="globe-spike-status">{statusText}</span>
       </div>
+      {notice === null ? null : (
+        <div
+          role="alert"
+          data-testid="globe-spike-notice"
+          className="absolute bottom-2 left-2 rounded bg-amber-700 p-2 text-xs text-white"
+        >
+          {notice}
+        </div>
+      )}
       <MapEntityList entities={list} selectedId={selectedId} onSelect={select} />
       <div aria-live="polite" role="status" data-testid="globe-spike-live" className="sr-only">
         {liveMessage}

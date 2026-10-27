@@ -1,6 +1,6 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
 
-import { GLOBE_SPIKE_FAIL_HASH, GLOBE_SPIKE_HASH } from "./globe-spike-flag.js";
+import { isSpikeHash } from "./globe-spike-flag.js";
 
 declare const __GLOBE_SPIKE__: boolean;
 
@@ -34,9 +34,7 @@ class SpikeBoundary extends Component<BoundaryProps> {
 }
 
 function spikeRequested(): boolean {
-  return (
-    window.location.hash === GLOBE_SPIKE_HASH || window.location.hash === GLOBE_SPIKE_FAIL_HASH
-  );
+  return isSpikeHash(window.location.hash);
 }
 
 function SpikeOverlay() {
