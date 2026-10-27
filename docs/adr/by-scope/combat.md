@@ -24,3 +24,4 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire.
 - [ADR-0312](../ADR-0312-surface-to-surface-missile-combat-module.md) Surface-to-surface missile salvos are a deterministic combat module.
 - [ADR-0321](../ADR-0321-division-order-model.md) Divisions receive a versioned order model, with stance as a lossless preset.
+- [ADR-0322](../ADR-0322-realism-order-permission-matrix.md) Realism modes gate battle orders in the engine, not in the UI.
