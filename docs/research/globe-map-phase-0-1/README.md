@@ -8,6 +8,8 @@ Start with `phase-0-1-decision.md` (CONDITIONAL_GO), then `phase-0-1-execution-r
 | phase-0-1-execution-report.md | baseline, ordering, commits, failures, ledger |
 | g-00-packaged-csp-report.md | packaged CSP gate |
 | g-01-data-license-and-size-report.md | datasets, licences, measured sizes |
+| g-03-offline-tile-bake-report.md | deterministic Natural Earth tile bake, sizes, offline, benchmark |
+| g-04-protected-features-report.md | protected maritime feature catalogue, validation, limits |
 | baseline-and-benchmark-report.md | current renderer vs hybrid spike, deep zoom, picking |
 | updated-ticket-plan.md | G-00..G-20 corrected status plus new tickets |
 | cross-gpu-protocol.md | how to collect the missing hardware evidence |

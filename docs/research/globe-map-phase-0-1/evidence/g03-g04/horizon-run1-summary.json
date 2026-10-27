@@ -1,0 +1,74 @@
+{
+  "label": "horizon",
+  "tasks": {
+    "horizon": {
+      "samples": 5760,
+      "front": 2797,
+      "back": 2957,
+      "limb": 6,
+      "limbRendered": 2,
+      "backRendered": 0,
+      "frontInBounds": 2119,
+      "frontInBoundsMissing": 1,
+      "byCombo": {
+        "p0b0": {
+          "samples": 1440,
+          "back": 664,
+          "backRendered": 0,
+          "frontInBounds": 647,
+          "frontInBoundsMissing": 0
+        },
+        "p45b0": {
+          "samples": 1440,
+          "back": 928,
+          "backRendered": 0,
+          "frontInBounds": 405,
+          "frontInBoundsMissing": 0
+        },
+        "p45b135": {
+          "samples": 1440,
+          "back": 585,
+          "backRendered": 0,
+          "frontInBounds": 588,
+          "frontInBoundsMissing": 0
+        },
+        "p60b270": {
+          "samples": 1440,
+          "back": 780,
+          "backRendered": 0,
+          "frontInBounds": 479,
+          "frontInBoundsMissing": 1
+        }
+      },
+      "backRenderedSamples": [],
+      "frontMissingSamples": [
+        {
+          "pitch": 60,
+          "bearing": 270,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": 40,
+          "id": "spike-longyearbyen",
+          "cls": "front",
+          "margin": -5.0963839707209235,
+          "onScreen": true,
+          "rendered": false
+        }
+      ],
+      "minMarginBackRendered": null
+    }
+  },
+  "checks": [
+    {
+      "name": "no marker classified back-side is rendered anywhere on the canvas (isolated-marker readback, independent of project())",
+      "ok": true,
+      "detail": "0/2957 (min margin null)"
+    },
+    {
+      "name": "every marker classified front-side whose project() position is in the viewport is rendered",
+      "ok": false,
+      "detail": "1/2119"
+    }
+  ],
+  "consoleErrors": []
+}

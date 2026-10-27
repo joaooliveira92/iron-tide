@@ -7,11 +7,11 @@ Status vocabulary as in the execution ledger. "Next phase" = authorized to start
 | G-00 CSP and worker, packaged | **passed-with-limitations** | - | `g-00-packaged-csp-report.md`; commits def63359 | P0 done; add N-05 (Windows/Linux) | yes (done) |
 | G-01 licence and data | **passed-with-limitations**, `requires-legal-review` z > 8 | - | `g-01-...-report.md` | split into G-01a legal, G-01b GSHHG licence, G-01c pinned snapshot + attribution design | G-01a/b yes |
 | G-02 geo-math | **passed** | - | 18 tests, commit 64d9d9e9 | done | yes |
-| G-03 deterministic coast tile bake | **not-started** (measurement scripts only) | G-01 (NE only), G-02 | `g01/measure.mjs` | P1 | yes, NE data only |
-| G-04 protected-feature layer | **not-started** | G-03 | canals absent in all candidates; NE rivers layer has Suez/Panama centrelines | P0 for any option | yes |
+| G-03 deterministic coast tile bake | **passed-with-limitations** (hitch removal unverified; z7 ceiling) | G-01 (NE only), G-02 | `g-03-offline-tile-bake-report.md`; commits 65fdd20e, 2644391a | done for NE; G-03a below | yes |
+| G-04 protected-feature layer | **passed-with-limitations** (schematic Corinth/Kiel; narrow straits unresolved) | G-03 | `g-04-protected-features-report.md`; commit 65fdd20e | done; G-04a to G-04e below | yes |
 | G-05 glyph pre-bake, OFL font | **in-progress** | - | script + Inter-derived PBFs (untracked); repo lacks Inter licence file | P2; needs licence file | yes |
-| G-06 tile hierarchy and LOD | **not-started** | G-03, G-04 | | P1 | yes |
-| G-07 flagged adapter | **in-progress** (throwaway spike exists; not production) | G-00, G-03 | spike component | P1 | yes |
+| G-06 tile hierarchy and LOD | **eligible, not started** (dependencies now met; the bake defines levels z0 to z7) | G-03, G-04 | | P1 | yes |
+| G-07 flagged adapter | **eligible; in-progress as a throwaway spike only** | G-00, G-03 (met) | spike component | P1 | yes |
 | G-08 subdivision tests | **passed-with-limitations** | G-02 | `densify.test.ts` 8 tests; 34/36 area outlines differ up to 191 km | P1; crack/neighbour test still open | yes |
 | G-09 markers, labels, back-side policy | **in-progress, defects found** | G-07 | GL markers remove ghosts; `project()` hit tests and horizon formula unreliable | **P0** | yes |
 | G-10 camera controller | **in-progress** (intent adapter prototype) | G-02, G-07 | replay bit-identical; anchor drift 0.0099 px; globe panning changes zoom | P1 | yes |
@@ -30,9 +30,9 @@ Status vocabulary as in the execution ledger. "Next phase" = authorized to start
 
 | ID | Title | Priority | Notes |
 |---|---|---|---|
-| N-01 | Area edge semantics: densify at bake, decide rhumb vs lon/lat | P0 | 34/36 areas > 1 km, max 191 km; densify to 10 m tolerance preserves legacy outlines |
+| N-01 | Area edge semantics: densify at bake, decide rhumb vs lon/lat | P0 | **resolved for the catalogue, the bake and the spike adapter** (lon/lat-linear, schema-enforced); sea-area outlines are not yet baked into tiles |
 | N-02 | Retest the black-window report under automation | P1 | cause probable (zero-height layout in an interim spike build), not proven |
-| N-03 | Pre-baked tiles to remove runtime GeoJSON tiling (zoom-out hitch, startup, vertex-limit warning) | P1 | merges with G-03/G-06 |
+| N-03 | Pre-baked tiles to remove runtime GeoJSON tiling (zoom-out hitch, startup, vertex-limit warning) | P1 | **coastline done by G-03**: startup -33%, heap -52%; the hitch did not reproduce so removal is unproven; vertex-limit warning not rechecked |
 | N-04 | Keep `maplibre-gl` out of shipped `node_modules` (29 MB, 789 files, shipped even with the flag off) | P1 | verify moving to devDependencies |
 | N-05 | Windows/Linux packaged CSP and file:// worker smoke | P0 | blocked-external |
 | N-06 | Inter OFL licence file and reserved-name check before committing glyph PBFs | P2 | |
@@ -41,6 +41,21 @@ Status vocabulary as in the execution ledger. "Next phase" = authorized to start
 | N-09 | Lifecycle: constant +27 listeners / +97 nodes retained after close | P2 | no growth across 10 cycles |
 | P-01 | GPU headroom measurement (timer queries or tracing) | P1 | uncapped flags are invalid |
 | N-10 | Missing-asset behaviour (worker/glyph/tile removed) | P2 | |
+
+## Tickets added by the G-03 and G-04 session
+
+| ID | Title | Priority | Notes |
+|---|---|---|---|
+| G-03a | Bake sea-area outlines, routes and markers into the pack or a sibling pack and remove the remaining runtime GeoJSON tiling | P1 | needs the neighbour-crack test on tiles |
+| G-03b | Range-readable pack for datasets above a few MB (the pack is read whole into memory) | P2 | only if a larger approved source is chosen |
+| G-04a | Replace the authored Corinth and Kiel lines and the Bosporus and Dardanelles fallback lines with a centreline from an approved source | P1 | blocked on a cleared source |
+| G-04b | Validate the true narrows: Hormuz, Malacca (Singapore and Phillip channels), Little Belt | P1 | needs finer cleared data |
+| G-04c | Overlay fidelity above z7 (z7 quantisation, about 3 px at z12.5) | P2 | tied to G-01a |
+| G-04d | Decide whether canal geometry above z7 needs a larger-scale source | P2 | blocked on the legal decision G-01a |
+| G-04e | ADR for catalogue, edge semantics and tile pack format | P1 | before any Phase 2 work |
+| N-11 | Deterministic render-truth method for marker visibility and horizon agreement | P1 | the isolated-marker readback is not repeatable |
+| N-12 | Guard that the default package never contains spike assets or build-time map inputs | P1 | caught manually this session; make it a smoke check |
+| N-13 | Reproduce or retire the 67 ms zoom-out hitch observation | P2 | not reproduced in 12 runs |
 
 ## Stop conditions that remain armed
 

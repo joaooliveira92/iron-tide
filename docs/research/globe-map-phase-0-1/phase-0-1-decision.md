@@ -62,3 +62,13 @@ G-03 deterministic tile bake (measurement scripts exist; no product pipeline), G
 ## 8. Production migration tickets
 
 G-18, G-19, G-20 remain **not authorized**.
+
+## 9. Update after G-03 and G-04
+
+**Decision unchanged: `CONDITIONAL_GO`.** Production migration and Phase 2 are not authorized.
+
+- G-04 passed-with-limitations: catalogue, edge semantics, pipeline and validator complete; Corinth and Kiel geometry is schematic and Hormuz and Malacca are validated only at their wide parts.
+- G-03 passed-with-limitations: the Natural Earth bake is deterministic, packaged, offline and validated; honest detail ends at z7.
+- Conditions 4 and 5 in section 6 are met for Natural Earth data at z7 (pre-baked tiles with protected overlay, densified lon/lat outlines and a neighbour-crack test). Condition 4's "1e-5 degree quantisation" and its zoom-out hitch re-measurement are not met: quantisation is the tile grid (76 m at z7) and the hitch did not reproduce.
+- Still open: 1 (legal decision above z8), 2 (cross-GPU), 3 (pointer-pixel hit testing and rendered-visibility indicator; the horizon pixel comparison is inconclusive), 6 (`maplibre-gl` still ships in the default package), 7 (Windows and Linux), 8 (full Overview accessibility plan), 9 (Fleet the Waves 3 observation).
+- New risk found and fixed: build-time map inputs and spike assets leaked into the default package. A guard (N-12) is still needed.

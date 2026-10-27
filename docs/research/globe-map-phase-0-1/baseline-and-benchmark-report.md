@@ -112,3 +112,43 @@ In-app request interceptor: 0 non-local requests. OS-level: the packaged spike p
 ## 11. Raw data
 
 `evidence/validate/*.json` (deep zoom, picking, bench), `evidence/validate2/*.json` (hidden, input, a11y, smoke), `evidence/baseline/capped/baseline.json` (all raw frame samples), `evidence/g00-final/`.
+
+## 12. Update after G-03 and G-04 (pre-baked tiles, horizon, defects)
+
+Historical sections above are unchanged. This section adds measurements made after commits `fc3d4f33`, `65fdd20e` and `2644391a`; the full G-03 numbers are in `g-03-offline-tile-bake-report.md`.
+
+### Before and after, runtime tiling versus the baked pack
+
+Six cold launches per mode, same scripted wheel input, alternating order, benchmark run alone, display capped near 61 Hz (so 16.7 ms means "held 60 fps", not headroom).
+
+| Metric | Runtime tiling | Baked pack |
+|---|---|---|
+| Hash change to idle | 962 ms | 632 to 648 ms |
+| First painted canvas | 567 ms | 450 to 472 ms |
+| JS heap after GC | 42.6 MB | 20.6 MB |
+| Zoom-out max frame, 12 runs | 17.8 to 18.8 ms | 17.7 to 18.7 ms |
+
+**The earlier 67 ms zoom-out hitch did not reproduce in the runtime-tiling baseline** (worst 18.8 ms in 12 runs), so the claim that pre-baked tiles remove it is **unproven**. What is proven is the startup and memory improvement. Not measured: GPU headroom, worker decode time, visible tile count.
+
+### Horizon classification against the render (defects 2 and 3)
+
+The corrected classifier (`classifyHorizon`) was compared with isolated-marker pixel readback over 5,760 samples (10 markers, 4 pitch/bearing combinations, 2 zooms, 2 centre latitudes, 36 longitudes). Three runs of the same task disagreed with each other:
+
+| Run | Back-side markers rendered | Front-side in-viewport markers missing |
+|---|---|---|
+| Earlier harness variant (single render wait) | 60 of 2,957 | 59 of 2,119 |
+| Second variant | 33 of 2,957 | 43 of 2,119 |
+| Final variant, run 1 | 0 of 2,957 | 1 of 2,119 |
+| Final variant, run 2 (identical code) | 108 of 2,957 | 104 of 2,119 |
+
+At pitch 0 and at pitch 45 with bearing 0 the first two variants and the final run 1 agreed perfectly; the disagreements appear in different combinations from run to run, and in pairs (a marker wrongly seen as rendered while another is wrongly missing), which points at stale-frame readbacks in the harness, not at the formula. **Conclusion: the empirical comparison with the rendered limb is inconclusive.** The formula is supported by (a) the derivation, which is the tangent-cone condition that MapLibre's own clipping-plane code evaluates, and (b) an independent ray-casting reference over 4,000 randomised cameras. It is not validated against pixels. New ticket N-11 covers a deterministic render-truth method.
+
+### Defect disposition
+
+| Defect | Disposition |
+|---|---|
+| Near-side marker misses from `project()` (14 of 1,440) | **Preserved, not resolved.** It does not affect G-03 and G-04 validation, which use tile sampling and pixel readback at positions the tests compute themselves. The horizon runs above also show `project()`-based in-viewport tests are not trustworthy. Remains in N-08 and blocks G-07 production use and Phase 2. No new regression fixture was added |
+| Far-side marker leakage from a whole-viewport query | Validation tooling no longer uses that query as a visibility test; `classifyHorizon` gives an explicit front, horizon or back class with a 0.05 degree tolerance (tested at exact horizon, near horizon, rotation and projection mode). Production indicator UX is not done |
+| Horizon formula | Corrected and tested for pitched and rotated cameras; pixel agreement inconclusive (above) |
+| Mercator edge interpretation | Resolved in schema, preprocessor, spike adapter, tests and documentation (G-04 report) |
+| Layout regression (zero-height container) | Covered by `map-container.test.ts`, a size guard that fails the spike back to the current renderer, and non-zero container checks in all four packaged modes. The historical cause of the black window remains probable, not proven |

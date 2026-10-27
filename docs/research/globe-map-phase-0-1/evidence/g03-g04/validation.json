@@ -1,0 +1,841 @@
+{
+  "passed": true,
+  "findings": [],
+  "results": [
+    {
+      "featureId": "suez-canal",
+      "level": 3,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 3,
+        "maxCoverageGapMetres": 632.4,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 73,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 1056.03,
+        "renderedWidthMetres": 21120.5
+      }
+    },
+    {
+      "featureId": "suez-canal",
+      "level": 4,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 3,
+        "maxCoverageGapMetres": 291.4,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 109,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 528.01,
+        "renderedWidthMetres": 10560.3
+      }
+    },
+    {
+      "featureId": "suez-canal",
+      "level": 5,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 3,
+        "maxCoverageGapMetres": 125.6,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 182,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 264.01,
+        "renderedWidthMetres": 5280.1
+      }
+    },
+    {
+      "featureId": "suez-canal",
+      "level": 6,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 3,
+        "maxCoverageGapMetres": 66,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 326,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 132,
+        "renderedWidthMetres": 2640.1
+      }
+    },
+    {
+      "featureId": "suez-canal",
+      "level": 7,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 3,
+        "maxCoverageGapMetres": 40,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 614,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 66,
+        "renderedWidthMetres": 1320
+      }
+    },
+    {
+      "featureId": "panama-canal",
+      "level": 4,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 3,
+        "maxCoverageGapMetres": 346.1,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 59,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 602.84,
+        "renderedWidthMetres": 12056.8
+      }
+    },
+    {
+      "featureId": "panama-canal",
+      "level": 5,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 3,
+        "maxCoverageGapMetres": 184.2,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 85,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 301.42,
+        "renderedWidthMetres": 6028.4
+      }
+    },
+    {
+      "featureId": "panama-canal",
+      "level": 6,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 3,
+        "maxCoverageGapMetres": 92.1,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 135,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 150.71,
+        "renderedWidthMetres": 3014.2
+      }
+    },
+    {
+      "featureId": "panama-canal",
+      "level": 7,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 3,
+        "maxCoverageGapMetres": 33.5,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 235,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 75.36,
+        "renderedWidthMetres": 1507.1
+      }
+    },
+    {
+      "featureId": "corinth-canal",
+      "level": 6,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 1,
+        "maxCoverageGapMetres": 51.5,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 15,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 120.38,
+        "renderedWidthMetres": 2407.6
+      }
+    },
+    {
+      "featureId": "corinth-canal",
+      "level": 7,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 1,
+        "maxCoverageGapMetres": 5.5,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 28,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 60.19,
+        "renderedWidthMetres": 1203.8
+      }
+    },
+    {
+      "featureId": "kiel-canal",
+      "level": 5,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 1,
+        "maxCoverageGapMetres": 102.6,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 134,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 179.99,
+        "renderedWidthMetres": 3599.7
+      }
+    },
+    {
+      "featureId": "kiel-canal",
+      "level": 6,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 1,
+        "maxCoverageGapMetres": 48.1,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 257,
+        "tileEdgeCrossings": 0,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 89.99,
+        "renderedWidthMetres": 1799.9
+      }
+    },
+    {
+      "featureId": "kiel-canal",
+      "level": 7,
+      "kind": "overlay",
+      "passed": true,
+      "metrics": {
+        "pieces": 2,
+        "maxCoverageGapMetres": 26.5,
+        "longestGapRunMetres": 0,
+        "sealedSamples": 0,
+        "samples": 505,
+        "tileEdgeCrossings": 1,
+        "tileEdgeGaps": 0,
+        "orphanVertices": 0,
+        "duplicates": 0,
+        "unitMetres": 45,
+        "renderedWidthMetres": 899.9
+      }
+    },
+    {
+      "featureId": "bosporus",
+      "level": 5,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "bosporus-t1",
+        "sourceWidthMetres": 1094,
+        "levelWidthMetres": 1094,
+        "requiredMetres": 547,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "bosporus",
+      "level": 6,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "bosporus-t1",
+        "sourceWidthMetres": 1094,
+        "levelWidthMetres": 1094,
+        "requiredMetres": 547,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "bosporus",
+      "level": 7,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "bosporus-t1",
+        "sourceWidthMetres": 1094,
+        "levelWidthMetres": 1090,
+        "requiredMetres": 547,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "dardanelles",
+      "level": 5,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "dardanelles-t1",
+        "sourceWidthMetres": 2792,
+        "levelWidthMetres": 2792,
+        "requiredMetres": 1396,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "dardanelles",
+      "level": 6,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "dardanelles-t1",
+        "sourceWidthMetres": 2792,
+        "levelWidthMetres": 2792,
+        "requiredMetres": 1396,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "dardanelles",
+      "level": 7,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "dardanelles-t1",
+        "sourceWidthMetres": 2792,
+        "levelWidthMetres": 2739,
+        "requiredMetres": 1396,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-gibraltar",
+      "level": 4,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-gibraltar-t1",
+        "sourceWidthMetres": 15944,
+        "levelWidthMetres": 15645,
+        "requiredMetres": 11161,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-gibraltar",
+      "level": 5,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-gibraltar-t1",
+        "sourceWidthMetres": 15944,
+        "levelWidthMetres": 15844,
+        "requiredMetres": 11161,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-gibraltar",
+      "level": 6,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-gibraltar-t1",
+        "sourceWidthMetres": 15944,
+        "levelWidthMetres": 15944,
+        "requiredMetres": 11161,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-gibraltar",
+      "level": 7,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-gibraltar-t1",
+        "sourceWidthMetres": 15944,
+        "levelWidthMetres": 15964,
+        "requiredMetres": 11161,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-hormuz",
+      "level": 4,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-hormuz-t1",
+        "sourceWidthMetres": 108921,
+        "levelWidthMetres": 108321,
+        "requiredMetres": 76244,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-hormuz",
+      "level": 5,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-hormuz-t1",
+        "sourceWidthMetres": 108921,
+        "levelWidthMetres": 108821,
+        "requiredMetres": 76244,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-hormuz",
+      "level": 6,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-hormuz-t1",
+        "sourceWidthMetres": 108921,
+        "levelWidthMetres": 109021,
+        "requiredMetres": 76244,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-hormuz",
+      "level": 7,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-hormuz-t1",
+        "sourceWidthMetres": 108921,
+        "levelWidthMetres": 108797,
+        "requiredMetres": 76244,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "bab-el-mandeb",
+      "level": 4,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "bab-el-mandeb-t1",
+        "sourceWidthMetres": 26247,
+        "levelWidthMetres": 28143,
+        "requiredMetres": 18373,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "bab-el-mandeb",
+      "level": 5,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "bab-el-mandeb-t1",
+        "sourceWidthMetres": 26247,
+        "levelWidthMetres": 27944,
+        "requiredMetres": 18373,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "bab-el-mandeb",
+      "level": 6,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "bab-el-mandeb-t1",
+        "sourceWidthMetres": 26247,
+        "levelWidthMetres": 26347,
+        "requiredMetres": 18373,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "bab-el-mandeb",
+      "level": 7,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "bab-el-mandeb-t1",
+        "sourceWidthMetres": 26247,
+        "levelWidthMetres": 26221,
+        "requiredMetres": 18373,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-malacca",
+      "level": 3,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-malacca-t1",
+        "sourceWidthMetres": 151656,
+        "levelWidthMetres": 152255,
+        "requiredMetres": 106159,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-malacca",
+      "level": 4,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-malacca-t1",
+        "sourceWidthMetres": 151656,
+        "levelWidthMetres": 152055,
+        "requiredMetres": 106159,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-malacca",
+      "level": 5,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-malacca-t1",
+        "sourceWidthMetres": 151656,
+        "levelWidthMetres": 151556,
+        "requiredMetres": 106159,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-malacca",
+      "level": 6,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-malacca-t1",
+        "sourceWidthMetres": 151656,
+        "levelWidthMetres": 151556,
+        "requiredMetres": 106159,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "strait-of-malacca",
+      "level": 7,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "strait-of-malacca-t1",
+        "sourceWidthMetres": 151656,
+        "levelWidthMetres": 151654,
+        "requiredMetres": 106159,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "dover-strait",
+      "level": 4,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "dover-strait-t1",
+        "sourceWidthMetres": 37994,
+        "levelWidthMetres": 38094,
+        "requiredMetres": 26596,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "dover-strait",
+      "level": 5,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "dover-strait-t1",
+        "sourceWidthMetres": 37994,
+        "levelWidthMetres": 38094,
+        "requiredMetres": 26596,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "dover-strait",
+      "level": 6,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "dover-strait-t1",
+        "sourceWidthMetres": 37994,
+        "levelWidthMetres": 38124,
+        "requiredMetres": 26596,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "dover-strait",
+      "level": 7,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "dover-strait-t1",
+        "sourceWidthMetres": 37994,
+        "levelWidthMetres": 38076,
+        "requiredMetres": 26596,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "oresund",
+      "level": 5,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "oresund-t1",
+        "sourceWidthMetres": 5995,
+        "levelWidthMetres": 5995,
+        "requiredMetres": 3597,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "oresund",
+      "level": 6,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "oresund-t1",
+        "sourceWidthMetres": 5995,
+        "levelWidthMetres": 6050,
+        "requiredMetres": 3597,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "oresund",
+      "level": 7,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "oresund-t1",
+        "sourceWidthMetres": 5995,
+        "levelWidthMetres": 6007,
+        "requiredMetres": 3597,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "great-belt",
+      "level": 4,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "great-belt-t1",
+        "sourceWidthMetres": 21783,
+        "levelWidthMetres": 21483,
+        "requiredMetres": 15248,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "great-belt",
+      "level": 5,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "great-belt-t1",
+        "sourceWidthMetres": 21783,
+        "levelWidthMetres": 21783,
+        "requiredMetres": 15248,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "great-belt",
+      "level": 6,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "great-belt-t1",
+        "sourceWidthMetres": 21783,
+        "levelWidthMetres": 21860,
+        "requiredMetres": 15248,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    },
+    {
+      "featureId": "great-belt",
+      "level": 7,
+      "kind": "transect",
+      "passed": true,
+      "metrics": {
+        "transect": "great-belt-t1",
+        "sourceWidthMetres": 21783,
+        "levelWidthMetres": 21835,
+        "requiredMetres": 15248,
+        "overlayInjected": false,
+        "sourceSealed": false,
+        "anyOpenSource": true
+      }
+    }
+  ],
+  "tileEdges": [
+    {
+      "level": 0,
+      "pairsChecked": 0,
+      "samples": 0,
+      "mismatches": 0,
+      "ambiguous": 0
+    },
+    {
+      "level": 1,
+      "pairsChecked": 4,
+      "samples": 96,
+      "mismatches": 0,
+      "ambiguous": 0
+    },
+    {
+      "level": 2,
+      "pairsChecked": 24,
+      "samples": 576,
+      "mismatches": 0,
+      "ambiguous": 0
+    },
+    {
+      "level": 3,
+      "pairsChecked": 112,
+      "samples": 2688,
+      "mismatches": 0,
+      "ambiguous": 0
+    },
+    {
+      "level": 4,
+      "pairsChecked": 458,
+      "samples": 10992,
+      "mismatches": 0,
+      "ambiguous": 0
+    },
+    {
+      "level": 5,
+      "pairsChecked": 1656,
+      "samples": 39744,
+      "mismatches": 0,
+      "ambiguous": 1
+    },
+    {
+      "level": 6,
+      "pairsChecked": 5448,
+      "samples": 130752,
+      "mismatches": 0,
+      "ambiguous": 0
+    },
+    {
+      "level": 7,
+      "pairsChecked": 18404,
+      "samples": 441696,
+      "mismatches": 0,
+      "ambiguous": 5
+    }
+  ],
+  "checks": 56
+}
