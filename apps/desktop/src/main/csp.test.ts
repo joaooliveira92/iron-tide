@@ -3,6 +3,7 @@ import {
   applyContentSecurityPolicy,
   CONTENT_SECURITY_POLICY,
   DEV_CONTENT_SECURITY_POLICY,
+  shouldApplyContentSecurityPolicy,
 } from "./csp.js";
 
 const directives = (policy: string): Map<string, string> =>
@@ -56,5 +57,19 @@ describe("applyContentSecurityPolicy", () => {
     expect(applyContentSecurityPolicy(undefined, true)["Content-Security-Policy"]).toEqual([
       DEV_CONTENT_SECURITY_POLICY,
     ]);
+  });
+});
+
+describe("shouldApplyContentSecurityPolicy", () => {
+  it("covers the app's own documents", () => {
+    expect(shouldApplyContentSecurityPolicy("http://localhost:5173/")).toBe(true);
+    expect(shouldApplyContentSecurityPolicy("file:///app/out/renderer/index.html")).toBe(true);
+  });
+
+  it("leaves browser-extension and devtools pages alone so DevTools can frame them", () => {
+    expect(shouldApplyContentSecurityPolicy("chrome-extension://abc/main.html")).toBe(false);
+    expect(shouldApplyContentSecurityPolicy("devtools://devtools/bundled/inspector.html")).toBe(
+      false,
+    );
   });
 });

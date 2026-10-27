@@ -24,6 +24,12 @@ export const DEV_CONTENT_SECURITY_POLICY = [
   ...LOCKED_DIRECTIVES,
 ].join("; ");
 
+const UNMANAGED_PROTOCOLS = ["chrome-extension:", "devtools:"];
+
+export function shouldApplyContentSecurityPolicy(url: string): boolean {
+  return !UNMANAGED_PROTOCOLS.some((protocol) => url.startsWith(protocol));
+}
+
 export function applyContentSecurityPolicy(
   responseHeaders: Record<string, string[]> | undefined,
   isDev = false,

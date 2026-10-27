@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, session } from "electron";
 import { Effect, ManagedRuntime } from "effect";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { applyContentSecurityPolicy } from "./csp.js";
+import { applyContentSecurityPolicy, shouldApplyContentSecurityPolicy } from "./csp.js";
 import { guardIpc, installShellGuards, type ShellTrust } from "./shellGuards.js";
 import { commandHandlers, createCampaignCommandDispatcher } from "./campaignBridge.js";
 import { ContentArtifactError, loadContentArtifact } from "./contentArtifact.js";
@@ -118,9 +118,11 @@ function createWindow(): BrowserWindow {
   });
 
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: applyContentSecurityPolicy(details.responseHeaders, isDev),
-    });
+    callback(
+      shouldApplyContentSecurityPolicy(details.url)
+        ? { responseHeaders: applyContentSecurityPolicy(details.responseHeaders, isDev) }
+        : {},
+    );
   });
 
   attachFailureRecovery(win);
