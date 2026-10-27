@@ -137,6 +137,8 @@ Legend: Impact / Effort / Confidence / Scope. QW = quick win.
 - **Risks:** runner minutes; mitigated by the existing Vite Task and Vitest caches in `quality.yml`.
 - **Ordering:** independent. Decision needed on cost.
 
+- **Implementation status (2026-10-27): implemented, not yet observed on a runner.** `determinism.yml` now triggers on pushes to `dev` (Ubuntu only via the plan job). That workflow already runs build, typecheck, every package test suite, the cross-process and replay checks, and the golden hash verification, so it supplies the missing integration-branch coverage without a new workflow. Confirm on the first push to `dev`.
+
 ### MONO-004: Manifest dependencies, tsconfig references and actual imports disagree
 - **Priority** P2. **Category** Package boundaries / dependency management. **Impact** medium. **Effort** medium. **Confidence** confirmed. **Scope** multi-package.
 - **Evidence (from a throwaway script, then spot-checked with grep):**
@@ -153,6 +155,8 @@ Legend: Impact / Effort / Confidence / Scope. QW = quick win.
 - **Risks:** removing a dependency changes `pnpm-lock.yaml`; do per package. Test-only and bundler-resolved imports need the checker to scan tests and configs.
 - **Ordering:** independent.
 
+- **Implementation status (2026-10-27): implemented.** New gate `scripts/verify-workspace-graph.mjs` (self-tested, wired as `gate:workspace-graph` in preflight) enforces: imported sibling is declared; declared sibling is imported; src import is not dev-only; src import has a tsconfig reference (`apps/desktop` exempt: bundled by electron-vite). Drift fixed: nine unused sibling declarations removed (`combat`, `content-codemod`, `content-compiler`, `deterministic`, `diagnostics`, `messages`, `random`, `test-support`, `compiler-cli`), eight missing references added (`campaign`, `campaign-engine`, `commands`, `cross-process-test`, `phase-engine` x2), `cross-process-test` moved `test-support` to `dependencies`, root `tsconfig.json` completed with `ai`, `combat`, `phase-engine`, `ship-visual`. `contracts` is now a true leaf. Correction: the audit's `ship-visual` and `compiler-cli` reference findings were false positives of the first script (devDependencies used only by scripts and tests; path-style difference).
+
 ### MONO-005: Release workflow does not re-run quality gates and packages Windows/Linux unsmoked
 - **Priority** P2. **Category** Release. **Impact** medium. **Effort** medium. **Confidence** high on the workflow content; branch protection unknown. **Scope** repository-wide.
 - **Evidence:** `release.yml` `verify` job only runs `scripts/verify-release-ref.mjs` (tag format, version match, commit on `main`). `mac`/`win`/`linux` jobs run `pnpm build` and package. The packaged-app smoke (`smoke:packaged`) exists only in `desktop-e2e.yml` on macOS, unpacked. No Windows or Linux packaged smoke exists. `pack` scripts also do not run `content:verify`.
@@ -163,6 +167,8 @@ Legend: Impact / Effort / Confidence / Scope. QW = quick win.
 - **Risks:** Linux needs a display server; signing steps untouched. Draft-only publishing already limits blast radius.
 - **Ordering:** after MONO-003 (reuse the same checks).
 
+- **Implementation status (2026-10-27): deferred.** Changes need a Windows and a Linux hosted runner to iterate on (unpacked output paths, `xvfb`, Electron's Linux sandbox flags for Playwright, and a commit-status check keyed to merge commits that do not carry PR check runs). A wrong release-gating edit would block releases and cannot be validated locally. Plan: add `pack --dir` plus `smoke:packaged --app <path>` per OS in `release.yml` once a runner is available, then a `verify` step that queries check runs for the tagged commit.
+
 ### MONO-006: No secret scanning or static analysis in CI
 - **Priority** P2. **Category** Security / supply chain. **Impact** medium. **Effort** small. **Confidence** high. **Scope** repository-wide. **QW:** yes.
 - **Evidence:** searching `.github`, `scripts`, `vite.config.ts`, `package.json` for gitleaks, trufflehog, CodeQL, osv or similar finds nothing. The contract (Security section) requires "vulnerability scanning, license checks, and secret scanning". `pnpm audit` runs only in `quality.yml` (PRs into `main`) at `--audit-level=high`. `.github/dependabot.yml` covers npm and Actions only.
@@ -171,6 +177,8 @@ Legend: Impact / Effort / Confidence / Scope. QW = quick win.
 - **Validation:** workflow run on a throwaway branch.
 - **Risks:** noise from fixtures and vendored code; configure path ignores for `vendor/**`.
 - **Ordering:** independent. I did not scan history for committed secrets; a one-off scan is worth running with this change.
+
+- **Implementation status (2026-10-27): partly implemented.** `.github/workflows/security.yml` runs `pnpm audit --prod --audit-level=high` and CodeQL (SHA-pinned) weekly on `dev`. A tracked-tree scan for common token and private-key patterns, and a history search for private-key headers, found nothing. Not done: enabling GitHub secret scanning and push protection is a repository setting (remote state), so it is left for the owner; a gitleaks step was not added because it could not be validated locally.
 
 ### MONO-007: Renderer sandbox disabled, IPC senders unchecked, Electron fuses unset
 - **Priority** P2. **Category** Security / Electron boundary. **Impact** medium. **Effort** medium. **Confidence** high for facts, low for exploitability. **Scope** local.
@@ -182,6 +190,8 @@ Legend: Impact / Effort / Confidence / Scope. QW = quick win.
 - **Risks:** sandboxed preload cannot import Node modules; `process.platform` is still available. Needs an ADR (Electron boundary, replacement cost).
 - **Ordering:** after MONO-001 and MONO-002.
 
+- **Implementation status (2026-10-27): mostly implemented.** The preload is built as CommonJS (`out/preload/index.cjs`) and the renderer runs with `sandbox: true`; `guardIpc` rejects invokes from an untrusted sender frame (tagged `UntrustedSender`) and drops untrusted one-way messages. Verified by unit tests, the full desktop e2e suite (33 passed) and the packaged smoke (22 checks). The sandbox decision is in ADR-0320. Deferred: Electron fuses; Playwright's `_electron.launch` (used by the packaged smoke) needs `EnableNodeCliInspectArguments`, so fuses need a separate fused release build and smoke strategy.
+
 ### MONO-008: Third-party copyrighted reference material is committed
 - **Priority** P2. **Category** Hygiene / legal. **Impact** medium. **Effort** small. **Confidence** confirmed presence; licence status unknown. **Scope** local.
 - **Evidence:** `docs/Rule the Waves 3 Manual EBOOK.pdf` (about 13 MB) and `docs/research/Steam Community __ Guide __ Ship Design Guide (1890 to 1970).mhtml` (about 4.7 MB) are tracked; `docs/campaign-review.mhtml` also. These are the largest tracked files outside `vendor/`.
@@ -191,6 +201,8 @@ Legend: Impact / Effort / Confidence / Scope. QW = quick win.
 - **Validation:** `pnpm preflight` (docs link check), `git ls-files -z | xargs -0 du -k | sort -rn | head`.
 - **Risks:** docs may link to these files; the history question needs the owner's decision.
 - **Ordering:** independent.
+
+- **Implementation status (2026-10-27): blocked on an owner decision.** ADR-0210 and many ADRs cite the manual as an authority, so deleting it would remove provenance, and purging history is forbidden without approval. Decision request: `.ai/decision-requests/0048-third-party-reference-documents-in-the-repository.md`.
 
 ### MONO-009: Node and pnpm versions are duplicated across eight places with no gate
 - **Priority** P3. **Category** DX / reproducibility. **Impact** low. **Effort** small. **Confidence** confirmed. **Scope** repository-wide. **QW:** yes.
@@ -217,6 +229,8 @@ Legend: Impact / Effort / Confidence / Scope. QW = quick win.
 - **Remediation if confirmed:** point `types` at `dist/*.d.ts` and rely on project references, or keep source types and document the invariant with a gate that fails when `dist` is older than `src`.
 - **Dependencies:** MONO-004 (reference correctness) first.
 
+- **Status (2026-10-27): no change, accepted risk.** Every gated path builds before it tests or typechecks (`pnpm test`, `pnpm typecheck`, `check:steps`, CI), so the stale-`dist` skew only affects an unbuilt local editor session. Changing `types` to `dist` would trade that for a build-before-edit requirement. Revisit only if stale-`dist` failures recur.
+
 ### MONO-012: `pnpm check` builds repeatedly and runs fully serial
 - **Priority** P3. **Category** Performance / DX. **Impact** low to medium. **Effort** medium. **Confidence** medium (needs profiling). **Scope** repository-wide.
 - **Evidence:** `check:steps` runs `typecheck` (which itself runs `vp run -r build`), then `pnpm build`, `content:verify` (rebuilds compiler-cli), then tests, in one `&&` chain; `scripts/heavy.mjs` additionally serializes sessions. During this audit my preflight queued behind another session's full check.
@@ -224,11 +238,15 @@ Legend: Impact / Effort / Confidence / Scope. QW = quick win.
 - **Remediation:** profile with `vp run --last-details`; if builds repeat, express the chain as a task graph with dependencies rather than a shell `&&` chain; audit task input declarations (a correctness issue if the cache can replay stale output).
 - **Validation:** measure wall time before and after on a clean tree.
 
+- **Status (2026-10-27): measured, no action.** A warm `pnpm typecheck` after a full build took 8 s (50/50 tasks, most replayed from the task cache), so the repeated builds are absorbed by the cache. The two tasks that always rerun (`@bluewave/desktop#build` and one more) modify their own inputs (the compiled content artifact); a full `pnpm check` took 618 s end to end on an idle machine. The `--no-cache` workaround in `quality.yml` remains a hint that some task inputs are under-declared; not investigated further.
+
 ### MONO-013: Foundational determinism packages have thin direct test suites
 - **Priority** P3. **Category** Testing. **Impact** medium. **Effort** medium. **Confidence** low (coverage not measured). **Scope** multi-package.
 - **Evidence:** test file counts: `random` 1, `diagnostics` 1, `contracts` 2, `deterministic` 2, `events` 6, versus `combat` 301 and `desktop` 422. No coverage configuration exists in `vite.config.ts` or the vitest configs.
 - **Why it matters:** these packages underpin every golden hash; indirect coverage through golden hashes and the replay corpus is strong but diagnoses poorly.
 - **Remediation:** measure branch coverage for just those packages (one-off `vp test run --coverage`) and add property tests for RNG stream derivation and canonical serialization where gaps appear. Do not add a global coverage threshold.
+
+- **Status (2026-10-27): largely refuted.** The coverage provider (`@vitest/coverage-v8`) is not installed, so line coverage was not measured. Counting instead: `random` has 20 test cases for 93 source lines, `deterministic` 18 for 106, `diagnostics` 10 for 150, `contracts` 30 for 245, `events` 63 for 757. Few test files do not mean thin tests, and the golden hashes and replay corpus cover these packages indirectly. No action; add property tests for RNG stream derivation only if a gap is found.
 
 ## 5. Quick-win plan
 
@@ -274,3 +292,21 @@ Sequencing: MONO-004 precedes MONO-011; MONO-001 and MONO-002 precede MONO-007; 
 - Ticket drafts were not generated; `docs/agents/issue-tracker.md` defines GitHub Issues, and creating remote issues was not authorized.
 
 Counts: P0 0, P1 2, P2 6, P3 5 (13 findings).
+
+## 9. Remediation status (2026-10-27)
+
+| Finding | Status |
+| --- | --- |
+| MONO-001 | implemented, tested (unit, e2e, packaged smoke) |
+| MONO-002 | hypothesis refuted; policy hardened and tested |
+| MONO-003 | implemented, pending first runner observation |
+| MONO-004 | implemented (new gate and drift fixed) |
+| MONO-005 | deferred (needs Windows and Linux runners) |
+| MONO-006 | partly implemented; GitHub secret scanning setting left to the owner |
+| MONO-007 | sandbox and IPC sender validation implemented; fuses deferred |
+| MONO-008 | blocked on decision request 0048 |
+| MONO-009 | implemented, pending first runner observation |
+| MONO-010 | implemented |
+| MONO-011 | no change, accepted risk |
+| MONO-012 | measured, no action |
+| MONO-013 | largely refuted, no action |
