@@ -18,7 +18,6 @@ playwright-report/
 # of truth — DESIGN-05). See docs/adr for the artifact ADR.
 content/generated/
 
-.turbo
 # Local git worktrees (AGENTS.md "dedicated worktree") — never tracked.
 .worktrees/
 apps/desktop/dist-electron/
