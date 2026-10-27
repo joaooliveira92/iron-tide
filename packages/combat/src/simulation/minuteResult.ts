@@ -19,6 +19,9 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
     torpedoStates,
     torpedoTracks,
     torpedoRecords,
+    missileRecords,
+    missileStates,
+    missileSalvos,
     smokeClouds,
     smokeRecords,
     airCombatRecords,
@@ -30,6 +33,10 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
   const events = ledger.sorted();
   const hasTorpedoSurface =
     torpedoTracks !== undefined || (torpedoRecords !== undefined && torpedoRecords.length > 0);
+  const hasMissileSurface =
+    missileStates !== undefined ||
+    missileSalvos !== undefined ||
+    (missileRecords !== undefined && missileRecords.length > 0);
   const snapshot = {
     battleId,
     minute,
@@ -94,6 +101,46 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
           },
         }
       : {}),
+    ...(hasMissileSurface
+      ? {
+          missile: {
+            ...(missileRecords && missileRecords.length > 0
+              ? {
+                  records: missileRecords.map((r) => ({
+                    recordId: r.recordId,
+                    kind: r.kind,
+                    recordHash: r.recordHash,
+                  })),
+                }
+              : {}),
+            ...(missileSalvos
+              ? {
+                  inFlight: missileSalvos.map((salvo) => ({
+                    salvoId: salvo.salvoId,
+                    impactMinute: salvo.impactMinute,
+                    missiles: salvo.missiles,
+                    salvoHash: salvo.salvoHash,
+                  })),
+                }
+              : {}),
+            ...(missileStates
+              ? {
+                  launchers: Object.keys(missileStates)
+                    .sort()
+                    .map((launcherId) => {
+                      const state = missileStates[launcherId]!;
+                      return {
+                        launcherId,
+                        salvosFired: state.salvosFired,
+                        maxSalvos: state.maxSalvos,
+                        stateHash: state.stateHash,
+                      };
+                    }),
+                }
+              : {}),
+          },
+        }
+      : {}),
     ...(smokeRecords && smokeRecords.length > 0
       ? {
           smoke: {
@@ -153,6 +200,9 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
     ...(torpedoStates ? { torpedoStates } : {}),
     ...(torpedoTracks ? { torpedoTracks } : {}),
     ...(torpedoRecords ? { torpedoRecords } : {}),
+    ...(missileRecords ? { missileRecords } : {}),
+    ...(missileStates ? { missileStates } : {}),
+    ...(missileSalvos ? { missileSalvos } : {}),
     ...(smokeClouds ? { smokeClouds } : {}),
     ...(smokeRecords ? { smokeRecords } : {}),
     ...(airCombatRecords ? { airCombatRecords } : {}),

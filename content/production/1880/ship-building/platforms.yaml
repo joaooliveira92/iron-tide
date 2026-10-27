@@ -9,6 +9,7 @@ platforms:
       - compatibility_funnel
       - compatibility_gun_mount
       - compatibility_magazine
+      - compatibility_missile_launcher
       - compatibility_propulsion_plant
       - compatibility_sensor
       - compatibility_torpedo_launcher
@@ -23,6 +24,7 @@ platforms:
       - compatibility_funnel
       - compatibility_gun_mount
       - compatibility_magazine
+      - compatibility_missile_launcher
       - compatibility_propulsion_plant
       - compatibility_sensor
       - compatibility_torpedo_launcher
@@ -37,6 +39,7 @@ platforms:
       - compatibility_funnel
       - compatibility_gun_mount
       - compatibility_magazine
+      - compatibility_missile_launcher
       - compatibility_propulsion_plant
       - compatibility_sensor
       - compatibility_torpedo_launcher
@@ -51,6 +54,7 @@ platforms:
       - compatibility_funnel
       - compatibility_gun_mount
       - compatibility_magazine
+      - compatibility_missile_launcher
       - compatibility_propulsion_plant
       - compatibility_sensor
       - compatibility_torpedo_launcher
@@ -65,6 +69,7 @@ platforms:
       - compatibility_funnel
       - compatibility_gun_mount
       - compatibility_magazine
+      - compatibility_missile_launcher
       - compatibility_propulsion_plant
       - compatibility_sensor
       - compatibility_torpedo_launcher
@@ -79,6 +84,7 @@ platforms:
       - compatibility_funnel
       - compatibility_gun_mount
       - compatibility_magazine
+      - compatibility_missile_launcher
       - compatibility_propulsion_plant
       - compatibility_sensor
       - compatibility_torpedo_launcher
@@ -93,6 +99,7 @@ platforms:
       - compatibility_funnel
       - compatibility_gun_mount
       - compatibility_magazine
+      - compatibility_missile_launcher
       - compatibility_propulsion_plant
       - compatibility_sensor
       - compatibility_torpedo_launcher
@@ -107,6 +114,7 @@ platforms:
       - compatibility_funnel
       - compatibility_gun_mount
       - compatibility_magazine
+      - compatibility_missile_launcher
       - compatibility_propulsion_plant
       - compatibility_sensor
       - compatibility_torpedo_launcher
@@ -121,6 +129,7 @@ platforms:
       - compatibility_funnel
       - compatibility_gun_mount
       - compatibility_magazine
+      - compatibility_missile_launcher
       - compatibility_propulsion_plant
       - compatibility_sensor
       - compatibility_torpedo_launcher

@@ -526,6 +526,19 @@
       "adr_or_issue": "ADR-0300"
     },
     {
+      "id": "combat-missiles",
+      "player_verb": "Surface-to-surface missile salvos in a battle",
+      "status": "dormant-by-decision",
+      "engine_package": "combat",
+      "engine_modules": ["missiles"],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "adr_or_issue": "ADR-0312",
+      "note": "Wired into campaign auto-resolution and the minute engine, and unit-tested (packages/combat/test/battle-resolution/missile-auto.test.ts) with a design that carries a missile_launch capability. No production campaign design carries a launcher yet; #258 owns the 1940-1970 reference designs that make it reachable in play."
+    },
+    {
       "id": "combat-submarines",
       "player_verb": "Submarine operations",
       "status": "dormant-by-decision",

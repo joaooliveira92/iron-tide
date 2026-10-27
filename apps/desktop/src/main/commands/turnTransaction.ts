@@ -144,6 +144,7 @@ export const runTurnTransaction = (
     const battleOffers = yield* contentArtifact.loadBattleOfferRules();
     const fleetManagement = yield* contentArtifact.loadFleetManagementRules();
     const gunneryRules = yield* contentArtifact.loadGunneryRules();
+    const missilesRules = yield* contentArtifact.loadMissilesRules();
 
     const recordedInputs = input.recordedInputs ?? [];
     const committedOrderHash = sha256Hex(canonicalSerialize(pendingCommands));
@@ -178,6 +179,7 @@ export const runTurnTransaction = (
           ? { fleetManagement, playerNationId: record.playerSlotId }
           : {}),
         ...(gunneryRules !== undefined ? { gunneryRules } : {}),
+        ...(missilesRules !== undefined ? { missilesRules } : {}),
         ...(channel !== undefined ? { interruptions: channel } : {}),
       },
     );

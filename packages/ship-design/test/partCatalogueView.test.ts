@@ -61,14 +61,20 @@ describe("family-level catalogue view (17b-1)", () => {
     ).toEqual(legacyCatalogueView(components).map(key));
   });
 
-  it("selects the legacy catalogue plus the authored radar parts", () => {
+  it("selects the legacy catalogue plus the authored radar and missile launcher parts", () => {
     const view = buildPartCatalogueView(model);
-    expect(view).toHaveLength(components.length + 3);
+    expect(view).toHaveLength(components.length + 6);
     expect(view.filter((entry) => legacyIds.has(entry.id)).map((e) => e.id)).toEqual(
       legacyCatalogueView(components).map((e) => e.id),
     );
     expect(view.map((e) => e.id)).toEqual(
-      expect.arrayContaining(["rad_type_286_search", "rad_type_284_fire_control"]),
+      expect.arrayContaining([
+        "rad_type_286_search",
+        "rad_type_284_fire_control",
+        "mis_launcher_light_ssm",
+        "mis_launcher_medium_ssm",
+        "mis_launcher_heavy_ssm",
+      ]),
     );
   });
 

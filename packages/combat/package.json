@@ -56,6 +56,10 @@
       "types": "./src/mines/index.ts",
       "default": "./dist/mines/index.js"
     },
+    "./missiles": {
+      "types": "./src/missiles/index.ts",
+      "default": "./dist/missiles/index.js"
+    },
     "./movement": {
       "types": "./src/movement/index.ts",
       "default": "./dist/movement/index.js"

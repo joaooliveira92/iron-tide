@@ -47,6 +47,11 @@ import { designRadarFactors, type GunneryRadarRules } from "./gunneryRadar.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { projectTorpedoes } from "./torpedoProjection.js";
 import type { TorpedoContext } from "../torpedoes/index.js";
+import {
+  projectMissileContext,
+  type MissileContext,
+  type MissileRules,
+} from "../missiles/index.js";
 
 import {
   NO_TRAINING_EFFECTS,
@@ -72,6 +77,7 @@ export interface ProjectBattleInput {
   defender: AutoResolverNation;
   rulesetVersion: string;
   gunneryRadar?: GunneryRadarRules;
+  missilesRules?: MissileRules;
 }
 
 export interface ProjectBattleOutput {
@@ -82,6 +88,7 @@ export interface ProjectBattleOutput {
   units: TacticalShipUnit[];
   designs: Record<string, CompiledDesignVersion>;
   torpedoes?: TorpedoContext;
+  missiles?: MissileContext;
   trainingEffects: TrainingEffectsBySide;
 }
 
@@ -308,6 +315,18 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
     damageTargets: targets,
   });
 
+  const missiles =
+    input.missilesRules === undefined
+      ? undefined
+      : projectMissileContext(
+          units.map((unit) => ({
+            shipId: unit.assetId,
+            sideId: unit.sideId,
+            ...(unit.capabilities === undefined ? {} : { capabilities: unit.capabilities }),
+          })),
+          input.missilesRules,
+        );
+
   return {
     state,
     batteries,
@@ -316,6 +335,7 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
     units,
     designs: unitDesigns,
     ...(torpedoes ? { torpedoes } : {}),
+    ...(missiles ? { missiles } : {}),
     trainingEffects: {
       ATTACKER: attacker.trainingEffects ?? NO_TRAINING_EFFECTS,
       DEFENDER: defender.trainingEffects ?? NO_TRAINING_EFFECTS,

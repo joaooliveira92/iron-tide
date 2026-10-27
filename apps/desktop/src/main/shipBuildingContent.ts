@@ -3,6 +3,7 @@ import {
   battleOffersFromRulesets,
   fleetManagementFromRulesets,
   gunneryFromRulesets,
+  missilesFromRulesets,
   presenceFromRulesets,
   type ShipBuildingCatalogue,
 } from "@bluewave/content-compiler";
@@ -108,6 +109,17 @@ export function loadGunneryRules(): GunneryRules | undefined {
   const { bundle } = readContentArtifact(resolveGeneratedContentDir());
   gunneryRules = { rules: gunneryFromRulesets(bundle.rulesets) };
   return gunneryRules.rules;
+}
+
+type MissilesRules = ReturnType<typeof missilesFromRulesets>;
+
+let missilesRules: { readonly rules: MissilesRules | undefined } | null = null;
+
+export function loadMissilesRules(): MissilesRules | undefined {
+  if (missilesRules !== null) return missilesRules.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  missilesRules = { rules: missilesFromRulesets(bundle.rulesets) };
+  return missilesRules.rules;
 }
 
 export function loadShipBuildingData(): ShipBuildingData {

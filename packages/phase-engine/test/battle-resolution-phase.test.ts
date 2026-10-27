@@ -1,7 +1,8 @@
-import type { CampaignSnapshot, Ship } from "@bluewave/campaign";
+import type { CampaignSnapshot, CompiledDesignVersion, Ship } from "@bluewave/campaign";
 import { resolve } from "@bluewave/combat";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "@bluewave/combat/battleResolution";
 import { INVALID_BATTLE_WEATHER_INITIALIZATION } from "@bluewave/combat/weather";
+import type { MissilesRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -21,9 +22,19 @@ import {
 const MONTH = "1880-02";
 type AutoResolutionManifest = Parameters<typeof resolve>[0]["manifest"];
 
-function runMonth(snapshot: CampaignSnapshot) {
+function runMonth(
+  snapshot: CampaignSnapshot,
+  engineOptions?: { readonly missilesRules?: MissilesRules },
+) {
   const collector = new DiagnosticCollector();
-  const result = new MonthExecutor().execute(snapshot, [], CAMPAIGN_SEED, collector);
+  const result = new MonthExecutor().execute(
+    snapshot,
+    [],
+    CAMPAIGN_SEED,
+    collector,
+    undefined,
+    engineOptions,
+  );
   return { collector, result };
 }
 
@@ -304,5 +315,74 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
       b.result.finalSnapshot.wars.battles[0]!.result,
     );
     expect(a.result.randomLedger.hash()).toBe(b.result.randomLedger.hash());
+  });
+
+  it("threads missilesRules into battle_resolution so a launcher design changes the resolved damage", () => {
+    const launched = {
+      ...makeDesign("dv-att-a", ATTACKER_NATION),
+      capabilities: [{ kind: "missile_launch", missileClass: "heavy_ssm" } as const],
+    };
+    const designs = new Map<string, CompiledDesignVersion>([
+      ["dv-att-a", launched],
+      ["dv-att-b", makeDesign("dv-att-b", ATTACKER_NATION)],
+      ["dv-def-a", makeDesign("dv-def-a", DEFENDER_NATION)],
+      ["dv-def-b", makeDesign("dv-def-b", DEFENDER_NATION)],
+    ]);
+    const rules: MissilesRules = {
+      sectionVersion: 1,
+      classes: {
+        light_ssm: {
+          rangeM: 30_000,
+          flightTimeSeconds: 60,
+          salvoSize: 2,
+          baseHitBp: 10_000,
+          structuralDamage: 1_800,
+          flotationDamage: 900,
+          defenceInterceptBp: 0,
+          maxSalvosPerBattle: 4,
+        },
+        medium_ssm: {
+          rangeM: 55_000,
+          flightTimeSeconds: 60,
+          salvoSize: 2,
+          baseHitBp: 10_000,
+          structuralDamage: 2_600,
+          flotationDamage: 1_400,
+          defenceInterceptBp: 0,
+          maxSalvosPerBattle: 4,
+        },
+        heavy_ssm: {
+          rangeM: 90_000,
+          flightTimeSeconds: 60,
+          salvoSize: 2,
+          baseHitBp: 10_000,
+          structuralDamage: 3_800,
+          flotationDamage: 2_200,
+          defenceInterceptBp: 0,
+          maxSalvosPerBattle: 3,
+        },
+      },
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [{ title: "test" }],
+        note: "test",
+      },
+    };
+
+    const without = runMonth(makeBattleSnapshot({ designs }));
+    const withMissiles = runMonth(makeBattleSnapshot({ designs }), { missilesRules: rules });
+
+    expect(without.collector.errors).toHaveLength(0);
+    expect(withMissiles.collector.errors).toHaveLength(0);
+    expect(
+      withMissiles.result.randomLedger.all.filter((decision) =>
+        decision.streamId.startsWith("missile/"),
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(withMissiles.result.finalSnapshot.wars.battles[0]!.result!.damageReport).not.toEqual(
+      without.result.finalSnapshot.wars.battles[0]!.result!.damageReport,
+    );
   });
 });

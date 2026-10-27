@@ -13,6 +13,7 @@ import type {
   BattleOfferRules,
   FleetManagementRules,
   GunneryRules,
+  MissilesRules,
 } from "@bluewave/content-schema";
 import type { ShipBuildingContent } from "@bluewave/ship-design";
 import type { FinancialLedger } from "./financial-ledger.js";
@@ -56,6 +57,7 @@ export interface MonthExecutorEngineOptions {
   readonly battleOffers?: BattleOfferRules;
   readonly fleetManagement?: FleetManagementRules;
   readonly gunneryRules?: GunneryRules;
+  readonly missilesRules?: MissilesRules;
 }
 
 export interface MonthRunState {
