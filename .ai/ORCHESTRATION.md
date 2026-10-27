@@ -86,7 +86,7 @@ the sprint's validation report (`.ai/reports/<slug>.md`):
 
 Run each effort in its own worktree (`.worktrees/<slug>`, ADR-0220) so several
 orchestrators progress in parallel without sharing a checkout. Track the live set
-in the local ledger `.worktrees/LEDGER.md` via `pnpm worktrees` (`new`/`list`/`sync`/`prune`);
+in the shared registry `$(git rev-parse --git-common-dir)/ai/worktrees.json` via `pnpm worktrees` (`new`/`list`/`sync`/`prune`);
 `pnpm preflight` warns on stale or unregistered subtrees.
 
 ## Orchestrator responsibilities

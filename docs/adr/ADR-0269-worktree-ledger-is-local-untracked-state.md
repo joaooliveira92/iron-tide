@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-10-22). Amends ADR-0220.
+Superseded by: ADR-0313. Amends ADR-0220.
 
 ## Context
 

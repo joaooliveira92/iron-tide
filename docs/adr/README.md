@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0313).
+highest existing number + 1 (the next number is ADR-0314).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -81,13 +81,14 @@ Concurrent-agent worktree coordination and repository process rules.
 | 0246 | [ADR-0246-replay-corpus-supersedes-single-scenario-golden.md](ADR-0246-replay-corpus-supersedes-single-scenario-golden.md) | A replay corpus supersedes the single-scenario golden as the determinism baseline | accepted | — |
 | 0267 | [ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md](ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md) | The reachability ledger maps engine capability to desktop path | accepted | — |
 | 0268 | [ADR-0268-code-carries-no-comments.md](ADR-0268-code-carries-no-comments.md) | Code carries no comments | accepted | — |
-| 0269 | [ADR-0269-worktree-ledger-is-local-untracked-state.md](ADR-0269-worktree-ledger-is-local-untracked-state.md) | The worktree ledger is local, untracked state | accepted | — |
+| 0269 | [ADR-0269-worktree-ledger-is-local-untracked-state.md](ADR-0269-worktree-ledger-is-local-untracked-state.md) | The worktree ledger is local, untracked state | superseded | ADR-0313 |
 | 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
 | 0279 | [ADR-0279-replay-approvals-carry-a-change-class.md](ADR-0279-replay-approvals-carry-a-change-class.md) | Replay approvals carry a verified change class | accepted | — |
 | 0280 | [ADR-0280-property-based-replay-scenarios.md](ADR-0280-property-based-replay-scenarios.md) | Property-based replay scenarios use fast-check as a test-only dependency | accepted | — |
 | 0295 | [ADR-0295-war-bearing-replay-scenarios.md](ADR-0295-war-bearing-replay-scenarios.md) | A replay scenario may name a player nation and a deterministic start setup so the corpus fights a battle | accepted | — |
 | 0299 | [ADR-0299-gate-runs-serialise-across-worktrees.md](ADR-0299-gate-runs-serialise-across-worktrees.md) | `pnpm check` serialises across worktrees and reports machine load | accepted | — |
 | 0300 | [ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md](ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md) | Unreachable combat modules are wired by their roadmap owner and stay dormant until then | accepted | — |
+| 0313 | [ADR-0313-worktree-registry-under-git-common-dir.md](ADR-0313-worktree-registry-under-git-common-dir.md) | The worktree inventory is a locked registry under the Git common directory | accepted | — |
 
 ## Scenario content & research
 
