@@ -35,6 +35,9 @@ export default defineConfig({
   renderer: {
     root: resolve(__dirname, "src/renderer"),
     plugins: [react(), tailwindcss()],
+    define: {
+      __GLOBE_SPIKE__: JSON.stringify(process.env.VITE_BLUEWAVE_GLOBE_SPIKE === "true"),
+    },
     build: {
       outDir: resolve(__dirname, "out/renderer"),
       rollupOptions: {
