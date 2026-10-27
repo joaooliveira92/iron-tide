@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0314).
+highest existing number + 1 (the next number is ADR-0315).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -89,6 +89,7 @@ Concurrent-agent worktree coordination and repository process rules.
 | 0299 | [ADR-0299-gate-runs-serialise-across-worktrees.md](ADR-0299-gate-runs-serialise-across-worktrees.md) | `pnpm check` serialises across worktrees and reports machine load | accepted | — |
 | 0300 | [ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md](ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md) | Unreachable combat modules are wired by their roadmap owner and stay dormant until then | accepted | — |
 | 0313 | [ADR-0313-worktree-registry-under-git-common-dir.md](ADR-0313-worktree-registry-under-git-common-dir.md) | The worktree inventory is a locked registry under the Git common directory | accepted | — |
+| 0314 | [ADR-0314-debug-screens-stay-internal.md](ADR-0314-debug-screens-stay-internal.md) | Debug-only screens stay internal and leave the production renderer bundle | accepted | — |
 
 ## Scenario content & research
 
