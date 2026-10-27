@@ -21,14 +21,14 @@ import { DEBUG_MODE } from "./debug-flag.js";
 
 export type { CampaignScreen, Screen } from "./campaign-screen-types.js";
 
-const MAP_PROTOTYPE_SCREEN: CampaignScreenDefinition = {
-  id: "map-prototype",
-  label: translate("nav.screen.map-prototype.label"),
-  shortLabel: translate("nav.screen.map-prototype.short"),
+const STRATEGIC_MAP_SCREEN: CampaignScreenDefinition = {
+  id: "strategic-map",
+  label: translate("nav.screen.strategic-map.label"),
+  shortLabel: translate("nav.screen.strategic-map.short"),
   icon: MapIcon,
   group: "campaign",
   searchable: true,
-  route: CAMPAIGN_SCREEN_ROUTES["map-prototype"],
+  route: CAMPAIGN_SCREEN_ROUTES["strategic-map"],
 };
 
 const SIMULATION_SCREEN: CampaignScreenDefinition = {
@@ -97,6 +97,7 @@ export const CAMPAIGN_SCREEN_REGISTRY: readonly CampaignScreenDefinition[] = [
     searchable: true,
     route: CAMPAIGN_SCREEN_ROUTES.fleet,
   },
+  STRATEGIC_MAP_SCREEN,
   ...(DEBUG_MODE ? [SIMULATION_SCREEN] : []),
   {
     id: "research",
@@ -118,7 +119,6 @@ export const CAMPAIGN_SCREEN_REGISTRY: readonly CampaignScreenDefinition[] = [
   },
   TREASURY_SCREEN,
   ...(DEBUG_MODE ? [TACTICAL_SANDBOX_SCREEN, DEBUGGING_SCREEN] : []),
-  ...(import.meta.env.DEV ? [MAP_PROTOTYPE_SCREEN] : []),
   {
     id: "campaign-preferences",
     label: translate("nav.screen.campaign-preferences.label"),

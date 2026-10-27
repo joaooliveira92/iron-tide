@@ -7,6 +7,8 @@ import { Inspector } from "../shipbuilding/components/Inspector.js";
 import { InspectorResizeHandle } from "../shipbuilding/components/InspectorResizeHandle.js";
 import { INSPECTOR_COLLAPSED_PX } from "../shipbuilding/inspector-layout.js";
 import { useInspectorLayout } from "../shipbuilding/useInspectorLayout.js";
+import { cn } from "../../lib/utils.js";
+import { useScreenHeaderHost } from "../../shell/screen-header.js";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import {
   BatchBuildDialog,
@@ -62,6 +64,7 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
     authorizeDockExpansion,
   } = useConstructionScreen(sessionId);
   const format = usePresentationFormat();
+  const hosted = useScreenHeaderHost();
   const [place, setPlace] = useState<YardPlaceId>("slipways");
   const [tabs, setTabs] = useState<Readonly<Record<YardPlaceId, string>>>(() => ({
     slipways: "project",
@@ -323,13 +326,36 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
 
   const inspectorTitle = place === "catalog" ? "Design catalog" : currentPlace.label;
 
+  const yardBar = (
+    <YardBar
+      design={selectedDesign}
+      designCount={state.designs.length}
+      busy={busy}
+      retryPending={request.outcomeUnknown}
+      onRetry={request.outcomeUnknown ? request.retry : undefined}
+      onSubmit={openWizard}
+      onBatch={openBatch}
+      onRefresh={refresh}
+      inHeader={hosted}
+    />
+  );
+
   return (
     <ScreenStage
       guidedTarget="construction"
       icon={Hammer}
       title="Construction Commands"
       description="Drydock procurement and shipyard queue management."
-      actions={debugRevisionActions(state.month, state.revision)}
+      actions={
+        hosted ? (
+          <>
+            {yardBar}
+            {debugRevisionActions(state.month, state.revision)}
+          </>
+        ) : (
+          debugRevisionActions(state.month, state.revision)
+        )
+      }
       className="space-y-3"
     >
       {state.notice !== null && !reviewing && (
@@ -340,7 +366,10 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
 
       <div
         data-testid="construction-workspace"
-        className="grid h-[clamp(30rem,calc(100svh_-_var(--chrome-top,0px)_-_var(--chrome-bottom,0px)_-_3rem),60rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border bg-background"
+        className={cn(
+          "grid h-[clamp(30rem,calc(100svh_-_var(--chrome-top,0px)_-_var(--chrome-bottom,0px)_-_3rem),60rem)] min-h-0 overflow-hidden rounded-lg border bg-background",
+          hosted ? "grid-rows-[minmax(0,1fr)_auto]" : "grid-rows-[auto_minmax(0,1fr)_auto]",
+        )}
         onKeyDownCapture={(event) => {
           if (
             (event.metaKey || event.ctrlKey) &&
@@ -361,16 +390,7 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
           }
         }}
       >
-        <YardBar
-          design={selectedDesign}
-          designCount={state.designs.length}
-          busy={busy}
-          retryPending={request.outcomeUnknown}
-          onRetry={request.outcomeUnknown ? request.retry : undefined}
-          onSubmit={openWizard}
-          onBatch={openBatch}
-          onRefresh={refresh}
-        />
+        {!hosted && yardBar}
 
         <div
           data-testid="construction-grid"

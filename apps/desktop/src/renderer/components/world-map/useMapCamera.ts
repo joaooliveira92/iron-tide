@@ -32,6 +32,7 @@ export interface MapCamera {
   readonly getPixelsPerUnit: () => number;
   readonly focusOn: (x: number, y: number, scale?: number) => void;
   readonly isDraggingRef: React.RefObject<boolean>;
+  readonly holdRef: React.RefObject<boolean>;
   readonly isWrapping: () => boolean;
   readonly getMinScale: () => number;
   readonly getViewport: () => Viewport;
@@ -61,6 +62,7 @@ export function useMapCamera(
   const worldRef = useRef<SVGGElement | null>(null);
   const meterRef = useRef<HTMLSpanElement | null>(null);
   const isDraggingRef = useRef(false);
+  const holdRef = useRef(false);
   const touched = useRef(false);
   const wrapping = useRef(true);
   const camera = useRef<CameraTransform>({ scale: 1, x: 0, y: 0 });
@@ -229,6 +231,8 @@ export function useMapCamera(
 
     function onPointerDown(event: PointerEvent) {
       if (event.button !== 0) return;
+      const target = event.target;
+      if (target instanceof Element && target.closest("[data-map-fleet]") !== null) return;
       pointerId = event.pointerId;
       isDraggingRef.current = false;
       lastX = event.clientX;
@@ -285,7 +289,7 @@ export function useMapCamera(
     const svg = svgRef.current;
     if (svg === null || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(() => {
-      if (!touched.current) {
+      if (!touched.current && !holdRef.current) {
         reset();
         return;
       }
@@ -314,6 +318,7 @@ export function useMapCamera(
     panBy,
     getPixelsPerUnit: pixelsPerUnit,
     isDraggingRef,
+    holdRef,
     isWrapping: () => wrapping.current,
     getViewport: viewportUnits,
     getMinScale: minScale,

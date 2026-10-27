@@ -11,4 +11,6 @@
 - Every rejection carries a stable reason code and `_tag`.
 - Commands are validated requests; no ambient time, randomness or env.
 
+**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/commands.md), with superseded records marked.
+
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/commands test`.

@@ -1,5 +1,7 @@
 # ADR-0225: Prestige is a required authored field; values are research-first and S-2 is gated on 0003
 
+Applies to: content, campaign, persistence
+
 ## Status
 
 Accepted (2026-10-17). Resolves decision requests

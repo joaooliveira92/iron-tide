@@ -13,4 +13,6 @@
 - Parsers freeze decoded events; ledger state cannot be mutated through snapshots.
 - Ordering must come from explicit keys, not insertion order.
 
+**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/events.md), with superseded records marked.
+
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/events test`.

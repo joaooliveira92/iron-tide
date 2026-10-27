@@ -21,6 +21,105 @@ export type DecodedSaveHeader = Mutable<typeof SaveHeaderSchema.Type>;
 
 const JsonRecord = Schema.Record(Schema.String, Schema.Unknown);
 
+const StorableDesignCapabilitySchema = Schema.Union([
+  Schema.Struct({
+    kind: Schema.Literal("fire_control_class"),
+    class: Schema.Literals(["heavy", "medium", "light"]),
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("fire_control_support"),
+    classes: Schema.Array(Schema.Literals(["heavy", "medium", "light"])).check(
+      Schema.isMinLength(1),
+    ),
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("ammunition_feed"),
+    maxFeedPermille: Schema.Finite,
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("arc_obstruction"),
+    blockedDeg: Schema.Finite,
+    reachPermille: Schema.Finite,
+  }),
+  Schema.Struct({ kind: Schema.Literal("damage_control"), effectBp: Schema.Finite }),
+  Schema.Struct({
+    kind: Schema.Literal("search_radar"),
+    level: Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 3 })),
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("fire_control_radar"),
+    level: Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 3 })),
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("sonar_detection"),
+    level: Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 3 })),
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("asw_attack"),
+    level: Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 3 })),
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("aa_engagement"),
+    level: Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 3 })),
+  }),
+  Schema.Struct({
+    kind: Schema.Literal("missile_launch"),
+    missileClass: Schema.Literals(["light_ssm", "medium_ssm", "heavy_ssm", "sam", "asm"]),
+  }),
+  Schema.Struct({ kind: Schema.Literal("aircraft_hangar"), capacity: Schema.Finite }),
+]);
+
+export const StorableDesignCapabilitiesSchema = Schema.Array(StorableDesignCapabilitySchema).check(
+  Schema.isMinLength(1),
+  Schema.makeFilter((list) => {
+    for (let i = 1; i < list.length; i++) {
+      if (list[i - 1]!.kind > list[i]!.kind) return "capabilities must be sorted by kind";
+    }
+    return undefined;
+  }),
+);
+
+const StorableConstructionPlanShareSchema = Schema.Struct({
+  id: Schema.String,
+  kind: Schema.String,
+  line: Schema.String,
+  totalWork: Schema.Finite,
+  dependsOn: Schema.Array(Schema.String),
+});
+
+const StorableConstructionPlanSchema = Schema.Struct({
+  yardId: Schema.String,
+  packages: Schema.Array(StorableConstructionPlanShareSchema),
+  capacityUnits: Schema.Record(Schema.String, Schema.Finite),
+});
+
+export const StorableCompiledDesignVersionSchema = Schema.Struct({
+  designVersionId: Schema.String,
+  designFamilyId: Schema.String,
+  className: Schema.String,
+  nationId: Schema.String,
+  hullType: Schema.String,
+  normalizedDisplacementKg: Schema.Finite,
+  normalizedSpeedUms: Schema.Finite,
+  normalizedArmorUm: Schema.Finite,
+  hitPoints: Schema.Finite,
+  mainGunsCaliber: Schema.Finite,
+  mainGunsCount: Schema.Finite,
+  machineryType: Schema.String,
+  crewComplement: Schema.Finite,
+  contentVersion: Schema.String,
+  compiledHash: Schema.String,
+  capabilities: Schema.optional(StorableDesignCapabilitiesSchema),
+  armament: Schema.optional(Schema.Array(Schema.Unknown)),
+  torpedoArmament: Schema.optional(Schema.Array(Schema.Unknown)),
+  sourceDraft: Schema.optional(JsonRecord),
+  colonialServiceFitted: Schema.optional(Schema.Literal(true)),
+  crampedAccommodation: Schema.optional(Schema.Literal(true)),
+  shortRange: Schema.optional(Schema.Literal(true)),
+  constructionCostUnits: Schema.optional(Schema.Finite),
+  constructionPlan: Schema.optional(StorableConstructionPlanSchema),
+});
+
 const emptyArrayDefault = Effect.succeed([]);
 
 export const StorablePossessionSchema = Schema.Struct({
@@ -102,7 +201,7 @@ const StorableSnapshotSchema = Schema.Struct({
   intelligence: Schema.Struct({
     shells: JsonRecord,
   }),
-  designs: JsonRecord,
+  designs: Schema.Record(Schema.String, StorableCompiledDesignVersionSchema),
   designFamilies: JsonRecord,
   strategicWeather: Schema.Array(Schema.Unknown).pipe(
     Schema.withDecodingDefaultType(emptyArrayDefault),

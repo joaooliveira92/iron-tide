@@ -1,5 +1,7 @@
 # ADR-0285: The campaign snapshot hash covers Map fields
 
+Applies to: campaign, persistence
+
 ## Status
 
 Accepted (2026-10-24). Resolves decision request [0043](../../.ai/decision-requests/0043-campaign-snapshot-hash-map-fields.md) with Option A, approved by the owner.

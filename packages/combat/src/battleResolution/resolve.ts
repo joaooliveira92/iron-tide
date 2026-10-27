@@ -19,6 +19,7 @@ import { buildBattleWeather, type StrategicWeatherState } from "../weather/neigh
 import { AUTO_RESOLUTION_UNAVAILABLE } from "../generation/reasonCodes.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { CauseOfLossTracker, type LossCause } from "./causeOfLoss.js";
+import type { GunneryRadarRules } from "./gunneryRadar.js";
 import { type AutoResolverNation, projectBattle, type ProjectBattleOutput } from "./project.js";
 import {
   projectAirCombatContext,
@@ -28,6 +29,11 @@ import {
 import { planTorpedoCommands } from "./torpedoDoctrine.js";
 import { pursuitOrders } from "./pursuit.js";
 import { TORPEDO_HIT_RESOLVED, type TorpedoContext } from "../torpedoes/index.js";
+import {
+  type MissileContext,
+  type MissileLauncherState,
+  type MissileRules,
+} from "../missiles/index.js";
 import {
   battleLoss,
   initialDamageState,
@@ -71,6 +77,8 @@ export interface ResolveBattleAutoInput {
   rulesetVersion: string;
   formulaVersion: string;
   rngVersion: string;
+  gunneryRadar?: GunneryRadarRules;
+  missilesRules?: MissileRules;
   maxMinutes?: number;
   randomLedger?: RandomLedger;
 }
@@ -93,6 +101,7 @@ export interface BattleResolutionResult {
   withdrawalReason?: WithdrawalReason;
   telemetry?: BattleTelemetry;
   torpedoSummary?: { tubesFired: number; hits: number };
+  missileActivity?: { launches: number; hits: number; intercepts: number };
   smokeActivity?: { events: number };
   airCombatActivity?: { capEngagements: number; strikeAttacks: number; losses: number };
   airDefenseActivity?: {
@@ -168,6 +177,16 @@ function trainedDamageControlResource(damageControlBp: number): DamageControlRes
   };
 }
 
+const DESIGN_DAMAGE_CONTROL_MAX_BP = 10_000;
+
+function designDamageControlBp(unit: TacticalShipUnit): number {
+  const bonus = (unit.capabilities ?? []).reduce(
+    (sum, capability) => (capability.kind === "damage_control" ? sum + capability.effectBp : sum),
+    0,
+  );
+  return Math.min(bonus, DESIGN_DAMAGE_CONTROL_MAX_BP);
+}
+
 export function buildDamageControlContexts(input: {
   battleId: string;
   minute: number;
@@ -181,6 +200,7 @@ export function buildDamageControlContexts(input: {
   const { battleId, minute, units, damage, movementStates, engine, randomLedger, trainingEffects } =
     input;
   const sideOf = new Map(units.map((u) => [u.assetId, u.sideId]));
+  const unitOf = new Map(units.map((u) => [u.assetId, u]));
   const contexts: Record<string, DamageControlContext> = {};
   const shipIds = units.map((u) => u.assetId).sort();
   for (const shipId of shipIds) {
@@ -224,7 +244,8 @@ export function buildDamageControlContexts(input: {
       shipType: target.shipType,
       currentSpeedKt: Math.floor(currentSpeedBp / SPEED_BP_SCALE),
       resources: trainedDamageControlResource(
-        effectsOf(trainingEffects, sideOf.get(shipId)).damageControlBp,
+        effectsOf(trainingEffects, sideOf.get(shipId)).damageControlBp +
+          designDamageControlBp(unitOf.get(shipId)!),
       ),
       keyedRng: scopedRng,
     };
@@ -311,6 +332,8 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     attacker: input.attacker,
     defender: input.defender,
     rulesetVersion: input.rulesetVersion,
+    ...(input.gunneryRadar === undefined ? {} : { gunneryRadar: input.gunneryRadar }),
+    ...(input.missilesRules === undefined ? {} : { missilesRules: input.missilesRules }),
   });
   const attackerCount = unitsOf(projected, "ATTACKER").length;
   const defenderCount = unitsOf(projected, "DEFENDER").length;
@@ -342,6 +365,8 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
   let weatherCtx = weather.context;
   let torpedo: TorpedoContext | undefined = projected.torpedoes;
   const torpedoSummary = { tubesFired: 0, hits: 0 };
+  let missiles: MissileContext | undefined = projected.missiles;
+  const missileActivity = { launches: 0, hits: 0, intercepts: 0 };
   let smoke = projectSmokeContext(input.manifest, weather.context.components);
   let airCombat = projectAirCombatContext(input.manifest, projected.state.battleId);
   let airDefense = projectAirDefenseContext(input.manifest, engine);
@@ -427,6 +452,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       weather: weatherCtx,
       damage,
       ...(torpedo ? { torpedoes: torpedo } : {}),
+      ...(missiles ? { missiles } : {}),
       ...(damageControl ? { damageControl } : {}),
       smoke,
       airCombat,
@@ -515,6 +541,25 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
               return next ? { ...w, launcher: next } : w;
             })
           : torpedo.launchers,
+      };
+    }
+    if (missiles) {
+      for (const record of res.missileRecords ?? []) {
+        if (record.kind === "LAUNCH") missileActivity.launches += 1;
+        else if (record.kind === "HIT") missileActivity.hits += 1;
+        else if (record.kind === "INTERCEPT") missileActivity.intercepts += 1;
+      }
+      const launcherStates: Readonly<Record<string, MissileLauncherState>> | undefined =
+        res.missileStates;
+      missiles = {
+        ...missiles,
+        launchers: launcherStates
+          ? missiles.launchers.map((launcher) => {
+              const next = launcherStates[launcher.launcherId];
+              return next ? { ...launcher, ...next } : launcher;
+            })
+          : missiles.launchers,
+        inFlight: res.missileSalvos ? [...res.missileSalvos] : missiles.inFlight,
       };
     }
 
@@ -643,6 +688,9 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     minuteHashes,
     resultHash: "",
     ...(projected.torpedoes ? { torpedoSummary } : {}),
+    ...(missiles && missileActivity.launches + missileActivity.hits + missileActivity.intercepts > 0
+      ? { missileActivity }
+      : {}),
     ...(Object.keys(causeOfLoss).length > 0 ? { causeOfLoss } : {}),
     ...(withdrawalReason ? { withdrawalReason } : {}),
     ...(smokeEventCount > 0 ? { smokeActivity: { events: smokeEventCount } } : {}),
@@ -658,6 +706,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     causeOfLoss: _cause,
     withdrawalReason: _withdrawalReason,
     telemetry: _telemetry,
+    missileActivity: _missileActivity,
     smokeActivity: _smoke,
     airCombatActivity: _airCombat,
     airDefenseActivity: _airDefense,

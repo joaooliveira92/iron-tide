@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24.18.0"
+          node-version-file: ".node-version"
       - name: Check commit subjects are Conventional Commits
         env:
           EVENT_NAME: ${{ github.event_name }}

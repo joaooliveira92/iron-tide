@@ -6,6 +6,7 @@ export const CATEGORY_LABEL: Readonly<Record<string, string>> = {
   TERTIARY_GUN: "Tertiary gun",
   DUAL_PURPOSE_GUN: "Dual-purpose gun",
   AA_WEAPON: "Anti-aircraft gun",
+  ASW_WEAPON: "Anti-submarine weapon",
   TORPEDO_TUBE: "Torpedo tube",
   DIRECTOR: "Fire-control director",
   RANGEFINDER: "Rangefinder",

@@ -1,5 +1,7 @@
 # ADR-0235: Main-owned recent campaigns and reopen allow-list
 
+Applies to: desktop
+
 ## Status
 
 Accepted (2026-10-19).

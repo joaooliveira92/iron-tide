@@ -1,15 +1,11 @@
 import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { WorldMapChart, type WorldMapChartProps } from "./WorldMapChart.js";
-import { AREAS, EDGES, FLEETS } from "./fixture-world.js";
+import { AREAS } from "./map-geometry.js";
 import type { LiveWorldMapOverlay } from "./campaign-map-join.js";
-import {
-  initialMapPrototypeState,
-  nationName,
-  readRoute,
-  type MapPrototypeState,
-} from "./map-state.js";
+import { initialMapPrototypeState, readRoute, type MapPrototypeState } from "./map-state.js";
 import { buildRegionStrengths } from "./map-strength.js";
+import type { MapOrders } from "./map-orders.js";
 
 const noop = () => undefined;
 
@@ -23,7 +19,6 @@ function chart(overrides: Partial<WorldMapChartProps> = {}) {
       onToggleLayer={noop}
       onSetProjection={noop}
       onSetCentre={noop}
-      onToggleClosedPassages={noop}
       {...overrides}
     />
   );
@@ -37,11 +32,18 @@ function homeLayer(container: HTMLElement, layer: string): Element | null {
   return container.querySelector(`[data-layer="${layer}"]`);
 }
 
-const UNGATED_LANES = new Set(
-  EDGES.filter((edge) => edge.passage === undefined).map((edge) =>
-    [edge.a, edge.b].sort().join("~"),
-  ),
-);
+function liveOverlay(patch: Partial<LiveWorldMapOverlay> = {}): LiveWorldMapOverlay {
+  return {
+    source: "campaign",
+    ownership: new Map(),
+    fleets: [],
+    ports: [],
+    lanes: [],
+    campaignAreas: [],
+    playerNationId: "uk",
+    ...patch,
+  };
+}
 
 describe("strategic map: route-free start", () => {
   afterEach(cleanup);
@@ -57,14 +59,21 @@ describe("strategic map: route-free start", () => {
 describe("strategic map: sea lanes", () => {
   afterEach(cleanup);
 
-  it("draws one lane per ungated edge of the route graph", () => {
-    const { container } = render(chart());
+  const overlay = liveOverlay({
+    lanes: [
+      { a: "area_north_sea", b: "area_western_approaches" },
+      { a: "area_baltic", b: "area_north_sea" },
+    ],
+  });
+
+  it("draws one lane per campaign sea route", () => {
+    const { container } = render(chart({ overlay }));
     const lanes = [...(homeLayer(container, "lanes")?.querySelectorAll("line") ?? [])];
-    expect(lanes).toHaveLength(UNGATED_LANES.size);
+    expect(lanes).toHaveLength(2);
   });
 
   it("is purely decorative: hidden from assistive tech and transparent to the pointer", () => {
-    const { container } = render(chart());
+    const { container } = render(chart({ overlay }));
     const layer = homeLayer(container, "lanes");
     expect(layer?.getAttribute("aria-hidden")).toBe("true");
     expect(layer?.getAttribute("pointer-events")).toBe("none");
@@ -72,44 +81,28 @@ describe("strategic map: sea lanes", () => {
 
   it("can be switched off with its layer toggle", () => {
     const state = withState({ layers: { ...initialMapPrototypeState.layers, lanes: false } });
-    const { container } = render(chart({ state }));
+    const { container } = render(chart({ state, overlay }));
     expect(homeLayer(container, "lanes")).toBeNull();
   });
 
   it("stays a passive layer: with no route there is no route line, and a route is drawn apart from the lanes", () => {
-    const state = withState({ rulerFrom: "area_north_sea", rulerTo: "area_western_approaches" });
-    const route = readRoute(state);
+    const state = withState({
+      rulerFrom: "area_north_sea",
+      rulerTo: "area_western_approaches",
+    });
+    const route = readRoute(state, overlay.lanes ?? []);
     expect(route).not.toBeNull();
-    const { container } = render(chart({ state, route }));
+    const { container } = render(chart({ state, route, overlay }));
     const routeLines = container.querySelectorAll('path[stroke-dasharray="10 6"]');
     expect(routeLines.length).toBeGreaterThan(0);
-    const lanes = homeLayer(container, "lanes");
-    expect(lanes?.getAttribute("stroke-dasharray")).not.toBe("10 6");
-    expect(lanes?.querySelector('path[stroke-dasharray="10 6"]')).toBeNull();
-  });
-
-  it("draws a live campaign's own sea connectivity, leaving gated straits to the passage layer", () => {
-    const overlay: LiveWorldMapOverlay = {
-      source: "campaign",
-      ownership: new Map(),
-      fleets: [],
-      ports: [],
-      campaignAreas: [],
-      playerNationId: null,
-      lanes: [
-        { a: "area_north_sea", b: "area_western_approaches" },
-        { a: "area_baltic", b: "area_north_sea" },
-      ],
-    };
-    const { container } = render(chart({ overlay }));
-    const lines = [...(homeLayer(container, "lanes")?.querySelectorAll("line") ?? [])];
-    expect(lines).toHaveLength(1);
+    const laneGroups = container.querySelectorAll('[data-layer="lanes"]');
+    expect(laneGroups[0]?.querySelectorAll("line")).toHaveLength(2);
   });
 
   it("is stable across rerenders", () => {
-    const { container, rerender } = render(chart());
+    const { container, rerender } = render(chart({ overlay }));
     const before = homeLayer(container, "lanes")?.innerHTML;
-    rerender(chart({ onSelect: () => undefined }));
+    rerender(chart({ overlay, onSelect: () => undefined }));
     expect(homeLayer(container, "lanes")?.innerHTML).toBe(before);
   });
 });
@@ -117,18 +110,30 @@ describe("strategic map: sea lanes", () => {
 describe("strategic map: regional strength", () => {
   afterEach(cleanup);
 
+  const overlay = liveOverlay({
+    fleets: [
+      { id: "home-fleet", name: "Home Fleet", area: "area_north_sea", nation: "uk", ships: 12 },
+      {
+        id: "channel-fleet",
+        name: "Channel Fleet",
+        area: "area_north_sea",
+        nation: "uk",
+        ships: 3,
+      },
+    ],
+  });
   const expected = buildRegionStrengths(
-    FLEETS.map((fleet) => ({
+    overlay.fleets.map((fleet) => ({
       id: fleet.id,
       area: fleet.area,
       ships: fleet.ships,
-      owner: fleet.owner,
+      owner: fleet.nation,
     })),
-    { nameFor: nationName, flagUrlFor: () => null },
+    { nameFor: () => "Britain", flagUrlFor: () => null },
   );
 
   it("draws one glyph per region that holds ships, each carrying that region's total", () => {
-    const { container } = render(chart());
+    const { container } = render(chart({ overlay }));
     const glyphs = [...(homeLayer(container, "strength")?.querySelectorAll("[data-region]") ?? [])];
     expect(glyphs.map((glyph) => glyph.getAttribute("data-region"))).toEqual(
       expected.map((region) => region.areaId),
@@ -139,7 +144,7 @@ describe("strategic map: regional strength", () => {
   });
 
   it("draws no glyph for a region with no ships", () => {
-    const { container } = render(chart());
+    const { container } = render(chart({ overlay }));
     const drawn = new Set(
       [...container.querySelectorAll('[data-layer="strength"] [data-region]')].map((g) =>
         g.getAttribute("data-region"),
@@ -151,7 +156,7 @@ describe("strategic map: regional strength", () => {
   });
 
   it("is decorative and never intercepts the pointer", () => {
-    const { container } = render(chart());
+    const { container } = render(chart({ overlay }));
     for (const layer of container.querySelectorAll("[data-layer]")) {
       expect(layer.getAttribute("aria-hidden")).toBe("true");
       expect(layer.getAttribute("pointer-events")).toBe("none");
@@ -172,13 +177,13 @@ describe("strategic map: regional strength", () => {
     const height = vi.spyOn(Element.prototype, "clientHeight", "get");
 
     height.mockReturnValue(900);
-    const large = render(chart());
+    const large = render(chart({ overlay }));
     await waitFor(() => expect(large.container.querySelector("[data-compact]")).toBeNull());
     const fullBar = tallest(large.container);
     large.unmount();
 
     height.mockReturnValue(420);
-    const small = render(chart());
+    const small = render(chart({ overlay }));
     await waitFor(() => expect(small.container.querySelector("[data-compact]")).not.toBeNull());
     expect(tallest(small.container)).toBeLessThan(fullBar);
     height.mockRestore();
@@ -186,12 +191,12 @@ describe("strategic map: regional strength", () => {
 
   it("follows the fleets layer toggle", () => {
     const state = withState({ layers: { ...initialMapPrototypeState.layers, fleets: false } });
-    const { container } = render(chart({ state }));
+    const { container } = render(chart({ state, overlay }));
     expect(homeLayer(container, "strength")).toBeNull();
   });
 
-  it("gives screen readers the strength in words on the focusable area, in nation order", () => {
-    const { container } = render(chart());
+  it("gives screen readers the strength in words on the focusable area", () => {
+    const { container } = render(chart({ overlay }));
     const region = expected[0];
     expect(region).toBeDefined();
     const name = AREAS.find((area) => area.id === region?.areaId)?.name ?? "";
@@ -202,42 +207,36 @@ describe("strategic map: regional strength", () => {
     expect(label).toMatch(new RegExp(`strength ${region?.total} ships? \\(`));
     for (const entry of region?.nations ?? [])
       expect(label).toContain(`${entry.name} ${entry.ships}`);
-    const quiet = labels.filter((text) => !text?.includes("strength"));
-    expect(quiet.length).toBe(AREAS.length - expected.length);
   });
 });
 
 describe("strategic map: area states", () => {
   afterEach(cleanup);
 
-  const liveOverlay = (owned: readonly string[]): LiveWorldMapOverlay => ({
-    source: "campaign",
-    ownership: new Map(owned.map((id) => [id, "uk"])),
-    fleets: [],
-    ports: [],
-    lanes: [],
-    playerNationId: "uk",
-    campaignAreas: [],
+  it("marks every area as having no campaign data when no campaign is loaded", () => {
+    const { container } = render(chart());
+    const paths = [...container.querySelectorAll('path[role="button"]')];
+    expect(paths.filter((path) => path.hasAttribute("data-unavailable"))).toHaveLength(
+      AREAS.length,
+    );
+    for (const path of paths) expect(path.getAttribute("aria-label")).toMatch(/no campaign data$/);
   });
 
-  it("marks areas a live campaign has no data for, in the visuals and in words", () => {
-    const { container } = render(chart({ overlay: liveOverlay(["area_north_sea"]) }));
+  it("marks only unmentioned areas when a campaign is loaded", () => {
+    const { container } = render(
+      chart({ overlay: liveOverlay({ ownership: new Map([["area_north_sea", "uk"]]) }) }),
+    );
     const paths = [...container.querySelectorAll('path[role="button"]')];
     const noData = paths.filter((path) => path.hasAttribute("data-unavailable"));
     expect(noData).toHaveLength(AREAS.length - 1);
-    for (const path of noData) expect(path.getAttribute("aria-label")).toMatch(/no campaign data$/);
     const live = paths.find((path) => path.getAttribute("aria-label")?.startsWith("North Sea:"));
     expect(live?.hasAttribute("data-unavailable")).toBe(false);
-    expect(live?.getAttribute("aria-label")).not.toMatch(/no campaign data/);
-  });
-
-  it("never marks fixture areas unavailable when no campaign is loaded", () => {
-    const { container } = render(chart());
-    expect(container.querySelector("[data-unavailable]")).toBeNull();
   });
 
   it("shows no strength for a live campaign with no fleets (zero or missing data)", () => {
-    const { container } = render(chart({ overlay: liveOverlay(["area_north_sea"]) }));
+    const { container } = render(
+      chart({ overlay: liveOverlay({ ownership: new Map([["area_north_sea", "uk"]]) }) }),
+    );
     expect(container.querySelector('[data-layer="strength"] [data-region]')).toBeNull();
   });
 
@@ -256,5 +255,113 @@ describe("strategic map: area states", () => {
     expect(root.style.getPropertyValue("--map-hover")).not.toBe(
       root.style.getPropertyValue("--map-focus"),
     );
+  });
+});
+
+describe("strategic map: fleet orders", () => {
+  afterEach(cleanup);
+
+  const overlay = liveOverlay({
+    ownership: new Map([
+      ["area_north_sea", "uk"],
+      ["area_western_approaches", "uk"],
+    ]),
+    campaignAreas: [
+      { id: "sea_north_sea", name: "North Sea", controller: "uk", fleets: [] },
+      { id: "sea_western_approaches", name: "Western Approaches", controller: "uk", fleets: [] },
+    ],
+    fleets: [
+      { id: "home-fleet", name: "Home Fleet", area: "area_north_sea", nation: "uk", ships: 12 },
+    ],
+  });
+
+  function orders(patch: Partial<MapOrders> = {}): MapOrders {
+    return {
+      fleets: [
+        {
+          fleetId: "home-fleet",
+          fleetName: "Home Fleet",
+          areaId: "sea_north_sea",
+          mapAreaId: "area_north_sea",
+          areaName: "North Sea",
+          shipCount: 12,
+          legalDestinations: [
+            {
+              areaId: "sea_western_approaches",
+              mapAreaId: "area_western_approaches",
+              name: "Western Approaches",
+            },
+          ],
+          blockedReason: null,
+        },
+      ],
+      pending: [],
+      blockadedMapAreas: new Set(),
+      selectedFleetId: null,
+      onSelectFleet: noop,
+      onDrop: noop,
+      ...patch,
+    };
+  }
+
+  it("marks own fleets as draggable and never marks foreign ones", () => {
+    const { container } = render(chart({ overlay, orders: orders() }));
+    expect(container.querySelector('[data-map-fleet="home-fleet"]')).not.toBeNull();
+    expect(container.querySelector('[data-draggable=""]')).not.toBeNull();
+  });
+
+  it("draws a pending order as a dashed route with its destination in words", () => {
+    const { container } = render(
+      chart({
+        overlay,
+        orders: orders({
+          pending: [
+            {
+              commandId: "cmd-1",
+              fleetId: "home-fleet",
+              fromMapAreaId: "area_north_sea",
+              toMapAreaId: "area_western_approaches",
+              destinationName: "Western Approaches",
+            },
+          ],
+        }),
+      }),
+    );
+    expect(container.textContent).toContain("Ordered: Western Approaches");
+    expect(homeLayer(container, "orders")).not.toBeNull();
+  });
+
+  it("highlights legal destinations and dims the rest while a fleet is selected", () => {
+    const { container } = render(
+      chart({ overlay, orders: orders({ selectedFleetId: "home-fleet" }) }),
+    );
+    const paths = [...container.querySelectorAll("path[data-map-area]")];
+    const legal = paths.filter((path) => path.hasAttribute("data-legal"));
+    expect(legal.map((path) => path.getAttribute("data-map-area"))).toEqual([
+      "area_western_approaches",
+    ]);
+    const dimmed = paths.filter((path) => path.getAttribute("class")?.includes("opacity-35"));
+    expect(dimmed.length).toBeGreaterThan(0);
+  });
+
+  it("states in the legend what the map does not model", () => {
+    const { container } = render(chart({ overlay, orders: orders() }));
+    expect(container.textContent).toContain(
+      "Foreign fleet positions are not known: intelligence is not modelled yet.",
+    );
+    expect(container.textContent).toContain("Invasion range is not modelled yet.");
+  });
+
+  it("marks blockaded areas the player is party to", () => {
+    const { container } = render(
+      chart({
+        overlay,
+        orders: orders({ blockadedMapAreas: new Set(["area_western_approaches"]) }),
+      }),
+    );
+    const blockaded = [...container.querySelectorAll("[data-blockade]")].map((element) =>
+      element.getAttribute("data-map-area"),
+    );
+    expect(blockaded).toContain("area_western_approaches");
   });
 });

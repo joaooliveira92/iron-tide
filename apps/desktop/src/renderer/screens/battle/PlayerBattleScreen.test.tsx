@@ -71,6 +71,76 @@ const VIEW: PlayerBattleView = {
           },
         ],
       },
+      torpedoSolution: {
+        formulaId: "torpedo_solution",
+        formulaVersion: "torpedo_formula_v1",
+        inputs: { baseSolutionBp: 8_000, torpedoTacticsBp: 1_000 },
+        intermediate: { trainingScaledBp: 8_800, rawFlooredBp: 8_800 },
+        result: 8_800,
+        unit: "bp",
+        children: [
+          {
+            formulaId: "torpedo_solution.training",
+            formulaVersion: "torpedo_formula_v1",
+            inputs: { multiplierBp: 11_000 },
+            intermediate: {},
+            result: 11_000,
+            unit: "bp",
+          },
+        ],
+      },
+      damageControl: {
+        formulaId: "damage_control",
+        formulaVersion: "damage_control_v1",
+        inputs: { teamCount: 4, pumpingPerTeamKgMin: 200, firefightingPerTeamBp: 125 },
+        intermediate: { pumpingCapacityKgMin: 800, firefightingCapacityBp: 500 },
+        result: 800,
+        unit: "kg/min",
+        children: [
+          {
+            formulaId: "damage_control.pumping",
+            formulaVersion: "damage_control_v1",
+            inputs: { teamCount: 4, pumpingPerTeamKgMin: 200 },
+            intermediate: {},
+            result: 800,
+            unit: "kg/min",
+          },
+          {
+            formulaId: "damage_control.firefighting",
+            formulaVersion: "damage_control_v1",
+            inputs: { teamCount: 4, firefightingPerTeamBp: 125 },
+            intermediate: {},
+            result: 500,
+            unit: "bp",
+          },
+        ],
+      },
+      loss: {
+        formulaId: "battle_loss",
+        formulaVersion: "battle_loss_v1",
+        inputs: { battleStartHitPoints: 100, currentHitPoints: 40 },
+        intermediate: {},
+        result: 60,
+        unit: "hp",
+        children: [
+          {
+            formulaId: "battle_loss.battleStartHitPoints",
+            formulaVersion: "battle_loss_v1",
+            inputs: {},
+            intermediate: {},
+            result: 100,
+            unit: "hp",
+          },
+          {
+            formulaId: "battle_loss.currentHitPoints",
+            formulaVersion: "battle_loss_v1",
+            inputs: {},
+            intermediate: {},
+            result: 40,
+            unit: "hp",
+          },
+        ],
+      },
     },
   ],
   divisions: [
@@ -177,11 +247,36 @@ describe("PlayerBattleScreen", () => {
     expect(within(disclosure).getByText("Training").nextSibling?.textContent).toBe("+10%");
   });
 
-  it("passes an automated accessibility audit with the accuracy disclosure open", async () => {
+  it("explains the torpedo solution, damage control and battle damage in words", async () => {
     mount(bridgeWith({}, { resumed: false, lastOrders: [] }));
     const row = await screen.findByTestId("battle-ship-s1");
-    const disclosure = within(row).getByTestId("battle-accuracy") as HTMLDetailsElement;
-    disclosure.open = true;
+    const torpedo = within(row).getByTestId("battle-explanation-torpedo_solution");
+    expect(within(torpedo).getByText("Torpedo solution 88%")).toBeTruthy();
+    expect(within(torpedo).getByText("Torpedo tactics training").nextSibling?.textContent).toBe(
+      "110%",
+    );
+
+    const damageControl = within(row).getByTestId("battle-explanation-damage_control");
+    expect(within(damageControl).getByText("Damage control pumping 800")).toBeTruthy();
+    expect(within(damageControl).getByText("Pumping").nextSibling?.textContent).toBe("800");
+    expect(within(damageControl).getByText("Firefighting").nextSibling?.textContent).toBe("5%");
+
+    const loss = within(row).getByTestId("battle-explanation-battle_loss");
+    expect(within(loss).getByText("Battle damage 60")).toBeTruthy();
+    expect(within(loss).getByText("Current hit points").nextSibling?.textContent).toBe("40");
+  });
+
+  it("passes an automated accessibility audit with the battle explanations open", async () => {
+    mount(bridgeWith({}, { resumed: false, lastOrders: [] }));
+    const row = await screen.findByTestId("battle-ship-s1");
+    for (const id of [
+      "battle-accuracy",
+      "battle-explanation-torpedo_solution",
+      "battle-explanation-damage_control",
+      "battle-explanation-battle_loss",
+    ]) {
+      (within(row).getByTestId(id) as HTMLDetailsElement).open = true;
+    }
     const violations = await axeViolations(screen.getByTestId("player-battle"));
     expect(violations.filter((violation) => !violation.startsWith("region "))).toEqual([]);
   });

@@ -1,10 +1,12 @@
 # ADR-0289: Role and formation changes are one division command priced from the ruleset; speed mismatch is a derived advisory
 
+Applies to: campaign, commands, desktop
+
 ## Status
 
 Accepted (2026-10-25). Implements ticket [#272](https://github.com/joaooliveira92/iron-tide/issues/272) of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265), decision #198. Values are the balance targets of
-[ADR-0283](ADR-0283-fleet-management-values-and-repair-entry.md); the section is
+[ADR-0314](ADR-0314-fleet-management-values-and-repair-entry.md); the section is
 [ADR-0286](ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md).
 
 ## Decision

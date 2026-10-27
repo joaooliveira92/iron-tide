@@ -1,6 +1,6 @@
 import type { ProjectionId } from "./projection.js";
 import type { LayerId, MapPrototypeState, RouteReading } from "./map-state.js";
-import type { AreaId } from "./fixture-world.js";
+import type { AreaId } from "./map-geometry.js";
 
 export interface MapViewProps {
   readonly state: MapPrototypeState;
@@ -10,7 +10,6 @@ export interface MapViewProps {
   readonly onToggleLayer: (layer: LayerId) => void;
   readonly onSetProjection: (projection: ProjectionId) => void;
   readonly onSetCentre: (centre: number) => void;
-  readonly onToggleClosedPassages: () => void;
 }
 
 export interface VariantDefinition {

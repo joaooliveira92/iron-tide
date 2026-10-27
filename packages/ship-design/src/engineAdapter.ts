@@ -1,3 +1,4 @@
+import type { CapabilityData } from "@bluewave/content-schema";
 import type { CompiledDesign, DesignDraft } from "./compile.js";
 import type { CompiledWeaponArmament } from "./compileShared.js";
 import type { CompiledTorpedo } from "@bluewave/armament";
@@ -19,6 +20,7 @@ export interface EngineDesignFields {
   readonly crewComplement: number;
   readonly contentVersion: string;
   readonly compiledHash: string;
+  readonly capabilities?: readonly CapabilityData[];
   readonly armament?: readonly CompiledWeaponArmament[];
   readonly torpedoArmament?: readonly {
     mountType: string;
@@ -121,6 +123,7 @@ export function toEngineDesign(
     crewComplement: c.systems?.crewRequired ?? 0,
     contentVersion: o.contentVersion,
     compiledHash: c.hash,
+    ...(c.capabilities.length > 0 ? { capabilities: [...c.capabilities] } : {}),
     ...(armament.length > 0 ? { armament } : {}),
     ...(torpedoArmament.length > 0 ? { torpedoArmament } : {}),
   };

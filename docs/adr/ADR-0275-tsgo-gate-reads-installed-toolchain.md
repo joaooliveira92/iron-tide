@@ -1,5 +1,9 @@
 # ADR-0275: The tsgo gate compares pins to the installed toolchain
 
+Applies to: repository
+
+Rule: The tsgo gate checks that root pins equal the installed toolchain versions and that patched binaries keep their `.original` backup.
+
 ## Status
 
 Accepted (2026-10-23).

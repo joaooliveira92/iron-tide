@@ -7,7 +7,7 @@ import {
   type LabelTraits,
 } from "./map-labels.js";
 import type { FleetMark, PortMark } from "./map-markers.js";
-import { projectPoint, type Point, type ProjectedArea, type Projection } from "./projection.js";
+import { projectPoint, type ProjectedArea, type Projection } from "./projection.js";
 import type { CameraTransform } from "./useMapCamera.js";
 
 export interface LabelSpec {
@@ -64,11 +64,9 @@ export interface LabelLayoutRequest {
   readonly flags: {
     readonly possessions: boolean;
     readonly fleets: boolean;
-    readonly passages: boolean;
   };
   readonly portMarks: readonly PortMark[];
   readonly fleetMarks: readonly FleetMark[];
-  readonly passageAnchors: readonly Point[];
   readonly strengthMarks: readonly {
     readonly ux: number;
     readonly uy: number;
@@ -92,7 +90,6 @@ export function layoutLabels(request: LabelLayoutRequest): PlacedLabel[] {
     flags,
     portMarks,
     fleetMarks,
-    passageAnchors,
     strengthMarks,
     transform,
     minScale,
@@ -211,11 +208,6 @@ export function layoutLabels(request: LabelLayoutRequest): PlacedLabel[] {
         hh: (glyph.bottom - glyph.top) / 2,
         oy: (glyph.top + glyph.bottom) / 2,
       });
-    }
-  }
-  if (flags.passages) {
-    for (const anchor of passageAnchors) {
-      markers.push({ ux: anchor[0], uy: anchor[1], hw: 9, hh: 9 });
     }
   }
 

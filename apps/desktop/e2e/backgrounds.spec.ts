@@ -28,7 +28,7 @@ for (const background of ANIMATED_BACKGROUNDS) {
     expect(await contextLost(page)).toBe(false);
 
     await page.getByRole("button", { name: /Theme:/ }).click();
-    await page.waitForFunction(() => document.documentElement.classList.contains("dark"));
+    await expect(page.locator("html")).toHaveClass(/dark/);
     await page.evaluate(
       () =>
         new Promise<void>((done) =>

@@ -1,5 +1,5 @@
 {
-  "AGENTS.md": 1345,
+  "AGENTS.md": 1375,
   "README.md": 625,
   "CONTEXT.md": 575,
   "engine-suite.md": 425,
@@ -31,6 +31,7 @@
   ".ai/ROADMAP.md": 400,
   "GLOSSARY-MAP.md": 50,
   "packages/campaign/GLOSSARY.md": 370,
+  "packages/combat/GLOSSARY.md": 230,
   "packages/contracts/AGENTS.md": 100,
   "packages/deterministic/AGENTS.md": 100,
   "packages/random/AGENTS.md": 100,
@@ -46,5 +47,14 @@
   "packages/ship-visual/AGENTS.md": 100,
   "scripts/data/reachability-ledger.json": 2100,
   "docs/reachability-report.md": 950,
-  ".ai/briefs/f-1-strategic-map.md": 3500
+  ".ai/briefs/f-1-strategic-map.md": 3500,
+  "packages/ai/AGENTS.md": 100,
+  "packages/armament/AGENTS.md": 100,
+  "packages/content-schema/AGENTS.md": 100,
+  "packages/cross-process-test/AGENTS.md": 100,
+  "packages/messages/AGENTS.md": 100,
+  "packages/test-support/AGENTS.md": 100,
+  "apps/desktop/AGENTS.md": 110,
+  "apps/compiler-cli/AGENTS.md": 100,
+  "content/AGENTS.md": 100
 }

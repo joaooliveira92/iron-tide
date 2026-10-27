@@ -31,12 +31,23 @@ export type {
   ShipStationAssignmentChanged,
   TechnologyDiscovered,
 } from "./envelope.js";
-export type { ExplanationTree } from "./explanation.js";
-export { ExplanationBuilder } from "./explanation.js";
+export type {
+  ExplanationOperation,
+  ExplanationSource,
+  ExplanationSourceKind,
+  ExplanationTree,
+} from "./explanation.js";
+export {
+  EXPLANATION_OPERATIONS,
+  EXPLANATION_SOURCE_KINDS,
+  ExplanationBuilder,
+} from "./explanation.js";
 export {
   DuplicateEventIdError,
   EmptyFormulaIdentifierError,
   EventSequenceNotIncreasingError,
+  InvalidExplanationOperationError,
+  InvalidExplanationSourceError,
   NonFiniteNumberError,
 } from "./errors.js";
 export { formatExplanation } from "./format.js";

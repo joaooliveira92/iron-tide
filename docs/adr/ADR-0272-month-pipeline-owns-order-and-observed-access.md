@@ -1,5 +1,9 @@
 # ADR-0272: The month pipeline owns phase order and observes real snapshot access
 
+Applies to: contracts, messages, phase-engine
+
+Rule: Phase order is declared once in `TURN_PHASES`; phases access snapshot aggregates through a recorded handle and receive randomness only through a grant.
+
 ## Status
 
 Accepted (2026-10-22).

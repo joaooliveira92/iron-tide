@@ -18,14 +18,8 @@ const root = resolve(import.meta.dirname, "..");
 
 /** Packages whose constraints are fully covered by the root AGENTS.md and gates. */
 export const EXEMPT = {
-  ai: "legal-only planning; constraints come from the root rules and gates",
-  armament: "leaf domain package; no package-specific constraints",
   "content-codemod": "tooling; covered by the codemod determinism gate",
-  "content-schema": "schema definitions; covered by effect-schema patterns",
-  "cross-process-test": "test harness; covered by the determinism gates",
   diagnostics: "leaf collector; no package-specific constraints",
-  messages: "presentation-adjacent projection; covered by root rules",
-  "test-support": "fixtures only",
 };
 
 export const CLASSES = ["runtime-free", "io-boundary"];

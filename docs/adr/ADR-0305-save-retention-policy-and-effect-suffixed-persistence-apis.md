@@ -1,5 +1,9 @@
 # ADR-0305: Saves are retained by an opt-in count with a protected head; Effect-returning persistence methods carry an `Effect` suffix
 
+Applies to: compiler-cli, desktop, persistence
+
+Rule: Save retention is opt-in with the active and previous saves always protected; Effect-returning persistence methods carry an `Effect` suffix.
+
 ## Status
 
 Accepted (2026-10-26). Covers the persistence changes delivered by PRs [#312](https://github.com/joaooliveira92/iron-tide/pull/312) to

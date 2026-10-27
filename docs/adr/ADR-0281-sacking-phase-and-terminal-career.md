@@ -1,5 +1,7 @@
 # ADR-0281: The sacking phase and the terminal career
 
+Applies to: campaign, phase-engine
+
 ## Status
 
 Accepted (2026-10-23). Implements tickets [#90](https://github.com/joaooliveira92/iron-tide/issues/90) (S-2 05) and

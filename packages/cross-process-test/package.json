@@ -25,10 +25,10 @@
     "@bluewave/phase-engine": "workspace:*",
     "@bluewave/random": "workspace:*",
     "@bluewave/ship-design": "workspace:*",
-    "effect": "workspace:*"
+    "effect": "workspace:*",
+    "@bluewave/test-support": "workspace:*"
   },
   "devDependencies": {
-    "@bluewave/test-support": "workspace:*",
     "fast-check": "^4.10.2"
   },
   "scripts": {

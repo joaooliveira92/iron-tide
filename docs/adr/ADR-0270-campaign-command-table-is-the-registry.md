@@ -1,5 +1,9 @@
 # ADR-0270: The campaign command descriptor table is the command registry
 
+Applies to: commands, desktop
+
+Rule: `campaignCommandShapes` is the one command registry; command names and map types derive from it, never by hand.
+
 ## Status
 
 Accepted (2026-10-22).

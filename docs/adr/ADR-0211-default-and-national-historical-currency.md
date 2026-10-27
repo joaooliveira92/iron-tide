@@ -1,5 +1,7 @@
 # ADR-0211: Default currency Naval Credits; National Historical is conditional
 
+Applies to: contracts, desktop
+
 ## Status
 
 Accepted (2026-10-15). New record of decision DR-011; no prior ADR file existed for

@@ -1,5 +1,7 @@
 # ADR-0296: Ship conditions are derived predicates the fleet view carries and the renderer only labels
 
+Applies to: campaign, campaign-engine, desktop
+
 ## Status
 
 Accepted (2026-10-25). Delivers stories 14, 15 and 44 of spec

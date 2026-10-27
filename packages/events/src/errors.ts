@@ -24,3 +24,16 @@ export class NonFiniteNumberError extends Data.TaggedError("NonFiniteNumberError
 export class EmptyFormulaIdentifierError extends Data.TaggedError("EmptyFormulaIdentifierError")<{
   readonly message: string;
 }> {}
+
+export class InvalidExplanationOperationError extends Data.TaggedError(
+  "InvalidExplanationOperationError",
+)<{
+  readonly operation: string;
+  readonly message: string;
+}> {}
+
+export class InvalidExplanationSourceError extends Data.TaggedError(
+  "InvalidExplanationSourceError",
+)<{
+  readonly message: string;
+}> {}

@@ -4,6 +4,7 @@ import {
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover.js";
+import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import type { EngineeringReadout } from "../engineering-status.js";
 import { ReadoutDetail } from "./ReadoutDetail.js";
 import { ReadoutValue } from "./ReadoutValue.js";
@@ -11,7 +12,13 @@ import { ReadoutValue } from "./ReadoutValue.js";
 const TRIGGER =
   "-mx-1 flex items-baseline gap-1.5 rounded px-1 outline-none hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring";
 
-export function ReadoutItem({ readout: r }: { readonly readout: EngineeringReadout }) {
+export function ReadoutItem({
+  readout: r,
+  format,
+}: {
+  readonly readout: EngineeringReadout;
+  readonly format?: PresentationFormat;
+}) {
   const value = <ReadoutValue label={r.label} value={r.value} tone={r.tone} />;
   if (r.breakdown !== undefined) {
     return (
@@ -25,6 +32,8 @@ export function ReadoutItem({ readout: r }: { readonly readout: EngineeringReado
             rows={r.breakdown.rows}
             causes={r.breakdown.causes}
             footer={r.breakdown.footer}
+            explanations={r.explanations}
+            format={format}
           />
         </PopoverContent>
       </Popover>
@@ -42,7 +51,12 @@ export function ReadoutItem({ readout: r }: { readonly readout: EngineeringReado
           {value}
         </HoverCardTrigger>
         <HoverCardContent side="top" align="start" className="w-64">
-          <ReadoutDetail title={r.hint.title} rows={r.hint.lines} />
+          <ReadoutDetail
+            title={r.hint.title}
+            rows={r.hint.lines}
+            explanations={r.explanations}
+            format={format}
+          />
         </HoverCardContent>
       </HoverCard>
     );

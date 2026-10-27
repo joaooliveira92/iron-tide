@@ -238,7 +238,16 @@ export function readPlacements(input: ReadPlacementsInput): ReadPlacementsResult
         placements.push(
           withCompiledTorpedo(reader, part, placement, `entries[${entry.id ?? entry.slot}]`),
         );
-    } else if (part.family === "fitting" || part.family === "sensor") {
+    } else if (
+      part.family === "fitting" ||
+      part.family === "sensor" ||
+      part.family === "radar" ||
+      part.family === "sonar" ||
+      part.family === "asw_weapon" ||
+      part.family === "aa_weapon" ||
+      part.family === "missile_launcher" ||
+      part.family === "hangar"
+    ) {
       const placement = readUnitEntry(
         reader,
         entry,

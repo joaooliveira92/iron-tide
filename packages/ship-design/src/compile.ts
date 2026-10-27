@@ -1,11 +1,11 @@
-import type { DesignHeaderData, LoadoutData } from "@bluewave/content-schema";
+import type { CapabilityData, DesignHeaderData, LoadoutData } from "@bluewave/content-schema";
 import { armourBalanceFromParts } from "./armourPartAdapter.js";
 import { resolveLoadout, type LoadoutResolutionIssue } from "./loadoutResolution.js";
 import { deriveAfterFit, type FitConditions } from "./partFit.js";
 import type { FitResult } from "./partFitTypes.js";
 import type { PartCatalogue } from "./partQueries.js";
 import { shipTypeRequirementsFor } from "./shipTypeRegistry.js";
-import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
 import {
   classFacts,
   classificationFindings,
@@ -79,6 +79,16 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
 
   const resolved = resolveDesignComponents(draft, ctx, catalogue, plant, findings);
   return compileResolved(draft, plant, resolved, ctx, findings);
+}
+
+function compiledCapabilities(resolved: readonly Resolved[]): readonly CapabilityData[] {
+  return resolved
+    .flatMap((entry) => entry.capabilities)
+    .sort(
+      (a, b) =>
+        compareCodePoints(a.kind, b.kind) ||
+        compareCodePoints(canonicalSerialize(a), canonicalSerialize(b)),
+    );
 }
 
 function compileResolved(
@@ -276,6 +286,7 @@ function compileResolved(
     stability,
     systems,
     naturalClass: naturalClassId,
+    capabilities: compiledCapabilities(resolved),
     componentCostMicro: costMicro,
     components,
     findings: sorted,

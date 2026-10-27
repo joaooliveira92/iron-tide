@@ -7,6 +7,7 @@ import { createPreferencesBridgeStub } from "../lib/preferences-test-bridge.js";
 import { DensityProvider } from "./DensityContext.js";
 import { axeViolations } from "../lib/axe.js";
 import { StatusStrip, StatusStripView } from "./StatusStrip.js";
+import { PrestigeCard } from "./StatusStripCards.js";
 import type { CampaignReads } from "./campaign-reads.js";
 import { buildStatusStrip } from "./status-strip-state.js";
 import { buildTrend, type TrendReport } from "./status-strip-trend.js";
@@ -560,5 +561,59 @@ describe("StatusStrip", () => {
       reads({ projection: { status: "unavailable", reason: "INSPECTION_FAILED" } }),
     );
     expect(screen.queryByRole("region", { name: "Status strip" })).toBeNull();
+  });
+});
+
+describe("PrestigeCard explanation", () => {
+  afterEach(cleanup);
+
+  const explanation = {
+    formulaId: "prestige_change",
+    formulaVersion: "prestige_v1",
+    inputs: { reasonCode: "BATTLE_LOST" },
+    intermediate: { unclampedAfter: 18, clampDelta: 0 },
+    result: 18,
+    unit: "prestige",
+    operation: "add" as const,
+    children: [
+      {
+        formulaId: "prestige_change.before",
+        formulaVersion: "prestige_v1",
+        inputs: {},
+        intermediate: {},
+        result: 20,
+        unit: "prestige",
+      },
+      {
+        formulaId: "prestige_change.rule",
+        formulaVersion: "prestige_v1",
+        inputs: {},
+        intermediate: {},
+        result: -2,
+        unit: "prestige",
+      },
+    ],
+  };
+
+  it("shows the last change as a disclosure with its working", () => {
+    render(
+      <PreferencesProvider>
+        <PrestigeCard
+          gauge={{
+            current: 18,
+            threshold: 16,
+            fraction: 0.6,
+            thresholdFraction: 0.533,
+            atRisk: false,
+          }}
+          note="Last change: -2 (Battle lost, 1880-02)."
+          explanation={explanation}
+        />
+      </PreferencesProvider>,
+    );
+    expect(screen.getByTestId("prestige-change-explanation")).toBeTruthy();
+    expect(screen.getByText("Prestige change: 18")).toBeTruthy();
+    expect(screen.getByText("Prestige before")).toBeTruthy();
+    expect(screen.getByText("Rule change")).toBeTruthy();
   });
 });

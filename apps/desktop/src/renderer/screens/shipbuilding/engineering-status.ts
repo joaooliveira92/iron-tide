@@ -1,3 +1,4 @@
+import type { ExplanationTree } from "@bluewave/events";
 import { topsideLoad, type Finding, type Severity, type WorkshopView } from "@bluewave/ship-design";
 import { passesFilter } from "../../components/design-workspace/validation/severity.js";
 import { formatExplanation, type PresentationFormat } from "../../lib/presentation-format/index.js";
@@ -21,6 +22,12 @@ export interface ReadoutHint {
   readonly lines: readonly ReadoutRow[];
 }
 
+export interface ReadoutExplanation {
+  readonly tree: ExplanationTree;
+  readonly area: string;
+  readonly summaryKey: string;
+}
+
 export interface EngineeringReadout {
   readonly id: string;
   readonly label: string;
@@ -28,6 +35,7 @@ export interface EngineeringReadout {
   readonly tone: ReadoutTone;
   readonly breakdown?: ReadoutBreakdown;
   readonly hint?: ReadoutHint;
+  readonly explanations?: readonly ReadoutExplanation[];
 }
 
 const t = (format: PresentationFormat, kg: number) =>

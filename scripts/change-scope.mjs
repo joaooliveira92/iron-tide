@@ -3,8 +3,7 @@
 //
 // Prints a versioned JSON report of the paths touched between a base ref and a
 // head ref (committed, plus staged/unstaged/untracked in the worktree). Intended
-// to feed change-based filtering — e.g. `turbo run … --filter='[<base>]'` in CI —
-// from one deterministic, machine-readable source rather than ad-hoc `git diff`.
+// to feed change-based filtering in CI from one deterministic, machine-readable source rather than ad-hoc `git diff`.
 //
 // Ported from deepseek-harness `scripts/change-scope.ts`.
 //

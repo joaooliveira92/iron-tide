@@ -1,5 +1,7 @@
 # ADR-0215: Canonical units module and its home in the contracts package
 
+Applies to: contracts, campaign, ship-design
+
 ## Status
 
 Accepted (2026-10-16). Records the canonical unit table that [ADR-0202](ADR-0202-canonical-internal-values.md) left to the canonical-values sprint (U-1 of `.ai/SPRINT-PLAN.md` Phase 2).

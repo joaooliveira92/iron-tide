@@ -1,10 +1,13 @@
+import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import type { EngineeringReadout } from "../engineering-status.js";
 import { ReadoutItem } from "./ReadoutItem.js";
 
 export function EngineeringStatusBar({
   readouts,
+  format,
 }: {
   readonly readouts: readonly EngineeringReadout[];
+  readonly format: PresentationFormat;
 }) {
   return (
     <section
@@ -18,7 +21,7 @@ export function EngineeringStatusBar({
           data-tone={r.tone}
           className="inline-flex items-baseline"
         >
-          <ReadoutItem readout={r} />
+          <ReadoutItem readout={r} format={format} />
         </span>
       ))}
     </section>

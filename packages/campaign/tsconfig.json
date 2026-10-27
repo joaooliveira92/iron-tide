@@ -7,6 +7,7 @@
   },
   "include": ["src"],
   "references": [
+    { "path": "../ship-design" },
     { "path": "../contracts" },
     { "path": "../diagnostics" },
     { "path": "../deterministic" },

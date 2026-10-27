@@ -1,3 +1,4 @@
+import type { CapabilityData } from "@bluewave/content-schema";
 import type { ArrangementBalance, ArrangementResult, ZoneDef, ZoneId } from "./arrangement.js";
 import type { ArmourBalance, ArmourRegion, ArmourResult, ThreatProfile } from "./armour.js";
 import type { ClassificationEra, ClassificationRules } from "./classification.js";
@@ -160,6 +161,7 @@ export interface CompiledDesign {
   readonly stability: StabilityResult | null;
   readonly systems: SystemsResult | null;
   readonly naturalClass: string | null;
+  readonly capabilities: readonly CapabilityData[];
   readonly componentCostMicro: number;
   readonly components: readonly ComponentSummary[];
   readonly findings: readonly Finding[];
@@ -216,6 +218,7 @@ export interface Resolved {
   readonly productionLine: string | null;
   readonly requires: readonly string[];
   readonly torpedoMount: ResolvedTorpedoMount | null;
+  readonly capabilities: readonly CapabilityData[];
   readonly params: Record<string, number>;
   readonly weightKg: number;
   readonly volumeLitre: number;

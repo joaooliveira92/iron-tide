@@ -19,6 +19,10 @@ const breakdown = (over: Partial<TreasuryBreakdown>): TreasuryBreakdown => ({
   availableFunds: 0,
   projectedMonthEndFunds: 60,
   runwayMonths: undefined,
+  netExplanation: undefined,
+  monthEndExplanation: undefined,
+  runwayExplanation: undefined,
+  appropriationExplanation: undefined,
   ...over,
 });
 

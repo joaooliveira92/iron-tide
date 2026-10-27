@@ -1,5 +1,7 @@
 # ADR-0253: Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input
 
+Applies to: content-compiler, content-schema, messages, phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Implements ticket

@@ -1,5 +1,9 @@
 # ADR-0234: Single checkout with local feature branches merged to dev locally
 
+Applies to: repository
+
+Rule: Work on short-lived local branches cut from `dev` and merge into `dev` locally once preflight, test:scripts and check are green.
+
 ## Status
 
 Accepted (2026-10-19).

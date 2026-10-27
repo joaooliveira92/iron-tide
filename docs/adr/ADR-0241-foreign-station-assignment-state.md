@@ -1,5 +1,7 @@
 # ADR-0241: Foreign-station assignment is optional ship state, orthogonal to readiness
 
+Applies to: campaign, campaign-engine, commands, events, phase-engine
+
 ## Status
 
 Accepted (2026-10-20). Implements decisions A and D of the wayfinder map

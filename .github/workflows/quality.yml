@@ -27,11 +27,9 @@ jobs:
           # commit and scan the range since it.
           fetch-depth: 0
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 11.21.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24.18.0"
+          node-version-file: ".node-version"
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       # Reuse Vitest's on-disk transform cache (`fsModuleCache`) and Node's V8
@@ -114,7 +112,7 @@ jobs:
       - run: pnpm check:equivalence
       # The long simulation suites (36-month regression, AI procurement) are
       # excluded from the default per-package run and executed here in isolation
-      # with bounded vitest workers, so parallel turbo load cannot flake a
+      # with bounded vitest workers, so parallel load cannot flake a
       # required check (release-readiness WS4).
       - name: Heavy simulation suites (bounded concurrency)
         run: pnpm test:heavy

@@ -1,5 +1,7 @@
 # ADR-0266: S-5 presence values and the other open decision requests, resolved by delegation
 
+Applies to: content, campaign, desktop
+
 ## Status
 
 Accepted (2026-10-21). Resolves decision requests

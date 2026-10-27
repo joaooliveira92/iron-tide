@@ -1,5 +1,7 @@
 # ADR-0216: Fixed-precision money type, treasury-unit scale, and the micro→unit bridge
 
+Applies to: contracts, campaign, ship-design
+
 ## Status
 
 Accepted (2026-10-16). Records the fixed-precision monetary representation that [ADR-0202](ADR-0202-canonical-internal-values.md) left to the canonical-values sprint (U-1 of `.ai/SPRINT-PLAN.md` Phase 2).

@@ -1,5 +1,7 @@
 # ADR-0203: Options screen and preferences architecture
 
+Applies to: desktop, persistence
+
 ## Status
 
 Accepted (2026-10-15). New record of decision DR-003; no prior ADR file existed for

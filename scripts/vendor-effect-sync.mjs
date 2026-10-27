@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Vendor the exact published `effect` and `@effect/vitest` artifacts (vendor
-// model V1) into `vendor/`, plus a thin Bluewave workspace wrapper so Turbo does
-// not build Effect from source.
+// model V1) into `vendor/`, plus a thin Bluewave workspace wrapper so the workspace
+// task runner does not build Effect from source.
 //
 // Usage:
 //   node scripts/vendor-effect-sync.mjs            # sync at the pinned version
@@ -107,7 +107,7 @@ function copyTree(srcDir, destDir) {
 }
 
 // The thin workspace wrapper: identical name/version/exports/files/sideEffects,
-// zero build/typecheck/lint/test scripts and no devDependencies, so `turbo run
+// zero build/typecheck/lint/test scripts and no devDependencies, so `vp run -r
 // build` skips it rather than invoking Effect's own (unsatisfied) upstream build.
 function wrapperPackageJson(upstream) {
   const out = {

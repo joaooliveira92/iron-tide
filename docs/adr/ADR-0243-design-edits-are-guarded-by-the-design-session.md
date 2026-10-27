@@ -1,5 +1,9 @@
 # ADR-0243: Every design edit is guarded in the design session, and a newly broken design is explained at once
 
+Applies to: desktop, ship-design
+
+Rule: Every design edit goes through the design session's guard, and a newly blocking or critical finding is explained at once.
+
 ## Status
 
 Accepted (2026-10-20).

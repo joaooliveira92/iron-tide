@@ -71,7 +71,7 @@ function PriorityChip({
           }
         />
         <SlateBody>
-          <p className="text-muted-foreground">{priority.summary}</p>
+          <p className="text-muted-foreground">{priority.advice ?? priority.summary}</p>
           <p className="text-xs font-medium text-foreground">{destination}</p>
         </SlateBody>
         <SlateFoot>{priority.reason}</SlateFoot>

@@ -1,12 +1,14 @@
 import { WORLD_WRAP_TURNS } from "./projection.js";
 import type { MapPalette } from "./map-palette.js";
 import type { WorldMapModel } from "./useWorldMapModel.js";
+import type { MapPendingOrder } from "./map-orders.js";
+import type { Point } from "./projection.js";
 import { AreasLayer } from "./layers/AreasLayer.js";
 import { FleetsLayer } from "./layers/FleetsLayer.js";
 import { GraticuleLayer } from "./layers/GraticuleLayer.js";
 import { LabelsLayer } from "./layers/LabelsLayer.js";
 import { LanesLayer } from "./layers/LanesLayer.js";
-import { PassagesLayer } from "./layers/PassagesLayer.js";
+import { OrdersLayer } from "./layers/OrdersLayer.js";
 import { PortsLayer } from "./layers/PortsLayer.js";
 import { RoutesLayer } from "./layers/RoutesLayer.js";
 import { StrengthLayer } from "./layers/StrengthLayer.js";
@@ -16,9 +18,29 @@ export interface MapLayersProps {
   readonly palette: MapPalette;
   readonly width: number;
   readonly onAreaClick: (id: string, shiftKey: boolean) => void;
+  readonly legalAreas: ReadonlySet<string>;
+  readonly dimmedAreas: ReadonlySet<string>;
+  readonly blockadedAreas: ReadonlySet<string>;
+  readonly pendingOrders: readonly (MapPendingOrder & {
+    readonly from: Point;
+    readonly to: Point;
+  })[];
+  readonly draggableFleets: ReadonlySet<string>;
+  readonly selectedFleetId: string | null;
 }
 
-export function MapLayers({ model, palette, width, onAreaClick }: MapLayersProps) {
+export function MapLayers({
+  model,
+  palette,
+  width,
+  onAreaClick,
+  legalAreas,
+  dimmedAreas,
+  blockadedAreas,
+  pendingOrders,
+  draggableFleets,
+  selectedFleetId,
+}: MapLayersProps) {
   const { state } = model;
   return (
     <>
@@ -48,13 +70,18 @@ export function MapLayers({ model, palette, width, onAreaClick }: MapLayersProps
             describe={model.describeAreaFor}
             fillFor={model.fillFor}
             onAreaClick={onAreaClick}
+            legal={legalAreas}
+            dimmed={dimmedAreas}
+            blockaded={blockadedAreas}
           />
 
           {state.layers.lanes && <LanesLayer lanes={model.lanes} stroke={palette.lane} />}
 
           <RoutesLayer d={model.routePath} stroke={palette.route} casing={palette.routeCasing} />
 
-          {state.layers.passages && <PassagesLayer marks={model.passageMarks} palette={palette} />}
+          {pendingOrders.length > 0 && (
+            <OrdersLayer pending={pendingOrders} palette={palette} worldWidth={width} />
+          )}
 
           {state.layers.possessions && (
             <PortsLayer marks={model.portMarks} strokeFor={model.strokeFor} />
@@ -66,6 +93,8 @@ export function MapLayers({ model, palette, width, onAreaClick }: MapLayersProps
               strokeFor={model.strokeFor}
               live={model.live}
               playerNationId={model.playerNationId}
+              draggable={draggableFleets}
+              selectedFleetId={selectedFleetId}
             />
           )}
 

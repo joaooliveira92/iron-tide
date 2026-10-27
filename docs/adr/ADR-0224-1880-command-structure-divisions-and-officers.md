@@ -1,5 +1,7 @@
 # ADR-0224: 1880 command structure — per-nation officer rosters and seeded divisions
 
+Applies to: content, campaign, cross-process-test
+
 ## Status
 
 Accepted (2026-10-17). Resolves decision request

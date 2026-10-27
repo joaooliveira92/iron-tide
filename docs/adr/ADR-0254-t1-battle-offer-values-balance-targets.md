@@ -1,5 +1,7 @@
 # ADR-0254: T-1 battle-offer values: labelled balance targets
 
+Applies to: content, phase-engine, cross-process-test
+
 ## Status
 
 Accepted (2026-10-21). Resolves decision requests

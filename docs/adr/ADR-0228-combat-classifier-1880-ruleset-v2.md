@@ -1,5 +1,7 @@
 # ADR-0228: The combat ship-type classifier aligns to the 1880 classification ruleset v2
 
+Applies to: content, combat, ship-design
+
 ## Status
 
 Accepted (2026-10-17). Sprints: N-2. Grounded by research note

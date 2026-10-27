@@ -1,5 +1,7 @@
 # ADR-0242: Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section
 
+Applies to: content-compiler, content-schema, campaign, phase-engine, ship-design, desktop
+
 ## Status
 
 Accepted (2026-10-20). Implements decisions A, I and J of the wayfinder map

@@ -23,7 +23,7 @@ export type CampaignScreen =
   | "treasury"
   | "tactical-sandbox"
   | "debugging"
-  | "map-prototype"
+  | "strategic-map"
   | "campaign-preferences"
   | "options";
 

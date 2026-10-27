@@ -1,5 +1,7 @@
 # ADR-0247: Presence is measured at month end from the dormant S-5 section and reported as typed shortfall events
 
+Applies to: content-schema, campaign, events, phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Implements decisions B and D of the wayfinder map

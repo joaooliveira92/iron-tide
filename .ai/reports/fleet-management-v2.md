@@ -4,21 +4,21 @@ Status: **accepted with listed gaps** as of `feat/fm-go-live` (off `dev` @ `bf16
 Spec [#265](https://github.com/joaooliveira92/iron-tide/issues/265); go-live ticket
 [#277](https://github.com/joaooliveira92/iron-tide/issues/277). The layer is live in the
 production pack: the 1880 core ruleset authors the `fleetManagement` section from the
-balance targets of ADR-0283, adopted under the owner's standing delegation on map #193.
+balance targets of ADR-0314, adopted under the owner's standing delegation on map #193.
 
 ## What landed
 
 | Ticket                                           | State | Evidence                                                                                                                                                                             |
 | ------------------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 267 value grounding                              | done  | ADR-0283, `docs/research/fleet-management-values.md`                                                                                                                                 |
+| 267 value grounding                              | done  | ADR-0314, `docs/research/fleet-management-values.md`                                                                                                                                 |
 | 268 gate evaluator, dormant section              | done  | ADR-0286; `packages/campaign/test/eligibility.test.ts`, `packages/content-compiler/test/fleetManagementRules.test.ts`                                                                |
 | 269 readiness command                            | done  | `packages/campaign/test/readinessCommand.test.ts`, `packages/phase-engine/test/ship-readiness-command.test.ts`                                                                       |
 | 270 assignment slot                              | done  | `packages/campaign/test/stationAssignment.test.ts`, `packages/phase-engine/test/station-assignment.test.ts`                                                                          |
 | 271 battle absence record                        | done  | ADR-0287; `packages/phase-engine/test/battle-absences.test.ts`, `packages/campaign/test/battleAbsence.parity.test.ts`, `packages/persistence/test/declined-battle-roundtrip.test.ts` |
 | 272 role and formation penalties, speed advisory | done  | ADR-0289; `packages/campaign/test/divisionDoctrine.test.ts`, `packages/phase-engine/test/division-doctrine-command.test.ts`, `FleetOrganizationView.test.tsx`                        |
 | 273 monthly cohesion growth                      | done  | ADR-0288; `packages/campaign/test/divisionCohesionGrowth.test.ts`, `packages/phase-engine/test/division-cohesion-growth.test.ts`                                                     |
-| 274 special training                             | done  | ADR-0290; `packages/campaign/test/specialTraining.test.ts`, `packages/phase-engine/test/special-training.test.ts`, `apps/desktop/src/main/commands/specialTrainingCommands.test.ts`  |
-| 275 annual fleet exercise                        | done  | ADR-0291; `packages/campaign/test/fleetExercise.test.ts`, `packages/phase-engine/test/fleet-exercise.test.ts`, `apps/desktop/src/main/commands/fleetExerciseCommands.test.ts`        |
+| 274 special training                             | done  | ADR-0316; `packages/campaign/test/specialTraining.test.ts`, `packages/phase-engine/test/special-training.test.ts`, `apps/desktop/src/main/commands/specialTrainingCommands.test.ts`  |
+| 275 annual fleet exercise                        | done  | ADR-0317; `packages/campaign/test/fleetExercise.test.ts`, `packages/phase-engine/test/fleet-exercise.test.ts`, `apps/desktop/src/main/commands/fleetExerciseCommands.test.ts`        |
 | 276 battle experience write-back                 | done  | ADR-0292; `packages/campaign/test/divisionExperience.test.ts`, `packages/phase-engine/test/battle-experience.test.ts`                                                                |
 | 277 go-live and this report                      | done  | ADR-0293; replay corpus and approvals below                                                                                                                                          |
 
@@ -39,7 +39,7 @@ balance targets of ADR-0283, adopted under the owner's standing delegation on ma
 | 46–48 gated values dormant until authorised, in ruleset data                                                                       | dormancy tests in each phase-engine suite; `rulesets.yaml` carries every value with provenance                                                                                   |
 | 50–56 one evaluator, closed reason enum, integer maths, command table, strict decoding, additive state, one maintenance calculator | `eligibility.test.ts`, `maintenance` callers (`economyOutlook`, `economyPhases`, `treasuryCommitments`) share `nationMaintenanceAdders`; schema parity tests listed above        |
 | 59 save and load preserve training, exercise and absences                                                                          | replay verification re-loads every month through `SaveStore`; `declined-battle-roundtrip.test.ts` for absences                                                                   |
-| 60 assignment slot and gates as extension points                                                                                   | ADR-0286 section 3, ADR-0291                                                                                                                                                     |
+| 60 assignment slot and gates as extension points                                                                                   | ADR-0286 section 3, ADR-0317                                                                                                                                                     |
 
 ### Gaps, stated plainly
 

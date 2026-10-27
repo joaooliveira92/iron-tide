@@ -1,5 +1,7 @@
 # ADR-0295: A replay scenario may name a player nation and a deterministic start setup so the corpus fights a battle
 
+Applies to: cross-process-test
+
 ## Status
 
 Accepted (2026-10-25). Closes the replay-scenario criteria left open on tickets

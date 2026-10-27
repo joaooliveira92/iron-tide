@@ -9,13 +9,17 @@ import {
 
 export const GUNNERY_ACCURACY_FORMULA_ID = "gunnery_accuracy" as const;
 
+const source = { kind: "ruleset", ref: gunneryAccuracyPolicyId } as const;
+
 export function explainGunneryAccuracy(factors: GunneryAccuracyFactors): ExplanationTree {
   const resolution = resolveAccuracy(factors);
   const builder = new ExplanationBuilder(GUNNERY_ACCURACY_FORMULA_ID, gunneryAccuracyPolicyId)
     .withInput("baseAccuracyBp", factors.baseAccuracyBp)
     .withIntermediate("rawFlooredBp", resolution.rounding.rawFlooredBp)
     .withResult(resolution.finalAccuracyBp)
-    .withUnit("bp");
+    .withUnit("bp")
+    .withOperation("multiply")
+    .withSource(source);
   for (const key of GUNNERY_ACCURACY_FACTOR_KEYS) {
     const multiplierBp = factors[key];
     if (multiplierBp === NEUTRAL_ACCURACY_MULTIPLIER_BP) continue;
@@ -24,6 +28,8 @@ export function explainGunneryAccuracy(factors: GunneryAccuracyFactors): Explana
         .withInput("multiplierBp", multiplierBp)
         .withResult(multiplierBp)
         .withUnit("bp")
+        .withOperation("multiply")
+        .withSource(source)
         .build(),
     );
   }

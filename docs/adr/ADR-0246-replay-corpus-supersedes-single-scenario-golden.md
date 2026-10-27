@@ -1,5 +1,7 @@
 # ADR-0246: A replay corpus supersedes the single-scenario golden as the determinism baseline
 
+Applies to: cross-process-test
+
 ## Status
 
 Accepted (2026-10-20). Delivers ticket [#208](https://github.com/joaooliveira92/iron-tide/issues/208)

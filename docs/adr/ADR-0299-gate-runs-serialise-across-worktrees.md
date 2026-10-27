@@ -1,5 +1,9 @@
 # ADR-0299: `pnpm check` serialises across worktrees and reports machine load
 
+Applies to: repository
+
+Rule: Run long gates through `pnpm heavy`, which serialises across worktrees and caps vitest workers at 4.
+
 ## Status
 
 Accepted (2026-10-25). Resolves [#218](https://github.com/joaooliveira92/iron-tide/issues/218), options 1 and 3.

@@ -11,8 +11,7 @@
   },
   "dependencies": {
     "@bluewave/contracts": "workspace:*",
-    "@bluewave/deterministic": "workspace:*",
-    "@bluewave/diagnostics": "workspace:*"
+    "@bluewave/deterministic": "workspace:*"
   },
   "scripts": {
     "build": "tsc -b",

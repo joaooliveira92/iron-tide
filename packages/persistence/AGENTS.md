@@ -12,4 +12,6 @@
 - A save from a different compatibility version is refused before decode, never migrated at runtime (BW-PER-001).
 - Writes are atomic; recovery must never fabricate canonical data.
 
+**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/persistence.md), with superseded records marked.
+
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/persistence test`.

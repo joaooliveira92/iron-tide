@@ -11,6 +11,7 @@ import {
 import { usePreferences } from "../../lib/preferences-context.js";
 import { formatMeasurement, UM_PER_NAUTICAL_MILE } from "../../lib/presentation-format/index.js";
 import { AccuracyDisclosure } from "./AccuracyDisclosure.js";
+import { BattleExplanationDisclosure } from "./BattleExplanationDisclosure.js";
 import { usePlayerBattle } from "./usePlayerBattle.js";
 
 export function PlayerBattleScreen({
@@ -194,6 +195,27 @@ export function PlayerBattleScreen({
                                   <AccuracyDisclosure
                                     tree={ship.gunneryAccuracy}
                                     locale={preferences.formattingLocale}
+                                  />
+                                )}
+                                {ship.torpedoSolution === undefined ? null : (
+                                  <BattleExplanationDisclosure
+                                    tree={ship.torpedoSolution}
+                                    locale={preferences.formattingLocale}
+                                    summaryKey="battle.torpedo_solution.summary"
+                                  />
+                                )}
+                                {ship.damageControl === undefined ? null : (
+                                  <BattleExplanationDisclosure
+                                    tree={ship.damageControl}
+                                    locale={preferences.formattingLocale}
+                                    summaryKey="battle.damage_control.summary"
+                                  />
+                                )}
+                                {ship.loss === undefined ? null : (
+                                  <BattleExplanationDisclosure
+                                    tree={ship.loss}
+                                    locale={preferences.formattingLocale}
+                                    summaryKey="battle.battle_loss.summary"
                                   />
                                 )}
                               </li>

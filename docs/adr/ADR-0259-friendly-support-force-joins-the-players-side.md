@@ -1,5 +1,7 @@
 # ADR-0259: A friendly support force joins the player's side
 
+Applies to: phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Implements ticket

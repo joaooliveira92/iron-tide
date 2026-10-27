@@ -393,6 +393,8 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = () =>
         input === null ? undefined : yield* contentArtifact.loadShipBuildingContent();
       const fleetManagement =
         input === null ? undefined : yield* contentArtifact.loadFleetManagementRules();
+      const gunneryRules = input === null ? undefined : yield* contentArtifact.loadGunneryRules();
+      const missilesRules = input === null ? undefined : yield* contentArtifact.loadMissilesRules();
       const engineOptions =
         shipBuilding === undefined
           ? undefined
@@ -402,6 +404,8 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = () =>
               ...(fleetManagement !== undefined
                 ? { fleetManagement, playerNationId: metadata.playerSlotId }
                 : {}),
+              ...(gunneryRules !== undefined ? { gunneryRules } : {}),
+              ...(missilesRules !== undefined ? { missilesRules } : {}),
             };
       const result = yield* replay.verify({
         snapshot: executed,

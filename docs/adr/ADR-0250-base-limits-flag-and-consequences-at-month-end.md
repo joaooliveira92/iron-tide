@@ -1,5 +1,7 @@
 # ADR-0250: Base limits are checked last each month; over-base ships are flagged and take the S-1 consequences
 
+Applies to: content-schema, campaign, phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Implements decision E of the wayfinder map

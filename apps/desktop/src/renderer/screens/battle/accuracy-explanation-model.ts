@@ -1,11 +1,14 @@
 import type { ExplanationTree } from "@bluewave/events";
 
+import { explanationLabelKey } from "../../lib/explanation.js";
 import { formatPercent } from "../../lib/presentation-format/index.js";
 import type { FormattingLocale } from "../../../shared/preferences-contract.js";
 import { translate } from "../../lib/strings.js";
 
+export { explanationLabelKey } from "../../lib/explanation.js";
+
 const NEUTRAL_BP = 10_000;
-const FACTOR_PREFIX = "gunnery_accuracy.";
+const LABEL_AREA = "battle";
 
 export interface AccuracyRow {
   readonly key: string;
@@ -32,12 +35,10 @@ export function accuracyExplanationModel(
   locale: FormattingLocale,
 ): AccuracyExplanationModel {
   const rows = (tree.children ?? []).map((child): AccuracyRow => {
-    const key = child.formulaId.startsWith(FACTOR_PREFIX)
-      ? child.formulaId.slice(FACTOR_PREFIX.length)
-      : child.formulaId;
+    const key = child.formulaId.slice(child.formulaId.lastIndexOf(".") + 1);
     return {
       key,
-      label: translate(`battle.accuracy.factor.${key}`),
+      label: translate(explanationLabelKey(LABEL_AREA, child.formulaId)),
       changeText: changeText(Number(child.inputs["multiplierBp"]), locale),
     };
   });

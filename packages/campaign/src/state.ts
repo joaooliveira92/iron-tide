@@ -1,5 +1,12 @@
 import type { Bp, Money, SafeInt } from "@bluewave/contracts";
-import type { CareerResult, PrestigeReasonCode, PrestigeValueSet } from "./prestige.js";
+import type { CapabilityData } from "@bluewave/content-schema";
+import type {
+  AppliedPrestigeRule,
+  CareerResult,
+  PrestigeBounds,
+  PrestigeReasonCode,
+  PrestigeValueSet,
+} from "./prestige.js";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { BattleAbsence } from "./battleAbsence.js";
@@ -76,6 +83,8 @@ export interface ResearchState {
   discoveredTechs: string[];
 }
 
+export type DesignCapability = CapabilityData;
+
 export interface CompiledDesignVersion {
   designVersionId: string;
   designFamilyId: string;
@@ -92,6 +101,7 @@ export interface CompiledDesignVersion {
   crewComplement: SafeInt;
   contentVersion: string;
   compiledHash: string;
+  capabilities?: readonly DesignCapability[];
   armament?: readonly CompiledArmamentMount[];
   torpedoArmament?: readonly CompiledTorpedoMount[];
   sourceDraft?: Readonly<Record<string, unknown>>;
@@ -589,6 +599,9 @@ export interface PrestigeLastChange {
   after: SafeInt;
   delta: SafeInt;
   month: string;
+  appliedRule?: AppliedPrestigeRule;
+  unclampedAfter?: SafeInt;
+  bounds?: PrestigeBounds;
 }
 
 export interface CampaignSnapshot {

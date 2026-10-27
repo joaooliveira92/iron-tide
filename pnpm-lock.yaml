@@ -62,9 +62,6 @@ importers:
       '@bluewave/content-compiler':
         specifier: workspace:*
         version: link:../../packages/content-compiler
-      '@bluewave/content-schema':
-        specifier: workspace:*
-        version: link:../../packages/content-schema
       '@bluewave/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -340,6 +337,9 @@ importers:
       '@bluewave/deterministic':
         specifier: workspace:*
         version: link:../deterministic
+      '@bluewave/events':
+        specifier: workspace:*
+        version: link:../events
       effect:
         specifier: workspace:*
         version: link:../../vendor/effect
@@ -362,9 +362,6 @@ importers:
       '@bluewave/deterministic':
         specifier: workspace:*
         version: link:../deterministic
-      '@bluewave/diagnostics':
-        specifier: workspace:*
-        version: link:../diagnostics
       '@bluewave/events':
         specifier: workspace:*
         version: link:../events
@@ -413,19 +410,12 @@ importers:
       yaml:
         specifier: ^2.9.1
         version: 2.9.1
-    devDependencies:
-      '@bluewave/combat':
-        specifier: workspace:*
-        version: link:../combat
 
   packages/content-compiler:
     dependencies:
       '@bluewave/content-schema':
         specifier: workspace:*
         version: link:../content-schema
-      '@bluewave/contracts':
-        specifier: workspace:*
-        version: link:../contracts
       '@bluewave/deterministic':
         specifier: workspace:*
         version: link:../deterministic
@@ -504,31 +494,25 @@ importers:
       '@bluewave/ship-design':
         specifier: workspace:*
         version: link:../ship-design
+      '@bluewave/test-support':
+        specifier: workspace:*
+        version: link:../test-support
       effect:
         specifier: workspace:*
         version: link:../../vendor/effect
     devDependencies:
-      '@bluewave/test-support':
-        specifier: workspace:*
-        version: link:../test-support
       fast-check:
         specifier: ^4.10.2
         version: 4.10.2
 
   packages/deterministic:
     dependencies:
-      '@bluewave/contracts':
-        specifier: workspace:*
-        version: link:../contracts
       '@noble/hashes':
         specifier: ^2.4.0
         version: 2.4.0
 
   packages/diagnostics:
     dependencies:
-      '@bluewave/contracts':
-        specifier: workspace:*
-        version: link:../contracts
       effect:
         specifier: workspace:*
         version: link:../../vendor/effect
@@ -562,10 +546,6 @@ importers:
       effect:
         specifier: workspace:*
         version: link:../../vendor/effect
-    devDependencies:
-      '@bluewave/test-support':
-        specifier: workspace:*
-        version: link:../test-support
 
   packages/persistence:
     dependencies:
@@ -651,9 +631,6 @@ importers:
       '@bluewave/deterministic':
         specifier: workspace:*
         version: link:../deterministic
-      '@bluewave/diagnostics':
-        specifier: workspace:*
-        version: link:../diagnostics
 
   packages/ship-design:
     dependencies:
@@ -703,9 +680,6 @@ importers:
       '@bluewave/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@bluewave/deterministic':
-        specifier: workspace:*
-        version: link:../deterministic
       '@bluewave/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics

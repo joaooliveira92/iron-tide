@@ -6,3 +6,4 @@ One glossary per context. Read the root vocabulary first, then the context you t
 | ------------------------------ | -------------------------------------------------------------- |
 | Repository (shared vocabulary) | [CONTEXT.md](CONTEXT.md)                                       |
 | Campaign economy               | [packages/campaign/GLOSSARY.md](packages/campaign/GLOSSARY.md) |
+| Tactical battle                | [packages/combat/GLOSSARY.md](packages/combat/GLOSSARY.md)     |

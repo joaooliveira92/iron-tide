@@ -1,4 +1,10 @@
-import { buildFleetScreenView, type MovementCommand } from "@bluewave/campaign-engine";
+import {
+  buildFleetScreenView,
+  explainExerciseGain,
+  explainTrainingMaintenanceAdder,
+  explainTrainingProgress,
+  type MovementCommand,
+} from "@bluewave/campaign-engine";
 import {
   campaignMonthId,
   exerciseLimitReached,
@@ -6,7 +12,7 @@ import {
   FLEET_EXERCISE_DORMANT,
   FLEET_EXERCISE_LIMIT_REACHED,
   isTrainingProficient,
-  trainingAdderBp,
+  trainingAdderDetail,
   TRAINING_DORMANT,
   TRAINING_SUBJECTS,
   trainingRefusal,
@@ -168,14 +174,24 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
             proficiencyMonths: fleetManagement.training.proficiencyMonths,
             subjects: TRAINING_SUBJECTS.map((subject) => {
               const entry = nation.specialTraining?.find((e) => e.subject === subject);
+              const fundedMonths = entry?.fundedMonths ?? 0;
+              const proficiencyMonths = fleetManagement.training.proficiencyMonths;
+              const detail = trainingAdderDetail(fleetManagement.training, subject, nation.id);
+              const proficient =
+                entry !== undefined && isTrainingProficient(entry, proficiencyMonths);
               return {
                 subject,
-                maintenanceAdderBp: trainingAdderBp(fleetManagement.training, subject, nation.id),
+                maintenanceAdderBp: detail.adderBp,
+                maintenanceAdderExplanation: explainTrainingMaintenanceAdder(detail),
                 funded: entry !== undefined,
-                fundedMonths: entry?.fundedMonths ?? 0,
-                proficient:
-                  entry !== undefined &&
-                  isTrainingProficient(entry, fleetManagement.training.proficiencyMonths),
+                fundedMonths,
+                monthsToProficiency: Math.max(0, proficiencyMonths - fundedMonths),
+                ...(entry !== undefined && !proficient
+                  ? {
+                      progressExplanation: explainTrainingProgress(fundedMonths, proficiencyMonths),
+                    }
+                  : {}),
+                proficient,
               };
             }),
           };
@@ -190,6 +206,9 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
             maxPerCalendarYear: fleetManagement.exercise.maxPerCalendarYear,
             maintenanceMultiple: fleetManagement.exercise.maintenanceMultiple,
             experienceGain: fleetManagement.divisionExperience.perExercise,
+            experienceGainExplanation: explainExerciseGain(
+              fleetManagement.divisionExperience.perExercise,
+            ),
             nextExerciseYear: exerciseYear,
             heldInNextExerciseYear:
               nation.fleetExercise?.year === exerciseYear ? nation.fleetExercise.yearCount : 0,

@@ -33,21 +33,24 @@ describe("NewGameLaunchingScreen", () => {
   it("reveals the checklist one line at a time up to all nine, verbatim", () => {
     render(<NewGameLaunchingScreen error={null} onBackToReview={vi.fn()} />);
 
-    expect(screen.getByText(CHECKLIST_LINES[0]!)).toBeTruthy();
-    expect(screen.queryByText(CHECKLIST_LINES[1]!)).toBeNull();
+    const isRevealed = (line: string) =>
+      screen.getByText(line).closest("li")?.getAttribute("data-revealed") === "true";
+
+    expect(isRevealed(CHECKLIST_LINES[0]!)).toBe(true);
+    expect(isRevealed(CHECKLIST_LINES[1]!)).toBe(false);
 
     for (let revealed = 1; revealed < CHECKLIST_LINES.length; revealed += 1) {
       act(() => {
         vi.advanceTimersByTime(CHECKLIST_REVEAL_INTERVAL_MS);
       });
-      expect(screen.getByText(CHECKLIST_LINES[revealed]!)).toBeTruthy();
+      expect(isRevealed(CHECKLIST_LINES[revealed]!)).toBe(true);
     }
 
     act(() => {
       vi.advanceTimersByTime(CHECKLIST_REVEAL_INTERVAL_MS * 3);
     });
     for (const line of CHECKLIST_LINES) {
-      expect(screen.getByText(line)).toBeTruthy();
+      expect(isRevealed(line)).toBe(true);
     }
   });
 

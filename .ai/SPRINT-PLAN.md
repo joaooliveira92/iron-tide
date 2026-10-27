@@ -143,12 +143,12 @@ from authoritative state, and the output is reviewed. It is a new baseline, not 
 
 ### Phase 6 — Frontend surfaces
 
-| #   | Sprint                                     | Size | Depends on    | Acceptance                                                                                                                                                                   |
-| --- | ------------------------------------------ | ---- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F-1 | Strategic map                              | M    | S-5, U-4      | Prototype promoted: pan/zoom, fog-of-war tooltips, drag-to-move, Suez and Panama gating, invasion range. Spec: `.ai/briefs/f-1-strategic-map.md` (open: requests 0037-0039). |
-| F-2 | Politics, intelligence, officers, doctrine | L    | S-4, W-3, W-6 | Production screens inside the click-depth ledger.                                                                                                                            |
-| F-3 | Fleet and construction surfaces            | M    | S-1, W-1      | Status codes, hotkeys, multi-select, assignments; submarine and coastal items enabled.                                                                                       |
-| F-4 | Saves                                      | S    | none          | Slots with copy and load-autosave; autosave count and frequency from Options.                                                                                                |
+| #   | Sprint                                     | Size | Depends on    | Acceptance                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --- | ------------------------------------------ | ---- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F-1 | Strategic map                              | M    | S-5, U-4      | **Done 2026-10-27** (#222; report [`.ai/reports/f-1-strategic-map.md`](reports/f-1-strategic-map.md)): the Map screen reads compiled campaign state only, drag or keyboard orders the same `MoveFleet` body as the Fleet screen, pending/rejection/cancel states and the not-modelled legend ship; Suez/Panama gating and invasion range are deferred by DR-0039. Spec: `.ai/briefs/f-1-strategic-map.md` (0037-0039 resolved). |
+| F-2 | Politics, intelligence, officers, doctrine | L    | S-4, W-3, W-6 | Production screens inside the click-depth ledger.                                                                                                                                                                                                                                                                                                                                                                               |
+| F-3 | Fleet and construction surfaces            | M    | S-1, W-1      | Status codes, hotkeys, multi-select, assignments; submarine and coastal items enabled.                                                                                                                                                                                                                                                                                                                                          |
+| F-4 | Saves                                      | S    | none          | Slots with copy and load-autosave; autosave count and frequency from Options.                                                                                                                                                                                                                                                                                                                                                   |
 
 ### Phase 7 — Roster and release
 
@@ -208,6 +208,34 @@ decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
    field with no default (0006-B). War outcome and capital-ship loss stay excluded
    sources (spec #74).
 6. **0008** closed administratively.
+
+**E-1 capability foundation (2026-10-26): done.** #288 (compiled design capabilities reach
+combat; ADR-0308) and #289-#291 (radar, sonar/ASW and AA/missile/hangar part families and
+capability kinds; ADR-0309) landed on `feat/e1-capability-foundation`. The content lock, all 11
+goldens and all 13 replays are unchanged because no production part uses a new family. Evidence:
+[`.ai/reports/e-1-capability-foundation.md`](reports/e-1-capability-foundation.md). #292, #293,
+#295 and the #278 catalogue-technology tickets now have the seam they need; #296 still waits on
+the W-2 submarine wiring assigned by ADR-0300.
+
+**T-2 engine foundation (2026-10-27): division orders.** The first T-2 slice landed (#324 map,
+#329 decision; ADR-0321): a strict versioned `DivisionOrderSet` and pure compiler in
+`@bluewave/combat/orders`, with the existing stance wire shape converted losslessly so player
+battles keep their exact behaviour. No golden, replay or compatibility version moved. Course,
+waypoint and speed-preset controls, formation keeping, realism gating, force orders and the
+battle-map screen are still open; `CRUISE` needs a sourced ruleset fraction before it is exposed
+to the player. Next dependency-ordered slice: formation keeping (#328).
+
+**F-1 strategic map (2026-10-27): done.** #222/#231 are closed; the Map screen reads compiled
+campaign state, orders the same `MoveFleet` body as the Fleet screen, and the fixture world is
+unreachable in production. Evidence: `.ai/reports/f-1-strategic-map.md`; Suez/Panama gating and
+invasion range are deferred by DR-0039.
+
+**Backlog blockers as of 2026-10-27.** E-1 combat slices #280/#282/#296 wait on decision request
+0047 (air and AA values) and the W-2 submarine wiring (ADR-0300); #281 has the SSM model and
+remains open only for SAM/ASM. E-1 content #256/#258 wait on decision request 0044; #254 has the
+US 1945 destroyer and 1948 cruisers and still lacks the 1940s battleship and other-nation
+slices. #249/#260 follow those content slices. The T-2 build map is not yet sliced into tickets
+beyond slice 1.
 
 **Immediate next action (2026-10-23):** finish **S-2** (#90-#94), then S-3 (spec under
 `docs/`, decisions 0010/0011 = ADR-0240) and S-4. **F-1** has a spec and brief

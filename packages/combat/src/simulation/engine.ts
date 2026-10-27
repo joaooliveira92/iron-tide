@@ -19,6 +19,12 @@ import {
   type SmokeCloud,
   type SmokeEventRecord,
 } from "../smoke/engineWiring.js";
+import type {
+  MissileContext,
+  MissileLauncherState,
+  MissileRecord,
+  MissileSalvoInFlight,
+} from "../missiles/index.js";
 import type { DamageControlContext } from "../damage/damageControlEngineWiring.js";
 import { type AirCombatContext, type AirCombatRecord } from "../air-combat/engineWiring.js";
 import {
@@ -39,6 +45,7 @@ import {
   resolvePropulsionStage,
   resolveSensorsStage,
   resolveSmokeStage,
+  resolveMissileStage,
   resolveTorpedoStage,
   resolveWeatherStage,
   updateContactKnowledge,
@@ -70,6 +77,7 @@ export interface AdvanceMinuteInput {
   damageControl?: Record<string, DamageControlContext>;
   airCombat?: AirCombatContext;
   airDefense?: AirDefenseContext;
+  missiles?: MissileContext;
 }
 
 export interface MinuteResult {
@@ -91,6 +99,9 @@ export interface MinuteResult {
   airCombatSummary?: { capEngagements: number; strikeAttacks: number; losses: number };
   airDefenseRecords?: readonly AirDefenseEngagementRecord[];
   airDefenseStates?: Readonly<Record<string, AirDefenseState>>;
+  missileRecords?: readonly MissileRecord[];
+  missileStates?: Readonly<Record<string, MissileLauncherState>>;
+  missileSalvos?: readonly MissileSalvoInFlight[];
 }
 
 export function advanceMinute(input: AdvanceMinuteInput): MinuteResult {
@@ -150,6 +161,7 @@ export function advanceMinute(input: AdvanceMinuteInput): MinuteResult {
   resolveSensorsStage(ctx);
   buildShipPositions(ctx);
   resolveGunneryStage(ctx);
+  resolveMissileStage(ctx);
   resolveDamageStage(ctx);
   resolveTorpedoStage(ctx);
   resolveDamageControlStage(ctx);
@@ -171,6 +183,7 @@ export interface AdvanceMinutesInput {
   damageControl?: Record<string, DamageControlContext>;
   airCombat?: AirCombatContext;
   airDefense?: AirDefenseContext;
+  missiles?: MissileContext;
 }
 export interface AdvanceMinutesResult {
   results: MinuteResult[];
@@ -191,6 +204,7 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
     ? { ...input.airCombat }
     : undefined;
   let airDefense = input.airDefense;
+  let missiles = input.missiles;
   let state: TacticalBattleState = {
     ...input.state,
     contacts: [...(input.state.contacts ?? [])],
@@ -212,6 +226,7 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
       damageControl,
       airCombat,
       airDefense,
+      missiles,
     });
     results.push(res);
     state = {
@@ -295,6 +310,18 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
           const ns = nextStates[d.state.defenderId];
           return ns ? { ...d, state: ns } : d;
         }),
+      };
+    }
+    if (missiles && (res.missileStates || res.missileSalvos)) {
+      missiles = {
+        ...missiles,
+        launchers: res.missileStates
+          ? missiles.launchers.map((launcher) => {
+              const next = res.missileStates![launcher.launcherId];
+              return next ? { ...launcher, ...next } : launcher;
+            })
+          : missiles.launchers,
+        inFlight: res.missileSalvos ? [...res.missileSalvos] : missiles.inFlight,
       };
     }
   }

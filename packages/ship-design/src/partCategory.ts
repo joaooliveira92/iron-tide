@@ -47,6 +47,18 @@ export function partCategory(part: FlattenedPart): PartCategoryResult {
       return { ok: true, category: "AMMUNITION" };
     case "sensor":
       return { ok: true, category: "RANGEFINDER" };
+    case "radar":
+      return { ok: true, category: "RADAR" };
+    case "sonar":
+      return { ok: true, category: "SONAR" };
+    case "asw_weapon":
+      return { ok: true, category: "ASW_WEAPON" };
+    case "aa_weapon":
+      return { ok: true, category: "AA_WEAPON" };
+    case "missile_launcher":
+      return { ok: true, category: "MISSILE_LAUNCHER" };
+    case "hangar":
+      return { ok: true, category: "AIRCRAFT_FACILITY" };
     case "propulsion_plant":
       return { ok: true, category: "ENGINE" };
     case "armour_material":

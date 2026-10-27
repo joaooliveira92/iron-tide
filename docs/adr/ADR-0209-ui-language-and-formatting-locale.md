@@ -1,5 +1,7 @@
 # ADR-0209: UI language, formatting locale, and externalized strings
 
+Applies to: desktop, messages
+
 ## Status
 
 Accepted (2026-10-15). New record of decision DR-009; no prior ADR file existed for

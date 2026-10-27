@@ -2,7 +2,7 @@
 
 21 standalone TypeScript composite projects. **Authoritative sources:**
 
-- **Boundaries** — [`docs/adr`](../docs/adr); read the index before adding a package or cross-package import.
+- **Boundaries** — each package's `AGENTS.md` links its [ADRs](../docs/adr).
 - **Vocabulary** — [CONTEXT.md](../CONTEXT.md).
 - **Non-negotiable rules** — [`DESIGN-57`](../docs/architecture/non-negotiable-rules.md).
 

@@ -6,6 +6,8 @@ import type {
 } from "@bluewave/campaign";
 import { campaignMonthId } from "@bluewave/campaign";
 import { resolve } from "@bluewave/combat";
+import type { GunneryRadarRules } from "@bluewave/combat/battleResolution";
+import type { MissilesRules } from "@bluewave/content-schema";
 import { computeManifestHash } from "@bluewave/combat/generation";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { RandomLedger } from "@bluewave/random";
@@ -86,7 +88,12 @@ function recomputedSurface(auto: {
 }
 
 export class TacticalReplayVerifier {
-  verify(snapshot: CampaignSnapshot, campaignSeed: string): TacticalReplayResult {
+  verify(
+    snapshot: CampaignSnapshot,
+    campaignSeed: string,
+    gunneryRadar?: GunneryRadarRules,
+    missilesRules?: MissilesRules,
+  ): TacticalReplayResult {
     const campaignMonth = campaignMonthId(
       snapshot["startYear"],
       snapshot["startMonth"],
@@ -99,7 +106,16 @@ export class TacticalReplayVerifier {
 
     const battles: TacticalBattleVerification[] = [];
     for (const battle of resolved) {
-      battles.push(this.verifyBattle(snapshot, battle, campaignSeed, campaignMonth));
+      battles.push(
+        this.verifyBattle(
+          snapshot,
+          battle,
+          campaignSeed,
+          campaignMonth,
+          gunneryRadar,
+          missilesRules,
+        ),
+      );
     }
 
     return { match: battles.every((b) => b.match), battles };
@@ -110,6 +126,8 @@ export class TacticalReplayVerifier {
     battle: BattleInstance,
     campaignSeed: string,
     campaignMonth: string,
+    gunneryRadar: GunneryRadarRules | undefined,
+    missilesRules: MissilesRules | undefined,
   ): TacticalBattleVerification {
     const manifest = resolveBattleManifest(snapshot, battle);
     if (!manifest) {
@@ -163,6 +181,8 @@ export class TacticalReplayVerifier {
         rulesetVersion: snapshot["rulesetVersion"],
         formulaVersion: manifest["formulaVersion"],
         rngVersion: manifest["rngVersion"],
+        ...(gunneryRadar === undefined ? {} : { gunneryRadar }),
+        ...(missilesRules === undefined ? {} : { missilesRules }),
         randomLedger: new RandomLedger(),
       });
     } catch (e) {

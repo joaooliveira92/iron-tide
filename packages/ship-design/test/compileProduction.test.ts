@@ -226,4 +226,22 @@ describe("production compile from a parts loadout (ticket 11d)", () => {
     expect(result.findings.map((f) => f.id)).toContain("FIT_NOT_YET_AVAILABLE");
     expect(Object.hasOwn(result, "compiled")).toBe(false);
   });
+
+  it("carries resolved part capabilities into the compiled design in canonical order", () => {
+    for (const loadout of loadouts) {
+      const result = compile(loadout);
+      expect(result.status, loadout.id).toBe("ACCEPTED");
+      if (result.status !== "ACCEPTED") continue;
+      const kinds = result.compiled.capabilities.map((c) => c.kind);
+      expect(kinds, loadout.id).toEqual([...kinds].sort());
+    }
+    const loadout = loadouts.find((entry) => entry.id === "majestic_like")!;
+    const result = compile(loadout);
+    expect(result.status).toBe("ACCEPTED");
+    if (result.status !== "ACCEPTED") return;
+    expect(result.compiled.capabilities).toContainEqual({
+      kind: "damage_control",
+      effectBp: 500,
+    });
+  });
 });

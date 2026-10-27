@@ -10,7 +10,7 @@
     "dev:debug": "node scripts/build-content.mjs && cross-env VITE_BLUEWAVE_DEBUG=true electron-vite dev",
     "dev:devtools": "node scripts/build-content.mjs && cross-env VITE_BLUEWAVE_DEVTOOLS=true electron-vite dev",
     "build": "node scripts/build-content.mjs && electron-vite build && node scripts/check-renderer-bundle.mjs",
-    "build:debug": "node scripts/build-content.mjs && cross-env VITE_BLUEWAVE_DEBUG=true electron-vite build && node scripts/check-renderer-bundle.mjs",
+    "build:debug": "node scripts/build-content.mjs && cross-env VITE_BLUEWAVE_DEBUG=true electron-vite build && cross-env VITE_BLUEWAVE_DEBUG=true node scripts/check-renderer-bundle.mjs",
     "preview": "electron-vite preview",
     "pack": "pnpm build && electron-builder --config",
     "pack:mac": "pnpm build && electron-builder --mac --config",

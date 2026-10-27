@@ -1,5 +1,7 @@
 # ADR-0231: Authoritative nation home area and possession ownership in campaign state
 
+Applies to: content, content-compiler, campaign, phase-engine
+
 ## Status
 
 Accepted (2026-10-18). Implements decision F of the wayfinder map

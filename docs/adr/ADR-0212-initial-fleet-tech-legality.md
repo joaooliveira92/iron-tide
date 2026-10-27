@@ -1,5 +1,7 @@
 # ADR-0212: Initial-fleet tech legality uses the global 1880 tech set
 
+Applies to: content, campaign, ship-design, content-compiler
+
 ## Status
 
 Accepted (2026-10-15). New record of decision DR-012; no prior ADR file existed

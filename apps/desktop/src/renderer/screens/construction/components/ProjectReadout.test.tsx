@@ -159,3 +159,127 @@ describe("ProjectReadout", () => {
     expect(screen.queryByText("complete")).toBeNull();
   });
 });
+
+describe("ProjectReadout explanation", () => {
+  it("shows the months-left explanation from the schedule readout", () => {
+    render(
+      <ProjectReadout
+        row={row({
+          readout: {
+            totalCostUnits: 640,
+            monthlyInstalmentUnits: 120,
+            remainingMonths: 6,
+            launchMonth: "1880-07",
+            scheduleBasis: "YARD_CAPACITY",
+            scheduleUnavailableReason: null,
+            haltedCarryingCostUnits: null,
+            scheduleExplanation: {
+              formulaId: "construction_schedule",
+              formulaVersion: "construction_v1",
+              inputs: {},
+              intermediate: { remainingWork: 700 },
+              result: 6,
+              unit: "months",
+              children: [
+                {
+                  formulaId: "construction_schedule.remainingWork",
+                  formulaVersion: "construction_v1",
+                  inputs: { amount: 700 },
+                  intermediate: {},
+                  result: 700,
+                  unit: "nc",
+                },
+                {
+                  formulaId: "construction_schedule.instalment",
+                  formulaVersion: "construction_v1",
+                  inputs: { amount: 120 },
+                  intermediate: {},
+                  result: 120,
+                  unit: "nc",
+                },
+              ],
+            },
+          },
+        })}
+      />,
+    );
+    expect(screen.getByText("Ready in 6 months")).toBeTruthy();
+    expect(screen.getByText("Work remaining")).toBeTruthy();
+    expect(screen.getByText("Work per month")).toBeTruthy();
+  });
+
+  it("shows the instalment line split and the package cost split when supplied", () => {
+    render(
+      <ProjectReadout
+        row={row({
+          readout: {
+            totalCostUnits: 640,
+            monthlyInstalmentUnits: 120,
+            remainingMonths: 6,
+            launchMonth: "1880-07",
+            scheduleBasis: "YARD_CAPACITY",
+            scheduleUnavailableReason: null,
+            haltedCarryingCostUnits: null,
+            instalmentExplanation: {
+              formulaId: "construction_instalment",
+              formulaVersion: "construction_v1",
+              inputs: { remainingWork: 640 },
+              intermediate: {},
+              result: 120,
+              unit: "nc",
+              children: [
+                {
+                  formulaId: "construction_instalment.slipway",
+                  formulaVersion: "construction_v1",
+                  inputs: { amount: 70 },
+                  intermediate: {},
+                  result: 70,
+                  unit: "nc",
+                },
+                {
+                  formulaId: "construction_instalment.machinery",
+                  formulaVersion: "construction_v1",
+                  inputs: { amount: 50 },
+                  intermediate: {},
+                  result: 50,
+                  unit: "nc",
+                },
+              ],
+            },
+            costExplanation: {
+              formulaId: "construction_cost",
+              formulaVersion: "construction_v1",
+              inputs: {},
+              intermediate: { packageCount: 2 },
+              result: 640,
+              unit: "nc",
+              children: [
+                {
+                  formulaId: "construction_cost.slipway",
+                  formulaVersion: "construction_v1",
+                  inputs: { amount: 600 },
+                  intermediate: {},
+                  result: 600,
+                  unit: "nc",
+                },
+                {
+                  formulaId: "construction_cost.machinery",
+                  formulaVersion: "construction_v1",
+                  inputs: { amount: 40 },
+                  intermediate: {},
+                  result: 40,
+                  unit: "nc",
+                },
+              ],
+            },
+          },
+        })}
+      />,
+    );
+    expect(screen.getByText("Work this month 120")).toBeTruthy();
+    expect(screen.getByText("Slipway work")).toBeTruthy();
+    expect(screen.getByText("Machinery work")).toBeTruthy();
+    expect(screen.getByText("Total cost 640")).toBeTruthy();
+    expect(screen.getByText("Hull and launch")).toBeTruthy();
+  });
+});

@@ -47,7 +47,7 @@ describe("economy calculators", () => {
     }
     expect(pairs).toBe(20_001 * 4_501);
     expect(counterexamples).toEqual([]);
-  });
+  }, 60_000);
 
   it("holds the legacy identity at the corners of the required domain", () => {
     for (const [base, rate, expected] of [

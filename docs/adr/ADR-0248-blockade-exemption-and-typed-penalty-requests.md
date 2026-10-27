@@ -1,5 +1,7 @@
 # ADR-0248: A blockaded nation at war is exempt from presence, and shortfalls emit typed penalty requests
 
+Applies to: campaign, events, phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Implements decisions C and D of the wayfinder map

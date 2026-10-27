@@ -56,9 +56,17 @@
       "types": "./src/mines/index.ts",
       "default": "./dist/mines/index.js"
     },
+    "./missiles": {
+      "types": "./src/missiles/index.ts",
+      "default": "./dist/missiles/index.js"
+    },
     "./movement": {
       "types": "./src/movement/index.ts",
       "default": "./dist/movement/index.js"
+    },
+    "./orders": {
+      "types": "./src/orders/index.ts",
+      "default": "./dist/orders/index.js"
     },
     "./simulation": {
       "types": "./src/simulation/index.ts",
@@ -92,7 +100,6 @@
   "dependencies": {
     "@bluewave/contracts": "workspace:*",
     "@bluewave/deterministic": "workspace:*",
-    "@bluewave/diagnostics": "workspace:*",
     "@bluewave/armament": "workspace:*",
     "@bluewave/campaign": "workspace:*",
     "@bluewave/random": "workspace:*",

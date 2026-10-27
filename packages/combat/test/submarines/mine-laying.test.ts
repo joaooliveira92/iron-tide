@@ -34,7 +34,7 @@ describe("AC-15: submarine mine laying (§20)", () => {
         mineInventory: SafeInt(100),
         requiredInventory: SafeInt(20),
         targetBelligerents: ["nation-enemy"],
-        availableTechnologyIds: new Set(["minelaying_submarine_technology"]),
+        availableTechnologyIds: new Set(["sub_minelaying"]),
       },
     );
     expect(verdict.accepted).toBe(true);
@@ -56,7 +56,7 @@ describe("AC-15: submarine mine laying (§20)", () => {
         mineInventory: SafeInt(100),
         requiredInventory: SafeInt(20),
         targetBelligerents: ["nation-enemy"],
-        availableTechnologyIds: new Set(["minelaying_submarine_technology"]),
+        availableTechnologyIds: new Set(["sub_minelaying"]),
       },
     );
     expect(verdict.accepted).toBe(false);
@@ -78,7 +78,7 @@ describe("AC-15: submarine mine laying (§20)", () => {
         mineInventory: SafeInt(100),
         requiredInventory: SafeInt(20),
         targetBelligerents: ["nation-enemy"],
-        availableTechnologyIds: new Set(["minelaying_submarine_technology"]),
+        availableTechnologyIds: new Set(["sub_minelaying"]),
       },
     );
     expect(verdict.accepted).toBe(false);
@@ -97,7 +97,7 @@ describe("AC-15: submarine mine laying (§20)", () => {
         mineInventory: SafeInt(100),
         requiredInventory: SafeInt(20),
         targetBelligerents: ["nation-enemy"],
-        availableTechnologyIds: new Set(["minelaying_submarine_technology"]),
+        availableTechnologyIds: new Set(["sub_minelaying"]),
       },
     );
     expect(verdict.accepted).toBe(false);
@@ -116,7 +116,7 @@ describe("AC-15: submarine mine laying (§20)", () => {
         mineInventory: SafeInt(100),
         requiredInventory: SafeInt(20),
         targetBelligerents: ["nation-enemy"],
-        availableTechnologyIds: new Set(["minelaying_submarine_technology"]),
+        availableTechnologyIds: new Set(["sub_minelaying"]),
       },
     );
     expect(verdict.accepted).toBe(false);
@@ -135,7 +135,7 @@ describe("AC-15: submarine mine laying (§20)", () => {
         mineInventory: SafeInt(100),
         requiredInventory: SafeInt(20),
         targetBelligerents: ["nation-enemy"],
-        availableTechnologyIds: new Set(["minelaying_submarine_technology"]),
+        availableTechnologyIds: new Set(["sub_minelaying"]),
       },
     );
     expect(verdict.accepted).toBe(false);
@@ -154,7 +154,7 @@ describe("AC-15: submarine mine laying (§20)", () => {
         mineInventory: SafeInt(10),
         requiredInventory: SafeInt(20),
         targetBelligerents: ["nation-enemy"],
-        availableTechnologyIds: new Set(["minelaying_submarine_technology"]),
+        availableTechnologyIds: new Set(["sub_minelaying"]),
       },
     );
     expect(verdict.accepted).toBe(false);
@@ -176,7 +176,7 @@ describe("AC-15: submarine mine laying (§20)", () => {
         mineInventory: SafeInt(100),
         requiredInventory: SafeInt(20),
         targetBelligerents: ["nation-enemy"],
-        availableTechnologyIds: new Set(["minelaying_submarine_technology"]),
+        availableTechnologyIds: new Set(["sub_minelaying"]),
       },
     );
     expect(verdict.accepted).toBe(false);

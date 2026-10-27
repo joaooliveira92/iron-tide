@@ -1,5 +1,9 @@
 # ADR-0300: Unreachable combat modules are wired by their roadmap owner and stay dormant until then
 
+Applies to: combat
+
+Rule: Unreachable combat modules stay dormant until their roadmap owner wires them; the UI must not expose them meanwhile.
+
 ## Status
 
 Accepted (2026-10-25). Resolves [#225](https://github.com/joaooliveira92/iron-tide/issues/225), taking Option A of

@@ -1,5 +1,19 @@
-export const CONTENT_SECURITY_POLICY =
-  "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:";
+const LOCKED_DIRECTIVES = [
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-ancestors 'none'",
+];
+
+export const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  ...LOCKED_DIRECTIVES,
+].join("; ");
 
 export const DEV_CONTENT_SECURITY_POLICY = [
   "default-src 'self' http://localhost:5173",
@@ -7,7 +21,14 @@ export const DEV_CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline' http://localhost:5173",
   "img-src 'self' data: http://localhost:5173",
   "connect-src 'self' ws://localhost:5173 http://localhost:5173",
+  ...LOCKED_DIRECTIVES,
 ].join("; ");
+
+const UNMANAGED_PROTOCOLS = ["chrome-extension:", "devtools:"];
+
+export function shouldApplyContentSecurityPolicy(url: string): boolean {
+  return !UNMANAGED_PROTOCOLS.some((protocol) => url.startsWith(protocol));
+}
 
 export function applyContentSecurityPolicy(
   responseHeaders: Record<string, string[]> | undefined,

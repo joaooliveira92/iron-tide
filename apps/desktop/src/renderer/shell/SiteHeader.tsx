@@ -90,7 +90,7 @@ export function SiteHeader({
       >
         <HeaderNav back={back} forward={forward} />
 
-        {collapsed && campaign !== null && <CompactStatus campaign={campaign} />}
+        {spec !== null && campaign !== null && <CompactStatus campaign={campaign} />}
 
         <HeaderTitle title={title} />
 

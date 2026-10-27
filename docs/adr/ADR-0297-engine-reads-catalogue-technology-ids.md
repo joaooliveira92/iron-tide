@@ -1,5 +1,7 @@
 # ADR-0297: The engine reads the catalogue's technology id where one matches, and leaves the rest named
 
+Applies to: combat, content
+
 ## Status
 
 Accepted (2026-10-25). Resolves part of [#278](https://github.com/joaooliveira92/iron-tide/issues/278), found by the era mechanics

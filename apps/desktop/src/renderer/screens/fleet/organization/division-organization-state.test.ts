@@ -48,6 +48,7 @@ describe("division organization state", () => {
       month: { month: 1, year: 1880 },
       divisions: [division],
       unassignedShips: [ship("b", "home", "English Home Waters")],
+      officers: [],
       roles: ["CORE"],
       formations: ["LINE_AHEAD"],
       maxShips: 5,
@@ -57,6 +58,7 @@ describe("division organization state", () => {
         addShip: { experience: 5, cohesion: 10 },
         removeShip: { experience: 3, cohesion: 5 },
         changeFlagship: { experience: 5, cohesion: 10 },
+        changeCommander: { experience: 5, cohesion: 10 },
         reorder: { experience: 0, cohesion: 3 },
         changeRole: { experience: 0, cohesion: 10 },
         changeFormation: { experience: 0, cohesion: 5 },
@@ -75,6 +77,8 @@ describe("division organization state", () => {
       "RemoveShipFromDivision",
       "ChangeDivisionFlagship",
       "ReorderDivisionShips",
+      "AssignOfficer",
+      "RelieveOfficer",
       "DissolveDivision",
     ] as const) {
       const { notice } = acceptDivisionCommand({

@@ -1,5 +1,7 @@
 # ADR-0249: Foreign-station ships are routed one hop a month toward the largest shortfall
 
+Applies to: campaign, events, phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Implements decision G of the wayfinder map

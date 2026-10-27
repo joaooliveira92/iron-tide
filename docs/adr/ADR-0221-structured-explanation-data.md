@@ -1,5 +1,7 @@
 # ADR-0221: Structured explanation data for domain display values
 
+Applies to: events, ship-design, phase-engine, desktop
+
 ## Status
 
 Accepted (2026-10-16). Completes the display-formatting sweep that ADR-0218

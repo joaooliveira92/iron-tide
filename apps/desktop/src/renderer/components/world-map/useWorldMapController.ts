@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
+import type { StrategicMapView } from "@bluewave/campaign-engine";
 import { type LiveWorldMapOverlay } from "./campaign-map-join.js";
-import { useLiveWorldMapOverlay } from "./useLiveWorldMapOverlay.js";
+import { useLiveWorldMapOverlay, type LiveWorldMapRead } from "./useLiveWorldMapOverlay.js";
 import {
   initialMapPrototypeState,
   pushRuler,
@@ -12,23 +13,29 @@ import {
   type RouteReading,
 } from "./map-state.js";
 import type { ProjectionId } from "./projection.js";
-import type { AreaId } from "./fixture-world.js";
+import type { AreaId } from "./map-geometry.js";
 
 export interface WorldMapController {
   readonly state: MapPrototypeState;
   readonly route: RouteReading | null;
   readonly overlay: LiveWorldMapOverlay;
+  readonly strategic: StrategicMapView | null;
+  readonly status: LiveWorldMapRead["status"];
+  readonly reason: string | null;
   readonly onSelect: (area: AreaId | null) => void;
   readonly onRuler: (area: AreaId) => void;
   readonly onToggleLayer: (layer: LayerId) => void;
   readonly onSetProjection: (projection: ProjectionId) => void;
   readonly onSetCentre: (centre: number) => void;
-  readonly onToggleClosedPassages: () => void;
 }
 
-export function useWorldMapController(sessionId: string | null): WorldMapController {
+export function useWorldMapController(
+  sessionId: string | null,
+  revision: number | null = null,
+  refreshToken = 0,
+): WorldMapController {
   const [state, setState] = useState(initialMapPrototypeState);
-  const overlay = useLiveWorldMapOverlay(sessionId);
+  const map = useLiveWorldMapOverlay(sessionId, revision, refreshToken);
 
   const onSelect = useCallback(
     (area: AreaId | null) => setState((current) => selectArea(current, area)),
@@ -50,24 +57,17 @@ export function useWorldMapController(sessionId: string | null): WorldMapControl
     (centre: number) => setState((current) => ({ ...current, centre })),
     [],
   );
-  const onToggleClosedPassages = useCallback(
-    () =>
-      setState((current) => ({
-        ...current,
-        respectClosedPassages: !current.respectClosedPassages,
-      })),
-    [],
-  );
-
   return {
     state,
-    route: readRoute(state),
-    overlay,
+    route: readRoute(state, map.overlay.lanes ?? []),
+    overlay: map.overlay,
+    strategic: map.strategic,
+    status: map.status,
+    reason: map.reason,
     onSelect,
     onRuler,
     onToggleLayer,
     onSetProjection,
     onSetCentre,
-    onToggleClosedPassages,
   };
 }

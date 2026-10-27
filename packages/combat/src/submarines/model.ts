@@ -2,6 +2,8 @@ import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import {
   BASE_PROXIMITY_BANDS,
+  MINELAYING_SUBMARINE_TECHNOLOGY,
+  MISSILE_SUBMARINE_TECHNOLOGY,
   SUBMARINE_BASIS_POINTS_PER_UNIT,
   SUBMARINE_POLICIES,
   SUBMARINE_RULESET_VERSION,
@@ -429,7 +431,7 @@ export const SHIPPED_SUBMARINE_TYPE_DEFINITIONS: readonly SubmarineTypeDefinitio
     missionEligibility: MINELAYING_MISSIONS,
     baseSupportRequirement: "REQUIRED",
     tacticalProjectionId: "tactical_projection_minelaying_v1",
-    technologyPrerequisiteIds: ["minelaying_submarine_technology"],
+    technologyPrerequisiteIds: [MINELAYING_SUBMARINE_TECHNOLOGY],
     contentVersion: submarineTypesPolicyId,
   }),
   withSubmarineTypeDefinitionContentHash({
@@ -445,7 +447,7 @@ export const SHIPPED_SUBMARINE_TYPE_DEFINITIONS: readonly SubmarineTypeDefinitio
     missionEligibility: MISSILE_MISSIONS,
     baseSupportRequirement: "OPTIONAL",
     tacticalProjectionId: "tactical_projection_missile_v1",
-    technologyPrerequisiteIds: ["missile_submarine_technology"],
+    technologyPrerequisiteIds: [MISSILE_SUBMARINE_TECHNOLOGY],
     contentVersion: submarineTypesPolicyId,
   }),
 ];

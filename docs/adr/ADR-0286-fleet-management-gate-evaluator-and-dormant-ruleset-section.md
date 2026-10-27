@@ -1,11 +1,13 @@
 # ADR-0286: Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section
 
+Applies to: campaign, content-compiler, content-schema
+
 ## Status
 
 Accepted (2026-10-24). Implements ticket
 [#268](https://github.com/joaooliveira92/iron-tide/issues/268) of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265), decisions #196 and #199. Values are the balance
-targets of [ADR-0283](ADR-0283-fleet-management-values-and-repair-entry.md); the section pattern is
+targets of [ADR-0314](ADR-0314-fleet-management-values-and-repair-entry.md); the section pattern is
 [ADR-0253](ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md).
 
 ## Decision

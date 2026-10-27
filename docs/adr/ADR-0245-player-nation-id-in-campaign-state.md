@@ -1,5 +1,7 @@
 # ADR-0245: The player nation is stored in authoritative campaign state
 
+Applies to: campaign, ai, test-support
+
 ## Status
 
 Accepted (2026-10-20). Resolves

@@ -1,5 +1,7 @@
 # ADR-0206: Naval Credits (NC) as the standardized comparison currency
 
+Applies to: contracts, desktop
+
 ## Status
 
 Accepted (2026-10-15). New record of decision DR-006; no prior ADR file existed for

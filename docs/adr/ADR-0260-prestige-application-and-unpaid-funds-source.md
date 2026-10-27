@@ -1,5 +1,7 @@
 # ADR-0260: Prestige application seam and the unpaid-funds source
 
+Applies to: events, messages, phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Implements ticket [#89](https://github.com/joaooliveira92/iron-tide/issues/89) (S-2 04) of spec

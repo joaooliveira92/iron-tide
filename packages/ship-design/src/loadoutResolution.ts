@@ -81,6 +81,42 @@ const FITTING_CATEGORY_BY_INTERFACE: Readonly<Record<string, Resolved["category"
   ventilation: "SPECIAL_EQUIPMENT",
 };
 
+type AuxiliaryPart = Extract<
+  FlattenedPart,
+  {
+    readonly family:
+      | "fitting"
+      | "sensor"
+      | "radar"
+      | "sonar"
+      | "asw_weapon"
+      | "aa_weapon"
+      | "missile_launcher"
+      | "hangar";
+  }
+>;
+
+function auxiliaryCategory(part: AuxiliaryPart): Resolved["category"] | undefined {
+  switch (part.family) {
+    case "fitting":
+      return FITTING_CATEGORY_BY_INTERFACE[part.provides];
+    case "sensor":
+      return "RANGEFINDER";
+    case "radar":
+      return "RADAR";
+    case "sonar":
+      return "SONAR";
+    case "asw_weapon":
+      return "ASW_WEAPON";
+    case "aa_weapon":
+      return "AA_WEAPON";
+    case "missile_launcher":
+      return "MISSILE_LAUNCHER";
+    case "hangar":
+      return "AIRCRAFT_FACILITY";
+  }
+}
+
 function placementSlot(
   reader: Reader,
   entry: LoadoutEntryData,
@@ -126,6 +162,7 @@ interface PartFacts {
   readonly attr: Record<string, number>;
   readonly fcClass?: string;
   readonly fcClasses: readonly string[];
+  readonly capabilities: readonly import("@bluewave/content-schema").CapabilityData[];
   readonly maintenanceMonthlyBp: number;
   readonly buildWorkMicro: number | null;
   readonly productionLine: string | null;
@@ -208,6 +245,7 @@ function factsOf(
     attr,
     ...(fcClass === undefined ? {} : { fcClass: fcClass.class }),
     fcClasses: fcClasses?.classes ?? [],
+    capabilities: [...capabilities],
     maintenanceMonthlyBp: engineering?.maintenance?.monthlyBpOfCost ?? 0,
     buildWorkMicro: part.buildWorkMicro ?? null,
     productionLine: part.productionLine ?? null,
@@ -252,6 +290,7 @@ function resolvedFrom(
     productionLine: facts.productionLine,
     requires: facts.requires,
     torpedoMount,
+    capabilities: facts.capabilities,
     params,
     weightKg: facts.weightKg,
     volumeLitre: facts.volumeLitre,
@@ -418,7 +457,7 @@ function launcherTorpedoMount(
 function readFittingPlacement(
   reader: Reader,
   entry: LoadoutEntryData,
-  part: Extract<FlattenedPart, { readonly family: "fitting" | "sensor" }>,
+  part: AuxiliaryPart,
   path: string,
 ): Resolved | null {
   if (entry.id === undefined) {
@@ -427,14 +466,13 @@ function readFittingPlacement(
   }
   const placed = placementSlot(reader, entry, path);
   if (placed === null) return null;
-  const category =
-    part.family === "sensor" ? "RANGEFINDER" : FITTING_CATEGORY_BY_INTERFACE[part.provides];
+  const category = auxiliaryCategory(part);
   if (category === undefined) {
     fail(
       reader,
       "RESOLVE_UNSUPPORTED_FAMILY",
       path,
-      `fitting '${part.id}' provides '${part.provides}', which has no component category.`,
+      `part '${part.id}' provides '${part.provides}', which has no component category.`,
     );
     return null;
   }
@@ -537,7 +575,13 @@ function readEntry(reader: Reader, entry: LoadoutEntryData, read: EntryRead): En
       return resolved === null ? read : { ...read, resolved: [...read.resolved, resolved] };
     }
     case "fitting":
-    case "sensor": {
+    case "sensor":
+    case "radar":
+    case "sonar":
+    case "asw_weapon":
+    case "aa_weapon":
+    case "missile_launcher":
+    case "hangar": {
       const resolved = readFittingPlacement(reader, entry, part, path);
       return resolved === null ? read : { ...read, resolved: [...read.resolved, resolved] };
     }

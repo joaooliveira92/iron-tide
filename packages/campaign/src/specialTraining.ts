@@ -31,17 +31,35 @@ export interface SpecialTrainingRules {
 
 const NEUTRAL_COST_BP = 10_000;
 
+export interface TrainingAdderDetail {
+  readonly baseAdderBp: number;
+  readonly nationMultiplierBp: number;
+  readonly adderBp: number;
+}
+
+export function trainingAdderDetail(
+  rules: SpecialTrainingRules,
+  subject: TrainingSubject,
+  nationId: string | undefined,
+): TrainingAdderDetail {
+  const baseAdderBp = rules.subjects[subject].maintenanceAdderBp;
+  const nationMultiplierBp =
+    nationId === undefined
+      ? NEUTRAL_COST_BP
+      : (rules.nationCostMultiplierBp?.[nationId] ?? NEUTRAL_COST_BP);
+  return {
+    baseAdderBp,
+    nationMultiplierBp,
+    adderBp: Math.floor((baseAdderBp * nationMultiplierBp) / NEUTRAL_COST_BP),
+  };
+}
+
 export function trainingAdderBp(
   rules: SpecialTrainingRules,
   subject: TrainingSubject,
   nationId: string | undefined,
 ): number {
-  const base = rules.subjects[subject].maintenanceAdderBp;
-  const multiplier =
-    nationId === undefined
-      ? NEUTRAL_COST_BP
-      : (rules.nationCostMultiplierBp?.[nationId] ?? NEUTRAL_COST_BP);
-  return Math.floor((base * multiplier) / NEUTRAL_COST_BP);
+  return trainingAdderDetail(rules, subject, nationId).adderBp;
 }
 
 export type TrainingRefusal =

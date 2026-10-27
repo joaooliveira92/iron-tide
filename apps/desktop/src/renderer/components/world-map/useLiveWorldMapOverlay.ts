@@ -1,45 +1,46 @@
-import { useEffect, useMemo, useState } from "react";
-import { useBridge } from "../../lib/bridge-context.js";
+import { useMemo } from "react";
+import type { StrategicMapView } from "@bluewave/campaign-engine";
+import { useRead } from "../../lib/use-read.js";
 import { EMPTY_LIVE_OVERLAY, joinWorldMap, type LiveWorldMapOverlay } from "./campaign-map-join.js";
 
-export function useLiveWorldMapOverlay(sessionId: string | null): LiveWorldMapOverlay {
-  const bridge = useBridge();
-  const [baseOverlay, setOverlay] = useState<LiveWorldMapOverlay>(EMPTY_LIVE_OVERLAY);
-  const [playerNationId, setPlayerNationId] = useState<string | null>(null);
+export interface LiveWorldMapRead {
+  readonly overlay: LiveWorldMapOverlay;
+  readonly strategic: StrategicMapView | null;
+  readonly status: "loading" | "ready" | "unavailable";
+  readonly reason: string | null;
+}
 
-  useEffect(() => {
-    if (bridge === undefined || sessionId === null) {
-      setOverlay(EMPTY_LIVE_OVERLAY);
-      return;
+export function useLiveWorldMapOverlay(
+  sessionId: string | null,
+  revision: number | null = null,
+  refreshToken = 0,
+): LiveWorldMapRead {
+  const read = useRead("inspectMap", sessionId ?? "", sessionId === null ? null : revision, {
+    enabled: sessionId !== null,
+    refreshToken,
+  });
+
+  return useMemo(() => {
+    if (sessionId === null) {
+      return { overlay: EMPTY_LIVE_OVERLAY, strategic: null, status: "unavailable", reason: null };
     }
-    let active = true;
-    bridge.campaign
-      .execute("inspectMap", sessionId)
-      .then((result) => {
-        if (!active) return;
-        if (result.outcome !== "success") {
-          setOverlay(EMPTY_LIVE_OVERLAY);
-          setPlayerNationId(null);
-          return;
-        }
-        setOverlay(joinWorldMap(result.value.strategic.world));
-        setPlayerNationId(result.value.playerNationId);
-      })
-      .catch(() => {
-        if (active) {
-          setOverlay(EMPTY_LIVE_OVERLAY);
-          setPlayerNationId(null);
-        }
-      });
-    return () => {
-      active = false;
+    if (read.status === "loading") {
+      return { overlay: EMPTY_LIVE_OVERLAY, strategic: null, status: "loading", reason: null };
+    }
+    if (read.status === "unavailable") {
+      return {
+        overlay: EMPTY_LIVE_OVERLAY,
+        strategic: null,
+        status: "unavailable",
+        reason: read.reason,
+      };
+    }
+    const overlay = joinWorldMap(read.value.strategic.world);
+    return {
+      overlay: { ...overlay, playerNationId: read.value.playerNationId },
+      strategic: read.value.strategic,
+      status: "ready",
+      reason: null,
     };
-  }, [bridge, sessionId]);
-
-  const overlay = useMemo(
-    () => (baseOverlay.source === "campaign" ? { ...baseOverlay, playerNationId } : baseOverlay),
-    [baseOverlay, playerNationId],
-  );
-
-  return overlay;
+  }, [read, sessionId]);
 }

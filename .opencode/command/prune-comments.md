@@ -8,7 +8,7 @@ return a high-level pruning plan.
 
 Scope: `$ARGUMENTS`. If empty, run the default full-repo partition named in the
 agent file (excluding `vendor/**`, `repos/**`, `**/dist/**`, `**/node_modules/**`,
-`**/.turbo/**`, `content/generated/**`).
+`content/generated/**`).
 
 Follow the agent's Run steps exactly. Adopt **poteto-mode**, use the **swarm**
 skill phases, and hand each worker the **no-comments** rubric. This is an

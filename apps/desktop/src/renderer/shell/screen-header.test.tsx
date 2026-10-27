@@ -42,7 +42,8 @@ describe("ScreenHeader", () => {
     expect(screen.getByRole("heading", { name: "Research & Technology" })).toBeTruthy();
     expect(screen.getByText("Bluewave — January 1880").className).toContain("sr-only");
     expect(screen.getByRole("button", { name: "Set priorities" })).toBeTruthy();
-    expect(screen.getByText("January 1880")).toBeTruthy();
+    expect(screen.queryByText("January 1880")).toBeNull();
+    expect(screen.queryByText(/Status:/)).toBeNull();
   });
 
   it("restores the application title when the screen unmounts", () => {

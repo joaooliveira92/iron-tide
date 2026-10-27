@@ -1,5 +1,7 @@
 # ADR-0283: E-1 1940-1970 content decisions
 
+Applies to: content, cross-process-test
+
 ## Status
 
 Accepted (2026-10-23). Records the owner's approval of every recommendation in decision request

@@ -1,5 +1,9 @@
 # ADR-0298: Hash-chained command-lifecycle records, settlement branches and the spec-rule helpers are scaffolding, not shipped
 
+Applies to: commands, phase-engine
+
+Rule: Command-lifecycle records and unused spec-rule helpers are scaffolding and do not ship; only `createCommandRecord` is kept.
+
 ## Status
 
 Accepted (2026-10-25). Resolves [#204](https://github.com/joaooliveira92/iron-tide/issues/204) and carries out

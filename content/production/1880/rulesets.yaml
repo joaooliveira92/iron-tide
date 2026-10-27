@@ -114,6 +114,71 @@
           page: "51, 53, 55"
           section: "Special training takes twelve months, at most two subjects, with maintenance surcharges; an annual fleet exercise costs twice the active maintenance; division experience has a slight impact on crew quality in battle"
       note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (docs/research/fleet-management-values.md). ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence."
+  # The gunnery radar section (#292). The manual (pp.121, 127) grounds fire-control radar, blind fire from level 3, and the
+  # diminishing returns of radar-directed medium AA, but gives no accuracy figure. The level tables are Bluewave balance
+  # targets recorded by ADR-0311. Retuning is a ruleset version change with replay re-approval.
+  gunnery:
+    sectionVersion: 1
+    radar:
+      accuracyBpByFireControlLevel: [10500, 11000, 12000]
+      blindFireMinLevel: 3
+      airDefenseSaturationBpBySearchLevel: [10000, 11000, 12000]
+    provenance:
+      sourceStatus: "BALANCE_TARGET"
+      confidence: "LOW"
+      kind: "balance_adjustment"
+      sources:
+        - title: "Rule the Waves 3 manual"
+          author: "Naval War Simulations / Matrix Games"
+          year: 2023
+          page: "121, 127"
+          section: "Fire control from level 3 allows blind fire; more than 4 radar-directed medium AA has diminishing returns and more than 8 is redundant"
+      note: "ADR-0311. The manual grounds the mechanic and supplies no accuracy multiplier; the three-level tables are balance targets chosen so a level-3 director is a material but not dominant gunnery advantage."
+  # The surface-to-surface missile section (#293). The manual (pp.121-123) names Light, Medium and Heavy ASM/SSM
+  # families and gives no range, hit rate or warhead figure. Every value is a Bluewave balance target recorded
+  # by ADR-0312, following the date and cost policy of ADR-0283 D2/D5. Retuning is a ruleset version change
+  # with replay re-approval.
+  missiles:
+    sectionVersion: 1
+    classes:
+      light_ssm:
+        rangeM: 30000
+        flightTimeSeconds: 90
+        salvoSize: 2
+        baseHitBp: 3500
+        structuralDamage: 1800
+        flotationDamage: 900
+        defenceInterceptBp: 2500
+        maxSalvosPerBattle: 4
+      medium_ssm:
+        rangeM: 55000
+        flightTimeSeconds: 120
+        salvoSize: 4
+        baseHitBp: 4000
+        structuralDamage: 2600
+        flotationDamage: 1400
+        defenceInterceptBp: 3000
+        maxSalvosPerBattle: 4
+      heavy_ssm:
+        rangeM: 90000
+        flightTimeSeconds: 180
+        salvoSize: 8
+        baseHitBp: 4500
+        structuralDamage: 3800
+        flotationDamage: 2200
+        defenceInterceptBp: 3500
+        maxSalvosPerBattle: 3
+    provenance:
+      sourceStatus: "BALANCE_TARGET"
+      confidence: "LOW"
+      kind: "balance_adjustment"
+      sources:
+        - title: "Rule the Waves 3 manual"
+          author: "Naval War Simulations / Matrix Games"
+          year: 2023
+          page: "121-123"
+          section: "Light, Medium and Heavy surface-to-surface and air-to-surface missile families"
+      note: "ADR-0312. The manual names the missile families and the ship/submarine carriage and supplies no range, flight time, salvo size, hit probability, warhead effect or interception figure. Every magnitude is a Bluewave balance target; the class progression follows ADR-0283 D2/D5."
   # The foreign-station and presence section (S-5, spec #73). Every value is a Bluewave balance decision recorded by
   # ADR-0266 (decision requests 0016-0023 and 0026, Option C); only the 1.5x colonial-service multiplier (manual p.46) is
   # sourced and it lives in code. The manual (pp.42, 45, 46) says each quantity exists and supplies no number. Retuning is a

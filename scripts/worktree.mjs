@@ -5,33 +5,45 @@
 // (a wayfinder map or spec issue on the tracker). They must never share a checkout — ADR-0165's incident was two agents in
 // the same `dev` tree, one `git add -A` sweeping the other's work. So each effort
 // gets a dedicated worktree under `.worktrees/<slug>` on a short-lived branch, and
-// the set of live subtrees is tracked in `.worktrees/LEDGER.md`.
+// the set of live subtrees is tracked in the shared registry
+// `$(git rev-parse --git-common-dir)/ai/worktrees.json`.
 //
-// This tool owns that ledger and the worktree lifecycle:
+// This tool owns that registry and the worktree lifecycle:
 //
 //   new <slug>      create `.worktrees/<slug>` on a branch from `dev`, register it
-//   list            live worktrees joined with the ledger, with drift warnings
-//   sync            reconcile the ledger with actual git worktrees
-//   prune           remove merged/gone/phantom subtrees and their ledger rows
+//   list            live worktrees joined with the registry, with drift warnings
+//   sync            reconcile the registry with actual git worktrees
+//   prune           remove merged/gone/phantom subtrees and their registry rows
 //   remove <slug>   remove one subtree (refuses on uncommitted changes)
 //   audit           read-only inventory + reconciliation of worktrees, branches,
-//                   remotes, the ledger, and (via `gh`) merged pull requests
+//                   remotes, the registry, and (via `gh`) merged pull requests
 //
 // `prune --check` reports without mutating (used by the preflight hygiene gate).
 // Arguments are parsed and validated in full before any command touches git or
-// the ledger: an unknown option fails closed with exit 2 and changes nothing.
+// the registry: an unknown option fails closed with exit 2 and changes nothing.
 // Everything here reads git state only (plus `gh pr list` for `audit`); no
 // clock, RNG, or environment.
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, realpathSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 import { isEntryPoint } from "./lib/paths.mjs";
+import {
+  WorktreeRegistryError,
+  acquireRegistryLock,
+  canonicalizeRows,
+  readRegistryFile,
+  registryPath,
+  updateRegistry,
+  writeRegistryFile,
+} from "./worktree-registry.mjs";
 
 export const REPO_ROOT = resolve(import.meta.dirname, "..");
-export const WORKTREES_DIR = join(REPO_ROOT, ".worktrees");
-export const LEDGER_PATH = join(mainCheckoutRoot(), ".worktrees", "LEDGER.md");
+export const MAIN_CHECKOUT_ROOT = mainCheckoutRoot();
+export const WORKTREES_DIR = join(MAIN_CHECKOUT_ROOT, ".worktrees");
+export const LEGACY_LEDGER_PATH = join(MAIN_CHECKOUT_ROOT, ".worktrees", "LEDGER.md");
+export const LEDGER_PATH = LEGACY_LEDGER_PATH;
 export const DEFAULT_BASE = "dev";
 export const DEFAULT_BRANCH_PREFIX = "feat/";
 
@@ -147,15 +159,60 @@ export function renderLedger(markdown, rows) {
   return `${markdown.slice(0, begin)}${block}${markdown.slice(end + LEDGER_END.length)}`;
 }
 
+function canonicalPath(path) {
+  try {
+    return realpathSync.native(path).replace(/\\/gu, "/");
+  } catch {
+    return resolve(path).replace(/\\/gu, "/");
+  }
+}
+
+function legacyRows() {
+  if (!existsSync(LEGACY_LEDGER_PATH)) return [];
+  return parseLedger(readFileSync(LEGACY_LEDGER_PATH, "utf8"));
+}
+
+function migratedLegacyRows() {
+  return legacyRows()
+    .map((row) => ({ ...row, path: canonicalPath(join(WORKTREES_DIR, row.slug)) }))
+    .filter((row) => existsSync(row.path));
+}
+
+export function readLedgerReadOnly() {
+  const registry = readRegistryFile(registryPath());
+  return registry === null ? migratedLegacyRows() : registry.rows;
+}
+
 export function readLedger() {
-  if (!existsSync(LEDGER_PATH)) return [];
-  return parseLedger(readFileSync(LEDGER_PATH, "utf8"));
+  const registry = readRegistryFile(registryPath());
+  if (registry !== null) return registry.rows;
+  const migrated = migratedLegacyRows();
+  if (migrated.length === 0) return [];
+  return updateRegistry(() => migrated);
 }
 
 export function writeLedger(rows) {
-  mkdirSync(dirname(LEDGER_PATH), { recursive: true });
-  const base = existsSync(LEDGER_PATH) ? readFileSync(LEDGER_PATH, "utf8") : "# Active worktrees\n";
-  writeFileSync(LEDGER_PATH, renderLedger(base, rows));
+  const complete = rows.map((row) => ({
+    ...row,
+    path: row.path ?? canonicalPath(join(WORKTREES_DIR, row.slug)),
+  }));
+  updateRegistry(() => canonicalizeRows(complete));
+}
+
+function readRowsForMutation() {
+  const registry = readRegistryFile(registryPath());
+  return registry === null ? migratedLegacyRows() : registry.rows;
+}
+
+function writeRowsLocked(rows) {
+  writeRegistryFile(canonicalizeRows(rows));
+}
+
+function registryFailure(error) {
+  if (!(error instanceof WorktreeRegistryError)) return false;
+  console.error(`worktree registry: ${error.message}`);
+  process.exitCode = 2;
+  return true;
 }
 
 /**
@@ -227,7 +284,7 @@ export function classifyWorktree({
   dirty,
   detached = false,
 }) {
-  if (!pathExists) return { state: "phantom", warnings: ["ledger row has no worktree on disk"] };
+  if (!pathExists) return { state: "phantom", warnings: ["registry row has no worktree on disk"] };
   // A detached HEAD has no branch to test, so it can carry unreferenced commits;
   // never treat it as prunable.
   if (detached) {
@@ -276,7 +333,7 @@ export function inspectRows(rows, { base = DEFAULT_BASE } = {}) {
   });
 }
 
-/** Registry rows for live worktrees that are absent from the ledger. */
+/** Registry rows for live worktrees that are absent from the registry. */
 export function unregisteredWorktrees(rows) {
   const known = new Set(rows.map((r) => r.slug));
   return liveWorktrees()
@@ -290,6 +347,7 @@ export function unregisteredWorktrees(rows) {
       base: DEFAULT_BASE,
       created: "—",
       pr: "—",
+      path: canonicalPath(w.path),
     }));
 }
 
@@ -298,15 +356,24 @@ export function unregisteredWorktrees(rows) {
  * ledger does not know about. Pruning only the ledger left an unregistered merged
  * worktree invisible to `prune`, so it lingered until someone noticed.
  */
-function hygieneRows() {
-  const ledger = readLedger();
+function hygieneRows(ledger = readLedger()) {
   return [
     ...ledger.map((row) => ({ ...row, registered: true })),
     ...unregisteredWorktrees(ledger).map((row) => ({ ...row, registered: false })),
   ];
 }
 
-const LEDGER_FIELDS = ["slug", "branch", "scope", "owner", "status", "base", "created", "pr"];
+const LEDGER_FIELDS = [
+  "slug",
+  "branch",
+  "scope",
+  "owner",
+  "status",
+  "base",
+  "created",
+  "pr",
+  "path",
+];
 const ledgerRow = (row) => Object.fromEntries(LEDGER_FIELDS.map((f) => [f, row[f]]));
 
 // --- audit -------------------------------------------------------------------
@@ -412,15 +479,15 @@ export function buildAudit(facts) {
       flag(
         "worktree-unregistered",
         subject,
-        "worktree is absent from .worktrees/LEDGER.md",
+        "worktree is absent from the worktree registry",
         "pnpm worktrees sync",
       );
     } else if (row !== undefined && !detached && row.branch !== w.branch) {
       flag(
         "ledger-branch-mismatch",
         subject,
-        `ledger says ${row.branch}, worktree has ${w.branch}`,
-        "fix the ledger row or the checkout",
+        `registry says ${row.branch}, worktree has ${w.branch}`,
+        "fix the registry row or the checkout",
       );
     }
     return item;
@@ -435,7 +502,7 @@ export function buildAudit(facts) {
   );
   for (const row of facts.ledger) {
     if (!liveSlugs.has(row.slug)) {
-      flag("ledger-phantom", row.slug, "ledger row has no worktree", "pnpm worktrees:prune");
+      flag("ledger-phantom", row.slug, "registry row has no worktree", "pnpm worktrees:prune");
       prunable.add(row.slug);
     }
   }
@@ -566,7 +633,7 @@ export function collectFacts({ gh }) {
     worktrees,
     branches,
     remotes,
-    ledger: readLedger(),
+    ledger: readLedgerReadOnly(),
     prLookup: gh ? "ok" : "skipped",
   };
 }
@@ -589,7 +656,7 @@ function formatAudit(audit) {
   }
   lines.push(
     "",
-    `ledger rows: ${audit.ledger.length}; auto-prunable: ${audit.prunable.join(", ") || "none"}`,
+    `registry rows: ${audit.ledger.length}; auto-prunable: ${audit.prunable.join(", ") || "none"}`,
   );
   for (const w of audit.warnings) lines.push(`warning: ${w}`);
   lines.push("", audit.ok ? "drift: none" : `drift: ${audit.drift.length}`);
@@ -618,14 +685,14 @@ const USAGE = `usage: worktree.mjs <command> [options]
 commands:
   new <slug> [--branch <name>] [--base <ref>] [--owner <role>]
                    create .worktrees/<slug> on a branch and register it
-  list [--json]    live worktrees joined with the ledger
-  sync             reconcile the ledger with git worktrees
+  list [--json]    live worktrees joined with the registry
+  sync             reconcile the registry with git worktrees
   prune [--check|--force]
                    remove merged, gone, and phantom subtrees (--check only reports)
   remove <slug> [--force]
                    remove one subtree
   audit [--json] [--no-gh]
-                   read-only inventory of worktrees, branches, remotes, ledger and
+                   read-only inventory of worktrees, branches, remotes, registry and
                    merged PRs; exit 0 clean, 1 drift, 2 error (--no-gh skips PRs)
   help             show this message
 
@@ -712,45 +779,53 @@ function cmdNew({ positionals: [slug], values }) {
   const base = values.base ?? DEFAULT_BASE;
   const owner = values.owner ?? "orchestrator";
   const path = join(WORKTREES_DIR, slug);
+  const release = acquireRegistryLock();
 
-  const rows = readLedger();
-  if (rows.some((r) => r.slug === slug)) {
-    console.error(`worktree "${slug}" is already registered in the ledger`);
-    process.exitCode = 1;
-    return;
-  }
-  const total = parseWorktreeList(git(["worktree", "list", "--porcelain"])).length;
-  if (total >= MAX_WORKTREES) {
-    console.error(
-      `worktree cap reached: ${total}/${MAX_WORKTREES} (main checkout included, ADR-0237); prune or remove one first`,
-    );
-    process.exitCode = 1;
-    return;
-  }
-  if (existsSync(path)) {
-    console.error(`path already exists: ${path}`);
-    process.exitCode = 1;
-    return;
-  }
-  if (branchExists(branch)) {
-    console.error(`branch already exists: ${branch} (pass --branch to pick another)`);
-    process.exitCode = 1;
-    return;
-  }
+  try {
+    const rows = readRowsForMutation();
+    if (rows.some((r) => r.slug === slug)) {
+      console.error(`worktree "${slug}" is already registered in the worktree registry`);
+      process.exitCode = 1;
+      return;
+    }
+    const total = parseWorktreeList(git(["worktree", "list", "--porcelain"])).length;
+    if (total >= MAX_WORKTREES) {
+      console.error(
+        `worktree cap reached: ${total}/${MAX_WORKTREES} (main checkout included, ADR-0237); prune or remove one first`,
+      );
+      process.exitCode = 1;
+      return;
+    }
+    if (existsSync(path)) {
+      console.error(`path already exists: ${path}`);
+      process.exitCode = 1;
+      return;
+    }
+    if (branchExists(branch)) {
+      console.error(`branch already exists: ${branch} (pass --branch to pick another)`);
+      process.exitCode = 1;
+      return;
+    }
 
-  mkdirSync(WORKTREES_DIR, { recursive: true });
-  git(["worktree", "add", "-b", branch, path, base]);
-  rows.push({
-    slug,
-    branch,
-    scope: slug,
-    owner,
-    status: "active",
-    base,
-    created: todayIso(),
-    pr: "—",
-  });
-  writeLedger(rows);
+    mkdirSync(WORKTREES_DIR, { recursive: true });
+    git(["worktree", "add", "-b", branch, path, base]);
+    writeRowsLocked([
+      ...rows,
+      {
+        slug,
+        branch,
+        scope: slug,
+        owner,
+        status: "active",
+        base,
+        created: todayIso(),
+        pr: "—",
+        path: canonicalPath(path),
+      },
+    ]);
+  } finally {
+    release();
+  }
   console.log(`created ${path} on ${branch} (base ${base})`);
   console.log(`next: work this subtree's frontier with ".opencode/command/work.md <root issue>"`);
 }
@@ -764,7 +839,7 @@ function cmdList({ flags }) {
     return;
   }
   if (inspected.length === 0 && extra.length === 0) {
-    console.log("no active subtrees registered (.worktrees/LEDGER.md)");
+    console.log("no active subtrees registered in the worktree registry");
     return;
   }
   for (const r of inspected) {
@@ -777,14 +852,25 @@ function cmdList({ flags }) {
 }
 
 function cmdSync() {
-  const rows = readLedger();
-  const live = liveWorktrees();
-  const liveSlugs = new Set(live.map((w) => w.slug));
-  const kept = rows.filter((r) => liveSlugs.has(r.slug));
-  const dropped = rows.filter((r) => !liveSlugs.has(r.slug)).map((r) => r.slug);
-  const added = unregisteredWorktrees(rows);
-  writeLedger([...kept, ...added]);
-  console.log(`ledger reconciled: +${added.length}, -${dropped.length}, =${kept.length}`);
+  const release = acquireRegistryLock();
+  let added;
+  let dropped;
+  let kept;
+  try {
+    const rows = readRowsForMutation();
+    const live = liveWorktrees();
+    const liveBySlug = new Map(live.map((w) => [w.slug, w]));
+    const liveSlugs = new Set(liveBySlug.keys());
+    kept = rows
+      .filter((r) => liveSlugs.has(r.slug))
+      .map((r) => ({ ...r, path: canonicalPath(liveBySlug.get(r.slug).path) }));
+    dropped = rows.filter((r) => !liveSlugs.has(r.slug)).map((r) => r.slug);
+    added = unregisteredWorktrees(rows);
+    writeRowsLocked([...kept, ...added]);
+  } finally {
+    release();
+  }
+  console.log(`registry reconciled: +${added.length}, -${dropped.length}, =${kept.length}`);
   if (added.length) console.log(`  registered: ${added.map((r) => r.slug).join(", ")}`);
   if (dropped.length) console.log(`  dropped: ${dropped.map((s) => s).join(", ")}`);
 }
@@ -803,29 +889,36 @@ function removeWorktree(row, { force }) {
 function cmdPrune({ flags }) {
   const check = Boolean(flags.check);
   const force = Boolean(flags.force);
-  const inspected = inspectRows(hygieneRows());
-  const keep = [];
+  const release = acquireRegistryLock();
   const lines = [];
   let stale = 0;
   let removedCount = 0;
-  for (const row of inspected) {
-    if (!TERMINAL_STATES.has(row.state)) {
-      keep.push(row);
-      if (row.warnings.length) lines.push(`warn ${row.slug}: ${row.warnings.join("; ")}`);
-      continue;
+  let keptCount = 0;
+  try {
+    const inspected = inspectRows(hygieneRows(readRowsForMutation()));
+    const keep = [];
+    for (const row of inspected) {
+      if (!TERMINAL_STATES.has(row.state)) {
+        keep.push(row);
+        if (row.warnings.length) lines.push(`warn ${row.slug}: ${row.warnings.join("; ")}`);
+        continue;
+      }
+      stale += 1;
+      if (check) {
+        lines.push(`stale ${row.slug} (${row.state}): ${row.warnings[0] ?? "prune it"}`);
+        continue;
+      }
+      const { removed, message } = removeWorktree(row, { force });
+      lines.push(message);
+      if (removed) removedCount += 1;
+      // A row we could not remove (e.g. dirty without --force) must stay registered.
+      if (!removed) keep.push(row);
     }
-    stale += 1;
-    if (check) {
-      lines.push(`stale ${row.slug} (${row.state}): ${row.warnings[0] ?? "prune it"}`);
-      continue;
-    }
-    const { removed, message } = removeWorktree(row, { force });
-    lines.push(message);
-    if (removed) removedCount += 1;
-    // A row we could not remove (e.g. dirty without --force) must stay registered.
-    if (!removed) keep.push(row);
+    keptCount = keep.length;
+    if (!check) writeRowsLocked(keep.filter((r) => r.registered).map(ledgerRow));
+  } finally {
+    release();
   }
-  if (!check) writeLedger(keep.filter((r) => r.registered).map(ledgerRow));
   for (const line of lines) console.log(line);
   if (check) {
     console.log(
@@ -834,25 +927,33 @@ function cmdPrune({ flags }) {
         : "worktrees: stale subtrees present — run `pnpm worktrees:prune`",
     );
   } else {
-    console.log(`pruned ${removedCount} subtree(s); ${keep.length} kept`);
+    console.log(`pruned ${removedCount} subtree(s); ${keptCount} kept`);
   }
 }
 
 function cmdRemove({ positionals: [slug], flags }) {
-  const rows = hygieneRows();
-  const inspected = inspectRows(rows).find((r) => r.slug === slug);
-  if (!inspected) {
-    console.error(`no subtree "${slug}"`);
-    process.exitCode = 1;
-    return;
+  const release = acquireRegistryLock();
+  let message;
+  try {
+    const ledger = readRowsForMutation();
+    const rows = hygieneRows(ledger);
+    const inspected = inspectRows(rows).find((r) => r.slug === slug);
+    if (!inspected) {
+      console.error(`no subtree "${slug}"`);
+      process.exitCode = 1;
+      return;
+    }
+    const result = removeWorktree(inspected, { force: Boolean(flags.force) });
+    if (!result.removed) {
+      console.error(result.message);
+      process.exitCode = 1;
+      return;
+    }
+    writeRowsLocked(rows.filter((r) => r.registered && r.slug !== slug).map(ledgerRow));
+    message = result.message;
+  } finally {
+    release();
   }
-  const { removed, message } = removeWorktree(inspected, { force: Boolean(flags.force) });
-  if (!removed) {
-    console.error(message);
-    process.exitCode = 1;
-    return;
-  }
-  writeLedger(rows.filter((r) => r.registered && r.slug !== slug).map(ledgerRow));
   console.log(message);
 }
 
@@ -876,7 +977,11 @@ function main() {
     console.log(USAGE);
     return;
   }
-  COMMANDS[parsed.command](parsed);
+  try {
+    COMMANDS[parsed.command](parsed);
+  } catch (error) {
+    if (!registryFailure(error)) throw error;
+  }
 }
 
 if (isEntryPoint(import.meta.url)) main();

@@ -1,5 +1,7 @@
 # ADR-0257: Declined-battle tally and the repeated-decline threshold event
 
+Applies to: events, phase-engine
+
 ## Status
 
 Accepted (2026-10-21). Implements ticket

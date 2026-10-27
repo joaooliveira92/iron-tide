@@ -1,15 +1,17 @@
 # ADR-0293: Fleet management goes live in the production pack and in every re-execution path
 
+Applies to: content, desktop
+
 ## Status
 
 Accepted (2026-10-25). Implements ticket [#277](https://github.com/joaooliveira92/iron-tide/issues/277) of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265). The values are the balance targets of
-[ADR-0283](ADR-0283-fleet-management-values-and-repair-entry.md), which the owner's standing delegation on map #193 makes the
+[ADR-0314](ADR-0314-fleet-management-values-and-repair-entry.md), which the owner's standing delegation on map #193 makes the
 authorisation ADR-0213 requires. The section is [ADR-0286](ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md).
 
 ## Decision
 
-1. **Authoring.** The 1880 core ruleset carries `fleetManagement` with the ADR-0283 values and a `balance_adjustment`
+1. **Authoring.** The 1880 core ruleset carries `fleetManagement` with the ADR-0314 values and a `balance_adjustment`
    provenance that names the manual pages for the sourced values. Removing the section returns the pack to dormant behaviour.
 2. **Every path that executes a month passes the section.** The desktop turn transaction already did; this decision adds
    the replay corpus executor (`advance`) and the desktop continuity replay, so a saved turn re-verifies against the same

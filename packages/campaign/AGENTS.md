@@ -12,4 +12,6 @@
 - Vocabulary lives in `GLOSSARY.md` here and in `CONTEXT.md`.
 - Compile-time repair is explicit, narrow and logged.
 
+**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/campaign.md), with superseded records marked.
+
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/campaign test`.

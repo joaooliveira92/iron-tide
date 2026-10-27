@@ -1,9 +1,11 @@
 # ADR-0302: All four training subjects reach battle through one per-side effects record
 
+Applies to: combat, phase-engine
+
 ## Status
 
 Accepted (2026-10-25). Extends [ADR-0301](ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) from gunnery to every special-training
-subject of [ADR-0290](ADR-0290-special-training-program.md). Closes the "effect carried but never read" gap for night fighting, torpedo
+subject of [ADR-0316](ADR-0316-special-training-program.md). Closes the "effect carried but never read" gap for night fighting, torpedo
 tactics and damage control.
 
 ## Decision

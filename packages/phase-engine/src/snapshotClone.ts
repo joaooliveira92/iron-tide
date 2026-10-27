@@ -494,6 +494,7 @@ const F = {
     "crewComplement",
     "contentVersion",
     "compiledHash",
+    "capabilities",
     "armament",
     "torpedoArmament",
     "sourceDraft",

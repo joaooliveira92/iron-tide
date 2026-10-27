@@ -32,7 +32,7 @@ import { NEW_FLAGS, runCli } from "./sweep-comments-engine.mjs";
 
 const ROOTS = ["packages", "apps", "scripts"];
 const EXTS = new Set([".ts", ".tsx", ".mjs", ".cjs"]);
-const SKIP_DIRS = new Set(["node_modules", "dist", ".turbo", "generated", "vendor", "repos"]);
+const SKIP_DIRS = new Set(["node_modules", "dist", "generated", "vendor", "repos"]);
 const TOKEN = /(DESIGN|ADR|§|AC-|INC|BW-|SPM|SB3-|CAH-|MIG-|IMP-|\bticket\b|\bspec\b|TDD|\d)/;
 const DENY = /(drift|legacy|deprecat|intentional|temporary|fallback|hack|workaround|migrat)/i;
 

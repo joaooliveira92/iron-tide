@@ -12,7 +12,6 @@ export default defineConfig({
       ".agents/**",
       ".claude/**",
       ".muse/**",
-      ".turbo/**",
       ".worktrees/**",
       "docs/**",
       "codefetch/**",
@@ -166,9 +165,25 @@ export default defineConfig({
         command: "node scripts/verify-package-agents.mjs",
         dependsOn: ["gate:package-agents-self-test", "gate:doc-budgets"],
       },
+      "gate:adr-scopes-self-test": {
+        command: "node scripts/verify-adr-scopes.mjs --self-test",
+        dependsOn: ["gate:git-state"],
+      },
+      "gate:adr-scopes": {
+        command: "node scripts/verify-adr-scopes.mjs",
+        dependsOn: ["gate:adr-scopes-self-test", "gate:package-agents"],
+      },
       "gate:dependency-policy": {
         command: "node scripts/verify-package-dependencies.mjs",
         dependsOn: ["gate:git-state"],
+      },
+      "gate:workspace-graph-self-test": {
+        command: "node scripts/verify-workspace-graph.mjs --self-test",
+        dependsOn: ["gate:git-state"],
+      },
+      "gate:workspace-graph": {
+        command: "node scripts/verify-workspace-graph.mjs",
+        dependsOn: ["gate:workspace-graph-self-test"],
       },
       "gate:unknown-casts": {
         command: "node scripts/verify-no-unknown-casts.mjs",
@@ -238,6 +253,10 @@ export default defineConfig({
         command: "node scripts/verify-reachability-ledger.mjs",
         dependsOn: ["gate:git-state"],
       },
+      "gate:explanation-coverage": {
+        command: "node scripts/verify-explanation-coverage.mjs",
+        dependsOn: ["gate:git-state"],
+      },
       "gate:content-placeholder-gate": {
         command: "node scripts/verify-content-gate.mjs",
         dependsOn: ["gate:content-lock"],
@@ -266,7 +285,9 @@ export default defineConfig({
           "gate:docs",
           "gate:doc-budgets",
           "gate:package-agents",
+          "gate:adr-scopes",
           "gate:dependency-policy",
+          "gate:workspace-graph",
           "gate:unknown-casts",
           "gate:torpedo-model-constants",
           "gate:upgradepath-refit-readers",
@@ -281,6 +302,7 @@ export default defineConfig({
           "gate:content-placeholder-gate",
           "gate:codemod-determinism",
           "gate:reachability-ledger",
+          "gate:explanation-coverage",
         ],
       },
     },

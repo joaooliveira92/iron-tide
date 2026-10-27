@@ -1,8 +1,10 @@
 import { SafeInt } from "@bluewave/contracts";
+import type { ConstructionPackage } from "@bluewave/campaign";
 import { describe, expect, it } from "vite-plus/test";
 import {
   buildConstructionDesignCatalog,
   buildConstructionProjectQueue,
+  buildConstructionProjectQueueWithReadouts,
   constructionCommandIdForProject,
   constructionProjectIdForCommand,
   projectedConstructionOrderCosts,
@@ -226,5 +228,79 @@ describe("buildConstructionProjectQueue with work packages (ADR-0077)", () => {
     const entry = queue({});
     expect("packages" in entry).toBe(false);
     expect("yardId" in entry).toBe(false);
+  });
+});
+
+describe("construction explanations", () => {
+  it("explains the months left from the work remaining and the monthly instalment", () => {
+    const pk = (
+      id: string,
+      kind: ConstructionPackage["kind"],
+      total: number,
+      done: number,
+      dependsOn: string[] = [],
+    ) => ({
+      id,
+      kind,
+      line: "slipway",
+      totalWork: SafeInt(total),
+      doneWork: SafeInt(done),
+      dependsOn,
+    });
+    const snapshot = fixtureSnapshot(
+      [
+        fixtureNation({
+          id: "uk",
+          constructionProjects: [
+            fixtureConstructionProject({
+              totalWork: SafeInt(10),
+              completedWork: SafeInt(4),
+              capacityUnits: { slipway: SafeInt(1), quay: SafeInt(1) },
+              packages: [pk("hull", "HULL", 7, 4), pk("launch", "LAUNCH", 3, 0, ["hull"])],
+            }),
+          ],
+        }),
+      ],
+      [fixtureDesign("uk", "design-1")],
+    );
+    const entry = buildConstructionProjectQueueWithReadouts(snapshot, "uk", "1880-01", null)[0]!;
+    expect(entry.readout?.monthlyInstalmentUnits).toBe(1);
+    expect(entry.readout?.remainingMonths).toBe(6);
+    const tree = entry.readout?.scheduleExplanation;
+    expect(Number(tree?.result)).toBe(entry.readout?.remainingMonths);
+    expect(tree?.children?.map((child) => Number(child.result))).toEqual([6, 1]);
+
+    const instalment = entry.readout?.instalmentExplanation;
+    expect(Number(instalment?.result)).toBe(entry.readout?.monthlyInstalmentUnits);
+    expect(instalment?.children?.map((child) => [child.formulaId, Number(child.result)])).toEqual([
+      ["construction_instalment.slipway", 1],
+    ]);
+
+    const cost = entry.readout?.costExplanation;
+    expect(Number(cost?.result)).toBe(entry.readout?.totalCostUnits);
+    expect(cost?.children?.map((child) => [child.formulaId, Number(child.result)])).toEqual([
+      ["construction_cost.slipway", 10],
+    ]);
+  });
+
+  it("omits the instalment and cost trees when the project has no package breakdown or draw", () => {
+    const snapshot = fixtureSnapshot(
+      [
+        fixtureNation({
+          id: "uk",
+          constructionProjects: [
+            fixtureConstructionProject({
+              totalWork: SafeInt(10),
+              completedWork: SafeInt(4),
+              capacityUnits: { slipway: SafeInt(1) },
+            }),
+          ],
+        }),
+      ],
+      [fixtureDesign("uk", "design-1")],
+    );
+    const entry = buildConstructionProjectQueueWithReadouts(snapshot, "uk", "1880-01", null)[0]!;
+    expect(entry.readout?.instalmentExplanation).toBeDefined();
+    expect(entry.readout?.costExplanation).toBeUndefined();
   });
 });

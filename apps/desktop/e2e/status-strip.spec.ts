@@ -1,6 +1,6 @@
 import type { Locator } from "@playwright/test";
 import { test, expect, openCampaign } from "./fixtures.js";
-import { advanceMonths } from "./flows.js";
+import { advanceMonths, expandStatusStrip } from "./flows.js";
 
 test("the status strip expands into Nation, Budget and Outlook cards that fit the minimum window", async ({
   e2e,
@@ -9,10 +9,7 @@ test("the status strip expands into Nation, Budget and Outlook cards that fit th
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
 
-  const strip = page.getByRole("region", { name: "Status strip" });
-  if ((await strip.getAttribute("data-expanded")) !== "true") {
-    await strip.getByRole("button", { name: /expand/i }).click();
-  }
+  const strip = await expandStatusStrip(page);
   for (const name of ["Nation", "Budget", "Outlook"]) {
     await expect(strip.getByRole("group", { name })).toBeVisible();
   }
@@ -64,24 +61,19 @@ test("every status strip hover card opens inside the minimum window", async ({
   });
   await expect.poll(() => page.evaluate(() => window.innerWidth <= 960)).toBe(true);
 
-  const strip = page.getByRole("region", { name: "Status strip" });
-  if ((await strip.getAttribute("data-expanded")) !== "true") {
-    await strip.getByRole("button", { name: /expand/i }).click();
-  }
+  const strip = await expandStatusStrip(page);
 
   const expectCardOnScreen = async (trigger: Locator, heading: string, shot: string) => {
     await trigger.scrollIntoViewIfNeeded();
-    await trigger.hover();
     const card = page.locator("[data-open][data-side][tabindex='-1']").filter({ hasText: heading });
-    await expect(card).toBeVisible();
-    await expect
-      .poll(async () => {
-        const a = await card.boundingBox();
-        await page.waitForTimeout(0);
-        const b = await card.boundingBox();
-        return a !== null && b !== null && a.x === b.x && a.width === b.width;
-      })
-      .toBe(true);
+    await expect(async () => {
+      await page.mouse.move(0, 0);
+      await trigger.hover();
+      await expect(card).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 15_000 });
+    await card.evaluate((el) =>
+      Promise.all(el.getAnimations().map((animation) => animation.finished)),
+    );
     const box = await card.boundingBox();
     const viewport = page.viewportSize() ?? { width: 960, height: 640 };
     expect(box).not.toBeNull();
@@ -135,10 +127,7 @@ test("a clicked status strip card stays pinned, two can be compared, and a click
 }) => {
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
-  const strip = page.getByRole("region", { name: "Status strip" });
-  if ((await strip.getAttribute("data-expanded")) !== "true") {
-    await strip.getByRole("button", { name: /expand/i }).click();
-  }
+  const strip = await expandStatusStrip(page);
   const popup = (heading: string) =>
     page.locator("[data-open][data-side][tabindex='-1']").filter({ hasText: heading });
 
@@ -146,8 +135,10 @@ test("a clicked status strip card stays pinned, two can be compared, and a click
   await maintenance.click();
   await expect(popup("Over a year")).toBeVisible();
 
+  await page.clock.install();
   await page.mouse.move(5, 5);
-  await page.waitForTimeout(400);
+  await page.clock.runFor(400);
+  await page.clock.resume();
   await expect(popup("Over a year")).toBeVisible();
   await expect(popup("Over a year").getByText(/Pinned\. Press Esc/)).toBeVisible();
 
@@ -174,10 +165,7 @@ test("the status strip shows a treasury trend only after a month has been advanc
 }) => {
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
-  const strip = page.getByRole("region", { name: "Status strip" });
-  if ((await strip.getAttribute("data-expanded")) !== "true") {
-    await strip.getByRole("button", { name: /expand/i }).click();
-  }
+  const strip = await expandStatusStrip(page);
   await expect(strip.locator("[data-trend-delta]")).toHaveCount(0);
 
   await advanceMonths(page, 1);
