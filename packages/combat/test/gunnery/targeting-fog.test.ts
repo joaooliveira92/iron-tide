@@ -116,6 +116,18 @@ describe("AC-12 fog-of-war targeting (DESIGN-39 §1 / DESIGN-38, INC-4)", () => 
     expect(err!.message).toBe("TACTICAL_FOG_OF_WAR_VIOLATION");
   });
 
+  it("a level-3 fire-control radar battery blind-fires at a zero-confidence track", () => {
+    const out = resolveGunnery({
+      battleId: BATTLE_ID,
+      minute: 1,
+      batteries: [{ ...battery(`${BATTLE_ID}:d1`), blindFireAllowed: true }],
+      contacts: [contact(`${BATTLE_ID}:d1`, 0)],
+      engine: new RandomEngine("blind-fire"),
+    });
+    expect(out.salvos).toHaveLength(1);
+    expect(out.salvos[0]!.outcome).toMatch(/HIT|MISS/);
+  });
+
   it("a battery with NO_TARGET simply does not fire (no violation, no ammo spent)", () => {
     const out = resolveGunnery({
       battleId: BATTLE_ID,

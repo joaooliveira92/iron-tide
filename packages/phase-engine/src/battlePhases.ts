@@ -341,6 +341,9 @@ function resolveViaTacticalAuto(
       rulesetVersion: ctx.snapshot.current["rulesetVersion"],
       formulaVersion: manifest["formulaVersion"],
       rngVersion: manifest["rngVersion"],
+      ...(ctx.engineOptions?.gunneryRules === undefined
+        ? {}
+        : { gunneryRadar: ctx.engineOptions.gunneryRules.radar }),
       randomLedger,
     });
 

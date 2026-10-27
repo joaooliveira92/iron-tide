@@ -247,4 +247,62 @@ describe("AC-4: tactical projection (manifest + committed ships -> TacticalBattl
     );
     expect(contexts["a2"]!.resources).toEqual(base["a2"]!.resources);
   });
+
+  it("sets the gunnery radar factor and blind fire from the best fire-control level", () => {
+    const nations = makeNations();
+    const withRadar = new Map(nations.attacker.designs);
+    const design = withRadar.get("dv-att-a")!;
+    withRadar.set("dv-att-a", {
+      ...design,
+      capabilities: [
+        { kind: "fire_control_radar", level: 2 },
+        { kind: "fire_control_radar", level: 3 },
+      ],
+    });
+    const out = projectBattle({
+      manifest: makeProjectionManifest(["a1", "a2", "d1"]),
+      areaId: AREA_ID,
+      campaignMonth: CAMPAIGN_MONTH,
+      attacker: { ...nations.attacker, designs: withRadar },
+      defender: nations.defender,
+      rulesetVersion: RULESET,
+      gunneryRadar: {
+        accuracyBpByFireControlLevel: [10500, 11000, 12000],
+        blindFireMinLevel: 3,
+        airDefenseSaturationBpBySearchLevel: [10000, 11000, 12000],
+      },
+    });
+    const radarShip = out.batteries.find((b) => b.ownerShipId === "a1")!;
+    expect(radarShip.accuracyFactors.radar).toBe(12000);
+    expect(radarShip.blindFireAllowed).toBe(true);
+    const plainShip = out.batteries.find((b) => b.ownerShipId === "a2")!;
+    expect(plainShip.accuracyFactors.radar).toBe(10000);
+    expect(plainShip.blindFireAllowed).toBeUndefined();
+  });
+
+  it("withholds blind fire below the ruleset threshold", () => {
+    const nations = makeNations();
+    const withRadar = new Map(nations.attacker.designs);
+    const design = withRadar.get("dv-att-a")!;
+    withRadar.set("dv-att-a", {
+      ...design,
+      capabilities: [{ kind: "fire_control_radar", level: 2 }],
+    });
+    const out = projectBattle({
+      manifest: makeProjectionManifest(["a1", "d1"]),
+      areaId: AREA_ID,
+      campaignMonth: CAMPAIGN_MONTH,
+      attacker: { ...nations.attacker, designs: withRadar },
+      defender: nations.defender,
+      rulesetVersion: RULESET,
+      gunneryRadar: {
+        accuracyBpByFireControlLevel: [10500, 11000, 12000],
+        blindFireMinLevel: 3,
+        airDefenseSaturationBpBySearchLevel: [10000, 11000, 12000],
+      },
+    });
+    const radarShip = out.batteries.find((b) => b.ownerShipId === "a1")!;
+    expect(radarShip.accuracyFactors.radar).toBe(11000);
+    expect(radarShip.blindFireAllowed).toBeUndefined();
+  });
 });

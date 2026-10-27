@@ -6,6 +6,8 @@ export const mineTypeDefinitionsPolicyId = "mine_type_definitions_v1" as const;
 export const MINE_RULESET_VERSION = "mine_ruleset_v1" as const;
 export const MINE_FORMULA_VERSION = "mine_formula_v1" as const;
 
+export const CONTROLLED_MINE_TECHNOLOGY = "m_asw_controlled_mine" as const;
+
 export const MINE_BASIS_POINTS_PER_UNIT = 10_000 as const;
 
 export const MINE_TYPES = [

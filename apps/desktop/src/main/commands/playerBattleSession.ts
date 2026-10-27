@@ -1,5 +1,5 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
-import type { FleetManagementRules } from "@bluewave/content-schema";
+import type { FleetManagementRules, GunneryRules } from "@bluewave/content-schema";
 import type { BattleManifest } from "@bluewave/combat";
 import {
   advancePlayerBattleMinute,
@@ -114,6 +114,7 @@ export function projectSession(
   campaignSeed: string,
   pending: { readonly createdAt: string; readonly playerNationId: string },
   fleetManagement?: FleetManagementRules,
+  gunneryRules?: GunneryRules,
 ): PlayerBattleSession | PlayerBattleRefusal {
   const manifest = (snapshot.wars.battleManifests ?? []).find(
     (candidate) => candidate.battleId === battleId,
@@ -143,6 +144,7 @@ export function projectSession(
       rulesetVersion: snapshot.rulesetVersion,
       formulaVersion: manifest.formulaVersion,
       rngVersion: manifest.rngVersion,
+      ...(gunneryRules === undefined ? {} : { gunneryRadar: gunneryRules.radar }),
     });
   } catch (error) {
     return refuse("PLAYER_BATTLE_PROJECTION_FAILED", projectionFailureReason(error));
@@ -197,12 +199,14 @@ export const startPlayerBattle = (input: {
     }
 
     const fleetManagement = yield* (yield* ContentArtifact).loadFleetManagementRules();
+    const gunneryRules = yield* (yield* ContentArtifact).loadGunneryRules();
     const projected = projectSession(
       outcome.snapshot,
       input.battleId,
       `${record.campaignSeed}:month:${String(pending.startingRevision)}`,
       pending,
       fleetManagement,
+      gunneryRules,
     );
     if (isRefusal(projected)) return projected;
 

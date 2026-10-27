@@ -93,15 +93,18 @@ test("declared war → generated battle → resolved and surfaced in campaign st
     .click();
   await expect(page.getByRole("heading", { name: "Diplomacy & War" })).toBeVisible();
 
-  const franceRow = page
-    .getByText("French Republic", { exact: true })
-    .first()
-    .locator("xpath=ancestor::div[contains(@class,'rounded-md')][1]");
-  await franceRow.getByRole("button", { name: "Declare war" }).click();
+  await page
+    .getByRole("navigation", { name: "Nations" })
+    .getByRole("button", { name: /^French Republic, / })
+    .click();
+  const dossier = page.getByTestId("nation-dossier");
+  await expect(dossier.getByRole("heading", { name: "French Republic" })).toBeVisible();
+  await dossier.getByRole("button", { name: /^Declare war/ }).click();
 
-  const queueAlert = page.getByRole("alert").filter({ hasText: /cannot be cancelled/ });
+  const orders = page.getByRole("group", { name: "Orders" });
+  const queueAlert = orders.getByRole("alert").filter({ hasText: /cannot be cancelled/ });
   await expect(queueAlert).toBeVisible();
-  await queueAlert.locator("xpath=..").getByRole("button", { name: "Declare war" }).click();
+  await orders.getByRole("button", { name: "Declare war", exact: true }).click();
   await expect(page.getByText("Command queued", { exact: true })).toBeVisible();
 
   await advanceMonths(page, 1);
@@ -120,6 +123,7 @@ test("declared war → generated battle → resolved and surfaced in campaign st
     .getByRole("button", { name: "Diplomacy & War", exact: true })
     .click();
 
+  await page.getByRole("tab", { name: "Battles" }).click();
   await expect(page.getByText("No battles fought yet")).not.toBeVisible();
   const summary = page.getByTestId("battle-summary");
   await expect(summary).toBeVisible();

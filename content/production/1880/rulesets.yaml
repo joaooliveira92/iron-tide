@@ -114,6 +114,26 @@
           page: "51, 53, 55"
           section: "Special training takes twelve months, at most two subjects, with maintenance surcharges; an annual fleet exercise costs twice the active maintenance; division experience has a slight impact on crew quality in battle"
       note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (docs/research/fleet-management-values.md). ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence."
+  # The gunnery radar section (#292). The manual (pp.121, 127) grounds fire-control radar, blind fire from level 3, and the
+  # diminishing returns of radar-directed medium AA, but gives no accuracy figure. The level tables are Bluewave balance
+  # targets recorded by ADR-0311. Retuning is a ruleset version change with replay re-approval.
+  gunnery:
+    sectionVersion: 1
+    radar:
+      accuracyBpByFireControlLevel: [10500, 11000, 12000]
+      blindFireMinLevel: 3
+      airDefenseSaturationBpBySearchLevel: [10000, 11000, 12000]
+    provenance:
+      sourceStatus: "BALANCE_TARGET"
+      confidence: "LOW"
+      kind: "balance_adjustment"
+      sources:
+        - title: "Rule the Waves 3 manual"
+          author: "Naval War Simulations / Matrix Games"
+          year: 2023
+          page: "121, 127"
+          section: "Fire control from level 3 allows blind fire; more than 4 radar-directed medium AA has diminishing returns and more than 8 is redundant"
+      note: "ADR-0311. The manual grounds the mechanic and supplies no accuracy multiplier; the three-level tables are balance targets chosen so a level-3 director is a material but not dominant gunnery advantage."
   # The foreign-station and presence section (S-5, spec #73). Every value is a Bluewave balance decision recorded by
   # ADR-0266 (decision requests 0016-0023 and 0026, Option C); only the 1.5x colonial-service multiplier (manual p.46) is
   # sourced and it lives in code. The manual (pp.42, 45, 46) says each quantity exists and supplies no number. Retuning is a

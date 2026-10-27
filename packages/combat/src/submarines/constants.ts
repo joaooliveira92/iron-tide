@@ -18,6 +18,9 @@ export const submarineFriendlyIdentificationPolicyId =
 export const SUBMARINE_RULESET_VERSION = "submarine_ruleset_v1" as const;
 export const SUBMARINE_FORMULA_VERSION = "submarine_formula_v1" as const;
 
+export const MINELAYING_SUBMARINE_TECHNOLOGY = "sub_minelaying" as const;
+export const MISSILE_SUBMARINE_TECHNOLOGY = "sub_missile" as const;
+
 export const SUBMARINE_BASIS_POINTS_PER_UNIT = 10_000 as const;
 
 export const STRATEGIC_REPRESENTATIONS = ["PERSISTENT_UNIT", "TYPED_FLOTILLA_POOL"] as const;

@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0310).
+highest existing number + 1 (the next number is ADR-0312).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -100,6 +100,7 @@ Legality, consistency and authored posture of the 1880 scenario's starting conte
 | 0228 | [ADR-0228-combat-classifier-1880-ruleset-v2.md](ADR-0228-combat-classifier-1880-ruleset-v2.md) | The combat ship-type classifier aligns to the 1880 classification ruleset v2 | accepted | — |
 | 0229 | [ADR-0229-technology-year-global-designer-unlock.md](ADR-0229-technology-year-global-designer-unlock.md) | Technology `year` is the global designer unlock year, not a research claim | accepted | — |
 | 0285 | [ADR-0285-research-workspace-projection.md](ADR-0285-research-workspace-projection.md) | The research screen reads a technology-chart projection, and the draw weight has one home | accepted | — |
+| 0310 | [ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md](ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) | E-1 catalogue technologies for carrier, mine and submarine engine ids | accepted | — |
 
 ## Campaign economy
 
@@ -192,6 +193,7 @@ The ship-designer model, its armour regions, named schemes, and the design draft
 | 0243 | [ADR-0243-design-edits-are-guarded-by-the-design-session.md](ADR-0243-design-edits-are-guarded-by-the-design-session.md) | Every design edit is guarded in the design session, and a newly broken design is explained at once | accepted | — |
 | 0252 | [ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md](ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md) | Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values | accepted | — |
 | 0309 | [ADR-0309-e1-part-families-and-capability-kinds.md](ADR-0309-e1-part-families-and-capability-kinds.md) | E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars | accepted | — |
+| 0311 | [ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md](ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) | Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire | accepted | — |
 
 ## World map
 

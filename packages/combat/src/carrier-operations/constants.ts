@@ -82,7 +82,7 @@ export const LIGHT_JET_MIN_DISPLACEMENT_WITH_CATAPULT_KG = 30_000_000 as const;
 export const HEAVY_JET_MIN_DISPLACEMENT_KG = 40_000_000 as const;
 
 export const LIGHT_JET_TECHNOLOGY = "av_carrier_jet" as const;
-export const HEAVY_JET_TECHNOLOGY = "modern_jet_carrier_operations" as const;
+export const HEAVY_JET_TECHNOLOGY = "cop_heavy_jet_operations" as const;
 
 export const SPOT_VALUE_CLAMP_MAX = 0 as const;
 

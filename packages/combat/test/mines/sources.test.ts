@@ -92,7 +92,7 @@ describe("AC-3: all six canonical source kinds are accepted when eligible", () =
     const eligible = mineLayingSourceEligible(
       validSource({
         sourceKind: "MINELAYING_SUBMARINE",
-        availableTechnologyIds: ["minelaying_submarine_technology"],
+        availableTechnologyIds: ["sub_minelaying"],
       }),
       validAction({ sourceKind: "MINELAYING_SUBMARINE" }),
       "SUBMARINE_LAID",

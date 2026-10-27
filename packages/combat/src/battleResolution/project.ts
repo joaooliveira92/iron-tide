@@ -43,6 +43,7 @@ import {
   designedSpeedBpKnots,
 } from "./constants.js";
 import { resolveRangeController } from "./engagement.js";
+import { designRadarFactors, type GunneryRadarRules } from "./gunneryRadar.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { projectTorpedoes } from "./torpedoProjection.js";
 import type { TorpedoContext } from "../torpedoes/index.js";
@@ -70,6 +71,7 @@ export interface ProjectBattleInput {
   attacker: AutoResolverNation;
   defender: AutoResolverNation;
   rulesetVersion: string;
+  gunneryRadar?: GunneryRadarRules;
 }
 
 export interface ProjectBattleOutput {
@@ -222,6 +224,7 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
     if (mainGunsCount <= 0) continue;
     const batteryId = `${u.assetId}:MAIN`;
     const armament = mainArmamentOf(design);
+    const radar = designRadarFactors(design.capabilities, input.gunneryRadar);
     const isContesting = rangeControl.controller !== null && u.sideId !== rangeControl.controller;
     batteries.push({
       id: batteryId,
@@ -233,8 +236,10 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
       salvoCount: mainGunsCount,
       preferredType: "ARMOR_PIERCING",
       rateFactors: neutralRateFactors(),
+      ...(radar.blindFireAllowed ? { blindFireAllowed: true } : {}),
       accuracyFactors: {
         ...neutralAccuracyFactors(GUNNERY_ACCURACY_BASE_BP),
+        radar: radar.accuracyBp,
         officer: commanderAccuracyBp(u, attacker, defender),
         training: scaleByTrainingBp(
           10_000,

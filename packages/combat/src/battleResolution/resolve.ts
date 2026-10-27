@@ -19,6 +19,7 @@ import { buildBattleWeather, type StrategicWeatherState } from "../weather/neigh
 import { AUTO_RESOLUTION_UNAVAILABLE } from "../generation/reasonCodes.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { CauseOfLossTracker, type LossCause } from "./causeOfLoss.js";
+import type { GunneryRadarRules } from "./gunneryRadar.js";
 import { type AutoResolverNation, projectBattle, type ProjectBattleOutput } from "./project.js";
 import {
   projectAirCombatContext,
@@ -71,6 +72,7 @@ export interface ResolveBattleAutoInput {
   rulesetVersion: string;
   formulaVersion: string;
   rngVersion: string;
+  gunneryRadar?: GunneryRadarRules;
   maxMinutes?: number;
   randomLedger?: RandomLedger;
 }
@@ -323,6 +325,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     attacker: input.attacker,
     defender: input.defender,
     rulesetVersion: input.rulesetVersion,
+    ...(input.gunneryRadar === undefined ? {} : { gunneryRadar: input.gunneryRadar }),
   });
   const attackerCount = unitsOf(projected, "ATTACKER").length;
   const defenderCount = unitsOf(projected, "DEFENDER").length;

@@ -17,6 +17,7 @@ import { advanceMinute, type UnitOrders } from "../simulation/engine.js";
 import { BATTLE_SEED_FORMULA_VERSION, deriveBattleSeed } from "../generation/seed.js";
 import type { BattleManifest } from "../generation/manifest.js";
 import { AUTO_RESOLUTION_MAX_MINUTES } from "./constants.js";
+import type { GunneryRadarRules } from "./gunneryRadar.js";
 import { type AutoResolverNation, projectBattle, type ProjectBattleOutput } from "./project.js";
 import { buildBattleWeather } from "../weather/neighbour.js";
 import {
@@ -133,6 +134,7 @@ export interface CreatePlayerBattleInput {
   readonly rulesetVersion: string;
   readonly formulaVersion: string;
   readonly rngVersion: string;
+  readonly gunneryRadar?: GunneryRadarRules;
   readonly maxMinutes?: number;
 }
 
@@ -182,6 +184,7 @@ function project(input: CreatePlayerBattleInput): ProjectedBattle {
     attacker: input.attacker,
     defender: input.defender,
     rulesetVersion: input.rulesetVersion,
+    ...(input.gunneryRadar === undefined ? {} : { gunneryRadar: input.gunneryRadar }),
   });
   const battleSeed = deriveBattleSeed(
     {
