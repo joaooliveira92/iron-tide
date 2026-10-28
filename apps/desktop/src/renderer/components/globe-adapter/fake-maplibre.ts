@@ -7,6 +7,7 @@ export interface FakeMap {
   readonly filterCalls: { readonly id: string; readonly value: unknown }[];
   readonly dragPanCalls: string[];
   readonly panByCalls: { readonly x: number; readonly y: number }[];
+  readonly panOptions: unknown[];
   readonly projectionCalls: unknown[];
   readonly bearingCalls: number[];
   boxZoomDisabled: boolean;
@@ -91,6 +92,7 @@ export class FakeMapClass implements FakeMap {
   readonly filterCalls: { readonly id: string; readonly value: unknown }[] = [];
   readonly dragPanCalls: string[] = [];
   readonly panByCalls: { readonly x: number; readonly y: number }[] = [];
+  readonly panOptions: unknown[] = [];
   readonly projectionCalls: unknown[] = [];
   readonly bearingCalls: number[] = [];
   boxZoomDisabled = false;
@@ -165,7 +167,11 @@ export class FakeMapClass implements FakeMap {
     if (value.center !== undefined) this.centre = { lng: value.center[0], lat: value.center[1] };
     if (value.zoom !== undefined) this.zoom = value.zoom;
   }
-  panBy(value: { readonly x?: number; readonly y?: number } | [number, number]): void {
+  panBy(
+    value: { readonly x?: number; readonly y?: number } | [number, number],
+    options?: unknown,
+  ): void {
+    this.panOptions.push(options);
     if (Array.isArray(value)) this.panByCalls.push({ x: value[0], y: value[1] });
   }
   on(event: string, handler: (event: unknown) => void): void {

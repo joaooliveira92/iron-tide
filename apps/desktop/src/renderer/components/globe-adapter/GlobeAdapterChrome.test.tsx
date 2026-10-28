@@ -68,9 +68,11 @@ describe("GlobeAdapterChrome", () => {
     const list = screen.getByRole("navigation", { name: "Map areas" });
     const northSea = within(list).getByRole("button", { name: /North Sea/ });
     expect(northSea.getAttribute("aria-pressed")).toBe("true");
+    expect(northSea.className).toContain("focus-visible:outline");
     fireEvent.click(northSea);
     expect(onSelect).toHaveBeenCalledWith("area_north_sea");
     expect(within(list).getAllByRole("button").length).toBeGreaterThan(30);
+    expect(screen.getByTestId("globe-adapter-frame-meter")).toBeTruthy();
   });
 
   it("wires layer, projection, reset and centre controls to application state", () => {

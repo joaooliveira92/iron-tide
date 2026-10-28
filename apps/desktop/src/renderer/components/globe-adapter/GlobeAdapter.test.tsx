@@ -359,6 +359,28 @@ describe("GlobeAdapter parity interactions", () => {
     expect(onSelect).toHaveBeenCalledWith(null);
   });
 
+  it("honours reduced motion for keyboard panning", async () => {
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: () => ({
+        matches: true,
+        media: "",
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+      }),
+    });
+    renderAdapter();
+    const map = await readyMap();
+    const application = document.querySelector('[role="application"]') as Element;
+    fireEvent.keyDown(application, { key: "ArrowLeft" });
+    expect(map.panOptions[0]).toMatchObject({ animate: false, duration: 0 });
+  });
+
   it("exposes the selected variant on the adapter root", async () => {
     renderAdapter({ variant: "command" });
     await readyMap();
