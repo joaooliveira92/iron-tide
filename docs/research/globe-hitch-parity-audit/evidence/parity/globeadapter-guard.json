@@ -3,14 +3,14 @@
   "policyVersion": "1.0.0",
   "passed": true,
   "counts": {
-    "files": 19587,
+    "files": 19318,
     "allowed": 16,
     "violations": 0
   },
   "sizes": {
-    "archiveBytes": 215085174,
+    "archiveBytes": 215086102,
     "archiveBytesMax": 219200000,
-    "outsideResourceBytes": 1680333,
+    "outsideResourceBytes": 0,
     "outsideResourceBytesMax": 2100000
   },
   "allowed": [
@@ -21,8 +21,8 @@
     },
     {
       "rule": "adapter-code-chunk",
-      "path": "out/renderer/assets/GlobeAdapter-DSLwk7Lg.js",
-      "size": 1394402
+      "path": "out/renderer/assets/GlobeAdapter-CYxf5v2k.js",
+      "size": 1394636
     },
     {
       "rule": "adapter-glyphs",

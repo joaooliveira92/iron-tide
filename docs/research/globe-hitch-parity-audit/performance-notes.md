@@ -1,12 +1,14 @@
 # Globe adapter performance notes (interaction-parity branch)
 
-**No new frame-time measurement is claimed on this branch.**
+**Measured on the parity build at `49cf9690`:** three clean packaged adapter runs
+held 61 rAF/s with a 17.7 ms zoom-out maximum, zero frames over 33.4 ms and zero
+long tasks. That is the same window as the audit's clean adapter runs (17.6-17.8 ms)
+and shows no repeatable parity regression. It is not GPU headroom and it is not a
+cross-GPU claim.
 
 The audit's accepted benchmark protocol remains
-`apps/desktop/scripts/globe-audit-benchmark.mjs`. It needs a packaged adapter build
-with the baked Natural Earth tile pack; that pack and the packaged artifacts are not
-present in this checkout (`apps/desktop/public/map-data` is absent). Running the
-protocol without them would not be valid evidence.
+`apps/desktop/scripts/globe-audit-benchmark.mjs`. The packaged adapter build used
+the baked Natural Earth pack (`2b7b264e...`).
 
 ## What the parity branch changes in the frame path
 
@@ -17,7 +19,18 @@ protocol without them would not be valid evidence.
 - New listeners and the hover frame are registered in the existing disposal
   registry, so repeated open/close retains the audited bounded lifecycle.
 
-## Evidence still required (#342)
+## Measurements
+
+| Run | Refresh | Zoom-out p95 | Zoom-out max | >33.4 ms | Long tasks |
+|---|---|---|---|---|---|
+| 1 | 61 Hz | 17.6 ms | 17.7 ms | 0 | 0 |
+| 2 | 61 Hz | 17.6 ms | 17.7 ms | 0 | 0 |
+| 3 | 61 Hz | 17.7 ms | 17.7 ms | 0 | 0 |
+
+Raw data: `evidence/parity/adapter-parity.json`.
+
+The historic 50-83 ms hitch still cannot be reproduced on this machine. #342 keeps
+the protocol for a reproducing host:
 
 1. Run on a host that reproduces 50-83 ms globe frames.
 2. Build with `pnpm run build:globe-adapter` and package with

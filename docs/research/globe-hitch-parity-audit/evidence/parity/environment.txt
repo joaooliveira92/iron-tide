@@ -1,10 +1,11 @@
-date: 2026-10-28
-host: Darwin 27.0.0 arm64
-os: 27.0.1 (26A434)
-node: v24.18.0
-pnpm: 11.21.0
-electron: 44.9.2
-app: apps/desktop/dist-electron/mac-arm64/Bluewave.app
-build: VITE_BLUEWAVE_GLOBE_ADAPTER=true electron-vite build + electron-builder --mac --dir
-adapter flag: enabled for this validation build only
-default build: unchanged (inert stub)
+ProductName:		macOS
+ProductVersion:		27.0.1
+BuildVersion:		26A434
+
+Apple M4
+
+v24.18.0
+11.21.0
+electron 44.9.2
+
+49cf96900235b218f2fda33af81e935c7745358b

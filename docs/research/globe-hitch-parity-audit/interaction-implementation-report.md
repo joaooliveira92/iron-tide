@@ -8,7 +8,7 @@ nothing merged or released.**
 |---|---|
 | Base | `perf/globe-hitch-parity-audit` at `a6b1fa3f` |
 | Branch | `feat/globe-interaction-parity` |
-| Implementation commit | `67a7a18f` |
+| Implementation commits | `67a7a18f`, `0baa769a`, `db16d738`, `49cf9690` |
 | Parent tracker | #341 |
 | Child issues | #342-#349 |
 
@@ -72,13 +72,13 @@ re-implementing them:
 
 ## Performance
 
-No new performance claim is made. The packaged adapter tile pack and build
-artifacts used by `globe-audit-benchmark.mjs` are not present in this checkout, and
-the repository forbids inventing measurements. The parity changes are
-interaction-path only and add no per-frame work beyond a single rAF-coalesced hover
-query. #342 remains the correct place for a reproducing host, GPU/compositor trace
-and before/after frame comparison. Cross-GPU, Windows and Linux evidence remains
-absent.
+Three clean packaged adapter runs at `49cf9690` held 61 rAF/s with a 17.7 ms
+zoom-out maximum, zero frames over 33.4 ms and zero long tasks
+(`evidence/parity/adapter-parity.json`). This matches the audit's clean adapter
+window (17.6-17.8 ms) and shows no repeatable parity regression. It is not GPU
+headroom or a cross-GPU claim. #342 remains the place for a reproducing host,
+GPU/compositor trace and before/after frame comparison. Cross-GPU, Windows and
+Linux evidence remains absent.
 
 ## Validation
 
@@ -86,11 +86,16 @@ absent.
 - Packaged adapter smoke: **47/47 pass**, including the area mirror (36 buttons),
   screen-reader area table (36 rows), minimap, frame meter, layer controls,
   fallback modes, no remote request, worker return and bounded lifecycle.
-- Adapter package guard: **PASS**, 19,587 files, 16 allow-listed map assets,
-  0 violations.
+- Adapter package guard: **PASS**, 19,318 files, 16 allow-listed map assets,
+  0 violations, `app.asar` 215,086,102 bytes.
 - Lifecycle on the parity build: 548 listeners / 813 detached nodes, flat across
-  five cycles; live DOM 70 → 70; workers 0 → 0; heap 20.3 → 20.5 MB.
-- `pnpm check` and `pnpm test:scripts` results are recorded on the parent issue.
+  five cycles; live DOM 70 → 70; workers 0 → 0; heap 20.4 → 20.6 MB.
+- Performance: three clean runs, 61 rAF/s, 17.7 ms zoom-out maximum, 0 frames
+  over 33.4 ms, 0 long tasks.
+- Default package guard: PASS, 0 map assets, 0 violations; default packaged smoke
+  23/23.
+- `pnpm check` (49/49 steps, exit 0) and `pnpm test:scripts` (410/410) are recorded
+  in the gate logs for the final commit.
 
 Evidence: `evidence/parity/` (`globe-adapter-smoke.json`,
 `globeadapter-guard.json`, `packaged-smoke.txt`, `environment.txt`).

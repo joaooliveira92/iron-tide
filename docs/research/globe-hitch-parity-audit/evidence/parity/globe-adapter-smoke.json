@@ -140,7 +140,7 @@
     {
       "name": "deep planar zoom stays on the z7 source ceiling",
       "ok": true,
-      "detail": "{\"zoom\":12.5,\"projection\":\"mercator\",\"sourceLevel\":7,\"overscaled\":true,\"visibleTiles\":1,\"storeVersion\":2,\"markerCount\":6,\"routeCount\":5,\"cache\":{\"entries\":5,\"bytes\":121989,\"inFlight\":0,\"hits\":9,\"misses\":5,\"evictions\":0,\"version\":\"natural-earth-10m-v1:2b7b264e9281\"},\"errors\":[]}"
+      "detail": "{\"zoom\":12.5,\"projection\":\"mercator\",\"sourceLevel\":7,\"overscaled\":true,\"visibleTiles\":1,\"storeVersion\":2,\"markerCount\":6,\"routeCount\":5,\"cache\":{\"entries\":5,\"bytes\":121989,\"inFlight\":0,\"hits\":5,\"misses\":5,\"evictions\":0,\"version\":\"natural-earth-10m-v1:2b7b264e9281\"},\"errors\":[]}"
     },
     {
       "name": "deep planar zoom still selects tiles",
@@ -150,17 +150,17 @@
     {
       "name": "1,000-marker scene applies incrementally",
       "ok": true,
-      "detail": "{\"requested\":1000,\"applied\":1000,\"ms\":5.1,\"storeVersion\":3,\"markerCount\":1006}"
+      "detail": "{\"requested\":1000,\"applied\":1000,\"ms\":1.7,\"storeVersion\":3,\"markerCount\":1006}"
     },
     {
       "name": "one marker update changes one feature",
       "ok": true,
-      "detail": "{\"ok\":true,\"ms\":1.7}"
+      "detail": "{\"ok\":true,\"ms\":0.7}"
     },
     {
       "name": "100-marker batch applies 100 changes",
       "ok": true,
-      "detail": "{\"requested\":100,\"applied\":100,\"ms\":1.6,\"storeVersion\":5}"
+      "detail": "{\"requested\":100,\"applied\":100,\"ms\":0.4,\"storeVersion\":5}"
     },
     {
       "name": "adapter starts a map worker",
@@ -230,7 +230,7 @@
     {
       "name": "heap does not grow across open-close cycles",
       "ok": true,
-      "detail": "20.3->20.5 MB"
+      "detail": "20.4->20.6 MB"
     },
     {
       "name": "workers do not grow across open-close cycles",
@@ -315,7 +315,7 @@
         "entries": 5,
         "bytes": 121989,
         "inFlight": 0,
-        "hits": 9,
+        "hits": 5,
         "misses": 5,
         "evictions": 0,
         "version": "natural-earth-10m-v1:2b7b264e9281"
@@ -325,27 +325,27 @@
     "benchmarkMarkers": {
       "requested": 1000,
       "applied": 1000,
-      "ms": 5.1,
+      "ms": 1.7,
       "storeVersion": 3,
       "markerCount": 1006
     },
     "oneMarkerUpdate": {
       "ok": true,
-      "ms": 1.7
+      "ms": 0.7
     },
     "batchUpdate": {
       "requested": 100,
       "applied": 100,
-      "ms": 1.6,
+      "ms": 0.4,
       "storeVersion": 5
     },
     "openCounters": {
       "nodes": 814,
       "live": 454,
-      "listeners": 588,
+      "listeners": 607,
       "documents": 1,
       "workers": 1,
-      "heapMB": 23.1
+      "heapMB": 23.5
     },
     "remoteRequests": [],
     "afterFirstClose": {
@@ -354,25 +354,9 @@
       "listeners": 548,
       "documents": 1,
       "workers": 0,
-      "heapMB": 22.1
+      "heapMB": 22.2
     },
     "perCycle": [
-      {
-        "nodes": 813,
-        "live": 70,
-        "listeners": 548,
-        "documents": 1,
-        "workers": 0,
-        "heapMB": 20.3
-      },
-      {
-        "nodes": 813,
-        "live": 70,
-        "listeners": 548,
-        "documents": 1,
-        "workers": 0,
-        "heapMB": 20.6
-      },
       {
         "nodes": 813,
         "live": 70,
@@ -396,8 +380,24 @@
         "documents": 1,
         "workers": 0,
         "heapMB": 20.5
+      },
+      {
+        "nodes": 813,
+        "live": 70,
+        "listeners": 548,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 20.6
+      },
+      {
+        "nodes": 813,
+        "live": 70,
+        "listeners": 548,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 20.6
       }
     ]
   },
-  "generatedAt": "2026-10-28T13:06:08.575Z"
+  "generatedAt": "2026-10-28T13:24:29.626Z"
 }

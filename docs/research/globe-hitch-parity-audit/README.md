@@ -1,7 +1,7 @@
 # Globe hitch isolation and Overview interaction-parity audit
 
 **Status: interaction-parity engineering complete on `feat/globe-interaction-parity`
-(code head `db16d738`), packaged and ready for review. The adapter remains off by default
+(code head `49cf9690`), packaged and ready for review. The adapter remains off by default
 and the current Overview renderer remains the default and the failure fallback. Nothing
 was merged or released. The historic hitch is still unreproduced on the tested machine;
 #342 remains hardware-blocked.**
@@ -14,7 +14,7 @@ implementation does not upgrade it.
 |---|---|
 | Historical ~67 ms zoom-out hitch | **Not reproduced** in 22 clean globe launches. Candidate phase is GPU/compositor sync. No fix. Child #342. |
 | Current-renderer comparison | Reproduced a **51 ms** zoom-out with 54/61 ms main-thread long tasks; 150-183 ms under contention. The "~67 ms" label is not globe-specific. |
-| Interaction parity | **71 rows**: 58 pass, 0 fail, 0 blocked, 13 not-applicable after `db16d738`. Implementation evidence: `interaction-implementation-report.md`. |
+| Interaction parity | **71 rows**: 58 pass, 0 fail, 0 blocked, 13 not-applicable after `49cf9690`. Implementation evidence: `interaction-implementation-report.md`. |
 | Lifecycle N-09 | Parity adapter flat at 548 listeners / 813 detached nodes after first close; live DOM returns to baseline; legacy spike unchanged at +27 / +97. |
 | Adapter off by default; current renderer default and fallback | Proven by default package guard and 23/23 packaged smoke, and by the adapter smoke's "adapter inactive by default" check. |
 
@@ -138,7 +138,6 @@ docs/research/globe-hitch-parity-audit/
   interaction-implementation-report.md
   accessibility-findings.md
   performance-notes.md
-  evidence/parity/
   evidence/
     environment.txt
     adapter/
@@ -158,8 +157,11 @@ docs/research/globe-hitch-parity-audit/
       baseline.json
     parity/
       globe-adapter-smoke.json
+      adapter-packaged-smoke.txt
       globeadapter-guard.json
+      globeadapter-guard.txt
       packaged-smoke.txt
+      default-guard.json
       adapter-parity.json
       environment.txt
 ```
@@ -177,7 +179,11 @@ from every conclusion.
   corrupt fallback, no remote request, worker return and bounded lifecycle.
 - Adapter package guard: **PASS** in the smoke; 0 violations and only the
   allow-listed adapter assets.
-- Performance: see `performance-notes.md` and `evidence/parity/adapter-parity.json`.
+- Performance: three clean runs at 61 rAF/s, 17.7 ms zoom-out maximum, zero frames
+  over 33.4 ms and zero long tasks; see `performance-notes.md` and
+  `evidence/parity/adapter-parity.json`. No repeatable parity regression.
+- Default package guard: PASS, 0 map assets, 0 violations, `app.asar` 206,332,850
+  bytes; default packaged smoke 23/23.
 - Focused tests: 74 adapter/chrome/contract tests pass (11 files).
 - Accessibility: source-level matrix plus component tests; no axe/manual pass.
 - Offline: packaged app served from `file:`; no non-local request in the smoke.
