@@ -47,6 +47,7 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0324](../ADR-0324-edge-semantics-offline-tiling-and-renderer-boundaries.md) Edge semantics, offline tiling and renderer boundaries.
 - [ADR-0325](../ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md) Production globe adapter and dynamic overlay contract.
 - [ADR-0326](../ADR-0326-globe-adapter-interaction-parity.md) Globe adapter interaction parity and projection mapping.
+- [ADR-0327](../ADR-0327-globe-overview-production-enablement.md) Globe overview production enablement.
 
 ## Superseded (do not follow)
 

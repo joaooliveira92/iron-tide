@@ -43,9 +43,9 @@ try {
 
   const isPackaged = await app.evaluate(({ app: electronApp }) => electronApp.isPackaged);
   check("running the packaged experimental adapter build", isPackaged === true);
-  const guard = runPackageGuard("adapter", values.app);
+  const guard = runPackageGuard("default", values.app);
   check(
-    "the adapter package holds only the allow-listed adapter assets",
+    "the package holds only the allow-listed production globe assets",
     guard.ok,
     guard.ok ? "" : guard.output.slice(0, 1500),
   );
@@ -107,7 +107,7 @@ try {
   measurements.baselineCounters = baselineCounters;
 
   const before = await page.evaluate(() => typeof window.__globeAdapter);
-  check("adapter inactive by default", before === "undefined");
+  check("the validation host is inactive until its explicit hash", before === "undefined");
 
   await page.evaluate(() => {
     window.location.hash = "#globe-adapter-demo";
@@ -321,9 +321,9 @@ try {
     `first ${firstCycle.listeners}, last ${lastCounters.listeners}`,
   );
   check(
-    "retained listeners are bounded and attributable to the harness and MapLibre globals",
-    lastCounters.listeners <= baselineCounters.listeners + 90,
-    `baseline ${baselineCounters.listeners}, last ${lastCounters.listeners}; CDP attribution: 13 Playwright window listeners, one MapLibre document visibilitychange listener and detached React chrome listeners`,
+    "retained listeners stay under the 600-listener production ceiling",
+    lastCounters.listeners <= 600,
+    `baseline ${baselineCounters.listeners}, last ${lastCounters.listeners}`,
   );
   check(
     "DOM nodes do not grow across open-close cycles",
@@ -331,9 +331,9 @@ try {
     `first ${firstCycle.nodes}, last ${lastCounters.nodes}`,
   );
   check(
-    "retained DOM nodes are bounded and detached from the live view",
-    lastCounters.nodes <= baselineCounters.nodes + 750,
-    `baseline ${baselineCounters.nodes}, last ${lastCounters.nodes}; includes the detached accessibility and chrome mirror`,
+    "retained detached nodes stay under the 900-node production ceiling",
+    lastCounters.nodes <= 900,
+    `baseline ${baselineCounters.nodes}, last ${lastCounters.nodes}`,
   );
   check(
     "live DOM returns to baseline after close",
@@ -344,6 +344,11 @@ try {
     "heap does not grow across open-close cycles",
     lastCounters.heapMB <= firstCycle.heapMB + 10,
     `${firstCycle.heapMB}->${lastCounters.heapMB} MB`,
+  );
+  check(
+    "heap stays under the 32 MB production ceiling",
+    lastCounters.heapMB <= 32,
+    `${lastCounters.heapMB} MB`,
   );
   check(
     "workers do not grow across open-close cycles",

@@ -1,36 +1,82 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
 import { WorldMapChart, type WorldMapChartProps } from "../world-map/WorldMapChart.js";
 import { EMPTY_LIVE_OVERLAY } from "../world-map/campaign-map-join.js";
-import { GLOBE_ADAPTER_ENABLED, adapterRequested } from "./globe-adapter-flag.js";
+import {
+  GLOBE_ADAPTER_ENABLED,
+  readStoredRenderer,
+  resolveOverviewRenderer,
+  type OverviewRenderer,
+} from "./globe-adapter-flag.js";
+import { recordRendererDiagnostic } from "./renderer-diagnostics.js";
+import { detectGraphicsSupport, type GraphicsSupport } from "./webgl-support.js";
 
 const GlobeAdapter = GLOBE_ADAPTER_ENABLED
   ? lazy(() => import("./GlobeAdapter.js").then((module) => ({ default: module.GlobeAdapter })))
   : null;
 
+export type MapSurfaceProps = WorldMapChartProps & {
+  readonly enableGlobe?: boolean;
+};
+
+function preference(enabled: boolean): OverviewRenderer {
+  if (!enabled) return "legacy";
+  return resolveOverviewRenderer(
+    {
+      hash: window.location.hash,
+      search: window.location.search,
+      stored: readStoredRenderer(),
+    },
+    GLOBE_ADAPTER_ENABLED,
+  );
+}
+
 function Fallback({ reason }: { readonly reason: string }) {
   return (
     <div
-      role="alert"
+      role="status"
       className="absolute bottom-2 left-2 z-20 rounded border border-amber-400 bg-amber-950/90 px-3 py-2 text-xs text-amber-100"
     >
-      Globe adapter unavailable: {reason}. The current Overview renderer is shown.
+      Globe renderer unavailable: {reason}. The standard Overview map is shown.
     </div>
   );
 }
 
-export function MapSurface(props: WorldMapChartProps) {
-  const [requested, setRequested] = useState(() => adapterRequested(window.location.hash));
+export function MapSurface({ enableGlobe = false, ...props }: MapSurfaceProps) {
+  const [requested, setRequested] = useState<OverviewRenderer>(() => preference(enableGlobe));
   const [failure, setFailure] = useState<string | null>(null);
+  const graphics = useMemo<GraphicsSupport>(() => detectGraphicsSupport(), []);
 
   useEffect(() => {
-    const onHash = () => setRequested(adapterRequested(window.location.hash));
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
+    const update = () => {
+      setRequested(preference(enableGlobe));
+      setFailure(null);
+    };
+    window.addEventListener("hashchange", update);
+    window.addEventListener("storage", update);
+    return () => {
+      window.removeEventListener("hashchange", update);
+      window.removeEventListener("storage", update);
+    };
+  }, [enableGlobe]);
 
+  const graphicsFailure = graphics.supported ? null : graphics.reason;
+  const fallbackReason = failure ?? graphicsFailure;
   const adapterActive =
-    GLOBE_ADAPTER_ENABLED && requested && failure === null && GlobeAdapter !== null;
+    GLOBE_ADAPTER_ENABLED &&
+    requested === "globe" &&
+    fallbackReason === null &&
+    GlobeAdapter !== null;
+  const activeRenderer: OverviewRenderer = adapterActive ? "globe" : "legacy";
+
+  useEffect(() => {
+    if (fallbackReason === null) {
+      recordRendererDiagnostic({ renderer: activeRenderer, event: "started" });
+      return;
+    }
+    recordRendererDiagnostic({ renderer: "legacy", event: "fallback", reason: fallbackReason });
+  }, [activeRenderer, fallbackReason]);
+
   const panels = (
     <>
       {props.leftPanels === undefined ? null : (
@@ -76,7 +122,7 @@ export function MapSurface(props: WorldMapChartProps) {
   return (
     <div className={`relative ${props.className ?? ""}`}>
       <WorldMapChart {...props} className="h-full w-full" />
-      {failure === null ? null : <Fallback reason={failure} />}
+      {fallbackReason === null ? null : <Fallback reason={fallbackReason} />}
     </div>
   );
 }

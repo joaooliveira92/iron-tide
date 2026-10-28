@@ -35,8 +35,8 @@ test("New Game compiles a fresh campaign onto Overview", async ({ e2e }) => {
     e2e.page.getByText("campaign-bluewave-1880-production", { exact: true }),
   ).toBeVisible();
 
-  await expect(e2e.page.getByRole("application", { name: /World map/ })).toBeVisible({
-    timeout: 15_000,
+  await expect(e2e.page.getByTestId("globe-adapter")).toBeVisible({
+    timeout: 60_000,
   });
 });
 

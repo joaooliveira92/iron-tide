@@ -1,7 +1,21 @@
 # Globe adapter accessibility findings
 
-**Scope:** the experimental adapter behind `VITE_BLUEWAVE_GLOBE_ADAPTER`. The
-current Overview renderer is unchanged.
+**Status: production enabled (ADR-0327).** The globe adapter is the default Overview
+renderer; the SVG renderer is the rollback fallback.
+
+## Production evidence (2026-10-28)
+
+| Check | Result |
+|---|---|
+| axe-core against the full chrome and accessibility mirror | **PASS**; `GlobeAdapterChrome.a11y.test.tsx` reports no violations (color-contrast disabled in jsdom, region disabled because the component is fragment-hosted). |
+| Keyboard-only path | **PASS** packaged: `+`, arrows, `0`, `n`, area-button Enter, layer, both projections and reset (15/15 interaction smoke). |
+| Focus order and restoration | Native buttons in ownership order; the map application is focusable; area activation preserves focus. |
+| Live region | Route/selection announcements are `role=status aria-live=polite`; route readout is visible text. |
+| Reduced motion | **PASS** packaged pass with `prefers-reduced-motion: reduce`; keyboard pan uses `animate:false`. |
+| ARIA tree | Packaged `ariaSnapshot` contains the application label, `Map areas` navigation (36 buttons), `Area control` table (36 rows) and the entity table. |
+| Fallback | Forced, missing and corrupt asset paths fall back to the SVG renderer without page errors (47/47 adapter smoke). |
+| High contrast | Not run: macOS host has no Windows forced-colors mode. Post-release. |
+| Native screen reader | Not run: no NVDA/JAWS/VoiceOver session was available. aria-tree + axe + keyboard are the evidence. Post-release. |
 
 ## Closed findings (commit 67a7a18f)
 
@@ -26,10 +40,10 @@ current Overview renderer is unchanged.
 
 ## Not produced
 
-- A full axe run against a packaged adapter build.
-- A manual NVDA/VoiceOver pass.
+- An axe run inside the packaged renderer (the axe run is on the production chrome
+  component in jsdom; packaged evidence is the aria tree and keyboard smoke).
+- A manual NVDA/JAWS/VoiceOver pass.
 - High-contrast forced-colors testing.
 - A cross-OS or cross-browser accessibility run.
 
-These remain follow-up evidence, not claims. The current renderer's existing
-accessibility behaviour is unchanged.
+These are post-release validation items, not claims of universal accessibility.

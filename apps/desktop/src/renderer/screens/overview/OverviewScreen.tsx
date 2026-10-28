@@ -146,6 +146,7 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
         {heading}
         <Suspense fallback={<Skeleton className="h-full w-full" />}>
           <MapSurface
+            enableGlobe
             className="h-full"
             variant="command"
             showMinimap={false}
@@ -173,6 +174,7 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
       <div className="h-[60vh] min-h-[22rem]">
         <Suspense fallback={<Skeleton className="h-full w-full rounded-lg" />}>
           <MapSurface
+            enableGlobe
             className="h-full"
             variant="panel"
             initialFocusAreaId={homeAreaId}

@@ -1,5 +1,11 @@
 # Lifecycle findings (N-09)
 
+**Production status (2026-10-28): accepted with explicit ceilings.** Five open-close
+cycles on the packaged production candidate: 548 listeners / 813 detached nodes after
+the first and fifth close (flat), live DOM back to baseline, zero workers, heap
+20.1-20.4 MB. Ceilings enforced by `globe-adapter-smoke.mjs`: 600 listeners, 900
+detached nodes, live DOM baseline + 2, 32 MB heap, zero worker growth.
+
 Both paths were measured in the same packaged builds as the hitch runs, on the same Apple M4 /
 macOS 27.0.1 machine. The adapter portion of N-09 is flat; the legacy spike retains +27 listeners
 and +97 DOM nodes after the first close, which is unchanged from the earlier G-03/G-07 finding.

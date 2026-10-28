@@ -5,7 +5,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 const GLOBE_SPIKE = process.env.VITE_BLUEWAVE_GLOBE_SPIKE === "true";
-const GLOBE_ADAPTER = process.env.VITE_BLUEWAVE_GLOBE_ADAPTER === "true";
+const GLOBE_ADAPTER = process.env.VITE_BLUEWAVE_GLOBE_ADAPTER !== "false";
 
 const HARNESS_ONLY_FILES = new Set(["validation.json", "protected-resolution.json"]);
 
@@ -17,6 +17,23 @@ const stubGlobeAdapter = {
     if (source !== "./GlobeAdapter.js" || importer === undefined) return null;
     if (!importer.includes("/components/globe-adapter/")) return null;
     return resolve(__dirname, "src/renderer/components/globe-adapter/GlobeAdapterStub.ts");
+  },
+};
+
+const copyGlobeRuntimeAssets = {
+  name: "bluewave-globe-runtime-assets",
+  closeBundle() {
+    if (!GLOBE_ADAPTER) return;
+    const source = resolve(__dirname, "map-assets");
+    if (!existsSync(source)) {
+      throw new Error(
+        `Globe runtime assets are missing at ${source}. Restore apps/desktop/map-assets before the production build.`,
+      );
+    }
+    cpSync(source, resolve(__dirname, "out/renderer/map-assets"), {
+      recursive: true,
+      filter: (path) => !HARNESS_ONLY_FILES.has(basename(path)),
+    });
   },
 };
 
@@ -63,7 +80,13 @@ export default defineConfig({
   },
   renderer: {
     root: resolve(__dirname, "src/renderer"),
-    plugins: [stubGlobeAdapter, react(), tailwindcss(), copyGlobeSpikeAssets],
+    plugins: [
+      stubGlobeAdapter,
+      react(),
+      tailwindcss(),
+      copyGlobeRuntimeAssets,
+      copyGlobeSpikeAssets,
+    ],
     define: {
       __GLOBE_SPIKE__: JSON.stringify(GLOBE_SPIKE),
       __GLOBE_ADAPTER__: JSON.stringify(GLOBE_ADAPTER),

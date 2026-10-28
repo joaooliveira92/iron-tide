@@ -69,6 +69,8 @@ import {
   type TileHierarchy,
 } from "./tile-hierarchy.js";
 
+export const GLOBE_ASSET_ROOT = "map-assets";
+
 export interface GlobeAdapterProps {
   readonly state: WorldMapChartProps["state"];
   readonly route: WorldMapChartProps["route"];
@@ -91,6 +93,9 @@ export interface GlobeAdapterProps {
 
 export interface AdapterDiagnostics {
   readonly zoom: number;
+  readonly centre: readonly [number, number];
+  readonly bearing: number;
+  readonly pitch: number;
   readonly projection: CameraProjection;
   readonly sourceLevel: number;
   readonly overscaled: boolean;
@@ -122,6 +127,11 @@ declare global {
         readonly storeVersion: number;
       };
       readonly selectArea: (id: string | null) => void;
+      readonly featureIds: () => readonly string[];
+      readonly featureScreenPoint: (
+        id: string,
+      ) => { readonly x: number; readonly y: number } | null;
+      readonly areaScreenPoint: (id: string) => { readonly x: number; readonly y: number } | null;
       readonly areaLabelsRendered: () => number;
       readonly jumpTo: (lon: number, lat: number, zoom: number) => void;
       readonly setProjection: (projection: CameraProjection) => void;
@@ -448,7 +458,7 @@ function buildStyle(
 ): StyleSpecification {
   return {
     version: 8,
-    glyphs: `${baseDirectory()}map-spike/glyphs/{fontstack}/{range}.pbf`,
+    glyphs: `${baseDirectory()}${GLOBE_ASSET_ROOT}/glyphs/{fontstack}/{range}.pbf`,
     projection: { type: "globe" },
     sources: mapSources(plan),
     layers: mapLayers(plan, overlay, layers),
@@ -501,7 +511,7 @@ export function GlobeAdapter({
 }: GlobeAdapterProps) {
   const hash = window.location.hash;
   const mode: AdapterLandMode = landMode ?? adapterLandMode(hash);
-  const plan = useLandPlan(mode);
+  const plan = useLandPlan(mode, GLOBE_ASSET_ROOT);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const storeRef = useRef<OverlayStore | null>(null);
@@ -1006,6 +1016,9 @@ export function GlobeAdapter({
         const snapshot = store.snapshot();
         return {
           zoom: active.getZoom(),
+          centre: [active.getCenter().lng, active.getCenter().lat],
+          bearing: active.getBearing(),
+          pitch: active.getPitch(),
           projection: projectionRef.current,
           sourceLevel: sourceLevelForDisplay(active.getZoom(), hierarchy),
           overscaled: isOverscaled(active.getZoom(), hierarchy),
@@ -1098,6 +1111,21 @@ export function GlobeAdapter({
         };
       },
       selectArea: (id) => onSelect(id),
+      featureIds: () => store.snapshot().features.map((feature) => feature.id),
+      featureScreenPoint: (id) => {
+        const feature = store.snapshot().features.find((entry) => entry.id === id);
+        if (feature === undefined || feature.geometry.type !== "Point") return null;
+        const point = active.project([feature.geometry.lon, feature.geometry.lat]);
+        const rect = active.getCanvas().getBoundingClientRect();
+        return { x: rect.left + point.x, y: rect.top + point.y };
+      },
+      areaScreenPoint: (id) => {
+        const area = AREAS_BY_ID.get(id);
+        if (area === undefined) return null;
+        const point = active.project([area.label[0], area.label[1]]);
+        const rect = active.getCanvas().getBoundingClientRect();
+        return { x: rect.left + point.x, y: rect.top + point.y };
+      },
       areaLabelsRendered: () =>
         active.queryRenderedFeatures({ layers: ["area-labels-list"] }).length,
       jumpTo: (lon, lat, zoom) => active.jumpTo({ center: [lon, lat], zoom }),
