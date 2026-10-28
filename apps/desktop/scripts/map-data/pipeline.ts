@@ -64,6 +64,7 @@ export async function loadInputs(mapDataDir: string): Promise<Inputs> {
     id: area.id,
     name: area.short,
     ring: area.ring as AreaSource["ring"],
+    label: [area.label[0], area.label[1]],
   }));
   validateAreaSource(areaSources, areaSpec, areaTextHash);
   return { config, catalogue, pins: parseSourcePins(pinsRaw), pinsRaw, areaSpec, areaSources };
@@ -152,7 +153,7 @@ export async function buildAll(
   files.set("licences/natural-earth-terms.txt", new Uint8Array(terms));
   const totalBytes = [...files.values()].reduce((sum, data) => sum + data.length, 0);
   const manifest = {
-    manifestVersion: 2,
+    manifestVersion: 3,
     pipelineVersion: inputs.config.pipelineVersion,
     packFormat: inputs.config.packFormat,
     dataset: {
@@ -215,6 +216,8 @@ export async function buildAll(
         zoom: level.zoom,
         tilesWithAreas: level.areaTiles,
         vertices: level.areaVertices,
+        labelTiles: level.labelTiles,
+        labelFeatures: level.labelFeatures,
       })),
       fitForPurposeMaxZoom: inputs.config.fitForPurposeMaxZoom,
       protectedCatalogueVersion: inputs.catalogue.catalogueVersion,
@@ -227,6 +230,27 @@ export async function buildAll(
         crackWorstUnits: areaReport.cracks.worstUnits,
         crackWorstMetres: areaReport.cracks.worstMetres,
       },
+    },
+    areaLabels: {
+      datasetVersion: inputs.areaSpec.datasetVersion,
+      sourceSha256: canonicalAreaHash(inputs.areaSources, areaTextHash),
+      count: geometry.areas.length,
+      layer: inputs.config.layers.areaLabels,
+      stableIdentity: true,
+      localizedText: "not baked; the renderer resolves text by stable area id",
+      configuration: "anchors baked from the pinned area-label source",
+      validation: {
+        passed: areaReport.labels.found === areaReport.labels.expected,
+        expected: areaReport.labels.expected,
+        found: areaReport.labels.found,
+        worstUnits: areaReport.labels.worstUnits,
+        boundUnits: areaReport.labels.boundUnits,
+      },
+      perLevel: output.levels.map((level) => ({
+        zoom: level.zoom,
+        tiles: level.labelTiles,
+        features: level.labelFeatures,
+      })),
     },
     protectedFeatures: {
       catalogueVersion: inputs.catalogue.catalogueVersion,

@@ -257,8 +257,13 @@ function buildStyle(plan: ReadyPlan): StyleSpecification {
               maxzoom: 22,
               tolerance: 0,
             },
+            areaLabels: {
+              type: "geojson" as const,
+              data: areaLabelCollection() as never,
+              maxzoom: 22,
+              tolerance: 0,
+            },
           }),
-      areaLabels: { type: "geojson", data: areaLabelCollection() as never },
       markers: { type: "geojson", data: markerCollection() as never, maxzoom: 22, tolerance: 0 },
       routes: { type: "geojson", data: routeCollection() as never, maxzoom: 22, tolerance: 0 },
       probe: { type: "geojson", data: EMPTY as never, maxzoom: 24, tolerance: 0 },
@@ -277,6 +282,25 @@ function buildStyle(plan: ReadyPlan): StyleSpecification {
         type: "line",
         ...areaLayerSource(plan, "areaOutlines"),
         paint: { "line-color": "#5fc0ff", "line-width": 1 },
+      },
+      {
+        id: "area-labels",
+        type: "symbol",
+        ...(plan.kind === "baked"
+          ? { source: "land", "source-layer": plan.tiles.manifest.layers.areaLabels }
+          : { source: "areaLabels" }),
+        layout: {
+          "text-field": ["get", "name"],
+          "text-font": ["Inter Regular"],
+          "text-size": ["interpolate", ["linear"], ["zoom"], 1, 11, 5, 13, 8, 14],
+          "text-max-width": 9,
+          "text-padding": 2,
+        },
+        paint: {
+          "text-color": "#d9f2ff",
+          "text-halo-color": "#0b2a3f",
+          "text-halo-width": 1.5,
+        },
       },
       {
         id: "routes",

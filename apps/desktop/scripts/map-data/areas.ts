@@ -7,6 +7,7 @@ export interface AreaSource {
   readonly id: string;
   readonly name: string;
   readonly ring: readonly Position[];
+  readonly label?: readonly [number, number];
 }
 
 export interface AreaOutlineSpec {
@@ -26,6 +27,7 @@ export interface PreparedArea {
   readonly ordinal: number;
   readonly id: string;
   readonly name: string;
+  readonly label: readonly [number, number];
   readonly sourceRing: readonly Position[];
   readonly ring: readonly Position[];
   readonly orientation: "clockwise" | "counter-clockwise";
@@ -125,6 +127,15 @@ export function validateAreaSource(
   for (const area of areas) {
     if (seen.has(area.id)) throw new MapDataError(`area outlines: duplicate id '${area.id}'`);
     seen.add(area.id);
+    if (area.label !== undefined) {
+      if (
+        !Number.isFinite(area.label[0]) ||
+        !Number.isFinite(area.label[1]) ||
+        Math.abs(area.label[1]) > MAX_MERCATOR_LATITUDE
+      ) {
+        throw new MapDataError(`area outlines: '${area.id}' has an invalid label anchor`);
+      }
+    }
     const ring = closeRing(area.ring);
     if (ring.length < 4)
       throw new MapDataError(`area outlines: '${area.id}' has fewer than 3 vertices`);
@@ -175,10 +186,13 @@ export function prepareAreas(
       const closed = closeRing(area.ring);
       const dense = densifyRing(closed, spec.densifyToleranceMetres);
       const ring = dedupeConsecutive(dense);
+      const first = closed[0] as Position;
+      const label = area.label ?? first;
       return {
         ordinal: index + 1,
         id: area.id,
         name: area.name,
+        label: [label[0], label[1]],
         sourceRing: closed,
         ring: closeRing(ring),
         orientation: signedArea(closed) > 0 ? "counter-clockwise" : "clockwise",
@@ -211,5 +225,14 @@ export function areaOutlineFeatures(areas: readonly PreparedArea[]): GeoJSON.Fea
     id: area.ordinal,
     properties: { id: area.id, name: area.name },
     geometry: { type: "LineString", coordinates: area.ring.map((point) => [point[0], point[1]]) },
+  }));
+}
+
+export function areaLabelFeatures(areas: readonly PreparedArea[]): GeoJSON.Feature[] {
+  return areas.map((area) => ({
+    type: "Feature",
+    id: area.ordinal,
+    properties: { id: area.id, name: area.name },
+    geometry: { type: "Point", coordinates: [area.label[0], area.label[1]] },
   }));
 }

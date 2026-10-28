@@ -18,18 +18,33 @@ const PACK = encodeTilePack(TILES);
 
 function manifest(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
-    manifestVersion: 2,
-    pipelineVersion: "1.1.0",
+    manifestVersion: 3,
+    pipelineVersion: "1.2.0",
     areaOutlines: {
       datasetVersion: "1.0.0",
       edgeSemantics: "lonlat-linear",
       sourceSha256: "def",
       geometryCount: { areas: 36 },
     },
+    areaLabels: {
+      datasetVersion: "1.0.0",
+      sourceSha256: "def",
+      count: 36,
+      layer: "area_labels",
+      stableIdentity: true,
+      localizedText: "not baked",
+      validation: { worstUnits: 0, boundUnits: 1 },
+    },
     zoom: { tileMin: 0, tileMax: 7, fitForPurposeMax: 7, overscaleMax: 12 },
     bounds: [-180, -85, 180, 85],
     tileExtent: 4096,
-    layers: { land: "land", protected: "protected", areas: "areas", areaOutlines: "area_outlines" },
+    layers: {
+      land: "land",
+      protected: "protected",
+      areas: "areas",
+      areaOutlines: "area_outlines",
+      areaLabels: "area_labels",
+    },
     integrity: { packSha256: "abc" },
     sizes: { packBytes: PACK.length },
     attribution: "Made with Natural Earth.",

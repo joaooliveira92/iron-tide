@@ -5,7 +5,7 @@ export const BAKED_PROTOCOL = "bwtiles";
 export const BAKED_PACK_FILE = "land.bwtp";
 export const BAKED_MANIFEST_FILE = "manifest.json";
 
-export const BAKED_MANIFEST_VERSION = 2;
+export const BAKED_MANIFEST_VERSION = 3;
 
 export interface BakedAreaOutlines {
   readonly datasetVersion: string;
@@ -14,9 +14,21 @@ export interface BakedAreaOutlines {
   readonly geometryCount: number;
 }
 
+export interface BakedAreaLabels {
+  readonly datasetVersion: string;
+  readonly sourceSha256: string;
+  readonly count: number;
+  readonly layer: string;
+  readonly stableIdentity: boolean;
+  readonly localizedText: string;
+  readonly worstUnits: number;
+  readonly boundUnits: number;
+}
+
 export interface BakedManifest {
   readonly pipelineVersion: string;
   readonly areaOutlines: BakedAreaOutlines;
+  readonly areaLabels: BakedAreaLabels;
   readonly zoom: {
     readonly tileMin: number;
     readonly tileMax: number;
@@ -30,6 +42,7 @@ export interface BakedManifest {
     readonly protected: string;
     readonly areas: string;
     readonly areaOutlines: string;
+    readonly areaLabels: string;
   };
   readonly packSha256: string;
   readonly packBytes: number;
@@ -92,6 +105,7 @@ export function parseBakedManifest(value: unknown): BakedManifest {
   const integrity = member(value, "integrity");
   const sizes = member(value, "sizes");
   const areaOutlines = member(value, "areaOutlines");
+  const areaLabels = member(value, "areaLabels");
   if (numberAt(value, "manifestVersion") !== BAKED_MANIFEST_VERSION) {
     throw new BakedTilesError(
       `manifest version ${String(member(value, "manifestVersion"))} is not supported; expected ${BAKED_MANIFEST_VERSION}`,
@@ -118,6 +132,16 @@ export function parseBakedManifest(value: unknown): BakedManifest {
       sourceSha256: stringAt(areaOutlines, "sourceSha256"),
       geometryCount: numberAt(member(areaOutlines, "geometryCount"), "areas"),
     },
+    areaLabels: {
+      datasetVersion: stringAt(areaLabels, "datasetVersion"),
+      sourceSha256: stringAt(areaLabels, "sourceSha256"),
+      count: numberAt(areaLabels, "count"),
+      layer: stringAt(areaLabels, "layer"),
+      stableIdentity: member(areaLabels, "stableIdentity") === true,
+      localizedText: stringAt(areaLabels, "localizedText"),
+      worstUnits: numberAt(member(areaLabels, "validation"), "worstUnits"),
+      boundUnits: numberAt(member(areaLabels, "validation"), "boundUnits"),
+    },
     zoom: {
       tileMin: numberAt(zoom, "tileMin"),
       tileMax: numberAt(zoom, "tileMax"),
@@ -131,6 +155,7 @@ export function parseBakedManifest(value: unknown): BakedManifest {
       protected: stringAt(layers, "protected"),
       areas: stringAt(layers, "areas"),
       areaOutlines: stringAt(layers, "areaOutlines"),
+      areaLabels: stringAt(layers, "areaLabels"),
     },
     packSha256: stringAt(integrity, "packSha256"),
     packBytes: numberAt(sizes, "packBytes"),
@@ -138,6 +163,15 @@ export function parseBakedManifest(value: unknown): BakedManifest {
   };
   if (manifest.zoom.tileMax < manifest.zoom.tileMin) {
     throw new BakedTilesError("manifest zoom range is inverted");
+  }
+  if (manifest.areaLabels.count <= 0) {
+    throw new BakedTilesError("manifest must declare a positive area label count");
+  }
+  if (manifest.areaLabels.layer !== manifest.layers.areaLabels) {
+    throw new BakedTilesError("manifest area label layer names disagree");
+  }
+  if (!manifest.areaLabels.stableIdentity) {
+    throw new BakedTilesError("manifest area labels must declare stable identity");
   }
   return manifest;
 }

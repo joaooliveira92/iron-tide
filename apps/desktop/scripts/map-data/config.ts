@@ -22,6 +22,7 @@ export interface PipelineConfig {
     readonly protected: string;
     readonly areas: string;
     readonly areaOutlines: string;
+    readonly areaLabels: string;
   };
   readonly packFormat: string;
   readonly generationTimestampPolicy: string;
@@ -53,11 +54,11 @@ export function parsePipelineConfig(value: unknown): PipelineConfig {
   const config = value as PipelineConfig;
   const layerNames = Object.values(config.layers ?? {});
   if (
-    layerNames.length !== 4 ||
+    layerNames.length !== 5 ||
     layerNames.some((name) => typeof name !== "string" || name.length === 0) ||
-    new Set(layerNames).size !== 4
+    new Set(layerNames).size !== 5
   ) {
-    throw new MapDataError("config: layers must name four distinct layers");
+    throw new MapDataError("config: layers must name five distinct layers");
   }
   if (config.tileMaxZoom < config.tileMinZoom || config.tileMaxZoom > 12) {
     throw new MapDataError("config: tile zoom range is invalid");

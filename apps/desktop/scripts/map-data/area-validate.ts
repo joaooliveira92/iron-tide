@@ -17,8 +17,10 @@ export interface AreaLevelSummary {
   readonly tilesWithAreas: number;
   readonly fillPieces: number;
   readonly outlinePieces: number;
+  readonly labelPieces: number;
   readonly idsInFill: number;
   readonly idsInOutline: number;
+  readonly idsInLabels: number;
 }
 
 export interface AreaValidation {
@@ -38,6 +40,13 @@ export interface AreaValidation {
     readonly samples: number;
     readonly worstUnits: number;
     readonly worstMetres: number;
+    readonly boundUnits: number;
+  };
+  readonly labels: {
+    readonly level: number;
+    readonly expected: number;
+    readonly found: number;
+    readonly worstUnits: number;
     readonly boundUnits: number;
   };
   readonly fillEdges: readonly TileEdgeSummary[];
@@ -191,9 +200,11 @@ function validateLevels(
   for (let zoom = config.tileMinZoom; zoom <= config.tileMaxZoom; zoom++) {
     const fillIds = new Set<string>();
     const outlineIds = new Set<string>();
+    const labelIds = new Set<string>();
     let tilesWithAreas = 0;
     let fillPieces = 0;
     let outlinePieces = 0;
+    let labelPieces = 0;
     let badOrientation = 0;
     let openRings = 0;
     let badIds = 0;
@@ -222,9 +233,16 @@ function validateLevels(
         outlinePieces += 1;
         if (feature.id !== expected.get(id)) badIds += 1;
       }
+      for (const feature of tile.layers.get(config.layers.areaLabels) ?? []) {
+        const id = String(feature.properties.id);
+        labelIds.add(id);
+        labelPieces += 1;
+        if (feature.id !== expected.get(id)) badIds += 1;
+      }
     }
     const missingFill = areas.filter((area) => !fillIds.has(area.id)).map((area) => area.id);
     const missingOutline = areas.filter((area) => !outlineIds.has(area.id)).map((area) => area.id);
+    const missingLabels = areas.filter((area) => !labelIds.has(area.id)).map((area) => area.id);
     if (missingFill.length > 0) {
       findings.push({
         featureId: "areas",
@@ -239,6 +257,14 @@ function validateLevels(
         level: zoom,
         rule: "area-id-preserved",
         detail: `outline tiles lost ${missingOutline.length} area(s): ${missingOutline.slice(0, 3).join(", ")}`,
+      });
+    }
+    if (missingLabels.length > 0) {
+      findings.push({
+        featureId: "area_labels",
+        level: zoom,
+        rule: "area-label-id",
+        detail: `label tiles lost ${missingLabels.length} area(s): ${missingLabels.slice(0, 3).join(", ")}`,
       });
     }
     if (badIds > 0) {
@@ -270,8 +296,10 @@ function validateLevels(
       tilesWithAreas,
       fillPieces,
       outlinePieces,
+      labelPieces,
       idsInFill: fillIds.size,
       idsInOutline: outlineIds.size,
+      idsInLabels: labelIds.size,
     });
   }
   return summaries;
@@ -480,6 +508,55 @@ function validateOutlineEdges(
   return summaries;
 }
 
+function validateLabels(
+  tiles: Tiles,
+  areas: readonly PreparedArea[],
+  config: PipelineConfig,
+  findings: Finding[],
+): AreaValidation["labels"] {
+  const zoom = config.tileMaxZoom;
+  const boundUnits = 1;
+  let found = 0;
+  let worst = 0;
+  for (const area of areas) {
+    const { x, y, local } = locate(zoom, area.label, config.tileExtent);
+    const tile = tiles.get(zoom, x, y);
+    let best = Number.POSITIVE_INFINITY;
+    for (const feature of tile?.layers.get(config.layers.areaLabels) ?? []) {
+      if (String(feature.properties.id) !== area.id) continue;
+      const point = feature.rings[0]?.[0];
+      if (point === undefined) continue;
+      best = Math.min(best, Math.hypot(point[0] - local[0], point[1] - local[1]));
+    }
+    if (!Number.isFinite(best)) {
+      findings.push({
+        featureId: area.id,
+        level: zoom,
+        rule: "area-label-anchor",
+        detail: `no baked label anchor at ${area.label[0]},${area.label[1]}`,
+      });
+      continue;
+    }
+    found += 1;
+    worst = Math.max(worst, best);
+    if (best > boundUnits) {
+      findings.push({
+        featureId: area.id,
+        level: zoom,
+        rule: "area-label-anchor",
+        detail: `baked label is ${best.toFixed(2)} tile units from its anchor; the bound is ${boundUnits}`,
+      });
+    }
+  }
+  return {
+    level: zoom,
+    expected: areas.length,
+    found,
+    worstUnits: Number(worst.toFixed(3)),
+    boundUnits,
+  };
+}
+
 export function validateAreaOutlines(
   pack: TilePack,
   areas: readonly PreparedArea[],
@@ -488,6 +565,7 @@ export function validateAreaOutlines(
   const findings: Finding[] = [];
   const tiles = new Tiles(pack);
   const levels = validateLevels(pack, tiles, areas, config, findings);
+  const labels = validateLabels(tiles, areas, config, findings);
   const fidelity = validateFidelity(tiles, areas, config, findings);
   const cracks = validateCracks(tiles, areas, config, findings);
   const outlineEdges = validateOutlineEdges(pack, tiles, config, findings);
@@ -508,9 +586,10 @@ export function validateAreaOutlines(
   }
   return {
     passed: findings.length === 0,
-    checks: levels.length * 2 + 2 + fill.summaries.length + outlineEdges.length + areas.length,
+    checks: levels.length * 3 + 2 + fill.summaries.length + outlineEdges.length + areas.length,
     findings,
     levels,
+    labels,
     fidelity,
     cracks,
     fillEdges: fill.summaries,

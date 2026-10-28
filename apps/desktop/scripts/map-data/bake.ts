@@ -11,7 +11,12 @@ import {
   metresBetween,
   type Position,
 } from "./geodesy.ts";
-import { areaFillFeatures, areaOutlineFeatures, type PreparedArea } from "./areas.ts";
+import {
+  areaFillFeatures,
+  areaLabelFeatures,
+  areaOutlineFeatures,
+  type PreparedArea,
+} from "./areas.ts";
 import { canonicalJson, type PipelineConfig } from "./config.ts";
 import {
   indexPolygons,
@@ -78,6 +83,8 @@ export interface LevelStats {
   readonly pinnedVertices: number;
   readonly areaTiles: number;
   readonly areaVertices: number;
+  readonly labelTiles: number;
+  readonly labelFeatures: number;
   readonly simplificationToleranceMetres: number;
   readonly quantisationMetres: number;
 }
@@ -318,6 +325,10 @@ export function bakeTiles(
     { type: "FeatureCollection", features: areaOutlineFeatures(input.areas) },
     areaTilingOptions,
   );
+  const areaLabelIndex = new geojsonvt(
+    { type: "FeatureCollection", features: areaLabelFeatures(input.areas) },
+    areaTilingOptions,
+  );
   const areaVertices = input.areas.reduce((sum, area) => sum + area.ring.length, 0);
   for (let zoom = config.tileMinZoom; zoom <= config.tileMaxZoom; zoom++) {
     const land = levelFeatures(polygons, zoom, config);
@@ -340,6 +351,8 @@ export function bakeTiles(
     );
     const levelTiles: TilePackTile[] = [];
     let areaTiles = 0;
+    let labelTiles = 0;
+    let labelFeatures = 0;
     const span = 2 ** zoom;
     for (let x = 0; x < span; x++) {
       for (let y = 0; y < span; y++) {
@@ -350,9 +363,15 @@ export function bakeTiles(
         if (overlayTile !== null) layers[config.layers.protected] = overlayTile;
         const fillTile = areaFillIndex.getTile(zoom, x, y);
         const outlineTile = areaOutlineIndex.getTile(zoom, x, y);
+        const labelTile = areaLabelIndex.getTile(zoom, x, y);
         if (fillTile !== null) layers[config.layers.areas] = fillTile;
         if (outlineTile !== null) layers[config.layers.areaOutlines] = outlineTile;
+        if (labelTile !== null) layers[config.layers.areaLabels] = labelTile;
         if (fillTile !== null || outlineTile !== null) areaTiles += 1;
+        if (labelTile !== null) {
+          labelTiles += 1;
+          labelFeatures += labelTile.features.length;
+        }
         if (Object.keys(layers).length === 0) continue;
         const data = toBytes(
           vtpbf.fromGeojsonVt(layers as Parameters<typeof vtpbf.fromGeojsonVt>[0], {
@@ -381,6 +400,8 @@ export function bakeTiles(
       pinnedVertices: land.pinned,
       areaTiles,
       areaVertices,
+      labelTiles,
+      labelFeatures,
       simplificationToleranceMetres: Number(
         (config.simplificationPixels * metresPerPixel).toFixed(1),
       ),
