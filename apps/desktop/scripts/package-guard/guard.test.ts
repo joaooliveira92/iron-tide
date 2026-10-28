@@ -49,10 +49,13 @@ interface Layout {
   readonly outside?: ReadonlyMap<string, Uint8Array>;
 }
 
-function writePackage(layout: Layout): string {
+function writePackage(
+  layout: Layout,
+  resourcesRelative = "Bluewave.app/Contents/Resources",
+): string {
   const root = mkdtempSync(join(tmpdir(), "bw-package-guard-"));
   roots.push(root);
-  const resources = join(root, "Bluewave.app", "Contents", "Resources");
+  const resources = join(root, resourcesRelative);
   mkdirSync(resources, { recursive: true });
   writeFileSync(join(resources, "app.asar"), encodeAsar(layout.archive));
   for (const [path, data] of layout.outside ?? []) {
@@ -323,6 +326,20 @@ describe("size policy", () => {
         "default",
       ),
     ).toContain("unexpected-large-file@Bluewave.app/Contents/Resources/extra.bin");
+  });
+
+  it("allows the content artifact under the Linux lowercase resources directory", () => {
+    const root = writePackage(
+      {
+        archive: DEFAULT_ARCHIVE(),
+        outside: new Map([
+          ["content/generated/1880/content-artifact.json", randomBytes(1_500_000)],
+        ]),
+      },
+      "linux-unpacked/resources",
+    );
+    const generous = budgeted(realPolicy, 210_000_000, 2_000_000);
+    expect(evaluatePackage(snapshotPackage(root), generous, "default").violations).toEqual([]);
   });
 
   it("enforces the archive and outside-resource budgets", () => {

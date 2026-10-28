@@ -345,10 +345,10 @@ void test("two linked worktrees register into one shared registry", () => {
       .sort(),
     ["a", "b"],
   );
-  const root = normalizePath(realpathSync(repo));
+  const root = normalizePath(realpathSync.native(repo));
   const registryPaths = registryRows(repo).map((r) => ({
     stored: r.path,
-    resolved: normalizePath(realpathSync(r.path)),
+    resolved: normalizePath(realpathSync.native(r.path)),
   }));
   assert.ok(
     registryPaths.every((entry) => entry.resolved.startsWith(root)),
