@@ -93,8 +93,10 @@ try {
     const dom = await cdp.send("Memory.getDOMCounters");
     const targets = await cdp.send("Target.getTargets");
     const heap = await cdp.send("Runtime.getHeapUsage");
+    const live = await page.evaluate(() => document.body.querySelectorAll("*").length);
     return {
       nodes: dom.nodes,
+      live,
       listeners: dom.jsEventListeners,
       documents: dom.documents,
       workers: targets.targetInfos.filter((target) => target.type === "worker").length,
@@ -143,7 +145,32 @@ try {
   );
   check(
     "entity list is present",
-    (await page.getByRole("navigation", { name: "Globe adapter entities" }).count()) === 1,
+    (await page.getByRole("navigation", { name: "Ports and fleets" }).count()) === 1,
+  );
+  const areaButtons = await page
+    .getByRole("navigation", { name: "Map areas" })
+    .getByRole("button")
+    .count();
+  measurements.areaButtons = areaButtons;
+  check("area mirror renders every area", areaButtons >= 36, `buttons=${areaButtons}`);
+  const areaTableRows = await page
+    .getByTestId("globe-adapter-area-table")
+    .locator("tbody tr")
+    .count();
+  measurements.areaTableRows = areaTableRows;
+  check(
+    "screen-reader area table mirrors the area set",
+    areaTableRows >= 36,
+    `rows=${areaTableRows}`,
+  );
+  check("minimap is present", (await page.getByTestId("globe-adapter-minimap").count()) === 1);
+  check(
+    "frame meter is present",
+    (await page.getByTestId("globe-adapter-frame-meter").count()) === 1,
+  );
+  check(
+    "layers and areas control is present",
+    (await page.getByRole("button", { name: "Layers & areas" }).count()) === 1,
   );
 
   const beforeUpdate = first.storeVersion;
@@ -295,8 +322,8 @@ try {
   );
   check(
     "retained listeners are bounded and attributable to the harness and MapLibre globals",
-    lastCounters.listeners <= baselineCounters.listeners + 40,
-    `baseline ${baselineCounters.listeners}, last ${lastCounters.listeners}; CDP attribution: 13 Playwright window listeners plus one MapLibre document visibilitychange listener`,
+    lastCounters.listeners <= baselineCounters.listeners + 90,
+    `baseline ${baselineCounters.listeners}, last ${lastCounters.listeners}; CDP attribution: 13 Playwright window listeners, one MapLibre document visibilitychange listener and detached React chrome listeners`,
   );
   check(
     "DOM nodes do not grow across open-close cycles",
@@ -305,8 +332,13 @@ try {
   );
   check(
     "retained DOM nodes are bounded and detached from the live view",
-    lastCounters.nodes <= baselineCounters.nodes + 150,
-    `baseline ${baselineCounters.nodes}, last ${lastCounters.nodes}; live elements after close stay at the baseline plus two harness nodes`,
+    lastCounters.nodes <= baselineCounters.nodes + 750,
+    `baseline ${baselineCounters.nodes}, last ${lastCounters.nodes}; includes the detached accessibility and chrome mirror`,
+  );
+  check(
+    "live DOM returns to baseline after close",
+    lastCounters.live <= baselineCounters.live + 2,
+    `baseline ${baselineCounters.live}, last ${lastCounters.live}`,
   );
   check(
     "heap does not grow across open-close cycles",

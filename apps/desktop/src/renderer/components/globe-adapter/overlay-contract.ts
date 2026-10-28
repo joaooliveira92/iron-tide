@@ -4,6 +4,7 @@ export type OverlayFeatureKind = "areaLabel" | "marker" | "route";
 export type MarkerClass = "port" | "fleet" | "selection" | "alert";
 export type RouteClass = "static" | "planned" | "active" | "preview" | "historical";
 export type RouteEdgeSemantics = "lonlat-linear" | "great-circle" | "rhumb";
+export type OverlayLayerClass = "lane" | "route";
 
 export interface PointGeometry {
   readonly type: "Point";
@@ -27,6 +28,7 @@ export interface OverlayFeature {
   readonly areaId?: string;
   readonly markerClass?: MarkerClass;
   readonly routeClass?: RouteClass;
+  readonly overlayClass?: OverlayLayerClass;
 }
 
 export interface OverlaySnapshot {
@@ -81,6 +83,7 @@ const ROUTE_SEMANTICS: ReadonlySet<RouteEdgeSemantics> = new Set([
   "great-circle",
   "rhumb",
 ]);
+const OVERLAY_LAYER_CLASSES: ReadonlySet<OverlayLayerClass> = new Set(["lane", "route"]);
 
 export class OverlayContractError extends Error {
   readonly _tag = "OverlayContractError";
@@ -139,6 +142,12 @@ export function assertOverlayFeature(feature: OverlayFeature): void {
     throw new OverlayContractError(
       "route",
       `${feature.id} has unsupported edge semantics '${feature.geometry.semantics}'`,
+    );
+  }
+  if (feature.overlayClass !== undefined && !OVERLAY_LAYER_CLASSES.has(feature.overlayClass)) {
+    throw new OverlayContractError(
+      "route",
+      `${feature.id} has unsupported overlay class '${feature.overlayClass}'`,
     );
   }
   if (feature.geometry.coordinates.length < 2) {

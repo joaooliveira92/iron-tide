@@ -58,7 +58,14 @@ export function MapSurface(props: WorldMapChartProps) {
             className="absolute inset-0"
             onSelect={props.onSelect}
             onRuler={props.onRuler}
+            onToggleLayer={props.onToggleLayer}
+            onSetProjection={props.onSetProjection}
+            onSetCentre={props.onSetCentre}
             onUnavailable={setFailure}
+            variant={props.variant}
+            showMinimap={props.showMinimap}
+            initialFocusAreaId={props.initialFocusAreaId}
+            initialFocusNationId={props.initialFocusNationId}
           />
         </Suspense>
         {panels}

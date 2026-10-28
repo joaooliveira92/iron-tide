@@ -107,7 +107,7 @@ const AREAS = [
   {
     name: "World map",
     blurb: "How the presentation-only strategic map's baked geography is produced.",
-    nums: [244, 323, 324, 325],
+    nums: [244, 323, 324, 325, 326],
   },
   {
     name: "Engine architecture",

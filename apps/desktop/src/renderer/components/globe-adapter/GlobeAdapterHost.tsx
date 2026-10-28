@@ -64,17 +64,23 @@ export function GlobeAdapterHost() {
     hash === GLOBE_ADAPTER_DEMO_CORRUPT_HASH;
   if (!GLOBE_ADAPTER_ENABLED || !requested || failed || GlobeAdapter === null) return null;
   return (
-    <Suspense fallback={null}>
-      <GlobeAdapter
-        state={initialMapPrototypeState}
-        route={null}
-        overlay={demoOverlay()}
-        onSelect={() => undefined}
-        onRuler={() => undefined}
-        landMode={demoMode(hash)}
-        forceFailure={hash === GLOBE_ADAPTER_DEMO_FAIL_HASH}
-        onUnavailable={() => setFailed(true)}
-      />
-    </Suspense>
+    <div className="fixed inset-0 z-[9999]">
+      <Suspense fallback={null}>
+        <GlobeAdapter
+          state={initialMapPrototypeState}
+          route={null}
+          overlay={demoOverlay()}
+          onSelect={() => undefined}
+          onRuler={() => undefined}
+          onToggleLayer={() => undefined}
+          onSetProjection={() => undefined}
+          onSetCentre={() => undefined}
+          variant="full"
+          landMode={demoMode(hash)}
+          forceFailure={hash === GLOBE_ADAPTER_DEMO_FAIL_HASH}
+          onUnavailable={() => setFailed(true)}
+        />
+      </Suspense>
+    </div>
   );
 }
