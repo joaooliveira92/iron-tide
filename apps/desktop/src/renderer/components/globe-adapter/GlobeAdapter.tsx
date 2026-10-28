@@ -32,12 +32,7 @@ import {
   adapterLandMode,
   type AdapterLandMode,
 } from "./globe-adapter-flag.js";
-import {
-  fitWorldCamera,
-  returnToNorth,
-  type AppCameraState,
-  type CameraProjection,
-} from "./camera-contract.js";
+import { fitWorldCamera, type AppCameraState, type CameraProjection } from "./camera-contract.js";
 import type { OverlayFeature, OverlaySnapshot } from "./overlay-contract.js";
 import { DisposalRegistry } from "./disposal.js";
 import { projectOverlay } from "./overlay-projection.js";
@@ -743,6 +738,7 @@ export function GlobeAdapter({
       });
       map.boxZoom.disable();
       map.doubleClickZoom.disable();
+      map.keyboard.disable();
     } catch (error) {
       if (registeredProtocol) removeProtocol(BAKED_PROTOCOL);
       store.dispose();
@@ -1353,19 +1349,6 @@ export function GlobeAdapter({
           cacheVersion: hierarchy.cacheVersion,
         })}
       </div>
-      <button
-        type="button"
-        className="absolute bottom-3 left-3 z-10 rounded bg-black/75 px-2 py-1 text-xs text-white"
-        onClick={() => {
-          const next = returnToNorth(camera);
-          mapRef.current?.jumpTo({
-            center: [next.centre[0], next.centre[1]],
-            bearing: next.bearing,
-          });
-        }}
-      >
-        Reset view
-      </button>
     </div>
   );
 }

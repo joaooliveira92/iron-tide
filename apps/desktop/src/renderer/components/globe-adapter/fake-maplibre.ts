@@ -6,8 +6,12 @@ export interface FakeMap {
   readonly layoutCalls: { readonly id: string; readonly value: unknown }[];
   readonly filterCalls: { readonly id: string; readonly value: unknown }[];
   readonly dragPanCalls: string[];
+  readonly panByCalls: { readonly x: number; readonly y: number }[];
+  readonly projectionCalls: unknown[];
+  readonly bearingCalls: number[];
   boxZoomDisabled: boolean;
   doubleClickZoomDisabled: boolean;
+  keyboardDisabled: boolean;
   readonly handlers: Map<string, ((event: unknown) => void)[]>;
   emit(event: string, payload: unknown): void;
   getCenter(): { readonly lng: number; readonly lat: number };
@@ -40,6 +44,7 @@ export interface FakeMap {
   readonly dragPan: { disable(): void; enable(): void };
   readonly boxZoom: { disable(): void };
   readonly doubleClickZoom: { disable(): void };
+  readonly keyboard: { disable(): void };
 }
 
 export const fakeMap = { instance: null as FakeMap | null };
@@ -85,8 +90,12 @@ export class FakeMapClass implements FakeMap {
   readonly layoutCalls: { readonly id: string; readonly value: unknown }[] = [];
   readonly filterCalls: { readonly id: string; readonly value: unknown }[] = [];
   readonly dragPanCalls: string[] = [];
+  readonly panByCalls: { readonly x: number; readonly y: number }[] = [];
+  readonly projectionCalls: unknown[] = [];
+  readonly bearingCalls: number[] = [];
   boxZoomDisabled = false;
   doubleClickZoomDisabled = false;
+  keyboardDisabled = false;
   readonly handlers = new Map<string, ((event: unknown) => void)[]>();
   private centre = { lng: 0, lat: 30 };
   private zoom = 2;
@@ -139,7 +148,9 @@ export class FakeMapClass implements FakeMap {
     this.filterCalls.push({ id, value });
   }
   setPaintProperty(): void {}
-  setProjection(): void {}
+  setProjection(value: unknown): void {
+    this.projectionCalls.push(value);
+  }
   setFeatureState(): void {}
   setCenter(value: { lng: number; lat: number }): void {
     this.centre = value;
@@ -147,12 +158,16 @@ export class FakeMapClass implements FakeMap {
   setZoom(value: number): void {
     this.zoom = value;
   }
-  setBearing(): void {}
+  setBearing(value: number): void {
+    this.bearingCalls.push(value);
+  }
   jumpTo(value: { center?: [number, number]; zoom?: number }): void {
     if (value.center !== undefined) this.centre = { lng: value.center[0], lat: value.center[1] };
     if (value.zoom !== undefined) this.zoom = value.zoom;
   }
-  panBy(): void {}
+  panBy(value: { readonly x?: number; readonly y?: number } | [number, number]): void {
+    if (Array.isArray(value)) this.panByCalls.push({ x: value[0], y: value[1] });
+  }
   on(event: string, handler: (event: unknown) => void): void {
     const list = this.handlers.get(event) ?? [];
     list.push(handler);
@@ -187,6 +202,11 @@ export class FakeMapClass implements FakeMap {
   readonly doubleClickZoom = {
     disable: () => {
       this.doubleClickZoomDisabled = true;
+    },
+  };
+  readonly keyboard = {
+    disable: () => {
+      this.keyboardDisabled = true;
     },
   };
 }
