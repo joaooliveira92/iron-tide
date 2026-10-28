@@ -15,6 +15,7 @@ files:
   - "!map-spike-assets/**"
   - "!scripts/map-data/**"
   - "!dist/tools/scripts/map-data/**"
+  - "!dist/tools/scripts/package-guard/**"
   - "!package-policy/**"
   - "!scripts/package-guard/**"
   - "!scripts/globe-spike-*.mjs"
