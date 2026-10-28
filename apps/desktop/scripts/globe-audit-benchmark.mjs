@@ -17,6 +17,8 @@ const { values } = parseArgs({
     width: { type: "string", default: "1470" },
     height: { type: "string", default: "868" },
     trace: { type: "boolean", default: false },
+    enforce: { type: "boolean", default: false },
+    cooldown: { type: "string", default: "3000" },
   },
 });
 
@@ -220,6 +222,24 @@ async function runOnce(runIndex) {
     result.pageErrors = pageErrors;
     result.remoteRequests = requests.filter((url) => !/^(file|data|blob|devtools):/.test(url));
     result.cpu = await page.evaluate(() => navigator.hardwareConcurrency);
+    result.graphics = await page.evaluate(() => {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+      if (context === null) return { api: "none" };
+      const debug = context.getExtension("WEBGL_debug_renderer_info");
+      return {
+        api: canvas.getContext("webgl2") === null ? "webgl" : "webgl2",
+        vendor: debug === null ? "unavailable" : context.getParameter(debug.UNMASKED_VENDOR_WEBGL),
+        renderer:
+          debug === null ? "unavailable" : context.getParameter(debug.UNMASKED_RENDERER_WEBGL),
+      };
+    });
+    result.platform = {
+      os: process.platform,
+      arch: process.arch,
+      electron: await app.evaluate(({ app: electronApp }) => electronApp.getVersion()),
+      version: await app.evaluate(({ app: electronApp }) => electronApp.getVersion()),
+    };
   } finally {
     await app.close();
   }
@@ -228,17 +248,15 @@ async function runOnce(runIndex) {
 
 const runs = [];
 for (let index = 1; index <= Number(values.runs); index++) {
+  if (index > 1) await sleep(Number(values.cooldown));
   runs.push(await runOnce(index));
-  await writeFile(
-    join(outDir, `${values.label}.json`),
-    JSON.stringify({ label: values.label, runs }, null, 2),
-  );
 }
 const summary = runs.map((run) => ({
   run: run.run,
   refreshHz: run.refreshHz,
   idleP95: run.idle.frames?.p95,
   panMax: run.pan.frames?.max,
+  zoomInP95: run.zoomIn.frames?.p95,
   zoomInMax: run.zoomIn.frames?.max,
   zoomOutP95: run.zoomOut.frames?.p95,
   zoomOutMax: run.zoomOut.frames?.max,
@@ -246,4 +264,51 @@ const summary = runs.map((run) => ({
   zoomOutLongTasks: run.zoomOut.longTasks,
   settleMs: run.zoomOut.settleMsAfterBurst,
 }));
-process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
+
+const PRODUCTION_FRAME_BUDGET = {
+  refreshHzMin: 55,
+  idleP95MaxMs: 34,
+  panMaxMs: 50,
+  zoomInP95MaxMs: 34,
+  zoomInMaxMs: 100,
+  zoomOutP95MaxMs: 34,
+  zoomOutMaxMs: 50,
+  zoomOutLongTasksMax: 0,
+  settleMaxMs: 100,
+};
+
+const budgetResults = runs.map((run) => {
+  const checks = {
+    refreshHz: run.refreshHz >= PRODUCTION_FRAME_BUDGET.refreshHzMin,
+    idleP95: (run.idle.frames?.p95 ?? Infinity) <= PRODUCTION_FRAME_BUDGET.idleP95MaxMs,
+    panMax: (run.pan.frames?.max ?? Infinity) <= PRODUCTION_FRAME_BUDGET.panMaxMs,
+    zoomInP95: (run.zoomIn.frames?.p95 ?? Infinity) <= PRODUCTION_FRAME_BUDGET.zoomInP95MaxMs,
+    zoomInMax: (run.zoomIn.frames?.max ?? Infinity) <= PRODUCTION_FRAME_BUDGET.zoomInMaxMs,
+    zoomOutP95: (run.zoomOut.frames?.p95 ?? Infinity) <= PRODUCTION_FRAME_BUDGET.zoomOutP95MaxMs,
+    zoomOutMax: (run.zoomOut.frames?.max ?? Infinity) <= PRODUCTION_FRAME_BUDGET.zoomOutMaxMs,
+    zoomOutLongTasks: run.zoomOut.longTasks <= PRODUCTION_FRAME_BUDGET.zoomOutLongTasksMax,
+    settle: run.zoomOut.settleMsAfterBurst <= PRODUCTION_FRAME_BUDGET.settleMaxMs,
+  };
+  return { run: run.run, checks, passed: Object.values(checks).every(Boolean) };
+});
+
+const accepted = budgetResults.every((entry) => entry.passed);
+const report = {
+  label: values.label,
+  budget: PRODUCTION_FRAME_BUDGET,
+  budgetResults,
+  accepted,
+  environment: {
+    os: runs[0]?.platform.os,
+    arch: runs[0]?.platform.arch,
+    electron: runs[0]?.platform.electron,
+    graphics: runs[0]?.graphics,
+    viewport: runs[0]?.viewport,
+    cpu: runs[0]?.cpu,
+    refreshHz: runs[0]?.refreshHz,
+  },
+  runs,
+};
+await writeFile(join(outDir, `${values.label}.json`), JSON.stringify(report, null, 2));
+process.stdout.write(`${JSON.stringify({ ...report, runs: summary }, null, 2)}\n`);
+if (values.enforce && !accepted) process.exitCode = 1;

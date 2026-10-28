@@ -15,6 +15,7 @@ const { values } = parseArgs({
     width: { type: "string", default: "1470" },
     height: { type: "string", default: "868" },
     uncapped: { type: "boolean", default: false },
+    legacy: { type: "boolean", default: false },
   },
 });
 
@@ -65,6 +66,11 @@ async function runOnce(runIndex) {
     );
     const page = await app.firstWindow();
     await page.waitForLoadState("load");
+    if (values.legacy) {
+      await page.evaluate(() => {
+        window.location.hash = "#legacy-renderer";
+      });
+    }
     await page.getByText("Bluewave Naval Staff").waitFor({ timeout: 20_000 });
     const click = (name) => page.getByRole("button", { name }).first().click();
     await click("New Campaign");
