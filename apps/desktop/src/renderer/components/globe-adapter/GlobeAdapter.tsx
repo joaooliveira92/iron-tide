@@ -12,8 +12,7 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { campaignNationHue } from "../../content/presentationContent.js";
-import { AREAS } from "../world-map/map-geometry.js";
+import { AREAS, AREAS_BY_ID } from "../world-map/map-geometry.js";
 import { formatFixed } from "../../lib/presentation-format/index.js";
 import {
   BAKED_PROTOCOL,
@@ -24,6 +23,10 @@ import { classifyHorizon, type GlobeCamera } from "../globe-spike/horizon.js";
 import { MAP_CONTAINER_STYLE, hasRenderableSize } from "../globe-spike/map-container.js";
 import { useLandPlan } from "../globe-spike/use-land-plan.js";
 import type { WorldMapChartProps } from "../world-map/WorldMapChart.js";
+import type { MapVariant } from "../world-map/map-variant-layout.js";
+import { MAP_VARIANT_LAYOUT } from "../world-map/map-variant-layout.js";
+import { homeFocusPoint } from "../world-map/campaign-map-join.js";
+import { nationFocusPoint } from "../world-map/useInitialFocusArea.js";
 import {
   adapterFailureRequested,
   adapterLandMode,
@@ -40,6 +43,26 @@ import { DisposalRegistry } from "./disposal.js";
 import { projectOverlay } from "./overlay-projection.js";
 import { OverlayStore } from "./overlay-store.js";
 import { selectPointerTarget } from "./pointer-visibility.js";
+import {
+  adapterLayerVisibility,
+  adapterProjectionFromApp,
+  appProjectionFromAdapter,
+  buildBorderCollection,
+  buildGraticuleCollection,
+  borderColorExpression,
+  markerFilter,
+  overlayClassFilter,
+  ownershipPaintValues,
+} from "./adapter-layer-state.js";
+import { deriveAdapterModel } from "./adapter-derivations.js";
+import { GlobeAdapterChrome } from "./GlobeAdapterChrome.js";
+import {
+  adapterDrop,
+  dragThresholdMet,
+  fleetIdFromMarker,
+  isDraggableFleet,
+  routeAnnouncement,
+} from "./adapter-interaction.js";
 import {
   NATURAL_EARTH_HIERARCHY,
   TileCache,
@@ -59,9 +82,16 @@ export interface GlobeAdapterProps {
   readonly className?: string;
   readonly onSelect: WorldMapChartProps["onSelect"];
   readonly onRuler: WorldMapChartProps["onRuler"];
+  readonly onToggleLayer: WorldMapChartProps["onToggleLayer"];
+  readonly onSetProjection: WorldMapChartProps["onSetProjection"];
+  readonly onSetCentre: WorldMapChartProps["onSetCentre"];
   readonly onUnavailable: (reason: string) => void;
   readonly forceFailure?: boolean;
   readonly landMode?: AdapterLandMode;
+  readonly variant?: MapVariant;
+  readonly showMinimap?: boolean;
+  readonly initialFocusAreaId?: string | null;
+  readonly initialFocusNationId?: string | null;
 }
 
 export interface AdapterDiagnostics {
@@ -127,6 +157,7 @@ function featureCollection(features: readonly OverlayFeature[]): GeoJSON.Feature
         kind: feature.kind,
         markerClass: feature.markerClass ?? "",
         routeClass: feature.routeClass ?? "",
+        overlayClass: feature.overlayClass ?? "",
         areaId: feature.areaId ?? "",
         lon: feature.geometry.type === "Point" ? feature.geometry.lon : 0,
         lat: feature.geometry.type === "Point" ? feature.geometry.lat : 0,
@@ -151,16 +182,10 @@ function routeCollection(snapshot: OverlaySnapshot): GeoJSON.FeatureCollection {
 }
 
 function ownershipPaint(overlay: GlobeAdapterProps["overlay"]): LayerSpecification["paint"] {
-  const entries = [...overlay.ownership]
-    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
-    .flatMap(([area, nation]) => [
-      area,
-      nation === null ? "#64748b" : `hsl(${campaignNationHue(nation)} 55% 42%)`,
-    ]);
-  if (entries.length === 0) return { "fill-color": "#46647f", "fill-opacity": 0.45 };
+  const paint = ownershipPaintValues({ ownership: overlay.ownership }, true);
   return {
-    "fill-color": ["match", ["get", "id"], ...entries, "#46647f"],
-    "fill-opacity": 0.45,
+    "fill-color": paint.color,
+    "fill-opacity": paint.opacity,
   } as LayerSpecification["paint"];
 }
 
@@ -191,14 +216,27 @@ function mapSources(
       maxzoom: 22,
       tolerance: 0,
     },
+    "adapter-borders": {
+      type: "geojson",
+      data: buildBorderCollection(),
+      promoteId: "id",
+      maxzoom: 22,
+    },
+    "adapter-graticule": {
+      type: "geojson",
+      data: buildGraticuleCollection(),
+      maxzoom: 22,
+    },
   };
 }
 
 function mapLayers(
   plan: Extract<ReturnType<typeof useLandPlan>, { readonly kind: "baked" }>,
   overlay: GlobeAdapterProps["overlay"],
+  layers: GlobeAdapterProps["state"]["layers"],
 ): LayerSpecification[] {
   const { manifest } = plan.tiles;
+  const visibility = adapterLayerVisibility(layers);
   return [
     { id: "ocean", type: "background", paint: { "background-color": "#0b2a3f" } },
     {
@@ -231,12 +269,28 @@ function mapLayers(
       paint: ownershipPaint(overlay) as never,
     },
     {
+      id: "areas-hover",
+      type: "fill",
+      source: "land",
+      "source-layer": manifest.layers.areas,
+      filter: ["==", ["get", "id"], "__none__"],
+      paint: { "fill-color": "#5fc0ff", "fill-opacity": 0.18 },
+    },
+    {
       id: "areas-selected",
       type: "line",
       source: "land",
       "source-layer": manifest.layers.areaOutlines,
       filter: ["==", ["get", "id"], ""],
       paint: { "line-color": "#ffffff", "line-width": 2.5 },
+    },
+    {
+      id: "areas-hover-line",
+      type: "line",
+      source: "land",
+      "source-layer": manifest.layers.areaOutlines,
+      filter: ["==", ["get", "id"], "__none__"],
+      paint: { "line-color": "#9fe0ff", "line-width": 1.8 },
     },
     {
       id: "areas-line",
@@ -251,6 +305,7 @@ function mapLayers(
       source: "land",
       "source-layer": manifest.layers.areaLabels,
       layout: {
+        visibility: visibility.labels ? "visible" : "none",
         "text-field": ["get", "name"],
         "text-font": ["Inter Regular"],
         "text-size": ["interpolate", ["linear"], ["zoom"], 1, 11, 5, 13, 8, 14],
@@ -264,10 +319,55 @@ function mapLayers(
       },
     },
     {
+      id: "adapter-borders-fill",
+      type: "fill",
+      source: "adapter-borders",
+      layout: { visibility: visibility.borders ? "visible" : "none" },
+      paint: {
+        "fill-color": borderColorExpression() as never,
+        "fill-opacity": 0.12,
+      },
+    },
+    {
+      id: "adapter-borders-line",
+      type: "line",
+      source: "adapter-borders",
+      layout: { visibility: visibility.borders ? "visible" : "none" },
+      paint: {
+        "line-color": borderColorExpression() as never,
+        "line-width": 1.2,
+        "line-opacity": 0.85,
+      },
+    },
+    {
+      id: "adapter-graticule",
+      type: "line",
+      source: "adapter-graticule",
+      layout: { visibility: visibility.graticule ? "visible" : "none" },
+      paint: { "line-color": "#7ea6b8", "line-width": 0.6, "line-opacity": 0.35 },
+    },
+    {
+      id: "adapter-lanes",
+      type: "line",
+      source: "adapter-routes",
+      filter: overlayClassFilter("lane") as never,
+      layout: {
+        visibility: visibility.lanes ? "visible" : "none",
+        "line-cap": "round",
+        "line-join": "round",
+      },
+      paint: { "line-color": "#3aa0e0", "line-width": 1, "line-opacity": 0.7 },
+    },
+    {
       id: "adapter-routes",
       type: "line",
       source: "adapter-routes",
-      layout: { "line-cap": "round", "line-join": "round" },
+      filter: overlayClassFilter("route") as never,
+      layout: {
+        visibility: visibility.routes ? "visible" : "none",
+        "line-cap": "round",
+        "line-join": "round",
+      },
       paint: {
         "line-color": [
           "match",
@@ -286,6 +386,7 @@ function mapLayers(
       id: "adapter-markers",
       type: "circle",
       source: "adapter-markers",
+      filter: markerFilter(visibility) as never,
       paint: {
         "circle-radius": ["match", ["get", "markerClass"], "fleet", 7, 5],
         "circle-color": [
@@ -306,6 +407,7 @@ function mapLayers(
       id: "adapter-marker-labels",
       type: "symbol",
       source: "adapter-markers",
+      filter: markerFilter(visibility) as never,
       minzoom: 4,
       layout: {
         "text-field": ["get", "name"],
@@ -321,12 +423,24 @@ function mapLayers(
       id: "adapter-selected-ring",
       type: "circle",
       source: "adapter-markers",
-      filter: ["==", ["get", "id"], ""],
+      filter: ["==", ["get", "areaId"], ""],
       paint: {
         "circle-radius": 12,
         "circle-color": "rgba(0,0,0,0)",
         "circle-stroke-color": "#ffffff",
         "circle-stroke-width": 2,
+      },
+    },
+    {
+      id: "adapter-selected-fleet-ring",
+      type: "circle",
+      source: "adapter-markers",
+      filter: ["==", ["get", "id"], ""],
+      paint: {
+        "circle-radius": 11,
+        "circle-color": "rgba(0,0,0,0)",
+        "circle-stroke-color": "#ffd24a",
+        "circle-stroke-width": 2.5,
       },
     },
   ];
@@ -335,13 +449,14 @@ function mapLayers(
 function buildStyle(
   plan: Extract<ReturnType<typeof useLandPlan>, { readonly kind: "baked" }>,
   overlay: GlobeAdapterProps["overlay"],
+  layers: GlobeAdapterProps["state"]["layers"],
 ): StyleSpecification {
   return {
     version: 8,
     glyphs: `${baseDirectory()}map-spike/glyphs/{fontstack}/{range}.pbf`,
     projection: { type: "globe" },
     sources: mapSources(plan),
-    layers: mapLayers(plan, overlay),
+    layers: mapLayers(plan, overlay, layers),
   };
 }
 
@@ -378,9 +493,16 @@ export function GlobeAdapter({
   className,
   onSelect,
   onRuler,
+  onToggleLayer,
+  onSetProjection,
+  onSetCentre,
   onUnavailable,
   forceFailure = false,
   landMode,
+  variant = "full",
+  showMinimap = true,
+  initialFocusAreaId = null,
+  initialFocusNationId = null,
 }: GlobeAdapterProps) {
   const hash = window.location.hash;
   const mode: AdapterLandMode = landMode ?? adapterLandMode(hash);
@@ -391,17 +513,45 @@ export function GlobeAdapter({
   const cacheRef = useRef<TileCache | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const selectedAreaRef = useRef<string | null>(null);
-  const projectionRef = useRef<CameraProjection>("globe");
+  const projectionRef = useRef<CameraProjection>(adapterProjectionFromApp(state.projection));
   const hoverFrameRef = useRef<number | null>(null);
   const hoveredRef = useRef<string | null>(null);
+  const hoveredAreaRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [projection, setProjection] = useState<CameraProjection>("globe");
+  const [projection, setProjection] = useState<CameraProjection>(() =>
+    adapterProjectionFromApp(state.projection),
+  );
   const [status, setStatus] = useState("starting");
   const [liveMessage, setLiveMessage] = useState("");
   const [errorText, setErrorText] = useState<string | null>(null);
-  const [camera, setCamera] = useState<AppCameraState>(() => fitWorldCamera("globe"));
+  const [camera, setCamera] = useState<AppCameraState>(() =>
+    fitWorldCamera(adapterProjectionFromApp(state.projection)),
+  );
+  const [hoveredArea, setHoveredArea] = useState<string | null>(null);
+  const [hoverTooltip, setHoverTooltip] = useState<{
+    readonly x: number;
+    readonly y: number;
+    readonly text: string;
+  } | null>(null);
+  const [selectedFleet, setSelectedFleet] = useState<string | null>(null);
+  const dragRef = useRef<{
+    readonly fleetId: string;
+    readonly pointerId: number;
+    readonly startX: number;
+    readonly startY: number;
+    dragging: boolean;
+  } | null>(null);
   const initialCameraRef = useRef(camera);
   const initialOverlayRef = useRef(overlay);
+  const initialLayersRef = useRef(state.layers);
+  const derived = useMemo(
+    () => deriveAdapterModel(overlay, state.selected),
+    [overlay, state.selected],
+  );
+  const derivedRef = useRef(derived);
+  const ordersRef = useRef(orders);
+  derivedRef.current = derived;
+  ordersRef.current = orders;
 
   projectionRef.current = projection;
 
@@ -446,21 +596,43 @@ export function GlobeAdapter({
   useEffect(() => {
     const map = mapRef.current;
     if (map === null || !ready) return;
-    map.setLayoutProperty(
-      "area-labels-list",
-      "visibility",
-      state.layers.labels ? "visible" : "none",
-    );
-    map.setLayoutProperty("adapter-routes", "visibility", state.layers.routes ? "visible" : "none");
-  }, [ready, state.layers.labels, state.layers.routes]);
+    const visibility = adapterLayerVisibility(state.layers);
+    const set = (id: string, visible: boolean) =>
+      map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
+    set("area-labels-list", visibility.labels);
+    set("adapter-borders-fill", visibility.borders);
+    set("adapter-borders-line", visibility.borders);
+    set("adapter-graticule", visibility.graticule);
+    set("adapter-lanes", visibility.lanes);
+    set("adapter-routes", visibility.routes);
+    map.setFilter("adapter-markers", markerFilter(visibility) as never);
+    map.setFilter("adapter-marker-labels", markerFilter(visibility) as never);
+  }, [ready, state.layers]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (map === null || !ready) return;
-    const paint = ownershipPaint(overlay) as Record<string, unknown>;
-    map.setPaintProperty("areas-fill", "fill-color", paint["fill-color"] as never);
-    map.setPaintProperty("areas-fill", "fill-opacity", paint["fill-opacity"] as never);
-  }, [overlay, ready]);
+    const next = adapterProjectionFromApp(state.projection);
+    if (next !== projectionRef.current) {
+      map.setProjection({ type: next });
+      setProjection(next);
+      projectionRef.current = next;
+    }
+  }, [ready, state.projection]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map === null || !ready) return;
+    map.setCenter([state.centre, map.getCenter().lat]);
+  }, [ready, state.centre]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map === null || !ready) return;
+    const paint = ownershipPaintValues({ ownership: overlay.ownership }, state.layers.ownership);
+    map.setPaintProperty("areas-fill", "fill-color", paint.color as never);
+    map.setPaintProperty("areas-fill", "fill-opacity", paint.opacity);
+  }, [overlay, ready, state.layers.ownership]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -469,6 +641,28 @@ export function GlobeAdapter({
     map.setFilter("adapter-selected-ring", ["==", ["get", "areaId"], state.selected ?? "__none__"]);
     selectedAreaRef.current = state.selected;
   }, [ready, state.selected]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map === null || !ready) return;
+    const filter = ["==", ["get", "id"], hoveredArea ?? "__none__"];
+    map.setFilter("areas-hover", filter as never);
+    map.setFilter("areas-hover-line", filter as never);
+  }, [hoveredArea, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map === null || !ready) return;
+    map.setFilter("adapter-selected-fleet-ring", [
+      "==",
+      ["get", "id"],
+      selectedFleet === null ? "" : `fleet:${selectedFleet}`,
+    ]);
+  }, [ready, selectedFleet]);
+
+  useEffect(() => {
+    setLiveMessage(routeAnnouncement(route));
+  }, [route]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -537,7 +731,7 @@ export function GlobeAdapter({
       registeredProtocol = true;
       map = new MapLibreMap({
         container,
-        style: buildStyle(plan, initialOverlayRef.current),
+        style: buildStyle(plan, initialOverlayRef.current, initialLayersRef.current),
         center: [initialCameraRef.current.centre[0], initialCameraRef.current.centre[1]],
         zoom: initialCameraRef.current.zoom,
         bearing: initialCameraRef.current.bearing,
@@ -547,6 +741,8 @@ export function GlobeAdapter({
         attributionControl: false,
         canvasContextAttributes: { antialias: true },
       });
+      map.boxZoom.disable();
+      map.doubleClickZoom.disable();
     } catch (error) {
       if (registeredProtocol) removeProtocol(BAKED_PROTOCOL);
       store.dispose();
@@ -633,6 +829,14 @@ export function GlobeAdapter({
       if (target !== null) {
         const hit = hits.find((feature) => String(feature.properties?.id) === target);
         const areaId = String(hit?.properties?.areaId ?? "");
+        const markerId = String(hit?.properties?.id ?? "");
+        const fleetId = fleetIdFromMarker(markerId);
+        if (!shiftKey && fleetId !== null) {
+          ordersRef.current?.onSelectFleet(fleetId);
+          setSelectedFleet(fleetId);
+          setLiveMessage(`Selected fleet ${String(hit?.properties?.name ?? fleetId)}`);
+          return;
+        }
         if (areaId.length > 0) {
           if (shiftKey) onRuler(areaId);
           else onSelect(areaId);
@@ -648,8 +852,13 @@ export function GlobeAdapter({
         if (!shiftKey) onSelect(null);
         return;
       }
-      if (shiftKey) onRuler(areaId);
-      else onSelect(areaId);
+      if (shiftKey) {
+        onRuler(areaId);
+        setLiveMessage(`Route via ${derivedRef.current.areaName(areaId)}`);
+      } else {
+        onSelect(areaId);
+        setLiveMessage(`Selected ${derivedRef.current.describeAreaFor(areaId)}`);
+      }
     };
     const onClick = (event: {
       readonly point: { readonly x: number; readonly y: number };
@@ -660,21 +869,113 @@ export function GlobeAdapter({
     const onMove = (event: { readonly point: { readonly x: number; readonly y: number } }) => {
       if (hoverFrameRef.current !== null) cancelAnimationFrame(hoverFrameRef.current);
       hoverFrameRef.current = requestAnimationFrame(() => {
-        const hits = active.queryRenderedFeatures([event.point.x, event.point.y], {
+        const markerHits = active.queryRenderedFeatures([event.point.x, event.point.y], {
           layers: ["adapter-markers"],
         });
-        const next = hits.length === 0 ? null : String(hits[0]?.properties?.id ?? "");
-        if (next !== hoveredRef.current) {
-          hoveredRef.current = next;
-          store.setHovered(next);
-          active.getCanvas().style.cursor = next === null ? "" : "pointer";
+        const markerId =
+          markerHits.length === 0 ? null : String(markerHits[0]?.properties?.id ?? "");
+        if (markerId !== hoveredRef.current) {
+          hoveredRef.current = markerId;
+          store.setHovered(markerId);
         }
+        const areaHits = active.queryRenderedFeatures([event.point.x, event.point.y], {
+          layers: ["areas-fill"],
+        });
+        const areaId = areaHits.length === 0 ? null : String(areaHits[0]?.properties?.id ?? "");
+        if (areaId !== hoveredAreaRef.current) {
+          hoveredAreaRef.current = areaId;
+          setHoveredArea(areaId);
+        }
+        if (areaId === null) {
+          setHoverTooltip(null);
+        } else {
+          setHoverTooltip({
+            x: event.point.x,
+            y: event.point.y,
+            text: derivedRef.current.describeAreaFor(areaId),
+          });
+        }
+        active.getCanvas().style.cursor =
+          markerId === null ? (areaId === null ? "" : "crosshair") : "pointer";
       });
     };
+    const onMouseOut = () => {
+      hoveredRef.current = null;
+      hoveredAreaRef.current = null;
+      store.setHovered(null);
+      setHoveredArea(null);
+      setHoverTooltip(null);
+    };
+    const canvas = active.getCanvas();
+    const pointOf = (event: PointerEvent): { readonly x: number; readonly y: number } => {
+      const box = canvas.getBoundingClientRect();
+      return { x: event.clientX - box.left, y: event.clientY - box.top };
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const currentOrders = ordersRef.current;
+      if (currentOrders === undefined || event.button !== 0) return;
+      const at = pointOf(event);
+      const hits = active.queryRenderedFeatures([at.x, at.y], { layers: ["adapter-markers"] });
+      const markerId = hits.length === 0 ? null : String(hits[0]?.properties?.id ?? "");
+      const fleetId = fleetIdFromMarker(markerId);
+      if (!isDraggableFleet(currentOrders, fleetId) || fleetId === null) return;
+      active.dragPan.disable();
+      canvas.setPointerCapture?.(event.pointerId);
+      dragRef.current = {
+        fleetId,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        dragging: false,
+      };
+      currentOrders.onSelectFleet(fleetId);
+      setSelectedFleet(fleetId);
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      const drag = dragRef.current;
+      if (drag === null || drag.pointerId !== event.pointerId || drag.dragging) return;
+      if (
+        dragThresholdMet({ x: drag.startX, y: drag.startY }, { x: event.clientX, y: event.clientY })
+      ) {
+        drag.dragging = true;
+        canvas.style.cursor = "grabbing";
+      }
+    };
+    const endDrag = (event: PointerEvent, drop: boolean) => {
+      const drag = dragRef.current;
+      if (drag === null || drag.pointerId !== event.pointerId) return;
+      if (canvas.hasPointerCapture?.(event.pointerId)) {
+        canvas.releasePointerCapture(event.pointerId);
+      }
+      active.dragPan.enable();
+      canvas.style.cursor = "";
+      dragRef.current = null;
+      if (!drop || !drag.dragging) return;
+      const at = pointOf(event);
+      const areas = active.queryRenderedFeatures([at.x, at.y], { layers: ["areas-fill"] });
+      const areaId = areas.length === 0 ? null : String(areas[0]?.properties?.id ?? "");
+      const currentOrders = ordersRef.current;
+      const resolution = adapterDrop(currentOrders, drag.fleetId, areaId);
+      if (resolution.kind === "ignored") {
+        setLiveMessage("That fleet destination is not available.");
+        return;
+      }
+      currentOrders?.onDrop(drag.fleetId, areaId as string);
+      setLiveMessage(
+        `Ordered fleet to ${areaId === null ? "an area" : derivedRef.current.areaName(areaId)}`,
+      );
+    };
+    const onPointerUp = (event: PointerEvent) => endDrag(event, true);
+    const onPointerCancel = (event: PointerEvent) => endDrag(event, false);
     active.on("idle", onIdle);
     active.on("error", onError);
     active.on("click", onClick);
     active.on("mousemove", onMove);
+    active.on("mouseout", onMouseOut);
+    canvas.addEventListener("pointerdown", onPointerDown, true);
+    canvas.addEventListener("pointermove", onPointerMove, true);
+    canvas.addEventListener("pointerup", onPointerUp, true);
+    canvas.addEventListener("pointercancel", onPointerCancel, true);
     active.once("load", () => {
       setReady(true);
       onIdle();
@@ -816,6 +1117,11 @@ export function GlobeAdapter({
     disposal.add(() => active.off("error", onError));
     disposal.add(() => active.off("click", onClick));
     disposal.add(() => active.off("mousemove", onMove));
+    disposal.add(() => active.off("mouseout", onMouseOut));
+    disposal.add(() => canvas.removeEventListener("pointerdown", onPointerDown, true));
+    disposal.add(() => canvas.removeEventListener("pointermove", onPointerMove, true));
+    disposal.add(() => canvas.removeEventListener("pointerup", onPointerUp, true));
+    disposal.add(() => canvas.removeEventListener("pointercancel", onPointerCancel, true));
     disposal.add(() => {
       if (hoverFrameRef.current !== null) cancelAnimationFrame(hoverFrameRef.current);
     });
@@ -834,11 +1140,50 @@ export function GlobeAdapter({
     return () => disposal.dispose();
   }, [forceFailure, mode, onRuler, onSelect, onUnavailable, plan]);
 
+  const resetView = useCallback(() => {
+    const map = mapRef.current;
+    if (map === null) return;
+    const next = fitWorldCamera(projectionRef.current);
+    map.jumpTo({
+      center: [state.centre, next.centre[1]],
+      zoom: next.zoom,
+      bearing: 0,
+      pitch: 0,
+    });
+  }, [state.centre]);
+
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       const map = mapRef.current;
+      const fleets = orders?.fleets ?? [];
+      const cycleFleet = () => {
+        if (fleets.length === 0) return;
+        const current = fleets.findIndex((fleet) => fleet.fleetId === orders?.selectedFleetId);
+        const next = fleets[(current + 1) % fleets.length];
+        if (next === undefined) return;
+        orders?.onSelectFleet(next.fleetId);
+        setSelectedFleet(next.fleetId);
+        const anchor = next.mapAreaId === null ? null : AREAS_BY_ID.get(next.mapAreaId)?.label;
+        if (map !== null && anchor !== undefined && anchor !== null) {
+          map.jumpTo({ center: [anchor[0], anchor[1]], zoom: Math.max(3.5, map.getZoom()) });
+        }
+        setLiveMessage(`Focused fleet ${next.fleetName}`);
+      };
+      if (!event.ctrlKey && !event.metaKey && !event.altKey) {
+        if (event.key === "f" || event.key === "F") {
+          event.preventDefault();
+          cycleFleet();
+          return;
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setSelectedFleet(null);
+          onSelect(null);
+          return;
+        }
+      }
       if (map === null) return;
-      const step = 120;
+      const step = event.shiftKey ? 240 : 120;
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const move = (dx: number, dy: number) =>
         map.panBy([dx, dy], { animate: !reduced, duration: reduced ? 0 : 250 });
@@ -850,25 +1195,17 @@ export function GlobeAdapter({
         "+": () => map.setZoom(map.getZoom() + 0.5),
         "=": () => map.setZoom(map.getZoom() + 0.5),
         "-": () => map.setZoom(map.getZoom() - 0.5),
-        "0": () => {
-          const next = fitWorldCamera(projectionRef.current);
-          map.jumpTo({
-            center: [next.centre[0], next.centre[1]],
-            zoom: next.zoom,
-            bearing: 0,
-            pitch: 0,
-          });
-        },
+        _: () => map.setZoom(map.getZoom() - 0.5),
+        "0": resetView,
         n: () => map.setBearing(0),
         N: () => map.setBearing(0),
-        Escape: () => onSelect(null),
       };
       const handler = handlers[event.key];
       if (handler === undefined) return;
       event.preventDefault();
       handler();
     },
-    [onSelect],
+    [onSelect, orders, resetView],
   );
 
   const setProjectionMode = useCallback((next: CameraProjection) => {
@@ -879,30 +1216,62 @@ export function GlobeAdapter({
     projectionRef.current = next;
   }, []);
 
+  const handleSetProjection = useCallback(
+    (next: NonNullable<WorldMapChartProps["state"]["projection"]>) => {
+      onSetProjection(next);
+      setProjectionMode(adapterProjectionFromApp(next));
+    },
+    [onSetProjection, setProjectionMode],
+  );
+
+  const recentre = useCallback(
+    (lon: number, lat: number) => {
+      mapRef.current?.jumpTo({ center: [lon, lat] });
+      onSetCentre(lon);
+    },
+    [onSetCentre],
+  );
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map === null || !ready) return;
+    const point = homeFocusPoint(initialFocusAreaId);
+    if (point === null) return;
+    const target = nationFocusPoint(point, initialFocusNationId);
+    map.jumpTo({ center: [target[0], target[1]], zoom: 3.5, bearing: 0, pitch: 0 });
+  }, [initialFocusAreaId, initialFocusNationId, ready]);
+
   const hierarchy: TileHierarchy = NATURAL_EARTH_HIERARCHY;
   const statusLabel = errorText === null ? status : `error ${errorText}`;
+  const viewport = camera;
 
   return (
     <div
       data-testid="globe-adapter"
       data-globe-adapter-projection={projection}
-      className={`fixed inset-0 z-[9998] bg-black ${className ?? ""}`}
+      data-globe-adapter-ready={ready ? "true" : "false"}
+      data-map-variant={variant}
+      className={`absolute inset-0 z-[9998] bg-black ${MAP_VARIANT_LAYOUT[variant].root} ${className ?? ""}`}
     >
       <div
         ref={containerRef}
         role="application"
-        aria-label="Strategic world map, experimental globe adapter. Use arrow keys to pan, plus and minus to zoom, zero to fit the world, n for north. A list of map entities is keyboard accessible."
+        aria-label="Strategic world map, experimental globe adapter. Use arrow keys to pan, shift plus arrow keys for a longer pan, plus and minus to zoom, zero to reset the view, f to cycle fleets, n for north and Escape to clear the selection. A list of areas, ports and fleets is keyboard accessible."
         tabIndex={0}
         onKeyDown={onKeyDown}
         className="absolute inset-0"
         style={MAP_CONTAINER_STYLE}
       />
-      <div className="absolute left-2 top-2 z-10 flex items-center gap-2 rounded bg-black/75 px-2 py-1 font-mono text-xs text-white">
+      <div className="absolute left-2 top-2 z-20 flex items-center gap-2 rounded bg-black/75 px-2 py-1 font-mono text-xs text-white">
         <span data-testid="globe-adapter-status">{statusLabel}</span>
         <button
           type="button"
           className="rounded border border-white/40 px-1"
-          onClick={() => setProjectionMode(projection === "globe" ? "mercator" : "globe")}
+          onClick={() =>
+            handleSetProjection(
+              appProjectionFromAdapter(projection === "globe" ? "mercator" : "globe"),
+            )
+          }
         >
           {projection === "globe" ? "Mercator" : "Globe"}
         </button>
@@ -915,29 +1284,41 @@ export function GlobeAdapter({
         </button>
         <span className="opacity-70">z{NATURAL_EARTH_HIERARCHY.sourceMaxZoom} source</span>
       </div>
-      <nav
-        aria-label="Globe adapter entities"
-        className="absolute right-2 top-2 z-10 max-h-[60vh] w-56 overflow-auto rounded bg-black/80 p-2 text-xs text-white"
-      >
-        <ul className="grid gap-1">
-          {entityRows.map((entity) => (
-            <li key={entity.id}>
-              <button
-                type="button"
-                aria-pressed={state.selected === entity.areaId}
-                data-adapter-entity={entity.id}
-                className="w-full rounded border border-white/40 px-2 py-1 text-left aria-pressed:bg-white aria-pressed:text-black"
-                onClick={() => {
-                  onSelect(entity.areaId);
-                  setLiveMessage(`Selected ${entity.name}`);
-                }}
-              >
-                {entity.name} <span className="opacity-70">({entity.kind})</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      {hoverTooltip === null ? null : (
+        <div
+          role="tooltip"
+          data-testid="globe-adapter-tooltip"
+          className="pointer-events-none absolute z-30 max-w-64 rounded bg-black/85 px-2 py-1 text-xs text-white"
+          style={{ left: hoverTooltip.x + 12, top: hoverTooltip.y + 12 }}
+        >
+          {hoverTooltip.text}
+        </div>
+      )}
+      <GlobeAdapterChrome
+        state={state}
+        route={route}
+        viewport={viewport}
+        variant={variant}
+        treeRows={derived.treeRows}
+        ownershipRows={derived.ownershipRows}
+        summary={derived.summary}
+        nameFor={derived.nameFor}
+        onSelect={(area) => {
+          onSelect(area);
+          setLiveMessage(area === null ? "Selection cleared" : derived.describeAreaFor(area));
+        }}
+        onToggleLayer={onToggleLayer}
+        onSetProjection={handleSetProjection}
+        onSetCentre={onSetCentre}
+        onReset={resetView}
+        onRecentre={recentre}
+        entityRows={entityRows}
+        onSelectEntity={(areaId) => {
+          onSelect(areaId);
+          setLiveMessage(`Selected ${derived.describeAreaFor(areaId)}`);
+        }}
+        showMinimap={showMinimap}
+      />
       <div aria-live="polite" role="status" data-testid="globe-adapter-live" className="sr-only">
         {liveMessage}
       </div>

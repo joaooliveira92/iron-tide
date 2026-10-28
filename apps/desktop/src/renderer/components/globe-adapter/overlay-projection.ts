@@ -54,6 +54,7 @@ function route(
   order: number,
   routeClass: RouteClass,
   coordinates: readonly (readonly [number, number])[],
+  overlayClass: "lane" | "route" = "route",
 ): OverlayFeature {
   return {
     id,
@@ -61,6 +62,7 @@ function route(
     order,
     minZoom: routeClass === "preview" ? 0.8 : 0,
     routeClass,
+    overlayClass,
     geometry: { type: "LineString", coordinates, semantics: "lonlat-linear" },
   };
 }
@@ -106,7 +108,7 @@ export function projectOverlay(input: OverlayProjectionInput): OverlayProjection
     const from = anchor(lane.a);
     const to = anchor(lane.b);
     if (from === null || to === null) return;
-    features.push(route(`lane:${lane.a}~${lane.b}`, 3000 + index, "static", [from, to]));
+    features.push(route(`lane:${lane.a}~${lane.b}`, 3000 + index, "static", [from, to], "lane"));
   });
 
   const pending = [...(input.orders?.pending ?? [])].sort((left, right) =>
