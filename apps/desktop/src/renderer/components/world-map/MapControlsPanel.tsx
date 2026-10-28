@@ -42,9 +42,8 @@ export function MapControlsPanel({
     >
       <div className="flex gap-1">
         {PROJECTIONS.map((option) => (
-          <Tip label={option.note}>
+          <Tip key={option.id} label={option.note}>
             <Button
-              key={option.id}
               type="button"
               size="sm"
               variant="ghost"
