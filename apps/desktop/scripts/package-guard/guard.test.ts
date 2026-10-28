@@ -30,6 +30,7 @@ function budgeted(policy: PackagePolicy, archive: number, outside: number): Pack
     modes: {
       default: { ...policy.modes.default, budget: budget("default") },
       spike: { ...policy.modes.spike, budget: budget("spike") },
+      adapter: { ...policy.modes.adapter, budget: budget("adapter") },
     },
   };
 }

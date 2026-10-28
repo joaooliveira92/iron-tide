@@ -19,6 +19,7 @@ files:
   - "!package-policy/**"
   - "!scripts/package-guard/**"
   - "!scripts/globe-spike-*.mjs"
+  - "!scripts/globe-adapter-*.mjs"
   - "!scripts/map-baseline.mjs"
   - "!test-results/**"
   - "!dist-electron/**"

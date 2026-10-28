@@ -13,6 +13,7 @@
     "build:debug": "node scripts/build-content.mjs && cross-env VITE_BLUEWAVE_DEBUG=true electron-vite build && cross-env VITE_BLUEWAVE_DEBUG=true node scripts/check-renderer-bundle.mjs",
     "map-data": "node scripts/map-data/cli.ts",
     "build:globe-spike": "node scripts/map-data/cli.ts fetch && node scripts/map-data/cli.ts bake && node scripts/map-data/cli.ts fixtures && node scripts/build-content.mjs && cross-env VITE_BLUEWAVE_GLOBE_SPIKE=true electron-vite build && cross-env VITE_BLUEWAVE_GLOBE_SPIKE=true node scripts/check-renderer-bundle.mjs",
+    "build:globe-adapter": "node scripts/map-data/cli.ts fetch && node scripts/map-data/cli.ts bake && node scripts/map-data/cli.ts fixtures && node scripts/build-content.mjs && cross-env VITE_BLUEWAVE_GLOBE_ADAPTER=true electron-vite build && cross-env VITE_BLUEWAVE_GLOBE_ADAPTER=true node scripts/check-renderer-bundle.mjs",
     "preview": "electron-vite preview",
     "pack": "pnpm build && electron-builder --config",
     "pack:mac": "pnpm build && electron-builder --mac --config",
@@ -25,6 +26,7 @@
     "test:e2e:debug": "playwright test --config playwright.debug.config.ts",
     "snap": "node scripts/view.ts",
     "smoke:packaged": "node scripts/packaged-smoke.mjs",
+    "smoke:globe-adapter": "node scripts/globe-adapter-smoke.mjs",
     "guard:package": "node scripts/package-guard/cli.ts",
     "lint": "vp lint .",
     "lint:fix": "echo 'ok'"

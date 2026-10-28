@@ -1,6 +1,6 @@
 import { PackagePolicyError } from "./errors.ts";
 
-export type PackageMode = "default" | "spike";
+export type PackageMode = "default" | "spike" | "adapter";
 export type FileLocation = "archive" | "unpacked" | "outside";
 
 export interface ForbiddenRule {
@@ -176,6 +176,7 @@ export function decodePolicy(value: unknown): PackagePolicy {
     modes: {
       default: mode(modes.default, "policy.modes.default"),
       spike: mode(modes.spike, "policy.modes.spike"),
+      adapter: mode(modes.adapter, "policy.modes.adapter"),
     },
   };
 }

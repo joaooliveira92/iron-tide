@@ -2,7 +2,7 @@ import { Map as MapIcon } from "lucide-react";
 import { ScreenStage } from "../../components/shared/ScreenStage.js";
 import { Button } from "../../components/ui/button.js";
 import { Skeleton } from "../../components/ui/skeleton.js";
-import { WorldMapChart } from "../../components/world-map/WorldMapChart.js";
+import { MapSurface } from "../../components/globe-adapter/MapSurface.js";
 import { campaignNationLabel } from "../../content/presentationContent.js";
 import { translate } from "../../lib/strings.js";
 import { OrdersPanel, type BlockadeRow } from "./OrdersPanel.js";
@@ -56,7 +56,7 @@ export function StrategicMapScreen({ sessionId }: StrategicMapScreenProps) {
           className="grid min-h-0 flex-1 gap-3 overflow-hidden lg:grid-cols-[minmax(0,1fr)_22rem]"
         >
           <div className="h-[calc(100vh-16rem)] min-h-[28rem] overflow-hidden rounded-lg border bg-background">
-            <WorldMapChart
+            <MapSurface
               className="h-full"
               variant="full"
               {...map.map}

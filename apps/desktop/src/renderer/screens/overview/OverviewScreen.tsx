@@ -51,9 +51,9 @@ function entityAvailability(projection: PlayerProjection): (ref: EntityReference
   };
 }
 
-const WorldMapChart = lazy(() =>
-  import("../../components/world-map/WorldMapChart.js").then((module) => ({
-    default: module.WorldMapChart,
+const MapSurface = lazy(() =>
+  import("../../components/globe-adapter/MapSurface.js").then((module) => ({
+    default: module.MapSurface,
   })),
 );
 
@@ -145,7 +145,7 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
       <div data-guided-target="overview" className="relative h-full min-h-[28rem]">
         {heading}
         <Suspense fallback={<Skeleton className="h-full w-full" />}>
-          <WorldMapChart
+          <MapSurface
             className="h-full"
             variant="command"
             showMinimap={false}
@@ -172,7 +172,7 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
       {heading}
       <div className="h-[60vh] min-h-[22rem]">
         <Suspense fallback={<Skeleton className="h-full w-full rounded-lg" />}>
-          <WorldMapChart
+          <MapSurface
             className="h-full"
             variant="panel"
             initialFocusAreaId={homeAreaId}

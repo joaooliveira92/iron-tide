@@ -24,7 +24,8 @@ function fail(message: string): never {
 }
 
 const mode = values.mode;
-if (mode !== "default" && mode !== "spike") fail("--mode must be 'default' or 'spike'");
+if (mode !== "default" && mode !== "spike" && mode !== "adapter")
+  fail("--mode must be 'default', 'spike' or 'adapter'");
 if (values.package === undefined)
   fail("--package <directory containing the unpacked app> is required");
 
