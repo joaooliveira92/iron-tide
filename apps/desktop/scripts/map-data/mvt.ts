@@ -4,6 +4,7 @@ import Protobuf from "pbf";
 import type { Position } from "./geodesy.ts";
 
 export interface DecodedFeature {
+  readonly id: number | undefined;
   readonly type: number;
   readonly properties: Readonly<Record<string, string | number | boolean>>;
   readonly rings: readonly (readonly (readonly [number, number])[])[];
@@ -26,6 +27,7 @@ export function decodeTile(bytes: Uint8Array): DecodedTile {
     for (let index = 0; index < layer.length; index++) {
       const feature = layer.feature(index);
       features.push({
+        id: feature.id,
         type: feature.type,
         properties: feature.properties as Record<string, string | number | boolean>,
         rings: feature

@@ -1,0 +1,24 @@
+$ node scripts/packaged-smoke.mjs
+PASS  running the packaged build
+PASS  the package holds no globe-spike, map-data or investigation assets
+PASS  renderer loaded over file://
+PASS  fresh campaign compiles onto Overview
+PASS  month header visible
+PASS  no session id in the release UI
+PASS  debug-only commands rejected
+PASS  home map application present
+PASS  home map coastline painted from the packaged chunk
+PASS  home map: 36 keyboard-reachable areas
+PASS  shipbuilding workspace opens on the shipped content
+PASS  shipbuilding workspace loads the ship-building catalogue
+PASS  shipbuilding workspace renders the ship plan
+PASS  shipbuilding screenshot captured
+PASS  no uncaught renderer exceptions
+PASS  no unexpected console errors
+PASS  packaged CSP blocks inline scripts
+PASS  packaged CSP locks base-uri
+PASS  packaged shell denies renderer-created windows
+PASS  packaged shell keeps a single window
+PASS  crash support bundle written by the packaged binary
+PASS  support bundle carries the forced crash
+PASS  support bundle is local-only (no network note)

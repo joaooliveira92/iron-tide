@@ -5,8 +5,18 @@ export const BAKED_PROTOCOL = "bwtiles";
 export const BAKED_PACK_FILE = "land.bwtp";
 export const BAKED_MANIFEST_FILE = "manifest.json";
 
+export const BAKED_MANIFEST_VERSION = 2;
+
+export interface BakedAreaOutlines {
+  readonly datasetVersion: string;
+  readonly edgeSemantics: "lonlat-linear";
+  readonly sourceSha256: string;
+  readonly geometryCount: number;
+}
+
 export interface BakedManifest {
   readonly pipelineVersion: string;
+  readonly areaOutlines: BakedAreaOutlines;
   readonly zoom: {
     readonly tileMin: number;
     readonly tileMax: number;
@@ -15,7 +25,12 @@ export interface BakedManifest {
   };
   readonly bounds: readonly [number, number, number, number];
   readonly tileExtent: number;
-  readonly layers: { readonly land: string; readonly protected: string };
+  readonly layers: {
+    readonly land: string;
+    readonly protected: string;
+    readonly areas: string;
+    readonly areaOutlines: string;
+  };
   readonly packSha256: string;
   readonly packBytes: number;
   readonly attribution: string;
@@ -76,6 +91,17 @@ export function parseBakedManifest(value: unknown): BakedManifest {
   const layers = member(value, "layers");
   const integrity = member(value, "integrity");
   const sizes = member(value, "sizes");
+  const areaOutlines = member(value, "areaOutlines");
+  if (numberAt(value, "manifestVersion") !== BAKED_MANIFEST_VERSION) {
+    throw new BakedTilesError(
+      `manifest version ${String(member(value, "manifestVersion"))} is not supported; expected ${BAKED_MANIFEST_VERSION}`,
+    );
+  }
+  if (member(areaOutlines, "edgeSemantics") !== "lonlat-linear") {
+    throw new BakedTilesError(
+      "manifest area outlines must declare 'lonlat-linear' edge semantics explicitly",
+    );
+  }
   if (
     !Array.isArray(bounds) ||
     bounds.length !== 4 ||
@@ -86,6 +112,12 @@ export function parseBakedManifest(value: unknown): BakedManifest {
   const [west, south, east, north] = bounds;
   const manifest: BakedManifest = {
     pipelineVersion: stringAt(value, "pipelineVersion"),
+    areaOutlines: {
+      datasetVersion: stringAt(areaOutlines, "datasetVersion"),
+      edgeSemantics: "lonlat-linear",
+      sourceSha256: stringAt(areaOutlines, "sourceSha256"),
+      geometryCount: numberAt(member(areaOutlines, "geometryCount"), "areas"),
+    },
     zoom: {
       tileMin: numberAt(zoom, "tileMin"),
       tileMax: numberAt(zoom, "tileMax"),
@@ -94,7 +126,12 @@ export function parseBakedManifest(value: unknown): BakedManifest {
     },
     bounds: [Number(west), Number(south), Number(east), Number(north)],
     tileExtent: numberAt(value, "tileExtent"),
-    layers: { land: stringAt(layers, "land"), protected: stringAt(layers, "protected") },
+    layers: {
+      land: stringAt(layers, "land"),
+      protected: stringAt(layers, "protected"),
+      areas: stringAt(layers, "areas"),
+      areaOutlines: stringAt(layers, "areaOutlines"),
+    },
     packSha256: stringAt(integrity, "packSha256"),
     packBytes: numberAt(sizes, "packBytes"),
     attribution: stringAt(value, "attribution"),

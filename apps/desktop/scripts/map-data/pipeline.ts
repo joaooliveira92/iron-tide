@@ -3,6 +3,14 @@ import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 
 import {
+  canonicalAreaHash,
+  decodeAreaSpec,
+  prepareAreas,
+  validateAreaSource,
+  type AreaOutlineSpec,
+  type AreaSource,
+} from "./areas.ts";
+import {
   bakeTiles,
   configurationHash,
   type BakeOptions,
@@ -20,8 +28,10 @@ import {
   type LoadedLayer,
   type SourcePins,
 } from "./sources.ts";
+import { validateAreaOutlines } from "./area-validate.ts";
 import { validateProtectedFeatures, type ValidationReport } from "./validate.ts";
 import { TilePack } from "../../src/renderer/components/globe-spike/tilepack.ts";
+import { AREAS } from "../../src/renderer/components/world-map/map-geometry.ts";
 
 export const PACK_FILE = "land.bwtp";
 export const MANIFEST_FILE = "manifest.json";
@@ -33,6 +43,12 @@ export interface Inputs {
   readonly catalogue: ProtectedCatalogue;
   readonly pins: SourcePins;
   readonly pinsRaw: unknown;
+  readonly areaSpec: AreaOutlineSpec;
+  readonly areaSources: readonly AreaSource[];
+}
+
+export function areaTextHash(text: string): string {
+  return sha256Hex(new TextEncoder().encode(text));
 }
 
 export async function readJson(path: string): Promise<unknown> {
@@ -43,7 +59,14 @@ export async function loadInputs(mapDataDir: string): Promise<Inputs> {
   const config = parsePipelineConfig(await readJson(join(mapDataDir, "pipeline.config.v1.json")));
   const catalogue = decodeCatalogue(await readJson(join(mapDataDir, "protected-features.v1.json")));
   const pinsRaw = await readJson(join(mapDataDir, "sources.v1.json"));
-  return { config, catalogue, pins: parseSourcePins(pinsRaw), pinsRaw };
+  const areaSpec = decodeAreaSpec(await readJson(join(mapDataDir, "area-outlines.v1.json")));
+  const areaSources = AREAS.map((area): AreaSource => ({
+    id: area.id,
+    name: area.short,
+    ring: area.ring as AreaSource["ring"],
+  }));
+  validateAreaSource(areaSources, areaSpec, areaTextHash);
+  return { config, catalogue, pins: parseSourcePins(pinsRaw), pinsRaw, areaSpec, areaSources };
 }
 
 export async function loadGeometry(
@@ -60,7 +83,11 @@ export async function loadGeometry(
     throw new MapDataError("sources: land, minor islands and rivers layers are all required");
   }
   return {
-    geometry: { landPolygons: [...land.polygons, ...islands.polygons], riverLines: rivers.lines },
+    geometry: {
+      landPolygons: [...land.polygons, ...islands.polygons],
+      riverLines: rivers.lines,
+      areas: prepareAreas(inputs.areaSources, inputs.areaSpec),
+    },
     layers,
   };
 }
@@ -103,11 +130,19 @@ export async function buildAll(
     output.resolution,
     inputs.config,
   );
+  const areaReport = validateAreaOutlines(pack, geometry.areas, inputs.config);
+  const combined: ValidationReport & { readonly areaOutlines: typeof areaReport } = {
+    ...report,
+    passed: report.passed && areaReport.passed,
+    findings: [...report.findings, ...areaReport.findings],
+    checks: report.checks + areaReport.checks,
+    areaOutlines: areaReport,
+  };
   const files = new Map<string, Uint8Array>();
   files.set(PACK_FILE, output.pack);
   const resolutionBytes = text(serialiseResolution(output.resolution));
   files.set(RESOLUTION_FILE, resolutionBytes);
-  files.set(VALIDATION_FILE, text(report));
+  files.set(VALIDATION_FILE, text(combined));
   for (const layer of layers) {
     for (const [name, data] of layer.licenceFiles) files.set(`licences/${name}`, data);
   }
@@ -117,7 +152,7 @@ export async function buildAll(
   files.set("licences/natural-earth-terms.txt", new Uint8Array(terms));
   const totalBytes = [...files.values()].reduce((sum, data) => sum + data.length, 0);
   const manifest = {
-    manifestVersion: 1,
+    manifestVersion: 2,
     pipelineVersion: inputs.config.pipelineVersion,
     packFormat: inputs.config.packFormat,
     dataset: {
@@ -151,7 +186,48 @@ export async function buildAll(
       inputs.catalogue,
       inputs.pinsRaw,
       sha256Hex,
+      { spec: inputs.areaSpec, sourceSha256: canonicalAreaHash(inputs.areaSources, areaTextHash) },
     ),
+    areaOutlines: {
+      datasetVersion: inputs.areaSpec.datasetVersion,
+      sourceSha256: canonicalAreaHash(inputs.areaSources, areaTextHash),
+      sourceModule: `${inputs.areaSpec.source.module}#${inputs.areaSpec.source.export}`,
+      sourceCount: inputs.areaSpec.source.count,
+      edgeSemantics: inputs.areaSpec.edgeSemantics,
+      longitudeConvention: "unwrapped; split at the antimeridian by the tiler",
+      densifyToleranceMetres: inputs.areaSpec.densifyToleranceMetres,
+      quantisation: {
+        tileExtent: inputs.config.tileExtent,
+        unitsPerTile: inputs.config.tileExtent,
+        note: "integer tile units; the worst baked vertex error is bounded by half a unit per axis",
+      },
+      clipping: {
+        tileBuffer: inputs.config.tileBuffer,
+        outlineGeometry: "open line pieces, no artificial edges",
+      },
+      layers: { fill: inputs.config.layers.areas, outline: inputs.config.layers.areaOutlines },
+      geometryCount: {
+        areas: geometry.areas.length,
+        fillAndOutlineFeatures: geometry.areas.length * 2,
+      },
+      vertices: areaReport.vertexCounts,
+      perLevel: output.levels.map((level) => ({
+        zoom: level.zoom,
+        tilesWithAreas: level.areaTiles,
+        vertices: level.areaVertices,
+      })),
+      fitForPurposeMaxZoom: inputs.config.fitForPurposeMaxZoom,
+      protectedCatalogueVersion: inputs.catalogue.catalogueVersion,
+      generationTool: `map-data pipeline ${inputs.config.pipelineVersion}`,
+      validation: {
+        passed: areaReport.passed,
+        findings: areaReport.findings.length,
+        checks: areaReport.checks,
+        fidelityWorstUnits: areaReport.fidelity.worstUnits,
+        crackWorstUnits: areaReport.cracks.worstUnits,
+        crackWorstMetres: areaReport.cracks.worstMetres,
+      },
+    },
     protectedFeatures: {
       catalogueVersion: inputs.catalogue.catalogueVersion,
       features: inputs.catalogue.features.length,
@@ -202,7 +278,7 @@ export async function buildAll(
     },
   };
   files.set(MANIFEST_FILE, text(manifest));
-  return { files, manifest, report, output };
+  return { files, manifest, report: combined, output };
 }
 
 function serialiseResolution(resolution: Resolution): unknown {
@@ -274,7 +350,21 @@ export async function verifyOutput(outDir: string, inputs: Inputs): Promise<Veri
     const pack = TilePack.parse(new Uint8Array(await readFile(join(outDir, PACK_FILE))));
     for (const entry of pack.entries()) pack.read(entry);
     const resolution = (await readJson(join(outDir, RESOLUTION_FILE))) as Resolution;
-    report = validateProtectedFeatures(pack, inputs.catalogue, resolution, inputs.config);
+    const protectedReport = validateProtectedFeatures(
+      pack,
+      inputs.catalogue,
+      resolution,
+      inputs.config,
+    );
+    const areaReport = validateAreaOutlines(
+      pack,
+      prepareAreas(inputs.areaSources, inputs.areaSpec),
+      inputs.config,
+    );
+    report = {
+      ...protectedReport,
+      findings: [...protectedReport.findings, ...areaReport.findings],
+    };
     for (const finding of report.findings) {
       problems.push(
         `${finding.featureId} z${finding.level ?? "-"} ${finding.rule}: ${finding.detail}`,
@@ -288,6 +378,7 @@ export async function verifyOutput(outDir: string, inputs: Inputs): Promise<Veri
     inputs.catalogue,
     inputs.pinsRaw,
     sha256Hex,
+    { spec: inputs.areaSpec, sourceSha256: canonicalAreaHash(inputs.areaSources, areaTextHash) },
   );
   if (manifest.configurationSha256 !== expectedConfig) {
     problems.push(

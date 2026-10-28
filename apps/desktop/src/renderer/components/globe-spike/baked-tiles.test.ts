@@ -18,11 +18,18 @@ const PACK = encodeTilePack(TILES);
 
 function manifest(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
-    pipelineVersion: "1.0.0",
+    manifestVersion: 2,
+    pipelineVersion: "1.1.0",
+    areaOutlines: {
+      datasetVersion: "1.0.0",
+      edgeSemantics: "lonlat-linear",
+      sourceSha256: "def",
+      geometryCount: { areas: 36 },
+    },
     zoom: { tileMin: 0, tileMax: 7, fitForPurposeMax: 7, overscaleMax: 12 },
     bounds: [-180, -85, 180, 85],
     tileExtent: 4096,
-    layers: { land: "land", protected: "protected" },
+    layers: { land: "land", protected: "protected", areas: "areas", areaOutlines: "area_outlines" },
     integrity: { packSha256: "abc" },
     sizes: { packBytes: PACK.length },
     attribution: "Made with Natural Earth.",
@@ -63,6 +70,36 @@ describe("baked tile loading", () => {
       ),
     ).toThrow(/inverted/);
     expect(() => parseBakedManifest({})).toThrow(BakedTilesError);
+  });
+
+  it("rejects a pack without the area outline layers or with an older manifest schema", () => {
+    expect(() =>
+      parseBakedManifest(manifest({ layers: { land: "land", protected: "protected" } })),
+    ).toThrow(/areas/);
+    expect(() => parseBakedManifest(manifest({ manifestVersion: 1 }))).toThrow(
+      /manifest version 1 is not supported/,
+    );
+    const { manifestVersion: _omitted, ...unversioned } = manifest();
+    expect(() => parseBakedManifest(unversioned)).toThrow(BakedTilesError);
+  });
+
+  it("requires explicit lonlat-linear edge semantics for the area outlines", () => {
+    const areaOutlines = {
+      datasetVersion: "1.0.0",
+      sourceSha256: "def",
+      geometryCount: { areas: 36 },
+    };
+    expect(() => parseBakedManifest(manifest({ areaOutlines }))).toThrow(/lonlat-linear/);
+    for (const edgeSemantics of ["mercator-linear", "great-circle", ""]) {
+      expect(() =>
+        parseBakedManifest(manifest({ areaOutlines: { ...areaOutlines, edgeSemantics } })),
+      ).toThrow(/lonlat-linear/);
+    }
+    expect(
+      parseBakedManifest(
+        manifest({ areaOutlines: { ...areaOutlines, edgeSemantics: "lonlat-linear" } }),
+      ).areaOutlines.geometryCount,
+    ).toBe(36);
   });
 
   it("loads the pack and serves tiles, empty ocean tiles and integrity failures distinctly", async () => {

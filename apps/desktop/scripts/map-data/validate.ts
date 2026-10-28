@@ -430,16 +430,20 @@ function validateStrait(
   }
 }
 
-function validateTileEdges(
+export function validateTileEdges(
   pack: TilePack,
   sampler: TileLandSampler,
   config: PipelineConfig,
+  label: string,
+  populationLayers: readonly string[],
 ): { readonly summaries: TileEdgeSummary[]; readonly findings: Finding[] } {
   const summaries: TileEdgeSummary[] = [];
   const findings: Finding[] = [];
   const extent = config.tileExtent;
   const populated = new Map<number, Set<string>>();
   for (const entry of pack.entries()) {
+    const tile = sampler.tile(entry.z, entry.x, entry.y);
+    if (!populationLayers.some((layer) => (tile?.layers.get(layer)?.length ?? 0) > 0)) continue;
     const set = populated.get(entry.z) ?? new Set<string>();
     set.add(`${entry.x}/${entry.y}`);
     populated.set(entry.z, set);
@@ -498,7 +502,7 @@ function validateTileEdges(
     summaries.push({ level: zoom, pairsChecked: pairs, samples, mismatches, ambiguous });
     if (mismatches > 0) {
       findings.push({
-        featureId: "land",
+        featureId: label,
         level: zoom,
         rule: "tile-edge-continuity",
         detail: `${mismatches} of ${samples} shared-edge samples disagree between neighbouring tiles (for example ${firstMismatch.join(", ")})`,
@@ -543,7 +547,10 @@ export function validateProtectedFeatures(
       );
     }
   }
-  const edges = validateTileEdges(pack, sampler, config);
+  const edges = validateTileEdges(pack, sampler, config, "land", [
+    config.layers.land,
+    config.layers.protected,
+  ]);
   findings.push(...edges.findings);
   return {
     passed: findings.length === 0,

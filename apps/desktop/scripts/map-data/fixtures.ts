@@ -20,7 +20,7 @@ export const TEST_CONFIG: PipelineConfig = {
   simplificationPixels: 0.35,
   protectedPinRadiusPixels: 6,
   overlayRenderedWidthPixels: 2.5,
-  layers: { land: "land", protected: "protected" },
+  layers: { land: "land", protected: "protected", areas: "areas", areaOutlines: "area_outlines" },
   packFormat: "bluewave-tilepack-1",
   generationTimestampPolicy: "none",
 };
@@ -44,6 +44,7 @@ export function strait(open: boolean): GeometryInput {
       ...(open ? [] : [[rectangle(-gap / 2, -1, gap / 2, 1)]]),
     ],
     riverLines: [],
+    areas: [],
   };
 }
 

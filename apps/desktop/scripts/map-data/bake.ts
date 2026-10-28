@@ -11,6 +11,7 @@ import {
   metresBetween,
   type Position,
 } from "./geodesy.ts";
+import { areaFillFeatures, areaOutlineFeatures, type PreparedArea } from "./areas.ts";
 import { canonicalJson, type PipelineConfig } from "./config.ts";
 import {
   indexPolygons,
@@ -33,6 +34,7 @@ export interface NamedLine {
 export interface GeometryInput {
   readonly landPolygons: readonly (readonly (readonly Position[])[])[];
   readonly riverLines: readonly NamedLine[];
+  readonly areas: readonly PreparedArea[];
 }
 
 export interface ResolvedOverlay {
@@ -74,6 +76,8 @@ export interface LevelStats {
   readonly landVertices: number;
   readonly landRings: number;
   readonly pinnedVertices: number;
+  readonly areaTiles: number;
+  readonly areaVertices: number;
   readonly simplificationToleranceMetres: number;
   readonly quantisationMetres: number;
 }
@@ -86,6 +90,7 @@ export interface BakeOutput {
   readonly densifiedVertices: number;
 }
 
+const AREA_SOURCE_PRECISION_ZOOMS = 3;
 const WATER_STEP_METRES = 100;
 const SEAL_FRACTION = 0.5;
 
@@ -297,6 +302,23 @@ export function bakeTiles(
   );
   const tiles: TilePackTile[] = [];
   const levels: LevelStats[] = [];
+  const areaTilingOptions = {
+    maxZoom: config.tileMaxZoom + AREA_SOURCE_PRECISION_ZOOMS,
+    indexMaxZoom: config.tileMaxZoom,
+    tolerance: 0,
+    extent: config.tileExtent,
+    buffer: config.tileBuffer,
+    debug: 0 as const,
+  };
+  const areaFillIndex = new geojsonvt(
+    { type: "FeatureCollection", features: areaFillFeatures(input.areas) },
+    areaTilingOptions,
+  );
+  const areaOutlineIndex = new geojsonvt(
+    { type: "FeatureCollection", features: areaOutlineFeatures(input.areas) },
+    areaTilingOptions,
+  );
+  const areaVertices = input.areas.reduce((sum, area) => sum + area.ring.length, 0);
   for (let zoom = config.tileMinZoom; zoom <= config.tileMaxZoom; zoom++) {
     const land = levelFeatures(polygons, zoom, config);
     const overlay = overlayFeatures(resolution.overlays, zoom, config.densifyToleranceMetres);
@@ -317,6 +339,7 @@ export function bakeTiles(
       tilingOptions,
     );
     const levelTiles: TilePackTile[] = [];
+    let areaTiles = 0;
     const span = 2 ** zoom;
     for (let x = 0; x < span; x++) {
       for (let y = 0; y < span; y++) {
@@ -325,6 +348,11 @@ export function bakeTiles(
         const layers: Record<string, unknown> = {};
         if (landTile !== null) layers[config.layers.land] = landTile;
         if (overlayTile !== null) layers[config.layers.protected] = overlayTile;
+        const fillTile = areaFillIndex.getTile(zoom, x, y);
+        const outlineTile = areaOutlineIndex.getTile(zoom, x, y);
+        if (fillTile !== null) layers[config.layers.areas] = fillTile;
+        if (outlineTile !== null) layers[config.layers.areaOutlines] = outlineTile;
+        if (fillTile !== null || outlineTile !== null) areaTiles += 1;
         if (Object.keys(layers).length === 0) continue;
         const data = toBytes(
           vtpbf.fromGeojsonVt(layers as Parameters<typeof vtpbf.fromGeojsonVt>[0], {
@@ -351,6 +379,8 @@ export function bakeTiles(
       landVertices: land.vertices,
       landRings: land.rings,
       pinnedVertices: land.pinned,
+      areaTiles,
+      areaVertices,
       simplificationToleranceMetres: Number(
         (config.simplificationPixels * metresPerPixel).toFixed(1),
       ),
@@ -372,8 +402,9 @@ export function configurationHash(
   catalogue: ProtectedCatalogue,
   pins: unknown,
   sha256: (bytes: string) => string,
+  areas: unknown,
 ): string {
-  return sha256(canonicalJson({ config, catalogue, pins }));
+  return sha256(canonicalJson({ config, catalogue, pins, areas }));
 }
 
 export function featureOf(catalogue: ProtectedCatalogue, id: string): ProtectedFeature {

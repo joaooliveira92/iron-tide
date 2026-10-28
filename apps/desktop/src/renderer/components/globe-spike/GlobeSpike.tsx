@@ -232,6 +232,15 @@ function landLayers(plan: ReadyPlan): LayerSpecification[] {
   return layers;
 }
 
+function areaLayerSource(
+  plan: ReadyPlan,
+  part: "areas" | "areaOutlines",
+): { readonly source: string; readonly "source-layer"?: string } {
+  return plan.kind === "baked"
+    ? { source: "land", "source-layer": plan.tiles.manifest.layers[part] }
+    : { source: "areas" };
+}
+
 function buildStyle(plan: ReadyPlan): StyleSpecification {
   return {
     version: 8,
@@ -239,7 +248,16 @@ function buildStyle(plan: ReadyPlan): StyleSpecification {
     projection: { type: "globe" },
     sources: {
       land: landSource(plan),
-      areas: { type: "geojson", data: areaCollection(true) as never, maxzoom: 22, tolerance: 0 },
+      ...(plan.kind === "baked"
+        ? {}
+        : {
+            areas: {
+              type: "geojson" as const,
+              data: areaCollection(true) as never,
+              maxzoom: 22,
+              tolerance: 0,
+            },
+          }),
       areaLabels: { type: "geojson", data: areaLabelCollection() as never },
       markers: { type: "geojson", data: markerCollection() as never, maxzoom: 22, tolerance: 0 },
       routes: { type: "geojson", data: routeCollection() as never, maxzoom: 22, tolerance: 0 },
@@ -251,13 +269,13 @@ function buildStyle(plan: ReadyPlan): StyleSpecification {
       {
         id: "areas-fill",
         type: "fill",
-        source: "areas",
+        ...areaLayerSource(plan, "areas"),
         paint: { "fill-color": "#3aa0e0", "fill-opacity": 0.1 },
       },
       {
         id: "areas-line",
         type: "line",
-        source: "areas",
+        ...areaLayerSource(plan, "areaOutlines"),
         paint: { "line-color": "#5fc0ff", "line-width": 1 },
       },
       {

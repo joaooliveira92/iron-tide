@@ -17,7 +17,12 @@ export interface PipelineConfig {
   readonly simplificationPixels: number;
   readonly protectedPinRadiusPixels: number;
   readonly overlayRenderedWidthPixels: number;
-  readonly layers: { readonly land: string; readonly protected: string };
+  readonly layers: {
+    readonly land: string;
+    readonly protected: string;
+    readonly areas: string;
+    readonly areaOutlines: string;
+  };
   readonly packFormat: string;
   readonly generationTimestampPolicy: string;
 }
@@ -46,6 +51,14 @@ export function parsePipelineConfig(value: unknown): PipelineConfig {
     throw new MapDataError("config: unsupported schemaVersion or edgeSemantics");
   }
   const config = value as PipelineConfig;
+  const layerNames = Object.values(config.layers ?? {});
+  if (
+    layerNames.length !== 4 ||
+    layerNames.some((name) => typeof name !== "string" || name.length === 0) ||
+    new Set(layerNames).size !== 4
+  ) {
+    throw new MapDataError("config: layers must name four distinct layers");
+  }
   if (config.tileMaxZoom < config.tileMinZoom || config.tileMaxZoom > 12) {
     throw new MapDataError("config: tile zoom range is invalid");
   }

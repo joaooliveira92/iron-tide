@@ -7,6 +7,7 @@ declare module "@mapbox/vector-tile" {
   }
 
   export interface VectorTileFeature {
+    readonly id?: number;
     readonly type: number;
     readonly properties: Record<string, unknown>;
     loadGeometry(): VectorTilePoint[][];
