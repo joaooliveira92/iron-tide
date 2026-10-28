@@ -1,12 +1,17 @@
 # Overview interaction-parity matrix
 
-Scope: every interaction surface the current default Overview map offers, against the
-experimental globe adapter behind `VITE_BLUEWAVE_GLOBE_ADAPTER` plus `#globe-adapter`.
-The current renderer remains the default and the fallback. A row with `not-applicable`
-means the current renderer does not offer the surface, so parity is undefined; adapter-only
-behaviour is recorded rather than scored as a regression.
+**Status (2026-10-28): production enabled.** The globe adapter is the default Overview
+renderer; the current SVG renderer remains the rollback fallback (ADR-0327). This matrix
+was revalidated against the production candidate and the packaged pointer/keyboard
+smoke `globe-packaged-interactions.mjs` (15/15).
 
-Rows: 71. Verdicts: not-applicable 13, pass 58.
+Scope: every interaction surface the current default Overview map offers, against the
+globe adapter. A row with `not-applicable` means the current renderer does not offer the
+surface, so parity is undefined; adapter-only behaviour is recorded rather than scored as
+a regression. Every not-applicable row has a current product rationale in
+[§ Not-applicable review](#not-applicable-review).
+
+Rows: 71. Verdicts: not-applicable 13, pass 58, fail 0, unverified 0.
 Implementation commits: `67a7a18f` (parity implementation), `0baa769a` and `db16d738`
 (keyboard/control fixes and regression coverage). The note column records the post-fix
 behaviour; the tests column links the regression evidence.
@@ -78,7 +83,7 @@ Evidence paths are relative to `apps/desktop/src/renderer/`. Test paths are rela
 | C-32 | Resize handling | `world-map/useMapCamera.ts:288-301` | `globe-adapter/GlobeAdapter.tsx:723-746` | **pass** | none | MapLibre trackResize remains on; the host controls the container size. | n/a (MapLibre default) |
 | C-33 | Initial focus on the home area/nation | `world-map/useInitialFocusArea.ts:59-74, WorldMapChart.tsx:83` | `globe-adapter/GlobeAdapter.tsx:1233-1245` | **pass** | high | initialFocusAreaId/NationId drive the opening camera at zoom 3.5. | GlobeAdapter.test.tsx:225 |
 | C-34 | Panel-open memory (sessionStorage) | `components/shared/panel-memory.ts:5-18` | `globe-adapter/GlobeAdapterChrome.tsx:167-173` | **pass** | low | The controls disclosure persists in sessionStorage via panel-memory. | GlobeAdapterChrome.test.tsx:140 |
-| C-35 | Build flag, hash opt-in, current-renderer fallback | `globe-adapter/globe-adapter-flag.ts:1-25` | `globe-adapter/MapSurface.tsx:22-73` | **pass** | none | The build flag, explicit hash and current-renderer fallback are unchanged. | globe-adapter-flag.test.ts; globe-adapter-smoke.mjs inactive check |
+| C-35 | Build flag, default renderer, rollback and current-renderer fallback | `globe-adapter/globe-adapter-flag.ts:1-70` | `globe-adapter/MapSurface.tsx:1-104` | **pass** | none | The globe is the default renderer; `localStorage`/`?renderer=legacy`/`#legacy-renderer` force the current renderer, and init/asset/WebGL failures fall back in place. | globe-adapter-flag.test.ts; webgl-support.test.ts; packaged-smoke.mjs; globe-adapter-smoke.mjs |
 | A-01 | role=application, descriptive label, key hints | `world-map/WorldMapChart.tsx:250-252` | `globe-adapter/GlobeAdapter.tsx:1258-1264` | **pass** | none | role=application with a full key-hint label. | GlobeAdapter.test.tsx:343 |
 | A-02 | Per-area accessible name with ownership/fleets/strength | `world-map/layers/AreasLayer.tsx:92, map-a11y.ts:12-19` | `globe-adapter/GlobeAdapterChrome.tsx:234-244` | **pass** | high | Area buttons expose name: owner, fleet count and strength. | GlobeAdapterChrome.test.tsx:65 |
 | A-03 | aria-pressed selection state per area | `world-map/layers/AreasLayer.tsx:91` | `globe-adapter/GlobeAdapterChrome.tsx:236` | **pass** | high | Area buttons expose aria-pressed selection state. | GlobeAdapterChrome.test.tsx:65 |
@@ -109,5 +114,36 @@ Rows that remain `not-applicable` retain the audit's reason: the current rendere
 not offer that surface, so parity is undefined. Adapter-only differences are recorded
 in the note column and are not counted as regressions.
 
-The adapter remains disabled by default; the current renderer remains the default and
-the failure fallback. No merge, production enablement or release is part of this evidence.
+The adapter is the default Overview renderer as of ADR-0327; the current renderer remains
+the tested fallback.
+
+## Not-applicable review
+
+Each of the 13 rows was re-reviewed against the current Overview contract on the production
+candidate. None is required by that contract; each is either a surface neither renderer
+offers or an adapter-only enhancement.
+
+| ID | Surface | Product rationale on the production candidate |
+|---|---|---|
+| P-07 | Click a port marker | The Overview contract has no port selection action; ports are informational markers. The adapter selects the port's area when the marker is clicked, which is an adapter-only enhancement. Not required. |
+| P-10 | Marker hover feedback | The current renderer has no marker hover. The adapter's cursor/store feedback is optional polish; area hover and tooltips cover the required hover surface. Not required. |
+| P-11 | Double-click to zoom | The current renderer has no double-click zoom. Keeping double-click disabled also avoids a selection-toggle race and preserves single-click fleet/area semantics. Not required. |
+| P-12 | Right-drag rotate / context menu | The current renderer does not rotate. MapLibre's drag-rotate is adapter-only and does not replace any Overview contract surface. Not required. |
+| P-13 | Shift-drag box zoom | The current renderer has no box zoom, and shift-click is the route-reading gesture the product requires. Box zoom must stay disabled to keep shift-click reachable. Not required. |
+| P-14 | Touch pinch/rotate/pitch | The Overview contract is a desktop pointer/keyboard surface. MapLibre touch defaults remain adapter-only; no touch workflow is claimed. Not required for this release; revisit with a touch product decision. |
+| K-09 | `n` returns bearing to north | The current renderer never rotates, so it has no north-reset action. The adapter supports it as an adapter-only control; reset (`0`) already returns the camera to the world. Not required. |
+| C-01 | Explicit zoom +/- buttons | Neither renderer has explicit buttons. Wheel, keyboard (`+`/`-`) and the reset control cover the contract. Not required. |
+| C-02 | Explicit pan buttons | Neither renderer has explicit pan buttons. Drag, arrow keys and the minimap cover the contract. Not required. |
+| C-26 | F1 full-screen map sheet | The adapter already fills its Overview host and command layout; the legacy F1 sheet is a shell affordance for a windowed map, not an Overview contract item. Not required. |
+| C-29 | Source-zoom/tile diagnostics bar | The adapter's source/overscale status is adapter-only developer chrome. The player-facing disclosure is the status/legend copy; diagnostics stay out of the contract. Not required. |
+| A-05 | Live region for selection feedback | The current renderer has no live region. The adapter adds a polite route/selection announcement as an enhancement; the required accessibility path is the focusable area/entity controls and the area table. Not required, but kept because it is free and tested. |
+| A-06 | Decorative layers hidden from AT | The canvas is one surface; decorative SVG chrome is `aria-hidden` where appropriate. The legacy row described a different DOM structure, so parity is undefined. The accessible controls and tables are present. Not required. |
+
+## Packaged interaction evidence
+
+`apps/desktop/scripts/globe-packaged-interactions.mjs` drives the packaged app and passes
+15/15: keyboard zoom/pan/reset, keyboard area activation, layer toggle, both projection
+directions, reset view, return north, pointer fleet selection, shift-click route reading,
+hover tooltip, legal fleet drop, illegal-drop rejection, and label rendering after the
+gesture pass. Reduced motion is enabled for the pass. Component tests additionally cover
+pointer cancel/cleanup, back-side rejection, horizon classification and drag cancellation.

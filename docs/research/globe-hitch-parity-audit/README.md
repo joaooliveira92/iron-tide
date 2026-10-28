@@ -1,10 +1,12 @@
-# Globe hitch isolation and Overview interaction-parity audit
+# Globe production enablement and interaction-parity audit
 
-**Status: interaction-parity engineering complete on `feat/globe-interaction-parity`
-(code head `49cf9690`), packaged and ready for review. The adapter remains off by default
-and the current Overview renderer remains the default and the failure fallback. Nothing
-was merged or released. The historic hitch is still unreproduced on the tested machine;
-#342 remains hardware-blocked.**
+**Status: production enabled on `dev` (2026-10-28).** The globe adapter is the default
+Overview renderer and the current SVG renderer remains a tested rollback fallback
+(ADR-0327). The packaged production candidate passes 58/58 applicable parity rows with
+13 documented not-applicable rows, 15/15 packaged pointer/keyboard checks, 48/48
+packaged adapter checks, the default guard and the packaged smoke. #342 is closed as
+not reproduced on the available hardware; its protocol is preserved for a reproducing
+host.
 
 Base: `perf/globe-hitch-parity-audit` at `a6b1fa3f` (from `5aaf7182` on
 `feat/globe-phase-0-1`). The Phase 0/1 decision remains **`CONDITIONAL_GO`**; this
@@ -16,7 +18,7 @@ implementation does not upgrade it.
 | Current-renderer comparison | Reproduced a **51 ms** zoom-out with 54/61 ms main-thread long tasks; 150-183 ms under contention. The "~67 ms" label is not globe-specific. |
 | Interaction parity | **71 rows**: 58 pass, 0 fail, 0 blocked, 13 not-applicable after `49cf9690`. Implementation evidence: `interaction-implementation-report.md`. |
 | Lifecycle N-09 | Parity adapter flat at 548 listeners / 813 detached nodes after first close; live DOM returns to baseline; legacy spike unchanged at +27 / +97. |
-| Adapter off by default; current renderer default and fallback | Proven by default package guard and 23/23 packaged smoke, and by the adapter smoke's "adapter inactive by default" check. |
+| Globe default; SVG rollback | Proven by the packaged smoke (globe mounts, diagnostic `globe`, legacy rollback via `#legacy-renderer` and 36 SVG area buttons) and the default guard. |
 
 ## Findings ledger
 
@@ -64,7 +66,7 @@ path, every layer toggle maps to its own layer, shift-click reaches the route
 reader, and the Overview chrome is hosted behind the existing adapter flag.
 
 The packaged adapter smoke now exercises the chrome mirror, minimap, frame meter,
-area table, layer/projection controls, fallback and lifecycle (47/47). Pointer and
+area table, layer/projection controls, fallback and lifecycle (48/48). Pointer and
 keyboard gestures are covered by component tests against a fake MapLibre map; a
 packaged pointer/key pass remains pre-enablement evidence.
 
@@ -81,50 +83,48 @@ Full method and numbers: [`lifecycle-findings.md`](lifecycle-findings.md).
 
 ## 4. Renderer status proof
 
-- Default package guard: **PASS**, mode `default`, 16,207 files, 0 allowed map assets,
-  0 violations, `app.asar` 195,959,497 bytes. `evidence/default/guard.json`.
-- Default packaged smoke: **23/23 PASS**, including "the package holds no globe-spike, map-data
-  or investigation assets" and "home map: 36 keyboard-reachable areas".
-  `evidence/default/packaged-smoke.txt`.
-- Adapter packaged smoke: **41/41 PASS**, including "adapter inactive by default" and the
-  forced/missing/corrupt fallback checks. `evidence/adapter/globe-adapter-smoke.json`.
+- Default package guard: **PASS**, mode `default`, 16,494 files, 15 allowed runtime map
+  assets, 0 violations, `app.asar` 204,020,415 bytes (budget 216,000,000).
+- Default packaged smoke: **29/29 PASS**, including the globe default, the renderer
+  diagnostic, the legacy rollback and returning to the globe. `test-results/`.
+- Adapter packaged smoke: **48/48 PASS**, including missing/corrupt/forced fallback and the
+  lifecycle ceilings. `test-results/globe-adapter/globe-adapter-smoke.json`.
+- Packaged interaction smoke: **15/15 PASS** (pointer, shift-click route, hover, drag/drop
+  accept and reject, keyboard pan/zoom/reset/area, layers, projections, reduced motion).
 - Spike packaged smoke: 28 PASS / 2 known N-09 FAIL, as before. `evidence/spike/result.json`.
-- The adapter is still gated by `VITE_BLUEWAVE_GLOBE_ADAPTER` plus an explicit hash; the default
-  build aliases it to an inert stub (`globe-adapter-flag.ts`, `MapSurface.tsx`, electron-vite
-  config).
+- The production build includes the adapter by default (`__GLOBE_ADAPTER__ = true`); only an
+  explicit `VITE_BLUEWAVE_GLOBE_ADAPTER=false` build omits it and aliases the inert stub.
 
-## 5. Recommendation
+## 5. Production decision
 
-**Do not promote the globe adapter and do not change the default renderer.** The
-interaction-parity backlog is now implemented, but promotion still needs the
-evidence below, not another parity pass:
+**The globe adapter is the default Overview renderer and the SVG renderer is the rollback
+fallback (ADR-0327).** The evidence that originally gated promotion is now recorded:
 
-1. **Interaction parity is implemented behind the flag.** The 37 failing rows and
-   the blocked shift-click row now have implementation and component-test evidence.
-   The remaining parity risk is packaged pointer/key coverage, which is absent.
-2. **The "~67 ms zoom-out hitch" should stay re-scoped.** It did not reproduce on
-   the current build; the current renderer produced comparable and larger hitches;
-   the one traced globe gap is GPU/compositor sync. Treat it as cross-renderer
-   frame pacing until a reproducing trace exists (child #342), and keep the
-   cross-GPU/Windows/Linux evidence gaps open.
-3. **Lifecycle is bounded but larger.** The parity adapter adds a detached chrome
-   mirror: 548 listeners / 813 nodes, flat across cycles, with live DOM back at
-   baseline. The legacy spike finding is unchanged.
-4. **Production enablement, merge and release remain not authorized.** Legal
-   ODbL/GSHHG, cross-GPU, Windows/Linux packaged validation, Fleet the Waves 3
-   observation and cross-OS determinism are untouched.
+1. **Interaction parity is packaged.** The packaged interaction smoke covers the pointer,
+   keyboard, route, hover, drop and control surfaces; component tests cover cancellation,
+   back-side and horizon cases.
+2. **The historic hitch is cross-renderer.** It did not reproduce for the globe in clean
+   runs; the SVG renderer produced 66.7-100.1 ms zoom frames and the globe produced 84.3 ms only
+   under controlled CPU contention. #342 is closed as not reproduced with its protocol
+   preserved.
+3. **Lifecycle is bounded.** 548 listeners / 813 detached nodes, flat across five cycles,
+   live DOM at baseline, zero workers, heap 20.1-20.4 MB; explicit ceilings are enforced.
+4. **Production scope is Natural Earth z7.** OSM and GSHHG are excluded; higher-resolution
+   data needs a separate legal and technical decision. The z7 ceiling and overscaling are
+   disclosed in the UI.
+5. **Platforms and fallback are defined.** macOS is the graphical validation host; Windows
+   and Linux are supported release targets validated by the CI package matrix. WebGL and
+   asset failures fall back to the SVG renderer.
 
-### Evidence this audit did not produce
+### Evidence this audit still did not produce
 
 - Cross-GPU or low-end GPU evidence; only Apple M4 / Metal.
-- Windows or Linux packaged runs.
+- Native Windows/Linux graphical interaction runs (packaging/guard/asset checks are in CI).
 - GPU hardware timer queries or a direct trace of a 50-83 ms globe frame.
-- A legal decision on ODbL/GSHHG or data above z8.
-- A Fleet the Waves 3 observation or a tactical-zoom product decision.
-- Cross-OS determinism.
-- A full accessibility audit (axe, manual screen-reader pass) of the adapter; the matrix is
-  source-level.
-- A default-renderer replacement or any production enablement.
+- A legal decision on ODbL/GSHHG or data above z7.
+- A Fleet the Waves 3 observation (kept as optional competitive research).
+- Native NVDA/VoiceOver or Windows high-contrast runs; the axe and aria-tree evidence is
+  recorded in the production report.
 
 ## 6. Evidence index
 
@@ -174,19 +174,19 @@ from every conclusion.
 
 ## 7. Parity validation
 
-- Adapter packaged smoke: **47/47 PASS**, including the area mirror (36 buttons),
+- Adapter packaged smoke: **48/48 PASS**, including the area mirror (36 buttons),
   SR area table (36 rows), minimap, frame meter, layer controls, forced/missing/
   corrupt fallback, no remote request, worker return and bounded lifecycle.
-- Adapter package guard: **PASS** in the smoke; 0 violations and only the
-  allow-listed adapter assets.
-- Performance: three clean runs at 61 rAF/s, 17.7 ms zoom-out maximum, zero frames
-  over 33.4 ms and zero long tasks; see `performance-notes.md` and
-  `evidence/parity/adapter-parity.json`. No repeatable parity regression.
-- Default package guard: PASS, 0 map assets, 0 violations, `app.asar` 206,332,850
-  bytes; default packaged smoke 23/23.
-- Focused tests: 74 adapter/chrome/contract tests pass (11 files).
-- Accessibility: source-level matrix plus component tests; no axe/manual pass.
-- Offline: packaged app served from `file:`; no non-local request in the smoke.
+- Packaged interaction smoke: **15/15 PASS**; see the matrix's packaged evidence section.
+- Default package guard: **PASS**, 15 allowed runtime map assets, 0 violations,
+  `app.asar` 204,020,415 bytes; default packaged smoke 29/29.
+- Performance: three clean runs at 61 rAF/s, zoom-out p95 17.1-33.4 ms and max
+  34.4 ms, zero zoom-out long tasks; see `performance-notes.md`.
+- Focused tests: adapter/chrome/contract/axe tests pass (14 files).
+- Accessibility: axe chrome pass; packaged aria snapshot contains the application, area
+  navigation, area control table and entity table; native screen-reader combinations remain
+  post-release.
+- Offline: packaged app served from `file:`; no non-local request in any smoke.
 
 ## 8. Reproduction commands
 

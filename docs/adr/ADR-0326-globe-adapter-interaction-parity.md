@@ -4,9 +4,9 @@ Applies to: desktop
 
 ## Status
 
-Accepted for the experimental globe adapter (2026-10-28). The adapter remains
-disabled by default; the current Overview renderer remains the default and the
-failure fallback. This ADR does not approve production enablement, merge or release.
+Accepted for the experimental globe adapter (2026-10-28). **Amended by
+ADR-0327**, which enables the adapter by default; the parity and projection
+mapping in this record remain binding.
 
 ## Context
 

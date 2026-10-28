@@ -4,9 +4,9 @@ Applies to: desktop
 
 ## Status
 
-Accepted for the Phase 0/1 experimental adapter (2026-10-28); not approved as the default
-Overview renderer, for production enablement, for merge, or for release. The adapter remains
-behind a build-time flag that is off by default.
+Accepted for the Phase 0/1 experimental adapter (2026-10-28); **amended by
+ADR-0327**, which promotes the adapter to the default renderer and defines the
+production rollback. The contract in this record is unchanged.
 
 ## Context
 
