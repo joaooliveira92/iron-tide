@@ -7,8 +7,12 @@ Status vocabulary as in the execution ledger. "Next phase" = authorized to start
 | G-00 CSP and worker, packaged | **passed-with-limitations** | - | `g-00-packaged-csp-report.md`; commits def63359 | P0 done; add N-05 (Windows/Linux) | yes (done) |
 | G-01 licence and data | **passed-with-limitations**, `requires-legal-review` z > 8 | - | `g-01-...-report.md` | split into G-01a legal, G-01b GSHHG licence, G-01c pinned snapshot + attribution design | G-01a/b yes |
 | G-02 geo-math | **passed** | - | 18 tests, commit 64d9d9e9 | done | yes |
-| G-03 deterministic coast tile bake | **passed-with-limitations** (hitch removal unverified; z7 ceiling) | G-01 (NE only), G-02 | `g-03-offline-tile-bake-report.md`; commits 65fdd20e, 2644391a | done for NE; G-03a below | yes |
+| G-03 deterministic coast tile bake | **passed-with-limitations** (hitch removal unverified; z7 ceiling) | G-01 (NE only), G-02 | `g-03-offline-tile-bake-report.md`; commits 65fdd20e, 2644391a, 0cef07c3 | done for NE; G-03a below | yes |
+| G-03a bake area outlines into the pack | **passed-with-limitations** (area outlines baked; labels, markers and routes remain runtime GeoJSON; hitch criterion still unverified) | G-03, G-04 | `g-03-offline-tile-bake-report.md` section 12; ADR-0324; commit 0cef07c3 | done | yes |
 | G-04 protected-feature layer | **passed-with-limitations** (schematic Corinth/Kiel; narrow straits unresolved) | G-03 | `g-04-protected-features-report.md`; commit 65fdd20e | done; G-04a to G-04e below | yes |
+| G-04d larger-scale canal source decision | **passed-with-limitations** (decision recorded: above z7 needs an approved larger-scale source; selection blocked on G-01a) | G-04, G-01a | ADR-0323 section 5; `g-04-protected-features-report.md` section 7 | decision done | blocked-external for the source |
+| G-04e ADR for catalogue, edge semantics and pack | **passed** (ADR-0323, ADR-0324; accepted for the spike only) | G-03a, G-04d | ADR-0323, ADR-0324 | done | yes |
+| N-12 default-package contamination guard | **passed** | N-03, packaging fix 92508f73 | `n-12-default-package-guard-report.md`; `evidence/n12/`, `evidence/g03a/`; commit f995399e | done | yes |
 | G-05 glyph pre-bake, OFL font | **in-progress** | - | script + Inter-derived PBFs (untracked); repo lacks Inter licence file | P2; needs licence file | yes |
 | G-06 tile hierarchy and LOD | **eligible, not started** (dependencies now met; the bake defines levels z0 to z7) | G-03, G-04 | | P1 | yes |
 | G-07 flagged adapter | **eligible; in-progress as a throwaway spike only** | G-00, G-03 (met) | spike component | P1 | yes |
@@ -46,16 +50,22 @@ Status vocabulary as in the execution ledger. "Next phase" = authorized to start
 
 | ID | Title | Priority | Notes |
 |---|---|---|---|
-| G-03a | Bake sea-area outlines, routes and markers into the pack or a sibling pack and remove the remaining runtime GeoJSON tiling | P1 | needs the neighbour-crack test on tiles |
+| G-03a | Bake sea-area outlines into the pack and remove runtime outline tiling | **passed-with-limitations** | area outlines done; labels, markers and routes remain runtime GeoJSON (G-03c) |
 | G-03b | Range-readable pack for datasets above a few MB (the pack is read whole into memory) | P2 | only if a larger approved source is chosen |
+| G-03c | Bake area labels, markers and routes into the pack or a sibling pack | P2 | remains runtime GeoJSON after G-03a |
 | G-04a | Replace the authored Corinth and Kiel lines and the Bosporus and Dardanelles fallback lines with a centreline from an approved source | P1 | blocked on a cleared source |
 | G-04b | Validate the true narrows: Hormuz, Malacca (Singapore and Phillip channels), Little Belt | P1 | needs finer cleared data |
 | G-04c | Overlay fidelity above z7 (z7 quantisation, about 3 px at z12.5) | P2 | tied to G-01a |
-| G-04d | Decide whether canal geometry above z7 needs a larger-scale source | P2 | blocked on the legal decision G-01a |
-| G-04e | ADR for catalogue, edge semantics and tile pack format | P1 | before any Phase 2 work |
+| G-04d | Decide whether canal geometry above z7 needs a larger-scale source | **passed-with-limitations** | decision in ADR-0323: yes; selection blocked on G-01a |
+| G-04e | ADR for catalogue, edge semantics and tile pack format | **passed** | ADR-0323 and ADR-0324 |
 | N-11 | Deterministic render-truth method for marker visibility and horizon agreement | P1 | the isolated-marker readback is not repeatable |
-| N-12 | Guard that the default package never contains spike assets or build-time map inputs | P1 | caught manually this session; make it a smoke check |
-| N-13 | Reproduce or retire the 67 ms zoom-out hitch observation | P2 | not reproduced in 12 runs |
+| N-12 | Guard that the default package never contains spike assets or build-time map inputs | **passed** | permanent guard plus packaged smokes |
+| N-13 | Reproduce or retire the 67 ms zoom-out hitch observation | P2 | a valid capped run reproduced hitches in both baked and runtime modes (max 50.9 / 83.4 ms); not eliminated |
+
+G-06 (tile hierarchy/LOD) and G-07 (production adapter) are technically eligible after G-03a but
+remain **not authorized**. Their production implications need a separate decision after the
+legal, cross-GPU, platform, hit-testing and visibility evidence. The same applies to G-03c
+(labels, markers and routes) and G-04a/b/c.
 
 ## Stop conditions that remain armed
 

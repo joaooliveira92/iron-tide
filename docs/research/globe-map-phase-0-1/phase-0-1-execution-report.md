@@ -132,3 +132,47 @@ All run from `apps/desktop` in the worktree unless stated: `map-data fetch|bake|
 ### Not done
 
 G-03a, G-04a to G-04e, G-06, G-07 production, G-10, G-11, G-13, G-14, G-16, G-17 and the production indicator. Blocked externally and unchanged: legal review of ODbL and GSHHG, cross-GPU, Windows and Linux packaged validation, direct Fleet the Waves 3 observation.
+
+## 11. Continuation session: N-12, G-03a and G-04d/e
+
+Scope: the permanent package contamination guard, baking the sea-area outlines into the offline pack, and the two decision records. Phase 2, production migration, a default renderer switch, G-06 and G-07 remain out of scope; nothing was pushed or merged.
+
+### Baseline and discrepancy against the assignment brief
+
+The brief expected `feat/globe-phase-0-1` at `69278f28` with a clean tree. The repository evidence differed and was trusted: the branch was at `f995399e` with the N-12 guard already committed there, and G-03a work existed as uncommitted changes (13 modified files and four new files). That work was inspected, completed and preserved rather than overwritten. The expected commits `fc3d4f33`, `65fdd20e`, `2644391a`, `92508f73` and `69278f28` are all ancestors. `dev` remains `b77d6b30`, the branch has no upstream, and the main checkout is untouched.
+
+### Commits
+
+| Commit | Content | Validation |
+|---|---|---|
+| `f995399e` (pre-existing) | test(packaging): reject globe spike assets from default builds | guard unit tests 29/29; default 23/23; spike 27/29 |
+| `f34ae9e3` | fix(packaging): keep compiled package-guard tests out of the package | preflight 53/53; default and spike guards pass |
+| `0cef07c3` | build(map-data): bake area outlines into offline tiles | focused tests, bakes, guard and packaged smokes |
+| this documentation commit | docs(map): record offline geography and edge semantics decisions | ADR index, doc budgets, report links |
+
+### Ticket results
+
+| Ticket | Result |
+|---|---|
+| N-12 | passed (`n-12-default-package-guard-report.md`) |
+| G-03a | passed-with-limitations (area outlines baked; labels, markers and routes remain runtime GeoJSON) |
+| G-04d | passed-with-limitations (decision in ADR-0323; larger-scale source blocked on G-01a) |
+| G-04e | passed (ADR-0323 and ADR-0324, accepted for the spike only) |
+| G-03, G-04 | unchanged passed-with-limitations |
+
+### Commands run (from `apps/desktop` unless stated)
+
+`pnpm exec vp test run scripts/map-data src/renderer/components/globe-spike` (99 tests), `pnpm exec vp test run scripts/package-guard` (29 tests), `pnpm typecheck`, `pnpm lint`, `vp fmt`, `pnpm map-data verify`, `pnpm map-data determinism`, a fresh-process `pnpm map-data bake`, `pnpm build`, `electron-builder --mac --dir`, `pnpm smoke:packaged` (23/23), `pnpm build:globe-spike`, `electron-builder --mac --dir`, the spike guard and smoke (27/29), and `node scripts/globe-spike-land.mjs --tasks bench --runs 3` (contended; see the benchmark report). At the repository root: `pnpm adr:index`, `pnpm check:doc-budgets`, and the final `pnpm check` and `pnpm test:scripts`.
+
+### Failures and corrections (none hidden)
+
+| What | Cause | Resolution |
+|---|---|---|
+| Lint error in `areas.ts` | `String(unknown)` triggered `no-base-to-string` | used `JSON.stringify` in the error message |
+| Format check on `pipeline.config.v1.json` | one long layer map exceeded the formatter | `vp fmt` on that file; parsed content unchanged |
+| First benchmark run showed 16-53 Hz refresh and 34-183 ms frames in both modes | machine load average 3-6 during the run, so the display was not a valid 60 Hz baseline | recorded as contended, not as a hitch result; the valid run was repeated in isolation |
+| Spike smoke 27/29 | unchanged constant +27 listeners / +97 nodes after close (N-09) | not absorbed; thresholds left strict |
+
+### Not done
+
+G-06 and G-07 remain eligible but not authorized. G-03c (bake labels, markers and routes), G-04a/b/c, the production adapter, the production renderer switch, G-10, G-11, G-13, G-14, G-16, G-17 and the production indicator remain open. Blocked externally and unchanged: ODbL and GSHHG legal review, cross-GPU, Windows and Linux packaged validation, direct Fleet the Waves 3 observation.

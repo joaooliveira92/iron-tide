@@ -152,3 +152,58 @@ At pitch 0 and at pitch 45 with bearing 0 the first two variants and the final r
 | Horizon formula | Corrected and tested for pitched and rotated cameras; pixel agreement inconclusive (above) |
 | Mercator edge interpretation | Resolved in schema, preprocessor, spike adapter, tests and documentation (G-04 report) |
 | Layout regression (zero-height container) | Covered by `map-container.test.ts`, a size guard that fails the spike back to the current renderer, and non-zero container checks in all four packaged modes. The historical cause of the black window remains probable, not proven |
+
+## 13. Update after G-03a (baked area outlines)
+
+Historical sections are unchanged. This section records the G-03a comparison; the geometry and
+packaging numbers are in `g-03-offline-tile-bake-report.md` section 12.
+
+### Method
+
+Same scripted scene and `bench` task as section 12: three launches per mode in alternating order,
+3 s idle, two drag cycles, 40 wheel notches in and 40 out, viewport 1470x868 at DPR 2. The
+`runtime` mode is the runtime-GeoJSON fallback (coastline and areas tiled at runtime); the
+`baked` mode is the current pack (coastline, protected overlays and area outlines baked). The
+benchmark ran alone. Every launch in the accepted run reported about 61 Hz.
+
+A first run was discarded as contended: several launches reported 16-53 Hz instead of 61 Hz and
+34-183 ms frames in both modes. It is kept as
+`evidence/g03a/g03a-benchmark-contended.json` and is not used for any conclusion.
+
+### Results (accepted run, mean of 3 launches unless stated)
+
+| Metric | Runtime GeoJSON | Baked pack with area outlines |
+|---|---|---|
+| Hash change to API ready | 367 ms | 350 ms |
+| First painted canvas | 549 ms | 412 ms |
+| Idle (all tiles loaded) | 1,166 ms | 569 ms |
+| JS heap after GC | 42.8 MB | 19.2 MB |
+| Pack read, verify and parse | n/a | 20-37 ms |
+| Idle max frame | 17.7 ms | 33.9 ms |
+| Pan max frame | 82.8 ms | 33.4 ms |
+| Zoom-in max frame | 100 ms | 315.8 ms (one outlier; other runs 66.7/83.4) |
+| **Zoom-out max frame** | **83.4 ms** (runs 34.3/83.4/66.7) | **50.9 ms** (runs 50.8/50/50.9) |
+| Zoom-out p99 max | 51 ms | 50 ms |
+| Frames over 33 ms during zoom-out | 51.3 mean | 65.3 mean |
+| Zoom-out settle time | 44 ms | 39 ms |
+| Main-thread script time during zoom-out | 563 ms | 543 ms |
+
+### Disposition of the historical 67 ms hitch
+
+**The 67 ms zoom-out hitch reproduced.** In this accepted run the runtime fallback reached
+83.4 ms and the baked path 50.9 ms; it is therefore **not** eliminated and the G-03 criterion
+remains **unverified/unmet**. Earlier G-03 runs found 17.7-18.8 ms maxima in both modes over 12
+launches, so the observation is variable rather than stable. The runtime fallback hitched at
+least as badly as the baked path in the same run, which means the run does not isolate baked area
+outlines as the cause; it is consistent with environment or GPU contention. No regression is
+attributed to G-03a and no removal is claimed.
+
+What G-03a does establish by design is that the baked path no longer creates the 36-ring area
+GeoJSON source or runs its densification and source-wide tiling at startup. That is a code-path
+removal, not a frame-time result.
+
+GPU headroom remains unmeasured; a 61 Hz capped run says "held the cap", not "has headroom".
+Cross-GPU behaviour remains blocked-external (section 10).
+
+Raw data: `evidence/g03a/g03a-benchmark.json` (accepted) and
+`evidence/g03a/g03a-benchmark-contended.json` (excluded).

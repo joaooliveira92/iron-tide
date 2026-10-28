@@ -90,7 +90,18 @@ Run on the real pack (13,241 tiles, z0 to z7). `validation.json`: 56 checks, 0 f
 | G-04a | Replace the authored Corinth and Kiel lines (and the Bosporus and Dardanelles fallback lines, which are unexercised) with a centreline from an approved source |
 | G-04b | The Hormuz and Malacca transects cross the wide parts (109 km and 152 km) and do not resolve the true narrows; the Singapore Strait and Little Belt are not assessed |
 | G-04c | At zoom above 7 the overlay keeps its z7 quantisation (about 3 px at z12.5); acceptable against 1.5 to 6 km accuracy classes, not for a surveyed canal |
-| G-04d | Decide whether canal geometry above z7 needs a larger-scale source; blocked on the legal decision in G-01a |
-| G-04e | An ADR for the catalogue, edge semantics and tile pack format before any Phase 2 work (not written: the work is still flagged and spike-scoped) |
+| G-04d | **passed-with-limitations**: ADR-0323 records that canal geometry above z7 needs an approved larger-scale source; Natural Earth cannot supply it and source selection stays blocked on G-01a |
+| G-04e | **passed**: ADR-0323 (geographic sources and protected overlays) and ADR-0324 (edge semantics, offline tiling and renderer boundaries), accepted for the spike only |
 
 No unapproved data is committed: catalogue coordinates are Natural Earth derived or Bluewave-authored, and no OSM or GSHHG data was used.
+
+## 8. Re-validation after G-03a
+
+The area outlines are now baked into the same pack as the protected overlays (G-03a). The
+protected catalogue, the resolution and every probe are unchanged. The combined validation on
+the new pack is 126 checks with 0 findings: 56 protected checks and 70 area-outline checks. All
+13 features remain evaluable, the six canal/passage features are not sealed, and the nine
+straits keep their documented probes. The schematic Corinth/Kiel and wide-probe Hormuz/Malacca
+limitations, the unassessed Singapore Strait and Little Belt, and the pinned-only-at-coarser-
+tolerances result are all unchanged. ADR-0323 records the source and overlay decisions;
+ADR-0324 records the edge semantics and tiling decisions.

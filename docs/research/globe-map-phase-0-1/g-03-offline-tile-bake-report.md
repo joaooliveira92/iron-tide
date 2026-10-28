@@ -124,3 +124,141 @@ Findings:
 - The pack is read whole into memory on the main thread (4 MB); a range-read format would be needed for larger datasets.
 - Area outlines are still GeoJSON and are not baked into the pack; the runtime GeoJSON tiling that remains is for areas, routes and markers, not for the coastline.
 - The `horizon` empirical comparison is inconclusive (see the benchmark report).
+
+## 12. G-03a: area outlines baked into the pack
+
+**Status: passed-with-limitations.** The 36 sea-area outlines are generated offline and baked into
+the same checksummed pack as the coastline and the protected overlays. The remaining limitation
+is that area labels, markers and routes are still runtime GeoJSON (G-03c), and the historical
+67 ms hitch criterion is still unverified. Commit `0cef07c3`; decision record
+ADR-0324. Evidence: `evidence/g03a/`.
+
+### 12.1 Source-to-output flow
+
+1. The 36 authored sea areas are `AREAS` in
+   `apps/desktop/src/renderer/components/world-map/map-geometry.ts`. They are presentation
+   geometry: plain WGS84 longitude/latitude rings with stable ids and names, no MapLibre types
+   and no simulation role.
+2. `map-data/area-outlines.v1.json` pins the source (module, export, count 36), the
+   `lonlat-linear` edge semantics, a 10 m densification tolerance and a canonical SHA-256 of
+   every id and ring. A changed outline fails the pin until it is deliberately re-pinned;
+   the package guard keeps this build-time file out of both runtime packages.
+3. `loadInputs` decodes the spec and validates the source: count, duplicate ids, ring length,
+   finite coordinates, Mercator latitude range, zero-length edges, edges of 180 degrees or more,
+   zero-area rings and the canonical hash.
+4. `prepareAreas` sorts by id, closes rings, densifies every edge at 10 m with the tested
+   helper, removes consecutive duplicates and records the source orientation.
+5. `bakeTiles` creates two `geojson-vt` indexes from the prepared rings: polygon fills
+   (`areas`) and open outline lines (`area_outlines`). They are written as ordinary Mapbox
+   Vector Tiles into the same pack, with the area's stable ordinal as the feature id and the
+   stable string id in properties.
+6. `validateAreaOutlines` decodes the generated pack and checks ids, closure, orientation,
+   fidelity, neighbour cracks, outline crossings, fill continuity and count metadata.
+7. The spike reads the same pack through its custom protocol. In baked mode it binds the fill
+   and outline layers to the `land` vector source; the runtime `areas` GeoJSON source is not
+   created at all. In runtime-fallback mode the old GeoJSON source is still used, so the
+   fallback remains testable.
+8. The manifest records the area dataset version, source hash, edge semantics, densification,
+   quantisation, clipping, layer names, geometry and vertex counts, per-level tile counts,
+   protected catalogue version, generation tool and validation summary.
+
+### 12.2 Output and hashes [M]
+
+| Item | Value |
+|---|---|
+| Area-outline dataset | `1.0.0`, 36 areas, 237 source vertices, 11,016 densified vertices |
+| Source canonical SHA-256 | `0a6720e058ce366903df750235447ff2b66148309dd2a3d5e8290a08ac4ec345` |
+| Pack | 5,647,299 bytes, 16,969 tiles, SHA-256 `91c74f4662bc795f4593be75dd8917c58b9fccc413347dd1f4d54bcf9dd31851` |
+| Pack before G-03a | 4,092,995 bytes, 13,241 tiles |
+| Delta | +1,554,304 bytes (+38.0%), +3,728 tiles (+28.2%) |
+| Output directory | 11 files, 5,806,088 bytes (was 4,238,183) |
+| Configuration SHA-256 | `526e327051673742f64b325885c765b980bc473ec1256c9cae868653714f2d88` |
+| Manifest schema | `manifestVersion` 2, pipeline `1.1.0`, pack format `bluewave-tilepack-1` |
+| Area tiles at z7 | 5,636; outline crossings at z7 1,593 |
+
+The pack grew because ocean tiles that previously carried no data now carry area fills and
+outlines, and because the z7 area lines add vertices to tiles that already carried land. The
+declared detail is unchanged: `tileMaxZoom` and `fitForPurposeMaxZoom` remain 7. Overscaling
+above z7 still discloses `coast detail limited to z7` and does not claim higher source detail.
+
+### 12.3 Determinism [M]
+
+- Two clean bakes in one process produced 11 byte-identical files.
+- A bake in a fresh process produced the same pack SHA-256
+  `91c74f4662bc795f4593be75dd8917c58b9fccc413347dd1f4d54bcf9dd31851` and matched the committed
+  `expected-output.v1.json`.
+- `pnpm map-data verify` passed: pack hash, per-level hashes, configuration hash, manifest and
+  validation all matched.
+- Feature order is id-sorted, tile order is `z/x/y`, geometry order follows the source rings
+  and the tiler, and numeric serialisation is canonical. No wall-clock value is written.
+- Cross-OS byte identity remains **unverified**; only macOS arm64 was run.
+
+### 12.4 Geometry and continuity [M]
+
+| Check | Result |
+|---|---|
+| Combined validation | 126 checks, 0 findings (protected 56; area 70) |
+| Area ids in fill and outline | 36/36 at every level z0-z7 |
+| Ring closure and exterior orientation | 0 findings |
+| Baked outline fidelity at z7 | worst 0.792 tile units (bound 1.0), 11,016 vertices |
+| Baked neighbour cracks | 10 collinear partial pairs, 444 samples, worst 0.493 units (26.59 m at z7), bound 1.5 |
+| Source-level densified cracks | unchanged 4.6e-10 m over 436 vertices (`area-cracks.test.ts`) |
+| Outline crossings across tile edges | 3,199 crossings, 0 mismatches, worst gap 0.88 units |
+| Area-fill shared edges | 335,784 samples, 0 mismatches, 1 ambiguous |
+| Land/protected shared edges | 546,688 samples, 0 mismatches, 6 ambiguous |
+| Total tile-continuity samples | 885,671, 0 mismatches |
+
+The source-level crack test still measures 4.6e-10 m because the authored rings still share the
+same collinear spans. The 26.59 m figure is the distance between **baked** outlines after
+integer tile quantisation at z7, not a changed source boundary or a new crack; it is compared
+against a 1.5-unit bound. The continuity measurement was extended from the land layer to three
+layer families, so the total sampled count (885,671) is stricter than the earlier 626,544 even
+though the land-only count changed with the population filter.
+
+Antimeridian handling, high-latitude rings (up to 84 degrees), duplicate-vertex removal,
+anti-self-intersection tests, corrupt-tile rejection, missing-outline findings and repeated-bake
+determinism are covered by `areas.test.ts`. A dropped tile is reported as
+`tile-edge-continuity`; a corrupt tile throws instead of passing silently.
+
+### 12.5 Protected features [M]
+
+All 13 catalogue features remain evaluable after G-03a. The protected validation result is
+unchanged at 56 checks with 0 findings; Suez, Panama, Bosporus, Dardanelles, Corinth and Kiel
+are not sealed, and the nine straits keep their documented probes. The schematic Corinth/Kiel
+and wide-probe Hormuz/Malacca limitations are unchanged, and no claim is made about Singapore
+Strait or Little Belt. No OSM or GSHHG data entered the bake.
+
+### 12.6 Packaged behaviour [M]
+
+- Default build: guard PASS, 19,514 files, no map-spike or map-data asset, `app.asar`
+  206,035,219 bytes; packaged smoke 23/23.
+- Spike build: guard PASS, 19,534 files, 16 allowed map-spike files, `app.asar` 214,693,496
+  bytes; packaged smoke 27/29 with the unchanged N-09 listener and DOM-node findings.
+- The spike package under the default policy fails on 11 exact paths (spike manifest, licences,
+  tiles and code), so the default policy is not merely permissive by omission.
+- Globe and planar modes both load the baked area layers; the blend reaches planar after z12
+  and marker picking still succeeds at every swept zoom.
+- Packaged offline behaviour is inherited from G-03: no non-local request in the benchmark or
+  smoke runs. Missing/corrupt pack fallback still renders the runtime GeoJSON path.
+
+### 12.7 Performance and the historical hitch [M/U]
+
+A benchmark run under system contention (load average 3-6) is recorded as
+`evidence/g03a/g03a-benchmark-contended.json`; several launches reported 16-53 Hz instead of
+about 61 Hz and 34-183 ms zoom-out frames in both the baked and runtime modes. That run is not a
+valid baseline and is not used to claim either a regression or a removal. The isolated
+re-measurement is recorded in the benchmark report; the criterion remains as stated there. G-03a
+removes runtime outline preparation by design: the baked path creates no `areas` GeoJSON source,
+so the 36-ring densification and source-wide tiling no longer run at startup. That design fact is
+reported separately from any frame-time claim.
+
+### 12.8 Limitations
+
+- Area labels, markers and routes remain runtime GeoJSON; only the 36 outlines and fills are
+  baked (G-03c).
+- The pack is read whole into memory; the larger 5.65 MB pack strengthens the case for a
+  range-readable format if a bigger approved source is chosen (G-03b).
+- Cross-OS byte identity and cross-GPU behaviour are unverified.
+- The historical 67 ms hitch criterion remains unverified; no valid baseline reproduced it and
+  eliminated it under comparable conditions.
+- z7 remains the honest ceiling; the area outlines above z7 are overscaled like the coastline.
