@@ -47,7 +47,7 @@ Interpretation: after the first (cold) run the current renderer holds ~60 fps wi
 | Frame while stationary in the blend (z11.5), earlier PoC run | p95 17.9 ms |
 | Main-thread blocking after a far jump | not blocked: `setView` 0-1 ms, worst event-loop gap 22-28 ms, no long tasks at z3-z21 |
 
-Zoom-out hitches (up to 67 ms) are the one candidate regression: when zooming out the map regenerates many low-zoom tiles from the runtime GeoJSON (no pre-baked tiles) in the worker; no main-thread task shows it, so it is a presentation hitch from late tiles. Pre-baked tiles (G-03) should remove it; not verified.
+Zoom-out hitches (up to 67 ms) are the one candidate regression: when zooming out the map regenerates many low-zoom tiles from the runtime GeoJSON (no pre-baked tiles) in the worker; no main-thread task shows it, so it is a presentation hitch from late tiles. Pre-baked tiles (G-03) were expected to remove it. The later accepted G-03a run reproduced the hitch and it was not eliminated (section 13).
 
 **Not valid / not done:** the uncapped runs (`--disable-frame-rate-limit --disable-gpu-vsync`) produced multi-second stalls (pan max 5.3 s, zoom-in max 9.8 s, long-task sums above wall-clock) because the unthrottled rAF loop queues GPU work unboundedly. That is a measurement artefact, not performance, and is **not used**. **GPU headroom is therefore unmeasured**; the 60 Hz cap hides it. A GPU timer query (`EXT_disjoint_timer_query_webgl2`) or Chromium tracing is needed (ticket P-01).
 
@@ -128,7 +128,7 @@ Six cold launches per mode, same scripted wheel input, alternating order, benchm
 | JS heap after GC | 42.6 MB | 20.6 MB |
 | Zoom-out max frame, 12 runs | 17.8 to 18.8 ms | 17.7 to 18.7 ms |
 
-**The earlier 67 ms zoom-out hitch did not reproduce in the runtime-tiling baseline** (worst 18.8 ms in 12 runs), so the claim that pre-baked tiles remove it is **unproven**. What is proven is the startup and memory improvement. Not measured: GPU headroom, worker decode time, visible tile count.
+**The earlier 67 ms zoom-out hitch did not reproduce in the runtime-tiling baseline** (worst 18.8 ms in 12 runs), so the claim that pre-baked tiles remove it is **unproven**. The later accepted G-03a run did reproduce the hitch and it was not eliminated (section 13). What is proven is the startup and memory improvement. Not measured: GPU headroom, worker decode time, visible tile count.
 
 ### Horizon classification against the render (defects 2 and 3)
 
@@ -207,3 +207,16 @@ Cross-GPU behaviour remains blocked-external (section 10).
 
 Raw data: `evidence/g03a/g03a-benchmark.json` (accepted) and
 `evidence/g03a/g03a-benchmark-contended.json` (excluded).
+
+## 14. Final branch validation
+
+The branch gates were run sequentially and alone on exact HEAD `39c05f0e`:
+`pnpm check` exited 0 in 541 s (workspace 12,228 tests passed, 1 skipped; e2e 39/39;
+`test:scripts` 410/410) and `pnpm test:scripts` exited 0 in 12 s (410 passed, 0 failed,
+0 skipped). Logs: `evidence/final-gates/`.
+
+This does not change the benchmark disposition above. The historical ~67 ms zoom-out hitch
+**reproduced and was not eliminated** (accepted G-03a run: runtime 83.4 ms, baked 50.9 ms), so
+the performance criterion remains unmet. GPU headroom, cross-GPU behaviour and cross-OS
+determinism remain unverified. The production renderer is unchanged and no production
+migration is authorized.

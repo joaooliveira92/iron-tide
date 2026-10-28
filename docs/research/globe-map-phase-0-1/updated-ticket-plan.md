@@ -7,8 +7,8 @@ Status vocabulary as in the execution ledger. "Next phase" = authorized to start
 | G-00 CSP and worker, packaged | **passed-with-limitations** | - | `g-00-packaged-csp-report.md`; commits def63359 | P0 done; add N-05 (Windows/Linux) | yes (done) |
 | G-01 licence and data | **passed-with-limitations**, `requires-legal-review` z > 8 | - | `g-01-...-report.md` | split into G-01a legal, G-01b GSHHG licence, G-01c pinned snapshot + attribution design | G-01a/b yes |
 | G-02 geo-math | **passed** | - | 18 tests, commit 64d9d9e9 | done | yes |
-| G-03 deterministic coast tile bake | **passed-with-limitations** (hitch removal unverified; z7 ceiling) | G-01 (NE only), G-02 | `g-03-offline-tile-bake-report.md`; commits 65fdd20e, 2644391a, 0cef07c3 | done for NE; G-03a below | yes |
-| G-03a bake area outlines into the pack | **passed-with-limitations** (area outlines baked; labels, markers and routes remain runtime GeoJSON; hitch criterion still unverified) | G-03, G-04 | `g-03-offline-tile-bake-report.md` section 12; ADR-0324; commit 0cef07c3 | done | yes |
+| G-03 deterministic coast tile bake | **passed-with-limitations** (historical ~67 ms zoom-out hitch reproduced and not eliminated; z7 ceiling) | G-01 (NE only), G-02 | `g-03-offline-tile-bake-report.md`; commits 65fdd20e, 2644391a, 0cef07c3 | done for NE; G-03a below | yes |
+| G-03a bake area outlines into the pack | **passed-with-limitations** (area outlines baked; labels, markers and routes remain runtime GeoJSON; historical ~67 ms hitch reproduced and not eliminated) | G-03, G-04 | `g-03-offline-tile-bake-report.md` section 12; ADR-0324; commit 0cef07c3 | done | yes |
 | G-04 protected-feature layer | **passed-with-limitations** (schematic Corinth/Kiel; narrow straits unresolved) | G-03 | `g-04-protected-features-report.md`; commit 65fdd20e | done; G-04a to G-04e below | yes |
 | G-04d larger-scale canal source decision | **passed-with-limitations** (decision recorded: above z7 needs an approved larger-scale source; selection blocked on G-01a) | G-04, G-01a | ADR-0323; `g-04-protected-features-report.md` section 7 | decision done | blocked-external for the source |
 | G-04e ADR for catalogue, edge semantics and pack | **passed** (ADR-0323, ADR-0324; accepted for the spike only) | G-03a, G-04d | ADR-0323, ADR-0324 | done | yes |
@@ -36,7 +36,7 @@ Status vocabulary as in the execution ledger. "Next phase" = authorized to start
 |---|---|---|---|
 | N-01 | Area edge semantics: densify at bake, decide rhumb vs lon/lat | P0 | **resolved for the catalogue, the bake and the spike adapter** (lon/lat-linear, schema-enforced); sea-area outlines are not yet baked into tiles |
 | N-02 | Retest the black-window report under automation | P1 | cause probable (zero-height layout in an interim spike build), not proven |
-| N-03 | Pre-baked tiles to remove runtime GeoJSON tiling (zoom-out hitch, startup, vertex-limit warning) | P1 | **coastline done by G-03**: startup -33%, heap -52%; the hitch did not reproduce so removal is unproven; vertex-limit warning not rechecked |
+| N-03 | Pre-baked tiles to remove runtime GeoJSON tiling (zoom-out hitch, startup, vertex-limit warning) | P1 | **coastline done by G-03**: startup -33%, heap -52%; the hitch did not reproduce in the G-03 runs but later reproduced in the accepted G-03a run and was not eliminated, so removal is unproven; vertex-limit warning not rechecked |
 | N-04 | Keep `maplibre-gl` out of shipped `node_modules` (29 MB, 789 files, shipped even with the flag off) | P1 | verify moving to devDependencies |
 | N-05 | Windows/Linux packaged CSP and file:// worker smoke | P0 | blocked-external |
 | N-06 | Inter OFL licence file and reserved-name check before committing glyph PBFs | P2 | |
@@ -70,3 +70,13 @@ legal, cross-GPU, platform, hit-testing and visibility evidence. The same applie
 ## Stop conditions that remain armed
 
 Any new network dependency; any CSP loosening beyond a documented, narrow, reviewed directive; any authoritative-coordinate change; any dataset whose licence cannot be satisfied; a cross-GPU run that shows > 0.3 px sphere error at z12 or sustained > 20 ms frames on the lowest supported GPU.
+
+## Final validation (branch-level)
+
+`pnpm check` and `pnpm test:scripts` were run sequentially and alone on `39c05f0e` and both
+exited 0 (541 s and 12 s; workspace 12,228 tests passed with 1 skipped, e2e 39/39, scripts
+410/410). Evidence: `evidence/final-gates/`. No ticket status is upgraded by a passing gate:
+N-12 stays **passed**, G-03a stays **passed-with-limitations**, G-04d and G-04e stay **done**,
+and G-03c, G-06, G-07, Phase 2 and production migration remain **not started and not
+authorized**. ADR-0323 and ADR-0324 do not authorize production migration. Cross-OS determinism
+and cross-GPU behaviour remain unverified.

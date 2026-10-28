@@ -105,3 +105,16 @@ straits keep their documented probes. The schematic Corinth/Kiel and wide-probe 
 limitations, the unassessed Singapore Strait and Little Belt, and the pinned-only-at-coarser-
 tolerances result are all unchanged. ADR-0323 records the source and overlay decisions;
 ADR-0324 records the edge semantics and tiling decisions.
+
+## 9. Final branch validation
+
+`pnpm check` and `pnpm test:scripts` were run sequentially and alone on `39c05f0e`; both exited 0
+(541 s and 12 s; workspace 12,228 tests passed with 1 skipped, e2e 39/39, scripts 410/410).
+Evidence: `evidence/final-gates/`. No code changed in that pass.
+
+G-04d and G-04e are **complete (done)**: G-04d passed-with-limitations per ADR-0323 (canal
+geometry above z7 needs an approved larger-scale source, blocked on G-01a), and G-04e passed.
+ADR-0323 and ADR-0324 remain accepted for the Phase 0/1 investigation spike only; they do not
+authorize production migration, Phase 2 or G-07, and they keep the legal and data-quality
+limitations. Investigation geometry is not authoritative simulation topology. No OSM, GSHHG or
+other unapproved geographic data entered the repository or package in this pass.

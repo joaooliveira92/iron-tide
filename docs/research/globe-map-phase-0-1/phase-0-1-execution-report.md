@@ -122,7 +122,7 @@ Branch `feat/globe-phase-0-1` at `5da888de`, clean tree, no upstream, `dev` at `
 | Rendered strait test failed | coast outlines and anti-aliasing eat narrow gaps | tolerance of 80% of geometric width minus 1.5 px |
 | Horizon pixel comparison not repeatable | stale-frame readback in the harness | recorded as inconclusive; N-11 |
 | Packaging: source archive cache and spike assets shipped, including in the default build | electron-builder file list and Vite `public/` copying | exclusions added; assets moved behind the flag; default package verified clean, default smoke 22 of 22 |
-| 67 ms zoom-out hitch not reproduced | earlier value was one sample | acceptance criterion marked unverified |
+| 67 ms zoom-out hitch not reproduced in the G-03 runs | earlier value was one sample | acceptance criterion marked unverified; the later accepted G-03a run reproduced the hitch and it was not eliminated (section 12) |
 | Smoke 27 of 29 on the spike build | known N-09 constant listener and node retention | unchanged, flat across cycles |
 
 ### Commands
@@ -173,12 +173,12 @@ The brief expected `feat/globe-phase-0-1` at `69278f28` with a clean tree. The r
 | First benchmark run showed 16-53 Hz refresh and 34-183 ms frames in both modes | machine load average 3-6 during the run, so the display was not a valid 60 Hz baseline | recorded as contended, not as a hitch result; the valid run was repeated in isolation |
 | Spike smoke 27/29 | unchanged constant +27 listeners / +97 nodes after close (N-09) | not absorbed; thresholds left strict |
 
-### Final gates (on `12f83175`)
+### Interim gate evidence (on `12f83175`)
 
 | Gate | Result |
 |---|---|
 | `pnpm preflight` | 53/53 |
-| `pnpm check` | 49/49; 3,195 tests passed, 1 skipped; 39/39 e2e |
+| `pnpm check` | 49/49; desktop 3,195 tests passed, 1 skipped; 39/39 e2e |
 | `pnpm test:scripts` | 410 passed, 0 failed, 0 skipped |
 | `pnpm format` / `pnpm lint` | clean (inside `pnpm check`) |
 | `pnpm typecheck` | clean |
@@ -188,8 +188,71 @@ The brief expected `feat/globe-phase-0-1` at `69278f28` with a clean tree. The r
 | Default packaged smoke | 23/23 |
 | Spike packaged smoke | 27/29, unchanged N-09 findings |
 
-`pnpm check` and `pnpm test:scripts` were run sequentially, not concurrently, and the performance benchmark was run alone.
+`pnpm check` and `pnpm test:scripts` were run sequentially with respect to each other. This
+evidence was superseded by the exact-HEAD run in section 12 after a parallel session committed
+`39c05f0e` mid-pass.
 
 ### Not done
 
 G-06 and G-07 remain eligible but not authorized. G-03c (bake labels, markers and routes), G-04a/b/c, the production adapter, the production renderer switch, G-10, G-11, G-13, G-14, G-16, G-17 and the production indicator remain open. Blocked externally and unchanged: ODbL and GSHHG legal review, cross-GPU, Windows and Linux packaged validation, direct Fleet the Waves 3 observation.
+
+## 12. Final validation pass (exact HEAD)
+
+### Baseline and the HEAD discrepancy
+
+At session start the branch was `feat/globe-phase-0-1` at `12f83175`, the worktree was clean, the branch had no upstream, `dev` was `b77d6b30` (the same merge base), and no branch existed on `origin`. The expected implementation commits (`def63359`, `64d9d9e9`, `f03967d2`, `a646d1ab`, `fc3d4f33`, `65fdd20e`, `2644391a`, `92508f73`, `f995399e`, `f34ae9e3`, `0cef07c3`, `12f83175`) and both ADRs were present.
+
+A parallel OpenCode session in the same worktree then committed `39c05f0e` (`docs(map): record the final N-12 and G-03a gate results`) at 23:45:23 -0300, while the first `pnpm check` was running. That commit is documentation-only (execution report, ticket plan, `evidence/g03a/environment.txt`) and is not part of this validation pass; it was inspected and left untouched, not amended. The concurrent activity also meant the first `pnpm check` (started on `12f83175`, exit 0, 1,137 s) was not alone for its final ten minutes and is therefore not the canonical evidence. After the parallel session's processes finished, both gates were re-run sequentially and alone on the exact HEAD. No other gate process was running during the recorded run.
+
+### Gate 1: `pnpm check`
+
+| Field | Value |
+|---|---|
+| Repository root | worktree `.worktrees/globe-phase-0-1` of the repository |
+| Branch | `feat/globe-phase-0-1` |
+| HEAD | `39c05f0e3ee93713e164fb45660a1d58cf0dc2b9` |
+| Command | `pnpm check` (runs `node scripts/heavy.mjs pnpm check:steps`) |
+| Start (UTC) | 2026-10-28T03:05:35Z |
+| End (UTC) | 2026-10-28T03:14:36Z |
+| Duration | 541 s |
+| Exit code | **0** |
+| Log | `evidence/final-gates/pnpm-check-39c05f0e.txt` (sanitized copy of the complete log; raw log kept outside the repository at the operator validation directory) |
+
+All 22 configured steps passed: preflight; format; lint; lint:effect; test:scripts; license check; typecheck; build; content verify; workspace tests; heavy tests; golden hashes; cross-process determinism; equivalence; replay corpus; golden re-pin; replay approvals; probe retirement; balance reports; reachability ledger; explanation coverage; Playwright e2e.
+
+Test summary: the workspace test run executed **1,143 test files and 12,228 tests, all passing, with 1 skipped** (the `monthAdvance` performance test). Playwright e2e **39/39** passed. `test:scripts` inside the gate passed **410/410** (3 suites). The heavy stage passed 12/12 and the balance-report check 2/2. `vp run` reported 46/49 cache hits.
+
+Warnings: 532 pre-existing `effecttsgo` advisory warnings (no errors), known React key warnings in existing screens, and a trailing load-average warning (`heavy: load average 22.6 on 10 cores`) caused by the parallel session that had just exited; no test timed out. Working tree after completion: clean.
+
+### Gate 2: `pnpm test:scripts`
+
+| Field | Value |
+|---|---|
+| Repository root | worktree `.worktrees/globe-phase-0-1` of the repository |
+| Branch | `feat/globe-phase-0-1` |
+| HEAD | `39c05f0e3ee93713e164fb45660a1d58cf0dc2b9` |
+| Command | `pnpm test:scripts` (`node --test "scripts/test/**/*.test.mjs"`) |
+| Start (UTC) | 2026-10-28T03:14:38Z |
+| End (UTC) | 2026-10-28T03:14:50Z |
+| Duration | 12 s (Node reports 12,370 ms) |
+| Exit code | **0** |
+| Log | `evidence/final-gates/pnpm-test-scripts-39c05f0e.txt` (sanitized copy; raw log kept outside the repository) |
+
+Test summary: **410 passed, 0 failed, 0 skipped, 0 cancelled, 3 suites**. No warnings. Working tree after completion: clean.
+
+### Failures and corrections
+
+None. Neither gate failed, so no branch-introduced defect was found and no code or test was changed in this pass. The only repository change is this documentation evidence.
+
+### Final branch state and preserved status
+
+- Final HEAD before the documentation commit: `39c05f0e3ee93713e164fb45660a1d58cf0dc2b9`.
+- Final worktree status: clean.
+- Decision: **`CONDITIONAL_GO`**, unchanged.
+- N-12: **passed**.
+- G-03a: **passed-with-limitations**. Area labels, markers and routes remain runtime GeoJSON (G-03c). The historical ~67 ms zoom-out hitch reproduced in the accepted G-03a benchmark (runtime fallback 83.4 ms, baked 50.9 ms) and was **not eliminated**; the performance criterion remains unmet, not passed.
+- G-04d and G-04e: **done** (G-04d passed-with-limitations; G-04e passed), recorded in ADR-0323 and ADR-0324.
+- ADR-0323 and ADR-0324: accepted for the Phase 0/1 investigation spike only. They do **not** authorize production migration, Phase 2, G-07 or a default renderer switch, and they preserve the legal and data-quality limitations. Investigation geometry is explicitly distinguished from authoritative simulation topology.
+- Cross-OS determinism: **unverified**. Cross-GPU behaviour: **unverified**.
+- Phase 2, G-06, G-07, G-03c, G-04a/b/c, the production adapter and the production renderer migration: **not started / not authorized**.
+- Nothing was pushed or merged. The production Overview renderer remains the default; CSP and Electron security settings are unchanged; no OSM, GSHHG or other unapproved geographic data entered the repository or package.

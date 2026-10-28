@@ -1,6 +1,6 @@
 # G-03: deterministic offline tile bake
 
-**Status: passed-with-limitations.** One acceptance criterion is **unverified**: the 67 ms zoom-out hitch that motivated pre-baked tiles did not reproduce in the baseline, so its removal cannot be shown (section 8). Everything else passes. Commits `65fdd20e` (pipeline), `2644391a` (spike integration and harness), plus the asset-placement fix described in section 9. Evidence: `evidence/g03-g04/`.
+**Status: passed-with-limitations.** One acceptance criterion is **unverified**: the 67 ms zoom-out hitch that motivated pre-baked tiles did not reproduce in the G-03 baseline runs (section 8); the later accepted G-03a benchmark did reproduce it and it was not eliminated (section 12.7). Its removal therefore cannot be shown. Everything else passes. Commits `65fdd20e` (pipeline), `2644391a` (spike integration and harness), plus the asset-placement fix described in section 9. Evidence: `evidence/g03-g04/`.
 
 Labels: **[F]** repository fact, **[M]** measured, **[U]** unverified.
 
@@ -98,7 +98,7 @@ Method: packaged spike, 6 cold launches per condition at 1470x868, DPR 2, displa
 
 Findings:
 
-1. **The 67 ms zoom-out hitch did not reproduce.** The runtime-tiling baseline's worst zoom-out frame was 18.8 ms in every run. The earlier 67 ms was a single sample in an earlier build. I therefore cannot claim the hitch was removed or reduced; the acceptance criterion "removed or materially reduced against a stated budget" is **unverified**. A stated budget for the record: zoom-out frames above 33.4 ms must be zero and the maximum under 20 ms; the baked path meets it, and so did the baseline in this setting.
+1. **The 67 ms zoom-out hitch did not reproduce in these G-03 runs.** The runtime-tiling baseline's worst zoom-out frame was 18.8 ms in every run. The earlier 67 ms was a single sample in an earlier build. I therefore cannot claim the hitch was removed or reduced; the acceptance criterion "removed or materially reduced against a stated budget" is **unverified** at this stage. A later accepted G-03a benchmark **did** reproduce the hitch and did not eliminate it (section 12.7). A stated budget for the record: zoom-out frames above 33.4 ms must be zero and the maximum under 20 ms; the baked path meets it in these runs, and so did the baseline in this setting.
 2. **Startup and memory improved clearly:** about 33% earlier idle and 52% less heap, because the coastline no longer has to be decoded into GeoJSON on the main thread.
 3. Main-thread script time is slightly higher with the pack (about 5%), because the protocol handler runs on the main thread and copies each tile. Worker decode time and visible tile count are **not measured**: the worker cannot be instrumented without tracing, and the frame cap hides GPU headroom. Do not read this table as GPU headroom.
 4. Display refresh was about 61 Hz in every run, so a result of 16.7 ms means "held 60 fps", not "has headroom".
@@ -130,7 +130,7 @@ Findings:
 **Status: passed-with-limitations.** The 36 sea-area outlines are generated offline and baked into
 the same checksummed pack as the coastline and the protected overlays. The remaining limitation
 is that area labels, markers and routes are still runtime GeoJSON (G-03c), and the historical
-67 ms hitch criterion is still unverified. Commit `0cef07c3`; decision record
+~67 ms hitch reproduced and was not eliminated (section 12.7). Commit `0cef07c3`; decision record
 ADR-0324. Evidence: `evidence/g03a/`.
 
 ### 12.1 Source-to-output flow
@@ -246,11 +246,15 @@ Strait or Little Belt. No OSM or GSHHG data entered the bake.
 A benchmark run under system contention (load average 3-6) is recorded as
 `evidence/g03a/g03a-benchmark-contended.json`; several launches reported 16-53 Hz instead of
 about 61 Hz and 34-183 ms zoom-out frames in both the baked and runtime modes. That run is not a
-valid baseline and is not used to claim either a regression or a removal. The isolated
-re-measurement is recorded in the benchmark report; the criterion remains as stated there. G-03a
-removes runtime outline preparation by design: the baked path creates no `areas` GeoJSON source,
-so the 36-ring densification and source-wide tiling no longer run at startup. That design fact is
-reported separately from any frame-time claim.
+valid baseline and is not used to claim either a regression or a removal. The isolated accepted
+re-measurement (`evidence/g03a/g03a-benchmark.json`) **reproduced the historical ~67 ms
+zoom-out hitch**: the runtime fallback reached 83.4 ms (runs 34.3/83.4/66.7) and the baked path
+50.9 ms (runs 50.8/50/50.9). The hitch was therefore **not eliminated** and the performance
+criterion remains unmet. Earlier G-03 runs measured 17.7-18.8 ms maxima over 12 launches, so the
+observation is variable rather than stable. G-03a removes runtime outline preparation by design:
+the baked path creates no `areas` GeoJSON source, so the 36-ring densification and source-wide
+tiling no longer run at startup. That design fact is reported separately from any frame-time
+claim and does not override the reproduced hitch.
 
 ### 12.8 Limitations
 
@@ -259,6 +263,16 @@ reported separately from any frame-time claim.
 - The pack is read whole into memory; the larger 5.65 MB pack strengthens the case for a
   range-readable format if a bigger approved source is chosen (G-03b).
 - Cross-OS byte identity and cross-GPU behaviour are unverified.
-- The historical 67 ms hitch criterion remains unverified; no valid baseline reproduced it and
-  eliminated it under comparable conditions.
+- The historical ~67 ms zoom-out hitch remains unresolved: it **reproduced and was not
+  eliminated** in the accepted G-03a benchmark (runtime 83.4 ms, baked 50.9 ms); earlier G-03
+  runs measured 17.7-18.8 ms maxima, so the observation is variable. The performance criterion
+  is not passed.
 - z7 remains the honest ceiling; the area outlines above z7 are overscaled like the coastline.
+
+## 13. Final branch validation
+
+`pnpm check` and `pnpm test:scripts` were run sequentially and alone on `39c05f0e` and both
+exited 0 (541 s and 12 s; workspace 12,228 tests passed with 1 skipped, e2e 39/39, scripts
+410/410). No code changed in that pass. Logs: `evidence/final-gates/`. The G-03a status stays
+**passed-with-limitations**, the hitch limitation above stays attached, and G-03c, G-06 and G-07
+were not started.
