@@ -148,7 +148,7 @@ The brief expected `feat/globe-phase-0-1` at `69278f28` with a clean tree. The r
 | `f995399e` (pre-existing) | test(packaging): reject globe spike assets from default builds | guard unit tests 29/29; default 23/23; spike 27/29 |
 | `f34ae9e3` | fix(packaging): keep compiled package-guard tests out of the package | preflight 53/53; default and spike guards pass |
 | `0cef07c3` | build(map-data): bake area outlines into offline tiles | focused tests, bakes, guard and packaged smokes |
-| this documentation commit | docs(map): record offline geography and edge semantics decisions | ADR index, doc budgets, report links |
+| `12f83175` | docs(map): record offline geography and edge semantics decisions | ADR index, doc budgets, report links |
 
 ### Ticket results
 
@@ -172,6 +172,23 @@ The brief expected `feat/globe-phase-0-1` at `69278f28` with a clean tree. The r
 | Format check on `pipeline.config.v1.json` | one long layer map exceeded the formatter | `vp fmt` on that file; parsed content unchanged |
 | First benchmark run showed 16-53 Hz refresh and 34-183 ms frames in both modes | machine load average 3-6 during the run, so the display was not a valid 60 Hz baseline | recorded as contended, not as a hitch result; the valid run was repeated in isolation |
 | Spike smoke 27/29 | unchanged constant +27 listeners / +97 nodes after close (N-09) | not absorbed; thresholds left strict |
+
+### Final gates (on `12f83175`)
+
+| Gate | Result |
+|---|---|
+| `pnpm preflight` | 53/53 |
+| `pnpm check` | 49/49; 3,195 tests passed, 1 skipped; 39/39 e2e |
+| `pnpm test:scripts` | 410 passed, 0 failed, 0 skipped |
+| `pnpm format` / `pnpm lint` | clean (inside `pnpm check`) |
+| `pnpm typecheck` | clean |
+| `pnpm check:doc-budgets` | 58 budgeted docs within ceiling |
+| `pnpm adr:index` | ADR-0323 and ADR-0324 indexed under World map and desktop |
+| Focused map-data, globe-spike and package-guard tests | 128 passed |
+| Default packaged smoke | 23/23 |
+| Spike packaged smoke | 27/29, unchanged N-09 findings |
+
+`pnpm check` and `pnpm test:scripts` were run sequentially, not concurrently, and the performance benchmark was run alone.
 
 ### Not done
 

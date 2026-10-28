@@ -3,7 +3,7 @@ os: macOS 27.0.1 (arm64)
 node: v24.18.0
 pnpm: 11.21.0
 electron: 44.9.2
-git head: f995399efe43b6d0daffe31802355ca1da2ef668
+git head: f995399efe43b6d0daffe31802355ca1da2ef668 (G-03a changes were uncommitted in the working tree at measurement time; committed as 0cef07c3)
 branch: feat/globe-phase-0-1
 load average at benchmark: 3.86 4.27 5.57
 packaged app: dist-electron/mac-arm64/Bluewave.app (arm64, unsigned local dir build)
