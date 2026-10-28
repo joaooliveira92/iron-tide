@@ -12,6 +12,13 @@ engine, no filesystem, no parsing.
 | `src/preload` | A narrow `window.bluewave` API exposed with `contextBridge` under context isolation. Imports no `effect`. |
 | `src/renderer` | React UI only. Imports no `effect`, parses no YAML, reads no files. |
 
+## Bridge channels
+
+Every channel is declared once in `src/shared/ipc-contract.ts` (ADR-0328).
+Preload and main derive channel names and payload types from that table, so they
+never spell a channel string themselves; main still decodes each payload
+strictly before a handler sees it.
+
 ## Reading state
 
 The renderer never holds authoritative state. It reads through read-only query

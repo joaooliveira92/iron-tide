@@ -2,10 +2,12 @@ import { app, BrowserWindow, dialog, ipcMain, session } from "electron";
 import { Effect, ManagedRuntime } from "effect";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { ipcEvents } from "../shared/ipc-contract.js";
 import { applyContentSecurityPolicy, shouldApplyContentSecurityPolicy } from "./csp.js";
 import { guardIpc, installShellGuards, type ShellTrust } from "./shellGuards.js";
 import { commandHandlers, createCampaignCommandDispatcher } from "./campaignBridge.js";
 import { ContentArtifactError, loadContentArtifact } from "./contentArtifact.js";
+import { createIpcHandlers, registerIpcChannels, type GuardedIpcMain } from "./ipc.js";
 import { createPreferencesBridge } from "./preferences/preferencesBridge.js";
 import { CrashReporter } from "./runtime/crashReporter.js";
 import { desktopMainLayer, type CommandEnv } from "./runtime/desktopMainLayer.js";
@@ -127,8 +129,8 @@ function createWindow(): BrowserWindow {
 
   attachFailureRecovery(win);
 
-  win.on("maximize", () => win.webContents.send("window:state-changed"));
-  win.on("unmaximize", () => win.webContents.send("window:state-changed"));
+  win.on("maximize", () => win.webContents.send(ipcEvents.windowStateChanged.channel));
+  win.on("unmaximize", () => win.webContents.send(ipcEvents.windowStateChanged.channel));
 
   if (isDev) {
     void win.loadURL(DEV_SERVER_ORIGIN);
@@ -143,61 +145,42 @@ function createWindow(): BrowserWindow {
 
 type DesktopMainRuntime = ManagedRuntime.ManagedRuntime<CommandEnv, never>;
 
-function registerIpc(runtime: DesktopMainRuntime): void {
-  const ipc = guardIpc(ipcMain, shellTrust);
-  const dispatchCampaignCommand = createCampaignCommandDispatcher(commandHandlers, () => runtime);
-  ipc.handle("campaign:execute", (_event, command: string, payload: unknown) =>
-    dispatchCampaignCommand(command, payload),
-  );
-
-  const preferences = createPreferencesBridge(() => runtime);
-  ipc.handle("preferences:read", () => preferences.read());
-  ipc.handle("preferences:write", (_event, payload: unknown) => preferences.write(payload));
-  ipc.handle("preferences:read-campaign", (_event, sessionId: string) =>
-    preferences.readCampaign(sessionId),
-  );
-  ipc.handle("preferences:write-campaign", (_event, sessionId: string, payload: unknown) =>
-    preferences.writeCampaign(sessionId, payload),
-  );
-
-  ipc.on("support:report-crash", (_event, payload: unknown) => {
-    void runtime.runPromise(
-      Effect.gen(function* () {
-        const crash = yield* CrashReporter;
-        const parsed = yield* crash.parseRendererInput(payload);
-        if (parsed === null) return;
-        yield* crash.capture("renderer", parsed.kind, {
-          message: parsed.message,
-          stack: parsed.stack,
-        });
-      }).pipe(Effect.catchTag("CommandFailed", () => Effect.void)),
-    );
-  });
-
-  ipc.handle("window:get-state", (event) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    return {
+function registerIpc(
+  runtime: DesktopMainRuntime,
+  ipc: GuardedIpcMain,
+  quitFlush: QuitFlushController,
+): void {
+  const handlers = createIpcHandlers({
+    host: {
       platform: process.platform,
-      isMaximized: win?.isMaximized() ?? false,
-      maximizable: win?.isMaximizable() ?? true,
-      minimizable: win?.isMinimizable() ?? true,
-    };
+      windowOf: (event) => BrowserWindow.fromWebContents(event.sender),
+    },
+    dispatchCampaignCommand: createCampaignCommandDispatcher(commandHandlers, () => runtime),
+    preferences: createPreferencesBridge(() => runtime),
+    reportCrash: (report) => {
+      void runtime.runPromise(
+        Effect.gen(function* () {
+          const crash = yield* CrashReporter;
+          const parsed = yield* crash.parseRendererInput(report);
+          if (parsed === null) return;
+          yield* crash.capture("renderer", parsed.kind, {
+            message: parsed.message,
+            stack: parsed.stack,
+          });
+        }).pipe(Effect.catchTag("CommandFailed", () => Effect.void)),
+      );
+    },
+    quitFlushComplete: quitFlush.complete,
   });
-  ipc.on("window:minimize", (event) => {
-    BrowserWindow.fromWebContents(event.sender)?.minimize();
-  });
-  ipc.on("window:maximize-toggle", (event) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    if (win === null) return;
-    if (win.isMaximized()) win.unmaximize();
-    else win.maximize();
-  });
-  ipc.on("window:close", (event) => {
-    BrowserWindow.fromWebContents(event.sender)?.close();
-  });
+  registerIpcChannels(ipc, handlers);
 }
 
-function installBoundedShutdown(runtime: DesktopMainRuntime): void {
+interface QuitFlushController {
+  readonly complete: () => void;
+}
+
+function installBoundedShutdown(runtime: DesktopMainRuntime): QuitFlushController {
+  let complete: (() => void) | null = null;
   app.on("before-quit", (event) => {
     if (quitting) return;
     const win = BrowserWindow.getAllWindows().find((candidate) => !candidate.isDestroyed());
@@ -210,8 +193,8 @@ function installBoundedShutdown(runtime: DesktopMainRuntime): void {
     const proceed = (): void => {
       if (settled) return;
       settled = true;
+      complete = null;
       clearTimeout(timer);
-      ipcMain.removeListener("app:quit-flush-complete", proceed);
       void runtime.dispose().then(
         () => app.quit(),
         () => app.quit(),
@@ -219,9 +202,10 @@ function installBoundedShutdown(runtime: DesktopMainRuntime): void {
     };
     const timer = setTimeout(proceed, QUIT_FLUSH_TIMEOUT_MS);
     timer.unref?.();
-    ipcMain.once("app:quit-flush-complete", proceed);
-    win.webContents.send("app:quit-flush");
+    complete = proceed;
+    win.webContents.send(ipcEvents.quitFlush.channel);
   });
+  return { complete: () => complete?.() };
 }
 
 if (!app.requestSingleInstanceLock()) {
@@ -267,8 +251,8 @@ if (!app.requestSingleInstanceLock()) {
     }
 
     installShellGuards({ app, session: session.defaultSession, trust: shellTrust });
-    registerIpc(runtime);
-    installBoundedShutdown(runtime);
+    const quitFlush = installBoundedShutdown(runtime);
+    registerIpc(runtime, guardIpc(ipcMain, shellTrust), quitFlush);
 
     try {
       loadContentArtifact();

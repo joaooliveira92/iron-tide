@@ -48,6 +48,7 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0325](../ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md) Production globe adapter and dynamic overlay contract.
 - [ADR-0326](../ADR-0326-globe-adapter-interaction-parity.md) Globe adapter interaction parity and projection mapping.
 - [ADR-0327](../ADR-0327-globe-overview-production-enablement.md) Globe overview production enablement.
+- [ADR-0328](../ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md) Every desktop bridge channel is declared once in `shared/ipc-contract.ts`; preload exposure and main-process registration derive names and payload types from it.
 
 ## Superseded (do not follow)
 
