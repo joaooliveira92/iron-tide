@@ -1,5 +1,5 @@
-import { cpSync, existsSync } from "node:fs";
-import { basename, resolve } from "node:path";
+import { createReadStream, cpSync, existsSync, statSync } from "node:fs";
+import { basename, extname, resolve, sep } from "node:path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -18,6 +18,13 @@ const stubGlobeAdapter = {
     if (!importer.includes("/components/globe-adapter/")) return null;
     return resolve(__dirname, "src/renderer/components/globe-adapter/GlobeAdapterStub.ts");
   },
+};
+
+const MAP_ASSET_CONTENT_TYPES: Record<string, string> = {
+  ".json": "application/json; charset=utf-8",
+  ".bwtp": "application/octet-stream",
+  ".pbf": "application/octet-stream",
+  ".txt": "text/plain; charset=utf-8",
 };
 
 const copyGlobeRuntimeAssets = {
@@ -84,6 +91,50 @@ export default defineConfig({
       stubGlobeAdapter,
       react(),
       tailwindcss(),
+      {
+        name: "bluewave-globe-runtime-assets-dev",
+        configureServer(server) {
+          if (!GLOBE_ADAPTER) return;
+          const root = resolve(__dirname, "map-assets");
+          server.middlewares.use((request, response, next) => {
+            const pathname = (request.url ?? "").split("?")[0] ?? "";
+            if (!pathname.startsWith("/map-assets/")) {
+              next();
+              return;
+            }
+            let relative: string;
+            try {
+              relative = decodeURIComponent(pathname.slice("/map-assets/".length));
+            } catch {
+              next();
+              return;
+            }
+            const file = resolve(root, relative);
+            if (!file.startsWith(`${root}${sep}`)) {
+              next();
+              return;
+            }
+            let size: number;
+            try {
+              const stats = statSync(file);
+              if (!stats.isFile()) {
+                next();
+                return;
+              }
+              size = stats.size;
+            } catch {
+              next();
+              return;
+            }
+            response.setHeader(
+              "Content-Type",
+              MAP_ASSET_CONTENT_TYPES[extname(file)] ?? "application/octet-stream",
+            );
+            response.setHeader("Content-Length", size);
+            createReadStream(file).pipe(response);
+          });
+        },
+      },
       copyGlobeRuntimeAssets,
       copyGlobeSpikeAssets,
     ],
