@@ -1,0 +1,331 @@
+START_UTC=2026-10-28T08:56:45Z
+HEAD=6b47ba4705bc50c10d07d4bca06e85a8d1500c7d
+BRANCH=feat/globe-phase-0-1
+$ node scripts/heavy.mjs pnpm check:steps
+$ pnpm preflight && pnpm format && pnpm lint && pnpm lint:effect && pnpm test:scripts && pnpm check:licenses && pnpm typecheck && pnpm build && pnpm content:verify && pnpm test:run && pnpm test:heavy && pnpm check:golden && pnpm check:determinism && pnpm check:equivalence && pnpm check:replay-corpus && pnpm check:golden-repin && pnpm check:replay-approvals && pnpm check:probe-retirement && pnpm check:balance-reports && pnpm check:reachability-ledger && pnpm check:explanation-coverage && pnpm test:e2e
+$ vp run gates:preflight
+$ node scripts/preflight.cjs ⊘ cache disabled
+preflight: ok (no in-progress git operation, no conflict markers in tracked files)
+
+$ node scripts/assert-canonical-serialization.mjs --self-test ⊘ cache disabled
+$ node scripts/assert-single-effect.mjs --self-test ⊘ cache disabled
+$ node scripts/verify-no-upgradepath-refit-readers.mjs --self-test ⊘ cache disabled
+$ node scripts/verify-adr-scopes.mjs --self-test ⊘ cache disabled
+assert-single-effect: self-test
+  ok   fixture "zero-resolution is ok": expected ok, got ok
+  ok   fixture "single workspace link is ok": expected ok, got ok
+  ok   fixture "same workspace link from two depths dedupes to one resolution": expected ok, got ok
+  ok   fixture "registry effect package entry fails": expected fail, got fail — registry effect resolution present: effect@4.0.2 (in `packages:`); registry effect resolution present: effect@4.0.2 (in `snapshots:`)
+  ok   fixture "two distinct effect link targets fail": expected fail, got fail — more than one distinct effect resolution in the pnpm graph: workspace:vendor/effect, workspace:vendor/other-effect
+  ok   fixture "registry @effect/vitest package entry fails": expected fail, got fail — registry @effect/vitest resolution present: @effect/vitest@4.0.2 (in `packages:`)
+  ok   fixture "legacy leading-slash registry effect key fails": expected fail, got fail — registry effect resolution present: /effect@4.0.2 (in `packages:`)
+  ok   fixture "empty lockfile fails closed": expected fail, got fail — unrecognized pnpm-lock.yaml (missing a `lockfileVersion:` header or a known section) — failing closed
+  ok   fixture "header-less garbage fails closed": expected fail, got fail — unrecognized pnpm-lock.yaml (missing a `lockfileVersion:` header or a known section) — failing closed
+assert-single-effect: self-test ok (9 fixtures)
+
+$ node scripts/assert-boundary-decode.mjs --self-test ⊘ cache disabled
+verify-no-upgradepath-refit-readers: self-test passed (10 cases)
+assert-canonical-serialization: self-test
+  ok   fixture "raw JSON.stringify fails": expected 1 finding(s), got 1
+  ok   fixture "bracket stringify fails": expected 1 finding(s), got 1
+  ok   fixture "canonicalSerialize passes": expected 0 finding(s), got 0
+  ok   fixture "another object's stringify passes": expected 0 finding(s), got 0
+  ok   fixture "two stringify calls are counted independently": expected 2 finding(s), got 2
+assert-canonical-serialization: self-test ok (5 fixtures)
+
+$ node scripts/assert-tagged-errors.mjs --self-test ⊘ cache disabled
+
+$ node scripts/assert-authoritative-determinism.mjs --self-test ⊘ cache disabled
+verify-adr-scopes: self-test
+  ok   fixture "real corpus passes"
+  ok   fixture "ADR without Applies to fails"
+  ok   fixture "unknown scope fails"
+  ok   fixture "broken supersession reciprocity fails"
+  ok   fixture "broken amendment reciprocity fails"
+  ok   fixture "removed index link fails"
+  ok   fixture "stale reference to a superseded ADR fails"
+
+$ node scripts/verify-no-torpedo-model-constants.mjs --self-test ⊘ cache disabled
+assert-boundary-decode: self-test
+  ok   fixture "a decode with no options fails": expected 1 finding(s), got 1
+  ok   fixture "a decode with options that omit onExcessProperty fails": expected 1 finding(s), got 1
+  ok   fixture "onExcessProperty ignore fails": expected 1 finding(s), got 1
+  ok   fixture "inline onExcessProperty error passes": expected 0 finding(s), got 0
+  ok   fixture "a same-file strict options constant passes": expected 0 finding(s), got 0
+  ok   fixture "a same-file loose options constant fails": expected 1 finding(s), got 1
+  ok   fixture "options from another module's member fail closed": expected 1 finding(s), got 1
+  ok   fixture "a spread of a same-file strict options constant passes": expected 0 finding(s), got 0
+  ok   fixture "a spread of an unknown options value fails": expected 1 finding(s), got 1
+  ok   fixture "an encode call is not a decode": expected 0 finding(s), got 0
+  ok   fixture "an unrelated decode member is ignored": expected 0 finding(s), got 0
+  ok   fixture "boundary cast fails": expected 1 finding(s), got 1
+  ok   fixture "cast after parens fails": expected 1 finding(s), got 1
+  ok   fixture "double assertion fails once": expected 1 finding(s), got 1
+  ok   fixture "unknown binding passes": expected 0 finding(s), got 0
+  ok   fixture "schema decode of a parse passes": expected 0 finding(s), got 0
+  ok   fixture "non-JSON parse cast is ignored": expected 0 finding(s), got 0
+  ok   fixture "other object's parse cast is ignored": expected 0 finding(s), got 0
+assert-boundary-decode: self-test ok (18 fixtures)
+assert-tagged-errors: self-test
+  ok   fixture "throwing a constructed error fails": expected 1 finding(s), got 1
+  ok   fixture "throwing a stored failure fails": expected 1 finding(s), got 1
+  ok   fixture "try/catch fails": expected 1 finding(s), got 1
+  ok   fixture "rethrowing a caught identifier passes": expected 0 finding(s), got 0
+  ok   fixture "try/finally without catch passes": expected 0 finding(s), got 0
+  ok   fixture "returning a Result passes": expected 0 finding(s), got 0
+  ok   fixture "throw new Error fails": expected 1 finding(s), got 1
+  ok   fixture "throw new TypeError fails": expected 1 finding(s), got 1
+  ok   fixture "throw Error(...) call fails": expected 1 finding(s), got 1
+  ok   fixture "throwing a tagged error passes": expected 0 finding(s), got 0
+  ok   fixture "rethrowing a caught value passes": expected 0 finding(s), got 0
+  ok   fixture "constructing without throwing passes": expected 0 finding(s), got 0
+  ok   fixture "two throws are counted independently": expected 2 finding(s), got 2
+  ok   fixture "untagged extends Error fails": expected 1 finding(s), got 1 — E
+  ok   fixture "tagged class field passes": expected 0 finding(s), got 0
+  ok   fixture "tagged accessor field passes": expected 0 finding(s), got 0
+  ok   fixture "Data.TaggedError subclass passes": expected 0 finding(s), got 0
+  ok   fixture "unnamed class expression fails": expected 1 finding(s), got 1 — <anonymous>
+  ok   fixture "extends a non-Error base passes": expected 0 finding(s), got 0
+  ok   fixture "untagged globalThis.Error fails": expected 1 finding(s), got 1 — E
+  ok   fixture "tagged globalThis.Error passes": expected 0 finding(s), got 0
+  ok   fixture "untagged imported Error alias fails": expected 1 finding(s), got 1 — C
+  ok   fixture "tagged imported Error alias passes": expected 0 finding(s), got 0
+  ok   fixture "two classes are counted independently": expected 1 finding(s), got 1 — A
+  ok   fixture "TSAbstractPropertyDefinition tag passes": expected 0 finding(s), got 0
+assert-tagged-errors: self-test ok (25 fixtures)
+
+$ node scripts/assert-runtime-free.mjs --self-test ⊘ cache disabled
+assert-authoritative-determinism: self-test
+
+$ node scripts/assert-no-stage-io.mjs --self-test ⊘ cache disabled
+  ok   fixture "Date.now() fails": expected 1 finding(s), got 1 — date-now
+  ok   fixture "new Date() with no args fails": expected 1 finding(s), got 1 — date-new
+  ok   fixture "new Date(ms) value conversion is allowed": expected 0 finding(s), got 0
+  ok   fixture "Date.UTC is allowed": expected 0 finding(s), got 0
+  ok   fixture "Math.random() fails": expected 1 finding(s), got 1 — math-random
+  ok   fixture "randomUUID() fails": expected 1 finding(s), got 1 — random-uuid
+  ok   fixture "crypto.randomUUID() fails": expected 1 finding(s), got 1 — random-uuid
+  ok   fixture "process.env fails": expected 1 finding(s), got 1 — process-env
+  ok   fixture "process.env bracket access fails": expected 1 finding(s), got 1 — process-env
+  ok   fixture "readdirSync fails": expected 1 finding(s), got 1 — fs-enumeration
+  ok   fixture "fs.readdirSync fails": expected 1 finding(s), got 1 — fs-enumeration
+  ok   fixture "explicit-path readFileSync is allowed": expected 0 finding(s), got 0
+  ok   fixture "member Date.now on another object is allowed": expected 0 finding(s), got 0
+  ok   fixture "a field named env on another object is allowed": expected 0 finding(s), got 0
+  ok   fixture "multiple hazards in one line are each counted": expected 2 finding(s), got 2 — date-now; math-random
+  ok   fixture "a fractional float literal fails": expected 1 finding(s), got 1 — float-literal
+  ok   fixture "an integer literal is allowed": expected 0 finding(s), got 0
+  ok   fixture "a BigInt literal is allowed": expected 0 finding(s), got 0
+  ok   fixture "a float value inside a string is allowed": expected 0 finding(s), got 0
+  ok   fixture "parseFloat fails": expected 1 finding(s), got 1 — parse-float
+  ok   fixture "localeCompare fails": expected 1 finding(s), got 1 — locale-sensitive
+  ok   fixture "toLocaleString fails": expected 1 finding(s), got 1 — locale-sensitive
+  ok   fixture "toLocaleUpperCase fails": expected 1 finding(s), got 1 — locale-sensitive
+  ok   fixture "Intl.NumberFormat fails": expected 1 finding(s), got 1 — locale-sensitive
+  ok   fixture "a compareStrings call is allowed": expected 0 finding(s), got 0
+  ok   fixture "a ledger draw with a blank inputHash fails": expected 1 finding(s), got 1 — ledger-blank-input-hash
+  ok   fixture "a ledger draw with an inline reasonCode literal fails": expected 1 finding(s), got 1 — ledger-literal-reason-code
+  ok   fixture "a ledger draw with a hash and catalogued code passes": expected 0 finding(s), got 0
+  ok   fixture "a blank inputHash outside a ledger record is allowed": expected 0 finding(s), got 0
+  ok   fixture "Number.parseFloat fails": expected 1 finding(s), got 1 — parse-float
+assert-authoritative-determinism: self-test ok (30 fixtures)
+verify-no-torpedo-model-constants: self-test passed (10 cases)
+
+
+$ node scripts/verify-package-agents.mjs --self-test ⊘ cache disabled
+$ node scripts/verify-content-lock.mjs ⊘ cache disabled
+assert-runtime-free: self-test
+  ok   fixture "runtime-free named imports are ok": expected 0 finding(s), got 0
+  ok   fixture "aliased runtime-free import is ok": expected 0 finding(s), got 0
+  ok   fixture "type-only runtime-free import is ok": expected 0 finding(s), got 0
+  ok   fixture "Effect import fails": expected 1 finding(s), got 1 — runtime symbol "Effect" imported from effect (import)
+  ok   fixture "Layer import fails": expected 1 finding(s), got 1 — runtime symbol "Layer" imported from effect (import)
+  ok   fixture "Context import fails": expected 1 finding(s), got 1 — runtime symbol "Context" imported from effect (import)
+  ok   fixture "ManagedRuntime import fails": expected 1 finding(s), got 1 — runtime symbol "ManagedRuntime" imported from effect (import)
+  ok   fixture "namespace import of effect fails": expected 1 finding(s), got 1 — namespace import of the effect runtime (import)
+  ok   fixture "runtime module subpath fails": expected 1 finding(s), got 1 — runtime module import: effect/Effect (import)
+  ok   fixture "runtime-free subpath is ok": expected 0 finding(s), got 0
+  ok   fixture "@effect package import fails": expected 1 finding(s), got 1 — @effect/* package import is not permitted in a runtime-free root: @effect/vitest (import)
+  ok   fixture "re-export of a runtime symbol fails": expected 1 finding(s), got 1 — runtime symbol "Effect" imported from effect (re-export)
+  ok   fixture "dynamic import of effect fails": expected 1 finding(s), got 1 — dynamic import of the effect runtime
+  ok   fixture "unrelated package import is ignored": expected 0 finding(s), got 0
+  ok   fixture "multi-line import is detected": expected 1 finding(s), got 1 — runtime symbol "Effect" imported from effect (import)
+assert-runtime-free: self-test ok (15 fixtures)
+
+$ node scripts/assert-no-library-console.mjs --self-test ⊘ cache disabled
+assert-no-stage-io: self-test
+  ok   fixture "node:fs import fails": expected 1 finding(s), got 1
+  ok   fixture "node:fs/promises import fails": expected 1 finding(s), got 1
+  ok   fixture "node:child_process import fails": expected 1 finding(s), got 1
+  ok   fixture "dynamic import fails": expected 1 finding(s), got 1
+  ok   fixture "require fails": expected 1 finding(s), got 1
+  ok   fixture "node:path import passes": expected 0 finding(s), got 0
+  ok   fixture "a non-node fs import passes": expected 0 finding(s), got 0
+assert-no-stage-io: self-test ok (7 fixtures)
+
+$ node scripts/verify-workspace-graph.mjs --self-test ⊘ cache disabled
+verify-package-agents: self-test
+  ok   fixture "conforming doc passes"
+  ok   fixture "wrong title fails"
+  ok   fixture "missing Invariants fails"
+  ok   fixture "missing root link fails"
+  ok   fixture "class contradicting the gate fails"
+  ok   fixture "unknown class fails"
+  ok   fixture "io-boundary package outside the gate passes"
+verify-package-agents: self-test ok (7 fixtures)
+
+$ node scripts/verify-vitest-config-parity.mjs --self-test ⊘ cache disabled
+  ok   fixture "coherent": expected 0 finding(s), got 0
+  ok   fixture "undeclared import": expected 1 finding(s), got 1
+  ok   fixture "unused declaration": expected 1 finding(s), got 1
+  ok   fixture "dev-only in src": expected 1 finding(s), got 1
+  ok   fixture "missing reference": expected 1 finding(s), got 1
+  ok   fixture "test-only dev dependency": expected 0 finding(s), got 0
+  ok   fixture "import, mock and dynamic import specifiers"
+assert-no-library-console: self-test
+  ok   fixture "console.error fails": expected 1 finding(s), got 1
+  ok   fixture "console.log fails": expected 1 finding(s), got 1
+  ok   fixture "bracket console.warn fails": expected 1 finding(s), got 1
+  ok   fixture "two calls count independently": expected 2 finding(s), got 2
+  ok   fixture "another object's log passes": expected 0 finding(s), got 0
+  ok   fixture "a console member that is not a log method passes": expected 0 finding(s), got 0
+assert-no-library-console: self-test ok (6 fixtures)
+
+$ node scripts/assert-presentation-formatting.mjs --self-test ⊘ cache disabled
+verify-vitest-config-parity: self-test passed (9 cases)
+
+
+$ node scripts/verify-check-parity.mjs ⊘ cache disabled
+$ node scripts/link-claude-skills.mjs ⊘ cache disabled
+assert-presentation-formatting: self-test ok
+
+$ node scripts/verify-test-focus.mjs ⊘ cache disabled
+check-parity: ok (22 check steps, all covered by CI)
+link-claude-skills: 31 present
+
+$ node scripts/verify-no-unknown-casts.mjs ⊘ cache disabled
+
+$ node scripts/verify-version-coherence.mjs ⊘ cache disabled
+version-coherence: ok (4.0.0)
+
+$ node scripts/verify-worktrees.mjs ⊘ cache disabled
+verify-test-focus: ok (1202 test files, no focus, no unexplained skip)
+
+$ node scripts/verify-package-dependencies.mjs ⊘ cache disabled
+verify-package-dependencies: ok (24 manifests conform).
+
+$ node scripts/verify-tsgo-integration.mjs ⊘ cache disabled
+$ tsc -b
+tsgo-integration: ok (@effect/tsgo 0.54.1, typescript 7.0.2, oxlint 1.89.0, tsgolint 7.0.2004; patched)
+
+$ node scripts/verify-doc-budgets.mjs ⊘ cache disabled
+verify-doc-budgets: 58 budgeted docs within ceiling.
+
+$ node scripts/docs-check.cjs ⊘ cache disabled
+worktrees: hygiene warnings (non-blocking)
+  - ledger-phantom adr-routing: registry row has no worktree -> pnpm worktrees:prune
+  - ledger-phantom f1-strategic-map: registry row has no worktree -> pnpm worktrees:prune
+  - ledger-phantom header-toolbar-row: registry row has no worktree -> pnpm worktrees:prune
+  run `pnpm worktrees audit` for the full inventory
+
+$ node scripts/verify-explanation-coverage.mjs ⊘ cache disabled
+docs-check: ok (686 links, 1 anchored, 125 ADRs indexed)
+
+$ node scripts/strip-comments.mjs --scope packages --scope apps --check ⊘ cache disabled
+explanation-coverage: 20/211 fields explained (9.47%, 191 exempt, minimum 9.47%)
+
+$ node scripts/verify-codemod-determinism.mjs ⊘ cache disabled
+Scope: 9 of 26 workspace projects
+packages/deterministic build$ tsc -b
+packages/contracts build$ tsc -b
+packages/contracts build: Done
+packages/deterministic build: Done
+packages/random build$ tsc -b
+packages/diagnostics build$ tsc -b
+packages/armament build$ tsc -b
+packages/armament build: Done
+packages/random build: Done
+packages/diagnostics build: Done
+packages/content-schema build$ tsc -b
+packages/content-schema build: Done
+packages/ship-design build$ tsc -b
+packages/ship-design build: Done
+packages/content-codemod build$ tsc -b
+packages/content-codemod build: Done
+Content lock verified
+  Content version: 0.5.0
+  Content hash: 5f7efb180f04910a0a04342de6a6d1cd45a927a0c470a319a27ce56341c06f2f
+  Lock: <repo>/content/production/1880/content-lock.json
+verify-content-lock: ok
+
+$ node scripts/verify-reachability-ledger.mjs ⊘ cache disabled
+reachability ledger: ok (35 reachable, 10 dormant-by-decision, 14 internal, 0 unclassified)
+
+$ node scripts/assert-single-effect.mjs ⊘ cache disabled
+verify-no-unknown-casts: no new assertions; 267 existing assertions remain.
+
+$ node scripts/verify-no-upgradepath-refit-readers.mjs ⊘ cache disabled
+assert-single-effect: ok (no registry effect; workspace:vendor/effect)
+
+$ node scripts/assert-canonical-serialization.mjs ⊘ cache disabled
+verify-no-upgradepath-refit-readers: no refit/design-compile/production-compatibility module reads 'upgradePath' or (in the acceptance modules) 'supersedes' (compatibility is slot acceptance only)
+
+$ node scripts/assert-boundary-decode.mjs --scope cli ⊘ cache disabled
+assert-boundary-decode: ok (no boundary casts in the guarded scopes)
+
+$ node scripts/assert-boundary-decode.mjs --scope compiler ⊘ cache disabled
+assert-canonical-serialization: ok (no raw JSON.stringify in the authoritative roots)
+
+$ node scripts/assert-boundary-decode.mjs --scope persistence ⊘ cache disabled
+assert-boundary-decode: ok (no boundary casts in the guarded scopes)
+
+$ node scripts/assert-boundary-decode.mjs --scope desktop ⊘ cache disabled
+assert-boundary-decode: ok (no boundary casts in the guarded scopes)
+
+$ node scripts/assert-boundary-decode.mjs --scope decode-options ⊘ cache disabled
+would remove 0 comment(s) in 0 of 3061 file(s); retained 0 (changes meaning); kept {"deprecated":1,"lint-directive":17,"test-focus-allow-skip":1,"tool-pragma":55,"triple-slash":1,"ts-directive":8}
+
+$ node scripts/assert-tagged-errors.mjs --scope engine ⊘ cache disabled
+assert-boundary-decode: ok (no boundary casts in the guarded scopes)
+
+$ node scripts/assert-tagged-errors.mjs --scope surface ⊘ cache disabled
+assert-tagged-errors: ok (engine — no untagged errors, 0 finding(s))
+
+$ node scripts/assert-authoritative-determinism.mjs ⊘ cache disabled
+assert-boundary-decode: ok (every Schema decode rejects excess properties)
+
+$ node scripts/verify-no-torpedo-model-constants.mjs ⊘ cache disabled
+verify-no-torpedo-model-constants: combat engine reads only CompiledTorpedo (per-model sample data confined to the cross-process test harnesses)
+
+$ node scripts/assert-runtime-free.mjs ⊘ cache disabled
+assert-tagged-errors: ok (surface — no untagged errors, 0 finding(s))
+
+$ node scripts/assert-no-stage-io.mjs ⊘ cache disabled
+assert-authoritative-determinism: ok (16 roots, no ambient determinism)
+
+$ node scripts/verify-workspace-graph.mjs ⊘ cache disabled
+assert-no-stage-io: ok (no ambient I/O under the stage directory)
+
+$ node scripts/assert-no-library-console.mjs ⊘ cache disabled
+verify-workspace-graph: ok (23 workspaces coherent).
+
+$ node scripts/verify-vitest-config-parity.mjs ⊘ cache disabled
+verify-vitest-config-parity: ok (23 projects inherit the baseline)
+
+$ node scripts/assert-presentation-formatting.mjs ⊘ cache disabled
+assert-presentation-formatting: 2 new ad-hoc formatting site(s):
+  apps/desktop/src/renderer/components/globe-adapter/GlobeAdapter.tsx:758:toFixed:ms: Number(ms.toFixed(3)),
+  apps/desktop/src/renderer/components/globe-adapter/GlobeAdapter.tsx:799:toFixed:ms: Number((performance.now() - started).toFixed(3)),
+Move them to apps/desktop/src/renderer/lib/presentation-format/ or re-seed with --write.
+
+
+
+
+---
+vp run: 45/49 successful. (Run `vp run --last-details` for full details)
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.
+END_UTC=2026-10-28T08:56:50Z
+EXIT_CODE=1
+DURATION_SECONDS=5

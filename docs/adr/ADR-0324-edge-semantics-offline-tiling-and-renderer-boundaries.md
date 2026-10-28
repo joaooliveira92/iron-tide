@@ -77,8 +77,18 @@ Mapbox Vector Tiles; MapLibre is a consumer, not a dependency of the data or dom
 - The pack is a pure function of pinned sources, configuration, catalogue, area specification
   and toolchain, so review can compare hashes instead of inspecting tiles by eye.
 - Adding a dataset or changing edge semantics is a schema and ADR change, not a renderer tweak.
-- The spike still carries runtime GeoJSON for labels, markers and routes, and the map remains
-  behind the flag. This record does not authorize Phase 2, a production adapter or a default
-  renderer switch.
+- The spike still carries runtime GeoJSON for markers and routes (area labels are baked by the
+  amendment below), and the map remains behind the flag. This record does not authorize Phase 2,
+  a production adapter or a default renderer switch.
 - Cross-operating-system byte identity and the remaining cross-GPU, platform and hit-testing
   evidence are still unverified and stay on the Phase 0/1 decision's condition list.
+
+## Amendment: G-03c baked area labels (2026-10-28)
+
+The G-03c implementation adds a baked `area_labels` vector layer to the same pack. The pack
+format remains `bluewave-tilepack-1`; the manifest moves to `manifestVersion` 3 and the pipeline
+to `1.2.0` so a reader cannot mistake a label-bearing pack for the earlier schema. Label
+features carry the stable area id and anchor; localized or mutable text is not baked. Marker and
+route state remains dynamic and moves to the bounded incremental overlay contract in
+ADR-0325, not into the pack. The z7 source ceiling, edge semantics, renderer boundary and
+production prohibitions in this record are unchanged.

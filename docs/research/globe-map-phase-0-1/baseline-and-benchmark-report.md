@@ -220,3 +220,20 @@ This does not change the benchmark disposition above. The historical ~67 ms zoom
 the performance criterion remains unmet. GPU headroom, cross-GPU behaviour and cross-OS
 determinism remain unverified. The production renderer is unchanged and no production
 migration is authorized.
+
+## 15. G-03c/G-06/G-07 incremental overlay measurements
+
+The packaged adapter measured store/apply behavior on Apple M4, macOS 27.0.1 arm64, 1470x868 CSS
+px at DPR 2, 61 Hz display, AC power:
+
+| Operation | Result |
+|---|---|
+| Apply 1,000-marker scene | 1,000 changes, 1.6 ms store apply; 1,006 markers |
+| Update one marker | 1 change, 0.7 ms |
+| Update 100-marker batch | 100 changes, 0.3 ms |
+| Deep planar z12.5 | source level 7, overscaled true, visible tiles 1 |
+| Cache after deep view | version `natural-earth-10m-v1:2b7b264e9281`, 5 entries, 121,989 bytes |
+
+These are not frame-time or GPU-headroom measurements. The 67 ms zoom-out hitch remains
+unresolved; no capped frame rate in this pass is presented as evidence that it was removed.
+Evidence: `evidence/g03c-g07/adapter-smoke.json`.

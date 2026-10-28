@@ -1,0 +1,2 @@
+$ node scripts/map-data/cli.ts verify
+verify: ok

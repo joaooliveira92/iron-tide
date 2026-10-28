@@ -256,3 +256,70 @@ None. Neither gate failed, so no branch-introduced defect was found and no code 
 - Cross-OS determinism: **unverified**. Cross-GPU behaviour: **unverified**.
 - Phase 2, G-06, G-07, G-03c, G-04a/b/c, the production adapter and the production renderer migration: **not started / not authorized**.
 - Nothing was pushed or merged. The production Overview renderer remains the default; CSP and Electron security settings are unchanged; no OSM, GSHHG or other unapproved geographic data entered the repository or package.
+
+## 13. Authorized engineering sequence: G-03c, G-06 and G-07
+
+Scope: the explicit authorization to start G-03c, G-06 and G-07 without waiting for legal,
+cross-GPU, Windows/Linux or Fleet the Waves 3 evidence. Those remain deferred release blockers;
+they are not converted into completed evidence. The production Overview renderer stays the
+default and nothing was pushed or merged.
+
+### Baseline and commits
+
+Start HEAD `6b47ba47`, clean tree, no upstream, `dev` `b77d6b30`. Code commits:
+
+| Commit | Content |
+|---|---|
+| `c2b218cc` | `build(map-data): bake stable area-label anchors into the pack` |
+| `cdf09309` | `refactor(map): add incremental overlay and tile hierarchy contracts` |
+| `d6c6e78c` | `feat(map): add disabled production globe adapter` |
+| this documentation commit | `docs(map): record the G-03c, G-06 and G-07 sequence and release blockers` |
+
+### Results
+
+| Ticket | Result |
+|---|---|
+| G-03c | **passed-with-limitations**; labels baked, markers/routes incremental, hitch unresolved |
+| G-06 | **passed-with-limitations**; versioned policy, deterministic selection, pack-hash cache |
+| G-07 | **passed-with-limitations**; disabled-by-default adapter, safe fallback, 41/41 packaged smoke |
+| N-08 | resolved for G-07; 14/1,440 `project()` misses excluded |
+| N-09 | adapter portion resolved; legacy spike retention unchanged |
+| N-11 | resolved for G-07; hysteresis, no pixel-readback authority |
+
+### New pack and evidence
+
+The area-label bake changes the pack to 5,678,007 bytes over 16,969 tiles, SHA-256
+`2b7b264e928124d314c577b9bb112c1e79b9db8c85329030eeae931e12952b16`, configuration SHA-256
+`4015bfdd8ac84571eca63e79910456c198270f6b2bebd22cdee540d8ca9ae34f`. Validation is 134 checks
+with 0 findings; label anchors are 36/36 with a worst 0.635-unit error. Two clean bakes and a
+fresh process are byte-identical. Evidence: `evidence/g03c-g07/`.
+
+### Gates and packaged validation
+
+- `pnpm check`: exit 0, 642 s, 22/22 steps; 1,149 workspace test files, 12,267 passed, 1 skipped;
+  e2e 39/39; `test:scripts` 410/410.
+- `pnpm test:scripts`: exit 0, 11 s, 410 passed, 0 failed, 0 skipped.
+- Default package: guard PASS, 19,555 files, 0 map assets, `app.asar` 206,228,275 bytes; packaged
+  smoke 23/23.
+- Spike package: guard PASS, 19,575 files, 16 allowed assets, `app.asar` 214,932,641 bytes; smoke
+  28 PASS / 2 known N-09 FAIL (unchanged).
+- Adapter package: guard PASS, 19,576 files, 16 allowed assets, `app.asar` 214,951,736 bytes;
+  smoke 41/41, including 1,000 markers, deep zoom, projection switch and forced/missing/corrupt
+  fallback.
+
+### Failures and corrections (none hidden)
+
+| What | Cause | Resolution |
+|---|---|---|
+| `pnpm check` first run | new test used `as unknown as OverlayFeature` | replaced with a typed feature and `Reflect.set` |
+| `pnpm check` second run | four plain `throw new Error` sites in the overlay store | converted to tagged `OverlayContractError` |
+| `pnpm check` third run | two ad-hoc `toFixed` calls in the benchmark API | replaced with rounding; formatting gate passes |
+| Default package initially included the adapter chunk | dynamic import remained statically visible | build-time resolver aliases the adapter entry to an inert stub unless the flag is set |
+| Adapter smoke initially failed absolute listener/node thresholds | 13 Playwright window listeners plus one MapLibre document listener are not application leaks | added explicit flat-growth and bounded-footprint checks with CDP attribution; no threshold hidden |
+
+### Not done
+
+Production enablement, default renderer switch, merge and push remain prohibited. The historical
+~67 ms zoom-out hitch, cross-GPU, cross-OS determinism, Windows/Linux packaged validation, legal
+ODbL/GSHHG decisions and Fleet the Waves 3 comparison remain open. The legacy spike N-09 finding
+is unchanged; the adapter's own lifecycle is bounded and flat.

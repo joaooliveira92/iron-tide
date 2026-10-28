@@ -129,3 +129,21 @@ This is why the policy covers evidence, validation output and build metadata, no
   the patterns that opt in.
 - The guard cannot prove the absence of a file that the packager never wrote; it proves the
   absence of every policy class in the artifacts that were actually produced.
+
+## 9. G-03c/G-07 adapter policy and final package evidence
+
+The policy now has an `adapter` mode alongside `default` and `spike`. The adapter mode allows the
+same map pack, manifest, licences and glyphs as the spike, plus only the real
+`GlobeAdapter-*` code and stylesheet chunks. The default build aliases the adapter entry to an
+inert stub, so the real chunk is never emitted; the default policy still forbids `map-spike`,
+`map-data`, `.bwtp`, source archives and the adapter chunk.
+
+| Package | Result |
+|---|---|
+| Default | PASS, 19,555 files, 0 map assets, 0 violations, `app.asar` 206,228,275 bytes |
+| Spike | PASS, 19,575 files, 16 allowed map assets, 0 violations, `app.asar` 214,932,641 bytes |
+| Adapter | PASS, 19,576 files, 16 allowed map assets, 0 violations, `app.asar` 214,951,736 bytes |
+
+The packaged adapter smoke also checks that the default/current renderer is shown when the adapter
+is inactive and when initialization, the pack or its hash fails. Evidence:
+`evidence/g03c-g07/{default,spike,adapter}-guard.{json,txt}`.

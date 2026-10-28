@@ -14,8 +14,8 @@ Status vocabulary as in the execution ledger. "Next phase" = authorized to start
 | G-04e ADR for catalogue, edge semantics and pack | **passed** (ADR-0323, ADR-0324; accepted for the spike only) | G-03a, G-04d | ADR-0323, ADR-0324 | done | yes |
 | N-12 default-package contamination guard | **passed** | N-03, packaging fix 92508f73 | `n-12-default-package-guard-report.md`; `evidence/n12/`, `evidence/g03a/`; commit f995399e | done | yes |
 | G-05 glyph pre-bake, OFL font | **in-progress** | - | script + Inter-derived PBFs (untracked); repo lacks Inter licence file | P2; needs licence file | yes |
-| G-06 tile hierarchy and LOD | **eligible, not started** (dependencies now met; the bake defines levels z0 to z7) | G-03, G-04 | | P1 | yes |
-| G-07 flagged adapter | **eligible; in-progress as a throwaway spike only** | G-00, G-03 (met) | spike component | P1 | yes |
+| G-06 tile hierarchy and LOD | **passed-with-limitations** (versioned policy, deterministic selection, pack-hash cache; single OS/GPU) | G-03, G-04 | `g-03c-g-06-g-07-report.md`; ADR-0325; commit cdf09309 | done for Natural Earth z7 | yes |
+| G-07 production adapter | **passed-with-limitations** (disabled-by-default adapter; current renderer fallback; 41/41 packaged smoke) | G-00, G-03, G-03c, G-06 | `g-03c-g-06-g-07-report.md`; ADR-0325; commit d6c6e78c | foundation done; enablement blocked | **no** |
 | G-08 subdivision tests | **passed-with-limitations** | G-02 | `densify.test.ts` 8 tests; 34/36 area outlines differ up to 191 km | P1; crack/neighbour test still open | yes |
 | G-09 markers, labels, back-side policy | **in-progress, defects found** | G-07 | GL markers remove ghosts; `project()` hit tests and horizon formula unreliable | **P0** | yes |
 | G-10 camera controller | **in-progress** (intent adapter prototype) | G-02, G-07 | replay bit-identical; anchor drift 0.0099 px; globe panning changes zoom | P1 | yes |
@@ -41,8 +41,8 @@ Status vocabulary as in the execution ledger. "Next phase" = authorized to start
 | N-05 | Windows/Linux packaged CSP and file:// worker smoke | P0 | blocked-external |
 | N-06 | Inter OFL licence file and reserved-name check before committing glyph PBFs | P2 | |
 | N-07 | OSM ODbL / GSHHG legal review (G-01a/b) | P0 | requires-legal-review |
-| N-08 | Hit-test and indicator authority: pointer-pixel queries + rendered visibility with hysteresis | P0 | replaces `project()` and horizon formula |
-| N-09 | Lifecycle: constant +27 listeners / +97 nodes retained after close | P2 | no growth across 10 cycles |
+| N-08 | Hit-test and indicator authority: pointer-pixel queries + rendered visibility with hysteresis | P0 | **resolved for G-07**: rendered hits plus horizon class; 14/1,440 `project()` misses excluded |
+| N-09 | Lifecycle: constant +27 listeners / +97 nodes retained after close | P2 | **adapter portion resolved**: flat after first close, disposal registry, CDP attribution; legacy spike retention unchanged |
 | P-01 | GPU headroom measurement (timer queries or tracing) | P1 | uncapped flags are invalid |
 | N-10 | Missing-asset behaviour (worker/glyph/tile removed) | P2 | |
 
@@ -50,22 +50,22 @@ Status vocabulary as in the execution ledger. "Next phase" = authorized to start
 
 | ID | Title | Priority | Notes |
 |---|---|---|---|
-| G-03a | Bake sea-area outlines into the pack and remove runtime outline tiling | **passed-with-limitations** | area outlines done; labels, markers and routes remain runtime GeoJSON (G-03c) |
+| G-03a | Bake sea-area outlines into the pack and remove runtime outline tiling | **passed-with-limitations** | area outlines done; G-03c subsequently baked labels and made markers/routes incremental; the hitch limitation remains |
 | G-03b | Range-readable pack for datasets above a few MB (the pack is read whole into memory) | P2 | only if a larger approved source is chosen |
-| G-03c | Bake area labels, markers and routes into the pack or a sibling pack | P2 | remains runtime GeoJSON after G-03a |
+| G-03c | Bake labels and make marker/route overlays incremental | **passed-with-limitations** | labels baked; markers/routes dynamic incremental; ~67 ms hitch unresolved |
 | G-04a | Replace the authored Corinth and Kiel lines and the Bosporus and Dardanelles fallback lines with a centreline from an approved source | P1 | blocked on a cleared source |
 | G-04b | Validate the true narrows: Hormuz, Malacca (Singapore and Phillip channels), Little Belt | P1 | needs finer cleared data |
 | G-04c | Overlay fidelity above z7 (z7 quantisation, about 3 px at z12.5) | P2 | tied to G-01a |
 | G-04d | Decide whether canal geometry above z7 needs a larger-scale source | **passed-with-limitations** | decision in ADR-0323: yes; selection blocked on G-01a |
 | G-04e | ADR for catalogue, edge semantics and tile pack format | **passed** | ADR-0323 and ADR-0324 |
-| N-11 | Deterministic render-truth method for marker visibility and horizon agreement | P1 | the isolated-marker readback is not repeatable |
+| N-11 | Deterministic render-truth method for marker visibility and horizon agreement | P1 | **resolved for G-07**: rendered-hit + horizon hysteresis; no pixel-readback authority |
 | N-12 | Guard that the default package never contains spike assets or build-time map inputs | **passed** | permanent guard plus packaged smokes |
 | N-13 | Reproduce or retire the 67 ms zoom-out hitch observation | P2 | a valid capped run reproduced hitches in both baked and runtime modes (max 50.9 / 83.4 ms); not eliminated |
 
-G-06 (tile hierarchy/LOD) and G-07 (production adapter) are technically eligible after G-03a but
-remain **not authorized**. Their production implications need a separate decision after the
-legal, cross-GPU, platform, hit-testing and visibility evidence. The same applies to G-03c
-(labels, markers and routes) and G-04a/b/c.
+G-03c, G-06 and G-07 were explicitly authorized and are now implemented as a
+**passed-with-limitations** foundation. G-07 remains disabled by default and production
+enablement remains **not authorized** pending the deferred legal, cross-GPU, Windows/Linux,
+Fleet the Waves 3, interaction-parity and hitch evidence. G-04a/b/c remain open.
 
 ## Stop conditions that remain armed
 
@@ -76,7 +76,16 @@ Any new network dependency; any CSP loosening beyond a documented, narrow, revie
 `pnpm check` and `pnpm test:scripts` were run sequentially and alone on `39c05f0e` and both
 exited 0 (541 s and 12 s; workspace 12,228 tests passed with 1 skipped, e2e 39/39, scripts
 410/410). Evidence: `evidence/final-gates/`. No ticket status is upgraded by a passing gate:
-N-12 stays **passed**, G-03a stays **passed-with-limitations**, G-04d and G-04e stay **done**,
-and G-03c, G-06, G-07, Phase 2 and production migration remain **not started and not
-authorized**. ADR-0323 and ADR-0324 do not authorize production migration. Cross-OS determinism
+N-12 stays **passed**, G-03a stays **passed-with-limitations**, G-04d and G-04e stay **done**.
+ADR-0323 and ADR-0324 do not authorize production migration. Cross-OS determinism and cross-GPU
+behaviour remain unverified.
+
+## Final validation (G-03c/G-06/G-07 sequence)
+
+`pnpm check` and `pnpm test:scripts` were re-run sequentially and alone on the working tree at
+`6b47ba47` and both exited 0 (642 s and 11 s; 12,267 workspace tests passed with 1 skipped, e2e
+39/39, scripts 410/410). G-03c, G-06 and G-07 are **passed-with-limitations**; N-08 and N-11 are
+resolved for G-07; the adapter portion of N-09 is resolved and the legacy spike finding is
+unchanged. Phase 2, production migration, default enablement, merge and push remain **not
+authorized**. ADR-0323, ADR-0324 and ADR-0325 do not authorize production. Cross-OS determinism
 and cross-GPU behaviour remain unverified.

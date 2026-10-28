@@ -97,3 +97,38 @@ G-18, G-19, G-20 remain **not authorized**.
 - The historical ~67 ms zoom-out hitch **reproduced and was not eliminated** (accepted G-03a run: runtime 83.4 ms, baked 50.9 ms). The performance criterion is not passed.
 - Cross-OS determinism and cross-GPU behaviour remain **unverified**.
 - Nothing was pushed or merged.
+
+## 12. Authorized engineering sequence: G-03c, G-06 and G-07
+
+**Decision unchanged: `CONDITIONAL_GO`.** This sequence implements the authorized engineering
+foundation. It does not make the globe the default, replace the Overview renderer, enable the
+adapter for production, authorize Phase 2, merge, push or release.
+
+- **G-03c passed-with-limitations.** Area-label anchors and stable ids are baked as the
+  `area_labels` layer (manifest v3, pack 5,678,007 bytes, 16,969 tiles, SHA-256 `2b7b264e...`).
+  Markers and routes are dynamic by ownership and now flow through a renderer-neutral incremental
+  overlay store: one marker update is one change, route replacement diffs only routes, and
+  selection/hidden state uses feature state rather than geometry rebuilds. The historical ~67 ms
+  zoom-out hitch remains unresolved and is not claimed fixed.
+- **G-06 passed-with-limitations.** The versioned tile policy keeps the z7 source ceiling
+  explicit, separates pyramid level, display zoom, source resolution and overscaling, makes tile
+  selection deterministic for a fixed camera, and versions the cache by the pack hash. Globe and
+  Mercator modes consume the same logical pack. Cross-OS and cross-GPU behavior remain unverified.
+- **G-07 passed-with-limitations.** A production-shaped adapter consumes the overlay, tile,
+  camera and visibility contracts behind `VITE_BLUEWAVE_GLOBE_ADAPTER`, off by default. The
+  default build aliases the adapter to an inert stub; the current Overview renderer remains the
+  default and the failure fallback. The packaged adapter smoke passes 41/41, including forced,
+  missing and corrupt initialization failure.
+- **N-08 resolved for G-07:** rendered hits plus horizon classification; the 14 near-side
+  `project()` misses in the 1,440-marker fixture are excluded. **N-11 resolved for G-07:**
+  hysteresis at the horizon and no pixel-readback authority. **N-09 adapter portion resolved:**
+  five open-close cycles are flat after the first close; the legacy spike's +27 listeners/+97
+  nodes finding is unchanged and still reported.
+- **Gates:** `pnpm check` exit 0 (642 s; 12,267 workspace tests passed, 1 skipped; e2e 39/39) and
+  `pnpm test:scripts` exit 0 (410/410). Default, spike and adapter package guards pass; default
+  smoke 23/23, spike smoke 28 PASS / 2 known N-09 FAIL, adapter smoke 41/41.
+- **Still open:** the 67 ms hitch, cross-GPU evidence, Windows/Linux packaged validation, legal
+  ODbL/GSHHG decisions, Fleet the Waves 3 observation, full Overview interaction-parity review
+  and production enablement. These are deferred release blockers, not waived evidence.
+- Commits: `c2b218cc` (baked labels), `cdf09309` (overlay and hierarchy contracts), `d6c6e78c`
+  (disabled adapter), followed by this documentation commit. Nothing was pushed or merged.

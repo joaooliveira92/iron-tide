@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0325).
+highest existing number + 1 (the next number is ADR-0326).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -209,6 +209,7 @@ How the presentation-only strategic map's baked geography is produced.
 | 0244 | [ADR-0244-nation-borders-are-clipped-to-the-map-coastline.md](ADR-0244-nation-borders-are-clipped-to-the-map-coastline.md) | Nation borders are baked clipped to the map's coastline | accepted | — |
 | 0323 | [ADR-0323-geographic-data-sources-and-protected-overlays.md](ADR-0323-geographic-data-sources-and-protected-overlays.md) | Geographic data sources and protected-feature overlays | accepted | — |
 | 0324 | [ADR-0324-edge-semantics-offline-tiling-and-renderer-boundaries.md](ADR-0324-edge-semantics-offline-tiling-and-renderer-boundaries.md) | Edge semantics, offline tiling and renderer boundaries | accepted | — |
+| 0325 | [ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md](ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md) | Production globe adapter and dynamic overlay contract | accepted | — |
 
 ## Engine architecture
 

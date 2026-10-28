@@ -118,3 +118,13 @@ ADR-0323 and ADR-0324 remain accepted for the Phase 0/1 investigation spike only
 authorize production migration, Phase 2 or G-07, and they keep the legal and data-quality
 limitations. Investigation geometry is not authoritative simulation topology. No OSM, GSHHG or
 other unapproved geographic data entered the repository or package in this pass.
+
+## 10. Revalidation after G-03c labels and G-06/G-07
+
+The G-03c pack adds baked area-label anchors but leaves the protected catalogue, resolution and
+every probe unchanged. On the new pack (5,678,007 bytes, manifest v3) the protected validation is
+still 56 checks with 0 findings; combined validation is 134 checks (protected 56, area 78). All 13
+features remain evaluable and none of the six canal/passage features is sealed. The schematic
+Corinth/Kiel geometry, wide Hormuz/Malacca probes, unassessed Singapore Strait/Little Belt and
+pinning-only-at-coarser-tolerances result are unchanged. ADR-0325 adds the adapter/overlay
+boundary but does not relax any G-04 limitation or authorize production.

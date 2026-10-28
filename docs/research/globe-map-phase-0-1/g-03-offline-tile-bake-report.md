@@ -275,4 +275,19 @@ claim and does not override the reproduced hitch.
 exited 0 (541 s and 12 s; workspace 12,228 tests passed with 1 skipped, e2e 39/39, scripts
 410/410). No code changed in that pass. Logs: `evidence/final-gates/`. The G-03a status stays
 **passed-with-limitations**, the hitch limitation above stays attached, and G-03c, G-06 and G-07
-were not started.
+were not started in that pass.
+
+## 14. G-03c: baked labels and incremental dynamic overlays
+
+The authorized G-03c follow-up adds a baked `area_labels` layer (36 stable anchors) to the same
+pack and moves markers/routes to a renderer-neutral incremental overlay contract. The pack is
+now 5,678,007 bytes over 16,969 tiles, SHA-256
+`2b7b264e928124d314c577b9bb112c1e79b9db8c85329030eeae931e12952b16`, manifest v3/pipeline 1.2.0.
+Validation is 134 checks with 0 findings; label anchors are 36/36 with worst 0.635 units against
+a 1.0 bound. Two clean bakes and a fresh process are byte-identical (`evidence/g03c-g07/`).
+
+This does **not** upgrade G-03a: its own status remains passed-with-limitations, and the
+approximately 67 ms zoom-out hitch reproduced and was not eliminated. Area labels no longer
+require runtime GeoJSON on the baked path; markers and routes remain dynamic by ownership and are
+now incremental (one marker update = one change; route replacement diffs only routes). Details:
+`g-03c-g-06-g-07-report.md`.
