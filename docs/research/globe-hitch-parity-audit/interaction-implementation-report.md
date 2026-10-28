@@ -82,9 +82,18 @@ absent.
 
 ## Validation
 
-See the parent issue for the exact gate log. The implementation was validated with
-the focused suites listed above plus `pnpm check` and `pnpm test:scripts` recorded in
-the parent issue.
+- Focused adapter/chrome/contract tests: **73/73 pass** across 11 files.
+- Packaged adapter smoke: **47/47 pass**, including the area mirror (36 buttons),
+  screen-reader area table (36 rows), minimap, frame meter, layer controls,
+  fallback modes, no remote request, worker return and bounded lifecycle.
+- Adapter package guard: **PASS**, 19,587 files, 16 allow-listed map assets,
+  0 violations.
+- Lifecycle on the parity build: 548 listeners / 813 detached nodes, flat across
+  five cycles; live DOM 70 → 70; workers 0 → 0; heap 20.3 → 20.5 MB.
+- `pnpm check` and `pnpm test:scripts` results are recorded on the parent issue.
+
+Evidence: `evidence/parity/` (`globe-adapter-smoke.json`,
+`globeadapter-guard.json`, `packaged-smoke.txt`, `environment.txt`).
 
 ## Rollback
 

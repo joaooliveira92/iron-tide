@@ -46,6 +46,7 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0323](../ADR-0323-geographic-data-sources-and-protected-overlays.md) Geographic data sources and protected-feature overlays.
 - [ADR-0324](../ADR-0324-edge-semantics-offline-tiling-and-renderer-boundaries.md) Edge semantics, offline tiling and renderer boundaries.
 - [ADR-0325](../ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md) Production globe adapter and dynamic overlay contract.
+- [ADR-0326](../ADR-0326-globe-adapter-interaction-parity.md) Globe adapter interaction parity and projection mapping.
 
 ## Superseded (do not follow)
 

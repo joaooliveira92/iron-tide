@@ -69,9 +69,14 @@ listeners, a `mouseout` handler and a hover animation frame. All are disposed by
 the existing `DisposalRegistry`, alongside the map, protocol, store, cache and
 subscriptions. The hover frame is cancelled on disposal.
 
-No packaged lifecycle smoke was rerun on this checkout because the packaged
-adapter tile pack is absent. The audited adapter numbers (497 listeners / 272 nodes
-flat after the first close, workers 0 → 0) are unchanged as a code fact: the
-disposal path is the same and the new handles are registered in it. A packaged
-re-run belongs to the #342 hardware/protocol work, not to an assertion in this
-report.
+A packaged lifecycle smoke was rerun on the parity build at `db16d738` with the
+baked Natural Earth pack (47/47 checks). The new chrome mirror is larger, so the
+absolute post-close footprint moved from the audit's 497/272 to **548 listeners /
+813 nodes**, flat from the first close through the fifth cycle. The live DOM
+returns to baseline (70 body elements before open and after close), workers return
+to 0, and heap stays at 20.4-20.5 MB. The extra listeners and detached nodes are
+the React chrome and accessibility mirror; they are bounded, do not accumulate,
+and are not live. The smoke now checks the live DOM separately and records the
+detached footprint rather than hiding it.
+
+The legacy spike numbers are unchanged: 473/135 baseline -> 500/232, +27/+97.

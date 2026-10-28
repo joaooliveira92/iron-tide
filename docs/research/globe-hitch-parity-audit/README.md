@@ -1,21 +1,21 @@
 # Globe hitch isolation and Overview interaction-parity audit
 
 **Status: interaction-parity engineering complete on `feat/globe-interaction-parity`
-(commit `67a7a18f`), pushed for review. The adapter remains off by default and the current
-Overview renderer remains the default and the failure fallback. Nothing was merged or
-released. The historic hitch is still unreproduced on the tested machine; #342 remains
-hardware-blocked.**
+(code head `db16d738`), packaged and ready for review. The adapter remains off by default
+and the current Overview renderer remains the default and the failure fallback. Nothing
+was merged or released. The historic hitch is still unreproduced on the tested machine;
+#342 remains hardware-blocked.**
 
-Branch: `perf/globe-hitch-parity-audit`, created from `5aaf7182` on `feat/globe-phase-0-1`.
-Work was done at `5aaf7182ba2878a8531a15cf9b03d6447b12b725`. The Phase 0/1 decision remains
-**`CONDITIONAL_GO`**; this audit does not upgrade it.
+Base: `perf/globe-hitch-parity-audit` at `a6b1fa3f` (from `5aaf7182` on
+`feat/globe-phase-0-1`). The Phase 0/1 decision remains **`CONDITIONAL_GO`**; this
+implementation does not upgrade it.
 
 | Question | Verdict |
 |---|---|
 | Historical ~67 ms zoom-out hitch | **Not reproduced** in 22 clean globe launches. Candidate phase is GPU/compositor sync. No fix. Child #342. |
 | Current-renderer comparison | Reproduced a **51 ms** zoom-out with 54/61 ms main-thread long tasks; 150-183 ms under contention. The "~67 ms" label is not globe-specific. |
-| Interaction parity | **71 rows**: 58 pass, 0 fail, 0 blocked, 13 not-applicable after `67a7a18f`. Implementation evidence: `interaction-implementation-report.md`. |
-| Lifecycle N-09 | Adapter flat at 497 listeners / 272 nodes after first close; legacy spike unchanged at +27 / +97. New parity listeners are in the disposal registry. |
+| Interaction parity | **71 rows**: 58 pass, 0 fail, 0 blocked, 13 not-applicable after `db16d738`. Implementation evidence: `interaction-implementation-report.md`. |
+| Lifecycle N-09 | Parity adapter flat at 548 listeners / 813 detached nodes after first close; live DOM returns to baseline; legacy spike unchanged at +27 / +97. |
 | Adapter off by default; current renderer default and fallback | Proven by default package guard and 23/23 packaged smoke, and by the adapter smoke's "adapter inactive by default" check. |
 
 ## Findings ledger
@@ -63,9 +63,10 @@ the verdict column and implementation-evidence section record the parity commit
 path, every layer toggle maps to its own layer, shift-click reaches the route
 reader, and the Overview chrome is hosted behind the existing adapter flag.
 
-The adapter still has **no packaged interaction smoke that drives pointer or key
-gestures**; component tests cover the adapter and chrome against a fake MapLibre
-map. A packaged pointer/key pass belongs to the pre-enablement evidence set.
+The packaged adapter smoke now exercises the chrome mirror, minimap, frame meter,
+area table, layer/projection controls, fallback and lifecycle (47/47). Pointer and
+keyboard gestures are covered by component tests against a fake MapLibre map; a
+packaged pointer/key pass remains pre-enablement evidence.
 
 ## 3. Lifecycle
 
@@ -106,9 +107,9 @@ evidence below, not another parity pass:
    the one traced globe gap is GPU/compositor sync. Treat it as cross-renderer
    frame pacing until a reproducing trace exists (child #342), and keep the
    cross-GPU/Windows/Linux evidence gaps open.
-3. **Lifecycle is not a release blocker for the adapter.** It is flat after the first
-   close and attributable; the parity listeners are in the disposal registry. The
-   legacy spike finding is unchanged and irrelevant to the default package.
+3. **Lifecycle is bounded but larger.** The parity adapter adds a detached chrome
+   mirror: 548 listeners / 813 nodes, flat across cycles, with live DOM back at
+   baseline. The legacy spike finding is unchanged.
 4. **Production enablement, merge and release remain not authorized.** Legal
    ODbL/GSHHG, cross-GPU, Windows/Linux packaged validation, Fleet the Waves 3
    observation and cross-OS determinism are untouched.
@@ -137,6 +138,7 @@ docs/research/globe-hitch-parity-audit/
   interaction-implementation-report.md
   accessibility-findings.md
   performance-notes.md
+  evidence/parity/
   evidence/
     environment.txt
     adapter/
@@ -154,6 +156,12 @@ docs/research/globe-hitch-parity-audit/
       packaged-smoke.txt
     default-contended/
       baseline.json
+    parity/
+      globe-adapter-smoke.json
+      globeadapter-guard.json
+      packaged-smoke.txt
+      adapter-parity.json
+      environment.txt
 ```
 
 The raw 35 MB CDP trace is not committed. Regenerate it with
@@ -162,7 +170,19 @@ The raw 35 MB CDP trace is not committed. Regenerate it with
 The contended default runs in `default-contended/` are recorded for transparency and excluded
 from every conclusion.
 
-## 7. Reproduction commands
+## 7. Parity validation
+
+- Adapter packaged smoke: **47/47 PASS**, including the area mirror (36 buttons),
+  SR area table (36 rows), minimap, frame meter, layer controls, forced/missing/
+  corrupt fallback, no remote request, worker return and bounded lifecycle.
+- Adapter package guard: **PASS** in the smoke; 0 violations and only the
+  allow-listed adapter assets.
+- Performance: see `performance-notes.md` and `evidence/parity/adapter-parity.json`.
+- Focused tests: 73 adapter/chrome/contract tests pass (11 files).
+- Accessibility: source-level matrix plus component tests; no axe/manual pass.
+- Offline: packaged app served from `file:`; no non-local request in the smoke.
+
+## 8. Reproduction commands
 
 From the audit worktree, with the untracked map cache and `map-spike-assets` present:
 

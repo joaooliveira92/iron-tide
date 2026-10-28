@@ -1,0 +1,23 @@
+{
+  "commit": "db16d738",
+  "branch": "feat/globe-interaction-parity",
+  "focusedTests": { "files": 11, "tests": 73, "passed": 73 },
+  "adapterSmoke": { "passed": 47, "total": 47 },
+  "packageGuard": { "mode": "adapter", "passed": true, "violations": 0 },
+  "lifecycle": {
+    "baselineListeners": 471,
+    "postCloseListeners": 548,
+    "firstCycleListeners": 548,
+    "lastCycleListeners": 548,
+    "baselineNodes": 135,
+    "postCloseNodes": 813,
+    "firstCycleNodes": 813,
+    "lastCycleNodes": 813,
+    "liveDomBaseline": 70,
+    "liveDomAfterClose": 70,
+    "workers": "0->0",
+    "heapMB": "20.3->20.5"
+  },
+  "performance": "No new frame benchmark was run; see performance-notes.md and #342.",
+  "productionEnablement": false
+}
