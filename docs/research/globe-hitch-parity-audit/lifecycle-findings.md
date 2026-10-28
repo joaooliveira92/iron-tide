@@ -61,3 +61,17 @@ retains more, but it is not the production candidate and is not shipped in the d
 The absolute numbers are CDP counters, not a claim that every retained node is reachable from
 the document. The measurement is single-run per path, on one OS and GPU; it is not cross-OS
 evidence. No leak was observed that would justify a code fix under the audit's narrow-fix rule.
+
+## Update 2026-10-28: parity branch
+
+The parity work adds canvas `pointerdown`/`pointermove`/`pointerup`/`pointercancel`
+listeners, a `mouseout` handler and a hover animation frame. All are disposed by
+the existing `DisposalRegistry`, alongside the map, protocol, store, cache and
+subscriptions. The hover frame is cancelled on disposal.
+
+No packaged lifecycle smoke was rerun on this checkout because the packaged
+adapter tile pack is absent. The audited adapter numbers (497 listeners / 272 nodes
+flat after the first close, workers 0 → 0) are unchanged as a code fact: the
+disposal path is the same and the new handles are registered in it. A packaged
+re-run belongs to the #342 hardware/protocol work, not to an assertion in this
+report.

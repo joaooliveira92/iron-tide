@@ -1,8 +1,10 @@
 # Globe hitch isolation and Overview interaction-parity audit
 
-**Status: audit complete. No production fix was made. The adapter remains off by default and the
-current Overview renderer remains the default and the failure fallback. Nothing was pushed or
-merged.**
+**Status: interaction-parity engineering complete on `feat/globe-interaction-parity`
+(commit `67a7a18f`), pushed for review. The adapter remains off by default and the current
+Overview renderer remains the default and the failure fallback. Nothing was merged or
+released. The historic hitch is still unreproduced on the tested machine; #342 remains
+hardware-blocked.**
 
 Branch: `perf/globe-hitch-parity-audit`, created from `5aaf7182` on `feat/globe-phase-0-1`.
 Work was done at `5aaf7182ba2878a8531a15cf9b03d6447b12b725`. The Phase 0/1 decision remains
@@ -12,8 +14,8 @@ Work was done at `5aaf7182ba2878a8531a15cf9b03d6447b12b725`. The Phase 0/1 decis
 |---|---|
 | Historical ~67 ms zoom-out hitch | **Not reproduced** in 22 clean globe launches. Candidate phase is GPU/compositor sync. No fix. Child #342. |
 | Current-renderer comparison | Reproduced a **51 ms** zoom-out with 54/61 ms main-thread long tasks; 150-183 ms under contention. The "~67 ms" label is not globe-specific. |
-| Interaction parity | **71 rows**: 19 pass, 37 fail, 1 blocked, 13 not-applicable, 1 unverified. Not ready to replace Overview. Child issues #343-#349. |
-| Lifecycle N-09 | Adapter flat at 497 listeners / 272 nodes after first close; legacy spike unchanged at +27 / +97. No fix. |
+| Interaction parity | **71 rows**: 58 pass, 0 fail, 0 blocked, 13 not-applicable after `67a7a18f`. Implementation evidence: `interaction-implementation-report.md`. |
+| Lifecycle N-09 | Adapter flat at 497 listeners / 272 nodes after first close; legacy spike unchanged at +27 / +97. New parity listeners are in the disposal registry. |
 | Adapter off by default; current renderer default and fallback | Proven by default package guard and 23/23 packaged smoke, and by the adapter smoke's "adapter inactive by default" check. |
 
 ## Findings ledger
@@ -50,27 +52,20 @@ Full protocol, numbers, attribution and limitations: [`hitch-report.md`](hitch-r
 ## 2. Interaction parity
 
 Full matrix: [`interaction-parity-matrix.md`](interaction-parity-matrix.md) and
-[`interaction-parity-matrix.csv`](interaction-parity-matrix.csv).
+[`interaction-parity-matrix.csv`](interaction-parity-matrix.csv). Implementation
+report: [`interaction-implementation-report.md`](interaction-implementation-report.md).
+Accessibility findings: [`accessibility-findings.md`](accessibility-findings.md).
 
 The matrix covers pointer, keyboard, controls, layers, panels, layout, state, accessibility and
-the flag/fallback surface. It is a source-level comparison with line citations; the only runtime
-checks are the packaged smokes. It is not an axe or manual screen-reader audit.
+the flag/fallback surface. The audit's source-level comparison is preserved in the note column;
+the verdict column and implementation-evidence section record the parity commit
+`67a7a18f` and its regression tests. Every area, port and fleet now has a keyboard
+path, every layer toggle maps to its own layer, shift-click reaches the route
+reader, and the Overview chrome is hosted behind the existing adapter flag.
 
-Headline gaps:
-
-- Shift-click is blocked by MapLibre `boxZoom`, and the adapter has no route readout.
-- Fleet selection and drag-to-order are not wired.
-- Area hover, tooltips and per-area keyboard/screen-reader access are absent.
-- Only labels and routes honour their layer toggles; ownership, borders, lanes, possessions,
-  fleets and the graticule do not.
-- The adapter is a fixed full-window canvas: no minimap, legend, scale bar, area inspector,
-  route readout, area tree, centre slider, frame meter, panel sizing or dock-inset layout.
-- Projection, reset view and initial home-area focus are not mapped to application state.
-
-The adapter has **no component test** for `GlobeAdapter.tsx`, `MapSurface.tsx` or
-`GlobeAdapterHost.tsx`. The packaged smoke proves that the surface and entity nav exist, not that
-a pointer or key gesture produces the expected state change. Any parity fix needs a runtime
-regression, not only a style assertion.
+The adapter still has **no packaged interaction smoke that drives pointer or key
+gestures**; component tests cover the adapter and chrome against a fake MapLibre
+map. A packaged pointer/key pass belongs to the pre-enablement evidence set.
 
 ## 3. Lifecycle
 
@@ -99,21 +94,24 @@ Full method and numbers: [`lifecycle-findings.md`](lifecycle-findings.md).
 
 ## 5. Recommendation
 
-**Do not promote the globe adapter and do not change the default renderer.** The audit changes
-the reasons, not the decision:
+**Do not promote the globe adapter and do not change the default renderer.** The
+interaction-parity backlog is now implemented, but promotion still needs the
+evidence below, not another parity pass:
 
-1. **Interaction parity is now the dominant engineering blocker.** The adapter is a capable
-   experimental surface, not an Overview replacement. The missing chrome, layer semantics,
-   area keyboard/AT mirror, route reading and orders are substantial work, not polish.
-2. **The "~67 ms zoom-out hitch" should be re-scoped.** It did not reproduce on the current build;
-   the current renderer produced comparable and larger hitches; the one traced globe gap is
-   GPU/compositor sync. Treat it as cross-renderer frame pacing until a reproducing trace exists
-   (child #342), and keep the cross-GPU/Windows/Linux evidence gaps open.
-3. **Lifecycle is not a release blocker for the adapter.** It is flat after the first close and
-   attributable. The legacy spike finding is unchanged and irrelevant to the default package.
-4. **Phase 2, production enablement, merge and push remain not authorized.** Legal ODbL/GSHHG,
-   cross-GPU, Windows/Linux packaged validation, Fleet the Waves 3 observation and cross-OS
-   determinism are untouched.
+1. **Interaction parity is implemented behind the flag.** The 37 failing rows and
+   the blocked shift-click row now have implementation and component-test evidence.
+   The remaining parity risk is packaged pointer/key coverage, which is absent.
+2. **The "~67 ms zoom-out hitch" should stay re-scoped.** It did not reproduce on
+   the current build; the current renderer produced comparable and larger hitches;
+   the one traced globe gap is GPU/compositor sync. Treat it as cross-renderer
+   frame pacing until a reproducing trace exists (child #342), and keep the
+   cross-GPU/Windows/Linux evidence gaps open.
+3. **Lifecycle is not a release blocker for the adapter.** It is flat after the first
+   close and attributable; the parity listeners are in the disposal registry. The
+   legacy spike finding is unchanged and irrelevant to the default package.
+4. **Production enablement, merge and release remain not authorized.** Legal
+   ODbL/GSHHG, cross-GPU, Windows/Linux packaged validation, Fleet the Waves 3
+   observation and cross-OS determinism are untouched.
 
 ### Evidence this audit did not produce
 
@@ -136,6 +134,9 @@ docs/research/globe-hitch-parity-audit/
   interaction-parity-matrix.md
   interaction-parity-matrix.csv
   lifecycle-findings.md
+  interaction-implementation-report.md
+  accessibility-findings.md
+  performance-notes.md
   evidence/
     environment.txt
     adapter/

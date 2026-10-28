@@ -142,3 +142,26 @@ that trace exists. Do not treat this audit as proof that the G-03a observation w
 - No conclusion about display-server or OS scheduling beyond the recorded load and frame
   cadence.
 - No cross-OS determinism claim.
+
+## Update 2026-10-28: interaction-parity branch (commit 67a7a18f)
+
+No fix for the historic 50-83 ms globe frame was made. The parity work does not
+change tile preparation, rendering, the compositor or the GPU; it adds interaction
+handling, layer filters and chrome. The existing benchmark and trace evidence stand.
+
+The reproduction portion stays open in #342 with the exact protocol:
+
+1. Use a machine that still reproduces 50-83 ms globe zoom-out frames. The tested
+   Apple M4 did not reproduce them in 22 clean launches.
+2. Build and package the adapter (`pnpm run build:globe-adapter`, then
+   `electron-builder --mac --dir --config electron-builder.yml`) so the baked tile
+   pack is present.
+3. Run `node scripts/globe-audit-benchmark.mjs --runs 3 --label repro --app <app>`
+   and retain the raw JSON. Keep vsync capped; label and exclude contended runs.
+4. Repeat with `--trace`. Compare `CrGpuMain`, `SwapBuffers` and the Dawn
+   `WaitForCommandsToBeScheduled` interval with `evidence/adapter/trace-summary.json`.
+5. Only a before/after trace of the same reproducing scenario can support a claim
+   that the hitch was fixed. A code change without that trace is not authorised.
+
+The current renderer's comparable or worse hitches remain part of the comparison.
+Cross-GPU, Windows, Linux and GPU timer-query evidence remain absent.
