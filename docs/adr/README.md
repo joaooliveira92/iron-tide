@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0328).
+highest existing number + 1 (the next number is ADR-0329).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -231,6 +231,7 @@ Package interfaces, seams and module depth across the engine.
 | 0320 | [ADR-0320-electron-shell-navigation-permission-and-csp-policy.md](ADR-0320-electron-shell-navigation-permission-and-csp-policy.md) | Electron shell navigation, permission and CSP policy | accepted | — |
 | 0321 | [ADR-0321-division-order-model.md](ADR-0321-division-order-model.md) | Divisions receive a versioned order model, with stance as a lossless preset | accepted | — |
 | 0322 | [ADR-0322-realism-order-permission-matrix.md](ADR-0322-realism-order-permission-matrix.md) | Realism modes gate battle orders in the engine, not in the UI | accepted | — |
+| 0328 | [ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md](ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md) | Desktop IPC channels are declared once in a shared contract | accepted | — |
 
 ## Archive
 
