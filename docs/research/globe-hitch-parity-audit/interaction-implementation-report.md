@@ -82,7 +82,7 @@ absent.
 
 ## Validation
 
-- Focused adapter/chrome/contract tests: **73/73 pass** across 11 files.
+- Focused adapter/chrome/contract tests: **74/74 pass** across 11 files.
 - Packaged adapter smoke: **47/47 pass**, including the area mirror (36 buttons),
   screen-reader area table (36 rows), minimap, frame meter, layer controls,
   fallback modes, no remote request, worker return and bounded lifecycle.

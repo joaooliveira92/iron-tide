@@ -178,7 +178,7 @@ from every conclusion.
 - Adapter package guard: **PASS** in the smoke; 0 violations and only the
   allow-listed adapter assets.
 - Performance: see `performance-notes.md` and `evidence/parity/adapter-parity.json`.
-- Focused tests: 73 adapter/chrome/contract tests pass (11 files).
+- Focused tests: 74 adapter/chrome/contract tests pass (11 files).
 - Accessibility: source-level matrix plus component tests; no axe/manual pass.
 - Offline: packaged app served from `file:`; no non-local request in the smoke.
 

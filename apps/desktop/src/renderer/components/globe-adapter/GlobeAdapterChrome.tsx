@@ -62,7 +62,12 @@ export interface GlobeAdapterChromeProps {
     readonly kind: string;
     readonly areaId: string;
   }[];
-  readonly onSelectEntity?: (areaId: string) => void;
+  readonly onSelectEntity?: (entity: {
+    readonly id: string;
+    readonly name: string;
+    readonly kind: string;
+    readonly areaId: string;
+  }) => void;
   readonly showMinimap?: boolean;
   readonly defaultControlsOpen?: boolean;
 }
@@ -259,7 +264,7 @@ export function GlobeAdapterChrome({
                 <button
                   type="button"
                   className="w-full rounded px-2 py-1 text-left hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                  onClick={() => onSelectEntity?.(entity.areaId)}
+                  onClick={() => onSelectEntity?.(entity)}
                 >
                   {entity.name} <span className="opacity-70">({entity.kind})</span>
                 </button>

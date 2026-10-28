@@ -139,6 +139,23 @@ describe("GlobeAdapterChrome", () => {
     expect(screen.getAllByText("Fleets").length).toBeGreaterThan(0);
   });
 
+  it("routes entity buttons with their kind so fleets are not selected as areas", () => {
+    const onSelectEntity = vi.fn();
+    renderChrome({
+      onSelectEntity,
+      entityRows: [
+        { id: "fleet:fleet-home", name: "Home Fleet", kind: "fleet", areaId: "area_north_sea" },
+      ],
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Home Fleet/ }));
+    expect(onSelectEntity).toHaveBeenCalledWith({
+      id: "fleet:fleet-home",
+      name: "Home Fleet",
+      kind: "fleet",
+      areaId: "area_north_sea",
+    });
+  });
+
   it("remembers the layers and areas disclosure for the session", () => {
     sessionStorage.clear();
     const { unmount } = renderChrome();

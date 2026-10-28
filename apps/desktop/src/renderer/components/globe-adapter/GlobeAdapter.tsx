@@ -1309,9 +1309,16 @@ export function GlobeAdapter({
         onReset={resetView}
         onRecentre={recentre}
         entityRows={entityRows}
-        onSelectEntity={(areaId) => {
-          onSelect(areaId);
-          setLiveMessage(`Selected ${derived.describeAreaFor(areaId)}`);
+        onSelectEntity={(entity) => {
+          const fleetId = fleetIdFromMarker(entity.id);
+          if (fleetId !== null) {
+            orders?.onSelectFleet(fleetId);
+            setSelectedFleet(fleetId);
+            setLiveMessage(`Selected fleet ${entity.name}`);
+            return;
+          }
+          onSelect(entity.areaId);
+          setLiveMessage(`Selected ${derived.describeAreaFor(entity.areaId)}`);
         }}
         showMinimap={showMinimap}
       />
