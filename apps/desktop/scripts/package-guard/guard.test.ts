@@ -63,7 +63,7 @@ function writePackage(layout: Layout): string {
   return root;
 }
 
-const DEFAULT_ARCHIVE = (): Map<string, Uint8Array> =>
+const BASE_ARCHIVE = (): Map<string, Uint8Array> =>
   new Map<string, Uint8Array>([
     ["package.json", text('{"name":"bluewave"}')],
     ["out/main/index.js", text("export {}")],
@@ -73,8 +73,25 @@ const DEFAULT_ARCHIVE = (): Map<string, Uint8Array> =>
     ["node_modules/maplibre-gl/dist/maplibre-gl.js", randomBytes(2_500_000)],
   ]);
 
+function withProductionAssets(archive: Map<string, Uint8Array>): Map<string, Uint8Array> {
+  const pack = randomBytes(40_000);
+  const manifest = {
+    integrity: { packSha256: sha(pack) },
+    sizes: { packBytes: pack.length },
+  };
+  archive.set("out/renderer/map-assets/land-tiles/land.bwtp", pack);
+  archive.set("out/renderer/map-assets/land-tiles/manifest.json", text(JSON.stringify(manifest)));
+  archive.set("out/renderer/map-assets/land-tiles/licences/natural-earth-terms.txt", text("terms"));
+  archive.set("out/renderer/map-assets/glyphs/Inter Regular/0-255.pbf", randomBytes(2_000));
+  archive.set("out/renderer/map-assets/glyphs/OFL.txt", text("SIL OFL 1.1"));
+  archive.set("out/renderer/assets/GlobeAdapter-abc.js", randomBytes(20_000));
+  return archive;
+}
+
+const DEFAULT_ARCHIVE = (): Map<string, Uint8Array> => withProductionAssets(BASE_ARCHIVE());
+
 function spikeArchive(): Map<string, Uint8Array> {
-  const archive = DEFAULT_ARCHIVE();
+  const archive = BASE_ARCHIVE();
   const pack = randomBytes(40_000);
   const manifest = {
     integrity: { packSha256: sha(pack) },
@@ -124,6 +141,40 @@ describe("clean packages", () => {
     expect(rules({ archive }, "spike")).toEqual([]);
     expect(rules({ archive }, "default")).toContain(
       "spike-runtime-asset@out/renderer/map-spike/land-tiles-corrupt/land.bwtp",
+    );
+  });
+});
+
+describe("production globe package policy", () => {
+  it("requires the production pack, manifest, glyphs and adapter chunk", () => {
+    const archive = DEFAULT_ARCHIVE();
+    archive.delete("out/renderer/map-assets/land-tiles/land.bwtp");
+    archive.delete("out/renderer/map-assets/land-tiles/manifest.json");
+    archive.delete("out/renderer/map-assets/glyphs/Inter Regular/0-255.pbf");
+    archive.delete("out/renderer/assets/GlobeAdapter-abc.js");
+    expect(rules({ archive }, "default")).toEqual(
+      expect.arrayContaining([
+        "production-tile-pack:missing@out/renderer/map-assets/land-tiles/land.bwtp",
+        "production-tile-manifest:missing@out/renderer/map-assets/land-tiles/manifest.json",
+        "production-glyphs:missing@out/renderer/map-assets/glyphs/**/*.pbf",
+        "production-adapter-chunk:missing@out/renderer/assets/GlobeAdapter-*.js",
+      ]),
+    );
+  });
+
+  it("rejects a production pack that does not match its manifest", () => {
+    const archive = DEFAULT_ARCHIVE();
+    archive.set("out/renderer/map-assets/land-tiles/land.bwtp", randomBytes(40_000));
+    expect(rules({ archive }, "default")).toContain(
+      "spike-pack-integrity@out/renderer/map-assets/land-tiles/land.bwtp",
+    );
+  });
+
+  it("rejects the production pack when it outgrows its cap", () => {
+    const archive = DEFAULT_ARCHIVE();
+    archive.set("out/renderer/map-assets/land-tiles/land.bwtp", randomBytes(6_100_000));
+    expect(rules({ archive }, "default")).toContain(
+      "production-tile-pack:size@out/renderer/map-assets/land-tiles/land.bwtp",
     );
   });
 });

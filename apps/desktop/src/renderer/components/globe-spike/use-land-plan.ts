@@ -19,8 +19,17 @@ const TILE_DIRECTORIES: Record<LandMode, string> = {
   baked: "land-tiles",
   runtime: "land-tiles",
   missing: "land-tiles-missing",
-  corrupt: "land-tiles-corrupt",
+  corrupt: "land-tiles",
 };
+
+function corruptingFetch(url: string) {
+  return fetch(url).then(async (response) => {
+    const buffer = await response.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    if (bytes.length > 0) bytes[bytes.length - 1] = (bytes[bytes.length - 1] ?? 0) ^ 0xff;
+    return { ok: response.ok, status: response.status, arrayBuffer: async () => bytes.buffer };
+  });
+}
 
 function baseDirectory(): string {
   const href = document.baseURI;
@@ -35,7 +44,7 @@ async function loadRuntimeCoast(): Promise<GeoFeatureCollection> {
   return coastlineCollection(decodeCoastline(bytes.buffer));
 }
 
-export function useLandPlan(mode: LandMode): LandPlan {
+export function useLandPlan(mode: LandMode, assetRoot = "map-spike"): LandPlan {
   const [plan, setPlan] = useState<LandPlan>({ kind: "loading" });
   useEffect(() => {
     let active = true;
@@ -55,8 +64,8 @@ export function useLandPlan(mode: LandMode): LandPlan {
       void fallback(null);
     } else {
       loadBakedTiles(
-        `${baseDirectory()}map-spike/${TILE_DIRECTORIES[mode]}/`,
-        (url) => fetch(url),
+        `${baseDirectory()}${assetRoot}/${TILE_DIRECTORIES[mode]}/`,
+        mode === "corrupt" ? corruptingFetch : (url) => fetch(url),
         subtleDigest,
         () => performance.now(),
       ).then(

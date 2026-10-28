@@ -21,12 +21,6 @@
       "patterns": ["out/renderer/assets/GlobeSpike*"]
     },
     {
-      "id": "adapter-code-chunk",
-      "class": "dev-feature-flag",
-      "reason": "the production globe adapter chunk exists only when the adapter flag is set at build time",
-      "patterns": ["out/renderer/assets/GlobeAdapter-*"]
-    },
-    {
       "id": "source-archive",
       "class": "source-archive-or-cache",
       "reason": "raw source archives and their download cache are build-time inputs and never ship",
@@ -223,10 +217,70 @@
   ],
   "modes": {
     "default": {
-      "allow": [],
-      "integrity": null,
+      "allow": [
+        {
+          "id": "production-tile-pack",
+          "class": "generated-runtime",
+          "reason": "the baked offline Natural Earth tile pack the production Overview renderer reads",
+          "pattern": "out/renderer/map-assets/land-tiles/land.bwtp",
+          "maxBytes": 6000000,
+          "required": true
+        },
+        {
+          "id": "production-tile-manifest",
+          "class": "generated-runtime",
+          "reason": "the manifest carrying the pack size and SHA-256 the loader verifies",
+          "pattern": "out/renderer/map-assets/land-tiles/manifest.json",
+          "maxBytes": 64000,
+          "required": true
+        },
+        {
+          "id": "production-licences",
+          "class": "generated-runtime",
+          "reason": "Natural Earth licence and version notices shipped with the tiles",
+          "pattern": "out/renderer/map-assets/land-tiles/licences/*",
+          "maxBytes": 200000,
+          "required": false
+        },
+        {
+          "id": "production-glyphs",
+          "class": "generated-runtime",
+          "reason": "Inter glyph ranges the production labels read from the app, never from a network",
+          "pattern": "out/renderer/map-assets/glyphs/**/*.pbf",
+          "maxBytes": 200000,
+          "required": true
+        },
+        {
+          "id": "production-glyph-licence",
+          "class": "generated-runtime",
+          "reason": "the SIL OFL notice for the Inter glyph derivative",
+          "pattern": "out/renderer/map-assets/glyphs/*.txt",
+          "maxBytes": 20000,
+          "required": false
+        },
+        {
+          "id": "production-adapter-chunk",
+          "class": "prod-feature",
+          "reason": "the lazy globe adapter chunk that is the default Overview renderer",
+          "pattern": "out/renderer/assets/GlobeAdapter-*.js",
+          "maxBytes": 3000000,
+          "required": true
+        },
+        {
+          "id": "production-adapter-style",
+          "class": "prod-feature",
+          "reason": "the stylesheet emitted with the lazy globe adapter chunk",
+          "pattern": "out/renderer/assets/GlobeAdapter-*.css",
+          "maxBytes": 100000,
+          "required": false
+        }
+      ],
+      "integrity": {
+        "manifest": "out/renderer/map-assets/land-tiles/manifest.json",
+        "pack": "out/renderer/map-assets/land-tiles/land.bwtp"
+      },
       "budget": {
-        "archiveBytesMax": 210200000,
+        "archiveBytesMax": 216000000,
         "outsideArchiveBytesMax": 2100000,
         "unlistedFileBytesMax": 1000000
       }
