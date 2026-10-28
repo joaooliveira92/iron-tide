@@ -173,6 +173,11 @@
       "reason": "the compiled content artifact shipped as an application resource"
     },
     {
+      "pattern": "**/resources/content/generated/*/content-artifact.json",
+      "maxBytes": 3000000,
+      "reason": "the compiled content artifact shipped as an application resource on Linux packages"
+    },
+    {
       "pattern": "out/renderer/assets/*.ttf",
       "maxBytes": 1200000,
       "reason": "the bundled interface font"

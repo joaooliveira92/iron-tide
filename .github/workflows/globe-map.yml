@@ -67,6 +67,8 @@ jobs:
       - name: Globe adapter unit and accessibility suites
         run: pnpm --filter @bluewave/desktop exec vp test run src/renderer/components/globe-adapter src/renderer/components/globe-spike scripts/package-guard
       - name: Package the app (unpacked)
-        run: CSC_IDENTITY_AUTO_DISCOVERY=false pnpm --filter @bluewave/desktop exec electron-builder ${{ matrix.target }} --dir --config electron-builder.yml
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: pnpm --filter @bluewave/desktop exec electron-builder ${{ matrix.target }} --dir --config electron-builder.yml
       - name: Enforce the production package policy
-        run: pnpm --filter @bluewave/desktop exec node scripts/package-guard/cli.ts --mode default --package apps/desktop/dist-electron
+        run: pnpm --filter @bluewave/desktop exec node scripts/package-guard/cli.ts --mode default --package dist-electron
