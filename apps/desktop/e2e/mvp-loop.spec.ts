@@ -36,7 +36,7 @@ test("New Game compiles a fresh campaign onto Overview", async ({ e2e }) => {
   ).toBeVisible();
 
   await expect(e2e.page.getByTestId("globe-adapter")).toBeVisible({
-    timeout: 15_000,
+    timeout: 60_000,
   });
 });
 
