@@ -1,0 +1,13 @@
+Pinning ablation (bake --simplification-pixels N [--no-pinning]), real Natural Earth data, validation by the same validator.
+Default config is 0.35 px.
+
+0.35 px, pinning on : validation passed (4,092,995 bytes)
+0.35 px, pinning off: validation passed (4,083,631 bytes)   -> pinning is not needed at the default tolerance
+2 px,    pinning on : validation passed (2,287,669 bytes)
+2 px,    pinning off: FAILED (2,275,702 bytes)
+  dardanelles z5 max-narrowing: passage 1296 m is narrower than 1396 m (source 2792 m, allowed narrowing 0.5)
+  bab-el-mandeb z4 max-displacement: passage centre moved 4341 m; limit 2000 m
+  bab-el-mandeb z5 max-displacement: passage centre moved 4241 m; limit 2000 m
+  strait-of-malacca z5 max-displacement: passage centre moved 6298 m; limit 5000 m
+4 px,    pinning on : validation passed (1,777,777 bytes)
+4 px,    pinning off: FAILED (1,764,995 bytes), 8 findings (dardanelles z5/z6, hormuz z4, bab-el-mandeb z4-z6, malacca z3/z6)

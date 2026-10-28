@@ -1,0 +1,18 @@
+{
+  "mode": "default",
+  "policyVersion": "1.0.0",
+  "passed": true,
+  "counts": {
+    "files": 19299,
+    "allowed": 0,
+    "violations": 0
+  },
+  "sizes": {
+    "archiveBytes": 206332850,
+    "archiveBytesMax": 210200000,
+    "outsideResourceBytes": 0,
+    "outsideResourceBytesMax": 2100000
+  },
+  "allowed": [],
+  "violations": []
+}

@@ -1,0 +1,413 @@
+{
+  "checks": [
+    {
+      "name": "running the packaged build",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the spike package holds only the allow-listed spike assets",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "contextIsolation on",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "nodeIntegration off",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "sandbox on",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "webSecurity not disabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "renderer has no require/process",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "eval is blocked by CSP (page-resident probe)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "remote fetch is blocked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "served from file:",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "spike inactive by default",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "globe canvas painted",
+      "ok": true,
+      "detail": "painted=533"
+    },
+    {
+      "name": "map worker started",
+      "ok": true,
+      "detail": "workers 0 -> 1"
+    },
+    {
+      "name": "bundled glyphs load and symbol labels are placed",
+      "ok": true,
+      "detail": "labels=1"
+    },
+    {
+      "name": "map reported no resource errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "marker pick succeeds at every swept zoom",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "blend reaches planar after z12",
+      "ok": true,
+      "detail": "[{\"zoom\":1.4,\"globeness\":1,\"hit\":true},{\"zoom\":5,\"globeness\":1,\"hit\":true},{\"zoom\":10,\"globeness\":1,\"hit\":true},{\"zoom\":11.5,\"globeness\":0.5,\"hit\":true},{\"zoom\":12.5,\"globeness\":0,\"hit\":true},{\"zoom\":14,\"globeness\":0,\"hit\":true}]"
+    },
+    {
+      "name": "real wheel and drag input did not throw",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no CSP violations while the globe is open",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "listeners after GC return to baseline after reopen cycles",
+      "ok": false,
+      "detail": "baseline 473, first 500, last 500"
+    },
+    {
+      "name": "DOM nodes after GC return to baseline after reopen cycles",
+      "ok": false,
+      "detail": "baseline 135, first 232, last 232"
+    },
+    {
+      "name": "heap after GC does not grow across reopen cycles",
+      "ok": true,
+      "detail": "15.7 -> 16.5 MB"
+    },
+    {
+      "name": "workers do not grow across reopen cycles",
+      "ok": true,
+      "detail": "0 -> 0"
+    },
+    {
+      "name": "forced failure is reported",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "forced failure returns to the current app",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "current renderer still usable after failure",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no non-local requests",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no unexpected CSP violations",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no unexpected console errors",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "no page errors",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "measurements": {
+    "webPreferences": {
+      "contextIsolation": true,
+      "nodeIntegration": false,
+      "sandbox": true,
+      "webSecurity": true
+    },
+    "posture": {
+      "hasRequire": false,
+      "hasProcess": false,
+      "remoteFetchBlocked": true,
+      "protocol": "file:"
+    },
+    "pagePosture": {
+      "evalBlocked": true
+    },
+    "baselineCounters": {
+      "nodes": 135,
+      "listeners": 473,
+      "documents": 1,
+      "workers": 0,
+      "heapMB": 9.5
+    },
+    "timeToIdleMs": 554,
+    "paintedPixels": 533,
+    "sweep": [
+      {
+        "zoom": 1.4,
+        "globeness": 1,
+        "hit": true
+      },
+      {
+        "zoom": 5,
+        "globeness": 1,
+        "hit": true
+      },
+      {
+        "zoom": 10,
+        "globeness": 1,
+        "hit": true
+      },
+      {
+        "zoom": 11.5,
+        "globeness": 0.5,
+        "hit": true
+      },
+      {
+        "zoom": 12.5,
+        "globeness": 0,
+        "hit": true
+      },
+      {
+        "zoom": 14,
+        "globeness": 0,
+        "hit": true
+      }
+    ],
+    "labelsRenderedAtZ5": 1,
+    "mapErrors": [],
+    "afterFirstClose": {
+      "nodes": 232,
+      "listeners": 500,
+      "documents": 1,
+      "workers": 0,
+      "heapMB": 16
+    },
+    "perCycle": [
+      {
+        "nodes": 232,
+        "listeners": 500,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 15.7
+      },
+      {
+        "nodes": 232,
+        "listeners": 500,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 15.9
+      },
+      {
+        "nodes": 232,
+        "listeners": 500,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 16
+      },
+      {
+        "nodes": 232,
+        "listeners": 500,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 16.1
+      },
+      {
+        "nodes": 232,
+        "listeners": 500,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 16.1
+      },
+      {
+        "nodes": 232,
+        "listeners": 500,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 16.1
+      },
+      {
+        "nodes": 232,
+        "listeners": 500,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 16.2
+      },
+      {
+        "nodes": 232,
+        "listeners": 500,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 16.5
+      },
+      {
+        "nodes": 232,
+        "listeners": 500,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 16.5
+      },
+      {
+        "nodes": 232,
+        "listeners": 500,
+        "documents": 1,
+        "workers": 0,
+        "heapMB": 16.5
+      }
+    ],
+    "canvasesAfterClose": 1,
+    "failSafe": {
+      "failures": [
+        "forced spike failure"
+      ],
+      "hash": "",
+      "spike": "undefined"
+    },
+    "remoteRequests": [],
+    "cspViolationsExpectedProbe": [
+      "connect-src https://example.invalid/probe"
+    ],
+    "consoleErrors": []
+  },
+  "consoleMessages": [
+    {
+      "type": "error",
+      "text": "Connecting to 'https://example.invalid/probe' violates the following Content Security Policy directive: \"connect-src 'self'\". The action has been blocked."
+    },
+    {
+      "type": "error",
+      "text": "Fetch API cannot load https://example.invalid/probe. Refused to connect because it violates the document's Content Security Policy."
+    },
+    {
+      "type": "warning",
+      "text": "Max vertices per segment is 65535: bucket requested 74280. Consider using the `fillLargeMeshArrays` function if you require meshes with more than 65535 vertices."
+    },
+    {
+      "type": "warning",
+      "text": "Max vertices per segment is 65535: bucket requested 74280. Consider using the `fillLargeMeshArrays` function if you require meshes with more than 65535 vertices."
+    },
+    {
+      "type": "warning",
+      "text": "Max vertices per segment is 65535: bucket requested 74280. Consider using the `fillLargeMeshArrays` function if you require meshes with more than 65535 vertices."
+    },
+    {
+      "type": "warning",
+      "text": "Max vertices per segment is 65535: bucket requested 74280. Consider using the `fillLargeMeshArrays` function if you require meshes with more than 65535 vertices."
+    },
+    {
+      "type": "warning",
+      "text": "Max vertices per segment is 65535: bucket requested 74280. Consider using the `fillLargeMeshArrays` function if you require meshes with more than 65535 vertices."
+    },
+    {
+      "type": "warning",
+      "text": "Max vertices per segment is 65535: bucket requested 74280. Consider using the `fillLargeMeshArrays` function if you require meshes with more than 65535 vertices."
+    },
+    {
+      "type": "warning",
+      "text": "Max vertices per segment is 65535: bucket requested 74280. Consider using the `fillLargeMeshArrays` function if you require meshes with more than 65535 vertices."
+    },
+    {
+      "type": "warning",
+      "text": "Max vertices per segment is 65535: bucket requested 74280. Consider using the `fillLargeMeshArrays` function if you require meshes with more than 65535 vertices."
+    },
+    {
+      "type": "warning",
+      "text": "Max vertices per segment is 65535: bucket requested 74280. Consider using the `fillLargeMeshArrays` function if you require meshes with more than 65535 vertices."
+    },
+    {
+      "type": "warning",
+      "text": "Max vertices per segment is 65535: bucket requested 74280. Consider using the `fillLargeMeshArrays` function if you require meshes with more than 65535 vertices."
+    },
+    {
+      "type": "warning",
+      "text": "Max vertices per segment is 65535: bucket requested 74280. Consider using the `fillLargeMeshArrays` function if you require meshes with more than 65535 vertices."
+    }
+  ],
+  "pageErrors": [],
+  "requests": [
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/inter-c8O0ljhh.ttf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/GlobeSpike-6LQ8wP8w.js",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/GlobeSpike-BUWBlw7H.css",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/geist-mono-Dispecij.woff2",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/maplibre-gl-worker-CMkqA50c.mjs",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/glyphs/Inter%20Regular/0-255.pbf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/maplibre-gl-worker-CMkqA50c.mjs",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/glyphs/Inter%20Regular/0-255.pbf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/maplibre-gl-worker-CMkqA50c.mjs",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/glyphs/Inter%20Regular/0-255.pbf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/maplibre-gl-worker-CMkqA50c.mjs",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/glyphs/Inter%20Regular/0-255.pbf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/maplibre-gl-worker-CMkqA50c.mjs",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/glyphs/Inter%20Regular/0-255.pbf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/maplibre-gl-worker-CMkqA50c.mjs",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/glyphs/Inter%20Regular/0-255.pbf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/maplibre-gl-worker-CMkqA50c.mjs",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/glyphs/Inter%20Regular/0-255.pbf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/maplibre-gl-worker-CMkqA50c.mjs",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/glyphs/Inter%20Regular/0-255.pbf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/maplibre-gl-worker-CMkqA50c.mjs",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/glyphs/Inter%20Regular/0-255.pbf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/maplibre-gl-worker-CMkqA50c.mjs",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/glyphs/Inter%20Regular/0-255.pbf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/assets/maplibre-gl-worker-CMkqA50c.mjs",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/glyphs/Inter%20Regular/0-255.pbf",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/manifest.json",
+    "file://<repo>/apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar/out/renderer/map-spike/land-tiles/land.bwtp"
+  ]
+}

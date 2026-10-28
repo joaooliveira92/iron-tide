@@ -1,0 +1,229 @@
+{
+  "label": "zoom150",
+  "tasks": {
+    "picking": {
+      "interiorCases": 126,
+      "unambiguousFailureCount": 0,
+      "unambiguousFailures": [],
+      "ambiguousFailureCount": 0,
+      "byZoom": [
+        {
+          "zoom": 2,
+          "cases": 18,
+          "failures": 0
+        },
+        {
+          "zoom": 5,
+          "cases": 18,
+          "failures": 0
+        },
+        {
+          "zoom": 11.5,
+          "cases": 18,
+          "failures": 0
+        },
+        {
+          "zoom": 12.5,
+          "cases": 18,
+          "failures": 0
+        },
+        {
+          "zoom": 15,
+          "cases": 18,
+          "failures": 0
+        },
+        {
+          "zoom": 18,
+          "cases": 18,
+          "failures": 0
+        },
+        {
+          "zoom": 22,
+          "cases": 18,
+          "failures": 0
+        }
+      ],
+      "scatterCases": 144,
+      "scatterAmbiguousWithin1p5px": 4,
+      "scatterHardFailures": 0,
+      "scatterAmbiguousMismatches": 0,
+      "transitionReversal": [
+        {
+          "phase": "in",
+          "zoom": 11,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.1,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.2,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.3,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.4,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.5,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.6,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.7,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.8,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.9,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 12,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 12,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.9,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.8,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.7,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.6,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.5,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.4,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.3,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.2,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.1,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11,
+          "hit": true,
+          "area": "area_mediterranean"
+        }
+      ]
+    }
+  },
+  "checks": [
+    {
+      "name": "area picking: interior centre picks match geometric truth (unambiguous cases)",
+      "ok": true,
+      "detail": "0/126"
+    },
+    {
+      "name": "area picking: scattered viewport points match truth except within 1.5 px of an edge",
+      "ok": true,
+      "detail": "0/144"
+    },
+    {
+      "name": "picking through z11-12 transition: marker hit at every step",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "picking through z11-12 transition: reversal gives identical results",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no console errors during validation",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "environment": {
+    "dpr": 3,
+    "viewport": [
+      980,
+      578
+    ],
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) @bluewave/desktop/4.0.0 Chrome/152.0.7977.167 Electron/44.9.2 Safari/537.36",
+    "args": [
+      "--user-data-dir=<tmp>",
+      "--disable-renderer-backgrounding",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-background-timer-throttling"
+    ]
+  },
+  "mainProcessLog": [],
+  "consoleErrors": []
+}

@@ -1,0 +1,516 @@
+{
+  "schemaVersion": 1,
+  "catalogueVersion": 1,
+  "edgeSemanticsPolicy": "Every authored or derived vertex is WGS84 longitude/latitude. Consecutive vertices are joined by straight segments in longitude/latitude (plate carree). Before tiling, every segment is densified so that Mercator, great-circle and rhumb interpretations agree to within densifyToleranceMetres.",
+  "features": [
+    {
+      "id": "suez-canal",
+      "name": "Suez Canal",
+      "type": "canal",
+      "representation": "overlay-line",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Route r_suez_canal links the Ottoman Egypt coast to the Red Sea in the 1880 content; it is the only sea shortcut between Mediterranean and Indian Ocean lanes, so a sealed isthmus would misrepresent the campaign map.",
+      "requiredFromZoom": 3,
+      "geometry": {
+        "source": "natural-earth",
+        "layer": "ne_10m_rivers_lake_centerlines",
+        "name": "Suez Canal"
+      },
+      "renderedWidthPixels": 2.5,
+      "maxDisplacementMetres": 1500,
+      "maxNarrowingFraction": 0.0,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "opensYear": 1869,
+      "provenance": {
+        "method": "derived-from-dataset",
+        "source": "Natural Earth ne_10m_rivers_lake_centerlines 5.0.0, feature 'Suez Canal'",
+        "accuracyClass": "dataset",
+        "positionalAccuracyMetres": 1500,
+        "retrieved": "2026-10-27",
+        "notes": "Centreline only; width is a deliberate cartographic exaggeration to renderedWidthPixels."
+      },
+      "license": {
+        "status": "public-domain",
+        "identifier": "Natural Earth terms of use",
+        "attributionRequired": false
+      },
+      "validationNotes": "Natural Earth 10m land seals the isthmus along this centreline; the overlay line is the only water representation."
+    },
+    {
+      "id": "panama-canal",
+      "name": "Panama Canal",
+      "type": "canal",
+      "representation": "overlay-line",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Connects Caribbean and Pacific lane groups for post-1914 scenarios; display-only in the 1880 campaign, kept so the map does not show a sealed isthmus once the era gate opens.",
+      "requiredFromZoom": 4,
+      "geometry": {
+        "source": "natural-earth",
+        "layer": "ne_10m_rivers_lake_centerlines",
+        "name": "Panama Canal"
+      },
+      "renderedWidthPixels": 2.5,
+      "maxDisplacementMetres": 1500,
+      "maxNarrowingFraction": 0.0,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "opensYear": 1914,
+      "provenance": {
+        "method": "derived-from-dataset",
+        "source": "Natural Earth ne_10m_rivers_lake_centerlines 5.0.0, feature 'Panama Canal'",
+        "accuracyClass": "dataset",
+        "positionalAccuracyMetres": 1500,
+        "retrieved": "2026-10-27",
+        "notes": "Centreline includes the lake section; locks are not represented."
+      },
+      "license": {
+        "status": "public-domain",
+        "identifier": "Natural Earth terms of use",
+        "attributionRequired": false
+      },
+      "validationNotes": "Not an 1880 feature: opensYear gates it to later eras and the renderer must not show it before then."
+    },
+    {
+      "id": "corinth-canal",
+      "name": "Corinth Canal",
+      "type": "canal",
+      "representation": "overlay-line",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Cuts the Peloponnese isthmus between the Gulf of Corinth and the Aegean for post-1893 eastern Mediterranean coastal movement; display-only.",
+      "requiredFromZoom": 6,
+      "geometry": {
+        "source": "authored",
+        "lines": [
+          [
+            [22.9876, 37.9701],
+            [23.01, 37.9163]
+          ]
+        ]
+      },
+      "renderedWidthPixels": 2.5,
+      "maxDisplacementMetres": 3000,
+      "maxNarrowingFraction": 0.0,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "opensYear": 1893,
+      "provenance": {
+        "method": "authored",
+        "source": "Bluewave-authored polyline from general public geographic knowledge of the published endpoints and course; not traced from any map image or proprietary dataset",
+        "accuracyClass": "schematic",
+        "positionalAccuracyMetres": 3000,
+        "retrieved": "2026-10-27",
+        "notes": "Two-point centreline from the published end locations (Poseidonia and Isthmia). Length checked at about 6.3 km, consistent with the published canal length. Accuracy is schematic until replaced by an approved dataset (ticket G-04a)."
+      },
+      "license": {
+        "status": "bluewave-authored",
+        "identifier": "repository licence",
+        "attributionRequired": false
+      },
+      "validationNotes": "Width is below one pixel at every supported level; the overlay is a deliberate exaggeration."
+    },
+    {
+      "id": "kiel-canal",
+      "name": "Kiel Canal",
+      "type": "canal",
+      "representation": "overlay-line",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Port 'ger_kiel' (level 8) and route r_north_baltic tie the German North Sea and Baltic coasts together; the canal is the strategic internal link after 1895. Display-only.",
+      "requiredFromZoom": 5,
+      "geometry": {
+        "source": "authored",
+        "lines": [
+          [
+            [9.14, 53.89],
+            [9.28, 54.02],
+            [9.65, 54.3],
+            [10.0, 54.34],
+            [10.14, 54.37]
+          ]
+        ]
+      },
+      "renderedWidthPixels": 2.5,
+      "maxDisplacementMetres": 6000,
+      "maxNarrowingFraction": 0.0,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "opensYear": 1895,
+      "provenance": {
+        "method": "authored",
+        "source": "Bluewave-authored polyline from general public geographic knowledge of the published endpoints and course; not traced from any map image or proprietary dataset",
+        "accuracyClass": "schematic",
+        "positionalAccuracyMetres": 6000,
+        "retrieved": "2026-10-27",
+        "notes": "Five-vertex schematic polyline between Brunsbuettel and Kiel-Holtenau through Rendsburg. It is a schematic course accurate to roughly 6 km, not a survey. Replace with an approved centreline (ticket G-04a)."
+      },
+      "license": {
+        "status": "bluewave-authored",
+        "identifier": "repository licence",
+        "attributionRequired": false
+      },
+      "validationNotes": "Schematic: the validation checks representation and continuity, not survey accuracy."
+    },
+    {
+      "id": "bosporus",
+      "name": "Bosporus",
+      "type": "strait",
+      "representation": "base-water-passage",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Area 'ott_marmara_coast' (Bosphorus / Marmara) and route r_med_black pass through it; a closed Bosporus would cut the Black Sea off the Mediterranean on the map.",
+      "requiredFromZoom": 5,
+      "transects": [
+        {
+          "id": "bosporus-t1",
+          "from": [29.0, 41.12],
+          "to": [29.12, 41.05]
+        }
+      ],
+      "referenceWidthMetres": 1100,
+      "maxNarrowingFraction": 0.5,
+      "maxDisplacementMetres": 1500,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "provenance": {
+        "method": "validation-probe",
+        "source": "Transect endpoints chosen on land either side of the passage from general geographic knowledge, then checked by script against the pinned Natural Earth land polygons; the passage itself is Natural Earth water",
+        "accuracyClass": "dataset",
+        "positionalAccuracyMetres": 1500,
+        "retrieved": "2026-10-27",
+        "notes": "referenceWidthMetres is the water width measured on the unsimplified pinned source along this transect, rounded; it is not a survey value"
+      },
+      "license": {
+        "status": "public-domain",
+        "identifier": "Natural Earth terms of use",
+        "attributionRequired": false
+      },
+      "validationNotes": "Natural Earth 10m keeps a water gap of about 1.1 km here; the strait is under one pixel wide below z5 and is guaranteed only from requiredFromZoom.",
+      "fallbackOverlay": {
+        "lines": [
+          [
+            [29.11, 41.21],
+            [29.06, 41.08],
+            [29.0, 41.0]
+          ]
+        ],
+        "provenance": {
+          "method": "authored",
+          "source": "Bluewave-authored schematic centreline from general public geographic knowledge of the strait's course; not traced from any map image or proprietary dataset",
+          "accuracyClass": "schematic",
+          "positionalAccuracyMetres": 3000,
+          "retrieved": "2026-10-27",
+          "notes": "Injected only when the pinned base land seals the passage along every transect. Replace with an approved centreline (ticket G-04a)."
+        }
+      }
+    },
+    {
+      "id": "dardanelles",
+      "name": "Dardanelles",
+      "type": "strait",
+      "representation": "base-water-passage",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Route r_med_black and area 'ott_aegean_coast' depend on this passage between the Aegean and the Sea of Marmara.",
+      "requiredFromZoom": 5,
+      "transects": [
+        {
+          "id": "dardanelles-t1",
+          "from": [26.3, 40.15],
+          "to": [26.45, 40.15]
+        }
+      ],
+      "referenceWidthMetres": 2700,
+      "maxNarrowingFraction": 0.5,
+      "maxDisplacementMetres": 1500,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "provenance": {
+        "method": "validation-probe",
+        "source": "Transect endpoints chosen on land either side of the passage from general geographic knowledge, then checked by script against the pinned Natural Earth land polygons; the passage itself is Natural Earth water",
+        "accuracyClass": "dataset",
+        "positionalAccuracyMetres": 1500,
+        "retrieved": "2026-10-27",
+        "notes": "referenceWidthMetres is the water width measured on the unsimplified pinned source along this transect, rounded; it is not a survey value"
+      },
+      "license": {
+        "status": "public-domain",
+        "identifier": "Natural Earth terms of use",
+        "attributionRequired": false
+      },
+      "validationNotes": "Natural Earth 10m keeps a water gap of about 2.7 km at the Canakkale narrows.",
+      "fallbackOverlay": {
+        "lines": [
+          [
+            [26.17, 40.04],
+            [26.4, 40.15],
+            [26.67, 40.4]
+          ]
+        ],
+        "provenance": {
+          "method": "authored",
+          "source": "Bluewave-authored schematic centreline from general public geographic knowledge of the strait's course; not traced from any map image or proprietary dataset",
+          "accuracyClass": "schematic",
+          "positionalAccuracyMetres": 3000,
+          "retrieved": "2026-10-27",
+          "notes": "Injected only when the pinned base land seals the passage along every transect. Replace with an approved centreline (ticket G-04a)."
+        }
+      }
+    },
+    {
+      "id": "strait-of-gibraltar",
+      "name": "Strait of Gibraltar",
+      "type": "strait",
+      "representation": "base-water-passage",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Area 'med_gibraltar', routes r_chan_gib, r_gib_medw, r_gib_malta and r_toulon_gib all cross it.",
+      "requiredFromZoom": 4,
+      "transects": [
+        {
+          "id": "strait-of-gibraltar-t1",
+          "from": [-5.62, 36.03],
+          "to": [-5.43, 35.88]
+        }
+      ],
+      "referenceWidthMetres": 15900,
+      "maxNarrowingFraction": 0.3,
+      "maxDisplacementMetres": 2000,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "provenance": {
+        "method": "validation-probe",
+        "source": "Transect endpoints chosen on land either side of the passage from general geographic knowledge, then checked by script against the pinned Natural Earth land polygons; the passage itself is Natural Earth water",
+        "accuracyClass": "dataset",
+        "positionalAccuracyMetres": 1500,
+        "retrieved": "2026-10-27",
+        "notes": "referenceWidthMetres is the water width measured on the unsimplified pinned source along this transect, rounded; it is not a survey value"
+      },
+      "license": {
+        "status": "public-domain",
+        "identifier": "Natural Earth terms of use",
+        "attributionRequired": false
+      },
+      "validationNotes": "Narrowest published width is about 14 km; the probe transect is slightly oblique."
+    },
+    {
+      "id": "strait-of-hormuz",
+      "name": "Strait of Hormuz",
+      "type": "strait",
+      "representation": "base-water-passage",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "No 1880 route or area uses it. Kept because the Persian Gulf entrance is mandated for passage validation in this investigation; display-only.",
+      "requiredFromZoom": 4,
+      "transects": [
+        {
+          "id": "strait-of-hormuz-t1",
+          "from": [56.25, 26.1],
+          "to": [56.6, 27.2]
+        }
+      ],
+      "referenceWidthMetres": 108800,
+      "maxNarrowingFraction": 0.3,
+      "maxDisplacementMetres": 3000,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "provenance": {
+        "method": "validation-probe",
+        "source": "Transect endpoints chosen on land either side of the passage from general geographic knowledge, then checked by script against the pinned Natural Earth land polygons; the passage itself is Natural Earth water",
+        "accuracyClass": "dataset",
+        "positionalAccuracyMetres": 1500,
+        "retrieved": "2026-10-27",
+        "notes": "referenceWidthMetres is measured on the pinned source along this transect, rounded"
+      },
+      "license": {
+        "status": "public-domain",
+        "identifier": "Natural Earth terms of use",
+        "attributionRequired": false
+      },
+      "validationNotes": "Limitation: this transect crosses the wide part of the strait and does not resolve the narrowest section; it guards against closure, not against narrowing of the true narrows."
+    },
+    {
+      "id": "bab-el-mandeb",
+      "name": "Bab-el-Mandeb",
+      "type": "strait",
+      "representation": "base-water-passage",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Route r_redsea_adden links the Red Sea to Aden; the Suez route is useless on the map if this passage closes.",
+      "requiredFromZoom": 4,
+      "transects": [
+        {
+          "id": "bab-el-mandeb-t1",
+          "from": [43.0, 12.65],
+          "to": [43.43, 12.65]
+        }
+      ],
+      "referenceWidthMetres": 26200,
+      "maxNarrowingFraction": 0.3,
+      "maxDisplacementMetres": 2000,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "provenance": {
+        "method": "validation-probe",
+        "source": "Transect endpoints chosen on land either side of the passage from general geographic knowledge, then checked by script against the pinned Natural Earth land polygons; the passage itself is Natural Earth water",
+        "accuracyClass": "dataset",
+        "positionalAccuracyMetres": 1500,
+        "retrieved": "2026-10-27",
+        "notes": "referenceWidthMetres is the water width measured on the unsimplified pinned source along this transect, rounded; it is not a survey value"
+      },
+      "license": {
+        "status": "public-domain",
+        "identifier": "Natural Earth terms of use",
+        "attributionRequired": false
+      },
+      "validationNotes": "The transect also crosses the small strait around Perim; validation uses the longest contiguous water interval."
+    },
+    {
+      "id": "strait-of-malacca",
+      "name": "Strait of Malacca",
+      "type": "strait",
+      "representation": "base-water-passage",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Routes r_ceylon_singapore, r_singapore_hk and r_singapore_java and area 'sea_singapore' (Singapore / Straits) depend on it.",
+      "requiredFromZoom": 3,
+      "transects": [
+        {
+          "id": "strait-of-malacca-t1",
+          "from": [99.8, 3.0],
+          "to": [101.8, 3.0]
+        }
+      ],
+      "referenceWidthMetres": 151700,
+      "maxNarrowingFraction": 0.3,
+      "maxDisplacementMetres": 5000,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "provenance": {
+        "method": "validation-probe",
+        "source": "Transect endpoints chosen on land either side of the passage from general geographic knowledge, then checked by script against the pinned Natural Earth land polygons; the passage itself is Natural Earth water",
+        "accuracyClass": "dataset",
+        "positionalAccuracyMetres": 1500,
+        "retrieved": "2026-10-27",
+        "notes": "referenceWidthMetres is the water width measured on the unsimplified pinned source along this transect, rounded; it is not a survey value"
+      },
+      "license": {
+        "status": "public-domain",
+        "identifier": "Natural Earth terms of use",
+        "attributionRequired": false
+      },
+      "validationNotes": "Limitation: the transect crosses the wide northern strait, not the Singapore Strait; the narrow Singapore and Phillip channels are not validated (follow-up ticket G-04b)."
+    },
+    {
+      "id": "dover-strait",
+      "name": "English Channel (Dover Strait)",
+      "type": "strait",
+      "representation": "base-water-passage",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Area 'sea_english_channel' and routes r_chan_gib, r_chan_north and r_chan_fra use the Channel; the Dover Strait is its narrowest passage.",
+      "requiredFromZoom": 4,
+      "transects": [
+        {
+          "id": "dover-strait-t1",
+          "from": [1.3, 51.14],
+          "to": [1.85, 50.96]
+        }
+      ],
+      "referenceWidthMetres": 38100,
+      "maxNarrowingFraction": 0.3,
+      "maxDisplacementMetres": 2000,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "provenance": {
+        "method": "validation-probe",
+        "source": "Transect endpoints chosen on land either side of the passage from general geographic knowledge, then checked by script against the pinned Natural Earth land polygons; the passage itself is Natural Earth water",
+        "accuracyClass": "dataset",
+        "positionalAccuracyMetres": 1500,
+        "retrieved": "2026-10-27",
+        "notes": "referenceWidthMetres is the water width measured on the unsimplified pinned source along this transect, rounded; it is not a survey value"
+      },
+      "license": {
+        "status": "public-domain",
+        "identifier": "Natural Earth terms of use",
+        "attributionRequired": false
+      },
+      "validationNotes": "Published narrowest width is about 33 km; the probe transect is oblique."
+    },
+    {
+      "id": "oresund",
+      "name": "Oresund (Danish straits)",
+      "type": "strait",
+      "representation": "base-water-passage",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Route r_north_baltic reaches the Baltic through the Danish straits; the Oresund is one of two deep-draft entrances.",
+      "requiredFromZoom": 5,
+      "transects": [
+        {
+          "id": "oresund-t1",
+          "from": [12.45, 56.03],
+          "to": [12.85, 56.03]
+        }
+      ],
+      "referenceWidthMetres": 6000,
+      "maxNarrowingFraction": 0.4,
+      "maxDisplacementMetres": 1500,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "provenance": {
+        "method": "validation-probe",
+        "source": "Transect endpoints chosen on land either side of the passage from general geographic knowledge, then checked by script against the pinned Natural Earth land polygons; the passage itself is Natural Earth water",
+        "accuracyClass": "dataset",
+        "positionalAccuracyMetres": 1500,
+        "retrieved": "2026-10-27",
+        "notes": "referenceWidthMetres is the water width measured on the unsimplified pinned source along this transect, rounded; it is not a survey value"
+      },
+      "license": {
+        "status": "public-domain",
+        "identifier": "Natural Earth terms of use",
+        "attributionRequired": false
+      },
+      "validationNotes": "Narrowest published width is about 4 km."
+    },
+    {
+      "id": "great-belt",
+      "name": "Great Belt (Danish straits)",
+      "type": "strait",
+      "representation": "base-water-passage",
+      "edgeSemantics": "lonlat-linear",
+      "gameplayReason": "Route r_north_baltic reaches the Baltic through the Danish straits; the Great Belt is the main deep-water entrance.",
+      "requiredFromZoom": 4,
+      "transects": [
+        {
+          "id": "great-belt-t1",
+          "from": [10.6, 55.33],
+          "to": [11.4, 55.33]
+        }
+      ],
+      "referenceWidthMetres": 21800,
+      "maxNarrowingFraction": 0.3,
+      "maxDisplacementMetres": 2500,
+      "visualContinuityRequired": true,
+      "simulationNavigabilityImplicated": false,
+      "displayOnly": true,
+      "provenance": {
+        "method": "validation-probe",
+        "source": "Transect endpoints chosen on land either side of the passage from general geographic knowledge, then checked by script against the pinned Natural Earth land polygons; the passage itself is Natural Earth water",
+        "accuracyClass": "dataset",
+        "positionalAccuracyMetres": 1500,
+        "retrieved": "2026-10-27",
+        "notes": "referenceWidthMetres is the water width measured on the unsimplified pinned source along this transect, rounded; it is not a survey value"
+      },
+      "license": {
+        "status": "public-domain",
+        "identifier": "Natural Earth terms of use",
+        "attributionRequired": false
+      },
+      "validationNotes": "Little Belt is not assessed (follow-up ticket G-04b)."
+    }
+  ]
+}

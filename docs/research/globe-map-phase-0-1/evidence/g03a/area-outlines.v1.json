@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "datasetVersion": "1.0.0",
+  "edgeSemantics": "lonlat-linear",
+  "longitudeConvention": "unwrapped: a ring that crosses the antimeridian continues past 180 degrees and is split by the tiler",
+  "densifyToleranceMetres": 10,
+  "source": {
+    "module": "src/renderer/components/world-map/map-geometry.ts",
+    "export": "AREAS",
+    "count": 36,
+    "canonicalSha256": "0a6720e058ce366903df750235447ff2b66148309dd2a3d5e8290a08ac4ec345"
+  },
+  "note": "Bluewave-authored sea-area outlines. Not Natural Earth, OSM or GSHHG data. The canonical hash covers id and ring of every area; changing an outline requires a deliberate re-pin."
+}

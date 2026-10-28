@@ -43,6 +43,10 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot.
 - [ADR-0319](../ADR-0319-debug-screens-stay-internal.md) Debug-only screens stay internal and leave the production renderer bundle.
 - [ADR-0320](../ADR-0320-electron-shell-navigation-permission-and-csp-policy.md) Electron shell navigation, permission and CSP policy.
+- [ADR-0323](../ADR-0323-geographic-data-sources-and-protected-overlays.md) Geographic data sources and protected-feature overlays.
+- [ADR-0324](../ADR-0324-edge-semantics-offline-tiling-and-renderer-boundaries.md) Edge semantics, offline tiling and renderer boundaries.
+- [ADR-0325](../ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md) Production globe adapter and dynamic overlay contract.
+- [ADR-0326](../ADR-0326-globe-adapter-interaction-parity.md) Globe adapter interaction parity and projection mapping.
 
 ## Superseded (do not follow)
 

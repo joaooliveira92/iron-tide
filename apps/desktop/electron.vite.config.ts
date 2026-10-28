@@ -1,7 +1,36 @@
-import { resolve } from "node:path";
+import { cpSync, existsSync } from "node:fs";
+import { basename, resolve } from "node:path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+
+const GLOBE_SPIKE = process.env.VITE_BLUEWAVE_GLOBE_SPIKE === "true";
+const GLOBE_ADAPTER = process.env.VITE_BLUEWAVE_GLOBE_ADAPTER === "true";
+
+const HARNESS_ONLY_FILES = new Set(["validation.json", "protected-resolution.json"]);
+
+const stubGlobeAdapter = {
+  name: "bluewave-globe-adapter-stub",
+  enforce: "pre" as const,
+  resolveId(source: string, importer: string | undefined) {
+    if (GLOBE_ADAPTER) return null;
+    if (source !== "./GlobeAdapter.js" || importer === undefined) return null;
+    if (!importer.includes("/components/globe-adapter/")) return null;
+    return resolve(__dirname, "src/renderer/components/globe-adapter/GlobeAdapterStub.ts");
+  },
+};
+
+const copyGlobeSpikeAssets = {
+  name: "bluewave-globe-spike-assets",
+  closeBundle() {
+    const source = resolve(__dirname, "map-spike-assets");
+    if (!(GLOBE_SPIKE || GLOBE_ADAPTER) || !existsSync(source)) return;
+    cpSync(source, resolve(__dirname, "out/renderer/map-spike"), {
+      recursive: true,
+      filter: (path) => !HARNESS_ONLY_FILES.has(basename(path)),
+    });
+  },
+};
 
 export default defineConfig({
   main: {
@@ -34,7 +63,11 @@ export default defineConfig({
   },
   renderer: {
     root: resolve(__dirname, "src/renderer"),
-    plugins: [react(), tailwindcss()],
+    plugins: [stubGlobeAdapter, react(), tailwindcss(), copyGlobeSpikeAssets],
+    define: {
+      __GLOBE_SPIKE__: JSON.stringify(GLOBE_SPIKE),
+      __GLOBE_ADAPTER__: JSON.stringify(GLOBE_ADAPTER),
+    },
     build: {
       outDir: resolve(__dirname, "out/renderer"),
       rollupOptions: {

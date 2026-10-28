@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
 
 import { App } from "./shell/App.js";
+import { GlobeAdapterHost } from "./components/globe-adapter/GlobeAdapterHost.js";
+import { GlobeSpikeHost } from "./components/globe-spike/GlobeSpikeHost.js";
 import { Toaster } from "./components/ui/toast.js";
 import { installAppFlushListener } from "./lib/app-flush.js";
 import { installRendererCrashHandlers } from "./lib/crash-report.js";
@@ -28,7 +30,10 @@ createRoot(container).render(
         <BackgroundProvider>
           <FontProvider>
             <DensityProvider>
-              <App />
+              <GlobeAdapterHost />
+              <GlobeSpikeHost>
+                <App />
+              </GlobeSpikeHost>
               <Toaster />
             </DensityProvider>
           </FontProvider>

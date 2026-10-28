@@ -1,0 +1,779 @@
+{
+  "trace": "run1-zoom-out-trace.json (raw trace not committed; regenerate with --trace)",
+  "eventCount": 183874,
+  "threads": [
+    "CVDisplayLink",
+    "Chrome_ChildIOThread",
+    "Chrome_DevToolsHandlerThread",
+    "Chrome_IOThread",
+    "Compositor",
+    "CrBrowserMain",
+    "CrGpuMain",
+    "CrRendererMain",
+    "DedicatedWorker thread",
+    "PerfettoTrace",
+    "ThreadPoolForegroundWorker",
+    "ThreadPoolServiceThread",
+    "VizCompositorThread"
+  ],
+  "animationFrameGaps": [
+    {
+      "gapMs": 32.297,
+      "fromTs": 1275074680666
+    },
+    {
+      "gapMs": 23.293,
+      "fromTs": 1275073999306
+    },
+    {
+      "gapMs": 20.12,
+      "fromTs": 1275073709352
+    },
+    {
+      "gapMs": 20.081,
+      "fromTs": 1275073591536
+    },
+    {
+      "gapMs": 19.755,
+      "fromTs": 1275073537854
+    },
+    {
+      "gapMs": 19.725,
+      "fromTs": 1275074126995
+    },
+    {
+      "gapMs": 19.071,
+      "fromTs": 1275073690143
+    },
+    {
+      "gapMs": 18.8,
+      "fromTs": 1275075087477
+    },
+    {
+      "gapMs": 18.651,
+      "fromTs": 1275075154661
+    },
+    {
+      "gapMs": 18.314,
+      "fromTs": 1275071152395
+    }
+  ],
+  "largestGapWindow": {
+    "gapMs": 32.297,
+    "windowMs": 70,
+    "events": [
+      {
+        "tMs": -16.0,
+        "durMs": 3.19,
+        "thread": "CrRendererMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": -16.0,
+        "durMs": 3.16,
+        "thread": "CrRendererMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": -15.76,
+        "durMs": 2.49,
+        "thread": "CrRendererMain",
+        "name": "FireAnimationFrame"
+      },
+      {
+        "tMs": -15.76,
+        "durMs": 2.46,
+        "thread": "CrRendererMain",
+        "name": "FunctionCall"
+      },
+      {
+        "tMs": -13.39,
+        "durMs": 12.87,
+        "thread": "CrGpuMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": -13.39,
+        "durMs": 12.86,
+        "thread": "CrGpuMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": -13.38,
+        "durMs": 12.86,
+        "thread": "CrGpuMain",
+        "name": "Scheduler::RunTask"
+      },
+      {
+        "tMs": -13.15,
+        "durMs": 12.62,
+        "thread": "CrGpuMain",
+        "name": "SkiaOutputSurfaceImplOnGpu::SwapBuffers"
+      },
+      {
+        "tMs": -12.69,
+        "durMs": 12.15,
+        "thread": "CrGpuMain",
+        "name": "Graphics.Pipeline"
+      },
+      {
+        "tMs": -12.69,
+        "durMs": 11.99,
+        "thread": "CrGpuMain",
+        "name": "SkiaOutputDevice->ScheduleOverlays()"
+      },
+      {
+        "tMs": -12.68,
+        "durMs": 11.96,
+        "thread": "CrGpuMain",
+        "name": "IOSurfaceImageBacking::WaitForCommandsToBeScheduled"
+      },
+      {
+        "tMs": -12.68,
+        "durMs": 11.96,
+        "thread": "CrGpuMain",
+        "name": "IOSurfaceImageBacking::WaitForCommandsToBeScheduled::Dawn"
+      },
+      {
+        "tMs": -0.18,
+        "durMs": 3.11,
+        "thread": "CrRendererMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": -0.18,
+        "durMs": 3.08,
+        "thread": "CrRendererMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": 0.0,
+        "durMs": 2.52,
+        "thread": "CrRendererMain",
+        "name": "FireAnimationFrame"
+      },
+      {
+        "tMs": 0.0,
+        "durMs": 2.48,
+        "thread": "CrRendererMain",
+        "name": "FunctionCall"
+      },
+      {
+        "tMs": 0.56,
+        "durMs": 2.74,
+        "thread": "CrGpuMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": 0.56,
+        "durMs": 2.74,
+        "thread": "CrGpuMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": 0.56,
+        "durMs": 2.74,
+        "thread": "CrGpuMain",
+        "name": "Scheduler::RunTask"
+      },
+      {
+        "tMs": 0.56,
+        "durMs": 2.73,
+        "thread": "CrGpuMain",
+        "name": "GpuChannel::ExecuteDeferredRequest"
+      },
+      {
+        "tMs": 0.57,
+        "durMs": 2.73,
+        "thread": "CrGpuMain",
+        "name": "GPUTask"
+      },
+      {
+        "tMs": 0.57,
+        "durMs": 2.72,
+        "thread": "CrGpuMain",
+        "name": "WebGL"
+      },
+      {
+        "tMs": 0.57,
+        "durMs": 2.72,
+        "thread": "CrGpuMain",
+        "name": "CommandBuffer::Flush"
+      },
+      {
+        "tMs": 0.57,
+        "durMs": 2.71,
+        "thread": "CrGpuMain",
+        "name": "CommandBufferStub::OnAsyncFlush"
+      },
+      {
+        "tMs": 0.58,
+        "durMs": 2.71,
+        "thread": "CrGpuMain",
+        "name": "CommandBufferService:PutChanged"
+      },
+      {
+        "tMs": 3.31,
+        "durMs": 3.18,
+        "thread": "CrGpuMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": 3.31,
+        "durMs": 3.18,
+        "thread": "CrGpuMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": 3.31,
+        "durMs": 3.17,
+        "thread": "CrGpuMain",
+        "name": "Scheduler::RunTask"
+      },
+      {
+        "tMs": 3.31,
+        "durMs": 3.17,
+        "thread": "CrGpuMain",
+        "name": "GpuChannel::ExecuteDeferredRequest"
+      },
+      {
+        "tMs": 3.31,
+        "durMs": 3.16,
+        "thread": "CrGpuMain",
+        "name": "GPUTask"
+      },
+      {
+        "tMs": 3.33,
+        "durMs": 3.13,
+        "thread": "CrGpuMain",
+        "name": "WebGL"
+      },
+      {
+        "tMs": 3.33,
+        "durMs": 3.12,
+        "thread": "CrGpuMain",
+        "name": "CommandBuffer::Flush"
+      },
+      {
+        "tMs": 3.33,
+        "durMs": 3.12,
+        "thread": "CrGpuMain",
+        "name": "CommandBufferStub::OnAsyncFlush"
+      },
+      {
+        "tMs": 3.33,
+        "durMs": 3.11,
+        "thread": "CrGpuMain",
+        "name": "CommandBufferService:PutChanged"
+      },
+      {
+        "tMs": 6.52,
+        "durMs": 5.49,
+        "thread": "CrGpuMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": 6.52,
+        "durMs": 5.49,
+        "thread": "CrGpuMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": 6.52,
+        "durMs": 5.49,
+        "thread": "CrGpuMain",
+        "name": "Scheduler::RunTask"
+      },
+      {
+        "tMs": 6.52,
+        "durMs": 5.48,
+        "thread": "CrGpuMain",
+        "name": "GpuChannel::ExecuteDeferredRequest"
+      },
+      {
+        "tMs": 6.53,
+        "durMs": 5.47,
+        "thread": "CrGpuMain",
+        "name": "GPUTask"
+      },
+      {
+        "tMs": 6.54,
+        "durMs": 5.46,
+        "thread": "CrGpuMain",
+        "name": "WebGL"
+      },
+      {
+        "tMs": 6.54,
+        "durMs": 5.46,
+        "thread": "CrGpuMain",
+        "name": "CommandBuffer::Flush"
+      },
+      {
+        "tMs": 6.54,
+        "durMs": 5.46,
+        "thread": "CrGpuMain",
+        "name": "CommandBufferStub::OnAsyncFlush"
+      },
+      {
+        "tMs": 6.55,
+        "durMs": 5.45,
+        "thread": "CrGpuMain",
+        "name": "CommandBufferService:PutChanged"
+      },
+      {
+        "tMs": 12.04,
+        "durMs": 2.65,
+        "thread": "CrGpuMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": 12.04,
+        "durMs": 2.65,
+        "thread": "CrGpuMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": 12.04,
+        "durMs": 2.64,
+        "thread": "CrGpuMain",
+        "name": "Scheduler::RunTask"
+      },
+      {
+        "tMs": 12.04,
+        "durMs": 2.63,
+        "thread": "CrGpuMain",
+        "name": "GpuChannel::ExecuteDeferredRequest"
+      },
+      {
+        "tMs": 12.05,
+        "durMs": 2.63,
+        "thread": "CrGpuMain",
+        "name": "GPUTask"
+      },
+      {
+        "tMs": 12.06,
+        "durMs": 2.61,
+        "thread": "CrGpuMain",
+        "name": "WebGL"
+      },
+      {
+        "tMs": 12.06,
+        "durMs": 2.61,
+        "thread": "CrGpuMain",
+        "name": "CommandBuffer::Flush"
+      },
+      {
+        "tMs": 12.06,
+        "durMs": 2.61,
+        "thread": "CrGpuMain",
+        "name": "CommandBufferStub::OnAsyncFlush"
+      },
+      {
+        "tMs": 12.06,
+        "durMs": 2.6,
+        "thread": "CrGpuMain",
+        "name": "CommandBufferService:PutChanged"
+      },
+      {
+        "tMs": 14.7,
+        "durMs": 2.04,
+        "thread": "CrGpuMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": 14.71,
+        "durMs": 2.04,
+        "thread": "CrGpuMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": 14.71,
+        "durMs": 2.03,
+        "thread": "CrGpuMain",
+        "name": "Scheduler::RunTask"
+      },
+      {
+        "tMs": 14.71,
+        "durMs": 2.03,
+        "thread": "CrGpuMain",
+        "name": "GpuChannel::ExecuteDeferredRequest"
+      },
+      {
+        "tMs": 14.72,
+        "durMs": 2.02,
+        "thread": "CrGpuMain",
+        "name": "GPUTask"
+      },
+      {
+        "tMs": 14.73,
+        "durMs": 1.64,
+        "thread": "CrGpuMain",
+        "name": "GLContextEGL::MakeCurrent"
+      },
+      {
+        "tMs": 17.4,
+        "durMs": 14.43,
+        "thread": "CrGpuMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": 17.4,
+        "durMs": 14.43,
+        "thread": "CrGpuMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": 17.4,
+        "durMs": 14.42,
+        "thread": "CrGpuMain",
+        "name": "Scheduler::RunTask"
+      },
+      {
+        "tMs": 17.58,
+        "durMs": 14.24,
+        "thread": "CrGpuMain",
+        "name": "SkiaOutputSurfaceImplOnGpu::SwapBuffers"
+      },
+      {
+        "tMs": 17.93,
+        "durMs": 13.89,
+        "thread": "CrGpuMain",
+        "name": "Graphics.Pipeline"
+      },
+      {
+        "tMs": 17.93,
+        "durMs": 13.71,
+        "thread": "CrGpuMain",
+        "name": "SkiaOutputDevice->ScheduleOverlays()"
+      },
+      {
+        "tMs": 17.93,
+        "durMs": 13.69,
+        "thread": "CrGpuMain",
+        "name": "IOSurfaceImageBacking::WaitForCommandsToBeScheduled"
+      },
+      {
+        "tMs": 17.93,
+        "durMs": 13.68,
+        "thread": "CrGpuMain",
+        "name": "IOSurfaceImageBacking::WaitForCommandsToBeScheduled::Dawn"
+      },
+      {
+        "tMs": 32.24,
+        "durMs": 2.7,
+        "thread": "CrRendererMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": 32.24,
+        "durMs": 2.68,
+        "thread": "CrRendererMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": 32.4,
+        "durMs": 2.28,
+        "thread": "CrRendererMain",
+        "name": "FireAnimationFrame"
+      },
+      {
+        "tMs": 32.4,
+        "durMs": 2.25,
+        "thread": "CrRendererMain",
+        "name": "FunctionCall"
+      },
+      {
+        "tMs": 34.12,
+        "durMs": 2.87,
+        "thread": "ThreadPoolForegroundWorker",
+        "name": "ThreadPool_RunTask"
+      },
+      {
+        "tMs": 36.33,
+        "durMs": 1.54,
+        "thread": "CrGpuMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": 36.33,
+        "durMs": 1.53,
+        "thread": "CrGpuMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": 36.35,
+        "durMs": 1.52,
+        "thread": "CrGpuMain",
+        "name": "Scheduler::RunTask"
+      },
+      {
+        "tMs": 36.35,
+        "durMs": 1.51,
+        "thread": "CrGpuMain",
+        "name": "GpuChannel::ExecuteDeferredRequest"
+      },
+      {
+        "tMs": 36.36,
+        "durMs": 1.51,
+        "thread": "CrGpuMain",
+        "name": "GPUTask"
+      },
+      {
+        "tMs": 36.43,
+        "durMs": 1.43,
+        "thread": "CrGpuMain",
+        "name": "WebGL"
+      },
+      {
+        "tMs": 36.43,
+        "durMs": 1.43,
+        "thread": "CrGpuMain",
+        "name": "CommandBuffer::Flush"
+      },
+      {
+        "tMs": 36.43,
+        "durMs": 1.43,
+        "thread": "CrGpuMain",
+        "name": "CommandBufferStub::OnAsyncFlush"
+      },
+      {
+        "tMs": 36.43,
+        "durMs": 1.43,
+        "thread": "CrGpuMain",
+        "name": "CommandBufferService:PutChanged"
+      },
+      {
+        "tMs": 37.89,
+        "durMs": 9.48,
+        "thread": "CrGpuMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": 37.89,
+        "durMs": 9.47,
+        "thread": "CrGpuMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": 37.9,
+        "durMs": 9.47,
+        "thread": "CrGpuMain",
+        "name": "Scheduler::RunTask"
+      },
+      {
+        "tMs": 38.07,
+        "durMs": 9.29,
+        "thread": "CrGpuMain",
+        "name": "SkiaOutputSurfaceImplOnGpu::SwapBuffers"
+      },
+      {
+        "tMs": 38.46,
+        "durMs": 8.9,
+        "thread": "CrGpuMain",
+        "name": "Graphics.Pipeline"
+      },
+      {
+        "tMs": 38.46,
+        "durMs": 8.74,
+        "thread": "CrGpuMain",
+        "name": "SkiaOutputDevice->ScheduleOverlays()"
+      },
+      {
+        "tMs": 38.47,
+        "durMs": 8.72,
+        "thread": "CrGpuMain",
+        "name": "IOSurfaceImageBacking::WaitForCommandsToBeScheduled"
+      },
+      {
+        "tMs": 38.47,
+        "durMs": 8.72,
+        "thread": "CrGpuMain",
+        "name": "IOSurfaceImageBacking::WaitForCommandsToBeScheduled::Dawn"
+      },
+      {
+        "tMs": 47.82,
+        "durMs": 3.94,
+        "thread": "CrRendererMain",
+        "name": "RunTask"
+      },
+      {
+        "tMs": 47.83,
+        "durMs": 3.91,
+        "thread": "CrRendererMain",
+        "name": "ThreadControllerImpl::RunTask"
+      },
+      {
+        "tMs": 48.13,
+        "durMs": 3.26,
+        "thread": "CrRendererMain",
+        "name": "FireAnimationFrame"
+      },
+      {
+        "tMs": 48.13,
+        "durMs": 3.23,
+        "thread": "CrRendererMain",
+        "name": "FunctionCall"
+      }
+    ]
+  },
+  "rendererMainTop": [
+    {
+      "name": "RunTask",
+      "ms": 8.618,
+      "ts": 1275073602051
+    },
+    {
+      "name": "ThreadControllerImpl::RunTask",
+      "ms": 8.598,
+      "ts": 1275073602051
+    },
+    {
+      "name": "MajorGC",
+      "ms": 8.503,
+      "ts": 1275073602126
+    },
+    {
+      "name": "V8.GC_MARK_COMPACTOR",
+      "ms": 8.46,
+      "ts": 1275073602139
+    },
+    {
+      "name": "RunTask",
+      "ms": 6.105,
+      "ts": 1275073591144
+    },
+    {
+      "name": "ThreadControllerImpl::RunTask",
+      "ms": 6.081,
+      "ts": 1275073591145
+    },
+    {
+      "name": "RunTask",
+      "ms": 5.905,
+      "ts": 1275074631474
+    },
+    {
+      "name": "ThreadControllerImpl::RunTask",
+      "ms": 5.882,
+      "ts": 1275074631478
+    },
+    {
+      "name": "FireAnimationFrame",
+      "ms": 5.429,
+      "ts": 1275073591536
+    },
+    {
+      "name": "FireAnimationFrame",
+      "ms": 5.407,
+      "ts": 1275074631665
+    }
+  ],
+  "gpuTop": [
+    {
+      "name": "RunTask",
+      "ms": 20.104,
+      "ts": 1275073048916
+    },
+    {
+      "name": "ThreadControllerImpl::RunTask",
+      "ms": 20.101,
+      "ts": 1275073048917
+    },
+    {
+      "name": "Scheduler::RunTask",
+      "ms": 20.097,
+      "ts": 1275073048919
+    },
+    {
+      "name": "SkiaOutputSurfaceImplOnGpu::SwapBuffers",
+      "ms": 19.959,
+      "ts": 1275073049053
+    },
+    {
+      "name": "Graphics.Pipeline",
+      "ms": 19.739,
+      "ts": 1275073049268
+    },
+    {
+      "name": "SkiaOutputDevice->ScheduleOverlays()",
+      "ms": 19.615,
+      "ts": 1275073049269
+    },
+    {
+      "name": "IOSurfaceImageBacking::WaitForCommandsToBeScheduled",
+      "ms": 19.601,
+      "ts": 1275073049271
+    },
+    {
+      "name": "IOSurfaceImageBacking::WaitForCommandsToBeScheduled::Dawn",
+      "ms": 19.599,
+      "ts": 1275073049272
+    },
+    {
+      "name": "RunTask",
+      "ms": 18.314,
+      "ts": 1275073192420
+    },
+    {
+      "name": "ThreadControllerImpl::RunTask",
+      "ms": 18.311,
+      "ts": 1275073192421
+    }
+  ],
+  "workerTop": [
+    {
+      "name": "RunTask",
+      "ms": 61.48,
+      "ts": 1275074991271
+    },
+    {
+      "name": "ThreadControllerImpl::RunTask",
+      "ms": 61.472,
+      "ts": 1275074991272
+    },
+    {
+      "name": "SimpleWatcher::OnHandleReady",
+      "ms": 61.467,
+      "ts": 1275074991275
+    },
+    {
+      "name": "RunTask",
+      "ms": 56.707,
+      "ts": 1275074930220
+    },
+    {
+      "name": "ThreadControllerImpl::RunTask",
+      "ms": 56.697,
+      "ts": 1275074930221
+    },
+    {
+      "name": "SimpleWatcher::OnHandleReady",
+      "ms": 56.691,
+      "ts": 1275074930223
+    },
+    {
+      "name": "RunTask",
+      "ms": 40.339,
+      "ts": 1275074408883
+    },
+    {
+      "name": "ThreadControllerImpl::RunTask",
+      "ms": 40.328,
+      "ts": 1275074408884
+    },
+    {
+      "name": "TimerFire",
+      "ms": 40.311,
+      "ts": 1275074408885
+    },
+    {
+      "name": "RunTask",
+      "ms": 34.045,
+      "ts": 1275074374545
+    }
+  ],
+  "mainThreadMaxMs": 8.618,
+  "gpuMaxMs": 20.104,
+  "workerMaxMs": 61.48,
+  "longTasksOver50msOnMain": 0
+}

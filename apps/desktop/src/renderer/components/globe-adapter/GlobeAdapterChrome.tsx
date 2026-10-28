@@ -1,0 +1,321 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { AREAS } from "../world-map/map-geometry.js";
+import { MAP_VARIANT_LAYOUT, type MapVariant } from "../world-map/map-variant-layout.js";
+import { AreaInspector } from "../world-map/AreaInspector.js";
+import { MapControlsPanel } from "../world-map/MapControlsPanel.js";
+import { MapLegend } from "../world-map/MapLegend.js";
+import { RouteReadout } from "../world-map/RouteReadout.js";
+import { useFrameMeter } from "../world-map/useFrameMeter.js";
+import { readPanelOpen, writePanelOpen } from "../shared/panel-memory.js";
+import { formatFixed } from "../../lib/presentation-format/index.js";
+import type { AreaOwnershipRow } from "../world-map/map-a11y.js";
+import type { AreaTreeRow } from "../world-map/area-tree.js";
+import type { LayerId, MapPrototypeState, RouteReading } from "../world-map/map-state.js";
+import type { AreaSummary } from "../world-map/map-state.js";
+import type { ProjectionId } from "../world-map/projection.js";
+import {
+  minimapToLatitude,
+  minimapToLongitude,
+  minimapViewportRect,
+  scaleBarForZoom,
+  type GlobeViewport,
+} from "./adapter-layer-state.js";
+
+const MINIMAP_WIDTH = 176;
+const MINIMAP_HEIGHT = 88;
+
+function worldPath(): string {
+  let path = "";
+  for (const area of AREAS) {
+    let first = true;
+    for (const [lon, lat] of area.ring) {
+      const wrapped = ((((lon + 180) % 360) + 360) % 360) - 180;
+      const x = ((wrapped + 180) / 360) * MINIMAP_WIDTH;
+      const y = ((90 - Math.max(-90, Math.min(90, lat))) / 180) * MINIMAP_HEIGHT;
+      path += `${first ? "M" : "L"}${formatFixed(x, { locale: "en-US", digits: 1 })} ${formatFixed(y, { locale: "en-US", digits: 1 })}`;
+      first = false;
+    }
+    path += "Z";
+  }
+  return path;
+}
+
+export interface GlobeAdapterChromeProps {
+  readonly state: MapPrototypeState;
+  readonly route: RouteReading | null;
+  readonly viewport: GlobeViewport;
+  readonly variant: MapVariant;
+  readonly treeRows: readonly AreaTreeRow[];
+  readonly ownershipRows: readonly AreaOwnershipRow[];
+  readonly summary: AreaSummary | null;
+  readonly nameFor: (nation: string | null) => string;
+  readonly onSelect: (area: string | null) => void;
+  readonly onToggleLayer: (layer: LayerId) => void;
+  readonly onSetProjection: (projection: ProjectionId) => void;
+  readonly onSetCentre: (centre: number) => void;
+  readonly onReset: () => void;
+  readonly onRecentre: (lon: number, lat: number) => void;
+  readonly entityRows?: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly kind: string;
+    readonly areaId: string;
+  }[];
+  readonly onSelectEntity?: (entity: {
+    readonly id: string;
+    readonly name: string;
+    readonly kind: string;
+    readonly areaId: string;
+  }) => void;
+  readonly showMinimap?: boolean;
+  readonly defaultControlsOpen?: boolean;
+}
+
+function GlobeMinimap({
+  viewport,
+  onRecentre,
+}: {
+  readonly viewport: GlobeViewport;
+  readonly onRecentre: (lon: number, lat: number) => void;
+}) {
+  const path = useMemo(worldPath, []);
+  const rect = minimapViewportRect(viewport, MINIMAP_WIDTH, MINIMAP_HEIGHT);
+  return (
+    <svg
+      aria-label="World minimap. Choose a point to recentre the map."
+      role="img"
+      data-testid="globe-adapter-minimap"
+      className="cursor-crosshair touch-none rounded-md border border-white/30"
+      style={{ background: "#0b2a3f", width: MINIMAP_WIDTH, height: MINIMAP_HEIGHT }}
+      viewBox={`0 0 ${MINIMAP_WIDTH} ${MINIMAP_HEIGHT}`}
+      onPointerDown={(event) => {
+        const box = event.currentTarget.getBoundingClientRect();
+        if (box.width === 0 || box.height === 0) return;
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+        onRecentre(
+          minimapToLongitude(event.clientX - box.left, box.width),
+          minimapToLatitude(event.clientY - box.top, box.height),
+        );
+      }}
+    >
+      <path d={path} fill="#33473b" fillOpacity={0.8} stroke="#5fc0ff" strokeOpacity={0.35} />
+      <rect
+        x={rect.x}
+        y={rect.y}
+        width={rect.width}
+        height={rect.height}
+        fill="#5fc0ff"
+        fillOpacity={0.16}
+        stroke="#ffffff"
+        strokeWidth={1.5}
+      />
+    </svg>
+  );
+}
+
+export function GlobeScaleBar({ zoom }: { readonly zoom: number }) {
+  const bar = scaleBarForZoom(zoom, 140);
+  return (
+    <div className="pointer-events-none flex flex-col items-start gap-0.5" aria-hidden="true">
+      <span className="text-xs tabular-nums text-white/80">{bar.nauticalMiles} nm</span>
+      <div
+        className="h-1.5 border-x border-b border-white/70"
+        style={{ width: `${Math.round(bar.pixels)}px` }}
+      />
+    </div>
+  );
+}
+
+function GlobeFrameMeter() {
+  const meterRef = useRef<HTMLSpanElement | null>(null);
+  const meter = useFrameMeter(meterRef);
+  const { sample } = meter;
+  useEffect(() => {
+    let frame = requestAnimationFrame(function tick() {
+      sample();
+      frame = requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [sample]);
+  return (
+    <span
+      ref={meterRef}
+      data-testid="globe-adapter-frame-meter"
+      className="font-mono text-xs tabular-nums text-white/70"
+    />
+  );
+}
+
+export function GlobeAdapterChrome({
+  state,
+  route,
+  viewport,
+  variant,
+  treeRows,
+  ownershipRows,
+  summary,
+  nameFor,
+  onSelect,
+  onToggleLayer,
+  onSetProjection,
+  onSetCentre,
+  onReset,
+  onRecentre,
+  entityRows = [],
+  onSelectEntity,
+  showMinimap = true,
+  defaultControlsOpen = true,
+}: GlobeAdapterChromeProps) {
+  const layout = MAP_VARIANT_LAYOUT[variant];
+  const [controlsOpen, setControlsOpen] = useState(() =>
+    readPanelOpen("globe-adapter-controls", defaultControlsOpen),
+  );
+  const meterRef = useRef<HTMLSpanElement | null>(null);
+  const toggleControls = () => {
+    setControlsOpen((open) => {
+      writePanelOpen("globe-adapter-controls", !open);
+      return !open;
+    });
+  };
+
+  return (
+    <>
+      <div
+        className={`pointer-events-auto absolute left-[calc(0.75rem+var(--chrome-left,0px))] z-10 flex flex-col gap-2 ${
+          variant === "command"
+            ? "bottom-[calc(0.75rem+var(--chrome-bottom,0px)+3rem)]"
+            : "top-[calc(0.75rem+var(--chrome-top,0px))]"
+        }`}
+      >
+        <button
+          type="button"
+          aria-expanded={controlsOpen}
+          className="w-fit rounded border border-white/40 bg-black/75 px-2 py-1 text-xs text-white"
+          onClick={toggleControls}
+        >
+          Layers &amp; areas
+        </button>
+        {controlsOpen && (
+          <MapControlsPanel
+            className={`${layout.controlsPanel} pointer-events-auto`}
+            state={state}
+            onSetProjection={onSetProjection}
+            onToggleLayer={onToggleLayer}
+            onSetCentre={onSetCentre}
+            onReset={onReset}
+            meterRef={meterRef}
+            inlineAreas={true}
+            treeRows={treeRows}
+            onFocusTreeRow={(row) => {
+              if (row.mapAreaId !== null) onSelect(row.mapAreaId);
+            }}
+          />
+        )}
+        <GlobeFrameMeter />
+      </div>
+
+      <div
+        className={`pointer-events-auto absolute right-[calc(0.75rem+var(--chrome-right,0px))] z-10 flex w-72 flex-col gap-2 ${
+          variant === "command"
+            ? "bottom-[calc(0.75rem+var(--chrome-bottom,0px))] max-h-[70%] overflow-y-auto"
+            : "top-[calc(0.75rem+var(--chrome-top,0px))] max-h-[70%] overflow-y-auto"
+        }`}
+      >
+        <AreaInspector
+          className="rounded-lg border p-3 text-xs shadow-lg backdrop-blur"
+          summary={summary}
+          nameFor={nameFor}
+          onSelect={onSelect}
+        />
+
+        <nav
+          aria-label="Map areas"
+          data-testid="globe-adapter-area-list"
+          className="rounded border border-white/25 bg-black/80 p-2 text-xs text-white"
+        >
+          <ul className="grid max-h-56 gap-0.5 overflow-y-auto">
+            {ownershipRows.map((row) => (
+              <li key={row.id}>
+                <button
+                  type="button"
+                  aria-pressed={row.selected}
+                  aria-label={`${row.name}: ${row.owner ?? "Unclaimed"}, ${row.fleets} fleets${row.strength === null ? "" : `, ${row.strength}`}`}
+                  title={row.name}
+                  data-adapter-area={row.id}
+                  onClick={() => onSelect(row.id)}
+                  className="w-full rounded px-2 py-1 text-left hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white aria-pressed:bg-white aria-pressed:text-black"
+                >
+                  {row.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <nav
+          aria-label="Ports and fleets"
+          data-testid="globe-adapter-entities"
+          className="rounded border border-white/25 bg-black/80 p-2 text-xs text-white"
+        >
+          <ul className="grid max-h-40 gap-0.5 overflow-y-auto">
+            {entityRows.map((entity) => (
+              <li key={entity.id}>
+                <button
+                  type="button"
+                  className="w-full rounded px-2 py-1 text-left hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  onClick={() => onSelectEntity?.(entity)}
+                >
+                  {entity.name} <span className="opacity-70">({entity.kind})</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+
+      <table className="sr-only" data-testid="globe-adapter-area-table">
+        <caption>Area control</caption>
+        <thead>
+          <tr>
+            <th scope="col">Area</th>
+            <th scope="col">Controlled by</th>
+            <th scope="col">Fleets</th>
+            <th scope="col">Strength</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ownershipRows.map((row) => (
+            <tr key={row.id} aria-selected={row.selected}>
+              <th scope="row">{row.name}</th>
+              <td>{row.owner ?? "Unclaimed"}</td>
+              <td>{row.fleets}</td>
+              <td>{row.strength ?? "No ships"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="pointer-events-auto absolute bottom-[calc(0.75rem+var(--chrome-bottom,0px))] right-[calc(0.75rem+var(--chrome-right,0px))] z-10 flex flex-col items-end gap-2">
+        {showMinimap && <GlobeMinimap viewport={viewport} onRecentre={onRecentre} />}
+        <div className="rounded border border-white/25 bg-black/75 px-2.5 py-1.5 text-white">
+          <MapLegend
+            showPossessions={state.layers.possessions}
+            showFleets={state.layers.fleets}
+            notes={["Globe adapter: foreign intelligence and invasion range are not modelled."]}
+          />
+          <GlobeScaleBar zoom={viewport.zoom} />
+        </div>
+      </div>
+
+      <RouteReadout
+        className={`${
+          variant === "command"
+            ? "absolute bottom-[calc(0.75rem+var(--chrome-bottom,0px))] left-1/2 -translate-x-1/2 rounded-lg border px-3 py-2 text-xs shadow-lg backdrop-blur"
+            : layout.routeReadout
+        } pointer-events-auto z-10`}
+        route={route}
+      />
+    </>
+  );
+}
