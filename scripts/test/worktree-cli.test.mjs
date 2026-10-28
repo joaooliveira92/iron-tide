@@ -346,7 +346,14 @@ void test("two linked worktrees register into one shared registry", () => {
     ["a", "b"],
   );
   const root = normalizePath(realpathSync(repo));
-  assert.ok(registryRows(repo).every((r) => normalizePath(realpathSync(r.path)).startsWith(root)));
+  const registryPaths = registryRows(repo).map((r) => ({
+    stored: r.path,
+    resolved: normalizePath(realpathSync(r.path)),
+  }));
+  assert.ok(
+    registryPaths.every((entry) => entry.resolved.startsWith(root)),
+    JSON.stringify({ root, registryPaths }),
+  );
   assert.equal(existsSync(join(repo, ".worktrees", "a", ".worktrees", "b")), false);
 });
 
