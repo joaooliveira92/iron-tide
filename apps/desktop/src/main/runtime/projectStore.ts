@@ -174,9 +174,17 @@ export class ProjectStore extends Context.Service<
 export function projectStoreLayer(): Layer.Layer<ProjectStore> {
   const store = new SaveStore(undefined, { retainSaves: PROVISIONAL_RETAINED_SAVES });
   return Layer.succeed(ProjectStore, {
-    isCurrent: (state, saveDir) => store.isCurrentEffect(state, saveDir),
+    isCurrent: (state, saveDir) =>
+      store.isCurrentEffect(state, saveDir).pipe(Effect.mapError(ioFailure("LOAD_FAILED"))),
     save: (state, saveDir, extras) =>
       store.saveEffect(state, saveDir, extras).pipe(
+        Effect.tap((result) =>
+          Effect.forEach(
+            result.warnings,
+            (warning) => Effect.logWarning(`${warning.stage}: ${warning.message}`),
+            { discard: true },
+          ),
+        ),
         Effect.map((result) => result.metadata),
         Effect.mapError(ioFailure("SAVE_FAILED")),
       ),

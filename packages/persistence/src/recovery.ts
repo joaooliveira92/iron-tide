@@ -1,23 +1,23 @@
 import { existsSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import { PersistenceIoError } from "./errors.js";
 import { systemClock, type PersistenceClock } from "./clock.js";
-import { readSaveMetadata } from "./fileDecode.js";
+import { readSaveMetadataResult } from "./fileDecode.js";
 import type { PointerFile } from "./schemas.js";
 
 export class RecoveryManager {
-  static revert(
+  static revertResult(
     saveDir: string,
     previousSaveId: string,
     clock: PersistenceClock = systemClock,
-  ): boolean {
+  ): Result.Result<void, PersistenceIoError> {
     const pointerPath = join(saveDir, "pointer.json");
 
     const metaPath = join(saveDir, previousSaveId, "metadata.json");
-    const predecessor = existsSync(metaPath)
-      ? readSaveMetadata(metaPath)?.previousSaveId
-      : undefined;
+    const metadata = existsSync(metaPath) ? readSaveMetadataResult(metaPath) : null;
+    const predecessor =
+      metadata !== null && Result.isSuccess(metadata) ? metadata.success.previousSaveId : undefined;
 
     const pointerContent: PointerFile = {
       activeSaveId: previousSaveId,
@@ -29,10 +29,24 @@ export class RecoveryManager {
       const tmpPath = `${pointerPath}.tmp`;
       writeFileSync(tmpPath, JSON.stringify(pointerContent, null, 2), "utf8");
       renameSync(tmpPath, pointerPath);
-      return true;
-    } catch {
-      return false;
+      return Result.succeed(undefined);
+    } catch (cause) {
+      const detail = cause instanceof Error ? cause.message : String(cause);
+      return Result.fail(
+        new PersistenceIoError({
+          message: `Could not write the reverted pointer in ${saveDir}: ${detail}`,
+          stage: REVERT_STAGE,
+        }),
+      );
     }
+  }
+
+  static revert(
+    saveDir: string,
+    previousSaveId: string,
+    clock: PersistenceClock = systemClock,
+  ): boolean {
+    return Result.isSuccess(RecoveryManager.revertResult(saveDir, previousSaveId, clock));
   }
 
   static revertEffect(
@@ -41,15 +55,8 @@ export class RecoveryManager {
     clock: PersistenceClock = systemClock,
   ): Effect.Effect<void, PersistenceIoError> {
     return Effect.suspend(() =>
-      RecoveryManager.revert(saveDir, previousSaveId, clock)
-        ? Effect.void
-        : Effect.fail(
-            new PersistenceIoError({
-              message: `Could not write the reverted pointer in ${saveDir}`,
-              stage: REVERT_STAGE,
-            }),
-          ),
-    );
+      Effect.fromResult(RecoveryManager.revertResult(saveDir, previousSaveId, clock)),
+    ).pipe(Effect.withSpan("persistence.revert"));
   }
 }
 
