@@ -4,7 +4,9 @@ Applies to: content, campaign, phase-engine
 
 ## Status
 
-Accepted (2026-10-18). Records the locked model of the wayfinder map
+Superseded by: ADR-0337
+
+Accepted (2026-10-18). Superseded by the consolidated campaign-economy record. Records the locked model of the wayfinder map
 [#123](https://github.com/joaooliveira92/iron-tide/issues/123) (decisions G1–G9,
 tickets #124–#137) and the spec [#138](https://github.com/joaooliveira92/iron-tide/issues/138).
 Supersedes [decision request 0014](../../.ai/decision-requests/0014-n-3-ten-year-run-treasury-baseline.md)

@@ -17,10 +17,8 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0224](../ADR-0224-1880-command-structure-divisions-and-officers.md) 1880 command structure — per-nation officer rosters and seeded divisions.
 - [ADR-0225](../ADR-0225-prestige-required-field-and-research-first.md) Prestige is a required authored field; values are research-first and S-2 is gated on 0003.
 - [ADR-0226](../ADR-0226-rtw3-prestige-research-outcome.md) RTW3 prestige research outcome — the model is grounded, the production values are not.
-- [ADR-0230](../ADR-0230-campaign-economy-model.md) Campaign economy model — one appropriation, one ledger, one set of calculators.
 - [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state.
 - [ADR-0239](../ADR-0239-s2-prestige-values-balance-targets.md) S-2 prestige values: the grounded model plus labelled balance targets.
-- [ADR-0240](../ADR-0240-s3-unrest-values-and-government-classification.md) S-3 unrest and economy values are researched then tunable; government type derives from political system.
 - [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness.
 - [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
 - [ADR-0245](../ADR-0245-player-nation-id-in-campaign-state.md) The player nation is stored in authoritative campaign state.
@@ -47,8 +45,11 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0316](../ADR-0316-special-training-program.md) Special training is a nation program whose maintenance adder feeds the shared calculator.
 - [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot.
 - [ADR-0330](../ADR-0330-unified-snapshot-hash.md) Every authoritative snapshot hash is the unified `unifiedSnapshotHash`; no replay, golden or cross-process path carries a local projection.
+- [ADR-0337](../ADR-0337-campaign-economy-model-and-budget-pressure.md) Campaign economy is a single integer appropriation-to-ledger model; budget-pressure values are researched then tunable; government type derives from political system via a mandatory ruleset table.
 
 ## Superseded (do not follow)
 
 - [ADR-0204](../ADR-0204-horizon-1939-and-scenario-ids.md) Authored horizon through 1939; no empty scenario IDs. Follow ADR-0282.
 - [ADR-0205](../ADR-0205-nine-playable-nations.md) Nine playable nations; the rest AI-only behind a readiness gate. Follow ADR-0214.
+- [ADR-0230](../ADR-0230-campaign-economy-model.md) Campaign economy model — one appropriation, one ledger, one set of calculators. Follow ADR-0337.
+- [ADR-0240](../ADR-0240-s3-unrest-values-and-government-classification.md) S-3 unrest and economy values are researched then tunable; government type derives from political system. Follow ADR-0337.

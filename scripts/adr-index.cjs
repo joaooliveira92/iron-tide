@@ -73,7 +73,7 @@ const AREAS = [
     name: "Campaign economy",
     blurb:
       "The monthly appropriation, ledger, research, deficit policy and construction capacity as one model.",
-    nums: [230, 240],
+    nums: [337, 230, 240],
   },
   {
     name: "Turns, interruptions & save/resume",

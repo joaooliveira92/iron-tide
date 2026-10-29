@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0337).
+highest existing number + 1 (the next number is ADR-0338).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -114,8 +114,9 @@ The monthly appropriation, ledger, research, deficit policy and construction cap
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0230 | [ADR-0230-campaign-economy-model.md](ADR-0230-campaign-economy-model.md) | Campaign economy model — one appropriation, one ledger, one set of calculators | accepted | — |
-| 0240 | [ADR-0240-s3-unrest-values-and-government-classification.md](ADR-0240-s3-unrest-values-and-government-classification.md) | S-3 unrest and economy values are researched then tunable; government type derives from political system | accepted | — |
+| 0337 | [ADR-0337-campaign-economy-model-and-budget-pressure.md](ADR-0337-campaign-economy-model-and-budget-pressure.md) | Campaign economy — one appropriation, one ledger, one set of budget-pressure values | accepted | — |
+| 0230 | [ADR-0230-campaign-economy-model.md](ADR-0230-campaign-economy-model.md) | Campaign economy model — one appropriation, one ledger, one set of calculators | superseded | ADR-0337 |
+| 0240 | [ADR-0240-s3-unrest-values-and-government-classification.md](ADR-0240-s3-unrest-values-and-government-classification.md) | S-3 unrest and economy values are researched then tunable; government type derives from political system | superseded | ADR-0337 |
 
 ## Turns, interruptions & save/resume
 

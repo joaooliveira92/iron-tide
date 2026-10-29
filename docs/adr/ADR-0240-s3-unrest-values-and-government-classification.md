@@ -4,7 +4,9 @@ Applies to: content, campaign
 
 ## Status
 
-Accepted (2026-10-19). Resolves decision requests
+Superseded by: ADR-0337
+
+Accepted (2026-10-19). Superseded by the consolidated campaign-economy record. Resolves decision requests
 [0010](../../.ai/decision-requests/0010-s-3-unrest-economy-values.md) (Option A) and
 [0011](../../.ai/decision-requests/0011-s-3-government-type-classification.md)
 (Option A), decided by the owner's delegation. Sprints: S-3. Follows
