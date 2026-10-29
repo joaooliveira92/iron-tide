@@ -28,6 +28,7 @@ function unusedIpcDependencies(): IpcDependencies {
     dispatchCampaignCommand: unused,
     preferences: {
       read: unused,
+      readWithRecovery: unused,
       write: unused,
       readCampaign: unused,
       writeCampaign: unused,
@@ -64,6 +65,7 @@ describe("Electron boundary", () => {
 
   it("declares every bridge channel exactly once in the shared contract", () => {
     expect(channelsOf(ipcRequests)).toEqual([
+      "app:read-startup",
       "campaign:execute",
       "preferences:read",
       "preferences:read-campaign",
@@ -119,6 +121,7 @@ describe("Electron boundary", () => {
       "campaign:",
       "preferences:",
       "platform:",
+      "readStartupSnapshot:",
       "getWindowState:",
       "windowMinimize:",
       "windowMaximizeToggle:",

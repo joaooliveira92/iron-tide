@@ -1,4 +1,4 @@
-import type { BridgeResult, WindowState } from "./bridge-contract.js";
+import type { AppStartupSnapshot, BridgeResult, WindowState } from "./bridge-contract.js";
 import type { CampaignCommandMap, CampaignCommandName } from "./campaign-contract.js";
 import type {
   CampaignPreferencesSnapshot,
@@ -64,6 +64,7 @@ export const ipcRequests = {
     [sessionId: string, request: WriteCampaignPreferencesRequest],
     BridgeResult<CampaignPreferencesSnapshot>
   >("preferences:write-campaign"),
+  appReadStartup: ipcRequest<[], BridgeResult<AppStartupSnapshot>>("app:read-startup"),
   windowGetState: ipcRequest<[], WindowState>("window:get-state"),
 } as const;
 
