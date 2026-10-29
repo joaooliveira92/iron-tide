@@ -115,6 +115,26 @@ function uniqueByLocation(hits) {
   return unique.sort((a, b) => a.path.localeCompare(b.path) || a.line - b.line);
 }
 
+export function fileExports(root, path) {
+  const text = readFileSync(resolve(root, path), "utf8");
+  const names = new Set();
+  const declaration =
+    /^\s*export\s+(?:declare\s+)?(?:async\s+)?(?:function|class|interface|type|const|let|var|enum)\s+([A-Za-z_$][A-Za-z0-9_$]*)/gmu;
+  for (const match of text.matchAll(declaration)) names.add(match[1]);
+  const braces = /^\s*export\s*\{([^}]*)\}/gmu;
+  for (const match of text.matchAll(braces)) {
+    for (const part of match[1].split(",")) {
+      const name = part
+        .trim()
+        .split(/\s+as\s+/u)
+        .pop()
+        ?.trim();
+      if (name !== undefined && IDENTIFIER.test(name)) names.add(name);
+    }
+  }
+  return [...names].sort((a, b) => a.localeCompare(b));
+}
+
 export function moduleStem(path) {
   const base = basename(path);
   const withoutExtension = base.slice(0, base.length - extname(base).length);
@@ -223,7 +243,9 @@ export function buildReport(root, query, limit) {
   let symbol = null;
   if (target.kind === "path") {
     symbol = moduleStem(target.path);
-    references = [];
+    references = uniqueByLocation(
+      symbolHits(root, symbol, symbol).filter((hit) => hit.path !== target.path),
+    );
   } else {
     symbol = target.symbol;
     definitions = uniqueByLocation(symbolHits(root, symbol, definitionPattern(symbol)));
@@ -266,6 +288,7 @@ export function buildReport(root, query, limit) {
     rules: { path: page, entries: ruleEntries(root, page, limit) },
     manifest: workspace === null ? null : `${workspace.dir}/package.json`,
     exports: exportEntries(manifest),
+    fileSymbols: target.kind === "path" ? fileExports(root, target.path) : [],
     definitions,
     references: references.slice(0, limit),
     referenceCount: references.length,
@@ -293,6 +316,9 @@ export function renderText(report) {
   lines.push(`rules: ${report.rules.path ?? "none"}`);
   for (const entry of report.rules.entries) lines.push(`  ${entry}`);
   if (report.manifest !== null) lines.push(`manifest: ${report.manifest}`);
+  if (report.fileSymbols.length > 0) {
+    lines.push(`symbols: ${report.fileSymbols.join(", ")}`);
+  }
   if (report.exports.length > 0) {
     lines.push(`exports: ${String(report.exports.length)}`);
     for (const entry of report.exports.slice(0, 12)) {
