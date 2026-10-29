@@ -301,8 +301,11 @@ if (require.main === module) {
   const archiveTarget = path.join(ARCHIVE_DIR, "README.md");
   fs.writeFileSync(mainTarget, buildIndex());
   fs.writeFileSync(archiveTarget, buildArchiveIndex());
-  require("./lib/adr-scope.cjs").writeScopePages(ROOT);
+  const adrScope = require("./lib/adr-scope.cjs");
+  adrScope.writeScopePages(ROOT);
+  const briefs = adrScope.writePackageBriefs(ROOT);
   console.log(
-    `adr-index: wrote ${path.relative(ROOT, mainTarget)} and ${path.relative(ROOT, archiveTarget)}`,
+    `adr-index: wrote ${path.relative(ROOT, mainTarget)}, ${path.relative(ROOT, archiveTarget)}, ` +
+      `${briefs.length} package-brief page(s)`,
   );
 }

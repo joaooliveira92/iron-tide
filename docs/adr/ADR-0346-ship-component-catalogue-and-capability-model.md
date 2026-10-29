@@ -13,6 +13,7 @@ Supersedes: ADR-0309
 Supersedes: ADR-0311
 Supersedes: ADR-0332
 Supersedes: ADR-0333
+Consistent with: ADR-0350
 
 ## Context
 

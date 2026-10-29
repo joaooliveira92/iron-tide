@@ -20,6 +20,7 @@ Supersedes: ADR-0262
 Supersedes: ADR-0263
 Supersedes: ADR-0264
 Supersedes: ADR-0265
+Consistent with: ADR-0356
 
 ## Context
 

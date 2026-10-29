@@ -10,6 +10,8 @@ Rule: Every displayed number derives its explanation from stored components or t
 
 Accepted (2026-10-30).
 Supersedes: ADR-0307
+Consistent with: ADR-0357
+Consistent with: ADR-0345
 
 ## Context
 

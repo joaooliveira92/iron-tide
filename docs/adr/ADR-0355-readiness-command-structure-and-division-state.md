@@ -13,6 +13,8 @@ Supersedes: ADR-0223
 Supersedes: ADR-0224
 Supersedes: ADR-0298
 Supersedes: ADR-0296
+Consistent with: ADR-0356
+Consistent with: ADR-0350
 
 ## Context
 

@@ -12,6 +12,9 @@ Accepted (2026-10-30).
 Supersedes: ADR-0212
 Supersedes: ADR-0213
 Supersedes: ADR-0229
+Consistent with: ADR-0340
+Consistent with: ADR-0348
+Consistent with: ADR-0350
 
 ## Context
 

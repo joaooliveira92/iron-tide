@@ -46,6 +46,7 @@ export function runSelfTest(repoRoot = root) {
     supersededBy: [other],
     amends: [],
     amendedBy: [],
+    consistentWith: [],
   });
   const cases = [
     ["real corpus passes", () => lib.validateRecords(records, universe, baseline), false],
@@ -129,6 +130,41 @@ export function runSelfTest(repoRoot = root) {
           text: `${entry.text}\nSee ADR-${superseded.number}.\n`,
         });
         return lib.validateGoverningDocs(repoRoot, records, broken, EXEMPT);
+      },
+      true,
+    ],
+    [
+      "conflicting Rule: tokens without Consistent with: or Supersedes:",
+      () => {
+        const nameA = "ADR-9990-combat-overlap-a.md";
+        const nameB = "ADR-9991-combat-overlap-b.md";
+        const make = (name, number, rule, supersedes) => ({
+          file: name,
+          location: "active",
+          number,
+          title: `fixture ${number}`,
+          status: "accepted",
+          appliesTo: ["combat"],
+          rule,
+          supersedes,
+          supersededBy: [],
+          amends: [],
+          amendedBy: [],
+          consistentWith: [],
+        });
+        const a = make(
+          nameA,
+          "9990",
+          "The combat pipeline resolves combat surface actions and torpedo combat resolution",
+          [],
+        );
+        const b = make(
+          nameB,
+          "9991",
+          "The combat pipeline generates combat battle offers for combat resolution and torpedo deflection",
+          [],
+        );
+        return lib.findRuleConflicts?.([a, b], ["combat"]) ?? [];
       },
       true,
     ],
