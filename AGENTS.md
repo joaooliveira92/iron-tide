@@ -55,7 +55,7 @@ Identical content, ruleset, inputs, seeds, and versions produce identical hashes
 
 ## Content and compiler
 
-- Author content as declarative TypeScript; compile to canonical JSON. YAML for i18n and mandated infra only (ADR-0334).
+- Author content as declarative TypeScript; compile to canonical JSON. YAML for i18n and mandated infra only (ADR-0334, superseded by ADR-0361).
 - Compiler stages: explicit, statically ordered, typed, immutable, no ambient I/O, randomness, or artifact writes. Accumulate diagnostics; block downstream on invalid prerequisites.
 - Validation, normalization, repair are distinct. Repair is explicit, narrow, logged, limited to safely recomputable data. See [canonical content](docs/architecture/canonical-content-and-rulesets.md).
 

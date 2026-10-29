@@ -4,6 +4,8 @@ Applies to: desktop
 
 ## Status
 
+Superseded by: ADR-0352
+
 Accepted (2026-10-15). New record of decision DR-008; no prior ADR file existed for
 it and none is restored (see ADR-0210).
 

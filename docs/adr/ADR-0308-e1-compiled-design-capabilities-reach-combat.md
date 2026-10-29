@@ -4,6 +4,8 @@ Applies to: armament, combat, content-schema, ship-design
 
 ## Status
 
+Superseded by: ADR-0358
+
 Accepted (2026-10-26) for [#288](https://github.com/joaooliveira92/iron-tide/issues/288), part of
 [#283](https://github.com/joaooliveira92/iron-tide/issues/283) under
 [#249](https://github.com/joaooliveira92/iron-tide/issues/249). Applies the additive-optional policy of

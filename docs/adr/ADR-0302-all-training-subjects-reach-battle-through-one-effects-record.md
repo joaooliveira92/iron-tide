@@ -4,6 +4,8 @@ Applies to: combat, phase-engine
 
 ## Status
 
+Superseded by: ADR-0357
+
 Accepted (2026-10-25). Extends [ADR-0301](ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) from gunnery to every special-training
 subject of [ADR-0316](ADR-0316-special-training-program.md). Closes the "effect carried but never read" gap for night fighting, torpedo
 tactics and damage control.

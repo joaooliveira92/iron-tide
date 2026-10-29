@@ -2,9 +2,9 @@
 
 Applies to: desktop
 
-Rule: Every desktop bridge channel is declared once in `shared/ipc-contract.ts`; preload exposure and main-process registration derive names and payload types from it.
-
 ## Status
+
+Superseded by: ADR-0360
 
 Accepted (2026-10-28).
 

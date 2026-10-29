@@ -4,6 +4,8 @@ Applies to: combat
 
 ## Status
 
+Superseded by: ADR-0358
+
 Accepted (2026-10-27). Implements the first engine slice of the T-2 tactical
 navigation map (#324) and its resolved division-order decision (#329).
 

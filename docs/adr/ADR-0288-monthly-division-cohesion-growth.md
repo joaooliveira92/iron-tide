@@ -4,6 +4,8 @@ Applies to: campaign, phase-engine
 
 ## Status
 
+Superseded by: ADR-0357
+
 Accepted (2026-10-25). Implements ticket [#273](https://github.com/joaooliveira92/iron-tide/issues/273) of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265), decision #203. Values are the balance targets of
 [ADR-0314](ADR-0314-fleet-management-values-and-repair-entry.md); the section is

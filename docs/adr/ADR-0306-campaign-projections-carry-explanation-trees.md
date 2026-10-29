@@ -4,6 +4,8 @@ Applies to: campaign-engine, desktop, events
 
 ## Status
 
+Superseded by: ADR-0359
+
 Accepted (2026-10-26). Unblocks the area slices of [ADR-0304](ADR-0304-explanation-trees-for-displayed-numbers.md)
 (economy, research, construction, fleet). Applies to the package graph gate in
 `packages/cross-process-test/test/package-graph.test.ts`.

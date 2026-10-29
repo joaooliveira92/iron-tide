@@ -8,18 +8,20 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0225](../ADR-0225-prestige-required-field-and-research-first.md) Prestige is a required authored field; values are research-first and S-2 is gated on 0003.
-- [ADR-0261](../ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code.
 - [ADR-0264](../ADR-0264-t1-battle-offer-state-keeps-compatibility-version-4-0-0.md) The T-1 battle-offer state keeps compatibility version 4.0.0.
-- [ADR-0276](../ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md) UI-state writes are field-level patches merged once, in the main process.
 - [ADR-0338](../ADR-0338-options-and-preferences-and-campaign-command-registry.md) Preferences are a versioned domain object with strict validation and.
 - [ADR-0342](../ADR-0342-turn-identity-and-campaign-resume-workflow.md) Turn identity is fixed from pre-execution inputs before any interruption is answered; campaign reopen is gated by a main-process-owned allow-list with canonical-path approval.
 - [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected.
+- [ADR-0354](../ADR-0354-prestige-and-career-system.md) Prestige is a required nation field; every value is either grounded by RTW3 sources or an explicitly labelled balance target; the application seam is pure and dormant by default; a monthly sacking phase ends the career through a typed terminal record.
+- [ADR-0360](../ADR-0360-desktop-ipc-and-process-boundary-architecture.md) Desktop bridge channels are declared once in `shared/ipc-contract.ts`; the command surface is split by concern; UI-state writes are field patches merged once in main; navigation, permission and CSP are guarded from a single policy.
 
 ## Superseded (do not follow)
 
 - [ADR-0203](../ADR-0203-options-and-preferences-architecture.md) Options screen and preferences architecture. Follow ADR-0338.
 - [ADR-0222](../ADR-0222-turn-identity-stable-across-resume.md) A turn's interruption identity is stable across suspend and resume. Follow ADR-0342.
+- [ADR-0225](../ADR-0225-prestige-required-field-and-research-first.md) Prestige is a required authored field; values are research-first and S-2 is gated on 0003. Follow ADR-0354.
+- [ADR-0261](../ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code. Follow ADR-0354.
+- [ADR-0276](../ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md) UI-state writes are field patches merged once, in main. Follow ADR-0360.
 - [ADR-0278](../ADR-0278-save-files-decode-strictly.md) Save files decode strictly, campaign.json included. Follow ADR-0343.
 - [ADR-0285](../ADR-0285-campaign-snapshot-hash-covers-map-fields.md) The campaign snapshot hash covers Map fields. Follow ADR-0343.
 - [ADR-0305](../ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md) Saves are retained by an opt-in count with a protected head; Effect-returning persistence methods carry an `Effect` suffix. Follow ADR-0343.

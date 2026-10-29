@@ -2,9 +2,9 @@
 
 Applies to: events, messages, phase-engine
 
-Rule: Event body types derive from their Effect schemas; no hand-mirrored interfaces and no boundary casts.
-
 ## Status
+
+Superseded by: ADR-0359
 
 Accepted (2026-10-25). Records the `packages/events` schema-ownership decision from the
 `improve-effect-use` review. The presentation move is tracked separately as a decision request.

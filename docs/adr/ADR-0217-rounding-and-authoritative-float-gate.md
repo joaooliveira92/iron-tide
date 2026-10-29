@@ -2,9 +2,9 @@
 
 Applies to: repository
 
-Rule: Use the contracts package's `RoundingMode` only; every authoritative formula declares its mode and rounds once at the end on exact `bigint` intermediates.
-
 ## Status
+
+Superseded by: ADR-0351
 
 Accepted (2026-10-16). Implements the rounding/fixed-point boundary of [ADR-0202](ADR-0202-canonical-internal-values.md); U-1 of `.ai/SPRINT-PLAN.md` Phase 2.
 

@@ -4,6 +4,8 @@ Applies to: campaign, phase-engine
 
 ## Status
 
+Superseded by: ADR-0357
+
 Accepted (2026-10-25). Implements ticket [#276](https://github.com/joaooliveira92/iron-tide/issues/276) of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265), decision #203. The seam follows the typed-request style of
 [ADR-0248](ADR-0248-blockade-exemption-and-typed-penalty-requests.md) and the prestige seam; values are the balance targets of

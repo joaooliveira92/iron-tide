@@ -4,6 +4,8 @@ Applies to: combat, desktop, events
 
 ## Status
 
+Superseded by: ADR-0357
+
 Accepted (2026-10-25), amended 2026-10-26 by [#299](https://github.com/joaooliveira92/iron-tide/issues/299). Starts
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265) story 49 and the "Explainable" bar of `AGENTS.md`. Builds on
 [ADR-0221](ADR-0221-structured-explanation-data.md). Does not complete the story: the coverage manifest and the per-area

@@ -2,9 +2,9 @@
 
 Applies to: repository
 
-Rule: Stored and authoritative values are canonical and unit-agnostic; units and currency convert only at the presentation boundary and are never persisted as formatted text.
-
 ## Status
+
+Superseded by: ADR-0351
 
 Accepted (2026-10-15). New record of decision DR-002; no prior ADR file existed for
 it and none is restored (see ADR-0210).

@@ -4,6 +4,8 @@ Applies to: campaign, content-compiler, content-schema
 
 ## Status
 
+Superseded by: ADR-0356
+
 Accepted (2026-10-24). Implements ticket
 [#268](https://github.com/joaooliveira92/iron-tide/issues/268) of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265), decisions #196 and #199. Values are the balance

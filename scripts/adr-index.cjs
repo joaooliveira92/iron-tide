@@ -43,7 +43,7 @@ const AREAS = [
     name: "Values, currency & language",
     blurb:
       "Canonical values and the presentation-only units, currency, and language modes over them.",
-    nums: [202, 206, 207, 208, 209, 211, 215, 216, 217, 218, 219, 221, 307],
+    nums: [351, 352, 353, 202, 206, 207, 208, 209, 211, 215, 216, 217, 218, 219, 221, 307],
   },
   {
     name: "Preferences & interfaces",
@@ -85,8 +85,8 @@ const AREAS = [
     blurb:
       "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
     nums: [
-      223, 224, 225, 226, 239, 245, 260, 261, 281, 314, 286, 287, 288, 289, 316, 317, 292, 293, 296,
-      297, 298, 301, 302, 303, 304,
+      354, 355, 356, 357, 223, 224, 225, 226, 239, 245, 260, 261, 281, 314, 286, 287, 288, 289, 316,
+      317, 292, 293, 296, 297, 298, 301, 302, 303, 304,
     ],
   },
   {
@@ -112,7 +112,9 @@ const AREAS = [
   {
     name: "Engine architecture",
     blurb: "Package interfaces, seams and module depth across the engine.",
-    nums: [271, 272, 273, 276, 277, 294, 306, 308, 312, 320, 321, 322, 328, 334],
+    nums: [
+      358, 359, 360, 361, 271, 272, 273, 276, 277, 294, 306, 308, 312, 320, 321, 322, 328, 334,
+    ],
   },
 ];
 

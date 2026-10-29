@@ -2,9 +2,9 @@
 
 Applies to: commands, phase-engine
 
-Rule: Command-lifecycle records and unused spec-rule helpers are scaffolding and do not ship; only `createCommandRecord` is kept.
-
 ## Status
+
+Superseded by: ADR-0355
 
 Accepted (2026-10-25). Resolves [#204](https://github.com/joaooliveira92/iron-tide/issues/204) and carries out
 [#205](https://github.com/joaooliveira92/iron-tide/issues/205). The owner delegated the choice.

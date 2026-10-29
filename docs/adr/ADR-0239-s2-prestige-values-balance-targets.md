@@ -4,6 +4,8 @@ Applies to: content, campaign, cross-process-test
 
 ## Status
 
+Superseded by: ADR-0354
+
 Accepted (2026-10-19). Resolves decision request
 [0012](../../.ai/decision-requests/0012-prestige-values-unresolved-after-research.md)
 (Option B), decided by the owner's delegation, which is the explicit owner

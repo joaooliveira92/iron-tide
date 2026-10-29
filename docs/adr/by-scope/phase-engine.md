@@ -9,7 +9,6 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 ## Current
 
 - [ADR-0221](../ADR-0221-structured-explanation-data.md) Structured explanation data for domain display values.
-- [ADR-0223](../ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md) S-1 readiness, crew and maintenance values are centralized ruleset constants.
 - [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state.
 - [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness.
 - [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
@@ -24,33 +23,40 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0257](../ADR-0257-declined-battle-tally-and-threshold-event.md) Declined-battle tally and the repeated-decline threshold event.
 - [ADR-0258](../ADR-0258-enemy-declines-a-battle-with-the-player.md) The enemy declines a battle with the player.
 - [ADR-0259](../ADR-0259-friendly-support-force-joins-the-players-side.md) A friendly support force joins the player's side.
-- [ADR-0260](../ADR-0260-prestige-application-and-unpaid-funds-source.md) Prestige application seam and the unpaid-funds source.
-- [ADR-0261](../ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code.
 - [ADR-0262](../ADR-0262-repeated-declines-cost-the-player-prestige.md) Repeated declines cost the player prestige through the S-2 seam.
 - [ADR-0265](../ADR-0265-battle-declined-event-carries-the-running-decline-count.md) The BattleDeclined event carries the running decline count.
-- [ADR-0271](../ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) `@bluewave/combat` exports only `resolve`, `advance`, `generate` and the contract types at its root; subsystems are subpath seams. (amended by ADR-0277).
-- [ADR-0272](../ADR-0272-month-pipeline-owns-order-and-observed-access.md) Phase order is declared once in `TURN_PHASES`; phases access snapshot aggregates through a recorded handle and receive randomness only through a grant.. Amends ADR-0247, ADR-0250.
-- [ADR-0281](../ADR-0281-sacking-phase-and-terminal-career.md) The sacking phase and the terminal career.
-- [ADR-0287](../ADR-0287-battle-absence-record.md) A battle record explains the player's absent ships with gate reasons.
-- [ADR-0288](../ADR-0288-monthly-division-cohesion-growth.md) Division cohesion grows monthly through a pure rule applied after readiness evolution.
-- [ADR-0292](../ADR-0292-battle-experience-write-back.md) Battle aftermath asks the division module for experience through a typed request.
-- [ADR-0294](../ADR-0294-event-body-types-derive-from-schemas.md) Event body types derive from their Effect schemas; no hand-mirrored interfaces and no boundary casts.
-- [ADR-0298](../ADR-0298-command-lifecycle-records-are-scaffolding.md) Command-lifecycle records and unused spec-rule helpers are scaffolding and do not ship; only `createCommandRecord` is kept.
-- [ADR-0301](../ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) Proficient gunnery training raises the nation's gunnery accuracy in battle.
-- [ADR-0302](../ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md) All four training subjects reach battle through one per-side effects record.
-- [ADR-0303](../ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) Training cost differences and exercise tension are generic ruleset data.
-- [ADR-0316](../ADR-0316-special-training-program.md) Special training is a nation program whose maintenance adder feeds the shared calculator.
-- [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot.
 - [ADR-0337](../ADR-0337-campaign-economy-model-and-budget-pressure.md) Campaign economy is a single integer appropriation-to-ledger model; budget-pressure values are researched then tunable; government type derives from political system via a mandatory ruleset table.
 - [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
 - [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
 - [ADR-0342](../ADR-0342-turn-identity-and-campaign-resume-workflow.md) Turn identity is fixed from pre-execution inputs before any interruption is answered; campaign reopen is gated by a main-process-owned allow-list with canonical-path approval.
 - [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected.
+- [ADR-0354](../ADR-0354-prestige-and-career-system.md) Prestige is a required nation field; every value is either grounded by RTW3 sources or an explicitly labelled balance target; the application seam is pure and dormant by default; a monthly sacking phase ends the career through a typed terminal record.
+- [ADR-0355](../ADR-0355-readiness-command-structure-and-division-state.md) Every numeric gameplay value for readiness, crew and maintenance is a centralized ruleset constant with provenance; per-nation officer rosters and seeded divisions are authored balance choices; command-lifecycle scaffolding is removed from shipping code; ship conditions are derived predicates computed from existing fields.
+- [ADR-0356](../ADR-0356-fleet-management-gates-values-and-ship-use.md) Ship use is decided by one pure gate evaluator; fleet-management values live in a dormant ruleset section until authored; repair entry from battle damage is deferred.
+- [ADR-0357](../ADR-0357-training-exercises-division-growth-and-explanation-trees.md) Division cohesion and experience grow through pure rules; special training is a nation program with proficiency tracked in funded months; exercises are commanded for the following month through the assignment slot and cost doubled active maintenance; training effects reach battle through one per-side effects record; displayed numbers carry explanation trees built from the same calculation the engine uses.
+- [ADR-0358](../ADR-0358-combat-engine-architecture.md) `@bluewave/combat` exports exactly `resolve`, `advance`, `generate` and the root contract; all subsystems, orders, realism and combat modules are subpath seams.
+- [ADR-0359](../ADR-0359-phase-engine-and-event-architecture.md) Phase order is declared once in `TURN_PHASES`; phases access snapshot aggregates through recorded handles with declared permissions; event body types derive from Effect schemas with no mirrored interfaces.
 
 ## Superseded (do not follow)
 
 - [ADR-0222](../ADR-0222-turn-identity-stable-across-resume.md) A turn's interruption identity is stable across suspend and resume. Follow ADR-0342.
+- [ADR-0223](../ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md) S-1 readiness, crew and maintenance values are centralized ruleset constants. Follow ADR-0355.
 - [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim. Follow ADR-0339.
 - [ADR-0230](../ADR-0230-campaign-economy-model.md) Campaign economy model — one appropriation, one ledger, one set of calculators. Follow ADR-0337.
+- [ADR-0260](../ADR-0260-prestige-application-and-unpaid-funds-source.md) Prestige application seam and the unpaid-funds source. Follow ADR-0354.
+- [ADR-0261](../ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code. Follow ADR-0354.
+- [ADR-0271](../ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) The combat package exposes three verbs and subsystem seams. Follow ADR-0358.
+- [ADR-0272](../ADR-0272-month-pipeline-owns-order-and-observed-access.md) The month pipeline owns phase order and observes real snapshot access. Follow ADR-0359.
+- [ADR-0281](../ADR-0281-sacking-phase-and-terminal-career.md) The sacking phase and the terminal career. Follow ADR-0354.
+- [ADR-0287](../ADR-0287-battle-absence-record.md) A battle record explains the player's absent ships with gate reasons. Follow ADR-0356.
+- [ADR-0288](../ADR-0288-monthly-division-cohesion-growth.md) Division cohesion grows monthly through a pure rule applied after readiness evolution. Follow ADR-0357.
+- [ADR-0292](../ADR-0292-battle-experience-write-back.md) Battle aftermath asks the division module for experience through a typed request. Follow ADR-0357.
+- [ADR-0294](../ADR-0294-event-body-types-derive-from-schemas.md) Event body types derive from their Effect schemas. Follow ADR-0359.
+- [ADR-0298](../ADR-0298-command-lifecycle-records-are-scaffolding.md) Hash-chained command-lifecycle records, settlement branches and the spec-rule helpers are scaffolding, not shipped. Follow ADR-0355.
+- [ADR-0301](../ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) Proficient gunnery training raises the nation's gunnery accuracy in battle. Follow ADR-0357.
+- [ADR-0302](../ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md) All four training subjects reach battle through one per-side effects record. Follow ADR-0357.
+- [ADR-0303](../ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) Training cost differences and exercise tension are generic ruleset data. Follow ADR-0357.
 - [ADR-0310](../ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) E-1 catalogue technologies for carrier, mine and submarine engine ids. Follow ADR-0340.
+- [ADR-0316](../ADR-0316-special-training-program.md) Special training is a nation program whose maintenance adder feeds the shared calculator. Follow ADR-0357.
+- [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot. Follow ADR-0357.
 - [ADR-0330](../ADR-0330-unified-snapshot-hash.md) One versioned, domain-separated snapshot hash. Follow ADR-0343.

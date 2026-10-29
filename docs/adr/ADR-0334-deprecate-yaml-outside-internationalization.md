@@ -4,6 +4,8 @@ Applies to: repository
 
 ## Status
 
+Superseded by: ADR-0361
+
 Accepted (2026-10-29). Implemented the same day: the migration ratchet is empty
 and the boundary gate runs in strict mode.
 

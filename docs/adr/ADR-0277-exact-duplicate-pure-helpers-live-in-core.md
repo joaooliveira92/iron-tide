@@ -4,6 +4,8 @@ Applies to: combat
 
 ## Status
 
+Superseded by: ADR-0358
+
 Accepted (2026-10-23).
 
 Amends: ADR-0271 (its first consequence: duplicated helpers stay behind separate seams).

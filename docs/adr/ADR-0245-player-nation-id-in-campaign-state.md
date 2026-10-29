@@ -4,6 +4,8 @@ Applies to: campaign, ai, test-support
 
 ## Status
 
+Superseded by: ADR-0354
+
 Accepted (2026-10-20). Resolves
 [decision request 0025](../../.ai/decision-requests/0025-s-2-player-nation-identity-in-the-month-executor.md)
 (Option A) for S-2 ([#89](https://github.com/joaooliveira92/iron-tide/issues/89), spec

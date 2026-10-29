@@ -4,6 +4,8 @@ Applies to: campaign, campaign-engine, desktop
 
 ## Status
 
+Superseded by: ADR-0353
+
 Accepted (2026-10-26). Continues [ADR-0304](ADR-0304-explanation-trees-for-displayed-numbers.md) for
 [#304](https://github.com/joaooliveira92/iron-tide/issues/304) and
 [#306](https://github.com/joaooliveira92/iron-tide/issues/306). Does not fabricate trees for accumulated

@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0351).
+highest existing number + 1 (the next number is ADR-0362).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -38,19 +38,22 @@ Canonical values and the presentation-only units, currency, and language modes o
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0202 | [ADR-0202-canonical-internal-values.md](ADR-0202-canonical-internal-values.md) | Canonical internal values, presentation-only units and currency | accepted | — |
-| 0206 | [ADR-0206-naval-credits.md](ADR-0206-naval-credits.md) | Naval Credits (NC) as the standardized comparison currency | accepted | — |
-| 0207 | [ADR-0207-budget-points.md](ADR-0207-budget-points.md) | Budget Points (BP) as an abstract display unit | accepted | — |
-| 0208 | [ADR-0208-no-custom-display-currency.md](ADR-0208-no-custom-display-currency.md) | Custom display currency excluded from the initial release | accepted | — |
-| 0209 | [ADR-0209-ui-language-and-formatting-locale.md](ADR-0209-ui-language-and-formatting-locale.md) | UI language, formatting locale, and externalized strings | accepted | — |
-| 0211 | [ADR-0211-default-and-national-historical-currency.md](ADR-0211-default-and-national-historical-currency.md) | Default currency Naval Credits; National Historical is conditional | accepted | — |
-| 0215 | [ADR-0215-canonical-units-module.md](ADR-0215-canonical-units-module.md) | Canonical units module and its home in the contracts package | accepted | — |
-| 0216 | [ADR-0216-money-type-and-treasury-bridge.md](ADR-0216-money-type-and-treasury-bridge.md) | Fixed-precision money type, treasury-unit scale, and the micro→unit bridge | accepted | — |
-| 0217 | [ADR-0217-rounding-and-authoritative-float-gate.md](ADR-0217-rounding-and-authoritative-float-gate.md) | Rounding and fixed-point rules and the authoritative-float gate | accepted | — |
-| 0218 | [ADR-0218-conversion-and-locale-boundary.md](ADR-0218-conversion-and-locale-boundary.md) | Conversion and locale boundary — canonical↔display only at presentation, language distinct from locale | accepted | — |
-| 0219 | [ADR-0219-combat-and-capacity-fixed-point-repin.md](ADR-0219-combat-and-capacity-fixed-point-repin.md) | Combat and construction-capacity float→fixed conversion and its re-pin | accepted | — |
+| 0351 | [ADR-0351-canonical-values-units-fixed-point.md](ADR-0351-canonical-values-units-fixed-point.md) | Canonical internal values, units and fixed-point arithmetic | accepted | — |
+| 0352 | [ADR-0352-currency-display-language-formatting-boundary.md](ADR-0352-currency-display-language-formatting-boundary.md) | Currency display modes, UI language, and formatting boundary | accepted | — |
+| 0353 | [ADR-0353-strategic-report-explanation-provenance.md](ADR-0353-strategic-report-explanation-provenance.md) | Provenance for strategic-area and monthly-report explanations | accepted | — |
+| 0202 | [ADR-0202-canonical-internal-values.md](ADR-0202-canonical-internal-values.md) | Canonical internal values, presentation-only units and currency | superseded | ADR-0351 |
+| 0206 | [ADR-0206-naval-credits.md](ADR-0206-naval-credits.md) | Naval Credits (NC) as the standardized comparison currency | superseded | ADR-0352 |
+| 0207 | [ADR-0207-budget-points.md](ADR-0207-budget-points.md) | Budget Points (BP) as an abstract display unit | superseded | ADR-0352 |
+| 0208 | [ADR-0208-no-custom-display-currency.md](ADR-0208-no-custom-display-currency.md) | Custom display currency excluded from the initial release | superseded | ADR-0352 |
+| 0209 | [ADR-0209-ui-language-and-formatting-locale.md](ADR-0209-ui-language-and-formatting-locale.md) | UI language, formatting locale, and externalized strings | superseded | ADR-0352 |
+| 0211 | [ADR-0211-default-and-national-historical-currency.md](ADR-0211-default-and-national-historical-currency.md) | Default currency Naval Credits; National Historical is conditional | superseded | ADR-0352 |
+| 0215 | [ADR-0215-canonical-units-module.md](ADR-0215-canonical-units-module.md) | Canonical units module and its home in the contracts package | superseded | ADR-0351 |
+| 0216 | [ADR-0216-money-type-and-treasury-bridge.md](ADR-0216-money-type-and-treasury-bridge.md) | Fixed-precision money type, treasury-unit scale, and the micro→unit bridge | superseded | ADR-0351 |
+| 0217 | [ADR-0217-rounding-and-authoritative-float-gate.md](ADR-0217-rounding-and-authoritative-float-gate.md) | Rounding and fixed-point rules and the authoritative-float gate | superseded | ADR-0351 |
+| 0218 | [ADR-0218-conversion-and-locale-boundary.md](ADR-0218-conversion-and-locale-boundary.md) | Conversion and locale boundary — canonical↔display only at presentation, language distinct from locale | superseded | ADR-0352 |
+| 0219 | [ADR-0219-combat-and-capacity-fixed-point-repin.md](ADR-0219-combat-and-capacity-fixed-point-repin.md) | Combat and construction-capacity float→fixed conversion and its re-pin | superseded | ADR-0351 |
 | 0221 | [ADR-0221-structured-explanation-data.md](ADR-0221-structured-explanation-data.md) | Structured explanation data for domain display values | accepted | — |
-| 0307 | [ADR-0307-strategic-and-report-explanation-provenance.md](ADR-0307-strategic-and-report-explanation-provenance.md) | Provenance for strategic-area and monthly-report explanations | accepted | — |
+| 0307 | [ADR-0307-strategic-and-report-explanation-provenance.md](ADR-0307-strategic-and-report-explanation-provenance.md) | Provenance for strategic-area and monthly-report explanations | superseded | ADR-0353 |
 
 ## Preferences & interfaces
 
@@ -147,31 +150,35 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0223 | [ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md](ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md) | S-1 readiness, crew and maintenance values are centralized ruleset constants | accepted | — |
-| 0224 | [ADR-0224-1880-command-structure-divisions-and-officers.md](ADR-0224-1880-command-structure-divisions-and-officers.md) | 1880 command structure — per-nation officer rosters and seeded divisions | accepted | — |
-| 0225 | [ADR-0225-prestige-required-field-and-research-first.md](ADR-0225-prestige-required-field-and-research-first.md) | Prestige is a required authored field; values are research-first and S-2 is gated on 0003 | accepted | — |
-| 0226 | [ADR-0226-rtw3-prestige-research-outcome.md](ADR-0226-rtw3-prestige-research-outcome.md) | RTW3 prestige research outcome — the model is grounded, the production values are not | accepted | — |
-| 0239 | [ADR-0239-s2-prestige-values-balance-targets.md](ADR-0239-s2-prestige-values-balance-targets.md) | S-2 prestige values: the grounded model plus labelled balance targets | accepted | — |
-| 0245 | [ADR-0245-player-nation-id-in-campaign-state.md](ADR-0245-player-nation-id-in-campaign-state.md) | The player nation is stored in authoritative campaign state | accepted | — |
-| 0260 | [ADR-0260-prestige-application-and-unpaid-funds-source.md](ADR-0260-prestige-application-and-unpaid-funds-source.md) | Prestige application seam and the unpaid-funds source | accepted | — |
-| 0261 | [ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md](ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) | A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code | accepted | — |
-| 0281 | [ADR-0281-sacking-phase-and-terminal-career.md](ADR-0281-sacking-phase-and-terminal-career.md) | The sacking phase and the terminal career | accepted | — |
-| 0314 | [ADR-0314-fleet-management-values-and-repair-entry.md](ADR-0314-fleet-management-values-and-repair-entry.md) | Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope | accepted | — |
-| 0286 | [ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md](ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md) | Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section | accepted | — |
-| 0287 | [ADR-0287-battle-absence-record.md](ADR-0287-battle-absence-record.md) | A battle record explains the player's absent ships with gate reasons | accepted | — |
-| 0288 | [ADR-0288-monthly-division-cohesion-growth.md](ADR-0288-monthly-division-cohesion-growth.md) | Division cohesion grows monthly through a pure rule applied after readiness evolution | accepted | — |
-| 0289 | [ADR-0289-division-doctrine-command-and-speed-advisory.md](ADR-0289-division-doctrine-command-and-speed-advisory.md) | Role and formation changes are one division command priced from the ruleset; speed mismatch is a derived advisory | accepted | — |
-| 0316 | [ADR-0316-special-training-program.md](ADR-0316-special-training-program.md) | Special training is a nation program whose maintenance adder feeds the shared calculator | accepted | — |
-| 0317 | [ADR-0317-annual-fleet-exercise.md](ADR-0317-annual-fleet-exercise.md) | The annual fleet exercise is scheduled for the next month and held through the assignment slot | accepted | — |
-| 0292 | [ADR-0292-battle-experience-write-back.md](ADR-0292-battle-experience-write-back.md) | Battle aftermath asks the division module for experience through a typed request | accepted | — |
-| 0293 | [ADR-0293-fleet-management-go-live.md](ADR-0293-fleet-management-go-live.md) | Fleet management goes live in the production pack and in every re-execution path | accepted | — |
-| 0296 | [ADR-0296-derived-ship-conditions.md](ADR-0296-derived-ship-conditions.md) | Ship conditions are derived predicates the fleet view carries and the renderer only labels | accepted | — |
-| 0297 | [ADR-0297-engine-reads-catalogue-technology-ids.md](ADR-0297-engine-reads-catalogue-technology-ids.md) | The engine reads the catalogue's technology id where one matches, and leaves the rest named | accepted | — |
-| 0298 | [ADR-0298-command-lifecycle-records-are-scaffolding.md](ADR-0298-command-lifecycle-records-are-scaffolding.md) | Hash-chained command-lifecycle records, settlement branches and the spec-rule helpers are scaffolding, not shipped | accepted | — |
-| 0301 | [ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md](ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) | Proficient gunnery training raises the nation's gunnery accuracy in battle | accepted | — |
-| 0302 | [ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md](ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md) | All four training subjects reach battle through one per-side effects record | accepted | — |
-| 0303 | [ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md](ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) | Training cost differences and exercise tension are generic ruleset data | accepted | — |
-| 0304 | [ADR-0304-explanation-trees-for-displayed-numbers.md](ADR-0304-explanation-trees-for-displayed-numbers.md) | Displayed numbers carry an explanation tree; gunnery accuracy is the first slice | accepted | — |
+| 0354 | [ADR-0354-prestige-and-career-system.md](ADR-0354-prestige-and-career-system.md) | Prestige and Career System | accepted | — |
+| 0355 | [ADR-0355-readiness-command-structure-and-division-state.md](ADR-0355-readiness-command-structure-and-division-state.md) | Readiness, Command Structure and Division State | accepted | — |
+| 0356 | [ADR-0356-fleet-management-gates-values-and-ship-use.md](ADR-0356-fleet-management-gates-values-and-ship-use.md) | Fleet Management — Gates, Values and Ship Use | accepted | — |
+| 0357 | [ADR-0357-training-exercises-division-growth-and-explanation-trees.md](ADR-0357-training-exercises-division-growth-and-explanation-trees.md) | Training, Exercises, Division Growth and Explanation Trees | accepted | — |
+| 0223 | [ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md](ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md) | S-1 readiness, crew and maintenance values are centralized ruleset constants | superseded | ADR-0355 |
+| 0224 | [ADR-0224-1880-command-structure-divisions-and-officers.md](ADR-0224-1880-command-structure-divisions-and-officers.md) | 1880 command structure — per-nation officer rosters and seeded divisions | superseded | ADR-0355 |
+| 0225 | [ADR-0225-prestige-required-field-and-research-first.md](ADR-0225-prestige-required-field-and-research-first.md) | Prestige is a required authored field; values are research-first and S-2 is gated on 0003 | superseded | ADR-0354 |
+| 0226 | [ADR-0226-rtw3-prestige-research-outcome.md](ADR-0226-rtw3-prestige-research-outcome.md) | RTW3 prestige research outcome — the model is grounded, the production values are not | superseded | ADR-0354 |
+| 0239 | [ADR-0239-s2-prestige-values-balance-targets.md](ADR-0239-s2-prestige-values-balance-targets.md) | S-2 prestige values: the grounded model plus labelled balance targets | superseded | ADR-0354 |
+| 0245 | [ADR-0245-player-nation-id-in-campaign-state.md](ADR-0245-player-nation-id-in-campaign-state.md) | The player nation is stored in authoritative campaign state | superseded | ADR-0354 |
+| 0260 | [ADR-0260-prestige-application-and-unpaid-funds-source.md](ADR-0260-prestige-application-and-unpaid-funds-source.md) | Prestige application seam and the unpaid-funds source | superseded | ADR-0354 |
+| 0261 | [ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md](ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) | A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code | superseded | ADR-0354 |
+| 0281 | [ADR-0281-sacking-phase-and-terminal-career.md](ADR-0281-sacking-phase-and-terminal-career.md) | The sacking phase and the terminal career | superseded | ADR-0354 |
+| 0314 | [ADR-0314-fleet-management-values-and-repair-entry.md](ADR-0314-fleet-management-values-and-repair-entry.md) | Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope | superseded | ADR-0356 |
+| 0286 | [ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md](ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md) | Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section | superseded | ADR-0356 |
+| 0287 | [ADR-0287-battle-absence-record.md](ADR-0287-battle-absence-record.md) | A battle record explains the player's absent ships with gate reasons | superseded | ADR-0356 |
+| 0288 | [ADR-0288-monthly-division-cohesion-growth.md](ADR-0288-monthly-division-cohesion-growth.md) | Division cohesion grows monthly through a pure rule applied after readiness evolution | superseded | ADR-0357 |
+| 0289 | [ADR-0289-division-doctrine-command-and-speed-advisory.md](ADR-0289-division-doctrine-command-and-speed-advisory.md) | Role and formation changes are one division command priced from the ruleset; speed mismatch is a derived advisory | superseded | ADR-0357 |
+| 0316 | [ADR-0316-special-training-program.md](ADR-0316-special-training-program.md) | Special training is a nation program whose maintenance adder feeds the shared calculator | superseded | ADR-0357 |
+| 0317 | [ADR-0317-annual-fleet-exercise.md](ADR-0317-annual-fleet-exercise.md) | The annual fleet exercise is scheduled for the next month and held through the assignment slot | superseded | ADR-0357 |
+| 0292 | [ADR-0292-battle-experience-write-back.md](ADR-0292-battle-experience-write-back.md) | Battle aftermath asks the division module for experience through a typed request | superseded | ADR-0357 |
+| 0293 | [ADR-0293-fleet-management-go-live.md](ADR-0293-fleet-management-go-live.md) | Fleet management goes live in the production pack and in every re-execution path | superseded | ADR-0356 |
+| 0296 | [ADR-0296-derived-ship-conditions.md](ADR-0296-derived-ship-conditions.md) | Ship conditions are derived predicates the fleet view carries and the renderer only labels | superseded | ADR-0355 |
+| 0297 | [ADR-0297-engine-reads-catalogue-technology-ids.md](ADR-0297-engine-reads-catalogue-technology-ids.md) | The engine reads the catalogue's technology id where one matches, and leaves the rest named | superseded | ADR-0357 |
+| 0298 | [ADR-0298-command-lifecycle-records-are-scaffolding.md](ADR-0298-command-lifecycle-records-are-scaffolding.md) | Hash-chained command-lifecycle records, settlement branches and the spec-rule helpers are scaffolding, not shipped | superseded | ADR-0355 |
+| 0301 | [ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md](ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) | Proficient gunnery training raises the nation's gunnery accuracy in battle | superseded | ADR-0357 |
+| 0302 | [ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md](ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md) | All four training subjects reach battle through one per-side effects record | superseded | ADR-0357 |
+| 0303 | [ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md](ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) | Training cost differences and exercise tension are generic ruleset data | superseded | ADR-0357 |
+| 0304 | [ADR-0304-explanation-trees-for-displayed-numbers.md](ADR-0304-explanation-trees-for-displayed-numbers.md) | Displayed numbers carry an explanation tree; gunnery accuracy is the first slice | superseded | ADR-0357 |
 
 ## Foreign stations & presence
 
@@ -238,20 +245,24 @@ Package interfaces, seams and module depth across the engine.
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0271 | [ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md](ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) | The combat package exposes three verbs and subsystem seams | accepted | — |
-| 0272 | [ADR-0272-month-pipeline-owns-order-and-observed-access.md](ADR-0272-month-pipeline-owns-order-and-observed-access.md) | The month pipeline owns phase order and observes real snapshot access | accepted | — |
-| 0273 | [ADR-0273-shared-command-contract-split-by-concern.md](ADR-0273-shared-command-contract-split-by-concern.md) | The shared command contract is split by concern | accepted | — |
-| 0276 | [ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md](ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md) | UI-state writes are field patches merged once, in main | accepted | — |
-| 0277 | [ADR-0277-exact-duplicate-pure-helpers-live-in-core.md](ADR-0277-exact-duplicate-pure-helpers-live-in-core.md) | Exact-duplicate pure helpers live in combat core | accepted | — |
-| 0294 | [ADR-0294-event-body-types-derive-from-schemas.md](ADR-0294-event-body-types-derive-from-schemas.md) | Event body types derive from their Effect schemas | accepted | — |
-| 0306 | [ADR-0306-campaign-projections-carry-explanation-trees.md](ADR-0306-campaign-projections-carry-explanation-trees.md) | Campaign projections may carry explanation trees; `@bluewave/events` moves to layer 4 | accepted | — |
-| 0308 | [ADR-0308-e1-compiled-design-capabilities-reach-combat.md](ADR-0308-e1-compiled-design-capabilities-reach-combat.md) | Compiled design capabilities reach combat and are decoded strictly | accepted | — |
-| 0312 | [ADR-0312-surface-to-surface-missile-combat-module.md](ADR-0312-surface-to-surface-missile-combat-module.md) | Surface-to-surface missile salvos are a deterministic combat module | accepted | — |
-| 0320 | [ADR-0320-electron-shell-navigation-permission-and-csp-policy.md](ADR-0320-electron-shell-navigation-permission-and-csp-policy.md) | Electron shell navigation, permission and CSP policy | accepted | — |
-| 0321 | [ADR-0321-division-order-model.md](ADR-0321-division-order-model.md) | Divisions receive a versioned order model, with stance as a lossless preset | accepted | — |
-| 0322 | [ADR-0322-realism-order-permission-matrix.md](ADR-0322-realism-order-permission-matrix.md) | Realism modes gate battle orders in the engine, not in the UI | accepted | — |
-| 0328 | [ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md](ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md) | Desktop IPC channels are declared once in a shared contract | accepted | — |
-| 0334 | [ADR-0334-deprecate-yaml-outside-internationalization.md](ADR-0334-deprecate-yaml-outside-internationalization.md) | Deprecate YAML outside internationalization | accepted | — |
+| 0358 | [ADR-0358-combat-engine-architecture.md](ADR-0358-combat-engine-architecture.md) | Combat engine architecture | accepted | — |
+| 0359 | [ADR-0359-phase-engine-and-event-architecture.md](ADR-0359-phase-engine-and-event-architecture.md) | Phase-engine and event architecture | accepted | — |
+| 0360 | [ADR-0360-desktop-ipc-and-process-boundary-architecture.md](ADR-0360-desktop-ipc-and-process-boundary-architecture.md) | Desktop IPC and process boundary architecture | accepted | — |
+| 0361 | [ADR-0361-deprecate-yaml-outside-internationalization.md](ADR-0361-deprecate-yaml-outside-internationalization.md) | Deprecate YAML outside internationalization | accepted | — |
+| 0271 | [ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md](ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) | The combat package exposes three verbs and subsystem seams | superseded | ADR-0358 |
+| 0272 | [ADR-0272-month-pipeline-owns-order-and-observed-access.md](ADR-0272-month-pipeline-owns-order-and-observed-access.md) | The month pipeline owns phase order and observes real snapshot access | superseded | ADR-0359 |
+| 0273 | [ADR-0273-shared-command-contract-split-by-concern.md](ADR-0273-shared-command-contract-split-by-concern.md) | The shared command contract is split by concern | superseded | ADR-0360 |
+| 0276 | [ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md](ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md) | UI-state writes are field patches merged once, in main | superseded | ADR-0360 |
+| 0277 | [ADR-0277-exact-duplicate-pure-helpers-live-in-core.md](ADR-0277-exact-duplicate-pure-helpers-live-in-core.md) | Exact-duplicate pure helpers live in combat core | superseded | ADR-0358 |
+| 0294 | [ADR-0294-event-body-types-derive-from-schemas.md](ADR-0294-event-body-types-derive-from-schemas.md) | Event body types derive from their Effect schemas | superseded | ADR-0359 |
+| 0306 | [ADR-0306-campaign-projections-carry-explanation-trees.md](ADR-0306-campaign-projections-carry-explanation-trees.md) | Campaign projections may carry explanation trees; `@bluewave/events` moves to layer 4 | superseded | ADR-0359 |
+| 0308 | [ADR-0308-e1-compiled-design-capabilities-reach-combat.md](ADR-0308-e1-compiled-design-capabilities-reach-combat.md) | Compiled design capabilities reach combat and are decoded strictly | superseded | ADR-0358 |
+| 0312 | [ADR-0312-surface-to-surface-missile-combat-module.md](ADR-0312-surface-to-surface-missile-combat-module.md) | Surface-to-surface missile salvos are a deterministic combat module | superseded | ADR-0358 |
+| 0320 | [ADR-0320-electron-shell-navigation-permission-and-csp-policy.md](ADR-0320-electron-shell-navigation-permission-and-csp-policy.md) | Electron shell navigation, permission and CSP policy | superseded | ADR-0360 |
+| 0321 | [ADR-0321-division-order-model.md](ADR-0321-division-order-model.md) | Divisions receive a versioned order model, with stance as a lossless preset | superseded | ADR-0358 |
+| 0322 | [ADR-0322-realism-order-permission-matrix.md](ADR-0322-realism-order-permission-matrix.md) | Realism modes gate battle orders in the engine, not in the UI | superseded | ADR-0358 |
+| 0328 | [ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md](ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md) | Desktop IPC channels are declared once in a shared contract | superseded | ADR-0360 |
+| 0334 | [ADR-0334-deprecate-yaml-outside-internationalization.md](ADR-0334-deprecate-yaml-outside-internationalization.md) | Deprecate YAML outside internationalization | superseded | ADR-0361 |
 
 ## Archive
 

@@ -4,6 +4,8 @@ Applies to: content, campaign, cross-process-test
 
 ## Status
 
+Superseded by: ADR-0355
+
 Accepted (2026-10-17). Resolves decision request
 [0005](../../.ai/decision-requests/0005-officer-rosters-and-divisions-golden-repin.md)
 (Option A). Complements ADR-0213. Sprints: N-1.

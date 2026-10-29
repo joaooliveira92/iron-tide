@@ -15,8 +15,14 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0249](../ADR-0249-foreign-station-deployment-routes-ships-to-the-largest-shortfall.md) Foreign-station ships are routed one hop a month toward the largest shortfall.
 - [ADR-0255](../ADR-0255-battle-offer-request-estimate-and-answer.md) The battle offer: request shape, estimate, accept and delegate, typed refusals.
 - [ADR-0257](../ADR-0257-declined-battle-tally-and-threshold-event.md) Declined-battle tally and the repeated-decline threshold event.
-- [ADR-0260](../ADR-0260-prestige-application-and-unpaid-funds-source.md) Prestige application seam and the unpaid-funds source.
 - [ADR-0265](../ADR-0265-battle-declined-event-carries-the-running-decline-count.md) The BattleDeclined event carries the running decline count.
-- [ADR-0294](../ADR-0294-event-body-types-derive-from-schemas.md) Event body types derive from their Effect schemas; no hand-mirrored interfaces and no boundary casts.
-- [ADR-0304](../ADR-0304-explanation-trees-for-displayed-numbers.md) Displayed numbers carry an explanation tree; gunnery accuracy is the first slice.
-- [ADR-0306](../ADR-0306-campaign-projections-carry-explanation-trees.md) Campaign projections may carry explanation trees; `@bluewave/events` moves to layer 4.
+- [ADR-0354](../ADR-0354-prestige-and-career-system.md) Prestige is a required nation field; every value is either grounded by RTW3 sources or an explicitly labelled balance target; the application seam is pure and dormant by default; a monthly sacking phase ends the career through a typed terminal record.
+- [ADR-0357](../ADR-0357-training-exercises-division-growth-and-explanation-trees.md) Division cohesion and experience grow through pure rules; special training is a nation program with proficiency tracked in funded months; exercises are commanded for the following month through the assignment slot and cost doubled active maintenance; training effects reach battle through one per-side effects record; displayed numbers carry explanation trees built from the same calculation the engine uses.
+- [ADR-0359](../ADR-0359-phase-engine-and-event-architecture.md) Phase order is declared once in `TURN_PHASES`; phases access snapshot aggregates through recorded handles with declared permissions; event body types derive from Effect schemas with no mirrored interfaces.
+
+## Superseded (do not follow)
+
+- [ADR-0260](../ADR-0260-prestige-application-and-unpaid-funds-source.md) Prestige application seam and the unpaid-funds source. Follow ADR-0354.
+- [ADR-0294](../ADR-0294-event-body-types-derive-from-schemas.md) Event body types derive from their Effect schemas. Follow ADR-0359.
+- [ADR-0304](../ADR-0304-explanation-trees-for-displayed-numbers.md) Displayed numbers carry an explanation tree; gunnery accuracy is the first slice. Follow ADR-0357.
+- [ADR-0306](../ADR-0306-campaign-projections-carry-explanation-trees.md) Campaign projections may carry explanation trees; `@bluewave/events` moves to layer 4. Follow ADR-0359.

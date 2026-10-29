@@ -60,7 +60,6 @@ link. No starting ship may be silently illegal: each is either design-linked and
   stated so it is not read as a defect.
 - No wire-format or schema change; the effect is content and validation only.
 
-
 ## Amendment (2026-10-17): `completedTechs` does not gate construction
 
 The Decision sentence above originally read that per-nation `completedTechs`

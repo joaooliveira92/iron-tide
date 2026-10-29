@@ -2,9 +2,9 @@
 
 Applies to: contracts, messages, phase-engine
 
-Rule: Phase order is declared once in `TURN_PHASES`; phases access snapshot aggregates through a recorded handle and receive randomness only through a grant.
-
 ## Status
+
+Superseded by: ADR-0359
 
 Accepted (2026-10-22).
 

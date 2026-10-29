@@ -4,6 +4,8 @@ Applies to: content, campaign
 
 ## Status
 
+Superseded by: ADR-0356
+
 Accepted (2026-10-23). Resolves the value gates of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265) (map
 [#193](https://github.com/joaooliveira92/iron-tide/issues/193)) by the owner's standing delegation on

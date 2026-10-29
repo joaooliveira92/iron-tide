@@ -8,10 +8,16 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0209](../ADR-0209-ui-language-and-formatting-locale.md) UI language, formatting locale, and externalized strings.
 - [ADR-0253](../ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input.
 - [ADR-0255](../ADR-0255-battle-offer-request-estimate-and-answer.md) The battle offer: request shape, estimate, accept and delegate, typed refusals.
 - [ADR-0256](../ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md) Declining a battle offer: terminal record, released ships, victory-point cost.
-- [ADR-0260](../ADR-0260-prestige-application-and-unpaid-funds-source.md) Prestige application seam and the unpaid-funds source.
-- [ADR-0272](../ADR-0272-month-pipeline-owns-order-and-observed-access.md) Phase order is declared once in `TURN_PHASES`; phases access snapshot aggregates through a recorded handle and receive randomness only through a grant.. Amends ADR-0247, ADR-0250.
-- [ADR-0294](../ADR-0294-event-body-types-derive-from-schemas.md) Event body types derive from their Effect schemas; no hand-mirrored interfaces and no boundary casts.
+- [ADR-0352](../ADR-0352-currency-display-language-formatting-boundary.md) Currency is displayed as Naval Credits (default), Budget Points, or National Historical (when a validated configuration exists); UI language and formatting locale are independent preferences; all canonical→display conversions happen exclusively at the presentation boundary.
+- [ADR-0354](../ADR-0354-prestige-and-career-system.md) Prestige is a required nation field; every value is either grounded by RTW3 sources or an explicitly labelled balance target; the application seam is pure and dormant by default; a monthly sacking phase ends the career through a typed terminal record.
+- [ADR-0359](../ADR-0359-phase-engine-and-event-architecture.md) Phase order is declared once in `TURN_PHASES`; phases access snapshot aggregates through recorded handles with declared permissions; event body types derive from Effect schemas with no mirrored interfaces.
+
+## Superseded (do not follow)
+
+- [ADR-0209](../ADR-0209-ui-language-and-formatting-locale.md) UI language, formatting locale, and externalized strings. Follow ADR-0352.
+- [ADR-0260](../ADR-0260-prestige-application-and-unpaid-funds-source.md) Prestige application seam and the unpaid-funds source. Follow ADR-0354.
+- [ADR-0272](../ADR-0272-month-pipeline-owns-order-and-observed-access.md) The month pipeline owns phase order and observes real snapshot access. Follow ADR-0359.
+- [ADR-0294](../ADR-0294-event-body-types-derive-from-schemas.md) Event body types derive from their Effect schemas. Follow ADR-0359.
