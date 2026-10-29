@@ -27,32 +27,83 @@ export function runSelfTest(repoRoot = root) {
   const universe = lib.scopeUniverse(repoRoot);
   const records = lib.loadRecords(repoRoot);
   const docs = lib.loadGoverningDocs(repoRoot, universe);
+  const baseline = lib.readRuleBaseline(repoRoot);
   const current = records.find(
     (r) => r.location === "active" && r.status === "accepted" && r.appliesTo?.includes("combat"),
   );
   const superseded = records.find((r) => r.status === "superseded");
   const amended = records.find((r) => r.amendedBy.length > 0);
+  const ruled = records.find((r) => r.rule !== null);
+  const cycle = (number, other) => ({
+    file: `ADR-${number}-cycle-fixture.md`,
+    location: "active",
+    number,
+    title: `cycle fixture ${number}`,
+    status: "superseded",
+    appliesTo: ["repository"],
+    rule: null,
+    supersedes: [other],
+    supersededBy: [other],
+    amends: [],
+    amendedBy: [],
+  });
   const cases = [
-    ["real corpus passes", () => lib.validateRecords(records, universe), false],
+    ["real corpus passes", () => lib.validateRecords(records, universe, baseline), false],
     [
       "ADR without Applies to fails",
-      () => lib.validateRecords(mutate(records, current.file, { appliesTo: null }), universe),
+      () =>
+        lib.validateRecords(mutate(records, current.file, { appliesTo: null }), universe, baseline),
       true,
     ],
     [
       "unknown scope fails",
       () =>
-        lib.validateRecords(mutate(records, current.file, { appliesTo: ["nowhere"] }), universe),
+        lib.validateRecords(
+          mutate(records, current.file, { appliesTo: ["nowhere"] }),
+          universe,
+          baseline,
+        ),
       true,
     ],
     [
       "broken supersession reciprocity fails",
-      () => lib.validateRecords(mutate(records, superseded.file, { supersededBy: [] }), universe),
+      () =>
+        lib.validateRecords(
+          mutate(records, superseded.file, { supersededBy: [] }),
+          universe,
+          baseline,
+        ),
       true,
     ],
     [
       "broken amendment reciprocity fails",
-      () => lib.validateRecords(mutate(records, amended.file, { amendedBy: [] }), universe),
+      () =>
+        lib.validateRecords(mutate(records, amended.file, { amendedBy: [] }), universe, baseline),
+      true,
+    ],
+    [
+      "current record without a Rule: fails",
+      () => lib.validateRecords(mutate(records, ruled.file, { rule: null }), universe, baseline),
+      true,
+    ],
+    [
+      "paid rule-baseline entry fails",
+      () =>
+        lib.validateRecords(
+          mutate(records, current.file, { rule: "fixture rule" }),
+          universe,
+          new Set([...baseline, current.number]),
+        ),
+      true,
+    ],
+    [
+      "supersession cycle fails",
+      () =>
+        lib.validateRecords(
+          [cycle("9001", "9002"), cycle("9002", "9001")],
+          ["repository"],
+          baseline,
+        ),
       true,
     ],
     [
@@ -73,7 +124,10 @@ export function runSelfTest(repoRoot = root) {
       () => {
         const broken = new Map(docs);
         const entry = broken.get("content");
-        broken.set("content", { ...entry, text: `${entry.text}\nSee ADR-${superseded.number}.\n` });
+        broken.set("content", {
+          ...entry,
+          text: `${entry.text}\nSee ADR-${superseded.number}.\n`,
+        });
         return lib.validateGoverningDocs(repoRoot, records, broken, EXEMPT);
       },
       true,
