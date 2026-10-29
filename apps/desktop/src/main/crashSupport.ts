@@ -223,6 +223,8 @@ export interface RendererCrashInput {
 }
 
 export function parseRendererCrashInput(value: unknown): RendererCrashInput | null {
-  const decoded = Schema.decodeUnknownResult(RendererCrashInputSchema)(value);
+  const decoded = Schema.decodeUnknownResult(RendererCrashInputSchema, {
+    onExcessProperty: "error",
+  })(value);
   return Result.isSuccess(decoded) ? decoded.success : null;
 }

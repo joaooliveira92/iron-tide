@@ -9,6 +9,7 @@ import { commandHandlers, createCampaignCommandDispatcher } from "./campaignBrid
 import { ContentArtifactError, loadContentArtifact } from "./contentArtifact.js";
 import { createIpcHandlers, registerIpcChannels, type GuardedIpcMain } from "./ipc.js";
 import { createPreferencesBridge } from "./preferences/preferencesBridge.js";
+import { reportRendererCrash } from "./rendererCrash.js";
 import { CrashReporter } from "./runtime/crashReporter.js";
 import { desktopMainLayer, type CommandEnv } from "./runtime/desktopMainLayer.js";
 import { isDebugModeEnabled } from "./debugGate.js";
@@ -158,17 +159,7 @@ function registerIpc(
     dispatchCampaignCommand: createCampaignCommandDispatcher(commandHandlers, () => runtime),
     preferences: createPreferencesBridge(() => runtime),
     reportCrash: (report) => {
-      void runtime.runPromise(
-        Effect.gen(function* () {
-          const crash = yield* CrashReporter;
-          const parsed = yield* crash.parseRendererInput(report);
-          if (parsed === null) return;
-          yield* crash.capture("renderer", parsed.kind, {
-            message: parsed.message,
-            stack: parsed.stack,
-          });
-        }).pipe(Effect.catchTag("CommandFailed", () => Effect.void)),
-      );
+      void runtime.runPromise(reportRendererCrash(report));
     },
     quitFlushComplete: quitFlush.complete,
   });
