@@ -79,3 +79,9 @@ export function ScreenHeader({ title, icon, children }: ScreenHeaderProps) {
   if (!hasToolbar || context?.toolbarTarget == null) return null;
   return createPortal(children, context.toolbarTarget);
 }
+
+export function HeaderToolbar({ children }: { readonly children: ReactNode }) {
+  const context = useContext(ScreenHeaderContext);
+  if (context?.toolbarTarget == null) return <>{children}</>;
+  return createPortal(children, context.toolbarTarget);
+}

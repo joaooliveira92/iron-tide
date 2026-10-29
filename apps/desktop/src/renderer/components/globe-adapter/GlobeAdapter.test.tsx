@@ -388,4 +388,25 @@ describe("GlobeAdapter parity interactions", () => {
     expect(root.getAttribute("data-map-variant")).toBe("command");
     expect(root.className).not.toContain("fixed");
   });
+
+  it("leaves the sea-area divisions out of the command variant", async () => {
+    renderAdapter({ variant: "command" });
+    await readyMap();
+    expect(screen.queryByTestId("globe-adapter-area-list")).toBeNull();
+  });
+
+  it("reaches the layers and ports lists from header toolbar buttons in the command variant", async () => {
+    renderAdapter({ variant: "command" });
+    await readyMap();
+    expect(screen.queryByTestId("globe-adapter-entities")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Ports and fleets/ }));
+    expect(await screen.findByTestId("globe-adapter-entities")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Layers & areas/ })).toBeTruthy();
+  });
+
+  it("keeps the sea-area list in the full variant", async () => {
+    renderAdapter({ variant: "full" });
+    await readyMap();
+    expect(screen.getByTestId("globe-adapter-area-list")).toBeTruthy();
+  });
 });

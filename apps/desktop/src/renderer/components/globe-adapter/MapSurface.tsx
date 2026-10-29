@@ -80,12 +80,12 @@ export function MapSurface({ enableGlobe = false, ...props }: MapSurfaceProps) {
   const panels = (
     <>
       {props.leftPanels === undefined ? null : (
-        <div className="pointer-events-auto absolute left-2 top-2 z-10 max-h-[calc(100%-1rem)] w-[min(22rem,calc(100%-1rem))] overflow-auto">
+        <div className="pointer-events-auto absolute left-2 top-[calc(0.5rem+var(--chrome-top,0px))] z-[9999] max-h-[calc(100%-1rem-var(--chrome-top,0px)-var(--chrome-bottom,0px))] w-[min(22rem,calc(100%-1rem))] overflow-auto">
           {props.leftPanels}
         </div>
       )}
       {props.rightPanels === undefined ? null : (
-        <div className="pointer-events-auto absolute right-2 top-2 z-10 max-h-[calc(100%-1rem)] w-[min(22rem,calc(100%-1rem))] overflow-auto">
+        <div className="pointer-events-auto absolute right-2 top-[calc(0.5rem+var(--chrome-top,0px))] z-[9999] max-h-[calc(100%-1rem-var(--chrome-top,0px)-var(--chrome-bottom,0px))] w-[min(22rem,calc(100%-1rem))] overflow-auto">
           {props.rightPanels}
         </div>
       )}

@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { ChevronDown } from "lucide-react";
+
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover.js";
+import { Registration } from "../ui/slate.js";
+import { HeaderToolbar } from "../../shell/screen-header.js";
+import { ChartLayersPanel } from "./ChartLayersPanel.js";
+import { HarbourBook } from "./HarbourBook.js";
 import { AREAS } from "../world-map/map-geometry.js";
 import { MAP_VARIANT_LAYOUT, type MapVariant } from "../world-map/map-variant-layout.js";
 import { AreaInspector } from "../world-map/AreaInspector.js";
@@ -69,6 +76,7 @@ export interface GlobeAdapterChromeProps {
     readonly areaId: string;
   }) => void;
   readonly showMinimap?: boolean;
+  readonly showAreas?: boolean;
   readonly defaultControlsOpen?: boolean;
 }
 
@@ -165,6 +173,7 @@ export function GlobeAdapterChrome({
   entityRows = [],
   onSelectEntity,
   showMinimap = true,
+  showAreas = true,
   defaultControlsOpen = true,
 }: GlobeAdapterChromeProps) {
   const layout = MAP_VARIANT_LAYOUT[variant];
@@ -179,100 +188,149 @@ export function GlobeAdapterChrome({
     });
   };
 
+  const docked = variant === "command";
+  const [layersOpen, setLayersOpen] = useState(false);
+  const [harbourOpen, setHarbourOpen] = useState(false);
+  const areaNames = useMemo(
+    () => new Map(ownershipRows.map((row) => [row.id, row.name] as const)),
+    [ownershipRows],
+  );
+  const areaName = (areaId: string): string => areaNames.get(areaId) ?? areaId;
+  const controlsPanel = (
+    <MapControlsPanel
+      className={`${layout.controlsPanel} pointer-events-auto`}
+      state={state}
+      onSetProjection={onSetProjection}
+      onToggleLayer={onToggleLayer}
+      onSetCentre={onSetCentre}
+      onReset={onReset}
+      meterRef={meterRef}
+      inlineAreas={showAreas}
+      treeRows={treeRows}
+      onFocusTreeRow={(row) => {
+        if (row.mapAreaId !== null) onSelect(row.mapAreaId);
+      }}
+    />
+  );
+  const entityList = (
+    <nav
+      aria-label="Ports and fleets"
+      data-testid="globe-adapter-entities"
+      className="rounded border border-white/25 bg-black/80 p-2 text-xs text-white"
+    >
+      <ul className="grid max-h-40 gap-0.5 overflow-y-auto">
+        {entityRows.map((entity) => (
+          <li key={entity.id}>
+            <button
+              type="button"
+              className="w-full rounded px-2 py-1 text-left hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              onClick={() => onSelectEntity?.(entity)}
+            >
+              {entity.name} <span className="opacity-70">({entity.kind})</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+  const triggerClass =
+    "flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-md border bg-muted/40 px-2 text-xs font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring";
+
   return (
     <>
-      <div
-        className={`pointer-events-auto absolute left-[calc(0.75rem+var(--chrome-left,0px))] z-10 flex flex-col gap-2 ${
-          variant === "command"
-            ? "bottom-[calc(0.75rem+var(--chrome-bottom,0px)+3rem)]"
-            : "top-[calc(0.75rem+var(--chrome-top,0px))]"
-        }`}
-      >
-        <button
-          type="button"
-          aria-expanded={controlsOpen}
-          className="w-fit rounded border border-white/40 bg-black/75 px-2 py-1 text-xs text-white"
-          onClick={toggleControls}
-        >
-          Layers &amp; areas
-        </button>
-        {controlsOpen && (
-          <MapControlsPanel
-            className={`${layout.controlsPanel} pointer-events-auto`}
-            state={state}
-            onSetProjection={onSetProjection}
-            onToggleLayer={onToggleLayer}
-            onSetCentre={onSetCentre}
-            onReset={onReset}
-            meterRef={meterRef}
-            inlineAreas={true}
-            treeRows={treeRows}
-            onFocusTreeRow={(row) => {
-              if (row.mapAreaId !== null) onSelect(row.mapAreaId);
-            }}
-          />
-        )}
-        <GlobeFrameMeter />
-      </div>
+      {docked && (
+        <HeaderToolbar>
+          <Popover open={layersOpen} onOpenChange={setLayersOpen}>
+            <PopoverTrigger className={triggerClass}>
+              Layers &amp; areas
+              <ChevronDown aria-hidden="true" className="size-3 text-muted-foreground" />
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80 p-0">
+              <Registration />
+              <ChartLayersPanel
+                state={state}
+                onSetProjection={onSetProjection}
+                onToggleLayer={onToggleLayer}
+                onSetCentre={onSetCentre}
+                onReset={onReset}
+                footer={<GlobeFrameMeter />}
+              />
+            </PopoverContent>
+          </Popover>
+          <Popover open={harbourOpen} onOpenChange={setHarbourOpen}>
+            <PopoverTrigger className={triggerClass}>
+              Ports and fleets
+              <ChevronDown aria-hidden="true" className="size-3 text-muted-foreground" />
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80 p-0">
+              <Registration />
+              <HarbourBook
+                entities={entityRows}
+                areaName={areaName}
+                onSelect={(entity) => {
+                  setHarbourOpen(false);
+                  onSelectEntity?.(entity);
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+        </HeaderToolbar>
+      )}
+      {!docked && (
+        <div className="pointer-events-auto absolute left-[calc(0.75rem+var(--chrome-left,0px))] top-[calc(0.75rem+var(--chrome-top,0px))] z-10 flex flex-col gap-2">
+          <button
+            type="button"
+            aria-expanded={controlsOpen}
+            className="w-fit rounded border border-white/40 bg-black/75 px-2 py-1 text-xs text-white"
+            onClick={toggleControls}
+          >
+            Layers &amp; areas
+          </button>
+          {controlsOpen && controlsPanel}
+          <GlobeFrameMeter />
+        </div>
+      )}
 
-      <div
-        className={`pointer-events-auto absolute right-[calc(0.75rem+var(--chrome-right,0px))] z-10 flex w-72 flex-col gap-2 ${
-          variant === "command"
-            ? "bottom-[calc(0.75rem+var(--chrome-bottom,0px))] max-h-[70%] overflow-y-auto"
-            : "top-[calc(0.75rem+var(--chrome-top,0px))] max-h-[70%] overflow-y-auto"
-        }`}
-      >
-        <AreaInspector
-          className="rounded-lg border p-3 text-xs shadow-lg backdrop-blur"
-          summary={summary}
-          nameFor={nameFor}
-          onSelect={onSelect}
-        />
+      {!docked && (
+        <div className="pointer-events-auto absolute right-[calc(0.75rem+var(--chrome-right,0px))] top-[calc(0.75rem+var(--chrome-top,0px))] z-10 flex max-h-[70%] w-72 flex-col gap-2 overflow-y-auto">
+          {showAreas && (
+            <AreaInspector
+              className="rounded-lg border p-3 text-xs shadow-lg backdrop-blur"
+              summary={summary}
+              nameFor={nameFor}
+              onSelect={onSelect}
+            />
+          )}
 
-        <nav
-          aria-label="Map areas"
-          data-testid="globe-adapter-area-list"
-          className="rounded border border-white/25 bg-black/80 p-2 text-xs text-white"
-        >
-          <ul className="grid max-h-56 gap-0.5 overflow-y-auto">
-            {ownershipRows.map((row) => (
-              <li key={row.id}>
-                <button
-                  type="button"
-                  aria-pressed={row.selected}
-                  aria-label={`${row.name}: ${row.owner ?? "Unclaimed"}, ${row.fleets} fleets${row.strength === null ? "" : `, ${row.strength}`}`}
-                  title={row.name}
-                  data-adapter-area={row.id}
-                  onClick={() => onSelect(row.id)}
-                  className="w-full rounded px-2 py-1 text-left hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white aria-pressed:bg-white aria-pressed:text-black"
-                >
-                  {row.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+          {showAreas && (
+            <nav
+              aria-label="Map areas"
+              data-testid="globe-adapter-area-list"
+              className="rounded border border-white/25 bg-black/80 p-2 text-xs text-white"
+            >
+              <ul className="grid max-h-56 gap-0.5 overflow-y-auto">
+                {ownershipRows.map((row) => (
+                  <li key={row.id}>
+                    <button
+                      type="button"
+                      aria-pressed={row.selected}
+                      aria-label={`${row.name}: ${row.owner ?? "Unclaimed"}, ${row.fleets} fleets${row.strength === null ? "" : `, ${row.strength}`}`}
+                      title={row.name}
+                      data-adapter-area={row.id}
+                      onClick={() => onSelect(row.id)}
+                      className="w-full rounded px-2 py-1 text-left hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white aria-pressed:bg-white aria-pressed:text-black"
+                    >
+                      {row.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
 
-        <nav
-          aria-label="Ports and fleets"
-          data-testid="globe-adapter-entities"
-          className="rounded border border-white/25 bg-black/80 p-2 text-xs text-white"
-        >
-          <ul className="grid max-h-40 gap-0.5 overflow-y-auto">
-            {entityRows.map((entity) => (
-              <li key={entity.id}>
-                <button
-                  type="button"
-                  className="w-full rounded px-2 py-1 text-left hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                  onClick={() => onSelectEntity?.(entity)}
-                >
-                  {entity.name} <span className="opacity-70">({entity.kind})</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </div>
+          {entityList}
+        </div>
+      )}
 
       <table className="sr-only" data-testid="globe-adapter-area-table">
         <caption>Area control</caption>

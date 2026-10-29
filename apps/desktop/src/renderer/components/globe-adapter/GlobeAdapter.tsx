@@ -235,14 +235,24 @@ function mapSources(
   };
 }
 
+const AREA_LAYER_IDS: ReadonlySet<string> = new Set([
+  "areas-fill",
+  "areas-hover",
+  "areas-selected",
+  "areas-hover-line",
+  "areas-line",
+  "area-labels-list",
+]);
+
 function mapLayers(
   plan: Extract<ReturnType<typeof useLandPlan>, { readonly kind: "baked" }>,
   overlay: GlobeAdapterProps["overlay"],
   layers: GlobeAdapterProps["state"]["layers"],
+  showAreas: boolean,
 ): LayerSpecification[] {
   const { manifest } = plan.tiles;
   const visibility = adapterLayerVisibility(layers);
-  return [
+  const specs: LayerSpecification[] = [
     { id: "ocean", type: "background", paint: { "background-color": "#0b2a3f" } },
     {
       id: "land",
@@ -449,19 +459,26 @@ function mapLayers(
       },
     },
   ];
+  if (showAreas) return specs;
+  return specs.map((spec) =>
+    AREA_LAYER_IDS.has(spec.id)
+      ? { ...spec, layout: { ...spec.layout, visibility: "none" } }
+      : spec,
+  ) as LayerSpecification[];
 }
 
 function buildStyle(
   plan: Extract<ReturnType<typeof useLandPlan>, { readonly kind: "baked" }>,
   overlay: GlobeAdapterProps["overlay"],
   layers: GlobeAdapterProps["state"]["layers"],
+  showAreas: boolean,
 ): StyleSpecification {
   return {
     version: 8,
     glyphs: `${baseDirectory()}${GLOBE_ASSET_ROOT}/glyphs/{fontstack}/{range}.pbf`,
     projection: { type: "globe" },
     sources: mapSources(plan),
-    layers: mapLayers(plan, overlay, layers),
+    layers: mapLayers(plan, overlay, layers, showAreas),
   };
 }
 
@@ -509,6 +526,7 @@ export function GlobeAdapter({
   initialFocusAreaId = null,
   initialFocusNationId = null,
 }: GlobeAdapterProps) {
+  const showAreas = variant !== "command";
   const hash = window.location.hash;
   const mode: AdapterLandMode = landMode ?? adapterLandMode(hash);
   const plan = useLandPlan(mode, GLOBE_ASSET_ROOT);
@@ -604,7 +622,7 @@ export function GlobeAdapter({
     const visibility = adapterLayerVisibility(state.layers);
     const set = (id: string, visible: boolean) =>
       map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
-    set("area-labels-list", visibility.labels);
+    set("area-labels-list", showAreas && visibility.labels);
     set("adapter-borders-fill", visibility.borders);
     set("adapter-borders-line", visibility.borders);
     set("adapter-graticule", visibility.graticule);
@@ -612,7 +630,7 @@ export function GlobeAdapter({
     set("adapter-routes", visibility.routes);
     map.setFilter("adapter-markers", markerFilter(visibility) as never);
     map.setFilter("adapter-marker-labels", markerFilter(visibility) as never);
-  }, [ready, state.layers]);
+  }, [ready, showAreas, state.layers]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -736,7 +754,7 @@ export function GlobeAdapter({
       registeredProtocol = true;
       map = new MapLibreMap({
         container,
-        style: buildStyle(plan, initialOverlayRef.current, initialLayersRef.current),
+        style: buildStyle(plan, initialOverlayRef.current, initialLayersRef.current, showAreas),
         center: [initialCameraRef.current.centre[0], initialCameraRef.current.centre[1]],
         zoom: initialCameraRef.current.zoom,
         bearing: initialCameraRef.current.bearing,
@@ -1323,6 +1341,7 @@ export function GlobeAdapter({
         route={route}
         viewport={viewport}
         variant={variant}
+        showAreas={showAreas}
         treeRows={derived.treeRows}
         ownershipRows={derived.ownershipRows}
         summary={derived.summary}
