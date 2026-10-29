@@ -63,6 +63,7 @@ import {
   plural,
   shipTypeIcon,
   shipTypeRole,
+  DraftSaveWarning,
   useDraftAutosave,
   useFindingsView,
   useFormNavigation,
@@ -161,6 +162,7 @@ export function DrawingBoard({
   });
   return (
     <ShipSelectionProvider store={selection}>
+      <DraftSaveWarning visible={autosave.saveFailed} onDismiss={autosave.dismissSaveFailed} />
       <div
         ref={rootRef}
         className="flex h-full min-h-0 flex-col gap-2 overflow-hidden bg-background p-2 @3xl:p-4"
