@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0336).
+highest existing number + 1 (the next number is ADR-0337).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -84,7 +84,6 @@ Concurrent-agent worktree coordination and repository process rules.
 | 0267 | [ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md](ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md) | The reachability ledger maps engine capability to desktop path | accepted | — |
 | 0268 | [ADR-0268-code-carries-no-comments.md](ADR-0268-code-carries-no-comments.md) | Code carries no comments | accepted | — |
 | 0269 | [ADR-0269-worktree-ledger-is-local-untracked-state.md](ADR-0269-worktree-ledger-is-local-untracked-state.md) | The worktree ledger is local, untracked state | superseded | ADR-0313 |
-| 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
 | 0279 | [ADR-0279-replay-approvals-carry-a-change-class.md](ADR-0279-replay-approvals-carry-a-change-class.md) | Replay approvals carry a verified change class | accepted | — |
 | 0280 | [ADR-0280-property-based-replay-scenarios.md](ADR-0280-property-based-replay-scenarios.md) | Property-based replay scenarios use fast-check as a test-only dependency | accepted | — |
 | 0295 | [ADR-0295-war-bearing-replay-scenarios.md](ADR-0295-war-bearing-replay-scenarios.md) | A replay scenario may name a player nation and a deterministic start setup so the corpus fights a battle | accepted | — |
@@ -94,6 +93,7 @@ Concurrent-agent worktree coordination and repository process rules.
 | 0318 | [ADR-0318-adrs-declare-their-scope-and-packages-link-them.md](ADR-0318-adrs-declare-their-scope-and-packages-link-them.md) | ADRs declare the scopes they govern, and each scope's AGENTS.md links its generated index | accepted | — |
 | 0319 | [ADR-0319-debug-screens-stay-internal.md](ADR-0319-debug-screens-stay-internal.md) | Debug-only screens stay internal and leave the production renderer bundle | accepted | — |
 | 0335 | [ADR-0335-agent-navigation-and-scoped-verification.md](ADR-0335-agent-navigation-and-scoped-verification.md) | Agent navigation and scoped verification are repository tools | accepted | — |
+| 0336 | [ADR-0336-adr-corpus-integrity-gate.md](ADR-0336-adr-corpus-integrity-gate.md) | Every current ADR states its `Rule:`, holds one area, and supersedes acyclically | accepted | — |
 
 ## Scenario content & research
 

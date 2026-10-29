@@ -59,8 +59,8 @@ const AREAS = [
     name: "Process & documentation",
     blurb: "Concurrent-agent worktree coordination and repository process rules.",
     nums: [
-      220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 278, 279, 280, 295, 299, 300, 313,
-      318, 319, 335,
+      220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 279, 280, 295, 299, 300, 313, 318,
+      319, 335, 336,
     ],
   },
   {
@@ -124,6 +124,14 @@ const ARCHIVED = new Set([]);
 const STATUS_OK = new Set(["accepted", "proposed", "deprecated", "superseded"]);
 const pad = (n) => String(n).padStart(4, "0");
 
+function duplicateAreaAssignments(areas) {
+  const byNum = new Map();
+  for (const { name, nums } of areas) {
+    for (const n of nums) byNum.set(n, [...(byNum.get(n) ?? []), name]);
+  }
+  return [...byNum].filter(([, names]) => names.length > 1).sort((a, b) => a[0] - b[0]);
+}
+
 function parseAdr(file, text) {
   const h1 = text.match(/^# (.*)$/m);
   if (!h1) throw new Error(`${file}: missing H1 title`);
@@ -178,6 +186,16 @@ function load() {
   // The area map must be a partition of the ADR set — but an empty corpus is
   // valid (no sprint started, no ADRs written yet). The roster is only enforced
   // once at least one ADR exists, so a fresh checkout with zero ADRs is green.
+  const twice = duplicateAreaAssignments(AREAS);
+  if (twice.length > 0) {
+    throw new Error(
+      `scripts/adr-index.cjs assigns one ADR to more than one area ` +
+        `(${twice
+          .map(([n, names]) => `ADR-${pad(n)} in ${names.map((x) => `"${x}"`).join(" and ")}`)
+          .join("; ")}) — keep one primary area and drop the number from the other`,
+    );
+  }
+
   const assigned = AREAS.flatMap((a) => a.nums);
   const missing = [...adrs.keys()].filter((n) => !assigned.includes(n));
   const extra = adrs.size > 0 ? assigned.filter((n) => !adrs.has(n)) : [];
@@ -268,7 +286,12 @@ function buildArchiveIndex() {
   return out.join("\n");
 }
 
-module.exports = { buildIndex, buildArchiveIndex };
+module.exports = {
+  AREAS,
+  buildIndex,
+  buildArchiveIndex,
+  duplicateAreaAssignments,
+};
 
 if (require.main === module) {
   const mainTarget = path.join(ADR_DIR, "README.md");

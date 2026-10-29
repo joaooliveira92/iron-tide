@@ -132,7 +132,42 @@ function byNumber(records) {
   return map;
 }
 
-function validateRecords(records, universe) {
+function supersessionCycles(records) {
+  const next = new Map(
+    records.filter((r) => r.supersededBy.length > 0).map((r) => [r.number, r.supersededBy]),
+  );
+  const state = new Map();
+  const path = [];
+  const cycles = [];
+  const visit = (number) => {
+    if (state.get(number) === "done") return;
+    if (state.get(number) === "open") {
+      cycles.push([...path.slice(path.indexOf(number)), number]);
+      return;
+    }
+    state.set(number, "open");
+    path.push(number);
+    for (const target of next.get(number) ?? []) visit(target);
+    path.pop();
+    state.set(number, "done");
+  };
+  for (const number of [...next.keys()].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) visit(number);
+  return cycles;
+}
+
+const RULE_BASELINE = "scripts/adr-rule.baseline.json";
+
+function readRuleBaseline(root) {
+  const abs = path.join(root, RULE_BASELINE);
+  if (!fs.existsSync(abs)) return new Set();
+  const parsed = JSON.parse(fs.readFileSync(abs, "utf8"));
+  if (!Array.isArray(parsed) || parsed.some((n) => typeof n !== "string" || !/^\d{4}$/.test(n))) {
+    throw new Error(`${RULE_BASELINE}: must be a JSON array of four-digit ADR numbers`);
+  }
+  return new Set(parsed);
+}
+
+function validateRecords(records, universe, ruleBaseline = new Set()) {
   const problems = [];
   const numbers = byNumber(records);
   const known = new Set(universe);
@@ -164,6 +199,19 @@ function validateRecords(records, universe) {
     if (r.status === "superseded" && r.rule !== null) {
       problems.push(`${id}: superseded record must not carry a "Rule:" line`);
     }
+    if (r.rule !== null && r.rule.trim() === "") {
+      problems.push(`${id}: empty "Rule:" line`);
+    }
+    if (isCurrent(r) && r.rule === null && !ruleBaseline.has(r.number)) {
+      problems.push(
+        `${id}: no "Rule:" line stating what is authoritative now (one sentence, cites no successor)`,
+      );
+    }
+    if (isCurrent(r) && r.rule !== null && ruleBaseline.has(r.number)) {
+      problems.push(
+        `${id}: has a "Rule:" line but is still listed in ${RULE_BASELINE} (delete the entry)`,
+      );
+    }
     if (r.status === "superseded" && r.supersededBy.length === 0) {
       problems.push(`${id}: superseded but has no "Superseded by:" reference`);
     }
@@ -188,6 +236,11 @@ function validateRecords(records, universe) {
         }
       }
     }
+  }
+  for (const cycle of supersessionCycles(records)) {
+    problems.push(
+      `supersession cycle: ${cycle.map((n) => `ADR-${n}`).join(" -> ")} (no record in it can be authoritative)`,
+    );
   }
   return problems;
 }
@@ -319,7 +372,7 @@ function verify(root, exemptScopes) {
   const records = loadRecords(root);
   const docs = loadGoverningDocs(root, universe);
   return [
-    ...validateRecords(records, universe),
+    ...validateRecords(records, universe, readRuleBaseline(root)),
     ...validateGoverningDocs(root, records, docs, exemptScopes),
     ...validateScopePages(root, records),
   ];
@@ -341,8 +394,10 @@ module.exports = {
   loadGoverningDocs,
   loadRecords,
   parseRecord,
+  readRuleBaseline,
   scopePage,
   scopeUniverse,
+  supersessionCycles,
   validateGoverningDocs,
   validateRecords,
   verify,

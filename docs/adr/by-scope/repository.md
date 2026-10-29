@@ -23,6 +23,7 @@ and for the exact boundaries of the rule.
 - [ADR-0318](../ADR-0318-adrs-declare-their-scope-and-packages-link-them.md) Every ADR has an `Applies to:` line, and every governing `AGENTS.md` links its generated `docs/adr/by-scope` page.
 - [ADR-0334](../ADR-0334-deprecate-yaml-outside-internationalization.md) Deprecate YAML outside internationalization.
 - [ADR-0335](../ADR-0335-agent-navigation-and-scoped-verification.md) Agents discover ownership with `pnpm agent:map`, validate a change with `pnpm verify:affected`, and run long gates blocking through `pnpm heavy`; scoped verification widens to full scope whenever impact is uncertain and never replaces `pnpm check`.
+- [ADR-0336](../ADR-0336-adr-corpus-integrity-gate.md) Every current ADR states its rule in one `Rule:` line, sits in exactly one index area, and supersedes acyclically.
 
 ## Superseded (do not follow)
 

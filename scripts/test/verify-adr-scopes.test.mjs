@@ -13,7 +13,12 @@ const repo = resolve(import.meta.dirname, "../..");
 
 function sandbox() {
   const dir = mkdtempSync(join(tmpdir(), "adr-scope-"));
-  for (const rel of ["docs/adr", "AGENTS.md", "content/AGENTS.md"]) {
+  for (const rel of [
+    "docs/adr",
+    "AGENTS.md",
+    "content/AGENTS.md",
+    "scripts/adr-rule.baseline.json",
+  ]) {
     cpSync(join(repo, rel), join(dir, rel), { recursive: true });
   }
   for (const group of ["packages", "apps"]) {
@@ -87,6 +92,86 @@ void test("deleting a package's index link makes the gate fail", () => {
 void test("a new duplicate ADR number is rejected", () => {
   const records = lib.loadRecords(repo);
   const extra = { ...records.find((r) => r.number === "0300"), file: "ADR-0300-other.md" };
-  const problems = lib.validateRecords([...records, extra], lib.scopeUniverse(repo));
+  const problems = lib.validateRecords(
+    [...records, extra],
+    lib.scopeUniverse(repo),
+    lib.readRuleBaseline(repo),
+  );
   assert.ok(problems.some((p) => p.includes("ADR-0300 is used by 2 files")));
+});
+
+void test("a supersession cycle fails even when every link reciprocates", () => {
+  const link = (number, other) => ({
+    file: `ADR-${number}-cycle-fixture.md`,
+    location: "active",
+    number,
+    title: `cycle fixture ${number}`,
+    status: "superseded",
+    appliesTo: ["repository"],
+    rule: null,
+    supersedes: [other],
+    supersededBy: [other],
+    amends: [],
+    amendedBy: [],
+  });
+  const problems = lib.validateRecords(
+    [link("9001", "9002"), link("9002", "9001")],
+    lib.scopeUniverse(repo),
+    lib.readRuleBaseline(repo),
+  );
+  assert.deepEqual(problems, [
+    "supersession cycle: ADR-9001 -> ADR-9002 -> ADR-9001 (no record in it can be authoritative)",
+  ]);
+});
+
+void test("a current ADR without a Rule: line fails", () => {
+  const dir = sandbox();
+  try {
+    const file = join(dir, "docs/adr/ADR-0278-save-files-decode-strictly.md");
+    writeFileSync(file, readFileSync(file, "utf8").replace(/^Rule:.*\n\n/m, ""));
+    assert.ok(
+      lib.verify(dir, EXEMPT).some((p) => p.includes("ADR-0278") && p.includes('no "Rule:" line')),
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+void test("an ADR created without a Rule: line cannot be added to the baseline", () => {
+  const dir = sandbox();
+  try {
+    writeFileSync(
+      join(dir, "docs/adr/ADR-0399-fixture-decision.md"),
+      "# ADR-0399: Fixture decision\n\nApplies to: repository\n\n## Status\n\nAccepted (2026-10-29).\n",
+    );
+    assert.ok(
+      lib.verify(dir, EXEMPT).some((p) => p.includes("ADR-0399") && p.includes('no "Rule:" line')),
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+void test("writing a Rule: on a baselined ADR must delete its baseline entry", () => {
+  const dir = sandbox();
+  try {
+    const number = lib.readRuleBaseline(repo).values().next().value;
+    const record = lib.loadRecords(repo).find((r) => r.number === number);
+    const file = join(dir, "docs/adr", record.file);
+    writeFileSync(
+      file,
+      readFileSync(file, "utf8").replace(/^Applies to:.*$/m, (line) => `${line}\n\nRule: Fixture.`),
+    );
+    assert.ok(
+      lib
+        .verify(dir, EXEMPT)
+        .some(
+          (p) =>
+            p.includes(`ADR-${number}`) &&
+            p.includes("still listed in scripts/adr-rule.baseline.json"),
+        ),
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
