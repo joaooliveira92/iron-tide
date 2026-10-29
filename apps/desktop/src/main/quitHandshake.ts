@@ -54,7 +54,7 @@ export function installQuitHandshake(options: QuitHandshakeOptions): QuitHandsha
   let quitting = false;
   let finished = false;
   let complete: (() => void) | null = null;
-  let timer: unknown | undefined;
+  let timer: unknown = undefined;
 
   const removeListener = (): void => {
     app.removeListener?.("before-quit", onBeforeQuit);

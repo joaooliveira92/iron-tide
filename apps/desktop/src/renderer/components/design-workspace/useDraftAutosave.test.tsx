@@ -116,7 +116,7 @@ describe("useDraftAutosave retry", () => {
       await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS);
     });
     expect(writes).toHaveLength(2);
-    expect((writes[1]?.draft as { readonly log: string }).log).toBe(encodeLog(second));
+    expect((writes[1]!.draft as { readonly log: string }).log).toBe(encodeLog(second));
     expect(result.current.saveFailed).toBe(false);
   });
 
@@ -136,7 +136,7 @@ describe("useDraftAutosave retry", () => {
       await vi.advanceTimersByTimeAsync(DRAFT_RETRY_DELAY_MS);
     });
     expect(writes).toHaveLength(2);
-    expect((writes[1]?.draft as { readonly log: string }).log).toBe(encodeLog(only));
+    expect((writes[1]!.draft as { readonly log: string }).log).toBe(encodeLog(only));
     expect(result.current.saveFailed).toBe(false);
   });
 
