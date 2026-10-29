@@ -3,23 +3,23 @@ import { Effect, ManagedRuntime } from "effect";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { ipcEvents } from "../shared/ipc-contract.js";
-import { applyContentSecurityPolicy, shouldApplyContentSecurityPolicy } from "./csp.js";
+import { installContentSecurityPolicy } from "./csp.js";
 import { guardIpc, installShellGuards, type ShellTrust } from "./shellGuards.js";
 import { commandHandlers, createCampaignCommandDispatcher } from "./campaignBridge.js";
 import { ContentArtifactError, loadContentArtifact } from "./contentArtifact.js";
+import { createDesktopWindow } from "./desktopWindow.js";
+import { attachDevToolsPageHook } from "./devToolsHook.js";
 import { createIpcHandlers, registerIpcChannels, type GuardedIpcMain } from "./ipc.js";
 import { createPreferencesBridge } from "./preferences/preferencesBridge.js";
+import { installQuitHandshake, type QuitHandshake } from "./quitHandshake.js";
 import { reportRendererCrash } from "./rendererCrash.js";
+import { installRendererFailureRecovery } from "./rendererFailureRecovery.js";
+import { createRendererStackSampler } from "./rendererStackSampler.js";
 import { CrashReporter } from "./runtime/crashReporter.js";
 import { desktopMainLayer, type CommandEnv } from "./runtime/desktopMainLayer.js";
+import { installUnresponsiveRecovery } from "./unresponsiveRecovery.js";
 import { isDebugModeEnabled } from "./debugGate.js";
 import { withModernExtensionApi } from "./extensionSession.js";
-import {
-  canRecoverRenderer,
-  isActionableLoadFailure,
-  MAX_RENDERER_RECOVERIES,
-  shouldReloadForDevToolsHook,
-} from "./shellPolicy.js";
 
 const isDev = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
 
@@ -29,106 +29,74 @@ const reactDevToolsRequested =
 const DEV_SERVER_ORIGIN = "http://localhost:5173";
 
 const RENDERER_ENTRY = resolve(import.meta.dirname, "../renderer/index.html");
+const PRELOAD_ENTRY = resolve(import.meta.dirname, "../preload/index.cjs");
 
 const shellTrust: ShellTrust = {
   entryUrl: pathToFileURL(RENDERER_ENTRY).href,
   devOrigin: isDev ? DEV_SERVER_ORIGIN : null,
 };
 
-const QUIT_FLUSH_TIMEOUT_MS = 1_500;
+type DesktopMainRuntime = ManagedRuntime.ManagedRuntime<CommandEnv, never>;
 
+let quitHandshake: QuitHandshake | undefined;
 let quitting = false;
 
-function hardFail(message: string): void {
-  dialog.showErrorBox("Bluewave", message);
+const log = (message: string): void => console.warn(message);
+
+function requestQuit(): void {
   quitting = true;
+  if (quitHandshake !== undefined) {
+    quitHandshake.forceQuit();
+    return;
+  }
   app.quit();
 }
 
-function attachFailureRecovery(win: BrowserWindow): void {
-  let recoveries = 0;
-
-  const recover = (label: string): void => {
-    if (quitting || win.isDestroyed()) return;
-    if (!canRecoverRenderer(recoveries)) {
-      hardFail(`The window could not recover (${label}).`);
-      return;
-    }
-    recoveries += 1;
-    console.warn(`[shell] ${label}; reloading (${recoveries}/${MAX_RENDERER_RECOVERIES})`);
-    win.reload();
-  };
-
-  win.webContents.on("render-process-gone", (_event, details) => {
-    recover(`renderer process gone (${details.reason})`);
-  });
-  win.on("unresponsive", () => {
-    recover("window unresponsive");
-  });
-  win.on("responsive", () => {
-    recoveries = 0;
-  });
-  win.webContents.on("did-fail-load", (_event, code, description, url, isMainFrame) => {
-    if (!isActionableLoadFailure(code, isMainFrame)) return;
-    if (isDev) {
-      console.warn(`[shell] dev server unavailable (${description}); quitting`);
-      quitting = true;
-      app.quit();
-      return;
-    }
-    recover(`failed to load ${url} (${description}, ${code})`);
-  });
+function hardFail(message: string): void {
+  dialog.showErrorBox("Bluewave", message);
+  requestQuit();
 }
 
-function attachDevToolsPageHook(win: BrowserWindow): void {
-  let reloaded = false;
-  win.webContents.on("did-finish-load", () => {
-    if (reloaded) return;
-    void win.webContents
-      .executeJavaScript(
-        "window.__REACT_DEVTOOLS_GLOBAL_HOOK__ ? window.__REACT_DEVTOOLS_GLOBAL_HOOK__.renderers?.size : -1",
-      )
-      .then((rendererCount: unknown) => {
-        if (
-          typeof rendererCount === "number" &&
-          shouldReloadForDevToolsHook(rendererCount, reloaded)
-        ) {
-          reloaded = true;
-          console.log("[shell] React DevTools hook not attached yet; reloading once");
-          win.webContents.reload();
-        }
-      })
-      .catch(() => undefined);
-  });
+function exportUnresponsiveBundle(
+  runtime: DesktopMainRuntime,
+  samples: readonly string[],
+): Promise<string | null> {
+  return runtime.runPromise(
+    Effect.gen(function* () {
+      const crash = yield* CrashReporter;
+      return yield* crash.capture("renderer", "window-error", {
+        message: "Window unresponsive",
+        ...(samples.length === 0 ? {} : { stack: samples.join("\n\n") }),
+      });
+    }).pipe(Effect.catchTag("CommandFailed", () => Effect.succeed(null))),
+  );
 }
 
-function createWindow(): BrowserWindow {
-  const win = new BrowserWindow({
-    width: 1280,
-    height: 820,
-    minWidth: 960,
-    minHeight: 640,
-    frame: false,
-    ...(process.platform === "darwin"
-      ? { titleBarStyle: "hidden" as const, trafficLightPosition: { x: 20, y: 21 } }
-      : {}),
-    webPreferences: {
-      preload: resolve(import.meta.dirname, "../preload/index.cjs"),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
+function createWindow(runtime: DesktopMainRuntime): BrowserWindow {
+  const win = createDesktopWindow(PRELOAD_ENTRY);
+  const sampler = createRendererStackSampler({ target: win.webContents, log });
+
+  installRendererFailureRecovery({
+    window: win,
+    isDev,
+    isQuitting: () => quitting || (quitHandshake?.isQuitting() ?? false),
+    onFatal: hardFail,
+    onDevServerUnavailable: requestQuit,
+    log,
+  });
+
+  installUnresponsiveRecovery({
+    window: win,
+    dialog: {
+      showMessageBox: (options) =>
+        dialog.showMessageBox({ ...options, buttons: [...options.buttons] }),
+      showErrorBox: (title, content) => dialog.showErrorBox(title, content),
     },
+    sampler,
+    log,
+    exportSupportBundle: () => exportUnresponsiveBundle(runtime, sampler.snapshot()),
+    quit: requestQuit,
   });
-
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback(
-      shouldApplyContentSecurityPolicy(details.url)
-        ? { responseHeaders: applyContentSecurityPolicy(details.responseHeaders, isDev) }
-        : {},
-    );
-  });
-
-  attachFailureRecovery(win);
 
   win.on("maximize", () => win.webContents.send(ipcEvents.windowStateChanged.channel));
   win.on("unmaximize", () => win.webContents.send(ipcEvents.windowStateChanged.channel));
@@ -136,7 +104,7 @@ function createWindow(): BrowserWindow {
   if (isDev) {
     void win.loadURL(DEV_SERVER_ORIGIN);
     win.webContents.openDevTools();
-    if (reactDevToolsRequested) attachDevToolsPageHook(win);
+    if (reactDevToolsRequested) attachDevToolsPageHook(win, log);
   } else {
     void win.loadFile(RENDERER_ENTRY);
   }
@@ -144,12 +112,10 @@ function createWindow(): BrowserWindow {
   return win;
 }
 
-type DesktopMainRuntime = ManagedRuntime.ManagedRuntime<CommandEnv, never>;
-
 function registerIpc(
   runtime: DesktopMainRuntime,
   ipc: GuardedIpcMain,
-  quitFlush: QuitFlushController,
+  handshake: QuitHandshake,
 ): void {
   const handlers = createIpcHandlers({
     host: {
@@ -161,42 +127,9 @@ function registerIpc(
     reportCrash: (report) => {
       void runtime.runPromise(reportRendererCrash(report));
     },
-    quitFlushComplete: quitFlush.complete,
+    quitFlushComplete: handshake.complete,
   });
   registerIpcChannels(ipc, handlers);
-}
-
-interface QuitFlushController {
-  readonly complete: () => void;
-}
-
-function installBoundedShutdown(runtime: DesktopMainRuntime): QuitFlushController {
-  let complete: (() => void) | null = null;
-  app.on("before-quit", (event) => {
-    if (quitting) return;
-    const win = BrowserWindow.getAllWindows().find((candidate) => !candidate.isDestroyed());
-    if (win === undefined || win.webContents.isDestroyed()) return;
-
-    event.preventDefault();
-    quitting = true;
-
-    let settled = false;
-    const proceed = (): void => {
-      if (settled) return;
-      settled = true;
-      complete = null;
-      clearTimeout(timer);
-      void runtime.dispose().then(
-        () => app.quit(),
-        () => app.quit(),
-      );
-    };
-    const timer = setTimeout(proceed, QUIT_FLUSH_TIMEOUT_MS);
-    timer.unref?.();
-    complete = proceed;
-    win.webContents.send(ipcEvents.quitFlush.channel);
-  });
-  return { complete: () => complete?.() };
 }
 
 if (!app.requestSingleInstanceLock()) {
@@ -222,8 +155,7 @@ if (!app.requestSingleInstanceLock()) {
             "Bluewave hit an unexpected error and needs to close." +
               (bundlePath !== null ? `\n\nA support bundle was saved to:\n${bundlePath}` : ""),
           );
-          quitting = true;
-          app.quit();
+          requestQuit();
         });
       }),
     );
@@ -242,8 +174,15 @@ if (!app.requestSingleInstanceLock()) {
     }
 
     installShellGuards({ app, session: session.defaultSession, trust: shellTrust });
-    const quitFlush = installBoundedShutdown(runtime);
-    registerIpc(runtime, guardIpc(ipcMain, shellTrust), quitFlush);
+    installContentSecurityPolicy(session.defaultSession, isDev);
+    quitHandshake = installQuitHandshake({
+      app,
+      runtime,
+      windows: () => BrowserWindow.getAllWindows(),
+      sendFlush: (window) => window.webContents.send(ipcEvents.quitFlush.channel),
+      log,
+    });
+    registerIpc(runtime, guardIpc(ipcMain, shellTrust), quitHandshake);
 
     try {
       loadContentArtifact();
@@ -257,11 +196,11 @@ if (!app.requestSingleInstanceLock()) {
       return;
     }
 
-    createWindow();
+    createWindow(runtime);
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
+        createWindow(runtime);
       }
     });
   });
