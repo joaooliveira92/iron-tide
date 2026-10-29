@@ -49,6 +49,7 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0326](../ADR-0326-globe-adapter-interaction-parity.md) Globe adapter interaction parity and projection mapping.
 - [ADR-0327](../ADR-0327-globe-overview-production-enablement.md) Globe overview production enablement.
 - [ADR-0328](../ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md) Every desktop bridge channel is declared once in `shared/ipc-contract.ts`; preload exposure and main-process registration derive names and payload types from it.
+- [ADR-0329](../ADR-0329-land-climate-zones-baked-from-koppen-geiger.md) The globe's land colour comes from a presentation-only `climate` tile layer baked at author time from Köppen-Geiger V3 and clipped to the Natural Earth coastline; no engine or authoritative code reads it.
 
 ## Superseded (do not follow)
 

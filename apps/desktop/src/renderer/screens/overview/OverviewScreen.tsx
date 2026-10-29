@@ -7,13 +7,11 @@ import { DEBUG_MODE } from "../../shell/debug-flag.js";
 import {
   OverviewLoadErrorState,
   OverviewLoadingState,
-  OverviewMonthReportPanel,
+  OverviewHeaderReports,
   OverviewNationsPanel,
-  OverviewPrioritiesPanel,
 } from "./components/index.js";
 import { nationHomeArea } from "../../content/presentationContent.js";
 import { monthLabel } from "./month-report-format.js";
-import { TurnSummaryPanel } from "./TurnSummaryPanel.js";
 import { useOverviewModel } from "./hooks/useOverviewModel.js";
 
 function screenForEntity(ref: EntityReferenceDto): Screen | null {
@@ -68,8 +66,6 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
     projection,
     areaName,
     roomy,
-    priorityCount,
-    priorities,
     nationRail,
     monthReports,
     turnSummaries,
@@ -91,26 +87,12 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
 
   const homeAreaId = nationHomeArea(projection.playerNationId);
 
-  const prioritiesPanel = (
-    <OverviewPrioritiesPanel
-      state={priorities}
-      priorityCount={priorityCount}
-      defaultOpen={roomy}
-      onNavigate={onNavigate}
-    />
-  );
-  const monthReport = (
-    <OverviewMonthReportPanel
+  const headerReports = (
+    <OverviewHeaderReports
       reports={monthReports}
       areaName={areaName}
-      defaultOpen={roomy && monthReports.length > 0}
-    />
-  );
-  const turnSummary = (
-    <TurnSummaryPanel
       summaries={turnSummaries}
-      loading={turnSummariesLoading}
-      defaultOpen={roomy && turnSummaries.length > 0}
+      summariesLoading={turnSummariesLoading}
       turnMessages={turnMessages}
       onTogglePinned={togglePinned}
       onToggleRead={toggleRead}
@@ -144,6 +126,7 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
     return (
       <div data-guided-target="overview" className="relative h-full min-h-[28rem]">
         {heading}
+        {headerReports}
         <Suspense fallback={<Skeleton className="h-full w-full" />}>
           <MapSurface
             enableGlobe
@@ -153,13 +136,6 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
             treeDefaultOpen={false}
             initialFocusAreaId={homeAreaId}
             initialFocusNationId={projection.playerNationId}
-            leftPanels={
-              <>
-                {prioritiesPanel}
-                {turnSummary}
-                {monthReport}
-              </>
-            }
             rightPanels={nationsPanel}
             {...map}
           />
@@ -171,6 +147,7 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
   return (
     <div data-guided-target="overview" className="flex flex-col gap-3 p-3">
       {heading}
+      {headerReports}
       <div className="h-[60vh] min-h-[22rem]">
         <Suspense fallback={<Skeleton className="h-full w-full rounded-lg" />}>
           <MapSurface
@@ -183,9 +160,6 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
           />
         </Suspense>
       </div>
-      {prioritiesPanel}
-      {turnSummary}
-      {monthReport}
       {nationsPanel}
     </div>
   );

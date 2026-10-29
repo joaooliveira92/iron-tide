@@ -17,6 +17,7 @@ import {
   areaOutlineFeatures,
   type PreparedArea,
 } from "./areas.ts";
+import type { ClimateZoneGeometry } from "./climate-data.ts";
 import { canonicalJson, type PipelineConfig } from "./config.ts";
 import {
   indexPolygons,
@@ -40,6 +41,7 @@ export interface GeometryInput {
   readonly landPolygons: readonly (readonly (readonly Position[])[])[];
   readonly riverLines: readonly NamedLine[];
   readonly areas: readonly PreparedArea[];
+  readonly climate: readonly ClimateZoneGeometry[];
 }
 
 export interface ResolvedOverlay {
@@ -81,6 +83,7 @@ export interface LevelStats {
   readonly landVertices: number;
   readonly landRings: number;
   readonly pinnedVertices: number;
+  readonly climateVertices: number;
   readonly areaTiles: number;
   readonly areaVertices: number;
   readonly labelTiles: number;
@@ -220,6 +223,7 @@ function levelFeatures(
   prepared: readonly (readonly PreparedRing[])[],
   zoom: number,
   config: PipelineConfig,
+  properties: GeoJSON.GeoJsonProperties = {},
 ): {
   readonly features: GeoJSON.Feature[];
   readonly vertices: number;
@@ -252,7 +256,7 @@ function levelFeatures(
       pinnedCount += ring.pinned.filter(Boolean).length;
     });
     if (coordinates.length === 0) continue;
-    features.push({ type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates } });
+    features.push({ type: "Feature", properties, geometry: { type: "Polygon", coordinates } });
   }
   return { features, vertices, rings, pinned: pinnedCount };
 }
@@ -307,6 +311,10 @@ export function bakeTiles(
     activeZones,
     config.densifyToleranceMetres,
   );
+  const climatePrepared = input.climate.map(({ zone, polygons: zonePolygons }) => ({
+    zone,
+    polygons: prepareRings(zonePolygons, [], config.densifyToleranceMetres).polygons,
+  }));
   const tiles: TilePackTile[] = [];
   const levels: LevelStats[] = [];
   const areaTilingOptions = {
@@ -333,6 +341,18 @@ export function bakeTiles(
   for (let zoom = config.tileMinZoom; zoom <= config.tileMaxZoom; zoom++) {
     const land = levelFeatures(polygons, zoom, config);
     const overlay = overlayFeatures(resolution.overlays, zoom, config.densifyToleranceMetres);
+    const climateFeatures: GeoJSON.Feature[] = [];
+    let climateVertices = 0;
+    for (const { zone, polygons: zonePolygons } of climatePrepared) {
+      const level = levelFeatures(
+        zonePolygons,
+        zoom,
+        { ...config, simplificationPixels: config.climateSimplificationPixels },
+        { zone },
+      );
+      climateFeatures.push(...level.features);
+      climateVertices += level.vertices;
+    }
     const tilingOptions = {
       maxZoom: zoom,
       indexMaxZoom: zoom,
@@ -349,6 +369,10 @@ export function bakeTiles(
       { type: "FeatureCollection", features: overlay },
       tilingOptions,
     );
+    const climateIndex = new geojsonvt(
+      { type: "FeatureCollection", features: climateFeatures },
+      tilingOptions,
+    );
     const levelTiles: TilePackTile[] = [];
     let areaTiles = 0;
     let labelTiles = 0;
@@ -358,8 +382,10 @@ export function bakeTiles(
       for (let y = 0; y < span; y++) {
         const landTile = landIndex.getTile(zoom, x, y);
         const overlayTile = overlayIndex.getTile(zoom, x, y);
+        const climateTile = climateIndex.getTile(zoom, x, y);
         const layers: Record<string, unknown> = {};
         if (landTile !== null) layers[config.layers.land] = landTile;
+        if (climateTile !== null) layers[config.layers.climate] = climateTile;
         if (overlayTile !== null) layers[config.layers.protected] = overlayTile;
         const fillTile = areaFillIndex.getTile(zoom, x, y);
         const outlineTile = areaOutlineIndex.getTile(zoom, x, y);
@@ -398,6 +424,7 @@ export function bakeTiles(
       landVertices: land.vertices,
       landRings: land.rings,
       pinnedVertices: land.pinned,
+      climateVertices,
       areaTiles,
       areaVertices,
       labelTiles,
@@ -424,8 +451,9 @@ export function configurationHash(
   pins: unknown,
   sha256: (bytes: string) => string,
   areas: unknown,
+  climate: unknown = null,
 ): string {
-  return sha256(canonicalJson({ config, catalogue, pins, areas }));
+  return sha256(canonicalJson({ config, catalogue, pins, areas, climate }));
 }
 
 export function featureOf(catalogue: ProtectedCatalogue, id: string): ProtectedFeature {

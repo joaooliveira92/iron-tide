@@ -18,6 +18,7 @@ export const TEST_CONFIG: PipelineConfig = {
   overscaleMaxZoom: 12,
   bounds: [-180, -85.0511287798066, 180, 85.0511287798066],
   simplificationPixels: 0.35,
+  climateSimplificationPixels: 1.5,
   protectedPinRadiusPixels: 6,
   overlayRenderedWidthPixels: 2.5,
   layers: {
@@ -26,6 +27,7 @@ export const TEST_CONFIG: PipelineConfig = {
     areas: "areas",
     areaOutlines: "area_outlines",
     areaLabels: "area_labels",
+    climate: "climate",
   },
   packFormat: "bluewave-tilepack-1",
   generationTimestampPolicy: "none",
@@ -51,6 +53,7 @@ export function strait(open: boolean): GeometryInput {
     ],
     riverLines: [],
     areas: [],
+    climate: [],
   };
 }
 

@@ -1,6 +1,6 @@
 {
-  "manifestVersion": 3,
-  "pipelineVersion": "1.2.0",
+  "manifestVersion": 4,
+  "pipelineVersion": "1.3.0",
   "packFormat": "bluewave-tilepack-1",
   "dataset": {
     "name": "Natural Earth",
@@ -32,9 +32,10 @@
     ]
   },
   "licence": {
-    "identifier": "Natural Earth: public domain",
-    "attributionRequired": false,
+    "identifier": "Natural Earth: public domain; Koppen-Geiger V3: CC BY 4.0",
+    "attributionRequired": true,
     "files": [
+      "licences/koppen-geiger-cc-by-4.0.txt",
       "licences/natural-earth-terms.txt",
       "licences/ne_10m_land.README.html",
       "licences/ne_10m_land.VERSION.txt",
@@ -54,7 +55,7 @@
     "pbf": "3.3.0",
     "lockfileSha256": "fd778abae8787c973a4a225191f3153f250f4e98ed8730ddc83b3db5462bc64e"
   },
-  "configurationSha256": "4015bfdd8ac84571eca63e79910456c198270f6b2bebd22cdee540d8ca9ae34f",
+  "configurationSha256": "9be8f1519a6abfcc4e318a18ed247f8745b6c3c46ffeefe70d016b04da3b7af6",
   "areaOutlines": {
     "datasetVersion": "1.0.0",
     "sourceSha256": "0a6720e058ce366903df750235447ff2b66148309dd2a3d5e8290a08ac4ec345",
@@ -144,7 +145,7 @@
     ],
     "fitForPurposeMaxZoom": 7,
     "protectedCatalogueVersion": 1,
-    "generationTool": "map-data pipeline 1.2.0",
+    "generationTool": "map-data pipeline 1.3.0",
     "validation": {
       "passed": true,
       "findings": 0,
@@ -240,24 +241,26 @@
     "protected": "protected",
     "areas": "areas",
     "areaOutlines": "area_outlines",
-    "areaLabels": "area_labels"
+    "areaLabels": "area_labels",
+    "climate": "climate"
   },
   "counts": {
     "tiles": 16969,
-    "files": 11,
+    "files": 12,
     "sourceVertices": 481687,
     "densifiedVertices": 481838
   },
   "sizes": {
-    "packBytes": 5678007,
-    "outputBytes": 5827709,
+    "packBytes": 9112260,
+    "outputBytes": 9263351,
     "sourceArchiveBytes": 5663509,
     "sourceExtractedBytes": 14373309
   },
   "integrity": {
-    "packSha256": "2b7b264e928124d314c577b9bb112c1e79b9db8c85329030eeae931e12952b16",
+    "packSha256": "dd04ff1dac017ac5e24e7fbf3973c947928b4622e9b7f181e5f1a642547199ea",
     "files": {
-      "land.bwtp": "2b7b264e928124d314c577b9bb112c1e79b9db8c85329030eeae931e12952b16",
+      "land.bwtp": "dd04ff1dac017ac5e24e7fbf3973c947928b4622e9b7f181e5f1a642547199ea",
+      "licences/koppen-geiger-cc-by-4.0.txt": "2a7a0be0e56da56794209230582e502d2a4122dbeb3479506a3f78063455dd77",
       "licences/natural-earth-terms.txt": "193e184272c9427002703823217a846f172622f421ac6977ba2f09435e245d98",
       "licences/ne_10m_land.README.html": "f22176c0b44403fd7b7381a404562007a595c477ca72d23d9b7ed3949e948b12",
       "licences/ne_10m_land.VERSION.txt": "548358969090d629b41888f5fe664ac31b7203dfd849f7c1ef820ac055b62191",
@@ -269,15 +272,100 @@
       "validation.json": "ba8ff11ac285ba4b976fcb14d6f6d516745109e6620e98125e960407c8ac1294"
     }
   },
+  "climate": {
+    "layer": "climate",
+    "property": "zone",
+    "binarySha256": "4d57ad94a6a454ffb1cc95a3f3b9a1bacd0f7aa1ab840dcb32f8c9797a2379ba",
+    "source": {
+      "name": "Koppen-Geiger V3 (Beck et al. 2023)",
+      "citation": "Beck, H. E., McVicar, T. R., Vergopolan, N., Berg, A., Lutsko, N. J., Dufour, A., Zeng, Z., Jiang, X., van Dijk, A. I. J. M., Miralles, D. G. High-resolution (1 km) Koppen-Geiger maps for 1901-2099 based on constrained CMIP6 projections. Scientific Data 10, 724 (2023).",
+      "doi": "10.1038/s41597-023-02549-6",
+      "dataDoi": "10.6084/m9.figshare.21789074",
+      "licence": "CC BY 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "period": "1991-2020",
+      "file": "1991_2020/koppen_geiger_0p1.tif",
+      "fileSha256": "59b749fe6711e72c720ff903044eb0efb4373524ee434740ed7384a0284c155b",
+      "archiveUrl": "https://ndownloader.figshare.com/files/61012822",
+      "archiveSha256": "bb84453d4541f1a0bc5a804ead83f483c19ce70f16a5197f6d3a7b6a63e65562"
+    },
+    "method": {
+      "grid": "0.1 degree, 3600x1800",
+      "noDataFill": "nearest-neighbour majority, 8 cells",
+      "smoothing": "2 box-blur passes, marching squares at 0.42",
+      "clip": "per-polygon intersection with Natural Earth 10m land and minor islands",
+      "outputGridDegrees": 0.01,
+      "toolchain": "geotiff, d3-contour, polygon-clipping installed in a scratch directory"
+    },
+    "zones": [
+      {
+        "id": 1,
+        "name": "tropical-wet",
+        "koppen": [
+          1,
+          2
+        ]
+      },
+      {
+        "id": 2,
+        "name": "tropical-seasonal",
+        "koppen": [
+          3,
+          3
+        ]
+      },
+      {
+        "id": 3,
+        "name": "arid",
+        "koppen": [
+          4,
+          5
+        ]
+      },
+      {
+        "id": 4,
+        "name": "semi-arid",
+        "koppen": [
+          6,
+          7
+        ]
+      },
+      {
+        "id": 5,
+        "name": "temperate",
+        "koppen": [
+          8,
+          16
+        ]
+      },
+      {
+        "id": 6,
+        "name": "cold",
+        "koppen": [
+          17,
+          28
+        ]
+      },
+      {
+        "id": 7,
+        "name": "polar",
+        "koppen": [
+          29,
+          30
+        ]
+      }
+    ]
+  },
   "levels": [
     {
       "zoom": 0,
       "tiles": 1,
-      "bytes": 82971,
-      "sha256": "ab75fa1a73560ebb081d12571a8c5462175880a07d62275adcfa49feb7f0fb64",
+      "bytes": 96337,
+      "sha256": "02999c9a429d4bbf0053d58e01e97de07c03b720af87b86b513737157361d0ab",
       "landVertices": 12100,
       "landRings": 453,
       "pinnedVertices": 679,
+      "climateVertices": 4157,
       "areaTiles": 1,
       "areaVertices": 11016,
       "labelTiles": 1,
@@ -288,11 +376,12 @@
     {
       "zoom": 1,
       "tiles": 4,
-      "bytes": 121769,
-      "sha256": "29b4bbfaf2298b1579b94433ce2896cae9a97c77b5022971bd9c3034101f96af",
+      "bytes": 152996,
+      "sha256": "863782c2c2ef071772a4975221c18bc9bde838f408cc222b60c9f0c56803cbf6",
       "landVertices": 25313,
       "landRings": 1000,
       "pinnedVertices": 679,
+      "climateVertices": 9588,
       "areaTiles": 4,
       "areaVertices": 11016,
       "labelTiles": 4,
@@ -303,11 +392,12 @@
     {
       "zoom": 2,
       "tiles": 16,
-      "bytes": 186495,
-      "sha256": "0a965b09d1ce2c2d840da00df232f9feaef5f1e2dae16de57b946feb0105fdb4",
+      "bytes": 255641,
+      "sha256": "bdac1f13d67f9ab9a97d10a2bbdc8630b25fb0f83f15c967e847415695d89ae6",
       "landVertices": 49066,
       "landRings": 1895,
       "pinnedVertices": 679,
+      "climateVertices": 20534,
       "areaTiles": 16,
       "areaVertices": 11016,
       "labelTiles": 16,
@@ -318,11 +408,12 @@
     {
       "zoom": 3,
       "tiles": 64,
-      "bytes": 297626,
-      "sha256": "f96e0b6e00f74f2bf0f2dc3dcbac21ca2a7dfef88ec2f41979caa81d7fddee6a",
+      "bytes": 436998,
+      "sha256": "887bc8702cba418f6b187463d8f144df3f9dfb0578497c281b9f344f5cd6003b",
       "landVertices": 88308,
       "landRings": 3187,
       "pinnedVertices": 679,
+      "climateVertices": 41182,
       "areaTiles": 40,
       "areaVertices": 11016,
       "labelTiles": 40,
@@ -333,11 +424,12 @@
     {
       "zoom": 4,
       "tiles": 248,
-      "bytes": 484934,
-      "sha256": "755d1c5c1649a911ebd646f33588c3e39073dd8f351ed0e4880d182cf28ceeb8",
+      "bytes": 746786,
+      "sha256": "717e653f9b363cfccf6051c3f339cf52b0eaadbde61517f4846d10170ac60eb1",
       "landVertices": 148022,
       "landRings": 5342,
       "pinnedVertices": 679,
+      "climateVertices": 74842,
       "areaTiles": 148,
       "areaVertices": 11016,
       "labelTiles": 84,
@@ -348,11 +440,12 @@
     {
       "zoom": 5,
       "tiles": 916,
-      "bytes": 765965,
-      "sha256": "5cd89b616306e2c3e03a5acc712c3e6088e837c666b0de8419b3c5a123030ebc",
+      "bytes": 1247465,
+      "sha256": "08a83cfb44b8efdf796bfa51b88ec13a457db8147d0b028f462de26917e2d598",
       "landVertices": 226254,
       "landRings": 7257,
       "pinnedVertices": 679,
+      "climateVertices": 129724,
       "areaTiles": 496,
       "areaVertices": 11016,
       "labelTiles": 144,
@@ -363,11 +456,12 @@
     {
       "zoom": 6,
       "tiles": 3348,
-      "bytes": 1212219,
-      "sha256": "3e4544b0b9aa7e290292c5e0ab3179372080b35f0a2bc7e5e4917fcafc361a81",
+      "bytes": 2086464,
+      "sha256": "cac211b3b9b1d4a9810370cb5674db5b5b7d1f7227f2b29b42762225c6612a7d",
       "landVertices": 308403,
       "landRings": 8063,
       "pinnedVertices": 679,
+      "climateVertices": 209230,
       "areaTiles": 1620,
       "areaVertices": 11016,
       "labelTiles": 160,
@@ -378,11 +472,12 @@
     {
       "zoom": 7,
       "tiles": 12372,
-      "bytes": 2118756,
-      "sha256": "0c8e0326625ec0a9ff3de0cafb04c11d02bd9d56cf67267bf48c4d36f8c9e150",
+      "bytes": 3682301,
+      "sha256": "5feaf84860dbda6134ee3b631ca20ea1a4610dabbd7dbcdb0dec756713f2b4a2",
       "landVertices": 385112,
       "landRings": 8531,
       "pinnedVertices": 679,
+      "climateVertices": 303591,
       "areaTiles": 5636,
       "areaVertices": 11016,
       "labelTiles": 164,
@@ -391,7 +486,7 @@
       "quantisationMetres": 76.35
     }
   ],
-  "attribution": "Made with Natural Earth. Natural Earth is public domain; attribution is optional.",
+  "attribution": "Made with Natural Earth (public domain). Climate zones from Koppen-Geiger V3: Beck, H. E. et al. (2023), Scientific Data 10, 724, CC BY 4.0.",
   "validation": {
     "passed": true,
     "findings": 0,

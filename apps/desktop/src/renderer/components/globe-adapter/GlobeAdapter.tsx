@@ -35,6 +35,7 @@ import {
 import { fitWorldCamera, type AppCameraState, type CameraProjection } from "./camera-contract.js";
 import type { OverlayFeature, OverlaySnapshot } from "./overlay-contract.js";
 import { DisposalRegistry } from "./disposal.js";
+import { srgbToCanvasHex } from "./display-color.js";
 import { projectOverlay } from "./overlay-projection.js";
 import { OverlayStore } from "./overlay-store.js";
 import { selectPointerTarget } from "./pointer-visibility.js";
@@ -244,6 +245,24 @@ const AREA_LAYER_IDS: ReadonlySet<string> = new Set([
   "area-labels-list",
 ]);
 
+const SEA_COLOR = srgbToCanvasHex("#00cce0");
+const LAND_COLOR = srgbToCanvasHex("#fcf4f0");
+const COAST_COLOR = srgbToCanvasHex("#6fd3bc");
+
+const CLIMATE_ZONE_COLORS: readonly (readonly [number, string])[] = [
+  [1, srgbToCanvasHex("#44d8b8")],
+  [2, srgbToCanvasHex("#70e0c4")],
+  [3, LAND_COLOR],
+  [4, srgbToCanvasHex("#f8ece0")],
+  [5, srgbToCanvasHex("#94e8d4")],
+  [6, srgbToCanvasHex("#b4eee0")],
+  [7, srgbToCanvasHex("#f4f8f8")],
+];
+
+function climateFillColor(): unknown {
+  return ["match", ["get", "zone"], ...CLIMATE_ZONE_COLORS.flat(), LAND_COLOR];
+}
+
 function mapLayers(
   plan: Extract<ReturnType<typeof useLandPlan>, { readonly kind: "baked" }>,
   overlay: GlobeAdapterProps["overlay"],
@@ -253,20 +272,27 @@ function mapLayers(
   const { manifest } = plan.tiles;
   const visibility = adapterLayerVisibility(layers);
   const specs: LayerSpecification[] = [
-    { id: "ocean", type: "background", paint: { "background-color": "#0b2a3f" } },
+    { id: "ocean", type: "background", paint: { "background-color": SEA_COLOR } },
     {
       id: "land",
       type: "fill",
       source: "land",
       "source-layer": manifest.layers.land,
-      paint: { "fill-color": "#33473b" },
+      paint: { "fill-color": LAND_COLOR },
+    },
+    {
+      id: "climate-fill",
+      type: "fill",
+      source: "land",
+      "source-layer": manifest.layers.climate,
+      paint: { "fill-color": climateFillColor() as never, "fill-antialias": false },
     },
     {
       id: "land-line",
       type: "line",
       source: "land",
       "source-layer": manifest.layers.land,
-      paint: { "line-color": "#9cc2ae", "line-width": 0.8 },
+      paint: { "line-color": COAST_COLOR, "line-width": 0.8 },
     },
     {
       id: "protected-water",
@@ -274,7 +300,7 @@ function mapLayers(
       source: "land",
       "source-layer": manifest.layers.protected,
       layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": "#0b2a3f", "line-width": ["get", "width"] },
+      paint: { "line-color": SEA_COLOR, "line-width": ["get", "width"] },
     },
     {
       id: "areas-fill",
@@ -312,7 +338,7 @@ function mapLayers(
       type: "line",
       source: "land",
       "source-layer": manifest.layers.areaOutlines,
-      paint: { "line-color": "#5fc0ff", "line-width": 0.8, "line-opacity": 0.55 },
+      paint: { "line-color": "#3f9f8c", "line-width": 0.7, "line-opacity": 0.5 },
     },
     {
       id: "area-labels-list",
@@ -340,7 +366,7 @@ function mapLayers(
       layout: { visibility: visibility.borders ? "visible" : "none" },
       paint: {
         "fill-color": borderColorExpression() as never,
-        "fill-opacity": 0.12,
+        "fill-opacity": 0.04,
       },
     },
     {
@@ -477,6 +503,15 @@ function buildStyle(
     version: 8,
     glyphs: `${baseDirectory()}${GLOBE_ASSET_ROOT}/glyphs/{fontstack}/{range}.pbf`,
     projection: { type: "globe" },
+    sky: {
+      "sky-color": "#bff3fb",
+      "horizon-color": "#eafcff",
+      "fog-color": "#eafcff",
+      "sky-horizon-blend": 0.6,
+      "horizon-fog-blend": 0.3,
+      "fog-ground-blend": 0,
+      "atmosphere-blend": 1,
+    },
     sources: mapSources(plan),
     layers: mapLayers(plan, overlay, layers, showAreas),
   };
@@ -1293,7 +1328,7 @@ export function GlobeAdapter({
       data-globe-adapter-projection={projection}
       data-globe-adapter-ready={ready ? "true" : "false"}
       data-map-variant={variant}
-      className={`absolute inset-0 z-[9998] bg-black ${MAP_VARIANT_LAYOUT[variant].root} ${className ?? ""}`}
+      className={`absolute inset-0 z-[9998] bg-[#cdf3fa] ${MAP_VARIANT_LAYOUT[variant].root} ${className ?? ""}`}
     >
       <div
         ref={containerRef}

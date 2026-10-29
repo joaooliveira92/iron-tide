@@ -50,18 +50,20 @@ export function overlayClassFilter(overlayClass: "lane" | "route"): AdapterFilte
   return ["==", ["get", "overlayClass"], overlayClass];
 }
 
+const UNOWNED_TINT = "rgba(0, 0, 0, 0)";
+
 export function ownershipColorExpression(
   overlay: Pick<OverlaySnapshot, "features"> | { ownership: ReadonlyMap<string, string | null> },
 ): string | AdapterFilter {
-  if (!("ownership" in overlay)) return "#46647f";
+  if (!("ownership" in overlay)) return UNOWNED_TINT;
   const entries = [...overlay.ownership]
     .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
     .flatMap(([area, nation]) => [
       area,
-      nation === null ? "#64748b" : `hsl(${campaignNationHue(nation)} 55% 42%)`,
+      nation === null ? UNOWNED_TINT : `hsl(${campaignNationHue(nation)} 60% 50%)`,
     ]);
-  if (entries.length === 0) return "#46647f";
-  return ["match", ["get", "id"], ...entries, "#46647f"];
+  if (entries.length === 0) return UNOWNED_TINT;
+  return ["match", ["get", "id"], ...entries, UNOWNED_TINT];
 }
 
 export function ownershipPaintValues(
@@ -69,8 +71,8 @@ export function ownershipPaintValues(
   visible: boolean,
 ): { readonly color: string | AdapterFilter; readonly opacity: number } {
   return {
-    color: visible ? ownershipColorExpression(overlay) : "#33473b",
-    opacity: visible ? 0.45 : 0.12,
+    color: visible ? ownershipColorExpression(overlay) : UNOWNED_TINT,
+    opacity: visible ? 0.06 : 0,
   };
 }
 
@@ -116,7 +118,7 @@ export function borderColorExpression(
 ): AdapterFilter {
   const entries = Object.keys(borders)
     .sort()
-    .flatMap((nation) => [nation, `hsl(${campaignNationHue(nation)} 60% 62%)`]);
+    .flatMap((nation) => [nation, `hsl(${campaignNationHue(nation)} 65% 45%)`]);
   return ["match", ["get", "id"], ...entries, "#93a9b8"];
 }
 

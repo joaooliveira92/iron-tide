@@ -18,7 +18,7 @@ const PACK = encodeTilePack(TILES);
 
 function manifest(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
-    manifestVersion: 3,
+    manifestVersion: 4,
     pipelineVersion: "1.2.0",
     areaOutlines: {
       datasetVersion: "1.0.0",
@@ -44,6 +44,7 @@ function manifest(overrides: Record<string, unknown> = {}): Record<string, unkno
       areas: "areas",
       areaOutlines: "area_outlines",
       areaLabels: "area_labels",
+      climate: "climate",
     },
     integrity: { packSha256: "abc" },
     sizes: { packBytes: PACK.length },

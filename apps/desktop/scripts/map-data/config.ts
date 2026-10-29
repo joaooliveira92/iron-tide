@@ -15,6 +15,7 @@ export interface PipelineConfig {
   readonly overscaleMaxZoom: number;
   readonly bounds: readonly [number, number, number, number];
   readonly simplificationPixels: number;
+  readonly climateSimplificationPixels: number;
   readonly protectedPinRadiusPixels: number;
   readonly overlayRenderedWidthPixels: number;
   readonly layers: {
@@ -23,6 +24,7 @@ export interface PipelineConfig {
     readonly areas: string;
     readonly areaOutlines: string;
     readonly areaLabels: string;
+    readonly climate: string;
   };
   readonly packFormat: string;
   readonly generationTimestampPolicy: string;
@@ -40,6 +42,7 @@ export function parsePipelineConfig(value: unknown): PipelineConfig {
     "fitForPurposeMaxZoom",
     "overscaleMaxZoom",
     "simplificationPixels",
+    "climateSimplificationPixels",
     "protectedPinRadiusPixels",
     "overlayRenderedWidthPixels",
   ] as const;
@@ -54,11 +57,11 @@ export function parsePipelineConfig(value: unknown): PipelineConfig {
   const config = value as PipelineConfig;
   const layerNames = Object.values(config.layers ?? {});
   if (
-    layerNames.length !== 5 ||
+    layerNames.length !== 6 ||
     layerNames.some((name) => typeof name !== "string" || name.length === 0) ||
-    new Set(layerNames).size !== 5
+    new Set(layerNames).size !== 6
   ) {
-    throw new MapDataError("config: layers must name five distinct layers");
+    throw new MapDataError("config: layers must name six distinct layers");
   }
   if (config.tileMaxZoom < config.tileMinZoom || config.tileMaxZoom > 12) {
     throw new MapDataError("config: tile zoom range is invalid");

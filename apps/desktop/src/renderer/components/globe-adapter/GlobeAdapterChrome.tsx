@@ -95,7 +95,7 @@ function GlobeMinimap({
       role="img"
       data-testid="globe-adapter-minimap"
       className="cursor-crosshair touch-none rounded-md border border-white/30"
-      style={{ background: "#0b2a3f", width: MINIMAP_WIDTH, height: MINIMAP_HEIGHT }}
+      style={{ background: "#00cce0", width: MINIMAP_WIDTH, height: MINIMAP_HEIGHT }}
       viewBox={`0 0 ${MINIMAP_WIDTH} ${MINIMAP_HEIGHT}`}
       onPointerDown={(event) => {
         const box = event.currentTarget.getBoundingClientRect();
@@ -107,7 +107,7 @@ function GlobeMinimap({
         );
       }}
     >
-      <path d={path} fill="#33473b" fillOpacity={0.8} stroke="#5fc0ff" strokeOpacity={0.35} />
+      <path d={path} fill="#fcf4f0" fillOpacity={1} stroke="#5bc9b0" strokeOpacity={0.6} />
       <rect
         x={rect.x}
         y={rect.y}
@@ -363,6 +363,9 @@ export function GlobeAdapterChrome({
             notes={["Globe adapter: foreign intelligence and invasion range are not modelled."]}
           />
           <GlobeScaleBar zoom={viewport.zoom} />
+          <p className="mt-1 text-xs text-white/60">
+            Land climate: Köppen-Geiger V3, Beck et al. (2023), CC BY 4.0
+          </p>
         </div>
       </div>
 
