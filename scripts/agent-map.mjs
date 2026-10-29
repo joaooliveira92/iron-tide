@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { basename, extname, isAbsolute, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
@@ -116,7 +116,13 @@ function uniqueByLocation(hits) {
 }
 
 export function fileExports(root, path) {
-  const text = readFileSync(resolve(root, path), "utf8");
+  const absolute = resolve(root, path);
+  try {
+    if (!statSync(absolute).isFile()) return [];
+  } catch {
+    return [];
+  }
+  const text = readFileSync(absolute, "utf8");
   const names = new Set();
   const declaration =
     /^\s*export\s+(?:declare\s+)?(?:async\s+)?(?:function|class|interface|type|const|let|var|enum)\s+([A-Za-z_$][A-Za-z0-9_$]*)/gmu;

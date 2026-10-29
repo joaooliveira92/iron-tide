@@ -99,6 +99,17 @@ void test("agent:map resolves a path with spaces and reports ownership, rules, t
   }
 });
 
+void test("agent:map accepts a directory without reading it", () => {
+  const dir = fixture();
+  try {
+    const report = buildReport(dir, "packages/a", 8);
+    assert.equal(report.owner.name, "@bluewave/a");
+    assert.deepEqual(report.fileSymbols, []);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 void test("agent:map finds one definition, its references and its test", () => {
   const dir = fixture();
   try {
