@@ -404,6 +404,65 @@ export default collection("parts", PartSchema, [
   },
   {
     family: "torpedo",
+    id: "usn_21in_mk35_1949",
+    lifecycle: {
+      availableFrom: "1949-01",
+    },
+    name: "usn_21in_mk35_1949",
+    origin: {
+      sourceFile: "ship-building/parts/torpedo.yaml",
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "game_conversion",
+      note: "The 21-inch acoustic homer is the US Mark 35 (1949), the only one for surface tubes per ADR-0284 D1/ADR-0350 Rule 6. Values: 10 sourced or derived from NW-TP (dossier §7); 4 unsourced fields (minimumArmingDistanceM, reliabilityBp, warheadExplosiveEquivalentMassKg, tubeHitHazardPolicy) are BALANCE_TARGET copied from usn_21in_mk14_1931, the nearest existing US 21-inch torpedo, per the standing ADR delegation. warheadExplosiveMassKg 122 rounded from the sourced 122.5 kg.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "https://www.navweaps.com/Weapons/WTUS_PostWWII.php",
+          title: "NW-TP — US Post-WWII Torpedoes (dossier §7)",
+        },
+        {
+          archiveOrUrl: "docs/research/e-1-1940s-hull-and-part-values.md",
+          section: "§7 21-inch acoustic homing torpedo",
+          title: "E-1 research: 1940-1949 hull forms and part values",
+        },
+      ],
+    },
+    provides: "torpedo",
+    quantities: [
+      {
+        basis: "PER_PART_UNIT",
+        id: "torpedo_mass",
+        kind: "massKg",
+        value: 803,
+      },
+    ],
+    revisions: [],
+    spec: {
+      diameterUm: 533000,
+      guidanceCapability: "acoustic",
+      launchTypes: ["ABOVE_WATER_TRAINABLE", "SUBMARINE_INTERNAL"],
+      massKg: 803,
+      minimumArmingDistanceM: 410,
+      propulsionType: "ELECTRIC",
+      reliabilityBp: 94000,
+      speedSettings: [
+        {
+          rangeM: 13710,
+          settingId: "27kn",
+          speedMilliKnots: 27000,
+        },
+      ],
+      technologyPrerequisiteIds: ["torp_acoustic_homing"],
+      tubeHitHazardPolicy: "ORDINARY",
+      warheadExplosiveEquivalentMassKg: 122,
+      warheadExplosiveMassKg: 122,
+      warheadType: "HBX",
+    },
+  },
+  {
+    family: "torpedo",
     id: "whitehead_14in_1886",
     lifecycle: {
       availableFrom: "1880-01",

@@ -69,8 +69,8 @@ const catalogue = partCatalogue({ parts, slotTemplates, platforms });
 const legacyById = new Map(readReferenceDesignEntries().map((d) => [d.id, d] as const));
 
 describe("production parts content → compile (ticket 11d)", () => {
-  it("carries the staged plan: 333 parts, 12 slot templates, 10 platforms, 97 loadouts", () => {
-    expect(parts).toHaveLength(333);
+  it("carries the staged plan: 334 parts, 12 slot templates, 10 platforms, 97 loadouts", () => {
+    expect(parts).toHaveLength(334);
     expect(slotTemplates).toHaveLength(12);
     expect(platforms).toHaveLength(10);
     expect(loadouts).toHaveLength(97);
@@ -79,7 +79,7 @@ describe("production parts content → compile (ticket 11d)", () => {
     }
   });
 
-  it("carries the eight torpedo parts and resolves the DQ-TORPEDO-001 forPart cross-references", () => {
+  it("carries the nine torpedo parts and resolves the DQ-TORPEDO-001 forPart cross-references", () => {
     const torpedoes = parts.filter((p) => p.family === "torpedo");
     expect(torpedoes.map((p) => p.id)).toEqual([
       "ger_533mm_g7a_1934",
@@ -88,6 +88,7 @@ describe("production parts content → compile (ticket 11d)", () => {
       "rn_21in_mk_iv_1916",
       "rn_21in_mk_viii_1927",
       "usn_21in_mk14_1931",
+      "usn_21in_mk35_1949",
       "whitehead_14in_1886",
       "whitehead_18in_1894",
     ]);
