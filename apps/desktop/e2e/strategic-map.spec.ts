@@ -85,9 +85,28 @@ async function pointInside(page: Page, mapAreaId: string) {
   }, mapAreaId);
 }
 
+async function visibleFleetMarker(page: Page, fleetId: string) {
+  const markers = page.locator(`[data-map-fleet="${fleetId}"]`);
+  const count = await markers.count();
+  const viewport = await page.evaluate(() => ({
+    width: globalThis.innerWidth,
+    height: globalThis.innerHeight,
+  }));
+  for (let index = 0; index < count; index += 1) {
+    const box = await markers.nth(index).boundingBox();
+    if (box === null) continue;
+    const onScreen =
+      box.x >= 0 &&
+      box.y >= 0 &&
+      box.x + box.width <= viewport.width &&
+      box.y + box.height <= viewport.height;
+    if (onScreen) return box;
+  }
+  return null;
+}
+
 async function dragFleet(page: Page, toAreaId: string) {
-  const marker = page.locator('[data-map-fleet="fleet_gbr_home"]').first();
-  const from = await marker.boundingBox();
+  const from = await visibleFleetMarker(page, "fleet_gbr_home");
   const to = await pointInside(page, toAreaId);
   expect(from).not.toBeNull();
   expect(to).not.toBeNull();

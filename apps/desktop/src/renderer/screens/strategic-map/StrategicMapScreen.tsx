@@ -3,7 +3,7 @@ import { ScreenStage } from "../../components/shared/ScreenStage.js";
 import { Button } from "../../components/ui/button.js";
 import { Skeleton } from "../../components/ui/skeleton.js";
 import { MapSurface } from "../../components/globe-adapter/MapSurface.js";
-import { campaignNationLabel } from "../../content/presentationContent.js";
+import { campaignNationLabel, nationHomeArea } from "../../content/presentationContent.js";
 import { translate } from "../../lib/strings.js";
 import { OrdersPanel, type BlockadeRow } from "./OrdersPanel.js";
 import { useStrategicMapScreen } from "./useStrategicMapScreen.js";
@@ -60,6 +60,8 @@ export function StrategicMapScreen({ sessionId }: StrategicMapScreenProps) {
               className="h-full"
               variant="full"
               {...map.map}
+              initialFocusAreaId={nationHomeArea(map.map.overlay.playerNationId)}
+              initialFocusNationId={map.map.overlay.playerNationId}
               orders={map.orders}
               treeDefaultOpen={false}
             />
