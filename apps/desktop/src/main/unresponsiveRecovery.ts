@@ -66,7 +66,7 @@ export function installUnresponsiveRecovery(
   let hung = false;
   let disposed = false;
   let promptOpen = false;
-  let rePrompt: unknown | undefined;
+  let rePrompt: unknown = undefined;
 
   const clearRePrompt = (): void => {
     if (rePrompt === undefined) return;

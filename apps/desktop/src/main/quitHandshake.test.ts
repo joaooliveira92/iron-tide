@@ -27,7 +27,7 @@ class FakeApp implements QuitApp {
 
   requestQuit(prevented: string[]): void {
     const event = { preventDefault: () => prevented.push("prevented") };
-    for (const listener of [...this.listeners]) listener(event);
+    for (const listener of this.listeners) listener(event);
   }
 }
 
@@ -85,7 +85,7 @@ function install(windows: readonly QuitWindow[]) {
     app,
     runtime,
     windows: () => windows,
-    sendFlush: (window) => flushed.push("flush"),
+    sendFlush: (_window) => flushed.push("flush"),
     scheduler,
     timeoutMs: 1_500,
   });

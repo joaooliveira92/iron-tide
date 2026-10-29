@@ -89,7 +89,7 @@ export function useDraftAutosave({
     clearRetry();
     retryTimer.current = setTimeout(() => {
       retryTimer.current = null;
-      writeRef.current();
+      void writeRef.current();
     }, delay);
   };
 
@@ -163,7 +163,7 @@ export function useDraftAutosave({
   const saveNow = () => {
     if (!enabled || !latest.current.loaded) return false;
     pending.current = { presetId: latest.current.presetId, log: latest.current.log };
-    writeRef.current();
+    void writeRef.current();
     return true;
   };
 

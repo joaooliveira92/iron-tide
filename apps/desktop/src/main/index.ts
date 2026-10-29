@@ -127,7 +127,7 @@ function registerIpc(
     reportCrash: (report) => {
       void runtime.runPromise(reportRendererCrash(report));
     },
-    quitFlushComplete: handshake.complete,
+    quitFlushComplete: () => handshake.complete(),
   });
   registerIpcChannels(ipc, handlers);
 }
