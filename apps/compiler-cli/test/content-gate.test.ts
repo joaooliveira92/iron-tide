@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vite-plus/test";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
@@ -14,6 +14,7 @@ const manifest = resolve(contentDir, "pack.json");
 
 const tempDirs: string[] = [];
 function tempDir(): string {
+  mkdirSync(join(repoRoot, ".tmp"), { recursive: true });
   const dir = mkdtempSync(join(repoRoot, ".tmp", "bw-gate-"));
   tempDirs.push(dir);
   return dir;

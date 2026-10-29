@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
@@ -33,6 +33,7 @@ describe("the authored horizon is 1970 (ADR-0282)", () => {
   });
 
   it("compiles a post-1939 technology beside the production pack without diagnostics", () => {
+    mkdirSync(join(REPO_ROOT, ".tmp"), { recursive: true });
     const dir = mkdtempSync(join(REPO_ROOT, ".tmp", "post-1939-"));
     dirs.push(dir);
     cpSync(PRODUCTION_PACK_DIR, dir, { recursive: true });

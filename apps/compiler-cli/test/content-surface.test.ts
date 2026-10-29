@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach, vi } from "vite-plus/test";
 import {
   cpSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -22,6 +23,7 @@ const manifest = resolve(contentDir, "pack.json");
 
 const tempDirs: string[] = [];
 function tempDir(): string {
+  mkdirSync(TEMPDIR_ROOT, { recursive: true });
   const dir = mkdtempSync(join(TEMPDIR_ROOT, "bw-content-"));
   tempDirs.push(dir);
   return dir;
