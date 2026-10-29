@@ -35,7 +35,13 @@ describe("unsourced content values (PLACEHOLDER ratchet)", () => {
   });
   it("the revision constants are decided design values, not placeholders", () => {
     const text = readFileSync(join(dir, "balance.ts"), "utf8");
-    const block = text.slice(text.indexOf("\nrevision:"));
+    const block = text.slice(
+      text.indexOf(`
+{
+  "revision": null
+}
+`),
+    );
     expect(block).not.toContain("PLACEHOLDER");
   });
 });

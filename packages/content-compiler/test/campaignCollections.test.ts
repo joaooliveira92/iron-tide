@@ -47,42 +47,53 @@ function compile(
   return { output, collector };
 }
 
-const DESIGN_A = `
-- designId: "des_a"
-  designVersionId: "des_a"
-  designFamilyId: "fam_a"
-  nationId: "uk"
-  className: "Alpha"
-  hullType: "ironclad_turret_ship"
-  displacementKg: 9000000
-  speedUms: 8
-  armorBeltUm: 300
-  mainGuns: { caliber: 305, count: 4, mounts: 2 }
-  machineryType: "reciprocating_compound"
-  hitPoints: 40
-  crewComplement: 400
-  familyCreationMonth: "1880-01"
-`;
+const jsonDocument = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
 
-const FLEET_A = `
-- id: "fleet_a"
-  nationId: "uk"
-  name: "Home Fleet"
-  locationAreaId: "eng"
-  ships:
-    - id: "ship_a"
-      name: "Ship A"
-      classId: "Alpha"
-      designVersionId: "des_a"
-      hitPoints: 40
-      maxHitPoints: 40
-      speed: 15
-      firepower: 24
-      armor: 24
-      isUnderConstruction: false
-      constructionProgress: 0
-      constructionTotalWork: 0
-`;
+const designRecord = (): Record<string, unknown> => ({
+  designId: "des_a",
+  designVersionId: "des_a",
+  designFamilyId: "fam_a",
+  nationId: "uk",
+  className: "Alpha",
+  hullType: "ironclad_turret_ship",
+  displacementKg: 9000000,
+  speedUms: 8,
+  armorBeltUm: 300,
+  mainGuns: { caliber: 305, count: 4, mounts: 2 },
+  machineryType: "reciprocating_compound",
+  hitPoints: 40,
+  crewComplement: 400,
+  familyCreationMonth: "1880-01",
+});
+
+const shipRecord = (): Record<string, unknown> => ({
+  id: "ship_a",
+  name: "Ship A",
+  classId: "Alpha",
+  designVersionId: "des_a",
+  hitPoints: 40,
+  maxHitPoints: 40,
+  speed: 15,
+  firepower: 24,
+  armor: 24,
+  isUnderConstruction: false,
+  constructionProgress: 0,
+  constructionTotalWork: 0,
+});
+
+const fleetDocument = (ship: Record<string, unknown>): string =>
+  jsonDocument([
+    {
+      id: "fleet_a",
+      nationId: "uk",
+      name: "Home Fleet",
+      locationAreaId: "eng",
+      ships: [ship],
+    },
+  ]);
+
+const DESIGN_A = jsonDocument([designRecord()]);
+const FLEET_A = fleetDocument(shipRecord());
 
 describe("campaign-file collections through the compiler", () => {
   it("compiles the campaign collections into the bundle", () => {
@@ -93,12 +104,12 @@ describe("campaign-file collections through the compiler", () => {
         "pack.json",
         JSON.stringify({ name: "test-pack", version: "0.4.0", type: "fixture", files: {} }),
       );
-      writeFixture(fixture.path, "fleets.yaml", FLEET_A);
-      writeFixture(fixture.path, "designs.yaml", DESIGN_A);
+      writeFixture(fixture.path, "fleets.json", FLEET_A);
+      writeFixture(fixture.path, "designs.json", DESIGN_A);
 
       const { output, collector } = compile(fixture.path, {
-        fleetFiles: [resolve(fixture.path, "fleets.yaml")],
-        designFiles: [resolve(fixture.path, "designs.yaml")],
+        fleetFiles: [resolve(fixture.path, "fleets.json")],
+        designFiles: [resolve(fixture.path, "designs.json")],
       });
 
       expect(collector.hasErrors).toBe(false);
@@ -119,17 +130,11 @@ describe("campaign-file collections through the compiler", () => {
         "pack.json",
         JSON.stringify({ name: "test-pack", version: "0.4.0", type: "fixture", files: {} }),
       );
-      writeFixture(
-        fixture.path,
-        "fleets.yaml",
-        FLEET_A.replace(
-          "      hitPoints: 40\n      maxHitPoints: 40\n",
-          "      maxHitPoints: 40\n",
-        ),
-      );
+      const { hitPoints: _omitted, ...withoutHitPoints } = shipRecord();
+      writeFixture(fixture.path, "fleets.json", fleetDocument(withoutHitPoints));
 
       const { output, collector } = compile(fixture.path, {
-        fleetFiles: [resolve(fixture.path, "fleets.yaml")],
+        fleetFiles: [resolve(fixture.path, "fleets.json")],
       });
 
       expect(output).toBeUndefined();
@@ -149,17 +154,10 @@ describe("campaign-file collections through the compiler", () => {
         "pack.json",
         JSON.stringify({ name: "test-pack", version: "0.4.0", type: "fixture", files: {} }),
       );
-      writeFixture(
-        fixture.path,
-        "fleets.yaml",
-        FLEET_A.replace(
-          "      constructionTotalWork: 0\n",
-          "      constructionTotalWork: 0\n      classQ: 1\n",
-        ),
-      );
+      writeFixture(fixture.path, "fleets.json", fleetDocument({ ...shipRecord(), classQ: 1 }));
 
       const { output, collector } = compile(fixture.path, {
-        fleetFiles: [resolve(fixture.path, "fleets.yaml")],
+        fleetFiles: [resolve(fixture.path, "fleets.json")],
       });
 
       expect(output).toBeUndefined();
@@ -193,17 +191,17 @@ describe("campaign-file collections through the compiler", () => {
         "pack.json",
         JSON.stringify({ name: "test-pack", version: "0.1.0", type: "fixture", files: {} }),
       );
-      writeFixture(fixture.path, "designs.yaml", `${DESIGN_A}${DESIGN_A}`);
+      writeFixture(fixture.path, "designs.json", jsonDocument([designRecord(), designRecord()]));
 
       const { output, collector } = compile(fixture.path, {
-        designFiles: [resolve(fixture.path, "designs.yaml")],
+        designFiles: [resolve(fixture.path, "designs.json")],
       });
 
       expect(output).toBeUndefined();
       const dup = collector.all.find((d) => d.code === "DUP-ID");
       expect(dup).toBeDefined();
       expect(dup!.message).toContain("des_a");
-      expect(dup!.sourceLocation?.path).toContain("designs.yaml");
+      expect(dup!.sourceLocation?.path).toContain("designs.json");
     } finally {
       fixture.cleanup();
     }
@@ -217,16 +215,16 @@ describe("campaign-file collections through the compiler", () => {
         "pack.json",
         JSON.stringify({ name: "test-pack", version: "0.1.0", type: "fixture", files: {} }),
       );
-      writeFixture(fixture.path, "designs.yaml", DESIGN_A);
+      writeFixture(fixture.path, "designs.json", DESIGN_A);
       writeFixture(
         fixture.path,
-        "fleets.yaml",
-        FLEET_A.replace('designVersionId: "des_a"', 'designVersionId: "des_missing"'),
+        "fleets.json",
+        fleetDocument({ ...shipRecord(), designVersionId: "des_missing" }),
       );
 
       const { output, collector } = compile(fixture.path, {
-        fleetFiles: [resolve(fixture.path, "fleets.yaml")],
-        designFiles: [resolve(fixture.path, "designs.yaml")],
+        fleetFiles: [resolve(fixture.path, "fleets.json")],
+        designFiles: [resolve(fixture.path, "designs.json")],
       });
 
       expect(output).toBeUndefined();
@@ -247,32 +245,24 @@ describe("campaign-file collections through the compiler", () => {
         "pack.json",
         JSON.stringify({ name: "test-pack", version: "0.1.0", type: "fixture", files: {} }),
       );
+      const construction = (id: string, targetId: string): Record<string, unknown> => ({
+        id,
+        nationId: "uk",
+        type: "ship",
+        targetId,
+        totalWork: 100,
+        completedWork: 0,
+        paidWork: 0,
+        status: "ACTIVE",
+        startedAt: "1880-01",
+      });
       writeFixture(
         fixture.path,
-        "constructions.yaml",
-        `
-- id: "con_b"
-  nationId: "uk"
-  type: "ship"
-  targetId: "ship_b"
-  totalWork: 100
-  completedWork: 0
-  paidWork: 0
-  status: "ACTIVE"
-  startedAt: "1880-01"
-- id: "con_a"
-  nationId: "uk"
-  type: "ship"
-  targetId: "ship_a"
-  totalWork: 100
-  completedWork: 0
-  paidWork: 0
-  status: "ACTIVE"
-  startedAt: "1880-01"
-`,
+        "constructions.json",
+        jsonDocument([construction("con_b", "ship_b"), construction("con_a", "ship_a")]),
       );
       const { output } = compile(fixture.path, {
-        constructionFiles: [resolve(fixture.path, "constructions.yaml")],
+        constructionFiles: [resolve(fixture.path, "constructions.json")],
       });
       expect(output).toBeDefined();
       const ids = output!.bundle.campaign!.constructions.map((c) => (c as { id: string }).id);
@@ -293,22 +283,22 @@ describe("campaign-file collections through the compiler", () => {
           version: "0.1.0",
           type: "fixture",
           files: {
-            fleets: ["fleets.yaml"],
-            economies: ["economies.yaml"],
-            constructions: ["constructions.yaml"],
-            diplomacy: ["diplomacy.yaml"],
-            research: ["research.yaml"],
-            designs: ["designs.yaml"],
+            fleets: ["fleets.json"],
+            economies: ["economies.json"],
+            constructions: ["constructions.json"],
+            diplomacy: ["diplomacy.json"],
+            research: ["research.json"],
+            designs: ["designs.json"],
           },
         }),
       );
       for (const name of [
-        "fleets.yaml",
-        "economies.yaml",
-        "constructions.yaml",
-        "diplomacy.yaml",
-        "research.yaml",
-        "designs.yaml",
+        "fleets.json",
+        "economies.json",
+        "constructions.json",
+        "diplomacy.json",
+        "research.json",
+        "designs.json",
       ]) {
         writeFixture(fixture.path, name, "[]\n");
       }

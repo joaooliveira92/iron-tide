@@ -83,9 +83,10 @@ packages. It also leaves the question "where does new content go?" open forever.
 8. **Content modules are loaded at the IO boundary, not by the compiler stages.**
    `loadContentModule` imports the declared `.ts` entry, `fullSurface` hands the
    resulting document to `CompilerInput.documents`, and `ParseStage` prefers that
-   document over any text. A `.yaml` path is rejected by the parse stage unless it
-   is the `ui` catalogue (fixture packs are the one exception, because test
-   scaffolding is not authored content and is tracked separately).
+   document over any text. The parse stage accepts exactly three inputs: a loaded
+   content module, a JSON document (test scaffolding and the pack manifest), and the
+   `ui` catalogue. A `.yaml` path is rejected for every other group, in every pack
+   type, so test fixtures build JSON documents rather than YAML text.
 
 ## Consequences
 
@@ -101,12 +102,19 @@ packages. It also leaves the question "where does new content go?" open forever.
 - Every test that read production YAML now loads the authored module through the
   compiler's loader (`test-support` exposes `readAuthoredFile`/`readAuthoredDocument`;
   `content-schema` and `content-compiler` keep a local `createRequire` helper to avoid
-  a build cycle). Inline YAML fixture strings inside tests remain and are the one
-  leftover of the old format; they never reach a tracked `.yaml` file.
-- The `yaml` dependency is removed from every package except the UI-catalogue
-  pipeline and the (temporary) codemod. `content-schema/src/yaml-parser.ts` keeps
-  its limits and policy while any YAML is still parsed, and is deleted with the last
-  non-internationalization input.
+  a build cycle). Every compiled fixture is a JSON document built by
+  `test-support`'s `jsonDocument` and friends, and fragment builders were replaced by
+  record builders, so no test writes YAML text at all. The one deliberate exception is
+  `content-schema/test/yaml-parser.test.ts`, which tests the internationalization
+  parser's own limits (aliases, tags, duplicate keys) and therefore must feed it YAML.
+- The cross-process fixture documents changed format, so its content artifact hash and
+  the bundle hash derived from it were re-pinned in `golden/hashes.json`; every
+  gameplay hash (snapshot, ledgers, replay verification, battle generation) is
+  unchanged, which is the evidence that the fixture change is serialization only.
+- The `yaml` dependency now exists in `@bluewave/content-schema` alone, used by
+  `parseUiCatalogue`. `content-schema/src/yaml-parser.ts` keeps its limits and policy
+  for that one caller and is deleted if the localization catalogue ever moves to JSON.
+  The codemod stages canonical JSON and no longer depends on `yaml`.
 - `README.md`, `.ai/ENGINEERING-CONTRACT.md`, `RULES.md`,
   `docs/architecture/non-negotiable-rules.md`,
   `docs/architecture/canonical-content-and-rulesets.md`, `content/AGENTS.md` and

@@ -1,4 +1,4 @@
-import { parseUiCatalogue, parseYamlSafe } from "@bluewave/content-schema";
+import { parseUiCatalogue } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
 import type { CompilerInput, CompilerStage } from "../index.js";
@@ -81,10 +81,6 @@ export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
     };
 
     let manifest: unknown = undefined;
-    const manifestType = (): unknown =>
-      typeof manifest === "object" && manifest !== null
-        ? (manifest as { readonly type?: unknown }).type
-        : undefined;
 
     for (const [group, files] of Object.entries(fileGroups)) {
       if (signal.aborted) return undefined;
@@ -107,46 +103,15 @@ export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
           continue;
         }
 
-        if (group === "manifest" && file.endsWith(".json")) {
-          const content = input.fileContents?.[file];
-          if (content === undefined) {
-            collector.addError("FILE-READ", `Failed to read file: ${file}`, {
-              stage: "parse",
-              sourceLocation: { path: sourcePath, line: 1 },
-            });
-            continue;
-          }
-          try {
-            const document: unknown = JSON.parse(content);
-            this.collect(group, sourcePath, document, sink);
-          } catch (error) {
-            collector.addError(
-              "JSON-PARSE",
-              `Failed to parse ${file}: ${error instanceof Error ? error.message : String(error)}`,
-              { stage: "parse", sourceLocation: { path: sourcePath, line: 1 } },
-            );
-          }
-          continue;
-        }
-
-        if (!/\.ya?ml$/u.test(file)) {
-          collector.addError(
-            "FILE-FORMAT",
-            `'${file}' is declared without a loaded document; content modules are loaded from TypeScript (ADR-0334)`,
-            { stage: "parse", sourceLocation: { path: sourcePath, line: 1 } },
-          );
-          continue;
-        }
-
-        if (group !== "ui" && manifestType() === "production") {
+        if (/\.ya?ml$/u.test(file) && group !== "ui") {
           collector.addError(
             "YAML-NOT-ALLOWED",
-            `'${file}' is authored YAML, which is only permitted for the internationalization catalogue (ADR-0334)`,
+            `'${file}' is YAML, which is only permitted for the internationalization catalogue (ADR-0334)`,
             {
               stage: "parse",
               sourceLocation: { path: sourcePath, line: 1 },
               remediation:
-                "Author the content as a TypeScript module exporting a define…(...) document, or move it to ui/ if it is a translation catalogue.",
+                "Author the document as a TypeScript content module, or as JSON if the pack is test scaffolding.",
             },
           );
           continue;
@@ -179,9 +144,24 @@ export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
           continue;
         }
 
-        const fixture = parseYamlSafe(content, sourcePath, collector);
-        if (fixture.success && fixture.data !== undefined) {
-          this.collect(group, sourcePath, fixture.data, sink);
+        if (!file.endsWith(".json")) {
+          collector.addError(
+            "FILE-FORMAT",
+            `'${file}' is neither a loaded content module, a JSON document nor the localization catalogue`,
+            { stage: "parse", sourceLocation: { path: sourcePath, line: 1 } },
+          );
+          continue;
+        }
+
+        try {
+          const parsed: unknown = JSON.parse(content);
+          this.collect(group, sourcePath, parsed, sink);
+        } catch (error) {
+          collector.addError(
+            "JSON-PARSE",
+            `Failed to parse ${file}: ${error instanceof Error ? error.message : String(error)}`,
+            { stage: "parse", sourceLocation: { path: sourcePath, line: 1 } },
+          );
         }
       }
     }

@@ -23,7 +23,7 @@ const part = (value: Record<string, unknown>): FlattenedPart =>
   decodeStrict(FlattenedPartSchema, {
     quantities: [],
     revisions: [],
-    origin: { sourceFile: "fixture.yaml" },
+    origin: { sourceFile: "fixture.json" },
     provenance: PROVENANCE,
     name: value["id"],
     ...value,
@@ -96,10 +96,10 @@ const FIUME = part({
   lifecycle: { availableFrom: "1881-01" },
   spec: torpedoSpec(355_600, 12),
   origin: {
-    sourceFile: "austria.yaml",
+    sourceFile: "austria.json",
     prototype: {
       id: "whitehead_14in",
-      sourceFile: "fixture.yaml",
+      sourceFile: "fixture.json",
       inheritedSpec: ["diameterUm"],
       inheritedQuantities: [],
     },

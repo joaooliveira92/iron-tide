@@ -26,9 +26,9 @@ figures and a recommended band.
   in these ranges (see `docs/research/rtw3-manual-baseline.md`, "Source and method").
   The defining passage is **Appendix 1 ("Ship type definitions used by the game"),
   pp.131–134**, extracted and read directly for this note.
-- **Primary (in-repo, directly verified):** `content/production/1880/ship-building/balance.yaml`
+- **Primary (in-repo, directly verified):** `content/production/1880/ship-building/balance.ts`
   (`ship.classification`, version 2); `packages/ship-design/src/classificationRules.ts`
-  (`DESIGN_22_EARLY`); `packages/combat/src/tactical/shipType.ts`; `content/production/1880/designs.yaml`.
+  (`DESIGN_22_EARLY`); `packages/combat/src/tactical/shipType.ts`; `content/production/1880/designs.ts`.
 - **Secondary (web, reputable, **not** read in the original):** Conway's *All the
   World's Fighting Ships 1860–1905* (Chesneau & Kolesnik, 1979) as quoted/cited by the
   individual ship references below, plus navypedia and Wikipedia. These are flagged as
@@ -77,7 +77,7 @@ a citable band. This is the central contradiction (see §5).
 
 ### 3.3 Historical 1880 armoured-ship taxonomy and bands
 
-Descriptive bands reconstructed from the seven ships in `designs.yaml` plus the wider
+Descriptive bands reconstructed from the seven ships in `designs.ts` plus the wider
 type literature. All displacement figures below are **secondary** (Conway's-derived web
 references); armour values are amidships/max belt unless stated. "Uncertainty" is
 recorded where sources disagree.
@@ -90,11 +90,11 @@ except where noted):**
 | Coast-defence ship | **~1,500–8,000 t** | ~3–8 in | Wikipedia "Coastal defence ship", which states the 1,500–8,000 t span and cites Conway's 1860–1905 (secondary; the range *is* stated by that source) |
 | Monitor (harbour / breastwork) | ~1,000–5,000 t | 5–9 in belt; 9–11.5 in turret | e.g. Cerberus 3,344 t, Cyclops 3,480 t, Glatton 4,912 t (Wikipedia "List of breastwork monitors of the Royal Navy", citing Conway's; secondary) |
 | Central-battery ironclad — small/colonial | ~1,500–4,000 t | ~4–9 in | Brasil 1,518 t, Fusō 3,717 t, Vasco da Gama 2,384 t (below) |
-| Central-battery ironclad — first-class | ~6,000–10,000 t | up to ~9 in | e.g. HMS Alexandra (designs.yaml: 9,500 t, 305 mm) |
+| Central-battery ironclad — first-class | ~6,000–10,000 t | up to ~9 in | e.g. HMS Alexandra (designs.ts: 9,500 t, 305 mm) |
 | Turret ship (ocean-going) | ~9,000–12,000 t | 12–14 in | Devastation 9,330 t belt 12 in; Dreadnought (1875) 10,886 t belt 14 in (naval-history.net class list, secondary) |
 | Small colonial ironclad / armoured corvette | ~1,500–3,500 t | ~3.5–8 in | Brasil, Schorpioen/Buffel, Cerberus-type colonial monitors |
 
-**The seven hulls in `designs.yaml` (per-figure provenance):**
+**The seven hulls in `designs.ts` (per-figure provenance):**
 
 | Design | `hullType` | Displacement (kg / t) | Belt (mm / in) | Main gun (mm) | Source for the figure (secondary) |
 | --- | --- | --- | --- | --- | --- |
@@ -122,7 +122,7 @@ The DESIGN-22 design-side classifier is **already** parameterised for the 1880 o
 
 - `DESIGN_22_EARLY` (`classificationRules.ts:92-129`) is version 1 and mirrors the manual
   exactly (`bMinDisplacementKg: 5_000_000`, `bBeltMinUm: 152_400`, `bMaxSpeedUms: 20 kn`).
-- `content/production/1880/ship-building/balance.yaml:234-279` authors a **version-2
+- `content/production/1880/ship-building/balance.ts:234-279` authors a **version-2
   ruleset** (ADR-0116) with exactly three changes, with an in-file rationale:
   `bMinDisplacementKg 5,000 t → 1,500 t` (`1500000`); `bBeltMinUm 6 in → 4 in`
   (`101600`); `bMaxSpeedUms 20 kn → 18 kn` (`9259992`). Its comment says this "only ever
@@ -149,7 +149,7 @@ classifier units:
 | `minCaliberUm` | 152,400 (6 in) | **152,400** (unchanged) | = 6 in |
 | `maxSpeedUms` | 10,288,880 (20 kn) | 10,288,880 (20 kn), or **9,259,992 (18 kn)** to match the v2 ruleset | — |
 
-This is the same band already authored in `balance.yaml` classification v2; the
+This is the same band already authored in `balance.ts` classification v2; the
 recommendation is that the combat classifier **align to it** rather than re-derive a
 second set of floors. Only the displacement and belt floors are needed to admit the
 seven; the 18-kn speed cap is needed only for consistency with the design-side v2
@@ -199,11 +199,11 @@ manual.
    ambiguity between "waterline belt" and "side armour"; flagged, not resolved.
 5. **Vasco da Gama's displacement is uncertain.** The YAML's 3,017 t sits between the
    as-built 2,384 t and the post-1901-rebuild 2,972 t (Wikipedia; secondary). The
-   `designs.yaml` entry already carries `sourceStatus: ESTIMATE`.
+   `designs.ts` entry already carries `sourceStatus: ESTIMATE`.
 6. **`docs/rules/ship-classification.md` does not exist** in the tree, though
    `classificationRules.ts:38` names it as the home of the "Normative thresholds". The
    normative boundaries currently live only in code (`DESIGN_22_EARLY`) and the scenario
-   `balance.yaml`; there is no prose authority to amend.
+   `balance.ts`; there is no prose authority to amend.
 7. **No source states a monitor/coast-defence/central-battery band.** Only the
    coast-defence 1,500–8,000 t span is explicitly stated (Wikipedia, citing Conway's;
    secondary). Every other per-type range in §3.3 is a descriptive envelope assembled
@@ -214,7 +214,7 @@ manual.
 - Aligning the combat classifier to the scenario ruleset is an implementation decision for
   the N-2 effort; this note recommends the band but does not change code.
 - Author of `docs/rules/ship-classification.md` (missing): needs an owner if the project
-  wants a prose normative source for the boundaries (currently code + `balance.yaml`).
+  wants a prose normative source for the boundaries (currently code + `balance.ts`).
 - If a future source is found that states a first-class vs small colonial-ironclad
   displacement/armour boundary explicitly, the descriptive envelopes in §3.3 should be
   replaced with a citation.

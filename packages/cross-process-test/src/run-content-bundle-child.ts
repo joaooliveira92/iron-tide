@@ -9,21 +9,32 @@ const PACK = JSON.stringify({
   name: "locale-fixture",
   version: "0.1.0",
   type: "fixture",
-  files: { areas: ["areas.yaml"] },
+  files: { areas: ["areas.json"] },
 });
 
-const AREAS = `- id: "Z"
-  name: "Zeta"
-  type: "land"
-- id: "a"
-  name: "alpha"
-  type: "land"
-- id: "I"
-  name: "Iota"
-  type: "land"
-- id: "i"
-  name: "iota"
-  type: "land"
+const AREAS = `
+[
+  {
+    "id": "Z",
+    "name": "Zeta",
+    "type": "land"
+  },
+  {
+    "id": "a",
+    "name": "alpha",
+    "type": "land"
+  },
+  {
+    "id": "I",
+    "name": "Iota",
+    "type": "land"
+  },
+  {
+    "id": "i",
+    "name": "iota",
+    "type": "land"
+  }
+]
 `;
 
 function run(): void {
@@ -31,7 +42,7 @@ function run(): void {
   mkdirSync(dir, { recursive: true });
   try {
     writeFileSync(resolve(dir, "pack.json"), PACK, "utf8");
-    writeFileSync(resolve(dir, "areas.yaml"), AREAS, "utf8");
+    writeFileSync(resolve(dir, "areas.json"), AREAS, "utf8");
     const collector = new DiagnosticCollector();
     const surfaceInput = buildFullSurfaceInput(resolve(dir, "pack.json"), dir);
     if (!surfaceInput) throw new Error("content surface input failed");

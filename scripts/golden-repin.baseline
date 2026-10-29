@@ -143,4 +143,19 @@
 # violate the repository history policy). `pnpm check:golden` reports all 11 hashes match the
 # committed golden and `pnpm check:determinism`/`check:equivalence` are byte-identical, so no
 # reference hash moved. The guard still applies to every later commit, including this branch's.
-ae33756c41843e3c5e8efe4dae7987c0d80a550a
+#
+# The baseline is advanced again to 2e281f69 — the flagged commit itself — during the
+# YAML-deprecation delivery (ADR-0334). 2e281f69 ("refactor(content): split the ship
+# component catalogue by nation") moved the single components file into per-family and
+# per-nation modules and simultaneously edited content-compiler's discovery/compile/
+# normalize/validate stages and the content-schema/ship-design barrels; it re-pinned no
+# golden/hashes.json and carries no `Golden-Repin: not-needed` trailer. It is already on
+# origin/dev and the failure reproduces against origin/dev alone
+# (`node scripts/verify-golden-repin.mjs --range <baseline>..origin/dev`), so it is not a
+# regression introduced by this branch. `node scripts/verify-golden-hashes.cjs` reports
+# all 11 hashes match the committed golden and the split's own message states the 51
+# records are unchanged, so no reference hash moved. Rewriting shared history would
+# violate the repository history policy, so the ratchet is advanced past it as the
+# documented fallback. Every later commit stays gated, including this branch's, which
+# re-pins golden/hashes.json in-commit for the fixture format change.
+2e281f6943f5fdc85a8f4b2f2778c5ebdce60c29

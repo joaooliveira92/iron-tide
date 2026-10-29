@@ -49,7 +49,7 @@ describe("ShipComponentSchema", () => {
 });
 
 describe("ShipComponentWithSourceSchema", () => {
-  const sourceFile = "ship-building/components/guns/british-rml.yaml";
+  const sourceFile = "ship-building/components/guns/british-rml.json";
 
   it("decodes a shipped component with the authored file it came from", () => {
     expect(decodeOk(ShipComponentWithSourceSchema, { ...comp, sourceFile })).toBe(true);

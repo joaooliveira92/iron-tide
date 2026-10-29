@@ -5,9 +5,10 @@ Scaffold a draft, research it, replace every placeholder with a sourced or
 explicitly classified value, then let the completeness validator gate it.
 
 **Authoring format.** YAML is deprecated outside localization (ADR-0334), and the
-boundary gate rejects a new tracked `.yaml` file. Adding the naval profile as YAML is
-blocked until `naval-profiles/` migrates to TypeScript; author it through a
-`defineNavalProfile` module once that constructor exists (tracking issue #372).
+boundary gate rejects a new tracked `.yaml` file. A naval profile is a TypeScript
+content module declaring `collection("navalProfiles", NationNavalProfileSchema, [ … ])`
+from `@bluewave/content-authoring`, so it is typechecked (`pnpm typecheck`) and
+strictly decoded like every other authored document.
 
 ## 1. Scaffold
 
@@ -23,20 +24,20 @@ This writes a draft `NationNavalProfile` skeleton and a research-note stub
 
 Research the nation into `docs/research/<nationId>-naval-profile.md`, then write
 a complete per-nation catalogue file (`{ navalProfiles: [ … ] }`, ADR-0109) that
-matches `content/production/<scenario>/ship-building/naval-profiles/<nationId>.yaml`.
+matches `content/production/<scenario>/ship-building/naval-profiles/<nationId>.ts`.
 Replace every `PLACEHOLDER` with a `VERIFIED`/`DERIVED`/`ESTIMATE` value that
 carries a provenance block, or an explicitly classified `BALANCE_TARGET`.
 
 The profile separates **hard capability** (what the nation can build) from **soft
 doctrine** (what it prefers); capability can only ever remove options.
 
-Set `homeArea` on the nation in `countries.yaml` to an existing area id; the
+Set `homeArea` on the nation in `countries.ts` to an existing area id; the
 validator rejects a missing or unknown one (ADR-0231).
 
 ## 3. Starters and gates
 
 Author six classified opening starters under
-`content/production/<scenario>/ship-building/reference-designs/<nationId>/starters.yaml`.
+`content/production/<scenario>/ship-building/reference-designs/<nationId>/starters.ts`.
 Then run the completeness validator (`validateNationCompleteness(..., { release:
 true })`), which rejects any remaining placeholder or missing provenance. Every
 release nation must be complete (see the national-content release gates).

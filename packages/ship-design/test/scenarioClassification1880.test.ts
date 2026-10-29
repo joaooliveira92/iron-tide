@@ -32,7 +32,7 @@ const designs = readReferenceDesignEntries() as {
 }[];
 
 describe("1880 scenario classification ruleset (ADR-0116)", () => {
-  it("is authored in balance.yaml, complete, and versioned", () => {
+  it("is authored in balance.ts, complete, and versioned", () => {
     expect(scenarioRules).toBeDefined();
     expect(() => classificationRulesFromRecord(scenarioRules)).not.toThrow();
     expect(Object.keys(scenarioRules).sort()).toEqual([...CLASSIFICATION_RULE_KEYS].sort());

@@ -29,7 +29,7 @@ const part = (): FlattenedPart =>
     spec: {},
     quantities: [],
     revisions: [],
-    origin: { sourceFile: "fixture.yaml" },
+    origin: { sourceFile: "fixture.json" },
     provenance: PROVENANCE,
   });
 

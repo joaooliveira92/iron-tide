@@ -26,8 +26,8 @@ export type FlattenedGunMountPart = Extract<FlattenedPart, { readonly family: "g
 export type GunMountType = FlattenedGunMountPart["spec"]["mountType"];
 
 export const GUN_SOURCE_FILES = {
-  authoredModel: "ship-building/armament/gun-models.yaml",
-  authoredMount: "ship-building/armament/gun-mounts.yaml",
+  authoredModel: "ship-building/armament/gun-models.ts",
+  authoredMount: "ship-building/armament/gun-mounts.ts",
 } as const;
 
 export type TranslationDisposition = "RECLASSIFIED_AS_CENTRAL_BATTERY";

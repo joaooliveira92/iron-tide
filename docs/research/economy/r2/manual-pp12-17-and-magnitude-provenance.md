@@ -24,7 +24,7 @@ Extends `docs/research/rtw3-manual-baseline.md`; does not rewrite it.
 | Magnitude (supplied) | Found in manual? | Found in repo (tracked, any branch)? | Other searched locations | Classification |
 | --- | --- | --- | --- | --- |
 | GB ~340,000 | No (full-text search: "340" appears nowhere as a budget) | No (`git log --all -S"340,000"` and `-S"340000"` hit only two unrelated commits: an index-on-worktree stash and the initial commit, neither tied to economy content; grep of `content/`, `.ai/`, `docs/`, `packages/*/src`, README/RULES/GLOSSARY empty) | `~/dev/bluewave-compiler copy`, `~/dev/bluewave-effect-apps`, `~/Downloads`: only unrelated hits (ship masses, gun data) | **Unverified. Title, publisher, edition, date, page, unit, period all unknown.** |
-| France ~200,000 | No | No economic hit; "200,000" in `content/production/1880/countries.yaml` is army size (lines 679, 1246, 1602) | same | **Unverified** |
+| France ~200,000 | No | No economic hit; "200,000" in `content/production/1880/countries.ts` is army size (lines 679, 1246, 1602) | same | **Unverified** |
 | US ~115,000 (1890) | No | No | same | **Unverified** (owner already flags it as 1890, not 1880) |
 
 Result: no source for any of the three magnitudes could be found. Per the issue they are
@@ -41,11 +41,11 @@ Related non-sources, recorded so nobody cites them:
 - `~/Downloads/Download the Rule the Waves 3 starting-flow Markdown.md` is an LLM-style design
   suggestion for a clone's start flow (it paraphrases manual p.18/19 and says numbers
   "should be calculated from your own game model"). Secondary, contains no budget magnitudes.
-- Repo authored values: `content/production/1880/economies.yaml` (14 nations; e.g. uk
+- Repo authored values: `content/production/1880/economies.ts` (14 nations; e.g. uk
   treasury 1000/income 100/expenses 38; france 700/68/26; usa 280/26/10). Neither the file
-  nor `countries.yaml` states a unit, time basis or source for them; ratios are not 340:200:115
+  nor `countries.ts` states a unit, time basis or source for them; ratios are not 340:200:115
   (uk:france income is 100:68 = 1:0.68, not 1:0.59; usa is 26, i.e. 0.26 of uk, not 0.34).
-  `countries.yaml` `baseResources` carries only qualitative fields (`gdpTier`,
+  `countries.ts` `baseResources` carries only qualitative fields (`gdpTier`,
   `gdpDescription`, `population`, `industrialization...`) with no numeric base.
   So the supplied magnitudes do not appear to be the origin of the authored numbers either
   (inference; no commit message or note links them; single initial commit `43177f4`).

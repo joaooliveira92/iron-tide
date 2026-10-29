@@ -43,7 +43,7 @@ function validate(data: unknown): DiagnosticCollector {
     data,
     PresentationContentSchema,
     "PresentationContent",
-    "presentation.yaml",
+    "presentation.json",
     collector,
   );
   return collector;
@@ -78,7 +78,7 @@ describe("presentation content schema (CAH-PRES-1/CAH-PRES-2)", () => {
     const error = collector.errors[0]!;
     expect(error.code).toBe("SCHEMA");
     expect(error.message).toContain("PresentationContent.nations.0.markerColour");
-    expect(error.sourceLocation?.path).toBe("presentation.yaml");
+    expect(error.sourceLocation?.path).toBe("presentation.json");
   });
 
   it("rejects a wrong-typed field naming the file and field path", () => {

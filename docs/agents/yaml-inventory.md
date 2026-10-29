@@ -38,17 +38,18 @@ content codemod stages canonical JSON instead of YAML.
 4. **The i18n exception is structural.** Only
    `content/production/<pack>/ui/<locale>.(yaml|yml)` qualifies. A locale file that
    grows gameplay numbers, formulas or component records stops qualifying.
-5. **The compiler rejects authored YAML.** `ParseStage` accepts a `.yaml` path only
-   for the `ui` group; fixture packs (`type: "fixture"`) are the test-scaffolding
-   exception.
+5. **The compiler rejects YAML everywhere else.** `ParseStage` accepts a `.yaml` path
+   only for the `ui` group, in every pack type. Fixtures are JSON documents.
+6. **Tests do not write YAML.** Compiled fixtures are built with `jsonDocument` from
+   `@bluewave/test-support`; the only test that still holds YAML text is
+   `content-schema/test/yaml-parser.test.ts`, which exercises the i18n parser's own
+   limits.
 
 ## Remaining work
 
-- Converting the inline YAML strings that tests still pass as compiler fixtures
-  (`fileContents`) into documents. They never reach a tracked `.yaml` file, so the
-  gate does not see them, but they are the last place YAML syntax lives.
 - Deleting `content-schema/src/yaml-parser.ts` if the localization catalogue ever
-  moves to JSON; until then it is the i18n loader's parser.
+  moves to JSON; until then it is the i18n loader's parser and the only consumer of
+  the `yaml` dependency.
 
 ## Authoring a new content collection
 

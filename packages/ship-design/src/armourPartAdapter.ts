@@ -7,7 +7,7 @@ import { designInvariant } from "./errors.js";
 
 export type FlattenedArmourPart = Extract<FlattenedPart, { readonly family: "armour_material" }>;
 
-export const ARMOUR_BALANCE_FILE = "ship-building/balance.yaml";
+export const ARMOUR_BALANCE_FILE = "ship-building/balance.ts";
 
 export interface UnreadArmourMaterial {
   readonly id: string;

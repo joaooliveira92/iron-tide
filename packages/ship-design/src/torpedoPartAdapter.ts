@@ -33,7 +33,7 @@ function isLaunchType(value: string): value is LaunchType {
 }
 
 export function navalProfileFile(nationId: string): string {
-  return `ship-building/naval-profiles/${nationId}.yaml`;
+  return `ship-building/naval-profiles/${nationId}.ts`;
 }
 
 export const TORPEDO_WAIVER = { code: "DQ-TORPEDO-001", waives: "diameterUmEqualsBore" } as const;

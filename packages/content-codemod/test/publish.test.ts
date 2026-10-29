@@ -184,7 +184,17 @@ describe("content codemod publisher (ticket 11c)", () => {
     mkdirSync(join(stagingDir, "designs"), { recursive: true });
     writeFileSync(
       join(stagingDir, "designs", "bogus.json"),
-      '{ "designs": [ { "id": "broken", "name": "broken", "month": "1800-01" } ] }\n',
+      `
+{
+  "designs": [
+    {
+      "id": "broken",
+      "name": "broken",
+      "month": "1800-01"
+    }
+  ]
+}
+`,
       "utf8",
     );
     const read = readStagedSource(stagingDir);

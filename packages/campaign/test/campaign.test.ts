@@ -5,7 +5,12 @@ import { SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { buildContentBundleArtifact, type CompilerInput } from "@bluewave/content-compiler";
-import { FIXTURE_RULESETS_YAML, nationYaml, nationsYaml } from "@bluewave/test-support";
+import {
+  FIXTURE_RULESETS_JSON,
+  jsonDocument,
+  nationDocument,
+  nationsDocument,
+} from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import { CampaignCompiler, type CampaignCompilerInput } from "../src/compiler-public.js";
 import {
@@ -32,36 +37,36 @@ function writeFile(base: string, rel: string, content: string): void {
 
 function writeContentFixture(fixturePath: string): void {
   writeFile(fixturePath, "pack.json", FIXTURE.pack);
-  writeFile(fixturePath, "rulesets.yaml", FIXTURE.rulesets);
-  writeFile(fixturePath, "countries.yaml", FIXTURE.countries);
-  writeFile(fixturePath, "areas.yaml", FIXTURE.areas);
-  writeFile(fixturePath, "routes.yaml", FIXTURE.routes);
-  writeFile(fixturePath, "possessions.yaml", FIXTURE.possessions);
-  writeFile(fixturePath, "ports.yaml", FIXTURE.ports);
-  writeFile(fixturePath, "technologies.yaml", FIXTURE.technologies);
-  writeFile(fixturePath, "fleets.yaml", FIXTURE.fleets);
-  writeFile(fixturePath, "economies.yaml", FIXTURE.economies);
-  writeFile(fixturePath, "constructions.yaml", FIXTURE.constructions);
-  writeFile(fixturePath, "diplomacy.yaml", FIXTURE.diplomacy);
-  writeFile(fixturePath, "research.yaml", FIXTURE.research);
+  writeFile(fixturePath, "rulesets.json", FIXTURE.rulesets);
+  writeFile(fixturePath, "countries.json", FIXTURE.countries);
+  writeFile(fixturePath, "areas.json", FIXTURE.areas);
+  writeFile(fixturePath, "routes.json", FIXTURE.routes);
+  writeFile(fixturePath, "possessions.json", FIXTURE.possessions);
+  writeFile(fixturePath, "ports.json", FIXTURE.ports);
+  writeFile(fixturePath, "technologies.json", FIXTURE.technologies);
+  writeFile(fixturePath, "fleets.json", FIXTURE.fleets);
+  writeFile(fixturePath, "economies.json", FIXTURE.economies);
+  writeFile(fixturePath, "constructions.json", FIXTURE.constructions);
+  writeFile(fixturePath, "diplomacy.json", FIXTURE.diplomacy);
+  writeFile(fixturePath, "research.json", FIXTURE.research);
 }
 
 function baseInput(fixturePath: string): CompilerInput {
   return {
     manifestPath: resolve(fixturePath, "pack.json"),
     contentDir: fixturePath,
-    rulesetFiles: ["rulesets.yaml"],
-    countryFiles: ["countries.yaml"],
-    areaFiles: ["areas.yaml"],
-    routeFiles: ["routes.yaml"],
-    possessionFiles: ["possessions.yaml"],
-    portFiles: ["ports.yaml"],
-    technologyFiles: ["technologies.yaml"],
-    fleetFiles: ["fleets.yaml"],
-    economyFiles: ["economies.yaml"],
-    constructionFiles: ["constructions.yaml"],
-    diplomacyFiles: ["diplomacy.yaml"],
-    researchFiles: ["research.yaml"],
+    rulesetFiles: ["rulesets.json"],
+    countryFiles: ["countries.json"],
+    areaFiles: ["areas.json"],
+    routeFiles: ["routes.json"],
+    possessionFiles: ["possessions.json"],
+    portFiles: ["ports.json"],
+    technologyFiles: ["technologies.json"],
+    fleetFiles: ["fleets.json"],
+    economyFiles: ["economies.json"],
+    constructionFiles: ["constructions.json"],
+    diplomacyFiles: ["diplomacy.json"],
+    researchFiles: ["research.json"],
     designFiles: [],
   };
 }
@@ -97,177 +102,253 @@ const FIXTURE = {
     version: "0.1.0",
     type: "fixture",
     files: {
-      rulesets: ["rulesets.yaml"],
-      countries: ["countries.yaml"],
-      areas: ["areas.yaml"],
-      routes: ["routes.yaml"],
-      possessions: ["possessions.yaml"],
-      ports: ["ports.yaml"],
-      technologies: ["technologies.yaml"],
+      rulesets: ["rulesets.json"],
+      countries: ["countries.json"],
+      areas: ["areas.json"],
+      routes: ["routes.json"],
+      possessions: ["possessions.json"],
+      ports: ["ports.json"],
+      technologies: ["technologies.json"],
     },
   }),
 
-  rulesets: FIXTURE_RULESETS_YAML,
+  rulesets: FIXTURE_RULESETS_JSON,
 
-  countries: nationsYaml([
+  countries: nationsDocument([
     { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
     { id: "france", tag: "FRA", name: "France", homeArea: "par" },
   ]),
 
   areas: `
-- id: "lon"
-  name: "London"
-  type: "land"
-  controller: "uk"
-- id: "par"
-  name: "Paris"
-  type: "land"
-  controller: "france"
-- id: "eng_ch"
-  name: "English Channel"
-  type: "sea"
+[
+  {
+    "id": "lon",
+    "name": "London",
+    "type": "land",
+    "controller": "uk"
+  },
+  {
+    "id": "par",
+    "name": "Paris",
+    "type": "land",
+    "controller": "france"
+  },
+  {
+    "id": "eng_ch",
+    "name": "English Channel",
+    "type": "sea"
+  }
+]
 `,
 
   routes: `
-- id: "lon-par"
-  from: "lon"
-  to: "par"
-  type: "sea"
-  distance: 300
-- id: "lon-eng_ch"
-  from: "lon"
-  to: "eng_ch"
-  type: "sea"
-  distance: 50
-- id: "par-eng_ch"
-  from: "par"
-  to: "eng_ch"
-  type: "sea"
-  distance: 100
+[
+  {
+    "id": "lon-par",
+    "from": "lon",
+    "to": "par",
+    "type": "sea",
+    "distance": 300
+  },
+  {
+    "id": "lon-eng_ch",
+    "from": "lon",
+    "to": "eng_ch",
+    "type": "sea",
+    "distance": 50
+  },
+  {
+    "id": "par-eng_ch",
+    "from": "par",
+    "to": "eng_ch",
+    "type": "sea",
+    "distance": 100
+  }
+]
 `,
 
   possessions: `
-- id: "uk-lon"
-  nationId: "uk"
-  areaId: "lon"
-- id: "fra-par"
-  nationId: "france"
-  areaId: "par"
+[
+  {
+    "id": "uk-lon",
+    "nationId": "uk",
+    "areaId": "lon"
+  },
+  {
+    "id": "fra-par",
+    "nationId": "france",
+    "areaId": "par"
+  }
+]
 `,
 
   ports: `
-- id: "port-lon"
-  name: "Port of London"
-  areaId: "lon"
-  nationId: "uk"
-  level: 5
-- id: "port-par"
-  name: "Port of Paris"
-  areaId: "par"
-  nationId: "france"
-  level: 3
+[
+  {
+    "id": "port-lon",
+    "name": "Port of London",
+    "areaId": "lon",
+    "nationId": "uk",
+    "level": 5
+  },
+  {
+    "id": "port-par",
+    "name": "Port of Paris",
+    "areaId": "par",
+    "nationId": "france",
+    "level": 3
+  }
+]
 `,
 
   technologies: `
-- id: "basic_steam"
-  name: "Basic Steam Turbine"
-  category: "propulsion"
-  cost: 100
-  year: 1880
-- id: "advanced_steam"
-  name: "Advanced Steam Turbine"
-  category: "propulsion"
-  prerequisites:
-    - { techId: "basic_steam" }
-  cost: 200
-  year: 1900
+[
+  {
+    "id": "basic_steam",
+    "name": "Basic Steam Turbine",
+    "category": "propulsion",
+    "cost": 100,
+    "year": 1880
+  },
+  {
+    "id": "advanced_steam",
+    "name": "Advanced Steam Turbine",
+    "category": "propulsion",
+    "prerequisites": [
+      {
+        "techId": "basic_steam"
+      }
+    ],
+    "cost": 200,
+    "year": 1900
+  }
+]
 `,
 
   fleets: `
-- id: "fleet-uk-home"
-  nationId: "uk"
-  name: "Home Fleet"
-  locationAreaId: "lon"
-  ships:
-    - id: "ship-hms-dreadnought"
-      name: "HMS Dreadnought"
-      classId: "battleship"
-      hitPoints: 100
-      maxHitPoints: 100
-      speed: 21
-      firepower: 10
-      armor: 12
-      isUnderConstruction: false
-      constructionProgress: 0
-      constructionTotalWork: 0
-    - id: "ship-hms-invincible"
-      name: "HMS Invincible"
-      classId: "battlecruiser"
-      hitPoints: 80
-      maxHitPoints: 80
-      speed: 25
-      firepower: 8
-      armor: 6
-      isUnderConstruction: false
-      constructionProgress: 0
-      constructionTotalWork: 0
-- id: "fleet-fra-atlantic"
-  nationId: "france"
-  name: "Atlantic Fleet"
-  locationAreaId: "par"
-  ships:
-    - id: "ship-fs-courbet"
-      name: "FS Courbet"
-      classId: "battleship"
-      hitPoints: 90
-      maxHitPoints: 90
-      speed: 20
-      firepower: 9
-      armor: 11
-      isUnderConstruction: false
-      constructionProgress: 0
-      constructionTotalWork: 0
+[
+  {
+    "id": "fleet-uk-home",
+    "nationId": "uk",
+    "name": "Home Fleet",
+    "locationAreaId": "lon",
+    "ships": [
+      {
+        "id": "ship-hms-dreadnought",
+        "name": "HMS Dreadnought",
+        "classId": "battleship",
+        "hitPoints": 100,
+        "maxHitPoints": 100,
+        "speed": 21,
+        "firepower": 10,
+        "armor": 12,
+        "isUnderConstruction": false,
+        "constructionProgress": 0,
+        "constructionTotalWork": 0
+      },
+      {
+        "id": "ship-hms-invincible",
+        "name": "HMS Invincible",
+        "classId": "battlecruiser",
+        "hitPoints": 80,
+        "maxHitPoints": 80,
+        "speed": 25,
+        "firepower": 8,
+        "armor": 6,
+        "isUnderConstruction": false,
+        "constructionProgress": 0,
+        "constructionTotalWork": 0
+      }
+    ]
+  },
+  {
+    "id": "fleet-fra-atlantic",
+    "nationId": "france",
+    "name": "Atlantic Fleet",
+    "locationAreaId": "par",
+    "ships": [
+      {
+        "id": "ship-fs-courbet",
+        "name": "FS Courbet",
+        "classId": "battleship",
+        "hitPoints": 90,
+        "maxHitPoints": 90,
+        "speed": 20,
+        "firepower": 9,
+        "armor": 11,
+        "isUnderConstruction": false,
+        "constructionProgress": 0,
+        "constructionTotalWork": 0
+      }
+    ]
+  }
+]
 `,
 
   economies: `
-- nationId: "uk"
-  treasury: 800
-  income: 150
-  expenses: 75
-- nationId: "france"
-  treasury: 600
-  income: 120
-  expenses: 60
+[
+  {
+    "nationId": "uk",
+    "treasury": 800,
+    "income": 150,
+    "expenses": 75
+  },
+  {
+    "nationId": "france",
+    "treasury": 600,
+    "income": 120,
+    "expenses": 60
+  }
+]
 `,
 
   constructions: `
-- id: "con-uk-ship-battleship2"
-  nationId: "uk"
-  type: "ship"
-  targetId: "ship-hms-thunderer"
-  totalWork: 200
-  completedWork: 50
-  paidWork: 0
-  status: "ACTIVE"
-  startedAt: "1880-01"
+[
+  {
+    "id": "con-uk-ship-battleship2",
+    "nationId": "uk",
+    "type": "ship",
+    "targetId": "ship-hms-thunderer",
+    "totalWork": 200,
+    "completedWork": 50,
+    "paidWork": 0,
+    "status": "ACTIVE",
+    "startedAt": "1880-01"
+  }
+]
 `,
 
   diplomacy: `
-- nationA: "uk"
-  nationB: "france"
-  relation: "neutral"
-  since: "1880-01"
+[
+  {
+    "nationA": "uk",
+    "nationB": "france",
+    "relation": "neutral",
+    "since": "1880-01"
+  }
+]
 `,
 
   research: `
-- nationId: "uk"
-  researchBudget: 30
-  currentProjectTechId: "basic_steam"
-  technologies:
-    - { techId: "basic_steam", investedPoints: 30, completed: false }
-- nationId: "france"
-  researchBudget: 0
-  technologies: []
+[
+  {
+    "nationId": "uk",
+    "researchBudget": 30,
+    "currentProjectTechId": "basic_steam",
+    "technologies": [
+      {
+        "techId": "basic_steam",
+        "investedPoints": 30,
+        "completed": false
+      }
+    ]
+  },
+  {
+    "nationId": "france",
+    "researchBudget": 0,
+    "technologies": []
+  }
+]
 `,
 };
 
@@ -346,27 +427,51 @@ describe("CampaignCompiler", () => {
           version: "0.1.0",
           type: "fixture",
           files: {
-            rulesets: ["rulesets.yaml"],
-            countries: ["countries.yaml"],
-            areas: ["areas.yaml"],
+            rulesets: ["rulesets.json"],
+            countries: ["countries.json"],
+            areas: ["areas.json"],
           },
         }),
       );
-      writeFile(fixture.path, "rulesets.yaml", FIXTURE_RULESETS_YAML);
+      writeFile(fixture.path, "rulesets.json", FIXTURE_RULESETS_JSON);
       writeFile(
         fixture.path,
-        "countries.yaml",
-        nationYaml({ id: "france", tag: "FRA", name: "France", isPlayable: true, homeArea: "par" }),
+        "countries.json",
+        nationDocument({
+          id: "france",
+          tag: "FRA",
+          name: "France",
+          isPlayable: true,
+          homeArea: "par",
+        }),
       );
       writeFile(
         fixture.path,
-        "areas.yaml",
-        '- id: "par"\n  name: "Paris"\n  type: "land"\n  controller: "france"\n',
+        "areas.json",
+        `
+[
+  {
+    "id": "par",
+    "name": "Paris",
+    "type": "land",
+    "controller": "france"
+  }
+]
+`,
       );
       writeFile(
         fixture.path,
-        "economies.yaml",
-        '- nationId: "france"\n  treasury: 600\n  income: 120\n  expenses: 60\n',
+        "economies.json",
+        `
+[
+  {
+    "nationId": "france",
+    "treasury": 600,
+    "income": 120,
+    "expenses": 60
+  }
+]
+`,
       );
 
       const collector = new DiagnosticCollector();
@@ -374,15 +479,15 @@ describe("CampaignCompiler", () => {
 
       const output = compileFixture(fixture.path, collector, signal, {
         input: {
-          rulesetFiles: ["rulesets.yaml"],
-          countryFiles: ["countries.yaml"],
-          areaFiles: ["areas.yaml"],
+          rulesetFiles: ["rulesets.json"],
+          countryFiles: ["countries.json"],
+          areaFiles: ["areas.json"],
           routeFiles: [],
           possessionFiles: [],
           portFiles: [],
           technologyFiles: [],
           fleetFiles: [],
-          economyFiles: ["economies.yaml"],
+          economyFiles: ["economies.json"],
           constructionFiles: [],
           diplomacyFiles: [],
           researchFiles: [],
@@ -411,16 +516,20 @@ describe("CampaignCompiler", () => {
           name: "missing-flag",
           version: "0.1.0",
           type: "fixture",
-          files: { countries: ["countries.yaml"] },
+          files: { countries: ["countries.json"] },
         }),
       );
       writeFile(
         fixture.path,
-        "countries.yaml",
+        "countries.json",
         `
-- id: "france"
-  tag: "FRA"
-  name: "France"
+[
+  {
+    "id": "france",
+    "tag": "FRA",
+    "name": "France"
+  }
+]
 `,
       );
 
@@ -430,7 +539,7 @@ describe("CampaignCompiler", () => {
       const output = compileFixture(fixture.path, collector, signal, {
         input: {
           rulesetFiles: [],
-          countryFiles: ["countries.yaml"],
+          countryFiles: ["countries.json"],
           areaFiles: [],
           routeFiles: [],
           possessionFiles: [],
@@ -541,42 +650,56 @@ describe("CampaignCompiler", () => {
       writeContentFixture(fixture.path);
       writeFile(
         fixture.path,
-        "designs.yaml",
+        "designs.json",
         `
-- designId: "uk-dreadnought-v1"
-  designVersionId: "uk-dreadnought-v1"
-  designFamilyId: "dreadnought"
-  nationId: "uk"
-  className: "Dreadnought-class"
-  hullType: "battleship"
-  displacementKg: 18000
-  speedUms: 11
-  armorBeltUm: 300
-  mainGuns: { caliber: 305, count: 10, mounts: 5 }
-  machineryType: "steam_turbine"
-  hitPoints: 120
-  crewComplement: 800
-- designId: "fra-courbet-v1"
-  designVersionId: "fra-courbet-v1"
-  designFamilyId: "courbet"
-  nationId: "france"
-  className: "Courbet-class"
-  hullType: "battleship"
-  displacementKg: 23000
-  speedUms: 10
-  armorBeltUm: 280
-  mainGuns: { caliber: 305, count: 6, mounts: 6 }
-  machineryType: "steam_turbine"
-  hitPoints: 110
-  crewComplement: 1085
-        `,
+[
+  {
+    "designId": "uk-dreadnought-v1",
+    "designVersionId": "uk-dreadnought-v1",
+    "designFamilyId": "dreadnought",
+    "nationId": "uk",
+    "className": "Dreadnought-class",
+    "hullType": "battleship",
+    "displacementKg": 18000,
+    "speedUms": 11,
+    "armorBeltUm": 300,
+    "mainGuns": {
+      "caliber": 305,
+      "count": 10,
+      "mounts": 5
+    },
+    "machineryType": "steam_turbine",
+    "hitPoints": 120,
+    "crewComplement": 800
+  },
+  {
+    "designId": "fra-courbet-v1",
+    "designVersionId": "fra-courbet-v1",
+    "designFamilyId": "courbet",
+    "nationId": "france",
+    "className": "Courbet-class",
+    "hullType": "battleship",
+    "displacementKg": 23000,
+    "speedUms": 10,
+    "armorBeltUm": 280,
+    "mainGuns": {
+      "caliber": 305,
+      "count": 6,
+      "mounts": 6
+    },
+    "machineryType": "steam_turbine",
+    "hitPoints": 110,
+    "crewComplement": 1085
+  }
+]
+`,
       );
 
       const collector = new DiagnosticCollector();
       const signal = new AbortController().signal;
 
       const output = compileFixture(fixture.path, collector, signal, {
-        input: { designFiles: ["designs.yaml"] },
+        input: { designFiles: ["designs.json"] },
       });
 
       expect(collector.hasErrors).toBe(false);
@@ -603,32 +726,35 @@ describe("CampaignCompiler", () => {
   });
 
   it("P-1 AC-2: compiles optional torpedoArmament; unarmed designs keep their hash shape", () => {
-    const compileDesign = (extra: string) => {
+    const compileDesign = (extra: Record<string, unknown>) => {
       const fixture = createFixtureDir();
       try {
         writeContentFixture(fixture.path);
         writeFile(
           fixture.path,
-          "designs.yaml",
-          `
-- designId: "uk-inflexible-v1"
-  designVersionId: "uk-inflexible-v1"
-  designFamilyId: "inflexible"
-  nationId: "uk"
-  className: "Inflexible"
-  hullType: "ironclad_turret_ship"
-  displacementKg: 11880000
-  speedUms: 14
-  armorBeltUm: 610
-  mainGuns: { caliber: 406, count: 4, mounts: 2 }
-  machineryType: "reciprocating_compound"
-  hitPoints: 60
-  crewComplement: 460
-${extra}`,
+          "designs.json",
+          jsonDocument([
+            {
+              designId: "uk-inflexible-v1",
+              designVersionId: "uk-inflexible-v1",
+              designFamilyId: "inflexible",
+              nationId: "uk",
+              className: "Inflexible",
+              hullType: "ironclad_turret_ship",
+              displacementKg: 11880000,
+              speedUms: 14,
+              armorBeltUm: 610,
+              mainGuns: { caliber: 406, count: 4, mounts: 2 },
+              machineryType: "reciprocating_compound",
+              hitPoints: 60,
+              crewComplement: 460,
+              ...extra,
+            },
+          ]),
         );
         const collector = new DiagnosticCollector();
         const output = compileFixture(fixture.path, collector, new AbortController().signal, {
-          input: { designFiles: ["designs.yaml"] },
+          input: { designFiles: ["designs.json"] },
         });
         expect(collector.hasErrors).toBe(false);
         return output!.state.snapshot.designs.get("uk-inflexible-v1")!;
@@ -637,83 +763,104 @@ ${extra}`,
       }
     };
 
-    const unarmed = compileDesign("");
-    const armed = compileDesign(`  torpedoArmament:
-    - { mountType: "UNDERWATER_FIXED", tubeCount: 2, torpedoModelId: "whitehead_14in_1886" }
-    - { mountType: "ABOVE_WATER_TRAINABLE", tubeCount: 2, torpedoModelId: "whitehead_14in_1886" }
-`);
+    const unarmed = compileDesign({});
+    const armed = compileDesign({
+      torpedoArmament: [
+        { mountType: "UNDERWATER_FIXED", tubeCount: 2, torpedoModelId: "whitehead_14in_1886" },
+        {
+          mountType: "ABOVE_WATER_TRAINABLE",
+          tubeCount: 2,
+          torpedoModelId: "whitehead_14in_1886",
+        },
+      ],
+    });
     expect("torpedoArmament" in unarmed).toBe(false);
     expect(armed.torpedoArmament).toEqual([
       { mountType: "UNDERWATER_FIXED", tubeCount: 2, torpedoModelId: "whitehead_14in_1886" },
       { mountType: "ABOVE_WATER_TRAINABLE", tubeCount: 2, torpedoModelId: "whitehead_14in_1886" },
     ]);
     expect(armed.compiledHash).not.toBe(unarmed.compiledHash);
-    expect(compileDesign("").compiledHash).toBe(unarmed.compiledHash);
+    expect(compileDesign({}).compiledHash).toBe(unarmed.compiledHash);
   });
 
   it("links initial fleet ships to compiled designs via designVersionId", () => {
     const fixture = createFixtureDir();
     try {
       writeFile(fixture.path, "pack.json", FIXTURE.pack);
-      writeFile(fixture.path, "rulesets.yaml", FIXTURE.rulesets);
-      writeFile(fixture.path, "countries.yaml", FIXTURE.countries);
-      writeFile(fixture.path, "areas.yaml", FIXTURE.areas);
-      writeFile(fixture.path, "routes.yaml", FIXTURE.routes);
-      writeFile(fixture.path, "possessions.yaml", FIXTURE.possessions);
-      writeFile(fixture.path, "ports.yaml", FIXTURE.ports);
-      writeFile(fixture.path, "technologies.yaml", FIXTURE.technologies);
-      writeFile(fixture.path, "economies.yaml", FIXTURE.economies);
-      writeFile(fixture.path, "constructions.yaml", FIXTURE.constructions);
-      writeFile(fixture.path, "diplomacy.yaml", FIXTURE.diplomacy);
-      writeFile(fixture.path, "research.yaml", FIXTURE.research);
+      writeFile(fixture.path, "rulesets.json", FIXTURE.rulesets);
+      writeFile(fixture.path, "countries.json", FIXTURE.countries);
+      writeFile(fixture.path, "areas.json", FIXTURE.areas);
+      writeFile(fixture.path, "routes.json", FIXTURE.routes);
+      writeFile(fixture.path, "possessions.json", FIXTURE.possessions);
+      writeFile(fixture.path, "ports.json", FIXTURE.ports);
+      writeFile(fixture.path, "technologies.json", FIXTURE.technologies);
+      writeFile(fixture.path, "economies.json", FIXTURE.economies);
+      writeFile(fixture.path, "constructions.json", FIXTURE.constructions);
+      writeFile(fixture.path, "diplomacy.json", FIXTURE.diplomacy);
+      writeFile(fixture.path, "research.json", FIXTURE.research);
       writeFile(
         fixture.path,
-        "designs.yaml",
+        "designs.json",
         `
-- designId: "uk-dreadnought-v1"
-  designVersionId: "uk-dreadnought-v1"
-  designFamilyId: "dreadnought"
-  nationId: "uk"
-  className: "Dreadnought-class"
-  hullType: "battleship"
-  displacementKg: 18000
-  speedUms: 11
-  armorBeltUm: 300
-  mainGuns: { caliber: 305, count: 10, mounts: 5 }
-  machineryType: "steam_turbine"
-  hitPoints: 120
-  crewComplement: 800
-        `,
+[
+  {
+    "designId": "uk-dreadnought-v1",
+    "designVersionId": "uk-dreadnought-v1",
+    "designFamilyId": "dreadnought",
+    "nationId": "uk",
+    "className": "Dreadnought-class",
+    "hullType": "battleship",
+    "displacementKg": 18000,
+    "speedUms": 11,
+    "armorBeltUm": 300,
+    "mainGuns": {
+      "caliber": 305,
+      "count": 10,
+      "mounts": 5
+    },
+    "machineryType": "steam_turbine",
+    "hitPoints": 120,
+    "crewComplement": 800
+  }
+]
+`,
       );
       writeFile(
         fixture.path,
-        "fleets.yaml",
+        "fleets.json",
         `
-- id: "fleet-uk-home"
-  nationId: "uk"
-  name: "Home Fleet"
-  locationAreaId: "lon"
-  ships:
-    - id: "ship-hms-dreadnought"
-      name: "HMS Dreadnought"
-      designVersionId: "uk-dreadnought-v1"
-      classId: "battleship"
-      hitPoints: 120
-      maxHitPoints: 120
-      speed: 11
-      firepower: 10
-      armor: 12
-      isUnderConstruction: false
-      constructionProgress: 0
-      constructionTotalWork: 0
-        `,
+[
+  {
+    "id": "fleet-uk-home",
+    "nationId": "uk",
+    "name": "Home Fleet",
+    "locationAreaId": "lon",
+    "ships": [
+      {
+        "id": "ship-hms-dreadnought",
+        "name": "HMS Dreadnought",
+        "designVersionId": "uk-dreadnought-v1",
+        "classId": "battleship",
+        "hitPoints": 120,
+        "maxHitPoints": 120,
+        "speed": 11,
+        "firepower": 10,
+        "armor": 12,
+        "isUnderConstruction": false,
+        "constructionProgress": 0,
+        "constructionTotalWork": 0
+      }
+    ]
+  }
+]
+`,
       );
 
       const collector = new DiagnosticCollector();
       const signal = new AbortController().signal;
 
       const output = compileFixture(fixture.path, collector, signal, {
-        input: { fleetFiles: ["fleets.yaml"], designFiles: ["designs.yaml"] },
+        input: { fleetFiles: ["fleets.json"], designFiles: ["designs.json"] },
       });
 
       expect(collector.hasErrors).toBe(false);
@@ -786,8 +933,19 @@ describe("CampaignCompiler decoded-bundle path (ticket 07 / CAH-LEG-1)", () => {
       const bundle = buildFixtureBundle(fixture.path);
       const signal = new AbortController().signal;
 
-      writeFile(fixture.path, "fleets.yaml", '- id: "bogus"\n  nationId: "uk"\n');
-      writeFile(fixture.path, "economies.yaml", "[]\n");
+      writeFile(
+        fixture.path,
+        "fleets.json",
+        `
+[
+  {
+    "id": "bogus",
+    "nationId": "uk"
+  }
+]
+`,
+      );
+      writeFile(fixture.path, "economies.json", "[]\n");
 
       const decoded = new CampaignCompiler().compile(
         {

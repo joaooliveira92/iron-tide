@@ -26,7 +26,7 @@ const envelope = (id: string, family: string, provides: string) => ({
   spec: {},
   quantities: [{ id: "mass", kind: "massKg", value: 100, basis: "PER_PART_UNIT" }],
   revisions: [],
-  origin: { sourceFile: "ship-building/parts/sensor.yaml" },
+  origin: { sourceFile: "ship-building/parts/sensor.json" },
   provenance,
 });
 

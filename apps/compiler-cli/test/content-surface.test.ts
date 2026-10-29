@@ -121,15 +121,25 @@ describe("content:check / content:build over the production pack", () => {
     const brokenManifest = resolve(broken, "pack.json");
     const referenceDir = resolve(broken, "ship-building", "reference-designs", "uk");
     writeFileSync(
-      resolve(referenceDir, "starters.yaml"),
+      resolve(referenceDir, "starters.json"),
       `
-designs:
-  - id: "rd_broken"
-    name: "Broken"
-    month: "1880-01"
-    draft:
-      hull: { hullFormId: "does_not_exist" }
-      machinery: { plantId: "does_not_exist" }
+{
+  "designs": [
+    {
+      "id": "rd_broken",
+      "name": "Broken",
+      "month": "1880-01",
+      "draft": {
+        "hull": {
+          "hullFormId": "does_not_exist"
+        },
+        "machinery": {
+          "plantId": "does_not_exist"
+        }
+      }
+    }
+  ]
+}
 `,
       "utf8",
     );

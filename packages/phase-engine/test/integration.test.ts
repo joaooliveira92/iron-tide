@@ -10,10 +10,10 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
 import {
-  FIXTURE_RULESETS_YAML,
+  FIXTURE_RULESETS_JSON,
   buildFixtureContentBundle,
   failureTag,
-  nationsYaml,
+  nationsDocument,
   runSync,
 } from "@bluewave/test-support";
 import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
@@ -32,42 +32,259 @@ const FIXTURE = {
     version: "0.1.0",
     type: "fixture",
     files: {
-      rulesets: ["rulesets.yaml"],
-      countries: ["countries.yaml"],
-      areas: ["areas.yaml"],
-      routes: ["routes.yaml"],
-      possessions: ["possessions.yaml"],
-      ports: ["ports.yaml"],
-      technologies: ["technologies.yaml"],
+      rulesets: ["rulesets.json"],
+      countries: ["countries.json"],
+      areas: ["areas.json"],
+      routes: ["routes.json"],
+      possessions: ["possessions.json"],
+      ports: ["ports.json"],
+      technologies: ["technologies.json"],
     },
   }),
 
-  rulesets: FIXTURE_RULESETS_YAML,
+  rulesets: FIXTURE_RULESETS_JSON,
 
-  countries: nationsYaml([
+  countries: nationsDocument([
     { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
     { id: "france", tag: "FRA", name: "France", homeArea: "par" },
   ]),
 
-  areas: `- id: "lon"\n  name: "London"\n  type: "land"\n  controller: "uk"\n- id: "par"\n  name: "Paris"\n  type: "land"\n  controller: "france"\n- id: "eng_ch"\n  name: "English Channel"\n  type: "sea"\n`,
+  areas: `
+[
+  {
+    "id": "lon",
+    "name": "London",
+    "type": "land",
+    "controller": "uk"
+  },
+  {
+    "id": "par",
+    "name": "Paris",
+    "type": "land",
+    "controller": "france"
+  },
+  {
+    "id": "eng_ch",
+    "name": "English Channel",
+    "type": "sea"
+  }
+]
+`,
 
-  routes: `- id: "lon-par"\n  from: "lon"\n  to: "par"\n  type: "sea"\n  distance: 300\n- id: "lon-eng_ch"\n  from: "lon"\n  to: "eng_ch"\n  type: "sea"\n  distance: 50\n- id: "par-eng_ch"\n  from: "par"\n  to: "eng_ch"\n  type: "sea"\n  distance: 100\n`,
+  routes: `
+[
+  {
+    "id": "lon-par",
+    "from": "lon",
+    "to": "par",
+    "type": "sea",
+    "distance": 300
+  },
+  {
+    "id": "lon-eng_ch",
+    "from": "lon",
+    "to": "eng_ch",
+    "type": "sea",
+    "distance": 50
+  },
+  {
+    "id": "par-eng_ch",
+    "from": "par",
+    "to": "eng_ch",
+    "type": "sea",
+    "distance": 100
+  }
+]
+`,
 
-  possessions: `- id: "uk-lon"\n  nationId: "uk"\n  areaId: "lon"\n- id: "fra-par"\n  nationId: "france"\n  areaId: "par"\n`,
+  possessions: `
+[
+  {
+    "id": "uk-lon",
+    "nationId": "uk",
+    "areaId": "lon"
+  },
+  {
+    "id": "fra-par",
+    "nationId": "france",
+    "areaId": "par"
+  }
+]
+`,
 
-  ports: `- id: "port-lon"\n  name: "Port of London"\n  areaId: "lon"\n  nationId: "uk"\n  level: 5\n- id: "port-par"\n  name: "Port of Paris"\n  areaId: "par"\n  nationId: "france"\n  level: 3\n`,
+  ports: `
+[
+  {
+    "id": "port-lon",
+    "name": "Port of London",
+    "areaId": "lon",
+    "nationId": "uk",
+    "level": 5
+  },
+  {
+    "id": "port-par",
+    "name": "Port of Paris",
+    "areaId": "par",
+    "nationId": "france",
+    "level": 3
+  }
+]
+`,
 
-  technologies: `- id: "basic_steam"\n  name: "Basic Steam Turbine"\n  category: "propulsion"\n  cost: 100\n  year: 1880\n- id: "advanced_steam"\n  name: "Advanced Steam Turbine"\n  category: "propulsion"\n  prerequisites:\n    - { techId: "basic_steam" }\n  cost: 200\n  year: 1900\n`,
+  technologies: `
+[
+  {
+    "id": "basic_steam",
+    "name": "Basic Steam Turbine",
+    "category": "propulsion",
+    "cost": 100,
+    "year": 1880
+  },
+  {
+    "id": "advanced_steam",
+    "name": "Advanced Steam Turbine",
+    "category": "propulsion",
+    "prerequisites": [
+      {
+        "techId": "basic_steam"
+      }
+    ],
+    "cost": 200,
+    "year": 1900
+  }
+]
+`,
 
-  fleets: `- id: "fleet-uk-home"\n  nationId: "uk"\n  name: "Home Fleet"\n  locationAreaId: "lon"\n  ships:\n    - id: "ship-hms-dreadnought"\n      name: "HMS Dreadnought"\n      classId: "battleship"\n      hitPoints: 100\n      maxHitPoints: 100\n      speed: 21\n      firepower: 10\n      armor: 12\n      isUnderConstruction: false\n      constructionProgress: 0\n      constructionTotalWork: 0\n    - id: "ship-hms-invincible"\n      name: "HMS Invincible"\n      classId: "battlecruiser"\n      hitPoints: 80\n      maxHitPoints: 80\n      speed: 25\n      firepower: 8\n      armor: 6\n      isUnderConstruction: false\n      constructionProgress: 0\n      constructionTotalWork: 0\n- id: "fleet-fra-atlantic"\n  nationId: "france"\n  name: "Atlantic Fleet"\n  locationAreaId: "par"\n  ships:\n    - id: "ship-fs-courbet"\n      name: "FS Courbet"\n      classId: "battleship"\n      hitPoints: 90\n      maxHitPoints: 90\n      speed: 20\n      firepower: 9\n      armor: 11\n      isUnderConstruction: false\n      constructionProgress: 0\n      constructionTotalWork: 0\n`,
+  fleets: `
+[
+  {
+    "id": "fleet-uk-home",
+    "nationId": "uk",
+    "name": "Home Fleet",
+    "locationAreaId": "lon",
+    "ships": [
+      {
+        "id": "ship-hms-dreadnought",
+        "name": "HMS Dreadnought",
+        "classId": "battleship",
+        "hitPoints": 100,
+        "maxHitPoints": 100,
+        "speed": 21,
+        "firepower": 10,
+        "armor": 12,
+        "isUnderConstruction": false,
+        "constructionProgress": 0,
+        "constructionTotalWork": 0
+      },
+      {
+        "id": "ship-hms-invincible",
+        "name": "HMS Invincible",
+        "classId": "battlecruiser",
+        "hitPoints": 80,
+        "maxHitPoints": 80,
+        "speed": 25,
+        "firepower": 8,
+        "armor": 6,
+        "isUnderConstruction": false,
+        "constructionProgress": 0,
+        "constructionTotalWork": 0
+      }
+    ]
+  },
+  {
+    "id": "fleet-fra-atlantic",
+    "nationId": "france",
+    "name": "Atlantic Fleet",
+    "locationAreaId": "par",
+    "ships": [
+      {
+        "id": "ship-fs-courbet",
+        "name": "FS Courbet",
+        "classId": "battleship",
+        "hitPoints": 90,
+        "maxHitPoints": 90,
+        "speed": 20,
+        "firepower": 9,
+        "armor": 11,
+        "isUnderConstruction": false,
+        "constructionProgress": 0,
+        "constructionTotalWork": 0
+      }
+    ]
+  }
+]
+`,
 
-  economies: `- nationId: "uk"\n  treasury: 800\n  income: 150\n  expenses: 75\n- nationId: "france"\n  treasury: 600\n  income: 120\n  expenses: 60\n`,
+  economies: `
+[
+  {
+    "nationId": "uk",
+    "treasury": 800,
+    "income": 150,
+    "expenses": 75
+  },
+  {
+    "nationId": "france",
+    "treasury": 600,
+    "income": 120,
+    "expenses": 60
+  }
+]
+`,
 
-  constructions: `- id: "con-gbr-ship-battleship2"\n  nationId: "uk"\n  type: "ship"\n  targetId: "ship-hms-thunderer"\n  totalWork: 200\n  completedWork: 50\n  paidWork: 0\n  status: "PLANNED"\n  startedAt: "1880-01"\n`,
+  constructions: `
+[
+  {
+    "id": "con-gbr-ship-battleship2",
+    "nationId": "uk",
+    "type": "ship",
+    "targetId": "ship-hms-thunderer",
+    "totalWork": 200,
+    "completedWork": 50,
+    "paidWork": 0,
+    "status": "PLANNED",
+    "startedAt": "1880-01"
+  }
+]
+`,
 
-  diplomacy: `- nationA: "uk"\n  nationB: "france"\n  relation: "neutral"\n  since: "1880-01"\n`,
+  diplomacy: `
+[
+  {
+    "nationA": "uk",
+    "nationB": "france",
+    "relation": "neutral",
+    "since": "1880-01"
+  }
+]
+`,
 
-  research: `- nationId: "uk"\n  currentProjectTechId: "basic_steam"\n  researchBudget: 100\n  fieldPriorities:\n    MACHINERY: 4\n    HULL_CONSTRUCTION: 2\n    GUNNERY: 1\n  technologies:\n    - { techId: "basic_steam", investedPoints: 30, completed: false }\n- nationId: "france"\n  researchBudget: 0\n  technologies: []\n`,
+  research: `
+[
+  {
+    "nationId": "uk",
+    "currentProjectTechId": "basic_steam",
+    "researchBudget": 100,
+    "fieldPriorities": {
+      "MACHINERY": 4,
+      "HULL_CONSTRUCTION": 2,
+      "GUNNERY": 1
+    },
+    "technologies": [
+      {
+        "techId": "basic_steam",
+        "investedPoints": 30,
+        "completed": false
+      }
+    ]
+  },
+  {
+    "nationId": "france",
+    "researchBudget": 0,
+    "technologies": []
+  }
+]
+`,
 };
 
 function createFixtureDir(): { path: string; cleanup: () => void } {
@@ -87,18 +304,18 @@ function writeFile(base: string, rel: string, content: string): void {
 
 function writeAllFixtureFiles(fixturePath: string): void {
   writeFile(fixturePath, "pack.json", FIXTURE.pack);
-  writeFile(fixturePath, "rulesets.yaml", FIXTURE.rulesets);
-  writeFile(fixturePath, "countries.yaml", FIXTURE.countries);
-  writeFile(fixturePath, "areas.yaml", FIXTURE.areas);
-  writeFile(fixturePath, "routes.yaml", FIXTURE.routes);
-  writeFile(fixturePath, "possessions.yaml", FIXTURE.possessions);
-  writeFile(fixturePath, "ports.yaml", FIXTURE.ports);
-  writeFile(fixturePath, "technologies.yaml", FIXTURE.technologies);
-  writeFile(fixturePath, "fleets.yaml", FIXTURE.fleets);
-  writeFile(fixturePath, "economies.yaml", FIXTURE.economies);
-  writeFile(fixturePath, "constructions.yaml", FIXTURE.constructions);
-  writeFile(fixturePath, "diplomacy.yaml", FIXTURE.diplomacy);
-  writeFile(fixturePath, "research.yaml", FIXTURE.research);
+  writeFile(fixturePath, "rulesets.json", FIXTURE.rulesets);
+  writeFile(fixturePath, "countries.json", FIXTURE.countries);
+  writeFile(fixturePath, "areas.json", FIXTURE.areas);
+  writeFile(fixturePath, "routes.json", FIXTURE.routes);
+  writeFile(fixturePath, "possessions.json", FIXTURE.possessions);
+  writeFile(fixturePath, "ports.json", FIXTURE.ports);
+  writeFile(fixturePath, "technologies.json", FIXTURE.technologies);
+  writeFile(fixturePath, "fleets.json", FIXTURE.fleets);
+  writeFile(fixturePath, "economies.json", FIXTURE.economies);
+  writeFile(fixturePath, "constructions.json", FIXTURE.constructions);
+  writeFile(fixturePath, "diplomacy.json", FIXTURE.diplomacy);
+  writeFile(fixturePath, "research.json", FIXTURE.research);
 }
 
 function compileCampaign(fixtureDir: string): CampaignState {
@@ -108,18 +325,18 @@ function compileCampaign(fixtureDir: string): CampaignState {
     {
       manifestPath: resolve(fixtureDir, "pack.json"),
       contentDir: fixtureDir,
-      rulesetFiles: ["rulesets.yaml"],
-      countryFiles: ["countries.yaml"],
-      areaFiles: ["areas.yaml"],
-      routeFiles: ["routes.yaml"],
-      possessionFiles: ["possessions.yaml"],
-      portFiles: ["ports.yaml"],
-      technologyFiles: ["technologies.yaml"],
-      fleetFiles: ["fleets.yaml"],
-      economyFiles: ["economies.yaml"],
-      constructionFiles: ["constructions.yaml"],
-      diplomacyFiles: ["diplomacy.yaml"],
-      researchFiles: ["research.yaml"],
+      rulesetFiles: ["rulesets.json"],
+      countryFiles: ["countries.json"],
+      areaFiles: ["areas.json"],
+      routeFiles: ["routes.json"],
+      possessionFiles: ["possessions.json"],
+      portFiles: ["ports.json"],
+      technologyFiles: ["technologies.json"],
+      fleetFiles: ["fleets.json"],
+      economyFiles: ["economies.json"],
+      constructionFiles: ["constructions.json"],
+      diplomacyFiles: ["diplomacy.json"],
+      researchFiles: ["research.json"],
       designFiles: [],
     },
     signal,

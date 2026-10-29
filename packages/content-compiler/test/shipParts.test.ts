@@ -6,38 +6,121 @@ import { describe, expect, it } from "vite-plus/test";
 import { buildFullSurfaceInput } from "../src/index.js";
 import { PROVENANCE, baseInput, compile, createFixture } from "./partModelFixture.js";
 
-const GUN_PARTS = `parts:
-  - id: bl_12in_25
-    family: gun
-    provides: gun
-    name: "BL 12-inch"
-    lifecycle: { availableFrom: "1885-01" }
-    spec: { calibreUm: 305000 }
-    quantities: [{ id: gun_mass, kind: massKg, value: 44500, basis: PER_PART_UNIT }]
-    provenance: ${PROVENANCE}
-  - id: bl_12in_barbette_twin
-    family: gun_mount
-    provides: gun_mount
-    name: "12-inch twin barbette"
-    lifecycle: { availableFrom: "1885-01" }
-    spec: { mountType: BARBETTE, gunsPerMount: 2 }
-    quantities:
-      - { id: fixed_installation, kind: massKg, value: 20000, basis: PER_LOADOUT_ENTRY }
-      - { id: per_gun_installation, kind: massKg, value: 30000, basis: PER_CONTAINED_UNIT }
-    slots: [{ id: guns, accepts: [gun], sameParts: true }]
-    provenance: ${PROVENANCE}
+const GUN_PARTS = `
+{
+  "parts": [
+    {
+      "id": "bl_12in_25",
+      "family": "gun",
+      "provides": "gun",
+      "name": "BL 12-inch",
+      "lifecycle": {
+        "availableFrom": "1885-01"
+      },
+      "spec": {
+        "calibreUm": 305000
+      },
+      "quantities": [
+        {
+          "id": "gun_mass",
+          "kind": "massKg",
+          "value": 44500,
+          "basis": "PER_PART_UNIT"
+        }
+      ],
+      "provenance": ${PROVENANCE}
+    },
+    {
+      "id": "bl_12in_barbette_twin",
+      "family": "gun_mount",
+      "provides": "gun_mount",
+      "name": "12-inch twin barbette",
+      "lifecycle": {
+        "availableFrom": "1885-01"
+      },
+      "spec": {
+        "mountType": "BARBETTE",
+        "gunsPerMount": 2
+      },
+      "quantities": [
+        {
+          "id": "fixed_installation",
+          "kind": "massKg",
+          "value": 20000,
+          "basis": "PER_LOADOUT_ENTRY"
+        },
+        {
+          "id": "per_gun_installation",
+          "kind": "massKg",
+          "value": 30000,
+          "basis": "PER_CONTAINED_UNIT"
+        }
+      ],
+      "slots": [
+        {
+          "id": "guns",
+          "accepts": [
+            "gun"
+          ],
+          "sameParts": true
+        }
+      ],
+      "provenance": ${PROVENANCE}
+    }
+  ]
+}
 `;
 
-const SLOT_TEMPLATES = `slotTemplates:
-  - id: capital_ship_1880s
-    slots:
-      - { id: fwd_main, accepts: [gun_mount], mountCount: { min: 0, max: 3 }, side: CENTRE }
-      - { id: secondary_port, accepts: [gun_mount], mountCount: { min: 0, max: 8 }, side: PORT }
-      - { id: secondary_stbd, mirrors: secondary_port }
+const SLOT_TEMPLATES = `
+{
+  "slotTemplates": [
+    {
+      "id": "capital_ship_1880s",
+      "slots": [
+        {
+          "id": "fwd_main",
+          "accepts": [
+            "gun_mount"
+          ],
+          "mountCount": {
+            "min": 0,
+            "max": 3
+          },
+          "side": "CENTRE"
+        },
+        {
+          "id": "secondary_port",
+          "accepts": [
+            "gun_mount"
+          ],
+          "mountCount": {
+            "min": 0,
+            "max": 8
+          },
+          "side": "PORT"
+        },
+        {
+          "id": "secondary_stbd",
+          "mirrors": "secondary_port"
+        }
+      ]
+    }
+  ]
+}
 `;
 
-const PLATFORMS = `platforms:
-  - { id: pre_dreadnought_form, hullForm: battleship_1880, slotTemplates: [capital_ship_1880s] }
+const PLATFORMS = `
+{
+  "platforms": [
+    {
+      "id": "pre_dreadnought_form",
+      "hullForm": "battleship_1880",
+      "slotTemplates": [
+        "capital_ship_1880s"
+      ]
+    }
+  ]
+}
 `;
 
 const provenance = {
@@ -144,9 +227,9 @@ describe("ship part collections at the content compile seam", () => {
     try {
       const { output, collector } = compile(
         baseInput(fixture, {
-          partFiles: [fixture.write("ship-building/parts/guns.yaml", GUN_PARTS)],
-          slotTemplateFiles: [fixture.write("ship-building/slot-templates.yaml", SLOT_TEMPLATES)],
-          platformFiles: [fixture.write("ship-building/platforms.yaml", PLATFORMS)],
+          partFiles: [fixture.write("ship-building/parts/guns.json", GUN_PARTS)],
+          slotTemplateFiles: [fixture.write("ship-building/slot-templates.json", SLOT_TEMPLATES)],
+          platformFiles: [fixture.write("ship-building/platforms.json", PLATFORMS)],
         }),
       );
       expect(collector.errors).toEqual([]);
@@ -161,7 +244,7 @@ describe("ship part collections at the content compile seam", () => {
     try {
       const { output, collector } = compile(
         baseInput(fixture, {
-          partFiles: [fixture.write("ship-building/parts/all.yaml", ONE_PER_FAMILY)],
+          partFiles: [fixture.write("ship-building/parts/all.json", ONE_PER_FAMILY)],
         }),
       );
       expect(collector.errors).toEqual([]);
@@ -177,9 +260,9 @@ describe("ship part collections at the content compile seam", () => {
     try {
       const a = compile(
         baseInput(withParts, {
-          partFiles: [withParts.write("ship-building/parts/guns.yaml", GUN_PARTS)],
-          slotTemplateFiles: [withParts.write("ship-building/slot-templates.yaml", SLOT_TEMPLATES)],
-          platformFiles: [withParts.write("ship-building/platforms.yaml", PLATFORMS)],
+          partFiles: [withParts.write("ship-building/parts/guns.json", GUN_PARTS)],
+          slotTemplateFiles: [withParts.write("ship-building/slot-templates.json", SLOT_TEMPLATES)],
+          platformFiles: [withParts.write("ship-building/platforms.json", PLATFORMS)],
         }),
       );
       const b = compile(baseInput(withoutParts));
@@ -196,33 +279,33 @@ describe("ship part collections at the content compile seam", () => {
   it.each([
     [
       "an unknown interface",
-      GUN_PARTS.replace("provides: gun\n", "provides: gun_12in\n"),
+      GUN_PARTS.replace('"provides": "gun"', '"provides": "gun_12in"'),
       "Part.provides:",
     ],
     [
       "an unknown basis",
-      GUN_PARTS.replace("basis: PER_PART_UNIT", "basis: PER_MOUNT"),
+      GUN_PARTS.replace('"basis": "PER_PART_UNIT"', '"basis": "PER_MOUNT"'),
       "Part.quantities.0.basis:",
     ],
     [
       "a visual trait",
       GUN_PARTS.replace(
-        "spec: { calibreUm: 305000 }",
-        "spec: { calibreUm: 305000 }\n    visual: { traits: { enclosure: open } }",
+        '"quantities": [',
+        '"visual": { "traits": { "enclosure": "open" } },\n      "quantities": [',
       ),
       "Part.visual.traits.enclosure:",
     ],
   ])("%s fails with the part file and field path", (_case, yaml, path) => {
     const fixture = createFixture();
     try {
-      const file = fixture.write("ship-building/parts/guns.yaml", yaml);
+      const file = fixture.write("ship-building/parts/guns.json", yaml);
       const { output, collector } = compile(baseInput(fixture, { partFiles: [file] }));
       expect(output).toBeUndefined();
       const schemaErrors = collector.errors.filter((error) => error.code === "SCHEMA");
       expect(schemaErrors.length).toBeGreaterThan(0);
       expect(
         schemaErrors.every(
-          (error) => error.sourceLocation?.path === "ship-building/parts/guns.yaml",
+          (error) => error.sourceLocation?.path === "ship-building/parts/guns.json",
         ),
       ).toBe(true);
       expect(schemaErrors.map((error) => error.message).join("\n")).toContain(path);
@@ -234,11 +317,11 @@ describe("ship part collections at the content compile seam", () => {
   it("a visual-trait contradiction fails the visual compile stage (V1–V9)", () => {
     const fixture = createFixture();
     try {
-      const yaml = GUN_PARTS.replace(
-        "spec: { mountType: BARBETTE, gunsPerMount: 2 }",
-        'spec: { mountType: BARBETTE, gunsPerMount: 2 }\n    visual: { traits: { presentation_form: { value: casemate, reason: "as built" } } }',
+      const document = GUN_PARTS.replace(
+        '"slots": [',
+        '"visual": { "traits": { "presentation_form": { "value": "casemate", "reason": "as built" } } },\n      "slots": [',
       );
-      const file = fixture.write("ship-building/parts/guns.yaml", yaml);
+      const file = fixture.write("ship-building/parts/guns.json", document);
       const { output, collector } = compile(baseInput(fixture, { partFiles: [file] }));
       expect(output).toBeUndefined();
       const violation = collector.errors.find((error) => error.code === "VISUAL_TRAIT");
@@ -253,16 +336,16 @@ describe("ship part collections at the content compile seam", () => {
     const fixture = createFixture();
     try {
       const file = fixture.write(
-        "ship-building/slot-templates.yaml",
+        "ship-building/slot-templates.json",
         SLOT_TEMPLATES.replace(
-          "side: CENTRE }",
-          "side: CENTRE, constraints: { calibreMmMin: 200 } }",
+          '"side": "CENTRE"',
+          '"side": "CENTRE", "constraints": { "calibreMmMin": 200 }',
         ),
       );
       const { output, collector } = compile(baseInput(fixture, { slotTemplateFiles: [file] }));
       expect(output).toBeUndefined();
       const error = collector.errors.find((e) => e.message.includes("constraints.calibreMmMin"));
-      expect(error?.sourceLocation?.path).toBe("ship-building/slot-templates.yaml");
+      expect(error?.sourceLocation?.path).toBe("ship-building/slot-templates.json");
       expect(error?.message).toContain("SlotTemplate.slots.0.constraints.calibreMmMin:");
     } finally {
       fixture.cleanup();
@@ -275,8 +358,8 @@ describe("ship part collections at the content compile seam", () => {
       const { output, collector } = compile(
         baseInput(fixture, {
           partFiles: [
-            fixture.write("ship-building/parts/guns.yaml", GUN_PARTS),
-            fixture.write("ship-building/parts/more-guns.yaml", GUN_PARTS),
+            fixture.write("ship-building/parts/guns.json", GUN_PARTS),
+            fixture.write("ship-building/parts/more-guns.json", GUN_PARTS),
           ],
         }),
       );
@@ -291,9 +374,9 @@ describe("ship part collections at the content compile seam", () => {
 
 describe("the manifest is the authority for part-model files", () => {
   it.each([
-    ["parts", "ship-building/parts/guns.yaml", GUN_PARTS],
-    ["slotTemplates", "ship-building/slot-templates.yaml", SLOT_TEMPLATES],
-    ["platforms", "ship-building/platforms.yaml", PLATFORMS],
+    ["parts", "ship-building/parts/guns.json", GUN_PARTS],
+    ["slotTemplates", "ship-building/slot-templates.json", SLOT_TEMPLATES],
+    ["platforms", "ship-building/platforms.json", PLATFORMS],
   ])("an undeclared %s file present on disk fails closed", (key, rel, content) => {
     const fixture = createFixture();
     try {
@@ -329,15 +412,15 @@ describe("the manifest is the authority for part-model files", () => {
           type: "fixture",
           files: {},
           shipBuilding: {
-            parts: ["ship-building/parts/guns.yaml"],
-            slotTemplates: ["ship-building/slot-templates.yaml"],
-            platforms: ["ship-building/platforms.yaml"],
+            parts: ["ship-building/parts/guns.json"],
+            slotTemplates: ["ship-building/slot-templates.json"],
+            platforms: ["ship-building/platforms.json"],
           },
         }),
       );
-      fixture.write("ship-building/parts/guns.yaml", GUN_PARTS);
-      fixture.write("ship-building/slot-templates.yaml", SLOT_TEMPLATES);
-      fixture.write("ship-building/platforms.yaml", PLATFORMS);
+      fixture.write("ship-building/parts/guns.json", GUN_PARTS);
+      fixture.write("ship-building/slot-templates.json", SLOT_TEMPLATES);
+      fixture.write("ship-building/platforms.json", PLATFORMS);
       const collector = new DiagnosticCollector();
       const input = buildFullSurfaceInput(
         resolve(fixture.path, "pack.json"),
@@ -345,7 +428,7 @@ describe("the manifest is the authority for part-model files", () => {
         collector,
       );
       expect(collector.errors).toEqual([]);
-      expect(input?.partFiles).toEqual([resolve(fixture.path, "ship-building/parts/guns.yaml")]);
+      expect(input?.partFiles).toEqual([resolve(fixture.path, "ship-building/parts/guns.json")]);
       expect(input?.slotTemplateFiles).toHaveLength(1);
       expect(input?.platformFiles).toHaveLength(1);
     } finally {

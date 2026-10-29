@@ -547,7 +547,7 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
           );
         } else {
           expect(part.nation, part.id).toBe(authored.nationId);
-          expect(part.origin.sourceFile).toBe("ship-building/armament/gun-models.yaml");
+          expect(part.origin.sourceFile).toBe("ship-building/armament/gun-models.ts");
         }
       }
     });

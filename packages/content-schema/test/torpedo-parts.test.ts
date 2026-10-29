@@ -112,7 +112,7 @@ describe("the torpedo part schema (SPM-R17)", () => {
     expect(
       decodeOk(FlattenedPartSchema, {
         ...AUTHORED,
-        origin: { sourceFile: "ship-building/parts/torpedo.yaml" },
+        origin: { sourceFile: "ship-building/parts/torpedo.json" },
       }),
     ).toBe(true);
   });

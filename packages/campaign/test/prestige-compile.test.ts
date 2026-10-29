@@ -6,8 +6,10 @@ import {
   createFixtureDir,
   FIXTURE_NATION_PRESTIGE,
   FIXTURE_PRESTIGE_VALUE_SET,
-  nationsYaml,
-  rulesetsYaml,
+  jsonDocument,
+  nationsDocument,
+  rulesetRecord,
+  rulesetsDocument,
   writeFixture,
   type FixtureDir,
 } from "@bluewave/test-support";
@@ -21,25 +23,46 @@ const FILES = {
     version: "0.1.0",
     type: "fixture",
     files: {
-      rulesets: ["rulesets.yaml"],
-      countries: ["countries.yaml"],
-      areas: ["areas.yaml"],
-      routes: ["routes.yaml"],
-      possessions: ["possessions.yaml"],
-      ports: ["ports.yaml"],
-      technologies: ["technologies.yaml"],
+      rulesets: ["rulesets.json"],
+      countries: ["countries.json"],
+      areas: ["areas.json"],
+      routes: ["routes.json"],
+      possessions: ["possessions.json"],
+      ports: ["ports.json"],
+      technologies: ["technologies.json"],
     },
   }),
-  areas: `- id: "lon"\n  name: "London"\n  type: "land"\n  controller: "uk"\n- id: "par"\n  name: "Paris"\n  type: "land"\n  controller: "france"\n`,
-  routes: `- id: "lon-par"\n  from: "lon"\n  to: "par"\n  type: "sea"\n  distance: 300\n`,
-  possessions: `- id: "gbr-lon"\n  nationId: "uk"\n  areaId: "lon"\n- id: "fra-par"\n  nationId: "france"\n  areaId: "par"\n`,
-  ports: `- id: "port-lon"\n  name: "Port of London"\n  areaId: "lon"\n  nationId: "uk"\n  level: 5\n`,
-  technologies: `- id: "basic_steam"\n  name: "Basic Steam Turbine"\n  category: "propulsion"\n  cost: 100\n  year: 1880\n`,
-  economies: `- nationId: "uk"\n  treasury: 800\n  income: 150\n  expenses: 75\n- nationId: "france"\n  treasury: 600\n  income: 120\n  expenses: 60\n`,
-  fleets: `[]\n`,
-  constructions: `[]\n`,
-  diplomacy: `- nationA: "uk"\n  nationB: "france"\n  relation: "neutral"\n  since: "1880-01"\n`,
-  research: `[]\n`,
+  areas: jsonDocument([
+    { id: "lon", name: "London", type: "land", controller: "uk" },
+    { id: "par", name: "Paris", type: "land", controller: "france" },
+  ]),
+  routes: jsonDocument([{ id: "lon-par", from: "lon", to: "par", type: "sea", distance: 300 }]),
+  possessions: jsonDocument([
+    { id: "gbr-lon", nationId: "uk", areaId: "lon" },
+    { id: "fra-par", nationId: "france", areaId: "par" },
+  ]),
+  ports: jsonDocument([
+    { id: "port-lon", name: "Port of London", areaId: "lon", nationId: "uk", level: 5 },
+  ]),
+  technologies: jsonDocument([
+    {
+      id: "basic_steam",
+      name: "Basic Steam Turbine",
+      category: "propulsion",
+      cost: 100,
+      year: 1880,
+    },
+  ]),
+  economies: jsonDocument([
+    { nationId: "uk", treasury: 800, income: 150, expenses: 75 },
+    { nationId: "france", treasury: 600, income: 120, expenses: 60 },
+  ]),
+  fleets: jsonDocument([]),
+  constructions: jsonDocument([]),
+  diplomacy: jsonDocument([
+    { nationA: "uk", nationB: "france", relation: "neutral", since: "1880-01" },
+  ]),
+  research: jsonDocument([]),
 };
 
 interface Variant {
@@ -58,18 +81,18 @@ function baseInput(dir: string): CompilerInput {
   return {
     manifestPath: resolve(dir, "pack.json"),
     contentDir: dir,
-    rulesetFiles: ["rulesets.yaml"],
-    countryFiles: ["countries.yaml"],
-    areaFiles: ["areas.yaml"],
-    routeFiles: ["routes.yaml"],
-    possessionFiles: ["possessions.yaml"],
-    portFiles: ["ports.yaml"],
-    technologyFiles: ["technologies.yaml"],
-    fleetFiles: ["fleets.yaml"],
-    economyFiles: ["economies.yaml"],
-    constructionFiles: ["constructions.yaml"],
-    diplomacyFiles: ["diplomacy.yaml"],
-    researchFiles: ["research.yaml"],
+    rulesetFiles: ["rulesets.json"],
+    countryFiles: ["countries.json"],
+    areaFiles: ["areas.json"],
+    routeFiles: ["routes.json"],
+    possessionFiles: ["possessions.json"],
+    portFiles: ["ports.json"],
+    technologyFiles: ["technologies.json"],
+    fleetFiles: ["fleets.json"],
+    economyFiles: ["economies.json"],
+    constructionFiles: ["constructions.json"],
+    diplomacyFiles: ["diplomacy.json"],
+    researchFiles: ["research.json"],
     designFiles: [],
   };
 }
@@ -79,7 +102,7 @@ function compile(variant: Variant = {}) {
     resolve(tmpdir(), `bw-prestige-${Math.random().toString(36).slice(2)}`),
   );
   const dir = fixture.path;
-  const countries = nationsYaml([
+  const countries = nationsDocument([
     {
       id: "uk",
       tag: "GBR",
@@ -91,8 +114,8 @@ function compile(variant: Variant = {}) {
     { id: "france", tag: "FRA", name: "France", homeArea: "par", ...variant.france },
   ]);
   writeFixture(dir, "pack.json", FILES.pack);
-  writeFixture(dir, "rulesets.yaml", variant.rulesets ?? rulesetsYaml());
-  writeFixture(dir, "countries.yaml", countries);
+  writeFixture(dir, "rulesets.json", variant.rulesets ?? rulesetsDocument());
+  writeFixture(dir, "countries.json", countries);
   for (const name of [
     "areas",
     "routes",
@@ -105,7 +128,7 @@ function compile(variant: Variant = {}) {
     "diplomacy",
     "research",
   ] as const) {
-    writeFixture(dir, `${name}.yaml`, FILES[name]);
+    writeFixture(dir, `${name}.json`, FILES[name]);
   }
   const collector = new DiagnosticCollector();
   const signal = new AbortController().signal;
@@ -181,14 +204,14 @@ describe("S-2 ticket 03: prestige at the campaign compile boundary", () => {
   });
 
   it("fails when the ruleset carries no prestige value set", () => {
-    const { collector, output } = compile({ rulesets: rulesetsYaml({ prestige: "omit" }) });
+    const { collector, output } = compile({ rulesets: rulesetsDocument({ prestige: "omit" }) });
     expect(codes(collector)).toContain(PRESTIGE_COMPILE_CODES.valueSetMissing);
     expect(output).toBeUndefined();
   });
 
   it("fails with the offending field named when the value set is malformed", () => {
     const bad = { ...FIXTURE_PRESTIGE_VALUE_SET, sackingProbabilityBp: 12_000 };
-    const { collector, output } = compile({ rulesets: rulesetsYaml({ prestige: bad }) });
+    const { collector, output } = compile({ rulesets: rulesetsDocument({ prestige: bad }) });
     const diagnostic = collector.all.find((d) => d.code === PRESTIGE_COMPILE_CODES.valueSetInvalid);
     expect(diagnostic).toBeDefined();
     expect(diagnostic?.message).toContain("sackingProbabilityBp");
@@ -197,13 +220,13 @@ describe("S-2 ticket 03: prestige at the campaign compile boundary", () => {
 
   it("rejects an excess key in the value set", () => {
     const bad = { ...FIXTURE_PRESTIGE_VALUE_SET, bonus: 1 };
-    const { collector } = compile({ rulesets: rulesetsYaml({ prestige: bad }) });
+    const { collector } = compile({ rulesets: rulesetsDocument({ prestige: bad }) });
     const diagnostic = collector.all.find((d) => d.code === PRESTIGE_COMPILE_CODES.valueSetInvalid);
     expect(diagnostic?.message).toContain("bonus");
   });
 
   it("is ambiguous, not guessed, when two rulesets both carry a value set", () => {
-    const two = `${rulesetsYaml()}${rulesetsYaml().replace('id: "core"', 'id: "other"')}`;
+    const two = jsonDocument([rulesetRecord(), { ...rulesetRecord(), id: "other" }]);
     const { collector, output } = compile({ rulesets: two });
     expect(codes(collector)).toContain(PRESTIGE_COMPILE_CODES.valueSetAmbiguous);
     expect(output).toBeUndefined();
@@ -213,7 +236,7 @@ describe("S-2 ticket 03: prestige at the campaign compile boundary", () => {
     const wide = { ...FIXTURE_PRESTIGE_VALUE_SET, upperBound: 1_000 };
     const { collector } = compile({
       uk: { prestige: 500 },
-      rulesets: rulesetsYaml({ prestige: wide }),
+      rulesets: rulesetsDocument({ prestige: wide }),
     });
     expect(collector.hasErrors).toBe(false);
   });

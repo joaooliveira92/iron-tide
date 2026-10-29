@@ -171,7 +171,7 @@ export function buildDesignsFromData(
       buildRawDesignRecord(rec),
       DesignTemplateSchema,
       "DesignTemplate",
-      "designs.yaml",
+      "designs.ts",
       collector,
     );
     if (!validated) continue;

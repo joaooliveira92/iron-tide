@@ -7,7 +7,12 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 
 import { Compiler, type CompilerInput } from "../src/index.js";
 
-export const PROVENANCE = `{ sourceStatus: VERIFIED, confidence: HIGH, kind: historical_fact, sources: [{ title: "test" }] }`;
+export const PROVENANCE = JSON.stringify({
+  sourceStatus: "VERIFIED",
+  confidence: "HIGH",
+  kind: "historical_fact",
+  sources: [{ title: "test" }],
+});
 
 export const HULL_FORMS = JSON.stringify({
   hullForms: [
@@ -70,8 +75,19 @@ export function baseInput(fixture: Fixture, extra: Partial<CompilerInput> = {}):
     possessionFiles: [],
     portFiles: [],
     technologyFiles: [],
-    shipBalanceFiles: [fixture.write("ship-building/balance.yaml", "ship:\n  dummy: 1\n")],
-    hullFormFiles: [fixture.write("ship-building/hull-forms.yaml", HULL_FORMS)],
+    shipBalanceFiles: [
+      fixture.write(
+        "ship-building/balance.json",
+        `
+{
+  "ship": {
+    "dummy": 1
+  }
+}
+`,
+      ),
+    ],
+    hullFormFiles: [fixture.write("ship-building/hull-forms.json", HULL_FORMS)],
     ...extra,
   };
 }

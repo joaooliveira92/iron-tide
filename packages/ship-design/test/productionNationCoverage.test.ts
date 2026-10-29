@@ -17,7 +17,7 @@ describe("production nation coverage (release gate)", () => {
   it("loads the release scenario with its committed nation and profile floors", () => {
     expect(
       countries.length,
-      "countries.yaml must parse to at least the 14 committed 1880 release nations",
+      "countries.json must parse to at least the 14 committed 1880 release nations",
     ).toBeGreaterThanOrEqual(14);
     const playable = countries.filter((c) => c.isPlayable === true);
     expect(
@@ -40,7 +40,7 @@ describe("production nation coverage (release gate)", () => {
     for (const profile of navalProfiles) {
       expect(
         known.has(profile.nationId),
-        `${profile.nationId} is profiled but not in countries.yaml`,
+        `${profile.nationId} is profiled but not in countries.ts`,
       ).toBe(true);
     }
   });

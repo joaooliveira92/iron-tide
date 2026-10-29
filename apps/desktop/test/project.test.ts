@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vite-plus/test";
 import { mkdtempSync, writeFileSync, rmSync, mkdirSync, readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { FIXTURE_RULESETS_YAML, nationsYaml } from "@bluewave/test-support";
+import { FIXTURE_RULESETS_JSON, nationsDocument } from "@bluewave/test-support";
 import {
   loadContentDirectory,
   saveProjectFile,
@@ -19,12 +19,12 @@ const FIXTURE_FILES: Record<string, string> = {
     version: "0.1.0",
     type: "fixture",
     files: {
-      rulesets: ["rulesets.yaml"],
-      countries: ["countries.yaml"],
+      rulesets: ["rulesets.json"],
+      countries: ["countries.json"],
     },
   }),
-  "rulesets.yaml": FIXTURE_RULESETS_YAML,
-  "countries.yaml": nationsYaml([{ id: "uk", tag: "GBR", name: "United Kingdom" }]),
+  "rulesets.json": FIXTURE_RULESETS_JSON,
+  "countries.json": nationsDocument([{ id: "uk", tag: "GBR", name: "United Kingdom" }]),
 };
 
 function writeFixture(dir: string): void {
@@ -55,8 +55,8 @@ describe("project module", () => {
     expect(project.version).toBe(1);
     expect(project.name).toBe("1880-test-scenario");
     expect(project.manifest.name).toBe("1880-test-scenario");
-    expect(project.files["rulesets.yaml"]).toContain('id: "core"');
-    expect(project.files["countries.yaml"]).toBeDefined();
+    expect(project.files["rulesets.json"]).toContain('"id": "core"');
+    expect(project.files["countries.json"]).toBeDefined();
   });
 
   it("round-trips a project through a saved file", () => {
@@ -72,9 +72,9 @@ describe("project module", () => {
     const extracted = resolve(workingDir, "extracted");
     extractProject(loaded, extracted);
     expect(readFileSync(resolve(extracted, "pack.json"), "utf8")).toContain("1880-test-scenario");
-    expect(existsSync(resolve(extracted, "rulesets.yaml"))).toBe(true);
-    expect(readFileSync(resolve(extracted, "countries.yaml"), "utf8")).toBe(
-      project.files["countries.yaml"],
+    expect(existsSync(resolve(extracted, "rulesets.json"))).toBe(true);
+    expect(readFileSync(resolve(extracted, "countries.json"), "utf8")).toBe(
+      project.files["countries.json"],
     );
 
     rmSync(tmpProj, { recursive: true, force: true });
@@ -102,7 +102,7 @@ describe("project module", () => {
     expect(() => loadProjectFileJson(serializeProject(project))).not.toThrow();
     expect(() =>
       loadProjectFileJson(
-        '{"format":"bluewave-project","version":1,"name":"x","manifest":{},"files":{"..\\..\\x.yaml":"data"}}',
+        '{"format":"bluewave-project","version":1,"name":"x","manifest":{},"files":{"..\\..\\x.json":"data"}}',
       ),
     ).toThrow();
   });
