@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type { CampaignSnapshot } from "@bluewave/campaign";
+import { unifiedSnapshotHash } from "@bluewave/campaign";
 import { fleetManagementFromRulesets } from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
@@ -13,7 +14,7 @@ import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 import { Effect, Result } from "effect";
 
 import { compileProductionCampaign } from "../production-pack.js";
-import { LEDGER_ORDER, fullSnapshotHash, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
+import { LEDGER_ORDER, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
 import {
   REPLAY_FORMAT_VERSION,
   ReplayFileError,
@@ -268,7 +269,7 @@ export function recordReplay(scenario: ReplayScenario): string {
     initial: {
       kind: "production-pack",
       pack: PACK,
-      snapshotHash: fullSnapshotHash(startSnapshot(scenario.setup)),
+      snapshotHash: unifiedSnapshotHash(startSnapshot(scenario.setup)),
       ...(scenario.setup === undefined ? {} : { setup: scenario.setup }),
     },
     engineOptions:
@@ -318,7 +319,7 @@ export function verifyReplay(
     });
   }
   let snapshot = startSnapshot(file.initial.setup);
-  const initialHash = fullSnapshotHash(snapshot);
+  const initialHash = unifiedSnapshotHash(snapshot);
   if (initialHash !== file.initial.snapshotHash) {
     return fail({
       month: 0,
@@ -370,10 +371,10 @@ export function verifyReplay(
     }
     snapshot = step.next;
     if (options.roundTrip !== undefined && month < file.months.length) {
-      const expected = fullSnapshotHash(snapshot);
+      const expected = unifiedSnapshotHash(snapshot);
       const stored = options.roundTrip.lossy?.(snapshot, month) ?? snapshot;
       const trip = saveAndLoad(stored);
-      const actual = trip.ok ? fullSnapshotHash(trip.snapshot) : `(load failed: ${trip.reason})`;
+      const actual = trip.ok ? unifiedSnapshotHash(trip.snapshot) : `(load failed: ${trip.reason})`;
       if (actual !== expected) {
         return fail({
           month,

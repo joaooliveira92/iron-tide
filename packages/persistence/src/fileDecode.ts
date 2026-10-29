@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import { Result, Schema } from "effect";
-import { PointerFileSchema, SaveMetadataSchema, SigFileSchema } from "./schemas.js";
+import {
+  PointerFileSchema,
+  SaveManifestSchema,
+  SaveMetadataSchema,
+  SigFileSchema,
+} from "./schemas.js";
 
 const STRICT_DECODE_OPTIONS = { onExcessProperty: "error" } as const;
 
@@ -21,3 +26,4 @@ function jsonFileReader<A>(schema: Schema.ConstraintDecoder<A, never>): (path: s
 export const readPointerFile = jsonFileReader(PointerFileSchema);
 export const readSaveMetadata = jsonFileReader(SaveMetadataSchema);
 export const readSigFile = jsonFileReader(SigFileSchema);
+export const readSaveManifest = jsonFileReader(SaveManifestSchema);

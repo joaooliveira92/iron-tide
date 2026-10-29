@@ -69,7 +69,7 @@ interface CompiledArtifact {
   readonly contentHash: string;
   readonly compatibilityVersion: string;
   readonly campaignJson: string;
-  readonly signatureJson: string;
+  readonly campaignManifestHash: string;
   readonly campaignPayloadHash: string;
   readonly treasures: readonly number[];
 }
@@ -106,8 +106,16 @@ async function compileAndSave(
   if (saveEntry === undefined) throw new Error("no save directory was published");
   const payloadDir = join(saveDir, saveEntry.name);
   const campaignJson = readFileSync(join(payloadDir, "campaign.json"), "utf8");
-  const signatureJson = readFileSync(join(payloadDir, "campaign.sig.json"), "utf8");
-  return { ...compiled, campaignJson, signatureJson, campaignPayloadHash: sha256(campaignJson) };
+  const manifest = JSON.parse(readFileSync(join(payloadDir, "manifest.json"), "utf8")) as {
+    files: { name: string; hash: string }[];
+  };
+  const campaignManifestHash = manifest.files.find((file) => file.name === "campaign.json")!.hash;
+  return {
+    ...compiled,
+    campaignJson,
+    campaignManifestHash,
+    campaignPayloadHash: sha256(campaignJson),
+  };
 }
 
 function preferenceMatrix(): readonly AppPreferences[] {
@@ -166,7 +174,7 @@ describe("presentation invariance (U-5 ticket 01)", () => {
       expect(artifact.contentHash).toBe(baseline.contentHash);
       expect(artifact.compatibilityVersion).toBe(baseline.compatibilityVersion);
       expect(artifact.campaignJson).toBe(baseline.campaignJson);
-      expect(artifact.signatureJson).toBe(baseline.signatureJson);
+      expect(artifact.campaignManifestHash).toBe(baseline.campaignManifestHash);
       expect(artifact.campaignPayloadHash).toBe(baseline.campaignPayloadHash);
 
       expect(artifact.treasures).toEqual(baseline.treasures);

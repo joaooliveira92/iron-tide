@@ -10,7 +10,7 @@ import {
   type OfferRequest,
   type OfferResponse,
 } from "@bluewave/messages";
-import { hashSnapshot, MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
+import { unifiedSnapshotHash, MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 import { describe, expect, it } from "vite-plus/test";
 
 import { compileProductionCampaign } from "../src/production-pack.js";
@@ -228,8 +228,8 @@ describe("scripted production war months (ADR-0254 section)", () => {
     expect(declined.outcome).toBe("completed");
     expect(scores(declined)).toEqual([[-5, 0]]);
     expect(declined.finalSnapshot.wars.declinedBattles).toHaveLength(1);
-    expect(hashSnapshot(declined.finalSnapshot)).toBe(
-      hashSnapshot(run(snapshot, SEED, request, "decline").finalSnapshot),
+    expect(unifiedSnapshotHash(declined.finalSnapshot)).toBe(
+      unifiedSnapshotHash(run(snapshot, SEED, request, "decline").finalSnapshot),
     );
   });
 
@@ -322,7 +322,7 @@ describe("scripted production war months (ADR-0254 section)", () => {
     const request = offerOf(run(supported, SUPPORT_PRESENT_SEED));
     const a = run(supported, SUPPORT_PRESENT_SEED, request, "accept");
     const b = run(supported, SUPPORT_PRESENT_SEED, request, "accept");
-    expect(hashSnapshot(a.finalSnapshot)).toBe(hashSnapshot(b.finalSnapshot));
+    expect(unifiedSnapshotHash(a.finalSnapshot)).toBe(unifiedSnapshotHash(b.finalSnapshot));
     expect(a.eventLedger.hash()).toBe(b.eventLedger.hash());
     expect(a.randomLedger.hash()).toBe(b.randomLedger.hash());
   });
@@ -342,7 +342,9 @@ describe("peacetime production months (R1, R15)", () => {
       );
     const configured = execute({ battleOffers: rules, playerNationId: PLAYER });
     const dormant = execute();
-    expect(hashSnapshot(configured.finalSnapshot)).toBe(hashSnapshot(dormant.finalSnapshot));
+    expect(unifiedSnapshotHash(configured.finalSnapshot)).toBe(
+      unifiedSnapshotHash(dormant.finalSnapshot),
+    );
     expect(configured.eventLedger.hash()).toBe(dormant.eventLedger.hash());
     expect(configured.randomLedger.hash()).toBe(dormant.randomLedger.hash());
   });

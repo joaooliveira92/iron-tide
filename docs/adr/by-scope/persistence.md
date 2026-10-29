@@ -17,3 +17,5 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0278](../ADR-0278-save-files-decode-strictly.md) Save files decode strictly with `onExcessProperty: "error"`; only the save-header probe stays lenient.
 - [ADR-0285](../ADR-0285-campaign-snapshot-hash-covers-map-fields.md) The campaign snapshot hash covers Map fields.
 - [ADR-0305](../ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md) Save retention is opt-in with the active and previous saves always protected; Effect-returning persistence methods carry an `Effect` suffix.
+- [ADR-0330](../ADR-0330-unified-snapshot-hash.md) Every authoritative snapshot hash is the unified `unifiedSnapshotHash`; no replay, golden or cross-process path carries a local projection.
+- [ADR-0331](../ADR-0331-save-manifest-integrity.md) A save carries one manifest that lists every file with its hash, its format version and its hash version; the product claims corruption detection, never authenticity.

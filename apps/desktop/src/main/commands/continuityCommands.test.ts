@@ -14,7 +14,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { SaveStore, type SaveMetadata } from "@bluewave/persistence";
+import { SaveStore, writeSaveManifest, type SaveMetadata } from "@bluewave/persistence";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { CommitMonthResponse } from "@bluewave/campaign-engine";
 import { Effect, Layer, ManagedRuntime } from "effect";
@@ -309,6 +309,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     };
     parsed.snapshot.compatibilityVersion = "1.0.0";
     writeFileSync(campaignPath, JSON.stringify(parsed), "utf8");
+    writeSaveManifest(join(saveDir, pointer.activeSaveId));
 
     restartApp();
 
@@ -444,6 +445,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
         "utf8",
       );
     }
+    writeSaveManifest(dir);
   }
 
   it("replay says a month played under other ship-building content cannot be reproduced, not that it matched", async () => {
@@ -588,6 +590,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
       };
       parsed.timestamp = sharedTimestamp;
       writeFileSync(metaPath, JSON.stringify(parsed, null, 2), "utf8");
+      writeSaveManifest(join(saveDir, meta.saveId));
     }
 
     await advanceOneMonth(compileSessionId, 0);

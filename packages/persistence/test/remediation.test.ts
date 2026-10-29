@@ -14,7 +14,6 @@ import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/determi
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { RecoveryManager } from "../src/recovery.js";
-import type { SigFile } from "../src/schemas.js";
 import { toStorableSnapshot } from "../src/snapshotSerialization.js";
 import { SaveStore } from "../src/store.js";
 import { minimalCampaignState } from "./campaign-state-fixture.js";
@@ -56,24 +55,28 @@ describe("persistence remediation", () => {
     });
   });
 
-  describe("signature-file validation (TODO #1/#5)", () => {
-    it("rejects a save whose signature was tampered", () => {
+  describe("integrity manifest validation", () => {
+    it("rejects a save whose manifest hash was tampered", () => {
       store.save(minimalCampaignState(), tmpDir);
       const id = store.getActiveSaveId(tmpDir)!;
-      const sigPath = join(tmpDir, id, "campaign.sig.json");
-      const sig = JSON.parse(readFileSync(sigPath, "utf8")) as SigFile;
-      sig.serializedHash = "f".repeat(64);
-      writeFileSync(sigPath, JSON.stringify(sig, null, 2), "utf8");
+      const manifestPath = join(tmpDir, id, "manifest.json");
+      const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+        files: { name: string; hash: string }[];
+      };
+      const campaign = manifest.files.find((file) => file.name === "campaign.json")!;
+      campaign.hash = "f".repeat(64);
+      writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
 
       const error = expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
-      expect(error.message).toBe("Save signature does not match serialized content");
+      expect(error.message).toBe("Saved campaign data failed its integrity check");
     });
 
-    it("rejects a save whose signature was deleted", () => {
+    it("rejects a save whose manifest is invalid", () => {
       store.save(minimalCampaignState(), tmpDir);
       const id = store.getActiveSaveId(tmpDir)!;
-      writeFileSync(join(tmpDir, id, "campaign.sig.json"), "", "utf8");
-      expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
+      writeFileSync(join(tmpDir, id, "manifest.json"), "", "utf8");
+      const error = expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
+      expect(error.message).toBe("Save integrity manifest is invalid");
     });
 
     it("rejects a semantically-modified campaign.json", () => {
@@ -84,10 +87,11 @@ describe("persistence remediation", () => {
       data.snapshot.turnNumber = 99;
       writeFileSync(campaignPath, JSON.stringify(data), "utf8");
 
-      expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
+      const error = expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
+      expect(error.message).toBe("Saved campaign data failed its integrity check");
     });
 
-    it("rejects campaign.json whose hashes were recomputed but whose signature is stale", () => {
+    it("rejects campaign.json whose hashes were recomputed but whose manifest is stale", () => {
       const state = minimalCampaignState();
       store.save(state, tmpDir);
       const id = store.getActiveSaveId(tmpDir)!;
@@ -105,21 +109,23 @@ describe("persistence remediation", () => {
       data.rawHash = sha256Hex(canonicalSerialize({ snapshot: state.snapshot, envelope }));
       writeFileSync(campaignPath, JSON.stringify(data, null, 2), "utf8");
 
-      expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
+      const error = expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
+      expect(error.message).toBe("Saved campaign data failed its integrity check");
     });
 
-    it("loads a legacy save with no signature file, emitting a validation warning", () => {
+    it("loads a legacy save with no manifest, emitting one legacy warning", () => {
       store.save(minimalCampaignState(), tmpDir);
       const id = store.getActiveSaveId(tmpDir)!;
-      rmSync(join(tmpDir, id, "campaign.sig.json"));
+      rmSync(join(tmpDir, id, "manifest.json"));
 
       const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
       expect(loaded.warnings).toHaveLength(1);
-      expect(loaded.warnings[0]!.code).toBe("PERSISTENCE_UNSIGNED_SAVE");
+      expect(loaded.warnings[0]!.code).toBe("PERSISTENCE_LEGACY_SAVE");
       expect(loaded.warnings[0]!.severity).toBe("warning");
+      expect(loaded.warnings[0]!.message).toContain("before the integrity manifest");
     });
 
-    it("round-trips a normally signed save with no false rejection or warning", () => {
+    it("round-trips a sealed save with no false rejection or warning", () => {
       store.save(minimalCampaignState(), tmpDir);
       const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
       expect(loaded.warnings).toHaveLength(0);
@@ -207,7 +213,7 @@ describe("persistence remediation", () => {
       };
       for (const id of [pointer.activeSaveId, store.getPreviousSaveId(tmpDir)!]) {
         const files = readdirSync(join(tmpDir, id)).sort();
-        expect(files).toEqual(["campaign.json", "campaign.sig.json", "metadata.json"]);
+        expect(files).toEqual(["campaign.json", "manifest.json", "metadata.json"]);
       }
       unwrapSuccess(runExit(store.load(tmpDir)));
     });
@@ -233,8 +239,8 @@ describe("persistence remediation", () => {
     });
   });
 
-  describe("list() signature fallback (TODO #11)", () => {
-    it("lists a valid signature when metadata is missing", () => {
+  describe("list() fallback", () => {
+    it("lists a save through its campaign header when metadata is missing", () => {
       store.save(minimalCampaignState(), tmpDir);
       const id = store.getActiveSaveId(tmpDir)!;
       writeFileSync(join(tmpDir, id, "metadata.json"), "corrupt", "utf8");
@@ -249,14 +255,10 @@ describe("persistence remediation", () => {
       store.save(minimalCampaignState(), tmpDir);
       const id = store.getActiveSaveId(tmpDir)!;
       writeFileSync(join(tmpDir, id, "metadata.json"), "corrupt", "utf8");
-      const sig = JSON.parse(
-        readFileSync(join(tmpDir, id, "campaign.sig.json"), "utf8"),
-      ) as SigFile;
 
       const saves = store.list(tmpDir);
       expect(saves).toHaveLength(1);
       expect(saves[0]!.snapshotHash).toBe("");
-      expect(saves[0]!.snapshotHash).not.toBe(sig.stateHash);
     });
   });
 

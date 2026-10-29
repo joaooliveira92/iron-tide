@@ -1,13 +1,13 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/campaign";
+import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import { runSync } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
-import { MonthExecutor, ReplayVerifier } from "../src/index.js";
+import { MonthExecutor, ReplayVerifier, unifiedSnapshotHash } from "../src/index.js";
 import {
   ATTACKER_NATION,
   buildBattleManifest,
@@ -18,42 +18,6 @@ import {
   makeDesign,
   makeShip,
 } from "./battle-fixtures.js";
-
-function hashSnapshot(snapshot: CampaignSnapshot): string {
-  const nations: Record<string, NationState> = {};
-  for (const [id, nation] of snapshot.nations) nations[id] = nation;
-  return sha256Hex(
-    canonicalSerialize({
-      version: snapshot.version,
-      turnNumber: snapshot.turnNumber,
-      campaignId: snapshot.campaignId,
-      startYear: snapshot.startYear,
-      startMonth: snapshot.startMonth,
-      strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
-      slots: snapshot.slots.map((s) => ({ ...s })),
-      world: {
-        areas: snapshot.world.areas.map((a) => ({ ...a })),
-        routes: snapshot.world.routes.map((r) => ({ ...r })),
-        ports: snapshot.world.ports.map((p) => ({ ...p })),
-      },
-      nations,
-      wars: {
-        wars: snapshot.wars.wars.map((w) => ({ ...w })),
-        battles: snapshot.wars.battles.map((b) => ({ ...b })),
-        participantMemberships: snapshot.wars.participantMemberships.map((m) => ({ ...m })),
-        blockadeState: snapshot.wars.blockadeState.map((b) => ({ ...b })),
-        battleManifests: (snapshot.wars.battleManifests ?? []).map((m) => ({ ...m })),
-      },
-      politics: {
-        relations: snapshot.politics.relations.map((r) => ({ ...r })),
-        shells: { ...snapshot.politics.shells },
-      },
-      intelligence: { shells: { ...snapshot.intelligence.shells } },
-      rulesetVersion: snapshot.rulesetVersion,
-      compatibilityVersion: snapshot.compatibilityVersion,
-    }),
-  );
-}
 
 function toSaveableState(snapshot: CampaignSnapshot): CampaignState {
   const envelope = createEnvelope("campaign-snapshot", snapshot.compatibilityVersion, snapshot);
@@ -95,7 +59,7 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
       const month1 = executor.execute(snapshot0, [], CAMPAIGN_SEED, collector);
       expect(month1.success).toBe(true);
       const snapshot1 = month1.finalSnapshot;
-      const closingHash = hashSnapshot(snapshot1);
+      const closingHash = unifiedSnapshotHash(snapshot1);
 
       expect(snapshot1.wars.battles.length).toBe(1);
       expect(snapshot1.wars.battles[0]!.phase).toBe("resolved");
@@ -128,7 +92,9 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
         CAMPAIGN_SEED,
         new DiagnosticCollector(),
       );
-      expect(hashSnapshot(loadedAgain.finalSnapshot)).toBe(hashSnapshot(directAgain.finalSnapshot));
+      expect(unifiedSnapshotHash(loadedAgain.finalSnapshot)).toBe(
+        unifiedSnapshotHash(directAgain.finalSnapshot),
+      );
 
       const replay = new ReplayVerifier().verify(
         snapshot0,

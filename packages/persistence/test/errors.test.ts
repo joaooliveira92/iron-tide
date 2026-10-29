@@ -9,8 +9,8 @@ import {
   PersistenceCompatibilityMismatchError,
   PersistenceCorruptSaveError,
   PersistenceMissingSaveError,
-  PersistenceUnsignedSaveError,
-  UNSIGNED_SAVE_CODE,
+  PersistenceLegacySaveError,
+  LEGACY_SAVE_CODE,
 } from "../src/errors.js";
 
 describe("PERSISTENCE_* tagged errors (MIG-WIRE-1)", () => {
@@ -28,9 +28,9 @@ describe("PERSISTENCE_* tagged errors (MIG-WIRE-1)", () => {
       ],
       [new PersistenceCancelledError({ message: "m" }), CANCELLED_CODE, "PERSISTENCE_CANCELLED"],
       [
-        new PersistenceUnsignedSaveError({ message: "m" }),
-        UNSIGNED_SAVE_CODE,
-        "PERSISTENCE_UNSIGNED_SAVE",
+        new PersistenceLegacySaveError({ message: "m" }),
+        LEGACY_SAVE_CODE,
+        "PERSISTENCE_LEGACY_SAVE",
       ],
       [
         new PersistenceCompatibilityMismatchError({ message: "m" }),
@@ -66,14 +66,14 @@ describe("PERSISTENCE_* tagged errors (MIG-WIRE-1)", () => {
     expect(viaError.toHuman()).toBe(viaCollector.toHuman());
   });
 
-  it("projects the unsigned-save warning exactly like DiagnosticCollector.addWarning", () => {
+  it("projects the legacy-save warning exactly like DiagnosticCollector.addWarning", () => {
     const viaCollector = new DiagnosticCollector();
-    viaCollector.addWarning(UNSIGNED_SAVE_CODE, "no signature", { stage: "persistence.load" });
+    viaCollector.addWarning(LEGACY_SAVE_CODE, "legacy save", { stage: "persistence.load" });
 
     const viaError = new DiagnosticCollector();
     viaError.add(
-      new PersistenceUnsignedSaveError({
-        message: "no signature",
+      new PersistenceLegacySaveError({
+        message: "legacy save",
         stage: "persistence.load",
       }).toDiagnostic(),
     );

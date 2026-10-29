@@ -22,6 +22,7 @@ import {
   monthPipeline,
   ReplayVerifier,
   type PhasePermissions,
+  unifiedSnapshotHash,
 } from "../src/index.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
@@ -164,48 +165,6 @@ function makeBudgetCommand(
   };
 }
 
-function snapshotToHashable(snapshot: CampaignSnapshot): unknown {
-  const nations: Record<string, NationState> = {};
-  for (const [id, nation] of snapshot.nations) {
-    nations[id] = nation;
-  }
-  return {
-    version: snapshot.version,
-    turnNumber: snapshot.turnNumber,
-    campaignId: snapshot.campaignId,
-    startYear: snapshot.startYear,
-    startMonth: snapshot.startMonth,
-    strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
-    slots: snapshot.slots.map((s) => ({ nationId: s.nationId, type: s.type })),
-    world: {
-      areas: snapshot.world.areas.map((a) => ({ ...a })),
-      routes: snapshot.world.routes.map((r) => ({ ...r })),
-      ports: snapshot.world.ports.map((p) => ({ ...p })),
-    },
-    nations,
-    wars: {
-      wars: snapshot.wars.wars.map((w) => ({ ...w })),
-      battles: snapshot.wars.battles.map((b) => ({ ...b })),
-      participantMemberships: snapshot.wars.participantMemberships.map((m) => ({ ...m })),
-      blockadeState: snapshot.wars.blockadeState.map((b) => ({ ...b })),
-      battleManifests: (snapshot.wars.battleManifests ?? []).map((m) => ({ ...m })),
-    },
-    politics: {
-      relations: snapshot.politics.relations.map((r) => ({ ...r })),
-      shells: { ...snapshot.politics.shells },
-    },
-    intelligence: {
-      shells: { ...snapshot.intelligence.shells },
-    },
-    rulesetVersion: snapshot.rulesetVersion,
-    compatibilityVersion: snapshot.compatibilityVersion,
-  };
-}
-
-function hashSnapshot(snapshot: CampaignSnapshot): string {
-  return sha256Hex(canonicalSerialize(snapshotToHashable(snapshot)));
-}
-
 describe("Full-slice integration", () => {
   let fixtureDir: string;
   let fixtureCleanup: () => void;
@@ -242,7 +201,7 @@ describe("Full-slice integration", () => {
     const r1 = run();
     const r2 = run();
 
-    expect(hashSnapshot(r1.finalSnapshot)).toBe(hashSnapshot(r2.finalSnapshot));
+    expect(unifiedSnapshotHash(r1.finalSnapshot)).toBe(unifiedSnapshotHash(r2.finalSnapshot));
     expect(r1.commandLedger.hash()).toBe(r2.commandLedger.hash());
     expect(r1.eventLedger.hash()).toBe(r2.eventLedger.hash());
     expect(r1.financialLedger.hash()).toBe(r2.financialLedger.hash());
@@ -287,7 +246,7 @@ describe("Full-slice integration", () => {
       snapshot,
       [cmd],
       originalLedger,
-      hashSnapshot(original.finalSnapshot),
+      unifiedSnapshotHash(original.finalSnapshot),
       "replay-seed",
       collector,
     );

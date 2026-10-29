@@ -12,7 +12,7 @@ import {
 } from "@bluewave/messages";
 import { describe, expect, it } from "vite-plus/test";
 import {
-  hashSnapshot,
+  unifiedSnapshotHash,
   MonthExecutor,
   monthPipeline,
   ReplayVerifier,
@@ -152,8 +152,8 @@ describe("month interruption seam", () => {
     const withoutChannel = run(snapshot);
     const withEmptyChannel = run(snapshot, { turnId: "t-1", recordedInputs: [] });
     expect(withEmptyChannel.outcome).toBe("completed");
-    expect(hashSnapshot(withEmptyChannel.finalSnapshot)).toBe(
-      hashSnapshot(withoutChannel.finalSnapshot),
+    expect(unifiedSnapshotHash(withEmptyChannel.finalSnapshot)).toBe(
+      unifiedSnapshotHash(withoutChannel.finalSnapshot),
     );
   });
 
@@ -194,7 +194,9 @@ describe("month interruption seam", () => {
     };
     const first = run(snapshot, channel);
     const second = run(snapshot, channel);
-    expect(hashSnapshot(first.finalSnapshot)).toBe(hashSnapshot(second.finalSnapshot));
+    expect(unifiedSnapshotHash(first.finalSnapshot)).toBe(
+      unifiedSnapshotHash(second.finalSnapshot),
+    );
   });
 
   it("suspends with an error on a hash-mismatched input", () => {
@@ -249,7 +251,7 @@ describe("month interruption seam", () => {
       snapshot,
       [],
       resumed.commandLedger,
-      hashSnapshot(resumed.finalSnapshot),
+      unifiedSnapshotHash(resumed.finalSnapshot),
       "seam-seed",
       new DiagnosticCollector(),
       { interruptions: channel },
