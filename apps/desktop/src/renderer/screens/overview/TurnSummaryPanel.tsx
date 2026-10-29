@@ -5,7 +5,6 @@ import type {
   TurnSummaryEntry,
 } from "../../../shared/turn-message-contract.js";
 import type { UiStateTurnMessages } from "../../../shared/ui-state-contract.js";
-import { CollapsiblePanel } from "../../components/shared/CollapsiblePanel.js";
 import { resolveMessage } from "../../content/uiCatalogue.js";
 import {
   CATEGORY_ORDER,
@@ -39,7 +38,6 @@ function severityLabelKey(severity: string): string {
 export interface TurnSummaryPanelProps {
   readonly summaries: readonly TurnSummaryEntry[];
   readonly loading: boolean;
-  readonly defaultOpen: boolean;
   readonly turnMessages: UiStateTurnMessages;
   readonly onTogglePinned: (id: string) => void;
   readonly onToggleRead: (id: string) => void;
@@ -206,7 +204,6 @@ function MessageRow({
 export function TurnSummaryPanel({
   summaries,
   loading,
-  defaultOpen,
   turnMessages,
   onTogglePinned,
   onToggleRead,
@@ -224,150 +221,142 @@ export function TurnSummaryPanel({
   const actionableCount = messages.filter(isActionable).length;
 
   return (
-    <CollapsiblePanel
-      panelId="home-turn-summary"
-      title={resolveMessage("ui.turnSummary.title")}
-      defaultOpen={defaultOpen}
-      badge={summaries.length > 0 ? `${String(messages.length)}` : undefined}
-      testId="home-turn-summary"
-    >
-      <div className="space-y-2 p-2" data-testid="turn-summary-panel">
-        {loading && (
-          <p className="text-muted-foreground">{resolveMessage("ui.turnSummary.loading")}</p>
-        )}
-        {!loading && summaries.length === 0 && (
-          <p className="text-muted-foreground" data-testid="turn-summary-empty">
-            {resolveMessage("ui.turnSummary.empty")}
-          </p>
-        )}
+    <div className="space-y-2" data-testid="turn-summary-panel">
+      {loading && (
+        <p className="text-muted-foreground">{resolveMessage("ui.turnSummary.loading")}</p>
+      )}
+      {!loading && summaries.length === 0 && (
+        <p className="text-muted-foreground" data-testid="turn-summary-empty">
+          {resolveMessage("ui.turnSummary.empty")}
+        </p>
+      )}
 
-        {summaries.length > 1 && (
-          <div className="flex flex-wrap gap-1" data-testid="turn-history">
-            {summaries.map((entry) => (
-              <button
-                key={entry.turnId}
-                type="button"
-                data-testid="turn-history-item"
-                aria-pressed={entry.turnId === selected?.turnId}
-                className={`rounded border px-1.5 py-0.5 text-xs ${
-                  entry.turnId === selected?.turnId ? "bg-accent" : ""
-                }`}
-                onClick={() => setSelectedTurnId(entry.turnId)}
-              >
-                {turnLabel(entry)}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {summaries.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1">
-            <input
-              type="search"
-              data-testid="turn-search"
-              placeholder={resolveMessage("ui.turnSummary.searchPlaceholder")}
-              aria-label={resolveMessage("ui.turnSummary.searchLabel")}
-              className="min-w-0 flex-1 rounded border border-border/60 bg-background px-1.5 py-0.5 text-xs"
-              value={filters.search}
-              onChange={(event) =>
-                setFilters((current) => ({
-                  ...current,
-                  search: event.target.value,
-                }))
-              }
-            />
-            <select
-              data-testid="category-filter"
-              aria-label={resolveMessage("ui.turnSummary.categoryLabel")}
-              className="rounded border border-border/60 bg-background px-1 py-0.5 text-xs"
-              value={filters.category}
-              onChange={(event) =>
-                setFilters((current) => ({
-                  ...current,
-                  category: event.target.value,
-                }))
-              }
-            >
-              <option value="ALL">{resolveMessage("ui.turnSummary.allCategories")}</option>
-              {CATEGORY_ORDER.map((value) => (
-                <option key={value} value={value}>
-                  {resolveMessage(categoryLabelKey(value))}
-                </option>
-              ))}
-            </select>
-            <select
-              data-testid="severity-filter"
-              aria-label={resolveMessage("ui.turnSummary.severityLabel")}
-              className="rounded border border-border/60 bg-background px-1 py-0.5 text-xs"
-              value={filters.severity}
-              onChange={(event) =>
-                setFilters((current) => ({
-                  ...current,
-                  severity: event.target.value,
-                }))
-              }
-            >
-              {SEVERITIES.map((value) => (
-                <option key={value} value={value}>
-                  {value === "ALL"
-                    ? resolveMessage("ui.turnSummary.allSeverities")
-                    : resolveMessage(severityLabelKey(value))}
-                </option>
-              ))}
-            </select>
+      {summaries.length > 1 && (
+        <div className="flex flex-wrap gap-1" data-testid="turn-history">
+          {summaries.map((entry) => (
             <button
+              key={entry.turnId}
               type="button"
-              data-testid="actionable-toggle"
-              aria-pressed={filters.actionableOnly}
-              className={`rounded border border-border/60 px-1.5 py-0.5 text-xs ${
-                filters.actionableOnly ? "bg-accent" : ""
+              data-testid="turn-history-item"
+              aria-pressed={entry.turnId === selected?.turnId}
+              className={`rounded border px-1.5 py-0.5 text-xs ${
+                entry.turnId === selected?.turnId ? "bg-accent" : ""
               }`}
-              onClick={() =>
-                setFilters((current) => ({
-                  ...current,
-                  actionableOnly: !current.actionableOnly,
-                }))
-              }
+              onClick={() => setSelectedTurnId(entry.turnId)}
             >
-              {resolveMessage("ui.turnSummary.actionable", {
-                count: actionableCount,
-              })}
+              {turnLabel(entry)}
             </button>
-          </div>
-        )}
+          ))}
+        </div>
+      )}
 
-        {groups.map((group) => (
-          <section
-            key={group.category}
-            data-testid="turn-message-group"
-            data-category={group.category}
+      {summaries.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1">
+          <input
+            type="search"
+            data-testid="turn-search"
+            placeholder={resolveMessage("ui.turnSummary.searchPlaceholder")}
+            aria-label={resolveMessage("ui.turnSummary.searchLabel")}
+            className="min-w-0 flex-1 rounded border border-border/60 bg-background px-1.5 py-0.5 text-xs"
+            value={filters.search}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                search: event.target.value,
+              }))
+            }
+          />
+          <select
+            data-testid="category-filter"
+            aria-label={resolveMessage("ui.turnSummary.categoryLabel")}
+            className="rounded border border-border/60 bg-background px-1 py-0.5 text-xs"
+            value={filters.category}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                category: event.target.value,
+              }))
+            }
           >
-            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {resolveMessage(categoryLabelKey(group.category))} ({group.messages.length})
-            </h3>
-            <ul className="space-y-1">
-              {group.messages.map((message) => (
-                <MessageRow
-                  key={message.id}
-                  message={message}
-                  pinnedIds={turnMessages.pinnedIds}
-                  readIds={turnMessages.readIds}
-                  onTogglePinned={onTogglePinned}
-                  onToggleRead={onToggleRead}
-                  {...(onOpenEntity !== undefined ? { onOpenEntity } : {})}
-                  {...(isEntityAvailable !== undefined ? { isEntityAvailable } : {})}
-                />
-              ))}
-            </ul>
-          </section>
-        ))}
+            <option value="ALL">{resolveMessage("ui.turnSummary.allCategories")}</option>
+            {CATEGORY_ORDER.map((value) => (
+              <option key={value} value={value}>
+                {resolveMessage(categoryLabelKey(value))}
+              </option>
+            ))}
+          </select>
+          <select
+            data-testid="severity-filter"
+            aria-label={resolveMessage("ui.turnSummary.severityLabel")}
+            className="rounded border border-border/60 bg-background px-1 py-0.5 text-xs"
+            value={filters.severity}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                severity: event.target.value,
+              }))
+            }
+          >
+            {SEVERITIES.map((value) => (
+              <option key={value} value={value}>
+                {value === "ALL"
+                  ? resolveMessage("ui.turnSummary.allSeverities")
+                  : resolveMessage(severityLabelKey(value))}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            data-testid="actionable-toggle"
+            aria-pressed={filters.actionableOnly}
+            className={`rounded border border-border/60 px-1.5 py-0.5 text-xs ${
+              filters.actionableOnly ? "bg-accent" : ""
+            }`}
+            onClick={() =>
+              setFilters((current) => ({
+                ...current,
+                actionableOnly: !current.actionableOnly,
+              }))
+            }
+          >
+            {resolveMessage("ui.turnSummary.actionable", {
+              count: actionableCount,
+            })}
+          </button>
+        </div>
+      )}
 
-        {!loading && messages.length > 0 && visible.length === 0 && (
-          <p className="text-muted-foreground" data-testid="turn-summary-no-match">
-            {resolveMessage("ui.turnSummary.noMatch")}
-          </p>
-        )}
-      </div>
-    </CollapsiblePanel>
+      {groups.map((group) => (
+        <section
+          key={group.category}
+          data-testid="turn-message-group"
+          data-category={group.category}
+        >
+          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {resolveMessage(categoryLabelKey(group.category))} ({group.messages.length})
+          </h3>
+          <ul className="space-y-1">
+            {group.messages.map((message) => (
+              <MessageRow
+                key={message.id}
+                message={message}
+                pinnedIds={turnMessages.pinnedIds}
+                readIds={turnMessages.readIds}
+                onTogglePinned={onTogglePinned}
+                onToggleRead={onToggleRead}
+                {...(onOpenEntity !== undefined ? { onOpenEntity } : {})}
+                {...(isEntityAvailable !== undefined ? { isEntityAvailable } : {})}
+              />
+            ))}
+          </ul>
+        </section>
+      ))}
+
+      {!loading && messages.length > 0 && visible.length === 0 && (
+        <p className="text-muted-foreground" data-testid="turn-summary-no-match">
+          {resolveMessage("ui.turnSummary.noMatch")}
+        </p>
+      )}
+    </div>
   );
 }

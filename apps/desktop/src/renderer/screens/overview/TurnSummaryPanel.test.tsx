@@ -98,7 +98,6 @@ describe("TurnSummaryPanel", () => {
           ]),
         ]}
         loading={false}
-        defaultOpen
         turnMessages={emptyState}
         onTogglePinned={() => undefined}
         onToggleRead={() => undefined}
@@ -126,7 +125,6 @@ describe("TurnSummaryPanel", () => {
           ]),
         ]}
         loading={false}
-        defaultOpen
         turnMessages={emptyState}
         onTogglePinned={() => undefined}
         onToggleRead={() => undefined}
@@ -150,7 +148,6 @@ describe("TurnSummaryPanel", () => {
       <TurnSummaryPanel
         summaries={[summary([message({ id: "m1", interpolation: { count: 3 } })])]}
         loading={false}
-        defaultOpen
         turnMessages={emptyState}
         onTogglePinned={onTogglePinned}
         onToggleRead={() => undefined}
@@ -170,7 +167,6 @@ describe("TurnSummaryPanel", () => {
       <TurnSummaryPanel
         summaries={[summary([message({ id: "m1" })])]}
         loading={false}
-        defaultOpen
         turnMessages={emptyState}
         onTogglePinned={() => undefined}
         onToggleRead={() => undefined}
@@ -190,7 +186,6 @@ describe("TurnSummaryPanel", () => {
       <TurnSummaryPanel
         summaries={[summary([message({ id: "m1" })])]}
         loading={false}
-        defaultOpen
         turnMessages={emptyState}
         onTogglePinned={() => undefined}
         onToggleRead={() => undefined}
@@ -227,7 +222,6 @@ describe("TurnSummaryPanel", () => {
           ]),
         ]}
         loading={false}
-        defaultOpen
         turnMessages={emptyState}
         onTogglePinned={() => undefined}
         onToggleRead={() => undefined}
@@ -245,7 +239,6 @@ describe("TurnSummaryPanel", () => {
       <TurnSummaryPanel
         summaries={[]}
         loading={false}
-        defaultOpen
         turnMessages={emptyState}
         onTogglePinned={() => undefined}
         onToggleRead={() => undefined}
