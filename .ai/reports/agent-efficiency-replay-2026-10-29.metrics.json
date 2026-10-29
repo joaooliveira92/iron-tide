@@ -1,0 +1,62 @@
+{
+  "experiment": "agent-efficiency-replay-2026-10-29",
+  "ticket": 359,
+  "base": "e866085",
+  "model": "openrouter/~deepseek/deepseek-flash-latest",
+  "arms": {
+    "control": {
+      "session": "ses_e7750230cffeh7ldowKZq1vewM",
+      "head": "e866085",
+      "wallMinutes": 6.3,
+      "steps": 54,
+      "toolCalls": 73,
+      "kinds": { "read": 34, "verify": 19, "mutate": 14, "wait": 0, "other": 6 },
+      "failed": 0,
+      "promptTokens": 2840658,
+      "freshInput": 55762,
+      "cacheRead": 2784896,
+      "output": 12942,
+      "cost": 0.042418,
+      "meanContext": 52605,
+      "peakContext": 81134,
+      "filesChanged": 7,
+      "insertions": 188,
+      "deletions": 14,
+      "focusedTests": "8 passed",
+      "newToolCalls": 0
+    },
+    "treatment": {
+      "session": "ses_e77434a5fffetOxQ2B9p2Gtw4F",
+      "head": "0c5106e",
+      "wallMinutes": 5.1,
+      "steps": 35,
+      "toolCalls": 55,
+      "kinds": { "read": 35, "verify": 7, "mutate": 13, "wait": 0, "other": 0 },
+      "failed": 0,
+      "promptTokens": 1730915,
+      "freshInput": 213603,
+      "cacheRead": 1517312,
+      "output": 1287,
+      "cost": 0.026154,
+      "meanContext": 49455,
+      "peakContext": 71044,
+      "filesChanged": 6,
+      "insertions": 212,
+      "deletions": 59,
+      "focusedTests": "8 passed",
+      "newToolCalls": 0
+    }
+  },
+  "thresholds": {
+    "stepsRatioMax": 0.75,
+    "promptTokensRatioMax": 0.7,
+    "wallRatioMax": 1.2,
+    "failedRateDeltaMax": 0.05
+  },
+  "observed": {
+    "stepsRatio": 0.648,
+    "promptTokensRatio": 0.609,
+    "wallRatio": 0.81,
+    "failedRateDelta": 0
+  }
+}
