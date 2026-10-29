@@ -51,9 +51,9 @@ function legacyComponentValue(row: GunPlacement, field: "weightKg" | "costMicro"
 const FIRST_CLASS = ["france", "germany", "uk"];
 
 describe("gun read path over today's content (ship-part-model 03)", () => {
-  it("covers all 96 reference designs and all 251 gun placements", () => {
-    expect(designs.length).toBe(96);
-    expect(gunPlacements.length).toBe(251);
+  it("covers all 97 reference designs and all 264 gun placements", () => {
+    expect(designs.length).toBe(97);
+    expect(gunPlacements.length).toBe(264);
     expect(gunPartModel.unread).toEqual([]);
   });
 
@@ -303,7 +303,7 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
         : [],
     );
 
-    it("reclassifies exactly the twelve §9.2 placements as BROADSIDE_BATTERY assemblies", () => {
+    it("reclassifies exactly the fifteen §9.2 and 16-inch placements as BROADSIDE_BATTERY assemblies", () => {
       expect(
         d17
           .map(({ row, t }) => `${where(row)}:${t.familyId}:${t.legacyResolvedMountType}`)
@@ -318,6 +318,9 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
         "redoutable_1878:main_fwd:gun_bl_274mm_m1875:BARBETTE",
         "sachsen_1878:main_aft:gun_bl_263mm_rkl20:TURRET",
         "sachsen_1878:main_fwd:gun_bl_263mm_rkl20:TURRET",
+        "starter_bb_usa_1945:main_1:gun_ap_16in_50_triple:TURRET",
+        "starter_bb_usa_1945:main_2:gun_ap_16in_50_triple:TURRET",
+        "starter_bb_usa_1945:main_3:gun_ap_16in_50_triple:TURRET",
         "starter_ca_usa_1948:main_1:gun_ap_8in_55_triple:TURRET",
         "starter_ca_usa_1948:main_2:gun_ap_8in_55_triple:TURRET",
         "starter_ca_usa_1948:main_3:gun_ap_8in_55_triple:TURRET",
@@ -360,7 +363,7 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
     const unresolved = results.flatMap(({ got }) => (got.unresolved ? [got.unresolved] : []));
 
     it("every one of the 183 non-resolving placements carries a reason and its parts", () => {
-      expect(unresolved.length).toBe(183);
+      expect(unresolved.length).toBe(196);
       expect(unresolved.length + 68).toBe(gunPlacements.length);
       expect(new Set(unresolved.map((u) => u.code))).toEqual(
         new Set(["PART_READ_PATH_NO_FIRST_CLASS_ARMAMENT"]),

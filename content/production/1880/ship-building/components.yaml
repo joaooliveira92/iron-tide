@@ -1459,7 +1459,7 @@ components:
     category: SECONDARY_GUN
     introduction: { fromMonth: "1945-01", obsoleteMonth: null }
     requires: [gun_dp_rapid_5in]
-    parameters: { barrels: { min: 2, max: 2, step: 1 }, rounds: { min: 200, max: 800, step: 50 } }
+    parameters: { barrels: { min: 2, max: 2, step: 1 }, rounds: { min: 100, max: 800, step: 50 } }
     constants:
       {
         gun_kg: 1810,
@@ -1593,6 +1593,45 @@ components:
       beamArcDeg: "150"
       maxFeedPermille: "300"
     maintenanceMonthlyBp: 20
+  # US 16-inch/50 Mark 7 gun in the Iowa class triple turret, E-1 1940-1949 (ADR-0332; research note section 14). Sourced
+  # (navweaps.com WNUS_16-50_mk7 and navypedia.org us_bb_iowa, SINGLE-SOURCE): 406 mm bore, 1,225 kg AP Mark 8 shell, 121,519 kg gun
+  # with breech, 1,735 mt triple turret, 2 rounds per minute, about 300 deg of train, service 1943. The charge (2,444 bp) is DERIVED
+  # from 299.4 kg over the AP shell. The turret splits as 578,467 kg per barrel and no fixed mass (1,735,401 kg). Mount cost, round
+  # volume, crew, volume and footprint scale the 8-inch triple by mass and follow the same conventions: all BALANCE TARGET.
+  - id: gun_ap_16in_50_triple
+    displayName: "16-inch/50 Mark 7 gun in triple turret"
+    category: MAIN_GUN
+    introduction: { fromMonth: "1943-01", obsoleteMonth: null }
+    requires: [gun_16in_heavy_guns]
+    parameters: { barrels: { min: 3, max: 3, step: 1 }, rounds: { min: 50, max: 1300, step: 50 } }
+    constants:
+      {
+        gun_kg: 121519,
+        mount_per_barrel_kg: 578467,
+        mount_fixed_kg: 0,
+        cost_per_kg_micro: 197000,
+        mount_cost_micro: 165300000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "600000 * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "64 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, heavy]
+    deckFootprintMm2: "30000000 * barrels"
+    heightMm: "4000"
+    zCgMm: "7500"
+    fcClass: heavy
+    attributes:
+      caliberUm: "406000"
+      shellMassG: "1225000"
+      chargeBp: "2444"
+      roundVolumeMl: "600000"
+      rofBaseX100: "200"
+      beamArcDeg: "150"
+      maxFeedPermille: "250"
+    maintenanceMonthlyBp: 40
   # US 5-inch/54 Mark 18 gun in the Mark 42 single mount, E-1 1950-1959 (ADR-0291; docs/research/e-1-1940s-hull-and-part-values.md section 13). Sourced
   # (navweaps.com WNUS_5-54_mk42, SINGLE-SOURCE): 127 mm bore, 31.45 kg HC projectile, 2,550 kg gun, 58,586 kg mount without ammunition and fluids, 40 rounds per
   # minute as designed, about 300 deg of train, 20 crew in the original Mod 0, service 1954. The charge (2,604 bp) is DERIVED from 8.19 kg over the projectile. The

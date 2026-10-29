@@ -19,6 +19,9 @@ export const D17_ROWS: readonly (readonly [
   ["starter_ca_usa_1948", "main_1", "gun_ap_8in_55_triple", 3, 1, 3, "TURRET"],
   ["starter_ca_usa_1948", "main_2", "gun_ap_8in_55_triple", 3, 1, 3, "TURRET"],
   ["starter_ca_usa_1948", "main_3", "gun_ap_8in_55_triple", 3, 1, 3, "TURRET"],
+  ["starter_bb_usa_1945", "main_1", "gun_ap_16in_50_triple", 3, 1, 3, "TURRET"],
+  ["starter_bb_usa_1945", "main_2", "gun_ap_16in_50_triple", 3, 1, 3, "TURRET"],
+  ["starter_bb_usa_1945", "main_3", "gun_ap_16in_50_triple", 3, 1, 3, "TURRET"],
 ];
 
 export const TORPEDO_ROWS: readonly (readonly [string, string, string, number, number])[] = [

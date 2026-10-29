@@ -296,3 +296,29 @@ Sources: NP (Navypedia) us_dd_forrest_sherman.htm and NW-54 https://www.navweaps
 
 Unsourced and set as `BALANCE_TARGET` or `ESTIMATE`: the mount split, cost, round volume, volume and footprint; the hull-form coefficients and `formBp`; rounds,
 quarters, moulded depth and the fire-control fit. Unmodelled for lack of a part family: 76 mm twin AA, 324 mm ASW tubes, Hedgehog.
+
+## 14. Iowa battleship and the 16-inch/50 gun (added for the battleship slice, 2026-10-29)
+
+Sources: NW-16 https://www.navweaps.com/Weapons/WNUS_16-50_mk7.php and NP us_bb_iowa.htm, both fetched 2026-10-29.
+
+| Item | Value | Source | Confidence |
+|---|---|---|---|
+| Displacement | 48,110 t standard, 57,540 t full load | NP | SINGLE-SOURCE |
+| Length, beam, draught | 262.1 m wl (270.4 m oa), 33.0 m, 11.0 m full load | NP | SINGLE-SOURCE |
+| Power, speed | 212,000 shp (158,084 kW), 32.5 kn | NP | SINGLE-SOURCE |
+| Fuel, range | 7,621 t oil, 15,000 nm at 15 kn | NP | SINGLE-SOURCE |
+| Armament | 3 x 3 - 406/50 Mk 7; 10 x 2 - 127/38 Mk 12 | NP | SINGLE-SOURCE |
+| Belt | 307 mm on 22 mm plating, inclined 19 deg; lower belt 307-41 mm | NP | SINGLE-SOURCE |
+| Main deck | 178 mm (152 mm near centreline); upper deck 38 mm | NP | SINGLE-SOURCE |
+| Turret | 432 mm face on 63 mm plating, 241 mm sides, 300 mm rear, 184 mm crown | NP | SINGLE-SOURCE |
+| Underwater protection | 317 kg TNT | NP | SINGLE-SOURCE |
+| Gun | 406 mm bore, 50 calibres, 121,519 kg with breech, 2 rounds/min, service 1943 | NW-16 | SINGLE-SOURCE |
+| Projectile, charge | AP Mark 8 1,225 kg, full charge 299.4 kg (2,444 bp, DERIVED) | NW-16 | SINGLE-SOURCE, DERIVED |
+| Muzzle velocity | AP 762 m/s, HC 820 m/s | NW-16 | SINGLE-SOURCE |
+| Turret mass | 1,728.4-1,735.4 mt; elevation -2/+45 deg (Turret II 0/+45); train -150/+150 deg | NW-16 | SINGLE-SOURCE |
+| Block coefficient | 0.590 at full load | DERIVED from the dimensions with seawater at 1,025 kg/m3 | DERIVED |
+
+Unsourced and set as `BALANCE_TARGET` or `ESTIMATE`: the mount split (578,467 kg per gun), mount cost scaled by mass from the 8-inch triple, round volume, turret crew,
+volume and footprint; hull-form band edges, `formBp`, `cFormX100` and the five coefficient fields; moulded depth, armour region lengths and widths, magazine box size,
+rounds per gun, quarters and fire-control fit. The reference design is dated 1945-01 because the pack's 5-inch/38 twin mount is dated 1945 (ADR-0284 decision 2); the
+Iowa class commissioned in 1943, so the date is a pack constraint, not the class's service entry.

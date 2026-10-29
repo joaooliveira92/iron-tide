@@ -39,6 +39,7 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire.
 - [ADR-0312](../ADR-0312-surface-to-surface-missile-combat-module.md) Surface-to-surface missile salvos are a deterministic combat module.
 - [ADR-0314](../ADR-0314-fleet-management-values-and-repair-entry.md) Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope.
+- [ADR-0332](../ADR-0332-e1-1940s-battleship-and-16-inch-gun-values.md) E-1 1940-1949 battleship and 16-inch gun values.
 
 ## Superseded (do not follow)
 

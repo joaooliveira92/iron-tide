@@ -4445,6 +4445,84 @@ parts:
       weaponCategory: SECONDARY_GUN
   - capabilities:
       - kind: ammunition_feed
+        maxFeedPermille: 250
+      - class: heavy
+        kind: fire_control_class
+    engineering:
+      maintenance:
+        monthlyBpOfCost: 40
+      physical:
+        centreOfGravity:
+          datum: PART_BASE
+          zMm: 7500
+        envelopeHeightMm: 4000
+      power:
+        consumption:
+          - basis: PER_PART_UNIT
+            id: power
+            kind: powerKw
+            value: 1
+    entryUnits:
+      max: 3
+      min: 3
+      step: 1
+    family: gun
+    id: standard_gun_ap_16in_50_triple
+    lifecycle:
+      availableFrom: 1943-01
+      availableUntil: null
+      requires:
+        - gun_16in_heavy_guns
+    metadata:
+      displayName: 16-inch/50 Mark 7 gun in triple turret
+      tags:
+        - gun
+        - heavy
+    name: US 16-inch/50 Mark 7 gun in triple turret
+    origin:
+      sourceFile: ship-building/components.yaml
+    parameters:
+      rounds:
+        max: 1300
+        min: 50
+        step: 50
+    provenance:
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0332. Bore, shell, mass and mount from navweaps.com WNUS_16-50_mk7 and navypedia.org us_bb_iowa (SINGLE-SOURCE); the component carries the derivations.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_16-50_mk7.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md section 14
+          title: navweaps.com US 16-inch/50 (40.6 cm) Mark 7
+        - archiveOrUrl: https://www.navypedia.org/ships/usa/us_bb_iowa.htm
+          section: docs/research/e-1-1940s-hull-and-part-values.md section 14
+          title: navypedia.org Iowa class battleships
+    provides: gun
+    quantities:
+      - basis: PER_PART_UNIT
+        id: gun_mass
+        kind: massKg
+        value: 121519
+      - basis: PER_PART_UNIT
+        id: gun_cost
+        kind: costMicro
+        value: 23939243000
+    revisions: []
+    spec:
+      beamArcDeg: 150
+      calibreUm: 406000
+      gunFamily: gun_ap_16in_50_triple
+      gunMassKg: 121519
+      mechanicalRateOfFireRoundsPerMinuteX100: 200
+      propellantChargeBp: 2444
+      roundVolumeMl: 600000
+      shellMassG: 1225000
+      supportedMountTypes:
+        - TURRET
+      weaponCategory: MAIN_GUN
+  - capabilities:
+      - kind: ammunition_feed
         maxFeedPermille: 300
       - class: heavy
         kind: fire_control_class
@@ -5599,7 +5677,7 @@ parts:
     parameters:
       rounds:
         max: 800
-        min: 200
+        min: 100
         step: 50
     provenance:
       confidence: MEDIUM

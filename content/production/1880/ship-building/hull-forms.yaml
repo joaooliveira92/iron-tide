@@ -173,6 +173,22 @@ hullForms:
     deckFullnessBp: 7000
     lcbPermille: 500
     zones: *a1
+  # Fast battleship hull (E-1 1940-1949, ADR-0332). Length band anchored on Iowa (262.1 m wl) and L/B on its 7.94
+  # (docs/research/e-1-1940s-hull-and-part-values.md section 14); band edges, formBp and the five coefficient fields are BALANCE TARGET:
+  # waterplane, sheer, fullness and LCB are copied from heavy_cruiser_form, and formBp is fitted so the reference closes on its sourced
+  # 57,540 t full load with the fitted plant mass, until a hull-weight fraction is sourced.
+  - id: fast_battleship_form
+    lengthMinMm: 250000
+    lengthMaxMm: 280000
+    lbMinX100: 740
+    lbMaxX100: 840
+    formBp: 8530
+    waterplaneCoeffBp: 7200
+    sheerBp: 11000
+    volumeFullnessBp: 5500
+    deckFullnessBp: 7000
+    lcbPermille: 500
+    zones: *a1
   # Postwar destroyer hull (E-1 1950-1959, ADR-0291). Length band anchored on Forrest Sherman (124.1 m wl) and L/B on its 9.06 (docs/research/e-1-1940s-hull-and-part-values.md
   # section 13); band edges, formBp and the five coefficient fields are BALANCE TARGET: waterplane, sheer, fullness and LCB are copied from destroyer_form, and
   # formBp is fitted so the reference closes on its sourced 4,916 t full load, until a hull-weight fraction is sourced.

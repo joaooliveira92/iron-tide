@@ -1,5 +1,67 @@
 parts:
   - family: gun_mount
+    id: gun_ap_16in_50_triple_central_battery_3
+    lifecycle:
+      availableFrom: 1943-01
+      availableUntil: null
+      requires:
+        - gun_16in_heavy_guns
+    name: gun_ap_16in_50_triple_central_battery_3
+    origin:
+      sourceFile: ship-building/components.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0332. Bore, shell, mass and mount from navweaps.com WNUS_16-50_mk7 and navypedia.org us_bb_iowa (SINGLE-SOURCE); the component carries the derivations.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_16-50_mk7.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md section 14
+          title: navweaps.com US 16-inch/50 (40.6 cm) Mark 7
+        - archiveOrUrl: https://www.navypedia.org/ships/usa/us_bb_iowa.htm
+          section: docs/research/e-1-1940s-hull-and-part-values.md section 14
+          title: navypedia.org Iowa class battleships
+    provides: gun_mount
+    quantities:
+      - basis: PER_LOADOUT_ENTRY
+        id: installation_fixed
+        kind: massKg
+        value: 0
+      - basis: PER_CONTAINED_UNIT
+        id: installation_per_gun
+        kind: massKg
+        value: 578467
+      - basis: PER_CONTAINED_UNIT
+        id: mount_cost_per_gun
+        kind: costMicro
+        value: 165300000000
+      - basis: PER_CONTAINED_UNIT
+        id: crew_per_gun
+        kind: crew
+        value: 64
+      - basis: PER_CONTAINED_UNIT
+        id: volume_per_gun
+        kind: volumeLitre
+        value: 600000
+      - basis: PER_CONTAINED_UNIT
+        id: deck_footprint_per_gun
+        kind: deckFootprintMm2
+        value: 30000000
+    revisions: []
+    slots:
+      - accepts:
+          - gun
+        id: guns
+        mountCount:
+          max: 3
+          min: 3
+    spec:
+      compatibleGunFamilies:
+        - gun_ap_16in_50_triple
+      firingArcDeg: 150
+      gunsPerMount: 3
+      mountType: BROADSIDE_BATTERY
+  - family: gun_mount
     id: gun_ap_8in_55_triple_central_battery_3
     lifecycle:
       availableFrom: 1948-01

@@ -1248,3 +1248,228 @@ designs:
           componentId: funnel_single
           zoneId: SUPERSTRUCTURE
           stationPermille: 630
+
+  # Battleship starter for the United States, 1945 (E-1 1940-1949, ADR-0332). Hull dimensions, 48,110 t standard and 57,540 t full-load
+  # displacement, 212,000 shp (158,084 kW), 32.5 kn, 7,621 t of oil, 307 mm belt, 178 mm deck, 432 mm turret faces and 317 kg torpedo
+  # protection are the Iowa figures of docs/research/e-1-1940s-hull-and-part-values.md section 14 (Navypedia, SINGLE-SOURCE); three 16-inch
+  # triple turrets and ten 5-inch twin mounts are the class armament. The armour lengths and widths, rounds, quarters, moulded depth and
+  # fire-control fit are ESTIMATES, not recorded outfit. The date is 1945-01 because the pack's 5-inch/38 twin mount is dated 1945
+  # (ADR-0284 decision 2), not because the class entered service then.
+  - id: starter_bb_usa_1945
+    name: Battleship (starter, BB) — United States, 1945
+    month: 1945-01
+    starterFor: BB
+    draft:
+      nationId: usa
+      requirement:
+        category: BB
+        requiredSpeedMilliKnots: 32500
+        cruiseSpeedMilliKnots: 15000
+        requiredRangeNm: 15000
+        designThreatId: rml_16in
+        modernizationExpectation: NONE
+        crewQualityBp: 10000
+        accommodationStandard: STANDARD
+        protectionGoal: STANDARD
+      hull:
+        hullFormId: fast_battleship_form
+        lengthWl: 262100
+        beam: 33000
+        draught: 11000
+        depthToMainDeck: 15500
+        blockCoeffBp: 5900
+        materialId: mild_steel
+        structuralSchemeId: mixed
+        subdivisionGrade: 3
+        targetDisplacementKg: 57540000
+        limitDisplacementKg: null
+        designMarginBp: 300
+        growthReserveBp: 0
+      machinery:
+        plantId: hp_steam_geared_turbine
+        installedKw: 158084
+        zoneId: CENTRAL_MACHINERY
+        stationPermille: 450
+        fuelCapacityKg: 7621000
+        fuelZoneId: CENTRAL_MACHINERY
+        fuelStationPermille: 500
+        foulingBp: 0
+        rooms:
+          - zoneId: CENTRAL_MACHINERY
+            stationPermille: 450
+            shareBp: 6000
+          - zoneId: AFT_SERVICE
+            stationPermille: 680
+            shareBp: 4000
+      armour:
+        regions:
+          - {
+              region: BELT_MAIN,
+              thicknessUm: 307000,
+              lengthMm: 141400,
+              heightMm: 3200,
+              materialId: krupp,
+              cosObliquityBp: 9455,
+            }
+          - {
+              region: DECK_MAIN,
+              thicknessUm: 178000,
+              lengthMm: 141400,
+              heightMm: 33000,
+              materialId: krupp,
+              cosObliquityBp: 10000,
+            }
+          - {
+              region: TURRET,
+              thicknessUm: 432000,
+              lengthMm: 36000,
+              heightMm: 4000,
+              materialId: krupp,
+              cosObliquityBp: 10000,
+            }
+          - {
+              region: MAGAZINE_BOX,
+              thicknessUm: 178000,
+              lengthMm: 40000,
+              heightMm: 2400,
+              materialId: krupp,
+              cosObliquityBp: 10000,
+            }
+        citadelLengthMm: 141400
+        torpedoWarheadKg: 317
+        bunkerProtectionBp: 0
+      placements:
+        - instanceId: main_1
+          componentId: gun_ap_16in_50_triple
+          zoneId: FORECASTLE
+          stationPermille: 40
+          params: { barrels: 3, rounds: 50 }
+          magazineRef: mag_fwd
+        - instanceId: main_2
+          componentId: gun_ap_16in_50_triple
+          zoneId: FWD_SERVICE
+          stationPermille: 180
+          params: { barrels: 3, rounds: 50 }
+          magazineRef: mag_fwd2
+        - instanceId: main_3
+          componentId: gun_ap_16in_50_triple
+          zoneId: QUARTERDECK
+          stationPermille: 900
+          params: { barrels: 3, rounds: 50 }
+          magazineRef: mag_aft
+        - instanceId: secondary_1
+          componentId: gun_dp_5in_38_twin
+          zoneId: FWD_SERVICE
+          stationPermille: 250
+          params: { barrels: 2, rounds: 100 }
+          magazineRef: mag_sec_fwd
+        - instanceId: secondary_2
+          componentId: gun_dp_5in_38_twin
+          zoneId: FWD_SERVICE
+          stationPermille: 275
+          params: { barrels: 2, rounds: 100 }
+          magazineRef: mag_sec_fwd
+        - instanceId: secondary_3
+          componentId: gun_dp_5in_38_twin
+          zoneId: FWD_SERVICE
+          stationPermille: 250
+          params: { barrels: 2, rounds: 100 }
+          magazineRef: mag_sec_fwd
+        - instanceId: secondary_4
+          componentId: gun_dp_5in_38_twin
+          zoneId: FWD_SERVICE
+          stationPermille: 275
+          params: { barrels: 2, rounds: 100 }
+          magazineRef: mag_sec_fwd
+        - instanceId: secondary_5
+          componentId: gun_dp_5in_38_twin
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 610
+          params: { barrels: 2, rounds: 100 }
+          magazineRef: mag_sec_aft
+        - instanceId: secondary_6
+          componentId: gun_dp_5in_38_twin
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 630
+          params: { barrels: 2, rounds: 100 }
+          magazineRef: mag_sec_aft
+        - instanceId: secondary_7
+          componentId: gun_dp_5in_38_twin
+          zoneId: AFT_SERVICE
+          stationPermille: 700
+          params: { barrels: 2, rounds: 100 }
+          magazineRef: mag_sec_aft
+        - instanceId: secondary_8
+          componentId: gun_dp_5in_38_twin
+          zoneId: AFT_SERVICE
+          stationPermille: 745
+          params: { barrels: 2, rounds: 100 }
+          magazineRef: mag_sec_aft
+        - instanceId: secondary_9
+          componentId: gun_dp_5in_38_twin
+          zoneId: AFT_SERVICE
+          stationPermille: 750
+          params: { barrels: 2, rounds: 100 }
+          magazineRef: mag_sec_aft
+        - instanceId: secondary_10
+          componentId: gun_dp_5in_38_twin
+          zoneId: QUARTERDECK
+          stationPermille: 950
+          params: { barrels: 2, rounds: 100 }
+          magazineRef: mag_sec_aft
+        - instanceId: mag_fwd
+          componentId: magazine_heavy
+          zoneId: FWD_MAGAZINE
+          stationPermille: 120
+        - instanceId: mag_fwd2
+          componentId: magazine_heavy
+          zoneId: FWD_MAGAZINE
+          stationPermille: 170
+        - instanceId: mag_aft
+          componentId: magazine_heavy
+          zoneId: AFT_MAGAZINE
+          stationPermille: 890
+        - instanceId: mag_sec_fwd
+          componentId: magazine_medium
+          zoneId: FWD_MAGAZINE
+          stationPermille: 160
+        - instanceId: mag_sec_aft
+          componentId: magazine_medium
+          zoneId: AFT_MAGAZINE
+          stationPermille: 840
+        - instanceId: rf
+          componentId: rangefinder_optical
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 525
+        - instanceId: dyn
+          componentId: dynamo_small
+          zoneId: FWD_SERVICE
+          stationPermille: 200
+        - instanceId: vent
+          componentId: ventilation_plant
+          zoneId: FWD_SERVICE
+          stationPermille: 210
+        - instanceId: quarters
+          componentId: quarters_crew
+          zoneId: FWD_SERVICE
+          stationPermille: 230
+          params: { blocks: 120 }
+        - instanceId: quarters_aft
+          componentId: quarters_crew
+          zoneId: AFT_SERVICE
+          stationPermille: 720
+          params: { blocks: 120 }
+        - instanceId: quarters_fwd2
+          componentId: quarters_crew
+          zoneId: FWD_SERVICE
+          stationPermille: 240
+          params: { blocks: 120 }
+        - instanceId: quarters_aft2
+          componentId: quarters_crew
+          zoneId: AFT_SERVICE
+          stationPermille: 700
+          params: { blocks: 120 }
+        - instanceId: funnel
+          componentId: funnel_single
+          zoneId: SUPERSTRUCTURE
+          stationPermille: 630

@@ -121,7 +121,12 @@ describe("buildWorkshopView", () => {
   });
   it("lists every yard with its fit, reasons and months; exactly the forecast yard is chosen", () => {
     const big = buildWorkshopView(majestic, env("1896-01")).forecast;
-    expect(big.yards.map((y) => y.yardId)).toEqual(["yard_small", "yard_medium", "yard_large"]);
+    expect(big.yards.map((y) => y.yardId)).toEqual([
+      "yard_small",
+      "yard_medium",
+      "yard_large",
+      "yard_super",
+    ]);
     expect(big.yards.filter((y) => y.chosen).map((y) => y.yardId)).toEqual(["yard_large"]);
     const small = big.yards.find((y) => y.yardId === "yard_small")!;
     expect(small.exceeds.length).toBeGreaterThan(0);
@@ -146,14 +151,17 @@ describe("buildWorkshopView", () => {
   it("forecast = max(historical, schedule); a weaker large yard lengthens it and names the bottleneck", () => {
     const e = env("1896-01");
     const base = buildWorkshopView(majestic, e);
+    const chosen = e.yards.find((y) => y.facility.id === base.forecast.yardId)!;
     const slow = buildWorkshopView(majestic, {
       ...e,
-      yards: e.yards.map((y) => ({
-        ...y,
-        capacity: Object.fromEntries(
-          Object.entries(y.capacity).map(([l, n]) => [l, Math.floor(n / 2)]),
-        ) as typeof y.capacity,
-      })),
+      yards: [
+        {
+          ...chosen,
+          capacity: Object.fromEntries(
+            Object.entries(chosen.capacity).map(([l, n]) => [l, Math.floor(n / 2)]),
+          ) as typeof chosen.capacity,
+        },
+      ],
     });
     expect(slow.forecast.months!).toBeGreaterThan(base.forecast.months!);
     expect(slow.forecast.months!).toBeGreaterThan(slow.forecast.historicalMonths!);
@@ -173,7 +181,7 @@ describe("buildWorkshopView", () => {
     expect(crawl.forecast.months).toBeNull();
     expect(crawl.forecast.yardId).toBeNull();
     expect(crawl.forecast.note).toMatch(
-      /No shipyard that can hold this hull finishes it within 120 months \(largest: yard_large\)/,
+      /No shipyard that can hold this hull finishes it within 120 months \(largest: yard_super\)/,
     );
     const none = buildWorkshopView(majestic, { ...e, yards: [] });
     expect(none.forecast.note).toBe("No shipyard can build this hull.");
