@@ -4,6 +4,8 @@ Applies to: combat, content-schema, ship-design, desktop
 
 ## Status
 
+Superseded by: ADR-0345
+
 Accepted (2026-10-18). Records the armour decisions of the wayfinder map
 [#152](https://github.com/joaooliveira92/iron-tide/issues/152) (tickets
 [#154](https://github.com/joaooliveira92/iron-tide/issues/154) and

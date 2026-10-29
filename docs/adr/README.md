@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0345).
+highest existing number + 1 (the next number is ADR-0351).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -19,15 +19,18 @@ The sole 1880 start, the 1970 authored horizon, and the ten-nation roster.
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0201 | [ADR-0201-sole-1880-start.md](ADR-0201-sole-1880-start.md) | Sole 1880 start | accepted | — |
-| 0204 | [ADR-0204-horizon-1939-and-scenario-ids.md](ADR-0204-horizon-1939-and-scenario-ids.md) | Authored horizon through 1939; no empty scenario IDs | superseded | ADR-0282 |
-| 0205 | [ADR-0205-nine-playable-nations.md](ADR-0205-nine-playable-nations.md) | Nine playable nations; the rest AI-only behind a readiness gate | superseded | ADR-0214 |
-| 0214 | [ADR-0214-ten-playable-nations-usa.md](ADR-0214-ten-playable-nations-usa.md) | Ten playable nations; the USA joins the 1880 playable roster | accepted | — |
-| 0282 | [ADR-0282-authored-horizon-through-1970.md](ADR-0282-authored-horizon-through-1970.md) | Authored horizon through 1970; no empty scenario IDs | accepted | — |
-| 0283 | [ADR-0283-e1-1940-1970-content-decisions.md](ADR-0283-e1-1940-1970-content-decisions.md) | E-1 1940-1970 content decisions | accepted | — |
-| 0284 | [ADR-0284-e1-1940s-ship-and-part-values.md](ADR-0284-e1-1940s-ship-and-part-values.md) | E-1 1940-1949 ship and part values | accepted | — |
-| 0290 | [ADR-0290-e1-1940s-cruiser-values.md](ADR-0290-e1-1940s-cruiser-values.md) | E-1 1940-1949 cruiser values | accepted | — |
-| 0291 | [ADR-0291-e1-1950s-destroyer-values.md](ADR-0291-e1-1950s-destroyer-values.md) | E-1 1950-1959 destroyer values and the limit of 1950-1970 ship content | accepted | — |
+| 0348 | [ADR-0348-authored-scope-and-horizon.md](ADR-0348-authored-scope-and-horizon.md) | Authored scope and horizon | accepted | — |
+| 0349 | [ADR-0349-ten-playable-nations-roster.md](ADR-0349-ten-playable-nations-roster.md) | Ten playable nations roster | accepted | — |
+| 0350 | [ADR-0350-e1-1940-1970-content-values.md](ADR-0350-e1-1940-1970-content-values.md) | E-1 1940-1970 content and values | accepted | — |
+| 0201 | [ADR-0201-sole-1880-start.md](ADR-0201-sole-1880-start.md) | Sole 1880 start | superseded | ADR-0348 |
+| 0204 | [ADR-0204-horizon-1939-and-scenario-ids.md](ADR-0204-horizon-1939-and-scenario-ids.md) | Authored horizon through 1939; no empty scenario IDs | superseded | ADR-0348 |
+| 0205 | [ADR-0205-nine-playable-nations.md](ADR-0205-nine-playable-nations.md) | Nine playable nations; the rest AI-only behind a readiness gate | superseded | ADR-0349 |
+| 0214 | [ADR-0214-ten-playable-nations-usa.md](ADR-0214-ten-playable-nations-usa.md) | Ten playable nations; the USA joins the 1880 playable roster | superseded | ADR-0349 |
+| 0282 | [ADR-0282-authored-horizon-through-1970.md](ADR-0282-authored-horizon-through-1970.md) | Authored horizon through 1970; no empty scenario IDs | superseded | ADR-0348 |
+| 0283 | [ADR-0283-e1-1940-1970-content-decisions.md](ADR-0283-e1-1940-1970-content-decisions.md) | E-1 1940-1970 content decisions | superseded | ADR-0350 |
+| 0284 | [ADR-0284-e1-1940s-ship-and-part-values.md](ADR-0284-e1-1940s-ship-and-part-values.md) | E-1 1940-1949 ship and part values | superseded | ADR-0350 |
+| 0290 | [ADR-0290-e1-1940s-cruiser-values.md](ADR-0290-e1-1940s-cruiser-values.md) | E-1 1940-1949 cruiser values | superseded | ADR-0350 |
+| 0291 | [ADR-0291-e1-1950s-destroyer-values.md](ADR-0291-e1-1950s-destroyer-values.md) | E-1 1950-1959 destroyer values and the limit of 1950-1970 ship content | superseded | ADR-0350 |
 
 ## Values, currency & language
 
@@ -65,7 +68,8 @@ Unavailable-artifact policy and the project authority order.
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0210 | [ADR-0210-unavailable-artifacts-and-authority-order.md](ADR-0210-unavailable-artifacts-and-authority-order.md) | Unavailable artifacts are unverified legacy references; authority order | accepted | — |
+| 0347 | [ADR-0347-repository-authority-and-rebaselining.md](ADR-0347-repository-authority-and-rebaselining.md) | Repository authority order and unavailable-artifact policy | accepted | — |
+| 0210 | [ADR-0210-unavailable-artifacts-and-authority-order.md](ADR-0210-unavailable-artifacts-and-authority-order.md) | Unavailable artifacts are unverified legacy references; authority order | superseded | ADR-0347 |
 
 ## Process & documentation
 
@@ -202,14 +206,16 @@ The ship-designer model, its armour regions, named schemes, and the design draft
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0232 | [ADR-0232-armour-region-model-and-manual-parity.md](ADR-0232-armour-region-model-and-manual-parity.md) | Armour region model and manual parity | accepted | — |
-| 0233 | [ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md](ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) | Designer draft-schema v2 and canonical vocabulary | accepted | — |
-| 0243 | [ADR-0243-design-edits-are-guarded-by-the-design-session.md](ADR-0243-design-edits-are-guarded-by-the-design-session.md) | Every design edit is guarded in the design session, and a newly broken design is explained at once | accepted | — |
-| 0252 | [ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md](ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md) | Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values | accepted | — |
-| 0309 | [ADR-0309-e1-part-families-and-capability-kinds.md](ADR-0309-e1-part-families-and-capability-kinds.md) | E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars | accepted | — |
-| 0311 | [ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md](ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) | Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire | accepted | — |
-| 0332 | [ADR-0332-e1-1940s-battleship-and-16-inch-gun-values.md](ADR-0332-e1-1940s-battleship-and-16-inch-gun-values.md) | E-1 1940-1949 battleship and 16-inch gun values | accepted | — |
-| 0333 | [ADR-0333-split-ship-component-catalogue-by-nation.md](ADR-0333-split-ship-component-catalogue-by-nation.md) | Split the ship-component catalogue by family and nation, with per-record source provenance | accepted | — |
+| 0345 | [ADR-0345-ship-design-model-and-draft-schema.md](ADR-0345-ship-design-model-and-draft-schema.md) | Ship Design Model and Draft Schema | accepted | — |
+| 0346 | [ADR-0346-ship-component-catalogue-and-capability-model.md](ADR-0346-ship-component-catalogue-and-capability-model.md) | Ship Component Catalogue and Capability Model | accepted | — |
+| 0232 | [ADR-0232-armour-region-model-and-manual-parity.md](ADR-0232-armour-region-model-and-manual-parity.md) | Armour region model and manual parity | superseded | ADR-0345 |
+| 0233 | [ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md](ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) | Designer draft-schema v2 and canonical vocabulary | superseded | ADR-0345 |
+| 0243 | [ADR-0243-design-edits-are-guarded-by-the-design-session.md](ADR-0243-design-edits-are-guarded-by-the-design-session.md) | Every design edit is guarded in the design session, and a newly broken design is explained at once | superseded | ADR-0345 |
+| 0252 | [ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md](ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md) | Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values | superseded | ADR-0345 |
+| 0309 | [ADR-0309-e1-part-families-and-capability-kinds.md](ADR-0309-e1-part-families-and-capability-kinds.md) | E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars | superseded | ADR-0346 |
+| 0311 | [ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md](ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) | Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire | superseded | ADR-0346 |
+| 0332 | [ADR-0332-e1-1940s-battleship-and-16-inch-gun-values.md](ADR-0332-e1-1940s-battleship-and-16-inch-gun-values.md) | E-1 1940-1949 battleship and 16-inch gun values | superseded | ADR-0346 |
+| 0333 | [ADR-0333-split-ship-component-catalogue-by-nation.md](ADR-0333-split-ship-component-catalogue-by-nation.md) | Split the ship-component catalogue by family and nation, with per-record source provenance | superseded | ADR-0346 |
 
 ## World map
 

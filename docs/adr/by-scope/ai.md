@@ -8,5 +8,9 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0214](../ADR-0214-ten-playable-nations-usa.md) Ten playable nations; the USA joins the 1880 playable roster.
 - [ADR-0245](../ADR-0245-player-nation-id-in-campaign-state.md) The player nation is stored in authoritative campaign state.
+- [ADR-0349](../ADR-0349-ten-playable-nations-roster.md) The 1880 release has fourteen committed nations and ten playable nations, with the remaining four AI-only until each passes the per-nation readiness gate.
+
+## Superseded (do not follow)
+
+- [ADR-0214](../ADR-0214-ten-playable-nations-usa.md) Ten playable nations; the USA joins the 1880 playable roster. Follow ADR-0349.

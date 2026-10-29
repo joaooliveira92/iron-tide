@@ -4,6 +4,8 @@ Applies to: content, ship-design
 
 ## Status
 
+Superseded by: ADR-0350
+
 Accepted (2026-10-25). Ticket #256 under the owner's standing delegation of unsourced values to the implementing agent
 ([ADR-0284](ADR-0284-e1-1940s-ship-and-part-values.md)). Evidence: `docs/research/e-1-1940s-hull-and-part-values.md` section 13 and the audit
 `.ai/reports/e-1-era-mechanics-audit.md`.

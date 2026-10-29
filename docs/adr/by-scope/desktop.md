@@ -13,15 +13,10 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0208](../ADR-0208-no-custom-display-currency.md) Custom display currency excluded from the initial release.
 - [ADR-0209](../ADR-0209-ui-language-and-formatting-locale.md) UI language, formatting locale, and externalized strings.
 - [ADR-0211](../ADR-0211-default-and-national-historical-currency.md) Default currency Naval Credits; National Historical is conditional.
-- [ADR-0214](../ADR-0214-ten-playable-nations-usa.md) Ten playable nations; the USA joins the 1880 playable roster.
 - [ADR-0218](../ADR-0218-conversion-and-locale-boundary.md) Conversion and locale boundary — canonical↔display only at presentation, language distinct from locale.
 - [ADR-0221](../ADR-0221-structured-explanation-data.md) Structured explanation data for domain display values.
-- [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity.
-- [ADR-0233](../ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) Designer draft-schema v2 and canonical vocabulary.
 - [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
-- [ADR-0243](../ADR-0243-design-edits-are-guarded-by-the-design-session.md) Every design edit goes through the design session's guard, and a newly blocking or critical finding is explained at once.
 - [ADR-0251](../ADR-0251-fleet-screen-foreign-station-status-assign-and-presence-readout.md) The fleet screen shows manual p.48 status, assigns foreign station, and reads presence from the projection.
-- [ADR-0252](../ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md) Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values.
 - [ADR-0255](../ADR-0255-battle-offer-request-estimate-and-answer.md) The battle offer: request shape, estimate, accept and delegate, typed refusals.
 - [ADR-0256](../ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md) Declining a battle offer: terminal record, released ships, victory-point cost.
 - [ADR-0266](../ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md) S-5 presence values and the other open decision requests, resolved by delegation.
@@ -43,13 +38,20 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0342](../ADR-0342-turn-identity-and-campaign-resume-workflow.md) Turn identity is fixed from pre-execution inputs before any interruption is answered; campaign reopen is gated by a main-process-owned allow-list with canonical-path approval.
 - [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected.
 - [ADR-0344](../ADR-0344-world-map-geography-and-globe.md) The world map is an offline, deterministic geography pipeline (Natural Earth 10m and Koppen-Geiger V3 sources, z7 source ceiling, EPSG:3857 tile pack at manifestVersion 4) feeding a production globe adapter that is the default Overview renderer with a tested SVG fallback, a renderer-neutral overlay contract, and no simulation-state authority.
+- [ADR-0345](../ADR-0345-ship-design-model-and-draft-schema.md) The ship design data model defines a versioned draft with optional fields, a canonical armour-region set mapped to the manual's nine universal fields, named armour schemes as deterministic transformations, and additive options from balance targets, all guarded by a session that explains new blocking or critical findings at once.
+- [ADR-0349](../ADR-0349-ten-playable-nations-roster.md) The 1880 release has fourteen committed nations and ten playable nations, with the remaining four AI-only until each passes the per-nation readiness gate.
 
 ## Superseded (do not follow)
 
 - [ADR-0203](../ADR-0203-options-and-preferences-architecture.md) Options screen and preferences architecture. Follow ADR-0338.
-- [ADR-0205](../ADR-0205-nine-playable-nations.md) Nine playable nations; the rest AI-only behind a readiness gate. Follow ADR-0214.
+- [ADR-0205](../ADR-0205-nine-playable-nations.md) Nine playable nations; the rest AI-only behind a readiness gate. Follow ADR-0349, ADR-0214.
+- [ADR-0214](../ADR-0214-ten-playable-nations-usa.md) Ten playable nations; the USA joins the 1880 playable roster. Follow ADR-0349.
+- [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity. Follow ADR-0345.
+- [ADR-0233](../ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) Designer draft-schema v2 and canonical vocabulary. Follow ADR-0345.
 - [ADR-0235](../ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md) Main-owned recent campaigns and reopen allow-list. Follow ADR-0342.
+- [ADR-0243](../ADR-0243-design-edits-are-guarded-by-the-design-session.md) Every design edit is guarded in the design session, and a newly broken design is explained at once. Follow ADR-0345.
 - [ADR-0244](../ADR-0244-nation-borders-are-clipped-to-the-map-coastline.md) Nation borders are baked clipped to the map's coastline. Follow ADR-0344.
+- [ADR-0252](../ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md) Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values. Follow ADR-0345.
 - [ADR-0270](../ADR-0270-campaign-command-table-is-the-registry.md) The campaign command descriptor table is the command registry. Follow ADR-0338.
 - [ADR-0305](../ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md) Saves are retained by an opt-in count with a protected head; Effect-returning persistence methods carry an `Effect` suffix. Follow ADR-0343.
 - [ADR-0315](../ADR-0315-research-workspace-projection.md) The research screen reads a technology-chart projection, and the draw weight has one home. Follow ADR-0340.

@@ -37,7 +37,7 @@ const AREAS = [
   {
     name: "Scope & horizon",
     blurb: "The sole 1880 start, the 1970 authored horizon, and the ten-nation roster.",
-    nums: [201, 204, 205, 214, 282, 283, 284, 290, 291],
+    nums: [348, 349, 350, 201, 204, 205, 214, 282, 283, 284, 290, 291],
   },
   {
     name: "Values, currency & language",
@@ -53,7 +53,7 @@ const AREAS = [
   {
     name: "Repository authority & re-baselining",
     blurb: "Unavailable-artifact policy and the project authority order.",
-    nums: [210],
+    nums: [347, 210],
   },
   {
     name: "Process & documentation",
@@ -102,7 +102,7 @@ const AREAS = [
     name: "Ship design & construction",
     blurb:
       "The ship-designer model, its armour regions, named schemes, and the design draft schema.",
-    nums: [232, 233, 243, 252, 309, 311, 332, 333],
+    nums: [345, 346, 232, 233, 243, 252, 309, 311, 332, 333],
   },
   {
     name: "World map",

@@ -4,6 +4,7 @@ Applies to: content, campaign, desktop
 
 ## Status
 
+Superseded by: ADR-0349
 Superseded by: ADR-0214. Originally accepted 2026-10-15 as new record of decision
 DR-005. ADR-0214 restores the ten-playable release contract: the nine-nation
 roster recorded here was a regression, not intended product behaviour.

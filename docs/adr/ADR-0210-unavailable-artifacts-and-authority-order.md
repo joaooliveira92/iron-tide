@@ -2,9 +2,9 @@
 
 Applies to: repository
 
-Rule: Artifacts that never existed in reachable history are unverified legacy references; never recreate them from their filenames.
-
 ## Status
+
+Superseded by: ADR-0347
 
 Accepted (2026-10-15). New record of decision DR-010; no prior ADR file existed for
 it and none is restored. This record also governs the artifact re-baselining performed

@@ -4,6 +4,8 @@ Applies to: content, desktop, ai, content-compiler, compiler-cli
 
 ## Status
 
+Superseded by: ADR-0349
+
 Accepted (2026-10-16). New record of decision DR-014.
 Supersedes: ADR-0205.
 

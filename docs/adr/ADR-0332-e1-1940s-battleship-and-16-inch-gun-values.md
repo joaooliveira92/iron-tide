@@ -4,6 +4,8 @@ Applies to: content, ship-design
 
 ## Status
 
+Superseded by: ADR-0346
+
 Accepted (2026-10-29) for [#254](https://github.com/joaooliveira92/iron-tide/issues/254) under
 [#249](https://github.com/joaooliveira92/iron-tide/issues/249). Applies the unsourced-value delegation of
 [ADR-0284](ADR-0284-e1-1940s-ship-and-part-values.md) and the balance-target policy of

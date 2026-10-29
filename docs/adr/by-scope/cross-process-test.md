@@ -15,11 +15,13 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0254](../ADR-0254-t1-battle-offer-values-balance-targets.md) T-1 battle-offer values: labelled balance targets.
 - [ADR-0279](../ADR-0279-replay-approvals-carry-a-change-class.md) Every replay approval carries a verified `changeClass`; unexpected nondeterminism is a failure and is never approved.
 - [ADR-0280](../ADR-0280-property-based-replay-scenarios.md) Property-based replay scenarios use `fast-check` as a devDependency of `cross-process-test` only, always with an explicit seed and run count.
-- [ADR-0282](../ADR-0282-authored-horizon-through-1970.md) Authored horizon through 1970; no empty scenario IDs.
-- [ADR-0283](../ADR-0283-e1-1940-1970-content-decisions.md) E-1 1940-1970 content decisions.
 - [ADR-0295](../ADR-0295-war-bearing-replay-scenarios.md) A replay scenario may name a player nation and a deterministic start setup so the corpus fights a battle.
 - [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected.
+- [ADR-0348](../ADR-0348-authored-scope-and-horizon.md) The sole start year is 1880; the authored horizon is 1970; any declared scenario ID with no content pack must not be selectable.
+- [ADR-0350](../ADR-0350-e1-1940-1970-content-values.md) Every authored technology, ship class, and part value for the 1940-1970 period must trace to a cited source or be labelled BALANCE_TARGET with a documented derivation; content must never promise behaviour the engine lacks.
 
 ## Superseded (do not follow)
 
+- [ADR-0282](../ADR-0282-authored-horizon-through-1970.md) Authored horizon through 1970; no empty scenario IDs. Follow ADR-0348.
+- [ADR-0283](../ADR-0283-e1-1940-1970-content-decisions.md) E-1 1940-1970 content decisions. Follow ADR-0350.
 - [ADR-0330](../ADR-0330-unified-snapshot-hash.md) One versioned, domain-separated snapshot hash. Follow ADR-0343.

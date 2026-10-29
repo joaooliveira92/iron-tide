@@ -4,6 +4,8 @@ Applies to: combat, content, content-schema, ship-design
 
 ## Status
 
+Superseded by: ADR-0346
+
 Accepted (2026-10-26) for [#292](https://github.com/joaooliveira92/iron-tide/issues/292), part of
 [#279](https://github.com/joaooliveira92/iron-tide/issues/279) under
 [#249](https://github.com/joaooliveira92/iron-tide/issues/249). Applies the capability seam of

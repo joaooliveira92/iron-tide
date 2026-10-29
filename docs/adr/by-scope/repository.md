@@ -7,7 +7,6 @@ and for the exact boundaries of the rule.
 ## Current
 
 - [ADR-0202](../ADR-0202-canonical-internal-values.md) Stored and authoritative values are canonical and unit-agnostic; units and currency convert only at the presentation boundary and are never persisted as formatted text.
-- [ADR-0210](../ADR-0210-unavailable-artifacts-and-authority-order.md) Artifacts that never existed in reachable history are unverified legacy references; never recreate them from their filenames.
 - [ADR-0217](../ADR-0217-rounding-and-authoritative-float-gate.md) Use the contracts package's `RoundingMode` only; every authoritative formula declares its mode and rounds once at the end on exact `bigint` intermediates.
 - [ADR-0227](../ADR-0227-pipeline-tracker-on-github.md) Pipeline artifacts (map, spec, tickets) are GitHub issues; there is no local markdown tracker.
 - [ADR-0234](../ADR-0234-single-checkout-local-merge-workflow.md) Work on short-lived local branches cut from `dev` and merge into `dev` locally once preflight, test:scripts and check are green. (amended by ADR-0236, ADR-0237).
@@ -24,8 +23,10 @@ and for the exact boundaries of the rule.
 - [ADR-0334](../ADR-0334-deprecate-yaml-outside-internationalization.md) Deprecate YAML outside internationalization.
 - [ADR-0335](../ADR-0335-agent-navigation-and-scoped-verification.md) Agents discover ownership with `pnpm agent:map`, validate a change with `pnpm verify:affected`, and run long gates blocking through `pnpm heavy`; scoped verification widens to full scope whenever impact is uncertain and never replaces `pnpm check`.
 - [ADR-0336](../ADR-0336-adr-corpus-integrity-gate.md) Every current ADR states its rule in one `Rule:` line, sits in exactly one index area, and supersedes acyclically.
+- [ADR-0347](../ADR-0347-repository-authority-and-rebaselining.md) Artifacts that never existed in reachable history are unverified legacy references; never recreate them from their filenames.
 
 ## Superseded (do not follow)
 
+- [ADR-0210](../ADR-0210-unavailable-artifacts-and-authority-order.md) Unavailable artifacts are unverified legacy references; authority order. Follow ADR-0347.
 - [ADR-0220](../ADR-0220-worktree-per-effort-coordination.md) Worktree-per-effort coordination for concurrent agents. Follow ADR-0234.
 - [ADR-0269](../ADR-0269-worktree-ledger-is-local-untracked-state.md) The worktree ledger is local, untracked state. Follow ADR-0313.

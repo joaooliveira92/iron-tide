@@ -4,6 +4,8 @@ Applies to: content, content-schema, ship-design
 
 ## Status
 
+Superseded by: ADR-0346
+
 Accepted (2026-10-29).
 
 ## Context
