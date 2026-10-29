@@ -16,7 +16,7 @@ import {
 
 export type FlattenedAmmunitionPart = Extract<FlattenedPart, { readonly family: "ammunition" }>;
 
-export const AMMUNITION_FILE = "ship-building/armament/ammunition.yaml";
+export const AMMUNITION_FILE = "ship-building/armament/ammunition.ts";
 
 export interface AmmunitionPartRecord {
   readonly part: FlattenedAmmunitionPart;

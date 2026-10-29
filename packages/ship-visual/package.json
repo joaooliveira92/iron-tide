@@ -12,7 +12,6 @@
   },
   "devDependencies": {
     "@bluewave/content-schema": "workspace:*",
-    "@bluewave/diagnostics": "workspace:*",
     "effect": "workspace:*"
   },
   "scripts": {

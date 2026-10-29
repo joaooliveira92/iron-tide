@@ -20,140 +20,158 @@ function writeFixture(base: string, rel: string, content: string): string {
   return full;
 }
 
-function nationYaml(
+const jsonDocument = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
+
+function nationRecord(
+  id: string,
+  tag: string,
+  name: string,
+  isPlayable = false,
+  homeArea?: string,
+): Record<string, unknown> {
+  return {
+    id,
+    tag,
+    name,
+    displayNameKey: `nation.${id}`,
+    isPlayable,
+    ...(homeArea === undefined ? {} : { homeArea }),
+    slot: null,
+    presentation: { colorBg: "#C8102E", colorFg: "#FFFFFF" },
+    identity: { oneSentence: "x", fullIdentity: "x", strategicProblem: "x" },
+    regime: {
+      type: "monarchy",
+      politicalSystem: "constitutional_monarchy",
+      headOfState: "x",
+      headOfGovernment: "x",
+      leaderTitle: "x",
+      navalPolicyActors: [],
+      governmentModifiers: [],
+      stabilityProfile: { level: "high", factors: [] },
+      description: "x",
+    },
+    strategicObjectives: { primary: "x", secondary: "x" },
+    baseResources: {
+      gdpTier: "great_power",
+      gdpDescription: "x",
+      population: "x",
+      industrialization: "industrial",
+      industrializationDescription: "x",
+    },
+    navalAppropriation: { budgetLevel: "moderate", justification: "x" },
+    economy: {
+      description: "x",
+      character: "x",
+      strengths: [],
+      weaknesses: [],
+      industrialBase: "mature_global",
+    },
+    navalInstitution: { description: "x", character: [], seniority: "senior_service" },
+    doctrine: { summary: "x", schools: [] },
+    shipDesign: { summary: "x", principles: [], favoredTypes: [] },
+    ai: { archetype: "status_quo_maritime_hegemon", behavior: [] },
+    navalPurpose: "sustain_global_empire",
+    coreAnxiety: "loss_of_sea_control_overstretch",
+    gameplayFeel: "manage_supremacy",
+    historicalAssumptions: [],
+  };
+}
+
+function nationDocument(
   id: string,
   tag: string,
   name: string,
   isPlayable = false,
   homeArea?: string,
 ): string {
-  return `
-- id: "${id}"
-  tag: "${tag}"
-  name: "${name}"
-  displayNameKey: "nation.${id}"
-  isPlayable: ${isPlayable}${homeArea === undefined ? "" : `\n  homeArea: "${homeArea}"`}
-  slot: null
-  presentation: { colorBg: "#C8102E", colorFg: "#FFFFFF" }
-  identity:
-    oneSentence: "x"
-    fullIdentity: "x"
-    strategicProblem: "x"
-  regime:
-    type: "monarchy"
-    politicalSystem: "constitutional_monarchy"
-    headOfState: "x"
-    headOfGovernment: "x"
-    leaderTitle: "x"
-    navalPolicyActors: []
-    governmentModifiers: []
-    stabilityProfile: { level: "high", factors: [] }
-    description: "x"
-  strategicObjectives: { primary: "x", secondary: "x" }
-  baseResources:
-    gdpTier: "great_power"
-    gdpDescription: "x"
-    population: "x"
-    industrialization: "industrial"
-    industrializationDescription: "x"
-  navalAppropriation: { budgetLevel: "moderate", justification: "x" }
-  economy:
-    description: "x"
-    character: "x"
-    strengths: []
-    weaknesses: []
-    industrialBase: "mature_global"
-  navalInstitution:
-    description: "x"
-    character: []
-    seniority: "senior_service"
-  doctrine: { summary: "x", schools: [] }
-  shipDesign: { summary: "x", principles: [], favoredTypes: [] }
-  ai: { archetype: "status_quo_maritime_hegemon", behavior: [] }
-  navalPurpose: "sustain_global_empire"
-  coreAnxiety: "loss_of_sea_control_overstretch"
-  gameplayFeel: "manage_supremacy"
-  historicalAssumptions: []
-`;
+  return jsonDocument([nationRecord(id, tag, name, isPlayable, homeArea)]);
 }
 
-function componentYaml(id: string): string {
-  return componentYamlWith(id, []);
+function componentRecord(id: string, upgradePath: readonly string[] = []): Record<string, unknown> {
+  return {
+    id,
+    displayName: id,
+    category: "MATERIAL",
+    introduction: { fromMonth: "1880-01", obsoleteMonth: null },
+    requires: [],
+    parameters: {},
+    constants: {},
+    weightKg: "1",
+    volumeLitre: "1",
+    costMicro: "1",
+    crew: "0",
+    powerKw: "0",
+    upgradePath: [...upgradePath],
+    tags: [],
+  };
 }
 
-function componentYamlWith(id: string, upgradePath: readonly string[]): string {
-  return `
-  - id: "${id}"
-    displayName: "${id}"
-    category: "MATERIAL"
-    introduction: { fromMonth: "1880-01", obsoleteMonth: null }
-    requires: []
-    parameters: {}
-    constants: {}
-    weightKg: "1"
-    volumeLitre: "1"
-    costMicro: "1"
-    crew: "0"
-    powerKw: "0"
-    upgradePath: [${upgradePath.map((u) => `"${u}"`).join(", ")}]
-    tags: []
-`;
+function componentsDocument(records: readonly Record<string, unknown>[]): string {
+  return jsonDocument({ components: records });
 }
 
 function shipBuildingInput(fixturePath: string): Record<string, string[]> {
   return {
-    shipComponentFiles: [resolve(fixturePath, "ship-building/components.yaml")],
-    shipBalanceFiles: [resolve(fixturePath, "ship-building/balance.yaml")],
+    shipComponentFiles: [resolve(fixturePath, "ship-building/components.json")],
+    shipBalanceFiles: [resolve(fixturePath, "ship-building/balance.json")],
   };
 }
 
-function referenceDesignYaml(id: string, hullFormId: string, plantId: string): string {
-  return `
-designs:
-  - id: "${id}"
-    name: "Reference ${id}"
-    month: "1880-01"
-    draft:
-      nationId: "uk"
-      requirement:
-        category: "B"
-        requiredSpeedMilliKnots: 15000
-        cruiseSpeedMilliKnots: 8000
-        requiredRangeNm: 3000
-        designThreatId: "rml_10in"
-        modernizationExpectation: "MINOR"
-        crewQualityBp: 10000
-        accommodationStandard: "STANDARD"
-      hull:
-        hullFormId: "${hullFormId}"
-        lengthWl: 90000
-        beam: 18000
-        draught: 7000
-        depthToMainDeck: 9000
-        blockCoeffBp: 6000
-        materialId: "iron"
-        structuralSchemeId: "mixed"
-        subdivisionGrade: 2
-        targetDisplacementKg: 9000000
-        limitDisplacementKg: null
-        designMarginBp: 300
-        growthReserveBp: 0
-      machinery:
-        plantId: "${plantId}"
-        installedKw: 5000
-        zoneId: "CENTRAL_MACHINERY"
-        stationPermille: 400
-        fuelCapacityKg: 500000
-        fuelZoneId: "CENTRAL_MACHINERY"
-        fuelStationPermille: 450
-        foulingBp: 0
-      armour:
-        regions: []
-        citadelLengthMm: 0
-        torpedoWarheadKg: 20
-        bunkerProtectionBp: 0
-      placements: []
-`;
+function referenceDesignDocument(id: string, hullFormId: string, plantId: string): string {
+  return jsonDocument({
+    designs: [
+      {
+        id,
+        name: `Reference ${id}`,
+        month: "1880-01",
+        draft: {
+          nationId: "uk",
+          requirement: {
+            category: "B",
+            requiredSpeedMilliKnots: 15000,
+            cruiseSpeedMilliKnots: 8000,
+            requiredRangeNm: 3000,
+            designThreatId: "rml_10in",
+            modernizationExpectation: "MINOR",
+            crewQualityBp: 10000,
+            accommodationStandard: "STANDARD",
+          },
+          hull: {
+            hullFormId,
+            lengthWl: 90000,
+            beam: 18000,
+            draught: 7000,
+            depthToMainDeck: 9000,
+            blockCoeffBp: 6000,
+            materialId: "iron",
+            structuralSchemeId: "mixed",
+            subdivisionGrade: 2,
+            targetDisplacementKg: 9000000,
+            limitDisplacementKg: null,
+            designMarginBp: 300,
+            growthReserveBp: 0,
+          },
+          machinery: {
+            plantId,
+            installedKw: 5000,
+            zoneId: "CENTRAL_MACHINERY",
+            stationPermille: 400,
+            fuelCapacityKg: 500000,
+            fuelZoneId: "CENTRAL_MACHINERY",
+            fuelStationPermille: 450,
+            foulingBp: 0,
+          },
+          armour: {
+            regions: [],
+            citadelLengthMm: 0,
+            torpedoWarheadKg: 20,
+            bunkerProtectionBp: 0,
+          },
+          placements: [],
+        },
+      },
+    ],
+  });
 }
 
 describe("Compiler", () => {
@@ -163,14 +181,18 @@ describe("Compiler", () => {
       writeFixture(
         fixture.path,
         "pack.json",
-        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "production", files: {} }),
+        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "fixture", files: {} }),
       );
       writeFixture(
         fixture.path,
-        "ship-building/components.yaml",
-        `components:${componentYaml("comp_a")}${componentYaml("comp_b")}`,
+        "ship-building/components.json",
+        componentsDocument([componentRecord("comp_a"), componentRecord("comp_b")]),
       );
-      writeFixture(fixture.path, "ship-building/balance.yaml", `ship:\n  dummy: 1\n`);
+      writeFixture(
+        fixture.path,
+        "ship-building/balance.json",
+        jsonDocument({ ship: { dummy: 1 } }),
+      );
 
       const collector = new DiagnosticCollector();
       const output = new Compiler().compile(
@@ -243,8 +265,8 @@ describe("Compiler", () => {
       );
       writeFixture(
         fixture.path,
-        "ship-building/components.yaml",
-        `components:${componentYaml("comp_a")}${componentYaml("comp_a")}`,
+        "ship-building/components.json",
+        componentsDocument([componentRecord("comp_a"), componentRecord("comp_a")]),
       );
 
       const collector = new DiagnosticCollector();
@@ -259,7 +281,7 @@ describe("Compiler", () => {
           possessionFiles: [],
           portFiles: [],
           technologyFiles: [],
-          shipComponentFiles: [resolve(fixture.path, "ship-building/components.yaml")],
+          shipComponentFiles: [resolve(fixture.path, "ship-building/components.json")],
         },
         new AbortController().signal,
         collector,
@@ -268,7 +290,7 @@ describe("Compiler", () => {
       expect(output).toBeUndefined();
       const dup = collector.errors.find((d) => d.code === "DUP-ID");
       expect(dup).toBeDefined();
-      expect(dup!.sourceLocation?.path).toBe("ship-building/components.yaml");
+      expect(dup!.sourceLocation?.path).toBe("ship-building/components.json");
       expect(dup!.entityId).toBe("comp_a");
     } finally {
       fixture.cleanup();
@@ -285,8 +307,8 @@ describe("Compiler", () => {
       );
       writeFixture(
         fixture.path,
-        "ship-building/reference-designs/uk/starters.yaml",
-        referenceDesignYaml("rd_1", "missing_form", "missing_plant"),
+        "ship-building/reference-designs/uk/starters.json",
+        referenceDesignDocument("rd_1", "missing_form", "missing_plant"),
       );
 
       const collector = new DiagnosticCollector();
@@ -302,7 +324,7 @@ describe("Compiler", () => {
           portFiles: [],
           technologyFiles: [],
           referenceDesignFiles: [
-            resolve(fixture.path, "ship-building/reference-designs/uk/starters.yaml"),
+            resolve(fixture.path, "ship-building/reference-designs/uk/starters.json"),
           ],
         },
         new AbortController().signal,
@@ -315,7 +337,7 @@ describe("Compiler", () => {
       expect(refs.some((d) => d.message.includes("missing_plant"))).toBe(true);
       expect(
         refs.every(
-          (d) => d.sourceLocation?.path === "ship-building/reference-designs/uk/starters.yaml",
+          (d) => d.sourceLocation?.path === "ship-building/reference-designs/uk/starters.json",
         ),
       ).toBe(true);
     } finally {
@@ -334,38 +356,46 @@ describe("Compiler", () => {
           version: "0.1.0",
           type: "fixture",
           files: {
-            countries: ["countries.yaml"],
-            areas: ["areas.yaml"],
-            rulesets: ["rulesets.yaml"],
+            countries: ["countries.json"],
+            areas: ["areas.json"],
+            rulesets: ["rulesets.json"],
           },
         }),
       );
 
       writeFixture(
         fixture.path,
-        "countries.yaml",
-        nationYaml("uk", "GBR", "United Kingdom", true, "lon"),
+        "countries.json",
+        nationDocument("uk", "GBR", "United Kingdom", true, "lon"),
       );
 
       writeFixture(
         fixture.path,
-        "areas.yaml",
+        "areas.json",
         `
-- id: "lon"
-  name: "London"
-  type: "land"
-  controller: "uk"
-      `,
+[
+  {
+    "id": "lon",
+    "name": "London",
+    "type": "land",
+    "controller": "uk"
+  }
+]
+`,
       );
 
       writeFixture(
         fixture.path,
-        "rulesets.yaml",
+        "rulesets.json",
         `
-- id: "core"
-  name: "Core Rules"
-  version: "1.0"
-      `,
+[
+  {
+    "id": "core",
+    "name": "Core Rules",
+    "version": "1.0"
+  }
+]
+`,
       );
 
       const compiler = new Compiler();
@@ -376,9 +406,9 @@ describe("Compiler", () => {
         {
           manifestPath: "pack.json",
           contentDir: fixture.path,
-          rulesetFiles: [resolve(fixture.path, "rulesets.yaml")],
-          countryFiles: [resolve(fixture.path, "countries.yaml")],
-          areaFiles: [resolve(fixture.path, "areas.yaml")],
+          rulesetFiles: [resolve(fixture.path, "rulesets.json")],
+          countryFiles: [resolve(fixture.path, "countries.json")],
+          areaFiles: [resolve(fixture.path, "areas.json")],
           routeFiles: [],
           possessionFiles: [],
           portFiles: [],
@@ -409,14 +439,17 @@ describe("Compiler", () => {
           name: "test-pack",
           version: "0.1.0",
           type: "fixture",
-          files: { countries: ["countries.yaml"] },
+          files: { countries: ["countries.json"] },
         }),
       );
 
       writeFixture(
         fixture.path,
-        "countries.yaml",
-        `${nationYaml("uk", "GBR", "United Kingdom")}${nationYaml("uk", "GBR", "United Kingdom")}`,
+        "countries.json",
+        jsonDocument([
+          nationRecord("uk", "GBR", "United Kingdom"),
+          nationRecord("uk", "GBR", "United Kingdom"),
+        ]),
       );
 
       const compiler = new Compiler();
@@ -428,7 +461,7 @@ describe("Compiler", () => {
           manifestPath: "pack.json",
           contentDir: fixture.path,
           rulesetFiles: [],
-          countryFiles: [resolve(fixture.path, "countries.yaml")],
+          countryFiles: [resolve(fixture.path, "countries.json")],
           areaFiles: [],
           routeFiles: [],
           possessionFiles: [],
@@ -458,19 +491,23 @@ describe("Compiler", () => {
           version: "0.1.0",
           type: "fixture",
           files: {
-            possessions: ["possessions.yaml"],
-            countries: ["countries.yaml"],
-            areas: ["areas.yaml"],
+            possessions: ["possessions.json"],
+            countries: ["countries.json"],
+            areas: ["areas.json"],
           },
         }),
       );
 
-      writeFixture(fixture.path, "countries.yaml", nationYaml("uk", "GBR", "United Kingdom"));
-      writeFixture(fixture.path, "areas.yaml", `- id: "lon"\n  name: "London"\n  type: "land"\n`);
+      writeFixture(fixture.path, "countries.json", nationDocument("uk", "GBR", "United Kingdom"));
       writeFixture(
         fixture.path,
-        "possessions.yaml",
-        `- id: "uk-lon"\n  nationId: "uk"\n  areaId: "nonexistent"\n`,
+        "areas.json",
+        jsonDocument([{ id: "lon", name: "London", type: "land" }]),
+      );
+      writeFixture(
+        fixture.path,
+        "possessions.json",
+        jsonDocument([{ id: "uk-lon", nationId: "uk", areaId: "nonexistent" }]),
       );
 
       const compiler = new Compiler();
@@ -482,10 +519,10 @@ describe("Compiler", () => {
           manifestPath: "pack.json",
           contentDir: fixture.path,
           rulesetFiles: [],
-          countryFiles: [resolve(fixture.path, "countries.yaml")],
-          areaFiles: [resolve(fixture.path, "areas.yaml")],
+          countryFiles: [resolve(fixture.path, "countries.json")],
+          areaFiles: [resolve(fixture.path, "areas.json")],
           routeFiles: [],
-          possessionFiles: [resolve(fixture.path, "possessions.yaml")],
+          possessionFiles: [resolve(fixture.path, "possessions.json")],
           portFiles: [],
           technologyFiles: [],
         },
@@ -511,24 +548,28 @@ describe("Compiler", () => {
           name: "test-pack",
           version: "0.1.0",
           type: "fixture",
-          files: { countries: ["countries.yaml"], areas: ["areas.yaml"] },
+          files: { countries: ["countries.json"], areas: ["areas.json"] },
         }),
       );
 
       writeFixture(
         fixture.path,
-        "countries.yaml",
-        nationYaml("uk", "GBR", "United Kingdom", false, "lon"),
+        "countries.json",
+        nationDocument("uk", "GBR", "United Kingdom", false, "lon"),
       );
       writeFixture(
         fixture.path,
-        "areas.yaml",
+        "areas.json",
         `
-- id: "lon"
-  name: "London"
-  type: "land"
-  controller: "uk"
-      `,
+[
+  {
+    "id": "lon",
+    "name": "London",
+    "type": "land",
+    "controller": "uk"
+  }
+]
+`,
       );
 
       const compiler = new Compiler();
@@ -540,8 +581,8 @@ describe("Compiler", () => {
           manifestPath: "pack.json",
           contentDir: fixture.path,
           rulesetFiles: [],
-          countryFiles: [resolve(fixture.path, "countries.yaml")],
-          areaFiles: [resolve(fixture.path, "areas.yaml")],
+          countryFiles: [resolve(fixture.path, "countries.json")],
+          areaFiles: [resolve(fixture.path, "areas.json")],
           routeFiles: [],
           possessionFiles: [],
           portFiles: [],
@@ -557,8 +598,8 @@ describe("Compiler", () => {
           manifestPath: "pack.json",
           contentDir: fixture.path,
           rulesetFiles: [],
-          countryFiles: [resolve(fixture.path, "countries.yaml")],
-          areaFiles: [resolve(fixture.path, "areas.yaml")],
+          countryFiles: [resolve(fixture.path, "countries.json")],
+          areaFiles: [resolve(fixture.path, "areas.json")],
           routeFiles: [],
           possessionFiles: [],
           portFiles: [],
@@ -587,11 +628,11 @@ describe("Compiler", () => {
           name: "test-pack",
           version: "0.1.0",
           type: "fixture",
-          files: { countries: ["countries.yaml"] },
+          files: { countries: ["countries.json"] },
         }),
       );
 
-      writeFixture(fixture.path, "countries.yaml", nationYaml("uk", "GBR", "United Kingdom"));
+      writeFixture(fixture.path, "countries.json", nationDocument("uk", "GBR", "United Kingdom"));
 
       const compiler = new Compiler();
       const collector = new DiagnosticCollector();
@@ -603,7 +644,7 @@ describe("Compiler", () => {
           manifestPath: "pack.json",
           contentDir: fixture.path,
           rulesetFiles: [],
-          countryFiles: [resolve(fixture.path, "countries.yaml")],
+          countryFiles: [resolve(fixture.path, "countries.json")],
           areaFiles: [],
           routeFiles: [],
           possessionFiles: [],
@@ -630,31 +671,45 @@ describe("Compiler", () => {
           name: "test-pack",
           version: "0.1.0",
           type: "fixture",
-          files: { technologies: ["technologies.yaml"] },
+          files: { technologies: ["technologies.json"] },
         }),
       );
 
       writeFixture(
         fixture.path,
-        "technologies.yaml",
+        "technologies.json",
         `
-- id: "tech_a"
-  name: "Tech A"
-  category: "hull"
-  researchFieldId: "HULL_CONSTRUCTION"
-- id: "tech_b"
-  name: "Tech B"
-  category: "hull"
-  researchFieldId: "HULL_CONSTRUCTION"
-  prerequisites:
-    - { techId: "tech_c" }
-- id: "tech_c"
-  name: "Tech C"
-  category: "hull"
-  researchFieldId: "HULL_CONSTRUCTION"
-  prerequisites:
-    - { techId: "tech_b" }
-      `,
+[
+  {
+    "id": "tech_a",
+    "name": "Tech A",
+    "category": "hull",
+    "researchFieldId": "HULL_CONSTRUCTION"
+  },
+  {
+    "id": "tech_b",
+    "name": "Tech B",
+    "category": "hull",
+    "researchFieldId": "HULL_CONSTRUCTION",
+    "prerequisites": [
+      {
+        "techId": "tech_c"
+      }
+    ]
+  },
+  {
+    "id": "tech_c",
+    "name": "Tech C",
+    "category": "hull",
+    "researchFieldId": "HULL_CONSTRUCTION",
+    "prerequisites": [
+      {
+        "techId": "tech_b"
+      }
+    ]
+  }
+]
+`,
       );
 
       const compiler = new Compiler();
@@ -671,7 +726,7 @@ describe("Compiler", () => {
           routeFiles: [],
           possessionFiles: [],
           portFiles: [],
-          technologyFiles: [resolve(fixture.path, "technologies.yaml")],
+          technologyFiles: [resolve(fixture.path, "technologies.json")],
         },
         signal,
         collector,
@@ -695,26 +750,38 @@ describe("Compiler", () => {
           name: "test-pack",
           version: "0.1.0",
           type: "fixture",
-          files: { technologies: ["technologies.yaml"] },
+          files: { technologies: ["technologies.json"] },
         }),
       );
       writeFixture(
         fixture.path,
-        "technologies.yaml",
+        "technologies.json",
         `
-- id: "tech_a"
-  name: "Tech A"
-  category: "hull"
-  researchFieldId: "HULL_CONSTRUCTION"
-  prerequisites:
-    - { techId: "tech_b" }
-- id: "tech_b"
-  name: "Tech B"
-  category: "hull"
-  researchFieldId: "HULL_CONSTRUCTION"
-  prerequisites:
-    - { techId: "tech_a" }
-      `,
+[
+  {
+    "id": "tech_a",
+    "name": "Tech A",
+    "category": "hull",
+    "researchFieldId": "HULL_CONSTRUCTION",
+    "prerequisites": [
+      {
+        "techId": "tech_b"
+      }
+    ]
+  },
+  {
+    "id": "tech_b",
+    "name": "Tech B",
+    "category": "hull",
+    "researchFieldId": "HULL_CONSTRUCTION",
+    "prerequisites": [
+      {
+        "techId": "tech_a"
+      }
+    ]
+  }
+]
+`,
       );
 
       const collector = new DiagnosticCollector();
@@ -728,7 +795,7 @@ describe("Compiler", () => {
           routeFiles: [],
           possessionFiles: [],
           portFiles: [],
-          technologyFiles: [resolve(fixture.path, "technologies.yaml")],
+          technologyFiles: [resolve(fixture.path, "technologies.json")],
         },
         new AbortController().signal,
         collector,
@@ -739,7 +806,7 @@ describe("Compiler", () => {
       expect(cycle).toBeDefined();
       expect(cycle!.message).toContain("tech_a");
       expect(cycle!.message).toContain("tech_b");
-      expect(cycle!.sourceLocation?.path).toBe("technologies.yaml");
+      expect(cycle!.sourceLocation?.path).toBe("technologies.json");
       expect((cycle!.relatedLocations ?? []).length).toBeGreaterThanOrEqual(2);
     } finally {
       fixture.cleanup();
@@ -756,20 +823,27 @@ describe("Compiler", () => {
           name: "test-pack",
           version: "0.1.0",
           type: "fixture",
-          files: { technologies: ["technologies.yaml"] },
+          files: { technologies: ["technologies.json"] },
         }),
       );
       writeFixture(
         fixture.path,
-        "technologies.yaml",
+        "technologies.json",
         `
-- id: "tech_a"
-  name: "Tech A"
-  category: "hull"
-  researchFieldId: "HULL_CONSTRUCTION"
-  prerequisites:
-    - { techId: "tech_a" }
-      `,
+[
+  {
+    "id": "tech_a",
+    "name": "Tech A",
+    "category": "hull",
+    "researchFieldId": "HULL_CONSTRUCTION",
+    "prerequisites": [
+      {
+        "techId": "tech_a"
+      }
+    ]
+  }
+]
+`,
       );
 
       const collector = new DiagnosticCollector();
@@ -783,7 +857,7 @@ describe("Compiler", () => {
           routeFiles: [],
           possessionFiles: [],
           portFiles: [],
-          technologyFiles: [resolve(fixture.path, "technologies.yaml")],
+          technologyFiles: [resolve(fixture.path, "technologies.json")],
         },
         new AbortController().signal,
         collector,
@@ -793,7 +867,7 @@ describe("Compiler", () => {
       const selfRef = collector.errors.find((d) => d.code === "SELF_REFERENCE");
       expect(selfRef).toBeDefined();
       expect(selfRef!.entityId).toBe("tech_a");
-      expect(selfRef!.sourceLocation?.path).toBe("technologies.yaml");
+      expect(selfRef!.sourceLocation?.path).toBe("technologies.json");
     } finally {
       fixture.cleanup();
     }
@@ -809,24 +883,33 @@ describe("Compiler", () => {
           name: "test-pack",
           version: "0.1.0",
           type: "fixture",
-          files: { technologies: ["technologies.yaml"] },
+          files: { technologies: ["technologies.json"] },
         }),
       );
       writeFixture(
         fixture.path,
-        "technologies.yaml",
+        "technologies.json",
         `
-- id: "tech_a"
-  name: "Tech A"
-  category: "hull"
-  researchFieldId: "HULL_CONSTRUCTION"
-- id: "tech_b"
-  name: "Tech B"
-  category: "hull"
-  researchFieldId: "HULL_CONSTRUCTION"
-  prerequisites:
-    - { techId: "tech_a" }
-      `,
+[
+  {
+    "id": "tech_a",
+    "name": "Tech A",
+    "category": "hull",
+    "researchFieldId": "HULL_CONSTRUCTION"
+  },
+  {
+    "id": "tech_b",
+    "name": "Tech B",
+    "category": "hull",
+    "researchFieldId": "HULL_CONSTRUCTION",
+    "prerequisites": [
+      {
+        "techId": "tech_a"
+      }
+    ]
+  }
+]
+`,
       );
 
       const collector = new DiagnosticCollector();
@@ -840,7 +923,7 @@ describe("Compiler", () => {
           routeFiles: [],
           possessionFiles: [],
           portFiles: [],
-          technologyFiles: [resolve(fixture.path, "technologies.yaml")],
+          technologyFiles: [resolve(fixture.path, "technologies.json")],
         },
         new AbortController().signal,
         collector,
@@ -863,10 +946,14 @@ describe("Compiler", () => {
       );
       writeFixture(
         fixture.path,
-        "ship-building/components.yaml",
-        `components:${componentYamlWith("comp_a", ["comp_a"])}`,
+        "ship-building/components.json",
+        componentsDocument([componentRecord("comp_a", ["comp_a"])]),
       );
-      writeFixture(fixture.path, "ship-building/balance.yaml", `ship:\n  dummy: 1\n`);
+      writeFixture(
+        fixture.path,
+        "ship-building/balance.json",
+        jsonDocument({ ship: { dummy: 1 } }),
+      );
 
       const collector = new DiagnosticCollector();
       const output = new Compiler().compile(
@@ -890,7 +977,7 @@ describe("Compiler", () => {
       const selfRef = collector.errors.find((d) => d.code === "SELF_REFERENCE");
       expect(selfRef).toBeDefined();
       expect(selfRef!.entityId).toBe("comp_a");
-      expect(selfRef!.sourceLocation?.path).toBe("ship-building/components.yaml");
+      expect(selfRef!.sourceLocation?.path).toBe("ship-building/components.json");
     } finally {
       fixture.cleanup();
     }
@@ -906,10 +993,17 @@ describe("Compiler", () => {
       );
       writeFixture(
         fixture.path,
-        "ship-building/components.yaml",
-        `components:${componentYamlWith("comp_a", ["comp_b"])}${componentYamlWith("comp_b", ["comp_a"])}`,
+        "ship-building/components.json",
+        componentsDocument([
+          componentRecord("comp_a", ["comp_b"]),
+          componentRecord("comp_b", ["comp_a"]),
+        ]),
       );
-      writeFixture(fixture.path, "ship-building/balance.yaml", `ship:\n  dummy: 1\n`);
+      writeFixture(
+        fixture.path,
+        "ship-building/balance.json",
+        jsonDocument({ ship: { dummy: 1 } }),
+      );
 
       const collector = new DiagnosticCollector();
       const output = new Compiler().compile(
@@ -934,7 +1028,7 @@ describe("Compiler", () => {
       expect(cycle).toBeDefined();
       expect(cycle!.message).toContain("comp_a");
       expect(cycle!.message).toContain("comp_b");
-      expect(cycle!.sourceLocation?.path).toBe("ship-building/components.yaml");
+      expect(cycle!.sourceLocation?.path).toBe("ship-building/components.json");
     } finally {
       fixture.cleanup();
     }
@@ -950,10 +1044,14 @@ describe("Compiler", () => {
       );
       writeFixture(
         fixture.path,
-        "ship-building/components.yaml",
-        `components:${componentYamlWith("comp_a", ["comp_b"])}${componentYamlWith("comp_b", [])}`,
+        "ship-building/components.json",
+        componentsDocument([componentRecord("comp_a", ["comp_b"]), componentRecord("comp_b")]),
       );
-      writeFixture(fixture.path, "ship-building/balance.yaml", `ship:\n  dummy: 1\n`);
+      writeFixture(
+        fixture.path,
+        "ship-building/balance.json",
+        jsonDocument({ ship: { dummy: 1 } }),
+      );
 
       const collector = new DiagnosticCollector();
       const output = new Compiler().compile(

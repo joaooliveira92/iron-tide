@@ -35,11 +35,11 @@ describe("DiagnosticCollector", () => {
     const c = new DiagnosticCollector();
     c.addError("TEST-ERR", "failure", {
       stage: "check",
-      sourceLocation: { path: "file.yaml", line: 5 },
+      sourceLocation: { path: "file.json", line: 5 },
     });
     const output = c.toHuman();
     expect(output).toContain("TEST-ERR");
-    expect(output).toContain("file.yaml:5");
+    expect(output).toContain("file.json:5");
   });
 
   it("generates JSON output", () => {
@@ -77,7 +77,7 @@ describe("DiagnosticError", () => {
     const error = new DiagnosticError({
       code: "TEST-ERR" as DiagnosticCode,
       message: "failure",
-      sourceLocation: { path: "file.yaml", line: 5 },
+      sourceLocation: { path: "file.json", line: 5 },
       entityId: "ship-1",
       remediation: "fix it",
     });
@@ -86,7 +86,7 @@ describe("DiagnosticError", () => {
       severity: "error",
       stage: "unknown",
       message: "failure",
-      sourceLocation: { path: "file.yaml", line: 5 },
+      sourceLocation: { path: "file.json", line: 5 },
       entityId: "ship-1",
       relatedLocations: undefined,
       remediation: "fix it",
@@ -97,7 +97,7 @@ describe("DiagnosticError", () => {
     const direct = new DiagnosticCollector();
     direct.addError("TEST-ERR", "failure", {
       stage: "check",
-      sourceLocation: { path: "file.yaml", line: 5 },
+      sourceLocation: { path: "file.json", line: 5 },
       entityId: "ship-1",
       remediation: "fix it",
     });
@@ -108,7 +108,7 @@ describe("DiagnosticError", () => {
         code: "TEST-ERR" as DiagnosticCode,
         message: "failure",
         stage: "check",
-        sourceLocation: { path: "file.yaml", line: 5 },
+        sourceLocation: { path: "file.json", line: 5 },
         entityId: "ship-1",
         remediation: "fix it",
       }).toDiagnostic(),

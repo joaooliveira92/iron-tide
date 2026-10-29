@@ -9,7 +9,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 import { MonthExecutor } from "@bluewave/phase-engine";
-import { FIXTURE_RULESETS_YAML, nationsYaml } from "@bluewave/test-support";
+import { FIXTURE_RULESETS_JSON, nationsDocument } from "@bluewave/test-support";
 
 const FIXTURE = {
   pack: JSON.stringify({
@@ -17,29 +17,136 @@ const FIXTURE = {
     version: "0.1.0",
     type: "fixture",
     files: {
-      rulesets: ["rulesets.yaml"],
-      countries: ["countries.yaml"],
-      areas: ["areas.yaml"],
-      routes: ["routes.yaml"],
-      possessions: ["possessions.yaml"],
-      ports: ["ports.yaml"],
-      technologies: ["technologies.yaml"],
+      rulesets: ["rulesets.json"],
+      countries: ["countries.json"],
+      areas: ["areas.json"],
+      routes: ["routes.json"],
+      possessions: ["possessions.json"],
+      ports: ["ports.json"],
+      technologies: ["technologies.json"],
     },
   }),
-  rulesets: FIXTURE_RULESETS_YAML,
-  countries: nationsYaml([
+  rulesets: FIXTURE_RULESETS_JSON,
+  countries: nationsDocument([
     { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
   ]),
-  areas: `- id: "lon"\n  name: "London"\n  type: "land"\n  controller: "uk"\n- id: "eng_ch"\n  name: "English Channel"\n  type: "sea"\n`,
-  routes: `- id: "lon-eng_ch"\n  from: "lon"\n  to: "eng_ch"\n  type: "sea"\n  distance: 50\n`,
-  possessions: `- id: "gbr-lon"\n  nationId: "uk"\n  areaId: "lon"\n`,
-  ports: `- id: "port-lon"\n  name: "Port of London"\n  areaId: "lon"\n  nationId: "uk"\n  level: 5\n`,
-  technologies: `- id: "basic_steam"\n  name: "Basic Steam Turbine"\n  category: "propulsion"\n  cost: 100\n  year: 1880\n`,
-  fleets: `- id: "fleet-gbr-home"\n  nationId: "uk"\n  name: "Home Fleet"\n  locationAreaId: "lon"\n  ships:\n    - id: "ship-hms-carrier"\n      name: "HMS Carrier"\n      classId: "carrier"\n      hitPoints: 100\n      maxHitPoints: 100\n      speed: 21\n      firepower: 2\n      armor: 6\n      isUnderConstruction: false\n      constructionProgress: 0\n      constructionTotalWork: 0\n`,
-  economies: `- nationId: "uk"\n  treasury: 800\n  income: 150\n  expenses: 75\n`,
-  constructions: `- id: "con-gbr-ship-carrier2"\n  nationId: "uk"\n  type: "ship"\n  targetId: "ship-hms-carrier2"\n  totalWork: 200\n  completedWork: 50\n  paidWork: 0\n  status: "PLANNED"\n  startedAt: "1880-01"\n`,
+  areas: `
+[
+  {
+    "id": "lon",
+    "name": "London",
+    "type": "land",
+    "controller": "uk"
+  },
+  {
+    "id": "eng_ch",
+    "name": "English Channel",
+    "type": "sea"
+  }
+]
+`,
+  routes: `
+[
+  {
+    "id": "lon-eng_ch",
+    "from": "lon",
+    "to": "eng_ch",
+    "type": "sea",
+    "distance": 50
+  }
+]
+`,
+  possessions: `
+[
+  {
+    "id": "gbr-lon",
+    "nationId": "uk",
+    "areaId": "lon"
+  }
+]
+`,
+  ports: `
+[
+  {
+    "id": "port-lon",
+    "name": "Port of London",
+    "areaId": "lon",
+    "nationId": "uk",
+    "level": 5
+  }
+]
+`,
+  technologies: `
+[
+  {
+    "id": "basic_steam",
+    "name": "Basic Steam Turbine",
+    "category": "propulsion",
+    "cost": 100,
+    "year": 1880
+  }
+]
+`,
+  fleets: `
+[
+  {
+    "id": "fleet-gbr-home",
+    "nationId": "uk",
+    "name": "Home Fleet",
+    "locationAreaId": "lon",
+    "ships": [
+      {
+        "id": "ship-hms-carrier",
+        "name": "HMS Carrier",
+        "classId": "carrier",
+        "hitPoints": 100,
+        "maxHitPoints": 100,
+        "speed": 21,
+        "firepower": 2,
+        "armor": 6,
+        "isUnderConstruction": false,
+        "constructionProgress": 0,
+        "constructionTotalWork": 0
+      }
+    ]
+  }
+]
+`,
+  economies: `
+[
+  {
+    "nationId": "uk",
+    "treasury": 800,
+    "income": 150,
+    "expenses": 75
+  }
+]
+`,
+  constructions: `
+[
+  {
+    "id": "con-gbr-ship-carrier2",
+    "nationId": "uk",
+    "type": "ship",
+    "targetId": "ship-hms-carrier2",
+    "totalWork": 200,
+    "completedWork": 50,
+    "paidWork": 0,
+    "status": "PLANNED",
+    "startedAt": "1880-01"
+  }
+]
+`,
   diplomacy: ``,
-  research: `- nationId: "uk"\n  researchBudget: 0\n  technologies: []\n`,
+  research: `
+[
+  {
+    "nationId": "uk",
+    "researchBudget": 0,
+    "technologies": []
+  }
+]
+`,
 };
 
 function writeFile(base: string, rel: string, content: string): void {
@@ -50,18 +157,18 @@ function writeFile(base: string, rel: string, content: string): void {
 
 function writeAllFixtureFiles(fixturePath: string): void {
   writeFile(fixturePath, "pack.json", FIXTURE.pack);
-  writeFile(fixturePath, "rulesets.yaml", FIXTURE.rulesets);
-  writeFile(fixturePath, "countries.yaml", FIXTURE.countries);
-  writeFile(fixturePath, "areas.yaml", FIXTURE.areas);
-  writeFile(fixturePath, "routes.yaml", FIXTURE.routes);
-  writeFile(fixturePath, "possessions.yaml", FIXTURE.possessions);
-  writeFile(fixturePath, "ports.yaml", FIXTURE.ports);
-  writeFile(fixturePath, "technologies.yaml", FIXTURE.technologies);
-  writeFile(fixturePath, "fleets.yaml", FIXTURE.fleets);
-  writeFile(fixturePath, "economies.yaml", FIXTURE.economies);
-  writeFile(fixturePath, "constructions.yaml", FIXTURE.constructions);
-  writeFile(fixturePath, "diplomacy.yaml", FIXTURE.diplomacy);
-  writeFile(fixturePath, "research.yaml", FIXTURE.research);
+  writeFile(fixturePath, "rulesets.json", FIXTURE.rulesets);
+  writeFile(fixturePath, "countries.json", FIXTURE.countries);
+  writeFile(fixturePath, "areas.json", FIXTURE.areas);
+  writeFile(fixturePath, "routes.json", FIXTURE.routes);
+  writeFile(fixturePath, "possessions.json", FIXTURE.possessions);
+  writeFile(fixturePath, "ports.json", FIXTURE.ports);
+  writeFile(fixturePath, "technologies.json", FIXTURE.technologies);
+  writeFile(fixturePath, "fleets.json", FIXTURE.fleets);
+  writeFile(fixturePath, "economies.json", FIXTURE.economies);
+  writeFile(fixturePath, "constructions.json", FIXTURE.constructions);
+  writeFile(fixturePath, "diplomacy.json", FIXTURE.diplomacy);
+  writeFile(fixturePath, "research.json", FIXTURE.research);
 }
 
 function compileCampaign(fixtureDir: string): { state: CampaignState; contentHash: string } {
@@ -71,18 +178,18 @@ function compileCampaign(fixtureDir: string): { state: CampaignState; contentHas
     {
       manifestPath: "pack.json",
       contentDir: fixtureDir,
-      rulesetFiles: ["rulesets.yaml"],
-      countryFiles: ["countries.yaml"],
-      areaFiles: ["areas.yaml"],
-      routeFiles: ["routes.yaml"],
-      possessionFiles: ["possessions.yaml"],
-      portFiles: ["ports.yaml"],
-      technologyFiles: ["technologies.yaml"],
-      fleetFiles: ["fleets.yaml"],
-      economyFiles: ["economies.yaml"],
-      constructionFiles: ["constructions.yaml"],
+      rulesetFiles: ["rulesets.json"],
+      countryFiles: ["countries.json"],
+      areaFiles: ["areas.json"],
+      routeFiles: ["routes.json"],
+      possessionFiles: ["possessions.json"],
+      portFiles: ["ports.json"],
+      technologyFiles: ["technologies.json"],
+      fleetFiles: ["fleets.json"],
+      economyFiles: ["economies.json"],
+      constructionFiles: ["constructions.json"],
       diplomacyFiles: [],
-      researchFiles: ["research.yaml"],
+      researchFiles: ["research.json"],
       designFiles: [],
     },
     signal,

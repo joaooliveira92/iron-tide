@@ -8,7 +8,7 @@ import { designInvariant } from "./errors.js";
 
 export type FlattenedPlantPart = Extract<FlattenedPart, { readonly family: "propulsion_plant" }>;
 
-export const PLANT_FILE = "ship-building/plants.yaml";
+export const PLANT_FILE = "ship-building/plants.ts";
 
 export const INSTALLED_KW = "installedKw";
 

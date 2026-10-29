@@ -1,0 +1,558 @@
+// National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
+// Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
+// target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+// Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
+// steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
+import { NationNavalProfileSchema, collection } from "@bluewave/content-authoring";
+
+export default collection("navalProfiles", NationNavalProfileSchema, [
+  {
+    nationId: "france",
+    activeFrom: "1880-01",
+    activeUntil: null,
+    strategicSituation:
+      "Continental and Mediterranean power whose Jeune-École doctrine made commerce raiding and the torpedo boat the primary offensive arms: torpedo flotillas and experimental, fast, heavily-armed armoured cruisers outweighed a battle line smaller than Britain's, with early and widespread water-tube machinery and a world-leading armour industry used as an export tool.",
+    hardCapabilities: {
+      maxGunCaliberUm: 305000,
+      maxArmourThicknessUm: 457000,
+      domesticTorpedoDiameterUm: 380000,
+      hullForms: [
+        "torpedo_boat_form",
+        "protected_cruiser_form",
+        "coast_defence_form",
+        "pre_dreadnought_form",
+        "merchant_liner_form",
+      ],
+      domesticPlants: [
+        "compound_cylindrical",
+        "triple_expansion_cylindrical",
+        "triple_expansion_watertube",
+        "compound_locomotive_tb",
+        "locomotive_boiler_tb",
+      ],
+      restrictedShipTypes: [],
+      grants: [],
+    },
+    softPreferences: {
+      speedOverArmourBp: 6000,
+      secondaryBatteryWeightBp: 12000,
+      enduranceWeightBp: 10000,
+      riskToleranceBp: 7500,
+      colonialServiceWeightBp: 9000,
+      torpedoOnCruisersBp: 13500,
+      accommodationStandard: "SPARTAN",
+    },
+    industrialProfile: {
+      buildTimeMultiplierBp: 10600,
+      costMultiplierBp: 10700,
+      machineryReliabilityBp: 8200,
+      constructionQualityVarianceBp: 4000,
+      maxPracticalDisplacementKg: [
+        {
+          fromMonth: "1880-01",
+          value: 9000000,
+        },
+        {
+          fromMonth: "1885-01",
+          value: 10500000,
+        },
+        {
+          fromMonth: "1890-01",
+          value: 12000000,
+        },
+      ],
+      heavyGunProduction: "DOMESTIC",
+      armourPlateProduction: "DOMESTIC",
+      provenance: {
+        sourceStatus: "ESTIMATE",
+        confidence: "MEDIUM",
+        kind: "balance_adjustment",
+        sources: [
+          {
+            title: "National naval profiles research note",
+            page: "A.2.2",
+          },
+          {
+            title: "Encyclopaedia Britannica 11th ed., 'Armour Plates'",
+          },
+        ],
+        derivation: {
+          sourceValue: "French completion slips slower; state yards, small series",
+          sourceUnit: "estimate",
+          conversion: "within the ±15% band",
+          gameValue: "buildTimeMultiplierBp 10600, costMultiplierBp 10700",
+          roundingRule: "±15%",
+        },
+      },
+    },
+    dock: {
+      maximumNewConstructionMassKg: 12000000,
+      maximumMajorRepairMassKg: 12000000,
+      maximumRebuildMassKg: 12000000,
+      maximumConversionMassKg: 12000000,
+      provenance: {
+        sourceStatus: "DERIVED",
+        confidence: "MEDIUM",
+        kind: "game_conversion",
+        sources: [
+          {
+            title: "1880 national dock capacity research note",
+            page: "findings table",
+          },
+        ],
+        derivation: {
+          sourceValue: "Amiral Duperre 11,200 t (largest 1880 hull)",
+          sourceUnit: "t",
+          conversion:
+            "largest 1880 hull the nation fields, rounded up to the next 1,000 t dock step",
+          gameValue: "maximumNewConstructionMassKg 12000000",
+          roundingRule: "ceiling to next 1,000 t",
+        },
+        note: "historical flagship rounded up to the next 1,000 t",
+      },
+    },
+    doctrineProfile: {
+      engagementRangeM: 2000,
+      hePreferenceBp: 7000,
+      postures: ["commerce_raiding", "torpedo_warfare", "coastal_defence"],
+      provenance: {
+        sourceStatus: "DERIVED",
+        confidence: "MEDIUM",
+        kind: "historical_fact",
+        sources: [
+          {
+            title: "A. Roksund, The Jeune Ecole (Brill, 2007) - relayed",
+            page: "A.2.1",
+          },
+          {
+            title: "National naval profiles research note",
+            page: "A.2.1, A.2.3",
+          },
+        ],
+      },
+    },
+    researchPreferences: [
+      {
+        field: "GUNNERY",
+        priority: 4,
+      },
+      {
+        field: "TORPEDOES",
+        priority: 4,
+      },
+      {
+        field: "MACHINERY",
+        priority: 3,
+      },
+      {
+        field: "HULL_CONSTRUCTION",
+        priority: 3,
+      },
+      {
+        field: "SUBMARINES",
+        priority: 3,
+      },
+      {
+        field: "MINES_AND_ASW",
+        priority: 2,
+      },
+      {
+        field: "SHIP_DESIGN",
+        priority: 2,
+      },
+      {
+        field: "FIRE_CONTROL",
+        priority: 2,
+      },
+      {
+        field: "INFRASTRUCTURE",
+        priority: 2,
+      },
+      {
+        field: "DAMAGE_CONTROL",
+        priority: 2,
+      },
+    ],
+    componentAccess: {
+      gun_bl_135in_30: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_12in_35: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_10in_32: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_274mm_m1875: {
+        status: "DOMESTIC",
+        producer: "Ruelle",
+      },
+      gun_bl_12in_25: {
+        status: "DOMESTIC",
+        producer: "Ruelle / Creusot",
+      },
+      gun_qf_6in_40: {
+        status: "DOMESTIC",
+        producer: "Ruelle / Canet",
+      },
+      gun_qf_47in: {
+        status: "DOMESTIC",
+        producer: "Ruelle / Canet",
+      },
+      gun_qf_12pdr: {
+        status: "DOMESTIC",
+        producer: "Ruelle",
+      },
+      tube_14in_above_water: {
+        status: "DOMESTIC",
+        producer: "Ruelle",
+      },
+      tube_14in_submerged: {
+        status: "DOMESTIC",
+        producer: "Ruelle",
+      },
+    },
+    gunModels: [
+      {
+        id: "fr_canon_274mm_mle1893",
+        familyId: "gun_bl_274mm_m1875",
+        designation: "Canon de 274 mm Mle 1893",
+        overrides: {
+          displayName: "Canon de 274 mm Mle 1893 in barbette mount",
+          "attributes.shellMassG": "255000",
+        },
+        mounts: ["BARBETTE", "TURRET"],
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              title: "navweaps WNFR_10-45_m1893",
+              archiveOrUrl: "http://www.navweaps.com/Weapons/WNFR_10-45_m1893.php",
+            },
+            {
+              title: "National naval profiles research note",
+              page: "B.2",
+            },
+          ],
+        },
+      },
+      {
+        id: "fr_canon_305mm_mle1893",
+        familyId: "gun_bl_12in_25",
+        designation: "Canon de 305 mm Mle 1893/1896",
+        overrides: {
+          displayName: "Canon de 305 mm Mle 1893/1896 in turret",
+          "attributes.shellMassG": "349000",
+        },
+        mounts: ["TURRET"],
+        introductionMonth: "1893-01",
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              title: "navweaps WNFR_10-45_m1893",
+              archiveOrUrl: "http://www.navweaps.com/Weapons/WNFR_10-45_m1893.php",
+            },
+            {
+              title: "National naval profiles research note",
+              page: "B.2",
+            },
+          ],
+        },
+      },
+      {
+        id: "fr_canon_1647mm_mle1887",
+        familyId: "gun_qf_6in_40",
+        designation: "Canon de 164,7 mm Mle 1887/1893",
+        overrides: {
+          displayName: "Canon de 164,7 mm Mle 1887/1893 in shielded mount",
+          "attributes.shellMassG": "54900",
+        },
+        mounts: ["CASEMATE", "DECK_SHIELDED", "TURRET"],
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              title: "navweaps WNFR_10-45_m1893",
+              archiveOrUrl: "http://www.navweaps.com/Weapons/WNFR_10-45_m1893.php",
+            },
+            {
+              title: "National naval profiles research note",
+              page: "B.2",
+            },
+          ],
+        },
+      },
+      {
+        id: "fr_canon_1386mm_mle1891",
+        familyId: "gun_qf_47in",
+        designation: "Canon de 138,6 mm Mle 1891",
+        overrides: {
+          displayName: "Canon de 138,6 mm Mle 1891 in shielded mount",
+          "attributes.shellMassG": "36500",
+        },
+        mounts: ["DECK_SHIELDED", "DECK_OPEN", "CASEMATE"],
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              title: "navweaps WNFR_10-45_m1893",
+              archiveOrUrl: "http://www.navweaps.com/Weapons/WNFR_10-45_m1893.php",
+            },
+            {
+              title: "National naval profiles research note",
+              page: "B.2",
+            },
+          ],
+        },
+      },
+      {
+        id: "fr_canon_65mm_mle1891",
+        familyId: "gun_qf_12pdr",
+        designation: "Canon de 65 mm Mle 1891",
+        overrides: {
+          displayName: "Canon de 65 mm (9-pdr) Mle 1891",
+          "attributes.shellMassG": "4000",
+        },
+        mounts: ["DECK_OPEN", "DECK_SHIELDED"],
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              title: "navweaps WNFR_10-45_m1893",
+              archiveOrUrl: "http://www.navweaps.com/Weapons/WNFR_10-45_m1893.php",
+            },
+            {
+              title: "National naval profiles research note",
+              page: "B.2",
+            },
+          ],
+        },
+      },
+    ],
+    ammunitionPatterns: [
+      {
+        id: "fr_melinite_he",
+        pattern: "MELINITE",
+        penetrationBiasBp: 3000,
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              title: "navweaps WNFR_65-45_m1893 (Melinite)",
+            },
+            {
+              title: "National naval profiles research note",
+              page: "A.2.3",
+            },
+          ],
+        },
+      },
+      {
+        id: "fr_apc",
+        pattern: "APC",
+        penetrationBiasBp: 8000,
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "balance_adjustment",
+          sources: [
+            {
+              title: "National naval profiles research note",
+              page: "A.2.3",
+            },
+          ],
+        },
+      },
+    ],
+    componentVariants: [
+      {
+        id: "fr_tube_380mm_aw",
+        familyId: "tube_14in_above_water",
+        designation: "Tube de 380 mm, above-water beam",
+        overrides: {
+          displayName: "Tube lance-torpilles de 380 mm, above-water beam",
+        },
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              title: "National naval profiles research note",
+              page: "B.2, C.2",
+            },
+          ],
+        },
+      },
+      {
+        id: "fr_tube_350mm_sub",
+        familyId: "tube_14in_submerged",
+        designation: "Tube de 350 mm, submerged bow",
+        overrides: {
+          displayName: "Tube lance-torpilles de 350 mm, submerged bow",
+        },
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              title: "National naval profiles research note",
+              page: "B.2, C.2",
+            },
+          ],
+        },
+      },
+    ],
+    designWeights: {
+      B: {
+        firepowerBp: 11500,
+        protectionBp: 10500,
+        speedBp: 10000,
+        enduranceBp: 9500,
+        torpedoBp: 10500,
+        reliabilityBp: 9000,
+        colonialBp: 8500,
+        costBp: 10500,
+      },
+      CA: {
+        firepowerBp: 11000,
+        protectionBp: 9500,
+        speedBp: 11500,
+        enduranceBp: 10000,
+        torpedoBp: 11000,
+        reliabilityBp: 9000,
+        colonialBp: 9000,
+        costBp: 10000,
+      },
+      CL: {
+        firepowerBp: 10000,
+        protectionBp: 9000,
+        speedBp: 11500,
+        enduranceBp: 10500,
+        torpedoBp: 11500,
+        reliabilityBp: 9000,
+        colonialBp: 9500,
+        costBp: 11000,
+      },
+      DD: {
+        firepowerBp: 8000,
+        protectionBp: 8000,
+        speedBp: 13500,
+        enduranceBp: 8500,
+        torpedoBp: 14500,
+        reliabilityBp: 9000,
+        colonialBp: 8500,
+        costBp: 12500,
+      },
+      KE: {
+        firepowerBp: 8500,
+        protectionBp: 8500,
+        speedBp: 9500,
+        enduranceBp: 11000,
+        torpedoBp: 10000,
+        reliabilityBp: 9500,
+        colonialBp: 11500,
+        costBp: 12000,
+      },
+      AMC: {
+        firepowerBp: 9500,
+        protectionBp: 8000,
+        speedBp: 10000,
+        enduranceBp: 12500,
+        torpedoBp: 12000,
+        reliabilityBp: 9000,
+        colonialBp: 11000,
+        costBp: 11000,
+      },
+    },
+    procurementPolicy: {
+      battleLineShareBp: 2000,
+      cruiserShareBp: 3000,
+      torpedoCraftShareBp: 3500,
+      colonialShareBp: 1500,
+      foreignProcurementAppetiteBp: 2500,
+      unprovenTechAppetiteBp: 7000,
+      buildOrder: ["DD", "CL", "CA", "B", "AMC", "KE"],
+    },
+    namingPolicy: {
+      stems: {
+        B: [
+          "Redoutable",
+          "Amiral Duperre",
+          "Hoche",
+          "Brennus",
+          "Charles Martel",
+          "Carnot",
+          "Jaureguiberry",
+          "Massena",
+          "Bouvet",
+          "Charlemagne",
+        ],
+        CA: ["Dupuy de Lome", "Amiral Charner", "Latouche-Treville", "Chanzy", "Bruix"],
+        CL: ["Friant", "Descartes", "D'Assas", "Catinat", "Guichen", "Chateaurenault"],
+        DD: ["Durandal", "Pique", "Pertuisane", "Arquebuse", "Hallebarde"],
+        KE: ["Rigault de Genouilly", "Eclaireur", "Hussard", "Forbin"],
+        AMC: ["Provence", "Normandie", "Bretagne"],
+      },
+      convention: {
+        B: "Heroic, Republican and professional names (Redoutable, Hoche, Bouvet).",
+        CA: "Admiral and statesman names (Dupuy de Lome, Amiral Charner).",
+        CL: "Descriptive and admiral names (Friant, D'Assas, Guichen).",
+        DD: "Torpedo boats numbered; contre-torpilleurs named as weapons (Durandal, Arquebuse).",
+        KE: "Colonial and descriptive names (Rigault de Genouilly, Eclaireur).",
+        AMC: "Provincial ship names taken up from trade.",
+      },
+    },
+    sourceReferences: [
+      {
+        title: "A. Roksund, The Jeune Ecole: The Strategy of the Weak",
+        author: "A. Roksund",
+        year: 2007,
+      },
+      {
+        title: "navweaps.com French gun pages (WNFR_*)",
+        archiveOrUrl: "http://www.navweaps.com",
+      },
+      {
+        title: "navypedia.org French class pages",
+        archiveOrUrl: "http://www.navypedia.org",
+      },
+      {
+        title: "National naval profiles research note (UK/France)",
+        page: "full",
+      },
+    ],
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "National naval profiles research note (UK/France)",
+          page: "A.2, B.2, C.2, D",
+        },
+      ],
+      derivation: {
+        sourceValue: "grounded shape (White/Brassey/navypedia/navweaps/Roksund relayed)",
+        sourceUnit: "mixed",
+        conversion: "weights and shares are gameplay abstractions",
+        gameValue: "profile as authored",
+        roundingRule: "multipliers within ±15%",
+      },
+    },
+  },
+]);

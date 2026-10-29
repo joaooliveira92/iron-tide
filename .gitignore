@@ -8,6 +8,8 @@ codefetch/
 .vite-hooks/
 release/
 test-results/
+.tmp/*
+!.tmp/.gitkeep
 playwright-report/
 *.sqlite
 *.sqlite.backup-*

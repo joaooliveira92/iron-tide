@@ -44,6 +44,7 @@ export const RUNTIME_FREE_ROOTS = [
   "packages/campaign-engine/src",
   "packages/combat/src",
   "packages/commands/src",
+  "packages/content-authoring/src",
   "packages/content-schema/src",
   "packages/contracts/src",
   "packages/deterministic/src",

@@ -1,0 +1,629 @@
+import { SlotTemplateSchema, collection } from "@bluewave/content-authoring";
+
+export default collection("slotTemplates", SlotTemplateSchema, [
+  {
+    id: "compatibility_accommodation",
+    slots: [
+      {
+        accepts: ["accommodation"],
+        id: "aft_magazine.accommodation",
+        zone: "AFT_MAGAZINE",
+      },
+      {
+        accepts: ["accommodation"],
+        id: "aft_service.accommodation",
+        zone: "AFT_SERVICE",
+      },
+      {
+        accepts: ["accommodation"],
+        id: "central_machinery.accommodation",
+        zone: "CENTRAL_MACHINERY",
+      },
+      {
+        accepts: ["accommodation"],
+        id: "forecastle.accommodation",
+        zone: "FORECASTLE",
+      },
+      {
+        accepts: ["accommodation"],
+        id: "fwd_magazine.accommodation",
+        zone: "FWD_MAGAZINE",
+      },
+      {
+        accepts: ["accommodation"],
+        id: "fwd_service.accommodation",
+        zone: "FWD_SERVICE",
+      },
+      {
+        accepts: ["accommodation"],
+        id: "mission.accommodation",
+        zone: "MISSION",
+      },
+      {
+        accepts: ["accommodation"],
+        id: "quarterdeck.accommodation",
+        zone: "QUARTERDECK",
+      },
+      {
+        accepts: ["accommodation"],
+        id: "superstructure.accommodation",
+        zone: "SUPERSTRUCTURE",
+      },
+    ],
+  },
+  {
+    id: "compatibility_armour_material",
+    slots: [
+      {
+        accepts: ["armour_material"],
+        id: "armour.belt_ends",
+        region: "BELT_ENDS",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.belt_main",
+        region: "BELT_MAIN",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.belt_upper",
+        region: "BELT_UPPER",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.conning_tower",
+        region: "CONNING_TOWER",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.deck_extended",
+        region: "DECK_EXTENDED",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.deck_main",
+        region: "DECK_MAIN",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.deck_slope",
+        region: "DECK_SLOPE",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.magazine_box",
+        region: "MAGAZINE_BOX",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.secondary_gun",
+        region: "SECONDARY_GUN",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.splinter_plating",
+        region: "SPLINTER_PLATING",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.torpedo_belt",
+        region: "TORPEDO_BELT",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.torpedo_bulkhead",
+        region: "TORPEDO_BULKHEAD",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.turret",
+        region: "TURRET",
+      },
+      {
+        accepts: ["armour_material"],
+        id: "armour.turret_top",
+        region: "TURRET_TOP",
+      },
+    ],
+  },
+  {
+    id: "compatibility_damage_control",
+    slots: [
+      {
+        accepts: ["damage_control"],
+        id: "aft_magazine.damage_control",
+        zone: "AFT_MAGAZINE",
+      },
+      {
+        accepts: ["damage_control"],
+        id: "aft_service.damage_control",
+        zone: "AFT_SERVICE",
+      },
+      {
+        accepts: ["damage_control"],
+        id: "central_machinery.damage_control",
+        zone: "CENTRAL_MACHINERY",
+      },
+      {
+        accepts: ["damage_control"],
+        id: "forecastle.damage_control",
+        zone: "FORECASTLE",
+      },
+      {
+        accepts: ["damage_control"],
+        id: "fwd_magazine.damage_control",
+        zone: "FWD_MAGAZINE",
+      },
+      {
+        accepts: ["damage_control"],
+        id: "fwd_service.damage_control",
+        zone: "FWD_SERVICE",
+      },
+      {
+        accepts: ["damage_control"],
+        id: "mission.damage_control",
+        zone: "MISSION",
+      },
+      {
+        accepts: ["damage_control"],
+        id: "quarterdeck.damage_control",
+        zone: "QUARTERDECK",
+      },
+      {
+        accepts: ["damage_control"],
+        id: "superstructure.damage_control",
+        zone: "SUPERSTRUCTURE",
+      },
+    ],
+  },
+  {
+    id: "compatibility_electrical_plant",
+    slots: [
+      {
+        accepts: ["electrical_plant"],
+        id: "aft_magazine.electrical_plant",
+        zone: "AFT_MAGAZINE",
+      },
+      {
+        accepts: ["electrical_plant"],
+        id: "aft_service.electrical_plant",
+        zone: "AFT_SERVICE",
+      },
+      {
+        accepts: ["electrical_plant"],
+        id: "central_machinery.electrical_plant",
+        zone: "CENTRAL_MACHINERY",
+      },
+      {
+        accepts: ["electrical_plant"],
+        id: "forecastle.electrical_plant",
+        zone: "FORECASTLE",
+      },
+      {
+        accepts: ["electrical_plant"],
+        id: "fwd_magazine.electrical_plant",
+        zone: "FWD_MAGAZINE",
+      },
+      {
+        accepts: ["electrical_plant"],
+        id: "fwd_service.electrical_plant",
+        zone: "FWD_SERVICE",
+      },
+      {
+        accepts: ["electrical_plant"],
+        id: "mission.electrical_plant",
+        zone: "MISSION",
+      },
+      {
+        accepts: ["electrical_plant"],
+        id: "quarterdeck.electrical_plant",
+        zone: "QUARTERDECK",
+      },
+      {
+        accepts: ["electrical_plant"],
+        id: "superstructure.electrical_plant",
+        zone: "SUPERSTRUCTURE",
+      },
+    ],
+  },
+  {
+    id: "compatibility_funnel",
+    slots: [
+      {
+        accepts: ["funnel"],
+        id: "aft_magazine.funnel",
+        zone: "AFT_MAGAZINE",
+      },
+      {
+        accepts: ["funnel"],
+        id: "aft_service.funnel",
+        zone: "AFT_SERVICE",
+      },
+      {
+        accepts: ["funnel"],
+        id: "central_machinery.funnel",
+        zone: "CENTRAL_MACHINERY",
+      },
+      {
+        accepts: ["funnel"],
+        id: "forecastle.funnel",
+        zone: "FORECASTLE",
+      },
+      {
+        accepts: ["funnel"],
+        id: "fwd_magazine.funnel",
+        zone: "FWD_MAGAZINE",
+      },
+      {
+        accepts: ["funnel"],
+        id: "fwd_service.funnel",
+        zone: "FWD_SERVICE",
+      },
+      {
+        accepts: ["funnel"],
+        id: "mission.funnel",
+        zone: "MISSION",
+      },
+      {
+        accepts: ["funnel"],
+        id: "quarterdeck.funnel",
+        zone: "QUARTERDECK",
+      },
+      {
+        accepts: ["funnel"],
+        id: "superstructure.funnel",
+        zone: "SUPERSTRUCTURE",
+      },
+    ],
+  },
+  {
+    id: "compatibility_gun_mount",
+    slots: [
+      {
+        accepts: ["gun_mount"],
+        id: "aft_magazine.gun_mount",
+        zone: "AFT_MAGAZINE",
+      },
+      {
+        accepts: ["gun_mount"],
+        id: "aft_service.gun_mount",
+        zone: "AFT_SERVICE",
+      },
+      {
+        accepts: ["gun_mount"],
+        id: "central_machinery.gun_mount",
+        zone: "CENTRAL_MACHINERY",
+      },
+      {
+        accepts: ["gun_mount"],
+        id: "forecastle.gun_mount",
+        zone: "FORECASTLE",
+      },
+      {
+        accepts: ["gun_mount"],
+        id: "fwd_magazine.gun_mount",
+        zone: "FWD_MAGAZINE",
+      },
+      {
+        accepts: ["gun_mount"],
+        id: "fwd_service.gun_mount",
+        zone: "FWD_SERVICE",
+      },
+      {
+        accepts: ["gun_mount"],
+        id: "mission.gun_mount",
+        zone: "MISSION",
+      },
+      {
+        accepts: ["gun_mount"],
+        id: "quarterdeck.gun_mount",
+        zone: "QUARTERDECK",
+      },
+      {
+        accepts: ["gun_mount"],
+        id: "superstructure.gun_mount",
+        zone: "SUPERSTRUCTURE",
+      },
+    ],
+  },
+  {
+    id: "compatibility_magazine",
+    slots: [
+      {
+        accepts: ["magazine"],
+        id: "aft_magazine.magazine",
+        zone: "AFT_MAGAZINE",
+      },
+      {
+        accepts: ["magazine"],
+        id: "aft_service.magazine",
+        zone: "AFT_SERVICE",
+      },
+      {
+        accepts: ["magazine"],
+        id: "central_machinery.magazine",
+        zone: "CENTRAL_MACHINERY",
+      },
+      {
+        accepts: ["magazine"],
+        id: "forecastle.magazine",
+        zone: "FORECASTLE",
+      },
+      {
+        accepts: ["magazine"],
+        id: "fwd_magazine.magazine",
+        zone: "FWD_MAGAZINE",
+      },
+      {
+        accepts: ["magazine"],
+        id: "fwd_service.magazine",
+        zone: "FWD_SERVICE",
+      },
+      {
+        accepts: ["magazine"],
+        id: "mission.magazine",
+        zone: "MISSION",
+      },
+      {
+        accepts: ["magazine"],
+        id: "quarterdeck.magazine",
+        zone: "QUARTERDECK",
+      },
+      {
+        accepts: ["magazine"],
+        id: "superstructure.magazine",
+        zone: "SUPERSTRUCTURE",
+      },
+    ],
+  },
+  {
+    id: "compatibility_missile_launcher",
+    slots: [
+      {
+        accepts: ["missile_launcher"],
+        id: "aft_magazine.missile_launcher",
+        zone: "AFT_MAGAZINE",
+      },
+      {
+        accepts: ["missile_launcher"],
+        id: "aft_service.missile_launcher",
+        zone: "AFT_SERVICE",
+      },
+      {
+        accepts: ["missile_launcher"],
+        id: "central_machinery.missile_launcher",
+        zone: "CENTRAL_MACHINERY",
+      },
+      {
+        accepts: ["missile_launcher"],
+        id: "forecastle.missile_launcher",
+        zone: "FORECASTLE",
+      },
+      {
+        accepts: ["missile_launcher"],
+        id: "fwd_magazine.missile_launcher",
+        zone: "FWD_MAGAZINE",
+      },
+      {
+        accepts: ["missile_launcher"],
+        id: "fwd_service.missile_launcher",
+        zone: "FWD_SERVICE",
+      },
+      {
+        accepts: ["missile_launcher"],
+        id: "mission.missile_launcher",
+        zone: "MISSION",
+      },
+      {
+        accepts: ["missile_launcher"],
+        id: "quarterdeck.missile_launcher",
+        zone: "QUARTERDECK",
+      },
+      {
+        accepts: ["missile_launcher"],
+        id: "superstructure.missile_launcher",
+        zone: "SUPERSTRUCTURE",
+      },
+    ],
+  },
+  {
+    id: "compatibility_propulsion_plant",
+    slots: [
+      {
+        accepts: ["propulsion_plant"],
+        id: "aft_magazine.propulsion_plant",
+        zone: "AFT_MAGAZINE",
+      },
+      {
+        accepts: ["propulsion_plant"],
+        id: "aft_service.propulsion_plant",
+        zone: "AFT_SERVICE",
+      },
+      {
+        accepts: ["propulsion_plant"],
+        id: "central_machinery.propulsion_plant",
+        zone: "CENTRAL_MACHINERY",
+      },
+      {
+        accepts: ["propulsion_plant"],
+        id: "forecastle.propulsion_plant",
+        zone: "FORECASTLE",
+      },
+      {
+        accepts: ["propulsion_plant"],
+        id: "fwd_magazine.propulsion_plant",
+        zone: "FWD_MAGAZINE",
+      },
+      {
+        accepts: ["propulsion_plant"],
+        id: "fwd_service.propulsion_plant",
+        zone: "FWD_SERVICE",
+      },
+      {
+        accepts: ["propulsion_plant"],
+        id: "mission.propulsion_plant",
+        zone: "MISSION",
+      },
+      {
+        accepts: ["propulsion_plant"],
+        id: "quarterdeck.propulsion_plant",
+        zone: "QUARTERDECK",
+      },
+      {
+        accepts: ["propulsion_plant"],
+        id: "superstructure.propulsion_plant",
+        zone: "SUPERSTRUCTURE",
+      },
+    ],
+  },
+  {
+    id: "compatibility_sensor",
+    slots: [
+      {
+        accepts: ["radar", "sensor", "sonar"],
+        id: "aft_magazine.sensor",
+        zone: "AFT_MAGAZINE",
+      },
+      {
+        accepts: ["radar", "sensor", "sonar"],
+        id: "aft_service.sensor",
+        zone: "AFT_SERVICE",
+      },
+      {
+        accepts: ["radar", "sensor", "sonar"],
+        id: "central_machinery.sensor",
+        zone: "CENTRAL_MACHINERY",
+      },
+      {
+        accepts: ["radar", "sensor", "sonar"],
+        id: "forecastle.sensor",
+        zone: "FORECASTLE",
+      },
+      {
+        accepts: ["radar", "sensor", "sonar"],
+        id: "fwd_magazine.sensor",
+        zone: "FWD_MAGAZINE",
+      },
+      {
+        accepts: ["radar", "sensor", "sonar"],
+        id: "fwd_service.sensor",
+        zone: "FWD_SERVICE",
+      },
+      {
+        accepts: ["radar", "sensor", "sonar"],
+        id: "mission.sensor",
+        zone: "MISSION",
+      },
+      {
+        accepts: ["radar", "sensor", "sonar"],
+        id: "quarterdeck.sensor",
+        zone: "QUARTERDECK",
+      },
+      {
+        accepts: ["radar", "sensor", "sonar"],
+        id: "superstructure.sensor",
+        zone: "SUPERSTRUCTURE",
+      },
+    ],
+  },
+  {
+    id: "compatibility_torpedo_launcher",
+    slots: [
+      {
+        accepts: ["torpedo_launcher"],
+        id: "aft_magazine.torpedo_launcher",
+        zone: "AFT_MAGAZINE",
+      },
+      {
+        accepts: ["torpedo_launcher"],
+        id: "aft_service.torpedo_launcher",
+        zone: "AFT_SERVICE",
+      },
+      {
+        accepts: ["torpedo_launcher"],
+        id: "central_machinery.torpedo_launcher",
+        zone: "CENTRAL_MACHINERY",
+      },
+      {
+        accepts: ["torpedo_launcher"],
+        id: "forecastle.torpedo_launcher",
+        zone: "FORECASTLE",
+      },
+      {
+        accepts: ["torpedo_launcher"],
+        id: "fwd_magazine.torpedo_launcher",
+        zone: "FWD_MAGAZINE",
+      },
+      {
+        accepts: ["torpedo_launcher"],
+        id: "fwd_service.torpedo_launcher",
+        zone: "FWD_SERVICE",
+      },
+      {
+        accepts: ["torpedo_launcher"],
+        id: "mission.torpedo_launcher",
+        zone: "MISSION",
+      },
+      {
+        accepts: ["torpedo_launcher"],
+        id: "quarterdeck.torpedo_launcher",
+        zone: "QUARTERDECK",
+      },
+      {
+        accepts: ["torpedo_launcher"],
+        id: "superstructure.torpedo_launcher",
+        zone: "SUPERSTRUCTURE",
+      },
+    ],
+  },
+  {
+    id: "compatibility_ventilation",
+    slots: [
+      {
+        accepts: ["ventilation"],
+        id: "aft_magazine.ventilation",
+        zone: "AFT_MAGAZINE",
+      },
+      {
+        accepts: ["ventilation"],
+        id: "aft_service.ventilation",
+        zone: "AFT_SERVICE",
+      },
+      {
+        accepts: ["ventilation"],
+        id: "central_machinery.ventilation",
+        zone: "CENTRAL_MACHINERY",
+      },
+      {
+        accepts: ["ventilation"],
+        id: "forecastle.ventilation",
+        zone: "FORECASTLE",
+      },
+      {
+        accepts: ["ventilation"],
+        id: "fwd_magazine.ventilation",
+        zone: "FWD_MAGAZINE",
+      },
+      {
+        accepts: ["ventilation"],
+        id: "fwd_service.ventilation",
+        zone: "FWD_SERVICE",
+      },
+      {
+        accepts: ["ventilation"],
+        id: "mission.ventilation",
+        zone: "MISSION",
+      },
+      {
+        accepts: ["ventilation"],
+        id: "quarterdeck.ventilation",
+        zone: "QUARTERDECK",
+      },
+      {
+        accepts: ["ventilation"],
+        id: "superstructure.ventilation",
+        zone: "SUPERSTRUCTURE",
+      },
+    ],
+  },
+]);

@@ -9,7 +9,10 @@ import { resolve } from "node:path";
 const ROOT = resolve(import.meta.dirname, "..");
 
 try {
-  execSync("pnpm --filter @bluewave/compiler-cli build", { cwd: ROOT, stdio: "inherit" });
+  execSync(
+    "pnpm --filter @bluewave/content-authoring build && pnpm --filter @bluewave/compiler-cli build",
+    { cwd: ROOT, stdio: "inherit" },
+  );
   execFileSync(
     process.execPath,
     [

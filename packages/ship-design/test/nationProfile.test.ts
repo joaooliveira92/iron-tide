@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
+import {} from "node:fs";
 import { join } from "node:path";
-import { parse } from "yaml";
 import { describe, it, expect } from "vite-plus/test";
 import { CANONICAL_RESEARCH_FIELD_IDS } from "@bluewave/content-schema";
 import { catalogueForNation } from "../src/componentVariants.js";
@@ -29,6 +28,8 @@ import {
 import { lintNavalArms, preferredAmmunition } from "../src/componentVariants.js";
 import { starterFor } from "../src/shipTypeRoster.js";
 import { renderExplanation } from "./helpers/explanation.js";
+import { readAuthoredFile } from "@bluewave/test-support";
+
 import {
   components,
   navalProfiles,
@@ -39,15 +40,14 @@ import {
 } from "./helpers/earlyContext.js";
 
 const root = join(__dirname, "..", "..", "..", "content", "production", "1880");
-const load = (rel: string) =>
-  parse(readFileSync(join(root, rel), "utf8")) as Record<string, unknown>;
+const load = (rel: string) => readAuthoredFile(join(root, rel)) as Record<string, unknown>;
 
-const countries = load("countries.yaml") as unknown as { id: string }[];
+const countries = load("countries.ts") as unknown as { id: string }[];
 const knownNationIds = new Set(countries.map((c) => c.id));
 const knownComponentIds = new Set(components.map((c) => c.id));
 const knownPlantIds = new Set(plants.map((p) => p.id));
 const knownHullFormIds = new Set(
-  (load("ship-building/hull-forms.yaml") as { hullForms: { id: string }[] }).hullForms.map(
+  (load("ship-building/hull-forms.ts") as { hullForms: { id: string }[] }).hullForms.map(
     (f) => f.id,
   ),
 );

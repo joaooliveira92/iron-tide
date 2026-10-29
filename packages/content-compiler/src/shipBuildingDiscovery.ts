@@ -22,16 +22,16 @@ export interface ShipBuildingFileGroups {
 }
 
 const FIXED_FILES: ReadonlyArray<readonly [keyof ShipBuildingFileGroups, string]> = [
-  ["propulsionPlantFiles", "ship-building/plants.yaml"],
-  ["hullFormFiles", "ship-building/hull-forms.yaml"],
-  ["shipBalanceFiles", "ship-building/balance.yaml"],
-  ["gunFamilyFiles", "ship-building/armament/gun-families.yaml"],
-  ["gunModelFiles", "ship-building/armament/gun-models.yaml"],
-  ["gunMountFiles", "ship-building/armament/gun-mounts.yaml"],
-  ["ammunitionFiles", "ship-building/armament/ammunition.yaml"],
-  ["slotTemplateFiles", "ship-building/slot-templates.yaml"],
-  ["platformFiles", "ship-building/platforms.yaml"],
-  ["shipTypeFiles", "ship-building/ship-types.yaml"],
+  ["propulsionPlantFiles", "ship-building/plants"],
+  ["hullFormFiles", "ship-building/hull-forms"],
+  ["shipBalanceFiles", "ship-building/balance"],
+  ["gunFamilyFiles", "ship-building/armament/gun-families"],
+  ["gunModelFiles", "ship-building/armament/gun-models"],
+  ["gunMountFiles", "ship-building/armament/gun-mounts"],
+  ["ammunitionFiles", "ship-building/armament/ammunition"],
+  ["slotTemplateFiles", "ship-building/slot-templates"],
+  ["platformFiles", "ship-building/platforms"],
+  ["shipTypeFiles", "ship-building/ship-types"],
 ];
 
 const COMPONENT_DIR = "ship-building/components";
@@ -59,21 +59,29 @@ export function discoverShipBuildingFiles(contentDir: string): ShipBuildingFileG
     designLoadoutFiles: [],
   };
 
-  for (const [key, rel] of FIXED_FILES) {
-    if (existsSync(join(contentDir, safePath(rel)))) {
-      groups[key].push(safePath(rel));
+  for (const [key, base] of FIXED_FILES) {
+    for (const suffix of [CONTENT_MODULE_SUFFIX, DOCUMENT_SUFFIX]) {
+      const rel = `${base}${suffix}`;
+      if (existsSync(join(contentDir, safePath(rel)))) groups[key].push(safePath(rel));
     }
   }
 
-  groups.shipComponentFiles = listYamlFiles(contentDir, COMPONENT_DIR).map(safePath);
-  groups.navalProfileFiles = listYamlFiles(contentDir, NAVAL_PROFILE_DIR).map(safePath);
+  groups.shipComponentFiles = listAuthoredFiles(contentDir, COMPONENT_DIR).map(safePath);
+  groups.navalProfileFiles = listAuthoredFiles(contentDir, NAVAL_PROFILE_DIR).map(safePath);
   groups.referenceDesignFiles = listReferenceDesignFiles(contentDir).map(safePath);
-  groups.partFiles = listYamlFiles(contentDir, PART_DIR).map(safePath);
-  groups.designLoadoutFiles = listYamlFiles(contentDir, DESIGN_LOADOUT_DIR).map(safePath);
+  groups.partFiles = listAuthoredFiles(contentDir, PART_DIR).map(safePath);
+  groups.designLoadoutFiles = listAuthoredFiles(contentDir, DESIGN_LOADOUT_DIR).map(safePath);
   return groups;
 }
 
-function listYamlFiles(contentDir: string, rel: string): string[] {
+const CONTENT_MODULE_SUFFIX = ".ts";
+const DOCUMENT_SUFFIX = ".json";
+
+function listAuthoredFiles(
+  contentDir: string,
+  rel: string,
+  suffixes: readonly string[] = [CONTENT_MODULE_SUFFIX, DOCUMENT_SUFFIX],
+): string[] {
   const abs = join(contentDir, rel);
   if (!existsSync(abs)) return [];
   return readdirSync(abs)
@@ -81,9 +89,9 @@ function listYamlFiles(contentDir: string, rel: string): string[] {
     .flatMap((entry) => {
       const child = join(rel, entry);
       if (statSync(join(contentDir, child)).isDirectory()) {
-        return listYamlFiles(contentDir, child);
+        return listAuthoredFiles(contentDir, child, suffixes);
       }
-      return entry.endsWith(".yaml") ? [child] : [];
+      return suffixes.some((suffix) => entry.endsWith(suffix)) ? [child] : [];
     });
 }
 
@@ -97,13 +105,15 @@ function listReferenceDesignFiles(contentDir: string): string[] {
     .flatMap((nation) => {
       const dir = join(base, nation);
       if (!statSync(dir).isDirectory()) return [];
-      const conventional = ["starters.yaml", "historical.yaml"]
+      const conventional = ["starters.ts", "historical.ts"]
         .map((name) => join(REFERENCE_DESIGN_DIR, nation, name))
         .filter((rel) => existsSync(join(contentDir, rel)));
       const extra = readdirSync(dir)
         .filter(
           (entry) =>
-            entry.endsWith(".yaml") && entry !== "starters.yaml" && entry !== "historical.yaml",
+            (entry.endsWith(CONTENT_MODULE_SUFFIX) || entry.endsWith(DOCUMENT_SUFFIX)) &&
+            entry !== "starters.ts" &&
+            entry !== "historical.ts",
         )
         .sort()
         .map((entry) => join(REFERENCE_DESIGN_DIR, nation, entry));

@@ -190,7 +190,7 @@ Reference ships fetched. Lengths in metres from NP unless noted; draught is full
 | Des Moines CA | 17,255 t | 213.4 / 218.4 m | 23.0 m | 7.92 m | 120,000 hp | 33 kn | NP; NS gives 716 ft 6 in oa and 76 ft 4 in beam (23.3 m), a 0.3 m beam discrepancy |
 | Iowa BB | 48,110 t | 262.1 / 270.4 m | 33.0 m | 11.0 m | 212,000 shp | 32.5 kn | NP Iowa, SINGLE-SOURCE |
 
-Derived (seawater 1,025 kg/m3 from `balance.yaml`; NP full-load displacement Gearing 3,460 t, Worcester 17,997 t, Des Moines 20,934 t, Iowa 57,540 t):
+Derived (seawater 1,025 kg/m3 from `balance.ts`; NP full-load displacement Gearing 3,460 t, Worcester 17,997 t, Des Moines 20,934 t, Iowa 57,540 t):
 
 | Ship | L/B | B/T | Block coefficient at full load |
 |---|---|---|---|

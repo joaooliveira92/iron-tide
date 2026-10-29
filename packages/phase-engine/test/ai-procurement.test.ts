@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
+import {} from "node:fs";
 import { join } from "node:path";
-import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
@@ -25,19 +24,19 @@ import { fundDesignStudies } from "../src/designStudies.js";
 import type { PhaseContext, SnapshotHandle } from "../src/pipeline.js";
 import { readNavalProfileEntries, readReferenceDesignEntries } from "./helpers/contentFiles.js";
 import { readComponentFiles } from "../../ship-design/test/helpers/componentFiles.js";
+import { readAuthoredFile } from "@bluewave/test-support";
 
 const root = join(__dirname, "..", "..", "..", "content", "production", "1880");
-const load = (rel: string) =>
-  parse(readFileSync(join(root, rel), "utf8")) as Record<string, unknown>;
+const load = (rel: string) => readAuthoredFile(join(root, rel)) as Record<string, unknown>;
 
 const content: ShipBuildingContent = buildShipBuildingContent({
   components: readComponentFiles(root).components,
-  plants: decodeStrict(PropulsionPlantCatalogueSchema, load("ship-building/plants.yaml"))
+  plants: decodeStrict(PropulsionPlantCatalogueSchema, load("ship-building/plants.ts"))
     .plants as unknown as PropulsionPlant[],
-  hullForms: decodeStrict(ShipHullFormCatalogueSchema, load("ship-building/hull-forms.yaml"))
+  hullForms: decodeStrict(ShipHullFormCatalogueSchema, load("ship-building/hull-forms.ts"))
     .hullForms as HullFormRecord[],
-  balance: load("ship-building/balance.yaml") as ShipBuildingData["balance"],
-  technologies: load("technologies.yaml") as unknown as { id: string; year: number }[],
+  balance: load("ship-building/balance.ts") as ShipBuildingData["balance"],
+  technologies: load("technologies.ts") as unknown as { id: string; year: number }[],
   navalProfiles: readNavalProfileEntries(),
   referenceDesigns: readReferenceDesignEntries(),
 } satisfies ShipBuildingData);

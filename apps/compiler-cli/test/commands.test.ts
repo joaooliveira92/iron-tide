@@ -130,8 +130,8 @@ function stdoutSpy() {
 
 const validManifest = JSON.stringify({
   files: {
-    rulesets: ["r.yaml"],
-    countries: ["c.yaml"],
+    rulesets: ["r.json"],
+    countries: ["c.json"],
     areas: [],
     routes: [],
     possessions: [],
@@ -338,12 +338,12 @@ describe("buildInput / safePath via runValidate", () => {
     ).toBe("usage-error");
   });
   it("throws on path traversal via safePath", () => {
-    expect(() => safePath(`..${sep}evil.yaml`)).toThrow(/Path traversal/);
+    expect(() => safePath(`..${sep}evil.json`)).toThrow(/Path traversal/);
     expect(() => safePath(`a${sep}..${sep}b`)).toThrow(/Path traversal/);
   });
   it("throws on path traversal via buildInput", async () => {
     fsMocks.readFileSync.mockReturnValue(
-      JSON.stringify({ files: { rulesets: [`..${sep}evil.yaml`] } }),
+      JSON.stringify({ files: { rulesets: [`..${sep}evil.json`] } }),
     );
     await expect(
       runCli(
@@ -360,19 +360,19 @@ describe("buildInput / safePath via runValidate", () => {
     fsMocks.readFileSync.mockReturnValue(
       JSON.stringify({
         files: {
-          rulesets: ["r.yaml"],
-          countries: ["c.yaml"],
-          areas: ["a.yaml"],
-          routes: ["rt.yaml"],
-          possessions: ["p.yaml"],
-          ports: ["po.yaml"],
-          technologies: ["t.yaml"],
+          rulesets: ["r.json"],
+          countries: ["c.json"],
+          areas: ["a.json"],
+          routes: ["rt.json"],
+          possessions: ["p.json"],
+          ports: ["po.json"],
+          technologies: ["t.json"],
         },
       }),
     );
     compilerMock.compile.mockImplementation((input: any) => {
-      expect(input.rulesetFiles[0]).toContain("r.yaml");
-      expect(input.technologyFiles[0]).toContain("t.yaml");
+      expect(input.rulesetFiles[0]).toContain("r.json");
+      expect(input.technologyFiles[0]).toContain("t.json");
       expect(input.manifestPath).toContain("pack.json");
       return { pack: {}, rawHash: "a", envelopeHash: "b" };
     });

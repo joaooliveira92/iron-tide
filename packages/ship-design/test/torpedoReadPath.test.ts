@@ -173,7 +173,7 @@ describe("torpedo launchers through the read path (ship-part-model 04)", () => {
       expect(variant.spec.boreDiameterUm, variant.id).toBe(
         profileOf(nation).hardCapabilities.domesticTorpedoDiameterUm,
       );
-      expect(variant.origin.sourceFile).toBe(`ship-building/naval-profiles/${nation}.yaml`);
+      expect(variant.origin.sourceFile).toBe(`ship-building/naval-profiles/${nation}.ts`);
       expect(variant.origin.prototype?.inheritedSpec).toEqual(["launchType"]);
     }
     expect(variants.filter((v) => v.legacyExceptions !== undefined).map((v) => v.id)).toEqual(

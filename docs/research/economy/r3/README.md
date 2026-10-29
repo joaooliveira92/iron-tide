@@ -117,7 +117,7 @@ Portugal's projected allocation is 0 because `floor(3*0.2)=0`.
 **F4. Construction cap is detached from economy scale [M].** `cap=floor(base/12/100)` needs base >= 1200 for cap 1
 (`thresholds.csv`), a scale taken from test fixtures (120,000). With income-derived bases the cap is 0 to 5; under I2
 GB finishes its remaining 40 work units in 8 months, USA needs 90 months (cap 1), Qing never (cap 0). The cap is
-independent of dock/shipyard data, which exists separately in `ship-building/balance.yaml` (R1 section 3).
+independent of dock/shipyard data, which exists separately in `ship-building/balance.ts` (R1 section 3).
 
 **F5. Rounding.** The chained floors are mathematically a single floor, and a scan of base 0..20000 at rates 500/2000/5000
 found 0 divergences, so there is no chained-floor discontinuity [M]. The real discontinuities are threshold effects:

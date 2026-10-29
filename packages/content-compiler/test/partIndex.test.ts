@@ -11,6 +11,8 @@ import {
 } from "../src/index.js";
 import { PROVENANCE, baseInput, compile, createFixture, type Fixture } from "./partModelFixture.js";
 
+const jsonDocument = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
+
 const provenance = {
   sourceStatus: "VERIFIED",
   confidence: "HIGH",
@@ -18,53 +20,147 @@ const provenance = {
   sources: [{ title: "test" }],
 };
 
-const PROTOTYPE_FILE = "ship-building/parts/torpedoes.yaml";
-const VARIANT_FILE = "ship-building/parts/austria-hungary.yaml";
+const PROTOTYPE_FILE = "ship-building/parts/torpedoes.json";
+const VARIANT_FILE = "ship-building/parts/austria-hungary.json";
 
-const PROTOTYPE = `parts:
-  - id: whitehead_14in
-    family: torpedo
-    provides: torpedo
-    name: "Whitehead 14-inch"
-    lifecycle: { availableFrom: "1880-01" }
-    spec:
-      diameterUm: 356000
-      massKg: 300
-      warheadType: WET_GUNCOTTON
-      warheadExplosiveMassKg: 12
-      warheadExplosiveEquivalentMassKg: 12
-      propulsionType: COMPRESSED_AIR
-      speedSettings:
-        - { settingId: "cruise", speedMilliKnots: 24000, rangeM: 550 }
-      minimumArmingDistanceM: 25
-      reliabilityBp: 88000
-      guidanceCapability: none
-      launchTypes: [ABOVE_WATER_TRAINABLE]
-      technologyPrerequisiteIds: []
-      tubeHitHazardPolicy: ORDINARY
-    quantities:
-      - { id: torpedo_mass, kind: massKg, value: 300, basis: PER_PART_UNIT }
-      - { id: torpedo_cost, kind: costMicro, value: 50000000, basis: PER_PART_UNIT }
-    revisions:
-      - { from: "1884-01", spec: { warheadExplosiveMassKg: 26, warheadExplosiveEquivalentMassKg: 26 }, provenance: ${PROVENANCE} }
-    provenance: ${PROVENANCE}
+const PROTOTYPE = `
+{
+  "parts": [
+    {
+      "id": "whitehead_14in",
+      "family": "torpedo",
+      "provides": "torpedo",
+      "name": "Whitehead 14-inch",
+      "lifecycle": {
+        "availableFrom": "1880-01"
+      },
+      "spec": {
+        "diameterUm": 356000,
+        "massKg": 300,
+        "warheadType": "WET_GUNCOTTON",
+        "warheadExplosiveMassKg": 12,
+        "warheadExplosiveEquivalentMassKg": 12,
+        "propulsionType": "COMPRESSED_AIR",
+        "speedSettings": [
+          {
+            "settingId": "cruise",
+            "speedMilliKnots": 24000,
+            "rangeM": 550
+          }
+        ],
+        "minimumArmingDistanceM": 25,
+        "reliabilityBp": 88000,
+        "guidanceCapability": "none",
+        "launchTypes": [
+          "ABOVE_WATER_TRAINABLE"
+        ],
+        "technologyPrerequisiteIds": [],
+        "tubeHitHazardPolicy": "ORDINARY"
+      },
+      "quantities": [
+        {
+          "id": "torpedo_mass",
+          "kind": "massKg",
+          "value": 300,
+          "basis": "PER_PART_UNIT"
+        },
+        {
+          "id": "torpedo_cost",
+          "kind": "costMicro",
+          "value": 50000000,
+          "basis": "PER_PART_UNIT"
+        }
+      ],
+      "revisions": [
+        {
+          "from": "1884-01",
+          "spec": {
+            "warheadExplosiveMassKg": 26,
+            "warheadExplosiveEquivalentMassKg": 26
+          },
+          "provenance": ${PROVENANCE}
+        }
+      ],
+      "provenance": ${PROVENANCE}
+    }
+  ]
+}
 `;
 
-const VARIANT = `parts:
-  - id: whitehead_14in_fiume
-    family: torpedo
-    provides: torpedo
-    name: "Fiume 14-inch"
-    nation: austria_hungary
-    extends: whitehead_14in
-    lifecycle: { availableFrom: "1881-01" }
-    spec: { massKg: 305 }
-    quantities:
-      - { id: torpedo_cost, kind: costMicro, value: 45000000, basis: PER_PART_UNIT }
-    revisions:
-      - { from: "1889-07", spec: { speedSettings: [{ settingId: "fast", speedMilliKnots: 26000, rangeM: 550 }, { settingId: "slow", speedMilliKnots: 22000, rangeM: 900 }] }, provenance: { sourceStatus: VERIFIED, confidence: MEDIUM, kind: historical_fact, sources: [{ title: "speeds" }] } }
-      - { from: "1885-03", spec: { warheadExplosiveMassKg: 30, warheadExplosiveEquivalentMassKg: 30 }, provenance: { sourceStatus: VERIFIED, confidence: LOW, kind: historical_fact, sources: [{ title: "warhead" }] } }
-    provenance: ${PROVENANCE}
+const VARIANT = `
+{
+  "parts": [
+    {
+      "id": "whitehead_14in_fiume",
+      "family": "torpedo",
+      "provides": "torpedo",
+      "name": "Fiume 14-inch",
+      "nation": "austria_hungary",
+      "extends": "whitehead_14in",
+      "lifecycle": {
+        "availableFrom": "1881-01"
+      },
+      "spec": {
+        "massKg": 305
+      },
+      "quantities": [
+        {
+          "id": "torpedo_cost",
+          "kind": "costMicro",
+          "value": 45000000,
+          "basis": "PER_PART_UNIT"
+        }
+      ],
+      "revisions": [
+        {
+          "from": "1889-07",
+          "spec": {
+            "speedSettings": [
+              {
+                "settingId": "fast",
+                "speedMilliKnots": 26000,
+                "rangeM": 550
+              },
+              {
+                "settingId": "slow",
+                "speedMilliKnots": 22000,
+                "rangeM": 900
+              }
+            ]
+          },
+          "provenance": {
+            "sourceStatus": "VERIFIED",
+            "confidence": "MEDIUM",
+            "kind": "historical_fact",
+            "sources": [
+              {
+                "title": "speeds"
+              }
+            ]
+          }
+        },
+        {
+          "from": "1885-03",
+          "spec": {
+            "warheadExplosiveMassKg": 30,
+            "warheadExplosiveEquivalentMassKg": 30
+          },
+          "provenance": {
+            "sourceStatus": "VERIFIED",
+            "confidence": "LOW",
+            "kind": "historical_fact",
+            "sources": [
+              {
+                "title": "warhead"
+              }
+            ]
+          }
+        }
+      ],
+      "provenance": ${PROVENANCE}
+    }
+  ]
+}
 `;
 
 const TORPEDO_SPEC = {
@@ -191,40 +287,64 @@ describe("a prototype, a variant and two revisions flatten to hand-worked values
 
   it("the index holds parts by id, interface and family, and the lineage graph", () => {
     withFixture((fixture) => {
-      const successor = `parts:
-  - id: whitehead_18in
-    family: torpedo
-    provides: torpedo
-    name: "Whitehead 18-inch"
-    lifecycle: { availableFrom: "1890-01", supersedes: [whitehead_14in_fiume, whitehead_14in] }
-    spec:
-      diameterUm: 457000
-      massKg: 560
-      warheadType: WET_GUNCOTTON
-      warheadExplosiveMassKg: 90
-      warheadExplosiveEquivalentMassKg: 90
-      propulsionType: COMPRESSED_AIR
-      speedSettings:
-        - { settingId: "cruise", speedMilliKnots: 29000, rangeM: 730 }
-      minimumArmingDistanceM: 25
-      reliabilityBp: 90000
-      guidanceCapability: none
-      launchTypes: [ABOVE_WATER_TRAINABLE]
-      technologyPrerequisiteIds: []
-      tubeHitHazardPolicy: ORDINARY
-    provenance: ${PROVENANCE}
-  - id: dry_funnel
-    family: fitting
-    provides: funnel
-    name: "Funnel"
-    lifecycle: { availableFrom: "1880-01" }
-    spec: {}
-    provenance: ${PROVENANCE}
+      const successor = `
+{
+  "parts": [
+    {
+      "id": "whitehead_18in",
+      "family": "torpedo",
+      "provides": "torpedo",
+      "name": "Whitehead 18-inch",
+      "lifecycle": {
+        "availableFrom": "1890-01",
+        "supersedes": [
+          "whitehead_14in_fiume",
+          "whitehead_14in"
+        ]
+      },
+      "spec": {
+        "diameterUm": 457000,
+        "massKg": 560,
+        "warheadType": "WET_GUNCOTTON",
+        "warheadExplosiveMassKg": 90,
+        "warheadExplosiveEquivalentMassKg": 90,
+        "propulsionType": "COMPRESSED_AIR",
+        "speedSettings": [
+          {
+            "settingId": "cruise",
+            "speedMilliKnots": 29000,
+            "rangeM": 730
+          }
+        ],
+        "minimumArmingDistanceM": 25,
+        "reliabilityBp": 90000,
+        "guidanceCapability": "none",
+        "launchTypes": [
+          "ABOVE_WATER_TRAINABLE"
+        ],
+        "technologyPrerequisiteIds": [],
+        "tubeHitHazardPolicy": "ORDINARY"
+      },
+      "provenance": ${PROVENANCE}
+    },
+    {
+      "id": "dry_funnel",
+      "family": "fitting",
+      "provides": "funnel",
+      "name": "Funnel",
+      "lifecycle": {
+        "availableFrom": "1880-01"
+      },
+      "spec": {},
+      "provenance": ${PROVENANCE}
+    }
+  ]
+}
 `;
       const { output, collector } = compile(
         handWorked(fixture, {
           partFiles: [
-            fixture.write("ship-building/parts/later.yaml", successor),
+            fixture.write("ship-building/parts/later.json", successor),
             fixture.write(VARIANT_FILE, VARIANT),
             fixture.write(PROTOTYPE_FILE, PROTOTYPE),
           ],
@@ -309,7 +429,7 @@ describe("the ship-type registry rides beside the part index, id-sorted", () => 
         baseInput(fixture, {
           shipTypeFiles: [
             fixture.write(
-              "ship-building/ship-types.yaml",
+              "ship-building/ship-types.json",
               JSON.stringify({ shipTypes: [shipType("KE"), shipType("AMC"), shipType("B")] }),
             ),
           ],
@@ -324,7 +444,7 @@ describe("the ship-type registry rides beside the part index, id-sorted", () => 
         baseInput(fixture, {
           shipTypeFiles: [
             fixture.write(
-              "ship-building/other-types.yaml",
+              "ship-building/other-types.json",
               JSON.stringify({ shipTypes: [shipType("B"), shipType("KE"), shipType("AMC")] }),
             ),
           ],
@@ -340,14 +460,14 @@ describe("the ship-type registry rides beside the part index, id-sorted", () => 
   it("ascribes an unknown engine class to the strict decoder with the source file", () => {
     withFixture((fixture) => {
       const file = fixture.write(
-        "ship-building/ship-types.yaml",
+        "ship-building/ship-types.json",
         JSON.stringify({ shipTypes: [shipType("B", { engineClass: "carrier_group" })] }),
       );
       const { output, collector } = compile(baseInput(fixture, { shipTypeFiles: [file] }));
       expect(output).toBeUndefined();
       const error = collector.errors.find((e) => e.code === "SCHEMA");
       expect(error?.message).toContain("ShipType");
-      expect(error?.sourceLocation?.path).toBe("ship-building/ship-types.yaml");
+      expect(error?.sourceLocation?.path).toBe("ship-building/ship-types.json");
     });
   });
 });
@@ -390,7 +510,7 @@ const FUNNEL = {
   provenance,
 };
 
-const CASE_FILE = "ship-building/parts/case.yaml";
+const CASE_FILE = "ship-building/parts/case.json";
 
 describe("the flatten stage fails with a structured diagnostic", () => {
   it.each([
@@ -509,40 +629,53 @@ describe("the flatten stage fails with a structured diagnostic", () => {
 });
 
 describe("cross-references fail with the file and field path", () => {
-  const SLOT_TEMPLATES = `slotTemplates:
-  - id: capital_ship_1880s
-    slots: [{ id: fwd_main, accepts: [gun_mount] }]
+  const SLOT_TEMPLATES = `
+{
+  "slotTemplates": [
+    {
+      "id": "capital_ship_1880s",
+      "slots": [
+        {
+          "id": "fwd_main",
+          "accepts": [
+            "gun_mount"
+          ]
+        }
+      ]
+    }
+  ]
+}
 `;
 
   it.each([
     [
       "an unknown slot template",
-      "slotTemplates: [capital_ship_1880s, cruiser_1880s]",
+      ["capital_ship_1880s", "cruiser_1880s"],
       "battleship_1880",
       "Platform 'form'.slotTemplates.1: unknown slot template 'cruiser_1880s'",
     ],
     [
       "an unknown hull form",
-      "slotTemplates: [capital_ship_1880s]",
+      ["capital_ship_1880s"],
       "monitor_1880",
       "Platform 'form'.hullForm: unknown hull form 'monitor_1880'",
     ],
-  ])("a platform naming %s", (_case, templates, hullForm, message) => {
+  ])("a platform naming %s", (_case, slotTemplates, hullForm, message) => {
     withFixture((fixture) => {
       const file = fixture.write(
-        "ship-building/platforms.yaml",
-        `platforms:\n  - { id: form, hullForm: ${hullForm}, ${templates} }\n`,
+        "ship-building/platforms.json",
+        jsonDocument({ platforms: [{ id: "form", hullForm, slotTemplates }] }),
       );
       const { output, collector } = compile(
         baseInput(fixture, {
-          slotTemplateFiles: [fixture.write("ship-building/slot-templates.yaml", SLOT_TEMPLATES)],
+          slotTemplateFiles: [fixture.write("ship-building/slot-templates.json", SLOT_TEMPLATES)],
           platformFiles: [file],
         }),
       );
       expect(output).toBeUndefined();
       const error = collector.errors.find((e) => e.message.includes(message));
       expect(error?.code).toBe("REF");
-      expect(error?.sourceLocation?.path).toBe("ship-building/platforms.yaml");
+      expect(error?.sourceLocation?.path).toBe("ship-building/platforms.json");
     });
   });
 
@@ -626,7 +759,7 @@ describe("the part index is deterministic and covered by the hash and lock", () 
         baseInput(fixture, {
           partFiles: [
             fixture.write(PROTOTYPE_FILE, PROTOTYPE),
-            fixture.write(VARIANT_FILE, VARIANT.replace("massKg: 305", "massKg: 306")),
+            fixture.write(VARIANT_FILE, VARIANT.replace('"massKg": 305', '"massKg": 306')),
           ],
         }),
       );

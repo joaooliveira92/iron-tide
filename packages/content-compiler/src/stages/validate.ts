@@ -246,7 +246,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
       const { schema, label } = entry;
       const items = input.collectionDocs.get(key) ?? [];
       for (const item of items) {
-        const result = validateAgainstSchema(item, schema, label, `${key}.yaml`, collector);
+        const result = validateAgainstSchema(item, schema, label, `${key}.ts`, collector);
         if (result !== undefined) {
           const arr = validated[key];
           if (arr) arr.push(result);
@@ -311,7 +311,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
 function validatePresentation(input: ParseOutput, collector: DiagnosticCollector): unknown {
   const raw = input.objectDocs.get("presentation");
   if (raw === undefined) return undefined;
-  const sourcePath = input.objectSourcePaths.get("presentation") ?? "presentation.yaml";
+  const sourcePath = input.objectSourcePaths.get("presentation") ?? "presentation.ts";
   return validateAgainstSchema(
     raw,
     PresentationContentSchema,
@@ -324,7 +324,7 @@ function validatePresentation(input: ParseOutput, collector: DiagnosticCollector
 function validateUi(input: ParseOutput, collector: DiagnosticCollector): unknown {
   const raw = input.objectDocs.get("ui");
   if (raw === undefined) return undefined;
-  const sourcePath = input.objectSourcePaths.get("ui") ?? "ui/en-US.yaml";
+  const sourcePath = input.objectSourcePaths.get("ui") ?? "ui/en-US.json";
   return validateAgainstSchema(raw, UiCatalogueSchema, "UiCatalogue", sourcePath, collector);
 }
 
@@ -335,7 +335,7 @@ function validatePresentationRegions(
   collector: DiagnosticCollector,
 ): void {
   if (presentation === null || typeof presentation !== "object") return;
-  const sourcePath = input.objectSourcePaths.get("presentation") ?? "presentation.yaml";
+  const sourcePath = input.objectSourcePaths.get("presentation") ?? "presentation.ts";
   const areaIds = idsOf(core["areas"]);
   const nationIds = idsOf(core["countries"]);
 
@@ -473,7 +473,7 @@ function validateCampaignCollections(
     const sources = input.sourcePaths.get(spec.key) ?? [];
     const validated: unknown[] = [];
     items.forEach((item, index) => {
-      const sourcePath = sources[index] ?? `${String(spec.key)}.yaml`;
+      const sourcePath = sources[index] ?? `${String(spec.key)}.ts`;
       const result = validateAgainstSchema(item, spec.schema, spec.label, sourcePath, collector);
       if (result !== undefined) validated.push(result);
     });
@@ -486,7 +486,7 @@ function validateCampaignCollections(
       if (seen.has(id)) {
         collector.addError("DUP-ID", `Duplicate ${spec.label} id '${id}'`, {
           stage: "validate",
-          sourceLocation: { path: sources[index] ?? `${String(spec.key)}.yaml`, line: 1 },
+          sourceLocation: { path: sources[index] ?? `${String(spec.key)}.ts`, line: 1 },
           entityId: id,
           remediation: `Give each ${spec.label} a unique '${spec.idField}'`,
         });
@@ -537,7 +537,7 @@ function validateCampaignReferences(
   ) => {
     collector.addError("REF", message, {
       stage: "validate",
-      sourceLocation: { path: sources(key, idField).get(entityId) ?? `${key}.yaml`, line: 1 },
+      sourceLocation: { path: sources(key, idField).get(entityId) ?? `${key}.ts`, line: 1 },
       entityId,
       remediation: `Add the missing reference or fix '${fieldPath}'`,
     });
@@ -691,7 +691,7 @@ function validateShipBuildingCatalogue(
     }
     const items: unknown[] = [];
     raw.forEach((item, index) => {
-      const sourcePath = sources[index] ?? `${spec.key}.yaml`;
+      const sourcePath = sources[index] ?? `${spec.key}.ts`;
       const result = validateAgainstSchema(item, spec.schema!, spec.label, sourcePath, collector);
       if (result !== undefined) items.push(result);
     });
@@ -751,7 +751,7 @@ function validateShipBuildingDuplicates(
       if (seen.has(id)) {
         collector.addError("DUP-ID", `Duplicate ${spec.label} id '${id}'`, {
           stage: "validate",
-          sourceLocation: { path: sources[index] ?? `${spec.key}.yaml`, line: 1 },
+          sourceLocation: { path: sources[index] ?? `${spec.key}.ts`, line: 1 },
           entityId: id,
           remediation: `Give each ${spec.label} a unique '${spec.idField}'`,
         });
@@ -792,7 +792,7 @@ function validateShipBuildingReferences(
     const sources = input.sourcePaths.get(key) ?? [];
     const field = idFieldByKey.get(key) ?? "id";
     const index = items.findIndex((item) => (item as Record<string, unknown>)[field] === id);
-    return sources[index] ?? `${String(key)}.yaml`;
+    return sources[index] ?? `${String(key)}.ts`;
   };
 
   const componentIds = ids("shipComponents");
@@ -983,7 +983,7 @@ function sourceById(input: ParseOutput, key: string, idField: string): Map<strin
   const map = new Map<string, string>();
   docs.forEach((doc, index) => {
     const id = (doc as Record<string, unknown>)[idField];
-    if (typeof id === "string") map.set(id, sources[index] ?? `${key}.yaml`);
+    if (typeof id === "string") map.set(id, sources[index] ?? `${key}.ts`);
   });
   return map;
 }
@@ -1066,7 +1066,7 @@ function validateTechnologyGraph(
       code: "TECHNOLOGY_PREREQUISITE_CYCLE",
       label: "Technology prerequisite",
       edgeField: "prerequisites",
-      fallbackSource: "technologies.yaml",
+      fallbackSource: "technologies.ts",
     },
     collector,
   );

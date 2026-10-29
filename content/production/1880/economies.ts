@@ -1,0 +1,88 @@
+import { CampaignEconomySchema, list } from "@bluewave/content-authoring";
+
+export default list(CampaignEconomySchema, [
+  {
+    nationId: "uk",
+    treasury: 1000,
+    income: 100,
+    expenses: 38,
+  },
+  {
+    nationId: "france",
+    treasury: 700,
+    income: 68,
+    expenses: 26,
+  },
+  {
+    nationId: "germany",
+    treasury: 320,
+    income: 30,
+    expenses: 12,
+  },
+  {
+    nationId: "russia",
+    treasury: 550,
+    income: 55,
+    expenses: 21,
+  },
+  {
+    nationId: "austria_hungary",
+    treasury: 240,
+    income: 22,
+    expenses: 9,
+  },
+  {
+    nationId: "italy",
+    treasury: 400,
+    income: 38,
+    expenses: 14,
+  },
+  {
+    nationId: "usa",
+    treasury: 280,
+    income: 26,
+    expenses: 10,
+  },
+  {
+    nationId: "japan",
+    treasury: 130,
+    income: 12,
+    expenses: 5,
+  },
+  {
+    nationId: "ottoman_empire",
+    treasury: 180,
+    income: 16,
+    expenses: 7,
+  },
+  {
+    nationId: "spain",
+    treasury: 180,
+    income: 16,
+    expenses: 7,
+  },
+  {
+    nationId: "netherlands",
+    treasury: 80,
+    income: 7,
+    expenses: 3,
+  },
+  {
+    nationId: "portugal",
+    treasury: 40,
+    income: 3,
+    expenses: 2,
+  },
+  {
+    nationId: "qing",
+    treasury: 100,
+    income: 9,
+    expenses: 4,
+  },
+  {
+    nationId: "brazil",
+    treasury: 60,
+    income: 5,
+    expenses: 2,
+  },
+]);

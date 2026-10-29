@@ -96,7 +96,7 @@ export function compilePartModel(
 
   const flattened: FlattenedPart[] = [];
   for (const part of parts) {
-    const sourceFile = context.sources.parts.get(part.id) ?? "parts.yaml";
+    const sourceFile = context.sources.parts.get(part.id) ?? "parts.ts";
     if (part.origin !== undefined) {
       const decoded = validateAgainstSchema(
         part,
@@ -173,8 +173,8 @@ interface Reporter {
 function reporter(sources: PartModelSources, collector: DiagnosticCollector): Reporter {
   let failed = false;
   const files = {
-    Part: { byId: sources.parts, fallback: "parts.yaml" },
-    Platform: { byId: sources.platforms, fallback: "platforms.yaml" },
+    Part: { byId: sources.parts, fallback: "parts.ts" },
+    Platform: { byId: sources.platforms, fallback: "platforms.ts" },
   } as const;
   const fileOf = (kind: RecordKind, id: string): string =>
     files[kind].byId.get(id) ?? files[kind].fallback;

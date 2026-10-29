@@ -31,7 +31,7 @@ const baseGun = {
   spec: { calibreUm: 305_000 },
   quantities: [{ id: "gun_mass", kind: "massKg", value: 44_500, basis: "PER_PART_UNIT" }],
   revisions: [],
-  origin: { sourceFile: "ship-building/components.yaml" },
+  origin: { sourceFile: "ship-building/components.json" },
   provenance,
 };
 

@@ -238,6 +238,7 @@ Package interfaces, seams and module depth across the engine.
 | 0321 | [ADR-0321-division-order-model.md](ADR-0321-division-order-model.md) | Divisions receive a versioned order model, with stance as a lossless preset | accepted | — |
 | 0322 | [ADR-0322-realism-order-permission-matrix.md](ADR-0322-realism-order-permission-matrix.md) | Realism modes gate battle orders in the engine, not in the UI | accepted | — |
 | 0328 | [ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md](ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md) | Desktop IPC channels are declared once in a shared contract | accepted | — |
+| 0334 | [ADR-0334-deprecate-yaml-outside-internationalization.md](ADR-0334-deprecate-yaml-outside-internationalization.md) | Deprecate YAML outside internationalization | accepted | — |
 
 ## Archive
 

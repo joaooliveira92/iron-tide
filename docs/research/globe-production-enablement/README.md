@@ -43,7 +43,7 @@ is complete.
 | Performance budget | PASS in 3 clean runs | `apps/desktop/test-results/perf-accepted/` |
 | Lifecycle | Flat 548 listeners / 813 nodes; ceilings enforced | `globe-adapter-smoke.json` |
 | Axe (chrome) | PASS | `GlobeAdapterChrome.a11y.test.tsx` |
-| ARIA tree | Application, 36 area buttons, 36-row area table, entity table | `.dev-data/globe-snap/aria.yaml` |
+| ARIA tree | Application, 36 area buttons, 36-row area table, entity table | `.dev-data/globe-snap/aria.txt` |
 | Reduced motion | PASS in packaged interaction pass | `globe-interactions.json` |
 | Offline | `file:` only; zero remote requests in every smoke | smoke reports |
 | Rollback | `localStorage`/query/hash to SVG; packaged smoke + 36 SVG areas | `packaged-smoke.mjs` |

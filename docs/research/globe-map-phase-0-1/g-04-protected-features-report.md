@@ -15,7 +15,7 @@ Labels: **[F]** repository fact, **[M]** measured, **[U]** unverified.
 | Edge semantics and densification | `scripts/map-data/geodesy.ts`, `globe-spike/densify.ts` |
 | Tests | `catalogue.test.ts` (8), `bake.test.ts` (8), `geodesy.test.ts` (7), `area-cracks.test.ts` (4) |
 
-The catalogue has no dependency on MapLibre. It is rendering geometry only: `simulationNavigabilityImplicated` is false for every feature and `displayOnly` true. Simulation lanes stay in `content/production/1880/routes.yaml` and are untouched **[F]** (`git diff b77d6b30 -- apps/desktop/src/main content` is empty).
+The catalogue has no dependency on MapLibre. It is rendering geometry only: `simulationNavigabilityImplicated` is false for every feature and `displayOnly` true. Simulation lanes stay in `content/production/1880/routes.ts` and are untouched **[F]** (`git diff b77d6b30 -- apps/desktop/src/main content` is empty).
 
 ## 2. Catalogue
 

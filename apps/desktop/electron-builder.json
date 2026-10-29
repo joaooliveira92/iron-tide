@@ -1,0 +1,65 @@
+{
+  "appId": "com.bluewave.desktop",
+  "productName": "Bluewave",
+  "directories": {
+    "buildResources": "build",
+    "output": "dist-electron"
+  },
+  "files": [
+    "!**/.vscode/*",
+    "!src/*",
+    "!electron.vite.config.{js,ts,mjs,cjs}",
+    "!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,CHANGELOG.md,README.md}",
+    "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}",
+    "!{tsconfig.tsbuildinfo,.gitignore}",
+    "!.map-data-cache/**",
+    "!map-data/**",
+    "!map-spike-assets/**",
+    "!map-assets/**",
+    "!scripts/map-data/**",
+    "!dist/tools/scripts/map-data/**",
+    "!dist/tools/scripts/package-guard/**",
+    "!package-policy/**",
+    "!scripts/package-guard/**",
+    "!scripts/globe-spike-*.mjs",
+    "!scripts/globe-adapter-*.mjs",
+    "!scripts/map-baseline.mjs",
+    "!test-results/**",
+    "!dist-electron/**",
+    "!**/*.tsbuildinfo",
+    "!dist/**/*.test.*",
+    "!dist/**"
+  ],
+  "extraResources": [
+    {
+      "from": "../../content/generated/1880",
+      "to": "content/generated/1880"
+    }
+  ],
+  "mac": {
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "target": ["dmg", "zip"],
+    "entitlements": "build/entitlements.mac.plist",
+    "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false
+  },
+  "win": {
+    "artifactName": "${productName}-${version}-setup.${ext}",
+    "target": ["nsis"],
+    "executableName": "bluewave"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false
+  },
+  "linux": {
+    "artifactName": "${productName}-${version}.${ext}",
+    "target": ["AppImage"],
+    "executableName": "bluewave",
+    "syncDesktopName": true,
+    "category": "Utility",
+    "maintainer": "bluewave@example.com"
+  }
+}

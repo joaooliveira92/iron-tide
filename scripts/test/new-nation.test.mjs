@@ -1,40 +1,27 @@
 // Tests for scripts/new-nation.mjs — the ADR-0092 nation-authoring scaffold.
 //
 // The generated draft must match the per-nation layout (ADR-0109:
-// `{ navalProfiles: [ … ] }`) and the NationNavalProfile schema's required
-// provenance shape (packages/content-schema/src/naval-profile.ts). The Effect
-// Schema *build output* is gitignored and `pnpm test:scripts` runs before
-// `pnpm build` (quality.yml / gates.yml), and Node's type stripping cannot
-// import the TS source (its internal specifiers are `.js`), so this test parses
-// the generated YAML and validates its structure directly against the schema's
-// required fields, vocabularies and provenance rules.
+// `collection("navalProfiles", …)`) and the NationNavalProfile schema's required
+// provenance shape (packages/content-schema/src/naval-profile.ts). `pnpm test:scripts`
+// runs before `pnpm build` (quality.yml / gates.yml), so this test validates the draft
+// *record* and the rendered module text directly against the schema's required fields,
+// vocabularies and provenance rules instead of importing the built schema.
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 
-import { buildProfileYaml, buildResearchNote, scaffoldNation } from "../new-nation.mjs";
-
-// `yaml` is a dependency of @bluewave/content-schema; resolve it through that
-// package so this test needs no dependency of its own.
-const require = createRequire(
-  new URL("../../packages/content-schema/package.json", import.meta.url),
-);
-const { parse } = require("yaml");
+import {
+  buildProfileModule,
+  buildProfileRecord,
+  buildResearchNote,
+  scaffoldNation,
+} from "../new-nation.mjs";
 
 const NATION = "testland";
 
-const draftProfile = () => {
-  const doc = parse(buildProfileYaml(NATION));
-  assert.ok(
-    Array.isArray(doc.navalProfiles),
-    "draft parses as a { navalProfiles: [...] } catalogue file",
-  );
-  assert.equal(doc.navalProfiles.length, 1);
-  return doc.navalProfiles[0];
-};
+const draftProfile = () => buildProfileRecord(NATION);
 
 void test("draft is a per-nation navalProfiles catalogue with the schema's required fields", () => {
   const profile = draftProfile();
@@ -140,13 +127,13 @@ void test("scaffoldNation writes the draft and note under the output root, deter
   const dir = mkdtempSync(join(tmpdir(), "bluewave-nation-"));
   try {
     const first = scaffoldNation(NATION, { rootDir: dir });
-    assert.equal(first.profilePath, join(dir, "docs", "nations", `${NATION}-profile-draft.yaml`));
+    assert.equal(first.profilePath, join(dir, "docs", "nations", `${NATION}-profile-draft.ts`));
     assert.equal(first.notePath, join(dir, "docs", "research", `${NATION}-naval-profile.md`));
-    assert.equal(readFileSync(first.profilePath, "utf8"), buildProfileYaml(NATION));
+    assert.equal(readFileSync(first.profilePath, "utf8"), buildProfileModule(NATION));
     assert.ok(readFileSync(first.notePath, "utf8").includes("national naval profile"));
 
     // Deterministic: repeat builds are byte-identical (no clock, no randomness).
-    assert.equal(buildProfileYaml(NATION), buildProfileYaml(NATION));
+    assert.equal(buildProfileModule(NATION), buildProfileModule(NATION));
     assert.equal(buildResearchNote(NATION), buildResearchNote(NATION));
 
     // Refuses to overwrite an existing draft rather than clobbering research.
@@ -156,16 +143,25 @@ void test("scaffoldNation writes the draft and note under the output root, deter
   }
 });
 
+void test("the draft module is a TypeScript content module, not YAML", () => {
+  const module = buildProfileModule(NATION);
+  assert.ok(module.includes('from "@bluewave/content-authoring"'), "imports the authoring API");
+  assert.ok(
+    module.includes('collection("navalProfiles", NationNavalProfileSchema, ['),
+    "declares the per-nation navalProfiles collection under the strict schema",
+  );
+  assert.ok(module.includes("export default collection("), "default-exports the document");
+  assert.ok(!/^navalProfiles:/mu.test(module), "emits no YAML mapping");
+  assert.ok(!module.includes(".yaml"), "names no YAML path");
+});
+
 void test("doc and generator agree on the canonical per-nation paths (ADR-0109)", () => {
   const script = readFileSync(new URL("../new-nation.mjs", import.meta.url), "utf8");
   const doc = readFileSync(
     new URL("../../docs/agents/adding-a-nation.md", import.meta.url),
     "utf8",
   );
-  const canonical = [
-    "naval-profiles/<nationId>.yaml",
-    "reference-designs/<nationId>/starters.yaml",
-  ];
+  const canonical = ["naval-profiles/<nationId>.ts", "reference-designs/<nationId>/starters.ts"];
   for (const token of canonical) {
     assert.ok(script.includes(token), `new-nation.mjs names ${token}`);
     assert.ok(doc.includes(token), `adding-a-nation.md names ${token}`);

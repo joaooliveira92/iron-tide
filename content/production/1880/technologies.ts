@@ -1,0 +1,2034 @@
+import { TechnologyPrerequisiteChainSchema, list } from "@bluewave/content-authoring";
+
+export default list(TechnologyPrerequisiteChainSchema, [
+  {
+    id: "hc_wrought_iron_hull",
+    name: "Wrought Iron Hull Construction",
+    category: "EARLY",
+    researchFieldId: "HULL_CONSTRUCTION",
+    cost: 50,
+    discoveryWeight: 1000,
+    year: 1880,
+  },
+  {
+    id: "hc_compound_armor",
+    name: "Compound Armor",
+    category: "EARLY",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_wrought_iron_hull",
+      },
+    ],
+    cost: 120,
+    discoveryWeight: 4000,
+    year: 1886,
+  },
+  {
+    id: "hc_all_steel_hull",
+    name: "All-Steel (Mild Steel) Hull",
+    category: "EARLY",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_wrought_iron_hull",
+      },
+    ],
+    cost: 140,
+    discoveryWeight: 4000,
+    year: 1886,
+  },
+  {
+    id: "hc_nickel_steel_armor",
+    name: "Nickel-Steel Armor",
+    category: "EARLY",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_compound_armor",
+      },
+    ],
+    cost: 150,
+    discoveryWeight: 5000,
+    year: 1889,
+  },
+  {
+    id: "hc_harvey_armor",
+    name: "Harvey Cemented Armor",
+    category: "EARLY",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_nickel_steel_armor",
+      },
+    ],
+    cost: 260,
+    discoveryWeight: 8000,
+    year: 1892,
+  },
+  {
+    id: "hc_steel_hull_standard",
+    name: "Standardized Steel Construction",
+    category: "EARLY",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_all_steel_hull",
+      },
+    ],
+    cost: 200,
+    discoveryWeight: 6000,
+    year: 1892,
+  },
+  {
+    id: "mac_compound_engine",
+    name: "Compound (Two-Stage) Engine",
+    category: "EARLY",
+    researchFieldId: "MACHINERY",
+    cost: 60,
+    discoveryWeight: 1000,
+    year: 1880,
+  },
+  {
+    id: "mac_triple_expansion",
+    name: "Triple-Expansion Engine",
+    category: "EARLY",
+    researchFieldId: "MACHINERY",
+    prerequisites: [
+      {
+        techId: "mac_compound_engine",
+      },
+    ],
+    cost: 130,
+    discoveryWeight: 5000,
+    year: 1881,
+  },
+  {
+    id: "mac_forced_draft",
+    name: "Forced-Draft Boilers",
+    category: "EARLY",
+    researchFieldId: "MACHINERY",
+    prerequisites: [
+      {
+        techId: "mac_triple_expansion",
+      },
+    ],
+    cost: 140,
+    discoveryWeight: 5000,
+    year: 1885,
+  },
+  {
+    id: "mac_water_tube_boiler",
+    name: "Water-Tube Boilers (Belleville type)",
+    category: "EARLY",
+    researchFieldId: "MACHINERY",
+    prerequisites: [
+      {
+        techId: "mac_forced_draft",
+      },
+    ],
+    cost: 300,
+    discoveryWeight: 10000,
+    year: 1894,
+  },
+  {
+    id: "sd_ironclad_design",
+    name: "Modern Ironclad Design",
+    category: "EARLY",
+    researchFieldId: "SHIP_DESIGN",
+    cost: 55,
+    discoveryWeight: 1000,
+    year: 1880,
+  },
+  {
+    id: "sd_protected_cruiser",
+    name: "Protected Cruiser Design",
+    category: "EARLY",
+    researchFieldId: "SHIP_DESIGN",
+    prerequisites: [
+      {
+        techId: "sd_ironclad_design",
+      },
+    ],
+    cost: 160,
+    discoveryWeight: 5000,
+    year: 1885,
+  },
+  {
+    id: "sd_torpedo_ram_design",
+    name: "Torpedo-Ship & Ram Design",
+    category: "EARLY",
+    researchFieldId: "SHIP_DESIGN",
+    prerequisites: [
+      {
+        techId: "sd_ironclad_design",
+      },
+    ],
+    cost: 140,
+    discoveryWeight: 4000,
+    year: 1886,
+  },
+  {
+    id: "sd_predreadnought_design",
+    name: "Pre-Dreadnought Design",
+    category: "EARLY",
+    researchFieldId: "SHIP_DESIGN",
+    prerequisites: [
+      {
+        techId: "sd_protected_cruiser",
+      },
+      {
+        techId: "hc_harvey_armor",
+      },
+    ],
+    cost: 350,
+    discoveryWeight: 14000,
+    year: 1893,
+  },
+  {
+    id: "gun_breech_rifled",
+    name: "Breech-Loading Rifled Guns",
+    category: "EARLY",
+    researchFieldId: "GUNNERY",
+    cost: 60,
+    discoveryWeight: 1000,
+    year: 1880,
+  },
+  {
+    id: "gun_qf_light",
+    name: "Quick-Firing Light Guns (Nordenfelt/Hotchkiss)",
+    category: "EARLY",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_breech_rifled",
+      },
+    ],
+    cost: 150,
+    discoveryWeight: 6000,
+    year: 1886,
+  },
+  {
+    id: "gun_qf_medium",
+    name: 'Quick-Firing Medium Guns (4.7"/6")',
+    category: "EARLY",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_qf_light",
+      },
+    ],
+    cost: 220,
+    discoveryWeight: 8000,
+    year: 1889,
+  },
+  {
+    id: "gun_smokeless_powder",
+    name: "Smokeless Propellant (Cordite/Poudre B)",
+    category: "EARLY",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_qf_light",
+      },
+    ],
+    cost: 260,
+    discoveryWeight: 9000,
+    year: 1890,
+  },
+  {
+    id: "gun_capped_ap_shell",
+    name: "Improved AP & Capped Shells",
+    category: "EARLY",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_smokeless_powder",
+      },
+      {
+        techId: "gun_qf_medium",
+      },
+    ],
+    cost: 300,
+    discoveryWeight: 9000,
+    year: 1895,
+  },
+  {
+    id: "torp_whitehead_torpedo",
+    name: "Whitehead Self-Propelled Torpedo",
+    category: "EARLY",
+    researchFieldId: "TORPEDOES",
+    cost: 70,
+    discoveryWeight: 1500,
+    year: 1880,
+  },
+  {
+    id: "torp_torpedo_boat",
+    name: "Torpedo Boat Development",
+    category: "EARLY",
+    researchFieldId: "TORPEDOES",
+    prerequisites: [
+      {
+        techId: "torp_whitehead_torpedo",
+      },
+    ],
+    cost: 130,
+    discoveryWeight: 5000,
+    year: 1882,
+  },
+  {
+    id: "torp_torpedo_gunnery",
+    name: "Torpedo Run Training & QF Defence Doctrine",
+    category: "EARLY",
+    researchFieldId: "TORPEDOES",
+    prerequisites: [
+      {
+        techId: "torp_torpedo_boat",
+      },
+    ],
+    cost: 150,
+    discoveryWeight: 4000,
+    year: 1886,
+  },
+  {
+    id: "torp_gyroscopic_steering",
+    name: "Gyroscopic Steering (Obry gear)",
+    category: "EARLY",
+    researchFieldId: "TORPEDOES",
+    prerequisites: [
+      {
+        techId: "torp_whitehead_torpedo",
+      },
+    ],
+    cost: 260,
+    discoveryWeight: 9000,
+    year: 1896,
+  },
+  {
+    id: "m_asw_contact_mine",
+    name: "Contact Mine (Horn/Mooring)",
+    category: "EARLY",
+    researchFieldId: "MINES_AND_ASW",
+    cost: 50,
+    discoveryWeight: 800,
+    year: 1880,
+  },
+  {
+    id: "m_asw_spar_torpedo",
+    name: "Spar/Outrigger Torpedo",
+    category: "EARLY",
+    researchFieldId: "MINES_AND_ASW",
+    cost: 50,
+    discoveryWeight: 800,
+    year: 1880,
+  },
+  {
+    id: "m_asw_mine_laying",
+    name: "Systematic Minefield Laying",
+    category: "EARLY",
+    researchFieldId: "MINES_AND_ASW",
+    prerequisites: [
+      {
+        techId: "m_asw_contact_mine",
+      },
+    ],
+    cost: 110,
+    discoveryWeight: 3500,
+    year: 1885,
+  },
+  {
+    id: "sub_experimental",
+    name: "Experimental Submersibles",
+    category: "EARLY",
+    researchFieldId: "SUBMARINES",
+    cost: 120,
+    discoveryWeight: 3000,
+    year: 1885,
+  },
+  {
+    id: "sub_practical_military_design",
+    name: "Practical Military Submarine (Holland type)",
+    category: "EARLY",
+    researchFieldId: "SUBMARINES",
+    prerequisites: [
+      {
+        techId: "sub_experimental",
+      },
+      {
+        techId: "torp_whitehead_torpedo",
+      },
+    ],
+    cost: 320,
+    discoveryWeight: 7000,
+    year: 1897,
+  },
+  {
+    id: "infra_dry_dock",
+    name: "Dry Docks & Repair Yards",
+    category: "EARLY",
+    researchFieldId: "INFRASTRUCTURE",
+    cost: 50,
+    discoveryWeight: 800,
+    year: 1880,
+  },
+  {
+    id: "infra_coaling_station",
+    name: "Coaling Stations & Bases",
+    category: "EARLY",
+    researchFieldId: "INFRASTRUCTURE",
+    cost: 50,
+    discoveryWeight: 800,
+    year: 1880,
+  },
+  {
+    id: "infra_coastal_fortification",
+    name: "Coastal Fortifications",
+    category: "EARLY",
+    researchFieldId: "INFRASTRUCTURE",
+    prerequisites: [
+      {
+        techId: "m_asw_mine_laying",
+      },
+    ],
+    cost: 130,
+    discoveryWeight: 3500,
+    year: 1885,
+  },
+  {
+    id: "infra_modern_dockyard",
+    name: "Modern Steel Dockyard",
+    category: "EARLY",
+    researchFieldId: "INFRASTRUCTURE",
+    prerequisites: [
+      {
+        techId: "infra_dry_dock",
+      },
+      {
+        techId: "hc_steel_hull_standard",
+      },
+    ],
+    cost: 260,
+    discoveryWeight: 5000,
+    year: 1893,
+  },
+  {
+    id: "dc_iron_subdivision",
+    name: "Iron Hull Subdivision & Pumping",
+    category: "EARLY",
+    researchFieldId: "DAMAGE_CONTROL",
+    cost: 55,
+    discoveryWeight: 900,
+    year: 1880,
+  },
+  {
+    id: "dc_watertight_bulkheads",
+    name: "Watertight Bulkhead Practice",
+    category: "EARLY",
+    researchFieldId: "DAMAGE_CONTROL",
+    prerequisites: [
+      {
+        techId: "dc_iron_subdivision",
+      },
+      {
+        techId: "hc_all_steel_hull",
+      },
+    ],
+    cost: 140,
+    discoveryWeight: 4000,
+    year: 1888,
+  },
+  {
+    id: "fc_basic_rangefinding",
+    name: "Basic Rangefinding & Spotting",
+    category: "EARLY",
+    researchFieldId: "FIRE_CONTROL",
+    prerequisites: [
+      {
+        techId: "gun_qf_medium",
+      },
+    ],
+    cost: 300,
+    discoveryWeight: 8000,
+    year: 1898,
+  },
+  {
+    id: "hc_krupp_cemented_armor",
+    name: "Krupp Cemented Armor (KCA)",
+    category: "PRE_WAR",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_harvey_armor",
+      },
+    ],
+    cost: 250,
+    discoveryWeight: 12000,
+    year: 1900,
+  },
+  {
+    id: "hc_all_or_nothing_armor",
+    name: "All-Or-Nothing Armor Scheme",
+    category: "PRE_WAR",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_krupp_cemented_armor",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 18000,
+    year: 1910,
+  },
+  {
+    id: "hc_high_tensile_structural_steel",
+    name: "High-Tensile Structural Steel",
+    category: "PRE_WAR",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_steel_hull_standard",
+      },
+    ],
+    cost: 200,
+    discoveryWeight: 10000,
+    year: 1905,
+  },
+  {
+    id: "mac_steam_turbine",
+    name: "Steam Turbine Machinery (Capital Ships)",
+    category: "PRE_WAR",
+    researchFieldId: "MACHINERY",
+    prerequisites: [
+      {
+        techId: "mac_water_tube_boiler",
+      },
+    ],
+    cost: 320,
+    discoveryWeight: 14000,
+    year: 1906,
+  },
+  {
+    id: "mac_oil_fired_boilers",
+    name: "Oil-Fired Boilers",
+    category: "PRE_WAR",
+    researchFieldId: "MACHINERY",
+    prerequisites: [
+      {
+        techId: "mac_steam_turbine",
+      },
+    ],
+    cost: 380,
+    discoveryWeight: 15000,
+    year: 1911,
+  },
+  {
+    id: "mac_geared_turbines",
+    name: "Geared Turbines",
+    category: "PRE_WAR",
+    researchFieldId: "MACHINERY",
+    prerequisites: [
+      {
+        techId: "mac_steam_turbine",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 16000,
+    year: 1915,
+  },
+  {
+    id: "sd_dreadnought_design",
+    name: "Dreadnought (All-Big-Gun) Design",
+    category: "PRE_WAR",
+    researchFieldId: "SHIP_DESIGN",
+    prerequisites: [
+      {
+        techId: "sd_predreadnought_design",
+      },
+      {
+        techId: "hc_krupp_cemented_armor",
+      },
+    ],
+    cost: 450,
+    discoveryWeight: 18000,
+    year: 1906,
+  },
+  {
+    id: "sd_battlecruiser_design",
+    name: "Battlecruiser Design",
+    category: "PRE_WAR",
+    researchFieldId: "SHIP_DESIGN",
+    prerequisites: [
+      {
+        techId: "sd_dreadnought_design",
+      },
+    ],
+    cost: 350,
+    discoveryWeight: 15000,
+    year: 1908,
+  },
+  {
+    id: "sd_super_dreadnought_design",
+    name: "Super-Dreadnought Design",
+    category: "PRE_WAR",
+    researchFieldId: "SHIP_DESIGN",
+    prerequisites: [
+      {
+        techId: "sd_dreadnought_design",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 16000,
+    year: 1912,
+  },
+  {
+    id: "gun_big_gun_12in",
+    name: "Standardized 12-inch (305mm) Heavy Guns",
+    category: "PRE_WAR",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_capped_ap_shell",
+      },
+    ],
+    cost: 300,
+    discoveryWeight: 12000,
+    year: 1905,
+  },
+  {
+    id: "gun_superfiring_turret",
+    name: "Superfiring Turret Arrangement",
+    category: "PRE_WAR",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_big_gun_12in",
+      },
+    ],
+    cost: 250,
+    discoveryWeight: 11000,
+    year: 1910,
+  },
+  {
+    id: "gun_135in_heavy_guns",
+    name: "13.5-inch (343mm) Heavy Guns",
+    category: "PRE_WAR",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_big_gun_12in",
+      },
+    ],
+    cost: 330,
+    discoveryWeight: 13000,
+    year: 1912,
+  },
+  {
+    id: "gun_15in_heavy_guns",
+    name: "15-inch (381mm) Heavy Guns",
+    category: "PRE_WAR",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_135in_heavy_guns",
+      },
+    ],
+    cost: 420,
+    discoveryWeight: 15000,
+    year: 1915,
+  },
+  {
+    id: "fc_coincidence_rangefinder",
+    name: "Coincidence Rangefinder (9-ft Barr & Stroud)",
+    category: "PRE_WAR",
+    researchFieldId: "FIRE_CONTROL",
+    prerequisites: [
+      {
+        techId: "fc_basic_rangefinding",
+      },
+    ],
+    cost: 280,
+    discoveryWeight: 11000,
+    year: 1905,
+  },
+  {
+    id: "fc_mechanical_gun_direktor",
+    name: "Mechanical Gunnery Direction (Dumaresq/Dreyer)",
+    category: "PRE_WAR",
+    researchFieldId: "FIRE_CONTROL",
+    prerequisites: [
+      {
+        techId: "fc_coincidence_rangefinder",
+      },
+    ],
+    cost: 320,
+    discoveryWeight: 12000,
+    year: 1910,
+  },
+  {
+    id: "fc_director_firing",
+    name: "Director-Controlled Firing",
+    category: "PRE_WAR",
+    researchFieldId: "FIRE_CONTROL",
+    prerequisites: [
+      {
+        techId: "fc_mechanical_gun_direktor",
+      },
+    ],
+    cost: 360,
+    discoveryWeight: 13000,
+    year: 1913,
+  },
+  {
+    id: "torp_long_range_18in",
+    name: "Long-Range 18-inch Torpedo",
+    category: "PRE_WAR",
+    researchFieldId: "TORPEDOES",
+    prerequisites: [
+      {
+        techId: "torp_gyroscopic_steering",
+      },
+    ],
+    cost: 260,
+    discoveryWeight: 10000,
+    year: 1904,
+  },
+  {
+    id: "torp_21in_ww1",
+    name: "WWI 21-inch (533mm) Torpedo",
+    category: "PRE_WAR",
+    researchFieldId: "TORPEDOES",
+    prerequisites: [
+      {
+        techId: "torp_long_range_18in",
+      },
+    ],
+    cost: 340,
+    discoveryWeight: 12000,
+    year: 1912,
+  },
+  {
+    id: "m_asw_automatic_contact_mine",
+    name: "Automatic (Moored) Contact Mine",
+    category: "PRE_WAR",
+    researchFieldId: "MINES_AND_ASW",
+    prerequisites: [
+      {
+        techId: "m_asw_mine_laying",
+      },
+    ],
+    cost: 200,
+    discoveryWeight: 9000,
+    year: 1906,
+  },
+  {
+    id: "m_asw_depth_charge_1916",
+    name: "Depth Charge (WWI)",
+    category: "PRE_WAR",
+    researchFieldId: "MINES_AND_ASW",
+    prerequisites: [
+      {
+        techId: "m_asw_automatic_contact_mine",
+      },
+    ],
+    cost: 300,
+    discoveryWeight: 11000,
+    year: 1916,
+  },
+  {
+    id: "sub_diesel_electric",
+    name: "Diesel-Electric Submarine Propulsion",
+    category: "PRE_WAR",
+    researchFieldId: "SUBMARINES",
+    prerequisites: [
+      {
+        techId: "sub_practical_military_design",
+      },
+    ],
+    cost: 350,
+    discoveryWeight: 12000,
+    year: 1910,
+  },
+  {
+    id: "sub_ww1_ocean_boat",
+    name: "Ocean-Going WWI Submarine",
+    category: "PRE_WAR",
+    researchFieldId: "SUBMARINES",
+    prerequisites: [
+      {
+        techId: "sub_diesel_electric",
+      },
+      {
+        techId: "torp_long_range_18in",
+      },
+    ],
+    cost: 420,
+    discoveryWeight: 13000,
+    year: 1915,
+  },
+  {
+    id: "infra_dreadnought_drydock",
+    name: "Dreadnought-Scale Drydocks",
+    category: "PRE_WAR",
+    researchFieldId: "INFRASTRUCTURE",
+    prerequisites: [
+      {
+        techId: "infra_modern_dockyard",
+      },
+    ],
+    cost: 300,
+    discoveryWeight: 9000,
+    year: 1906,
+  },
+  {
+    id: "infra_oil_basing",
+    name: "Oil Bunkering & Bases",
+    category: "PRE_WAR",
+    researchFieldId: "INFRASTRUCTURE",
+    prerequisites: [
+      {
+        techId: "infra_coaling_station",
+      },
+    ],
+    cost: 250,
+    discoveryWeight: 8000,
+    year: 1912,
+  },
+  {
+    id: "dc_torpedo_bulkhead",
+    name: "Torpedo Bulkhead Protection",
+    category: "PRE_WAR",
+    researchFieldId: "DAMAGE_CONTROL",
+    prerequisites: [
+      {
+        techId: "dc_watertight_bulkheads",
+      },
+    ],
+    cost: 280,
+    discoveryWeight: 10000,
+    year: 1908,
+  },
+  {
+    id: "gun_16in_heavy_guns",
+    name: "16-inch (406mm) Heavy Guns",
+    category: "INTERWAR",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_15in_heavy_guns",
+      },
+    ],
+    cost: 460,
+    discoveryWeight: 16000,
+    year: 1927,
+  },
+  {
+    id: "gun_superheavy_ap",
+    name: "Super-Heavy AP Shells",
+    category: "INTERWAR",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_16in_heavy_guns",
+      },
+    ],
+    cost: 500,
+    discoveryWeight: 17000,
+    year: 1937,
+  },
+  {
+    id: "gun_14in_treaty",
+    name: "14-inch Treaty (356mm) Guns",
+    category: "INTERWAR",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_15in_heavy_guns",
+      },
+    ],
+    cost: 480,
+    discoveryWeight: 15000,
+    year: 1937,
+  },
+  {
+    id: "gun_quadruple_turret",
+    name: "Quadruple Turret Arrangement",
+    category: "INTERWAR",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_superfiring_turret",
+      },
+    ],
+    cost: 380,
+    discoveryWeight: 13000,
+    year: 1936,
+  },
+  {
+    id: "mac_high_pressure_steam",
+    name: "High-Pressure (400 psi) Steam",
+    category: "INTERWAR",
+    researchFieldId: "MACHINERY",
+    prerequisites: [
+      {
+        techId: "mac_oil_fired_boilers",
+      },
+    ],
+    cost: 420,
+    discoveryWeight: 15000,
+    year: 1937,
+  },
+  {
+    id: "mac_improved_geared_turbines",
+    name: "Improved Geared Turbines",
+    category: "INTERWAR",
+    researchFieldId: "MACHINERY",
+    prerequisites: [
+      {
+        techId: "mac_geared_turbines",
+      },
+    ],
+    cost: 430,
+    discoveryWeight: 15000,
+    year: 1937,
+  },
+  {
+    id: "hc_internal_inclined_belt",
+    name: "Internal Inclined Belt Armour",
+    category: "INTERWAR",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_all_or_nothing_armor",
+      },
+    ],
+    cost: 350,
+    discoveryWeight: 13000,
+    year: 1927,
+  },
+  {
+    id: "hc_void_liquid_void",
+    name: "Void-Liquid-Void Side Protection",
+    category: "INTERWAR",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_internal_inclined_belt",
+      },
+    ],
+    cost: 450,
+    discoveryWeight: 15000,
+    year: 1937,
+  },
+  {
+    id: "hc_improved_cemented_armor",
+    name: "Improved Cemented Armour (KC n/A)",
+    category: "INTERWAR",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_krupp_cemented_armor",
+      },
+    ],
+    cost: 380,
+    discoveryWeight: 14000,
+    year: 1937,
+  },
+  {
+    id: "hc_thickened_belt_deck",
+    name: "Thickened Belt & Deck Armour",
+    category: "INTERWAR",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_improved_cemented_armor",
+      },
+    ],
+    cost: 420,
+    discoveryWeight: 15000,
+    year: 1937,
+  },
+  {
+    id: "sd_washington_treaty_design",
+    name: "Washington Treaty Design",
+    category: "INTERWAR",
+    researchFieldId: "SHIP_DESIGN",
+    prerequisites: [
+      {
+        techId: "sd_super_dreadnought_design",
+      },
+    ],
+    cost: 200,
+    discoveryWeight: 10000,
+    year: 1922,
+  },
+  {
+    id: "sd_treaty_cruiser_design",
+    name: "Treaty (8-inch) Heavy-Cruiser Design",
+    category: "INTERWAR",
+    researchFieldId: "SHIP_DESIGN",
+    prerequisites: [
+      {
+        techId: "sd_washington_treaty_design",
+      },
+    ],
+    cost: 220,
+    discoveryWeight: 9000,
+    year: 1922,
+  },
+  {
+    id: "sd_fast_battleship_design",
+    name: "Fast Battleship Design",
+    category: "INTERWAR",
+    researchFieldId: "SHIP_DESIGN",
+    prerequisites: [
+      {
+        techId: "sd_washington_treaty_design",
+      },
+    ],
+    cost: 420,
+    discoveryWeight: 15000,
+    year: 1937,
+  },
+  {
+    id: "fc_analog_fire_control_computer",
+    name: "Analog Fire-Control Computer (AFCT/RangeKeeper)",
+    category: "INTERWAR",
+    researchFieldId: "FIRE_CONTROL",
+    prerequisites: [
+      {
+        techId: "fc_director_firing",
+      },
+    ],
+    cost: 380,
+    discoveryWeight: 14000,
+    year: 1932,
+  },
+  {
+    id: "fc_gyro_stabilised_director",
+    name: "Gyro-Stabilised Director",
+    category: "INTERWAR",
+    researchFieldId: "FIRE_CONTROL",
+    prerequisites: [
+      {
+        techId: "fc_analog_fire_control_computer",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1935,
+  },
+  {
+    id: "torp_improved_long_range",
+    name: "Improved Long-Range Torpedo",
+    category: "INTERWAR",
+    researchFieldId: "TORPEDOES",
+    prerequisites: [
+      {
+        techId: "torp_21in_ww1",
+      },
+    ],
+    cost: 380,
+    discoveryWeight: 14000,
+    year: 1933,
+  },
+  {
+    id: "torp_oxygen_type93",
+    name: "Oxygen (Type 93 'Long Lance') Torpedo",
+    category: "INTERWAR",
+    researchFieldId: "TORPEDOES",
+    prerequisites: [
+      {
+        techId: "torp_improved_long_range",
+      },
+    ],
+    cost: 450,
+    discoveryWeight: 15000,
+    year: 1933,
+  },
+  {
+    id: "m_asw_asdic_sonar",
+    name: "ASDIC (Active Sonar)",
+    category: "INTERWAR",
+    researchFieldId: "MINES_AND_ASW",
+    prerequisites: [
+      {
+        techId: "m_asw_depth_charge_1916",
+      },
+    ],
+    cost: 350,
+    discoveryWeight: 12000,
+    year: 1928,
+  },
+  {
+    id: "m_asw_improved_contact_mine",
+    name: "Improved Moored Contact Mine",
+    category: "INTERWAR",
+    researchFieldId: "MINES_AND_ASW",
+    prerequisites: [
+      {
+        techId: "m_asw_automatic_contact_mine",
+      },
+    ],
+    cost: 320,
+    discoveryWeight: 11000,
+    year: 1930,
+  },
+  {
+    id: "sub_modern_diesel_electric",
+    name: "Modern Diesel-Electric Submarine (Type VII)",
+    category: "INTERWAR",
+    researchFieldId: "SUBMARINES",
+    prerequisites: [
+      {
+        techId: "sub_ww1_ocean_boat",
+      },
+    ],
+    cost: 450,
+    discoveryWeight: 14000,
+    year: 1935,
+  },
+  {
+    id: "sub_fleet_ocean_boat",
+    name: "Fleet/Ocean Submarine (Gato / RN T-class)",
+    category: "INTERWAR",
+    researchFieldId: "SUBMARINES",
+    prerequisites: [
+      {
+        techId: "sub_modern_diesel_electric",
+      },
+    ],
+    cost: 500,
+    discoveryWeight: 15000,
+    year: 1939,
+  },
+  {
+    id: "infra_fleet_support_pens",
+    name: "Fleet Support Basins & U-boat Pens",
+    category: "INTERWAR",
+    researchFieldId: "INFRASTRUCTURE",
+    prerequisites: [
+      {
+        techId: "infra_dreadnought_drydock",
+      },
+    ],
+    cost: 380,
+    discoveryWeight: 12000,
+    year: 1938,
+  },
+  {
+    id: "dc_enhanced_subdivision",
+    name: "Enhanced Subdivision & Counterflooding",
+    category: "INTERWAR",
+    researchFieldId: "DAMAGE_CONTROL",
+    prerequisites: [
+      {
+        techId: "dc_torpedo_bulkhead",
+      },
+    ],
+    cost: 360,
+    discoveryWeight: 13000,
+    year: 1937,
+  },
+  {
+    id: "dc_magazine_anti_flash",
+    name: "Magazine Anti-Flash Protection",
+    category: "INTERWAR",
+    researchFieldId: "DAMAGE_CONTROL",
+    prerequisites: [
+      {
+        techId: "dc_torpedo_bulkhead",
+      },
+    ],
+    cost: 340,
+    discoveryWeight: 12000,
+    year: 1936,
+  },
+  {
+    id: "rad_search_radar",
+    name: "Search Radar (Air and Surface Warning)",
+    category: "MID_CENTURY",
+    researchFieldId: "RADAR_AND_ELECTRONICS",
+    prerequisites: [
+      {
+        techId: "fc_analog_fire_control_computer",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1940,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Naval Radar",
+          author: "N. Friedman, 1981",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: no design carries radar, so it has no effect on gunnery or detection (#279); see .ai/reports/e-1-era-mechanics-audit.md.",
+    },
+  },
+  {
+    id: "rad_gunnery_fire_control_radar",
+    name: "Gunnery Fire-Control Radar",
+    category: "MID_CENTURY",
+    researchFieldId: "RADAR_AND_ELECTRONICS",
+    prerequisites: [
+      {
+        techId: "rad_search_radar",
+      },
+      {
+        techId: "fc_gyro_stabilised_director",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1941,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Naval Radar",
+          author: "N. Friedman, 1981",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from rad_search_radar, the nearest existing technology. Inert in the engine: no design carries radar, so it has no effect on gunnery (#279); see .ai/reports/e-1-era-mechanics-audit.md.",
+    },
+  },
+  {
+    id: "rad_blind_fire_director",
+    name: "Blind-Fire Radar Director",
+    category: "MID_CENTURY",
+    researchFieldId: "RADAR_AND_ELECTRONICS",
+    prerequisites: [
+      {
+        techId: "rad_gunnery_fire_control_radar",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1943,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Naval Radar",
+          author: "N. Friedman, 1981",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from rad_gunnery_fire_control_radar, the nearest existing technology. Inert in the engine: no blind-fire rule exists (#279); see .ai/reports/e-1-era-mechanics-audit.md.",
+    },
+  },
+  {
+    id: "fc_proximity_fuze",
+    name: "Proximity-Fuzed AA Ammunition",
+    category: "MID_CENTURY",
+    researchFieldId: "FIRE_CONTROL",
+    prerequisites: [
+      {
+        techId: "fc_gyro_stabilised_director",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1943,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "US Naval Weapons",
+          author: "N. Friedman, 1983",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: campaign battles run no air defence (#280); see .ai/reports/e-1-era-mechanics-audit.md.",
+    },
+  },
+  {
+    id: "fc_radar_directed_maa",
+    name: "Radar-Directed Medium AA",
+    category: "MID_CENTURY",
+    researchFieldId: "FIRE_CONTROL",
+    prerequisites: [
+      {
+        techId: "rad_gunnery_fire_control_radar",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1944,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "US Naval Weapons",
+          author: "N. Friedman, 1983",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: campaign battles run no air defence and designs carry no radar (#279, #280); see .ai/reports/e-1-era-mechanics-audit.md.",
+    },
+  },
+  {
+    id: "gun_dp_rapid_5in",
+    name: "Dual-Purpose Rapid-Fire 5-inch Mount",
+    category: "MID_CENTURY",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_quadruple_turret",
+      },
+    ],
+    cost: 380,
+    discoveryWeight: 13000,
+    year: 1945,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "US Naval Weapons",
+          author: "N. Friedman, 1983",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from gun_quadruple_turret, the nearest existing technology.",
+    },
+  },
+  {
+    id: "gun_auto_loading_turret",
+    name: "Automatic-Loading Cruiser Turret",
+    category: "MID_CENTURY",
+    researchFieldId: "GUNNERY",
+    prerequisites: [
+      {
+        techId: "gun_dp_rapid_5in",
+      },
+    ],
+    cost: 380,
+    discoveryWeight: 13000,
+    year: 1948,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "The Postwar Naval Revolution",
+          author: "N. Friedman, 1986",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from gun_quadruple_turret, the nearest existing technology.",
+    },
+  },
+  {
+    id: "torp_acoustic_homing",
+    name: "Acoustic Homing Torpedo",
+    category: "MID_CENTURY",
+    researchFieldId: "TORPEDOES",
+    prerequisites: [
+      {
+        techId: "torp_improved_long_range",
+      },
+    ],
+    cost: 380,
+    discoveryWeight: 14000,
+    year: 1943,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "US Naval Weapons",
+          author: "N. Friedman, 1983",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from torp_improved_long_range, the nearest existing technology.",
+    },
+  },
+  {
+    id: "m_asw_influence_mine",
+    name: "Magnetic and Acoustic Influence Mines",
+    category: "MID_CENTURY",
+    researchFieldId: "MINES_AND_ASW",
+    prerequisites: [
+      {
+        techId: "m_asw_improved_contact_mine",
+      },
+    ],
+    cost: 320,
+    discoveryWeight: 11000,
+    year: 1940,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Conway's All the World's Fighting Ships 1922-1946",
+          author: "R. Gardiner (ed.)",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from m_asw_improved_contact_mine, the nearest existing technology. Inert in the engine: the engine reads other mine technology ids and mines are outside campaign battles (#278, #282); see .ai/reports/e-1-era-mechanics-audit.md.",
+    },
+  },
+  {
+    id: "m_asw_ahead_throwing",
+    name: "Ahead-Throwing ASW Weapons",
+    category: "MID_CENTURY",
+    researchFieldId: "MINES_AND_ASW",
+    prerequisites: [
+      {
+        techId: "m_asw_improved_contact_mine",
+      },
+    ],
+    cost: 320,
+    discoveryWeight: 11000,
+    year: 1942,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "British Destroyers and Frigates: The Second World War and After",
+          author: "N. Friedman, 2006",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from m_asw_improved_contact_mine, the nearest existing technology. Inert in the engine: no surface anti-submarine weapon model exists (#282); see .ai/reports/e-1-era-mechanics-audit.md.",
+    },
+  },
+  {
+    id: "sub_snorkel",
+    name: "Snorkel",
+    category: "MID_CENTURY",
+    researchFieldId: "SUBMARINES",
+    prerequisites: [
+      {
+        techId: "sub_fleet_ocean_boat",
+      },
+    ],
+    cost: 500,
+    discoveryWeight: 15000,
+    year: 1944,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Conway's All the World's Fighting Ships 1922-1946",
+          author: "R. Gardiner (ed.)",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from sub_fleet_ocean_boat, the nearest existing technology. Inert in the engine: submarines are outside campaign battles (#282); see .ai/reports/e-1-era-mechanics-audit.md.",
+    },
+  },
+  {
+    id: "hc_all_welded_hull",
+    name: "All-Welded Hull Construction",
+    category: "MID_CENTURY",
+    researchFieldId: "HULL_CONSTRUCTION",
+    prerequisites: [
+      {
+        techId: "hc_thickened_belt_deck",
+      },
+    ],
+    cost: 420,
+    discoveryWeight: 15000,
+    year: 1941,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Conway's All the World's Fighting Ships 1922-1946",
+          author: "R. Gardiner (ed.)",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from hc_thickened_belt_deck, the nearest existing technology.",
+    },
+  },
+  {
+    id: "av_carrier_jet",
+    name: "Carrier-Borne Jet Aircraft",
+    category: "MID_CENTURY",
+    researchFieldId: "AVIATION",
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1944,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Steam Community guide: Ship Design Guide (1890 to 1970)",
+          section: "community anchor",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "121-123",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: the engine reads other jet technology ids and campaign battles run no air groups (#278, #280); see .ai/reports/e-1-era-mechanics-audit.md.",
+    },
+  },
+  {
+    id: "mis_heavy_ssm",
+    name: "Heavy Surface-to-Surface Missile",
+    category: "MID_CENTURY",
+    researchFieldId: "MISSILES",
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1947,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Steam Community guide: Ship Design Guide (1890 to 1970)",
+          section: "community anchor",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "121-123",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. ADR-0312 gives it a combat consumer for all three SSM launcher parts.",
+    },
+  },
+  {
+    id: "m_asw_improved_sonar",
+    name: "Improved Hull-Mounted and Variable-Depth Sonar",
+    category: "MID_CENTURY",
+    researchFieldId: "MINES_AND_ASW",
+    prerequisites: [
+      {
+        techId: "m_asw_asdic_sonar",
+      },
+    ],
+    cost: 320,
+    discoveryWeight: 11000,
+    year: 1955,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Steam Community guide: Ship Design Guide (1890 to 1970)",
+          section: "community anchor",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "121-123",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from m_asw_ahead_throwing, the nearest existing technology. The dossier year is 1952; the community anchor of 1955 for enhanced sonar overrides it (ADR-0283 D2).",
+    },
+  },
+  {
+    id: "sub_streamlined_hull",
+    name: "High-Speed Streamlined Submarine Hull",
+    category: "MID_CENTURY",
+    researchFieldId: "SUBMARINES",
+    prerequisites: [
+      {
+        techId: "sub_snorkel",
+      },
+    ],
+    cost: 500,
+    discoveryWeight: 15000,
+    year: 1953,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "The Postwar Naval Revolution",
+          author: "N. Friedman, 1986",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from sub_snorkel, the nearest existing technology.",
+    },
+  },
+  {
+    id: "mac_marine_gas_turbine",
+    name: "Marine Gas Turbine",
+    category: "MID_CENTURY",
+    researchFieldId: "MACHINERY",
+    prerequisites: [
+      {
+        techId: "mac_improved_geared_turbines",
+      },
+    ],
+    cost: 430,
+    discoveryWeight: 15000,
+    year: 1953,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Conway's All the World's Fighting Ships 1947-1995",
+          author: "R. Gardiner (ed.)",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mac_improved_geared_turbines, the nearest existing technology.",
+    },
+  },
+  {
+    id: "torp_wire_guided_homing",
+    name: "Wire-Guided and Active-Homing Anti-Ship Torpedo",
+    category: "MID_CENTURY",
+    researchFieldId: "TORPEDOES",
+    prerequisites: [
+      {
+        techId: "torp_acoustic_homing",
+      },
+    ],
+    cost: 380,
+    discoveryWeight: 14000,
+    year: 1956,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "US Naval Weapons",
+          author: "N. Friedman, 1983",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from torp_acoustic_homing, the nearest existing technology.",
+    },
+  },
+  {
+    id: "sd_helicopter_hangar",
+    name: "Helicopter Hangar and Deck on Escorts",
+    category: "MID_CENTURY",
+    researchFieldId: "SHIP_DESIGN",
+    prerequisites: [
+      {
+        techId: "sd_fast_battleship_design",
+      },
+    ],
+    cost: 420,
+    discoveryWeight: 15000,
+    year: 1955,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Conway's All the World's Fighting Ships 1947-1995",
+          author: "R. Gardiner (ed.)",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from sd_fast_battleship_design, the nearest existing technology. The sources pin only the decade, so 1955 is a balance target (ADR-0283 D3h).",
+    },
+  },
+  {
+    id: "cop_angled_deck",
+    name: "Angled Flight Deck and Larger Carriers",
+    category: "MID_CENTURY",
+    researchFieldId: "CARRIER_OPERATIONS",
+    prerequisites: [
+      {
+        techId: "av_carrier_jet",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1950,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Steam Community guide: Ship Design Guide (1890 to 1970)",
+          section: "community anchor",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "121-123",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from av_carrier_jet, the nearest existing technology. Year is the community anchor for carrier size limit and angled decks (ADR-0283 D2).",
+    },
+  },
+  {
+    id: "cop_steam_catapult",
+    name: "Steam Catapult and 30-Knot Carrier Jet Refit",
+    category: "MID_CENTURY",
+    researchFieldId: "CARRIER_OPERATIONS",
+    prerequisites: [
+      {
+        techId: "cop_angled_deck",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1952,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Steam Community guide: Ship Design Guide (1890 to 1970)",
+          section: "community anchor",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "121-123",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from av_carrier_jet, the nearest existing technology. Year is the community anchor for the 30-knot carrier jet conversion with steam catapults (ADR-0283 D2).",
+    },
+  },
+  {
+    id: "mis_medium_heavy_sam",
+    name: "Medium and Heavy Surface-to-Air Missile",
+    category: "MID_CENTURY",
+    researchFieldId: "MISSILES",
+    prerequisites: [
+      {
+        techId: "fc_radar_directed_maa",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1956,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "US Naval Weapons",
+          author: "N. Friedman, 1983",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology.",
+    },
+  },
+  {
+    id: "mis_quadruple_heavy_ssm",
+    name: "Quadruple Heavy SSM Launchers",
+    category: "MID_CENTURY",
+    researchFieldId: "MISSILES",
+    prerequisites: [
+      {
+        techId: "mis_heavy_ssm",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1959,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Steam Community guide: Ship Design Guide (1890 to 1970)",
+          section: "community anchor",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "121-123",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for quadruple heavy SSM launchers (ADR-0283 D2).",
+    },
+  },
+  {
+    id: "mis_cruise_missile_data_link",
+    name: "Data Link and Cruise-Missile Targeting",
+    category: "LATE",
+    researchFieldId: "MISSILES",
+    prerequisites: [
+      {
+        techId: "mis_quadruple_heavy_ssm",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1960,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Steam Community guide: Ship Design Guide (1890 to 1970)",
+          section: "community anchor",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "121-123",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for cruise missiles (ADR-0283 D2); the dossier year for data link is 1960 as well.",
+    },
+  },
+  {
+    id: "mis_light_sam",
+    name: "Light Surface-to-Air Missile",
+    category: "LATE",
+    researchFieldId: "MISSILES",
+    prerequisites: [
+      {
+        techId: "mis_medium_heavy_sam",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1961,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "US Naval Weapons",
+          author: "N. Friedman, 1983",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology.",
+    },
+  },
+  {
+    id: "mis_medium_ssm_quadruple",
+    name: "Medium Surface-to-Surface Missile with Quadruple Launchers",
+    category: "LATE",
+    researchFieldId: "MISSILES",
+    prerequisites: [
+      {
+        techId: "mis_cruise_missile_data_link",
+      },
+    ],
+    cost: 400,
+    discoveryWeight: 14000,
+    year: 1966,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Steam Community guide: Ship Design Guide (1890 to 1970)",
+          section: "community anchor",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "121-123",
+        },
+      ],
+      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for quadruple medium SSM launchers; it overrides the 1967 historical-analogue date of the first medium anti-ship missile (ADR-0283 D2).",
+    },
+  },
+  {
+    id: "av_early_aviation",
+    name: "Early Naval Aviation",
+    category: "PRE_WAR",
+    researchFieldId: "AVIATION",
+    cost: 220,
+    discoveryWeight: 9000,
+    year: 1912,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Conway's All the World's Fighting Ships 1906-1921",
+          author: "R. Gardiner and A. Gray (eds.)",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "102-120",
+        },
+      ],
+      note: "ADR-0310. The year is the historical-analogue introduction of ship-borne naval aviation (seaplane carriers and catapult trials); the manual grounds aircraft operations and gives no date. Cost and discovery weight are copied from m_asw_automatic_contact_mine, the nearest PRE_WAR technology, and are Bluewave balance targets. The engine reads this id for the aircraft-development gate (ADR-0297).",
+    },
+  },
+  {
+    id: "cop_heavy_jet_operations",
+    name: "Heavy Jet Carrier Operations",
+    category: "MID_CENTURY",
+    researchFieldId: "CARRIER_OPERATIONS",
+    prerequisites: [
+      {
+        techId: "av_carrier_jet",
+      },
+      {
+        techId: "cop_angled_deck",
+      },
+      {
+        techId: "cop_steam_catapult",
+      },
+    ],
+    cost: 500,
+    discoveryWeight: 16000,
+    year: 1955,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "The Postwar Naval Revolution",
+          author: "N. Friedman, 1986",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "102-120",
+        },
+      ],
+      note: "ADR-0310. Year is a historical-analogue balance target for routine heavy jet operation from carriers, after the angled deck and steam catapult anchors (ADR-0283 D2). The manual grounds carrier aircraft operations and gives no date. Cost and discovery weight are copied from cop_steam_catapult, the nearest CARRIER_OPERATIONS technology. The engine reads this id for HEAVY_JET_TECHNOLOGY (ADR-0297).",
+    },
+  },
+  {
+    id: "m_asw_controlled_mine",
+    name: "Controlled Minefields",
+    category: "EARLY",
+    researchFieldId: "MINES_AND_ASW",
+    prerequisites: [
+      {
+        techId: "m_asw_mine_laying",
+      },
+    ],
+    cost: 150,
+    discoveryWeight: 6000,
+    year: 1890,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Conway's All the World's Fighting Ships 1860-1905",
+          author: "R. Gardiner (ed.)",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "33-36, 72-74",
+        },
+      ],
+      note: "ADR-0310. Year is the historical-analogue introduction of electrically command-detonated harbour and coastal minefields; the manual grounds mine warfare and controlled installations and gives no date. Cost and discovery weight are copied from m_asw_automatic_contact_mine, the nearest MINES_AND_ASW technology, and are Bluewave balance targets. The engine reads this id for the controlled defensive mine type (ADR-0297).",
+    },
+  },
+  {
+    id: "sub_minelaying",
+    name: "Minelaying Submarines",
+    category: "PRE_WAR",
+    researchFieldId: "SUBMARINES",
+    prerequisites: [
+      {
+        techId: "sub_diesel_electric",
+      },
+      {
+        techId: "m_asw_mine_laying",
+      },
+    ],
+    cost: 380,
+    discoveryWeight: 12000,
+    year: 1916,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "Conway's All the World's Fighting Ships 1906-1921",
+          author: "R. Gardiner and A. Gray (eds.)",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "33-36, 72-74",
+        },
+      ],
+      note: "ADR-0310. Year is the historical-analogue introduction of purpose-built minelaying submarines; the manual grounds submarine mine laying and gives no date. Cost and discovery weight are copied from sub_ww1_ocean_boat, the nearest SUBMARINES technology, and are Bluewave balance targets. The engine reads this id for the minelaying submarine type and the submarine-laid mine (ADR-0297).",
+    },
+  },
+  {
+    id: "sub_missile",
+    name: "Missile-Carrying Submarines",
+    category: "MID_CENTURY",
+    researchFieldId: "SUBMARINES",
+    prerequisites: [
+      {
+        techId: "sub_streamlined_hull",
+      },
+      {
+        techId: "mis_heavy_ssm",
+      },
+    ],
+    cost: 500,
+    discoveryWeight: 16000,
+    year: 1955,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      sources: [
+        {
+          title: "US Naval Weapons",
+          author: "N. Friedman, 1983",
+        },
+        {
+          title: "Conway's All the World's Fighting Ships 1947-1995",
+          author: "R. Gardiner (ed.)",
+        },
+        {
+          title: "Rule the Waves 3 manual",
+          author: "Naval War Simulations / Matrix Games",
+          year: 2023,
+          page: "121-123",
+        },
+      ],
+      note: "ADR-0310. Year is the historical-analogue start of operational missile-carrying submarine patrols, not earlier than the sourced period; the manual grounds missiles and their ship/submarine carriage and gives no date. Cost and discovery weight are copied from sub_streamlined_hull, the nearest SUBMARINES technology, and are Bluewave balance targets. The engine reads this id for the missile submarine type (ADR-0297).",
+    },
+  },
+]);

@@ -4,9 +4,10 @@ import { buildContentBundleArtifact, type CompilerInput } from "@bluewave/conten
 import { FleetShipSchema } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
-  FIXTURE_RULESETS_YAML,
+  FIXTURE_RULESETS_JSON,
   createFixtureDir,
-  nationsYaml,
+  jsonDocument,
+  nationsDocument,
   type FixtureDir,
   writeFixture,
 } from "@bluewave/test-support";
@@ -29,56 +30,153 @@ const FIXTURE = {
     version: "0.1.0",
     type: "fixture",
     files: {
-      rulesets: ["rulesets.yaml"],
-      countries: ["countries.yaml"],
-      areas: ["areas.yaml"],
-      routes: ["routes.yaml"],
-      possessions: ["possessions.yaml"],
-      ports: ["ports.yaml"],
-      technologies: ["technologies.yaml"],
+      rulesets: ["rulesets.json"],
+      countries: ["countries.json"],
+      areas: ["areas.json"],
+      routes: ["routes.json"],
+      possessions: ["possessions.json"],
+      ports: ["ports.json"],
+      technologies: ["technologies.json"],
     },
   }),
-  rulesets: FIXTURE_RULESETS_YAML,
-  countries: nationsYaml([
+  rulesets: FIXTURE_RULESETS_JSON,
+  countries: nationsDocument([
     { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
     { id: "france", tag: "FRA", name: "France", homeArea: "par" },
   ]),
-  areas: `- id: "lon"\n  name: "London"\n  type: "land"\n  controller: "uk"\n- id: "par"\n  name: "Paris"\n  type: "land"\n  controller: "france"\n`,
-  routes: `- id: "lon-par"\n  from: "lon"\n  to: "par"\n  type: "sea"\n  distance: 300\n`,
-  possessions: `- id: "gbr-lon"\n  nationId: "uk"\n  areaId: "lon"\n- id: "fra-par"\n  nationId: "france"\n  areaId: "par"\n`,
-  ports: `- id: "port-lon"\n  name: "Port of London"\n  areaId: "lon"\n  nationId: "uk"\n  level: 5\n`,
-  technologies: `- id: "basic_steam"\n  name: "Basic Steam Turbine"\n  category: "propulsion"\n  cost: 100\n  year: 1880\n`,
-  economies: `- nationId: "uk"\n  treasury: 800\n  income: 150\n  expenses: 75\n- nationId: "france"\n  treasury: 600\n  income: 120\n  expenses: 60\n`,
+  areas: `
+[
+  {
+    "id": "lon",
+    "name": "London",
+    "type": "land",
+    "controller": "uk"
+  },
+  {
+    "id": "par",
+    "name": "Paris",
+    "type": "land",
+    "controller": "france"
+  }
+]
+`,
+  routes: `
+[
+  {
+    "id": "lon-par",
+    "from": "lon",
+    "to": "par",
+    "type": "sea",
+    "distance": 300
+  }
+]
+`,
+  possessions: `
+[
+  {
+    "id": "gbr-lon",
+    "nationId": "uk",
+    "areaId": "lon"
+  },
+  {
+    "id": "fra-par",
+    "nationId": "france",
+    "areaId": "par"
+  }
+]
+`,
+  ports: `
+[
+  {
+    "id": "port-lon",
+    "name": "Port of London",
+    "areaId": "lon",
+    "nationId": "uk",
+    "level": 5
+  }
+]
+`,
+  technologies: `
+[
+  {
+    "id": "basic_steam",
+    "name": "Basic Steam Turbine",
+    "category": "propulsion",
+    "cost": 100,
+    "year": 1880
+  }
+]
+`,
+  economies: `
+[
+  {
+    "nationId": "uk",
+    "treasury": 800,
+    "income": 150,
+    "expenses": 75
+  },
+  {
+    "nationId": "france",
+    "treasury": 600,
+    "income": 120,
+    "expenses": 60
+  }
+]
+`,
   constructions: `[]\n`,
-  diplomacy: `- nationA: "uk"\n  nationB: "france"\n  relation: "neutral"\n  since: "1880-01"\n`,
+  diplomacy: `
+[
+  {
+    "nationA": "uk",
+    "nationB": "france",
+    "relation": "neutral",
+    "since": "1880-01"
+  }
+]
+`,
   research: `[]\n`,
 };
 
-function fleetsYaml(ships: string): string {
-  return `- id: "fleet-gbr-home"\n  nationId: "uk"\n  name: "Home Fleet"\n  locationAreaId: "lon"\n  ships:\n${ships}`;
-}
+const shipRecord = (
+  id: string,
+  opts: { underConstruction?: boolean; extra?: Record<string, unknown> } = {},
+): Record<string, unknown> => ({
+  id,
+  name: id,
+  classId: "battleship",
+  hitPoints: 100,
+  maxHitPoints: 100,
+  speed: 21,
+  firepower: 10,
+  armor: 12,
+  isUnderConstruction: opts.underConstruction ?? false,
+  constructionProgress: 0,
+  constructionTotalWork: 0,
+  ...opts.extra,
+});
 
-function shipYaml(id: string, opts: { underConstruction?: boolean; extra?: string } = {}): string {
-  const underConstruction = opts.underConstruction ?? false;
-  return `    - id: "${id}"\n      name: "${id}"\n      classId: "battleship"\n      hitPoints: 100\n      maxHitPoints: 100\n      speed: 21\n      firepower: 10\n      armor: 12\n      isUnderConstruction: ${underConstruction}\n      constructionProgress: 0\n      constructionTotalWork: 0\n${opts.extra ?? ""}`;
+function fleetsDocument(ships: readonly Record<string, unknown>[]): string {
+  return jsonDocument([
+    { id: "fleet-gbr-home", nationId: "uk", name: "Home Fleet", locationAreaId: "lon", ships },
+  ]);
 }
 
 function baseInput(dir: string): CompilerInput {
   return {
     manifestPath: resolve(dir, "pack.json"),
     contentDir: dir,
-    rulesetFiles: ["rulesets.yaml"],
-    countryFiles: ["countries.yaml"],
-    areaFiles: ["areas.yaml"],
-    routeFiles: ["routes.yaml"],
-    possessionFiles: ["possessions.yaml"],
-    portFiles: ["ports.yaml"],
-    technologyFiles: ["technologies.yaml"],
-    fleetFiles: ["fleets.yaml"],
-    economyFiles: ["economies.yaml"],
-    constructionFiles: ["constructions.yaml"],
-    diplomacyFiles: ["diplomacy.yaml"],
-    researchFiles: ["research.yaml"],
+    rulesetFiles: ["rulesets.json"],
+    countryFiles: ["countries.json"],
+    areaFiles: ["areas.json"],
+    routeFiles: ["routes.json"],
+    possessionFiles: ["possessions.json"],
+    portFiles: ["ports.json"],
+    technologyFiles: ["technologies.json"],
+    fleetFiles: ["fleets.json"],
+    economyFiles: ["economies.json"],
+    constructionFiles: ["constructions.json"],
+    diplomacyFiles: ["diplomacy.json"],
+    researchFiles: ["research.json"],
     designFiles: [],
   };
 }
@@ -92,18 +190,18 @@ function compileFleets(
   fixture = createFixtureDir(resolve(tmpdir(), `bw-readiness-${String(Date.now())}`));
   const dir = fixture.path;
   writeFixture(dir, "pack.json", FIXTURE.pack);
-  writeFixture(dir, "rulesets.yaml", FIXTURE.rulesets);
-  writeFixture(dir, "countries.yaml", FIXTURE.countries);
-  writeFixture(dir, "areas.yaml", FIXTURE.areas);
-  writeFixture(dir, "routes.yaml", FIXTURE.routes);
-  writeFixture(dir, "possessions.yaml", FIXTURE.possessions);
-  writeFixture(dir, "ports.yaml", FIXTURE.ports);
-  writeFixture(dir, "technologies.yaml", FIXTURE.technologies);
-  writeFixture(dir, "economies.yaml", FIXTURE.economies);
-  writeFixture(dir, "constructions.yaml", FIXTURE.constructions);
-  writeFixture(dir, "diplomacy.yaml", FIXTURE.diplomacy);
-  writeFixture(dir, "research.yaml", FIXTURE.research);
-  writeFixture(dir, "fleets.yaml", fleets);
+  writeFixture(dir, "rulesets.json", FIXTURE.rulesets);
+  writeFixture(dir, "countries.json", FIXTURE.countries);
+  writeFixture(dir, "areas.json", FIXTURE.areas);
+  writeFixture(dir, "routes.json", FIXTURE.routes);
+  writeFixture(dir, "possessions.json", FIXTURE.possessions);
+  writeFixture(dir, "ports.json", FIXTURE.ports);
+  writeFixture(dir, "technologies.json", FIXTURE.technologies);
+  writeFixture(dir, "economies.json", FIXTURE.economies);
+  writeFixture(dir, "constructions.json", FIXTURE.constructions);
+  writeFixture(dir, "diplomacy.json", FIXTURE.diplomacy);
+  writeFixture(dir, "research.json", FIXTURE.research);
+  writeFixture(dir, "fleets.json", fleets);
 
   const collector = new DiagnosticCollector();
   const signal = new AbortController().signal;
@@ -131,7 +229,7 @@ afterEach(() => {
 describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
   it("derives ACTIVE/ceiling for a commissioned ship and WORKING_UP for an under-construction ship", () => {
     const { collector, output } = compileFleets(
-      fleetsYaml(`${shipYaml("ship-a")}${shipYaml("ship-b", { underConstruction: true })}`),
+      fleetsDocument([shipRecord("ship-a"), shipRecord("ship-b", { underConstruction: true })]),
     );
 
     expect(collector.hasErrors).toBe(false);
@@ -148,11 +246,7 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
 
   it("honours a validated authored readiness/crew seed", () => {
     const { collector, output } = compileFleets(
-      fleetsYaml(
-        shipYaml("ship-a", {
-          extra: `      readiness: "RESERVE"\n      crewQuality: 42\n`,
-        }),
-      ),
+      fleetsDocument([shipRecord("ship-a", { extra: { readiness: "RESERVE", crewQuality: 42 } })]),
     );
 
     expect(collector.hasErrors).toBe(false);
@@ -163,7 +257,7 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
 
   it("rejects an unknown readiness state at the compile boundary", () => {
     const { collector, output } = compileFleets(
-      fleetsYaml(shipYaml("ship-a", { extra: `      readiness: "BOGUS"\n` })),
+      fleetsDocument([shipRecord("ship-a", { extra: { readiness: "BOGUS" } })]),
     );
 
     expect(output).toBeUndefined();
@@ -172,7 +266,7 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
 
   it("rejects a non-integer or out-of-range crew quality at the compile boundary", () => {
     const outOfRange = compileFleets(
-      fleetsYaml(shipYaml("ship-a", { extra: `      crewQuality: 150\n` })),
+      fleetsDocument([shipRecord("ship-a", { extra: { crewQuality: 150 } })]),
     );
     expect(outOfRange.output).toBeUndefined();
     expect(outOfRange.collector.errors.map((e) => e.code)).toContain(
@@ -180,7 +274,7 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
     );
 
     const nonInteger = compileFleets(
-      fleetsYaml(shipYaml("ship-a", { extra: `      crewQuality: 1.5\n` })),
+      fleetsDocument([shipRecord("ship-a", { extra: { crewQuality: 1.5 } })]),
     );
     expect(nonInteger.output).toBeUndefined();
     expect(nonInteger.collector.errors.map((e) => e.code)).toContain(
@@ -206,7 +300,7 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
 
   it("rejects an excess key on a ship record", () => {
     const viaContent = compileFleets(
-      fleetsYaml(shipYaml("ship-a", { extra: `      classQ: "x"\n` })),
+      fleetsDocument([shipRecord("ship-a", { extra: { classQ: "x" } })]),
     );
     expect(viaContent.output).toBeUndefined();
     expect(viaContent.collector.errors.map((e) => e.code)).toContain("SCHEMA");

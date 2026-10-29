@@ -1,0 +1,5 @@
+{
+  "comment": "YAML migration debt (ADR-0334). Every path here is foreign YAML that must migrate to TypeScript or canonical JSON. This list may only shrink: scripts/assert-no-foreign-yaml.mjs fails on a tracked path that is unlisted, on a listed path that no longer exists, and (with --base) on any entry added since the base ref. Regenerate deliberately with --write.",
+  "version": 1,
+  "entries": []
+}

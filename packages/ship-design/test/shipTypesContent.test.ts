@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import {} from "node:fs";
 import { join } from "node:path";
 
 import {
@@ -6,13 +6,11 @@ import {
   SHIP_TYPE_ERA_BANDS,
   SHIP_TYPE_HULL_TRAITS,
   SHIP_TYPE_ROLES,
-  ShipTypeRecordSchema,
-  decodeStrict,
-  parseYamlSafe,
   type EngineBehaviourClass,
   type ShipTypeRecord,
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
+import { readAuthoredFile } from "@bluewave/test-support";
 
 import { CLASSIFIED_SHIP_TYPES } from "../src/classificationRules.js";
 import { ERA_BANDS, SHIP_ROLES, SHIP_TYPE_IDS, type ShipTypeDefinition } from "../src/shipTypes.js";
@@ -27,15 +25,11 @@ const path = join(
   "production",
   "1880",
   "ship-building",
-  "ship-types.yaml",
+  "ship-types.ts",
 );
 
 function readShipTypeRecords(): ShipTypeRecord[] {
-  const collector = { addError: () => undefined, hasErrors: false } as never;
-  const parsed = parseYamlSafe(readFileSync(path, "utf8"), path, collector);
-  if (!parsed.success) throw new Error(`bad YAML: ${path}`);
-  const records = (parsed.data as { shipTypes: unknown[] }).shipTypes;
-  return records.map((record) => decodeStrict(ShipTypeRecordSchema, record));
+  return (readAuthoredFile(path) as { shipTypes: ShipTypeRecord[] }).shipTypes;
 }
 
 const records = readShipTypeRecords();

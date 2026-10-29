@@ -7,11 +7,11 @@
  *
  *   node scripts/new-nation.mjs <nationId>
  *
- * The draft is a complete per-nation catalogue file (ADR-0109: `{ navalProfiles: [ … ] }`) matching
- * `content/production/<scenario>/ship-building/naval-profiles/<nationId>.yaml`, so it can be dropped straight in once
+ * The draft is a complete per-nation TypeScript content module (ADR-0109 shape, ADR-0334 format) matching
+ * `content/production/<scenario>/ship-building/naval-profiles/<nationId>.ts`, so it can be dropped straight in once
  * every PLACEHOLDER is replaced. Then: research the nation into `docs/research/<nationId>-naval-profile.md`, replace
  * every PLACEHOLDER with a sourced or explicitly classified value, author six classified opening starters under
- * `content/production/<scenario>/ship-building/reference-designs/<nationId>/starters.yaml`, and run the completeness
+ * `content/production/<scenario>/ship-building/reference-designs/<nationId>/starters.ts`, and run the completeness
  * validator.
  */
 import { mkdirSync, writeFileSync, existsSync } from "node:fs";
@@ -25,81 +25,126 @@ const root = join(__dirname, "..");
  * Build the draft `navalProfiles` catalogue YAML for a nation. Every value is a PLACEHOLDER, every required
  * provenance block is present, and the file shape matches the per-nation release layout (ADR-0109).
  */
-export function buildProfileYaml(nationId) {
+export function buildProfileRecord(nationId) {
   const due = {
     sourceStatus: "PLACEHOLDER",
     confidence: "LOW",
     kind: "balance_adjustment",
     sources: [],
   };
-  return `# DRAFT naval-profiles catalogue for '${nationId}' (one nation per file, ADR-0109).
-# Every value below is a PLACEHOLDER. Do not move this file into content/production until every PLACEHOLDER is
-# replaced with a sourced (VERIFIED/DERIVED/ESTIMATE) or explicitly classified (BALANCE_TARGET) value that carries a
-# provenance block, and the completeness validator passes. See docs/agents/adding-a-nation.md.
-navalProfiles:
-  - nationId: ${nationId}
-    activeFrom: "1880-01"
-    activeUntil: null
-    strategicSituation: "PLACEHOLDER: one paragraph on the nation's 1880 strategic naval position."
-    hardCapabilities:
-      maxGunCaliberUm: 100000 # PLACEHOLDER
-      maxArmourThicknessUm: 100000 # PLACEHOLDER
-      domesticTorpedoDiameterUm: 100000 # PLACEHOLDER
-      hullForms: [torpedo_boat_form, protected_cruiser_form, coast_defence_form, pre_dreadnought_form, merchant_liner_form]
-      domesticPlants: [compound_cylindrical]
-      restrictedShipTypes: []
-      grants: []
-    softPreferences:
-      speedOverArmourBp: 5000 # PLACEHOLDER
-      secondaryBatteryWeightBp: 10000 # PLACEHOLDER
-      enduranceWeightBp: 10000 # PLACEHOLDER
-      riskToleranceBp: 5000 # PLACEHOLDER
-      colonialServiceWeightBp: 10000 # PLACEHOLDER
-      torpedoOnCruisersBp: 10000 # PLACEHOLDER
-      accommodationStandard: STANDARD
-    industrialProfile:
-      buildTimeMultiplierBp: 10000 # PLACEHOLDER
-      costMultiplierBp: 10000 # PLACEHOLDER
-      machineryReliabilityBp: 9000 # PLACEHOLDER
-      constructionQualityVarianceBp: 2500 # PLACEHOLDER
-      maxPracticalDisplacementKg:
-        - { fromMonth: "1880-01", value: 8000000 } # PLACEHOLDER
-      heavyGunProduction: UNAVAILABLE # PLACEHOLDER: DOMESTIC | LICENSE_BUILT | IMPORTED | CAPTURED_OR_STUDIED | UNAVAILABLE
-      armourPlateProduction: UNAVAILABLE # PLACEHOLDER
-      provenance: { sourceStatus: PLACEHOLDER, confidence: LOW, kind: balance_adjustment, sources: [] }
-    doctrineProfile:
-      engagementRangeM: 2000 # PLACEHOLDER
-      hePreferenceBp: 5000 # PLACEHOLDER
-      postures: [coastal_defence] # PLACEHOLDER
-      provenance: { sourceStatus: PLACEHOLDER, confidence: LOW, kind: historical_fact, sources: [] }
-    researchPreferences:
-      - { field: GUNNERY, priority: 2 } # PLACEHOLDER: use the canonical research-field ids
-    componentAccess: {}
-    # Entries in the three catalogues below are optional, but EVERY entry MUST carry its own provenance block:
-    # sourceStatus/confidence/kind/sources. Never mark an entry VERIFIED without at least one source.
-    gunModels: []
-    ammunitionPatterns: []
-    componentVariants: []
-    designWeights:
-      B: { firepowerBp: 10000, protectionBp: 10000, speedBp: 10000, enduranceBp: 10000, torpedoBp: 10000, reliabilityBp: 10000, colonialBp: 10000, costBp: 10000 } # PLACEHOLDER
-      CA: { firepowerBp: 10000, protectionBp: 10000, speedBp: 10000, enduranceBp: 10000, torpedoBp: 10000, reliabilityBp: 10000, colonialBp: 10000, costBp: 10000 }
-      CL: { firepowerBp: 10000, protectionBp: 10000, speedBp: 10000, enduranceBp: 10000, torpedoBp: 10000, reliabilityBp: 10000, colonialBp: 10000, costBp: 10000 }
-      DD: { firepowerBp: 10000, protectionBp: 10000, speedBp: 10000, enduranceBp: 10000, torpedoBp: 10000, reliabilityBp: 10000, colonialBp: 10000, costBp: 10000 }
-      KE: { firepowerBp: 10000, protectionBp: 10000, speedBp: 10000, enduranceBp: 10000, torpedoBp: 10000, reliabilityBp: 10000, colonialBp: 10000, costBp: 10000 }
-      AMC: { firepowerBp: 10000, protectionBp: 10000, speedBp: 10000, enduranceBp: 10000, torpedoBp: 10000, reliabilityBp: 10000, colonialBp: 10000, costBp: 10000 }
-    procurementPolicy:
-      battleLineShareBp: 2500 # PLACEHOLDER
-      cruiserShareBp: 2500
-      torpedoCraftShareBp: 2500
-      colonialShareBp: 2500
-      foreignProcurementAppetiteBp: 2000
-      unprovenTechAppetiteBp: 3000
-      buildOrder: [B, CA, CL, DD, KE, AMC]
-    namingPolicy:
-      stems: { B: [PLACEHOLDER], CA: [PLACEHOLDER], CL: [PLACEHOLDER], DD: [PLACEHOLDER], KE: [PLACEHOLDER], AMC: [PLACEHOLDER] }
-      convention: { B: "PLACEHOLDER", CA: "PLACEHOLDER", CL: "PLACEHOLDER", DD: "PLACEHOLDER", KE: "PLACEHOLDER", AMC: "PLACEHOLDER" }
-    sourceReferences: [{ sourceId: "PLACEHOLDER", title: "PLACEHOLDER" }]
-    provenance: ${JSON.stringify(due)}
+  return {
+    nationId,
+    activeFrom: "1880-01",
+    activeUntil: null,
+    strategicSituation: "PLACEHOLDER: one paragraph on the nation's 1880 strategic naval position.",
+    hardCapabilities: {
+      maxGunCaliberUm: 100000,
+      maxArmourThicknessUm: 100000,
+      domesticTorpedoDiameterUm: 100000,
+      hullForms: [
+        "torpedo_boat_form",
+        "protected_cruiser_form",
+        "coast_defence_form",
+        "pre_dreadnought_form",
+        "merchant_liner_form",
+      ],
+      domesticPlants: ["compound_cylindrical"],
+      restrictedShipTypes: [],
+      grants: [],
+    },
+    softPreferences: {
+      speedOverArmourBp: 5000,
+      secondaryBatteryWeightBp: 10000,
+      enduranceWeightBp: 10000,
+      riskToleranceBp: 5000,
+      colonialServiceWeightBp: 10000,
+      torpedoOnCruisersBp: 10000,
+      accommodationStandard: "STANDARD",
+    },
+    industrialProfile: {
+      buildTimeMultiplierBp: 10000,
+      costMultiplierBp: 10000,
+      machineryReliabilityBp: 9000,
+      constructionQualityVarianceBp: 2500,
+      maxPracticalDisplacementKg: [{ fromMonth: "1880-01", value: 8000000 }],
+      heavyGunProduction: "UNAVAILABLE",
+      armourPlateProduction: "UNAVAILABLE",
+      provenance: { ...due },
+    },
+    dock: {
+      maximumNewConstructionMassKg: 8000000,
+      maximumMajorRepairMassKg: 8000000,
+      maximumRebuildMassKg: 8000000,
+      maximumConversionMassKg: 8000000,
+      provenance: { ...due, kind: "game_conversion" },
+    },
+    doctrineProfile: {
+      engagementRangeM: 2000,
+      hePreferenceBp: 5000,
+      postures: ["coastal_defence"],
+      provenance: { ...due, kind: "historical_fact" },
+    },
+    researchPreferences: [{ field: "GUNNERY", priority: 2 }],
+    componentAccess: {},
+    gunModels: [],
+    ammunitionPatterns: [],
+    componentVariants: [],
+    designWeights: Object.fromEntries(
+      ["B", "CA", "CL", "DD", "KE", "AMC"].map((shipType) => [
+        shipType,
+        {
+          firepowerBp: 10000,
+          protectionBp: 10000,
+          speedBp: 10000,
+          enduranceBp: 10000,
+          torpedoBp: 10000,
+          reliabilityBp: 10000,
+          colonialBp: 10000,
+          costBp: 10000,
+        },
+      ]),
+    ),
+    procurementPolicy: {
+      battleLineShareBp: 2500,
+      cruiserShareBp: 2500,
+      torpedoCraftShareBp: 2500,
+      colonialShareBp: 2500,
+      foreignProcurementAppetiteBp: 2000,
+      unprovenTechAppetiteBp: 3000,
+      buildOrder: ["B", "CA", "CL", "DD", "KE", "AMC"],
+    },
+    namingPolicy: {
+      stems: Object.fromEntries(
+        ["B", "CA", "CL", "DD", "KE", "AMC"].map((shipType) => [shipType, ["PLACEHOLDER"]]),
+      ),
+      convention: Object.fromEntries(
+        ["B", "CA", "CL", "DD", "KE", "AMC"].map((shipType) => [shipType, "PLACEHOLDER"]),
+      ),
+    },
+    sourceReferences: [{ sourceId: "PLACEHOLDER", title: "PLACEHOLDER" }],
+    provenance: due,
+  };
+}
+
+/**
+ * Build the draft naval-profiles content module for a nation. Every value is a PLACEHOLDER, every
+ * required provenance block is present, and the module decodes with `NationNavalProfileSchema`
+ * (ADR-0109, ADR-0334): it can be dropped into the pack once the placeholders are replaced.
+ */
+export function buildProfileModule(nationId) {
+  const items = JSON.stringify([buildProfileRecord(nationId)], null, 2)
+    .split("\n")
+    .slice(1, -1)
+    .join("\n");
+  return `// DRAFT naval-profiles catalogue for '${nationId}' (one nation per file, ADR-0109).
+// Every value below is a PLACEHOLDER. Do not move this file into content/production until every PLACEHOLDER is
+// replaced with a sourced (VERIFIED/DERIVED/ESTIMATE) or explicitly classified (BALANCE_TARGET) value that carries a
+// provenance block, and the completeness validator passes. See docs/agents/adding-a-nation.md.
+import { NationNavalProfileSchema, collection } from "@bluewave/content-authoring";
+
+export default collection("navalProfiles", NationNavalProfileSchema, [
+${items}
+]);
 `;
 }
 
@@ -133,12 +178,12 @@ export function scaffoldNation(nationId, { rootDir = root } = {}) {
   const nationsDir = join(rootDir, "docs", "nations");
   mkdirSync(nationsDir, { recursive: true });
   mkdirSync(join(rootDir, "docs", "research"), { recursive: true });
-  const profilePath = join(nationsDir, `${nationId}-profile-draft.yaml`);
+  const profilePath = join(nationsDir, `${nationId}-profile-draft.ts`);
   const notePath = join(rootDir, "docs", "research", `${nationId}-naval-profile.md`);
   if (existsSync(profilePath)) {
     throw new Error(`refusing to overwrite ${profilePath}`);
   }
-  writeFileSync(profilePath, buildProfileYaml(nationId));
+  writeFileSync(profilePath, buildProfileModule(nationId));
   if (!existsSync(notePath)) writeFileSync(notePath, buildResearchNote(nationId));
   return { profilePath, notePath };
 }
@@ -166,10 +211,10 @@ function main() {
     `  1. Research ${nationId} into the note; replace every PLACEHOLDER with a sourced/classified value.`,
   );
   console.log(
-    "  2. Copy the draft catalogue to content/production/1880/ship-building/naval-profiles/<nationId>.yaml.",
+    "  2. Copy the draft catalogue to content/production/1880/ship-building/naval-profiles/<nationId>.ts.",
   );
   console.log(
-    "  3. Author six classified opening starters in content/production/1880/ship-building/reference-designs/<nationId>/starters.yaml.",
+    "  3. Author six classified opening starters in content/production/1880/ship-building/reference-designs/<nationId>/starters.ts.",
   );
   console.log(
     "  4. Run the completeness validator: pnpm --filter @bluewave/ship-design exec vp test run nationCompleteness.",

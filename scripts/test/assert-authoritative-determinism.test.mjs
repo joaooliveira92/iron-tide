@@ -10,6 +10,8 @@ import { fileURLToPath } from "node:url";
 import {
   DETERMINISM_ROOTS,
   findAmbientDeterminism,
+  findContentModuleHazards,
+  isContentModule,
   scanAmbientDeterminism,
 } from "../assert-authoritative-determinism.mjs";
 
@@ -118,4 +120,20 @@ void test("combat holds no locale-sensitive or provenance-free finding in the re
     ),
     [],
   );
+});
+
+void test("content modules admit only the authoring package", () => {
+  const content = (text) => findContentModuleHazards("content/production/1880/x.ts", text).length;
+  assert.equal(content('import { number } from "@bluewave/content-authoring";'), 0);
+  assert.equal(content('import { readFileSync } from "node:fs";'), 1);
+  assert.equal(content('import shared from "../shared.ts";'), 1);
+  assert.equal(content('const m = await import("./x.ts");'), 1);
+  assert.equal(content('const f = new Function("return 1");'), 1);
+  assert.equal(content('const x = eval("1");'), 1);
+});
+
+void test("only content modules get the import-allowlist rules", () => {
+  assert.equal(isContentModule("content/production/1880/a.ts"), true);
+  assert.equal(isContentModule("packages/content-schema/src/yaml-parser.ts"), false);
+  assert.equal(isContentModule("content/production/1880/ui/en-US.yaml"), false);
 });

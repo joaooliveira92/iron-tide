@@ -36,7 +36,7 @@ const mountPart = (id: string, mountType: string, supersedes?: readonly string[]
     spec: { mountType, gunsPerMount: 1 },
     quantities: [],
     revisions: [],
-    origin: { sourceFile: "fixture.yaml" },
+    origin: { sourceFile: "fixture.json" },
     provenance: PROVENANCE,
   });
 
@@ -96,7 +96,7 @@ const sensorPart = (id: string, massKg: number, supersedes?: readonly string[]):
     spec: {},
     quantities: [{ id: "sensor_mass", kind: "massKg", value: massKg, basis: "PER_PART_UNIT" }],
     revisions: [],
-    origin: { sourceFile: "fixture.yaml" },
+    origin: { sourceFile: "fixture.json" },
     provenance: PROVENANCE,
   });
 
@@ -113,7 +113,7 @@ const gunPart = (id: string, family: string, calibreUm: number): FlattenedPart =
     spec: { calibreUm, gunFamily: family },
     quantities: [],
     revisions: [],
-    origin: { sourceFile: "ship-building/components.yaml" },
+    origin: { sourceFile: "ship-building/components.json" },
     provenance: PROVENANCE,
   });
 const gun6pdr = gunPart("standard_qf_6pdr", "qf_6pdr", 57_000);

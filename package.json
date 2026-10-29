@@ -1,6 +1,9 @@
 {
   "name": "bluewave",
   "private": true,
+  "dependencies": {
+    "@bluewave/content-authoring": "workspace:*"
+  },
   "engines": {
     "node": ">=24.0.0",
     "pnpm": ">=11.0.0"
@@ -43,9 +46,9 @@
     "check:reachability-ledger": "node scripts/verify-reachability-ledger.mjs",
     "check:explanation-coverage": "node scripts/verify-explanation-coverage.mjs",
     "check:commit-msgs": "node scripts/check-commit-msgs.cjs",
-    "content:check": "pnpm --filter @bluewave/compiler-cli build && node apps/compiler-cli/dist/main.js content:check --manifest content/production/1880/pack.json --content-dir content/production/1880",
-    "content:build": "pnpm --filter @bluewave/compiler-cli build && node apps/compiler-cli/dist/main.js content:build --manifest content/production/1880/pack.json --content-dir content/production/1880 --output-dir content/generated/1880",
-    "content:verify": "pnpm --filter @bluewave/compiler-cli build && node apps/compiler-cli/dist/main.js content:verify --manifest content/production/1880/pack.json --content-dir content/production/1880",
+    "content:check": "pnpm --filter @bluewave/content-authoring build && pnpm --filter @bluewave/compiler-cli build && node apps/compiler-cli/dist/main.js content:check --manifest content/production/1880/pack.json --content-dir content/production/1880",
+    "content:build": "pnpm --filter @bluewave/content-authoring build && pnpm --filter @bluewave/compiler-cli build && node apps/compiler-cli/dist/main.js content:build --manifest content/production/1880/pack.json --content-dir content/production/1880 --output-dir content/generated/1880",
+    "content:verify": "pnpm --filter @bluewave/content-authoring build && pnpm --filter @bluewave/compiler-cli build && node apps/compiler-cli/dist/main.js content:verify --manifest content/production/1880/pack.json --content-dir content/production/1880",
     "snap": "pnpm --filter @bluewave/desktop build && pnpm --filter @bluewave/desktop run snap",
     "snap:debug": "pnpm --filter @bluewave/desktop exec cross-env VITE_BLUEWAVE_DEBUG=true electron-vite build && pnpm --filter @bluewave/desktop run snap",
     "dev": "pnpm preflight && vp run -r --parallel dev",
@@ -55,7 +58,7 @@
     "lint:effect": "effect-tsgo patch --no-typescript --oxlint && oxlint --config oxlint.effect.json packages apps",
     "format": "vp fmt --check .",
     "format:fix": "vp fmt --write .",
-    "typecheck": "vp run -r build && vp run -r typecheck",
+    "typecheck": "vp run -r build && vp run -r typecheck && tsc -p content/tsconfig.json",
     "test": "vp run -r build && vp run -r --concurrency-limit 4 test",
     "test:e2e": "pnpm --filter @bluewave/desktop test:e2e",
     "test:scripts": "node --test \"scripts/test/**/*.test.mjs\"",
@@ -66,7 +69,8 @@
     "clean:all": "pnpm clean && rimraf node_modules",
     "check": "node scripts/heavy.mjs pnpm check:steps",
     "check:steps": "pnpm preflight && pnpm format && pnpm lint && pnpm lint:effect && pnpm test:scripts && pnpm check:licenses && pnpm typecheck && pnpm build && pnpm content:verify && pnpm test:run && pnpm test:heavy && pnpm check:golden && pnpm check:determinism && pnpm check:equivalence && pnpm check:replay-corpus && pnpm check:golden-repin && pnpm check:replay-approvals && pnpm check:probe-retirement && pnpm check:balance-reports && pnpm check:reachability-ledger && pnpm check:explanation-coverage && pnpm test:e2e",
-    "heavy": "node scripts/heavy.mjs"
+    "heavy": "node scripts/heavy.mjs",
+    "check:yaml-boundary": "node scripts/assert-no-foreign-yaml.mjs"
   },
   "devDependencies": {
     "@effect/tsgo": "0.63.0",

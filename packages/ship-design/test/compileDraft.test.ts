@@ -1,8 +1,7 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { FlattenedPartSchema, decodeStrict, type FlattenedPart } from "@bluewave/content-schema";
 import { canonicalSerialize } from "@bluewave/deterministic";
-import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
 import { compileDesign, compileDraftFromParts, toLegacyCompileView } from "../src/index.js";
 import { draftToLoadout, type DraftCompileContent } from "../src/compileDraft.js";
@@ -16,6 +15,7 @@ import {
 } from "./helpers/earlyContext.js";
 import { compatibility, designs, present } from "./helpers/gunReadPath.js";
 import { torpedoDiameterUm } from "./helpers/torpedoModels.js";
+import { readAuthoredFile } from "@bluewave/test-support";
 
 const partsDir = join(
   import.meta.dirname,
@@ -29,9 +29,9 @@ const partsDir = join(
   "parts",
 );
 const productionParts: readonly FlattenedPart[] = readdirSync(partsDir)
-  .filter((name) => name.endsWith(".yaml"))
+  .filter((name) => name.endsWith(".ts"))
   .flatMap((name) => {
-    const file = parse(readFileSync(join(partsDir, name), "utf8")) as { parts: unknown[] };
+    const file = readAuthoredFile(join(partsDir, name)) as { parts: unknown[] };
     return file.parts.map((record) => decodeStrict(FlattenedPartSchema, record));
   });
 
