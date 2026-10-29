@@ -2,14 +2,21 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vite-plus/test";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
-import { DEFAULT_APP_PREFERENCES } from "../../shared/preferences-contract.js";
+import {
+  DEFAULT_APP_PREFERENCES,
+  PREFERENCES_SCHEMA_VERSION,
+} from "../../shared/preferences-contract.js";
 import { BridgeProvider } from "./bridge-context.js";
 import {
   type ActiveCampaignCurrencyContext,
   type NationalCurrencyConfiguration,
   type NationalCurrencySource,
 } from "./presentation-format/index.js";
-import { PreferencesProvider, useCurrencyDisplayMode } from "./preferences-context.js";
+import {
+  PreferencesProvider,
+  useCurrencyDisplayMode,
+  usePreferences,
+} from "./preferences-context.js";
 import { createPreferencesBridgeStub } from "./preferences-test-bridge.js";
 
 function makeWrapper(bridge: BluewaveDesktopBridge) {
@@ -177,5 +184,44 @@ describe("useCurrencyDisplayMode", () => {
     expect(result.current.fallbackReason).toBe("noActiveNation");
     expect(stub.writes).toHaveLength(0);
     expect(stub.current().app.currencyDisplayMode).toBe("nationalHistorical");
+  });
+});
+
+describe("PreferencesProvider startup snapshot", () => {
+  it("hydrates the first render from the snapshot without a second read", async () => {
+    const stub = createPreferencesBridgeStub();
+    const snapshot = {
+      version: PREFERENCES_SCHEMA_VERSION,
+      app: {
+        ...DEFAULT_APP_PREFERENCES,
+        theme: "dark" as const,
+        interfaceDensity: "compact" as const,
+      },
+    };
+    const wrapper = ({ children }: { readonly children: ReactNode }) => (
+      <BridgeProvider bridge={stub.bridge}>
+        <PreferencesProvider initialSnapshot={snapshot}>{children}</PreferencesProvider>
+      </BridgeProvider>
+    );
+
+    const { result } = renderHook(() => usePreferences(), { wrapper });
+    expect(result.current.preferences.theme).toBe("dark");
+    expect(result.current.preferences.interfaceDensity).toBe("compact");
+    expect(result.current.status).toBe("ready");
+    await act(async () => {});
+    expect(stub.readCalls()).toBe(0);
+  });
+
+  it("falls back to the read-after-mount path when the snapshot is missing", async () => {
+    const stub = createPreferencesBridgeStub({ ...DEFAULT_APP_PREFERENCES, theme: "light" });
+    const wrapper = ({ children }: { readonly children: ReactNode }) => (
+      <BridgeProvider bridge={stub.bridge}>
+        <PreferencesProvider>{children}</PreferencesProvider>
+      </BridgeProvider>
+    );
+
+    const { result } = renderHook(() => usePreferences(), { wrapper });
+    await waitFor(() => expect(result.current.preferences.theme).toBe("light"));
+    expect(stub.readCalls()).toBe(1);
   });
 });

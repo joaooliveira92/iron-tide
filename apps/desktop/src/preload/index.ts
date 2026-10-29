@@ -4,7 +4,7 @@ import type {
   CampaignCommandMap,
   CampaignCommandName,
 } from "../shared/campaign-contract.js";
-import type { BridgeResult, WindowState } from "../shared/bridge-contract.js";
+import type { AppStartupSnapshot, BridgeResult, WindowState } from "../shared/bridge-contract.js";
 import {
   ipcEvents,
   ipcMessages,
@@ -33,6 +33,7 @@ export interface BluewaveDesktopBridge {
     ): Promise<BridgeResult<CampaignPreferencesSnapshot>>;
   };
   readonly platform: NodeJS.Platform;
+  readStartupSnapshot?(): Promise<BridgeResult<AppStartupSnapshot>>;
   getWindowState(): Promise<WindowState>;
   windowMinimize(): void;
   windowMaximizeToggle(): void;
@@ -71,6 +72,9 @@ function executeCampaign<Name extends CampaignCommandName>(
   >;
 }
 
+const startupSnapshot = invoke(ipcRequests.appReadStartup);
+void startupSnapshot.catch(() => undefined);
+
 contextBridge.exposeInMainWorld("bluewave", {
   campaign: {
     execute: executeCampaign,
@@ -83,6 +87,7 @@ contextBridge.exposeInMainWorld("bluewave", {
       invoke(ipcRequests.preferencesWriteCampaign, sessionId, request),
   },
   platform: process.platform,
+  readStartupSnapshot: () => startupSnapshot,
   getWindowState: () => invoke(ipcRequests.windowGetState),
   windowMinimize: () => send(ipcMessages.windowMinimize),
   windowMaximizeToggle: () => send(ipcMessages.windowMaximizeToggle),

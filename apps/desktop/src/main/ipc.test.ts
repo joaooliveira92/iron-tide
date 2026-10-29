@@ -56,6 +56,7 @@ interface MessageRow {
 }
 
 const REQUEST_ROWS: Record<IpcRequestName, RequestRow> = {
+  appReadStartup: { untrustedArgs: [] },
   campaignExecute: {
     untrustedArgs: ["inspectCampaign", { sessionId: "session-1" }],
     malformed: [
@@ -203,6 +204,10 @@ function harness(): Harness {
     read: () => {
       preferenceCalls.push("read");
       return realPreferences.read();
+    },
+    readWithRecovery: () => {
+      preferenceCalls.push("readWithRecovery");
+      return realPreferences.readWithRecovery();
     },
     write: (payload) => {
       preferenceCalls.push("write");

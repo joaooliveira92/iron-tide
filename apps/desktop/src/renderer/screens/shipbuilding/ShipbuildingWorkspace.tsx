@@ -38,6 +38,7 @@ import {
   mountNameMap,
   planModel,
   plural,
+  DraftSaveWarning,
   useDraftAutosave,
   useFindingsView,
   useHullPlanEditing,
@@ -476,6 +477,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
 
   return (
     <ShipSelectionProvider store={selection}>
+      <DraftSaveWarning visible={autosave.saveFailed} onDismiss={autosave.dismissSaveFailed} />
       <div
         data-testid="shipbuilding-workspace"
         className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border bg-background"

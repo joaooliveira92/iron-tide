@@ -1,5 +1,5 @@
 import type { IpcMainEvent, IpcMainInvokeEvent } from "electron";
-import type { BridgeResult } from "../shared/bridge-contract.js";
+import type { AppStartupSnapshot, BridgeResult, WindowState } from "../shared/bridge-contract.js";
 import {
   IPC_MESSAGE_NAMES,
   IPC_REQUEST_NAMES,
@@ -57,6 +57,16 @@ export interface IpcHandlers {
   readonly messages: IpcMessageHandlers;
 }
 
+function windowStateOf(host: IpcHost, event: IpcMainInvokeEvent | IpcMainEvent): WindowState {
+  const window = host.windowOf(event);
+  return {
+    platform: host.platform,
+    isMaximized: window?.isMaximized() ?? false,
+    maximizable: window?.isMaximizable() ?? true,
+    minimizable: window?.isMinimizable() ?? true,
+  };
+}
+
 export function createIpcHandlers(dependencies: IpcDependencies): IpcHandlers {
   const { host } = dependencies;
   return {
@@ -69,15 +79,22 @@ export function createIpcHandlers(dependencies: IpcDependencies): IpcHandlers {
         dependencies.preferences.readCampaign(sessionId),
       preferencesWriteCampaign: (_event, sessionId, request) =>
         dependencies.preferences.writeCampaign(sessionId, request),
-      windowGetState: (event) => {
-        const window = host.windowOf(event);
+      appReadStartup: async (event): Promise<BridgeResult<AppStartupSnapshot>> => {
+        const preferences = await dependencies.preferences.readWithRecovery();
+        if (preferences.outcome !== "success") return preferences;
         return {
-          platform: host.platform,
-          isMaximized: window?.isMaximized() ?? false,
-          maximizable: window?.isMaximizable() ?? true,
-          minimizable: window?.isMinimizable() ?? true,
+          outcome: "success",
+          value: {
+            preferences: preferences.value.snapshot,
+            windowState: windowStateOf(host, event),
+            ...(preferences.value.recovery === null
+              ? {}
+              : { preferencesRecovery: preferences.value.recovery }),
+          },
+          diagnostics: [],
         };
       },
+      windowGetState: (event) => windowStateOf(host, event),
     },
     messages: {
       windowMinimize: (event) => {

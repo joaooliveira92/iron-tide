@@ -95,15 +95,21 @@ function ActiveCampaignView({ screen }: { readonly screen: Screen }) {
 
 function CampaignShellApplication({
   bridge,
+  initialWindowState,
 }: {
   readonly bridge: BluewaveDesktopBridge | undefined;
+  readonly initialWindowState?: WindowState | undefined;
 }) {
   const { resolvedTheme } = useTheme();
   const { background } = useBackground();
   const shell = useCampaignShellContext();
-  const [windowState, setWindowState] = useState<WindowState | null>(null);
+  const [windowState, setWindowState] = useState<WindowState | null>(initialWindowState ?? null);
 
   useEffect(() => {
+    if (initialWindowState !== undefined) {
+      setWindowState(initialWindowState);
+      return;
+    }
     let active = true;
     async function loadWindowState(): Promise<void> {
       if (bridge === undefined) return;
@@ -116,7 +122,7 @@ function CampaignShellApplication({
     return () => {
       active = false;
     };
-  }, [bridge]);
+  }, [bridge, initialWindowState]);
 
   const platform = bridge?.platform ?? "darwin";
   const headerCampaign: HeaderCampaign | null = useMemo(
@@ -313,15 +319,17 @@ function CampaignShellApplication({
 
 export function App({
   bridge = window.bluewave,
+  initialWindowState,
 }: {
   readonly bridge?: BluewaveDesktopBridge | undefined;
+  readonly initialWindowState?: WindowState | undefined;
 } = {}) {
   return (
     <BridgeProvider bridge={bridge}>
       <PresentationContentGate>
         <UiCatalogueGate>
           <CampaignShellProvider bridge={bridge}>
-            <CampaignShellApplication bridge={bridge} />
+            <CampaignShellApplication bridge={bridge} initialWindowState={initialWindowState} />
           </CampaignShellProvider>
         </UiCatalogueGate>
       </PresentationContentGate>

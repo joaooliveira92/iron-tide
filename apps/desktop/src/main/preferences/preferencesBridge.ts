@@ -5,6 +5,7 @@ import type {
   AppPreferences,
   CampaignPreferences,
   CampaignPreferencesSnapshot,
+  PreferencesRecoveryInfo,
   PreferencesSnapshot,
 } from "../../shared/preferences-contract.js";
 import type { CommandEnv } from "../runtime/desktopMainLayer.js";
@@ -37,6 +38,21 @@ export const readPreferencesProgram = (): Effect.Effect<
   Effect.gen(function* () {
     const store = yield* PreferencesStore;
     return yield* store.read();
+  });
+
+export interface PreferencesReadResult {
+  readonly snapshot: PreferencesSnapshot;
+  readonly recovery: PreferencesRecoveryInfo | null;
+}
+
+export const readPreferencesWithRecoveryProgram = (): Effect.Effect<
+  PreferencesReadResult,
+  PreferencesError,
+  CommandEnv
+> =>
+  Effect.gen(function* () {
+    const store = yield* PreferencesStore;
+    return yield* store.readWithRecovery();
   });
 
 export const writePreferencesProgram = (
@@ -94,6 +110,7 @@ function projectPreferencesExit<A>(exit: Exit.Exit<A, PreferencesError>): Bridge
 
 export interface PreferencesBridge {
   read(): Promise<BridgeResult<PreferencesSnapshot>>;
+  readWithRecovery(): Promise<BridgeResult<PreferencesReadResult>>;
   write(payload: unknown): Promise<BridgeResult<PreferencesSnapshot>>;
   readCampaign(sessionId: unknown): Promise<BridgeResult<CampaignPreferencesSnapshot>>;
   writeCampaign(
@@ -119,6 +136,10 @@ export function createPreferencesBridge(
   return {
     async read() {
       const exit = await getRuntime().runPromiseExit(readPreferencesProgram());
+      return projectPreferencesExit(exit);
+    },
+    async readWithRecovery() {
+      const exit = await getRuntime().runPromiseExit(readPreferencesWithRecoveryProgram());
       return projectPreferencesExit(exit);
     },
     async write(payload: unknown) {
