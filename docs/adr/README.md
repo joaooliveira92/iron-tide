@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0329).
+highest existing number + 1 (the next number is ADR-0330).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -212,6 +212,7 @@ How the presentation-only strategic map's baked geography is produced.
 | 0325 | [ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md](ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md) | Production globe adapter and dynamic overlay contract | accepted | — |
 | 0326 | [ADR-0326-globe-adapter-interaction-parity.md](ADR-0326-globe-adapter-interaction-parity.md) | Globe adapter interaction parity and projection mapping | accepted | — |
 | 0327 | [ADR-0327-globe-overview-production-enablement.md](ADR-0327-globe-overview-production-enablement.md) | Globe overview production enablement | accepted | — |
+| 0329 | [ADR-0329-land-climate-zones-baked-from-koppen-geiger.md](ADR-0329-land-climate-zones-baked-from-koppen-geiger.md) | Land climate zones are baked from Köppen-Geiger V3 | accepted | — |
 
 ## Engine architecture
 

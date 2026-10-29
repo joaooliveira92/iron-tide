@@ -19,6 +19,7 @@ import {
   type Resolution,
 } from "./bake.ts";
 import { decodeCatalogue, type ProtectedCatalogue } from "./catalogue.ts";
+import { loadClimate, type ClimateData } from "./climate-data.ts";
 import { canonicalJson, parsePipelineConfig, type PipelineConfig } from "./config.ts";
 import { MapDataError, MapDataIntegrityError } from "./errors.ts";
 import {
@@ -45,6 +46,7 @@ export interface Inputs {
   readonly pinsRaw: unknown;
   readonly areaSpec: AreaOutlineSpec;
   readonly areaSources: readonly AreaSource[];
+  readonly climate: ClimateData;
 }
 
 export function areaTextHash(text: string): string {
@@ -67,7 +69,16 @@ export async function loadInputs(mapDataDir: string): Promise<Inputs> {
     label: [area.label[0], area.label[1]],
   }));
   validateAreaSource(areaSources, areaSpec, areaTextHash);
-  return { config, catalogue, pins: parseSourcePins(pinsRaw), pinsRaw, areaSpec, areaSources };
+  const climate = await loadClimate(mapDataDir);
+  return {
+    config,
+    catalogue,
+    pins: parseSourcePins(pinsRaw),
+    pinsRaw,
+    areaSpec,
+    areaSources,
+    climate,
+  };
 }
 
 export async function loadGeometry(
@@ -88,9 +99,21 @@ export async function loadGeometry(
       landPolygons: [...land.polygons, ...islands.polygons],
       riverLines: rivers.lines,
       areas: prepareAreas(inputs.areaSources, inputs.areaSpec),
+      climate: inputs.climate.geometry,
     },
     layers,
   };
+}
+
+export function configurationFor(inputs: Inputs): string {
+  return configurationHash(
+    inputs.config,
+    inputs.catalogue,
+    inputs.pinsRaw,
+    sha256Hex,
+    { spec: inputs.areaSpec, sourceSha256: canonicalAreaHash(inputs.areaSources, areaTextHash) },
+    inputs.climate.provenanceRaw,
+  );
 }
 
 export interface BuiltFiles {
@@ -151,9 +174,13 @@ export async function buildAll(
     new URL("../../map-data/licences/natural-earth-terms.txt", import.meta.url),
   );
   files.set("licences/natural-earth-terms.txt", new Uint8Array(terms));
+  const climateNotice = await readFile(
+    new URL("../../map-data/licences/koppen-geiger-cc-by-4.0.txt", import.meta.url),
+  );
+  files.set("licences/koppen-geiger-cc-by-4.0.txt", new Uint8Array(climateNotice));
   const totalBytes = [...files.values()].reduce((sum, data) => sum + data.length, 0);
   const manifest = {
-    manifestVersion: 3,
+    manifestVersion: 4,
     pipelineVersion: inputs.config.pipelineVersion,
     packFormat: inputs.config.packFormat,
     dataset: {
@@ -168,8 +195,8 @@ export async function buildAll(
       })),
     },
     licence: {
-      identifier: "Natural Earth: public domain",
-      attributionRequired: false,
+      identifier: "Natural Earth: public domain; Koppen-Geiger V3: CC BY 4.0",
+      attributionRequired: true,
       files: [...files.keys()].filter((name) => name.startsWith("licences/")).sort(),
     },
     generationTimestampPolicy: inputs.config.generationTimestampPolicy,
@@ -182,13 +209,7 @@ export async function buildAll(
       pbf: await packageVersion(repoRoot, "pbf"),
       lockfileSha256: await lockfileSha(repoRoot),
     },
-    configurationSha256: configurationHash(
-      inputs.config,
-      inputs.catalogue,
-      inputs.pinsRaw,
-      sha256Hex,
-      { spec: inputs.areaSpec, sourceSha256: canonicalAreaHash(inputs.areaSources, areaTextHash) },
-    ),
+    configurationSha256: configurationFor(inputs),
     areaOutlines: {
       datasetVersion: inputs.areaSpec.datasetVersion,
       sourceSha256: canonicalAreaHash(inputs.areaSources, areaTextHash),
@@ -291,9 +312,17 @@ export async function buildAll(
           .map(([name, data]) => [name, sha256Hex(data)]),
       ),
     },
+    climate: {
+      layer: inputs.config.layers.climate,
+      property: "zone",
+      binarySha256: inputs.climate.provenance.binarySha256,
+      source: inputs.climate.provenance.source,
+      method: inputs.climate.provenance.method,
+      zones: inputs.climate.provenance.zones,
+    },
     levels: output.levels,
     attribution:
-      "Made with Natural Earth. Natural Earth is public domain; attribution is optional.",
+      "Made with Natural Earth (public domain). Climate zones from Koppen-Geiger V3: Beck, H. E. et al. (2023), Scientific Data 10, 724, CC BY 4.0.",
     validation: {
       passed: report.passed,
       findings: report.findings.length,
@@ -397,13 +426,7 @@ export async function verifyOutput(outDir: string, inputs: Inputs): Promise<Veri
   } catch (error) {
     problems.push(`pack: ${error instanceof Error ? error.message : String(error)}`);
   }
-  const expectedConfig = configurationHash(
-    inputs.config,
-    inputs.catalogue,
-    inputs.pinsRaw,
-    sha256Hex,
-    { spec: inputs.areaSpec, sourceSha256: canonicalAreaHash(inputs.areaSources, areaTextHash) },
-  );
+  const expectedConfig = configurationFor(inputs);
   if (manifest.configurationSha256 !== expectedConfig) {
     problems.push(
       "manifest: configurationSha256 does not match the current config, catalogue and source pins",

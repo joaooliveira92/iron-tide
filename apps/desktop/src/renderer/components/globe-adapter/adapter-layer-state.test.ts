@@ -91,8 +91,8 @@ describe("adapter layer state", () => {
 
   it("dims ownership without hiding the area fill that drives picking", () => {
     const overlay = { ownership: new Map([["area_north_sea", "united_kingdom"]]) };
-    expect(ownershipPaintValues(overlay, true).opacity).toBe(0.45);
-    expect(ownershipPaintValues(overlay, false)).toEqual({ color: "#33473b", opacity: 0.12 });
+    expect(ownershipPaintValues(overlay, true).opacity).toBe(0.06);
+    expect(ownershipPaintValues(overlay, false)).toEqual({ color: "rgba(0, 0, 0, 0)", opacity: 0 });
   });
 
   it("keeps the minimap viewport inside the minimap and maps clicks back to geography", () => {

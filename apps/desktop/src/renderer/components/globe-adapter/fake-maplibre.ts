@@ -77,6 +77,7 @@ export const fakeManifest = {
     areas: "areas",
     areaOutlines: "area_outlines",
     areaLabels: "area_labels",
+    climate: "climate",
   },
   packSha256: "0123456789abcdef",
   packBytes: 0,

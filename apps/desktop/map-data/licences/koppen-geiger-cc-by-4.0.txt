@@ -1,0 +1,23 @@
+Koppen-Geiger climate classification, V3 (1991-2020), used for the presentation-only
+land climate zones baked into the globe tiles.
+
+Data: Beck, H. E., McVicar, T. R., Vergopolan, N., Berg, A., Lutsko, N. J., Dufour, A.,
+Zeng, Z., Jiang, X., van Dijk, A. I. J. M., and Miralles, D. G. High-resolution (1 km)
+Koppen-Geiger maps for 1901-2099 based on constrained CMIP6 projections.
+Scientific Data 10, 724 (2023). https://doi.org/10.1038/s41597-023-02549-6
+
+Dataset record: https://doi.org/10.6084/m9.figshare.21789074 (version 2, published
+2026-01-14), file koppen_geiger_tif.zip, licence recorded by the Figshare API as
+"CC BY 4.0" (https://creativecommons.org/licenses/by/4.0/).
+
+Licence: Creative Commons Attribution 4.0 International. Sharing and adapting, including
+commercially, is permitted with attribution to the authors above, a link to the licence,
+and an indication that the data were changed.
+
+Changes made: the 30 Koppen-Geiger classes of the 0.1 degree 1991-2020 map were
+reclassified into seven presentation zones, smoothed, vectorised, and clipped to the
+Natural Earth coastline. The result is presentation only; no authoritative game outcome
+reads it. The mapping is in scripts/map-data/climate-zones.ts.
+
+The GloH2O page text and its licence link disagreed about the licence (CC BY 4.0 versus
+CC BY-NC 4.0); the dataset record's own metadata was taken as authoritative.
