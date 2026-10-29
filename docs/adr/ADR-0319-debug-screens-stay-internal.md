@@ -4,6 +4,8 @@ Applies to: desktop
 
 ## Status
 
+Superseded by: ADR-0366
+
 Accepted (2026-10-26). Resolves [#226](https://github.com/joaooliveira92/iron-tide/issues/226).
 
 ## Context

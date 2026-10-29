@@ -57,10 +57,11 @@ const AREAS = [
   },
   {
     name: "Process & documentation",
-    blurb: "Concurrent-agent worktree coordination and repository process rules.",
+    blurb:
+      "Worktree and git workflow, verification gates and CI infrastructure, ADR corpus and replay practices.",
     nums: [
       220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 279, 280, 295, 299, 300, 313, 318,
-      319, 335, 336,
+      319, 335, 336, 364, 365, 366,
     ],
   },
   {
@@ -95,7 +96,7 @@ const AREAS = [
       "The authoritative home area and possession ownership behind per-area presence, the foreign-station assignment state, and the colonial-service fitting with its dormant ruleset section.",
     nums: [
       231, 241, 242, 247, 248, 249, 250, 251, 253, 254, 255, 256, 257, 258, 259, 262, 263, 264, 265,
-      266,
+      266, 362, 363,
     ],
   },
   {

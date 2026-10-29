@@ -2,9 +2,9 @@
 
 Applies to: cross-process-test
 
-Rule: Property-based replay scenarios use `fast-check` as a devDependency of `cross-process-test` only, always with an explicit seed and run count.
-
 ## Status
+
+Superseded by: ADR-0366
 
 Accepted (2026-10-23). Builds on ADR-0246 and does not amend it: the pinned fuzz seeds stay as the cross-OS equality baseline.
 

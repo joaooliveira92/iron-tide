@@ -21,8 +21,8 @@ Run `pnpm agent:map <symbol|path>` before reading, `pnpm verify:affected` before
 
 - Check `git status`, `git pull --rebase`, and `pnpm preflight` at session start; rebase before every push.
 - Never overwrite or reformat others' work. Keep commits narrow, Conventional.
-- No code comments (ADR-0268). Names, types, tests carry intent; rationale in ADR or commit message.
-- Short-lived branch from `dev`; max 5 worktrees (ADR-0237), one session per checkout.
+- No code comments (ADR-0268, see ADR-0366). Names, types, tests carry intent; rationale in ADR or commit message.
+- Short-lived branch from `dev`; max 5 worktrees (ADR-0237, see ADR-0364), one session per checkout.
 - Review agents are read-only: no edits, commits, branches, or PR state.
 - Doc budgets in `scripts/doc-budgets.manifest.json`; ratchet down, justify raises.
 - Constraining decisions → ADR with `Applies to:` and `Rule:`. Authority through `Supersedes:`/`Amends:`. Read by-scope: [repository](docs/adr/by-scope/repository.md) + package `AGENTS.md`.
@@ -72,7 +72,7 @@ Identical content, ruleset, inputs, seeds, and versions produce identical hashes
 
 ## Git
 
-- No commits on `dev`/`main`. Merge branch into `dev` when gates green; PR optional (ADR-0234). Delete branch only after merge.
+- No commits on `dev`/`main`. Merge branch into `dev` when gates green; PR optional (ADR-0234, see ADR-0364). Delete branch only after merge.
 - No force-push, no history rewrite. No secrets, `.env`, stores, caches, or machine-specific config.
 - Use `pnpm change-scope` for change-based filtering: [change scope](docs/agents/change-scope.md).
 

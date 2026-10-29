@@ -2,9 +2,9 @@
 
 Applies to: repository
 
-Rule: The commit-msg hook refuses a commit that needs a golden re-pin without one; it adds no path exemptions.
-
 ## Status
+
+Superseded by: ADR-0365
 
 Accepted (2026-10-19).
 

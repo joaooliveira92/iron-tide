@@ -2,9 +2,9 @@
 
 Applies to: repository
 
-Rule: Every current ADR states its rule in one `Rule:` line, sits in exactly one index area, and supersedes acyclically.
-
 ## Status
+
+Superseded by: ADR-0366
 
 Accepted (2026-10-29).
 

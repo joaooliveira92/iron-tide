@@ -8,16 +8,17 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness.
-- [ADR-0251](../ADR-0251-fleet-screen-foreign-station-status-assign-and-presence-readout.md) The fleet screen shows manual p.48 status, assigns foreign station, and reads presence from the projection.
 - [ADR-0352](../ADR-0352-currency-display-language-formatting-boundary.md) Currency is displayed as Naval Credits (default), Budget Points, or National Historical (when a validated configuration exists); UI language and formatting locale are independent preferences; all canonical→display conversions happen exclusively at the presentation boundary.
 - [ADR-0353](../ADR-0353-strategic-report-explanation-provenance.md) Every displayed number derives its explanation from stored components or the rule that produced it; report trees are additive persisted fields outside the authoritative hash.
 - [ADR-0355](../ADR-0355-readiness-command-structure-and-division-state.md) Every numeric gameplay value for readiness, crew and maintenance is a centralized ruleset constant with provenance; per-nation officer rosters and seeded divisions are authored balance choices; command-lifecycle scaffolding is removed from shipping code; ship conditions are derived predicates computed from existing fields.
 - [ADR-0359](../ADR-0359-phase-engine-and-event-architecture.md) Phase order is declared once in `TURN_PHASES`; phases access snapshot aggregates through recorded handles with declared permissions; event body types derive from Effect schemas with no mirrored interfaces.
+- [ADR-0362](../ADR-0362-foreign-station-presence.md) S-5 presence is measured at month end from authored ruleset values; nations own possessions in presence areas, deploy ships on foreign station duty, and incur penalties for shortfalls, with exemption for blockade, while base limits constrain over-deployment.
 
 ## Superseded (do not follow)
 
 - [ADR-0218](../ADR-0218-conversion-and-locale-boundary.md) Conversion and locale boundary — canonical↔display only at presentation, language distinct from locale. Follow ADR-0352.
+- [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness. Follow ADR-0362.
+- [ADR-0251](../ADR-0251-fleet-screen-foreign-station-status-assign-and-presence-readout.md) The fleet screen shows manual p.48 status, assigns foreign station, and reads presence from the projection. Follow ADR-0362.
 - [ADR-0296](../ADR-0296-derived-ship-conditions.md) Ship conditions are derived predicates the fleet view carries and the renderer only labels. Follow ADR-0355.
 - [ADR-0306](../ADR-0306-campaign-projections-carry-explanation-trees.md) Campaign projections may carry explanation trees; `@bluewave/events` moves to layer 4. Follow ADR-0359.
 - [ADR-0307](../ADR-0307-strategic-and-report-explanation-provenance.md) Provenance for strategic-area and monthly-report explanations. Follow ADR-0353.

@@ -4,6 +4,8 @@ Applies to: content-compiler, content-schema, campaign, phase-engine, ship-desig
 
 ## Status
 
+Superseded by: ADR-0362
+
 Accepted (2026-10-20). Implements decisions A, I and J of the wayfinder map
 [#54](https://github.com/joaooliveira92/iron-tide/issues/54) via ticket
 [#78](https://github.com/joaooliveira92/iron-tide/issues/78) (S-5 04, spec

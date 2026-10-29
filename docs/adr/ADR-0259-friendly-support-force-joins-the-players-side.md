@@ -4,6 +4,8 @@ Applies to: phase-engine
 
 ## Status
 
+Superseded by: ADR-0363
+
 Accepted (2026-10-21). Implements ticket
 [#117](https://github.com/joaooliveira92/iron-tide/issues/117) (T-1 08) of spec
 [#109](https://github.com/joaooliveira92/iron-tide/issues/109), R12 and R14 (support line). Builds on

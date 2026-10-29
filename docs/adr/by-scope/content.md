@@ -8,12 +8,6 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state.
-- [ADR-0254](../ADR-0254-t1-battle-offer-values-balance-targets.md) T-1 battle-offer values: labelled balance targets.
-- [ADR-0262](../ADR-0262-repeated-declines-cost-the-player-prestige.md) Repeated declines cost the player prestige through the S-2 seam.
-- [ADR-0263](../ADR-0263-battle-offer-section-goes-live-on-the-production-pack.md) The battle-offer section goes live on the production pack.
-- [ADR-0264](../ADR-0264-t1-battle-offer-state-keeps-compatibility-version-4-0-0.md) The T-1 battle-offer state keeps compatibility version 4.0.0.
-- [ADR-0266](../ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md) S-5 presence values and the other open decision requests, resolved by delegation.
 - [ADR-0337](../ADR-0337-campaign-economy-model-and-budget-pressure.md) Campaign economy is a single integer appropriation-to-ledger model; budget-pressure values are researched then tunable; government type derives from political system via a mandatory ruleset table.
 - [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
 - [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
@@ -27,6 +21,8 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0356](../ADR-0356-fleet-management-gates-values-and-ship-use.md) Ship use is decided by one pure gate evaluator; fleet-management values live in a dormant ruleset section until authored; repair entry from battle damage is deferred.
 - [ADR-0357](../ADR-0357-training-exercises-division-growth-and-explanation-trees.md) Division cohesion and experience grow through pure rules; special training is a nation program with proficiency tracked in funded months; exercises are commanded for the following month through the assignment slot and cost doubled active maintenance; training effects reach battle through one per-side effects record; displayed numbers carry explanation trees built from the same calculation the engine uses.
 - [ADR-0358](../ADR-0358-combat-engine-architecture.md) `@bluewave/combat` exports exactly `resolve`, `advance`, `generate` and the root contract; all subsystems, orders, realism and combat modules are subpath seams.
+- [ADR-0362](../ADR-0362-foreign-station-presence.md) S-5 presence is measured at month end from authored ruleset values; nations own possessions in presence areas, deploy ships on foreign station duty, and incur penalties for shortfalls, with exemption for blockade, while base limits constrain over-deployment.
+- [ADR-0363](../ADR-0363-battle-offers.md) Battle offers are raised for eligible missions when the ruleset section is authored; the player may decline at a victory-point cost, repeated declines trigger prestige loss through the S-2 seam, the enemy may decline when outmatched, and a support force may join under defined conditions.
 
 ## Superseded (do not follow)
 
@@ -42,9 +38,15 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0226](../ADR-0226-rtw3-prestige-research-outcome.md) RTW3 prestige research outcome — the model is grounded, the production values are not. Follow ADR-0354.
 - [ADR-0228](../ADR-0228-combat-classifier-1880-ruleset-v2.md) The combat ship-type classifier aligns to the 1880 classification ruleset v2. Follow ADR-0340.
 - [ADR-0230](../ADR-0230-campaign-economy-model.md) Campaign economy model — one appropriation, one ledger, one set of calculators. Follow ADR-0337.
+- [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state. Follow ADR-0362.
 - [ADR-0239](../ADR-0239-s2-prestige-values-balance-targets.md) S-2 prestige values: the grounded model plus labelled balance targets. Follow ADR-0354.
 - [ADR-0240](../ADR-0240-s3-unrest-values-and-government-classification.md) S-3 unrest and economy values are researched then tunable; government type derives from political system. Follow ADR-0337.
 - [ADR-0252](../ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md) Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values. Follow ADR-0345.
+- [ADR-0254](../ADR-0254-t1-battle-offer-values-balance-targets.md) T-1 battle-offer values: labelled balance targets. Follow ADR-0363.
+- [ADR-0262](../ADR-0262-repeated-declines-cost-the-player-prestige.md) Repeated declines cost the player prestige through the S-2 seam. Follow ADR-0363.
+- [ADR-0263](../ADR-0263-battle-offer-section-goes-live-on-the-production-pack.md) The battle-offer section goes live on the production pack. Follow ADR-0363.
+- [ADR-0264](../ADR-0264-t1-battle-offer-state-keeps-compatibility-version-4-0-0.md) The T-1 battle-offer state keeps compatibility version 4.0.0. Follow ADR-0363.
+- [ADR-0266](../ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md) S-5 presence values and the other open decision requests, resolved by delegation. Follow ADR-0362.
 - [ADR-0282](../ADR-0282-authored-horizon-through-1970.md) Authored horizon through 1970; no empty scenario IDs. Follow ADR-0348.
 - [ADR-0283](../ADR-0283-e1-1940-1970-content-decisions.md) E-1 1940-1970 content decisions. Follow ADR-0350.
 - [ADR-0284](../ADR-0284-e1-1940s-ship-and-part-values.md) E-1 1940-1949 ship and part values. Follow ADR-0350.

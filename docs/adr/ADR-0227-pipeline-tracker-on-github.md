@@ -2,9 +2,9 @@
 
 Applies to: repository
 
-Rule: Pipeline artifacts (map, spec, tickets) are GitHub issues; there is no local markdown tracker.
-
 ## Status
+
+Superseded by: ADR-0365
 
 Accepted (2026-10-17). Supersedes the tracking model recorded in
 `.ai/reports/reconciliation-2026-10-17.md`.

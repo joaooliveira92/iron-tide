@@ -6,29 +6,32 @@ and for the exact boundaries of the rule.
 
 ## Current
 
-- [ADR-0227](../ADR-0227-pipeline-tracker-on-github.md) Pipeline artifacts (map, spec, tickets) are GitHub issues; there is no local markdown tracker.
-- [ADR-0234](../ADR-0234-single-checkout-local-merge-workflow.md) Work on short-lived local branches cut from `dev` and merge into `dev` locally once preflight, test:scripts and check are green. (amended by ADR-0236, ADR-0237).
-- [ADR-0236](../ADR-0236-up-to-three-worktrees.md) Superseded in effect by ADR-0237's cap of five; one session per checkout and one short-lived branch per worktree still apply. (amended by ADR-0237). Amends ADR-0234.
-- [ADR-0237](../ADR-0237-up-to-five-worktrees.md) At most five worktrees at once including the main checkout, each on its own short-lived branch cut from `dev`; create them with `pnpm worktrees new`.. Amends ADR-0236, ADR-0234.
-- [ADR-0238](../ADR-0238-golden-repin-commit-time-guard.md) The commit-msg hook refuses a commit that needs a golden re-pin without one; it adds no path exemptions.
-- [ADR-0267](../ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md) Every engine capability maps to a player verb in `scripts/data/reachability-ledger.json` (engine entry, command, screen, evidence test).
-- [ADR-0268](../ADR-0268-code-carries-no-comments.md) Code carries no comments; rationale lives in an ADR or the commit message, and only tool-read comments survive.
-- [ADR-0274](../ADR-0274-scratch-removed-from-tree.md) The frozen `.scratch/` tree is removed.
-- [ADR-0275](../ADR-0275-tsgo-gate-reads-installed-toolchain.md) The tsgo gate checks that root pins equal the installed toolchain versions and that patched binaries keep their `.original` backup.
-- [ADR-0299](../ADR-0299-gate-runs-serialise-across-worktrees.md) Run long gates through `pnpm heavy`, which serialises across worktrees and caps vitest workers at 4.
-- [ADR-0313](../ADR-0313-worktree-registry-under-git-common-dir.md) The worktree inventory is a locked registry under the Git common directory.
-- [ADR-0318](../ADR-0318-adrs-declare-their-scope-and-packages-link-them.md) Every ADR has an `Applies to:` line, and every governing `AGENTS.md` links its generated `docs/adr/by-scope` page.
-- [ADR-0335](../ADR-0335-agent-navigation-and-scoped-verification.md) Agents discover ownership with `pnpm agent:map`, validate a change with `pnpm verify:affected`, and run long gates blocking through `pnpm heavy`; scoped verification widens to full scope whenever impact is uncertain and never replaces `pnpm check`.
-- [ADR-0336](../ADR-0336-adr-corpus-integrity-gate.md) Every current ADR states its rule in one `Rule:` line, sits in exactly one index area, and supersedes acyclically.
 - [ADR-0347](../ADR-0347-repository-authority-and-rebaselining.md) Artifacts that never existed in reachable history are unverified legacy references; never recreate them from their filenames.
 - [ADR-0351](../ADR-0351-canonical-values-units-fixed-point.md) All authoritative values are stored as canonical fixed-precision types using a single rounding vocabulary; units, currency, and locale convert only at the presentation boundary.
 - [ADR-0361](../ADR-0361-deprecate-yaml-outside-internationalization.md) YAML is reserved for internationalization catalogues and mandated infrastructure; all other authored content is declarative TypeScript under constrained domain constructors.
+- [ADR-0364](../ADR-0364-worktree-and-git-workflow.md) At most five worktrees including the main checkout; each on its own short-lived branch cut from `dev`; manage through `pnpm worktrees` which uses a locked JSON registry under the Git common directory; merge into `dev` locally after gates are green; one session per checkout.
+- [ADR-0365](../ADR-0365-verification-gates-and-infrastructure.md) Verification gates enforce golden-repin discipline, reachability, toolchain integrity and agent scoped checks under `pnpm heavy` serialisation; pipeline artifacts are GitHub Issues; unreachable combat modules stay dormant.
+- [ADR-0366](../ADR-0366-adr-code-and-replay-practices.md) Every current ADR states its rule and scope and supersedes acyclically; code carries no comments; the determinism baseline is an approval-gated replay corpus; debug screens stay internal.
 
 ## Superseded (do not follow)
 
 - [ADR-0202](../ADR-0202-canonical-internal-values.md) Canonical internal values, presentation-only units and currency. Follow ADR-0351.
 - [ADR-0210](../ADR-0210-unavailable-artifacts-and-authority-order.md) Unavailable artifacts are unverified legacy references; authority order. Follow ADR-0347.
 - [ADR-0217](../ADR-0217-rounding-and-authoritative-float-gate.md) Rounding and fixed-point rules and the authoritative-float gate. Follow ADR-0351.
-- [ADR-0220](../ADR-0220-worktree-per-effort-coordination.md) Worktree-per-effort coordination for concurrent agents. Follow ADR-0234.
-- [ADR-0269](../ADR-0269-worktree-ledger-is-local-untracked-state.md) The worktree ledger is local, untracked state. Follow ADR-0313.
+- [ADR-0220](../ADR-0220-worktree-per-effort-coordination.md) Worktree-per-effort coordination for concurrent agents. Follow ADR-0364.
+- [ADR-0227](../ADR-0227-pipeline-tracker-on-github.md) Pipeline issues live on GitHub, not local markdown. Follow ADR-0365.
+- [ADR-0234](../ADR-0234-single-checkout-local-merge-workflow.md) Single checkout with local feature branches merged to dev locally. Follow ADR-0364.
+- [ADR-0236](../ADR-0236-up-to-three-worktrees.md) Up to three concurrent worktrees. Follow ADR-0364.
+- [ADR-0237](../ADR-0237-up-to-five-worktrees.md) Up to five concurrent worktrees. Follow ADR-0364.
+- [ADR-0238](../ADR-0238-golden-repin-commit-time-guard.md) Golden re-pin guard at commit time. Follow ADR-0365.
+- [ADR-0267](../ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md) The reachability ledger maps engine capability to desktop path. Follow ADR-0365.
+- [ADR-0268](../ADR-0268-code-carries-no-comments.md) Code carries no comments. Follow ADR-0366.
+- [ADR-0269](../ADR-0269-worktree-ledger-is-local-untracked-state.md) The worktree ledger is local, untracked state. Follow ADR-0364.
+- [ADR-0274](../ADR-0274-scratch-removed-from-tree.md) The frozen `.scratch/` tree is removed. Follow ADR-0365.
+- [ADR-0275](../ADR-0275-tsgo-gate-reads-installed-toolchain.md) The tsgo gate compares pins to the installed toolchain. Follow ADR-0365.
+- [ADR-0299](../ADR-0299-gate-runs-serialise-across-worktrees.md) `pnpm check` serialises across worktrees and reports machine load. Follow ADR-0365.
+- [ADR-0313](../ADR-0313-worktree-registry-under-git-common-dir.md) The worktree inventory is a locked registry under the Git common directory. Follow ADR-0364.
+- [ADR-0318](../ADR-0318-adrs-declare-their-scope-and-packages-link-them.md) ADRs declare the scopes they govern, and each scope's AGENTS.md links its generated index. Follow ADR-0366.
 - [ADR-0334](../ADR-0334-deprecate-yaml-outside-internationalization.md) Deprecate YAML outside internationalization. Follow ADR-0361.
+- [ADR-0335](../ADR-0335-agent-navigation-and-scoped-verification.md) Agent navigation and scoped verification are repository tools. Follow ADR-0365.
+- [ADR-0336](../ADR-0336-adr-corpus-integrity-gate.md) Every current ADR states its `Rule:`, holds one area, and supersedes acyclically. Follow ADR-0366.

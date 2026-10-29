@@ -8,7 +8,6 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0300](../ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md) Unreachable combat modules stay dormant until their roadmap owner wires them; the UI must not expose them meanwhile.
 - [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
 - [ADR-0345](../ADR-0345-ship-design-model-and-draft-schema.md) The ship design data model defines a versioned draft with optional fields, a canonical armour-region set mapped to the manual's nine universal fields, named armour schemes as deterministic transformations, and additive options from balance targets, all guarded by a session that explains new blocking or critical findings at once.
 - [ADR-0346](../ADR-0346-ship-component-catalogue-and-capability-model.md) The ship-component catalogue is organised by family and nation with per-record provenance, defines part families and capability kinds for all equipment eras, carries sourced or BALANCE_TARGET values, and consumes part capabilities through explicit ruleset sections.
@@ -23,6 +22,7 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0271](../ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) The combat package exposes three verbs and subsystem seams. Follow ADR-0358.
 - [ADR-0277](../ADR-0277-exact-duplicate-pure-helpers-live-in-core.md) Exact-duplicate pure helpers live in combat core. Follow ADR-0358.
 - [ADR-0297](../ADR-0297-engine-reads-catalogue-technology-ids.md) The engine reads the catalogue's technology id where one matches, and leaves the rest named. Follow ADR-0357.
+- [ADR-0300](../ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md) Unreachable combat modules are wired by their roadmap owner and stay dormant until then. Follow ADR-0365.
 - [ADR-0301](../ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) Proficient gunnery training raises the nation's gunnery accuracy in battle. Follow ADR-0357.
 - [ADR-0302](../ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md) All four training subjects reach battle through one per-side effects record. Follow ADR-0357.
 - [ADR-0304](../ADR-0304-explanation-trees-for-displayed-numbers.md) Displayed numbers carry an explanation tree; gunnery accuracy is the first slice. Follow ADR-0357.

@@ -4,6 +4,8 @@ Applies to: campaign, campaign-engine, commands, events, phase-engine
 
 ## Status
 
+Superseded by: ADR-0362
+
 Accepted (2026-10-20). Implements decisions A and D of the wayfinder map
 [#54](https://github.com/joaooliveira92/iron-tide/issues/54) via ticket
 [#77](https://github.com/joaooliveira92/iron-tide/issues/77) (S-5 03, spec

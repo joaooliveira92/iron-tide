@@ -4,6 +4,8 @@ Applies to: content-schema, campaign, phase-engine
 
 ## Status
 
+Superseded by: ADR-0362
+
 Accepted (2026-10-21). Implements decision E of the wayfinder map
 [#54](https://github.com/joaooliveira92/iron-tide/issues/54) via ticket
 [#82](https://github.com/joaooliveira92/iron-tide/issues/82) (S-5 08, spec

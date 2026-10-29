@@ -9,22 +9,6 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 ## Current
 
 - [ADR-0221](../ADR-0221-structured-explanation-data.md) Structured explanation data for domain display values.
-- [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state.
-- [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness.
-- [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
-- [ADR-0247](../ADR-0247-presence-measurement-and-shortfall.md) Presence is measured at month end from the dormant S-5 section and reported as typed shortfall events (amended by ADR-0272).
-- [ADR-0248](../ADR-0248-blockade-exemption-and-typed-penalty-requests.md) A blockaded nation at war is exempt from presence, and shortfalls emit typed penalty requests.
-- [ADR-0249](../ADR-0249-foreign-station-deployment-routes-ships-to-the-largest-shortfall.md) Foreign-station ships are routed one hop a month toward the largest shortfall.
-- [ADR-0250](../ADR-0250-base-limits-flag-and-consequences-at-month-end.md) Base limits are checked last each month; over-base ships are flagged and take the S-1 consequences (amended by ADR-0272).
-- [ADR-0253](../ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input.
-- [ADR-0254](../ADR-0254-t1-battle-offer-values-balance-targets.md) T-1 battle-offer values: labelled balance targets.
-- [ADR-0255](../ADR-0255-battle-offer-request-estimate-and-answer.md) The battle offer: request shape, estimate, accept and delegate, typed refusals.
-- [ADR-0256](../ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md) Declining a battle offer: terminal record, released ships, victory-point cost.
-- [ADR-0257](../ADR-0257-declined-battle-tally-and-threshold-event.md) Declined-battle tally and the repeated-decline threshold event.
-- [ADR-0258](../ADR-0258-enemy-declines-a-battle-with-the-player.md) The enemy declines a battle with the player.
-- [ADR-0259](../ADR-0259-friendly-support-force-joins-the-players-side.md) A friendly support force joins the player's side.
-- [ADR-0262](../ADR-0262-repeated-declines-cost-the-player-prestige.md) Repeated declines cost the player prestige through the S-2 seam.
-- [ADR-0265](../ADR-0265-battle-declined-event-carries-the-running-decline-count.md) The BattleDeclined event carries the running decline count.
 - [ADR-0337](../ADR-0337-campaign-economy-model-and-budget-pressure.md) Campaign economy is a single integer appropriation-to-ledger model; budget-pressure values are researched then tunable; government type derives from political system via a mandatory ruleset table.
 - [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
 - [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
@@ -36,6 +20,8 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0357](../ADR-0357-training-exercises-division-growth-and-explanation-trees.md) Division cohesion and experience grow through pure rules; special training is a nation program with proficiency tracked in funded months; exercises are commanded for the following month through the assignment slot and cost doubled active maintenance; training effects reach battle through one per-side effects record; displayed numbers carry explanation trees built from the same calculation the engine uses.
 - [ADR-0358](../ADR-0358-combat-engine-architecture.md) `@bluewave/combat` exports exactly `resolve`, `advance`, `generate` and the root contract; all subsystems, orders, realism and combat modules are subpath seams.
 - [ADR-0359](../ADR-0359-phase-engine-and-event-architecture.md) Phase order is declared once in `TURN_PHASES`; phases access snapshot aggregates through recorded handles with declared permissions; event body types derive from Effect schemas with no mirrored interfaces.
+- [ADR-0362](../ADR-0362-foreign-station-presence.md) S-5 presence is measured at month end from authored ruleset values; nations own possessions in presence areas, deploy ships on foreign station duty, and incur penalties for shortfalls, with exemption for blockade, while base limits constrain over-deployment.
+- [ADR-0363](../ADR-0363-battle-offers.md) Battle offers are raised for eligible missions when the ruleset section is authored; the player may decline at a victory-point cost, repeated declines trigger prestige loss through the S-2 seam, the enemy may decline when outmatched, and a support force may join under defined conditions.
 
 ## Superseded (do not follow)
 
@@ -43,8 +29,24 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0223](../ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md) S-1 readiness, crew and maintenance values are centralized ruleset constants. Follow ADR-0355.
 - [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim. Follow ADR-0339.
 - [ADR-0230](../ADR-0230-campaign-economy-model.md) Campaign economy model — one appropriation, one ledger, one set of calculators. Follow ADR-0337.
+- [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state. Follow ADR-0362.
+- [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness. Follow ADR-0362.
+- [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section. Follow ADR-0362.
+- [ADR-0247](../ADR-0247-presence-measurement-and-shortfall.md) Presence is measured at month end from the dormant S-5 section and reported as typed shortfall events. Follow ADR-0362.
+- [ADR-0248](../ADR-0248-blockade-exemption-and-typed-penalty-requests.md) A blockaded nation at war is exempt from presence, and shortfalls emit typed penalty requests. Follow ADR-0362.
+- [ADR-0249](../ADR-0249-foreign-station-deployment-routes-ships-to-the-largest-shortfall.md) Foreign-station ships are routed one hop a month toward the largest shortfall. Follow ADR-0362.
+- [ADR-0250](../ADR-0250-base-limits-flag-and-consequences-at-month-end.md) Base limits are checked last each month; over-base ships are flagged and take the S-1 consequences. Follow ADR-0362.
+- [ADR-0253](../ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input. Follow ADR-0363.
+- [ADR-0254](../ADR-0254-t1-battle-offer-values-balance-targets.md) T-1 battle-offer values: labelled balance targets. Follow ADR-0363.
+- [ADR-0255](../ADR-0255-battle-offer-request-estimate-and-answer.md) The battle offer: request shape, estimate, accept and delegate, typed refusals. Follow ADR-0363.
+- [ADR-0256](../ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md) Declining a battle offer: terminal record, released ships, victory-point cost. Follow ADR-0363.
+- [ADR-0257](../ADR-0257-declined-battle-tally-and-threshold-event.md) Declined-battle tally and the repeated-decline threshold event. Follow ADR-0363.
+- [ADR-0258](../ADR-0258-enemy-declines-a-battle-with-the-player.md) The enemy declines a battle with the player. Follow ADR-0363.
+- [ADR-0259](../ADR-0259-friendly-support-force-joins-the-players-side.md) A friendly support force joins the player's side. Follow ADR-0363.
 - [ADR-0260](../ADR-0260-prestige-application-and-unpaid-funds-source.md) Prestige application seam and the unpaid-funds source. Follow ADR-0354.
 - [ADR-0261](../ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code. Follow ADR-0354.
+- [ADR-0262](../ADR-0262-repeated-declines-cost-the-player-prestige.md) Repeated declines cost the player prestige through the S-2 seam. Follow ADR-0363.
+- [ADR-0265](../ADR-0265-battle-declined-event-carries-the-running-decline-count.md) The BattleDeclined event carries the running decline count. Follow ADR-0363.
 - [ADR-0271](../ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) The combat package exposes three verbs and subsystem seams. Follow ADR-0358.
 - [ADR-0272](../ADR-0272-month-pipeline-owns-order-and-observed-access.md) The month pipeline owns phase order and observes real snapshot access. Follow ADR-0359.
 - [ADR-0281](../ADR-0281-sacking-phase-and-terminal-career.md) The sacking phase and the terminal career. Follow ADR-0354.

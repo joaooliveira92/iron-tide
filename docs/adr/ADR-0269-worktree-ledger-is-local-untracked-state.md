@@ -4,7 +4,9 @@ Applies to: repository
 
 ## Status
 
-Superseded by: ADR-0313. Amends ADR-0220.
+Superseded by: ADR-0364
+
+Amends ADR-0220.
 
 ## Context
 

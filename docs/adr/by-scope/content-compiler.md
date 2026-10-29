@@ -8,17 +8,19 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state.
-- [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
-- [ADR-0253](../ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input.
 - [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
 - [ADR-0349](../ADR-0349-ten-playable-nations-roster.md) The 1880 release has fourteen committed nations and ten playable nations, with the remaining four AI-only until each passes the per-nation readiness gate.
 - [ADR-0356](../ADR-0356-fleet-management-gates-values-and-ship-use.md) Ship use is decided by one pure gate evaluator; fleet-management values live in a dormant ruleset section until authored; repair entry from battle damage is deferred.
 - [ADR-0357](../ADR-0357-training-exercises-division-growth-and-explanation-trees.md) Division cohesion and experience grow through pure rules; special training is a nation program with proficiency tracked in funded months; exercises are commanded for the following month through the assignment slot and cost doubled active maintenance; training effects reach battle through one per-side effects record; displayed numbers carry explanation trees built from the same calculation the engine uses.
+- [ADR-0362](../ADR-0362-foreign-station-presence.md) S-5 presence is measured at month end from authored ruleset values; nations own possessions in presence areas, deploy ships on foreign station duty, and incur penalties for shortfalls, with exemption for blockade, while base limits constrain over-deployment.
+- [ADR-0363](../ADR-0363-battle-offers.md) Battle offers are raised for eligible missions when the ruleset section is authored; the player may decline at a victory-point cost, repeated declines trigger prestige loss through the S-2 seam, the enemy may decline when outmatched, and a support force may join under defined conditions.
 
 ## Superseded (do not follow)
 
 - [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set. Follow ADR-0339.
 - [ADR-0214](../ADR-0214-ten-playable-nations-usa.md) Ten playable nations; the USA joins the 1880 playable roster. Follow ADR-0349.
+- [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state. Follow ADR-0362.
+- [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section. Follow ADR-0362.
+- [ADR-0253](../ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input. Follow ADR-0363.
 - [ADR-0286](../ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md) Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section. Follow ADR-0356.
 - [ADR-0303](../ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) Training cost differences and exercise tension are generic ruleset data. Follow ADR-0357.

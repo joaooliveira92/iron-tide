@@ -4,7 +4,9 @@ Applies to: repository
 
 ## Status
 
-Superseded by: ADR-0234. Originally accepted 2026-10-16. Defines how several orchestrator sessions run at once
+Superseded by: ADR-0364
+
+Originally accepted 2026-10-16. Defines how several orchestrator sessions run at once
 without sharing a checkout, extending the delivery rule of ADR-0165.
 
 ## Context

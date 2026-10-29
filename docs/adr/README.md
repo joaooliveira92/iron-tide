@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0362).
+highest existing number + 1 (the next number is ADR-0367).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -76,32 +76,35 @@ Unavailable-artifact policy and the project authority order.
 
 ## Process & documentation
 
-Concurrent-agent worktree coordination and repository process rules.
+Worktree and git workflow, verification gates and CI infrastructure, ADR corpus and replay practices.
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0220 | [ADR-0220-worktree-per-effort-coordination.md](ADR-0220-worktree-per-effort-coordination.md) | Worktree-per-effort coordination for concurrent agents | superseded | ADR-0234 |
-| 0227 | [ADR-0227-pipeline-tracker-on-github.md](ADR-0227-pipeline-tracker-on-github.md) | Pipeline issues live on GitHub, not local markdown | accepted | — |
-| 0274 | [ADR-0274-scratch-removed-from-tree.md](ADR-0274-scratch-removed-from-tree.md) | The frozen `.scratch/` tree is removed | accepted | — |
-| 0275 | [ADR-0275-tsgo-gate-reads-installed-toolchain.md](ADR-0275-tsgo-gate-reads-installed-toolchain.md) | The tsgo gate compares pins to the installed toolchain | accepted | — |
-| 0234 | [ADR-0234-single-checkout-local-merge-workflow.md](ADR-0234-single-checkout-local-merge-workflow.md) | Single checkout with local feature branches merged to dev locally | accepted | — |
-| 0236 | [ADR-0236-up-to-three-worktrees.md](ADR-0236-up-to-three-worktrees.md) | Up to three concurrent worktrees | accepted | — |
-| 0237 | [ADR-0237-up-to-five-worktrees.md](ADR-0237-up-to-five-worktrees.md) | Up to five concurrent worktrees | accepted | — |
-| 0238 | [ADR-0238-golden-repin-commit-time-guard.md](ADR-0238-golden-repin-commit-time-guard.md) | Golden re-pin guard at commit time | accepted | — |
-| 0246 | [ADR-0246-replay-corpus-supersedes-single-scenario-golden.md](ADR-0246-replay-corpus-supersedes-single-scenario-golden.md) | A replay corpus supersedes the single-scenario golden as the determinism baseline | accepted | — |
-| 0267 | [ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md](ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md) | The reachability ledger maps engine capability to desktop path | accepted | — |
-| 0268 | [ADR-0268-code-carries-no-comments.md](ADR-0268-code-carries-no-comments.md) | Code carries no comments | accepted | — |
-| 0269 | [ADR-0269-worktree-ledger-is-local-untracked-state.md](ADR-0269-worktree-ledger-is-local-untracked-state.md) | The worktree ledger is local, untracked state | superseded | ADR-0313 |
-| 0279 | [ADR-0279-replay-approvals-carry-a-change-class.md](ADR-0279-replay-approvals-carry-a-change-class.md) | Replay approvals carry a verified change class | accepted | — |
-| 0280 | [ADR-0280-property-based-replay-scenarios.md](ADR-0280-property-based-replay-scenarios.md) | Property-based replay scenarios use fast-check as a test-only dependency | accepted | — |
-| 0295 | [ADR-0295-war-bearing-replay-scenarios.md](ADR-0295-war-bearing-replay-scenarios.md) | A replay scenario may name a player nation and a deterministic start setup so the corpus fights a battle | accepted | — |
-| 0299 | [ADR-0299-gate-runs-serialise-across-worktrees.md](ADR-0299-gate-runs-serialise-across-worktrees.md) | `pnpm check` serialises across worktrees and reports machine load | accepted | — |
-| 0300 | [ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md](ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md) | Unreachable combat modules are wired by their roadmap owner and stay dormant until then | accepted | — |
-| 0313 | [ADR-0313-worktree-registry-under-git-common-dir.md](ADR-0313-worktree-registry-under-git-common-dir.md) | The worktree inventory is a locked registry under the Git common directory | accepted | — |
-| 0318 | [ADR-0318-adrs-declare-their-scope-and-packages-link-them.md](ADR-0318-adrs-declare-their-scope-and-packages-link-them.md) | ADRs declare the scopes they govern, and each scope's AGENTS.md links its generated index | accepted | — |
-| 0319 | [ADR-0319-debug-screens-stay-internal.md](ADR-0319-debug-screens-stay-internal.md) | Debug-only screens stay internal and leave the production renderer bundle | accepted | — |
-| 0335 | [ADR-0335-agent-navigation-and-scoped-verification.md](ADR-0335-agent-navigation-and-scoped-verification.md) | Agent navigation and scoped verification are repository tools | accepted | — |
-| 0336 | [ADR-0336-adr-corpus-integrity-gate.md](ADR-0336-adr-corpus-integrity-gate.md) | Every current ADR states its `Rule:`, holds one area, and supersedes acyclically | accepted | — |
+| 0220 | [ADR-0220-worktree-per-effort-coordination.md](ADR-0220-worktree-per-effort-coordination.md) | Worktree-per-effort coordination for concurrent agents | superseded | ADR-0364 |
+| 0227 | [ADR-0227-pipeline-tracker-on-github.md](ADR-0227-pipeline-tracker-on-github.md) | Pipeline issues live on GitHub, not local markdown | superseded | ADR-0365 |
+| 0274 | [ADR-0274-scratch-removed-from-tree.md](ADR-0274-scratch-removed-from-tree.md) | The frozen `.scratch/` tree is removed | superseded | ADR-0365 |
+| 0275 | [ADR-0275-tsgo-gate-reads-installed-toolchain.md](ADR-0275-tsgo-gate-reads-installed-toolchain.md) | The tsgo gate compares pins to the installed toolchain | superseded | ADR-0365 |
+| 0234 | [ADR-0234-single-checkout-local-merge-workflow.md](ADR-0234-single-checkout-local-merge-workflow.md) | Single checkout with local feature branches merged to dev locally | superseded | ADR-0364 |
+| 0236 | [ADR-0236-up-to-three-worktrees.md](ADR-0236-up-to-three-worktrees.md) | Up to three concurrent worktrees | superseded | ADR-0364 |
+| 0237 | [ADR-0237-up-to-five-worktrees.md](ADR-0237-up-to-five-worktrees.md) | Up to five concurrent worktrees | superseded | ADR-0364 |
+| 0238 | [ADR-0238-golden-repin-commit-time-guard.md](ADR-0238-golden-repin-commit-time-guard.md) | Golden re-pin guard at commit time | superseded | ADR-0365 |
+| 0246 | [ADR-0246-replay-corpus-supersedes-single-scenario-golden.md](ADR-0246-replay-corpus-supersedes-single-scenario-golden.md) | A replay corpus supersedes the single-scenario golden as the determinism baseline | superseded | ADR-0366 |
+| 0267 | [ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md](ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md) | The reachability ledger maps engine capability to desktop path | superseded | ADR-0365 |
+| 0268 | [ADR-0268-code-carries-no-comments.md](ADR-0268-code-carries-no-comments.md) | Code carries no comments | superseded | ADR-0366 |
+| 0269 | [ADR-0269-worktree-ledger-is-local-untracked-state.md](ADR-0269-worktree-ledger-is-local-untracked-state.md) | The worktree ledger is local, untracked state | superseded | ADR-0364 |
+| 0279 | [ADR-0279-replay-approvals-carry-a-change-class.md](ADR-0279-replay-approvals-carry-a-change-class.md) | Replay approvals carry a verified change class | superseded | ADR-0366 |
+| 0280 | [ADR-0280-property-based-replay-scenarios.md](ADR-0280-property-based-replay-scenarios.md) | Property-based replay scenarios use fast-check as a test-only dependency | superseded | ADR-0366 |
+| 0295 | [ADR-0295-war-bearing-replay-scenarios.md](ADR-0295-war-bearing-replay-scenarios.md) | A replay scenario may name a player nation and a deterministic start setup so the corpus fights a battle | superseded | ADR-0366 |
+| 0299 | [ADR-0299-gate-runs-serialise-across-worktrees.md](ADR-0299-gate-runs-serialise-across-worktrees.md) | `pnpm check` serialises across worktrees and reports machine load | superseded | ADR-0365 |
+| 0300 | [ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md](ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md) | Unreachable combat modules are wired by their roadmap owner and stay dormant until then | superseded | ADR-0365 |
+| 0313 | [ADR-0313-worktree-registry-under-git-common-dir.md](ADR-0313-worktree-registry-under-git-common-dir.md) | The worktree inventory is a locked registry under the Git common directory | superseded | ADR-0364 |
+| 0318 | [ADR-0318-adrs-declare-their-scope-and-packages-link-them.md](ADR-0318-adrs-declare-their-scope-and-packages-link-them.md) | ADRs declare the scopes they govern, and each scope's AGENTS.md links its generated index | superseded | ADR-0366 |
+| 0319 | [ADR-0319-debug-screens-stay-internal.md](ADR-0319-debug-screens-stay-internal.md) | Debug-only screens stay internal and leave the production renderer bundle | superseded | ADR-0366 |
+| 0335 | [ADR-0335-agent-navigation-and-scoped-verification.md](ADR-0335-agent-navigation-and-scoped-verification.md) | Agent navigation and scoped verification are repository tools | superseded | ADR-0365 |
+| 0336 | [ADR-0336-adr-corpus-integrity-gate.md](ADR-0336-adr-corpus-integrity-gate.md) | Every current ADR states its `Rule:`, holds one area, and supersedes acyclically | superseded | ADR-0366 |
+| 0364 | [ADR-0364-worktree-and-git-workflow.md](ADR-0364-worktree-and-git-workflow.md) | Worktree and git workflow | accepted | — |
+| 0365 | [ADR-0365-verification-gates-and-infrastructure.md](ADR-0365-verification-gates-and-infrastructure.md) | Verification gates and infrastructure | accepted | — |
+| 0366 | [ADR-0366-adr-code-and-replay-practices.md](ADR-0366-adr-code-and-replay-practices.md) | ADR, code and replay practices | accepted | — |
 
 ## Scenario content & research
 
@@ -186,26 +189,28 @@ The authoritative home area and possession ownership behind per-area presence, t
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0231 | [ADR-0231-nation-home-area-and-possession-ownership.md](ADR-0231-nation-home-area-and-possession-ownership.md) | Authoritative nation home area and possession ownership in campaign state | accepted | — |
-| 0241 | [ADR-0241-foreign-station-assignment-state.md](ADR-0241-foreign-station-assignment-state.md) | Foreign-station assignment is optional ship state, orthogonal to readiness | accepted | — |
-| 0242 | [ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md](ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) | Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section | accepted | — |
-| 0247 | [ADR-0247-presence-measurement-and-shortfall.md](ADR-0247-presence-measurement-and-shortfall.md) | Presence is measured at month end from the dormant S-5 section and reported as typed shortfall events | accepted | — |
-| 0248 | [ADR-0248-blockade-exemption-and-typed-penalty-requests.md](ADR-0248-blockade-exemption-and-typed-penalty-requests.md) | A blockaded nation at war is exempt from presence, and shortfalls emit typed penalty requests | accepted | — |
-| 0249 | [ADR-0249-foreign-station-deployment-routes-ships-to-the-largest-shortfall.md](ADR-0249-foreign-station-deployment-routes-ships-to-the-largest-shortfall.md) | Foreign-station ships are routed one hop a month toward the largest shortfall | accepted | — |
-| 0250 | [ADR-0250-base-limits-flag-and-consequences-at-month-end.md](ADR-0250-base-limits-flag-and-consequences-at-month-end.md) | Base limits are checked last each month; over-base ships are flagged and take the S-1 consequences | accepted | — |
-| 0251 | [ADR-0251-fleet-screen-foreign-station-status-assign-and-presence-readout.md](ADR-0251-fleet-screen-foreign-station-status-assign-and-presence-readout.md) | The fleet screen shows manual p.48 status, assigns foreign station, and reads presence from the projection | accepted | — |
-| 0253 | [ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md](ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) | Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input | accepted | — |
-| 0254 | [ADR-0254-t1-battle-offer-values-balance-targets.md](ADR-0254-t1-battle-offer-values-balance-targets.md) | T-1 battle-offer values: labelled balance targets | accepted | — |
-| 0255 | [ADR-0255-battle-offer-request-estimate-and-answer.md](ADR-0255-battle-offer-request-estimate-and-answer.md) | The battle offer: request shape, estimate, accept and delegate, typed refusals | accepted | — |
-| 0256 | [ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md](ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md) | Declining a battle offer: terminal record, released ships, victory-point cost | accepted | — |
-| 0257 | [ADR-0257-declined-battle-tally-and-threshold-event.md](ADR-0257-declined-battle-tally-and-threshold-event.md) | Declined-battle tally and the repeated-decline threshold event | accepted | — |
-| 0258 | [ADR-0258-enemy-declines-a-battle-with-the-player.md](ADR-0258-enemy-declines-a-battle-with-the-player.md) | The enemy declines a battle with the player | accepted | — |
-| 0259 | [ADR-0259-friendly-support-force-joins-the-players-side.md](ADR-0259-friendly-support-force-joins-the-players-side.md) | A friendly support force joins the player's side | accepted | — |
-| 0262 | [ADR-0262-repeated-declines-cost-the-player-prestige.md](ADR-0262-repeated-declines-cost-the-player-prestige.md) | Repeated declines cost the player prestige through the S-2 seam | accepted | — |
-| 0263 | [ADR-0263-battle-offer-section-goes-live-on-the-production-pack.md](ADR-0263-battle-offer-section-goes-live-on-the-production-pack.md) | The battle-offer section goes live on the production pack | accepted | — |
-| 0264 | [ADR-0264-t1-battle-offer-state-keeps-compatibility-version-4-0-0.md](ADR-0264-t1-battle-offer-state-keeps-compatibility-version-4-0-0.md) | The T-1 battle-offer state keeps compatibility version 4.0.0 | accepted | — |
-| 0265 | [ADR-0265-battle-declined-event-carries-the-running-decline-count.md](ADR-0265-battle-declined-event-carries-the-running-decline-count.md) | The BattleDeclined event carries the running decline count | accepted | — |
-| 0266 | [ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md](ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md) | S-5 presence values and the other open decision requests, resolved by delegation | accepted | — |
+| 0231 | [ADR-0231-nation-home-area-and-possession-ownership.md](ADR-0231-nation-home-area-and-possession-ownership.md) | Authoritative nation home area and possession ownership in campaign state | superseded | ADR-0362 |
+| 0241 | [ADR-0241-foreign-station-assignment-state.md](ADR-0241-foreign-station-assignment-state.md) | Foreign-station assignment is optional ship state, orthogonal to readiness | superseded | ADR-0362 |
+| 0242 | [ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md](ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) | Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section | superseded | ADR-0362 |
+| 0247 | [ADR-0247-presence-measurement-and-shortfall.md](ADR-0247-presence-measurement-and-shortfall.md) | Presence is measured at month end from the dormant S-5 section and reported as typed shortfall events | superseded | ADR-0362 |
+| 0248 | [ADR-0248-blockade-exemption-and-typed-penalty-requests.md](ADR-0248-blockade-exemption-and-typed-penalty-requests.md) | A blockaded nation at war is exempt from presence, and shortfalls emit typed penalty requests | superseded | ADR-0362 |
+| 0249 | [ADR-0249-foreign-station-deployment-routes-ships-to-the-largest-shortfall.md](ADR-0249-foreign-station-deployment-routes-ships-to-the-largest-shortfall.md) | Foreign-station ships are routed one hop a month toward the largest shortfall | superseded | ADR-0362 |
+| 0250 | [ADR-0250-base-limits-flag-and-consequences-at-month-end.md](ADR-0250-base-limits-flag-and-consequences-at-month-end.md) | Base limits are checked last each month; over-base ships are flagged and take the S-1 consequences | superseded | ADR-0362 |
+| 0251 | [ADR-0251-fleet-screen-foreign-station-status-assign-and-presence-readout.md](ADR-0251-fleet-screen-foreign-station-status-assign-and-presence-readout.md) | The fleet screen shows manual p.48 status, assigns foreign station, and reads presence from the projection | superseded | ADR-0362 |
+| 0253 | [ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md](ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) | Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input | superseded | ADR-0363 |
+| 0254 | [ADR-0254-t1-battle-offer-values-balance-targets.md](ADR-0254-t1-battle-offer-values-balance-targets.md) | T-1 battle-offer values: labelled balance targets | superseded | ADR-0363 |
+| 0255 | [ADR-0255-battle-offer-request-estimate-and-answer.md](ADR-0255-battle-offer-request-estimate-and-answer.md) | The battle offer: request shape, estimate, accept and delegate, typed refusals | superseded | ADR-0363 |
+| 0256 | [ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md](ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md) | Declining a battle offer: terminal record, released ships, victory-point cost | superseded | ADR-0363 |
+| 0257 | [ADR-0257-declined-battle-tally-and-threshold-event.md](ADR-0257-declined-battle-tally-and-threshold-event.md) | Declined-battle tally and the repeated-decline threshold event | superseded | ADR-0363 |
+| 0258 | [ADR-0258-enemy-declines-a-battle-with-the-player.md](ADR-0258-enemy-declines-a-battle-with-the-player.md) | The enemy declines a battle with the player | superseded | ADR-0363 |
+| 0259 | [ADR-0259-friendly-support-force-joins-the-players-side.md](ADR-0259-friendly-support-force-joins-the-players-side.md) | A friendly support force joins the player's side | superseded | ADR-0363 |
+| 0262 | [ADR-0262-repeated-declines-cost-the-player-prestige.md](ADR-0262-repeated-declines-cost-the-player-prestige.md) | Repeated declines cost the player prestige through the S-2 seam | superseded | ADR-0363 |
+| 0263 | [ADR-0263-battle-offer-section-goes-live-on-the-production-pack.md](ADR-0263-battle-offer-section-goes-live-on-the-production-pack.md) | The battle-offer section goes live on the production pack | superseded | ADR-0363 |
+| 0264 | [ADR-0264-t1-battle-offer-state-keeps-compatibility-version-4-0-0.md](ADR-0264-t1-battle-offer-state-keeps-compatibility-version-4-0-0.md) | The T-1 battle-offer state keeps compatibility version 4.0.0 | superseded | ADR-0363 |
+| 0265 | [ADR-0265-battle-declined-event-carries-the-running-decline-count.md](ADR-0265-battle-declined-event-carries-the-running-decline-count.md) | The BattleDeclined event carries the running decline count | superseded | ADR-0363 |
+| 0266 | [ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md](ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md) | S-5 presence values and the other open decision requests, resolved by delegation | superseded | ADR-0362 |
+| 0362 | [ADR-0362-foreign-station-presence.md](ADR-0362-foreign-station-presence.md) | Foreign station presence — measurement, assignment, base limits, and penalties | accepted | — |
+| 0363 | [ADR-0363-battle-offers.md](ADR-0363-battle-offers.md) | Battle offers — estimate, decline, enemy decline, and support force | accepted | — |
 
 ## Ship design & construction
 

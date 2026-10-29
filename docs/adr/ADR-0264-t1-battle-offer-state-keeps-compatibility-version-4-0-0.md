@@ -4,6 +4,8 @@ Applies to: content, persistence
 
 ## Status
 
+Superseded by: ADR-0363
+
 Accepted (2026-10-21). Closes the R15 assessment of spec
 [#109](https://github.com/joaooliveira92/iron-tide/issues/109) left to the persistence ticket
 ([#113](https://github.com/joaooliveira92/iron-tide/issues/113)). Applies the policy of

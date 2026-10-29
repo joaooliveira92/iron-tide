@@ -2,9 +2,9 @@
 
 Applies to: repository
 
-Rule: Agents discover ownership with `pnpm agent:map`, validate a change with `pnpm verify:affected`, and run long gates blocking through `pnpm heavy`; scoped verification widens to full scope whenever impact is uncertain and never replaces `pnpm check`.
-
 ## Status
+
+Superseded by: ADR-0365
 
 Accepted (2026-10-29). Resolves the agent-session efficiency program (#381).
 

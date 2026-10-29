@@ -4,6 +4,8 @@ Applies to: content, phase-engine, cross-process-test
 
 ## Status
 
+Superseded by: ADR-0363
+
 Accepted (2026-10-21). Resolves decision requests
 [0028](../../.ai/decision-requests/0028-t-1-battle-estimate-model.md),
 [0029](../../.ai/decision-requests/0029-t-1-decline-victory-point-cost.md),

@@ -2,9 +2,9 @@
 
 Applies to: combat
 
-Rule: Unreachable combat modules stay dormant until their roadmap owner wires them; the UI must not expose them meanwhile.
-
 ## Status
+
+Superseded by: ADR-0365
 
 Accepted (2026-10-25). Resolves [#225](https://github.com/joaooliveira92/iron-tide/issues/225), taking Option A of
 `.ai/decision-requests/0046-unreachable-combat-modules-wire-dormant-or-retire.md`. The owner delegated the choice.

@@ -8,14 +8,15 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness.
 - [ADR-0338](../ADR-0338-options-and-preferences-and-campaign-command-registry.md) Preferences are a versioned domain object with strict validation and.
 - [ADR-0355](../ADR-0355-readiness-command-structure-and-division-state.md) Every numeric gameplay value for readiness, crew and maintenance is a centralized ruleset constant with provenance; per-nation officer rosters and seeded divisions are authored balance choices; command-lifecycle scaffolding is removed from shipping code; ship conditions are derived predicates computed from existing fields.
 - [ADR-0357](../ADR-0357-training-exercises-division-growth-and-explanation-trees.md) Division cohesion and experience grow through pure rules; special training is a nation program with proficiency tracked in funded months; exercises are commanded for the following month through the assignment slot and cost doubled active maintenance; training effects reach battle through one per-side effects record; displayed numbers carry explanation trees built from the same calculation the engine uses.
 - [ADR-0360](../ADR-0360-desktop-ipc-and-process-boundary-architecture.md) Desktop bridge channels are declared once in `shared/ipc-contract.ts`; the command surface is split by concern; UI-state writes are field patches merged once in main; navigation, permission and CSP are guarded from a single policy.
+- [ADR-0362](../ADR-0362-foreign-station-presence.md) S-5 presence is measured at month end from authored ruleset values; nations own possessions in presence areas, deploy ships on foreign station duty, and incur penalties for shortfalls, with exemption for blockade, while base limits constrain over-deployment.
 
 ## Superseded (do not follow)
 
+- [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness. Follow ADR-0362.
 - [ADR-0270](../ADR-0270-campaign-command-table-is-the-registry.md) The campaign command descriptor table is the command registry. Follow ADR-0338.
 - [ADR-0273](../ADR-0273-shared-command-contract-split-by-concern.md) The shared command contract is split by concern. Follow ADR-0360.
 - [ADR-0289](../ADR-0289-division-doctrine-command-and-speed-advisory.md) Role and formation changes are one division command priced from the ruleset; speed mismatch is a derived advisory. Follow ADR-0357.
