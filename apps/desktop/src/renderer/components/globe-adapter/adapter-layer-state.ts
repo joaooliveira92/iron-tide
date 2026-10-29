@@ -1,6 +1,7 @@
-import type { FlatPolygon } from "../../lib/simplify-geometry.js";
+import type { FlatPolygon, FlatRing } from "../../lib/simplify-geometry.js";
 import { campaignNationHue } from "../../content/presentationContent.js";
 import { BORDERS_1880 } from "../world-map/borders-1880-data.js";
+import { BORDER_FRONTIERS_1880 } from "../world-map/borders-1880-frontiers-data.js";
 import type { LayerId, MapPrototypeState } from "../world-map/map-state.js";
 import type { ProjectionId } from "../world-map/projection.js";
 import type { CameraProjection } from "./camera-contract.js";
@@ -107,6 +108,34 @@ export function buildBorderCollection(
           id: nation,
           properties: { id: nation, name: nation },
           geometry: { type: "MultiPolygon" as const, coordinates },
+        },
+      ];
+    });
+  return { type: "FeatureCollection", features };
+}
+
+function frontierLine(ring: FlatRing): number[][] {
+  const pairs: number[][] = [];
+  for (let index = 0; index < ring.length; index += 2) {
+    pairs.push([ring[index] as number, ring[index + 1] as number]);
+  }
+  return pairs;
+}
+
+export function buildFrontierCollection(
+  frontiers: Readonly<Record<string, readonly FlatRing[]>> = BORDER_FRONTIERS_1880,
+): GeoJSON.FeatureCollection {
+  const features: GeoJSON.Feature[] = Object.entries(frontiers)
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .flatMap(([nation, lines]) => {
+      const coordinates = lines.map(frontierLine).filter((line) => line.length >= 2);
+      if (coordinates.length === 0) return [];
+      return [
+        {
+          type: "Feature" as const,
+          id: nation,
+          properties: { id: nation, name: nation },
+          geometry: { type: "MultiLineString" as const, coordinates },
         },
       ];
     });

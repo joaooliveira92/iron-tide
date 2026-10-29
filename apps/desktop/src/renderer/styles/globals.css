@@ -234,7 +234,6 @@
   --globe-ocean-outer: #cfe3f4;
   --globe-accent: var(--color-admiralty-signal);
   --globe-land-fill: #cbdcc4;
-  --globe-land-stroke: var(--color-admiralty-accent);
   --globe-ring: var(--color-admiralty-accent);
 }
 

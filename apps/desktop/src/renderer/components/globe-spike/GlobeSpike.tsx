@@ -211,13 +211,6 @@ function landLayers(plan: ReadyPlan): LayerSpecification[] {
       ...sourceLayer,
       paint: { "fill-color": "#33473b" },
     },
-    {
-      id: "land-line",
-      type: "line",
-      source: "land",
-      ...sourceLayer,
-      paint: { "line-color": "#9cc2ae", "line-width": 0.8 },
-    },
   ];
   if (plan.kind === "baked") {
     layers.push({

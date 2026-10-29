@@ -3,7 +3,6 @@ import { useSyncExternalStore } from "react";
 export interface MapPalette {
   readonly ocean: string;
   readonly land: string;
-  readonly landEdge: string;
   readonly graticule: string;
   readonly areaEdge: string;
   readonly areaWash: string;
@@ -35,7 +34,6 @@ export interface MapPalette {
 export const DARK_MAP_PALETTE: MapPalette = {
   ocean: "oklch(0.2 0.045 240)",
   land: "oklch(0.36 0.045 150)",
-  landEdge: "oklch(0.5 0.05 150)",
   graticule: "oklch(0.40 0.02 245 / 0.45)",
   areaEdge: "oklch(0.75 0.02 240 / 0.2)",
   areaWash: "oklch(0.7 0.02 240 / 0.11)",
@@ -67,7 +65,6 @@ export const DARK_MAP_PALETTE: MapPalette = {
 export const LIGHT_MAP_PALETTE: MapPalette = {
   ocean: "oklch(0.9 0.045 230)",
   land: "oklch(0.8 0.08 140)",
-  landEdge: "oklch(0.55 0.08 145)",
   graticule: "oklch(0.55 0.02 245 / 0.22)",
   areaEdge: "oklch(0.45 0.03 245 / 0.22)",
   areaWash: "oklch(0.6 0.03 245 / 0.1)",

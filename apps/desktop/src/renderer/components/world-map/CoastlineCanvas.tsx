@@ -4,7 +4,12 @@ import {
   coastlineTierFor,
   type CoastlineTier,
 } from "../../lib/coastline-tiers.js";
-import { simplifyPolygons, type FlatPolygon } from "../../lib/simplify-geometry.js";
+import {
+  simplifyPolygons,
+  simplifyRing,
+  type FlatPolygon,
+  type FlatRing,
+} from "../../lib/simplify-geometry.js";
 import { runTimeSliced, type TimeSliceHandle } from "../../lib/time-slice.js";
 import type { MapCamera } from "./useMapCamera.js";
 import { snapBordersToIslands } from "./snap-borders-to-islands.js";
@@ -24,19 +29,20 @@ export interface CoastlineCanvasProps {
   readonly projection: Projection;
   readonly centre: number;
   readonly fill: string;
-  readonly stroke: string;
   readonly borders?: readonly BorderSet[];
 }
 
 export interface BorderSet {
   readonly id: string;
   readonly polygons: readonly FlatPolygon[];
+  readonly frontiers: readonly FlatRing[];
   readonly tint: string;
   readonly edge: string;
 }
 
 interface BuiltBorders {
   readonly path: Path2D;
+  readonly frontierPath: Path2D;
   readonly tint: string;
   readonly edge: string;
 }
@@ -78,7 +84,18 @@ function buildBorders(
         path.closePath();
       }
     }
-    return { path, tint: set.tint, edge: set.edge };
+    const frontierPath = new Path2D();
+    const frontiers = (
+      tolerance === 0 ? set.frontiers : set.frontiers.map((line) => simplifyRing(line, tolerance))
+    ).filter((line) => line.length >= 4);
+    for (const line of frontiers) {
+      for (let k = 0; k < line.length; k += 2) {
+        const [x, y] = projection.project((line[k] as number) - centre, line[k + 1] as number);
+        if (k === 0) frontierPath.moveTo(x, y);
+        else frontierPath.lineTo(x, y);
+      }
+    }
+    return { path, frontierPath, tint: set.tint, edge: set.edge };
   });
 }
 
@@ -134,7 +151,6 @@ export function CoastlineCanvas({
   projection,
   centre,
   fill,
-  stroke,
   borders,
 }: CoastlineCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -195,8 +211,6 @@ export function CoastlineCanvas({
       const d = ctm.d * transform.scale;
       const f = ctm.d * transform.y + ctm.f - rect.top;
       context.fillStyle = fill;
-      context.strokeStyle = stroke;
-      context.lineWidth = dpr / Math.min(a, d);
       context.lineJoin = "round";
 
       for (const turn of WORLD_WRAP_TURNS) {
@@ -211,7 +225,6 @@ export function CoastlineCanvas({
           const bottom = d * polygon.maxY + f;
           if (right < 0 || left > rect.width || bottom < 0 || top > rect.height) continue;
           context.fill(polygon.path, "evenodd");
-          context.stroke(polygon.path);
         }
         const builtBordersNow = bordersRef.current(wantedTier);
         if (builtBordersNow.length > 0) {
@@ -221,12 +234,10 @@ export function CoastlineCanvas({
             context.fillStyle = border.tint;
             context.fill(border.path, "evenodd");
             context.strokeStyle = border.edge;
-            context.stroke(border.path);
+            context.stroke(border.frontierPath);
           }
           context.globalCompositeOperation = "source-over";
           context.fillStyle = fill;
-          context.strokeStyle = stroke;
-          context.lineWidth = dpr / Math.min(a, d);
         }
       }
     };
@@ -281,7 +292,7 @@ export function CoastlineCanvas({
       observer?.disconnect();
       if (frame !== 0) cancelAnimationFrame(frame);
     };
-  }, [polygons, projection, centre, fill, stroke]);
+  }, [polygons, projection, centre, fill]);
 
   return (
     <>

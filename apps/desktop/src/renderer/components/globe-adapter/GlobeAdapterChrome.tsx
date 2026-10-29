@@ -107,7 +107,7 @@ function GlobeMinimap({
         );
       }}
     >
-      <path d={path} fill="#fcf4f0" fillOpacity={1} stroke="#5bc9b0" strokeOpacity={0.6} />
+      <path d={path} fill="#fcf4f0" fillOpacity={1} />
       <rect
         x={rect.x}
         y={rect.y}

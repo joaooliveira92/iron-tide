@@ -4,6 +4,7 @@ import {
   adapterProjectionFromApp,
   appProjectionFromAdapter,
   buildBorderCollection,
+  buildFrontierCollection,
   buildGraticuleCollection,
   markerFilter,
   minimapToLatitude,
@@ -87,6 +88,20 @@ describe("adapter layer state", () => {
     );
     expect(meridians).toHaveLength(12);
     expect(parallels).toHaveLength(5);
+  });
+
+  it("builds inland frontier polylines instead of stroking the coast", () => {
+    const frontiers = buildFrontierCollection();
+    expect(frontiers.features.length).toBeGreaterThan(0);
+    for (const feature of frontiers.features) {
+      expect(feature.geometry.type).toBe("MultiLineString");
+      if (feature.geometry.type !== "MultiLineString") continue;
+      for (const line of feature.geometry.coordinates) {
+        expect(line.length).toBeGreaterThanOrEqual(2);
+      }
+    }
+    const japan = frontiers.features.find((feature) => feature.id === "japan");
+    expect(japan).toBeUndefined();
   });
 
   it("dims ownership without hiding the area fill that drives picking", () => {

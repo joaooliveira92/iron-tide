@@ -44,6 +44,7 @@ import {
   adapterProjectionFromApp,
   appProjectionFromAdapter,
   buildBorderCollection,
+  buildFrontierCollection,
   buildGraticuleCollection,
   borderColorExpression,
   markerFilter,
@@ -228,6 +229,12 @@ function mapSources(
       promoteId: "id",
       maxzoom: 22,
     },
+    "adapter-border-lines": {
+      type: "geojson",
+      data: buildFrontierCollection(),
+      promoteId: "id",
+      maxzoom: 22,
+    },
     "adapter-graticule": {
       type: "geojson",
       data: buildGraticuleCollection(),
@@ -247,8 +254,6 @@ const AREA_LAYER_IDS: ReadonlySet<string> = new Set([
 
 const SEA_COLOR = srgbToCanvasHex("#00cce0");
 const LAND_COLOR = srgbToCanvasHex("#fcf4f0");
-const COAST_COLOR = srgbToCanvasHex("#6fd3bc");
-
 const CLIMATE_ZONE_COLORS: readonly (readonly [number, string])[] = [
   [1, srgbToCanvasHex("#44d8b8")],
   [2, srgbToCanvasHex("#70e0c4")],
@@ -286,13 +291,6 @@ function mapLayers(
       source: "land",
       "source-layer": manifest.layers.climate,
       paint: { "fill-color": climateFillColor() as never, "fill-antialias": false },
-    },
-    {
-      id: "land-line",
-      type: "line",
-      source: "land",
-      "source-layer": manifest.layers.land,
-      paint: { "line-color": COAST_COLOR, "line-width": 0.8 },
     },
     {
       id: "protected-water",
@@ -372,7 +370,7 @@ function mapLayers(
     {
       id: "adapter-borders-line",
       type: "line",
-      source: "adapter-borders",
+      source: "adapter-border-lines",
       layout: { visibility: visibility.borders ? "visible" : "none" },
       paint: {
         "line-color": borderColorExpression() as never,
