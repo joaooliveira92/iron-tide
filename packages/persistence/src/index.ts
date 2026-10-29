@@ -16,8 +16,8 @@ export {
   PersistenceInvalidOptionError,
   PersistenceIoError,
   PersistenceMissingSaveError,
-  PersistenceUnsignedSaveError,
-  UNSIGNED_SAVE_CODE,
+  PersistenceLegacySaveError,
+  LEGACY_SAVE_CODE,
 } from "./errors.js";
 export type { PersistenceError, PersistenceErrorFields } from "./errors.js";
 export { cleanup, RecoveryManager, sweepStaleTemp } from "./recovery.js";
@@ -30,6 +30,16 @@ export {
   type SaveMigrationKind,
   type SaveMigrationStep,
 } from "./saveMigration.js";
+export {
+  buildSaveManifest,
+  LEGACY_SIG_FILE,
+  SAVE_FORMAT_VERSION,
+  SAVE_HASH_VERSION,
+  SAVE_MANIFEST_FILE,
+  verifySaveManifest,
+  writeSaveManifest,
+  type SaveManifestCheck,
+} from "./manifest.js";
 export { decodeStorableCampaignState, StorableCampaignStateSchema } from "./schemas.js";
 export { fromStorableSnapshot } from "./snapshotSerialization.js";
 export type { StorableCampaignSnapshot } from "./snapshotSerialization.js";

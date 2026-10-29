@@ -11,11 +11,12 @@ import { basename, dirname, join } from "node:path";
 import { createCampaignSnapshotEnvelope, verifyCampaignSnapshotEnvelope } from "@bluewave/campaign";
 import type { CampaignState } from "@bluewave/campaign";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
-import { Result, Schema } from "effect";
+import { Result } from "effect";
 import { CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
 import { readSaveMetadata } from "./fileDecode.js";
 import { BACKUP_PREFIX, MIGRATING_SUFFIX } from "./recovery.js";
-import { SaveHeaderSchema } from "./schemas.js";
+import { LEGACY_SIG_FILE, SAVE_MANIFEST_FILE, writeSaveManifest } from "./manifest.js";
+import { decodeSaveHeader } from "./schemas.js";
 import { toStorableSnapshot } from "./snapshotSerialization.js";
 import { loadByIdResult } from "./store.js";
 
@@ -43,7 +44,6 @@ export type MigrateSaveDirectoryResult =
     };
 
 const CAMPAIGN_FILE = "campaign.json";
-const SIG_FILE = "campaign.sig.json";
 const METADATA_FILE = "metadata.json";
 
 const parseVersion = (value: string): readonly [number, number, number] | null => {
@@ -64,7 +64,7 @@ const isFuture = (from: string, current: string): boolean => {
 };
 
 export function detectSaveVersion(raw: unknown): string | null {
-  const decoded = Schema.decodeUnknownResult(SaveHeaderSchema)(raw);
+  const decoded = decodeSaveHeader(raw);
   return Result.isSuccess(decoded) ? decoded.success.snapshot.compatibilityVersion : null;
 }
 
@@ -172,19 +172,16 @@ export function migrateSaveDirectory(
   try {
     mkdirSync(tmpPath, { recursive: true });
     for (const entry of readdirSync(savePath)) {
-      if (entry === CAMPAIGN_FILE || entry === SIG_FILE || entry === METADATA_FILE) continue;
+      if (
+        entry === CAMPAIGN_FILE ||
+        entry === METADATA_FILE ||
+        entry === LEGACY_SIG_FILE ||
+        entry === SAVE_MANIFEST_FILE
+      )
+        continue;
       renameSync(join(savePath, entry), join(tmpPath, entry));
     }
     writeFileSync(join(tmpPath, CAMPAIGN_FILE), serialized, "utf8");
-    writeFileSync(
-      join(tmpPath, SIG_FILE),
-      JSON.stringify(
-        { serializedHash, stateHash: migrated.rawHash, compatibilityVersion: current },
-        null,
-        2,
-      ),
-      "utf8",
-    );
     writeFileSync(
       join(tmpPath, METADATA_FILE),
       JSON.stringify(
@@ -199,6 +196,7 @@ export function migrateSaveDirectory(
       ),
       "utf8",
     );
+    writeSaveManifest(tmpPath);
 
     renameSync(savePath, backup);
     moved = true;

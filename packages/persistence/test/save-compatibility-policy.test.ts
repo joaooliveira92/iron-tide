@@ -10,6 +10,7 @@ import {
   CURRENT_COMPATIBILITY_VERSION,
   PART_MODEL_COMPATIBILITY_VERSION,
 } from "../src/compatibility.js";
+import { writeSaveManifest } from "../src/manifest.js";
 import { SaveStore } from "../src/store.js";
 import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
@@ -92,6 +93,7 @@ describe("save-compatibility policy (ADR-0113)", () => {
     };
     parsed.snapshot.compatibilityVersion = "1.0.0";
     writeFileSync(campaignPath, JSON.stringify(parsed), "utf8");
+    writeSaveManifest(join(tmpDir, saveId!));
 
     const error = expectFailureTag(
       runExit(store.load(tmpDir)),
@@ -116,6 +118,7 @@ describe("save-compatibility policy (ADR-0113)", () => {
       };
       parsed.snapshot.compatibilityVersion = prior;
       writeFileSync(campaignPath, JSON.stringify(parsed), "utf8");
+      writeSaveManifest(join(tmpDir, saveId!));
 
       const error = expectFailureTag(
         runExit(store.load(tmpDir)),

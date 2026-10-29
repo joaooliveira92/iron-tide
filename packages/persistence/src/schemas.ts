@@ -19,6 +19,8 @@ export const SaveHeaderSchema = Schema.Struct({
 
 export type DecodedSaveHeader = Mutable<typeof SaveHeaderSchema.Type>;
 
+export const decodeSaveHeader = Schema.decodeUnknownResult(SaveHeaderSchema);
+
 const JsonRecord = Schema.Record(Schema.String, Schema.Unknown);
 
 const StorableDesignCapabilitySchema = Schema.Union([
@@ -245,6 +247,23 @@ export const SigFileSchema = Schema.Struct({
 });
 
 export type SigFile = Mutable<typeof SigFileSchema.Type>;
+
+export const SaveManifestFileSchema = Schema.Struct({
+  name: Schema.String,
+  hash: Schema.String,
+});
+
+export const SaveManifestSchema = Schema.Struct({
+  formatVersion: Schema.Literal(1),
+  hashVersion: Schema.String,
+  files: Schema.Array(SaveManifestFileSchema),
+});
+
+export type SaveManifest = Mutable<typeof SaveManifestSchema.Type>;
+
+export const decodeSaveManifest = Schema.decodeUnknownResult(SaveManifestSchema, {
+  onExcessProperty: "error",
+});
 
 export const SaveMetadataSchema = Schema.Struct({
   saveId: Schema.String,
