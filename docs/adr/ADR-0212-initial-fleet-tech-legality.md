@@ -4,6 +4,8 @@ Applies to: content, campaign, ship-design, content-compiler
 
 ## Status
 
+Superseded by: ADR-0339
+
 Accepted (2026-10-15). New record of decision DR-012; no prior ADR file existed
 for it and none is restored (see ADR-0210). Resolves decision request
 `.ai/decision-requests/0002-initial-fleet-tech-legality.md` (D1) and unblocks N-1

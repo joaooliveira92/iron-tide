@@ -4,6 +4,8 @@ Applies to: desktop
 
 ## Status
 
+Superseded by: ADR-0344
+
 Accepted for the Phase 0/1 investigation spike (2026-10-27); not approved for production migration. A larger-scale canal source and every non-Natural-Earth dataset remain blocked on the legal decisions in G-01a and G-01b.
 
 ## Context

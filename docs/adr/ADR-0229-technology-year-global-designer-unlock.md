@@ -4,6 +4,8 @@ Applies to: content-schema, ship-design, phase-engine
 
 ## Status
 
+Superseded by: ADR-0339
+
 Accepted (2026-10-17). Records decision D4 of the N-3 map (#42), closed on
 [#46](https://github.com/joaooliveira92/iron-tide/issues/46) and resolved by
 delegation in

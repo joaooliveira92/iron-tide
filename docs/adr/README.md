@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0338).
+highest existing number + 1 (the next number is ADR-0345).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -55,8 +55,9 @@ The versioned preferences domain behind the Options screen.
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0203 | [ADR-0203-options-and-preferences-architecture.md](ADR-0203-options-and-preferences-architecture.md) | Options screen and preferences architecture | accepted | — |
-| 0270 | [ADR-0270-campaign-command-table-is-the-registry.md](ADR-0270-campaign-command-table-is-the-registry.md) | The campaign command descriptor table is the command registry | accepted | — |
+| 0338 | [ADR-0338-options-and-preferences-and-campaign-command-registry.md](ADR-0338-options-and-preferences-and-campaign-command-registry.md) | Options, preferences and the campaign command registry | accepted | — |
+| 0203 | [ADR-0203-options-and-preferences-architecture.md](ADR-0203-options-and-preferences-architecture.md) | Options screen and preferences architecture | superseded | ADR-0338 |
+| 0270 | [ADR-0270-campaign-command-table-is-the-registry.md](ADR-0270-campaign-command-table-is-the-registry.md) | The campaign command descriptor table is the command registry | superseded | ADR-0338 |
 
 ## Repository authority & re-baselining
 
@@ -101,12 +102,14 @@ Legality, consistency and authored posture of the 1880 scenario's starting conte
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0212 | [ADR-0212-initial-fleet-tech-legality.md](ADR-0212-initial-fleet-tech-legality.md) | Initial-fleet tech legality uses the global 1880 tech set | accepted | — |
-| 0213 | [ADR-0213-opening-posture-balance-choices.md](ADR-0213-opening-posture-balance-choices.md) | The 1880 opening posture is authored canon; magnitudes are balance choices | accepted | — |
-| 0228 | [ADR-0228-combat-classifier-1880-ruleset-v2.md](ADR-0228-combat-classifier-1880-ruleset-v2.md) | The combat ship-type classifier aligns to the 1880 classification ruleset v2 | accepted | — |
-| 0229 | [ADR-0229-technology-year-global-designer-unlock.md](ADR-0229-technology-year-global-designer-unlock.md) | Technology `year` is the global designer unlock year, not a research claim | accepted | — |
-| 0315 | [ADR-0315-research-workspace-projection.md](ADR-0315-research-workspace-projection.md) | The research screen reads a technology-chart projection, and the draw weight has one home | accepted | — |
-| 0310 | [ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md](ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) | E-1 catalogue technologies for carrier, mine and submarine engine ids | accepted | — |
+| 0339 | [ADR-0339-scenario-opening-conditions-and-technology-unlock.md](ADR-0339-scenario-opening-conditions-and-technology-unlock.md) | Scenario opening conditions & technology unlock discipline | accepted | — |
+| 0340 | [ADR-0340-combat-classification-and-research-technology-alignment.md](ADR-0340-combat-classification-and-research-technology-alignment.md) | Combat classification & research technology alignment | accepted | — |
+| 0212 | [ADR-0212-initial-fleet-tech-legality.md](ADR-0212-initial-fleet-tech-legality.md) | Initial-fleet tech legality uses the global 1880 tech set | superseded | ADR-0339 |
+| 0213 | [ADR-0213-opening-posture-balance-choices.md](ADR-0213-opening-posture-balance-choices.md) | The 1880 opening posture is authored canon; magnitudes are balance choices | superseded | ADR-0339 |
+| 0228 | [ADR-0228-combat-classifier-1880-ruleset-v2.md](ADR-0228-combat-classifier-1880-ruleset-v2.md) | The combat ship-type classifier aligns to the 1880 classification ruleset v2 | superseded | ADR-0340 |
+| 0229 | [ADR-0229-technology-year-global-designer-unlock.md](ADR-0229-technology-year-global-designer-unlock.md) | Technology `year` is the global designer unlock year, not a research claim | superseded | ADR-0339 |
+| 0315 | [ADR-0315-research-workspace-projection.md](ADR-0315-research-workspace-projection.md) | The research screen reads a technology-chart projection, and the draw weight has one home | superseded | ADR-0340 |
+| 0310 | [ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md](ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) | E-1 catalogue technologies for carrier, mine and submarine engine ids | superseded | ADR-0340 |
 
 ## Campaign economy
 
@@ -124,13 +127,15 @@ Turn identity, the suspend/resume interruption model, and strict save-file decod
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0222 | [ADR-0222-turn-identity-stable-across-resume.md](ADR-0222-turn-identity-stable-across-resume.md) | A turn's interruption identity is stable across suspend and resume | accepted | — |
-| 0235 | [ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md](ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md) | Main-owned recent campaigns and reopen allow-list | accepted | — |
-| 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
-| 0285 | [ADR-0285-campaign-snapshot-hash-covers-map-fields.md](ADR-0285-campaign-snapshot-hash-covers-map-fields.md) | The campaign snapshot hash covers Map fields | accepted | — |
-| 0305 | [ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md](ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md) | Saves are retained by an opt-in count with a protected head; Effect-returning persistence methods carry an `Effect` suffix | accepted | — |
-| 0330 | [ADR-0330-unified-snapshot-hash.md](ADR-0330-unified-snapshot-hash.md) | One versioned, domain-separated snapshot hash | accepted | — |
-| 0331 | [ADR-0331-save-manifest-integrity.md](ADR-0331-save-manifest-integrity.md) | Saves are sealed by a complete-file manifest, not a signature | accepted | — |
+| 0342 | [ADR-0342-turn-identity-and-campaign-resume-workflow.md](ADR-0342-turn-identity-and-campaign-resume-workflow.md) | Turn identity and campaign resume workflow | accepted | — |
+| 0343 | [ADR-0343-save-file-integrity-retention-and-hashing.md](ADR-0343-save-file-integrity-retention-and-hashing.md) | Save file integrity, retention and hashing | accepted | — |
+| 0222 | [ADR-0222-turn-identity-stable-across-resume.md](ADR-0222-turn-identity-stable-across-resume.md) | A turn's interruption identity is stable across suspend and resume | superseded | ADR-0342 |
+| 0235 | [ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md](ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md) | Main-owned recent campaigns and reopen allow-list | superseded | ADR-0342 |
+| 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | superseded | ADR-0343 |
+| 0285 | [ADR-0285-campaign-snapshot-hash-covers-map-fields.md](ADR-0285-campaign-snapshot-hash-covers-map-fields.md) | The campaign snapshot hash covers Map fields | superseded | ADR-0343 |
+| 0305 | [ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md](ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md) | Saves are retained by an opt-in count with a protected head; Effect-returning persistence methods carry an `Effect` suffix | superseded | ADR-0343 |
+| 0330 | [ADR-0330-unified-snapshot-hash.md](ADR-0330-unified-snapshot-hash.md) | One versioned, domain-separated snapshot hash | superseded | ADR-0343 |
+| 0331 | [ADR-0331-save-manifest-integrity.md](ADR-0331-save-manifest-integrity.md) | Saves are sealed by a complete-file manifest, not a signature | superseded | ADR-0343 |
 
 ## Fleet readiness, command & prestige
 
@@ -212,13 +217,14 @@ How the presentation-only strategic map's baked geography is produced.
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
-| 0244 | [ADR-0244-nation-borders-are-clipped-to-the-map-coastline.md](ADR-0244-nation-borders-are-clipped-to-the-map-coastline.md) | Nation borders are baked clipped to the map's coastline | accepted | — |
-| 0323 | [ADR-0323-geographic-data-sources-and-protected-overlays.md](ADR-0323-geographic-data-sources-and-protected-overlays.md) | Geographic data sources and protected-feature overlays | accepted | — |
-| 0324 | [ADR-0324-edge-semantics-offline-tiling-and-renderer-boundaries.md](ADR-0324-edge-semantics-offline-tiling-and-renderer-boundaries.md) | Edge semantics, offline tiling and renderer boundaries | accepted | — |
-| 0325 | [ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md](ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md) | Production globe adapter and dynamic overlay contract | accepted | — |
-| 0326 | [ADR-0326-globe-adapter-interaction-parity.md](ADR-0326-globe-adapter-interaction-parity.md) | Globe adapter interaction parity and projection mapping | accepted | — |
-| 0327 | [ADR-0327-globe-overview-production-enablement.md](ADR-0327-globe-overview-production-enablement.md) | Globe overview production enablement | accepted | — |
-| 0329 | [ADR-0329-land-climate-zones-baked-from-koppen-geiger.md](ADR-0329-land-climate-zones-baked-from-koppen-geiger.md) | Land climate zones are baked from Köppen-Geiger V3 | accepted | — |
+| 0344 | [ADR-0344-world-map-geography-and-globe.md](ADR-0344-world-map-geography-and-globe.md) | World map geography, data pipeline and globe rendering | accepted | — |
+| 0244 | [ADR-0244-nation-borders-are-clipped-to-the-map-coastline.md](ADR-0244-nation-borders-are-clipped-to-the-map-coastline.md) | Nation borders are baked clipped to the map's coastline | superseded | ADR-0344 |
+| 0323 | [ADR-0323-geographic-data-sources-and-protected-overlays.md](ADR-0323-geographic-data-sources-and-protected-overlays.md) | Geographic data sources and protected-feature overlays | superseded | ADR-0344 |
+| 0324 | [ADR-0324-edge-semantics-offline-tiling-and-renderer-boundaries.md](ADR-0324-edge-semantics-offline-tiling-and-renderer-boundaries.md) | Edge semantics, offline tiling and renderer boundaries | superseded | ADR-0344 |
+| 0325 | [ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md](ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md) | Production globe adapter and dynamic overlay contract | superseded | ADR-0344 |
+| 0326 | [ADR-0326-globe-adapter-interaction-parity.md](ADR-0326-globe-adapter-interaction-parity.md) | Globe adapter interaction parity and projection mapping | superseded | ADR-0344 |
+| 0327 | [ADR-0327-globe-overview-production-enablement.md](ADR-0327-globe-overview-production-enablement.md) | Globe overview production enablement | superseded | ADR-0344 |
+| 0329 | [ADR-0329-land-climate-zones-baked-from-koppen-geiger.md](ADR-0329-land-climate-zones-baked-from-koppen-geiger.md) | Land climate zones are baked from Köppen-Geiger V3 | superseded | ADR-0344 |
 
 ## Engine architecture
 

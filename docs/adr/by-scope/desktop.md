@@ -8,7 +8,6 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0203](../ADR-0203-options-and-preferences-architecture.md) Options screen and preferences architecture.
 - [ADR-0206](../ADR-0206-naval-credits.md) Naval Credits (NC) as the standardized comparison currency.
 - [ADR-0207](../ADR-0207-budget-points.md) Budget Points (BP) as an abstract display unit.
 - [ADR-0208](../ADR-0208-no-custom-display-currency.md) Custom display currency excluded from the initial release.
@@ -19,39 +18,45 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0221](../ADR-0221-structured-explanation-data.md) Structured explanation data for domain display values.
 - [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity.
 - [ADR-0233](../ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) Designer draft-schema v2 and canonical vocabulary.
-- [ADR-0235](../ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md) Main-owned recent campaigns and reopen allow-list.
 - [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
 - [ADR-0243](../ADR-0243-design-edits-are-guarded-by-the-design-session.md) Every design edit goes through the design session's guard, and a newly blocking or critical finding is explained at once.
-- [ADR-0244](../ADR-0244-nation-borders-are-clipped-to-the-map-coastline.md) Nation borders are baked clipped to the map's coastline.
 - [ADR-0251](../ADR-0251-fleet-screen-foreign-station-status-assign-and-presence-readout.md) The fleet screen shows manual p.48 status, assigns foreign station, and reads presence from the projection.
 - [ADR-0252](../ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md) Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values.
 - [ADR-0255](../ADR-0255-battle-offer-request-estimate-and-answer.md) The battle offer: request shape, estimate, accept and delegate, typed refusals.
 - [ADR-0256](../ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md) Declining a battle offer: terminal record, released ships, victory-point cost.
 - [ADR-0266](../ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md) S-5 presence values and the other open decision requests, resolved by delegation.
-- [ADR-0270](../ADR-0270-campaign-command-table-is-the-registry.md) `campaignCommandShapes` is the one command registry; command names and map types derive from it, never by hand.
 - [ADR-0273](../ADR-0273-shared-command-contract-split-by-concern.md) The shared command contract is split by concern.
 - [ADR-0276](../ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md) UI-state writes are field-level patches merged once, in the main process.
 - [ADR-0289](../ADR-0289-division-doctrine-command-and-speed-advisory.md) Role and formation changes are one division command priced from the ruleset; speed mismatch is a derived advisory.
 - [ADR-0293](../ADR-0293-fleet-management-go-live.md) Fleet management goes live in the production pack and in every re-execution path.
 - [ADR-0296](../ADR-0296-derived-ship-conditions.md) Ship conditions are derived predicates the fleet view carries and the renderer only labels.
 - [ADR-0304](../ADR-0304-explanation-trees-for-displayed-numbers.md) Displayed numbers carry an explanation tree; gunnery accuracy is the first slice.
-- [ADR-0305](../ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md) Save retention is opt-in with the active and previous saves always protected; Effect-returning persistence methods carry an `Effect` suffix.
 - [ADR-0306](../ADR-0306-campaign-projections-carry-explanation-trees.md) Campaign projections may carry explanation trees; `@bluewave/events` moves to layer 4.
 - [ADR-0307](../ADR-0307-strategic-and-report-explanation-provenance.md) Provenance for strategic-area and monthly-report explanations.
-- [ADR-0315](../ADR-0315-research-workspace-projection.md) The research screen reads a technology-chart projection, and the draw weight has one home.
 - [ADR-0316](../ADR-0316-special-training-program.md) Special training is a nation program whose maintenance adder feeds the shared calculator.
 - [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot.
 - [ADR-0319](../ADR-0319-debug-screens-stay-internal.md) Debug-only screens stay internal and leave the production renderer bundle.
 - [ADR-0320](../ADR-0320-electron-shell-navigation-permission-and-csp-policy.md) Electron shell navigation, permission and CSP policy.
-- [ADR-0323](../ADR-0323-geographic-data-sources-and-protected-overlays.md) Geographic data sources and protected-feature overlays.
-- [ADR-0324](../ADR-0324-edge-semantics-offline-tiling-and-renderer-boundaries.md) Edge semantics, offline tiling and renderer boundaries.
-- [ADR-0325](../ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md) Production globe adapter and dynamic overlay contract.
-- [ADR-0326](../ADR-0326-globe-adapter-interaction-parity.md) Globe adapter interaction parity and projection mapping.
-- [ADR-0327](../ADR-0327-globe-overview-production-enablement.md) Globe overview production enablement.
 - [ADR-0328](../ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md) Every desktop bridge channel is declared once in `shared/ipc-contract.ts`; preload exposure and main-process registration derive names and payload types from it.
-- [ADR-0329](../ADR-0329-land-climate-zones-baked-from-koppen-geiger.md) The globe's land colour comes from a presentation-only `climate` tile layer baked at author time from Köppen-Geiger V3 and clipped to the Natural Earth coastline; no engine or authoritative code reads it.
-- [ADR-0331](../ADR-0331-save-manifest-integrity.md) A save carries one manifest that lists every file with its hash, its format version and its hash version; the product claims corruption detection, never authenticity.
+- [ADR-0338](../ADR-0338-options-and-preferences-and-campaign-command-registry.md) Preferences are a versioned domain object with strict validation and.
+- [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
+- [ADR-0342](../ADR-0342-turn-identity-and-campaign-resume-workflow.md) Turn identity is fixed from pre-execution inputs before any interruption is answered; campaign reopen is gated by a main-process-owned allow-list with canonical-path approval.
+- [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected.
+- [ADR-0344](../ADR-0344-world-map-geography-and-globe.md) The world map is an offline, deterministic geography pipeline (Natural Earth 10m and Koppen-Geiger V3 sources, z7 source ceiling, EPSG:3857 tile pack at manifestVersion 4) feeding a production globe adapter that is the default Overview renderer with a tested SVG fallback, a renderer-neutral overlay contract, and no simulation-state authority.
 
 ## Superseded (do not follow)
 
+- [ADR-0203](../ADR-0203-options-and-preferences-architecture.md) Options screen and preferences architecture. Follow ADR-0338.
 - [ADR-0205](../ADR-0205-nine-playable-nations.md) Nine playable nations; the rest AI-only behind a readiness gate. Follow ADR-0214.
+- [ADR-0235](../ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md) Main-owned recent campaigns and reopen allow-list. Follow ADR-0342.
+- [ADR-0244](../ADR-0244-nation-borders-are-clipped-to-the-map-coastline.md) Nation borders are baked clipped to the map's coastline. Follow ADR-0344.
+- [ADR-0270](../ADR-0270-campaign-command-table-is-the-registry.md) The campaign command descriptor table is the command registry. Follow ADR-0338.
+- [ADR-0305](../ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md) Saves are retained by an opt-in count with a protected head; Effect-returning persistence methods carry an `Effect` suffix. Follow ADR-0343.
+- [ADR-0315](../ADR-0315-research-workspace-projection.md) The research screen reads a technology-chart projection, and the draw weight has one home. Follow ADR-0340.
+- [ADR-0323](../ADR-0323-geographic-data-sources-and-protected-overlays.md) Geographic data sources and protected-feature overlays. Follow ADR-0344.
+- [ADR-0324](../ADR-0324-edge-semantics-offline-tiling-and-renderer-boundaries.md) Edge semantics, offline tiling and renderer boundaries. Follow ADR-0344.
+- [ADR-0325](../ADR-0325-production-globe-adapter-and-dynamic-overlay-contract.md) Production globe adapter and dynamic overlay contract. Follow ADR-0344.
+- [ADR-0326](../ADR-0326-globe-adapter-interaction-parity.md) Globe adapter interaction parity and projection mapping. Follow ADR-0344.
+- [ADR-0327](../ADR-0327-globe-overview-production-enablement.md) Globe overview production enablement. Follow ADR-0344.
+- [ADR-0329](../ADR-0329-land-climate-zones-baked-from-koppen-geiger.md) Land climate zones are baked from Köppen-Geiger V3. Follow ADR-0344.
+- [ADR-0331](../ADR-0331-save-manifest-integrity.md) Saves are sealed by a complete-file manifest, not a signature. Follow ADR-0343.

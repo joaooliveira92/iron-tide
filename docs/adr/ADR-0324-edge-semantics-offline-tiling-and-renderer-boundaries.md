@@ -4,6 +4,8 @@ Applies to: desktop
 
 ## Status
 
+Superseded by: ADR-0344
+
 Accepted for the Phase 0/1 investigation spike (2026-10-27); not approved for production migration or as the default Overview renderer. The pack remains behind the globe-spike build flag.
 
 ## Context

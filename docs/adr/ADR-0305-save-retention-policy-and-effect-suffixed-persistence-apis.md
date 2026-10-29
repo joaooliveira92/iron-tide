@@ -2,9 +2,9 @@
 
 Applies to: compiler-cli, desktop, persistence
 
-Rule: Save retention is opt-in with the active and previous saves always protected; Effect-returning persistence methods carry an `Effect` suffix.
-
 ## Status
+
+Superseded by: ADR-0343
 
 Accepted (2026-10-26). Covers the persistence changes delivered by PRs [#312](https://github.com/joaooliveira92/iron-tide/pull/312) to
 [#316](https://github.com/joaooliveira92/iron-tide/pull/316). Builds on [ADR-0268](ADR-0268-code-carries-no-comments.md) only for the rule that rationale lives here.

@@ -9,10 +9,8 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 ## Current
 
 - [ADR-0201](../ADR-0201-sole-1880-start.md) Sole 1880 start.
-- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set.
 - [ADR-0215](../ADR-0215-canonical-units-module.md) Canonical units module and its home in the contracts package.
 - [ADR-0216](../ADR-0216-money-type-and-treasury-bridge.md) Fixed-precision money type, treasury-unit scale, and the micro→unit bridge.
-- [ADR-0222](../ADR-0222-turn-identity-stable-across-resume.md) A turn's identity hashes its pre-execution input set, never the inputs accumulated while suspended.
 - [ADR-0223](../ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md) S-1 readiness, crew and maintenance values are centralized ruleset constants.
 - [ADR-0224](../ADR-0224-1880-command-structure-divisions-and-officers.md) 1880 command structure — per-nation officer rosters and seeded divisions.
 - [ADR-0225](../ADR-0225-prestige-required-field-and-research-first.md) Prestige is a required authored field; values are research-first and S-2 is gated on 0003.
@@ -31,7 +29,6 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0266](../ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md) S-5 presence values and the other open decision requests, resolved by delegation.
 - [ADR-0281](../ADR-0281-sacking-phase-and-terminal-career.md) The sacking phase and the terminal career.
 - [ADR-0282](../ADR-0282-authored-horizon-through-1970.md) Authored horizon through 1970; no empty scenario IDs.
-- [ADR-0285](../ADR-0285-campaign-snapshot-hash-covers-map-fields.md) The campaign snapshot hash covers Map fields.
 - [ADR-0286](../ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md) Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section.
 - [ADR-0287](../ADR-0287-battle-absence-record.md) A battle record explains the player's absent ships with gate reasons.
 - [ADR-0288](../ADR-0288-monthly-division-cohesion-growth.md) Division cohesion grows monthly through a pure rule applied after readiness evolution.
@@ -41,15 +38,22 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0303](../ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) Training cost differences and exercise tension are generic ruleset data.
 - [ADR-0307](../ADR-0307-strategic-and-report-explanation-provenance.md) Provenance for strategic-area and monthly-report explanations.
 - [ADR-0314](../ADR-0314-fleet-management-values-and-repair-entry.md) Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope.
-- [ADR-0315](../ADR-0315-research-workspace-projection.md) The research screen reads a technology-chart projection, and the draw weight has one home.
 - [ADR-0316](../ADR-0316-special-training-program.md) Special training is a nation program whose maintenance adder feeds the shared calculator.
 - [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot.
-- [ADR-0330](../ADR-0330-unified-snapshot-hash.md) Every authoritative snapshot hash is the unified `unifiedSnapshotHash`; no replay, golden or cross-process path carries a local projection.
 - [ADR-0337](../ADR-0337-campaign-economy-model-and-budget-pressure.md) Campaign economy is a single integer appropriation-to-ledger model; budget-pressure values are researched then tunable; government type derives from political system via a mandatory ruleset table.
+- [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
+- [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
+- [ADR-0342](../ADR-0342-turn-identity-and-campaign-resume-workflow.md) Turn identity is fixed from pre-execution inputs before any interruption is answered; campaign reopen is gated by a main-process-owned allow-list with canonical-path approval.
+- [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected.
 
 ## Superseded (do not follow)
 
 - [ADR-0204](../ADR-0204-horizon-1939-and-scenario-ids.md) Authored horizon through 1939; no empty scenario IDs. Follow ADR-0282.
 - [ADR-0205](../ADR-0205-nine-playable-nations.md) Nine playable nations; the rest AI-only behind a readiness gate. Follow ADR-0214.
+- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set. Follow ADR-0339.
+- [ADR-0222](../ADR-0222-turn-identity-stable-across-resume.md) A turn's interruption identity is stable across suspend and resume. Follow ADR-0342.
 - [ADR-0230](../ADR-0230-campaign-economy-model.md) Campaign economy model — one appropriation, one ledger, one set of calculators. Follow ADR-0337.
 - [ADR-0240](../ADR-0240-s3-unrest-values-and-government-classification.md) S-3 unrest and economy values are researched then tunable; government type derives from political system. Follow ADR-0337.
+- [ADR-0285](../ADR-0285-campaign-snapshot-hash-covers-map-fields.md) The campaign snapshot hash covers Map fields. Follow ADR-0343.
+- [ADR-0315](../ADR-0315-research-workspace-projection.md) The research screen reads a technology-chart projection, and the draw weight has one home. Follow ADR-0340.
+- [ADR-0330](../ADR-0330-unified-snapshot-hash.md) One versioned, domain-separated snapshot hash. Follow ADR-0343.

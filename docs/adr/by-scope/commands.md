@@ -9,9 +9,13 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 ## Current
 
 - [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness.
-- [ADR-0270](../ADR-0270-campaign-command-table-is-the-registry.md) `campaignCommandShapes` is the one command registry; command names and map types derive from it, never by hand.
 - [ADR-0273](../ADR-0273-shared-command-contract-split-by-concern.md) The shared command contract is split by concern.
 - [ADR-0289](../ADR-0289-division-doctrine-command-and-speed-advisory.md) Role and formation changes are one division command priced from the ruleset; speed mismatch is a derived advisory.
 - [ADR-0298](../ADR-0298-command-lifecycle-records-are-scaffolding.md) Command-lifecycle records and unused spec-rule helpers are scaffolding and do not ship; only `createCommandRecord` is kept.
 - [ADR-0316](../ADR-0316-special-training-program.md) Special training is a nation program whose maintenance adder feeds the shared calculator.
 - [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot.
+- [ADR-0338](../ADR-0338-options-and-preferences-and-campaign-command-registry.md) Preferences are a versioned domain object with strict validation and.
+
+## Superseded (do not follow)
+
+- [ADR-0270](../ADR-0270-campaign-command-table-is-the-registry.md) The campaign command descriptor table is the command registry. Follow ADR-0338.

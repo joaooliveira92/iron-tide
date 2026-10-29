@@ -4,6 +4,8 @@ Applies to: combat, content, phase-engine
 
 ## Status
 
+Superseded by: ADR-0340
+
 Accepted (2026-10-26) for [#294](https://github.com/joaooliveira92/iron-tide/issues/294),
 [#297](https://github.com/joaooliveira92/iron-tide/issues/297) and
 [#298](https://github.com/joaooliveira92/iron-tide/issues/298), part of

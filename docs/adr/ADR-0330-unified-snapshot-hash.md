@@ -2,9 +2,9 @@
 
 Applies to: campaign, phase-engine, cross-process-test, persistence
 
-Rule: Every authoritative snapshot hash is the unified `unifiedSnapshotHash`; no replay, golden or cross-process path carries a local projection.
-
 ## Status
+
+Superseded by: ADR-0343
 
 Accepted (2026-10-29). Resolves decision request
 [0049](../../.ai/decision-requests/0049-unify-the-campaign-snapshot-hash.md) with

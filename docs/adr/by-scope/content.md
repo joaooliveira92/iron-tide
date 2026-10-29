@@ -9,14 +9,11 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 ## Current
 
 - [ADR-0201](../ADR-0201-sole-1880-start.md) Sole 1880 start.
-- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set.
-- [ADR-0213](../ADR-0213-opening-posture-balance-choices.md) The 1880 opening posture is authored canon; magnitudes are balance choices.
 - [ADR-0214](../ADR-0214-ten-playable-nations-usa.md) Ten playable nations; the USA joins the 1880 playable roster.
 - [ADR-0223](../ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md) S-1 readiness, crew and maintenance values are centralized ruleset constants.
 - [ADR-0224](../ADR-0224-1880-command-structure-divisions-and-officers.md) 1880 command structure — per-nation officer rosters and seeded divisions.
 - [ADR-0225](../ADR-0225-prestige-required-field-and-research-first.md) Prestige is a required authored field; values are research-first and S-2 is gated on 0003.
 - [ADR-0226](../ADR-0226-rtw3-prestige-research-outcome.md) RTW3 prestige research outcome — the model is grounded, the production values are not.
-- [ADR-0228](../ADR-0228-combat-classifier-1880-ruleset-v2.md) The combat ship-type classifier aligns to the 1880 classification ruleset v2.
 - [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state.
 - [ADR-0239](../ADR-0239-s2-prestige-values-balance-targets.md) S-2 prestige values: the grounded model plus labelled balance targets.
 - [ADR-0252](../ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md) Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values.
@@ -33,17 +30,22 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0293](../ADR-0293-fleet-management-go-live.md) Fleet management goes live in the production pack and in every re-execution path.
 - [ADR-0297](../ADR-0297-engine-reads-catalogue-technology-ids.md) The engine reads the catalogue's technology id where one matches, and leaves the rest named.
 - [ADR-0303](../ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) Training cost differences and exercise tension are generic ruleset data.
-- [ADR-0310](../ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) E-1 catalogue technologies for carrier, mine and submarine engine ids.
 - [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire.
 - [ADR-0312](../ADR-0312-surface-to-surface-missile-combat-module.md) Surface-to-surface missile salvos are a deterministic combat module.
 - [ADR-0314](../ADR-0314-fleet-management-values-and-repair-entry.md) Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope.
 - [ADR-0332](../ADR-0332-e1-1940s-battleship-and-16-inch-gun-values.md) E-1 1940-1949 battleship and 16-inch gun values.
 - [ADR-0333](../ADR-0333-split-ship-component-catalogue-by-nation.md) Split the ship-component catalogue by family and nation, with per-record source provenance.
 - [ADR-0337](../ADR-0337-campaign-economy-model-and-budget-pressure.md) Campaign economy is a single integer appropriation-to-ledger model; budget-pressure values are researched then tunable; government type derives from political system via a mandatory ruleset table.
+- [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
+- [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
 
 ## Superseded (do not follow)
 
 - [ADR-0204](../ADR-0204-horizon-1939-and-scenario-ids.md) Authored horizon through 1939; no empty scenario IDs. Follow ADR-0282.
 - [ADR-0205](../ADR-0205-nine-playable-nations.md) Nine playable nations; the rest AI-only behind a readiness gate. Follow ADR-0214.
+- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set. Follow ADR-0339.
+- [ADR-0213](../ADR-0213-opening-posture-balance-choices.md) The 1880 opening posture is authored canon; magnitudes are balance choices. Follow ADR-0339.
+- [ADR-0228](../ADR-0228-combat-classifier-1880-ruleset-v2.md) The combat ship-type classifier aligns to the 1880 classification ruleset v2. Follow ADR-0340.
 - [ADR-0230](../ADR-0230-campaign-economy-model.md) Campaign economy model — one appropriation, one ledger, one set of calculators. Follow ADR-0337.
 - [ADR-0240](../ADR-0240-s3-unrest-values-and-government-classification.md) S-3 unrest and economy values are researched then tunable; government type derives from political system. Follow ADR-0337.
+- [ADR-0310](../ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) E-1 catalogue technologies for carrier, mine and submarine engine ids. Follow ADR-0340.

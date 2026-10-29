@@ -2,9 +2,9 @@
 
 Applies to: desktop
 
-Rule: The globe's land colour comes from a presentation-only `climate` tile layer baked at author time from Köppen-Geiger V3 and clipped to the Natural Earth coastline; no engine or authoritative code reads it.
-
 ## Status
+
+Superseded by: ADR-0344
 
 Accepted (2026-10-28).
 

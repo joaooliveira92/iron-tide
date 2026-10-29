@@ -9,4 +9,8 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 ## Current
 
 - [ADR-0214](../ADR-0214-ten-playable-nations-usa.md) Ten playable nations; the USA joins the 1880 playable roster.
-- [ADR-0305](../ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md) Save retention is opt-in with the active and previous saves always protected; Effect-returning persistence methods carry an `Effect` suffix.
+- [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected.
+
+## Superseded (do not follow)
+
+- [ADR-0305](../ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md) Saves are retained by an opt-in count with a protected head; Effect-returning persistence methods carry an `Effect` suffix. Follow ADR-0343.

@@ -4,6 +4,8 @@ Applies to: desktop
 
 ## Status
 
+Superseded by: ADR-0344
+
 Accepted for the Phase 0/1 experimental adapter (2026-10-28); **amended by
 ADR-0327**, which promotes the adapter to the default renderer and defines the
 production rollback. The contract in this record is unchanged.

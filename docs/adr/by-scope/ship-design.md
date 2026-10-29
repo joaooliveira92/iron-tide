@@ -8,12 +8,9 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set.
 - [ADR-0215](../ADR-0215-canonical-units-module.md) Canonical units module and its home in the contracts package.
 - [ADR-0216](../ADR-0216-money-type-and-treasury-bridge.md) Fixed-precision money type, treasury-unit scale, and the micro→unit bridge.
 - [ADR-0221](../ADR-0221-structured-explanation-data.md) Structured explanation data for domain display values.
-- [ADR-0228](../ADR-0228-combat-classifier-1880-ruleset-v2.md) The combat ship-type classifier aligns to the 1880 classification ruleset v2.
-- [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim.
 - [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity.
 - [ADR-0233](../ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) Designer draft-schema v2 and canonical vocabulary.
 - [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
@@ -27,3 +24,11 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire.
 - [ADR-0332](../ADR-0332-e1-1940s-battleship-and-16-inch-gun-values.md) E-1 1940-1949 battleship and 16-inch gun values.
 - [ADR-0333](../ADR-0333-split-ship-component-catalogue-by-nation.md) Split the ship-component catalogue by family and nation, with per-record source provenance.
+- [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
+- [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
+
+## Superseded (do not follow)
+
+- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set. Follow ADR-0339.
+- [ADR-0228](../ADR-0228-combat-classifier-1880-ruleset-v2.md) The combat ship-type classifier aligns to the 1880 classification ruleset v2. Follow ADR-0340.
+- [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim. Follow ADR-0339.

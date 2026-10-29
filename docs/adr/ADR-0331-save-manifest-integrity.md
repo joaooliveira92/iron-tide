@@ -2,9 +2,9 @@
 
 Applies to: persistence, desktop
 
-Rule: A save carries one manifest that lists every file with its hash, its format version and its hash version; the product claims corruption detection, never authenticity.
-
 ## Status
+
+Superseded by: ADR-0343
 
 Accepted (2026-10-29). Resolves decision request
 [0050](../../.ai/decision-requests/0050-save-integrity-threat-model.md) with

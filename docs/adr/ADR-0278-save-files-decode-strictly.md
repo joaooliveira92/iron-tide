@@ -2,9 +2,9 @@
 
 Applies to: persistence
 
-Rule: Save files decode strictly with `onExcessProperty: "error"`; only the save-header probe stays lenient.
-
 ## Status
+
+Superseded by: ADR-0343
 
 Accepted (2026-10-23).
 

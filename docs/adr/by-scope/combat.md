@@ -9,7 +9,6 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 ## Current
 
 - [ADR-0219](../ADR-0219-combat-and-capacity-fixed-point-repin.md) Combat and construction-capacity float→fixed conversion and its re-pin.
-- [ADR-0228](../ADR-0228-combat-classifier-1880-ruleset-v2.md) The combat ship-type classifier aligns to the 1880 classification ruleset v2.
 - [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity.
 - [ADR-0271](../ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) `@bluewave/combat` exports only `resolve`, `advance`, `generate` and the contract types at its root; subsystems are subpath seams. (amended by ADR-0277).
 - [ADR-0277](../ADR-0277-exact-duplicate-pure-helpers-live-in-core.md) Exact-duplicate pure helpers live in combat core. Amends ADR-0271.
@@ -20,8 +19,13 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0304](../ADR-0304-explanation-trees-for-displayed-numbers.md) Displayed numbers carry an explanation tree; gunnery accuracy is the first slice.
 - [ADR-0308](../ADR-0308-e1-compiled-design-capabilities-reach-combat.md) Compiled design capabilities reach combat and are decoded strictly.
 - [ADR-0309](../ADR-0309-e1-part-families-and-capability-kinds.md) E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars.
-- [ADR-0310](../ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) E-1 catalogue technologies for carrier, mine and submarine engine ids.
 - [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire.
 - [ADR-0312](../ADR-0312-surface-to-surface-missile-combat-module.md) Surface-to-surface missile salvos are a deterministic combat module.
 - [ADR-0321](../ADR-0321-division-order-model.md) Divisions receive a versioned order model, with stance as a lossless preset.
 - [ADR-0322](../ADR-0322-realism-order-permission-matrix.md) Realism modes gate battle orders in the engine, not in the UI.
+- [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
+
+## Superseded (do not follow)
+
+- [ADR-0228](../ADR-0228-combat-classifier-1880-ruleset-v2.md) The combat ship-type classifier aligns to the 1880 classification ruleset v2. Follow ADR-0340.
+- [ADR-0310](../ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) E-1 catalogue technologies for carrier, mine and submarine engine ids. Follow ADR-0340.

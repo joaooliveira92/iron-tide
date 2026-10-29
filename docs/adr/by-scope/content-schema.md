@@ -8,7 +8,6 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim.
 - [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity.
 - [ADR-0233](../ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) Designer draft-schema v2 and canonical vocabulary.
 - [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
@@ -21,3 +20,8 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0309](../ADR-0309-e1-part-families-and-capability-kinds.md) E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars.
 - [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire.
 - [ADR-0333](../ADR-0333-split-ship-component-catalogue-by-nation.md) Split the ship-component catalogue by family and nation, with per-record source provenance.
+- [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
+
+## Superseded (do not follow)
+
+- [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim. Follow ADR-0339.

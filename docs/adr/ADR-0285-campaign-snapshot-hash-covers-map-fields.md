@@ -4,6 +4,8 @@ Applies to: campaign, persistence
 
 ## Status
 
+Superseded by: ADR-0343
+
 Accepted (2026-10-24). Resolves decision request [0043](../../.ai/decision-requests/0043-campaign-snapshot-hash-map-fields.md) with Option A, approved by the owner.
 
 ## Decision

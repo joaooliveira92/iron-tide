@@ -4,6 +4,8 @@ Applies to: desktop
 
 ## Status
 
+Superseded by: ADR-0342
+
 Accepted (2026-10-19).
 
 ## Context

@@ -9,9 +9,7 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 ## Current
 
 - [ADR-0221](../ADR-0221-structured-explanation-data.md) Structured explanation data for domain display values.
-- [ADR-0222](../ADR-0222-turn-identity-stable-across-resume.md) A turn's identity hashes its pre-execution input set, never the inputs accumulated while suspended.
 - [ADR-0223](../ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md) S-1 readiness, crew and maintenance values are centralized ruleset constants.
-- [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim.
 - [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state.
 - [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness.
 - [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
@@ -41,12 +39,18 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0301](../ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) Proficient gunnery training raises the nation's gunnery accuracy in battle.
 - [ADR-0302](../ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md) All four training subjects reach battle through one per-side effects record.
 - [ADR-0303](../ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) Training cost differences and exercise tension are generic ruleset data.
-- [ADR-0310](../ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) E-1 catalogue technologies for carrier, mine and submarine engine ids.
 - [ADR-0316](../ADR-0316-special-training-program.md) Special training is a nation program whose maintenance adder feeds the shared calculator.
 - [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot.
-- [ADR-0330](../ADR-0330-unified-snapshot-hash.md) Every authoritative snapshot hash is the unified `unifiedSnapshotHash`; no replay, golden or cross-process path carries a local projection.
 - [ADR-0337](../ADR-0337-campaign-economy-model-and-budget-pressure.md) Campaign economy is a single integer appropriation-to-ledger model; budget-pressure values are researched then tunable; government type derives from political system via a mandatory ruleset table.
+- [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
+- [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
+- [ADR-0342](../ADR-0342-turn-identity-and-campaign-resume-workflow.md) Turn identity is fixed from pre-execution inputs before any interruption is answered; campaign reopen is gated by a main-process-owned allow-list with canonical-path approval.
+- [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected.
 
 ## Superseded (do not follow)
 
+- [ADR-0222](../ADR-0222-turn-identity-stable-across-resume.md) A turn's interruption identity is stable across suspend and resume. Follow ADR-0342.
+- [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim. Follow ADR-0339.
 - [ADR-0230](../ADR-0230-campaign-economy-model.md) Campaign economy model — one appropriation, one ledger, one set of calculators. Follow ADR-0337.
+- [ADR-0310](../ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) E-1 catalogue technologies for carrier, mine and submarine engine ids. Follow ADR-0340.
+- [ADR-0330](../ADR-0330-unified-snapshot-hash.md) One versioned, domain-separated snapshot hash. Follow ADR-0343.

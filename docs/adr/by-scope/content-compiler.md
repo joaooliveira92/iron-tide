@@ -8,10 +8,14 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set.
 - [ADR-0214](../ADR-0214-ten-playable-nations-usa.md) Ten playable nations; the USA joins the 1880 playable roster.
 - [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state.
 - [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
 - [ADR-0253](../ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input.
 - [ADR-0286](../ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md) Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section.
 - [ADR-0303](../ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) Training cost differences and exercise tension are generic ruleset data.
+- [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
+
+## Superseded (do not follow)
+
+- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set. Follow ADR-0339.

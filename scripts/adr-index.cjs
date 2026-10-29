@@ -48,7 +48,7 @@ const AREAS = [
   {
     name: "Preferences & interfaces",
     blurb: "The versioned preferences domain behind the Options screen.",
-    nums: [203, 270],
+    nums: [338, 203, 270],
   },
   {
     name: "Repository authority & re-baselining",
@@ -67,7 +67,7 @@ const AREAS = [
     name: "Scenario content & research",
     blurb:
       "Legality, consistency and authored posture of the 1880 scenario's starting content and research state.",
-    nums: [212, 213, 228, 229, 315, 310],
+    nums: [339, 340, 212, 213, 228, 229, 315, 310],
   },
   {
     name: "Campaign economy",
@@ -78,7 +78,7 @@ const AREAS = [
   {
     name: "Turns, interruptions & save/resume",
     blurb: "Turn identity, the suspend/resume interruption model, and strict save-file decoding.",
-    nums: [222, 235, 278, 285, 305, 330, 331],
+    nums: [342, 343, 222, 235, 278, 285, 305, 330, 331],
   },
   {
     name: "Fleet readiness, command & prestige",
@@ -107,7 +107,7 @@ const AREAS = [
   {
     name: "World map",
     blurb: "How the presentation-only strategic map's baked geography is produced.",
-    nums: [244, 323, 324, 325, 326, 327, 329],
+    nums: [344, 244, 323, 324, 325, 326, 327, 329],
   },
   {
     name: "Engine architecture",

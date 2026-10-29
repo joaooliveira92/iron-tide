@@ -4,6 +4,8 @@ Applies to: desktop
 
 ## Status
 
+Superseded by: ADR-0344
+
 Accepted (2026-10-28). The globe adapter is the default Overview renderer. The
 current SVG Overview renderer remains a tested, supported rollback path.
 

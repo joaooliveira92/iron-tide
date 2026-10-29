@@ -4,6 +4,8 @@ Applies to: campaign, desktop
 
 ## Status
 
+Superseded by: ADR-0340
+
 Accepted (2026-10-23).
 
 ## Context

@@ -4,6 +4,8 @@ Applies to: desktop
 
 ## Status
 
+Superseded by: ADR-0344
+
 Accepted for the experimental globe adapter (2026-10-28). **Amended by
 ADR-0327**, which enables the adapter by default; the parity and projection
 mapping in this record remain binding.
