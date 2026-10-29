@@ -12,7 +12,7 @@ import {
   PlatformSchema,
   PropulsionPlantCatalogueSchema,
   ReferenceDesignSchema,
-  ShipComponentCatalogueSchema,
+  ShipComponentWithSourceCatalogueSchema,
   ShipHullFormCatalogueSchema,
   SlotTemplateSchema,
   decodeStrict,
@@ -53,6 +53,35 @@ const directories = (dir: string): string[] => {
     .filter((e) => e.isDirectory())
     .map((e) => e.name)
     .sort(compareCodePoints);
+};
+
+const yamlFilesRecursive = (dir: string): string[] => {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true })
+    .flatMap((entry) => {
+      const child = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        return yamlFilesRecursive(child).map((file) => join(entry.name, file));
+      }
+      return entry.name.endsWith(".yaml") ? [entry.name] : [];
+    })
+    .sort(compareCodePoints);
+};
+
+const declaredComponentFiles = (contentDir: string, sb: string): string[] => {
+  const fallback = () =>
+    yamlFilesRecursive(join(sb, "components")).map((file) => `ship-building/components/${file}`);
+  const manifestPath = join(contentDir, "pack.json");
+  if (!existsSync(manifestPath)) return fallback();
+  try {
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+      shipBuilding?: { shipComponents?: string[] };
+    };
+    const declared = manifest.shipBuilding?.shipComponents;
+    return Array.isArray(declared) && declared.length > 0 ? declared : fallback();
+  } catch {
+    return fallback();
+  }
 };
 
 function makeReader(contentDir: string) {
@@ -96,7 +125,16 @@ export function loadLegacySource(options: LoadOptions): MigrationResult<LegacySo
     }
   };
 
-  const componentsRaw = loadRequired(join(sb, "components.yaml"), "components.yaml");
+  const componentEntries: unknown[] = [];
+  for (const file of declaredComponentFiles(contentDir, sb)) {
+    const raw = loadRequired(join(contentDir, file), file);
+    const components = (raw as { readonly components?: unknown[] } | undefined)?.components;
+    if (Array.isArray(components)) {
+      componentEntries.push(
+        ...components.map((component) => ({ ...(component as object), sourceFile: file })),
+      );
+    }
+  }
   const plantsRaw = loadRequired(join(sb, "plants.yaml"), "plants.yaml");
   const hullFormsRaw = loadRequired(join(sb, "hull-forms.yaml"), "hull-forms.yaml");
   const balanceRaw = loadRequired(join(sb, "balance.yaml"), "balance.yaml");
@@ -104,7 +142,7 @@ export function loadLegacySource(options: LoadOptions): MigrationResult<LegacySo
   const modelsRaw = loadRequired(join(armamentDir, "gun-models.yaml"), "gun-models.yaml");
   const mountsRaw = loadRequired(join(armamentDir, "gun-mounts.yaml"), "gun-mounts.yaml");
   const ammoRaw = loadRequired(join(armamentDir, "ammunition.yaml"), "ammunition.yaml");
-  if (failures.length > 0 || componentsRaw === undefined) return { ok: false, failures };
+  if (failures.length > 0 || componentEntries.length === 0) return { ok: false, failures };
 
   const profileEntries: unknown[] = [];
   for (const file of yamlFiles(join(sb, "naval-profiles"))) {
@@ -128,8 +166,9 @@ export function loadLegacySource(options: LoadOptions): MigrationResult<LegacySo
   if (failures.length > 0) return { ok: false, failures };
 
   try {
-    const components = decodeStrict(ShipComponentCatalogueSchema, componentsRaw)
-      .components as ComponentDef[];
+    const components = decodeStrict(ShipComponentWithSourceCatalogueSchema, {
+      components: componentEntries,
+    }).components as ComponentDef[];
     const plants = decodeStrict(PropulsionPlantCatalogueSchema, plantsRaw)
       .plants as PropulsionPlant[];
     const hullForms = decodeStrict(ShipHullFormCatalogueSchema, hullFormsRaw)

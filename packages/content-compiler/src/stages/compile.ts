@@ -133,7 +133,10 @@ function buildShipBuildingCatalogue(input: NormalizeOutput): ShipBuildingCatalog
   if (!hasCatalogue) return undefined;
 
   return {
-    components: input.shipComponents,
+    components: input.shipComponents.map((component) => {
+      const sourceFile = input.componentSources.get(String(component.id));
+      return sourceFile === undefined ? component : { ...component, sourceFile };
+    }),
     plants: input.propulsionPlants,
     hullForms: input.shipHullForms,
     balance: input.shipBalance,

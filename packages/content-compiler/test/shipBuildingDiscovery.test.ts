@@ -32,7 +32,8 @@ function writeShipBuildingTree(root: string): void {
     "ship-building/reference-designs/uk/historical.yaml",
     "ship-building/naval-profiles/a.yaml",
     "ship-building/reference-designs/germany/extra-a.yaml",
-    "ship-building/components.yaml",
+    "ship-building/components/equipment.yaml",
+    "ship-building/components/guns/british-rml.yaml",
     "ship-building/reference-designs/uk/starters.yaml",
     "ship-building/ship-types.yaml",
     "ship-building/naval-profiles/sub/b.yaml",
@@ -46,7 +47,10 @@ function writeShipBuildingTree(root: string): void {
 }
 
 const EXPECTED = {
-  shipComponentFiles: ["ship-building/components.yaml"],
+  shipComponentFiles: [
+    "ship-building/components/equipment.yaml",
+    "ship-building/components/guns/british-rml.yaml",
+  ],
   propulsionPlantFiles: [],
   hullFormFiles: [],
   shipBalanceFiles: ["ship-building/balance.yaml"],

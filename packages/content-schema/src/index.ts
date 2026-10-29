@@ -228,6 +228,8 @@ export {
   SHIP_ZONE_IDS,
   ShipComponentCatalogueSchema,
   ShipComponentSchema,
+  ShipComponentWithSourceCatalogueSchema,
+  ShipComponentWithSourceSchema,
   ShipHullFormCatalogueSchema,
   ShipHullFormSchema,
 } from "./ship-component.js";

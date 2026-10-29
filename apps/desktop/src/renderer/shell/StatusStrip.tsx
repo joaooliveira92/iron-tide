@@ -208,11 +208,13 @@ function rowById(rows: readonly StripRow[], id: string): StripRow | undefined {
 function Panel({
   name,
   aside,
+  actions,
   className,
   children,
 }: {
   readonly name: string;
   readonly aside?: string;
+  readonly actions?: ReactNode;
   readonly className?: string;
   readonly children: ReactNode;
 }) {
@@ -225,7 +227,7 @@ function Panel({
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-muted/30 px-3 py-1.5">
+      <div className="flex items-center justify-between gap-2 border-b border-border/60 bg-muted/30 px-3 py-1">
         <h2 className="flex items-center gap-2 font-display text-sm font-semibold leading-5 tracking-tight">
           <span aria-hidden="true" className="h-3.5 w-0.5 rounded-full bg-admiralty-accent" />
           {name}
@@ -235,8 +237,9 @@ function Panel({
             {aside}
           </span>
         )}
+        {actions}
       </div>
-      <div className="flex-1 px-3 py-2.5">{children}</div>
+      <div className="flex-1 px-2.5 py-2">{children}</div>
     </div>
   );
 }
@@ -259,19 +262,21 @@ function PrestigeTile({ model }: { readonly model: StatusStripModel }) {
           sacked at {prestige.threshold}
         </span>
       </span>
-      <span
-        className={cn(
-          "font-display text-2xl leading-7 font-semibold tabular-nums",
-          prestige.atRisk && "text-destructive",
-        )}
-      >
-        {row.value}
+      <span className="flex items-center gap-3">
+        <span
+          className={cn(
+            "font-display text-xl leading-6 font-semibold tabular-nums",
+            prestige.atRisk && "text-destructive",
+          )}
+        >
+          {row.value}
+        </span>
+        <Meter
+          fraction={prestige.fraction}
+          mark={prestige.thresholdFraction}
+          fill={prestige.atRisk ? "bg-destructive" : "bg-admiralty-accent"}
+        />
       </span>
-      <Meter
-        fraction={prestige.fraction}
-        mark={prestige.thresholdFraction}
-        fill={prestige.atRisk ? "bg-destructive" : "bg-admiralty-accent"}
-      />
     </Instrument>
   );
 }
@@ -289,10 +294,12 @@ function StationsTile({
   return (
     <Instrument row={row} width="w-80" card={<StationsCard stations={stations} />}>
       <span className={FIELD_LABEL}>{row.label}</span>
-      <span className="font-display text-base leading-6 font-semibold tabular-nums">
-        {row.value}
+      <span className="flex items-center gap-2">
+        <span className="font-display text-base leading-5 font-semibold tabular-nums">
+          {row.value}
+        </span>
+        <Meter fraction={stations.unknown ? 0 : share} fill="bg-admiralty-signal" />
       </span>
-      <Meter fraction={stations.unknown ? 0 : share} fill="bg-admiralty-signal" />
     </Instrument>
   );
 }
@@ -311,10 +318,15 @@ function ShipyardTile({
       card={<ShipyardCard ports={model.ports} total={row.value} />}
     >
       <span className={FIELD_LABEL}>{row.label}</span>
-      <span className="font-display text-base leading-6 font-semibold tabular-nums">
-        {row.value}
+      <span className="flex items-end gap-2">
+        <span className="font-display text-base leading-5 font-semibold tabular-nums">
+          {row.value}
+        </span>
+        <Histogram
+          className="h-4"
+          fractions={model.ports.slice(0, MAX_PORT_BARS).map((port) => port.fraction)}
+        />
       </span>
-      <Histogram fractions={model.ports.slice(0, MAX_PORT_BARS).map((port) => port.fraction)} />
     </Instrument>
   );
 }
@@ -323,7 +335,7 @@ function NationPanel({ model }: { readonly model: StatusStripModel }) {
   const rows = model.nation.filter((row) => !row.deferred && row.id !== "prestige");
   return (
     <Panel name="Nation" aside={model.nationName}>
-      <div className="grid grid-cols-2 content-start gap-1.5">
+      <div className="grid grid-cols-2 content-start gap-1">
         <PrestigeTile model={model} />
         {rows.map((row) => {
           if (row.id === "foreign-stations") {
@@ -364,7 +376,7 @@ function AllocationBar({
 }) {
   const limit = allocation.overCommitted ? allocation.limit : null;
   return (
-    <div className="relative pb-3">
+    <div className="relative">
       <div
         role="img"
         aria-label={`${allocation.committed.value} committed, ${allocation.committed.percent} of the monthly appropriation of ${allocation.appropriation}${allocation.overCommitted ? ", over-committed" : ""}`}
@@ -404,15 +416,10 @@ function AllocationBar({
             />
           ))}
       </div>
-      <span aria-hidden="true" className="absolute inset-x-0 bottom-0 flex h-2 justify-between">
-        {Array.from({ length: 11 }, (_, index) => (
-          <span key={index} className={cn("w-px bg-border", index % 5 === 0 ? "h-2" : "h-1")} />
-        ))}
-      </span>
       {limit !== null && (
         <span
           aria-hidden="true"
-          className="absolute -top-1 bottom-1 w-0.5 bg-foreground"
+          className="absolute -top-1 -bottom-1 w-0.5 bg-foreground"
           style={{ left: percentString(limit) }}
         />
       )}
@@ -428,10 +435,10 @@ function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
   const noteFor = (id: AllocationSegment["id"]) => rowById(model.budget, id)?.note ?? "";
   return (
     <Panel name="Budget" aside="Monthly" className="@container">
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div data-row="monthly-budget" className="flex items-baseline justify-between gap-3">
           <span className={FIELD_LABEL}>{appropriation?.label ?? "Monthly appropriation"}</span>
-          <span className="font-display text-xl leading-6 font-semibold tabular-nums">
+          <span className="font-display text-lg leading-6 font-semibold tabular-nums">
             {allocation.appropriation}
           </span>
         </div>
@@ -441,7 +448,7 @@ function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
           onActive={setActive}
           noteFor={noteFor}
         />
-        <div className="grid gap-x-3 gap-y-0.5 @lg:grid-cols-2">
+        <div className="grid gap-x-3 @sm:grid-cols-2">
           {allocation.segments.map((segment) => (
             <div
               key={segment.id}
@@ -466,7 +473,7 @@ function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
                   "aria-label": `${segment.label}: ${segment.value}, ${segment.percent}`,
                 }}
                 triggerClassName={cn(
-                  "grid cursor-help grid-cols-[auto_minmax(0,1fr)_auto_2.5rem] items-center gap-x-2 rounded-sm px-1.5 py-1 text-xs outline-none transition-[opacity,background-color] hover:bg-muted/60 focus-visible:ring-1 focus-visible:ring-ring data-[pinned=true]:bg-muted/60",
+                  "grid cursor-help grid-cols-[auto_minmax(0,1fr)_auto_2.5rem] items-center gap-x-2 rounded-sm px-1.5 py-0.5 text-xs outline-none transition-[opacity,background-color] hover:bg-muted/60 focus-visible:ring-1 focus-visible:ring-ring data-[pinned=true]:bg-muted/60",
                   active !== null && active !== segment.id && "opacity-50",
                 )}
                 card={
@@ -499,7 +506,7 @@ function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
             tabIndex: 0,
             "aria-label": `Committed expenses: ${allocation.committed.value}`,
           }}
-          triggerClassName="flex cursor-help items-center justify-between gap-3 rounded-sm border-t border-border/60 px-1.5 pt-2 text-xs outline-none hover:bg-muted/40 focus-visible:ring-1 focus-visible:ring-ring"
+          triggerClassName="flex cursor-help items-center justify-between gap-3 rounded-sm border-t border-border/60 px-1.5 pt-1.5 text-xs outline-none hover:bg-muted/40 focus-visible:ring-1 focus-visible:ring-ring"
           card={committedRow === undefined ? <></> : <NoteCard row={committedRow} />}
         >
           <span className="text-muted-foreground">
@@ -531,9 +538,11 @@ function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
 function OutlookPanel({
   model,
   trend,
+  actions,
 }: {
   readonly model: StatusStripModel;
   readonly trend: TrendDetail | null;
+  readonly actions?: ReactNode;
 }) {
   const balance = rowById(model.budget, "balance");
   const treasury = rowById(model.budget, "treasury");
@@ -542,21 +551,21 @@ function OutlookPanel({
   const alert = balance?.tone === "alert";
   const runwayMonths = model.outlook.runwayMonths;
   return (
-    <Panel name="Outlook">
-      <div className="space-y-2">
+    <Panel name="Outlook" actions={actions}>
+      <div className="space-y-1.5">
         {balance !== undefined && (
           <Instrument
             row={balance}
             card={<BalanceCard outlook={model.outlook} trend={trend} />}
             width="w-96"
             className={cn(
-              "gap-0.5 py-2",
+              "gap-0 py-1.5",
               alert ? "border-destructive/40 bg-destructive/10" : "border-success/30 bg-success/10",
             )}
           >
             <span className={cn(FIELD_LABEL, "text-foreground/80")}>{balance.label}</span>
             <span className="flex items-center justify-between gap-2">
-              <span className="font-display text-2xl leading-8 font-semibold tabular-nums">
+              <span className="font-display text-xl leading-7 font-semibold tabular-nums">
                 {balance.value}
               </span>
               <span className="flex flex-col items-end gap-1">
@@ -570,13 +579,13 @@ function OutlookPanel({
             </span>
           </Instrument>
         )}
-        <div className="space-y-1">
+        <div className="grid grid-cols-2 gap-1">
           {treasury !== undefined && (
             <Instrument
               row={treasury}
               card={<TreasuryCard outlook={model.outlook} trend={trend} />}
               width="w-80"
-              className="flex-row items-center justify-between gap-3 py-1.5"
+              className="gap-0.5 py-1.5"
             >
               <span className={FIELD_LABEL}>{treasury.label}</span>
               <span className="flex items-baseline gap-1.5">
@@ -603,7 +612,7 @@ function OutlookPanel({
           {shortfall !== undefined && (
             <Instrument
               row={shortfall}
-              className="flex-row items-center justify-between gap-3 border-destructive/40 bg-destructive/10 py-1.5"
+              className="col-span-2 flex-row items-center justify-between gap-3 border-destructive/40 bg-destructive/10 py-1"
             >
               <span className={FIELD_LABEL}>{shortfall.label}</span>
               <span className="text-xs font-semibold tabular-nums text-destructive">
@@ -838,6 +847,25 @@ export function StatusStripView({
   const [chosen, setChosen] = useState<boolean | null>(null);
   const expanded = chosen ?? density !== "compact";
   const { summary } = model;
+  const controls = (
+    <div className="flex shrink-0 items-center gap-1.5">
+      <DeferredPopover model={model} />
+      <Toggle
+        variant="outline"
+        size="sm"
+        pressed={expanded}
+        onPressedChange={setChosen}
+        className="h-5 min-w-0 gap-1 px-1.5 text-xs"
+      >
+        {expanded ? (
+          <ChevronDown className="size-3.5" aria-hidden="true" />
+        ) : (
+          <ChevronUp className="size-3.5" aria-hidden="true" />
+        )}
+        <span>{expanded ? "Collapse" : "Expand"}</span>
+      </Toggle>
+    </div>
+  );
 
   return (
     <section
@@ -850,16 +878,14 @@ export function StatusStripView({
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-admiralty-accent/60 to-transparent"
       />
-      <div className="flex items-center gap-2 text-xs">
-        {expanded ? (
-          <span className="flex items-center gap-2 py-1 font-display text-sm font-semibold">
-            <span className="relative grid size-2 place-items-center" aria-hidden="true">
-              <span className="absolute size-2 animate-ping rounded-full bg-success/60 motion-reduce:animate-none" />
-              <span className="size-1.5 rounded-full bg-success" />
-            </span>
-            Status
-          </span>
-        ) : (
+      {expanded ? (
+        <div className="grid gap-1.5 py-1.5 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_minmax(0,2fr)]">
+          <NationPanel model={model} />
+          <BudgetPanel model={model} />
+          <OutlookPanel model={model} trend={trend} actions={controls} />
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-xs">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 py-1">
             <BalanceChip model={model} trend={trend} />
             <TreasuryChip model={model} trend={trend} />
@@ -867,32 +893,7 @@ export function StatusStripView({
             <PrestigeChip model={model} />
             <AlertsChip alerts={summary.alerts} />
           </div>
-        )}
-
-        <div className="ml-auto flex shrink-0 items-center gap-1.5">
-          <DeferredPopover model={model} />
-          <Toggle
-            variant="outline"
-            size="sm"
-            pressed={expanded}
-            onPressedChange={setChosen}
-            className="h-5 min-w-0 gap-1 px-1.5 text-xs"
-          >
-            {expanded ? (
-              <ChevronDown className="size-3.5" aria-hidden="true" />
-            ) : (
-              <ChevronUp className="size-3.5" aria-hidden="true" />
-            )}
-            <span>{expanded ? "Collapse" : "Expand"}</span>
-          </Toggle>
-        </div>
-      </div>
-
-      {expanded && (
-        <div className="mt-1 grid gap-2 border-t border-border/60 py-2 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_minmax(0,2fr)]">
-          <NationPanel model={model} />
-          <BudgetPanel model={model} />
-          <OutlookPanel model={model} trend={trend} />
+          <div className="ml-auto">{controls}</div>
         </div>
       )}
     </section>

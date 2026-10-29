@@ -15,8 +15,8 @@ navalProfiles:
       cruisers, with no seagoing ironclad, no modern breech-loading heavy gun and no service torpedo; doctrine is
       coastal and hemispheric, spending is minimal, but the industrial base is enormous and latent.
     hardCapabilities:
-      maxGunCaliberUm: 381000
-      maxArmourThicknessUm: 279000
+      maxGunCaliberUm: 406000
+      maxArmourThicknessUm: 432000
       domesticTorpedoDiameterUm: 356000
       hullForms:
         [
@@ -28,6 +28,7 @@ navalProfiles:
           postwar_destroyer_form,
           light_cruiser_form,
           heavy_cruiser_form,
+          fast_battleship_form,
           merchant_liner_form,
         ]
       domesticPlants: [compound_cylindrical, hp_steam_geared_turbine]
@@ -50,7 +51,7 @@ navalProfiles:
         - { fromMonth: "1880-01", value: 6000000 }
         - { fromMonth: "1885-01", value: 8000000 }
         - { fromMonth: "1890-01", value: 11000000 }
-        - { fromMonth: "1940-01", value: 25000000 }
+        - { fromMonth: "1940-01", value: 60000000 }
       heavyGunProduction: DOMESTIC
       armourPlateProduction: DOMESTIC
       provenance:
@@ -80,10 +81,10 @@ navalProfiles:
             roundingRule: "±15%",
           }
     dock:
-      maximumNewConstructionMassKg: 5000000
-      maximumMajorRepairMassKg: 5000000
-      maximumRebuildMassKg: 5000000
-      maximumConversionMassKg: 5000000
+      maximumNewConstructionMassKg: 60000000
+      maximumMajorRepairMassKg: 60000000
+      maximumRebuildMassKg: 60000000
+      maximumConversionMassKg: 60000000
       provenance:
         sourceStatus: DERIVED
         confidence: MEDIUM
@@ -95,10 +96,10 @@ navalProfiles:
             sourceValue: "scenario CA starter 4,865 t (largest 1880 hull); Amphitrite 3,990 t",
             sourceUnit: "t",
             conversion: "largest 1880 hull the nation fields, rounded up to the next 1,000 t dock step",
-            gameValue: "maximumNewConstructionMassKg 5000000",
+            gameValue: "maximumNewConstructionMassKg 60000000",
             roundingRule: "ceiling to next 1,000 t",
           }
-        note: "max(historical flagship 3,990 t, scenario largest hull 4,865 t) rounded up to the next 1,000 t"
+        note: "max(historical flagship 3,990 t, scenario largest hull 4,865 t) rounded up to the next 1,000 t; the 1940-1949 battleship slice raises the shared profile ceiling to 60,000 t for the Iowa (ADR-0332), because the profile has no per-era dock field"
     doctrineProfile:
       engagementRangeM: 1200
       hePreferenceBp: 5500

@@ -1,0 +1,260 @@
+# Ship-building component catalogue: German (Krupp) ordnance.
+# Source of record: docs/research/ship-building-1880-pre-era-armament.md.
+# Units: kg, mm, litres, kW, budget micro-units, bp. Formulas use the restricted grammar of
+# @bluewave/ship-design. Every component id is unique across this directory; the compiler
+# discovers nothing on its own: pack.json's `shipBuilding.shipComponents` lists every file.
+components:
+  # German 26cm RK L/20 C/74: calibre [B86] (SINGLE-SOURCE); shell/charge/MV/mass are ESTIMATE (Table XVII German rows unreadable),
+  # taken as close to the Austrian 26cm row of Table XVII. Main gun of the Kaiser and Sachsen classes.
+  - id: gun_bl_263mm_rkl20
+    displayName: "26 cm Ringkanone L/20 C/74"
+    category: MAIN_GUN
+    introduction: { fromMonth: "1880-01", obsoleteMonth: null }
+    requires: []
+    parameters: { barrels: { min: 1, max: 6, step: 1 }, rounds: { min: 20, max: 120, step: 5 } }
+    constants:
+      {
+        gun_kg: 26000,
+        mount_per_barrel_kg: 20000,
+        mount_fixed_kg: 12000,
+        cost_per_kg_micro: 150000,
+        mount_cost_micro: 5000000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "3 * (gun_kg + mount_per_barrel_kg) * barrels" # PLACEHOLDER
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels" # ESTIMATE: ~GBP 150/t
+    crew: "12 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, heavy]
+    deckFootprintMm2: "470 * (gun_kg + mount_per_barrel_kg) * barrels" # PLACEHOLDER
+    heightMm: "3200"
+    zCgMm: "6500"
+    fcClass: heavy
+    attributes:
+      caliberUm: "263000"
+      shellMassG: "250000" # ESTIMATE
+      chargeBp: "2400" # ESTIMATE: charge ~60 kg
+      roundVolumeMl: "125000" # ESTIMATE
+      rofBaseX100: "100" # ESTIMATE: 1 rds/min, breech-loading
+      beamArcDeg: "120"
+      maxFeedPermille: "250"
+    maintenanceMonthlyBp: 20
+
+  # --- ADR-0119 coast-defence / casemate ordnance (1880 scenario) ------------------------------------------------------------
+  # Bore + mount from navypedia (SINGLE-SOURCE); gun mass where a print source exists; every value not in a print source is
+  # ESTIMATE (see docs/research/ship-building-1880-coast-defence-armament.md and -followups.md). Each family has its own
+  # component with the same id and category (the release gate requires `lintArmamentContent` family/category parity).
+  # Dutch 28 cm (283 mm) Krupp Ringkanone No.1 (*Matador*): gun mass approaches the Von Müller 28 cm RK L/22 (labelled analogy,
+  # different mark); shell 253 kg and charge 56 kg borrow the sourced Austrian Krupp 28 cm row (docs/...-armament.md §2.1).
+  - id: gun_bl_283mm_krupp
+    displayName: "28 cm Krupp Ringkanone No.1 in monitor turret"
+    category: MAIN_GUN
+    introduction: { fromMonth: "1880-01", obsoleteMonth: null }
+    requires: []
+    parameters: { barrels: { min: 1, max: 2, step: 1 }, rounds: { min: 20, max: 100, step: 10 } }
+    constants:
+      {
+        gun_kg: 27500,
+        mount_per_barrel_kg: 22000,
+        mount_fixed_kg: 12000,
+        cost_per_kg_micro: 150000,
+        mount_cost_micro: 6000000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "3 * (gun_kg + mount_per_barrel_kg) * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "12 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, heavy]
+    deckFootprintMm2: "470 * (gun_kg + mount_per_barrel_kg) * barrels"
+    heightMm: "3200"
+    zCgMm: "6500"
+    fcClass: heavy
+    attributes:
+      caliberUm: "283000"
+      shellMassG: "253000" # SINGLE-SOURCE: Krupp 28 cm forged-steel AP/shot (Austrian row analogy)
+      chargeBp: "2213" # SINGLE-SOURCE analogy: 56 kg black powder over a 253 kg shell
+      roundVolumeMl: "130000" # ESTIMATE
+      rofBaseX100: "100" # ESTIMATE: hand-worked Krupp BL
+      beamArcDeg: "120"
+      maxFeedPermille: "250"
+    maintenanceMonthlyBp: 20
+  # Portuguese 15 cm (149 mm) Krupp RK L/22 C/75 (*Vasco da Gama* secondary). Gun 3,500 kg, projectile 33.67 kg and
+  # charge 7.75 kg from Von Müller 1879 (15 cm RK L/22, SINGLE-SOURCE).
+  - id: gun_bl_149mm_rkl22
+    displayName: "15 cm Krupp RK L/22 C/75 in casemate"
+    category: SECONDARY_GUN
+    introduction: { fromMonth: "1880-01", obsoleteMonth: null }
+    requires: []
+    parameters: { barrels: { min: 1, max: 4, step: 1 }, rounds: { min: 40, max: 200, step: 10 } }
+    constants:
+      {
+        gun_kg: 3500,
+        mount_per_barrel_kg: 8000,
+        mount_fixed_kg: 1500,
+        cost_per_kg_micro: 150000,
+        mount_cost_micro: 2000000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "3 * (gun_kg + mount_per_barrel_kg) * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "8 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, medium]
+    deckFootprintMm2: "470 * (gun_kg + mount_per_barrel_kg) * barrels"
+    heightMm: "2200"
+    zCgMm: "6000"
+    fcClass: medium
+    attributes:
+      caliberUm: "149000"
+      shellMassG: "33670" # SINGLE-SOURCE: chilled-iron grenade 33.67 kg (Von Müller 1879)
+      chargeBp: "2302" # SINGLE-SOURCE: 7.75 kg over a 33.67 kg projectile
+      roundVolumeMl: "17000" # ESTIMATE
+      rofBaseX100: "100" # ESTIMATE: hand-worked Krupp BL
+      beamArcDeg: "150"
+      maxFeedPermille: "280"
+    maintenanceMonthlyBp: 20
+  # Portuguese 6.7 cm (67 mm) Krupp anti-torpedo gun (*Vasco da Gama*). No print source found: all ballistics ESTIMATE.
+  - id: gun_bl_67mm_krupp
+    displayName: "6.7 cm Krupp gun on deck"
+    category: SECONDARY_GUN
+    introduction: { fromMonth: "1880-01", obsoleteMonth: null }
+    requires: []
+    parameters: { barrels: { min: 1, max: 4, step: 1 }, rounds: { min: 100, max: 500, step: 50 } }
+    constants:
+      {
+        gun_kg: 350,
+        mount_per_barrel_kg: 200,
+        mount_fixed_kg: 0,
+        cost_per_kg_micro: 150000,
+        mount_cost_micro: 100000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "3 * (gun_kg + mount_per_barrel_kg) * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "3 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, light]
+    deckFootprintMm2: "470 * (gun_kg + mount_per_barrel_kg) * barrels"
+    heightMm: "1200"
+    zCgMm: "4000"
+    fcClass: light
+    attributes:
+      caliberUm: "67000"
+      shellMassG: "4500" # ESTIMATE
+      chargeBp: "1556" # ESTIMATE
+      roundVolumeMl: "2000" # ESTIMATE
+      rofBaseX100: "500" # ESTIMATE
+      beamArcDeg: "140"
+      maxFeedPermille: "300"
+    maintenanceMonthlyBp: 20
+  # Japanese 24 cm (235 mm) Krupp RKL/22 C/72 (*Fusō* main). Gun 15,500 kg from Von Müller 1879; shell/charge/MV ESTIMATE.
+  - id: gun_bl_235mm_rkl22
+    displayName: "24 cm Krupp RKL/22 C/72 in central battery"
+    category: MAIN_GUN
+    introduction: { fromMonth: "1880-01", obsoleteMonth: null }
+    requires: []
+    parameters: { barrels: { min: 1, max: 2, step: 1 }, rounds: { min: 20, max: 100, step: 10 } }
+    constants:
+      {
+        gun_kg: 15500,
+        mount_per_barrel_kg: 20000,
+        mount_fixed_kg: 12000,
+        cost_per_kg_micro: 150000,
+        mount_cost_micro: 5000000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "3 * (gun_kg + mount_per_barrel_kg) * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "12 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, heavy]
+    deckFootprintMm2: "470 * (gun_kg + mount_per_barrel_kg) * barrels"
+    heightMm: "3200"
+    zCgMm: "6500"
+    fcClass: heavy
+    attributes:
+      caliberUm: "235000"
+      shellMassG: "170000" # ESTIMATE (source range ~150-190 kg)
+      chargeBp: "1765" # ESTIMATE: ~30 kg black powder
+      roundVolumeMl: "95000" # ESTIMATE
+      rofBaseX100: "100" # ESTIMATE: hand-worked Krupp BL
+      beamArcDeg: "120"
+      maxFeedPermille: "250"
+    maintenanceMonthlyBp: 20
+  # Japanese 17 cm (173 mm) Krupp RKL/25 C/72 (*Fusō* secondary). Gun 5,600 kg from Von Müller 1879; shell/charge/MV ESTIMATE.
+  - id: gun_bl_173mm_rkl25
+    displayName: "17 cm Krupp RKL/25 C/72 in battery"
+    category: SECONDARY_GUN
+    introduction: { fromMonth: "1880-01", obsoleteMonth: null }
+    requires: []
+    parameters: { barrels: { min: 1, max: 2, step: 1 }, rounds: { min: 40, max: 200, step: 10 } }
+    constants:
+      {
+        gun_kg: 5600,
+        mount_per_barrel_kg: 8000,
+        mount_fixed_kg: 4000,
+        cost_per_kg_micro: 150000,
+        mount_cost_micro: 1500000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "3 * (gun_kg + mount_per_barrel_kg) * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "8 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, medium]
+    deckFootprintMm2: "470 * (gun_kg + mount_per_barrel_kg) * barrels"
+    heightMm: "2200"
+    zCgMm: "6000"
+    fcClass: medium
+    attributes:
+      caliberUm: "173000"
+      shellMassG: "54000" # ESTIMATE
+      chargeBp: "1852" # ESTIMATE: ~10 kg black powder
+      roundVolumeMl: "28000" # ESTIMATE
+      rofBaseX100: "150" # ESTIMATE
+      beamArcDeg: "140"
+      maxFeedPermille: "280"
+    maintenanceMonthlyBp: 20
+  # Austro-Hungarian 21 cm (209 mm) G. L/20 C.68 (*Kaiser Max* central casemate). Gun 9,400 kg and charge 17 kg from a Pola
+  # 1875 source; shell mass ESTIMATE.
+  - id: gun_bl_209mm_gl20
+    displayName: "21 cm G. L/20 C.68 in central casemate"
+    category: MAIN_GUN
+    introduction: { fromMonth: "1880-01", obsoleteMonth: null }
+    requires: []
+    parameters: { barrels: { min: 1, max: 4, step: 1 }, rounds: { min: 20, max: 120, step: 10 } }
+    constants:
+      {
+        gun_kg: 9400,
+        mount_per_barrel_kg: 8000,
+        mount_fixed_kg: 5000,
+        cost_per_kg_micro: 150000,
+        mount_cost_micro: 2000000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "3 * (gun_kg + mount_per_barrel_kg) * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "9 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, heavy]
+    deckFootprintMm2: "470 * (gun_kg + mount_per_barrel_kg) * barrels"
+    heightMm: "3200"
+    zCgMm: "6500"
+    fcClass: heavy
+    attributes:
+      caliberUm: "209000"
+      shellMassG: "100000" # ESTIMATE
+      chargeBp: "1700" # SINGLE-SOURCE: 17 kg black powder over a 100 kg shell
+      roundVolumeMl: "45000" # ESTIMATE
+      rofBaseX100: "100" # ESTIMATE: hand-worked Krupp-pattern BL
+      beamArcDeg: "150"
+      maxFeedPermille: "280"
+    maintenanceMonthlyBp: 20

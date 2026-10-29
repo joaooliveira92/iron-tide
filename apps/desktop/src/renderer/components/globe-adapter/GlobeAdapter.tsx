@@ -597,7 +597,18 @@ export function GlobeAdapter({
     readonly startY: number;
     dragging: boolean;
   } | null>(null);
-  const initialCameraRef = useRef(camera);
+  const [initialCamera] = useState<AppCameraState>(() => {
+    const point = homeFocusPoint(initialFocusAreaId);
+    return point === null
+      ? camera
+      : {
+          ...camera,
+          centre: nationFocusPoint(point, initialFocusNationId),
+          zoom: 3.5,
+          bearing: 0,
+          pitch: 0,
+        };
+  });
   const initialOverlayRef = useRef(overlay);
   const initialLayersRef = useRef(state.layers);
   const derived = useMemo(
@@ -788,10 +799,10 @@ export function GlobeAdapter({
       map = new MapLibreMap({
         container,
         style: buildStyle(plan, initialOverlayRef.current, initialLayersRef.current, showAreas),
-        center: [initialCameraRef.current.centre[0], initialCameraRef.current.centre[1]],
-        zoom: initialCameraRef.current.zoom,
-        bearing: initialCameraRef.current.bearing,
-        pitch: initialCameraRef.current.pitch,
+        center: [initialCamera.centre[0], initialCamera.centre[1]],
+        zoom: initialCamera.zoom,
+        bearing: initialCamera.bearing,
+        pitch: initialCamera.pitch,
         maxZoom: hierarchy.displayMaxZoom,
         fadeDuration: 0,
         attributionControl: false,

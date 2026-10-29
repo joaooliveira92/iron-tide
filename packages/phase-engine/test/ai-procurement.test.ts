@@ -7,7 +7,6 @@ import { SafeInt } from "@bluewave/contracts";
 import {
   decodeStrict,
   PropulsionPlantCatalogueSchema,
-  ShipComponentCatalogueSchema,
   ShipHullFormCatalogueSchema,
 } from "@bluewave/content-schema";
 import { canonicalSerialize } from "@bluewave/deterministic";
@@ -16,7 +15,6 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { RandomEngine, RandomLedger } from "@bluewave/random";
 import {
   buildShipBuildingContent,
-  type ComponentDef,
   type HullFormRecord,
   type PropulsionPlant,
   type ShipBuildingContent,
@@ -26,14 +24,14 @@ import { runAiProcurementPhase } from "../src/aiProcurement.js";
 import { fundDesignStudies } from "../src/designStudies.js";
 import type { PhaseContext, SnapshotHandle } from "../src/pipeline.js";
 import { readNavalProfileEntries, readReferenceDesignEntries } from "./helpers/contentFiles.js";
+import { readComponentFiles } from "../../ship-design/test/helpers/componentFiles.js";
 
 const root = join(__dirname, "..", "..", "..", "content", "production", "1880");
 const load = (rel: string) =>
   parse(readFileSync(join(root, rel), "utf8")) as Record<string, unknown>;
 
 const content: ShipBuildingContent = buildShipBuildingContent({
-  components: decodeStrict(ShipComponentCatalogueSchema, load("ship-building/components.yaml"))
-    .components as ComponentDef[],
+  components: readComponentFiles(root).components,
   plants: decodeStrict(PropulsionPlantCatalogueSchema, load("ship-building/plants.yaml"))
     .plants as unknown as PropulsionPlant[],
   hullForms: decodeStrict(ShipHullFormCatalogueSchema, load("ship-building/hull-forms.yaml"))

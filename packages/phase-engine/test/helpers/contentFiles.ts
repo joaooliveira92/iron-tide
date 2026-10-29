@@ -3,7 +3,6 @@ import { join } from "node:path";
 import {
   decodeStrict,
   PropulsionPlantCatalogueSchema,
-  ShipComponentCatalogueSchema,
   ShipHullFormCatalogueSchema,
 } from "@bluewave/content-schema";
 import {
@@ -14,6 +13,7 @@ import {
   type ShipBuildingData,
 } from "@bluewave/ship-design";
 import { parse } from "yaml";
+import { readComponentFiles } from "../../../ship-design/test/helpers/componentFiles.js";
 
 const root = join(__dirname, "..", "..", "..", "..", "content", "production", "1880");
 const sbDir = join(root, "ship-building");
@@ -52,8 +52,7 @@ export function productionShipBuildingData(
   options: { readonly navalProfiles?: boolean } = {},
 ): ShipBuildingData {
   return {
-    components: decodeStrict(ShipComponentCatalogueSchema, loadRaw("ship-building/components.yaml"))
-      .components,
+    components: readComponentFiles(root).components,
     plants: decodeStrict(PropulsionPlantCatalogueSchema, loadRaw("ship-building/plants.yaml"))
       .plants,
     hullForms: decodeStrict(ShipHullFormCatalogueSchema, loadRaw("ship-building/hull-forms.yaml"))

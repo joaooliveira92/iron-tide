@@ -68,6 +68,7 @@ export interface ValidateOutput {
   shipTypes?: unknown[];
   designLoadouts?: unknown[];
   partModelSources?: PartModelSources;
+  componentSources?: ReadonlyMap<string, string>;
   fleets?: unknown[];
   economies?: unknown[];
   constructions?: unknown[];
@@ -286,6 +287,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
       ports: validated["ports"] ?? [],
       technologies: validated["technologies"] ?? [],
       ...catalogue,
+      componentSources: sourceById(input, "shipComponents", "id"),
       partModelSources: {
         contentDir: input.contentDir,
         parts: sourceById(input, "parts", "id"),
@@ -1084,7 +1086,7 @@ function validateComponentUpgradeGraph(
       code: "COMPONENT_UPGRADE_CYCLE",
       label: "Ship component upgrade",
       edgeField: "upgradePath",
-      fallbackSource: "ship-building/components.yaml",
+      fallbackSource: "ship-building/components",
     },
     collector,
   );

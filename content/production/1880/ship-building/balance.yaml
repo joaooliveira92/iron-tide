@@ -36,6 +36,7 @@ ship:
       postwar_destroyer_form: 14946 # BALANCE TARGET copied from destroyer_form; fitted so the Forrest Sherman returns its 33 kn at 52,199 kW and 4,916 t full load (ADR-0291)
       light_cruiser_form: 20568 # BALANCE TARGET fitted so the Worcester returns its 33 kn at 89,484 kW and 17,997 t full load (ADR-0290)
       heavy_cruiser_form: 22749 # BALANCE TARGET fitted so the Des Moines returns its 33 kn at 89,484 kW and 20,934 t full load (ADR-0290)
+      fast_battleship_form: 24200 # BALANCE TARGET fitted so the Iowa returns its 32.5 kn at 158,084 kW and 57,540 t full load (ADR-0332)
       merchant_liner_form: 26000 # ESTIMATE/SINGLE-SOURCE: C2 x100 for Etruria (14,000 ihp/18.8 kn), Campania and City of Paris; range 25,000-29,000 (docs/research/ship-building-merchant-liner.md section 5)
     slr0X1000: 1300
     kSlBp: 600
@@ -413,6 +414,7 @@ cost:
     postwar_destroyer_form: 11000 # BALANCE TARGET: copied from destroyer_form
     light_cruiser_form: 10500 # BALANCE TARGET: copied from protected_cruiser_form, the nearest cruiser hull
     heavy_cruiser_form: 10500 # BALANCE TARGET: copied from protected_cruiser_form, the nearest cruiser hull
+    fast_battleship_form: 10000 # BALANCE TARGET: copied from pre_dreadnought_form, the nearest capital hull (ADR-0332)
     merchant_liner_form: 10000 # ESTIMATE: neutral until a merchant-yard source exists
   subdivisionComplexityBp:
     - 9000
@@ -896,6 +898,16 @@ environment:
         maxBeamMm: 40000,
         maxDisplacementKg: 30000000,
         craneLiftKg: 500000,
+      }
+    # E-1 1940-1949 battleship slice (ADR-0332): Iowa is 270.4 m overall, 57,540 t full load and its 16-inch triple turret is
+    # 1,735 t. The limits are the reference ship's figures rounded up; every value is a BALANCE TARGET because no 1940s yard
+    # survey is cited.
+    - {
+        id: yard_super,
+        maxLengthMm: 280000,
+        maxBeamMm: 40000,
+        maxDisplacementKg: 60000000,
+        craneLiftKg: 2500000,
       }
   # Rate (SECONDARY, derived): work micro-units per tonne of maxDisplacement per month per line. Brassey 1901 pp. 18-19 launch
   # weights give 250-364 t of hull per month on a battleship slip (Russell 5,950 t in 23 months, Montagu 4,987 t in 15.4, Albemarle

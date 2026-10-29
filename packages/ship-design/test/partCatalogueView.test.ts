@@ -4,7 +4,7 @@ import { join } from "node:path";
 import {
   CompiledPartModelSchema,
   FlattenedPartSchema,
-  ShipComponentCatalogueSchema,
+  ShipComponentWithSourceCatalogueSchema,
   decodeStrict,
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
@@ -29,7 +29,7 @@ const artifact: unknown = JSON.parse(readFileSync(artifactPath, "utf8"));
 const shipBuilding = (artifact as { readonly shipBuilding: unknown }).shipBuilding;
 const slice = (key: string): unknown => (shipBuilding as Readonly<Record<string, unknown>>)[key];
 const model = decodeStrict(CompiledPartModelSchema, slice("partModel"));
-const components = decodeStrict(ShipComponentCatalogueSchema, {
+const components = decodeStrict(ShipComponentWithSourceCatalogueSchema, {
   components: slice("components"),
 }).components;
 

@@ -20,3 +20,4 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0308](../ADR-0308-e1-compiled-design-capabilities-reach-combat.md) Compiled design capabilities reach combat and are decoded strictly.
 - [ADR-0309](../ADR-0309-e1-part-families-and-capability-kinds.md) E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars.
 - [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire.
+- [ADR-0333](../ADR-0333-split-ship-component-catalogue-by-nation.md) Split the ship-component catalogue by family and nation, with per-record source provenance.

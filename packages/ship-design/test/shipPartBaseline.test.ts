@@ -21,17 +21,17 @@ const entriesOf = (r: EquivalenceReport) =>
 describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
   it("pins the coverage and data-quality inventory", () => {
     const expected = {
-      designs: 96,
-      placements: 883,
-      gunPlacements: 251,
+      designs: 97,
+      placements: 909,
+      gunPlacements: 264,
       tubePlacements: 31,
-      fittingPlacements: 601,
+      fittingPlacements: 614,
     };
     expect(report.coverage.baseline).toEqual(expected);
     expect(report.coverage.candidate).toEqual(expected);
     expect(report.coverage.pinned).toEqual(expected);
     expect(report.dataQuality.inventory.observed).toEqual({
-      centralBatteryPlacements: 12,
+      centralBatteryPlacements: 15,
       launcherVariants: 17,
       waivedLauncherRecords: 5,
       torpedoEntriesAffected: 9,
@@ -47,13 +47,13 @@ describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
   it("keeps inherited findings in dataQuality, apart from the differences", () => {
     const { inherited } = report.dataQuality;
     expect(inherited.filter((f) => f.code === "DQ-TORPEDO-001")).toHaveLength(9);
-    expect(inherited.filter((f) => f.code === "DQ-ARMAMENT-001")).toHaveLength(12);
+    expect(inherited.filter((f) => f.code === "DQ-ARMAMENT-001")).toHaveLength(15);
     expect(inherited.every((f) => f.status === "inherited")).toBe(true);
     const rows = report.designs.flatMap((d) => d.rows);
     expect(rows.some((r) => String(r.path).includes("DQ-"))).toBe(false);
   });
 
-  it("pins the twelve D17 rows", () => {
+  it("pins the fifteen D17 rows", () => {
     const nine = entriesOf(report).filter(
       (e) => e.disposition === "RECLASSIFIED_AS_CENTRAL_BATTERY",
     );

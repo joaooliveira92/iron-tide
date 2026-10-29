@@ -475,6 +475,19 @@ gunFamilies:
         - title: navweaps.com US 6-inch/47 (15.2 cm) Mark 16 DP
           archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_6-47DP_mk16.php
           section: docs/research/e-1-1940s-hull-and-part-values.md sections 3-4
+  - id: gun_ap_16in_50_triple
+    designation: US 16-inch/50 Mark 7 gun in triple turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: BALANCE_TARGET
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0332. Bore, shell, mass and mount from navweaps.com WNUS_16-50_mk7 and navypedia.org us_bb_iowa (SINGLE-SOURCE); the component carries the derivations.
+      sources:
+        - title: navweaps.com US 16-inch/50 (40.6 cm) Mark 7
+          archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_16-50_mk7.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md section 14
   - id: gun_ap_8in_55_triple
     designation: US 8-inch/55 Mark 16 rapid-fire gun in triple turret
     category: MAIN_GUN

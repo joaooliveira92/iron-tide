@@ -1,12 +1,74 @@
 parts:
   - family: gun_mount
+    id: gun_ap_16in_50_triple_central_battery_3
+    lifecycle:
+      availableFrom: 1943-01
+      availableUntil: null
+      requires:
+        - gun_16in_heavy_guns
+    name: gun_ap_16in_50_triple_central_battery_3
+    origin:
+      sourceFile: ship-building/components/guns/united-states.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0332. Bore, shell, mass and mount from navweaps.com WNUS_16-50_mk7 and navypedia.org us_bb_iowa (SINGLE-SOURCE); the component carries the derivations.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_16-50_mk7.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md section 14
+          title: navweaps.com US 16-inch/50 (40.6 cm) Mark 7
+        - archiveOrUrl: https://www.navypedia.org/ships/usa/us_bb_iowa.htm
+          section: docs/research/e-1-1940s-hull-and-part-values.md section 14
+          title: navypedia.org Iowa class battleships
+    provides: gun_mount
+    quantities:
+      - basis: PER_LOADOUT_ENTRY
+        id: installation_fixed
+        kind: massKg
+        value: 0
+      - basis: PER_CONTAINED_UNIT
+        id: installation_per_gun
+        kind: massKg
+        value: 578467
+      - basis: PER_CONTAINED_UNIT
+        id: mount_cost_per_gun
+        kind: costMicro
+        value: 165300000000
+      - basis: PER_CONTAINED_UNIT
+        id: crew_per_gun
+        kind: crew
+        value: 64
+      - basis: PER_CONTAINED_UNIT
+        id: volume_per_gun
+        kind: volumeLitre
+        value: 600000
+      - basis: PER_CONTAINED_UNIT
+        id: deck_footprint_per_gun
+        kind: deckFootprintMm2
+        value: 30000000
+    revisions: []
+    slots:
+      - accepts:
+          - gun
+        id: guns
+        mountCount:
+          max: 3
+          min: 3
+    spec:
+      compatibleGunFamilies:
+        - gun_ap_16in_50_triple
+      firingArcDeg: 150
+      gunsPerMount: 3
+      mountType: BROADSIDE_BATTERY
+  - family: gun_mount
     id: gun_ap_8in_55_triple_central_battery_3
     lifecycle:
       availableFrom: 1948-01
       availableUntil: null
     name: gun_ap_8in_55_triple_central_battery_3
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     provenance:
       confidence: MEDIUM
       kind: balance_adjustment
@@ -1134,7 +1196,7 @@ parts:
       availableUntil: null
     name: gun_bl_149mm_rkl22_broadside_battery
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -1192,7 +1254,7 @@ parts:
       availableUntil: null
     name: gun_bl_149mm_rkl22_casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -1250,7 +1312,7 @@ parts:
       availableUntil: null
     name: gun_bl_149mm_rkl22_deck_shielded
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -1308,7 +1370,7 @@ parts:
       availableUntil: null
     name: gun_bl_173mm_rkl25_casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -1366,7 +1428,7 @@ parts:
       availableUntil: null
     name: gun_bl_173mm_rkl25_deck_shielded
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -1424,7 +1486,7 @@ parts:
       availableUntil: null
     name: gun_bl_209mm_gl20_casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -1482,7 +1544,7 @@ parts:
       availableUntil: null
     name: gun_bl_235mm_rkl22_barbette
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -1540,7 +1602,7 @@ parts:
       availableUntil: null
     name: gun_bl_235mm_rkl22_barbette_x2
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -1599,7 +1661,7 @@ parts:
       availableUntil: null
     name: gun_bl_235mm_rkl22_casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -2621,7 +2683,7 @@ parts:
       availableUntil: null
     name: gun_bl_283mm_krupp_turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -2679,7 +2741,7 @@ parts:
       availableUntil: null
     name: gun_bl_283mm_krupp_turret_x2
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -2738,7 +2800,7 @@ parts:
       availableUntil: null
     name: gun_bl_67mm_krupp_deck_open
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     provenance:
       confidence: LOW
       kind: historical_fact
@@ -2796,7 +2858,7 @@ parts:
       availableUntil: null
     name: gun_bl_6in_26_broadside_battery
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-breech-loading.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -2912,7 +2974,7 @@ parts:
       availableUntil: null
     name: gun_bl_6in_26_deck_open
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-breech-loading.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -3206,7 +3268,7 @@ parts:
       availableUntil: null
     name: gun_dp_5in_38_twin_turret_x2
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     provenance:
       confidence: MEDIUM
       kind: balance_adjustment
@@ -3264,7 +3326,7 @@ parts:
       availableUntil: null
     name: gun_dp_5in_54_single_turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     provenance:
       confidence: MEDIUM
       kind: balance_adjustment
@@ -3321,7 +3383,7 @@ parts:
       availableUntil: null
     name: gun_dp_6in_47_twin_turret_x2
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     provenance:
       confidence: MEDIUM
       kind: balance_adjustment
@@ -3667,7 +3729,7 @@ parts:
       availableUntil: null
     name: gun_qf_47in_broadside_battery
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-quick-firing.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -3960,7 +4022,7 @@ parts:
       availableUntil: null
     name: gun_qf_6in_40_deck_open
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-quick-firing.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -4254,7 +4316,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_12ton_300pdr_broadside_battery
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -4312,7 +4374,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_12ton_300pdr_deck_open
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -4481,7 +4543,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_18ton_broadside_barbette
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -4536,7 +4598,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_18ton_broadside_barbette_x2
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -4592,7 +4654,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_18ton_broadside_battery
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -4702,7 +4764,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_18ton_broadside_central_battery_3
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -4757,7 +4819,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_18ton_broadside_central_battery_4
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -4812,7 +4874,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_18ton_broadside_central_battery_5
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -4867,7 +4929,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_18ton_broadside_central_battery_6
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -4922,7 +4984,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_18ton_casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -5197,7 +5259,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_18ton_turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -5252,7 +5314,7 @@ parts:
       availableUntil: null
     name: gun_rml_10in_18ton_turret_x2
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -5419,7 +5481,7 @@ parts:
       availableUntil: null
     name: gun_rml_11in_25ton_casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -5694,7 +5756,7 @@ parts:
       availableUntil: null
     name: gun_rml_11in_25ton_deck_shielded
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -5749,7 +5811,7 @@ parts:
       availableUntil: null
     name: gun_rml_11in_25ton_turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -5804,7 +5866,7 @@ parts:
       availableUntil: null
     name: gun_rml_11in_25ton_turret_x2
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -6080,7 +6142,7 @@ parts:
       availableUntil: null
     name: gun_rml_125in_38ton_deck_shielded
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -7239,7 +7301,7 @@ parts:
       availableUntil: null
     name: gun_rml_229mm_whitworth_broadside_battery
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -7297,7 +7359,7 @@ parts:
       availableUntil: null
     name: gun_rml_229mm_whitworth_casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -7355,7 +7417,7 @@ parts:
       availableUntil: null
     name: gun_rml_64pdr_71cwt_broadside_battery
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -7410,7 +7472,7 @@ parts:
       availableUntil: null
     name: gun_rml_64pdr_71cwt_casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -7520,7 +7582,7 @@ parts:
       availableUntil: null
     name: gun_rml_64pdr_71cwt_deck_shielded
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -7686,7 +7748,7 @@ parts:
       availableUntil: null
     name: gun_rml_7in_7ton_casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -7961,7 +8023,7 @@ parts:
       availableUntil: null
     name: gun_rml_7in_7ton_deck_open
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -8016,7 +8078,7 @@ parts:
       availableUntil: null
     name: gun_rml_7in_7ton_deck_shielded
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -8182,7 +8244,7 @@ parts:
       availableUntil: null
     name: gun_rml_8in_9ton_broadside_battery
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -8237,7 +8299,7 @@ parts:
       availableUntil: null
     name: gun_rml_8in_9ton_casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -8512,7 +8574,7 @@ parts:
       availableUntil: null
     name: gun_rml_8in_9ton_deck_open
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -8567,7 +8629,7 @@ parts:
       availableUntil: null
     name: gun_rml_8in_9ton_deck_shielded
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -8622,7 +8684,7 @@ parts:
       availableUntil: null
     name: gun_rml_8in_9ton_turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -8677,7 +8739,7 @@ parts:
       availableUntil: null
     name: gun_rml_8in_9ton_turret_x2
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -8733,7 +8795,7 @@ parts:
       availableUntil: null
     name: gun_sb_15in_dahlgren_turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact
@@ -8791,7 +8853,7 @@ parts:
       availableUntil: null
     name: gun_sb_15in_dahlgren_turret_x2
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     provenance:
       confidence: MEDIUM
       kind: historical_fact

@@ -15,6 +15,7 @@ export interface NormalizeOutput {
   ports: Record<string, unknown>[];
   technologies: Record<string, unknown>[];
   shipComponents: Record<string, unknown>[];
+  componentSources: ReadonlyMap<string, string>;
   propulsionPlants: Record<string, unknown>[];
   shipHullForms: Record<string, unknown>[];
   shipBalance: unknown;
@@ -70,6 +71,7 @@ export class NormalizeStage implements CompilerStage<FlattenOutput, NormalizeOut
       ports: sortById(input.ports as Record<string, unknown>[]),
       technologies: sortById(input.technologies as Record<string, unknown>[]),
       shipComponents: sortById((input.shipComponents ?? []) as Record<string, unknown>[]),
+      componentSources: input.componentSources ?? new Map(),
       propulsionPlants: sortById((input.propulsionPlants ?? []) as Record<string, unknown>[]),
       shipHullForms: sortById((input.shipHullForms ?? []) as Record<string, unknown>[]),
       shipBalance: input.shipBalance,
