@@ -8,7 +8,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   consumeOfferResponse,
   createInterruptionState,
-  hashSnapshot,
+  unifiedSnapshotHash,
   MonthExecutor,
   PLAYER_NATION_UNKNOWN,
 } from "../src/index.js";
@@ -115,8 +115,8 @@ describe("month player-nation input", () => {
       prestige: controlPlayer.prestige,
       prestigeLastChange: controlPlayer.prestigeLastChange,
     });
-    expect(hashSnapshot({ ...withPlayer.finalSnapshot, nations })).toBe(
-      hashSnapshot(control.finalSnapshot),
+    expect(unifiedSnapshotHash({ ...withPlayer.finalSnapshot, nations })).toBe(
+      unifiedSnapshotHash(control.finalSnapshot),
     );
   });
 
@@ -127,6 +127,6 @@ describe("month player-nation input", () => {
     });
     expect(result.success).toBe(false);
     expect(collector.all.map((d) => d.code)).toContain(PLAYER_NATION_UNKNOWN);
-    expect(hashSnapshot(result.finalSnapshot)).toBe(hashSnapshot(snapshot));
+    expect(unifiedSnapshotHash(result.finalSnapshot)).toBe(unifiedSnapshotHash(snapshot));
   });
 });

@@ -3,7 +3,7 @@ import type { CommandBody, CommandEnvelope, CommandLedger } from "@bluewave/comm
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { RecoveryManager } from "@bluewave/persistence";
 import {
-  hashSnapshot,
+  unifiedSnapshotHash,
   type MonthExecutorEngineOptions,
   type ReplayResult,
   ReplayVerifier,
@@ -52,7 +52,7 @@ export function replayServiceLayer(): Layer.Layer<ReplayService> {
       RecoveryManager.revertEffect(saveDir, saveId).pipe(
         Effect.match({ onFailure: () => false, onSuccess: () => true }),
       ),
-    hash: (snapshot) => Effect.sync(() => hashSnapshot(snapshot)),
+    hash: (snapshot) => Effect.sync(() => unifiedSnapshotHash(snapshot)),
     promote: (snapshot, slotId) =>
       Effect.sync(() => promotePlayerSlotForExecution(snapshot, slotId)),
   });

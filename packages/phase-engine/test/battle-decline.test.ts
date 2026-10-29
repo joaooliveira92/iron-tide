@@ -9,7 +9,7 @@ import {
 import { FIXTURE_BATTLE_OFFER_RULES } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import {
-  hashSnapshot,
+  unifiedSnapshotHash,
   MonthExecutor,
   priceDecline,
   type InterruptionChannel,
@@ -166,7 +166,9 @@ describe("a decline (R8)", () => {
 
   it("is a pure function of its inputs: two passes agree byte for byte", () => {
     const again = declined(warSnapshot());
-    expect(hashSnapshot(again.finalSnapshot)).toBe(hashSnapshot(result.finalSnapshot));
+    expect(unifiedSnapshotHash(again.finalSnapshot)).toBe(
+      unifiedSnapshotHash(result.finalSnapshot),
+    );
     expect(again.randomLedger.all).toEqual(result.randomLedger.all);
     expect(again.eventLedger.all).toEqual(result.eventLedger.all);
   });
@@ -299,7 +301,9 @@ describe("several offers in one month (R8, R15)", () => {
     const resumed = run(snapshot, { inputs });
     const single = run(snapshot, { inputs: [...inputs] });
     expect(resumed.outcome).toBe("completed");
-    expect(hashSnapshot(single.finalSnapshot)).toBe(hashSnapshot(resumed.finalSnapshot));
+    expect(unifiedSnapshotHash(single.finalSnapshot)).toBe(
+      unifiedSnapshotHash(resumed.finalSnapshot),
+    );
     expect(single.eventLedger.all).toEqual(resumed.eventLedger.all);
     expect(resumed.finalSnapshot.wars.declinedBattles).toHaveLength(1);
     expect(resumed.finalSnapshot.wars.battles.map((b) => b.phase).sort()).toEqual([

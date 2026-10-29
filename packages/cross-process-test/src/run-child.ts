@@ -2,6 +2,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/campaign";
+import { unifiedSnapshotHash } from "@bluewave/campaign";
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
 import { generate } from "@bluewave/combat";
 import type { BudgetProjectCommand, CommandEnvelope } from "@bluewave/commands";
@@ -135,48 +136,6 @@ function contentBundleHash(fixtureDir: string): string {
   return artifact.envelope.bodyHash;
 }
 
-function snapshotToHashable(snapshot: CampaignSnapshot): unknown {
-  const nations: Record<string, NationState> = {};
-  for (const [id, nation] of snapshot.nations) {
-    nations[id] = nation;
-  }
-  return {
-    version: snapshot.version,
-    turnNumber: snapshot.turnNumber,
-    campaignId: snapshot.campaignId,
-    startYear: snapshot.startYear,
-    startMonth: snapshot.startMonth,
-    strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
-    slots: snapshot.slots.map((s) => ({ nationId: s.nationId, type: s.type })),
-    world: {
-      areas: snapshot.world.areas.map((a) => ({ ...a })),
-      routes: snapshot.world.routes.map((r) => ({ ...r })),
-      ports: snapshot.world.ports.map((p) => ({ ...p })),
-    },
-    nations,
-    wars: {
-      wars: snapshot.wars.wars.map((w) => ({ ...w })),
-      battles: snapshot.wars.battles.map((b) => ({ ...b })),
-      participantMemberships: snapshot.wars.participantMemberships.map((m) => ({ ...m })),
-      blockadeState: snapshot.wars.blockadeState.map((b) => ({ ...b })),
-      battleManifests: (snapshot.wars.battleManifests ?? []).map((m) => ({ ...m })),
-    },
-    politics: {
-      relations: snapshot.politics.relations.map((r) => ({ ...r })),
-      shells: { ...snapshot.politics.shells },
-    },
-    intelligence: {
-      shells: { ...snapshot.intelligence.shells },
-    },
-    rulesetVersion: snapshot.rulesetVersion,
-    compatibilityVersion: snapshot.compatibilityVersion,
-  };
-}
-
-function hashSnapshot(snapshot: CampaignSnapshot): string {
-  return sha256Hex(canonicalSerialize(snapshotToHashable(snapshot)));
-}
-
 function makeBudgetCommand(
   snapshot: CampaignSnapshot,
   nationId: string,
@@ -268,14 +227,14 @@ function run(): void {
 
     const { state: campaignState, contentHash: contentArtifactHash } = compileCampaign(fixtureDir);
     const snapshot = campaignState.snapshot;
-    const initialSnapshotHash = campaignState.rawHash;
+    const initialSnapshotHash = unifiedSnapshotHash(snapshot);
 
     const executor = new MonthExecutor();
     const cmd = makeBudgetCommand(snapshot, "uk", "con-gbr-ship-battleship2", SafeInt(100));
     const collector = new DiagnosticCollector();
     const monthResult = executor.execute(snapshot, [cmd], "deterministic-seed", collector);
 
-    const closingSnapshotHash = hashSnapshot(monthResult.finalSnapshot);
+    const closingSnapshotHash = unifiedSnapshotHash(monthResult.finalSnapshot);
     const commandLedgerHash = monthResult.commandLedger.hash();
     const eventLedgerHash = monthResult.eventLedger.hash();
     const financialLedgerHash = monthResult.financialLedger.hash();
@@ -417,7 +376,7 @@ function advanceProductionRun(
       yearStarts.push({
         year: calendar.year,
         month: `${String(calendar.year)}-01`,
-        snapshotHash: hashSnapshot(snapshot),
+        snapshotHash: unifiedSnapshotHash(snapshot),
       });
       onYearStart?.(snapshot, calendar.year);
     }
@@ -467,18 +426,18 @@ function advanceProductionRun(
       if (after !== undefined && (after.treasury as number) !== (before.treasury as number) + net)
         ledgerIdentityBreaks.push(`${String(index + 1)}:${nationId}`);
     }
-    monthlyHashes.push(hashSnapshot(result.finalSnapshot));
+    monthlyHashes.push(unifiedSnapshotHash(result.finalSnapshot));
     snapshot = {
       ...result.finalSnapshot,
       turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt.ONE),
     };
   }
   return {
-    initialSnapshotHash: hashSnapshot(initial),
+    initialSnapshotHash: unifiedSnapshotHash(initial),
     yearStarts,
     monthlyHashes,
     monthlySuccess,
-    closingSnapshotHash: hashSnapshot(snapshot),
+    closingSnapshotHash: unifiedSnapshotHash(snapshot),
     success,
     diagnostics,
     firstShortfallMonth,

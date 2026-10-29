@@ -1,6 +1,6 @@
-import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
+import type { CampaignSnapshot } from "@bluewave/campaign";
+import { unifiedSnapshotHash } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope, CommandLedger } from "@bluewave/commands";
-import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { MonthExecutor } from "./month.js";
 import type { MonthExecutorEngineOptions } from "./pipeline.js";
@@ -32,49 +32,6 @@ export interface ReplayResult {
   finalSnapshot: CampaignSnapshot;
 }
 
-export function snapshotToHashable(snapshot: CampaignSnapshot): unknown {
-  const nations: Record<string, NationState> = {};
-  for (const [id, nation] of snapshot.nations) {
-    nations[id] = nation;
-  }
-  const wars = {
-    wars: snapshot.wars.wars.map((w) => ({ ...w })),
-    battles: snapshot.wars.battles.map((b) => ({ ...b, manifestHash: b.manifestHash })),
-    participantMemberships: snapshot.wars.participantMemberships.map((m) => ({ ...m })),
-    blockadeState: snapshot.wars.blockadeState.map((b) => ({ ...b })),
-    battleManifests: (snapshot.wars.battleManifests ?? []).map((m) => ({ ...m })),
-  };
-  return {
-    version: snapshot.version,
-    turnNumber: snapshot.turnNumber,
-    campaignId: snapshot.campaignId,
-    startYear: snapshot.startYear,
-    startMonth: snapshot.startMonth,
-    strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
-    slots: snapshot.slots.map((s) => ({ ...s })),
-    world: {
-      areas: snapshot.world.areas.map((a) => ({ ...a })),
-      routes: snapshot.world.routes.map((r) => ({ ...r })),
-      ports: snapshot.world.ports.map((p) => ({ ...p })),
-    },
-    nations,
-    wars,
-    politics: {
-      relations: snapshot.politics.relations.map((r) => ({ ...r })),
-      shells: { ...snapshot.politics.shells },
-    },
-    intelligence: {
-      shells: { ...snapshot.intelligence.shells },
-    },
-    rulesetVersion: snapshot.rulesetVersion,
-    compatibilityVersion: snapshot.compatibilityVersion,
-  };
-}
-
-export function hashSnapshot(snapshot: CampaignSnapshot): string {
-  return sha256Hex(canonicalSerialize(snapshotToHashable(snapshot)));
-}
-
 export class ReplayVerifier {
   verify(
     snapshot: CampaignSnapshot,
@@ -95,7 +52,7 @@ export class ReplayVerifier {
       engineOptions,
     );
 
-    const replayedFinalHash = hashSnapshot(result.finalSnapshot);
+    const replayedFinalHash = unifiedSnapshotHash(result.finalSnapshot);
 
     const originalOutcomes = originalCommandLedger.all;
     const replayedOutcomes = result.commandLedger.all;

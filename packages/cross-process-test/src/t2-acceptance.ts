@@ -20,7 +20,7 @@ import {
   type RecordedInput,
   type SuspendedTurn,
 } from "@bluewave/messages";
-import { hashSnapshot, MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
+import { unifiedSnapshotHash, MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 
 import { compileProductionCampaign } from "./production-pack.js";
 
@@ -223,7 +223,7 @@ export function runT2Acceptance(): T2Observation {
     },
     submitted: {
       outcome: submitted.outcome,
-      snapshotHash: hashSnapshot(submitted.finalSnapshot),
+      snapshotHash: unifiedSnapshotHash(submitted.finalSnapshot),
       eventsHash: submitted.eventLedger.hash(),
       randomHash: submitted.randomLedger.hash(),
       battlePhase: resolved?.phase ?? "missing",

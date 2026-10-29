@@ -10,7 +10,8 @@ import {
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
-import type { CampaignState, CampaignSnapshot, NationState } from "@bluewave/campaign";
+import type { CampaignState, CampaignSnapshot } from "@bluewave/campaign";
+import { unifiedSnapshotHash } from "@bluewave/campaign";
 import type { CommandEnvelope, BudgetProjectCommand } from "@bluewave/commands";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
 import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
@@ -19,48 +20,6 @@ import { Effect } from "effect";
 import { FIXTURE_BATTLE_OFFER_RULES, FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 import { compileProductionCampaign } from "../src/production-pack.js";
 import { tmpdir } from "node:os";
-
-function snapshotToHashable(snapshot: CampaignSnapshot): unknown {
-  const nations: Record<string, NationState> = {};
-  for (const [id, nation] of snapshot.nations) {
-    nations[id] = nation;
-  }
-  return {
-    version: snapshot.version,
-    turnNumber: snapshot.turnNumber,
-    campaignId: snapshot.campaignId,
-    startYear: snapshot.startYear,
-    startMonth: snapshot.startMonth,
-    strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
-    slots: snapshot.slots.map((s) => ({ ...s })),
-    world: {
-      areas: snapshot.world.areas.map((a) => ({ ...a })),
-      routes: snapshot.world.routes.map((r) => ({ ...r })),
-      ports: snapshot.world.ports.map((p) => ({ ...p })),
-    },
-    nations,
-    wars: {
-      wars: snapshot.wars.wars.map((w) => ({ ...w })),
-      battles: snapshot.wars.battles.map((b) => ({ ...b })),
-      participantMemberships: snapshot.wars.participantMemberships.map((m) => ({ ...m })),
-      blockadeState: snapshot.wars.blockadeState.map((b) => ({ ...b })),
-      battleManifests: (snapshot.wars.battleManifests ?? []).map((m) => ({ ...m })),
-    },
-    politics: {
-      relations: snapshot.politics.relations.map((r) => ({ ...r })),
-      shells: { ...snapshot.politics.shells },
-    },
-    intelligence: {
-      shells: { ...snapshot.intelligence.shells },
-    },
-    rulesetVersion: snapshot.rulesetVersion,
-    compatibilityVersion: snapshot.compatibilityVersion,
-  };
-}
-
-function hashSnapshot(snapshot: CampaignSnapshot): string {
-  return sha256Hex(canonicalSerialize(snapshotToHashable(snapshot)));
-}
 
 const thisDir = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(thisDir, "..", "..", "..");
@@ -154,7 +113,7 @@ describe("production pack (content/production/1880) full loop", () => {
       expect(loaded.state.snapshot.campaignId).toBe(snapshot.campaignId);
 
       const replayVerifier = new ReplayVerifier();
-      const closingSnapshotHash = hashSnapshot(monthResult.finalSnapshot);
+      const closingSnapshotHash = unifiedSnapshotHash(monthResult.finalSnapshot);
       const replayResult = replayVerifier.verify(
         snapshot,
         [cmd],
@@ -416,7 +375,7 @@ describe("S-1 acceptance (ticket 09): readiness and maintenance on the productio
     const warMaintenance = warMonth2.finalSnapshot.nations.get("uk")!.maintenanceCost as number;
     expect(warMaintenance).toBeGreaterThan(peaceMaintenance);
 
-    expect(hashSnapshot(run().finalSnapshot)).toBe(hashSnapshot(run().finalSnapshot));
+    expect(unifiedSnapshotHash(run().finalSnapshot)).toBe(unifiedSnapshotHash(run().finalSnapshot));
   });
 });
 
@@ -570,7 +529,9 @@ describe("T-1 09 (#118): the battle-offer section is configured on the productio
     const control = run();
     const withPlayer = run("uk");
     expect(withPlayer.success).toBe(control.success);
-    expect(hashSnapshot(withPlayer.finalSnapshot)).toBe(hashSnapshot(control.finalSnapshot));
+    expect(unifiedSnapshotHash(withPlayer.finalSnapshot)).toBe(
+      unifiedSnapshotHash(control.finalSnapshot),
+    );
     expect(sha256Hex(canonicalSerialize(withPlayer.eventLedger))).toBe(
       sha256Hex(canonicalSerialize(control.eventLedger)),
     );
@@ -640,14 +601,16 @@ describe("S-2 04 (#89): the unpaid-funds prestige source on the production pack 
     const plain = compileProductionCampaign().state.snapshot;
     const quiet = run(plain, "uk");
     expect(prestigeEvents(quiet)).toHaveLength(0);
-    expect(hashSnapshot(quiet.finalSnapshot)).toBe(hashSnapshot(run(plain).finalSnapshot));
+    expect(unifiedSnapshotHash(quiet.finalSnapshot)).toBe(
+      unifiedSnapshotHash(run(plain).finalSnapshot),
+    );
   });
 
   it("is byte-identical across two runs of the scripted month", () => {
     const snapshot = shortfallSnapshot(["uk"]);
     const a = run(snapshot, "uk");
     const b = run(snapshot, "uk");
-    expect(hashSnapshot(a.finalSnapshot)).toBe(hashSnapshot(b.finalSnapshot));
+    expect(unifiedSnapshotHash(a.finalSnapshot)).toBe(unifiedSnapshotHash(b.finalSnapshot));
     expect(sha256Hex(canonicalSerialize(a.eventLedger))).toBe(
       sha256Hex(canonicalSerialize(b.eventLedger)),
     );

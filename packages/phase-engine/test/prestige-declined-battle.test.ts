@@ -9,7 +9,7 @@ import {
 import { FIXTURE_BATTLE_OFFER_RULES } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import {
-  hashSnapshot,
+  unifiedSnapshotHash,
   MonthExecutor,
   type InterruptionChannel,
   type MonthResult,
@@ -204,10 +204,14 @@ describe("declined battles cost the player prestige at the threshold (R10)", () 
       [answer(request1, "decline"), answer(request2, "decline")],
       rules,
     );
-    expect(hashSnapshot(single.finalSnapshot)).toBe(hashSnapshot(resumed.finalSnapshot));
+    expect(unifiedSnapshotHash(single.finalSnapshot)).toBe(
+      unifiedSnapshotHash(resumed.finalSnapshot),
+    );
     expect(single.eventLedger.all).toEqual(resumed.eventLedger.all);
     const again = script(["decline", "decline"], rules);
-    expect(hashSnapshot(again.finalSnapshot)).toBe(hashSnapshot(resumed.finalSnapshot));
+    expect(unifiedSnapshotHash(again.finalSnapshot)).toBe(
+      unifiedSnapshotHash(resumed.finalSnapshot),
+    );
     expect(again.eventLedger.hash()).toBe(resumed.eventLedger.hash());
   });
 });

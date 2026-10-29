@@ -4,7 +4,7 @@ import { campaignMonthId, type CampaignSnapshot } from "@bluewave/campaign";
 import { BATTLE_END_PRECEDENCE } from "@bluewave/combat/battleResolution";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { MonthExecutor } from "../src/month.js";
-import { hashSnapshot } from "../src/replay.js";
+import { unifiedSnapshotHash } from "../src/index.js";
 import { makeBattleSnapshot } from "./battle-fixtures.js";
 
 const MONTHS = 36;
@@ -95,7 +95,7 @@ function observe(
     randomHash: ledgers.randomHash,
     commandHash: ledgers.commandHash,
     financialHash: ledgers.financialHash,
-    snapshotHash: hashSnapshot(final),
+    snapshotHash: unifiedSnapshotHash(final),
     battlesThisMonth: thisMonth.length,
     resolved,
     unresolved,

@@ -4,7 +4,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
-import { hashSnapshot, MonthExecutor } from "../src/index.js";
+import { unifiedSnapshotHash, MonthExecutor } from "../src/index.js";
 import { ATTACKER_NATION, makeBattleSnapshot } from "./battle-fixtures.js";
 
 import {
@@ -191,6 +191,6 @@ describe("design studies (DESIGN-21 section 3, ADR-0085)", () => {
   it("is deterministic", () => {
     const one = month(snapshot0, [submit(snapshot0, "des_a")]).result.finalSnapshot;
     const two = month(snapshot0, [submit(snapshot0, "des_a")]).result.finalSnapshot;
-    expect(hashSnapshot(one)).toBe(hashSnapshot(two));
+    expect(unifiedSnapshotHash(one)).toBe(unifiedSnapshotHash(two));
   });
 });

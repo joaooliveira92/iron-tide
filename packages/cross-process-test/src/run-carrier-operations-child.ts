@@ -1,7 +1,8 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/campaign";
+import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
+import { unifiedSnapshotHash } from "@bluewave/campaign";
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
 import { buildContentBundleArtifact } from "@bluewave/content-compiler";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -107,48 +108,6 @@ function compileCampaign(fixtureDir: string): { state: CampaignState; contentHas
   return { state: output.state, contentHash: output.contentHash };
 }
 
-function snapshotToHashable(snapshot: CampaignSnapshot): unknown {
-  const nations: Record<string, NationState> = {};
-  for (const [id, nation] of snapshot.nations) {
-    nations[id] = nation;
-  }
-  return {
-    version: snapshot.version,
-    turnNumber: snapshot.turnNumber,
-    campaignId: snapshot.campaignId,
-    startYear: snapshot.startYear,
-    startMonth: snapshot.startMonth,
-    strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
-    slots: snapshot.slots.map((s) => ({ nationId: s.nationId, type: s.type })),
-    world: {
-      areas: snapshot.world.areas.map((a) => ({ ...a })),
-      routes: snapshot.world.routes.map((r) => ({ ...r })),
-      ports: snapshot.world.ports.map((p) => ({ ...p })),
-    },
-    nations,
-    wars: {
-      wars: snapshot.wars.wars.map((w) => ({ ...w })),
-      battles: snapshot.wars.battles.map((b) => ({ ...b })),
-      participantMemberships: snapshot.wars.participantMemberships.map((m) => ({ ...m })),
-      blockadeState: snapshot.wars.blockadeState.map((b) => ({ ...b })),
-      battleManifests: (snapshot.wars.battleManifests ?? []).map((m) => ({ ...m })),
-    },
-    politics: {
-      relations: snapshot.politics.relations.map((r) => ({ ...r })),
-      shells: { ...snapshot.politics.shells },
-    },
-    intelligence: {
-      shells: { ...snapshot.intelligence.shells },
-    },
-    rulesetVersion: snapshot.rulesetVersion,
-    compatibilityVersion: snapshot.compatibilityVersion,
-  };
-}
-
-function hashSnapshot(snapshot: CampaignSnapshot): string {
-  return sha256Hex(canonicalSerialize(snapshotToHashable(snapshot)));
-}
-
 function carrierOpsHash(snapshot: CampaignSnapshot): string {
   const ops: Record<string, unknown> = {};
   for (const [nationId, nation] of snapshot.nations) {
@@ -183,7 +142,7 @@ function run(): void {
     const collector = new DiagnosticCollector();
     const monthResult = executor.execute(snapshot, [], "deterministic-seed", collector);
 
-    const closingSnapshotHash = hashSnapshot(monthResult.finalSnapshot);
+    const closingSnapshotHash = unifiedSnapshotHash(monthResult.finalSnapshot);
     const commandLedgerHash = monthResult.commandLedger.hash();
     const eventLedgerHash = monthResult.eventLedger.hash();
     const financialLedgerHash = monthResult.financialLedger.hash();

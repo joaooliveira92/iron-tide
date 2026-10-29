@@ -1,4 +1,4 @@
-import type { CampaignSnapshot } from "@bluewave/campaign";
+import { unifiedSnapshotHash } from "@bluewave/campaign";
 import { canonicalSerialize, compareCodePoints, hashWithContext } from "@bluewave/deterministic";
 import type { MonthResult } from "@bluewave/phase-engine";
 
@@ -6,7 +6,6 @@ import type { LedgerName, ReplayFile } from "./format.js";
 
 type MonthCheckpoint = ReplayFile["months"][number];
 
-const SNAPSHOT_CONTEXT = "bluewave/replay-corpus/snapshot/v1";
 const ENTRY_CONTEXT = "bluewave/replay-corpus/ledger-entry/v1";
 
 export const LEDGER_ORDER: readonly LedgerName[] = ["command", "event", "financial", "random"];
@@ -33,10 +32,6 @@ function plain(value: unknown): unknown {
   return value;
 }
 
-export function fullSnapshotHash(snapshot: CampaignSnapshot): string {
-  return hashWithContext(canonicalSerialize(plain(snapshot)), SNAPSHOT_CONTEXT);
-}
-
 function ledgerCheckpoint(entries: readonly unknown[]): MonthCheckpoint["ledgers"]["command"] {
   return {
     count: entries.length,
@@ -54,7 +49,7 @@ export function monthCheckpoint(
   return {
     turnNumber,
     commands,
-    snapshotHash: fullSnapshotHash(result.finalSnapshot),
+    snapshotHash: unifiedSnapshotHash(result.finalSnapshot),
     ledgers: {
       command: ledgerCheckpoint(result.commandLedger.all),
       event: ledgerCheckpoint(result.eventLedger.all),

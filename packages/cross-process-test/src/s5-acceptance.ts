@@ -5,7 +5,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { DomainEventBody } from "@bluewave/events";
 import {
-  hashSnapshot,
+  unifiedSnapshotHash,
   MonthExecutor,
   type MonthExecutorEngineOptions,
   type MonthResult,
@@ -316,11 +316,11 @@ export function runS5Acceptance(): S5Observation {
   return {
     sectionState: "dormant-production-fixture-exercised",
     oldHashes: {
-      snapshot: hashSnapshot(dormant.finalSnapshot),
+      snapshot: unifiedSnapshotHash(dormant.finalSnapshot),
       eventLedger: dormant.eventLedger.hash(),
     },
     newHashes: {
-      snapshot: hashSnapshot(limited.finalSnapshot),
+      snapshot: unifiedSnapshotHash(limited.finalSnapshot),
       eventLedger: limited.eventLedger.hash(),
     },
     assignment: {
@@ -359,7 +359,8 @@ export function runS5Acceptance(): S5Observation {
       prestige,
       revolt,
       stateUnchangedByRequests:
-        hashSnapshot(configured.finalSnapshot) === hashSnapshot(dormant.finalSnapshot),
+        unifiedSnapshotHash(configured.finalSnapshot) ===
+        unifiedSnapshotHash(dormant.finalSnapshot),
     },
     overBase: {
       flagged: flaggedShips.map((s) => s.id).sort(),

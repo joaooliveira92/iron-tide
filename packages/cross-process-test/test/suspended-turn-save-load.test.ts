@@ -1,4 +1,5 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
+import { unifiedSnapshotHash } from "@bluewave/campaign";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
   makeRecordedInput,
@@ -10,7 +11,6 @@ import { MonthExecutor, type InterruptionChannel } from "@bluewave/phase-engine"
 import { describe, expect, it } from "vite-plus/test";
 
 import { productionStartSnapshot, saveAndLoad } from "../src/replay-corpus/corpus.js";
-import { fullSnapshotHash } from "../src/replay-corpus/checkpoint.js";
 
 const SEED = "suspended-turn-save-load";
 const TURN_ID = "turn-1";
@@ -94,8 +94,8 @@ describe("a turn suspended for a decision survives save and load", () => {
       const afterReload = run(reloaded.snapshot, channel);
 
       expect(afterReload.outcome).toBe("completed");
-      expect(fullSnapshotHash(afterReload.finalSnapshot)).toBe(
-        fullSnapshotHash(inMemory.finalSnapshot),
+      expect(unifiedSnapshotHash(afterReload.finalSnapshot)).toBe(
+        unifiedSnapshotHash(inMemory.finalSnapshot),
       );
       expect(afterReload.randomLedger.hash()).toBe(inMemory.randomLedger.hash());
       expect(afterReload.financialLedger.hash()).toBe(inMemory.financialLedger.hash());
@@ -105,7 +105,7 @@ describe("a turn suspended for a decision survives save and load", () => {
   it("reaches different states for different answers", () => {
     if (request?.kind !== "decision") throw new Error("expected a decision request");
     const finalHash = (optionId: string) =>
-      fullSnapshotHash(
+      unifiedSnapshotHash(
         run(start, {
           turnId: TURN_ID,
           recordedInputs: [answer(request, optionId)],

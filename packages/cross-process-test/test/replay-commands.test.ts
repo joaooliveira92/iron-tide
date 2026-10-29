@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import { sha256Hex, canonicalSerialize } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { ReplayVerifier, hashSnapshot } from "@bluewave/phase-engine";
+import { ReplayVerifier, unifiedSnapshotHash } from "@bluewave/phase-engine";
 import { Result } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 
@@ -125,7 +125,7 @@ describe("replay format v2: recorded command envelopes", () => {
       snapshot,
       commands,
       first.result.commandLedger,
-      hashSnapshot(first.result.finalSnapshot),
+      unifiedSnapshotHash(first.result.finalSnapshot),
       seed,
       original,
       fleetManagementOptions(),

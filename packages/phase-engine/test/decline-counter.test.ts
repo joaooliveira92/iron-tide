@@ -9,7 +9,7 @@ import {
 import { FIXTURE_BATTLE_OFFER_RULES } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import {
-  hashSnapshot,
+  unifiedSnapshotHash,
   MonthExecutor,
   tallyDecline,
   type InterruptionChannel,
@@ -321,7 +321,9 @@ describe("the tally in a compiled month (R9)", () => {
       answer(request1, "decline"),
       answer(request2, "decline"),
     ]);
-    expect(hashSnapshot(single.finalSnapshot)).toBe(hashSnapshot(resumed.finalSnapshot));
+    expect(unifiedSnapshotHash(single.finalSnapshot)).toBe(
+      unifiedSnapshotHash(resumed.finalSnapshot),
+    );
     expect(single.eventLedger.all).toEqual(resumed.eventLedger.all);
     expect(single.finalSnapshot.wars.declineCounters).toEqual(
       resumed.finalSnapshot.wars.declineCounters,
@@ -331,7 +333,7 @@ describe("the tally in a compiled month (R9)", () => {
   it("two passes of the scripted run are byte-identical", () => {
     const a = script(twoAreaSnapshot(), ["decline", "decline"]);
     const b = script(twoAreaSnapshot(), ["decline", "decline"]);
-    expect(hashSnapshot(a.finalSnapshot)).toBe(hashSnapshot(b.finalSnapshot));
+    expect(unifiedSnapshotHash(a.finalSnapshot)).toBe(unifiedSnapshotHash(b.finalSnapshot));
     expect(a.eventLedger.hash()).toBe(b.eventLedger.hash());
   });
 

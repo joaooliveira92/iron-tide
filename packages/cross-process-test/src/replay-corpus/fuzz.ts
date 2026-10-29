@@ -1,4 +1,5 @@
 import { monthlyRevenue, researchCap } from "@bluewave/campaign";
+import { unifiedSnapshotHash } from "@bluewave/campaign";
 import type { CampaignSlot, CampaignSnapshot } from "@bluewave/campaign";
 import {
   APPROPRIATION_RATE_MAX_BP,
@@ -25,13 +26,14 @@ import { Data, Result, Schema } from "effect";
 import {
   advance,
   firstLedgerDifference,
+  formatDivergence,
   productionStartSnapshot,
   saveAndLoad,
   type ExecutorPerturbation,
   type ReplayDivergence,
   type RoundTripOptions,
 } from "./corpus.js";
-import { LEDGER_ORDER, fullSnapshotHash, monthCheckpoint } from "./checkpoint.js";
+import { LEDGER_ORDER, monthCheckpoint } from "./checkpoint.js";
 import { SUBSYSTEMS, monthCoverage } from "./coverage.js";
 import { monthInvariantViolations, type InvariantViolation } from "./invariants.js";
 import type { ReplayFile } from "./format.js";
@@ -250,10 +252,10 @@ function runMonths(
     for (const id of monthCoverage(step.result).subsystems) seen.add(id);
     snapshot = step.next;
     if (options.roundTrip !== undefined && month < monthCount) {
-      const expected = fullSnapshotHash(snapshot);
+      const expected = unifiedSnapshotHash(snapshot);
       const stored = options.roundTrip.lossy?.(snapshot, month) ?? snapshot;
       const trip = saveAndLoad(stored);
-      const actual = trip.ok ? fullSnapshotHash(trip.snapshot) : `(load failed: ${trip.reason})`;
+      const actual = trip.ok ? unifiedSnapshotHash(trip.snapshot) : `(load failed: ${trip.reason})`;
       if (actual !== expected) {
         return finish(months, issued, accepted, seen, violations, {
           month,
@@ -351,6 +353,50 @@ function firstDifference(
     }
   }
   return undefined;
+}
+
+export function commandPlanDivergence(
+  seed: string,
+  plan: CommandPlan,
+  options: CheckOptions = {},
+): { readonly property: FuzzProperty; readonly divergence: ReplayDivergence } | undefined {
+  const first = runCommandPlan(seed, plan);
+  const second = runCommandPlan(
+    seed,
+    plan,
+    options.secondRun === undefined ? {} : { perturb: options.secondRun },
+  );
+  const repeat = firstDifference(first.months, second.months);
+  if (repeat !== undefined) return { property: "repeatability", divergence: repeat };
+
+  const tripped = runCommandPlan(seed, plan, { roundTrip: options.roundTrip ?? {} });
+  if (tripped.roundTripDivergence !== undefined) {
+    return { property: "roundtrip", divergence: tripped.roundTripDivergence };
+  }
+  const trip = firstDifference(first.months, tripped.months);
+  if (trip !== undefined) return { property: "roundtrip", divergence: trip };
+  return undefined;
+}
+
+export function formatCommandPlanFailure(
+  seed: string,
+  plan: CommandPlan,
+  report: { readonly property: FuzzProperty; readonly divergence: ReplayDivergence },
+): string {
+  const { divergence } = report;
+  const commands = plan[divergence.month - 1] ?? [];
+  const pick = commands[divergence.entryIndex ?? 0];
+  const command =
+    pick === undefined
+      ? "no command"
+      : `${pick.kind} (command ${String((divergence.entryIndex ?? 0) + 1)})`;
+  return [
+    `property ${report.property} failed: seed ${seed}`,
+    `  first difference at month ${String(divergence.month)}, command ${command}`,
+    formatDivergence(divergence).trimEnd(),
+    `  reproduce: pnpm replay:fuzz plan ${seed} '${JSON.stringify(plan)}'`,
+    "",
+  ].join("\n");
 }
 
 export function checkFuzzCase(fuzzCase: FuzzCase, options: CheckOptions = {}): FuzzOutcome {
