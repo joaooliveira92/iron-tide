@@ -8,7 +8,7 @@ export const MENU_LABEL = "px-2 py-1.5 text-xs font-medium text-muted-foreground
 export const MENU_SEPARATOR = "-mx-1 my-1 h-px bg-border";
 export const MENU_SHORTCUT = "ml-auto text-xs tracking-widest text-muted-foreground";
 
-export const FLOATING_LAYER = "z-[60]";
+export const FLOATING_LAYER = "z-[10000]";
 
 export const SLATE_SURFACE =
   "relative z-50 origin-(--transform-origin) overflow-hidden rounded-lg bg-popover/90 text-popover-foreground ring-1 ring-admiralty-accent/30 outline-hidden backdrop-blur-xl duration-100";
