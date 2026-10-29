@@ -36,6 +36,7 @@ import type { MapPalette } from "./map-palette.js";
 import type { MapCamera } from "./useMapCamera.js";
 import type { BorderSet } from "./CoastlineCanvas.js";
 import { BORDERS_1880 } from "./borders-1880-data.js";
+import { BORDER_FRONTIERS_1880 } from "./borders-1880-frontiers-data.js";
 import { campaignWorldMapSource, type WorldMapSource } from "./world-map-source.js";
 
 export interface WorldMapModel {
@@ -104,6 +105,7 @@ export function useWorldMapModel({
             return {
               id,
               polygons,
+              frontiers: BORDER_FRONTIERS_1880[id] ?? [],
               tint: `oklch(${palette.borderTintLightness} 0.14 ${hue} / 0.16)`,
               edge: `oklch(${palette.borderEdgeLightness} 0.15 ${hue} / 0.9)`,
             };

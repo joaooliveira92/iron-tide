@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { decodeCoastline, encodeCoastline } from "../../lib/coastline-codec.js";
 import { COASTLINE_BASE64 } from "./coastline-data.js";
+import { deriveBorderFrontiers } from "./border-frontiers.js";
 
 const NATIONS: Readonly<Record<string, { subjects: string[]; names?: string[] }>> = {
   uk: {
@@ -131,7 +132,8 @@ const closed = (flat: readonly number[]): Pair[] => {
 const binary = atob(COASTLINE_BASE64);
 const bytes = new Uint8Array(binary.length);
 for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-const land: { multi: PcMulti; box: Box }[] = decodeCoastline(bytes.buffer).map((rings) => {
+const coast = decodeCoastline(bytes.buffer);
+const land: { multi: PcMulti; box: Box }[] = coast.map((rings) => {
   const multi: PcMulti = [rings.map(closed)];
   return { multi, box: boxOf(multi) };
 });
@@ -232,6 +234,34 @@ export const BORDERS_1880: Readonly<Record<string, readonly FlatPolygon[]>> = Ob
 );
 `;
 writeFileSync(join(here, "borders-1880-data.ts"), `${header}${entries.join("")}${footer}`);
+
+const frontiers = deriveBorderFrontiers(result, coast);
+const frontierEntries = Object.entries(frontiers).map(
+  ([nation, lines]) =>
+    `  ${nation}: "${Buffer.from(encodeCoastline(lines.map((line) => [line]))).toString("base64")}",\n`,
+);
+const frontierHeader = `import { decodeCoastline } from "../../lib/coastline-codec.js";
+import type { FlatRing } from "../../lib/simplify-geometry.js";
+
+const ENCODED: Readonly<Record<string, string>> = {
+`;
+const frontierFooter = `};
+
+function decode(base64: string): FlatRing[] {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return decodeCoastline(bytes.buffer).flatMap((rings) => (rings[0] === undefined ? [] : [rings[0]]));
+}
+
+export const BORDER_FRONTIERS_1880: Readonly<Record<string, readonly FlatRing[]>> =
+  Object.fromEntries(Object.entries(ENCODED).map(([nation, base64]) => [nation, decode(base64)]));
+`;
+writeFileSync(
+  join(here, "borders-1880-frontiers-data.ts"),
+  `${frontierHeader}${frontierEntries.join("")}${frontierFooter}`,
+);
+
 const total = Object.values(result).reduce(
   (n, polys) => n + polys.reduce((m, p) => m + p.reduce((k, r) => k + r.length / 2, 0), 0),
   0,
