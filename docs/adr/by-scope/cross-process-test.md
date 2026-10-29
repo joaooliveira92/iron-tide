@@ -18,3 +18,4 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0282](../ADR-0282-authored-horizon-through-1970.md) Authored horizon through 1970; no empty scenario IDs.
 - [ADR-0283](../ADR-0283-e1-1940-1970-content-decisions.md) E-1 1940-1970 content decisions.
 - [ADR-0295](../ADR-0295-war-bearing-replay-scenarios.md) A replay scenario may name a player nation and a deterministic start setup so the corpus fights a battle.
+- [ADR-0330](../ADR-0330-unified-snapshot-hash.md) Every authoritative snapshot hash is the unified `unifiedSnapshotHash`; no replay, golden or cross-process path carries a local projection.

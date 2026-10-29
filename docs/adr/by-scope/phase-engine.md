@@ -45,3 +45,4 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0310](../ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) E-1 catalogue technologies for carrier, mine and submarine engine ids.
 - [ADR-0316](../ADR-0316-special-training-program.md) Special training is a nation program whose maintenance adder feeds the shared calculator.
 - [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot.
+- [ADR-0330](../ADR-0330-unified-snapshot-hash.md) Every authoritative snapshot hash is the unified `unifiedSnapshotHash`; no replay, golden or cross-process path carries a local projection.

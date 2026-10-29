@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0330).
+highest existing number + 1 (the next number is ADR-0332).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -127,6 +127,8 @@ Turn identity, the suspend/resume interruption model, and strict save-file decod
 | 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
 | 0285 | [ADR-0285-campaign-snapshot-hash-covers-map-fields.md](ADR-0285-campaign-snapshot-hash-covers-map-fields.md) | The campaign snapshot hash covers Map fields | accepted | — |
 | 0305 | [ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md](ADR-0305-save-retention-policy-and-effect-suffixed-persistence-apis.md) | Saves are retained by an opt-in count with a protected head; Effect-returning persistence methods carry an `Effect` suffix | accepted | — |
+| 0330 | [ADR-0330-unified-snapshot-hash.md](ADR-0330-unified-snapshot-hash.md) | One versioned, domain-separated snapshot hash | accepted | — |
+| 0331 | [ADR-0331-save-manifest-integrity.md](ADR-0331-save-manifest-integrity.md) | Saves are sealed by a complete-file manifest, not a signature | accepted | — |
 
 ## Fleet readiness, command & prestige
 

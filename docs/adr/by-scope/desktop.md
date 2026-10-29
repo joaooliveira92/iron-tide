@@ -50,6 +50,7 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0327](../ADR-0327-globe-overview-production-enablement.md) Globe overview production enablement.
 - [ADR-0328](../ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md) Every desktop bridge channel is declared once in `shared/ipc-contract.ts`; preload exposure and main-process registration derive names and payload types from it.
 - [ADR-0329](../ADR-0329-land-climate-zones-baked-from-koppen-geiger.md) The globe's land colour comes from a presentation-only `climate` tile layer baked at author time from Köppen-Geiger V3 and clipped to the Natural Earth coastline; no engine or authoritative code reads it.
+- [ADR-0331](../ADR-0331-save-manifest-integrity.md) A save carries one manifest that lists every file with its hash, its format version and its hash version; the product claims corruption detection, never authenticity.
 
 ## Superseded (do not follow)
 
