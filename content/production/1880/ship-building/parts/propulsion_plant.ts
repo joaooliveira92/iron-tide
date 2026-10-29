@@ -1,0 +1,268 @@
+import { PartSchema, collection } from "@bluewave/content-authoring";
+
+export default collection("parts", PartSchema, [
+  {
+    family: "propulsion_plant",
+    id: "compound_cylindrical",
+    lifecycle: {
+      availableFrom: "1880-01",
+      availableUntil: null,
+      requires: ["mac_compound_engine"],
+    },
+    name: "compound_cylindrical",
+    origin: {
+      sourceFile: "ship-building/plants.yaml",
+    },
+    parameters: {
+      installedKw: {
+        max: 8000,
+        min: 300,
+        step: 1,
+      },
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "game_conversion",
+      note: "Read from legacy plant 'compound_cylindrical', whose sources are YAML comments only.",
+      sourceStatus: "PLACEHOLDER",
+      sources: [],
+    },
+    provides: "propulsion_plant",
+    quantities: [],
+    revisions: [],
+    spec: {
+      fuelType: "COAL",
+      reliabilityBp: 8500,
+      sfcGramPerKwh: {
+        points: [
+          [0, 1651],
+          [2000, 1443],
+          [6000, 1300],
+          [10000, 1385],
+        ],
+      },
+      volumeLitrePerKw: 180,
+      weightMilliKgPerKw: 195000,
+    },
+  },
+  {
+    family: "propulsion_plant",
+    id: "compound_locomotive_tb",
+    lifecycle: {
+      availableFrom: "1880-01",
+      availableUntil: null,
+      requires: ["mac_compound_engine"],
+    },
+    name: "compound_locomotive_tb",
+    origin: {
+      sourceFile: "ship-building/plants.yaml",
+    },
+    parameters: {
+      installedKw: {
+        max: 600,
+        min: 150,
+        step: 1,
+      },
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "game_conversion",
+      note: "Read from legacy plant 'compound_locomotive_tb', whose sources are YAML comments only.",
+      sourceStatus: "PLACEHOLDER",
+      sources: [],
+    },
+    provides: "propulsion_plant",
+    quantities: [],
+    revisions: [],
+    spec: {
+      fuelType: "COAL",
+      reliabilityBp: 8000,
+      sfcGramPerKwh: {
+        points: [
+          [0, 1905],
+          [2000, 1665],
+          [6000, 1500],
+          [10000, 1598],
+        ],
+      },
+      volumeLitrePerKw: 60,
+      weightMilliKgPerKw: 46000,
+    },
+  },
+  {
+    family: "propulsion_plant",
+    id: "hp_steam_geared_turbine",
+    lifecycle: {
+      availableFrom: "1940-01",
+      availableUntil: null,
+      requires: ["mac_high_pressure_steam", "mac_improved_geared_turbines"],
+    },
+    name: "hp_steam_geared_turbine",
+    origin: {
+      sourceFile: "ship-building/plants.yaml",
+    },
+    parameters: {
+      installedKw: {
+        max: 158084,
+        min: 2000,
+        step: 1,
+      },
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "game_conversion",
+      note: "Read from legacy plant 'hp_steam_geared_turbine', whose sources are YAML comments only.",
+      sourceStatus: "PLACEHOLDER",
+      sources: [],
+    },
+    provides: "propulsion_plant",
+    quantities: [],
+    revisions: [],
+    spec: {
+      fuelType: "OIL",
+      reliabilityBp: 9000,
+      sfcGramPerKwh: {
+        points: [
+          [0, 510],
+          [2000, 445],
+          [6000, 400],
+          [10000, 425],
+        ],
+      },
+      volumeLitrePerKw: 20,
+      weightMilliKgPerKw: 18000,
+    },
+  },
+  {
+    family: "propulsion_plant",
+    id: "locomotive_boiler_tb",
+    lifecycle: {
+      availableFrom: "1890-01",
+      availableUntil: null,
+      requires: ["mac_forced_draft"],
+    },
+    name: "locomotive_boiler_tb",
+    origin: {
+      sourceFile: "ship-building/plants.yaml",
+    },
+    parameters: {
+      installedKw: {
+        max: 3000,
+        min: 200,
+        step: 1,
+      },
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "game_conversion",
+      note: "Read from legacy plant 'locomotive_boiler_tb', whose sources are YAML comments only.",
+      sourceStatus: "PLACEHOLDER",
+      sources: [],
+    },
+    provides: "propulsion_plant",
+    quantities: [],
+    revisions: [],
+    spec: {
+      fuelType: "COAL",
+      reliabilityBp: 8000,
+      sfcGramPerKwh: {
+        points: [
+          [0, 1905],
+          [2000, 1665],
+          [6000, 1500],
+          [10000, 1598],
+        ],
+      },
+      volumeLitrePerKw: 60,
+      weightMilliKgPerKw: 46000,
+    },
+  },
+  {
+    family: "propulsion_plant",
+    id: "triple_expansion_cylindrical",
+    lifecycle: {
+      availableFrom: "1885-01",
+      availableUntil: null,
+      requires: ["mac_triple_expansion"],
+    },
+    name: "triple_expansion_cylindrical",
+    origin: {
+      sourceFile: "ship-building/plants.yaml",
+    },
+    parameters: {
+      installedKw: {
+        max: 14000,
+        min: 500,
+        step: 1,
+      },
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "game_conversion",
+      note: "Read from legacy plant 'triple_expansion_cylindrical', whose sources are YAML comments only.",
+      sourceStatus: "PLACEHOLDER",
+      sources: [],
+    },
+    provides: "propulsion_plant",
+    quantities: [],
+    revisions: [],
+    spec: {
+      fuelType: "COAL",
+      reliabilityBp: 9000,
+      sfcGramPerKwh: {
+        points: [
+          [0, 1549],
+          [2000, 1354],
+          [6000, 1220],
+          [10000, 1299],
+        ],
+      },
+      volumeLitrePerKw: 150,
+      weightMilliKgPerKw: 170000,
+    },
+  },
+  {
+    family: "propulsion_plant",
+    id: "triple_expansion_watertube",
+    lifecycle: {
+      availableFrom: "1893-01",
+      availableUntil: null,
+      requires: ["mac_triple_expansion", "mac_water_tube_boiler"],
+    },
+    name: "triple_expansion_watertube",
+    origin: {
+      sourceFile: "ship-building/plants.yaml",
+    },
+    parameters: {
+      installedKw: {
+        max: 20000,
+        min: 300,
+        step: 1,
+      },
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "game_conversion",
+      note: "Read from legacy plant 'triple_expansion_watertube', whose sources are YAML comments only.",
+      sourceStatus: "PLACEHOLDER",
+      sources: [],
+    },
+    provides: "propulsion_plant",
+    quantities: [],
+    revisions: [],
+    spec: {
+      fuelType: "COAL",
+      reliabilityBp: 8200,
+      sfcGramPerKwh: {
+        points: [
+          [0, 1704],
+          [2000, 1489],
+          [6000, 1342],
+          [10000, 1429],
+        ],
+      },
+      volumeLitrePerKw: 110,
+      weightMilliKgPerKw: 114000,
+    },
+  },
+]);

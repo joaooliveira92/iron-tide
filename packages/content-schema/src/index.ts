@@ -148,6 +148,7 @@ export {
   RegionSchema,
 } from "./presentation.js";
 export { UiCatalogueSchema, type UiCatalogue } from "./ui-catalogue.js";
+export { isInternationalizationPath, parseUiCatalogue, type UiCatalogueParse } from "./i18n.js";
 export type { Possession } from "./possession.js";
 export { PossessionSchema } from "./possession.js";
 export type { ResearchFieldId } from "./research-fields.js";

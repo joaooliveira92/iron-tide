@@ -4,6 +4,11 @@ Adding a nation is a researched **content** task, not a code task (ADR-0092).
 Scaffold a draft, research it, replace every placeholder with a sourced or
 explicitly classified value, then let the completeness validator gate it.
 
+**Authoring format.** YAML is deprecated outside localization (ADR-0334), and the
+boundary gate rejects a new tracked `.yaml` file. Adding the naval profile as YAML is
+blocked until `naval-profiles/` migrates to TypeScript; author it through a
+`defineNavalProfile` module once that constructor exists (tracking issue #372).
+
 ## 1. Scaffold
 
 ```sh

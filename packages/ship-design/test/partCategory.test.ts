@@ -1,28 +1,21 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import {
-  FlattenedPartSchema,
-  decodeStrict,
-  parseYamlSafe,
-  type FlattenedPart,
-} from "@bluewave/content-schema";
+import { FlattenedPartSchema, decodeStrict, type FlattenedPart } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
+import { readAuthoredFile } from "@bluewave/test-support";
 import { partCategory, partCategoryOrThrow } from "../src/partCategory.js";
 
 const root = join(import.meta.dirname, "..", "..", "..", "content", "production", "1880");
 const shipBuilding = join(root, "ship-building");
 
-function readYaml(path: string): Record<string, unknown> {
-  const collector = { addError: () => undefined, hasErrors: false } as never;
-  const parsed = parseYamlSafe(readFileSync(path, "utf8"), path, collector);
-  if (!parsed.success) throw new Error(`bad YAML: ${path}`);
-  return parsed.data as Record<string, unknown>;
+function readAuthored(path: string): Record<string, unknown> {
+  return readAuthoredFile(path) as Record<string, unknown>;
 }
 
 const parts: FlattenedPart[] = readdirSync(join(shipBuilding, "parts"))
-  .filter((name) => name.endsWith(".yaml"))
+  .filter((name) => name.endsWith(".ts"))
   .flatMap((name) =>
-    (readYaml(join(shipBuilding, "parts", name))["parts"] as unknown[]).map((record) =>
+    (readAuthored(join(shipBuilding, "parts", name))["parts"] as unknown[]).map((record) =>
       decodeStrict(FlattenedPartSchema, record),
     ),
   );

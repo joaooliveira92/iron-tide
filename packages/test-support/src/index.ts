@@ -1,6 +1,10 @@
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
-import { buildContentBundleArtifact, type CompilerInput } from "@bluewave/content-compiler";
+import {
+  buildContentBundleArtifact,
+  loadContentModule,
+  type CompilerInput,
+} from "@bluewave/content-compiler";
 import type {
   BattleOfferRules,
   CompiledContentBundle,
@@ -8,7 +12,7 @@ import type {
 } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
-import { Effect, Exit, Result } from "effect";
+import { Data, Effect, Exit, Result } from "effect";
 
 export interface FixtureDir {
   path: string;
@@ -435,4 +439,23 @@ export function failureTag<A, E extends { readonly _tag: string }>(
   if (Exit.isSuccess(exit)) return "success";
   const found = Exit.findError(exit);
   return Result.isSuccess(found) ? found.success._tag : "defect";
+}
+
+export class AuthoredContentReadError extends Data.TaggedError("AuthoredContentReadError")<{
+  readonly path: string;
+  readonly message: string;
+}> {}
+
+export function readAuthoredFile(absolutePath: string): unknown {
+  const loaded = loadContentModule(absolutePath);
+  if (!loaded.ok) {
+    throw new AuthoredContentReadError({ path: absolutePath, message: loaded.message });
+  }
+  return structuredClone(loaded.document);
+}
+
+export function readAuthoredDocument(root: string, file: string): unknown {
+  const loaded = loadContentModule(resolve(root, file));
+  if (!loaded.ok) throw new AuthoredContentReadError({ path: file, message: loaded.message });
+  return structuredClone(loaded.document);
 }

@@ -1,22 +1,19 @@
-import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { join } from "node:path";
-import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
 import { NavalProfileCatalogueSchema } from "../src/index.js";
 import { decodeIssue, decodeOk } from "./decode-helpers.js";
 
-const file = join(
-  process.cwd(),
-  "..",
-  "..",
-  "content",
-  "production",
-  "1880",
-  "ship-building",
-  "naval-profiles",
-  "uk.yaml",
-);
-const read = () => parse(readFileSync(file, "utf8"));
+const requireAuthored = (path: string): unknown =>
+  structuredClone((createRequire(import.meta.url)(path) as { default: unknown }).default);
+
+const root = join(process.cwd(), "..", "..", "content", "production", "1880");
+type ProfileCatalogue = {
+  navalProfiles: ({ hardCapabilities: Record<string, unknown> } & Record<string, unknown>)[];
+};
+
+const read = (): ProfileCatalogue =>
+  requireAuthored(join(root, "ship-building/naval-profiles/uk.ts")) as ProfileCatalogue;
 
 describe("NavalProfileCatalogueSchema — authored production catalogue", () => {
   it("decodes the whole catalogue under the strict excess-key policy (records and all)", () => {

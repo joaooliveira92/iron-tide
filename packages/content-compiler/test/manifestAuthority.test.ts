@@ -48,7 +48,7 @@ describe("manifest authority for the loaded surface", () => {
         JSON.stringify({
           name: "test-pack",
           version: "0.1.0",
-          type: "production",
+          type: "fixture",
           files: {},
           shipBuilding: { shipComponents: ["ship-building/components/guns/rifle.yaml"] },
         }),
@@ -77,7 +77,7 @@ describe("manifest authority for the loaded surface", () => {
       writeFixture(
         fixture.path,
         "pack.json",
-        JSON.stringify({ name: "test-pack", version: "0.1.0", type: "production", files: {} }),
+        JSON.stringify({ name: "test-pack", version: "0.1.0", type: "fixture", files: {} }),
       );
       writeFixture(fixture.path, "ship-building/components/guns/rifle.yaml", COMPONENT);
 
@@ -107,7 +107,7 @@ describe("manifest authority for the loaded surface", () => {
         JSON.stringify({
           name: "test-pack",
           version: "0.1.0",
-          type: "production",
+          type: "fixture",
           files: { countries: ["countries.yaml"] },
         }),
       );
@@ -155,7 +155,7 @@ describe("manifest authority for the loaded surface", () => {
         JSON.stringify({
           name: "test-pack",
           version: "0.4.0",
-          type: "production",
+          type: "fixture",
           files: { rulesets: ["rulesets.yaml"] },
           shipBuilding: { shipComponents: ["ship-building/components/guns/rifle.yaml"] },
         }),

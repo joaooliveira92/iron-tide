@@ -1,0 +1,553 @@
+// National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
+// Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
+// target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+// Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
+// steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
+// Netherlands (canonical id "netherlands"). A small trading empire defending a low-lying home coast (Fortress
+// Holland, Zuiderzee and river mouths) with monitors, turret rams and gunboats, plus a large East Indies colonial
+// commitment served by cruisers; foreign Krupp/Armstrong guns. Non-playable in 1880 but present in the scenario.
+// Grounding: docs/research/netherlands-naval-profile.md.
+import { NationNavalProfileSchema, collection } from "@bluewave/content-authoring";
+
+export default collection("navalProfiles", NationNavalProfileSchema, [
+  {
+    nationId: "netherlands",
+    activeFrom: "1880-01",
+    activeUntil: null,
+    strategicSituation:
+      "Small trading empire on the defensive: monitors, turret rams and gunboats for the low-lying home coast and river mouths, and a scattering of cruisers and colonial gunboats for the Netherlands Indies; guns and armour are imported and the navy is built to hold a coast, not to seek a battle.",
+    hardCapabilities: {
+      maxGunCaliberUm: 305000,
+      maxArmourThicknessUm: 305000,
+      domesticTorpedoDiameterUm: 356000,
+      hullForms: [
+        "torpedo_boat_form",
+        "protected_cruiser_form",
+        "coast_defence_form",
+        "pre_dreadnought_form",
+        "merchant_liner_form",
+      ],
+      domesticPlants: ["compound_cylindrical", "triple_expansion_cylindrical"],
+      restrictedShipTypes: [],
+      grants: [],
+    },
+    softPreferences: {
+      speedOverArmourBp: 4500,
+      secondaryBatteryWeightBp: 10000,
+      enduranceWeightBp: 10500,
+      riskToleranceBp: 5000,
+      colonialServiceWeightBp: 12000,
+      torpedoOnCruisersBp: 9000,
+      accommodationStandard: "SPARTAN",
+    },
+    industrialProfile: {
+      buildTimeMultiplierBp: 10500,
+      costMultiplierBp: 10500,
+      machineryReliabilityBp: 8600,
+      constructionQualityVarianceBp: 3200,
+      maxPracticalDisplacementKg: [
+        {
+          fromMonth: "1880-01",
+          value: 2000000,
+        },
+        {
+          fromMonth: "1885-01",
+          value: 2200000,
+        },
+        {
+          fromMonth: "1890-01",
+          value: 2500000,
+        },
+      ],
+      heavyGunProduction: "IMPORTED",
+      armourPlateProduction: "IMPORTED",
+      provenance: {
+        sourceStatus: "ESTIMATE",
+        confidence: "MEDIUM",
+        kind: "balance_adjustment",
+        note: "Small Rijkswerf/Fijenoord yards; Krupp/Armstrong guns imported. Multipliers are BALANCE TARGET within ±15%.",
+        sources: [
+          {
+            sourceId: "netherlands-note",
+            title: "National naval profile research note — Netherlands",
+            page: "B",
+          },
+          {
+            sourceId: "navypedia-nl",
+            title: "navypedia.org Dutch class pages",
+          },
+        ],
+        derivation: {
+          sourceValue: "small domestic hulls, imported ordnance and armour",
+          sourceUnit: "estimate",
+          conversion: "within the ±15% band",
+          gameValue: "buildTimeMultiplierBp 10500, costMultiplierBp 10500",
+          roundingRule: "±15%",
+        },
+      },
+    },
+    dock: {
+      maximumNewConstructionMassKg: 5000000,
+      maximumMajorRepairMassKg: 5000000,
+      maximumRebuildMassKg: 5000000,
+      maximumConversionMassKg: 5000000,
+      provenance: {
+        sourceStatus: "DERIVED",
+        confidence: "MEDIUM",
+        kind: "game_conversion",
+        sources: [
+          {
+            title: "1880 national dock capacity research note",
+            page: "findings table",
+          },
+        ],
+        derivation: {
+          sourceValue: "scenario CA starter 4,865 t (largest 1880 hull); Atjeh 3,669 t",
+          sourceUnit: "t",
+          conversion:
+            "largest 1880 hull the nation fields, rounded up to the next 1,000 t dock step",
+          gameValue: "maximumNewConstructionMassKg 5000000",
+          roundingRule: "ceiling to next 1,000 t",
+        },
+        note: "max(historical flagship 3,669 t, scenario largest hull 4,865 t) rounded up to the next 1,000 t",
+      },
+    },
+    doctrineProfile: {
+      engagementRangeM: 1500,
+      hePreferenceBp: 4000,
+      postures: [
+        "coastal_defence",
+        "colonial_presence",
+        "distant_water_operations",
+        "commerce_defence",
+      ],
+      provenance: {
+        sourceStatus: "ESTIMATE",
+        confidence: "MEDIUM",
+        kind: "historical_fact",
+        sources: [
+          {
+            sourceId: "netherlands-note",
+            title: "National naval profile research note — Netherlands",
+            page: "A, C",
+          },
+          {
+            sourceId: "navypedia-nl",
+            title: "navypedia.org Dutch class pages",
+          },
+        ],
+      },
+    },
+    researchPreferences: [
+      {
+        field: "HULL_CONSTRUCTION",
+        priority: 3,
+      },
+      {
+        field: "INFRASTRUCTURE",
+        priority: 3,
+      },
+      {
+        field: "MACHINERY",
+        priority: 3,
+      },
+      {
+        field: "MINES_AND_ASW",
+        priority: 3,
+      },
+      {
+        field: "GUNNERY",
+        priority: 2,
+      },
+      {
+        field: "TORPEDOES",
+        priority: 2,
+      },
+      {
+        field: "SHIP_DESIGN",
+        priority: 2,
+      },
+      {
+        field: "DAMAGE_CONTROL",
+        priority: 2,
+      },
+      {
+        field: "FIRE_CONTROL",
+        priority: 1,
+      },
+      {
+        field: "SUBMARINES",
+        priority: 1,
+      },
+    ],
+    componentAccess: {
+      gun_bl_274mm_m1875: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_135in_30: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_12in_35: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_12in_25: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_10in_32: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_92in_315: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_6in_26: {
+        status: "UNAVAILABLE",
+      },
+      gun_qf_6in_40: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_16in_80ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_125in_38ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_12in_35ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_12in_25ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_7in_7ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_263mm_rkl20: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_bl_283mm_krupp: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_rml_8in_9ton: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_rml_11in_25ton: {
+        status: "IMPORTED",
+        producer: "Armstrong",
+      },
+      gun_rml_10in_18ton: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_rml_10in_18ton_broadside: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_rml_64pdr_71cwt: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_qf_47in: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_qf_12pdr: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_nordenfelt_1in: {
+        status: "IMPORTED",
+        producer: "Nordenfelt",
+      },
+      tube_14in_above_water: {
+        status: "IMPORTED",
+        producer: "Whitehead",
+      },
+    },
+    gunModels: [
+      {
+        id: "nl_krupp_283",
+        familyId: "gun_bl_283mm_krupp",
+        designation: "28 cm Krupp RK No.1",
+        overrides: {
+          displayName: "28 cm Krupp Ringkanone No.1 in monitor turret",
+          "attributes.shellMassG": "253000",
+        },
+        mounts: ["TURRET"],
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          note: "Krupp guns imported; the 283 mm family is sourced at bore/mount level (shell 253 kg and charge borrowed from the Austrian Krupp 28 cm row).",
+          sources: [
+            {
+              sourceId: "netherlands-note",
+              title: "National naval profile research note — Netherlands",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "nl_krupp_209",
+        familyId: "gun_rml_8in_9ton",
+        designation: "20.9 cm Krupp RK L/22",
+        overrides: {
+          displayName: "20.9 cm Krupp Ringkanone",
+        },
+        mounts: ["CASEMATE", "DECK_SHIELDED", "TURRET"],
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          note: "Krupp guns imported; the 283 mm family is sourced at bore/mount level (shell 253 kg and charge borrowed from the Austrian Krupp 28 cm row).",
+          sources: [
+            {
+              sourceId: "netherlands-note",
+              title: "National naval profile research note — Netherlands",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "nl_armstrong_229",
+        familyId: "gun_rml_11in_25ton",
+        designation: "229 mm Armstrong 12.5-ton RML",
+        overrides: {
+          displayName: "229 mm Armstrong 12.5-ton RML in turret",
+        },
+        mounts: ["TURRET", "BARBETTE"],
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          note: "Krupp guns imported; the 283 mm family is sourced at bore/mount level (shell 253 kg and charge borrowed from the Austrian Krupp 28 cm row).",
+          sources: [
+            {
+              sourceId: "netherlands-note",
+              title: "National naval profile research note — Netherlands",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "nl_krupp_173",
+        familyId: "gun_qf_47in",
+        designation: "17.3 cm Krupp No.1",
+        overrides: {
+          displayName: "17.3 cm Krupp gun in shielded mount",
+        },
+        mounts: ["DECK_SHIELDED", "DECK_OPEN", "CASEMATE"],
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          note: "Krupp guns imported; the 283 mm family is sourced at bore/mount level (shell 253 kg and charge borrowed from the Austrian Krupp 28 cm row).",
+          sources: [
+            {
+              sourceId: "netherlands-note",
+              title: "National naval profile research note — Netherlands",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "nl_krupp_120",
+        familyId: "gun_qf_12pdr",
+        designation: "12 cm Krupp No.1",
+        overrides: {
+          displayName: "12 cm Krupp gun",
+        },
+        mounts: ["DECK_OPEN", "DECK_SHIELDED"],
+        provenance: {
+          sourceStatus: "DERIVED",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          note: "Krupp guns imported; the 283 mm family is sourced at bore/mount level (shell 253 kg and charge borrowed from the Austrian Krupp 28 cm row).",
+          sources: [
+            {
+              sourceId: "netherlands-note",
+              title: "National naval profile research note — Netherlands",
+              page: "F",
+            },
+          ],
+        },
+      },
+    ],
+    ammunitionPatterns: [
+      {
+        id: "nl_ap_krupp",
+        pattern: "AP",
+        penetrationBiasBp: 6000,
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "balance_adjustment",
+          sources: [
+            {
+              sourceId: "netherlands-note",
+              title: "National naval profile research note — Netherlands",
+              page: "C",
+            },
+          ],
+        },
+      },
+    ],
+    componentVariants: [
+      {
+        id: "nl_tube_356_aw",
+        familyId: "tube_14in_above_water",
+        designation: "356 mm Whitehead, above-water (imported)",
+        overrides: {
+          displayName: "356 mm Whitehead torpedo tube, above-water",
+        },
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "historical_fact",
+          sources: [
+            {
+              sourceId: "netherlands-note",
+              title: "National naval profile research note — Netherlands",
+              page: "F",
+            },
+          ],
+        },
+      },
+    ],
+    designWeights: {
+      B: {
+        firepowerBp: 10500,
+        protectionBp: 12500,
+        speedBp: 8000,
+        enduranceBp: 9000,
+        torpedoBp: 9000,
+        reliabilityBp: 10500,
+        colonialBp: 9000,
+        costBp: 11500,
+      },
+      CA: {
+        firepowerBp: 10000,
+        protectionBp: 10000,
+        speedBp: 10500,
+        enduranceBp: 11000,
+        torpedoBp: 9500,
+        reliabilityBp: 10000,
+        colonialBp: 10500,
+        costBp: 11000,
+      },
+      CL: {
+        firepowerBp: 9500,
+        protectionBp: 9000,
+        speedBp: 11000,
+        enduranceBp: 12500,
+        torpedoBp: 9500,
+        reliabilityBp: 10000,
+        colonialBp: 11500,
+        costBp: 11000,
+      },
+      DD: {
+        firepowerBp: 8000,
+        protectionBp: 8000,
+        speedBp: 12500,
+        enduranceBp: 9000,
+        torpedoBp: 12000,
+        reliabilityBp: 10000,
+        colonialBp: 9000,
+        costBp: 11500,
+      },
+      KE: {
+        firepowerBp: 8500,
+        protectionBp: 9000,
+        speedBp: 9500,
+        enduranceBp: 11500,
+        torpedoBp: 9000,
+        reliabilityBp: 10500,
+        colonialBp: 12500,
+        costBp: 11500,
+      },
+      AMC: {
+        firepowerBp: 9000,
+        protectionBp: 8500,
+        speedBp: 9500,
+        enduranceBp: 13000,
+        torpedoBp: 9500,
+        reliabilityBp: 10000,
+        colonialBp: 12000,
+        costBp: 11500,
+      },
+    },
+    procurementPolicy: {
+      battleLineShareBp: 2200,
+      cruiserShareBp: 3200,
+      torpedoCraftShareBp: 1800,
+      colonialShareBp: 2800,
+      foreignProcurementAppetiteBp: 6000,
+      unprovenTechAppetiteBp: 3500,
+      buildOrder: ["CL", "KE", "B", "CA", "DD", "AMC"],
+    },
+    namingPolicy: {
+      stems: {
+        B: ["Matador", "Draak", "Schorpionen", "Stier", "Buffel", "Guinea"],
+        CA: ["Koningin Wilhelmina der Nederlanden", "De Ruyter", "Tromp"],
+        CL: ["Atjeh", "Tromp", "Sumatra", "Koningin Emma"],
+        DD: ["Ardjoeno", "Cerberus", "Hydra", "Evertsen"],
+        KE: ["Adder", "Wodan", "Hydra", "Hadda", "Heimdall"],
+        AMC: ["Nederland", "Rotterdam", "Amsterdam"],
+      },
+      convention: {
+        B: "Mythological and predator names (Matador, Schorpionen).",
+        CA: "Royal and admiral names (De Ruyter, Tromp).",
+        CL: "Colonies, provinces and admirals (Atjeh, Sumatra).",
+        DD: "Mythological and animal names (Ardjoeno, Hydra).",
+        KE: "Mythological and animal names (Adder, Wodan).",
+        AMC: "City and country names taken up from trade.",
+      },
+    },
+    sourceReferences: [
+      {
+        sourceId: "netherlands-note",
+        title: "National naval profile research note — Netherlands",
+      },
+      {
+        sourceId: "navypedia-nl",
+        title: "navypedia.org Dutch class pages",
+        archiveOrUrl: "http://www.navypedia.org",
+      },
+      {
+        sourceId: "ship-1880-ships",
+        title: "Ship-building 1880 ships by nation note",
+        page: "Netherlands",
+      },
+    ],
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "Grounded shape (home-coast monitors, Indies cruisers, imported guns); weights and multipliers are BALANCE TARGET.",
+      sources: [
+        {
+          sourceId: "netherlands-note",
+          title: "National naval profile research note — Netherlands",
+          page: "A, B, C, F",
+        },
+        {
+          sourceId: "ship-1880-ships",
+          title: "Ship-building 1880 ships by nation note",
+          page: "Netherlands",
+        },
+      ],
+      derivation: {
+        sourceValue: "grounded shape; no single sourced multiplier",
+        sourceUnit: "mixed",
+        conversion: "weights and shares are gameplay abstractions",
+        gameValue: "profile as authored",
+        roundingRule: "multipliers within ±15%",
+      },
+    },
+  },
+]);

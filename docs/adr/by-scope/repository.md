@@ -21,6 +21,7 @@ and for the exact boundaries of the rule.
 - [ADR-0299](../ADR-0299-gate-runs-serialise-across-worktrees.md) Run long gates through `pnpm heavy`, which serialises across worktrees and caps vitest workers at 4.
 - [ADR-0313](../ADR-0313-worktree-registry-under-git-common-dir.md) The worktree inventory is a locked registry under the Git common directory.
 - [ADR-0318](../ADR-0318-adrs-declare-their-scope-and-packages-link-them.md) Every ADR has an `Applies to:` line, and every governing `AGENTS.md` links its generated `docs/adr/by-scope` page.
+- [ADR-0334](../ADR-0334-deprecate-yaml-outside-internationalization.md) Deprecate YAML outside internationalization.
 
 ## Superseded (do not follow)
 

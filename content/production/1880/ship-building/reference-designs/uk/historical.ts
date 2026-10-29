@@ -1,0 +1,943 @@
+// Reference designs for the EARLY band (starting points for the Drawing Board and regression fixtures).
+// One directory per nation: starters.yaml (a `starterFor` opening design) and historical.yaml.
+// Fittings (magazines, quarters, pumps, ventilation) weigh nothing extra (White 1894, ADR-0083).
+import { ReferenceDesignSchema, collection } from "@bluewave/content-authoring";
+
+export default collection("designs", ReferenceDesignSchema, [
+  {
+    id: "torpedo_cruiser_1880",
+    name: "Torpedo cruiser (1880, CL)",
+    month: "1880-01",
+    historical: false,
+    draft: {
+      nationId: "uk",
+      requirement: {
+        category: "CL",
+        requiredSpeedMilliKnots: 16000,
+        cruiseSpeedMilliKnots: 10000,
+        requiredRangeNm: 1500,
+        designThreatId: "qf_12pdr",
+        modernizationExpectation: "NONE",
+        crewQualityBp: 10000,
+        accommodationStandard: "SPARTAN",
+        protectionGoal: "NONE",
+      },
+      hull: {
+        hullFormId: "protected_cruiser_form",
+        lengthWl: 85000,
+        beam: 12000,
+        draught: 4200,
+        depthToMainDeck: 7000,
+        blockCoeffBp: 5000,
+        materialId: "mild_steel",
+        structuralSchemeId: "mixed",
+        subdivisionGrade: 2,
+        targetDisplacementKg: 2200000,
+        limitDisplacementKg: null,
+        designMarginBp: 300,
+        growthReserveBp: 0,
+      },
+      machinery: {
+        plantId: "compound_cylindrical",
+        installedKw: 2300,
+        zoneId: "CENTRAL_MACHINERY",
+        stationPermille: 400,
+        fuelCapacityKg: 800000,
+        fuelZoneId: "CENTRAL_MACHINERY",
+        fuelStationPermille: 450,
+        foulingBp: 0,
+        rooms: [
+          {
+            zoneId: "CENTRAL_MACHINERY",
+            stationPermille: 400,
+            shareBp: 6000,
+          },
+          {
+            zoneId: "AFT_SERVICE",
+            stationPermille: 680,
+            shareBp: 4000,
+          },
+        ],
+      },
+      armour: {
+        regions: [],
+        citadelLengthMm: 0,
+        torpedoWarheadKg: 12,
+        bunkerProtectionBp: 0,
+      },
+      placements: [
+        {
+          instanceId: "mg_fwd",
+          componentId: "gun_nordenfelt_1in",
+          zoneId: "FORECASTLE",
+          stationPermille: 40,
+          params: {
+            barrels: 1,
+            rounds: 1000,
+          },
+          magazineRef: "mag_fwd",
+        },
+        {
+          instanceId: "mg_aft",
+          componentId: "gun_nordenfelt_1in",
+          zoneId: "QUARTERDECK",
+          stationPermille: 950,
+          params: {
+            barrels: 1,
+            rounds: 1000,
+          },
+          magazineRef: "mag_aft",
+        },
+        {
+          instanceId: "tubes",
+          componentId: "tube_14in_above_water",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 580,
+          params: {
+            tubes: 4,
+          },
+        },
+        {
+          instanceId: "mag_fwd",
+          componentId: "magazine_small",
+          zoneId: "FWD_MAGAZINE",
+          stationPermille: 130,
+        },
+        {
+          instanceId: "mag_aft",
+          componentId: "magazine_small",
+          zoneId: "AFT_MAGAZINE",
+          stationPermille: 830,
+        },
+        {
+          instanceId: "dyn",
+          componentId: "dynamo_small",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 200,
+        },
+        {
+          instanceId: "vent",
+          componentId: "ventilation_plant",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 210,
+        },
+        {
+          instanceId: "quarters",
+          componentId: "quarters_crew",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 230,
+          params: {
+            blocks: 12,
+          },
+        },
+        {
+          instanceId: "funnel",
+          componentId: "funnel_single",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 600,
+        },
+      ],
+    },
+  },
+  // HMS Devastation (1873): mastless sea-going turret ship, 9,387 t, 13.8 kn, 2x2 12-in RML, 12-in iron belt.
+  {
+    id: "devastator_1873",
+    name: "Devastation (1873, turret ironclad)",
+    month: "1880-01",
+    historical: true,
+    provenance: {
+      completionDate: {
+        value: "19.4.1873 (lead ship; Thunderer 26.5.1877)",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_bb1_devastation.html)",
+          },
+        ],
+      },
+      displacementBasis: {
+        value: "9,387 t normal (Thunderer 9,390); 9,330 t per period annual",
+        status: "VERIFIED",
+        sources: [
+          {
+            title: "T. A. Brassey (ed.), The Naval Annual 1886",
+            year: 1886,
+            page: "l.4639",
+          },
+          {
+            title: "navypedia.org (uk/brit_bb1_devastation.html)",
+          },
+        ],
+      },
+      armourScheme: {
+        value:
+          "wrought iron; belt 305-216 mm (two strakes), deck 76-51, turret 356-254, breastwork 305-254, CT 229-152",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_bb1_devastation.html)",
+          },
+        ],
+      },
+      armamentConfiguration: {
+        value:
+          "2x2 305 mm (12-in) RML Mk II = 4 guns in 2 twin turrets; 2x356 mm (14-in) above-water torpedo tubes added 1879",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_bb1_devastation.html)",
+          },
+        ],
+      },
+      machineryOutput: {
+        value: "2 x 2-cyl HSE trunk, 8 rectangular boilers, 2 shafts; 6,640 ihp",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_bb1_devastation.html)",
+          },
+        ],
+      },
+      speed: {
+        value: "13.8 kn max; 4,700 nmi at 10 kn",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_bb1_devastation.html)",
+          },
+        ],
+      },
+    },
+    draft: {
+      nationId: "uk",
+      requirement: {
+        category: "B",
+        requiredSpeedMilliKnots: 13800,
+        cruiseSpeedMilliKnots: 8000,
+        requiredRangeNm: 4700,
+        designThreatId: "rml_10in",
+        modernizationExpectation: "MINOR",
+        crewQualityBp: 10000,
+        accommodationStandard: "STANDARD",
+        protectionGoal: "STANDARD",
+      },
+      hull: {
+        hullFormId: "coast_defence_form",
+        lengthWl: 86900,
+        beam: 19000,
+        draught: 8400,
+        depthToMainDeck: 10800,
+        blockCoeffBp: 6200,
+        materialId: "iron",
+        structuralSchemeId: "mixed",
+        subdivisionGrade: 2,
+        targetDisplacementKg: 9387000,
+        limitDisplacementKg: null,
+        designMarginBp: 300,
+        growthReserveBp: 300,
+      },
+      machinery: {
+        plantId: "compound_cylindrical",
+        installedKw: 5700,
+        zoneId: "CENTRAL_MACHINERY",
+        stationPermille: 400,
+        fuelCapacityKg: 1600000,
+        fuelZoneId: "CENTRAL_MACHINERY",
+        fuelStationPermille: 450,
+        foulingBp: 0,
+        rooms: [
+          {
+            zoneId: "CENTRAL_MACHINERY",
+            stationPermille: 400,
+            shareBp: 6000,
+          },
+          {
+            zoneId: "AFT_SERVICE",
+            stationPermille: 680,
+            shareBp: 4000,
+          },
+        ],
+      },
+      armour: {
+        regions: [
+          {
+            region: "BELT_MAIN",
+            thicknessUm: 305000,
+            lengthMm: 60000,
+            heightMm: 3200,
+            materialId: "wrought_iron",
+            cosObliquityBp: 10000,
+          },
+          {
+            region: "DECK_MAIN",
+            thicknessUm: 76000,
+            lengthMm: 86900,
+            heightMm: 19000,
+            materialId: "wrought_iron",
+            cosObliquityBp: 10000,
+          },
+          {
+            region: "MAGAZINE_BOX",
+            thicknessUm: 305000,
+            lengthMm: 60000,
+            heightMm: 3000,
+            materialId: "wrought_iron",
+            cosObliquityBp: 10000,
+          },
+          {
+            region: "TURRET",
+            thicknessUm: 356000,
+            lengthMm: 20000,
+            heightMm: 3000,
+            materialId: "wrought_iron",
+            cosObliquityBp: 10000,
+          },
+        ],
+        citadelLengthMm: 60000,
+        torpedoWarheadKg: 30,
+        bunkerProtectionBp: 0,
+      },
+      placements: [
+        {
+          instanceId: "main_fwd",
+          componentId: "gun_rml_12in_35ton",
+          zoneId: "FORECASTLE",
+          stationPermille: 40,
+          params: {
+            barrels: 2,
+            rounds: 80,
+          },
+          magazineRef: "mag_fwd",
+        },
+        {
+          instanceId: "main_aft",
+          componentId: "gun_rml_12in_35ton",
+          zoneId: "AFT_SERVICE",
+          stationPermille: 700,
+          params: {
+            barrels: 2,
+            rounds: 80,
+          },
+          magazineRef: "mag_aft",
+        },
+        {
+          instanceId: "tubes",
+          componentId: "tube_14in_above_water",
+          zoneId: "QUARTERDECK",
+          stationPermille: 900,
+          params: {
+            tubes: 2,
+          },
+        },
+        {
+          instanceId: "mag_fwd",
+          componentId: "magazine_heavy",
+          zoneId: "FWD_MAGAZINE",
+          stationPermille: 130,
+        },
+        {
+          instanceId: "mag_aft",
+          componentId: "magazine_heavy",
+          zoneId: "AFT_MAGAZINE",
+          stationPermille: 820,
+        },
+        {
+          instanceId: "dyn",
+          componentId: "dynamo_small",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 220,
+        },
+        {
+          instanceId: "vent",
+          componentId: "ventilation_plant",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 230,
+        },
+        {
+          instanceId: "quarters",
+          componentId: "quarters_crew",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 250,
+          params: {
+            blocks: 70,
+          },
+        },
+        {
+          instanceId: "funnel_a",
+          componentId: "funnel_single",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 580,
+        },
+        {
+          instanceId: "funnel_b",
+          componentId: "funnel_single",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 620,
+        },
+      ],
+    },
+  },
+  // HMS Dreadnought (1875): turret ironclad, 10,886 t, 14.5 kn, 2x2 12.5-in RML, 14-in iron belt.
+  {
+    id: "dreadnought_1875",
+    name: "Dreadnought (1875, turret ironclad)",
+    month: "1880-01",
+    historical: true,
+    provenance: {
+      completionDate: {
+        value: "15.2.1879 (laid down 10.9.1870, launched 8.3.1875)",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_bb1_dreadnought.html)",
+          },
+        ],
+      },
+      displacementBasis: {
+        value: "10,886 t normal; 10,820 t per period annual",
+        status: "VERIFIED",
+        sources: [
+          {
+            title: "T. A. Brassey (ed.), The Naval Annual 1886",
+            year: 1886,
+            page: "l.3602",
+          },
+          {
+            title: "navypedia.org (uk/brit_bb1_dreadnought.html)",
+          },
+        ],
+      },
+      armourScheme: {
+        value:
+          "wrought iron; belt 356-203 (lower edge), deck 76-64, turret 356 (two 178 mm plates), citadel 356-279",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_bb1_dreadnought.html)",
+          },
+        ],
+      },
+      armamentConfiguration: {
+        value:
+          "2x2 318 mm (12.5-in) RML Mk I = 4 guns in 2 twin turrets; 2x356 mm (14-in) beam torpedo tubes",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_bb1_dreadnought.html)",
+          },
+        ],
+      },
+      machineryOutput: {
+        value: "2 x 2-cyl VC, 12 cylindrical boilers, 2 shafts; 8,206 ihp",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_bb1_dreadnought.html)",
+          },
+        ],
+      },
+      speed: {
+        value: "14.5 kn max",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_bb1_dreadnought.html)",
+          },
+        ],
+      },
+    },
+    draft: {
+      nationId: "uk",
+      requirement: {
+        category: "B",
+        requiredSpeedMilliKnots: 14500,
+        cruiseSpeedMilliKnots: 8000,
+        requiredRangeNm: 5700,
+        designThreatId: "rml_10in",
+        modernizationExpectation: "MINOR",
+        crewQualityBp: 10000,
+        accommodationStandard: "STANDARD",
+        protectionGoal: "STANDARD",
+      },
+      hull: {
+        hullFormId: "coast_defence_form",
+        lengthWl: 97500,
+        beam: 19500,
+        draught: 8600,
+        depthToMainDeck: 10500,
+        blockCoeffBp: 6600,
+        materialId: "iron",
+        structuralSchemeId: "mixed",
+        subdivisionGrade: 2,
+        targetDisplacementKg: 10886000,
+        limitDisplacementKg: null,
+        designMarginBp: 300,
+        growthReserveBp: 300,
+      },
+      machinery: {
+        plantId: "compound_cylindrical",
+        installedKw: 7300,
+        zoneId: "CENTRAL_MACHINERY",
+        stationPermille: 400,
+        fuelCapacityKg: 1800000,
+        fuelZoneId: "CENTRAL_MACHINERY",
+        fuelStationPermille: 450,
+        foulingBp: 0,
+        rooms: [
+          {
+            zoneId: "CENTRAL_MACHINERY",
+            stationPermille: 400,
+            shareBp: 6000,
+          },
+          {
+            zoneId: "AFT_SERVICE",
+            stationPermille: 680,
+            shareBp: 4000,
+          },
+        ],
+      },
+      armour: {
+        regions: [
+          {
+            region: "BELT_MAIN",
+            thicknessUm: 356000,
+            lengthMm: 70000,
+            heightMm: 3200,
+            materialId: "wrought_iron",
+            cosObliquityBp: 10000,
+          },
+          {
+            region: "DECK_MAIN",
+            thicknessUm: 76000,
+            lengthMm: 97500,
+            heightMm: 19500,
+            materialId: "wrought_iron",
+            cosObliquityBp: 10000,
+          },
+          {
+            region: "MAGAZINE_BOX",
+            thicknessUm: 356000,
+            lengthMm: 70000,
+            heightMm: 3000,
+            materialId: "wrought_iron",
+            cosObliquityBp: 10000,
+          },
+          {
+            region: "TURRET",
+            thicknessUm: 356000,
+            lengthMm: 22000,
+            heightMm: 3000,
+            materialId: "wrought_iron",
+            cosObliquityBp: 10000,
+          },
+        ],
+        citadelLengthMm: 70000,
+        torpedoWarheadKg: 30,
+        bunkerProtectionBp: 0,
+      },
+      placements: [
+        {
+          instanceId: "main_fwd",
+          componentId: "gun_rml_125in_38ton",
+          zoneId: "FORECASTLE",
+          stationPermille: 40,
+          params: {
+            barrels: 2,
+            rounds: 80,
+          },
+          magazineRef: "mag_fwd",
+        },
+        {
+          instanceId: "main_aft",
+          componentId: "gun_rml_125in_38ton",
+          zoneId: "AFT_SERVICE",
+          stationPermille: 700,
+          params: {
+            barrels: 2,
+            rounds: 80,
+          },
+          magazineRef: "mag_aft",
+        },
+        {
+          instanceId: "tubes",
+          componentId: "tube_14in_above_water",
+          zoneId: "QUARTERDECK",
+          stationPermille: 900,
+          params: {
+            tubes: 2,
+          },
+        },
+        {
+          instanceId: "mag_fwd",
+          componentId: "magazine_heavy",
+          zoneId: "FWD_MAGAZINE",
+          stationPermille: 130,
+        },
+        {
+          instanceId: "mag_aft",
+          componentId: "magazine_heavy",
+          zoneId: "AFT_MAGAZINE",
+          stationPermille: 820,
+        },
+        {
+          instanceId: "dyn",
+          componentId: "dynamo_small",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 220,
+        },
+        {
+          instanceId: "vent",
+          componentId: "ventilation_plant",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 230,
+        },
+        {
+          instanceId: "quarters",
+          componentId: "quarters_crew",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 250,
+          params: {
+            blocks: 75,
+          },
+        },
+        {
+          instanceId: "funnel_a",
+          componentId: "funnel_single",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 580,
+        },
+        {
+          instanceId: "funnel_b",
+          componentId: "funnel_single",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 620,
+        },
+      ],
+    },
+  },
+  // HMS Iris (1879): steel dispatch vessel / early cruiser, 3,730 t, 17.9 kn, 10x 64-pdr RML, no armour (protectionGoal NONE).
+  {
+    id: "iris_1879",
+    name: "Iris (1879, dispatch vessel)",
+    month: "1880-01",
+    historical: true,
+    provenance: {
+      completionDate: {
+        value: "4.1879 (Iris; Mercury 9.1879)",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_cr_iris.htm)",
+          },
+        ],
+      },
+      displacementBasis: {
+        value: "3,730 t normal",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_cr_iris.htm)",
+          },
+        ],
+      },
+      armourScheme: {
+        value:
+          "nil - steel hull, extensive subdivision; coal bunkers in the wing compartments are the only side protection",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_cr_iris.htm)",
+          },
+        ],
+      },
+      armamentConfiguration: {
+        value:
+          "10x1 160 mm (6.3-in) 64-pdr 71-cwt RML, 4/side + 1 fwd + 1 aft; no torpedo tubes as built (rearmed 1880; 356 mm added 1886-87)",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_cr_iris.htm)",
+          },
+        ],
+      },
+      machineryOutput: {
+        value:
+          "sails + 2 x 4-cyl HC direct-action, 8 oval + 4 cylindrical boilers, 2 shafts; 6,000 ihp design, 7,330 ihp trials (Iris)",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_cr_iris.htm)",
+          },
+        ],
+      },
+      speed: {
+        value: "17.5 kn design; Iris 17.89 kn, Mercury 18.57 kn trials",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_cr_iris.htm)",
+          },
+        ],
+      },
+    },
+    draft: {
+      nationId: "uk",
+      requirement: {
+        category: "CL",
+        requiredSpeedMilliKnots: 17900,
+        cruiseSpeedMilliKnots: 10000,
+        requiredRangeNm: 6000,
+        designThreatId: "qf_6in",
+        modernizationExpectation: "NONE",
+        crewQualityBp: 10000,
+        accommodationStandard: "SPARTAN",
+        protectionGoal: "NONE",
+      },
+      hull: {
+        hullFormId: "protected_cruiser_form",
+        lengthWl: 91400,
+        beam: 14000,
+        draught: 6710,
+        depthToMainDeck: 8000,
+        blockCoeffBp: 5000,
+        materialId: "mild_steel",
+        structuralSchemeId: "mixed",
+        subdivisionGrade: 3,
+        targetDisplacementKg: 3730000,
+        limitDisplacementKg: null,
+        designMarginBp: 300,
+        growthReserveBp: 0,
+      },
+      machinery: {
+        plantId: "compound_cylindrical",
+        installedKw: 6200,
+        zoneId: "CENTRAL_MACHINERY",
+        stationPermille: 400,
+        fuelCapacityKg: 780000,
+        fuelZoneId: "CENTRAL_MACHINERY",
+        fuelStationPermille: 450,
+        foulingBp: 0,
+        rooms: [
+          {
+            zoneId: "CENTRAL_MACHINERY",
+            stationPermille: 400,
+            shareBp: 6000,
+          },
+          {
+            zoneId: "AFT_SERVICE",
+            stationPermille: 680,
+            shareBp: 4000,
+          },
+        ],
+      },
+      armour: {
+        regions: [],
+        citadelLengthMm: 0,
+        torpedoWarheadKg: 20,
+        bunkerProtectionBp: 0,
+      },
+      placements: [
+        {
+          instanceId: "mag_sec",
+          componentId: "magazine_heavy",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 560,
+        },
+        {
+          instanceId: "sec_p",
+          componentId: "gun_rml_64pdr_71cwt",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 560,
+          side: "PORT",
+          params: {
+            barrels: 5,
+            rounds: 150,
+          },
+          magazineRef: "mag_sec",
+        },
+        {
+          instanceId: "sec_s",
+          componentId: "gun_rml_64pdr_71cwt",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 560,
+          side: "STBD",
+          params: {
+            barrels: 5,
+            rounds: 150,
+          },
+          magazineRef: "mag_sec",
+        },
+        {
+          instanceId: "dyn",
+          componentId: "dynamo_small",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 220,
+        },
+        {
+          instanceId: "vent",
+          componentId: "ventilation_plant",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 230,
+        },
+        {
+          instanceId: "quarters",
+          componentId: "quarters_crew",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 250,
+          params: {
+            blocks: 28,
+          },
+        },
+        {
+          instanceId: "funnel",
+          componentId: "funnel_single",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 600,
+        },
+      ],
+    },
+  },
+  // HMS TB2 class first-class torpedo boat (TB2-TB9, 1878-79; in service Jan 1880): 28 t normal,
+  // 26.3 m pp / 3.1 m / 1.60 m, 1 x 2-cyl VCE + 1 locomotive boiler, 460 ihp = 343 kW, 20 kn, 1 x 406 mm
+  // (16-in) tube, crew 15 (navypedia uk/brit_dd_tb2.htm; docs/research/ship-building-1880-ships-by-nation.md
+  // section 1, SINGLE-SOURCE). This is the design that the new light plant (compound_locomotive_tb,
+  // 46 kg/kW) makes possible: at the only-1880 plant (compound_cylindrical, 195 kg/kW, 300 kW minimum)
+  // the machinery alone would weigh 58 t, more than the whole boat.
+  // Documented approximations: (1) the model has no 16-in tube, so the 14-in Whitehead above-water tube
+  // stands in (2300 kg with reloads); (2) torpedoWarheadKg 12 is the 1877 charge, the 1880-01 revision of
+  // the neutral torpedo. Two model fittings are deliberately NOT carried, and this is an UNSOURCED approximation:
+  // (a) the dynamo/ventilation plant — no correctly-sized light dynamo exists in content, so a small-craft
+  // electrical plant and its ventilation are a known content gap (the research note records dimensions/machinery/
+  // torpedo/coal/crew only, not the electrical fit); (b) the funnel — funnel_single is a 5 t, 6 m capital-ship part
+  // with no source and cannot be fitted to a 28 t boat, so the small-boat funnel is likewise a known content gap,
+  // as the 16-in tube is. The ledger balances at 28,771 kg against a 28,000 kg target (margin 838 kg) after those
+  // omissions.
+  {
+    id: "tb2_1879",
+    name: "TB2 (1879, first-class torpedo boat)",
+    month: "1880-01",
+    historical: true,
+    provenance: {
+      completionDate: {
+        value: "TB2-TB9 1878-79 (TB10-TB12 1880); TB2-TB9 in service by Jan 1880",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_dd_tb2.htm)",
+          },
+        ],
+      },
+      displacementBasis: {
+        value: "28 t normal / 32 t full",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_dd_tb2.htm)",
+          },
+        ],
+      },
+      armourScheme: {
+        value: "none",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_dd_tb2.htm)",
+          },
+        ],
+      },
+      armamentConfiguration: {
+        value: "1 x 406 mm (16-in) tube; 1880s: 2 x 356 mm (14-in) dropping gear",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_dd_tb2.htm)",
+          },
+        ],
+        note: "The model carries the 14-in above-water tube: no 16-in tube exists in content (documented approximation).",
+      },
+      machineryOutput: {
+        value: "1 x 2-cyl VCE + 1 locomotive boiler, 1 shaft; 460 ihp",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_dd_tb2.htm)",
+          },
+        ],
+      },
+      speed: {
+        value: "20 kn",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (uk/brit_dd_tb2.htm)",
+          },
+        ],
+      },
+    },
+    draft: {
+      nationId: "uk",
+      requirement: {
+        category: "DD",
+        requiredSpeedMilliKnots: 20000,
+        cruiseSpeedMilliKnots: 10000,
+        requiredRangeNm: 300,
+        designThreatId: "qf_12pdr",
+        modernizationExpectation: "NONE",
+        crewQualityBp: 10000,
+        accommodationStandard: "SPARTAN",
+        protectionGoal: "NONE",
+      },
+      hull: {
+        hullFormId: "torpedo_boat_form",
+        lengthWl: 26300,
+        beam: 3100,
+        draught: 1600,
+        depthToMainDeck: 2150,
+        blockCoeffBp: 2150,
+        materialId: "mild_steel",
+        structuralSchemeId: "mixed",
+        subdivisionGrade: 2,
+        targetDisplacementKg: 28000,
+        limitDisplacementKg: null,
+        designMarginBp: 300,
+        growthReserveBp: 0,
+      },
+      machinery: {
+        plantId: "compound_locomotive_tb",
+        installedKw: 343,
+        zoneId: "CENTRAL_MACHINERY",
+        stationPermille: 450,
+        fuelCapacityKg: 2000,
+        fuelZoneId: "SUPERSTRUCTURE",
+        fuelStationPermille: 600,
+        foulingBp: 0,
+      },
+      armour: {
+        regions: [],
+        citadelLengthMm: 0,
+        torpedoWarheadKg: 12,
+        bunkerProtectionBp: 0,
+      },
+      placements: [
+        {
+          instanceId: "tubes",
+          componentId: "tube_14in_above_water",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 580,
+          params: {
+            tubes: 1,
+          },
+        },
+        {
+          instanceId: "quarters",
+          componentId: "quarters_crew",
+          zoneId: "FWD_MAGAZINE",
+          stationPermille: 130,
+          params: {
+            blocks: 1,
+          },
+        },
+      ],
+    },
+  },
+]);

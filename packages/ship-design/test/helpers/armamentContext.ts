@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
+import {} from "node:fs";
 import { join } from "node:path";
-import { parse } from "yaml";
 import {
   AmmunitionCatalogueSchema,
   GunFamilyCatalogueSchema,
@@ -16,6 +15,8 @@ import {
   type StarterDesign,
 } from "../../src/index.js";
 import { type ArmamentStarter } from "../../src/armamentContent.js";
+import { readAuthoredFile } from "@bluewave/test-support";
+
 import {
   components,
   navalProfiles,
@@ -25,13 +26,13 @@ import {
 
 const root = join(__dirname, "..", "..", "..", "..", "content", "production", "1880");
 const armamentDir = join(root, "ship-building", "armament");
-const read = (rel: string) => parse(readFileSync(join(armamentDir, rel), "utf8"));
+const read = (rel: string) => readAuthoredFile(join(armamentDir, rel));
 
 export const armamentContent: AuthoredArmamentContent = {
-  gunFamilies: decodeStrict(GunFamilyCatalogueSchema, read("gun-families.yaml")).gunFamilies,
-  gunModels: decodeStrict(GunModelCatalogueSchema, read("gun-models.yaml")).gunModels,
-  gunMounts: decodeStrict(GunMountCatalogueSchema, read("gun-mounts.yaml")).gunMounts,
-  ammunition: decodeStrict(AmmunitionCatalogueSchema, read("ammunition.yaml")).ammunition,
+  gunFamilies: decodeStrict(GunFamilyCatalogueSchema, read("gun-families.ts")).gunFamilies,
+  gunModels: decodeStrict(GunModelCatalogueSchema, read("gun-models.ts")).gunModels,
+  gunMounts: decodeStrict(GunMountCatalogueSchema, read("gun-mounts.ts")).gunMounts,
+  ammunition: decodeStrict(AmmunitionCatalogueSchema, read("ammunition.ts")).ammunition,
 } as unknown as AuthoredArmamentContent;
 
 const GUN_CATEGORIES = new Set(["MAIN_GUN", "SECONDARY_GUN", "DUAL_PURPOSE_GUN", "AA_WEAPON"]);

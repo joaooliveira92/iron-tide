@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import {
   FlattenedPartSchema,
@@ -7,7 +7,6 @@ import {
   ShipTypeRecordSchema,
   SlotTemplateSchema,
   decodeStrict,
-  parseYamlSafe,
   type FlattenedPart,
   type PlatformData,
   type ReferenceDesignLoadoutData,
@@ -17,6 +16,7 @@ import {
 } from "@bluewave/content-schema";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
+import { readAuthoredFile } from "@bluewave/test-support";
 import { partCatalogue, compileDesign, compileTorpedo } from "../src/index.js";
 import { compileDesignFromLoadout } from "../src/compile.js";
 import { nationalContext, readReferenceDesignEntries } from "./helpers/earlyContext.js";
@@ -37,35 +37,32 @@ function stripCompiledTorpedo(value: unknown): unknown {
   return value;
 }
 
-function readYaml(path: string): Record<string, unknown> {
-  const collector = { addError: () => undefined, hasErrors: false } as never;
-  const parsed = parseYamlSafe(readFileSync(path, "utf8"), path, collector);
-  if (!parsed.success) throw new Error(`bad YAML: ${path}`);
-  return parsed.data as Record<string, unknown>;
+function readAuthored(path: string): Record<string, unknown> {
+  return readAuthoredFile(path) as Record<string, unknown>;
 }
 
 const parts: FlattenedPart[] = readdirSync(join(shipBuilding, "parts"))
-  .filter((name) => name.endsWith(".yaml"))
+  .filter((name) => name.endsWith(".ts"))
   .flatMap((name) =>
-    (readYaml(join(shipBuilding, "parts", name))["parts"] as unknown[]).map((record) =>
+    (readAuthored(join(shipBuilding, "parts", name))["parts"] as unknown[]).map((record) =>
       decodeStrict(FlattenedPartSchema, record),
     ),
   );
 const platforms: PlatformData[] = (
-  readYaml(join(shipBuilding, "platforms.yaml"))["platforms"] as unknown[]
+  readAuthored(join(shipBuilding, "platforms.ts"))["platforms"] as unknown[]
 ).map((record) => decodeStrict(PlatformSchema, record));
 const slotTemplates: SlotTemplateData[] = (
-  readYaml(join(shipBuilding, "slot-templates.yaml"))["slotTemplates"] as unknown[]
+  readAuthored(join(shipBuilding, "slot-templates.ts"))["slotTemplates"] as unknown[]
 ).map((record) => decodeStrict(SlotTemplateSchema, record));
 const loadouts: ReferenceDesignLoadoutData[] = readdirSync(join(shipBuilding, "design-loadouts"))
-  .filter((name) => name.endsWith(".yaml"))
+  .filter((name) => name.endsWith(".ts"))
   .flatMap((name) =>
-    (readYaml(join(shipBuilding, "design-loadouts", name))["designs"] as unknown[]).map((record) =>
-      decodeStrict(ReferenceDesignLoadoutSchema, record),
+    (readAuthored(join(shipBuilding, "design-loadouts", name))["designs"] as unknown[]).map(
+      (record) => decodeStrict(ReferenceDesignLoadoutSchema, record),
     ),
   );
 const shipTypeRecords: ShipTypeRecord[] = (
-  readYaml(join(shipBuilding, "ship-types.yaml"))["shipTypes"] as unknown[]
+  readAuthored(join(shipBuilding, "ship-types.ts"))["shipTypes"] as unknown[]
 ).map((record) => decodeStrict(ShipTypeRecordSchema, record));
 
 const catalogue = partCatalogue({ parts, slotTemplates, platforms });

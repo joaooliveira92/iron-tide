@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import {
   decodeStrict,
@@ -12,22 +12,22 @@ import {
   type ShipBuildingContent,
   type ShipBuildingData,
 } from "@bluewave/ship-design";
-import { parse } from "yaml";
 import { readComponentFiles } from "../../../ship-design/test/helpers/componentFiles.js";
+import { readAuthoredFile } from "@bluewave/test-support";
 
 const root = join(__dirname, "..", "..", "..", "..", "content", "production", "1880");
 const sbDir = join(root, "ship-building");
 
-const loadRaw = (rel: string): unknown => parse(readFileSync(join(root, rel), "utf8"));
+const loadRaw = (rel: string): unknown => readAuthoredFile(join(root, rel));
 
 export const readNavalProfileEntries = (): NationNavalProfile[] =>
   readdirSync(join(sbDir, "naval-profiles"))
-    .filter((f) => f.endsWith(".yaml"))
+    .filter((f) => f.endsWith(".ts"))
     .sort()
     .flatMap(
       (f) =>
         (
-          parse(readFileSync(join(sbDir, "naval-profiles", f), "utf8")) as {
+          readAuthoredFile(join(sbDir, "naval-profiles", f)) as {
             navalProfiles: NationNavalProfile[];
           }
         ).navalProfiles,
@@ -40,10 +40,10 @@ export const readReferenceDesignEntries = (): RawReferenceDesign[] =>
   readdirSync(join(sbDir, "reference-designs"))
     .sort(nationOrder)
     .flatMap((nation) =>
-      ["starters.yaml", "historical.yaml"].flatMap((name) => {
+      ["starters.ts", "historical.ts"].flatMap((name) => {
         const path = join(sbDir, "reference-designs", nation, name);
         return existsSync(path)
-          ? (parse(readFileSync(path, "utf8")) as { designs: RawReferenceDesign[] }).designs
+          ? (readAuthoredFile(path) as { designs: RawReferenceDesign[] }).designs
           : [];
       }),
     );
@@ -53,12 +53,11 @@ export function productionShipBuildingData(
 ): ShipBuildingData {
   return {
     components: readComponentFiles(root).components,
-    plants: decodeStrict(PropulsionPlantCatalogueSchema, loadRaw("ship-building/plants.yaml"))
-      .plants,
-    hullForms: decodeStrict(ShipHullFormCatalogueSchema, loadRaw("ship-building/hull-forms.yaml"))
+    plants: decodeStrict(PropulsionPlantCatalogueSchema, loadRaw("ship-building/plants.ts")).plants,
+    hullForms: decodeStrict(ShipHullFormCatalogueSchema, loadRaw("ship-building/hull-forms.ts"))
       .hullForms,
-    balance: loadRaw("ship-building/balance.yaml") as ShipBuildingData["balance"],
-    technologies: loadRaw("technologies.yaml") as ShipBuildingData["technologies"],
+    balance: loadRaw("ship-building/balance.ts") as ShipBuildingData["balance"],
+    technologies: loadRaw("technologies.ts") as ShipBuildingData["technologies"],
     ...(options.navalProfiles ? { navalProfiles: readNavalProfileEntries() } : {}),
   };
 }

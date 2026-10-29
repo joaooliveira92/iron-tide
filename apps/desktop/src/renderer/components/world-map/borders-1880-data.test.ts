@@ -1,21 +1,19 @@
-import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 import { decodeCoastline } from "../../lib/coastline-codec.js";
 import { BORDERS_1880 } from "./borders-1880-data.js";
 import { COASTLINE_BASE64 } from "./coastline-data.js";
 
-const COUNTRIES_YAML = resolve(process.cwd(), "../../content/production/1880/countries.yaml");
+const COUNTRIES_MODULE = resolve(process.cwd(), "../../content/production/1880/countries.ts");
 
 function nationPlayability(): Map<string, boolean> {
-  const blocks = readFileSync(COUNTRIES_YAML, "utf8").split(/\n(?=- id: )/);
-  const result = new Map<string, boolean>();
-  for (const block of blocks) {
-    const id = /- id: (\S+)/.exec(block)?.[1];
-    if (id === undefined) continue;
-    result.set(id, /\n\s+isPlayable: true/.test(block));
-  }
-  return result;
+  const nations = (
+    createRequire(import.meta.url)(COUNTRIES_MODULE) as {
+      default: { id: string; isPlayable: boolean }[];
+    }
+  ).default;
+  return new Map(nations.map((nation) => [nation.id, nation.isPlayable]));
 }
 
 describe("1880 borders (baked from historical-basemaps)", () => {

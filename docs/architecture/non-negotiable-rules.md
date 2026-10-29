@@ -14,8 +14,10 @@ one of these and another document disagree, the contract wins.
   (BW-DET-001) and no ambient input.
 - **No global consumptive RNG.** Randomness uses domain-separated streams with
   stable entity keys and an audit ledger (BW-DET-002, BW-DET-004).
-- **Content is data.** Authored YAML and localized text never execute code and
-  never control mechanics (BW-RUL-001, BW-RUL-002).
+- **Content is data.** Authored domain content is declarative TypeScript decoded
+  into a canonical JSON artifact and loaded outside compiler stages (ADR-0334);
+  authored formulas are data, not embedded programs. Localized text never
+  executes code and never controls mechanics (BW-RUL-001, BW-RUL-002).
 - **Commands do not mutate state directly**; they pass validation, reservation,
   locking, and explicit resolution outcomes (BW-CMD-001, BW-CMD-002).
 - **Boundaries are decoded, never trusted.** Saves, compiled content, IPC/event

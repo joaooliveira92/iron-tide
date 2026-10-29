@@ -77,6 +77,15 @@ export const FLOAT_ROOTS = [
   "packages/ship-design/src",
 ];
 
+/**
+ * Authored content modules (ADR-0334). They are data, not application code: only
+ * the authoring package may be imported, no dynamic import, no eval/Function, and
+ * unlike the package roots they carry no allowlist at all.
+ */
+export const CONTENT_MODULE_ROOTS = ["content/production"];
+
+export const CONTENT_MODULE_IMPORT_ALLOWLIST = ["@bluewave/content-authoring"];
+
 const SOURCE_RE = /\.(?:[cm]?[jt]s|[jt]sx)$/u;
 const TEST_RE = /(?:^|\/)(?:test|tests|__tests__)\/|\.(?:test|spec)\.[cm]?[jt]sx?$/u;
 
@@ -277,6 +286,77 @@ export function findAmbientDeterminism(file, text) {
   return findings.sort((a, b) => a.line - b.line || (a.kind < b.kind ? -1 : 1));
 }
 
+export function isContentModule(file) {
+  const normalized = file.replaceAll("\\", "/");
+  return (
+    normalized.endsWith(".ts") &&
+    !TEST_RE.test(normalized) &&
+    CONTENT_MODULE_ROOTS.some((root) => normalized.startsWith(`${root}/`))
+  );
+}
+
+/**
+ * Find forbidden imports and dynamic code in one authored content module.
+ * @param {string} file repository-relative path (forward slashes)
+ * @param {string} text source contents
+ * @returns {Array<{file: string, line: number, kind: string, fingerprint: string}>}
+ */
+export function findContentModuleHazards(file, text) {
+  const normalized = file.replaceAll("\\", "/");
+  const { program, errors } = parseSync(normalized, text);
+  if (errors.length > 0) {
+    throw new Error(
+      `assert-authoritative-determinism: cannot parse ${normalized}: ${errors[0].message} ` +
+        "(failing closed — an unparsed content module could hide a hazard)",
+    );
+  }
+  const findings = [];
+  const record = (kind, start, end) => {
+    findings.push({
+      file: normalized,
+      line: lineAt(text, start),
+      kind,
+      fingerprint: createHash("sha256")
+        .update(`${kind}:${normalize(text.slice(start, end))}`)
+        .digest("hex"),
+    });
+  };
+  const visit = (node) => {
+    if (node === null || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const child of node) visit(child);
+      return;
+    }
+    if (typeof node.type !== "string") return;
+    if (
+      (node.type === "ImportDeclaration" ||
+        node.type === "ExportNamedDeclaration" ||
+        node.type === "ExportAllDeclaration") &&
+      typeof node.source?.value === "string"
+    ) {
+      const specifier = node.source.value;
+      if (!CONTENT_MODULE_IMPORT_ALLOWLIST.includes(specifier)) {
+        record("forbidden-import", node.start, node.end);
+      }
+    } else if (node.type === "ImportExpression") {
+      record("dynamic-import", node.start, node.end);
+    } else if (isCall(node) && node.callee?.type === "Identifier") {
+      if (node.callee.name === "require" || node.callee.name === "eval") {
+        record("dynamic-code", node.start, node.end);
+      }
+    } else if (node.type === "NewExpression" && node.callee?.type === "Identifier") {
+      if (node.callee.name === "Function") record("dynamic-code", node.start, node.end);
+    }
+    for (const key of Object.keys(node)) {
+      if (key === "type" || key === "start" || key === "end" || key === "range") continue;
+      const value = node[key];
+      if (value !== null && typeof value === "object") visit(value);
+    }
+  };
+  visit(program);
+  return findings.sort((a, b) => a.line - b.line || (a.kind < b.kind ? -1 : 1));
+}
+
 /**
  * Scan every authored source file under the authoritative pure packages.
  * @param {string} repoRoot
@@ -312,13 +392,35 @@ export function scanAmbientDeterminism(repoRoot) {
   }
 
   const isFloatKind = (kind) => kind === "float-literal" || kind === "parse-float";
-  return present
+  const packageFindings = present
     .flatMap((file) => findAmbientDeterminism(file, readFileSync(resolve(repoRoot, file), "utf8")))
     .filter(
       (finding) =>
         !isFloatKind(finding.kind) ||
         FLOAT_ROOTS.some((root) => finding.file.startsWith(`${root}/`)),
     );
+
+  const contentFiles = [
+    ...new Set(
+      execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], {
+        cwd: repoRoot,
+        encoding: "utf8",
+        maxBuffer: 16 * 1024 * 1024,
+      })
+        .split("\0")
+        .map((file) => file.replaceAll("\\", "/"))
+        .filter(isContentModule),
+    ),
+  ].sort();
+  const contentFindings = contentFiles.flatMap((file) => {
+    const text = readFileSync(resolve(repoRoot, file), "utf8");
+    return [
+      ...findContentModuleHazards(file, text),
+      ...findAmbientDeterminism(file, text).filter((finding) => finding.kind !== "float-literal"),
+    ];
+  });
+
+  return [...packageFindings, ...contentFindings];
 }
 
 /** Count findings per file and fingerprint, in stable code-unit order. */
@@ -401,6 +503,10 @@ export function verifyAmbientDeterminism(repoRoot, mode = "verify") {
   const remaining = structuredClone(allowlist);
   const added = [];
   for (const finding of findings) {
+    if (isContentModule(finding.file)) {
+      added.push(finding);
+      continue;
+    }
     const perFile = remaining[finding.file];
     const allowance = perFile?.[finding.fingerprint] ?? 0;
     if (perFile !== undefined && allowance > 0) perFile[finding.fingerprint] = allowance - 1;
@@ -501,8 +607,59 @@ const FIXTURES = [
   { name: "Number.parseFloat fails", source: "const x = Number.parseFloat(s);", expect: 1 },
 ];
 
-export function runSelfTest(fixtures = FIXTURES) {
+const CONTENT_FIXTURES = [
+  {
+    name: "content module importing the authoring package is allowed",
+    source: 'import { defineShipComponent } from "@bluewave/content-authoring";',
+    expect: 0,
+  },
+  {
+    name: "content module importing node:fs fails",
+    source: 'import { readFileSync } from "node:fs";',
+    expect: 1,
+  },
+  {
+    name: "content module importing a relative module fails",
+    source: 'import shared from "../shared.ts";',
+    expect: 1,
+  },
+  {
+    name: "content module re-export from the authoring package is allowed",
+    source: 'export { number } from "@bluewave/content-authoring";',
+    expect: 0,
+  },
+  {
+    name: "content module dynamic import fails",
+    source: 'const m = await import("./x.ts");',
+    expect: 1,
+  },
+  {
+    name: "content module new Function fails",
+    source: 'const f = new Function("return 1");',
+    expect: 1,
+  },
+  { name: "content module eval fails", source: 'const x = eval("1");', expect: 1 },
+  { name: "content module Math.random fails", source: "const r = Math.random();", expect: 1 },
+  { name: "content module Date.now fails", source: "const t = Date.now();", expect: 1 },
+  { name: "content module process.env fails", source: "const e = process.env.HOME;", expect: 1 },
+  { name: "content module fractional literal fails", source: "const x = 1.5;", expect: 1 },
+];
+
+export function runSelfTest(fixtures = FIXTURES, contentFixtures = CONTENT_FIXTURES) {
   let failed = 0;
+  for (const fixture of contentFixtures) {
+    const file = "content/production/1880/fixture.ts";
+    const findings = [
+      ...findContentModuleHazards(file, fixture.source),
+      ...findAmbientDeterminism(file, fixture.source),
+    ];
+    const passed = findings.length === fixture.expect;
+    if (!passed) failed += 1;
+    const detail = findings.length > 0 ? ` — ${findings.map((f) => f.kind).join("; ")}` : "";
+    console.log(
+      `  ${passed ? "ok  " : "FAIL"} content fixture "${fixture.name}": expected ${String(fixture.expect)} finding(s), got ${String(findings.length)}${detail}`,
+    );
+  }
   for (const fixture of fixtures) {
     const findings = findAmbientDeterminism("fixture.ts", fixture.source);
     const passed = findings.length === fixture.expect;
@@ -513,7 +670,7 @@ export function runSelfTest(fixtures = FIXTURES) {
       `  ${verdict} fixture "${fixture.name}": expected ${String(fixture.expect)} finding(s), got ${String(findings.length)}${detail}`,
     );
   }
-  return { ok: failed === 0, failed, total: fixtures.length };
+  return { ok: failed === 0, failed, total: fixtures.length + contentFixtures.length };
 }
 
 function main() {

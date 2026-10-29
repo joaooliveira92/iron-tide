@@ -8,21 +8,21 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 
 import { runContentCheck, runContentBuild, runContentVerify } from "../src/commands.js";
 import { runCli } from "./runCli.js";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = resolve(here, "..", "..", "..");
+const TEMPDIR_ROOT = join(repoRoot, ".tmp");
 const contentDir = resolve(repoRoot, "content", "production", "1880");
 const manifest = resolve(contentDir, "pack.json");
 
 const tempDirs: string[] = [];
 function tempDir(): string {
-  const dir = mkdtempSync(resolve(tmpdir(), "bw-content-"));
+  const dir = mkdtempSync(join(TEMPDIR_ROOT, "bw-content-"));
   tempDirs.push(dir);
   return dir;
 }
@@ -205,22 +205,10 @@ describe("content:verify over the production pack (CAH-LOCK)", () => {
     const lockPath = resolve(dir, "content-lock.json");
     const lock = JSON.parse(readFileSync(lockPath, "utf8")) as { bodyHash: string };
 
-    const areasPath = resolve(dir, "areas.yaml");
+    const areasPath = resolve(dir, "areas.ts");
     writeFileSync(
       areasPath,
-      `${readFileSync(areasPath, "utf8")}\n- id: "cah_drift_area"\n  name: "Drift Area"\n  type: "land"\n`,
-      "utf8",
-    );
-    const presentationPath = resolve(dir, "presentation.yaml");
-    writeFileSync(
-      presentationPath,
-      readFileSync(presentationPath, "utf8")
-        .replaceAll("\r\n", "\n")
-        .replace("  areaRegion:\n", "  areaRegion:\n    cah_drift_area: northern_europe\n")
-        .replace(
-          "  campaignAreaToFixture:\n",
-          "  campaignAreaToFixture:\n    cah_drift_area: area_north_sea\n",
-        ),
+      readFileSync(areasPath, "utf8").replace('name: "Gibraltar"', 'name: "Gibraltar (drift)"'),
       "utf8",
     );
     expect(

@@ -1,12 +1,12 @@
-import { readFileSync } from "node:fs";
+import {} from "node:fs";
 import { join } from "node:path";
-import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
 import { navalProfiles } from "./helpers/earlyContext.js";
+import { readAuthoredFile } from "@bluewave/test-support";
 
 const root = join(__dirname, "..", "..", "..", "content", "production", "1880");
 
-const countries = parse(readFileSync(join(root, "countries.yaml"), "utf8")) as {
+const countries = readAuthoredFile(join(root, "countries.ts")) as {
   id: string;
   isPlayable?: boolean;
 }[];

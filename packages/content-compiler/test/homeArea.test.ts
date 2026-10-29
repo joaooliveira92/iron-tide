@@ -1,20 +1,19 @@
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
-import { parseYamlSafe } from "@bluewave/content-schema";
+import { createRequire } from "node:module";
 import { ValidateStage } from "@bluewave/content-compiler";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { ParseOutput } from "../src/stages/parse.js";
 
 const CONTENT = resolve(import.meta.dirname, "../../../content/production/1880");
+const requireAuthored = createRequire(import.meta.url);
 const read = (file: string): unknown =>
-  parseYamlSafe(readFileSync(resolve(CONTENT, file), "utf8"), file, new DiagnosticCollector()).data;
+  structuredClone(
+    (requireAuthored(resolve(CONTENT, file)) as { readonly default: unknown }).default,
+  );
 const load = (file: string): Record<string, unknown>[] => read(file) as Record<string, unknown>[];
 
-function validate(
-  countries: unknown[],
-  areas: unknown[] = load("areas.yaml"),
-): DiagnosticCollector {
+function validate(countries: unknown[], areas: unknown[] = load("areas.ts")): DiagnosticCollector {
   const input: ParseOutput = {
     manifest: { name: "test-pack", version: "0.1.0", type: "fixture", files: {} },
     collectionDocs: new Map<string, unknown[]>([
@@ -32,7 +31,7 @@ function validate(
 }
 
 const withHome = (id: string, homeArea: unknown): unknown[] =>
-  load("countries.yaml").map((n) => {
+  load("countries.ts").map((n) => {
     if (n["id"] !== id) return n;
     const { homeArea: _drop, ...rest } = n;
     return homeArea === undefined ? rest : { ...rest, homeArea };
@@ -40,10 +39,10 @@ const withHome = (id: string, homeArea: unknown): unknown[] =>
 
 describe("nation home area", () => {
   it("equals the presentation join value for every production nation (parity)", () => {
-    const presentation = read("presentation.yaml") as {
+    const presentation = read("presentation.ts") as {
       mapJoin: { nationHomeArea: Record<string, string> };
     };
-    const countries = load("countries.yaml");
+    const countries = load("countries.ts");
     expect(countries.length).toBeGreaterThan(0);
     for (const nation of countries) {
       expect(nation["homeArea"]).toBe(presentation.mapJoin.nationHomeArea[nation["id"] as string]);
@@ -51,7 +50,7 @@ describe("nation home area", () => {
   });
 
   it("is accepted for every production nation", () => {
-    const codes = validate(load("countries.yaml")).all.map((d) => d.code as string);
+    const codes = validate(load("countries.ts")).all.map((d) => d.code as string);
     expect(codes).not.toContain("HOME_AREA_MISSING");
     expect(codes).not.toContain("HOME_AREA_UNKNOWN");
   });
@@ -70,7 +69,7 @@ describe("nation home area", () => {
   });
 
   it("rejects an excess key on a nation (strict decoding stays in force)", () => {
-    const countries = load("countries.yaml").map((n) =>
+    const countries = load("countries.ts").map((n) =>
       n["id"] === "uk" ? { ...n, homeAreaa: "eng_home_coast" } : n,
     );
     expect(validate(countries).hasErrors).toBe(true);
@@ -78,11 +77,11 @@ describe("nation home area", () => {
 
   describe("a pack with nations and zero areas", () => {
     it("fails HOME_AREA_UNKNOWN for a nation that declares a home area", () => {
-      const codes = validate(load("countries.yaml"), []).all.filter(
+      const codes = validate(load("countries.ts"), []).all.filter(
         (d) => d.code === "HOME_AREA_UNKNOWN",
       );
       expect(codes.map((d) => d.entityId).sort((a, b) => ((a ?? "") < (b ?? "") ? -1 : 1))).toEqual(
-        load("countries.yaml")
+        load("countries.ts")
           .map((n) => n["id"] as string)
           .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
       );

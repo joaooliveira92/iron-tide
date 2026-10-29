@@ -65,7 +65,7 @@ export function discoverShipBuildingFiles(contentDir: string): ShipBuildingFileG
     }
   }
 
-  groups.shipComponentFiles = listYamlFiles(contentDir, COMPONENT_DIR).map(safePath);
+  groups.shipComponentFiles = listAuthoredFiles(contentDir, COMPONENT_DIR).map(safePath);
   groups.navalProfileFiles = listYamlFiles(contentDir, NAVAL_PROFILE_DIR).map(safePath);
   groups.referenceDesignFiles = listReferenceDesignFiles(contentDir).map(safePath);
   groups.partFiles = listYamlFiles(contentDir, PART_DIR).map(safePath);
@@ -74,6 +74,16 @@ export function discoverShipBuildingFiles(contentDir: string): ShipBuildingFileG
 }
 
 function listYamlFiles(contentDir: string, rel: string): string[] {
+  return listAuthoredFiles(contentDir, rel, [".yaml"]);
+}
+
+const CONTENT_MODULE_SUFFIX = ".ts";
+
+function listAuthoredFiles(
+  contentDir: string,
+  rel: string,
+  suffixes: readonly string[] = [".yaml", CONTENT_MODULE_SUFFIX],
+): string[] {
   const abs = join(contentDir, rel);
   if (!existsSync(abs)) return [];
   return readdirSync(abs)
@@ -81,9 +91,9 @@ function listYamlFiles(contentDir: string, rel: string): string[] {
     .flatMap((entry) => {
       const child = join(rel, entry);
       if (statSync(join(contentDir, child)).isDirectory()) {
-        return listYamlFiles(contentDir, child);
+        return listAuthoredFiles(contentDir, child, suffixes);
       }
-      return entry.endsWith(".yaml") ? [child] : [];
+      return suffixes.some((suffix) => entry.endsWith(suffix)) ? [child] : [];
     });
 }
 

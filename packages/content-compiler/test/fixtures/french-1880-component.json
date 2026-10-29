@@ -1,0 +1,50 @@
+{
+  "id": "gun_bl_274mm_m1875",
+  "displayName": "Canon de 27 cm modèle 1875",
+  "category": "MAIN_GUN",
+  "introduction": {
+    "fromMonth": "1880-01",
+    "obsoleteMonth": null
+  },
+  "requires": [],
+  "parameters": {
+    "barrels": {
+      "min": 1,
+      "max": 6,
+      "step": 1
+    },
+    "rounds": {
+      "min": 20,
+      "max": 120,
+      "step": 5
+    }
+  },
+  "constants": {
+    "gun_kg": 27000,
+    "mount_per_barrel_kg": 20000,
+    "mount_fixed_kg": 12000,
+    "cost_per_kg_micro": 150000,
+    "mount_cost_micro": 5000000000
+  },
+  "weightKg": "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg",
+  "volumeLitre": "3 * (gun_kg + mount_per_barrel_kg) * barrels",
+  "costMicro": "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels",
+  "crew": "12 * barrels",
+  "powerKw": "1 * barrels",
+  "upgradePath": [],
+  "tags": ["gun", "heavy"],
+  "deckFootprintMm2": "470 * (gun_kg + mount_per_barrel_kg) * barrels",
+  "heightMm": "3200",
+  "zCgMm": "6500",
+  "fcClass": "heavy",
+  "attributes": {
+    "caliberUm": "274000",
+    "shellMassG": "216000",
+    "chargeBp": "3472",
+    "roundVolumeMl": "108000",
+    "rofBaseX100": "100",
+    "beamArcDeg": "120",
+    "maxFeedPermille": "250"
+  },
+  "maintenanceMonthlyBp": 20
+}

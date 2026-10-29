@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { decodeStrict, PackManifestSchema, type PackManifest } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
+import { isContentModulePath, loadContentModule } from "./contentModule.js";
 import type { CompilerInput } from "./index.js";
 import { safePath } from "./safePath.js";
 import { discoverShipBuildingFiles, type ShipBuildingFileGroups } from "./shipBuildingDiscovery.js";
@@ -158,9 +159,16 @@ export function buildFullSurfaceInput(
     declaredByInputKey[spec.inputKey] = declared.map(toAbsolute);
   }
 
+  const declaredEverywhere = [
+    ...Object.values(files).flatMap((entries) => entries ?? []),
+    ...Object.values(shipBuilding).flatMap((entries) => entries ?? []),
+  ].map(toAbsolute);
+  const documents = loadAuthoredDocuments(declaredEverywhere, report);
+
   return {
     manifestPath: resolvedManifest,
     contentDir: resolvedContentDir,
+    ...(documents === undefined ? {} : { documents }),
     rulesetFiles: (files.rulesets ?? []).map(toAbsolute),
     countryFiles: (files.countries ?? []).map(toAbsolute),
     areaFiles: (files.areas ?? []).map(toAbsolute),
@@ -193,6 +201,29 @@ export function buildFullSurfaceInput(
     presentationFiles: (files.presentation ?? []).map(toAbsolute),
     uiFiles: (files.ui ?? []).map(toAbsolute),
   };
+}
+
+function loadAuthoredDocuments(
+  declaredPaths: readonly string[],
+  report: (message: string, path: string, remediation?: string) => void,
+): Record<string, unknown> | undefined {
+  const documents: Record<string, unknown> = {};
+  let any = false;
+  for (const path of declaredPaths) {
+    if (!isContentModulePath(path)) continue;
+    const loaded = loadContentModule(path);
+    if (!loaded.ok) {
+      report(
+        `Authored content module '${path}' could not be loaded: ${loaded.message}`,
+        path,
+        "Export a define…(...) document as the default export and keep the module declarative (ADR-0334).",
+      );
+      continue;
+    }
+    documents[path] = loaded.document;
+    any = true;
+  }
+  return any ? documents : undefined;
 }
 
 function assertDeclaredFilesExist(

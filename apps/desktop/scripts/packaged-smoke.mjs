@@ -8,7 +8,7 @@
  *
  *   pnpm --filter @bluewave/desktop build
  *   CSC_IDENTITY_AUTO_DISCOVERY=false pnpm --filter @bluewave/desktop exec \
- *     electron-builder --mac --dir --config electron-builder.yml
+ *     electron-builder --mac --dir --config electron-builder.json
  *   pnpm --filter @bluewave/desktop run smoke:packaged [--app BINARY] [--shot OUT.png] [--save DIR]
  *
  * `--shot` overrides the shipbuilding screenshot path; it defaults to

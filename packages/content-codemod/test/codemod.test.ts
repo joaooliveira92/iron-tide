@@ -3,7 +3,7 @@ import type { FlattenedPart } from "@bluewave/content-schema";
 import { PART_SOURCE_FIELDS } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
 import { canonicalSerialize } from "@bluewave/deterministic";
-import { fromYaml } from "../src/yaml.js";
+import { fromStagedJson } from "../src/staged.js";
 import { planFromLegacy, planFromStaged } from "../src/index.js";
 import { components, legacySource } from "./helpers/production.js";
 import type { LegacySource } from "../src/types.js";
@@ -18,7 +18,7 @@ const planned = (() => {
 const partsById = ((): ReadonlyMap<string, FlattenedPart> => {
   const map = new Map<string, FlattenedPart>();
   for (const file of planned.files.filter((f) => f.path.startsWith("parts/"))) {
-    const records = (fromYaml(file.content) as { parts: unknown[] }).parts;
+    const records = (fromStagedJson(file.content) as { parts: unknown[] }).parts;
     for (const record of records) {
       const part = decodeStrict(FlattenedPartSchema, record);
       map.set(part.id, part);
@@ -54,9 +54,9 @@ describe("content codemod planner (ticket 11c)", () => {
   });
 
   it("generates the eight torpedo parts, including the 1884 Whitehead revision", () => {
-    const file = planned.files.find((f) => f.path === "parts/torpedo.yaml");
+    const file = planned.files.find((f) => f.path === "parts/torpedo.json");
     expect(file).toBeDefined();
-    const records = (fromYaml(file!.content) as { parts: unknown[] }).parts.map((record) =>
+    const records = (fromStagedJson(file!.content) as { parts: unknown[] }).parts.map((record) =>
       decodeStrict(FlattenedPartSchema, record),
     );
     expect(records.map((r) => r.id)).toEqual([

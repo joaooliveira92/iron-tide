@@ -25,7 +25,7 @@ import {
   type DraftTranslationIssue,
   type SourceCatalogue,
 } from "@bluewave/ship-design";
-import { fromYaml, toYaml } from "./yaml.js";
+import { fromStagedJson, toStagedJson } from "./staged.js";
 import { migrationFailure } from "./failure.js";
 import type { MigrationFailure, MigrationResult } from "./failure.js";
 import {
@@ -103,8 +103,8 @@ function catalogueSource(source: LegacySource): SourceCatalogue {
   };
 }
 
-const familyFile = (family: string): string => `parts/${family}.yaml`;
-const designFile = (nation: string): string => `designs/${nation}.yaml`;
+const familyFile = (family: string): string => `parts/${family}.json`;
+const designFile = (nation: string): string => `designs/${nation}.json`;
 
 function partFiles(parts: readonly FlattenedPart[]): GeneratedFile[] {
   const byFamily = new Map<string, FlattenedPart[]>();
@@ -118,7 +118,7 @@ function partFiles(parts: readonly FlattenedPart[]): GeneratedFile[] {
     return {
       path: familyFile(family),
       records: records.length,
-      content: toYaml({ parts: records }),
+      content: toStagedJson({ parts: records }),
     };
   });
 }
@@ -142,7 +142,7 @@ function designFiles(designs: readonly StagedDesign[]): GeneratedFile[] {
     return {
       path: designFile(nation),
       records: records.length,
-      content: toYaml({ designs: records }),
+      content: toStagedJson({ designs: records }),
     };
   });
 }
@@ -268,7 +268,7 @@ function decodeGeneratedFiles(
   for (const file of files) {
     const key = collectionKey(file.path);
     try {
-      const raw = fromYaml(file.content);
+      const raw = fromStagedJson(file.content);
       if (typeof raw !== "object" || raw === null) {
         return { path: file.path, message: "document is not a mapping." };
       }
@@ -287,17 +287,17 @@ function decodeGeneratedFiles(
 function collectionKey(path: string): string {
   if (path.startsWith("parts/")) return "parts";
   if (path.startsWith("designs/")) return "designs";
-  if (path === "platforms.yaml") return "platforms";
-  if (path === "slot-templates.yaml") return "slotTemplates";
+  if (path === "platforms.json") return "platforms";
+  if (path === "slot-templates.json") return "slotTemplates";
   return "records";
 }
 
 function decodeGeneratedRecord(path: string, record: unknown): void {
   if (path.startsWith("parts/")) {
     decodeStrict(FlattenedPartSchema, record);
-  } else if (path === "platforms.yaml") {
+  } else if (path === "platforms.json") {
     decodeStrict(PlatformSchema, record);
-  } else if (path === "slot-templates.yaml") {
+  } else if (path === "slot-templates.json") {
     decodeStrict(SlotTemplateSchema, record);
   } else if (path.startsWith("designs/")) {
     const design = record as { readonly header?: unknown; readonly loadout?: unknown };
@@ -315,14 +315,14 @@ function assemblePlan(input: {
   const files: GeneratedFile[] = [
     ...partFiles(input.parts),
     {
-      path: "platforms.yaml",
+      path: "platforms.json",
       records: input.platforms.length,
-      content: toYaml({ platforms: [...input.platforms].sort(byId) }),
+      content: toStagedJson({ platforms: [...input.platforms].sort(byId) }),
     },
     {
-      path: "slot-templates.yaml",
+      path: "slot-templates.json",
       records: input.slotTemplates.length,
-      content: toYaml({ slotTemplates: [...input.slotTemplates].sort(byId) }),
+      content: toStagedJson({ slotTemplates: [...input.slotTemplates].sort(byId) }),
     },
     ...designFiles(input.records.designs),
   ].sort((a, b) => compareCodePoints(a.path, b.path));

@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import { readFileSync } from "node:fs";
+import {} from "node:fs";
 import { join } from "node:path";
-import { parse } from "yaml";
 import {
   PropulsionPlantCatalogueSchema,
   ShipHullFormCatalogueSchema,
@@ -20,22 +19,20 @@ import {
 } from "../src/index.js";
 import { hullStructureWeight } from "../src/hull.js";
 import { requiredKw, type MachineryInput } from "../src/machinery.js";
+import { readAuthoredFile } from "@bluewave/test-support";
 
 const root = join(__dirname, "..", "..", "..", "content", "production", "1880");
-const load = (rel: string) =>
-  parse(readFileSync(join(root, rel), "utf8")) as Record<string, unknown>;
+const load = (rel: string) => readAuthoredFile(join(root, rel)) as Record<string, unknown>;
 
 const components = readComponentFiles(root).components;
-const plants = decodeStrict(PropulsionPlantCatalogueSchema, load("ship-building/plants.yaml"))
+const plants = decodeStrict(PropulsionPlantCatalogueSchema, load("ship-building/plants.ts"))
   .plants as unknown as PropulsionPlant[];
-const hullRecords = decodeStrict(ShipHullFormCatalogueSchema, load("ship-building/hull-forms.yaml"))
+const hullRecords = decodeStrict(ShipHullFormCatalogueSchema, load("ship-building/hull-forms.ts"))
   .hullForms as HullFormRecord[];
-const balanceFile = load("ship-building/balance.yaml");
+const balanceFile = load("ship-building/balance.ts");
 const ship = shipBalanceFromRecord(balanceFile.ship);
 const techIds = new Set(
-  (parse(readFileSync(join(root, "technologies.yaml"), "utf8")) as { id: string }[]).map(
-    (t) => t.id,
-  ),
+  (readAuthoredFile(join(root, "technologies.ts")) as { id: string }[]).map((t) => t.id),
 );
 
 describe("EARLY-band content integrity", () => {

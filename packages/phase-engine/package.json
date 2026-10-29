@@ -28,8 +28,7 @@
     "effect": "workspace:*"
   },
   "devDependencies": {
-    "@bluewave/test-support": "workspace:*",
-    "yaml": "^2.9.1"
+    "@bluewave/test-support": "workspace:*"
   },
   "scripts": {
     "build": "tsc -b",

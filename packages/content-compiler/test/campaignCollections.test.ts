@@ -91,7 +91,7 @@ describe("campaign-file collections through the compiler", () => {
       writeFixture(
         fixture.path,
         "pack.json",
-        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "production", files: {} }),
+        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "fixture", files: {} }),
       );
       writeFixture(fixture.path, "fleets.yaml", FLEET_A);
       writeFixture(fixture.path, "designs.yaml", DESIGN_A);
@@ -117,7 +117,7 @@ describe("campaign-file collections through the compiler", () => {
       writeFixture(
         fixture.path,
         "pack.json",
-        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "production", files: {} }),
+        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "fixture", files: {} }),
       );
       writeFixture(
         fixture.path,
@@ -147,7 +147,7 @@ describe("campaign-file collections through the compiler", () => {
       writeFixture(
         fixture.path,
         "pack.json",
-        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "production", files: {} }),
+        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "fixture", files: {} }),
       );
       writeFixture(
         fixture.path,
@@ -291,7 +291,7 @@ describe("campaign-file collections through the compiler", () => {
         JSON.stringify({
           name: "test-pack",
           version: "0.1.0",
-          type: "production",
+          type: "fixture",
           files: {
             fleets: ["fleets.yaml"],
             economies: ["economies.yaml"],

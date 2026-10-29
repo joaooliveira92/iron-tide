@@ -163,7 +163,7 @@ describe("Compiler", () => {
       writeFixture(
         fixture.path,
         "pack.json",
-        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "production", files: {} }),
+        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "fixture", files: {} }),
       );
       writeFixture(
         fixture.path,
