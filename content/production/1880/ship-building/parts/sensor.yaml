@@ -29,7 +29,7 @@ parts:
         - fire_control
     name: Optical rangefinder
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/equipment.yaml
     provenance:
       confidence: LOW
       kind: game_conversion

@@ -41,7 +41,7 @@ parts:
         id: standard_gun_bl_6in_26
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-breech-loading.yaml
       sourceFile: ship-building/naval-profiles/austria_hungary.yaml
     parameters:
       rounds:
@@ -121,7 +121,7 @@ parts:
         id: standard_gun_bl_209mm_gl20
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/german-krupp.yaml
       sourceFile: ship-building/naval-profiles/austria_hungary.yaml
     parameters:
       rounds:
@@ -200,7 +200,7 @@ parts:
         id: standard_gun_bl_263mm_rkl20
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/german-krupp.yaml
       sourceFile: ship-building/naval-profiles/austria_hungary.yaml
     parameters:
       rounds:
@@ -280,7 +280,7 @@ parts:
         id: standard_gun_rml_64pdr_71cwt
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/austria_hungary.yaml
     parameters:
       rounds:
@@ -362,7 +362,7 @@ parts:
         id: standard_gun_qf_47in
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-quick-firing.yaml
       sourceFile: ship-building/naval-profiles/brazil.yaml
     parameters:
       rounds:
@@ -444,7 +444,7 @@ parts:
         id: standard_gun_qf_6in_40
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-quick-firing.yaml
       sourceFile: ship-building/naval-profiles/brazil.yaml
     parameters:
       rounds:
@@ -524,7 +524,7 @@ parts:
         id: standard_gun_rml_64pdr_71cwt
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/brazil.yaml
     parameters:
       rounds:
@@ -604,7 +604,7 @@ parts:
         id: standard_gun_rml_229mm_whitworth
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/brazil.yaml
     parameters:
       rounds:
@@ -684,7 +684,7 @@ parts:
         id: standard_gun_rml_10in_18ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/brazil.yaml
     parameters:
       rounds:
@@ -919,7 +919,7 @@ parts:
         id: standard_gun_rml_8in_9ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/spain.yaml
     parameters:
       rounds:
@@ -999,7 +999,7 @@ parts:
         id: standard_gun_rml_10in_12ton_300pdr
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/spain.yaml
     parameters:
       rounds:
@@ -1080,7 +1080,7 @@ parts:
         id: standard_gun_bl_6in_26
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-breech-loading.yaml
       sourceFile: ship-building/naval-profiles/spain.yaml
     parameters:
       rounds:
@@ -1159,7 +1159,7 @@ parts:
         id: standard_gun_rml_64pdr_71cwt
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/spain.yaml
     parameters:
       rounds:
@@ -1991,7 +1991,7 @@ parts:
         id: standard_gun_qf_47in
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-quick-firing.yaml
       sourceFile: ship-building/naval-profiles/italy.yaml
     parameters:
       rounds:
@@ -2070,7 +2070,7 @@ parts:
         id: standard_gun_rml_10in_18ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/italy.yaml
     parameters:
       rounds:
@@ -2149,7 +2149,7 @@ parts:
         id: standard_gun_rml_11in_25ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/italy.yaml
     parameters:
       rounds:
@@ -2231,7 +2231,7 @@ parts:
         id: standard_gun_qf_6in_40
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-quick-firing.yaml
       sourceFile: ship-building/naval-profiles/italy.yaml
     parameters:
       rounds:
@@ -2312,7 +2312,7 @@ parts:
         id: standard_gun_qf_6in_40
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-quick-firing.yaml
       sourceFile: ship-building/naval-profiles/japan.yaml
     parameters:
       rounds:
@@ -2392,7 +2392,7 @@ parts:
         id: standard_gun_bl_173mm_rkl25
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/german-krupp.yaml
       sourceFile: ship-building/naval-profiles/japan.yaml
     parameters:
       rounds:
@@ -2472,7 +2472,7 @@ parts:
         id: standard_gun_bl_235mm_rkl22
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/german-krupp.yaml
       sourceFile: ship-building/naval-profiles/japan.yaml
     parameters:
       rounds:
@@ -2552,7 +2552,7 @@ parts:
         id: standard_gun_bl_263mm_rkl20
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/german-krupp.yaml
       sourceFile: ship-building/naval-profiles/japan.yaml
     parameters:
       rounds:
@@ -2632,7 +2632,7 @@ parts:
         id: standard_gun_rml_11in_25ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/netherlands.yaml
     parameters:
       rounds:
@@ -2714,7 +2714,7 @@ parts:
         id: standard_gun_qf_12pdr
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-quick-firing.yaml
       sourceFile: ship-building/naval-profiles/netherlands.yaml
     parameters:
       rounds:
@@ -2796,7 +2796,7 @@ parts:
         id: standard_gun_qf_47in
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-quick-firing.yaml
       sourceFile: ship-building/naval-profiles/netherlands.yaml
     parameters:
       rounds:
@@ -2877,7 +2877,7 @@ parts:
         id: standard_gun_rml_8in_9ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/netherlands.yaml
     parameters:
       rounds:
@@ -2958,7 +2958,7 @@ parts:
         id: standard_gun_bl_283mm_krupp
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/german-krupp.yaml
       sourceFile: ship-building/naval-profiles/netherlands.yaml
     parameters:
       rounds:
@@ -3037,7 +3037,7 @@ parts:
         id: standard_gun_rml_7in_7ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/ottoman_empire.yaml
     parameters:
       rounds:
@@ -3118,7 +3118,7 @@ parts:
         id: standard_gun_rml_8in_9ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/ottoman_empire.yaml
     parameters:
       rounds:
@@ -3199,7 +3199,7 @@ parts:
         id: standard_gun_rml_10in_18ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/ottoman_empire.yaml
     parameters:
       rounds:
@@ -3281,7 +3281,7 @@ parts:
         id: standard_gun_qf_12pdr
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-quick-firing.yaml
       sourceFile: ship-building/naval-profiles/ottoman_empire.yaml
     parameters:
       rounds:
@@ -3361,7 +3361,7 @@ parts:
         id: standard_gun_rml_64pdr_71cwt
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/portugal.yaml
     parameters:
       rounds:
@@ -3441,7 +3441,7 @@ parts:
         id: standard_gun_rml_8in_9ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/portugal.yaml
     parameters:
       rounds:
@@ -3521,7 +3521,7 @@ parts:
         id: standard_gun_bl_149mm_rkl22
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/german-krupp.yaml
       sourceFile: ship-building/naval-profiles/portugal.yaml
     parameters:
       rounds:
@@ -3602,7 +3602,7 @@ parts:
         id: standard_gun_bl_263mm_rkl20
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/german-krupp.yaml
       sourceFile: ship-building/naval-profiles/portugal.yaml
     parameters:
       rounds:
@@ -3683,7 +3683,7 @@ parts:
         id: standard_gun_bl_67mm_krupp
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/german-krupp.yaml
       sourceFile: ship-building/naval-profiles/portugal.yaml
     parameters:
       rounds:
@@ -3764,7 +3764,7 @@ parts:
         id: standard_gun_qf_12pdr
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-quick-firing.yaml
       sourceFile: ship-building/naval-profiles/portugal.yaml
     parameters:
       rounds:
@@ -3843,7 +3843,7 @@ parts:
         id: standard_gun_rml_64pdr_71cwt
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/qing.yaml
     parameters:
       rounds:
@@ -3923,7 +3923,7 @@ parts:
         id: standard_gun_rml_11in_25ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/qing.yaml
     parameters:
       rounds:
@@ -4003,7 +4003,7 @@ parts:
         id: standard_gun_rml_125in_38ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/qing.yaml
     parameters:
       rounds:
@@ -4085,7 +4085,7 @@ parts:
         id: standard_gun_qf_47in
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-quick-firing.yaml
       sourceFile: ship-building/naval-profiles/qing.yaml
     parameters:
       rounds:
@@ -4165,7 +4165,7 @@ parts:
         id: standard_gun_rml_11in_25ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/russia.yaml
     parameters:
       rounds:
@@ -4246,7 +4246,7 @@ parts:
         id: standard_gun_bl_12in_25
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-breech-loading.yaml
       sourceFile: ship-building/naval-profiles/russia.yaml
     parameters:
       rounds:
@@ -4325,7 +4325,7 @@ parts:
         id: standard_gun_rml_64pdr_71cwt
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/russia.yaml
     parameters:
       rounds:
@@ -4404,7 +4404,7 @@ parts:
         id: standard_gun_rml_8in_9ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/russia.yaml
     parameters:
       rounds:
@@ -4480,7 +4480,7 @@ parts:
         - heavy
     name: US 16-inch/50 Mark 7 gun in triple turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     parameters:
       rounds:
         max: 1300
@@ -4558,7 +4558,7 @@ parts:
         - heavy
     name: US 8-inch/55 Mark 16 rapid-fire gun in triple turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     parameters:
       rounds:
         max: 750
@@ -4633,7 +4633,7 @@ parts:
         - heavy
     name: BL 10-inch/32 gun in mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-breech-loading.yaml
     parameters:
       rounds:
         max: 120
@@ -4708,7 +4708,7 @@ parts:
         - heavy
     name: BL 12-inch/25 gun in barbette mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-breech-loading.yaml
     parameters:
       rounds:
         max: 120
@@ -4784,7 +4784,7 @@ parts:
         - heavy
     name: BL 12-inch/35 Mk VIII gun in turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-breech-loading.yaml
     parameters:
       rounds:
         max: 120
@@ -4859,7 +4859,7 @@ parts:
         - heavy
     name: BL 13.5-inch/30 gun in barbette mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-breech-loading.yaml
     parameters:
       rounds:
         max: 120
@@ -4932,7 +4932,7 @@ parts:
         - medium
     name: 15 cm Krupp RK L/22 C/75 in casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     parameters:
       rounds:
         max: 200
@@ -5006,7 +5006,7 @@ parts:
         - medium
     name: 17 cm Krupp RKL/25 C/72 in battery
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     parameters:
       rounds:
         max: 200
@@ -5080,7 +5080,7 @@ parts:
         - heavy
     name: 21 cm G. L/20 C.68 in central casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     parameters:
       rounds:
         max: 120
@@ -5154,7 +5154,7 @@ parts:
         - heavy
     name: 24 cm Krupp RKL/22 C/72 in central battery
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     parameters:
       rounds:
         max: 100
@@ -5228,7 +5228,7 @@ parts:
         - heavy
     name: 26 cm Ringkanone L/20 C/74
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     parameters:
       rounds:
         max: 120
@@ -5300,7 +5300,7 @@ parts:
         - heavy
     name: Canon de 27 cm modèle 1875
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/french.yaml
     parameters:
       rounds:
         max: 120
@@ -5373,7 +5373,7 @@ parts:
         - heavy
     name: 28 cm Krupp Ringkanone No.1 in monitor turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     parameters:
       rounds:
         max: 100
@@ -5447,7 +5447,7 @@ parts:
         - light
     name: 6.7 cm Krupp gun on deck
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/german-krupp.yaml
     parameters:
       rounds:
         max: 500
@@ -5523,7 +5523,7 @@ parts:
         - medium
     name: BL 6-inch/26 gun in mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-breech-loading.yaml
     parameters:
       rounds:
         max: 200
@@ -5598,7 +5598,7 @@ parts:
         - medium
     name: BL 9.2-inch/31.5 gun in mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-breech-loading.yaml
     parameters:
       rounds:
         max: 120
@@ -5673,7 +5673,7 @@ parts:
         - medium
     name: US 5-inch/38 Mark 12 dual-purpose gun in Mark 38 twin mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     parameters:
       rounds:
         max: 800
@@ -5748,7 +5748,7 @@ parts:
         - medium
     name: US 5-inch/54 Mark 18 dual-purpose gun in Mark 42 single mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     parameters:
       rounds:
         max: 800
@@ -5823,7 +5823,7 @@ parts:
         - medium
     name: US 6-inch/47 Mark 16 dual-purpose gun in twin turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     parameters:
       rounds:
         max: 1000
@@ -5898,7 +5898,7 @@ parts:
         - light
     name: Hotchkiss 3-pounder 47 mm gun
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-quick-firing.yaml
     parameters:
       rounds:
         max: 400
@@ -5971,7 +5971,7 @@ parts:
         - light
     name: Maxim .303 machine gun on mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-quick-firing.yaml
     parameters:
       rounds:
         max: 6000
@@ -6042,7 +6042,7 @@ parts:
         - light
     name: Nordenfelt 1-inch 4-barrel machine gun
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-quick-firing.yaml
     parameters:
       rounds:
         max: 3000
@@ -6116,7 +6116,7 @@ parts:
         - light
     name: QF 12-pounder 12-cwt gun on pedestal
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-quick-firing.yaml
     parameters:
       rounds:
         max: 300
@@ -6191,7 +6191,7 @@ parts:
         - light
     name: QF 4.7-inch gun in shielded mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-quick-firing.yaml
     parameters:
       rounds:
         max: 200
@@ -6266,7 +6266,7 @@ parts:
         - medium
     name: QF 6-inch/40 gun in shielded mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-quick-firing.yaml
     parameters:
       rounds:
         max: 200
@@ -6341,7 +6341,7 @@ parts:
         - light
     name: QF 6-pounder 8-cwt gun on pedestal
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-quick-firing.yaml
     parameters:
       rounds:
         max: 300
@@ -6414,7 +6414,7 @@ parts:
         - heavy
     name: RML 10-inch 12-ton 300-pdr (Armstrong) in broadside
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 100
@@ -6488,7 +6488,7 @@ parts:
         - heavy
     name: RML 10-inch 18-ton gun in mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 120
@@ -6559,7 +6559,7 @@ parts:
         - medium
     name: RML 10-inch 18-ton gun in broadside battery
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 120
@@ -6630,7 +6630,7 @@ parts:
         - heavy
     name: RML 11-inch 25-ton gun in mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 120
@@ -6701,7 +6701,7 @@ parts:
         - heavy
     name: RML 12.5-inch 38-ton gun in turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 120
@@ -6772,7 +6772,7 @@ parts:
         - heavy
     name: RML 12-inch 25-ton gun in turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 120
@@ -6843,7 +6843,7 @@ parts:
         - heavy
     name: RML 12-inch 35-ton gun in turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 120
@@ -6914,7 +6914,7 @@ parts:
         - heavy
     name: RML 16-inch 80-ton gun in turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 120
@@ -6985,7 +6985,7 @@ parts:
         - heavy
     name: 9-inch Whitworth 300-pdr RML in casemate
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 100
@@ -7059,7 +7059,7 @@ parts:
         - light
     name: RML 64-pounder 71-cwt gun
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 300
@@ -7130,7 +7130,7 @@ parts:
         - medium
     name: RML 7-inch 7-ton gun in mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 200
@@ -7201,7 +7201,7 @@ parts:
         - medium
     name: RML 8-inch 9-ton gun in mount
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/british-rml.yaml
     parameters:
       rounds:
         max: 200
@@ -7273,7 +7273,7 @@ parts:
         - smoothbore
     name: XV-inch Dahlgren smoothbore in monitor turret
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/guns/united-states.yaml
     parameters:
       rounds:
         max: 100
@@ -8413,7 +8413,7 @@ parts:
         id: standard_gun_sb_15in_dahlgren
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/united-states.yaml
       sourceFile: ship-building/naval-profiles/usa.yaml
     parameters:
       rounds:
@@ -8492,7 +8492,7 @@ parts:
         id: standard_gun_rml_8in_9ton
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/usa.yaml
     parameters:
       rounds:
@@ -8571,7 +8571,7 @@ parts:
         id: standard_gun_rml_64pdr_71cwt
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/usa.yaml
     parameters:
       rounds:
@@ -8651,7 +8651,7 @@ parts:
         id: standard_gun_rml_10in_18ton_broadside
         inheritedQuantities: []
         inheritedSpec: []
-        sourceFile: ship-building/components.yaml
+        sourceFile: ship-building/components/guns/british-rml.yaml
       sourceFile: ship-building/naval-profiles/usa.yaml
     parameters:
       rounds:

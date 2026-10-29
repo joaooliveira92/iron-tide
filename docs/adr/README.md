@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0333).
+highest existing number + 1 (the next number is ADR-0334).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -202,6 +202,7 @@ The ship-designer model, its armour regions, named schemes, and the design draft
 | 0309 | [ADR-0309-e1-part-families-and-capability-kinds.md](ADR-0309-e1-part-families-and-capability-kinds.md) | E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars | accepted | — |
 | 0311 | [ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md](ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) | Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire | accepted | — |
 | 0332 | [ADR-0332-e1-1940s-battleship-and-16-inch-gun-values.md](ADR-0332-e1-1940s-battleship-and-16-inch-gun-values.md) | E-1 1940-1949 battleship and 16-inch gun values | accepted | — |
+| 0333 | [ADR-0333-split-ship-component-catalogue-by-nation.md](ADR-0333-split-ship-component-catalogue-by-nation.md) | Split the ship-component catalogue by family and nation, with per-record source provenance | accepted | — |
 
 ## World map
 

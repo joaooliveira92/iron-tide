@@ -40,6 +40,7 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 - [ADR-0312](../ADR-0312-surface-to-surface-missile-combat-module.md) Surface-to-surface missile salvos are a deterministic combat module.
 - [ADR-0314](../ADR-0314-fleet-management-values-and-repair-entry.md) Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope.
 - [ADR-0332](../ADR-0332-e1-1940s-battleship-and-16-inch-gun-values.md) E-1 1940-1949 battleship and 16-inch gun values.
+- [ADR-0333](../ADR-0333-split-ship-component-catalogue-by-nation.md) Split the ship-component catalogue by family and nation, with per-record source provenance.
 
 ## Superseded (do not follow)
 

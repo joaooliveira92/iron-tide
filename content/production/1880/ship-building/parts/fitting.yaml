@@ -32,7 +32,7 @@ parts:
         - electrical
     name: Dynamo set, 60 kW
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/equipment.yaml
     provenance:
       confidence: LOW
       kind: game_conversion
@@ -89,7 +89,7 @@ parts:
         - funnel
     name: Funnel
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/equipment.yaml
     provenance:
       confidence: LOW
       kind: game_conversion
@@ -144,7 +144,7 @@ parts:
         - magazine
     name: Magazine, heavy (main battery)
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/equipment.yaml
     provenance:
       confidence: LOW
       kind: game_conversion
@@ -202,7 +202,7 @@ parts:
         - magazine
     name: Magazine, medium (secondary guns)
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/equipment.yaml
     provenance:
       confidence: LOW
       kind: game_conversion
@@ -258,7 +258,7 @@ parts:
         - magazine
     name: Magazine, small (light guns and shell rooms)
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/equipment.yaml
     provenance:
       confidence: LOW
       kind: game_conversion
@@ -319,7 +319,7 @@ parts:
         - damage_control
     name: Pumps and damage-control gear
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/equipment.yaml
     provenance:
       confidence: LOW
       kind: game_conversion
@@ -376,7 +376,7 @@ parts:
         - accommodation
     name: Crew quarters block (volume only)
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/equipment.yaml
     parameters:
       blocks:
         max: 120
@@ -440,7 +440,7 @@ parts:
         - ventilation
     name: Ventilation and cooling plant
     origin:
-      sourceFile: ship-building/components.yaml
+      sourceFile: ship-building/components/equipment.yaml
     provenance:
       confidence: LOW
       kind: game_conversion

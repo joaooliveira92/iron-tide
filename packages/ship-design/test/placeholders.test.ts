@@ -4,7 +4,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 const CEILING: Record<string, number> = {
   "balance.yaml": 5,
-  "components.yaml": 50,
+  components: 49,
   "plants.yaml": 1,
   "hull-forms.yaml": 0,
   "reference-designs": 0,

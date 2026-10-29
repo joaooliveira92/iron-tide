@@ -21,7 +21,17 @@
     "ui": ["ui/en-US.yaml"]
   },
   "shipBuilding": {
-    "shipComponents": ["ship-building/components.yaml"],
+    "shipComponents": [
+      "ship-building/components/equipment.yaml",
+      "ship-building/components/guns/british-breech-loading.yaml",
+      "ship-building/components/guns/british-quick-firing.yaml",
+      "ship-building/components/guns/british-rml.yaml",
+      "ship-building/components/guns/french.yaml",
+      "ship-building/components/guns/german-krupp.yaml",
+      "ship-building/components/guns/united-states.yaml",
+      "ship-building/components/torpedo-tubes/british.yaml",
+      "ship-building/components/torpedo-tubes/united-states.yaml"
+    ],
     "propulsionPlants": ["ship-building/plants.yaml"],
     "hullForms": ["ship-building/hull-forms.yaml"],
     "shipBalance": ["ship-building/balance.yaml"],

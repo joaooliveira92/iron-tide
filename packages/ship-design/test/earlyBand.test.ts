@@ -3,19 +3,18 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import {
-  ShipComponentCatalogueSchema,
   PropulsionPlantCatalogueSchema,
   ShipHullFormCatalogueSchema,
   decodeStrict,
 } from "@bluewave/content-schema";
 import { lintCatalogue } from "../src/component.js";
 import { hullFormsFromRecords, ContentError } from "../src/contextBuilder.js";
+import { readComponentFiles } from "./helpers/componentFiles.js";
 import {
   shipBalanceFromRecord,
   bp,
   kg,
   mm,
-  type ComponentDef,
   type HullFormRecord,
   type PropulsionPlant,
 } from "../src/index.js";
@@ -26,8 +25,7 @@ const root = join(__dirname, "..", "..", "..", "content", "production", "1880");
 const load = (rel: string) =>
   parse(readFileSync(join(root, rel), "utf8")) as Record<string, unknown>;
 
-const components = decodeStrict(ShipComponentCatalogueSchema, load("ship-building/components.yaml"))
-  .components as ComponentDef[];
+const components = readComponentFiles(root).components;
 const plants = decodeStrict(PropulsionPlantCatalogueSchema, load("ship-building/plants.yaml"))
   .plants as unknown as PropulsionPlant[];
 const hullRecords = decodeStrict(ShipHullFormCatalogueSchema, load("ship-building/hull-forms.yaml"))

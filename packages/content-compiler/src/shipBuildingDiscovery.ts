@@ -22,7 +22,6 @@ export interface ShipBuildingFileGroups {
 }
 
 const FIXED_FILES: ReadonlyArray<readonly [keyof ShipBuildingFileGroups, string]> = [
-  ["shipComponentFiles", "ship-building/components.yaml"],
   ["propulsionPlantFiles", "ship-building/plants.yaml"],
   ["hullFormFiles", "ship-building/hull-forms.yaml"],
   ["shipBalanceFiles", "ship-building/balance.yaml"],
@@ -35,6 +34,7 @@ const FIXED_FILES: ReadonlyArray<readonly [keyof ShipBuildingFileGroups, string]
   ["shipTypeFiles", "ship-building/ship-types.yaml"],
 ];
 
+const COMPONENT_DIR = "ship-building/components";
 const NAVAL_PROFILE_DIR = "ship-building/naval-profiles";
 const REFERENCE_DESIGN_DIR = "ship-building/reference-designs";
 const PART_DIR = "ship-building/parts";
@@ -65,6 +65,7 @@ export function discoverShipBuildingFiles(contentDir: string): ShipBuildingFileG
     }
   }
 
+  groups.shipComponentFiles = listYamlFiles(contentDir, COMPONENT_DIR).map(safePath);
   groups.navalProfileFiles = listYamlFiles(contentDir, NAVAL_PROFILE_DIR).map(safePath);
   groups.referenceDesignFiles = listReferenceDesignFiles(contentDir).map(safePath);
   groups.partFiles = listYamlFiles(contentDir, PART_DIR).map(safePath);

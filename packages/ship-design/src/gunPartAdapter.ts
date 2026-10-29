@@ -12,6 +12,7 @@ import {
   type AuthoredArmamentContent,
 } from "./armamentContent.js";
 import type { ComponentDef } from "./component.js";
+import { LEGACY_COMPONENT_SOURCE } from "./component.js";
 import {
   QUANTITY_STEM,
   readComponentQuantities,
@@ -27,7 +28,6 @@ export type GunMountType = FlattenedGunMountPart["spec"]["mountType"];
 export const GUN_SOURCE_FILES = {
   authoredModel: "ship-building/armament/gun-models.yaml",
   authoredMount: "ship-building/armament/gun-mounts.yaml",
-  component: "ship-building/components.yaml",
 } as const;
 
 export type TranslationDisposition = "RECLASSIFIED_AS_CENTRAL_BATTERY";
@@ -162,7 +162,9 @@ function gunPartFromModel(
     ],
     revisions: [],
     origin: {
-      sourceFile: authored ? GUN_SOURCE_FILES.authoredModel : GUN_SOURCE_FILES.component,
+      sourceFile: authored
+        ? GUN_SOURCE_FILES.authoredModel
+        : (component?.sourceFile ?? LEGACY_COMPONENT_SOURCE),
     },
     provenance: provenanceOf(model.provenance),
   };
@@ -282,7 +284,9 @@ function mountPartFromLegacy(
     ],
     revisions: [],
     origin: {
-      sourceFile: authored ? GUN_SOURCE_FILES.authoredMount : GUN_SOURCE_FILES.component,
+      sourceFile: authored
+        ? GUN_SOURCE_FILES.authoredMount
+        : (component?.sourceFile ?? LEGACY_COMPONENT_SOURCE),
     },
     provenance: provenanceOf(legacy.provenance),
   };

@@ -18,7 +18,12 @@ import { type GunPlacementTranslation } from "../src/partReadPath.js";
 import { componentAccessOf, toCompiledWeaponArmament } from "../src/armamentCompile.js";
 import { sortUnresolvedGunPlacements, type UnresolvedGunPlacement } from "../src/partReadPath.js";
 import { totalOf } from "../src/partQuantities.js";
-import { armamentContent, components, earlyContext } from "./helpers/earlyContext.js";
+import {
+  armamentContent,
+  componentSourceById,
+  components,
+  earlyContext,
+} from "./helpers/earlyContext.js";
 import {
   compatibility,
   designs,
@@ -537,7 +542,9 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
         if (authored === undefined) {
           expect(part.id.startsWith("standard_"), part.id).toBe(true);
           expect(part.nation, part.id).toBeUndefined();
-          expect(part.origin.sourceFile).toBe("ship-building/components.yaml");
+          expect(part.origin.sourceFile).toBe(
+            componentSourceById.get(part.id.slice("standard_".length)),
+          );
         } else {
           expect(part.nation, part.id).toBe(authored.nationId);
           expect(part.origin.sourceFile).toBe("ship-building/armament/gun-models.yaml");

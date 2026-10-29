@@ -8,7 +8,6 @@ import {
   GunMountCatalogueSchema,
   NavalProfileCatalogueSchema,
   PropulsionPlantCatalogueSchema,
-  ShipComponentCatalogueSchema,
   ShipHullFormCatalogueSchema,
   ShipTypeRecordSchema,
   decodeStrict,
@@ -18,7 +17,6 @@ import {
   buildShipBuildingContent,
   shipBalanceFromRecord,
   type AuthoredArmamentContent,
-  type ComponentDef,
   type ConstructionBalance,
   type CostBalance,
   type HullFormRecord,
@@ -29,6 +27,7 @@ import {
   type ShipContext,
 } from "../../src/index.js";
 import { type CveBalance } from "../../src/cve.js";
+import { readComponentFiles } from "./componentFiles.js";
 
 const root = join(__dirname, "..", "..", "..", "..", "content", "production", "1880");
 const sbDir = join(root, "ship-building");
@@ -75,10 +74,7 @@ export const armamentContent: AuthoredArmamentContent = {
   ammunition: decodeStrict(AmmunitionCatalogueSchema, loadArmament("ammunition.yaml")).ammunition,
 } as unknown as AuthoredArmamentContent;
 
-export const components = decodeStrict(
-  ShipComponentCatalogueSchema,
-  load("ship-building/components.yaml"),
-).components as ComponentDef[];
+export const { components, sourceById: componentSourceById } = readComponentFiles(root);
 export const plants = decodeStrict(
   PropulsionPlantCatalogueSchema,
   load("ship-building/plants.yaml"),
