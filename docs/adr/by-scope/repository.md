@@ -21,6 +21,7 @@ and for the exact boundaries of the rule.
 - [ADR-0299](../ADR-0299-gate-runs-serialise-across-worktrees.md) Run long gates through `pnpm heavy`, which serialises across worktrees and caps vitest workers at 4.
 - [ADR-0313](../ADR-0313-worktree-registry-under-git-common-dir.md) The worktree inventory is a locked registry under the Git common directory.
 - [ADR-0318](../ADR-0318-adrs-declare-their-scope-and-packages-link-them.md) Every ADR has an `Applies to:` line, and every governing `AGENTS.md` links its generated `docs/adr/by-scope` page.
+- [ADR-0335](../ADR-0335-agent-navigation-and-scoped-verification.md) Agents discover ownership with `pnpm agent:map`, validate a change with `pnpm verify:affected`, and run long gates blocking through `pnpm heavy`; scoped verification widens to full scope whenever impact is uncertain and never replaces `pnpm check`.
 
 ## Superseded (do not follow)
 

@@ -25,9 +25,9 @@ contract → ADRs → milestone brief → local conventions. On a genuine confli
 - Check `git status` and the remote branch before mutating; `git pull --rebase` and run `pnpm preflight` at session start; rebase before every push.
 - Never overwrite, revert, or reformat another contributor's work. Keep commits narrow and Conventional.
 - Write no code comments. Names, types, and tests carry intent; rationale goes in an ADR or the commit message (ADR-0268).
-- Work in the main checkout on a short-lived local branch. Up to 5 worktrees
-  (main checkout included) may exist at once, created with `pnpm worktrees new <slug>` (ADR-0237, which amends ADR-0236 and ADR-0234). One session per checkout.
-- Review agents are read-only: they must not edit code, tests, commits, branches, or PR state.
+- Discover with `pnpm agent:map <symbol|path>`, validate with `pnpm verify:affected`, and run long gates blocking via `pnpm heavy`; never poll with `sleep`. See [agent tools](docs/agents/agent-tools.md).
+- Work on a short-lived local branch; at most 5 worktrees including the main checkout, created with `pnpm worktrees new <slug>` (ADR-0237). One session per checkout.
+- Review agents are read-only: no edits to code, tests, commits, branches, or PR state.
 - Standing standards docs carry a word ceiling in `scripts/doc-budgets.manifest.json`; ratchet down, justify any raise, and add
   new standing docs to the manifest.
 - Record decisions that constrain architecture, determinism, compatibility,
@@ -57,9 +57,8 @@ produce identical authoritative hashes across OSes.
 
 ## Effect source of truth
 
-- `effect@4.0.2` is vendored under `vendor/effect`; read the installed source and
-  declarations before relying on behaviour. Import `effect` (or `effect/<Subpath>`),
-  never the npm registry and never `repos/`; the single-copy guard is enforced.
+- `effect@4.0.2` is vendored under `vendor/effect`; read the vendored source first.
+  Import `effect` (or `effect/<Subpath>`), never the npm registry and never `repos/`; the single-copy guard is enforced.
 - Runtime-free subset: `Schema`, `SchemaIssue`, `Data`, `Equal`, `Hash`, `Option`,
   `Predicate`, `Result`. The full runtime lives only at IO/entrypoint boundaries —
   `persistence`, `content-compiler`, `apps/desktop/src/main`, `apps/compiler-cli`.

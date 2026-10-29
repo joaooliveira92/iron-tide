@@ -18,4 +18,5 @@ itself.
 
 It is documented here because it is a script other tooling depends on; see
 `scripts/README.md` for the full script catalogue and `AGENTS.md` for when to
-reach for it.
+reach for it. The agent-facing wrapper that turns this report into a verification
+plan is [agent tools](agent-tools.md).
