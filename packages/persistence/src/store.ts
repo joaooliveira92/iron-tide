@@ -24,7 +24,12 @@ import {
   PersistenceMissingSaveError,
   PersistenceLegacySaveError,
 } from "./errors.js";
-import { readPointerFile, readSaveMetadata, readSigFile } from "./fileDecode.js";
+import {
+  readPointerFile,
+  readPointerFileResult,
+  readSaveMetadata,
+  readSigFile,
+} from "./fileDecode.js";
 import { LEGACY_SIG_FILE, writeSaveManifest, verifySaveManifest } from "./manifest.js";
 import {
   BACKUP_PREFIX,
@@ -58,7 +63,10 @@ export interface SaveResult {
   savePath: string;
   hash: string;
   metadata: SaveMetadata;
+  warnings: readonly Diagnostic[];
 }
+
+type PointerReadFailure = PersistenceIoError | PersistenceCorruptSaveError;
 
 const SAVE_ID_PATTERN = /^\d{13}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -103,6 +111,7 @@ const MONTH_INPUT_STAGE = "persistence.loadMonthInput";
 const SAVE_STAGE = "persistence.save";
 const LIST_STAGE = "persistence.list";
 const POINTER_STAGE = "persistence.pointer";
+const IS_CURRENT_STAGE = "persistence.isCurrent";
 
 function ioError(stage: string, cause: unknown): PersistenceIoError {
   return new PersistenceIoError({
@@ -192,7 +201,14 @@ export class SaveStore {
     const stateHash = sha256Hex(canonicalSerialize(stateForHash));
     const serializedHash = sha256Hex(serialized);
     const snapshotHash = sha256Hex(canonicalSerialize(toStorableSnapshot(state.snapshot)));
-    const previousSaveId = this.getActiveSaveId(saveDir) ?? undefined;
+    const pointerRead = this.pointerResult(saveDir);
+    const pointerUnreadable = Result.isFailure(pointerRead);
+    const previousSaveId = Result.isSuccess(pointerRead)
+      ? (pointerRead.success?.activeSaveId ?? undefined)
+      : undefined;
+    const warnings: Diagnostic[] = pointerUnreadable
+      ? [pointerRead.failure.toDiagnostic("warning")]
+      : [];
     const monthInput =
       extras.monthInput === undefined ? undefined : canonicalSerialize(extras.monthInput);
 
@@ -242,9 +258,11 @@ export class SaveStore {
       }
 
       updatePointer(saveDir, saveId, previousSaveId);
-      if (this.retainSaves !== undefined) this.prune(saveDir, this.retainSaves);
+      if (this.retainSaves !== undefined && !pointerUnreadable) {
+        this.prune(saveDir, this.retainSaves);
+      }
 
-      return { savePath, hash: stateHash, metadata };
+      return { savePath, hash: stateHash, metadata, warnings };
     } catch (err) {
       cleanup(tmpDir);
       cleanup(join(saveDir, POINTER_TEMP_FILE));
@@ -270,44 +288,55 @@ export class SaveStore {
               stage: SAVE_STAGE,
             })
           : ioError(SAVE_STAGE, cause),
-    });
+    }).pipe(Effect.withSpan("persistence.save"));
   }
 
   listEffect(saveDir: string): Effect.Effect<SaveMetadata[], PersistenceIoError> {
     return Effect.try({
       try: () => this.list(saveDir),
       catch: (cause) => ioError(LIST_STAGE, cause),
-    });
+    }).pipe(Effect.withSpan("persistence.list"));
   }
 
-  isCurrentEffect(state: CampaignState, saveDir: string): Effect.Effect<boolean> {
-    return Effect.sync(() => this.isCurrent(state, saveDir));
+  isCurrentEffect(
+    state: CampaignState,
+    saveDir: string,
+  ): Effect.Effect<boolean, PointerReadFailure> {
+    return Effect.suspend(() => Effect.fromResult(this.isCurrentResult(state, saveDir))).pipe(
+      Effect.withSpan(IS_CURRENT_STAGE),
+    );
   }
 
-  activeSaveIdEffect(saveDir: string): Effect.Effect<string | null, PersistenceIoError> {
-    return Effect.try({
-      try: () => this.getActiveSaveId(saveDir),
-      catch: (cause) => ioError(POINTER_STAGE, cause),
-    });
+  activeSaveIdEffect(saveDir: string): Effect.Effect<string | null, PointerReadFailure> {
+    return Effect.suspend(() =>
+      Effect.fromResult(
+        Result.map(this.pointerResult(saveDir), (pointer) => pointer?.activeSaveId ?? null),
+      ),
+    ).pipe(Effect.withSpan("persistence.activeSaveId"));
   }
 
-  previousSaveIdEffect(saveDir: string): Effect.Effect<string | null, PersistenceIoError> {
-    return Effect.try({
-      try: () => this.getPreviousSaveId(saveDir),
-      catch: (cause) => ioError(POINTER_STAGE, cause),
-    });
+  previousSaveIdEffect(saveDir: string): Effect.Effect<string | null, PointerReadFailure> {
+    return Effect.suspend(() =>
+      Effect.fromResult(
+        Result.map(this.pointerResult(saveDir), (pointer) => pointer?.previousSaveId ?? null),
+      ),
+    ).pipe(Effect.withSpan("persistence.previousSaveId"));
   }
 
   load(saveDir: string, signal?: AbortSignal): Effect.Effect<LoadedSave, LoadFailure> {
     const currentVersion = this.currentCompatibilityVersion;
-    return Effect.suspend(() => Effect.fromResult(loadResult(saveDir, currentVersion, signal)));
+    return Effect.suspend(() =>
+      Effect.fromResult(loadResult(saveDir, currentVersion, signal)),
+    ).pipe(Effect.withSpan("persistence.load"));
   }
 
   loadMonthInput(
     saveDir: string,
     saveId: string,
   ): Effect.Effect<MonthInputLoad, PersistenceCorruptSaveError> {
-    return Effect.suspend(() => Effect.fromResult(loadMonthInputResult(saveDir, saveId)));
+    return Effect.suspend(() => Effect.fromResult(loadMonthInputResult(saveDir, saveId))).pipe(
+      Effect.withSpan("persistence.loadMonthInput"),
+    );
   }
 
   loadById(
@@ -318,7 +347,7 @@ export class SaveStore {
     const currentVersion = this.currentCompatibilityVersion;
     return Effect.suspend(() =>
       Effect.fromResult(loadByIdResult(saveDir, saveId, currentVersion, signal)),
-    );
+    ).pipe(Effect.withSpan("persistence.loadById"));
   }
 
   list(saveDir: string): SaveMetadata[] {
@@ -396,28 +425,74 @@ export class SaveStore {
   }
 
   isCurrent(state: CampaignState, saveDir: string): boolean {
-    try {
-      const activeId = this.getActiveSaveId(saveDir);
-      if (activeId === null) return false;
-      const active = this.list(saveDir).find((save) => save.saveId === activeId);
-      if (active === undefined) return false;
-      const storable = { ...state, snapshot: toStorableSnapshot(state.snapshot) };
-      return active.contentArtifactHash === sha256Hex(canonicalSerialize(storable));
-    } catch {
-      return false;
-    }
+    const current = this.isCurrentResult(state, saveDir);
+    return Result.isSuccess(current) ? current.success : false;
   }
 
   getActiveSaveId(saveDir: string): string | null {
-    const pointerPath = join(saveDir, "pointer.json");
-    if (!existsSync(pointerPath)) return null;
-    return readPointerFile(pointerPath)?.activeSaveId ?? null;
+    const decoded = this.pointerResult(saveDir);
+    return Result.isSuccess(decoded) ? (decoded.success?.activeSaveId ?? null) : null;
   }
 
   getPreviousSaveId(saveDir: string): string | null {
-    const pointerPath = join(saveDir, "pointer.json");
-    if (!existsSync(pointerPath)) return null;
-    return readPointerFile(pointerPath)?.previousSaveId ?? null;
+    const decoded = this.pointerResult(saveDir);
+    return Result.isSuccess(decoded) ? (decoded.success?.previousSaveId ?? null) : null;
+  }
+
+  private isCurrentResult(
+    state: CampaignState,
+    saveDir: string,
+  ): Result.Result<boolean, PointerReadFailure> {
+    const pointerRead = this.pointerResult(saveDir);
+    if (Result.isFailure(pointerRead)) {
+      const failure = pointerRead.failure;
+      return Result.fail(
+        failure._tag === "PERSISTENCE_CORRUPT_SAVE"
+          ? new PersistenceCorruptSaveError({ message: failure.message, stage: IS_CURRENT_STAGE })
+          : new PersistenceIoError({ message: failure.message, stage: IS_CURRENT_STAGE }),
+      );
+    }
+    const pointer = pointerRead.success;
+    if (pointer === null) return Result.succeed(false);
+
+    let saves: SaveMetadata[];
+    try {
+      saves = this.list(saveDir);
+    } catch (cause) {
+      return Result.fail(ioError(IS_CURRENT_STAGE, cause));
+    }
+
+    const active = saves.find((save) => save.saveId === pointer.activeSaveId);
+    if (active === undefined) {
+      return Result.fail(
+        new PersistenceCorruptSaveError({
+          message: `Active save ${pointer.activeSaveId} is not readable`,
+          stage: IS_CURRENT_STAGE,
+        }),
+      );
+    }
+
+    const storable = { ...state, snapshot: toStorableSnapshot(state.snapshot) };
+    return Result.succeed(active.contentArtifactHash === sha256Hex(canonicalSerialize(storable)));
+  }
+
+  private pointerResult(saveDir: string): Result.Result<PointerFile | null, PointerReadFailure> {
+    const decoded = readPointerFileResult(join(saveDir, "pointer.json"));
+    if (Result.isSuccess(decoded)) return Result.succeed(decoded.success);
+
+    const failure = decoded.failure;
+    if (failure.reason === "missing") return Result.succeed(null);
+    if (failure.reason === "unreadable") {
+      return Result.fail(
+        new PersistenceIoError({ message: failure.message, stage: POINTER_STAGE }),
+      );
+    }
+    return Result.fail(
+      new PersistenceCorruptSaveError({
+        message: "Pointer file is corrupt or unreadable",
+        stage: POINTER_STAGE,
+      }),
+    );
   }
 }
 

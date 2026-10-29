@@ -9,6 +9,7 @@ export {
   CANCELLED_CODE,
   COMPATIBILITY_MISMATCH_CODE,
   CORRUPT_SAVE_CODE,
+  IO_CODE,
   MISSING_SAVE_CODE,
   PersistenceCancelledError,
   PersistenceCompatibilityMismatchError,
