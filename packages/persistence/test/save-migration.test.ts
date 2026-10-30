@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
@@ -162,6 +162,29 @@ describe("save migration (ticket 11d)", () => {
     expect(result.status).toBe("refused");
     if (result.status === "refused") expect(result.kind).toBe("unknown");
   });
+
+  it.skipIf(process.getuid?.() === 0)(
+    "reports a failed migration with its cause and leaves the original save in place",
+    () => {
+      const savePath = saveAt("1.2.0", tmpDir);
+      const campaignBefore = readFileSync(join(savePath, "campaign.json"));
+      chmodSync(tmpDir, 0o555);
+      try {
+        const result = migrateSaveDirectory(
+          savePath,
+          CURRENT_COMPATIBILITY_VERSION,
+          INJECTED_STEPS,
+        );
+
+        expect(result.status).toBe("failed");
+        if (result.status === "failed") expect(result.reason).toContain("EACCES");
+      } finally {
+        chmodSync(tmpDir, 0o755);
+      }
+      expect(readFileSync(join(savePath, "campaign.json")).equals(campaignBefore)).toBe(true);
+      expect(existsSync(`${savePath}.migrating`)).toBe(false);
+    },
+  );
 
   it("migrates a save directory atomically and leaves the original recoverable", () => {
     const savePath = saveAt("1.2.0", tmpDir);
