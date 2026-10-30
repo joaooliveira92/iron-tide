@@ -243,14 +243,14 @@
     {
       "id": "accept-peace",
       "player_verb": "Accept a peace settlement",
-      "status": "reachable",
+      "status": "dormant-by-decision",
       "engine_package": "phase-engine",
       "engine_modules": [],
       "engine_symbols": ["applyAcceptPeace"],
       "main_commands": ["submitDiplomacyCommand"],
-      "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
-      "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
-      "decision": null
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#422"
     },
     {
       "id": "form-or-break-alliance",
@@ -311,7 +311,7 @@
     {
       "id": "fight-or-decline-battle",
       "player_verb": "Accept or decline a battle offer and fight it with division stance and speed orders",
-      "status": "reachable",
+      "status": "dormant-by-decision",
       "engine_package": "phase-engine",
       "engine_modules": ["battleOffer", "battles", "interruption"],
       "engine_symbols": [
@@ -330,9 +330,9 @@
         "finishPlayerBattle",
         "submitBattleResult"
       ],
-      "renderer_screen": "screens/battle/PlayerBattleScreen.tsx",
-      "evidence_test": "apps/desktop/src/renderer/shell/App.test.tsx",
-      "decision": null
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#422"
     },
     {
       "id": "assign-or-relieve-officer",
@@ -471,7 +471,7 @@
     {
       "id": "combat-fought-battle",
       "player_verb": "Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under division stance and speed orders",
-      "status": "reachable",
+      "status": "dormant-by-decision",
       "engine_package": "combat",
       "engine_modules": [
         "gunnery",
@@ -485,9 +485,9 @@
       ],
       "engine_symbols": [],
       "main_commands": ["startPlayerBattle", "advancePlayerBattle", "finishPlayerBattle"],
-      "renderer_screen": "screens/battle/PlayerBattleScreen.tsx",
-      "evidence_test": "apps/desktop/src/main/commands/battleOfferCommands.test.ts",
-      "decision": null,
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#422",
       "note": "The player orders stance and speed per division; the stance wire shape compiles through the versioned division order model, and fire control and torpedo doctrine are automatic."
     },
     {

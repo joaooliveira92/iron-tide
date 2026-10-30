@@ -4,8 +4,9 @@ Issue #227, brief `.ai/briefs/ui-acceptance-run.md`. Observed on `dev` plus the 
 
 ## Existing lane
 
-`heavy pnpm test:e2e` on this branch: 39 passed, 0 failed, 1.2 minutes, 3 workers, exit 0. The lane is 11 spec files. Whether
-the 18 uncovered rows fit the CI time budget is not yet known; the brief names that as a blocker.
+`heavy pnpm test:e2e` on this branch: 39 passed, 0 failed, 1.2 minutes, 3 workers, exit 0. The lane is 11 spec files. Stages 1 to 3 added
+the management, construction, rebuild and diplomacy specs; whether the lane still fits the CI time budget is not yet
+known; the brief names that as a blocker.
 
 `campaign-battle-drill.debug.spec.ts` is excluded from the default lane (`testIgnore: "**/*.debug.spec.ts"`) and needs the
 debug build, so it does not count as a UI path.
@@ -40,7 +41,7 @@ by reading the specs, not by instrumentation. Classes:
 | halt-or-resume-construction       | drives | `construction` halt                                                                                                                                                     |
 | cancel-construction-project       | drives | `construction` project cancelled, shown as cancelled after the month, steering controls gone (the engine refunds 0, so no refund to assert)                             |
 | read-priorities                   | reads  | `status-strip`                                                                                                                                                          |
-| read-battle-history               | reads  | `mvp-loop` empty history only                                                                                                                                           |
+| read-battle-history               | reads  | `mvp-loop` empty history only; no production route fills it, see Findings                                                                                               |
 | persist-ui-state                  | drives | `management` preference and guided inspection survive restarts                                                                                                          |
 | set-research-priority             | drives | `management` research priority queued, holds after the month                                                                                                            |
 | fund-special-training             | drives | `management` special training funded, accrues a month                                                                                                                   |
@@ -52,19 +53,17 @@ by reading the specs, not by instrumentation. Classes:
 | accelerate-construction           | drives | `construction` accelerate, status accelerated after the month                                                                                                           |
 | authorize-dock-expansion          | drives | `construction` dock expansion queued, new infrastructure project on the slipways after the month                                                                        |
 | declare-war                       | drives | `diplomacy` war declared on France, shown as Declared with the score bar and an At war rail entry after the month                                                       |
-| accept-peace                      | none   | BLOCKED: no production path makes a war ACTIVE, see Findings                                                                                                            |
 | form-or-break-alliance            | drives | `diplomacy` alliance formed with the Netherlands and shown Allied, then broken and shown Neutral again                                                                  |
 | form-or-break-non-aggression-pact | drives | `diplomacy` pact formed with Russia and shown as NAP, then broken                                                                                                       |
 | declare-blockade                  | drives | `diplomacy` blockade of the chosen area listed on the war front and the dossier, war score changes after the month                                                      |
-| fight-or-decline-battle           | none   | debug spec only                                                                                                                                                         |
-| combat-fought-battle              | none   | debug spec only                                                                                                                                                         |
 
 ## Counts
 
-35 reachable rows: 27 drives, 5 reads, 3 none. Stage 1 turned six `none` rows into `drives`
-(`management.spec.ts`); stage 2 turned five more (`construction.spec.ts`, `ship-rebuild.spec.ts`); stage 3 turned four more
-(`diplomacy.spec.ts`). The 3 remaining `none` rows are accept-peace (BLOCKED, see Findings) and the two battle rows, whose
-route is the same blocker. The `reads` rows still need real content assertions.
+32 reachable rows: 27 drives, 5 reads, 0 none. Stage 1 turned six `none` rows into `drives` (`management.spec.ts`); stage 2
+turned five more (`construction.spec.ts`, `ship-rebuild.spec.ts`); stage 3 turned four more (`diplomacy.spec.ts`). Stage 4
+found no production route to a battle, so accept-peace, fight-or-decline-battle and combat-fought-battle were reclassified
+`dormant-by-decision` (#422) and left the table: the ledger now counts 32 reachable, 14 dormant-by-decision, 14 internal.
+The `reads` rows still need real content assertions.
 
 ## Gap list, in stage order
 
@@ -75,8 +74,10 @@ route is the same blocker. The `reads` rows still need real content assertions.
    screen); the slipways inspector now has a Revise control, shown only for a player-designed project the engine can
    revise, that opens the drawing board on that project.
 3. Stage 3, diplomacy: done for four rows. declare-war, form-or-break-alliance, form-or-break-non-aggression-pact and
-   declare-blockade are driven in `diplomacy.spec.ts`. accept-peace is BLOCKED (see Findings).
-4. Stage 4, battle: fight-or-decline-battle, combat-fought-battle, read-battle-history with a fought battle.
+   declare-blockade are driven in `diplomacy.spec.ts`.
+4. Stage 4, battle: not drivable. No production route reaches a battle offer, so accept-peace, fight-or-decline-battle and
+   combat-fought-battle are `dormant-by-decision` (#422) and no `battle.spec.ts` exists. Unblocking needs an owner decision
+   on thresholds or content (#422); when it lands, restore the three rows and drive them.
 5. Upgrade the `reads` rows to assertions on real content: read-opening-briefing, read-priorities, read-battle-history.
 
 ## Findings for the brief
@@ -86,19 +87,31 @@ route is the same blocker. The `reads` rows still need real content assertions.
 - start-rebuild: the Rebuild tab unmounts when the player switches to another design tab, which drops the loaded ship. The
   only in-panel edit is the bulge action, so the step drives a bulge rebuild.
 
-- accept-peace: BLOCKED, and the cause is shared with stage 4. The Accept peace control is shown only for a war with status
-  ACTIVE (`WarFront.tsx`, `diplomacyBeginPeace`), and the engine validator also requires ACTIVE
-  (`validateAcceptPeace`). `applyDeclareWar` creates a war as DECLARED_NOT_ACTIVE; the only code that sets ACTIVE is
-  `applyBattleResult`, i.e. a resolved battle. Battle generation rejects an opportunity unless both sides field eligible
-  firepower of at least 300 (fleet battle) or 150 (cruiser battle) in one area (`pipeline.ts`, `mission.ts`). Observed in a
-  UI campaign: UK 1880 fleets total 16 to 34 firepower per area, every other nation 12 to 26; after 36 advanced months the
-  strongest foreign fleet was 50 (Ottoman Empire). The UK Home Fleet, sailed through the Fleet screen to the French
-  Channel coast during a declared war, produced no battle and the war stayed Declared for five months. No AI
-  nation declares war on the player, and a surrender settles through `settleWar`, not Accept peace. So no production
-  start state reaches an acceptable peace without an engine, content or balance change.
-- Stage 4 is the risk the brief names, and accept-peace now confirms it: the battle offer has no production route in a
-  fresh campaign for the same firepower reason. The only battle e2e is the debug spec, which seeds a drill through the
-  debug bridge, so a production route to an offer is unproven by any default-lane test.
+- Stage 4 outcome: no production route to a battle offer, an ACTIVE war, or a fought battle. Issue #422. The three rows
+  accept-peace, fight-or-decline-battle and combat-fought-battle are reclassified `dormant-by-decision` and are not in the
+  map table. The epic's packaged-app acceptance cannot include fought battles, accepted or declined offers, or accepted
+  peace until #422 is resolved by an owner decision.
+- Evidence chain. `applyDeclareWar` creates a war DECLARED_NOT_ACTIVE (`diplomacy.ts:97`); the only code that sets ACTIVE
+  is `applyBattleResult` (`battles.ts:113-115`); Accept peace needs ACTIVE (`validateAcceptPeace`,
+  `diplomacyValidation.ts:105`; `WarFront.tsx`). A declared war does create battle opportunities for two nations with ships
+  in one area (`opportunity.ts`), but `generateBattles` rejects an opportunity unless each side's eligible firepower in the
+  area is at least 300 (fleet battle) or 150 (cruiser battle) (`mission.ts:38-39`, `pipeline.ts:256-260`); only the two
+  nations' own ships count. Built ships get `mainGunsCount * floor(caliber / 100000)` firepower
+  (`constructionPhase.ts:238`).
+- Measurement, production composition (`compileCampaignProgram` then `resolveTurnProgram` per month, no player orders,
+  scratch probe in `/tmp/epic220`, not committed). The 1880 start holds at most 50 firepower per nation in total and 34 in
+  one area (UK); every other nation 12 to 26. The AI only plans budget, research and construction (`aiPlanner.ts`,
+  `aiProcurement.ts`): it never declares war and never moves a fleet. Over 240 months the largest firepower any nation
+  holds in one area is 42 (Italy, month 80); France 24, Russia 36, Ottoman Empire 40; no war ever started. Six option
+  variants over 120 months (generated legacy fleet, historical budget, very_large fleet size, alternate continuity, fast
+  research, four player nations, hard difficulties) gave the same maximum of 42. The player's own strength does not help,
+  because the enemy side cannot reach 150 in any area.
+- Routes ruled out: concentrating all fleets and sailing to an enemy area (the enemy side stays under threshold); declaring
+  on other nations (every nation is under threshold); waiting many months (AI growth saturates at 42); AI-initiated wars
+  (the AI never declares); other nations, archetypes and the new-game options (no variant changed the world); the
+  `seedCampaignBattleDrill` command (debug build only, `debugGate.ts`).
+- read-battle-history stays `reads`: no production route puts an entry in the history, so only its empty state can be
+  asserted until #422 is resolved.
 - declare-blockade is driven during a Declared war; the blockade adds war score each month even though the war is not ACTIVE.
 - A mapping check (stage 5) cannot rely on spec titles. It needs an explicit row id on each step, for example a
   `test.step("reachable:set-research-priority", ...)` convention.
