@@ -28,6 +28,8 @@ export const ALLOWLIST = {
     "preflight gate:reachability-ledger runs `node scripts/verify-reachability-ledger.mjs` — same command as pnpm check:reachability-ledger, so the check chain is always covered",
   "check:explanation-coverage":
     "preflight gate:explanation-coverage runs `node scripts/verify-explanation-coverage.mjs` — same command as pnpm check:explanation-coverage, so the check chain is always covered",
+  "check:ui-acceptance-map":
+    "preflight gate:ui-acceptance-map runs `node scripts/verify-ui-acceptance-map.mjs` — same command as pnpm check:ui-acceptance-map, so the check chain is always covered",
 };
 
 /**

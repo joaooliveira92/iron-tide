@@ -74,6 +74,7 @@ void test("the allowlist is seeded with the check steps covered by raw commands"
     "check:explanation-coverage",
     "check:golden",
     "check:reachability-ledger",
+    "check:ui-acceptance-map",
   ]);
   for (const coverage of Object.values(ALLOWLIST)) {
     assert.match(coverage, /(?:\.yml|preflight)/u);

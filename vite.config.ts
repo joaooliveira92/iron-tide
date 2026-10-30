@@ -249,6 +249,10 @@ export default defineConfig({
         command: "node scripts/verify-explanation-coverage.mjs",
         dependsOn: ["gate:git-state"],
       },
+      "gate:ui-acceptance-map": {
+        command: "node scripts/verify-ui-acceptance-map.mjs",
+        dependsOn: ["gate:git-state"],
+      },
       "gate:content-placeholder-gate": {
         command: "node scripts/verify-content-gate.mjs",
         dependsOn: ["gate:content-lock"],
@@ -303,6 +307,7 @@ export default defineConfig({
           "gate:yaml-boundary",
           "gate:reachability-ledger",
           "gate:explanation-coverage",
+          "gate:ui-acceptance-map",
         ],
       },
     },

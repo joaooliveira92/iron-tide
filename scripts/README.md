@@ -43,6 +43,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `verify-version-coherence.mjs` — desktop version equals `CURRENT_COMPATIBILITY_VERSION`.
 - `verify-check-parity.mjs` — every `pnpm check:steps` step is CI-invoked or allowlisted.
 - `verify-reachability-ledger.mjs` — engine capability to desktop path ledger (`--write` regenerates the report).
+- `verify-ui-acceptance-map.mjs` — every `reachable` ledger row has a `test.step("reachable:<id>", ...)` in a default-lane e2e spec.
 - `verify-tsgo-integration.mjs` — toolchain pins match the installed `@effect/tsgo` set and it is patched.
 - `verify-vitest-config-parity.mjs` — every package spreads `vitest-shared.mjs`.
 - `verify-worktrees.mjs` — warn-only: drift reported by `pnpm worktrees audit`, run offline.
