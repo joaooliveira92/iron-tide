@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Strips code comments from .ts and .tsx files (ADR-0268). Comments come from the
+// Strips code comments from .ts and .tsx files. Comments come from the
 // parser, so string, template, and regex contents are never touched. A file is
 // rewritten only when its syntax tree with comments ignored is identical before
 // and after; a comment whose removal changes the tree is retained and reported.
@@ -355,7 +355,7 @@ export function runCli(argv, env) {
     if (opts.check && totals.removed > 0) {
       const offenders = results.filter((r) => r.removed > 0).slice(0, 10);
       err(
-        `Error: ${String(totals.removed)} comment(s) found. Code carries no comments (ADR-0268); ` +
+        `Error: ${String(totals.removed)} comment(s) found. Code carries no comments; ` +
           "delete them or run `pnpm strip:comments --scope <path> --apply`.\n" +
           offenders.map((r) => `  ${r.path}: ${String(r.removed)}\n`).join(""),
       );

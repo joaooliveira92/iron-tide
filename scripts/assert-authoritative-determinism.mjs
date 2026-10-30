@@ -7,11 +7,11 @@
 // process environment, or enumerate the filesystem — all of which vary between runs
 // and machines. `pnpm lint:effect` surfaces these as *warnings*; this gate makes
 // the rule fail closed over the pure packages, so the determinism guarantee cannot
-// silently decay (ADR-0106 ratchet pattern).
+// silently decay.
 //
 // Scope: the `packages/**` entries of `RUNTIME_FREE_ROOTS` (the pure engine).
 // `apps/desktop/src/main` is an app entry point and a synchronous `node:fs`
-// pipeline (ADR-0128), and the IO-boundary packages (`persistence`,
+// pipeline, and the IO-boundary packages (`persistence`,
 // `content-compiler`, `compiler-cli`) are excluded by construction — their clocks
 // and explicit-path reads are legitimate at the boundary. Tests are excluded.
 //
@@ -30,7 +30,7 @@
 // A third rule rejects locale-sensitive APIs (`localeCompare`, `toLocale*String`,
 // `toLocaleUpperCase`/`toLocaleLowerCase`, any `Intl` access): collation and
 // formatting vary with the ICU build and runtime locale, so authoritative order and
-// text must use code-unit comparison (ADR-0218). A fourth rule inspects every
+// text must use code-unit comparison. A fourth rule inspects every
 // `RandomLedger.record({...})` call: a blank `inputHash` or an inline string-literal
 // `reasonCode` (rather than a catalogued constant) leaves a draw without provenance.
 //
@@ -78,7 +78,7 @@ export const FLOAT_ROOTS = [
 ];
 
 /**
- * Authored content modules (ADR-0334). They are data, not application code: only
+ * Authored content modules. They are data, not application code: only
  * the authoring package may be imported, no dynamic import, no eval/Function, and
  * unlike the package roots they carry no allowlist at all.
  */

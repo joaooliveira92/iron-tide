@@ -454,7 +454,7 @@ describe("AC-5: SHIPPED_ARMOR_CONTRACT + validate guard (fail closed)", () => {
   });
 });
 
-describe("inferArmorZoneType: design armour regions reach combat as zones (ADR-0232)", () => {
+describe("inferArmorZoneType: design armour regions reach combat as zones", () => {
   it("turret components map to TURRET_FACE; the folded barbette no longer yields its own zone", () => {
     expect(inferArmorZoneType("TURRET-1")).toBe("TURRET_FACE");
     expect(inferArmorZoneType("BARBETTE-1")).toBe("TURRET_FACE");

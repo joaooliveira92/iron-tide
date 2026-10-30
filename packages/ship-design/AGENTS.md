@@ -10,6 +10,4 @@
 
 - `approved-diffs.json` lists reviewed, intentional ship-part output changes and is expected to stay empty; never add an entry just to silence a failing diff.
 
-**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/ship-design.md), with superseded records marked.
-
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/ship-design test`.

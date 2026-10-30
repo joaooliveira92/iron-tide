@@ -21,7 +21,7 @@ missing, or discovered but undeclared, fails `content:check`/`content:build`.
 - **Source of record** — values trace to [docs/research/](../docs/research/); confidence is typed provenance data, not comments.
 
 YAML is deprecated outside localization ([inventory](../docs/agents/yaml-inventory.md),
-ADR-0334). Every remaining `.yaml` is listed in the shrinking
+Every remaining `.yaml` is listed in the shrinking
 [ratchet](../scripts/data/yaml-boundary.ratchet.json); `pnpm check:yaml-boundary`
 fails on a new one. Content is data, not application code: it must not encode
 mechanics, and localized text must never control behaviour (`DESIGN-57`).

@@ -14,7 +14,7 @@ engine, no filesystem, no parsing.
 
 ## Bridge channels
 
-Every channel is declared once in `src/shared/ipc-contract.ts` (ADR-0328).
+Every channel is declared once in `src/shared/ipc-contract.ts`.
 Preload and main derive channel names and payload types from that table, so they
 never spell a channel string themselves; main still decodes each payload
 strictly before a handler sees it.

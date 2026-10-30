@@ -10,7 +10,7 @@ rewritten.
 ## Source and method
 
 - Source: `docs/Rule the Waves 3 Manual EBOOK.pdf` — the RTW3 game manual, authority
-  order 3 per [`.ai/AUTHORITY-INDEX.md`](../../.ai/AUTHORITY-INDEX.md) and ADR-0210.
+  order 3 per `.ai/AUTHORITY-INDEX.md` and ADR-0210.
 - Method: text extracted page-by-page with `pypdf` **6.14.2** (`PdfReader.pages[i]
   .extract_text()`), 148 pages. The full extraction and a per-page working copy are kept
   in the session temp dir, not tracked. Text is 0-based in `pypdf`; the manual's printed

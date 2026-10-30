@@ -750,7 +750,7 @@ describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 f
     expect(outcome.explanation.join(" ")).toContain("unavailable on the pre-month snapshot");
   });
 
-  it("a non-decided battle (null winner/loser) -> warScoreDelta 0 (ADR-0026 §7)", () => {
+  it("a non-decided battle (null winner/loser) -> warScoreDelta 0", () => {
     const battle: BattleInstance = {
       ...makeBattle(),
       result: {

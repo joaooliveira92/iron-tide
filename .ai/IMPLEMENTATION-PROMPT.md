@@ -9,7 +9,6 @@ Implement the approved milestone brief supplied with this prompt.
 - Operating rules: `.ai/AUTONOMOUS-AGENT.md`
 - Orchestration pipeline: `.ai/ORCHESTRATION.md` (four subagent roles + validation gate, built on the `wayfinder`/`to-spec`/`to-tickets`/`research` skills)
 - Requirement index: `.ai/REQUIREMENTS.md`
-- Approved ADRs
 - One approved milestone brief based on `.ai/templates/milestone-brief.md`
 
 ## Procedure
@@ -45,7 +44,6 @@ Write a concise dependency-ordered plan. Identify authoritative contracts, bound
 - Return structured diagnostic and explanation data, not mechanics hidden in strings.
 - Propagate `AbortSignal` in long-running orchestration and I/O.
 - Perform atomic output operations and deterministic cleanup.
-- Add ADRs for materially constraining decisions.
 
 ### 5. Test continuously
 
@@ -61,7 +59,7 @@ Apply `.ai/REVIEW-PROMPT.md` adversarially. Repair only bounded, understood, in-
 
 ### 8. Deliver
 
-Update traceability, ADRs, fixtures, validation report, and pull-request description. Use small Conventional Commits and do not self-merge.
+Update traceability, fixtures, validation report, and pull-request description. Use small Conventional Commits and do not self-merge.
 
 ## Prohibited shortcuts
 

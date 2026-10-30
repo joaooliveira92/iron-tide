@@ -8,7 +8,7 @@ import { DEFAULT_MAX_BATTLE_MINUTES } from "@bluewave/combat/battleResolution";
 import { makeAutoInput } from "./fixtures.js";
 
 describe("AC-7: winner/loser viability rule", () => {
-  it("withdrawing side loses: winner is the other nation, loser keeps its survivors (ADR-0073)", () => {
+  it("withdrawing side loses: winner is the other nation, loser keeps its survivors", () => {
     const input = { ...makeAutoInput(), campaignSeed: "cause-1" };
     const result = resolveBattleAuto(input);
     expect(result.battleEndReason).toBe("withdrawal_complete");

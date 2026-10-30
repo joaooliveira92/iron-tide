@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Reachability ledger gate (ADR-0267). `scripts/data/reachability-ledger.json` maps each
+// Reachability ledger gate. `scripts/data/reachability-ledger.json` maps each
 // player-facing engine capability (a player verb, backed by package exports) to its desktop
 // path: engine entry -> main command (CAMPAIGN_COMMAND_NAMES) -> renderer screen -> evidence
 // test. This gate fails when:
@@ -10,7 +10,7 @@
 //     or is classified twice, or a row names something that no longer exists;
 //   - a `reachable` row lacks a production renderer screen, a registered main handler, a
 //     renderer call site for each command, or an existing test that cites the path;
-//   - a `dormant-by-decision` row does not cite a resolvable ADR or issue.
+//   - a `dormant-by-decision` row does not cite a resolvable decision (issue or RULES.md section).
 // It also fails when `docs/reachability-report.md` drifts from the ledger.
 // Usage: `node scripts/verify-reachability-ledger.mjs [--write]` (`--write` regenerates the report).
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -37,7 +37,7 @@ const ROW_KEYS = {
   main_commands: "string[]",
   renderer_screen: "string|null",
   evidence_test: "string|null",
-  adr_or_issue: "string|null",
+  decision: "string|null",
 };
 const OPTIONAL_ROW_KEYS = { note: "string" };
 
@@ -200,11 +200,10 @@ export function evaluateLedger({ ledger, repo }) {
   const debugOnly = extractDebugOnlyScreens(repo.read(REGISTRY_PATH) ?? "");
   const rendererSources = repo.list(RENDERER_DIR).filter(isSource);
   const rendererText = new Map(rendererSources.map((p) => [p, repo.read(p) ?? ""]));
-  const adrFiles = repo.list("docs/adr");
 
   const surface = readSurface(repo);
   for (const row of rows)
-    checkRow(row, { problems, repo, names, bridge, debugOnly, rendererText, adrFiles, surface });
+    checkRow(row, { problems, repo, names, bridge, debugOnly, rendererText, surface });
   checkCoverage(rows, surface, names, problems);
   return { ok: problems.length === 0, problems, counts };
 }
@@ -225,7 +224,7 @@ function readSurface(repo) {
 }
 
 function checkRow(row, ctx) {
-  const { problems, repo, names, bridge, debugOnly, rendererText, adrFiles, surface } = ctx;
+  const { problems, repo, names, bridge, debugOnly, rendererText, surface } = ctx;
   const id = `"${row.id}"`;
   if (row.status === "unclassified") problems.push(`${id}: unclassified rows must be triaged`);
 
@@ -264,32 +263,39 @@ function checkRow(row, ctx) {
     }
   }
 
-  if (row.status !== "dormant-by-decision" && row.adr_or_issue !== null) {
-    problems.push(`${id}: adr_or_issue is only valid on dormant-by-decision rows`);
+  if (row.status !== "dormant-by-decision" && row.decision !== null) {
+    problems.push(`${id}: decision is only valid on dormant-by-decision rows`);
   }
   if (row.status !== "reachable" && (row.renderer_screen !== null || row.evidence_test !== null)) {
     problems.push(`${id}: only reachable rows may set renderer_screen or evidence_test`);
   }
-  if (row.status === "dormant-by-decision") checkCitation(row, repo, adrFiles, problems);
+  if (row.status === "dormant-by-decision") checkCitation(row, repo, problems);
   if (row.status === "reachable")
     checkReachable(row, { problems, repo, names, bridge, debugOnly, rendererText });
 }
 
-function checkCitation(row, repo, adrFiles, problems) {
+const RULES_CITATION = "RULES.md#dormant-by-decision";
+
+function checkCitation(row, repo, problems) {
   const id = `"${row.id}"`;
-  const cite = row.adr_or_issue;
+  const cite = row.decision;
   if (cite === null) {
-    problems.push(`${id}: dormant-by-decision requires adr_or_issue`);
+    problems.push(`${id}: dormant-by-decision requires decision`);
     return;
   }
-  if (!/^(ADR-\d{4}|#\d+)(, (ADR-\d{4}|#\d+))*$/u.test(cite)) {
-    problems.push(`${id}: adr_or_issue must cite ADR-NNNN or #N (comma separated), got "${cite}"`);
+  if (
+    !/^(RULES\.md#dormant-by-decision|#\d+)(, (RULES\.md#dormant-by-decision|#\d+))*$/u.test(cite)
+  ) {
+    problems.push(
+      `${id}: decision must cite #N or ${RULES_CITATION} (comma separated), got "${cite}"`,
+    );
     return;
   }
-  for (const adr of cite.match(/ADR-\d{4}/gu) ?? []) {
-    if (!adrFiles.some((f) => f.startsWith(`docs/adr/${adr}-`))) {
-      problems.push(`${id}: ${adr} does not exist in docs/adr`);
-    }
+  if (
+    cite.includes(RULES_CITATION) &&
+    !/^## Dormant by decision$/mu.test(repo.read("RULES.md") ?? "")
+  ) {
+    problems.push(`${id}: RULES.md has no "Dormant by decision" section`);
   }
 }
 
@@ -382,7 +388,6 @@ export function renderReport(ledger) {
     "# Reachability report",
     "",
     `Generated from \`${LEDGER_PATH}\` by \`node scripts/verify-reachability-ledger.mjs --write\`; do not edit.`,
-    "Rules and statuses: ADR-0267.",
     "",
     "| Status | Rows |",
     "| --- | --- |",
@@ -412,7 +417,7 @@ export function renderReport(ledger) {
   section("Dormant by decision", "dormant-by-decision", ["Row", "Player verb", "Decision"], (r) => [
     r.id,
     r.player_verb,
-    r.adr_or_issue,
+    r.decision,
   ]);
   section("Internal", "internal", ["Row", "Capability", "Commands"], (r) => [
     r.id,

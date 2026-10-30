@@ -83,7 +83,7 @@ const commitMonth = (payload: {
   transportRequestId: string;
 }) => runProgram<unknown>(commitMonthProgram, payload);
 
-describe("battle sandbox commands (ADR-0057)", () => {
+describe("battle sandbox commands", () => {
   let saveRoot: string;
 
   beforeEach(() => {

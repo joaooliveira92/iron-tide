@@ -7,7 +7,7 @@ import { parseArgs } from "node:util";
 import { isEntryPoint } from "./lib/paths.mjs";
 import { discoverWorkspaces, toPosix, workspaceForPath } from "./lib/workspaces.mjs";
 
-export const FORMAT_VERSION = 1;
+export const FORMAT_VERSION = 2;
 const MAX_BUFFER = 32 * 1024 * 1024;
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/u;
 const SOURCE_ROOTS = ["packages", "apps", "content", "scripts"];
@@ -174,23 +174,6 @@ function scopedInstructions(root, workspace) {
   return files;
 }
 
-function scopePage(root, workspace, instructions) {
-  if (workspace === null) return "docs/adr/by-scope/repository.md";
-  const scoped = instructions.find((file) => file !== "AGENTS.md");
-  if (scoped === undefined) return null;
-  const text = readFileSync(resolve(root, scoped), "utf8");
-  const match = /by-scope\/([a-z0-9-]+)\.md/u.exec(text);
-  return match === null ? null : `docs/adr/by-scope/${match[1]}.md`;
-}
-
-function ruleEntries(root, page, limit) {
-  if (page === null || !existsSync(resolve(root, page))) return [];
-  return readFileSync(resolve(root, page), "utf8")
-    .split("\n")
-    .filter((line) => line.startsWith("- [ADR-"))
-    .slice(0, limit);
-}
-
 function exportEntries(manifest) {
   const exports = manifest?.exports;
   if (exports === null || typeof exports !== "object") return [];
@@ -279,7 +262,6 @@ export function buildReport(root, query, limit) {
       : (definitions[0]?.path ?? references[0]?.path ?? target.symbol);
   const workspace = workspaceForPath(path, workspaces);
   const instructions = scopedInstructions(root, workspace);
-  const page = scopePage(root, workspace, instructions);
   const manifest = workspace === null ? null : readJsonSafe(root, `${workspace.dir}/package.json`);
   return {
     formatVersion: FORMAT_VERSION,
@@ -291,7 +273,6 @@ export function buildReport(root, query, limit) {
         : { name: workspace.name, dir: workspace.dir, kind: workspace.kind },
     path,
     instructions,
-    rules: { path: page, entries: ruleEntries(root, page, limit) },
     manifest: workspace === null ? null : `${workspace.dir}/package.json`,
     exports: exportEntries(manifest),
     fileSymbols: target.kind === "path" ? fileExports(root, target.path) : [],
@@ -319,8 +300,6 @@ export function renderText(report) {
   lines.push(`owner: ${owner}`);
   lines.push(`path: ${report.path}`);
   lines.push(`instructions: ${report.instructions.join(", ")}`);
-  lines.push(`rules: ${report.rules.path ?? "none"}`);
-  for (const entry of report.rules.entries) lines.push(`  ${entry}`);
   if (report.manifest !== null) lines.push(`manifest: ${report.manifest}`);
   if (report.fileSymbols.length > 0) {
     lines.push(`symbols: ${report.fileSymbols.join(", ")}`);

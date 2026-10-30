@@ -71,7 +71,7 @@ jobs:
       # `scripts/golden-repin.baseline`, so pre-guard history is grandfathered.
       - run: pnpm check:golden-repin
       - run: pnpm typecheck
-      # Replay-corpus approvals (ADR-0246): every corpus delta since the base
+      # Replay-corpus approvals: every corpus delta since the base
       # needs a committed, hash-bound approval. CI only verifies; it never
       # writes approvals (`pnpm replay:approve` refuses to run under CI).
       - name: Replay approvals

@@ -20,8 +20,7 @@ node scripts/verify-golden-hashes.cjs   # verify (also runs in CI determinism.ym
 ## Repinning is a deliberate act
 
 When you re-pin a golden hash, the change must report the **old value, the new
-value, the cause**, and a migration assessment — per the ENGINEERING-CONTRACT
-(ADR-0007). `scripts/verify-golden-repin.mjs` guards that a change touching the
+value, the cause**, and a migration assessment — per the ENGINEERING-CONTRACT. `scripts/verify-golden-repin.mjs` guards that a change touching the
 hash also states its reason, and reviewed exemptions name paths that cannot move
 it. A golden that changes without an understood authoritative cause is a stop
 condition (see `AGENTS.md`).

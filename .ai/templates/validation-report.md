@@ -53,9 +53,9 @@ Describe trust boundaries, parsing and path defenses, temporary output behavior,
 
 Report non-authoritative fixture measurements and regressions, if collected.
 
-## ADRs and dependencies
+## Dependencies
 
-List new ADRs and dependencies with rationale, license, maintenance, security, and determinism assessment.
+List new dependencies with rationale, license, maintenance, security, and determinism assessment.
 
 ## Known limitations and deferred requirements
 

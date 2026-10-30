@@ -13,7 +13,7 @@ Before editing:
 1. Inspect the repository, Git status, branches, remotes, package manager, runtime, and available tooling.
 2. Read `README.md`.
 3. Read `.ai/ENGINEERING-CONTRACT.md`.
-4. Read `.ai/REQUIREMENTS.md` and applicable ADRs.
+4. Read `.ai/REQUIREMENTS.md` and the package's `AGENTS.md`.
 5. Read the current approved milestone brief.
 6. Inspect nearby code, tests, package exports, and CI rather than assuming they exist.
 
@@ -35,7 +35,7 @@ at the repository level:
 7. Perform a secondary consistency check of artifacts, hashes, Git state, and reports.
 8. Create small Conventional Commits on a feature branch.
 9. Push and open a pull request only if the brief allows it and tooling is available.
-10. Merge into `dev` only under the brief's merge authority (ADR-0367); never into `main`.
+10. Merge into `dev` only under the brief's merge authority; never into `main`.
 
 ## Autonomous authority
 
@@ -58,12 +58,12 @@ Stop and write `.ai/templates/decision-request.md` when:
 - a dependency creates a material license or security concern;
 - determinism cannot be demonstrated or a golden hash changes without an understood authoritative cause.
 
-Do not stop for routine local design choices. Record materially constraining choices as ADRs.
+Do not stop for routine local design choices. Put the rule in a gate, type or test, or in `RULES.md`.
 
 ## Git policy
 
 - Create or use a dedicated feature branch in a dedicated worktree; never commit
-  on `dev`/`main` (ADR-0165).
+  on `dev`/`main`.
 - Do not commit to a protected branch.
 - Do not force-push or rewrite history.
 - Never commit secrets, `.env` files, stores, caches, generated temporary files, or machine-specific settings.

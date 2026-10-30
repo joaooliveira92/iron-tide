@@ -3,7 +3,7 @@
 The orchestrator (the primary agent session) drives every sprint through four
 subagent roles plus an orchestrator-owned validation gate. Each role is
 dispatched with a [task brief](templates/task-brief.md) and tracked through the
-[task lifecycle](../docs/agents/task-lifecycle.md) (ADR-0367). The pipeline is
+[task lifecycle](../docs/agents/task-lifecycle.md). The pipeline is
 **ticket-driven** and built on four repo skills:
 
 | Skill        | Where                       | Phase                                                   |
@@ -39,7 +39,7 @@ dispatched with a [task brief](templates/task-brief.md) and tracked through the
 6. **Verify (reviewer)** — the **reviewer** adversarial-checks each ticket/batch
    against its acceptance criteria + the spec + contract + repo standards.
 7. **Gate + commit (orchestrator)** — orchestrator runs the validation gate, owns
-   git/traceability/ADRs, and auto-advances.
+   git/traceability, and auto-advances.
 
 ## Roles
 
@@ -49,7 +49,7 @@ dispatched with a [task brief](templates/task-brief.md) and tracked through the
 | 2. research      | `research`                                | write notes only    | `docs/research/<slug>-<topic>.md`                             |
 | 3. implementator | — (works `to-tickets` output)             | edit+run            | frontier ticket + code + tests + execution report             |
 | 4. reviewer      | — (`.ai/REVIEW-PROMPT.md`)                | read-only           | classified, severity-tagged findings + APPROVE / NEEDS_REWORK |
-| orchestrator     | `wayfinder` (chart), `to-tickets` (slice) | owns git/validation | map + gate + git/traceability/ADRs                            |
+| orchestrator     | `wayfinder` (chart), `to-tickets` (slice) | owns git/validation | map + gate + git/traceability                                 |
 
 Ordering: **chart/research → spec → slice → implement → review → (repair loop) →
 validation gate → commit**.
@@ -58,7 +58,7 @@ validation gate → commit**.
 
 - Each subagent's final report is a **spec for the next step, not the source of
   truth**. The orchestrator re-reads files, the diff and `git status`, and
-  re-runs claimed gates before acting (ADR-0367 rule 5).
+  re-runs claimed gates before acting.
 - Write scope is role-locked: spec-creator writes only the spec issue;
   research writes only
   `docs/research/<slug>-<topic>.md`; the reviewer writes nothing. The
@@ -80,8 +80,7 @@ the sprint's validation report (`.ai/reports/<slug>.md`):
 - full test suite;
 - determinism: cross-process child run twice (byte-identical) + golden verify
   (`node scripts/verify-golden-hashes.cjs`);
-- any authoritative hash changes get old/new + cause + migration assessment
-  (ADR-0007 process). A build alone is not acceptance (ENGINEERING-CONTRACT §Tests).
+- any authoritative hash changes get old/new + cause + migration assessment. A build alone is not acceptance (ENGINEERING-CONTRACT §Tests).
 
 ## Concurrent worktrees
 
@@ -97,12 +96,11 @@ task's state with `pnpm worktrees status`, and review only what
 - For huge/foggy efforts, chart via **wayfinder** (`map` + decision tickets on
   GitHub Issues); otherwise go spec → slice → implement directly.
 - Own all Git: small Conventional Commits on a short-lived branch (never
-  directly on `dev`); merge into `dev` only under the brief's merge authority
-  (ADR-0367 rule 7); never merge into `main`; leave the tree clean.
+  directly on `dev`); merge into `dev` only under the brief's merge authority; never merge into `main`; leave the tree clean.
 - Close each task (merged/rejected/archived), prune its worktree, and record the
   rollback in its report.
 - Update traceability (SPRINT-PLAN row done + pointer, `.ai/reports/*`).
-- Resolve routine decisions as ADRs; stop only on a genuine decision-request /
+- Resolve routine decisions locally; stop only on a genuine decision-request /
   stop condition.
 - Keep the roles tiny and focused so no single subagent accumulates the whole
   project context.

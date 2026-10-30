@@ -22,8 +22,13 @@ contract wins; fix this file in the same change.
 - Standing standards docs carry a word ceiling in
   `scripts/doc-budgets.manifest.json`; ratchet down and justify any raise. Add
   new standing docs to that manifest.
-- Record decisions that constrain architecture, determinism, compatibility,
-  persistence, security, or replacement cost as ADRs (threshold in the contract).
+- There are no ADRs. A rule that a gate, type or test can enforce lives in that
+  gate, type or test. A rule nothing can enforce is a line in this file or in the
+  owning package's `AGENTS.md`. Rationale goes in the commit message.
+- An artifact that never existed in reachable git history is an unverified legacy
+  reference; never recreate it from its filename.
+- An `ADR-NNNN` citation in content provenance, research notes or a test refers to
+  a record deleted from the tree. Read it with `git show 13aaced9:docs/adr/ADR-NNNN-*.md`.
 
 ## Determinism
 
@@ -56,7 +61,7 @@ contract wins; fix this file in the same change.
   `scripts/assert-runtime-free.mjs` import nothing else from `effect`. The full
   runtime lives only at IO/entrypoint boundaries — `persistence`,
   `content-compiler`, and the two app surfaces `apps/desktop/src/main` and
-  `apps/compiler-cli` (ADR-0159); the renderer and preload import no `effect`.
+  `apps/compiler-cli`; the renderer and preload import no `effect`.
 
 ## Errors
 
@@ -71,15 +76,15 @@ contract wins; fix this file in the same change.
 - Tests discriminate by `_tag` too (`isBluewaveError`, or a local structural
   `_tag` guard), never `instanceof`/`toBeInstanceOf(SomeDomainError)`. The one
   sanctioned class-based test form is the matcher `expect(fn).toThrow(ErrorClass)`
-  / `toThrowError(ErrorClass)` (ADR-0152 §6); `expect(x).toBeInstanceOf(Error)`
+  / `toThrowError(ErrorClass)`; `expect(x).toBeInstanceOf(Error)`
   (the global `Error`) is out of scope.
 
 ## Schema and boundaries
 
-- Effect Schema is the single validator at every boundary (Zod was replaced,
-  ADR-0102/0105). `Schema.Struct` **strips** excess keys by default
+- Effect Schema is the single validator at every boundary (Zod was replaced).
+  `Schema.Struct` **strips** excess keys by default
   (`onExcessProperty: "ignore"`, matching non-strict `z.object`); reject them by
-  decoding with `{ onExcessProperty: "error" }` (ADR-0104 §3, ADR-0105 §2).
+  decoding with `{ onExcessProperty: "error" }`.
 - Never trust an external boundary: decode compiled YAML, saves, IPC/event
   envelopes, and file contents with a strict schema before use.
 - Wire formats are frozen. Every schema change carries a parity test built from
@@ -88,9 +93,9 @@ contract wins; fix this file in the same change.
 ## Content and compiler
 
 - Author domain content as declarative TypeScript modules and compile it into
-  canonical JSON artifacts (ADR-0334). YAML is permitted only for
-  internationalization catalogues and for the externally mandated infrastructure
-  files ADR-0334 names; new non-internationalization YAML fails the boundary gate.
+  canonical JSON artifacts. YAML is permitted only for internationalization
+  catalogues and for externally mandated infrastructure files;
+  new non-internationalization YAML fails `scripts/assert-no-foreign-yaml.mjs`.
   The manifest declares roots, collections, dependencies, versions,
   localization, and production/fixture classification.
 - Compiler stages are explicit, statically ordered, typed, immutable, and free
@@ -98,6 +103,27 @@ contract wins; fix this file in the same change.
   and block downstream stages whose prerequisites are invalid.
 - Keep validation, normalization, and repair distinct. Repair is explicit,
   narrow, logged, and limited to safely recomputable data.
+
+## Scope and values
+
+- The sole start year is 1880 and the authored horizon is 1970. A declared scenario
+  with no content pack is not selectable. The 1880 release has fourteen committed
+  nations; ten are playable and the other four stay AI-only until each passes the
+  per-nation readiness gate.
+- Authoritative values are canonical fixed-precision types with one rounding
+  vocabulary. Units, currency and locale convert only at the presentation boundary.
+- Every authored value cites a source or is labelled `BALANCE_TARGET`/`PROVISIONAL`.
+  Content must not promise behaviour the engine lacks.
+- Every number the player sees derives its explanation from stored components or the
+  rule that produced it. Explanation trees are additive persisted fields outside the
+  authoritative hash.
+
+## Dormant by decision
+
+Engine capabilities with no desktop path stay dormant until a ticket wires them:
+aircraft and carriers, air combat, mines, submarines, coastal defence, smoke and
+surface-to-surface missiles. `scripts/data/reachability-ledger.json` lists each one
+and `scripts/verify-reachability-ledger.mjs` fails when a row drifts.
 
 ## Services, layers, composition
 

@@ -31,7 +31,7 @@ function designYear(familyCreationMonth: string | undefined): number | undefined
   return match ? Number(match[1]) : undefined;
 }
 
-describe("initial fleet legality (ADR-0212)", () => {
+describe("initial fleet legality", () => {
   const bundle = buildProductionBundle();
   const fleets = fleetsOf(bundle);
   const designs = designsOf(bundle);

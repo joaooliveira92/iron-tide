@@ -140,7 +140,7 @@ describe("SaveStore round-trips the S-2 prestige state", () => {
     );
   });
 
-  it("round-trips an authored DECLINED_BATTLE fixed-loss rule exactly (ADR-0261)", () => {
+  it("round-trips an authored DECLINED_BATTLE fixed-loss rule exactly", () => {
     const withRule = makeFixtureState(33, CURRENT_COMPATIBILITY_VERSION, {
       ...VALUE_SET,
       rules: { ...VALUE_SET.rules, DECLINED_BATTLE: { kind: "FIXED_LOSS", amount: SafeInt(2) } },
@@ -151,7 +151,7 @@ describe("SaveStore round-trips the S-2 prestige state", () => {
     expect(loaded.state.rawHash).toBe(withRule.rawHash);
   });
 
-  it("stores a value set without DECLINED_BATTLE with no such key, so its bytes do not move (ADR-0261)", () => {
+  it("stores a value set without DECLINED_BATTLE with no such key, so its bytes do not move", () => {
     const stored = canonicalSerialize(toStorableSnapshot(makeFixtureState(20).snapshot));
     expect(stored).not.toContain("DECLINED_BATTLE");
   });

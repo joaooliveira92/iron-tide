@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Fast staged-file format check for the `pre-commit` hook (ADR-0107 follow-up).
+// Fast staged-file format check for the `pre-commit` hook.
 //
 // The hook's `preflight` set checks git state, docs, dependency and determinism
 // guards but never ran a formatter, so unformatted files kept landing and were

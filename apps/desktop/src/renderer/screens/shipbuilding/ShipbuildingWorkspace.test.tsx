@@ -531,7 +531,7 @@ describe("Systems section", () => {
     expect(within(panel()).getAllByRole("button", { name: /^Add / }).length).toBeGreaterThan(0);
   });
 
-  it("fits colonial service on the Accommodation tab, states the production displacement share (ADR-0266), and undoes it", () => {
+  it("fits colonial service on the Accommodation tab, states the production displacement share, and undoes it", () => {
     render(<ShipbuildingWorkspace />);
     openSystemTab("Accommodation");
     const colonial = () => screen.getByRole("region", { name: "Colonial service" });

@@ -7,7 +7,7 @@ import {
   type NationalCurrencyAvailability,
 } from "./preferences-contract.js";
 
-describe("currency-display request vs effective (ADR-0211)", () => {
+describe("currency-display request vs effective", () => {
   it("defaults the request to Naval Credits", () => {
     expect(DEFAULT_APP_PREFERENCES.currencyDisplayMode).toBe("navalCredits");
   });

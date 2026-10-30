@@ -263,7 +263,7 @@ const packageInvariantsHold = (p: NationState["constructionProjects"][number]) =
   p.packages.reduce((a, x) => a + Number(x.doneWork), 0) === Number(p.completedWork) &&
   p.packages.every((x) => Number(x.doneWork) <= Number(x.totalWork));
 
-describe("ReviseProject on a project with work packages (ADR-0077)", () => {
+describe("ReviseProject on a project with work packages", () => {
   it("a free change keeps the share done and the project consistent with the new design's plan", () => {
     const before = withPackageProject({ hull: 0.02 });
     const { snapshot, collector } = revise(before, fittingsChange);
@@ -369,7 +369,7 @@ const shipOf = (s: CampaignSnapshot, id: string) =>
     .fleets.flatMap((f) => f.ships)
     .find((x) => x.id === id)!;
 
-describe("StartRebuild through the month (ADR-0078)", () => {
+describe("StartRebuild through the month", () => {
   it("a legal rebuild makes the ship unavailable and starts a REBUILD project without the hull and launch", () => {
     const { snapshot, shipId } = withBuiltShip();
     const { snapshot: after, collector } = startRebuild(snapshot, shipId, machineryChange);

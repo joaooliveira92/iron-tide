@@ -326,7 +326,7 @@ void test("audit without --no-gh fails loudly when pull requests cannot be read"
   assert.equal(snapshot(repo), before);
 });
 
-// --- shared registry (ADR-0313) ---------------------------------------------
+// --- shared registry ---------------------------------------------
 
 void test("two linked worktrees register into one shared registry", () => {
   const repo = makeRepo();

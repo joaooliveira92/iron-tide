@@ -155,7 +155,7 @@ void test("the draft module is a TypeScript content module, not YAML", () => {
   assert.ok(!module.includes(".yaml"), "names no YAML path");
 });
 
-void test("doc and generator agree on the canonical per-nation paths (ADR-0109)", () => {
+void test("doc and generator agree on the canonical per-nation paths", () => {
   const script = readFileSync(new URL("../new-nation.mjs", import.meta.url), "utf8");
   const doc = readFileSync(
     new URL("../../docs/agents/adding-a-nation.md", import.meta.url),

@@ -12,7 +12,7 @@ Describe the exact ambiguity, contradiction, destructive action, compatibility i
 
 - Canonical sections and requirement IDs
 - Relevant files, symbols, artifacts, and test results
-- Existing ADRs or compatibility contracts
+- Existing rules or compatibility contracts
 
 ## Why agent judgment is insufficient
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Replay corpus gate (ADR-0246, spec #207): re-execute every checked-in replay in
+// Replay corpus gate: re-execute every checked-in replay in
 // `golden/replays` through the real engine, each in two fresh processes, and require
 // both runs to produce identical output. A divergence prints the first-divergence
 // report (month, ledger, entry). This only verifies: it never records or approves a

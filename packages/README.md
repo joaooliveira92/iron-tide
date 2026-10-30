@@ -2,7 +2,7 @@
 
 22 TypeScript composite projects. **Authoritative sources:**
 
-- **Boundaries** — each package's `AGENTS.md` links its [ADRs](../docs/adr).
+- **Boundaries** — each package's `AGENTS.md` states its boundary and invariants.
 - **Vocabulary** — [CONTEXT.md](../CONTEXT.md).
 - **Non-negotiable rules** — [`DESIGN-57`](../docs/architecture/non-negotiable-rules.md).
 
@@ -16,14 +16,14 @@ before editing it. Build/test one with `pnpm --filter @bluewave/<name> <build|te
 | `contracts` | Branded `SafeInt` types, checked arithmetic, rounding. Graph root. |
 | `diagnostics` | Diagnostic collector, stable codes. |
 | `deterministic` | Canonical JSON, SHA-256, hash contexts, envelopes, fixed-point math. |
-| `armament` | Platform-independent authoritative armament domain + resolver (ADR-0093). |
+| `armament` | Platform-independent authoritative armament domain + resolver. |
 | `random` | Domain-separated seeded PRNG with an audit ledger. |
-| `content-authoring` | Typed content-authoring API: expressions, provenance, constructors (ADR-0334). |
+| `content-authoring` | Typed content-authoring API: expressions, provenance, constructors. |
 | `content-schema` | Effect `Schema` definitions + safe YAML parser for packs, rulesets, entities. |
 | `content-compiler` | Parse → validate → normalize → compile stages with diagnostics. |
 | `campaign` | Campaign compiler and state aggregates (world, nations, fleets, war…). |
 | `ship-design` | Component-level ship compiler (DESIGN-21/63). |
-| `ship-visual` | Presentation-only ship visual parts: era/nation part catalog, resolver, placement (ADR-0148). Renderer-only. |
+| `ship-visual` | Presentation-only ship visual parts: era/nation part catalog, resolver, placement. Renderer-only. |
 | `messages` | Turn interruptions, decision requests, recorded inputs, message aggregation. |
 | `content-codemod` | Legacy-to-parts content codemod; stages content, never activates production. |
 | `commands` | Command envelopes, 7-step lifecycle, authorization, ledger, reason codes. |

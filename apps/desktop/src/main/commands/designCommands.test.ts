@@ -202,7 +202,7 @@ const cruiser = {
   ],
 };
 
-describe("submitDesignCommand (ADR-0066)", () => {
+describe("submitDesignCommand", () => {
   let saveRoot: string;
   beforeEach(() => {
     saveRoot = mkdtempSync(resolve(tmpdir(), "bw-desktop-design-"));
@@ -264,7 +264,7 @@ describe("submitDesignCommand (ADR-0066)", () => {
   });
 
   it.each(["BB", "BC", "CV", "CVL", "AV", "SS", "MTB", "TR"])(
-    "refuses a %s design at the 1880 campaign date and queues nothing (ADR-0088)",
+    "refuses a %s design at the 1880 campaign date and queues nothing",
     async (category) => {
       const r = await submit({
         draft: { ...cruiser, requirement: { ...cruiser.requirement, category } },
@@ -337,7 +337,7 @@ describe("submitDesignCommand (ADR-0066)", () => {
   });
 });
 
-describe("reviseProjectCommand and loadProjectDraft (ADR-0070)", () => {
+describe("reviseProjectCommand and loadProjectDraft", () => {
   let saveRoot: string;
   beforeEach(() => {
     saveRoot = mkdtempSync(resolve(tmpdir(), "bw-desktop-revise-"));
@@ -501,7 +501,7 @@ describe("reviseProjectCommand and loadProjectDraft (ADR-0070)", () => {
   });
 });
 
-describe("rebuilding a ship through the programs (ADR-0078)", () => {
+describe("rebuilding a ship through the programs", () => {
   let saveRoot: string;
   beforeEach(() => {
     saveRoot = mkdtempSync(resolve(tmpdir(), "bw-desktop-rebuild-"));

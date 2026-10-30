@@ -230,7 +230,7 @@ describe("promoted historical national starters", () => {
   });
 });
 
-describe("smoothbore ordnance (ADR-0117)", () => {
+describe("smoothbore ordnance", () => {
   it("models the US 15-in Dahlgren as a distinct smoothbore, never mapped onto rifled-RML ballistics", () => {
     const sb = components.find((c) => c.id === "gun_sb_15in_dahlgren")!;
     expect(sb.category).toBe("MAIN_GUN");
@@ -256,7 +256,7 @@ const NEW_FAMILIES: ReadonlyArray<readonly [string, string, "MAIN_GUN" | "SECOND
   ["gun_bl_209mm_gl20", "austria_hungary", "MAIN_GUN"],
 ];
 
-describe("coast-defence / casemate ordnance (ADR-0119)", () => {
+describe("coast-defence / casemate ordnance", () => {
   it.each(NEW_FAMILIES)(
     "%s has a matching %s-category component and a first-class family record",
     (familyId, _nation, category) => {

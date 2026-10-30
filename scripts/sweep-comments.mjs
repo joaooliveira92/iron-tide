@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Deterministic comment-sweep lever (ADR-0106/0107). It removes three
+// Deterministic comment-sweep lever. It removes three
 // unambiguous mechanical classes of redundant comment from the authored tree:
 //
 //   1. self-path file headers on line 1 (the path is the file's identity)

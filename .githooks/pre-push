@@ -9,7 +9,7 @@ if ! command -v node >/dev/null 2>&1 || ! command -v pnpm >/dev/null 2>&1; then
   esac
 fi
 # Re-run the fast gates before pushing, in case a commit used --no-verify.
-# `preflight` first, then the Effect Oxlint gate (ADR-0139): it is part of
+# `preflight` first, then the Effect Oxlint gate: it is part of
 # `pnpm check` and CI, and ~2s, so it belongs here too. Fail-fast at the first
 # red gate.
 pnpm preflight || exit 1

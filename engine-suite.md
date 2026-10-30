@@ -13,7 +13,6 @@ The repository must contain:
 
 - `README.md`, the binding canonical game-design baseline.
 - This `.ai/` prompt suite.
-- Approved ADRs and design amendments created during implementation.
 
 Do not copy the entire canonical design into coding prompts. Reference it through stable requirement IDs in `.ai/REQUIREMENTS.md`.
 
@@ -22,7 +21,7 @@ Do not copy the entire canonical design into coding prompts. Reference it throug
 1. Safety, legal, credential, and destructive-operation constraints
 2. Canonical game design and approved amendments
 3. `.ai/ENGINEERING-CONTRACT.md`
-4. Approved ADRs and compatibility contracts
+4. `RULES.md` and compatibility contracts
 5. Current milestone brief
 6. Reusable implementation prompt
 7. Local conventions and agent judgment

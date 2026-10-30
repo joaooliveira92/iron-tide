@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Worktree coordinator for concurrent agents (ADR-0220).
+// Worktree coordinator for concurrent agents.
 //
 // Several orchestrator sessions may run at once, each scoped to one effort `<slug>`
 // (a wayfinder map or spec issue on the tracker). They must never share a checkout — ADR-0165's incident was two agents in
@@ -54,14 +54,14 @@ const LEDGER_BEGIN = "<!-- worktrees:begin -->";
 const LEDGER_END = "<!-- worktrees:end -->";
 const COLUMNS = ["Slug", "Branch", "Scope", "Owner", "Status", "Base", "Created", "PR"];
 
-/** Most worktrees allowed at once, main checkout included (ADR-0237). */
+/** Most worktrees allowed at once, main checkout included. */
 export const MAX_WORKTREES = 5;
 
 /** Non-terminal subtree states. `prune` removes everything else. */
 export const TERMINAL_STATES = new Set(["merged", "gone", "phantom"]);
 
 /**
- * Agent task lifecycle (ADR-0367), in inbox order: states that need a human sort
+ * Agent task lifecycle, in inbox order: states that need a human sort
  * first, closed states are hidden from the inbox. `active` is the pre-lifecycle
  * spelling of `running` and is read as such.
  */
@@ -831,7 +831,7 @@ function cmdNew({ positionals: [slug], values }) {
     const total = parseWorktreeList(git(["worktree", "list", "--porcelain"])).length;
     if (total >= MAX_WORKTREES) {
       console.error(
-        `worktree cap reached: ${total}/${MAX_WORKTREES} (main checkout included, ADR-0237); prune or remove one first`,
+        `worktree cap reached: ${total}/${MAX_WORKTREES} (main checkout included); prune or remove one first`,
       );
       process.exitCode = 1;
       return;

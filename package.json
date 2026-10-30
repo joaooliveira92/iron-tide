@@ -14,7 +14,6 @@
     "prepare": "node scripts/install-hooks.mjs && node scripts/link-claude-skills.mjs && effect-tsgo patch --typescript --oxlint",
     "hooks:install": "node scripts/install-hooks.mjs",
     "preflight": "vp run gates:preflight",
-    "adr:index": "node scripts/adr-index.cjs",
     "check:licenses": "node scripts/license-check.cjs",
     "check:doc-budgets": "node scripts/verify-doc-budgets.mjs",
     "check:unknown-casts": "node scripts/verify-no-unknown-casts.mjs",

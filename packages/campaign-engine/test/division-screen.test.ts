@@ -166,7 +166,7 @@ describe("buildDivisionScreenView", () => {
     expect(view.unassignedShips).toEqual([]);
   });
 
-  it("names the commanding officer (ADR-0065) and leaves the commander unset when vacant", () => {
+  it("names the commanding officer and leaves the commander unset when vacant", () => {
     const officer = {
       id: "off_uk_1",
       name: "Edmund Harcourt",

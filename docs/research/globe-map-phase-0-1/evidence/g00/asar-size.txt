@@ -1,1 +1,0 @@
--rw-r--r--@ 1 joao  staff  218275539 Oct 27 15:12 apps/desktop/dist-electron/mac-arm64/Bluewave.app/Contents/Resources/app.asar

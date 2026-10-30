@@ -15,7 +15,7 @@ skill (`.agents/skills/to-spec`).
 - You write **exactly one artifact**: the spec, as a **GitHub issue** in
   `joaooliveira92/iron-tide` labelled `ready-for-agent` (per
   `docs/agents/issue-tracker.md`). Publish it with `gh issue create`.
-- You **never** edit or create code, tests, briefs, ADRs, or any other file, and
+- You **never** edit or create code, tests, briefs, or any other file, and
   you never write a `.scratch/` or `.ai/specs/` file (both are retired/frozen).
 - If you believe an edit outside the spec issue is needed, report it to the
   orchestrator instead of doing it.
@@ -28,7 +28,7 @@ skill (`.agents/skills/to-spec`).
   Readiness is the `ready-for-agent` triage label (`docs/agents/triage-labels.md`).
 - `.ai/REQUIREMENTS.md` + `docs/requirements/REQUIREMENT-MAP.md`.
 - The milestone brief (`.ai/briefs/<slug>.md`) or conversation context; the
-  governing DESIGN-* docs; approved ADRs; `.ai/SPRINT-PLAN.md` row.
+  governing DESIGN-* docs; `RULES.md`; `.ai/SPRINT-PLAN.md` row.
 - `docs/agents/issue-tracker.md` — GitHub is the pipeline's store; publish the spec
   as an issue and record its number for the orchestrator.
 
@@ -51,11 +51,11 @@ Apply the `ready-for-agent` label so the orchestrator can slice it.
 
 - Do not silently resolve an `OPEN DECISION`, weaken a test, or design to make a
   golden hash pass. Flag canonical-contract ambiguity to the orchestrator.
-- Assign deterministic, versioned resolution (ruleset constant + ADR) for routine
+- Assign deterministic, versioned resolution (ruleset constant) for routine
   decisions per AUTONOMOUS-AGENT.md.
 
 ## Final report to orchestrator (concise)
 
 - The spec issue number/URL, the acceptance-criteria→test mapping count,
-  user-story count, plan order, any stop-condition/ADR triggers, and the
+  user-story count, plan order, any stop-condition triggers, and the
   definition-of-done checklist.

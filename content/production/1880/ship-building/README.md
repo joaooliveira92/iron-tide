@@ -16,7 +16,7 @@ of the compiled artifact's content identity.
 
 Source of record: `docs/research/ship-building-early-band.md` (confidence labels kept in comments).
 
-## Component catalogue layout (ADR-0333)
+## Component catalogue layout
 
 `components/` replaces the former single `components.yaml`. Each file is one family, and within a
 family that spans several nations or technologies, one file per nation/era: `guns/` (british-rml,
@@ -25,7 +25,7 @@ british-breech-loading, british-quick-firing, french, german-krupp, united-state
 Adding a nation or a later era is a new file plus one `pack.json` line — no existing file grows.
 
 Every file is declared in `pack.json`'s `shipBuilding.shipComponents`; discovery is fail-closed in
-both directions (ADR-0333). The compiler stamps each component's `sourceFile` from that declaration,
+both directions. The compiler stamps each component's `sourceFile` from that declaration,
 and derived parts (guns, fittings, launchers) carry it as their `origin`, so provenance follows the
 file and survives future re-splits without code changes.
 
@@ -67,7 +67,7 @@ Each VERIFIED / SINGLE-SOURCE value in `docs/research/ship-building-early-band-2
 Heavy mount masses (12/10/9.2-inch), tube and carriage masses, magazine/fitting data, QF unit prices, rangefinder mass, part-load fuel curves, plant volumes and reliability, zone shares, stability windows,
 crew per tonne, all cost/construction/CVE/refit/AI constants. Each is marked `PLACEHOLDER` or `ESTIMATE` in the files or in `balance.yaml`'s header.
 
-## Opening ship types and starter designs (2026-10-10, ADR-0088)
+## Opening ship types and starter designs (2026-10-10)
 
 The designer offers `B CA CL DD KE AMC` at the 1880 start. `reference-designs/<nation>/starters.yaml` entries with `starterFor: <type>` are the
 starting points the Drawing Board's "Ship types" panel loads; the newest one not after the campaign month is used. New, non-historical

@@ -19,7 +19,7 @@ You **do not edit**; you return findings.
   via `gh issue view <n> --json number,title,body,labels,comments`), the spec (its
   parent spec issue), and the implementator's changed-file list and
   reported validation results.
-- Governing DESIGN-* docs + related ADRs.
+- Governing DESIGN-* docs + `RULES.md`.
 - Actually inspect the diff and the code — verify claims against the repository,
   don't trust the implementator's summary.
 

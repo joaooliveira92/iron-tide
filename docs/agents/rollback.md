@@ -1,7 +1,7 @@
 # Rollback
 
 Every delivery path here has a rollback that needs no reconstruction of prior
-state (ADR-0367 rule 8). Every execution report names the one that applies to
+state. Every execution report names the one that applies to
 its change.
 
 ## A merge into `dev`
@@ -38,8 +38,7 @@ Publishing, unpublishing and tagging are human actions
 ## Behaviour that may need switching off
 
 There are no runtime feature flags. Unfinished or risky capability stays
-dormant behind the reachability ledger's `dormant-by-decision` status
-(ADR-0365 rule 7) until the change that wires it. Switching it off again means
+dormant behind the reachability ledger's `dormant-by-decision` status until the change that wires it. Switching it off again means
 reverting that wiring change.
 
 ## Records and drills

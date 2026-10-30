@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * National content scaffold (ADR-0092). Generates a *draft* NationNavalProfile skeleton and a research-note stub for
+ * National content scaffold. Generates a *draft* NationNavalProfile skeleton and a research-note stub for
  * a new nation, so adding a nation is a researched content task rather than a code task. The generated profile is
  * written OUTSIDE the release content (under `docs/nations/`) and every value is a PLACEHOLDER, so it can never reach
  * release — `validateNationCompleteness(..., { release: true })` rejects PLACEHOLDER values and missing provenance.
@@ -23,7 +23,7 @@ const root = join(__dirname, "..");
 
 /**
  * Build the draft `navalProfiles` catalogue YAML for a nation. Every value is a PLACEHOLDER, every required
- * provenance block is present, and the file shape matches the per-nation release layout (ADR-0109).
+ * provenance block is present, and the file shape matches the per-nation release layout.
  */
 export function buildProfileRecord(nationId) {
   const due = {
@@ -129,7 +129,7 @@ export function buildProfileRecord(nationId) {
 /**
  * Build the draft naval-profiles content module for a nation. Every value is a PLACEHOLDER, every
  * required provenance block is present, and the module decodes with `NationNavalProfileSchema`
- * (ADR-0109, ADR-0334): it can be dropped into the pack once the placeholders are replaced.
+ *: it can be dropped into the pack once the placeholders are replaced.
  */
 export function buildProfileModule(nationId) {
   const items = JSON.stringify([buildProfileRecord(nationId)], null, 2)

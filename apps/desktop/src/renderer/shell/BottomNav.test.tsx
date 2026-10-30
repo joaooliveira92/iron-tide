@@ -73,7 +73,7 @@ describe("BottomNav (proof of concept)", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("shows the engine session id in debug builds only (ADR-0058)", () => {
+  it("shows the engine session id in debug builds only", () => {
     const SESSION = "ecfd0892-05b3-4baf-aa64-295c439a19c1";
     debugFlag.on = false;
     const { unmount } = render(

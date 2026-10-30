@@ -11,7 +11,7 @@
       "main_commands": ["inspectResearchScreen", "setResearchPriorityCommand"],
       "renderer_screen": "screens/research/ResearchScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/research/ResearchScreen.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "move-fleet",
@@ -28,7 +28,7 @@
       ],
       "renderer_screen": "screens/strategic-map/StrategicMapScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.test.tsx",
-      "adr_or_issue": null,
+      "decision": null,
       "note": "The map and the Fleet panel share useMovementOrders, so both build the same MoveFleet body."
     },
     {
@@ -41,7 +41,7 @@
       "main_commands": ["submitStationAssignment"],
       "renderer_screen": "screens/fleet/station/FleetStationSection.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "set-ship-readiness",
@@ -53,7 +53,7 @@
       "main_commands": ["submitShipReadiness"],
       "renderer_screen": "screens/fleet/station/FleetStationSection.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "fund-special-training",
@@ -65,7 +65,7 @@
       "main_commands": ["submitSpecialTraining"],
       "renderer_screen": "screens/fleet/training/FleetTrainingSection.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/fleet/training/FleetTrainingView.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "hold-fleet-exercise",
@@ -77,7 +77,7 @@
       "main_commands": ["submitFleetExercise"],
       "renderer_screen": "screens/fleet/exercise/FleetExerciseSection.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/fleet/exercise/FleetExerciseView.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "organise-divisions",
@@ -89,7 +89,7 @@
       "main_commands": ["inspectDivisionScreen", "submitDivisionCommand"],
       "renderer_screen": "screens/fleet/organization/FleetOrganizationSection.tsx",
       "evidence_test": "apps/desktop/src/main/commands/divisionCommands.test.ts",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "set-budget-allocation",
@@ -101,7 +101,7 @@
       "main_commands": ["inspectBudgetScreen", "submitBudgetAllocation"],
       "renderer_screen": "screens/treasury/TreasuryScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/treasury/components/BudgetPolicyPanel.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "submit-design",
@@ -113,7 +113,7 @@
       "main_commands": ["submitDesignCommand", "readDrawingBoardDraft", "writeDrawingBoardDraft"],
       "renderer_screen": "components/design-workspace/panels/SubmitPanel.tsx",
       "evidence_test": "apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "revise-project",
@@ -125,7 +125,7 @@
       "main_commands": ["reviseProjectCommand", "loadProjectDraft"],
       "renderer_screen": "components/design-workspace/panels/RevisionPanel.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/construction/drawing-board/RevisionApply.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "start-rebuild",
@@ -142,7 +142,7 @@
       ],
       "renderer_screen": "components/design-workspace/panels/RebuildPanel.tsx",
       "evidence_test": "apps/desktop/src/renderer/components/design-workspace/panels/RebuildPanel.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "order-construction",
@@ -166,7 +166,7 @@
       ],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/construction/hooks/useConstructionScreen.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "halt-or-resume-construction",
@@ -178,7 +178,7 @@
       "main_commands": ["haltConstructionCommand", "resumeConstructionCommand"],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
       "evidence_test": "apps/desktop/src/main/commands/constructionStatusCommands.test.ts",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "accelerate-construction",
@@ -190,7 +190,7 @@
       "main_commands": ["setAccelerationCommand"],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
       "evidence_test": "apps/desktop/src/main/commands/constructionStatusCommands.test.ts",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "authorize-dock-expansion",
@@ -202,7 +202,7 @@
       "main_commands": ["authorizeDockExpansionCommand"],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/construction/hooks/useConstructionScreen.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "order-foreign-construction",
@@ -214,7 +214,7 @@
       "main_commands": ["placeForeignConstructionCommand", "previewForeignConstructionCommand"],
       "renderer_screen": "screens/construction/components/ForeignContractPanel.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/construction/components/ForeignContractPanel.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "cancel-construction-project",
@@ -226,7 +226,7 @@
       "main_commands": ["cancelConstructionProjectCommand"],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
       "evidence_test": "apps/desktop/src/main/commands/constructionStatusCommands.test.ts",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "declare-war",
@@ -238,7 +238,7 @@
       "main_commands": ["inspectDiplomacyScreen", "submitDiplomacyCommand"],
       "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "accept-peace",
@@ -250,7 +250,7 @@
       "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "form-or-break-alliance",
@@ -262,7 +262,7 @@
       "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "form-or-break-non-aggression-pact",
@@ -274,7 +274,7 @@
       "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "declare-blockade",
@@ -286,7 +286,7 @@
       "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "advance-month",
@@ -306,7 +306,7 @@
       ],
       "renderer_screen": "shell/App.tsx",
       "evidence_test": "apps/desktop/src/renderer/shell/useCampaignShell.test.ts",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "fight-or-decline-battle",
@@ -332,7 +332,7 @@
       ],
       "renderer_screen": "screens/battle/PlayerBattleScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/shell/App.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "assign-or-relieve-officer",
@@ -344,7 +344,7 @@
       "main_commands": ["inspectDivisionScreen", "submitDivisionCommand"],
       "renderer_screen": "screens/fleet/organization/FleetOrganizationSection.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/fleet/organization/FleetOrganizationView.test.tsx",
-      "adr_or_issue": null,
+      "decision": null,
       "note": "The fleet organization card lists the officer corps, assigns an unassigned officer to a vacant command and relieves an appointed one."
     },
     {
@@ -357,7 +357,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#223",
+      "decision": "#223",
       "note": "The engine changes prestige in the monthly pipeline; the player sees only the header metric."
     },
     {
@@ -370,7 +370,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "#276",
+      "decision": "#276",
       "note": "Applied in the monthly pipeline once the fleet-management section is authored (#277); the division screen already shows the value."
     },
     {
@@ -383,7 +383,7 @@
       "main_commands": ["submitShipReadiness"],
       "renderer_screen": "screens/fleet/station/FleetStationSection.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx",
-      "adr_or_issue": null,
+      "decision": null,
       "note": "The station table shows AF, RF, MB and WU codes with labels (fleet-station-state.test.ts); selected ships can be placed in reserve or mothballed and the month applies the change."
     },
     {
@@ -396,7 +396,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "ADR-0300",
+      "decision": "RULES.md#dormant-by-decision",
       "note": "Both run in the monthly pipeline; no airbase, aircraft or carrier surface exists."
     },
     {
@@ -409,7 +409,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null,
+      "decision": null,
       "note": "Emitted only by the AI command generator."
     },
     {
@@ -422,7 +422,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "design-studies",
@@ -434,7 +434,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null,
+      "decision": null,
       "note": "Started by submit-design, never directly by the player."
     },
     {
@@ -447,7 +447,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "phase-engine-infrastructure",
@@ -466,7 +466,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "combat-fought-battle",
@@ -487,7 +487,7 @@
       "main_commands": ["startPlayerBattle", "advancePlayerBattle", "finishPlayerBattle"],
       "renderer_screen": "screens/battle/PlayerBattleScreen.tsx",
       "evidence_test": "apps/desktop/src/main/commands/battleOfferCommands.test.ts",
-      "adr_or_issue": null,
+      "decision": null,
       "note": "The player orders stance and speed per division; the stance wire shape compiles through the versioned division order model, and fire control and torpedo doctrine are automatic."
     },
     {
@@ -500,7 +500,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "ADR-0300",
+      "decision": "RULES.md#dormant-by-decision",
       "note": "Contexts are supplied empty: the campaign battle manifest never declares air groups or installations."
     },
     {
@@ -513,7 +513,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "ADR-0300"
+      "decision": "RULES.md#dormant-by-decision"
     },
     {
       "id": "combat-mines",
@@ -525,7 +525,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "ADR-0300"
+      "decision": "RULES.md#dormant-by-decision"
     },
     {
       "id": "combat-missiles",
@@ -537,7 +537,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "ADR-0312",
+      "decision": "RULES.md#dormant-by-decision",
       "note": "Wired into campaign auto-resolution and the minute engine, and unit-tested (packages/combat/test/battle-resolution/missile-auto.test.ts) with a design that carries a missile_launch capability. No production campaign design carries a launcher yet; #258 owns the 1940-1970 reference designs that make it reachable in play."
     },
     {
@@ -550,7 +550,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "ADR-0300"
+      "decision": "RULES.md#dormant-by-decision"
     },
     {
       "id": "combat-coastal-defense",
@@ -562,7 +562,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "ADR-0300",
+      "decision": "RULES.md#dormant-by-decision",
       "note": "Exported as a subpath seam but not referenced outside the module."
     },
     {
@@ -575,7 +575,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": "ADR-0300",
+      "decision": "RULES.md#dormant-by-decision",
       "note": "Projected into every battle but the campaign manifest declares no smoke source."
     },
     {
@@ -588,7 +588,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "combat-battle-resolution",
@@ -600,7 +600,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "combat-aircraft-model",
@@ -612,7 +612,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "combat-shared-support",
@@ -624,7 +624,7 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "read-campaign-overview",
@@ -636,7 +636,7 @@
       "main_commands": ["inspectCampaign"],
       "renderer_screen": "screens/overview/OverviewScreen.tsx",
       "evidence_test": "apps/desktop/src/main/commands/inspectCampaign.test.ts",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "read-world-map",
@@ -648,7 +648,7 @@
       "main_commands": ["inspectMap"],
       "renderer_screen": "screens/strategic-map/StrategicMapScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.test.tsx",
-      "adr_or_issue": null,
+      "decision": null,
       "note": "Compiled campaign state only; the fixture world is deleted."
     },
     {
@@ -661,7 +661,7 @@
       "main_commands": ["inspectBattleHistory"],
       "renderer_screen": "screens/diplomacy/components/BattleHistorySection.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/components/BattleHistorySection.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "read-priorities",
@@ -673,7 +673,7 @@
       "main_commands": ["inspectPriorities"],
       "renderer_screen": "screens/overview/PrioritiesCard.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/overview/PrioritiesCard.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "read-opening-briefing",
@@ -685,7 +685,7 @@
       "main_commands": ["inspectOpeningBriefing"],
       "renderer_screen": "screens/new-game/NewGameBriefingScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/new-game/NewGameBriefingScreen.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "start-new-game",
@@ -697,7 +697,7 @@
       "main_commands": ["listNewGameOptions", "compileCampaign"],
       "renderer_screen": "screens/new-game/NewGameLaunchingScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/new-game/NewGameLaunchingScreen.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "manage-campaign-files",
@@ -721,7 +721,7 @@
       ],
       "renderer_screen": "screens/campaign-file/CampaignFileScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/campaign-file/CampaignFileScreen.test.tsx",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "persist-ui-state",
@@ -733,7 +733,7 @@
       "main_commands": ["readUiState", "writeUiState"],
       "renderer_screen": "screens/campaign-preferences/CampaignPreferencesScreen.tsx",
       "evidence_test": "apps/desktop/src/main/uiState.test.ts",
-      "adr_or_issue": null
+      "decision": null
     },
     {
       "id": "read-content-catalogues",
@@ -749,7 +749,7 @@
       ],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null,
+      "decision": null,
       "note": "Supporting reads for other screens, not a player verb."
     },
     {
@@ -767,8 +767,8 @@
       ],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null,
-      "note": "Registered only under DEBUG_MODE. Internal debug tooling, not a player verb; production battles use PlayerBattleScreen (ADR-0319)."
+      "decision": null,
+      "note": "Registered only under DEBUG_MODE. Internal debug tooling, not a player verb; production battles use PlayerBattleScreen."
     },
     {
       "id": "debug-simulation-screen",
@@ -780,8 +780,8 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null,
-      "note": "Registered only under DEBUG_MODE. Kept as internal debug tooling; not a player verb (ADR-0319)."
+      "decision": null,
+      "note": "Registered only under DEBUG_MODE. Kept as internal debug tooling; not a player verb."
     },
     {
       "id": "debug-debugging-screen",
@@ -793,8 +793,8 @@
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null,
-      "note": "Registered only under DEBUG_MODE. Kept as internal debug tooling; not a player verb (ADR-0319)."
+      "decision": null,
+      "note": "Registered only under DEBUG_MODE. Kept as internal debug tooling; not a player verb."
     },
     {
       "id": "debug-battle-drill-seed",
@@ -806,7 +806,7 @@
       "main_commands": ["seedCampaignBattleDrill"],
       "renderer_screen": null,
       "evidence_test": null,
-      "adr_or_issue": null,
+      "decision": null,
       "note": "Test seam used by the debug e2e spec."
     }
   ]

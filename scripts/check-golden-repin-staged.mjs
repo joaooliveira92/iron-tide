@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Commit-time form of the golden re-pin guard (ADR-0238). Called by the `commit-msg` hook with the
+// Commit-time form of the golden re-pin guard. Called by the `commit-msg` hook with the
 // message file; reads the staged paths and applies the same predicate as `verify-golden-repin.mjs`,
 // so a missing `Golden-Repin: not-needed` trailer is caught while the commit is still amendable.
 //
@@ -43,7 +43,7 @@ if (process.argv[1] && import.meta.filename === process.argv[1]) {
     for (const path of files) console.error(`  ${path}`);
     console.error(
       "Update golden/hashes.json in this commit (node scripts/regenerate-golden-hashes.cjs), or if no\n" +
-        "reference hash moves, add a `Golden-Repin: not-needed` trailer with the reason (ADR-0007).",
+        "reference hash moves, add a `Golden-Repin: not-needed` trailer with the reason.",
     );
     process.exit(1);
   }

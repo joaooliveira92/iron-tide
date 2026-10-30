@@ -303,7 +303,7 @@ describe("compileDesign: tertiary battery (#168 step 4b)", () => {
   });
 });
 
-describe("compileDesign: aluminium superstructure (ADR-0252)", () => {
+describe("compileDesign: aluminium superstructure", () => {
   const section = { fromMonth: "1880-01", hullWeightSavingBp: 1_000 };
   const tuned = withCtx({ balance: { ...ctx.balance, aluminiumSuperstructure: section } });
   const aluminium = withDraft({ aluminiumSuperstructure: true });
@@ -347,7 +347,7 @@ describe("compileDesign: aluminium superstructure (ADR-0252)", () => {
   });
 });
 
-describe("compileDesign: AA fit (ADR-0252)", () => {
+describe("compileDesign: AA fit", () => {
   const section = {
     fromMonth: "1880-01",
     lightGunWeightKg: 100,

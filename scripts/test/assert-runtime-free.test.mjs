@@ -1,5 +1,5 @@
 // Tests for scripts/assert-runtime-free.mjs — the runtime-free import gate's
-// detection boundary (ADR-0100 §2, ADR-0159). Covers admitted runtime-free
+// detection boundary. Covers admitted runtime-free
 // forms, rejected runtime symbols/subpaths, aliases, re-exports, dynamic
 // imports, and the fail-closed parse path.
 import assert from "node:assert/strict";

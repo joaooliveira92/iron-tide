@@ -132,7 +132,7 @@ describe("battle consequences (AC-9)", () => {
   });
 });
 
-describe("collectLostShips (ADR-0061)", () => {
+describe("collectLostShips", () => {
   it("records name, class, nation, month and cause for exactly the ships applyBattleConsequences removes", () => {
     const snapshot = makeBattleSnapshot({
       attackerShips: [

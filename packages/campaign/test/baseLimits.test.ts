@@ -150,7 +150,7 @@ describe("measureBaseLimits", () => {
     );
   });
 
-  it("is not exempted by a war or blockade (ADR-0248): it reads neither", () => {
+  it("is not exempted by a war or blockade: it reads neither", () => {
     expect(() => measureBaseLimits(snapshot([ship("a")]), RULES)).not.toThrow();
   });
 });

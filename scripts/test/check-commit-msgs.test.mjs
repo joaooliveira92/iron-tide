@@ -1,7 +1,7 @@
 // Tests for scripts/check-commit-msgs.cjs — the Conventional-Commit subject
 // gate. Covers the fail-closed contract: an unresolvable range is fatal when CI
 // is set (no silent green) but a local skip otherwise, and the `--message-file`
-// hook mode validates one subject without needing any range (ADR-0107).
+// hook mode validates one subject without needing any range.
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";

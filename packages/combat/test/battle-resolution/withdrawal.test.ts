@@ -113,7 +113,7 @@ describe("ADR-0073 withdrawal predicate", () => {
     expect(d.withdrawnSide).toBeUndefined();
   });
 
-  it("classifies the withdrawal reason from the dominant loss (ADR-0098)", () => {
+  it("classifies the withdrawal reason from the dominant loss", () => {
     expect(classifyWithdrawalReason([atBp("ATTACKER", "a1", 1_000)], "ATTACKER")).toBe(
       "FLEET_STRENGTH_FLOODING",
     );

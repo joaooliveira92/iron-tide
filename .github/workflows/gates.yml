@@ -1,7 +1,7 @@
 name: Gates (cross-OS)
 
 # Proves the static gates and their fixtures on the OSes Bluewave ships to
-# (ADR-0107). quality.yml only runs for pull requests into main, so this job
+#. quality.yml only runs for pull requests into main, so this job
 # also covers Ubuntu to keep the static gates on Linux for every pull request.
 on:
   push:

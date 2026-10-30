@@ -8,7 +8,7 @@ if ! command -v node >/dev/null 2>&1; then
     *PATH=*) PATH="${login_path##*PATH=}:$PATH"; export PATH;;
   esac
 fi
-# Validate the Conventional-Commit subject (ADR-0099/0107).
+# Validate the Conventional-Commit subject.
 node scripts/check-commit-msgs.cjs --message-file "$1" || exit 1
-# Refuse authoritative source changes with no golden re-pin or trailer (ADR-0238).
+# Refuse authoritative source changes with no golden re-pin or trailer.
 exec node scripts/check-golden-repin-staged.mjs --message-file "$1"

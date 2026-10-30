@@ -8,8 +8,8 @@ if ! command -v node >/dev/null 2>&1 || ! command -v pnpm >/dev/null 2>&1; then
     *PATH=*) PATH="${login_path##*PATH=}:$PATH"; export PATH;;
   esac
 fi
-# Fast gates before a commit (ADR-0107). Refuse a direct commit on a protected
-# integration branch (`dev`/`main`) first (ADR-0165), then format-check the
+# Fast gates before a commit. Refuse a direct commit on a protected
+# integration branch (`dev`/`main`) first, then format-check the
 # staged files so unformatted code cannot enter history, then run the preflight
 # gate set. Bypass with `git commit --no-verify` only when justified; CI re-runs
 # everything.

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tsgo integration gate (ADR-0139, ADR-0100/0101). The install-time
+// tsgo integration gate. The install-time
 // `effect-tsgo patch --typescript --oxlint` (root `prepare`) is what actually
 // wires the Effect language service into the TypeScript-Go server and the Oxlint
 // binary. This gate proves two things: (1) the toolchain the root package.json

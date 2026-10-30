@@ -379,7 +379,7 @@ describe("S-1 acceptance (ticket 09): readiness and maintenance on the productio
   });
 });
 
-describe("S-2 ticket 03: prestige on the production pack (ADR-0239)", () => {
+describe("S-2 ticket 03: prestige on the production pack", () => {
   const EXPECTED_RULES = {
     lowerBound: SafeInt(0),
     upperBound: SafeInt(1000),
@@ -449,7 +449,7 @@ describe("S-2 ticket 03: prestige on the production pack (ADR-0239)", () => {
   });
 });
 
-describe("T-1 09 (#118): the battle-offer section is configured on the production pack (ADR-0254)", () => {
+describe("T-1 09 (#118): the battle-offer section is configured on the production pack", () => {
   const PRODUCTION_DIR = resolve(
     dirname(fileURLToPath(import.meta.url)),
     "../../../content/production/1880",
@@ -538,7 +538,7 @@ describe("T-1 09 (#118): the battle-offer section is configured on the productio
   });
 });
 
-describe("S-2 04 (#89): the unpaid-funds prestige source on the production pack (ADR-0239)", () => {
+describe("S-2 04 (#89): the unpaid-funds prestige source on the production pack", () => {
   function shortfallSnapshot(shortNationIds: readonly string[]): CampaignSnapshot {
     const { state } = compileProductionCampaign();
     const nations = new Map(state.snapshot.nations);

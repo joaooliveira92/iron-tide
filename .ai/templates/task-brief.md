@@ -1,6 +1,6 @@
 # Task brief: <outcome in one line>
 
-Hand this to an agent in place of an implementation recipe (ADR-0367). Fill
+Hand this to an agent in place of an implementation recipe. Fill
 every field; write `none` rather than leaving one blank. The agent returns only at
 a state that needs a human (`waiting-for-input`, `blocked`, `ready-for-review`,
 `ready-to-merge`) or when the task is closed.
@@ -38,7 +38,7 @@ Issue links, reproduction steps, logs, screenshots, failing commands, replay ids
 
 ## Constraints and non-goals
 
-Rules, ADRs and packages that bound the change; what must not change; deferred
+Rules and packages that bound the change; what must not change; deferred
 systems the agent must not wire.
 
 ## Acceptance criteria
@@ -64,8 +64,8 @@ Report under `.ai/reports/`, `pnpm snap` screenshots, balance reports, PR link.
 
 - Pull request: `may open after local gates pass` | `do not open`.
 - Merge: `not authorized` | `authorized when: <every condition, machine-checkable>`.
-  The default conditions are in ADR-0367 rule 7.
-- High-risk (ADR-0367 rule 6): independent review required before `ready-to-merge`.
+  The default conditions are in the task lifecycle.
+- High-risk: independent review required before `ready-to-merge`.
 
 ## Blockers that need a human
 

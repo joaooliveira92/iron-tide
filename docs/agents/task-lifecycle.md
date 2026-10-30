@@ -1,6 +1,6 @@
 # Agent task lifecycle
 
-How an agent task runs from brief to closure (ADR-0367). Start every
+How an agent task runs from brief to closure. Start every
 substantial task from [the task brief](../../.ai/templates/task-brief.md).
 
 ## States
@@ -24,7 +24,7 @@ pnpm worktrees inbox            # NEEDS-YOU rows first; closed rows hidden
 
 The inbox is the review queue. Do not watch running tasks. Open a thread
 only when its row reads `NEEDS-YOU`. Run independent tasks at the same time,
-within the worktree cap (ADR-0364).
+within the worktree cap.
 
 ## Running
 
@@ -38,7 +38,7 @@ within the worktree cap (ADR-0364).
 
 ## Review
 
-High-risk changes (ADR-0367 rule 6) get an independent reviewer running
+High-risk changes get an independent reviewer running
 [the review prompt](../../.ai/REVIEW-PROMPT.md) against the brief and the full
 diff. The reviewer is read-only and uses its own checkout or `git diff dev...<branch>`.
 Classify every finding:
@@ -61,7 +61,7 @@ Open a PR only after local gates pass and the brief allows it. Then loop:
 4. Stop at `blocked` when requirements conflict, CI is flaky beyond one re-run,
    or a finding would change scope.
 5. When checks are green, the branch is synchronised and no required finding is
-   open: merge if authorized (ADR-0367 rule 7), else set `ready-to-merge`.
+   open: merge if authorized, else set `ready-to-merge`.
 6. After merge, confirm the merge commit is on `dev` and that the CI run on
    `dev` passes, then close the task.
 
@@ -70,7 +70,7 @@ Open a PR only after local gates pass and the brief allows it. Then loop:
 - Close merged, rejected and superseded tasks, and prune their worktrees.
 - A task waiting on something outside the repository stays `blocked`, with the
   dependency and the date to revisit written in its brief or issue.
-- Put decisions into ADRs, issues or `.ai/reports/`. Never leave them only in a thread.
+- Put decisions into `RULES.md`, issues or commit messages. Never leave them only in a thread.
 - At the end of the day, run `pnpm worktrees inbox` and `pnpm worktrees audit`.
   Every row is running, blocked on a recorded dependency, or closed.
 

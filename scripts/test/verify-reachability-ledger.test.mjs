@@ -1,5 +1,5 @@
 // Tests for scripts/verify-reachability-ledger.mjs: the reachability ledger gate
-// (ADR-0267). The gate is pure over a `repo` port, so each test builds a small
+// The gate is pure over a `repo` port, so each test builds a small
 // in-memory repository and asserts on the problems the gate reports.
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -45,7 +45,7 @@ function baseFiles() {
     "packages/phase-engine/src/index.ts": `export { MonthExecutor } from "./month.js";\n`,
     "packages/phase-engine/src/month.ts": "",
     "packages/phase-engine/src/commands.ts": `export function applyDoThing(a) {}\nexport function applyOther(a) {}\nexport function notAVerb() {}\n`,
-    "docs/adr/ADR-0001-x.md": "# x",
+    "RULES.md": "# Rules\n\n## Dormant by decision\n\nText.\n",
   };
 }
 
@@ -68,7 +68,7 @@ const row = (over) => ({
   main_commands: [],
   renderer_screen: null,
   evidence_test: null,
-  adr_or_issue: null,
+  decision: null,
   ...over,
 });
 
@@ -97,7 +97,7 @@ function goodLedger(extra = []) {
         engine_package: "combat",
         status: "dormant-by-decision",
         engine_modules: ["air", "smoke"],
-        adr_or_issue: "#225",
+        decision: "#225",
       }),
       ...extra,
     ],
@@ -288,28 +288,30 @@ void test("a debug-only or dev-only screen cannot be the path of a reachable row
   assert.ok(has(r, "debug-only or dev-only"));
 });
 
-void test("dormant-by-decision needs an ADR or issue citation that resolves", () => {
+void test("dormant-by-decision needs an issue or RULES.md citation that resolves", () => {
   const none = goodLedger([
-    row({ id: "d1", status: "dormant-by-decision", adr_or_issue: null, engine_symbols: [] }),
+    row({ id: "d1", status: "dormant-by-decision", decision: null, engine_symbols: [] }),
   ]);
-  assert.ok(has(run(none), "dormant-by-decision requires adr_or_issue"));
+  assert.ok(has(run(none), "dormant-by-decision requires decision"));
   const badFormat = goodLedger([
-    row({ id: "d2", status: "dormant-by-decision", adr_or_issue: "someday" }),
+    row({ id: "d2", status: "dormant-by-decision", decision: "someday" }),
   ]);
   assert.ok(has(run(badFormat), "must cite"));
-  const missingAdr = goodLedger([
-    row({ id: "d3", status: "dormant-by-decision", adr_or_issue: "ADR-9999" }),
+  const unknownRule = goodLedger([
+    row({ id: "d3", status: "dormant-by-decision", decision: "RULES.md#nowhere" }),
   ]);
-  assert.ok(has(run(missingAdr), "ADR-9999"));
-  const okAdr = goodLedger([
-    row({ id: "d4", status: "dormant-by-decision", adr_or_issue: "ADR-0001" }),
+  assert.ok(has(run(unknownRule), "must cite"));
+  const okRule = goodLedger([
+    row({ id: "d4", status: "dormant-by-decision", decision: "RULES.md#dormant-by-decision" }),
   ]);
-  assert.deepEqual(run(okAdr).problems, []);
+  assert.deepEqual(run(okRule).problems, []);
+  const okIssue = goodLedger([row({ id: "d5", status: "dormant-by-decision", decision: "#12" })]);
+  assert.deepEqual(run(okIssue).problems, []);
 });
 
 void test("only dormant rows carry a citation, and internal rows carry no screen", () => {
-  const r = run(goodLedger([row({ id: "i1", adr_or_issue: "#1" })]));
-  assert.ok(has(r, "adr_or_issue is only valid"));
+  const r = run(goodLedger([row({ id: "i1", decision: "#1" })]));
+  assert.ok(has(r, "decision is only valid"));
   const s = run(goodLedger([row({ id: "i2", renderer_screen: "screens/live/LiveScreen.tsx" })]));
   assert.ok(has(s, "only reachable rows may set renderer_screen"));
 });

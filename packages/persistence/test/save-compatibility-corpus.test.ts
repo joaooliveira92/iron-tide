@@ -16,7 +16,7 @@ const versions = readdirSync(corpusDir, { withFileTypes: true })
   .map((entry) => entry.name)
   .sort();
 
-describe("save-compatibility corpus (ADR-0113 §5)", () => {
+describe("save-compatibility corpus", () => {
   const store = new SaveStore();
 
   it("contains a fixture for the current release version", () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { COASTLINE_TIER_TOLERANCES, coastlineTierFor } from "./coastline-tiers.js";
 
-describe("coastlineTierFor (ADR-0055)", () => {
+describe("coastlineTierFor", () => {
   it("uses the coarse tier when zoomed out, full detail when zoomed in", () => {
     expect(coastlineTierFor(0.9)).toBe(0);
     expect(coastlineTierFor(2.99)).toBe(0);

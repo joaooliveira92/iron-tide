@@ -19,7 +19,7 @@ startable state, and launch the current frontier sprint.
 
 ## 2. Scan the GitHub issue tracker (the frontier source of truth)
 
-Per ADR-0227 and `docs/agents/issue-tracker.md`, GitHub Issues is the single
+Per `docs/agents/issue-tracker.md`, GitHub Issues is the single
 tracker for external reports and pipeline artifacts. The frontier is a GitHub
 query, not a directory scan:
 
@@ -46,7 +46,7 @@ query, not a directory scan:
   `--json comments --jq '.comments[-3:]'` and read older ones only when resuming.
 - Reconcile the frontier against `.ai/SPRINT-PLAN.md`'s "Immediate next action":
   if the plan points at a sprint whose issues are absent, closed, or blocked, do
-  not silently choose — report the drift, prefer the issue tracker (ADR-0227),
+  not silently choose — report the drift, prefer the issue tracker,
   and refresh the plan's frontier section once the sprint lands.
 - `$ARGUMENTS` overrides the frontier: a GitHub issue reference (`#119`, a URL,
   or a number) scopes the run to that effort like `/work`; a sprint id (e.g.

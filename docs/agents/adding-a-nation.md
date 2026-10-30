@@ -1,10 +1,10 @@
 # Adding a nation
 
-Adding a nation is a researched **content** task, not a code task (ADR-0092).
+Adding a nation is a researched **content** task, not a code task.
 Scaffold a draft, research it, replace every placeholder with a sourced or
 explicitly classified value, then let the completeness validator gate it.
 
-**Authoring format.** YAML is deprecated outside localization (ADR-0334), and the
+**Authoring format.** YAML is deprecated outside localization, and the
 boundary gate rejects a new tracked `.yaml` file. A naval profile is a TypeScript
 content module declaring `collection("navalProfiles", NationNavalProfileSchema, [ … ])`
 from `@bluewave/content-authoring`, so it is typechecked (`pnpm typecheck`) and
@@ -23,7 +23,7 @@ This writes a draft `NationNavalProfile` skeleton and a research-note stub
 ## 2. Research and fill
 
 Research the nation into `docs/research/<nationId>-naval-profile.md`, then write
-a complete per-nation catalogue file (`{ navalProfiles: [ … ] }`, ADR-0109) that
+a complete per-nation catalogue file (`{ navalProfiles: [ … ] }`) that
 matches `content/production/<scenario>/ship-building/naval-profiles/<nationId>.ts`.
 Replace every `PLACEHOLDER` with a `VERIFIED`/`DERIVED`/`ESTIMATE` value that
 carries a provenance block, or an explicitly classified `BALANCE_TARGET`.
@@ -32,7 +32,7 @@ The profile separates **hard capability** (what the nation can build) from **sof
 doctrine** (what it prefers); capability can only ever remove options.
 
 Set `homeArea` on the nation in `countries.ts` to an existing area id; the
-validator rejects a missing or unknown one (ADR-0231).
+validator rejects a missing or unknown one.
 
 ## 3. Starters and gates
 

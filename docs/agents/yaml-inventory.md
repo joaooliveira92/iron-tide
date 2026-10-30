@@ -1,6 +1,6 @@
 # YAML inventory and the boundary gate
 
-YAML is deprecated outside internationalization ([ADR-0334](../adr/ADR-0334-deprecate-yaml-outside-internationalization.md)).
+YAML is deprecated outside internationalization .
 The migration completed on 2026-10-29: the ratchet is empty and the gate runs in
 strict mode. The machine-readable truth is
 [`scripts/data/yaml-boundary.ratchet.json`](../../scripts/data/yaml-boundary.ratchet.json);

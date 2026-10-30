@@ -141,7 +141,7 @@ describe("Effect Schema save-boundary serialization (MIG-WIRE-4)", () => {
     expect(decoded.snapshot.strategicWeather).toEqual([]);
   });
 
-  it("rejects an unmodeled key at the top level and inside a struct (ADR-0278)", () => {
+  it("rejects an unmodeled key at the top level and inside a struct", () => {
     const minimal = minimalStorableState();
 
     expect(Result.isSuccess(decodeStorableCampaignState(minimal))).toBe(true);

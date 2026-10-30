@@ -28,7 +28,7 @@
 // A second rule rejects `throw new Error(...)` (and the other built-in error
 // constructors): a thrown plain error carries no `_tag`, so the catching edge can only
 // branch on its message. Existing sites are frozen in a shrink-only baseline keyed by
-// file and content fingerprint (ADR-0106 ratchet pattern); a new throw fails closed.
+// file and content fingerprint; a new throw fails closed.
 //
 // A third rule guards the typed-failure roots (`TYPED_FAILURE_ROOTS`: `campaign`, the
 // runtime-free authoritative package, and `persistence`, the IO boundary that returns

@@ -1,3 +1,0 @@
-$ node scripts/map-data/cli.ts determinism
-determinism: byte-identical across two clean runs (11 files, 5806088 bytes)
-pack sha256 91c74f4662bc795f4593be75dd8917c58b9fccc413347dd1f4d54bcf9dd31851

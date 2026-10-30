@@ -10,7 +10,7 @@ content, ruleset, inputs, commands, seeds, and compatibility versions always pro
 ## Design pillars
 
 - **Determinism.** Authoritative outcomes use integer/fixed-point maths,  domain-separated RNG, and a canonical serializer. No wall-clock, locale, or  filesystem-order dependence (`.ai/REQUIREMENTS.md` BW-DET-*).
-- **Content is data.** Authored content is declarative and never runs as application code; a manifest declares the whole loaded surface, and only the compiled artifact is run. YAML is deprecated outside localization catalogues (ADR-0334).
+- **Content is data.** Authored content is declarative and never runs as application code; a manifest declares the whole loaded surface, and only the compiled artifact is run. YAML is deprecated outside localization catalogues.
 - **Commands, not mutations.** Intents pass validation, reservation, locking, and an explicit resolution outcome, and emit domain events.
 - **Phases.** The month advances through an ordered, registered phase pipeline
   with declared read/write footprints.
@@ -29,7 +29,7 @@ content, ruleset, inputs, commands, seeds, and compatibility versions always pro
 | `packages/` | The engine, one package per concern. See [packages/README.md](packages/README.md). |
 | `content/` | Authored game content + the pack manifest. See [content/README.md](content/README.md). |
 | `scripts/` | Dependency-light gate/generator scripts. See [scripts/README.md](scripts/README.md). |
-| `docs/` | Architecture, delivery, agent guides, and ADRs. Start at [docs/agents/repo-map.md](docs/agents/repo-map.md). |
+| `docs/` | Architecture, delivery, and agent guides. Start at [docs/agents/repo-map.md](docs/agents/repo-map.md). |
 | `.ai/` | The contract, requirements, roadmap, and orchestration prompts. |
 | `vendor/` | Vendored upstream artifacts (read-only reference). |
 
@@ -58,7 +58,7 @@ Requirements: Node ≥ 24 and pnpm ≥ 11 (see `package.json` `engines`).
 1. Safety, legal, credential, and destructive-operation constraints.
 2. This canonical design and approved amendments (`.ai/REQUIREMENTS.md`).
 3. `.ai/ENGINEERING-CONTRACT.md`.
-4. Approved ADRs and compatibility contracts (`docs/adr/`).
+4. `RULES.md` and compatibility contracts.
 5. The current milestone brief.
 6. Local conventions and agent judgement.
 

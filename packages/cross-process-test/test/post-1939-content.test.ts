@@ -26,7 +26,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
 
 const REPO_ROOT = resolve(import.meta.dirname, "..", "..", "..");
 
-describe("the authored horizon is 1970 (ADR-0282)", () => {
+describe("the authored horizon is 1970", () => {
   const dirs: string[] = [];
   afterEach(() => {
     for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });

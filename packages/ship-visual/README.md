@@ -1,6 +1,6 @@
 # @bluewave/ship-visual
 
-Pure, presentation-only ship visual parts (ADR-0148): the `VisualEra` / `NationStyle` /
+Pure, presentation-only ship visual parts: the `VisualEra` / `NationStyle` /
 `SizeBand` / `MountClass` vocabulary, the generated part catalog, the key resolver with its
 fallback chain, and pure placement maths. No runtime dependencies and no `effect` import; only
 the desktop renderer depends on it, and nothing it produces enters authoritative state.

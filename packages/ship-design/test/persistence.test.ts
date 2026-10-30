@@ -187,7 +187,7 @@ describe("edit log (undo/redo)", () => {
   });
 });
 
-describe("schema v2: armour regions fold (ADR-0232, ADR-0233)", () => {
+describe("schema v2: armour regions fold", () => {
   type Region = {
     region: string;
     thicknessUm: number;

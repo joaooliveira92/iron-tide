@@ -4,7 +4,7 @@ Review the proposed milestone as a hostile but constructive verifier. Do not mer
 
 ## Establish scope
 
-Read the canonical design, engineering contract, requirement index, approved ADRs, milestone brief, Git diff, tests, validation report, and changed canonical artifacts. Verify the actual repository and command results.
+Read the canonical design, engineering contract, requirement index, milestone brief, Git diff, tests, validation report, and changed canonical artifacts. Verify the actual repository and command results.
 
 ## Review dimensions
 
@@ -28,7 +28,7 @@ Inspect for:
 16. Electron IPC, preload, navigation, CSP, and renderer-authority risks when applicable
 17. Tests that can pass without proving behavior, oversized snapshots, or golden regeneration without cause
 18. Unnecessary abstractions, speculative packages, and premature optimization
-19. Missing traceability, ADRs, documentation, or validation evidence
+19. Missing traceability, documentation, or validation evidence
 20. Git or delivery-policy violations
 21. Gaps against the task brief's problem and acceptance criteria, not only against the diff's own claims
 22. Unrelated modifications, unsafe or unjustified dependencies, and missing rollback instructions

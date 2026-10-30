@@ -44,7 +44,7 @@ describe("protection view model", () => {
     }
   });
 
-  it("names every region, using the manual's terms for the parity fields (ADR-0232)", () => {
+  it("names every region, using the manual's terms for the parity fields", () => {
     expect(regionLabel("BELT_ENDS")).toBe("Belt extended (BE)");
     expect(regionLabel("DECK_EXTENDED")).toBe("Deck extended (DE)");
     expect(regionLabel("TURRET")).toBe("Turret + barbette (T)");

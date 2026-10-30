@@ -52,7 +52,7 @@ function createFixtureState(): CampaignState {
   return { snapshot, envelope, rawHash };
 }
 
-describe("save-compatibility policy (ADR-0113)", () => {
+describe("save-compatibility policy", () => {
   let tmpDir: string;
   let store: SaveStore;
 

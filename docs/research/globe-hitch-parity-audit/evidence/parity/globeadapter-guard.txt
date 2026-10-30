@@ -1,3 +1,0 @@
-package guard: adapter policy 1.0.0: PASS
-files 19318, allowed map assets 16, violations 0
-app.asar 215086102 / 219200000 bytes; resources outside the archive 0 / 2100000 bytes

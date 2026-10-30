@@ -7,27 +7,27 @@ Bluewave is a deterministic naval strategy game: engine, content compiler, and E
 1. `README.md` — design baseline.
 2. `.ai/ENGINEERING-CONTRACT.md` — highest code authority.
 3. `RULES.md` — binding rules.
-4. `.ai/REQUIREMENTS.md` and relevant ADRs.
+4. `.ai/REQUIREMENTS.md` and the package's `AGENTS.md`.
 5. `.ai/SPRINT-PLAN.md` / `.ai/briefs/` — approved milestone.
 6. The nearby code, tests, exports, and CI.
 
-Precedence: safety/legal/credential → canonical design → contract → ADRs → brief → local conventions. On conflict, **stop** (see Stop conditions).
+Precedence: safety/legal/credential → canonical design → contract → rules → brief → local conventions. On conflict, **stop** (see Stop conditions).
 
 ## Agent workflow
 
 Run `pnpm agent:map <symbol|path>` before reading, `pnpm verify:affected` before committing, and `pnpm heavy` (not `sleep`) for long gates. See [agent tools](docs/agents/agent-tools.md).
 
-Start substantial tasks from a [task brief](.ai/templates/task-brief.md): problem and evidence first, then the simplest viable solution. Track state with `pnpm worktrees status`/`inbox`; return only when a human is needed. Merge only with the brief's authority; report rollback (ADR-0367). See [task lifecycle](docs/agents/task-lifecycle.md), [rollback](docs/agents/rollback.md), [autonomy and access](docs/agents/autonomy-and-access.md).
+Start substantial tasks from a [task brief](.ai/templates/task-brief.md): problem and evidence first, then the simplest viable solution. Track state with `pnpm worktrees status`/`inbox`; return only when a human is needed. Merge only with the brief's authority; report rollback. See [task lifecycle](docs/agents/task-lifecycle.md), [rollback](docs/agents/rollback.md), [autonomy and access](docs/agents/autonomy-and-access.md).
 
 ## Rules
 
 - Check `git status`, `git pull --rebase`, and `pnpm preflight` at session start; rebase before every push.
 - Never overwrite or reformat others' work. Keep commits narrow, Conventional.
-- No code comments (ADR-0268, see ADR-0366). Names, types, tests carry intent; rationale in ADR or commit message.
-- Short-lived branch from `dev`; max 5 worktrees (ADR-0237, see ADR-0364), one session per checkout.
+- No code comments. Names, types, tests carry intent; rationale in the commit message.
+- Short-lived branch from `dev`; max 5 worktrees, one session per checkout.
 - Review agents are read-only: no edits, commits, branches, or PR state. Reports are pointers, not evidence: verify the diff, gates, and `git status`.
 - Doc budgets in `scripts/doc-budgets.manifest.json`; ratchet down, justify raises.
-- Constraining decisions → ADR with `Applies to:` and `Rule:`. Authority through `Supersedes:`/`Amends:`. Read by-scope: [repository](docs/adr/by-scope/repository.md) + package `AGENTS.md`.
+- No ADRs. Enforce a rule in a gate, type or test; otherwise add a line to `RULES.md` or the package `AGENTS.md`.
 
 ## Determinism
 
@@ -57,7 +57,7 @@ Identical content, ruleset, inputs, seeds, and versions produce identical hashes
 
 ## Content and compiler
 
-- Author content as declarative TypeScript; compile to canonical JSON. YAML for i18n and mandated infra only (ADR-0334, superseded by ADR-0361).
+- Author content as declarative TypeScript; compile to canonical JSON. YAML for i18n and mandated infra only.
 - Compiler stages: explicit, statically ordered, typed, immutable, no ambient I/O, randomness, or artifact writes. Accumulate diagnostics; block downstream on invalid prerequisites.
 - Validation, normalization, repair are distinct. Repair is explicit, narrow, logged, limited to safely recomputable data. See [canonical content](docs/architecture/canonical-content-and-rulesets.md).
 
@@ -74,7 +74,7 @@ Identical content, ruleset, inputs, seeds, and versions produce identical hashes
 
 ## Git
 
-- No commits on `dev`/`main`. Merge branch into `dev` when gates green; PR optional (ADR-0234, see ADR-0364). Delete branch only after merge.
+- No commits on `dev`/`main`. Merge branch into `dev` when gates green; PR optional. Delete branch only after merge.
 - No force-push, no history rewrite. No secrets, `.env`, stores, caches, or machine-specific config.
 - Use `pnpm change-scope` for change-based filtering: [change scope](docs/agents/change-scope.md).
 
@@ -82,7 +82,7 @@ Identical content, ruleset, inputs, seeds, and versions produce identical hashes
 
 - **Playable**: desktop launches, vertical slice runs on every merge.
 - **Seen**: UI change verified with `pnpm snap` before done.
-- **Tunable**: numbers in content/balance data, marked PROVISIONAL until sourced (ADR-0252, superseded by ADR-0345); code holds mechanisms, not magic numbers.
+- **Tunable**: numbers in content/balance data, marked PROVISIONAL until sourced; code holds mechanisms, not magic numbers.
 - **Explainable**: every player-facing number traces to an explanation tree.
 - **Measured**: balance claims cite generated reports (`pnpm check:balance-reports`), not intuition.
 
@@ -102,10 +102,10 @@ Identical content, ruleset, inputs, seeds, and versions produce identical hashes
 
 Stop and write a decision request (`.ai/templates/decision-request.md`) when: plausible interpretations change gameplay; design contradicts itself; required high-authority content is missing; repair would fabricate canonical information; migration changes unapproved authoritative outcomes; fix expands scope into deferred subsystem; destructive data or history rewrite needed; credentials/secrets/signing/publishing involved; dependency raises licence/security concern; determinism cannot be demonstrated; golden hash changes without understood cause.
 
-Do not stop for routine design choices — record constraining ones as ADRs. Pipeline: [`.ai/ORCHESTRATION.md`](.ai/ORCHESTRATION.md).
+Do not stop for routine design choices. Pipeline: [`.ai/ORCHESTRATION.md`](.ai/ORCHESTRATION.md).
 
 ## Agent skills
 
 - Issues: GitHub Issues (`joaooliveira92/iron-tide`), `gh` CLI. See [issue tracker](docs/agents/issue-tracker.md).
 - Labels: [triage labels](docs/agents/triage-labels.md).
-- Domain: [GLOSSARY-MAP.md](GLOSSARY-MAP.md) → per-context `GLOSSARY.md`; system ADRs in `docs/adr/`. See [domain docs](docs/agents/domain.md).
+- Domain: [GLOSSARY-MAP.md](GLOSSARY-MAP.md) → per-context `GLOSSARY.md`. See [domain docs](docs/agents/domain.md).

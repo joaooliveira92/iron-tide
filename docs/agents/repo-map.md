@@ -16,10 +16,10 @@ Where to start reading, by task. Every link here is a living entry point.
 | Check requirements | [`.ai/REQUIREMENTS.md`](../../.ai/REQUIREMENTS.md) |
 | Pick up the backlog | [`.ai/SPRINT-PLAN.md`](../../.ai/SPRINT-PLAN.md) |
 | Run the pipeline | [`.ai/ORCHESTRATION.md`](../../.ai/ORCHESTRATION.md) |
-| Work several efforts at once | [task lifecycle](task-lifecycle.md), [ADR-0364](../adr/ADR-0364-worktree-and-git-workflow.md) |
+| Work several efforts at once | [task lifecycle](task-lifecycle.md) |
 | Brief or hand off an agent task | [`.ai/templates/task-brief.md`](../../.ai/templates/task-brief.md) |
 | Undo a merge or release | [rollback](rollback.md) |
-| Record a decision | [`docs/adr/README.md`](../adr/README.md) |
+| Record a decision | [`RULES.md`](../../RULES.md) |
 
 `engine-suite.md` and `.ai/ROADMAP.md` are historical (superseded); keep them only
 for provenance. Non-negotiable rules live in

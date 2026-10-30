@@ -1,6 +1,6 @@
 # Replay corpus
 
-Replay files in `golden/replays/` are the determinism baseline (ADR-0246). They are not re-pinned:
+Replay files in `golden/replays/` are the determinism baseline. They are not re-pinned:
 the `Golden-Repin` trailer and the ratchet baseline do not apply to them
 (see [golden repinning](golden-repinning.md)).
 
@@ -9,7 +9,7 @@ the `Golden-Repin` trailer and the ratchet baseline do not apply to them
 `golden/replay-approvals.json` holds entries bound to the exact old and new checkpoint hashes of one
 replay and month. After `pnpm replay:record <id>`, run `pnpm replay:approve --cause "<why>" --migration
 "<assessment>" --class <class>` to propose entries from the diff against `origin/dev` (`--base <ref>`);
-the class (ADR-0279) is `EXPECTED_GAMEPLAY_CHANGE`, `SERIALIZATION_ONLY` or `RULESET_VERSION_CHANGE`.
+the class is `EXPECTED_GAMEPLAY_CHANGE`, `SERIALIZATION_ONLY` or `RULESET_VERSION_CHANGE`.
 `pnpm check:replay-approvals` fails an unapproved, mismatched, orphaned, reused, rewritten or misclassed
 entry. CI only verifies; entries are append-only.
 

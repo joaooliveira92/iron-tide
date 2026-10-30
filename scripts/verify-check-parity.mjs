@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// CI <-> `pnpm check` parity gate (ADR-0107, ADR-0140). Every step `pnpm check`
+// CI <-> `pnpm check` parity gate. Every step `pnpm check`
 // runs must also be invoked by some `.github/workflows/*.yml`, or be listed in
 // the inline ALLOWLIST below with the workflow and raw command that covers it.
 //

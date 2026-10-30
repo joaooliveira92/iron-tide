@@ -6,7 +6,7 @@ Extends `docs/research/rtw3-manual-baseline.md`; it does not rewrite it.
 ## Resolution (2026-10-19)
 
 The unresolved values below were decided by the owner's delegation in
-[ADR-0239](../adr/ADR-0239-s2-prestige-values-balance-targets.md) (decision request 0012,
+ADR-0239 (decision request 0012,
 Option B). Grounded values here are used as sourced; the rest are labelled Bluewave
 balance decisions there. The statements below describe the research as it stood and are
 kept unchanged as provenance.
@@ -16,7 +16,7 @@ kept unchanged as provenance.
 - **Decision 0003-B authorizes research only.** The owner chose Option B
   ("research against high-trust external sources before authoring production
   prestige values") and recorded it in
-  [ADR-0225](../../docs/adr/ADR-0225-prestige-required-field-and-research-first.md).
+  ADR-0225.
   This note is the research product of that decision.
 - **No production values are committed here.** Nothing in this note is a
   production content value, a ruleset value, a fixture, or a placeholder. No

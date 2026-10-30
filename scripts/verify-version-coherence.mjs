@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Version coherence gate (ADR-0134): the released desktop version and the save
+// Version coherence gate: the released desktop version and the save
 // compatibility constant must be the same number. A release that bumps one and
-// not the other silently breaks the reject-on-mismatch save policy (ADR-0113) or
+// not the other silently breaks the reject-on-mismatch save policy or
 // ships a tag that disagrees with the app's own version.
 
 import { readFileSync } from "node:fs";
@@ -29,7 +29,7 @@ export function checkCoherence({ desktopVersion, compatibilityVersion }) {
   if (desktopVersion === compatibilityVersion) return [];
   return [
     `apps/desktop version "${desktopVersion}" != CURRENT_COMPATIBILITY_VERSION ` +
-      `"${compatibilityVersion}" (ADR-0134): bump them together`,
+      `"${compatibilityVersion}": bump them together`,
   ];
 }
 

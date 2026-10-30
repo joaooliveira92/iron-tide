@@ -15,7 +15,7 @@ one of these and another document disagree, the contract wins.
 - **No global consumptive RNG.** Randomness uses domain-separated streams with
   stable entity keys and an audit ledger (BW-DET-002, BW-DET-004).
 - **Content is data.** Authored domain content is declarative TypeScript decoded
-  into a canonical JSON artifact and loaded outside compiler stages (ADR-0334);
+  into a canonical JSON artifact and loaded outside compiler stages;
   authored formulas are data, not embedded programs. Localized text never
   executes code and never controls mechanics (BW-RUL-001, BW-RUL-002).
 - **Commands do not mutate state directly**; they pass validation, reservation,

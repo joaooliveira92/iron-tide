@@ -1,7 +1,7 @@
 # Autonomy and access
 
 What an agent may do alone, what needs a human, and which machines and accounts
-may run agents here (ADR-0367).
+may run agents here.
 
 ## Permissions by task type
 
@@ -9,8 +9,8 @@ may run agents here (ADR-0367).
 | --- | --- | --- |
 | Review, triage, investigation | Read, run read-only commands, file issues | Report |
 | Low-risk implementation | Edit, test, commit on its branch, open a PR if the brief allows | `ready-for-review` |
-| High-risk implementation (ADR-0367 rule 6) | Same, plus request independent review | `ready-to-merge` unless merge is authorized |
-| Merge | Merge into `dev` under ADR-0367 rule 7 | Any failed condition |
+| High-risk implementation | Same, plus request independent review | `ready-to-merge` unless merge is authorized |
+| Merge | Merge into `dev` under the task-lifecycle merge conditions | Any failed condition |
 
 Grant the least the task needs. Review agents never edit, commit, branch, or
 change PR state.
@@ -68,8 +68,8 @@ fleet repository. Before a machine runs tasks here, it must have:
 
 ## Resource limits on one machine
 
-- At most five checkouts (ADR-0364). Long gates run through `pnpm heavy`, one at
-  a time per machine, with Vitest capped at four workers (ADR-0365 rule 6).
+- At most five checkouts. Long gates run through `pnpm heavy`, one at
+  a time per machine, with Vitest capped at four workers.
 - `heavy` warns when load exceeds the core count. Do not start another gate
   then; queue it.
 - Do not start work with under 10 GB free disk. `pnpm worktrees prune` reclaims

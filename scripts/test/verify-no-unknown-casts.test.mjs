@@ -72,7 +72,7 @@ void test("fails closed on a parse error rather than silently reporting zero", (
   assert.throws(() => findUnknownCasts("a.ts", "const x = (y as unknown"), /failing closed/u);
 });
 
-void test("strict mode is on in CI and off locally (ADR-0107)", () => {
+void test("strict mode is on in CI and off locally", () => {
   assert.equal(isStrictEnvironment({ CI: "true" }), true);
   assert.equal(isStrictEnvironment({ CI: "1" }), true);
   assert.equal(isStrictEnvironment({ CI: "false" }), false);

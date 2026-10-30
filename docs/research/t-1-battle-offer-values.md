@@ -100,13 +100,13 @@ cannot be answered without the other). None is presented as sourced fact, none i
 
 | Decision | Covers | Minimum owner response |
 | --- | --- | --- |
-| [0028](../../.ai/decision-requests/0028-t-1-battle-estimate-model.md) | G1 estimate model, granularity, composition shown | Choose an option and, if A or C, the model kind and its parameters with provenance |
-| [0029](../../.ai/decision-requests/0029-t-1-decline-victory-point-cost.md) | G2 VP cost and modifiers | Choose an option and, if A or C, the per-mission amount and any modifier rule |
-| [0030](../../.ai/decision-requests/0030-t-1-decline-opponent-credit.md) | G3 opponent credit | Choose none, mirror or fraction, and the fraction |
-| [0031](../../.ai/decision-requests/0031-t-1-several-declined-battles-threshold.md) | G4 "several": threshold, scope, reset | Choose threshold, scope and reset |
-| [0032](../../.ai/decision-requests/0032-t-1-declined-battle-prestige-rule.md) | G5 prestige rule kind and amount (within the S-2 shape) | Choose option and, if A or C, kind and amount |
-| [0033](../../.ai/decision-requests/0033-t-1-enemy-decline-rule.md) | G6 enemy-decline comparison, threshold, probability, cost | Choose option and the four sub-values together |
-| [0034](../../.ai/decision-requests/0034-t-1-support-force-presence-and-composition.md) | G7 support presence chance, composition, own-AI question | Choose option and the three sub-values |
+| 0028 | G1 estimate model, granularity, composition shown | Choose an option and, if A or C, the model kind and its parameters with provenance |
+| 0029 | G2 VP cost and modifiers | Choose an option and, if A or C, the per-mission amount and any modifier rule |
+| 0030 | G3 opponent credit | Choose none, mirror or fraction, and the fraction |
+| 0031 | G4 "several": threshold, scope, reset | Choose threshold, scope and reset |
+| 0032 | G5 prestige rule kind and amount (within the S-2 shape) | Choose option and, if A or C, kind and amount |
+| 0033 | G6 enemy-decline comparison, threshold, probability, cost | Choose option and the four sub-values together |
+| 0034 | G7 support presence chance, composition, own-AI question | Choose option and the three sub-values |
 
 Open observations (non-blocking, not decision requests, per spec #109): how many offers per
 month beyond the repository's one accepted battle per area; ownership of coastal raids;

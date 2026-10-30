@@ -4,9 +4,9 @@ agent: build
 ---
 
 You are managing the Bluetide worktree subtrees that let several agents work at
-once without sharing a checkout (ADR-0220). Each effort runs in its own git
+once without sharing a checkout. Each effort runs in its own git
 worktree under `.worktrees/<slug>` on a short-lived branch; the live set is the
-shared registry `$(git rev-parse --git-common-dir)/ai/worktrees.json` (untracked and shared by every checkout, ADR-0313). Never edit that file by hand —
+shared registry `$(git rev-parse --git-common-dir)/ai/worktrees.json` (untracked and shared by every checkout). Never edit that file by hand —
 [`scripts/worktree.mjs`](../scripts/worktree.mjs) owns it.
 
 Interpret `$ARGUMENTS` as `worktree.mjs` argv and run it:
@@ -42,4 +42,4 @@ unregistered worktree is drift: fix it with `sync` or `prune`, never by editing 
 
 Stop and report if `new` fails because the slug, path, or branch already exists —
 do not force over another agent's subtree; that is exactly the shared-checkout
-hazard ADR-0165 removed.
+hazard the branch-discipline hook removed.

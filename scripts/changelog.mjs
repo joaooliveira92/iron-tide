@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Generate a draft changelog section from Conventional Commits (ADR-0134).
+// Generate a draft changelog section from Conventional Commits.
 //
 // The curated `CHANGELOG.md` stays the player-facing source of truth; this
 // produces the raw, per-type draft that seeds a release section, so the commit
@@ -10,7 +10,7 @@
 //
 // Prints the raw per-type draft to stdout by default. The curated `CHANGELOG.md`
 // is human-authored and is not overwritten: `--out` writes the draft beside it
-// for a maintainer to reconcile at release time (ADR-0134).
+// for a maintainer to reconcile at release time.
 
 import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";

@@ -189,14 +189,14 @@ parameters. Shapes only; no value is implied.
 
 | Request                                                                                        | Values returned                                                              |
 | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| [0016](../../.ai/decision-requests/0016-s-5-presence-tonnage-required-formula.md)              | Tonnage-required function and possession value (rows 1, 2)                   |
-| [0017](../../.ai/decision-requests/0017-s-5-base-value-limit-mapping-and-no-base-limit.md)     | Base value source, limit mapping, no-base limit (rows 3 to 5)                |
-| [0018](../../.ai/decision-requests/0018-s-5-base-slot-occupying-readiness-states.md)           | Readiness states occupying a base slot (row 6)                               |
-| [0019](../../.ai/decision-requests/0019-s-5-over-base-maintenance-and-crew-quality-effects.md) | Over-base maintenance and crew-quality effects (rows 7, 8)                   |
-| [0020](../../.ai/decision-requests/0020-s-5-cramped-and-short-range-counting-fraction.md)      | Cramped and short-range fraction (row 10)                                    |
-| [0021](../../.ai/decision-requests/0021-s-5-colonial-service-displacement-proportion.md)       | Colonial-service displacement proportion (row 12)                            |
-| [0022](../../.ai/decision-requests/0022-s-5-home-area-requirement-and-blockade-exemption.md)   | Home-area requirement and its blockade exemption (rows 15, 16; row 14 scope) |
-| [0023](../../.ai/decision-requests/0023-s-5-presence-penalty-magnitudes-and-revolt-trigger.md) | Prestige, revolt-pressure magnitudes and revolt trigger (rows 17 to 19)      |
+| 0016              | Tonnage-required function and possession value (rows 1, 2)                   |
+| 0017     | Base value source, limit mapping, no-base limit (rows 3 to 5)                |
+| 0018           | Readiness states occupying a base slot (row 6)                               |
+| 0019 | Over-base maintenance and crew-quality effects (rows 7, 8)                   |
+| 0020      | Cramped and short-range fraction (row 10)                                    |
+| 0021       | Colonial-service displacement proportion (row 12)                            |
+| 0022   | Home-area requirement and its blockade exemption (rows 15, 16; row 14 scope) |
+| 0023 | Prestige, revolt-pressure magnitudes and revolt trigger (rows 17 to 19)      |
 
 Eight requests, since the p.46 penalty group and the home-area group are each tightly
 coupled; rows 17 to 19 cannot be chosen independently (S-3 owns revolts).

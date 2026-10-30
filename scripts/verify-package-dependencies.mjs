@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Enforce the workspace dependency policy (ADR-0107).
+// Enforce the workspace dependency policy.
 //
 // A gate for the manifest layer, complementing the lockfile-level single-copy
 // guard (`assert-single-effect.mjs`) and `pnpm audit`:
@@ -87,7 +87,6 @@ function main() {
     console.error("verify-package-dependencies: FAILED\n");
     for (const v of violations)
       console.error(`  ${v.file}: ${v.name}@${v.specifier} — ${v.reason}`);
-    console.error("\nSee ADR-0107 for the workspace dependency policy.");
     process.exit(1);
   }
   console.log(`verify-package-dependencies: ok (${manifestPaths().length} manifests conform).`);

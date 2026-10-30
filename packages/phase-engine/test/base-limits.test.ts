@@ -120,7 +120,7 @@ describe("S-5 08: base limits at month end", () => {
     }
   });
 
-  it("is not exempted by a war with a blockade (ADR-0248)", () => {
+  it("is not exempted by a war with a blockade", () => {
     const base = peace(3, [port(1)]);
     const blockaded: CampaignSnapshot = {
       ...base,

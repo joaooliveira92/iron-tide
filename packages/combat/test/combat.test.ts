@@ -357,7 +357,7 @@ describe("combat (narrow) - preserved", () => {
   });
 });
 
-describe("StrengthCalculator: a ship under rebuild does not count (ADR-0078)", () => {
+describe("StrengthCalculator: a ship under rebuild does not count", () => {
   it("leaves unavailable ships out of firepower, as it leaves out ships under construction", () => {
     const ships = [
       makeShip({ id: "s1", firepower: SafeInt(10) }),

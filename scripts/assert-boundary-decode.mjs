@@ -5,7 +5,7 @@
 // external boundary; a `JSON.parse(...) as T` assertion admits whatever the file
 // happens to contain, bypassing the validator the same shape already has
 // (ADR-0102/ADR-0105). This gate freezes the rule per boundary scope
-// (ADR-0106 ratchet pattern):
+//:
 //
 //   --scope compiler  packages/content-compiler/src  (the content loader)
 //   --scope desktop   apps/desktop/src/main          (project/pack loaders)
@@ -36,7 +36,7 @@
 // shrink-only baseline keyed by file and content fingerprint. The remaining baseline is
 // deliberate: renderer crash reports stay tolerant, command rows and sidecars choose their
 // own options, the content manifest/lock tolerate extra keys (pinned by test), and the
-// save-header probe stays lenient (ADR-0278 §4).
+// save-header probe stays lenient.
 //
 // Usage: `node scripts/assert-boundary-decode.mjs [--scope compiler|desktop|cli|persistence|decode-options|all] [--self-test] [--strict] [--write]`
 //   (`--write` reseeds the decode-options baseline from the current tree)
@@ -63,7 +63,7 @@ export const SCOPES = {
 /**
  * Reviewed exceptions, keyed by file then by the whitespace-normalised source of
  * the cast expression, each with the number of occurrences the exception covers
- * and a one-line justification (ADR-0151 §2). The count keeps the ratchet
+ * and a one-line justification. The count keeps the ratchet
  * honest: the same cast appearing once more than its allowance is a new finding.
  * Entries here only ever shrink; a rewritten cast is treated as new and must be
  * re-reviewed.
@@ -209,7 +209,7 @@ export function findBoundaryDecodeCasts(file, text) {
  * Split the findings into those no allowlist entry covers (`kept`) and the
  * allowlist entries whose occurrence allowance was not fully consumed (`stale`),
  * keyed by file then whitespace-normalised cast source, consuming one unit of
- * each entry's occurrence allowance per match (ADR-0151 §2). A duplicate cast
+ * each entry's occurrence allowance per match. A duplicate cast
  * beyond its allowance is kept, so a new assertion is never silently admitted; a
  * fully-unused entry is stale, so a removed assertion must shrink the allowlist.
  * @param {ReadonlyArray<{file: string, line: number, snippet: string}>} findings
@@ -256,7 +256,7 @@ export function filterAllowlisted(findings, allowlist) {
  * True when the run should treat stale allowlist entries as fatal. CI is the
  * authority on the committed tree, so it is strict; a local run only warns,
  * because a concurrent editor removing a cast elsewhere must not block an
- * unrelated commit (ADR-0107). `--strict` opts a local run in. Mirrors
+ * unrelated commit. `--strict` opts a local run in. Mirrors
  * `verify-no-unknown-casts.mjs`.
  * @returns {boolean}
  */
@@ -324,7 +324,7 @@ export function scanBoundaryDecodeCasts(repoRoot, roots, allowlist = ALLOWLIST, 
     const message =
       "assert-boundary-decode: stale allowlist entr" +
       (stale.length === 1 ? "y" : "ies") +
-      " — the cast was removed, so remove the entry (ADR-0151 §2: entries may only shrink).\n" +
+      " — the cast was removed, so remove the entry (entries may only shrink).\n" +
       detail;
     if (strict) throw new Error(message);
     console.warn(message);

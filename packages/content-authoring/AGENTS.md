@@ -12,6 +12,4 @@
 - Provenance is data: a placeholder, estimate or derived value without a rationale is rejected at construction.
 - Constructors may not hide a tuning coefficient.
 
-**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/content-authoring.md).
-
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Test: `pnpm --filter @bluewave/content-authoring test`.

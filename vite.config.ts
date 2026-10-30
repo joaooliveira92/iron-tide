@@ -17,7 +17,7 @@ export default defineConfig({
       "codefetch/**",
       "golden/**",
       // Frozen save artifacts: `campaign.json` is hashed byte-for-byte by its
-      // signature, so reformatting it would break the fixture (ADR-0113 §5).
+      // signature, so reformatting it would break the fixture.
       "packages/persistence/test/fixtures/**",
       "dist/**",
       "out/**",
@@ -165,14 +165,6 @@ export default defineConfig({
         command: "node scripts/verify-package-agents.mjs",
         dependsOn: ["gate:package-agents-self-test", "gate:doc-budgets"],
       },
-      "gate:adr-scopes-self-test": {
-        command: "node scripts/verify-adr-scopes.mjs --self-test",
-        dependsOn: ["gate:git-state"],
-      },
-      "gate:adr-scopes": {
-        command: "node scripts/verify-adr-scopes.mjs",
-        dependsOn: ["gate:adr-scopes-self-test", "gate:package-agents"],
-      },
       "gate:dependency-policy": {
         command: "node scripts/verify-package-dependencies.mjs",
         dependsOn: ["gate:git-state"],
@@ -293,7 +285,6 @@ export default defineConfig({
           "gate:docs",
           "gate:doc-budgets",
           "gate:package-agents",
-          "gate:adr-scopes",
           "gate:dependency-policy",
           "gate:workspace-graph",
           "gate:unknown-casts",

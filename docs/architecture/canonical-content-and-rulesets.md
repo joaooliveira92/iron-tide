@@ -1,7 +1,7 @@
 # Canonical content and rulesets
 
 Domain content is authored as declarative TypeScript and compiled into a canonical
-JSON artifact that the app runs on ([ADR-0334](../adr/ADR-0334-deprecate-yaml-outside-internationalization.md)).
+JSON artifact that the app runs on .
 The distinction between **authored**, **compiled**, and **ruleset** data is a
 load-bearing part of the determinism story.
 
@@ -45,7 +45,7 @@ fails the build.
 - **Generated:** canonical JSON, written only by the compiler and never edited.
 - **YAML:** permitted only for localization catalogues under
   `content/production/<pack>/ui/`, plus the externally mandated infrastructure
-  files ADR-0334 names. `scripts/assert-no-foreign-yaml.mjs` fails on any other
+  files. `scripts/assert-no-foreign-yaml.mjs` fails on any other
   tracked `.yaml`/`.yml` outside the shrinking migration ratchet.
 
 ## Safety
