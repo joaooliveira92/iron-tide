@@ -22,6 +22,10 @@ Exit codes: `0` clean, `1` failure, `2` usage or unknown base, `130` cancelled. 
 
 Prints one `.ai/SPRINT-PLAN.md` section, capped at 120 lines. `--list` shows the outline. Ambiguous selectors exit `3`, unknown `4`.
 
+## `pnpm worktrees inbox`
+
+Lists open tasks from the worktree registry, `NEEDS-YOU` rows first; `pnpm worktrees status <slug> <state>` moves one. See [task lifecycle](task-lifecycle.md).
+
 ## Long gates
 
 Run long commands blocking through `pnpm heavy <command>`; it serialises across worktrees and forwards signals. Do not background a gate and poll it with `sleep`.

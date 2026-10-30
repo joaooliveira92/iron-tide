@@ -18,6 +18,7 @@ Supersedes: ADR-0275
 Supersedes: ADR-0299
 Supersedes: ADR-0300
 Supersedes: ADR-0335
+Consistent with: ADR-0367
 
 ## Context
 

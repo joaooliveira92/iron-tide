@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0367).
+highest existing number + 1 (the next number is ADR-0368).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -76,7 +76,7 @@ Unavailable-artifact policy and the project authority order.
 
 ## Process & documentation
 
-Worktree and git workflow, verification gates and CI infrastructure, ADR corpus and replay practices.
+Worktree and git workflow, agent task lifecycle, verification gates and CI infrastructure, ADR corpus and replay practices.
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
@@ -105,6 +105,7 @@ Worktree and git workflow, verification gates and CI infrastructure, ADR corpus 
 | 0364 | [ADR-0364-worktree-and-git-workflow.md](ADR-0364-worktree-and-git-workflow.md) | Worktree and git workflow | accepted | — |
 | 0365 | [ADR-0365-verification-gates-and-infrastructure.md](ADR-0365-verification-gates-and-infrastructure.md) | Verification gates and infrastructure | accepted | — |
 | 0366 | [ADR-0366-adr-code-and-replay-practices.md](ADR-0366-adr-code-and-replay-practices.md) | ADR, code and replay practices | accepted | — |
+| 0367 | [ADR-0367-agent-task-lifecycle-and-merge-authority.md](ADR-0367-agent-task-lifecycle-and-merge-authority.md) | Agent task lifecycle, merge authority and rollback | accepted | — |
 
 ## Scenario content & research
 

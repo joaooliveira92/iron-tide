@@ -17,13 +17,15 @@ Precedence: safety/legal/credential → canonical design → contract → ADRs �
 
 Run `pnpm agent:map <symbol|path>` before reading, `pnpm verify:affected` before committing, and `pnpm heavy` (not `sleep`) for long gates. See [agent tools](docs/agents/agent-tools.md).
 
+Start substantial tasks from a [task brief](.ai/templates/task-brief.md): problem and evidence first, then the simplest viable solution. Track state with `pnpm worktrees status`/`inbox`; return only when a human is needed. Merge only with the brief's authority; report rollback (ADR-0367). See [task lifecycle](docs/agents/task-lifecycle.md), [rollback](docs/agents/rollback.md), [autonomy and access](docs/agents/autonomy-and-access.md).
+
 ## Rules
 
 - Check `git status`, `git pull --rebase`, and `pnpm preflight` at session start; rebase before every push.
 - Never overwrite or reformat others' work. Keep commits narrow, Conventional.
 - No code comments (ADR-0268, see ADR-0366). Names, types, tests carry intent; rationale in ADR or commit message.
 - Short-lived branch from `dev`; max 5 worktrees (ADR-0237, see ADR-0364), one session per checkout.
-- Review agents are read-only: no edits, commits, branches, or PR state.
+- Review agents are read-only: no edits, commits, branches, or PR state. Reports are pointers, not evidence: verify the diff, gates, and `git status`.
 - Doc budgets in `scripts/doc-budgets.manifest.json`; ratchet down, justify raises.
 - Constraining decisions → ADR with `Applies to:` and `Rule:`. Authority through `Supersedes:`/`Amends:`. Read by-scope: [repository](docs/adr/by-scope/repository.md) + package `AGENTS.md`.
 

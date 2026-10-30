@@ -15,6 +15,9 @@
 //   sync            reconcile the registry with actual git worktrees
 //   prune           remove merged/gone/phantom subtrees and their registry rows
 //   remove <slug>   remove one subtree (refuses on uncommitted changes)
+//   status <slug> <state>
+//                   move a task through the lifecycle in docs/agents/task-lifecycle.md
+//   inbox           open tasks ordered by how urgently they need a human
 //   audit           read-only inventory + reconciliation of worktrees, branches,
 //                   remotes, the registry, and (via `gh`) merged pull requests
 //
@@ -56,6 +59,27 @@ export const MAX_WORKTREES = 5;
 
 /** Non-terminal subtree states. `prune` removes everything else. */
 export const TERMINAL_STATES = new Set(["merged", "gone", "phantom"]);
+
+/**
+ * Agent task lifecycle (ADR-0367), in inbox order: states that need a human sort
+ * first, closed states are hidden from the inbox. `active` is the pre-lifecycle
+ * spelling of `running` and is read as such.
+ */
+export const TASK_STATES = [
+  { state: "waiting-for-input", attention: "human" },
+  { state: "blocked", attention: "human" },
+  { state: "ready-for-review", attention: "human" },
+  { state: "ready-to-merge", attention: "human" },
+  { state: "monitoring-pr", attention: "none" },
+  { state: "running", attention: "none" },
+  { state: "queued", attention: "none" },
+  { state: "merged", attention: "closed" },
+  { state: "rejected", attention: "closed" },
+  { state: "archived", attention: "closed" },
+];
+const TASK_STATE_NAMES = TASK_STATES.map((t) => t.state);
+const LEGACY_TASK_STATES = new Map([["active", "running"]]);
+export const taskState = (status) => LEGACY_TASK_STATES.get(status) ?? status;
 
 function mainCheckoutRoot() {
   try {
@@ -343,7 +367,7 @@ export function unregisteredWorktrees(rows) {
       branch: w.branch || "detached",
       scope: w.slug,
       owner: "unknown",
-      status: "active",
+      status: "running",
       base: DEFAULT_BASE,
       created: "—",
       pr: "—",
@@ -683,14 +707,17 @@ function cmdAudit({ flags }) {
 const USAGE = `usage: worktree.mjs <command> [options]
 
 commands:
-  new <slug> [--branch <name>] [--base <ref>] [--owner <role>]
-                   create .worktrees/<slug> on a branch and register it
+  new <slug> [--branch <name>] [--base <ref>] [--owner <role>] [--scope <issue>]
+                   create .worktrees/<slug> on a branch and register it as running
   list [--json]    live worktrees joined with the registry
   sync             reconcile the registry with git worktrees
   prune [--check|--force]
                    remove merged, gone, and phantom subtrees (--check only reports)
   remove <slug> [--force]
                    remove one subtree
+  status <slug> <state> [--pr <ref>]
+                   set a task's lifecycle state (${TASK_STATE_NAMES.join(", ")})
+  inbox [--json]   open tasks, those needing a human first; closed tasks hidden
   audit [--json] [--no-gh]
                    read-only inventory of worktrees, branches, remotes, registry and
                    merged PRs; exit 0 clean, 1 drift, 2 error (--no-gh skips PRs)
@@ -699,12 +726,14 @@ commands:
 Unknown commands or options fail with exit 2 and change nothing.`;
 
 const COMMAND_SPECS = {
-  new: { positional: "slug", flags: [], values: ["branch", "base", "owner"] },
+  new: { positional: "slug", flags: [], values: ["branch", "base", "owner", "scope"] },
   list: { flags: ["json"], values: [] },
   sync: { flags: [], values: [] },
   prune: { flags: ["check", "force"], values: [], exclusive: [["check", "force"]] },
   remove: { positional: "slug", flags: ["force"], values: [] },
   audit: { flags: ["json", "no-gh"], values: [] },
+  status: { positionals: ["slug", "state"], flags: [], values: ["pr"] },
+  inbox: { flags: ["json"], values: [] },
 };
 
 const isHelp = (arg) => arg === "--help" || arg === "-h";
@@ -746,14 +775,24 @@ export function parseCliArgs(argv) {
       return { ok: false, command, error: `unknown option "${arg}" for "${command}"` };
     }
   }
-  const expected = spec.positional ? 1 : 0;
-  if (positionals.length !== expected) {
+  const names = spec.positionals ?? (spec.positional ? [spec.positional] : []);
+  if (positionals.length !== names.length) {
     return {
       ok: false,
       command,
-      error: expected
-        ? `"${command}" takes exactly one <${spec.positional}>`
-        : `"${command}" takes no positional arguments`,
+      error:
+        names.length === 0
+          ? `"${command}" takes no positional arguments`
+          : names.length === 1
+            ? `"${command}" takes exactly one <${names[0]}>`
+            : `"${command}" takes ${names.map((n) => `<${n}>`).join(" ")}`,
+    };
+  }
+  if (command === "status" && !TASK_STATE_NAMES.includes(positionals[1])) {
+    return {
+      ok: false,
+      command,
+      error: `unknown task state "${positionals[1]}" (one of ${TASK_STATE_NAMES.join(", ")})`,
     };
   }
   for (const group of spec.exclusive ?? []) {
@@ -778,6 +817,7 @@ function cmdNew({ positionals: [slug], values }) {
   const branch = values.branch ?? `${DEFAULT_BRANCH_PREFIX}${slug}`;
   const base = values.base ?? DEFAULT_BASE;
   const owner = values.owner ?? "orchestrator";
+  const scope = values.scope ?? slug;
   const path = join(WORKTREES_DIR, slug);
   const release = acquireRegistryLock();
 
@@ -814,9 +854,9 @@ function cmdNew({ positionals: [slug], values }) {
       {
         slug,
         branch,
-        scope: slug,
+        scope,
         owner,
-        status: "active",
+        status: "running",
         base,
         created: todayIso(),
         pr: "—",
@@ -827,7 +867,7 @@ function cmdNew({ positionals: [slug], values }) {
     release();
   }
   console.log(`created ${path} on ${branch} (base ${base})`);
-  console.log(`next: work this subtree's frontier with ".opencode/command/work.md <root issue>"`);
+  console.log(`next: fill a task brief (.ai/templates/task-brief.md) and work it in ${path}`);
 }
 
 function cmdList({ flags }) {
@@ -957,6 +997,78 @@ function cmdRemove({ positionals: [slug], flags }) {
   console.log(message);
 }
 
+function cmdStatus({ positionals: [slug, state], values }) {
+  let previous;
+  const release = acquireRegistryLock();
+  try {
+    const rows = readRowsForMutation();
+    const row = rows.find((r) => r.slug === slug);
+    if (!row) {
+      console.error(`no registered task "${slug}" (run "worktree.mjs sync" first?)`);
+      process.exitCode = 1;
+      return;
+    }
+    previous = taskState(row.status);
+    writeRowsLocked(
+      rows.map((r) => (r.slug === slug ? { ...r, status: state, pr: values.pr ?? r.pr } : r)),
+    );
+  } finally {
+    release();
+  }
+  console.log(`${slug}: ${previous} -> ${state}`);
+}
+
+/** Registered tasks with their lifecycle state, in inbox order, closed ones dropped. */
+export function inboxTasks(rows) {
+  const rank = new Map(TASK_STATES.map((t, index) => [t.state, index]));
+  const attention = new Map(TASK_STATES.map((t) => [t.state, t.attention]));
+  return rows
+    .map((row) => {
+      const status = taskState(row.status);
+      return {
+        slug: row.slug,
+        status,
+        attention: attention.get(status) ?? "human",
+        branch: row.branch,
+        scope: row.scope,
+        pr: row.pr,
+        owner: row.owner,
+        created: row.created,
+      };
+    })
+    .filter((task) => task.attention !== "closed")
+    .sort(
+      (a, b) =>
+        (rank.get(a.status) ?? -1) - (rank.get(b.status) ?? -1) || compareText(a.slug, b.slug),
+    );
+}
+
+function cmdInbox({ flags }) {
+  const inspected = inspectRows(readLedger());
+  const stale = inspected
+    .filter((r) => TERMINAL_STATES.has(r.state))
+    .map((r) => ({ slug: r.slug, state: r.state, status: taskState(r.status) }));
+  const staleSlugs = new Set(stale.map((r) => r.slug));
+  const tasks = inboxTasks(inspected.filter((r) => !staleSlugs.has(r.slug)));
+  if (flags.json) {
+    console.log(JSON.stringify({ tasks, stale }, null, 2));
+    return;
+  }
+  if (tasks.length === 0) {
+    console.log("# inbox zero: no open tasks");
+  } else {
+    console.log("# attention\tslug\tstatus\tscope\tpr\tbranch");
+    for (const t of tasks) {
+      const mark = t.attention === "human" ? "NEEDS-YOU" : "-";
+      console.log(`${mark}\t${t.slug}\t${t.status}\t${t.scope}\t${t.pr}\t${t.branch}`);
+    }
+  }
+  if (stale.length > 0) {
+    const list = stale.map((r) => `${r.slug} (${r.state})`).join(", ");
+    console.log(`# ${stale.length} stale row(s): ${list}; run \`pnpm worktrees prune\``);
+  }
+}
+
 const COMMANDS = {
   new: cmdNew,
   list: cmdList,
@@ -964,6 +1076,8 @@ const COMMANDS = {
   prune: cmdPrune,
   remove: cmdRemove,
   audit: cmdAudit,
+  status: cmdStatus,
+  inbox: cmdInbox,
 };
 
 function main() {

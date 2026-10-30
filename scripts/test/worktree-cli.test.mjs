@@ -414,3 +414,93 @@ void test("legacy ledger metadata migrates once and drops phantom rows", () => {
     ["a"],
   );
 });
+
+// --- task lifecycle: status transitions and the attention-ordered inbox ------
+
+void test("new records the --scope issue and starts the task running", () => {
+  const repo = makeRepo();
+  assert.equal(run(repo, "new", "issue-7", "--scope", "#7").code, 0);
+  const [row] = registryRows(repo);
+  assert.equal(row.scope, "#7");
+  assert.equal(row.status, "running");
+});
+
+void test("status moves a registered task to a lifecycle state and records its PR", () => {
+  const repo = makeRepo();
+  assert.equal(run(repo, "new", "a").code, 0);
+  const r = run(repo, "status", "a", "ready-for-review", "--pr", "#12");
+  assert.equal(r.code, 0, r.err);
+  const [row] = registryRows(repo);
+  assert.equal(row.status, "ready-for-review");
+  assert.equal(row.pr, "#12");
+});
+
+void test("status rejects an unknown state and leaves the registry unchanged", () => {
+  const repo = makeRepo();
+  assert.equal(run(repo, "new", "a").code, 0);
+  const before = readFileSync(registryFile(repo), "utf8");
+  const r = run(repo, "status", "a", "done-ish");
+  assert.equal(r.code, 2);
+  assert.match(r.err, /unknown task state "done-ish"/);
+  assert.equal(readFileSync(registryFile(repo), "utf8"), before);
+});
+
+void test("status fails on an unregistered slug", () => {
+  const repo = makeRepo();
+  const r = run(repo, "status", "nope", "blocked");
+  assert.equal(r.code, 1);
+  assert.match(r.err, /no registered task "nope"/);
+});
+
+void test("inbox lists tasks needing a human first and hides closed ones", () => {
+  const repo = makeRepo();
+  for (const slug of ["run", "wait", "merge", "gone"]) {
+    assert.equal(run(repo, "new", slug).code, 0);
+  }
+  run(repo, "status", "wait", "waiting-for-input");
+  run(repo, "status", "merge", "ready-to-merge");
+  run(repo, "status", "gone", "archived");
+  const r = run(repo, "inbox");
+  assert.equal(r.code, 0, r.err);
+  const slugs = r.out
+    .trim()
+    .split("\n")
+    .filter((line) => !line.startsWith("#"))
+    .map((line) => line.split("\t")[1]);
+  assert.deepEqual(slugs, ["wait", "merge", "run"]);
+});
+
+void test("inbox --json reports the legacy active status as running", () => {
+  const repo = makeRepo();
+  openWorktree(repo, "a");
+  register(repo, [["a", "research/a"]]);
+  const r = run(repo, "inbox", "--json");
+  assert.equal(r.code, 0, r.err);
+  const tasks = JSON.parse(r.out).tasks;
+  assert.deepEqual(
+    tasks.map((t) => [t.slug, t.status, t.attention]),
+    [["a", "running", "none"]],
+  );
+});
+
+void test("inbox reports rows whose worktree is gone as stale, not as open work", () => {
+  const repo = makeRepo();
+  openWorktree(repo, "live");
+  register(repo, [
+    ["live", "research/live"],
+    ["ghost", "feat/ghost"],
+  ]);
+  const json = JSON.parse(run(repo, "inbox", "--json").out);
+  assert.deepEqual(
+    json.tasks.map((t) => t.slug),
+    ["live"],
+  );
+  assert.deepEqual(
+    json.stale.map((t) => [t.slug, t.state]),
+    [["ghost", "phantom"]],
+  );
+  assert.match(
+    run(repo, "inbox").out,
+    /# 1 stale row\(s\): ghost \(phantom\); run `pnpm worktrees prune`/,
+  );
+});

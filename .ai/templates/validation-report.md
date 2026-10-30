@@ -4,6 +4,8 @@
 
 `PASS`, `PASS_WITH_LIMITATIONS`, or `BLOCKED`.
 
+Task brief: link. Thread, machine, model: as recorded in the brief.
+
 ## Scope delivered
 
 Summarize implemented behavior and explicitly deferred behavior.
@@ -59,6 +61,11 @@ List new ADRs and dependencies with rationale, license, maintenance, security, a
 
 Be precise. Do not present fixture support as production support.
 
+## Assumptions and unresolved concerns
+
+Mark each statement as observed (with the command or file) or hypothesis.
+List review findings answered as invalid, with the reason.
+
 ## Changed files
 
 Group by package and purpose.
@@ -70,7 +77,16 @@ Group by package and purpose.
 - Working tree:
 - Push status:
 - Pull request:
-- Merge performed: must be `no`
+- Review disposition:
+- Merge performed: `no`, or `yes` with the brief's merge authority and the observed conditions
+
+## Rollback
+
+The exact revert command for this change ([rollback](../../docs/agents/rollback.md)), and any re-pin it implies.
+
+## Recommended next action
+
+One action and the lifecycle state the task is left in.
 
 ## Secondary consistency check
 

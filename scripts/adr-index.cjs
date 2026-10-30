@@ -58,10 +58,10 @@ const AREAS = [
   {
     name: "Process & documentation",
     blurb:
-      "Worktree and git workflow, verification gates and CI infrastructure, ADR corpus and replay practices.",
+      "Worktree and git workflow, agent task lifecycle, verification gates and CI infrastructure, ADR corpus and replay practices.",
     nums: [
       220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 279, 280, 295, 299, 300, 313, 318,
-      319, 335, 336, 364, 365, 366,
+      319, 335, 336, 364, 365, 366, 367,
     ],
   },
   {
