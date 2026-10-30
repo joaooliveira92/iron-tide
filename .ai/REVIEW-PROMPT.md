@@ -30,11 +30,14 @@ Inspect for:
 18. Unnecessary abstractions, speculative packages, and premature optimization
 19. Missing traceability, ADRs, documentation, or validation evidence
 20. Git or delivery-policy violations
+21. Gaps against the task brief's problem and acceptance criteria, not only against the diff's own claims
+22. Unrelated modifications, unsafe or unjustified dependencies, and missing rollback instructions
 
 ## Required output
 
 For every finding provide:
 
+- class: required, recommended, or unrelated to this task ([task lifecycle](../docs/agents/task-lifecycle.md));
 - severity: blocker, high, medium, low;
 - requirement ID or contract section;
 - exact file and symbol or line range;

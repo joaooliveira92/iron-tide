@@ -66,7 +66,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `adr-index.cjs` (`pnpm adr:index`) — regenerate the `docs/adr/` indexes.
 - `change-scope.mjs` (`pnpm change-scope --base <ref>`) — change-scope JSON ([usage](../docs/agents/change-scope.md)).
 - `agent-map.mjs`, `verify-affected.mjs`, `sprint-show.mjs` — agent loop ([agent tools](../docs/agents/agent-tools.md)).
-- `worktree.mjs` (`pnpm worktrees …`) — manage worktrees and the registry (ADR-0313, [worktree command](../.opencode/command/worktrees.md)).
+- `worktree.mjs` (`pnpm worktrees …`) — manage worktrees, the registry, and task lifecycle state: `status`, `inbox` (ADR-0364, ADR-0367, [task lifecycle](../docs/agents/task-lifecycle.md)).
 - `changelog.mjs` — draft a changelog section from Conventional Commits (ADR-0134).
 - `install-hooks.mjs` (`pnpm hooks:install`) — point `core.hooksPath` at `.githooks`.
 - `new-nation.mjs` — scaffold a nation's content ([adding a nation](../docs/agents/adding-a-nation.md)).

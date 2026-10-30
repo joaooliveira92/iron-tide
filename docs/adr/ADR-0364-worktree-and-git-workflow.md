@@ -16,6 +16,7 @@ Supersedes: ADR-0236
 Supersedes: ADR-0237
 Supersedes: ADR-0269
 Supersedes: ADR-0313
+Amended by: ADR-0367 (rule 4: the `status` field carries the agent task lifecycle).
 
 ## Context
 
