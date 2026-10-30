@@ -73,14 +73,6 @@ export function canonicalizePayload(
   return { canonicalPayload: normalized, canonicalPayloadHash: hash };
 }
 
-let globalOrdinal = 0;
-export function assignSubmissionOrdinal(): number {
-  return globalOrdinal++;
-}
-export function resetSubmissionOrdinal(): void {
-  globalOrdinal = 0;
-}
-
 export function canonicalOrder(
   records: CommandRecord[],
   phaseOrdinalMap: Map<string, number>,
