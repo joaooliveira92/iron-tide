@@ -74,8 +74,8 @@
   },
   "devDependencies": {
     "@effect/tsgo": "0.63.0",
-    "@types/node": "^26.6.5",
-    "oxc-parser": "0.155.0",
+    "@types/node": "^26.6.6",
+    "oxc-parser": "0.156.0",
     "oxlint": "1.90.0",
     "oxlint-tsgolint": "7.0.2005",
     "rimraf": "6.1.3",
