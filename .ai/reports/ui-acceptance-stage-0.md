@@ -41,12 +41,12 @@ by reading the specs, not by instrumentation. Classes:
 | cancel-construction-project       | none   | `construction` cancels a pending command, not a project with a refund              |
 | read-priorities                   | reads  | `status-strip`                                                                     |
 | read-battle-history               | reads  | `mvp-loop` empty history only                                                      |
-| persist-ui-state                  | none   | `theme` and `backgrounds` write preferences to a fixture file, not through the UI  |
-| set-research-priority             | none   |                                                                                    |
-| fund-special-training             | none   |                                                                                    |
-| hold-fleet-exercise               | none   |                                                                                    |
-| assign-or-relieve-officer         | none   |                                                                                    |
-| set-budget-allocation             | none   | `status-strip` reads the budget card only                                          |
+| persist-ui-state                  | drives | `management` preference and guided inspection survive restarts                     |
+| set-research-priority             | drives | `management` research priority queued, holds after the month                       |
+| fund-special-training             | drives | `management` special training funded, accrues a month                              |
+| hold-fleet-exercise               | drives | `management` annual exercise ordered, then marked held                             |
+| assign-or-relieve-officer         | drives | `management` commander relieved, then assigned                                     |
+| set-budget-allocation             | drives | `management` budget allocation queued, research spend changes next month           |
 | revise-project                    | none   |                                                                                    |
 | start-rebuild                     | none   |                                                                                    |
 | accelerate-construction           | none   |                                                                                    |
@@ -61,13 +61,13 @@ by reading the specs, not by instrumentation. Classes:
 
 ## Counts
 
-35 reachable rows: 12 drives, 5 reads, 18 none. Stages 1 to 4 must turn the 18 `none` rows into `drives`, and the 5
-`reads` rows get real content assertions.
+35 reachable rows: 18 drives, 5 reads, 12 none. Stage 1 turned six `none` rows into `drives` (`management.spec.ts`).
+Stages 2 to 4 must turn the 12 remaining `none` rows into `drives`, and the 5 `reads` rows get real content assertions.
 
 ## Gap list, in stage order
 
-1. Stage 1, management: set-research-priority, set-budget-allocation, fund-special-training, hold-fleet-exercise,
-   assign-or-relieve-officer, persist-ui-state (drive it through Preferences).
+1. Stage 1, management: done. set-research-priority, set-budget-allocation, fund-special-training, hold-fleet-exercise,
+   assign-or-relieve-officer and persist-ui-state are driven in `management.spec.ts`.
 2. Stage 2, construction: accelerate-construction, authorize-dock-expansion, revise-project, start-rebuild,
    cancel-construction-project (project, with refund).
 3. Stage 3, diplomacy: declare-war, accept-peace, form-or-break-alliance, form-or-break-non-aggression-pact,
