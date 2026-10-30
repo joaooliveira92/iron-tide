@@ -21,6 +21,7 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         "protected_cruiser_form",
         "coast_defence_form",
         "pre_dreadnought_form",
+        "postwar_destroyer_form",
         "merchant_liner_form",
       ],
       domesticPlants: [
@@ -29,6 +30,7 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         "triple_expansion_watertube",
         "compound_locomotive_tb",
         "locomotive_boiler_tb",
+        "hp_steam_geared_turbine",
       ],
       restrictedShipTypes: [],
       grants: [],
@@ -220,6 +222,10 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
       tube_14in_submerged: {
         status: "DOMESTIC",
         producer: "Whitehead (Woolwich)",
+      },
+      tube_21in_above_water: {
+        status: "DOMESTIC",
+        producer: "Vickers / Whitehead",
       },
     },
     gunModels: [
