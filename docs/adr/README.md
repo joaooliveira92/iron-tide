@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0369).
+highest existing number + 1 (the next number is ADR-0370).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -270,6 +270,7 @@ Package interfaces, seams and module depth across the engine.
 | 0322 | [ADR-0322-realism-order-permission-matrix.md](ADR-0322-realism-order-permission-matrix.md) | Realism modes gate battle orders in the engine, not in the UI | superseded | ADR-0358 |
 | 0328 | [ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md](ADR-0328-desktop-ipc-channels-derive-from-a-shared-contract.md) | Desktop IPC channels are declared once in a shared contract | superseded | ADR-0360 |
 | 0334 | [ADR-0334-deprecate-yaml-outside-internationalization.md](ADR-0334-deprecate-yaml-outside-internationalization.md) | Deprecate YAML outside internationalization | superseded | ADR-0361 |
+| 0369 | [ADR-0369-formation-keeping-follows-the-flagship-track.md](ADR-0369-formation-keeping-follows-the-flagship-track.md) | Divisions keep formation by following the flagship's track, behind an optional input | accepted | — |
 
 ## Archive
 

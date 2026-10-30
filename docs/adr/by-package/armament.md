@@ -17,4 +17,4 @@ boundaries.
 
 ## armament-specific
 
-- [ADR-0358](../ADR-0358-combat-engine-architecture.md) `@bluewave/combat` exports exactly `resolve`, `advance`, `generate` and the root contract; all subsystems, orders, realism and combat modules are subpath seams.
+- [ADR-0358](../ADR-0358-combat-engine-architecture.md) `@bluewave/combat` exports exactly `resolve`, `advance`, `generate` and the root contract; all subsystems, orders, realism and combat modules are subpath seams. (amended by ADR-0369).
