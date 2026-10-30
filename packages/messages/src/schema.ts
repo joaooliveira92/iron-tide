@@ -126,12 +126,9 @@ export type CampaignDate = string;
 const DECODE_OPTIONS = { onExcessProperty: "error" } as const;
 
 export function decodeTurnMessage(input: unknown): TurnMessage {
-  return Schema.decodeUnknownSync(TurnMessageSchema, DECODE_OPTIONS)(input) as TurnMessage;
+  return Schema.decodeUnknownSync(TurnMessageSchema, DECODE_OPTIONS)(input);
 }
 
-export function decodeTurnMessages(input: unknown): TurnMessage[] {
-  return Schema.decodeUnknownSync(
-    Schema.Array(TurnMessageSchema),
-    DECODE_OPTIONS,
-  )(input) as TurnMessage[];
+export function decodeTurnMessages(input: unknown): readonly TurnMessage[] {
+  return Schema.decodeUnknownSync(Schema.Array(TurnMessageSchema), DECODE_OPTIONS)(input);
 }

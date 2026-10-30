@@ -1,6 +1,6 @@
 import { canonicalSerialize, hashWithContext } from "@bluewave/deterministic";
 import { Schema } from "effect";
-import type { EntityReference, Interpolation, TurnPhase } from "./schema.js";
+import type { Interpolation, TurnPhase } from "./schema.js";
 import { InterpolationSchema, EntityReferenceSchema, TurnPhaseSchema } from "./schema.js";
 
 const nonEmptyString = Schema.String.check(Schema.isMinLength(1));
@@ -20,23 +20,14 @@ export const EffectHintSchema = Schema.Struct({
   direction: Schema.Literals(EFFECT_DIRECTIONS),
   magnitude: Schema.Literals(EFFECT_MAGNITUDES),
 });
-export interface EffectHint {
-  readonly target: EntityReference;
-  readonly attribute: string;
-  readonly direction: EffectDirection;
-  readonly magnitude: EffectMagnitude;
-}
+export type EffectHint = typeof EffectHintSchema.Type;
 
 export const DecisionEffectSchema = Schema.Struct({
   nationId: nonEmptyString,
   attribute: Schema.Literal("treasury"),
   delta: Schema.Number,
 });
-export interface DecisionEffect {
-  readonly nationId: string;
-  readonly attribute: "treasury";
-  readonly delta: number;
-}
+export type DecisionEffect = typeof DecisionEffectSchema.Type;
 
 export const DecisionOptionSchema = Schema.Struct({
   optionId: nonEmptyString,
@@ -45,13 +36,7 @@ export const DecisionOptionSchema = Schema.Struct({
   hints: Schema.Array(EffectHintSchema),
   effects: Schema.Array(DecisionEffectSchema),
 });
-export interface DecisionOption {
-  readonly optionId: string;
-  readonly titleKey: string;
-  readonly bodyKey: string;
-  readonly hints: readonly EffectHint[];
-  readonly effects: readonly DecisionEffect[];
-}
+export type DecisionOption = typeof DecisionOptionSchema.Type;
 
 export interface PendingDecision {
   readonly phase: TurnPhase;
@@ -63,41 +48,11 @@ export interface PendingDecision {
   readonly options: readonly DecisionOption[];
 }
 
-export interface DecisionRequest {
-  readonly kind: "decision";
-  readonly turnId: string;
-  readonly interruptionId: string;
-  readonly phase: TurnPhase;
-  readonly ordinal: number;
-  readonly subjectKey: string;
-  readonly decisionId: string;
-  readonly titleKey: string;
-  readonly bodyKey: string;
-  readonly interpolation: Interpolation;
-  readonly options: readonly DecisionOption[];
-}
+export type DecisionRequest = typeof DecisionRequestSchema.Type;
 
-export interface DecisionAnswer {
-  readonly interruptionId: string;
-  readonly decisionId: string;
-  readonly optionId: string;
-}
+export type DecisionAnswer = typeof DecisionAnswerSchema.Type;
 
-export interface BattleRequest {
-  readonly kind: "battle";
-  readonly turnId: string;
-  readonly interruptionId: string;
-  readonly phase: TurnPhase;
-  readonly ordinal: number;
-  readonly subjectKey: string;
-  readonly battleId: string;
-  readonly titleKey: string;
-  readonly bodyKey: string;
-  readonly interpolation: Interpolation;
-  readonly attackerId: string;
-  readonly defenderId: string;
-  readonly areaId: string;
-}
+export type BattleRequest = typeof BattleRequestSchema.Type;
 
 export const OFFER_ESTIMATE_MODELS = ["EXACT", "BANDED", "PERTURBED"] as const;
 export type OfferEstimateModel = (typeof OFFER_ESTIMATE_MODELS)[number];
@@ -139,43 +94,19 @@ export const OfferContentSchema = Schema.Struct(offerContentFields);
 
 export type OfferContent = typeof OfferContentSchema.Type;
 
-export interface BattleResultInput {
-  readonly interruptionId: string;
-  readonly battleId: string;
-  readonly winnerId: string | null;
-  readonly loserId: string | null;
-  readonly attackerLosses: readonly string[];
-  readonly defenderLosses: readonly string[];
-  readonly damageReport: Readonly<Record<string, number>>;
-}
+export type BattleResultInput = typeof BattleResultInputSchema.Type;
 
 export const OFFER_RESPONSES = ["accept", "decline", "delegate"] as const;
 export type OfferResponse = (typeof OFFER_RESPONSES)[number];
 
-export interface OfferResponseInput {
-  readonly interruptionId: string;
-  readonly battleId: string;
-  readonly response: OfferResponse;
-}
+export type OfferResponseInput = typeof OfferResponseInputSchema.Type;
 
 export type InterruptionRequest = DecisionRequest | BattleRequest | OfferRequest;
 export type InterruptionPayload = DecisionAnswer | BattleResultInput | OfferResponseInput;
 
-export interface RecordedInput {
-  readonly ordinal: number;
-  readonly kind: InterruptionKind;
-  readonly interruptionId: string;
-  readonly payload: InterruptionPayload;
-  readonly inputHash: string;
-}
+export type RecordedInput = typeof RecordedInputSchema.Type;
 
-export interface SuspendedTurn {
-  readonly turnId: string;
-  readonly request: InterruptionRequest | null;
-  readonly nextInterruptionOrdinal: number;
-  readonly reason: SuspensionReason;
-  readonly refusalTag?: string;
-}
+export type SuspendedTurn = typeof SuspendedTurnSchema.Type;
 
 export const SUSPENSION_REASONS = ["awaiting-input", "invalid-input"] as const;
 export type SuspensionReason = (typeof SUSPENSION_REASONS)[number];
@@ -236,14 +167,6 @@ export function makeRecordedInput(input: {
   return { ...input, inputHash: computeInputHash(input) };
 }
 
-const DecisionOptionWireSchema = Schema.Struct({
-  optionId: nonEmptyString,
-  titleKey: nonEmptyString,
-  bodyKey: nonEmptyString,
-  hints: Schema.Array(EffectHintSchema),
-  effects: Schema.Array(DecisionEffectSchema),
-});
-
 const DecisionRequestSchema = Schema.Struct({
   kind: Schema.Literal("decision"),
   turnId: nonEmptyString,
@@ -255,7 +178,7 @@ const DecisionRequestSchema = Schema.Struct({
   titleKey: nonEmptyString,
   bodyKey: nonEmptyString,
   interpolation: InterpolationSchema,
-  options: Schema.Array(DecisionOptionWireSchema),
+  options: Schema.Array(DecisionOptionSchema),
 });
 
 const BattleRequestSchema = Schema.Struct({
@@ -337,21 +260,19 @@ export const SuspendedTurnSchema = Schema.Struct({
   refusalTag: Schema.optional(nonEmptyString),
 });
 
-function decode<T>(schema: Schema.ConstraintDecoder<T, never>) {
-  return (input: unknown): T =>
-    Schema.decodeUnknownSync(schema, { onExcessProperty: "error" })(input) as T;
+function decode<S extends Schema.ConstraintDecoder<unknown>>(schema: S) {
+  return (input: unknown): S["Type"] =>
+    Schema.decodeUnknownSync(schema, { onExcessProperty: "error" })(input);
 }
 
-export const decodeInterruptionRequest = decode<InterruptionRequest>(InterruptionRequestSchema);
-export const decodeOfferRequest = decode<OfferRequest>(OfferRequestSchema);
-export const decodeDecisionAnswer = decode<DecisionAnswer>(DecisionAnswerSchema);
-export const decodeBattleResultInput = decode<BattleResultInput>(BattleResultInputSchema);
-export const decodeOfferResponseInput = decode<OfferResponseInput>(OfferResponseInputSchema);
-export const decodeRecordedInput = decode<RecordedInput>(RecordedInputSchema);
-export const decodeSuspendedTurn = decode<SuspendedTurn>(SuspendedTurnSchema);
-export const decodeRecordedInputs = decode<readonly RecordedInput[]>(
-  Schema.Array(RecordedInputSchema),
-);
+export const decodeInterruptionRequest = decode(InterruptionRequestSchema);
+export const decodeOfferRequest = decode(OfferRequestSchema);
+export const decodeDecisionAnswer = decode(DecisionAnswerSchema);
+export const decodeBattleResultInput = decode(BattleResultInputSchema);
+export const decodeOfferResponseInput = decode(OfferResponseInputSchema);
+export const decodeRecordedInput = decode(RecordedInputSchema);
+export const decodeSuspendedTurn = decode(SuspendedTurnSchema);
+export const decodeRecordedInputs = decode(Schema.Array(RecordedInputSchema));
 
 export function decodeInterruptionPayload(
   kind: InterruptionKind,
