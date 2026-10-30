@@ -15,6 +15,7 @@ Supersedes: ADR-0308
 Supersedes: ADR-0312
 Supersedes: ADR-0321
 Supersedes: ADR-0322
+Amended by: ADR-0369 (rule 8: formation keeping is an optional minute-loop input).
 
 ## Context
 

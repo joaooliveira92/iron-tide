@@ -6,7 +6,7 @@ Rules and statuses: ADR-0267.
 | Status | Rows |
 | --- | --- |
 | reachable | 35 |
-| dormant-by-decision | 10 |
+| dormant-by-decision | 11 |
 | internal | 14 |
 
 ## Reachable
@@ -58,10 +58,11 @@ Rules and statuses: ADR-0267.
 | aircraft-and-carriers | Develop aircraft and operate carriers | ADR-0300 |
 | combat-air-combat | Air combat and air defence in a battle | ADR-0300 |
 | combat-carrier-operations | Carrier operations in a battle | ADR-0300 |
-| combat-mines | Mine laying, sweeping and pressure | ADR-0300 |
-| combat-missiles | Surface-to-surface missile salvos in a battle | ADR-0312 |
+| combat-mines | Mine laying and sweeping | ADR-0300 |
+| combat-missiles | Surface-to-surface missile salvos | ADR-0312 |
+| combat-formation | Formation keeping | ADR-0369 |
 | combat-submarines | Submarine operations | ADR-0300 |
-| combat-coastal-defense | Coastal defence batteries and mine pressure | ADR-0300 |
+| combat-coastal-defense | Coastal defence batteries | ADR-0300 |
 | combat-smoke | Smokescreens and funnel smoke | ADR-0300 |
 
 ## Internal
