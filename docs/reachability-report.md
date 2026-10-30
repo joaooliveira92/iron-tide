@@ -5,7 +5,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Status | Rows |
 | --- | --- |
 | reachable | 35 |
-| dormant-by-decision | 10 |
+| dormant-by-decision | 11 |
 | internal | 14 |
 
 ## Reachable
@@ -57,10 +57,11 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | aircraft-and-carriers | Develop aircraft and operate carriers | RULES.md#dormant-by-decision |
 | combat-air-combat | Air combat and air defence in a battle | RULES.md#dormant-by-decision |
 | combat-carrier-operations | Carrier operations in a battle | RULES.md#dormant-by-decision |
-| combat-mines | Mine laying, sweeping and pressure | RULES.md#dormant-by-decision |
-| combat-missiles | Surface-to-surface missile salvos in a battle | RULES.md#dormant-by-decision |
+| combat-mines | Mine laying and sweeping | RULES.md#dormant-by-decision |
+| combat-missiles | Surface-to-surface missile salvos | RULES.md#dormant-by-decision |
+| combat-formation | Formation keeping | RULES.md#dormant-by-decision |
 | combat-submarines | Submarine operations | RULES.md#dormant-by-decision |
-| combat-coastal-defense | Coastal defence batteries and mine pressure | RULES.md#dormant-by-decision |
+| combat-coastal-defense | Coastal defence batteries | RULES.md#dormant-by-decision |
 | combat-smoke | Smokescreens and funnel smoke | RULES.md#dormant-by-decision |
 
 ## Internal

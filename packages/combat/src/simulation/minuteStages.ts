@@ -52,6 +52,15 @@ import {
   type AirDefenseState,
 } from "../air-defense/engineWiring.js";
 import type { AdvanceMinuteInput, UnitOrders } from "./engine.js";
+import {
+  createFormationRuntime,
+  planFormationSubstep,
+  recordFlagshipTracks,
+  type FormationRuntime,
+  type FormationShipSource,
+  type FormationTrack,
+  type ShipStationRecord,
+} from "../formation/index.js";
 
 export const DAMAGE_CONTROL_SUBSTEP = 57 as const;
 
@@ -95,6 +104,8 @@ export interface MinuteRun {
   missileStates?: Readonly<Record<string, MissileLauncherState>>;
   missileSalvos?: readonly MissileSalvoInFlight[];
   missileImpacts?: Readonly<Record<string, readonly GunneryImpact[]>>;
+  formationTracks?: Readonly<Record<string, FormationTrack>>;
+  formationRecords?: readonly ShipStationRecord[];
 }
 
 export function evt(
@@ -168,10 +179,31 @@ export function resolveSmokeStage(run: MinuteRun): void {
 }
 
 export function resolvePropulsionStage(run: MinuteRun): void {
+  const context = run.input.formation;
+  const runtime: FormationRuntime | undefined = context
+    ? createFormationRuntime(
+        context,
+        run.input.state.divisions ?? [],
+        new Set(run.run.map((u) => u.assetId)),
+      )
+    : undefined;
+  const movements: Record<string, MovementState> = {};
+  for (const u of run.run) movements[u.assetId] = u.movement;
+  const sources: Record<string, FormationShipSource> = {};
+  for (const unit of run.units) {
+    sources[unit.assetId] = { assetId: unit.assetId, designedSpeedUms: unit.designedSpeedUms };
+  }
+  if (runtime && context) recordFlagshipTracks(runtime, context, movements);
   for (let sub = 0; sub < SUBSTEPS_PER_MINUTE; sub++) {
+    const plan =
+      runtime && context
+        ? planFormationSubstep(runtime, context, movements, run.orders, sources)
+        : undefined;
     for (const u of run.run) {
       const ord = run.orders[u.assetId];
+      const steer = plan?.overrides[u.assetId];
       const m = u.movement;
+      if (steer) m.orderedSpeed = steer.orderedSpeedBp;
       m.currentSpeed = resolvePropulsion({
         currentSpeed: m.currentSpeed,
         orderedSpeed: m.orderedSpeed,
@@ -180,7 +212,7 @@ export function resolvePropulsionStage(run: MinuteRun): void {
       });
       m.heading = resolveTurning({
         heading: m.heading,
-        orderedHeading: ord?.orderedHeading ?? m.heading,
+        orderedHeading: steer?.orderedHeading ?? ord?.orderedHeading ?? m.heading,
         dtSeconds: 1,
         turningRateMdegS: m.turningRate,
       });
@@ -189,6 +221,17 @@ export function resolvePropulsionStage(run: MinuteRun): void {
         dtSeconds: 1,
       });
     }
+    if (runtime && context) recordFlagshipTracks(runtime, context, movements);
+  }
+  if (runtime && context) {
+    run.formationRecords = planFormationSubstep(
+      runtime,
+      context,
+      movements,
+      run.orders,
+      sources,
+    ).records;
+    run.formationTracks = runtime.tracks;
   }
   for (const u of run.run) run.resolvedMovements[u.assetId] = { ...u.movement };
   run.ledger.append(

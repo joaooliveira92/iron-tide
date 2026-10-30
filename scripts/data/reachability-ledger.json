@@ -517,7 +517,7 @@
     },
     {
       "id": "combat-mines",
-      "player_verb": "Mine laying, sweeping and pressure",
+      "player_verb": "Mine laying and sweeping",
       "status": "dormant-by-decision",
       "engine_package": "combat",
       "engine_modules": ["mines"],
@@ -529,7 +529,7 @@
     },
     {
       "id": "combat-missiles",
-      "player_verb": "Surface-to-surface missile salvos in a battle",
+      "player_verb": "Surface-to-surface missile salvos",
       "status": "dormant-by-decision",
       "engine_package": "combat",
       "engine_modules": ["missiles"],
@@ -538,7 +538,19 @@
       "renderer_screen": null,
       "evidence_test": null,
       "decision": "RULES.md#dormant-by-decision",
-      "note": "Wired into campaign auto-resolution and the minute engine, and unit-tested (packages/combat/test/battle-resolution/missile-auto.test.ts) with a design that carries a missile_launch capability. No production campaign design carries a launcher yet; #258 owns the 1940-1970 reference designs that make it reachable in play."
+      "note": "Wired into auto-resolution and the minute engine and unit-tested; no production design carries a launcher yet."
+    },
+    {
+      "id": "combat-formation",
+      "player_verb": "Formation keeping",
+      "status": "dormant-by-decision",
+      "engine_package": "combat",
+      "engine_modules": ["formation"],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "RULES.md#dormant-by-decision"
     },
     {
       "id": "combat-submarines",
@@ -554,7 +566,7 @@
     },
     {
       "id": "combat-coastal-defense",
-      "player_verb": "Coastal defence batteries and mine pressure",
+      "player_verb": "Coastal defence batteries",
       "status": "dormant-by-decision",
       "engine_package": "combat",
       "engine_modules": ["coastal-defense"],

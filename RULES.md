@@ -121,8 +121,8 @@ contract wins; fix this file in the same change.
 ## Dormant by decision
 
 Engine capabilities with no desktop path stay dormant until a ticket wires them:
-aircraft and carriers, air combat, mines, submarines, coastal defence, smoke and
-surface-to-surface missiles. `scripts/data/reachability-ledger.json` lists each one
+aircraft and carriers, air combat, mines, submarines, coastal defence, smoke,
+surface-to-surface missiles and formation keeping. `scripts/data/reachability-ledger.json` lists each one
 and `scripts/verify-reachability-ledger.mjs` fails when a row drifts.
 
 ## Services, layers, composition
