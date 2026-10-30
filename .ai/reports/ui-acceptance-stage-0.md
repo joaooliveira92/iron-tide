@@ -4,9 +4,10 @@ Issue #227, brief `.ai/briefs/ui-acceptance-run.md`. Observed on `dev` plus the 
 
 ## Existing lane
 
-`heavy pnpm test:e2e` on this branch: 39 passed, 0 failed, 1.2 minutes, 3 workers, exit 0. The lane is 11 spec files. Stages 1 to 3 added
-the management, construction, rebuild and diplomacy specs; whether the lane still fits the CI time budget is not yet
-known; the brief names that as a blocker.
+Stage 0 baseline: `heavy pnpm test:e2e` ran 39 passed, 0 failed, 1.2 minutes, 3 workers, exit 0, over 11 spec files.
+After stage 5a the same command runs 54 passed, 0 failed, 3.4 minutes, 3 workers, exit 0, over 14 default-lane spec files
+(stages 1 to 3 added the management, construction, rebuild and diplomacy specs). Whether the lane fits the CI time budget
+is not yet known; the brief names that as a blocker.
 
 `campaign-battle-drill.debug.spec.ts` is excluded from the default lane (`testIgnore: "**/*.debug.spec.ts"`) and needs the
 debug build, so it does not count as a UI path.
