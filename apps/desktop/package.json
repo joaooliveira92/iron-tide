@@ -52,7 +52,7 @@
     "@bluewave/random": "workspace:*",
     "@bluewave/ship-design": "workspace:*",
     "@bluewave/ship-visual": "workspace:*",
-    "@paper-design/shaders-react": "^0.0.81",
+    "@paper-design/shaders-react": "^0.0.82",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
