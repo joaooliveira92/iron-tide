@@ -10,6 +10,7 @@ export interface CompilerInput {
   manifestPath: string;
   contentDir: string;
   fileContents?: Readonly<Record<string, string>>;
+  fileReadFailures?: Readonly<Record<string, string>>;
   documents?: Readonly<Record<string, unknown>>;
   rulesetFiles: string[];
   countryFiles: string[];

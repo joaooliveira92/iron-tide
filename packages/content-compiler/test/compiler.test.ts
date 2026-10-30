@@ -1077,4 +1077,43 @@ describe("Compiler", () => {
       fixture.cleanup();
     }
   });
+
+  it("tells a file that cannot be read from one that is missing", () => {
+    const fixture = createFixtureDir();
+    try {
+      writeFixture(
+        fixture.path,
+        "pack.json",
+        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "fixture", files: {} }),
+      );
+      mkdirSync(resolve(fixture.path, "countries.json"));
+
+      const collector = new DiagnosticCollector();
+      new Compiler().compile(
+        {
+          manifestPath: "pack.json",
+          contentDir: fixture.path,
+          rulesetFiles: [],
+          countryFiles: ["countries.json", "missing.json"],
+          areaFiles: [],
+          routeFiles: [],
+          possessionFiles: [],
+          portFiles: [],
+          technologyFiles: [],
+        },
+        new AbortController().signal,
+        collector,
+      );
+
+      const messages = collector.errors
+        .filter((diagnostic) => diagnostic.code === "FILE-READ")
+        .map((diagnostic) => diagnostic.message);
+      expect(messages).toHaveLength(2);
+      expect(messages[0]).toContain("countries.json");
+      expect(messages[0]).toContain("EISDIR");
+      expect(messages[1]).toContain("absent from the compiler input");
+    } finally {
+      fixture.cleanup();
+    }
+  });
 });
