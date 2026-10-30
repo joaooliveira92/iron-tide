@@ -19,7 +19,10 @@ import { FleetStationSection } from "./station/FleetStationSection.js";
 import { FleetExerciseSection } from "./exercise/FleetExerciseSection.js";
 import { FleetTrainingSection } from "./training/FleetTrainingSection.js";
 import { AreaOverviewTable } from "./components/AreaOverviewTable.js";
+import { orderHotkeyIntent, stepDivisionSelection } from "./fleet-hotkeys.js";
+import { useFleetHotkeys } from "./hooks/useFleetHotkeys.js";
 import { useFleetScreen } from "./hooks/useFleetScreen.js";
+import { translate } from "../../lib/strings.js";
 import { DivisionPicker } from "./components/DivisionPicker.js";
 import { WorldMapPanel } from "../../components/world-map/WorldMapPanel.js";
 import { LoadErrorCard } from "./components/LoadErrorCard.js";
@@ -98,6 +101,33 @@ function FleetScreen({ sessionId }: { readonly sessionId: string }) {
     ],
   );
 
+  const divisionIds = useMemo(() => divisionRows.map((row) => row.divisionId), [divisionRows]);
+  const runOrderHotkey = useCallback(
+    (action: "submit-order" | "cancel-order") => {
+      const intent = orderHotkeyIntent(action, {
+        busy: orderActions.busy,
+        divisionSelected: selectedDivision !== null,
+        destinationChosen: destinationAreaId !== null,
+        pendingCommandId: pendingRoute?.commandId ?? null,
+      });
+      if (intent === null) return;
+      if (intent.kind === "submit") submit();
+      else if (intent.kind === "replace") replace(intent.commandId);
+      else cancel(intent.commandId);
+    },
+    [orderActions.busy, selectedDivision, destinationAreaId, pendingRoute, submit, replace, cancel],
+  );
+  useFleetHotkeys({
+    "previous-division": () =>
+      setSelectedDivisionId((current) => stepDivisionSelection(divisionIds, current, -1)),
+    "next-division": () =>
+      setSelectedDivisionId((current) => stepDivisionSelection(divisionIds, current, 1)),
+    "focus-destination": () =>
+      document.querySelector<HTMLElement>("[data-fleet-destination]")?.focus(),
+    "submit-order": () => runOrderHotkey("submit-order"),
+    "cancel-order": () => runOrderHotkey("cancel-order"),
+  });
+
   if (loadError !== null) {
     return (
       <div data-guided-target="fleet">
@@ -132,6 +162,9 @@ function FleetScreen({ sessionId }: { readonly sessionId: string }) {
           ) : undefined
         }
       />
+      <p className="text-xs text-muted-foreground" data-testid="fleet-hotkey-hint">
+        {translate("fleet.hotkeys.hint")}
+      </p>
       <DivisionPicker
         rows={divisionRows}
         selectedDivisionId={selectedDivisionId}
