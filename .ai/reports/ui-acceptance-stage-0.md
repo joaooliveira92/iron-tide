@@ -16,21 +16,25 @@ debug build, so it does not count as a UI path.
 Each `reachable` row in `scripts/data/reachability-ledger.json` is matched to the e2e steps that reach it. Matching was done
 by reading the specs, not by instrumentation. Classes:
 
-- **drives**: an e2e step performs the player verb through the UI and asserts the result.
+- **drives**: an e2e step performs the player verb through the UI and asserts the result. For a `read-*` row the verb is
+  reading the screen, so a step that asserts real content, not only that a heading renders, is `drives`.
 - **reads**: an e2e step only asserts that the screen renders. The verb is not performed.
 - **none**: no default-lane step reaches the row.
+
+Every step is named `test.step("reachable:<row-id>", ...)`, and `node scripts/verify-ui-acceptance-map.mjs`
+(`pnpm check:ui-acceptance-map`, also a preflight gate) fails when a `reachable` row has no such step in a default-lane spec.
 
 ## Map
 
 | Row                               | Class  | Spec                                                                                                                                                                    |
 | --------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | start-new-game                    | drives | `mvp-loop` New Game                                                                                                                                                     |
-| read-opening-briefing             | reads  | `mvp-loop` New Game (clicks through the briefing, asserts nothing on it)                                                                                                |
-| read-campaign-overview            | reads  | `mvp-loop` New Game                                                                                                                                                     |
+| read-opening-briefing             | drives | `mvp-loop` New Game: all five briefing pages asserted (appointment names the nation, navy inventory, treasury, foreign intelligence, immediate concerns)                |
+| read-campaign-overview            | drives | `mvp-loop` New Game: overview heading with the month, nation, treasury and an immediate priority                                                                        |
 | advance-month                     | drives | `mvp-loop` Advance Month                                                                                                                                                |
 | manage-campaign-files             | drives | `mvp-loop` Campaign menu; `continuance` load, recent, verify, replay, recover                                                                                           |
 | move-fleet                        | drives | `mvp-loop` sail; `strategic-map`                                                                                                                                        |
-| read-world-map                    | reads  | `strategic-map`                                                                                                                                                         |
+| read-world-map                    | drives | `strategic-map` the Map lists the player fleets, foreign stations and unmodelled limits                                                                                 |
 | assign-station                    | drives | `mvp-loop` foreign station                                                                                                                                              |
 | set-ship-readiness                | drives | `mvp-loop` reserve                                                                                                                                                      |
 | ship-readiness                    | drives | `mvp-loop` reserve                                                                                                                                                      |
@@ -40,8 +44,8 @@ by reading the specs, not by instrumentation. Classes:
 | order-foreign-construction        | drives | `construction` foreign yard                                                                                                                                             |
 | halt-or-resume-construction       | drives | `construction` halt                                                                                                                                                     |
 | cancel-construction-project       | drives | `construction` project cancelled, shown as cancelled after the month, steering controls gone (the engine refunds 0, so no refund to assert)                             |
-| read-priorities                   | reads  | `status-strip`                                                                                                                                                          |
-| read-battle-history               | reads  | `mvp-loop` empty history only; no production route fills it, see Findings                                                                                               |
+| read-priorities                   | drives | `status-strip` the Immediate priorities group offers a severity, title and destination; `mvp-loop` New Game                                                             |
+| read-battle-history               | drives | `mvp-loop` Battles tab shows the empty state; no production route fills it, see Findings                                                                                |
 | persist-ui-state                  | drives | `management` preference and guided inspection survive restarts                                                                                                          |
 | set-research-priority             | drives | `management` research priority queued, holds after the month                                                                                                            |
 | fund-special-training             | drives | `management` special training funded, accrues a month                                                                                                                   |
@@ -59,11 +63,11 @@ by reading the specs, not by instrumentation. Classes:
 
 ## Counts
 
-32 reachable rows: 27 drives, 5 reads, 0 none. Stage 1 turned six `none` rows into `drives` (`management.spec.ts`); stage 2
+32 reachable rows: 32 drives, 0 reads, 0 none. Stage 1 turned six `none` rows into `drives` (`management.spec.ts`); stage 2
 turned five more (`construction.spec.ts`, `ship-rebuild.spec.ts`); stage 3 turned four more (`diplomacy.spec.ts`). Stage 4
 found no production route to a battle, so accept-peace, fight-or-decline-battle and combat-fought-battle were reclassified
 `dormant-by-decision` (#422) and left the table: the ledger now counts 32 reachable, 14 dormant-by-decision, 14 internal.
-The `reads` rows still need real content assertions.
+Stage 5a gave the five `read-*` rows content assertions, so none remain as `reads`.
 
 ## Gap list, in stage order
 
@@ -78,12 +82,15 @@ The `reads` rows still need real content assertions.
 4. Stage 4, battle: not drivable. No production route reaches a battle offer, so accept-peace, fight-or-decline-battle and
    combat-fought-battle are `dormant-by-decision` (#422) and no `battle.spec.ts` exists. Unblocking needs an owner decision
    on thresholds or content (#422); when it lands, restore the three rows and drive them.
-5. Upgrade the `reads` rows to assertions on real content: read-opening-briefing, read-priorities, read-battle-history.
+5. Stage 5a: done. The five `read-*` rows assert real content, every `reachable` row carries a
+   `test.step("reachable:<row-id>", ...)`, and `scripts/verify-ui-acceptance-map.mjs` enforces the mapping.
+6. Stage 5b: the two-process hash comparison and `.ai/reports/ui-reachability.md`.
 
 ## Findings for the brief
 
-- cancel-construction-project: the ledger verb says "take the refund", but the engine settles a cancellation with
-  `refundedAmount` 0 (work done is forfeited) and the button tooltip says so. The step asserts the visible outcome only.
+- cancel-construction-project: the ledger verb said "take the refund", but the engine settles a cancellation with
+  `refundedAmount` 0 (work done is forfeited) and the button tooltip says so. The ledger verb now says the work is forfeited
+  and nothing is refunded; the step asserts the visible outcome only.
 - start-rebuild: the Rebuild tab unmounts when the player switches to another design tab, which drops the loaded ship. The
   only in-panel edit is the bulge action, so the step drives a bulge rebuild.
 
@@ -110,8 +117,9 @@ The `reads` rows still need real content assertions.
   on other nations (every nation is under threshold); waiting many months (AI growth saturates at 42); AI-initiated wars
   (the AI never declares); other nations, archetypes and the new-game options (no variant changed the world); the
   `seedCampaignBattleDrill` command (debug build only, `debugGate.ts`).
-- read-battle-history stays `reads`: no production route puts an entry in the history, so only its empty state can be
-  asserted until #422 is resolved.
+- read-battle-history is `drives` on its empty state only: no production route puts an entry in the history, so a populated
+  entry cannot be asserted until #422 is resolved.
 - declare-blockade is driven during a Declared war; the blockade adds war score each month even though the war is not ACTIVE.
-- A mapping check (stage 5) cannot rely on spec titles. It needs an explicit row id on each step, for example a
-  `test.step("reachable:set-research-priority", ...)` convention.
+- The mapping check cannot rely on spec titles, so each step carries an explicit row id, `test.step("reachable:<row-id>", ...)`.
+  `scripts/verify-ui-acceptance-map.mjs` fails on a `reachable` row without a default-lane step, a step that names a
+  non-`reachable` row, and a row claimed only by a `*.debug.spec.ts`.

@@ -218,7 +218,7 @@
     },
     {
       "id": "cancel-construction-project",
-      "player_verb": "Cancel a construction project and take the refund",
+      "player_verb": "Cancel a construction project; work done is forfeited and nothing is refunded",
       "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
