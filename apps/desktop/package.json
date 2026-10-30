@@ -57,7 +57,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "effect": "workspace:*",
-    "lucide-react": "^1.60.0",
+    "lucide-react": "^1.62.0",
     "maplibre-gl": "6.16.0",
     "motion": "^14.4.0",
     "react": "^19.3.1",
