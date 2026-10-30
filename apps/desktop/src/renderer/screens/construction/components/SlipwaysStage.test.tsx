@@ -34,6 +34,7 @@ const row = (over: Partial<ProjectRow> = {}): ProjectRow => ({
     { id: "fit_out", label: "Fit-out", percent: 0, state: "ready", dependsOn: [] },
   ],
   isForeign: false,
+  revisable: false,
   readout: null,
   ...over,
 });

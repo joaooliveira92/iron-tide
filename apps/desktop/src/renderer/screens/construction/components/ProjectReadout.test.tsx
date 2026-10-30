@@ -15,6 +15,7 @@ const row = (over: Partial<ProjectRow> = {}): ProjectRow => ({
   packages: [],
   holdUntilMonth: null,
   isForeign: false,
+  revisable: false,
   readout: {
     totalCostUnits: 640,
     monthlyInstalmentUnits: 120,
