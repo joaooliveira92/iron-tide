@@ -106,3 +106,36 @@ export async function selectRosterOption(roster: Locator, name: string): Promise
   await expect(roster).toHaveAttribute("aria-activedescendant", targetId!);
   await roster.press("Enter");
 }
+
+export async function submitReferenceDesign(
+  page: Page,
+  referenceName: string,
+  className: string,
+): Promise<void> {
+  const workspace = await openShipbuilding(page);
+  await selectRosterOption(await openRoster(page, workspace), referenceName);
+  const replace = page.getByRole("button", { name: "Replace my design" });
+  const classNameField = workspace
+    .getByRole("group", { name: "Design commands" })
+    .getByRole("textbox", { name: "Class name" });
+  await replace.or(classNameField).first().waitFor();
+  if (await replace.isVisible()) await replace.click();
+  await classNameField.fill(className);
+  await expect(workspace.getByText("Can be submitted")).toBeVisible();
+  await workspace.getByRole("button", { name: "Finish design" }).click();
+  await workspace.getByRole("button", { name: "Submit design" }).click();
+  await expect(workspace.getByText(new RegExp(`Design queued\\. .*"${className}"`))).toBeVisible();
+  await workspace.getByRole("button", { name: "Close", exact: true }).click();
+}
+
+export async function orderDesignFromCatalog(page: Page, className: string): Promise<void> {
+  await navigateTo(page, "Construction");
+  await page
+    .getByRole("navigation", { name: "Yard" })
+    .getByRole("button", { name: /^Design catalog/ })
+    .click();
+  await page.getByRole("radio", { name: new RegExp(className) }).click();
+  await page.getByRole("button", { name: "Submit Construction Command" }).click();
+  await page.getByRole("button", { name: "Confirm order" }).click();
+  await expect(page.getByText(/Command \S+ is submitted/)).toBeVisible();
+}

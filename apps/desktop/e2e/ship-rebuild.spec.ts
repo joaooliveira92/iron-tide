@@ -1,10 +1,9 @@
 import { test, expect, openCampaign } from "./fixtures.js";
 import {
   advanceMonths,
-  navigateTo,
-  openRoster,
   openShipbuilding,
-  selectRosterOption,
+  orderDesignFromCatalog,
+  submitReferenceDesign,
 } from "./flows.js";
 
 const CLASS_NAME = "Rebuild E2E";
@@ -18,31 +17,10 @@ test("a completed player-designed ship is rebuilt and leaves service after a mon
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
 
-  const workspace = await openShipbuilding(page);
-  await selectRosterOption(await openRoster(page, workspace), CORVETTE);
-  const replace = page.getByRole("button", { name: "Replace my design" });
-  const className = workspace
-    .getByRole("group", { name: "Design commands" })
-    .getByRole("textbox", { name: "Class name" });
-  await replace.or(className).first().waitFor();
-  if (await replace.isVisible()) await replace.click();
-  await className.fill(CLASS_NAME);
-  await expect(workspace.getByText("Can be submitted")).toBeVisible();
-  await workspace.getByRole("button", { name: "Finish design" }).click();
-  await workspace.getByRole("button", { name: "Submit design" }).click();
-  await expect(workspace.getByText(new RegExp(`Design queued\\. .*"${CLASS_NAME}"`))).toBeVisible();
-  await workspace.getByRole("button", { name: "Close", exact: true }).click();
+  await submitReferenceDesign(page, CORVETTE, CLASS_NAME);
 
   await advanceMonths(page, 4);
-  await navigateTo(page, "Construction");
-  await page
-    .getByRole("navigation", { name: "Yard" })
-    .getByRole("button", { name: /^Design catalog/ })
-    .click();
-  await page.getByRole("radio", { name: new RegExp(CLASS_NAME) }).click();
-  await page.getByRole("button", { name: "Submit Construction Command" }).click();
-  await page.getByRole("button", { name: "Confirm order" }).click();
-  await expect(page.getByText(/Command \S+ is submitted/)).toBeVisible();
+  await orderDesignFromCatalog(page, CLASS_NAME);
   await advanceMonths(page, 4);
 
   await test.step("reachable:start-rebuild", async () => {

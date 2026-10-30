@@ -1,6 +1,14 @@
 import type { Page } from "@playwright/test";
 import { test, expect, openCampaign } from "./fixtures.js";
-import { advanceMonths, navigateTo } from "./flows.js";
+import {
+  advanceMonths,
+  navigateTo,
+  orderDesignFromCatalog,
+  submitReferenceDesign,
+} from "./flows.js";
+
+const REVISED_CLASS = "Revise E2E";
+const CORVETTE = "Corvette / colonial gunboat (KE)";
 
 const openYardPlace = (page: Page, name: RegExp) =>
   page.getByRole("navigation", { name: "Yard" }).getByRole("button", { name }).click();
@@ -211,5 +219,58 @@ test("a player can cancel a construction project and it is cancelled after a mon
     await page.getByRole("button", { name: /^Inflexible, cancelled/ }).click();
     await expect(page.getByRole("button", { name: "Inflexible cancel project" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Inflexible accelerate" })).toHaveCount(0);
+  });
+});
+
+test("a player can revise a player-designed project and it is on hold after a month", async ({
+  e2e,
+  campaignTemplate,
+}) => {
+  test.setTimeout(240_000);
+  const page = e2e.page;
+  await openCampaign(e2e, campaignTemplate);
+
+  await submitReferenceDesign(page, CORVETTE, REVISED_CLASS);
+  await advanceMonths(page, 4);
+  await orderDesignFromCatalog(page, REVISED_CLASS);
+  await advanceMonths(page, 1);
+
+  await test.step("reachable:revise-project", async () => {
+    await navigateTo(page, "Construction");
+    await openYardPlace(page, /^Slipways/);
+    await page.getByRole("button", { name: new RegExp(`^${REVISED_CLASS}, `) }).click();
+    await expect(page.getByText(/on hold until/)).toHaveCount(0);
+    await page.getByRole("button", { name: `${REVISED_CLASS} revise` }).click();
+
+    const board = page.getByRole("dialog", { name: "Drawing Board" });
+    await expect(board).toBeVisible();
+    await board.getByRole("tab", { name: "Build" }).click();
+    const revision = board.getByRole("region", { name: "Revision preview" });
+    await revision.getByRole("button", { name: "Load this ship's design into the board" }).click();
+    await expect(
+      revision.getByText("No changes yet, so nothing would need revising."),
+    ).toBeVisible();
+
+    await board.getByRole("tab", { name: "Hull and machinery" }).click();
+    const subdivision = board.getByRole("combobox", { name: "Subdivision" });
+    await subdivision.click();
+    await page.getByRole("option", { name: "Grade 1" }).click();
+
+    await board.getByRole("tab", { name: "Build" }).click();
+    await expect(revision.getByText("Redesign", { exact: true })).toBeVisible();
+    await expect(revision.getByText("Funding on hold for")).toBeVisible();
+    await revision.getByRole("button", { name: "Apply revision to this ship" }).click();
+    await page.getByRole("button", { name: "Queue the revision" }).click();
+    await expect(
+      revision.getByRole("alert").filter({ hasText: "Revision queued (Redesign)" }),
+    ).toBeVisible();
+    await board.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(board).toBeHidden();
+
+    await advanceMonths(page, 1);
+    await navigateTo(page, "Construction");
+    await openYardPlace(page, /^Slipways/);
+    await page.getByRole("button", { name: new RegExp(`^${REVISED_CLASS}, `) }).click();
+    await expect(page.getByText(/on hold until \d{4}-\d{2}/).first()).toBeVisible();
   });
 });
