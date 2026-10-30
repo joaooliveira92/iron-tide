@@ -8,7 +8,7 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected.
+- [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected. (amended by ADR-0368).
 - [ADR-0348](../ADR-0348-authored-scope-and-horizon.md) The sole start year is 1880; the authored horizon is 1970; any declared scenario ID with no content pack must not be selectable.
 - [ADR-0350](../ADR-0350-e1-1940-1970-content-values.md) Every authored technology, ship class, and part value for the 1940-1970 period must trace to a cited source or be labelled BALANCE_TARGET with a documented derivation; content must never promise behaviour the engine lacks.
 - [ADR-0355](../ADR-0355-readiness-command-structure-and-division-state.md) Every numeric gameplay value for readiness, crew and maintenance is a centralized ruleset constant with provenance; per-nation officer rosters and seeded divisions are authored balance choices; command-lifecycle scaffolding is removed from shipping code; ship conditions are derived predicates computed from existing fields.

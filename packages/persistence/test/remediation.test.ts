@@ -219,26 +219,6 @@ describe("persistence remediation", () => {
     });
   });
 
-  describe("cancellation invariants (TODO #5/#6)", () => {
-    it("an aborted save leaves the pointer and save set untouched", () => {
-      store.save(minimalCampaignState(), tmpDir);
-      const id = store.getActiveSaveId(tmpDir)!;
-
-      const before = readdirSync(tmpDir).sort();
-      const controller = new AbortController();
-      controller.abort();
-      let thrown: unknown;
-      try {
-        store.save(minimalCampaignState(), tmpDir, controller.signal);
-      } catch (err) {
-        thrown = err;
-      }
-      expect((thrown as Error).name).toBe("AbortError");
-      expect(store.getActiveSaveId(tmpDir)).toBe(id);
-      expect(readdirSync(tmpDir).sort()).toEqual(before);
-    });
-  });
-
   describe("list() fallback", () => {
     it("lists a save through its campaign header when metadata is missing", () => {
       store.save(minimalCampaignState(), tmpDir);

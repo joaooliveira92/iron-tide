@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0368).
+highest existing number + 1 (the next number is ADR-0369).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -140,6 +140,7 @@ Turn identity, the suspend/resume interruption model, and strict save-file decod
 | --- | --- | --- | --- | --- |
 | 0342 | [ADR-0342-turn-identity-and-campaign-resume-workflow.md](ADR-0342-turn-identity-and-campaign-resume-workflow.md) | Turn identity and campaign resume workflow | accepted | — |
 | 0343 | [ADR-0343-save-file-integrity-retention-and-hashing.md](ADR-0343-save-file-integrity-retention-and-hashing.md) | Save file integrity, retention and hashing | accepted | — |
+| 0368 | [ADR-0368-persistence-cancellation-and-typed-failure-guard.md](ADR-0368-persistence-cancellation-and-typed-failure-guard.md) | Persistence has no abort signal; its typed failures are guarded by the ratchet | accepted | — |
 | 0222 | [ADR-0222-turn-identity-stable-across-resume.md](ADR-0222-turn-identity-stable-across-resume.md) | A turn's interruption identity is stable across suspend and resume | superseded | ADR-0342 |
 | 0235 | [ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md](ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md) | Main-owned recent campaigns and reopen allow-list | superseded | ADR-0342 |
 | 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | superseded | ADR-0343 |

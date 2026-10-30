@@ -119,9 +119,12 @@ export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
 
         const content = input.fileContents?.[file];
         if (content === undefined) {
+          const readFailure = input.fileReadFailures?.[file];
           collector.addError(
             "FILE-READ",
-            `Failed to read file: ${file} is absent from the compiler input`,
+            readFailure === undefined
+              ? `Failed to read file: ${file} is absent from the compiler input`
+              : `Failed to read file: ${file} could not be read (${readFailure})`,
             {
               stage: "parse",
               sourceLocation: { path: sourcePath, line: 1 },
