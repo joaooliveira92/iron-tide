@@ -9,9 +9,9 @@ import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { SaveStore, restampState } from "@bluewave/persistence";
+import { loadResult, SaveStore, restampState } from "@bluewave/persistence";
 import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
-import { Effect, Result } from "effect";
+import { Result } from "effect";
 
 import { compileProductionCampaign } from "../production-pack.js";
 import { LEDGER_ORDER, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
@@ -160,7 +160,7 @@ export function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
       snapshot.compatibilityVersion,
     );
     store.save(state, saveDir);
-    const loaded = Effect.runSync(Effect.result(store.load(saveDir)));
+    const loaded = loadResult(saveDir);
     if (Result.isFailure(loaded)) {
       return { ok: false, reason: loaded.failure.message };
     }

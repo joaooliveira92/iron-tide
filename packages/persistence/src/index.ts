@@ -49,7 +49,8 @@ export type {
   LoadFailure,
   MonthInputLoad,
   SaveExtras,
+  SaveListing,
   SaveMetadata,
   SaveResult,
 } from "./store.js";
-export { SaveStore, type SaveStoreOptions } from "./store.js";
+export { loadResult, SaveStore, type SaveStoreOptions } from "./store.js";

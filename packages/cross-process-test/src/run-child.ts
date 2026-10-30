@@ -10,9 +10,9 @@ import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/con
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
+import { CURRENT_COMPATIBILITY_VERSION, loadResult, SaveStore } from "@bluewave/persistence";
 import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
-import { Effect, Result } from "effect";
+import { Result } from "effect";
 import { FIXTURE_RULESETS_JSON, nationsDocument } from "@bluewave/test-support";
 
 import { buildProgressionLedger } from "./progression-ledger.js";
@@ -460,9 +460,9 @@ function run(): void {
     };
     store.save(saveableState, saveDir);
 
-    const loaded = Effect.runSync(Effect.result(store.load(saveDir)));
+    const loaded = loadResult(saveDir);
     if (Result.isFailure(loaded)) {
-      throw new Error("Save/load failed");
+      throw loaded.failure;
     }
 
     const replayVerifier = new ReplayVerifier();
