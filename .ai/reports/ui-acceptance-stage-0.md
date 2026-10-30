@@ -51,19 +51,20 @@ by reading the specs, not by instrumentation. Classes:
 | start-rebuild                     | drives | `ship-rebuild` corvette designed, ordered, built, rebuilt with a bulge; ship leaves the rebuildable list after the month                                                |
 | accelerate-construction           | drives | `construction` accelerate, status accelerated after the month                                                                                                           |
 | authorize-dock-expansion          | drives | `construction` dock expansion queued, new infrastructure project on the slipways after the month                                                                        |
-| declare-war                       | none   | debug spec only                                                                                                                                                         |
-| accept-peace                      | none   |                                                                                                                                                                         |
-| form-or-break-alliance            | none   |                                                                                                                                                                         |
-| form-or-break-non-aggression-pact | none   |                                                                                                                                                                         |
-| declare-blockade                  | none   |                                                                                                                                                                         |
+| declare-war                       | drives | `diplomacy` war declared on France, shown as Declared with the score bar and an At war rail entry after the month                                                       |
+| accept-peace                      | none   | BLOCKED: no production path makes a war ACTIVE, see Findings                                                                                                            |
+| form-or-break-alliance            | drives | `diplomacy` alliance formed with the Netherlands and shown Allied, then broken and shown Neutral again                                                                  |
+| form-or-break-non-aggression-pact | drives | `diplomacy` pact formed with Russia and shown as NAP, then broken                                                                                                       |
+| declare-blockade                  | drives | `diplomacy` blockade of the chosen area listed on the war front and the dossier, war score changes after the month                                                      |
 | fight-or-decline-battle           | none   | debug spec only                                                                                                                                                         |
 | combat-fought-battle              | none   | debug spec only                                                                                                                                                         |
 
 ## Counts
 
-35 reachable rows: 23 drives, 5 reads, 7 none. Stage 1 turned six `none` rows into `drives`
-(`management.spec.ts`); stage 2 turned five more (`construction.spec.ts`, `ship-rebuild.spec.ts`). Stages 3 and 4 must turn
-the remaining 7 `none` rows into `drives`, and the 5 `reads` rows get real content assertions.
+35 reachable rows: 27 drives, 5 reads, 3 none. Stage 1 turned six `none` rows into `drives`
+(`management.spec.ts`); stage 2 turned five more (`construction.spec.ts`, `ship-rebuild.spec.ts`); stage 3 turned four more
+(`diplomacy.spec.ts`). The 3 remaining `none` rows are accept-peace (BLOCKED, see Findings) and the two battle rows, whose
+route is the same blocker. The `reads` rows still need real content assertions.
 
 ## Gap list, in stage order
 
@@ -73,8 +74,8 @@ the remaining 7 `none` rows into `drives`, and the 5 `reads` rows get real conte
    start-rebuild and revise-project are driven. revise-project was unreachable (`DrawingBoardDialog` was imported by no
    screen); the slipways inspector now has a Revise control, shown only for a player-designed project the engine can
    revise, that opens the drawing board on that project.
-3. Stage 3, diplomacy: declare-war, accept-peace, form-or-break-alliance, form-or-break-non-aggression-pact,
-   declare-blockade.
+3. Stage 3, diplomacy: done for four rows. declare-war, form-or-break-alliance, form-or-break-non-aggression-pact and
+   declare-blockade are driven in `diplomacy.spec.ts`. accept-peace is BLOCKED (see Findings).
 4. Stage 4, battle: fight-or-decline-battle, combat-fought-battle, read-battle-history with a fought battle.
 5. Upgrade the `reads` rows to assertions on real content: read-opening-briefing, read-priorities, read-battle-history.
 
@@ -85,8 +86,19 @@ the remaining 7 `none` rows into `drives`, and the 5 `reads` rows get real conte
 - start-rebuild: the Rebuild tab unmounts when the player switches to another design tab, which drops the loaded ship. The
   only in-panel edit is the bulge action, so the step drives a bulge rebuild.
 
-- Stage 4 is the risk the brief names. The only battle e2e is the debug spec, so the production route to a battle offer
-  is unproven by any default-lane test. Stage 4 starts by finding out whether a campaign reaches an offer without the
-  debug build.
+- accept-peace: BLOCKED, and the cause is shared with stage 4. The Accept peace control is shown only for a war with status
+  ACTIVE (`WarFront.tsx`, `diplomacyBeginPeace`), and the engine validator also requires ACTIVE
+  (`validateAcceptPeace`). `applyDeclareWar` creates a war as DECLARED_NOT_ACTIVE; the only code that sets ACTIVE is
+  `applyBattleResult`, i.e. a resolved battle. Battle generation rejects an opportunity unless both sides field eligible
+  firepower of at least 300 (fleet battle) or 150 (cruiser battle) in one area (`pipeline.ts`, `mission.ts`). Observed in a
+  UI campaign: UK 1880 fleets total 16 to 34 firepower per area, every other nation 12 to 26; after 36 advanced months the
+  strongest foreign fleet was 50 (Ottoman Empire). The UK Home Fleet, sailed through the Fleet screen to the French
+  Channel coast during a declared war, produced no battle and the war stayed Declared for five months. No AI
+  nation declares war on the player, and a surrender settles through `settleWar`, not Accept peace. So no production
+  start state reaches an acceptable peace without an engine, content or balance change.
+- Stage 4 is the risk the brief names, and accept-peace now confirms it: the battle offer has no production route in a
+  fresh campaign for the same firepower reason. The only battle e2e is the debug spec, which seeds a drill through the
+  debug bridge, so a production route to an offer is unproven by any default-lane test.
+- declare-blockade is driven during a Declared war; the blockade adds war score each month even though the war is not ACTIVE.
 - A mapping check (stage 5) cannot rely on spec titles. It needs an explicit row id on each step, for example a
   `test.step("reachable:set-research-priority", ...)` convention.
