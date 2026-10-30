@@ -21,11 +21,11 @@ const entriesOf = (r: EquivalenceReport) =>
 describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
   it("pins the coverage and data-quality inventory", () => {
     const expected = {
-      designs: 97,
-      placements: 909,
-      gunPlacements: 264,
-      tubePlacements: 31,
-      fittingPlacements: 614,
+      designs: 98,
+      placements: 922,
+      gunPlacements: 267,
+      tubePlacements: 33,
+      fittingPlacements: 622,
     };
     expect(report.coverage.baseline).toEqual(expected);
     expect(report.coverage.candidate).toEqual(expected);
@@ -75,7 +75,7 @@ describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
     }
   });
 
-  it("pins the 31 torpedo rows", () => {
+  it("pins the 33 torpedo rows", () => {
     const tubes = entriesOf(report)
       .filter((e) => e.kind === "tube")
       .map((e) => [e.design, e.instanceId, e.legacyComponentId, e.legacyUnits, e.mountCount])
@@ -83,7 +83,7 @@ describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
     const pinned = [...TORPEDO_ROWS]
       .map((r) => [...r])
       .sort((a, b) => `${a[0]}:${a[1]}`.localeCompare(`${b[0]}:${b[1]}`));
-    expect(tubes).toHaveLength(31);
+    expect(tubes).toHaveLength(33);
     expect(tubes).toEqual(pinned);
   });
 });

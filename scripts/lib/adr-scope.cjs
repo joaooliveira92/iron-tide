@@ -247,7 +247,6 @@ function ruleTokens(rule) {
 // already connected by Supersedes:, Amends:, or Consistent with: are skipped.
 function findRuleConflicts(records, universe) {
   const problems = [];
-  const numbers = byNumber(records);
   const current = records.filter(isCurrent);
 
   function isConnected(a, b) {
@@ -513,7 +512,6 @@ function buildPackageBrief(scope, records) {
 
 function buildPackageBriefs(root) {
   const records = loadRecords(root);
-  const dir = path.join(root, PACKAGE_DIR);
   const pages = new Map();
   for (const scope of scopeUniverse(root)) {
     if (scope === REPOSITORY) continue;

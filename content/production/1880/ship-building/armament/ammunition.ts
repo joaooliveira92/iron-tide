@@ -213,4 +213,32 @@ export default collection("ammunition", AmmunitionPatternSchema, [
       ],
     },
   },
+  {
+    id: "uk_he_45in_45",
+    shellType: "HE",
+    nationId: "uk",
+    compatibleGunFamilies: ["gun_qf_45in_45_twin"],
+    shellMassG: 27200,
+    penetrationBiasBp: 2500,
+    introductionMonth: "1952-01",
+    retirementMonth: null,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "ticket #256. 27.2 kg HE shell (29.1 kg AP) and 4.64 kg charge (1,706 bp, DERIVED) from the dossier; the charge and rate live on the component and part.",
+      sources: [
+        {
+          title: "navypedia.org Daring class destroyers",
+          archiveOrUrl: "https://www.navypedia.org/ships/uk/brit_dd_daring.htm",
+          section: "docs/research/e-1-1950s-gun-ships.md section 1",
+        },
+        {
+          title: "navweaps.com UK 4.5-inch/45 (12 cm) QF Mark 6",
+          archiveOrUrl: "http://www.navweaps.com/Weapons/WNBR_45-45_mk6.php",
+          section: "docs/research/e-1-1950s-gun-ships.md section 1",
+        },
+      ],
+    },
+  },
 ]);
