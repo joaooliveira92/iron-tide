@@ -64,7 +64,7 @@ void test("a package doc citing a superseded ADR without its replacement fails",
     assert.ok(
       lib.verify(dir, EXEMPT).some((p) => p.includes("superseded") && p.includes("ADR-0204")),
     );
-    writeFileSync(file, `${base}\nSee ADR-0204 and ADR-0282.\n`);
+    writeFileSync(file, `${base}\nSee ADR-0204, ADR-0282 and ADR-0348.\n`);
     assert.ok(!lib.verify(dir, EXEMPT).some((p) => p.includes("without its replacement")));
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -111,6 +111,7 @@ void test("a supersession cycle fails even when every link reciprocates", () => 
     rule: null,
     supersedes: [other],
     supersededBy: [other],
+    consistentWith: [],
     amends: [],
     amendedBy: [],
   });
@@ -127,10 +128,10 @@ void test("a supersession cycle fails even when every link reciprocates", () => 
 void test("a current ADR without a Rule: line fails", () => {
   const dir = sandbox();
   try {
-    const file = join(dir, "docs/adr/ADR-0278-save-files-decode-strictly.md");
+    const file = join(dir, "docs/adr/ADR-0337-campaign-economy-model-and-budget-pressure.md");
     writeFileSync(file, readFileSync(file, "utf8").replace(/^Rule:.*\n\n/m, ""));
     assert.ok(
-      lib.verify(dir, EXEMPT).some((p) => p.includes("ADR-0278") && p.includes('no "Rule:" line')),
+      lib.verify(dir, EXEMPT).some((p) => p.includes("ADR-0337") && p.includes('no "Rule:" line')),
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });
