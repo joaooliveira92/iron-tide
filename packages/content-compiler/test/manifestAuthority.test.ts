@@ -21,21 +21,29 @@ function writeFixture(base: string, rel: string, content: string): string {
 }
 
 const COMPONENT = `
-components:
-  - id: "comp_a"
-    displayName: "A"
-    category: "MATERIAL"
-    introduction: { fromMonth: "1880-01", obsoleteMonth: null }
-    requires: []
-    parameters: {}
-    constants: {}
-    weightKg: "1"
-    volumeLitre: "1"
-    costMicro: "1"
-    crew: "0"
-    powerKw: "0"
-    upgradePath: []
-    tags: []
+{
+  "components": [
+    {
+      "id": "comp_a",
+      "displayName": "A",
+      "category": "MATERIAL",
+      "introduction": {
+        "fromMonth": "1880-01",
+        "obsoleteMonth": null
+      },
+      "requires": [],
+      "parameters": {},
+      "constants": {},
+      "weightKg": "1",
+      "volumeLitre": "1",
+      "costMicro": "1",
+      "crew": "0",
+      "powerKw": "0",
+      "upgradePath": [],
+      "tags": []
+    }
+  ]
+}
 `;
 
 describe("manifest authority for the loaded surface", () => {
@@ -48,12 +56,12 @@ describe("manifest authority for the loaded surface", () => {
         JSON.stringify({
           name: "test-pack",
           version: "0.1.0",
-          type: "production",
+          type: "fixture",
           files: {},
-          shipBuilding: { shipComponents: ["ship-building/components.yaml"] },
+          shipBuilding: { shipComponents: ["ship-building/components/guns/rifle.json"] },
         }),
       );
-      writeFixture(fixture.path, "ship-building/components.yaml", COMPONENT);
+      writeFixture(fixture.path, "ship-building/components/guns/rifle.json", COMPONENT);
 
       const collector = new DiagnosticCollector();
       const input = buildFullSurfaceInput(
@@ -64,7 +72,7 @@ describe("manifest authority for the loaded surface", () => {
 
       expect(collector.hasErrors).toBe(false);
       expect(input!.shipComponentFiles).toEqual([
-        resolve(fixture.path, "ship-building/components.yaml"),
+        resolve(fixture.path, "ship-building/components/guns/rifle.json"),
       ]);
     } finally {
       fixture.cleanup();
@@ -77,17 +85,17 @@ describe("manifest authority for the loaded surface", () => {
       writeFixture(
         fixture.path,
         "pack.json",
-        JSON.stringify({ name: "test-pack", version: "0.1.0", type: "production", files: {} }),
+        JSON.stringify({ name: "test-pack", version: "0.1.0", type: "fixture", files: {} }),
       );
-      writeFixture(fixture.path, "ship-building/components.yaml", COMPONENT);
+      writeFixture(fixture.path, "ship-building/components/guns/rifle.json", COMPONENT);
 
       const collector = new DiagnosticCollector();
       buildFullSurfaceInput(resolve(fixture.path, "pack.json"), fixture.path, collector);
 
       const error = collector.errors.find((d) => d.code === "MANIFEST");
       expect(error).toBeDefined();
-      expect(error!.message).toContain("ship-building/components.yaml");
-      expect(error!.sourceLocation?.path).toBe("ship-building/components.yaml");
+      expect(error!.message).toContain("ship-building/components/guns/rifle.json");
+      expect(error!.sourceLocation?.path).toBe("ship-building/components/guns/rifle.json");
       expect(error!.remediation).toContain("shipBuilding.shipComponents");
 
       expect(() => buildFullSurfaceInput(resolve(fixture.path, "pack.json"), fixture.path)).toThrow(
@@ -107,8 +115,8 @@ describe("manifest authority for the loaded surface", () => {
         JSON.stringify({
           name: "test-pack",
           version: "0.1.0",
-          type: "production",
-          files: { countries: ["countries.yaml"] },
+          type: "fixture",
+          files: { countries: ["countries.json"] },
         }),
       );
 
@@ -117,7 +125,7 @@ describe("manifest authority for the loaded surface", () => {
 
       const error = collector.errors.find((d) => d.code === "MANIFEST");
       expect(error).toBeDefined();
-      expect(error!.message).toContain("countries.yaml");
+      expect(error!.message).toContain("countries.json");
       expect(error!.message).toContain("does not exist");
     } finally {
       fixture.cleanup();
@@ -155,17 +163,17 @@ describe("manifest authority for the loaded surface", () => {
         JSON.stringify({
           name: "test-pack",
           version: "0.4.0",
-          type: "production",
-          files: { rulesets: ["rulesets.yaml"] },
-          shipBuilding: { shipComponents: ["ship-building/components.yaml"] },
+          type: "fixture",
+          files: { rulesets: ["rulesets.json"] },
+          shipBuilding: { shipComponents: ["ship-building/components/guns/rifle.json"] },
         }),
       );
       writeFixture(
         fixture.path,
-        "rulesets.yaml",
-        `- id: "core"\n  name: "Core"\n  version: "1.0"\n`,
+        "rulesets.json",
+        `${JSON.stringify([{ id: "core", name: "Core", version: "1.0" }], null, 2)}\n`,
       );
-      writeFixture(fixture.path, "ship-building/components.yaml", COMPONENT);
+      writeFixture(fixture.path, "ship-building/components/guns/rifle.json", COMPONENT);
 
       const input = buildFullSurfaceInput(resolve(fixture.path, "pack.json"), fixture.path);
       const collector = new DiagnosticCollector();
@@ -175,7 +183,7 @@ describe("manifest authority for the loaded surface", () => {
       const manifest = output!.bundle.manifest as Record<string, unknown>;
       expect(manifest["shipBuilding"]).toBeUndefined();
       expect(manifest["name"]).toBe("test-pack");
-      expect(manifest["files"]).toEqual({ rulesets: ["rulesets.yaml"] });
+      expect(manifest["files"]).toEqual({ rulesets: ["rulesets.json"] });
     } finally {
       fixture.cleanup();
     }

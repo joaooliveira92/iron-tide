@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import {
   FlattenedPartSchema,
@@ -7,7 +7,6 @@ import {
   ShipTypeRecordSchema,
   SlotTemplateSchema,
   decodeStrict,
-  parseYamlSafe,
   type FlattenedPart,
   type PlatformData,
   type ReferenceDesignLoadoutData,
@@ -17,6 +16,7 @@ import {
 } from "@bluewave/content-schema";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
+import { readAuthoredFile } from "@bluewave/test-support";
 import { partCatalogue, compileDesign, compileTorpedo } from "../src/index.js";
 import { compileDesignFromLoadout } from "../src/compile.js";
 import { nationalContext, readReferenceDesignEntries } from "./helpers/earlyContext.js";
@@ -37,52 +37,49 @@ function stripCompiledTorpedo(value: unknown): unknown {
   return value;
 }
 
-function readYaml(path: string): Record<string, unknown> {
-  const collector = { addError: () => undefined, hasErrors: false } as never;
-  const parsed = parseYamlSafe(readFileSync(path, "utf8"), path, collector);
-  if (!parsed.success) throw new Error(`bad YAML: ${path}`);
-  return parsed.data as Record<string, unknown>;
+function readAuthored(path: string): Record<string, unknown> {
+  return readAuthoredFile(path) as Record<string, unknown>;
 }
 
 const parts: FlattenedPart[] = readdirSync(join(shipBuilding, "parts"))
-  .filter((name) => name.endsWith(".yaml"))
+  .filter((name) => name.endsWith(".ts"))
   .flatMap((name) =>
-    (readYaml(join(shipBuilding, "parts", name))["parts"] as unknown[]).map((record) =>
+    (readAuthored(join(shipBuilding, "parts", name))["parts"] as unknown[]).map((record) =>
       decodeStrict(FlattenedPartSchema, record),
     ),
   );
 const platforms: PlatformData[] = (
-  readYaml(join(shipBuilding, "platforms.yaml"))["platforms"] as unknown[]
+  readAuthored(join(shipBuilding, "platforms.ts"))["platforms"] as unknown[]
 ).map((record) => decodeStrict(PlatformSchema, record));
 const slotTemplates: SlotTemplateData[] = (
-  readYaml(join(shipBuilding, "slot-templates.yaml"))["slotTemplates"] as unknown[]
+  readAuthored(join(shipBuilding, "slot-templates.ts"))["slotTemplates"] as unknown[]
 ).map((record) => decodeStrict(SlotTemplateSchema, record));
 const loadouts: ReferenceDesignLoadoutData[] = readdirSync(join(shipBuilding, "design-loadouts"))
-  .filter((name) => name.endsWith(".yaml"))
+  .filter((name) => name.endsWith(".ts"))
   .flatMap((name) =>
-    (readYaml(join(shipBuilding, "design-loadouts", name))["designs"] as unknown[]).map((record) =>
-      decodeStrict(ReferenceDesignLoadoutSchema, record),
+    (readAuthored(join(shipBuilding, "design-loadouts", name))["designs"] as unknown[]).map(
+      (record) => decodeStrict(ReferenceDesignLoadoutSchema, record),
     ),
   );
 const shipTypeRecords: ShipTypeRecord[] = (
-  readYaml(join(shipBuilding, "ship-types.yaml"))["shipTypes"] as unknown[]
+  readAuthored(join(shipBuilding, "ship-types.ts"))["shipTypes"] as unknown[]
 ).map((record) => decodeStrict(ShipTypeRecordSchema, record));
 
 const catalogue = partCatalogue({ parts, slotTemplates, platforms });
 const legacyById = new Map(readReferenceDesignEntries().map((d) => [d.id, d] as const));
 
 describe("production parts content → compile (ticket 11d)", () => {
-  it("carries the staged plan: 331 parts, 12 slot templates, 9 platforms, 96 loadouts", () => {
-    expect(parts).toHaveLength(331);
+  it("carries the staged plan: 334 parts, 12 slot templates, 10 platforms, 97 loadouts", () => {
+    expect(parts).toHaveLength(334);
     expect(slotTemplates).toHaveLength(12);
-    expect(platforms).toHaveLength(9);
-    expect(loadouts).toHaveLength(96);
+    expect(platforms).toHaveLength(10);
+    expect(loadouts).toHaveLength(97);
     for (const loadout of loadouts) {
       expect(legacyById.has(loadout.id), loadout.id).toBe(true);
     }
   });
 
-  it("carries the eight torpedo parts and resolves the DQ-TORPEDO-001 forPart cross-references", () => {
+  it("carries the nine torpedo parts and resolves the DQ-TORPEDO-001 forPart cross-references", () => {
     const torpedoes = parts.filter((p) => p.family === "torpedo");
     expect(torpedoes.map((p) => p.id)).toEqual([
       "ger_533mm_g7a_1934",
@@ -91,6 +88,7 @@ describe("production parts content → compile (ticket 11d)", () => {
       "rn_21in_mk_iv_1916",
       "rn_21in_mk_viii_1927",
       "usn_21in_mk14_1931",
+      "usn_21in_mk35_1949",
       "whitehead_14in_1886",
       "whitehead_18in_1894",
     ]);
@@ -153,7 +151,7 @@ describe("production parts content → compile (ticket 11d)", () => {
         ).toBeDefined();
       }
     }
-    expect(placements).toBe(883);
+    expect(placements).toBe(909);
   });
 
   it("executes the four D17 designs through the production barrier and pins their central batteries", () => {

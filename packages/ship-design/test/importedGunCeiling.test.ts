@@ -1,21 +1,20 @@
-import { readFileSync } from "node:fs";
+import {} from "node:fs";
 import { join } from "node:path";
-import { parse } from "yaml";
 import { describe, it, expect } from "vite-plus/test";
 import { CANONICAL_RESEARCH_FIELD_IDS } from "@bluewave/content-schema";
 import { catalogueForNation } from "../src/componentVariants.js";
 import { type NationNavalProfile } from "../src/index.js";
 import { validateNavalProfiles, type ComponentAccess } from "../src/nationProfile.js";
 import { components, navalProfiles, plants } from "./helpers/earlyContext.js";
+import { readAuthoredFile } from "@bluewave/test-support";
 
 const root = join(__dirname, "..", "..", "..", "content", "production", "1880");
-const load = (rel: string) =>
-  parse(readFileSync(join(root, rel), "utf8")) as Record<string, unknown>;
+const load = (rel: string) => readAuthoredFile(join(root, rel)) as Record<string, unknown>;
 const knownNationIds = new Set(navalProfiles.map((p) => p.nationId));
 const knownComponentIds = new Set(components.map((c) => c.id));
 const knownPlantIds = new Set(plants.map((p) => p.id));
 const knownHullFormIds = new Set(
-  (load("ship-building/hull-forms.yaml") as { hullForms: { id: string }[] }).hullForms.map(
+  (load("ship-building/hull-forms.ts") as { hullForms: { id: string }[] }).hullForms.map(
     (f) => f.id,
   ),
 );

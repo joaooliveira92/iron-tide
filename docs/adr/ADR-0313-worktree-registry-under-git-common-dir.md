@@ -4,9 +4,11 @@ Applies to: repository
 
 ## Status
 
+Superseded by: ADR-0364
+
 Accepted (2026-10-26).
 
-Supersedes: ADR-0269. Amends ADR-0220.
+Amends ADR-0220.
 
 ## Context
 

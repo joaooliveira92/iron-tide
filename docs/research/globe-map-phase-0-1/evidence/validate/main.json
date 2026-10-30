@@ -1,0 +1,1836 @@
+{
+  "label": "main",
+  "tasks": {
+    "deepzoom": {
+      "rows": [
+        {
+          "location": "equator-ocean",
+          "zoom": 12.5,
+          "globeness": 0,
+          "settleMs": 39,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03373078809560951,
+          "probeMeanErrPx": 0.0184577600281851,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000045
+        },
+        {
+          "location": "equator-ocean",
+          "zoom": 13,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03705926770957835,
+          "probeMeanErrPx": 0.027814428947474473,
+          "resourceErrors": 0,
+          "frameP50": 16.699999999999818
+        },
+        {
+          "location": "equator-ocean",
+          "zoom": 14,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.038723924952908016,
+          "probeMeanErrPx": 0.03603719358848715,
+          "resourceErrors": 0,
+          "frameP50": 16.600000000000364
+        },
+        {
+          "location": "equator-ocean",
+          "zoom": 15,
+          "globeness": 0,
+          "settleMs": 34,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.0202264999274996,
+          "probeMeanErrPx": 0.01810866622194983,
+          "resourceErrors": 0,
+          "frameP50": 16.699999999999818
+        },
+        {
+          "location": "equator-ocean",
+          "zoom": 16,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03910183523587227,
+          "probeMeanErrPx": 0.023082694977420687,
+          "resourceErrors": 0,
+          "frameP50": 16.600000000000364
+        },
+        {
+          "location": "equator-ocean",
+          "zoom": 17,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.04287965435419491,
+          "probeMeanErrPx": 0.038189506333515456,
+          "resourceErrors": 0,
+          "frameP50": 16.699999999999818
+        },
+        {
+          "location": "equator-ocean",
+          "zoom": 18,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.032972446133619604,
+          "probeMeanErrPx": 0.023852770305200204,
+          "resourceErrors": 0,
+          "frameP50": 16.699999999999818
+        },
+        {
+          "location": "equator-ocean",
+          "zoom": 19,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.037059535519975206,
+          "probeMeanErrPx": 0.02781508694581528,
+          "resourceErrors": 0,
+          "frameP50": 16.699999999999818
+        },
+        {
+          "location": "equator-ocean",
+          "zoom": 20,
+          "globeness": 0,
+          "settleMs": 38,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.038723834337213985,
+          "probeMeanErrPx": 0.036036670111551185,
+          "resourceErrors": 0,
+          "frameP50": 16.699999999999818
+        },
+        {
+          "location": "equator-ocean",
+          "zoom": 21,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.021932942189067103,
+          "probeMeanErrPx": 0.01771084552197312,
+          "resourceErrors": 0,
+          "frameP50": 16.699999999999818
+        },
+        {
+          "location": "equator-ocean",
+          "zoom": 22,
+          "globeness": 0,
+          "settleMs": 38,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03478516919258496,
+          "probeMeanErrPx": 0.02199819021150857,
+          "resourceErrors": 0,
+          "frameP50": 16.699999999999818
+        },
+        {
+          "location": "high-north",
+          "zoom": 12.5,
+          "globeness": 0,
+          "settleMs": 52,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.04002003164350769,
+          "probeMeanErrPx": 0.03219228311333422,
+          "resourceErrors": 0,
+          "frameP50": 16.699999999999818
+        },
+        {
+          "location": "high-north",
+          "zoom": 13,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03262400587695302,
+          "probeMeanErrPx": 0.026298906291573533,
+          "resourceErrors": 0,
+          "frameP50": 16.699999999999818
+        },
+        {
+          "location": "high-north",
+          "zoom": 14,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.04010434871170161,
+          "probeMeanErrPx": 0.03644548106343128,
+          "resourceErrors": 0,
+          "frameP50": 16.699999999999818
+        },
+        {
+          "location": "high-north",
+          "zoom": 15,
+          "globeness": 0,
+          "settleMs": 34,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03262403287186746,
+          "probeMeanErrPx": 0.026298918935544854,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-north",
+          "zoom": 16,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.041721797262186715,
+          "probeMeanErrPx": 0.036631156729594716,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-north",
+          "zoom": 17,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03607895603835451,
+          "probeMeanErrPx": 0.026418899000157817,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "high-north",
+          "zoom": 18,
+          "globeness": 0,
+          "settleMs": 40,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.037846920885326735,
+          "probeMeanErrPx": 0.03470227602411147,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-north",
+          "zoom": 19,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.022052983175960675,
+          "probeMeanErrPx": 0.02101083640920308,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-north",
+          "zoom": 20,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.04112584757007194,
+          "probeMeanErrPx": 0.032806783297557617,
+          "resourceErrors": 0,
+          "frameP50": 16.600000000000364
+        },
+        {
+          "location": "high-north",
+          "zoom": 21,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.025232280046302364,
+          "probeMeanErrPx": 0.022098738307860095,
+          "resourceErrors": 0,
+          "frameP50": 16.600000000000364
+        },
+        {
+          "location": "high-north",
+          "zoom": 22,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.036742312788666444,
+          "probeMeanErrPx": 0.03228480130101502,
+          "resourceErrors": 0,
+          "frameP50": 16.600000000000364
+        },
+        {
+          "location": "high-south",
+          "zoom": 12.5,
+          "globeness": 0,
+          "settleMs": 53,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.06644948597647898,
+          "probeMeanErrPx": 0.05289091057544405,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-south",
+          "zoom": 13,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.0433924119727862,
+          "probeMeanErrPx": 0.0391872302139953,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-south",
+          "zoom": 14,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03522458574565405,
+          "probeMeanErrPx": 0.02509842225874418,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-south",
+          "zoom": 15,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.02691920588103269,
+          "probeMeanErrPx": 0.024710758719794987,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-south",
+          "zoom": 16,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03779459683033773,
+          "probeMeanErrPx": 0.03499820769919557,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-south",
+          "zoom": 17,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03639832816408132,
+          "probeMeanErrPx": 0.01792095511021792,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-south",
+          "zoom": 18,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.037054548534785715,
+          "probeMeanErrPx": 0.028520118900026075,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-south",
+          "zoom": 19,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03771481048553271,
+          "probeMeanErrPx": 0.03640736557454598,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-south",
+          "zoom": 20,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.020527701934918673,
+          "probeMeanErrPx": 0.019297473591786997,
+          "resourceErrors": 0,
+          "frameP50": 16.600000000000364
+        },
+        {
+          "location": "high-south",
+          "zoom": 21,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03844580536730881,
+          "probeMeanErrPx": 0.023015296372884814,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "high-south",
+          "zoom": 22,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.046334701436934404,
+          "probeMeanErrPx": 0.03936606547133884,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999891
+        },
+        {
+          "location": "antimeridian-west",
+          "zoom": 12.5,
+          "globeness": 0,
+          "settleMs": 52,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.047035332204836126,
+          "probeMeanErrPx": 0.029826821116924182,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-west",
+          "zoom": 13,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03934125108296609,
+          "probeMeanErrPx": 0.03341452282202419,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "antimeridian-west",
+          "zoom": 14,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.0397494955870504,
+          "probeMeanErrPx": 0.031706195380184536,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-west",
+          "zoom": 15,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03581411279663741,
+          "probeMeanErrPx": 0.03359003801591764,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-west",
+          "zoom": 16,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.026270111541877316,
+          "probeMeanErrPx": 0.02007026999957879,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-west",
+          "zoom": 17,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.039203242147518635,
+          "probeMeanErrPx": 0.030680326217575844,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "antimeridian-west",
+          "zoom": 18,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.025075983628998873,
+          "probeMeanErrPx": 0.02404725636180953,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "antimeridian-west",
+          "zoom": 19,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.044410468693261373,
+          "probeMeanErrPx": 0.036652961986460925,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-west",
+          "zoom": 20,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.020118576760254563,
+          "probeMeanErrPx": 0.017481884511944577,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-west",
+          "zoom": 21,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.02638385780309866,
+          "probeMeanErrPx": 0.0171055256786292,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-west",
+          "zoom": 22,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.025596889221163387,
+          "probeMeanErrPx": 0.021727489987205972,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-east",
+          "zoom": 12.5,
+          "globeness": 0,
+          "settleMs": 51,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.047035366946223456,
+          "probeMeanErrPx": 0.029826811458961006,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-east",
+          "zoom": 13,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.039341260538581925,
+          "probeMeanErrPx": 0.03341453623968341,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-east",
+          "zoom": 14,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.039749495587232384,
+          "probeMeanErrPx": 0.032025595851850386,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-east",
+          "zoom": 15,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03581404758967991,
+          "probeMeanErrPx": 0.0335899915479752,
+          "resourceErrors": 0,
+          "frameP50": 16.600000000002183
+        },
+        {
+          "location": "antimeridian-east",
+          "zoom": 16,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.026270035795814158,
+          "probeMeanErrPx": 0.02007020491950277,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-east",
+          "zoom": 17,
+          "globeness": 0,
+          "settleMs": 34,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03920322618798593,
+          "probeMeanErrPx": 0.03068033651442251,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-east",
+          "zoom": 18,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.025075934221568657,
+          "probeMeanErrPx": 0.023744924307011347,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-east",
+          "zoom": 19,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.04440947641487743,
+          "probeMeanErrPx": 0.0366517986973689,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-east",
+          "zoom": 20,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.020119466243561618,
+          "probeMeanErrPx": 0.01748305690544667,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "antimeridian-east",
+          "zoom": 21,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.026378310140322398,
+          "probeMeanErrPx": 0.017097177094985712,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "antimeridian-east",
+          "zoom": 22,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.025595042975981207,
+          "probeMeanErrPx": 0.021726241179256457,
+          "resourceErrors": 0,
+          "frameP50": 16.600000000002183
+        },
+        {
+          "location": "dense-archipelago-aegean",
+          "zoom": 12.5,
+          "globeness": 0,
+          "settleMs": 51,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.052035948682098335,
+          "probeMeanErrPx": 0.04715836809808135,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "dense-archipelago-aegean",
+          "zoom": 13,
+          "globeness": 0,
+          "settleMs": 51,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03699756819759231,
+          "probeMeanErrPx": 0.022609632588002682,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "dense-archipelago-aegean",
+          "zoom": 14,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.02025545251633492,
+          "probeMeanErrPx": 0.017549547649836142,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "dense-archipelago-aegean",
+          "zoom": 15,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03264423501517663,
+          "probeMeanErrPx": 0.015071325535830536,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "dense-archipelago-aegean",
+          "zoom": 16,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.018373596711992655,
+          "probeMeanErrPx": 0.01753832918179952,
+          "resourceErrors": 0,
+          "frameP50": 16.600000000002183
+        },
+        {
+          "location": "dense-archipelago-aegean",
+          "zoom": 17,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.034136982795863274,
+          "probeMeanErrPx": 0.018328652364506825,
+          "resourceErrors": 0,
+          "frameP50": 16.600000000002183
+        },
+        {
+          "location": "dense-archipelago-aegean",
+          "zoom": 18,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.026147842383444933,
+          "probeMeanErrPx": 0.024086722736893402,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "dense-archipelago-aegean",
+          "zoom": 19,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.04355185162013722,
+          "probeMeanErrPx": 0.037401396804120336,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "dense-archipelago-aegean",
+          "zoom": 20,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.02903278371683628,
+          "probeMeanErrPx": 0.017321488861435957,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "dense-archipelago-aegean",
+          "zoom": 21,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.027845091380982546,
+          "probeMeanErrPx": 0.02149118370982257,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "dense-archipelago-aegean",
+          "zoom": 22,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.04171059072073623,
+          "probeMeanErrPx": 0.030232406962953016,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "narrow-strait-gibraltar",
+          "zoom": 12.5,
+          "globeness": 0,
+          "settleMs": 34,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.039274029607662346,
+          "probeMeanErrPx": 0.02184635237895343,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000000728
+        },
+        {
+          "location": "narrow-strait-gibraltar",
+          "zoom": 13,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.031192673162893238,
+          "probeMeanErrPx": 0.029412214543951827,
+          "resourceErrors": 0,
+          "frameP50": 16.600000000002183
+        },
+        {
+          "location": "narrow-strait-gibraltar",
+          "zoom": 14,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03324519830433098,
+          "probeMeanErrPx": 0.026708586183290764,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "narrow-strait-gibraltar",
+          "zoom": 15,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.0332452256202339,
+          "probeMeanErrPx": 0.02856574435590516,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "narrow-strait-gibraltar",
+          "zoom": 16,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03674256673455381,
+          "probeMeanErrPx": 0.027088439503589072,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "narrow-strait-gibraltar",
+          "zoom": 17,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.033371044711326146,
+          "probeMeanErrPx": 0.032596311189846044,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "narrow-strait-gibraltar",
+          "zoom": 18,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.032075615327155256,
+          "probeMeanErrPx": 0.020140524281657593,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "narrow-strait-gibraltar",
+          "zoom": 19,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03294559548474329,
+          "probeMeanErrPx": 0.0313702041695795,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "narrow-strait-gibraltar",
+          "zoom": 20,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.030596829204922144,
+          "probeMeanErrPx": 0.022870603987642877,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "narrow-strait-gibraltar",
+          "zoom": 21,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.04022507506841901,
+          "probeMeanErrPx": 0.036272124738782344,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "narrow-strait-gibraltar",
+          "zoom": 22,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.029411923132968042,
+          "probeMeanErrPx": 0.014483576925434803,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "large-area-mediterranean",
+          "zoom": 12.5,
+          "globeness": 0,
+          "settleMs": 50,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.06433215517091306,
+          "probeMeanErrPx": 0.0539934213227587,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "large-area-mediterranean",
+          "zoom": 13,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.034902344504810744,
+          "probeMeanErrPx": 0.031141575472523372,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "large-area-mediterranean",
+          "zoom": 14,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.029806915616746588,
+          "probeMeanErrPx": 0.029118451576601312,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "large-area-mediterranean",
+          "zoom": 15,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03817739515960918,
+          "probeMeanErrPx": 0.029029797831945967,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "large-area-mediterranean",
+          "zoom": 16,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03209359811075824,
+          "probeMeanErrPx": 0.029892880466185053,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "large-area-mediterranean",
+          "zoom": 17,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.0344735161226034,
+          "probeMeanErrPx": 0.02831411459108033,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "large-area-mediterranean",
+          "zoom": 18,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.034473418762388276,
+          "probeMeanErrPx": 0.028328647422904838,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "large-area-mediterranean",
+          "zoom": 19,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.033245842058860636,
+          "probeMeanErrPx": 0.028566127159229588,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "large-area-mediterranean",
+          "zoom": 20,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03447348928806265,
+          "probeMeanErrPx": 0.028330972103501266,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "large-area-mediterranean",
+          "zoom": 21,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.032021297982616076,
+          "probeMeanErrPx": 0.02860204900404943,
+          "resourceErrors": 0,
+          "frameP50": 16.60000000000582
+        },
+        {
+          "location": "large-area-mediterranean",
+          "zoom": 22,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.0398194524668811,
+          "probeMeanErrPx": 0.02929169534477342,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "coastal-boundary-malta",
+          "zoom": 12.5,
+          "globeness": 0,
+          "settleMs": 51,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.032133011447757306,
+          "probeMeanErrPx": 0.022234425981653434,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "coastal-boundary-malta",
+          "zoom": 13,
+          "globeness": 0,
+          "settleMs": 52,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.02220241800269107,
+          "probeMeanErrPx": 0.016724398991427903,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "coastal-boundary-malta",
+          "zoom": 14,
+          "globeness": 0,
+          "settleMs": 102,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.035067312486198855,
+          "probeMeanErrPx": 0.016702046288908725,
+          "resourceErrors": 0,
+          "frameP50": 16.700000000004366
+        },
+        {
+          "location": "coastal-boundary-malta",
+          "zoom": 15,
+          "globeness": 0,
+          "settleMs": 52,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03028789971307211,
+          "probeMeanErrPx": 0.022868265100807663,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "coastal-boundary-malta",
+          "zoom": 16,
+          "globeness": 0,
+          "settleMs": 52,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03806446811248497,
+          "probeMeanErrPx": 0.031334350427320815,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "coastal-boundary-malta",
+          "zoom": 17,
+          "globeness": 0,
+          "settleMs": 51,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.04557454590229132,
+          "probeMeanErrPx": 0.02419013058170816,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "coastal-boundary-malta",
+          "zoom": 18,
+          "globeness": 0,
+          "settleMs": 52,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03960220983749289,
+          "probeMeanErrPx": 0.037067105765052635,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "coastal-boundary-malta",
+          "zoom": 19,
+          "globeness": 0,
+          "settleMs": 52,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03209415066164228,
+          "probeMeanErrPx": 0.013209995922996702,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "coastal-boundary-malta",
+          "zoom": 20,
+          "globeness": 0,
+          "settleMs": 53,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.02724357882006937,
+          "probeMeanErrPx": 0.019059332617440593,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "coastal-boundary-malta",
+          "zoom": 21,
+          "globeness": 0,
+          "settleMs": 52,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03531273839093854,
+          "probeMeanErrPx": 0.01902671755912398,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "coastal-boundary-malta",
+          "zoom": 22,
+          "globeness": 0,
+          "settleMs": 52,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.033282486033430043,
+          "probeMeanErrPx": 0.029478155662271816,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "route-tile-boundary",
+          "zoom": 12.5,
+          "globeness": 0,
+          "settleMs": 51,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.05780618040372748,
+          "probeMeanErrPx": 0.04241879862973363,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "route-tile-boundary",
+          "zoom": 13,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03813639990752721,
+          "probeMeanErrPx": 0.030648951494730087,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "route-tile-boundary",
+          "zoom": 14,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.02567049301456827,
+          "probeMeanErrPx": 0.023665206505672838,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "route-tile-boundary",
+          "zoom": 15,
+          "globeness": 0,
+          "settleMs": 37,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.05064460124514755,
+          "probeMeanErrPx": 0.03969177655746778,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "route-tile-boundary",
+          "zoom": 16,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03181329099328939,
+          "probeMeanErrPx": 0.02100473788923898,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "route-tile-boundary",
+          "zoom": 17,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.031813577919813554,
+          "probeMeanErrPx": 0.02100473577732758,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "route-tile-boundary",
+          "zoom": 18,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.036345479248614844,
+          "probeMeanErrPx": 0.023567204573318082,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "route-tile-boundary",
+          "zoom": 19,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.025229021835012962,
+          "probeMeanErrPx": 0.022096913504578278,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "route-tile-boundary",
+          "zoom": 20,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03447320750985206,
+          "probeMeanErrPx": 0.028327795237479168,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "route-tile-boundary",
+          "zoom": 21,
+          "globeness": 0,
+          "settleMs": 36,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03014105122796819,
+          "probeMeanErrPx": 0.02507284258163432,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        },
+        {
+          "location": "route-tile-boundary",
+          "zoom": 22,
+          "globeness": 0,
+          "settleMs": 35,
+          "probeMissing": 0,
+          "probeMaxErrPx": 0.03920678378663546,
+          "probeMeanErrPx": 0.032384071603833796,
+          "resourceErrors": 0,
+          "frameP50": 16.69999999999709
+        }
+      ],
+      "heapStartMB": 38.8,
+      "heapEndMB": 42.9
+    },
+    "picking": {
+      "interiorCases": 756,
+      "unambiguousFailureCount": 0,
+      "unambiguousFailures": [],
+      "ambiguousFailureCount": 0,
+      "byZoom": [
+        {
+          "zoom": 2,
+          "cases": 108,
+          "failures": 0
+        },
+        {
+          "zoom": 5,
+          "cases": 108,
+          "failures": 0
+        },
+        {
+          "zoom": 11.5,
+          "cases": 108,
+          "failures": 0
+        },
+        {
+          "zoom": 12.5,
+          "cases": 108,
+          "failures": 0
+        },
+        {
+          "zoom": 15,
+          "cases": 108,
+          "failures": 0
+        },
+        {
+          "zoom": 18,
+          "cases": 108,
+          "failures": 0
+        },
+        {
+          "zoom": 22,
+          "cases": 108,
+          "failures": 0
+        }
+      ],
+      "scatterCases": 864,
+      "scatterAmbiguousWithin1p5px": 3,
+      "scatterHardFailures": 0,
+      "scatterAmbiguousMismatches": 0,
+      "transitionReversal": [
+        {
+          "phase": "in",
+          "zoom": 11,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.1,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.2,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.3,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.4,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.5,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.6,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.7,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.8,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 11.9,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "in",
+          "zoom": 12,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 12,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.9,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.8,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.7,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.6,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.5,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.4,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.3,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.2,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11.1,
+          "hit": true,
+          "area": "area_mediterranean"
+        },
+        {
+          "phase": "out",
+          "zoom": 11,
+          "hit": true,
+          "area": "area_mediterranean"
+        }
+      ]
+    },
+    "hidden": {
+      "samples": 1440,
+      "ghostClickable": 24,
+      "ghostSamples": [
+        {
+          "zoom": 1.4,
+          "lon": -175,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": true,
+          "visible": true,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -170,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": true,
+          "visible": true,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -165,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": true,
+          "visible": true,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -160,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": true,
+          "visible": true,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -155,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": true,
+          "visible": true,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -150,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": true,
+          "visible": true,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -125,
+          "id": "spike-yokohama",
+          "beyondHorizon": true,
+          "visible": true,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -105,
+          "id": "spike-suva",
+          "beyondHorizon": true,
+          "visible": true,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -100,
+          "id": "spike-gibraltar",
+          "beyondHorizon": true,
+          "visible": true,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -90,
+          "id": "spike-murmansk",
+          "beyondHorizon": true,
+          "visible": true,
+          "onScreen": true
+        }
+      ],
+      "beyondHorizonAndQueryHitOffScreen": 2,
+      "nearSideMissing": 14,
+      "missingSamples": [
+        {
+          "zoom": 1.4,
+          "lon": -100,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": false,
+          "visible": false,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -95,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": false,
+          "visible": false,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -90,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": false,
+          "visible": false,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -85,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": false,
+          "visible": false,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -80,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": false,
+          "visible": false,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": -75,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": false,
+          "visible": false,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": 95,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": false,
+          "visible": false,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": 100,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": false,
+          "visible": false,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": 105,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": false,
+          "visible": false,
+          "onScreen": true
+        },
+        {
+          "zoom": 1.4,
+          "lon": 110,
+          "id": "spike-longyearbyen",
+          "beyondHorizon": false,
+          "visible": false,
+          "onScreen": true
+        }
+      ],
+      "horizonSweepChanges": 0,
+      "horizonSweepSamples": 1201,
+      "selectedHidden": {
+        "indicatorShown": true,
+        "label": "Suva is off screen at bearing 356 degrees. Activate to centre it.",
+        "markerHidden": true
+      }
+    },
+    "input": {
+      "semanticReplay": [
+        {
+          "zoom": 3.0000000000008167,
+          "centre": [
+            9.999999999977375,
+            39.99999999996121
+          ],
+          "bearing": 0,
+          "pitch": 0,
+          "maxAnchorDriftPx": 35.20447694906427
+        },
+        {
+          "zoom": 3.0000000000008167,
+          "centre": [
+            9.999999999977375,
+            39.99999999996121
+          ],
+          "bearing": 0,
+          "pitch": 0,
+          "maxAnchorDriftPx": 35.20447694906427
+        },
+        {
+          "zoom": 3.0000000000008167,
+          "centre": [
+            9.999999999977375,
+            39.99999999996121
+          ],
+          "bearing": 0,
+          "pitch": 0,
+          "maxAnchorDriftPx": 35.20447694906427
+        }
+      ],
+      "identical": true,
+      "reversalCentreErrorDegrees": 4.49050243010826e-11,
+      "rawWheel": {
+        "runs": [
+          {
+            "delay": 20,
+            "repeat": 0,
+            "zoom": 8.399485233183274,
+            "centre": [
+              53.8243583242803,
+              39.412266952622566
+            ]
+          },
+          {
+            "delay": 20,
+            "repeat": 1,
+            "zoom": 8.39948523318784,
+            "centre": [
+              53.82435832446049,
+              39.41226695240185
+            ]
+          },
+          {
+            "delay": 60,
+            "repeat": 0,
+            "zoom": 8.399485233188297,
+            "centre": [
+              53.82435832452495,
+              39.41226695237973
+            ]
+          },
+          {
+            "delay": 60,
+            "repeat": 1,
+            "zoom": 8.399485233186704,
+            "centre": [
+              53.82435832424494,
+              39.412266952456775
+            ]
+          },
+          {
+            "delay": 120,
+            "repeat": 0,
+            "zoom": 8.399485233185954,
+            "centre": [
+              53.82435832436636,
+              39.41226695249289
+            ]
+          },
+          {
+            "delay": 120,
+            "repeat": 1,
+            "zoom": 8.3994852331938,
+            "centre": [
+              53.82435832476688,
+              39.412266952113235
+            ]
+          }
+        ],
+        "zoomSpread": 1.0526690630285884e-11
+      }
+    },
+    "a11y": {
+      "appName": "Strategic world map, experimental globe. Use arrow keys to pan and plus or minus to zoom. A list of map entities is available.",
+      "selection": {
+        "focused": "spike-honolulu",
+        "selected": "spike-honolulu",
+        "live": "Selected Honolulu"
+      },
+      "axe": []
+    }
+  },
+  "checks": [
+    {
+      "name": "deep zoom z12.5-z22: every row fully planar (globeness 0)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "deep zoom: probes present at every row",
+      "ok": true,
+      "detail": "missing=0"
+    },
+    {
+      "name": "deep zoom: max projected-vs-rendered error <= 0.5 css px",
+      "ok": true,
+      "detail": "worst=0.066"
+    },
+    {
+      "name": "deep zoom: no resource errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "deep zoom: heap after sweep within 40 MB of start",
+      "ok": true,
+      "detail": "38.8 -> 42.9"
+    },
+    {
+      "name": "area picking: interior centre picks match geometric truth (unambiguous cases)",
+      "ok": true,
+      "detail": "0/756"
+    },
+    {
+      "name": "area picking: scattered viewport points match truth except within 1.5 px of an edge",
+      "ok": true,
+      "detail": "0/864"
+    },
+    {
+      "name": "picking through z11-12 transition: marker hit at every step",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "picking through z11-12 transition: reversal gives identical results",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "back-side markers are never pickable (beyond horizon => not rendered)",
+      "ok": false,
+      "detail": "24/1440"
+    },
+    {
+      "name": "near-side on-screen markers are always rendered",
+      "ok": false,
+      "detail": "14"
+    },
+    {
+      "name": "marker visibility changes at most twice while a marker crosses the horizon (no flicker)",
+      "ok": true,
+      "detail": "0 changes over 1201 samples"
+    },
+    {
+      "name": "selected hidden entity shows an intentional edge indicator with an accessible name",
+      "ok": true,
+      "detail": "Suva is off screen at bearing 356 degrees. Activate to centre it."
+    },
+    {
+      "name": "selected hidden entity is not pickable on the map",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "activating the indicator brings the entity into view",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "semantic replay: three runs give bit-identical final camera state",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "semantic replay: anchor drift <= 1 px through the 11-12 band",
+      "ok": false,
+      "detail": "35.20447694906427"
+    },
+    {
+      "name": "semantic replay: zoom in then out returns to the start zoom within 1e-6",
+      "ok": true,
+      "detail": "3.0000000000008167"
+    },
+    {
+      "name": "raw wheel input: final zoom is NOT identical across inter-event delays (documents nondeterminism source)",
+      "ok": true,
+      "detail": "spread=0.0000 zoom levels"
+    },
+    {
+      "name": "keyboard: arrow keys pan the map",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "keyboard: plus key zooms the map by 0.5",
+      "ok": true,
+      "detail": "3.002728606306496 -> 3.502728606306496"
+    },
+    {
+      "name": "keyboard: arrow keys move focus within the entity list",
+      "ok": true,
+      "detail": "spike-honolulu"
+    },
+    {
+      "name": "keyboard: Enter selects the entity and announces it in a polite live region",
+      "ok": true,
+      "detail": "spike-honolulu / Selected Honolulu"
+    },
+    {
+      "name": "selection is exposed with aria-pressed (not colour alone)",
+      "ok": true,
+      "detail": "1"
+    },
+    {
+      "name": "reduced motion: selection jumps instead of animating",
+      "ok": true,
+      "detail": "-157.86,21.31"
+    },
+    {
+      "name": "axe-core: no violations on the overlay (colour-contrast excluded; not computable on canvas)",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "no console errors during validation",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "environment": {
+    "dpr": 2,
+    "viewport": [
+      1470,
+      868
+    ],
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) @bluewave/desktop/4.0.0 Chrome/152.0.7977.167 Electron/44.9.2 Safari/537.36",
+    "args": [
+      "--user-data-dir=<tmp>",
+      "--disable-renderer-backgrounding",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-background-timer-throttling"
+    ]
+  },
+  "mainProcessLog": [],
+  "consoleErrors": []
+}

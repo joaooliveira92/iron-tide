@@ -4,8 +4,9 @@ import { Data } from "effect";
 export const CORRUPT_SAVE_CODE = "PERSISTENCE_CORRUPT_SAVE" as DiagnosticCode;
 export const MISSING_SAVE_CODE = "PERSISTENCE_MISSING_SAVE" as DiagnosticCode;
 export const CANCELLED_CODE = "PERSISTENCE_CANCELLED" as DiagnosticCode;
-export const UNSIGNED_SAVE_CODE = "PERSISTENCE_UNSIGNED_SAVE" as DiagnosticCode;
+export const LEGACY_SAVE_CODE = "PERSISTENCE_LEGACY_SAVE" as DiagnosticCode;
 export const COMPATIBILITY_MISMATCH_CODE = "PERSISTENCE_COMPATIBILITY_MISMATCH" as DiagnosticCode;
+export const IO_CODE = "PERSISTENCE_IO" as DiagnosticCode;
 
 export interface PersistenceErrorFields {
   readonly message: string;
@@ -57,10 +58,10 @@ export class PersistenceCancelledError extends Data.TaggedError(
   }
 }
 
-export class PersistenceUnsignedSaveError extends Data.TaggedError(
-  "PERSISTENCE_UNSIGNED_SAVE",
+export class PersistenceLegacySaveError extends Data.TaggedError(
+  "PERSISTENCE_LEGACY_SAVE",
 )<PersistenceErrorFields> {
-  readonly code: DiagnosticCode = UNSIGNED_SAVE_CODE;
+  readonly code: DiagnosticCode = LEGACY_SAVE_CODE;
   toDiagnostic(severity: Severity = "warning"): Diagnostic {
     return projectDiagnostic(this.code, this, severity);
   }
@@ -75,9 +76,12 @@ export class PersistenceCompatibilityMismatchError extends Data.TaggedError(
   }
 }
 
-export class PersistenceIoError extends Data.TaggedError(
-  "PERSISTENCE_IO",
-)<PersistenceErrorFields> {}
+export class PersistenceIoError extends Data.TaggedError("PERSISTENCE_IO")<PersistenceErrorFields> {
+  readonly code: DiagnosticCode = IO_CODE;
+  toDiagnostic(severity: Severity = "error"): Diagnostic {
+    return projectDiagnostic(this.code, this, severity);
+  }
+}
 
 export class PersistenceInvalidOptionError extends Data.TaggedError(
   "PERSISTENCE_INVALID_OPTION",

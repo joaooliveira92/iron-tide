@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Effect, Layer, ManagedRuntime } from "effect";
@@ -111,6 +111,18 @@ describe("preferences bridge", () => {
     const result = await bridge.write({ app: { ...DEFAULT_APP_PREFERENCES, highContrast: true } });
     expect(result.outcome).toBe("error");
     if (result.outcome === "error") expect(result.reason).toBe("INVALID_PREFERENCES_PAYLOAD");
+  });
+
+  it("returns the recovery reason and file with the startup read", async () => {
+    writeFileSync(join(root, PREFERENCES_FILENAME), "{ this is not json", "utf8");
+    const result = await bridge.readWithRecovery();
+    expect(result.outcome).toBe("success");
+    if (result.outcome !== "success") return;
+    expect(result.value.snapshot.app).toEqual(DEFAULT_APP_PREFERENCES);
+    expect(result.value.recovery).toEqual({
+      file: join(root, PREFERENCES_FILENAME),
+      reason: "unparseable",
+    });
   });
 
   it("rejects a malformed payload with the typed INVALID_PREFERENCES_PAYLOAD reason", async () => {

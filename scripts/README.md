@@ -65,6 +65,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 
 - `adr-index.cjs` (`pnpm adr:index`) — regenerate the `docs/adr/` indexes.
 - `change-scope.mjs` (`pnpm change-scope --base <ref>`) — change-scope JSON ([usage](../docs/agents/change-scope.md)).
+- `agent-map.mjs`, `verify-affected.mjs`, `sprint-show.mjs` — agent loop ([agent tools](../docs/agents/agent-tools.md)).
 - `worktree.mjs` (`pnpm worktrees …`) — manage worktrees and the registry (ADR-0313, [worktree command](../.opencode/command/worktrees.md)).
 - `changelog.mjs` — draft a changelog section from Conventional Commits (ADR-0134).
 - `install-hooks.mjs` (`pnpm hooks:install`) — point `core.hooksPath` at `.githooks`.

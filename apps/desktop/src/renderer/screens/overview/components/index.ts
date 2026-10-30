@@ -12,7 +12,6 @@ export { MonthReportPrioritiesSection } from "./MonthReportPrioritiesSection.js"
 export { MonthReportResearchSection } from "./MonthReportResearchSection.js";
 export { MonthReportTreasurySection } from "./MonthReportTreasurySection.js";
 export { MonthlyReportView } from "./MonthlyReportView.js";
-export { OverviewMonthReportPanel } from "./OverviewMonthReportPanel.js";
+export { OverviewHeaderReports } from "./OverviewHeaderReports.js";
 export { OverviewNationsPanel } from "./OverviewNationsPanel.js";
-export { OverviewPrioritiesPanel } from "./OverviewPrioritiesPanel.js";
 export { OverviewLoadErrorState, OverviewLoadingState } from "./OverviewStates.js";

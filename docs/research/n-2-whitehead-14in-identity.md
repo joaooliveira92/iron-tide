@@ -9,7 +9,7 @@ model's identity (see §7).
 ## 1. Question
 
 The 1880 pack ships a torpedo model with the content id `whitehead_14in_1886`
-(`content/production/1880/ship-building/parts/torpedo.yaml`). Its own fields disagree
+(`content/production/1880/ship-building/parts/torpedo.ts`). Its own fields disagree
 with the year in its id: it is `availableFrom: 1880-01`, and its only revision is
 `from: 1884-01` (a 1877 26 lb / 12 kg wet-guncotton charge, re-rated to the 58–70 lb /
 26–27 kg charge by the 1884 Mark IV). The id is also a frozen contract id: it is a
@@ -38,9 +38,9 @@ the id?
   [The History of the Torpedo — "The Whitehead Torpedo"](https://www.torp.esrc.unimelb.edu.au/biogs/E000001b.htm)
   — the Royal Navy purchased and began manufacturing the design in 1871.
 - **Primary (in-repo, directly verified):** the shipped content itself —
-  `content/production/1880/ship-building/parts/torpedo.yaml` (the model and its
-  revision), `components.yaml` (`torpedoModelId`), `torpedo_launcher.yaml`
-  (`loadsTorpedo`), `designs.yaml`, and the combat contract
+  `content/production/1880/ship-building/parts/torpedo.ts` (the model and its
+  revision), `ship-building/components/` (`torpedoModelId`), `torpedo_launcher.ts`
+  (`loadsTorpedo`), `designs.ts`, and the combat contract
   (`packages/combat/src/torpedoes/constants.ts`, `detonation.ts`).
 
 Method: confirm whether any manufacturer or service used a designation matching the id,
@@ -121,7 +121,7 @@ The model's provenance previously cited `docs/research/ship-building-early-band-
 repository or in its reachable history; per ADR-0210 they are **unavailable, unverified
 legacy references** and may not be cited. This note is the registered replacement
 citation **for this model's identity**. The same two paths are cited more broadly across
-the torpedo content and combat contract (e.g. `torpedo.yaml`, `constants.ts`,
+the torpedo content and combat contract (e.g. `torpedo.ts`, `constants.ts`,
 `detonation.ts`, `torpedoModels.ts`); replacing those citations for the other models
 and for the torpedo model table is a separate documentation effort and is not part of
 ticket #40.

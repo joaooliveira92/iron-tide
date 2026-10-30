@@ -1,12 +1,12 @@
-import { readFileSync } from "node:fs";
+import {} from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
-import { parse } from "yaml";
 import type { PresentationContentDto } from "../shared/content-contract.js";
 import { dispatchCampaignCommand } from "./campaignBridge.js";
+import { readAuthoredFile } from "@bluewave/test-support";
 
 const REPO_ROOT = resolve(process.cwd(), "../..");
-const PRESENTATION_PATH = resolve(REPO_ROOT, "content", "production", "1880", "presentation.yaml");
+const PRESENTATION_PATH = resolve(REPO_ROOT, "content", "production", "1880", "presentation.ts");
 
 interface AuthoredPresentation {
   nations: Array<{
@@ -26,7 +26,7 @@ interface AuthoredPresentation {
   };
 }
 
-const authored = parse(readFileSync(PRESENTATION_PATH, "utf8")) as AuthoredPresentation;
+const authored = readAuthoredFile(PRESENTATION_PATH) as AuthoredPresentation;
 
 describe("presentation content over the content IPC (CAH-PRES-3)", () => {
   it("serves the authored presentation corpus as a data-only DTO", async () => {

@@ -4,6 +4,8 @@ Applies to: cross-process-test
 
 ## Status
 
+Superseded by: ADR-0366
+
 Accepted (2026-10-25). Closes the replay-scenario criteria left open on tickets
 [#271](https://github.com/joaooliveira92/iron-tide/issues/271) and
 [#276](https://github.com/joaooliveira92/iron-tide/issues/276) of spec

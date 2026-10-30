@@ -4,6 +4,8 @@ Applies to: content, campaign, persistence
 
 ## Status
 
+Superseded by: ADR-0354
+
 Accepted (2026-10-17). Resolves decision requests
 [0006](../../.ai/decision-requests/0006-prestige-required-field-vs-untouched-production.md)
 (Option B) and

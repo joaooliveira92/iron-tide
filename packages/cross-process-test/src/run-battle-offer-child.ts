@@ -3,7 +3,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { makeRecordedInput, type OfferRequest, type OfferResponse } from "@bluewave/messages";
-import { hashSnapshot, MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
+import { unifiedSnapshotHash, MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 import { FIXTURE_BATTLE_OFFER_RULES } from "@bluewave/test-support";
 
 import { compileProductionCampaign } from "./production-pack.js";
@@ -318,7 +318,8 @@ function runChild(): void {
         manifestHash: supportManifest?.manifestHash ?? "",
         battleSeed: supportManifest?.battleSeed ?? "",
         inProcessEqual:
-          hashSnapshot(present.finalSnapshot) === hashSnapshot(presentAgain.finalSnapshot) &&
+          unifiedSnapshotHash(present.finalSnapshot) ===
+            unifiedSnapshotHash(presentAgain.finalSnapshot) &&
           present.randomLedger.hash() === presentAgain.randomLedger.hash(),
         randomLedgerHash: present.randomLedger.hash(),
         declinedAllyReserved: allyShips(presentDeclined).filter((s) => s.inBattleId !== undefined)
@@ -326,14 +327,14 @@ function runChild(): void {
         declinedAllyUndamaged: allyShips(presentDeclined).every(
           (s) => s.hitPoints === s.maxHitPoints,
         ),
-        declinedSnapshotHash: hashSnapshot(presentDeclined.finalSnapshot),
+        declinedSnapshotHash: unifiedSnapshotHash(presentDeclined.finalSnapshot),
         acceptedOutcome: presentAccepted.outcome,
         acceptedAllyReserved: allyShips(presentAccepted).filter((s) => s.inBattleId !== undefined)
           .length,
         acceptedAllyUndamaged: allyShips(presentAccepted).every(
           (s) => s.hitPoints === s.maxHitPoints,
         ),
-        acceptedSnapshotHash: hashSnapshot(presentAccepted.finalSnapshot),
+        acceptedSnapshotHash: unifiedSnapshotHash(presentAccepted.finalSnapshot),
         absentDraws: supportStream(absent),
         absentFlag: offerOf(absent).supportForcePresent,
         noCandidateDraws: supportStream(noCandidates).length,
@@ -348,12 +349,12 @@ function runChild(): void {
           .filter((ship) => ship.inBattleId !== undefined).length,
         withdrawals: withdrawals(enemyDeclined).length,
         draws: enemyStream(enemyDeclined),
-        snapshotHash: hashSnapshot(enemyDeclined.finalSnapshot),
+        snapshotHash: unifiedSnapshotHash(enemyDeclined.finalSnapshot),
         eventLedgerHash: enemyDeclined.eventLedger.hash(),
         randomLedgerHash: enemyDeclined.randomLedger.hash(),
         inProcessEqual:
-          hashSnapshot(enemyDeclined.finalSnapshot) ===
-            hashSnapshot(enemyDeclinedAgain.finalSnapshot) &&
+          unifiedSnapshotHash(enemyDeclined.finalSnapshot) ===
+            unifiedSnapshotHash(enemyDeclinedAgain.finalSnapshot) &&
           enemyDeclined.randomLedger.hash() === enemyDeclinedAgain.randomLedger.hash(),
         proceedsOutcome: enemyProceeds.outcome,
         proceedsRequestKind: enemyProceeds.suspended?.request?.kind ?? null,
@@ -370,13 +371,13 @@ function runChild(): void {
       request,
       requestReExecutedEqual: canonicalSerialize(reExecuted) === canonicalSerialize(request),
       requestLeaksEnemyShip: enemyShipIds.some((id) => requestText.includes(`"${id}"`)),
-      dormantSnapshotHash: hashSnapshot(dormant.finalSnapshot),
-      nonOfferedSnapshotHash: hashSnapshot(nonOffered.finalSnapshot),
-      nonOfferedPrestigeNeutralSnapshotHash: hashSnapshot(
+      dormantSnapshotHash: unifiedSnapshotHash(dormant.finalSnapshot),
+      nonOfferedSnapshotHash: unifiedSnapshotHash(nonOffered.finalSnapshot),
+      nonOfferedPrestigeNeutralSnapshotHash: unifiedSnapshotHash(
         withPlayerPrestigeOf(nonOffered.finalSnapshot, dormant.finalSnapshot),
       ),
-      acceptedSnapshotHash: hashSnapshot(accepted.finalSnapshot),
-      delegatedSnapshotHash: hashSnapshot(delegated.finalSnapshot),
+      acceptedSnapshotHash: unifiedSnapshotHash(accepted.finalSnapshot),
+      delegatedSnapshotHash: unifiedSnapshotHash(delegated.finalSnapshot),
       acceptedOutcome: accepted.outcome,
       acceptedBattleKind: accepted.suspended?.request?.kind ?? null,
       delegatedOutcome: delegated.outcome,
@@ -389,9 +390,10 @@ function runChild(): void {
       nonOfferedRandomLedgerHash: nonOffered.randomLedger.hash(),
       draws,
       declinedOutcome: declined.outcome,
-      declinedSnapshotHash: hashSnapshot(declined.finalSnapshot),
+      declinedSnapshotHash: unifiedSnapshotHash(declined.finalSnapshot),
       declinedInProcessEqual:
-        hashSnapshot(declined.finalSnapshot) === hashSnapshot(declinedAgain.finalSnapshot) &&
+        unifiedSnapshotHash(declined.finalSnapshot) ===
+          unifiedSnapshotHash(declinedAgain.finalSnapshot) &&
         declined.eventLedger.hash() === declinedAgain.eventLedger.hash() &&
         declined.randomLedger.hash() === declinedAgain.randomLedger.hash(),
       declinedRecords: declined.finalSnapshot.wars.declinedBattles ?? [],
@@ -414,18 +416,20 @@ function runChild(): void {
       prestigeBodies: prestigeEvents(costed),
       prestigeUntouchedWithoutRule:
         second.finalSnapshot.nations.get(PLAYER)!.prestige === seeded.nations.get(PLAYER)!.prestige,
-      prestigeSnapshotHash: hashSnapshot(costed.finalSnapshot),
+      prestigeSnapshotHash: unifiedSnapshotHash(costed.finalSnapshot),
       prestigeEventLedgerHash: costed.eventLedger.hash(),
       prestigeInProcessEqual:
-        hashSnapshot(costed.finalSnapshot) === hashSnapshot(costedAgain.finalSnapshot) &&
+        unifiedSnapshotHash(costed.finalSnapshot) ===
+          unifiedSnapshotHash(costedAgain.finalSnapshot) &&
         costed.eventLedger.hash() === costedAgain.eventLedger.hash(),
       secondOutcome: second.outcome,
       secondCounters: second.finalSnapshot.wars.declineCounters ?? [],
       secondThresholdBodies: thresholdEvents(second).map((e) => e.body),
-      secondSnapshotHash: hashSnapshot(second.finalSnapshot),
+      secondSnapshotHash: unifiedSnapshotHash(second.finalSnapshot),
       secondEventLedgerHash: second.eventLedger.hash(),
       secondInProcessEqual:
-        hashSnapshot(second.finalSnapshot) === hashSnapshot(secondAgain.finalSnapshot) &&
+        unifiedSnapshotHash(second.finalSnapshot) ===
+          unifiedSnapshotHash(secondAgain.finalSnapshot) &&
         second.eventLedger.hash() === secondAgain.eventLedger.hash(),
     };
     process.stdout.write(JSON.stringify(output) + "\n");

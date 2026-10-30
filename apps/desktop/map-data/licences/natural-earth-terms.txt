@@ -1,0 +1,14 @@
+Natural Earth terms of use, quoted from https://www.naturalearthdata.com/about/terms-of-use/
+(retrieved 2026-10-27; excerpts recorded in the Phase 0/1 G-01 report)
+
+"All versions of Natural Earth raster + vector map data found on this website are in the public domain."
+"No permission is needed to use Natural Earth."
+"Crediting the authors is unnecessary."
+Use is permitted "for personal, educational, and commercial purposes."
+
+Caveat recorded by the same page: some underlying third-party data was licensed to Natural Earth
+"for the sole purpose of creating a world base map". Only the land, minor-islands and rivers/lake
+centrelines layers are consumed here. The marine-polygon and place layers are not used.
+
+The README.html and VERSION.txt files shipped inside each pinned archive are copied verbatim into the
+generated output directory.

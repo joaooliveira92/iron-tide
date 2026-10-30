@@ -1,0 +1,351 @@
+{
+  "label": "horizon",
+  "tasks": {
+    "horizon": {
+      "samples": 5760,
+      "front": 2797,
+      "back": 2957,
+      "limb": 6,
+      "limbRendered": 2,
+      "backRendered": 108,
+      "frontInBounds": 2119,
+      "frontInBoundsMissing": 104,
+      "byCombo": {
+        "p0b0": {
+          "samples": 1440,
+          "back": 664,
+          "backRendered": 72,
+          "frontInBounds": 647,
+          "frontInBoundsMissing": 69
+        },
+        "p45b0": {
+          "samples": 1440,
+          "back": 928,
+          "backRendered": 30,
+          "frontInBounds": 405,
+          "frontInBoundsMissing": 28
+        },
+        "p45b135": {
+          "samples": 1440,
+          "back": 585,
+          "backRendered": 6,
+          "frontInBounds": 588,
+          "frontInBoundsMissing": 6
+        },
+        "p60b270": {
+          "samples": 1440,
+          "back": 780,
+          "backRendered": 0,
+          "frontInBounds": 479,
+          "frontInBoundsMissing": 1
+        }
+      },
+      "backRenderedSamples": [
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": -70,
+          "id": "spike-suva",
+          "cls": "back",
+          "margin": 34.359539524079686,
+          "onScreen": true,
+          "rendered": true
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": -60,
+          "id": "spike-honolulu",
+          "cls": "back",
+          "margin": 8.335270731701886,
+          "onScreen": true,
+          "rendered": true
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": -60,
+          "id": "spike-suva",
+          "cls": "back",
+          "margin": 43.617732629456384,
+          "onScreen": true,
+          "rendered": true
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": 50,
+          "id": "spike-honolulu",
+          "cls": "back",
+          "margin": 49.1147503316033,
+          "onScreen": true,
+          "rendered": true
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": 50,
+          "id": "spike-suva",
+          "cls": "back",
+          "margin": 50.02331373787673,
+          "onScreen": true,
+          "rendered": true
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": 60,
+          "id": "spike-suva",
+          "cls": "back",
+          "margin": 40.721851558513556,
+          "onScreen": true,
+          "rendered": true
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 60,
+          "lon": -170,
+          "id": "spike-suva",
+          "cls": "back",
+          "margin": 3.0811206415709695,
+          "onScreen": true,
+          "rendered": true
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 60,
+          "lon": -160,
+          "id": "spike-suva",
+          "cls": "back",
+          "margin": 4.4572210843112945,
+          "onScreen": true,
+          "rendered": true
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 60,
+          "lon": -150,
+          "id": "spike-gibraltar",
+          "cls": "back",
+          "margin": 3.9258914191081242,
+          "onScreen": true,
+          "rendered": true
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 60,
+          "lon": -140,
+          "id": "spike-gibraltar",
+          "cls": "back",
+          "margin": 1.2583877608196905,
+          "onScreen": true,
+          "rendered": true
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 60,
+          "lon": -140,
+          "id": "spike-suva",
+          "cls": "back",
+          "margin": 9.449201789781108,
+          "onScreen": true,
+          "rendered": true
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 60,
+          "lon": -130,
+          "id": "spike-malta",
+          "cls": "back",
+          "margin": 4.1218856098713434,
+          "onScreen": true,
+          "rendered": true
+        }
+      ],
+      "frontMissingSamples": [
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": -70,
+          "id": "spike-murmansk",
+          "cls": "front",
+          "margin": -5.461737214108569,
+          "onScreen": true,
+          "rendered": false
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": 40,
+          "id": "spike-murmansk",
+          "cls": "front",
+          "margin": -32.246270967755045,
+          "onScreen": true,
+          "rendered": false
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": 50,
+          "id": "spike-capetown",
+          "cls": "front",
+          "margin": -19.660246352066352,
+          "onScreen": true,
+          "rendered": false
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": 60,
+          "id": "spike-gibraltar",
+          "cls": "front",
+          "margin": -22.615322979875764,
+          "onScreen": true,
+          "rendered": false
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 20,
+          "lon": 60,
+          "id": "spike-yokohama",
+          "cls": "front",
+          "margin": -11.029757199261631,
+          "onScreen": true,
+          "rendered": false
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 60,
+          "lon": -160,
+          "id": "spike-honolulu",
+          "cls": "front",
+          "margin": -36.902813623209,
+          "onScreen": true,
+          "rendered": false
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 60,
+          "lon": -130,
+          "id": "spike-honolulu",
+          "cls": "front",
+          "margin": -32.22035749900533,
+          "onScreen": true,
+          "rendered": false
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 60,
+          "lon": -40,
+          "id": "spike-murmansk",
+          "cls": "front",
+          "margin": -45.002312245447015,
+          "onScreen": true,
+          "rendered": false
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 1.4,
+          "lat": 60,
+          "lon": 60,
+          "id": "spike-yokohama",
+          "cls": "front",
+          "margin": -20.754843514139573,
+          "onScreen": true,
+          "rendered": false
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 3,
+          "lat": 20,
+          "lon": -180,
+          "id": "spike-honolulu",
+          "cls": "front",
+          "margin": -48.91746313948608,
+          "onScreen": true,
+          "rendered": false
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 3,
+          "lat": 20,
+          "lon": -180,
+          "id": "spike-suva",
+          "cls": "front",
+          "margin": -31.488157087808293,
+          "onScreen": true,
+          "rendered": false
+        },
+        {
+          "pitch": 0,
+          "bearing": 0,
+          "zoom": 3,
+          "lat": 20,
+          "lon": -170,
+          "id": "spike-honolulu",
+          "cls": "front",
+          "margin": -58.2268973684228,
+          "onScreen": true,
+          "rendered": false
+        }
+      ],
+      "minMarginBackRendered": 0.6251729157707662
+    }
+  },
+  "checks": [
+    {
+      "name": "no marker classified back-side is rendered anywhere on the canvas (isolated-marker readback, independent of project())",
+      "ok": false,
+      "detail": "108/2957 (min margin 0.6251729157707662)"
+    },
+    {
+      "name": "every marker classified front-side whose project() position is in the viewport is rendered",
+      "ok": false,
+      "detail": "104/2119"
+    }
+  ],
+  "consoleErrors": []
+}

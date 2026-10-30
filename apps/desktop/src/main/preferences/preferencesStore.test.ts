@@ -1,7 +1,7 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Effect, Layer, ManagedRuntime } from "effect";
+import { Effect, Layer, Logger, ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import {
   DEFAULT_APP_PREFERENCES,
@@ -14,6 +14,7 @@ import {
   PREFERENCES_FILENAME,
   PreferencesStore,
   preferencesStoreLayer,
+  type PreferencesReadResult,
 } from "./preferencesStore.js";
 
 function appPathsLayer(userDataDir: string): Layer.Layer<AppPaths> {
@@ -53,6 +54,29 @@ const writeStore = (runtime: StoreRuntime, app: AppPreferences): Promise<Prefere
     }),
   );
 
+const readWithRecovery = (runtime: StoreRuntime): Promise<PreferencesReadResult> =>
+  runtime.runPromise(
+    Effect.gen(function* () {
+      const store = yield* PreferencesStore;
+      return yield* store.readWithRecovery();
+    }),
+  );
+
+const readWithRecoveryLogging = (
+  runtime: StoreRuntime,
+  messages: string[],
+): Promise<PreferencesReadResult> => {
+  const collector = Logger.make((options) => {
+    messages.push(String(options.message));
+  });
+  return runtime.runPromise(
+    Effect.gen(function* () {
+      const store = yield* PreferencesStore;
+      return yield* store.readWithRecovery();
+    }).pipe(Effect.provide(Logger.layer([collector]))),
+  );
+};
+
 describe("preferences store", () => {
   let root: string;
   let runtime: StoreRuntime;
@@ -79,6 +103,37 @@ describe("preferences store", () => {
 
     writeFileSync(filePath(), JSON.stringify({ version: 1, app: { theme: "neon" } }), "utf8");
     expect((await readStore(runtime)).app).toEqual(DEFAULT_APP_PREFERENCES);
+  });
+
+  it.each([
+    ["unparseable", "{ this is not json"],
+    ["undecodable", JSON.stringify({ version: 1, app: { theme: "neon" } })],
+    ["unknown-version:9", JSON.stringify({ version: 9, app: DEFAULT_APP_PREFERENCES })],
+  ])(
+    "surfaces the %s recovery reason with the file and leaves it untouched",
+    async (reason, raw) => {
+      writeFileSync(filePath(), raw, "utf8");
+
+      const result = await readWithRecovery(runtime);
+      expect(result.snapshot.app).toEqual(DEFAULT_APP_PREFERENCES);
+      expect(result.recovery).toEqual({ file: filePath(), reason });
+      expect(readFileSync(filePath(), "utf8")).toBe(raw);
+    },
+  );
+
+  it("logs each recovery reason with the file while keeping the unreadable file", async () => {
+    for (const [reason, raw] of [
+      ["unparseable", "{ this is not json"],
+      ["undecodable", JSON.stringify({ version: 1, app: { theme: "neon" } })],
+      ["unknown-version:9", JSON.stringify({ version: 9, app: DEFAULT_APP_PREFERENCES })],
+    ] as const) {
+      writeFileSync(filePath(), raw, "utf8");
+      const messages: string[] = [];
+      await readWithRecoveryLogging(runtime, messages);
+      expect(messages.join("\n")).toContain(filePath());
+      expect(messages.join("\n")).toContain(reason);
+      expect(readFileSync(filePath(), "utf8")).toBe(raw);
+    }
   });
 
   it("writes atomically: persists the full object and leaves no .tmp behind", async () => {

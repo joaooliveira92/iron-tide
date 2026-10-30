@@ -4,6 +4,8 @@ Applies to: combat, phase-engine
 
 ## Status
 
+Superseded by: ADR-0357
+
 Accepted (2026-10-25). Delivers the "proficiency effect in combat" follow-up of [ADR-0314](ADR-0314-fleet-management-values-and-repair-entry.md)
 and [ADR-0316](ADR-0316-special-training-program.md), for the one subject combat can express today. The owner delegated the choice.
 

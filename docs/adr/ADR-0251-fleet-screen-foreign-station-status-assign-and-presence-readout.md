@@ -4,6 +4,8 @@ Applies to: campaign-engine, desktop
 
 ## Status
 
+Superseded by: ADR-0362
+
 Accepted (2026-10-21). Implements ticket [#83](https://github.com/joaooliveira92/iron-tide/issues/83) (S-5 09, spec
 [#73](https://github.com/joaooliveira92/iron-tide/issues/73), R12). Builds on ADR-0241, ADR-0247 to ADR-0250.
 

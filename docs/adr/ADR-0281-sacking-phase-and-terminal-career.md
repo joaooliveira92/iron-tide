@@ -4,6 +4,8 @@ Applies to: campaign, phase-engine
 
 ## Status
 
+Superseded by: ADR-0354
+
 Accepted (2026-10-23). Implements tickets [#90](https://github.com/joaooliveira92/iron-tide/issues/90) (S-2 05) and
 [#91](https://github.com/joaooliveira92/iron-tide/issues/91) (S-2 06) and
 [#92](https://github.com/joaooliveira92/iron-tide/issues/92) (S-2 07) and

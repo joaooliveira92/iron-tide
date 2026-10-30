@@ -4,6 +4,8 @@ Applies to: content
 
 ## Status
 
+Superseded by: ADR-0363
+
 Accepted (2026-10-21). Implements ticket
 [#118](https://github.com/joaooliveira92/iron-tide/issues/118) (T-1 09) of spec
 [#109](https://github.com/joaooliveira92/iron-tide/issues/109), R1, R2, R15 and R16. The values are the

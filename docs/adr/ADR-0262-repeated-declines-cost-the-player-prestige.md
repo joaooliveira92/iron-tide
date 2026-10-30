@@ -4,6 +4,8 @@ Applies to: campaign, phase-engine, content
 
 ## Status
 
+Superseded by: ADR-0363
+
 Accepted (2026-10-21). Implements ticket
 [#115](https://github.com/joaooliveira92/iron-tide/issues/115) (T-1 06) of spec
 [#109](https://github.com/joaooliveira92/iron-tide/issues/109), R10. Consumes the seam of

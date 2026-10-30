@@ -8,20 +8,32 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set.
-- [ADR-0215](../ADR-0215-canonical-units-module.md) Canonical units module and its home in the contracts package.
-- [ADR-0216](../ADR-0216-money-type-and-treasury-bridge.md) Fixed-precision money type, treasury-unit scale, and the micro→unit bridge.
 - [ADR-0221](../ADR-0221-structured-explanation-data.md) Structured explanation data for domain display values.
-- [ADR-0228](../ADR-0228-combat-classifier-1880-ruleset-v2.md) The combat ship-type classifier aligns to the 1880 classification ruleset v2.
-- [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim.
-- [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity.
-- [ADR-0233](../ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) Designer draft-schema v2 and canonical vocabulary.
-- [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
-- [ADR-0243](../ADR-0243-design-edits-are-guarded-by-the-design-session.md) Every design edit goes through the design session's guard, and a newly blocking or critical finding is explained at once.
-- [ADR-0252](../ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md) Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values.
-- [ADR-0284](../ADR-0284-e1-1940s-ship-and-part-values.md) E-1 1940-1949 ship and part values.
-- [ADR-0290](../ADR-0290-e1-1940s-cruiser-values.md) E-1 1940-1949 cruiser values.
-- [ADR-0291](../ADR-0291-e1-1950s-destroyer-values.md) E-1 1950-1959 destroyer values and the limit of 1950-1970 ship content.
-- [ADR-0308](../ADR-0308-e1-compiled-design-capabilities-reach-combat.md) Compiled design capabilities reach combat and are decoded strictly.
-- [ADR-0309](../ADR-0309-e1-part-families-and-capability-kinds.md) E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars.
-- [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire.
+- [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
+- [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
+- [ADR-0345](../ADR-0345-ship-design-model-and-draft-schema.md) The ship design data model defines a versioned draft with optional fields, a canonical armour-region set mapped to the manual's nine universal fields, named armour schemes as deterministic transformations, and additive options from balance targets, all guarded by a session that explains new blocking or critical findings at once.
+- [ADR-0346](../ADR-0346-ship-component-catalogue-and-capability-model.md) The ship-component catalogue is organised by family and nation with per-record provenance, defines part families and capability kinds for all equipment eras, carries sourced or BALANCE_TARGET values, and consumes part capabilities through explicit ruleset sections.
+- [ADR-0350](../ADR-0350-e1-1940-1970-content-values.md) Every authored technology, ship class, and part value for the 1940-1970 period must trace to a cited source or be labelled BALANCE_TARGET with a documented derivation; content must never promise behaviour the engine lacks.
+- [ADR-0358](../ADR-0358-combat-engine-architecture.md) `@bluewave/combat` exports exactly `resolve`, `advance`, `generate` and the root contract; all subsystems, orders, realism and combat modules are subpath seams.
+- [ADR-0362](../ADR-0362-foreign-station-presence.md) S-5 presence is measured at month end from authored ruleset values; nations own possessions in presence areas, deploy ships on foreign station duty, and incur penalties for shortfalls, with exemption for blockade, while base limits constrain over-deployment.
+
+## Superseded (do not follow)
+
+- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set. Follow ADR-0339.
+- [ADR-0215](../ADR-0215-canonical-units-module.md) Canonical units module and its home in the contracts package. Follow ADR-0351.
+- [ADR-0216](../ADR-0216-money-type-and-treasury-bridge.md) Fixed-precision money type, treasury-unit scale, and the micro→unit bridge. Follow ADR-0351.
+- [ADR-0228](../ADR-0228-combat-classifier-1880-ruleset-v2.md) The combat ship-type classifier aligns to the 1880 classification ruleset v2. Follow ADR-0340.
+- [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim. Follow ADR-0339.
+- [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity. Follow ADR-0345.
+- [ADR-0233](../ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) Designer draft-schema v2 and canonical vocabulary. Follow ADR-0345.
+- [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section. Follow ADR-0362.
+- [ADR-0243](../ADR-0243-design-edits-are-guarded-by-the-design-session.md) Every design edit is guarded in the design session, and a newly broken design is explained at once. Follow ADR-0345.
+- [ADR-0252](../ADR-0252-designer-options-magazine-box-aluminium-superstructure-and-aa.md) Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values. Follow ADR-0345.
+- [ADR-0284](../ADR-0284-e1-1940s-ship-and-part-values.md) E-1 1940-1949 ship and part values. Follow ADR-0350.
+- [ADR-0290](../ADR-0290-e1-1940s-cruiser-values.md) E-1 1940-1949 cruiser values. Follow ADR-0350.
+- [ADR-0291](../ADR-0291-e1-1950s-destroyer-values.md) E-1 1950-1959 destroyer values and the limit of 1950-1970 ship content. Follow ADR-0350.
+- [ADR-0308](../ADR-0308-e1-compiled-design-capabilities-reach-combat.md) Compiled design capabilities reach combat and are decoded strictly. Follow ADR-0358.
+- [ADR-0309](../ADR-0309-e1-part-families-and-capability-kinds.md) E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars. Follow ADR-0346.
+- [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire. Follow ADR-0346.
+- [ADR-0332](../ADR-0332-e1-1940s-battleship-and-16-inch-gun-values.md) E-1 1940-1949 battleship and 16-inch gun values. Follow ADR-0346.
+- [ADR-0333](../ADR-0333-split-ship-component-catalogue-by-nation.md) Split the ship-component catalogue by family and nation, with per-record source provenance. Follow ADR-0346.

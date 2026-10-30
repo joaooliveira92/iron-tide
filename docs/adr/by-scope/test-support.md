@@ -8,4 +8,8 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0245](../ADR-0245-player-nation-id-in-campaign-state.md) The player nation is stored in authoritative campaign state.
+- [ADR-0354](../ADR-0354-prestige-and-career-system.md) Prestige is a required nation field; every value is either grounded by RTW3 sources or an explicitly labelled balance target; the application seam is pure and dormant by default; a monthly sacking phase ends the career through a typed terminal record.
+
+## Superseded (do not follow)
+
+- [ADR-0245](../ADR-0245-player-nation-id-in-campaign-state.md) The player nation is stored in authoritative campaign state. Follow ADR-0354.

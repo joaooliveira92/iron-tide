@@ -4,6 +4,8 @@ Applies to: content, campaign, desktop
 
 ## Status
 
+Superseded by: ADR-0362
+
 Accepted (2026-10-21). Resolves decision requests
 [0015](../../.ai/decision-requests/0015-fc-incompatible-severity-on-1880-starters.md),
 [0017](../../.ai/decision-requests/0017-s-5-base-value-limit-mapping-and-no-base-limit.md),

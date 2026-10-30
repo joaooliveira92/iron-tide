@@ -4,6 +4,8 @@ Applies to: commands, desktop
 
 ## Status
 
+Superseded by: ADR-0360
+
 Accepted (2026-10-22).
 
 ## Context

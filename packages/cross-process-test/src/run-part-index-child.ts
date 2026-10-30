@@ -6,7 +6,12 @@ import { buildContentBundleArtifact, type CompilerInput } from "@bluewave/conten
 import { SHIP_ZONE_IDS } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 
-const PROVENANCE = `{ sourceStatus: VERIFIED, confidence: HIGH, kind: historical_fact, sources: [{ title: "fixture" }] }`;
+const PROVENANCE = JSON.stringify({
+  sourceStatus: "VERIFIED",
+  confidence: "HIGH",
+  kind: "historical_fact",
+  sources: [{ title: "fixture" }],
+});
 
 const HULL_FORMS = JSON.stringify({
   hullForms: [
@@ -34,68 +39,167 @@ const HULL_FORMS = JSON.stringify({
   ],
 });
 
-const PARTS = `parts:
-  - id: whitehead_18in
-    family: torpedo
-    provides: torpedo
-    name: "Whitehead 18-inch"
-    lifecycle: { availableFrom: "1890-01", supersedes: [whitehead_14in_fiume, whitehead_14in] }
-    spec:
-      diameterUm: 457000
-      massKg: 560
-      warheadType: WET_GUNCOTTON
-      warheadExplosiveMassKg: 90
-      warheadExplosiveEquivalentMassKg: 90
-      propulsionType: COMPRESSED_AIR
-      speedSettings: [{ settingId: "s1", speedMilliKnots: 29000, rangeM: 730 }]
-      minimumArmingDistanceM: 25
-      reliabilityBp: 90000
-      guidanceCapability: none
-      launchTypes: [ABOVE_WATER_TRAINABLE]
-      technologyPrerequisiteIds: []
-      tubeHitHazardPolicy: ORDINARY
-    provenance: ${PROVENANCE}
-  - id: whitehead_14in_fiume
-    family: torpedo
-    provides: torpedo
-    name: "Fiume 14-inch"
-    extends: whitehead_14in
-    lifecycle: { availableFrom: "1881-01" }
-    spec: { massKg: 305 }
-    revisions:
-      - { from: "1889-07", spec: { speedSettings: [{ settingId: "s2", speedMilliKnots: 26000, rangeM: 550 }, { settingId: "s3", speedMilliKnots: 22000, rangeM: 900 }] }, provenance: ${PROVENANCE} }
-      - { from: "1885-03", spec: { warheadExplosiveMassKg: 30, warheadExplosiveEquivalentMassKg: 30 }, provenance: ${PROVENANCE} }
-    provenance: ${PROVENANCE}
-  - id: whitehead_14in
-    family: torpedo
-    provides: torpedo
-    name: "Whitehead 14-inch"
-    lifecycle: { availableFrom: "1880-01" }
-    spec:
-      diameterUm: 356000
-      massKg: 300
-      warheadType: WET_GUNCOTTON
-      warheadExplosiveMassKg: 12
-      warheadExplosiveEquivalentMassKg: 12
-      propulsionType: COMPRESSED_AIR
-      speedSettings: [{ settingId: "s4", speedMilliKnots: 24000, rangeM: 550 }]
-      minimumArmingDistanceM: 25
-      reliabilityBp: 88000
-      guidanceCapability: none
-      launchTypes: [ABOVE_WATER_TRAINABLE]
-      technologyPrerequisiteIds: []
-      tubeHitHazardPolicy: ORDINARY
-    quantities: [{ id: torpedo_mass, kind: massKg, value: 300, basis: PER_PART_UNIT }]
-    provenance: ${PROVENANCE}
+const PARTS = `
+{
+  "parts": [
+    {
+      "id": "whitehead_18in",
+      "family": "torpedo",
+      "provides": "torpedo",
+      "name": "Whitehead 18-inch",
+      "lifecycle": {
+        "availableFrom": "1890-01",
+        "supersedes": [
+          "whitehead_14in_fiume",
+          "whitehead_14in"
+        ]
+      },
+      "spec": {
+        "diameterUm": 457000,
+        "massKg": 560,
+        "warheadType": "WET_GUNCOTTON",
+        "warheadExplosiveMassKg": 90,
+        "warheadExplosiveEquivalentMassKg": 90,
+        "propulsionType": "COMPRESSED_AIR",
+        "speedSettings": [
+          {
+            "settingId": "s1",
+            "speedMilliKnots": 29000,
+            "rangeM": 730
+          }
+        ],
+        "minimumArmingDistanceM": 25,
+        "reliabilityBp": 90000,
+        "guidanceCapability": "none",
+        "launchTypes": [
+          "ABOVE_WATER_TRAINABLE"
+        ],
+        "technologyPrerequisiteIds": [],
+        "tubeHitHazardPolicy": "ORDINARY"
+      },
+      "provenance": ${PROVENANCE}
+    },
+    {
+      "id": "whitehead_14in_fiume",
+      "family": "torpedo",
+      "provides": "torpedo",
+      "name": "Fiume 14-inch",
+      "extends": "whitehead_14in",
+      "lifecycle": {
+        "availableFrom": "1881-01"
+      },
+      "spec": {
+        "massKg": 305
+      },
+      "revisions": [
+        {
+          "from": "1889-07",
+          "spec": {
+            "speedSettings": [
+              {
+                "settingId": "s2",
+                "speedMilliKnots": 26000,
+                "rangeM": 550
+              },
+              {
+                "settingId": "s3",
+                "speedMilliKnots": 22000,
+                "rangeM": 900
+              }
+            ]
+          },
+          "provenance": ${PROVENANCE}
+        },
+        {
+          "from": "1885-03",
+          "spec": {
+            "warheadExplosiveMassKg": 30,
+            "warheadExplosiveEquivalentMassKg": 30
+          },
+          "provenance": ${PROVENANCE}
+        }
+      ],
+      "provenance": ${PROVENANCE}
+    },
+    {
+      "id": "whitehead_14in",
+      "family": "torpedo",
+      "provides": "torpedo",
+      "name": "Whitehead 14-inch",
+      "lifecycle": {
+        "availableFrom": "1880-01"
+      },
+      "spec": {
+        "diameterUm": 356000,
+        "massKg": 300,
+        "warheadType": "WET_GUNCOTTON",
+        "warheadExplosiveMassKg": 12,
+        "warheadExplosiveEquivalentMassKg": 12,
+        "propulsionType": "COMPRESSED_AIR",
+        "speedSettings": [
+          {
+            "settingId": "s4",
+            "speedMilliKnots": 24000,
+            "rangeM": 550
+          }
+        ],
+        "minimumArmingDistanceM": 25,
+        "reliabilityBp": 88000,
+        "guidanceCapability": "none",
+        "launchTypes": [
+          "ABOVE_WATER_TRAINABLE"
+        ],
+        "technologyPrerequisiteIds": [],
+        "tubeHitHazardPolicy": "ORDINARY"
+      },
+      "quantities": [
+        {
+          "id": "torpedo_mass",
+          "kind": "massKg",
+          "value": 300,
+          "basis": "PER_PART_UNIT"
+        }
+      ],
+      "provenance": ${PROVENANCE}
+    }
+  ]
+}
 `;
 
-const SLOT_TEMPLATES = `slotTemplates:
-  - id: capital_ship_1880s
-    slots: [{ id: tubes, accepts: [torpedo_launcher], mountCount: { min: 0, max: 4 } }]
+const SLOT_TEMPLATES = `
+{
+  "slotTemplates": [
+    {
+      "id": "capital_ship_1880s",
+      "slots": [
+        {
+          "id": "tubes",
+          "accepts": [
+            "torpedo_launcher"
+          ],
+          "mountCount": {
+            "min": 0,
+            "max": 4
+          }
+        }
+      ]
+    }
+  ]
+}
 `;
 
-const PLATFORMS = `platforms:
-  - { id: pre_dreadnought_form, hullForm: battleship_1880, slotTemplates: [capital_ship_1880s] }
+const PLATFORMS = `
+{
+  "platforms": [
+    {
+      "id": "pre_dreadnought_form",
+      "hullForm": "battleship_1880",
+      "slotTemplates": [
+        "capital_ship_1880s"
+      ]
+    }
+  ]
+}
 `;
 
 function run(): void {
@@ -118,11 +222,22 @@ function run(): void {
       possessionFiles: [],
       portFiles: [],
       technologyFiles: [],
-      shipBalanceFiles: [write("ship-building/balance.yaml", "ship:\n  dummy: 1\n")],
-      hullFormFiles: [write("ship-building/hull-forms.yaml", HULL_FORMS)],
-      partFiles: [write("ship-building/parts/torpedoes.yaml", PARTS)],
-      slotTemplateFiles: [write("ship-building/slot-templates.yaml", SLOT_TEMPLATES)],
-      platformFiles: [write("ship-building/platforms.yaml", PLATFORMS)],
+      shipBalanceFiles: [
+        write(
+          "ship-building/balance.json",
+          `
+{
+  "ship": {
+    "dummy": 1
+  }
+}
+`,
+        ),
+      ],
+      hullFormFiles: [write("ship-building/hull-forms.json", HULL_FORMS)],
+      partFiles: [write("ship-building/parts/torpedoes.json", PARTS)],
+      slotTemplateFiles: [write("ship-building/slot-templates.json", SLOT_TEMPLATES)],
+      platformFiles: [write("ship-building/platforms.json", PLATFORMS)],
     };
     const collector = new DiagnosticCollector();
     const artifact = buildContentBundleArtifact(input, new AbortController().signal, collector);

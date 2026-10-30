@@ -4,6 +4,8 @@ Applies to: desktop, events, messages, phase-engine
 
 ## Status
 
+Superseded by: ADR-0363
+
 Accepted (2026-10-21). Implements ticket
 [#112](https://github.com/joaooliveira92/iron-tide/issues/112) (T-1 03) of spec
 [#109](https://github.com/joaooliveira92/iron-tide/issues/109), R3 to R7, R13, R14, R15. Builds on

@@ -12,7 +12,7 @@ import { verifyCampaignSnapshotEnvelope } from "@bluewave/campaign";
 import type { CampaignState } from "@bluewave/campaign";
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
 import type { Diagnostic } from "@bluewave/diagnostics";
-import { Effect, Result, Schema } from "effect";
+import { Effect, Result } from "effect";
 import { systemClock, type PersistenceClock } from "./clock.js";
 import { CompatibilityChecker, CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
 import {
@@ -22,9 +22,15 @@ import {
   PersistenceCompatibilityMismatchError,
   PersistenceCorruptSaveError,
   PersistenceMissingSaveError,
-  PersistenceUnsignedSaveError,
+  PersistenceLegacySaveError,
 } from "./errors.js";
-import { readPointerFile, readSaveMetadata, readSigFile } from "./fileDecode.js";
+import {
+  readPointerFile,
+  readPointerFileResult,
+  readSaveMetadata,
+  readSigFile,
+} from "./fileDecode.js";
+import { LEGACY_SIG_FILE, writeSaveManifest, verifySaveManifest } from "./manifest.js";
 import {
   BACKUP_PREFIX,
   cleanup,
@@ -33,11 +39,10 @@ import {
   TEMP_SAVE_PREFIX,
 } from "./recovery.js";
 import {
+  decodeSaveHeader,
   decodeStorableCampaignState,
-  SaveHeaderSchema,
   type PointerFile,
   type SaveMetadata,
-  type SigFile,
 } from "./schemas.js";
 import {
   fromStorableSnapshot,
@@ -49,7 +54,7 @@ export {
   CANCELLED_CODE,
   CORRUPT_SAVE_CODE,
   MISSING_SAVE_CODE,
-  UNSIGNED_SAVE_CODE,
+  LEGACY_SAVE_CODE,
 } from "./errors.js";
 
 export type { SaveMetadata } from "./schemas.js";
@@ -58,7 +63,10 @@ export interface SaveResult {
   savePath: string;
   hash: string;
   metadata: SaveMetadata;
+  warnings: readonly Diagnostic[];
 }
+
+type PointerReadFailure = PersistenceIoError | PersistenceCorruptSaveError;
 
 const SAVE_ID_PATTERN = /^\d{13}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -103,6 +111,7 @@ const MONTH_INPUT_STAGE = "persistence.loadMonthInput";
 const SAVE_STAGE = "persistence.save";
 const LIST_STAGE = "persistence.list";
 const POINTER_STAGE = "persistence.pointer";
+const IS_CURRENT_STAGE = "persistence.isCurrent";
 
 function ioError(stage: string, cause: unknown): PersistenceIoError {
   return new PersistenceIoError({
@@ -192,15 +201,17 @@ export class SaveStore {
     const stateHash = sha256Hex(canonicalSerialize(stateForHash));
     const serializedHash = sha256Hex(serialized);
     const snapshotHash = sha256Hex(canonicalSerialize(toStorableSnapshot(state.snapshot)));
-    const previousSaveId = this.getActiveSaveId(saveDir) ?? undefined;
+    const pointerRead = this.pointerResult(saveDir);
+    const pointerUnreadable = Result.isFailure(pointerRead);
+    const previousSaveId = Result.isSuccess(pointerRead)
+      ? (pointerRead.success?.activeSaveId ?? undefined)
+      : undefined;
+    const warnings: Diagnostic[] = pointerUnreadable
+      ? [pointerRead.failure.toDiagnostic("warning")]
+      : [];
     const monthInput =
       extras.monthInput === undefined ? undefined : canonicalSerialize(extras.monthInput);
 
-    const sig: SigFile = {
-      serializedHash,
-      stateHash,
-      compatibilityVersion: state.snapshot.compatibilityVersion,
-    };
     const metadata: SaveMetadata = {
       saveId,
       previousSaveId,
@@ -228,10 +239,10 @@ export class SaveStore {
     try {
       mkdirSync(tmpDir, { recursive: true });
       writeFileSync(join(tmpDir, "campaign.json"), serialized, "utf8");
-      writeFileSync(join(tmpDir, "campaign.sig.json"), JSON.stringify(sig, null, 2), "utf8");
       writeFileSync(join(tmpDir, "metadata.json"), JSON.stringify(metadata, null, 2), "utf8");
       if (monthInput !== undefined)
         writeFileSync(join(tmpDir, MONTH_INPUT_FILE), monthInput, "utf8");
+      writeSaveManifest(tmpDir);
 
       if (signal?.aborted) {
         cleanup(tmpDir);
@@ -247,9 +258,11 @@ export class SaveStore {
       }
 
       updatePointer(saveDir, saveId, previousSaveId);
-      if (this.retainSaves !== undefined) this.prune(saveDir, this.retainSaves);
+      if (this.retainSaves !== undefined && !pointerUnreadable) {
+        this.prune(saveDir, this.retainSaves);
+      }
 
-      return { savePath, hash: stateHash, metadata };
+      return { savePath, hash: stateHash, metadata, warnings };
     } catch (err) {
       cleanup(tmpDir);
       cleanup(join(saveDir, POINTER_TEMP_FILE));
@@ -275,44 +288,55 @@ export class SaveStore {
               stage: SAVE_STAGE,
             })
           : ioError(SAVE_STAGE, cause),
-    });
+    }).pipe(Effect.withSpan("persistence.save"));
   }
 
   listEffect(saveDir: string): Effect.Effect<SaveMetadata[], PersistenceIoError> {
     return Effect.try({
       try: () => this.list(saveDir),
       catch: (cause) => ioError(LIST_STAGE, cause),
-    });
+    }).pipe(Effect.withSpan("persistence.list"));
   }
 
-  isCurrentEffect(state: CampaignState, saveDir: string): Effect.Effect<boolean> {
-    return Effect.sync(() => this.isCurrent(state, saveDir));
+  isCurrentEffect(
+    state: CampaignState,
+    saveDir: string,
+  ): Effect.Effect<boolean, PointerReadFailure> {
+    return Effect.suspend(() => Effect.fromResult(this.isCurrentResult(state, saveDir))).pipe(
+      Effect.withSpan(IS_CURRENT_STAGE),
+    );
   }
 
-  activeSaveIdEffect(saveDir: string): Effect.Effect<string | null, PersistenceIoError> {
-    return Effect.try({
-      try: () => this.getActiveSaveId(saveDir),
-      catch: (cause) => ioError(POINTER_STAGE, cause),
-    });
+  activeSaveIdEffect(saveDir: string): Effect.Effect<string | null, PointerReadFailure> {
+    return Effect.suspend(() =>
+      Effect.fromResult(
+        Result.map(this.pointerResult(saveDir), (pointer) => pointer?.activeSaveId ?? null),
+      ),
+    ).pipe(Effect.withSpan("persistence.activeSaveId"));
   }
 
-  previousSaveIdEffect(saveDir: string): Effect.Effect<string | null, PersistenceIoError> {
-    return Effect.try({
-      try: () => this.getPreviousSaveId(saveDir),
-      catch: (cause) => ioError(POINTER_STAGE, cause),
-    });
+  previousSaveIdEffect(saveDir: string): Effect.Effect<string | null, PointerReadFailure> {
+    return Effect.suspend(() =>
+      Effect.fromResult(
+        Result.map(this.pointerResult(saveDir), (pointer) => pointer?.previousSaveId ?? null),
+      ),
+    ).pipe(Effect.withSpan("persistence.previousSaveId"));
   }
 
   load(saveDir: string, signal?: AbortSignal): Effect.Effect<LoadedSave, LoadFailure> {
     const currentVersion = this.currentCompatibilityVersion;
-    return Effect.suspend(() => Effect.fromResult(loadResult(saveDir, currentVersion, signal)));
+    return Effect.suspend(() =>
+      Effect.fromResult(loadResult(saveDir, currentVersion, signal)),
+    ).pipe(Effect.withSpan("persistence.load"));
   }
 
   loadMonthInput(
     saveDir: string,
     saveId: string,
   ): Effect.Effect<MonthInputLoad, PersistenceCorruptSaveError> {
-    return Effect.suspend(() => Effect.fromResult(loadMonthInputResult(saveDir, saveId)));
+    return Effect.suspend(() => Effect.fromResult(loadMonthInputResult(saveDir, saveId))).pipe(
+      Effect.withSpan("persistence.loadMonthInput"),
+    );
   }
 
   loadById(
@@ -323,7 +347,7 @@ export class SaveStore {
     const currentVersion = this.currentCompatibilityVersion;
     return Effect.suspend(() =>
       Effect.fromResult(loadByIdResult(saveDir, saveId, currentVersion, signal)),
-    );
+    ).pipe(Effect.withSpan("persistence.loadById"));
   }
 
   list(saveDir: string): SaveMetadata[] {
@@ -341,7 +365,7 @@ export class SaveStore {
       if (dirName.startsWith(TEMP_SAVE_PREFIX) || dirName.startsWith(BACKUP_PREFIX)) continue;
 
       const metaPath = join(saveDir, dirName, "metadata.json");
-      const sigPath = join(saveDir, dirName, "campaign.sig.json");
+      const sigPath = join(saveDir, dirName, LEGACY_SIG_FILE);
 
       const meta = existsSync(metaPath) ? readSaveMetadata(metaPath) : null;
       if (meta !== null) {
@@ -360,6 +384,27 @@ export class SaveStore {
           compatibilityVersion: sig.compatibilityVersion,
           contentArtifactHash: sig.serializedHash,
         });
+        continue;
+      }
+
+      const campaignPath = join(saveDir, dirName, "campaign.json");
+      if (!existsSync(campaignPath)) continue;
+      try {
+        const campaignJson = readFileSync(campaignPath, "utf8");
+        const decoded = decodeSaveHeader(JSON.parse(campaignJson));
+        if (Result.isSuccess(decoded)) {
+          saves.push({
+            saveId: dirName,
+            timestamp: "",
+            turnNumber: 0,
+            campaignId: "",
+            snapshotHash: "",
+            compatibilityVersion: decoded.success.snapshot.compatibilityVersion,
+            contentArtifactHash: sha256Hex(campaignJson),
+          });
+        }
+      } catch {
+        continue;
       }
     }
 
@@ -380,28 +425,74 @@ export class SaveStore {
   }
 
   isCurrent(state: CampaignState, saveDir: string): boolean {
-    try {
-      const activeId = this.getActiveSaveId(saveDir);
-      if (activeId === null) return false;
-      const active = this.list(saveDir).find((save) => save.saveId === activeId);
-      if (active === undefined) return false;
-      const storable = { ...state, snapshot: toStorableSnapshot(state.snapshot) };
-      return active.contentArtifactHash === sha256Hex(canonicalSerialize(storable));
-    } catch {
-      return false;
-    }
+    const current = this.isCurrentResult(state, saveDir);
+    return Result.isSuccess(current) ? current.success : false;
   }
 
   getActiveSaveId(saveDir: string): string | null {
-    const pointerPath = join(saveDir, "pointer.json");
-    if (!existsSync(pointerPath)) return null;
-    return readPointerFile(pointerPath)?.activeSaveId ?? null;
+    const decoded = this.pointerResult(saveDir);
+    return Result.isSuccess(decoded) ? (decoded.success?.activeSaveId ?? null) : null;
   }
 
   getPreviousSaveId(saveDir: string): string | null {
-    const pointerPath = join(saveDir, "pointer.json");
-    if (!existsSync(pointerPath)) return null;
-    return readPointerFile(pointerPath)?.previousSaveId ?? null;
+    const decoded = this.pointerResult(saveDir);
+    return Result.isSuccess(decoded) ? (decoded.success?.previousSaveId ?? null) : null;
+  }
+
+  private isCurrentResult(
+    state: CampaignState,
+    saveDir: string,
+  ): Result.Result<boolean, PointerReadFailure> {
+    const pointerRead = this.pointerResult(saveDir);
+    if (Result.isFailure(pointerRead)) {
+      const failure = pointerRead.failure;
+      return Result.fail(
+        failure._tag === "PERSISTENCE_CORRUPT_SAVE"
+          ? new PersistenceCorruptSaveError({ message: failure.message, stage: IS_CURRENT_STAGE })
+          : new PersistenceIoError({ message: failure.message, stage: IS_CURRENT_STAGE }),
+      );
+    }
+    const pointer = pointerRead.success;
+    if (pointer === null) return Result.succeed(false);
+
+    let saves: SaveMetadata[];
+    try {
+      saves = this.list(saveDir);
+    } catch (cause) {
+      return Result.fail(ioError(IS_CURRENT_STAGE, cause));
+    }
+
+    const active = saves.find((save) => save.saveId === pointer.activeSaveId);
+    if (active === undefined) {
+      return Result.fail(
+        new PersistenceCorruptSaveError({
+          message: `Active save ${pointer.activeSaveId} is not readable`,
+          stage: IS_CURRENT_STAGE,
+        }),
+      );
+    }
+
+    const storable = { ...state, snapshot: toStorableSnapshot(state.snapshot) };
+    return Result.succeed(active.contentArtifactHash === sha256Hex(canonicalSerialize(storable)));
+  }
+
+  private pointerResult(saveDir: string): Result.Result<PointerFile | null, PointerReadFailure> {
+    const decoded = readPointerFileResult(join(saveDir, "pointer.json"));
+    if (Result.isSuccess(decoded)) return Result.succeed(decoded.success);
+
+    const failure = decoded.failure;
+    if (failure.reason === "missing") return Result.succeed(null);
+    if (failure.reason === "unreadable") {
+      return Result.fail(
+        new PersistenceIoError({ message: failure.message, stage: POINTER_STAGE }),
+      );
+    }
+    return Result.fail(
+      new PersistenceCorruptSaveError({
+        message: "Pointer file is corrupt or unreadable",
+        stage: POINTER_STAGE,
+      }),
+    );
   }
 }
 
@@ -458,7 +549,10 @@ function loadByIdCore(
   }
 
   const campaignPath = join(savePath, "campaign.json");
-  const sigPath = join(savePath, "campaign.sig.json");
+  const sigPath = join(savePath, LEGACY_SIG_FILE);
+
+  const manifest = verifySaveManifest(savePath);
+  if (manifest.status === "invalid") return Result.fail(corruptSave(manifest.message));
 
   if (!existsSync(campaignPath)) {
     return Result.fail(corruptSave(`Save data file not found: ${campaignPath}`));
@@ -478,7 +572,7 @@ function loadByIdCore(
     return Result.fail(corruptSave("Save data file contains invalid JSON"));
   }
 
-  const headerResult = Schema.decodeUnknownResult(SaveHeaderSchema)(raw);
+  const headerResult = decodeSaveHeader(raw);
   if (!Result.isSuccess(headerResult)) {
     return Result.fail(corruptSave("Save data is missing required fields"));
   }
@@ -513,8 +607,17 @@ function loadByIdCore(
   }
 
   const warnings: Diagnostic[] = [];
-  const signature = validateSignatureResult(sigPath, sha256Hex(campaignJson), state, warnings);
-  if (Result.isFailure(signature)) return Result.fail(signature.failure);
+  if (manifest.status === "legacy") {
+    warnings.push(
+      new PersistenceLegacySaveError({
+        message:
+          "Save was written before the integrity manifest; loaded as legacy without a complete-file check",
+        stage: LOAD_STAGE,
+      }).toDiagnostic(),
+    );
+    const legacy = validateLegacySignatureResult(sigPath, sha256Hex(campaignJson), state);
+    if (Result.isFailure(legacy)) return Result.fail(legacy.failure);
+  }
 
   if (!verifyCampaignSnapshotEnvelope(state["envelope"], state["snapshot"])) {
     return Result.fail(
@@ -525,33 +628,22 @@ function loadByIdCore(
   return Result.succeed({ state, warnings });
 }
 
-function validateSignatureResult(
+function validateLegacySignatureResult(
   sigPath: string,
   rawSerializedHash: string,
   state: CampaignState,
-  warnings: Diagnostic[],
 ): Result.Result<void, PersistenceCorruptSaveError> {
-  if (!existsSync(sigPath)) {
-    warnings.push(
-      new PersistenceUnsignedSaveError({
-        message:
-          "Save has no signature file; loaded as legacy with no independent on-disk tamper verification",
-        stage: LOAD_STAGE,
-      }).toDiagnostic(),
-    );
-    return Result.succeed(undefined);
-  }
-
+  if (!existsSync(sigPath)) return Result.succeed(undefined);
   const sig = readSigFile(sigPath);
-  if (sig === null) return Result.fail(corruptSave("Save signature file is invalid"));
+  if (sig === null) return Result.fail(corruptSave("Legacy save integrity record is invalid"));
   if (sig.serializedHash !== rawSerializedHash) {
-    return Result.fail(corruptSave("Save signature does not match serialized content"));
+    return Result.fail(corruptSave("Legacy save integrity record does not match its content"));
   }
   if (sig.stateHash !== state.rawHash) {
-    return Result.fail(corruptSave("Save signature does not match state"));
+    return Result.fail(corruptSave("Legacy save integrity record does not match its state"));
   }
   if (sig.compatibilityVersion !== state.snapshot.compatibilityVersion) {
-    return Result.fail(corruptSave("Save signature version does not match state"));
+    return Result.fail(corruptSave("Legacy save integrity record version does not match"));
   }
   return Result.succeed(undefined);
 }

@@ -1,18 +1,13 @@
-import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { resolve } from "node:path";
-import { decodeStrict, parseYamlSafe, ShipVisualCatalogSchema } from "@bluewave/content-schema";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { MOUNT_CLASSES, PART_CATALOG, SIZE_BANDS } from "../src/index.js";
 
-const YAML_PATH = resolve(import.meta.dirname, "../../../content/ship-visual/parts.yaml");
+const SOURCE_PATH = resolve(import.meta.dirname, "../../../content/ship-visual/parts.ts");
 
 describe("the generated catalog", () => {
-  it("is exactly the schema-decoded content YAML (regenerate with `catalog:generate`)", () => {
-    const diagnostics = new DiagnosticCollector();
-    const parsed = parseYamlSafe(readFileSync(YAML_PATH, "utf8"), YAML_PATH, diagnostics);
-    expect(diagnostics.toHuman()).toBe("");
-    const decoded = decodeStrict(ShipVisualCatalogSchema, parsed.data);
+  it("is exactly the schema-decoded content module (regenerate with `catalog:generate`)", () => {
+    const decoded = createRequire(import.meta.url)(SOURCE_PATH).default;
     expect(PART_CATALOG).toEqual(decoded);
   });
 

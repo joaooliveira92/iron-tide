@@ -7,8 +7,10 @@ import { Result } from "effect";
 import {
   FUZZ_CASES,
   checkFuzzCase,
+  commandPlanDivergence,
   decodeFuzzManifest,
   fuzzSubsystems,
+  formatCommandPlanFailure,
   formatFuzzFailure,
   recordFuzzManifest,
   buildCoverageReport,
@@ -17,6 +19,7 @@ import {
   recordReplay,
   verifyReplay,
   REPLAY_SCENARIOS,
+  type CommandPlan,
 } from "./replay-corpus/index.js";
 
 const REPLAY_DIR = resolve(
@@ -37,9 +40,31 @@ const USAGE = `usage:
   replay-corpus fuzz record                           re-record golden/replay-fuzz.json (local only)
   replay-corpus fuzz run <seed> <months>              check the fuzz properties for one seed
   replay-corpus fuzz check                            check every fuzz case against the pinned file
+  replay-corpus fuzz plan <seed> <json>               replay a shrinking counterexample plan
 scenarios: ${REPLAY_SCENARIOS.map((s) => s.id).join(", ")}`;
 
 function fuzz(action: string | undefined, args: readonly string[]): number {
+  if (action === "plan") {
+    const [seed, planText] = args;
+    if (seed === undefined || planText === undefined) {
+      process.stderr.write(`${USAGE}\n`);
+      return 2;
+    }
+    let plan: CommandPlan;
+    try {
+      plan = JSON.parse(planText) as CommandPlan;
+    } catch {
+      process.stderr.write("fuzz plan: the plan is not valid JSON\n");
+      return 2;
+    }
+    const report = commandPlanDivergence(seed, plan);
+    if (report !== undefined) {
+      process.stderr.write(formatCommandPlanFailure(seed, plan, report));
+      return 1;
+    }
+    process.stdout.write(`fuzz plan ok: seed ${seed}, ${String(plan.length)} months\n`);
+    return 0;
+  }
   if (action === "record") {
     if (process.env["CI"] !== undefined) {
       process.stderr.write("refusing to record the fuzz manifest under CI\n");

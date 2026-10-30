@@ -8,11 +8,16 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0206](../ADR-0206-naval-credits.md) Naval Credits (NC) as the standardized comparison currency.
-- [ADR-0207](../ADR-0207-budget-points.md) Budget Points (BP) as an abstract display unit.
-- [ADR-0211](../ADR-0211-default-and-national-historical-currency.md) Default currency Naval Credits; National Historical is conditional.
-- [ADR-0215](../ADR-0215-canonical-units-module.md) Canonical units module and its home in the contracts package.
-- [ADR-0216](../ADR-0216-money-type-and-treasury-bridge.md) Fixed-precision money type, treasury-unit scale, and the micro→unit bridge.
-- [ADR-0218](../ADR-0218-conversion-and-locale-boundary.md) Conversion and locale boundary — canonical↔display only at presentation, language distinct from locale.
-- [ADR-0219](../ADR-0219-combat-and-capacity-fixed-point-repin.md) Combat and construction-capacity float→fixed conversion and its re-pin.
-- [ADR-0272](../ADR-0272-month-pipeline-owns-order-and-observed-access.md) Phase order is declared once in `TURN_PHASES`; phases access snapshot aggregates through a recorded handle and receive randomness only through a grant.. Amends ADR-0247, ADR-0250.
+- [ADR-0352](../ADR-0352-currency-display-language-formatting-boundary.md) Currency is displayed as Naval Credits (default), Budget Points, or National Historical (when a validated configuration exists); UI language and formatting locale are independent preferences; all canonical→display conversions happen exclusively at the presentation boundary.
+- [ADR-0359](../ADR-0359-phase-engine-and-event-architecture.md) Phase order is declared once in `TURN_PHASES`; phases access snapshot aggregates through recorded handles with declared permissions; event body types derive from Effect schemas with no mirrored interfaces.
+
+## Superseded (do not follow)
+
+- [ADR-0206](../ADR-0206-naval-credits.md) Naval Credits (NC) as the standardized comparison currency. Follow ADR-0352.
+- [ADR-0207](../ADR-0207-budget-points.md) Budget Points (BP) as an abstract display unit. Follow ADR-0352.
+- [ADR-0211](../ADR-0211-default-and-national-historical-currency.md) Default currency Naval Credits; National Historical is conditional. Follow ADR-0352.
+- [ADR-0215](../ADR-0215-canonical-units-module.md) Canonical units module and its home in the contracts package. Follow ADR-0351.
+- [ADR-0216](../ADR-0216-money-type-and-treasury-bridge.md) Fixed-precision money type, treasury-unit scale, and the micro→unit bridge. Follow ADR-0351.
+- [ADR-0218](../ADR-0218-conversion-and-locale-boundary.md) Conversion and locale boundary — canonical↔display only at presentation, language distinct from locale. Follow ADR-0352.
+- [ADR-0219](../ADR-0219-combat-and-capacity-fixed-point-repin.md) Combat and construction-capacity float→fixed conversion and its re-pin. Follow ADR-0351.
+- [ADR-0272](../ADR-0272-month-pipeline-owns-order-and-observed-access.md) The month pipeline owns phase order and observes real snapshot access. Follow ADR-0359.

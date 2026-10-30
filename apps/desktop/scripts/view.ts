@@ -221,10 +221,10 @@ try {
   const shot = { path: resolve(outDir, "screenshot.png"), ...shotOptions };
   if (opts.selector) await h.page.locator(opts.selector).first().screenshot(shot);
   else await h.page.screenshot(shot);
-  await writeFile(resolve(outDir, "aria.yaml"), await h.page.locator("body").ariaSnapshot());
+  await writeFile(resolve(outDir, "aria.txt"), await h.page.locator("body").ariaSnapshot());
   await writeFile(resolve(outDir, "text.txt"), await h.page.locator("body").innerText());
   await writeFile(resolve(outDir, "console.log"), log.join("\n") + "\n");
-  console.log(`captured -> ${outDir}\n  screenshot.png  aria.yaml  text.txt  console.log`);
+  console.log(`captured -> ${outDir}\n  screenshot.png  aria.txt  text.txt  console.log`);
   if (log.some((l) => l.includes("WARNING"))) console.log("  ! warnings — see console.log");
   const failure = problems.summary();
   if (opts.strict && failure) console.error(failure);

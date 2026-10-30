@@ -4,7 +4,7 @@ Status: research note for GitHub issue #127 (child of economy map #123), created
 Planning/evidence only: no production content, code, or ADR is changed by this note.
 Scope: the ten playable nations of `content/production/1880` (ADR-0214: uk, germany, usa,
 japan, france, italy, russia, austria_hungary, spain, qing) plus Portugal, which is
-`isPlayable: false` in `countries.yaml` but is named by the owner brief. Dates are 1880
+`isPlayable: false` in `countries.ts` but is named by the owner brief. Dates are 1880
 unless a row says otherwise; later-period material is labelled and never used as a start value.
 
 ## 1. Sources, method, and trust grading
@@ -16,7 +16,7 @@ unless a row says otherwise; later-period material is labelled and never used as
 | S3 | Bolt & van Zanden, Maddison Project Database 2023, via Our World in Data CSV `gdp-per-capita-maddison-project-database` (int-$ 2011 prices) | Scholarly reconstruction | Medium (modelled; several 1880 values are interpolated; no Japan/China 1880 value exists in the series) | CSV downloaded and read |
 | S4 | Mulhall, *Dictionary of Statistics* (1884 ed.; archive.org `dictionarystati00mulhgoog`), pig-iron table | Contemporary compilation | Low-medium: the OCR is badly damaged (digit 2 reads as 9, 1 as x). Only the five-column 1880 pig-iron row whose parts sum to its printed total is used | Row reconstructed and sum-checked in section 4 |
 | S5 | B. A. Elman, "Naval Warfare and the Refraction of China's Self-Strengthening Reforms into Scientific and Technological Failure, 1865-1895" (Modern Asian Studies 38:2, 2004), `https://www.princeton.edu/~elman/documents/Naval_Warfare_and_the_Refraction_of_China's_Self-Strengthening_Reforms.pdf` | Scholarly article | High for structure; much of its funding evidence is 1885-94 (later period) | Text extracted with `pypdf`; page tags are PDF page indices |
-| S6 | Repo: `content/production/1880/{economies,countries}.yaml`, `packages/campaign/src/nationCompilation.ts`, `packages/phase-engine/src/economyPhases.ts`, `packages/campaign-engine/src/projection.ts`, `balance.yaml` (`treasuryUnitMicro`) | First-party | Authoritative for what the engine does | Read directly |
+| S6 | Repo: `content/production/1880/{economies,countries}.yaml`, `packages/campaign/src/nationCompilation.ts`, `packages/phase-engine/src/economyPhases.ts`, `packages/campaign-engine/src/projection.ts`, `balance.ts` (`treasuryUnitMicro`) | First-party | Authoritative for what the engine does | Read directly |
 
 Not obtained (stated so nothing is silently assumed): Austrian-Hungarian, Spanish and Qing
 naval appropriations for 1880; any Japanese figure for 1880 itself (S1 stops at FY1877-78);
@@ -28,13 +28,13 @@ Page numbers are the Year-Book's own, read from the nearest running header, and 
 
 Conversion note: S1 prints its own sterling equivalents. Implied rates: 25 francs, 25 lire,
 25 pesetas, 20 marks, 7 roubles (paper), 5 dollars and 5 yen to the pound. One campaign
-treasury unit is GBP 10,000 (`balance.yaml` `treasuryUnitMicro`, S6), so GBP 1 million = 100 units.
+treasury unit is GBP 10,000 (`balance.ts` `treasuryUnitMicro`, S6), so GBP 1 million = 100 units.
 
 ## 2. Engine facts that decide how evidence can be used (S6)
 
-1. `economies.yaml` gives per nation `treasury`, `income`, `expenses`. Compilation copies them
+1. `economies.ts` gives per nation `treasury`, `income`, `expenses`. Compilation copies them
    (`nationCompilation.ts:223-243`) but hard-codes `baseResources: 0` and
-   `navalAppropriationRateBp: 2000` (20 %) for every nation. `countries.yaml`
+   `navalAppropriationRateBp: 2000` (20 %) for every nation. `countries.ts`
    `gdpTier` / `budgetLevel` / `industrialBase` are narrative strings and are not read into any number.
 2. The monthly revenue phase (`economyPhases.ts` `runMonthlyRevenuePhase`) pays
    `baseResources * rateBp / 10000 / 12`; with `baseResources = 0` revenue is 0 for all nations in
@@ -147,7 +147,7 @@ presence is inside the vote rather than a separate expense; the Treasury view wa
 (supplementary budget left 381,000 GBP surplus, S1 p. 229) and a "slight decrease" in naval cost (S2).
 "Wealthy yet budget-pressured under the same accounting": consistent with the data only through debt charge
 (34 % of expenditure) and the lack of any 1880 rival-driven rise; the naval-dominance response (two-power
-standard, 1889 Naval Defence Act per `countries.yaml`) is LATER-period evidence, not an 1880 start value or formula input.
+standard, 1889 Naval Defence Act per `countries.ts`) is LATER-period evidence, not an 1880 start value or formula input.
 
 **United States.** Valid 1880 start: revenue 66.7 m (82 % of UK), naval vote only 2.71 m (26 % of UK),
 navy 5.1 % of expenditure while 73.97 m dollars of surplus retired debt (S1 p. 585-586). "Below leading

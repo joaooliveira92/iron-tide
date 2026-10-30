@@ -4,6 +4,8 @@ Applies to: combat, contracts, cross-process-test
 
 ## Status
 
+Superseded by: ADR-0351
+
 Accepted (2026-10-16). Implements the two authoritative float-path conversions of [ADR-0202](ADR-0202-canonical-internal-values.md) under the resolved golden baseline of decision request 0005; U-1 of `.ai/SPRINT-PLAN.md` Phase 2.
 
 ## Context

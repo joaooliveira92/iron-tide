@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test"
 import type { LiveWorldMapOverlay } from "../../components/world-map/campaign-map-join.js";
 import type { MapOrderFleet } from "../../components/world-map/map-orders.js";
 import { initialMapPrototypeState } from "../../components/world-map/map-state.js";
+import { HOME_FOCUS_SCALE } from "../../components/world-map/useInitialFocusArea.js";
 import { StrategicMapScreen } from "./StrategicMapScreen.js";
 
 const noop = () => undefined;
@@ -11,19 +12,19 @@ const noop = () => undefined;
 const overlay: LiveWorldMapOverlay = {
   source: "campaign",
   ownership: new Map([
-    ["area_north_sea", "GBR"],
-    ["area_western_approaches", "GBR"],
+    ["area_north_sea", "uk"],
+    ["area_western_approaches", "uk"],
   ]),
   fleets: [
-    { id: "home-fleet", name: "Home Fleet", area: "area_north_sea", nation: "GBR", ships: 12 },
+    { id: "home-fleet", name: "Home Fleet", area: "area_north_sea", nation: "uk", ships: 12 },
   ],
   ports: [],
   lanes: [{ a: "area_north_sea", b: "area_western_approaches" }],
   campaignAreas: [
-    { id: "sea_north_sea", name: "North Sea", controller: "GBR", fleets: [] },
-    { id: "sea_western_approaches", name: "Western Approaches", controller: "GBR", fleets: [] },
+    { id: "sea_north_sea", name: "North Sea", controller: "uk", fleets: [] },
+    { id: "sea_western_approaches", name: "Western Approaches", controller: "uk", fleets: [] },
   ],
-  playerNationId: "GBR",
+  playerNationId: "uk",
 };
 
 const fleet: MapOrderFleet = {
@@ -117,6 +118,12 @@ describe("StrategicMapScreen", () => {
     expect(screen.getByRole("application", { name: /World map/ })).toBeTruthy();
     expect(screen.getByRole("complementary", { name: "Fleet orders" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Home Fleet" })).toBeTruthy();
+  });
+
+  it("opens framed on the player's home waters", () => {
+    const { container } = render(<StrategicMapScreen sessionId="ses-1" />);
+    const world = container.querySelector("svg[role='application'] g");
+    expect(world?.getAttribute("transform")).toContain(`scale(${HOME_FOCUS_SCALE})`);
   });
 
   it("orders a fleet to a legal destination chosen in the panel", () => {

@@ -8,6 +8,7 @@
 
 - A UI change is verified in the running app with `pnpm snap` before it is done.
 - Every number the player sees traces to an explanation tree.
+- `electron-builder.json` ships content as `extraResources` from `content/generated/1880` (resolved via `process.resourcesPath`), never by a repo-root walk.
 
 **Governing ADRs:** [every current ADR for this app](../../docs/adr/by-scope/desktop.md), with superseded records marked.
 

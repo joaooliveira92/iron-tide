@@ -4,6 +4,8 @@ Applies to: content, cross-process-test
 
 ## Status
 
+Superseded by: ADR-0350
+
 Accepted (2026-10-23). Records the owner's approval of every recommendation in decision request
 [0040](../../.ai/decision-requests/0040-e-1-1940-1970-content-dates-and-field-structure.md), for spec
 [#249](https://github.com/joaooliveira92/iron-tide/issues/249). Builds on [ADR-0282](ADR-0282-authored-horizon-through-1970.md) and the

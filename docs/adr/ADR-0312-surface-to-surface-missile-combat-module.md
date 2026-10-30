@@ -4,6 +4,8 @@ Applies to: combat, content
 
 ## Status
 
+Superseded by: ADR-0358
+
 Accepted (2026-10-26) for [#293](https://github.com/joaooliveira92/iron-tide/issues/293), part of
 [#281](https://github.com/joaooliveira92/iron-tide/issues/281) under
 [#249](https://github.com/joaooliveira92/iron-tide/issues/249). Applies the capability seam of

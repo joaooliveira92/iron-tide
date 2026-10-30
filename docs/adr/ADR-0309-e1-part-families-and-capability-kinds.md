@@ -4,6 +4,8 @@ Applies to: combat, content-schema, ship-design
 
 ## Status
 
+Superseded by: ADR-0346
+
 Accepted (2026-10-26) for [#289](https://github.com/joaooliveira92/iron-tide/issues/289),
 [#290](https://github.com/joaooliveira92/iron-tide/issues/290) and
 [#291](https://github.com/joaooliveira92/iron-tide/issues/291), part of

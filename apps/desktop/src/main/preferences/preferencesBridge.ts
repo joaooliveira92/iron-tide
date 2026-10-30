@@ -1,9 +1,11 @@
 import { Cause, Effect, Exit, ManagedRuntime, Result, Schema, SchemaIssue } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
+import { SessionIdPayloadSchema } from "../../shared/campaignCommandSchemas.js";
 import type {
   AppPreferences,
   CampaignPreferences,
   CampaignPreferencesSnapshot,
+  PreferencesRecoveryInfo,
   PreferencesSnapshot,
 } from "../../shared/preferences-contract.js";
 import type { CommandEnv } from "../runtime/desktopMainLayer.js";
@@ -36,6 +38,21 @@ export const readPreferencesProgram = (): Effect.Effect<
   Effect.gen(function* () {
     const store = yield* PreferencesStore;
     return yield* store.read();
+  });
+
+export interface PreferencesReadResult {
+  readonly snapshot: PreferencesSnapshot;
+  readonly recovery: PreferencesRecoveryInfo | null;
+}
+
+export const readPreferencesWithRecoveryProgram = (): Effect.Effect<
+  PreferencesReadResult,
+  PreferencesError,
+  CommandEnv
+> =>
+  Effect.gen(function* () {
+    const store = yield* PreferencesStore;
+    return yield* store.readWithRecovery();
   });
 
 export const writePreferencesProgram = (
@@ -93,20 +110,36 @@ function projectPreferencesExit<A>(exit: Exit.Exit<A, PreferencesError>): Bridge
 
 export interface PreferencesBridge {
   read(): Promise<BridgeResult<PreferencesSnapshot>>;
+  readWithRecovery(): Promise<BridgeResult<PreferencesReadResult>>;
   write(payload: unknown): Promise<BridgeResult<PreferencesSnapshot>>;
-  readCampaign(sessionId: string): Promise<BridgeResult<CampaignPreferencesSnapshot>>;
+  readCampaign(sessionId: unknown): Promise<BridgeResult<CampaignPreferencesSnapshot>>;
   writeCampaign(
-    sessionId: string,
+    sessionId: unknown,
     payload: unknown,
   ): Promise<BridgeResult<CampaignPreferencesSnapshot>>;
 }
 
+function decodeSessionId(sessionId: unknown): Result.Result<string, BridgeResult<never>> {
+  const decoded = Schema.decodeUnknownResult(SessionIdPayloadSchema, {
+    onExcessProperty: "error",
+  })(sessionId);
+  if (Result.isSuccess(decoded)) return Result.succeed(decoded.success);
+  return Result.fail(
+    projectPreferencesError<never>(
+      new InvalidPreferencesPayload({ issues: issueMessages(decoded.failure) }),
+    ),
+  );
+}
 export function createPreferencesBridge(
   getRuntime: () => ManagedRuntime.ManagedRuntime<CommandEnv, never>,
 ): PreferencesBridge {
   return {
     async read() {
       const exit = await getRuntime().runPromiseExit(readPreferencesProgram());
+      return projectPreferencesExit(exit);
+    },
+    async readWithRecovery() {
+      const exit = await getRuntime().runPromiseExit(readPreferencesWithRecoveryProgram());
       return projectPreferencesExit(exit);
     },
     async write(payload: unknown) {
@@ -121,11 +154,17 @@ export function createPreferencesBridge(
       const exit = await getRuntime().runPromiseExit(writePreferencesProgram(decoded.success.app));
       return projectPreferencesExit(exit);
     },
-    async readCampaign(sessionId: string) {
-      const exit = await getRuntime().runPromiseExit(readCampaignPreferencesProgram(sessionId));
+    async readCampaign(sessionId: unknown) {
+      const decodedSession = decodeSessionId(sessionId);
+      if (Result.isFailure(decodedSession)) return decodedSession.failure;
+      const exit = await getRuntime().runPromiseExit(
+        readCampaignPreferencesProgram(decodedSession.success),
+      );
       return projectPreferencesExit(exit);
     },
-    async writeCampaign(sessionId: string, payload: unknown) {
+    async writeCampaign(sessionId: unknown, payload: unknown) {
+      const decodedSession = decodeSessionId(sessionId);
+      if (Result.isFailure(decodedSession)) return decodedSession.failure;
       const decoded = Schema.decodeUnknownResult(WriteCampaignPreferencesRequestSchema, {
         onExcessProperty: "error",
       })(payload);
@@ -135,7 +174,7 @@ export function createPreferencesBridge(
         );
       }
       const exit = await getRuntime().runPromiseExit(
-        writeCampaignPreferencesProgram(sessionId, decoded.success.campaign),
+        writeCampaignPreferencesProgram(decodedSession.success, decoded.success.campaign),
       );
       return projectPreferencesExit(exit);
     },

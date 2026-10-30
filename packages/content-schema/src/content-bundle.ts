@@ -27,14 +27,14 @@ import { RouteEdgeSchema } from "./route.js";
 import { UiCatalogueSchema } from "./ui-catalogue.js";
 import {
   PropulsionPlantSchema,
-  ShipComponentSchema,
+  ShipComponentWithSourceSchema,
   ShipHullFormSchema,
 } from "./ship-component.js";
 import { CompiledPartModelSchema, ReferenceDesignLoadoutSchema } from "./ship-parts.js";
 import { TechnologyPrerequisiteChainSchema } from "./technology.js";
 
 const ShipBuildingCatalogueSchema = Schema.Struct({
-  components: Schema.Array(ShipComponentSchema),
+  components: Schema.Array(ShipComponentWithSourceSchema),
   plants: Schema.Array(PropulsionPlantSchema),
   hullForms: Schema.Array(ShipHullFormSchema),
   balance: Schema.Unknown,

@@ -4,6 +4,8 @@ Applies to: cross-process-test
 
 ## Status
 
+Superseded by: ADR-0366
+
 Accepted (2026-10-20). Delivers ticket [#208](https://github.com/joaooliveira92/iron-tide/issues/208)
 of spec [#207](https://github.com/joaooliveira92/iron-tide/issues/207). Builds on ADR-0007 and
 ADR-0136 and does not amend them: the golden stays as a smoke test (decision 7).

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
-import { parse } from "yaml";
+import { parseUiCatalogue } from "@bluewave/content-schema";
 import type { UiCatalogueDto } from "../shared/content-contract.js";
 import { dispatchCampaignCommand } from "./campaignBridge.js";
 
@@ -13,7 +13,9 @@ interface AuthoredCatalogue {
   strings: Record<string, string>;
 }
 
-const authored = parse(readFileSync(CATALOGUE_PATH, "utf8")) as AuthoredCatalogue;
+const parsed = parseUiCatalogue(readFileSync(CATALOGUE_PATH, "utf8"), CATALOGUE_PATH);
+if (!parsed.ok) throw new Error(parsed.diagnostics);
+const authored = parsed.catalogue as AuthoredCatalogue;
 
 const REQUIRED_KEYS = [
   "messages.finance.budgetChanged.title",

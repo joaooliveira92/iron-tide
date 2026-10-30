@@ -6,7 +6,81 @@ const path = require("node:path");
 const REPOSITORY = "repository";
 const CONTENT = "content";
 const SCOPE_DIR = "docs/adr/by-scope";
+const PACKAGE_DIR = "docs/adr/by-package";
 const REF = /ADR-(\d{4})/g;
+
+// Words that commonly appear in Rule: lines but carry no domain meaning.
+const STOP_WORDS = new Set([
+  "this",
+  "that",
+  "with",
+  "from",
+  "they",
+  "their",
+  "them",
+  "have",
+  "been",
+  "being",
+  "were",
+  "which",
+  "what",
+  "when",
+  "where",
+  "there",
+  "would",
+  "could",
+  "should",
+  "into",
+  "about",
+  "after",
+  "before",
+  "between",
+  "through",
+  "during",
+  "without",
+  "within",
+  "along",
+  "across",
+  "above",
+  "below",
+  "than",
+  "then",
+  "also",
+  "very",
+  "just",
+  "each",
+  "other",
+  "some",
+  "more",
+  "most",
+  "many",
+  "such",
+  "only",
+  "over",
+  "under",
+  "once",
+  "every",
+  "both",
+  "few",
+  "those",
+  "these",
+  "again",
+  "well",
+  "even",
+  "still",
+  "already",
+  "always",
+  "never",
+  "often",
+  "much",
+  "done",
+  "used",
+  "like",
+  "non",
+  "one",
+  "two",
+  "way",
+]);
 
 function listDirs(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -94,6 +168,7 @@ function parseRecord(file, location, text) {
     supersededBy: lineRefs(text, "Superseded by"),
     amends: lineRefs(text, "Amends"),
     amendedBy: lineRefs(text, "Amended by"),
+    consistentWith: lineRefs(text, "Consistent with"),
   };
 }
 
@@ -132,7 +207,104 @@ function byNumber(records) {
   return map;
 }
 
-function validateRecords(records, universe) {
+function supersessionCycles(records) {
+  const next = new Map(
+    records.filter((r) => r.supersededBy.length > 0).map((r) => [r.number, r.supersededBy]),
+  );
+  const state = new Map();
+  const path = [];
+  const cycles = [];
+  const visit = (number) => {
+    if (state.get(number) === "done") return;
+    if (state.get(number) === "open") {
+      cycles.push([...path.slice(path.indexOf(number)), number]);
+      return;
+    }
+    state.set(number, "open");
+    path.push(number);
+    for (const target of next.get(number) ?? []) visit(target);
+    path.pop();
+    state.set(number, "done");
+  };
+  for (const number of [...next.keys()].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) visit(number);
+  return cycles;
+}
+
+const RULE_BASELINE = "scripts/adr-rule.baseline.json";
+
+// Extract significant tokens from a Rule: line for conflict detection.
+function ruleTokens(rule) {
+  if (!rule) return [];
+  const raw = rule
+    .toLowerCase()
+    .replace(/[^a-z0-9@._-]/g, " ")
+    .split(/\s+/);
+  return raw.filter((t) => t.length >= 4 && !STOP_WORDS.has(t));
+}
+
+// Find pairs of current ADRs in the same scope whose Rule: lines share enough
+// vocabulary that a human should confirm they are not contradictory. Pairs
+// already connected by Supersedes:, Amends:, or Consistent with: are skipped.
+function findRuleConflicts(records, universe) {
+  const problems = [];
+  const numbers = byNumber(records);
+  const current = records.filter(isCurrent);
+
+  function isConnected(a, b) {
+    return (
+      a.supersedes.includes(b.number) ||
+      a.supersededBy.includes(b.number) ||
+      a.amends.includes(b.number) ||
+      a.amendedBy.includes(b.number) ||
+      a.consistentWith.includes(b.number)
+    );
+  }
+
+  const byScope = new Map();
+  for (const scope of universe) {
+    byScope.set(
+      scope,
+      current.filter((r) => r.appliesTo?.includes(scope) && r.rule !== null),
+    );
+  }
+
+  for (const [scope, group] of byScope) {
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        const a = group[i];
+        const b = group[j];
+        if (isConnected(a, b) || isConnected(b, a)) continue;
+
+        const ta = ruleTokens(a.rule);
+        const tb = ruleTokens(b.rule);
+        const shared = ta.filter((t) => tb.includes(t));
+        if (shared.length < 3) continue;
+
+        problems.push(
+          `${scope}: ADR-${a.number} and ADR-${b.number} share ` +
+            `${shared.length} significant Rule: token(s) ` +
+            `(${shared.map((t) => `"${t}"`).join(", ")}) ` +
+            `but are not connected by Supersedes/Amends/Consistent with. ` +
+            `Review for contradiction; add "Consistent with:" to both if complementary, ` +
+            `or "Supersedes:" if one replaces the other.`,
+        );
+      }
+    }
+  }
+  return problems;
+}
+
+function readRuleBaseline(root) {
+  const abs = path.join(root, RULE_BASELINE);
+  if (!fs.existsSync(abs)) return new Set();
+  const parsed = JSON.parse(fs.readFileSync(abs, "utf8"));
+  if (!Array.isArray(parsed) || parsed.some((n) => typeof n !== "string" || !/^\d{4}$/.test(n))) {
+    throw new Error(`${RULE_BASELINE}: must be a JSON array of four-digit ADR numbers`);
+  }
+  return new Set(parsed);
+}
+
+function validateRecords(records, universe, ruleBaseline = new Set()) {
   const problems = [];
   const numbers = byNumber(records);
   const known = new Set(universe);
@@ -164,6 +336,19 @@ function validateRecords(records, universe) {
     if (r.status === "superseded" && r.rule !== null) {
       problems.push(`${id}: superseded record must not carry a "Rule:" line`);
     }
+    if (r.rule !== null && r.rule.trim() === "") {
+      problems.push(`${id}: empty "Rule:" line`);
+    }
+    if (isCurrent(r) && r.rule === null && !ruleBaseline.has(r.number)) {
+      problems.push(
+        `${id}: no "Rule:" line stating what is authoritative now (one sentence, cites no successor)`,
+      );
+    }
+    if (isCurrent(r) && r.rule !== null && ruleBaseline.has(r.number)) {
+      problems.push(
+        `${id}: has a "Rule:" line but is still listed in ${RULE_BASELINE} (delete the entry)`,
+      );
+    }
     if (r.status === "superseded" && r.supersededBy.length === 0) {
       problems.push(`${id}: superseded but has no "Superseded by:" reference`);
     }
@@ -188,6 +373,24 @@ function validateRecords(records, universe) {
         }
       }
     }
+    // Consistent with — reciprocal but not a chain relation.
+    for (const target of r.consistentWith) {
+      const group = numbers.get(target);
+      if (!group) {
+        problems.push(`${id}: "Consistent with: ADR-${target}" does not exist`);
+      } else if (group.length > 1) {
+        problems.push(`${id}: "Consistent with: ADR-${target}" is ambiguous (duplicate number)`);
+      } else if (!group[0].consistentWith.includes(r.number)) {
+        problems.push(
+          `${id}: "Consistent with: ADR-${target}" is not reciprocated by ${group[0].file}`,
+        );
+      }
+    }
+  }
+  for (const cycle of supersessionCycles(records)) {
+    problems.push(
+      `supersession cycle: ${cycle.map((n) => `ADR-${n}`).join(" -> ")} (no record in it can be authoritative)`,
+    );
   }
   return problems;
 }
@@ -285,6 +488,49 @@ function buildScopePage(scope, records) {
   return out.join("\n");
 }
 
+function buildPackageBrief(scope, records) {
+  const repo = records.filter((r) => isCurrent(r) && r.appliesTo?.includes(REPOSITORY));
+  const local = records.filter((r) => isCurrent(r) && r.appliesTo?.includes(scope));
+  const out = [
+    `# ADRs governing ${scope}`,
+    "",
+    "Generated by `pnpm adr:index`. Compact reference combining",
+    "repository-wide rules and package-specific rules. Does not replace",
+    "the canonical by-scope pages; open an ADR for context and exact",
+    "boundaries.",
+    "",
+  ];
+  out.push("## Repository-wide (apply here too)", "");
+  if (repo.length === 0) out.push("None.");
+  for (const r of repo) out.push(rowFor(r));
+  out.push("");
+  out.push(`## ${scope}-specific`, "");
+  if (local.length === 0) out.push("None.");
+  for (const r of local) out.push(rowFor(r));
+  out.push("");
+  return out.join("\n");
+}
+
+function buildPackageBriefs(root) {
+  const records = loadRecords(root);
+  const dir = path.join(root, PACKAGE_DIR);
+  const pages = new Map();
+  for (const scope of scopeUniverse(root)) {
+    if (scope === REPOSITORY) continue;
+    pages.set(`${PACKAGE_DIR}/${scope}.md`, buildPackageBrief(scope, records));
+  }
+  return pages;
+}
+
+function writePackageBriefs(root) {
+  const pages = buildPackageBriefs(root);
+  const dir = path.join(root, PACKAGE_DIR);
+  fs.mkdirSync(dir, { recursive: true });
+  for (const f of fs.readdirSync(dir)) fs.rmSync(path.join(dir, f));
+  for (const [rel, text] of pages) fs.writeFileSync(path.join(root, rel), text);
+  return [...pages.keys()];
+}
+
 function buildScopePages(root) {
   const records = loadRecords(root);
   const pages = new Map();
@@ -319,9 +565,10 @@ function verify(root, exemptScopes) {
   const records = loadRecords(root);
   const docs = loadGoverningDocs(root, universe);
   return [
-    ...validateRecords(records, universe),
+    ...validateRecords(records, universe, readRuleBaseline(root)),
     ...validateGoverningDocs(root, records, docs, exemptScopes),
     ...validateScopePages(root, records),
+    ...findRuleConflicts(records, universe),
   ];
 }
 
@@ -335,16 +582,22 @@ function writeScopePages(root) {
 }
 
 module.exports = {
+  buildPackageBrief,
+  buildPackageBriefs,
   buildScopePage,
   buildScopePages,
+  findRuleConflicts,
   governingDocPath,
   loadGoverningDocs,
   loadRecords,
   parseRecord,
+  readRuleBaseline,
   scopePage,
   scopeUniverse,
+  supersessionCycles,
   validateGoverningDocs,
   validateRecords,
   verify,
+  writePackageBriefs,
   writeScopePages,
 };

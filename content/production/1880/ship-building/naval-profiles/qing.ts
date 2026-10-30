@@ -1,0 +1,515 @@
+// National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
+// Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
+// target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+// Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
+// steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
+// Qing China (canonical id "qing"). A vast, fiscally fragmented empire modernising by import under the
+// Self-Strengthening Movement: four regional fleets, no ironclad in service in 1880, composite sloops and Rendel
+// flatiron gunboats, and near-total import dependence. Grounding: docs/research/qing-naval-profile.md.
+import { NationNavalProfileSchema, collection } from "@bluewave/content-authoring";
+
+export default collection("navalProfiles", NationNavalProfileSchema, [
+  {
+    nationId: "qing",
+    activeFrom: "1880-01",
+    activeUntil: null,
+    strategicSituation:
+      "Fiscally fragmented empire modernising by import: four regional fleets under viceroys rather than the court, no ironclad yet in service, only composite sloops and flatiron gunboats, tenure coastal and regional, and near-total dependence on foreign yards, guns and machinery.",
+    hardCapabilities: {
+      maxGunCaliberUm: 318000,
+      maxArmourThicknessUm: 356000,
+      domesticTorpedoDiameterUm: 356000,
+      hullForms: [
+        "torpedo_boat_form",
+        "protected_cruiser_form",
+        "coast_defence_form",
+        "pre_dreadnought_form",
+        "merchant_liner_form",
+      ],
+      domesticPlants: ["compound_cylindrical"],
+      restrictedShipTypes: [],
+      grants: [],
+    },
+    softPreferences: {
+      speedOverArmourBp: 5000,
+      secondaryBatteryWeightBp: 10000,
+      enduranceWeightBp: 9000,
+      riskToleranceBp: 4000,
+      colonialServiceWeightBp: 8000,
+      torpedoOnCruisersBp: 10000,
+      accommodationStandard: "SPARTAN",
+    },
+    industrialProfile: {
+      buildTimeMultiplierBp: 10800,
+      costMultiplierBp: 10900,
+      machineryReliabilityBp: 8400,
+      constructionQualityVarianceBp: 4800,
+      maxPracticalDisplacementKg: [
+        {
+          fromMonth: "1880-01",
+          value: 2000000,
+        },
+        {
+          fromMonth: "1885-01",
+          value: 2200000,
+        },
+        {
+          fromMonth: "1890-01",
+          value: 2500000,
+        },
+      ],
+      heavyGunProduction: "IMPORTED",
+      armourPlateProduction: "IMPORTED",
+      provenance: {
+        sourceStatus: "ESTIMATE",
+        confidence: "MEDIUM",
+        kind: "balance_adjustment",
+        note: "Small Foochow/Jiangnan arsenals; almost all modern ships imported. BALANCE TARGET within ±15%.",
+        sources: [
+          {
+            sourceId: "qing-note",
+            title: "National naval profile research note — Qing China",
+            page: "B",
+          },
+          {
+            sourceId: "navypedia-cn",
+            title: "navypedia.org Chinese class pages",
+          },
+        ],
+        derivation: {
+          sourceValue: "regional fleets, import-dependent, lightly built",
+          sourceUnit: "estimate",
+          conversion: "within the ±15% band",
+          gameValue: "buildTimeMultiplierBp 10800, costMultiplierBp 10900",
+          roundingRule: "±15%",
+        },
+      },
+    },
+    dock: {
+      maximumNewConstructionMassKg: 10000000,
+      maximumMajorRepairMassKg: 10000000,
+      maximumRebuildMassKg: 10000000,
+      maximumConversionMassKg: 10000000,
+      provenance: {
+        sourceStatus: "DERIVED",
+        confidence: "MEDIUM",
+        kind: "game_conversion",
+        sources: [
+          {
+            title: "1880 national dock capacity research note",
+            page: "findings table",
+          },
+        ],
+        derivation: {
+          sourceValue: "scenario B starter 9,377 t (largest 1880 hull); Dingyuan 7,220 t",
+          sourceUnit: "t",
+          conversion:
+            "largest 1880 hull the nation fields, rounded up to the next 1,000 t dock step",
+          gameValue: "maximumNewConstructionMassKg 10000000",
+          roundingRule: "ceiling to next 1,000 t",
+        },
+        note: "max(historical flagship 7,220 t, scenario largest hull 9,377 t) rounded up to the next 1,000 t",
+      },
+    },
+    doctrineProfile: {
+      engagementRangeM: 1500,
+      hePreferenceBp: 4500,
+      postures: ["coastal_defence", "regional_warfare"],
+      provenance: {
+        sourceStatus: "ESTIMATE",
+        confidence: "MEDIUM",
+        kind: "historical_fact",
+        sources: [
+          {
+            sourceId: "qing-note",
+            title: "National naval profile research note — Qing China",
+            page: "A, C",
+          },
+          {
+            sourceId: "navypedia-cn",
+            title: "navypedia.org Chinese class pages",
+          },
+        ],
+      },
+    },
+    researchPreferences: [
+      {
+        field: "GUNNERY",
+        priority: 3,
+      },
+      {
+        field: "INFRASTRUCTURE",
+        priority: 3,
+      },
+      {
+        field: "HULL_CONSTRUCTION",
+        priority: 3,
+      },
+      {
+        field: "SHIP_DESIGN",
+        priority: 3,
+      },
+      {
+        field: "MACHINERY",
+        priority: 2,
+      },
+      {
+        field: "TORPEDOES",
+        priority: 2,
+      },
+      {
+        field: "MINES_AND_ASW",
+        priority: 2,
+      },
+      {
+        field: "DAMAGE_CONTROL",
+        priority: 1,
+      },
+      {
+        field: "FIRE_CONTROL",
+        priority: 1,
+      },
+      {
+        field: "SUBMARINES",
+        priority: 1,
+      },
+    ],
+    componentAccess: {
+      gun_bl_274mm_m1875: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_263mm_rkl20: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_135in_30: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_12in_35: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_12in_25: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_10in_32: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_92in_315: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_6in_26: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_16in_80ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_12in_35ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_12in_25ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_7in_7ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_125in_38ton: {
+        status: "IMPORTED",
+        producer: "Armstrong",
+      },
+      gun_rml_11in_25ton: {
+        status: "IMPORTED",
+        producer: "Armstrong",
+      },
+      gun_rml_8in_9ton: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_rml_64pdr_71cwt: {
+        status: "IMPORTED",
+        producer: "Armstrong",
+      },
+      gun_qf_47in: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_qf_12pdr: {
+        status: "IMPORTED",
+        producer: "Krupp / Armstrong",
+      },
+      tube_14in_above_water: {
+        status: "IMPORTED",
+        producer: "Whitehead",
+      },
+    },
+    gunModels: [
+      {
+        id: "qing_armstrong_318",
+        familyId: "gun_rml_125in_38ton",
+        designation: "Armstrong 12.5-in 38-ton RML (318 mm)",
+        overrides: {
+          displayName: "Armstrong 318 mm 38-ton RML in shielded mount",
+          "attributes.shellMassG": "367100",
+        },
+        mounts: ["DECK_SHIELDED", "TURRET"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "historical_fact",
+          note: "Imported Armstrong/Krupp guns; most shell masses ESTIMATE.",
+          sources: [
+            {
+              sourceId: "qing-note",
+              title: "National naval profile research note — Qing China",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "qing_armstrong_279",
+        familyId: "gun_rml_11in_25ton",
+        designation: "Armstrong 11-in 25-ton RML (279 mm)",
+        overrides: {
+          displayName: "Armstrong 279 mm 25-ton RML",
+        },
+        mounts: ["DECK_SHIELDED", "CASEMATE"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "historical_fact",
+          note: "Imported Armstrong/Krupp guns; most shell masses ESTIMATE.",
+          sources: [
+            {
+              sourceId: "qing-note",
+              title: "National naval profile research note — Qing China",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "qing_armstrong_160",
+        familyId: "gun_rml_64pdr_71cwt",
+        designation: "Armstrong 160 mm MLR",
+        overrides: {
+          displayName: "Armstrong 160 mm muzzle-loading rifle",
+        },
+        mounts: ["DECK_SHIELDED", "BROADSIDE_BATTERY"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "historical_fact",
+          note: "Imported Armstrong/Krupp guns; most shell masses ESTIMATE.",
+          sources: [
+            {
+              sourceId: "qing-note",
+              title: "National naval profile research note — Qing China",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "qing_krupp_120",
+        familyId: "gun_qf_47in",
+        designation: "Krupp 12 cm RK L/35",
+        overrides: {
+          displayName: "Krupp 12 cm Ringkanone L/35 in shielded mount",
+        },
+        mounts: ["DECK_SHIELDED", "DECK_OPEN"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "historical_fact",
+          note: "Imported Armstrong/Krupp guns; most shell masses ESTIMATE.",
+          sources: [
+            {
+              sourceId: "qing-note",
+              title: "National naval profile research note — Qing China",
+              page: "F",
+            },
+          ],
+        },
+      },
+    ],
+    ammunitionPatterns: [
+      {
+        id: "qing_common_shell",
+        pattern: "AP",
+        penetrationBiasBp: 5500,
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "balance_adjustment",
+          sources: [
+            {
+              sourceId: "qing-note",
+              title: "National naval profile research note — Qing China",
+              page: "C",
+            },
+          ],
+        },
+      },
+    ],
+    componentVariants: [
+      {
+        id: "qing_tube_356_aw",
+        familyId: "tube_14in_above_water",
+        designation: "356 mm Whitehead, above-water (imported)",
+        overrides: {
+          displayName: "356 mm Whitehead torpedo tube, above-water",
+        },
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "historical_fact",
+          sources: [
+            {
+              sourceId: "qing-note",
+              title: "National naval profile research note — Qing China",
+              page: "F",
+            },
+          ],
+        },
+      },
+    ],
+    designWeights: {
+      B: {
+        firepowerBp: 11500,
+        protectionBp: 11500,
+        speedBp: 8500,
+        enduranceBp: 9000,
+        torpedoBp: 9000,
+        reliabilityBp: 9000,
+        colonialBp: 8500,
+        costBp: 12000,
+      },
+      CA: {
+        firepowerBp: 10500,
+        protectionBp: 9500,
+        speedBp: 10500,
+        enduranceBp: 10000,
+        torpedoBp: 10000,
+        reliabilityBp: 9000,
+        colonialBp: 9000,
+        costBp: 11500,
+      },
+      CL: {
+        firepowerBp: 9500,
+        protectionBp: 9000,
+        speedBp: 10500,
+        enduranceBp: 11000,
+        torpedoBp: 10000,
+        reliabilityBp: 9000,
+        colonialBp: 10000,
+        costBp: 11500,
+      },
+      DD: {
+        firepowerBp: 8000,
+        protectionBp: 8000,
+        speedBp: 12000,
+        enduranceBp: 9000,
+        torpedoBp: 12000,
+        reliabilityBp: 9000,
+        colonialBp: 9000,
+        costBp: 12000,
+      },
+      KE: {
+        firepowerBp: 9000,
+        protectionBp: 8500,
+        speedBp: 9000,
+        enduranceBp: 10500,
+        torpedoBp: 9000,
+        reliabilityBp: 9500,
+        colonialBp: 11000,
+        costBp: 12000,
+      },
+      AMC: {
+        firepowerBp: 9000,
+        protectionBp: 8500,
+        speedBp: 9500,
+        enduranceBp: 12000,
+        torpedoBp: 9500,
+        reliabilityBp: 9000,
+        colonialBp: 10500,
+        costBp: 12000,
+      },
+    },
+    procurementPolicy: {
+      battleLineShareBp: 2600,
+      cruiserShareBp: 3200,
+      torpedoCraftShareBp: 2200,
+      colonialShareBp: 2000,
+      foreignProcurementAppetiteBp: 8500,
+      unprovenTechAppetiteBp: 4000,
+      buildOrder: ["CL", "KE", "B", "DD", "CA", "AMC"],
+    },
+    namingPolicy: {
+      stems: {
+        B: [
+          "Dingyuan",
+          "Zhenyuan",
+          "Jiyuan",
+          "Zhiyuan",
+          "Jingyuan",
+          "Laiyuan",
+          "Chaoyong",
+          "Yangwei",
+        ],
+        CA: ["Jiyuan", "Chaoyong", "Yangwei", "Nan Shui", "Nan Thin", "Kai Che"],
+        CL: ["Wei Yuen", "Chao Wu", "Kang Chi", "Teng Ch'ing", "Heng Hai", "Kuang Chia"],
+        DD: ["Lei Fu", "Lei Lung", "Lei Chen", "Chang Tse", "Chen Tse"],
+        KE: ["Fei Ting", "Tse Tien", "Kwangtung", "Tien Chi", "Tse Hai", "Wei Ching"],
+        AMC: ["China Merchants steamers"],
+      },
+      convention: {
+        B: "Auspicious and poetic two-character names (Dingyuan, Zhiyuan).",
+        CA: "Auspicious two-character compounds (Jiyuan, Chaoyong).",
+        CL: "Auspicious and place-flavoured names (Wei Yuen, Kuang Chia).",
+        DD: "Lei (thunder) prefixed names (Lei Fu, Lei Chen).",
+        KE: "Place and nature gunboat names (Fei Ting, Tse Tien).",
+        AMC: "Steamer names taken up from trade.",
+      },
+    },
+    sourceReferences: [
+      {
+        sourceId: "qing-note",
+        title: "National naval profile research note — Qing China",
+      },
+      {
+        sourceId: "navypedia-cn",
+        title: "navypedia.org Chinese class pages",
+        archiveOrUrl: "http://www.navypedia.org",
+      },
+      {
+        sourceId: "ship-1880-ships",
+        title: "Ship-building 1880 ships by nation note",
+        page: "Qing Dynasty",
+      },
+    ],
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "Grounded shape (regional fleets, import dependence, coastal tenure); weights and multipliers are BALANCE TARGET.",
+      sources: [
+        {
+          sourceId: "qing-note",
+          title: "National naval profile research note — Qing China",
+          page: "A, B, C, F",
+        },
+        {
+          sourceId: "ship-1880-ships",
+          title: "Ship-building 1880 ships by nation note",
+          page: "Qing Dynasty",
+        },
+      ],
+      derivation: {
+        sourceValue: "grounded shape; no single sourced multiplier",
+        sourceUnit: "mixed",
+        conversion: "weights and shares are gameplay abstractions",
+        gameValue: "profile as authored",
+        roundingRule: "multipliers within ±15%",
+      },
+    },
+  },
+]);

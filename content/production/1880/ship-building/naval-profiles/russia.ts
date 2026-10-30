@@ -1,0 +1,548 @@
+// National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
+// Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
+// target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+// Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
+// steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
+// Russia (canonical id "russia"). A huge, poor, technologically lagging empire with three separated fleets
+// (Baltic, Black Sea, Pacific): a coastal-defence and torpedo tradition, a real commerce-raiding cruiser force, and
+// heavy dependence on foreign machinery with weak domestic reliability. Grounding: docs/research/russia-naval-profile.md.
+import { NationNavalProfileSchema, collection } from "@bluewave/content-authoring";
+
+export default collection("navalProfiles", NationNavalProfileSchema, [
+  {
+    nationId: "russia",
+    activeFrom: "1880-01",
+    activeUntil: null,
+    strategicSituation:
+      "Three-fleet continental empire: coastal-defence ironclads and monitors, a prodigious torpedo and mine arm, and a real commerce-raiding cruiser force, all split between the Baltic, Black Sea and Pacific; domestic industry is large but unreliable and heavily dependent on foreign machinery.",
+    hardCapabilities: {
+      maxGunCaliberUm: 305000,
+      maxArmourThicknessUm: 406000,
+      domesticTorpedoDiameterUm: 381000,
+      hullForms: [
+        "torpedo_boat_form",
+        "protected_cruiser_form",
+        "coast_defence_form",
+        "pre_dreadnought_form",
+        "merchant_liner_form",
+      ],
+      domesticPlants: ["compound_cylindrical", "triple_expansion_cylindrical"],
+      restrictedShipTypes: [],
+      grants: [],
+    },
+    softPreferences: {
+      speedOverArmourBp: 4500,
+      secondaryBatteryWeightBp: 11000,
+      enduranceWeightBp: 10500,
+      riskToleranceBp: 5500,
+      colonialServiceWeightBp: 9500,
+      torpedoOnCruisersBp: 11500,
+      accommodationStandard: "SPARTAN",
+    },
+    industrialProfile: {
+      buildTimeMultiplierBp: 10800,
+      costMultiplierBp: 11000,
+      machineryReliabilityBp: 8000,
+      constructionQualityVarianceBp: 4500,
+      maxPracticalDisplacementKg: [
+        {
+          fromMonth: "1880-01",
+          value: 10000000,
+        },
+        {
+          fromMonth: "1885-01",
+          value: 11000000,
+        },
+        {
+          fromMonth: "1890-01",
+          value: 11500000,
+        },
+      ],
+      heavyGunProduction: "DOMESTIC",
+      armourPlateProduction: "DOMESTIC",
+      provenance: {
+        sourceStatus: "ESTIMATE",
+        confidence: "MEDIUM",
+        kind: "balance_adjustment",
+        note: "Obukhov/Izhora domestic but slow; resources insufficient and many ships ordered abroad. BALANCE TARGET within ±15%.",
+        sources: [
+          {
+            sourceId: "russia-note",
+            title: "National naval profile research note — Russia",
+            page: "B",
+          },
+          {
+            sourceId: "bras86",
+            title: "The Naval Annual 1886",
+            page: "360-363, 502",
+          },
+        ],
+        derivation: {
+          sourceValue:
+            "coast-defence and cruisers absorbed the naval budget; foreign orders needed",
+          sourceUnit: "estimate",
+          conversion: "within the ±15% band",
+          gameValue: "buildTimeMultiplierBp 10800, costMultiplierBp 11000",
+          roundingRule: "±15%",
+        },
+      },
+    },
+    dock: {
+      maximumNewConstructionMassKg: 11000000,
+      maximumMajorRepairMassKg: 11000000,
+      maximumRebuildMassKg: 11000000,
+      maximumConversionMassKg: 11000000,
+      provenance: {
+        sourceStatus: "DERIVED",
+        confidence: "MEDIUM",
+        kind: "game_conversion",
+        sources: [
+          {
+            title: "1880 national dock capacity research note",
+            page: "findings table",
+          },
+        ],
+        derivation: {
+          sourceValue: "Petr Velikiy 10,570 t (largest 1880 hull)",
+          sourceUnit: "t",
+          conversion:
+            "largest 1880 hull the nation fields, rounded up to the next 1,000 t dock step",
+          gameValue: "maximumNewConstructionMassKg 11000000",
+          roundingRule: "ceiling to next 1,000 t",
+        },
+        note: "historical flagship rounded up to the next 1,000 t",
+      },
+    },
+    doctrineProfile: {
+      engagementRangeM: 1500,
+      hePreferenceBp: 4500,
+      postures: [
+        "coastal_defence",
+        "torpedo_warfare",
+        "distant_water_operations",
+        "commerce_raiding",
+      ],
+      provenance: {
+        sourceStatus: "ESTIMATE",
+        confidence: "MEDIUM",
+        kind: "historical_fact",
+        sources: [
+          {
+            sourceId: "russia-note",
+            title: "National naval profile research note — Russia",
+            page: "A, C",
+          },
+          {
+            sourceId: "navypedia-ru",
+            title: "navypedia.org Russian class pages",
+          },
+        ],
+      },
+    },
+    researchPreferences: [
+      {
+        field: "TORPEDOES",
+        priority: 4,
+      },
+      {
+        field: "GUNNERY",
+        priority: 3,
+      },
+      {
+        field: "MINES_AND_ASW",
+        priority: 3,
+      },
+      {
+        field: "HULL_CONSTRUCTION",
+        priority: 3,
+      },
+      {
+        field: "MACHINERY",
+        priority: 2,
+      },
+      {
+        field: "INFRASTRUCTURE",
+        priority: 2,
+      },
+      {
+        field: "DAMAGE_CONTROL",
+        priority: 2,
+      },
+      {
+        field: "SHIP_DESIGN",
+        priority: 2,
+      },
+      {
+        field: "SUBMARINES",
+        priority: 2,
+      },
+      {
+        field: "FIRE_CONTROL",
+        priority: 1,
+      },
+    ],
+    componentAccess: {
+      gun_bl_274mm_m1875: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_263mm_rkl20: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_135in_30: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_12in_35: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_10in_32: {
+        status: "UNAVAILABLE",
+      },
+      gun_qf_6in_40: {
+        status: "UNAVAILABLE",
+      },
+      gun_qf_47in: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_16in_80ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_125in_38ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_12in_35ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_7in_7ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_12in_25ton: {
+        status: "DOMESTIC",
+        producer: "Obukhov",
+      },
+      gun_rml_11in_25ton: {
+        status: "DOMESTIC",
+        producer: "Obukhov",
+      },
+      gun_rml_10in_18ton: {
+        status: "DOMESTIC",
+        producer: "Obukhov",
+      },
+      gun_rml_10in_18ton_broadside: {
+        status: "DOMESTIC",
+        producer: "Obukhov",
+      },
+      gun_rml_8in_9ton: {
+        status: "DOMESTIC",
+        producer: "Obukhov",
+      },
+      gun_rml_64pdr_71cwt: {
+        status: "DOMESTIC",
+        producer: "Obukhov",
+      },
+      gun_bl_12in_25: {
+        status: "DOMESTIC",
+        producer: "Obukhov",
+      },
+      gun_bl_92in_315: {
+        status: "DOMESTIC",
+        producer: "Obukhov",
+      },
+      gun_bl_6in_26: {
+        status: "DOMESTIC",
+        producer: "Obukhov",
+      },
+      gun_qf_12pdr: {
+        status: "LICENSE_BUILT",
+        producer: "Canet",
+      },
+      tube_14in_above_water: {
+        status: "DOMESTIC",
+        producer: "Obukhov / Whitehead",
+      },
+    },
+    gunModels: [
+      {
+        id: "ru_12in30_obr1877",
+        familyId: "gun_bl_12in_25",
+        designation: "12-in/30 obr.1877",
+        overrides: {
+          displayName: "12-inch/30 obr.1877 in twin turret",
+          "attributes.shellMassG": "331700",
+        },
+        mounts: ["TURRET", "BARBETTE"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              sourceId: "russia-note",
+              title: "National naval profile research note — Russia",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "ru_11in_obr1867",
+        familyId: "gun_rml_11in_25ton",
+        designation: "11-in obr.1867",
+        overrides: {
+          displayName: "11-inch obr.1867 in barbette",
+        },
+        mounts: ["BARBETTE", "TURRET"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              sourceId: "russia-note",
+              title: "National naval profile research note — Russia",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "ru_8in_obr1867",
+        familyId: "gun_rml_8in_9ton",
+        designation: "8-in obr.1867",
+        overrides: {
+          displayName: "8-inch obr.1867 in casemate",
+        },
+        mounts: ["CASEMATE", "BROADSIDE_BATTERY"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              sourceId: "russia-note",
+              title: "National naval profile research note — Russia",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "ru_6in_obr1867",
+        familyId: "gun_rml_64pdr_71cwt",
+        designation: "6-in obr.1867",
+        overrides: {
+          displayName: "6-inch obr.1867 in casemate",
+        },
+        mounts: ["CASEMATE", "DECK_OPEN"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              sourceId: "russia-note",
+              title: "National naval profile research note — Russia",
+              page: "F",
+            },
+          ],
+        },
+      },
+    ],
+    ammunitionPatterns: [
+      {
+        id: "ru_ap_steel",
+        pattern: "AP",
+        penetrationBiasBp: 6500,
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "balance_adjustment",
+          sources: [
+            {
+              sourceId: "russia-note",
+              title: "National naval profile research note — Russia",
+              page: "C",
+            },
+          ],
+        },
+      },
+    ],
+    componentVariants: [
+      {
+        id: "ru_tube_381_aw",
+        familyId: "tube_14in_above_water",
+        designation: "381 mm Whitehead, above-water",
+        overrides: {
+          displayName: "381 mm torpedo tube, above-water",
+        },
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              sourceId: "russia-note",
+              title: "National naval profile research note — Russia",
+              page: "F",
+            },
+          ],
+        },
+      },
+    ],
+    designWeights: {
+      B: {
+        firepowerBp: 11500,
+        protectionBp: 12000,
+        speedBp: 9000,
+        enduranceBp: 9500,
+        torpedoBp: 10000,
+        reliabilityBp: 9000,
+        colonialBp: 9000,
+        costBp: 11500,
+      },
+      CA: {
+        firepowerBp: 11000,
+        protectionBp: 10500,
+        speedBp: 10500,
+        enduranceBp: 11000,
+        torpedoBp: 11000,
+        reliabilityBp: 9000,
+        colonialBp: 10000,
+        costBp: 11000,
+      },
+      CL: {
+        firepowerBp: 10000,
+        protectionBp: 9500,
+        speedBp: 11000,
+        enduranceBp: 12000,
+        torpedoBp: 11500,
+        reliabilityBp: 9000,
+        colonialBp: 10500,
+        costBp: 11500,
+      },
+      DD: {
+        firepowerBp: 8000,
+        protectionBp: 8000,
+        speedBp: 13000,
+        enduranceBp: 9000,
+        torpedoBp: 14000,
+        reliabilityBp: 9000,
+        colonialBp: 9000,
+        costBp: 12000,
+      },
+      KE: {
+        firepowerBp: 8500,
+        protectionBp: 9000,
+        speedBp: 9500,
+        enduranceBp: 11500,
+        torpedoBp: 10000,
+        reliabilityBp: 9500,
+        colonialBp: 11000,
+        costBp: 12000,
+      },
+      AMC: {
+        firepowerBp: 9500,
+        protectionBp: 9000,
+        speedBp: 10000,
+        enduranceBp: 13000,
+        torpedoBp: 11000,
+        reliabilityBp: 9000,
+        colonialBp: 11000,
+        costBp: 11500,
+      },
+    },
+    procurementPolicy: {
+      battleLineShareBp: 2800,
+      cruiserShareBp: 3200,
+      torpedoCraftShareBp: 2800,
+      colonialShareBp: 1200,
+      foreignProcurementAppetiteBp: 5000,
+      unprovenTechAppetiteBp: 4000,
+      buildOrder: ["B", "DD", "CL", "CA", "KE", "AMC"],
+    },
+    namingPolicy: {
+      stems: {
+        B: [
+          "Petr Velikiy",
+          "Ekaterina II",
+          "Chesma",
+          "Sinop",
+          "Georgii Pobedonosets",
+          "Navarin",
+          "Dvenadsat Apostolov",
+        ],
+        CA: [
+          "General-Admiral",
+          "Gertsog Edinburgskiy",
+          "Minin",
+          "Admiral Nakhimov",
+          "Vladimir Monomakh",
+          "Dmitriy Donskoy",
+          "Rurik",
+        ],
+        CL: [
+          "Kreyser",
+          "Dzhigit",
+          "Razboynik",
+          "Nayezdnik",
+          "Plastun",
+          "Strelok",
+          "Vestnik",
+          "Rynda",
+          "Vityaz",
+        ],
+        DD: ["Vzryv", "Batum", "Sukhum", "Poti", "Gagry", "Sirena", "Skorpion"],
+        KE: ["Burun", "Tucha", "Burya", "Groza", "Dozhd", "Grad", "Koreets", "Mandzhur"],
+        AMC: ["Holsatia", "Moskwa", "Kostroma", "Konstantin", "Vesta", "Argonaut"],
+      },
+      convention: {
+        B: "Emperors, saints and victories (Petr Velikiy, Chesma).",
+        CA: "Admirals, princes and warriors (General-Admiral, Rurik).",
+        CL: "Corsairs, speed and places (Kreyser, Vityaz).",
+        DD: "Explosions and places (Vzryv, Batum).",
+        KE: "Weather, birds and places (Groza, Koreets).",
+        AMC: "Trade and liner names (Holsatia, Kostroma).",
+      },
+    },
+    sourceReferences: [
+      {
+        sourceId: "russia-note",
+        title: "National naval profile research note — Russia",
+      },
+      {
+        sourceId: "navypedia-ru",
+        title: "navypedia.org Russian class pages",
+        archiveOrUrl: "http://www.navypedia.org",
+      },
+      {
+        sourceId: "ship-1880-ships",
+        title: "Ship-building 1880 ships by nation note",
+        page: "Russia",
+      },
+    ],
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "Grounded shape (coastal/torpedo, commerce-raiding cruisers, weak machinery); weights and multipliers are BALANCE TARGET.",
+      sources: [
+        {
+          sourceId: "russia-note",
+          title: "National naval profile research note — Russia",
+          page: "A, B, C, F",
+        },
+        {
+          sourceId: "ship-1880-ships",
+          title: "Ship-building 1880 ships by nation note",
+          page: "Russia",
+        },
+      ],
+      derivation: {
+        sourceValue: "grounded shape; no single sourced multiplier",
+        sourceUnit: "mixed",
+        conversion: "weights and shares are gameplay abstractions",
+        gameValue: "profile as authored",
+        roundingRule: "multipliers within ±15%",
+      },
+    },
+  },
+]);

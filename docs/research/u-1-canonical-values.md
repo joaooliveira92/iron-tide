@@ -14,7 +14,7 @@ locale). Per ADR-0202 the manual's values are display facts, not canonical stora
   PDF page index in these ranges (baseline note, "Source and method").
 - Cross-check of the code's current canonical conventions (not from the manual):
   `packages/campaign/src/designUnits.ts` (kg, µm, µm/s; ADR-0037) and
-  `content/production/1880/ship-building/balance.yaml:778-780` (`treasuryUnitMicro`,
+  `content/production/1880/ship-building/balance.ts:778-780` (`treasuryUnitMicro`,
   one treasury unit = GBP 10,000).
 
 ## 2. Budget and money in the manual
@@ -99,7 +99,7 @@ grounding must come from the ADRs, not the manual.
   cite p.18 for the `measurementPreset` default and its rationale, never as the storage
   spec.
 - **Fixed-precision money** — manual gives no representation; ground in ADR-0202 and the
-  existing integer treasury convention (`balance.yaml:778-780`: one treasury unit =
+  existing integer treasury convention (`balance.ts:778-780`: one treasury unit =
   GBP 10,000; `treasuryUnitMicro` = 10^10 micro-pounds, i.e. 10^6 micro per £). This is
   code/ADR grounding, explicitly NOT a manual figure.
 - **Rounding / number-format boundaries** — manual is silent (costs are relative %,

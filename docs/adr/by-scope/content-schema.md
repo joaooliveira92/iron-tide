@@ -8,15 +8,27 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim.
-- [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity.
-- [ADR-0233](../ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) Designer draft-schema v2 and canonical vocabulary.
-- [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
-- [ADR-0247](../ADR-0247-presence-measurement-and-shortfall.md) Presence is measured at month end from the dormant S-5 section and reported as typed shortfall events (amended by ADR-0272).
-- [ADR-0250](../ADR-0250-base-limits-flag-and-consequences-at-month-end.md) Base limits are checked last each month; over-base ships are flagged and take the S-1 consequences (amended by ADR-0272).
-- [ADR-0253](../ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input.
-- [ADR-0286](../ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md) Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section.
-- [ADR-0303](../ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) Training cost differences and exercise tension are generic ruleset data.
-- [ADR-0308](../ADR-0308-e1-compiled-design-capabilities-reach-combat.md) Compiled design capabilities reach combat and are decoded strictly.
-- [ADR-0309](../ADR-0309-e1-part-families-and-capability-kinds.md) E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars.
-- [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire.
+- [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
+- [ADR-0345](../ADR-0345-ship-design-model-and-draft-schema.md) The ship design data model defines a versioned draft with optional fields, a canonical armour-region set mapped to the manual's nine universal fields, named armour schemes as deterministic transformations, and additive options from balance targets, all guarded by a session that explains new blocking or critical findings at once.
+- [ADR-0346](../ADR-0346-ship-component-catalogue-and-capability-model.md) The ship-component catalogue is organised by family and nation with per-record provenance, defines part families and capability kinds for all equipment eras, carries sourced or BALANCE_TARGET values, and consumes part capabilities through explicit ruleset sections.
+- [ADR-0356](../ADR-0356-fleet-management-gates-values-and-ship-use.md) Ship use is decided by one pure gate evaluator; fleet-management values live in a dormant ruleset section until authored; repair entry from battle damage is deferred.
+- [ADR-0357](../ADR-0357-training-exercises-division-growth-and-explanation-trees.md) Division cohesion and experience grow through pure rules; special training is a nation program with proficiency tracked in funded months; exercises are commanded for the following month through the assignment slot and cost doubled active maintenance; training effects reach battle through one per-side effects record; displayed numbers carry explanation trees built from the same calculation the engine uses.
+- [ADR-0358](../ADR-0358-combat-engine-architecture.md) `@bluewave/combat` exports exactly `resolve`, `advance`, `generate` and the root contract; all subsystems, orders, realism and combat modules are subpath seams.
+- [ADR-0362](../ADR-0362-foreign-station-presence.md) S-5 presence is measured at month end from authored ruleset values; nations own possessions in presence areas, deploy ships on foreign station duty, and incur penalties for shortfalls, with exemption for blockade, while base limits constrain over-deployment.
+- [ADR-0363](../ADR-0363-battle-offers.md) Battle offers are raised for eligible missions when the ruleset section is authored; the player may decline at a victory-point cost, repeated declines trigger prestige loss through the S-2 seam, the enemy may decline when outmatched, and a support force may join under defined conditions.
+
+## Superseded (do not follow)
+
+- [ADR-0229](../ADR-0229-technology-year-global-designer-unlock.md) Technology `year` is the global designer unlock year, not a research claim. Follow ADR-0339.
+- [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity. Follow ADR-0345.
+- [ADR-0233](../ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) Designer draft-schema v2 and canonical vocabulary. Follow ADR-0345.
+- [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section. Follow ADR-0362.
+- [ADR-0247](../ADR-0247-presence-measurement-and-shortfall.md) Presence is measured at month end from the dormant S-5 section and reported as typed shortfall events. Follow ADR-0362.
+- [ADR-0250](../ADR-0250-base-limits-flag-and-consequences-at-month-end.md) Base limits are checked last each month; over-base ships are flagged and take the S-1 consequences. Follow ADR-0362.
+- [ADR-0253](../ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input. Follow ADR-0363.
+- [ADR-0286](../ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md) Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section. Follow ADR-0356.
+- [ADR-0303](../ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) Training cost differences and exercise tension are generic ruleset data. Follow ADR-0357.
+- [ADR-0308](../ADR-0308-e1-compiled-design-capabilities-reach-combat.md) Compiled design capabilities reach combat and are decoded strictly. Follow ADR-0358.
+- [ADR-0309](../ADR-0309-e1-part-families-and-capability-kinds.md) E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars. Follow ADR-0346.
+- [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire. Follow ADR-0346.
+- [ADR-0333](../ADR-0333-split-ship-component-catalogue-by-nation.md) Split the ship-component catalogue by family and nation, with per-record source provenance. Follow ADR-0346.

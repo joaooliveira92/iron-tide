@@ -12,10 +12,7 @@
     "9d6dc3c5b4321fdffa4211b9e3f20119ade3edc5d81c2309ba9ff8c3e8b9f533": 1,
     "ac0f876eb28af13ef7c9c0ced35657de3a7c22e7685eeb7cf48c2dca1373e79c": 1
   },
-  "packages/persistence/src/saveMigration.ts": {
-    "841fc994fa051f40c4bd0a4f171395103c9e8a9315b67d1e141753d3299090fe": 1
-  },
-  "packages/persistence/src/store.ts": {
+  "packages/persistence/src/schemas.ts": {
     "841fc994fa051f40c4bd0a4f171395103c9e8a9315b67d1e141753d3299090fe": 1
   }
 }

@@ -4,7 +4,7 @@ import type { BattleOfferRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { makeRecordedInput, type OfferRequest, type OfferResponse } from "@bluewave/messages";
-import { hashSnapshot, MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
+import { unifiedSnapshotHash, MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 
 import { compileProductionCampaign } from "./production-pack.js";
 
@@ -212,7 +212,7 @@ function offerOf(result: MonthResult): OfferRequest {
 }
 
 const hashesOf = (result: MonthResult): RunHashes => ({
-  snapshot: hashSnapshot(result.finalSnapshot),
+  snapshot: unifiedSnapshotHash(result.finalSnapshot),
   events: result.eventLedger.hash(),
   random: result.randomLedger.hash(),
 });
@@ -307,7 +307,7 @@ export function runT1Acceptance(): T1Observation {
     const after = result.finalSnapshot.wars.declineCounters ?? [];
     counts.push(after.reduce((sum, entry) => sum + (entry.count as number), 0));
     prestigeAfter.push(result.finalSnapshot.nations.get(PLAYER)!.prestige as number);
-    finalHash = hashSnapshot(result.finalSnapshot);
+    finalHash = unifiedSnapshotHash(result.finalSnapshot);
     const nations = new Map(current.nations);
     nations.set(PLAYER, {
       ...nations.get(PLAYER)!,
@@ -378,7 +378,9 @@ export function runT1Acceptance(): T1Observation {
     delegate: {
       outcome: delegated.outcome,
       scores: scores(delegated),
-      sameAsAccept: hashSnapshot(delegated.finalSnapshot) === hashSnapshot(accepted.finalSnapshot),
+      sameAsAccept:
+        unifiedSnapshotHash(delegated.finalSnapshot) ===
+        unifiedSnapshotHash(accepted.finalSnapshot),
     },
     decline: {
       outcome: declined.outcome,
@@ -423,7 +425,8 @@ export function runT1Acceptance(): T1Observation {
     },
     peacetime: {
       identicalWithAndWithoutSection:
-        hashSnapshot(peaceWith.finalSnapshot) === hashSnapshot(peaceWithout.finalSnapshot) &&
+        unifiedSnapshotHash(peaceWith.finalSnapshot) ===
+          unifiedSnapshotHash(peaceWithout.finalSnapshot) &&
         peaceWith.eventLedger.hash() === peaceWithout.eventLedger.hash() &&
         peaceWith.randomLedger.hash() === peaceWithout.randomLedger.hash(),
       hashes: hashesOf(peaceWith),

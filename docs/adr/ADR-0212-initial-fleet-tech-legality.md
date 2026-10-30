@@ -4,6 +4,8 @@ Applies to: content, campaign, ship-design, content-compiler
 
 ## Status
 
+Superseded by: ADR-0339
+
 Accepted (2026-10-15). New record of decision DR-012; no prior ADR file existed
 for it and none is restored (see ADR-0210). Resolves decision request
 `.ai/decision-requests/0002-initial-fleet-tech-legality.md` (D1) and unblocks N-1
@@ -57,7 +59,6 @@ link. No starting ship may be silently illegal: each is either design-linked and
   build today. This is intended (a service-vs-build distinction) and must be
   stated so it is not read as a defect.
 - No wire-format or schema change; the effect is content and validation only.
-
 
 ## Amendment (2026-10-17): `completedTechs` does not gate construction
 

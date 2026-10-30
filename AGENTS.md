@@ -1,193 +1,109 @@
 # Working in Bluewave
 
-Bluewave is a deterministic naval strategy/tactical game: an engine, a
-content compiler, and an Electron desktop app in one TypeScript monorepo. This
-file is how an agent works here. It does not restate the binding authorities — it
-points at them and adds the working conventions.
+Bluewave is a deterministic naval strategy game: engine, content compiler, and Electron desktop app in one TypeScript monorepo. This file tells an agent how to work here.
 
 ## Authority and reading order
 
-Read, in order, before editing:
+1. `README.md` — design baseline.
+2. `.ai/ENGINEERING-CONTRACT.md` — highest code authority.
+3. `RULES.md` — binding rules.
+4. `.ai/REQUIREMENTS.md` and relevant ADRs.
+5. `.ai/SPRINT-PLAN.md` / `.ai/briefs/` — approved milestone.
+6. The nearby code, tests, exports, and CI.
 
-1. `README.md` — the canonical design baseline.
-2. `.ai/ENGINEERING-CONTRACT.md` — the highest code authority.
-3. `RULES.md` — the binding rules distilled from the above.
-4. `.ai/REQUIREMENTS.md` and the ADRs the task cites.
-5. The current approved milestone brief (`.ai/SPRINT-PLAN.md`, `.ai/briefs/`).
-6. The nearby code, tests, package exports, and CI — never assume they exist.
+Precedence: safety/legal/credential → canonical design → contract → ADRs → brief → local conventions. On conflict, **stop** (see Stop conditions).
 
-Precedence: safety/legal/credential constraints → canonical design → engineering
-contract → ADRs → milestone brief → local conventions. On a genuine conflict,
-**stop** (see Stop conditions) rather than resolving gameplay silently.
+## Agent workflow
 
-## Repository rules
+Run `pnpm agent:map <symbol|path>` before reading, `pnpm verify:affected` before committing, and `pnpm heavy` (not `sleep`) for long gates. See [agent tools](docs/agents/agent-tools.md).
 
-- Check `git status` and the remote branch before mutating; `git pull --rebase` and run `pnpm preflight` at session start; rebase before every push.
-- Never overwrite, revert, or reformat another contributor's work. Keep commits narrow and Conventional.
-- Write no code comments. Names, types, and tests carry intent; rationale goes in an ADR or the commit message (ADR-0268).
-- Work in the main checkout on a short-lived local branch. Up to 5 worktrees
-  (main checkout included) may exist at once, created with `pnpm worktrees new <slug>` (ADR-0237, which amends ADR-0236 and ADR-0234). One session per checkout.
-- Review agents are read-only: they must not edit code, tests, commits, branches, or PR state.
-- Standing standards docs carry a word ceiling in `scripts/doc-budgets.manifest.json`; ratchet down, justify any raise, and add
-  new standing docs to the manifest.
-- Record decisions that constrain architecture, determinism, compatibility,
-  persistence, security, or replacement cost as ADRs with an `Applies to:` line;
-  `pnpm adr:index` regenerates the indexes. Read the ADRs for your scope, not the
-  whole index: [repository-wide](docs/adr/by-scope/repository.md) plus the link in
-  your package's `AGENTS.md`.
+## Rules
 
-## Determinism (the core invariant)
+- Check `git status`, `git pull --rebase`, and `pnpm preflight` at session start; rebase before every push.
+- Never overwrite or reformat others' work. Keep commits narrow, Conventional.
+- No code comments (ADR-0268, see ADR-0366). Names, types, tests carry intent; rationale in ADR or commit message.
+- Short-lived branch from `dev`; max 5 worktrees (ADR-0237, see ADR-0364), one session per checkout.
+- Review agents are read-only: no edits, commits, branches, or PR state.
+- Doc budgets in `scripts/doc-budgets.manifest.json`; ratchet down, justify raises.
+- Constraining decisions → ADR with `Applies to:` and `Rule:`. Authority through `Supersedes:`/`Amends:`. Read by-scope: [repository](docs/adr/by-scope/repository.md) + package `AGENTS.md`.
 
-Identical content, ruleset, inputs, commands, seeds, and compatibility versions
-produce identical authoritative hashes across OSes.
+## Determinism
 
-- Authoritative packages must not read `Math.random`, random UUIDs, wall-clock
-  time, `process.env`, locale/timezone, filesystem order, network/hostname/pid/
-  scheduler, mutable globals, or platform path separators. Inputs enter through
-  validated requests or explicit ports.
-- Use hierarchical, domain-separated RNG only — never a generic `nextRandom()`.
-  Every random outcome records stream identity, stable entity key, phase, ruleset
-  version, input hash, draw/derived value, outcome, and reason code.
-- Authoritative outcomes use integer or fixed-point maths: branded safe-integer
-  unit types, checked arithmetic, explicit bounds and rounding; reject
-  non-integers and unsafe integers at construction.
-- Use a versioned canonical serializer with defined key/collection ordering,
-  Unicode normalization, and integer representation; SHA-256 with
-  domain-separated envelopes. Never treat JavaScript insertion order as canon.
+Identical content, ruleset, inputs, seeds, and versions produce identical hashes across OSes.
 
-## Effect source of truth
+- No `Math.random`, random UUIDs, wall-clock, `process.env`, locale, filesystem order, network, pid, mutable globals, or platform path separators in authoritative code.
+- Hierarchical, domain-separated RNG only. Every draw records stream, entity, phase, version, input hash, outcome, and reason.
+- Integer/fixed-point arithmetic: branded safe-integer types, checked arithmetic, explicit bounds and rounding.
+- Versioned canonical serializer: defined key/collection ordering, Unicode normalization, integer representation; SHA-256 with domain-separated envelopes. Never rely on JS insertion order.
 
-- `effect@4.0.2` is vendored under `vendor/effect`; read the installed source and
-  declarations before relying on behaviour. Import `effect` (or `effect/<Subpath>`),
-  never the npm registry and never `repos/`; the single-copy guard is enforced.
-- Runtime-free subset: `Schema`, `SchemaIssue`, `Data`, `Equal`, `Hash`, `Option`,
-  `Predicate`, `Result`. The full runtime lives only at IO/entrypoint boundaries —
-  `persistence`, `content-compiler`, `apps/desktop/src/main`, `apps/compiler-cli`.
-  The renderer and preload import no `effect`. See
-  [runtime-free gate](docs/agents/runtime-free-gate.md).
+## Effect
+
+- `effect@4.0.2` vendored at `vendor/effect`. Import `effect` or `effect/<Subpath>`; no registry or `repos/`.
+- Runtime-free subset in domain packages: `Schema`, `SchemaIssue`, `Data`, `Equal`, `Hash`, `Option`, `Predicate`, `Result`. Full runtime at IO boundaries only (`persistence`, `compiler-cli`, `desktop/src/main`). See [runtime-free gate](docs/agents/runtime-free-gate.md).
 
 ## Errors
 
-- In-process domain errors: `Data.TaggedError`; serializable/wire errors:
-  `Schema.TaggedError`. Give every typed failure a stable `_tag`.
-- Discriminate with `_tag`, never `instanceof`. Handle each failure at its call
-  site with `Effect.catchTag`/`catchTags`/`catchReason`; do not add shared error
-  transformers or guards that probe the failure channel. No `Effect.orDie` except
-  where recovery is intentional.
-- Tests discriminate by `_tag` too. The one sanctioned class-based test form is
-  `expect(fn).toThrow(ErrorClass)`.
+- In-process: `Data.TaggedError`; wire: `Schema.TaggedError`. Every typed failure needs a stable `_tag`.
+- Discriminate by `_tag`, never `instanceof`. Handle at call site with `Effect.catchTag`/`catchTags`/`catchReason`. No `Effect.orDie` except where recovery is intentional.
+- Tests discriminate by `_tag` too. One class-based exception: `expect(fn).toThrow(ErrorClass)`.
 
 ## Schema and boundaries
 
-- Effect Schema is the single validator at every boundary (Zod was replaced).
-  `Schema.Struct` **strips** excess keys by default; reject them by decoding with
-  `{ onExcessProperty: "error" }`.
-- Never trust an external boundary: decode compiled YAML, saves, IPC/event
-  envelopes, and file contents with a strict schema before use. Never assert a
-  boundary with `JSON.parse(...) as T`. See [domain](docs/agents/domain.md).
-- Wire formats are frozen; every schema change carries a parity test built from
-  the existing fixtures. Never dual-maintain two validators. See
-  [Effect Schema patterns](agent-patterns/effect-schema.md).
+- Effect Schema validates every boundary. `Schema.Struct` strips excess keys; decode with `{ onExcessProperty: "error" }` to reject them.
+- Never trust external boundaries: decode compiled YAML, saves, IPC envelopes, file contents with strict schema. No `JSON.parse(...) as T`. See [domain](docs/agents/domain.md).
+- Wire formats frozen; every schema change needs a parity test from existing fixtures. See [Effect Schema patterns](agent-patterns/effect-schema.md).
 
 ## Content and compiler
 
-- Author content in YAML without executable tags; compile it into canonical
-  artifacts. The manifest declares roots, collections, dependencies, versions,
-  localization, and production/fixture classification.
-- Compiler stages are explicit, statically ordered, typed, immutable, and free of
-  ambient I/O, randomness, and final-artifact writes. Accumulate diagnostics and
-  block downstream stages whose prerequisites are invalid.
-- Keep validation, normalization, and repair distinct: repair is explicit,
-  narrow, logged, and limited to safely recomputable data. See
-  [canonical content and rulesets](docs/architecture/canonical-content-and-rulesets.md).
+- Author content as declarative TypeScript; compile to canonical JSON. YAML for i18n and mandated infra only (ADR-0334, superseded by ADR-0361).
+- Compiler stages: explicit, statically ordered, typed, immutable, no ambient I/O, randomness, or artifact writes. Accumulate diagnostics; block downstream on invalid prerequisites.
+- Validation, normalization, repair are distinct. Repair is explicit, narrow, logged, limited to safely recomputable data. See [canonical content](docs/architecture/canonical-content-and-rulesets.md).
 
-## Services, layers, composition
+## Services and composition
 
-- Model stable dependencies with `Context.Service`; pass per-call input as
-  arguments. Resolve dependencies once while the Layer is built and close over
-  them, so a method is `Effect<A, E, never>` unless the dependency is genuinely
-  per-call (say why).
-- Name stored layers `layer`/`layerX`; PascalCase for types/services/schemas/error
-  classes, camelCase for other values. Use `.pipe(...)` for linear composition and
-  `Effect.gen` for sequential workflows; run synchronous code directly inside
-  `Effect.gen`. Keep execution inside Effect (`Deferred`/`Queue`/`FiberSet`, not
-  `runPromise`), and log with `Effect.log*`, never `console.*`.
+- `Context.Service` for stable dependencies; per-call inputs as args. A method is `Effect<A, E, never>` unless genuinely per-call.
+- PascalCase for types/services/schemas/errors; camelCase for values. Use `.pipe()` for linear composition, `Effect.gen` for sequential workflows. Stay in Effect (`Deferred`/`Queue`/`FiberSet`, not `runPromise`); log with `Effect.log*`, never `console.*`.
 
-## Tests and gates
+## Tests
 
-- Red, Green, Refactor. A bug is unconfirmed until an observable regression test
-  fails for the expected reason before the fix and passes after.
-- Tests run on `vite-plus/test`; exercise production composition and replace only
-  true external boundaries. Never use sleeps as synchronization or tests whose
-  runtime depends on wall-clock time.
-- Definition of done on the exact commit: `pnpm preflight`, `pnpm test:scripts`,
-  and `pnpm check` all green; clean tree; Conventional Commit subjects; the
-  ticket's acceptance criteria met. Never weaken a gate or its fixtures to pass —
-  fix the cause. Golden artefacts are re-pinned deliberately: see
-  [golden repinning](docs/agents/golden-repinning.md).
+- Red, Green, Refactor. Bug unconfirmed until a regression test fails before the fix and passes after.
+- Tests on `vite-plus/test`. Exercise production composition; replace only true external boundaries. No sleep-based synchronization or wall-clock-dependent tests.
+- Done: `pnpm preflight`, `pnpm test:scripts`, `pnpm check` green; clean tree; Conventional subject; ACS met. Never weaken gates. Golden re-pins: [golden repinning](docs/agents/golden-repinning.md).
 
-## Git policy
+## Git
 
-- Never commit on `dev` or `main`. Deliver by merging the branch into `dev`
-  locally once the gates are green; a pull request is optional
-  (ADR-0234). Delete a
-  branch only after it is merged.
-- Do not force-push or rewrite history; never commit secrets, `.env` files,
-  stores, caches, or machine-specific settings. End a milestone tree-clean.
-- Use `pnpm change-scope` for change-based filtering: see
-  [change scope](docs/agents/change-scope.md).
+- No commits on `dev`/`main`. Merge branch into `dev` when gates green; PR optional (ADR-0234, see ADR-0364). Delete branch only after merge.
+- No force-push, no history rewrite. No secrets, `.env`, stores, caches, or machine-specific config.
+- Use `pnpm change-scope` for change-based filtering: [change scope](docs/agents/change-scope.md).
 
-## Shipping bar (game-team standard)
+## Shipping bar
 
-Game-lead bar: the player's experience is the product.
-
-- **Playable** on every merge: the desktop app launches and the vertical slice runs.
-- **Seen**: a UI change is verified in the running app with `pnpm snap` before it is done.
-- **Tunable**: gameplay numbers live in content or balance data, marked PROVISIONAL until sourced or playtested (ADR-0252); code holds mechanisms, not magic numbers.
-- **Explainable**: every number the player sees traces to an explanation tree.
-- **Measured**: balance claims cite the generated reports (`pnpm check:balance-reports`), not intuition.
+- **Playable**: desktop launches, vertical slice runs on every merge.
+- **Seen**: UI change verified with `pnpm snap` before done.
+- **Tunable**: numbers in content/balance data, marked PROVISIONAL until sourced (ADR-0252, superseded by ADR-0345); code holds mechanisms, not magic numbers.
+- **Explainable**: every player-facing number traces to an explanation tree.
+- **Measured**: balance claims cite generated reports (`pnpm check:balance-reports`), not intuition.
 
 ## Task guides
 
-Reach for the guide when the task matches:
+- Desktop renderer/main/preload: [desktop view](docs/agents/desktop-view.md)
+- Screenshot, Aria tree, console: [desktop snap](docs/agents/desktop-snap.md)
+- Adding a nation: [adding a nation](docs/agents/adding-a-nation.md)
+- Editing inside a package: read its `AGENTS.md` first; roster in [packages/README.md](packages/README.md)
+- Unsure where something lives: [repo map](docs/agents/repo-map.md)
 
-- Editing `apps/desktop` renderer, main, or preload: [desktop view](docs/agents/desktop-view.md).
-- Seeing the running app (screenshot, aria tree, console): [desktop snap](docs/agents/desktop-snap.md).
-- Adding a nation: [adding a nation](docs/agents/adding-a-nation.md).
-- Editing inside a package: read its `AGENTS.md` first when it has one; the roster is in [packages/README.md](packages/README.md).
-- Unsure where something lives: [repo map](docs/agents/repo-map.md).
+## Vendored repos
 
-## Vendored repositories
-
-`vendor/` and `repos/` are read-only reference material — never lint, reformat,
-or import from them. `repos/` may be absent in
-a normal checkout.
+`vendor/` and `repos/` are read-only — never lint, reformat, or import from. `repos/` may be absent in a normal checkout.
 
 ## Stop conditions
 
-Stop and write a decision request (`.ai/templates/decision-request.md`) when: two
-plausible interpretations change gameplay; the design contradicts itself; required
-high-authority content is missing; a repair would fabricate canonical information;
-a migration changes authoritative outcomes unapproved; a fix materially expands
-scope into a deferred subsystem; destructive data operations or history rewriting
-would be required; credentials/secrets/signing/publishing are implicated; a
-dependency raises a material licence or security concern; or determinism cannot be
-demonstrated or a golden hash changes without an understood authoritative cause.
+Stop and write a decision request (`.ai/templates/decision-request.md`) when: plausible interpretations change gameplay; design contradicts itself; required high-authority content is missing; repair would fabricate canonical information; migration changes unapproved authoritative outcomes; fix expands scope into deferred subsystem; destructive data or history rewrite needed; credentials/secrets/signing/publishing involved; dependency raises licence/security concern; determinism cannot be demonstrated; golden hash changes without understood cause.
 
-Do not stop for routine local design choices — record the constraining ones as
-ADRs. The orchestration pipeline (chart → research → spec → slice → implement →
-review → gate) is in `.ai/ORCHESTRATION.md`.
+Do not stop for routine design choices — record constraining ones as ADRs. Pipeline: [`.ai/ORCHESTRATION.md`](.ai/ORCHESTRATION.md).
 
 ## Agent skills
 
-### Issue tracker
-
-Issues live in this repo's GitHub Issues (`joaooliveira92/iron-tide`), driven by the `gh` CLI. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Canonical triage roles with default label strings. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Multi-context: the root `GLOSSARY-MAP.md` points to per-context `GLOSSARY.md` files; system ADRs in `docs/adr/`. See `docs/agents/domain.md`.
+- Issues: GitHub Issues (`joaooliveira92/iron-tide`), `gh` CLI. See [issue tracker](docs/agents/issue-tracker.md).
+- Labels: [triage labels](docs/agents/triage-labels.md).
+- Domain: [GLOSSARY-MAP.md](GLOSSARY-MAP.md) → per-context `GLOSSARY.md`; system ADRs in `docs/adr/`. See [domain docs](docs/agents/domain.md).

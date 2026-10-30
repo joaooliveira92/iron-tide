@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/@effect/tsgo/schema.json",
   "files": [],
   "references": [
     { "path": "packages/contracts" },
@@ -6,6 +7,7 @@
     { "path": "packages/deterministic" },
     { "path": "packages/armament" },
     { "path": "packages/ship-design" },
+    { "path": "packages/content-authoring" },
     { "path": "packages/content-schema" },
     { "path": "packages/content-compiler" },
     { "path": "packages/content-codemod" },
@@ -24,5 +26,12 @@
     { "path": "packages/cross-process-test" },
     { "path": "apps/compiler-cli" },
     { "path": "apps/desktop" }
-  ]
+  ],
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "@effect/language-service"
+      }
+    ]
+  }
 }

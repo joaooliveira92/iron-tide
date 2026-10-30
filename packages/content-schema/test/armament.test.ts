@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { join } from "node:path";
-import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
 import {
   AmmunitionCatalogueSchema,
@@ -9,6 +8,9 @@ import {
   GunMountCatalogueSchema,
 } from "../src/index.js";
 import { decodeIssue, decodeOk } from "./decode-helpers.js";
+
+const requireAuthored = (path: string): unknown =>
+  structuredClone((createRequire(import.meta.url)(path) as { default: unknown }).default);
 
 const dir = join(
   process.cwd(),
@@ -20,7 +22,7 @@ const dir = join(
   "ship-building",
   "armament",
 );
-const read = (file: string) => parse(readFileSync(join(dir, file), "utf8"));
+const read = (file: string): unknown => requireAuthored(join(dir, file));
 
 const provenance = {
   sourceStatus: "VERIFIED",
@@ -31,28 +33,28 @@ const provenance = {
 
 describe("armament content schema — the authored catalogue parses", () => {
   it("parses every gun family", () => {
-    const data = read("gun-families.yaml");
+    const data = read("gun-families.ts");
     expect(
       decodeOk(GunFamilyCatalogueSchema, data),
       decodeIssue(GunFamilyCatalogueSchema, data),
     ).toBe(true);
   });
   it("parses every national gun model", () => {
-    const data = read("gun-models.yaml");
+    const data = read("gun-models.ts");
     expect(
       decodeOk(GunModelCatalogueSchema, data),
       decodeIssue(GunModelCatalogueSchema, data),
     ).toBe(true);
   });
   it("parses every gun mount", () => {
-    const data = read("gun-mounts.yaml");
+    const data = read("gun-mounts.ts");
     expect(
       decodeOk(GunMountCatalogueSchema, data),
       decodeIssue(GunMountCatalogueSchema, data),
     ).toBe(true);
   });
   it("parses every ammunition pattern", () => {
-    const data = read("ammunition.yaml");
+    const data = read("ammunition.ts");
     expect(
       decodeOk(AmmunitionCatalogueSchema, data),
       decodeIssue(AmmunitionCatalogueSchema, data),

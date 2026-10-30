@@ -1,11 +1,9 @@
-import { readFileSync } from "node:fs";
 import type { ContentPack } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
 import { buildNationStates, checkStartRevenue } from "../src/nationCompilation.js";
-import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import { FIXTURE_PRESTIGE_RULES, readAuthoredFile } from "@bluewave/test-support";
 
 const ZERO = "ZERO_MONTHLY_REVENUE";
 const codes = (c: DiagnosticCollector): string[] => c.all.map((d) => d.code as string);
@@ -140,18 +138,18 @@ describe("ZERO_MONTHLY_REVENUE through the compiler", () => {
 
 describe("shipped 1880 pack", () => {
   const read = <T>(file: string): T =>
-    parse(
-      readFileSync(new URL(`../../../content/production/1880/${file}`, import.meta.url), "utf8"),
+    readAuthoredFile(
+      new URL(`../../../content/production/1880/${file}`, import.meta.url).pathname,
     ) as T;
 
   it("compiles without ZERO_MONTHLY_REVENUE, identically on repeated runs", () => {
     const run = (): DiagnosticCollector => {
-      const pack = { nations: read<ContentPack["nations"]>("countries.yaml") } as ContentPack;
+      const pack = { nations: read<ContentPack["nations"]>("countries.ts") } as ContentPack;
       const collector = new DiagnosticCollector();
       buildNationStates(
         pack,
         [],
-        read<EconomyRows>("economies.yaml"),
+        read<EconomyRows>("economies.ts"),
         [],
         [],
         [],

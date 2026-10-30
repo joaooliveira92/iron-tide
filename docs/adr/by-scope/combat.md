@@ -8,20 +8,28 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0219](../ADR-0219-combat-and-capacity-fixed-point-repin.md) Combat and construction-capacity float→fixed conversion and its re-pin.
-- [ADR-0228](../ADR-0228-combat-classifier-1880-ruleset-v2.md) The combat ship-type classifier aligns to the 1880 classification ruleset v2.
-- [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity.
-- [ADR-0271](../ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) `@bluewave/combat` exports only `resolve`, `advance`, `generate` and the contract types at its root; subsystems are subpath seams. (amended by ADR-0277).
-- [ADR-0277](../ADR-0277-exact-duplicate-pure-helpers-live-in-core.md) Exact-duplicate pure helpers live in combat core. Amends ADR-0271.
-- [ADR-0297](../ADR-0297-engine-reads-catalogue-technology-ids.md) The engine reads the catalogue's technology id where one matches, and leaves the rest named.
-- [ADR-0300](../ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md) Unreachable combat modules stay dormant until their roadmap owner wires them; the UI must not expose them meanwhile.
-- [ADR-0301](../ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) Proficient gunnery training raises the nation's gunnery accuracy in battle.
-- [ADR-0302](../ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md) All four training subjects reach battle through one per-side effects record.
-- [ADR-0304](../ADR-0304-explanation-trees-for-displayed-numbers.md) Displayed numbers carry an explanation tree; gunnery accuracy is the first slice.
-- [ADR-0308](../ADR-0308-e1-compiled-design-capabilities-reach-combat.md) Compiled design capabilities reach combat and are decoded strictly.
-- [ADR-0309](../ADR-0309-e1-part-families-and-capability-kinds.md) E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars.
-- [ADR-0310](../ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) E-1 catalogue technologies for carrier, mine and submarine engine ids.
-- [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire.
-- [ADR-0312](../ADR-0312-surface-to-surface-missile-combat-module.md) Surface-to-surface missile salvos are a deterministic combat module.
-- [ADR-0321](../ADR-0321-division-order-model.md) Divisions receive a versioned order model, with stance as a lossless preset.
-- [ADR-0322](../ADR-0322-realism-order-permission-matrix.md) Realism modes gate battle orders in the engine, not in the UI.
+- [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
+- [ADR-0345](../ADR-0345-ship-design-model-and-draft-schema.md) The ship design data model defines a versioned draft with optional fields, a canonical armour-region set mapped to the manual's nine universal fields, named armour schemes as deterministic transformations, and additive options from balance targets, all guarded by a session that explains new blocking or critical findings at once.
+- [ADR-0346](../ADR-0346-ship-component-catalogue-and-capability-model.md) The ship-component catalogue is organised by family and nation with per-record provenance, defines part families and capability kinds for all equipment eras, carries sourced or BALANCE_TARGET values, and consumes part capabilities through explicit ruleset sections.
+- [ADR-0357](../ADR-0357-training-exercises-division-growth-and-explanation-trees.md) Division cohesion and experience grow through pure rules; special training is a nation program with proficiency tracked in funded months; exercises are commanded for the following month through the assignment slot and cost doubled active maintenance; training effects reach battle through one per-side effects record; displayed numbers carry explanation trees built from the same calculation the engine uses.
+- [ADR-0358](../ADR-0358-combat-engine-architecture.md) `@bluewave/combat` exports exactly `resolve`, `advance`, `generate` and the root contract; all subsystems, orders, realism and combat modules are subpath seams.
+
+## Superseded (do not follow)
+
+- [ADR-0219](../ADR-0219-combat-and-capacity-fixed-point-repin.md) Combat and construction-capacity float→fixed conversion and its re-pin. Follow ADR-0351.
+- [ADR-0228](../ADR-0228-combat-classifier-1880-ruleset-v2.md) The combat ship-type classifier aligns to the 1880 classification ruleset v2. Follow ADR-0340.
+- [ADR-0232](../ADR-0232-armour-region-model-and-manual-parity.md) Armour region model and manual parity. Follow ADR-0345.
+- [ADR-0271](../ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) The combat package exposes three verbs and subsystem seams. Follow ADR-0358.
+- [ADR-0277](../ADR-0277-exact-duplicate-pure-helpers-live-in-core.md) Exact-duplicate pure helpers live in combat core. Follow ADR-0358.
+- [ADR-0297](../ADR-0297-engine-reads-catalogue-technology-ids.md) The engine reads the catalogue's technology id where one matches, and leaves the rest named. Follow ADR-0357.
+- [ADR-0300](../ADR-0300-unreachable-combat-modules-wire-by-owner-dormant-until-then.md) Unreachable combat modules are wired by their roadmap owner and stay dormant until then. Follow ADR-0365.
+- [ADR-0301](../ADR-0301-gunnery-proficiency-feeds-battle-accuracy.md) Proficient gunnery training raises the nation's gunnery accuracy in battle. Follow ADR-0357.
+- [ADR-0302](../ADR-0302-all-training-subjects-reach-battle-through-one-effects-record.md) All four training subjects reach battle through one per-side effects record. Follow ADR-0357.
+- [ADR-0304](../ADR-0304-explanation-trees-for-displayed-numbers.md) Displayed numbers carry an explanation tree; gunnery accuracy is the first slice. Follow ADR-0357.
+- [ADR-0308](../ADR-0308-e1-compiled-design-capabilities-reach-combat.md) Compiled design capabilities reach combat and are decoded strictly. Follow ADR-0358.
+- [ADR-0309](../ADR-0309-e1-part-families-and-capability-kinds.md) E-1 part families and capability kinds for radar, sonar, ASW, AA, missiles and hangars. Follow ADR-0346.
+- [ADR-0310](../ADR-0310-e1-catalogue-technologies-for-carrier-mine-and-submarine-ids.md) E-1 catalogue technologies for carrier, mine and submarine engine ids. Follow ADR-0340.
+- [ADR-0311](../ADR-0311-fire-control-radar-gunnery-factor-and-blind-fire.md) Fire-control radar sets the gunnery radar factor, and level 3 allows blind fire. Follow ADR-0346.
+- [ADR-0312](../ADR-0312-surface-to-surface-missile-combat-module.md) Surface-to-surface missile salvos are a deterministic combat module. Follow ADR-0358.
+- [ADR-0321](../ADR-0321-division-order-model.md) Divisions receive a versioned order model, with stance as a lossless preset. Follow ADR-0358.
+- [ADR-0322](../ADR-0322-realism-order-permission-matrix.md) Realism modes gate battle orders in the engine, not in the UI. Follow ADR-0358.

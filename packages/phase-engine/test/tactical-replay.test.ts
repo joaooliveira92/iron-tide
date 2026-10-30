@@ -1,50 +1,19 @@
-import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
-import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import type { CampaignSnapshot } from "@bluewave/campaign";
+import { canonicalSerialize } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
-import { MonthExecutor, ReplayVerifier, TacticalReplayVerifier } from "../src/index.js";
+import {
+  MonthExecutor,
+  ReplayVerifier,
+  TacticalReplayVerifier,
+  unifiedSnapshotHash,
+} from "../src/index.js";
 import {
   ATTACKER_NATION,
   CAMPAIGN_SEED,
   DEFENDER_NATION,
   makeBattleSnapshot,
 } from "./battle-fixtures.js";
-
-function hashSnapshot(snapshot: CampaignSnapshot): string {
-  const nations: Record<string, NationState> = {};
-  for (const [id, nation] of snapshot.nations) nations[id] = nation;
-  return sha256Hex(
-    canonicalSerialize({
-      version: snapshot.version,
-      turnNumber: snapshot.turnNumber,
-      campaignId: snapshot.campaignId,
-      startYear: snapshot.startYear,
-      startMonth: snapshot.startMonth,
-      strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
-      slots: snapshot.slots.map((s) => ({ ...s })),
-      world: {
-        areas: snapshot.world.areas.map((a) => ({ ...a })),
-        routes: snapshot.world.routes.map((r) => ({ ...r })),
-        ports: snapshot.world.ports.map((p) => ({ ...p })),
-      },
-      nations,
-      wars: {
-        wars: snapshot.wars.wars.map((w) => ({ ...w })),
-        battles: snapshot.wars.battles.map((b) => ({ ...b })),
-        participantMemberships: snapshot.wars.participantMemberships.map((m) => ({ ...m })),
-        blockadeState: snapshot.wars.blockadeState.map((b) => ({ ...b })),
-        battleManifests: (snapshot.wars.battleManifests ?? []).map((m) => ({ ...m })),
-      },
-      politics: {
-        relations: snapshot.politics.relations.map((r) => ({ ...r })),
-        shells: { ...snapshot.politics.shells },
-      },
-      intelligence: { shells: { ...snapshot.intelligence.shells } },
-      rulesetVersion: snapshot.rulesetVersion,
-      compatibilityVersion: snapshot.compatibilityVersion,
-    }),
-  );
-}
 
 describe("TacticalReplayVerifier (ticket 07)", () => {
   it("reports a match when re-resolution from manifest + seed reproduces the recorded result", () => {
@@ -211,7 +180,7 @@ describe("TacticalReplayVerifier (ticket 07)", () => {
     const s0 = makeBattleSnapshot();
     const month = new MonthExecutor().execute(s0, [], CAMPAIGN_SEED, new DiagnosticCollector());
     const fs = month.finalSnapshot;
-    const closingHash = hashSnapshot(fs);
+    const closingHash = unifiedSnapshotHash(fs);
 
     const strategic = new ReplayVerifier().verify(
       s0,

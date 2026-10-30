@@ -1,5 +1,6 @@
 export { useDrawingBoard } from "./useDrawingBoard.js";
 export { useDraftAutosave } from "./useDraftAutosave.js";
+export { DraftSaveWarning } from "./DraftSaveWarning.js";
 export { useRestoredDraftToast } from "./useRestoredDraftToast.js";
 export { handleUndoShortcut, SHORTCUT_MOD, SHORTCUT_SHIFT } from "./undoShortcut.js";
 export {

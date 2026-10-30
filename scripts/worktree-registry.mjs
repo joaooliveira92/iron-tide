@@ -72,7 +72,8 @@ export function lockPathFor(path) {
 }
 
 export function normalizePath(path) {
-  return resolve(path).replace(/\\/gu, "/");
+  const normalized = resolve(path).replace(/\\/gu, "/");
+  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
 
 function requireString(value, field, index) {

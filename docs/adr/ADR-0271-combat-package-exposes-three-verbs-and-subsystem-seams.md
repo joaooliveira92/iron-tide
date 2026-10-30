@@ -2,9 +2,9 @@
 
 Applies to: combat, phase-engine
 
-Rule: `@bluewave/combat` exports only `resolve`, `advance`, `generate` and the contract types at its root; subsystems are subpath seams.
-
 ## Status
+
+Superseded by: ADR-0358
 
 Accepted (2026-10-22).
 

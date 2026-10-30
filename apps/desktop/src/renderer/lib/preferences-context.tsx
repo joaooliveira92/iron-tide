@@ -47,12 +47,20 @@ const DEFAULT_CONTEXT_VALUE: PreferencesContextValue = {
 
 const PreferencesContext = createContext<PreferencesContextValue>(DEFAULT_CONTEXT_VALUE);
 
-export function PreferencesProvider({ children }: { readonly children: ReactNode }) {
+export function PreferencesProvider({
+  children,
+  initialSnapshot,
+}: {
+  readonly children: ReactNode;
+  readonly initialSnapshot?: PreferencesSnapshot | undefined;
+}) {
   const bridge = useBridge();
   const capability: PreferencesCapability | undefined = bridge?.preferences;
-  const [preferences, setPreferences] = useState<AppPreferences>(DEFAULT_APP_PREFERENCES);
+  const [preferences, setPreferences] = useState<AppPreferences>(
+    initialSnapshot?.app ?? DEFAULT_APP_PREFERENCES,
+  );
   const [status, setStatus] = useState<PreferencesStatus>(
-    capability === undefined ? "ready" : "loading",
+    capability === undefined || initialSnapshot !== undefined ? "ready" : "loading",
   );
   const preferencesRef = useRef(preferences);
   preferencesRef.current = preferences;
@@ -60,6 +68,12 @@ export function PreferencesProvider({ children }: { readonly children: ReactNode
 
   useEffect(() => {
     if (capability === undefined) {
+      setStatus("ready");
+      return;
+    }
+    if (initialSnapshot !== undefined) {
+      preferencesRef.current = initialSnapshot.app;
+      setPreferences(initialSnapshot.app);
       setStatus("ready");
       return;
     }
@@ -85,7 +99,7 @@ export function PreferencesProvider({ children }: { readonly children: ReactNode
     return () => {
       active = false;
     };
-  }, [capability]);
+  }, [capability, initialSnapshot]);
 
   const setApp = useCallback(
     (patch: Partial<AppPreferences>) => {

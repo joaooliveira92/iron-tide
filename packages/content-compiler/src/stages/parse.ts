@@ -1,4 +1,4 @@
-import { parseYamlSafe } from "@bluewave/content-schema";
+import { parseUiCatalogue } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
 import type { CompilerInput, CompilerStage } from "../index.js";
@@ -86,6 +86,37 @@ export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
       if (signal.aborted) return undefined;
       for (const file of files) {
         const sourcePath = canonicalContentPath(input.contentDir, file);
+        const sink = {
+          manifest: (value: unknown) => {
+            manifest = value;
+          },
+          collectionDocs,
+          sourcePaths,
+          objectDocs,
+          objectSourcePaths,
+          collector,
+        };
+
+        const document = input.documents?.[file];
+        if (document !== undefined) {
+          this.collect(group, sourcePath, document, sink);
+          continue;
+        }
+
+        if (/\.ya?ml$/u.test(file) && group !== "ui") {
+          collector.addError(
+            "YAML-NOT-ALLOWED",
+            `'${file}' is YAML, which is only permitted for the internationalization catalogue (ADR-0334)`,
+            {
+              stage: "parse",
+              sourceLocation: { path: sourcePath, line: 1 },
+              remediation:
+                "Author the document as a TypeScript content module, or as JSON if the pack is test scaffolding.",
+            },
+          );
+          continue;
+        }
+
         const content = input.fileContents?.[file];
         if (content === undefined) {
           collector.addError(
@@ -98,18 +129,39 @@ export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
           );
           continue;
         }
-        const result = parseYamlSafe(content, sourcePath, collector);
-        if (result.success && result.data !== undefined) {
-          this.collect(group, sourcePath, result.data, {
-            manifest: (value) => {
-              manifest = value;
-            },
-            collectionDocs,
-            sourcePaths,
-            objectDocs,
-            objectSourcePaths,
-            collector,
-          });
+
+        if (group === "ui") {
+          const catalogue = parseUiCatalogue(content, sourcePath);
+          if (!catalogue.ok) {
+            collector.addError("YAML-PARSE", catalogue.diagnostics, {
+              stage: "parse",
+              sourceLocation: { path: sourcePath, line: 1 },
+              remediation: "Fix the localization catalogue syntax",
+            });
+            continue;
+          }
+          this.collect(group, sourcePath, catalogue.catalogue, sink);
+          continue;
+        }
+
+        if (!file.endsWith(".json")) {
+          collector.addError(
+            "FILE-FORMAT",
+            `'${file}' is neither a loaded content module, a JSON document nor the localization catalogue`,
+            { stage: "parse", sourceLocation: { path: sourcePath, line: 1 } },
+          );
+          continue;
+        }
+
+        try {
+          const parsed: unknown = JSON.parse(content);
+          this.collect(group, sourcePath, parsed, sink);
+        } catch (error) {
+          collector.addError(
+            "JSON-PARSE",
+            `Failed to parse ${file}: ${error instanceof Error ? error.message : String(error)}`,
+            { stage: "parse", sourceLocation: { path: sourcePath, line: 1 } },
+          );
         }
       }
     }

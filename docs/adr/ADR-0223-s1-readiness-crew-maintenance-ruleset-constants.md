@@ -4,6 +4,8 @@ Applies to: content, campaign, phase-engine
 
 ## Status
 
+Superseded by: ADR-0355
+
 Accepted (2026-10-17). Resolves decision request
 [0007](../../.ai/decision-requests/0007-s-1-readiness-crew-and-maintenance-values.md)
 (Option A). Sprints: S-1.

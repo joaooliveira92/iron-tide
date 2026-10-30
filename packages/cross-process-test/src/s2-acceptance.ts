@@ -2,7 +2,7 @@ import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { hashSnapshot, MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
+import { unifiedSnapshotHash, MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 
 import { compileProductionCampaign } from "./production-pack.js";
 
@@ -57,7 +57,7 @@ function execute(snapshot: CampaignSnapshot, seed: string): MonthResult {
 function observe(result: MonthResult): MonthObservation {
   const player = result.finalSnapshot.nations.get(PLAYER)!;
   return {
-    snapshotHash: hashSnapshot(result.finalSnapshot),
+    snapshotHash: unifiedSnapshotHash(result.finalSnapshot),
     eventLedgerHash: result.eventLedger.hash(),
     randomLedgerHash: result.randomLedger.hash(),
     outcome: result.outcome ?? "completed",

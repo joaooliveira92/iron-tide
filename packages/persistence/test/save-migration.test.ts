@@ -6,6 +6,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
+import { verifySaveManifest } from "../src/manifest.js";
 import {
   detectSaveVersion,
   migrateSaveDirectory,
@@ -171,5 +172,6 @@ describe("save migration (ticket 11d)", () => {
     expect(existsSync(result.backup)).toBe(true);
     expect(readFileSync(join(result.backup, "campaign.json")).equals(originalBytes)).toBe(true);
     expect(existsSync(`${savePath}.migrating`)).toBe(false);
+    expect(verifySaveManifest(savePath)).toEqual({ status: "current" });
   });
 });

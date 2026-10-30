@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { buildContentBundleArtifact } from "@bluewave/content-compiler";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { FIXTURE_RULESETS_YAML, nationYaml } from "@bluewave/test-support";
+import { FIXTURE_RULESETS_JSON, nationDocument } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import { CampaignCompiler } from "../src/compiler-public.js";
 import {
@@ -839,17 +839,17 @@ describe("CampaignCompiler DESIGN-03 configuration gate", () => {
         version: "0.1.0",
         type: "fixture",
         files: {
-          rulesets: ["rulesets.yaml"],
-          countries: ["countries.yaml"],
-          areas: ["areas.yaml"],
+          rulesets: ["rulesets.json"],
+          countries: ["countries.json"],
+          areas: ["areas.json"],
         },
       }),
       "utf8",
     );
-    writeFileSync(resolve(dir, "rulesets.yaml"), FIXTURE_RULESETS_YAML, "utf8");
+    writeFileSync(resolve(dir, "rulesets.json"), FIXTURE_RULESETS_JSON, "utf8");
     writeFileSync(
-      resolve(dir, "countries.yaml"),
-      nationYaml({
+      resolve(dir, "countries.json"),
+      nationDocument({
         id: "uk",
         tag: "GBR",
         name: "United Kingdom",
@@ -859,13 +859,31 @@ describe("CampaignCompiler DESIGN-03 configuration gate", () => {
       "utf8",
     );
     writeFileSync(
-      resolve(dir, "areas.yaml"),
-      '- id: "lon"\n  name: "London"\n  type: "land"\n  controller: "uk"\n',
+      resolve(dir, "areas.json"),
+      `
+[
+  {
+    "id": "lon",
+    "name": "London",
+    "type": "land",
+    "controller": "uk"
+  }
+]
+`,
       "utf8",
     );
     writeFileSync(
-      resolve(dir, "economies.yaml"),
-      '- nationId: "uk"\n  treasury: 800\n  income: 150\n  expenses: 75\n',
+      resolve(dir, "economies.json"),
+      `
+[
+  {
+    "nationId": "uk",
+    "treasury": 800,
+    "income": 150,
+    "expenses": 75
+  }
+]
+`,
       "utf8",
     );
   }
@@ -876,15 +894,15 @@ describe("CampaignCompiler DESIGN-03 configuration gate", () => {
       {
         manifestPath: resolve(dir, "pack.json"),
         contentDir: dir,
-        rulesetFiles: ["rulesets.yaml"],
-        countryFiles: ["countries.yaml"],
-        areaFiles: ["areas.yaml"],
+        rulesetFiles: ["rulesets.json"],
+        countryFiles: ["countries.json"],
+        areaFiles: ["areas.json"],
         routeFiles: [],
         possessionFiles: [],
         portFiles: [],
         technologyFiles: [],
         fleetFiles: [],
-        economyFiles: ["economies.yaml"],
+        economyFiles: ["economies.json"],
         constructionFiles: [],
         diplomacyFiles: [],
         researchFiles: [],

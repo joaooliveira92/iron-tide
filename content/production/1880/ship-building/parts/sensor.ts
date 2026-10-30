@@ -1,0 +1,90 @@
+import { PartSchema, collection } from "@bluewave/content-authoring";
+
+export default collection("parts", PartSchema, [
+  {
+    capabilities: [
+      {
+        classes: ["heavy", "medium", "light"],
+        kind: "fire_control_support",
+      },
+    ],
+    engineering: {
+      physical: {
+        centreOfGravity: {
+          datum: "PART_BASE",
+          zMm: 8000,
+        },
+        envelopeHeightMm: 1500,
+      },
+      power: {
+        consumption: [
+          {
+            basis: "PER_PART_UNIT",
+            id: "power",
+            kind: "powerKw",
+            value: 0,
+          },
+        ],
+      },
+    },
+    family: "sensor",
+    id: "rangefinder_optical",
+    lifecycle: {
+      availableFrom: "1893-01",
+      availableUntil: null,
+      requires: ["fc_basic_rangefinding"],
+    },
+    metadata: {
+      tags: ["fire_control"],
+    },
+    name: "Optical rangefinder",
+    origin: {
+      sourceFile: "ship-building/components/equipment.yaml",
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "game_conversion",
+      note: "Read from legacy component 'rangefinder_optical', which has no structured provenance.",
+      sourceStatus: "PLACEHOLDER",
+      sources: [],
+    },
+    provides: "sensor",
+    quantities: [
+      {
+        basis: "PER_PART_UNIT",
+        id: "mass",
+        kind: "massKg",
+        value: 300,
+      },
+      {
+        basis: "PER_PART_UNIT",
+        id: "cost",
+        kind: "costMicro",
+        value: 100000000,
+      },
+      {
+        basis: "PER_PART_UNIT",
+        id: "crew",
+        kind: "crew",
+        value: 2,
+      },
+      {
+        basis: "PER_PART_UNIT",
+        id: "volume",
+        kind: "volumeLitre",
+        value: 300,
+      },
+      {
+        basis: "PER_PART_UNIT",
+        id: "deck_footprint",
+        kind: "deckFootprintMm2",
+        value: 600000,
+      },
+    ],
+    revisions: [],
+    spec: {
+      accuracyBonusBp: 800,
+      gunCapacity: 8,
+    },
+  },
+]);

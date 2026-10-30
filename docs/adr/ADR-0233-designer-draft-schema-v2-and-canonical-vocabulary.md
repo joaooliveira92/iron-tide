@@ -4,6 +4,8 @@ Applies to: content-schema, ship-design, desktop
 
 ## Status
 
+Superseded by: ADR-0345
+
 Accepted (2026-10-18). Records the model fields and vocabulary added by the
 wayfinder map [#152](https://github.com/joaooliveira92/iron-tide/issues/152)
 (tickets [#155](https://github.com/joaooliveira92/iron-tide/issues/155),

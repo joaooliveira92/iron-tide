@@ -9,12 +9,25 @@ of the compiled artifact's content identity.
 
 | File | Contents |
 |---|---|
-| `components.yaml` | Pre-1880 ordnance (RMLs, early BL, French 27-cm, German 26-cm) plus the 1885-95 band: 13 weapons (12-inch to .303 Maxim, 2 torpedo tubes), magazines, rangefinder and ship fittings |
+| `components/` | Legacy component catalogue, split by family and nation/era: `guns/` (British RML, British breech-loading, British quick-firing, French, German Krupp, United States), `torpedo-tubes/` (British, United States) and `equipment.yaml` (magazines, rangefinder, dynamo, accommodation, funnel, ventilation, damage control) |
 | `plants.yaml` | 4 propulsion plants (compound, triple-expansion, water-tube, locomotive-boiler torpedo-boat plant) |
 | `hull-forms.yaml` | 5 hull forms: torpedo boat, protected cruiser, coast-defence ship, pre-dreadnought battleship, merchant liner (`traits: [merchant_derived]`) |
 | `balance.yaml` | balance constants for hull, machinery, armour, cost, construction, CVE, refit, AI |
 
 Source of record: `docs/research/ship-building-early-band.md` (confidence labels kept in comments).
+
+## Component catalogue layout (ADR-0333)
+
+`components/` replaces the former single `components.yaml`. Each file is one family, and within a
+family that spans several nations or technologies, one file per nation/era: `guns/` (british-rml,
+british-breech-loading, british-quick-firing, french, german-krupp, united-states) and
+`torpedo-tubes/` (british, united-states); nation-neutral equipment lives in `equipment.yaml`.
+Adding a nation or a later era is a new file plus one `pack.json` line — no existing file grows.
+
+Every file is declared in `pack.json`'s `shipBuilding.shipComponents`; discovery is fail-closed in
+both directions (ADR-0333). The compiler stamps each component's `sourceFile` from that declaration,
+and derived parts (guns, fittings, launchers) carry it as their `origin`, so provenance follows the
+file and survives future re-splits without code changes.
 
 ## Pre-1880 armament and the January-1880 reference set (2026-10-10)
 

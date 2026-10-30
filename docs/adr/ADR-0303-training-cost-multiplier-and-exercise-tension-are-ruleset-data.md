@@ -4,6 +4,8 @@ Applies to: campaign, content-compiler, content-schema, phase-engine, content
 
 ## Status
 
+Superseded by: ADR-0357
+
 Accepted (2026-10-25). Resolves the two items [ADR-0314](ADR-0314-fleet-management-values-and-repair-entry.md) left unmodelled: Japan's training
 discount and the tension consequence of a large exercise. Respects [ADR-0230](ADR-0230-campaign-economy-model.md):
 no code branch names a nation. The owner delegated the choice.

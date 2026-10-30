@@ -3,3 +3,4 @@ apps/desktop/src/assets/fonts/Space_Grotesk/OFL.txt -text
 docs/research/Steam[[:space:]]Community[[:space:]]__[[:space:]]Guide[[:space:]]__[[:space:]]Ship[[:space:]]Design[[:space:]]Guide[[:space:]](1890[[:space:]]to[[:space:]]1970).mhtml -text
 docs/research/economy/r1/consumers.csv -text
 docs/research/economy/r1/nations-economy-matrix.csv -text
+apps/desktop/map-assets/** -text

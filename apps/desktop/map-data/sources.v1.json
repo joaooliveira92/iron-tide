@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "dataset": "Natural Earth",
+  "licence": {
+    "status": "public-domain",
+    "evidence": "licences/natural-earth-terms.txt",
+    "attributionRequired": false
+  },
+  "sources": [
+    {
+      "id": "ne_10m_land",
+      "layer": "ne_10m_land",
+      "version": "5.1.1",
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_land.zip",
+      "sha256": "e547d749445eaa0964aba76738090ec88f5e63c4585122170f98c67a7ea922dc",
+      "bytes": 3269070,
+      "use": "land polygons"
+    },
+    {
+      "id": "ne_10m_minor_islands",
+      "layer": "ne_10m_minor_islands",
+      "version": "4.1.0",
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_minor_islands.zip",
+      "sha256": "47c0b3ce26df7b4dbabdbb251023918cb2f5c83462a426288f1f253da7284db2",
+      "bytes": 314932,
+      "use": "island polygons"
+    },
+    {
+      "id": "ne_10m_rivers_lake_centerlines",
+      "layer": "ne_10m_rivers_lake_centerlines",
+      "version": "5.0.0",
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_rivers_lake_centerlines.zip",
+      "sha256": "ded71b01870855ccfe19b51f2ec14c9bb48fae23c0e9f3c11974d426433b5c38",
+      "bytes": 2079507,
+      "use": "Suez and Panama canal centrelines"
+    }
+  ]
+}

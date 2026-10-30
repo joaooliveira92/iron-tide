@@ -1,6 +1,19 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { CampaignCommandClient } from "../shared/campaign-contract.js";
-import type { BridgeResult, WindowState } from "../shared/bridge-contract.js";
+import type {
+  CampaignCommandClient,
+  CampaignCommandMap,
+  CampaignCommandName,
+} from "../shared/campaign-contract.js";
+import type { AppStartupSnapshot, BridgeResult, WindowState } from "../shared/bridge-contract.js";
+import {
+  ipcEvents,
+  ipcMessages,
+  ipcRequests,
+  type IpcArguments,
+  type IpcMessage,
+  type IpcRequest,
+  type RendererCrashReport,
+} from "../shared/ipc-contract.js";
 import type {
   CampaignPreferencesSnapshot,
   PreferencesSnapshot,
@@ -20,17 +33,14 @@ export interface BluewaveDesktopBridge {
     ): Promise<BridgeResult<CampaignPreferencesSnapshot>>;
   };
   readonly platform: NodeJS.Platform;
+  readStartupSnapshot?(): Promise<BridgeResult<AppStartupSnapshot>>;
   getWindowState(): Promise<WindowState>;
   windowMinimize(): void;
   windowMaximizeToggle(): void;
   windowClose(): void;
   onQuitFlush?(handler: () => void): void;
   notifyQuitFlushComplete?(): void;
-  reportCrash?(report: {
-    readonly kind: "window-error" | "unhandledrejection";
-    readonly message: string;
-    readonly stack?: string;
-  }): void;
+  reportCrash?(report: RendererCrashReport): void;
 }
 
 declare global {
@@ -39,32 +49,56 @@ declare global {
   }
 }
 
+function invoke<Arguments extends IpcArguments, Result>(
+  request: IpcRequest<Arguments, Result>,
+  ...args: Arguments
+): Promise<Result> {
+  return ipcRenderer.invoke(request.channel, ...args);
+}
+
+function send<Arguments extends IpcArguments>(
+  message: IpcMessage<Arguments>,
+  ...args: Arguments
+): void {
+  ipcRenderer.send(message.channel, ...args);
+}
+
+function executeCampaign<Name extends CampaignCommandName>(
+  command: Name,
+  payload: CampaignCommandMap[Name]["payload"],
+): Promise<BridgeResult<CampaignCommandMap[Name]["result"]>> {
+  return invoke(ipcRequests.campaignExecute, command, payload) as Promise<
+    BridgeResult<CampaignCommandMap[Name]["result"]>
+  >;
+}
+
+const startupSnapshot = invoke(ipcRequests.appReadStartup);
+void startupSnapshot.catch(() => undefined);
+
 contextBridge.exposeInMainWorld("bluewave", {
   campaign: {
-    execute: (command: string, payload: unknown) => {
-      return ipcRenderer.invoke("campaign:execute", command, payload);
-    },
+    execute: executeCampaign,
   },
   preferences: {
-    read: () => ipcRenderer.invoke("preferences:read"),
-    write: (request: WriteAppPreferencesRequest) =>
-      ipcRenderer.invoke("preferences:write", request),
-    readCampaign: (sessionId: string) => ipcRenderer.invoke("preferences:read-campaign", sessionId),
+    read: () => invoke(ipcRequests.preferencesRead),
+    write: (request: WriteAppPreferencesRequest) => invoke(ipcRequests.preferencesWrite, request),
+    readCampaign: (sessionId: string) => invoke(ipcRequests.preferencesReadCampaign, sessionId),
     writeCampaign: (sessionId: string, request: WriteCampaignPreferencesRequest) =>
-      ipcRenderer.invoke("preferences:write-campaign", sessionId, request),
+      invoke(ipcRequests.preferencesWriteCampaign, sessionId, request),
   },
   platform: process.platform,
-  getWindowState: () => ipcRenderer.invoke("window:get-state"),
-  windowMinimize: () => ipcRenderer.send("window:minimize"),
-  windowMaximizeToggle: () => ipcRenderer.send("window:maximize-toggle"),
-  windowClose: () => ipcRenderer.send("window:close"),
+  readStartupSnapshot: () => startupSnapshot,
+  getWindowState: () => invoke(ipcRequests.windowGetState),
+  windowMinimize: () => send(ipcMessages.windowMinimize),
+  windowMaximizeToggle: () => send(ipcMessages.windowMaximizeToggle),
+  windowClose: () => send(ipcMessages.windowClose),
   onQuitFlush: (handler: () => void) => {
-    ipcRenderer.on("app:quit-flush", () => handler());
+    ipcRenderer.on(ipcEvents.quitFlush.channel, () => handler());
   },
   notifyQuitFlushComplete: () => {
-    ipcRenderer.send("app:quit-flush-complete");
+    send(ipcMessages.quitFlushComplete);
   },
   reportCrash: (report) => {
-    ipcRenderer.send("support:report-crash", report);
+    send(ipcMessages.reportCrash, report);
   },
 } satisfies BluewaveDesktopBridge);

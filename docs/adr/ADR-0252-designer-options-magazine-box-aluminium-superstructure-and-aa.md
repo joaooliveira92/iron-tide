@@ -4,6 +4,8 @@ Applies to: content, desktop, ship-design
 
 ## Status
 
+Superseded by: ADR-0345
+
 Accepted (2026-10-20). Follows the owner's walkthrough of the RTW3 ship-design screen
 against ours. Extends ADR-0233 (designer draft-schema v2) and follows the optional-field
 precedent of ADR-0242 (colonial service) and the tertiary battery (ADR-0233 §1).

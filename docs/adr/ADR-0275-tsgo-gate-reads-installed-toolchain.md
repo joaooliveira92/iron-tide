@@ -2,9 +2,9 @@
 
 Applies to: repository
 
-Rule: The tsgo gate checks that root pins equal the installed toolchain versions and that patched binaries keep their `.original` backup.
-
 ## Status
+
+Superseded by: ADR-0365
 
 Accepted (2026-10-23).
 

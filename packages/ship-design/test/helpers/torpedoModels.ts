@@ -242,7 +242,7 @@ const toTorpedoSource = (model: (typeof TORPEDO_MODELS)[number]): TorpedoModelSo
     compatibleLauncherFamilyIds: [...model.compatibleLauncherFamilyIds],
     availableFrom,
     provenance: TORPEDO_PROVENANCE,
-    sourceFile: "ship-building/parts/torpedo.yaml",
+    sourceFile: "ship-building/parts/torpedo.json",
     ...(id === "whitehead_14in_1886"
       ? {
           warheadFirstPattern: {

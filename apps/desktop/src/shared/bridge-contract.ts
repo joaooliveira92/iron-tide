@@ -1,3 +1,5 @@
+import type { PreferencesRecoveryInfo, PreferencesSnapshot } from "./preferences-contract.js";
+
 export interface CommandEnvelope {
   readonly sessionId: string;
   readonly expectedRevision: number;
@@ -9,6 +11,12 @@ export interface WindowState {
   readonly isMaximized: boolean;
   readonly maximizable: boolean;
   readonly minimizable: boolean;
+}
+
+export interface AppStartupSnapshot {
+  readonly preferences: PreferencesSnapshot;
+  readonly windowState: WindowState;
+  readonly preferencesRecovery?: PreferencesRecoveryInfo;
 }
 
 export type BridgeResult<T> =

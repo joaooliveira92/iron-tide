@@ -2,9 +2,9 @@
 
 Applies to: campaign, persistence, phase-engine
 
-Rule: A turn's identity hashes its pre-execution input set, never the inputs accumulated while suspended.
-
 ## Status
+
+Superseded by: ADR-0342
 
 Accepted (2026-10-16). Implements the resume model of the turn-messages effort (`.scratch/turn-messages/spec.md`, D-12) and fixes a latent defect that made every resume fail.
 

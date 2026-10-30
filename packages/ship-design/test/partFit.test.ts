@@ -39,7 +39,7 @@ const base = (id: string, name = id) => ({
   name,
   quantities: [],
   revisions: [],
-  origin: { sourceFile: "fixture.yaml" },
+  origin: { sourceFile: "fixture.json" },
   provenance: PROVENANCE,
 });
 

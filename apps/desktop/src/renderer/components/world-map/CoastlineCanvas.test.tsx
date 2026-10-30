@@ -31,7 +31,6 @@ describe("CoastlineCanvas lifecycle", () => {
       projection: projectionById("miller"),
       centre: 0,
       fill: "#222",
-      stroke: "#444",
     };
     const { rerender } = render(<CoastlineCanvas camera={fakeCamera(subscribe)} {...props} />);
     expect(subscribe).toHaveBeenCalledTimes(1);
@@ -49,7 +48,6 @@ describe("CoastlineCanvas lifecycle", () => {
       polygons: [],
       projection: projectionById("miller"),
       fill: "#222",
-      stroke: "#444",
     };
     const { rerender } = render(
       <CoastlineCanvas camera={fakeCamera(subscribe)} centre={0} {...base} />,

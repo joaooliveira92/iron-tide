@@ -384,13 +384,13 @@ describe("migration-only aliases are rejected by the canonical decoder", () => {
     const { errors } = diagnose(
       PartSchema,
       { ...PARTS.torpedo, legacyExceptions: [exception] },
-      "ship-building/parts/torpedoes.yaml",
+      "ship-building/parts/torpedoes.json",
     );
     expect(errors.map((e) => e.message)).toContainEqual(
       expect.stringContaining("Part.legacyExceptions"),
     );
     expect(
-      errors.every((e) => e.sourceLocation?.path === "ship-building/parts/torpedoes.yaml"),
+      errors.every((e) => e.sourceLocation?.path === "ship-building/parts/torpedoes.json"),
     ).toBe(true);
   });
 
@@ -499,7 +499,7 @@ describe("slot shape rules", () => {
 });
 
 describe("strict failure diagnostics identify the source file and field path", () => {
-  const FILE = "ship-building/parts/guns.yaml";
+  const FILE = "ship-building/parts/guns.json";
 
   it.each([
     ["an unknown interface", { ...PARTS.gun, provides: "gun_12in" }, "Part.provides"],
@@ -564,7 +564,7 @@ describe("strict failure diagnostics identify the source file and field path", (
 });
 
 describe("a variant writes its spec as a delta over its prototype", () => {
-  const FILE = "ship-building/parts/torpedoes.yaml";
+  const FILE = "ship-building/parts/torpedoes.json";
 
   it("a standalone part missing a required spec field fails at that field", () => {
     const { result, errors } = diagnose(
@@ -651,7 +651,7 @@ describe("resolvePartRevision applies dated deltas cumulatively", () => {
         provenance,
       },
     ],
-    origin: { sourceFile: "ship-building/parts/torpedoes.yaml" },
+    origin: { sourceFile: "ship-building/parts/torpedoes.json" },
   };
 
   it("decodes as a flattened part", () => {

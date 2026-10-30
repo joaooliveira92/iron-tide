@@ -12,7 +12,6 @@ import { useMonthlyReports } from "../useMonthlyReports.js";
 import { useTurnMessageState } from "../useTurnMessageState.js";
 import { useTurnSummaries } from "../useTurnSummaries.js";
 import { useNationRail, type NationRailLoad } from "../useNationRail.js";
-import { usePriorities, type PrioritiesState } from "../usePriorities.js";
 
 export const COMMAND_OVERLAY_MIN_WIDTH = 1024;
 
@@ -21,8 +20,6 @@ export interface OverviewModel {
   readonly projection: PlayerProjection | null;
   readonly areaName: (id: string) => string;
   readonly roomy: boolean;
-  readonly priorityCount: number | null;
-  readonly priorities: PrioritiesState;
   readonly nationRail: NationRailLoad;
   readonly monthReports: readonly MonthlyReportEntry[];
   readonly turnSummaries: readonly TurnSummaryEntry[];
@@ -35,7 +32,6 @@ export interface OverviewModel {
 }
 
 export function useOverviewModel(sessionId: string): OverviewModel {
-  const priorities = usePriorities(sessionId);
   const nationRail = useNationRail(sessionId);
   const monthReports = useMonthlyReports(sessionId);
   const turnSummaries = useTurnSummaries(sessionId);
@@ -55,8 +51,6 @@ export function useOverviewModel(sessionId: string): OverviewModel {
     projection,
     areaName,
     roomy: density !== "compact",
-    priorityCount: priorities.status === "ready" ? priorities.priorities.length : null,
-    priorities,
     nationRail,
     monthReports: monthReports.reports,
     turnSummaries: turnSummaries.summaries,

@@ -6,6 +6,7 @@ import type {
 import { compareCodePoints } from "@bluewave/deterministic";
 import { num, type PlacementSpec } from "./compileShared.js";
 import type { ComponentCategory, ComponentDef } from "./component.js";
+import { LEGACY_COMPONENT_SOURCE } from "./component.js";
 import { compatibilitySlotId, type CompatibilityInterface } from "./partCompatibility.js";
 import { lifecycleIssue } from "./partLifecycle.js";
 import { quantityLines, totalOf, type QuantityLine } from "./partQuantities.js";
@@ -19,8 +20,6 @@ export type FlattenedFittingPart = Extract<FlattenedPart, { readonly family: "fi
 export type FlattenedSensorPart = Extract<FlattenedPart, { readonly family: "sensor" }>;
 export type FittingOrSensorPart = FlattenedFittingPart | FlattenedSensorPart;
 type FittingInterface = FlattenedFittingPart["provides"];
-
-export const FITTING_COMPONENT_FILE = "ship-building/components.yaml";
 
 const INTERFACE_BY_CATEGORY: Partial<
   Readonly<Record<ComponentCategory, FittingInterface | "sensor">>
@@ -180,7 +179,7 @@ export function buildFittingPartModel(input: {
       lifecycle: lifecycleOf(def),
       quantities: [...quantities],
       revisions: [],
-      origin: { sourceFile: FITTING_COMPONENT_FILE },
+      origin: { sourceFile: def.sourceFile ?? LEGACY_COMPONENT_SOURCE },
       provenance: placeholderProvenance(def),
       ...(countParameter !== null
         ? {

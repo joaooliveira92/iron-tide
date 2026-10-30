@@ -4,6 +4,8 @@ Applies to: content, campaign, cross-process-test
 
 ## Status
 
+Superseded by: ADR-0348
+
 Accepted (2026-10-23).
 Supersedes: ADR-0204.
 

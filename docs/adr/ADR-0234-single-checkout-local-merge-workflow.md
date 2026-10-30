@@ -2,13 +2,13 @@
 
 Applies to: repository
 
-Rule: Work on short-lived local branches cut from `dev` and merge into `dev` locally once preflight, test:scripts and check are green.
-
 ## Status
+
+Superseded by: ADR-0364
 
 Accepted (2026-10-19).
 
-Supersedes: ADR-0220. It also replaces the worktree and pull-request delivery
+It also replaces the worktree and pull-request delivery
 parts of ADR-0165.
 
 ## Context
@@ -41,5 +41,4 @@ keep features locally and merge them into `dev` locally.
   or committed on its branch before switching.
 - History is not rewritten and nothing is force-pushed.
 
-Amended by: ADR-0236 (up to three concurrent worktrees).
-Amended by: ADR-0237 (cap raised to five).
+

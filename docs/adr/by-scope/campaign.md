@@ -8,46 +8,61 @@ Repository-wide ADRs apply here too: [repository.md](repository.md).
 
 ## Current
 
-- [ADR-0201](../ADR-0201-sole-1880-start.md) Sole 1880 start.
-- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set.
-- [ADR-0215](../ADR-0215-canonical-units-module.md) Canonical units module and its home in the contracts package.
-- [ADR-0216](../ADR-0216-money-type-and-treasury-bridge.md) Fixed-precision money type, treasury-unit scale, and the micro→unit bridge.
-- [ADR-0222](../ADR-0222-turn-identity-stable-across-resume.md) A turn's identity hashes its pre-execution input set, never the inputs accumulated while suspended.
-- [ADR-0223](../ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md) S-1 readiness, crew and maintenance values are centralized ruleset constants.
-- [ADR-0224](../ADR-0224-1880-command-structure-divisions-and-officers.md) 1880 command structure — per-nation officer rosters and seeded divisions.
-- [ADR-0225](../ADR-0225-prestige-required-field-and-research-first.md) Prestige is a required authored field; values are research-first and S-2 is gated on 0003.
-- [ADR-0226](../ADR-0226-rtw3-prestige-research-outcome.md) RTW3 prestige research outcome — the model is grounded, the production values are not.
-- [ADR-0230](../ADR-0230-campaign-economy-model.md) Campaign economy model — one appropriation, one ledger, one set of calculators.
-- [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state.
-- [ADR-0239](../ADR-0239-s2-prestige-values-balance-targets.md) S-2 prestige values: the grounded model plus labelled balance targets.
-- [ADR-0240](../ADR-0240-s3-unrest-values-and-government-classification.md) S-3 unrest and economy values are researched then tunable; government type derives from political system.
-- [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness.
-- [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section.
-- [ADR-0245](../ADR-0245-player-nation-id-in-campaign-state.md) The player nation is stored in authoritative campaign state.
-- [ADR-0247](../ADR-0247-presence-measurement-and-shortfall.md) Presence is measured at month end from the dormant S-5 section and reported as typed shortfall events (amended by ADR-0272).
-- [ADR-0248](../ADR-0248-blockade-exemption-and-typed-penalty-requests.md) A blockaded nation at war is exempt from presence, and shortfalls emit typed penalty requests.
-- [ADR-0249](../ADR-0249-foreign-station-deployment-routes-ships-to-the-largest-shortfall.md) Foreign-station ships are routed one hop a month toward the largest shortfall.
-- [ADR-0250](../ADR-0250-base-limits-flag-and-consequences-at-month-end.md) Base limits are checked last each month; over-base ships are flagged and take the S-1 consequences (amended by ADR-0272).
-- [ADR-0261](../ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code.
-- [ADR-0262](../ADR-0262-repeated-declines-cost-the-player-prestige.md) Repeated declines cost the player prestige through the S-2 seam.
-- [ADR-0266](../ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md) S-5 presence values and the other open decision requests, resolved by delegation.
-- [ADR-0281](../ADR-0281-sacking-phase-and-terminal-career.md) The sacking phase and the terminal career.
-- [ADR-0282](../ADR-0282-authored-horizon-through-1970.md) Authored horizon through 1970; no empty scenario IDs.
-- [ADR-0285](../ADR-0285-campaign-snapshot-hash-covers-map-fields.md) The campaign snapshot hash covers Map fields.
-- [ADR-0286](../ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md) Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section.
-- [ADR-0287](../ADR-0287-battle-absence-record.md) A battle record explains the player's absent ships with gate reasons.
-- [ADR-0288](../ADR-0288-monthly-division-cohesion-growth.md) Division cohesion grows monthly through a pure rule applied after readiness evolution.
-- [ADR-0289](../ADR-0289-division-doctrine-command-and-speed-advisory.md) Role and formation changes are one division command priced from the ruleset; speed mismatch is a derived advisory.
-- [ADR-0292](../ADR-0292-battle-experience-write-back.md) Battle aftermath asks the division module for experience through a typed request.
-- [ADR-0296](../ADR-0296-derived-ship-conditions.md) Ship conditions are derived predicates the fleet view carries and the renderer only labels.
-- [ADR-0303](../ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) Training cost differences and exercise tension are generic ruleset data.
-- [ADR-0307](../ADR-0307-strategic-and-report-explanation-provenance.md) Provenance for strategic-area and monthly-report explanations.
-- [ADR-0314](../ADR-0314-fleet-management-values-and-repair-entry.md) Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope.
-- [ADR-0315](../ADR-0315-research-workspace-projection.md) The research screen reads a technology-chart projection, and the draw weight has one home.
-- [ADR-0316](../ADR-0316-special-training-program.md) Special training is a nation program whose maintenance adder feeds the shared calculator.
-- [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot.
+- [ADR-0337](../ADR-0337-campaign-economy-model-and-budget-pressure.md) Campaign economy is a single integer appropriation-to-ledger model; budget-pressure values are researched then tunable; government type derives from political system via a mandatory ruleset table.
+- [ADR-0339](../ADR-0339-scenario-opening-conditions-and-technology-unlock.md) The 1880 scenario opening posture, initial-fleet legality and technology year are authored canon, with technology year acting as a global calendar-only designer unlock gate.
+- [ADR-0340](../ADR-0340-combat-classification-and-research-technology-alignment.md) The combat ship-type classifier, catalogue technology ids and research screen projection each align engine or UI behaviour to authored scenario content without changing save or wire formats.
+- [ADR-0342](../ADR-0342-turn-identity-and-campaign-resume-workflow.md) Turn identity is fixed from pre-execution inputs before any interruption is answered; campaign reopen is gated by a main-process-owned allow-list with canonical-path approval.
+- [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected.
+- [ADR-0348](../ADR-0348-authored-scope-and-horizon.md) The sole start year is 1880; the authored horizon is 1970; any declared scenario ID with no content pack must not be selectable.
+- [ADR-0349](../ADR-0349-ten-playable-nations-roster.md) The 1880 release has fourteen committed nations and ten playable nations, with the remaining four AI-only until each passes the per-nation readiness gate.
+- [ADR-0353](../ADR-0353-strategic-report-explanation-provenance.md) Every displayed number derives its explanation from stored components or the rule that produced it; report trees are additive persisted fields outside the authoritative hash.
+- [ADR-0354](../ADR-0354-prestige-and-career-system.md) Prestige is a required nation field; every value is either grounded by RTW3 sources or an explicitly labelled balance target; the application seam is pure and dormant by default; a monthly sacking phase ends the career through a typed terminal record.
+- [ADR-0355](../ADR-0355-readiness-command-structure-and-division-state.md) Every numeric gameplay value for readiness, crew and maintenance is a centralized ruleset constant with provenance; per-nation officer rosters and seeded divisions are authored balance choices; command-lifecycle scaffolding is removed from shipping code; ship conditions are derived predicates computed from existing fields.
+- [ADR-0356](../ADR-0356-fleet-management-gates-values-and-ship-use.md) Ship use is decided by one pure gate evaluator; fleet-management values live in a dormant ruleset section until authored; repair entry from battle damage is deferred.
+- [ADR-0357](../ADR-0357-training-exercises-division-growth-and-explanation-trees.md) Division cohesion and experience grow through pure rules; special training is a nation program with proficiency tracked in funded months; exercises are commanded for the following month through the assignment slot and cost doubled active maintenance; training effects reach battle through one per-side effects record; displayed numbers carry explanation trees built from the same calculation the engine uses.
+- [ADR-0362](../ADR-0362-foreign-station-presence.md) S-5 presence is measured at month end from authored ruleset values; nations own possessions in presence areas, deploy ships on foreign station duty, and incur penalties for shortfalls, with exemption for blockade, while base limits constrain over-deployment.
+- [ADR-0363](../ADR-0363-battle-offers.md) Battle offers are raised for eligible missions when the ruleset section is authored; the player may decline at a victory-point cost, repeated declines trigger prestige loss through the S-2 seam, the enemy may decline when outmatched, and a support force may join under defined conditions.
 
 ## Superseded (do not follow)
 
-- [ADR-0204](../ADR-0204-horizon-1939-and-scenario-ids.md) Authored horizon through 1939; no empty scenario IDs. Follow ADR-0282.
-- [ADR-0205](../ADR-0205-nine-playable-nations.md) Nine playable nations; the rest AI-only behind a readiness gate. Follow ADR-0214.
+- [ADR-0201](../ADR-0201-sole-1880-start.md) Sole 1880 start. Follow ADR-0348.
+- [ADR-0204](../ADR-0204-horizon-1939-and-scenario-ids.md) Authored horizon through 1939; no empty scenario IDs. Follow ADR-0348, ADR-0282.
+- [ADR-0205](../ADR-0205-nine-playable-nations.md) Nine playable nations; the rest AI-only behind a readiness gate. Follow ADR-0349, ADR-0214.
+- [ADR-0212](../ADR-0212-initial-fleet-tech-legality.md) Initial-fleet tech legality uses the global 1880 tech set. Follow ADR-0339.
+- [ADR-0215](../ADR-0215-canonical-units-module.md) Canonical units module and its home in the contracts package. Follow ADR-0351.
+- [ADR-0216](../ADR-0216-money-type-and-treasury-bridge.md) Fixed-precision money type, treasury-unit scale, and the micro→unit bridge. Follow ADR-0351.
+- [ADR-0222](../ADR-0222-turn-identity-stable-across-resume.md) A turn's interruption identity is stable across suspend and resume. Follow ADR-0342.
+- [ADR-0223](../ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md) S-1 readiness, crew and maintenance values are centralized ruleset constants. Follow ADR-0355.
+- [ADR-0224](../ADR-0224-1880-command-structure-divisions-and-officers.md) 1880 command structure — per-nation officer rosters and seeded divisions. Follow ADR-0355.
+- [ADR-0225](../ADR-0225-prestige-required-field-and-research-first.md) Prestige is a required authored field; values are research-first and S-2 is gated on 0003. Follow ADR-0354.
+- [ADR-0226](../ADR-0226-rtw3-prestige-research-outcome.md) RTW3 prestige research outcome — the model is grounded, the production values are not. Follow ADR-0354.
+- [ADR-0230](../ADR-0230-campaign-economy-model.md) Campaign economy model — one appropriation, one ledger, one set of calculators. Follow ADR-0337.
+- [ADR-0231](../ADR-0231-nation-home-area-and-possession-ownership.md) Authoritative nation home area and possession ownership in campaign state. Follow ADR-0362.
+- [ADR-0239](../ADR-0239-s2-prestige-values-balance-targets.md) S-2 prestige values: the grounded model plus labelled balance targets. Follow ADR-0354.
+- [ADR-0240](../ADR-0240-s3-unrest-values-and-government-classification.md) S-3 unrest and economy values are researched then tunable; government type derives from political system. Follow ADR-0337.
+- [ADR-0241](../ADR-0241-foreign-station-assignment-state.md) Foreign-station assignment is optional ship state, orthogonal to readiness. Follow ADR-0362.
+- [ADR-0242](../ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section. Follow ADR-0362.
+- [ADR-0245](../ADR-0245-player-nation-id-in-campaign-state.md) The player nation is stored in authoritative campaign state. Follow ADR-0354.
+- [ADR-0247](../ADR-0247-presence-measurement-and-shortfall.md) Presence is measured at month end from the dormant S-5 section and reported as typed shortfall events. Follow ADR-0362.
+- [ADR-0248](../ADR-0248-blockade-exemption-and-typed-penalty-requests.md) A blockaded nation at war is exempt from presence, and shortfalls emit typed penalty requests. Follow ADR-0362.
+- [ADR-0249](../ADR-0249-foreign-station-deployment-routes-ships-to-the-largest-shortfall.md) Foreign-station ships are routed one hop a month toward the largest shortfall. Follow ADR-0362.
+- [ADR-0250](../ADR-0250-base-limits-flag-and-consequences-at-month-end.md) Base limits are checked last each month; over-base ships are flagged and take the S-1 consequences. Follow ADR-0362.
+- [ADR-0261](../ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code. Follow ADR-0354.
+- [ADR-0262](../ADR-0262-repeated-declines-cost-the-player-prestige.md) Repeated declines cost the player prestige through the S-2 seam. Follow ADR-0363.
+- [ADR-0266](../ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md) S-5 presence values and the other open decision requests, resolved by delegation. Follow ADR-0362.
+- [ADR-0281](../ADR-0281-sacking-phase-and-terminal-career.md) The sacking phase and the terminal career. Follow ADR-0354.
+- [ADR-0282](../ADR-0282-authored-horizon-through-1970.md) Authored horizon through 1970; no empty scenario IDs. Follow ADR-0348.
+- [ADR-0285](../ADR-0285-campaign-snapshot-hash-covers-map-fields.md) The campaign snapshot hash covers Map fields. Follow ADR-0343.
+- [ADR-0286](../ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md) Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section. Follow ADR-0356.
+- [ADR-0287](../ADR-0287-battle-absence-record.md) A battle record explains the player's absent ships with gate reasons. Follow ADR-0356.
+- [ADR-0288](../ADR-0288-monthly-division-cohesion-growth.md) Division cohesion grows monthly through a pure rule applied after readiness evolution. Follow ADR-0357.
+- [ADR-0289](../ADR-0289-division-doctrine-command-and-speed-advisory.md) Role and formation changes are one division command priced from the ruleset; speed mismatch is a derived advisory. Follow ADR-0357.
+- [ADR-0292](../ADR-0292-battle-experience-write-back.md) Battle aftermath asks the division module for experience through a typed request. Follow ADR-0357.
+- [ADR-0296](../ADR-0296-derived-ship-conditions.md) Ship conditions are derived predicates the fleet view carries and the renderer only labels. Follow ADR-0355.
+- [ADR-0303](../ADR-0303-training-cost-multiplier-and-exercise-tension-are-ruleset-data.md) Training cost differences and exercise tension are generic ruleset data. Follow ADR-0357.
+- [ADR-0307](../ADR-0307-strategic-and-report-explanation-provenance.md) Provenance for strategic-area and monthly-report explanations. Follow ADR-0353.
+- [ADR-0314](../ADR-0314-fleet-management-values-and-repair-entry.md) Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope. Follow ADR-0356.
+- [ADR-0315](../ADR-0315-research-workspace-projection.md) The research screen reads a technology-chart projection, and the draw weight has one home. Follow ADR-0340.
+- [ADR-0316](../ADR-0316-special-training-program.md) Special training is a nation program whose maintenance adder feeds the shared calculator. Follow ADR-0357.
+- [ADR-0317](../ADR-0317-annual-fleet-exercise.md) The annual fleet exercise is scheduled for the next month and held through the assignment slot. Follow ADR-0357.
+- [ADR-0330](../ADR-0330-unified-snapshot-hash.md) One versioned, domain-separated snapshot hash. Follow ADR-0343.

@@ -4,6 +4,8 @@ import { describe, expect, it } from "vite-plus/test";
 
 import {
   PICK_SCALE,
+  commandPlanDivergence,
+  formatCommandPlanFailure,
   runCommandPlan,
   type CommandKind,
   type CommandPick,
@@ -54,14 +56,20 @@ function extraDraw(month: number): Perturbation {
 
 function violations(plan: CommandPlan, secondRun?: Perturbation): string[] {
   const first = runCommandPlan(SEED, plan);
-  const second = runCommandPlan(SEED, plan, secondRun === undefined ? {} : { perturb: secondRun });
-  const tripped = runCommandPlan(SEED, plan, { roundTrip: {} });
   const found: string[] = [];
-  if (first.digest !== second.digest) found.push("repeatability");
-  if (tripped.roundTripDivergence !== undefined || tripped.digest !== first.digest) {
-    found.push("roundtrip");
+  const divergence = commandPlanDivergence(
+    SEED,
+    plan,
+    secondRun === undefined ? {} : { secondRun },
+  );
+  if (divergence !== undefined) found.push(formatCommandPlanFailure(SEED, plan, divergence));
+  if (first.invariantViolations.length > 0) {
+    found.push(
+      first.invariantViolations
+        .map((violation) => `invariant ${violation.code} at ${violation.path}: ${violation.detail}`)
+        .join("\n"),
+    );
   }
-  if (first.invariantViolations.length > 0) found.push("invariants");
   return found;
 }
 
@@ -114,6 +122,28 @@ describe("the property harness itself", () => {
     );
     expect(outcome.failed).toBe(true);
     expect(outcome.counterexample?.[0]).toEqual([[]]);
+  });
+
+  it("names the month and command and prints a reproduction command", () => {
+    const plan: CommandPlan = [
+      [{ kind: "SetBudgetAllocation", draws: [500, 900] }],
+      [{ kind: "SetResearchPriority", draws: [100] }],
+    ];
+    const text = formatCommandPlanFailure(SEED, plan, {
+      property: "roundtrip",
+      divergence: {
+        month: 2,
+        turnNumber: 1,
+        where: "snapshot",
+        entryIndex: 0,
+        expected: "a".repeat(64),
+        actual: "b".repeat(64),
+      },
+    });
+    expect(text).toContain(`seed ${SEED}`);
+    expect(text).toContain("first difference at month 2");
+    expect(text).toContain("SetResearchPriority (command 1)");
+    expect(text).toContain("reproduce: pnpm replay:fuzz plan");
   });
 
   it("reports the seed needed to reproduce a failure", () => {

@@ -5,6 +5,7 @@ import type {
 } from "@bluewave/content-schema";
 import { compareCodePoints } from "@bluewave/deterministic";
 import type { ComponentDef } from "./component.js";
+import { LEGACY_COMPONENT_SOURCE } from "./component.js";
 import type { PlacementSpec } from "./compileShared.js";
 import { applyComponentOverrides } from "./componentVariants.js";
 import {
@@ -31,10 +32,8 @@ function isLaunchType(value: string): value is LaunchType {
   return LAUNCH_TYPES.has(value);
 }
 
-export const LAUNCHER_COMPONENT_FILE = "ship-building/components.yaml";
-
 export function navalProfileFile(nationId: string): string {
-  return `ship-building/naval-profiles/${nationId}.yaml`;
+  return `ship-building/naval-profiles/${nationId}.ts`;
 }
 
 export const TORPEDO_WAIVER = { code: "DQ-TORPEDO-001", waives: "diameterUmEqualsBore" } as const;
@@ -143,7 +142,7 @@ export function buildLauncherPartModel(input: {
       spec: { launchType: mount.mountType, boreDiameterUm: loadsDiameterUm },
       quantities: read.quantities,
       revisions: [],
-      origin: { sourceFile: LAUNCHER_COMPONENT_FILE },
+      origin: { sourceFile: def.sourceFile ?? LEGACY_COMPONENT_SOURCE },
       provenance: {
         sourceStatus: "PLACEHOLDER",
         confidence: "LOW",
@@ -201,7 +200,7 @@ export function buildLauncherPartModel(input: {
           sourceFile: navalProfileFile(profile.nationId),
           prototype: {
             id: base.part.id,
-            sourceFile: LAUNCHER_COMPONENT_FILE,
+            sourceFile: base.def.sourceFile ?? LEGACY_COMPONENT_SOURCE,
             inheritedSpec: ["launchType"],
             inheritedQuantities: inherited,
           },

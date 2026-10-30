@@ -4,6 +4,8 @@ Applies to: content
 
 ## Status
 
+Superseded by: ADR-0339
+
 Accepted (2026-10-15). New record of decision DR-013; no prior ADR file existed
 for it and none is restored (see ADR-0210). Covers the N-1 opening-posture tickets
 05 (diplomacy), 06 (squadrons/fleets) and 07 (divisions/officers).

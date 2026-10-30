@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
+import { writeSaveManifest } from "../src/manifest.js";
 import { RecoveryManager } from "../src/recovery.js";
 import { SaveStore } from "../src/store.js";
 import { minimalCampaignState } from "./campaign-state-fixture.js";
@@ -46,21 +47,22 @@ describe("persistence files reject excess keys", () => {
     const id = saveOnce();
     const campaignPath = join(dir, id, "campaign.json");
     writeJson(campaignPath, { ...readJson(campaignPath), surprise: true });
+    writeSaveManifest(join(dir, id));
 
     const error = expectFailureTag(runExit(store.loadById(dir, id)), "PERSISTENCE_CORRUPT_SAVE");
     expect(error.message).toBe("Save data is structurally invalid");
   });
 
-  it("treats a signature file with an unmodeled key as corrupt", () => {
+  it("treats an integrity manifest with an unmodeled key as corrupt", () => {
     const id = saveOnce();
-    const sigPath = join(dir, id, "campaign.sig.json");
-    writeJson(sigPath, { ...readJson(sigPath), surprise: true });
+    const manifestPath = join(dir, id, "manifest.json");
+    writeJson(manifestPath, { ...readJson(manifestPath), surprise: true });
 
     const error = expectFailureTag(runExit(store.load(dir)), "PERSISTENCE_CORRUPT_SAVE");
-    expect(error.message).toBe("Save signature file is invalid");
+    expect(error.message).toBe("Save integrity manifest is invalid");
   });
 
-  it("lists a save through its signature when metadata carries an unmodeled key", () => {
+  it("lists a save through its campaign header when metadata carries an unmodeled key", () => {
     const id = saveOnce();
     const metaPath = join(dir, id, "metadata.json");
     writeJson(metaPath, { ...readJson(metaPath), surprise: true });
@@ -69,6 +71,7 @@ describe("persistence files reject excess keys", () => {
     expect(saves).toHaveLength(1);
     expect(saves[0]!.saveId).toBe(id);
     expect(saves[0]!.snapshotHash).toBe("");
+    expect(saves[0]!.compatibilityVersion).toBe("4.0.0");
   });
 
   it("reports corrupt month-input metadata with an unmodeled key", () => {

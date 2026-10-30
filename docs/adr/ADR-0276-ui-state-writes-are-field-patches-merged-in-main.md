@@ -2,9 +2,9 @@
 
 Applies to: desktop, persistence
 
-Rule: UI-state writes are field-level patches merged once, in the main process.
-
 ## Status
+
+Superseded by: ADR-0360
 
 Accepted (2026-10-22). Extends ADR-0273; does not supersede it.
 

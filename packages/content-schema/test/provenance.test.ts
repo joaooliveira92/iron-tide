@@ -18,7 +18,7 @@ describe("provenance/confidence as a schema field (CAH-PROV-1)", () => {
       { ...AREA, provenance: VALID_PROVENANCE },
       AreaSchema,
       "Area",
-      "areas.yaml",
+      "areas.json",
       collector,
     );
     expect(collector.hasErrors).toBe(false);
@@ -31,7 +31,7 @@ describe("provenance/confidence as a schema field (CAH-PROV-1)", () => {
       { ...AREA, provenance: { ...VALID_PROVENANCE, confidence: "SURE" } },
       AreaSchema,
       "Area",
-      "areas.yaml",
+      "areas.json",
       collector,
     );
     expect(out).toBeUndefined();
@@ -46,7 +46,7 @@ describe("provenance/confidence as a schema field (CAH-PROV-1)", () => {
       { ...AREA, provenance: { ...VALID_PROVENANCE, sourceStatus: "MAYBE" } },
       AreaSchema,
       "Area",
-      "areas.yaml",
+      "areas.json",
       collector,
     );
     expect(out).toBeUndefined();

@@ -4,6 +4,8 @@ Applies to: content-compiler, content-schema, messages, phase-engine
 
 ## Status
 
+Superseded by: ADR-0363
+
 Accepted (2026-10-21). Implements ticket
 [#111](https://github.com/joaooliveira92/iron-tide/issues/111) (T-1 02) of spec
 [#109](https://github.com/joaooliveira92/iron-tide/issues/109), R1, R3 (player input), R6, R15.

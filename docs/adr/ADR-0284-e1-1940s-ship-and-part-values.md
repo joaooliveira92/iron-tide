@@ -4,6 +4,8 @@ Applies to: content, ship-design
 
 ## Status
 
+Superseded by: ADR-0350
+
 Accepted (2026-10-23). The owner delegated the open decisions of decision request
 [0041](../../.ai/decision-requests/0041-e-1-1940s-hull-and-part-values.md) to the implementing agent ("you decide"). Builds on
 [ADR-0283](ADR-0283-e1-1940-1970-content-decisions.md) and [ADR-0213](ADR-0213-opening-posture-balance-choices.md) for balance targets. Evidence:

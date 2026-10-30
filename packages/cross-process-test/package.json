@@ -29,6 +29,7 @@
     "@bluewave/test-support": "workspace:*"
   },
   "devDependencies": {
+    "@bluewave/content-authoring": "workspace:*",
     "fast-check": "^4.10.2"
   },
   "scripts": {

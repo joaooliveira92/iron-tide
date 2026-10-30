@@ -43,7 +43,7 @@ jobs:
         run: pnpm content:build
       - run: pnpm --filter @bluewave/desktop test:e2e
       - name: Package the app (unpacked)
-        run: CSC_IDENTITY_AUTO_DISCOVERY=false pnpm --filter @bluewave/desktop exec electron-builder --mac --dir --config electron-builder.yml
+        run: CSC_IDENTITY_AUTO_DISCOVERY=false pnpm --filter @bluewave/desktop exec electron-builder --mac --dir --config electron-builder.json
       # The smoke starts a fresh game, which is the path that reads the shipped
       # content artifact from app resources (ticket 05); no precompiled save.
       - name: Smoke the packaged app

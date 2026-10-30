@@ -4,6 +4,8 @@ Applies to: content, combat, ship-design
 
 ## Status
 
+Superseded by: ADR-0340
+
 Accepted (2026-10-17). Sprints: N-2. Grounded by research note
 [docs/research/n-2-1880-ship-classification.md](../research/n-2-1880-ship-classification.md).
 

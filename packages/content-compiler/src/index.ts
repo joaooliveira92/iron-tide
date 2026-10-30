@@ -10,6 +10,7 @@ export interface CompilerInput {
   manifestPath: string;
   contentDir: string;
   fileContents?: Readonly<Record<string, string>>;
+  documents?: Readonly<Record<string, unknown>>;
   rulesetFiles: string[];
   countryFiles: string[];
   areaFiles: string[];
@@ -136,6 +137,12 @@ export { fleetManagementFromRulesets } from "./fleetManagementRules.js";
 export { presenceFromRulesets, type PresenceValues } from "./presenceRules.js";
 export { discoverShipBuildingFiles, type ShipBuildingFileGroups } from "./shipBuildingDiscovery.js";
 export { buildFullSurfaceInput } from "./fullSurface.js";
+export {
+  CONTENT_MODULE_EXTENSION,
+  isContentModulePath,
+  loadContentModule,
+  type ContentModuleLoad,
+} from "./contentModule.js";
 export {
   CONTENT_ARTIFACT_FILENAME,
   CONTENT_BUNDLE_ARTIFACT_KIND,

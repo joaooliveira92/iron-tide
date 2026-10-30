@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "pipelineVersion": "1.3.0",
+  "projection": "EPSG:3857 tiles from WGS84 lon/lat source",
+  "edgeSemantics": "lonlat-linear",
+  "densifyToleranceMetres": 25,
+  "maxMercatorLatitude": 85.0511287798066,
+  "tileExtent": 4096,
+  "tileBuffer": 64,
+  "tileMinZoom": 0,
+  "tileMaxZoom": 7,
+  "fitForPurposeMaxZoom": 7,
+  "overscaleMaxZoom": 12,
+  "bounds": [-180, -85.0511287798066, 180, 85.0511287798066],
+  "simplificationPixels": 0.35,
+  "climateSimplificationPixels": 1.5,
+  "protectedPinRadiusPixels": 6,
+  "overlayRenderedWidthPixels": 2.5,
+  "layers": {
+    "land": "land",
+    "protected": "protected",
+    "areas": "areas",
+    "areaOutlines": "area_outlines",
+    "areaLabels": "area_labels",
+    "climate": "climate"
+  },
+  "packFormat": "bluewave-tilepack-1",
+  "generationTimestampPolicy": "none: no wall-clock value is written; identical inputs give identical bytes"
+}

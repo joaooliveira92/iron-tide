@@ -2,9 +2,9 @@
 
 Applies to: desktop, ship-design
 
-Rule: Every design edit goes through the design session's guard, and a newly blocking or critical finding is explained at once.
-
 ## Status
+
+Superseded by: ADR-0345
 
 Accepted (2026-10-20).
 

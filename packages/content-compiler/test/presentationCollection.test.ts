@@ -6,6 +6,8 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { CompilerInput } from "../src/index.js";
 import { Compiler, buildFullSurfaceInput } from "../src/index.js";
 
+const jsonDocument = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
+
 function createFixtureDir(): { path: string; cleanup: () => void } {
   const dir = mkdtempSync(resolve(tmpdir(), "bw-presentation-"));
   return {
@@ -41,61 +43,106 @@ function compile(contentDir: string, groups: Partial<CompilerInput>): Diagnostic
 }
 
 const PRESENTATION = `
-nations:
-  - countryId: "gb"
-    nationId: "uk"
-    code: "GBR"
-    markerColour: "#c8102e"
-    coordinates: { lat: 51.5, lng: -0.1, label: "London" }
-    flavor: { name: "United Kingdom", economy: "E", military: "M", diplomacy: "D" }
-    dossier:
-      appointmentTitle: "First Sea Lord"
-      doctrine: "Global sea control"
-      strategicRegions: "North Sea"
-      budgetCategory: "Very Large"
-      shipbuildingCapacity: "World-leading"
-      researchStrengths: "Gunnery"
-      researchWeaknesses: "Overstretched"
-      nationalCharacteristics: "Worldwide deployment"
-      likelyRivals: ["Germany"]
-      difficulty: 5
-  - countryId: "de"
-    nationId: "germany"
-    code: "DEU"
-    markerColour: "#111111"
-    coordinates: { lat: 52.5, lng: 13.4, label: "Berlin" }
-    flavor: { name: "German Empire", economy: "E", military: "M", diplomacy: "D" }
-    dossier:
-      appointmentTitle: "State Secretary"
-      doctrine: "Risk fleet"
-      strategicRegions: "North Sea"
-      budgetCategory: "Large"
-      shipbuildingCapacity: "Advanced"
-      researchStrengths: "Metallurgy"
-      researchWeaknesses: "Basing"
-      nationalCharacteristics: "Rapid expansion"
-      likelyRivals: ["United Kingdom"]
-      difficulty: 4
-regions:
-  regions:
-    - { id: "northern_europe", label: "Northern Europe" }
-    - { id: "mediterranean", label: "The Mediterranean" }
-  areaRegion:
-    eng_home_coast: northern_europe
-    med_malta: mediterranean
-mapJoin:
-  campaignAreaToFixture:
-    eng_home_coast: area_north_sea
-    med_malta: area_mediterranean
-  nationHue:
-    uk: 15
-    germany: 60
-  nationLabel:
-    uk: Britain
-    germany: Germany
-  nationHomeArea:
-    uk: eng_home_coast
-    germany: ger_baltic_coast
+{
+  "nations": [
+    {
+      "countryId": "gb",
+      "nationId": "uk",
+      "code": "GBR",
+      "markerColour": "#c8102e",
+      "coordinates": {
+        "lat": 51.5,
+        "lng": -0.1,
+        "label": "London"
+      },
+      "flavor": {
+        "name": "United Kingdom",
+        "economy": "E",
+        "military": "M",
+        "diplomacy": "D"
+      },
+      "dossier": {
+        "appointmentTitle": "First Sea Lord",
+        "doctrine": "Global sea control",
+        "strategicRegions": "North Sea",
+        "budgetCategory": "Very Large",
+        "shipbuildingCapacity": "World-leading",
+        "researchStrengths": "Gunnery",
+        "researchWeaknesses": "Overstretched",
+        "nationalCharacteristics": "Worldwide deployment",
+        "likelyRivals": [
+          "Germany"
+        ],
+        "difficulty": 5
+      }
+    },
+    {
+      "countryId": "de",
+      "nationId": "germany",
+      "code": "DEU",
+      "markerColour": "#111111",
+      "coordinates": {
+        "lat": 52.5,
+        "lng": 13.4,
+        "label": "Berlin"
+      },
+      "flavor": {
+        "name": "German Empire",
+        "economy": "E",
+        "military": "M",
+        "diplomacy": "D"
+      },
+      "dossier": {
+        "appointmentTitle": "State Secretary",
+        "doctrine": "Risk fleet",
+        "strategicRegions": "North Sea",
+        "budgetCategory": "Large",
+        "shipbuildingCapacity": "Advanced",
+        "researchStrengths": "Metallurgy",
+        "researchWeaknesses": "Basing",
+        "nationalCharacteristics": "Rapid expansion",
+        "likelyRivals": [
+          "United Kingdom"
+        ],
+        "difficulty": 4
+      }
+    }
+  ],
+  "regions": {
+    "regions": [
+      {
+        "id": "northern_europe",
+        "label": "Northern Europe"
+      },
+      {
+        "id": "mediterranean",
+        "label": "The Mediterranean"
+      }
+    ],
+    "areaRegion": {
+      "eng_home_coast": "northern_europe",
+      "med_malta": "mediterranean"
+    }
+  },
+  "mapJoin": {
+    "campaignAreaToFixture": {
+      "eng_home_coast": "area_north_sea",
+      "med_malta": "area_mediterranean"
+    },
+    "nationHue": {
+      "uk": 15,
+      "germany": 60
+    },
+    "nationLabel": {
+      "uk": "Britain",
+      "germany": "Germany"
+    },
+    "nationHomeArea": {
+      "uk": "eng_home_coast",
+      "germany": "ger_baltic_coast"
+    }
+  }
+}
 `;
 
 describe("presentation collections through the compiler (CAH-PRES-1/CAH-PRES-2)", () => {
@@ -107,9 +154,9 @@ describe("presentation collections through the compiler (CAH-PRES-1/CAH-PRES-2)"
         "pack.json",
         JSON.stringify({ name: "t", version: "0.1.0", type: "fixture", files: {} }),
       );
-      writeFixture(fixture.path, "presentation.yaml", PRESENTATION);
+      writeFixture(fixture.path, "presentation.json", PRESENTATION);
       const collector = compile(fixture.path, {
-        presentationFiles: [resolve(fixture.path, "presentation.yaml")],
+        presentationFiles: [resolve(fixture.path, "presentation.json")],
       });
       expect(collector.hasErrors).toBe(false);
       const bundle = new Compiler().compile(
@@ -117,7 +164,7 @@ describe("presentation collections through the compiler (CAH-PRES-1/CAH-PRES-2)"
           manifestPath: "pack.json",
           contentDir: fixture.path,
           ...EMPTY_INPUT,
-          presentationFiles: [resolve(fixture.path, "presentation.yaml")],
+          presentationFiles: [resolve(fixture.path, "presentation.json")],
         },
         new AbortController().signal,
         new DiagnosticCollector(),
@@ -159,16 +206,16 @@ describe("presentation collections through the compiler (CAH-PRES-1/CAH-PRES-2)"
       );
       writeFixture(
         fixture.path,
-        "presentation.yaml",
-        PRESENTATION.replace("lat: 51.5", 'lat: "north"'),
+        "presentation.json",
+        PRESENTATION.replace('"lat": 51.5', '"lat": "north"'),
       );
       const collector = compile(fixture.path, {
-        presentationFiles: [resolve(fixture.path, "presentation.yaml")],
+        presentationFiles: [resolve(fixture.path, "presentation.json")],
       });
       expect(collector.hasErrors).toBe(true);
       const error = collector.errors.find((d) => d.code === "SCHEMA")!;
       expect(error.message).toContain("nations.0.coordinates.lat");
-      expect(error.sourceLocation?.path).toContain("presentation.yaml");
+      expect(error.sourceLocation?.path).toContain("presentation.json");
     } finally {
       fixture.cleanup();
     }
@@ -184,16 +231,16 @@ describe("presentation collections through the compiler (CAH-PRES-1/CAH-PRES-2)"
           name: "t",
           version: "0.1.0",
           type: "fixture",
-          files: { presentation: ["presentation.yaml"] },
+          files: { presentation: ["presentation.json"] },
         }),
       );
-      writeFixture(fixture.path, "presentation.yaml", PRESENTATION);
+      writeFixture(fixture.path, "presentation.json", PRESENTATION);
       const input = buildFullSurfaceInput(
         resolve(fixture.path, "pack.json"),
         fixture.path,
         new DiagnosticCollector(),
       );
-      expect(input!.presentationFiles).toEqual([resolve(fixture.path, "presentation.yaml")]);
+      expect(input!.presentationFiles).toEqual([resolve(fixture.path, "presentation.json")]);
     } finally {
       fixture.cleanup();
     }
@@ -209,19 +256,21 @@ describe("presentation collections through the compiler (CAH-PRES-1/CAH-PRES-2)"
       );
       writeFixture(
         fixture.path,
-        "areas.yaml",
-        "- id: eng_home_coast\n  name: English Home Waters\n  type: coastal\n" +
-          "- id: new_area\n  name: New Area\n  type: sea\n",
+        "areas.json",
+        jsonDocument([
+          { id: "eng_home_coast", name: "English Home Waters", type: "coastal" },
+          { id: "new_area", name: "New Area", type: "sea" },
+        ]),
       );
-      writeFixture(fixture.path, "presentation.yaml", PRESENTATION);
+      writeFixture(fixture.path, "presentation.json", PRESENTATION);
       const collector = compile(fixture.path, {
-        areaFiles: [resolve(fixture.path, "areas.yaml")],
-        presentationFiles: [resolve(fixture.path, "presentation.yaml")],
+        areaFiles: [resolve(fixture.path, "areas.json")],
+        presentationFiles: [resolve(fixture.path, "presentation.json")],
       });
       expect(collector.hasErrors).toBe(true);
       const error = collector.errors.find((d) => d.code === "PRESENTATION_REGION")!;
       expect(error.message).toContain("new_area");
-      expect(error.sourceLocation?.path).toContain("presentation.yaml");
+      expect(error.sourceLocation?.path).toContain("presentation.json");
     } finally {
       fixture.cleanup();
     }
@@ -237,17 +286,25 @@ describe("presentation collections through the compiler (CAH-PRES-1/CAH-PRES-2)"
       );
       writeFixture(
         fixture.path,
-        "areas.yaml",
-        "- id: eng_home_coast\n  name: English Home Waters\n  type: coastal\n",
+        "areas.json",
+        `
+[
+  {
+    "id": "eng_home_coast",
+    "name": "English Home Waters",
+    "type": "coastal"
+  }
+]
+`,
       );
       writeFixture(
         fixture.path,
-        "presentation.yaml",
-        PRESENTATION.replace("eng_home_coast: northern_europe", "eng_home_coast: atlantis"),
+        "presentation.json",
+        PRESENTATION.replace('"eng_home_coast": "northern_europe"', '"eng_home_coast": "atlantis"'),
       );
       const collector = compile(fixture.path, {
-        areaFiles: [resolve(fixture.path, "areas.yaml")],
-        presentationFiles: [resolve(fixture.path, "presentation.yaml")],
+        areaFiles: [resolve(fixture.path, "areas.json")],
+        presentationFiles: [resolve(fixture.path, "presentation.json")],
       });
       expect(collector.hasErrors).toBe(true);
       const error = collector.errors.find((d) => d.code === "PRESENTATION_REGION")!;
@@ -267,18 +324,20 @@ describe("presentation collections through the compiler (CAH-PRES-1/CAH-PRES-2)"
       );
       writeFixture(
         fixture.path,
-        "areas.yaml",
-        "- id: eng_home_coast\n  name: English Home Waters\n  type: coastal\n" +
-          "- id: new_area\n  name: New Area\n  type: sea\n",
+        "areas.json",
+        jsonDocument([
+          { id: "eng_home_coast", name: "English Home Waters", type: "coastal" },
+          { id: "new_area", name: "New Area", type: "sea" },
+        ]),
       );
       writeFixture(
         fixture.path,
-        "presentation.yaml",
-        PRESENTATION.replace("med_malta: mediterranean", "new_area: mediterranean"),
+        "presentation.json",
+        PRESENTATION.replace('"med_malta": "mediterranean"', '"new_area": "mediterranean"'),
       );
       const collector = compile(fixture.path, {
-        areaFiles: [resolve(fixture.path, "areas.yaml")],
-        presentationFiles: [resolve(fixture.path, "presentation.yaml")],
+        areaFiles: [resolve(fixture.path, "areas.json")],
+        presentationFiles: [resolve(fixture.path, "presentation.json")],
       });
       expect(collector.hasErrors).toBe(true);
       const error = collector.errors.find((d) => d.code === "PRESENTATION_REGION")!;

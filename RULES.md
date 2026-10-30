@@ -87,9 +87,12 @@ contract wins; fix this file in the same change.
 
 ## Content and compiler
 
-- Author content in YAML without executable tags or arbitrary construction;
-  compile it into canonical artifacts. The manifest declares roots, collections,
-  dependencies, versions, localization, and production/fixture classification.
+- Author domain content as declarative TypeScript modules and compile it into
+  canonical JSON artifacts (ADR-0334). YAML is permitted only for
+  internationalization catalogues and for the externally mandated infrastructure
+  files ADR-0334 names; new non-internationalization YAML fails the boundary gate.
+  The manifest declares roots, collections, dependencies, versions,
+  localization, and production/fixture classification.
 - Compiler stages are explicit, statically ordered, typed, immutable, and free
   of ambient I/O, randomness, and final-artifact writes. Accumulate diagnostics
   and block downstream stages whose prerequisites are invalid.

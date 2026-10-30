@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach, vi } from "vite-plus/test";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
@@ -14,7 +14,8 @@ const manifest = resolve(contentDir, "pack.json");
 
 const tempDirs: string[] = [];
 function tempDir(): string {
-  const dir = mkdtempSync(resolve(tmpdir(), "bw-gate-"));
+  mkdirSync(join(repoRoot, ".tmp"), { recursive: true });
+  const dir = mkdtempSync(join(repoRoot, ".tmp", "bw-gate-"));
   tempDirs.push(dir);
   return dir;
 }
@@ -23,27 +24,33 @@ afterEach(() => {
   for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-const PLACEHOLDER_AREA = `
-- id: "cah_placeholder_area"
-  name: "Placeholder Area"
-  type: "land"
-  provenance:
-    sourceStatus: PLACEHOLDER
-    confidence: LOW
-    kind: balance_adjustment
-    sources: []
+const PLACEHOLDER_AREA = `  {
+    id: "cah_placeholder_area",
+    name: "Placeholder Area",
+    type: "land",
+    provenance: {
+      sourceStatus: "PLACEHOLDER",
+      confidence: "LOW",
+      kind: "balance_adjustment",
+      sources: [],
+    },
+  },
 `;
 
 function addPlaceholderArea(dir: string): void {
-  const areasPath = resolve(dir, "areas.yaml");
-  writeFileSync(areasPath, `${readFileSync(areasPath, "utf8")}${PLACEHOLDER_AREA}`, "utf8");
-  const presentationPath = resolve(dir, "presentation.yaml");
+  const areasPath = resolve(dir, "areas.ts");
+  const areas = readFileSync(areasPath, "utf8").replaceAll("\r\n", "\n");
+  writeFileSync(areasPath, areas.replace(/\n\]\);\n$/u, `\n${PLACEHOLDER_AREA}]);\n`), "utf8");
+  const presentationPath = resolve(dir, "presentation.ts");
   const patched = readFileSync(presentationPath, "utf8")
     .replaceAll("\r\n", "\n")
-    .replace("  areaRegion:\n", "  areaRegion:\n    cah_placeholder_area: northern_europe\n")
     .replace(
-      "  campaignAreaToFixture:\n",
-      "  campaignAreaToFixture:\n    cah_placeholder_area: area_north_sea\n",
+      "    areaRegion: {\n",
+      '    areaRegion: {\n      cah_placeholder_area: "northern_europe",\n',
+    )
+    .replace(
+      "    campaignAreaToFixture: {\n",
+      '    campaignAreaToFixture: {\n      cah_placeholder_area: "area_north_sea",\n',
     );
   writeFileSync(presentationPath, patched, "utf8");
 }

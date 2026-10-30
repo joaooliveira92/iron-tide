@@ -1,0 +1,248 @@
+// Reference designs for the EARLY band (starting points for the Drawing Board and regression fixtures).
+// One directory per nation: starters.yaml (a `starterFor` opening design) and historical.yaml.
+// Fittings (magazines, quarters, pumps, ventilation) weigh nothing extra (White 1894, ADR-0083).
+// SMS Kaiser (1875): German central-battery armoured frigate, steel armour, 8,799 t, 14.5 kn, 8x 26-cm RK, 10-in belt.
+import { ReferenceDesignSchema, collection } from "@bluewave/content-authoring";
+
+export default collection("designs", ReferenceDesignSchema, [
+  {
+    id: "kaiser_1875",
+    name: "Kaiser (1875, armoured frigate)",
+    month: "1880-01",
+    historical: true,
+    provenance: {
+      completionDate: {
+        value: "13.2.1875 (Deutschland 20.7.1875; last foreign-built German capital ship)",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (germany/ger_bb_kaiser.htm)",
+          },
+        ],
+      },
+      displacementBasis: {
+        value: "8,799 t normal / 8,940 t full (Kaiser)",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (germany/ger_bb_kaiser.htm)",
+          },
+        ],
+      },
+      armourScheme: {
+        value:
+          "steel (belt on teak backing); belt 254-127, deck 51-38, casemate 203-178, bulkheads 178, CT 50",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (germany/ger_bb_kaiser.htm)",
+          },
+        ],
+      },
+      armamentConfiguration: {
+        value:
+          "8x1 263 mm (10.4-in) RKL/20 C/74 + 1x1 209 mm (8.2-in) RKL/22.5 C/68; no torpedo tubes as built (5x350 mm at 1897 reconstruction)",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (germany/ger_bb_kaiser.htm)",
+          },
+        ],
+      },
+      machineryOutput: {
+        value: "1 HSE, 8 rectangular boilers, 1 shaft; 5,700 ihp",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (germany/ger_bb_kaiser.htm)",
+          },
+        ],
+      },
+      speed: {
+        value: "14.5 kn; 2,470 nmi at 10 kn",
+        status: "DERIVED",
+        sources: [
+          {
+            title: "navypedia.org (germany/ger_bb_kaiser.htm)",
+          },
+        ],
+      },
+    },
+    draft: {
+      nationId: "germany",
+      requirement: {
+        category: "B",
+        requiredSpeedMilliKnots: 14500,
+        cruiseSpeedMilliKnots: 8000,
+        requiredRangeNm: 2470,
+        designThreatId: "rml_10in",
+        modernizationExpectation: "MINOR",
+        crewQualityBp: 10000,
+        accommodationStandard: "STANDARD",
+        protectionGoal: "STANDARD",
+      },
+      hull: {
+        hullFormId: "coast_defence_form",
+        lengthWl: 88500,
+        beam: 19100,
+        draught: 7930,
+        depthToMainDeck: 10000,
+        blockCoeffBp: 6000,
+        materialId: "iron",
+        structuralSchemeId: "mixed",
+        subdivisionGrade: 2,
+        targetDisplacementKg: 8799000,
+        limitDisplacementKg: null,
+        designMarginBp: 300,
+        growthReserveBp: 300,
+      },
+      machinery: {
+        plantId: "compound_cylindrical",
+        installedKw: 5900,
+        zoneId: "CENTRAL_MACHINERY",
+        stationPermille: 400,
+        fuelCapacityKg: 684000,
+        fuelZoneId: "CENTRAL_MACHINERY",
+        fuelStationPermille: 450,
+        foulingBp: 0,
+        rooms: [
+          {
+            zoneId: "CENTRAL_MACHINERY",
+            stationPermille: 400,
+            shareBp: 6000,
+          },
+          {
+            zoneId: "AFT_SERVICE",
+            stationPermille: 680,
+            shareBp: 4000,
+          },
+        ],
+      },
+      armour: {
+        regions: [
+          {
+            region: "BELT_MAIN",
+            thicknessUm: 254000,
+            lengthMm: 60000,
+            heightMm: 3200,
+            materialId: "steel",
+            cosObliquityBp: 10000,
+          },
+          {
+            region: "DECK_MAIN",
+            thicknessUm: 51000,
+            lengthMm: 88500,
+            heightMm: 19100,
+            materialId: "steel",
+            cosObliquityBp: 10000,
+          },
+          {
+            region: "MAGAZINE_BOX",
+            thicknessUm: 254000,
+            lengthMm: 60000,
+            heightMm: 3000,
+            materialId: "steel",
+            cosObliquityBp: 10000,
+          },
+          {
+            region: "TURRET",
+            thicknessUm: 203000,
+            lengthMm: 20000,
+            heightMm: 3000,
+            materialId: "steel",
+            cosObliquityBp: 10000,
+          },
+        ],
+        citadelLengthMm: 60000,
+        torpedoWarheadKg: 30,
+        bunkerProtectionBp: 0,
+      },
+      placements: [
+        {
+          instanceId: "main_fwd",
+          componentId: "gun_bl_263mm_rkl20",
+          zoneId: "CENTRAL_MACHINERY",
+          stationPermille: 300,
+          params: {
+            barrels: 4,
+            rounds: 80,
+          },
+          magazineRef: "mag_fwd",
+        },
+        {
+          instanceId: "main_aft",
+          componentId: "gun_bl_263mm_rkl20",
+          zoneId: "CENTRAL_MACHINERY",
+          stationPermille: 480,
+          params: {
+            barrels: 4,
+            rounds: 80,
+          },
+          magazineRef: "mag_aft",
+        },
+        {
+          instanceId: "sec",
+          componentId: "gun_rml_8in_9ton",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 560,
+          params: {
+            barrels: 1,
+            rounds: 100,
+          },
+          magazineRef: "mag_sec",
+        },
+        {
+          instanceId: "mag_sec",
+          componentId: "magazine_heavy",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 560,
+        },
+        {
+          instanceId: "mag_fwd",
+          componentId: "magazine_heavy",
+          zoneId: "FWD_MAGAZINE",
+          stationPermille: 130,
+        },
+        {
+          instanceId: "mag_aft",
+          componentId: "magazine_heavy",
+          zoneId: "AFT_SERVICE",
+          stationPermille: 700,
+        },
+        {
+          instanceId: "dyn",
+          componentId: "dynamo_small",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 220,
+        },
+        {
+          instanceId: "vent",
+          componentId: "ventilation_plant",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 230,
+        },
+        {
+          instanceId: "quarters",
+          componentId: "quarters_crew",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 250,
+          params: {
+            blocks: 80,
+          },
+        },
+        {
+          instanceId: "funnel_a",
+          componentId: "funnel_single",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 580,
+        },
+        {
+          instanceId: "funnel_b",
+          componentId: "funnel_single",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 620,
+        },
+      ],
+    },
+  },
+]);

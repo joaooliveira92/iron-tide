@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DesignLoadoutSchema, FlattenedPartSchema, decodeStrict } from "@bluewave/content-schema";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
-import { fromYaml } from "../src/yaml.js";
+import { fromStagedJson } from "../src/staged.js";
 import {
   loadLegacySource,
   planFromLegacy,
@@ -40,8 +40,8 @@ describe("content codemod publisher (ticket 11c)", () => {
     expect(result.ok).toBe(true);
     const files = listFiles(stagingDir);
     expect(files).toContain("manifest.json");
-    expect(files).toContain("platforms.yaml");
-    expect(files).toContain("slot-templates.yaml");
+    expect(files).toContain("platforms.json");
+    expect(files).toContain("slot-templates.json");
     expect(files.some((f) => f.startsWith("parts/"))).toBe(true);
     expect(files.some((f) => f.startsWith("designs/"))).toBe(true);
     expect(files.some((f) => f.includes(".codemod-tmp"))).toBe(false);
@@ -55,16 +55,16 @@ describe("content codemod publisher (ticket 11c)", () => {
     const read = readStagedSource(stagingDir);
     expect(read.ok).toBe(true);
     if (!read.ok) return;
-    expect(read.value.parts).toHaveLength(325);
-    expect(read.value.designs).toHaveLength(96);
+    expect(read.value.parts).toHaveLength(327);
+    expect(read.value.designs).toHaveLength(97);
     for (const file of listFiles(stagingDir).filter((f) => f.startsWith("parts/"))) {
-      const raw = fromYaml(readFileSync(join(stagingDir, file), "utf8"));
+      const raw = fromStagedJson(readFileSync(join(stagingDir, file), "utf8"));
       for (const record of (raw as { parts: unknown[] }).parts) {
         decodeStrict(FlattenedPartSchema, record);
       }
     }
     for (const file of listFiles(stagingDir).filter((f) => f.startsWith("designs/"))) {
-      const raw = fromYaml(readFileSync(join(stagingDir, file), "utf8"));
+      const raw = fromStagedJson(readFileSync(join(stagingDir, file), "utf8"));
       for (const record of (raw as { designs: { header: unknown; loadout: unknown }[] }).designs) {
         decodeStrict(DesignLoadoutSchema, { header: record.header, loadout: record.loadout });
       }
@@ -102,7 +102,7 @@ describe("content codemod publisher (ticket 11c)", () => {
     expect(republish.ok).toBe(true);
     if (republish.ok) expect(republish.value.noop).toBe(true);
     const reread = readStagedSource(stagingDir);
-    expect(reread.ok && reread.value.designs.length).toBe(96);
+    expect(reread.ok && reread.value.designs.length).toBe(97);
   });
 
   it("refuses unsafe, ambiguous or protected output paths", () => {
@@ -171,7 +171,7 @@ describe("content codemod publisher (ticket 11c)", () => {
     const loaded = loadLegacySource({ contentDir, torpedoDiameterUm, torpedoModels });
     expect(loaded.ok).toBe(true);
     if (!loaded.ok) return;
-    expect(loaded.value.designs).toHaveLength(96);
+    expect(loaded.value.designs).toHaveLength(97);
     expect(loaded.value.sourceFiles.length).toBeGreaterThan(10);
     const fromDisk = planFromLegacy(loaded.value);
     expect(fromDisk.ok).toBe(true);
@@ -183,8 +183,18 @@ describe("content codemod publisher (ticket 11c)", () => {
     publishMigration(planned, { stagingDir, protectedRoots: [contentDir] });
     mkdirSync(join(stagingDir, "designs"), { recursive: true });
     writeFileSync(
-      join(stagingDir, "designs", "bogus.yaml"),
-      "designs:\n  - id: broken\n    name: broken\n    month: 1800-01\n",
+      join(stagingDir, "designs", "bogus.json"),
+      `
+{
+  "designs": [
+    {
+      "id": "broken",
+      "name": "broken",
+      "month": "1800-01"
+    }
+  ]
+}
+`,
       "utf8",
     );
     const read = readStagedSource(stagingDir);

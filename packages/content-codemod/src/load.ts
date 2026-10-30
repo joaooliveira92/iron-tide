@@ -12,12 +12,14 @@ import {
   PlatformSchema,
   PropulsionPlantCatalogueSchema,
   ReferenceDesignSchema,
-  ShipComponentCatalogueSchema,
+  ShipComponentWithSourceCatalogueSchema,
   ShipHullFormCatalogueSchema,
   SlotTemplateSchema,
   decodeStrict,
 } from "@bluewave/content-schema";
 import { compareCodePoints, sha256Hex } from "@bluewave/deterministic";
+
+import { fromStagedJson } from "./staged.js";
 import { shipBalanceFromRecord } from "@bluewave/ship-design";
 import type {
   AuthoredArmamentContent,
@@ -28,7 +30,7 @@ import type {
   RawReferenceDesign,
   TorpedoModelSource,
 } from "@bluewave/ship-design";
-import { fromYaml } from "./yaml.js";
+import { loadContentModule } from "@bluewave/content-compiler";
 import { migrationFailure } from "./failure.js";
 import type { MigrationFailure, MigrationResult } from "./failure.js";
 import type { LegacySource, SourceFileRef, StagedDesign, StagedSource } from "./types.js";
@@ -40,12 +42,16 @@ export interface LoadOptions {
   readonly torpedoModels: readonly TorpedoModelSource[];
 }
 
-const yamlFiles = (dir: string): string[] => {
+const filesWith = (dir: string, extension: string): string[] => {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((f) => f.endsWith(".yaml"))
+    .filter((f) => f.endsWith(extension))
     .sort(compareCodePoints);
 };
+
+const authoredFiles = (dir: string): string[] => filesWith(dir, ".ts");
+
+const stagedFiles = (dir: string): string[] => filesWith(dir, ".json");
 
 const directories = (dir: string): string[] => {
   if (!existsSync(dir)) return [];
@@ -53,6 +59,37 @@ const directories = (dir: string): string[] => {
     .filter((e) => e.isDirectory())
     .map((e) => e.name)
     .sort(compareCodePoints);
+};
+
+const authoredFilesRecursive = (dir: string): string[] => {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true })
+    .flatMap((entry) => {
+      const child = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        return authoredFilesRecursive(child).map((file) => join(entry.name, file));
+      }
+      return entry.name.endsWith(".ts") ? [entry.name] : [];
+    })
+    .sort(compareCodePoints);
+};
+
+const declaredComponentFiles = (contentDir: string, sb: string): string[] => {
+  const fallback = () =>
+    authoredFilesRecursive(join(sb, "components")).map(
+      (file) => `ship-building/components/${file}`,
+    );
+  const manifestPath = join(contentDir, "pack.json");
+  if (!existsSync(manifestPath)) return fallback();
+  try {
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+      shipBuilding?: { shipComponents?: string[] };
+    };
+    const declared = manifest.shipBuilding?.shipComponents;
+    return Array.isArray(declared) && declared.length > 0 ? declared : fallback();
+  } catch {
+    return fallback();
+  }
 };
 
 function makeReader(contentDir: string) {
@@ -83,7 +120,10 @@ export function loadLegacySource(options: LoadOptions): MigrationResult<LegacySo
       return undefined;
     }
     try {
-      return fromYaml(reader.read(absolute));
+      reader.read(absolute);
+      const loaded = loadContentModule(absolute);
+      if (!loaded.ok) throw new Error(loaded.message);
+      return loaded.document;
     } catch (error) {
       failures.push(
         migrationFailure(
@@ -96,18 +136,27 @@ export function loadLegacySource(options: LoadOptions): MigrationResult<LegacySo
     }
   };
 
-  const componentsRaw = loadRequired(join(sb, "components.yaml"), "components.yaml");
-  const plantsRaw = loadRequired(join(sb, "plants.yaml"), "plants.yaml");
-  const hullFormsRaw = loadRequired(join(sb, "hull-forms.yaml"), "hull-forms.yaml");
-  const balanceRaw = loadRequired(join(sb, "balance.yaml"), "balance.yaml");
-  const familiesRaw = loadRequired(join(armamentDir, "gun-families.yaml"), "gun-families.yaml");
-  const modelsRaw = loadRequired(join(armamentDir, "gun-models.yaml"), "gun-models.yaml");
-  const mountsRaw = loadRequired(join(armamentDir, "gun-mounts.yaml"), "gun-mounts.yaml");
-  const ammoRaw = loadRequired(join(armamentDir, "ammunition.yaml"), "ammunition.yaml");
-  if (failures.length > 0 || componentsRaw === undefined) return { ok: false, failures };
+  const componentEntries: unknown[] = [];
+  for (const file of declaredComponentFiles(contentDir, sb)) {
+    const raw = loadRequired(join(contentDir, file), file);
+    const components = (raw as { readonly components?: unknown[] } | undefined)?.components;
+    if (Array.isArray(components)) {
+      componentEntries.push(
+        ...components.map((component) => ({ ...(component as object), sourceFile: file })),
+      );
+    }
+  }
+  const plantsRaw = loadRequired(join(sb, "plants.ts"), "plants.ts");
+  const hullFormsRaw = loadRequired(join(sb, "hull-forms.ts"), "hull-forms.ts");
+  const balanceRaw = loadRequired(join(sb, "balance.ts"), "balance.ts");
+  const familiesRaw = loadRequired(join(armamentDir, "gun-families.ts"), "gun-families.ts");
+  const modelsRaw = loadRequired(join(armamentDir, "gun-models.ts"), "gun-models.ts");
+  const mountsRaw = loadRequired(join(armamentDir, "gun-mounts.ts"), "gun-mounts.ts");
+  const ammoRaw = loadRequired(join(armamentDir, "ammunition.ts"), "ammunition.ts");
+  if (failures.length > 0 || componentEntries.length === 0) return { ok: false, failures };
 
   const profileEntries: unknown[] = [];
-  for (const file of yamlFiles(join(sb, "naval-profiles"))) {
+  for (const file of authoredFiles(join(sb, "naval-profiles"))) {
     const raw = loadRequired(join(sb, "naval-profiles", file), `naval-profiles/${file}`);
     const profiles = (raw as { readonly navalProfiles?: unknown[] } | undefined)?.navalProfiles;
     if (Array.isArray(profiles)) profileEntries.push(...profiles);
@@ -116,7 +165,7 @@ export function loadLegacySource(options: LoadOptions): MigrationResult<LegacySo
   const designEntries: unknown[] = [];
   const designRoot = join(sb, "reference-designs");
   for (const nation of directories(designRoot)) {
-    for (const name of yamlFiles(join(designRoot, nation))) {
+    for (const name of authoredFiles(join(designRoot, nation))) {
       const raw = loadRequired(
         join(designRoot, nation, name),
         `reference-designs/${nation}/${name}`,
@@ -128,8 +177,9 @@ export function loadLegacySource(options: LoadOptions): MigrationResult<LegacySo
   if (failures.length > 0) return { ok: false, failures };
 
   try {
-    const components = decodeStrict(ShipComponentCatalogueSchema, componentsRaw)
-      .components as ComponentDef[];
+    const components = decodeStrict(ShipComponentWithSourceCatalogueSchema, {
+      components: componentEntries,
+    }).components as ComponentDef[];
     const plants = decodeStrict(PropulsionPlantCatalogueSchema, plantsRaw)
       .plants as PropulsionPlant[];
     const hullForms = decodeStrict(ShipHullFormCatalogueSchema, hullFormsRaw)
@@ -186,9 +236,21 @@ export function readStagedSource(stagingDir: string): MigrationResult<StagedSour
   const failures: MigrationFailure[] = [];
   const reader = makeReader(stagingDir);
   const readCollection = (dir: string, key: string, decode: (record: unknown) => void): void => {
-    for (const file of yamlFiles(dir)) {
+    for (const file of stagedFiles(dir)) {
       const absolute = join(dir, file);
-      const raw = fromYaml(reader.read(absolute));
+      let raw: unknown;
+      try {
+        raw = fromStagedJson(reader.read(absolute));
+      } catch (error) {
+        failures.push(
+          migrationFailure(
+            "CODEMOD_INVALID_SOURCE",
+            file,
+            `not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
+          ),
+        );
+        continue;
+      }
       if (typeof raw !== "object" || raw === null) {
         failures.push(migrationFailure("CODEMOD_INVALID_SOURCE", file, "not a mapping."));
         continue;
@@ -219,7 +281,7 @@ export function readStagedSource(stagingDir: string): MigrationResult<StagedSour
     parts.push(decodeStrict(FlattenedPartSchema, record));
   });
   const platforms: StagedSource["platforms"][number][] = [];
-  const platformRaw = readJsonOrYaml(reader, join(stagingDir, "platforms.yaml"), "platforms");
+  const platformRaw = readStagedCollection(reader, join(stagingDir, "platforms.json"), "platforms");
   for (const record of platformRaw) {
     try {
       platforms.push(decodeStrict(PlatformSchema, record));
@@ -227,14 +289,18 @@ export function readStagedSource(stagingDir: string): MigrationResult<StagedSour
       failures.push(
         migrationFailure(
           "CODEMOD_INVALID_SOURCE",
-          "platforms.yaml",
+          "platforms.json",
           error instanceof Error ? error.message : String(error),
         ),
       );
     }
   }
   const slotTemplates: StagedSource["slotTemplates"][number][] = [];
-  const slotRaw = readJsonOrYaml(reader, join(stagingDir, "slot-templates.yaml"), "slotTemplates");
+  const slotRaw = readStagedCollection(
+    reader,
+    join(stagingDir, "slot-templates.json"),
+    "slotTemplates",
+  );
   for (const record of slotRaw) {
     try {
       slotTemplates.push(decodeStrict(SlotTemplateSchema, record));
@@ -242,7 +308,7 @@ export function readStagedSource(stagingDir: string): MigrationResult<StagedSour
       failures.push(
         migrationFailure(
           "CODEMOD_INVALID_SOURCE",
-          "slot-templates.yaml",
+          "slot-templates.json",
           error instanceof Error ? error.message : String(error),
         ),
       );
@@ -250,8 +316,20 @@ export function readStagedSource(stagingDir: string): MigrationResult<StagedSour
   }
 
   const designs: StagedDesign[] = [];
-  for (const file of yamlFiles(join(stagingDir, "designs"))) {
-    const raw = fromYaml(reader.read(join(stagingDir, "designs", file)));
+  for (const file of stagedFiles(join(stagingDir, "designs"))) {
+    let raw: unknown;
+    try {
+      raw = fromStagedJson(reader.read(join(stagingDir, "designs", file)));
+    } catch (error) {
+      failures.push(
+        migrationFailure(
+          "CODEMOD_INVALID_SOURCE",
+          `designs/${file}`,
+          `not valid JSON: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      );
+      continue;
+    }
     const records =
       typeof raw === "object" && raw !== null
         ? (raw as Record<string, unknown>)["designs"]
@@ -300,13 +378,13 @@ export function readStagedSource(stagingDir: string): MigrationResult<StagedSour
   };
 }
 
-function readJsonOrYaml(
+function readStagedCollection(
   reader: ReturnType<typeof makeReader>,
   absolute: string,
   key: string,
 ): unknown[] {
   if (!existsSync(absolute)) return [];
-  const raw = fromYaml(reader.read(absolute));
+  const raw = fromStagedJson(reader.read(absolute));
   if (typeof raw !== "object" || raw === null) return [];
   const records = (raw as Record<string, unknown>)[key];
   return Array.isArray(records) ? records : [];

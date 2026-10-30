@@ -1,0 +1,518 @@
+{
+  "label": "g03a-benchmark",
+  "tasks": {
+    "bench": [
+      {
+        "mode": "runtime",
+        "run": 0,
+        "order": "runtime>baked",
+        "timing": {
+          "apiMs": 369.30000019073486,
+          "firstPaintMs": 530.9000000953674,
+          "idleMs": 956
+        },
+        "refreshHz": 61,
+        "finalZoom": 13.164674606989522,
+        "idle": {
+          "frames": {
+            "n": 181,
+            "p50": 16.69999999999891,
+            "p95": 17.5,
+            "p99": 17.69999999999891,
+            "max": 17.700000000000728,
+            "mean": 16.665745856353592
+          },
+          "framesOver33": 0,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 20.59999990463257,
+          "mainThreadTaskMs": 88.342,
+          "mainThreadScriptMs": 13.634
+        },
+        "pan": {
+          "frames": {
+            "n": 343,
+            "p50": 16.69999999999891,
+            "p95": 17.600000000000364,
+            "p99": 17.700000000000728,
+            "max": 17.700000000000728,
+            "mean": 16.642857142996167
+          },
+          "framesOver33": 0,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 129.59999990463257,
+          "mainThreadTaskMs": 421.2290000000001,
+          "mainThreadScriptMs": 271.255
+        },
+        "zoomIn": {
+          "frames": {
+            "n": 303,
+            "p50": 16.700000000000728,
+            "p95": 33.30000000000291,
+            "p99": 34.29999999999927,
+            "max": 67.60000000000218,
+            "mean": 18.59174917491749
+          },
+          "framesOver33": 9,
+          "longTasks": 1,
+          "longTaskTotalMs": 66,
+          "settleMsAfterBurst": 32.200000047683716,
+          "mainThreadTaskMs": 811.964,
+          "mainThreadScriptMs": 663.6580000000001
+        },
+        "zoomOut": {
+          "frames": {
+            "n": 621,
+            "p50": 16.69999999999709,
+            "p95": 33.29999999999927,
+            "p99": 33.400000000001455,
+            "max": 34.29999999999927,
+            "mean": 17.776972624798713
+          },
+          "framesOver33": 14,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 24.09999990463257,
+          "mainThreadTaskMs": 744.3460000000002,
+          "mainThreadScriptMs": 620.135
+        },
+        "heapMB": 42.8,
+        "diagnostics": null,
+        "nonLocal": 0
+      },
+      {
+        "mode": "baked",
+        "run": 0,
+        "order": "runtime>baked",
+        "timing": {
+          "apiMs": 349,
+          "firstPaintMs": 415.40000009536743,
+          "idleMs": 570.5
+        },
+        "refreshHz": 61,
+        "finalZoom": 13.164656231541287,
+        "idle": {
+          "frames": {
+            "n": 181,
+            "p50": 16.699999999999818,
+            "p95": 17.600000000000364,
+            "p99": 17.600000000000364,
+            "max": 17.699999999999818,
+            "mean": 16.669060773480666
+          },
+          "framesOver33": 0,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 22.300000190734863,
+          "mainThreadTaskMs": 79.002,
+          "mainThreadScriptMs": 13.019999999999998
+        },
+        "pan": {
+          "frames": {
+            "n": 343,
+            "p50": 16.69999999999891,
+            "p95": 17.599999999998545,
+            "p99": 17.600000000000364,
+            "max": 17.69999999999891,
+            "mean": 16.63644314868804
+          },
+          "framesOver33": 0,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 131.80000019073486,
+          "mainThreadTaskMs": 436.14599999999996,
+          "mainThreadScriptMs": 287.01899999999995
+        },
+        "zoomIn": {
+          "frames": {
+            "n": 308,
+            "p50": 16.69999999999891,
+            "p95": 33.30000000000109,
+            "p99": 133.39999999999964,
+            "max": 315.7999999999993,
+            "mean": 20.833441558441557
+          },
+          "framesOver33": 12,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 31.100000143051147,
+          "mainThreadTaskMs": 851.7360000000001,
+          "mainThreadScriptMs": 698.4879999999999
+        },
+        "zoomOut": {
+          "frames": {
+            "n": 543,
+            "p50": 16.700000000000728,
+            "p95": 33.79999999999927,
+            "p99": 34.30000000000291,
+            "max": 50.79999999999927,
+            "mean": 21.860220994475142
+          },
+          "framesOver33": 60,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 47.90000009536743,
+          "mainThreadTaskMs": 693.3600000000002,
+          "mainThreadScriptMs": 561.59
+        },
+        "heapMB": 19.3,
+        "diagnostics": {
+          "requests": 230,
+          "served": 230,
+          "empty": 0,
+          "failures": [],
+          "packBytes": 5647299,
+          "loadMs": 30.799999952316284,
+          "packVerified": true
+        },
+        "nonLocal": 0
+      },
+      {
+        "mode": "baked",
+        "run": 1,
+        "order": "baked>runtime",
+        "timing": {
+          "apiMs": 352.2999999523163,
+          "firstPaintMs": 422,
+          "idleMs": 572.4000000953674
+        },
+        "refreshHz": 61,
+        "finalZoom": 13.164712149952212,
+        "idle": {
+          "frames": {
+            "n": 181,
+            "p50": 16.699999999999818,
+            "p95": 17.599999999999454,
+            "p99": 17.600000000000364,
+            "max": 17.600000000000364,
+            "mean": 16.666298342541435
+          },
+          "framesOver33": 0,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 24,
+          "mainThreadTaskMs": 80.036,
+          "mainThreadScriptMs": 13.700000000000001
+        },
+        "pan": {
+          "frames": {
+            "n": 343,
+            "p50": 16.699999999999818,
+            "p95": 17.600000000000364,
+            "p99": 17.600000000000364,
+            "max": 17.700000000000728,
+            "mean": 16.645189504095136
+          },
+          "framesOver33": 0,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 131.39999985694885,
+          "mainThreadTaskMs": 419.195,
+          "mainThreadScriptMs": 261.05999999999995
+        },
+        "zoomIn": {
+          "frames": {
+            "n": 280,
+            "p50": 16.700000000000728,
+            "p95": 34.29999999999927,
+            "p99": 50.900000000001455,
+            "max": 66.70000000000073,
+            "mean": 22.083214285714284
+          },
+          "framesOver33": 29,
+          "longTasks": 1,
+          "longTaskTotalMs": 59,
+          "settleMsAfterBurst": 32.10000014305115,
+          "mainThreadTaskMs": 859.699,
+          "mainThreadScriptMs": 710.128
+        },
+        "zoomOut": {
+          "frames": {
+            "n": 571,
+            "p50": 16.700000000000728,
+            "p95": 33.400000000001455,
+            "p99": 34.29999999999927,
+            "max": 50,
+            "mean": 19.916637478108587
+          },
+          "framesOver33": 40,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 44.5,
+          "mainThreadTaskMs": 701.6320000000001,
+          "mainThreadScriptMs": 578.6510000000001
+        },
+        "heapMB": 19.2,
+        "diagnostics": {
+          "requests": 229,
+          "served": 229,
+          "empty": 0,
+          "failures": [],
+          "packBytes": 5647299,
+          "loadMs": 31.600000143051147,
+          "packVerified": true
+        },
+        "nonLocal": 0
+      },
+      {
+        "mode": "runtime",
+        "run": 1,
+        "order": "baked>runtime",
+        "timing": {
+          "apiMs": 366.10000014305115,
+          "firstPaintMs": 572.7000000476837,
+          "idleMs": 1429.2999999523163
+        },
+        "refreshHz": 61,
+        "finalZoom": 13.161186406239036,
+        "idle": {
+          "frames": {
+            "n": 181,
+            "p50": 16.69999999999891,
+            "p95": 17.30000000000109,
+            "p99": 17.600000000000364,
+            "max": 17.700000000000728,
+            "mean": 16.66629834254145
+          },
+          "framesOver33": 0,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 23.59999990463257,
+          "mainThreadTaskMs": 78.764,
+          "mainThreadScriptMs": 12.567000000000002
+        },
+        "pan": {
+          "frames": {
+            "n": 333,
+            "p50": 16.700000000000728,
+            "p95": 50,
+            "p99": 50.10000000000218,
+            "max": 66.60000000000218,
+            "mean": 23.250450450020868
+          },
+          "framesOver33": 44,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 79.59999990463257,
+          "mainThreadTaskMs": 450.312,
+          "mainThreadScriptMs": 298.84999999999997
+        },
+        "zoomIn": {
+          "frames": {
+            "n": 255,
+            "p50": 16.700000000000728,
+            "p95": 33.400000000001455,
+            "p99": 33.79999999999927,
+            "max": 100,
+            "mean": 23.594509803921564
+          },
+          "framesOver33": 21,
+          "longTasks": 1,
+          "longTaskTotalMs": 92,
+          "settleMsAfterBurst": 38.39999985694885,
+          "mainThreadTaskMs": 763.0400000000001,
+          "mainThreadScriptMs": 619.2379999999999
+        },
+        "zoomOut": {
+          "frames": {
+            "n": 507,
+            "p50": 16.700000000000728,
+            "p95": 50,
+            "p99": 50.29999999999927,
+            "max": 83.39999999999782,
+            "mean": 24.32958579872253
+          },
+          "framesOver33": 56,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 58.89999985694885,
+          "mainThreadTaskMs": 666.2660000000001,
+          "mainThreadScriptMs": 536.989
+        },
+        "heapMB": 42.7,
+        "diagnostics": null,
+        "nonLocal": 0
+      },
+      {
+        "mode": "runtime",
+        "run": 2,
+        "order": "runtime>baked",
+        "timing": {
+          "apiMs": 365.80000019073486,
+          "firstPaintMs": 542.5,
+          "idleMs": 1113.8000001907349
+        },
+        "refreshHz": 61,
+        "finalZoom": 13.161079721849308,
+        "idle": {
+          "frames": {
+            "n": 181,
+            "p50": 16.69999999999891,
+            "p95": 17.19999999999891,
+            "p99": 17.600000000000364,
+            "max": 17.700000000000728,
+            "mean": 16.666298342541438
+          },
+          "framesOver33": 0,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 23.200000047683716,
+          "mainThreadTaskMs": 76.652,
+          "mainThreadScriptMs": 12.042
+        },
+        "pan": {
+          "frames": {
+            "n": 337,
+            "p50": 16.700000000000728,
+            "p95": 50,
+            "p99": 67.20000000000073,
+            "max": 82.79999999999927,
+            "mean": 24.556379821392486
+          },
+          "framesOver33": 50,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 100.09999990463257,
+          "mainThreadTaskMs": 472.87699999999995,
+          "mainThreadScriptMs": 296.502
+        },
+        "zoomIn": {
+          "frames": {
+            "n": 265,
+            "p50": 16.700000000000728,
+            "p95": 33.400000000001455,
+            "p99": 34.29999999999927,
+            "max": 83.40000000000146,
+            "mean": 22.38943396226414
+          },
+          "framesOver33": 33,
+          "longTasks": 1,
+          "longTaskTotalMs": 79,
+          "settleMsAfterBurst": 28.799999952316284,
+          "mainThreadTaskMs": 734.3820000000001,
+          "mainThreadScriptMs": 604.7779999999999
+        },
+        "zoomOut": {
+          "frames": {
+            "n": 505,
+            "p50": 16.700000000000728,
+            "p95": 34.20000000000073,
+            "p99": 51,
+            "max": 66.70000000000073,
+            "mean": 24.307920791701505
+          },
+          "framesOver33": 84,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 47.5,
+          "mainThreadTaskMs": 657.227,
+          "mainThreadScriptMs": 531.447
+        },
+        "heapMB": 42.8,
+        "diagnostics": null,
+        "nonLocal": 0
+      },
+      {
+        "mode": "baked",
+        "run": 2,
+        "order": "runtime>baked",
+        "timing": {
+          "apiMs": 347.40000009536743,
+          "firstPaintMs": 399.5,
+          "idleMs": 563
+        },
+        "refreshHz": 61,
+        "finalZoom": 13.161325999745467,
+        "idle": {
+          "frames": {
+            "n": 163,
+            "p50": 16.699999999999818,
+            "p95": 33.399999999999636,
+            "p99": 33.69999999999982,
+            "max": 33.899999999999636,
+            "mean": 18.50736196319018
+          },
+          "framesOver33": 8,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 23.90000009536743,
+          "mainThreadTaskMs": 74.327,
+          "mainThreadScriptMs": 12.121
+        },
+        "pan": {
+          "frames": {
+            "n": 335,
+            "p50": 16.69999999999891,
+            "p95": 17.69999999999891,
+            "p99": 33.30000000000109,
+            "max": 33.399999999999636,
+            "mean": 17.43820895508154
+          },
+          "framesOver33": 0,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 91.39999985694885,
+          "mainThreadTaskMs": 439.01500000000004,
+          "mainThreadScriptMs": 297.173
+        },
+        "zoomIn": {
+          "frames": {
+            "n": 260,
+            "p50": 16.80000000000109,
+            "p95": 34.30000000000109,
+            "p99": 50,
+            "max": 83.40000000000146,
+            "mean": 24.038076923076915
+          },
+          "framesOver33": 30,
+          "longTasks": 2,
+          "longTaskTotalMs": 145,
+          "settleMsAfterBurst": 62.10000014305115,
+          "mainThreadTaskMs": 797.181,
+          "mainThreadScriptMs": 666.531
+        },
+        "zoomOut": {
+          "frames": {
+            "n": 517,
+            "p50": 17.200000000000728,
+            "p95": 34.400000000001455,
+            "p99": 50,
+            "max": 50.89999999999782,
+            "mean": 24.63056092861773
+          },
+          "framesOver33": 96,
+          "longTasks": 0,
+          "longTaskTotalMs": 0,
+          "settleMsAfterBurst": 24.5,
+          "mainThreadTaskMs": 613.483,
+          "mainThreadScriptMs": 487.781
+        },
+        "heapMB": 19.2,
+        "diagnostics": {
+          "requests": 203,
+          "served": 203,
+          "empty": 0,
+          "failures": [],
+          "packBytes": 5647299,
+          "loadMs": 26.300000190734863,
+          "packVerified": true
+        },
+        "nonLocal": 0
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "benchmark ran for both modes",
+      "ok": true,
+      "detail": "baked zoom-out max 50.79999999999927/50/50.89999999999782 ms, runtime 34.29999999999927/83.39999999999782/66.70000000000073 ms"
+    },
+    {
+      "name": "no non-local request during the benchmark",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "consoleErrors": []
+}

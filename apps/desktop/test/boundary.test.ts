@@ -6,6 +6,37 @@ import {
   CONTENT_SECURITY_POLICY,
   DEV_CONTENT_SECURITY_POLICY,
 } from "../src/main/csp.js";
+import { createIpcHandlers, registerIpcChannels, type IpcDependencies } from "../src/main/ipc.js";
+import { ipcEvents, ipcMessages, ipcRequests } from "../src/shared/ipc-contract.js";
+
+function channelsOf(table: Readonly<Record<string, { readonly channel: string }>>): string[] {
+  return Object.values(table)
+    .map((entry) => entry.channel)
+    .sort();
+}
+
+const CONTRACT_CHANNELS = [
+  ...channelsOf(ipcRequests),
+  ...channelsOf(ipcMessages),
+  ...channelsOf(ipcEvents),
+];
+
+function unusedIpcDependencies(): IpcDependencies {
+  const unused = (): Promise<never> => new Promise<never>(() => undefined);
+  return {
+    host: { platform: "darwin", windowOf: () => null },
+    dispatchCampaignCommand: unused,
+    preferences: {
+      read: unused,
+      readWithRecovery: unused,
+      write: unused,
+      readCampaign: unused,
+      writeCampaign: unused,
+    },
+    reportCrash: () => undefined,
+    quitFlushComplete: () => undefined,
+  };
+}
 
 describe("Electron boundary", () => {
   it("applies `default-src 'self'` CSP to renderer responses", () => {
@@ -32,39 +63,65 @@ describe("Electron boundary", () => {
     expect(prodHeaders["Content-Security-Policy"]).toEqual([CONTENT_SECURITY_POLICY]);
   });
 
-  it("registers only the allow-listed IPC handlers in the main process", () => {
-    const mainSource = readFileSync(resolve(__dirname, "../src/main/index.ts"), "utf8");
-    const allowedHandle = [
-      'ipc.handle("campaign:execute"',
-      'ipc.handle("window:get-state"',
-      'ipc.handle("preferences:read"',
-      'ipc.handle("preferences:write"',
-      'ipc.handle("preferences:read-campaign"',
-      'ipc.handle("preferences:write-campaign"',
-    ];
-    const allowedOn = [
-      'ipc.on("window:minimize"',
-      'ipc.on("window:maximize-toggle"',
-      'ipc.on("window:close"',
-      'ipc.on("support:report-crash"',
-    ];
-    for (const handler of [...allowedHandle, ...allowedOn]) {
-      expect(mainSource).toContain(handler);
+  it("declares every bridge channel exactly once in the shared contract", () => {
+    expect(channelsOf(ipcRequests)).toEqual([
+      "app:read-startup",
+      "campaign:execute",
+      "preferences:read",
+      "preferences:read-campaign",
+      "preferences:write",
+      "preferences:write-campaign",
+      "window:get-state",
+    ]);
+    expect(channelsOf(ipcMessages)).toEqual([
+      "app:quit-flush-complete",
+      "support:report-crash",
+      "window:close",
+      "window:maximize-toggle",
+      "window:minimize",
+    ]);
+    expect(channelsOf(ipcEvents)).toEqual(["app:quit-flush", "window:state-changed"]);
+    expect(new Set(CONTRACT_CHANNELS).size).toBe(CONTRACT_CHANNELS.length);
+  });
+
+  it("registers every contract channel, and only those, in the main process", () => {
+    const registered: string[] = [];
+    const ipc = {
+      handle: (channel: string) => {
+        registered.push(channel);
+      },
+      on: (channel: string) => {
+        registered.push(channel);
+      },
+    };
+
+    registerIpcChannels(ipc, createIpcHandlers(unusedIpcDependencies()));
+
+    expect([...registered].sort()).toEqual(
+      [...channelsOf(ipcRequests), ...channelsOf(ipcMessages)].sort(),
+    );
+  });
+
+  it("takes every channel name from the contract in both preload and main", () => {
+    for (const file of ["../src/preload/index.ts", "../src/main/index.ts", "../src/main/ipc.ts"]) {
+      const source = readFileSync(resolve(__dirname, file), "utf8");
+      for (const channel of CONTRACT_CHANNELS) {
+        expect(source).not.toContain(`"${channel}"`);
+        expect(source).not.toContain(`'${channel}'`);
+      }
     }
-    const registeredHandle = mainSource.match(/ipc\.handle\("[^"]+"/g) ?? [];
-    const registeredOn = mainSource.match(/ipc\.on\("[^"]+"/g) ?? [];
-    expect(registeredHandle.length).toBe(allowedHandle.length);
-    expect(registeredOn.length).toBe(allowedOn.length);
   });
 
   it("narrows the preload bridge to only the allow-listed top-level members", () => {
     const preloadSource = readFileSync(resolve(__dirname, "../src/preload/index.ts"), "utf8");
-    expect(preloadSource).toContain("contextBridge.exposeInMainWorld");
-    const exposed = preloadSource.match(/^\s{2}([a-zA-Z]+):/gm) ?? [];
+    const exposedStart = preloadSource.indexOf("contextBridge.exposeInMainWorld");
+    expect(exposedStart).toBeGreaterThanOrEqual(0);
+    const exposed = preloadSource.slice(exposedStart).match(/^\s{2}([a-zA-Z]+):/gm) ?? [];
     const allowed = [
       "campaign:",
       "preferences:",
       "platform:",
+      "readStartupSnapshot:",
       "getWindowState:",
       "windowMinimize:",
       "windowMaximizeToggle:",
@@ -80,13 +137,9 @@ describe("Electron boundary", () => {
   });
 
   it("dispatches every command through the single campaign:execute channel, none directly", () => {
-    const mainSource = readFileSync(resolve(__dirname, "../src/main/index.ts"), "utf8");
-    expect(mainSource).toContain("dispatchCampaignCommand");
-    const registered = mainSource.match(/ipcMain\.(handle|on)\("([^"]+)"/g) ?? [];
-    expect(
-      registered.every((r) =>
-        /"(campaign:execute|window:[a-z-]+|support:report-crash|preferences:[a-z-]+)"/.test(r),
-      ),
-    ).toBe(true);
+    const campaignChannels = channelsOf(ipcRequests).filter((channel) =>
+      channel.startsWith("campaign:"),
+    );
+    expect(campaignChannels).toEqual(["campaign:execute"]);
   });
 });

@@ -9,7 +9,7 @@ import {
 import { FIXTURE_BATTLE_OFFER_RULES } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import {
-  hashSnapshot,
+  unifiedSnapshotHash,
   MonthExecutor,
   type InterruptionChannel,
   type MonthResult,
@@ -152,7 +152,7 @@ describe("the enemy declines (R11)", () => {
     expect(offerOf(run(strongPlayer, notHeld))).toEqual(offer);
     const a = run(strongPlayer, proceeds, [answer(offer, "accept")]);
     const b = run(strongPlayer, notHeld, [answer(offer, "accept")]);
-    expect(hashSnapshot(a.finalSnapshot)).toBe(hashSnapshot(b.finalSnapshot));
+    expect(unifiedSnapshotHash(a.finalSnapshot)).toBe(unifiedSnapshotHash(b.finalSnapshot));
     expect(a.eventLedger.hash()).toBe(b.eventLedger.hash());
   });
 
@@ -207,7 +207,7 @@ describe("the enemy declines (R11)", () => {
     }
     const a = run(strongPlayer, rules({ probabilityBp: 10_000 }));
     const b = run(strongPlayer, rules({ probabilityBp: 10_000 }));
-    expect(hashSnapshot(a.finalSnapshot)).toBe(hashSnapshot(b.finalSnapshot));
+    expect(unifiedSnapshotHash(a.finalSnapshot)).toBe(unifiedSnapshotHash(b.finalSnapshot));
     expect(a.eventLedger.hash()).toBe(b.eventLedger.hash());
     expect(a.randomLedger.hash()).toBe(b.randomLedger.hash());
   });
@@ -227,7 +227,9 @@ describe("without an interruption channel the month is byte-identical to today (
     expect(draws(withSection)).toHaveLength(0);
     expect(withdrawn(withSection)).toHaveLength(0);
     expect(withSection.finalSnapshot.wars.battles).toHaveLength(1);
-    expect(hashSnapshot(withSection.finalSnapshot)).toBe(hashSnapshot(without.finalSnapshot));
+    expect(unifiedSnapshotHash(withSection.finalSnapshot)).toBe(
+      unifiedSnapshotHash(without.finalSnapshot),
+    );
     expect(withSection.eventLedger.hash()).toBe(without.eventLedger.hash());
     expect(withSection.randomLedger.all).toEqual(without.randomLedger.all);
   });

@@ -1,6 +1,6 @@
 # Packages
 
-21 standalone TypeScript composite projects. **Authoritative sources:**
+22 TypeScript composite projects. **Authoritative sources:**
 
 - **Boundaries** — each package's `AGENTS.md` links its [ADRs](../docs/adr).
 - **Vocabulary** — [CONTEXT.md](../CONTEXT.md).
@@ -8,8 +8,8 @@
 
 Rules: the graph is directed and acyclic, leaf primitives at the bottom and the
 phase engine composing them; import only a package's public `exports`
-(`src/index.ts`), never another package's source. Packages with non-obvious constraints carry an `AGENTS.md`; read it before editing. Build/test one package with
-`pnpm --filter @bluewave/<name> <build|test|typecheck|lint>`.
+(`src/index.ts`), never another package's source. Read a package's `AGENTS.md`
+before editing it. Build/test one with `pnpm --filter @bluewave/<name> <build|test>`.
 
 | Package | Role |
 | --- | --- |
@@ -18,6 +18,7 @@ phase engine composing them; import only a package's public `exports`
 | `deterministic` | Canonical JSON, SHA-256, hash contexts, envelopes, fixed-point math. |
 | `armament` | Platform-independent authoritative armament domain + resolver (ADR-0093). |
 | `random` | Domain-separated seeded PRNG with an audit ledger. |
+| `content-authoring` | Typed content-authoring API: expressions, provenance, constructors (ADR-0334). |
 | `content-schema` | Effect `Schema` definitions + safe YAML parser for packs, rulesets, entities. |
 | `content-compiler` | Parse → validate → normalize → compile stages with diagnostics. |
 | `campaign` | Campaign compiler and state aggregates (world, nations, fleets, war…). |

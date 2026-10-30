@@ -2,13 +2,13 @@
 
 Applies to: repository
 
-Rule: At most five worktrees at once including the main checkout, each on its own short-lived branch cut from `dev`; create them with `pnpm worktrees new`.
-
 ## Status
+
+Superseded by: ADR-0364
 
 Accepted (2026-10-19).
 
-Amends: ADR-0236 and ADR-0234. Only the cap changes, from three to five.
+Only the cap changes, from three to five.
 
 ## Context
 

@@ -2,9 +2,9 @@
 
 Applies to: compiler-cli, desktop, persistence
 
-Rule: Save retention is opt-in with the active and previous saves always protected; Effect-returning persistence methods carry an `Effect` suffix.
-
 ## Status
+
+Superseded by: ADR-0343
 
 Accepted (2026-10-26). Covers the persistence changes delivered by PRs [#312](https://github.com/joaooliveira92/iron-tide/pull/312) to
 [#316](https://github.com/joaooliveira92/iron-tide/pull/316). Builds on [ADR-0268](ADR-0268-code-carries-no-comments.md) only for the rule that rationale lives here.
@@ -31,8 +31,10 @@ Accepted (2026-10-26). Covers the persistence changes delivered by PRs [#312](ht
 
 ## Not delivered (tracked, not hidden)
 
-- The synchronous methods still swallow some filesystem errors in `catch {}` blocks, and `revert(): boolean` cannot say why it failed.
-  Making them typed changes return types, so it is its own PR.
+- The synchronous getters (`getActiveSaveId`, `getPreviousSaveId`, `isCurrent`, `revert(): boolean`) stay best-effort on purpose.
+  The Effect channel is typed instead: pointer reads separate missing from unreadable from corrupt, a save over an unreadable
+  pointer skips pruning and reports it in `SaveResult.warnings`, `isCurrentEffect` fails rather than guessing, and
+  `revertEffect` carries the filesystem cause.
 - There is no retention policy for replays or month-input files; only save directories are pruned.
 
 ## Compatibility

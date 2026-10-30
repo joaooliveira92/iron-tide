@@ -2,9 +2,9 @@
 
 Applies to: repository
 
-Rule: Code carries no comments; rationale lives in an ADR or the commit message, and only tool-read comments survive.
-
 ## Status
+
+Superseded by: ADR-0366
 
 Accepted (2026-10-22).
 

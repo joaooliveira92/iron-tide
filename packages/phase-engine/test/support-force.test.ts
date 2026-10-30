@@ -9,7 +9,7 @@ import {
 import { FIXTURE_BATTLE_OFFER_RULES } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import {
-  hashSnapshot,
+  unifiedSnapshotHash,
   MonthExecutor,
   type InterruptionChannel,
   type MonthResult,
@@ -279,7 +279,7 @@ describe("the support force (R12)", () => {
     }
     const a = run(withCandidates, present, [answer(request, "accept")]);
     const b = run(withCandidates, present, [answer(request, "accept")]);
-    expect(hashSnapshot(a.finalSnapshot)).toBe(hashSnapshot(b.finalSnapshot));
+    expect(unifiedSnapshotHash(a.finalSnapshot)).toBe(unifiedSnapshotHash(b.finalSnapshot));
     expect(a.eventLedger.hash()).toBe(b.eventLedger.hash());
   });
 
@@ -314,7 +314,9 @@ describe("without an interruption channel the month is byte-identical to today (
     const without = execute(undefined);
     expect(draws(withSection)).toHaveLength(0);
     expect(manifestOf(withSection)?.temporaryAssets).toEqual([]);
-    expect(hashSnapshot(withSection.finalSnapshot)).toBe(hashSnapshot(without.finalSnapshot));
+    expect(unifiedSnapshotHash(withSection.finalSnapshot)).toBe(
+      unifiedSnapshotHash(without.finalSnapshot),
+    );
     expect(withSection.eventLedger.hash()).toBe(without.eventLedger.hash());
     expect(withSection.randomLedger.all).toEqual(without.randomLedger.all);
   });

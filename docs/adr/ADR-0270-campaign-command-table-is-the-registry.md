@@ -2,9 +2,9 @@
 
 Applies to: commands, desktop
 
-Rule: `campaignCommandShapes` is the one command registry; command names and map types derive from it, never by hand.
-
 ## Status
+
+Superseded by: ADR-0338
 
 Accepted (2026-10-22).
 

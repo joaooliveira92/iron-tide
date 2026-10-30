@@ -5,7 +5,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import type { CommandEnvelope, BudgetProjectCommand } from "@bluewave/commands";
 import { CommandLedger } from "@bluewave/commands";
-import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
+import { MonthExecutor, ReplayVerifier, unifiedSnapshotHash } from "@bluewave/phase-engine";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function createSnapshot(): CampaignSnapshot {
@@ -101,46 +101,6 @@ function cloneLedger(original: CommandLedger): CommandLedger {
   return clone;
 }
 
-function hashSnapshot(snapshot: CampaignSnapshot): string {
-  const nations: Record<string, NationState> = {};
-  for (const [id, nation] of snapshot.nations) {
-    nations[id] = nation;
-  }
-  const wars = {
-    wars: snapshot.wars.wars.map((w) => ({ ...w })),
-    battles: snapshot.wars.battles.map((b) => ({ ...b })),
-    participantMemberships: snapshot.wars.participantMemberships.map((m) => ({ ...m })),
-    blockadeState: snapshot.wars.blockadeState.map((b) => ({ ...b })),
-    battleManifests: (snapshot.wars.battleManifests ?? []).map((m) => ({ ...m })),
-  };
-  const hashable = {
-    version: snapshot.version,
-    turnNumber: snapshot.turnNumber,
-    campaignId: snapshot.campaignId,
-    startYear: snapshot.startYear,
-    startMonth: snapshot.startMonth,
-    strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
-    slots: snapshot.slots.map((s) => ({ ...s })),
-    world: {
-      areas: snapshot.world.areas.map((a) => ({ ...a })),
-      routes: snapshot.world.routes.map((r) => ({ ...r })),
-      ports: snapshot.world.ports.map((p) => ({ ...p })),
-    },
-    nations,
-    wars,
-    politics: {
-      relations: snapshot.politics.relations.map((r) => ({ ...r })),
-      shells: { ...snapshot.politics.shells },
-    },
-    intelligence: {
-      shells: { ...snapshot.intelligence.shells },
-    },
-    rulesetVersion: snapshot.rulesetVersion,
-    compatibilityVersion: snapshot.compatibilityVersion,
-  };
-  return sha256Hex(canonicalSerialize(hashable));
-}
-
 describe("ReplayVerifier", () => {
   it("replay with same snapshot and commands matches", () => {
     const snapshot = createSnapshot();
@@ -149,7 +109,7 @@ describe("ReplayVerifier", () => {
     const executor = new MonthExecutor();
     const result = executor.execute(snapshot, [cmd], "test-seed", collector);
     const originalLedger = cloneLedger(result.commandLedger);
-    const expectedFinalHash = hashSnapshot(result.finalSnapshot);
+    const expectedFinalHash = unifiedSnapshotHash(result.finalSnapshot);
     const verifier = new ReplayVerifier();
     const replayResult = verifier.verify(
       snapshot,
@@ -172,7 +132,7 @@ describe("ReplayVerifier", () => {
     const executor = new MonthExecutor();
     const result = executor.execute(snapshot, [cmd100], "test-seed", collector);
     const originalLedger = cloneLedger(result.commandLedger);
-    const expectedFinalHash = hashSnapshot(result.finalSnapshot);
+    const expectedFinalHash = unifiedSnapshotHash(result.finalSnapshot);
     const verifier = new ReplayVerifier();
     const replayResult = verifier.verify(
       snapshot,
@@ -192,7 +152,7 @@ describe("ReplayVerifier", () => {
     const executor = new MonthExecutor();
     const result = executor.execute(snapshot, [cmd], "test-seed", collector);
     const originalLedger = cloneLedger(result.commandLedger);
-    const expectedFinalHash = hashSnapshot(result.finalSnapshot);
+    const expectedFinalHash = unifiedSnapshotHash(result.finalSnapshot);
     const wrongSnapshot = createSnapshot();
     const gbr = wrongSnapshot.nations.get("GBR")!;
     gbr.treasury = SafeInt(999);
@@ -217,7 +177,7 @@ describe("ReplayVerifier", () => {
     const emptyLedger = new CommandLedger();
     const executor = new MonthExecutor();
     const result = executor.execute(snapshot, [], "test-seed", new DiagnosticCollector());
-    const finalHash = hashSnapshot(result.finalSnapshot);
+    const finalHash = unifiedSnapshotHash(result.finalSnapshot);
     const verifier = new ReplayVerifier();
     const replayResult = verifier.verify(
       snapshot,
@@ -241,7 +201,7 @@ describe("ReplayVerifier", () => {
       new DiagnosticCollector(),
     );
     const originalLedger = cloneLedger(result.commandLedger);
-    const expectedFinalHash = hashSnapshot(result.finalSnapshot);
+    const expectedFinalHash = unifiedSnapshotHash(result.finalSnapshot);
     const verifier = new ReplayVerifier();
     const r1 = verifier.verify(
       snapshot,
@@ -270,7 +230,7 @@ describe("ReplayVerifier", () => {
       snap,
       [cmd],
       cloneLedger(res.commandLedger),
-      hashSnapshot(res.finalSnapshot),
+      unifiedSnapshotHash(res.finalSnapshot),
       "seed-B",
       new DiagnosticCollector(),
     );
@@ -285,7 +245,7 @@ describe("ReplayVerifier", () => {
       snap,
       [cmd],
       badLedger,
-      hashSnapshot(res.finalSnapshot),
+      unifiedSnapshotHash(res.finalSnapshot),
       "s",
       new DiagnosticCollector(),
     );

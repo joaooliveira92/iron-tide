@@ -28,19 +28,19 @@ ruleset authors today; none of it is sourced.
 | `START_THICKNESS_UM` for `DECK_EXTENDED` / `TURRET` / `TURRET_TOP` / `SECONDARY_GUN` | 50 / 150 / 50 / 75 mm | #154 | manual pp.37, 135 (fields only) | `packages/ship-design/src/armour.ts` |
 | Starting sizes of the same regions (length x height) | extended deck: waterline - citadel x deck width; turret 6 x 2.5 m; turret top 4 x 4 m; secondary 3 x 2 m | #154 | — | `newArmourRegion` |
 | `BARBETTE` / `TURRET_FACE` to `TURRET` merge rule | per-field maximum; material and incline from the thicker plate; tie by smaller material id | #154 | — (migration rule) | `persistence.ts` (`foldLegacyTurretRegions`) |
-| `enginePriorityWeightSwingBp` | 1500 | #155 | manual p.41 (axis only) | `balance.yaml` `machinery` |
-| `enginePriorityPowerSwingBp` | 500 | #155 | — | `balance.yaml` `machinery` |
-| `enginePriorityReliabilitySwingBp` | 2500 | #155 | — | `balance.yaml` `machinery` |
-| `enginePriorityReliabilityWarnBp` (breakdown-risk warning) | 7000 | #155 | — | `balance.yaml` `machinery` |
-| `fireControlPositionRedundancyBp` (per position, capped at 10 000) | 2500 | #156 | manual p.135 (field only) | `balance.yaml` `systems` |
+| `enginePriorityWeightSwingBp` | 1500 | #155 | manual p.41 (axis only) | `balance.ts` `machinery` |
+| `enginePriorityPowerSwingBp` | 500 | #155 | — | `balance.ts` `machinery` |
+| `enginePriorityReliabilitySwingBp` | 2500 | #155 | — | `balance.ts` `machinery` |
+| `enginePriorityReliabilityWarnBp` (breakdown-risk warning) | 7000 | #155 | — | `balance.ts` `machinery` |
+| `fireControlPositionRedundancyBp` (per position, capped at 10 000) | 2500 | #156 | manual p.135 (field only) | `balance.ts` `systems` |
 | `FIRE_CONTROL_NO_POSITIONS` threshold | 0 positions with directors and guns fitted | #156 | manual p.135 | `systems.ts` (no tunable) |
 | Per-calibre gun quality | -3..+2 on the combat scale; DERIVED | #156 | manual p.135; read-only | `GUN_QUALITY_TABLE` (combat). **No research source assigns a quality to a calibre today**, so the panel reports the neutral value 0 and says so. |
-| `lowFreeboardReserveCutBp` | 3000 | #157 | manual p.39 (toggle only) | `balance.yaml` `hull` |
-| `lowFreeboardHullWeightSavingBp` | 400 | #157 | — | `balance.yaml` `hull` |
-| `tertiary.gunWeightNanoKgPerMm3` | 1 500 000 (57 mm gun ~ 278 kg) | #157 | manual p.28 (count only) | `balance.yaml` `tertiary` |
-| `tertiary.footprintFactorPermille` | 400 000 (57 mm gun ~ 1.3 m2 of deck) | #157 | — | `balance.yaml` `tertiary` |
-| `tertiary.shellNanoKgPerMm3` | 20 000 (57 mm shell ~ 3.7 kg) | #157 | — | `balance.yaml` `tertiary` |
-| `tertiary.bearingBp` (share of guns bearing on one beam) | 5000 | #157 | — | `balance.yaml` `tertiary` |
+| `lowFreeboardReserveCutBp` | 3000 | #157 | manual p.39 (toggle only) | `balance.ts` `hull` |
+| `lowFreeboardHullWeightSavingBp` | 400 | #157 | — | `balance.ts` `hull` |
+| `tertiary.gunWeightNanoKgPerMm3` | 1 500 000 (57 mm gun ~ 278 kg) | #157 | manual p.28 (count only) | `balance.ts` `tertiary` |
+| `tertiary.footprintFactorPermille` | 400 000 (57 mm gun ~ 1.3 m2 of deck) | #157 | — | `balance.ts` `tertiary` |
+| `tertiary.shellNanoKgPerMm3` | 20 000 (57 mm shell ~ 3.7 kg) | #157 | — | `balance.ts` `tertiary` |
+| `tertiary.bearingBp` (share of guns bearing on one beam) | 5000 | #157 | — | `balance.ts` `tertiary` |
 | Tertiary calibre choices offered | 47, 57, 76.2 mm | #157 | — | `BatteryPanel.tsx` |
 | Scheme layouts (which belt/deck regions each fits) | see `ARMOUR_SCHEMES` | #159 | manual pp.38-39 (names only) | `packages/ship-design/src/armourSchemes.ts` |
 | Scheme unlock years: Belt and sloping deck / All or nothing | 1905 / 1912 | #159 | manual pp.38-39 (gated only) | `armourSchemes.ts` |

@@ -4,6 +4,8 @@ Applies to: desktop, messages, phase-engine
 
 ## Status
 
+Superseded by: ADR-0363
+
 Accepted (2026-10-21). Implements ticket
 [#113](https://github.com/joaooliveira92/iron-tide/issues/113) (T-1 04) of spec
 [#109](https://github.com/joaooliveira92/iron-tide/issues/109), R8, R13 (class refusal), R14, R15. Builds on

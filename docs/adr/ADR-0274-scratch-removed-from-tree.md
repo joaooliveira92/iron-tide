@@ -4,6 +4,8 @@ Applies to: repository
 
 ## Status
 
+Superseded by: ADR-0365
+
 Accepted (2026-10-22). Amends ADR-0227.
 
 ## Context

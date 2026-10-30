@@ -1,11 +1,22 @@
-import { chmodSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Effect } from "effect";
+import { Effect, Tracer } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { RecoveryManager, SaveStore } from "../src/index.js";
 import { minimalCampaignState } from "./campaign-state-fixture.js";
 import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
+
+const readJson = (path: string): Record<string, unknown> =>
+  JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
 
 describe("effect write api", () => {
   let dir: string;
@@ -19,6 +30,18 @@ describe("effect write api", () => {
     chmodSync(dir, 0o755);
     rmSync(dir, { recursive: true, force: true });
   });
+
+  const corruptPointer = (): void => {
+    const pointerPath = join(dir, "pointer.json");
+    writeFileSync(
+      pointerPath,
+      JSON.stringify({ ...readJson(pointerPath), surprise: true }, null, 2),
+      "utf8",
+    );
+  };
+
+  const saveDirectoryCount = (): number =>
+    readdirSync(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).length;
 
   it("saveEffect round-trips with list, active and previous ids", () => {
     const first = unwrapSuccess(runExit(store.saveEffect(minimalCampaignState(), dir)));
@@ -75,5 +98,89 @@ describe("effect write api", () => {
       "PERSISTENCE_IO",
     );
     expect(Effect.isEffect(RecoveryManager.revertEffect(dir, first.metadata.saveId))).toBe(true);
+  });
+
+  it("pointer effects fail typed instead of reporting no active save", () => {
+    unwrapSuccess(runExit(store.saveEffect(minimalCampaignState(), dir)));
+    corruptPointer();
+
+    const active = expectFailureTag(
+      runExit(store.activeSaveIdEffect(dir)),
+      "PERSISTENCE_CORRUPT_SAVE",
+    );
+    expect(active.stage).toBe("persistence.pointer");
+
+    const previous = expectFailureTag(
+      runExit(store.previousSaveIdEffect(dir)),
+      "PERSISTENCE_CORRUPT_SAVE",
+    );
+    expect(previous.stage).toBe("persistence.pointer");
+  });
+
+  it("isCurrentEffect fails typed when the pointer cannot be read", () => {
+    unwrapSuccess(runExit(store.saveEffect(minimalCampaignState(), dir)));
+    unwrapSuccess(runExit(store.saveEffect(minimalCampaignState(), dir)));
+    corruptPointer();
+
+    const failure = expectFailureTag(
+      runExit(store.isCurrentEffect(minimalCampaignState(), dir)),
+      "PERSISTENCE_CORRUPT_SAVE",
+    );
+    expect(failure.stage).toBe("persistence.isCurrent");
+    expect(
+      unwrapSuccess(runExit(store.isCurrentEffect(minimalCampaignState(), join(dir, "absent")))),
+    ).toBe(false);
+  });
+
+  it("saveEffect warns and skips pruning when the pointer is unreadable", () => {
+    const pruned = new SaveStore(undefined, { retainSaves: 2 });
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      unwrapSuccess(runExit(pruned.saveEffect(minimalCampaignState(), dir)));
+    }
+    expect(saveDirectoryCount()).toBe(2);
+
+    corruptPointer();
+    const result = unwrapSuccess(runExit(pruned.saveEffect(minimalCampaignState(), dir)));
+
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]!.code).toBe("PERSISTENCE_CORRUPT_SAVE");
+    expect(result.warnings[0]!.severity).toBe("warning");
+    expect(saveDirectoryCount()).toBe(3);
+    expect(pruned.getPreviousSaveId(dir)).toBeNull();
+  });
+
+  it("revertEffect keeps the underlying cause in the failure", () => {
+    const failure = expectFailureTag(
+      runExit(
+        RecoveryManager.revertEffect(
+          join(dir, "absent"),
+          "1700000000000-00000000-0000-0000-000000000000",
+        ),
+      ),
+      "PERSISTENCE_IO",
+    );
+    expect(failure.message).toContain("ENOENT");
+  });
+
+  it("traces the persistence io boundary", () => {
+    const spans: Tracer.NativeSpan[] = [];
+    const tracer = Tracer.make({
+      span(options) {
+        const span = new Tracer.NativeSpan(options);
+        spans.push(span);
+        return span;
+      },
+    });
+    const program = Effect.gen(function* () {
+      yield* store.saveEffect(minimalCampaignState(), dir);
+      yield* store.listEffect(dir);
+      yield* store.isCurrentEffect(minimalCampaignState(), dir);
+    });
+
+    unwrapSuccess(runExit(Effect.provideService(program, Tracer.Tracer, tracer)));
+
+    expect(spans.map((span) => span.name)).toEqual(
+      expect.arrayContaining(["persistence.save", "persistence.list", "persistence.isCurrent"]),
+    );
   });
 });

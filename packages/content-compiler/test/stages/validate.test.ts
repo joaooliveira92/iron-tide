@@ -18,7 +18,7 @@ function makeInput(overrides: Partial<ParseOutput> = {}): ParseOutput {
 function collection(
   key: string,
   items: readonly unknown[],
-  file = `${key}.yaml`,
+  file = `${key}.json`,
 ): Pick<ParseOutput, "collectionDocs" | "sourcePaths"> {
   return {
     collectionDocs: new Map([[key, [...items]]]),
@@ -119,7 +119,7 @@ describe("ValidateStage", () => {
   it("rejects a technology that lists itself as a prerequisite (SELF_REFERENCE)", () => {
     const collector = new DiagnosticCollector();
     const result = new ValidateStage().run(
-      makeInput(collection("technologies", [tech("tech_a", ["tech_a"])], "techs.yaml")),
+      makeInput(collection("technologies", [tech("tech_a", ["tech_a"])], "techs.json")),
       new AbortController().signal,
       collector,
     );
@@ -128,7 +128,7 @@ describe("ValidateStage", () => {
     const selfRef = collector.errors.find((d) => d.code === "SELF_REFERENCE");
     expect(selfRef).toBeDefined();
     expect(selfRef!.entityId).toBe("tech_a");
-    expect(selfRef!.sourceLocation?.path).toBe("techs.yaml");
+    expect(selfRef!.sourceLocation?.path).toBe("techs.json");
   });
 
   it("detects a prerequisite cycle and names its members (TECHNOLOGY_PREREQUISITE_CYCLE)", () => {
@@ -138,7 +138,7 @@ describe("ValidateStage", () => {
         collection(
           "technologies",
           [tech("tech_a", ["tech_b"]), tech("tech_b", ["tech_a"])],
-          "techs.yaml",
+          "techs.json",
         ),
       ),
       new AbortController().signal,
@@ -150,7 +150,7 @@ describe("ValidateStage", () => {
     expect(cycle).toBeDefined();
     expect(cycle!.message).toContain("tech_a");
     expect(cycle!.message).toContain("tech_b");
-    expect(cycle!.sourceLocation?.path).toBe("techs.yaml");
+    expect(cycle!.sourceLocation?.path).toBe("techs.json");
     expect((cycle!.relatedLocations ?? []).length).toBeGreaterThanOrEqual(2);
   });
 
@@ -161,7 +161,7 @@ describe("ValidateStage", () => {
         collection(
           "shipComponents",
           [component("comp_a", ["comp_b"]), component("comp_b", ["comp_a"])],
-          "ship-building/components.yaml",
+          "ship-building/components.json",
         ),
       ),
       new AbortController().signal,
@@ -180,7 +180,7 @@ describe("ValidateStage", () => {
     const invalidComponent = { ...(component("comp_a") as Record<string, unknown>) };
     invalidComponent["requires"] = ["missing_tech"];
     const result = new ValidateStage().run(
-      makeInput(collection("shipComponents", [invalidComponent], "ship-building/components.yaml")),
+      makeInput(collection("shipComponents", [invalidComponent], "ship-building/components.json")),
       new AbortController().signal,
       collector,
     );
@@ -190,7 +190,7 @@ describe("ValidateStage", () => {
       (d) => d.code === "REF" && d.message.includes("missing_tech"),
     );
     expect(ref).toBeDefined();
-    expect(ref!.sourceLocation?.path).toBe("ship-building/components.yaml");
+    expect(ref!.sourceLocation?.path).toBe("ship-building/components.json");
     expect(ref!.entityId).toBe("comp_a");
   });
 

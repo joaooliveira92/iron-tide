@@ -126,6 +126,11 @@ export interface PreferencesSnapshot {
   readonly app: AppPreferences;
 }
 
+export interface PreferencesRecoveryInfo {
+  readonly file: string;
+  readonly reason: string;
+}
+
 export interface WriteAppPreferencesRequest {
   readonly app: AppPreferences;
 }

@@ -4,6 +4,8 @@ Applies to: content, campaign
 
 ## Status
 
+Superseded by: ADR-0348
+
 Accepted (2026-10-15). New record of decision DR-001; no prior ADR file existed for
 it and none is restored (see ADR-0210).
 

@@ -124,7 +124,8 @@ export {
 } from "./pipeline.js";
 export { monthPipeline } from "./phases.js";
 export type { ReplayMismatch, ReplayResult, ReplayStepResult } from "./replay.js";
-export { ReplayVerifier, hashSnapshot, snapshotToHashable } from "./replay.js";
+export { ReplayVerifier } from "./replay.js";
+export { unifiedSnapshotHash } from "@bluewave/campaign";
 export type {
   TacticalBattleDivergence,
   TacticalBattleVerification,

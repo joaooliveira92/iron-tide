@@ -4,6 +4,8 @@ Applies to: campaign, campaign-engine, desktop
 
 ## Status
 
+Superseded by: ADR-0355
+
 Accepted (2026-10-25). Delivers stories 14, 15 and 44 of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265) from decision
 [#195](https://github.com/joaooliveira92/iron-tide/issues/195), left open by the go-live report

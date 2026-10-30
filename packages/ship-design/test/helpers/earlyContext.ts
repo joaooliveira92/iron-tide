@@ -1,6 +1,5 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { parse } from "yaml";
 import {
   AmmunitionCatalogueSchema,
   GunFamilyCatalogueSchema,
@@ -8,7 +7,6 @@ import {
   GunMountCatalogueSchema,
   NavalProfileCatalogueSchema,
   PropulsionPlantCatalogueSchema,
-  ShipComponentCatalogueSchema,
   ShipHullFormCatalogueSchema,
   ShipTypeRecordSchema,
   decodeStrict,
@@ -18,7 +16,6 @@ import {
   buildShipBuildingContent,
   shipBalanceFromRecord,
   type AuthoredArmamentContent,
-  type ComponentDef,
   type ConstructionBalance,
   type CostBalance,
   type HullFormRecord,
@@ -29,20 +26,21 @@ import {
   type ShipContext,
 } from "../../src/index.js";
 import { type CveBalance } from "../../src/cve.js";
+import { readComponentFiles } from "./componentFiles.js";
+import { readAuthoredFile } from "@bluewave/test-support";
 
 const root = join(__dirname, "..", "..", "..", "..", "content", "production", "1880");
 const sbDir = join(root, "ship-building");
-const load = (rel: string) =>
-  parse(readFileSync(join(root, rel), "utf8")) as Record<string, unknown>;
+const load = (rel: string) => readAuthoredFile(join(root, rel)) as Record<string, unknown>;
 
 export const readNavalProfileEntries = (): unknown[] =>
   readdirSync(join(sbDir, "naval-profiles"))
-    .filter((f) => f.endsWith(".yaml"))
+    .filter((f) => f.endsWith(".ts"))
     .sort()
     .flatMap(
       (f) =>
         (
-          parse(readFileSync(join(sbDir, "naval-profiles", f), "utf8")) as {
+          readAuthoredFile(join(sbDir, "naval-profiles", f)) as {
             navalProfiles: unknown[];
           }
         ).navalProfiles,
@@ -55,44 +53,38 @@ export const readReferenceDesignEntries = (): RawReferenceDesign[] =>
   readdirSync(join(sbDir, "reference-designs"))
     .sort(nationOrder)
     .flatMap((nation) =>
-      ["starters.yaml", "historical.yaml"].flatMap((name) => {
+      ["starters.ts", "historical.ts"].flatMap((name) => {
         const path = join(sbDir, "reference-designs", nation, name);
         return existsSync(path)
-          ? (parse(readFileSync(path, "utf8")) as { designs: RawReferenceDesign[] }).designs
+          ? (readAuthoredFile(path) as { designs: RawReferenceDesign[] }).designs
           : [];
       }),
     );
 
 const armamentDir = join(root, "ship-building", "armament");
 const loadArmament = (rel: string) =>
-  parse(readFileSync(join(armamentDir, rel), "utf8")) as Record<string, unknown>;
+  readAuthoredFile(join(armamentDir, rel)) as Record<string, unknown>;
 
 export const armamentContent: AuthoredArmamentContent = {
-  gunFamilies: decodeStrict(GunFamilyCatalogueSchema, loadArmament("gun-families.yaml"))
-    .gunFamilies,
-  gunModels: decodeStrict(GunModelCatalogueSchema, loadArmament("gun-models.yaml")).gunModels,
-  gunMounts: decodeStrict(GunMountCatalogueSchema, loadArmament("gun-mounts.yaml")).gunMounts,
-  ammunition: decodeStrict(AmmunitionCatalogueSchema, loadArmament("ammunition.yaml")).ammunition,
+  gunFamilies: decodeStrict(GunFamilyCatalogueSchema, loadArmament("gun-families.ts")).gunFamilies,
+  gunModels: decodeStrict(GunModelCatalogueSchema, loadArmament("gun-models.ts")).gunModels,
+  gunMounts: decodeStrict(GunMountCatalogueSchema, loadArmament("gun-mounts.ts")).gunMounts,
+  ammunition: decodeStrict(AmmunitionCatalogueSchema, loadArmament("ammunition.ts")).ammunition,
 } as unknown as AuthoredArmamentContent;
 
-export const components = decodeStrict(
-  ShipComponentCatalogueSchema,
-  load("ship-building/components.yaml"),
-).components as ComponentDef[];
-export const plants = decodeStrict(
-  PropulsionPlantCatalogueSchema,
-  load("ship-building/plants.yaml"),
-).plants as unknown as PropulsionPlant[];
+export const { components, sourceById: componentSourceById } = readComponentFiles(root);
+export const plants = decodeStrict(PropulsionPlantCatalogueSchema, load("ship-building/plants.ts"))
+  .plants as unknown as PropulsionPlant[];
 export const hullRecords = decodeStrict(
   ShipHullFormCatalogueSchema,
-  load("ship-building/hull-forms.yaml"),
+  load("ship-building/hull-forms.ts"),
 ).hullForms as HullFormRecord[];
-const balanceFile = load("ship-building/balance.yaml");
+const balanceFile = load("ship-building/balance.ts");
 export const shipBalance = shipBalanceFromRecord(balanceFile.ship);
 export const costBalance = balanceFile.cost as CostBalance;
 export const constructionBalance = balanceFile.construction as ConstructionBalance;
 export const cveBalance = balanceFile.cve as CveBalance;
-const techs = parse(readFileSync(join(root, "technologies.yaml"), "utf8")) as {
+const techs = readAuthoredFile(join(root, "technologies.ts")) as {
   id: string;
   year: number;
 }[];
@@ -113,7 +105,7 @@ export const shipBuildingContent = buildShipBuildingContent(shipBuildingData);
 export const navalProfiles = shipBuildingData.navalProfiles!;
 
 export const shipTypes: ShipTypeRecord[] = (
-  parse(readFileSync(join(sbDir, "ship-types.yaml"), "utf8")) as { shipTypes: unknown[] }
+  readAuthoredFile(join(sbDir, "ship-types.ts")) as { shipTypes: unknown[] }
 ).shipTypes.map((record) => decodeStrict(ShipTypeRecordSchema, record));
 
 const withShipTypes = (ctx: ShipContext): ShipContext => ({ ...ctx, shipTypes });

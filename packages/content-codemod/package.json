@@ -11,10 +11,10 @@
     }
   },
   "dependencies": {
+    "@bluewave/content-compiler": "workspace:*",
     "@bluewave/content-schema": "workspace:*",
     "@bluewave/deterministic": "workspace:*",
-    "@bluewave/ship-design": "workspace:*",
-    "yaml": "^2.9.1"
+    "@bluewave/ship-design": "workspace:*"
   },
   "scripts": {
     "build": "tsc -b",

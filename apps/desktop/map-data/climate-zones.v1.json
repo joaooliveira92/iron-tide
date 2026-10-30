@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "binarySha256": "4d57ad94a6a454ffb1cc95a3f3b9a1bacd0f7aa1ab840dcb32f8c9797a2379ba",
+  "binaryBytes": 1137752,
+  "source": {
+    "name": "Koppen-Geiger V3 (Beck et al. 2023)",
+    "citation": "Beck, H. E., McVicar, T. R., Vergopolan, N., Berg, A., Lutsko, N. J., Dufour, A., Zeng, Z., Jiang, X., van Dijk, A. I. J. M., Miralles, D. G. High-resolution (1 km) Koppen-Geiger maps for 1901-2099 based on constrained CMIP6 projections. Scientific Data 10, 724 (2023).",
+    "doi": "10.1038/s41597-023-02549-6",
+    "dataDoi": "10.6084/m9.figshare.21789074",
+    "licence": "CC BY 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "period": "1991-2020",
+    "file": "1991_2020/koppen_geiger_0p1.tif",
+    "fileSha256": "59b749fe6711e72c720ff903044eb0efb4373524ee434740ed7384a0284c155b",
+    "archiveUrl": "https://ndownloader.figshare.com/files/61012822",
+    "archiveSha256": "bb84453d4541f1a0bc5a804ead83f483c19ce70f16a5197f6d3a7b6a63e65562"
+  },
+  "method": {
+    "grid": "0.1 degree, 3600x1800",
+    "noDataFill": "nearest-neighbour majority, 8 cells",
+    "smoothing": "2 box-blur passes, marching squares at 0.42",
+    "clip": "per-polygon intersection with Natural Earth 10m land and minor islands",
+    "outputGridDegrees": 0.01,
+    "toolchain": "geotiff, d3-contour, polygon-clipping installed in a scratch directory"
+  },
+  "zones": [
+    {
+      "id": 1,
+      "name": "tropical-wet",
+      "koppen": [1, 2]
+    },
+    {
+      "id": 2,
+      "name": "tropical-seasonal",
+      "koppen": [3, 3]
+    },
+    {
+      "id": 3,
+      "name": "arid",
+      "koppen": [4, 5]
+    },
+    {
+      "id": 4,
+      "name": "semi-arid",
+      "koppen": [6, 7]
+    },
+    {
+      "id": 5,
+      "name": "temperate",
+      "koppen": [8, 16]
+    },
+    {
+      "id": 6,
+      "name": "cold",
+      "koppen": [17, 28]
+    },
+    {
+      "id": 7,
+      "name": "polar",
+      "koppen": [29, 30]
+    }
+  ]
+}

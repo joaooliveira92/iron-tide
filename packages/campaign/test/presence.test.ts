@@ -1,6 +1,4 @@
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
 import type { ContentPack } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -8,14 +6,15 @@ import { buildNationStates } from "../src/nationCompilation.js";
 import { buildWorldState } from "../src/worldCompilation.js";
 import { presenceAreaIds } from "../src/presence.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import { readAuthoredFile } from "@bluewave/test-support";
 
 const CONTENT = resolve(import.meta.dirname, "../../../content/production/1880");
 const load = (file: string): Record<string, unknown>[] =>
-  parse(readFileSync(resolve(CONTENT, file), "utf8")) as Record<string, unknown>[];
+  readAuthoredFile(resolve(CONTENT, file)) as Record<string, unknown>[];
 
 type PossessionRow = { id: string; nationId: string; areaId: string };
 const loadPossessions = (): PossessionRow[] =>
-  load("possessions.yaml").map((p) => ({
+  load("possessions.ts").map((p) => ({
     id: String(p["id"]),
     nationId: String(p["nationId"]),
     areaId: String(p["areaId"]),
@@ -61,7 +60,7 @@ describe("buildWorldState possessions", () => {
   it("gives every production nation its distinct possession areas as presence areas", () => {
     const possessions = loadPossessions();
     const world = buildWorldState({ areas: [], possessions }, START);
-    for (const nation of load("countries.yaml")) {
+    for (const nation of load("countries.ts")) {
       const id = nation["id"] as string;
       const expected = [
         ...new Set(possessions.filter((p) => p.nationId === id).map((p) => p.areaId)),

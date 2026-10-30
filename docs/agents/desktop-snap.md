@@ -6,7 +6,7 @@ unless `--strict` is given. Source: `apps/desktop/scripts/view.ts`.
 
 Build first (`pnpm --filter @bluewave/desktop build`; a fresh worktree also needs the
 package builds). Output lands in `.dev-data/view` (git-ignored, `--out DIR` to change):
-`screenshot.png`, `aria.yaml` (best for finding controls), `text.txt`, `console.log`.
+`screenshot.png`, `aria.txt` (best for finding controls), `text.txt`, `console.log`.
 
 ## Actions
 

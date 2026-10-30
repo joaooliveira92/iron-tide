@@ -25,7 +25,6 @@
     "@bluewave/armament": "workspace:*",
     "@bluewave/content-schema": "workspace:*",
     "@bluewave/content-compiler": "workspace:*",
-    "yaml": "^2.9.1",
     "@bluewave/ship-design": "workspace:*",
     "effect": "workspace:*"
   },

@@ -6,21 +6,22 @@ Authored game content, compiled by `@bluewave/content-compiler` through
 
 ```
 content/
-  production/
-    1880/                 # the 1880 scenario pack
-      pack.json           # the one manifest: declares the whole loaded surface
-      *.yaml              # nations, areas, ports, routes, fleets, research, …
-      ship-building/      # component-level ship data (see its README)
+  production/1880/
+    pack.json           # the one manifest: declares the whole loaded surface
+    ui/en-US.yaml       # the only permitted YAML: a localization catalogue
+    *.yaml              # in migration (see the ratchet)
+    ship-building/      # component-level ship data; guns/french.ts is migrated
 ```
 
-`pack.json` is the single authority for the loaded surface: `files` declares the
-pack/campaign collections, `shipBuilding` the ship-building subtree. A file
-discovered but undeclared, or declared but missing, fails
-`content:check`/`content:build`.
+`pack.json` is the single authority for the loaded surface. A file declared but
+missing, or discovered but undeclared, fails `content:check`/`content:build`.
 
-- **Authoring a nation** — [adding a nation](../docs/agents/adding-a-nation.md); scaffold with `node scripts/new-nation.mjs`.
-- **Ship-building subtree** — [`1880/ship-building/README.md`](production/1880/ship-building/README.md) records its sourced/placeholder values.
-- **Source of record** — content values trace to notes under [docs/research/](../docs/research/); keep confidence labels (`VERIFIED` / `ESTIMATE` / `PLACEHOLDER`) in comments.
+- **Authoring a nation** — [adding a nation](../docs/agents/adding-a-nation.md).
+- **Ship-building subtree** — [`1880/ship-building/README.md`](production/1880/ship-building/README.md).
+- **Source of record** — values trace to [docs/research/](../docs/research/); confidence is typed provenance data, not comments.
 
-Content is data, not code: it must not encode mechanics, and localized text must
-never control behaviour (`DESIGN-57`).
+YAML is deprecated outside localization ([inventory](../docs/agents/yaml-inventory.md),
+ADR-0334). Every remaining `.yaml` is listed in the shrinking
+[ratchet](../scripts/data/yaml-boundary.ratchet.json); `pnpm check:yaml-boundary`
+fails on a new one. Content is data, not application code: it must not encode
+mechanics, and localized text must never control behaviour (`DESIGN-57`).

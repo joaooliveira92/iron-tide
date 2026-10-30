@@ -223,7 +223,6 @@ export function WorldMapChart({
           projection={projection}
           centre={state.centre}
           fill={palette.land}
-          stroke={palette.landEdge}
           borders={model.borderSets}
         />
       )}

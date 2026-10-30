@@ -4,7 +4,7 @@ import { join } from "node:path";
 import {
   CompiledPartModelSchema,
   FlattenedPartSchema,
-  ShipComponentCatalogueSchema,
+  ShipComponentWithSourceCatalogueSchema,
   decodeStrict,
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
@@ -29,7 +29,7 @@ const artifact: unknown = JSON.parse(readFileSync(artifactPath, "utf8"));
 const shipBuilding = (artifact as { readonly shipBuilding: unknown }).shipBuilding;
 const slice = (key: string): unknown => (shipBuilding as Readonly<Record<string, unknown>>)[key];
 const model = decodeStrict(CompiledPartModelSchema, slice("partModel"));
-const components = decodeStrict(ShipComponentCatalogueSchema, {
+const components = decodeStrict(ShipComponentWithSourceCatalogueSchema, {
   components: slice("components"),
 }).components;
 
@@ -120,7 +120,7 @@ describe("family-level catalogue view (17b-1)", () => {
         capabilities,
         quantities: [{ id: "mass", kind: "massKg", value: 100, basis: "PER_PART_UNIT" }],
         revisions: [],
-        origin: { sourceFile: "ship-building/parts/sensor.yaml" },
+        origin: { sourceFile: "ship-building/parts/sensor.json" },
         provenance,
       });
     const parts = [

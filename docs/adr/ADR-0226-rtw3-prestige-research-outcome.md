@@ -4,6 +4,8 @@ Applies to: content, campaign
 
 ## Status
 
+Superseded by: ADR-0354
+
 Accepted (2026-10-17). Records the product of decision
 [0003](../../.ai/decision-requests/0003-prestige-scale-and-values.md) (Option B,
 research only), authorized by

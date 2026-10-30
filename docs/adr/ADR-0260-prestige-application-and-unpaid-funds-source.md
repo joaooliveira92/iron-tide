@@ -4,6 +4,8 @@ Applies to: events, messages, phase-engine
 
 ## Status
 
+Superseded by: ADR-0354
+
 Accepted (2026-10-21). Implements ticket [#89](https://github.com/joaooliveira92/iron-tide/issues/89) (S-2 04) of spec
 [#74](https://github.com/joaooliveira92/iron-tide/issues/74), R4 and R5. Uses the value set of
 [ADR-0239](ADR-0239-s2-prestige-values-balance-targets.md) unchanged. Departs from one detail of

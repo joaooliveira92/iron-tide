@@ -9,7 +9,7 @@ describe("validateAgainstSchema (Effect Schema)", () => {
       { id: "lon", name: "London", type: "land" },
       AreaSchema,
       "Area",
-      "areas.yaml",
+      "areas.json",
       collector,
     );
     expect(out).toEqual({ id: "lon", name: "London", type: "land" });
@@ -22,7 +22,7 @@ describe("validateAgainstSchema (Effect Schema)", () => {
       { id: "lon", name: "London", type: "land", extra: 1 },
       AreaSchema,
       "Area",
-      "areas.yaml",
+      "areas.json",
       collector,
     );
     expect(out).toBeUndefined();
@@ -30,7 +30,7 @@ describe("validateAgainstSchema (Effect Schema)", () => {
     const diagnostic = collector.errors[0]!;
     expect(diagnostic.code).toBe("SCHEMA");
     expect(diagnostic.stage).toBe("validate");
-    expect(diagnostic.sourceLocation).toEqual({ path: "areas.yaml", line: 1 });
+    expect(diagnostic.sourceLocation).toEqual({ path: "areas.json", line: 1 });
     expect(diagnostic.message).toContain("Validation failed for Area.extra");
     expect(diagnostic.message).toContain("Expected no excess property");
   });
@@ -41,7 +41,7 @@ describe("validateAgainstSchema (Effect Schema)", () => {
       { name: "London", type: "land" },
       AreaSchema,
       "Area",
-      "areas.yaml",
+      "areas.json",
       collector,
     );
     expect(out).toBeUndefined();
@@ -55,7 +55,7 @@ describe("validateAgainstSchema (Effect Schema)", () => {
 
   it("uses (root) when the failure is not attached to a property path", () => {
     const collector = new DiagnosticCollector();
-    const out = validateAgainstSchema(42, AreaSchema, "Area", "areas.yaml", collector);
+    const out = validateAgainstSchema(42, AreaSchema, "Area", "areas.json", collector);
     expect(out).toBeUndefined();
     expect(collector.errors).toHaveLength(1);
     expect(collector.errors[0]!.message).toContain("Validation failed for Area.(root)");

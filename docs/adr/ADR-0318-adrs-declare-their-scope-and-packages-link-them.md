@@ -2,9 +2,9 @@
 
 Applies to: repository
 
-Rule: Every ADR has an `Applies to:` line, and every governing `AGENTS.md` links its generated `docs/adr/by-scope` page.
-
 ## Status
+
+Superseded by: ADR-0366
 
 Accepted (2026-10-26).
 

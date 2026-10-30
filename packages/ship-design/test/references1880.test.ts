@@ -115,6 +115,26 @@ describe("the 1948 United States cruisers (E-1 1940-1949)", () => {
   });
 });
 
+describe("the 1945 United States battleship (E-1 1940-1949)", () => {
+  const draft = byId("starter_bb_usa_1945").draft;
+
+  it("is a battleship under the 1940 classification rules", () => {
+    expect(compileDesign(draft, earlyContext("1945-01")).naturalClass).toBe("BB");
+  });
+
+  it("closes on the sourced full-load displacement and 32.5 knots", () => {
+    const r = compileDesign(draft, earlyContext("1945-01"));
+    expect(Math.abs(r.totalKg - 57_540_000)).toBeLessThan(50_000);
+    expect(r.machinery?.maxSpeedMilliKnots).toBeGreaterThanOrEqual(32_400);
+  });
+
+  it("is not available before the 5-inch/38 twin mount", () => {
+    const r = compileDesign(draft, earlyContext("1944-12"));
+    expect(r.valid).toBe(false);
+    expect(r.findings.map((f) => f.id)).toContain("TECH_UNAVAILABLE");
+  });
+});
+
 describe("the 1955 United States destroyer (E-1 1950-1959)", () => {
   const draft = byId("starter_dd_usa_1955").draft;
 

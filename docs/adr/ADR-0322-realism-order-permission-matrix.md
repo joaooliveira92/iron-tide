@@ -4,6 +4,8 @@ Applies to: combat
 
 ## Status
 
+Superseded by: ADR-0358
+
 Accepted (2026-10-27). Records the resolved rules of the T-2 realism decision
 (#326) and unblocks the rank-gated targeting work in #230.
 

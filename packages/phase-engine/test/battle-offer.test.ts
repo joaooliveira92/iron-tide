@@ -11,7 +11,7 @@ import { FIXTURE_BATTLE_OFFER_RULES, fixtureBattleOfferRules } from "@bluewave/t
 import { describe, expect, it } from "vite-plus/test";
 import {
   estimateEnemyStrength,
-  hashSnapshot,
+  unifiedSnapshotHash,
   MonthExecutor,
   type InterruptionChannel,
   type MonthResult,
@@ -177,7 +177,7 @@ describe("the offer (R3, R4, R13)", () => {
     const a = run(warSnapshot());
     const b = run(warSnapshot());
     expect(offerOf(a)).toEqual(offerOf(b));
-    expect(hashSnapshot(a.finalSnapshot)).toBe(hashSnapshot(b.finalSnapshot));
+    expect(unifiedSnapshotHash(a.finalSnapshot)).toBe(unifiedSnapshotHash(b.finalSnapshot));
   });
 
   it("never offers a battle between other nations", () => {
@@ -187,7 +187,9 @@ describe("the offer (R3, R4, R13)", () => {
     const control = run(third, { channel: false, player: "ITA" });
     const withChannel = run(third, { player: "ITA" });
     expect(withChannel.outcome).toBe("completed");
-    expect(hashSnapshot(withChannel.finalSnapshot)).toBe(hashSnapshot(control.finalSnapshot));
+    expect(unifiedSnapshotHash(withChannel.finalSnapshot)).toBe(
+      unifiedSnapshotHash(control.finalSnapshot),
+    );
   });
 
   it("yields no offer for a battle that was never generated (no eligible force, S-1 exclusion)", () => {
@@ -227,8 +229,8 @@ describe("dormancy (R1, R3)", () => {
       prestige: dormantPlayer.prestige,
       prestigeLastChange: dormantPlayer.prestigeLastChange,
     });
-    expect(hashSnapshot({ ...configured.finalSnapshot, nations })).toBe(
-      hashSnapshot(dormant.finalSnapshot),
+    expect(unifiedSnapshotHash({ ...configured.finalSnapshot, nations })).toBe(
+      unifiedSnapshotHash(dormant.finalSnapshot),
     );
     expect(configured.randomLedger.hash()).toBe(dormant.randomLedger.hash());
     const withoutPrestige = (r: MonthResult) =>
@@ -321,7 +323,9 @@ describe("accept and delegate (R6, R7)", () => {
     const resumed = run(warSnapshot(), { inputs: [answer(request, "delegate")] });
     expect(resumed.outcome).toBe("completed");
     const control = nonOffered();
-    expect(hashSnapshot(resumed.finalSnapshot)).toBe(hashSnapshot(control.finalSnapshot));
+    expect(unifiedSnapshotHash(resumed.finalSnapshot)).toBe(
+      unifiedSnapshotHash(control.finalSnapshot),
+    );
     expect(resumed.finalSnapshot.wars.wars).toEqual(control.finalSnapshot.wars.wars);
     expect(resumed.finalSnapshot.wars.battles).toEqual(control.finalSnapshot.wars.battles);
 
@@ -369,7 +373,9 @@ describe("accept and delegate (R6, R7)", () => {
     const replay = run(warSnapshot(), {
       inputs: [answer(request, "accept"), battleResult(battle)],
     });
-    expect(hashSnapshot(replay.finalSnapshot)).toBe(hashSnapshot(resumed.finalSnapshot));
+    expect(unifiedSnapshotHash(replay.finalSnapshot)).toBe(
+      unifiedSnapshotHash(resumed.finalSnapshot),
+    );
   });
 
   it("costs no victory points: the war score equals the non-offered run's", () => {
@@ -398,11 +404,13 @@ describe("several offers in one month (R3, R15)", () => {
     const resumed = run(snapshot, { rules: exact, inputs });
     expect(resumed.outcome).toBe("completed");
     const single = run(snapshot, { rules: exact, inputs: [...inputs] });
-    expect(hashSnapshot(single.finalSnapshot)).toBe(hashSnapshot(resumed.finalSnapshot));
+    expect(unifiedSnapshotHash(single.finalSnapshot)).toBe(
+      unifiedSnapshotHash(resumed.finalSnapshot),
+    );
     expect(single.randomLedger.all).toEqual(resumed.randomLedger.all);
     expect(single.eventLedger.all).toEqual(resumed.eventLedger.all);
-    expect(hashSnapshot(resumed.finalSnapshot)).toBe(
-      hashSnapshot(run(snapshot, { rules: exact, channel: false }).finalSnapshot),
+    expect(unifiedSnapshotHash(resumed.finalSnapshot)).toBe(
+      unifiedSnapshotHash(run(snapshot, { rules: exact, channel: false }).finalSnapshot),
     );
   });
 });

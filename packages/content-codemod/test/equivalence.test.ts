@@ -11,20 +11,20 @@ import { runEquivalence } from "../../ship-design/test/helpers/equivalenceRun.js
 const report = runEquivalence();
 
 describe("equivalence totals are unchanged by the codemod (ticket 11c)", () => {
-  it("covers 96/96 designs and 883/883 placements", () => {
+  it("covers 97/97 designs and 909/909 placements", () => {
     expect(report.coverage.baseline).toEqual({
-      designs: 96,
-      placements: 883,
-      gunPlacements: 251,
+      designs: 97,
+      placements: 909,
+      gunPlacements: 264,
       tubePlacements: 31,
-      fittingPlacements: 601,
+      fittingPlacements: 614,
     });
     expect(report.summary.rows.changed).toBe(0);
     expect(report.summary.rows.orderingOnly).toBe(0);
   });
 
   it("keeps the independent armament, magazine and waiver counts separate", () => {
-    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(183);
+    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(196);
     expect(
       report.dataQuality.unresolvedGunPlacements.every(
         (u) => u.code === "PART_READ_PATH_NO_FIRST_CLASS_ARMAMENT",
@@ -38,7 +38,7 @@ describe("equivalence totals are unchanged by the codemod (ticket 11c)", () => {
     const nine = report.designs.flatMap((d) =>
       d.entries.filter((e) => e.disposition === "RECLASSIFIED_AS_CENTRAL_BATTERY"),
     );
-    expect(nine).toHaveLength(12);
+    expect(nine).toHaveLength(15);
     for (const entry of nine) {
       expect(entry.mountType).toBe("BROADSIDE_BATTERY");
       expect(entry.mountCount).toBe(1);

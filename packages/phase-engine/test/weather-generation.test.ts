@@ -9,7 +9,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
-import { MonthExecutor, ReplayVerifier } from "../src/index.js";
+import { MonthExecutor, ReplayVerifier, unifiedSnapshotHash } from "../src/index.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 function makeNation(id: string, treasury = 500): NationState {
@@ -197,7 +197,7 @@ describe("weather_generation phase (B-6 INC-1)", () => {
     const executor = new MonthExecutor();
     const collector = new DiagnosticCollector();
     const monthResult = executor.execute(snapshot, [], "replay-seed", collector);
-    const closingHash = hashSnapshot(monthResult.finalSnapshot);
+    const closingHash = unifiedSnapshotHash(monthResult.finalSnapshot);
 
     const replay = new ReplayVerifier().verify(
       snapshot,
@@ -213,39 +213,3 @@ describe("weather_generation phase (B-6 INC-1)", () => {
     );
   });
 });
-
-function hashSnapshot(snapshot: CampaignSnapshot): string {
-  const nations: Record<string, NationState> = {};
-  for (const [id, nation] of snapshot.nations) nations[id] = nation;
-  return sha256Hex(
-    canonicalSerialize({
-      version: snapshot.version,
-      turnNumber: snapshot.turnNumber,
-      campaignId: snapshot.campaignId,
-      startYear: snapshot.startYear,
-      startMonth: snapshot.startMonth,
-      strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
-      slots: snapshot.slots.map((s) => ({ ...s })),
-      world: {
-        areas: snapshot.world.areas.map((a) => ({ ...a })),
-        routes: snapshot.world.routes.map((r) => ({ ...r })),
-        ports: snapshot.world.ports.map((p) => ({ ...p })),
-      },
-      nations,
-      wars: {
-        wars: snapshot.wars.wars.map((w) => ({ ...w })),
-        battles: snapshot.wars.battles.map((b) => ({ ...b })),
-        participantMemberships: snapshot.wars.participantMemberships.map((m) => ({ ...m })),
-        blockadeState: snapshot.wars.blockadeState.map((b) => ({ ...b })),
-        battleManifests: (snapshot.wars.battleManifests ?? []).map((m) => ({ ...m })),
-      },
-      politics: {
-        relations: snapshot.politics.relations.map((r) => ({ ...r })),
-        shells: { ...snapshot.politics.shells },
-      },
-      intelligence: { shells: { ...snapshot.intelligence.shells } },
-      rulesetVersion: snapshot.rulesetVersion,
-      compatibilityVersion: snapshot.compatibilityVersion,
-    }),
-  );
-}

@@ -4,6 +4,8 @@ Applies to: contracts, campaign-engine, desktop
 
 ## Status
 
+Superseded by: ADR-0352
+
 Accepted (2026-10-16). Implements the conversion/locale boundary of [ADR-0202](ADR-0202-canonical-internal-values.md) and [ADR-0209](ADR-0209-ui-language-and-formatting-locale.md); U-1 of `.ai/SPRINT-PLAN.md` Phase 2.
 
 ## Context

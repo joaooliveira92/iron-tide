@@ -1,7 +1,7 @@
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { CampaignSnapshot } from "@bluewave/campaign";
-import { hashSnapshot, MonthExecutor } from "@bluewave/phase-engine";
+import { unifiedSnapshotHash, MonthExecutor } from "@bluewave/phase-engine";
 
 import { compileProductionCampaign } from "./production-pack.js";
 
@@ -146,12 +146,13 @@ function run(): void {
       .sort();
     const output = {
       baseLimitFlagged,
-      baseLimitSnapshotHash: hashSnapshot(baseLimited.finalSnapshot),
+      baseLimitSnapshotHash: unifiedSnapshotHash(baseLimited.finalSnapshot),
       baseLimitEventLedgerHash: baseLimited.eventLedger.hash(),
       stationedShipId,
       deploymentEvents,
-      deploymentSnapshotHash: deployed === undefined ? "" : hashSnapshot(deployed.finalSnapshot),
-      configuredFullSnapshotHash: hashSnapshot(configured.finalSnapshot),
+      deploymentSnapshotHash:
+        deployed === undefined ? "" : unifiedSnapshotHash(deployed.finalSnapshot),
+      configuredFullSnapshotHash: unifiedSnapshotHash(configured.finalSnapshot),
       deploymentEventLedgerHash: deployed === undefined ? "" : deployed.eventLedger.hash(),
       penaltySnapshotHash: sha256Hex(canonicalSerialize(penalised.finalSnapshot)),
       penaltyEventLedgerHash: penalised.eventLedger.hash(),

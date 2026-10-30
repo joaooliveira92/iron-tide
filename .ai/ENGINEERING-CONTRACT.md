@@ -71,11 +71,11 @@ Use hierarchical, domain-separated random decisions. Do not expose a generic glo
 
 ## Content
 
-- Author normal content in YAML and compile it to canonical artifacts.
-- Parse YAML without executable tags or arbitrary object construction.
+- Author domain content as declarative TypeScript and compile it to canonical JSON artifacts; YAML is permitted only for internationalization catalogues and the infrastructure files ADR-0334 lists (ADR-0334).
+- A content module is data, not application code: loaded at the IO boundary, decoded with a strict schema, never executed inside a stage.
 - Use strict boundary schemas and reject unknown fields by default.
 - Decode untrusted boundaries and serialization contracts with Effect `Schema` (Zod was replaced, ADR-0102/0105). Decode, never assert: a boundary `JSON.parse(...) as T` cast is rejected by `scripts/assert-boundary-decode.mjs` in the scopes it guards. Keep semantic rules and aggregate invariants in explicit domain code.
-- Ordinary content must not execute JavaScript, TypeScript, shell, arbitrary expressions, or database scripts.
+- Content values embed no shell, database scripts or free-form executable text; the only executable surface is the gate-restricted authoring layer (ADR-0334).
 - The pack manifest explicitly declares roots, collections, dependencies, versions, localization, and fixture or production classification.
 - Namespaced editor metadata cannot affect mechanics unless promoted into a versioned authoritative contract.
 

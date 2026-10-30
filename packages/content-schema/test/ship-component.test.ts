@@ -2,6 +2,7 @@ import { describe, it, expect } from "vite-plus/test";
 import {
   ShipComponentSchema,
   ShipComponentCatalogueSchema,
+  ShipComponentWithSourceSchema,
   PropulsionPlantSchema,
   ShipHullFormSchema,
   SHIP_COMPONENT_CATEGORIES,
@@ -44,6 +45,20 @@ describe("ShipComponentSchema", () => {
   });
   it("has 30 categories", () => {
     expect(SHIP_COMPONENT_CATEGORIES).toHaveLength(30);
+  });
+});
+
+describe("ShipComponentWithSourceSchema", () => {
+  const sourceFile = "ship-building/components/guns/british-rml.json";
+
+  it("decodes a shipped component with the authored file it came from", () => {
+    expect(decodeOk(ShipComponentWithSourceSchema, { ...comp, sourceFile })).toBe(true);
+    expect(decodeOk(ShipComponentWithSourceSchema, comp)).toBe(true);
+  });
+
+  it("keeps the authored schema strict about provenance paths", () => {
+    expect(decodeOk(ShipComponentSchema, { ...comp, sourceFile })).toBe(false);
+    expect(decodeOk(ShipComponentWithSourceSchema, { ...comp, sourceFile: "" })).toBe(false);
   });
 });
 

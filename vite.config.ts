@@ -265,6 +265,14 @@ export default defineConfig({
         command: "node scripts/verify-codemod-determinism.mjs",
         dependsOn: ["gate:git-state"],
       },
+      "gate:yaml-boundary-self-test": {
+        command: "node scripts/assert-no-foreign-yaml.mjs --self-test",
+        dependsOn: ["gate:git-state"],
+      },
+      "gate:yaml-boundary": {
+        command: "node scripts/assert-no-foreign-yaml.mjs",
+        dependsOn: ["gate:yaml-boundary-self-test"],
+      },
       "gates:preflight": {
         command: "node -p 0",
         dependsOn: [
@@ -301,6 +309,7 @@ export default defineConfig({
           "gate:vitest-config",
           "gate:content-placeholder-gate",
           "gate:codemod-determinism",
+          "gate:yaml-boundary",
           "gate:reachability-ledger",
           "gate:explanation-coverage",
         ],

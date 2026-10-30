@@ -1,0 +1,518 @@
+// National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
+// Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
+// target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+// Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
+// steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
+// Austria-Hungary (canonical id "austria_hungary"). A continental dual monarchy with one narrow Adriatic window:
+// a compact, professional, Pola-based navy for coast defence and the Adriatic, with Krupp guns imported and an
+// outsized torpedo tradition because Whitehead's works at Fiume lay inside the monarchy. Grounding: docs/research/austria_hungary-naval-profile.md.
+import { NationNavalProfileSchema, collection } from "@bluewave/content-authoring";
+
+export default collection("navalProfiles", NationNavalProfileSchema, [
+  {
+    nationId: "austria_hungary",
+    activeFrom: "1880-01",
+    activeUntil: null,
+    strategicSituation:
+      "Adriatic dual monarchy: a compact Pola-based navy for coast defence and regional superiority against Italy, with a small defensive ironclad line, imported Krupp guns and foreign armour, and an outsized torpedo arm because the Whitehead works at Fiume were domestic.",
+    hardCapabilities: {
+      maxGunCaliberUm: 283000,
+      maxArmourThicknessUm: 305000,
+      domesticTorpedoDiameterUm: 356000,
+      hullForms: [
+        "torpedo_boat_form",
+        "protected_cruiser_form",
+        "coast_defence_form",
+        "pre_dreadnought_form",
+        "merchant_liner_form",
+      ],
+      domesticPlants: ["compound_cylindrical", "triple_expansion_cylindrical"],
+      restrictedShipTypes: [],
+      grants: [],
+    },
+    softPreferences: {
+      speedOverArmourBp: 5000,
+      secondaryBatteryWeightBp: 10500,
+      enduranceWeightBp: 9000,
+      riskToleranceBp: 5000,
+      colonialServiceWeightBp: 8500,
+      torpedoOnCruisersBp: 12000,
+      accommodationStandard: "SPARTAN",
+    },
+    industrialProfile: {
+      buildTimeMultiplierBp: 10700,
+      costMultiplierBp: 10800,
+      machineryReliabilityBp: 8600,
+      constructionQualityVarianceBp: 3000,
+      maxPracticalDisplacementKg: [
+        {
+          fromMonth: "1880-01",
+          value: 7700000,
+        },
+        {
+          fromMonth: "1885-01",
+          value: 7700000,
+        },
+        {
+          fromMonth: "1890-01",
+          value: 8400000,
+        },
+      ],
+      heavyGunProduction: "IMPORTED",
+      armourPlateProduction: "IMPORTED",
+      provenance: {
+        sourceStatus: "ESTIMATE",
+        confidence: "MEDIUM",
+        kind: "balance_adjustment",
+        note: "Small Pola/STT yards; Krupp guns and foreign armour. Multipliers are BALANCE TARGET within ±15%.",
+        sources: [
+          {
+            sourceId: "ah-note",
+            title: "National naval profile research note — Austria-Hungary",
+            page: "B",
+          },
+          {
+            sourceId: "bras86",
+            title: "The Naval Annual 1886",
+            page: "211",
+          },
+        ],
+        derivation: {
+          sourceValue: "small state yards, imported ordnance and armour",
+          sourceUnit: "estimate",
+          conversion: "within the ±15% band",
+          gameValue: "buildTimeMultiplierBp 10700, costMultiplierBp 10800",
+          roundingRule: "±15%",
+        },
+      },
+    },
+    dock: {
+      maximumNewConstructionMassKg: 8000000,
+      maximumMajorRepairMassKg: 8000000,
+      maximumRebuildMassKg: 8000000,
+      maximumConversionMassKg: 8000000,
+      provenance: {
+        sourceStatus: "DERIVED",
+        confidence: "MEDIUM",
+        kind: "game_conversion",
+        sources: [
+          {
+            title: "1880 national dock capacity research note",
+            page: "findings table",
+          },
+        ],
+        derivation: {
+          sourceValue: "SMS Custoza 7,609 t (largest 1880 hull)",
+          sourceUnit: "t",
+          conversion:
+            "largest 1880 hull the nation fields, rounded up to the next 1,000 t dock step",
+          gameValue: "maximumNewConstructionMassKg 8000000",
+          roundingRule: "ceiling to next 1,000 t",
+        },
+        note: "historical flagship rounded up to the next 1,000 t",
+      },
+    },
+    doctrineProfile: {
+      engagementRangeM: 1500,
+      hePreferenceBp: 4000,
+      postures: ["coastal_defence", "regional_warfare", "torpedo_warfare"],
+      provenance: {
+        sourceStatus: "ESTIMATE",
+        confidence: "MEDIUM",
+        kind: "historical_fact",
+        sources: [
+          {
+            sourceId: "ah-note",
+            title: "National naval profile research note — Austria-Hungary",
+            page: "A, C",
+          },
+          {
+            sourceId: "navypedia-ah",
+            title: "navypedia.org Austro-Hungarian class pages",
+          },
+        ],
+      },
+    },
+    researchPreferences: [
+      {
+        field: "TORPEDOES",
+        priority: 4,
+      },
+      {
+        field: "MINES_AND_ASW",
+        priority: 3,
+      },
+      {
+        field: "MACHINERY",
+        priority: 3,
+      },
+      {
+        field: "HULL_CONSTRUCTION",
+        priority: 3,
+      },
+      {
+        field: "GUNNERY",
+        priority: 3,
+      },
+      {
+        field: "SHIP_DESIGN",
+        priority: 3,
+      },
+      {
+        field: "INFRASTRUCTURE",
+        priority: 2,
+      },
+      {
+        field: "DAMAGE_CONTROL",
+        priority: 2,
+      },
+      {
+        field: "FIRE_CONTROL",
+        priority: 1,
+      },
+      {
+        field: "SUBMARINES",
+        priority: 1,
+      },
+    ],
+    componentAccess: {
+      gun_bl_274mm_m1875: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_135in_30: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_12in_35: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_12in_25: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_10in_32: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_92in_315: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_16in_80ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_125in_38ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_12in_35ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_12in_25ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_rml_7in_7ton: {
+        status: "UNAVAILABLE",
+      },
+      gun_qf_6in_40: {
+        status: "UNAVAILABLE",
+      },
+      gun_qf_47in: {
+        status: "UNAVAILABLE",
+      },
+      gun_bl_263mm_rkl20: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_bl_209mm_gl20: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_bl_6in_26: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_rml_8in_9ton: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_rml_64pdr_71cwt: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      gun_qf_12pdr: {
+        status: "IMPORTED",
+        producer: "Krupp",
+      },
+      tube_14in_above_water: {
+        status: "DOMESTIC",
+        producer: "Whitehead (Fiume)",
+      },
+    },
+    gunModels: [
+      {
+        id: "ah_krupp_26cm",
+        familyId: "gun_bl_263mm_rkl20",
+        designation: "26 cm Krupp G. L/22",
+        overrides: {
+          displayName: "26 cm Krupp G. L/22 in casemate",
+          "attributes.shellMassG": "179500",
+        },
+        mounts: ["CASEMATE", "BARBETTE"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "historical_fact",
+          note: "Krupp guns imported; only the 26/28 cm shell masses are sourced.",
+          sources: [
+            {
+              sourceId: "ah-note",
+              title: "National naval profile research note — Austria-Hungary",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "ah_krupp_209",
+        familyId: "gun_bl_209mm_gl20",
+        designation: "20.9 cm Krupp G. L/20",
+        overrides: {
+          displayName: "20.9 cm Krupp G. L/20 in casemate",
+        },
+        mounts: ["CASEMATE"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "historical_fact",
+          note: "Krupp guns imported; only the 26/28 cm shell masses are sourced.",
+          sources: [
+            {
+              sourceId: "ah-note",
+              title: "National naval profile research note — Austria-Hungary",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "ah_krupp_149",
+        familyId: "gun_bl_6in_26",
+        designation: "15 cm Krupp G. L/24",
+        overrides: {
+          displayName: "15 cm Krupp G. L/24 in casemate",
+        },
+        mounts: ["CASEMATE", "DECK_OPEN"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "historical_fact",
+          note: "Krupp guns imported; only the 26/28 cm shell masses are sourced.",
+          sources: [
+            {
+              sourceId: "ah-note",
+              title: "National naval profile research note — Austria-Hungary",
+              page: "F",
+            },
+          ],
+        },
+      },
+      {
+        id: "ah_krupp_87",
+        familyId: "gun_rml_64pdr_71cwt",
+        designation: "8.7 cm Krupp G. L/24",
+        overrides: {
+          displayName: "8.7 cm Krupp G. L/24",
+        },
+        mounts: ["CASEMATE", "DECK_OPEN"],
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "historical_fact",
+          note: "Krupp guns imported; only the 26/28 cm shell masses are sourced.",
+          sources: [
+            {
+              sourceId: "ah-note",
+              title: "National naval profile research note — Austria-Hungary",
+              page: "F",
+            },
+          ],
+        },
+      },
+    ],
+    ammunitionPatterns: [
+      {
+        id: "ah_ap_steel",
+        pattern: "AP",
+        penetrationBiasBp: 6000,
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "LOW",
+          kind: "balance_adjustment",
+          sources: [
+            {
+              sourceId: "ah-note",
+              title: "National naval profile research note — Austria-Hungary",
+              page: "C",
+            },
+          ],
+        },
+      },
+    ],
+    componentVariants: [
+      {
+        id: "ah_tube_350_aw",
+        familyId: "tube_14in_above_water",
+        designation: "35 cm Whitehead, above-water (Fiume)",
+        overrides: {
+          displayName: "35 cm Whitehead torpedo tube, above-water",
+        },
+        provenance: {
+          sourceStatus: "ESTIMATE",
+          confidence: "MEDIUM",
+          kind: "historical_fact",
+          sources: [
+            {
+              sourceId: "ah-note",
+              title: "National naval profile research note — Austria-Hungary",
+              page: "F",
+            },
+          ],
+        },
+      },
+    ],
+    designWeights: {
+      B: {
+        firepowerBp: 11000,
+        protectionBp: 12000,
+        speedBp: 9000,
+        enduranceBp: 9000,
+        torpedoBp: 10500,
+        reliabilityBp: 10500,
+        colonialBp: 8500,
+        costBp: 11000,
+      },
+      CA: {
+        firepowerBp: 10500,
+        protectionBp: 10500,
+        speedBp: 10500,
+        enduranceBp: 9500,
+        torpedoBp: 11500,
+        reliabilityBp: 10000,
+        colonialBp: 9000,
+        costBp: 11000,
+      },
+      CL: {
+        firepowerBp: 9500,
+        protectionBp: 9500,
+        speedBp: 11000,
+        enduranceBp: 10000,
+        torpedoBp: 12000,
+        reliabilityBp: 10000,
+        colonialBp: 9500,
+        costBp: 11500,
+      },
+      DD: {
+        firepowerBp: 8000,
+        protectionBp: 8000,
+        speedBp: 13000,
+        enduranceBp: 8500,
+        torpedoBp: 14000,
+        reliabilityBp: 10000,
+        colonialBp: 8500,
+        costBp: 12000,
+      },
+      KE: {
+        firepowerBp: 8500,
+        protectionBp: 8500,
+        speedBp: 9500,
+        enduranceBp: 10500,
+        torpedoBp: 10000,
+        reliabilityBp: 10500,
+        colonialBp: 10000,
+        costBp: 12000,
+      },
+      AMC: {
+        firepowerBp: 9000,
+        protectionBp: 8500,
+        speedBp: 9500,
+        enduranceBp: 12000,
+        torpedoBp: 10500,
+        reliabilityBp: 10000,
+        colonialBp: 10000,
+        costBp: 11500,
+      },
+    },
+    procurementPolicy: {
+      battleLineShareBp: 3000,
+      cruiserShareBp: 2600,
+      torpedoCraftShareBp: 3200,
+      colonialShareBp: 1200,
+      foreignProcurementAppetiteBp: 4500,
+      unprovenTechAppetiteBp: 4500,
+      buildOrder: ["DD", "B", "CL", "CA", "KE", "AMC"],
+    },
+    namingPolicy: {
+      stems: {
+        B: [
+          "Kaiser",
+          "Erzherzog Albrecht",
+          "Custoza",
+          "Kaiser Max",
+          "Prinz Eugen",
+          "Tegetthoff",
+          "Kronprinz Erzherzog Rudolf",
+        ],
+        CA: ["Kaiserin und Koenigin Maria Theresia", "Kaiser Karl VI", "Sankt Georg"],
+        CL: ["Saida", "Radetzky", "Laudon", "Donau", "Panther", "Tiger", "Zenta", "Novara"],
+        DD: ["I", "II", "III", "IV", "Adler", "Sperber", "Bussard", "Blitz", "Meteor"],
+        KE: ["Leitha", "Maros", "Koeroes", "Temes", "Enns", "Sava", "Albatros"],
+        AMC: ["Oesterreichischer Lloyd", "Austro-Americana"],
+      },
+      convention: {
+        B: "Habsburg dynastic titles, archdukes and battles (Kaiser, Tegetthoff).",
+        CA: "Empress, archduke and saint names (Maria Theresia, Sankt Georg).",
+        CL: "Geographic, river and admiral names (Saida, Radetzky).",
+        DD: "Roman numerals, then birds and phenomena (III, Blitz).",
+        KE: "Rivers and small animals (Leitha, Albatros).",
+        AMC: "Liner names taken up from trade.",
+      },
+    },
+    sourceReferences: [
+      {
+        sourceId: "ah-note",
+        title: "National naval profile research note — Austria-Hungary",
+      },
+      {
+        sourceId: "navypedia-ah",
+        title: "navypedia.org Austro-Hungarian class pages",
+        archiveOrUrl: "http://www.navypedia.org",
+      },
+      {
+        sourceId: "ship-1880-ships",
+        title: "Ship-building 1880 ships by nation note",
+        page: "Austria-Hungary",
+      },
+    ],
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "Grounded shape (Adriatic coast defence, Krupp imports, Whitehead torpedoes); weights and multipliers are BALANCE TARGET.",
+      sources: [
+        {
+          sourceId: "ah-note",
+          title: "National naval profile research note — Austria-Hungary",
+          page: "A, B, C, F",
+        },
+        {
+          sourceId: "ship-1880-ships",
+          title: "Ship-building 1880 ships by nation note",
+          page: "Austria-Hungary",
+        },
+      ],
+      derivation: {
+        sourceValue: "grounded shape; no single sourced multiplier",
+        sourceUnit: "mixed",
+        conversion: "weights and shares are gameplay abstractions",
+        gameValue: "profile as authored",
+        roundingRule: "multipliers within ±15%",
+      },
+    },
+  },
+]);

@@ -89,8 +89,9 @@ function withFileContents(input: CompilerInput): CompilerInput {
     ...(input.presentationFiles ?? []),
     ...(input.uiFiles ?? []),
   ];
+  const documents = input.documents ?? {};
   for (const path of paths) {
-    if (path in fileContents) continue;
+    if (path in fileContents || path in documents) continue;
     try {
       fileContents[path] = readFileSync(resolve(input.contentDir, path), "utf8");
     } catch {}

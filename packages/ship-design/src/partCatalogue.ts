@@ -13,12 +13,12 @@ import { armamentMountFor, type AuthoredArmamentContent } from "./armamentConten
 import { buildAmmunitionPartModel } from "./ammunitionPartAdapter.js";
 import { buildArmourPartModel } from "./armourPartAdapter.js";
 import type { ComponentDef } from "./component.js";
+import { LEGACY_COMPONENT_SOURCE } from "./component.js";
 import { applyComponentOverrides, applyGunModel } from "./componentVariants.js";
 import { buildFittingPartModel } from "./fittingPartAdapter.js";
 import {
   buildGunMountPart,
   buildGunPartModel,
-  GUN_SOURCE_FILES,
   isGunMountType,
   isSingleGunMount,
   type FlattenedGunMountPart,
@@ -959,7 +959,7 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
             sourceFile: navalProfileFile(nationId),
             prototype: {
               id: standardGunPartId(base.id),
-              sourceFile: GUN_SOURCE_FILES.component,
+              sourceFile: base.sourceFile ?? LEGACY_COMPONENT_SOURCE,
               inheritedSpec: [],
               inheritedQuantities: [],
             },

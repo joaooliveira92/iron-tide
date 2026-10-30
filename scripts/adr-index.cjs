@@ -37,56 +37,57 @@ const AREAS = [
   {
     name: "Scope & horizon",
     blurb: "The sole 1880 start, the 1970 authored horizon, and the ten-nation roster.",
-    nums: [201, 204, 205, 214, 282, 283, 284, 290, 291],
+    nums: [348, 349, 350, 201, 204, 205, 214, 282, 283, 284, 290, 291],
   },
   {
     name: "Values, currency & language",
     blurb:
       "Canonical values and the presentation-only units, currency, and language modes over them.",
-    nums: [202, 206, 207, 208, 209, 211, 215, 216, 217, 218, 219, 221, 307],
+    nums: [351, 352, 353, 202, 206, 207, 208, 209, 211, 215, 216, 217, 218, 219, 221, 307],
   },
   {
     name: "Preferences & interfaces",
     blurb: "The versioned preferences domain behind the Options screen.",
-    nums: [203, 270],
+    nums: [338, 203, 270],
   },
   {
     name: "Repository authority & re-baselining",
     blurb: "Unavailable-artifact policy and the project authority order.",
-    nums: [210],
+    nums: [347, 210],
   },
   {
     name: "Process & documentation",
-    blurb: "Concurrent-agent worktree coordination and repository process rules.",
+    blurb:
+      "Worktree and git workflow, verification gates and CI infrastructure, ADR corpus and replay practices.",
     nums: [
-      220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 278, 279, 280, 295, 299, 300, 313,
-      318, 319,
+      220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 279, 280, 295, 299, 300, 313, 318,
+      319, 335, 336, 364, 365, 366,
     ],
   },
   {
     name: "Scenario content & research",
     blurb:
       "Legality, consistency and authored posture of the 1880 scenario's starting content and research state.",
-    nums: [212, 213, 228, 229, 315, 310],
+    nums: [339, 340, 212, 213, 228, 229, 315, 310],
   },
   {
     name: "Campaign economy",
     blurb:
       "The monthly appropriation, ledger, research, deficit policy and construction capacity as one model.",
-    nums: [230, 240],
+    nums: [337, 230, 240],
   },
   {
     name: "Turns, interruptions & save/resume",
     blurb: "Turn identity, the suspend/resume interruption model, and strict save-file decoding.",
-    nums: [222, 235, 278, 285, 305],
+    nums: [342, 343, 222, 235, 278, 285, 305, 330, 331],
   },
   {
     name: "Fleet readiness, command & prestige",
     blurb:
       "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
     nums: [
-      223, 224, 225, 226, 239, 245, 260, 261, 281, 314, 286, 287, 288, 289, 316, 317, 292, 293, 296,
-      297, 298, 301, 302, 303, 304,
+      354, 355, 356, 357, 223, 224, 225, 226, 239, 245, 260, 261, 281, 314, 286, 287, 288, 289, 316,
+      317, 292, 293, 296, 297, 298, 301, 302, 303, 304,
     ],
   },
   {
@@ -95,24 +96,26 @@ const AREAS = [
       "The authoritative home area and possession ownership behind per-area presence, the foreign-station assignment state, and the colonial-service fitting with its dormant ruleset section.",
     nums: [
       231, 241, 242, 247, 248, 249, 250, 251, 253, 254, 255, 256, 257, 258, 259, 262, 263, 264, 265,
-      266,
+      266, 362, 363,
     ],
   },
   {
     name: "Ship design & construction",
     blurb:
       "The ship-designer model, its armour regions, named schemes, and the design draft schema.",
-    nums: [232, 233, 243, 252, 309, 311],
+    nums: [345, 346, 232, 233, 243, 252, 309, 311, 332, 333],
   },
   {
     name: "World map",
     blurb: "How the presentation-only strategic map's baked geography is produced.",
-    nums: [244],
+    nums: [344, 244, 323, 324, 325, 326, 327, 329],
   },
   {
     name: "Engine architecture",
     blurb: "Package interfaces, seams and module depth across the engine.",
-    nums: [271, 272, 273, 276, 277, 294, 306, 308, 312, 320, 321, 322],
+    nums: [
+      358, 359, 360, 361, 271, 272, 273, 276, 277, 294, 306, 308, 312, 320, 321, 322, 328, 334,
+    ],
   },
 ];
 
@@ -123,6 +126,14 @@ const ARCHIVED = new Set([]);
 
 const STATUS_OK = new Set(["accepted", "proposed", "deprecated", "superseded"]);
 const pad = (n) => String(n).padStart(4, "0");
+
+function duplicateAreaAssignments(areas) {
+  const byNum = new Map();
+  for (const { name, nums } of areas) {
+    for (const n of nums) byNum.set(n, [...(byNum.get(n) ?? []), name]);
+  }
+  return [...byNum].filter(([, names]) => names.length > 1).sort((a, b) => a[0] - b[0]);
+}
 
 function parseAdr(file, text) {
   const h1 = text.match(/^# (.*)$/m);
@@ -178,6 +189,16 @@ function load() {
   // The area map must be a partition of the ADR set — but an empty corpus is
   // valid (no sprint started, no ADRs written yet). The roster is only enforced
   // once at least one ADR exists, so a fresh checkout with zero ADRs is green.
+  const twice = duplicateAreaAssignments(AREAS);
+  if (twice.length > 0) {
+    throw new Error(
+      `scripts/adr-index.cjs assigns one ADR to more than one area ` +
+        `(${twice
+          .map(([n, names]) => `ADR-${pad(n)} in ${names.map((x) => `"${x}"`).join(" and ")}`)
+          .join("; ")}) — keep one primary area and drop the number from the other`,
+    );
+  }
+
   const assigned = AREAS.flatMap((a) => a.nums);
   const missing = [...adrs.keys()].filter((n) => !assigned.includes(n));
   const extra = adrs.size > 0 ? assigned.filter((n) => !adrs.has(n)) : [];
@@ -268,15 +289,23 @@ function buildArchiveIndex() {
   return out.join("\n");
 }
 
-module.exports = { buildIndex, buildArchiveIndex };
+module.exports = {
+  AREAS,
+  buildIndex,
+  buildArchiveIndex,
+  duplicateAreaAssignments,
+};
 
 if (require.main === module) {
   const mainTarget = path.join(ADR_DIR, "README.md");
   const archiveTarget = path.join(ARCHIVE_DIR, "README.md");
   fs.writeFileSync(mainTarget, buildIndex());
   fs.writeFileSync(archiveTarget, buildArchiveIndex());
-  require("./lib/adr-scope.cjs").writeScopePages(ROOT);
+  const adrScope = require("./lib/adr-scope.cjs");
+  adrScope.writeScopePages(ROOT);
+  const briefs = adrScope.writePackageBriefs(ROOT);
   console.log(
-    `adr-index: wrote ${path.relative(ROOT, mainTarget)} and ${path.relative(ROOT, archiveTarget)}`,
+    `adr-index: wrote ${path.relative(ROOT, mainTarget)}, ${path.relative(ROOT, archiveTarget)}, ` +
+      `${briefs.length} package-brief page(s)`,
   );
 }

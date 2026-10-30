@@ -27,10 +27,12 @@ describe("save-compatibility corpus (ADR-0113 §5)", () => {
     const dir = join(corpusDir, version);
 
     if (version === CURRENT_COMPATIBILITY_VERSION) {
-      it(`loads the released ${version} save`, () => {
+      it(`loads the released ${version} save and warns once that it predates the manifest`, () => {
         const loaded = unwrapSuccess(runExit(store.load(dir)));
 
         expect(loaded.state.snapshot.compatibilityVersion).toBe(CURRENT_COMPATIBILITY_VERSION);
+        expect(loaded.warnings).toHaveLength(1);
+        expect(loaded.warnings[0]!.code).toBe("PERSISTENCE_LEGACY_SAVE");
       });
     } else {
       it(`rejects the superseded ${version} save with the stable mismatch code`, () => {

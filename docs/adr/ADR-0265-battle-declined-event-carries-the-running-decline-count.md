@@ -4,6 +4,8 @@ Applies to: events, phase-engine
 
 ## Status
 
+Superseded by: ADR-0363
+
 Accepted (2026-10-21). Closes review item R14 of the T-1 battle-offer work (spec
 [#109](https://github.com/joaooliveira92/iron-tide/issues/109), R9). Builds on ADR-0256 and ADR-0257.
 

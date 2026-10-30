@@ -8,7 +8,7 @@
  *
  *   pnpm --filter @bluewave/desktop build
  *   CSC_IDENTITY_AUTO_DISCOVERY=false pnpm --filter @bluewave/desktop exec \
- *     electron-builder --mac --dir --config electron-builder.yml
+ *     electron-builder --mac --dir --config electron-builder.json
  *   pnpm --filter @bluewave/desktop run smoke:packaged [--app BINARY] [--shot OUT.png] [--save DIR]
  *
  * `--shot` overrides the shipbuilding screenshot path; it defaults to
@@ -25,6 +25,8 @@ import { mkdir, mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
+
+import { runPackageGuard } from "./package-guard/run.mjs";
 
 const { values } = parseArgs({
   options: {
@@ -75,6 +77,13 @@ try {
   }, saveDir);
   const isPackaged = await app.evaluate(({ app: electronApp }) => electronApp.isPackaged);
   check("running the packaged build", isPackaged === true);
+
+  const guard = runPackageGuard("default", values.app);
+  check(
+    "the default package holds only the allow-listed production globe assets",
+    guard.ok,
+    guard.ok ? "" : guard.output.slice(0, 1500),
+  );
 
   // The window may already exist by the time we ask: firstWindow handles both.
   const page = await app.firstWindow();
@@ -134,35 +143,60 @@ try {
   );
   check("debug-only commands rejected", reason === "DEBUG_ONLY", String(reason));
 
-  // --- The home map's lazy coastline chunk still paints in the packaged build.
-  // Checked while the fresh campaign is still on Overview, its home screen; the
-  // map unmounts when the shell navigates away to Construction below.
-  const mapPainted = (root) =>
-    root.evaluate((container) => {
-      const canvas = container.querySelector("canvas");
-      if (!canvas || canvas.width === 0) return false;
-      const data = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
-      for (let i = 3; i < data.length; i += 4) if (data[i] > 0) return true;
-      return false;
-    });
-  const awaitPainted = async (name, root) => {
-    const deadline = Date.now() + 15_000;
-    while (Date.now() < deadline) {
-      if (await mapPainted(root)) return check(name, true);
-      await page.waitForTimeout(250);
-    }
-    check(name, false, "canvas stayed empty");
-  };
-
-  const homeApp = page.getByRole("application", { name: /World map/ });
-  await homeApp.waitFor({ timeout: 15_000 });
-  check("home map application present", true);
-  const homeMap = homeApp.locator("xpath=..");
-  await awaitPainted("home map coastline painted from the packaged chunk", homeMap);
+  // --- The Overview home map is now the globe renderer by default. It must
+  // mount from packaged assets, report itself, and keep a tested legacy path.
+  const globe = page.getByTestId("globe-adapter");
+  await globe.waitFor({ timeout: 30_000 });
+  check("globe renderer is the default Overview renderer", true);
   check(
-    "home map: 36 keyboard-reachable areas",
-    (await homeMap.locator('path[role="button"]').count()) === 36,
+    "renderer diagnostic reports the globe",
+    (await page.evaluate(() => document.documentElement.dataset.overviewRenderer)) === "globe",
   );
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[data-testid="globe-adapter-status"]')
+        ?.textContent?.includes("tiles=") === true,
+    null,
+    { timeout: 30_000 },
+  );
+  const globeStatus = await page.getByTestId("globe-adapter-status").innerText();
+  check(
+    "globe reports a live source level and tile set",
+    /z=.*tiles=[1-9]/.test(globeStatus),
+    globeStatus,
+  );
+  const globeAreas = page.getByRole("navigation", { name: "Map areas" }).getByRole("button");
+  check(
+    "globe exposes every area as a keyboard button",
+    (await globeAreas.count()) >= 36,
+    `buttons=${await globeAreas.count()}`,
+  );
+  check(
+    "globe exposes the screen-reader area table",
+    (await page.getByTestId("globe-adapter-area-table").locator("tbody tr").count()) >= 36,
+  );
+  await page.screenshot({ path: resolve(dirname(shotPath), "globe-overview.png") });
+
+  await page.evaluate(() => {
+    window.location.hash = "#legacy-renderer";
+  });
+  const legacyApp = page.getByRole("application", { name: /World map/ });
+  await legacyApp.waitFor({ timeout: 15_000 });
+  check("legacy renderer is available as a rollback fallback", true);
+  check(
+    "renderer diagnostic reports the rollback",
+    (await page.evaluate(() => document.documentElement.dataset.overviewRenderer)) === "legacy",
+  );
+  check(
+    "legacy home map keeps its 36 keyboard-reachable areas",
+    (await legacyApp.locator('path[role="button"]').count()) === 36,
+  );
+  await page.evaluate(() => {
+    window.location.hash = "";
+  });
+  await globe.waitFor({ timeout: 30_000 });
+  check("clearing the rollback flag returns to the globe renderer", true);
 
   // --- The Shipbuilding workspace renders the artifact-backed ship-building content ---
   await page.getByTestId("bottom-nav").getByRole("button", { name: "Ship design" }).click();

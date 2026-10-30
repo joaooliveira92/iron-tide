@@ -2,13 +2,13 @@
 
 Applies to: repository
 
-Rule: Superseded in effect by ADR-0237's cap of five; one session per checkout and one short-lived branch per worktree still apply.
-
 ## Status
+
+Superseded by: ADR-0364
 
 Accepted (2026-10-19).
 
-Amends: ADR-0234. Amended by: ADR-0237 (cap raised to five). The single-checkout rule is relaxed to a small, capped number
+The single-checkout rule is relaxed to a small, capped number
 of worktrees; ADR-0234's local-merge delivery is unchanged.
 
 ## Context

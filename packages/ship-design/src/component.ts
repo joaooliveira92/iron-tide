@@ -35,6 +35,8 @@ export const COMPONENT_CATEGORIES = [
   "DAMAGE_CONTROL",
   "ACCOMMODATION",
 ] as const;
+export const LEGACY_COMPONENT_SOURCE = "ship-building/components";
+
 export type ComponentCategory = (typeof COMPONENT_CATEGORIES)[number];
 
 export interface ParameterRange {
@@ -48,6 +50,7 @@ export interface ComponentDef {
   readonly displayName: string;
   readonly category: ComponentCategory;
   readonly introduction: { readonly fromMonth: string; readonly obsoleteMonth: string | null };
+  readonly sourceFile?: string;
   readonly requires: readonly string[];
   readonly parameters: Readonly<Record<string, ParameterRange>>;
   readonly constants: Readonly<Record<string, number>>;

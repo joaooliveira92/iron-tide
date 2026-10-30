@@ -15,7 +15,7 @@ export {
   type StagedDesign,
   type StagedSource,
 } from "./types.js";
-export { fromYaml, sortKeysDeep, toYaml } from "./yaml.js";
+export { fromStagedJson, sortKeysDeep, toStagedJson } from "./staged.js";
 export { validateStagingDir, type StagingPathOptions } from "./paths.js";
 export { publishMigration, type PublishOptions, type PublishResult } from "./publish.js";
 export { planFromLegacy, planFromStaged } from "./plan.js";

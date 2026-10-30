@@ -4,13 +4,13 @@ Bluewave is a deterministic 1880s naval strategy and tactical game — and the e
 
 ## What it is
 
-A monthly-turn strategic layer (nations, dockyards, fleets, budget, research, war) drives a deterministic tactical battle resolver. Content is authored in YAML, compiled into a canonical JSON artifact, and run by the app. The same
+A monthly-turn strategic layer (nations, dockyards, fleets, budget, research, war) drives a deterministic tactical battle resolver. Content is authored as constrained TypeScript, compiled into a canonical JSON artifact, and run by the app. The same
 content, ruleset, inputs, commands, seeds, and compatibility versions always produce the same authoritative hashes, on every supported OS.
 
 ## Design pillars
 
 - **Determinism.** Authoritative outcomes use integer/fixed-point maths,  domain-separated RNG, and a canonical serializer. No wall-clock, locale, or  filesystem-order dependence (`.ai/REQUIREMENTS.md` BW-DET-*).
-- **Content is data.** Authored YAML never executes; a manifest declares the whole loaded surface, and only the compiled artifact is run.
+- **Content is data.** Authored content is declarative and never runs as application code; a manifest declares the whole loaded surface, and only the compiled artifact is run. YAML is deprecated outside localization catalogues (ADR-0334).
 - **Commands, not mutations.** Intents pass validation, reservation, locking, and an explicit resolution outcome, and emit domain events.
 - **Phases.** The month advances through an ordered, registered phase pipeline
   with declared read/write footprints.

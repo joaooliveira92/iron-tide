@@ -4,6 +4,8 @@ Applies to: content, desktop
 
 ## Status
 
+Superseded by: ADR-0356
+
 Accepted (2026-10-25). Implements ticket [#277](https://github.com/joaooliveira92/iron-tide/issues/277) of spec
 [#265](https://github.com/joaooliveira92/iron-tide/issues/265). The values are the balance targets of
 [ADR-0314](ADR-0314-fleet-management-values-and-repair-entry.md), which the owner's standing delegation on map #193 makes the

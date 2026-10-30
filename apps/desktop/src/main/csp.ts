@@ -26,6 +26,33 @@ export const DEV_CONTENT_SECURITY_POLICY = [
 
 const UNMANAGED_PROTOCOLS = ["chrome-extension:", "devtools:"];
 
+export interface CspHeaderDetails {
+  readonly url: string;
+  readonly responseHeaders?: Record<string, string[]>;
+}
+
+export interface CspHeaderResult {
+  readonly responseHeaders?: Record<string, string[]>;
+}
+
+export interface CspSession {
+  readonly webRequest: {
+    onHeadersReceived(
+      listener: (details: CspHeaderDetails, callback: (result: CspHeaderResult) => void) => void,
+    ): void;
+  };
+}
+
+export function installContentSecurityPolicy(session: CspSession, isDev: boolean): void {
+  session.webRequest.onHeadersReceived((details, callback) => {
+    callback(
+      shouldApplyContentSecurityPolicy(details.url)
+        ? { responseHeaders: applyContentSecurityPolicy(details.responseHeaders, isDev) }
+        : {},
+    );
+  });
+}
+
 export function shouldApplyContentSecurityPolicy(url: string): boolean {
   return !UNMANAGED_PROTOCOLS.some((protocol) => url.startsWith(protocol));
 }

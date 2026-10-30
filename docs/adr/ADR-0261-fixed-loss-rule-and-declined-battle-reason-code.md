@@ -4,6 +4,8 @@ Applies to: phase-engine, campaign, persistence
 
 ## Status
 
+Superseded by: ADR-0354
+
 Accepted (2026-10-21). Seam extension for T-1 [#115](https://github.com/joaooliveira92/iron-tide/issues/115) (spec
 [#109](https://github.com/joaooliveira92/iron-tide/issues/109) G5), authorised by the owner as option A of the #115
 blocker. Builds on [ADR-0260](ADR-0260-prestige-application-and-unpaid-funds-source.md). Adds no prestige value.

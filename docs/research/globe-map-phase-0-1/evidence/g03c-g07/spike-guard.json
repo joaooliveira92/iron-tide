@@ -1,0 +1,99 @@
+{
+  "mode": "spike",
+  "policyVersion": "1.0.0",
+  "passed": true,
+  "counts": {
+    "files": 19575,
+    "allowed": 16,
+    "violations": 0
+  },
+  "sizes": {
+    "archiveBytes": 214932641,
+    "archiveBytesMax": 219200000,
+    "outsideResourceBytes": 1680333,
+    "outsideResourceBytesMax": 2100000
+  },
+  "allowed": [
+    {
+      "rule": "spike-code-chunk",
+      "path": "out/renderer/assets/GlobeSpike-6LQ8wP8w.js",
+      "size": 1347626
+    },
+    {
+      "rule": "spike-style-chunk",
+      "path": "out/renderer/assets/GlobeSpike-BUWBlw7H.css",
+      "size": 71596
+    },
+    {
+      "rule": "spike-glyphs",
+      "path": "out/renderer/map-spike/glyphs/Inter Regular/0-255.pbf",
+      "size": 77088
+    },
+    {
+      "rule": "spike-glyphs",
+      "path": "out/renderer/map-spike/glyphs/Inter Regular/256-511.pbf",
+      "size": 128863
+    },
+    {
+      "rule": "spike-glyphs",
+      "path": "out/renderer/map-spike/glyphs/Inter Regular/8192-8447.pbf",
+      "size": 46944
+    },
+    {
+      "rule": "spike-corrupt-fixture",
+      "path": "out/renderer/map-spike/land-tiles-corrupt/land.bwtp",
+      "size": 690917
+    },
+    {
+      "rule": "spike-corrupt-fixture",
+      "path": "out/renderer/map-spike/land-tiles-corrupt/manifest.json",
+      "size": 11702
+    },
+    {
+      "rule": "spike-tile-pack",
+      "path": "out/renderer/map-spike/land-tiles/land.bwtp",
+      "size": 5678007
+    },
+    {
+      "rule": "spike-licences",
+      "path": "out/renderer/map-spike/land-tiles/licences/natural-earth-terms.txt",
+      "size": 844
+    },
+    {
+      "rule": "spike-licences",
+      "path": "out/renderer/map-spike/land-tiles/licences/ne_10m_land.README.html",
+      "size": 37096
+    },
+    {
+      "rule": "spike-licences",
+      "path": "out/renderer/map-spike/land-tiles/licences/ne_10m_land.VERSION.txt",
+      "size": 7
+    },
+    {
+      "rule": "spike-licences",
+      "path": "out/renderer/map-spike/land-tiles/licences/ne_10m_minor_islands.README.html",
+      "size": 24176
+    },
+    {
+      "rule": "spike-licences",
+      "path": "out/renderer/map-spike/land-tiles/licences/ne_10m_minor_islands.VERSION.txt",
+      "size": 7
+    },
+    {
+      "rule": "spike-licences",
+      "path": "out/renderer/map-spike/land-tiles/licences/ne_10m_rivers_lake_centerlines.README.html",
+      "size": 48596
+    },
+    {
+      "rule": "spike-licences",
+      "path": "out/renderer/map-spike/land-tiles/licences/ne_10m_rivers_lake_centerlines.VERSION.txt",
+      "size": 7
+    },
+    {
+      "rule": "spike-tile-manifest",
+      "path": "out/renderer/map-spike/land-tiles/manifest.json",
+      "size": 11703
+    }
+  ],
+  "violations": []
+}

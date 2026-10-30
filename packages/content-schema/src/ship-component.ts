@@ -109,6 +109,15 @@ export const ShipComponentCatalogueSchema = Schema.Struct({
   components: Schema.Array(ShipComponentSchema),
 });
 
+export const ShipComponentWithSourceSchema = Schema.Struct({
+  ...ShipComponentSchema.fields,
+  sourceFile: Schema.optional(Schema.NonEmptyString),
+});
+
+export const ShipComponentWithSourceCatalogueSchema = Schema.Struct({
+  components: Schema.Array(ShipComponentWithSourceSchema),
+});
+
 export const PropulsionPlantSchema = Schema.Struct({
   id: stableId,
   fuelType: Schema.Literals(["COAL", "OIL", "MIXED"]),

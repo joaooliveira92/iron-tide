@@ -1,0 +1,432 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "1.0.0",
+  "forbidden": [
+    {
+      "id": "spike-runtime-asset",
+      "class": "generated-spike-runtime",
+      "reason": "generated globe-spike tiles, glyphs and manifests ship only in an explicit spike build, and only the files the spike policy allow-lists",
+      "patterns": [
+        "**/map-spike/**",
+        "**/map-spike-assets/**",
+        "**/land-tiles/**",
+        "**/land-tiles-corrupt/**",
+        "**/*.bwtp"
+      ]
+    },
+    {
+      "id": "spike-code-chunk",
+      "class": "dev-feature-flag",
+      "reason": "the globe spike renderer chunk exists only when the spike flag is set at build time",
+      "patterns": ["out/renderer/assets/GlobeSpike*"]
+    },
+    {
+      "id": "source-archive",
+      "class": "source-archive-or-cache",
+      "reason": "raw source archives and their download cache are build-time inputs and never ship",
+      "patterns": ["**/*.zip", "**/.map-data-cache/**", "**/ne_*_*.zip"]
+    },
+    {
+      "id": "extracted-source",
+      "class": "source-archive-or-cache",
+      "reason": "extracted geographic source data is a build-time input and never ships",
+      "patterns": [
+        "**/ne_10m_*",
+        "**/ne_50m_*",
+        "**/ne_110m_*",
+        "**/*.shp",
+        "**/*.shx",
+        "**/*.dbf",
+        "**/*.prj",
+        "**/*.cpg",
+        "**/*.sbn",
+        "**/*.sbx",
+        "**/*.geojson",
+        "**/*.VERSION.txt"
+      ]
+    },
+    {
+      "id": "map-data-input",
+      "class": "build-time-map-input",
+      "reason": "map-data configuration, catalogue, source pins, expected hashes and bake scripts are build-time inputs",
+      "patterns": [
+        "**/map-data/**",
+        "**/protected-features*.json",
+        "**/pipeline.config*.json",
+        "**/sources.v1.json",
+        "**/expected-output*.json",
+        "**/natural-earth-terms.txt"
+      ]
+    },
+    {
+      "id": "bake-intermediate",
+      "class": "source-archive-or-cache",
+      "reason": "bake caches and intermediate geometry are build outputs, not runtime resources",
+      "patterns": ["**/bake-cache/**", "**/intermediate/**", "**/*.cache", "**/*.tmp"]
+    },
+    {
+      "id": "test-fixture",
+      "class": "test-only-fixture",
+      "reason": "test fixtures, test styles, sprites and tile manifests are for tests and never ship",
+      "patterns": [
+        "**/fixtures/**",
+        "**/__fixtures__/**",
+        "**/*.fixture.*",
+        "**/protected-resolution.json",
+        "**/*test*style*.json",
+        "**/test-sprites/**",
+        "**/test-glyphs/**"
+      ]
+    },
+    {
+      "id": "benchmark-and-harness",
+      "class": "investigation",
+      "reason": "benchmark and packaged-validation harnesses are investigation tooling",
+      "patterns": [
+        "**/scripts/globe-spike-*",
+        "**/scripts/map-baseline.*",
+        "**/benchmark*/**",
+        "**/scripts/globe-adapter-*"
+      ]
+    },
+    {
+      "id": "investigation-evidence",
+      "class": "investigation-evidence",
+      "reason": "screenshots, evidence and baselines from investigations are not runtime resources",
+      "patterns": [
+        "**/test-results/**",
+        "**/evidence/**",
+        "**/__screenshots__/**",
+        "**/*-baseline.png",
+        "**/*.snap.png"
+      ]
+    },
+    {
+      "id": "validation-output",
+      "class": "investigation-evidence",
+      "reason": "validation reports and raw logs are evidence, not runtime resources",
+      "patterns": ["**/validation.json", "**/validation-*.json", "**/*.log"]
+    },
+    {
+      "id": "machine-specific-file",
+      "class": "machine-specific",
+      "reason": "editor, OS and local-environment files are specific to one machine",
+      "patterns": [
+        "**/.DS_Store",
+        "**/.env",
+        "**/.env.*",
+        "**/*.local",
+        "**/.vscode/**",
+        "**/.idea/**",
+        "**/*.code-workspace"
+      ]
+    },
+    {
+      "id": "repository-metadata",
+      "class": "machine-specific",
+      "reason": "git metadata and worktrees must never be packaged",
+      "patterns": ["**/.git/**", "**/.git", "**/.worktrees/**"],
+      "includeNodeModules": true
+    },
+    {
+      "id": "build-metadata",
+      "class": "machine-specific",
+      "reason": "incremental compiler state is machine-specific and has no runtime use",
+      "patterns": ["**/*.tsbuildinfo"]
+    },
+    {
+      "id": "package-guard-self",
+      "class": "investigation",
+      "reason": "the packaging policy and its tooling are build-time files",
+      "patterns": ["**/package-policy/**", "**/scripts/package-guard/**"]
+    }
+  ],
+  "largeFileAllowances": [
+    {
+      "pattern": "out/renderer/assets/index-*.js",
+      "maxBytes": 6000000,
+      "reason": "the main renderer bundle"
+    },
+    {
+      "pattern": "out/renderer/assets/coastline-data-*.js",
+      "maxBytes": 3000000,
+      "reason": "the production coastline chunk"
+    },
+    {
+      "pattern": "dist/renderer/components/world-map/coastline-data.js",
+      "maxBytes": 3000000,
+      "reason": "the compiled production coastline module"
+    },
+    {
+      "pattern": "out/renderer/assets/*.png",
+      "maxBytes": 3000000,
+      "reason": "production artwork"
+    },
+    {
+      "pattern": "out/renderer/assets/*.jpg",
+      "maxBytes": 1500000,
+      "reason": "production artwork"
+    },
+    {
+      "pattern": "**/Resources/content/generated/*/content-artifact.json",
+      "maxBytes": 3000000,
+      "reason": "the compiled content artifact shipped as an application resource"
+    },
+    {
+      "pattern": "**/resources/content/generated/*/content-artifact.json",
+      "maxBytes": 3000000,
+      "reason": "the compiled content artifact shipped as an application resource on Linux packages"
+    },
+    {
+      "pattern": "out/renderer/assets/*.ttf",
+      "maxBytes": 1200000,
+      "reason": "the bundled interface font"
+    }
+  ],
+  "duplicateWatchExtensions": [".bwtp", ".pbf", ".mvt", ".geojson", ".zip", ".shp"],
+  "duplicateWatchSegments": ["map-spike", "land-tiles"],
+  "textExtensions": [
+    ".js",
+    ".mjs",
+    ".cjs",
+    ".json",
+    ".html",
+    ".css",
+    ".txt",
+    ".map",
+    ".yml",
+    ".yaml"
+  ],
+  "textScanMaxBytes": 8000000,
+  "absolutePathPatterns": [
+    {
+      "id": "macos-home",
+      "regex": "/Users/[A-Za-z0-9._-]+/"
+    },
+    {
+      "id": "linux-home",
+      "regex": "/home/[a-z_][a-z0-9_-]*/"
+    },
+    {
+      "id": "windows-home",
+      "regex": "[A-Za-z]:\\\\\\\\?Users\\\\\\\\?[A-Za-z0-9._ -]+"
+    },
+    {
+      "id": "macos-temp",
+      "regex": "/private/var/folders/"
+    },
+    {
+      "id": "worktree-checkout",
+      "regex": "\\.worktrees/[A-Za-z0-9._-]+"
+    }
+  ],
+  "modes": {
+    "default": {
+      "allow": [
+        {
+          "id": "production-tile-pack",
+          "class": "generated-runtime",
+          "reason": "the baked offline Natural Earth tile pack the production Overview renderer reads",
+          "pattern": "out/renderer/map-assets/land-tiles/land.bwtp",
+          "maxBytes": 6000000,
+          "required": true
+        },
+        {
+          "id": "production-tile-manifest",
+          "class": "generated-runtime",
+          "reason": "the manifest carrying the pack size and SHA-256 the loader verifies",
+          "pattern": "out/renderer/map-assets/land-tiles/manifest.json",
+          "maxBytes": 64000,
+          "required": true
+        },
+        {
+          "id": "production-licences",
+          "class": "generated-runtime",
+          "reason": "Natural Earth licence and version notices shipped with the tiles",
+          "pattern": "out/renderer/map-assets/land-tiles/licences/*",
+          "maxBytes": 200000,
+          "required": false
+        },
+        {
+          "id": "production-glyphs",
+          "class": "generated-runtime",
+          "reason": "Inter glyph ranges the production labels read from the app, never from a network",
+          "pattern": "out/renderer/map-assets/glyphs/**/*.pbf",
+          "maxBytes": 200000,
+          "required": true
+        },
+        {
+          "id": "production-glyph-licence",
+          "class": "generated-runtime",
+          "reason": "the SIL OFL notice for the Inter glyph derivative",
+          "pattern": "out/renderer/map-assets/glyphs/*.txt",
+          "maxBytes": 20000,
+          "required": false
+        },
+        {
+          "id": "production-adapter-chunk",
+          "class": "prod-feature",
+          "reason": "the lazy globe adapter chunk that is the default Overview renderer",
+          "pattern": "out/renderer/assets/GlobeAdapter-*.js",
+          "maxBytes": 3000000,
+          "required": true
+        },
+        {
+          "id": "production-adapter-style",
+          "class": "prod-feature",
+          "reason": "the stylesheet emitted with the lazy globe adapter chunk",
+          "pattern": "out/renderer/assets/GlobeAdapter-*.css",
+          "maxBytes": 100000,
+          "required": false
+        }
+      ],
+      "integrity": {
+        "manifest": "out/renderer/map-assets/land-tiles/manifest.json",
+        "pack": "out/renderer/map-assets/land-tiles/land.bwtp"
+      },
+      "budget": {
+        "archiveBytesMax": 216000000,
+        "outsideArchiveBytesMax": 2100000,
+        "unlistedFileBytesMax": 1000000
+      }
+    },
+    "spike": {
+      "allow": [
+        {
+          "id": "spike-tile-pack",
+          "class": "generated-spike-runtime",
+          "reason": "the baked offline tile pack the spike reads",
+          "pattern": "out/renderer/map-spike/land-tiles/land.bwtp",
+          "maxBytes": 6000000,
+          "required": true
+        },
+        {
+          "id": "spike-tile-manifest",
+          "class": "generated-spike-runtime",
+          "reason": "the manifest carrying the pack size and SHA-256 the loader verifies",
+          "pattern": "out/renderer/map-spike/land-tiles/manifest.json",
+          "maxBytes": 64000,
+          "required": true
+        },
+        {
+          "id": "spike-licences",
+          "class": "generated-spike-runtime",
+          "reason": "Natural Earth licence and version notices shipped with the tiles",
+          "pattern": "out/renderer/map-spike/land-tiles/licences/*",
+          "maxBytes": 200000,
+          "required": false
+        },
+        {
+          "id": "spike-glyphs",
+          "class": "generated-spike-runtime",
+          "reason": "glyph ranges the spike labels read from the app, never from a network",
+          "pattern": "out/renderer/map-spike/glyphs/**/*.pbf",
+          "maxBytes": 200000,
+          "required": true
+        },
+        {
+          "id": "spike-corrupt-fixture",
+          "class": "packaged-test-fixture",
+          "reason": "the packaged validation harness loads a deliberately corrupt pack to prove the integrity fallback",
+          "pattern": "out/renderer/map-spike/land-tiles-corrupt/*",
+          "maxBytes": 1000000,
+          "required": false
+        },
+        {
+          "id": "spike-code-chunk",
+          "class": "dev-feature-flag",
+          "reason": "the lazy spike renderer chunk built when the spike flag is set",
+          "pattern": "out/renderer/assets/GlobeSpike*.js",
+          "maxBytes": 3000000,
+          "required": true
+        },
+        {
+          "id": "spike-style-chunk",
+          "class": "dev-feature-flag",
+          "reason": "the stylesheet emitted with the lazy spike renderer chunk",
+          "pattern": "out/renderer/assets/GlobeSpike*.css",
+          "maxBytes": 100000,
+          "required": false
+        }
+      ],
+      "integrity": {
+        "manifest": "out/renderer/map-spike/land-tiles/manifest.json",
+        "pack": "out/renderer/map-spike/land-tiles/land.bwtp"
+      },
+      "budget": {
+        "archiveBytesMax": 219200000,
+        "outsideArchiveBytesMax": 2100000,
+        "unlistedFileBytesMax": 1000000
+      }
+    },
+    "adapter": {
+      "allow": [
+        {
+          "id": "adapter-tile-pack",
+          "class": "generated-spike-runtime",
+          "reason": "the baked offline tile pack the adapter reads",
+          "pattern": "out/renderer/map-spike/land-tiles/land.bwtp",
+          "maxBytes": 6000000,
+          "required": true
+        },
+        {
+          "id": "adapter-tile-manifest",
+          "class": "generated-spike-runtime",
+          "reason": "the manifest carrying the pack size and SHA-256 the loader verifies",
+          "pattern": "out/renderer/map-spike/land-tiles/manifest.json",
+          "maxBytes": 64000,
+          "required": true
+        },
+        {
+          "id": "adapter-licences",
+          "class": "generated-spike-runtime",
+          "reason": "Natural Earth licence and version notices shipped with the tiles",
+          "pattern": "out/renderer/map-spike/land-tiles/licences/*",
+          "maxBytes": 200000,
+          "required": false
+        },
+        {
+          "id": "adapter-glyphs",
+          "class": "generated-spike-runtime",
+          "reason": "glyph ranges the adapter labels read from the app, never from a network",
+          "pattern": "out/renderer/map-spike/glyphs/**/*.pbf",
+          "maxBytes": 200000,
+          "required": true
+        },
+        {
+          "id": "adapter-corrupt-fixture",
+          "class": "packaged-test-fixture",
+          "reason": "the packaged validation harness loads a deliberately corrupt pack to prove the integrity fallback",
+          "pattern": "out/renderer/map-spike/land-tiles-corrupt/*",
+          "maxBytes": 1000000,
+          "required": false
+        },
+        {
+          "id": "adapter-code-chunk",
+          "class": "dev-feature-flag",
+          "reason": "the lazy adapter renderer chunk built when the adapter flag is set",
+          "pattern": "out/renderer/assets/GlobeAdapter-*.js",
+          "maxBytes": 3000000,
+          "required": true
+        },
+        {
+          "id": "adapter-style-chunk",
+          "class": "dev-feature-flag",
+          "reason": "the stylesheet emitted with the lazy adapter renderer chunk",
+          "pattern": "out/renderer/assets/GlobeAdapter-*.css",
+          "maxBytes": 100000,
+          "required": false
+        }
+      ],
+      "integrity": {
+        "manifest": "out/renderer/map-spike/land-tiles/manifest.json",
+        "pack": "out/renderer/map-spike/land-tiles/land.bwtp"
+      },
+      "budget": {
+        "archiveBytesMax": 219200000,
+        "outsideArchiveBytesMax": 2100000,
+        "unlistedFileBytesMax": 1000000
+      }
+    }
+  }
+}

@@ -4,6 +4,8 @@ Applies to: combat, content
 
 ## Status
 
+Superseded by: ADR-0357
+
 Accepted (2026-10-25). Resolves part of [#278](https://github.com/joaooliveira92/iron-tide/issues/278), found by the era mechanics
 audit (`.ai/reports/e-1-era-mechanics-audit.md`). The owner delegated the per-id choice.
 
