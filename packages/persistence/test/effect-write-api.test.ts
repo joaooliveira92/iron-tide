@@ -48,7 +48,7 @@ describe("effect write api", () => {
     const second = unwrapSuccess(runExit(store.saveEffect(minimalCampaignState(), dir)));
     expect(unwrapSuccess(runExit(store.activeSaveIdEffect(dir)))).toBe(second.metadata.saveId);
     expect(unwrapSuccess(runExit(store.previousSaveIdEffect(dir)))).toBe(first.metadata.saveId);
-    expect(unwrapSuccess(runExit(store.listEffect(dir)))).toHaveLength(2);
+    expect(unwrapSuccess(runExit(store.listEffect(dir))).saves).toHaveLength(2);
     expect(unwrapSuccess(runExit(store.isCurrentEffect(minimalCampaignState(), dir)))).toBe(true);
   });
 
@@ -86,6 +86,34 @@ describe("effect write api", () => {
     } finally {
       chmodSync(unreadable, 0o755);
     }
+  });
+
+  it("listEffect reports an unreadable save as a warning instead of dropping it", () => {
+    const saved = unwrapSuccess(runExit(store.saveEffect(minimalCampaignState(), dir)));
+    const unreadable = join(dir, "unreadable-save");
+    mkdirSync(unreadable);
+    writeFileSync(join(unreadable, "campaign.json"), "{ not json", "utf8");
+
+    const listing = unwrapSuccess(runExit(store.listEffect(dir)));
+
+    expect(listing.saves.map((save) => save.saveId)).toEqual([saved.metadata.saveId]);
+    expect(listing.warnings).toHaveLength(1);
+    expect(listing.warnings[0]!.code).toBe("PERSISTENCE_CORRUPT_SAVE");
+    expect(listing.warnings[0]!.severity).toBe("warning");
+    expect(listing.warnings[0]!.message).toContain("unreadable-save");
+  });
+
+  it("listEffect warns when a save header does not decode", () => {
+    const undecodable = join(dir, "undecodable-save");
+    mkdirSync(undecodable);
+    writeFileSync(join(undecodable, "campaign.json"), JSON.stringify({ snapshot: 1 }), "utf8");
+
+    const listing = unwrapSuccess(runExit(store.listEffect(dir)));
+
+    expect(listing.saves).toEqual([]);
+    expect(listing.warnings.map((warning) => warning.message)).toEqual([
+      expect.stringContaining("undecodable-save"),
+    ]);
   });
 
   it("revertEffect repoints and fails typed when the pointer cannot be written", () => {

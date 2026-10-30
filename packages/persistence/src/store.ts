@@ -66,6 +66,11 @@ export interface SaveResult {
   warnings: readonly Diagnostic[];
 }
 
+export interface SaveListing {
+  readonly saves: SaveMetadata[];
+  readonly warnings: readonly Diagnostic[];
+}
+
 type PointerReadFailure = PersistenceIoError | PersistenceCorruptSaveError;
 
 const SAVE_ID_PATTERN = /^\d{13}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -291,9 +296,9 @@ export class SaveStore {
     }).pipe(Effect.withSpan("persistence.save"));
   }
 
-  listEffect(saveDir: string): Effect.Effect<SaveMetadata[], PersistenceIoError> {
+  listEffect(saveDir: string): Effect.Effect<SaveListing, PersistenceIoError> {
     return Effect.try({
-      try: () => this.list(saveDir),
+      try: () => this.listing(saveDir),
       catch: (cause) => ioError(LIST_STAGE, cause),
     }).pipe(Effect.withSpan("persistence.list"));
   }
@@ -351,12 +356,25 @@ export class SaveStore {
   }
 
   list(saveDir: string): SaveMetadata[] {
+    return this.listing(saveDir).saves;
+  }
+
+  private listing(saveDir: string): SaveListing {
     if (!existsSync(saveDir)) {
-      return [];
+      return { saves: [], warnings: [] };
     }
 
     const entries = readdirSync(saveDir, { withFileTypes: true });
     const saves: SaveMetadata[] = [];
+    const warnings: Diagnostic[] = [];
+    const unlisted = (dirName: string, reason: string): void => {
+      warnings.push(
+        new PersistenceCorruptSaveError({
+          message: `Save ${dirName} was left out of the list: ${reason}`,
+          stage: LIST_STAGE,
+        }).toDiagnostic("warning"),
+      );
+    };
 
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
@@ -389,23 +407,29 @@ export class SaveStore {
 
       const campaignPath = join(saveDir, dirName, "campaign.json");
       if (!existsSync(campaignPath)) continue;
+      let campaignJson: string;
+      let parsed: unknown;
       try {
-        const campaignJson = readFileSync(campaignPath, "utf8");
-        const decoded = decodeSaveHeader(JSON.parse(campaignJson));
-        if (Result.isSuccess(decoded)) {
-          saves.push({
-            saveId: dirName,
-            timestamp: "",
-            turnNumber: 0,
-            campaignId: "",
-            snapshotHash: "",
-            compatibilityVersion: decoded.success.snapshot.compatibilityVersion,
-            contentArtifactHash: sha256Hex(campaignJson),
-          });
-        }
-      } catch {
+        campaignJson = readFileSync(campaignPath, "utf8");
+        parsed = JSON.parse(campaignJson);
+      } catch (cause) {
+        unlisted(dirName, cause instanceof Error ? cause.message : String(cause));
         continue;
       }
+      const decoded = decodeSaveHeader(parsed);
+      if (Result.isFailure(decoded)) {
+        unlisted(dirName, "the save header does not decode");
+        continue;
+      }
+      saves.push({
+        saveId: dirName,
+        timestamp: "",
+        turnNumber: 0,
+        campaignId: "",
+        snapshotHash: "",
+        compatibilityVersion: decoded.success.snapshot.compatibilityVersion,
+        contentArtifactHash: sha256Hex(campaignJson),
+      });
     }
 
     const chainRank = new Map<string, number>();
@@ -421,7 +445,7 @@ export class SaveStore {
       if (byChain !== 0) return byChain;
       return compareCodePoints(b.saveId, a.saveId);
     });
-    return saves;
+    return { saves, warnings };
   }
 
   isCurrent(state: CampaignState, saveDir: string): boolean {

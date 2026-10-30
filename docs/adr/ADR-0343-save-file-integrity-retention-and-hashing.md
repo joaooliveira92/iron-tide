@@ -149,10 +149,11 @@ format version and hash version replaces it.
    and no longer wrap the synchronous ones in `Effect.try` themselves.
 
 4. The synchronous getters (`getActiveSaveId`, `getPreviousSaveId`, `isCurrent`,
-   `revert(): boolean`) stay best-effort on purpose. The Effect channel is typed
-   instead: pointer reads separate missing from unreadable from corrupt, a save
-   over an unreadable pointer skips pruning and reports it in
-   `SaveResult.warnings`, `isCurrentEffect` fails rather than guessing, and
+   `list`, `revert(): boolean`) stay best-effort on purpose. The Effect channel
+   is typed instead: pointer reads separate missing from unreadable from
+   corrupt, a save over an unreadable pointer skips pruning and reports it in
+   `SaveResult.warnings`, `listEffect` returns a `SaveListing` with one warning
+   per save it left out, `isCurrentEffect` fails rather than guessing, and
    `revertEffect` carries the filesystem cause.
 
 ### 5. Save manifest integrity
