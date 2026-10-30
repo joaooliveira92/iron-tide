@@ -175,7 +175,7 @@ describe("production globe package policy", () => {
 
   it("rejects the production pack when it outgrows its cap", () => {
     const archive = DEFAULT_ARCHIVE();
-    archive.set("out/renderer/map-assets/land-tiles/land.bwtp", randomBytes(6_100_000));
+    archive.set("out/renderer/map-assets/land-tiles/land.bwtp", randomBytes(10_100_000));
     expect(rules({ archive }, "default")).toContain(
       "production-tile-pack:size@out/renderer/map-assets/land-tiles/land.bwtp",
     );
