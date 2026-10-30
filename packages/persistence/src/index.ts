@@ -6,12 +6,10 @@ export {
   PART_MODEL_COMPATIBILITY_VERSION,
 } from "./compatibility.js";
 export {
-  CANCELLED_CODE,
   COMPATIBILITY_MISMATCH_CODE,
   CORRUPT_SAVE_CODE,
   IO_CODE,
   MISSING_SAVE_CODE,
-  PersistenceCancelledError,
   PersistenceCompatibilityMismatchError,
   PersistenceCorruptSaveError,
   PersistenceInvalidOptionError,

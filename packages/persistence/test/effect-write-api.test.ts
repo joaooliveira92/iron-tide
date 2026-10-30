@@ -68,15 +68,6 @@ describe("effect write api", () => {
     expect(failure.stage).toBe("persistence.save");
   });
 
-  it("saveEffect fails with a cancellation error when the signal is already aborted", () => {
-    const controller = new AbortController();
-    controller.abort();
-    expectFailureTag(
-      runExit(store.saveEffect(minimalCampaignState(), dir, {}, controller.signal)),
-      "PERSISTENCE_CANCELLED",
-    );
-  });
-
   it("listEffect fails with a typed IO error when the directory is unreadable", () => {
     const unreadable = join(dir, "unreadable");
     mkdirSync(unreadable);

@@ -8,10 +8,12 @@ import { fileURLToPath } from "node:url";
 
 import {
   SCOPES,
+  TYPED_FAILURE_ROOTS,
   findUntaggedErrors,
   findUntaggedThrows,
   scanTaggedErrors,
   scanUntaggedThrows,
+  typedFailureRootsFor,
   unbaselinedThrows,
 } from "../assert-tagged-errors.mjs";
 
@@ -109,4 +111,18 @@ void test("subtracts the baseline and reports only new throw sites", () => {
 void test("combat holds no untagged throw in the real tree", () => {
   const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
   assert.deepEqual(scanUntaggedThrows(repoRoot, ["packages/combat/src"]), []);
+});
+
+void test("guards the persistence root for typed-failure leaks under the engine scope", () => {
+  assert.deepEqual(typedFailureRootsFor(["engine"]), ["packages/persistence/src"]);
+  assert.deepEqual(typedFailureRootsFor(["surface"]), ["packages/campaign/src"]);
+  assert.deepEqual(typedFailureRootsFor(["engine", "surface"]), [
+    "packages/campaign/src",
+    "packages/persistence/src",
+  ]);
+});
+
+void test("every typed-failure root sits inside a reachability scope", () => {
+  const covered = new Set(Object.values(SCOPES).flat());
+  for (const leakRoot of TYPED_FAILURE_ROOTS) assert.ok(covered.has(leakRoot), leakRoot);
 });

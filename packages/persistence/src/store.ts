@@ -18,7 +18,6 @@ import { CompatibilityChecker, CURRENT_COMPATIBILITY_VERSION } from "./compatibi
 import {
   PersistenceInvalidOptionError,
   PersistenceIoError,
-  PersistenceCancelledError,
   PersistenceCompatibilityMismatchError,
   PersistenceCorruptSaveError,
   PersistenceMissingSaveError,
@@ -50,12 +49,7 @@ import {
   toStorableSnapshot,
 } from "./snapshotSerialization.js";
 
-export {
-  CANCELLED_CODE,
-  CORRUPT_SAVE_CODE,
-  MISSING_SAVE_CODE,
-  LEGACY_SAVE_CODE,
-} from "./errors.js";
+export { CORRUPT_SAVE_CODE, MISSING_SAVE_CODE, LEGACY_SAVE_CODE } from "./errors.js";
 
 export type { SaveMetadata } from "./schemas.js";
 
@@ -84,12 +78,6 @@ function isContainedIn(parent: string, child: string): boolean {
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
 }
 
-function createAbortError(): Error {
-  const error = new Error("Save operation was cancelled");
-  error.name = "AbortError";
-  return error;
-}
-
 export interface SaveExtras {
   readonly monthInput?: unknown;
 }
@@ -106,7 +94,6 @@ export interface LoadedSave {
 export type LoadFailure =
   | PersistenceCorruptSaveError
   | PersistenceMissingSaveError
-  | PersistenceCancelledError
   | PersistenceCompatibilityMismatchError;
 
 const MONTH_INPUT_FILE = "month-input.json";
@@ -131,13 +118,6 @@ function corruptSave(message: string): PersistenceCorruptSaveError {
 
 function missingSave(message: string): PersistenceMissingSaveError {
   return new PersistenceMissingSaveError({ message, stage: LOAD_STAGE });
-}
-
-function cancelledLoad(): PersistenceCancelledError {
-  return new PersistenceCancelledError({
-    message: "Load operation was cancelled",
-    stage: LOAD_STAGE,
-  });
 }
 
 export interface SaveStoreOptions {
@@ -184,16 +164,7 @@ export class SaveStore {
     }
   }
 
-  save(
-    state: CampaignState,
-    saveDir: string,
-    signal?: AbortSignal,
-    extras: SaveExtras = {},
-  ): SaveResult {
-    if (signal?.aborted) {
-      throw createAbortError();
-    }
-
+  save(state: CampaignState, saveDir: string, extras: SaveExtras = {}): SaveResult {
     sweepStaleTemp(saveDir);
 
     const saveId = `${this.clock.nowMillis()}-${this.clock.uuid()}`;
@@ -249,18 +220,8 @@ export class SaveStore {
         writeFileSync(join(tmpDir, MONTH_INPUT_FILE), monthInput, "utf8");
       writeSaveManifest(tmpDir);
 
-      if (signal?.aborted) {
-        cleanup(tmpDir);
-        throw createAbortError();
-      }
-
       renameSync(tmpDir, savePath);
       published = true;
-
-      if (signal?.aborted) {
-        rmSync(savePath, { recursive: true, force: true });
-        throw createAbortError();
-      }
 
       updatePointer(saveDir, saveId, previousSaveId);
       if (this.retainSaves !== undefined && !pointerUnreadable) {
@@ -282,17 +243,10 @@ export class SaveStore {
     state: CampaignState,
     saveDir: string,
     extras: SaveExtras = {},
-    signal?: AbortSignal,
-  ): Effect.Effect<SaveResult, PersistenceCancelledError | PersistenceIoError> {
+  ): Effect.Effect<SaveResult, PersistenceIoError> {
     return Effect.try({
-      try: () => this.save(state, saveDir, signal, extras),
-      catch: (cause) =>
-        signal?.aborted === true
-          ? new PersistenceCancelledError({
-              message: "Save operation was cancelled",
-              stage: SAVE_STAGE,
-            })
-          : ioError(SAVE_STAGE, cause),
+      try: () => this.save(state, saveDir, extras),
+      catch: (cause) => ioError(SAVE_STAGE, cause),
     }).pipe(Effect.withSpan("persistence.save"));
   }
 
@@ -328,11 +282,11 @@ export class SaveStore {
     ).pipe(Effect.withSpan("persistence.previousSaveId"));
   }
 
-  load(saveDir: string, signal?: AbortSignal): Effect.Effect<LoadedSave, LoadFailure> {
+  load(saveDir: string): Effect.Effect<LoadedSave, LoadFailure> {
     const currentVersion = this.currentCompatibilityVersion;
-    return Effect.suspend(() =>
-      Effect.fromResult(loadResult(saveDir, currentVersion, signal)),
-    ).pipe(Effect.withSpan("persistence.load"));
+    return Effect.suspend(() => Effect.fromResult(loadResult(saveDir, currentVersion))).pipe(
+      Effect.withSpan("persistence.load"),
+    );
   }
 
   loadMonthInput(
@@ -344,14 +298,10 @@ export class SaveStore {
     );
   }
 
-  loadById(
-    saveDir: string,
-    saveId: string,
-    signal?: AbortSignal,
-  ): Effect.Effect<LoadedSave, LoadFailure> {
+  loadById(saveDir: string, saveId: string): Effect.Effect<LoadedSave, LoadFailure> {
     const currentVersion = this.currentCompatibilityVersion;
     return Effect.suspend(() =>
-      Effect.fromResult(loadByIdResult(saveDir, saveId, currentVersion, signal)),
+      Effect.fromResult(loadByIdResult(saveDir, saveId, currentVersion)),
     ).pipe(Effect.withSpan("persistence.loadById"));
   }
 
@@ -523,10 +473,7 @@ export class SaveStore {
 export function loadResult(
   saveDir: string,
   currentVersion: string = CURRENT_COMPATIBILITY_VERSION,
-  signal?: AbortSignal,
 ): Result.Result<LoadedSave, LoadFailure> {
-  if (signal?.aborted) return Result.fail(cancelledLoad());
-
   if (!existsSync(saveDir)) {
     return Result.fail(missingSave(`Save directory not found: ${saveDir}`));
   }
@@ -548,9 +495,7 @@ export function loadByIdResult(
   saveDir: string,
   saveId: string,
   currentVersion: string = CURRENT_COMPATIBILITY_VERSION,
-  signal?: AbortSignal,
 ): Result.Result<LoadedSave, LoadFailure> {
-  if (signal?.aborted) return Result.fail(cancelledLoad());
   return loadByIdCore(saveDir, saveId, currentVersion);
 }
 

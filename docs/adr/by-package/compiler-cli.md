@@ -17,5 +17,6 @@ boundaries.
 
 ## compiler-cli-specific
 
-- [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected.
+- [ADR-0343](../ADR-0343-save-file-integrity-retention-and-hashing.md) Save files decode with strict schema validation and are integrity-sealed by a complete-file manifest; the snapshot has a single unified hash covering all fields including maps; save retention is opt-in with active and previous saves always protected. (amended by ADR-0368).
 - [ADR-0349](../ADR-0349-ten-playable-nations-roster.md) The 1880 release has fourteen committed nations and ten playable nations, with the remaining four AI-only until each passes the per-nation readiness gate.
+- [ADR-0368](../ADR-0368-persistence-cancellation-and-typed-failure-guard.md) Persistence operations take no `AbortSignal` and report no cancellation error, because every body is synchronous and cannot be interrupted mid-flight, and interruption is the Effect runtime's concern at the call site; failures in `packages/persistence/src` leave the typed channel only at sites frozen in the shrink-only typed-failure baseline.. Amends ADR-0343.

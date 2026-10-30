@@ -14,6 +14,7 @@ Supersedes: ADR-0285
 Supersedes: ADR-0305
 Supersedes: ADR-0330
 Supersedes: ADR-0331
+Amended by: ADR-0368 (retention rule 2: persistence has no abort signal and no cancellation error).
 
 ## Context
 

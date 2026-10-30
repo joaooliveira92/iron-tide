@@ -30,9 +30,10 @@
 // branch on its message. Existing sites are frozen in a shrink-only baseline keyed by
 // file and content fingerprint (ADR-0106 ratchet pattern); a new throw fails closed.
 //
-// A third rule guards the typed-failure roots (`TYPED_FAILURE_ROOTS`, the runtime-free
-// authoritative packages that return failures as `Result`): any `throw` of something other
-// than a caught identifier, and any `try/catch`, lets a failure leave the typed channel.
+// A third rule guards the typed-failure roots (`TYPED_FAILURE_ROOTS`: `campaign`, the
+// runtime-free authoritative package, and `persistence`, the IO boundary that returns
+// failures as `Result` and `Effect`): any `throw` of something other than a caught
+// identifier, and any `try/catch`, lets a failure leave the typed channel.
 // Existing sites are frozen in `typed-failure-leaks.baseline.json` (shrink-only, same
 // fingerprint scheme as the throw baseline).
 //
@@ -111,7 +112,18 @@ export const ALLOWLIST = {};
 const THROW_BASELINE_PATH = "scripts/untagged-throws.baseline.json";
 const LEAK_BASELINE_PATH = "scripts/typed-failure-leaks.baseline.json";
 
-export const TYPED_FAILURE_ROOTS = ["packages/campaign/src"];
+export const TYPED_FAILURE_ROOTS = ["packages/campaign/src", "packages/persistence/src"];
+
+/**
+ * The typed-failure roots that belong to the scopes being checked, so each scope run
+ * guards its own roots and `--scope all` guards both.
+ * @param {readonly string[]} scopes
+ * @returns {string[]}
+ */
+export function typedFailureRootsFor(scopes) {
+  const covered = new Set(scopes.flatMap((scope) => SCOPES[scope]));
+  return TYPED_FAILURE_ROOTS.filter((leakRoot) => covered.has(leakRoot));
+}
 
 const BUILTIN_ERROR_CONSTRUCTORS = new Set([
   "Error",
@@ -716,13 +728,17 @@ function main() {
       );
     }
   }
-  const surfaceRoots = new Set(SCOPES.surface);
-  if (
-    TYPED_FAILURE_ROOTS.every((leakRoot) => surfaceRoots.has(leakRoot)) &&
-    scopes.includes("surface")
-  ) {
+  const leakRoots = typedFailureRootsFor(scopes);
+  if (leakRoots.length > 0) {
     const leakBaseline = readThrowBaseline(root, LEAK_BASELINE_PATH);
-    const addedLeaks = unbaselinedThrows(scanTypedFailureLeaks(root), leakBaseline);
+    const guarded = (file) => leakRoots.some((prefix) => file.startsWith(`${prefix}/`));
+    const scopedLeakBaseline = Object.fromEntries(
+      Object.entries(leakBaseline).filter(([file]) => guarded(file)),
+    );
+    const addedLeaks = unbaselinedThrows(
+      scanTypedFailureLeaks(root, leakRoots),
+      scopedLeakBaseline,
+    );
     if (addedLeaks.length > 0) {
       const detail = addedLeaks
         .map(

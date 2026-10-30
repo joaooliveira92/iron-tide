@@ -51,7 +51,7 @@ describe("SaveStore month input", () => {
   it("round-trips the month input and records its hash in the metadata", () => {
     const store = new SaveStore();
     const input = { commands: [{ id: "c1", body: { b: 2, a: 1 } }], contentHash: "abc" };
-    const { metadata } = store.save(state(), dir, undefined, { monthInput: input });
+    const { metadata } = store.save(state(), dir, { monthInput: input });
     expect(metadata.monthInputHash).toBe(sha256Hex(canonicalSerialize(input)));
     expect(unwrapSuccess(runExit(store.loadMonthInput(dir, metadata.saveId)))).toEqual({
       status: "present",
@@ -71,7 +71,7 @@ describe("SaveStore month input", () => {
 
   it("reports an altered, missing or escaping month input as corrupt, never as absent", () => {
     const store = new SaveStore();
-    const { metadata, savePath } = store.save(state(), dir, undefined, { monthInput: { n: 1 } });
+    const { metadata, savePath } = store.save(state(), dir, { monthInput: { n: 1 } });
     writeFileSync(join(savePath, "month-input.json"), canonicalSerialize({ n: 2 }), "utf8");
     const error = expectFailureTag(
       runExit(store.loadMonthInput(dir, metadata.saveId)),
