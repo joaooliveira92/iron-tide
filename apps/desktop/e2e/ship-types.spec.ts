@@ -45,38 +45,42 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
   const page = e2e.page;
   const root = await mkdtemp(join(tmpdir(), "bluewave-shiptypes-"));
   const pkg = await openCampaign(e2e, campaignTemplate, root);
-  const workspace = await openShipbuilding(page);
+  await test.step("reachable:submit-design", async () => {
+    const workspace = await openShipbuilding(page);
 
-  const roster = await openRoster(page, workspace);
-  await selectRosterOption(roster, BATTLESHIP);
-  const replace = page.getByRole("button", { name: "Replace my design" });
-  const className = workspace
-    .getByRole("group", { name: "Design commands" })
-    .getByRole("textbox", { name: "Class name" });
-  await replace.or(className).first().waitFor();
-  if (await replace.isVisible()) await replace.click();
-  await className.fill(CLASS_NAME);
-  await expect(workspace.getByText("Can be submitted")).toBeVisible();
+    const roster = await openRoster(page, workspace);
+    await selectRosterOption(roster, BATTLESHIP);
+    const replace = page.getByRole("button", { name: "Replace my design" });
+    const className = workspace
+      .getByRole("group", { name: "Design commands" })
+      .getByRole("textbox", { name: "Class name" });
+    await replace.or(className).first().waitFor();
+    if (await replace.isVisible()) await replace.click();
+    await className.fill(CLASS_NAME);
+    await expect(workspace.getByText("Can be submitted")).toBeVisible();
 
-  await workspace.getByRole("button", { name: /^Protection, / }).click();
-  await workspace.getByRole("tab", { name: "Armour" }).click();
-  const belt = workspace.getByRole("textbox", { name: "Thickness of BELT_MAIN (mm)" });
-  const original = await belt.inputValue();
-  await belt.fill("100");
-  await belt.press("Enter");
-  const explanation = page.getByRole("alertdialog");
-  await expect(explanation.getByText("This change breaks the design")).toBeVisible();
-  await explanation.getByRole("button", { name: "Keep it and fix it myself" }).click();
-  await expect(workspace.getByText("Cannot be built")).toBeVisible();
+    await workspace.getByRole("button", { name: /^Protection, / }).click();
+    await workspace.getByRole("tab", { name: "Armour" }).click();
+    const belt = workspace.getByRole("textbox", { name: "Thickness of BELT_MAIN (mm)" });
+    const original = await belt.inputValue();
+    await belt.fill("100");
+    await belt.press("Enter");
+    const explanation = page.getByRole("alertdialog");
+    await expect(explanation.getByText("This change breaks the design")).toBeVisible();
+    await explanation.getByRole("button", { name: "Keep it and fix it myself" }).click();
+    await expect(workspace.getByText("Cannot be built")).toBeVisible();
 
-  await belt.fill(original);
-  await belt.press("Enter");
-  await expect(workspace.getByText("Can be submitted")).toBeVisible();
+    await belt.fill(original);
+    await belt.press("Enter");
+    await expect(workspace.getByText("Can be submitted")).toBeVisible();
 
-  await workspace.getByRole("button", { name: "Finish design" }).click();
-  await workspace.getByRole("button", { name: "Submit design" }).click();
-  await expect(workspace.getByText(new RegExp(`Design queued\\. .*"${CLASS_NAME}"`))).toBeVisible();
-  await expect(workspace.getByRole("button", { name: "Queued" })).toBeDisabled();
+    await workspace.getByRole("button", { name: "Finish design" }).click();
+    await workspace.getByRole("button", { name: "Submit design" }).click();
+    await expect(
+      workspace.getByText(new RegExp(`Design queued\\. .*"${CLASS_NAME}"`)),
+    ).toBeVisible();
+    await expect(workspace.getByRole("button", { name: "Queued" })).toBeDisabled();
+  });
 
   await e2e.app.close();
   const second = await relaunchAndOpen(pkg);

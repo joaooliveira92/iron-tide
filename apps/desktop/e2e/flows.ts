@@ -7,6 +7,7 @@ export interface NewCampaignOptions {
   readonly admiral?: string;
   readonly campaign?: string;
   readonly seed?: string;
+  readonly onBriefingPage?: (pageIndex: number) => Promise<void>;
 }
 
 const click = (page: Page, name: string) => page.getByRole("button", { name, exact: true }).click();
@@ -39,13 +40,16 @@ export async function startNewCampaign(page: Page, opts: NewCampaignOptions = {}
   await click(page, "Next: Review Campaign");
   await click(page, "Begin Commission");
 
-  for (const label of [
+  const forwardLabels = [
     "Review Naval Estimates",
     "Continue to Treasury Position",
     "Continue to Foreign Intelligence",
     "Continue to Immediate Concerns",
     "Take command",
-  ]) {
+  ];
+  for (const [pageIndex, label] of forwardLabels.entries()) {
+    await page.getByRole("button", { name: label, exact: true }).waitFor();
+    await opts.onBriefingPage?.(pageIndex);
     await click(page, label);
   }
 }
