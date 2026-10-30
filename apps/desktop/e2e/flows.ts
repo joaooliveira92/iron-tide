@@ -84,3 +84,25 @@ export async function expandStatusStrip(page: Page): Promise<Locator> {
 
 export const navigateTo = (page: Page, label: string) =>
   page.getByTestId("bottom-nav").getByRole("button", { name: label, exact: true }).click();
+
+export async function openRoster(page: Page, workspace: Locator): Promise<Locator> {
+  await workspace.getByRole("button", { name: "Start from a reference design" }).click();
+  return page
+    .getByRole("dialog", { name: "Start from a reference design" })
+    .getByRole("listbox", { name: "Ship types" });
+}
+
+export async function selectRosterOption(roster: Locator, name: string): Promise<void> {
+  const targetId = await roster.getByRole("option", { name }).getAttribute("id");
+  expect(targetId).not.toBeNull();
+  await roster.focus();
+  const activeId = () => roster.getAttribute("aria-activedescendant");
+  for (let step = 0; step < 6; step++) {
+    const before = await activeId();
+    if (before === targetId) break;
+    await roster.press("ArrowRight");
+    await expect.poll(activeId).not.toBe(before);
+  }
+  await expect(roster).toHaveAttribute("aria-activedescendant", targetId!);
+  await roster.press("Enter");
+}

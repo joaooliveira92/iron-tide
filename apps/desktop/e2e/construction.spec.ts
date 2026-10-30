@@ -132,3 +132,84 @@ test("a construction command can be submitted, replaced atomically, then cancell
   await expect(page.getByRole("row").filter({ hasText: "cancelled" })).toBeVisible();
   await expect(submittedRow).toHaveCount(0);
 });
+
+test("a player can accelerate a building hull and it is accelerated after a month", async ({
+  e2e,
+  campaignTemplate,
+}) => {
+  const page = e2e.page;
+  await openCampaign(e2e, campaignTemplate);
+
+  await test.step("reachable:accelerate-construction", async () => {
+    await navigateTo(page, "Construction");
+    await page.getByRole("button", { name: /^Inflexible, active/ }).click();
+    await page.getByRole("button", { name: "Inflexible accelerate" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "SetAcceleration queued" }),
+    ).toBeVisible();
+
+    await advanceMonths(page, 1);
+    await navigateTo(page, "Construction");
+    await expect(
+      shipsUnderConstruction(page).filter({ hasText: "Inflexible" }).getByText("accelerated", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: /^Inflexible, accelerated/ }).click();
+    await expect(page.getByRole("button", { name: "Inflexible stop accelerating" })).toBeVisible();
+  });
+});
+
+test("a player can authorize a dock expansion and it is under way after a month", async ({
+  e2e,
+  campaignTemplate,
+}) => {
+  const page = e2e.page;
+  await openCampaign(e2e, campaignTemplate);
+
+  await test.step("reachable:authorize-dock-expansion", async () => {
+    await navigateTo(page, "Construction");
+    const ships = shipsUnderConstruction(page);
+    await expect(ships.first()).toBeVisible();
+    const before = await ships.count();
+    await openYardPlace(page, /^Dock/);
+    await expect(page.getByTestId("dock-size")).toBeVisible();
+    await page.getByRole("button", { name: "Authorize dock expansion" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "AuthorizeDockExpansion queued" }),
+    ).toBeVisible();
+
+    await advanceMonths(page, 1);
+    await navigateTo(page, "Construction");
+    await openYardPlace(page, /^Slipways/);
+    await expect(ships).toHaveCount(before + 1);
+  });
+});
+
+test("a player can cancel a construction project and it is cancelled after a month", async ({
+  e2e,
+  campaignTemplate,
+}) => {
+  const page = e2e.page;
+  await openCampaign(e2e, campaignTemplate);
+
+  await test.step("reachable:cancel-construction-project", async () => {
+    await navigateTo(page, "Construction");
+    await page.getByRole("button", { name: /^Inflexible, active/ }).click();
+    await page.getByRole("button", { name: "Inflexible cancel project" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "CancelConstructionProject queued" }),
+    ).toBeVisible();
+
+    await advanceMonths(page, 1);
+    await navigateTo(page, "Construction");
+    await expect(
+      shipsUnderConstruction(page).filter({ hasText: "Inflexible" }).getByText("cancelled", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: /^Inflexible, cancelled/ }).click();
+    await expect(page.getByRole("button", { name: "Inflexible cancel project" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Inflexible accelerate" })).toHaveCount(0);
+  });
+});
