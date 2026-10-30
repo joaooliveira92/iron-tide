@@ -3,6 +3,18 @@ import { join } from "node:path";
 
 import { safePath } from "./safePath.js";
 
+export interface DirectoryReader {
+  readonly exists: (path: string) => boolean;
+  readonly readdir: (path: string) => string[];
+  readonly isDirectory: (path: string) => boolean;
+}
+
+export const nodeDirectoryReader: DirectoryReader = {
+  exists: existsSync,
+  readdir: (path) => readdirSync(path),
+  isDirectory: (path) => statSync(path).isDirectory(),
+};
+
 export interface ShipBuildingFileGroups {
   shipComponentFiles: string[];
   propulsionPlantFiles: string[];
@@ -40,7 +52,10 @@ const REFERENCE_DESIGN_DIR = "ship-building/reference-designs";
 const PART_DIR = "ship-building/parts";
 const DESIGN_LOADOUT_DIR = "ship-building/design-loadouts";
 
-export function discoverShipBuildingFiles(contentDir: string): ShipBuildingFileGroups {
+export function discoverShipBuildingFiles(
+  contentDir: string,
+  reader: DirectoryReader = nodeDirectoryReader,
+): ShipBuildingFileGroups {
   const groups: ShipBuildingFileGroups = {
     shipComponentFiles: [],
     propulsionPlantFiles: [],
@@ -62,15 +77,17 @@ export function discoverShipBuildingFiles(contentDir: string): ShipBuildingFileG
   for (const [key, base] of FIXED_FILES) {
     for (const suffix of [CONTENT_MODULE_SUFFIX, DOCUMENT_SUFFIX]) {
       const rel = `${base}${suffix}`;
-      if (existsSync(join(contentDir, safePath(rel)))) groups[key].push(safePath(rel));
+      if (reader.exists(join(contentDir, safePath(rel)))) groups[key].push(safePath(rel));
     }
   }
 
-  groups.shipComponentFiles = listAuthoredFiles(contentDir, COMPONENT_DIR).map(safePath);
-  groups.navalProfileFiles = listAuthoredFiles(contentDir, NAVAL_PROFILE_DIR).map(safePath);
-  groups.referenceDesignFiles = listReferenceDesignFiles(contentDir).map(safePath);
-  groups.partFiles = listAuthoredFiles(contentDir, PART_DIR).map(safePath);
-  groups.designLoadoutFiles = listAuthoredFiles(contentDir, DESIGN_LOADOUT_DIR).map(safePath);
+  groups.shipComponentFiles = listAuthoredFiles(reader, contentDir, COMPONENT_DIR).map(safePath);
+  groups.navalProfileFiles = listAuthoredFiles(reader, contentDir, NAVAL_PROFILE_DIR).map(safePath);
+  groups.referenceDesignFiles = listReferenceDesignFiles(reader, contentDir).map(safePath);
+  groups.partFiles = listAuthoredFiles(reader, contentDir, PART_DIR).map(safePath);
+  groups.designLoadoutFiles = listAuthoredFiles(reader, contentDir, DESIGN_LOADOUT_DIR).map(
+    safePath,
+  );
   return groups;
 }
 
@@ -78,37 +95,41 @@ const CONTENT_MODULE_SUFFIX = ".ts";
 const DOCUMENT_SUFFIX = ".json";
 
 function listAuthoredFiles(
+  reader: DirectoryReader,
   contentDir: string,
   rel: string,
   suffixes: readonly string[] = [CONTENT_MODULE_SUFFIX, DOCUMENT_SUFFIX],
 ): string[] {
   const abs = join(contentDir, rel);
-  if (!existsSync(abs)) return [];
-  return readdirSync(abs)
+  if (!reader.exists(abs)) return [];
+  return reader
+    .readdir(abs)
     .sort()
     .flatMap((entry) => {
       const child = join(rel, entry);
-      if (statSync(join(contentDir, child)).isDirectory()) {
-        return listAuthoredFiles(contentDir, child, suffixes);
+      if (reader.isDirectory(join(contentDir, child))) {
+        return listAuthoredFiles(reader, contentDir, child, suffixes);
       }
       return suffixes.some((suffix) => entry.endsWith(suffix)) ? [child] : [];
     });
 }
 
-function listReferenceDesignFiles(contentDir: string): string[] {
+function listReferenceDesignFiles(reader: DirectoryReader, contentDir: string): string[] {
   const base = join(contentDir, REFERENCE_DESIGN_DIR);
-  if (!existsSync(base)) return [];
+  if (!reader.exists(base)) return [];
   const nationOrder = (a: string, b: string): number =>
     a === b ? 0 : a === "uk" ? -1 : b === "uk" ? 1 : a < b ? -1 : 1;
-  return readdirSync(base)
+  return reader
+    .readdir(base)
     .sort(nationOrder)
     .flatMap((nation) => {
       const dir = join(base, nation);
-      if (!statSync(dir).isDirectory()) return [];
+      if (!reader.isDirectory(dir)) return [];
       const conventional = ["starters.ts", "historical.ts"]
         .map((name) => join(REFERENCE_DESIGN_DIR, nation, name))
-        .filter((rel) => existsSync(join(contentDir, rel)));
-      const extra = readdirSync(dir)
+        .filter((rel) => reader.exists(join(contentDir, rel)));
+      const extra = reader
+        .readdir(dir)
         .filter(
           (entry) =>
             (entry.endsWith(CONTENT_MODULE_SUFFIX) || entry.endsWith(DOCUMENT_SUFFIX)) &&

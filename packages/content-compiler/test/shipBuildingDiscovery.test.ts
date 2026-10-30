@@ -1,22 +1,18 @@
-import { describe, it, expect, vi } from "vite-plus/test";
+import { describe, it, expect } from "vite-plus/test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 
-const fsControl = vi.hoisted(() => ({ reverseDirectoryReads: false }));
-vi.mock("node:fs", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:fs")>();
-  const realReaddir = actual.readdirSync as (path: string) => string[];
-  return {
-    ...actual,
-    readdirSync: (path: string): string[] => {
-      const entries = realReaddir(path);
-      return fsControl.reverseDirectoryReads ? [...entries].reverse() : entries;
-    },
-  };
-});
+import {
+  discoverShipBuildingFiles,
+  nodeDirectoryReader,
+  type DirectoryReader,
+} from "../src/shipBuildingDiscovery.js";
 
-import { discoverShipBuildingFiles } from "../src/shipBuildingDiscovery.js";
+const reversedReader: DirectoryReader = {
+  ...nodeDirectoryReader,
+  readdir: (path) => [...nodeDirectoryReader.readdir(path)].reverse(),
+};
 
 function writeShipBuildingTree(root: string): void {
   const files = [
@@ -87,16 +83,13 @@ describe("discoverShipBuildingFiles", () => {
     try {
       writeShipBuildingTree(dir);
 
-      fsControl.reverseDirectoryReads = false;
       const natural = discoverShipBuildingFiles(dir);
       expect(natural).toEqual(EXPECTED);
 
-      fsControl.reverseDirectoryReads = true;
-      const reversed = discoverShipBuildingFiles(dir);
+      const reversed = discoverShipBuildingFiles(dir, reversedReader);
       expect(reversed).toEqual(EXPECTED);
       expect(reversed).toEqual(natural);
     } finally {
-      fsControl.reverseDirectoryReads = false;
       rmSync(dir, { recursive: true, force: true });
     }
   });
