@@ -14,7 +14,6 @@ export interface MapVariantLayout {
   readonly inspector: string;
   readonly inspectorHideWhenEmpty: boolean;
   readonly routeReadout: string;
-  readonly routeHideWhenEmpty: boolean;
 }
 
 const CONTROLS_PANEL =
@@ -37,7 +36,6 @@ export const MAP_VARIANT_LAYOUT: Readonly<Record<MapVariant, MapVariantLayout>> 
     inspector: INSPECTOR,
     inspectorHideWhenEmpty: false,
     routeReadout: ROUTE_READOUT,
-    routeHideWhenEmpty: false,
   },
   panel: {
     root: "rounded-lg border shadow-sm",
@@ -51,7 +49,6 @@ export const MAP_VARIANT_LAYOUT: Readonly<Record<MapVariant, MapVariantLayout>> 
     inspector: INSPECTOR,
     inspectorHideWhenEmpty: true,
     routeReadout: ROUTE_READOUT,
-    routeHideWhenEmpty: true,
   },
   command: {
     root: "",
@@ -67,6 +64,5 @@ export const MAP_VARIANT_LAYOUT: Readonly<Record<MapVariant, MapVariantLayout>> 
     inspector: cn("rounded-lg border p-3 text-xs shadow-lg backdrop-blur", "pointer-events-auto"),
     inspectorHideWhenEmpty: true,
     routeReadout: ROUTE_READOUT,
-    routeHideWhenEmpty: true,
   },
 };

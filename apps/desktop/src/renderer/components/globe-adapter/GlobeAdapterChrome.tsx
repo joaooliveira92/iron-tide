@@ -359,11 +359,7 @@ export function GlobeAdapterChrome({
       <div className="pointer-events-auto absolute bottom-[calc(0.75rem+var(--chrome-bottom,0px)+var(--chrome-slip,0px))] right-[calc(0.75rem+var(--chrome-right,0px))] z-10 flex flex-col items-end gap-2">
         {showMinimap && <GlobeMinimap viewport={viewport} onRecentre={onRecentre} />}
         <div className="rounded border border-white/25 bg-black/75 px-2.5 py-1.5 text-white">
-          <MapLegend
-            showPossessions={state.layers.possessions}
-            showFleets={state.layers.fleets}
-            notes={["Globe adapter: foreign intelligence and invasion range are not modelled."]}
-          />
+          <MapLegend showPossessions={state.layers.possessions} showFleets={state.layers.fleets} />
           <GlobeScaleBar zoom={viewport.zoom} />
           <p className="mt-1 text-xs text-white/60">
             Land climate: Köppen-Geiger V3, Beck et al. (2023), CC BY 4.0

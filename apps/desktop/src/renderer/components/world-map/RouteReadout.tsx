@@ -9,6 +9,7 @@ export interface RouteReadoutProps {
 
 export function RouteReadout({ className, route }: RouteReadoutProps) {
   const format = usePresentationFormat();
+  if (route === null) return null;
   return (
     <div
       data-map-obstacle
@@ -19,24 +20,20 @@ export function RouteReadout({ className, route }: RouteReadoutProps) {
         color: CHART.ink,
       }}
     >
-      {route === null ? (
-        <span style={{ color: CHART.inkDim }}>Shift-click two areas for a route reading</span>
-      ) : (
-        <div className="flex items-center gap-4">
-          <span>
-            <strong className="tabular-nums">{format.count(route.hops)}</strong> hops
-          </span>
-          <span className="tabular-nums" style={{ color: CHART.inkDim }}>
-            {format.count(route.nauticalMiles)} nm
-          </span>
-          <span className="tabular-nums" style={{ color: CHART.inkDim }}>
-            {format.count(route.perHop)} nm/hop
-          </span>
-          <span className="tabular-nums" style={{ color: CHART.inkDim }}>
-            ≈{format.number(route.months, { maximumFractionDigits: 1 })} months
-          </span>
-        </div>
-      )}
+      <div className="flex items-center gap-4">
+        <span>
+          <strong className="tabular-nums">{format.count(route.hops)}</strong> hops
+        </span>
+        <span className="tabular-nums" style={{ color: CHART.inkDim }}>
+          {format.count(route.nauticalMiles)} nm
+        </span>
+        <span className="tabular-nums" style={{ color: CHART.inkDim }}>
+          {format.count(route.perHop)} nm/hop
+        </span>
+        <span className="tabular-nums" style={{ color: CHART.inkDim }}>
+          ≈{format.number(route.months, { maximumFractionDigits: 1 })} months
+        </span>
+      </div>
     </div>
   );
 }
