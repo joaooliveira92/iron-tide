@@ -38,7 +38,9 @@ and `.scratch` references do not resolve in this checkout.
 The engine-versus-desktop status is no longer kept here. The machine-checked
 **reachability ledger** (`scripts/data/reachability-ledger.json`, ADR-0267) is the source
 of truth, `docs/reachability-report.md` is generated from it, and `pnpm preflight` and
-`pnpm check` fail when it drifts. The table below is about the manual, not the desktop.
+`pnpm check` fail when it drifts. Last verified 2026-10-30: 32 reachable, 14 dormant-by-decision,
+14 internal, 0 unclassified; the [UI acceptance report](reports/ui-reachability.md) maps each
+reachable row to an e2e step. The table below is about the manual, not the desktop.
 
 | Manual area                                                                           | Status                                                                                                                                                             |
 | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

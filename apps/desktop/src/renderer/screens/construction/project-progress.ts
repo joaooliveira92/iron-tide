@@ -23,6 +23,7 @@ export interface ProjectRow {
   readonly packages: readonly PackageRow[];
   readonly holdUntilMonth: string | null;
   readonly isForeign: boolean;
+  readonly revisable: boolean;
   readonly readout: ConstructionProjectReadoutView | null;
 }
 
@@ -74,6 +75,7 @@ export function projectRow(entry: ConstructionProjectQueueEntry): ProjectRow {
     packages,
     holdUntilMonth: entry.holdUntilMonth,
     isForeign: entry.isForeign,
+    revisable: entry.revisable,
     readout: entry.readout ?? null,
   };
 }

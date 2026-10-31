@@ -50,6 +50,7 @@ const project = (status: string): ProjectRow => ({
   packages: [],
   holdUntilMonth: null,
   isForeign: false,
+  revisable: false,
   readout: null,
 });
 

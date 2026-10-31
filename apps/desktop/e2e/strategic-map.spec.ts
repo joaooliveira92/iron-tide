@@ -20,14 +20,16 @@ test("the Map reads the compiled campaign and states what it does not model", as
   campaignTemplate,
 }) => {
   await openCampaign(e2e, campaignTemplate);
-  const panel = await openMap(e2e.page);
+  await test.step("reachable:read-world-map", async () => {
+    const panel = await openMap(e2e.page);
 
-  await expect(panel.getByRole("button", { name: /Home Fleet/ })).toBeVisible();
-  await expect(panel.getByText(/Foreign fleet positions are not known/)).toBeVisible();
-  await expect(panel.getByText(/Invasion range is not modelled yet/)).toBeVisible();
-  await expect(panel.getByRole("heading", { name: "Foreign stations" })).toBeVisible();
-  await expect(panel.getByText(/\d+ t short/).first()).toBeVisible();
-  await expect(e2e.page.locator("[data-map-area]").first()).toBeVisible();
+    await expect(panel.getByRole("button", { name: /Home Fleet/ })).toBeVisible();
+    await expect(panel.getByText(/Foreign fleet positions are not known/)).toBeVisible();
+    await expect(panel.getByText(/Invasion range is not modelled yet/)).toBeVisible();
+    await expect(panel.getByRole("heading", { name: "Foreign stations" })).toBeVisible();
+    await expect(panel.getByText(/\d+ t short/).first()).toBeVisible();
+    await expect(e2e.page.locator("[data-map-area]").first()).toBeVisible();
+  });
 });
 
 test("a fleet ordered from the Map panel sails one hop when the month advances", async ({
@@ -36,16 +38,18 @@ test("a fleet ordered from the Map panel sails one hop when the month advances",
 }) => {
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
-  const panel = await openMap(page);
+  await test.step("reachable:move-fleet", async () => {
+    const panel = await openMap(page);
 
-  await panel.getByRole("button", { name: /Home Fleet/ }).click();
-  await panel.getByRole("button", { name: "English Channel" }).click();
-  await expect(panel.getByText(/Ordered: sails for English Channel/)).toBeVisible();
+    await panel.getByRole("button", { name: /Home Fleet/ }).click();
+    await panel.getByRole("button", { name: "English Channel" }).click();
+    await expect(panel.getByText(/Ordered: sails for English Channel/)).toBeVisible();
 
-  await advanceMonths(page, 1);
-  const after = await openMap(page);
-  await expect(after.getByText(/English Channel ·/)).toBeVisible();
-  await expect(after.getByText(/Ordered: sails for/)).toBeHidden();
+    await advanceMonths(page, 1);
+    const after = await openMap(page);
+    await expect(after.getByText(/English Channel ·/)).toBeVisible();
+    await expect(after.getByText(/Ordered: sails for/)).toBeHidden();
+  });
 });
 
 test("a keyboard-only player can select a fleet and choose a destination", async ({

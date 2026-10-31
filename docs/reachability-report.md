@@ -4,8 +4,8 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 
 | Status | Rows |
 | --- | --- |
-| reachable | 35 |
-| dormant-by-decision | 11 |
+| reachable | 32 |
+| dormant-by-decision | 14 |
 | internal | 14 |
 
 ## Reachable
@@ -28,17 +28,14 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | accelerate-construction | Accelerate a construction project at a premium | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
 | authorize-dock-expansion | Authorize a dock expansion | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/renderer/screens/construction/hooks/useConstructionScreen.test.tsx` |
 | order-foreign-construction | Preview and place a ship order with a foreign builder | `screens/construction/components/ForeignContractPanel.tsx` | `apps/desktop/src/renderer/screens/construction/components/ForeignContractPanel.test.tsx` |
-| cancel-construction-project | Cancel a construction project and take the refund | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
+| cancel-construction-project | Cancel a construction project; work done is forfeited and nothing is refunded | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
 | declare-war | Declare war on a nation | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
-| accept-peace | Accept a peace settlement | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | form-or-break-alliance | Form or break an alliance | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | form-or-break-non-aggression-pact | Form or break a non-aggression pact | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | declare-blockade | Declare a blockade of a nation in an area | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | advance-month | Advance the campaign month and answer interruptions | `shell/App.tsx` | `apps/desktop/src/renderer/shell/useCampaignShell.test.ts` |
-| fight-or-decline-battle | Accept or decline a battle offer and fight it with division stance and speed orders | `screens/battle/PlayerBattleScreen.tsx` | `apps/desktop/src/renderer/shell/App.test.tsx` |
 | assign-or-relieve-officer | Assign or relieve an officer | `screens/fleet/organization/FleetOrganizationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/organization/FleetOrganizationView.test.tsx` |
 | ship-readiness | See and manage ship readiness | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
-| combat-fought-battle | Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under division stance and speed orders | `screens/battle/PlayerBattleScreen.tsx` | `apps/desktop/src/main/commands/battleOfferCommands.test.ts` |
 | read-campaign-overview | Read the campaign overview | `screens/overview/OverviewScreen.tsx` | `apps/desktop/src/main/commands/inspectCampaign.test.ts` |
 | read-world-map | Read the world map (Map, Overview, F1, Fleet) | `screens/strategic-map/StrategicMapScreen.tsx` | `apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.test.tsx` |
 | read-battle-history | Read the battle history | `screens/diplomacy/components/BattleHistorySection.tsx` | `apps/desktop/src/renderer/screens/diplomacy/components/BattleHistorySection.test.tsx` |
@@ -52,9 +49,12 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 
 | Row | Player verb | Decision |
 | --- | --- | --- |
+| accept-peace | Accept a peace settlement | #422 |
+| fight-or-decline-battle | Accept or decline a battle offer and fight it with division stance and speed orders | #422 |
 | prestige | See and act on national prestige | #223 |
 | division-battle-experience | Divisions gain experience from the battles they fight | #276 |
 | aircraft-and-carriers | Develop aircraft and operate carriers | RULES.md#dormant-by-decision |
+| combat-fought-battle | Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under division stance and speed orders | #422 |
 | combat-air-combat | Air combat and air defence in a battle | RULES.md#dormant-by-decision |
 | combat-carrier-operations | Carrier operations in a battle | RULES.md#dormant-by-decision |
 | combat-mines | Mine laying and sweeping | RULES.md#dormant-by-decision |

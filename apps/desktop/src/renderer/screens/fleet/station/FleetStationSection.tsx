@@ -24,6 +24,7 @@ import {
   type StationRow,
 } from "./fleet-station-state.js";
 import type { FleetStationState } from "./fleet-station-model.js";
+import { useFleetHotkeys } from "../hooks/useFleetHotkeys.js";
 import { useStationAssignment } from "./useStationAssignment.js";
 
 export interface FleetStationViewProps {
@@ -326,6 +327,13 @@ export function FleetStationView({
 
 export function FleetStationSection({ sessionId }: { readonly sessionId: string }) {
   const station = useStationAssignment(sessionId);
+  const { selected, busy, sendReadiness } = station;
+  useFleetHotkeys({
+    "reserve-selected": () => {
+      if (selected.length === 0 || busy) return;
+      void sendReadiness("RESERVE");
+    },
+  });
   return (
     <FleetStationView
       state={station.state}

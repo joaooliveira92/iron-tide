@@ -43,7 +43,8 @@ systems the agent must not wire.
 
 ## Acceptance criteria
 
-Observable, checkable statements. Each maps to a test or an artifact.
+Observable, checkable statements. Each maps to a test or an artifact. New
+player-facing engine capability names its UI path or a `dormant-by-decision` ledger row.
 
 ## Approach
 
