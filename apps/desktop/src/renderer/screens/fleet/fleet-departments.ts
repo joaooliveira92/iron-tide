@@ -1,3 +1,4 @@
+import { BluewaveError } from "@bluewave/contracts";
 import {
   Flag,
   GraduationCap,
@@ -94,7 +95,7 @@ const GROUPS: readonly (readonly FleetDepartmentMeta[])[] = [
 
 export function fleetDepartmentMeta(id: FleetDepartment): FleetDepartmentMeta {
   const found = GROUPS.flat().find((meta) => meta.id === id);
-  if (found === undefined) throw new Error(`Unknown fleet department ${id}`);
+  if (found === undefined) throw new BluewaveError("FLEET_DEPARTMENT_UNKNOWN", { id });
   return found;
 }
 

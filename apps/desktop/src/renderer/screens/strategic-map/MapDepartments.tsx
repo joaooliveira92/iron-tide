@@ -1,4 +1,5 @@
 import type { StrategicMapView } from "@bluewave/campaign-engine";
+import { BluewaveError } from "@bluewave/contracts";
 import { Eye, Flag, MapPinned, Route, ShieldBan, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import type { IndexTab } from "../../components/slate/IndexTabs.js";
@@ -76,11 +77,14 @@ const META: readonly (readonly DepartmentMeta[])[] = [
 
 export function mapDepartmentMeta(id: MapDepartment): DepartmentMeta {
   const found = META.flat().find((meta) => meta.id === id);
-  if (found === undefined) throw new Error(`Unknown map department ${id}`);
+  if (found === undefined) throw new BluewaveError("MAP_DEPARTMENT_UNKNOWN", { id });
   return found;
 }
 
-function detailFor(id: MapDepartment, data: MapDepartmentData): { text: string; attention: boolean } {
+function detailFor(
+  id: MapDepartment,
+  data: MapDepartmentData,
+): { text: string; attention: boolean } {
   switch (id) {
     case "orders":
       return data.pending.length === 0
@@ -93,7 +97,10 @@ function detailFor(id: MapDepartment, data: MapDepartmentData): { text: string; 
       const count = data.strategic?.blockades.length ?? 0;
       return count === 0
         ? { text: translate("map.desk.blockades.none"), attention: false }
-        : { text: translate("map.desk.blockades.count", { count: String(count) }), attention: true };
+        : {
+            text: translate("map.desk.blockades.count", { count: String(count) }),
+            attention: true,
+          };
     }
     case "stations": {
       if (data.shortfalls === null) {
@@ -116,7 +123,9 @@ function detailFor(id: MapDepartment, data: MapDepartmentData): { text: string; 
   }
 }
 
-export function mapIndexTabs(data: MapDepartmentData): readonly (readonly IndexTab<MapDepartment>[])[] {
+export function mapIndexTabs(
+  data: MapDepartmentData,
+): readonly (readonly IndexTab<MapDepartment>[])[] {
   return META.map((group) =>
     group.map((meta) => {
       const detail = detailFor(meta.id, data);
@@ -155,7 +164,9 @@ function OrdersList({ data }: { readonly data: MapDepartmentData }) {
               <span className="font-display">{order.destinationName}</span>
             </div>
             <div className="flex items-baseline justify-between gap-3 text-admiralty-ink-muted">
-              <span>{translate("map.orders.from", { area: fleet?.areaName ?? order.fromMapAreaId })}</span>
+              <span>
+                {translate("map.orders.from", { area: fleet?.areaName ?? order.fromMapAreaId })}
+              </span>
               <button
                 type="button"
                 onClick={() => data.onCancelOrder(order.commandId)}
