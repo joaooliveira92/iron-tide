@@ -68,9 +68,11 @@ function makeNation(id: (typeof NATION_IDS)[number]): Nation {
       fullIdentity: `${id} full identity`,
       strategicProblem: `${id} strategic problem`,
     },
+    traits: [],
     regime: {
       type: "monarchy",
       politicalSystem: "constitutional_monarchy",
+      governmentType: "limited_democracy",
       headOfState: "ruler",
       headOfGovernment: "pm",
       leaderTitle: "title",
