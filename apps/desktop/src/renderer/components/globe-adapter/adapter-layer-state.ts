@@ -47,6 +47,11 @@ export function markerFilter(visibility: AdapterLayerVisibility): AdapterFilter 
   return clauses.length === 1 ? (clauses[0] as AdapterFilter) : ["any", ...clauses];
 }
 
+export function fleetGlyphFilter(visibility: AdapterLayerVisibility): AdapterFilter {
+  if (!visibility.fleets) return ["==", ["get", "id"], "__none__"];
+  return ["==", ["get", "markerClass"], "fleet"];
+}
+
 export function overlayClassFilter(overlayClass: "lane" | "route"): AdapterFilter {
   return ["==", ["get", "overlayClass"], overlayClass];
 }

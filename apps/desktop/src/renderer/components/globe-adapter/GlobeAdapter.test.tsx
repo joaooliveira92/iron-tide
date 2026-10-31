@@ -297,7 +297,24 @@ describe("GlobeAdapter parity interactions", () => {
             call.id === "adapter-marker-labels" && JSON.stringify(call.value).includes("__none__"),
         ),
       ).toBe(true);
+      expect(
+        next.filterCalls.some(
+          (call) =>
+            call.id === "adapter-fleet-glyphs" && JSON.stringify(call.value).includes("__none__"),
+        ),
+      ).toBe(true);
     });
+  });
+
+  it("registers the fleet square as an SDF image when MapLibre asks for it", async () => {
+    renderAdapter();
+    const map = await readyMap();
+    map.emit("styleimagemissing", { id: "something-else" });
+    expect(map.images).toEqual([]);
+    map.emit("styleimagemissing", { id: "fleet-square" });
+    map.emit("styleimagemissing", { id: "fleet-square" });
+    expect(map.images).toHaveLength(1);
+    expect(map.images[0]?.options).toEqual({ sdf: true });
   });
 
   it("ignores an illegal fleet drop and restores drag pan on cancel", async () => {

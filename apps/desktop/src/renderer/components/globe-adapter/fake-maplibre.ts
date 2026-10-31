@@ -3,6 +3,7 @@ export interface FakeMap {
   readonly canvas: HTMLCanvasElement;
   markerHits: readonly { readonly properties: Record<string, unknown> }[];
   areaHits: readonly { readonly properties: Record<string, unknown> }[];
+  readonly images: { readonly id: string; readonly image: unknown; readonly options: unknown }[];
   readonly layoutCalls: { readonly id: string; readonly value: unknown }[];
   readonly filterCalls: { readonly id: string; readonly value: unknown }[];
   readonly dragPanCalls: string[];
@@ -29,6 +30,8 @@ export interface FakeMap {
   setLayoutProperty(id: string, key: string, value: unknown): void;
   setFilter(id: string, value: unknown): void;
   setPaintProperty(id: string, key: string, value: unknown): void;
+  hasImage(id: string): boolean;
+  addImage(id: string, image: unknown, options?: unknown): void;
   setProjection(value: unknown): void;
   setFeatureState(): void;
   setCenter(value: unknown): void;
@@ -89,6 +92,8 @@ export class FakeMapClass implements FakeMap {
   readonly canvas: HTMLCanvasElement;
   markerHits: readonly { readonly properties: Record<string, unknown> }[] = [];
   areaHits: readonly { readonly properties: Record<string, unknown> }[] = [];
+  readonly images: { readonly id: string; readonly image: unknown; readonly options: unknown }[] =
+    [];
   readonly layoutCalls: { readonly id: string; readonly value: unknown }[] = [];
   readonly filterCalls: { readonly id: string; readonly value: unknown }[] = [];
   readonly dragPanCalls: string[] = [];
@@ -151,6 +156,12 @@ export class FakeMapClass implements FakeMap {
     this.filterCalls.push({ id, value });
   }
   setPaintProperty(): void {}
+  hasImage(id: string): boolean {
+    return this.images.some((image) => image.id === id);
+  }
+  addImage(id: string, image: unknown, options?: unknown): void {
+    this.images.push({ id, image, options });
+  }
   setProjection(value: unknown): void {
     this.projectionCalls.push(value);
   }

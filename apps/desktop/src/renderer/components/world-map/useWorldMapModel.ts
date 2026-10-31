@@ -8,6 +8,7 @@ import type { AreaControl, AreaSummary, MapPrototypeState, RouteReading } from "
 import {
   WORLD_WRAP_TURNS,
   projectAreas,
+  projectPoint,
   type ProjectedArea,
   type Projection,
 } from "./projection.js";
@@ -23,7 +24,7 @@ import {
 import { layoutLabels, type PlacedLabel } from "./map-label-layout.js";
 import { buildGraticule } from "./map-graticule.js";
 import { separateGlyphs } from "./map-glyph-layout.js";
-import { buildLanes, type LaneMark } from "./map-lanes.js";
+import { buildLanes, buildSeaLanes, type LaneMark } from "./map-lanes.js";
 import {
   buildRegionStrengths,
   compactGlyphs,
@@ -138,21 +139,28 @@ export function useWorldMapModel({
 
   const fleetMarks = useMemo<FleetMark[]>(() => {
     const anchors: AreaAnchors = new Map([...areasById].map(([id, area]) => [id, area.label]));
-    const singles = fleetSingles(source.fleets, anchors);
+    const singles = fleetSingles(source.fleets, anchors, (lonLat) =>
+      projectPoint(lonLat, projection, state.centre),
+    );
     const factor = camera.getTransform().scale * camera.getPixelsPerUnit();
     return buildFleetMarks(singles, camera.zoomBand === 0, factor, portMarks);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areasById, camera.zoomBand, source.fleets, portMarks, viewVersion]);
+  }, [areasById, camera.zoomBand, source.fleets, portMarks, projection, state.centre, viewVersion]);
 
-  const lanes = useMemo(
-    () =>
-      buildLanes(
-        overlay.lanes ?? [],
-        new Map([...areasById].map(([id, area]) => [id, area.label] as const)),
+  const lanes = useMemo(() => {
+    if ((overlay.seaLanes ?? []).length > 0) {
+      return buildSeaLanes(
+        overlay.seaLanes ?? [],
+        (lonLat) => projectPoint(lonLat, projection, state.centre),
         projection.width,
-      ),
-    [areasById, overlay.lanes, projection.width],
-  );
+      );
+    }
+    return buildLanes(
+      overlay.lanes ?? [],
+      new Map([...areasById].map(([id, area]) => [id, area.label] as const)),
+      projection.width,
+    );
+  }, [areasById, overlay.lanes, overlay.seaLanes, projection, state.centre]);
 
   const strengths = useMemo(
     () =>

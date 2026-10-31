@@ -35,6 +35,7 @@ import {
 import { fitWorldCamera, type AppCameraState, type CameraProjection } from "./camera-contract.js";
 import type { OverlayFeature, OverlaySnapshot } from "./overlay-contract.js";
 import { DisposalRegistry } from "./disposal.js";
+import { FLEET_GLYPH_ID, buildFleetGlyph } from "./fleet-glyph.js";
 import { srgbToCanvasHex } from "./display-color.js";
 import { projectOverlay } from "./overlay-projection.js";
 import { OverlayStore } from "./overlay-store.js";
@@ -47,6 +48,7 @@ import {
   buildFrontierCollection,
   buildGraticuleCollection,
   borderColorExpression,
+  fleetGlyphFilter,
   markerFilter,
   nationMarkerColor,
   overlayClassFilter,
@@ -444,9 +446,47 @@ function mapLayers(
           ["match", ["get", "markerClass"], "fleet", "#0b3a5c", "#ffd24a"],
           ["to-color", ["get", "color"]],
         ],
-        "circle-stroke-color": ["match", ["get", "markerClass"], "fleet", "#ffffff", "#001018"],
-        "circle-stroke-width": ["match", ["get", "markerClass"], "fleet", 2.5, 1.5],
-        "circle-opacity": ["case", ["boolean", ["feature-state", "hidden"], false], 0, 1],
+        "circle-stroke-color": "#001018",
+        "circle-stroke-width": 1.5,
+        "circle-opacity": [
+          "case",
+          ["boolean", ["feature-state", "hidden"], false],
+          0,
+          ["==", ["get", "markerClass"], "fleet"],
+          0,
+          1,
+        ],
+        "circle-stroke-opacity": [
+          "case",
+          ["boolean", ["feature-state", "hidden"], false],
+          0,
+          ["==", ["get", "markerClass"], "fleet"],
+          0,
+          1,
+        ],
+      },
+    },
+    {
+      id: "adapter-fleet-glyphs",
+      type: "symbol",
+      source: "adapter-markers",
+      filter: fleetGlyphFilter(visibility) as never,
+      layout: {
+        "icon-image": FLEET_GLYPH_ID,
+        "icon-size": 0.8,
+        "icon-allow-overlap": true,
+        "icon-ignore-placement": true,
+      },
+      paint: {
+        "icon-color": [
+          "case",
+          ["==", ["get", "color"], ""],
+          "#0b3a5c",
+          ["to-color", ["get", "color"]],
+        ],
+        "icon-halo-color": "#ffffff",
+        "icon-halo-width": 2,
+        "icon-opacity": ["case", ["boolean", ["feature-state", "hidden"], false], 0, 1],
       },
     },
     {
@@ -680,6 +720,7 @@ export function GlobeAdapter({
     set("adapter-lanes", visibility.lanes);
     set("adapter-routes", visibility.routes);
     map.setFilter("adapter-markers", markerFilter(visibility) as never);
+    map.setFilter("adapter-fleet-glyphs", fleetGlyphFilter(visibility) as never);
     map.setFilter("adapter-marker-labels", markerFilter(visibility) as never);
   }, [ready, showAreas, state.layers]);
 
@@ -1042,6 +1083,11 @@ export function GlobeAdapter({
     };
     const onPointerUp = (event: PointerEvent) => endDrag(event, true);
     const onPointerCancel = (event: PointerEvent) => endDrag(event, false);
+    const onImageMissing = (event: { readonly id: string }) => {
+      if (event.id !== FLEET_GLYPH_ID || active.hasImage(FLEET_GLYPH_ID)) return;
+      active.addImage(FLEET_GLYPH_ID, buildFleetGlyph(), { sdf: true });
+    };
+    active.on("styleimagemissing", onImageMissing);
     active.on("idle", onIdle);
     active.on("error", onError);
     active.on("click", onClick);
@@ -1206,6 +1252,7 @@ export function GlobeAdapter({
       whenIdle: waitIdle,
     };
 
+    disposal.add(() => active.off("styleimagemissing", onImageMissing));
     disposal.add(() => active.off("idle", onIdle));
     disposal.add(() => active.off("error", onError));
     disposal.add(() => active.off("click", onClick));
