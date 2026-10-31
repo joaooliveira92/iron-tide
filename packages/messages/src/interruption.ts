@@ -25,7 +25,7 @@ export type EffectHint = typeof EffectHintSchema.Type;
 export const DecisionEffectSchema = Schema.Struct({
   nationId: nonEmptyString,
   attribute: Schema.Literal("treasury"),
-  delta: Schema.Number,
+  delta: Schema.Finite,
 });
 export type DecisionEffect = typeof DecisionEffectSchema.Type;
 
@@ -235,7 +235,7 @@ export const BattleResultInputSchema = Schema.Struct({
   loserId: Schema.NullOr(nonEmptyString),
   attackerLosses: Schema.Array(nonEmptyString),
   defenderLosses: Schema.Array(nonEmptyString),
-  damageReport: Schema.Record(Schema.String, Schema.Number),
+  damageReport: Schema.Record(Schema.String, Schema.Finite),
 });
 
 export const OfferResponseInputSchema = Schema.Struct({
