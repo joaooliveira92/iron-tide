@@ -1,3 +1,5 @@
+Superseded by [ui-reachability.md](ui-reachability.md), the final report; this file keeps the stage history.
+
 # UI acceptance run, stage 0: coverage map
 
 Issue #227, brief `.ai/briefs/ui-acceptance-run.md`. Observed on `dev` plus the branch commits, 2026-10-30.
