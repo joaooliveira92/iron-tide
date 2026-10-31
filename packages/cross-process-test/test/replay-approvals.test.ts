@@ -13,9 +13,9 @@ import {
 const RECORDED = recordReplay({ id: "approvals-two-months", seed: "approvals-test", months: 2 });
 const NAME = "approvals-two-months.replay.json";
 
-function perturbed(text: string, month: number): string {
+function perturbed(text: string, month: number, hash = "a".repeat(64)): string {
   const file = JSON.parse(text);
-  file.months[month - 1].snapshotHash = "a".repeat(64);
+  file.months[month - 1].snapshotHash = hash;
   return JSON.stringify(file);
 }
 
@@ -69,6 +69,21 @@ describe("replay approvals guard", () => {
     approvals.entries[0].newHash = "b".repeat(64);
     const head = state(changed.replays.get(NAME)!, JSON.stringify(approvals));
     expect(tags(base, head)).toEqual(["HashMismatch"]);
+  });
+
+  it("fails two chained approvals that skip the recorded base hash", () => {
+    const mid = perturbed(RECORDED, 2, "b".repeat(64));
+    const head = perturbed(mid, 2, "c".repeat(64));
+    const first = JSON.parse(proposed(state(RECORDED), state(mid))).entries[0];
+    const second = JSON.parse(proposed(state(mid), state(head))).entries[0];
+    const chained = JSON.stringify({
+      schema: "replay-approvals/2",
+      entries: [first, second],
+    });
+    const outcome = unwrap(checkReplayApprovals(base, state(head, chained)));
+    expect(outcome.failures.map((f) => f._tag)).toEqual(["HashMismatch"]);
+    expect(outcome.failures[0]!.detail).toContain(first.id);
+    expect(outcome.failures[0]!.detail).toContain(second.id);
   });
 
   it("fails an orphaned approval that matches no delta", () => {
