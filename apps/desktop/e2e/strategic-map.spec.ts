@@ -58,7 +58,7 @@ test("a fleet ordered from the Map panel sails one hop when the month advances",
 
     await advanceMonths(page, 1);
     const after = await openMap(page);
-    await expect(after.getByText(/English Channel ·/)).toBeVisible();
+    await expect(after.getByText("In English Channel")).toBeVisible();
     await expect(after.getByText(/Ordered: sails for/)).toBeHidden();
   });
 });
