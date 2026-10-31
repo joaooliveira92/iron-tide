@@ -10,7 +10,7 @@ const ReplayOutputSchema = Schema.Struct({
   matched: Schema.Boolean,
   revisions: Schema.Array(
     Schema.Struct({
-      revision: Schema.Number,
+      revision: Schema.Finite,
       matched: Schema.Boolean,
       expectedHash: Schema.String,
       actualHash: Schema.String,
