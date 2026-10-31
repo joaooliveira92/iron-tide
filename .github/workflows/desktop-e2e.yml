@@ -41,6 +41,8 @@ jobs:
       # mean tests/packaging used a stale or missing artifact.
       - name: Build the compiled content artifact
         run: pnpm content:build
+      - name: Compile the engine-only replay child
+        run: pnpm --filter @bluewave/desktop typecheck
       - run: pnpm --filter @bluewave/desktop test:e2e
       - name: Package the app (unpacked)
         run: CSC_IDENTITY_AUTO_DISCOVERY=false pnpm --filter @bluewave/desktop exec electron-builder --mac --dir --config electron-builder.json
