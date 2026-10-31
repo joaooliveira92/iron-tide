@@ -24,8 +24,8 @@ dispatched with a [task brief](templates/task-brief.md) and tracked through the
    GitHub issue tracker, wire blocking edges, and work it one ticket per
    session. If the way is already clear and fits one session, skip straight to Spec.
 2. **Ground (research)** — for content/spec-heavy sprints, the **research** role
-   spins up a background agent against primary sources and writes
-   `docs/research/<slug>-<topic>.md`.
+   spins up a background agent against primary sources and publishes a
+   `Research` discussion.
 3. **Spec (spec-creator)** — the **spec-creator** role synthesizes a spec in the
    **to-spec** format (Problem/Solution/User Stories/Implementation Decisions/
    Testing/Out of Scope), publishes it as a GitHub issue labelled `ready-for-agent`,
@@ -46,7 +46,7 @@ dispatched with a [task brief](templates/task-brief.md) and tracked through the
 | Role             | Skill                                     | Permissions         | Output                                                        |
 | ---------------- | ----------------------------------------- | ------------------- | ------------------------------------------------------------- |
 | 1. spec-creator  | `to-spec`                                 | write spec issue    | spec issue (`ready-for-agent`)                                |
-| 2. research      | `research`                                | write notes only    | `docs/research/<slug>-<topic>.md`                             |
+| 2. research      | `research`                                | write notes only    | `Research` discussion                                         |
 | 3. implementator | — (works `to-tickets` output)             | edit+run            | frontier ticket + code + tests + execution report             |
 | 4. reviewer      | — (`.ai/REVIEW-PROMPT.md`)                | read-only           | classified, severity-tagged findings + APPROVE / NEEDS_REWORK |
 | orchestrator     | `wayfinder` (chart), `to-tickets` (slice) | owns git/validation | map + gate + git/traceability                                 |
@@ -60,8 +60,7 @@ validation gate → commit**.
   truth**. The orchestrator re-reads files, the diff and `git status`, and
   re-runs claimed gates before acting.
 - Write scope is role-locked: spec-creator writes only the spec issue;
-  research writes only
-  `docs/research/<slug>-<topic>.md`; the reviewer writes nothing. The
+  research writes only a `Research` discussion; the reviewer writes nothing. The
   orchestrator re-reads those files (not the reports) before acting on them.
 - The implementator works one **frontier ticket** (from to-tickets); the reviewer
   checks that ticket against its acceptance criteria + the spec + contract.

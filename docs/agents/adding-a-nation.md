@@ -22,8 +22,9 @@ This writes a draft `NationNavalProfile` skeleton and a research-note stub
 
 ## 2. Research and fill
 
-Research the nation into `docs/research/<nationId>-naval-profile.md`, then write
-a complete per-nation catalogue file (`{ navalProfiles: [ … ] }`) that
+Research the nation into a `Research` discussion
+(`gh discussion create --category Research --title "<nationId>: naval profile" --body-file <note>`),
+then write a complete per-nation catalogue file (`{ navalProfiles: [ … ] }`) that
 matches `content/production/<scenario>/ship-building/naval-profiles/<nationId>.ts`.
 Replace every `PLACEHOLDER` with a `VERIFIED`/`DERIVED`/`ESTIMATE` value that
 carries a provenance block, or an explicitly classified `BALANCE_TARGET`.

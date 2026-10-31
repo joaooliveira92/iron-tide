@@ -14,7 +14,7 @@ and `.scratch` references do not resolve in this checkout.
 - **Standing gate:** `pnpm preflight`, `pnpm test:scripts`, `pnpm check` green on the
   exact commit; goldens re-pinned only per `docs/agents/golden-repinning.md`.
 - **Unknown values:** the manual states rules and some numbers, not full tables.
-  Anything it does not give is researched into `docs/research/` or raised as a
+  Anything it does not give is published as a `Research` discussion or raised as a
   decision request. Never fabricate (AGENTS.md stop conditions).
 - Sizes: S ≤ 1 week, M ≈ 2–3 weeks, L ≈ 4+ weeks of one agent pipeline.
 

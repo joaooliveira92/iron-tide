@@ -9,7 +9,7 @@
  *
  * The draft is a complete per-nation TypeScript content module (ADR-0109 shape, ADR-0334 format) matching
  * `content/production/<scenario>/ship-building/naval-profiles/<nationId>.ts`, so it can be dropped straight in once
- * every PLACEHOLDER is replaced. Then: research the nation into `docs/research/<nationId>-naval-profile.md`, replace
+ * every PLACEHOLDER is replaced. Then: publish the nation's research note as a `Research` discussion, replace
  * every PLACEHOLDER with a sourced or explicitly classified value, author six classified opening starters under
  * `content/production/<scenario>/ship-building/reference-designs/<nationId>/starters.ts`, and run the completeness
  * validator.
@@ -154,7 +154,7 @@ export function buildResearchNote(nationId) {
 
 **Question.** Ground the date-banded NationNavalProfile for '${nationId}' (hard capability, soft doctrine, industry,
 research, component access, gun models, procurement, naming). Method and confidence labels as in
-\`docs/research/national-naval-profiles-uk-france.md\` (VERIFIED / SINGLE-SOURCE / ESTIMATE / UNVERIFIED; Wikipedia is
+the national naval profiles notes (VERIFIED / SINGLE-SOURCE / ESTIMATE / UNVERIFIED; Wikipedia is
 not a source).
 
 ## Required figures
@@ -171,21 +171,18 @@ not a source).
 }
 
 /**
- * Write the draft catalogue and research-note stub under `rootDir` (the repo root by default). Refuses to overwrite an
- * existing draft. Returns the written paths so callers (and tests) can assert them.
+ * Write the draft catalogue under `rootDir` (the repo root by default) and return the research-note stub. Refuses to
+ * overwrite an existing draft. The note is never written locally: research lives in GitHub Discussions.
  */
 export function scaffoldNation(nationId, { rootDir = root } = {}) {
   const nationsDir = join(rootDir, "docs", "nations");
   mkdirSync(nationsDir, { recursive: true });
-  mkdirSync(join(rootDir, "docs", "research"), { recursive: true });
   const profilePath = join(nationsDir, `${nationId}-profile-draft.ts`);
-  const notePath = join(rootDir, "docs", "research", `${nationId}-naval-profile.md`);
   if (existsSync(profilePath)) {
     throw new Error(`refusing to overwrite ${profilePath}`);
   }
   writeFileSync(profilePath, buildProfileModule(nationId));
-  if (!existsSync(notePath)) writeFileSync(notePath, buildResearchNote(nationId));
-  return { profilePath, notePath };
+  return { profilePath, researchNote: buildResearchNote(nationId) };
 }
 
 function main() {
@@ -204,11 +201,13 @@ function main() {
   }
 
   console.log(`draft profile -> ${paths.profilePath}`);
-  console.log(`research note -> ${paths.notePath}`);
   console.log("");
+  console.log("Research note stub (publish it; do not commit it):");
+  console.log("");
+  console.log(paths.researchNote);
   console.log("Next steps (see docs/agents/adding-a-nation.md):");
   console.log(
-    `  1. Research ${nationId} into the note; replace every PLACEHOLDER with a sourced/classified value.`,
+    `  1. Publish the note: gh discussion create --category Research --title "${nationId}: naval profile" --body-file <note>; replace every PLACEHOLDER with a sourced/classified value.`,
   );
   console.log(
     "  2. Copy the draft catalogue to content/production/1880/ship-building/naval-profiles/<nationId>.ts.",
