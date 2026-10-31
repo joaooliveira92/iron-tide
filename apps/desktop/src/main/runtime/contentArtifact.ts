@@ -6,6 +6,7 @@ import type {
   TensionDriftRules,
 } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
+import type { EventEngineContent } from "@bluewave/phase-engine";
 import type { ShipBuildingContent, ShipBuildingData } from "@bluewave/ship-design";
 import { Context, Effect, Layer } from "effect";
 import type {
@@ -26,6 +27,7 @@ import {
   loadMissilesRules,
   loadShipBuildingContent,
   loadShipBuildingData,
+  loadEventContent,
   loadTensionDriftRules,
   shipBuildingContentHash,
 } from "../shipBuildingContent.js";
@@ -68,6 +70,7 @@ export class ContentArtifact extends Context.Service<
       TensionDriftRules | undefined,
       CommandFailed
     >;
+    readonly loadEventContent: () => Effect.Effect<EventEngineContent | undefined, CommandFailed>;
     readonly loadShipBuildingData: () => Effect.Effect<ShipBuildingData, CommandFailed>;
     readonly shipBuildingContentHash: () => Effect.Effect<string, CommandFailed>;
     readonly armamentContentHash: () => Effect.Effect<string, CommandFailed>;
@@ -115,6 +118,8 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadMissilesRules(), catch: contentUnavailable }),
     loadTensionDriftRules: () =>
       Effect.try({ try: () => loadTensionDriftRules(), catch: contentUnavailable }),
+    loadEventContent: () =>
+      Effect.try({ try: () => loadEventContent(), catch: contentUnavailable }),
     loadShipBuildingData: () =>
       Effect.try({ try: () => loadShipBuildingData(), catch: contentUnavailable }),
     shipBuildingContentHash: () =>

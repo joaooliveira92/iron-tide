@@ -1,6 +1,8 @@
 import { hashWithContext } from "@bluewave/deterministic";
+import type { EventEngineContent } from "@bluewave/phase-engine";
 import {
   battleOffersFromRulesets,
+  eventResolutionFromRulesets,
   fleetManagementFromRulesets,
   gunneryFromRulesets,
   missilesFromRulesets,
@@ -141,6 +143,27 @@ export function loadTensionDriftRules(): TensionDriftRules | undefined {
     );
   tensionDrift = { rules: decoded?.value };
   return tensionDrift.rules;
+}
+
+let eventContent: { readonly content: EventEngineContent | undefined } | null = null;
+
+export function loadEventContent(): EventEngineContent | undefined {
+  if (eventContent !== null) return eventContent.content;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const decoded = eventResolutionFromRulesets(bundle.rulesets);
+  if (decoded !== undefined && !decoded.ok)
+    throw new ContentArtifactError(
+      "CONTENT_ARTIFACT_INVALID",
+      `ruleset eventResolution section is invalid at '${decoded.field}': ${decoded.message}`,
+    );
+  const catalogue = bundle.campaign?.events ?? [];
+  eventContent = {
+    content:
+      decoded === undefined || catalogue.length === 0
+        ? undefined
+        : { rules: decoded.value, catalogue },
+  };
+  return eventContent.content;
 }
 
 export function loadShipBuildingData(): ShipBuildingData {

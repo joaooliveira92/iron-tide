@@ -22,6 +22,7 @@ export const RulesetManifestSchema = Schema.Struct({
   gunnery: Schema.optional(Schema.Unknown),
   missiles: Schema.optional(Schema.Unknown),
   tensionDrift: Schema.optional(Schema.Unknown),
+  eventResolution: Schema.optional(Schema.Unknown),
   provenance: Schema.optional(ProvenanceSchema),
 });
 

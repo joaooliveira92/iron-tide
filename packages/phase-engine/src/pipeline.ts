@@ -15,6 +15,8 @@ import type {
   GunneryRules,
   MissilesRules,
   TensionDriftRules,
+  EventResolutionRules,
+  GameEvent,
 } from "@bluewave/content-schema";
 import type { ShipBuildingContent } from "@bluewave/ship-design";
 import type { FinancialLedger } from "./financial-ledger.js";
@@ -49,6 +51,11 @@ export interface RandomGrant {
   engine(): RandomEngine;
 }
 
+export interface EventEngineContent {
+  readonly rules: EventResolutionRules;
+  readonly catalogue: readonly GameEvent[];
+}
+
 export interface MonthExecutorEngineOptions {
   readonly phaseOverrides?: ReadonlyMap<TurnPhase, PhasePermissions>;
   readonly shipBuilding?: ShipBuildingContent;
@@ -60,6 +67,7 @@ export interface MonthExecutorEngineOptions {
   readonly gunneryRules?: GunneryRules;
   readonly missilesRules?: MissilesRules;
   readonly tensionDrift?: TensionDriftRules;
+  readonly events?: EventEngineContent;
 }
 
 export interface MonthRunState {

@@ -52,7 +52,35 @@ const uiDocument = (keys: readonly string[]): string =>
 
 const ALL_KEYS = ["event.scare.title", "event.scare.body", "event.scare.arm", "event.scare.hold"];
 
-function compile(events: readonly unknown[], uiKeys: readonly string[] = ALL_KEYS) {
+const stanceWeights = { hawkBp: 4_000, doveBp: 4_000, neutralBp: 2_000 };
+
+const eventResolution = {
+  sectionVersion: 1,
+  defaultAnswerAfterMonths: 3,
+  aiStanceWeightsBp: {
+    liberal_democracy: stanceWeights,
+    limited_democracy: stanceWeights,
+    autocratic: stanceWeights,
+    fascist: stanceWeights,
+    communist: stanceWeights,
+    eastern: stanceWeights,
+  },
+  traitShifts: [],
+  provenance,
+};
+
+const resolutionRuleset = (section: unknown = eventResolution): Record<string, unknown> => ({
+  id: "event-rules",
+  name: "event-rules",
+  version: "1.0",
+  ...(section === null ? {} : { eventResolution: section }),
+});
+
+function compile(
+  events: readonly unknown[],
+  uiKeys: readonly string[] = ALL_KEYS,
+  rulesets: readonly unknown[] = [resolutionRuleset()],
+) {
   const dir = mkdtempSync(resolve(tmpdir(), "bw-events-"));
   try {
     mkdirSync(resolve(dir, "ui"), { recursive: true });
@@ -61,13 +89,14 @@ function compile(events: readonly unknown[], uiKeys: readonly string[] = ALL_KEY
       JSON.stringify({ name: "test-pack", version: "0.4.0", type: "fixture", files: {} }),
     );
     writeFileSync(resolve(dir, "events.json"), jsonDocument(events));
+    writeFileSync(resolve(dir, "rulesets.json"), jsonDocument(rulesets));
     writeFileSync(resolve(dir, "ui", "en-US.json"), uiDocument(uiKeys));
     const collector = new DiagnosticCollector();
     const output = new Compiler().compile(
       {
         manifestPath: "pack.json",
         contentDir: dir,
-        rulesetFiles: [],
+        rulesetFiles: [resolve(dir, "rulesets.json")],
         countryFiles: [],
         areaFiles: [],
         routeFiles: [],
@@ -149,6 +178,32 @@ describe("event collection through the compiler", () => {
     expect(output).toBeUndefined();
     const error = collector.errors.find((d) => d.code === "EVENT_FLAG_UNKNOWN");
     expect(error?.message).toContain("never_set");
+  });
+
+  it("rejects authored events when no ruleset carries an eventResolution section", () => {
+    const { output, collector } = compile([eventRecord()], ALL_KEYS, [resolutionRuleset(null)]);
+    expect(output).toBeUndefined();
+    expect(collector.errors.map((d) => d.code)).toContain("EVENT_RESOLUTION_RULES_MISSING");
+  });
+
+  it("rejects an invalid eventResolution section naming the field", () => {
+    const { output, collector } = compile([eventRecord()], ALL_KEYS, [
+      resolutionRuleset({ ...eventResolution, defaultAnswerAfterMonths: 0 }),
+    ]);
+    expect(output).toBeUndefined();
+    const error = collector.errors.find((d) => d.code === "EVENT_RESOLUTION_RULES_INVALID");
+    expect(error?.message).toContain("defaultAnswerAfterMonths");
+  });
+
+  it("leaves a pack with neither events nor an eventResolution section untouched", () => {
+    const { collector } = compile([], ALL_KEYS, [resolutionRuleset(null)]);
+    expect(collector.errors.map((d) => d.code)).not.toContain("EVENT_RESOLUTION_RULES_MISSING");
+  });
+
+  it("rejects two rulesets that both carry an eventResolution section", () => {
+    const second = { ...resolutionRuleset(), id: "event-rules-2", name: "event-rules-2" };
+    const { collector } = compile([eventRecord()], ALL_KEYS, [resolutionRuleset(), second]);
+    expect(collector.errors.map((d) => d.code)).toContain("EVENT_RESOLUTION_RULES_AMBIGUOUS");
   });
 
   it("accepts a gate on a flag that an answer of another event sets", () => {

@@ -710,6 +710,9 @@ const cloneNation = (n: NationState): NationState =>
         : {
             fired: (v as NonNullable<NationState["eventHistory"]>).fired.map((r) => ({ ...r })),
             flags: [...(v as NonNullable<NationState["eventHistory"]>).flags],
+            ...((v as NonNullable<NationState["eventHistory"]>).pending === undefined
+              ? {}
+              : { pending: { ...(v as NonNullable<NationState["eventHistory"]>).pending! } }),
           },
     fleets: (v) => (v as FleetState[]).map(cloneFleet),
     divisions: (v) => (v as PermanentDivision[]).map(cloneDivision),

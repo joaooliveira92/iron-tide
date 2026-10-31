@@ -19,6 +19,7 @@ export * from "./divisionExperience.js";
 export * from "./specialTraining.js";
 export * from "./fleetExercise.js";
 export * from "./tensionDrift.js";
+export * from "./eventDraw.js";
 export * from "./designUnits.js";
 export * from "./fleetSize.js";
 export * from "./snapshotHash.js";
@@ -58,7 +59,9 @@ export type {
   DesignStudy,
   NationDockExpansionState,
   NationDockState,
+  NationEventHistory,
   NationState,
+  PendingDilemma,
   PossessionData,
   PossessionDockExpansionEligibility,
   ProcurementIntent,

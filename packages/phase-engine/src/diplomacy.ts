@@ -24,6 +24,7 @@ import type {
   DeclareWarCommand,
 } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
+import { applyEventsForMonth } from "./eventDraw.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
 function pairKey(a: string, b: string): string {
@@ -379,6 +380,7 @@ export function runDiplomacyPhase(ctx: PhaseContext): PhaseRunOutcome {
   if (next !== wars) ctx.snapshot.write("wars", next);
   applyExerciseTensionForMonth(ctx);
   applyTensionDriftForMonth(ctx);
+  applyEventsForMonth(ctx);
   return { status: "continue" };
 }
 
@@ -387,7 +389,7 @@ export const diplomacyPhase: MonthPhase = {
   name: "Diplomacy Resolution",
   permissions: {
     reads: ["wars", "nations", "politics", "rulesetVersion"],
-    writes: ["wars", "politics"],
+    writes: ["wars", "politics", "nations"],
     rng: true,
   },
   run: runDiplomacyPhase,

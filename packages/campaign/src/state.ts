@@ -364,9 +364,15 @@ export interface FiredEventRecord {
   resolvedBy: EventResolver;
 }
 
+export interface PendingDilemma {
+  eventId: string;
+  drawnMonth: string;
+}
+
 export interface NationEventHistory {
   fired: FiredEventRecord[];
   flags: string[];
+  pending?: PendingDilemma;
 }
 
 export interface NationState {

@@ -333,6 +333,23 @@ describe("cloneSnapshot government and event history", () => {
     expect(nation.eventHistory!.flags).toEqual(["naval_scare_armed"]);
   });
 
+  it("deep-copies a pending dilemma and does not invent one", () => {
+    const a = minimalSnapshot();
+    const nation = a.nations.get("n1")!;
+    Object.assign(nation, {
+      eventHistory: { ...history, pending: { eventId: "naval_scare", drawnMonth: "1881-04" } },
+    });
+    const copy = snapshotClone.cloneSnapshot(a).nations.get("n1")!;
+    expect(copy.eventHistory!.pending).toEqual({ eventId: "naval_scare", drawnMonth: "1881-04" });
+    expect(copy.eventHistory!.pending).not.toBe(nation.eventHistory!.pending);
+    copy.eventHistory!.pending!.drawnMonth = "mutated";
+    expect(nation.eventHistory!.pending!.drawnMonth).toBe("1881-04");
+
+    Object.assign(nation, { eventHistory: history });
+    const without = snapshotClone.cloneSnapshot(a).nations.get("n1")!;
+    expect("pending" in without.eventHistory!).toBe(false);
+  });
+
   it("does not invent a history for a nation that has none", () => {
     const source = minimalSnapshot();
     const {

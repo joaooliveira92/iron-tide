@@ -123,6 +123,31 @@ describe("SaveStore round-trips government type, traits and fired-event history"
     expect(loaded.state.rawHash).toBe(state.rawHash);
   });
 
+  it("save -> load preserves a pending dilemma, and a nation without one stays without", () => {
+    const pending = { eventId: "naval_scare", drawnMonth: "1881-04" };
+    const withPending = makeNation({
+      governmentType: "autocratic",
+      eventHistory: { fired: [], flags: [], pending },
+    });
+    const state = makeState(withPending);
+    const store = new SaveStore();
+    store.save(state, tmpDir);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect(loaded.state.snapshot.nations.get("nation-a")?.eventHistory).toEqual({
+      fired: [],
+      flags: [],
+      pending,
+    });
+    expect(loaded.state.rawHash).toBe(state.rawHash);
+
+    const quiet = makeNation({ eventHistory: { fired: [], flags: [] } });
+    const quietState = makeState(quiet);
+    rmSync(tmpDir, { recursive: true, force: true });
+    store.save(quietState, tmpDir);
+    const reloaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect("pending" in reloaded.state.snapshot.nations.get("nation-a")!.eventHistory!).toBe(false);
+  });
+
   it("save -> load keeps a nation without the new fields free of them", () => {
     const state = makeState(makeNation({}));
     const store = new SaveStore();

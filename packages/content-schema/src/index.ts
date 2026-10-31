@@ -209,6 +209,18 @@ export {
   MissilesRulesSchema,
   decodeMissilesRules,
 } from "./missiles-rules.js";
+export type {
+  EventResolutionRules,
+  EventResolutionRulesDecoded,
+  EventStanceWeights,
+  EventTraitShift,
+} from "./event-resolution-rules.js";
+export {
+  decodeEventResolutionRules,
+  EventResolutionRulesSchema,
+  EventStanceWeightsSchema,
+  EventTraitShiftSchema,
+} from "./event-resolution-rules.js";
 export type { TensionDriftRules, TensionDriftRulesDecoded } from "./tension-drift-rules.js";
 export { decodeTensionDriftRules, TensionDriftRulesSchema } from "./tension-drift-rules.js";
 export type { PresenceRules, PresenceRulesDecoded } from "./presence-rules.js";

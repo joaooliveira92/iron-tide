@@ -822,6 +822,19 @@
       "note": "The schema carries every trait from manual pp.59-60 and the compiler copies them onto the nation; no engine rule consumes a trait yet. Each trait gets a consumer or stays dormant under this row."
     },
     {
+      "id": "national-events",
+      "player_verb": "Answer a monthly event dilemma, or let it lapse to its default",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyEventsForMonth"],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#426",
+      "note": "The diplomacy phase draws events and resolves AI and default answers, but the production pack authors no events or eventResolution section, so nothing fires. The dialog is #428 and the catalogue is #429."
+    },
+    {
       "id": "debug-battle-drill-seed",
       "player_verb": "Seed a campaign battle drill for end-to-end tests",
       "status": "internal",

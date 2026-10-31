@@ -5,7 +5,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Status | Rows |
 | --- | --- |
 | reachable | 32 |
-| dormant-by-decision | 15 |
+| dormant-by-decision | 16 |
 | internal | 14 |
 
 ## Reachable
@@ -64,6 +64,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | combat-coastal-defense | Coastal defence batteries | RULES.md#dormant-by-decision |
 | combat-smoke | Smokescreens and funnel smoke | RULES.md#dormant-by-decision |
 | national-traits | Play a nation whose national traits change shipbuilding, prestige loss, budget and surprise attack | #424 |
+| national-events | Answer a monthly event dilemma, or let it lapse to its default | #426 |
 
 ## Internal
 

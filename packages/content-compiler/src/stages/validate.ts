@@ -35,6 +35,7 @@ import {
   type ContentSchema,
   decodeBattleOfferRules,
   decodeTensionDriftRules,
+  decodeEventResolutionRules,
   decodeFleetManagementRules,
   decodeGunneryRules,
   decodeMissilesRules,
@@ -274,6 +275,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     validateComponentUpgradeGraph(catalogue, input, collector);
 
     const campaign = validateCampaignCollections(validated, input, collector);
+    validateEventResolutionRules(validated["rulesets"] ?? [], campaign.events ?? [], collector);
 
     const presentation = validatePresentation(input, collector);
     validatePresentationRegions(validated, presentation, input, collector);
@@ -1315,6 +1317,48 @@ function validateTensionDriftRules(
         stage: "validate",
         entityId: rulesetId,
         remediation: `Author every tensionDrift value in ruleset '${rulesetId}', or remove the section to leave drift dormant`,
+      },
+    );
+  }
+}
+
+function validateEventResolutionRules(
+  rulesets: readonly unknown[],
+  events: readonly unknown[],
+  collector: DiagnosticCollector,
+): void {
+  const carriers = rulesets.filter(
+    (ruleset) => (ruleset as Record<string, unknown>)["eventResolution"] !== undefined,
+  );
+  if (carriers.length > 1)
+    collector.addError(
+      "EVENT_RESOLUTION_RULES_AMBIGUOUS",
+      `More than one ruleset carries an eventResolution section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
+      { stage: "validate" },
+    );
+  if (carriers.length === 0 && events.length > 0)
+    collector.addError(
+      "EVENT_RESOLUTION_RULES_MISSING",
+      "The pack authors events but no ruleset carries an eventResolution section",
+      {
+        stage: "validate",
+        remediation:
+          "Author the eventResolution section (default answer delay and AI stance weights) in a ruleset, or remove the events",
+      },
+    );
+  for (const ruleset of rulesets) {
+    const record = ruleset as Record<string, unknown>;
+    if (record["eventResolution"] === undefined) continue;
+    const rulesetId = String(record["id"]);
+    const decoded = decodeEventResolutionRules(record["eventResolution"]);
+    if (decoded.ok) continue;
+    collector.addError(
+      "EVENT_RESOLUTION_RULES_INVALID",
+      `Ruleset '${rulesetId}' eventResolution section is invalid at '${decoded.field}': ${decoded.message}`,
+      {
+        stage: "validate",
+        entityId: rulesetId,
+        remediation: `Author every eventResolution value in ruleset '${rulesetId}', or remove the section and the events`,
       },
     );
   }
