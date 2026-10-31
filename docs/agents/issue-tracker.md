@@ -1,7 +1,7 @@
 # Issue tracker: GitHub
 
-Issues and specs live as GitHub issues in `joaooliveira92/iron-tide`. Use the
-`gh` CLI (repo from `git remote -v`).
+Issues and specs live in `joaooliveira92/iron-tide`. Use the `gh` CLI (repo from
+`git remote -v`).
 
 ## Conventions
 
@@ -13,16 +13,30 @@ Issues and specs live as GitHub issues in `joaooliveira92/iron-tide`. Use the
 - **Labels**: `gh issue edit <n> --add-label "..."` / `--remove-label "..."`.
 - **Close**: `gh issue close <n> --comment "..."`.
 
+## Discussions (research and documentation)
+
+Research notes and working documentation live in GitHub Discussions, never as
+local markdown. The repo keeps code, canonical authority (`README.md`,
+`RULES.md`, `.ai/ENGINEERING-CONTRACT.md`), agent instructions, and generated
+gate artifacts (`docs/research/p1-*.md`, `docs/reachability-report.md`).
+
+- **Create**: `gh discussion create --category Research --title "<slug>: <topic>" --body-file <note>`
+- **Read**: `gh discussion view <n|url> --json number,title,body,category,comments`
+- **List**: `gh discussion list --category Research --json number,title,url`
+- **Comment/edit**: `gh discussion comment|edit <n> --body-file <note>`
+- **Index**: discussion #456 lists every migrated note.
+
 ## Pipeline artifacts
 
-The pipeline stores its artifacts here, not as local markdown:
+The pipeline stores its artifacts on GitHub, not as local markdown:
 
 - **Spec** (`to-spec`) → an issue labelled `ready-for-agent`; its body is the spec.
 - **Tickets** (`to-tickets`) → sub-issues of the spec issue, `ready-for-agent`, native blocking edges.
 - **Map** (`wayfinder`) → Wayfinding below.
+- **Research** (`research`) → a discussion in category `Research`.
 
-`.ai/specs/` is retired. Create `wayfinder:*` labels
-on first use (`gh label create wayfinder:map`, plus `research`/`prototype`/`grilling`/`task`).
+`.ai/specs/` is retired. Create `wayfinder:*` labels on first use
+(`gh label create wayfinder:map`, plus `research`/`prototype`/`grilling`/`task`).
 
 ## Pull requests as a triage surface
 
@@ -36,6 +50,7 @@ resolve `#42` with `gh pr view 42`, else `gh issue view 42`.
 ## Skill phrases
 
 - "publish to the issue tracker" → create a GitHub issue.
+- "publish research" → create a `Research` discussion.
 - "fetch the relevant ticket" → read it as in **Read** above.
 
 ## Wayfinding (`/wayfinder`)

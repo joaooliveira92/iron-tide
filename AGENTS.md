@@ -28,6 +28,7 @@ Start substantial tasks from a [task brief](.ai/templates/task-brief.md): proble
 - Review agents are read-only: no edits, commits, branches, or PR state. Reports are pointers, not evidence: verify the diff, gates, and `git status`.
 - Doc budgets in `scripts/doc-budgets.manifest.json`; ratchet down, justify raises.
 - No ADRs. Enforce a rule in a gate, type or test; otherwise add a line to `RULES.md` or the package `AGENTS.md`.
+- Research notes and working documentation live in GitHub Discussions, never in the repository: `gh discussion create --category Research`. The repo keeps code, canonical authority, agent instructions, and generated gate artifacts. See [issue tracker](docs/agents/issue-tracker.md).
 
 ## Determinism
 
@@ -107,6 +108,6 @@ Do not stop for routine design choices. Pipeline: [`.ai/ORCHESTRATION.md`](.ai/O
 
 ## Agent skills
 
-- Issues: GitHub Issues (`joaooliveira92/iron-tide`), `gh` CLI. See [issue tracker](docs/agents/issue-tracker.md).
+- Issues: GitHub Issues (`joaooliveira92/iron-tide`), `gh` CLI. Research and docs: GitHub Discussions, category `Research`. See [issue tracker](docs/agents/issue-tracker.md).
 - Labels: [triage labels](docs/agents/triage-labels.md).
 - Domain: [GLOSSARY-MAP.md](GLOSSARY-MAP.md) → per-context `GLOSSARY.md`. See [domain docs](docs/agents/domain.md).

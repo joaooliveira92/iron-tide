@@ -18,7 +18,7 @@ missing, or discovered but undeclared, fails `content:check`/`content:build`.
 
 - **Authoring a nation** — [adding a nation](../docs/agents/adding-a-nation.md).
 - **Ship-building subtree** — [`1880/ship-building/README.md`](production/1880/ship-building/README.md).
-- **Source of record** — values trace to [docs/research/](../docs/research/); confidence is typed provenance data, not comments.
+- **Source of record** — values trace to [Research discussions](https://github.com/joaooliveira92/iron-tide/discussions/categories/research); confidence is typed provenance data, not comments.
 
 YAML is deprecated outside localization ([inventory](../docs/agents/yaml-inventory.md),
 Every remaining `.yaml` is listed in the shrinking

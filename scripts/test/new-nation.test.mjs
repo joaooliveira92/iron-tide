@@ -7,7 +7,7 @@
 // *record* and the rendered module text directly against the schema's required fields,
 // vocabularies and provenance rules instead of importing the built schema.
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -123,14 +123,19 @@ void test("industrial component-access values are schema vocabulary members", ()
   }
 });
 
-void test("scaffoldNation writes the draft and note under the output root, deterministically", () => {
+void test("scaffoldNation writes the draft and returns the research note, deterministically", () => {
   const dir = mkdtempSync(join(tmpdir(), "bluewave-nation-"));
   try {
     const first = scaffoldNation(NATION, { rootDir: dir });
     assert.equal(first.profilePath, join(dir, "docs", "nations", `${NATION}-profile-draft.ts`));
-    assert.equal(first.notePath, join(dir, "docs", "research", `${NATION}-naval-profile.md`));
+    assert.equal(first.researchNote, buildResearchNote(NATION));
     assert.equal(readFileSync(first.profilePath, "utf8"), buildProfileModule(NATION));
-    assert.ok(readFileSync(first.notePath, "utf8").includes("national naval profile"));
+    assert.ok(first.researchNote.includes("national naval profile"));
+    assert.equal(
+      existsSync(join(dir, "docs", "research")),
+      false,
+      "research notes are never written into the repository",
+    );
 
     // Deterministic: repeat builds are byte-identical (no clock, no randomness).
     assert.equal(buildProfileModule(NATION), buildProfileModule(NATION));
