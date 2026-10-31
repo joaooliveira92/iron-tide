@@ -171,6 +171,7 @@ export function StrategicMapScreen({ sessionId }: StrategicMapScreenProps) {
       initialFocusAreaId={nationHomeArea(mapController.overlay.playerNationId)}
       initialFocusNationId={mapController.overlay.playerNationId}
       orders={orders}
+      showMinimap={false}
       treeDefaultOpen={false}
     />
   );

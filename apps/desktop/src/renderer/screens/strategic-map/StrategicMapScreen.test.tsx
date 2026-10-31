@@ -1,5 +1,5 @@
 /* @vitest-environment jsdom */
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { LiveWorldMapOverlay } from "../../components/world-map/campaign-map-join.js";
 import type { MapOrderFleet } from "../../components/world-map/map-orders.js";
@@ -197,6 +197,42 @@ describe("StrategicMapScreen", () => {
     expect(hookMocks.cancelOrder).toHaveBeenCalledWith("cmd-1");
     const tabs = within(screen.getByRole("navigation", { name: "Strategic affairs" }));
     expect(tabs.getByRole("button", { name: /^Orders\s*1 sealed$/ })).toBeTruthy();
+  });
+
+  it("leaves the minimap off so the legend and order slip stay clear", async () => {
+    const { container } = render(<StrategicMapScreen sessionId="ses-1" />);
+    await waitFor(() => expect(screen.queryByText("Loading coastline…")).toBeNull());
+    expect(container.querySelector('[data-testid="map-minimap"]')).toBeNull();
+    expect(container.querySelector('[data-testid="globe-adapter-minimap"]')).toBeNull();
+  });
+
+  it("states a queued order once, in the sealed line", () => {
+    hookMocks.stateFn.mockReturnValue(
+      state({
+        selectedFleet: fleet,
+        notice: "Order queued. The fleet sails when you advance the month.",
+        orders: {
+          fleets: [fleet],
+          pending: [
+            {
+              commandId: "cmd-1",
+              fleetId: "home-fleet",
+              fromMapAreaId: "area_north_sea",
+              toMapAreaId: "area_western_approaches",
+              destinationName: "Western Approaches",
+            },
+          ],
+          blockadedMapAreas: new Set<string>(),
+          selectedFleetId: "home-fleet",
+          onSelectFleet: hookMocks.selectFleet,
+          onDrop: noop,
+        },
+      }),
+    );
+    render(<StrategicMapScreen sessionId="ses-1" />);
+    const strip = within(screen.getByRole("region", { name: "Fleet orders" }));
+    expect(strip.getByText("Ordered: sails for Western Approaches at month end")).toBeTruthy();
+    expect(strip.queryByText(/Order queued/)).toBeNull();
   });
 
   it("shows the read failure with a retry instead of a world", () => {
