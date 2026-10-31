@@ -161,14 +161,20 @@ describe("replay approvals tool", () => {
   const base = state(RECORDED);
   const changed = state(perturbed(RECORDED, 1));
 
-  function io(): ApprovalsIo & { written: string[] } {
+  function io(
+    overrides: Partial<Pick<ApprovalsIo, "base" | "gateBase">> = {},
+  ): ApprovalsIo & { written: string[]; printed: string[] } {
     const written: string[] = [];
+    const printed: string[] = [];
     return {
       written,
+      printed,
+      base: overrides.base ?? "origin/dev",
+      gateBase: overrides.gateBase ?? "origin/dev",
       readBase: () => base,
       readHead: () => ({ replays: changed.replays, approvals: written.at(-1) }),
       writeApprovals: (text) => void written.push(text),
-      print: () => undefined,
+      print: (line) => void printed.push(line),
     };
   }
 
@@ -187,6 +193,22 @@ describe("replay approvals tool", () => {
     expect(approvalsCommand(propose, {}, sink)).toBe(0);
     expect(JSON.parse(sink.written[0]!).entries).toHaveLength(1);
     expect(approvalsCommand(["check"], {}, sink)).toBe(0);
+  });
+
+  it("prints the base and warns when it differs from the gate base", () => {
+    const sink = io({ base: "feat/parent", gateBase: "origin/dev" });
+    expect(approvalsCommand(propose, {}, sink)).toBe(0);
+    expect(sink.printed).toContain("approval base: feat/parent\n");
+    expect(
+      sink.printed.some((line) => line.includes("warning:") && line.includes("origin/dev")),
+    ).toBe(true);
+  });
+
+  it("prints the base without a warning when it matches the gate base", () => {
+    const sink = io();
+    expect(approvalsCommand(propose, {}, sink)).toBe(0);
+    expect(sink.printed).toContain("approval base: origin/dev\n");
+    expect(sink.printed.some((line) => line.includes("warning:"))).toBe(false);
   });
 
   it("refuses to write in CI", () => {
