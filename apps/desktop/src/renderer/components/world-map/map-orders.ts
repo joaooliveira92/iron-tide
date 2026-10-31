@@ -22,6 +22,8 @@ export interface MapPendingOrder {
   readonly fleetId: string;
   readonly fromMapAreaId: string;
   readonly toMapAreaId: string;
+  readonly fromAreaId?: string;
+  readonly toAreaId?: string;
   readonly destinationName: string;
 }
 

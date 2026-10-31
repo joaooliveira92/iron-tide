@@ -26,6 +26,7 @@ export interface OverlayFeature {
   readonly geometry: PointGeometry | LineGeometry;
   readonly label?: string;
   readonly areaId?: string;
+  readonly nationId?: string;
   readonly markerClass?: MarkerClass;
   readonly routeClass?: RouteClass;
   readonly overlayClass?: OverlayLayerClass;

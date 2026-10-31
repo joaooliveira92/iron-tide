@@ -1,6 +1,6 @@
 import { cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { fixtureAnchor } from "./campaign-map-join.js";
+import { AREA_ANCHORS } from "./campaign-anchors.js";
 import { projectionById } from "./projection.js";
 import { HOME_FOCUS_SCALE, nationFocusPoint, useInitialFocusArea } from "./useInitialFocusArea.js";
 
@@ -12,11 +12,10 @@ describe("useInitialFocusArea", () => {
   it("centres the camera on the home area's projected anchor at the home focus scale", () => {
     const focusOn = vi.fn();
     renderHook(() => useInitialFocusArea({ focusOn }, "eng_home_coast", projection, 0));
-    const anchor = fixtureAnchor("area_north_sea");
-    expect(anchor).not.toBeNull();
+    const anchor = AREA_ANCHORS["eng_home_coast"]!;
     expect(focusOn).toHaveBeenCalledTimes(1);
     expect(focusOn).toHaveBeenCalledWith(
-      ...projection.project(anchor![0], anchor![1]),
+      ...projection.project(anchor[0], anchor[1]),
       HOME_FOCUS_SCALE,
     );
   });
@@ -53,7 +52,7 @@ describe("useInitialFocusArea", () => {
   it("frames a nation's land together with its home waters", () => {
     const focusOn = vi.fn();
     renderHook(() => useInitialFocusArea({ focusOn }, "eng_home_coast", projection, 0, "germany"));
-    const anchor = fixtureAnchor("area_north_sea")!;
+    const anchor = AREA_ANCHORS["eng_home_coast"]!;
     const target = nationFocusPoint(anchor, "germany");
     expect(target).not.toEqual(anchor);
     expect(focusOn).toHaveBeenCalledWith(
