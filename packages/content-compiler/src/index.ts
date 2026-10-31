@@ -134,6 +134,7 @@ export {
 } from "./releaseGate.js";
 export { safePath } from "./safePath.js";
 export { battleOffersFromRulesets } from "./battleOfferRules.js";
+export { tensionDriftFromRulesets } from "./tensionDriftRules.js";
 export { gunneryFromRulesets } from "./gunneryRules.js";
 export { missilesFromRulesets } from "./missilesRules.js";
 export { fleetManagementFromRulesets } from "./fleetManagementRules.js";

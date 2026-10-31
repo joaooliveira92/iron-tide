@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { unifiedSnapshotHash } from "@bluewave/campaign";
-import { fleetManagementFromRulesets } from "@bluewave/content-compiler";
+import { fleetManagementFromRulesets, tensionDriftFromRulesets } from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -170,10 +170,22 @@ export function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
   }
 }
 
+function productionTensionDrift() {
+  const decoded = tensionDriftFromRulesets(production().bundle.rulesets);
+  if (decoded === undefined) return undefined;
+  if (!decoded.ok)
+    throw new ReplayFileError({
+      message: `production tensionDrift section is invalid at '${decoded.field}'`,
+    });
+  return decoded.value;
+}
+
 export function fleetManagementOptions(playerNationId?: string) {
   const fleetManagement = productionFleetManagement();
+  const tensionDrift = productionTensionDrift();
   return {
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
+    ...(tensionDrift === undefined ? {} : { tensionDrift }),
     ...(playerNationId === undefined ? {} : { playerNationId }),
   };
 }

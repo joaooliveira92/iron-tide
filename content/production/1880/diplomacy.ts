@@ -31,6 +31,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "austria_hungary",
     nationB: "italy",
+    frictionBp: 60,
     relation: "neutral",
     tension: 6,
     provenance: {
@@ -50,6 +51,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "austria_hungary",
     nationB: "ottoman_empire",
+    frictionBp: 30,
     relation: "neutral",
     tension: 4,
     provenance: {
@@ -69,6 +71,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "austria_hungary",
     nationB: "russia",
+    frictionBp: 60,
     relation: "neutral",
     tension: 7,
     provenance: {
@@ -88,6 +91,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "brazil",
     nationB: "usa",
+    frictionBp: 10,
     relation: "neutral",
     tension: 2,
     provenance: {
@@ -107,6 +111,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "france",
     nationB: "germany",
+    frictionBp: 80,
     relation: "neutral",
     tension: 9,
     provenance: {
@@ -126,6 +131,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "france",
     nationB: "italy",
+    frictionBp: 60,
     relation: "neutral",
     tension: 6,
     provenance: {
@@ -145,6 +151,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "france",
     nationB: "qing",
+    frictionBp: 30,
     relation: "neutral",
     tension: 5,
     provenance: {
@@ -164,6 +171,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "france",
     nationB: "uk",
+    frictionBp: 60,
     relation: "neutral",
     tension: 6,
     provenance: {
@@ -183,6 +191,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "germany",
     nationB: "russia",
+    frictionBp: 10,
     relation: "neutral",
     tension: 3,
     nap: true,
@@ -203,6 +212,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "italy",
     nationB: "ottoman_empire",
+    frictionBp: 30,
     relation: "neutral",
     tension: 5,
     provenance: {
@@ -222,6 +232,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "japan",
     nationB: "qing",
+    frictionBp: 60,
     relation: "neutral",
     tension: 6,
     provenance: {
@@ -241,6 +252,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "japan",
     nationB: "russia",
+    frictionBp: 30,
     relation: "neutral",
     tension: 4,
     provenance: {
@@ -260,6 +272,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "netherlands",
     nationB: "uk",
+    frictionBp: 30,
     relation: "neutral",
     tension: 4,
     provenance: {
@@ -279,6 +292,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "ottoman_empire",
     nationB: "russia",
+    frictionBp: 80,
     relation: "neutral",
     tension: 8,
     provenance: {
@@ -298,6 +312,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "ottoman_empire",
     nationB: "uk",
+    frictionBp: 10,
     relation: "neutral",
     tension: 3,
     provenance: {
@@ -317,6 +332,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "russia",
     nationB: "uk",
+    frictionBp: 60,
     relation: "neutral",
     tension: 7,
     provenance: {
@@ -356,6 +372,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "qing",
     nationB: "russia",
+    frictionBp: 30,
     relation: "neutral",
     tension: 5,
     provenance: {
@@ -375,6 +392,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "qing",
     nationB: "uk",
+    frictionBp: 60,
     relation: "neutral",
     tension: 6,
     provenance: {
@@ -394,6 +412,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "spain",
     nationB: "portugal",
+    frictionBp: 10,
     relation: "neutral",
     tension: 2,
     provenance: {
@@ -413,6 +432,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "spain",
     nationB: "usa",
+    frictionBp: 10,
     relation: "neutral",
     tension: 3,
     provenance: {
@@ -432,6 +452,7 @@ export default list(CampaignDiplomacySchema, [
   {
     nationA: "uk",
     nationB: "usa",
+    frictionBp: 30,
     relation: "neutral",
     tension: 4,
     provenance: {

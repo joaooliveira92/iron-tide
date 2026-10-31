@@ -10,9 +10,14 @@ import {
   applyExerciseTension,
   BLOCKADE_WAR_SCORE_PER_MONTH,
   NAP_VIOLATION_PENALTY,
+  planTensionDrift,
+  resolveTensionDriftStep,
+  TENSION_DRIFT_DRAW_RANGE_BP,
+  TENSION_DRIFT_STREAM_FAMILY,
   TENSION_PEACE,
   TENSION_WAR,
 } from "@bluewave/campaign";
+import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
 import type {
   AcceptPeaceCommand,
   DeclareBlockadeCommand,
@@ -298,17 +303,92 @@ function applyExerciseTensionForMonth(ctx: PhaseContext): void {
   });
 }
 
+function navalBudgetOf(nations: ReadonlyMap<string, NationState>, nationId: string): number {
+  const nation = nations.get(nationId);
+  if (nation === undefined) return 0;
+  return Math.floor((Number(nation.income) * Number(nation.navalAppropriationRateBp)) / 10_000);
+}
+
+function applyTensionDriftForMonth(ctx: PhaseContext): void {
+  const rules = ctx.engineOptions?.tensionDrift;
+  if (rules === undefined) return;
+  const nations = ctx.snapshot.read("nations");
+  const politics = ctx.snapshot.read("politics");
+  const engine = ctx.rng.engine();
+  const rulesetVersion = ctx.snapshot.read("rulesetVersion");
+  const relations = [...politics.relations];
+  let changed = false;
+
+  const order = relations
+    .map((relation, index) => ({
+      relation,
+      index,
+      key: pairKey(relation.nationA, relation.nationB),
+    }))
+    .sort((a, b) => compareCodePoints(a.key, b.key));
+
+  for (const { relation, index, key } of order) {
+    const plan = planTensionDrift(
+      {
+        relation: relation.relation,
+        tension: relation.tension,
+        frictionBp: relation.frictionBp ?? 0,
+        navalBudgetA: navalBudgetOf(nations, relation.nationA),
+        navalBudgetB: navalBudgetOf(nations, relation.nationB),
+      },
+      rules,
+    );
+    if (plan.riseReason === undefined && plan.coolingReason === undefined) continue;
+
+    const entityKey = key.replace("\u0000", "|");
+    const draw = Math.floor(
+      engine.stream(`${TENSION_DRIFT_STREAM_FAMILY}/${entityKey}/${ctx.campaignMonth}`).next() *
+        TENSION_DRIFT_DRAW_RANGE_BP,
+    );
+    const step = resolveTensionDriftStep(plan, relation.tension, draw);
+    ctx.randomLedger.record({
+      streamId: TENSION_DRIFT_STREAM_FAMILY,
+      entityKey,
+      phase: "resolve_diplomacy",
+      rulesetVersion,
+      inputHash: sha256Hex(
+        canonicalSerialize({
+          pair: entityKey,
+          campaignMonth: ctx.campaignMonth,
+          relation: relation.relation,
+          tension: relation.tension,
+          plan,
+        }),
+      ),
+      draw,
+      outcome: step.delta > 0 ? "RISE" : step.delta < 0 ? "COOL" : "HOLD",
+      reasonCode: step.reasonCode,
+    });
+    if (step.delta === 0) continue;
+    relations[index] = { ...relation, tension: relation.tension + step.delta };
+    changed = true;
+  }
+
+  if (!changed) return;
+  ctx.snapshot.write("politics", { ...politics, relations });
+}
+
 export function runDiplomacyPhase(ctx: PhaseContext): PhaseRunOutcome {
   const wars = ctx.snapshot.read("wars");
   const next = resolveDiplomacyWars(wars, ctx.campaignMonth);
   if (next !== wars) ctx.snapshot.write("wars", next);
   applyExerciseTensionForMonth(ctx);
+  applyTensionDriftForMonth(ctx);
   return { status: "continue" };
 }
 
 export const diplomacyPhase: MonthPhase = {
   id: "resolve_diplomacy",
   name: "Diplomacy Resolution",
-  permissions: { reads: ["wars", "nations", "politics"], writes: ["wars", "politics"], rng: false },
+  permissions: {
+    reads: ["wars", "nations", "politics", "rulesetVersion"],
+    writes: ["wars", "politics"],
+    rng: true,
+  },
   run: runDiplomacyPhase,
 };

@@ -44,6 +44,32 @@ export default list(RulesetManifestSchema, [
       ],
       note: "ADR-0239. The threshold of 16 and the proportional-loss shape are documented RTW3; the bounds, the loss and gain rates and the monthly sacking probability are Bluewave balance targets.",
     },
+    // The tension-drift section (S-4 slice 2, decision #425). Every value is a PROVISIONAL Bluewave balance target: the
+    // manual (pp.60-61) says tension rises slowly over years but gives no number. Removing this section returns tension to
+    // the dormant behaviour of changing only through war, peace and fleet exercises.
+    tensionDrift: {
+      sectionVersion: 1,
+      maxRiseProbabilityBp: 100,
+      navalRatio: { thresholdBp: 30_000, pressureBp: 15, tensionCeiling: 5 },
+      damping: { alliedBp: 40, tradeAgreementBp: 15 },
+      cooling: { alliedBp: 8, tradeAgreementBp: 4 },
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [
+          {
+            title: "Rule the Waves 3 manual",
+            author: "Naval War Simulations / Matrix Games",
+            year: 2023,
+            page: "60-61",
+            section:
+              "Tension rises slowly over years; allies and trade partners are less likely to fall out",
+          },
+        ],
+        note: "PROVISIONAL. With the authored pair frictions the monthly probabilities give one tension step about every nine years for the most hostile pairs and about every eighty for the quietest; they await a sourcing pass and the balance report.",
+      },
+    },
     // The battle-offer section (T-1, spec #109). Every value is a Bluewave balance decision recorded by ADR-0254 (decision
     // requests 0028-0034, Option C): the manual (p.67) says each quantity exists but supplies no number. Retuning is a
     // ruleset version change with a golden re-pin. Removing this section returns the pack to the dormant behaviour.

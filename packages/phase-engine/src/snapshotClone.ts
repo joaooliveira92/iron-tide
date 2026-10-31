@@ -353,6 +353,7 @@ const F = {
     "relation",
     "tension",
     "nap",
+    "frictionBp",
     "since",
   ),
   PoliticalState: fields<PoliticalState>()("relations", "shells"),

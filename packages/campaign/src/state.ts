@@ -147,6 +147,7 @@ export interface DiplomaticRelation {
   relation: "neutral" | "allied" | "at_war" | "trade_agreement";
   tension: number;
   nap: boolean;
+  frictionBp?: number;
   since: string;
 }
 

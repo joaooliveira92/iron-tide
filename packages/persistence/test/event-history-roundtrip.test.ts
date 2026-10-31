@@ -1,7 +1,12 @@
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/campaign";
+import type {
+  CampaignSnapshot,
+  CampaignState,
+  DiplomaticRelation,
+  NationState,
+} from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
@@ -42,7 +47,11 @@ function makeNation(extra: Partial<NationState>): NationState {
   };
 }
 
-function makeState(nation: NationState, version = CURRENT_COMPATIBILITY_VERSION): CampaignState {
+function makeState(
+  nation: NationState,
+  version = CURRENT_COMPATIBILITY_VERSION,
+  relations: DiplomaticRelation[] = [],
+): CampaignState {
   const snapshot: CampaignSnapshot = {
     version: "1.0.0",
     turnNumber: SafeInt.ONE,
@@ -60,7 +69,7 @@ function makeState(nation: NationState, version = CURRENT_COMPATIBILITY_VERSION)
       blockadeState: [],
       battleManifests: [],
     },
-    politics: { relations: [], shells: {} },
+    politics: { relations, shells: {} },
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
@@ -125,6 +134,36 @@ describe("SaveStore round-trips government type, traits and fired-event history"
     expect(restored).toBeDefined();
     expect("governmentType" in restored!).toBe(false);
     expect("eventHistory" in restored!).toBe(false);
+  });
+
+  it("save -> load keeps a relation's authored friction, and a relation without it stays without", () => {
+    const relations: DiplomaticRelation[] = [
+      {
+        nationA: "nation-a",
+        nationB: "nation-b",
+        relation: "neutral",
+        tension: 6,
+        nap: false,
+        frictionBp: 60,
+        since: "1880-01",
+      },
+      {
+        nationA: "nation-a",
+        nationB: "nation-c",
+        relation: "allied",
+        tension: 1,
+        nap: true,
+        since: "1880-01",
+      },
+    ];
+    const state = makeState(makeNation({}), CURRENT_COMPATIBILITY_VERSION, relations);
+    const store = new SaveStore();
+    store.save(state, tmpDir);
+
+    const restored = unwrapSuccess(runExit(store.load(tmpDir))).state.snapshot.politics.relations;
+    expect(restored[0]?.frictionBp).toBe(60);
+    expect("frictionBp" in restored[1]!).toBe(false);
+    expect(restored).toEqual(relations);
   });
 
   it("refuses a 4.0.0 save with the stable mismatch code", () => {
