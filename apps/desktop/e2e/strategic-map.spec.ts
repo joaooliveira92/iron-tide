@@ -82,18 +82,24 @@ test("a keyboard-only player can select a fleet and choose a destination", async
 
 async function pointInside(page: Page, mapAreaId: string) {
   return page.evaluate((id) => {
-    const path = document.querySelector(`[data-map-area="${id}"]`);
-    if (path === null) return null;
-    const box = path.getBoundingClientRect();
-    for (let row = 1; row < 12; row += 1) {
-      for (let column = 1; column < 12; column += 1) {
-        const x = box.x + (box.width * column) / 12;
-        const y = box.y + (box.height * row) / 12;
-        const hit = document
-          .elementFromPoint(x, y)
-          ?.closest("[data-map-area]")
-          ?.getAttribute("data-map-area");
-        if (hit === id) return { x, y };
+    const steps = 24;
+    for (const path of document.querySelectorAll(`[data-map-area="${id}"]`)) {
+      const box = path.getBoundingClientRect();
+      const left = Math.max(box.left, 0);
+      const right = Math.min(box.right, globalThis.innerWidth);
+      const top = Math.max(box.top, 0);
+      const bottom = Math.min(box.bottom, globalThis.innerHeight);
+      if (right <= left || bottom <= top) continue;
+      for (let row = 1; row < steps; row += 1) {
+        for (let column = 1; column < steps; column += 1) {
+          const x = left + ((right - left) * column) / steps;
+          const y = top + ((bottom - top) * row) / steps;
+          const hit = document
+            .elementFromPoint(x, y)
+            ?.closest("[data-map-area]")
+            ?.getAttribute("data-map-area");
+          if (hit === id) return { x, y };
+        }
       }
     }
     return null;
