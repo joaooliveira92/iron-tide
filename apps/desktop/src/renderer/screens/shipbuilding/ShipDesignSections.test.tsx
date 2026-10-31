@@ -1,31 +1,31 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { buildWorkshopView, type DesignDraft, type WorkshopView } from "@bluewave/ship-design";
-import { loadDrawingBoardContent } from "../../../components/design-workspace/content.js";
-import { DrawingBoard } from "./DrawingBoard.js";
-import { openPlanDisplay, openTab } from "./test-helpers.js";
+import { loadDrawingBoardContent } from "../../components/design-workspace/content.js";
+import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
+import { layersPopover, openSection } from "./test-helpers.js";
 import {
   bowStyleFor,
   planFrame,
   sternStyleFor,
   stationX,
   PLAN_W,
-} from "../../../components/design-workspace/panels/hull-plan/geometry.js";
+} from "../../components/design-workspace/panels/hull-plan/geometry.js";
 import {
   SectionCard,
   type SectionCardContext,
-} from "../../../components/design-workspace/panels/hull-plan/SectionCard.js";
+} from "../../components/design-workspace/panels/hull-plan/SectionCard.js";
 import {
   SECTION_CLOSE_DELAY,
   SECTION_OPEN_DELAY,
   SectionLabels,
-} from "../../../components/design-workspace/panels/hull-plan/SectionLabels.js";
+} from "../../components/design-workspace/panels/hull-plan/SectionLabels.js";
 import {
   SECTION_IDS,
   SECTIONS,
   sectionFacts,
   sectionSpan,
-} from "../../../components/design-workspace/panels/hull-plan/sections.js";
+} from "../../components/design-workspace/panels/hull-plan/sections.js";
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "requestAnimationFrame"] });
@@ -151,7 +151,7 @@ describe("section cards", () => {
 
 describe("section labels on the hull plan", () => {
   it("renders all eight sections as keyboard-reachable buttons named in full", async () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     const buttons = within(strip()).getAllByRole("button");
     expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual(NAMES);
     await act(async () => {
@@ -168,7 +168,7 @@ describe("section labels on the hull plan", () => {
   const centreOf = (left: string) => parseFloat(/^min\(([\d.]+)%, /.exec(left)![1]!);
 
   it("aligns each label with its section's span of the drawing", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     expect(strip().dataset["aligned"]).toBe("true");
     for (const id of SECTION_IDS) {
       const zone = form.zones.find((z) => z.id === SECTIONS[id].zoneId)!;
@@ -193,7 +193,7 @@ describe("section labels on the hull plan", () => {
   });
 
   it("opens the section's card on keyboard focus and highlights the section on the plan", async () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     await tabTo(label("Forward magazine"));
     screen.getByRole("heading", { name: "Forward magazine" });
     expect(card()!.dataset["section"]).toBe("forward-magazine");
@@ -206,7 +206,7 @@ describe("section labels on the hull plan", () => {
   });
 
   it("swaps to the next section's content when focus moves along the strip", async () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     await tabTo(label("Forecastle"));
     screen.getByRole("heading", { name: "Forecastle" });
     await tabTo(label("Forward magazine"));
@@ -217,7 +217,7 @@ describe("section labels on the hull plan", () => {
   });
 
   it("gives tap and click users the same details without hover, in the inspector", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(label("Quarterdeck"));
     expect(
       document.querySelector("[data-testid='section-selected']")?.getAttribute("data-zone"),
@@ -228,27 +228,23 @@ describe("section labels on the hull plan", () => {
     expect(card()).toBeNull();
   });
 
-  it("renders the card outside the Drawing Board, so no panel overflow can clip it", async () => {
-    render(<DrawingBoard />);
+  it("renders the card outside the workspace, so no panel overflow can clip it", async () => {
+    render(<ShipbuildingWorkspace />);
     await tabTo(label("Superstructure"));
     expect(card()?.dataset["section"]).toBe("superstructure");
-    expect(screen.getByTestId("drawing-board").contains(card())).toBe(false);
+    expect(screen.getByTestId("shipbuilding-workspace").contains(card())).toBe(false);
   });
 
-  it("keeps the labels, their card and the plan tools working on every tab", async () => {
-    render(<DrawingBoard />);
+  it("keeps the labels, their card and the plan tools working while the panels change", async () => {
+    render(<ShipbuildingWorkspace />);
     const drawing = screen.getByRole("img", { name: /Top-down plan/ });
-    openPlanDisplay();
-    fireEvent.click(screen.getByLabelText("Show gun arcs"));
-    fireEvent.click(screen.getByRole("button", { name: "Plan display" }));
+    fireEvent.click(within(layersPopover()).getByRole("checkbox", { name: "Turret arcs" }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(SECTION_OPEN_DELAY + 1);
     });
-    expect(screen.queryByRole("dialog", { name: "Plan display" })).toBeNull();
-    for (const tab of ["Arrangement", "Analysis", "Build", "History and files"]) {
-      openTab(tab);
+    for (const name of ["Hull", "Machinery", "Armament", "Review"]) {
+      openSection(name);
       expect(screen.getByRole("img", { name: /Top-down plan/ })).toBe(drawing);
-      expect(drawing.querySelectorAll("[data-arc]")).toHaveLength(0);
     }
     await tabTo(label("Aft service"));
     expect(card()?.dataset["section"]).toBe("aft-service");

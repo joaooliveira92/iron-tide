@@ -68,9 +68,18 @@ export async function advanceMonths(page: Page, count: number): Promise<void> {
 
 export async function openShipbuilding(page: Page): Promise<Locator> {
   await page.getByTestId("bottom-nav").getByRole("button", { name: "Ship design" }).click();
-  const dialog = page.getByTestId("shipbuilding-dialog");
-  await dialog.getByTestId("shipbuilding-workspace").waitFor({ timeout: 15_000 });
-  return dialog;
+  await page.getByTestId("shipbuilding-workspace").waitFor({ timeout: 15_000 });
+  return page.locator("body");
+}
+
+export async function openDesignSection(page: Page, section: string): Promise<Locator> {
+  const button = page
+    .getByRole("navigation", { name: "Design sections" })
+    .getByRole("button", { name: new RegExp(`^${section}`) });
+  if ((await button.getAttribute("aria-expanded")) !== "true") await button.click();
+  const drawer = page.getByRole("dialog", { name: section });
+  await expect(drawer).toBeVisible();
+  return drawer;
 }
 
 export async function dismissTour(page: Page): Promise<void> {
@@ -146,7 +155,6 @@ export async function submitReferenceDesign(
   await workspace.getByRole("button", { name: "Finish design" }).click();
   await workspace.getByRole("button", { name: "Submit design" }).click();
   await expect(workspace.getByText(new RegExp(`Design queued\\. .*"${className}"`))).toBeVisible();
-  await workspace.getByRole("button", { name: "Close", exact: true }).click();
 }
 
 export async function orderDesignFromCatalog(page: Page, className: string): Promise<void> {

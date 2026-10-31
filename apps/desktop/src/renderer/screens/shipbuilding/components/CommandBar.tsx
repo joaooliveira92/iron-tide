@@ -25,13 +25,8 @@ import { SHORTCUT_MOD, SHORTCUT_SHIFT } from "../../../components/design-workspa
 import { cn } from "../../../lib/utils.js";
 import { Tip } from "../../../components/ui/tip.js";
 
-export interface DesignStatus {
-  readonly label: string;
-  readonly tone: "ok" | "warn" | "bad";
-  readonly detail: string;
-}
-
 export interface CommandBarProps {
+  readonly embedded?: boolean;
   readonly shipClassName: string;
   readonly onShipClassName: (name: string) => void;
   readonly nameInputRef?: Ref<HTMLInputElement>;
@@ -58,6 +53,7 @@ export interface CommandBarProps {
 }
 
 export function CommandBar({
+  embedded = false,
   shipClassName,
   onShipClassName,
   nameInputRef,
@@ -79,7 +75,10 @@ export function CommandBar({
     <div
       role="group"
       aria-label="Design commands"
-      className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b bg-muted/40 px-3 py-2"
+      className={cn(
+        "flex flex-wrap items-center gap-x-4 gap-y-2",
+        embedded ? "min-w-0 flex-1" : "border-b bg-muted/40 px-3 py-2",
+      )}
     >
       <div className="flex min-w-0 flex-1 basis-[28rem] flex-wrap items-center gap-2">
         <label className="flex min-w-40 max-w-xs flex-1 items-center gap-2 text-xs text-muted-foreground">

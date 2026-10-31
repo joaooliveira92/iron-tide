@@ -1,23 +1,23 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { buildWorkshopView, type Finding, type WorkshopView } from "@bluewave/ship-design";
-import { batteryCards } from "../../../components/design-workspace/batteryView.js";
-import { loadDrawingBoardContent } from "../../../components/design-workspace/content.js";
-import { DrawingBoard } from "./DrawingBoard.js";
-import { armMove, openPlanDisplay, openTab, planMenu } from "./test-helpers.js";
+import { batteryCards } from "../../components/design-workspace/batteryView.js";
+import { loadDrawingBoardContent } from "../../components/design-workspace/content.js";
+import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
+import { armMove, layersPopover, openSection, planMenu } from "./test-helpers.js";
 import {
   bowStyleFor,
   fittingPoint,
   planFrame,
   sternStyleFor,
-} from "../../../components/design-workspace/panels/hull-plan/geometry.js";
-import { fixDestination } from "../../../components/design-workspace/selection/navigation.js";
+} from "../../components/design-workspace/panels/hull-plan/geometry.js";
+import { fixDestination } from "../../components/design-workspace/selection/navigation.js";
 import {
   boardFindings,
   findingsFor,
-} from "../../../components/design-workspace/validation/boardFindings.js";
-import { FINDINGS_VIEW_KEY } from "../../../components/design-workspace/validation/FindingsControl.js";
-import { layoutMarkers } from "../../../components/design-workspace/validation/FindingMarkers.js";
+} from "../../components/design-workspace/validation/boardFindings.js";
+import { FINDINGS_VIEW_KEY } from "../../components/design-workspace/validation/FindingsControl.js";
+import { layoutMarkers } from "../../components/design-workspace/validation/FindingMarkers.js";
 
 afterEach(cleanup);
 beforeEach(() => localStorage.clear());
@@ -59,7 +59,12 @@ const legacy: Finding = {
 const marker = (k: string) => document.querySelector<SVGGElement>(`[data-marker="${k}"]`);
 const inspector = () => screen.queryByTestId("selection-inspector");
 const commit = (label: RegExp, value: string) => {
-  const input = screen.getByLabelText(label) as HTMLInputElement;
+  const rows = screen.queryByRole("region", { name: /fittings$/ });
+  const input = (
+    rows !== null && within(rows).queryByLabelText(label) !== null
+      ? within(rows).getByLabelText(label)
+      : screen.getByLabelText(label)
+  ) as HTMLInputElement;
   fireEvent.change(input, { target: { value } });
   fireEvent.blur(input);
 };
@@ -166,7 +171,7 @@ describe("marker layout", () => {
 
   it("follows the drawing's geometry, so the overlay scales with the panel", () => {
     const svg = () => screen.getByTestId("finding-markers");
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     expect(svg().getAttribute("viewBox")).toBe(
       screen.getByRole("img", { name: /Top-down plan/ }).getAttribute("viewBox"),
     );
@@ -176,8 +181,8 @@ describe("marker layout", () => {
 
 describe("markers on the drawing", () => {
   it("shows a grouped marker with the highest severity and the count, and a useful name", () => {
-    render(<DrawingBoard />);
-    openTab("Arrangement");
+    render(<ShipbuildingWorkspace />);
+    openSection("Armament", "Secondary");
     commit(/^Station of gun_12pdr /, "120");
     const m = marker("f:gun_12pdr")!;
     expect(m.getAttribute("data-severity")).toBe("BLOCKING");
@@ -189,7 +194,7 @@ describe("markers on the drawing", () => {
   });
 
   it("is one tab stop with arrow-key movement, and Enter pins the entity and its finding", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     const all = [
       ...screen.getByTestId("finding-markers").querySelectorAll<SVGGElement>("[data-marker]"),
     ];
@@ -204,7 +209,7 @@ describe("markers on the drawing", () => {
   });
 
   it("pins the fitting on click and shows its findings with values, rule and link kind", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(marker("f:mag_aft")!);
     expect(document.querySelector('[data-target="mag_aft"]')?.getAttribute("aria-pressed")).toBe(
       "true",
@@ -217,29 +222,26 @@ describe("markers on the drawing", () => {
   });
 
   it("Go to fix opens the fitting's row and focuses its station; the pin survives", () => {
-    render(<DrawingBoard />);
-    openTab("Arrangement");
+    render(<ShipbuildingWorkspace />);
+    openSection("Armament", "Secondary");
     commit(/^Station of gun_12pdr /, "120");
-    openTab("Build");
+    openSection("Review");
     fireEvent.click(marker("f:gun_12pdr")!);
     const fixes = within(inspector()!).getAllByRole("button", { name: "Go to fix" });
     fireEvent.click(fixes[0]!);
-    expect(screen.getByRole("tab", { name: /Arrangement/ }).getAttribute("aria-selected")).toBe(
-      "true",
-    );
-    expect(document.activeElement).toBe(screen.getByLabelText(/^Station of gun_12pdr /));
+    expect(screen.getByRole("dialog", { name: "Armament" })).toBeTruthy();
+    expect(screen.getByTestId("design-drawer").contains(document.activeElement)).toBe(true);
+    expect(document.activeElement?.getAttribute("aria-label")).toMatch(/gun_12pdr/);
     expect(document.querySelector('[data-target="gun_12pdr"]')?.getAttribute("aria-pressed")).toBe(
       "true",
     );
   });
 
   it("Open in Analysis focuses the same finding; Show on ship comes back to it", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(marker("f:mag_aft")!);
     fireEvent.click(within(inspector()!).getByRole("button", { name: "Open in Analysis" }));
-    expect(screen.getByRole("tab", { name: /Analysis/ }).getAttribute("aria-selected")).toBe(
-      "true",
-    );
+    expect(screen.getByRole("dialog", { name: "Review" })).toBeTruthy();
     const entry = document.activeElement!.closest("[data-finding-key]")!;
     expect(entry.getAttribute("data-finding-key")).toBe("MAGAZINE_UNPROTECTED|placement:mag_aft");
     expect(entry.getAttribute("data-nav-flash")).toBe("true");
@@ -261,8 +263,8 @@ describe("markers on the drawing", () => {
   });
 
   it("lights the target while an Analysis entry has focus", () => {
-    render(<DrawingBoard />);
-    openTab("Analysis");
+    render(<ShipbuildingWorkspace />);
+    openSection("Review", "Findings");
     const entry = document.querySelector<HTMLElement>(
       '[data-finding-key="MAGAZINE_UNPROTECTED|placement:mag_fwd"]',
     )!;
@@ -275,8 +277,8 @@ describe("markers on the drawing", () => {
 
 describe("live resolution", () => {
   it("removes a fixed finding's marker, keeps the entity pinned and notes the fix politely", () => {
-    render(<DrawingBoard />);
-    openTab("Arrangement");
+    render(<ShipbuildingWorkspace />);
+    openSection("Armament", "Secondary");
     commit(/^Station of gun_12pdr /, "120");
     fireEvent.click(marker("f:gun_12pdr")!);
     expect(marker("f:gun_12pdr")?.getAttribute("data-severity")).toBe("BLOCKING");
@@ -296,9 +298,8 @@ describe("live resolution", () => {
   });
 
   it("prunes the marker and the selection when the fitting itself is removed", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(marker("f:mag_aft")!);
-    openTab("Arrangement");
     fireEvent.click(screen.getByRole("button", { name: "Remove mag_aft" }));
     expect(marker("f:mag_aft")).toBeNull();
     expect(inspector()).toBeNull();
@@ -307,31 +308,30 @@ describe("live resolution", () => {
 
 describe("display controls", () => {
   it("filters by severity and hides all findings, as view state only", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     expect(marker("f:mag_aft")).not.toBeNull();
-    openPlanDisplay();
+    layersPopover();
     fireEvent.click(screen.getByLabelText("Findings to show"));
     fireEvent.click(screen.getByRole("option", { name: "Blocking and critical" }));
     expect(marker("f:mag_aft")).toBeNull();
     expect(marker("f:gun_12pdr")).toBeNull();
-    openPlanDisplay();
+    layersPopover();
     fireEvent.click(screen.getByLabelText("Findings to show"));
     fireEvent.click(screen.getByRole("option", { name: "Advisories" }));
     expect(marker("f:mag_aft")).not.toBeNull();
     expect(marker("f:gun_12pdr")).toBeNull();
-    openPlanDisplay();
+    layersPopover();
     fireEvent.click(screen.getByLabelText("Show findings on the plan"));
     expect(screen.queryByTestId("finding-markers")).toBeNull();
     expect(JSON.parse(localStorage.getItem(FINDINGS_VIEW_KEY)!)).toEqual({
       visible: false,
       filter: "advisory",
     });
-    expect(screen.getByText("No edits")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Undo" }).hasAttribute("disabled")).toBe(true);
   });
 
   it("steps aside while Place or Move is active", async () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     await armMove();
     expect(screen.queryByTestId("finding-markers")).toBeNull();
     expect(screen.getByTestId("plan-click-layer")).toBeTruthy();
@@ -339,13 +339,13 @@ describe("display controls", () => {
     expect(screen.getByTestId("finding-markers")).toBeTruthy();
   });
 
-  it("pins the whole ship from the ship-level findings button", () => {
-    render(<DrawingBoard />);
-    expect(document.querySelector("[data-ship-findings]")).toBeNull();
-    commit(/installed power/i, "300");
-    const ship = document.querySelector<HTMLButtonElement>("[data-ship-findings]")!;
-    expect(ship.getAttribute("aria-label")).toMatch(/^Whole ship: \d+ finding/);
-    fireEvent.click(ship);
+  it("pins the whole ship from a ship-wide problem on the slip, and goes to its fix", () => {
+    render(<ShipbuildingWorkspace />);
+    openSection("Machinery");
+    commit(/^Installed power/, "300");
+    fireEvent.click(
+      within(screen.getByTestId("flaw-slip")).getByRole("button", { name: "Show on ship" }),
+    );
     expect(within(inspector()!).getByRole("heading", { name: "Whole ship" })).toBeTruthy();
     const list = within(inspector()!).getByRole("list", { name: "Findings for this selection" });
     expect(list.textContent).toMatch(/PLANT_INSUFFICIENT/);
@@ -364,7 +364,7 @@ describe("display controls", () => {
 
 describe("Escape", () => {
   it("closes the opened finding, then the selection, one step per press", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(marker("f:mag_aft")!);
     const m = marker("f:mag_aft")!;
     expect(inspector()!.querySelector("[aria-current='true']")).not.toBeNull();
@@ -379,8 +379,8 @@ describe("Escape", () => {
 describe("one source of findings", () => {
   it("shows every finding of an entity in the inspector exactly as the Analysis tab lists it", () => {
     const fs = boardFindings(view, ref.draft, batteries);
-    render(<DrawingBoard />);
-    openTab("Analysis");
+    render(<ShipbuildingWorkspace />);
+    openSection("Review", "Findings");
     const keys = [...document.querySelectorAll("[data-finding-key]")].map((e) =>
       e.getAttribute("data-finding-key"),
     );

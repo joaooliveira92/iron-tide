@@ -7,6 +7,7 @@ import {
   Handshake,
   LayoutDashboard,
   Map as MapIcon,
+  PencilRuler,
   Settings,
   Settings2,
   Ship,
@@ -87,6 +88,15 @@ export const CAMPAIGN_SCREEN_REGISTRY: readonly CampaignScreenDefinition[] = [
     group: "campaign",
     searchable: true,
     route: CAMPAIGN_SCREEN_ROUTES.construction,
+  },
+  {
+    id: "ship-design",
+    label: translate("nav.screen.ship-design.label"),
+    shortLabel: translate("nav.screen.ship-design.short"),
+    icon: PencilRuler,
+    group: "campaign",
+    searchable: true,
+    route: CAMPAIGN_SCREEN_ROUTES["ship-design"],
   },
   {
     id: "fleet",

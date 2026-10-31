@@ -18,13 +18,69 @@ const draw = () =>
   );
 
 describe("HullPlanPanel", () => {
-  it("is the hull plan panel: a described plan and profile, a legend and a schematic note", () => {
+  it("is the hull plan panel: a described plan, a drawing key and a schematic note", () => {
     draw();
     const panel = screen.getByRole("region", { name: "Hull plan" });
     expect(within(panel).getByRole("img", { name: /^Top-down plan/ })).toBeTruthy();
-    expect(within(panel).getByRole("img", { name: /^Side profile/ })).toBeTruthy();
-    expect(within(panel).getByRole("group", { name: "Drawing legend" })).toBeTruthy();
+    expect(within(panel).queryByRole("img", { name: /^Side profile/ })).toBeNull();
     expect(panel.textContent).toMatch(/Schematic, not a lines plan\./);
+    expect(within(panel).getByRole("button", { name: "Drawing key" })).toBeTruthy();
+  });
+
+  it("draws one view at a time: top, side or isometric", () => {
+    const { rerender } = draw();
+    const show = (shipView: "top" | "side" | "iso") =>
+      rerender(
+        <HullPlanPanel
+          draft={reference.draft}
+          content={content}
+          view={view}
+          month={reference.month}
+          edit={() => {}}
+          findings={[]}
+          shipView={shipView}
+        />,
+      );
+    show("side");
+    expect(screen.getByRole("img", { name: /^Side profile/ })).toBeTruthy();
+    expect(screen.queryByRole("img", { name: /^Top-down plan/ })).toBeNull();
+    expect(screen.queryByTestId("anatomy-ship")).toBeNull();
+    show("iso");
+    expect(screen.getByTestId("anatomy-ship")).toBeTruthy();
+    expect(screen.queryByRole("img", { name: /^Side profile/ })).toBeNull();
+    expect(screen.queryByRole("img", { name: /^Top-down plan/ })).toBeNull();
+    show("top");
+    expect(screen.getByRole("img", { name: /^Top-down plan/ })).toBeTruthy();
+    expect(screen.queryByTestId("anatomy-ship")).toBeNull();
+  });
+
+  it("lights the highlighted fitting in the isometric drawing and turns it to the port side", () => {
+    const fitting = reference.draft.placements[0]!.instanceId;
+    const { rerender } = draw();
+    const show = (isoSide: "starboard" | "port") =>
+      rerender(
+        <HullPlanPanel
+          draft={reference.draft}
+          content={content}
+          view={view}
+          month={reference.month}
+          edit={() => {}}
+          findings={[]}
+          shipView="iso"
+          isoSide={isoSide}
+          highlightId={fitting}
+        />,
+      );
+    show("starboard");
+    expect(screen.getByTestId("anatomy-ship").getAttribute("data-azimuth")).toBe("135");
+    expect(
+      screen
+        .getByTestId("anatomy-ship")
+        .querySelector(`[data-part="${fitting}"]`)
+        ?.hasAttribute("data-lit"),
+    ).toBe(true);
+    show("port");
+    expect(screen.getByTestId("anatomy-ship").getAttribute("data-azimuth")).toBe("225");
   });
 
   it("drops its own heading inside the workspace, where the view toolbar names the drawing", () => {
@@ -58,7 +114,8 @@ describe("HullPlanPanel", () => {
         month={reference.month}
         edit={() => {}}
         findings={[]}
-        shipView="compartments"
+        shipView="top"
+        overlays={new Set(["compartments"])}
       />,
     );
     expect(strip().textContent).toMatch(/1.*2.*3.*4.*5.*6.*7.*8/);

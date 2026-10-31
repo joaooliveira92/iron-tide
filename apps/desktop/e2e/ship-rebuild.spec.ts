@@ -1,6 +1,7 @@
 import { test, expect, openCampaign } from "./fixtures.js";
 import {
   advanceMonths,
+  openDesignSection,
   openShipbuilding,
   orderDesignFromCatalog,
   submitReferenceDesign,
@@ -25,7 +26,7 @@ test("a completed player-designed ship is rebuilt and leaves service after a mon
 
   await test.step("reachable:start-rebuild", async () => {
     const rebuildWorkspace = await openShipbuilding(page);
-    await rebuildWorkspace.getByRole("button", { name: /^Review/ }).click();
+    await openDesignSection(page, "Review");
     await page.getByRole("tab", { name: "Rebuild" }).click();
     const panel = rebuildWorkspace.getByRole("region", { name: "Rebuild a ship" });
     await expect(panel.getByRole("combobox", { name: "Ship to rebuild" })).toContainText(
@@ -51,11 +52,10 @@ test("a completed player-designed ship is rebuilt and leaves service after a mon
     await expect(
       panel.getByRole("alert").filter({ hasText: /Rebuild of .* queued/ }),
     ).toBeVisible();
-    await rebuildWorkspace.getByRole("button", { name: "Close", exact: true }).click();
 
     await advanceMonths(page, 1);
     const reopened = await openShipbuilding(page);
-    await reopened.getByRole("button", { name: /^Review/ }).click();
+    await openDesignSection(page, "Review");
     await page.getByRole("tab", { name: "Rebuild" }).click();
     await expect(reopened.getByText("None of your ships can be rebuilt yet.")).toBeVisible();
   });

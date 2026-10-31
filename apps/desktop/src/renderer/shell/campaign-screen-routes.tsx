@@ -3,6 +3,7 @@ import { CampaignPreferencesScreen } from "../screens/campaign-preferences/Campa
 import { ConstructionScreen } from "../screens/construction/ConstructionScreen.js";
 import { FleetScreen } from "../screens/fleet/FleetScreen.js";
 import { OptionsScreen } from "../screens/options/OptionsScreen.js";
+import { ShipDesignScreen } from "../screens/shipbuilding/ShipDesignScreen.js";
 import { OverviewScreen } from "../screens/overview/OverviewScreen.js";
 import { StrategicMapScreen } from "../screens/strategic-map/StrategicMapScreen.js";
 import { useCampaignShellContext } from "./CampaignShellContext.js";
@@ -58,6 +59,10 @@ function OverviewRoute({ sessionId }: CampaignScreenRouteProps) {
 
 function ConstructionRoute({ sessionId }: CampaignScreenRouteProps) {
   return <ConstructionScreen sessionId={sessionId} />;
+}
+
+function ShipDesignRoute({ sessionId }: CampaignScreenRouteProps) {
+  return <ShipDesignScreen sessionId={sessionId} />;
 }
 
 function FleetRoute({ sessionId }: CampaignScreenRouteProps) {
@@ -121,6 +126,7 @@ function OptionsRoute() {
 export const CAMPAIGN_SCREEN_ROUTES: Readonly<Record<CampaignScreen, CampaignScreenRoute>> = {
   overview: OverviewRoute,
   construction: ConstructionRoute,
+  "ship-design": ShipDesignRoute,
   fleet: FleetRoute,
   simulation: SimulationRoute,
   research: ResearchRoute,

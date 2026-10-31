@@ -8,7 +8,7 @@ import { InspectorResizeHandle } from "../shipbuilding/components/InspectorResiz
 import { INSPECTOR_COLLAPSED_PX } from "../shipbuilding/inspector-layout.js";
 import { useInspectorLayout } from "../shipbuilding/useInspectorLayout.js";
 import { cn } from "../../lib/utils.js";
-import { DrawingBoardDialog } from "./drawing-board/DrawingBoardDialog.js";
+import { useReviseProject } from "../../shell/CampaignShellContext.js";
 import { useScreenHeaderHost } from "../../shell/screen-header.js";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import {
@@ -75,7 +75,7 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
   }));
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedCommandId, setSelectedCommandId] = useState<string | null>(null);
-  const [revisingProjectId, setRevisingProjectId] = useState<string | null>(null);
+  const reviseProject = useReviseProject();
   const {
     layout: inspectorLayout,
     setWidth: setInspectorWidth,
@@ -207,7 +207,6 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
   );
   const selectedCommand =
     workspace.commands.find((command) => command.commandId === selectedCommandId) ?? null;
-  const revisingProject = state.projects.find((project) => project.projectId === revisingProjectId);
   const reviewing = place === "catalog" && (batchOpen || tab.id === "order");
   const monthLabel = `${state.month?.year ?? ""}-${String(state.month?.month ?? 0).padStart(2, "0")}`;
 
@@ -300,7 +299,7 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
           onResume={resume}
           onAccelerate={setAcceleration}
           onCancelProject={cancelProject}
-          onRevise={setRevisingProjectId}
+          onRevise={reviseProject}
         />
       );
     }
@@ -449,15 +448,6 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
 
         <YardStatusBar readouts={yardReadouts(figures, workspace, format)} />
       </div>
-
-      <DrawingBoardDialog
-        sessionId={sessionId}
-        projects={revisingProject === undefined ? [] : [revisingProject]}
-        open={revisingProject !== undefined}
-        onOpenChange={(open) => {
-          if (!open) setRevisingProjectId(null);
-        }}
-      />
 
       <CollapsibleSection
         title="Not yet modelled"

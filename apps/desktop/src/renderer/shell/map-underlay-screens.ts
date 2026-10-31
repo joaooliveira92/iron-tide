@@ -3,6 +3,7 @@ import type { Screen } from "./campaign-screen-types.js";
 const MAP_UNDERLAY_SCREENS: ReadonlySet<Screen> = new Set<Screen>([
   "overview",
   "fleet",
+  "ship-design",
   "strategic-map",
 ]);
 

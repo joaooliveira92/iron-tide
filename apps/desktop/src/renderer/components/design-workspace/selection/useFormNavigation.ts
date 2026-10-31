@@ -1,6 +1,6 @@
 import { type RefObject, useCallback } from "react";
 import { flushSync } from "react-dom";
-import { findTarget, type BoardTab, type Destination } from "./navigation.js";
+import { findTarget, type Destination } from "./navigation.js";
 
 const FOCUS_ORDER = [
   "input:not([disabled])",
@@ -22,12 +22,12 @@ function flash(el: HTMLElement): void {
 }
 
 export function useFormNavigation(
-  setTab: (tab: BoardTab) => void,
+  reveal: (destination: Destination) => void,
   root: RefObject<HTMLElement | null>,
 ): (d: Destination) => boolean {
   return useCallback(
     (d) => {
-      flushSync(() => setTab(d.tab));
+      flushSync(() => reveal(d));
       const el = root.current ? findTarget(root.current, d.target) : null;
       if (!el) return false;
       const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -43,6 +43,6 @@ export function useFormNavigation(
       flash(el);
       return true;
     },
-    [setTab, root],
+    [reveal, root],
   );
 }

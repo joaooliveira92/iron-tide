@@ -6,20 +6,23 @@ export interface ChartDeskProps {
   readonly tabs: ReactNode;
   readonly drawer: ReactNode | null;
   readonly slip: ReactNode | null;
+  readonly foot?: ReactNode;
 }
 
 const SLIP_GAP_PX = 12;
 
-export function ChartDesk({ tabs, drawer, slip }: ChartDeskProps) {
+export function ChartDesk({ tabs, drawer, slip, foot }: ChartDeskProps) {
   const deskRef = useRef<HTMLDivElement>(null);
   const slipRef = useRef<HTMLDivElement>(null);
+  const footRef = useRef<HTMLDivElement>(null);
   const showSlip = drawer === null && slip !== null;
+  const showFoot = foot !== undefined && foot !== null;
 
   useEffect(() => {
     const host = deskRef.current?.parentElement;
     if (host === null || host === undefined) return;
-    const slipElement = slipRef.current;
-    if (!showSlip || slipElement === null) {
+    const slipElement = showSlip ? slipRef.current : showFoot ? footRef.current : null;
+    if (slipElement === null) {
       host.style.setProperty("--chrome-slip", "0px");
       return;
     }
@@ -32,7 +35,7 @@ export function ChartDesk({ tabs, drawer, slip }: ChartDeskProps) {
       observer.disconnect();
       host.style.setProperty("--chrome-slip", "0px");
     };
-  }, [showSlip]);
+  }, [showSlip, showFoot]);
 
   return (
     <div
@@ -46,6 +49,14 @@ export function ChartDesk({ tabs, drawer, slip }: ChartDeskProps) {
             className="absolute inset-x-0 bottom-0 flex justify-center pl-[18.75rem]"
           >
             {slip}
+          </div>
+        )}
+        {showFoot && (
+          <div
+            ref={footRef}
+            className="absolute inset-x-0 bottom-0 flex flex-col items-start gap-2"
+          >
+            {foot}
           </div>
         )}
       </div>

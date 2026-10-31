@@ -1,17 +1,17 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { buildWorkshopView, COMPONENT_CATEGORIES } from "@bluewave/ship-design";
-import { Checkbox } from "../../../components/ui/checkbox.js";
-import { DrawingBoard } from "./DrawingBoard.js";
-import { componentCategoryMeta } from "../../../components/design-workspace/componentCategory.js";
+import { Checkbox } from "../../components/ui/checkbox.js";
+import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
+import { componentCategoryMeta } from "../../components/design-workspace/componentCategory.js";
 import {
   componentFacts,
   componentsByCategory,
-} from "../../../components/design-workspace/componentFacts.js";
-import { loadDrawingBoardContent } from "../../../components/design-workspace/content.js";
-import { exportDesign } from "../../../components/design-workspace/designFile.js";
-import { RequirementChip } from "../../../components/design-workspace/RequirementChip.js";
-import { openTab, region } from "./test-helpers.js";
+} from "../../components/design-workspace/componentFacts.js";
+import { loadDrawingBoardContent } from "../../components/design-workspace/content.js";
+import { exportDesign } from "../../components/design-workspace/designFile.js";
+import { RequirementChip } from "../../components/design-workspace/RequirementChip.js";
+import { openSection } from "./test-helpers.js";
 
 afterEach(cleanup);
 const content = loadDrawingBoardContent();
@@ -71,8 +71,10 @@ describe("componentCategoryMeta", () => {
 
 describe("design file chip", () => {
   it("shows the opened file as an attachment, and a bad file as an error chip", async () => {
-    render(<DrawingBoard />);
-    openTab("History and files");
+    render(<ShipbuildingWorkspace />);
+    fireEvent.click(screen.getByRole("button", { name: /More design actions/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /Import or export design/ }));
+    const region = () => screen.getByRole("region", { name: "Design file" });
     const input = screen.getByLabelText("Design file", { selector: "input" }) as HTMLInputElement;
     const good = exportDesign(
       ref.draft,
@@ -83,19 +85,17 @@ describe("design file chip", () => {
       target: { files: [new File([good], "my-ship.bwdesign", { type: "application/json" })] },
     });
     await waitFor(() =>
-      expect(within(region("Design file")).getByLabelText("Last design file").textContent).toMatch(
+      expect(within(region()).getByLabelText("Last design file").textContent).toMatch(
         /my-ship\.bwdesign.*Opened/,
       ),
     );
     fireEvent.change(input, { target: { files: [new File(["nonsense"], "bad.bwdesign")] } });
     await waitFor(() => {
-      const chip = within(region("Design file")).getByLabelText("Last design file");
+      const chip = within(region()).getByLabelText("Last design file");
       expect(chip.textContent).toMatch(/bad\.bwdesign.*Could not be opened/);
       expect(chip.getAttribute("data-state")).toBe("error");
     });
-    expect(within(region("Design file")).getByRole("status").textContent).toMatch(
-      /Cannot open design/,
-    );
+    expect(within(region()).getByRole("status").textContent).toMatch(/Cannot open design/);
   });
 });
 
@@ -118,71 +118,15 @@ describe("revision tier badge", () => {
       totalWork: 20,
       completedWork: 4,
     };
-    render(<DrawingBoard projects={[project]} />);
-    const input = screen.getByLabelText(/installed power/i) as HTMLInputElement;
+    render(<ShipbuildingWorkspace projects={[project]} />);
+    openSection("Machinery");
+    const input = screen.getByLabelText(/^Installed power/) as HTMLInputElement;
     fireEvent.change(input, { target: { value: String(Number(input.value) + 100) } });
     fireEvent.blur(input);
-    const status = await within(region("Revision preview")).findByRole("status");
+    openSection("Review", "Finish");
+    const preview = screen.getByRole("region", { name: "Revision preview" });
+    const status = await within(preview).findByRole("status");
     expect(within(status).getByText(/^(Redesign|Revision)$/)).toBeTruthy();
-    expect(within(region("Revision preview")).getByLabelText("Selected ship").textContent).toMatch(
-      /authored design/,
-    );
-  });
-});
-
-describe("tabbed layout", () => {
-  const tabs = () => screen.getAllByRole("tab").map((t) => t.textContent);
-
-  it("splits the board into five icon tabs and opens on hull and machinery", () => {
-    render(<DrawingBoard />);
-    expect(tabs()).toEqual([
-      "Hull and machinery",
-      "Arrangement",
-      "Analysis",
-      "Build",
-      "History and files",
-    ]);
-    for (const t of screen.getAllByRole("tab")) expect(t.querySelector("svg")).not.toBeNull();
-    expect(
-      screen.getByRole("tab", { name: "Hull and machinery" }).getAttribute("aria-selected"),
-    ).toBe("true");
-    expect(screen.queryByRole("region", { name: "Validation" })).toBeNull();
-    expect(screen.getByRole("region", { name: "Hull plan" })).toBeTruthy();
-  });
-
-  it("the status strip shows validity and jumps to the analysis tab", () => {
-    render(<DrawingBoard />);
-    const strip = screen.getByRole("button", { name: /design status/i });
-    expect(strip.textContent).toMatch(/Can be submitted/);
-    expect(strip.textContent).toMatch(/blocking/);
-    fireEvent.click(strip);
-    expect(screen.getByRole("tab", { name: "Analysis" }).getAttribute("aria-selected")).toBe(
-      "true",
-    );
-    expect(screen.getByRole("region", { name: "Validation" })).toBeTruthy();
-  });
-
-  it("the strip reports a design that cannot be built", () => {
-    render(<DrawingBoard />);
-    const input = screen.getByLabelText(/coal bunkers/i) as HTMLInputElement;
-    fireEvent.change(input, { target: { value: "400" } });
-    fireEvent.blur(input);
-    const strip = screen.getByRole("button", { name: /design status/i });
-    expect(strip.textContent).toMatch(/Cannot be built/);
-  });
-
-  it("keeps a panel's state while another tab is open", async () => {
-    render(<DrawingBoard />);
-    const file = () =>
-      screen.getByLabelText("Design file", { selector: "input" }) as HTMLInputElement;
-    region("Design file");
-    fireEvent.change(file(), { target: { files: [new File(["nonsense"], "bad.bwdesign")] } });
-    await waitFor(() =>
-      expect(within(region("Design file")).getByLabelText("Last design file")).toBeTruthy(),
-    );
-    region("Hull plan");
-    expect(within(region("Design file")).getByLabelText("Last design file").textContent).toMatch(
-      /bad\.bwdesign/,
-    );
+    expect(within(preview).getByLabelText("Selected ship").textContent).toMatch(/authored design/);
   });
 });

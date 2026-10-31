@@ -339,4 +339,20 @@ describe("month commit", () => {
     expect(failed.commitFailure).toEqual({ _tag: "TransportFailure", message: "boom" });
     expect(failed.saveMessage).toBe("boom");
   });
+
+  it("sends a revision request to Ship design and forgets it when cleared", () => {
+    const opened = reduceCampaignShell(initialCampaignShellState(), {
+      type: "campaign-opened",
+      campaign,
+    });
+    const requested = reduceCampaignShell(opened, {
+      type: "revision-requested",
+      projectId: "project-1",
+    });
+    expect(currentShellScreen(requested)).toBe("ship-design");
+    expect(requested.revisionProjectId).toBe("project-1");
+    const cleared = reduceCampaignShell(requested, { type: "revision-cleared" });
+    expect(cleared.revisionProjectId).toBeNull();
+    expect(currentShellScreen(cleared)).toBe("ship-design");
+  });
 });

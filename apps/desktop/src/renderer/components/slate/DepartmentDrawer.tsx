@@ -52,7 +52,7 @@ export function DepartmentDrawer({
   }, []);
 
   return (
-    <aside
+    <section
       role="dialog"
       aria-modal="false"
       aria-labelledby={titleId}
@@ -87,6 +87,6 @@ export function DepartmentDrawer({
       <div className="themed-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 text-sm">
         {children}
       </div>
-    </aside>
+    </section>
   );
 }

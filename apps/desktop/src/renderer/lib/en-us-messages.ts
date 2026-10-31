@@ -82,6 +82,8 @@ export const EN_US_MESSAGES = {
   "nav.screen.overview.short": "Overview",
   "nav.screen.construction.label": "Construction",
   "nav.screen.construction.short": "Build",
+  "nav.screen.ship-design.label": "Ship design",
+  "nav.screen.ship-design.short": "Design",
   "nav.screen.fleet.label": "Fleet",
   "nav.screen.fleet.short": "Fleet",
   "nav.screen.simulation.label": "Simulation & Turn",
@@ -164,7 +166,6 @@ export const EN_US_MESSAGES = {
   "map.desk.intel.detail": "Not modelled",
 
   "nav.bottom.landmark": "Campaign",
-  "nav.bottom.shipbuilding": "Ship design",
 
   "shell.header.title.default": "Naval Ministry",
   "shell.header.back": "Go back",

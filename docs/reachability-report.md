@@ -21,7 +21,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | organise-divisions | Create, change and dissolve divisions and pick flagships | `screens/fleet/organization/FleetOrganizationSection.tsx` | `apps/desktop/src/main/commands/divisionCommands.test.ts` |
 | set-budget-allocation | Set the budget allocation across spending categories | `screens/treasury/TreasuryScreen.tsx` | `apps/desktop/src/renderer/screens/treasury/components/BudgetPolicyPanel.test.tsx` |
 | submit-design | Draw a ship design and submit it for construction | `components/design-workspace/panels/SubmitPanel.tsx` | `apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx` |
-| revise-project | Revise a ship project that is already ordered | `components/design-workspace/panels/RevisionPanel.tsx` | `apps/desktop/src/renderer/screens/construction/drawing-board/RevisionApply.test.tsx` |
+| revise-project | Revise a ship project that is already ordered | `components/design-workspace/panels/RevisionPanel.tsx` | `apps/desktop/src/renderer/screens/shipbuilding/ShipDesignRevision.test.tsx` |
 | start-rebuild | Rebuild or convert an existing ship | `components/design-workspace/panels/RebuildPanel.tsx` | `apps/desktop/src/renderer/components/design-workspace/panels/RebuildPanel.test.tsx` |
 | order-construction | Order, replace, cancel or batch-build ships and read the project queue | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/renderer/screens/construction/hooks/useConstructionScreen.test.tsx` |
 | halt-or-resume-construction | Halt or resume a construction project | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |

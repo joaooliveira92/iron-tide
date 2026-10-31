@@ -56,6 +56,7 @@ export interface CampaignShellState {
   readonly loading: boolean;
   readonly error: string | null;
   readonly history: NavigationHistory<Screen>;
+  readonly revisionProjectId: string | null;
   readonly saving: boolean;
   readonly saveMessage: string | null;
   readonly primaryAction: PrimaryAction | null;
@@ -110,6 +111,8 @@ export type CampaignShellEvent =
   | { readonly type: "campaign-open-failed"; readonly message: string }
   | { readonly type: "campaign-closed" }
   | { readonly type: "visit"; readonly screen: Screen }
+  | { readonly type: "revision-requested"; readonly projectId: string }
+  | { readonly type: "revision-cleared" }
   | {
       readonly type: "history-replaced";
       readonly history: NavigationHistory<Screen>;
@@ -143,6 +146,7 @@ export function initialCampaignShellState(): CampaignShellState {
     loading: false,
     error: null,
     history: initialHistory<Screen>("file"),
+    revisionProjectId: null,
     saving: false,
     saveMessage: null,
     primaryAction: null,
@@ -173,6 +177,14 @@ export function reduceCampaignShell(
       return initialCampaignShellState();
     case "visit":
       return { ...state, history: visit(state.history, event.screen) };
+    case "revision-requested":
+      return {
+        ...state,
+        revisionProjectId: event.projectId,
+        history: visit(state.history, "ship-design"),
+      };
+    case "revision-cleared":
+      return { ...state, revisionProjectId: null };
     case "history-replaced":
       return { ...state, history: event.history };
     case "save-started":

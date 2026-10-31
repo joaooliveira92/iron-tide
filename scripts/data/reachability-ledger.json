@@ -124,7 +124,7 @@
       "engine_symbols": ["applyReviseProject"],
       "main_commands": ["reviseProjectCommand", "loadProjectDraft"],
       "renderer_screen": "components/design-workspace/panels/RevisionPanel.tsx",
-      "evidence_test": "apps/desktop/src/renderer/screens/construction/drawing-board/RevisionApply.test.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/shipbuilding/ShipDesignRevision.test.tsx",
       "decision": null
     },
     {

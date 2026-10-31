@@ -1,27 +1,27 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { buildWorkshopView } from "@bluewave/ship-design";
-import { batteryCards } from "../../../components/design-workspace/batteryView.js";
-import { loadDrawingBoardContent } from "../../../components/design-workspace/content.js";
-import { DrawingBoard } from "./DrawingBoard.js";
-import { armMove, chooseOption, openTab } from "./test-helpers.js";
+import { batteryCards } from "../../components/design-workspace/batteryView.js";
+import { loadDrawingBoardContent } from "../../components/design-workspace/content.js";
+import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
+import { armMove, openSection } from "./test-helpers.js";
 import {
   SECTION_IDS,
   SECTIONS,
-} from "../../../components/design-workspace/panels/hull-plan/sections.js";
+} from "../../components/design-workspace/panels/hull-plan/sections.js";
 import {
   boardFindings,
   entityWarns,
   findingsFor,
-} from "../../../components/design-workspace/validation/boardFindings.js";
+} from "../../components/design-workspace/validation/boardFindings.js";
 import {
   fittingFacts,
   type EntityContext,
-} from "../../../components/design-workspace/selection/facts.js";
-import { destinationFor } from "../../../components/design-workspace/selection/navigation.js";
-import { SelectionInspector } from "../../../components/design-workspace/selection/SelectionInspector.js";
-import { createSelectionStore } from "../../../components/design-workspace/selection/store.js";
-import { ShipSelectionProvider } from "../../../components/design-workspace/selection/useShipSelection.js";
+} from "../../components/design-workspace/selection/facts.js";
+import { destinationFor } from "../../components/design-workspace/selection/navigation.js";
+import { SelectionInspector } from "../../components/design-workspace/selection/SelectionInspector.js";
+import { createSelectionStore } from "../../components/design-workspace/selection/store.js";
+import { ShipSelectionProvider } from "../../components/design-workspace/selection/useShipSelection.js";
 
 afterEach(cleanup);
 
@@ -72,7 +72,7 @@ describe("selection store", () => {
 
 describe("selecting sections", () => {
   it("pins each of the eight sections in turn, one at a time, with the inspector following", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     for (const id of SECTION_IDS) {
       const name = SECTIONS[id].name;
       fireEvent.click(label(name));
@@ -82,20 +82,14 @@ describe("selecting sections", () => {
     }
   });
 
-  it("stays pinned after the pointer leaves and across every tab", () => {
-    render(<DrawingBoard />);
+  it("stays pinned after the pointer leaves and across every panel", () => {
+    render(<ShipbuildingWorkspace />);
     const drawing = screen.getByRole("img", { name: /Top-down plan/ });
     fireEvent.click(label("Aft magazine"));
     fireEvent.pointerLeave(label("Aft magazine"));
     fireEvent.mouseLeave(label("Aft magazine"));
-    for (const tab of [
-      "Arrangement",
-      "Analysis",
-      "Build",
-      "History and files",
-      "Hull and machinery",
-    ]) {
-      openTab(tab);
+    for (const tab of ["Hull", "Armament", "Review", "Machinery", "Systems"]) {
+      openSection(tab);
       expect(pressed()).toEqual(["Aft magazine"]);
       expect(within(inspector()!).getByRole("heading", { name: "Aft magazine" })).toBeTruthy();
       expect(screen.getByRole("img", { name: /Top-down plan/ })).toBe(drawing);
@@ -103,7 +97,7 @@ describe("selecting sections", () => {
   });
 
   it("clears with Escape from the drawing, after an open preview card has closed first", async () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(label("Forecastle"));
     fireEvent.keyDown(label("Forecastle"), { key: "Escape" });
     expect(pressed()).toEqual([]);
@@ -122,35 +116,35 @@ describe("selecting sections", () => {
   });
 
   it("clears with the inspector's close button and returns focus to the section label", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(label("Superstructure"));
     fireEvent.click(within(inspector()!).getByRole("button", { name: "Clear selection" }));
     expect(inspector()).toBeNull();
     expect(document.activeElement).toBe(label("Superstructure"));
   });
 
-  it("clears when another ship is loaded", () => {
-    render(<DrawingBoard />);
+  it("clears when the design is reset to its starting point", () => {
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(label("Central machinery"));
     expect(inspector()).not.toBeNull();
-    const other = content.references.find((r) => r.id !== ref.id)!;
-    chooseOption("Starting design", other.name);
+    fireEvent.click(screen.getByRole("button", { name: /More design actions/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /Reset to the starting design/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Replace my design" }));
     expect(inspector()).toBeNull();
     expect(pressed()).toEqual([]);
   });
 
   it("never changes the design", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(label("Forward service"));
     fireEvent.click(target("gun_12pdr"));
-    expect(screen.getByText("No edits")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Undo" }).hasAttribute("disabled")).toBe(true);
   });
 });
 
 describe("selecting fittings", () => {
   it("selects a fitting by pointer, with a persistent ring, its facts, and its arcs untouched", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     const arcs = document.querySelectorAll("[data-arc]").length;
     fireEvent.click(target("gun_12pdr"));
     expect(target("gun_12pdr").getAttribute("aria-pressed")).toBe("true");
@@ -169,7 +163,7 @@ describe("selecting fittings", () => {
   });
 
   it("is keyboard operable: one tab stop, arrows walk bow to stern, Enter and Space select", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     const stops = [...fittings().querySelectorAll<SVGGElement>("[data-target]")];
     expect(stops.filter((t) => t.tabIndex === 0)).toHaveLength(1);
     expect(stops[0]!.getAttribute("data-target")).toBe("gun_12pdr");
@@ -178,6 +172,8 @@ describe("selecting fittings", () => {
     expect(document.activeElement?.getAttribute("data-target")).toBe("mag_fwd");
     fireEvent.keyDown(document.activeElement!, { key: "Enter" });
     expect(target("mag_fwd").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("dialog", { name: "Protection" })).toBeTruthy();
+    act(() => target("mag_fwd").focus());
     fireEvent.keyDown(document.activeElement!, { key: "End" });
     fireEvent.keyDown(document.activeElement!, { key: " " });
     expect(target("tubes").getAttribute("aria-pressed")).toBe("true");
@@ -187,7 +183,7 @@ describe("selecting fittings", () => {
   });
 
   it("is unavailable while a plan tool owns the drawing, so placing and moving work as before", async () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     await armMove();
     expect(fittings().getAttribute("aria-disabled")).toBe("true");
     expect(fittings().getAttribute("class")).toContain("pointer-events-none");
@@ -200,21 +196,21 @@ describe("selecting fittings", () => {
   });
 
   it("drops a selected fitting that is removed from the design", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(target("dyn"));
     expect(inspector()).not.toBeNull();
-    openTab("Arrangement");
     fireEvent.click(screen.getByRole("button", { name: "Remove dyn" }));
     expect(inspector()).toBeNull();
   });
 
   it("shows the warning state when findings name the selection", () => {
-    render(<DrawingBoard />);
-    openTab("Arrangement");
-    const station = screen.getByLabelText(/^Station of gun_12pdr /);
+    render(<ShipbuildingWorkspace />);
+    fireEvent.click(target("gun_12pdr"));
+    const station = within(screen.getByRole("region", { name: /fittings$/ })).getByLabelText(
+      /^Station of gun_12pdr /,
+    );
     fireEvent.change(station, { target: { value: "500" } });
     fireEvent.blur(station);
-    fireEvent.click(target("gun_12pdr"));
     expect(fittings().querySelector("[data-testid='selection-warning']")).not.toBeNull();
     expect(
       within(inspector()!).getByRole("list", { name: "Findings for this selection" }).textContent,
@@ -303,13 +299,11 @@ describe("drawing-to-form navigation", () => {
   });
 
   it("opens the machinery settings, focuses a control there and outlines the group", () => {
-    render(<DrawingBoard />);
-    openTab("Build");
+    render(<ShipbuildingWorkspace />);
+    openSection("Review");
     fireEvent.click(label("Central machinery"));
     fireEvent.click(within(inspector()!).getByRole("button", { name: "Go to machinery settings" }));
-    expect(
-      screen.getByRole("tab", { name: /Hull and machinery/ }).getAttribute("aria-selected"),
-    ).toBe("true");
+    expect(screen.getByRole("dialog", { name: "Machinery" })).toBeTruthy();
     const panel = screen.getByRole("region", { name: "Machinery, fuel and range" });
     expect(panel.contains(document.activeElement)).toBe(true);
     expect(panel.dataset["navFlash"]).toBe("true");
@@ -317,14 +311,12 @@ describe("drawing-to-form navigation", () => {
   });
 
   it("opens a gun's battery card and a magazine's own row", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(target("gun_12pdr"));
     fireEvent.click(within(inspector()!).getByRole("button", { name: "Go to battery settings" }));
-    expect(screen.getByRole("tab", { name: /Arrangement/ }).getAttribute("aria-selected")).toBe(
-      "true",
-    );
-    expect(document.activeElement).toBe(
-      screen.getByLabelText("Rounds per gun, Secondary battery, 3.0-inch"),
+    expect(screen.getByRole("dialog", { name: "Armament" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Batteries" }).contains(document.activeElement)).toBe(
+      true,
     );
     fireEvent.click(target("mag_fwd"));
     fireEvent.click(within(inspector()!).getByRole("button", { name: "Go to fitting settings" }));
@@ -335,9 +327,9 @@ describe("drawing-to-form navigation", () => {
 
 describe("form-to-drawing linking", () => {
   it("lights a fitting while its row has focus, without replacing the pinned selection", () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(target("gun_12pdr"));
-    openTab("Arrangement");
+    openSection("Machinery");
     act(() => screen.getByLabelText(/^Station of dyn /).focus());
     expect(target("dyn").getAttribute("data-state")).toBe("linked");
     expect(fittings().querySelectorAll("[data-testid='fitting-linked-ring']")).toHaveLength(1);
@@ -347,14 +339,17 @@ describe("form-to-drawing linking", () => {
     expect(target("gun_12pdr").getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("lights all of a battery's mounts, and the machinery rooms from the machinery settings", () => {
-    render(<DrawingBoard />);
-    openTab("Arrangement");
-    act(() => screen.getByLabelText("Rounds per gun, Secondary battery, 2.2-inch").focus());
-    expect(target("gun_6pdr_a").getAttribute("data-state")).toBe("linked");
-    expect(target("gun_6pdr_b").getAttribute("data-state")).toBe("linked");
-    expect(target("gun_12pdr").getAttribute("data-state")).toBe("default");
-    openTab("Hull and machinery");
+  it("lights a mount while its row has focus, and the machinery rooms from the machinery settings", () => {
+    render(<ShipbuildingWorkspace />);
+    openSection("Armament", "Secondary");
+    const mounts = screen.getAllByRole("button", { name: /^Select mount / });
+    act(() => mounts[0]!.focus());
+    expect(
+      [...fittings().querySelectorAll("[data-target]")].filter(
+        (t) => t.getAttribute("data-state") === "linked",
+      ),
+    ).toHaveLength(1);
+    openSection("Machinery");
     act(() => screen.getByLabelText(/Installed power/).focus());
     expect(document.querySelectorAll("[data-testid='room-linked']")).toHaveLength(2);
     act(() => (document.activeElement as HTMLElement).blur());
@@ -362,7 +357,7 @@ describe("form-to-drawing linking", () => {
   });
 
   it("draws preview, linked and selected sections differently, not by colour alone", async () => {
-    render(<DrawingBoard />);
+    render(<ShipbuildingWorkspace />);
     fireEvent.click(label("Forecastle"));
     fireEvent.keyDown(document.body, { key: "Tab" });
     act(() => label("Quarterdeck").focus());

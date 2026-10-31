@@ -16,6 +16,7 @@ export type Screen =
 export type CampaignScreen =
   | "overview"
   | "construction"
+  | "ship-design"
   | "fleet"
   | "simulation"
   | "research"
@@ -26,6 +27,10 @@ export type CampaignScreen =
   | "strategic-map"
   | "campaign-preferences"
   | "options";
+
+export type LeaveTarget = Screen | "back" | "forward";
+
+export type LeaveGuard = (target: LeaveTarget) => boolean;
 
 export interface CampaignScreenRouteProps {
   readonly sessionId: string;
