@@ -22,7 +22,8 @@ import { isDebugModeEnabled } from "./debugGate.js";
 import { withModernExtensionApi } from "./extensionSession.js";
 
 const nodeEnv = Effect.runSync(Config.option(Config.string("NODE_ENV")));
-const isDev = process.argv.includes("--dev") || (nodeEnv._tag === "Some" && nodeEnv.value === "development");
+const isDev =
+  process.argv.includes("--dev") || (nodeEnv._tag === "Some" && nodeEnv.value === "development");
 
 const reactDevToolsConfig = Effect.runSync(Config.option(Config.string("VITE_BLUEWAVE_DEVTOOLS")));
 const reactDevToolsRequested =
