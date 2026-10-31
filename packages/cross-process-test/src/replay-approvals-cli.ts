@@ -13,13 +13,9 @@ const SUFFIX = ".replay.json";
 const git = (...args: string[]): string =>
   execFileSync("git", args, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 
-function baseOf(argv: readonly string[]): string {
+function baseOf(argv: readonly string[], gateBase: string): string {
   const index = argv.indexOf("--base");
-  return (
-    (index >= 0 ? argv[index + 1] : undefined) ??
-    process.env["REPLAY_APPROVALS_BASE"] ??
-    "origin/dev"
-  );
+  return (index >= 0 ? argv[index + 1] : undefined) ?? gateBase;
 }
 
 function readBase(ref: string): CorpusState {
@@ -51,8 +47,12 @@ function readHead(): CorpusState {
 }
 
 const argv = process.argv.slice(2);
+const gateBase = process.env["REPLAY_APPROVALS_BASE"] ?? "origin/dev";
+const base = baseOf(argv, gateBase);
 const io: ApprovalsIo = {
-  readBase: () => readBase(baseOf(argv)),
+  base,
+  gateBase,
+  readBase: () => readBase(base),
   readHead,
   writeApprovals: (text) => writeFileSync(resolve(ROOT, APPROVALS), text, "utf8"),
   print: (line) => process.stdout.write(line),

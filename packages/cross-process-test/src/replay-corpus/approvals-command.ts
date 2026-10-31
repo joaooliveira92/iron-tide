@@ -10,6 +10,8 @@ import {
 } from "./approvals.js";
 
 export interface ApprovalsIo {
+  readonly base: string;
+  readonly gateBase: string;
   readBase(): CorpusState;
   readHead(): CorpusState;
   writeApprovals(text: string): void;
@@ -31,6 +33,7 @@ export function approvalsCommand(
   io: ApprovalsIo,
 ): number {
   const [command] = argv;
+  io.print(`approval base: ${io.base}\n`);
   if (command === "check") {
     const outcome = checkReplayApprovals(io.readBase(), io.readHead());
     if (Result.isFailure(outcome)) {
@@ -48,6 +51,11 @@ export function approvalsCommand(
     if (inCi(env)) {
       io.print("refused: approvals are written locally and committed; CI only verifies\n");
       return 2;
+    }
+    if (io.base !== io.gateBase) {
+      io.print(
+        `warning: the gate verifies against ${io.gateBase}; entries proposed against ${io.base} will not cover its delta\n`,
+      );
     }
     const cause = option(argv, "--cause");
     const migrationAssessment = option(argv, "--migration");
