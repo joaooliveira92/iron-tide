@@ -159,7 +159,7 @@ describe("declined-battle record save/load parity", () => {
     expect(loaded.state.rawHash).toBe(saved.rawHash);
     expect(loaded.state.snapshot.wars.declinedBattles).toBeUndefined();
     expect("declinedBattles" in loaded.state.snapshot.wars).toBe(false);
-    expect(CURRENT_COMPATIBILITY_VERSION).toBe("4.0.0");
+    expect(CURRENT_COMPATIBILITY_VERSION).toBe("5.0.0");
   });
 
   it("refuses, rather than silently loading, a state-bearing save whose new keys a reader without them would drop (R15)", () => {

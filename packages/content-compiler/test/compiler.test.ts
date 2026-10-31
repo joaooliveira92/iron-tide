@@ -39,9 +39,11 @@ function nationRecord(
     slot: null,
     presentation: { colorBg: "#C8102E", colorFg: "#FFFFFF" },
     identity: { oneSentence: "x", fullIdentity: "x", strategicProblem: "x" },
+    traits: [],
     regime: {
       type: "monarchy",
       politicalSystem: "constitutional_monarchy",
+      governmentType: "limited_democracy",
       headOfState: "x",
       headOfGovernment: "x",
       leaderTitle: "x",

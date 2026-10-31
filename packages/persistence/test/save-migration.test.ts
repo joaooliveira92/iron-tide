@@ -132,7 +132,7 @@ describe("save migration (ticket 11d)", () => {
   });
 
   it("refuses an unsupported future version", () => {
-    const result = migrateSaveDirectory(saveAt("5.0.0", tmpDir));
+    const result = migrateSaveDirectory(saveAt("6.0.0", tmpDir));
     expect(result.status).toBe("refused");
     if (result.status === "refused") expect(result.kind).toBe("future");
   });

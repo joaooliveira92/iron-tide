@@ -71,7 +71,7 @@ describe("persistence files reject excess keys", () => {
     expect(saves).toHaveLength(1);
     expect(saves[0]!.saveId).toBe(id);
     expect(saves[0]!.snapshotHash).toBe("");
-    expect(saves[0]!.compatibilityVersion).toBe("4.0.0");
+    expect(saves[0]!.compatibilityVersion).toBe("5.0.0");
   });
 
   it("reports corrupt month-input metadata with an unmodeled key", () => {

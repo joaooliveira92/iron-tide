@@ -6,6 +6,7 @@ import { buildNationStates } from "../src/nationCompilation.js";
 import { buildWorldState } from "../src/worldCompilation.js";
 import { presenceAreaIds } from "../src/presence.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import { STUB_REGIME, STUB_TRAITS } from "./stub-regime.js";
 import { readAuthoredFile } from "@bluewave/test-support";
 
 const CONTENT = resolve(import.meta.dirname, "../../../content/production/1880");
@@ -80,6 +81,8 @@ describe("buildNationStates home area", () => {
           tag: "GBR",
           isPlayable: true,
           prestige: 20,
+          traits: STUB_TRAITS,
+          regime: STUB_REGIME,
           homeArea: "eng_home_coast",
         },
       ],

@@ -34,6 +34,7 @@ export interface NormalizeOutput {
   research: Record<string, unknown>[];
   designs: Record<string, unknown>[];
   divisions: Record<string, unknown>[];
+  events: Record<string, unknown>[];
   presentation?: unknown;
   ui?: unknown;
 }
@@ -93,6 +94,7 @@ export class NormalizeStage implements CompilerStage<FlattenOutput, NormalizeOut
       research: sortByField((input.research ?? []) as Record<string, unknown>[], "nationId"),
       designs: sortByField((input.designs ?? []) as Record<string, unknown>[], "designId"),
       divisions: sortById((input.divisions ?? []) as Record<string, unknown>[]),
+      events: sortById((input.events ?? []) as Record<string, unknown>[]),
       ...(input.presentation !== undefined ? { presentation: input.presentation } : {}),
       ...(input.ui !== undefined ? { ui: input.ui } : {}),
     };

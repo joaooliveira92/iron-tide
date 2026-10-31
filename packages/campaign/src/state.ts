@@ -1,5 +1,5 @@
 import type { Bp, Money, SafeInt } from "@bluewave/contracts";
-import type { CapabilityData } from "@bluewave/content-schema";
+import type { CapabilityData, GovernmentType, NationTrait } from "@bluewave/content-schema";
 import type {
   AppliedPrestigeRule,
   CareerResult,
@@ -354,10 +354,27 @@ export interface ForeignContractImpoundmentRecord {
   month: string;
 }
 
+export type EventResolver = "PLAYER" | "AI" | "DEFAULT";
+
+export interface FiredEventRecord {
+  eventId: string;
+  month: string;
+  answerId: string;
+  resolvedBy: EventResolver;
+}
+
+export interface NationEventHistory {
+  fired: FiredEventRecord[];
+  flags: string[];
+}
+
 export interface NationState {
   id: string;
   name: string;
   tag: string;
+  governmentType?: GovernmentType;
+  traits?: NationTrait[];
+  eventHistory?: NationEventHistory;
   treasury: SafeInt;
   income: SafeInt;
   expenses: SafeInt;

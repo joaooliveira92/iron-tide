@@ -66,7 +66,7 @@ describe("save-compatibility policy", () => {
   });
 
   it("locks CURRENT_COMPATIBILITY_VERSION to the current release constant", () => {
-    expect(CURRENT_COMPATIBILITY_VERSION).toBe("4.0.0");
+    expect(CURRENT_COMPATIBILITY_VERSION).toBe("5.0.0");
   });
 
   it("round-trips a snapshot saved at the current compatibility version", () => {
@@ -132,7 +132,7 @@ describe("save-compatibility policy", () => {
     expect(PART_MODEL_COMPATIBILITY_VERSION).toBe("2.0.0");
   });
 
-  it("refuses a 2.0.0 campaign at the current 4.0.0 version, leaving the file byte-identical", () => {
+  it("refuses a 2.0.0 campaign at the current 5.0.0 version, leaving the file byte-identical", () => {
     const legacy = createFixtureState();
     const legacySnapshot = { ...legacy.snapshot, compatibilityVersion: "2.0.0" };
     const legacyEnvelope = createEnvelope("campaign-snapshot", "2.0.0", legacySnapshot);

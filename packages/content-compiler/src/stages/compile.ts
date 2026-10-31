@@ -161,7 +161,8 @@ function buildCampaignCollections(input: NormalizeOutput): CampaignCollections |
     input.diplomacy.length > 0 ||
     input.research.length > 0 ||
     input.designs.length > 0 ||
-    input.divisions.length > 0;
+    input.divisions.length > 0 ||
+    input.events.length > 0;
   if (!hasCampaign) return undefined;
 
   return {
@@ -172,5 +173,6 @@ function buildCampaignCollections(input: NormalizeOutput): CampaignCollections |
     research: input.research,
     designs: input.designs,
     ...(input.divisions.length > 0 ? { divisions: input.divisions } : {}),
+    ...(input.events.length > 0 ? { events: input.events } : {}),
   };
 }

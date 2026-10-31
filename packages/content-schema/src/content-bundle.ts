@@ -7,6 +7,7 @@ import {
   GunMountSchema,
 } from "./armament.js";
 import { AreaSchema } from "./area.js";
+import { EventSchema } from "./event.js";
 import {
   CampaignConstructionSchema,
   CampaignDesignSchema,
@@ -58,6 +59,7 @@ export const CampaignCollectionsSchema = Schema.Struct({
   research: Schema.Array(CampaignResearchSchema),
   designs: Schema.Array(CampaignDesignSchema),
   divisions: Schema.optional(Schema.Array(CampaignDivisionSchema)),
+  events: Schema.optional(Schema.Array(EventSchema)),
 });
 
 export type CampaignCollections = typeof CampaignCollectionsSchema.Type;

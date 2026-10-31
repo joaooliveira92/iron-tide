@@ -809,6 +809,19 @@
       "note": "Registered only under DEBUG_MODE. Kept as internal debug tooling; not a player verb."
     },
     {
+      "id": "national-traits",
+      "player_verb": "Play a nation whose national traits change shipbuilding, prestige loss, budget and surprise attack",
+      "status": "dormant-by-decision",
+      "engine_package": "campaign-engine",
+      "engine_modules": [],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#424",
+      "note": "The schema carries every trait from manual pp.59-60 and the compiler copies them onto the nation; no engine rule consumes a trait yet. Each trait gets a consumer or stays dormant under this row."
+    },
+    {
       "id": "debug-battle-drill-seed",
       "player_verb": "Seed a campaign battle drill for end-to-end tests",
       "status": "internal",

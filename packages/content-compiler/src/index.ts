@@ -41,6 +41,7 @@ export interface CompilerInput {
   researchFiles?: string[];
   designFiles?: string[];
   divisionFiles?: string[];
+  eventFiles?: string[];
   presentationFiles?: string[];
   uiFiles?: string[];
 }
@@ -70,6 +71,7 @@ export interface CampaignCollections {
   research: readonly unknown[];
   designs: readonly unknown[];
   divisions?: readonly unknown[];
+  events?: readonly unknown[];
 }
 
 export interface ContentBundle {

@@ -22,6 +22,14 @@ function minimalSnapshot(): CampaignSnapshot {
           id: "n1",
           name: "Test",
           tag: "TST",
+          governmentType: "liberal_democracy",
+          traits: ["cautious"],
+          eventHistory: {
+            fired: [
+              { eventId: "naval_scare", month: "1880-02", answerId: "arm", resolvedBy: "PLAYER" },
+            ],
+            flags: ["naval_scare_armed"],
+          },
           treasury: 100,
           income: 10,
           expenses: 5,
@@ -297,5 +305,46 @@ describe("cloneSnapshot hardening", () => {
     expect(b.designs.get("d1")!.armament).not.toBe(a.designs.get("d1").armament);
     (b.designs.get("d1")!.armament![0] as { gunModelId: string }).gunModelId = "mutated";
     expect(a.designs.get("d1").armament[0].gunModelId).toBe("gb_bl_13_5in_30");
+  });
+});
+
+describe("cloneSnapshot government and event history", () => {
+  const history = {
+    fired: [{ eventId: "naval_scare", month: "1881-03", answerId: "arm", resolvedBy: "PLAYER" }],
+    flags: ["naval_scare_armed"],
+  };
+
+  it("deep-copies government type, traits and fired-event history", () => {
+    const a = minimalSnapshot();
+    const nation = a.nations.get("n1")!;
+    Object.assign(nation, {
+      governmentType: "liberal_democracy",
+      traits: ["cautious"],
+      eventHistory: history,
+    });
+    const copy = snapshotClone.cloneSnapshot(a).nations.get("n1")!;
+    expect(copy.governmentType).toBe("liberal_democracy");
+    expect(copy.traits).toEqual(["cautious"]);
+    expect(copy.eventHistory).toEqual(history);
+    expect(copy.traits).not.toBe(nation.traits);
+    expect(copy.eventHistory).not.toBe(nation.eventHistory);
+    expect(copy.eventHistory!.fired[0]).not.toBe(nation.eventHistory!.fired[0]);
+    copy.eventHistory!.flags.push("mutated");
+    expect(nation.eventHistory!.flags).toEqual(["naval_scare_armed"]);
+  });
+
+  it("does not invent a history for a nation that has none", () => {
+    const source = minimalSnapshot();
+    const {
+      governmentType: _governmentType,
+      traits: _traits,
+      eventHistory: _eventHistory,
+      ...bare
+    } = source.nations.get("n1")!;
+    source.nations.set("n1", bare);
+    const copy = snapshotClone.cloneSnapshot(source).nations.get("n1")!;
+    expect("governmentType" in copy).toBe(false);
+    expect("eventHistory" in copy).toBe(false);
+    expect("traits" in copy).toBe(false);
   });
 });

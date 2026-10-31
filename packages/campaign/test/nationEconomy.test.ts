@@ -5,6 +5,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { MAX_ECONOMIC_BASE, monthlyRevenue } from "../src/economy.js";
 import { buildNationStates } from "../src/nationCompilation.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import { STUB_REGIME, STUB_TRAITS } from "./stub-regime.js";
 
 type EconomyRows = Parameters<typeof buildNationStates>[2];
 type ResearchRows = Parameters<typeof buildNationStates>[4];
@@ -16,6 +17,8 @@ function pack(ids: string[]): ContentPack {
     tag: id.toUpperCase(),
     isPlayable: true,
     prestige: 20,
+    traits: STUB_TRAITS,
+    regime: STUB_REGIME,
   }));
   return { nations } as ContentPack;
 }

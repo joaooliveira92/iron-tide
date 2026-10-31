@@ -169,7 +169,7 @@ describe("SaveStore round-trips the S-2 prestige state", () => {
   });
 
   it("is stamped with the new compatibility version", () => {
-    expect(CURRENT_COMPATIBILITY_VERSION).toBe("4.0.0");
+    expect(CURRENT_COMPATIBILITY_VERSION).toBe("5.0.0");
   });
   it.each([
     ["SACKED", { year: 1883, month: 4 }],

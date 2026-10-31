@@ -8,6 +8,7 @@ import {
   CampaignEconomySchema,
   CampaignFleetSchema,
   CampaignResearchSchema,
+  EventSchema,
   GunFamilySchema,
   GunModelSchema,
   GunMountSchema,
@@ -76,6 +77,7 @@ export interface ValidateOutput {
   research?: unknown[];
   designs?: unknown[];
   divisions?: unknown[];
+  events?: unknown[];
   presentation?: unknown;
   ui?: unknown;
 }
@@ -183,6 +185,7 @@ const CAMPAIGN_COLLECTIONS: readonly CampaignCollection[] = [
     idField: "id",
   },
   { key: "divisions", schema: CampaignDivisionSchema, label: "Division", idField: "id" },
+  { key: "events", schema: EventSchema, label: "Event", idField: "id" },
 ];
 
 interface CampaignCollection {
@@ -274,6 +277,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     validatePresentationRegions(validated, presentation, input, collector);
 
     const ui = validateUi(input, collector);
+    validateEventReferences(campaign.events ?? [], ui, input, collector);
 
     if (collector.hasErrors) return undefined;
 
@@ -302,6 +306,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
       research: [...campaign.research],
       designs: [...campaign.designs],
       divisions: [...(campaign.divisions ?? [])],
+      events: [...(campaign.events ?? [])],
       ...(presentation !== undefined ? { presentation } : {}),
       ...(ui !== undefined ? { ui } : {}),
     };
@@ -505,7 +510,68 @@ function validateCampaignCollections(
     research: out["research"] ?? [],
     designs: out["designs"] ?? [],
     divisions: out["divisions"] ?? [],
+    events: out["events"] ?? [],
   };
+}
+
+interface EventReferenceSource {
+  id: string;
+  titleKey: string;
+  bodyKey: string;
+  gates: { requiredFlags?: readonly string[]; excludedFlags?: readonly string[] };
+  answers: readonly { labelKey: string; effects: { setFlag?: string } }[];
+}
+
+function validateEventReferences(
+  events: readonly unknown[],
+  ui: unknown,
+  input: ParseOutput,
+  collector: DiagnosticCollector,
+): void {
+  if (events.length === 0) return;
+  const catalogue = events as readonly EventReferenceSource[];
+  const strings = asRecord(asRecord(ui)["strings"]);
+  const sources = sourceById(input, "events", "id");
+  const fail = (code: string, event: EventReferenceSource, message: string, remediation: string) =>
+    collector.addError(code, message, {
+      stage: "validate",
+      sourceLocation: { path: sources.get(event.id) ?? "events.ts", line: 1 },
+      entityId: event.id,
+      remediation,
+    });
+
+  for (const event of catalogue) {
+    const keys = [event.titleKey, event.bodyKey, ...event.answers.map((a) => a.labelKey)];
+    for (const key of keys) {
+      if (typeof strings[key] === "string") continue;
+      fail(
+        "EVENT_I18N_MISSING",
+        event,
+        `Event '${event.id}' uses i18n key '${key}' that the ui catalogue does not define`,
+        `Add '${key}' to the ui catalogue`,
+      );
+    }
+  }
+
+  const settable = new Set(
+    catalogue.flatMap((event) =>
+      event.answers.flatMap((answer) =>
+        answer.effects.setFlag === undefined ? [] : [answer.effects.setFlag],
+      ),
+    ),
+  );
+  for (const event of catalogue) {
+    const gated = [...(event.gates.requiredFlags ?? []), ...(event.gates.excludedFlags ?? [])];
+    for (const flag of gated) {
+      if (settable.has(flag)) continue;
+      fail(
+        "EVENT_FLAG_UNKNOWN",
+        event,
+        `Event '${event.id}' gates on flag '${flag}' that no answer sets`,
+        `Set '${flag}' from an answer or remove the gate`,
+      );
+    }
+  }
 }
 
 function validateCampaignReferences(
