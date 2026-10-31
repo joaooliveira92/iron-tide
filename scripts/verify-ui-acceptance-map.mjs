@@ -57,17 +57,20 @@ export function evaluateMap({ ledger, specs }) {
     );
   }
 
-  for (const [claims, label] of [
-    [defaultClaims, "step"],
-    [debugClaims, "debug step"],
-  ]) {
+  /**
+   * @param {Map<string, string[]>} claims
+   * @param {string} label
+   */
+  const reportNonReachable = (claims, label) => {
     for (const [id, paths] of claims) {
       const status = statusById.get(id);
       if (status === "reachable") continue;
       const reason = status === undefined ? "is not a ledger row" : `is ${status}, not reachable`;
       problems.push(`${paths[0]}: ${label} "reachable:${id}" ${reason}`);
     }
-  }
+  };
+  reportNonReachable(defaultClaims, "step");
+  reportNonReachable(debugClaims, "debug step");
 
   const mapped = [...statusById].filter(
     ([id, status]) => status === "reachable" && defaultClaims.has(id),

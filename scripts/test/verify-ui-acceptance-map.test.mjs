@@ -23,7 +23,7 @@ const ledger = (...rows) => ({ version: 2, capabilities: rows });
 const step = (id) => `  await test.step("reachable:${id}", async () => {});\n`;
 const spec = (path, ...ids) => ({ path, text: ids.map(step).join("") });
 
-test("extractStepIds reads double-quoted reachable steps in source order", () => {
+void test("extractStepIds reads double-quoted reachable steps in source order", () => {
   const source = [
     step("alpha"),
     `  await test.step('reachable:single', async () => {});\n`,
@@ -34,16 +34,16 @@ test("extractStepIds reads double-quoted reachable steps in source order", () =>
   assert.deepEqual(extractStepIds(source), ["alpha", "beta"]);
 });
 
-test("extractStepIds ignores a step disabled by a whole-line comment", () => {
+void test("extractStepIds ignores a step disabled by a whole-line comment", () => {
   assert.deepEqual(extractStepIds(`// await test.step("reachable:gone", async () => {});\n`), []);
 });
 
-test("isDebugSpec matches only debug specs", () => {
+void test("isDebugSpec matches only debug specs", () => {
   assert.equal(isDebugSpec("apps/desktop/e2e/campaign-battle-drill.debug.spec.ts"), true);
   assert.equal(isDebugSpec("apps/desktop/e2e/mvp-loop.spec.ts"), false);
 });
 
-test("passes when every reachable row has a step and reports how many are mapped", () => {
+void test("passes when every reachable row has a step and reports how many are mapped", () => {
   const result = evaluateMap({
     ledger: ledger(row("alpha", "reachable"), row("beta", "reachable"), row("gamma", "internal")),
     specs: [spec("a.spec.ts", "alpha"), spec("b.spec.ts", "beta", "alpha")],
@@ -53,7 +53,7 @@ test("passes when every reachable row has a step and reports how many are mapped
   assert.equal(result.mapped, 2);
 });
 
-test("fails a reachable row that has no step", () => {
+void test("fails a reachable row that has no step", () => {
   const result = evaluateMap({
     ledger: ledger(row("alpha", "reachable"), row("beta", "reachable")),
     specs: [spec("a.spec.ts", "alpha")],
@@ -64,7 +64,7 @@ test("fails a reachable row that has no step", () => {
   assert.match(result.problems[0], /"beta": reachable row has no e2e step/u);
 });
 
-test("fails a step that names an unknown id", () => {
+void test("fails a step that names an unknown id", () => {
   const result = evaluateMap({
     ledger: ledger(row("alpha", "reachable")),
     specs: [spec("a.spec.ts", "alpha", "ghost")],
@@ -76,7 +76,7 @@ test("fails a step that names an unknown id", () => {
   );
 });
 
-test("fails a step that names a dormant or internal row", () => {
+void test("fails a step that names a dormant or internal row", () => {
   const result = evaluateMap({
     ledger: ledger(
       row("alpha", "reachable"),
@@ -93,7 +93,7 @@ test("fails a step that names a dormant or internal row", () => {
   assert.match(result.problems.join("\n"), /"reachable:plumbing" is internal, not reachable/u);
 });
 
-test("fails a reachable row claimed only by a debug spec", () => {
+void test("fails a reachable row claimed only by a debug spec", () => {
   const result = evaluateMap({
     ledger: ledger(row("alpha", "reachable")),
     specs: [spec("apps/desktop/e2e/drill.debug.spec.ts", "alpha")],
@@ -106,7 +106,7 @@ test("fails a reachable row claimed only by a debug spec", () => {
   );
 });
 
-test("a debug spec may repeat an id a default-lane spec already claims", () => {
+void test("a debug spec may repeat an id a default-lane spec already claims", () => {
   const result = evaluateMap({
     ledger: ledger(row("alpha", "reachable")),
     specs: [spec("a.spec.ts", "alpha"), spec("drill.debug.spec.ts", "alpha")],
@@ -115,7 +115,7 @@ test("a debug spec may repeat an id a default-lane spec already claims", () => {
   assert.equal(result.mapped, 1);
 });
 
-test("a debug spec step naming a non-reachable id still fails", () => {
+void test("a debug spec step naming a non-reachable id still fails", () => {
   const result = evaluateMap({
     ledger: ledger(
       row("alpha", "reachable"),
@@ -127,7 +127,7 @@ test("a debug spec step naming a non-reachable id still fails", () => {
   assert.match(result.problems[0], /drill\.debug\.spec\.ts: debug step "reachable:sleeper"/u);
 });
 
-test("rejects a malformed ledger before mapping", () => {
+void test("rejects a malformed ledger before mapping", () => {
   const result = evaluateMap({ ledger: { version: 2, capabilities: [{ id: "x" }] }, specs: [] });
   assert.equal(result.ok, false);
   assert.ok(result.problems.length > 0);
