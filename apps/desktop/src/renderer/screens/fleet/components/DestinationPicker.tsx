@@ -26,7 +26,7 @@ export const DestinationPicker = memo(function DestinationPicker({
         Destination
       </label>
       <Select value={value ?? ""} onValueChange={onChange} className="w-full">
-        <SelectTrigger id={destinationId}>
+        <SelectTrigger id={destinationId} data-fleet-destination="" aria-keyshortcuts="M">
           <SelectValue placeholder="Select a destination" />
         </SelectTrigger>
         <SelectContent>

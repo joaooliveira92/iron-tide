@@ -211,6 +211,8 @@ export const EN_US_MESSAGES = {
   "fleet.station.selectShip": "Select {ship}",
   "fleet.station.selected": "{n} selected",
   "fleet.station.selectedNone": "No ships selected",
+  "fleet.hotkeys.hint":
+    "Hotkeys: [ and ] pick a division, M destination, Enter submit or replace the order, Esc cancel it, R place selected ships in reserve.",
   "fleet.station.action.assign": "Assign to foreign station",
   "fleet.station.action.clear": "Clear foreign station",
   "fleet.station.action.busy": "Waiting for the engine",
