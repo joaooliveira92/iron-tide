@@ -9,7 +9,7 @@ const campaignDatePattern = Schema.String.check(
   Schema.isPattern(/^\d{4}-(0[1-9]|1[0-2])$/, { message: "Expected YYYY-MM" }),
 );
 
-const scalar = Schema.Union([Schema.String, Schema.Number, Schema.Boolean]);
+const scalar = Schema.Union([Schema.String, Schema.Finite, Schema.Boolean]);
 
 export const MESSAGE_SEVERITIES = ["CRITICAL", "HIGH", "NORMAL", "LOW", "TRACE"] as const;
 export type MessageSeverity = (typeof MESSAGE_SEVERITIES)[number];
@@ -70,7 +70,7 @@ export const EffectReferenceSchema = Schema.Struct({
   attribute: nonEmptyString,
   previousValue: Schema.optional(scalar),
   newValue: Schema.optional(scalar),
-  delta: Schema.optional(Schema.Number),
+  delta: Schema.optional(Schema.Finite),
   visibility: Schema.Literals(EFFECT_VISIBILITIES),
 });
 export interface EffectReference {
