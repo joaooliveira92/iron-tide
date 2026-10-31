@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { WorldMapView } from "@bluewave/campaign-engine";
 import { fixtureAreaId, nationHomeArea } from "../../content/presentationContent.js";
-import { fixtureAnchor, homeFocusPoint, joinWorldMap } from "./campaign-map-join.js";
+import { AREA_ANCHORS, PORT_ANCHORS } from "./campaign-anchors.js";
+import { homeFocusPoint, joinWorldMap } from "./campaign-map-join.js";
 
 const WORLD: WorldMapView = {
   nations: [{ id: "uk", name: "Britain", tag: "GBR", homeAreaId: null, presenceAreaIds: [] }],
@@ -48,6 +49,7 @@ describe("joinWorldMap", () => {
         area: "area_north_sea",
         nation: "uk",
         level: 10,
+        anchor: PORT_ANCHORS["gbr_portsmouth"],
       },
     ]);
     expect(overlay.fleets).toEqual([
@@ -57,6 +59,7 @@ describe("joinWorldMap", () => {
         area: "area_north_sea",
         nation: "uk",
         ships: 3,
+        anchor: AREA_ANCHORS["eng_home_coast"],
       },
     ]);
   });
@@ -99,13 +102,12 @@ describe("nationHomeArea", () => {
 });
 
 describe("homeFocusPoint", () => {
-  it("returns the mapped fixture anchor for a home area", () => {
-    expect(homeFocusPoint("eng_home_coast")).toEqual(fixtureAnchor("area_north_sea"));
+  it("returns the campaign anchor for a home area", () => {
+    expect(homeFocusPoint("eng_home_coast")).toEqual(AREA_ANCHORS["eng_home_coast"]);
     const point = homeFocusPoint("eng_home_coast");
     expect(point).not.toBeNull();
     expect(point!.every((value) => Number.isFinite(value))).toBe(true);
   });
-
   it("centres nowhere for an unknown or unmapped area rather than guessing", () => {
     expect(homeFocusPoint("not_a_real_area")).toBeNull();
     expect(homeFocusPoint(null)).toBeNull();

@@ -151,6 +151,10 @@ export function borderColorExpression(
   return ["match", ["get", "id"], ...entries, "#93a9b8"];
 }
 
+export function nationMarkerColor(nationId: string | undefined): string {
+  return nationId === undefined ? "" : `hsl(${campaignNationHue(nationId)} 70% 48%)`;
+}
+
 export function buildGraticuleCollection(): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature[] = [];
   for (let lat = -60; lat <= 60; lat += 30) {

@@ -71,7 +71,6 @@ export function ResearchWorkspace({
 
   const selectTech = (techId: string) => {
     if (techId === selectedTechId && techModalOpen) {
-      // same node clicked while modal open — close it
       setTechModalOpen(false);
     } else {
       setSelectedTechId(techId);
@@ -114,12 +113,14 @@ export function ResearchWorkspace({
           <>
             {commandExtras}
             <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
-              <DialogTrigger render={
-                <Button variant="ghost" size="sm" type="button">
-                  <Archive aria-hidden="true" className="size-4" />
-                  <span className="hidden sm:inline">Archive</span>
-                </Button>
-              } />
+              <DialogTrigger
+                render={
+                  <Button variant="ghost" size="sm" type="button">
+                    <Archive aria-hidden="true" className="size-4" />
+                    <span className="hidden sm:inline">Archive</span>
+                  </Button>
+                }
+              />
               <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
                 <DialogTitle className="flex items-center gap-2 text-lg">
                   <Archive aria-hidden="true" className="size-5 text-primary" />
@@ -139,12 +140,7 @@ export function ResearchWorkspace({
         <div />
       )}
       <div className="grid min-h-0 grid-cols-[16rem_minmax(0,1fr)]">
-        {/* Left panel: field list with inline progress + budget summary */}
-        <nav
-          aria-label="Research fields"
-          className="flex min-h-0 flex-col border-r bg-muted/20"
-        >
-          {/* Fields list */}
+        <nav aria-label="Research fields" className="flex min-h-0 flex-col border-r bg-muted/20">
           <div className="themed-scrollbar min-h-0 flex-1 overflow-y-auto">
             <FieldMap
               fields={vm.fields}
@@ -157,7 +153,6 @@ export function ResearchWorkspace({
             />
           </div>
 
-          {/* Budget mini-summary + Briefing trigger — always visible at bottom */}
           <div className="border-t px-3 py-2.5 space-y-2">
             <div className="flex items-baseline justify-between gap-2 text-xs">
               <span className="text-muted-foreground">Monthly budget</span>
@@ -178,12 +173,19 @@ export function ResearchWorkspace({
               <span>Cap {format.count(vm.budget.cap)}</span>
             </div>
             <Dialog open={briefingOpen} onOpenChange={setBriefingOpen}>
-              <DialogTrigger render={
-                <Button variant="ghost" size="sm" type="button" className="w-full justify-start gap-1.5 text-xs">
-                  <BookOpen aria-hidden="true" className="size-3.5" />
-                  How research works
-                </Button>
-              } />
+              <DialogTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    className="w-full justify-start gap-1.5 text-xs"
+                  >
+                    <BookOpen aria-hidden="true" className="size-3.5" />
+                    How research works
+                  </Button>
+                }
+              />
               <DialogContent className="max-w-lg">
                 <DialogTitle className="flex items-center gap-2 text-base">
                   <BookOpen aria-hidden="true" className="size-4 text-primary" />
@@ -195,7 +197,6 @@ export function ResearchWorkspace({
           </div>
         </nav>
 
-        {/* Center panel: thin budget bar + tech tree */}
         <section aria-label="Technology chart" className="flex min-h-0 min-w-0 flex-col">
           <div className="shrink-0 border-b bg-muted/15 px-3 py-1.5">
             <AllocationSpectrum
@@ -224,7 +225,6 @@ export function ResearchWorkspace({
         </section>
       </div>
 
-      {/* Technology detail modal */}
       {selectedTech !== undefined && (
         <Dialog open={techModalOpen} onOpenChange={onTechModalChange}>
           <DialogContent className="max-w-lg">
