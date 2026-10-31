@@ -74,8 +74,7 @@ export function FieldMap({
           const Icon = fieldIcon(field.fieldId);
           const active = field.fieldId === selectedFieldId;
           const muted = field.state === "waiting" || field.state === "empty";
-          const showProgress =
-            field.activeTech !== null && field.activeTech.progressPct > 0;
+          const showProgress = field.activeTech !== null && field.activeTech.progressPct > 0;
           return (
             <li key={field.fieldId}>
               <div
@@ -90,7 +89,9 @@ export function FieldMap({
                   aria-hidden="true"
                   className={cn(
                     "absolute inset-y-2 left-0 w-0.5 rounded-full transition-colors",
-                    active ? WEIGHT_RAIL[field.weightLabel] : "bg-transparent group-hover/row:bg-border",
+                    active
+                      ? WEIGHT_RAIL[field.weightLabel]
+                      : "bg-transparent group-hover/row:bg-border",
                   )}
                 />
                 <HoverCard>

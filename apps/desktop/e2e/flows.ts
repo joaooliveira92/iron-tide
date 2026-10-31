@@ -89,6 +89,23 @@ export async function expandStatusStrip(page: Page): Promise<Locator> {
 export const navigateTo = (page: Page, label: string) =>
   page.getByTestId("bottom-nav").getByRole("button", { name: label, exact: true }).click();
 
+export async function openFleetDepartment(page: Page, department: string): Promise<Locator> {
+  const drawer = page.getByRole("dialog", { name: department });
+  if (!(await drawer.isVisible())) {
+    await page
+      .getByRole("navigation", { name: "Fleet departments" })
+      .getByRole("button", { name: new RegExp(`^${department}`) })
+      .click();
+  }
+  await expect(drawer).toBeVisible();
+  return drawer;
+}
+
+export async function closeFleetDepartment(page: Page, department: string): Promise<void> {
+  await page.getByRole("button", { name: `Close ${department}` }).click();
+  await expect(page.getByRole("dialog", { name: department })).toBeHidden();
+}
+
 export async function openRoster(page: Page, workspace: Locator): Promise<Locator> {
   await workspace.getByRole("button", { name: "Start from a reference design" }).click();
   return page

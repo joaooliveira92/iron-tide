@@ -15,6 +15,7 @@ import {
   advanceMonths,
   expandStatusStrip,
   navigateTo,
+  openFleetDepartment,
   openShipbuilding,
   startNewCampaign,
 } from "./flows.js";
@@ -127,7 +128,8 @@ test("Fleet and Diplomacy & War render the honest compiled state", async ({
   await expect(page.getByRole("heading", { name: "Divisions" })).toBeVisible();
   await expect(page.getByRole("radio", { name: /Home Fleet/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit movement command" })).toBeVisible();
-  await expect(page.getByText("No movement commands")).toBeVisible();
+  await openFleetDepartment(page, "Orders");
+  await expect(page.getByText("No orders submitted this month.")).toBeVisible();
 
   await navigateTo(page, "Diplomacy & War");
   await expect(page.getByRole("heading", { name: "Diplomacy & War" })).toBeVisible();
@@ -153,6 +155,7 @@ test("a ship is assigned to and cleared from foreign station, and the presence r
   await openCampaign(e2e, campaignTemplate);
   await test.step("reachable:assign-station", async () => {
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Station");
 
     const section = page.getByTestId("fleet-station");
     await expect(
@@ -177,6 +180,7 @@ test("a ship is assigned to and cleared from foreign station, and the presence r
 
     await advanceMonths(page, 1);
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Station");
     await expect(
       page.getByTestId("fleet-station-row-gbr_dreadnought").getByText("On foreign station"),
     ).toBeVisible();
@@ -192,6 +196,7 @@ test("a ship is placed in reserve through the readiness command", async ({
   await test.step("reachable:ship-readiness", async () => {
     await test.step("reachable:set-ship-readiness", async () => {
       await navigateTo(page, "Fleet");
+      await openFleetDepartment(page, "Station");
 
       const section = page.getByTestId("fleet-station");
       const row = section.getByTestId("fleet-station-row-gbr_dreadnought");
@@ -204,6 +209,7 @@ test("a ship is placed in reserve through the readiness command", async ({
 
       await advanceMonths(page, 1);
       await navigateTo(page, "Fleet");
+      await openFleetDepartment(page, "Station");
       await expect(
         page.getByTestId("fleet-station-row-gbr_dreadnought").getByText("Reserve fleet"),
       ).toBeVisible();
@@ -223,12 +229,14 @@ test("a fleet ordered to sail moves one hop when the month advances", async ({
     await page.getByRole("radio", { name: /Home Fleet/ }).click();
     await page.getByRole("button", { name: "Submit movement command" }).click();
     await expect(page.getByText("Order queued")).toBeVisible();
+    await openFleetDepartment(page, "Orders");
     await expect(page.getByRole("row", { name: /Home Fleet.*submitted/ })).toBeVisible();
 
     await advanceMonths(page, 1);
     await navigateTo(page, "Fleet");
     await expect(page.getByRole("radio", { name: /Home Fleet.*English Channel/ })).toBeVisible();
-    await expect(page.getByText("No movement commands")).toBeVisible();
+    await openFleetDepartment(page, "Orders");
+    await expect(page.getByText("No orders submitted this month.")).toBeVisible();
   });
 });
 
@@ -241,6 +249,7 @@ test("Fleet organization founds a division through the real engine and applies i
 
   await test.step("reachable:organise-divisions", async () => {
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Organization");
     const organization = page.getByTestId("fleet-organization");
     const divisions = organization.getByRole("heading", {
       name: /division — HMS /,
@@ -254,6 +263,7 @@ test("Fleet organization founds a division through the real engine and applies i
 
     await advanceMonths(page, 1);
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Organization");
     await expect(divisions).toHaveCount(1);
 
     await organization.getByRole("button", { name: "Create division" }).click();
@@ -261,6 +271,7 @@ test("Fleet organization founds a division through the real engine and applies i
 
     await advanceMonths(page, 1);
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Organization");
     await expect(divisions).toHaveCount(2);
     await expect(organization.getByText("Commander vacant")).toBeVisible();
     await expect(organization.getByText("No divisions yet")).not.toBeVisible();

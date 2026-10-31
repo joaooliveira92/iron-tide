@@ -32,7 +32,8 @@ export function DepartmentDrawer({
     const opener = document.activeElement;
     headingRef.current?.focus({ preventScroll: true });
     return () => {
-      if (opener instanceof HTMLElement && opener.isConnected) opener.focus({ preventScroll: true });
+      if (opener instanceof HTMLElement && opener.isConnected)
+        opener.focus({ preventScroll: true });
     };
   }, [title]);
 
