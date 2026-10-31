@@ -134,23 +134,25 @@ async function useLegacyChart(page: Page) {
   await expect(page.locator("[data-map-fleet]").first()).toBeAttached();
 }
 
+type FleetMarkerBox = NonNullable<Awaited<ReturnType<typeof visibleFleetMarker>>>;
+
 async function settledFleetMarker(page: Page, fleetId: string) {
   await page.getByRole("application", { name: /world map/i }).focus();
-  let previous: Awaited<ReturnType<typeof visibleFleetMarker>> = null;
+  const seen: { box: FleetMarkerBox | null } = { box: null };
   await expect
     .poll(async () => {
       const box = await visibleFleetMarker(page, fleetId);
       if (box === null) {
         await page.keyboard.press("ArrowDown");
-        previous = null;
+        seen.box = null;
         return false;
       }
-      const settled = previous !== null && box.x === previous.x && box.y === previous.y;
-      previous = box;
+      const settled = seen.box !== null && box.x === seen.box.x && box.y === seen.box.y;
+      seen.box = box;
       return settled;
     })
     .toBe(true);
-  return previous;
+  return seen.box;
 }
 
 async function dragFleet(page: Page, toAreaId: string) {
