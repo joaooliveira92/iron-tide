@@ -115,7 +115,7 @@ describe("WorldMapChart", () => {
     it("keeps idle hint cards out of the way", () => {
       renderPanel();
       expect(hidden(screen.getByText(/Click an area to inspect/))).toBe(true);
-      expect(hidden(screen.getByText(/Shift-click two areas for a route reading/))).toBe(true);
+      expect(screen.queryByText(/Shift-click two areas for a route reading/)).toBeNull();
     });
 
     it("can omit the minimap", () => {

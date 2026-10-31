@@ -3,7 +3,12 @@ import type {
   MapOrderFleet,
   MapPendingOrder,
 } from "../../components/world-map/map-orders.js";
-import { CourseChip, DispatchSlip, SealedLine, SlipButton } from "../../components/slate/DispatchSlip.js";
+import {
+  CourseChip,
+  DispatchSlip,
+  SealedLine,
+  SlipButton,
+} from "../../components/slate/DispatchSlip.js";
 import { translate } from "../../lib/strings.js";
 import { cn } from "../../lib/utils.js";
 
@@ -54,7 +59,7 @@ export function MapDispatch({
       {fleets.length === 0 ? (
         <p className="text-sm text-admiralty-ink-muted">{translate("map.orders.empty")}</p>
       ) : (
-        <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] gap-x-4 gap-y-1 p-0">
+        <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] gap-x-5 gap-y-2 p-0">
           {fleets.map((fleet) => {
             const selected = selectedFleet?.fleetId === fleet.fleetId;
             return (
@@ -64,16 +69,22 @@ export function MapDispatch({
                   aria-pressed={selected}
                   onClick={() => onSelectFleet(fleet.fleetId)}
                   className={cn(
-                    "block w-full border-b-2 pb-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admiralty-signal",
-                    selected ? "border-admiralty-accent" : "border-admiralty-border",
+                    "block w-full border-l-2 py-0.5 pl-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admiralty-signal",
+                    selected
+                      ? "border-admiralty-accent"
+                      : "border-admiralty-border opacity-75 hover:opacity-100",
                   )}
                 >
-                  <span className="block font-display text-base font-semibold leading-tight">
-                    {fleet.fleetName}
+                  <span className="flex items-baseline justify-between gap-3">
+                    <span className="font-display text-lg font-semibold leading-tight">
+                      {fleet.fleetName}
+                    </span>
+                    <span className="shrink-0 text-sm tabular-nums text-admiralty-ink-muted">
+                      {shipCount(fleet.shipCount)}
+                    </span>
                   </span>
                   <span className="block text-sm leading-snug text-admiralty-ink-muted">
-                    {translate("map.orders.from", { area: fleet.areaName })} ·{" "}
-                    {shipCount(fleet.shipCount)}
+                    {translate("map.orders.from", { area: fleet.areaName })}
                   </span>
                 </button>
               </li>
@@ -87,7 +98,7 @@ export function MapDispatch({
           <p className="text-sm text-admiralty-ink-muted">{translate("map.orders.pick")}</p>
         )
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 border-t border-admiralty-border pt-3">
           {selectedFleet.blockedReason === null ? null : (
             <p role="status" className="text-sm font-medium text-admiralty-accent">
               {selectedFleet.blockedReason.message}
@@ -99,7 +110,9 @@ export function MapDispatch({
               aria-label={translate("map.orders.choose")}
               className="flex flex-wrap items-center gap-2"
             >
-              <span className="text-sm font-medium">{translate("map.orders.choose")}</span>
+              <span className="w-full text-sm font-medium text-admiralty-ink-muted">
+                {translate("map.orders.choose")}
+              </span>
               {choices.map((destination) => (
                 <CourseChip
                   key={destination.areaId}
@@ -119,7 +132,9 @@ export function MapDispatch({
               aria-label={translate("map.orders.legal")}
               className="flex flex-wrap items-center gap-2"
             >
-              <span className="mr-1 text-sm font-medium">{translate("map.orders.sailTo")}</span>
+              <span className="w-full text-sm font-medium text-admiralty-ink-muted">
+                {translate("map.orders.sailTo")}
+              </span>
               {selectedFleet.legalDestinations.map((destination) => (
                 <CourseChip
                   key={destination.areaId}
@@ -146,7 +161,7 @@ export function MapDispatch({
         </SealedLine>
       )}
 
-      {notice === null ? null : (
+      {notice === null || (pendingOrder !== undefined && noticeKind === "status") ? null : (
         <p
           role={noticeKind === "alert" ? "alert" : "status"}
           className={cn(

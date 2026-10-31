@@ -410,10 +410,7 @@ export function WorldMapChart({
         />
       </div>
 
-      <RouteReadout
-        className={cn(layout.routeReadout, layout.routeHideWhenEmpty && route === null && "hidden")}
-        route={route}
-      />
+      <RouteReadout className={layout.routeReadout} route={route} />
     </div>
   );
 }

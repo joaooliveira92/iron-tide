@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { test, expect, openCampaign, relaunchAndOpen, teardownHarness } from "./fixtures.js";
-import { advanceMonths, navigateTo } from "./flows.js";
+import { advanceMonths, navigateTo, openFleetDepartment } from "./flows.js";
 
 test("a research priority is queued and holds after the month advances", async ({
   e2e,
@@ -64,6 +64,7 @@ test("special training is funded and accrues a month of progress", async ({
 
   await test.step("reachable:fund-special-training", async () => {
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Training");
     const training = page.getByRole("region", { name: "Special training" });
     await expect(training.getByText("0 of 2")).toBeVisible();
 
@@ -73,6 +74,7 @@ test("special training is funded and accrues a month of progress", async ({
 
     await advanceMonths(page, 1);
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Training");
     await expect(training.getByText("1 of 2")).toBeVisible();
     await expect(training.getByRole("checkbox", { name: "Fund Gunnery" })).toBeChecked();
     await expect(training.getByText("1 of 12 months")).toBeVisible();
@@ -88,6 +90,7 @@ test("the annual fleet exercise is ordered and then marked as held", async ({
 
   await test.step("reachable:hold-fleet-exercise", async () => {
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Exercises");
     const exercise = page.getByRole("region", { name: "Annual fleet exercise" });
     await expect(exercise.getByText("0 of 1 in 1880")).toBeVisible();
 
@@ -97,6 +100,7 @@ test("the annual fleet exercise is ordered and then marked as held", async ({
 
     await advanceMonths(page, 1);
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Exercises");
     await expect(exercise.getByText("1 of 1 in 1880")).toBeVisible();
     await expect(exercise.getByText("Exercise set for 1880-02 with 1 ship.")).toBeVisible();
     await expect(
@@ -114,6 +118,7 @@ test("a division commander is relieved and a new one is assigned", async ({
 
   await test.step("reachable:assign-or-relieve-officer", async () => {
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Organization");
     const organization = page.getByTestId("fleet-organization");
     const relieve = organization.getByRole("button", { name: "Relieve commander" });
     const vacant = organization.getByText("Commander vacant");
@@ -125,6 +130,7 @@ test("a division commander is relieved and a new one is assigned", async ({
 
     await advanceMonths(page, 1);
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Organization");
     await expect(vacant).toHaveCount(1);
     await expect(relieve).toHaveCount(1);
 
@@ -133,6 +139,7 @@ test("a division commander is relieved and a new one is assigned", async ({
 
     await advanceMonths(page, 1);
     await navigateTo(page, "Fleet");
+    await openFleetDepartment(page, "Organization");
     await expect(vacant).toHaveCount(0);
     await expect(relieve).toHaveCount(2);
   });

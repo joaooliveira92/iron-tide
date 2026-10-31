@@ -27,11 +27,7 @@ import { IndexTabs } from "../../components/slate/IndexTabs.js";
 import { DivisionPicker } from "./components/DivisionPicker.js";
 import { FleetMap } from "./components/FleetMap.js";
 import { FleetRoster } from "./components/FleetRoster.js";
-import {
-  fleetDepartmentMeta,
-  fleetIndexTabs,
-  type FleetDepartment,
-} from "./fleet-departments.js";
+import { fleetDepartmentMeta, fleetIndexTabs, type FleetDepartment } from "./fleet-departments.js";
 import { useMinWidth } from "../../lib/use-min-width.js";
 import { COMMAND_OVERLAY_MIN_WIDTH } from "../overview/hooks/useOverviewModel.js";
 import { LoadErrorCard } from "./components/LoadErrorCard.js";

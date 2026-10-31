@@ -45,9 +45,7 @@ export function IndexTabs<Id extends string>({
                   onClick={() => onOpen(tab.id)}
                   className={cn(
                     "group relative flex w-full items-center gap-2.5 border border-admiralty-border bg-admiralty-surface-raised py-1.5 pl-3 pr-3 text-left text-admiralty-ink shadow-[0_4px_14px_-8px_rgb(11_26_43/0.55)] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admiralty-signal motion-reduce:transition-none",
-                    attached
-                      ? "rounded-l-sm border-r-0 hover:-translate-x-1"
-                      : "rounded-sm",
+                    attached ? "rounded-l-sm border-r-0 hover:-translate-x-1" : "rounded-sm",
                     attached && open && "-translate-x-2 hover:-translate-x-2",
                   )}
                 >
@@ -58,7 +56,10 @@ export function IndexTabs<Id extends string>({
                       open ? "bg-admiralty-accent" : "bg-transparent",
                     )}
                   />
-                  <Icon aria-hidden="true" className="size-[1.125rem] shrink-0 text-admiralty-ink-muted" />
+                  <Icon
+                    aria-hidden="true"
+                    className="size-[1.125rem] shrink-0 text-admiralty-ink-muted"
+                  />
                   <span className="min-w-0 flex-1">
                     <span className="block font-display text-sm font-medium leading-tight">
                       {tab.label}

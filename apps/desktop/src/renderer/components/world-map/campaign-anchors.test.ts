@@ -49,12 +49,43 @@ function inRing(ring: readonly number[], x: number, y: number): boolean {
   return inside;
 }
 
+interface IndexedPolygon {
+  readonly rings: readonly (readonly number[])[];
+  readonly minX: number;
+  readonly maxX: number;
+  readonly minY: number;
+  readonly maxY: number;
+}
+
+function indexPolygon(rings: readonly (readonly number[])[]): IndexedPolygon {
+  const outer = rings[0] as readonly number[];
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (let i = 0; i < outer.length; i += 2) {
+    const x = outer[i] as number;
+    const y = outer[i + 1] as number;
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  return { rings, minX, maxX, minY, maxY };
+}
+
+const indexedLand = land.map(indexPolygon);
+
 function onLand(lon: number, lat: number): boolean {
   const x = ((((lon + 180) % 360) + 360) % 360) - 180;
-  return land.some(
+  return indexedLand.some(
     (polygon) =>
-      inRing(polygon[0] as number[], x, lat) &&
-      !polygon.slice(1).some((hole) => inRing(hole, x, lat)),
+      x >= polygon.minX &&
+      x <= polygon.maxX &&
+      lat >= polygon.minY &&
+      lat <= polygon.maxY &&
+      inRing(polygon.rings[0] as readonly number[], x, lat) &&
+      !polygon.rings.slice(1).some((hole) => inRing(hole, x, lat)),
   );
 }
 

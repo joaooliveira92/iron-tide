@@ -58,7 +58,7 @@ test("a fleet ordered from the Map panel sails one hop when the month advances",
 
     await advanceMonths(page, 1);
     const after = await openMap(page);
-    await expect(after.getByText(/English Channel ·/)).toBeVisible();
+    await expect(after.getByText("In English Channel")).toBeVisible();
     await expect(after.getByText(/Ordered: sails for/)).toBeHidden();
   });
 });
@@ -82,18 +82,24 @@ test("a keyboard-only player can select a fleet and choose a destination", async
 
 async function pointInside(page: Page, mapAreaId: string) {
   return page.evaluate((id) => {
-    const path = document.querySelector(`[data-map-area="${id}"]`);
-    if (path === null) return null;
-    const box = path.getBoundingClientRect();
-    for (let row = 1; row < 12; row += 1) {
-      for (let column = 1; column < 12; column += 1) {
-        const x = box.x + (box.width * column) / 12;
-        const y = box.y + (box.height * row) / 12;
-        const hit = document
-          .elementFromPoint(x, y)
-          ?.closest("[data-map-area]")
-          ?.getAttribute("data-map-area");
-        if (hit === id) return { x, y };
+    const steps = 24;
+    for (const path of document.querySelectorAll(`[data-map-area="${id}"]`)) {
+      const box = path.getBoundingClientRect();
+      const left = Math.max(box.left, 0);
+      const right = Math.min(box.right, globalThis.innerWidth);
+      const top = Math.max(box.top, 0);
+      const bottom = Math.min(box.bottom, globalThis.innerHeight);
+      if (right <= left || bottom <= top) continue;
+      for (let row = 1; row < steps; row += 1) {
+        for (let column = 1; column < steps; column += 1) {
+          const x = left + ((right - left) * column) / steps;
+          const y = top + ((bottom - top) * row) / steps;
+          const hit = document
+            .elementFromPoint(x, y)
+            ?.closest("[data-map-area]")
+            ?.getAttribute("data-map-area");
+          if (hit === id) return { x, y };
+        }
       }
     }
     return null;
@@ -108,21 +114,67 @@ async function visibleFleetMarker(page: Page, fleetId: string) {
     height: globalThis.innerHeight,
   }));
   for (let index = 0; index < count; index += 1) {
-    const box = await markers.nth(index).boundingBox();
+    const marker = markers.nth(index);
+    const box = await marker.boundingBox();
     if (box === null) continue;
     const onScreen =
       box.x >= 0 &&
       box.y >= 0 &&
       box.x + box.width <= viewport.width &&
       box.y + box.height <= viewport.height;
-    if (onScreen) return box;
+    if (!onScreen) continue;
+    const uncovered = await marker.evaluate((element) => {
+      const at = element.getBoundingClientRect();
+      const top = document.elementFromPoint(at.x + at.width / 2, at.y + at.height / 2);
+      return top?.closest("[data-map-fleet]") === element;
+    });
+    if (uncovered) return box;
   }
   return null;
 }
 
-async function dragFleet(page: Page, toAreaId: string) {
-  const from = await visibleFleetMarker(page, "fleet_gbr_home");
-  const to = await pointInside(page, toAreaId);
+async function useLegacyChart(page: Page) {
+  await page.evaluate(() => {
+    globalThis.location.hash = "#legacy-renderer";
+  });
+  await expect(page.locator("[data-map-fleet]").first()).toBeAttached();
+}
+
+type FleetMarkerBox = NonNullable<Awaited<ReturnType<typeof visibleFleetMarker>>>;
+
+async function settledFleetMarker(page: Page, fleetId: string) {
+  await page.getByRole("application", { name: /world map/i }).focus();
+  const seen: { box: FleetMarkerBox | null } = { box: null };
+  await expect
+    .poll(
+      async () => {
+        const box = await visibleFleetMarker(page, fleetId);
+        if (box === null) {
+          await page.keyboard.press("ArrowDown");
+          seen.box = null;
+          return false;
+        }
+        const settled = seen.box !== null && box.x === seen.box.x && box.y === seen.box.y;
+        seen.box = box;
+        return settled;
+      },
+      { timeout: 45_000 },
+    )
+    .toBe(true);
+  return seen.box;
+}
+
+async function firstVisibleDropPoint(page: Page, areaIds: readonly string[]) {
+  for (const areaId of areaIds) {
+    const point = await pointInside(page, areaId);
+    if (point !== null) return point;
+  }
+  return null;
+}
+
+async function dragFleet(page: Page, toAreaIds: readonly string[]) {
+  const from = await settledFleetMarker(page, "fleet_gbr_home");
+  const to = await firstVisibleDropPoint(page, toAreaIds);
   expect(from).not.toBeNull();
   expect(to).not.toBeNull();
   await page.mouse.move(from!.x + from!.width / 2, from!.y + from!.height / 2);
@@ -139,8 +191,9 @@ test("dragging a fleet marker onto a legal area queues the same order", async ({
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
   const panel = await openMap(page);
+  await useLegacyChart(page);
 
-  await dragFleet(page, "area_western_approaches");
+  await dragFleet(page, ["area_western_approaches"]);
 
   await expect(panel.getByText(/Ordered: sails for/)).toBeVisible();
 });
@@ -149,8 +202,15 @@ test("dropping a fleet on an illegal area queues nothing", async ({ e2e, campaig
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
   const panel = await openMap(page);
+  await useLegacyChart(page);
 
-  await dragFleet(page, "area_baltic");
+  await dragFleet(page, [
+    "area_baltic",
+    "area_black_sea",
+    "area_mediterranean",
+    "area_adriatic",
+    "area_central_atlantic",
+  ]);
 
   await expect(panel.getByRole("button", { name: "Home Fleet" })).toHaveAttribute(
     "aria-pressed",

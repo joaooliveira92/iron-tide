@@ -1,4 +1,4 @@
-import { Anchor } from "lucide-react";
+import { Anchor, Check } from "lucide-react";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { cn } from "../../lib/utils.js";
 import { Slate } from "./Slate.js";
@@ -24,9 +24,7 @@ export function DispatchSlip({ label, sealed, testId, children }: DispatchSlipPr
           sealed ? "bg-admiralty-accent" : "bg-admiralty-border",
         )}
       />
-      <div className="min-w-0 flex-1 space-y-3 px-4 py-3.5">
-        {children}
-      </div>
+      <div className="min-w-0 flex-1 space-y-3 px-4 py-3.5">{children}</div>
     </Slate>
   );
 }
@@ -38,7 +36,7 @@ export interface SealedLineProps {
 
 export function SealedLine({ children, action }: SealedLineProps) {
   return (
-    <div className="flex items-start justify-between gap-4 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-200">
+    <div className="flex items-center justify-between gap-4 rounded-sm bg-admiralty-accent/10 px-3 py-2 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-200">
       <p role="status" className="flex items-start gap-2 text-sm font-medium text-admiralty-accent">
         <Anchor aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
         <span>{children}</span>
@@ -61,12 +59,13 @@ export function CourseChip({ label, onClick, pressed }: CourseChipProps) {
       aria-pressed={pressed}
       onClick={onClick}
       className={cn(
-        "rounded-sm border px-2.5 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admiralty-signal motion-reduce:transition-none",
+        "inline-flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admiralty-signal motion-reduce:transition-none",
         pressed === true
-          ? "border-admiralty-accent bg-admiralty-accent text-admiralty-accent-foreground"
-          : "border-admiralty-border bg-admiralty-surface text-admiralty-ink hover:border-admiralty-accent",
+          ? "border-admiralty-accent bg-admiralty-accent font-medium text-admiralty-accent-foreground"
+          : "border-admiralty-border bg-admiralty-surface text-admiralty-ink hover:border-admiralty-accent hover:bg-admiralty-accent/5",
       )}
     >
+      {pressed === true ? <Check aria-hidden="true" className="size-3.5 shrink-0" /> : null}
       {label}
     </button>
   );

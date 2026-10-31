@@ -92,9 +92,9 @@ describe("GlobeAdapterChrome", () => {
     expect(onSetCentre).toHaveBeenCalledWith(40);
   });
 
-  it("shows the route reading numbers and the shift-click prompt", () => {
+  it("shows the route reading numbers and no prompt before a route exists", () => {
     const { rerender } = renderChrome();
-    expect(screen.getByText(/Shift-click two areas/)).toBeTruthy();
+    expect(screen.queryByText(/Shift-click two areas/)).toBeNull();
     rerender(
       <GlobeAdapterChrome
         state={initialMapPrototypeState}
