@@ -164,9 +164,17 @@ async function settledFleetMarker(page: Page, fleetId: string) {
   return seen.box;
 }
 
-async function dragFleet(page: Page, toAreaId: string) {
+async function firstVisibleDropPoint(page: Page, areaIds: readonly string[]) {
+  for (const areaId of areaIds) {
+    const point = await pointInside(page, areaId);
+    if (point !== null) return point;
+  }
+  return null;
+}
+
+async function dragFleet(page: Page, toAreaIds: readonly string[]) {
   const from = await settledFleetMarker(page, "fleet_gbr_home");
-  const to = await pointInside(page, toAreaId);
+  const to = await firstVisibleDropPoint(page, toAreaIds);
   expect(from).not.toBeNull();
   expect(to).not.toBeNull();
   await page.mouse.move(from!.x + from!.width / 2, from!.y + from!.height / 2);
@@ -185,7 +193,7 @@ test("dragging a fleet marker onto a legal area queues the same order", async ({
   const panel = await openMap(page);
   await useLegacyChart(page);
 
-  await dragFleet(page, "area_western_approaches");
+  await dragFleet(page, ["area_western_approaches"]);
 
   await expect(panel.getByText(/Ordered: sails for/)).toBeVisible();
 });
@@ -196,7 +204,13 @@ test("dropping a fleet on an illegal area queues nothing", async ({ e2e, campaig
   const panel = await openMap(page);
   await useLegacyChart(page);
 
-  await dragFleet(page, "area_baltic");
+  await dragFleet(page, [
+    "area_baltic",
+    "area_black_sea",
+    "area_mediterranean",
+    "area_adriatic",
+    "area_central_atlantic",
+  ]);
 
   await expect(panel.getByRole("button", { name: "Home Fleet" })).toHaveAttribute(
     "aria-pressed",
