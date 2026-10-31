@@ -5,6 +5,7 @@ import { resolveMessage } from "../content/uiCatalogue.js";
 import { envelopeOf, stampCommand } from "../lib/command-envelope.js";
 import { emitWideEvent } from "../lib/telemetry.js";
 import type { Screen } from "./campaign-screen-registry.js";
+import type { LeaveGuard, LeaveTarget } from "./campaign-screen-types.js";
 import { overviewFromProjection } from "./campaign-overview.js";
 import { activeAlertsCount, readCampaign, type CampaignReads } from "./campaign-reads.js";
 import {
@@ -157,7 +158,25 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     [],
   );
 
-  const selectScreen = useCallback((screen: Screen) => dispatch({ type: "visit", screen }), []);
+  const leaveGuardRef = useRef<LeaveGuard | null>(null);
+  const setLeaveGuard = useCallback((guard: LeaveGuard | null) => {
+    leaveGuardRef.current = guard;
+  }, []);
+  const mayLeave = useCallback((target: LeaveTarget) => {
+    const guard = leaveGuardRef.current;
+    return guard === null || guard(target);
+  }, []);
+  const selectScreen = useCallback(
+    (screen: Screen) => {
+      if (mayLeave(screen)) dispatch({ type: "visit", screen });
+    },
+    [mayLeave],
+  );
+  const reviseProject = useCallback(
+    (projectId: string) => dispatch({ type: "revision-requested", projectId }),
+    [],
+  );
+  const clearRevision = useCallback(() => dispatch({ type: "revision-cleared" }), []);
 
   const refreshCampaign = useCallback(
     async (sessionIdOverride?: string) => {
@@ -294,14 +313,13 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     (action: PrimaryAction | null) => dispatch({ type: "primary-action-changed", action }),
     [],
   );
-  const goBackInHistory = useCallback(
-    () => dispatch({ type: "history-replaced", history: goBack(state.history) }),
-    [state.history],
-  );
-  const goForwardInHistory = useCallback(
-    () => dispatch({ type: "history-replaced", history: goForward(state.history) }),
-    [state.history],
-  );
+  const goBackInHistory = useCallback(() => {
+    if (mayLeave("back")) dispatch({ type: "history-replaced", history: goBack(state.history) });
+  }, [state.history, mayLeave]);
+  const goForwardInHistory = useCallback(() => {
+    if (mayLeave("forward"))
+      dispatch({ type: "history-replaced", history: goForward(state.history) });
+  }, [state.history, mayLeave]);
 
   return useMemo(
     () => ({
@@ -314,6 +332,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       committing: state.committing,
       interruption: state.interruption,
       commitFailure: state.commitFailure,
+      revisionProjectId: state.revisionProjectId,
       reads,
       mode: campaignShellMode(state),
       screen: currentShellScreen(state),
@@ -328,6 +347,9 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       abandonPendingTurn,
       refreshCampaign,
       selectScreen,
+      reviseProject,
+      clearRevision,
+      setLeaveGuard,
       setPrimaryAction,
       goBack: goBackInHistory,
       goForward: goForwardInHistory,
@@ -344,6 +366,9 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       abandonPendingTurn,
       refreshCampaign,
       selectScreen,
+      reviseProject,
+      clearRevision,
+      setLeaveGuard,
       setPrimaryAction,
       goBackInHistory,
       goForwardInHistory,

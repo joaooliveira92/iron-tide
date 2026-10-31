@@ -1,4 +1,4 @@
-export const SHIP_VIEWS = ["top", "side", "armour", "compartments", "arcs"] as const;
+export const SHIP_VIEWS = ["top", "side", "iso"] as const;
 export type ShipView = (typeof SHIP_VIEWS)[number];
 
 export const SHIP_OVERLAYS = [
@@ -8,6 +8,7 @@ export const SHIP_OVERLAYS = [
   "mass",
   "topside",
   "machinery",
+  "compartments",
   "conflicts",
 ] as const;
 export type ShipOverlay = (typeof SHIP_OVERLAYS)[number];
@@ -17,7 +18,7 @@ export interface ShipViewDef {
   readonly label: string;
   readonly hint: string;
   readonly overlays: readonly ShipOverlay[];
-  readonly profileOnly: boolean;
+  readonly editable: boolean;
 }
 
 export const SHIP_VIEW_DEFS: { readonly [K in ShipView]: ShipViewDef & { readonly id: K } } = {
@@ -26,35 +27,21 @@ export const SHIP_VIEW_DEFS: { readonly [K in ShipView]: ShipViewDef & { readonl
     label: "Top",
     hint: "The waterline plan, looking down: the hull, its sections and the fittings placed on it.",
     overlays: ["arcs", "footprint", "topside", "conflicts"],
-    profileOnly: false,
+    editable: true,
   },
   side: {
     id: "side",
     label: "Side",
     hint: "The side profile: depth, draught, sheer and the fitted structures.",
     overlays: [],
-    profileOnly: true,
+    editable: false,
   },
-  armour: {
-    id: "armour",
-    label: "Armour",
-    hint: "The armoured belt over the citadel, with the fittings that carry it.",
-    overlays: ["armour", "footprint", "conflicts"],
-    profileOnly: false,
-  },
-  compartments: {
-    id: "compartments",
-    label: "Compartments",
-    hint: "The hull's internal subdivision: its sections and the machinery spaces in them.",
-    overlays: ["machinery", "footprint", "conflicts"],
-    profileOnly: false,
-  },
-  arcs: {
-    id: "arcs",
-    label: "Firing arcs",
-    hint: "The gun arcs each mount can bear, and the sectors its neighbours blank off.",
-    overlays: ["arcs", "footprint", "conflicts"],
-    profileOnly: false,
+  iso: {
+    id: "iso",
+    label: "Isometric",
+    hint: "The ship in three dimensions, with every fitting drawn where it stands.",
+    overlays: [],
+    editable: false,
   },
 };
 
@@ -74,6 +61,7 @@ export const SHIP_OVERLAY_DEFS: {
   mass: { id: "mass", label: "Centre of mass" },
   topside: { id: "topside", label: "Topside load" },
   machinery: { id: "machinery", label: "Machinery layout" },
+  compartments: { id: "compartments", label: "Compartments" },
   conflicts: { id: "conflicts", label: "Structural conflicts" },
 };
 

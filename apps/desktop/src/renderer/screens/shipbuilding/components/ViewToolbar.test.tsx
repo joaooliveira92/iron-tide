@@ -13,6 +13,8 @@ describe("ViewToolbar", () => {
         onView={() => {}}
         overlays={overlaysOf("top")}
         onToggleOverlay={() => {}}
+        isoSide="starboard"
+        onIsoSide={() => {}}
       />,
     );
     const views = screen.getByRole("group", { name: "Ship view" });

@@ -1,8 +1,9 @@
-import { createContext, type ReactNode, use, useMemo } from "react";
+import { createContext, type ReactNode, use, useEffect, useMemo, useRef } from "react";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { ActiveCampaignCurrencyContext } from "../lib/presentation-format/index.js";
 import type { useCampaignShell } from "./useCampaignShell.js";
 import { useCampaignShell as useCampaignShellState } from "./useCampaignShell.js";
+import type { LeaveGuard, LeaveTarget } from "./campaign-screen-types.js";
 
 type CampaignShell = ReturnType<typeof useCampaignShell>;
 
@@ -18,6 +19,7 @@ export interface CampaignShellContextValue {
     | "committing"
     | "interruption"
     | "commitFailure"
+    | "revisionProjectId"
     | "reads"
     | "mode"
     | "screen"
@@ -35,6 +37,9 @@ export interface CampaignShellContextValue {
     | "abandonPendingTurn"
     | "refreshCampaign"
     | "selectScreen"
+    | "reviseProject"
+    | "clearRevision"
+    | "setLeaveGuard"
     | "setPrimaryAction"
     | "goBack"
     | "goForward"
@@ -66,6 +71,7 @@ export function CampaignShellProvider({
         committing: shell.committing,
         interruption: shell.interruption,
         commitFailure: shell.commitFailure,
+        revisionProjectId: shell.revisionProjectId,
         reads: shell.reads,
         mode: shell.mode,
         screen: shell.screen,
@@ -82,6 +88,9 @@ export function CampaignShellProvider({
         abandonPendingTurn: shell.abandonPendingTurn,
         refreshCampaign: shell.refreshCampaign,
         selectScreen: shell.selectScreen,
+        reviseProject: shell.reviseProject,
+        clearRevision: shell.clearRevision,
+        setLeaveGuard: shell.setLeaveGuard,
         setPrimaryAction: shell.setPrimaryAction,
         goBack: shell.goBack,
         goForward: shell.goForward,
@@ -120,4 +129,43 @@ export function useActiveCampaignCurrencyContext(): ActiveCampaignCurrencyContex
   return campaign.playerNationId !== undefined
     ? { nationId: campaign.playerNationId, year: campaign.month.year }
     : { year: campaign.month.year };
+}
+
+export function useRevisionRequest(): {
+  readonly projectId: string | null;
+  readonly clear: () => void;
+} {
+  const context = use(CampaignShellContext);
+  return {
+    projectId: context?.state.revisionProjectId ?? null,
+    clear: context?.actions.clearRevision ?? NOOP,
+  };
+}
+
+export function useLeaveGuard(guard: LeaveGuard): (target: LeaveTarget) => void {
+  const context = use(CampaignShellContext);
+  const actions = context?.actions;
+  const latest = useRef(guard);
+  latest.current = guard;
+  const bypass = useRef(false);
+  const setGuard = actions?.setLeaveGuard;
+  useEffect(() => {
+    if (setGuard === undefined) return;
+    setGuard((target) => bypass.current || latest.current(target));
+    return () => setGuard(null);
+  }, [setGuard]);
+  return (target) => {
+    bypass.current = true;
+    if (actions === undefined) return;
+    if (target === "back") actions.goBack();
+    else if (target === "forward") actions.goForward();
+    else actions.selectScreen(target);
+  };
+}
+
+function NOOP(): void {}
+
+export function useReviseProject(): (projectId: string) => void {
+  const context = use(CampaignShellContext);
+  return context?.actions.reviseProject ?? NOOP;
 }

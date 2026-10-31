@@ -797,4 +797,57 @@ describe("useCampaignShell", () => {
       expect(result.current.saveMessage).toBe("Save failed: SAVE_FAILED. disk full");
     });
   });
+
+  describe("leave guard", () => {
+    const opened = async () => {
+      const rendered = setup(
+        vi.fn(async () => ({
+          outcome: "success" as const,
+          value: { projection },
+          diagnostics: [],
+        })),
+      );
+      await act(() => rendered.result.current.openCampaign("ses_1"));
+      return rendered;
+    };
+
+    it("lets a screen veto leaving by selection, back and forward, and lifts the veto when cleared", async () => {
+      const { result } = await opened();
+      act(() => result.current.selectScreen("ship-design"));
+      act(() => result.current.selectScreen("fleet"));
+      expect(result.current.screen).toBe("fleet");
+      act(() => result.current.selectScreen("ship-design"));
+      const guard = vi.fn(() => false);
+      act(() => result.current.setLeaveGuard(guard));
+
+      act(() => result.current.selectScreen("treasury"));
+      expect(guard).toHaveBeenLastCalledWith("treasury");
+      expect(result.current.screen).toBe("ship-design");
+      act(() => result.current.goBack());
+      expect(guard).toHaveBeenLastCalledWith("back");
+      expect(result.current.screen).toBe("ship-design");
+      act(() => result.current.goForward());
+      expect(guard).toHaveBeenLastCalledWith("forward");
+
+      act(() => result.current.setLeaveGuard(null));
+      act(() => result.current.goBack());
+      expect(result.current.screen).toBe("fleet");
+    });
+
+    it("lets a guard that allows the move through", async () => {
+      const { result } = await opened();
+      act(() => result.current.setLeaveGuard(() => true));
+      act(() => result.current.selectScreen("treasury"));
+      expect(result.current.screen).toBe("treasury");
+    });
+
+    it("opens Ship design on a revision request and keeps the project until cleared", async () => {
+      const { result } = await opened();
+      act(() => result.current.reviseProject("project-9"));
+      expect(result.current.screen).toBe("ship-design");
+      expect(result.current.revisionProjectId).toBe("project-9");
+      act(() => result.current.clearRevision());
+      expect(result.current.revisionProjectId).toBeNull();
+    });
+  });
 });

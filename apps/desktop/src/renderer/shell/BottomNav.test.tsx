@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 const debugFlag = vi.hoisted(() => ({ on: false }));
@@ -20,12 +20,11 @@ describe("BottomNav (proof of concept)", () => {
     const labels = within(nav)
       .getAllByRole("button")
       .map((button) => button.textContent);
-    expect(labels).toEqual([
-      ...CAMPAIGN_NAVIGATION_SECTIONS.flatMap((section) =>
+    expect(labels).toEqual(
+      CAMPAIGN_NAVIGATION_SECTIONS.flatMap((section) =>
         section.items.map((item) => item.shortLabel),
       ),
-      "Ship design",
-    ]);
+    );
   });
 
   it("marks only the current screen with aria-current and gives every entry a tooltip", () => {
@@ -59,13 +58,12 @@ describe("BottomNav (proof of concept)", () => {
     expect(onSelect).toHaveBeenCalledWith("fleet");
   });
 
-  it("opens the Ship design workspace modal from the bottom bar without navigating", () => {
+  it("lists Ship design as an ordinary screen entry and selects it like any other", () => {
     const onSelect = vi.fn();
     render(<BottomNav screen="overview" onSelect={onSelect} />);
     expect(screen.queryByRole("dialog")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Ship design" }));
-    expect(within(screen.getByRole("dialog")).getByText("Ship design")).toBeTruthy();
-    expect(onSelect).not.toHaveBeenCalled();
+    screen.getByRole("button", { name: "Ship design" }).click();
+    expect(onSelect).toHaveBeenCalledWith("ship-design");
   });
 
   it("renders nothing outside the campaign (new-game wizard, file picker)", () => {

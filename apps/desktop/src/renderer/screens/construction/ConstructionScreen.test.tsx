@@ -4,7 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { ConstructionScreenProjection } from "../../../shared/construction-contract.js";
 import { ConstructionScreen } from "./ConstructionScreen.js";
 
-const mocks = vi.hoisted(() => ({ execute: vi.fn() }));
+const mocks = vi.hoisted(() => ({ execute: vi.fn(), revise: vi.fn() }));
+vi.mock("../../shell/CampaignShellContext.js", async (original) => ({
+  ...(await original<typeof import("../../shell/CampaignShellContext.js")>()),
+  useReviseProject: () => mocks.revise,
+}));
 vi.mock("../../lib/bridge-context.js", () => ({
   useBridge: () => ({ campaign: { execute: mocks.execute } }),
 }));
@@ -12,6 +16,7 @@ vi.mock("../../lib/bridge-context.js", () => ({
 afterEach(() => {
   cleanup();
   mocks.execute.mockReset();
+  mocks.revise.mockReset();
 });
 
 const project = (
@@ -63,16 +68,16 @@ const serve = (projection: ConstructionScreenProjection) =>
   });
 
 describe("ConstructionScreen revise project", () => {
-  it("opens the drawing board on the selected revisable project", async () => {
+  it("sends the selected revisable project to the Ship design screen", async () => {
     serve(projectionWith([project()]));
     render(<ConstructionScreen sessionId="ses_1" />);
 
     (await screen.findByRole("button", { name: /^Havock class, active/ })).click();
-    expect(screen.queryByRole("dialog", { name: "Drawing Board" })).toBeNull();
+    expect(mocks.revise).not.toHaveBeenCalled();
     (await screen.findByRole("button", { name: "Havock class revise" })).click();
 
-    await waitFor(() => expect(screen.getByRole("dialog", { name: "Drawing Board" })).toBeTruthy());
-    expect(screen.getByTestId("drawing-board")).toBeTruthy();
+    await waitFor(() => expect(mocks.revise).toHaveBeenCalledWith("project-1"));
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("offers no revise control for a project built from an authored design", async () => {

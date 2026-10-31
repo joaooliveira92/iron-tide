@@ -1,12 +1,11 @@
 export { AntiAircraftPanel } from "./AntiAircraftPanel.js";
 export { AluminiumSuperstructurePanel } from "./AluminiumSuperstructurePanel.js";
 export { ClassNameBrowser } from "./ClassNameBrowser.js";
-export { CommandBar, type DesignStatus } from "./CommandBar.js";
+export { CommandBar } from "./CommandBar.js";
 export { ArmamentEditor } from "./ArmamentEditor.js";
-export { DesignMap } from "./DesignMap.js";
+export { DrawerBody } from "./DrawerBody.js";
+export { FlawSlip } from "./FlawSlip.js";
 export { EngineeringStatusBar } from "./EngineeringStatusBar.js";
-export { Inspector } from "./Inspector.js";
-export { InspectorResizeHandle } from "./InspectorResizeHandle.js";
 export { MachineryEditor } from "./MachineryEditor.js";
 export { NotAvailable } from "./NotAvailable.js";
 export { ProtectionEditor } from "./ProtectionEditor.js";
@@ -14,7 +13,8 @@ export { OverviewPanel, DEFAULT_PRIORITIES, type PriorityLevel } from "./Overvie
 export { ColonialServicePanel } from "./ColonialServicePanel.js";
 export { SystemsPanel } from "./SystemsPanel.js";
 export { ShipStage } from "./ShipStage.js";
-export { ViewToolbar } from "./ViewToolbar.js";
+export { ViewToolbar, type IsoSide } from "./ViewToolbar.js";
 export { WorkspaceDialog } from "./WorkspaceDialog.js";
 export { ReferenceDesignBrowser } from "./ReferenceDesignBrowser.js";
-export { DesignMapFooter } from "./DesignMapFooter.js";
+export { DesignIdentity } from "./DesignIdentity.js";
+export { DesignStatusChip, type DesignStatus } from "./DesignStatusChip.js";

@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import "./anatomy.css";
 import type { AnatomyShip } from "./ship-anatomy.js";
 
@@ -7,10 +8,12 @@ export function AnatomyShipFigure({
   ship,
   highlight,
   className,
+  style,
 }: {
   readonly ship: AnatomyShip;
   readonly highlight?: string | undefined;
   readonly className?: string;
+  readonly style?: CSSProperties;
 }) {
   const anchor = highlight === undefined ? undefined : ship.anchors.get(highlight);
   return (
@@ -19,6 +22,7 @@ export function AnatomyShipFigure({
       className={className === undefined ? "an-ship" : `an-ship ${className}`}
       role="img"
       aria-label={ship.label}
+      style={style}
       data-testid="anatomy-ship"
       data-azimuth={ship.azimuth}
     >

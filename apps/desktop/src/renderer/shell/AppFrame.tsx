@@ -80,12 +80,7 @@ export function AppFrame({
           <StatusStrip reads={campaignReads} />
         )}
         {campaignSessionId !== null && (
-          <BottomNav
-            screen={screen}
-            onSelect={onSelectScreen}
-            footer={campaignSessionId}
-            sessionId={campaignSessionId}
-          />
+          <BottomNav screen={screen} onSelect={onSelectScreen} footer={campaignSessionId} />
         )}
       </div>
     </SidebarProvider>

@@ -79,7 +79,7 @@ export function RebuildPanel({
     return () => {
       live = false;
     };
-  }, [bridge, sessionId]);
+  }, [bridge, sessionId, revision]);
 
   useEffect(() => {
     setCheck(null);

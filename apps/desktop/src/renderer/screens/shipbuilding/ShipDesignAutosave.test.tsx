@@ -1,21 +1,23 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { decodeLog, encodeLog, newLog, pushEdit } from "@bluewave/ship-design";
-import { Toaster } from "../../../components/ui/toast.js";
-import { DrawingBoard } from "./DrawingBoard.js";
-import { loadDrawingBoardContent } from "../../../components/design-workspace/content.js";
+import { Toaster } from "../../components/ui/toast.js";
+import { loadDrawingBoardContent } from "../../components/design-workspace/content.js";
+import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
+import { enteredSessions } from "./entered-sessions.js";
 
-vi.mock("../../../shell/CampaignShellContext.js", () => ({
+vi.mock("../../shell/CampaignShellContext.js", () => ({
   useCampaignRevision: () => 0,
   useCampaignMonthId: () => "1880-01",
   useActiveCampaignCurrencyContext: () => ({}),
+  useLeaveGuard: () => () => undefined,
 }));
 
-const renderBoard = (props: Parameters<typeof DrawingBoard>[0] = {}): ReturnType<typeof render> =>
+const renderWorkspace = (sessionId = "s1"): ReturnType<typeof render> =>
   render(
     <>
       <Toaster />
-      <DrawingBoard {...props} />
+      <ShipbuildingWorkspace sessionId={sessionId} />
     </>,
   );
 
@@ -34,6 +36,7 @@ let holdRead = false;
 beforeEach(() => {
   stored = null;
   holdRead = false;
+  enteredSessions.reset();
   execute.mockReset();
   execute.mockImplementation(async (command: string, payload: unknown) => {
     if (command === "readDrawingBoardDraft") {
@@ -47,31 +50,45 @@ beforeEach(() => {
     }
     return { outcome: "error", reason: "UNEXPECTED", diagnostics: [] };
   });
-  (window as unknown as { bluewave: unknown }).bluewave = { campaign: { execute } };
+  Reflect.set(window, "bluewave", { campaign: { execute } });
 });
 afterEach(() => {
   cleanup();
-  delete (window as unknown as { bluewave?: unknown }).bluewave;
+  Reflect.deleteProperty(window, "bluewave");
 });
 
 const writes = () => execute.mock.calls.filter((c) => c[0] === "writeDrawingBoardDraft");
+const undo = () => screen.getByRole("button", { name: "Undo" });
 const editPower = (kw: number) => {
-  const input = screen.getByLabelText(/installed power/i) as HTMLInputElement;
+  const sections = screen.getByRole("navigation", { name: "Design sections" });
+  if (screen.queryByRole("dialog", { name: "Machinery" }) === null)
+    fireEvent.click(within(sections).getByRole("button", { name: /^Machinery/ }));
+  const input = screen.getByLabelText(/^Installed power/) as HTMLInputElement;
   fireEvent.change(input, { target: { value: String(kw) } });
   fireEvent.blur(input);
 };
 
-describe("Drawing Board autosave", () => {
+describe("Ship design autosave", () => {
   it("restores the saved design with its history, and says so", async () => {
     stored = { presetId: start.id, log: encodeLog(savedLog), savedAt: "2026-10-09T09:00:00.000Z" };
-    renderBoard({ sessionId: "s1" });
+    renderWorkspace();
     expect(await screen.findByText(/unsubmitted design was restored/)).toBeTruthy();
-    expect(screen.getByText("1 edit")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Undo" }).hasAttribute("disabled")).toBe(false);
+    expect(undo().hasAttribute("disabled")).toBe(false);
   });
 
-  it("saves shortly after an edit, and flushes a waiting save when the board closes", async () => {
-    const { unmount } = renderBoard({ sessionId: "s1" });
+  it("restores quietly when the player comes back to the screen in the same session", async () => {
+    stored = { presetId: start.id, log: encodeLog(savedLog), savedAt: "2026-10-09T09:00:00.000Z" };
+    const first = renderWorkspace();
+    expect(await screen.findByText(/unsubmitted design was restored/)).toBeTruthy();
+    first.unmount();
+    cleanup();
+    renderWorkspace();
+    await waitFor(() => expect(undo().hasAttribute("disabled")).toBe(false));
+    expect(screen.queryByText(/unsubmitted design was restored/)).toBeNull();
+  });
+
+  it("saves shortly after an edit, and flushes a waiting save when the screen is left", async () => {
+    const { unmount } = renderWorkspace();
     await waitFor(() => expect(execute).toHaveBeenCalledWith("readDrawingBoardDraft", "s1"));
     editPower(start.draft.machinery.installedKw + 250);
     await waitFor(() => expect(stored).not.toBeNull(), { timeout: 3000 });
@@ -84,7 +101,7 @@ describe("Drawing Board autosave", () => {
   it("never writes before the saved design has been read", async () => {
     holdRead = true;
     stored = { presetId: start.id, log: encodeLog(savedLog), savedAt: "2026-10-09T09:00:00.000Z" };
-    renderBoard({ sessionId: "s1" });
+    renderWorkspace();
     await new Promise((r) => setTimeout(r, 600));
     expect(writes()).toHaveLength(0);
     await act(async () => releaseRead());
@@ -94,19 +111,19 @@ describe("Drawing Board autosave", () => {
 
   it("start over drops the saved design and removes the file", async () => {
     stored = { presetId: start.id, log: encodeLog(savedLog), savedAt: "2026-10-09T09:00:00.000Z" };
-    renderBoard({ sessionId: "s1" });
+    renderWorkspace();
     fireEvent.click(await screen.findByRole("button", { name: "Start over" }));
-    expect(screen.getByText("No edits")).toBeTruthy();
+    expect(undo().hasAttribute("disabled")).toBe(true);
     await waitFor(() => expect(stored).toBeNull(), { timeout: 3000 });
     expect(screen.queryByText(/unsubmitted design was restored/)).toBeNull();
   });
 
   it("keeps the fresh start when the saved log no longer applies to this content", async () => {
     stored = { presetId: "a_design_that_was_removed", log: encodeLog(savedLog), savedAt: "x" };
-    renderBoard({ sessionId: "s1" });
+    renderWorkspace();
     await waitFor(() => expect(execute).toHaveBeenCalledWith("readDrawingBoardDraft", "s1"));
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.queryByText(/unsubmitted design was restored/)).toBeNull();
-    expect(screen.getByText("No edits")).toBeTruthy();
+    expect(undo().hasAttribute("disabled")).toBe(true);
   });
 });

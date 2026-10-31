@@ -31,6 +31,7 @@ export const SECTION_OF_SCREEN: Readonly<Record<CampaignScreen, SidebarSectionId
   overview: "admiralty",
   fleet: "operations",
   construction: "operations",
+  "ship-design": "operations",
   research: "government",
   treasury: "government",
   diplomacy: "foreign",

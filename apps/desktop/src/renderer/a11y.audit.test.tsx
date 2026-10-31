@@ -10,8 +10,8 @@ import { WorldMapChart } from "./components/world-map/WorldMapChart.js";
 import { initialMapPrototypeState } from "./components/world-map/map-state.js";
 import { axeViolations } from "./lib/axe.js";
 import { loadDrawingBoardContent } from "./components/design-workspace/content.js";
-import { DrawingBoard } from "./screens/construction/drawing-board/DrawingBoard.js";
-import { armMove, armPlace } from "./screens/construction/drawing-board/test-helpers.js";
+import { ShipbuildingWorkspace } from "./screens/shipbuilding/ShipbuildingWorkspace.js";
+import { armMove, armPlace, openSection } from "./screens/shipbuilding/test-helpers.js";
 import { BattleHistorySection } from "./screens/diplomacy/components/BattleHistorySection.js";
 import { AreaOverviewTable } from "./screens/fleet/components/AreaOverviewTable.js";
 import { MovementCommandsTable } from "./screens/fleet/components/MovementCommandsTable.js";
@@ -270,35 +270,51 @@ describe("accessibility audit (axe-core)", () => {
   });
 
   const BOARD_TIMEOUT_MS = 120_000;
-  const openBattleship = () => {
-    const rendered = render(<DrawingBoard />);
-    fireEvent.click(screen.getByLabelText("Starting design"));
-    fireEvent.click(screen.getByRole("option", { name: "Majestic-like battleship (1895)" }));
-    return rendered.container;
-  };
+  const openWorkspace = () => render(<ShipbuildingWorkspace sessionId="audit" />).container;
 
   it(
-    "Drawing Board — every tab on the battleship",
+    "Ship design — every panel and every drawing",
     async () => {
-      const container = openBattleship();
-      for (const tab of [
-        "Hull and machinery",
-        "Arrangement",
-        "Analysis",
-        "Build",
-        "History and files",
+      const container = openWorkspace();
+      expect(await axeViolations(container), "closed").toEqual([]);
+      for (const section of [
+        "Overview",
+        "Hull",
+        "Machinery",
+        "Protection",
+        "Armament",
+        "Systems",
+        "Review",
       ]) {
-        fireEvent.click(screen.getByRole("tab", { name: new RegExp(tab, "i") }));
-        expect(await axeViolations(container), tab).toEqual([]);
+        openSection(section);
+        expect(await axeViolations(container), section).toEqual([]);
+      }
+      for (const view of ["Side", "Isometric", "Top"]) {
+        fireEvent.click(screen.getByRole("button", { name: view }));
+        expect(await axeViolations(container), view).toEqual([]);
       }
     },
     BOARD_TIMEOUT_MS,
   );
 
   it(
-    "Drawing Board — the plan's context menu and both tool modes",
+    "Ship design — a flawed design raises an accessible problem slip",
     async () => {
-      const container = openBattleship();
+      const container = openWorkspace();
+      openSection("Machinery");
+      const fuel = screen.getByLabelText(/^Fuel capacity/) as HTMLInputElement;
+      fireEvent.change(fuel, { target: { value: "400" } });
+      fireEvent.blur(fuel);
+      await screen.findByTestId("flaw-slip");
+      expect(await axeViolations(container), "flaw slip").toEqual([]);
+    },
+    BOARD_TIMEOUT_MS,
+  );
+
+  it(
+    "Ship design — the plan's context menu and both tool modes",
+    async () => {
+      const container = openWorkspace();
       fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
       await screen.findByRole("menuitem", { name: "Place" });
       expect(
@@ -317,11 +333,13 @@ describe("accessibility audit (axe-core)", () => {
   );
 
   it(
-    "Drawing Board — the legend popover (a portal, so the whole document is audited)",
+    "Ship design — the drawing key popover (a portal, so the whole document is audited)",
     async () => {
-      openBattleship();
-      fireEvent.click(screen.getByRole("button", { name: /^Sheer \(Sheer/ }));
-      await screen.findByText("Data + convention");
+      openWorkspace();
+      fireEvent.click(screen.getByRole("button", { name: "Drawing key" }));
+      await screen.findByText("Schematic design views, not construction drawings", {
+        exact: false,
+      });
       expect((await axeViolations(document.body)).filter((v) => !v.startsWith("region "))).toEqual(
         [],
       );

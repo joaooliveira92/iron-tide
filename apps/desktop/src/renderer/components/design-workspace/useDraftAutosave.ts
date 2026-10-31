@@ -31,6 +31,7 @@ export function useDraftAutosave({
   readonly enabled: boolean;
   readonly saveNow: () => boolean;
   readonly saveFailed: boolean;
+  readonly unsaved: boolean;
   readonly dismissSaveFailed: () => void;
 } {
   const bridge = useBridge();
@@ -173,6 +174,7 @@ export function useDraftAutosave({
     enabled,
     saveNow,
     saveFailed: failed && !dismissed,
+    unsaved: failed,
     dismissSaveFailed: () => setDismissed(true),
   };
 }

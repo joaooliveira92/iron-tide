@@ -5,6 +5,7 @@ import { test, expect, relaunchAndOpen, teardownHarness, openCampaign } from "./
 import {
   advanceMonths,
   navigateTo,
+  openDesignSection,
   openRoster,
   openShipbuilding,
   selectRosterOption,
@@ -59,7 +60,7 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
     await className.fill(CLASS_NAME);
     await expect(workspace.getByText("Can be submitted")).toBeVisible();
 
-    await workspace.getByRole("button", { name: /^Protection, / }).click();
+    await openDesignSection(page, "Protection");
     await workspace.getByRole("tab", { name: "Armour" }).click();
     const belt = workspace.getByRole("textbox", { name: "Thickness of BELT_MAIN (mm)" });
     const original = await belt.inputValue();
@@ -68,11 +69,12 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
     const explanation = page.getByRole("alertdialog");
     await expect(explanation.getByText("This change breaks the design")).toBeVisible();
     await explanation.getByRole("button", { name: "Keep it and fix it myself" }).click();
-    await expect(workspace.getByText("Cannot be built")).toBeVisible();
+    const status = page.getByRole("region", { name: "Engineering status" });
+    await expect(status.getByText("Cannot be built")).toBeVisible();
 
     await belt.fill(original);
     await belt.press("Enter");
-    await expect(workspace.getByText("Can be submitted")).toBeVisible();
+    await expect(status.getByText("Can be submitted")).toBeVisible();
 
     await workspace.getByRole("button", { name: "Finish design" }).click();
     await workspace.getByRole("button", { name: "Submit design" }).click();

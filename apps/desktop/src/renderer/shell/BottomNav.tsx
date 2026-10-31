@@ -1,6 +1,3 @@
-import { useState } from "react";
-import { Ship } from "lucide-react";
-import { ShipbuildingDialog } from "../screens/shipbuilding/ShipbuildingDialog.js";
 import { DEBUG_MODE } from "./debug-flag.js";
 import { cn } from "../lib/utils.js";
 import { translate } from "../lib/strings.js";
@@ -13,11 +10,9 @@ export interface BottomNavProps {
   readonly screen: Screen;
   readonly onSelect: (screen: Screen) => void;
   readonly footer?: string;
-  readonly sessionId?: string;
 }
 
-export function BottomNav({ screen, onSelect, footer, sessionId }: BottomNavProps) {
-  const [shipbuildingOpen, setShipbuildingOpen] = useState(false);
+export function BottomNav({ screen, onSelect, footer }: BottomNavProps) {
   const tooltipDetail = useTooltipDetail();
   if (!showsCampaignNavigation(screen)) return null;
 
@@ -52,34 +47,7 @@ export function BottomNav({ screen, onSelect, footer, sessionId }: BottomNavProp
             </li>
           );
         })}
-        <li className="min-w-16 flex-1">
-          <Tip
-            label={translate("nav.bottom.shipbuilding")}
-            disabled={!shouldShowTooltip(tooltipDetail)}
-          >
-            <button
-              type="button"
-              aria-label={translate("nav.bottom.shipbuilding")}
-              aria-haspopup="dialog"
-              onClick={() => setShipbuildingOpen(true)}
-              className={cn(
-                "flex min-h-11 w-full flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 text-xs leading-tight outline-none",
-                "hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring",
-              )}
-            >
-              <Ship className="size-4 shrink-0" aria-hidden="true" />
-              <span className="max-w-full whitespace-nowrap">
-                {translate("nav.bottom.shipbuilding")}
-              </span>
-            </button>
-          </Tip>
-        </li>
       </ul>
-      <ShipbuildingDialog
-        open={shipbuildingOpen}
-        onOpenChange={setShipbuildingOpen}
-        sessionId={sessionId}
-      />
       {DEBUG_MODE && footer !== undefined && (
         <span className="block truncate px-3 pb-1 font-mono text-[12px] text-muted-foreground">
           {footer}
