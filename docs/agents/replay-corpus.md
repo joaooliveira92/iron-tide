@@ -11,7 +11,7 @@ replay and month. After `pnpm replay:record <id>`, run `pnpm replay:approve --ca
 "<assessment>" --class <class>` to propose entries from the diff against `origin/dev` (`--base <ref>`);
 the class is `EXPECTED_GAMEPLAY_CHANGE`, `SERIALIZATION_ONLY` or `RULESET_VERSION_CHANGE`.
 `pnpm check:replay-approvals` fails an unapproved, mismatched, orphaned, reused, rewritten or misclassed
-entry. CI only verifies; entries are append-only.
+entry. CI only verifies; entries are append-only relative to the gate base.
 
 ## Verifying and extending
 
