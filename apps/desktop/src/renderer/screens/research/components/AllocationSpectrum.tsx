@@ -34,32 +34,31 @@ export function AllocationSpectrum({
   const stalledHigh = fields.filter((f) => f.isHigh && f.state === "waiting");
 
   return (
-    <section aria-label="Monthly allocation" className="space-y-1.5 border-b px-3 py-2.5">
-      <div className="flex items-baseline justify-between gap-3 text-xs">
-        <h3 className="font-medium text-foreground">Where the budget goes</h3>
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2 text-[0.6875rem]">
+        <span className="font-medium text-foreground">Allocation</span>
         <span className="text-muted-foreground tabular-nums">
-          {totals.projectedPoints} pts per month across {funded.length}{" "}
-          {funded.length === 1 ? "field" : "fields"}
+          {totals.projectedPoints} pts · {funded.length} {funded.length === 1 ? "field" : "fields"}
         </span>
       </div>
       {funded.length === 0 ? (
         <div
           role="status"
-          className="flex h-9 items-center rounded-md border border-dashed px-3 text-xs text-muted-foreground [background-image:repeating-linear-gradient(135deg,transparent_0_6px,color-mix(in_oklab,var(--border)_60%,transparent)_6px_7px)]"
+          className="flex h-6 items-center rounded border border-dashed px-2 text-[0.6875rem] text-muted-foreground [background-image:repeating-linear-gradient(135deg,transparent_0_6px,color-mix(in_oklab,var(--border)_60%,transparent)_6px_7px)]"
         >
           {budget === 0
             ? "The research budget is empty, so nothing is spent."
             : "No field has an open technology, so the budget is not drawn."}
         </div>
       ) : (
-        <ul className="flex h-9 gap-px overflow-hidden rounded-md border bg-border">
+        <div className="flex h-6 gap-px overflow-hidden rounded border bg-border">
           {funded.map((field) => {
             const Icon = fieldIcon(field.fieldId);
             return (
-              <li
+              <div
                 key={field.fieldId}
                 style={{ flexGrow: field.projectedPoints, flexBasis: 0 }}
-                className="min-w-6 transition-[flex-grow] duration-500 motion-reduce:transition-none"
+                className="min-w-4 transition-[flex-grow] duration-500 motion-reduce:transition-none"
               >
                 <HoverCard>
                   <HoverCardTrigger
@@ -71,35 +70,35 @@ export function AllocationSpectrum({
                         onClick={() => onSelect(field.fieldId)}
                         aria-label={`${field.label}: ${field.projectedPoints} points, ${field.sharePct}% of the budget`}
                         className={cn(
-                          "flex h-full w-full items-center gap-1.5 overflow-hidden px-2 text-xs outline-none",
+                          "flex h-full w-full items-center gap-1 overflow-hidden px-1.5 text-[0.6875rem] outline-none",
                           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                           SEGMENT_TONE[field.weightLabel],
                           field.fieldId === selectedFieldId &&
-                            "shadow-[inset_0_-3px_0_0_var(--foreground)]",
+                            "shadow-[inset_0_-2px_0_0_var(--foreground)]",
                         )}
                       />
                     }
                   >
-                    <Icon aria-hidden="true" className="size-3.5 shrink-0" />
-                    <span className="truncate">{field.label}</span>
-                    <span className="ml-auto tabular-nums opacity-80">{field.projectedPoints}</span>
+                    <Icon aria-hidden="true" className="size-3 shrink-0" />
+                    <span className="truncate max-[40rem]:hidden">{field.label}</span>
+                    <span className="ml-auto tabular-nums opacity-80 max-[30rem]:hidden">{field.projectedPoints}</span>
                   </HoverCardTrigger>
                   <HoverCardContent side="bottom" align="center" className="w-64">
                     <FieldSummary field={field} />
                   </HoverCardContent>
                 </HoverCard>
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
       {stalledHigh.length > 0 && (
-        <p role="status" className="text-xs text-amber-600 dark:text-amber-400">
+        <p role="status" className="text-[0.6875rem] text-amber-600 dark:text-amber-400">
           {formatConjunctionList(stalledHigh.map((f) => f.label))}{" "}
           {stalledHigh.length === 1 ? "is" : "are"} High priority with nothing open to research, so{" "}
           {stalledHigh.length === 1 ? "its" : "their"} share goes to other fields.
         </p>
       )}
-    </section>
+    </div>
   );
 }

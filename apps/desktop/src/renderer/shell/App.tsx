@@ -21,6 +21,7 @@ import {
   CampaignScreenOutlet,
   type Screen,
 } from "./campaign-screen-registry.js";
+import { isMapUnderlayScreen } from "./map-underlay-screens.js";
 import { type CampaignShellMode, describeMonthCommitFailure } from "./campaign-shell-state.js";
 import { AppFrame } from "./AppFrame.js";
 import { BackgroundLayer } from "./BackgroundLayer.js";
@@ -87,7 +88,7 @@ function activeViewFor(mode: CampaignShellMode): ActiveView {
 
 function ActiveCampaignView({ screen }: { readonly screen: Screen }) {
   return (
-    <div className={screen === "overview" ? "h-full font-sans" : "p-4 font-sans"}>
+    <div className={isMapUnderlayScreen(screen) ? "h-full font-sans" : "p-4 font-sans"}>
       <CampaignScreenOutlet screen={screen} />
     </div>
   );

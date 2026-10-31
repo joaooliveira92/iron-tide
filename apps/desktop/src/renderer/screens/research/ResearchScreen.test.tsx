@@ -86,19 +86,19 @@ describe("ResearchScreen", () => {
     hookMocks.stateFn.mockReturnValue(makeLoaded());
     render(<ResearchScreen sessionId="ses-1" />);
 
-    const group = screen.getAllByRole("group", { name: "Hull construction" })[0]!;
-    fireEvent.click(within(group).getByRole("button", { name: "Hull construction Med" }));
+    const group = screen.getAllByRole("group", { name: /priority/i })[0]!;
+    fireEvent.click(within(group).getByRole("button", { name: /Med$/ }));
     expect(hookMocks.setFieldWeight).toHaveBeenCalledWith("HULL_CONSTRUCTION", 2);
   });
 
-  it("opens a technology's detail in the inspector when it is clicked", () => {
+  it("opens a technology's detail in a dialog when it is clicked", () => {
     hookMocks.stateFn.mockReturnValue(makeLoaded());
     render(<ResearchScreen sessionId="ses-1" />);
 
     fireEvent.click(screen.getByTestId("tech-node-hc_compound"));
-    const inspector = screen.getByRole("complementary", { name: /Inspector/ });
-    expect(within(inspector).getByText("67% to be drawn next")).not.toBeNull();
-    expect(within(inspector).getByText("Wrought Iron Hull")).not.toBeNull();
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText("67% to be drawn next")).not.toBeNull();
+    expect(within(dialog).getByText("Wrought Iron Hull")).not.toBeNull();
   });
 
   it("reports the budget and archive progress in the status bar", () => {
@@ -145,8 +145,8 @@ describe("ResearchScreen", () => {
     render(<ResearchScreen sessionId="ses-1" />);
 
     expect(
-      screen.getByText(/Gunnery is High priority with nothing open to research/),
-    ).not.toBeNull();
+      screen.getAllByText(/High priority with nothing open to research/i).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("tells the truth about a field with no authored technologies", () => {
@@ -154,7 +154,9 @@ describe("ResearchScreen", () => {
     render(<ResearchScreen sessionId="ses-1" />);
 
     fireEvent.click(screen.getByRole("button", { name: /^Missiles, Low priority/ }));
-    expect(screen.getByText("No technologies are authored for this field yet.")).not.toBeNull();
+    expect(
+      screen.getAllByText("No technologies are authored for this field yet.").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("says plainly that an empty budget spends nothing", () => {

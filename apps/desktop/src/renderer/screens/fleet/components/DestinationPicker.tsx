@@ -21,9 +21,9 @@ export const DestinationPicker = memo(function DestinationPicker({
 }: DestinationPickerProps) {
   const destinationId = useId();
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex min-w-56 flex-1 flex-col gap-1">
       <label className="text-sm font-medium" htmlFor={destinationId}>
-        Destination
+        Sail to
       </label>
       <Select value={value ?? ""} onValueChange={onChange} className="w-full">
         <SelectTrigger id={destinationId} data-fleet-destination="" aria-keyshortcuts="M">

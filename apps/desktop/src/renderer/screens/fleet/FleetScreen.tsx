@@ -1,10 +1,8 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { DEBUG_MODE } from "../../shell/debug-flag.js";
 import { Ship } from "lucide-react";
 import { PageHeader } from "../../components/shared/PageHeader.js";
-import { CollapsibleSection } from "../../components/shared/CollapsibleSection.js";
 import { Badge } from "../../components/ui/badge.js";
-import { Separator } from "../../components/ui/separator.js";
 import {
   buildAreaOverview,
   divisionPickerRows,
@@ -23,8 +21,19 @@ import { orderHotkeyIntent, stepDivisionSelection } from "./fleet-hotkeys.js";
 import { useFleetHotkeys } from "./hooks/useFleetHotkeys.js";
 import { useFleetScreen } from "./hooks/useFleetScreen.js";
 import { translate } from "../../lib/strings.js";
+import { ChartDesk, INDEX_TABS_CLEARANCE } from "../../components/slate/ChartDesk.js";
+import { DepartmentDrawer } from "../../components/slate/DepartmentDrawer.js";
+import { IndexTabs } from "../../components/slate/IndexTabs.js";
 import { DivisionPicker } from "./components/DivisionPicker.js";
-import { WorldMapPanel } from "../../components/world-map/WorldMapPanel.js";
+import { FleetMap } from "./components/FleetMap.js";
+import { FleetRoster } from "./components/FleetRoster.js";
+import {
+  fleetDepartmentMeta,
+  fleetIndexTabs,
+  type FleetDepartment,
+} from "./fleet-departments.js";
+import { useMinWidth } from "../../lib/use-min-width.js";
+import { COMMAND_OVERLAY_MIN_WIDTH } from "../overview/hooks/useOverviewModel.js";
 import { LoadErrorCard } from "./components/LoadErrorCard.js";
 import { LoadingState } from "./components/LoadingState.js";
 
@@ -45,6 +54,8 @@ function FleetScreen({ sessionId }: { readonly sessionId: string }) {
     replace,
     cancel,
   } = useFleetScreen(sessionId);
+  const wide = useMinWidth(COMMAND_OVERLAY_MIN_WIDTH);
+  const [department, setDepartment] = useState<FleetDepartment | null>(null);
 
   const areaNameMap = useMemo(() => new Map(state.areas.map((a) => [a.id, a.name])), [state.areas]);
   const divisionNameMap = useMemo(
@@ -144,8 +155,104 @@ function FleetScreen({ sessionId }: { readonly sessionId: string }) {
     );
   }
 
+  const stationsShort =
+    state.presence === null || !state.presence.configured
+      ? null
+      : state.presence.areas.filter((area) => area.shortfallTons > 0).length;
+
+  const roster = (
+    <FleetRoster divisionCount={divisionRows.length} hint={translate("fleet.hotkeys.hint")}>
+      <DivisionPicker
+        rows={divisionRows}
+        selectedDivisionId={selectedDivisionId}
+        onSelectDivision={setSelectedDivisionId}
+      />
+    </FleetRoster>
+  );
+
+  const dispatch = (
+    <OrderSection
+      destinations={reachableAreas}
+      destinationAreaId={destinationAreaId}
+      onDestinationChange={setDestinationAreaId}
+      order={order}
+      actions={orderActions}
+      notice={state.notice}
+    />
+  );
+
+  const tabs = (
+    <IndexTabs
+      label="Fleet departments"
+      testId="fleet-affairs"
+      groups={fleetIndexTabs({
+        divisions: divisionRows.length,
+        orders: movementRows.length,
+        areas: areaOverview.length,
+        stationsShort,
+      })}
+      openId={department}
+      onOpen={(id) => setDepartment(department === id ? null : id)}
+      attached={wide}
+    />
+  );
+
+  const panels: Readonly<Record<FleetDepartment, ReactNode>> = {
+    organization: <FleetOrganizationSection sessionId={sessionId} />,
+    station: <FleetStationSection sessionId={sessionId} />,
+    training: <FleetTrainingSection sessionId={sessionId} />,
+    exercises: <FleetExerciseSection sessionId={sessionId} />,
+    orders: <MovementCommandsTable compact rows={movementRows} />,
+    areas: <AreaOverviewTable rows={areaOverview} />,
+    reports: <FleetReportSections sessionId={sessionId} />,
+  };
+
+  const meta = department === null ? null : fleetDepartmentMeta(department);
+  const drawer =
+    department === null || meta === null ? null : (
+      <DepartmentDrawer
+        title={meta.label}
+        summary={meta.summary}
+        width={meta.width}
+        testId="fleet-workbench"
+        hotkeyScope
+        onClose={() => setDepartment(null)}
+      >
+        <div className="space-y-4 [&>section]:border-t-0 [&>section]:pt-0">
+          {panels[department]}
+        </div>
+      </DepartmentDrawer>
+    );
+
+  const focusAreaId = selectedDivision?.areaId ?? null;
+
+  if (wide) {
+    const drawerWidth = meta === null ? null : meta.width === "wide" ? "44rem" : "28rem";
+    const clearance =
+      drawerWidth === null
+        ? INDEX_TABS_CLEARANCE
+        : `calc(${INDEX_TABS_CLEARANCE} + ${drawerWidth} + 0.75rem)`;
+    return (
+      <div
+        data-guided-target="fleet"
+        className="relative h-full min-h-[28rem]"
+        style={{ "--chrome-right": clearance } as CSSProperties}
+      >
+        <h2 className="sr-only">Fleet</h2>
+        <FleetMap
+          sessionId={sessionId}
+          playerNationId={state.playerNationId}
+          focusAreaId={focusAreaId}
+          variant="command"
+          leftPanels={roster}
+        />
+        <ChartDesk tabs={tabs} drawer={drawer} slip={dispatch} />
+      </div>
+    );
+  }
+
   return (
-    <div data-guided-target="fleet" className="space-y-6">
+    <div data-guided-target="fleet" className="flex flex-col gap-3 p-3">
       <PageHeader
         icon={Ship}
         title="Fleet"
@@ -162,42 +269,18 @@ function FleetScreen({ sessionId }: { readonly sessionId: string }) {
           ) : undefined
         }
       />
-      <p className="text-xs text-muted-foreground" data-testid="fleet-hotkey-hint">
-        {translate("fleet.hotkeys.hint")}
-      </p>
-      <DivisionPicker
-        rows={divisionRows}
-        selectedDivisionId={selectedDivisionId}
-        onSelectDivision={setSelectedDivisionId}
-      />
-      <Separator />
-      <WorldMapPanel
-        sessionId={sessionId}
-        title="Fleet positions"
-        focusAreaId={selectedDivision?.areaId ?? null}
-        testId="fleet-map-panel"
-      />
-      <CollapsibleSection title="Area overview" testId="fleet-area-overview">
-        <AreaOverviewTable rows={areaOverview} />
-      </CollapsibleSection>
-      <Separator />
-      <FleetOrganizationSection sessionId={sessionId} />
-      <Separator />
-      <FleetStationSection sessionId={sessionId} />
-      <FleetTrainingSection sessionId={sessionId} />
-      <FleetExerciseSection sessionId={sessionId} />
-      <Separator />
-      <OrderSection
-        destinations={reachableAreas}
-        destinationAreaId={destinationAreaId}
-        onDestinationChange={setDestinationAreaId}
-        order={order}
-        actions={orderActions}
-        notice={state.notice}
-      />
-      <MovementCommandsTable rows={movementRows} />
-      <Separator />
-      <FleetReportSections sessionId={sessionId} />
+      <div className="h-[60vh] min-h-[22rem]">
+        <FleetMap
+          sessionId={sessionId}
+          playerNationId={state.playerNationId}
+          focusAreaId={focusAreaId}
+          variant="panel"
+        />
+      </div>
+      {roster}
+      {dispatch}
+      {tabs}
+      {drawer !== null && <div className="h-[70vh] min-h-[22rem]">{drawer}</div>}
     </div>
   );
 }

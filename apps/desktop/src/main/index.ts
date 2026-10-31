@@ -21,11 +21,11 @@ import { installUnresponsiveRecovery } from "./unresponsiveRecovery.js";
 import { isDebugModeEnabled } from "./debugGate.js";
 import { withModernExtensionApi } from "./extensionSession.js";
 
-const nodeEnv = Effect.runSync(Config.option(Config.string("NODE_ENV")));
+const nodeEnv = Effect.runSync(Config.option(Config.String("NODE_ENV")));
 const isDev =
   process.argv.includes("--dev") || (nodeEnv._tag === "Some" && nodeEnv.value === "development");
 
-const reactDevToolsConfig = Effect.runSync(Config.option(Config.string("VITE_BLUEWAVE_DEVTOOLS")));
+const reactDevToolsConfig = Effect.runSync(Config.option(Config.String("VITE_BLUEWAVE_DEVTOOLS")));
 const reactDevToolsRequested =
   isDebugModeEnabled() ||
   (reactDevToolsConfig._tag === "Some" && reactDevToolsConfig.value === "true");

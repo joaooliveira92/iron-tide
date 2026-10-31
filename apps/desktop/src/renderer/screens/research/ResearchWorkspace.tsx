@@ -4,7 +4,9 @@ import { cn } from "../../lib/utils.js";
 import { useScreenHeaderHost } from "../../shell/screen-header.js";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { EngineeringStatusBar } from "../shipbuilding/components/EngineeringStatusBar.js";
-import { Inspector } from "../shipbuilding/components/Inspector.js";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "../../components/ui/dialog.js";
+import { Button } from "../../components/ui/button.js";
+import { Archive, BookOpen } from "lucide-react";
 import {
   AllocationSpectrum,
   ArchivePanel,
@@ -19,14 +21,6 @@ import {
 import type { FieldWeightOption } from "./research-field-priorities.js";
 import { researchReadouts } from "./research-readouts.js";
 import type { ResearchViewModel } from "./research-view-model.js";
-
-const TABS = [
-  { id: "briefing", label: "Briefing" },
-  { id: "technology", label: "Technology" },
-  { id: "archive", label: "Archive" },
-] as const;
-
-type TabId = (typeof TABS)[number]["id"];
 
 export interface ResearchWorkspaceProps {
   readonly vm: ResearchViewModel;
@@ -61,7 +55,9 @@ export function ResearchWorkspace({
   const format = usePresentationFormat();
   const [selectedFieldId, setSelectedFieldId] = useState(() => initialField(vm));
   const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
-  const [tab, setTab] = useState<TabId>("briefing");
+  const [briefingOpen, setBriefingOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [techModalOpen, setTechModalOpen] = useState(false);
 
   const field = vm.fields.find((f) => f.fieldId === selectedFieldId) ?? vm.fields[0]!;
   const selectedTech = selectedTechId === null ? undefined : vm.technologies.get(selectedTechId);
@@ -74,8 +70,17 @@ export function ResearchWorkspace({
   };
 
   const selectTech = (techId: string) => {
-    setSelectedTechId(techId);
-    setTab("technology");
+    if (techId === selectedTechId && techModalOpen) {
+      // same node clicked while modal open — close it
+      setTechModalOpen(false);
+    } else {
+      setSelectedTechId(techId);
+      setTechModalOpen(true);
+    }
+  };
+
+  const onTechModalChange = (open: boolean) => {
+    setTechModalOpen(open);
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -86,11 +91,6 @@ export function ResearchWorkspace({
   };
 
   const hosted = useScreenHeaderHost();
-
-  const breadcrumb =
-    tab === "technology" && selectedTech !== undefined
-      ? ["Research", field.label, selectedTech.label]
-      : ["Research", TABS.find((t) => t.id === tab)?.label ?? ""];
 
   return (
     <div
@@ -110,7 +110,26 @@ export function ResearchWorkspace({
         canSubmit={canSubmit}
         onRevert={onRevert}
         onSubmit={onSubmit}
-        extras={commandExtras}
+        extras={
+          <>
+            {commandExtras}
+            <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+              <DialogTrigger render={
+                <Button variant="ghost" size="sm" type="button">
+                  <Archive aria-hidden="true" className="size-4" />
+                  <span className="hidden sm:inline">Archive</span>
+                </Button>
+              } />
+              <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
+                <DialogTitle className="flex items-center gap-2 text-lg">
+                  <Archive aria-hidden="true" className="size-5 text-primary" />
+                  Technology Archive
+                </DialogTitle>
+                <ArchivePanel fields={vm.fields} />
+              </DialogContent>
+            </Dialog>
+          </>
+        }
       />
       {notice !== null ? (
         <div className="border-b px-3 py-2">
@@ -119,24 +138,74 @@ export function ResearchWorkspace({
       ) : (
         <div />
       )}
-      <div className="grid min-h-0 grid-cols-[3.5rem_minmax(0,1fr)_20rem] xl:grid-cols-[15rem_minmax(0,1fr)_22rem]">
-        <FieldMap
-          fields={vm.fields}
-          selectedFieldId={field.fieldId}
-          highCapReached={highCapReached}
-          highCap={vm.highCap}
-          busy={busy}
-          onSelect={selectField}
-          onSetWeight={onSetFieldWeight}
-        />
+      <div className="grid min-h-0 grid-cols-[16rem_minmax(0,1fr)]">
+        {/* Left panel: field list with inline progress + budget summary */}
+        <nav
+          aria-label="Research fields"
+          className="flex min-h-0 flex-col border-r bg-muted/20"
+        >
+          {/* Fields list */}
+          <div className="themed-scrollbar min-h-0 flex-1 overflow-y-auto">
+            <FieldMap
+              fields={vm.fields}
+              selectedFieldId={field.fieldId}
+              highCapReached={highCapReached}
+              highCap={vm.highCap}
+              busy={busy}
+              onSelect={selectField}
+              onSetWeight={onSetFieldWeight}
+            />
+          </div>
+
+          {/* Budget mini-summary + Briefing trigger — always visible at bottom */}
+          <div className="border-t px-3 py-2.5 space-y-2">
+            <div className="flex items-baseline justify-between gap-2 text-xs">
+              <span className="text-muted-foreground">Monthly budget</span>
+              <span className="font-medium tabular-nums">{format.count(vm.budget.monthly)}</span>
+            </div>
+            <div className="relative h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none",
+                  vm.budget.lowSpending ? "bg-amber-500" : "bg-primary",
+                )}
+                style={{ width: `${vm.budget.utilizationPct}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[0.6875rem] text-muted-foreground tabular-nums">
+              <span>0</span>
+              <span>Floor {format.count(vm.budget.floor)}</span>
+              <span>Cap {format.count(vm.budget.cap)}</span>
+            </div>
+            <Dialog open={briefingOpen} onOpenChange={setBriefingOpen}>
+              <DialogTrigger render={
+                <Button variant="ghost" size="sm" type="button" className="w-full justify-start gap-1.5 text-xs">
+                  <BookOpen aria-hidden="true" className="size-3.5" />
+                  How research works
+                </Button>
+              } />
+              <DialogContent className="max-w-lg">
+                <DialogTitle className="flex items-center gap-2 text-base">
+                  <BookOpen aria-hidden="true" className="size-4 text-primary" />
+                  Research briefing
+                </DialogTitle>
+                <BriefingPanel budget={vm.budget} />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </nav>
+
+        {/* Center panel: thin budget bar + tech tree */}
         <section aria-label="Technology chart" className="flex min-h-0 min-w-0 flex-col">
-          <AllocationSpectrum
-            fields={vm.fields}
-            totals={vm.totals}
-            budget={vm.budget.monthly}
-            selectedFieldId={field.fieldId}
-            onSelect={selectField}
-          />
+          <div className="shrink-0 border-b bg-muted/15 px-3 py-1.5">
+            <AllocationSpectrum
+              fields={vm.fields}
+              totals={vm.totals}
+              budget={vm.budget.monthly}
+              selectedFieldId={field.fieldId}
+              onSelect={selectField}
+            />
+          </div>
           <FieldHeader
             field={field}
             highCapReached={highCapReached}
@@ -153,26 +222,18 @@ export function ResearchWorkspace({
             />
           </div>
         </section>
-        <Inspector
-          title="Research"
-          breadcrumb={breadcrumb}
-          tabs={TABS}
-          tab={tab}
-          onTab={(next) => setTab(next as TabId)}
-        >
-          {tab === "briefing" && <BriefingPanel budget={vm.budget} />}
-          {tab === "technology" &&
-            (selectedTech === undefined ? (
-              <p className="text-sm text-muted-foreground">
-                Choose a technology on the chart to see its cost, prerequisites, and odds of being
-                drawn.
-              </p>
-            ) : (
-              <TechnologyDetail tech={selectedTech} fieldLabel={field.label} />
-            ))}
-          {tab === "archive" && <ArchivePanel fields={vm.fields} />}
-        </Inspector>
       </div>
+
+      {/* Technology detail modal */}
+      {selectedTech !== undefined && (
+        <Dialog open={techModalOpen} onOpenChange={onTechModalChange}>
+          <DialogContent className="max-w-lg">
+            <DialogTitle className="sr-only">{selectedTech.label}</DialogTitle>
+            <TechnologyDetail tech={selectedTech} fieldLabel={field.label} />
+          </DialogContent>
+        </Dialog>
+      )}
+
       <EngineeringStatusBar readouts={readouts} format={format} />
     </div>
   );

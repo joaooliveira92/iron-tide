@@ -1,5 +1,4 @@
 import { memo } from "react";
-import { Alert, AlertDescription } from "../../../components/ui/alert.js";
 
 export const OrderNotice = memo(function OrderNotice({
   notice,
@@ -8,8 +7,11 @@ export const OrderNotice = memo(function OrderNotice({
 }) {
   if (notice === null) return null;
   return (
-    <Alert>
-      <AlertDescription className="whitespace-pre-line">{notice}</AlertDescription>
-    </Alert>
+    <p
+      role="status"
+      className="whitespace-pre-line border-l-2 border-admiralty-border pl-3 text-sm text-admiralty-ink-muted"
+    >
+      {notice}
+    </p>
   );
 });

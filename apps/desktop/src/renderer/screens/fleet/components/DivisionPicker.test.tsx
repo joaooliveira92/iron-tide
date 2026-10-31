@@ -22,11 +22,22 @@ const row: DivisionPickerRow = {
 };
 
 describe("DivisionPicker", () => {
-  it("titles each card with the fleet's name, never the internal id", () => {
+  it("titles each row with the fleet's name, never the internal id", () => {
     render(<DivisionPicker rows={[row]} selectedDivisionId={null} onSelectDivision={vi.fn()} />);
     expect(screen.getByText("Home Fleet")).not.toBeNull();
     expect(screen.getByText("English Home Waters")).not.toBeNull();
+    expect(screen.getByText("1 ship")).not.toBeNull();
     expect(screen.queryByText(/fleet_gbr_home/)).toBeNull();
+  });
+
+  it("lists the ships of the selected division only", () => {
+    const { rerender } = render(
+      <DivisionPicker rows={[row]} selectedDivisionId={null} onSelectDivision={vi.fn()} />,
+    );
+    expect(screen.queryByText("HMS Alexandra")).toBeNull();
+    rerender(
+      <DivisionPicker rows={[row]} selectedDivisionId="fleet_gbr_home" onSelectDivision={vi.fn()} />,
+    );
     expect(screen.getByText("HMS Alexandra")).not.toBeNull();
   });
 });

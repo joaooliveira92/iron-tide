@@ -1416,25 +1416,27 @@ export function GlobeAdapter({
       <div aria-live="polite" role="status" data-testid="globe-adapter-live" className="sr-only">
         {liveMessage}
       </div>
-      <table className="sr-only">
-        <caption>Globe adapter entities</caption>
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Kind</th>
-            <th scope="col">Area</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entityRows.map((entity) => (
-            <tr key={entity.id}>
-              <th scope="row">{entity.name}</th>
-              <td>{entity.kind}</td>
-              <td>{entity.areaId}</td>
+      <div className="sr-only">
+        <table>
+          <caption>Globe adapter entities</caption>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Kind</th>
+              <th scope="col">Area</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {entityRows.map((entity) => (
+              <tr key={entity.id}>
+                <th scope="row">{entity.name}</th>
+                <td>{entity.kind}</td>
+                <td>{entity.areaId}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <div className="sr-only" data-testid="globe-adapter-camera">
         {JSON.stringify(camera)}
       </div>

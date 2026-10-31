@@ -5,6 +5,7 @@ import {
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
 import { Hourglass } from "lucide-react";
+import { Progress } from "../../../components/ui/progress.js";
 import { Kbd } from "../../../components/ui/kbd.js";
 import { cn } from "../../../lib/utils.js";
 import type { FieldWeightOption } from "../research-field-priorities.js";
@@ -63,32 +64,35 @@ export function FieldMap({
   };
 
   return (
-    <nav aria-label="Research fields" className="flex h-full min-h-0 flex-col border-r">
+    <div className="flex h-full min-h-0 flex-col">
       <ul
         ref={listRef}
         onKeyDown={onKeyDown}
-        className="themed-scrollbar flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-1.5 xl:p-2"
+        className="flex min-h-0 flex-1 flex-col gap-px px-1.5 py-2"
       >
         {fields.map((field) => {
           const Icon = fieldIcon(field.fieldId);
           const active = field.fieldId === selectedFieldId;
           const muted = field.state === "waiting" || field.state === "empty";
+          const showProgress =
+            field.activeTech !== null && field.activeTech.progressPct > 0;
           return (
-            <li key={field.fieldId} className="relative">
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "absolute inset-y-1.5 left-0 w-0.5 rounded-full",
-                  WEIGHT_RAIL[field.weightLabel],
-                )}
-              />
+            <li key={field.fieldId}>
               <div
                 data-active={active}
                 className={cn(
-                  "group/row flex items-center gap-1 rounded-md pr-1 pl-1.5",
-                  "hover:bg-accent/60 data-[active=true]:bg-accent",
+                  "group/row relative rounded-md transition-colors",
+                  "hover:bg-accent/50 data-[active=true]:bg-accent",
+                  "focus-within:ring-2 focus-within:ring-ring",
                 )}
               >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "absolute inset-y-2 left-0 w-0.5 rounded-full transition-colors",
+                    active ? WEIGHT_RAIL[field.weightLabel] : "bg-transparent group-hover/row:bg-border",
+                  )}
+                />
                 <HoverCard>
                   <HoverCardTrigger
                     delay={250}
@@ -101,42 +105,64 @@ export function FieldMap({
                         aria-label={`${field.label}, ${field.weightLabel} priority, ${field.discoveredTechs} of ${field.totalTechs} discovered`}
                         tabIndex={active ? 0 : -1}
                         onClick={() => onSelect(field.fieldId)}
-                        className={cn(
-                          "flex min-w-0 flex-1 items-center gap-2 rounded-md py-2 text-left text-sm outline-none",
-                          "focus-visible:ring-2 focus-visible:ring-ring max-xl:justify-center",
-                          active && "font-medium",
-                          muted && !active && "text-muted-foreground",
-                        )}
+                        className="flex w-full items-start gap-2 px-2.5 py-2 text-left outline-none"
                       />
                     }
                   >
-                    <Icon aria-hidden="true" className="size-4 shrink-0" />
-                    <span className="min-w-0 flex-1 truncate max-xl:sr-only">{field.label}</span>
-                    {field.state === "waiting" && (
-                      <Hourglass
-                        aria-hidden="true"
-                        className="size-3 shrink-0 text-muted-foreground max-xl:hidden"
-                      />
-                    )}
-                    <span
+                    <Icon
                       aria-hidden="true"
                       className={cn(
-                        "text-xs text-muted-foreground tabular-nums max-xl:sr-only",
-                        "xl:group-hover/row:hidden xl:group-focus-within/row:hidden xl:group-data-[active=true]/row:hidden",
+                        "mt-0.5 size-4 shrink-0",
+                        active ? "text-primary" : "text-muted-foreground",
                       )}
-                    >
-                      {field.projectedPoints > 0
-                        ? `+${field.projectedPoints}`
-                        : `${field.discoveredTechs}/${field.totalTechs}`}
-                    </span>
+                    />
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={cn(
+                            "text-sm leading-tight font-medium truncate",
+                            muted && !active && "text-muted-foreground",
+                          )}
+                        >
+                          {field.label}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                          {field.projectedPoints > 0
+                            ? `+${field.projectedPoints} pts`
+                            : field.state === "complete"
+                              ? `${field.discoveredTechs}/${field.totalTechs}`
+                              : field.state === "waiting"
+                                ? "idle"
+                                : "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-[0.6875rem] text-muted-foreground">
+                          {field.stateNote}
+                        </span>
+                        {field.state === "waiting" && (
+                          <Hourglass
+                            aria-hidden="true"
+                            className="size-3 shrink-0 text-muted-foreground"
+                          />
+                        )}
+                      </div>
+                      {showProgress && (
+                        <Progress
+                          value={field.activeTech!.progressPct}
+                          aria-label={`${field.activeTech!.label} progress`}
+                          className="h-1"
+                        />
+                      )}
+                    </div>
                   </HoverCardTrigger>
                   <HoverCardContent side="right" align="start" sideOffset={8} className="w-64">
                     <FieldSummary field={field} />
                   </HoverCardContent>
                 </HoverCard>
-                <div className="hidden xl:group-hover/row:block xl:group-focus-within/row:block xl:group-data-[active=true]/row:block">
+                <div className="absolute right-1.5 top-2">
                   <WeightControl
-                    label={`${field.label} quick priority`}
+                    label={`${field.label} priority`}
                     weight={field.weight}
                     highBlocked={highCapReached}
                     highCap={highCap}
@@ -150,7 +176,7 @@ export function FieldMap({
           );
         })}
       </ul>
-      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t px-3 py-2 text-xs whitespace-nowrap text-muted-foreground max-xl:hidden">
+      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t px-3 py-1.5 text-[0.6875rem] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
           <Kbd>↑</Kbd>
           <Kbd>↓</Kbd> browse
@@ -161,6 +187,6 @@ export function FieldMap({
           <Kbd>L</Kbd> priority
         </span>
       </p>
-    </nav>
+    </div>
   );
 }

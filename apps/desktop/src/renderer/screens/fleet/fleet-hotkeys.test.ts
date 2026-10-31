@@ -155,3 +155,22 @@ describe("orderHotkeyIntent", () => {
     expect(orderHotkeyIntent("submit-order", { ...base, destinationChosen: false })).toBeNull();
   });
 });
+
+describe("fleet affairs workbench scope", () => {
+  it("allows only the reserve hotkey inside the workbench", () => {
+    expect(fleetHotkeyAction(event({ key: "r", target: "workbench" }))).toBe("reserve-selected");
+    expect(fleetHotkeyAction(event({ key: "Escape", target: "workbench" }))).toBeNull();
+    expect(fleetHotkeyAction(event({ key: "Enter", target: "workbench" }))).toBeNull();
+    expect(fleetHotkeyAction(event({ key: "]", target: "workbench" }))).toBeNull();
+  });
+
+  it("classifies a control inside the scoped dialog as workbench and other dialogs as overlay", () => {
+    document.body.innerHTML = `
+      <div role="dialog" data-fleet-hotkey-scope><button id="scoped">Assign</button><input id="field" type="text" /></div>
+      <div role="dialog"><button id="other">Close</button></div>`;
+    expect(classifyHotkeyTarget(document.getElementById("scoped"))).toBe("workbench");
+    expect(classifyHotkeyTarget(document.getElementById("field"))).toBe("text-entry");
+    expect(classifyHotkeyTarget(document.getElementById("other"))).toBe("overlay");
+    document.body.innerHTML = "";
+  });
+});

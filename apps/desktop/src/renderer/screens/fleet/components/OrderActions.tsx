@@ -1,6 +1,7 @@
 import type { MovementCommand } from "@bluewave/campaign-engine";
+import { RefreshCw } from "lucide-react";
 import { memo } from "react";
-import { Button } from "../../../components/ui/button.js";
+import { SlipButton } from "../../../components/slate/DispatchSlip.js";
 
 export interface OrderActionsProps {
   readonly busy: boolean;
@@ -28,36 +29,38 @@ export const OrderActions = memo(function OrderActions({
   onRetry,
 }: OrderActionsProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Button variant="default" onClick={onSubmit} disabled={busy || !canSubmit}>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <SlipButton tone="primary" onClick={onSubmit} disabled={busy || !canSubmit}>
         Submit movement command
-      </Button>
+      </SlipButton>
       {pendingRoute !== null && (
         <>
-          <Button
-            variant="outline"
+          <SlipButton
+            tone="quiet"
             onClick={() => onReplace(pendingRoute.commandId)}
             disabled={busy || !canReplace}
           >
             Replace pending route
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => onCancel(pendingRoute.commandId)}
-            disabled={busy}
-          >
+          </SlipButton>
+          <SlipButton tone="quiet" onClick={() => onCancel(pendingRoute.commandId)} disabled={busy}>
             Cancel pending route
-          </Button>
+          </SlipButton>
         </>
       )}
-      <Button variant="ghost" size="sm" onClick={onRefresh}>
-        Refresh
-      </Button>
       {hasPendingRequest && (
-        <Button variant="secondary" size="sm" onClick={onRetry}>
+        <SlipButton tone="quiet" onClick={onRetry}>
           Retry pending request
-        </Button>
+        </SlipButton>
       )}
+      <SlipButton
+        tone="quiet"
+        aria-label="Refresh"
+        title="Refresh"
+        onClick={onRefresh}
+        className="p-1.5 no-underline"
+      >
+        <RefreshCw aria-hidden="true" className="size-4" />
+      </SlipButton>
     </div>
   );
 });

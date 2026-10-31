@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { MovementCommand } from "@bluewave/campaign-engine";
@@ -37,8 +38,13 @@ vi.mock("./hooks/useFleetScreen.js", () => ({
     cancel: screenHook.cancel,
   }),
 }));
-vi.mock("../../components/world-map/WorldMapPanel.js", () => ({
-  WorldMapPanel: () => <div />,
+vi.mock("./components/FleetMap.js", () => ({
+  FleetMap: ({ leftPanels, rightPanels }: { leftPanels?: ReactNode; rightPanels?: ReactNode }) => (
+    <div>
+      {leftPanels}
+      {rightPanels}
+    </div>
+  ),
 }));
 vi.mock("./organization/FleetOrganizationSection.js", () => ({
   FleetOrganizationSection: () => <div />,

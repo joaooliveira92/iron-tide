@@ -3,6 +3,7 @@ import { Alert, AlertDescription } from "../components/ui/alert.js";
 import { SidebarInset, SidebarProvider } from "../components/ui/sidebar.js";
 import { BottomNav } from "./BottomNav.js";
 import type { Screen } from "./campaign-screen-registry.js";
+import { isMapUnderlayScreen } from "./map-underlay-screens.js";
 import type { CampaignReads } from "./campaign-reads.js";
 import { StatusStrip } from "./StatusStrip.js";
 
@@ -25,7 +26,7 @@ export function AppFrame({
   children,
   onSelectScreen,
 }: AppFrameProps) {
-  const underlay = screen === "overview";
+  const underlay = isMapUnderlayScreen(screen);
   const frameRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);

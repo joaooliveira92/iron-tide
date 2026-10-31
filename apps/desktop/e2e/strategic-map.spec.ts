@@ -7,7 +7,7 @@ const navigateTo = (page: Page, label: string) =>
 
 async function openMap(page: Page) {
   await navigateTo(page, "Map");
-  await expect(page.getByRole("application", { name: /World map/ })).toBeVisible({
+  await expect(page.getByRole("application", { name: /world map/i })).toBeVisible({
     timeout: 30_000,
   });
   const panel = page.getByTestId("map-orders-panel");
@@ -24,11 +24,22 @@ test("the Map reads the compiled campaign and states what it does not model", as
     const panel = await openMap(e2e.page);
 
     await expect(panel.getByRole("button", { name: /Home Fleet/ })).toBeVisible();
-    await expect(panel.getByText(/Foreign fleet positions are not known/)).toBeVisible();
-    await expect(panel.getByText(/Invasion range is not modelled yet/)).toBeVisible();
-    await expect(panel.getByRole("heading", { name: "Foreign stations" })).toBeVisible();
-    await expect(panel.getByText(/\d+ t short/).first()).toBeVisible();
-    await expect(e2e.page.locator("[data-map-area]").first()).toBeVisible();
+    const overscroll = await e2e.page
+      .locator("main")
+      .evaluate((main) => main.scrollHeight - main.clientHeight);
+    expect(overscroll).toBe(0);
+
+    const tabs = e2e.page.getByRole("navigation", { name: "Strategic affairs" });
+    await tabs.getByRole("button", { name: /^Intelligence/ }).click();
+    const intelligence = e2e.page.getByRole("dialog", { name: "Intelligence" });
+    await expect(intelligence.getByText(/Foreign fleet positions are not known/)).toBeVisible();
+    await expect(intelligence.getByText(/Invasion range is not modelled yet/)).toBeVisible();
+
+    await tabs.getByRole("button", { name: /^Foreign stations/ }).click();
+    const stations = e2e.page.getByRole("dialog", { name: "Foreign stations" });
+    await expect(stations.getByText(/\d+ t short/).first()).toBeVisible();
+    await stations.getByRole("button", { name: "Close Foreign stations" }).click();
+    await expect(e2e.page.getByRole("table", { name: "Area control" })).toBeAttached();
   });
 });
 

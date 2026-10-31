@@ -1,5 +1,5 @@
 /* @vitest-environment jsdom */
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { LiveWorldMapOverlay } from "../../components/world-map/campaign-map-join.js";
 import type { MapOrderFleet } from "../../components/world-map/map-orders.js";
@@ -113,11 +113,12 @@ afterEach(() => {
 });
 
 describe("StrategicMapScreen", () => {
-  it("renders the production map and the fleet orders panel", () => {
+  it("renders the production map and the fleet dispatch strip", () => {
     render(<StrategicMapScreen sessionId="ses-1" />);
     expect(screen.getByRole("application", { name: /World map/ })).toBeTruthy();
-    expect(screen.getByRole("complementary", { name: "Fleet orders" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Home Fleet" })).toBeTruthy();
+    const strip = within(screen.getByRole("region", { name: "Fleet orders" }));
+    expect(strip.getByRole("button", { name: /Home Fleet/ })).toBeTruthy();
+    expect(strip.getByText("Pick a fleet to plot a course.")).toBeTruthy();
   });
 
   it("opens framed on the player's home waters", () => {
@@ -133,25 +134,69 @@ describe("StrategicMapScreen", () => {
     expect(hookMocks.orderTo).toHaveBeenCalledWith("home-fleet", "sea_western_approaches");
   });
 
-  it("lists the blockades the player is party to, with nation and area names", () => {
+  it("shows each department as a tab that reports its live state", () => {
+    render(<StrategicMapScreen sessionId="ses-1" />);
+    const tabs = within(screen.getByRole("navigation", { name: "Strategic affairs" }));
+    expect(tabs.getByRole("button", { name: /^Orders\s*None sealed$/ })).toBeTruthy();
+    expect(tabs.getByRole("button", { name: /^Blockades\s*None$/ })).toBeTruthy();
+    expect(tabs.getByRole("button", { name: /^Foreign stations\s*Not configured$/ })).toBeTruthy();
+    expect(tabs.getByRole("button", { name: /^Areas\s*2 areas$/ })).toBeTruthy();
+    expect(tabs.getByRole("button", { name: /^Intelligence\s*Not modelled$/ })).toBeTruthy();
+  });
+
+  it("opens the foreign stations ledger with the areas that are short of tonnage", () => {
     hookMocks.stateFn.mockReturnValue(
       state({
-        strategic: {
-          world: { areas: [], ports: [], fleets: [], routes: [] },
-          playerFleets: [],
-          blockades: [
-            {
-              blockaderId: "FRA",
-              blockadedNationId: "GBR",
-              areaId: "sea_western_approaches",
-              establishedMonth: "1880-03",
-            },
+        presence: {
+          configured: true,
+          areas: [
+            { areaId: "sea_north_sea", requiredTons: 900, presentTons: 150, shortfallTons: 750 },
           ],
         },
       }),
     );
     render(<StrategicMapScreen sessionId="ses-1" />);
-    expect(screen.getByText(/blockades .+ in Western Approaches/)).toBeTruthy();
+    const tabs = within(screen.getByRole("navigation", { name: "Strategic affairs" }));
+    expect(tabs.getByRole("button", { name: /^Foreign stations\s*1 short$/ })).toBeTruthy();
+    fireEvent.click(tabs.getByRole("button", { name: /^Foreign stations/ }));
+    const drawer = within(screen.getByRole("dialog", { name: "Foreign stations" }));
+    expect(drawer.getByText("750 t short")).toBeTruthy();
+    expect(drawer.getByText("Required 900 t, present 150 t")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Fleet orders" })).toBeNull();
+    fireEvent.click(drawer.getByRole("button", { name: "Close Foreign stations" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("region", { name: "Fleet orders" })).toBeTruthy();
+  });
+
+  it("seals the selected fleet's order and lets the player cancel it", () => {
+    hookMocks.stateFn.mockReturnValue(
+      state({
+        selectedFleet: fleet,
+        orders: {
+          fleets: [fleet],
+          pending: [
+            {
+              commandId: "cmd-1",
+              fleetId: "home-fleet",
+              fromMapAreaId: "area_north_sea",
+              toMapAreaId: "area_western_approaches",
+              destinationName: "Western Approaches",
+            },
+          ],
+          blockadedMapAreas: new Set<string>(),
+          selectedFleetId: "home-fleet",
+          onSelectFleet: hookMocks.selectFleet,
+          onDrop: noop,
+        },
+      }),
+    );
+    render(<StrategicMapScreen sessionId="ses-1" />);
+    const strip = within(screen.getByRole("region", { name: "Fleet orders" }));
+    expect(strip.getByText("Ordered: sails for Western Approaches at month end")).toBeTruthy();
+    fireEvent.click(strip.getByRole("button", { name: "Cancel order" }));
+    expect(hookMocks.cancelOrder).toHaveBeenCalledWith("cmd-1");
+    const tabs = within(screen.getByRole("navigation", { name: "Strategic affairs" }));
+    expect(tabs.getByRole("button", { name: /^Orders\s*1 sealed$/ })).toBeTruthy();
   });
 
   it("shows the read failure with a retry instead of a world", () => {

@@ -6,7 +6,7 @@ export type FleetHotkeyAction =
   | "cancel-order"
   | "reserve-selected";
 
-export type HotkeyTarget = "none" | "control" | "text-entry" | "overlay";
+export type HotkeyTarget = "none" | "control" | "text-entry" | "overlay" | "workbench";
 
 export interface HotkeyEvent {
   readonly key: string;
@@ -42,6 +42,7 @@ const CONTROL_ROLES = new Set([
 ]);
 const CONTROL_TAGS = new Set(["BUTTON", "A", "SELECT", "SUMMARY"]);
 const OVERLAY_SELECTOR = '[role="dialog"], [role="alertdialog"], [role="listbox"], [role="menu"]';
+const WORKBENCH_SELECTOR = "[data-fleet-hotkey-scope]";
 
 const KEY_ACTIONS: Readonly<Record<string, FleetHotkeyAction>> = {
   "[": "previous-division",
@@ -54,7 +55,12 @@ const KEY_ACTIONS: Readonly<Record<string, FleetHotkeyAction>> = {
 
 export function classifyHotkeyTarget(target: EventTarget | null): HotkeyTarget {
   if (!(target instanceof Element)) return "none";
-  if (target.closest(OVERLAY_SELECTOR) !== null) return "overlay";
+  if (target.closest(OVERLAY_SELECTOR) === null) return classifyElement(target);
+  if (target.closest(WORKBENCH_SELECTOR) === null) return "overlay";
+  return classifyElement(target) === "text-entry" ? "text-entry" : "workbench";
+}
+
+function classifyElement(target: Element): HotkeyTarget {
   if (target instanceof HTMLTextAreaElement) return "text-entry";
   if (target.closest('[contenteditable]:not([contenteditable="false"])') !== null) {
     return "text-entry";
@@ -73,6 +79,7 @@ export function fleetHotkeyAction(event: HotkeyEvent): FleetHotkeyAction | null 
   const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
   const action = KEY_ACTIONS[key];
   if (action === undefined) return null;
+  if (event.target === "workbench") return action === "reserve-selected" ? action : null;
   if (action === "submit-order" && event.target === "control") return null;
   return action;
 }

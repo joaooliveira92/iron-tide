@@ -332,29 +332,31 @@ export function GlobeAdapterChrome({
         </div>
       )}
 
-      <table className="sr-only" data-testid="globe-adapter-area-table">
-        <caption>Area control</caption>
-        <thead>
-          <tr>
-            <th scope="col">Area</th>
-            <th scope="col">Controlled by</th>
-            <th scope="col">Fleets</th>
-            <th scope="col">Strength</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ownershipRows.map((row) => (
-            <tr key={row.id} aria-selected={row.selected}>
-              <th scope="row">{row.name}</th>
-              <td>{row.owner ?? "Unclaimed"}</td>
-              <td>{row.fleets}</td>
-              <td>{row.strength ?? "No ships"}</td>
+      <div className="sr-only">
+        <table data-testid="globe-adapter-area-table">
+          <caption>Area control</caption>
+          <thead>
+            <tr>
+              <th scope="col">Area</th>
+              <th scope="col">Controlled by</th>
+              <th scope="col">Fleets</th>
+              <th scope="col">Strength</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {ownershipRows.map((row) => (
+              <tr key={row.id} aria-selected={row.selected}>
+                <th scope="row">{row.name}</th>
+                <td>{row.owner ?? "Unclaimed"}</td>
+                <td>{row.fleets}</td>
+                <td>{row.strength ?? "No ships"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      <div className="pointer-events-auto absolute bottom-[calc(0.75rem+var(--chrome-bottom,0px))] right-[calc(0.75rem+var(--chrome-right,0px))] z-10 flex flex-col items-end gap-2">
+      <div className="pointer-events-auto absolute bottom-[calc(0.75rem+var(--chrome-bottom,0px)+var(--chrome-slip,0px))] right-[calc(0.75rem+var(--chrome-right,0px))] z-10 flex flex-col items-end gap-2">
         {showMinimap && <GlobeMinimap viewport={viewport} onRecentre={onRecentre} />}
         <div className="rounded border border-white/25 bg-black/75 px-2.5 py-1.5 text-white">
           <MapLegend
@@ -372,7 +374,7 @@ export function GlobeAdapterChrome({
       <RouteReadout
         className={`${
           variant === "command"
-            ? "absolute bottom-[calc(0.75rem+var(--chrome-bottom,0px))] left-1/2 -translate-x-1/2 rounded-lg border px-3 py-2 text-xs shadow-lg backdrop-blur"
+            ? "absolute bottom-[calc(0.75rem+var(--chrome-bottom,0px)+var(--chrome-slip,0px))] left-1/2 -translate-x-1/2 rounded-lg border px-3 py-2 text-xs shadow-lg backdrop-blur"
             : layout.routeReadout
         } pointer-events-auto z-10`}
         route={route}

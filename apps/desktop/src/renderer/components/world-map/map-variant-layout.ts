@@ -62,7 +62,7 @@ export const MAP_VARIANT_LAYOUT: Readonly<Record<MapVariant, MapVariantLayout>> 
     leftDock:
       "pointer-events-none absolute bottom-[calc(var(--chrome-bottom,0px)+0.75rem)] left-3 top-[calc(var(--chrome-top,0px)+0.75rem)] z-10 flex w-72 flex-col gap-2 overflow-y-auto",
     rightDock:
-      "pointer-events-none absolute bottom-[calc(var(--chrome-bottom,0px)+0.75rem)] right-3 top-[calc(var(--chrome-top,0px)+0.75rem)] z-10 flex w-72 flex-col items-stretch gap-2 overflow-y-auto",
+      "pointer-events-none absolute bottom-[calc(var(--chrome-bottom,0px)+0.75rem)] right-[calc(0.75rem+var(--chrome-right,0px))] top-[calc(var(--chrome-top,0px)+0.75rem)] z-10 flex w-72 flex-col items-stretch gap-2 overflow-y-auto",
     inlineAreas: false,
     inspector: cn("rounded-lg border p-3 text-xs shadow-lg backdrop-blur", "pointer-events-auto"),
     inspectorHideWhenEmpty: true,
