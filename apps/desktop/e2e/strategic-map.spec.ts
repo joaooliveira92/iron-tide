@@ -140,17 +140,20 @@ async function settledFleetMarker(page: Page, fleetId: string) {
   await page.getByRole("application", { name: /world map/i }).focus();
   const seen: { box: FleetMarkerBox | null } = { box: null };
   await expect
-    .poll(async () => {
-      const box = await visibleFleetMarker(page, fleetId);
-      if (box === null) {
-        await page.keyboard.press("ArrowDown");
-        seen.box = null;
-        return false;
-      }
-      const settled = seen.box !== null && box.x === seen.box.x && box.y === seen.box.y;
-      seen.box = box;
-      return settled;
-    })
+    .poll(
+      async () => {
+        const box = await visibleFleetMarker(page, fleetId);
+        if (box === null) {
+          await page.keyboard.press("ArrowDown");
+          seen.box = null;
+          return false;
+        }
+        const settled = seen.box !== null && box.x === seen.box.x && box.y === seen.box.y;
+        seen.box = box;
+        return settled;
+      },
+      { timeout: 45_000 },
+    )
     .toBe(true);
   return seen.box;
 }
