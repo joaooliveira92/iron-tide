@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, session } from "electron";
-import { Effect, ManagedRuntime } from "effect";
+import { Config, Effect, ManagedRuntime } from "effect";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { ipcEvents } from "../shared/ipc-contract.js";
@@ -21,10 +21,13 @@ import { installUnresponsiveRecovery } from "./unresponsiveRecovery.js";
 import { isDebugModeEnabled } from "./debugGate.js";
 import { withModernExtensionApi } from "./extensionSession.js";
 
-const isDev = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
+const nodeEnv = Effect.runSync(Config.option(Config.string("NODE_ENV")));
+const isDev = process.argv.includes("--dev") || (nodeEnv._tag === "Some" && nodeEnv.value === "development");
 
+const reactDevToolsConfig = Effect.runSync(Config.option(Config.string("VITE_BLUEWAVE_DEVTOOLS")));
 const reactDevToolsRequested =
-  isDebugModeEnabled() || process.env.VITE_BLUEWAVE_DEVTOOLS === "true";
+  isDebugModeEnabled() ||
+  (reactDevToolsConfig._tag === "Some" && reactDevToolsConfig.value === "true");
 
 const DEV_SERVER_ORIGIN = "http://localhost:5173";
 
