@@ -134,10 +134,12 @@ export const EN_US_MESSAGES = {
   "map.orders.pick": "Pick a fleet to plot a course.",
   "map.desk.tabs": "Strategic affairs",
   "map.desk.orders.label": "Orders",
-  "map.desk.orders.summary": "Courses sealed this month. A sealed course can be recalled until the month ends.",
+  "map.desk.orders.summary":
+    "Courses sealed this month. A sealed course can be recalled until the month ends.",
   "map.desk.orders.none": "None sealed",
   "map.desk.orders.count": "{count} sealed",
-  "map.desk.orders.empty": "No fleet has sailing orders. Pick one on the chart or in the dispatch strip.",
+  "map.desk.orders.empty":
+    "No fleet has sailing orders. Pick one on the chart or in the dispatch strip.",
   "map.desk.orders.row": "{from} to {to}",
   "map.desk.blockades.label": "Blockades",
   "map.desk.blockades.summary": "Blockades that involve your nation.",
