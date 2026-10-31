@@ -7,7 +7,14 @@ import { promisify } from "node:util";
 import type { Page } from "@playwright/test";
 import { Schema } from "effect";
 import { SEED, test, expect, expectOverview } from "./fixtures.js";
-import { advanceMonths, dismissTour, navigateTo, startNewCampaign } from "./flows.js";
+import {
+  advanceMonths,
+  closeFleetDepartment,
+  dismissTour,
+  navigateTo,
+  openFleetDepartment,
+  startNewCampaign,
+} from "./flows.js";
 
 const run = promisify(execFile);
 const here = dirname(fileURLToPath(import.meta.url));
@@ -83,10 +90,12 @@ async function queueMonthOneOrders(page: Page): Promise<void> {
   await expect(page.getByText(/Budget allocation queued/)).toBeVisible();
 
   await navigateTo(page, "Fleet");
+  await openFleetDepartment(page, "Training");
   const training = page.getByRole("region", { name: "Special training" });
   await training.getByRole("checkbox", { name: "Fund Gunnery" }).check();
   await training.getByRole("button", { name: "Apply training" }).click();
   await expect(training.getByText(/Special training queued/)).toBeVisible();
+  await closeFleetDepartment(page, "Training");
 
   await page.getByRole("radio", { name: /Home Fleet/ }).click();
   await page.getByRole("button", { name: "Submit movement command" }).click();
@@ -106,6 +115,7 @@ async function queueMonthOneOrders(page: Page): Promise<void> {
 
 async function queueDivisionOrders(page: Page, month: number): Promise<void> {
   await navigateTo(page, "Fleet");
+  await openFleetDepartment(page, "Organization");
   const organization = page.getByTestId("fleet-organization");
   if (month === 2) {
     await organization.getByRole("button", { name: "Dissolve division" }).first().click();

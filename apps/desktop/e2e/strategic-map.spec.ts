@@ -108,20 +108,53 @@ async function visibleFleetMarker(page: Page, fleetId: string) {
     height: globalThis.innerHeight,
   }));
   for (let index = 0; index < count; index += 1) {
-    const box = await markers.nth(index).boundingBox();
+    const marker = markers.nth(index);
+    const box = await marker.boundingBox();
     if (box === null) continue;
     const onScreen =
       box.x >= 0 &&
       box.y >= 0 &&
       box.x + box.width <= viewport.width &&
       box.y + box.height <= viewport.height;
-    if (onScreen) return box;
+    if (!onScreen) continue;
+    const uncovered = await marker.evaluate((element) => {
+      const at = element.getBoundingClientRect();
+      const top = document.elementFromPoint(at.x + at.width / 2, at.y + at.height / 2);
+      return top?.closest("[data-map-fleet]") === element;
+    });
+    if (uncovered) return box;
   }
   return null;
 }
 
+async function useLegacyChart(page: Page) {
+  await page.evaluate(() => {
+    globalThis.location.hash = "#legacy-renderer";
+  });
+  await expect(page.locator("[data-map-fleet]").first()).toBeAttached();
+}
+
+async function settledFleetMarker(page: Page, fleetId: string) {
+  await page.getByRole("application", { name: /world map/i }).focus();
+  let previous: Awaited<ReturnType<typeof visibleFleetMarker>> = null;
+  await expect
+    .poll(async () => {
+      const box = await visibleFleetMarker(page, fleetId);
+      if (box === null) {
+        await page.keyboard.press("ArrowDown");
+        previous = null;
+        return false;
+      }
+      const settled = previous !== null && box.x === previous.x && box.y === previous.y;
+      previous = box;
+      return settled;
+    })
+    .toBe(true);
+  return previous;
+}
+
 async function dragFleet(page: Page, toAreaId: string) {
-  const from = await visibleFleetMarker(page, "fleet_gbr_home");
+  const from = await settledFleetMarker(page, "fleet_gbr_home");
   const to = await pointInside(page, toAreaId);
   expect(from).not.toBeNull();
   expect(to).not.toBeNull();
@@ -139,6 +172,7 @@ test("dragging a fleet marker onto a legal area queues the same order", async ({
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
   const panel = await openMap(page);
+  await useLegacyChart(page);
 
   await dragFleet(page, "area_western_approaches");
 
@@ -149,6 +183,7 @@ test("dropping a fleet on an illegal area queues nothing", async ({ e2e, campaig
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
   const panel = await openMap(page);
+  await useLegacyChart(page);
 
   await dragFleet(page, "area_baltic");
 
