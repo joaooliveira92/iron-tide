@@ -2,6 +2,7 @@ import type { WorldMapView } from "@bluewave/campaign-engine";
 import { fixtureAreaId } from "../../content/presentationContent.js";
 import { areaAnchor, lanePath, portAnchor, type LonLat } from "./campaign-anchors.js";
 import { AREAS_BY_ID, type AreaId, type NationId } from "./map-geometry.js";
+import type { MapPendingOrder } from "./map-orders.js";
 
 export interface LiveWorldMapOverlay {
   readonly ownership: ReadonlyMap<AreaId, NationId | null>;
@@ -138,6 +139,28 @@ export const EMPTY_LIVE_OVERLAY: LiveWorldMapOverlay = {
 
 export function fixtureAnchor(area: AreaId): readonly [number, number] | null {
   return AREAS_BY_ID.get(area)?.label ?? null;
+}
+
+export function orderLonLatPath(
+  overlay: Pick<LiveWorldMapOverlay, "seaLanes">,
+  order: Pick<MapPendingOrder, "fromAreaId" | "toAreaId" | "fromMapAreaId" | "toMapAreaId">,
+): readonly LonLat[] | null {
+  if (order.fromAreaId !== undefined && order.toAreaId !== undefined) {
+    const lane = (overlay.seaLanes ?? []).find(
+      (candidate) =>
+        (candidate.from === order.fromAreaId && candidate.to === order.toAreaId) ||
+        (candidate.from === order.toAreaId && candidate.to === order.fromAreaId),
+    );
+    if (lane !== undefined) {
+      return lane.from === order.fromAreaId ? lane.path : [...lane.path].reverse();
+    }
+    const from = areaAnchor(order.fromAreaId);
+    const to = areaAnchor(order.toAreaId);
+    if (from !== null && to !== null) return [from, to];
+  }
+  const from = fixtureAnchor(order.fromMapAreaId);
+  const to = fixtureAnchor(order.toMapAreaId);
+  return from === null || to === null ? null : [from, to];
 }
 
 export function homeFocusPoint(campaignAreaId: string | null): readonly [number, number] | null {

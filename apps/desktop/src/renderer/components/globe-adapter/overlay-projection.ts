@@ -1,7 +1,7 @@
 import { AREAS_BY_ID } from "../world-map/map-geometry.js";
-import { areaAnchor, type LonLat } from "../world-map/campaign-anchors.js";
-import type { LiveWorldMapOverlay } from "../world-map/campaign-map-join.js";
-import type { MapOrders, MapPendingOrder } from "../world-map/map-orders.js";
+import type { LonLat } from "../world-map/campaign-anchors.js";
+import { orderLonLatPath, type LiveWorldMapOverlay } from "../world-map/campaign-map-join.js";
+import type { MapOrders } from "../world-map/map-orders.js";
 import type { MapPrototypeState, RouteReading } from "../world-map/map-state.js";
 import {
   sortOverlayFeatures,
@@ -90,28 +90,6 @@ function fanned(at: LonLat, index: number, count: number): LonLat {
   return [lon, lat];
 }
 
-function pendingPath(
-  overlay: LiveWorldMapOverlay,
-  order: MapPendingOrder,
-): readonly LonLat[] | null {
-  if (order.fromAreaId !== undefined && order.toAreaId !== undefined) {
-    const lane = (overlay.seaLanes ?? []).find(
-      (candidate) =>
-        (candidate.from === order.fromAreaId && candidate.to === order.toAreaId) ||
-        (candidate.from === order.toAreaId && candidate.to === order.fromAreaId),
-    );
-    if (lane !== undefined) {
-      return lane.from === order.fromAreaId ? lane.path : [...lane.path].reverse();
-    }
-    const from = areaAnchor(order.fromAreaId);
-    const to = areaAnchor(order.toAreaId);
-    if (from !== null && to !== null) return [from, to];
-  }
-  const from = anchor(order.fromMapAreaId);
-  const to = anchor(order.toMapAreaId);
-  return from === null || to === null ? null : [from, to];
-}
-
 export function projectOverlay(input: OverlayProjectionInput): OverlayProjectionResult {
   const features: OverlayFeature[] = [];
   const ports = [...input.overlay.ports].sort((left, right) => compareIds(left.id, right.id));
@@ -173,7 +151,7 @@ export function projectOverlay(input: OverlayProjectionInput): OverlayProjection
     compareIds(left.commandId, right.commandId),
   );
   pending.forEach((order, index) => {
-    const path = pendingPath(input.overlay, order);
+    const path = orderLonLatPath(input.overlay, order);
     if (path === null) return;
     features.push(route(`pending:${order.commandId}`, 4000 + index, "planned", path));
   });

@@ -17,8 +17,13 @@ import { useInitialFocusArea } from "./useInitialFocusArea.js";
 import { useMapCamera } from "./useMapCamera.js";
 import { useMapPalette } from "./map-palette.js";
 import { useWorldMapModel } from "./useWorldMapModel.js";
-import { EMPTY_LIVE_OVERLAY, type LiveWorldMapOverlay } from "./campaign-map-join.js";
-import { projectionById, type ProjectedArea } from "./projection.js";
+import {
+  EMPTY_LIVE_OVERLAY,
+  orderLonLatPath,
+  type LiveWorldMapOverlay,
+} from "./campaign-map-join.js";
+import { projectContinuousPath } from "./map-lanes.js";
+import { projectPoint, projectionById, type ProjectedArea } from "./projection.js";
 import { orderModeMapAreas, pendingRoutes, type MapOrders } from "./map-orders.js";
 import { areaAtPoint } from "./map-hit-test.js";
 import type { AreaTreeRow } from "./area-tree.js";
@@ -102,7 +107,20 @@ export function WorldMapChart({
     }
   }
   const blockadedAreas = orders?.blockadedMapAreas ?? EMPTY_AREAS;
-  const pending = pendingRoutes(orders?.pending ?? [], (areaId) => model.anchorOf(areaId));
+  const pending = pendingRoutes(
+    orders?.pending ?? [],
+    (areaId) => model.anchorOf(areaId),
+    (order) => {
+      const path = orderLonLatPath(overlay, order);
+      return path === null
+        ? null
+        : projectContinuousPath(
+            path,
+            (lonLat) => projectPoint(lonLat, projection, state.centre),
+            projection.width,
+          );
+    },
+  );
   const draggableFleets = new Set(
     (orders?.fleets ?? [])
       .filter((fleet) => fleet.mapAreaId !== null && fleet.legalDestinations.length > 0)

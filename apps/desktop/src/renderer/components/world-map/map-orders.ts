@@ -91,11 +91,19 @@ export function pendingForFleet(
 export function pendingRoutes(
   orders: readonly MapPendingOrder[],
   anchorOf: (mapAreaId: string) => readonly [number, number] | undefined,
+  pathOf?: (order: MapPendingOrder) => readonly (readonly [number, number])[] | null,
 ): readonly (MapPendingOrder & {
   readonly from: readonly [number, number];
   readonly to: readonly [number, number];
+  readonly via?: readonly (readonly [number, number])[];
 })[] {
   return orders.flatMap((order) => {
+    const path = pathOf?.(order) ?? null;
+    if (path !== null && path.length >= 2) {
+      const first = path[0] as readonly [number, number];
+      const last = path[path.length - 1] as readonly [number, number];
+      return [{ ...order, from: first, to: last, via: path.slice(1, -1) }];
+    }
     const from = anchorOf(order.fromMapAreaId);
     const to = anchorOf(order.toMapAreaId);
     if (from === undefined || to === undefined) return [];

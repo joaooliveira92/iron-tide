@@ -7,6 +7,7 @@ export interface OrdersLayerProps {
   readonly pending: readonly (MapPendingOrder & {
     readonly from: Point;
     readonly to: Point;
+    readonly via?: readonly Point[];
   })[];
   readonly palette: MapPalette;
   readonly worldWidth: number;
@@ -16,30 +17,34 @@ export function OrdersLayer({ pending, palette, worldWidth }: OrdersLayerProps) 
   return (
     <g data-layer="orders" aria-hidden="true" pointerEvents="none">
       {pending.map((order) => {
-        const toX =
-          order.to[0] - order.from[0] > worldWidth / 2
+        const followsLane = order.via !== undefined;
+        const toX = followsLane
+          ? order.to[0]
+          : order.to[0] - order.from[0] > worldWidth / 2
             ? order.to[0] - worldWidth
             : order.from[0] - order.to[0] > worldWidth / 2
               ? order.to[0] + worldWidth
               : order.to[0];
-        const midX = (order.from[0] + toX) / 2;
-        const midY = (order.from[1] + order.to[1]) / 2;
+        const points: Point[] = [order.from, ...(order.via ?? []), [toX, order.to[1]]];
+        const polyline = points.map(([x, y]) => `${x},${y}`).join(" ");
+        const middle = points[Math.floor((points.length - 1) / 2)] as Point;
+        const next = points[Math.floor(points.length / 2)] as Point;
+        const midX = (middle[0] + next[0]) / 2;
+        const midY = (middle[1] + next[1]) / 2;
         return (
           <g key={order.commandId} data-order={order.fleetId}>
-            <line
-              x1={order.from[0]}
-              y1={order.from[1]}
-              x2={toX}
-              y2={order.to[1]}
+            <polyline
+              points={polyline}
+              fill="none"
+              strokeLinejoin="round"
               stroke={palette.routeCasing}
               strokeWidth={4}
               strokeDasharray="8 5"
             />
-            <line
-              x1={order.from[0]}
-              y1={order.from[1]}
-              x2={toX}
-              y2={order.to[1]}
+            <polyline
+              points={polyline}
+              fill="none"
+              strokeLinejoin="round"
               stroke={palette.orderPending}
               strokeWidth={2}
               strokeDasharray="8 5"

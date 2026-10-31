@@ -54,7 +54,7 @@ export function campaignWorldMapSource(overlay: LiveWorldMapOverlay): WorldMapSo
   }
 
   const ports = overlay.ports.flatMap<PossessionPlacement>((port) => {
-    const at = fixtureAnchor(port.area);
+    const at = port.anchor ?? fixtureAnchor(port.area);
     if (at === null) return [];
     return [
       {
@@ -73,6 +73,7 @@ export function campaignWorldMapSource(overlay: LiveWorldMapOverlay): WorldMapSo
       {
         id: fleet.id,
         area: fleet.area,
+        ...(fleet.anchor === null || fleet.anchor === undefined ? {} : { at: fleet.anchor }),
         ships: fleet.ships,
         owner: fleet.nation,
       },
