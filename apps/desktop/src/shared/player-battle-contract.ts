@@ -4,6 +4,8 @@ export interface PlayerBattleDivisionOrderDto {
   readonly divisionId: string;
   readonly stance: "ENGAGE" | "HOLD" | "WITHDRAW";
   readonly speedPercent: number;
+  readonly courseDeg?: number;
+  readonly speedKnots?: number;
 }
 
 export interface PlayerBattleResultDto {
