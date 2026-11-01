@@ -9,8 +9,7 @@ const props = (over: Partial<CommandBarProps> = {}): CommandBarProps => ({
   shipClassName: "",
   onShipClassName: () => {},
   onStartFromReference: () => {},
-  shipType: "DD",
-  shipTypeLabel: "DD · Torpedo boat",
+  shipTypeName: "Torpedo boat / early destroyer",
   shipTypeIcon: null,
   canUndo: false,
   canRedo: false,
@@ -27,12 +26,13 @@ const props = (over: Partial<CommandBarProps> = {}): CommandBarProps => ({
 const bar = () => screen.getByRole("group", { name: "Design commands" });
 
 describe("CommandBar", () => {
-  it("keeps the current type on the reference button and opens the browser from it", () => {
+  it("names the current type on the reference button in words and opens the browser from it", () => {
     const onStartFromReference = vi.fn();
     render(<CommandBar {...props({ onStartFromReference })} />);
     const button = within(bar()).getByRole("button", { name: /Start from a reference design/ });
-    expect(button.getAttribute("aria-description")).toContain("DD · Torpedo boat");
-    expect(within(button).getByLabelText("Current type DD")).toBeTruthy();
+    expect(button.textContent).toBe("Torpedo boat / early destroyer");
+    expect(button.getAttribute("aria-label")).toContain("Torpedo boat / early destroyer");
+    expect(button.getAttribute("aria-description")).toContain("Torpedo boat / early destroyer");
     fireEvent.click(button);
     expect(onStartFromReference).toHaveBeenCalledOnce();
   });

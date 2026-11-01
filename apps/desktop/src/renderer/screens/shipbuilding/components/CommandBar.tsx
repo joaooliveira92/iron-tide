@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode, type Ref } from "react";
 import {
   CheckCircle2,
+  ChevronDown,
   ClipboardCheck,
   GitCompare,
   MoreHorizontal,
@@ -8,7 +9,6 @@ import {
   Check,
   Undo2,
 } from "lucide-react";
-import { Badge } from "../../../components/ui/badge.js";
 import { Button, buttonVariants } from "../../../components/ui/button.js";
 import { ButtonGroup } from "../../../components/ui/button-group.js";
 import {
@@ -31,8 +31,7 @@ export interface CommandBarProps {
   readonly onShipClassName: (name: string) => void;
   readonly nameInputRef?: Ref<HTMLInputElement>;
   readonly onStartFromReference: () => void;
-  readonly shipType: string;
-  readonly shipTypeLabel: string;
+  readonly shipTypeName: string;
   readonly shipTypeIcon: ReactNode;
   readonly canUndo: boolean;
   readonly canRedo: boolean;
@@ -58,8 +57,7 @@ export function CommandBar({
   onShipClassName,
   nameInputRef,
   onStartFromReference,
-  shipType,
-  shipTypeLabel,
+  shipTypeName,
   shipTypeIcon,
   canUndo,
   canRedo,
@@ -94,18 +92,17 @@ export function CommandBar({
           />
         </label>
         <Tip
-          label={`Current type: ${shipTypeLabel}. Pick a reference design to start from another type.`}
+          label={`Current type: ${shipTypeName}. Start from a reference design to build another type.`}
         >
-          <Button variant="outline" className="gap-1.5" onClick={onStartFromReference}>
+          <Button
+            variant="outline"
+            className="min-w-0 max-w-[20rem] gap-1.5"
+            aria-label={`Start from a reference design. Current type: ${shipTypeName}`}
+            onClick={onStartFromReference}
+          >
             {shipTypeIcon}
-            Start from a reference design
-            <Badge
-              variant="secondary"
-              className="ml-1 px-1.5 py-0"
-              aria-label={`Current type ${shipType}`}
-            >
-              {shipType}
-            </Badge>
+            <span className="truncate">{shipTypeName}</span>
+            <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
           </Button>
         </Tip>
       </div>

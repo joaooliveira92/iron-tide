@@ -120,7 +120,8 @@ describe("Shipbuilding workspace shell", () => {
     const button = within(commands()).getByRole("button", {
       name: /Start from a reference design/,
     });
-    expect(within(button).getByLabelText(/^Current type /)).toBeTruthy();
+    expect(button.textContent).toMatch(/\S/);
+    expect(button.textContent).not.toMatch(/^[A-Z]{2,4}$/);
     fireEvent.click(button);
     expect(screen.getByRole("dialog", { name: "Start from a reference design" })).toBeTruthy();
   });

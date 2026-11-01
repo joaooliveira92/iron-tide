@@ -32,6 +32,7 @@ import {
   linkedEntities,
   mountNameMap,
   planModel,
+  plainShipTypeName,
   plural,
   DraftSaveWarning,
   useDraftAutosave,
@@ -44,7 +45,6 @@ import {
   type EntityContext,
   type PlanTool,
   type RevisionProject,
-  shipTypeChoices,
   shipTypeIcon,
 } from "../../components/design-workspace/index.js";
 import {
@@ -246,7 +246,6 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
           detail: findingCounts,
         };
   const shipType = draft.requirement.category;
-  const shipTypeChoice = shipTypeChoices(env.ctx, shipType).find((c) => c.value === shipType);
   const ShipTypeIcon = shipTypeIcon(shipType);
   const validate = () => {
     openSection("review", "findings");
@@ -577,8 +576,7 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
       onShipClassName={setShipClassName}
       nameInputRef={nameInputRef}
       onStartFromReference={() => setDialog("start")}
-      shipType={shipType}
-      shipTypeLabel={shipTypeChoice?.label ?? shipType}
+      shipTypeName={plainShipTypeName(shipType)}
       shipTypeIcon={<ShipTypeIcon aria-hidden="true" className="size-4" />}
       canUndo={state.canUndo}
       canRedo={state.canRedo}

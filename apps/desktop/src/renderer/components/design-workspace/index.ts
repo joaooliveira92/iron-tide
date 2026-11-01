@@ -45,5 +45,10 @@ export { RequirementChip } from "./RequirementChip.js";
 export { SelectField } from "./fields.js";
 export { batteryCards, mountNameMap } from "./batteryView.js";
 export { shipTypeIcon } from "./ship-type-icon.js";
-export { shipTypeChoices, shipTypeRole, type ShipTypeChoice } from "./shipTypes.js";
+export {
+  plainShipTypeName,
+  shipTypeChoices,
+  shipTypeRole,
+  type ShipTypeChoice,
+} from "./shipTypes.js";
 export { plural } from "./plural.js";

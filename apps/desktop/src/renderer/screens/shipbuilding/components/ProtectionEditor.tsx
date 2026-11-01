@@ -176,7 +176,7 @@ function ProtectionFieldRow({
         </span>
       </div>
 
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
         <Readout label="Thickness">{`${format.number(field.thicknessMm)} mm`}</Readout>
         <Readout label="Length coverage">{`${format.percent(field.coveragePermille * 10, 0)} of length`}</Readout>
         <Readout label="Weight">

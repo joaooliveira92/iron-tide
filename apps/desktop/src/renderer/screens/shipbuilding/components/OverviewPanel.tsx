@@ -63,7 +63,7 @@ export function OverviewPanel({
             A record of your intent. Changing a priority does not modify the design (no
             assisted-design mode exists yet).
           </p>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3">
             {PRIORITY_IDS.map((id) => (
               <SelectField
                 key={id}

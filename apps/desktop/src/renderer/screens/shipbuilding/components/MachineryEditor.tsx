@@ -31,7 +31,7 @@ export function MachineryEditor({
   const plantPreview = previewPlant === null ? [] : (previewDeltas?.get(previewPlant) ?? []);
   return (
     <Panel title="Machinery, fuel and range">
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-5">
         <section aria-label="Propulsion configuration" className="space-y-3">
           <h3 className="text-sm font-medium">Targets and configuration</h3>
           <div className="grid grid-cols-2 gap-3">
@@ -75,7 +75,8 @@ export function MachineryEditor({
             />
             <SelectField
               label="Propulsion plant"
-              shortLabel="Plant"
+              shortLabel="Propulsion plant"
+              className="col-span-2"
               value={inputs.plantId}
               options={inputs.plantOptions.map((p) => ({
                 value: p.id,

@@ -222,7 +222,7 @@ export function ArmamentEditor({
             <span className="font-medium">{selected.layout}</span>
             <Badge variant="outline">{selected.displayName}</Badge>
           </div>
-          <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
+          <dl className="grid grid-cols-1 gap-y-1 text-sm">
             <Readout label="Mount type">{selected.mountType ?? "n/a"}</Readout>
             <Readout label="Fire control">{selected.fcClass ?? "none"}</Readout>
             <Readout label="Firing arc">
