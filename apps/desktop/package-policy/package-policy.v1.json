@@ -185,6 +185,7 @@
   ],
   "duplicateWatchExtensions": [".bwtp", ".pbf", ".mvt", ".geojson", ".zip", ".shp"],
   "duplicateWatchSegments": ["map-spike", "land-tiles"],
+  "duplicateExemptSegments": ["licences"],
   "textExtensions": [
     ".js",
     ".mjs",

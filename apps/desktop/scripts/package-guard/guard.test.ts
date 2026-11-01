@@ -258,6 +258,19 @@ describe("contamination of the default package", () => {
     expect(found).toContain("duplicate-copy@out/renderer/map-spike/land-tiles/land.bwtp");
     expect(found).toContain("spike-runtime-asset@out/renderer/map-spike/copy/land.bwtp");
   });
+
+  it("allows byte-identical licence notices next to the production pack", () => {
+    const archive = DEFAULT_ARCHIVE();
+    const notice = new TextEncoder().encode("4.1.0");
+    archive.set("out/renderer/map-assets/land-tiles/licences/ne_10m_reefs.VERSION.txt", notice);
+    archive.set(
+      "out/renderer/map-assets/land-tiles/licences/ne_10m_minor_islands.VERSION.txt",
+      notice,
+    );
+    expect(
+      rules({ archive }, "default").filter((rule) => rule.startsWith("duplicate-copy")),
+    ).toEqual([]);
+  });
 });
 
 describe("spike package policy", () => {
