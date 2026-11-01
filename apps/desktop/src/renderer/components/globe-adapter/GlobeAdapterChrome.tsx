@@ -15,7 +15,7 @@ import { MapLegend } from "../world-map/MapLegend.js";
 import { RouteReadout } from "../world-map/RouteReadout.js";
 import { useFrameMeter } from "../world-map/useFrameMeter.js";
 import { readPanelOpen, writePanelOpen } from "../shared/panel-memory.js";
-import { formatFixed } from "../../lib/presentation-format/index.js";
+import { formatFixed } from "../../lib/presentation-format/format.js";
 import type { AreaOwnershipRow } from "../world-map/map-a11y.js";
 import type { AreaTreeRow } from "../world-map/area-tree.js";
 import type { LayerId, MapPrototypeState, RouteReading } from "../world-map/map-state.js";
@@ -220,7 +220,10 @@ export function GlobeAdapterChrome({
     >
       <ul className="grid max-h-40 gap-0.5 overflow-y-auto">
         {entityRows.map((entity) => (
-          <li key={entity.id}>
+          <li
+            key={entity.id}
+            className="[content-visibility:auto] [contain-intrinsic-size:auto_1.5rem]"
+          >
             <button
               type="button"
               className="w-full rounded px-2 py-1 text-left hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"

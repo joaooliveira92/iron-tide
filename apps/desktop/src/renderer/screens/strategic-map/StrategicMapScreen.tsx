@@ -7,6 +7,7 @@ import { IndexTabs } from "../../components/slate/IndexTabs.js";
 import { Button } from "../../components/ui/button.js";
 import { Skeleton } from "../../components/ui/skeleton.js";
 import { MapSurface } from "../../components/globe-adapter/MapSurface.js";
+import type { CampaignAreaEntry } from "../../components/world-map/campaign-map-join.js";
 import { nationHomeArea } from "../../content/presentationContent.js";
 import { translate } from "../../lib/strings.js";
 import { useMinWidth } from "../../lib/use-min-width.js";
@@ -27,6 +28,8 @@ export interface StrategicMapScreenProps {
 }
 
 const DRAWER_WIDTH = "28rem";
+
+const NO_AREAS: readonly CampaignAreaEntry[] = [];
 
 export function StrategicMapScreen({ sessionId }: StrategicMapScreenProps) {
   const {
@@ -50,7 +53,7 @@ export function StrategicMapScreen({ sessionId }: StrategicMapScreenProps) {
   const wide = useMinWidth(COMMAND_OVERLAY_MIN_WIDTH);
   const [department, setDepartment] = useState<MapDepartment | null>(null);
 
-  const campaignAreas = mapController.overlay.campaignAreas ?? [];
+  const campaignAreas = mapController.overlay.campaignAreas ?? NO_AREAS;
   const areaNameMap = useMemo(
     () => new Map(campaignAreas.map((area) => [area.id, area.name])),
     [campaignAreas],

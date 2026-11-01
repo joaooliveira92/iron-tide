@@ -13,7 +13,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AREAS, AREAS_BY_ID } from "../world-map/map-geometry.js";
-import { formatFixed } from "../../lib/presentation-format/index.js";
+import { formatFixed } from "../../lib/presentation-format/format.js";
 import {
   BAKED_PROTOCOL,
   createBakedTileLoader,

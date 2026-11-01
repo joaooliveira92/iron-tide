@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import type { PlacedLabel } from "../map-label-layout.js";
 import { pinned, screenText } from "../map-svg.js";
 
@@ -7,7 +9,11 @@ export interface LabelsLayerProps {
   readonly labelHalo: string;
 }
 
-export function LabelsLayer({ labels, labelInk, labelHalo }: LabelsLayerProps) {
+export const LabelsLayer = memo(function LabelsLayer({
+  labels,
+  labelInk,
+  labelHalo,
+}: LabelsLayerProps) {
   return (
     <>
       {labels.map(({ id, spec, dx, dy }) => (
@@ -37,4 +43,4 @@ export function LabelsLayer({ labels, labelInk, labelHalo }: LabelsLayerProps) {
       ))}
     </>
   );
-}
+});
