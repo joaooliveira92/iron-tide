@@ -1,4 +1,14 @@
-export function RoutesLayer({ d, stroke, casing }: { d: string; stroke: string; casing: string }) {
+import { memo } from "react";
+
+export const RoutesLayer = memo(function RoutesLayer({
+  d,
+  stroke,
+  casing,
+}: {
+  readonly d: string;
+  readonly stroke: string;
+  readonly casing: string;
+}) {
   if (d === "") return null;
   return (
     <>
@@ -21,4 +31,4 @@ export function RoutesLayer({ d, stroke, casing }: { d: string; stroke: string; 
       />
     </>
   );
-}
+});

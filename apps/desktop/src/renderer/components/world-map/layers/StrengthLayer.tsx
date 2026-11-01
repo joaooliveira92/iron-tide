@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import { pinned, screenText } from "../map-svg.js";
 import { barHeight, type NationStrength, type RegionStrength } from "../map-strength.js";
 import type { MapPalette } from "../map-palette.js";
@@ -38,7 +40,7 @@ export interface StrengthLayerProps {
   readonly offsets?: ReadonlyMap<string, number>;
 }
 
-export function StrengthLayer({
+export const StrengthLayer = memo(function StrengthLayer({
   regions,
   anchorOf,
   strokeFor,
@@ -67,7 +69,7 @@ export function StrengthLayer({
       })}
     </g>
   );
-}
+});
 
 function Glyph({
   region,

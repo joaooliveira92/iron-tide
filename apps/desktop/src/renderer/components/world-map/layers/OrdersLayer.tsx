@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import { CHART } from "../chart-theme.js";
 import type { MapPalette } from "../map-palette.js";
 import type { MapPendingOrder } from "../map-orders.js";
@@ -13,7 +15,11 @@ export interface OrdersLayerProps {
   readonly worldWidth: number;
 }
 
-export function OrdersLayer({ pending, palette, worldWidth }: OrdersLayerProps) {
+export const OrdersLayer = memo(function OrdersLayer({
+  pending,
+  palette,
+  worldWidth,
+}: OrdersLayerProps) {
   return (
     <g data-layer="orders" aria-hidden="true" pointerEvents="none">
       {pending.map((order) => {
@@ -68,4 +74,4 @@ export function OrdersLayer({ pending, palette, worldWidth }: OrdersLayerProps) 
       })}
     </g>
   );
-}
+});

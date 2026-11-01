@@ -1,6 +1,14 @@
+import { memo } from "react";
+
 import type { LaneMark } from "../map-lanes.js";
 
-export function LanesLayer({ lanes, stroke }: { lanes: readonly LaneMark[]; stroke: string }) {
+export const LanesLayer = memo(function LanesLayer({
+  lanes,
+  stroke,
+}: {
+  readonly lanes: readonly LaneMark[];
+  readonly stroke: string;
+}) {
   if (lanes.length === 0) return null;
   return (
     <g
@@ -34,4 +42,4 @@ export function LanesLayer({ lanes, stroke }: { lanes: readonly LaneMark[]; stro
       )}
     </g>
   );
-}
+});
