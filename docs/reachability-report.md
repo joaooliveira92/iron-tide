@@ -50,11 +50,11 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Row | Player verb | Decision |
 | --- | --- | --- |
 | accept-peace | Accept a peace settlement | #422 |
-| fight-or-decline-battle | Accept or decline a battle offer and fight it with division stance and speed orders | #422 |
+| fight-or-decline-battle | Accept or decline a battle offer and fight it with stance, speed and course orders | #422 |
 | prestige | See and act on national prestige | #223 |
 | division-battle-experience | Divisions gain experience from the battles they fight | #276 |
 | aircraft-and-carriers | Develop aircraft and operate carriers | RULES.md#dormant-by-decision |
-| combat-fought-battle | Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under division stance and speed orders | #422 |
+| combat-fought-battle | Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under stance, speed and course orders | #422 |
 | combat-air-combat | Air combat and air defence in a battle | RULES.md#dormant-by-decision |
 | combat-carrier-operations | Carrier operations in a battle | RULES.md#dormant-by-decision |
 | combat-mines | Mine laying and sweeping | RULES.md#dormant-by-decision |

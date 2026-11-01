@@ -310,7 +310,7 @@
     },
     {
       "id": "fight-or-decline-battle",
-      "player_verb": "Accept or decline a battle offer and fight it with division stance and speed orders",
+      "player_verb": "Accept or decline a battle offer and fight it with stance, speed and course orders",
       "status": "dormant-by-decision",
       "engine_package": "phase-engine",
       "engine_modules": ["battleOffer", "battles", "interruption"],
@@ -470,7 +470,7 @@
     },
     {
       "id": "combat-fought-battle",
-      "player_verb": "Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under division stance and speed orders",
+      "player_verb": "Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under stance, speed and course orders",
       "status": "dormant-by-decision",
       "engine_package": "combat",
       "engine_modules": [
@@ -488,7 +488,7 @@
       "renderer_screen": null,
       "evidence_test": null,
       "decision": "#422",
-      "note": "The player orders stance and speed per division; the stance wire shape compiles through the versioned division order model, and fire control and torpedo doctrine are automatic."
+      "note": "The player orders stance, speed and course per division; both wire shapes compile through the versioned division order model, and fire control and torpedo doctrine are automatic."
     },
     {
       "id": "combat-air-combat",

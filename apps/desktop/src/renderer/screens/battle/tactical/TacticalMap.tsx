@@ -70,8 +70,8 @@ export interface TacticalMapProps {
 const FALLBACK_VIEWPORT: TacticalViewport = { width: 800, height: 480 };
 const PAN_KEY_PIXELS = 48;
 const SCALE_BAR_MAX_PX = 140;
-const LABEL_CHAR_PX = 6.2;
-const LABEL_HEIGHT_PX = 14;
+const LABEL_CHAR_PX = 6.8;
+const LABEL_HEIGHT_PX = 16;
 const PREVIEW_LENGTH_PX = 90;
 const STANDING_COURSE_LENGTH_PX = 260;
 const RING_COUNT = 4;
