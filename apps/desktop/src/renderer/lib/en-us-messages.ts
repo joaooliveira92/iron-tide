@@ -8,7 +8,14 @@ export const EN_US_MESSAGES = {
   "settings.section.currency": "Currency and Numbers",
   "settings.section.language": "Language and Region",
   "settings.section.accessibility": "Accessibility",
-  "settings.section.advanced": "Advanced",
+
+  "settings.summary.general": "Where settings are stored and how to restore defaults.",
+  "settings.summary.appearance": "Theme, wallpaper, typeface, spacing and text size.",
+  "settings.summary.measurements": "Units for speed, length, calibre, armour and more.",
+  "settings.summary.currency": "How money and figures are displayed.",
+  "settings.summary.language": "Language and regional formatting of numbers and dates.",
+  "settings.summary.accessibility": "Motion and tooltip detail.",
+  "settings.general.detail": "Storage and defaults",
 
   "settings.theme.label": "Theme",
   "settings.theme.system": "System",
@@ -66,7 +73,12 @@ export const EN_US_MESSAGES = {
   "settings.tooltipDetail.detailed": "Detailed",
 
   "settings.reset.all": "Reset all to defaults",
-  "settings.reset.section": "Reset section",
+  "settings.reset.department": "Reset {department} to defaults",
+  "settings.reset.noun.appearance": "appearance",
+  "settings.reset.noun.measurements": "measurements",
+  "settings.reset.noun.currency": "currency and numbers",
+  "settings.reset.noun.language": "language and region",
+  "settings.reset.noun.accessibility": "accessibility",
 
   "shell.app.name": "Bluewave",
   "shell.campaign.loading": "Loading campaign…",

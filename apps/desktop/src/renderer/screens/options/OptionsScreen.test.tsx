@@ -44,13 +44,40 @@ function renderOptions(stub: PreferencesBridgeStub) {
   );
 }
 
-describe("OptionsScreen display density", () => {
+function openDepartment(prefix: RegExp) {
+  fireEvent.click(screen.getByRole("button", { name: prefix }));
+}
+
+describe("OptionsScreen departments", () => {
   beforeEach(() => {
     localStorage.clear();
     delete document.documentElement.dataset["density"];
     delete document.documentElement.dataset["font"];
   });
   afterEach(cleanup);
+
+  it("opens Appearance by default and swaps to one department at a time", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    expect(screen.getByRole("group", { name: "Display density" })).toBeTruthy();
+    expect(screen.queryByRole("group", { name: "Motion" })).toBeNull();
+    openDepartment(/^Accessibility/);
+    expect(screen.getByRole("group", { name: "Motion" })).toBeTruthy();
+    expect(screen.queryByRole("group", { name: "Display density" })).toBeNull();
+  });
+
+  it("shows the current theme on the Appearance tab", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Appearance.*Dark/ }).getAttribute("aria-expanded"),
+      ).toBe("true"),
+    );
+  });
 
   it("offers Comfortable and Compact, starting on Comfortable", async () => {
     const stub = createPreferencesBridgeStub();
@@ -82,23 +109,6 @@ describe("OptionsScreen display density", () => {
     expect(localStorage.getItem("bluewave-density")).toBeNull();
   });
 
-  it("no longer carries campaign file actions (they live in the header Campaign menu)", async () => {
-    const stub = createPreferencesBridgeStub();
-    renderOptions(stub);
-    await waitFor(() => expect(stub.readCalls()).toBe(1));
-    expect(screen.queryByRole("button", { name: /^Save/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /Close Campaign/i })).toBeNull();
-  });
-});
-
-describe("OptionsScreen application font", () => {
-  beforeEach(() => {
-    localStorage.clear();
-    delete document.documentElement.dataset["density"];
-    delete document.documentElement.dataset["font"];
-  });
-  afterEach(cleanup);
-
   it("offers Inter and Plus Jakarta Sans, starting on Inter", async () => {
     const stub = createPreferencesBridgeStub();
     renderOptions(stub);
@@ -126,13 +136,6 @@ describe("OptionsScreen application font", () => {
     expect(stub.writes[0]?.app.font).toBe("jakarta");
     expect(localStorage.getItem("bluewave-font")).toBeNull();
   });
-});
-
-describe("OptionsScreen new sections (U-4)", () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-  afterEach(cleanup);
 
   it("offers the high-contrast theme and writes it to the domain", async () => {
     const stub = createPreferencesBridgeStub();
@@ -152,10 +155,23 @@ describe("OptionsScreen new sections (U-4)", () => {
     expect(stub.writes[0]?.app.textScale).toBe(105);
   });
 
-  it("states why National Historical is unavailable and preserves the request", async () => {
+  it("resets only the open department to its defaults", async () => {
     const stub = createPreferencesBridgeStub();
     renderOptions(stub);
     await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "Increase text size" }));
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    fireEvent.click(screen.getByRole("button", { name: "Reset appearance to defaults" }));
+    await waitFor(() => expect(stub.writes).toHaveLength(2));
+    expect(stub.writes[1]?.app.textScale).toBe(100);
+    expect(stub.writes[1]?.app.theme).toBe("system");
+  });
+
+  it("opens Currency and Numbers for the currency display setting", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    openDepartment(/^Currency/);
     fireEvent.click(screen.getByRole("button", { name: "National Historical" }));
     await waitFor(() =>
       expect(screen.getByRole("status").textContent).toContain("Available once a campaign is open"),
@@ -163,10 +179,11 @@ describe("OptionsScreen new sections (U-4)", () => {
     expect(stub.writes[0]?.app.currencyDisplayMode).toBe("nationalHistorical");
   });
 
-  it("writes a per-category measurement selection", async () => {
+  it("opens Measurements and writes a per-category selection", async () => {
     const stub = createPreferencesBridgeStub();
     renderOptions(stub);
     await waitFor(() => expect(stub.readCalls()).toBe(1));
+    openDepartment(/^Measurements/);
     fireEvent.change(screen.getByRole("combobox", { name: "Calibre" }), {
       target: { value: "millimetres" },
     });
@@ -174,14 +191,23 @@ describe("OptionsScreen new sections (U-4)", () => {
     expect(stub.writes[0]?.app.measurementSelections["calibre"]).toBe("millimetres");
   });
 
-  it("resets all preferences to the central defaults", async () => {
+  it("resets all preferences to the central defaults from General", async () => {
     const stub = createPreferencesBridgeStub();
     renderOptions(stub);
     await waitFor(() => expect(stub.readCalls()).toBe(1));
     fireEvent.click(screen.getByRole("button", { name: "High contrast" }));
     await waitFor(() => expect(stub.writes).toHaveLength(1));
-    fireEvent.click(screen.getAllByRole("button", { name: "Reset all to defaults" })[0]!);
+    openDepartment(/^General/);
+    fireEvent.click(screen.getByRole("button", { name: "Reset all to defaults" }));
     await waitFor(() => expect(stub.writes).toHaveLength(2));
     expect(stub.writes[1]?.app.theme).toBe("system");
+  });
+
+  it("no longer carries campaign file actions (they live in the header Campaign menu)", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    expect(screen.queryByRole("button", { name: /^Save/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Close Campaign/i })).toBeNull();
   });
 });
