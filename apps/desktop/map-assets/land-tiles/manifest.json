@@ -1,5 +1,5 @@
 {
-  "manifestVersion": 4,
+  "manifestVersion": 5,
   "pipelineVersion": "1.3.0",
   "packFormat": "bluewave-tilepack-1",
   "dataset": {
@@ -28,6 +28,38 @@
         "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_rivers_lake_centerlines.zip",
         "archiveSha256": "ded71b01870855ccfe19b51f2ec14c9bb48fae23c0e9f3c11974d426433b5c38",
         "archiveBytes": 2079507
+      },
+      {
+        "id": "ne_10m_bathymetry_K_200",
+        "layer": "ne_10m_bathymetry_K_200",
+        "version": "4.1.0",
+        "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_bathymetry_K_200.zip",
+        "archiveSha256": "68fe55b9ac57bd8255696d83259f5856594a60c582dd395de9c1772179337887",
+        "archiveBytes": 1197185
+      },
+      {
+        "id": "ne_10m_bathymetry_J_1000",
+        "layer": "ne_10m_bathymetry_J_1000",
+        "version": "4.1.0",
+        "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_bathymetry_J_1000.zip",
+        "archiveSha256": "ff586fb1faf86c9917519577f1490a2106d7c45a456053374731f59aac0211e5",
+        "archiveBytes": 758915
+      },
+      {
+        "id": "ne_10m_bathymetry_G_4000",
+        "layer": "ne_10m_bathymetry_G_4000",
+        "version": "4.1.0",
+        "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_bathymetry_G_4000.zip",
+        "archiveSha256": "466486cedef079608abe20fa832e542b6abc92bb5ca40c0f6e587ed7f7be95bd",
+        "archiveBytes": 3593230
+      },
+      {
+        "id": "ne_10m_reefs",
+        "layer": "ne_10m_reefs",
+        "version": "4.1.0",
+        "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_reefs.zip",
+        "archiveSha256": "b29cce160628a9aa243ab9c88d2234d79af97aded495137248059230e36f508c",
+        "archiveBytes": 178301
       }
     ]
   },
@@ -37,10 +69,18 @@
     "files": [
       "licences/koppen-geiger-cc-by-4.0.txt",
       "licences/natural-earth-terms.txt",
+      "licences/ne_10m_bathymetry_G_4000.README.html",
+      "licences/ne_10m_bathymetry_G_4000.VERSION.txt",
+      "licences/ne_10m_bathymetry_J_1000.README.html",
+      "licences/ne_10m_bathymetry_J_1000.VERSION.txt",
+      "licences/ne_10m_bathymetry_K_200.README.html",
+      "licences/ne_10m_bathymetry_K_200.VERSION.txt",
       "licences/ne_10m_land.README.html",
       "licences/ne_10m_land.VERSION.txt",
       "licences/ne_10m_minor_islands.README.html",
       "licences/ne_10m_minor_islands.VERSION.txt",
+      "licences/ne_10m_reefs.README.html",
+      "licences/ne_10m_reefs.VERSION.txt",
       "licences/ne_10m_rivers_lake_centerlines.README.html",
       "licences/ne_10m_rivers_lake_centerlines.VERSION.txt"
     ]
@@ -53,9 +93,9 @@
     "shapefile": "0.6.6",
     "@mapbox/vector-tile": "1.3.1",
     "pbf": "3.3.0",
-    "lockfileSha256": "fd778abae8787c973a4a225191f3153f250f4e98ed8730ddc83b3db5462bc64e"
+    "lockfileSha256": "3cc6fedc8ebd5bb17f9aec9450f4779a7e9dabc9df82686ed85b84a4c56c1dfc"
   },
-  "configurationSha256": "9be8f1519a6abfcc4e318a18ed247f8745b6c3c46ffeefe70d016b04da3b7af6",
+  "configurationSha256": "1e911d1df80de76629e04f3712e62690107736eb3dcea8e116dbaec62ffb4c0c",
   "areaOutlines": {
     "datasetVersion": "1.0.0",
     "sourceSha256": "0a6720e058ce366903df750235447ff2b66148309dd2a3d5e8290a08ac4ec345",
@@ -242,35 +282,60 @@
     "areas": "areas",
     "areaOutlines": "area_outlines",
     "areaLabels": "area_labels",
-    "climate": "climate"
+    "climate": "climate",
+    "bathymetry": "bathymetry",
+    "reefs": "reefs"
   },
   "counts": {
-    "tiles": 16969,
-    "files": 12,
+    "tiles": 21681,
+    "files": 20,
     "sourceVertices": 481687,
     "densifiedVertices": 481838
   },
   "sizes": {
-    "packBytes": 9112260,
-    "outputBytes": 9263351,
-    "sourceArchiveBytes": 5663509,
-    "sourceExtractedBytes": 14373309
+    "packBytes": 13702826,
+    "outputBytes": 13968463,
+    "sourceArchiveBytes": 11391140,
+    "sourceExtractedBytes": 27828514
   },
   "integrity": {
-    "packSha256": "dd04ff1dac017ac5e24e7fbf3973c947928b4622e9b7f181e5f1a642547199ea",
+    "packSha256": "b876674d9907851aa6e5dead4a9312ddeac59235e0854e749fe3dac0d747b283",
     "files": {
-      "land.bwtp": "dd04ff1dac017ac5e24e7fbf3973c947928b4622e9b7f181e5f1a642547199ea",
+      "land.bwtp": "b876674d9907851aa6e5dead4a9312ddeac59235e0854e749fe3dac0d747b283",
       "licences/koppen-geiger-cc-by-4.0.txt": "2a7a0be0e56da56794209230582e502d2a4122dbeb3479506a3f78063455dd77",
       "licences/natural-earth-terms.txt": "193e184272c9427002703823217a846f172622f421ac6977ba2f09435e245d98",
+      "licences/ne_10m_bathymetry_G_4000.README.html": "526e276b16ad41c9e943423d2f454074bed34274beedbc2e7005d9f81840d525",
+      "licences/ne_10m_bathymetry_G_4000.VERSION.txt": "0874a8fe36effb87780f431845b5a7d85be657f2bd998ce8eeace717860d3b78",
+      "licences/ne_10m_bathymetry_J_1000.README.html": "526e276b16ad41c9e943423d2f454074bed34274beedbc2e7005d9f81840d525",
+      "licences/ne_10m_bathymetry_J_1000.VERSION.txt": "0874a8fe36effb87780f431845b5a7d85be657f2bd998ce8eeace717860d3b78",
+      "licences/ne_10m_bathymetry_K_200.README.html": "526e276b16ad41c9e943423d2f454074bed34274beedbc2e7005d9f81840d525",
+      "licences/ne_10m_bathymetry_K_200.VERSION.txt": "0874a8fe36effb87780f431845b5a7d85be657f2bd998ce8eeace717860d3b78",
       "licences/ne_10m_land.README.html": "f22176c0b44403fd7b7381a404562007a595c477ca72d23d9b7ed3949e948b12",
       "licences/ne_10m_land.VERSION.txt": "548358969090d629b41888f5fe664ac31b7203dfd849f7c1ef820ac055b62191",
       "licences/ne_10m_minor_islands.README.html": "afb419225d9f70f24901103d8431622d94127cfb9f35b32e724de9ff13c5cb27",
       "licences/ne_10m_minor_islands.VERSION.txt": "0874a8fe36effb87780f431845b5a7d85be657f2bd998ce8eeace717860d3b78",
+      "licences/ne_10m_reefs.README.html": "4264c6834854bb63dbc472c3097d16decc7d22a1067d1be1c5d98d48c453b50d",
+      "licences/ne_10m_reefs.VERSION.txt": "0874a8fe36effb87780f431845b5a7d85be657f2bd998ce8eeace717860d3b78",
       "licences/ne_10m_rivers_lake_centerlines.README.html": "611c5c993f7fa7495f4c78046df9d97db244533ccfd2f0f80746d27c97db9891",
       "licences/ne_10m_rivers_lake_centerlines.VERSION.txt": "30d0ad7c0f48ffeaaf390112b5b95823c7efa1da3ee5abc116eb481989340b58",
       "protected-resolution.json": "6bd31ec63e70c9c82829336a17ea9a2bf3ddc30012e3bf91b227c39728cbbcec",
       "validation.json": "ba8ff11ac285ba4b976fcb14d6f6d516745109e6620e98125e960407c8ac1294"
     }
+  },
+  "bathymetry": {
+    "layer": "bathymetry",
+    "property": "depth",
+    "bandsMetres": [
+      200,
+      1000,
+      4000
+    ],
+    "simplificationPixels": 10
+  },
+  "reefs": {
+    "layer": "reefs",
+    "geometry": "line",
+    "minZoom": 5
   },
   "climate": {
     "layer": "climate",
@@ -360,12 +425,14 @@
     {
       "zoom": 0,
       "tiles": 1,
-      "bytes": 96337,
-      "sha256": "02999c9a429d4bbf0053d58e01e97de07c03b720af87b86b513737157361d0ab",
+      "bytes": 104760,
+      "sha256": "9d3013786355021ae65d933f16048e450d32839c7e2755a13dd31ad7f4d508f1",
       "landVertices": 12100,
       "landRings": 453,
       "pinnedVertices": 679,
       "climateVertices": 4157,
+      "bathymetryVertices": 1061,
+      "reefVertices": 0,
       "areaTiles": 1,
       "areaVertices": 11016,
       "labelTiles": 1,
@@ -376,12 +443,14 @@
     {
       "zoom": 1,
       "tiles": 4,
-      "bytes": 152996,
-      "sha256": "863782c2c2ef071772a4975221c18bc9bde838f408cc222b60c9f0c56803cbf6",
+      "bytes": 168650,
+      "sha256": "44303a75cd14bd54a2320c762ea7081d7d6fa85b14f58a7933e1a2c0d2009375",
       "landVertices": 25313,
       "landRings": 1000,
       "pinnedVertices": 679,
       "climateVertices": 9588,
+      "bathymetryVertices": 1710,
+      "reefVertices": 0,
       "areaTiles": 4,
       "areaVertices": 11016,
       "labelTiles": 4,
@@ -392,12 +461,14 @@
     {
       "zoom": 2,
       "tiles": 16,
-      "bytes": 255641,
-      "sha256": "bdac1f13d67f9ab9a97d10a2bbdc8630b25fb0f83f15c967e847415695d89ae6",
+      "bytes": 285755,
+      "sha256": "44f9ae970deb75361336f71f3c56d72f07173328a655790acc02d0a2e4594f8a",
       "landVertices": 49066,
       "landRings": 1895,
       "pinnedVertices": 679,
       "climateVertices": 20534,
+      "bathymetryVertices": 3172,
+      "reefVertices": 0,
       "areaTiles": 16,
       "areaVertices": 11016,
       "labelTiles": 16,
@@ -408,12 +479,14 @@
     {
       "zoom": 3,
       "tiles": 64,
-      "bytes": 436998,
-      "sha256": "887bc8702cba418f6b187463d8f144df3f9dfb0578497c281b9f344f5cd6003b",
+      "bytes": 503399,
+      "sha256": "ca18b3788bbfe2cb9b2e9374eb554ea58a59c16d1e04fef5a1ecadfff790bf10",
       "landVertices": 88308,
       "landRings": 3187,
       "pinnedVertices": 679,
       "climateVertices": 41182,
+      "bathymetryVertices": 6812,
+      "reefVertices": 0,
       "areaTiles": 40,
       "areaVertices": 11016,
       "labelTiles": 40,
@@ -423,13 +496,15 @@
     },
     {
       "zoom": 4,
-      "tiles": 248,
-      "bytes": 746786,
-      "sha256": "717e653f9b363cfccf6051c3f339cf52b0eaadbde61517f4846d10170ac60eb1",
+      "tiles": 256,
+      "bytes": 906535,
+      "sha256": "2949020a9227b8070ada15661c45a1b96cce6081012c3b6c889c2d1be24ee4ca",
       "landVertices": 148022,
       "landRings": 5342,
       "pinnedVertices": 679,
       "climateVertices": 74842,
+      "bathymetryVertices": 16531,
+      "reefVertices": 0,
       "areaTiles": 148,
       "areaVertices": 11016,
       "labelTiles": 84,
@@ -439,13 +514,15 @@
     },
     {
       "zoom": 5,
-      "tiles": 916,
-      "bytes": 1247465,
-      "sha256": "08a83cfb44b8efdf796bfa51b88ec13a457db8147d0b028f462de26917e2d598",
+      "tiles": 1024,
+      "bytes": 1696314,
+      "sha256": "1f9e015015bca3208597e6fb538d71e8286984e90f5ea7aa50f423bd5f6db0a4",
       "landVertices": 226254,
       "landRings": 7257,
       "pinnedVertices": 679,
       "climateVertices": 129724,
+      "bathymetryVertices": 42190,
+      "reefVertices": 11646,
       "areaTiles": 496,
       "areaVertices": 11016,
       "labelTiles": 144,
@@ -455,13 +532,15 @@
     },
     {
       "zoom": 6,
-      "tiles": 3348,
-      "bytes": 2086464,
-      "sha256": "cac211b3b9b1d4a9810370cb5674db5b5b7d1f7227f2b29b42762225c6612a7d",
+      "tiles": 4080,
+      "bytes": 3182584,
+      "sha256": "c68626f6d2e4e0ece6b427a21beaca02bdc9eff0ceb2057d34e62a261fa87d54",
       "landVertices": 308403,
       "landRings": 8063,
       "pinnedVertices": 679,
       "climateVertices": 209230,
+      "bathymetryVertices": 99300,
+      "reefVertices": 11646,
       "areaTiles": 1620,
       "areaVertices": 11016,
       "labelTiles": 160,
@@ -471,13 +550,15 @@
     },
     {
       "zoom": 7,
-      "tiles": 12372,
-      "bytes": 3682301,
-      "sha256": "5feaf84860dbda6134ee3b631ca20ea1a4610dabbd7dbcdb0dec756713f2b4a2",
+      "tiles": 16236,
+      "bytes": 6334469,
+      "sha256": "5cae01e3c6aa3b925b4b53adc72c9ac726237cf0dfd55e0e8955f14d30f2cacc",
       "landVertices": 385112,
       "landRings": 8531,
       "pinnedVertices": 679,
       "climateVertices": 303591,
+      "bathymetryVertices": 164084,
+      "reefVertices": 11646,
       "areaTiles": 5636,
       "areaVertices": 11016,
       "labelTiles": 164,

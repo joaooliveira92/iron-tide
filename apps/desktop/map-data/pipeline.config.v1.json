@@ -14,6 +14,8 @@
   "bounds": [-180, -85.0511287798066, 180, 85.0511287798066],
   "simplificationPixels": 0.35,
   "climateSimplificationPixels": 1.5,
+  "bathymetrySimplificationPixels": 10,
+  "reefMinZoom": 5,
   "protectedPinRadiusPixels": 6,
   "overlayRenderedWidthPixels": 2.5,
   "layers": {
@@ -22,7 +24,9 @@
     "areas": "areas",
     "areaOutlines": "area_outlines",
     "areaLabels": "area_labels",
-    "climate": "climate"
+    "climate": "climate",
+    "bathymetry": "bathymetry",
+    "reefs": "reefs"
   },
   "packFormat": "bluewave-tilepack-1",
   "generationTimestampPolicy": "none: no wall-clock value is written; identical inputs give identical bytes"

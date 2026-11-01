@@ -276,6 +276,17 @@ const CLIMATE_ZONE_COLORS: readonly (readonly [number, string])[] = [
   [7, srgbToCanvasHex("#f4f8f8")],
 ];
 
+const DEPTH_COLORS: readonly (readonly [number, string])[] = [
+  [200, srgbToCanvasHex("#00bad6")],
+  [1000, srgbToCanvasHex("#00a6cc")],
+  [4000, srgbToCanvasHex("#0090bd")],
+];
+const REEF_COLOR = srgbToCanvasHex("#f2fffb");
+
+function depthFillColor(): unknown {
+  return ["match", ["get", "depth"], ...DEPTH_COLORS.flat(), SEA_COLOR];
+}
+
 function climateFillColor(): unknown {
   return ["match", ["get", "zone"], ...CLIMATE_ZONE_COLORS.flat(), LAND_COLOR];
 }
@@ -291,6 +302,14 @@ function mapLayers(
   const specs: LayerSpecification[] = [
     { id: "ocean", type: "background", paint: { "background-color": SEA_COLOR } },
     {
+      id: "bathymetry-fill",
+      type: "fill",
+      source: "land",
+      "source-layer": manifest.layers.bathymetry,
+      layout: { "fill-sort-key": ["get", "depth"] as never },
+      paint: { "fill-color": depthFillColor() as never, "fill-antialias": false },
+    },
+    {
       id: "land",
       type: "fill",
       source: "land",
@@ -303,6 +322,19 @@ function mapLayers(
       source: "land",
       "source-layer": manifest.layers.climate,
       paint: { "fill-color": climateFillColor() as never, "fill-antialias": false },
+    },
+    {
+      id: "reefs-line",
+      type: "line",
+      source: "land",
+      "source-layer": manifest.layers.reefs,
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": REEF_COLOR,
+        "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 8, 1.4],
+        "line-dasharray": [2, 1.5],
+        "line-opacity": 0.85,
+      },
     },
     {
       id: "protected-water",

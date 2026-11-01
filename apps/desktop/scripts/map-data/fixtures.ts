@@ -19,6 +19,8 @@ export const TEST_CONFIG: PipelineConfig = {
   bounds: [-180, -85.0511287798066, 180, 85.0511287798066],
   simplificationPixels: 0.35,
   climateSimplificationPixels: 1.5,
+  bathymetrySimplificationPixels: 1.5,
+  reefMinZoom: 5,
   protectedPinRadiusPixels: 6,
   overlayRenderedWidthPixels: 2.5,
   layers: {
@@ -28,6 +30,8 @@ export const TEST_CONFIG: PipelineConfig = {
     areaOutlines: "area_outlines",
     areaLabels: "area_labels",
     climate: "climate",
+    bathymetry: "bathymetry",
+    reefs: "reefs",
   },
   packFormat: "bluewave-tilepack-1",
   generationTimestampPolicy: "none",
@@ -54,6 +58,8 @@ export function strait(open: boolean): GeometryInput {
     riverLines: [],
     areas: [],
     climate: [],
+    bathymetry: [],
+    reefLines: [],
   };
 }
 

@@ -81,6 +81,8 @@ export const fakeManifest = {
     areaOutlines: "area_outlines",
     areaLabels: "area_labels",
     climate: "climate",
+    bathymetry: "bathymetry",
+    reefs: "reefs",
   },
   packSha256: "0123456789abcdef",
   packBytes: 0,

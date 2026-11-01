@@ -226,9 +226,9 @@
         {
           "id": "production-tile-pack",
           "class": "generated-runtime",
-          "reason": "the baked offline Natural Earth tile pack the production Overview renderer reads, grown to 9.11 MB by the Koppen climate layer (ADR-0329)",
+          "reason": "the baked offline Natural Earth tile pack the production Overview renderer reads, grown to 9.11 MB by the Koppen climate layer (ADR-0329) and to 13.70 MB by the bathymetry and reef layers",
           "pattern": "out/renderer/map-assets/land-tiles/land.bwtp",
-          "maxBytes": 10000000,
+          "maxBytes": 20000000,
           "required": true
         },
         {

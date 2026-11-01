@@ -91,8 +91,21 @@ export async function loadGeometry(
   const land = byId.get("ne_10m_land");
   const islands = byId.get("ne_10m_minor_islands");
   const rivers = byId.get("ne_10m_rivers_lake_centerlines");
-  if (land === undefined || islands === undefined || rivers === undefined) {
-    throw new MapDataError("sources: land, minor islands and rivers layers are all required");
+  const reefs = byId.get("ne_10m_reefs");
+  if (land === undefined || islands === undefined || rivers === undefined || reefs === undefined) {
+    throw new MapDataError(
+      "sources: land, minor islands, rivers and reefs layers are all required",
+    );
+  }
+  const bathymetry = layers
+    .flatMap((layer) =>
+      layer.depthMetres === null
+        ? []
+        : [{ depthMetres: layer.depthMetres, polygons: layer.polygons }],
+    )
+    .sort((a, b) => a.depthMetres - b.depthMetres);
+  if (bathymetry.length === 0) {
+    throw new MapDataError("sources: at least one bathymetry layer is required");
   }
   return {
     geometry: {
@@ -100,6 +113,8 @@ export async function loadGeometry(
       riverLines: rivers.lines,
       areas: prepareAreas(inputs.areaSources, inputs.areaSpec),
       climate: inputs.climate.geometry,
+      bathymetry,
+      reefLines: reefs.lines,
     },
     layers,
   };
@@ -180,7 +195,7 @@ export async function buildAll(
   files.set("licences/koppen-geiger-cc-by-4.0.txt", new Uint8Array(climateNotice));
   const totalBytes = [...files.values()].reduce((sum, data) => sum + data.length, 0);
   const manifest = {
-    manifestVersion: 4,
+    manifestVersion: 5,
     pipelineVersion: inputs.config.pipelineVersion,
     packFormat: inputs.config.packFormat,
     dataset: {
@@ -311,6 +326,17 @@ export async function buildAll(
           .sort(([a], [b]) => (a < b ? -1 : 1))
           .map(([name, data]) => [name, sha256Hex(data)]),
       ),
+    },
+    bathymetry: {
+      layer: inputs.config.layers.bathymetry,
+      property: "depth",
+      bandsMetres: geometry.bathymetry.map((band) => band.depthMetres),
+      simplificationPixels: inputs.config.bathymetrySimplificationPixels,
+    },
+    reefs: {
+      layer: inputs.config.layers.reefs,
+      geometry: "line",
+      minZoom: inputs.config.reefMinZoom,
     },
     climate: {
       layer: inputs.config.layers.climate,

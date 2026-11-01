@@ -33,6 +33,42 @@
       "sha256": "ded71b01870855ccfe19b51f2ec14c9bb48fae23c0e9f3c11974d426433b5c38",
       "bytes": 2079507,
       "use": "Suez and Panama canal centrelines"
+    },
+    {
+      "id": "ne_10m_bathymetry_K_200",
+      "layer": "ne_10m_bathymetry_K_200",
+      "version": "4.1.0",
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_bathymetry_K_200.zip",
+      "sha256": "68fe55b9ac57bd8255696d83259f5856594a60c582dd395de9c1772179337887",
+      "bytes": 1197185,
+      "use": "ocean deeper than 200 m"
+    },
+    {
+      "id": "ne_10m_bathymetry_J_1000",
+      "layer": "ne_10m_bathymetry_J_1000",
+      "version": "4.1.0",
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_bathymetry_J_1000.zip",
+      "sha256": "ff586fb1faf86c9917519577f1490a2106d7c45a456053374731f59aac0211e5",
+      "bytes": 758915,
+      "use": "ocean deeper than 1000 m"
+    },
+    {
+      "id": "ne_10m_bathymetry_G_4000",
+      "layer": "ne_10m_bathymetry_G_4000",
+      "version": "4.1.0",
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_bathymetry_G_4000.zip",
+      "sha256": "466486cedef079608abe20fa832e542b6abc92bb5ca40c0f6e587ed7f7be95bd",
+      "bytes": 3593230,
+      "use": "ocean deeper than 4000 m"
+    },
+    {
+      "id": "ne_10m_reefs",
+      "layer": "ne_10m_reefs",
+      "version": "4.1.0",
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_reefs.zip",
+      "sha256": "b29cce160628a9aa243ab9c88d2234d79af97aded495137248059230e36f508c",
+      "bytes": 178301,
+      "use": "coral reef lines"
     }
   ]
 }

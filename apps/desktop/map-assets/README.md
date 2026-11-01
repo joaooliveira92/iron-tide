@@ -5,8 +5,9 @@ Committed runtime assets for the default Overview globe renderer. They are copie
 excluded from the package.
 
 - `land-tiles/land.bwtp` — Natural Earth 10m land, minor islands and canal centrelines,
-  plus the presentation-only `climate` layer (Köppen-Geiger V3 zones clipped to the
-  coastline), baked at z0-z7. Pack SHA-256 `dd04ff1dac017ac5e24e7fbf3973c947928b4622e9b7f181e5f1a642547199ea`.
+  the presentation-only `bathymetry` layer (ocean deeper than 200, 1000 and 4000 m, with a
+  `depth` property) and `reefs` line layer, plus the presentation-only `climate` layer
+  (Köppen-Geiger V3 zones clipped to the coastline), baked at z0-z7.
 - `land-tiles/manifest.json` — layer ids, zoom contract (fit-for-purpose z7, overscale
   to z12), bounds, source pins and integrity hashes.
 - `land-tiles/licences/` — Natural Earth terms and source version/readme notices

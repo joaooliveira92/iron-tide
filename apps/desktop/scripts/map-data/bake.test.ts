@@ -6,6 +6,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { bakeTiles, resolveProtection } from "./bake.ts";
 import { MapDataError } from "./errors.ts";
 import { TEST_CONFIG, canalCatalogue, strait, straitCatalogue } from "./fixtures.ts";
+import { decodeTile, lonLatToTileLocal } from "./mvt.ts";
 import { sha256Hex } from "./sources.ts";
 import { validateProtectedFeatures } from "./validate.ts";
 import {
@@ -156,6 +157,54 @@ describe("protected feature bake and validation", () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("bathymetry and reef layers", () => {
+  const ring = (half: number): [number, number][] => [
+    [-half, -half],
+    [half, -half],
+    [half, half],
+    [-half, half],
+    [-half, -half],
+  ];
+  const input = {
+    ...strait(true),
+    bathymetry: [
+      { depthMetres: 200, polygons: [[ring(0.5)]] },
+      { depthMetres: 1000, polygons: [[ring(0.25)]] },
+    ],
+    reefLines: [
+      {
+        name: "",
+        parts: [
+          [
+            [-0.4, 0.1],
+            [0.4, 0.1],
+          ] as [number, number][],
+        ],
+      },
+    ],
+  };
+  const pack = TilePack.parse(bakeTiles(straitCatalogue(true), input, TEST_CONFIG, sha256Hex).pack);
+
+  function tileAt(zoom: number) {
+    const address = lonLatToTileLocal(zoom, [0.01, 0.01], TEST_CONFIG.tileExtent);
+    const bytes = pack.get(zoom, address.x, address.y);
+    if (bytes === null) throw new MapDataError(`no tile at z${zoom}`);
+    return decodeTile(bytes);
+  }
+
+  it("bakes each depth band with its depth property", () => {
+    const depths = (tileAt(4).layers.get(TEST_CONFIG.layers.bathymetry) ?? []).map(
+      (feature) => feature.properties.depth,
+    );
+    expect(depths).toEqual([200, 1000]);
+  });
+
+  it("bakes reef lines only from the configured minimum zoom", () => {
+    expect(tileAt(TEST_CONFIG.reefMinZoom - 1).layers.has(TEST_CONFIG.layers.reefs)).toBe(false);
+    expect(tileAt(TEST_CONFIG.reefMinZoom).layers.get(TEST_CONFIG.layers.reefs)?.length).toBe(1);
   });
 });
 
