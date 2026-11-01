@@ -4,7 +4,15 @@ import { cn } from "../../lib/utils.js";
 import { useScreenHeaderHost } from "../../shell/screen-header.js";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { EngineeringStatusBar } from "../shipbuilding/components/EngineeringStatusBar.js";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "../../components/ui/dialog.js";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../../components/ui/dialog.js";
 import { Button } from "../../components/ui/button.js";
 import { Archive, BookOpen } from "lucide-react";
 import {
@@ -18,6 +26,7 @@ import {
   TechnologyChart,
   TechnologyDetail,
 } from "./components/index.js";
+import { TECH_STATUS } from "./components/tech-status.js";
 import type { FieldWeightOption } from "./research-field-priorities.js";
 import { researchReadouts } from "./research-readouts.js";
 import type { ResearchViewModel } from "./research-view-model.js";
@@ -121,12 +130,19 @@ export function ResearchWorkspace({
                   </Button>
                 }
               />
-              <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
-                <DialogTitle className="flex items-center gap-2 text-lg">
-                  <Archive aria-hidden="true" className="size-5 text-primary" />
-                  Technology Archive
-                </DialogTitle>
-                <ArchivePanel fields={vm.fields} />
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Archive aria-hidden="true" className="size-5 text-primary" />
+                    Technology Archive
+                  </DialogTitle>
+                  <DialogDescription>
+                    Every technology discovered so far, by field.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogBody>
+                  <ArchivePanel fields={vm.fields} />
+                </DialogBody>
               </DialogContent>
             </Dialog>
           </>
@@ -186,12 +202,19 @@ export function ResearchWorkspace({
                   </Button>
                 }
               />
-              <DialogContent className="max-w-lg">
-                <DialogTitle className="flex items-center gap-2 text-base">
-                  <BookOpen aria-hidden="true" className="size-4 text-primary" />
-                  Research briefing
-                </DialogTitle>
-                <BriefingPanel budget={vm.budget} />
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <BookOpen aria-hidden="true" className="size-5 text-primary" />
+                    Research briefing
+                  </DialogTitle>
+                  <DialogDescription>
+                    The monthly budget, and how research turns it into technologies.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogBody>
+                  <BriefingPanel budget={vm.budget} />
+                </DialogBody>
               </DialogContent>
             </Dialog>
           </div>
@@ -227,9 +250,14 @@ export function ResearchWorkspace({
 
       {selectedTech !== undefined && (
         <Dialog open={techModalOpen} onOpenChange={onTechModalChange}>
-          <DialogContent className="max-w-lg">
-            <DialogTitle className="sr-only">{selectedTech.label}</DialogTitle>
-            <TechnologyDetail tech={selectedTech} fieldLabel={field.label} />
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{selectedTech.label}</DialogTitle>
+              <DialogDescription>{`${field.label} · ${TECH_STATUS[selectedTech.status].label}`}</DialogDescription>
+            </DialogHeader>
+            <DialogBody>
+              <TechnologyDetail tech={selectedTech} fieldLabel={field.label} showHeading={false} />
+            </DialogBody>
           </DialogContent>
         </Dialog>
       )}

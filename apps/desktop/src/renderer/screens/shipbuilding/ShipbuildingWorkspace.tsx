@@ -777,7 +777,6 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
         onClose={() => setDialog(null)}
         title="Start from a reference design"
         description="Each ship type has a starting design. Your current design is replaced only after you confirm."
-        wide
       >
         <ReferenceDesignBrowser
           env={nationEnv}

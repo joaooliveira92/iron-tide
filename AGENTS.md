@@ -92,6 +92,7 @@ Identical content, ruleset, inputs, seeds, and versions produce identical hashes
 
 - Desktop renderer/main/preload: [desktop view](docs/agents/desktop-view.md)
 - Screenshot, Aria tree, console: [desktop snap](docs/agents/desktop-snap.md)
+- Any modal, dialog, confirmation or drawer: [modal guide](docs/agents/modal-guide.md)
 - Adding a nation: [adding a nation](docs/agents/adding-a-nation.md)
 - Editing inside a package: read its `AGENTS.md` first; roster in [packages/README.md](packages/README.md)
 - Unsure where something lives: [repo map](docs/agents/repo-map.md)

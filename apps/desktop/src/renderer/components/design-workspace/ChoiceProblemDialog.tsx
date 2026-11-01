@@ -3,6 +3,7 @@ import { formatExplanation } from "../../../shared/explanation-text.js";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -27,7 +28,7 @@ export function ChoiceProblemDialog({
 }) {
   return (
     <AlertDialog open={open && problem !== null} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-h-[85vh] max-w-xl overflow-y-auto">
+      <AlertDialogContent>
         {problem && (
           <>
             <AlertDialogHeader>
@@ -40,33 +41,35 @@ export function ChoiceProblemDialog({
                 happened and how to fix it.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <ul className="space-y-4">
-              {problem.findings.map((f) => (
-                <li key={f.key} className="space-y-2 rounded-md border p-3 text-sm">
-                  <div className="flex items-start gap-2">
-                    <Badge variant={SEVERITY_STYLE[f.severity].badge}>
-                      {SEVERITY_STYLE[f.severity].label}
-                    </Badge>
-                    <p className="font-medium">{f.title}</p>
-                  </div>
-                  <p className="text-muted-foreground">{f.explanation}</p>
-                  <p>
-                    <span className="font-medium">In play: </span>
-                    {formatExplanation(f.finding.consequence)}
-                  </p>
-                  {f.finding.remedies.length > 0 && (
-                    <div>
-                      <p className="font-medium">How to fix it</p>
-                      <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-                        {f.finding.remedies.map((r) => (
-                          <li key={r.id}>{formatExplanation(r.description)}</li>
-                        ))}
-                      </ul>
+            <AlertDialogBody>
+              <ul className="space-y-4">
+                {problem.findings.map((f) => (
+                  <li key={f.key} className="space-y-2 rounded-md border p-3 text-sm">
+                    <div className="flex items-start gap-2">
+                      <Badge variant={SEVERITY_STYLE[f.severity].badge}>
+                        {SEVERITY_STYLE[f.severity].label}
+                      </Badge>
+                      <p className="font-medium">{f.title}</p>
                     </div>
-                  )}
-                </li>
-              ))}
-            </ul>
+                    <p className="text-muted-foreground">{f.explanation}</p>
+                    <p>
+                      <span className="font-medium">In play: </span>
+                      {formatExplanation(f.finding.consequence)}
+                    </p>
+                    {f.finding.remedies.length > 0 && (
+                      <div>
+                        <p className="font-medium">How to fix it</p>
+                        <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                          {f.finding.remedies.map((r) => (
+                            <li key={r.id}>{formatExplanation(r.description)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </AlertDialogBody>
             <AlertDialogFooter>
               <AlertDialogCancel>Keep it and fix it myself</AlertDialogCancel>
               <AlertDialogAction onClick={onUndo}>Undo this choice</AlertDialogAction>
