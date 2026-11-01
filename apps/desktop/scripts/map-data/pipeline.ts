@@ -154,6 +154,23 @@ async function packageVersion(repoRoot: string, name: string): Promise<string> {
   return (JSON.parse(raw) as { version: string }).version;
 }
 
+export function uniqueLicenceFiles(
+  layers: readonly Pick<LoadedLayer, "licenceFiles">[],
+): ReadonlyMap<string, Uint8Array> {
+  const named = layers
+    .flatMap((layer) => [...layer.licenceFiles])
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  const seen = new Set<string>();
+  const unique = new Map<string, Uint8Array>();
+  for (const [name, data] of named) {
+    const digest = sha256Hex(data);
+    if (seen.has(digest)) continue;
+    seen.add(digest);
+    unique.set(name, data);
+  }
+  return unique;
+}
+
 export async function buildAll(
   inputs: Inputs,
   geometry: GeometryInput,
@@ -182,9 +199,7 @@ export async function buildAll(
   const resolutionBytes = text(serialiseResolution(output.resolution));
   files.set(RESOLUTION_FILE, resolutionBytes);
   files.set(VALIDATION_FILE, text(combined));
-  for (const layer of layers) {
-    for (const [name, data] of layer.licenceFiles) files.set(`licences/${name}`, data);
-  }
+  for (const [name, data] of uniqueLicenceFiles(layers)) files.set(`licences/${name}`, data);
   const terms = await readFile(
     new URL("../../map-data/licences/natural-earth-terms.txt", import.meta.url),
   );
