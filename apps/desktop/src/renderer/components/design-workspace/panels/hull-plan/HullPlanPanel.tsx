@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState } from "react";
-import type { ArmourRegionId, DesignDraft, WorkshopView } from "@bluewave/ship-design";
+import { memo, useMemo, useRef, useState } from "react";
+import type { ArmourRegionId, DesignDraft, WorkshopView, ZoneSpan } from "@bluewave/ship-design";
 import type { DrawingBoardContent } from "../../content.js";
 import { Checkbox } from "../../../ui/checkbox.js";
 import { Panel } from "../Panel.js";
 import { PLAN_H, PLAN_W } from "./geometry.js";
+import type { PlanFrame } from "./geometry.js";
 import { planLabel } from "./describe.js";
 import { HullPlanLegend } from "./HullPlanLegend.js";
 import { legendEntries } from "./legend.js";
@@ -14,6 +15,7 @@ import { ProfileView } from "./ProfileView.js";
 import { SectionCard } from "./SectionCard.js";
 import { SectionLabels } from "./SectionLabels.js";
 import { FindingMarkers, layoutMarkers } from "../../validation/FindingMarkers.js";
+import { entityKey, type ShipEntity } from "../../selection/store.js";
 import {
   FindingsControl,
   useFindingsView,
@@ -50,6 +52,52 @@ import type { Edit } from "../types.js";
 
 const ISO_HEIGHT =
   "calc(100svh - var(--chrome-top, 0px) - var(--chrome-bottom, 0px) - var(--chrome-slip, 0px) - 7rem)";
+
+const NO_FINDINGS: readonly BoardFinding[] = [];
+
+function PlanDragGhost({
+  useGhostPosition,
+}: {
+  readonly useGhostPosition: HullPlanEditing["useGhostPosition"];
+}) {
+  const at = useGhostPosition();
+  return at === null ? null : (
+    <circle
+      cx={at.x}
+      cy={at.y}
+      r={7}
+      fill="none"
+      stroke="currentColor"
+      strokeDasharray="3 2"
+      pointerEvents="none"
+      data-testid="plan-drag-ghost"
+      aria-hidden="true"
+    />
+  );
+}
+
+const PlanConflictMarkers = memo(function PlanConflictMarkers({
+  shown,
+  visible,
+  frame,
+  draft,
+  zones,
+  names,
+  hidden,
+}: {
+  readonly shown: readonly BoardFinding[];
+  readonly visible: boolean;
+  readonly frame: PlanFrame;
+  readonly draft: DesignDraft;
+  readonly zones: readonly ZoneSpan[];
+  readonly names: (entity: ShipEntity) => string;
+  readonly hidden: boolean;
+}) {
+  const groups = visible ? layoutMarkers(shown, frame, draft, zones) : [];
+  return groups.length === 0 ? null : (
+    <FindingMarkers groups={groups} names={names} hidden={hidden} />
+  );
+});
 
 export function HullPlanPanel({
   draft,
@@ -105,7 +153,13 @@ export function HullPlanPanel({
   const findingsControl = onFindingsView === undefined;
   const planRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const model = givenModel ?? planModel(draft, content, view, month, given);
+  const givenFindings = given ?? NO_FINDINGS;
+  const fallback = useMemo(
+    () => planModel(draft, content, view, month, given),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- given drives recompute via givenFindings
+    [draft, content, view, month, givenFindings],
+  );
+  const model = givenModel ?? fallback;
   const ownEditing = useHullPlanEditing({
     draft,
     content,
@@ -118,9 +172,12 @@ export function HullPlanPanel({
     onTool,
   });
   const editing = givenEditing ?? ownEditing;
-  const { tool, notice, ghost, planHandlers, onNudge, onSide } = editing;
+  const { tool, notice, useGhostPosition, planHandlers, onNudge, onSide } = editing;
   const { frame, zones, form, facts, superstructure, placedFunnels, mounts, targets } = model;
-  const shown = model.findings.filter((f) => passesFilter(f.severity, findingsView.filter));
+  const shown = useMemo(
+    () => model.findings.filter((f) => passesFilter(f.severity, findingsView.filter)),
+    [model.findings, findingsView.filter],
+  );
   const viewDef = SHIP_VIEW_DEFS[givenShipView ?? DEFAULT_VIEW];
   const drawing = viewDef.id;
   const overlaysGiven = givenOverlays !== undefined;
@@ -219,7 +276,7 @@ export function HullPlanPanel({
               >
                 <HullOutlineLayer frame={frame} />
                 <HullDeckLayer frame={frame} />
-                <SelectionLayer frame={frame} zones={zones} draft={draft} warns={model.warns} />
+                <SelectionLayer frame={frame} zones={zones} draft={draft} warned={model.warned} />
                 <HullZoneLayer frame={frame} zones={zones} />
                 {givenOverlays?.has("compartments") === true && (
                   <CompartmentLayer frame={frame} zones={zones} />
@@ -269,31 +326,23 @@ export function HullPlanPanel({
                     {...planHandlers}
                   />
                 )}
-                {ghost !== null && (
-                  <circle
-                    cx={ghost.x}
-                    cy={ghost.y}
-                    r={7}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeDasharray="3 2"
-                    pointerEvents="none"
-                    data-testid="plan-drag-ghost"
-                    aria-hidden="true"
-                  />
-                )}
+                <PlanDragGhost useGhostPosition={useGhostPosition} />
               </svg>
               <FittingTargets
                 frame={frame}
                 draft={draft}
                 targets={targets}
                 disabled={tool.mode !== "off"}
-                warns={(instanceId) => model.warns({ kind: "fitting", instanceId })}
+                warned={model.warned}
                 anatomy={anatomy}
               />
               {on("conflicts") && (
-                <FindingMarkers
-                  groups={findingsView.visible ? layoutMarkers(shown, frame, draft, zones) : []}
+                <PlanConflictMarkers
+                  shown={shown}
+                  visible={findingsView.visible}
+                  frame={frame}
+                  draft={draft}
+                  zones={zones}
                   names={model.entityName}
                   hidden={tool.mode !== "off"}
                 />

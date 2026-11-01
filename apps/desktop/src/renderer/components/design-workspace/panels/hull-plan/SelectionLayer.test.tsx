@@ -1,7 +1,7 @@
 import { act, render } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 import { machineryRooms } from "../../selection/facts.js";
-import { createSelectionStore } from "../../selection/store.js";
+import { createSelectionStore, entityKey } from "../../selection/store.js";
 import { ShipSelectionProvider } from "../../selection/useShipSelection.js";
 import { SelectionLayer } from "./SelectionLayer.js";
 import { frame, hullForm as form, reference } from "./test-fixtures.js";
@@ -17,7 +17,11 @@ const setup = (warns = false) => {
           frame={frame}
           zones={form.zones}
           draft={reference.draft}
-          warns={() => warns}
+          warned={
+            warns
+              ? new Set([entityKey({ kind: "section", id: "central-machinery" })])
+              : new Set<string>()
+          }
         />
       </svg>
     </ShipSelectionProvider>,

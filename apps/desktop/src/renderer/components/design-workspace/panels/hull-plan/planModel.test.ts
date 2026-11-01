@@ -1,7 +1,8 @@
 import { buildWorkshopView } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
 import { loadDrawingBoardContent } from "../../content.js";
-import type { BoardFinding } from "../../validation/boardFindings.js";
+import { entityKey } from "../../selection/store.js";
+import { entityWarns, type BoardFinding } from "../../validation/boardFindings.js";
 import { bowStyleFor, planFrame, sternStyleFor } from "./geometry.js";
 import { planModel } from "./planModel.js";
 import { SECTIONS } from "./sections.js";
@@ -95,17 +96,24 @@ describe("planModel", () => {
 
   it("warns for an entity only when its findings are above advisory", () => {
     const placed = ref.draft.placements[0]!;
+    const fitting = entityKey({ kind: "fitting", instanceId: placed.instanceId });
     const blocking = [
       {
         severity: "BLOCKING",
         entities: [{ kind: "fitting", instanceId: placed.instanceId }],
       } as unknown as BoardFinding,
     ];
-    const m = model(blocking);
-    expect(m.warns({ kind: "fitting", instanceId: placed.instanceId })).toBe(true);
-    expect(m.warns({ kind: "fitting", instanceId: "not_placed" })).toBe(false);
-    expect(typeof model().warns({ kind: "fitting", instanceId: placed.instanceId })).toBe(
-      "boolean",
-    );
+    expect(model(blocking).warned.has(fitting)).toBe(true);
+    expect(
+      model(blocking).warned.has(entityKey({ kind: "fitting", instanceId: "not_placed" })),
+    ).toBe(false);
+    expect(model([]).warned.size).toBe(0);
+  });
+
+  it("indexes warned entities the same way entityWarns scans them", () => {
+    const m = model();
+    for (const finding of m.findings)
+      for (const entity of finding.entities)
+        expect(m.warned.has(entityKey(entity))).toBe(entityWarns(entity, m.findings));
   });
 });

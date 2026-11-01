@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import type {
   DesignDraft,
@@ -42,13 +42,34 @@ export interface PlanPointerHandlers {
   readonly onClick: (e: ReactMouseEvent<SVGRectElement>) => void;
 }
 
+export interface GhostPosition {
+  readonly x: number;
+  readonly y: number;
+}
+
+const planPointFromEvent = (e: {
+  readonly currentTarget: SVGRectElement;
+  readonly clientX: number;
+  readonly clientY: number;
+}) =>
+  clientToPlan(
+    e.currentTarget.ownerSVGElement?.getBoundingClientRect() ?? {
+      left: 0,
+      top: 0,
+      width: 0,
+      height: 0,
+    },
+    e.clientX,
+    e.clientY,
+  );
+
 export interface HullPlanEditing {
   readonly tool: PlanTool;
   readonly setTool: (next: PlanTool) => void;
   readonly notice: string | null;
   readonly setNotice: (text: string, under?: PlanTool) => void;
   readonly selected: PlacementSpec | undefined;
-  readonly ghost: { readonly x: number; readonly y: number } | null;
+  readonly useGhostPosition: () => GhostPosition | null;
   readonly onPlanClick: (svgX: number, svgY: number) => void;
   readonly planHandlers: PlanPointerHandlers;
   readonly onNudge: (deltaPermille: number) => void;
@@ -119,62 +140,64 @@ export function useHullPlanEditing({
   };
 
   const drag = useRef<{ readonly id: string; readonly x: number; readonly y: number } | null>(null);
-  const [ghost, setGhost] = useState<{ readonly x: number; readonly y: number } | null>(null);
-  const suppressClick = useRef(false);
-  const planPointFromEvent = (e: {
-    readonly currentTarget: SVGRectElement;
-    readonly clientX: number;
-    readonly clientY: number;
-  }) =>
-    clientToPlan(
-      e.currentTarget.ownerSVGElement?.getBoundingClientRect() ?? {
-        left: 0,
-        top: 0,
-        width: 0,
-        height: 0,
-      },
-      e.clientX,
-      e.clientY,
-    );
-  const planHandlers: PlanPointerHandlers = {
-    onPointerDown: (e) => {
-      if (tool.mode !== "move") return;
-      const point = planPointFromEvent(e);
-      const hit = point && fittingAt(frame, draft, point.x, point.y);
-      if (!point || !hit) return;
-      drag.current = { id: hit, x: point.x, y: point.y };
-      e.currentTarget.setPointerCapture?.(e.pointerId);
-    },
-    onPointerMove: (e) => {
-      const d = drag.current;
-      const point = d && planPointFromEvent(e);
-      if (!d || !point) return;
-      if (ghost !== null || Math.hypot(point.x - d.x, point.y - d.y) > 4) setGhost(point);
-    },
-    onPointerUp: (e) => {
-      const d = drag.current;
-      drag.current = null;
-      const point = planPointFromEvent(e);
-      if (d && ghost !== null && point) {
-        const p = draft.placements.find((x) => x.instanceId === d.id);
-        if (p) moveTo(p, point.x, point.y, pick(d.id));
-        suppressClick.current = true;
-      }
-      setGhost(null);
-    },
-    onPointerCancel: () => {
-      drag.current = null;
-      setGhost(null);
-    },
-    onClick: (e) => {
-      if (suppressClick.current) {
-        suppressClick.current = false;
-        return;
-      }
-      const point = planPointFromEvent(e);
-      if (point) onPlanClick(point.x, point.y);
-    },
+  const ghostStore = useRef<{
+    value: GhostPosition | null;
+    listeners: Set<() => void>;
+  }>({ value: null, listeners: new Set() });
+  const setGhost = (at: GhostPosition | null) => {
+    ghostStore.current.value = at;
+    for (const l of ghostStore.current.listeners) l();
   };
+  const readGhost = () => ghostStore.current.value;
+  const subscribeGhost = (l: () => void) => {
+    ghostStore.current.listeners.add(l);
+    return () => ghostStore.current.listeners.delete(l);
+  };
+  const useGhostPosition = () => useSyncExternalStore(subscribeGhost, readGhost, () => null);
+  const suppressClick = useRef(false);
+  const planHandlers: PlanPointerHandlers = useMemo(
+    () => ({
+      onPointerDown: (e) => {
+        if (tool.mode !== "move") return;
+        const point = planPointFromEvent(e);
+        const hit = point && fittingAt(frame, draft, point.x, point.y);
+        if (!point || !hit) return;
+        drag.current = { id: hit, x: point.x, y: point.y };
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+      },
+      onPointerMove: (e) => {
+        const d = drag.current;
+        const point = d && planPointFromEvent(e);
+        if (!d || !point) return;
+        if (readGhost() !== null || Math.hypot(point.x - d.x, point.y - d.y) > 4) setGhost(point);
+      },
+      onPointerUp: (e) => {
+        const d = drag.current;
+        drag.current = null;
+        const point = planPointFromEvent(e);
+        const released = readGhost();
+        if (released !== null) setGhost(null);
+        if (d && released !== null && point) {
+          const p = draft.placements.find((x) => x.instanceId === d.id);
+          if (p) moveTo(p, point.x, point.y, pick(d.id));
+          suppressClick.current = true;
+        }
+      },
+      onPointerCancel: () => {
+        drag.current = null;
+        setGhost(null);
+      },
+      onClick: (e) => {
+        if (suppressClick.current) {
+          suppressClick.current = false;
+          return;
+        }
+        const point = planPointFromEvent(e);
+        if (point) onPlanClick(point.x, point.y);
+      },
+    }),
+    [tool, draft, frame, zones, entryOf, edit],
+  );
 
   const onNudge = (delta: number) => {
     if (selected)
@@ -207,7 +230,7 @@ export function useHullPlanEditing({
     notice,
     setNotice,
     selected,
-    ghost,
+    useGhostPosition,
     onPlanClick,
     planHandlers,
     onNudge,

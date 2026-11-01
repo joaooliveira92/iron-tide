@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { kg, type DesignDraft } from "@bluewave/ship-design";
 import { Ship } from "lucide-react";
@@ -56,18 +56,21 @@ export function RebuildPanel({
   const ship = ships.find((s) => s.shipId === chosen) ?? ships[0];
   const shipId = ship?.shipId;
   const bulgeMassKg = action === "BULGE" ? Math.max(0, Math.floor(blisterMassKg)) : 0;
-  const checkedDraft: DesignDraft =
-    bulgeMassKg > 0
-      ? {
-          ...draft,
-          hull: {
-            ...draft.hull,
-            targetDisplacementKg: kg(draft.hull.targetDisplacementKg + bulgeMassKg),
-          },
-        }
-      : draft;
+  const checkedDraft = useMemo<DesignDraft>(
+    () =>
+      bulgeMassKg > 0
+        ? {
+            ...draft,
+            hull: {
+              ...draft.hull,
+              targetDisplacementKg: kg(draft.hull.targetDisplacementKg + bulgeMassKg),
+            },
+          }
+        : draft,
+    [draft, bulgeMassKg],
+  );
   const rebuildKind = action === "BULGE" ? ("BULGE" as const) : undefined;
-  const checkedDraftJson = JSON.stringify(checkedDraft);
+  const checkedDraftKey = useMemo(() => JSON.stringify(checkedDraft), [checkedDraft]);
 
   useEffect(() => {
     setShips([]);
@@ -90,7 +93,7 @@ export function RebuildPanel({
       .execute("checkRebuild", {
         sessionId,
         shipId,
-        draft: JSON.parse(checkedDraftJson) as Record<string, unknown>,
+        draft: checkedDraft,
         ...(rebuildKind === undefined ? {} : { rebuildKind }),
       })
       .then((r) => {
@@ -99,7 +102,7 @@ export function RebuildPanel({
     return () => {
       live = false;
     };
-  }, [bridge, sessionId, shipId, loaded, checkedDraftJson, rebuildKind]);
+  }, [bridge, sessionId, shipId, loaded, checkedDraft, checkedDraftKey, rebuildKind]);
 
   const rules = content.rebuild;
   if (rules === null) {

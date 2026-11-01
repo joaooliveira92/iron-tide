@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import {
   ZONE_IDS,
   type ComponentCategory,
+  type ComponentSummary,
   type DesignDraft,
   type MountSide,
   type PartCatalogueEntry,
@@ -60,22 +61,19 @@ function midStation(content: DrawingBoardContent, draft: DesignDraft, zone: Zone
 function ComponentHover({
   entry,
   placement,
-  view,
+  compiled,
   onSelect,
   selected,
 }: {
   readonly entry: PartCatalogueEntry | undefined;
   readonly placement: PlacementSpec;
-  readonly view: WorkshopView;
+  readonly compiled: ComponentSummary | undefined;
   readonly onSelect?: () => void;
   readonly selected?: boolean;
 }) {
   const format = usePresentationFormat();
   if (!entry) return <span>{placement.componentId}</span>;
-  const facts = componentFacts(
-    entry,
-    view.compiled.components.find((c) => c.instanceId === placement.instanceId),
-  );
+  const facts = componentFacts(entry, compiled);
   return (
     <HoverCard>
       <HoverCardTrigger
@@ -154,7 +152,14 @@ export function PlacementsPanel({
   readonly onSelect?: (instanceId: string) => void;
   readonly selectedInstanceId?: string | null;
 }) {
-  const catalogueById = new Map(content.catalogue.map((e) => [e.id, e]));
+  const catalogueById = useMemo(
+    () => new Map(content.catalogue.map((e) => [e.id, e])),
+    [content.catalogue],
+  );
+  const compiledById = useMemo(
+    () => new Map(view.compiled.components.map((c) => [c.instanceId, c])),
+    [view.compiled.components],
+  );
   const shown = (entry: PartCatalogueEntry | undefined) =>
     categories === undefined || (entry !== undefined && categories.has(entry.category));
   const placements = draft.placements.filter((p) => shown(catalogueById.get(p.componentId)));
@@ -227,7 +232,7 @@ export function PlacementsPanel({
                       <ComponentHover
                         entry={catalogueById.get(p.componentId)}
                         placement={p}
-                        view={view}
+                        compiled={compiledById.get(p.instanceId)}
                         onSelect={onSelect === undefined ? undefined : () => onSelect(p.instanceId)}
                         selected={selectedInstanceId === p.instanceId}
                       />

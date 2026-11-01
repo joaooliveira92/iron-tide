@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { HullPlanPanel } from "./HullPlanPanel.js";
+import { PLAN_H, PLAN_W } from "./geometry.js";
+import { IDLE_TOOL } from "./plan-tool.js";
 import { content, reference, view } from "./test-fixtures.js";
 
 afterEach(cleanup);
@@ -138,5 +141,58 @@ describe("HullPlanPanel", () => {
     expect(plan.querySelectorAll("[data-arc]")).toHaveLength(0);
     fireEvent.click(checkbox);
     expect(plan.querySelectorAll("[data-arc]")).toHaveLength(arcs);
+  });
+
+  it("moves only the ghost circle during a drag, without re-rendering the panel", async () => {
+    let renders = 0;
+    const Counting = () => {
+      const [tool, setTool] = useState(IDLE_TOOL);
+      renders++;
+      return (
+        <HullPlanPanel
+          draft={reference.draft}
+          content={content}
+          view={view}
+          month={reference.month}
+          edit={() => {}}
+          findings={[]}
+          shipView="top"
+          tool={tool}
+          onTool={setTool}
+        />
+      );
+    };
+    const { container } = render(<Counting />);
+    const plan = container.querySelector("svg[aria-label]") as SVGSVGElement;
+    plan.getBoundingClientRect = () =>
+      ({
+        left: 0,
+        top: 0,
+        width: PLAN_W,
+        height: PLAN_H,
+        right: PLAN_W,
+        bottom: PLAN_H,
+      }) as DOMRect;
+    fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Move" }));
+    const last = reference.draft.placements[reference.draft.placements.length - 1]!;
+    const items = await screen.findAllByRole("menuitem", {
+      name: new RegExp(`\\(${last.instanceId}\\)$`),
+    });
+    fireEvent.click(items[0]!);
+    const layer = screen.getByTestId("plan-click-layer");
+    const dot = container.querySelector(`[data-fitting='${last.instanceId}']`) as SVGCircleElement;
+    const x = Number(dot.getAttribute("cx"));
+    const y = Number(dot.getAttribute("cy"));
+    const stable = renders;
+    fireEvent.pointerDown(layer, { clientX: x, clientY: y, pointerId: 1 });
+    fireEvent.pointerMove(layer, { clientX: x + 20, clientY: y, pointerId: 1 });
+    const ghost = screen.getByTestId("plan-drag-ghost") as SVGCircleElement;
+    expect(Number(ghost.getAttribute("cx"))).toBe(x + 20);
+    fireEvent.pointerMove(layer, { clientX: x + 40, clientY: y, pointerId: 1 });
+    expect(Number(screen.getByTestId("plan-drag-ghost").getAttribute("cx"))).toBe(x + 40);
+    expect(renders).toBe(stable);
+    fireEvent.pointerUp(layer, { clientX: x + 40, clientY: y, pointerId: 1 });
+    expect(screen.queryByTestId("plan-drag-ghost")).toBeNull();
   });
 });

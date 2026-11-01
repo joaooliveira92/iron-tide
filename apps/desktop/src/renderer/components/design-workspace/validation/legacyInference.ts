@@ -3,8 +3,17 @@ import { formatExplanation } from "../../../lib/presentation-format/index.js";
 import { SECTION_IDS, SECTIONS } from "../panels/hull-plan/sections.js";
 import type { ShipEntity } from "../selection/store.js";
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const naming = (token: string) => new RegExp(`(^|[^A-Za-z0-9_])${escape(token)}([^A-Za-z0-9_]|$)`);
+const escapeRe = /[.*+?^${}()|[\]\\]/g;
+const escape = (s: string) => s.replace(escapeRe, "\\$&");
+const namingRe = new Map<string, RegExp>();
+const naming = (token: string) => {
+  let re = namingRe.get(token);
+  if (re === undefined) {
+    re = new RegExp(`(^|[^A-Za-z0-9_])${escape(token)}([^A-Za-z0-9_]|$)`);
+    namingRe.set(token, re);
+  }
+  return re;
+};
 
 export function inferEntities(f: Finding, draft: DesignDraft): ShipEntity[] {
   const text = `${formatExplanation(f.what)} ${formatExplanation(f.why)}`;

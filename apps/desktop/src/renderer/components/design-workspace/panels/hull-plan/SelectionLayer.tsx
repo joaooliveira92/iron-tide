@@ -1,6 +1,6 @@
 import type { DesignDraft } from "@bluewave/ship-design";
 import { machineryRooms } from "../../selection/facts.js";
-import { sameEntity, type ShipEntity } from "../../selection/store.js";
+import { entityKey, sameEntity } from "../../selection/store.js";
 import { useShipSelection } from "../../selection/useShipSelection.js";
 import { WarningGlyph } from "./WarningGlyph.js";
 import { PLAN_MID, type PlanFrame } from "./geometry.js";
@@ -11,12 +11,12 @@ export function SelectionLayer({
   frame,
   zones,
   draft,
-  warns,
+  warned,
 }: {
   readonly frame: PlanFrame;
   readonly zones: readonly ZoneRange[];
   readonly draft: DesignDraft;
-  readonly warns: (entity: ShipEntity) => boolean;
+  readonly warned: ReadonlySet<string>;
 }) {
   const selected = useShipSelection((s) => s.selected);
   const linked = useShipSelection((s) => s.linked);
@@ -54,7 +54,7 @@ export function SelectionLayer({
       {selectedZone && selected && (
         <>
           <SectionHighlightLayer frame={frame} zone={selectedZone} variant="selected" />
-          {warns(selected) && (
+          {warned.has(entityKey(selected)) && (
             <WarningGlyph
               x={frame.x(selectedZone.endPermille) - 8}
               y={PLAN_MID - frame.maxHalf - 10}
