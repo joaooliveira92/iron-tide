@@ -1,7 +1,4 @@
 import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
-import { formatMeasurement } from "../../../lib/presentation-format/format.js";
-import { UM_PER_NAUTICAL_MILE } from "../../../lib/presentation-format/units.js";
-import { usePreferences } from "../../../lib/preferences-context.js";
 import { translate } from "../../../lib/strings.js";
 import { formatTacticalClock, type TacticalTimeScale } from "./tactical-time.js";
 
@@ -14,7 +11,6 @@ export function TacticalStatusBar({
   readonly running: boolean;
   readonly scale: TacticalTimeScale;
 }) {
-  const { preferences } = usePreferences();
   const state = view.ended ? "finished" : running ? "running" : "paused";
   return (
     <div
@@ -47,23 +43,6 @@ export function TacticalStatusBar({
       </span>
       <span data-testid="battle-status">
         {view.ended ? `Ended: ${view.endReason ?? "unknown"}` : "In progress"}
-      </span>
-      <span>
-        {"sea "}
-        {view.weather.seaState.toLowerCase()}
-        {" · "}
-        {view.weather.daylight ? "day" : "night"}
-        {" · "}
-        {view.weather.precipitation.toLowerCase()}
-        <span data-testid="battle-weather">
-          {" · visibility "}
-          {formatMeasurement(view.weather.visibilityNm * UM_PER_NAUTICAL_MILE, {
-            locale: preferences.formattingLocale,
-            category: "range",
-            preset: preferences.measurementPreset,
-            selections: preferences.measurementSelections,
-          })}
-        </span>
       </span>
       {view.ended && (
         <span data-testid="battle-outcome">

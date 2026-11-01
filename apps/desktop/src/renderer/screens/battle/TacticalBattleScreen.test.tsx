@@ -506,6 +506,56 @@ describe("tactical battle screen", () => {
     expect(advances(execute)).toHaveLength(0);
   });
 
+  it("filters ship names to all, the selection only, or none", async () => {
+    mount();
+    await screen.findByTestId("tactical-map");
+    const shown = screen.getAllByTestId(/^tactical-label-/u).length;
+    expect(shown).toBeGreaterThanOrEqual(2);
+    expect(shown).toBeLessThan(3);
+    fireEvent.change(screen.getByTestId("tactical-names"), { target: { value: "none" } });
+    expect(screen.queryAllByTestId(/^tactical-label-/u)).toHaveLength(0);
+    fireEvent.change(screen.getByTestId("tactical-names"), { target: { value: "selected" } });
+    fireEvent.click(screen.getByTestId("tactical-ship-a2"));
+    const labels = screen.getAllByTestId(/^tactical-label-/u);
+    expect(labels).toHaveLength(1);
+    expect(labels[0]?.textContent).toBe("HMS Bravo");
+  });
+
+  it("reports sea, sky, daylight and visibility on the map", async () => {
+    mount();
+    await screen.findByTestId("tactical-map");
+    const conditions = screen.getByTestId("tactical-conditions");
+    expect(conditions.textContent).toContain("Sea: moderate");
+    expect(conditions.textContent).toContain("Weather: clear");
+    expect(conditions.textContent).toContain("Day");
+    expect(screen.getByTestId("battle-weather").textContent).toContain("Visibility:");
+  });
+
+  it("measures the distance from the selected ship to the cursor", async () => {
+    mount();
+    const map = await screen.findByTestId("tactical-map");
+    expect(screen.queryByTestId("tactical-cursor-distance")).toBeNull();
+    fireEvent.click(await screen.findByTestId("tactical-ship-a1"));
+    fireEvent.pointerMove(map, { clientX: 300, clientY: 200 });
+    expect(screen.getByTestId("tactical-cursor-distance").textContent).toMatch(
+      /Distance to cursor: .+/u,
+    );
+    fireEvent.pointerLeave(map);
+    expect(screen.queryByTestId("tactical-cursor-distance")).toBeNull();
+  });
+
+  it("plots a standing course line once a course order is in effect", async () => {
+    mount();
+    fireEvent.click(await screen.findByTestId("tactical-ship-a1"));
+    expect(screen.queryByTestId("tactical-standing-course")).toBeNull();
+    fireEvent.change(screen.getByTestId("unit-course-input"), { target: { value: "090" } });
+    fireEvent.change(screen.getByTestId("unit-speed-input"), { target: { value: "12" } });
+    fireEvent.click(screen.getByTestId("unit-apply"));
+    expect(screen.queryByTestId("tactical-standing-course")).toBeNull();
+    fireEvent.click(screen.getByTestId("battle-advance"));
+    expect(await screen.findByTestId("tactical-standing-course")).toBeTruthy();
+  });
+
   it("passes an automated accessibility audit", async () => {
     mount();
     fireEvent.click(await screen.findByTestId("tactical-ship-a1"));

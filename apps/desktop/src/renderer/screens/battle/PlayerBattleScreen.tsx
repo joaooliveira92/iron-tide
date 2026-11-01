@@ -12,7 +12,13 @@ import { usePreferences } from "../../lib/preferences-context.js";
 import { translate } from "../../lib/strings.js";
 import { CombatLogPanel } from "./tactical/CombatLogPanel.js";
 import { OrderOfBattle } from "./tactical/OrderOfBattle.js";
-import { TacticalMap, type CoursePreview, type MapOverlays } from "./tactical/TacticalMap.js";
+import {
+  TacticalMap,
+  type CoursePreview,
+  type MapOverlays,
+  type NameFilter,
+  type StandingCourse,
+} from "./tactical/TacticalMap.js";
 import { TacticalStatusBar } from "./tactical/TacticalStatusBar.js";
 import { TacticalToolbar } from "./tactical/TacticalToolbar.js";
 import { UnitCommandPanel } from "./tactical/UnitCommandPanel.js";
@@ -42,7 +48,7 @@ import { usePlayerBattle } from "./usePlayerBattle.js";
 
 const INITIAL_CAMERA: TacticalCamera = { centreX: 0, centreY: 0, metresPerPixel: 400 };
 const INITIAL_VIEWPORT: TacticalViewport = { width: 800, height: 480 };
-const INITIAL_OVERLAYS: MapOverlays = { labels: true, tracks: true, rings: true, fire: true };
+const INITIAL_OVERLAYS: MapOverlays = { labels: "all", tracks: true, rings: true, fire: true };
 
 export function PlayerBattleScreen({
   request,
@@ -134,9 +140,21 @@ export function PlayerBattleScreen({
     setCamera(next);
   }, []);
 
-  const toggleOverlay = useCallback((overlay: keyof MapOverlays, on: boolean) => {
+  const toggleOverlay = useCallback((overlay: "tracks" | "rings" | "fire", on: boolean) => {
     setOverlays((current) => ({ ...current, [overlay]: on }));
   }, []);
+
+  const setNames = useCallback((labels: NameFilter) => {
+    setOverlays((current) => ({ ...current, labels }));
+  }, []);
+
+  const standingCourses = useMemo<readonly StandingCourse[]>(() => {
+    if (view === null) return [];
+    return view.divisions.flatMap((division) => {
+      const course = acceptedOrders[division.divisionId]?.courseDeg;
+      return course === undefined ? [] : [{ shipId: division.flagshipId, headingDeg: course }];
+    });
+  }, [view, acceptedOrders]);
 
   const centre: readonly [number, number] = [viewport.width / 2, viewport.height / 2];
 
@@ -209,93 +227,98 @@ export function PlayerBattleScreen({
                   }
                 }}
                 onOverlay={toggleOverlay}
+                onNames={setNames}
               />
 
-              <div className="grid min-h-0 gap-2 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]">
-                <aside className="min-h-0 rounded border border-border p-2 lg:max-h-[30rem] lg:overflow-auto">
-                  <Tabs defaultValue="oob">
-                    <TabsList variant="line" aria-label={translate("tactical.tabs.label")}>
-                      <TabsTrigger value="oob">{translate("tactical.tabs.oob")}</TabsTrigger>
-                      <TabsTrigger value="log">{translate("tactical.tabs.log")}</TabsTrigger>
-                      {view.objectives.length > 0 && (
-                        <TabsTrigger value="objectives">
-                          {translate("tactical.tabs.objectives")}
-                        </TabsTrigger>
-                      )}
-                    </TabsList>
-                    <TabsContent value="oob">
-                      <OrderOfBattle
-                        view={view}
-                        locale={preferences.formattingLocale}
-                        orderFor={orderFor}
-                        setOrder={setOrder}
-                        selectedShipId={selectedShipId}
-                        selectedDivisionId={selectedDivisionId}
-                        onSelectShip={setSelectedShipId}
-                        onSelectDivision={selectDivision}
-                      />
-                    </TabsContent>
-                    <TabsContent value="log">
-                      <CombatLogPanel entries={entries} onSelectShip={setSelectedShipId} />
-                    </TabsContent>
-                    {view.objectives.length > 0 && (
-                      <TabsContent value="objectives">
-                        <ul
-                          data-testid="battle-objectives"
-                          className="list-disc space-y-1 pl-4 text-xs"
-                        >
-                          {view.objectives.map((objective) => (
-                            <li key={objective}>{objective}</li>
-                          ))}
-                        </ul>
+              <div className="grid gap-2 lg:h-[clamp(26rem,62vh,48rem)] lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]">
+                <aside className="flex min-h-0 flex-col gap-2 overflow-y-auto">
+                  <div className="min-h-[14rem] flex-1 overflow-auto rounded border border-border p-2">
+                    <Tabs defaultValue="oob">
+                      <TabsList variant="line" aria-label={translate("tactical.tabs.label")}>
+                        <TabsTrigger value="oob">{translate("tactical.tabs.oob")}</TabsTrigger>
+                        <TabsTrigger value="log">{translate("tactical.tabs.log")}</TabsTrigger>
+                        {view.objectives.length > 0 && (
+                          <TabsTrigger value="objectives">
+                            {translate("tactical.tabs.objectives")}
+                          </TabsTrigger>
+                        )}
+                      </TabsList>
+                      <TabsContent value="oob">
+                        <OrderOfBattle
+                          view={view}
+                          locale={preferences.formattingLocale}
+                          orderFor={orderFor}
+                          setOrder={setOrder}
+                          selectedShipId={selectedShipId}
+                          selectedDivisionId={selectedDivisionId}
+                          onSelectShip={setSelectedShipId}
+                          onSelectDivision={selectDivision}
+                        />
                       </TabsContent>
-                    )}
-                  </Tabs>
+                      <TabsContent value="log">
+                        <CombatLogPanel entries={entries} onSelectShip={setSelectedShipId} />
+                      </TabsContent>
+                      {view.objectives.length > 0 && (
+                        <TabsContent value="objectives">
+                          <ul
+                            data-testid="battle-objectives"
+                            className="list-disc space-y-1 pl-4 text-xs"
+                          >
+                            {view.objectives.map((objective) => (
+                              <li key={objective}>{objective}</li>
+                            ))}
+                          </ul>
+                        </TabsContent>
+                      )}
+                    </Tabs>
+                  </div>
+                  <div className="shrink-0">
+                    <UnitCommandPanel
+                      view={view}
+                      locale={preferences.formattingLocale}
+                      selectedShipId={selectedShipId}
+                      orderFor={orderFor}
+                      acceptedOrders={acceptedOrders}
+                      setOrder={setOrder}
+                      releaseCourse={releaseCourse}
+                      onPreviewCourse={setCoursePreview}
+                    />
+                  </div>
                 </aside>
 
-                <div className="flex min-w-0 flex-col gap-2">
-                  <div className="relative h-[min(20rem,36vh)]">
-                    <TacticalMap
-                      view={view}
-                      camera={camera}
-                      onCameraChange={changeCamera}
-                      onViewportChange={setViewport}
-                      selectedShipId={selectedShipId}
-                      onSelectShip={setSelectedShipId}
-                      overlays={overlays}
-                      trails={trails}
-                      markers={markers}
-                      stepIntervalMs={stepIntervalMs(scale)}
-                      paused={!running}
-                      coursePreview={preview}
-                    />
-                    {!running && !ended && (
-                      <div
-                        aria-hidden="true"
-                        data-testid="tactical-paused-banner"
-                        className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded bg-amber-500/90 px-4 py-1 text-sm font-bold tracking-widest text-black"
-                      >
-                        {translate("tactical.status.paused")}
-                      </div>
-                    )}
-                  </div>
-                  <UnitCommandPanel
+                <div className="relative h-[24rem] min-w-0 lg:h-full">
+                  <TacticalMap
                     view={view}
-                    locale={preferences.formattingLocale}
+                    camera={camera}
+                    onCameraChange={changeCamera}
+                    onViewportChange={setViewport}
                     selectedShipId={selectedShipId}
-                    orderFor={orderFor}
-                    acceptedOrders={acceptedOrders}
-                    setOrder={setOrder}
-                    releaseCourse={releaseCourse}
-                    onPreviewCourse={setCoursePreview}
+                    onSelectShip={setSelectedShipId}
+                    overlays={overlays}
+                    trails={trails}
+                    markers={markers}
+                    stepIntervalMs={stepIntervalMs(scale)}
+                    paused={!running}
+                    coursePreview={preview}
+                    standingCourses={standingCourses}
                   />
                   {!running && !ended && (
-                    <p className="text-xs text-muted-foreground">
-                      {translate("tactical.status.pending_orders")}
-                    </p>
+                    <div
+                      aria-hidden="true"
+                      data-testid="tactical-paused-banner"
+                      className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded bg-amber-500/90 px-4 py-1 text-sm font-bold tracking-widest text-black"
+                    >
+                      {translate("tactical.status.paused")}
+                    </div>
                   )}
                 </div>
               </div>
+
+              {!running && !ended && (
+                <p className="text-xs text-muted-foreground">
+                  {translate("tactical.status.pending_orders")}
+                </p>
+              )}
 
               <TacticalStatusBar view={view} running={running} scale={scale} />
 

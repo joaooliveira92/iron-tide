@@ -20,6 +20,7 @@ import {
   PROVISIONAL_ZOOM_STEP,
   compassFromHeading,
   panCamera,
+  screenToWorld,
   visibleLabelKeys,
   worldToScreen,
   zoomCameraAt,
@@ -31,8 +32,15 @@ import type { TransientMarkers } from "./tactical-log.js";
 import { shipPoint, shipStatus, type Trails } from "./tactical-model.js";
 import { TACTICAL_PALETTE } from "./tactical-palette.js";
 
+export type NameFilter = "all" | "selected" | "none";
+
+export interface StandingCourse {
+  readonly shipId: string;
+  readonly headingDeg: number;
+}
+
 export interface MapOverlays {
-  readonly labels: boolean;
+  readonly labels: NameFilter;
   readonly tracks: boolean;
   readonly rings: boolean;
   readonly fire: boolean;
@@ -56,6 +64,7 @@ export interface TacticalMapProps {
   readonly stepIntervalMs: number;
   readonly paused: boolean;
   readonly coursePreview: CoursePreview | null;
+  readonly standingCourses: readonly StandingCourse[];
 }
 
 const FALLBACK_VIEWPORT: TacticalViewport = { width: 800, height: 480 };
@@ -64,6 +73,7 @@ const SCALE_BAR_MAX_PX = 140;
 const LABEL_CHAR_PX = 6.2;
 const LABEL_HEIGHT_PX = 14;
 const PREVIEW_LENGTH_PX = 90;
+const STANDING_COURSE_LENGTH_PX = 260;
 const RING_COUNT = 4;
 
 const SIDE_COLOUR = { own: TACTICAL_PALETTE.own, hostile: TACTICAL_PALETTE.hostile } as const;
@@ -88,11 +98,13 @@ export function TacticalMap(props: TacticalMapProps) {
     stepIntervalMs,
     paused,
     coursePreview,
+    standingCourses,
   } = props;
   const { preferences } = usePreferences();
   const frame = useRef<HTMLDivElement | null>(null);
   const [viewport, setViewport] = useState<TacticalViewport>(FALLBACK_VIEWPORT);
   const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const [cursor, setCursor] = useState<readonly [number, number] | null>(null);
 
   useEffect(() => {
     const element = frame.current;
@@ -130,8 +142,12 @@ export function TacticalMap(props: TacticalMapProps) {
   );
 
   const labelKeys = useMemo(() => {
-    if (!overlays.labels) return new Set<string>();
-    const candidates: LabelCandidate[] = visibleShips.map((ship) => {
+    if (overlays.labels === "none") return new Set<string>();
+    const named =
+      overlays.labels === "selected"
+        ? visibleShips.filter((ship) => ship.shipId === selectedShipId)
+        : visibleShips;
+    const candidates: LabelCandidate[] = named.map((ship) => {
       const [x, y] = project(shipPoint(ship)!);
       const width = ship.name.length * LABEL_CHAR_PX + 8;
       const priority =
@@ -163,6 +179,21 @@ export function TacticalMap(props: TacticalMapProps) {
       : "";
 
   const selected = selectedShipId === null ? undefined : shipsById.get(selectedShipId);
+  const measurement = {
+    locale: preferences.formattingLocale,
+    category: "range",
+    preset: preferences.measurementPreset,
+    selections: preferences.measurementSelections,
+  } as const;
+  const selectedPoint = selected === undefined ? null : shipPoint(selected);
+  let cursorDistance: string | null = null;
+  if (cursor !== null && selectedPoint !== null) {
+    const world = screenToWorld(camera, viewport, cursor);
+    cursorDistance = formatMeasurement(
+      Math.round(Math.hypot(world[0] - selectedPoint[0], world[1] - selectedPoint[1])),
+      measurement,
+    );
+  }
   const centre: readonly [number, number] = [viewport.width / 2, viewport.height / 2];
 
   const onWheel = (event: WheelEvent<SVGSVGElement>) => {
@@ -184,6 +215,8 @@ export function TacticalMap(props: TacticalMapProps) {
   };
 
   const onPointerMove = (event: PointerEvent<SVGSVGElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setCursor([event.clientX - rect.left, event.clientY - rect.top]);
     const state = drag.current;
     if (state === null) return;
     const dx = event.clientX - state.x;
@@ -249,6 +282,7 @@ export function TacticalMap(props: TacticalMapProps) {
         onWheel={onWheel}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
+        onPointerLeave={() => setCursor(null)}
         onPointerUp={onPointerUp}
         onKeyDown={onKeyDown}
       >
@@ -358,6 +392,29 @@ export function TacticalMap(props: TacticalMapProps) {
               );
             })
           : null}
+
+        {standingCourses.map((course) => {
+          const target = shipsById.get(course.shipId);
+          const point = target === undefined ? null : shipPoint(target);
+          if (point === null) return null;
+          const [x, y] = project(point);
+          const radians = (course.headingDeg * Math.PI) / 180;
+          return (
+            <line
+              key={`course-${course.shipId}`}
+              data-testid="tactical-standing-course"
+              x1={x}
+              y1={y}
+              x2={x + Math.cos(radians) * STANDING_COURSE_LENGTH_PX}
+              y2={y - Math.sin(radians) * STANDING_COURSE_LENGTH_PX}
+              stroke={TACTICAL_PALETTE.standingCourse}
+              strokeOpacity={0.6}
+              strokeWidth={1}
+              strokeDasharray="8 5"
+              pointerEvents="none"
+            />
+          );
+        })}
 
         {coursePreview !== null
           ? (() => {
@@ -524,6 +581,30 @@ export function TacticalMap(props: TacticalMapProps) {
           </text>
         </g>
       </svg>
+      <div
+        data-testid="tactical-conditions"
+        className="pointer-events-none absolute bottom-2 right-3 space-y-0.5 text-right text-[11px] font-medium text-slate-300"
+      >
+        <p>
+          {translate("tactical.weather.sky", { sky: view.weather.precipitation.toLowerCase() })}
+        </p>
+        <p>{translate("tactical.weather.sea", { sea: view.weather.seaState.toLowerCase() })}</p>
+        <p>
+          {view.weather.daylight
+            ? translate("tactical.weather.day")
+            : translate("tactical.weather.night")}
+        </p>
+        <p data-testid="battle-weather">
+          {translate("tactical.weather.visibility", {
+            range: formatMeasurement(view.weather.visibilityNm * UM_PER_NAUTICAL_MILE, measurement),
+          })}
+        </p>
+        {cursorDistance === null ? null : (
+          <p data-testid="tactical-cursor-distance">
+            {translate("tactical.cursor.distance", { distance: cursorDistance })}
+          </p>
+        )}
+      </div>
       {selected?.headingDeg == null ? null : (
         <span className="sr-only" data-testid="tactical-selected-bearing">
           {String(compassFromHeading(selected.headingDeg))}

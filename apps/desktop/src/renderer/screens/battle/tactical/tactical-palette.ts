@@ -12,4 +12,5 @@ export const TACTICAL_PALETTE = {
   firingLine: "#fbbf24",
   impact: "#f97316",
   coursePreview: "#a3e635",
+  standingCourse: "#94a3b8",
 } as const;
