@@ -4,7 +4,7 @@ import type { CompiledDesignVersion } from "@bluewave/campaign-engine";
 import { cn } from "../../../lib/utils.js";
 import { humanizeId } from "../../../lib/humanize-id.js";
 import { shipTypeIcon } from "../../../components/design-workspace/index.js";
-import { KG_PER_TONNE } from "../../../lib/presentation-format/index.js";
+import { KG_PER_TONNE } from "../../../lib/presentation-format/units.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { DesignFit } from "../yard-workspace.js";
 import { Meter } from "./Meter.js";

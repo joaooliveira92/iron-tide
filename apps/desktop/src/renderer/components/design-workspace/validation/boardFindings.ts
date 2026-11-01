@@ -8,7 +8,7 @@ import {
   type WorkshopView,
 } from "@bluewave/ship-design";
 import type { BatteryCard } from "../batteryView.js";
-import { formatExplanation } from "../../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { SECTION_IDS, SECTIONS } from "../panels/hull-plan/sections.js";
 import { sameEntity, type ShipEntity } from "../selection/store.js";
 import { inferEntities } from "./legacyInference.js";

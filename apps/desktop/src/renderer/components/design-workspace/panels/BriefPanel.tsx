@@ -1,6 +1,6 @@
 import type { DesignDraft, ShipContext, WorkshopView } from "@bluewave/ship-design";
 import { Badge } from "../../ui/badge.js";
-import { formatExplanation } from "../../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { shipTypeIcon } from "../ship-type-icon.js";
 import { NumberField, SelectField } from "../fields.js";
 import { shipTypeChoices } from "../shipTypes.js";

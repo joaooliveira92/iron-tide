@@ -19,7 +19,7 @@ import { Button } from "../../ui/button.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
 import { SlateBody, SlateFacts, SlateHeader } from "../../ui/slate.js";
 import { cn } from "../../../lib/utils.js";
-import { formatExplanation } from "../../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 import { findingAttrs } from "../selection/navigation.js";

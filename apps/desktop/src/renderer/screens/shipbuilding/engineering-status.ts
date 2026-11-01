@@ -1,7 +1,8 @@
 import type { ExplanationTree } from "@bluewave/events";
 import { topsideLoad, type Finding, type Severity, type WorkshopView } from "@bluewave/ship-design";
 import { passesFilter } from "../../components/design-workspace/validation/severity.js";
-import { formatExplanation, type PresentationFormat } from "../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../shared/explanation-text.js";
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 
 export type ReadoutTone = "neutral" | "warn" | "bad";
 

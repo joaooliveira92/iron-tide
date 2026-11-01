@@ -1,5 +1,5 @@
 import { OctagonX } from "lucide-react";
-import { formatExplanation } from "../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../shared/explanation-text.js";
 import {
   AlertDialog,
   AlertDialogAction,

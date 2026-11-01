@@ -3,7 +3,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
-import { formatConjunctionList } from "../../../lib/presentation-format/index.js";
+import { formatConjunctionList } from "../../../lib/presentation-format/list.js";
 import { cn } from "../../../lib/utils.js";
 import type { ResearchFieldView, ResearchTotals } from "../research-view-model.js";
 import { fieldIcon } from "./field-icons.js";

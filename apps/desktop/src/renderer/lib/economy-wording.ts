@@ -1,7 +1,7 @@
 import type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign-engine";
 
 import { resolveMessage } from "../content/uiCatalogue.js";
-import { formatCount } from "./presentation-format/index.js";
+import { formatCount } from "./presentation-format/format.js";
 
 export function economyStatusLabel(status: EconomyStatus): string {
   return resolveMessage(`economy.status.${status}`);

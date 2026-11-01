@@ -4,7 +4,7 @@ import type { ExplanationTree } from "@bluewave/events";
 import { monthName } from "../lib/campaign-month.js";
 import { economyStatusLabel, researchNote } from "../lib/economy-wording.js";
 import type { PresentationFormat } from "../lib/presentation-format/index.js";
-import { KG_PER_TONNE } from "../lib/presentation-format/index.js";
+import { KG_PER_TONNE } from "../lib/presentation-format/units.js";
 import { translate } from "../lib/strings.js";
 
 export const FOREIGN_STATION_RULE_V1 = "controlled-by-another-nation";

@@ -6,7 +6,7 @@ import {
   type DesignDraft,
   type WorkshopView,
 } from "@bluewave/ship-design";
-import { formatTonnes } from "../../lib/presentation-format/index.js";
+import { formatTonnes } from "../../lib/presentation-format/armament.js";
 
 export type AntiAircraftStatus = "empty" | "fitted" | "unavailable";
 

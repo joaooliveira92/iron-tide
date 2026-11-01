@@ -35,12 +35,12 @@ import { useBackground } from "../../shell/BackgroundContext.js";
 import { DENSITY_OPTIONS, useDensity } from "../../shell/DensityContext.js";
 import { SANS_FONT_OPTIONS, useFont } from "../../shell/FontContext.js";
 import { useTheme } from "../../shell/ThemeContext.js";
+import { formatMoney } from "../../lib/presentation-format/money.js";
 import {
   MEASUREMENT_CATEGORIES,
   defaultDisplayUnit,
   displayUnitsForCategory,
-  formatMoney,
-} from "../../lib/presentation-format/index.js";
+} from "../../lib/presentation-format/units.js";
 import { useCurrencyDisplayMode, usePreferences } from "../../lib/preferences-context.js";
 import { translate, type MessageKey } from "../../lib/strings.js";
 import { useActiveCampaignCurrencyContext } from "../../shell/CampaignShellContext.js";

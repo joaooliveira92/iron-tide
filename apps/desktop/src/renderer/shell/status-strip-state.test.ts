@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
-import { createPresentationFormat } from "../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../lib/presentation-format/profile.js";
 import {
   buildStatusStrip,
   type StatusStripAreas,

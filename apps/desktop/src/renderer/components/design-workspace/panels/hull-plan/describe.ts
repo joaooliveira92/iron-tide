@@ -1,4 +1,4 @@
-import { formatFixed } from "../../../../lib/presentation-format/index.js";
+import { formatFixed } from "../../../../lib/presentation-format/format.js";
 import type { BowStyle, SternStyle } from "./geometry.js";
 
 export interface DrawingFacts {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { applyEdit, buildWorkshopView, type WorkshopView } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/index.js";
-import { createPresentationFormat } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import { engineeringStatus, type EngineeringReadout } from "./engineering-status.js";
 
 const content = loadDrawingBoardContent();

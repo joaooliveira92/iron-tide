@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
-import { createPresentationFormat } from "../../../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../../../lib/presentation-format/profile.js";
 import type { DrawingFacts } from "./describe.js";
 import { HullPlanLegend } from "./HullPlanLegend.js";
 import { legendEntries } from "./legend.js";

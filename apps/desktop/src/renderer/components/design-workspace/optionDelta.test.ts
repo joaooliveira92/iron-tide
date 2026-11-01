@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { applyEdit, buildWorkshopView } from "@bluewave/ship-design";
-import { createPresentationFormat } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import { loadDrawingBoardContent } from "./content.js";
 import { previewOptionDeltas, viewDeltas } from "./optionDelta.js";
 

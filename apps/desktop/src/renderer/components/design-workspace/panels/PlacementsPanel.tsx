@@ -39,7 +39,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-ca
 import { SlateBody, SlateFacts, SlateHeader } from "../../ui/slate.js";
 import { buttonVariants } from "../../ui/button.js";
 import { cn } from "../../../lib/utils.js";
-import { KG_PER_TONNE } from "../../../lib/presentation-format/index.js";
+import { KG_PER_TONNE } from "../../../lib/presentation-format/units.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { componentFacts, componentsByCategory } from "../componentFacts.js";
 import type { DrawingBoardContent } from "../content.js";

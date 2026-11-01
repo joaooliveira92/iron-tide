@@ -1,8 +1,6 @@
 import type { WorkshopView } from "@bluewave/ship-design";
-import {
-  formatExplanation,
-  type PresentationFormat,
-} from "../../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../../shared/explanation-text.js";
+import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 

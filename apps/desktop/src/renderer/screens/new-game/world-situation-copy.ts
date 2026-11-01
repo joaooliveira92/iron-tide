@@ -1,5 +1,5 @@
 import { interpolate } from "../../content/uiCatalogue.js";
-import { formatConjunctionList } from "../../lib/presentation-format/index.js";
+import { formatConjunctionList } from "../../lib/presentation-format/list.js";
 import type { TensionLabel } from "@bluewave/campaign-engine";
 import type {
   PowerOutlook,

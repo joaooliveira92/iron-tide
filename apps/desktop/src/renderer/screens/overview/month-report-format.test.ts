@@ -1,6 +1,6 @@
 import type { BattleOutcome, StrategicPriority } from "@bluewave/campaign-engine";
 import { describe, expect, it } from "vite-plus/test";
-import { createPresentationFormat } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import { comparePriorities, describeBattle, monthLabel, signed } from "./month-report-format.js";
 
 const FORMAT = createPresentationFormat({

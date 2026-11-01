@@ -1,5 +1,5 @@
 import type { DesignDraft, Finding } from "@bluewave/ship-design";
-import { formatExplanation } from "../../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { SECTION_IDS, SECTIONS } from "../panels/hull-plan/sections.js";
 import type { ShipEntity } from "../selection/store.js";
 

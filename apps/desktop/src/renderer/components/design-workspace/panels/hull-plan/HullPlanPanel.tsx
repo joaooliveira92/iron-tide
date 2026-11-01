@@ -44,7 +44,7 @@ import { planModel, type PlanModel } from "./planModel.js";
 import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.js";
 import { Info } from "lucide-react";
 import { cn } from "../../../../lib/utils.js";
-import { formatHullMetres } from "../../../../lib/presentation-format/index.js";
+import { formatHullMetres } from "../../../../lib/presentation-format/hull-metres.js";
 import { usePresentationFormat } from "../../../../shell/usePresentationFormat.js";
 import { plural } from "../../plural.js";
 import type { BoardFinding } from "../../validation/boardFindings.js";

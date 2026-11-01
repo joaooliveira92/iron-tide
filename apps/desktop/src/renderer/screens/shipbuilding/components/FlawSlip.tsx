@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight, Crosshair, ListChecks, Wrench } from "lucide-react";
 import { Button } from "../../../components/ui/button.js";
 import { Slate } from "../../../components/slate/Slate.js";
-import { formatExplanation } from "../../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { SEVERITY_STYLE } from "../../../components/design-workspace/validation/severity.js";
 import { cn } from "../../../lib/utils.js";
 import type { Flaw } from "../flaw.js";

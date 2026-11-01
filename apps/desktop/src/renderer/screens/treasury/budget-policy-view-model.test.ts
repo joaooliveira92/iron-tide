@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { createPresentationFormat } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import type { BudgetPolicyState } from "./budget-policy-state.js";
 import {
   buildBudgetPolicyViewModel,

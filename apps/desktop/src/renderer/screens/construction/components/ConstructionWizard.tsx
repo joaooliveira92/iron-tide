@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../../../components/ui/card.js";
-import { KG_PER_TONNE } from "../../../lib/presentation-format/index.js";
+import { KG_PER_TONNE } from "../../../lib/presentation-format/units.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { WizardSection } from "./WizardSection.js";
 import { constructionWizardView } from "./wizard-view.js";

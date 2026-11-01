@@ -13,7 +13,7 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
-import { formatFixed } from "../../lib/presentation-format/index.js";
+import { formatFixed } from "../../lib/presentation-format/format.js";
 import {
   BAKED_PROTOCOL,
   createBakedTileLoader,

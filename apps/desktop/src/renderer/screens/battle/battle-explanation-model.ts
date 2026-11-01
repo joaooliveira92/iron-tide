@@ -1,7 +1,7 @@
 import type { ExplanationTree } from "@bluewave/events";
 
 import type { FormattingLocale } from "../../../shared/preferences-contract.js";
-import { formatNumber, formatPercent } from "../../lib/presentation-format/index.js";
+import { formatNumber, formatPercent } from "../../lib/presentation-format/format.js";
 import { translate } from "../../lib/strings.js";
 
 export interface BattleExplanationRow {

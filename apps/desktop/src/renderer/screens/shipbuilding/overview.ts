@@ -1,7 +1,8 @@
 import type { BatteryCard } from "../../components/design-workspace/batteryView.js";
 import type { DesignDraft, Severity, WorkshopView } from "@bluewave/ship-design";
 import { plural } from "../../components/design-workspace/plural.js";
-import { formatExplanation, type PresentationFormat } from "../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../shared/explanation-text.js";
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 
 export interface OverviewValue {
   readonly id: string;

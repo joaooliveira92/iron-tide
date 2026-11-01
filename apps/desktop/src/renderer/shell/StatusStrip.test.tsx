@@ -12,7 +12,7 @@ import type { CampaignReads } from "./campaign-reads.js";
 import { buildStatusStrip } from "./status-strip-state.js";
 import { buildTrend, type TrendReport } from "./status-strip-trend.js";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
-import { createPresentationFormat } from "../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../lib/presentation-format/profile.js";
 
 const FORMAT = createPresentationFormat({
   locale: "en-US",

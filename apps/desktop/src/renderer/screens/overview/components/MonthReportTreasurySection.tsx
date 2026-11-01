@@ -1,7 +1,7 @@
 import type { MonthlyReportTreasury } from "../../../../shared/reports-contract.js";
 import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
-import { formatCount } from "../../../lib/presentation-format/index.js";
+import { formatCount } from "../../../lib/presentation-format/format.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { signed } from "../month-report-format.js";
 

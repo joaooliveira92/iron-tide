@@ -9,7 +9,8 @@ import {
   playerSideOf,
 } from "../../../shared/player-battle-orders.js";
 import { usePreferences } from "../../lib/preferences-context.js";
-import { formatMeasurement, UM_PER_NAUTICAL_MILE } from "../../lib/presentation-format/index.js";
+import { formatMeasurement } from "../../lib/presentation-format/format.js";
+import { UM_PER_NAUTICAL_MILE } from "../../lib/presentation-format/units.js";
 import { AccuracyDisclosure } from "./AccuracyDisclosure.js";
 import { BattleExplanationDisclosure } from "./BattleExplanationDisclosure.js";
 import { usePlayerBattle } from "./usePlayerBattle.js";
