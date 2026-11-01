@@ -1,24 +1,54 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
 import type { PlayerBattleResultDto } from "../../../shared/player-battle-contract.js";
-import {
-  MAX_SPEED_PERCENT,
-  MIN_SPEED_PERCENT,
-  PLAYER_BATTLE_STANCES,
-  SPEED_PERCENT_STEP,
-  playerSideOf,
-} from "../../../shared/player-battle-orders.js";
 import {
   AlertDialog,
   AlertDialogBody,
   AlertDialogContent,
 } from "../../components/ui/alert-dialog.js";
+import { Button } from "../../components/ui/button.js";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs.js";
 import { usePreferences } from "../../lib/preferences-context.js";
-import { formatMeasurement } from "../../lib/presentation-format/format.js";
-import { UM_PER_NAUTICAL_MILE } from "../../lib/presentation-format/units.js";
-import { AccuracyDisclosure } from "./AccuracyDisclosure.js";
-import { BattleExplanationDisclosure } from "./BattleExplanationDisclosure.js";
+import { translate } from "../../lib/strings.js";
+import { CombatLogPanel } from "./tactical/CombatLogPanel.js";
+import { OrderOfBattle } from "./tactical/OrderOfBattle.js";
+import {
+  TacticalMap,
+  type CoursePreview,
+  type MapOverlays,
+  type NameFilter,
+  type StandingCourse,
+} from "./tactical/TacticalMap.js";
+import { TacticalStatusBar } from "./tactical/TacticalStatusBar.js";
+import { TacticalToolbar } from "./tactical/TacticalToolbar.js";
+import { UnitCommandPanel } from "./tactical/UnitCommandPanel.js";
+import {
+  PROVISIONAL_ZOOM_STEP,
+  centreCameraOn,
+  fitCamera,
+  zoomCameraAt,
+  type TacticalCamera,
+  type TacticalViewport,
+} from "./tactical/tactical-geometry.js";
+import { projectCombatLog, transientMarkers } from "./tactical/tactical-log.js";
+import {
+  appendTrails,
+  knownPositions,
+  selectedShip,
+  shipPoint,
+  type Trails,
+} from "./tactical/tactical-model.js";
+import {
+  DEFAULT_TIME_SCALE,
+  stepIntervalMs,
+  type TacticalTimeScale,
+} from "./tactical/tactical-time.js";
+import { useTacticalPacer } from "./tactical/useTacticalPacer.js";
 import { usePlayerBattle } from "./usePlayerBattle.js";
+
+const INITIAL_CAMERA: TacticalCamera = { centreX: 0, centreY: 0, metresPerPixel: 400 };
+const INITIAL_VIEWPORT: TacticalViewport = { width: 800, height: 480 };
+const INITIAL_OVERLAYS: MapOverlays = { labels: "all", tracks: true, rings: true, fire: true };
 
 export function PlayerBattleScreen({
   request,
@@ -33,22 +63,100 @@ export function PlayerBattleScreen({
 }) {
   const battleId = request.battleId ?? "";
   const { preferences } = usePreferences();
-  const { view, resume, error, busy, orderFor, setOrder, advance, submit } = usePlayerBattle(
-    sessionId,
-    battleId,
-    onSubmitResult,
+  const {
+    view,
+    resume,
+    acceptedOrders,
+    error,
+    busy,
+    orderFor,
+    setOrder,
+    releaseCourse,
+    advance,
+    submit,
+  } = usePlayerBattle(sessionId, battleId, onSubmitResult);
+
+  const [running, setRunning] = useState(false);
+  const [scale, setScale] = useState<TacticalTimeScale>(DEFAULT_TIME_SCALE);
+  const [selectedShipId, setSelectedShipId] = useState<string | null>(null);
+  const [camera, setCamera] = useState<TacticalCamera>(INITIAL_CAMERA);
+  const [viewport, setViewport] = useState<TacticalViewport>(INITIAL_VIEWPORT);
+  const [overlays, setOverlays] = useState<MapOverlays>(INITIAL_OVERLAYS);
+  const [trails, setTrails] = useState<Trails>({});
+  const [coursePreview, setCoursePreview] = useState<number | null>(null);
+  const fittedKey = useRef("");
+  const userMoved = useRef(false);
+
+  const ended = view?.ended ?? false;
+
+  useTacticalPacer({
+    running,
+    scale,
+    busy,
+    ended: view === null || ended,
+    onStep: () => advance("minute"),
+  });
+
+  useEffect(() => {
+    if (view === null) return;
+    setTrails((previous) => appendTrails(previous, view));
+    const points = knownPositions(view);
+    const key = `${String(points.length)}:${String(view.ended)}`;
+    if (!userMoved.current && key !== fittedKey.current) {
+      fittedKey.current = key;
+      setCamera((current) => fitCamera(points, viewport, current));
+    }
+  }, [view, viewport]);
+
+  useEffect(() => {
+    if (ended) setRunning(false);
+  }, [ended]);
+
+  const entries = useMemo(() => (view === null ? [] : projectCombatLog(view)), [view]);
+  const markers = useMemo(
+    () => (view === null ? { firing: [], impacts: [] } : transientMarkers(entries, view.minute)),
+    [entries, view],
   );
 
-  const playerSide = view === null ? null : playerSideOf(view);
-  const divisions = useMemo(
-    () =>
-      view === null ? [] : view.divisions.filter((division) => division.sideId === playerSide),
-    [view, playerSide],
-  );
-  const shipsById = useMemo(
-    () => new Map((view?.ships ?? []).map((ship) => [ship.shipId, ship])),
+  const selected = view === null ? null : selectedShip(view, selectedShipId);
+  const selectedPoint = selected === null ? null : shipPoint(selected);
+  const selectedDivisionId = selected?.divisionId ?? null;
+
+  const preview: CoursePreview | null =
+    selected !== null && coursePreview !== null
+      ? { shipId: selected.shipId, headingDeg: coursePreview }
+      : null;
+
+  const selectDivision = useCallback(
+    (divisionId: string) => {
+      const division = view?.divisions.find((entry) => entry.divisionId === divisionId);
+      if (division !== undefined) setSelectedShipId(division.flagshipId);
+    },
     [view],
   );
+
+  const changeCamera = useCallback((next: TacticalCamera) => {
+    userMoved.current = true;
+    setCamera(next);
+  }, []);
+
+  const toggleOverlay = useCallback((overlay: "tracks" | "rings" | "fire", on: boolean) => {
+    setOverlays((current) => ({ ...current, [overlay]: on }));
+  }, []);
+
+  const setNames = useCallback((labels: NameFilter) => {
+    setOverlays((current) => ({ ...current, labels }));
+  }, []);
+
+  const standingCourses = useMemo<readonly StandingCourse[]>(() => {
+    if (view === null) return [];
+    return view.divisions.flatMap((division) => {
+      const course = acceptedOrders[division.divisionId]?.courseDeg;
+      return course === undefined ? [] : [{ shipId: division.flagshipId, headingDeg: course }];
+    });
+  }, [view, acceptedOrders]);
+
+  const centre: readonly [number, number] = [viewport.width / 2, viewport.height / 2];
 
   return (
     <AlertDialog open onOpenChange={() => undefined}>
@@ -61,17 +169,6 @@ export function PlayerBattleScreen({
                 {view === null
                   ? "Projecting the committed battle…"
                   : `${view.campaignMonth} · minute ${String(view.minute)} / ${String(view.maxMinutes)} · sea ${view.weather.seaState}`}
-                {view !== null && (
-                  <span data-testid="battle-weather">
-                    {" · visibility "}
-                    {formatMeasurement(view.weather.visibilityNm * UM_PER_NAUTICAL_MILE, {
-                      locale: preferences.formattingLocale,
-                      category: "range",
-                      preset: preferences.measurementPreset,
-                      selections: preferences.measurementSelections,
-                    })}
-                  </span>
-                )}
               </p>
               {resume === "resumed" && (
                 <p data-testid="battle-resumed" className="mt-1 text-xs text-muted-foreground">
@@ -90,256 +187,154 @@ export function PlayerBattleScreen({
           </div>
 
           {error !== null && (
-            <p data-testid="battle-error" className="mt-2 text-xs text-red-400">
+            <p data-testid="battle-error" role="alert" className="mt-2 text-xs text-red-400">
               {error}
             </p>
           )}
 
           {view !== null && (
-            <>
-              <div className="mt-3 flex flex-wrap gap-3 text-xs">
-                <span data-testid="battle-status">
-                  {view.ended ? `Ended: ${view.endReason ?? "unknown"}` : "In progress"}
-                </span>
-                {view.objectives.length > 0 && (
-                  <span className="text-muted-foreground">
-                    Objectives: {view.objectives.join(", ")}
-                  </span>
-                )}
-                {view.ended && (
-                  <span data-testid="battle-outcome">
-                    Winner: {view.winnerId ?? "none"} · Loser: {view.loserId ?? "none"}
-                  </span>
-                )}
-              </div>
+            <div className="mt-2 flex flex-col gap-2">
+              <TacticalToolbar
+                running={running}
+                scale={scale}
+                busy={busy}
+                ended={ended}
+                canFocus={selectedPoint !== null}
+                overlays={overlays}
+                onToggleRunning={() => setRunning((current) => !current)}
+                onScale={setScale}
+                onStep={() => advance("minute")}
+                onFightToEnd={() => {
+                  setRunning(false);
+                  advance("to_end");
+                }}
+                onZoomIn={() =>
+                  setCamera((current) =>
+                    zoomCameraAt(current, viewport, PROVISIONAL_ZOOM_STEP, centre),
+                  )
+                }
+                onZoomOut={() =>
+                  setCamera((current) =>
+                    zoomCameraAt(current, viewport, 1 / PROVISIONAL_ZOOM_STEP, centre),
+                  )
+                }
+                onFit={() =>
+                  setCamera((current) => fitCamera(knownPositions(view), viewport, current))
+                }
+                onFocus={() => {
+                  if (selectedPoint !== null) {
+                    setCamera((current) => centreCameraOn(current, selectedPoint));
+                  }
+                }}
+                onOverlay={toggleOverlay}
+                onNames={setNames}
+              />
 
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <section>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground">
-                    Your divisions
-                  </h3>
-                  <div className="mt-2 space-y-2">
-                    {divisions.length === 0 && (
-                      <p className="text-xs">No player divisions committed.</p>
-                    )}
-                    {divisions.map((division) => {
-                      const order = orderFor(division.divisionId);
-                      return (
-                        <div
-                          key={division.divisionId}
-                          data-testid={`battle-division-${division.divisionId}`}
-                          className="rounded border border-border p-2"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold">{division.divisionId}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {division.role} · {division.formation}
-                            </span>
-                          </div>
-                          <div className="mt-1 flex items-center gap-2">
-                            <select
-                              aria-label={`Stance for ${division.divisionId}`}
-                              className="rounded border border-border bg-background px-1 py-0.5 text-xs"
-                              value={order.stance}
-                              disabled={view.ended}
-                              onChange={(event) => {
-                                const stance = PLAYER_BATTLE_STANCES.find(
-                                  (candidate) => candidate === event.target.value,
-                                );
-                                if (stance !== undefined) setOrder(division.divisionId, { stance });
-                              }}
-                            >
-                              {PLAYER_BATTLE_STANCES.map((stance) => (
-                                <option key={stance} value={stance}>
-                                  {stance.charAt(0) + stance.slice(1).toLowerCase()}
-                                </option>
-                              ))}
-                            </select>
-                            <label className="flex items-center gap-1 text-xs">
-                              Speed {String(order.speedPercent)}%
-                              <input
-                                type="range"
-                                min={MIN_SPEED_PERCENT}
-                                max={MAX_SPEED_PERCENT}
-                                step={SPEED_PERCENT_STEP}
-                                value={order.speedPercent}
-                                disabled={view.ended}
-                                onChange={(event) =>
-                                  setOrder(division.divisionId, {
-                                    speedPercent: Number(event.target.value),
-                                  })
-                                }
-                              />
-                            </label>
-                          </div>
-                          <ul className="mt-1 space-y-0.5 text-xs">
-                            {division.unitIds.map((unitId) => {
-                              const ship = shipsById.get(unitId);
-                              if (ship === undefined) return null;
-                              return (
-                                <li
-                                  key={unitId}
-                                  data-testid={`battle-ship-${unitId}`}
-                                  className="flex flex-wrap justify-between gap-x-2"
-                                >
-                                  <span>
-                                    {ship.name}{" "}
-                                    <span className="text-muted-foreground">({ship.shipType})</span>
-                                  </span>
-                                  <span
-                                    className={ship.damageState === "NORMAL" ? "" : "text-red-400"}
-                                  >
-                                    {ship.damageState === "NORMAL" ? "" : "▼ "}
-                                    {ship.hitPoints}/{ship.maxHitPoints} {ship.damageState}
-                                  </span>
-                                  {ship.gunneryAccuracy === undefined ? null : (
-                                    <AccuracyDisclosure
-                                      tree={ship.gunneryAccuracy}
-                                      locale={preferences.formattingLocale}
-                                    />
-                                  )}
-                                  {ship.torpedoSolution === undefined ? null : (
-                                    <BattleExplanationDisclosure
-                                      tree={ship.torpedoSolution}
-                                      locale={preferences.formattingLocale}
-                                      summaryKey="battle.torpedo_solution.summary"
-                                    />
-                                  )}
-                                  {ship.damageControl === undefined ? null : (
-                                    <BattleExplanationDisclosure
-                                      tree={ship.damageControl}
-                                      locale={preferences.formattingLocale}
-                                      summaryKey="battle.damage_control.summary"
-                                    />
-                                  )}
-                                  {ship.loss === undefined ? null : (
-                                    <BattleExplanationDisclosure
-                                      tree={ship.loss}
-                                      locale={preferences.formattingLocale}
-                                      summaryKey="battle.battle_loss.summary"
-                                    />
-                                  )}
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-
-                <section>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground">
-                    Enemy divisions
-                  </h3>
-                  <div className="mt-2 space-y-2">
-                    {view.divisions
-                      .filter((division) => division.sideId !== playerSide)
-                      .map((division) => (
-                        <div key={division.divisionId} className="rounded border border-border p-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold">{division.divisionId}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {division.role} · {division.formation}
-                            </span>
-                          </div>
-                          <ul className="mt-1 space-y-0.5 text-xs">
-                            {division.unitIds.map((unitId) => {
-                              const ship = shipsById.get(unitId);
-                              if (ship === undefined) return null;
-                              return (
-                                <li key={unitId} className="flex justify-between gap-2">
-                                  <span>{ship.name}</span>
-                                  <span
-                                    className={ship.damageState === "NORMAL" ? "" : "text-red-400"}
-                                  >
-                                    {ship.damageState === "NORMAL" ? "" : "▼ "}
-                                    {ship.hitPoints}/{ship.maxHitPoints} {ship.damageState}
-                                  </span>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      ))}
-                    {view.ships.some(
-                      (ship) => ship.sideId !== playerSide && ship.divisionId === null,
-                    ) && (
-                      <div className="rounded border border-border p-2">
-                        <span className="text-xs font-semibold">Not in a division</span>
-                        <ul className="mt-1 space-y-0.5 text-xs">
-                          {view.ships
-                            .filter(
-                              (ship) => ship.sideId !== playerSide && ship.divisionId === null,
-                            )
-                            .map((ship) => (
-                              <li
-                                key={ship.shipId}
-                                data-testid={`battle-ship-${ship.shipId}`}
-                                className="flex justify-between gap-2"
-                              >
-                                <span>{ship.name}</span>
-                                <span>
-                                  {ship.damageState === "NORMAL" ? "" : "▼ "}
-                                  {ship.hitPoints}/{ship.maxHitPoints} {ship.damageState}
-                                </span>
-                              </li>
+              <div className="grid gap-2 lg:h-[clamp(26rem,62vh,48rem)] lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)]">
+                <aside className="flex min-h-0 flex-col gap-2 overflow-y-auto">
+                  <div className="min-h-[14rem] flex-1 overflow-auto rounded border border-border p-2">
+                    <Tabs defaultValue="oob">
+                      <TabsList variant="line" aria-label={translate("tactical.tabs.label")}>
+                        <TabsTrigger value="oob">{translate("tactical.tabs.oob")}</TabsTrigger>
+                        <TabsTrigger value="log">{translate("tactical.tabs.log")}</TabsTrigger>
+                        {view.objectives.length > 0 && (
+                          <TabsTrigger value="objectives">
+                            {translate("tactical.tabs.objectives")}
+                          </TabsTrigger>
+                        )}
+                      </TabsList>
+                      <TabsContent value="oob">
+                        <OrderOfBattle
+                          view={view}
+                          locale={preferences.formattingLocale}
+                          orderFor={orderFor}
+                          setOrder={setOrder}
+                          selectedShipId={selectedShipId}
+                          selectedDivisionId={selectedDivisionId}
+                          onSelectShip={setSelectedShipId}
+                          onSelectDivision={selectDivision}
+                        />
+                      </TabsContent>
+                      <TabsContent value="log">
+                        <CombatLogPanel entries={entries} onSelectShip={setSelectedShipId} />
+                      </TabsContent>
+                      {view.objectives.length > 0 && (
+                        <TabsContent value="objectives">
+                          <ul
+                            data-testid="battle-objectives"
+                            className="list-disc space-y-1 pl-4 text-xs"
+                          >
+                            {view.objectives.map((objective) => (
+                              <li key={objective}>{objective}</li>
                             ))}
-                        </ul>
-                      </div>
-                    )}
+                          </ul>
+                        </TabsContent>
+                      )}
+                    </Tabs>
                   </div>
-                </section>
+                  <div className="shrink-0">
+                    <UnitCommandPanel
+                      view={view}
+                      locale={preferences.formattingLocale}
+                      selectedShipId={selectedShipId}
+                      orderFor={orderFor}
+                      acceptedOrders={acceptedOrders}
+                      setOrder={setOrder}
+                      releaseCourse={releaseCourse}
+                      onPreviewCourse={setCoursePreview}
+                    />
+                  </div>
+                </aside>
+
+                <div className="relative h-[24rem] min-w-0 lg:h-full">
+                  <TacticalMap
+                    view={view}
+                    camera={camera}
+                    onCameraChange={changeCamera}
+                    onViewportChange={setViewport}
+                    selectedShipId={selectedShipId}
+                    onSelectShip={setSelectedShipId}
+                    overlays={overlays}
+                    trails={trails}
+                    markers={markers}
+                    stepIntervalMs={stepIntervalMs(scale)}
+                    paused={!running}
+                    coursePreview={preview}
+                    standingCourses={standingCourses}
+                  />
+                  {!running && !ended && (
+                    <div
+                      aria-hidden="true"
+                      data-testid="tactical-paused-banner"
+                      className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded bg-amber-500/90 px-4 py-1 text-sm font-bold tracking-widest text-black"
+                    >
+                      {translate("tactical.status.paused")}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="mt-4 flex gap-2">
-                <button
+              {!running && !ended && (
+                <p className="text-xs text-muted-foreground">
+                  {translate("tactical.status.pending_orders")}
+                </p>
+              )}
+
+              <TacticalStatusBar view={view} running={running} scale={scale} />
+
+              <div className="flex gap-2">
+                <Button
                   type="button"
-                  data-testid="battle-advance"
-                  className="rounded border border-border px-2 py-1 text-xs hover:bg-accent disabled:opacity-50"
-                  disabled={busy || view.ended}
-                  onClick={() => advance("minute")}
-                >
-                  Advance minute
-                </button>
-                <button
-                  type="button"
-                  data-testid="battle-auto"
-                  className="rounded border border-border px-2 py-1 text-xs hover:bg-accent disabled:opacity-50"
-                  disabled={busy || view.ended}
-                  onClick={() => advance("to_end")}
-                >
-                  Auto-fight
-                </button>
-                <button
-                  type="button"
+                  size="sm"
+                  variant="outline"
                   data-testid="battle-submit"
-                  className="rounded border border-border px-2 py-1 text-xs hover:bg-accent disabled:opacity-50"
-                  disabled={!view.ended || busy}
+                  disabled={!ended || busy}
                   onClick={() => submit()}
                 >
                   Submit result
-                </button>
+                </Button>
               </div>
-
-              <section className="mt-4">
-                <h3 className="text-xs font-semibold uppercase text-muted-foreground">
-                  Battle log
-                </h3>
-                <ol
-                  data-testid="battle-log"
-                  className="mt-1 max-h-40 space-y-0.5 overflow-auto font-mono text-xs"
-                >
-                  {view.log.slice(-80).map((event, index) => (
-                    <li key={`${String(event.minute)}-${String(index)}`}>
-                      m{String(event.minute).padStart(3, "0")} {event.eventType} {event.actorId}
-                      {event.targetId === "" ? "" : ` → ${event.targetId}`}
-                    </li>
-                  ))}
-                </ol>
-              </section>
-            </>
+            </div>
           )}
         </AlertDialogBody>
       </AlertDialogContent>

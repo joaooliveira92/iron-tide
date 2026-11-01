@@ -4,6 +4,8 @@ import type { FormattingLocale } from "../../../shared/preferences-contract.js";
 import { formatNumber, formatPercent } from "../../lib/presentation-format/format.js";
 import { translate } from "../../lib/strings.js";
 
+const MILLI_KNOTS_PER_KNOT = 1_000;
+
 export interface BattleExplanationRow {
   readonly key: string;
   readonly label: string;
@@ -21,6 +23,9 @@ function formatTreeValue(
   locale: FormattingLocale,
 ): string {
   if (unit === "bp") return formatPercent(value, { locale, maximumFractionDigits: 1 });
+  if (unit === "mkn") {
+    return `${formatNumber(value / MILLI_KNOTS_PER_KNOT, { locale, maximumFractionDigits: 1 })} kn`;
+  }
   return formatNumber(value, { locale });
 }
 

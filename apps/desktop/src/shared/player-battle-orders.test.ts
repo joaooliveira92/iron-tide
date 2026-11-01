@@ -59,3 +59,27 @@ describe("player battle orders", () => {
     expect(toCombatOrders([])).toEqual({ divisions: {} });
   });
 });
+
+describe("course and knots orders", () => {
+  const steered = { stance: "ENGAGE", speedPercent: 100, courseDeg: 270, speedKnots: 12 } as const;
+
+  it("carries a course and a speed in knots through the wire dtos and the combat shape", () => {
+    const dtos = ordersToDtos({ a1: steered });
+    expect(dtos).toEqual([{ divisionId: "a1", ...steered }]);
+    expect(toCombatOrders(dtos)).toEqual({ divisions: { a1: steered } });
+  });
+
+  it("restores a standing course order over the default", () => {
+    const orders = standingOrdersFor(viewOf("uk"), [{ divisionId: "a1", ...steered }]);
+    expect(orders.a1).toEqual(steered);
+    expect(orders.a2).toEqual(DEFAULT_DIVISION_ORDER);
+  });
+
+  it("leaves the keys out when no course or knots were ordered", () => {
+    expect(
+      Object.keys(
+        toCombatOrders([{ divisionId: "a1", stance: "HOLD", speedPercent: 0 }]).divisions.a1!,
+      ),
+    ).toEqual(["stance", "speedPercent"]);
+  });
+});

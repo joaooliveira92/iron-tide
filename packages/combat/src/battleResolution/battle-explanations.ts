@@ -48,6 +48,31 @@ export function explainTorpedoSolution(torpedoTacticsBp: number): ExplanationTre
   return builder.build();
 }
 
+const motionSource = { kind: "code", ref: "combat/movement/kinematics#resolvePropulsion" } as const;
+
+export function explainShipMotion(movement: {
+  readonly heading: number;
+  readonly orderedSpeed: number;
+  readonly currentSpeed: number;
+}): ExplanationTree {
+  return new ExplanationBuilder("ship_motion", "ship_motion_v1")
+    .withInput("orderedSpeedMilliKnots", movement.orderedSpeed)
+    .withInput("headingDeg", movement.heading)
+    .withResult(movement.currentSpeed)
+    .withUnit("mkn")
+    .withOperation("identity")
+    .withSource(motionSource)
+    .addChild(
+      new ExplanationBuilder("ship_motion.orderedSpeed", "ship_motion_v1")
+        .withResult(movement.orderedSpeed)
+        .withUnit("mkn")
+        .withOperation("identity")
+        .withSource(motionSource)
+        .build(),
+    )
+    .build();
+}
+
 export function explainDamageControl(): ExplanationTree {
   const resources = createDefaultDamageControlResource();
   const builder = new ExplanationBuilder("damage_control", damageControlPolicyId)

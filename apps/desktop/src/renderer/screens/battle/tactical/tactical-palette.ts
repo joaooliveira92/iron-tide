@@ -1,0 +1,16 @@
+export const TACTICAL_PALETTE = {
+  sea: "#0b1b2b",
+  ring: "#334155",
+  ringLabel: "#64748b",
+  compassRing: "#475569",
+  chrome: "#e2e8f0",
+  selection: "#f8fafc",
+  own: "#38bdf8",
+  ownLabel: "#bae6fd",
+  hostile: "#fb7185",
+  hostileLabel: "#fecdd3",
+  firingLine: "#fbbf24",
+  impact: "#f97316",
+  coursePreview: "#a3e635",
+  standingCourse: "#94a3b8",
+} as const;
