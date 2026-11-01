@@ -3,6 +3,7 @@ import { test, expect, openCampaign } from "./fixtures.js";
 import {
   advanceMonths,
   navigateTo,
+  openDesignSection,
   orderDesignFromCatalog,
   submitReferenceDesign,
 } from "./flows.js";
@@ -250,21 +251,26 @@ test("a player can revise a player-designed project and it is on hold after a mo
     await expect(page.getByText(/on hold until/)).toHaveCount(0);
     await page.getByRole("button", { name: `${REVISED_CLASS} revise` }).click();
 
-    const board = page.getByRole("dialog", { name: "Drawing Board" });
-    await expect(board).toBeVisible();
-    await board.getByRole("tab", { name: "Build" }).click();
-    const revision = board.getByRole("region", { name: "Revision preview" });
+    const workspace = page.getByTestId("shipbuilding-workspace");
+    await expect(workspace).toBeVisible();
+    await openDesignSection(page, "Review");
+    await page.getByRole("tab", { name: "Finish" }).click();
+    const revision = workspace.getByRole("region", { name: "Revision preview" });
     await revision.getByRole("button", { name: "Load this ship's design into the board" }).click();
+    const replaceMine = page.getByRole("button", { name: "Replace my design" });
+    if (await replaceMine.isVisible()) await replaceMine.click();
     await expect(
       revision.getByText("No changes yet, so nothing would need revising."),
     ).toBeVisible();
 
-    await board.getByRole("tab", { name: "Hull and machinery" }).click();
-    const subdivision = board.getByRole("combobox", { name: "Subdivision" });
+    await openDesignSection(page, "Hull");
+    await page.getByRole("tab", { name: "Dimensions" }).click();
+    const subdivision = page.getByRole("combobox", { name: "Subdivision" });
     await subdivision.click();
     await page.getByRole("option", { name: "Grade 1" }).click();
 
-    await board.getByRole("tab", { name: "Build" }).click();
+    await openDesignSection(page, "Review");
+    await page.getByRole("tab", { name: "Finish" }).click();
     await expect(revision.getByText("Redesign", { exact: true })).toBeVisible();
     await expect(revision.getByText("Funding on hold for")).toBeVisible();
     await revision.getByRole("button", { name: "Apply revision to this ship" }).click();
@@ -272,8 +278,6 @@ test("a player can revise a player-designed project and it is on hold after a mo
     await expect(
       revision.getByRole("alert").filter({ hasText: "Revision queued (Redesign)" }),
     ).toBeVisible();
-    await board.getByRole("button", { name: "Close", exact: true }).click();
-    await expect(board).toBeHidden();
 
     await advanceMonths(page, 1);
     await navigateTo(page, "Construction");
