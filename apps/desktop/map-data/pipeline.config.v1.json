@@ -14,7 +14,7 @@
   "bounds": [-180, -85.0511287798066, 180, 85.0511287798066],
   "simplificationPixels": 0.35,
   "climateSimplificationPixels": 1.5,
-  "bathymetrySimplificationPixels": 10,
+  "bathymetrySimplificationPixels": 4,
   "reefMinZoom": 5,
   "protectedPinRadiusPixels": 6,
   "overlayRenderedWidthPixels": 2.5,
