@@ -220,7 +220,10 @@ export function GlobeAdapterChrome({
     >
       <ul className="grid max-h-40 gap-0.5 overflow-y-auto">
         {entityRows.map((entity) => (
-          <li key={entity.id}>
+          <li
+            key={entity.id}
+            className="[content-visibility:auto] [contain-intrinsic-size:auto_1.5rem]"
+          >
             <button
               type="button"
               className="w-full rounded px-2 py-1 text-left hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
