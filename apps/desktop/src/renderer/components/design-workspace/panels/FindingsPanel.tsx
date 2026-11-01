@@ -7,12 +7,7 @@ import type {
   WorkshopView,
 } from "@bluewave/ship-design";
 import { CircleCheck, Crosshair, Lightbulb, OctagonX, TriangleAlert } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "../../ui/accordion.js";
+import { BouncyAccordion, type BouncyAccordionItem } from "../../motion/bouncy-accordion.js";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "../../ui/alert.js";
 import { Badge } from "../../ui/badge.js";
 import { Button } from "../../ui/button.js";
@@ -69,7 +64,7 @@ function RuleEvidence({ f }: { readonly f: Finding }) {
   );
 }
 
-function FindingItem({
+function FindingDetail({
   bf,
   onShowOnShip,
 }: {
@@ -77,61 +72,74 @@ function FindingItem({
   readonly onShowOnShip: (f: BoardFinding) => void;
 }) {
   const f = bf.finding;
-  const { Icon, tone, badge } = SEVERITY_STYLE[f.severity];
   return (
-    <AccordionItem
-      value={bf.key}
-      className="rounded-lg border px-3 not-last:border-b"
-      {...findingAttrs(bf)}
-    >
-      <AccordionTrigger className="gap-2 py-2.5 text-left font-normal hover:no-underline">
-        <Icon aria-hidden="true" className={cn("size-4 shrink-0", tone)} />
-        <span className="flex flex-1 items-start gap-2">
-          <Badge variant={badge} className="shrink-0">
-            {f.severity}
-          </Badge>
-          <span>{formatExplanation(f.what)}</span>
-        </span>
-      </AccordionTrigger>
-      <AccordionContent className="pt-0 pb-3 pl-6">
-        <div className="space-y-1.5 text-sm">
-          <p>
-            <strong>Why:</strong>{" "}
-            <span className="text-muted-foreground">{formatExplanation(f.why)}</span>
-          </p>
-          <p>
-            <strong>Consequence:</strong>{" "}
-            <span className="text-muted-foreground">{formatExplanation(f.consequence)}</span>
-          </p>
-          {f.remedies.length > 0 && (
-            <div>
-              <strong>Ways to fix it:</strong>
-              <ul className="ml-5 list-disc text-muted-foreground">
-                {f.remedies.map((r) => (
-                  <li key={r.id}>{formatExplanation(r.description)}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <div className="flex flex-wrap items-center gap-3">
-            <RuleEvidence f={f} />
-            {bf.entities.length > 0 && (
-              <Button size="sm" variant="outline" onClick={() => onShowOnShip(bf)}>
-                <Crosshair aria-hidden="true" className="mr-1 size-3.5" />
-                Show on ship
-              </Button>
-            )}
-            {bf.association === "inferred" && (
-              <span className="text-xs text-muted-foreground italic">
-                Ship link inferred from wording
-              </span>
-            )}
-          </div>
+    <div className="space-y-1.5 pl-9 text-sm">
+      <p>
+        <strong>Why:</strong>{" "}
+        <span className="text-muted-foreground">{formatExplanation(f.why)}</span>
+      </p>
+      <p>
+        <strong>Consequence:</strong>{" "}
+        <span className="text-muted-foreground">{formatExplanation(f.consequence)}</span>
+      </p>
+      {f.remedies.length > 0 && (
+        <div>
+          <strong>Ways to fix it:</strong>
+          <ul className="ml-5 list-disc text-muted-foreground">
+            {f.remedies.map((r) => (
+              <li key={r.id}>{formatExplanation(r.description)}</li>
+            ))}
+          </ul>
         </div>
-      </AccordionContent>
-    </AccordionItem>
+      )}
+      <div className="flex flex-wrap items-center gap-3">
+        <RuleEvidence f={f} />
+        {bf.entities.length > 0 && (
+          <Button size="sm" variant="outline" onClick={() => onShowOnShip(bf)}>
+            <Crosshair aria-hidden="true" className="mr-1 size-3.5" />
+            Show on ship
+          </Button>
+        )}
+        {bf.association === "inferred" && (
+          <span className="text-xs text-muted-foreground italic">
+            Ship link inferred from wording
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
+
+function findingRow(
+  bf: BoardFinding,
+  onShowOnShip: (f: BoardFinding) => void,
+): BouncyAccordionItem {
+  const f = bf.finding;
+  const { Icon, tone, badge } = SEVERITY_STYLE[f.severity];
+  return {
+    id: bf.key,
+    attrs: findingAttrs(bf),
+    icon: <Icon aria-hidden="true" className={cn("size-4", tone)} />,
+    title: (
+      <span className="flex items-start gap-2 text-sm font-normal">
+        <Badge variant={badge} className="shrink-0">
+          {f.severity}
+        </Badge>
+        <span>{formatExplanation(f.what)}</span>
+      </span>
+    ),
+    description: <FindingDetail bf={bf} onShowOnShip={onShowOnShip} />,
+  };
+}
+
+const FINDING_ACCORDION_CLASSES = {
+  item: "ring-1 ring-border",
+  trigger: "min-h-11 gap-2 px-3 py-2.5",
+  icon: "size-4",
+  content: "text-sm",
+  body: "px-3 pb-3",
+  description: "text-sm leading-normal",
+} as const;
 
 function FindingGroup({
   klass,
@@ -148,11 +156,12 @@ function FindingGroup({
       <h3 className="text-sm font-medium">
         {CLASS_LABEL[klass]} ({items.length})
       </h3>
-      <Accordion multiple className="space-y-2" aria-label={`${CLASS_LABEL[klass]} findings`}>
-        {items.map((bf) => (
-          <FindingItem key={bf.key} bf={bf} onShowOnShip={onShowOnShip} />
-        ))}
-      </Accordion>
+      <BouncyAccordion
+        items={items.map((bf) => findingRow(bf, onShowOnShip))}
+        radius={10}
+        classNames={FINDING_ACCORDION_CLASSES}
+        aria-label={`${CLASS_LABEL[klass]} findings`}
+      />
     </section>
   );
 }
