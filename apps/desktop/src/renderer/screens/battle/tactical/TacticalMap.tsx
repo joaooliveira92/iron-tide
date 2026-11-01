@@ -310,7 +310,7 @@ export function TacticalMap(props: TacticalMapProps) {
                     y={y + radius + 12}
                     textAnchor="middle"
                     fill={TACTICAL_PALETTE.ringLabel}
-                    fontSize={10}
+                    fontSize={12}
                   >
                     {formatMeasurement(radiusNm * UM_PER_NAUTICAL_MILE, {
                       locale: preferences.formattingLocale,
@@ -540,7 +540,7 @@ export function TacticalMap(props: TacticalMapProps) {
                       ? TACTICAL_PALETTE.ownLabel
                       : TACTICAL_PALETTE.hostileLabel
                   }
-                  fontSize={11}
+                  fontSize={12}
                 >
                   {ship.name}
                 </text>
@@ -563,7 +563,7 @@ export function TacticalMap(props: TacticalMapProps) {
             x={bar.px + 8}
             y={4}
             fill={TACTICAL_PALETTE.chrome}
-            fontSize={11}
+            fontSize={12}
             data-testid="tactical-scale"
           >
             {barText}
@@ -576,14 +576,14 @@ export function TacticalMap(props: TacticalMapProps) {
         >
           <circle r={14} fill="none" stroke={TACTICAL_PALETTE.compassRing} />
           <path d="M0 -12 L4 2 L0 -2 L-4 2 Z" fill={TACTICAL_PALETTE.chrome} />
-          <text y={-16} textAnchor="middle" fill={TACTICAL_PALETTE.chrome} fontSize={10}>
+          <text y={-16} textAnchor="middle" fill={TACTICAL_PALETTE.chrome} fontSize={12}>
             N
           </text>
         </g>
       </svg>
       <div
         data-testid="tactical-conditions"
-        className="pointer-events-none absolute bottom-2 right-3 space-y-0.5 text-right text-[11px] font-medium text-slate-300"
+        className="pointer-events-none absolute bottom-2 right-3 space-y-0.5 text-right text-xs font-medium text-slate-300"
       >
         <p>
           {translate("tactical.weather.sky", { sky: view.weather.precipitation.toLowerCase() })}
