@@ -3,6 +3,7 @@ import {
   use,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -19,8 +20,10 @@ import {
   type WriteAppPreferencesRequest,
 } from "../../shared/preferences-contract.js";
 import {
-  computeNationalCurrencyAvailability,
   NO_NATIONAL_CURRENCY_CONFIGURATIONS,
+  computeNationalCurrencyAvailability,
+} from "./presentation-format/currency-availability.js";
+import {
   type ActiveCampaignCurrencyContext,
   type NationalCurrencySource,
 } from "./presentation-format/index.js";
@@ -46,6 +49,8 @@ const DEFAULT_CONTEXT_VALUE: PreferencesContextValue = {
 };
 
 const PreferencesContext = createContext<PreferencesContextValue>(DEFAULT_CONTEXT_VALUE);
+
+const DEFAULT_CURRENCY_CONTEXT: ActiveCampaignCurrencyContext = {};
 
 export function PreferencesProvider({
   children,
@@ -122,11 +127,12 @@ export function PreferencesProvider({
     [capability],
   );
 
-  return (
-    <PreferencesContext.Provider value={{ preferences, status, setApp }}>
-      {children}
-    </PreferencesContext.Provider>
+  const value = useMemo<PreferencesContextValue>(
+    () => ({ preferences, status, setApp }),
+    [preferences, status, setApp],
   );
+
+  return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;
 }
 
 export function usePreferences(): PreferencesContextValue {
@@ -141,7 +147,7 @@ export interface CurrencyDisplayModeSelection {
 }
 
 export function useCurrencyDisplayMode(
-  context: ActiveCampaignCurrencyContext = {},
+  context: ActiveCampaignCurrencyContext = DEFAULT_CURRENCY_CONTEXT,
   source: NationalCurrencySource = NO_NATIONAL_CURRENCY_CONFIGURATIONS,
 ): CurrencyDisplayModeSelection {
   const { preferences, setApp } = usePreferences();
