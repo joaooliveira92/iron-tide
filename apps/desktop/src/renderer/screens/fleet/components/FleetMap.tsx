@@ -48,6 +48,7 @@ export function FleetMap({
         leftPanels={leftPanels}
         rightPanels={rightPanels}
         {...map}
+        camera={focusAreaId === null ? map.camera : null}
       />
     </Suspense>
   );

@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { GlobeAdapter } from "./GlobeAdapter.js";
+import type { AppCameraState } from "./camera-contract.js";
 import { initialMapPrototypeState } from "../world-map/map-state.js";
 import { EMPTY_LIVE_OVERLAY } from "../world-map/campaign-map-join.js";
 import type { MapOrders } from "../world-map/map-orders.js";
@@ -368,8 +369,9 @@ describe("GlobeAdapter parity interactions", () => {
     const application = document.querySelector('[role="application"]') as Element;
     fireEvent.keyDown(application, { key: "ArrowLeft" });
     expect(map.panByCalls).toHaveLength(1);
+    const zoomBefore = map.getZoom();
     fireEvent.keyDown(application, { key: "+" });
-    expect(map.getZoom()).toBe(2.5);
+    expect(map.getZoom()).toBe(zoomBefore + 0.5);
     fireEvent.keyDown(application, { key: "n" });
     expect(map.bearingCalls.length).toBeGreaterThan(0);
     fireEvent.keyDown(application, { key: "Escape" });
@@ -425,5 +427,81 @@ describe("GlobeAdapter parity interactions", () => {
     renderAdapter({ variant: "full" });
     await readyMap();
     expect(screen.getByTestId("globe-adapter-area-list")).toBeTruthy();
+  });
+
+  describe("shared camera", () => {
+    const france: AppCameraState = {
+      version: 1,
+      centre: [2.4, 46.6],
+      zoom: 5.5,
+      bearing: 0,
+      pitch: 20,
+      projection: "globe",
+    };
+
+    it("opens on the shared camera instead of the home area", async () => {
+      renderAdapter({
+        camera: france,
+        initialFocusAreaId: nationHomeArea("uk"),
+        initialFocusNationId: "uk",
+      });
+      const map = await readyMap();
+      await waitFor(() => {
+        expect(map.getCenter().lng).toBe(2.4);
+        expect(map.getCenter().lat).toBe(46.6);
+        expect(map.getZoom()).toBe(5.5);
+      });
+    });
+
+    it("frames the home area when no camera was shared yet", async () => {
+      renderAdapter({
+        camera: null,
+        initialFocusAreaId: nationHomeArea("uk"),
+        initialFocusNationId: "uk",
+      });
+      const map = await readyMap();
+      await waitFor(() => expect(map.getZoom()).toBe(3.5));
+    });
+
+    it("moves to a new home area requested after it opened", async () => {
+      const noop = () => undefined;
+      const { rerender } = renderAdapter({
+        camera: france,
+        onSelect: noop,
+        onRuler: noop,
+        onUnavailable: noop,
+      });
+      const map = await readyMap();
+      await waitFor(() => expect(map.getCenter().lng).toBe(2.4));
+      rerender(
+        <GlobeAdapter
+          state={{ ...initialMapPrototypeState, projection: "equirectangular" }}
+          route={null}
+          overlay={overlay}
+          orders={orders}
+          camera={france}
+          initialFocusAreaId={nationHomeArea("uk")}
+          initialFocusNationId="uk"
+          onSelect={noop}
+          onRuler={noop}
+          onToggleLayer={noop}
+          onSetProjection={noop}
+          onSetCentre={noop}
+          onUnavailable={noop}
+        />,
+      );
+      await waitFor(() => expect(map.getZoom()).toBe(3.5));
+    });
+
+    it("reports the settled camera so another screen can restore it", async () => {
+      const onCameraChange = vi.fn();
+      renderAdapter({ camera: france, onCameraChange });
+      const map = await readyMap();
+      map.jumpTo({ center: [-3.2, 55.9], zoom: 4 });
+      map.emit("idle", undefined);
+      expect(onCameraChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({ centre: [-3.2, 55.9], zoom: 4, version: 1 }),
+      );
+    });
   });
 });
