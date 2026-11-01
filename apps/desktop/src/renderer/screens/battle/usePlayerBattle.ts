@@ -27,6 +27,7 @@ export type BattleResume = "fresh" | "resumed";
 export interface PlayerBattleState extends RequestLifecycle {
   readonly view: PlayerBattleView | null;
   readonly orders: DivisionOrders;
+  readonly acceptedOrders: DivisionOrders;
   readonly resume: BattleResume;
 }
 
@@ -41,16 +42,19 @@ const initialState = (): PlayerBattleState => ({
   notice: null,
   view: null,
   orders: {},
+  acceptedOrders: {},
   resume: "fresh",
 });
 
 export interface UsePlayerBattleReturn {
   readonly view: PlayerBattleView | null;
   readonly resume: BattleResume;
+  readonly acceptedOrders: DivisionOrders;
   readonly error: string | null;
   readonly busy: boolean;
   readonly orderFor: (divisionId: string) => DivisionOrder;
   readonly setOrder: (divisionId: string, patch: Partial<DivisionOrder>) => void;
+  readonly releaseCourse: (divisionId: string) => void;
   readonly advance: (mode: "minute" | "to_end") => void;
   readonly submit: () => void;
 }
@@ -79,6 +83,7 @@ export function usePlayerBattle(
       project: (projection) => ({
         view: projection.view,
         orders: standingOrdersFor(projection.view, projection.lastOrders),
+        acceptedOrders: standingOrdersFor(projection.view, projection.lastOrders),
         resume: projection.resumed ? "resumed" : "fresh",
       }),
       accept: (value) => ({
@@ -114,6 +119,17 @@ export function usePlayerBattle(
     [updateState],
   );
 
+  const releaseCourse = useCallback(
+    (divisionId: string): void => {
+      updateState((current) => {
+        const existing = current.orders[divisionId] ?? DEFAULT_DIVISION_ORDER;
+        const { courseDeg: _course, speedKnots: _knots, ...stance } = existing;
+        return { ...current, orders: { ...current.orders, [divisionId]: stance } };
+      });
+    },
+    [updateState],
+  );
+
   const advance = useCallback(
     (mode: "minute" | "to_end"): void => {
       if (bridge === undefined || view === null || view.ended) return;
@@ -125,9 +141,13 @@ export function usePlayerBattle(
           mode,
           divisions: ordersToDtos(effective),
         }),
-      );
+      ).then((outcome) => {
+        if (outcome === "accepted") {
+          updateState((current) => ({ ...current, acceptedOrders: effective }));
+        }
+      });
     },
-    [battleId, bridge, execute, orders, sessionId, view],
+    [battleId, bridge, execute, orders, sessionId, updateState, view],
   );
 
   const submit = useCallback((): void => {
@@ -145,10 +165,12 @@ export function usePlayerBattle(
   return {
     view,
     resume: state.resume,
+    acceptedOrders: state.acceptedOrders,
     error: workflow.loadError ?? (state.notice === "" ? null : state.notice),
     busy: state.pendingRequest !== null,
     orderFor,
     setOrder,
+    releaseCourse,
     advance,
     submit,
   };

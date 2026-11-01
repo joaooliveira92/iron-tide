@@ -276,6 +276,24 @@ describe("player battle session over in-memory sidecar stores", () => {
     await reloaded.runtime.dispose();
   });
 
+  it("fights to the end after a division steers away from the enemy", async () => {
+    const a = app(memoryStores());
+    const battleId = await acceptedBattle(a);
+    const started = await start(a, battleId);
+    const [first, ...rest] = ordersFor(started, 100);
+    const orders = [
+      { ...first!, stance: "ENGAGE" as const, courseDeg: 45, speedKnots: 10 },
+      ...rest.map((order) => ({ ...order, stance: "ENGAGE" as const })),
+    ];
+    for (let minute = 0; minute < 9; minute += 1) {
+      const step = await advance(a, battleId, "minute", orders);
+      expect(step, JSON.stringify(step)).toMatchObject({ outcome: "success" });
+    }
+    const toEnd = await advance(a, battleId, "to_end", orders);
+    expect(toEnd, JSON.stringify(toEnd)).toMatchObject({ outcome: "success" });
+    await a.runtime.dispose();
+  });
+
   it("starts fresh and keeps a corrupt battle save instead of clearing it", async () => {
     const cleared: string[] = [];
     const spy = Layer.effect(
