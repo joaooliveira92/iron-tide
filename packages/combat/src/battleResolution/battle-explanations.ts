@@ -56,12 +56,20 @@ export function explainShipMotion(movement: {
   readonly currentSpeed: number;
 }): ExplanationTree {
   return new ExplanationBuilder("ship_motion", "ship_motion_v1")
-    .withInput("orderedSpeedBp", movement.orderedSpeed)
+    .withInput("orderedSpeedMilliKnots", movement.orderedSpeed)
     .withInput("headingDeg", movement.heading)
     .withResult(movement.currentSpeed)
-    .withUnit("bp")
+    .withUnit("mkn")
     .withOperation("identity")
     .withSource(motionSource)
+    .addChild(
+      new ExplanationBuilder("ship_motion.orderedSpeed", "ship_motion_v1")
+        .withResult(movement.orderedSpeed)
+        .withUnit("mkn")
+        .withOperation("identity")
+        .withSource(motionSource)
+        .build(),
+    )
     .build();
 }
 
