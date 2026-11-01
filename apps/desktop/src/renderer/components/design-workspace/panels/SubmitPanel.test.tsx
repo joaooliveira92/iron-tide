@@ -48,6 +48,13 @@ describe("SubmitPanel", () => {
     ).toBe(false);
   });
 
+  it("says why Submit is unavailable until the class has a name", () => {
+    render(<SubmitPanel sessionId="s" draft={draft} valid />);
+    expect(screen.getByText("Name the class to submit it.")).toBeTruthy();
+    name("Arethusa");
+    expect(screen.queryByText("Name the class to submit it.")).toBeNull();
+  });
+
   it("explains a refusal in plain words and keeps the design", async () => {
     execute.mockResolvedValue({
       outcome: "rejected",

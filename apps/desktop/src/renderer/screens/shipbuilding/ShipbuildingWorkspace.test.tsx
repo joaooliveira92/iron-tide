@@ -747,7 +747,7 @@ describe("Engineering status strip", () => {
   const item = (id: string) => strip().querySelector<HTMLElement>(`[data-status="${id}"]`)!;
   const trigger = (id: string) => item(id).querySelector<HTMLElement>("button, a")!;
 
-  it("shows displacement, cost, speed, range, stability, topside load and warnings", () => {
+  it("shows displacement, cost, speed, range, stability, topside load and remaining weight", () => {
     render(<ShipbuildingWorkspace />);
     for (const id of [
       "displacement",
@@ -757,11 +757,14 @@ describe("Engineering status strip", () => {
       "stability",
       "topside",
       "remaining",
-      "warnings",
     ])
       expect(item(id)).toBeTruthy();
     expect(item("displacement").getAttribute("data-tone")).toBe("neutral");
-    expect(item("warnings").getAttribute("data-tone")).toBe("warn");
+  });
+
+  it("leaves finding counts to the section tabs rather than repeating them", () => {
+    render(<ShipbuildingWorkspace />);
+    expect(item("warnings")).toBeNull();
   });
 
   it("opens a weight breakdown, whose groups add up to current, on clicking displacement", () => {

@@ -16,7 +16,7 @@ export function EngineeringStatusBar({
   return (
     <Slate
       aria-label="Engineering status"
-      className="flex w-[min(52rem,100%)] flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2 text-sm"
+      className="flex w-[min(64rem,100%)] flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2 text-sm"
     >
       {lead}
       {readouts.map((r) => (

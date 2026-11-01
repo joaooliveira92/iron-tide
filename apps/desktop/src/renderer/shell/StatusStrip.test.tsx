@@ -69,13 +69,14 @@ function model(balance: number) {
 async function renderStrip(
   balance = 1200,
   interfaceDensity: "comfortable" | "compact" = "comfortable",
+  startCollapsed = false,
 ) {
   const stub = createPreferencesBridgeStub({ ...DEFAULT_APP_PREFERENCES, interfaceDensity });
   const result = render(
     <BridgeProvider bridge={stub.bridge}>
       <PreferencesProvider>
         <DensityProvider>
-          <StatusStripView model={model(balance)} />
+          <StatusStripView model={model(balance)} startCollapsed={startCollapsed} />
         </DensityProvider>
       </PreferencesProvider>
     </BridgeProvider>,
@@ -149,6 +150,13 @@ describe("StatusStripView", () => {
     await renderStrip(1200, "compact");
     await waitFor(() => expect(screen.queryByRole("group", { name: "Nation" })).toBeNull());
     expect(screen.getByRole("button", { name: /expand/i })).toBeTruthy();
+  });
+
+  it("starts as a one-liner when the screen asks for it, and an explicit choice wins", async () => {
+    await renderStrip(1200, "comfortable", true);
+    await waitFor(() => expect(screen.queryByRole("group", { name: "Nation" })).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: /expand/i }));
+    expect(screen.getByRole("group", { name: "Nation" })).toBeTruthy();
   });
 
   it("draws the appropriation as a described stacked bar with a legend of shares", async () => {

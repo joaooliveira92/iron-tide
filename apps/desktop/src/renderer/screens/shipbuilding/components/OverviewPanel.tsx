@@ -30,10 +30,7 @@ export function OverviewPanel({
 }) {
   return (
     <Panel title="Overview">
-      <dl
-        className="grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-2"
-        data-testid="overview-summary"
-      >
+      <dl className="grid grid-cols-1 gap-y-1.5 text-sm" data-testid="overview-summary">
         {model.values.map((v) => (
           <div key={v.id} className="flex items-baseline justify-between gap-3" data-value={v.id}>
             <dt className="text-muted-foreground">{v.label}</dt>
@@ -59,25 +56,27 @@ export function OverviewPanel({
         </p>
       </section>
 
-      <section aria-label="Design priorities" className="space-y-2 border-t pt-3">
-        <h3 className="text-sm font-medium">Design priorities</h3>
-        <p className="text-xs text-muted-foreground">
-          A record of your intent. Changing a priority does not modify the design (no
-          assisted-design mode exists yet).
-        </p>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {PRIORITY_IDS.map((id) => (
-            <SelectField
-              key={id}
-              label={`${PRIORITY_LABEL[id]} priority`}
-              shortLabel={PRIORITY_LABEL[id]}
-              value={priorities[id]}
-              options={[...LEVELS]}
-              onChange={(v) => onPriority(id, v as PriorityLevel)}
-            />
-          ))}
-        </div>
-      </section>
+      <details className="group border-t pt-3">
+        <summary className="cursor-pointer text-sm font-medium">Design priorities</summary>
+        <section aria-label="Design priorities" className="mt-2 space-y-2">
+          <p className="text-xs text-muted-foreground">
+            A record of your intent. Changing a priority does not modify the design (no
+            assisted-design mode exists yet).
+          </p>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            {PRIORITY_IDS.map((id) => (
+              <SelectField
+                key={id}
+                label={`${PRIORITY_LABEL[id]} priority`}
+                shortLabel={PRIORITY_LABEL[id]}
+                value={priorities[id]}
+                options={[...LEVELS]}
+                onChange={(v) => onPriority(id, v as PriorityLevel)}
+              />
+            ))}
+          </div>
+        </section>
+      </details>
     </Panel>
   );
 }

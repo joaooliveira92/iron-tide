@@ -145,6 +145,9 @@ export function SubmitPanel({
           Resolve the blocking findings before submitting.
         </p>
       )}
+      {valid && className.trim() === "" && (
+        <p className="text-xs text-muted-foreground">Name the class to submit it.</p>
+      )}
       {result !== null && (
         <Alert role="status" variant={result.tone === "ok" ? "default" : "destructive"}>
           <ul>

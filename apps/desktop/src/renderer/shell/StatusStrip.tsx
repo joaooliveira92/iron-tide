@@ -846,13 +846,15 @@ function AlertsChip({ alerts }: { readonly alerts: string }) {
 export const StatusStripView = memo(function StatusStripView({
   model,
   trend = null,
+  startCollapsed = false,
 }: {
   readonly model: StatusStripModel;
   readonly trend?: TrendDetail | null;
+  readonly startCollapsed?: boolean;
 }) {
   const { density } = useDensity();
   const [chosen, setChosen] = useState<boolean | null>(null);
-  const expanded = chosen ?? density !== "compact";
+  const expanded = chosen ?? (density !== "compact" && !startCollapsed);
   const { summary } = model;
   const controls = (
     <div className="flex shrink-0 items-center gap-1.5">
@@ -909,9 +911,10 @@ export const StatusStripView = memo(function StatusStripView({
 
 export interface StatusStripProps {
   readonly reads: CampaignReads;
+  readonly startCollapsed?: boolean;
 }
 
-export function StatusStrip({ reads }: StatusStripProps) {
+export function StatusStrip({ reads, startCollapsed = false }: StatusStripProps) {
   const { projection, areas, reports } = reads;
   const format = usePresentationFormat();
   const model = useMemo(
@@ -931,5 +934,5 @@ export function StatusStrip({ reads }: StatusStripProps) {
     [reports, format],
   );
   if (model === null) return null;
-  return <StatusStripView model={model} trend={trend} />;
+  return <StatusStripView model={model} trend={trend} startCollapsed={startCollapsed} />;
 }

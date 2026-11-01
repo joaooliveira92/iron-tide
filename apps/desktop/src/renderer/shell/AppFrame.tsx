@@ -6,6 +6,7 @@ import type { Screen } from "./campaign-screen-registry.js";
 import { isMapUnderlayScreen } from "./map-underlay-screens.js";
 import type { CampaignReads } from "./campaign-reads.js";
 import { StatusStrip } from "./StatusStrip.js";
+import { startsCollapsed } from "./status-strip-start.js";
 
 export interface AppFrameProps {
   readonly campaignSessionId: string | null;
@@ -77,7 +78,7 @@ export function AppFrame({
         className="group/chrome relative z-[45] mt-auto shrink-0"
       >
         {campaignSessionId !== null && campaignReads !== null && (
-          <StatusStrip reads={campaignReads} />
+          <StatusStrip reads={campaignReads} startCollapsed={startsCollapsed(screen)} />
         )}
         {campaignSessionId !== null && (
           <BottomNav screen={screen} onSelect={onSelectScreen} footer={campaignSessionId} />

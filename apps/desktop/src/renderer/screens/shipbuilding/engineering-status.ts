@@ -103,7 +103,6 @@ export function engineeringStatus(
   const stabilityFindings = findings.filter((f) => STABILITY_CAUSE.test(f.id));
   const stability = view.compiled.stability;
   const load = topsideLoad(view.compiled.arrangement);
-  const warnings = view.counts.CRITICAL + view.counts.WARNING;
 
   return [
     {
@@ -206,12 +205,6 @@ export function engineeringStatus(
           { label: "Free", value: t(format, remainingKg) },
         ],
       },
-    },
-    {
-      id: "warnings",
-      label: "Warnings",
-      value: format.count(warnings),
-      tone: warnings > 0 ? "warn" : "neutral",
     },
   ];
 }

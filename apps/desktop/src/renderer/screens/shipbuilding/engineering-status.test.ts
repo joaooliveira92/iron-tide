@@ -34,7 +34,6 @@ describe("engineeringStatus", () => {
       "stability",
       "topside",
       "remaining",
-      "warnings",
     ]);
   });
 

@@ -96,12 +96,7 @@ export function CommandBar({
         <Tip
           label={`Current type: ${shipTypeLabel}. Pick a reference design to start from another type.`}
         >
-          <Button
-            variant="outline"
-            className="gap-1.5"
-
-            onClick={onStartFromReference}
-          >
+          <Button variant="outline" className="gap-1.5" onClick={onStartFromReference}>
             {shipTypeIcon}
             Start from a reference design
             <Badge
@@ -118,10 +113,9 @@ export function CommandBar({
         <ButtonGroup aria-label="History">
           <Tip label={`Undo (${SHORTCUT_MOD}Z)`}>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               aria-label="Undo"
-
               disabled={!canUndo}
               onClick={onUndo}
             >
@@ -130,10 +124,9 @@ export function CommandBar({
           </Tip>
           <Tip label={`Redo (${SHORTCUT_SHIFT}${SHORTCUT_MOD}Z)`}>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               aria-label="Redo"
-
               disabled={!canRedo}
               onClick={onRedo}
             >
@@ -142,7 +135,7 @@ export function CommandBar({
           </Tip>
         </ButtonGroup>
         <Popover>
-          <PopoverTrigger className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}>
+          <PopoverTrigger className={cn(buttonVariants({ variant: "ghost" }), "gap-1.5")}>
             <GitCompare aria-hidden="true" className="size-4" />
             Compare
           </PopoverTrigger>
@@ -153,7 +146,7 @@ export function CommandBar({
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="More design actions"
-            className={cn(buttonVariants({ variant: "outline", size: "icon" }))}
+            className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
           >
             <MoreHorizontal aria-hidden="true" />
           </DropdownMenuTrigger>
@@ -187,7 +180,7 @@ export function CommandBar({
             </span>
           </Tip>
         )}
-        <Button variant="outline" onClick={onValidate}>
+        <Button variant="ghost" onClick={onValidate}>
           <ClipboardCheck aria-hidden="true" className="mr-1 size-4" />
           Validate
         </Button>
