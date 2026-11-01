@@ -93,7 +93,7 @@ export function RebuildPanel({
       .execute("checkRebuild", {
         sessionId,
         shipId,
-        draft: checkedDraft,
+        draft: { ...checkedDraft },
         ...(rebuildKind === undefined ? {} : { rebuildKind }),
       })
       .then((r) => {

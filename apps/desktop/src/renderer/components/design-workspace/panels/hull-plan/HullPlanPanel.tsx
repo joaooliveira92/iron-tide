@@ -1,5 +1,5 @@
 import { memo, useMemo, useRef, useState } from "react";
-import type { ArmourRegionId, DesignDraft, WorkshopView, ZoneSpan } from "@bluewave/ship-design";
+import type { ArmourRegionId, DesignDraft, WorkshopView } from "@bluewave/ship-design";
 import type { DrawingBoardContent } from "../../content.js";
 import { Checkbox } from "../../../ui/checkbox.js";
 import { Panel } from "../Panel.js";
@@ -11,6 +11,7 @@ import { legendEntries } from "./legend.js";
 import { PlanContextMenu } from "./PlanContextMenu.js";
 import { PlanToolOptions } from "./PlanToolbar.js";
 import { clientToPlan, fittingAt } from "./plan-pointer.js";
+import type { ZoneSpan } from "./plan-targeting.js";
 import { ProfileView } from "./ProfileView.js";
 import { SectionCard } from "./SectionCard.js";
 import { SectionLabels } from "./SectionLabels.js";

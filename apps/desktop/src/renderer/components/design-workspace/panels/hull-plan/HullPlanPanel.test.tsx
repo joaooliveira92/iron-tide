@@ -181,13 +181,13 @@ describe("HullPlanPanel", () => {
     });
     fireEvent.click(items[0]!);
     const layer = screen.getByTestId("plan-click-layer");
-    const dot = container.querySelector(`[data-fitting='${last.instanceId}']`) as SVGCircleElement;
+    const dot = container.querySelector<SVGCircleElement>(`[data-fitting='${last.instanceId}']`)!;
     const x = Number(dot.getAttribute("cx"));
     const y = Number(dot.getAttribute("cy"));
     const stable = renders;
     fireEvent.pointerDown(layer, { clientX: x, clientY: y, pointerId: 1 });
     fireEvent.pointerMove(layer, { clientX: x + 20, clientY: y, pointerId: 1 });
-    const ghost = screen.getByTestId("plan-drag-ghost") as SVGCircleElement;
+    const ghost = screen.getByTestId("plan-drag-ghost");
     expect(Number(ghost.getAttribute("cx"))).toBe(x + 20);
     fireEvent.pointerMove(layer, { clientX: x + 40, clientY: y, pointerId: 1 });
     expect(Number(screen.getByTestId("plan-drag-ghost").getAttribute("cx"))).toBe(x + 40);
