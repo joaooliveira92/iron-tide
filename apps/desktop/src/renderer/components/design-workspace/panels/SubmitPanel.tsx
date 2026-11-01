@@ -63,12 +63,14 @@ export function SubmitPanel({
   valid,
   name,
   onNameChange,
+  onRequestName,
 }: {
   readonly sessionId: string;
   readonly draft: DesignDraft;
   readonly valid: boolean;
   readonly name?: string;
   readonly onNameChange?: (name: string) => void;
+  readonly onRequestName?: () => void;
 }) {
   const revision = useCampaignRevision();
   const bridge = useBridge();
@@ -121,20 +123,32 @@ export function SubmitPanel({
       setBusy(false);
     }
   };
+  const hostNamed = onNameChange !== undefined;
   return (
     <Panel title="Submit for construction">
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <label htmlFor="class-name" className="block text-xs text-muted-foreground">
-            Class name
-          </label>
-          <input
-            id="class-name"
-            className="h-8 w-64 rounded-md border bg-background px-2 text-sm"
-            value={className}
-            maxLength={60}
-            onChange={(e) => setClassName(e.target.value)}
-          />
+          {hostNamed ? (
+            <>
+              <p className="text-xs text-muted-foreground">Class name</p>
+              <p className="flex h-8 items-center text-sm font-medium">
+                {className.trim() === "" ? "Not named yet" : className.trim()}
+              </p>
+            </>
+          ) : (
+            <>
+              <label htmlFor="class-name" className="block text-xs text-muted-foreground">
+                Class name
+              </label>
+              <input
+                id="class-name"
+                className="h-8 w-64 rounded-md border bg-background px-2 text-sm"
+                value={className}
+                maxLength={60}
+                onChange={(e) => setClassName(e.target.value)}
+              />
+            </>
+          )}
         </div>
         <Button onClick={() => void submit()} disabled={!canSubmit}>
           {busy ? "Submitting…" : alreadyQueued ? "Queued" : "Submit design"}
@@ -146,7 +160,14 @@ export function SubmitPanel({
         </p>
       )}
       {valid && className.trim() === "" && (
-        <p className="text-xs text-muted-foreground">Name the class to submit it.</p>
+        <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          Name the class to submit it.
+          {onRequestName !== undefined && (
+            <Button variant="outline" size="sm" onClick={onRequestName}>
+              Enter a class name
+            </Button>
+          )}
+        </p>
       )}
       {result !== null && (
         <Alert role="status" variant={result.tone === "ok" ? "default" : "destructive"}>

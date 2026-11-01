@@ -52,7 +52,7 @@ export function ProtectionEditor({
     setToAdd("");
   };
   return (
-    <Panel title="Protection">
+    <Panel title="Protection" hideTitle>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="text-muted-foreground">Belt coverage</span>
         <Badge variant="outline" className="tabular-nums">

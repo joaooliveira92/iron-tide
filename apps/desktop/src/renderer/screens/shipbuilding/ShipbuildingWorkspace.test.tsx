@@ -45,15 +45,9 @@ describe("Shipbuilding workspace shell", () => {
     const inputs = within(commands()).queryAllByRole("textbox");
     expect(inputs.map((i) => i.getAttribute("aria-label"))).toEqual(["Class name"]);
     expect(within(commands()).queryAllByRole("spinbutton")).toEqual([]);
-    for (const name of [
-      "Undo",
-      "Redo",
-      "Compare",
-      "More design actions",
-      "Validate",
-      "Finish design",
-    ])
+    for (const name of ["Undo", "Redo", "Compare", "More design actions", "Finish design"])
       expect(within(commands()).getByRole("button", { name: new RegExp(name) })).toBeTruthy();
+    expect(within(commands()).queryByRole("button", { name: /Validate/ })).toBeNull();
   });
 
   it("shows the compiled validity, displacement and cost", () => {
@@ -101,10 +95,16 @@ describe("Shipbuilding workspace shell", () => {
     expect((screen.getByLabelText(/^Installed power/) as HTMLInputElement).value).toBe(original);
   });
 
-  it("sends Validate and Finish to the Review section", () => {
+  it("sends Finish to the Review section's Finish tab", () => {
     render(<ShipbuildingWorkspace />);
-    fireEvent.click(within(commands()).getByRole("button", { name: /Validate/ }));
+    fireEvent.click(within(commands()).getByRole("button", { name: /Finish design/ }));
     expect(screen.getByRole("dialog", { name: "Review" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Finish" }).getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("reaches the validation findings from the Review section tab", () => {
+    render(<ShipbuildingWorkspace />);
+    openMap("Review");
     expect(screen.getByRole("region", { name: "Validation" })).toBeTruthy();
   });
 
@@ -662,16 +662,11 @@ describe("Overview summary section", () => {
     expect(within(warnings).getByText(/Advisories never prevent submission/)).toBeTruthy();
   });
 
-  it("records design priorities without modifying the design", () => {
+  it("offers no controls that leave the design unchanged", () => {
     render(<ShipbuildingWorkspace />);
     openMap("Overview");
-    const before = statusOf("displacement");
-    const priorities = within(panel()).getByRole("region", { name: "Design priorities" });
-    for (const label of ["Speed", "Protection", "Firepower", "Range", "Cost"])
-      expect(within(priorities).getByLabelText(`${label} priority`)).toBeTruthy();
-    expect(within(priorities).getAllByText("Normal").length).toBe(5);
-    expect(within(priorities).getByText(/does not modify the design/)).toBeTruthy();
-    expect(statusOf("displacement")).toBe(before);
+    expect(within(panel()).queryByRole("region", { name: "Design priorities" })).toBeNull();
+    expect(within(panel()).queryAllByRole("combobox")).toEqual([]);
   });
 });
 

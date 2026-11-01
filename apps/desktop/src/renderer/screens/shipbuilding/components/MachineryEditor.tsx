@@ -30,7 +30,7 @@ export function MachineryEditor({
   const [previewPlant, setPreviewPlant] = useState<string | null>(null);
   const plantPreview = previewPlant === null ? [] : (previewDeltas?.get(previewPlant) ?? []);
   return (
-    <Panel title="Machinery, fuel and range">
+    <Panel title="Machinery, fuel and range" hideTitle>
       <div className="grid gap-5">
         <section aria-label="Propulsion configuration" className="space-y-3">
           <h3 className="text-sm font-medium">Targets and configuration</h3>

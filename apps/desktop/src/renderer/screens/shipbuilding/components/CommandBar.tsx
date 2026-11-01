@@ -2,7 +2,6 @@ import { Fragment, type ReactNode, type Ref } from "react";
 import {
   CheckCircle2,
   ChevronDown,
-  ClipboardCheck,
   GitCompare,
   MoreHorizontal,
   Redo2,
@@ -39,7 +38,6 @@ export interface CommandBarProps {
   readonly onRedo: () => void;
   readonly compare: ReactNode;
   readonly autosaved: boolean;
-  readonly onValidate: () => void;
   readonly onFinish: () => void;
   readonly overflow: readonly {
     readonly label: string;
@@ -65,7 +63,6 @@ export function CommandBar({
   onRedo,
   compare,
   autosaved,
-  onValidate,
   onFinish,
   overflow,
 }: CommandBarProps) {
@@ -92,7 +89,7 @@ export function CommandBar({
           />
         </label>
         <Tip
-          label={`Current type: ${shipTypeName}. Start from a reference design to build another type.`}
+          label={`Current type: ${shipTypeName}. Start from a reference design for another type; this replaces your design once you confirm.`}
         >
           <Button
             variant="outline"
@@ -177,10 +174,6 @@ export function CommandBar({
             </span>
           </Tip>
         )}
-        <Button variant="ghost" onClick={onValidate}>
-          <ClipboardCheck aria-hidden="true" className="mr-1 size-4" />
-          Validate
-        </Button>
         <Button onClick={onFinish}>
           <CheckCircle2 aria-hidden="true" className="mr-1 size-4" />
           Finish design

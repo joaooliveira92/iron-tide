@@ -125,6 +125,10 @@ export function BriefPanel({
         The type is what the ship must qualify as. A design that does not meet its type cannot be
         built; the natural class is the type it would actually qualify as.
       </p>
+      <p className="text-xs text-muted-foreground">
+        Changing the type here keeps your fittings. To start over from a typical design for a type,
+        use the type button above the drawing.
+      </p>
     </Panel>
   );
 }

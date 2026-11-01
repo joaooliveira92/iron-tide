@@ -17,7 +17,6 @@ const props = (over: Partial<CommandBarProps> = {}): CommandBarProps => ({
   onRedo: () => {},
   compare: null,
   autosaved: false,
-  onValidate: () => {},
   onFinish: () => {},
   overflow: [{ label: "Design", items: [{ label: "Edit history…", onSelect: () => {} }] }],
   ...over,
@@ -51,13 +50,11 @@ describe("CommandBar", () => {
     expect(ref.current).toBe(within(bar()).getByLabelText("Class name"));
   });
 
-  it("fires Validate and Finish", () => {
-    const onValidate = vi.fn();
+  it("offers Finish as its one primary action, with no separate Validate", () => {
     const onFinish = vi.fn();
-    render(<CommandBar {...props({ onValidate, onFinish })} />);
-    fireEvent.click(within(bar()).getByRole("button", { name: /Validate/ }));
+    render(<CommandBar {...props({ onFinish })} />);
+    expect(within(bar()).queryByRole("button", { name: /Validate/ })).toBeNull();
     fireEvent.click(within(bar()).getByRole("button", { name: /Finish design/ }));
-    expect(onValidate).toHaveBeenCalledOnce();
     expect(onFinish).toHaveBeenCalledOnce();
   });
 });

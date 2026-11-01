@@ -3,17 +3,6 @@ import type { DesignDraft, Severity, WorkshopView } from "@bluewave/ship-design"
 import { plural } from "../../components/design-workspace/plural.js";
 import { formatExplanation, type PresentationFormat } from "../../lib/presentation-format/index.js";
 
-export const PRIORITY_IDS = ["speed", "protection", "firepower", "range", "cost"] as const;
-export type PriorityId = (typeof PRIORITY_IDS)[number];
-
-export const PRIORITY_LABEL: { readonly [K in PriorityId]: string } = {
-  speed: "Speed",
-  protection: "Protection",
-  firepower: "Firepower",
-  range: "Range",
-  cost: "Cost",
-};
-
 export interface OverviewValue {
   readonly id: string;
   readonly label: string;

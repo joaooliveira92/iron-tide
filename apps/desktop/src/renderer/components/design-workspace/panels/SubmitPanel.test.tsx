@@ -55,6 +55,36 @@ describe("SubmitPanel", () => {
     expect(screen.queryByText("Name the class to submit it.")).toBeNull();
   });
 
+  it("shows the host's class name as text and sends the player to the one field to edit it", () => {
+    const onRequestName = vi.fn();
+    const { rerender } = render(
+      <SubmitPanel
+        sessionId="s"
+        draft={draft}
+        valid
+        name=""
+        onNameChange={() => {}}
+        onRequestName={onRequestName}
+      />,
+    );
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.getByText("Not named yet")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Enter a class name" }));
+    expect(onRequestName).toHaveBeenCalledOnce();
+    rerender(
+      <SubmitPanel
+        sessionId="s"
+        draft={draft}
+        valid
+        name="Arethusa"
+        onNameChange={() => {}}
+        onRequestName={onRequestName}
+      />,
+    );
+    expect(screen.getByText("Arethusa")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Enter a class name" })).toBeNull();
+  });
+
   it("explains a refusal in plain words and keeps the design", async () => {
     execute.mockResolvedValue({
       outcome: "rejected",

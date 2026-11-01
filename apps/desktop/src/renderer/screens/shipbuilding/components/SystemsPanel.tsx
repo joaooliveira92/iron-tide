@@ -16,7 +16,7 @@ export function SystemsPanel({
   readonly onAdd: (componentId: string) => void;
 }) {
   return (
-    <Panel title="Systems">
+    <Panel title="Systems" hideTitle>
       <label className="flex items-center gap-2 text-sm">
         <Checkbox
           checked={showUnavailable}

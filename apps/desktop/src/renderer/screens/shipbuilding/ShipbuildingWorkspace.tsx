@@ -3,7 +3,6 @@ import { flushSync } from "react-dom";
 import { PencilRuler } from "lucide-react";
 import type { ArmourRegionId, BatteryRole, ComponentCategory } from "@bluewave/ship-design";
 import { Alert } from "../../components/ui/alert.js";
-import { toast } from "../../components/ui/toast.js";
 import {
   AlternativesPanel,
   BriefPanel,
@@ -74,7 +73,6 @@ import {
   DesignIdentity,
   DesignStatusChip,
   DrawerBody,
-  DEFAULT_PRIORITIES,
   EngineeringStatusBar,
   FlawSlip,
   MachineryEditor,
@@ -87,7 +85,6 @@ import {
   ReferenceDesignBrowser,
   WorkspaceDialog,
   type IsoSide,
-  type PriorityLevel,
 } from "./components/index.js";
 import { aluminiumModel } from "./aluminium-view.js";
 import { antiAircraftModel } from "./anti-aircraft-view.js";
@@ -95,7 +92,7 @@ import { armamentEntries } from "./armament.js";
 import { nameGroups, namePoolFor, suggestClassName } from "./class-name-suggestions.js";
 import { colonialServiceModel } from "./colonial-service-view.js";
 import { machineryModel, plantDeltas } from "./machinery-view.js";
-import { overviewModel, type PriorityId } from "./overview.js";
+import { overviewModel } from "./overview.js";
 import { protectionModel } from "./protection-view.js";
 import { addSystemEdit, systemsModel } from "./systems-view.js";
 import {
@@ -114,8 +111,6 @@ import { sectionStatuses } from "./section-status.js";
 import { focusEntityControl, placeForEntity } from "./selection.js";
 import { focusesArcs, layersFor } from "./stage-layers.js";
 
-const VALIDATION_TOAST_ID = "shipbuilding-validation";
-const VALIDATION_TOAST_MS = 4000;
 const DRAWER_WIDTH = "28rem";
 const DRAWER_GAP = "0.75rem";
 
@@ -205,10 +200,6 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
     setOverlays(layersFor(null));
   };
   const [shipClassName, setShipClassName] = useState("");
-  const [priorities, setPriorities] =
-    useState<Readonly<Record<PriorityId, PriorityLevel>>>(DEFAULT_PRIORITIES);
-  const setPriority = (id: PriorityId, level: PriorityLevel) =>
-    setPriorities((p) => ({ ...p, [id]: level }));
   const [showSystemsUnavailable, setShowSystemsUnavailable] = useState(false);
   const [armourHighlight, setArmourHighlight] = useState<ArmourRegionId | null>(null);
   const selectArmourRegion = (region: ArmourRegionId | null) => {
@@ -247,13 +238,6 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
         };
   const shipType = draft.requirement.category;
   const ShipTypeIcon = shipTypeIcon(shipType);
-  const validate = () => {
-    openSection("review", "findings");
-    toast(`${view.valid ? "No blocking findings" : "Blocking findings found"}: ${findingCounts}.`, {
-      id: VALIDATION_TOAST_ID,
-      duration: VALIDATION_TOAST_MS,
-    });
-  };
   const [focusName, setFocusName] = useState(false);
   useEffect(() => {
     if (!focusName) return;
@@ -390,11 +374,7 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
           </>
         ) : (
           <>
-            <OverviewPanel
-              model={overviewModel(draft, view, batteries, state.month, format)}
-              priorities={priorities}
-              onPriority={setPriority}
-            />
+            <OverviewPanel model={overviewModel(draft, view, batteries, state.month, format)} />
             <MetricsPanel view={view} />
             <LedgerPanel view={view} />
             <ForecastPanel view={view} treasuryUnitMicro={content.treasuryUnitMicro} />
@@ -542,6 +522,7 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
                 valid={view.valid}
                 name={shipClassName}
                 onNameChange={setShipClassName}
+                onRequestName={() => nameInputRef.current?.focus()}
               />
             ) : (
               <NotAvailable title="Finishing: not available">
@@ -584,7 +565,6 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
       onRedo={actions.redo}
       compare={<ComparePanel baseline={state.baseline} view={view} name={state.preset.name} />}
       autosaved={autosave.enabled}
-      onValidate={validate}
       onFinish={finish}
       overflow={[
         {

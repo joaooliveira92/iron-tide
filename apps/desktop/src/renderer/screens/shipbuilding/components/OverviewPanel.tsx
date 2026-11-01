@@ -1,35 +1,11 @@
 import { Badge } from "../../../components/ui/badge.js";
 import { Panel } from "../../../components/design-workspace/panels/Panel.js";
-import { SelectField } from "../../../components/design-workspace/fields.js";
 import { SEVERITY_STYLE } from "../../../components/design-workspace/validation/severity.js";
-import { PRIORITY_IDS, PRIORITY_LABEL, type OverviewModel, type PriorityId } from "../overview.js";
+import type { OverviewModel } from "../overview.js";
 
-const LEVELS = [
-  { value: "LOW", label: "Low" },
-  { value: "NORMAL", label: "Normal" },
-  { value: "HIGH", label: "High" },
-] as const;
-
-export type PriorityLevel = "LOW" | "NORMAL" | "HIGH";
-export const DEFAULT_PRIORITIES: Readonly<Record<PriorityId, PriorityLevel>> = {
-  speed: "NORMAL",
-  protection: "NORMAL",
-  firepower: "NORMAL",
-  range: "NORMAL",
-  cost: "NORMAL",
-};
-
-export function OverviewPanel({
-  model,
-  priorities,
-  onPriority,
-}: {
-  readonly model: OverviewModel;
-  readonly priorities: Readonly<Record<PriorityId, PriorityLevel>>;
-  readonly onPriority: (id: PriorityId, level: PriorityLevel) => void;
-}) {
+export function OverviewPanel({ model }: { readonly model: OverviewModel }) {
   return (
-    <Panel title="Overview">
+    <Panel title="Overview" hideTitle>
       <dl className="grid grid-cols-1 gap-y-1.5 text-sm" data-testid="overview-summary">
         {model.values.map((v) => (
           <div key={v.id} className="flex items-baseline justify-between gap-3" data-value={v.id}>
@@ -55,28 +31,6 @@ export function OverviewPanel({
           Review.
         </p>
       </section>
-
-      <details className="group border-t pt-3">
-        <summary className="cursor-pointer text-sm font-medium">Design priorities</summary>
-        <section aria-label="Design priorities" className="mt-2 space-y-2">
-          <p className="text-xs text-muted-foreground">
-            A record of your intent. Changing a priority does not modify the design (no
-            assisted-design mode exists yet).
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            {PRIORITY_IDS.map((id) => (
-              <SelectField
-                key={id}
-                label={`${PRIORITY_LABEL[id]} priority`}
-                shortLabel={PRIORITY_LABEL[id]}
-                value={priorities[id]}
-                options={[...LEVELS]}
-                onChange={(v) => onPriority(id, v as PriorityLevel)}
-              />
-            ))}
-          </div>
-        </section>
-      </details>
     </Panel>
   );
 }
