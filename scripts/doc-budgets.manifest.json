@@ -29,6 +29,7 @@
   "docs/agents/domain.md": 350,
   "docs/agents/golden-repinning.md": 215,
   "docs/agents/issue-tracker.md": 500,
+  "docs/agents/modal-guide.md": 550,
   "docs/agents/replay-corpus.md": 300,
   "docs/agents/repo-map.md": 275,
   "docs/agents/rollback.md": 350,

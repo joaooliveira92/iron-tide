@@ -3,6 +3,13 @@ import * as React from "react";
 
 import { cn } from "../../lib/utils.js";
 import { buttonVariants } from "./button.js";
+import {
+  MODAL_BODY_CLASS,
+  MODAL_PADDING_CLASS,
+  MODAL_SIZE_CLASS,
+  MODAL_SURFACE_CLASS,
+  type ModalSize,
+} from "./modal-frame.js";
 
 const AlertDialog = AlertDialogPrimitive.Root;
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
@@ -26,22 +33,21 @@ const AlertDialogOverlay = ({ className, ref, ...props }: AlertDialogOverlayProp
 );
 AlertDialogOverlay.displayName = "AlertDialogOverlay";
 
-interface AlertDialogContentProps extends React.ComponentPropsWithoutRef<
-  typeof AlertDialogPrimitive.Popup
+interface AlertDialogContentProps extends Omit<
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Popup>,
+  "className"
 > {
   ref?: React.Ref<React.ComponentRef<typeof AlertDialogPrimitive.Popup>> | undefined;
+  readonly size?: ModalSize;
 }
 
-const AlertDialogContent = ({ className, ref, ...props }: AlertDialogContentProps) => (
+const AlertDialogContent = ({ size = "confirm", ref, ...props }: AlertDialogContentProps) => (
   <AlertDialogPortal>
     <AlertDialogOverlay />
     <AlertDialogPrimitive.Popup
       ref={ref}
-      className={cn(
-        "fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 sm:rounded-lg",
-        "data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95",
-        className,
-      )}
+      aria-modal="true"
+      className={cn(MODAL_SURFACE_CLASS, MODAL_SIZE_CLASS[size], MODAL_PADDING_CLASS)}
       {...props}
     />
   </AlertDialogPortal>
@@ -49,13 +55,24 @@ const AlertDialogContent = ({ className, ref, ...props }: AlertDialogContentProp
 AlertDialogContent.displayName = "AlertDialogContent";
 
 const AlertDialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props} />
+  <div
+    className={cn("flex shrink-0 flex-col space-y-2 text-center sm:text-left", className)}
+    {...props}
+  />
 );
 AlertDialogHeader.displayName = "AlertDialogHeader";
 
+const AlertDialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn(MODAL_BODY_CLASS, className)} {...props} />
+);
+AlertDialogBody.displayName = "AlertDialogBody";
+
 const AlertDialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
+    className={cn(
+      "flex shrink-0 flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      className,
+    )}
     {...props}
   />
 );
@@ -121,6 +138,7 @@ export {
   AlertDialog,
   AlertDialogTrigger,
   AlertDialogContent,
+  AlertDialogBody,
   AlertDialogHeader,
   AlertDialogFooter,
   AlertDialogTitle,

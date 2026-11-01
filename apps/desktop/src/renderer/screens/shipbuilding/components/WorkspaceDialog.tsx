@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -12,30 +13,22 @@ export function WorkspaceDialog({
   onClose,
   title,
   description,
-  wide = false,
   children,
 }: {
   readonly open: boolean;
   readonly onClose: () => void;
   readonly title: string;
   readonly description: string;
-  readonly wide?: boolean;
   readonly children: ReactNode;
 }) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent
-        className={
-          wide
-            ? "flex h-[85vh] max-h-[85vh] w-[min(92vw,80rem)] max-w-none flex-col overflow-hidden sm:max-w-none"
-            : "max-h-[85vh] max-w-3xl overflow-y-auto"
-        }
-      >
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        {children}
+        <DialogBody>{children}</DialogBody>
       </DialogContent>
     </Dialog>
   );

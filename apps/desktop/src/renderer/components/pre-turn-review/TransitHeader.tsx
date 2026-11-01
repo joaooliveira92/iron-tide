@@ -25,7 +25,7 @@ export function TransitHeader({
 }) {
   const { chip, Icon } = VERDICT_STYLE[verdict.kind];
   return (
-    <header className="slate-grid relative border-b border-border/70 px-6 pt-5 pb-4">
+    <header className="slate-grid relative shrink-0 border-b border-border/70 px-6 pt-5 pb-4">
       <span
         aria-hidden="true"
         className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-admiralty-accent/80 to-transparent"

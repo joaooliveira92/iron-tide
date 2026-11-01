@@ -3,6 +3,13 @@ import { X } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "../../lib/utils.js";
+import {
+  MODAL_BODY_CLASS,
+  MODAL_PADDING_CLASS,
+  MODAL_SIZE_CLASS,
+  MODAL_SURFACE_CLASS,
+  type ModalSize,
+} from "./modal-frame.js";
 
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -27,19 +34,30 @@ const DialogOverlay = ({ className, ref, ...props }: DialogOverlayProps) => (
 );
 DialogOverlay.displayName = "DialogOverlay";
 
-interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Popup> {
+interface DialogContentProps extends Omit<
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Popup>,
+  "className"
+> {
   ref?: React.Ref<React.ComponentRef<typeof DialogPrimitive.Popup>> | undefined;
+  readonly size?: ModalSize;
+  readonly flush?: boolean;
 }
 
-const DialogContent = ({ className, children, ref, ...props }: DialogContentProps) => (
+const DialogContent = ({
+  size = "standard",
+  flush = false,
+  children,
+  ref,
+  ...props
+}: DialogContentProps) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Popup
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 sm:rounded-lg",
-        "data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95",
-        className,
+        MODAL_SURFACE_CLASS,
+        MODAL_SIZE_CLASS[size],
+        flush ? "gap-0 p-0" : MODAL_PADDING_CLASS,
       )}
       {...props}
     >
@@ -54,13 +72,24 @@ const DialogContent = ({ className, children, ref, ...props }: DialogContentProp
 DialogContent.displayName = "DialogContent";
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props} />
+  <div
+    className={cn("flex shrink-0 flex-col space-y-1.5 pr-8 text-center sm:text-left", className)}
+    {...props}
+  />
 );
 DialogHeader.displayName = "DialogHeader";
 
+const DialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn(MODAL_BODY_CLASS, className)} {...props} />
+);
+DialogBody.displayName = "DialogBody";
+
 const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
+    className={cn(
+      "flex shrink-0 flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      className,
+    )}
     {...props}
   />
 );
@@ -92,6 +121,7 @@ DialogDescription.displayName = DialogPrimitive.Description.displayName;
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,

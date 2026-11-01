@@ -3,6 +3,7 @@ import { useRef } from "react";
 import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
 import {
   AlertDialog,
+  AlertDialogBody,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -49,59 +50,54 @@ export function OfferDialog({
   ];
   return (
     <AlertDialog open onOpenChange={() => undefined}>
-      <AlertDialogContent
-        data-testid="offer-dialog"
-        aria-modal="true"
-        initialFocus={acceptRef}
-        className="max-w-md gap-3 p-4"
-      >
-        <AlertDialogHeader className="space-y-1">
-          <AlertDialogTitle className="text-sm">
-            {resolveMessage(request.titleKey, interpolation)}
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-xs">
+      <AlertDialogContent data-testid="offer-dialog" initialFocus={acceptRef}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{resolveMessage(request.titleKey, interpolation)}</AlertDialogTitle>
+          <AlertDialogDescription>
             {resolveMessage(request.bodyKey, interpolation)}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-          {rows.map(([label, value]) => (
-            <div key={label} className="contents">
-              <dt className="text-muted-foreground">{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-        </dl>
-        <section aria-labelledby="offer-force-heading">
-          <h3 id="offer-force-heading" className="text-xs font-semibold">
-            {resolveMessage("ui.offer.force.heading")}
-          </h3>
-          <ul className="mt-1 space-y-0.5 text-xs" data-testid="offer-force">
-            {(request.playerForce ?? []).map((ship) => (
-              <li key={ship.shipId}>
-                {resolveMessage("ui.offer.force.ship", {
-                  name: ship.name,
-                  classId: ship.classId,
-                })}
-              </li>
+        <AlertDialogBody className="gap-3">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+            {rows.map(([label, value]) => (
+              <div key={label} className="contents">
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd>{value}</dd>
+              </div>
             ))}
-          </ul>
-        </section>
-        {estimate !== undefined && (
-          <p className="text-xs font-medium" data-testid="offer-estimate">
-            {resolveMessage(`ui.offer.estimate.${estimate.model}`, {
-              strength: estimate.strength,
-            })}
+          </dl>
+          <section aria-labelledby="offer-force-heading">
+            <h3 id="offer-force-heading" className="text-xs font-semibold">
+              {resolveMessage("ui.offer.force.heading")}
+            </h3>
+            <ul className="mt-1 space-y-0.5 text-xs" data-testid="offer-force">
+              {(request.playerForce ?? []).map((ship) => (
+                <li key={ship.shipId}>
+                  {resolveMessage("ui.offer.force.ship", {
+                    name: ship.name,
+                    classId: ship.classId,
+                  })}
+                </li>
+              ))}
+            </ul>
+          </section>
+          {estimate !== undefined && (
+            <p className="text-xs font-medium" data-testid="offer-estimate">
+              {resolveMessage(`ui.offer.estimate.${estimate.model}`, {
+                strength: estimate.strength,
+              })}
+            </p>
+          )}
+          <p className="text-xs" data-testid="offer-support">
+            {request.supportForcePresent !== true
+              ? resolveMessage("ui.offer.support.absent")
+              : (request.supportNationIds ?? []).length > 0
+                ? resolveMessage("ui.offer.support.presentFrom", {
+                    nations: (request.supportNationIds ?? []).join(", "),
+                  })
+                : resolveMessage("ui.offer.support.present")}
           </p>
-        )}
-        <p className="text-xs" data-testid="offer-support">
-          {request.supportForcePresent !== true
-            ? resolveMessage("ui.offer.support.absent")
-            : (request.supportNationIds ?? []).length > 0
-              ? resolveMessage("ui.offer.support.presentFrom", {
-                  nations: (request.supportNationIds ?? []).join(", "),
-                })
-              : resolveMessage("ui.offer.support.present")}
-        </p>
+        </AlertDialogBody>
         <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
           <Button
             ref={acceptRef}
