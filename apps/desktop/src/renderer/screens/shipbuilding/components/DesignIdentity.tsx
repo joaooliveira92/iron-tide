@@ -1,6 +1,6 @@
 import { BookOpen, CalendarClock, Sparkles } from "lucide-react";
 import { Button } from "../../../components/ui/button.js";
-import { SelectField } from "../../../components/design-workspace/index.js";
+import { SelectField } from "../../../components/design-workspace/fields.js";
 import { Tip } from "../../../components/ui/tip.js";
 
 export interface DesignIdentityProps {

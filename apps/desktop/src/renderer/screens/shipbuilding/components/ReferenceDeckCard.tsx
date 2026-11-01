@@ -2,7 +2,7 @@ import { memo } from "react";
 import type { WorkshopEnvironment } from "@bluewave/ship-design";
 import type { CardPalette } from "@/components/card-deck/index.js";
 import type { DrawingBoardContent } from "../../../components/design-workspace/content.js";
-import { StarterProfile } from "../../../components/design-workspace/index.js";
+import { StarterProfile } from "../../../components/design-workspace/panels/hull-plan/StarterProfile.js";
 import type { ReferenceDeckEntry } from "../reference-deck.js";
 
 export function referenceOptionId(listboxId: string, typeId: string): string {

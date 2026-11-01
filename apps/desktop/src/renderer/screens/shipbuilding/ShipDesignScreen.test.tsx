@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   workspace: vi.fn(),
 }));
 
-vi.mock("../../components/design-workspace/index.js", () => ({
+vi.mock("../../components/design-workspace/useDrawingBoardContent.js", () => ({
   useDrawingBoardContentSource: () => mocks.status,
 }));
 vi.mock("../../shell/CampaignShellContext.js", () => ({

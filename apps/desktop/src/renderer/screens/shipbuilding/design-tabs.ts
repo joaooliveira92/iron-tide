@@ -1,5 +1,5 @@
 import type { IndexTab } from "../../components/slate/IndexTabs.js";
-import { plural } from "../../components/design-workspace/index.js";
+import { plural } from "../../components/design-workspace/plural.js";
 import { SECTION_ORDER, type DesignSectionId } from "./design-sections.js";
 import type { SectionStatus } from "./section-status.js";
 
