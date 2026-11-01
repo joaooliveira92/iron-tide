@@ -1,8 +1,11 @@
+import { memo, useMemo } from "react";
+
 import { WORLD_WRAP_TURNS } from "./projection.js";
 import type { MapPalette } from "./map-palette.js";
 import type { WorldMapModel } from "./useWorldMapModel.js";
 import type { MapPendingOrder } from "./map-orders.js";
 import type { Point } from "./projection.js";
+import type { PlacedLabel } from "./map-label-layout.js";
 import { AreasLayer } from "./layers/AreasLayer.js";
 import { FleetsLayer } from "./layers/FleetsLayer.js";
 import { GraticuleLayer } from "./layers/GraticuleLayer.js";
@@ -29,7 +32,9 @@ export interface MapLayersProps {
   readonly selectedFleetId: string | null;
 }
 
-export function MapLayers({
+const NO_LABELS: readonly PlacedLabel[] = [];
+
+export const MapLayers = memo(function MapLayers({
   model,
   palette,
   width,
@@ -42,6 +47,15 @@ export function MapLayers({
   selectedFleetId,
 }: MapLayersProps) {
   const { state } = model;
+  const labelsByTurn = useMemo(() => {
+    const grouped = new Map<number, PlacedLabel[]>();
+    for (const label of model.placedLabels) {
+      const list = grouped.get(label.turn);
+      if (list === undefined) grouped.set(label.turn, [label]);
+      else list.push(label);
+    }
+    return grouped;
+  }, [model.placedLabels]);
   return (
     <>
       {WORLD_WRAP_TURNS.map((turn) => (
@@ -110,7 +124,7 @@ export function MapLayers({
           )}
 
           <LabelsLayer
-            labels={model.placedLabels.filter((label) => label.turn === turn)}
+            labels={labelsByTurn.get(turn) ?? NO_LABELS}
             labelInk={palette.labelInk}
             labelHalo={palette.labelHalo}
           />
@@ -118,4 +132,4 @@ export function MapLayers({
       ))}
     </>
   );
-}
+});

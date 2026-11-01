@@ -71,7 +71,7 @@ export function useStrategicMapScreen(sessionId: string): StrategicMapScreenStat
     }),
     { refreshKey: revision },
   );
-  const { state: fleetState, execute, loadError } = workflow;
+  const { state: fleetState, execute, loadError, loadScreen } = workflow;
 
   const areaNames = useMemo(() => {
     const names = new Map<string, string>();
@@ -80,14 +80,19 @@ export function useStrategicMapScreen(sessionId: string): StrategicMapScreenStat
   }, [map.overlay.campaignAreas]);
 
   const fleets = useMemo(() => orderFleets(map.strategic, areaNames), [map.strategic, areaNames]);
+  const fleetById = useMemo(() => new Map(fleets.map((fleet) => [fleet.fleetId, fleet])), [fleets]);
   const pending = useMemo(
     () => pendingOrders(fleetState.movementCommands, fleets),
     [fleetState.movementCommands, fleets],
   );
+  const blockadedAreas = useMemo(() => blockadedMapAreas(map.strategic), [map.strategic]);
 
   const orders = useMovementOrders(sessionId, execute);
 
-  const selectedFleet = fleets.find((fleet) => fleet.fleetId === selectedFleetId) ?? null;
+  const selectedFleet = useMemo(
+    () => (selectedFleetId === null ? null : (fleetById.get(selectedFleetId) ?? null)),
+    [fleetById, selectedFleetId],
+  );
 
   const selectFleet = useCallback((fleetId: string) => {
     setSelectedFleetId((current) => (current === fleetId ? null : fleetId));
@@ -96,7 +101,7 @@ export function useStrategicMapScreen(sessionId: string): StrategicMapScreenStat
 
   const orderTo = useCallback(
     (fleetId: string, areaId: string) => {
-      const fleet = fleets.find((candidate) => candidate.fleetId === fleetId);
+      const fleet = fleetById.get(fleetId);
       if (fleet === undefined) return;
       const target = { divisionId: fleetId, fromAreaId: fleet.areaId, toAreaId: areaId };
       const existing = pending.find((order) => order.fleetId === fleetId);
@@ -106,13 +111,12 @@ export function useStrategicMapScreen(sessionId: string): StrategicMapScreenStat
         existing === undefined ? orders.submit(target) : orders.replace(target, existing.commandId)
       ).then(setLastOutcome);
     },
-    [fleets, orders, pending],
+    [fleetById, orders, pending],
   );
 
   const onDrop = useCallback(
     (fleetId: string, mapAreaId: string) => {
-      const fleet = fleets.find((candidate) => candidate.fleetId === fleetId);
-      const resolution: DropResolution = resolveDrop(fleet, mapAreaId);
+      const resolution: DropResolution = resolveDrop(fleetById.get(fleetId), mapAreaId);
       setSelectedFleetId(fleetId);
       if (resolution.kind === "ignored") {
         setChoices([]);
@@ -124,7 +128,7 @@ export function useStrategicMapScreen(sessionId: string): StrategicMapScreenStat
       }
       orderTo(fleetId, resolution.destination.areaId);
     },
-    [fleets, orderTo],
+    [fleetById, orderTo],
   );
 
   const chooseDestination = useCallback(
@@ -143,10 +147,24 @@ export function useStrategicMapScreen(sessionId: string): StrategicMapScreenStat
     [orders],
   );
 
+  const cancelChoice = useCallback(() => setChoices([]), []);
+
   const retry = useCallback(() => {
     setRefreshToken((token) => token + 1);
-    void workflow.loadScreen();
-  }, [workflow]);
+    void loadScreen();
+  }, [loadScreen]);
+
+  const mapOrders = useMemo<MapOrders>(
+    () => ({
+      fleets,
+      pending,
+      blockadedMapAreas: blockadedAreas,
+      selectedFleetId,
+      onSelectFleet: selectFleet,
+      onDrop,
+    }),
+    [blockadedAreas, fleets, onDrop, pending, selectFleet, selectedFleetId],
+  );
 
   const notice = fleetState.notice;
   const noticeKind =
@@ -156,14 +174,7 @@ export function useStrategicMapScreen(sessionId: string): StrategicMapScreenStat
     map,
     strategic: map.strategic,
     presence: fleetState.presence,
-    orders: {
-      fleets,
-      pending,
-      blockadedMapAreas: blockadedMapAreas(map.strategic),
-      selectedFleetId,
-      onSelectFleet: selectFleet,
-      onDrop,
-    },
+    orders: mapOrders,
     selectedFleet,
     choices,
     notice,
@@ -173,7 +184,7 @@ export function useStrategicMapScreen(sessionId: string): StrategicMapScreenStat
     selectFleet,
     orderTo,
     chooseDestination,
-    cancelChoice: () => setChoices([]),
+    cancelChoice,
     cancelOrder,
     retry,
   };

@@ -1,4 +1,4 @@
-import type { PresentationFormat } from "../../lib/presentation-format/index.js";
+import type { PresentationFormat } from "../../lib/presentation-format/profile.js";
 
 const NM_PER_DEGREE = 60;
 

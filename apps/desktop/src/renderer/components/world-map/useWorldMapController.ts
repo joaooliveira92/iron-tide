@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { StrategicMapView } from "@bluewave/campaign-engine";
 import { type LiveWorldMapOverlay } from "./campaign-map-join.js";
 import { useLiveWorldMapOverlay, type LiveWorldMapRead } from "./useLiveWorldMapOverlay.js";
@@ -10,10 +10,13 @@ import {
   toggleLayer,
   type LayerId,
   type MapPrototypeState,
+  type RouteLane,
   type RouteReading,
 } from "./map-state.js";
 import type { ProjectionId } from "./projection.js";
 import type { AreaId } from "./map-geometry.js";
+
+const NO_ROUTE_LANES: readonly RouteLane[] = [];
 
 export interface WorldMapController {
   readonly state: MapPrototypeState;
@@ -36,6 +39,8 @@ export function useWorldMapController(
 ): WorldMapController {
   const [state, setState] = useState(initialMapPrototypeState);
   const map = useLiveWorldMapOverlay(sessionId, revision, refreshToken);
+  const lanes = map.overlay.lanes ?? NO_ROUTE_LANES;
+  const route = useMemo(() => readRoute(state, lanes), [lanes, state]);
 
   const onSelect = useCallback(
     (area: AreaId | null) => setState((current) => selectArea(current, area)),
@@ -57,17 +62,32 @@ export function useWorldMapController(
     (centre: number) => setState((current) => ({ ...current, centre })),
     [],
   );
-  return {
-    state,
-    route: readRoute(state, map.overlay.lanes ?? []),
-    overlay: map.overlay,
-    strategic: map.strategic,
-    status: map.status,
-    reason: map.reason,
-    onSelect,
-    onRuler,
-    onToggleLayer,
-    onSetProjection,
-    onSetCentre,
-  };
+  return useMemo(
+    () => ({
+      state,
+      route,
+      overlay: map.overlay,
+      strategic: map.strategic,
+      status: map.status,
+      reason: map.reason,
+      onSelect,
+      onRuler,
+      onToggleLayer,
+      onSetProjection,
+      onSetCentre,
+    }),
+    [
+      map.overlay,
+      map.reason,
+      map.status,
+      map.strategic,
+      onRuler,
+      onSelect,
+      onSetCentre,
+      onSetProjection,
+      onToggleLayer,
+      route,
+      state,
+    ],
+  );
 }

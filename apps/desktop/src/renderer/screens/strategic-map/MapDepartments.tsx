@@ -1,7 +1,7 @@
 import type { StrategicMapView } from "@bluewave/campaign-engine";
 import { BluewaveError } from "@bluewave/contracts";
 import { Eye, Flag, MapPinned, Route, ShieldBan, type LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import type { IndexTab } from "../../components/slate/IndexTabs.js";
 import { Leader, LedgerRow } from "../../components/slate/Slate.js";
 import type { CampaignAreaEntry } from "../../components/world-map/campaign-map-join.js";
@@ -75,8 +75,12 @@ const META: readonly (readonly DepartmentMeta[])[] = [
   ],
 ];
 
+const META_BY_ID = new Map<MapDepartment, DepartmentMeta>(
+  META.flat().map((meta) => [meta.id, meta]),
+);
+
 export function mapDepartmentMeta(id: MapDepartment): DepartmentMeta {
-  const found = META.flat().find((meta) => meta.id === id);
+  const found = META_BY_ID.get(id);
   if (found === undefined) throw new BluewaveError("MAP_DEPARTMENT_UNKNOWN", { id });
   return found;
 }
@@ -149,11 +153,15 @@ function Empty({ children }: { readonly children: ReactNode }) {
 }
 
 function OrdersList({ data }: { readonly data: MapDepartmentData }) {
+  const fleetById = useMemo(
+    () => new Map(data.fleets.map((fleet) => [fleet.fleetId, fleet])),
+    [data.fleets],
+  );
   if (data.pending.length === 0) return <Empty>{translate("map.desk.orders.empty")}</Empty>;
   return (
     <Rows>
       {data.pending.map((order) => {
-        const fleet = data.fleets.find((candidate) => candidate.fleetId === order.fleetId);
+        const fleet = fleetById.get(order.fleetId);
         return (
           <li key={order.commandId} className="space-y-1 py-3">
             <div className="flex items-baseline gap-2">
