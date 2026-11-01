@@ -4,6 +4,7 @@ import { RandomEngine } from "@bluewave/random";
 import type { ExplanationTree } from "@bluewave/events";
 import type { GunneryBattery } from "../gunnery/resolve.js";
 import { withGunneryStateHash } from "../gunnery/index.js";
+import { ageContact, isStale } from "../contact/neighbour.js";
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import type { TacticalDivision } from "../tactical/division.js";
@@ -449,13 +450,22 @@ function mercureTargets(session: PlayerBattleSession): TorpedoContext | undefine
   return { ...torpedoes, targets };
 }
 
+function withSurvivingContacts(state: TacticalBattleState): TacticalBattleState {
+  return {
+    ...state,
+    contacts: (state.contacts ?? [])
+      .map((contact) => ageContact(contact, 1))
+      .filter((contact) => !isStale(contact)),
+  };
+}
+
 function planTorpedoes(session: PlayerBattleSession, torpedoes: TorpedoContext): TorpedoContext {
   return {
     ...torpedoes,
     commands: planTorpedoCommands({
       battleId: session.battleId,
       torpedoes,
-      battleState: session.state,
+      battleState: withSurvivingContacts(session.state),
       damage: session.damage,
       units: session.units,
       trainingEffects: session.trainingEffects,
@@ -513,7 +523,7 @@ export function advancePlayerBattleMinute(
   const preparedTorpedoes = torpedoes === undefined ? undefined : planTorpedoes(session, torpedoes);
   const targets = assignTargetContactIds(
     session.batteries,
-    session.state,
+    withSurvivingContacts(session.state),
     session.damage,
     session.battleId,
     session.units,

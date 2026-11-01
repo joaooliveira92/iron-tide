@@ -246,3 +246,53 @@ describe("hostile contact projection", () => {
     }
   });
 });
+
+describe("breaking contact by course order", () => {
+  it.each([0, 90, 180, 270])(
+    "keeps stepping when the division steers %i degrees away for two hours",
+    (courseDeg) => {
+      let session = newSession();
+      const orders = order(session, { courseDeg, speedKnots: 20 });
+      for (let minute = 0; minute < 120 && !session.ended; minute += 1) {
+        session = advancePlayerBattleMinute(session, orders);
+      }
+      expect(session.minute).toBeGreaterThan(0);
+    },
+  );
+});
+
+describe("a contact that lapses between minutes", () => {
+  it("is dropped as a target instead of failing the step", () => {
+    let session = newSession();
+    for (let minute = 0; minute < 6; minute += 1) {
+      session = advancePlayerBattleMinute(session, { divisions: {} });
+    }
+    const contacts = session.state.contacts ?? [];
+    expect(contacts.length).toBeGreaterThan(0);
+    const ownIds = new Set(
+      playerBattleView(session)
+        .ships.filter((ship) => ship.sideId === "ATTACKER")
+        .map((ship) => ship.shipId),
+    );
+    const movement = Object.fromEntries(
+      Object.entries(session.state.movementStates ?? {}).map(([id, state]) => [
+        id,
+        ownIds.has(id)
+          ? {
+              ...state,
+              position: [state.position[0] + 9e11, state.position[1]] as [number, number],
+            }
+          : state,
+      ]),
+    );
+    const brink = {
+      ...session,
+      state: {
+        ...session.state,
+        movementStates: movement,
+        contacts: contacts.map((contact) => ({ ...contact, confidence: 1 })),
+      },
+    };
+    expect(() => advancePlayerBattleMinute(brink, { divisions: {} })).not.toThrow();
+  });
+});
