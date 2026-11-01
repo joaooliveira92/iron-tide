@@ -5,6 +5,7 @@ import type {
   MeasurementPreset,
   NumberScalePreference,
 } from "../../../shared/preferences-contract.js";
+import { cachedNumberFormat } from "./intl-cache.js";
 import {
   convertToDisplay,
   resolveDisplayUnit,
@@ -43,7 +44,7 @@ export function formatNumber(value: number, options: FormatNumberOptions): strin
   if (options.minimumFractionDigits !== undefined) {
     formatOptions.minimumFractionDigits = options.minimumFractionDigits;
   }
-  return new Intl.NumberFormat(options.locale, formatOptions).format(value);
+  return cachedNumberFormat(options.locale, formatOptions).format(value);
 }
 
 export interface FormatFixedOptions {
@@ -51,15 +52,25 @@ export interface FormatFixedOptions {
   readonly digits: number;
 }
 
+const DECIMAL_SEPARATORS = new Map<string, string>();
+
+function decimalSeparator(locale: string): string {
+  const cached = DECIMAL_SEPARATORS.get(locale);
+  if (cached !== undefined) return cached;
+  const discovered =
+    cachedNumberFormat(locale)
+      .formatToParts(1.1)
+      .find((part) => part.type === "decimal")?.value ?? ".";
+  DECIMAL_SEPARATORS.set(locale, discovered);
+  return discovered;
+}
+
 export function formatFixed(value: number, options: FormatFixedOptions): string {
-  const decimal =
-    new Intl.NumberFormat(options.locale).formatToParts(1.1).find((part) => part.type === "decimal")
-      ?.value ?? ".";
-  return value.toFixed(options.digits).replace(".", decimal);
+  return value.toFixed(options.digits).replace(".", decimalSeparator(options.locale));
 }
 
 export function formatCount(value: number, locale: FormattingLocale = "en-US"): string {
-  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value);
+  return cachedNumberFormat(locale, { maximumFractionDigits: 0 }).format(value);
 }
 
 export interface FormatPercentOptions {
@@ -68,7 +79,7 @@ export interface FormatPercentOptions {
 }
 
 export function formatPercent(bp: Bp | number, options: FormatPercentOptions): string {
-  return new Intl.NumberFormat(options.locale, {
+  return cachedNumberFormat(options.locale, {
     style: "percent",
     maximumFractionDigits: options.maximumFractionDigits ?? 0,
   }).format(bp / BP_ONE);
@@ -92,7 +103,7 @@ export function formatMeasurement(canonical: number, options: FormatMeasurementO
     options.selections ?? {},
   );
   const digits = options.maximumFractionDigits ?? DEFAULT_FRACTION_DIGITS[options.category] ?? 1;
-  const text = new Intl.NumberFormat(options.locale, {
+  const text = cachedNumberFormat(options.locale, {
     maximumFractionDigits: digits,
     minimumFractionDigits: options.minimumFractionDigits ?? 0,
   }).format(value);
