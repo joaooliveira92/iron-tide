@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AREAS, AREAS_BY_ID } from "./map-geometry.js";
 import { EMPTY_LIVE_OVERLAY, type LiveWorldMapOverlay } from "./campaign-map-join.js";
 import { campaignNationHue } from "../../content/presentationContent.js";
@@ -34,7 +34,7 @@ import {
 import { strengthExtent, strengthHalfWidth } from "./layers/StrengthLayer.js";
 import { nationFlagUrl } from "../../content/nation-flag.js";
 import type { MapPalette } from "./map-palette.js";
-import type { MapCamera } from "./useMapCamera.js";
+import type { CameraView, MapCamera } from "./useMapCamera.js";
 import type { BorderSet } from "./CoastlineCanvas.js";
 import { BORDERS_1880 } from "./borders-1880-data.js";
 import { BORDER_FRONTIERS_1880 } from "./borders-1880-frontiers-data.js";
@@ -115,12 +115,12 @@ export function useWorldMapModel({
     [palette, state.layers.borders],
   );
 
-  const [viewVersion, setViewVersion] = useState(0);
+  const [view, setView] = useState<CameraView>(() => camera.getView());
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const bump = () => {
       clearTimeout(timer);
-      timer = setTimeout(() => setViewVersion((version) => version + 1), 120);
+      timer = setTimeout(() => setView(camera.getView()), 120);
     };
     const unsubscribe = camera.subscribe(bump);
     bump();
@@ -128,24 +128,31 @@ export function useWorldMapModel({
       clearTimeout(timer);
       unsubscribe();
     };
-  }, [camera.subscribe]);
+  }, [camera.getView, camera.subscribe]);
 
   const portMarks = useMemo<PortMark[]>(() => {
     const singles = portSingles(source.ports, projection, state.centre);
-    const factor = camera.getTransform().scale * camera.getPixelsPerUnit();
+    const factor = view.scale * view.pixelsPerUnit;
     return buildPortMarks(singles, camera.zoomBand === 0, factor);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [camera.zoomBand, source.ports, projection, state.centre, viewVersion]);
+  }, [camera.zoomBand, source.ports, projection, state.centre, view.scale, view.pixelsPerUnit]);
 
   const fleetMarks = useMemo<FleetMark[]>(() => {
     const anchors: AreaAnchors = new Map([...areasById].map(([id, area]) => [id, area.label]));
     const singles = fleetSingles(source.fleets, anchors, (lonLat) =>
       projectPoint(lonLat, projection, state.centre),
     );
-    const factor = camera.getTransform().scale * camera.getPixelsPerUnit();
+    const factor = view.scale * view.pixelsPerUnit;
     return buildFleetMarks(singles, camera.zoomBand === 0, factor, portMarks);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areasById, camera.zoomBand, source.fleets, portMarks, projection, state.centre, viewVersion]);
+  }, [
+    areasById,
+    camera.zoomBand,
+    source.fleets,
+    portMarks,
+    projection,
+    state.centre,
+    view.scale,
+    view.pixelsPerUnit,
+  ]);
 
   const lanes = useMemo(() => {
     if ((overlay.seaLanes ?? []).length > 0) {
@@ -174,13 +181,9 @@ export function useWorldMapModel({
     () => new Map(strengths.map((region) => [region.areaId, region])),
     [strengths],
   );
-  const compact = useMemo(
-    () => compactGlyphs(camera.svgRef.current?.clientHeight ?? 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [viewVersion],
-  );
+  const compact = useMemo(() => compactGlyphs(view.svgHeight), [view.svgHeight]);
   const glyphOffsets = useMemo(() => {
-    const factor = camera.getTransform().scale * camera.getPixelsPerUnit();
+    const factor = view.scale * view.pixelsPerUnit;
     return separateGlyphs(
       strengths.flatMap((region) => {
         const at = areasById.get(region.areaId)?.label;
@@ -198,10 +201,10 @@ export function useWorldMapModel({
       }),
       factor,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [strengths, areasById, compact, viewVersion]);
+  }, [strengths, areasById, compact, view.scale, view.pixelsPerUnit]);
   const anchorOf = useMemo(() => (areaId: string) => areasById.get(areaId)?.label, [areasById]);
 
+  const factor = view.scale * view.pixelsPerUnit;
   const placedLabels = useMemo<PlacedLabel[]>(() => {
     if (!state.layers.labels) return [];
     const svg = camera.svgRef.current;
@@ -220,7 +223,6 @@ export function useWorldMapModel({
       strengthMarks: strengths.flatMap((region) => {
         const at = areasById.get(region.areaId)?.label;
         if (at === undefined) return [];
-        const factor = camera.getTransform().scale * camera.getPixelsPerUnit();
         const shift = (glyphOffsets.get(region.areaId) ?? 0) / (factor > 0 ? factor : 1);
         return [
           {
@@ -231,25 +233,29 @@ export function useWorldMapModel({
           },
         ];
       }),
-      transform: camera.getTransform(),
-      minScale: camera.getMinScale(),
-      turns: camera.isWrapping() ? WORLD_WRAP_TURNS : [0],
+      transform: view.transform,
+      minScale: view.minScale,
+      turns: view.wrapping ? WORLD_WRAP_TURNS : [0],
       svg,
       root: rootRef.current,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     areas,
+    areasById,
+    camera.svgRef,
+    compact,
+    factor,
     fleetMarks,
+    glyphOffsets,
     portMarks,
     projection,
+    rootRef,
     state.centre,
     state.layers,
     strengths,
-    areasById,
-    compact,
-    glyphOffsets,
-    viewVersion,
+    view.transform,
+    view.minScale,
+    view.wrapping,
   ]);
 
   const ownershipRows = useMemo(
@@ -318,37 +324,77 @@ export function useWorldMapModel({
 
   const areaName = useMemo(() => (id: string) => AREAS_BY_ID.get(id)?.name ?? id, []);
 
-  return {
-    state,
-    live: source.live,
-    playerNationId: source.playerNationId,
-    areas,
-    areasById,
-    control: source.control,
-    borderSets,
-    portMarks,
-    fleetMarks,
-    lanes,
-    strengths,
-    compactGlyphs: compact,
-    glyphOffsets,
-    unavailable: source.unavailable,
-    anchorOf,
-    placedLabels,
-    graticule,
-    routePath,
-    routeSet,
-    ownershipRows,
-    rowById,
-    treeRows,
-    summary,
-    areaName,
-    fillFor: (nation, alpha) => source.fillFor(nation, alpha),
-    strokeFor: (nation) => source.strokeFor(nation),
-    nameFor: (nation) => source.nameFor(nation),
-    describeAreaFor: (id) => {
+  const fillFor = useCallback(
+    (nation: string | null, alpha: number) => source.fillFor(nation, alpha),
+    [source],
+  );
+  const strokeFor = useCallback((nation: string | null) => source.strokeFor(nation), [source]);
+  const nameFor = useCallback((nation: string | null) => source.nameFor(nation), [source]);
+  const describeAreaFor = useCallback(
+    (id: string) => {
       const row = rowById.get(id);
       return row === undefined ? id : describeArea(row);
     },
-  };
+    [rowById],
+  );
+
+  return useMemo<WorldMapModel>(
+    () => ({
+      state,
+      live: source.live,
+      playerNationId: source.playerNationId,
+      areas,
+      areasById,
+      control: source.control,
+      borderSets,
+      portMarks,
+      fleetMarks,
+      lanes,
+      strengths,
+      compactGlyphs: compact,
+      glyphOffsets,
+      unavailable: source.unavailable,
+      anchorOf,
+      placedLabels,
+      graticule,
+      routePath,
+      routeSet,
+      ownershipRows,
+      rowById,
+      treeRows,
+      summary,
+      areaName,
+      fillFor,
+      strokeFor,
+      nameFor,
+      describeAreaFor,
+    }),
+    [
+      anchorOf,
+      areaName,
+      areas,
+      areasById,
+      borderSets,
+      compact,
+      describeAreaFor,
+      fillFor,
+      fleetMarks,
+      glyphOffsets,
+      graticule,
+      lanes,
+      ownershipRows,
+      placedLabels,
+      portMarks,
+      routePath,
+      routeSet,
+      rowById,
+      source,
+      state,
+      strengths,
+      strokeFor,
+      summary,
+      treeRows,
+      nameFor,
+    ],
+  );
 }
