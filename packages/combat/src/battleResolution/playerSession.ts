@@ -91,6 +91,7 @@ export interface PlayerBattleShipView {
   readonly position: readonly [number, number] | null;
   readonly headingDeg: number | null;
   readonly speedBp: number | null;
+  readonly contactConfidenceBp: number | null;
   readonly motion?: ExplanationTree;
   readonly gunneryAccuracy?: ExplanationTree;
   readonly torpedoSolution?: ExplanationTree;
@@ -735,11 +736,24 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
       .filter((battery) => battery.sideId === playerSide)
       .map((battery) => [battery.ownerShipId, battery] as const),
   );
+  const freshContacts = new Map(
+    (session.state.contacts ?? [])
+      .filter((contact) => contact.sideId !== playerSide && !contact.stale)
+      .map((contact) => [contact.assetId, contact] as const),
+  );
   const ships: PlayerBattleShipView[] = session.units.map((unit) => {
     const battery = batteryOf.get(unit.assetId);
     const damageState = session.damage.targets[unit.assetId]?.state;
     const movement: MovementState | undefined = session.state.movementStates?.[unit.assetId];
     const own = unit.sideId === playerSide;
+    const contact = own ? undefined : freshContacts.get(unit.assetId);
+    const observed = own
+      ? movement && {
+          position: movement.position,
+          heading: movement.heading,
+          speed: movement.currentSpeed,
+        }
+      : contact && { position: contact.position, heading: contact.course, speed: contact.speed };
     const loss =
       own && damageState !== undefined
         ? explainBattleLoss(unit.hitPoints as number, damageState, unit.maxHitPoints as number)
@@ -755,9 +769,10 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
       hitPoints: unit.hitPoints as number,
       maxHitPoints: unit.maxHitPoints as number,
       damageState: damageState?.terminalStatus ?? "NORMAL",
-      position: movement ? [movement.position[0], movement.position[1]] : null,
-      headingDeg: movement ? movement.heading : null,
-      speedBp: movement ? movement.currentSpeed : null,
+      position: observed ? [observed.position[0], observed.position[1]] : null,
+      headingDeg: observed ? observed.heading : null,
+      speedBp: observed ? observed.speed : null,
+      contactConfidenceBp: contact ? contact.confidence : null,
       ...(own && movement ? { motion: explainShipMotion(movement) } : {}),
       ...(battery === undefined
         ? {}

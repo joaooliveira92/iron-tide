@@ -8,6 +8,7 @@ import {
   type PlayerBattleOrders,
   type PlayerBattleSession,
 } from "@bluewave/combat/battleResolution";
+import { createContactTrack } from "@bluewave/combat/contact";
 import { BluewaveError, isBluewaveError, SafeInt } from "@bluewave/contracts";
 import type { PermanentDivision } from "@bluewave/campaign";
 import { ATTACKER_NATION, makeAutoInput, makeNations } from "./fixtures.js";
@@ -97,8 +98,8 @@ function capture(task: () => unknown): BluewaveError {
 }
 
 describe("real-time tactical orders", () => {
-  it("projects an integer heading and a speed on every ship", () => {
-    const ships = playerBattleView(newSession()).ships;
+  it("projects an integer heading and a speed on every own ship", () => {
+    const ships = playerBattleView(newSession()).ships.filter((ship) => ship.sideId === "ATTACKER");
     expect(ships.length).toBeGreaterThan(0);
     for (const ship of ships) {
       expect(Number.isInteger(ship.headingDeg)).toBe(true);
@@ -169,6 +170,79 @@ describe("real-time tactical orders", () => {
       } else {
         expect(ship).not.toHaveProperty("motion");
       }
+    }
+  });
+});
+
+describe("hostile contact projection", () => {
+  const hostile = (session: PlayerBattleSession) =>
+    playerBattleView(session).ships.filter((ship) => ship.sideId === "DEFENDER");
+
+  it("withholds the true movement of a hostile ship that holds no contact", () => {
+    const session = newSession();
+    expect(session.state.contacts ?? []).toEqual([]);
+    for (const ship of hostile(session)) {
+      expect(ship.position).toBeNull();
+      expect(ship.headingDeg).toBeNull();
+      expect(ship.speedBp).toBeNull();
+      expect(ship.contactConfidenceBp).toBeNull();
+    }
+  });
+
+  it("projects a hostile ship from the contact estimate, not from its true movement", () => {
+    const session = newSession();
+    const target = hostile(session)[0]!;
+    const contact = createContactTrack({
+      battleId: session.battleId,
+      assetId: target.shipId,
+      sideId: "DEFENDER",
+      estimatedIdentity: "unknown",
+      position: [123_456, 654_321],
+      course: 77,
+      speedBpKnots: 5_000,
+      observationTime: "1880-02-01T06:00:00.000Z",
+      minute: 0,
+      confidenceBp: 6_000,
+    });
+    const known = playerBattleView({
+      ...session,
+      state: { ...session.state, contacts: [contact] },
+    }).ships.find((ship) => ship.shipId === target.shipId)!;
+    expect(known.position).toEqual([123_456, 654_321]);
+    expect(known.headingDeg).toBe(77);
+    expect(known.speedBp).toBe(5_000);
+    expect(known.contactConfidenceBp).toBe(6_000);
+  });
+
+  it("drops a stale contact from the projection", () => {
+    const session = newSession();
+    const target = hostile(session)[0]!;
+    const stale = {
+      ...createContactTrack({
+        battleId: session.battleId,
+        assetId: target.shipId,
+        sideId: "DEFENDER",
+        estimatedIdentity: "unknown",
+        position: [1, 2],
+        course: 10,
+        speedBpKnots: 1_000,
+        observationTime: "1880-02-01T06:00:00.000Z",
+        minute: 0,
+      }),
+      stale: true,
+    };
+    const ship = playerBattleView({
+      ...session,
+      state: { ...session.state, contacts: [stale] },
+    }).ships.find((entry) => entry.shipId === target.shipId)!;
+    expect(ship.position).toBeNull();
+  });
+
+  it("keeps the player's own movement exact and free of contact data", () => {
+    for (const ship of playerBattleView(newSession()).ships) {
+      if (ship.sideId !== "ATTACKER") continue;
+      expect(ship.position).not.toBeNull();
+      expect(ship.contactConfidenceBp).toBeNull();
     }
   });
 });
