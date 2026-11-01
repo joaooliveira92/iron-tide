@@ -46,6 +46,7 @@ function finite(value: unknown, label: string): number {
 }
 
 function wrapLongitude(value: number): number {
+  if (value > -180 && value <= 180) return value;
   const wrapped = ((value + 180) % 360) - 180;
   return wrapped === -180 ? 180 : wrapped;
 }

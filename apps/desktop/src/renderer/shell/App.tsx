@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, type ReactNode, Suspense, useEffect, useMemo, useState } from "react";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { WindowState } from "../../shared/bridge-contract.js";
 import {
@@ -34,6 +34,7 @@ import { UiCatalogueGate } from "../content/UiCatalogueGate.js";
 import { OfferDialog } from "./interruptions/OfferDialog.js";
 import { DecisionDialog } from "./interruptions/DecisionDialog.js";
 import { PendingTurnRecoveryPrompt } from "./interruptions/PendingTurnRecoveryPrompt.js";
+import { SharedWorldMapProvider } from "../components/world-map/shared-world-map.js";
 import { MapSheet } from "./MapSheet.js";
 import { ScreenHeaderProvider } from "./screen-header.js";
 import { SiteHeader } from "./SiteHeader.js";
@@ -325,6 +326,15 @@ function CampaignShellApplication({
   );
 }
 
+function CampaignWorldMap({ children }: { readonly children: ReactNode }) {
+  const shell = useCampaignShellContext();
+  return (
+    <SharedWorldMapProvider key={shell.state.campaign?.sessionId ?? "no-campaign"}>
+      {children}
+    </SharedWorldMapProvider>
+  );
+}
+
 export function App({
   bridge = window.bluewave,
   initialWindowState,
@@ -337,7 +347,9 @@ export function App({
       <PresentationContentGate>
         <UiCatalogueGate>
           <CampaignShellProvider bridge={bridge}>
-            <CampaignShellApplication bridge={bridge} initialWindowState={initialWindowState} />
+            <CampaignWorldMap>
+              <CampaignShellApplication bridge={bridge} initialWindowState={initialWindowState} />
+            </CampaignWorldMap>
           </CampaignShellProvider>
         </UiCatalogueGate>
       </PresentationContentGate>

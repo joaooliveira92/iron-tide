@@ -8,6 +8,7 @@ import {
   resolveOverviewRenderer,
   type OverviewRenderer,
 } from "./globe-adapter-flag.js";
+import type { AppCameraState } from "./camera-contract.js";
 import { recordRendererDiagnostic } from "./renderer-diagnostics.js";
 import { detectGraphicsSupport, type GraphicsSupport } from "./webgl-support.js";
 
@@ -17,6 +18,8 @@ const GlobeAdapter = GLOBE_ADAPTER_ENABLED
 
 export type MapSurfaceProps = WorldMapChartProps & {
   readonly enableGlobe?: boolean;
+  readonly camera?: AppCameraState | null;
+  readonly onCameraChange?: ((camera: AppCameraState) => void) | undefined;
 };
 
 function preference(enabled: boolean): OverviewRenderer {
@@ -42,7 +45,12 @@ function Fallback({ reason }: { readonly reason: string }) {
   );
 }
 
-export function MapSurface({ enableGlobe = false, ...props }: MapSurfaceProps) {
+export function MapSurface({
+  enableGlobe = false,
+  camera = null,
+  onCameraChange,
+  ...props
+}: MapSurfaceProps) {
   const [requested, setRequested] = useState<OverviewRenderer>(() => preference(enableGlobe));
   const [failure, setFailure] = useState<string | null>(null);
   const graphics = useMemo<GraphicsSupport>(() => detectGraphicsSupport(), []);
@@ -112,6 +120,8 @@ export function MapSurface({ enableGlobe = false, ...props }: MapSurfaceProps) {
             showMinimap={props.showMinimap}
             initialFocusAreaId={props.initialFocusAreaId}
             initialFocusNationId={props.initialFocusNationId}
+            camera={camera}
+            onCameraChange={onCameraChange}
           />
         </Suspense>
         {panels}

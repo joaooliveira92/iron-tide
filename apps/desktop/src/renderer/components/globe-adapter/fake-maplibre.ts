@@ -108,8 +108,16 @@ export class FakeMapClass implements FakeMap {
   private centre = { lng: 0, lat: 30 };
   private zoom = 2;
 
-  constructor(options: { readonly container: HTMLElement }) {
+  constructor(options: {
+    readonly container: HTMLElement;
+    readonly center?: readonly [number, number];
+    readonly zoom?: number;
+  }) {
     this.options = options;
+    if (options.center !== undefined) {
+      this.centre = { lng: options.center[0], lat: options.center[1] };
+    }
+    if (options.zoom !== undefined) this.zoom = options.zoom;
     this.canvas = document.createElement("canvas");
     options.container.appendChild(this.canvas);
     fakeMap.instance = this;

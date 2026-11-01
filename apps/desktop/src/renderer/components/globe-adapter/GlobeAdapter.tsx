@@ -32,7 +32,12 @@ import {
   adapterLandMode,
   type AdapterLandMode,
 } from "./globe-adapter-flag.js";
-import { fitWorldCamera, type AppCameraState, type CameraProjection } from "./camera-contract.js";
+import {
+  fitWorldCamera,
+  fromRendererCamera,
+  type AppCameraState,
+  type CameraProjection,
+} from "./camera-contract.js";
 import type { OverlayFeature, OverlaySnapshot } from "./overlay-contract.js";
 import { DisposalRegistry } from "./disposal.js";
 import { FLEET_GLYPH_ID, buildFleetGlyph } from "./fleet-glyph.js";
@@ -94,6 +99,8 @@ export interface GlobeAdapterProps {
   readonly showMinimap?: boolean;
   readonly initialFocusAreaId?: string | null;
   readonly initialFocusNationId?: string | null;
+  readonly camera?: AppCameraState | null;
+  readonly onCameraChange?: ((camera: AppCameraState) => void) | undefined;
 }
 
 export interface AdapterDiagnostics {
@@ -605,8 +612,13 @@ export function GlobeAdapter({
   showMinimap = true,
   initialFocusAreaId = null,
   initialFocusNationId = null,
+  camera: sharedCamera = null,
+  onCameraChange,
 }: GlobeAdapterProps) {
   const showAreas = variant !== "command";
+  const restoringCameraRef = useRef(sharedCamera !== null);
+  const onCameraChangeRef = useRef(onCameraChange);
+  onCameraChangeRef.current = onCameraChange;
   const hash = window.location.hash;
   const mode: AdapterLandMode = landMode ?? adapterLandMode(hash);
   const plan = useLandPlan(mode, GLOBE_ASSET_ROOT);
@@ -627,9 +639,12 @@ export function GlobeAdapter({
   const [status, setStatus] = useState("starting");
   const [liveMessage, setLiveMessage] = useState("");
   const [errorText, setErrorText] = useState<string | null>(null);
-  const [camera, setCamera] = useState<AppCameraState>(() =>
-    fitWorldCamera(adapterProjectionFromApp(state.projection)),
-  );
+  const [camera, setCamera] = useState<AppCameraState>(() => {
+    const adapterProjection = adapterProjectionFromApp(state.projection);
+    return sharedCamera === null
+      ? fitWorldCamera(adapterProjection)
+      : { ...sharedCamera, projection: adapterProjection };
+  });
   const [hoveredArea, setHoveredArea] = useState<string | null>(null);
   const [hoverTooltip, setHoverTooltip] = useState<{
     readonly x: number;
@@ -646,7 +661,7 @@ export function GlobeAdapter({
   } | null>(null);
   const [initialCamera] = useState<AppCameraState>(() => {
     const point = homeFocusPoint(initialFocusAreaId);
-    return point === null
+    return point === null || restoringCameraRef.current
       ? camera
       : {
           ...camera,
@@ -737,7 +752,7 @@ export function GlobeAdapter({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map === null || !ready) return;
+    if (map === null || !ready || restoringCameraRef.current) return;
     map.setCenter([state.centre, map.getCenter().lat]);
   }, [ready, state.centre]);
 
@@ -922,6 +937,15 @@ export function GlobeAdapter({
         pitch: active.getPitch(),
         projection: projectionRef.current,
       }));
+      onCameraChangeRef.current?.(
+        fromRendererCamera({
+          centre: [active.getCenter().lng, active.getCenter().lat],
+          zoom,
+          bearing: active.getBearing(),
+          pitch: active.getPitch(),
+          projection: projectionRef.current,
+        }),
+      );
     };
     const onError = (event: { readonly error?: { readonly message?: string } }) => {
       const message = event.error?.message ?? "unknown";
@@ -1374,12 +1398,16 @@ export function GlobeAdapter({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map === null || !ready) return;
+    if (map === null || !ready || restoringCameraRef.current) return;
     const point = homeFocusPoint(initialFocusAreaId);
     if (point === null) return;
     const target = nationFocusPoint(point, initialFocusNationId);
     map.jumpTo({ center: [target[0], target[1]], zoom: 3.5, bearing: 0, pitch: 0 });
   }, [initialFocusAreaId, initialFocusNationId, ready]);
+
+  useEffect(() => {
+    if (ready) restoringCameraRef.current = false;
+  }, [ready]);
 
   const hierarchy: TileHierarchy = NATURAL_EARTH_HIERARCHY;
   const statusLabel = errorText === null ? status : `error ${errorText}`;
