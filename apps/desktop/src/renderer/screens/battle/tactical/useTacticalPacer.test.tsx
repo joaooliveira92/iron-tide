@@ -18,47 +18,59 @@ describe("tactical pacer", () => {
     vi.useRealTimers();
   });
 
-  it("requests one step after the scale's interval", () => {
+  it("requests one step after the scale's interval", async () => {
     const onStep = vi.fn();
     renderHook(() => useTacticalPacer({ ...idle, onStep }));
-    act(() => vi.advanceTimersByTime(stepIntervalMs(1) - 1));
+    await act(async () => {
+      vi.advanceTimersByTime(stepIntervalMs(1) - 1);
+    });
     expect(onStep).not.toHaveBeenCalled();
-    act(() => vi.advanceTimersByTime(1));
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+    });
     expect(onStep).toHaveBeenCalledTimes(1);
   });
 
-  it("requests no step while paused, busy or ended", () => {
+  it("requests no step while paused, busy or ended", async () => {
     for (const patch of [{ running: false }, { busy: true }, { ended: true }]) {
       const onStep = vi.fn();
       const { unmount } = renderHook(() => useTacticalPacer({ ...idle, ...patch, onStep }));
-      act(() => vi.advanceTimersByTime(60_000));
+      await act(async () => {
+        vi.advanceTimersByTime(60_000);
+      });
       expect(onStep).not.toHaveBeenCalled();
       unmount();
     }
   });
 
-  it("steps sooner at a higher scale without changing what one step is", () => {
+  it("steps sooner at a higher scale without changing what one step is", async () => {
     const onStep = vi.fn();
     renderHook(() => useTacticalPacer({ ...idle, scale: 8, onStep }));
-    act(() => vi.advanceTimersByTime(stepIntervalMs(8)));
+    await act(async () => {
+      vi.advanceTimersByTime(stepIntervalMs(8));
+    });
     expect(onStep).toHaveBeenCalledTimes(1);
   });
 
-  it("drops the pending step when it pauses", () => {
+  it("drops the pending step when it pauses", async () => {
     const onStep = vi.fn();
     const { rerender } = renderHook((props: TacticalPacerInput) => useTacticalPacer(props), {
       initialProps: { ...idle, onStep },
     });
     rerender({ ...idle, running: false, onStep });
-    act(() => vi.advanceTimersByTime(60_000));
+    await act(async () => {
+      vi.advanceTimersByTime(60_000);
+    });
     expect(onStep).not.toHaveBeenCalled();
   });
 
-  it("clears its timer on unmount", () => {
+  it("clears its timer on unmount", async () => {
     const onStep = vi.fn();
     const { unmount } = renderHook(() => useTacticalPacer({ ...idle, onStep }));
     unmount();
-    act(() => vi.advanceTimersByTime(60_000));
+    await act(async () => {
+      vi.advanceTimersByTime(60_000);
+    });
     expect(onStep).not.toHaveBeenCalled();
     expect(vi.getTimerCount()).toBe(0);
   });

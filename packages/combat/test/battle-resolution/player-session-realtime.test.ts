@@ -111,7 +111,7 @@ describe("real-time tactical orders", () => {
 
   it("turns a division onto an ordered course", () => {
     const start = newSession();
-    const target = (ownShips(start)[0]!.headingDeg + 90) % 360;
+    const target = ((ownShips(start)[0]!.headingDeg ?? 0) + 90) % 360;
     const after = run(start, order(start, { courseDeg: target }), 20);
     for (const ship of ownShips(after)) expect(ship.headingDeg).toBe(target);
   });
@@ -120,7 +120,7 @@ describe("real-time tactical orders", () => {
     const start = newSession();
     const after = run(start, order(start, { courseDeg: 90, speedKnots: 6 }), 20);
     for (const ship of ownShips(after)) expect(ship.speedBp).toBeLessThanOrEqual(6_000);
-    expect(Math.max(...ownShips(after).map((ship) => ship.speedBp))).toBe(6_000);
+    expect(Math.max(...ownShips(after).map((ship) => ship.speedBp ?? 0))).toBe(6_000);
   });
 
   it("changes the canonical hash when a course is ordered", () => {

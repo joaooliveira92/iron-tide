@@ -29,6 +29,7 @@ import {
 } from "./tactical-geometry.js";
 import type { TransientMarkers } from "./tactical-log.js";
 import { shipPoint, shipStatus, type Trails } from "./tactical-model.js";
+import { TACTICAL_PALETTE } from "./tactical-palette.js";
 
 export interface MapOverlays {
   readonly labels: boolean;
@@ -65,7 +66,7 @@ const LABEL_HEIGHT_PX = 14;
 const PREVIEW_LENGTH_PX = 90;
 const RING_COUNT = 4;
 
-const SIDE_COLOUR = { own: "#38bdf8", hostile: "#fb7185" } as const;
+const SIDE_COLOUR = { own: TACTICAL_PALETTE.own, hostile: TACTICAL_PALETTE.hostile } as const;
 
 function symbolSize(band: ReturnType<typeof lodBandFor>): number {
   if (band === "symbols") return 5;
@@ -251,7 +252,7 @@ export function TacticalMap(props: TacticalMapProps) {
         onPointerUp={onPointerUp}
         onKeyDown={onKeyDown}
       >
-        <rect width={viewport.width} height={viewport.height} fill="#0b1b2b" />
+        <rect width={viewport.width} height={viewport.height} fill={TACTICAL_PALETTE.sea} />
 
         {overlays.rings && selected?.position
           ? Array.from({ length: RING_COUNT }, (_, index) => {
@@ -266,11 +267,17 @@ export function TacticalMap(props: TacticalMapProps) {
                     cy={y}
                     r={radius}
                     fill="none"
-                    stroke="#334155"
+                    stroke={TACTICAL_PALETTE.ring}
                     strokeWidth={1}
                     strokeDasharray="4 4"
                   />
-                  <text x={x} y={y + radius + 12} textAnchor="middle" fill="#64748b" fontSize={10}>
+                  <text
+                    x={x}
+                    y={y + radius + 12}
+                    textAnchor="middle"
+                    fill={TACTICAL_PALETTE.ringLabel}
+                    fontSize={10}
+                  >
                     {formatMeasurement(radiusNm * UM_PER_NAUTICAL_MILE, {
                       locale: preferences.formattingLocale,
                       category: "range",
@@ -320,7 +327,7 @@ export function TacticalMap(props: TacticalMapProps) {
                   y1={y1}
                   x2={x2}
                   y2={y2}
-                  stroke="#fbbf24"
+                  stroke={TACTICAL_PALETTE.firingLine}
                   strokeOpacity={0.55}
                   strokeWidth={1}
                   strokeDasharray="2 3"
@@ -344,7 +351,7 @@ export function TacticalMap(props: TacticalMapProps) {
                   cy={y}
                   r={size + 6}
                   fill="none"
-                  stroke="#f97316"
+                  stroke={TACTICAL_PALETTE.impact}
                   strokeWidth={2}
                   pointerEvents="none"
                 />
@@ -366,7 +373,7 @@ export function TacticalMap(props: TacticalMapProps) {
                   y1={y}
                   x2={x + Math.cos(radians) * PREVIEW_LENGTH_PX}
                   y2={y - Math.sin(radians) * PREVIEW_LENGTH_PX}
-                  stroke="#a3e635"
+                  stroke={TACTICAL_PALETTE.coursePreview}
                   strokeWidth={2}
                   strokeDasharray="6 4"
                   pointerEvents="none"
@@ -418,7 +425,7 @@ export function TacticalMap(props: TacticalMapProps) {
                 <circle
                   r={size + 7}
                   fill="none"
-                  stroke="#f8fafc"
+                  stroke={TACTICAL_PALETTE.selection}
                   strokeWidth={2}
                   data-testid="tactical-selection"
                 />
@@ -447,7 +454,9 @@ export function TacticalMap(props: TacticalMapProps) {
                   />
                 )}
               </g>
-              {isFlagship ? <circle r={2} fill="#f8fafc" pointerEvents="none" /> : null}
+              {isFlagship ? (
+                <circle r={2} fill={TACTICAL_PALETTE.selection} pointerEvents="none" />
+              ) : null}
             </g>
           );
         })}
@@ -469,7 +478,11 @@ export function TacticalMap(props: TacticalMapProps) {
                   data-testid={`tactical-label-${ship.shipId}`}
                   x={size + 6}
                   y={4}
-                  fill={ship.sideId === playerSide ? "#bae6fd" : "#fecdd3"}
+                  fill={
+                    ship.sideId === playerSide
+                      ? TACTICAL_PALETTE.ownLabel
+                      : TACTICAL_PALETTE.hostileLabel
+                  }
                   fontSize={11}
                 >
                   {ship.name}
@@ -479,10 +492,23 @@ export function TacticalMap(props: TacticalMapProps) {
           })}
 
         <g pointerEvents="none" transform={`translate(12 ${String(viewport.height - 16)})`}>
-          <line x1={0} y1={0} x2={bar.px} y2={0} stroke="#e2e8f0" strokeWidth={2} />
-          <line x1={0} y1={-4} x2={0} y2={4} stroke="#e2e8f0" strokeWidth={2} />
-          <line x1={bar.px} y1={-4} x2={bar.px} y2={4} stroke="#e2e8f0" strokeWidth={2} />
-          <text x={bar.px + 8} y={4} fill="#e2e8f0" fontSize={11} data-testid="tactical-scale">
+          <line x1={0} y1={0} x2={bar.px} y2={0} stroke={TACTICAL_PALETTE.chrome} strokeWidth={2} />
+          <line x1={0} y1={-4} x2={0} y2={4} stroke={TACTICAL_PALETTE.chrome} strokeWidth={2} />
+          <line
+            x1={bar.px}
+            y1={-4}
+            x2={bar.px}
+            y2={4}
+            stroke={TACTICAL_PALETTE.chrome}
+            strokeWidth={2}
+          />
+          <text
+            x={bar.px + 8}
+            y={4}
+            fill={TACTICAL_PALETTE.chrome}
+            fontSize={11}
+            data-testid="tactical-scale"
+          >
             {barText}
           </text>
         </g>
@@ -491,9 +517,9 @@ export function TacticalMap(props: TacticalMapProps) {
           transform={`translate(${String(viewport.width - 28)} 28)`}
           aria-hidden="true"
         >
-          <circle r={14} fill="none" stroke="#475569" />
-          <path d="M0 -12 L4 2 L0 -2 L-4 2 Z" fill="#e2e8f0" />
-          <text y={-16} textAnchor="middle" fill="#e2e8f0" fontSize={10}>
+          <circle r={14} fill="none" stroke={TACTICAL_PALETTE.compassRing} />
+          <path d="M0 -12 L4 2 L0 -2 L-4 2 Z" fill={TACTICAL_PALETTE.chrome} />
+          <text y={-16} textAnchor="middle" fill={TACTICAL_PALETTE.chrome} fontSize={10}>
             N
           </text>
         </g>
