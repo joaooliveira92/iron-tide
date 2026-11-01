@@ -17,3 +17,7 @@ export const DIVISION_SPEED_PRESETS = [
 ] as const;
 
 export const TWO_KNOTS_SPEED_BP = 2_000 as const;
+
+export const DIVISION_ORDER_MAX_KNOTS = 60 as const;
+
+export const DIVISION_ORDER_MAX_HEADING_DEG = 359 as const;

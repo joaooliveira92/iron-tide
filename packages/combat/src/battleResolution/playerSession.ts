@@ -33,6 +33,7 @@ import { withNightTraining, effectsOf, type TrainingEffectsBySide } from "./trai
 import {
   explainBattleLoss,
   explainDamageControl,
+  explainShipMotion,
   explainTorpedoSolution,
 } from "./battle-explanations.js";
 import { pursuitOrders } from "./pursuit.js";
@@ -45,11 +46,15 @@ import { battleLoss, initialDamageState, type DamageContext } from "../damage/mi
 import { decideBattleEnd, type BattleSide, type ShipViability } from "./viability.js";
 import { headingToward } from "./engagement.js";
 import {
+  DIVISION_ORDER_MAX_HEADING_DEG,
+  DIVISION_ORDER_MAX_KNOTS,
   DIVISION_STANCES,
   compileDivisionOrders,
   divisionOrdersFromLegacy,
+  type DivisionNavigation,
+  type DivisionOrderSet,
+  type DivisionSpeed,
   type DivisionStance,
-  type LegacyDivisionOrders,
 } from "../orders/index.js";
 
 export const PLAYER_BATTLE_STANCES = DIVISION_STANCES;
@@ -58,6 +63,8 @@ export type PlayerBattleStance = DivisionStance;
 export interface PlayerBattleDivisionOrder {
   readonly stance: PlayerBattleStance;
   readonly speedPercent: number;
+  readonly courseDeg?: number;
+  readonly speedKnots?: number;
 }
 
 export interface PlayerBattleOrders {
@@ -82,6 +89,9 @@ export interface PlayerBattleShipView {
   readonly maxHitPoints: number;
   readonly damageState: string;
   readonly position: readonly [number, number] | null;
+  readonly headingDeg: number | null;
+  readonly speedBp: number | null;
+  readonly motion?: ExplanationTree;
   readonly gunneryAccuracy?: ExplanationTree;
   readonly torpedoSolution?: ExplanationTree;
   readonly damageControl?: ExplanationTree;
@@ -293,6 +303,62 @@ function clampSpeedPercent(value: number): number {
   return Math.min(100, Math.max(0, value));
 }
 
+function requireInteger(field: string, value: number, minimum: number, maximum: number): number {
+  if (!Number.isInteger(value) || value < minimum || value > maximum) {
+    throw new BluewaveError(BATTLE_AUTO_RESOLUTION_FAILED, {
+      code: BATTLE_AUTO_RESOLUTION_FAILED,
+      reason: `${field} must be an integer from ${String(minimum)} to ${String(maximum)}`,
+      value,
+    });
+  }
+  return value;
+}
+
+function divisionOrderSet(
+  orders: PlayerBattleOrders,
+  divisions: readonly TacticalDivision[],
+): DivisionOrderSet {
+  const legacy: Record<string, { stance: PlayerBattleStance; speedPercent: number }> = {};
+  for (const [divisionId, order] of Object.entries(orders.divisions)) {
+    legacy[divisionId] = {
+      stance: order.stance,
+      speedPercent: clampSpeedPercent(order.speedPercent),
+    };
+  }
+  const base = divisionOrdersFromLegacy({ divisions: legacy }, divisions);
+  return {
+    ...base,
+    divisions: base.divisions.map((entry) => {
+      const requested = orders.divisions[entry.divisionId]!;
+      const navigation: DivisionNavigation =
+        requested.courseDeg === undefined
+          ? entry.navigation
+          : {
+              kind: "COURSE",
+              headingDeg: requireInteger(
+                "courseDeg",
+                requested.courseDeg,
+                0,
+                DIVISION_ORDER_MAX_HEADING_DEG,
+              ),
+            };
+      const speed: DivisionSpeed =
+        requested.speedKnots === undefined
+          ? entry.speed
+          : {
+              kind: "KNOTS",
+              knots: requireInteger(
+                "speedKnots",
+                requested.speedKnots,
+                1,
+                DIVISION_ORDER_MAX_KNOTS,
+              ),
+            };
+      return { ...entry, navigation, speed };
+    }),
+  };
+}
+
 function divisionOf(state: TacticalBattleState): ReadonlyMap<string, string> {
   const map = new Map<string, string>();
   for (const division of state.divisions) {
@@ -343,16 +409,8 @@ function resolveOrders(
     units: session.units,
     baseOrders: session.baseOrders,
   });
-  const escaped: Record<string, { stance: PlayerBattleStance; speedPercent: number }> = {};
-  for (const [divisionId, order] of Object.entries(orders.divisions)) {
-    escaped[divisionId] = {
-      stance: order.stance,
-      speedPercent: clampSpeedPercent(order.speedPercent),
-    };
-  }
-  const legacy: LegacyDivisionOrders = { divisions: escaped };
   return compileDivisionOrders({
-    orders: divisionOrdersFromLegacy(legacy, session.state.divisions),
+    orders: divisionOrderSet(orders, session.state.divisions),
     units: session.units,
     divisions: session.state.divisions,
     baseOrders: session.baseOrders,
@@ -698,6 +756,9 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
       maxHitPoints: unit.maxHitPoints as number,
       damageState: damageState?.terminalStatus ?? "NORMAL",
       position: movement ? [movement.position[0], movement.position[1]] : null,
+      headingDeg: movement ? movement.heading : null,
+      speedBp: movement ? movement.currentSpeed : null,
+      ...(own && movement ? { motion: explainShipMotion(movement) } : {}),
       ...(battery === undefined
         ? {}
         : { gunneryAccuracy: explainGunneryAccuracy(battery.accuracyFactors) }),
