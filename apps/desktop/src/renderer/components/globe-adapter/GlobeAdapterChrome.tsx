@@ -15,7 +15,7 @@ import { MapLegend } from "../world-map/MapLegend.js";
 import { RouteReadout } from "../world-map/RouteReadout.js";
 import { useFrameMeter } from "../world-map/useFrameMeter.js";
 import { readPanelOpen, writePanelOpen } from "../shared/panel-memory.js";
-import { formatFixed } from "../../lib/presentation-format/index.js";
+import { formatFixed } from "../../lib/presentation-format/format.js";
 import type { AreaOwnershipRow } from "../world-map/map-a11y.js";
 import type { AreaTreeRow } from "../world-map/area-tree.js";
 import type { LayerId, MapPrototypeState, RouteReading } from "../world-map/map-state.js";
