@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   UM_PER_INCH,
   ZONE_IDS,
@@ -74,10 +74,14 @@ export function ArmamentEditor({
   const [linked, setLinked] = useState(false);
   const [replaceTo, setReplaceTo] = useState("");
 
+  const takenIds = useMemo(
+    () => new Set(draft.placements.map((p) => p.instanceId)),
+    [draft.placements],
+  );
   const entryOf = (componentId: string) => content.catalogue.find((e) => e.id === componentId);
   const nextId = (componentId: string) => {
     let n = 1;
-    while (draft.placements.some((p) => p.instanceId === `${componentId}_${n}`)) n++;
+    while (takenIds.has(`${componentId}_${n}`)) n++;
     return `${componentId}_${n}`;
   };
   const mirror = selected === null ? null : mirrorOf(selected, entries);
@@ -157,12 +161,22 @@ export function ArmamentEditor({
     );
   }
 
-  const entry = selected === null ? undefined : entryOf(selected.componentId);
+  const entryComponentId = selected?.componentId;
+  const entry = useMemo(
+    () =>
+      entryComponentId === undefined
+        ? undefined
+        : content.catalogue.find((e) => e.id === entryComponentId),
+    [entryComponentId, content.catalogue],
+  );
+  const replaceCandidates = useMemo(
+    () =>
+      entry === undefined
+        ? []
+        : content.catalogue.filter((e) => e.category === entry.category && e.id !== entry.id),
+    [entry, content.catalogue],
+  );
   const conflicts = selected === null ? [] : conflictsFor(selected.instanceId, findings);
-  const replaceCandidates =
-    entry === undefined
-      ? []
-      : content.catalogue.filter((e) => e.category === entry.category && e.id !== entry.id);
 
   return (
     <Panel title="Batteries">

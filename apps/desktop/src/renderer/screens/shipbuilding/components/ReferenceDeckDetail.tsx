@@ -3,11 +3,11 @@ import { CardContent, CardHeader } from "@/components/ui/card.js";
 import { GlassCard } from "@/components/ui/glass-card.js";
 import { Badge } from "@/components/ui/badge.js";
 import { Button } from "@/components/ui/button.js";
+import { CATEGORY_LABEL } from "../../../components/design-workspace/shipTypes.js";
 import {
-  CATEGORY_LABEL,
   ShipTypeDetails,
   ShipTypeFacts,
-} from "../../../components/design-workspace/index.js";
+} from "../../../components/design-workspace/panels/ShipTypeDetails.js";
 import type { ReferenceDeckEntry } from "../reference-deck.js";
 
 export function ReferenceDeckDetail({

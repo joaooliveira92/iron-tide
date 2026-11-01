@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "../../../components/ui/dropdown-menu.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover.js";
-import { SHORTCUT_MOD, SHORTCUT_SHIFT } from "../../../components/design-workspace/index.js";
+import { SHORTCUT_MOD, SHORTCUT_SHIFT } from "../../../components/design-workspace/undoShortcut.js";
 import { cn } from "../../../lib/utils.js";
 import { Tip } from "../../../components/ui/tip.js";
 

@@ -1,51 +1,63 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { flushSync } from "react-dom";
 import { PencilRuler } from "lucide-react";
 import type { ArmourRegionId, BatteryRole, ComponentCategory } from "@bluewave/ship-design";
 import { Alert } from "../../components/ui/alert.js";
+import { AlternativesPanel } from "../../components/design-workspace/panels/AlternativesPanel.js";
+import { BriefPanel } from "../../components/design-workspace/panels/BriefPanel.js";
+import { ComparePanel } from "../../components/design-workspace/panels/ComparePanel.js";
+import { FilePanel } from "../../components/design-workspace/panels/FilePanel.js";
+import { FindingsPanel } from "../../components/design-workspace/panels/FindingsPanel.js";
+import { ForecastPanel } from "../../components/design-workspace/panels/ForecastPanel.js";
+import { HistoryPanel } from "../../components/design-workspace/panels/HistoryPanel.js";
+import { HullPanel } from "../../components/design-workspace/panels/HullPanel.js";
+import { HullPlanPanel } from "../../components/design-workspace/panels/hull-plan/HullPlanPanel.js";
 import {
-  AlternativesPanel,
-  BriefPanel,
-  ComparePanel,
-  ChoiceProblemDialog,
-  ConfirmDialog,
-  FilePanel,
-  FindingsPanel,
-  ForecastPanel,
-  HistoryPanel,
-  HullPanel,
-  HullPlanPanel,
   IDLE_TOOL,
-  LedgerPanel,
-  MetricsPanel,
-  PlacementsPanel,
-  RebuildPanel,
-  RevisionPanel,
-  SelectionInspector,
-  ShipSelectionProvider,
-  ShipViewBoundary,
-  SubmitPanel,
-  TopsidePanel,
-  handleUndoShortcut,
+  type PlanTool,
+} from "../../components/design-workspace/panels/hull-plan/PlanToolbar.js";
+import { LedgerPanel } from "../../components/design-workspace/panels/LedgerPanel.js";
+import { MetricsPanel } from "../../components/design-workspace/panels/MetricsPanel.js";
+import { PlacementsPanel } from "../../components/design-workspace/panels/PlacementsPanel.js";
+import { RebuildPanel } from "../../components/design-workspace/panels/RebuildPanel.js";
+import { RevisionPanel } from "../../components/design-workspace/panels/RevisionPanel.js";
+import { SubmitPanel } from "../../components/design-workspace/panels/SubmitPanel.js";
+import { TopsidePanel } from "../../components/design-workspace/panels/TopsidePanel.js";
+import { useHullPlanEditing } from "../../components/design-workspace/panels/hull-plan/useHullPlanEditing.js";
+import { mountNameMap } from "../../components/design-workspace/batteryView.js";
+import { ChoiceProblemDialog } from "../../components/design-workspace/ChoiceProblemDialog.js";
+import { ConfirmDialog } from "../../components/design-workspace/ConfirmAction.js";
+import { DraftSaveWarning } from "../../components/design-workspace/DraftSaveWarning.js";
+import { useFindingsView } from "../../components/design-workspace/validation/FindingsControl.js";
+import { useFormNavigation } from "../../components/design-workspace/selection/useFormNavigation.js";
+import { handleUndoShortcut } from "../../components/design-workspace/undoShortcut.js";
+import {
   findDrawingControl,
   linkedEntities,
-  mountNameMap,
-  planModel,
-  plainShipTypeName,
-  plural,
-  DraftSaveWarning,
-  useDraftAutosave,
-  useFindingsView,
-  useHullPlanEditing,
-  useRestoredDraftToast,
+} from "../../components/design-workspace/selection/navigation.js";
+import { planModel } from "../../components/design-workspace/panels/hull-plan/planModel.js";
+import { plainShipTypeName } from "../../components/design-workspace/shipTypes.js";
+import { plural } from "../../components/design-workspace/plural.js";
+import {
   useDesignSession,
-  useFormNavigation,
   technologyMonths,
-  type EntityContext,
-  type PlanTool,
-  type RevisionProject,
-  shipTypeIcon,
-} from "../../components/design-workspace/index.js";
+} from "../../components/design-workspace/useDesignSession.js";
+import { useDraftAutosave } from "../../components/design-workspace/useDraftAutosave.js";
+import { useRestoredDraftToast } from "../../components/design-workspace/useRestoredDraftToast.js";
+import { SelectionInspector } from "../../components/design-workspace/selection/SelectionInspector.js";
+import { ShipSelectionProvider } from "../../components/design-workspace/selection/useShipSelection.js";
+import { ShipViewBoundary } from "../../components/design-workspace/workspace/ShipViewBoundary.js";
+import { shipTypeIcon } from "../../components/design-workspace/ship-type-icon.js";
+import type { EntityContext } from "../../components/design-workspace/selection/facts.js";
+import type { RevisionProject } from "../../components/design-workspace/revisionPreview.js";
 import {
   DEFAULT_VIEW,
   SHIP_VIEWS,
@@ -63,29 +75,26 @@ import { useCampaignMonthId, useLeaveGuard } from "../../shell/CampaignShellCont
 import { ScreenHeader, useScreenHeaderHost } from "../../shell/screen-header.js";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { COMMAND_OVERLAY_MIN_WIDTH } from "../overview/hooks/useOverviewModel.js";
-import {
-  AluminiumSuperstructurePanel,
-  AntiAircraftPanel,
-  ArmamentEditor,
-  ClassNameBrowser,
-  ColonialServicePanel,
-  CommandBar,
-  DesignIdentity,
-  DesignStatusChip,
-  DrawerBody,
-  EngineeringStatusBar,
-  FlawSlip,
-  MachineryEditor,
-  NotAvailable,
-  OverviewPanel,
-  ProtectionEditor,
-  ShipStage,
-  SystemsPanel,
-  ViewToolbar,
-  ReferenceDesignBrowser,
-  WorkspaceDialog,
-  type IsoSide,
-} from "./components/index.js";
+import { AluminiumSuperstructurePanel } from "./components/AluminiumSuperstructurePanel.js";
+import { AntiAircraftPanel } from "./components/AntiAircraftPanel.js";
+import { ArmamentEditor } from "./components/ArmamentEditor.js";
+import { ClassNameBrowser } from "./components/ClassNameBrowser.js";
+import { ColonialServicePanel } from "./components/ColonialServicePanel.js";
+import { CommandBar } from "./components/CommandBar.js";
+import { DesignIdentity } from "./components/DesignIdentity.js";
+import { DesignStatusChip } from "./components/DesignStatusChip.js";
+import { DrawerBody } from "./components/DrawerBody.js";
+import { EngineeringStatusBar } from "./components/EngineeringStatusBar.js";
+import { FlawSlip } from "./components/FlawSlip.js";
+import { MachineryEditor } from "./components/MachineryEditor.js";
+import { NotAvailable } from "./components/NotAvailable.js";
+import { OverviewPanel } from "./components/OverviewPanel.js";
+import { ProtectionEditor } from "./components/ProtectionEditor.js";
+import { ShipStage } from "./components/ShipStage.js";
+import { SystemsPanel } from "./components/SystemsPanel.js";
+import { ViewToolbar, type IsoSide } from "./components/ViewToolbar.js";
+import { ReferenceDesignBrowser } from "./components/ReferenceDesignBrowser.js";
+import { WorkspaceDialog } from "./components/WorkspaceDialog.js";
 import { aluminiumModel } from "./aluminium-view.js";
 import { antiAircraftModel } from "./anti-aircraft-view.js";
 import { armamentEntries } from "./armament.js";
@@ -168,7 +177,10 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
   const [isoSide, setIsoSide] = useState<IsoSide>("starboard");
   const [overlays, setOverlays] = useState<ReadonlySet<ShipOverlay>>(() => layersFor(null));
   const [planTool, setPlanTool] = useState<PlanTool>(IDLE_TOOL);
-  const [selectedEntity, setSelectedEntity] = useState<ShipEntity | null>(null);
+  const selectedEntity = useSyncExternalStore(
+    (onStoreChange) => selection.subscribe(onStoreChange),
+    () => selection.get().selected,
+  );
   const drawerBodyRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const flipOverlay = (overlay: ShipOverlay) =>
@@ -269,12 +281,73 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
     () => content.environmentFor(state.month, draft.nationId),
     [content, state.month, draft.nationId],
   );
-  const aluminium = aluminiumModel(view, env.ctx.balance.aluminiumSuperstructure, state.month);
-  const antiAircraft = antiAircraftModel(draft, view, env.ctx.balance.antiAircraft, state.month);
-  const namePool = namePoolFor(nationEnv.ctx.navalProfile, shipType);
+  const placeSection = place?.section;
+  const placeTab = place?.tab;
+  const aluminium = useMemo(
+    () => aluminiumModel(view, env.ctx.balance.aluminiumSuperstructure, state.month),
+    [view, env, state.month],
+  );
+  const antiAircraft = useMemo(
+    () => antiAircraftModel(draft, view, env.ctx.balance.antiAircraft, state.month),
+    [draft, view, env, state.month],
+  );
+  const namePool = useMemo(
+    () => namePoolFor(nationEnv.ctx.navalProfile, shipType),
+    [nationEnv, shipType],
+  );
+  const overview = useMemo(
+    () =>
+      placeSection === "overview"
+        ? overviewModel(draft, view, batteries, state.month, format)
+        : null,
+    [placeSection, draft, view, batteries, state.month, format],
+  );
+  const machinery = useMemo(
+    () => (placeSection === "machinery" ? machineryModel(draft, view, env, format) : null),
+    [placeSection, draft, view, env, format],
+  );
+  const protection = useMemo(
+    () =>
+      placeSection === "protection"
+        ? protectionModel(draft, view, armourMaterials, Number(state.month.slice(0, 4)))
+        : null,
+    [placeSection, draft, view, armourMaterials, state.month],
+  );
+  const armament = useMemo(() => {
+    const role =
+      placeSection === "armament" && placeTab !== undefined ? TAB_BATTERY[placeTab] : undefined;
+    return role === undefined
+      ? null
+      : armamentEntries(role, batteries, draft, view, content, format);
+  }, [placeSection, placeTab, batteries, draft, view, content, format]);
+  const systemCategories = useMemo(
+    () => (placeSection === "systems" && place !== null ? categoriesOf(place) : null),
+    [placeSection, placeTab],
+  );
+  const systems = useMemo(
+    () =>
+      systemCategories === null
+        ? null
+        : systemsModel(
+            systemCategories,
+            draft,
+            content,
+            state.month,
+            env.ctx.unlockedTechs,
+            showSystemsUnavailable,
+          ),
+    [systemCategories, draft, content, state.month, env, showSystemsUnavailable],
+  );
+  const colonial = useMemo(
+    () =>
+      placeSection === "systems" && placeTab === "accommodation"
+        ? colonialServiceModel(view)
+        : null,
+    [placeSection, placeTab, view],
+  );
   const machineryDeltas = useMemo(
-    () => (place?.section === "machinery" ? plantDeltas(draft, nationEnv, view, format) : null),
-    [place?.section, draft, nationEnv, view, format],
+    () => (placeSection === "machinery" ? plantDeltas(draft, nationEnv, view, format) : null),
+    [placeSection, draft, nationEnv, view, format],
   );
 
   const entityCtx: EntityContext = {
@@ -286,23 +359,34 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
     findings,
   };
   const lastPinned = useRef<ShipEntity | null>(null);
+  const pendingFocus = useRef<ShipEntity | null>(null);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+  const contentRef = useRef(content);
+  contentRef.current = content;
+  useEffect(
+    () =>
+      selection.subscribe(() => {
+        const pinned = selection.get().selected;
+        if (sameEntity(pinned, lastPinned.current)) return;
+        lastPinned.current = pinned;
+        if (pinned === null) return;
+        const at = placeForEntity(pinned, { draft: draftRef.current, content: contentRef.current });
+        if (at === null) return;
+        pendingFocus.current = pinned;
+        flushSync(() => {
+          if (placeRef.current?.section !== at.section) setOverlays(layersFor(at.section));
+          setPlace(at);
+        });
+      }),
+    [selection],
+  );
   useEffect(() => {
-    const unsubscribe = selection.subscribe(() => {
-      const pinned = selection.get().selected;
-      if (sameEntity(pinned, lastPinned.current)) return;
-      lastPinned.current = pinned;
-      setSelectedEntity(pinned);
-      if (pinned === null) return;
-      const at = placeForEntity(pinned, { draft, content });
-      if (at === null) return;
-      flushSync(() => {
-        if (placeRef.current?.section !== at.section) setOverlays(layersFor(at.section));
-        setPlace(at);
-      });
-      focusEntityControl(drawerBodyRef.current ?? document, pinned);
-    });
-    return unsubscribe;
-  }, [selection, draft, content]);
+    const pinned = pendingFocus.current;
+    if (pinned === null) return;
+    pendingFocus.current = null;
+    focusEntityControl(drawerBodyRef.current ?? document, pinned);
+  }, [selectedEntity, place]);
   const selectedInstanceId = selectedEntity?.kind === "fitting" ? selectedEntity.instanceId : null;
 
   const showOnShip = (f: BoardFinding) => {
@@ -374,7 +458,7 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
           </>
         ) : (
           <>
-            <OverviewPanel model={overviewModel(draft, view, batteries, state.month, format)} />
+            {overview !== null && <OverviewPanel model={overview} />}
             <MetricsPanel view={view} />
             <LedgerPanel view={view} />
             <ForecastPanel view={view} treasuryUnitMicro={content.treasuryUnitMicro} />
@@ -402,30 +486,34 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
           <MetricsPanel view={view} />
         ) : (
           <>
-            <MachineryEditor
-              errorFor={choiceCheck.errorFor}
-              model={machineryModel(draft, view, env, format)}
-              edit={actions.edit}
-              previewDeltas={machineryDeltas ?? undefined}
-              recommended={{
-                targetSpeedMilliKnots: state.preset.draft.requirement.requiredSpeedMilliKnots,
-                cruiseSpeedMilliKnots: state.preset.draft.requirement.cruiseSpeedMilliKnots,
-                rangeNm: state.preset.draft.requirement.requiredRangeNm,
-              }}
-            />
+            {machinery !== null && (
+              <MachineryEditor
+                errorFor={choiceCheck.errorFor}
+                model={machinery}
+                edit={actions.edit}
+                previewDeltas={machineryDeltas ?? undefined}
+                recommended={{
+                  targetSpeedMilliKnots: state.preset.draft.requirement.requiredSpeedMilliKnots,
+                  cruiseSpeedMilliKnots: state.preset.draft.requirement.cruiseSpeedMilliKnots,
+                  rangeNm: state.preset.draft.requirement.requiredRangeNm,
+                }}
+              />
+            )}
             {fittingsPanel(at)}
           </>
         );
       case "protection":
         return at.tab === "armour" ? (
           <>
-            <ProtectionEditor
-              errorFor={choiceCheck.errorFor}
-              model={protectionModel(draft, view, armourMaterials, Number(state.month.slice(0, 4)))}
-              edit={actions.edit}
-              onSelectRegion={selectArmourRegion}
-              selectedRegion={armourHighlight}
-            />
+            {protection !== null && (
+              <ProtectionEditor
+                errorFor={choiceCheck.errorFor}
+                model={protection}
+                edit={actions.edit}
+                onSelectRegion={selectArmourRegion}
+                selectedRegion={armourHighlight}
+              />
+            )}
             {fittingsPanel(at)}
           </>
         ) : (
@@ -442,7 +530,7 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
           ) : (
             fittingsOnly(at)
           );
-        const entries = armamentEntries(role, batteries, draft, view, content, format);
+        const entries = armament ?? armamentEntries(role, batteries, draft, view, content, format);
         return (
           <>
             <ArmamentEditor
@@ -462,25 +550,18 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
       case "systems":
         return (
           <>
-            {at.tab === "accommodation" && (
-              <ColonialServicePanel model={colonialServiceModel(view)} edit={actions.edit} />
+            {colonial !== null && <ColonialServicePanel model={colonial} edit={actions.edit} />}
+            {systems !== null && (
+              <SystemsPanel
+                groups={systems}
+                showUnavailable={showSystemsUnavailable}
+                onShowUnavailable={setShowSystemsUnavailable}
+                onAdd={(id) => {
+                  const e = addSystemEdit(id, draft, content);
+                  if (e) actions.edit(e);
+                }}
+              />
             )}
-            <SystemsPanel
-              groups={systemsModel(
-                categoriesOf(at),
-                draft,
-                content,
-                state.month,
-                env.ctx.unlockedTechs,
-                showSystemsUnavailable,
-              )}
-              showUnavailable={showSystemsUnavailable}
-              onShowUnavailable={setShowSystemsUnavailable}
-              onAdd={(id) => {
-                const e = addSystemEdit(id, draft, content);
-                if (e) actions.edit(e);
-              }}
-            />
             {fittingsPanel(at)}
           </>
         );

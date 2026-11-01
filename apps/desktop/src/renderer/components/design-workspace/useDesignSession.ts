@@ -74,10 +74,9 @@ export function useDesignSession(fixedMonth: string | null) {
       ),
     [content],
   );
-  const armourMaterials = armourMaterialOptions(
-    env.ctx.balance.armour,
-    state.month,
-    env.ctx.unlockedTechs,
+  const armourMaterials = useMemo(
+    () => armourMaterialOptions(env.ctx.balance.armour, state.month, env.ctx.unlockedTechs),
+    [env, state.month],
   );
   return {
     state,
