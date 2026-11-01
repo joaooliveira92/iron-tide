@@ -84,7 +84,10 @@ export function DepartmentDrawer({
           <X aria-hidden="true" className="size-5" />
         </button>
       </header>
-      <div className="themed-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-4 text-sm">
+      <div
+        data-testid="drawer-scroll"
+        className="themed-scrollbar relative min-h-0 flex-1 overflow-y-auto py-4 pl-5 pr-2 text-sm [scrollbar-gutter:stable]"
+      >
         {children}
       </div>
     </section>

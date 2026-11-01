@@ -50,6 +50,18 @@ describe("DepartmentDrawer", () => {
     opener.remove();
   });
 
+  it("scrolls its body inside a positioned box, so absolute descendants never grow the page", () => {
+    render(
+      <DepartmentDrawer title="Orders" summary="Courses sealed." width="narrow" onClose={vi.fn()}>
+        <span className="sr-only">Hidden caption</span>
+      </DepartmentDrawer>,
+    );
+    const scroller = screen.getByTestId("drawer-scroll");
+    expect(scroller.classList.contains("overflow-y-auto")).toBe(true);
+    expect(scroller.classList.contains("relative")).toBe(true);
+    expect(scroller.contains(screen.getByText("Hidden caption"))).toBe(true);
+  });
+
   it("closes on Escape unless a listbox inside it handled the key", () => {
     const onClose = vi.fn();
     render(
