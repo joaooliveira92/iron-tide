@@ -10,7 +10,7 @@ import {
 import type { BatteryCard } from "../batteryView.js";
 import { formatExplanation } from "../../../lib/presentation-format/index.js";
 import { SECTION_IDS, SECTIONS } from "../panels/hull-plan/sections.js";
-import { entityKey, sameEntity, type ShipEntity } from "../selection/store.js";
+import { sameEntity, type ShipEntity } from "../selection/store.js";
 import { inferEntities } from "./legacyInference.js";
 import { SEVERITY_ORDER, severityRank } from "./severity.js";
 

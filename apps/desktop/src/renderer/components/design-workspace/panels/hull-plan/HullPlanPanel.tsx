@@ -16,7 +16,7 @@ import { ProfileView } from "./ProfileView.js";
 import { SectionCard } from "./SectionCard.js";
 import { SectionLabels } from "./SectionLabels.js";
 import { FindingMarkers, layoutMarkers } from "../../validation/FindingMarkers.js";
-import { entityKey, type ShipEntity } from "../../selection/store.js";
+import type { ShipEntity } from "../../selection/store.js";
 import {
   FindingsControl,
   useFindingsView,
