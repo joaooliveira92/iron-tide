@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
-import { GuidedInspectionOverlay } from "./GuidedInspectionOverlay.js";
+import { GuidedInspectionOverlay, sameRect } from "./GuidedInspectionOverlay.js";
 
 describe("GuidedInspectionOverlay", () => {
   it("renders step title and N of 7 progress", () => {
@@ -91,5 +91,22 @@ describe("GuidedInspectionOverlay", () => {
     target.remove();
     (window as unknown as { matchMedia?: unknown }).matchMedia =
       original as unknown as typeof window.matchMedia;
+  });
+
+  it("treats an unchanged target rectangle as no new state", () => {
+    const rect = { x: 10, y: 20, width: 100, height: 50 };
+    expect(sameRect(rect, { ...rect })).toBe(true);
+    expect(sameRect(rect, { ...rect, y: 21 })).toBe(false);
+    expect(sameRect(null, null)).toBe(true);
+    expect(sameRect(rect, null)).toBe(false);
+    expect(sameRect(null, rect)).toBe(false);
+  });
+
+  it("registers the scroll tracker as a passive capture listener", () => {
+    const add = vi.spyOn(window, "addEventListener");
+    render(<GuidedInspectionOverlay stepIndex={0} onStepChange={vi.fn()} onDismiss={vi.fn()} />);
+    const scroll = add.mock.calls.find(([type]) => type === "scroll");
+    expect(scroll?.[2]).toEqual({ passive: true, capture: true });
+    add.mockRestore();
   });
 });

@@ -32,6 +32,8 @@ const SAVE_MESSAGE_DURATION_MS = 8_000;
 
 export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
   const [state, dispatch] = useReducer(reduceCampaignShell, undefined, initialCampaignShellState);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const refreshGenerationRef = useRef(0);
   const [reads, setReads] = useState<CampaignReads | null>(null);
@@ -102,27 +104,27 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
   );
 
   const closeCampaign = useCallback(async () => {
-    if (bridge === undefined || state.campaign === null) return;
+    const campaign = stateRef.current.campaign;
+    if (bridge === undefined || campaign === null) return;
     const started = performance.now();
-    const result = await bridge.campaign.execute("closeCampaign", state.campaign.sessionId);
+    const result = await bridge.campaign.execute("closeCampaign", campaign.sessionId);
     const duration = Math.round(performance.now() - started);
     if (result.outcome === "success" || result.reason === "SESSION_NOT_FOUND") {
-      emitWideEvent("campaign_close", state.campaign.sessionId, duration, "success");
+      emitWideEvent("campaign_close", campaign.sessionId, duration, "success");
       refreshGenerationRef.current += 1;
       setReads(null);
       dispatch({ type: "campaign-closed" });
       return;
     }
-    emitWideEvent("campaign_close", state.campaign.sessionId, duration, "rejected", [
-      result.reason,
-    ]);
+    emitWideEvent("campaign_close", campaign.sessionId, duration, "rejected", [result.reason]);
     collectMessage(resolveMessage("shell.campaign.closeFailed", { reason: result.reason }));
-  }, [bridge, state.campaign]);
+  }, [bridge]);
 
   const saveCampaign = useCallback(async () => {
-    if (bridge === undefined || state.campaign === null) return;
+    const campaign = stateRef.current.campaign;
+    if (bridge === undefined || campaign === null) return;
     dispatch({ type: "save-started" });
-    const result = await bridge.campaign.execute("saveCampaign", state.campaign.sessionId);
+    const result = await bridge.campaign.execute("saveCampaign", campaign.sessionId);
     collectMessage(
       result.outcome === "success"
         ? resolveMessage("shell.campaign.saved", { revision: result.value.revision })
@@ -133,12 +135,13 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
               diagnostics: diagnosticsSuffix(result.diagnostics),
             }),
     );
-  }, [bridge, state.campaign]);
+  }, [bridge]);
 
   const copyCampaign = useCallback(async () => {
-    if (bridge === undefined || state.campaign === null) return;
+    const campaign = stateRef.current.campaign;
+    if (bridge === undefined || campaign === null) return;
     dispatch({ type: "save-started" });
-    const result = await bridge.campaign.execute("copyCampaign", state.campaign.sessionId);
+    const result = await bridge.campaign.execute("copyCampaign", campaign.sessionId);
     collectMessage(
       result.outcome === "success"
         ? resolveMessage("shell.campaign.copySaved", { location: result.value.location })
@@ -149,7 +152,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
               diagnostics: diagnosticsSuffix(result.diagnostics),
             }),
     );
-  }, [bridge, state.campaign]);
+  }, [bridge]);
 
   useEffect(
     () => () => {
@@ -180,7 +183,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
 
   const refreshCampaign = useCallback(
     async (sessionIdOverride?: string) => {
-      const sessionId = sessionIdOverride ?? state.campaign?.sessionId;
+      const sessionId = sessionIdOverride ?? stateRef.current.campaign?.sessionId;
       if (bridge === undefined || sessionId === undefined) return;
       const generation = ++refreshGenerationRef.current;
       const campaignReads = await readCampaign(bridge.campaign, sessionId);
@@ -196,7 +199,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       });
       setReads(campaignReads);
     },
-    [bridge, state.campaign?.sessionId],
+    [bridge],
   );
 
   const setInterruption = useCallback((interruption: ShellInterruption | null) => {
@@ -234,15 +237,16 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
   );
 
   const advanceMonth = useCallback(async () => {
-    if (bridge === undefined || state.campaign === null) return;
-    if (state.interruption?.request != null) return;
+    const { campaign, interruption } = stateRef.current;
+    if (bridge === undefined || campaign === null) return;
+    if (interruption?.request != null) return;
     dispatch({ type: "month-commit-started" });
-    const sessionId = state.campaign.sessionId;
+    const sessionId = campaign.sessionId;
     const started = performance.now();
     try {
       const result = await bridge.campaign.execute(
         "resolveTurn",
-        envelopeOf(sessionId, stampCommand("resolveTurn", state.campaign.revision)),
+        envelopeOf(sessionId, stampCommand("resolveTurn", campaign.revision)),
       );
       const duration = Math.round(performance.now() - started);
       emitWideEvent(
@@ -252,7 +256,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
         result.outcome === "success" ? "success" : "rejected",
         result.outcome === "success" ? [] : [result.reason],
       );
-      applyResolveOutcome(foldResolveTurn(result, state.campaign, sessionId), sessionId, null);
+      applyResolveOutcome(foldResolveTurn(result, campaign, sessionId), sessionId, null);
     } catch (error) {
       emitWideEvent("campaign_month_advance", sessionId, 0, "rejected", [
         error instanceof Error ? error.message : resolveMessage("shell.campaign.unknownError"),
@@ -266,40 +270,42 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
         },
       });
     }
-  }, [bridge, state.campaign, state.interruption, applyResolveOutcome]);
+  }, [bridge, applyResolveOutcome]);
 
   const answerInterruption = useCallback(
     async (answer: InterruptionAnswer): Promise<InterruptionAnswerOutcome> => {
-      const request = state.interruption?.request;
-      if (bridge === undefined || state.campaign === null) {
+      const { campaign, interruption } = stateRef.current;
+      const request = interruption?.request;
+      if (bridge === undefined || campaign === null) {
         return { _tag: "NotSent", reason: { _tag: "NoCampaign" } };
       }
       if (request === null || request === undefined) {
         return { _tag: "NotSent", reason: { _tag: "NoOutstandingRequest" } };
       }
-      const plan = planInterruptionAnswer(state.campaign, request, answer);
+      const plan = planInterruptionAnswer(campaign, request, answer);
       if ("_tag" in plan) {
         return { _tag: "NotSent", reason: plan };
       }
       dispatch({ type: "month-commit-started" });
-      const sessionId = state.campaign.sessionId;
+      const sessionId = campaign.sessionId;
       const result = await sendInterruptionAnswer(bridge.campaign, plan);
       const { outcome, message } = foldInterruptionAnswer(
         result,
         request,
         answer,
-        state.campaign,
+        campaign,
         sessionId,
       );
       applyResolveOutcome(outcome, sessionId, message);
       return { _tag: "Sent", outcome };
     },
-    [bridge, state.campaign, state.interruption, applyResolveOutcome],
+    [bridge, applyResolveOutcome],
   );
 
   const abandonPendingTurn = useCallback(async () => {
-    if (bridge === undefined || state.campaign === null) return;
-    const sessionId = state.campaign.sessionId;
+    const campaign = stateRef.current.campaign;
+    if (bridge === undefined || campaign === null) return;
+    const sessionId = campaign.sessionId;
     const result = await bridge.campaign.execute("abandonPendingTurn", sessionId);
     if (result.outcome === "success") {
       setInterruption(null);
@@ -307,19 +313,20 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     } else {
       collectMessage(resolveMessage("shell.turn.discardFailed", { reason: result.reason }));
     }
-  }, [bridge, state.campaign, setInterruption, collectMessage]);
+  }, [bridge, setInterruption, collectMessage]);
 
   const setPrimaryAction = useCallback(
     (action: PrimaryAction | null) => dispatch({ type: "primary-action-changed", action }),
     [],
   );
   const goBackInHistory = useCallback(() => {
-    if (mayLeave("back")) dispatch({ type: "history-replaced", history: goBack(state.history) });
-  }, [state.history, mayLeave]);
+    if (mayLeave("back"))
+      dispatch({ type: "history-replaced", history: goBack(stateRef.current.history) });
+  }, [mayLeave]);
   const goForwardInHistory = useCallback(() => {
     if (mayLeave("forward"))
-      dispatch({ type: "history-replaced", history: goForward(state.history) });
-  }, [state.history, mayLeave]);
+      dispatch({ type: "history-replaced", history: goForward(stateRef.current.history) });
+  }, [mayLeave]);
 
   return useMemo(
     () => ({

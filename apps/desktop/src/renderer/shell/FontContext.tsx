@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, use, useLayoutEffect } from "react";
+import { createContext, type ReactNode, use, useCallback, useLayoutEffect, useMemo } from "react";
 
 import type { FontPreference } from "../../shared/preferences-contract.js";
 import { usePreferences } from "../lib/preferences-context.js";
@@ -35,9 +35,11 @@ export function FontProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset["font"] = font;
   }, [font]);
 
-  const setFont = (next: SansFontPreference) => setApp({ font: next });
+  const setFont = useCallback((next: SansFontPreference) => setApp({ font: next }), [setApp]);
 
-  return <FontContext.Provider value={{ font, setFont }}>{children}</FontContext.Provider>;
+  const value = useMemo(() => ({ font, setFont }), [font, setFont]);
+
+  return <FontContext.Provider value={value}>{children}</FontContext.Provider>;
 }
 
 export function useFont(): FontContextValue {

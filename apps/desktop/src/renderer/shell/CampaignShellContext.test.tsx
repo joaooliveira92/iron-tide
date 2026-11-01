@@ -62,6 +62,11 @@ function CurrencyConsumer() {
   return <span data-testid="currency-context">{JSON.stringify(context)}</span>;
 }
 
+function ValueConsumer({ seen }: { readonly seen: unknown[] }) {
+  seen.push(useCampaignShellContext());
+  return null;
+}
+
 describe("CampaignShellProvider", () => {
   it("provides shell state, actions, and metadata", () => {
     vi.mocked(useCampaignShell).mockReturnValue(shell);
@@ -137,5 +142,30 @@ describe("CampaignShellProvider", () => {
     unmount();
     render(<CurrencyConsumer />);
     expect(screen.getByTestId("currency-context").textContent).toBe("{}");
+  });
+
+  it("keeps the shell context value itself while no shell field moves", () => {
+    const seen: unknown[] = [];
+    vi.mocked(useCampaignShell).mockReturnValue(shell);
+    const { rerender } = render(
+      <CampaignShellProvider bridge={undefined}>
+        <ValueConsumer seen={seen} />
+      </CampaignShellProvider>,
+    );
+
+    rerender(
+      <CampaignShellProvider bridge={undefined}>
+        <ValueConsumer seen={seen} />
+      </CampaignShellProvider>,
+    );
+    expect(seen[1]).toBe(seen[0]);
+
+    vi.mocked(useCampaignShell).mockReturnValue({ ...shell, screen: "fleet" as const });
+    rerender(
+      <CampaignShellProvider bridge={undefined}>
+        <ValueConsumer seen={seen} />
+      </CampaignShellProvider>,
+    );
+    expect(seen[2]).not.toBe(seen[0]);
   });
 });

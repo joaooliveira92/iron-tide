@@ -1,4 +1,11 @@
-import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
+import {
+  memo,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import {
   Bell,
   ChevronDown,
@@ -836,7 +843,7 @@ function AlertsChip({ alerts }: { readonly alerts: string }) {
   );
 }
 
-export function StatusStripView({
+export const StatusStripView = memo(function StatusStripView({
   model,
   trend = null,
 }: {
@@ -898,7 +905,7 @@ export function StatusStripView({
       )}
     </section>
   );
-}
+});
 
 export interface StatusStripProps {
   readonly reads: CampaignReads;
@@ -907,16 +914,22 @@ export interface StatusStripProps {
 export function StatusStrip({ reads }: StatusStripProps) {
   const { projection, areas, reports } = reads;
   const format = usePresentationFormat();
-  if (projection.status !== "ready") return null;
-  return (
-    <StatusStripView
-      trend={buildTrend(reports.status === "ready" ? reports.value : null, format)}
-      model={buildStatusStrip({
-        projection: projection.value,
-        areas: areas.status === "ready" ? areas.value : null,
-        alertsCount: activeAlertsCount(reads),
-        format,
-      })}
-    />
+  const model = useMemo(
+    () =>
+      projection.status === "ready"
+        ? buildStatusStrip({
+            projection: projection.value,
+            areas: areas.status === "ready" ? areas.value : null,
+            alertsCount: activeAlertsCount(reads),
+            format,
+          })
+        : null,
+    [projection, areas, reads, format],
   );
+  const trend = useMemo(
+    () => buildTrend(reports.status === "ready" ? reports.value : null, format),
+    [reports, format],
+  );
+  if (model === null) return null;
+  return <StatusStripView model={model} trend={trend} />;
 }

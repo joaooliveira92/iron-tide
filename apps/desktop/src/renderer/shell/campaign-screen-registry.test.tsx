@@ -31,6 +31,7 @@ afterEach(() => {
 
 vi.mock("./CampaignShellContext.js", () => ({
   useCampaignShellContext: () => shell,
+  useCampaignShellActions: () => shell.actions,
 }));
 
 vi.mock("../screens/overview/OverviewScreen.js", async () => {

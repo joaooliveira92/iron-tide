@@ -28,8 +28,10 @@ afterEach(() => {
 
 describe("theme model (U-4 ticket 03)", () => {
   it("resolves high contrast to the dark base", () => {
-    expect(resolveTheme("highContrast")).toBe("dark");
-    expect(resolveTheme("light")).toBe("light");
+    expect(resolveTheme("highContrast", false)).toBe("dark");
+    expect(resolveTheme("light", true)).toBe("light");
+    expect(resolveTheme("system", true)).toBe("dark");
+    expect(resolveTheme("system", false)).toBe("light");
   });
 
   it("applies the high-contrast class on the root", async () => {

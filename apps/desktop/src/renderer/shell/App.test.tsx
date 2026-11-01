@@ -445,9 +445,16 @@ function createCampaignClient(execute?: CampaignCommandClient["execute"]): Campa
   return {
     execute:
       execute ??
-      (vi.fn(async (_name: string) => ({
+      (vi.fn(async (name: string) => ({
         outcome: "success" as const,
-        value: { sessionId: "ses-created" },
+        value:
+          name === "inspectMap"
+            ? {
+                sessionId: "ses-created",
+                playerNationId: "uk",
+                strategic: { world: { areas: [], ports: [], fleets: [], routes: [] } },
+              }
+            : { sessionId: "ses-created" },
       })) as unknown as CampaignCommandClient["execute"]),
   };
 }
@@ -598,7 +605,7 @@ describe("App", () => {
     expect(screen.queryByTestId("battle-dialog")).toBeNull();
   });
 
-  it("shows the player battle screen for a battle interruption and submits its outcome", () => {
+  it("shows the player battle screen for a battle interruption and submits its outcome", async () => {
     const shell = createShell({
       campaign: {
         sessionId: "ses-1",
@@ -632,7 +639,7 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(screen.getByTestId("player-battle-screen")).toBeTruthy();
+    expect(await screen.findByTestId("player-battle-screen")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Finish battle" }));
     expect(shell.answerInterruption).toHaveBeenCalledWith({
       kind: "battle-outcome",

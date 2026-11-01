@@ -798,6 +798,85 @@ describe("useCampaignShell", () => {
     });
   });
 
+  describe("command identity", () => {
+    const committed: PlayerProjection = {
+      ...projection,
+      revision: 4,
+      month: { year: 1900, month: 2 },
+      economy: { ...projection.economy, treasury: 22_900_000 },
+    };
+    let committedOnce = false;
+    const openedExecute = vi.fn(async (command: string) => {
+      if (command === "inspectPriorities") {
+        return { outcome: "success" as const, value: { priorities: [] }, diagnostics: [] };
+      }
+      if (command === "inspectCampaign") {
+        return {
+          outcome: "success" as const,
+          value: { projection: committedOnce ? committed : projection },
+          diagnostics: [],
+        };
+      }
+      if (command === "resolveTurn") {
+        committedOnce = true;
+        return monthResolveSuccess;
+      }
+      return { outcome: "success" as const, value: {}, diagnostics: [] };
+    });
+
+    it("keeps every command reference stable across dispatches", async () => {
+      committedOnce = false;
+      openedExecute.mockClear();
+      const { result } = setup(openedExecute);
+      await act(() => result.current.openCampaign("ses-1"));
+
+      const before = {
+        closeCampaign: result.current.closeCampaign,
+        saveCampaign: result.current.saveCampaign,
+        copyCampaign: result.current.copyCampaign,
+        advanceMonth: result.current.advanceMonth,
+        answerInterruption: result.current.answerInterruption,
+        abandonPendingTurn: result.current.abandonPendingTurn,
+        refreshCampaign: result.current.refreshCampaign,
+        selectScreen: result.current.selectScreen,
+        goBack: result.current.goBack,
+        goForward: result.current.goForward,
+      };
+
+      act(() => result.current.selectScreen("fleet"));
+      act(() =>
+        result.current.setPrimaryAction({
+          label: "Done",
+          disabled: false,
+          onTrigger: () => undefined,
+        }),
+      );
+      await act(() => result.current.saveCampaign());
+      await act(() => result.current.advanceMonth());
+
+      expect(result.current.screen).toBe("fleet");
+      expect(result.current.campaign?.revision).toBe(4);
+      for (const [name, command] of Object.entries(before)) {
+        expect(result.current[name as keyof typeof before], name).toBe(command);
+      }
+    });
+
+    it("closes the session that was current when the command was issued", async () => {
+      const execute = vi.fn(async (command: string) =>
+        command === "closeCampaign"
+          ? { outcome: "success" as const, value: {}, diagnostics: [] }
+          : { outcome: "success" as const, value: { projection }, diagnostics: [] },
+      );
+      const { result } = setup(execute);
+      await act(() => result.current.openCampaign("ses-1"));
+
+      await act(() => result.current.closeCampaign());
+
+      expect(execute).toHaveBeenCalledWith("closeCampaign", "ses-1");
+      expect(result.current.campaign).toBeNull();
+    });
+  });
+
   describe("leave guard", () => {
     const opened = async () => {
       const rendered = setup(

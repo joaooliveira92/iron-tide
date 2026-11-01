@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, use, useLayoutEffect } from "react";
+import { createContext, type ReactNode, use, useCallback, useLayoutEffect, useMemo } from "react";
 
 import type { InterfaceDensityPreference } from "../../shared/preferences-contract.js";
 import { usePreferences } from "../lib/preferences-context.js";
@@ -29,11 +29,11 @@ export function DensityProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset["density"] = density;
   }, [density]);
 
-  const setDensity = (next: Density) => setApp({ interfaceDensity: next });
+  const setDensity = useCallback((next: Density) => setApp({ interfaceDensity: next }), [setApp]);
 
-  return (
-    <DensityContext.Provider value={{ density, setDensity }}>{children}</DensityContext.Provider>
-  );
+  const value = useMemo(() => ({ density, setDensity }), [density, setDensity]);
+
+  return <DensityContext.Provider value={value}>{children}</DensityContext.Provider>;
 }
 
 export function useDensity(): DensityContextValue {

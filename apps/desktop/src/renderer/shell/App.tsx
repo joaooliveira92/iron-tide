@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { WindowState } from "../../shared/bridge-contract.js";
 import {
@@ -31,7 +31,6 @@ import { CampaignUnavailableView } from "./CampaignUnavailableView.js";
 import { CampaignShellProvider, useCampaignShellContext } from "./CampaignShellContext.js";
 import { GuidedInspectionOverlay } from "./GuidedInspectionOverlay.js";
 import { UiCatalogueGate } from "../content/UiCatalogueGate.js";
-import { PlayerBattleScreen } from "../screens/battle/PlayerBattleScreen.js";
 import { OfferDialog } from "./interruptions/OfferDialog.js";
 import { DecisionDialog } from "./interruptions/DecisionDialog.js";
 import { PendingTurnRecoveryPrompt } from "./interruptions/PendingTurnRecoveryPrompt.js";
@@ -58,6 +57,12 @@ declare global {
     bluewave?: BluewaveDesktopBridge;
   }
 }
+
+const PlayerBattleScreen = lazy(() =>
+  import("../screens/battle/PlayerBattleScreen.js").then((module) => ({
+    default: module.PlayerBattleScreen,
+  })),
+);
 
 const NEW_GAME_MODE_KINDS: ReadonlySet<CampaignShellMode["kind"]> = new Set([
   "new-game-nation",
@@ -293,14 +298,16 @@ function CampaignShellApplication({
               onAbandon={shell.actions.abandonPendingTurn}
             />
           ) : (
-            <PlayerBattleScreen
-              request={shell.state.interruption.request}
-              sessionId={shell.state.campaign.sessionId}
-              onSubmitResult={(outcome) =>
-                void shell.actions.answerInterruption({ kind: "battle-outcome", outcome })
-              }
-              onAbandon={shell.actions.abandonPendingTurn}
-            />
+            <Suspense fallback={<MonthlyResolutionLoading committing />}>
+              <PlayerBattleScreen
+                request={shell.state.interruption.request}
+                sessionId={shell.state.campaign.sessionId}
+                onSubmitResult={(outcome) =>
+                  void shell.actions.answerInterruption({ kind: "battle-outcome", outcome })
+                }
+                onAbandon={shell.actions.abandonPendingTurn}
+              />
+            </Suspense>
           ))}
         {guided.visible && !guided.loading && (
           <GuidedInspectionOverlay

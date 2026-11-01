@@ -162,6 +162,7 @@ export function reduceCampaignShell(
 ): CampaignShellState {
   switch (event.type) {
     case "campaign-opening":
+      if (state.loading && state.error === null) return state;
       return { ...state, loading: true, error: null };
     case "campaign-opened":
       return {
@@ -172,6 +173,7 @@ export function reduceCampaignShell(
         history: visit(state.history, "overview"),
       };
     case "campaign-open-failed":
+      if (!state.loading && state.error === event.message) return state;
       return { ...state, loading: false, error: event.message };
     case "campaign-closed":
       return initialCampaignShellState();
@@ -184,14 +186,17 @@ export function reduceCampaignShell(
         history: visit(state.history, "ship-design"),
       };
     case "revision-cleared":
+      if (state.revisionProjectId === null) return state;
       return { ...state, revisionProjectId: null };
     case "history-replaced":
       return { ...state, history: event.history };
     case "save-started":
+      if (state.saving && state.saveMessage === null) return state;
       return { ...state, saving: true, saveMessage: null };
     case "save-finished":
       return { ...state, saving: false, saveMessage: event.message };
     case "save-message-cleared":
+      if (state.saveMessage === null && state.commitFailure === null) return state;
       return { ...state, saveMessage: null, commitFailure: null };
     case "primary-action-changed": {
       const current = state.primaryAction;
@@ -208,6 +213,9 @@ export function reduceCampaignShell(
       return { ...state, primaryAction: next };
     }
     case "month-commit-started":
+      if (state.committing && state.saveMessage === null && state.commitFailure === null) {
+        return state;
+      }
       return {
         ...state,
         committing: true,
@@ -236,6 +244,7 @@ export function reduceCampaignShell(
     case "interruption-set":
       return { ...state, committing: false, interruption: event.interruption };
     case "interruption-cleared":
+      if (state.interruption === null) return state;
       return { ...state, interruption: null };
   }
 }

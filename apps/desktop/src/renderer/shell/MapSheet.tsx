@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
-import { WorldMapChart } from "../components/world-map/WorldMapChart.js";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../components/ui/sheet.js";
 import { useWorldMapController } from "../components/world-map/useWorldMapController.js";
 import { useCampaignShellContext } from "./CampaignShellContext.js";
+
+const WorldMapChart = lazy(() =>
+  import("../components/world-map/WorldMapChart.js").then((module) => ({
+    default: module.WorldMapChart,
+  })),
+);
 
 export function MapSheet() {
   const [open, setOpen] = useState(false);
@@ -37,7 +42,9 @@ export function MapSheet() {
         <SheetHeader className="space-y-0.5 text-left">
           <SheetTitle>World Map</SheetTitle>
         </SheetHeader>
-        <WorldMapChart className="min-h-0 flex-1" {...map} />
+        <Suspense fallback={<div className="min-h-0 flex-1 animate-pulse bg-muted" />}>
+          <WorldMapChart className="min-h-0 flex-1" {...map} />
+        </Suspense>
       </SheetContent>
     </Sheet>
   );

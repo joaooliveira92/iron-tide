@@ -1,12 +1,6 @@
 import { lazy, useCallback } from "react";
-import { CampaignPreferencesScreen } from "../screens/campaign-preferences/CampaignPreferencesScreen.js";
-import { ConstructionScreen } from "../screens/construction/ConstructionScreen.js";
-import { FleetScreen } from "../screens/fleet/FleetScreen.js";
+import { useCampaignShellActions, useCampaignShellContext } from "./CampaignShellContext.js";
 import { OptionsScreen } from "../screens/options/OptionsScreen.js";
-import { ShipDesignScreen } from "../screens/shipbuilding/ShipDesignScreen.js";
-import { OverviewScreen } from "../screens/overview/OverviewScreen.js";
-import { StrategicMapScreen } from "../screens/strategic-map/StrategicMapScreen.js";
-import { useCampaignShellContext } from "./CampaignShellContext.js";
 import type {
   CampaignScreen,
   CampaignScreenRoute,
@@ -15,6 +9,36 @@ import type {
 
 const DEBUG_MODE = import.meta.env.VITE_BLUEWAVE_DEBUG === "true";
 
+const OverviewScreen = lazy(() =>
+  import("../screens/overview/OverviewScreen.js").then((module) => ({
+    default: module.OverviewScreen,
+  })),
+);
+const ConstructionScreen = lazy(() =>
+  import("../screens/construction/ConstructionScreen.js").then((module) => ({
+    default: module.ConstructionScreen,
+  })),
+);
+const ShipDesignScreen = lazy(() =>
+  import("../screens/shipbuilding/ShipDesignScreen.js").then((module) => ({
+    default: module.ShipDesignScreen,
+  })),
+);
+const FleetScreen = lazy(() =>
+  import("../screens/fleet/FleetScreen.js").then((module) => ({
+    default: module.FleetScreen,
+  })),
+);
+const StrategicMapScreen = lazy(() =>
+  import("../screens/strategic-map/StrategicMapScreen.js").then((module) => ({
+    default: module.StrategicMapScreen,
+  })),
+);
+const CampaignPreferencesScreen = lazy(() =>
+  import("../screens/campaign-preferences/CampaignPreferencesScreen.js").then((module) => ({
+    default: module.CampaignPreferencesScreen,
+  })),
+);
 const DebuggingScreen = DEBUG_MODE
   ? lazy(() =>
       import("../screens/debugging/DebuggingScreen.js").then((module) => ({
@@ -53,7 +77,7 @@ const TacticalSandboxScreen = DEBUG_MODE
   : null;
 
 function OverviewRoute({ sessionId }: CampaignScreenRouteProps) {
-  const { actions } = useCampaignShellContext();
+  const actions = useCampaignShellActions();
   return <OverviewScreen sessionId={sessionId} onNavigate={actions.selectScreen} />;
 }
 
@@ -113,7 +137,7 @@ function StrategicMapRoute({ sessionId }: CampaignScreenRouteProps) {
 }
 
 function CampaignPreferencesRoute({ sessionId }: CampaignScreenRouteProps) {
-  const { actions } = useCampaignShellContext();
+  const actions = useCampaignShellActions();
   return (
     <CampaignPreferencesScreen sessionId={sessionId} onCloseCampaign={actions.closeCampaign} />
   );
