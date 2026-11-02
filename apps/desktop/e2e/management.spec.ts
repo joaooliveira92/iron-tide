@@ -154,7 +154,10 @@ test("preferences and the guided inspection state survive a restart", async ({
     page.getByRole("button", { name: "Toggle Show Unit Fatigue" });
   const openDisplayPreferences = async (page: typeof e2e.page) => {
     await navigateTo(page, "Campaign Preferences");
-    await page.getByRole("tab", { name: "Display Preferences" }).click();
+    await page
+      .getByRole("navigation", { name: "Campaign preference sections" })
+      .getByRole("button", { name: "Display preferences" })
+      .click();
   };
 
   await test.step("reachable:persist-ui-state", async () => {
