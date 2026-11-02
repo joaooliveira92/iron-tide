@@ -21,6 +21,7 @@ const NUMERIC_POLICY_KEYS = [
   "handoffMaxWords",
   "taskPromptMaxWords",
   "hookStderrMaxChars",
+  "quietFailTailLines",
 ];
 const HOOK_SOURCES = [
   "scripts/hooks/pre-tool-use-bash.mjs",

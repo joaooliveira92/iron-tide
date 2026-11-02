@@ -46,6 +46,8 @@
     "check:explanation-coverage": "node scripts/verify-explanation-coverage.mjs",
     "check:ui-acceptance-map": "node scripts/verify-ui-acceptance-map.mjs",
     "check:agent-context": "node scripts/verify-agent-context.mjs --check",
+    "preflight:quiet": "node scripts/run-quiet.mjs -- pnpm preflight",
+    "check:quiet": "node scripts/run-quiet.mjs -- pnpm check",
     "check:commit-msgs": "node scripts/check-commit-msgs.cjs",
     "content:check": "pnpm --filter @bluewave/content-authoring build && pnpm --filter @bluewave/compiler-cli build && node apps/compiler-cli/dist/main.js content:check --manifest content/production/1880/pack.json --content-dir content/production/1880",
     "content:build": "pnpm --filter @bluewave/content-authoring build && pnpm --filter @bluewave/compiler-cli build && node apps/compiler-cli/dist/main.js content:build --manifest content/production/1880/pack.json --content-dir content/production/1880 --output-dir content/generated/1880",

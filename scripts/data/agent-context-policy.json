@@ -15,5 +15,7 @@
   "handoffExemptPromptPrefixes": ["/handoff", "/compact", "/clear"],
   "resumePromptPattern": "^\\s*(continue|resume|keep going|go on)\\b",
   "guardAuditLogEnv": "AGENT_GUARD_AUDIT_LOG",
-  "hookStderrMaxChars": 600
+  "hookStderrMaxChars": 600,
+  "quietFailTailLines": 40,
+  "quietLogDir": "node_modules/.cache/bluewave-quiet"
 }

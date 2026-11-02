@@ -14,6 +14,7 @@ All thresholds live in `scripts/data/agent-context-policy.json`; hooks, tests an
 | Context hook | advises at 100k, warns at 150k, blocks a resume or post-idle prompt above 200k | `scripts/hooks/user-prompt-context.mjs` |
 | Snap defaults | 1280x800 window, CSS-pixel screenshots, `--full-res` opt-out | `pnpm snap` |
 | Screen map | owners, tests and e2e per screen, generated from `git ls-files` | `pnpm agent:map --screen` |
+| Quiet gates | one line on pass, the failing tail and log path on failure | `pnpm preflight:quiet`, `pnpm check:quiet` |
 | Gate | policy, hooks, templates, agents and docs stay coherent | `pnpm check:agent-context` |
 
 Override a Bash block with `# agent-guard: allow <reason>` (logged to `~/.claude/tools/ctx-audit/guard-overrides.log`). Override a context block with `ctx-override: <reason>` in the prompt.
