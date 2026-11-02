@@ -2,6 +2,7 @@ import { buildWorkshopView } from "@bluewave/ship-design";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { loadDrawingBoardContent } from "../content.js";
+import { DesignWorkspaceFixture } from "../DesignWorkspaceFixture.js";
 import { BriefPanel } from "./BriefPanel.js";
 
 afterEach(cleanup);
@@ -18,7 +19,11 @@ describe("BriefPanel accommodation", () => {
       ...reference.draft,
       requirement: { ...reference.draft.requirement, accommodationStandard: "STANDARD" as const },
     };
-    render(<BriefPanel draft={draft} view={view} edit={edit} ctx={env.ctx} />);
+    render(
+      <DesignWorkspaceFixture draft={draft} view={view} edit={edit} ctx={env.ctx}>
+        <BriefPanel />
+      </DesignWorkspaceFixture>,
+    );
 
     const trigger = screen.getByRole("combobox", { name: "Accommodation" });
     expect(trigger.textContent).toContain("Standard");

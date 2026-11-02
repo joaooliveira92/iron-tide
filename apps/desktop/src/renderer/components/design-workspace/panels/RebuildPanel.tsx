@@ -1,7 +1,7 @@
 import type { DesignDraft } from "@bluewave/ship-design";
 import { useBridge } from "../../../lib/bridge-context.js";
 import { Alert } from "../../ui/alert.js";
-import type { DrawingBoardContent } from "../content.js";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { ConfirmAction } from "../ConfirmAction.js";
 import { NumberField, SelectField } from "../fields.js";
 import { limitRows } from "../rebuildView.js";
@@ -19,17 +19,14 @@ import { useRebuildState } from "./rebuild/useRebuildState.js";
 
 export function RebuildPanel({
   sessionId,
-  draft,
-  content,
   onLoad,
   dirty,
 }: {
   readonly sessionId?: string;
-  readonly draft: DesignDraft;
-  readonly content: DrawingBoardContent;
   readonly onLoad: (draft: DesignDraft) => void;
   readonly dirty: boolean;
 }) {
+  const { draft, content } = useDesignState();
   const bridge = useBridge();
   const format = usePresentationFormat();
   const { state, actions } = useRebuildState({

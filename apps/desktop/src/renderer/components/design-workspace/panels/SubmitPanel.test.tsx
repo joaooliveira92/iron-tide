@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { loadDrawingBoardContent } from "../content.js";
+import { DesignWorkspaceFixture } from "../DesignWorkspaceFixture.js";
 import { rejectionLead, SubmitPanel } from "./SubmitPanel.js";
 
 vi.mock("../../../shell/CampaignShellContext.js", () => ({
@@ -8,7 +8,6 @@ vi.mock("../../../shell/CampaignShellContext.js", () => ({
   useActiveCampaignCurrencyContext: () => ({}),
 }));
 
-const draft = loadDrawingBoardContent().references[0]!.draft;
 const execute = vi.fn();
 beforeEach(() => {
   execute.mockReset();
@@ -30,7 +29,11 @@ describe("SubmitPanel", () => {
       value: { commandId: "c", designVersionId: "d", appliedOnNextTurn: true },
       diagnostics: [],
     });
-    render(<SubmitPanel sessionId="s" draft={draft} valid />);
+    render(
+      <DesignWorkspaceFixture>
+        <SubmitPanel sessionId="s" />
+      </DesignWorkspaceFixture>,
+    );
     name("Arethusa");
     submit();
     expect(await screen.findByText(/Design queued/)).toBeTruthy();
@@ -49,7 +52,11 @@ describe("SubmitPanel", () => {
   });
 
   it("says why Submit is unavailable until the class has a name", () => {
-    render(<SubmitPanel sessionId="s" draft={draft} valid />);
+    render(
+      <DesignWorkspaceFixture>
+        <SubmitPanel sessionId="s" />
+      </DesignWorkspaceFixture>,
+    );
     expect(screen.getByText("Name the class to submit it.")).toBeTruthy();
     name("Arethusa");
     expect(screen.queryByText("Name the class to submit it.")).toBeNull();
@@ -57,30 +64,22 @@ describe("SubmitPanel", () => {
 
   it("shows the host's class name as text and sends the player to the one field to edit it", () => {
     const onRequestName = vi.fn();
-    const { rerender } = render(
-      <SubmitPanel
-        sessionId="s"
-        draft={draft}
-        valid
-        name=""
-        onNameChange={() => {}}
-        onRequestName={onRequestName}
-      />,
+    const panel = (name: string) => (
+      <DesignWorkspaceFixture>
+        <SubmitPanel
+          sessionId="s"
+          name={name}
+          onNameChange={() => {}}
+          onRequestName={onRequestName}
+        />
+      </DesignWorkspaceFixture>
     );
+    const { rerender } = render(panel(""));
     expect(screen.queryByRole("textbox")).toBeNull();
     expect(screen.getByText("Not named yet")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Enter a class name" }));
     expect(onRequestName).toHaveBeenCalledOnce();
-    rerender(
-      <SubmitPanel
-        sessionId="s"
-        draft={draft}
-        valid
-        name="Arethusa"
-        onNameChange={() => {}}
-        onRequestName={onRequestName}
-      />,
-    );
+    rerender(panel("Arethusa"));
     expect(screen.getByText("Arethusa")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Enter a class name" })).toBeNull();
   });
@@ -91,7 +90,11 @@ describe("SubmitPanel", () => {
       reason: "DESIGN_REJECTED",
       diagnostics: ["Displacement exceeds the limit."],
     });
-    render(<SubmitPanel sessionId="s" draft={draft} valid />);
+    render(
+      <DesignWorkspaceFixture>
+        <SubmitPanel sessionId="s" />
+      </DesignWorkspaceFixture>,
+    );
     name("Heavy");
     submit();
     expect(await screen.findByText(/cannot be built/)).toBeTruthy();
@@ -104,7 +107,11 @@ describe("SubmitPanel", () => {
 
   it("reports a bridge failure instead of an unhandled rejection", async () => {
     execute.mockRejectedValue(new Error("channel closed"));
-    render(<SubmitPanel sessionId="s" draft={draft} valid />);
+    render(
+      <DesignWorkspaceFixture>
+        <SubmitPanel sessionId="s" />
+      </DesignWorkspaceFixture>,
+    );
     name("Lost");
     submit();
     await waitFor(() =>

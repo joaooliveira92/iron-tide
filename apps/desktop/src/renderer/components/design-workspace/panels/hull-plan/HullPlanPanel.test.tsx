@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
+import { DesignWorkspaceFixture } from "../../DesignWorkspaceFixture.js";
 import { HullPlanPanel } from "./HullPlanPanel.js";
 import { PLAN_H, PLAN_W } from "./geometry.js";
 import { IDLE_TOOL } from "./plan-tool.js";
@@ -8,17 +9,20 @@ import { content, reference, view } from "./test-fixtures.js";
 
 afterEach(cleanup);
 
-const draw = () =>
-  render(
-    <HullPlanPanel
+function DesignedHullPlan(props: ComponentProps<typeof HullPlanPanel>) {
+  return (
+    <DesignWorkspaceFixture
       draft={reference.draft}
       content={content}
       view={view}
       month={reference.month}
-      edit={() => {}}
-      findings={[]}
-    />,
+    >
+      <HullPlanPanel {...props} />
+    </DesignWorkspaceFixture>
   );
+}
+
+const draw = () => render(<DesignedHullPlan findings={[]} />);
 
 describe("HullPlanPanel", () => {
   it("is the hull plan panel: a described plan, a drawing key and a schematic note", () => {
@@ -33,17 +37,7 @@ describe("HullPlanPanel", () => {
   it("draws one view at a time: top, side or isometric", () => {
     const { rerender } = draw();
     const show = (shipView: "top" | "side" | "iso") =>
-      rerender(
-        <HullPlanPanel
-          draft={reference.draft}
-          content={content}
-          view={view}
-          month={reference.month}
-          edit={() => {}}
-          findings={[]}
-          shipView={shipView}
-        />,
-      );
+      rerender(<DesignedHullPlan findings={[]} shipView={shipView} />);
     show("side");
     expect(screen.getByRole("img", { name: /^Side profile/ })).toBeTruthy();
     expect(screen.queryByRole("img", { name: /^Top-down plan/ })).toBeNull();
@@ -62,17 +56,7 @@ describe("HullPlanPanel", () => {
     const { rerender } = draw();
     const show = (isoSide: "starboard" | "port") =>
       rerender(
-        <HullPlanPanel
-          draft={reference.draft}
-          content={content}
-          view={view}
-          month={reference.month}
-          edit={() => {}}
-          findings={[]}
-          shipView="iso"
-          isoSide={isoSide}
-          highlightId={fitting}
-        />,
+        <DesignedHullPlan findings={[]} shipView="iso" isoSide={isoSide} highlightId={fitting} />,
       );
     show("starboard");
     expect(screen.getByTestId("anatomy-ship").getAttribute("data-azimuth")).toBe("135");
@@ -89,17 +73,7 @@ describe("HullPlanPanel", () => {
   it("drops its own heading inside the workspace, where the view toolbar names the drawing", () => {
     const { rerender } = draw();
     expect(screen.getByText("Hull plan")).toBeTruthy();
-    rerender(
-      <HullPlanPanel
-        draft={reference.draft}
-        content={content}
-        view={view}
-        month={reference.month}
-        edit={() => {}}
-        findings={[]}
-        shipView="top"
-      />,
-    );
+    rerender(<DesignedHullPlan findings={[]} shipView="top" />);
     expect(screen.queryByText("Hull plan")).toBeNull();
     expect(screen.getByRole("region", { name: "Hull plan" })).toBeTruthy();
   });
@@ -110,16 +84,7 @@ describe("HullPlanPanel", () => {
     const strip = () => within(panel()).getByTestId("section-labels");
     expect(strip().textContent).not.toMatch(/^1/);
     rerender(
-      <HullPlanPanel
-        draft={reference.draft}
-        content={content}
-        view={view}
-        month={reference.month}
-        edit={() => {}}
-        findings={[]}
-        shipView="top"
-        overlays={new Set(["compartments"])}
-      />,
+      <DesignedHullPlan findings={[]} shipView="top" overlays={new Set(["compartments"])} />,
     );
     expect(strip().textContent).toMatch(/1.*2.*3.*4.*5.*6.*7.*8/);
   });
@@ -148,19 +113,7 @@ describe("HullPlanPanel", () => {
     const Counting = () => {
       const [tool, setTool] = useState(IDLE_TOOL);
       renders++;
-      return (
-        <HullPlanPanel
-          draft={reference.draft}
-          content={content}
-          view={view}
-          month={reference.month}
-          edit={() => {}}
-          findings={[]}
-          shipView="top"
-          tool={tool}
-          onTool={setTool}
-        />
-      );
+      return <DesignedHullPlan findings={[]} shipView="top" tool={tool} onTool={setTool} />;
     };
     const { container } = render(<Counting />);
     const plan = container.querySelector("svg[aria-label]") as SVGSVGElement;

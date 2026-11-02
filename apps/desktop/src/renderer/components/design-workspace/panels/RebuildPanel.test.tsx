@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { loadDrawingBoardContent } from "../content.js";
+import { DesignWorkspaceFixture } from "../DesignWorkspaceFixture.js";
 import { RebuildPanel } from "./RebuildPanel.js";
 
 const campaign = vi.hoisted(() => ({ revision: 3 }));
@@ -39,13 +40,9 @@ describe("RebuildPanel rebuild action selector (SB3-R25/R34)", () => {
         : Promise.resolve({ outcome: "success", value: {}, diagnostics: [] }),
     );
     render(
-      <RebuildPanel
-        sessionId="s"
-        draft={draft}
-        content={content}
-        onLoad={() => {}}
-        dirty={false}
-      />,
+      <DesignWorkspaceFixture content={content} draft={draft}>
+        <RebuildPanel sessionId="s" onLoad={() => {}} dirty={false} />
+      </DesignWorkspaceFixture>,
     );
     const select = (await screen.findByRole("combobox", {
       name: "Rebuild action",
@@ -67,7 +64,9 @@ describe("RebuildPanel while the campaign moves on", () => {
         : Promise.resolve({ outcome: "success", value: {}, diagnostics: [] }),
     );
     const panel = () => (
-      <RebuildPanel sessionId="s" draft={draft} content={content} onLoad={() => {}} dirty={false} />
+      <DesignWorkspaceFixture content={content} draft={draft}>
+        <RebuildPanel sessionId="s" onLoad={() => {}} dirty={false} />
+      </DesignWorkspaceFixture>
     );
     const { rerender } = render(panel());
     await screen.findByText(/None of your ships can be rebuilt yet/);
