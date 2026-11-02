@@ -149,11 +149,11 @@ export async function startFromReference(page: Page, referenceName: string): Pro
   return workspace;
 }
 
+export const classNameField = (page: Page): Locator =>
+  page.getByRole("group", { name: "Design commands" }).getByRole("textbox", { name: "Class name" });
+
 export async function nameTheClass(page: Page, className: string): Promise<void> {
-  await page
-    .getByRole("group", { name: "Design commands" })
-    .getByRole("textbox", { name: "Class name" })
-    .fill(className);
+  await classNameField(page).fill(className);
 }
 
 export async function submitReferenceDesign(

@@ -81,6 +81,33 @@ describe("Drawing Board draft sidecar", () => {
     expect(existsSync(join(saveDir, DRAWING_BOARD_DRAFT_FILENAME))).toBe(false);
   });
 
+  it("keeps the class name with the working design, and reads an older draft without one", async () => {
+    await runProgram(writeDrawingBoardDraftProgram, {
+      sessionId: "s",
+      draft: { presetId: reference.id, log, className: "Torpedo Cruiser" },
+    });
+    expect(await runProgram(readDrawingBoardDraftProgram, "s")).toMatchObject({
+      outcome: "success",
+      value: { draft: { presetId: reference.id, log, className: "Torpedo Cruiser" } },
+    });
+
+    await runProgram(writeDrawingBoardDraftProgram, {
+      sessionId: "s",
+      draft: { presetId: reference.id, log },
+    });
+    const unnamed = await runProgram(readDrawingBoardDraftProgram, "s");
+    expect(unnamed).toMatchObject({ outcome: "success", value: { draft: { log } } });
+    if (unnamed.outcome === "success")
+      expect((unnamed.value as ReadDrawingBoardDraftResult).draft).not.toHaveProperty("className");
+
+    expect(
+      await runProgram(writeDrawingBoardDraftProgram, {
+        sessionId: "s",
+        draft: { presetId: reference.id, log, className: "x".repeat(61) },
+      }),
+    ).toMatchObject({ outcome: "error", reason: "INVALID_PAYLOAD" });
+  });
+
   it("rejects something that is not an edit log, and reads a corrupt file as no draft", async () => {
     const rejected = await runProgram(writeDrawingBoardDraftProgram, {
       sessionId: "s",

@@ -8,15 +8,21 @@ import {
 import type { ComponentDef } from "@bluewave/ship-design";
 
 export type ImportResult =
-  | { readonly ok: true; readonly draft: DesignDraft; readonly notes: readonly string[] }
+  | {
+      readonly ok: true;
+      readonly draft: DesignDraft;
+      readonly className: string | null;
+      readonly notes: readonly string[];
+    }
   | { readonly ok: false; readonly error: string };
 
 export function exportDesign(
   draft: DesignDraft,
   catalogue: readonly ComponentDef[],
   compiled: CompiledDesign,
+  className = "",
 ): string {
-  return encodeDesignFile(draft, catalogue, compiled);
+  return encodeDesignFile(draft, catalogue, compiled, className);
 }
 
 export function importDesign(text: string, catalogue: readonly ComponentDef[]): ImportResult {
@@ -28,7 +34,7 @@ export function importDesign(text: string, catalogue: readonly ComponentDef[]): 
       notes.push(
         `Component definitions changed since this file was saved (${d.contentDrift.join(", ")}); the design was recompiled.`,
       );
-    return { ok: true, draft: d.draft, notes };
+    return { ok: true, draft: d.draft, className: d.className, notes };
   } catch (e) {
     return {
       ok: false,

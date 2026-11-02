@@ -9,7 +9,12 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { PencilRuler } from "lucide-react";
-import type { ArmourRegionId, BatteryRole, ComponentCategory } from "@bluewave/ship-design";
+import type {
+  ArmourRegionId,
+  BatteryRole,
+  ComponentCategory,
+  DesignDraft,
+} from "@bluewave/ship-design";
 import { Alert } from "../../components/ui/alert.js";
 import { AlternativesPanel } from "../../components/design-workspace/panels/AlternativesPanel.js";
 import { BriefPanel } from "../../components/design-workspace/panels/BriefPanel.js";
@@ -166,12 +171,22 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
     armourMaterials,
   } = useDesignSession(campaignMonth);
   const { draft, view, content } = state;
+  const [shipClassName, setShipClassName] = useState("");
   const autosave = useDraftAutosave({
     sessionId,
     presetId: state.preset.id,
     log: state.log,
-    restore: actions.restore,
+    className: shipClassName,
+    restore: (presetId, saved, savedName) => {
+      const restored = actions.restore(presetId, saved);
+      if (restored && savedName !== null) setShipClassName(savedName);
+      return restored;
+    },
   });
+  const loadDesign = (d: DesignDraft, name: string | null) => {
+    loadDraft(d);
+    if (name !== null) setShipClassName(name);
+  };
   const [findingsView, setFindingsView] = useFindingsView();
   const [shipView, setShipView] = useState<ShipView>(DEFAULT_VIEW);
   const [isoSide, setIsoSide] = useState<IsoSide>("starboard");
@@ -211,7 +226,6 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
     setPlace(null);
     setOverlays(layersFor(null));
   };
-  const [shipClassName, setShipClassName] = useState("");
   const [showSystemsUnavailable, setShowSystemsUnavailable] = useState(false);
   const [armourHighlight, setArmourHighlight] = useState<ArmourRegionId | null>(null);
   const selectArmourRegion = (region: ArmourRegionId | null) => {
@@ -882,7 +896,8 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
           view={view}
           content={content}
           presetName={state.preset.name}
-          onLoad={loadDraft}
+          className={shipClassName}
+          onLoad={loadDesign}
           dirty={state.editCount > 0}
         />
       </WorkspaceDialog>

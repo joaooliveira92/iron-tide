@@ -55,7 +55,10 @@ export interface DesignFile {
   readonly draft: DesignDraft;
   readonly componentHashes: Readonly<Record<string, string>>;
   readonly compiledHash: string | null;
+  readonly className?: string;
 }
+
+export const MAX_CLASS_NAME_LENGTH = 60;
 
 const isObj = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v);
@@ -156,8 +159,10 @@ export function encodeDesignFile(
   draft: DesignDraft,
   catalogue: readonly ComponentDef[],
   compiled: CompiledDesign | null,
+  className = "",
 ): string {
   assertNoFloats(draft);
+  const name = className.trim();
   const byId = new Map(catalogue.map((c) => [c.id, c]));
   const hashes: Record<string, string> = {};
   for (const p of draft.placements) {
@@ -170,6 +175,7 @@ export function encodeDesignFile(
     draft,
     componentHashes: hashes,
     compiledHash: compiled?.hash ?? null,
+    ...(name === "" ? {} : { className: name }),
   };
   return canonicalSerialize(file);
 }
@@ -227,6 +233,18 @@ export interface DecodedDesign {
   readonly migratedFrom: number | null;
   readonly contentDrift: readonly string[];
   readonly compiledHash: string | null;
+  readonly className: string | null;
+}
+
+function decodeClassName(raw: unknown): string | null {
+  if (raw === undefined) return null;
+  if (typeof raw !== "string" || raw.trim().length > MAX_CLASS_NAME_LENGTH)
+    throw new PersistenceError(
+      "INVALID_DRAFT",
+      `className must be a string of at most ${MAX_CLASS_NAME_LENGTH} characters`,
+    );
+  const name = raw.trim();
+  return name === "" ? null : name;
 }
 
 export function decodeDesignFile(
@@ -261,6 +279,7 @@ export function decodeDesignFile(
   const problems = validateDraftShape(cur.draft);
   if (problems.length > 0) throw new PersistenceError("INVALID_DRAFT", problems.join("; "));
   const draft = cur.draft as unknown as DesignDraft;
+  const className = decodeClassName(cur.className);
   const stored = isObj(cur.componentHashes) ? (cur.componentHashes as Record<string, string>) : {};
   const byId = new Map(catalogue.map((c) => [c.id, c]));
   const drift: string[] = [];
@@ -274,6 +293,7 @@ export function decodeDesignFile(
     migratedFrom: original === DESIGN_SCHEMA_VERSION ? null : original,
     contentDrift: drift,
     compiledHash: typeof cur.compiledHash === "string" ? cur.compiledHash : null,
+    className,
   };
 }
 

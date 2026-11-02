@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { test, expect, openCampaign } from "./fixtures.js";
 import {
@@ -14,7 +14,7 @@ import {
   saveDesignFile,
   setNumber,
 } from "./design-session.js";
-import { nameTheClass, startFromReference } from "./flows.js";
+import { classNameField, nameTheClass, startFromReference } from "./flows.js";
 
 const BATTLESHIP = "Pre-dreadnought battleship (B)";
 const CLASS_NAME = "Saved Design E2E";
@@ -46,8 +46,10 @@ test("a player tunes a battleship, saves it, keeps experimenting and goes back t
 
   await saveDesignFile(e2e.app, page, file);
   await closeFileDialog(page);
+  expect(JSON.parse(await readFile(file, "utf8"))).toMatchObject({ className: CLASS_NAME });
 
   await test.step("keep experimenting after the save", async () => {
+    await nameTheClass(page, "Scratch Name");
     const narrowed = await openHullDimensions(page);
     await setNumber(narrowed, "Beam (m)", "18.50");
     const warning = page.getByRole("alertdialog", { name: "This change breaks the design" });
@@ -67,6 +69,7 @@ test("a player tunes a battleship, saves it, keeps experimenting and goes back t
     await expect(dialog.getByLabel("Last design file")).toContainText("Opened");
     await closeFileDialog(page);
 
+    await expect(classNameField(page)).toHaveValue(CLASS_NAME);
     await expect.poll(() => readEngineeringStatus(page)).toEqual(tuned);
     const reopenedHull = await openHullDimensions(page);
     await expect(reopenedHull.getByRole("textbox", { name: "Beam (m)" })).toHaveValue("20.50");

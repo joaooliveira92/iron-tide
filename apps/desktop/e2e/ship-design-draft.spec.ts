@@ -11,7 +11,13 @@ import {
   readEngineeringStatus,
   setNumber,
 } from "./design-session.js";
-import { nameTheClass, navigateTo, openShipbuilding, startFromReference } from "./flows.js";
+import {
+  classNameField,
+  nameTheClass,
+  navigateTo,
+  openShipbuilding,
+  startFromReference,
+} from "./flows.js";
 
 const BATTLESHIP = "Pre-dreadnought battleship (B)";
 
@@ -47,6 +53,7 @@ test("an unfinished design is waiting after a restart, and the player can keep i
       await openShipbuilding(next);
       await expect(next.getByRole("button", { name: "Start over" })).toBeVisible();
       await expect(next.getByRole("button", { name: "Keep working" })).toBeVisible();
+      await expect(classNameField(next)).toHaveValue("Draft E2E");
       await expect.poll(() => readEngineeringStatus(next)).toEqual(stripped);
       const restored = await openArmamentTab(next, "Torpedoes");
       await expect.poll(() => fittingRows(restored)).toHaveLength(0);

@@ -14,6 +14,19 @@ describe("design files", () => {
     expect(r).toMatchObject({ ok: true, notes: [] });
     if (r.ok) expect(r.draft).toEqual(ref.draft);
   });
+  it("carries the class name in the file, and opens an unnamed file with none", () => {
+    const named = exportDesign(ref.draft, content.components, view.compiled, " Dido ");
+    expect(importDesign(named, content.components)).toMatchObject({
+      ok: true,
+      className: "Dido",
+      notes: [],
+    });
+    const unnamed = exportDesign(ref.draft, content.components, view.compiled);
+    expect(importDesign(unnamed, content.components)).toMatchObject({
+      ok: true,
+      className: null,
+    });
+  });
   it("rejects garbage and foreign files with a message, never a throw", () => {
     for (const bad of ["", "not json", "{}", '{"format":"other","schemaVersion":1}'])
       expect(importDesign(bad, content.components)).toMatchObject({ ok: false });
