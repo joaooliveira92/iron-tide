@@ -19,6 +19,24 @@ export class PeaceTermUnsupported extends Data.TaggedError("PeaceTermUnsupported
   readonly termTag: string;
 }> {}
 
+export class PeaceTermMalformed extends Data.TaggedError("PeaceTermMalformed")<{
+  readonly termTag: string;
+}> {}
+
+export class PeaceAreaNotOwned extends Data.TaggedError("PeaceAreaNotOwned")<{
+  readonly areaId: string;
+  readonly nationId: string;
+}> {}
+
+export class PeaceAreaIsHome extends Data.TaggedError("PeaceAreaIsHome")<{
+  readonly areaId: string;
+  readonly nationId: string;
+}> {}
+
+export class PeaceAreaUnpriced extends Data.TaggedError("PeaceAreaUnpriced")<{
+  readonly areaId: string;
+}> {}
+
 export class PeaceTermOverBudget extends Data.TaggedError("PeaceTermOverBudget")<{
   readonly cost: number;
   readonly budget: number;
@@ -29,16 +47,32 @@ export type ProposePeaceFailure =
   | PeaceWarNotActive
   | PeaceCallerNotPrincipal
   | PeaceTermUnsupported
+  | PeaceTermMalformed
+  | PeaceAreaNotOwned
+  | PeaceAreaIsHome
+  | PeaceAreaUnpriced
   | PeaceTermOverBudget;
 
 export type UncheckedProposePeace = Omit<ProposePeaceCommand, "term"> & {
-  readonly term: { readonly _tag: string };
+  readonly term: { readonly _tag: string; readonly areaId?: unknown };
 };
 
-export function peaceTermCost(term: PeaceTerm): number {
+export type PeaceCheckSnapshot = Pick<CampaignSnapshot, "wars" | "world" | "nations">;
+
+type WorldAreas = Pick<CampaignSnapshot["world"], "areas">;
+
+export function peaceTermCost(
+  term: PeaceTerm,
+  world: WorldAreas,
+): Result.Result<number, PeaceAreaUnpriced> {
   switch (term._tag) {
     case "StatusQuo":
-      return 0;
+      return Result.succeed(0);
+    case "CedeArea": {
+      const cost = world.areas.find((a) => a.id === term.areaId)?.cessionCost;
+      if (cost === undefined) return Result.fail(new PeaceAreaUnpriced({ areaId: term.areaId }));
+      return Result.succeed(cost);
+    }
   }
 }
 
@@ -50,12 +84,39 @@ export function checkPeaceBudget(
   return Result.succeed(undefined);
 }
 
-function isSupportedTerm(term: { readonly _tag: string }): term is PeaceTerm {
-  return term._tag === "StatusQuo";
+function readTerm(
+  term: UncheckedProposePeace["term"],
+): Result.Result<PeaceTerm, ProposePeaceFailure> {
+  switch (term._tag) {
+    case "StatusQuo":
+      return Result.succeed({ _tag: "StatusQuo" });
+    case "CedeArea":
+      if (typeof term.areaId !== "string" || term.areaId.length === 0)
+        return Result.fail(new PeaceTermMalformed({ termTag: term._tag }));
+      return Result.succeed({ _tag: "CedeArea", areaId: term.areaId });
+    default:
+      return Result.fail(new PeaceTermUnsupported({ termTag: term._tag }));
+  }
+}
+
+export function checkCedeArea(
+  snapshot: Pick<CampaignSnapshot, "world" | "nations">,
+  loserId: string,
+  areaId: string,
+): Result.Result<void, PeaceAreaNotOwned | PeaceAreaIsHome> {
+  const area = snapshot.world.areas.find((a) => a.id === areaId);
+  const heldByOthers = (snapshot.world.possessions ?? []).some(
+    (p) => p.areaId === areaId && p.nationId !== loserId,
+  );
+  if (area === undefined || area.controller !== loserId || heldByOthers)
+    return Result.fail(new PeaceAreaNotOwned({ areaId, nationId: loserId }));
+  if (snapshot.nations.get(loserId)?.homeAreaId === areaId)
+    return Result.fail(new PeaceAreaIsHome({ areaId, nationId: loserId }));
+  return Result.succeed(undefined);
 }
 
 export function checkProposePeace(
-  snapshot: Pick<CampaignSnapshot, "wars">,
+  snapshot: PeaceCheckSnapshot,
   body: UncheckedProposePeace,
 ): Result.Result<PeaceTerm, ProposePeaceFailure> {
   const war = snapshot.wars.wars.find((w) => w.id === body.warId);
@@ -65,10 +126,18 @@ export function checkProposePeace(
   const isDefender = war.defenderId === body.nationId;
   if (!isAttacker && !isDefender)
     return Result.fail(new PeaceCallerNotPrincipal({ warId: body.warId, nationId: body.nationId }));
-  if (!isSupportedTerm(body.term))
-    return Result.fail(new PeaceTermUnsupported({ termTag: body.term._tag }));
+  const read = readTerm(body.term);
+  if (Result.isFailure(read)) return Result.fail(read.failure);
+  const term = read.success;
+  if (term._tag === "CedeArea") {
+    const loserId = isAttacker ? war.defenderId : war.attackerId;
+    const owned = checkCedeArea(snapshot, loserId, term.areaId);
+    if (Result.isFailure(owned)) return Result.fail(owned.failure);
+  }
+  const cost = peaceTermCost(term, snapshot.world);
+  if (Result.isFailure(cost)) return Result.fail(cost.failure);
   const budget = isAttacker ? war.attackerWarScore : war.defenderWarScore;
-  const withinBudget = checkPeaceBudget(peaceTermCost(body.term), budget);
+  const withinBudget = checkPeaceBudget(cost.success, budget);
   if (Result.isFailure(withinBudget)) return Result.fail(withinBudget.failure);
-  return Result.succeed(body.term);
+  return Result.succeed(term);
 }

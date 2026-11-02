@@ -163,14 +163,42 @@ export function validateProposePeace(
       return rejectValidation(
         envelope,
         snapshot,
-        "PEACE_OFFER_INVALID",
+        "PEACE_TERM_UNSUPPORTED",
         `Peace term ${failure.termTag} is not supported`,
+      );
+    case "PeaceTermMalformed":
+      return rejectValidation(
+        envelope,
+        snapshot,
+        "PEACE_OFFER_INVALID",
+        `Peace term ${failure.termTag} is malformed`,
+      );
+    case "PeaceAreaNotOwned":
+      return rejectValidation(
+        envelope,
+        snapshot,
+        "PEACE_AREA_NOT_OWNED",
+        `Area ${failure.areaId} is not held wholly by ${failure.nationId}`,
+      );
+    case "PeaceAreaIsHome":
+      return rejectValidation(
+        envelope,
+        snapshot,
+        "PEACE_AREA_IS_HOME",
+        `Area ${failure.areaId} is the home area of ${failure.nationId} and cannot be ceded`,
+      );
+    case "PeaceAreaUnpriced":
+      return rejectValidation(
+        envelope,
+        snapshot,
+        "PEACE_AREA_UNPRICED",
+        `Area ${failure.areaId} has no cession cost and cannot be ceded`,
       );
     case "PeaceTermOverBudget":
       return rejectValidation(
         envelope,
         snapshot,
-        "PEACE_OFFER_INVALID",
+        "PEACE_TERM_OVER_BUDGET",
         `Peace term costs ${failure.cost} against a war-score budget of ${failure.budget}`,
       );
   }

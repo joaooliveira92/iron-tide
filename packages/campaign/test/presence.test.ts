@@ -71,6 +71,28 @@ describe("buildWorldState possessions", () => {
   });
 });
 
+describe("buildWorldState area cession cost", () => {
+  it("carries an authored cession cost and leaves unpriced areas without the key", () => {
+    const world = buildWorldState(
+      {
+        areas: [
+          { id: "a", name: "A", type: "coastal", controller: "uk", cessionCost: 6 },
+          { id: "b", name: "B", type: "coastal", controller: "uk" },
+        ],
+      },
+      START,
+    );
+    expect(world.areas[0]).toEqual({
+      id: "a",
+      name: "A",
+      type: "coastal",
+      controller: "uk",
+      cessionCost: 6,
+    });
+    expect(Object.keys(world.areas[1]!)).not.toContain("cessionCost");
+  });
+});
+
 describe("buildNationStates home area", () => {
   it("carries the authored home area onto the nation state", () => {
     const pack = {

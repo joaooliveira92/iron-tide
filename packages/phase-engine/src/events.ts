@@ -558,6 +558,34 @@ export const foreignStationEvents = {
     ),
 };
 
+export function possessionTransferredEvent(
+  possessionId: string,
+  areaId: string,
+  fromNationId: string,
+  toNationId: string,
+  warId: string,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `PossessionTransferred-${possessionId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "possession",
+    aggregateId: possessionId,
+    eventType: "PossessionTransferred",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "PossessionTransferred",
+      possessionId,
+      areaId,
+      fromNationId,
+      toNationId,
+      warId,
+    },
+    sequenceNumber: seq,
+  };
+}
+
 export function makeLedgerEntry(
   nationId: string,
   phaseId: string,

@@ -358,7 +358,7 @@ const F = {
   ),
   PoliticalState: fields<PoliticalState>()("relations", "shells"),
   IntelligenceState: fields<IntelligenceState>()("shells"),
-  AreaData: fields<AreaData>()("id", "name", "type", "controller"),
+  AreaData: fields<AreaData>()("id", "name", "type", "controller", "cessionCost"),
   RouteData: fields<RouteData>()("id", "from", "to", "type", "distance"),
   PortData: fields<PortData>()("id", "name", "areaId", "nationId", "level"),
   PossessionData: fields<PossessionData>()("id", "nationId", "areaId"),

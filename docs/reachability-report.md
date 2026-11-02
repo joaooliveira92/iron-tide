@@ -49,7 +49,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 
 | Row | Player verb | Decision |
 | --- | --- | --- |
-| accept-peace | Accept a peace settlement | #422, #484 |
+| accept-peace | Accept a peace settlement | #422, #483, #484 |
 | fight-or-decline-battle | Accept or decline a battle offer and fight it with stance, speed and course orders | #422 |
 | prestige | See and act on national prestige | #223 |
 | division-battle-experience | Divisions gain experience from the battles they fight | #276 |

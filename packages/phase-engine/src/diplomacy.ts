@@ -18,6 +18,7 @@ import {
   TENSION_WAR,
 } from "@bluewave/campaign";
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
+import { checkProposePeace } from "@bluewave/commands";
 import type {
   AcceptPeaceCommand,
   ProposePeaceCommand,
@@ -25,6 +26,9 @@ import type {
   DeclareWarCommand,
 } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
+import type { DomainEventEnvelope } from "@bluewave/events";
+import { Result } from "effect";
+import { possessionTransferredEvent } from "./events.js";
 import { applyEventsForMonth } from "./eventDraw.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
@@ -177,18 +181,74 @@ export function applyAcceptPeace(
   return next;
 }
 
+export interface PeaceTermSink {
+  readonly nextSeq: () => SafeInt;
+  readonly append: (event: DomainEventEnvelope) => void;
+  readonly reject: (code: string, message: string) => void;
+}
+
+function cedeArea(
+  snapshot: CampaignSnapshot,
+  body: ProposePeaceCommand,
+  areaId: string,
+  campaignMonth: string,
+  sink: PeaceTermSink,
+): CampaignSnapshot {
+  const war = snapshot.wars.wars.find((w) => w.id === body.warId);
+  if (!war) return snapshot;
+  const loserId = war.attackerId === body.nationId ? war.defenderId : war.attackerId;
+  const possessions = snapshot.world.possessions ?? [];
+  for (const possession of possessions) {
+    if (possession.areaId !== areaId) continue;
+    sink.append(
+      possessionTransferredEvent(
+        possession.id,
+        areaId,
+        loserId,
+        body.nationId,
+        body.warId,
+        sink.nextSeq(),
+        campaignMonth,
+      ),
+    );
+  }
+  return {
+    ...snapshot,
+    world: {
+      ...snapshot.world,
+      areas: snapshot.world.areas.map((a) =>
+        a.id === areaId ? { ...a, controller: body.nationId } : a,
+      ),
+      possessions: possessions.map((p) =>
+        p.areaId === areaId ? { ...p, nationId: body.nationId } : p,
+      ),
+    },
+  };
+}
+
 export function applyProposePeace(
   snapshot: CampaignSnapshot,
   body: ProposePeaceCommand,
   campaignMonth: string,
+  sink: PeaceTermSink,
 ): CampaignSnapshot {
+  const accept: AcceptPeaceCommand = {
+    type: "AcceptPeace",
+    nationId: body.nationId,
+    warId: body.warId,
+  };
   switch (body.term._tag) {
     case "StatusQuo":
-      return applyAcceptPeace(
-        snapshot,
-        { type: "AcceptPeace", nationId: body.nationId, warId: body.warId },
-        campaignMonth,
-      );
+      return applyAcceptPeace(snapshot, accept, campaignMonth);
+    case "CedeArea": {
+      const checked = checkProposePeace(snapshot, body);
+      if (Result.isFailure(checked)) {
+        sink.reject("PEACE_OFFER_INVALID", `Peace term no longer applies: ${checked.failure._tag}`);
+        return snapshot;
+      }
+      const ceded = cedeArea(snapshot, body, body.term.areaId, campaignMonth, sink);
+      return applyAcceptPeace(ceded, accept, campaignMonth);
+    }
   }
 }
 

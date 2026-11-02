@@ -16,6 +16,7 @@ export type {
   ForeignStationNoRoute,
   ForeignStationShipMoved,
   NationBudgetChanged,
+  PossessionTransferred,
   PresenceShortfall,
   PrestigeChanged,
   PrestigeLossRequested,

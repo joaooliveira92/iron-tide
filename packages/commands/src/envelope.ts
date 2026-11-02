@@ -160,7 +160,9 @@ export interface AcceptPeaceCommand {
   nationId: string;
   warId: string;
 }
-export type PeaceTerm = { readonly _tag: "StatusQuo" };
+export type PeaceTerm =
+  | { readonly _tag: "StatusQuo" }
+  | { readonly _tag: "CedeArea"; readonly areaId: string };
 export interface ProposePeaceCommand {
   type: "ProposePeace";
   nationId: string;

@@ -111,6 +111,13 @@ describe("replay format v2: recorded command envelopes", () => {
         warId: "war-1",
         term: { _tag: "StatusQuo" },
       });
+    const ceded = decodeReplayFile(proposal({ _tag: "CedeArea", areaId: "med_malta" }));
+    expect(Result.isSuccess(ceded)).toBe(true);
+    if (Result.isSuccess(ceded))
+      expect(ceded.success.months[0]!.commands[0]!.body).toMatchObject({
+        term: { _tag: "CedeArea", areaId: "med_malta" },
+      });
+    expect(Result.isFailure(decodeReplayFile(proposal({ _tag: "CedeArea" })))).toBe(true);
     expect(Result.isFailure(decodeReplayFile(proposal({ _tag: "Annex" })))).toBe(true);
     expect(Result.isFailure(decodeReplayFile(proposal({ _tag: "StatusQuo", extra: 1 })))).toBe(
       true,

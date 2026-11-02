@@ -33,6 +33,15 @@ describe("ProposePeace status-quo term on the production pack (issue #482)", () 
     expect(obs.propose).toEqual(obs.accept);
   });
 
+  it("cedes a whole priced area and replays to the same hash", () => {
+    expect(obs.cede.warStatus).toBe("ENDED");
+    expect(obs.cede.controllerBefore).toBe("italy");
+    expect(obs.cede.controllerAfter).toBe("austria_hungary");
+    expect(obs.cede.transferredPossessionIds.length).toBeGreaterThan(0);
+    expect(obs.cede.snapshotHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(obs.cede.snapshotHash).not.toBe(obs.propose.snapshotHash);
+  });
+
   it("is byte-identical across two clean processes", () => {
     const a = runChild();
     const b = runChild();
