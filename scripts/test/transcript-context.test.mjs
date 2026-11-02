@@ -43,8 +43,8 @@ before(() => {
 });
 after(() => rmSync(sandbox, { recursive: true, force: true }));
 
-describe("context measurement", () => {
-  test("uses the last main-model iteration, not the advisor-inflated top-level usage", () => {
+void describe("context measurement", () => {
+  void test("uses the last main-model iteration, not the advisor-inflated top-level usage", () => {
     const inflated = {
       input_tokens: 4,
       cache_read_input_tokens: 885314,
@@ -72,7 +72,7 @@ describe("context measurement", () => {
     };
     assert.equal(contextTokensOf(inflated), 444880);
   });
-  test("skips synthetic and sidechain records and reports the latest activity", () => {
+  void test("skips synthetic and sidechain records and reports the latest activity", () => {
     const lines = [
       assistant(120000, "2026-11-02T10:00:00Z"),
       JSON.stringify({
@@ -92,7 +92,7 @@ describe("context measurement", () => {
     assert.equal(tokens, 120000);
     assert.equal(lastActivityMs, Date.parse("2026-11-02T10:05:00Z"));
   });
-  test("readTail drops the partial first line when truncating", () => {
+  void test("readTail drops the partial first line when truncating", () => {
     const path = writeTranscript("tail.jsonl", [
       assistant(1, "2026-11-02T10:00:00Z"),
       assistant(2, "2026-11-02T10:01:00Z"),
@@ -102,7 +102,7 @@ describe("context measurement", () => {
   });
 });
 
-describe("prompt policy", () => {
+void describe("prompt policy", () => {
   const decide = (tokens, prompt, idleMinutes = 1) =>
     evaluatePrompt({
       prompt,
@@ -111,24 +111,24 @@ describe("prompt policy", () => {
       nowMs: NOW,
       policy: POLICY,
     }).action;
-  test("is silent below the advisor band", () => assert.equal(decide(99000, "go"), "none"));
-  test("advises, then warns, as context grows", () => {
+  void test("is silent below the advisor band", () => assert.equal(decide(99000, "go"), "none"));
+  void test("advises, then warns, as context grows", () => {
     assert.equal(decide(POLICY.contextAdvisorTokens, "go"), "advise");
     assert.equal(decide(POLICY.contextWarnTokens, "go"), "warn");
   });
-  test("blocks a resume above the block limit, by phrase or idle gap", () => {
+  void test("blocks a resume above the block limit, by phrase or idle gap", () => {
     assert.equal(decide(POLICY.contextBlockTokens, "Continue where you left off."), "block");
     assert.equal(decide(POLICY.contextBlockTokens, "next task", POLICY.idleResumeMinutes), "block");
     assert.equal(decide(POLICY.contextBlockTokens, "next task", 5), "warn");
   });
-  test("honours the explicit override and the handoff exemptions", () => {
+  void test("honours the explicit override and the handoff exemptions", () => {
     assert.equal(
       decide(POLICY.contextBlockTokens, `continue ${POLICY.contextOverrideToken} urgent fix`),
       "warn",
     );
     assert.equal(decide(POLICY.contextBlockTokens, "/handoff next session", 600), "none");
   });
-  test("is silent when the context is unknown", () =>
+  void test("is silent when the context is unknown", () =>
     assert.equal(
       evaluatePrompt({
         prompt: "x",
@@ -141,12 +141,12 @@ describe("prompt policy", () => {
     ));
 });
 
-describe("hook process", () => {
+void describe("hook process", () => {
   const run = (payload) => {
     const stdin = typeof payload === "string" ? payload : JSON.stringify(payload);
     return spawnSync(process.execPath, [HOOK], { input: stdin, encoding: "utf8" });
   };
-  test("injects additional context in the warn band", () => {
+  void test("injects additional context in the warn band", () => {
     const transcript = writeTranscript("warn.jsonl", [
       assistant(POLICY.contextWarnTokens + 5, new Date().toISOString()),
     ]);
@@ -156,7 +156,7 @@ describe("hook process", () => {
     assert.equal(out.hookSpecificOutput.hookEventName, "UserPromptSubmit");
     assert.match(out.hookSpecificOutput.additionalContext, /\/handoff/u);
   });
-  test("blocks a resume prompt above the limit with exit 2", () => {
+  void test("blocks a resume prompt above the limit with exit 2", () => {
     const transcript = writeTranscript("block.jsonl", [
       assistant(POLICY.contextBlockTokens + 5, new Date().toISOString()),
     ]);
@@ -164,7 +164,7 @@ describe("hook process", () => {
     assert.equal(result.status, 2);
     assert.match(result.stderr, /fresh session/u);
   });
-  test("fails open on malformed input, a missing transcript, or no path", () => {
+  void test("fails open on malformed input, a missing transcript, or no path", () => {
     for (const payload of [
       "",
       "nope",

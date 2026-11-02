@@ -33,7 +33,7 @@ function fixture() {
 
 after(() => created.forEach((dir) => rmSync(dir, { recursive: true, force: true })));
 
-test("lists screens with their entry file and test counts", () => {
+void test("lists screens with their entry file and test counts", () => {
   const screens = listScreens(fixture());
   assert.deepEqual(
     screens.map((s) => [s.name, s.entry?.split("/").pop(), s.tests]),
@@ -44,7 +44,7 @@ test("lists screens with their entry file and test counts", () => {
   );
 });
 
-test("describes a screen: routes, largest files, tests and e2e", () => {
+void test("describes a screen: routes, largest files, tests and e2e", () => {
   const report = describeScreen(fixture(), "alpha", 5);
   assert.equal(report.routes[0], "apps/desktop/src/renderer/shell/App.tsx");
   assert.equal(report.largest[0].lines, 3);
@@ -53,7 +53,7 @@ test("describes a screen: routes, largest files, tests and e2e", () => {
   assert.equal(describeScreen(fixture(), "missing", 5), null);
 });
 
-test("argument parsing accepts --screen with an optional name only", () => {
+void test("argument parsing accepts --screen with an optional name only", () => {
   assert.deepEqual(parseArguments(["--screen"]), {
     help: false,
     screen: true,
@@ -65,7 +65,7 @@ test("argument parsing accepts --screen with an optional name only", () => {
   assert.throws(() => parseArguments(["--screen", "a", "b"]));
 });
 
-test("run returns 4 for an unknown screen and 0 for a known one in the real repo", () => {
+void test("run returns 4 for an unknown screen and 0 for a known one in the real repo", () => {
   const realWrite = process.stdout.write.bind(process.stdout);
   const realError = process.stderr.write.bind(process.stderr);
   process.stdout.write = () => true;
@@ -79,7 +79,7 @@ test("run returns 4 for an unknown screen and 0 for a known one in the real repo
   }
 });
 
-test("every screen documented in desktop-view.md exists in the generated map", () => {
+void test("every screen documented in desktop-view.md exists in the generated map", () => {
   const names = new Set(listScreens(ROOT).map((s) => s.name));
   for (const name of ["fleet", "shipbuilding", "strategic-map", "options"])
     assert.ok(names.has(name), name);

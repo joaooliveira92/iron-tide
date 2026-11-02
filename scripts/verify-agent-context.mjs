@@ -273,6 +273,25 @@ function checkNoDuplicatedThresholds(root, policy, failures) {
   }
 }
 
+const DOC_THRESHOLDS = [
+  ["CLAUDE.md", ["contextWarnTokens", "contextBlockTokens"]],
+  [
+    "docs/agents/context-efficiency.md",
+    ["contextAdvisorTokens", "contextWarnTokens", "contextBlockTokens"],
+  ],
+];
+
+function checkDocsMatchPolicy(root, policy, failures) {
+  for (const [path, keys] of DOC_THRESHOLDS) {
+    const text = readText(root, path);
+    if (text === null) continue;
+    for (const key of keys) {
+      const label = `${Math.round(policy[key] / 1000)}k`;
+      if (!text.includes(label)) failures.push(`${path} must state ${key} as ${label}`);
+    }
+  }
+}
+
 export function checkRepo(root = ROOT) {
   const failures = [];
   const policy = checkPolicy(root, failures);
@@ -283,6 +302,7 @@ export function checkRepo(root = ROOT) {
   if (policy !== null) {
     checkTemplates(root, policy, failures);
     checkNoDuplicatedThresholds(root, policy, failures);
+    checkDocsMatchPolicy(root, policy, failures);
   }
   return failures;
 }

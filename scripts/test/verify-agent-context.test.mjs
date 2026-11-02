@@ -52,28 +52,28 @@ const mutate = (dir, file, edit) => {
 
 after(() => created.forEach((dir) => rmSync(dir, { recursive: true, force: true })));
 
-describe("checkRepo", () => {
-  test("passes on the real repository", () => assert.deepEqual(checkRepo(ROOT), []));
-  test("passes on an exact copy of the governed files", () =>
+void describe("checkRepo", () => {
+  void test("passes on the real repository", () => assert.deepEqual(checkRepo(ROOT), []));
+  void test("passes on an exact copy of the governed files", () =>
     assert.deepEqual(checkRepo(copyTree()), []));
-  test("fails when a hook script is not wired in settings", () => {
+  void test("fails when a hook script is not wired in settings", () => {
     const dir = copyTree();
     mutate(dir, ".claude/settings.json", (t) => t.replace("pre-tool-use-bash.mjs", "other.mjs"));
     assert.match(checkRepo(dir).join("\n"), /PreToolUse does not run/u);
   });
-  test("fails when an agent lacks a model or is missing", () => {
+  void test("fails when an agent lacks a model or is missing", () => {
     const dir = copyTree();
     mutate(dir, ".claude/agents/grep.md", (t) => t.replace(/^model:.*$/mu, ""));
     assert.match(checkRepo(dir).join("\n"), /grep\.md lacks model:/u);
     execFileSync("git", ["rm", "-q", "-f", ".claude/agents/runner.md"], { cwd: dir });
     assert.match(checkRepo(dir).join("\n"), /runner\.md must exist and be tracked/u);
   });
-  test("fails when .claude is ignored again", () => {
+  void test("fails when .claude is ignored again", () => {
     const dir = copyTree();
     mutate(dir, ".gitignore", (t) => t.replace("!.claude/agents/\n", ""));
     assert.match(checkRepo(dir).join("\n"), /\.gitignore must contain !\.claude\/agents\//u);
   });
-  test("fails when the standing subagent authorization or autonomy sections vanish", () => {
+  void test("fails when the standing subagent authorization or autonomy sections vanish", () => {
     const dir = copyTree();
     mutate(dir, "CLAUDE.md", (t) => t.replace("Standing user authorization", "Maybe"));
     mutate(dir, ".ai/templates/task-prompt.md", (t) => t.replace("## Autonomy", "## Style"));
@@ -83,7 +83,7 @@ describe("checkRepo", () => {
     assert.match(text, /task-prompt template is missing "## Autonomy"/u);
     assert.match(text, /AGENTS\.md is missing "## Stop conditions"/u);
   });
-  test("fails when a prompt template embeds skill text or grows past the limit", () => {
+  void test("fails when a prompt template embeds skill text or grows past the limit", () => {
     const dir = copyTree();
     mutate(
       dir,
@@ -94,7 +94,7 @@ describe("checkRepo", () => {
     assert.match(text, /embeds skill frontmatter/u);
     assert.match(text, /limit/u);
   });
-  test("fails when a threshold is hardcoded outside the policy", () => {
+  void test("fails when a threshold is hardcoded outside the policy", () => {
     const dir = copyTree();
     mutate(
       dir,
@@ -103,22 +103,28 @@ describe("checkRepo", () => {
     );
     assert.match(checkRepo(dir).join("\n"), /hardcodes contextWarnTokens/u);
   });
-  test("fails when the snap docs drift from the default size", () => {
+  void test("fails when a doc states a different context limit than the policy", () => {
+    const dir = copyTree();
+    mutate(dir, "CLAUDE.md", (text) => text.replaceAll("200k", "300k"));
+    assert.match(checkRepo(dir).join("\n"), /CLAUDE\.md must state contextBlockTokens as 200k/u);
+  });
+  void test("fails when the snap docs drift from the default size", () => {
     const dir = copyTree();
     mutate(dir, "docs/agents/desktop-snap.md", (t) => t.replaceAll("1280x800", "999x999"));
     assert.match(checkRepo(dir).join("\n"), /desktop-snap\.md must state 1280x800/u);
   });
 });
 
-describe("handoff validation", () => {
+void describe("handoff validation", () => {
   const good = [
     "# Handoff: x (d)",
     ...["Goal", "Done", "Next", "Decisions", "Blockers", "Validation", "Files", "Do not redo"].map(
       (h) => `## ${h}\n\nfine`,
     ),
   ].join("\n\n");
-  test("accepts a complete small handoff", () => assert.deepEqual(checkHandoff(good, POLICY), []));
-  test("rejects missing sections, placeholders and oversize files", () => {
+  void test("accepts a complete small handoff", () =>
+    assert.deepEqual(checkHandoff(good, POLICY), []));
+  void test("rejects missing sections, placeholders and oversize files", () => {
     assert.match(
       checkHandoff(good.replace("## Next", "## Later"), POLICY).join(),
       /missing "## Next"/u,
@@ -129,7 +135,7 @@ describe("handoff validation", () => {
       /limit/u,
     );
   });
-  test("the CLI validates a file and reports usage errors", () => {
+  void test("the CLI validates a file and reports usage errors", () => {
     const dir = mkdtempSync(join(tmpdir(), "bw-handoff-"));
     created.push(dir);
     const file = join(dir, "h.md");
