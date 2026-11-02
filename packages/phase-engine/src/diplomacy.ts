@@ -20,6 +20,7 @@ import {
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
 import type {
   AcceptPeaceCommand,
+  ProposePeaceCommand,
   DeclareBlockadeCommand,
   DeclareWarCommand,
 } from "@bluewave/commands";
@@ -174,6 +175,21 @@ export function applyAcceptPeace(
   });
 
   return next;
+}
+
+export function applyProposePeace(
+  snapshot: CampaignSnapshot,
+  body: ProposePeaceCommand,
+  campaignMonth: string,
+): CampaignSnapshot {
+  switch (body.term._tag) {
+    case "StatusQuo":
+      return applyAcceptPeace(
+        snapshot,
+        { type: "AcceptPeace", nationId: body.nationId, warId: body.warId },
+        campaignMonth,
+      );
+  }
 }
 
 export function applySetRelation(

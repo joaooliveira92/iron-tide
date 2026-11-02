@@ -133,6 +133,11 @@ export const DiplomacyCommandBodySchema = Schema.Union([
   }),
   Schema.Struct({ type: Schema.Literal("AcceptPeace"), warId: nonEmptyString }),
   Schema.Struct({
+    type: Schema.Literal("ProposePeace"),
+    warId: nonEmptyString,
+    term: Schema.Struct({ _tag: Schema.Literal("StatusQuo") }),
+  }),
+  Schema.Struct({
     type: Schema.Literal("FormAlliance"),
     partnerNationId: nonEmptyString,
   }),

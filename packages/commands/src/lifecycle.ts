@@ -273,7 +273,7 @@ export class CommandLifecycle {
         snapshotHash,
         result: { nationId: body.nationId, targetNationId: body.targetNationId },
       };
-    if (body.type === "AcceptPeace")
+    if (body.type === "AcceptPeace" || body.type === "ProposePeace")
       return {
         type: "success",
         commandId: envelope.commandId,
