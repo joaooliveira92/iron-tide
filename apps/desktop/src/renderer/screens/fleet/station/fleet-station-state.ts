@@ -139,7 +139,11 @@ function explainRejection(
       ? diagnostic.slice(diagnostic.indexOf(": ") + 2)
       : diagnostic;
     const pairs = detail.split(", ").map((part) => part.split("="));
-    if (pairs.every((pair) => pair.length === 2 && pair[0] !== "" && REASON_CODE_PATTERN.test(pair[1]!))) {
+    if (
+      pairs.every(
+        (pair) => pair.length === 2 && pair[0] !== "" && REASON_CODE_PATTERN.test(pair[1]!),
+      )
+    ) {
       for (const [id, code] of pairs as [string, string][]) {
         const reasonKey = `${reasonPrefix}.${code}`;
         const subject = id === "<batch>" ? "" : (names.get(id) ?? id);
