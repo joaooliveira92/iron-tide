@@ -139,12 +139,17 @@ function StrategicMapRoute({ sessionId }: CampaignScreenRouteProps) {
 function CampaignPreferencesRoute({ sessionId }: CampaignScreenRouteProps) {
   const actions = useCampaignShellActions();
   return (
-    <CampaignPreferencesScreen sessionId={sessionId} onCloseCampaign={actions.closeCampaign} />
+    <CampaignPreferencesScreen
+      sessionId={sessionId}
+      onCloseCampaign={actions.closeCampaign}
+      onClose={actions.goBack}
+    />
   );
 }
 
 function OptionsRoute() {
-  return <OptionsScreen />;
+  const actions = useCampaignShellActions();
+  return <OptionsScreen onClose={actions.goBack} />;
 }
 
 export const CAMPAIGN_SCREEN_ROUTES: Readonly<Record<CampaignScreen, CampaignScreenRoute>> = {
