@@ -246,11 +246,11 @@
       "status": "dormant-by-decision",
       "engine_package": "phase-engine",
       "engine_modules": [],
-      "engine_symbols": ["applyAcceptPeace"],
+      "engine_symbols": ["applyAcceptPeace", "applyProposePeace"],
       "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": null,
       "evidence_test": null,
-      "decision": "#422"
+      "decision": "#422, #484"
     },
     {
       "id": "form-or-break-alliance",

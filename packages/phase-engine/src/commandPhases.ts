@@ -3,6 +3,7 @@ import { researchPriorityAllocation } from "@bluewave/ship-design";
 import { TENSION_ALLIANCE, TENSION_PEACE } from "@bluewave/campaign";
 import {
   type AcceptPeaceCommand,
+  type ProposePeaceCommand,
   type AssignOfficerCommand,
   type AuthorizeDockExpansionCommand,
   type BreakAllianceCommand,
@@ -45,6 +46,7 @@ import {
 } from "./commands.js";
 import {
   applyAcceptPeace,
+  applyProposePeace,
   applyDeclareBlockade,
   applyDeclareWar,
   applySetNap,
@@ -174,6 +176,15 @@ function applyDiplomacyCommand(ctx: PhaseContext, body: CommandBody): boolean {
     ctx.snapshot.current = applyDeclareWar(
       ctx.snapshot.current,
       body as DeclareWarCommand,
+      campaignMonth,
+    );
+    return true;
+  }
+
+  if (body["type"] === "ProposePeace") {
+    ctx.snapshot.current = applyProposePeace(
+      ctx.snapshot.current,
+      body as ProposePeaceCommand,
       campaignMonth,
     );
     return true;

@@ -1,5 +1,6 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { MAXIMUM_CONCURRENT_WARS } from "@bluewave/campaign";
+import { Result } from "effect";
 import type {
   AcceptPeaceCommand,
   BreakAllianceCommand,
@@ -11,6 +12,7 @@ import type {
   FormAllianceCommand,
   FormNonAggressionPactCommand,
 } from "./envelope.js";
+import { checkProposePeace, type UncheckedProposePeace } from "./peaceProposal.js";
 import type { LifecycleStepResult } from "./types.js";
 import { rejectValidation } from "./validation.js";
 
@@ -121,6 +123,57 @@ export function validateAcceptPeace(
       `${body.nationId} is not a member of war ${body.warId}`,
     );
   return { ok: true };
+}
+
+export function validateProposePeace(
+  envelope: CommandEnvelope<CommandBody>,
+  snapshot: CampaignSnapshot,
+): LifecycleStepResult {
+  const body = envelope.body as UncheckedProposePeace;
+  if (typeof body.warId !== "string" || body.warId.length === 0)
+    return rejectValidation(envelope, snapshot, "PEACE_INVALID", "warId must be non-empty");
+  if (typeof body.term !== "object" || body.term === null || typeof body.term._tag !== "string")
+    return rejectValidation(envelope, snapshot, "PEACE_OFFER_INVALID", "term must be tagged");
+  const checked = checkProposePeace(snapshot, body);
+  if (Result.isSuccess(checked)) return { ok: true };
+  const failure = checked.failure;
+  switch (failure._tag) {
+    case "PeaceWarNotFound":
+      return rejectValidation(
+        envelope,
+        snapshot,
+        "PEACE_INVALID",
+        `War ${failure.warId} not found`,
+      );
+    case "PeaceWarNotActive":
+      return rejectValidation(
+        envelope,
+        snapshot,
+        "PEACE_NO_ACTIVE_WAR",
+        `War ${failure.warId} is not active`,
+      );
+    case "PeaceCallerNotPrincipal":
+      return rejectValidation(
+        envelope,
+        snapshot,
+        "PEACE_NEGOTIATION_INELIGIBLE",
+        `${failure.nationId} is not a principal of war ${failure.warId}`,
+      );
+    case "PeaceTermUnsupported":
+      return rejectValidation(
+        envelope,
+        snapshot,
+        "PEACE_OFFER_INVALID",
+        `Peace term ${failure.termTag} is not supported`,
+      );
+    case "PeaceTermOverBudget":
+      return rejectValidation(
+        envelope,
+        snapshot,
+        "PEACE_OFFER_INVALID",
+        `Peace term costs ${failure.cost} against a war-score budget of ${failure.budget}`,
+      );
+  }
 }
 
 export function validateFormAlliance(

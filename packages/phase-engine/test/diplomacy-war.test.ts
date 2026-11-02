@@ -607,4 +607,114 @@ describe("B10c diplomacy & war acceptance (criteria 1-14)", () => {
     const r2 = run().finalSnapshot;
     expect(sha256Hex(canonicalSerialize(r1))).toBe(sha256Hex(canonicalSerialize(r2)));
   });
+
+  describe("ProposePeace with the status-quo term", () => {
+    const fixedIds = { commandId: "cmd-peace", idempotencyKey: "idem-peace" };
+
+    function atWar(commandingNationId = "GBR"): CampaignSnapshot {
+      const snapshot = withWar(makeSnapshot(threeNations()), {
+        attackerId: "GBR",
+        defenderId: "FRA",
+      });
+      const commanding = snapshot.slots.filter((slot) => slot.nationId === commandingNationId);
+      const others = snapshot.slots.filter((slot) => slot.nationId !== commandingNationId);
+      return {
+        ...snapshot,
+        slots: [...commanding.map((slot) => ({ ...slot, type: "playable" as const })), ...others],
+      };
+    }
+
+    function finalHashAfter(snapshot: CampaignSnapshot, body: CommandBody): string {
+      const cmd = makeCommand(snapshot, body, fixedIds);
+      const result = new MonthExecutor().execute(
+        snapshot,
+        [cmd],
+        "seed",
+        new DiagnosticCollector(),
+      );
+      expect(result.finalSnapshot.wars.wars[0]!.status).toBe("ENDED");
+      return sha256Hex(canonicalSerialize(result.finalSnapshot));
+    }
+
+    function rejectionCode(snapshot: CampaignSnapshot, body: CommandBody): string | null {
+      const outcome = new CommandLifecycle().validate(makeCommand(snapshot, body), snapshot);
+      if (outcome.ok || outcome.outcome.type !== "rejected") return null;
+      return outcome.outcome.diagnostic.code;
+    }
+
+    it.each(["GBR", "FRA"])("%s proposing status quo hashes identically to AcceptPeace", (id) => {
+      const snapshot = atWar(id);
+      const warId = snapshot.wars.wars[0]!.id;
+      const proposed = finalHashAfter(snapshot, {
+        type: "ProposePeace",
+        nationId: id,
+        warId,
+        term: { _tag: "StatusQuo" },
+      });
+      const accepted = finalHashAfter(snapshot, { type: "AcceptPeace", nationId: id, warId });
+      expect(proposed).toBe(accepted);
+    });
+
+    it("ends the war and resets relations to neutral tension 5", () => {
+      const snapshot = atWar();
+      const cmd = makeCommand(snapshot, {
+        type: "ProposePeace",
+        nationId: "GBR",
+        warId: snapshot.wars.wars[0]!.id,
+        term: { _tag: "StatusQuo" },
+      });
+      const result = new MonthExecutor().execute(
+        snapshot,
+        [cmd],
+        "seed",
+        new DiagnosticCollector(),
+      );
+      expect(result.finalSnapshot.wars.wars[0]!.status).toBe("ENDED");
+      const rel = findRelation(result.finalSnapshot, "GBR", "FRA")!;
+      expect(rel.relation).toBe("neutral");
+      expect(rel.tension).toBe(5);
+    });
+
+    it("is rejected with PEACE_INVALID for an unknown war", () => {
+      expect(
+        rejectionCode(atWar(), {
+          type: "ProposePeace",
+          nationId: "GBR",
+          warId: "missing",
+          term: { _tag: "StatusQuo" },
+        }),
+      ).toBe("PEACE_INVALID");
+    });
+
+    it("is rejected with PEACE_NO_ACTIVE_WAR for an ended war", () => {
+      const snapshot = atWar();
+      const ended = {
+        ...snapshot,
+        wars: {
+          ...snapshot.wars,
+          wars: snapshot.wars.wars.map((w) => ({ ...w, status: "ENDED" as const })),
+        },
+      };
+      expect(
+        rejectionCode(ended, {
+          type: "ProposePeace",
+          nationId: "GBR",
+          warId: ended.wars.wars[0]!.id,
+          term: { _tag: "StatusQuo" },
+        }),
+      ).toBe("PEACE_NO_ACTIVE_WAR");
+    });
+
+    it("is rejected with PEACE_NEGOTIATION_INELIGIBLE for a non-principal", () => {
+      const snapshot = atWar();
+      expect(
+        rejectionCode(snapshot, {
+          type: "ProposePeace",
+          nationId: "GER",
+          warId: snapshot.wars.wars[0]!.id,
+          term: { _tag: "StatusQuo" },
+        }),
+      ).toBe("PEACE_NEGOTIATION_INELIGIBLE");
+    });
+  });
 });

@@ -29,10 +29,12 @@ export function useBriefingPager({
   onPrimaryActionChange,
 }: BriefingPagerOptions): BriefingPager {
   const [pageIndex, setPageIndex] = useState(EMPTY_PAGE_INDEX);
+  const [pagedSessionId, setPagedSessionId] = useState(sessionId);
 
-  useEffect(() => {
+  if (pagedSessionId !== sessionId) {
+    setPagedSessionId(sessionId);
     setPageIndex(EMPTY_PAGE_INDEX);
-  }, [sessionId]);
+  }
 
   const isLastPage = pageIndex === OPENING_BRIEFING_PAGE_COUNT - 1;
 

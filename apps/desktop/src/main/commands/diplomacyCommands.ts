@@ -95,6 +95,15 @@ const DIPLOMACY_COMMANDS: {
       warId: command.warId,
     }),
   }),
+  ProposePeace: planWith<"ProposePeace">({
+    discriminator: (command) => command.warId,
+    toEngineBody: (command, playerSlotId) => ({
+      type: "ProposePeace",
+      nationId: playerSlotId,
+      warId: command.warId,
+      term: command.term,
+    }),
+  }),
   FormAlliance: planWith<"FormAlliance">({
     discriminator: (command) => command.partnerNationId,
     toEngineBody: (command, playerSlotId) => ({

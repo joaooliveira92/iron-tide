@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { memo, useCallback, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { cn } from "../../../lib/utils.js";
 import {
   attitudeLabel,
@@ -33,29 +33,34 @@ export interface PowerSummaryCardProps {
   readonly density: CardDensity;
   readonly selected: boolean;
   readonly tabbable: boolean;
-  readonly onSelect: () => void;
-  readonly onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
-  readonly buttonRef: (element: HTMLButtonElement | null) => void;
+  readonly onSelect: (nationId: string) => void;
+  readonly onKeyDown: (event: KeyboardEvent<HTMLButtonElement>, nationId: string) => void;
+  readonly registerButton: (nationId: string, element: HTMLButtonElement | null) => void;
 }
 
-export function PowerSummaryCard({
+export const PowerSummaryCard = memo(function PowerSummaryCard({
   power,
   density,
   selected,
   tabbable,
   onSelect,
   onKeyDown,
-  buttonRef,
+  registerButton,
 }: PowerSummaryCardProps) {
   const tone = OUTLOOK_TONE[power.outlook];
+  const { nationId } = power;
+  const buttonRef = useCallback(
+    (element: HTMLButtonElement | null) => registerButton(nationId, element),
+    [registerButton, nationId],
+  );
   return (
     <button
       ref={buttonRef}
       type="button"
       aria-current={selected ? "true" : undefined}
       tabIndex={tabbable ? 0 : -1}
-      onClick={onSelect}
-      onKeyDown={onKeyDown}
+      onClick={() => onSelect(nationId)}
+      onKeyDown={(event) => onKeyDown(event, nationId)}
       className={cn(
         "group flex w-full items-center gap-3 border-l-4 text-left outline-none",
         "motion-safe:transition-colors motion-safe:duration-150",
@@ -92,7 +97,7 @@ export function PowerSummaryCard({
       {selected && <span className="sr-only">{worldText("navigator.selected")}</span>}
     </button>
   );
-}
+});
 
 export interface PowerNavigatorProps {
   readonly groups: readonly PowerGroupModel[];
@@ -118,7 +123,14 @@ export function PowerNavigator({
     visible[0]?.nationId ??
     null;
 
-  const move = (event: KeyboardEvent<HTMLButtonElement>, current: string) => {
+  const latest = useRef({ visible, onSelect });
+  latest.current = { visible, onSelect };
+
+  const selectPower = useCallback((nationId: string) => {
+    latest.current.onSelect(nationId);
+  }, []);
+
+  const move = useCallback((event: KeyboardEvent<HTMLButtonElement>, current: string) => {
     const step =
       event.key === "ArrowDown"
         ? "next"
@@ -131,11 +143,16 @@ export function PowerNavigator({
               : null;
     if (step === null) return;
     event.preventDefault();
-    const target = adjacentPowerId(visible, current, step);
+    const target = adjacentPowerId(latest.current.visible, current, step);
     if (target === null) return;
-    onSelect(target);
+    latest.current.onSelect(target);
     buttons.current.get(target)?.focus();
-  };
+  }, []);
+
+  const registerButton = useCallback((nationId: string, element: HTMLButtonElement | null) => {
+    if (element === null) buttons.current.delete(nationId);
+    else buttons.current.set(nationId, element);
+  }, []);
 
   const toggle = (tier: RelevanceTier) => {
     const opening = !expanded.has(tier);
@@ -213,12 +230,9 @@ export function PowerNavigator({
                       density={density}
                       selected={power.nationId === selectedId}
                       tabbable={power.nationId === tabStopId}
-                      onSelect={() => onSelect(power.nationId)}
-                      onKeyDown={(event) => move(event, power.nationId)}
-                      buttonRef={(element) => {
-                        if (element === null) buttons.current.delete(power.nationId);
-                        else buttons.current.set(power.nationId, element);
-                      }}
+                      onSelect={selectPower}
+                      onKeyDown={move}
+                      registerButton={registerButton}
                     />
                     {power.nationId === selectedId && (
                       <div className="mt-1.5 mb-2">{renderDossier(power)}</div>

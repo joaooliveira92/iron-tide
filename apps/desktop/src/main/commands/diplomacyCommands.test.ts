@@ -76,6 +76,7 @@ const commitMonth = (payload: {
 const DIPLOMACY_TYPES = new Set<string>([
   "DeclareWar",
   "AcceptPeace",
+  "ProposePeace",
   "FormAlliance",
   "BreakAlliance",
   "FormNonAggressionPact",
@@ -387,6 +388,29 @@ describe("diplomacy commands", () => {
         type: "AcceptPeace",
         nationId: "uk",
         warId: "war_uk_france_1880-01",
+      });
+    });
+
+    it("ProposePeace with the status-quo term on an ACTIVE war queues a valid envelope", async () => {
+      const saveDir = resolve(saveRoot, "type-propose-peace");
+      registerProductionSession("type-propose-peace-session", saveDir, (snapshot) => {
+        snapshot.wars = { ...snapshot.wars, wars: [makeActiveWar()] };
+      });
+
+      const result = await submitDiplomacyCommand(
+        payload("type-propose-peace-session", {
+          type: "ProposePeace",
+          warId: "war_uk_france_1880-01",
+          term: { _tag: "StatusQuo" },
+        }),
+      );
+      expect(result.outcome).toBe("success");
+      const [queued] = queuedDiplomacy("type-propose-peace-session");
+      expect(queued?.body).toEqual({
+        type: "ProposePeace",
+        nationId: "uk",
+        warId: "war_uk_france_1880-01",
+        term: { _tag: "StatusQuo" },
       });
     });
 
