@@ -93,7 +93,10 @@ const ProposePeaceBody = Schema.Struct({
   type: Schema.Literal("ProposePeace"),
   nationId: Id,
   warId: Id,
-  term: Schema.Struct({ _tag: Schema.Literal("StatusQuo") }),
+  term: Schema.Union([
+    Schema.Struct({ _tag: Schema.Literal("StatusQuo") }),
+    Schema.Struct({ _tag: Schema.Literal("CedeArea"), areaId: Id }),
+  ]),
 });
 
 const MoveFleetBody = Schema.Struct({

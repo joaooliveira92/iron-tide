@@ -555,6 +555,7 @@ export interface AreaData {
   name: string;
   type: "land" | "sea" | "coastal";
   controller?: string;
+  cessionCost?: SafeInt;
 }
 
 export interface RouteData {

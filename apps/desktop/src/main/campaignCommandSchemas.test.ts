@@ -217,6 +217,24 @@ describe("DiplomacyCommandBodySchema (tagged union)", () => {
     });
   });
 
+  it("accepts a ProposePeace carrying a cede-area term and rejects one without an area", () => {
+    expectSuccess(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "w",
+      term: { _tag: "CedeArea", areaId: "med_malta" },
+    });
+    expectFailure(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "w",
+      term: { _tag: "CedeArea" },
+    });
+    expectFailure(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "w",
+      term: { _tag: "CedeArea", areaId: "" },
+    });
+  });
+
   it("rejects a ProposePeace with an unknown, missing or malformed term", () => {
     expectFailure(DiplomacyCommandBodySchema, {
       type: "ProposePeace",

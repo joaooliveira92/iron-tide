@@ -186,6 +186,12 @@ function applyDiplomacyCommand(ctx: PhaseContext, body: CommandBody): boolean {
       ctx.snapshot.current,
       body as ProposePeaceCommand,
       campaignMonth,
+      {
+        nextSeq: () => ctx.nextSeq(),
+        append: (event) => ctx.eventLedger.append(event),
+        reject: (code, message) =>
+          ctx.collector.addError(code, message, { stage: "command-collection" }),
+      },
     );
     return true;
   }
@@ -465,7 +471,7 @@ export const commandCollectionPhase: MonthPhase = {
   name: "Command Collection",
   permissions: {
     reads: "all",
-    writes: ["nations", "wars", "politics", "designs", "designFamilies"],
+    writes: ["nations", "wars", "politics", "world", "designs", "designFamilies"],
     rng: false,
   },
   run: runCommandCollectionPhase,

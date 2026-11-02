@@ -16,7 +16,9 @@ export type DiplomacyCommandBody =
   | {
       readonly type: "ProposePeace";
       readonly warId: string;
-      readonly term: { readonly _tag: "StatusQuo" };
+      readonly term:
+        | { readonly _tag: "StatusQuo" }
+        | { readonly _tag: "CedeArea"; readonly areaId: string };
     }
   | { readonly type: "FormAlliance"; readonly partnerNationId: string }
   | { readonly type: "BreakAlliance"; readonly partnerNationId: string }

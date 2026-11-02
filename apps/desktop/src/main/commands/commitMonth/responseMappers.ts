@@ -100,6 +100,8 @@ function describeDomainEventBody(body: DomainEventBody): string {
       return `${body.nationId}: ship ${body.shipId} left division ${body.divisionId}${body.divisionDissolved ? " (division dissolved)" : ""} (${body.reason})`;
     case "ForeignStationShipMoved":
       return `${body.nationId}: foreign-station ship ${body.shipId} sailed ${body.fromAreaId} -> ${body.toAreaId} toward ${body.targetAreaId}`;
+    case "PossessionTransferred":
+      return `${body.toNationId}: took possession ${body.possessionId} in ${body.areaId} from ${body.fromNationId} under war ${body.warId}`;
     case "ForeignStationNoRoute":
       return `${body.nationId}: foreign-station ship ${body.shipId} in ${body.areaId} has no route to ${body.targetAreaId}`;
   }
