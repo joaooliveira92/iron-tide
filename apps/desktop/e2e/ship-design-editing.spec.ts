@@ -32,11 +32,12 @@ test("a player refits a battleship, regrets it, steps back through the history a
 
   const torpedoes = await openArmamentTab(page, "Torpedoes");
   await expect.poll(() => fittingRows(torpedoes)).toHaveLength(1);
+  let stripped = original;
 
   await test.step("strip the torpedo tube, then change your mind with undo and redo", async () => {
     await torpedoes.getByRole("button", { name: "Remove tubes" }).click();
     await expect.poll(() => fittingRows(torpedoes)).toHaveLength(0);
-    const stripped = await readEngineeringStatus(page);
+    stripped = await readEngineeringStatus(page);
     expect(stripped.cost).toBeLessThan(original.cost);
 
     await undo.click();
@@ -53,7 +54,9 @@ test("a player refits a battleship, regrets it, steps back through the history a
     await addFitting(torpedoes, page, "quarterdeck", TORPEDO_TUBE);
     await expect.poll(() => fittingRows(torpedoes)).toHaveLength(1);
     await expect(torpedoes.getByRole("row").filter({ hasText: "quarterdeck" })).toBeVisible();
-    expect((await readEngineeringStatus(page)).cost).toBeGreaterThan(0);
+    await expect
+      .poll(async () => (await readEngineeringStatus(page)).cost)
+      .toBeGreaterThan(stripped.cost);
   });
 
   await test.step("jump back to the start through the edit history", async () => {
