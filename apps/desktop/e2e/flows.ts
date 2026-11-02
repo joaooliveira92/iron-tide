@@ -137,20 +137,32 @@ export async function selectRosterOption(roster: Locator, name: string): Promise
   await roster.press("Enter");
 }
 
+export async function startFromReference(page: Page, referenceName: string): Promise<Locator> {
+  const workspace = await openShipbuilding(page);
+  await selectRosterOption(await openRoster(page, workspace), referenceName);
+  const replace = page.getByRole("button", { name: "Replace my design" });
+  const className = workspace
+    .getByRole("group", { name: "Design commands" })
+    .getByRole("textbox", { name: "Class name" });
+  await replace.or(className).first().waitFor();
+  if (await replace.isVisible()) await replace.click();
+  return workspace;
+}
+
+export const classNameField = (page: Page): Locator =>
+  page.getByRole("group", { name: "Design commands" }).getByRole("textbox", { name: "Class name" });
+
+export async function nameTheClass(page: Page, className: string): Promise<void> {
+  await classNameField(page).fill(className);
+}
+
 export async function submitReferenceDesign(
   page: Page,
   referenceName: string,
   className: string,
 ): Promise<void> {
-  const workspace = await openShipbuilding(page);
-  await selectRosterOption(await openRoster(page, workspace), referenceName);
-  const replace = page.getByRole("button", { name: "Replace my design" });
-  const classNameField = workspace
-    .getByRole("group", { name: "Design commands" })
-    .getByRole("textbox", { name: "Class name" });
-  await replace.or(classNameField).first().waitFor();
-  if (await replace.isVisible()) await replace.click();
-  await classNameField.fill(className);
+  const workspace = await startFromReference(page, referenceName);
+  await nameTheClass(page, className);
   await expect(workspace.getByText("Can be submitted")).toBeVisible();
   await workspace.getByRole("button", { name: "Finish design" }).click();
   await workspace.getByRole("button", { name: "Submit design" }).click();

@@ -5,12 +5,16 @@ import {
   closeSectionDrawer,
   closeWorkspaceDialog,
   fittingRows,
-  nameTheClass,
   openArmamentTab,
   readEngineeringStatus,
-  startFromReference,
 } from "./design-session.js";
-import { openRoster, openShipbuilding, selectRosterOption } from "./flows.js";
+import {
+  nameTheClass,
+  openRoster,
+  openShipbuilding,
+  selectRosterOption,
+  startFromReference,
+} from "./flows.js";
 
 const BATTLESHIP = "Pre-dreadnought battleship (B)";
 const ARMOURED_CRUISER = "Armoured cruiser (CA)";

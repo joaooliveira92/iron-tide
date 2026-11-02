@@ -4,6 +4,7 @@ import {
   navigateTo,
   openDesignSection,
   orderDesignFromCatalog,
+  startFromReference,
   submitReferenceDesign,
 } from "./flows.js";
 import {
@@ -13,7 +14,6 @@ import {
   openHullDimensions,
   readEngineeringStatus,
   setNumber,
-  startFromReference,
 } from "./design-session.js";
 
 const BATTLESHIP = "Pre-dreadnought battleship (B)";

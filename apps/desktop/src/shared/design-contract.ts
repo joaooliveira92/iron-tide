@@ -111,6 +111,7 @@ export interface RebuildCommandOutcome {
 export interface DrawingBoardDraftRecord {
   readonly presetId: string;
   readonly log: string;
+  readonly className?: string;
   readonly savedAt: string;
 }
 
@@ -120,5 +121,9 @@ export interface ReadDrawingBoardDraftResult {
 
 export interface WriteDrawingBoardDraftPayload {
   readonly sessionId: string;
-  readonly draft: { readonly presetId: string; readonly log: string } | null;
+  readonly draft: {
+    readonly presetId: string;
+    readonly log: string;
+    readonly className?: string;
+  } | null;
 }

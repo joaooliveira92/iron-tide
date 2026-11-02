@@ -722,6 +722,18 @@ describe("WriteDrawingBoardDraftPayloadSchema (nullable draft)", () => {
     });
   });
 
+  it("accepts an optional class name of 1 to 60 characters and refuses any other", () => {
+    expectSuccess(WriteDrawingBoardDraftPayloadSchema, {
+      sessionId: "s",
+      draft: { presetId: "p", log: "[]", className: "x".repeat(60) },
+    });
+    for (const className of ["", "x".repeat(61), 3])
+      expectFailure(WriteDrawingBoardDraftPayloadSchema, {
+        sessionId: "s",
+        draft: { presetId: "p", log: "[]", className },
+      });
+  });
+
   it("rejects a malformed draft", () => {
     expectFailure(WriteDrawingBoardDraftPayloadSchema, {
       sessionId: "s",

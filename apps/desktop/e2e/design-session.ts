@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 import type { ElectronApplication, Locator, Page } from "@playwright/test";
 import { existsSync } from "node:fs";
 import { readFile, rm } from "node:fs/promises";
-import { openDesignSection, openRoster, openShipbuilding, selectRosterOption } from "./flows.js";
+import { openDesignSection } from "./flows.js";
 
 export interface EngineeringStatus {
   readonly displacement: number;
@@ -12,25 +12,6 @@ export interface EngineeringStatus {
 }
 
 const toNumber = (text: string | undefined): number => Number((text ?? "NaN").replaceAll(",", ""));
-
-export async function startFromReference(page: Page, referenceName: string): Promise<Locator> {
-  const workspace = await openShipbuilding(page);
-  await selectRosterOption(await openRoster(page, workspace), referenceName);
-  const replace = page.getByRole("button", { name: "Replace my design" });
-  const className = workspace
-    .getByRole("group", { name: "Design commands" })
-    .getByRole("textbox", { name: "Class name" });
-  await replace.or(className).first().waitFor();
-  if (await replace.isVisible()) await replace.click();
-  return workspace;
-}
-
-export async function nameTheClass(page: Page, className: string): Promise<void> {
-  await page
-    .getByRole("group", { name: "Design commands" })
-    .getByRole("textbox", { name: "Class name" })
-    .fill(className);
-}
 
 export async function readEngineeringStatus(page: Page): Promise<EngineeringStatus> {
   const text = await page.getByRole("region", { name: "Engineering status" }).innerText();

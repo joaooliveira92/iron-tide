@@ -4,11 +4,12 @@ import { join } from "node:path";
 import { test, expect, relaunchAndOpen, teardownHarness, openCampaign } from "./fixtures.js";
 import {
   advanceMonths,
+  nameTheClass,
   navigateTo,
   openDesignSection,
   openRoster,
   openShipbuilding,
-  selectRosterOption,
+  startFromReference,
 } from "./flows.js";
 
 const CLASS_NAME = "Predread E2E";
@@ -47,17 +48,8 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
   const root = await mkdtemp(join(tmpdir(), "bluewave-shiptypes-"));
   const pkg = await openCampaign(e2e, campaignTemplate, root);
   await test.step("reachable:submit-design", async () => {
-    const workspace = await openShipbuilding(page);
-
-    const roster = await openRoster(page, workspace);
-    await selectRosterOption(roster, BATTLESHIP);
-    const replace = page.getByRole("button", { name: "Replace my design" });
-    const className = workspace
-      .getByRole("group", { name: "Design commands" })
-      .getByRole("textbox", { name: "Class name" });
-    await replace.or(className).first().waitFor();
-    if (await replace.isVisible()) await replace.click();
-    await className.fill(CLASS_NAME);
+    const workspace = await startFromReference(page, BATTLESHIP);
+    await nameTheClass(page, CLASS_NAME);
     await expect(workspace.getByText("Can be submitted")).toBeVisible();
 
     await openDesignSection(page, "Protection");

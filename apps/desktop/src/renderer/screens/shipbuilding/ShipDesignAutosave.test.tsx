@@ -29,7 +29,7 @@ const savedLog = pushEdit(newLog(start.draft), {
 });
 
 const execute = vi.fn();
-let stored: { presetId: string; log: string; savedAt: string } | null = null;
+let stored: { presetId: string; log: string; className?: string; savedAt: string } | null = null;
 let releaseRead: () => void = () => {};
 let holdRead = false;
 
@@ -44,7 +44,8 @@ beforeEach(() => {
       return { outcome: "success", value: { draft: stored }, diagnostics: [] };
     }
     if (command === "writeDrawingBoardDraft") {
-      const d = (payload as { draft: { presetId: string; log: string } | null }).draft;
+      const d = (payload as { draft: { presetId: string; log: string; className?: string } | null })
+        .draft;
       stored = d === null ? null : { ...d, savedAt: "2026-10-09T10:00:00.000Z" };
       return { outcome: "success", value: { saved: d !== null }, diagnostics: [] };
     }
@@ -74,6 +75,36 @@ describe("Ship design autosave", () => {
     renderWorkspace();
     expect(await screen.findByText(/unsubmitted design was restored/)).toBeTruthy();
     expect(undo().hasAttribute("disabled")).toBe(false);
+  });
+
+  it("restores the class name beside the design, and leaves the field empty for an older draft", async () => {
+    stored = {
+      presetId: start.id,
+      log: encodeLog(savedLog),
+      className: "Dido",
+      savedAt: "2026-10-09T09:00:00.000Z",
+    };
+    const first = renderWorkspace();
+    expect(await screen.findByText(/unsubmitted design was restored/)).toBeTruthy();
+    expect((screen.getByLabelText("Class name") as HTMLInputElement).value).toBe("Dido");
+    first.unmount();
+    cleanup();
+
+    stored = { presetId: start.id, log: encodeLog(savedLog), savedAt: "2026-10-09T09:00:00.000Z" };
+    enteredSessions.reset();
+    renderWorkspace();
+    expect(await screen.findByText(/unsubmitted design was restored/)).toBeTruthy();
+    expect((screen.getByLabelText("Class name") as HTMLInputElement).value).toBe("");
+  });
+
+  it("saves the class name with the design, and again when only the name changes", async () => {
+    renderWorkspace();
+    await waitFor(() => expect(execute).toHaveBeenCalledWith("readDrawingBoardDraft", "s1"));
+    editPower(start.draft.machinery.installedKw + 250);
+    await waitFor(() => expect(stored).not.toBeNull(), { timeout: 3000 });
+    expect(stored).not.toHaveProperty("className");
+    fireEvent.change(screen.getByLabelText("Class name"), { target: { value: "  Dido  " } });
+    await waitFor(() => expect(stored?.className).toBe("Dido"), { timeout: 3000 });
   });
 
   it("restores quietly when the player comes back to the screen in the same session", async () => {

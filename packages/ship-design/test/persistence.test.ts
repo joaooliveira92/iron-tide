@@ -531,3 +531,46 @@ describe("AA fit in the design file and edits", () => {
     ).toThrow(EditError);
   });
 });
+
+describe("class name in the design file", () => {
+  const unnamed = encodeDesignFile(draft, ctx.catalogue, compiled);
+  const withName = (value: unknown) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 2,
+      draft,
+      componentHashes: {},
+      compiledHash: null,
+      className: value,
+    });
+  it("round-trips the name beside the draft without touching the draft or its hash", () => {
+    const named = encodeDesignFile(draft, ctx.catalogue, compiled, "Gunboat Mk II");
+    const d = decodeDesignFile(named, ctx.catalogue);
+    expect(d.className).toBe("Gunboat Mk II");
+    expect(d.draft).toEqual(draft);
+    expect(d.compiledHash).toBe(compiled.hash);
+    expect(encodeDesignFile(d.draft, ctx.catalogue, compiled, d.className ?? undefined)).toBe(
+      named,
+    );
+  });
+  it("leaves a file without a name byte-identical to one written before the field existed", () => {
+    expect(encodeDesignFile(draft, ctx.catalogue, compiled, "")).toBe(unnamed);
+    expect(encodeDesignFile(draft, ctx.catalogue, compiled, "   ")).toBe(unnamed);
+    expect(unnamed).not.toContain("className");
+    expect(decodeDesignFile(unnamed, ctx.catalogue).className).toBeNull();
+  });
+  it("opens the v1 fixture with no name and no schema bump", () => {
+    const fixture = readFileSync(
+      new URL("./fixtures/v1-ironclad-turret-and-barbette.bwdesign.json", import.meta.url),
+      "utf8",
+    );
+    expect(decodeDesignFile(fixture, ctx.catalogue).className).toBeNull();
+    expect(DESIGN_SCHEMA_VERSION).toBe(2);
+  });
+  it("trims the name and refuses one that is not a string or is too long", () => {
+    expect(decodeDesignFile(withName("  Gunboat  "), ctx.catalogue).className).toBe("Gunboat");
+    expect(decodeDesignFile(withName("   "), ctx.catalogue).className).toBeNull();
+    for (const bad of [1, null, true, {}, "x".repeat(61)])
+      expect(() => decodeDesignFile(withName(bad), ctx.catalogue)).toThrow(PersistenceError);
+  });
+});
