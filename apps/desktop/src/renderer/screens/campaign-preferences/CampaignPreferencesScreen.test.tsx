@@ -99,17 +99,30 @@ describe("CampaignPreferencesScreen", () => {
     expect(onCloseCampaign).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Close Campaign" }));
     expect(onCloseCampaign).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(screen.queryByRole("dialog", { name: /Campaign preferences/ })).toBeNull();
   });
 
-  it("does not close the campaign when the confirmation is cancelled", async () => {
+  it("returns to Danger zone when the confirmation is cancelled", async () => {
     const onCloseCampaign = vi.fn();
-    render(<CampaignPreferencesScreen sessionId="ses-1" onCloseCampaign={onCloseCampaign} />);
+    const onClose = vi.fn();
+    render(
+      <CampaignPreferencesScreen
+        sessionId="ses-1"
+        onCloseCampaign={onCloseCampaign}
+        onClose={onClose}
+      />,
+    );
     openSection(/^Danger zone$/);
     fireEvent.click(screen.getByRole("button", { name: "Close Campaign" }));
     await waitFor(() => expect(screen.getByRole("alertdialog")).toBeTruthy());
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(
+      screen.getByRole("dialog", { name: /^Campaign preferences\s*\/\s*Danger zone$/ }),
+    ).toBeTruthy();
     expect(onCloseCampaign).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("hides Close Campaign when the shell offers no way to close", () => {

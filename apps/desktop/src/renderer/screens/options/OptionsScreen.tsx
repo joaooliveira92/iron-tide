@@ -483,6 +483,11 @@ export function OptionsScreen({ onClose }: OptionsScreenProps = {}) {
         <SettingsRow
           title={translate("settings.contrast.title")}
           description={translate("settings.contrast.description")}
+          control={
+            <Button type="button" variant="outline" onClick={() => setDepartment("appearance")}>
+              {translate("settings.contrast.open")}
+            </Button>
+          }
         />
       </SettingsSection>
     ),

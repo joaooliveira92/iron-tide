@@ -212,6 +212,16 @@ describe("OptionsScreen departments", () => {
     expect(stub.writes[1]?.app.theme).toBe("system");
   });
 
+  it("takes the Contrast row to the theme choices under Appearance", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    openDepartment(/^Accessibility$/);
+    fireEvent.click(screen.getByRole("button", { name: "Go to Appearance" }));
+    expect(screen.getByRole("dialog", { name: /^Settings\s*\/\s*Appearance$/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "High contrast" })).toBeTruthy();
+  });
+
   it("no longer carries campaign file actions (they live in the header Campaign menu)", async () => {
     const stub = createPreferencesBridgeStub();
     renderOptions(stub);
