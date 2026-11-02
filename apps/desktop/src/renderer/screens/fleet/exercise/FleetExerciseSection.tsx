@@ -1,6 +1,7 @@
 import { Badge } from "../../../components/ui/badge.js";
 import { Button } from "../../../components/ui/button.js";
 import { Card, CardContent } from "../../../components/ui/card.js";
+import { useMemo } from "react";
 import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
@@ -33,6 +34,7 @@ export function FleetExerciseView({
   onReload,
 }: FleetExerciseViewProps) {
   const format = usePresentationFormat();
+  const selectedIds = useMemo(() => new Set(selected), [selected]);
   const exercise = state.exercise;
   if (exercise === null) return null;
   const scheduled = exercise.scheduled;
@@ -115,7 +117,7 @@ export function FleetExerciseView({
                 <input
                   type="checkbox"
                   className="size-4 accent-primary"
-                  checked={selected.includes(row.shipId)}
+                  checked={selectedIds.has(row.shipId)}
                   disabled={busy || !row.eligible}
                   onChange={() => onToggle(row.shipId)}
                   aria-label={`Exercise ${row.name}`}

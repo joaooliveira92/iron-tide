@@ -37,6 +37,8 @@ export interface StationRow {
   readonly conditions: readonly StationCondition[];
 }
 
+const REASON_CODE_PATTERN = /^[A-Z_]+$/;
+
 const READINESS_CODE: Readonly<Record<string, "AF" | "RF" | "MB" | "WU">> = {
   ACTIVE: "AF",
   RESERVE: "RF",
@@ -137,7 +139,7 @@ function explainRejection(
       ? diagnostic.slice(diagnostic.indexOf(": ") + 2)
       : diagnostic;
     const pairs = detail.split(", ").map((part) => part.split("="));
-    if (pairs.every((pair) => pair.length === 2 && pair[0] !== "" && /^[A-Z_]+$/.test(pair[1]!))) {
+    if (pairs.every((pair) => pair.length === 2 && pair[0] !== "" && REASON_CODE_PATTERN.test(pair[1]!))) {
       for (const [id, code] of pairs as [string, string][]) {
         const reasonKey = `${reasonPrefix}.${code}`;
         const subject = id === "<batch>" ? "" : (names.get(id) ?? id);
