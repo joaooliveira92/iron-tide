@@ -5,7 +5,6 @@ import {
   addFitting,
   closeFileDialog,
   fittingRows,
-  nameTheClass,
   openArmamentTab,
   openDesignFile,
   openFileDialog,
@@ -14,8 +13,8 @@ import {
   readEngineeringStatus,
   saveDesignFile,
   setNumber,
-  startFromReference,
 } from "./design-session.js";
+import { nameTheClass, startFromReference } from "./flows.js";
 
 const BATTLESHIP = "Pre-dreadnought battleship (B)";
 const CLASS_NAME = "Saved Design E2E";

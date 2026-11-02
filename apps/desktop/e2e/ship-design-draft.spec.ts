@@ -6,14 +6,12 @@ import type { E2EHarness } from "./fixtures.js";
 import {
   closeSectionDrawer,
   fittingRows,
-  nameTheClass,
   openArmamentTab,
   openHullDimensions,
   readEngineeringStatus,
   setNumber,
-  startFromReference,
 } from "./design-session.js";
-import { navigateTo, openShipbuilding } from "./flows.js";
+import { nameTheClass, navigateTo, openShipbuilding, startFromReference } from "./flows.js";
 
 const BATTLESHIP = "Pre-dreadnought battleship (B)";
 
