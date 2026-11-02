@@ -118,11 +118,19 @@ export function buildDiplomacyViewModel(
   projection: Projection,
   draft: DiplomacyDraftCommand | null,
 ): DiplomacyViewModel {
-  const rivals = likelyRivalNames(projection.playerNationId);
+  const rivals = new Set(likelyRivalNames(projection.playerNationId));
   const blockades = projection.blockades.map((b) => ({
     row: blockadeRow(projection, b),
     nationIds: [b.blockaderId, b.blockadedNationId],
   }));
+  const blockadesByNation = new Map<string, DiplomacyBlockadeRow[]>();
+  for (const b of blockades) {
+    for (const id of new Set(b.nationIds)) {
+      const rows = blockadesByNation.get(id) ?? [];
+      rows.push(b.row);
+      blockadesByNation.set(id, rows);
+    }
+  }
   const relations: DiplomacyRelationRow[] = projection.relations
     .map((row) => ({
       flagUrl: nationFlagUrl(row.partnerNationId),
@@ -130,9 +138,7 @@ export function buildDiplomacyViewModel(
       band: tensionLabel(row.tension),
       atWar: row.relation === "at_war",
       allied: row.relation === "allied",
-      blockades: blockades
-        .filter((b) => b.nationIds.includes(row.partnerNationId))
-        .map((b) => b.row),
+      blockades: blockadesByNation.get(row.partnerNationId) ?? [],
       partnerNationId: row.partnerNationId,
       partnerName: row.partnerName,
       since: row.since,
@@ -140,7 +146,7 @@ export function buildDiplomacyViewModel(
       tension: row.tension,
       tensionBadge: tensionBadgeLabel(row.relation, row.tension),
       nap: row.nap,
-      isLikelyRival: rivals.includes(row.partnerName),
+      isLikelyRival: rivals.has(row.partnerName),
       highTension: isHighTension(row.tension),
       highTensionNote: humanizeId(tensionLabel(row.tension)).toLowerCase(),
       actions: sortActions(diplomacyLegalActions(row)),
@@ -167,7 +173,7 @@ export function buildDiplomacyViewModel(
     },
     relations,
     wars: projection.wars.map((war) => {
-      const memberIds = [...war.attackerSideMembers, ...war.defenderSideMembers];
+      const memberIds = new Set([...war.attackerSideMembers, ...war.defenderSideMembers]);
       return {
         war,
         attackerSideLabel: sideLabel(projection, war.attackerSideMembers),
@@ -187,7 +193,7 @@ export function buildDiplomacyViewModel(
         standing: warStanding(warScoreSplit(war)),
         duration: durationLabel(monthsBetween(war.startDate, projection.month)),
         blockades: blockades
-          .filter((b) => b.nationIds.every((id) => memberIds.includes(id)))
+          .filter((b) => b.nationIds.every((id) => memberIds.has(id)))
           .map((b) => b.row),
       };
     }),

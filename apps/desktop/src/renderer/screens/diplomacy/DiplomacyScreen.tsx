@@ -1,5 +1,5 @@
 import { Handshake } from "lucide-react";
-import { useId, useState, type CSSProperties } from "react";
+import { useCallback, useId, useMemo, useState, type CSSProperties } from "react";
 import { ScreenStage } from "../../components/shared/ScreenStage.js";
 import { debugRevisionActions } from "../../components/shared/debugRevisionActions.js";
 import { cn } from "../../lib/utils.js";
@@ -79,24 +79,46 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
     toggleCollapsed: toggleInspector,
   } = useInspectorLayout(sessionId);
   const inspectorId = useId();
+  const hosted = useScreenHeaderHost();
+  const projection = state.kind === "idle" ? null : state.projection;
+  const draft = state.kind === "idle" ? null : state.draftCommand;
+  const vm = useMemo(
+    () => (projection === null ? null : buildDiplomacyViewModel(projection, draft)),
+    [projection, draft],
+  );
+  const records = useMemo(
+    () =>
+      vm === null
+        ? null
+        : battleRecords(
+            battleHistory,
+            vm.relations.map((row) => row.partnerName),
+          ),
+    [vm, battleHistory],
+  );
+  const selectNation = useCallback((nationId: string) => setPlace(nationPlace(nationId)), []);
+  const acceptPeace = useCallback(
+    (warId: string) => {
+      const war = projection?.wars.find((w) => w.warId === warId);
+      if (war !== undefined) {
+        selectNation(war.playerSide === "attacker" ? war.defenderId : war.attackerId);
+      }
+      setPeaceAction(warId);
+    },
+    [projection, selectNation, setPeaceAction],
+  );
 
   if (loadError !== null) {
     return <DiplomacyLoadErrorState message={loadError} onRetry={() => void reload()} />;
   }
 
-  if (state.kind === "idle") {
+  if (state.kind === "idle" || vm === null || records === null) {
     return <DiplomacyLoadingState />;
   }
 
   const busy = state.kind === "submitting";
   const queued = state.kind === "submitted";
-  const hosted = useScreenHeaderHost();
   const declaringWar = state.draftCommand?.kind === "DeclareWar" && !queued;
-  const vm = buildDiplomacyViewModel(state.projection, state.draftCommand);
-  const records = battleRecords(
-    battleHistory,
-    vm.relations.map((row) => row.partnerName),
-  );
   const draftPartnerId = state.draftCommand?.partnerNationId ?? null;
   const currentPlace = reconcilePlace(
     place,
@@ -107,15 +129,6 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
       ? resolveSelectedNation(vm.relations, currentPlace.nationId, null)
       : null;
   const tab = activeTab(currentPlace);
-
-  const selectNation = (nationId: string) => setPlace(nationPlace(nationId));
-  const acceptPeace = (warId: string) => {
-    const war = state.projection.wars.find((w) => w.warId === warId);
-    if (war !== undefined) {
-      selectNation(war.playerSide === "attacker" ? war.defenderId : war.attackerId);
-    }
-    setPeaceAction(warId);
-  };
 
   const breadcrumb = ["Your nation", selected?.partnerName ?? "Overview", tab.label];
 
