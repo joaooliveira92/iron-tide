@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { parseSnapArgs, SnapUsageError } from "./snap-args.ts";
+import { DEFAULT_SNAP_SIZE, parseSnapArgs, SnapUsageError } from "./snap-args.ts";
 
 describe("parseSnapArgs", () => {
   it("keeps actions in command-line order across every action flag", () => {
@@ -74,6 +74,8 @@ describe("parseSnapArgs", () => {
       tour: false,
       strict: false,
       freeze: false,
+      fullRes: false,
+      size: DEFAULT_SNAP_SIZE,
       actions: [],
     });
     expect(opts.background).toBeUndefined();
@@ -113,6 +115,16 @@ describe("parseSnapArgs", () => {
       tour: true,
       strict: true,
     });
+  });
+
+  it("leaves the window size alone with --full-res", () => {
+    const opts = parseSnapArgs(["--full-res"]);
+    expect(opts.fullRes).toBe(true);
+    expect(opts.size).toBeUndefined();
+  });
+
+  it("lets an explicit --size win over the default", () => {
+    expect(parseSnapArgs(["--size", "900x700"]).size).toEqual({ width: 900, height: 700 });
   });
 
   it("parses size, theme and background", () => {
@@ -212,8 +224,7 @@ describe("parseSnapArgs", () => {
       "1200",
       "--size",
       "7680x4320",
-      "--click-at",
-      "-100000,100000",
+      "--click-at=-100000,100000",
       "--scroll",
       "100000,-100000@-100000,100000",
     ]);

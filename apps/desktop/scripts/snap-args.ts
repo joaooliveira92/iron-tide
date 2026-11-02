@@ -48,6 +48,7 @@ export interface SnapOptions {
   readonly tour: boolean;
   readonly strict: boolean;
   readonly freeze: boolean;
+  readonly fullRes: boolean;
   readonly size?: { readonly width: number; readonly height: number };
   readonly theme?: ThemePreference;
   readonly background?: BackgroundPreference;
@@ -76,6 +77,8 @@ const SNAP_LIMITS = {
   coordinateMagnitude: 100_000,
   actions: 1_000,
 } as const;
+
+export const DEFAULT_SNAP_SIZE = { width: 1280, height: 800 } as const;
 
 const fail = (message: string): never => {
   throw new SnapUsageError(message);
@@ -240,6 +243,7 @@ function parseRawArgs(argv: readonly string[]) {
         tour: { type: "boolean", default: false },
         strict: { type: "boolean", default: false },
         freeze: { type: "boolean", default: false },
+        "full-res": { type: "boolean", default: false },
         size: { type: "string" },
         theme: { type: "string" },
         background: { type: "string" },
@@ -307,6 +311,8 @@ export function parseSnapArgs(argv: readonly string[]): SnapOptions {
         max: SNAP_LIMITS.viewportHeight,
       }),
     };
+  } else if (!values["full-res"]) {
+    size = DEFAULT_SNAP_SIZE;
   }
 
   return {
@@ -331,6 +337,7 @@ export function parseSnapArgs(argv: readonly string[]): SnapOptions {
     tour: values.tour,
     strict: values.strict,
     freeze: values.freeze,
+    fullRes: values["full-res"],
     ...(size !== undefined ? { size } : {}),
     ...(values.theme !== undefined
       ? { theme: oneOf("--theme", values.theme, THEME_PREFERENCES) }

@@ -15,9 +15,9 @@ Precedence: safety/legal/credential → canonical design → contract → rules 
 
 ## Agent workflow
 
-Run `pnpm agent:map <symbol|path>` before reading, `pnpm verify:affected` before committing, and `pnpm heavy` (not `sleep`) for long gates. See [agent tools](docs/agents/agent-tools.md).
+Run `pnpm agent:map <symbol|path>` (or `--screen <name>`) before reading, `pnpm verify:affected` before committing, and `pnpm heavy <cmd>` (not `sleep`) for long gates. Read code by range, not whole files; `.claude/settings.json` hooks enforce it. See [agent tools](docs/agents/agent-tools.md) and [context efficiency](docs/agents/context-efficiency.md).
 
-Start substantial tasks from a [task brief](.ai/templates/task-brief.md): problem and evidence first, then the simplest viable solution. Track state with `pnpm worktrees status`/`inbox`; return only when a human is needed. Merge only with the brief's authority; report rollback. See [task lifecycle](docs/agents/task-lifecycle.md), [rollback](docs/agents/rollback.md), [autonomy and access](docs/agents/autonomy-and-access.md).
+Start substantial tasks from a [task brief](.ai/templates/task-brief.md) or a short [task prompt](.ai/templates/task-prompt.md): problem and evidence first, then the simplest viable solution. Record routine decisions in the brief and continue. Track state with `pnpm worktrees status`/`inbox`; return only for a stop condition. Merge only with the brief's authority; report rollback. See [task lifecycle](docs/agents/task-lifecycle.md), [rollback](docs/agents/rollback.md), [autonomy and access](docs/agents/autonomy-and-access.md).
 
 ## Rules
 
