@@ -39,7 +39,9 @@ packages/*/src/**/*.d.ts.map
 *.log
 .DS_Store
 .pnpm-store/
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/agents/
 .muse/
 
 # Vendored Effect artifacts are committed verbatim (V1 vendor model) — the
