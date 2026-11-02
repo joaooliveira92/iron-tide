@@ -32,6 +32,7 @@ import { existsSync, mkdirSync, readFileSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { isEntryPoint } from "./lib/paths.mjs";
+import { executeMerge, planMerge } from "./lib/worktree-merge.mjs";
 import {
   WorktreeRegistryError,
   acquireRegistryLock,
@@ -715,6 +716,9 @@ commands:
                    remove merged, gone, and phantom subtrees (--check only reports)
   remove <slug> [--force]
                    remove one subtree
+  merge <slug> [--base <ref>] [--execute]
+                   check that the subtree's branch merges cleanly into the base (default
+                   dev) from the main checkout; only --execute performs the --no-ff merge
   status <slug> <state> [--pr <ref>]
                    set a task's lifecycle state (${TASK_STATE_NAMES.join(", ")})
   inbox [--json]   open tasks, those needing a human first; closed tasks hidden
@@ -731,6 +735,7 @@ const COMMAND_SPECS = {
   sync: { flags: [], values: [] },
   prune: { flags: ["check", "force"], values: [], exclusive: [["check", "force"]] },
   remove: { positional: "slug", flags: ["force"], values: [] },
+  merge: { positional: "slug", flags: ["execute"], values: ["base"] },
   audit: { flags: ["json", "no-gh"], values: [] },
   status: { positionals: ["slug", "state"], flags: [], values: ["pr"] },
   inbox: { flags: ["json"], values: [] },
@@ -997,6 +1002,34 @@ function cmdRemove({ positionals: [slug], flags }) {
   console.log(message);
 }
 
+function cmdMerge({ positionals: [slug], flags, values }) {
+  const row = inspectRows(hygieneRows(readRowsForMutation())).find((r) => r.slug === slug);
+  if (!row) {
+    console.error(`no subtree "${slug}"`);
+    process.exitCode = 1;
+    return;
+  }
+  const request = {
+    mainRoot: MAIN_CHECKOUT_ROOT,
+    branch: row.branch,
+    base: values.base ?? DEFAULT_BASE,
+  };
+  const outcome = flags.execute
+    ? executeMerge(request)
+    : { merged: false, plan: planMerge(request) };
+  for (const note of outcome.plan.notes) console.log(`note: ${note}`);
+  for (const problem of outcome.plan.problems) console.error(`blocked: ${problem}`);
+  if (!outcome.plan.ok) {
+    process.exitCode = 1;
+    return;
+  }
+  console.log(
+    outcome.merged
+      ? `merged ${row.branch} into ${request.base} at ${outcome.tip}; run \`pnpm worktrees prune --check\` next`
+      : `ready: ${row.branch} merges cleanly into ${request.base}; rerun with --execute`,
+  );
+}
+
 function cmdStatus({ positionals: [slug, state], values }) {
   let previous;
   const release = acquireRegistryLock();
@@ -1075,6 +1108,7 @@ const COMMANDS = {
   sync: cmdSync,
   prune: cmdPrune,
   remove: cmdRemove,
+  merge: cmdMerge,
   audit: cmdAudit,
   status: cmdStatus,
   inbox: cmdInbox,

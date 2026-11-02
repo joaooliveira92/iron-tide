@@ -25,12 +25,14 @@ const SCRIPTS = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPT = join(SCRIPTS, "worktree.mjs");
 const REGISTRY = join(SCRIPTS, "worktree-registry.mjs");
 const PATHS_HELPER = join(SCRIPTS, "lib", "paths.mjs");
+const MERGE_HELPER = join(SCRIPTS, "lib", "worktree-merge.mjs");
 
 function installScript(scriptsDir) {
   mkdirSync(join(scriptsDir, "lib"), { recursive: true });
   copyFileSync(SCRIPT, join(scriptsDir, "worktree.mjs"));
   copyFileSync(REGISTRY, join(scriptsDir, "worktree-registry.mjs"));
   copyFileSync(PATHS_HELPER, join(scriptsDir, "lib", "paths.mjs"));
+  copyFileSync(MERGE_HELPER, join(scriptsDir, "lib", "worktree-merge.mjs"));
 }
 const cleanups = [];
 const compareText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);

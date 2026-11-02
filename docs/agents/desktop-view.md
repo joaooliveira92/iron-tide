@@ -75,6 +75,21 @@ recoverable, shutdown is bounded by a renderer flush handshake, a second launch
 focuses the running window, and a local support bundle captures crash/error
 observability with bounded, privacy-respecting writes.
 
+## Screen map
+
+`pnpm agent:map --screen [name]` lists every screen, or one screen's entry, routes, largest files, tests and e2e specs, generated from `git ls-files`. Hand-linked anchors:
+[strategic map](../../apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.tsx),
+[fleet](../../apps/desktop/src/renderer/screens/fleet/FleetScreen.tsx),
+[ship design](../../apps/desktop/src/renderer/screens/shipbuilding/ShipbuildingWorkspace.tsx) (read by range),
+[options](../../apps/desktop/src/renderer/screens/options/OptionsScreen.tsx),
+[shell](../../apps/desktop/src/renderer/shell/App.tsx),
+[routes](../../apps/desktop/src/renderer/shell/campaign-screen-routes.tsx),
+[globe](../../apps/desktop/src/renderer/components/globe-adapter/GlobeAdapter.tsx).
+
+## UI acceptance
+
+Match the existing screen's density and navigation pattern, avoid decorative defaults, and keep every prior capability. Check the aria tree first, then one screenshot per changed screen.
+
 ## Seeing the app
 
 Agents inspect and drive the running app with `pnpm snap`; see
