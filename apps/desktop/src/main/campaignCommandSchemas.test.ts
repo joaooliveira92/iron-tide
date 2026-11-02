@@ -209,6 +209,39 @@ describe("DiplomacyCommandBodySchema (tagged union)", () => {
     });
   });
 
+  it("accepts a ProposePeace carrying the status-quo term", () => {
+    expectSuccess(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "w",
+      term: { _tag: "StatusQuo" },
+    });
+  });
+
+  it("rejects a ProposePeace with an unknown, missing or malformed term", () => {
+    expectFailure(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "w",
+      term: { _tag: "Annex" },
+    });
+    expectFailure(DiplomacyCommandBodySchema, { type: "ProposePeace", warId: "w" });
+    expectFailure(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "",
+      term: { _tag: "StatusQuo" },
+    });
+  });
+
+  it("still decodes an AcceptPeace body unchanged", () => {
+    const decoded = Schema.decodeUnknownResult(DiplomacyCommandBodySchema)({
+      type: "AcceptPeace",
+      warId: "w",
+    });
+    expect(Result.isSuccess(decoded) ? decoded.success : null).toEqual({
+      type: "AcceptPeace",
+      warId: "w",
+    });
+  });
+
   it("rejects an unknown discriminant", () => {
     expectFailure(DiplomacyCommandBodySchema, {
       type: "NotACommand",

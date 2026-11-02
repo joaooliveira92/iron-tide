@@ -18,6 +18,8 @@ export type {
   DeclareBlockadeCommand,
   DeclareWarCommand,
   DissolveDivisionCommand,
+  PeaceTerm,
+  ProposePeaceCommand,
   FormAllianceCommand,
   FormNonAggressionPactCommand,
   HaltConstructionCommand,
@@ -51,6 +53,7 @@ export {
   ScopedIdempotencyStore,
   transitionRecord,
 } from "./lifecycle.js";
+export * from "./peaceProposal.js";
 export * from "./reasonCodes.js";
 export * from "./registry.js";
 export * from "./reservation.js";

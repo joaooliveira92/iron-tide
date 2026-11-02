@@ -26,6 +26,7 @@ import {
   validateDeclareWar,
   validateFormAlliance,
   validateFormNap,
+  validateProposePeace,
 } from "./diplomacyValidation.js";
 import {
   validateAddShipToDivision,
@@ -68,6 +69,7 @@ export function validatePayloadRules(
   }
   if (envelope.body.type === "DeclareWar") return validateDeclareWar(envelope, snapshot);
   if (envelope.body.type === "AcceptPeace") return validateAcceptPeace(envelope, snapshot);
+  if (envelope.body.type === "ProposePeace") return validateProposePeace(envelope, snapshot);
   if (envelope.body.type === "FormAlliance") return validateFormAlliance(envelope, snapshot);
   if (envelope.body.type === "BreakAlliance") return validateBreakAlliance(envelope, snapshot);
   if (envelope.body.type === "FormNonAggressionPact") return validateFormNap(envelope, snapshot);

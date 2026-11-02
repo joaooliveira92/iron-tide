@@ -92,6 +92,31 @@ describe("replay format v2: recorded command envelopes", () => {
     }
   });
 
+  it("round-trips a ProposePeace envelope with the status-quo term and rejects other terms", () => {
+    const proposal = (term: Record<string, unknown>) =>
+      tamper(recorded, (f) => {
+        f.months[0].commands[0].body = {
+          type: "ProposePeace",
+          nationId: "austria_hungary",
+          warId: "war-1",
+          term,
+        };
+      });
+    const decoded = decodeReplayFile(proposal({ _tag: "StatusQuo" }));
+    expect(Result.isSuccess(decoded)).toBe(true);
+    if (Result.isSuccess(decoded))
+      expect(decoded.success.months[0]!.commands[0]!.body).toEqual({
+        type: "ProposePeace",
+        nationId: "austria_hungary",
+        warId: "war-1",
+        term: { _tag: "StatusQuo" },
+      });
+    expect(Result.isFailure(decodeReplayFile(proposal({ _tag: "Annex" })))).toBe(true);
+    expect(Result.isFailure(decodeReplayFile(proposal({ _tag: "StatusQuo", extra: 1 })))).toBe(
+      true,
+    );
+  });
+
   it("still reads format v1 files and refuses commands inside one", () => {
     const v1 = readFileSync(resolve(REPLAY_DIR, "production-1880-1m.replay.json"), "utf8");
     expect(Result.isSuccess(decodeReplayFile(v1))).toBe(true);
