@@ -39,7 +39,7 @@ export function CampaignFileScreen({ onOpenCampaign, onStartNewGame }: CampaignF
       <Button type="button" variant="outline" onClick={() => setShowOptions((open) => !open)}>
         Options
       </Button>
-      {showOptions ? <OptionsScreen /> : null}
+      {showOptions ? <OptionsScreen onClose={() => setShowOptions(false)} /> : null}
       <RecentCampaigns
         files={recentFiles}
         disabled={pendingLabel !== null}

@@ -16,6 +16,7 @@ hand-rolled `role="dialog"`/`aria-modal`, and on `className` passed to a dialog.
 | --- | --- | --- |
 | Browse, read, edit, review: anything with content | `Dialog` + `DialogContent` | `standard`: `h-[85vh] w-[min(92vw,80rem)]` |
 | A question with a button answer, or an interruption | `AlertDialog` + `AlertDialogContent` | `confirm`: `w-[min(92vw,32rem)]`, height follows content, capped at 85vh |
+| Settings: grouped rows by section | `SettingsModal` (`components/shared`) | `flush`, sidebar and cards |
 | Content the player works beside (ship design sections, fleet, map panels) | `DepartmentDrawer` | docked, not modal; see below |
 | Jump to a screen | `CommandDialog` | palette, not a modal |
 | Tour coach mark | `GuidedInspectionOverlay` | not a modal |
@@ -58,7 +59,7 @@ in one; use `Dialog`. Both sizes exist on both primitives (`size="standard"` on
   `h-*`, `p-*` on a modal. Change the frame in `modal-frame.ts`, for every modal at once.
 - Build a modal from a fixed `div`, `role="dialog"` or `aria-modal="true"`.
 - Nest a modal in a modal. Replace the content or close first.
-- Make a one-field question a standard modal. Ask it with a confirm.
+- Make a one-field question a standard modal; use a confirm.
 
 ## Drawers
 
@@ -69,5 +70,5 @@ otherwise use a modal.
 
 ## Verify
 
-Open the modal with `pnpm snap` at the default size and at `--size 1100x700`, and check
-the frame, header and scrolling body ([desktop snap](desktop-snap.md)).
+Open the modal with `pnpm snap` at default size and `--size 1100x700`; check frame, header
+and body ([desktop snap](desktop-snap.md)).

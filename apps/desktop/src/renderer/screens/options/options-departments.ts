@@ -7,7 +7,6 @@ import {
   SlidersHorizontal,
   type LucideIcon,
 } from "lucide-react";
-import type { IndexTab } from "../../components/slate/IndexTabs.js";
 import { translate } from "../../lib/strings.js";
 
 export type OptionsDepartment =
@@ -64,53 +63,15 @@ const DEPARTMENTS: Readonly<Record<OptionsDepartment, OptionsDepartmentMeta>> = 
   },
 };
 
-const GROUP_IDS: readonly (readonly OptionsDepartment[])[] = [
-  ["general", "appearance"],
-  ["measurements", "currency"],
-  ["language", "accessibility"],
+export const OPTIONS_DEPARTMENT_ORDER: readonly OptionsDepartment[] = [
+  "general",
+  "appearance",
+  "measurements",
+  "currency",
+  "language",
+  "accessibility",
 ];
 
 export function optionsDepartmentMeta(id: OptionsDepartment): OptionsDepartmentMeta {
   return DEPARTMENTS[id];
-}
-
-export interface OptionsDepartmentFacts {
-  readonly theme: string;
-  readonly measurementPreset: string;
-  readonly currency: string;
-  readonly currencyAttention: boolean;
-  readonly language: string;
-  readonly motion: string;
-}
-
-function detail(
-  id: OptionsDepartment,
-  facts: OptionsDepartmentFacts,
-): { readonly text: string; readonly attention: boolean } {
-  switch (id) {
-    case "general":
-      return { text: translate("settings.general.detail"), attention: false };
-    case "appearance":
-      return { text: facts.theme, attention: false };
-    case "measurements":
-      return { text: facts.measurementPreset, attention: false };
-    case "currency":
-      return { text: facts.currency, attention: facts.currencyAttention };
-    case "language":
-      return { text: facts.language, attention: false };
-    case "accessibility":
-      return { text: facts.motion, attention: false };
-  }
-}
-
-export function optionsIndexTabs(
-  facts: OptionsDepartmentFacts,
-): readonly (readonly IndexTab<OptionsDepartment>[])[] {
-  return GROUP_IDS.map((group) =>
-    group.map((id) => {
-      const meta = DEPARTMENTS[id];
-      const { text, attention } = detail(id, facts);
-      return { id, label: meta.label, icon: meta.icon, detail: text, attention };
-    }),
-  );
 }
