@@ -49,7 +49,10 @@ h.page.on("pageerror", (e) => {
   problems.record(`page error: ${e.message}`);
 });
 
-const shotOptions = opts.freeze ? ({ animations: "disabled" } as const) : {};
+const shotOptions = {
+  ...(opts.freeze ? ({ animations: "disabled" } as const) : {}),
+  ...(opts.fullRes ? {} : ({ scale: "css" } as const)),
+};
 
 async function settle(extraMs = 0): Promise<void> {
   await h.page.waitForTimeout(opts.waitMs + extraMs);

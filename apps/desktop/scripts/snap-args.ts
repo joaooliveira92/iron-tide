@@ -43,10 +43,13 @@ export interface SnapOptions {
   readonly tour: boolean;
   readonly strict: boolean;
   readonly freeze: boolean;
+  readonly fullRes: boolean;
   readonly size?: { readonly width: number; readonly height: number };
   readonly theme?: ThemePreference;
   readonly background?: BackgroundPreference;
 }
+
+export const DEFAULT_SNAP_SIZE = { width: 1280, height: 800 } as const;
 
 const fail = (message: string): never => {
   throw new SnapUsageError(message);
@@ -134,6 +137,7 @@ export function parseSnapArgs(argv: readonly string[]): SnapOptions {
         tour: { type: "boolean", default: false },
         strict: { type: "boolean", default: false },
         freeze: { type: "boolean", default: false },
+        "full-res": { type: "boolean", default: false },
         size: { type: "string" },
         theme: { type: "string" },
         background: { type: "string" },
@@ -158,6 +162,8 @@ export function parseSnapArgs(argv: readonly string[]): SnapOptions {
     const m = /^(\d+)x(\d+)$/.exec(values.size);
     if (m === null) return fail(`--size expects WxH, got "${values.size}"`);
     size = { width: Number(m[1]), height: Number(m[2]) };
+  } else if (!values["full-res"]) {
+    size = DEFAULT_SNAP_SIZE;
   }
 
   return {
@@ -173,6 +179,7 @@ export function parseSnapArgs(argv: readonly string[]): SnapOptions {
     tour: values.tour,
     strict: values.strict,
     freeze: values.freeze,
+    fullRes: values["full-res"],
     ...(size !== undefined ? { size } : {}),
     ...(values.theme !== undefined
       ? { theme: oneOf("--theme", values.theme, THEME_PREFERENCES) }
