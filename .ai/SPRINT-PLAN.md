@@ -253,7 +253,7 @@ changes into a single re-pin. If S-1 research cannot ground a value and it canno
 responsibly classified as an ADR-0213 `balance_adjustment`, return that individual
 value for owner decision instead of guessing.
 
-Owner decisions outstanding: **0004** (mine inventory; W-2's W-1 dependency is unmet, so it is off the current frontier), and the rank-gating decision behind #230. 0009, 0012, 0026 and 0027 are resolved (ADR-0239, ADR-0266). 0054 (peace terms) is partially accepted: questions 1 to 5 as recommended, question 6 (area controller versus possessions) open.
+Owner decisions outstanding: **0004** (mine inventory; W-2's W-1 dependency is unmet, so it is off the current frontier), and the rank-gating decision behind #230. 0009, 0012, 0026 and 0027 are resolved (ADR-0239, ADR-0266). 0054 (peace terms) is accepted: questions 1 to 5 as recommended, question 6 decided as whole-area cession.
 
 ## Decisions recorded
 

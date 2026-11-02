@@ -2,7 +2,7 @@
 
 ## Status
 
-Partially accepted. The owner accepted the recommendations for questions 1 to 5 as written in Recommendation. Question 6 (area controller versus possessions) is open. Blocks GitHub issue #165; sub-ticket #481 is this decision; #482 to #485 follow it.
+Accepted. Questions 1 to 5 as recommended; question 6 decided as option (ii) (whole-area cession). Blocks nothing further: GitHub issue #165 proceeds through #482 to #485; #481 is this decision.
 
 ## Trigger
 
@@ -69,9 +69,9 @@ Option A, with these answers, subject to owner approval.
 (4) Fleets are never deleted. An explicit repositioning rule moves them. The recommended destination is the loser's home area, which is always protected and so always held.
 (5) Out of scope. Purchase needs its own decision.
 
-Question 6 (open). Transfer moves a possession, but the UI shows area ownership from controller, which transfer would leave stale. Options: (i) controller is derived from possessions after a transfer: an area belongs to the nation holding all of its possessions, and stays with the previous holder when split; (ii) a cession term names a whole area and rewrites controller and every possession in it; (iii) controller stays authored and the UI is changed to read possessions. Recommendation: (ii), because the player demands areas in the UI, a split area has no clean owner to display, and it needs no derivation rule. Ticket #483 must not start until the owner answers.
+Question 6 (decided: option (ii)). Transfer moves a possession, but the UI shows area ownership from controller, which transfer would leave stale. Options: (i) controller is derived from possessions after a transfer: an area belongs to the nation holding all of its possessions, and stays with the previous holder when split; (ii) a cession term names a whole area and rewrites controller and every possession in it; (iii) controller stays authored and the UI is changed to read possessions. Recommendation: (ii), because the player demands areas in the UI, a split area has no clean owner to display, and it needs no derivation rule. Consequences for #483: the cede term names an area, not a single possession; applying it rewrites AreaData.controller and the nationId of every possession in that area in one step; the home-area protection rule applies to the whole area (an area containing the loser's homeAreaId cannot be ceded); the war-score cost is per area, owner-set, PROVISIONAL; the engine writes controller, so the world-state clone and canonical serializer must include it and a parity test from existing fixtures is required.
 
-Do not implement the disputed behavior before approval.
+Approved; implement through tickets #482 to #485.
 
 ## Work safely completed while blocked
 
