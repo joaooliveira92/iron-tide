@@ -177,6 +177,50 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
     closeBatch,
   ]);
 
+  const selectProject = useCallback(
+    (projectId: string) => {
+      setSelectedProjectId(projectId);
+      setTab("slipways", "project");
+    },
+    [setTab],
+  );
+  const selectDesign = useCallback(
+    (designId: string) => {
+      setSelectedDesignId(designId);
+      setTab("catalog", "design");
+    },
+    [setSelectedDesignId, setTab],
+  );
+  const selectCommand = useCallback(
+    (commandId: string) => {
+      setSelectedCommandId(commandId);
+      setTab("orders", "command");
+    },
+    [setTab],
+  );
+  const browseCatalog = useCallback(() => setPlace("catalog"), []);
+
+  const figures = useMemo(
+    () =>
+      state.workspace === null || state.economy === null
+        ? null
+        : {
+            projects: rows,
+            designs: state.designs,
+            commands: state.workspace.commands,
+            economy: state.economy,
+          },
+    [rows, state.designs, state.workspace, state.economy],
+  );
+  const marks = useMemo(() => (figures === null ? null : railMarks(figures)), [figures]);
+  const readouts = useMemo(
+    () =>
+      figures === null || state.workspace === null
+        ? null
+        : yardReadouts(figures, state.workspace, format),
+    [figures, state.workspace, format],
+  );
+
   if (loadError !== null) {
     return (
       <div data-guided-target="construction">
@@ -185,7 +229,7 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
     );
   }
 
-  if (state.workspace === null || state.economy === null) {
+  if (state.workspace === null || state.economy === null || marks === null || readouts === null) {
     return (
       <div data-guided-target="construction" className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[0, 1, 2].map((idx) => (
@@ -198,8 +242,6 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
   const busy = state.pendingRequest !== null || state.requiresRefresh;
   const workspace = state.workspace;
   const economy = state.economy;
-  const figures = { projects: rows, designs: state.designs, commands: workspace.commands, economy };
-  const marks = railMarks(figures);
   const currentPlace = placeOf(place);
   const tab = currentPlace.tabs.find((t) => t.id === tabs[place]) ?? currentPlace.tabs[0]!;
   const selectedRow = rows.find(
@@ -218,11 +260,8 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
             rows={rows}
             economy={economy}
             selectedId={selectedRow?.projectId ?? null}
-            onSelect={(projectId) => {
-              setSelectedProjectId(projectId);
-              setTab("slipways", "project");
-            }}
-            onBrowseCatalog={() => setPlace("catalog")}
+            onSelect={selectProject}
+            onBrowseCatalog={browseCatalog}
           />
         );
       case "catalog":
@@ -248,10 +287,7 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
             economy={economy}
             workspace={workspace}
             selectedDesignId={selectedDesignId}
-            onSelectDesign={(designId) => {
-              setSelectedDesignId(designId);
-              setTab("catalog", "design");
-            }}
+            onSelectDesign={selectDesign}
           />
         );
       case "orders":
@@ -262,13 +298,10 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
             busy={busy}
             selectedDesignId={selectedDesignId}
             selectedCommandId={selectedCommandId}
-            onSelectCommand={(commandId) => {
-              setSelectedCommandId(commandId);
-              setTab("orders", "command");
-            }}
+            onSelectCommand={selectCommand}
             onReplace={replace}
             onCancel={cancel}
-            onBrowseCatalog={() => setPlace("catalog")}
+            onBrowseCatalog={browseCatalog}
           />
         );
       case "dock":
@@ -446,7 +479,7 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
           </div>
         </div>
 
-        <YardStatusBar readouts={yardReadouts(figures, workspace, format)} />
+        <YardStatusBar readouts={readouts} />
       </div>
 
       <CollapsibleSection

@@ -1,5 +1,6 @@
 import type { ConstructionProjectQueueEntry } from "@bluewave/campaign-engine";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { memo, type ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { ConstructionScreenProjection } from "../../../shared/construction-contract.js";
 import { ConstructionScreen } from "./ConstructionScreen.js";
@@ -9,6 +10,15 @@ vi.mock("../../shell/CampaignShellContext.js", async (original) => ({
   ...(await original<typeof import("../../shell/CampaignShellContext.js")>()),
   useReviseProject: () => mocks.revise,
 }));
+const stageRenders = vi.hoisted(() => ({ slipways: vi.fn() }));
+vi.mock("./components/SlipwaysStage.js", async (original) => {
+  const real = await original<typeof import("./components/SlipwaysStage.js")>();
+  const Counted = memo(function Counted(props: ComponentProps<typeof real.SlipwaysStage>) {
+    stageRenders.slipways();
+    return <real.SlipwaysStage {...props} />;
+  });
+  return { ...real, SlipwaysStage: Counted };
+});
 vi.mock("../../lib/bridge-context.js", () => ({
   useBridge: () => ({ campaign: { execute: mocks.execute } }),
 }));
@@ -17,6 +27,7 @@ afterEach(() => {
   cleanup();
   mocks.execute.mockReset();
   mocks.revise.mockReset();
+  stageRenders.slipways.mockClear();
 });
 
 const project = (
@@ -66,6 +77,20 @@ const serve = (projection: ConstructionScreenProjection) =>
       return { outcome: "success", value: projection, diagnostics: [] };
     return { outcome: "failure", reason: "UNEXPECTED", diagnostics: [command] };
   });
+
+describe("ConstructionScreen stage memoization", () => {
+  it("does not re-render the slipways stage when only the inspector layout changes", async () => {
+    serve(projectionWith([project()]));
+    render(<ConstructionScreen sessionId="ses_1" />);
+    await screen.findByRole("button", { name: /^Havock class, active/ });
+    const rendersBefore = stageRenders.slipways.mock.calls.length;
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide inspector" }));
+    await screen.findByRole("button", { name: "Show inspector" });
+
+    expect(stageRenders.slipways.mock.calls.length).toBe(rendersBefore);
+  });
+});
 
 describe("ConstructionScreen revise project", () => {
   it("sends the selected revisable project to the Ship design screen", async () => {

@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { DiplomacyScreenState } from "./diplomacy-screen-state.js";
 import {
+  initialDiplomacyScreenState,
   diplomacyBeginAction,
   diplomacyBeginSubmit,
   diplomacyLoadSuccess,
@@ -414,5 +415,16 @@ describe("DiplomacyScreen", () => {
     } finally {
       debugFlag.on = false;
     }
+  });
+
+  it("survives the idle to loaded transition without changing its hook order", () => {
+    hookMocks.stateFn.mockImplementation(() => initialDiplomacyScreenState());
+    const { rerender } = render(<DiplomacyScreen sessionId="ses-1" />);
+    expect(screen.queryByTestId("diplomacy-workspace")).toBeNull();
+
+    hookMocks.stateFn.mockImplementation(() => makeLoaded());
+    rerender(<DiplomacyScreen sessionId="ses-1" />);
+
+    expect(screen.getByTestId("diplomacy-workspace")).not.toBeNull();
   });
 });
