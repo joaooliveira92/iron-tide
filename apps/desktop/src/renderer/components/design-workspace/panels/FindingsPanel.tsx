@@ -1,11 +1,5 @@
 import { useState } from "react";
-import type {
-  DraftEdit,
-  Finding,
-  Severity,
-  SuggestedFix,
-  WorkshopView,
-} from "@bluewave/ship-design";
+import type { Finding, Severity, SuggestedFix, WorkshopView } from "@bluewave/ship-design";
 import { CircleCheck, Crosshair, Lightbulb, OctagonX, TriangleAlert } from "lucide-react";
 import { BouncyAccordion, type BouncyAccordionItem } from "../../motion/bouncy-accordion.js";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "../../ui/alert.js";
@@ -16,6 +10,7 @@ import { SlateBody, SlateFacts, SlateHeader } from "../../ui/slate.js";
 import { cn } from "../../../lib/utils.js";
 import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import { useDesignActions, useDesignState } from "../DesignWorkspaceContext.js";
 import { Panel } from "./Panel.js";
 import { findingAttrs } from "../selection/navigation.js";
 import type { BoardFinding } from "../validation/boardFindings.js";
@@ -215,18 +210,16 @@ function FixSummary({ f }: { readonly f: SuggestedFix }) {
 }
 
 export function FindingsPanel({
-  view,
   findings,
   suggest,
-  onApply,
   onShowOnShip,
 }: {
-  readonly view: WorkshopView;
   readonly findings: readonly BoardFinding[];
   readonly onShowOnShip: (f: BoardFinding) => void;
   readonly suggest: () => SuggestedFix[];
-  readonly onApply: (e: DraftEdit) => void;
 }) {
+  const { view } = useDesignState();
+  const { edit: onApply } = useDesignActions();
   const order: readonly Severity[] = SEVERITY_ORDER;
   const total = order.reduce((a, s) => a + view.counts[s], 0);
   const serious = view.counts.BLOCKING + view.counts.CRITICAL + view.counts.WARNING > 0;

@@ -1,10 +1,11 @@
-import type { WorkshopView } from "@bluewave/ship-design";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
 import { SlateBody, SlateFacts, SlateHeader } from "../../ui/slate.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 
-export function LedgerPanel({ view }: { readonly view: WorkshopView }) {
+export function LedgerPanel() {
+  const { view } = useDesignState();
   const format = usePresentationFormat();
   const tonnes = (kg: number) => format.measurement(kg, "mass", { maximumFractionDigits: 0 });
   return (

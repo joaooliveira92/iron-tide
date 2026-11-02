@@ -1,20 +1,11 @@
-import { bp, kg, mm, type DesignDraft } from "@bluewave/ship-design";
-import type { DrawingBoardContent } from "../content.js";
+import { bp, kg, mm } from "@bluewave/ship-design";
+import { useDesignActions, useDesignState } from "../DesignWorkspaceContext.js";
 import { NumberField, SelectField } from "../fields.js";
 import { Panel } from "./Panel.js";
-import type { Edit } from "./types.js";
 
-export function HullPanel({
-  draft,
-  content,
-  edit,
-  errorFor,
-}: {
-  readonly draft: DesignDraft;
-  readonly content: DrawingBoardContent;
-  readonly edit: Edit;
-  readonly errorFor: (field: string) => string | undefined;
-}) {
+export function HullPanel() {
+  const { draft, content } = useDesignState();
+  const { edit, errorFor } = useDesignActions();
   const h = draft.hull;
   return (
     <Panel title="Hull and displacement">

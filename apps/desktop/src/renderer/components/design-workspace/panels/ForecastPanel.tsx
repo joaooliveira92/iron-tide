@@ -1,15 +1,14 @@
-import { treasuryCostUnits, type WorkshopView } from "@bluewave/ship-design";
+import { treasuryCostUnits } from "@bluewave/ship-design";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { Panel } from "./Panel.js";
 import { YardList } from "./YardList.js";
 
-export function ForecastPanel({
-  view,
-  treasuryUnitMicro,
-}: {
-  readonly view: WorkshopView;
-  readonly treasuryUnitMicro: number;
-}) {
+export function ForecastPanel() {
+  const {
+    view,
+    content: { treasuryUnitMicro },
+  } = useDesignState();
   const format = usePresentationFormat();
   return (
     <Panel title="Cost and construction forecast">

@@ -1,10 +1,6 @@
-import {
-  TOPSIDE_WARN_BP,
-  topsideLoad,
-  type TopsideStatus,
-  type WorkshopView,
-} from "@bluewave/ship-design";
+import { TOPSIDE_WARN_BP, topsideLoad, type TopsideStatus } from "@bluewave/ship-design";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { Panel } from "./Panel.js";
 
 const LABEL: Record<TopsideStatus, string> = {
@@ -18,7 +14,8 @@ const BAR: Record<TopsideStatus, string> = {
   exceeded: "bg-red-600",
 };
 
-export function TopsidePanel({ view }: { readonly view: WorkshopView }) {
+export function TopsidePanel() {
+  const { view } = useDesignState();
   const format = usePresentationFormat();
   const m2 = (mm2: number) => format.number(mm2 / 1_000_000, { maximumFractionDigits: 1 });
   const load = topsideLoad(view.compiled.arrangement);

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import type { DesignDraft, WorkshopView } from "@bluewave/ship-design";
+import type { DesignDraft } from "@bluewave/ship-design";
 import { FileText } from "lucide-react";
 import {
   Attachment,
@@ -11,29 +11,24 @@ import {
 import { Alert } from "../../ui/alert.js";
 import { Button } from "../../ui/button.js";
 import { ButtonGroup } from "../../ui/button-group.js";
-import type { DrawingBoardContent } from "../content.js";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { designFileName, exportDesign, importDesign } from "../designFile.js";
 import { ConfirmAction } from "../ConfirmAction.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 
 export function FilePanel({
-  draft,
-  view,
-  content,
   presetName,
   className,
   onLoad,
   dirty,
 }: {
-  readonly draft: DesignDraft;
-  readonly view: WorkshopView;
-  readonly content: DrawingBoardContent;
   readonly presetName: string;
   readonly className: string;
   readonly onLoad: (draft: DesignDraft, className: string | null) => void;
   readonly dirty: boolean;
 }) {
+  const { draft, view, content } = useDesignState();
   const format = usePresentationFormat();
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<{
