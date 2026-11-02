@@ -23,6 +23,10 @@ Actions run in command-line order, in either `--flag value` or `--flag=value` fo
 
 Setup: `--save DIR`, `--make-save DIR`, `--size WxH`, `--theme`, `--background`, `--tour`.
 
+## Image budget
+
+Read `aria.txt` first. The default window is 1280x800 and screenshots are written in CSS pixels, so retina displays do not double the image. Take one screenshot per changed screen and drop it afterwards. `--full-res` keeps the native window and device pixels for a final pixel-level check; `--size WxH` overrides the window.
+
 ## Reliability
 
 - After each action it waits `--wait` ms (default 300), then for the DOM to be

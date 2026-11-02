@@ -5,13 +5,15 @@ import { basename, extname, isAbsolute, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
 import { isEntryPoint } from "./lib/paths.mjs";
+import { describeScreen, listScreens, renderScreen, renderScreenList } from "./lib/screen-map.mjs";
 import { discoverWorkspaces, toPosix, workspaceForPath } from "./lib/workspaces.mjs";
 
 export const FORMAT_VERSION = 2;
 const MAX_BUFFER = 32 * 1024 * 1024;
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/u;
 const SOURCE_ROOTS = ["packages", "apps", "content", "scripts"];
-const USAGE = "usage: pnpm agent:map <symbol-or-path> [--json] [--limit N] [--help]";
+const USAGE =
+  "usage: pnpm agent:map <symbol-or-path> [--json] [--limit N] [--help]\n       pnpm agent:map --screen [name] [--json] [--limit N]";
 
 export class MapError extends Error {
   constructor(message, code, details = []) {
@@ -33,6 +35,7 @@ export function parseArguments(argv) {
       options: {
         json: { type: "boolean", default: false },
         help: { type: "boolean", default: false },
+        screen: { type: "boolean", default: false },
         limit: { type: "string", default: "8" },
       },
     }));
@@ -40,11 +43,15 @@ export function parseArguments(argv) {
     throw new MapError(`${error.message}\n${USAGE}`, 2);
   }
   if (values.help) return { help: true };
-  if (positionals.length !== 1) throw new MapError(USAGE, 2);
   const limit = Number(values.limit);
   if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
     throw new MapError("--limit must be an integer between 1 and 50", 2);
   }
+  if (values.screen) {
+    if (positionals.length > 1) throw new MapError(USAGE, 2);
+    return { help: false, screen: true, query: positionals[0] ?? null, json: values.json, limit };
+  }
+  if (positionals.length !== 1) throw new MapError(USAGE, 2);
   return { help: false, query: positionals[0], json: values.json, limit };
 }
 
@@ -334,6 +341,28 @@ function printError(error) {
   for (const detail of error.details ?? []) process.stderr.write(`  ${detail}\n`);
 }
 
+function runScreen(root, options) {
+  if (options.query === null) {
+    const screens = listScreens(root);
+    process.stdout.write(
+      options.json ? `${JSON.stringify(screens, null, 2)}\n` : renderScreenList(screens),
+    );
+    return 0;
+  }
+  const report = describeScreen(root, options.query, options.limit);
+  if (report === null) {
+    const names = listScreens(root)
+      .map((screen) => screen.name)
+      .join(", ");
+    printError(new MapError(`unknown screen "${options.query}". Known: ${names}`, 4));
+    return 4;
+  }
+  process.stdout.write(
+    options.json ? `${JSON.stringify(report, null, 2)}\n` : renderScreen(report),
+  );
+  return 0;
+}
+
 export function run(argv, root = resolve(import.meta.dirname, "..")) {
   let options;
   try {
@@ -349,6 +378,7 @@ export function run(argv, root = resolve(import.meta.dirname, "..")) {
     process.stdout.write(`${USAGE}\n`);
     return 0;
   }
+  if (options.screen) return runScreen(root, options);
   try {
     const report = buildReport(root, options.query, options.limit);
     process.stdout.write(
