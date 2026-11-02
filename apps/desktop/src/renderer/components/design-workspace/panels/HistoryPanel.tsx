@@ -1,7 +1,7 @@
 import { Button } from "../../ui/button.js";
 import { cn } from "../../../lib/utils.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
-import type { DrawingBoardContent } from "../content.js";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { describeEdit } from "../describeEdit.js";
 import type { DraftEdit } from "@bluewave/ship-design";
 import { Panel } from "./Panel.js";
@@ -10,15 +10,14 @@ export function HistoryPanel({
   history,
   cursor,
   startName,
-  content,
   jumpTo,
 }: {
   readonly history: readonly DraftEdit[];
   readonly cursor: number;
   readonly startName: string;
-  readonly content: DrawingBoardContent;
   readonly jumpTo: (cursor: number) => void;
 }) {
+  const { content } = useDesignState();
   const format = usePresentationFormat();
   const names = new Map(content.catalogue.map((e) => [e.id, e.displayName]));
   const nameOf = (id: string) => names.get(id) ?? id;

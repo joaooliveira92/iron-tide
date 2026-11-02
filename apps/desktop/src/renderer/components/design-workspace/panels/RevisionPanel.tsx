@@ -19,7 +19,7 @@ import {
 import { Badge } from "../../ui/badge.js";
 import { Alert } from "../../ui/alert.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
-import type { DrawingBoardContent } from "../content.js";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { ConfirmAction } from "../ConfirmAction.js";
 import { SelectField } from "../fields.js";
 import {
@@ -45,21 +45,18 @@ export function RevisionPanel({
   sessionId,
   projects,
   history,
-  draft,
   startDraft,
-  content,
   onLoad,
   dirty,
 }: {
   readonly sessionId?: string;
   readonly projects: readonly RevisionProject[];
   readonly history: readonly DraftEdit[];
-  readonly draft: DesignDraft;
   readonly startDraft: DesignDraft;
-  readonly content: DrawingBoardContent;
   readonly onLoad: (draft: DesignDraft) => void;
   readonly dirty: boolean;
 }) {
+  const { draft, content } = useDesignState();
   const format = usePresentationFormat();
   const pct = (bp: number) => format.percent(bp, 1);
   const balance = content.revision;

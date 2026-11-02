@@ -1,11 +1,10 @@
-import type { DesignDraft, ShipContext, WorkshopView } from "@bluewave/ship-design";
 import { Badge } from "../../ui/badge.js";
 import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { shipTypeIcon } from "../ship-type-icon.js";
 import { NumberField, SelectField } from "../fields.js";
 import { shipTypeChoices } from "../shipTypes.js";
 import { Panel } from "./Panel.js";
-import type { Edit } from "./types.js";
+import { useDesignActions, useDesignState } from "../DesignWorkspaceContext.js";
 
 const ACCOMMODATION_OPTIONS = [
   {
@@ -17,19 +16,9 @@ const ACCOMMODATION_OPTIONS = [
   { value: "GENEROUS", label: "Generous", description: "Spacious: most crew space, heaviest." },
 ] as const;
 
-export function BriefPanel({
-  draft,
-  view,
-  edit,
-  errorFor,
-  ctx,
-}: {
-  readonly draft: DesignDraft;
-  readonly view: WorkshopView;
-  readonly edit: Edit;
-  readonly errorFor?: (field: string) => string | undefined;
-  readonly ctx: ShipContext;
-}) {
+export function BriefPanel() {
+  const { draft, view, ctx } = useDesignState();
+  const { edit, errorFor } = useDesignActions();
   const r = draft.requirement;
   const icon = (t: string) => {
     const Icon = shipTypeIcon(t);
@@ -65,7 +54,7 @@ export function BriefPanel({
           className="col-span-2"
           value={r.category}
           options={options}
-          error={errorFor?.("set_requirement:category")}
+          error={errorFor("set_requirement:category")}
           onChange={(v) => edit({ kind: "set_requirement", patch: { category: v } })}
         />
         <NumberField
@@ -74,7 +63,7 @@ export function BriefPanel({
           value={r.requiredSpeedMilliKnots}
           scale={1000}
           decimals={1}
-          error={errorFor?.("set_requirement:requiredSpeedMilliKnots")}
+          error={errorFor("set_requirement:requiredSpeedMilliKnots")}
           onCommit={(v) => edit({ kind: "set_requirement", patch: { requiredSpeedMilliKnots: v } })}
         />
         <NumberField
@@ -83,14 +72,14 @@ export function BriefPanel({
           value={r.cruiseSpeedMilliKnots}
           scale={1000}
           decimals={1}
-          error={errorFor?.("set_requirement:cruiseSpeedMilliKnots")}
+          error={errorFor("set_requirement:cruiseSpeedMilliKnots")}
           onCommit={(v) => edit({ kind: "set_requirement", patch: { cruiseSpeedMilliKnots: v } })}
         />
         <NumberField
           label="Required range"
           unit="nm"
           value={r.requiredRangeNm}
-          error={errorFor?.("set_requirement:requiredRangeNm")}
+          error={errorFor("set_requirement:requiredRangeNm")}
           onCommit={(v) => edit({ kind: "set_requirement", patch: { requiredRangeNm: v } })}
         />
         <SelectField
@@ -98,7 +87,7 @@ export function BriefPanel({
           className="col-span-2"
           value={r.accommodationStandard}
           options={ACCOMMODATION_OPTIONS}
-          error={errorFor?.("set_requirement:accommodationStandard")}
+          error={errorFor("set_requirement:accommodationStandard")}
           onChange={(v) =>
             edit({
               kind: "set_requirement",

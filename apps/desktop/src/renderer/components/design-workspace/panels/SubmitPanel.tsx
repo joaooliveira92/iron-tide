@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
-import type { DesignDraft } from "@bluewave/ship-design";
 import { Alert } from "../../ui/alert.js";
 import { Button } from "../../ui/button.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { Panel } from "./Panel.js";
 import { plural } from "../plural.js";
 import type { DesignStudyPreview } from "../../../../shared/design-contract.js";
@@ -59,19 +59,19 @@ export function rejectionLead(reason: string): string {
 
 export function SubmitPanel({
   sessionId,
-  draft,
-  valid,
   name,
   onNameChange,
   onRequestName,
 }: {
   readonly sessionId: string;
-  readonly draft: DesignDraft;
-  readonly valid: boolean;
   readonly name?: string;
   readonly onNameChange?: (name: string) => void;
   readonly onRequestName?: () => void;
 }) {
+  const {
+    draft,
+    view: { valid },
+  } = useDesignState();
   const revision = useCampaignRevision();
   const bridge = useBridge();
   const format = usePresentationFormat();

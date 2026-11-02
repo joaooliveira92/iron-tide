@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { useState } from "react";
 import { buildWorkshopView, type DesignDraft } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/content.js";
+import { DesignWorkspaceFixture } from "../../components/design-workspace/DesignWorkspaceFixture.js";
 import { HullPlanPanel } from "../../components/design-workspace/panels/index.js";
 import { ShipViewBoundary } from "../../components/design-workspace/workspace/ShipViewBoundary.js";
 
@@ -13,14 +14,9 @@ const ref = content.references[0]!;
 const refView = buildWorkshopView(ref.draft, content.environmentFor(ref.month));
 const drawFor = (draft: DesignDraft, shipView: "top" | "side" | "iso" = "top") =>
   render(
-    <HullPlanPanel
-      draft={draft}
-      content={content}
-      view={refView}
-      month={ref.month}
-      edit={() => {}}
-      shipView={shipView}
-    />,
+    <DesignWorkspaceFixture draft={draft} content={content} view={refView} month={ref.month}>
+      <HullPlanPanel shipView={shipView} />
+    </DesignWorkspaceFixture>,
   );
 
 describe("ship view states", () => {

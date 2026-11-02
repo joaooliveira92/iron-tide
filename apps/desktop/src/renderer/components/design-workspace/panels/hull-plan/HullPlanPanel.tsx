@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import type { ArmourRegionId, DesignDraft, WorkshopView } from "@bluewave/ship-design";
-import type { DrawingBoardContent } from "../../content.js";
+import type { ArmourRegionId } from "@bluewave/ship-design";
+import { useDesignActions, useDesignState } from "../../DesignWorkspaceContext.js";
 import { Checkbox } from "../../../ui/checkbox.js";
 import { Panel } from "../Panel.js";
 import { PlanToolOptions } from "./PlanToolbar.js";
@@ -21,7 +21,6 @@ import { planModel, type PlanModel } from "./planModel.js";
 import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.js";
 import { formatHullMetres } from "../../../../lib/presentation-format/hull-metres.js";
 import type { PlanTool } from "./plan-tool.js";
-import type { Edit } from "../types.js";
 
 const ISO_HEIGHT =
   "calc(100svh - var(--chrome-top, 0px) - var(--chrome-bottom, 0px) - var(--chrome-slip, 0px) - 7rem)";
@@ -29,11 +28,6 @@ const ISO_HEIGHT =
 const NO_FINDINGS: readonly BoardFinding[] = [];
 
 export function HullPlanPanel({
-  draft,
-  content,
-  view,
-  month,
-  edit,
   findings: given,
   model: givenModel,
   editing: givenEditing,
@@ -50,11 +44,6 @@ export function HullPlanPanel({
   highlightId,
   focusArcs = false,
 }: {
-  readonly draft: DesignDraft;
-  readonly content: DrawingBoardContent;
-  readonly view: WorkshopView;
-  readonly month: string;
-  readonly edit: Edit;
   readonly findings?: readonly BoardFinding[];
   readonly model?: PlanModel;
   readonly editing?: HullPlanEditing;
@@ -71,6 +60,8 @@ export function HullPlanPanel({
   readonly highlightId?: string;
   readonly focusArcs?: boolean;
 }) {
+  const { draft, content, view, month } = useDesignState();
+  const { edit } = useDesignActions();
   const [localShowArcs, setLocalShowArcs] = useState(true);
   const [localFindingsView, setLocalFindingsView] = useFindingsView();
   const showArcs = givenShowArcs ?? localShowArcs;

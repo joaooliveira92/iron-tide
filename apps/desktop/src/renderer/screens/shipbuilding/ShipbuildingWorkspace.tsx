@@ -58,6 +58,7 @@ import {
 import { useDraftAutosave } from "../../components/design-workspace/useDraftAutosave.js";
 import { useRestoredDraftToast } from "../../components/design-workspace/useRestoredDraftToast.js";
 import { SelectionInspector } from "../../components/design-workspace/selection/SelectionInspector.js";
+import { DesignWorkspaceProvider } from "../../components/design-workspace/DesignWorkspaceContext.js";
 import { ShipSelectionProvider } from "../../components/design-workspace/selection/useShipSelection.js";
 import { ShipViewBoundary } from "../../components/design-workspace/workspace/ShipViewBoundary.js";
 import { shipTypeIcon } from "../../components/design-workspace/ship-type-icon.js";
@@ -421,11 +422,6 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
         title={`${tabLabel(at)} fittings`}
         categories={categories}
         names={mountNameMap(batteries)}
-        draft={draft}
-        content={content}
-        month={state.month}
-        view={view}
-        edit={actions.edit}
         onSelect={(instanceId) => selection.select({ kind: "fitting", instanceId })}
         selectedInstanceId={selectedInstanceId}
       />
@@ -462,33 +458,22 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
                 },
               }}
             />
-            <BriefPanel
-              draft={draft}
-              view={view}
-              edit={actions.edit}
-              errorFor={choiceCheck.errorFor}
-              ctx={env.ctx}
-            />
+            <BriefPanel />
           </>
         ) : (
           <>
             {overview !== null && <OverviewPanel model={overview} />}
-            <MetricsPanel view={view} />
-            <LedgerPanel view={view} />
-            <ForecastPanel view={view} treasuryUnitMicro={content.treasuryUnitMicro} />
+            <MetricsPanel />
+            <LedgerPanel />
+            <ForecastPanel />
           </>
         );
       case "hull":
         return at.tab === "stability" ? (
-          <TopsidePanel view={view} />
+          <TopsidePanel />
         ) : (
           <>
-            <HullPanel
-              draft={draft}
-              content={content}
-              edit={actions.edit}
-              errorFor={choiceCheck.errorFor}
-            />
+            <HullPanel />
             {aluminium.offered && (
               <AluminiumSuperstructurePanel model={aluminium} edit={actions.edit} />
             )}
@@ -497,7 +482,7 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
         );
       case "machinery":
         return at.tab === "performance" ? (
-          <MetricsPanel view={view} />
+          <MetricsPanel />
         ) : (
           <>
             {machinery !== null && (
@@ -581,21 +566,9 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
         );
       case "review":
         return at.tab === "findings" ? (
-          <FindingsPanel
-            view={view}
-            findings={findings}
-            suggest={actions.suggest}
-            onApply={actions.edit}
-            onShowOnShip={showOnShip}
-          />
+          <FindingsPanel findings={findings} suggest={actions.suggest} onShowOnShip={showOnShip} />
         ) : at.tab === "rebuild" ? (
-          <RebuildPanel
-            sessionId={sessionId}
-            draft={draft}
-            content={content}
-            onLoad={loadDraft}
-            dirty={state.editCount > 0}
-          />
+          <RebuildPanel sessionId={sessionId} onLoad={loadDraft} dirty={state.editCount > 0} />
         ) : (
           <>
             {projects.length > 0 && (
@@ -603,9 +576,7 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
                 sessionId={sessionId}
                 projects={projects}
                 history={state.history.slice(0, state.editCount)}
-                draft={draft}
                 startDraft={state.preset.draft}
-                content={content}
                 onLoad={loadDraft}
                 dirty={state.editCount > 0}
               />
@@ -613,8 +584,6 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
             {sessionId !== undefined ? (
               <SubmitPanel
                 sessionId={sessionId}
-                draft={draft}
-                valid={view.valid}
                 name={shipClassName}
                 onNameChange={setShipClassName}
                 onRequestName={() => nameInputRef.current?.focus()}
@@ -658,7 +627,7 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
       canRedo={state.canRedo}
       onUndo={actions.undo}
       onRedo={actions.redo}
-      compare={<ComparePanel baseline={state.baseline} view={view} name={state.preset.name} />}
+      compare={<ComparePanel baseline={state.baseline} name={state.preset.name} />}
       autosaved={autosave.enabled}
       onFinish={finish}
       overflow={[
@@ -708,11 +677,6 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
     >
       <ShipViewBoundary resetKey={draft}>
         <HullPlanPanel
-          draft={draft}
-          content={content}
-          view={view}
-          month={state.month}
-          edit={actions.edit}
           findings={findings}
           model={model}
           editing={editing}
@@ -892,9 +856,6 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
         description="Save the design to a file, or load one."
       >
         <FilePanel
-          draft={draft}
-          view={view}
-          content={content}
           presetName={state.preset.name}
           className={shipClassName}
           onLoad={loadDesign}
@@ -911,7 +872,6 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
           history={state.history}
           cursor={state.editCount}
           startName={state.preset.name}
-          content={content}
           jumpTo={actions.jumpTo}
         />
       </WorkspaceDialog>
@@ -935,62 +895,72 @@ export function ShipbuildingWorkspace({ sessionId, projects = [] }: Shipbuilding
 
   return (
     <ShipSelectionProvider store={selection}>
-      <DraftSaveWarning visible={autosave.saveFailed} onDismiss={autosave.dismissSaveFailed} />
-      {hosted ? (
-        <ScreenHeader title="Ship design" icon={PencilRuler}>
-          {commandBar}
-        </ScreenHeader>
-      ) : null}
-      {wide ? (
-        <div
-          ref={rootRef}
-          data-testid="shipbuilding-workspace"
-          data-guided-target="ship-design"
-          className="relative h-full min-h-[28rem]"
-          style={{ "--chrome-right": drawerClearance } as CSSProperties}
-          onKeyDown={onKeyDown}
-          onKeyDownCapture={onKeyDownCapture}
-        >
-          <h2 className="sr-only">Ship design</h2>
-          {stage}
-          <ChartDesk tabs={tabs} drawer={drawer} slip={null} foot={foot} />
-          {!hosted && (
-            <div className="pointer-events-auto absolute inset-x-0 top-0 z-[10000]">
-              {commandBar}
-            </div>
-          )}
-          {overlay}
-        </div>
-      ) : (
-        <div
-          ref={rootRef}
-          data-testid="shipbuilding-workspace"
-          data-guided-target="ship-design"
-          className="flex flex-col gap-3 p-3 pb-[calc(var(--chrome-bottom,0px)+0.75rem)] pt-[calc(var(--chrome-top,0px)+0.75rem)]"
-          onKeyDown={onKeyDown}
-          onKeyDownCapture={onKeyDownCapture}
-        >
-          <h2 className="sr-only">Ship design</h2>
-          {!hosted && commandBar}
+      <DesignWorkspaceProvider
+        draft={draft}
+        view={view}
+        content={content}
+        ctx={env.ctx}
+        month={state.month}
+        edit={actions.edit}
+        errorFor={choiceCheck.errorFor}
+      >
+        <DraftSaveWarning visible={autosave.saveFailed} onDismiss={autosave.dismissSaveFailed} />
+        {hosted ? (
+          <ScreenHeader title="Ship design" icon={PencilRuler}>
+            {commandBar}
+          </ScreenHeader>
+        ) : null}
+        {wide ? (
           <div
-            className="relative h-[60vh] min-h-[22rem] overflow-hidden rounded-sm border border-admiralty-border"
-            style={
-              {
-                "--chrome-top": "0px",
-                "--chrome-bottom": "0px",
-                "--chrome-slip": "0px",
-                "--chrome-right": "1.5rem",
-              } as CSSProperties
-            }
+            ref={rootRef}
+            data-testid="shipbuilding-workspace"
+            data-guided-target="ship-design"
+            className="relative h-full min-h-[28rem]"
+            style={{ "--chrome-right": drawerClearance } as CSSProperties}
+            onKeyDown={onKeyDown}
+            onKeyDownCapture={onKeyDownCapture}
           >
+            <h2 className="sr-only">Ship design</h2>
             {stage}
+            <ChartDesk tabs={tabs} drawer={drawer} slip={null} foot={foot} />
+            {!hosted && (
+              <div className="pointer-events-auto absolute inset-x-0 top-0 z-[10000]">
+                {commandBar}
+              </div>
+            )}
+            {overlay}
           </div>
-          <div className="flex flex-col items-start gap-2">{foot}</div>
-          {tabs}
-          {drawer !== null && <div className="h-[70vh] min-h-[22rem]">{drawer}</div>}
-          {overlay}
-        </div>
-      )}
+        ) : (
+          <div
+            ref={rootRef}
+            data-testid="shipbuilding-workspace"
+            data-guided-target="ship-design"
+            className="flex flex-col gap-3 p-3 pb-[calc(var(--chrome-bottom,0px)+0.75rem)] pt-[calc(var(--chrome-top,0px)+0.75rem)]"
+            onKeyDown={onKeyDown}
+            onKeyDownCapture={onKeyDownCapture}
+          >
+            <h2 className="sr-only">Ship design</h2>
+            {!hosted && commandBar}
+            <div
+              className="relative h-[60vh] min-h-[22rem] overflow-hidden rounded-sm border border-admiralty-border"
+              style={
+                {
+                  "--chrome-top": "0px",
+                  "--chrome-bottom": "0px",
+                  "--chrome-slip": "0px",
+                  "--chrome-right": "1.5rem",
+                } as CSSProperties
+              }
+            >
+              {stage}
+            </div>
+            <div className="flex flex-col items-start gap-2">{foot}</div>
+            {tabs}
+            {drawer !== null && <div className="h-[70vh] min-h-[22rem]">{drawer}</div>}
+            {overlay}
+          </div>
+        )}
+      </DesignWorkspaceProvider>
     </ShipSelectionProvider>
   );
 }

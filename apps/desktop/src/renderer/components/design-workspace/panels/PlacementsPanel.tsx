@@ -1,7 +1,6 @@
-import type { ComponentCategory, DesignDraft, WorkshopView } from "@bluewave/ship-design";
-import type { DrawingBoardContent } from "../content.js";
+import type { ComponentCategory } from "@bluewave/ship-design";
+import { useDesignActions, useDesignState } from "../DesignWorkspaceContext.js";
 import { Panel } from "./Panel.js";
-import type { Edit } from "./types.js";
 import { AddComponentBar } from "./placements/AddComponentBar.js";
 import { PlacementRow } from "./placements/PlacementRow.js";
 import { PlacementsTable } from "./placements/PlacementsTable.js";
@@ -9,28 +8,20 @@ import { allowedZonesFor } from "./placements/placement-helpers.js";
 import { usePlacementsState } from "./placements/usePlacementsState.js";
 
 export function PlacementsPanel({
-  draft,
-  content,
-  month,
-  view,
   names,
-  edit,
   categories,
   title = "Components and arrangement",
   onSelect,
   selectedInstanceId,
 }: {
-  readonly draft: DesignDraft;
-  readonly content: DrawingBoardContent;
-  readonly month: string;
-  readonly view: WorkshopView;
   readonly names: ReadonlyMap<string, string>;
-  readonly edit: Edit;
   readonly categories?: ReadonlySet<ComponentCategory>;
   readonly title?: string;
   readonly onSelect?: (instanceId: string) => void;
   readonly selectedInstanceId?: string | null;
 }) {
+  const { draft, content, month, view } = useDesignState();
+  const { edit } = useDesignActions();
   const { state, actions } = usePlacementsState({ draft, content, view, edit, categories });
 
   return (
