@@ -16,7 +16,7 @@ hand-rolled `role="dialog"`/`aria-modal`, and on `className` passed to a dialog.
 | --- | --- | --- |
 | Browse, read, edit, review: anything with content | `Dialog` + `DialogContent` | `standard`: `h-[85vh] w-[min(92vw,80rem)]` |
 | A question with a button answer, or an interruption | `AlertDialog` + `AlertDialogContent` | `confirm`: `w-[min(92vw,32rem)]`, height follows content, capped at 85vh |
-| Settings: grouped rows by section | `SettingsModal` (`components/shared`) | `flush`, sidebar and cards |
+| Settings: grouped rows by section | `SettingsModal` (`components/shared`) | `flush`, sidebar, cards, `sr-only` description |
 | Content the player works beside (ship design sections, fleet, map panels) | `DepartmentDrawer` | docked, not modal; see below |
 | Jump to a screen | `CommandDialog` | palette, not a modal |
 | Tour coach mark | `GuidedInspectionOverlay` | not a modal |

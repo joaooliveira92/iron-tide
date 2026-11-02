@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useRef } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,17 +12,28 @@ import {
 
 export interface CloseCampaignDialogProps {
   readonly open: boolean;
-  readonly onOpenChange: (open: boolean) => void;
-  readonly onCloseCampaign: () => void;
+  readonly onCancel: () => void;
+  readonly onConfirm: () => void;
 }
 
 export const CloseCampaignDialog = memo(function CloseCampaignDialog({
   open,
-  onOpenChange,
-  onCloseCampaign,
+  onCancel,
+  onConfirm,
 }: CloseCampaignDialogProps) {
+  const confirmed = useRef(false);
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) return;
+        if (confirmed.current) {
+          confirmed.current = false;
+          return;
+        }
+        onCancel();
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Close this campaign?</AlertDialogTitle>
@@ -32,7 +43,14 @@ export const CloseCampaignDialog = memo(function CloseCampaignDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onCloseCampaign}>Close Campaign</AlertDialogAction>
+          <AlertDialogAction
+            onClick={() => {
+              confirmed.current = true;
+              onConfirm();
+            }}
+          >
+            Close Campaign
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

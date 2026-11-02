@@ -189,8 +189,14 @@ export function CampaignPreferencesScreen({
       {onCloseCampaign !== undefined && (
         <CloseCampaignDialog
           open={confirmClose}
-          onOpenChange={setConfirmClose}
-          onCloseCampaign={onCloseCampaign}
+          onCancel={() => {
+            setConfirmClose(false);
+            setOpen(true);
+          }}
+          onConfirm={() => {
+            setConfirmClose(false);
+            onCloseCampaign();
+          }}
         />
       )}
     </div>

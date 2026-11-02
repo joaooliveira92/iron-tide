@@ -46,6 +46,7 @@ export const EN_US_MESSAGES = {
   "settings.reducedMotion.description": "Reduce animation across the interface.",
   "settings.tooltipDetail.description": "How much detail tooltips show.",
   "settings.contrast.description": "The high-contrast theme lives under Appearance.",
+  "settings.contrast.open": "Go to Appearance",
   "settings.open": "Open settings",
   "settings.modal.title": "Settings",
   "settings.modal.nav": "Settings sections",
