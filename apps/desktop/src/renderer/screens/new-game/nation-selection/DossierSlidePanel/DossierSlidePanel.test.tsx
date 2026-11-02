@@ -4,8 +4,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test"
 import { PLAYABLE_SLOT_COUNTRY_IDS } from "@/content/nationAssetManifest.js";
 import { nationDossier, nationFlavor } from "@/content/presentationContent.js";
 import { DossierSlidePanel } from "./DossierSlidePanel.js";
+import { buildDossierTabs } from "./DossierTabContent.js";
+
+vi.mock("./DossierTabContent.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("./DossierTabContent.js")>();
+  return { ...original, buildDossierTabs: vi.fn(original.buildDossierTabs) };
+});
 
 beforeEach(() => {
+  vi.mocked(buildDossierTabs).mockClear();
   window.matchMedia ??= ((query: string) => ({
     matches: false,
     media: query,
@@ -33,6 +40,18 @@ function renderPanel(countryId: (typeof PLAYABLE_SLOT_COUNTRY_IDS)[number]) {
 describe("DossierSlidePanel", () => {
   afterEach(() => {
     cleanup();
+  });
+
+  it("rebuilds the dossier tabs only when the country changes", () => {
+    const props = { onChangeNation: vi.fn(), onConfirm: vi.fn(), onRecommendedSetup: vi.fn() };
+    const { rerender } = render(<DossierSlidePanel countryId="gb" isOpen {...props} />);
+
+    rerender(<DossierSlidePanel countryId="gb" isOpen={false} {...props} />);
+    expect(buildDossierTabs).toHaveBeenCalledTimes(1);
+
+    rerender(<DossierSlidePanel countryId="fr" isOpen={false} {...props} />);
+    expect(buildDossierTabs).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(buildDossierTabs).mock.lastCall?.[0]).toBe("fr");
   });
 
   it("shows the nation name with the appointment title only on the flag's hover", async () => {

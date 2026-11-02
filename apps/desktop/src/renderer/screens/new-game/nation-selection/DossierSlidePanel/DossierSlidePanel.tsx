@@ -1,4 +1,4 @@
-import type { JSX } from "react";
+import { useMemo, type JSX } from "react";
 import { SlidePanel } from "@/components/slide-panel/index.js";
 import type { PlayableSlotCountryId } from "@/content/nationAssetManifest.js";
 import { nationDossier, nationFlavor } from "@/content/presentationContent.js";
@@ -19,9 +19,14 @@ export function DossierSlidePanel({
   countryId,
   isOpen,
 }: DossierSlidePanelProps): JSX.Element | null {
-  const flavor = nationFlavor(countryId);
-  const fields = nationDossier(countryId);
-  const tabs = buildDossierTabs(countryId, flavor);
+  const { flavor, fields, tabs } = useMemo(() => {
+    const countryFlavor = nationFlavor(countryId);
+    return {
+      flavor: countryFlavor,
+      fields: nationDossier(countryId),
+      tabs: buildDossierTabs(countryId, countryFlavor),
+    };
+  }, [countryId]);
 
   return (
     <SlidePanel isOpen={isOpen} aria-labelledby={`nation-dossier-heading-${countryId}`}>

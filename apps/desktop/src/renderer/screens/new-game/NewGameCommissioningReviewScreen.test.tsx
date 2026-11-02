@@ -7,7 +7,21 @@ import type { NewGameOptions } from "../../../shared/new-game-contract.js";
 import { NewGameCommissioningReviewScreen } from "./NewGameCommissioningReviewScreen.js";
 import { defaultFleetMethod } from "./new-game-fleet-method-screen-state.js";
 import { defaultCampaignIdentity } from "./new-game-identity-screen-state.js";
+import {
+  buildStrategicForecast,
+  buildSummaryRows,
+} from "./new-game-commissioning-review-screen-state.js";
 import type { DraftPreferences } from "./new-game-preferences-screen-state.js";
+
+vi.mock("./new-game-commissioning-review-screen-state.js", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("./new-game-commissioning-review-screen-state.js")>();
+  return {
+    ...original,
+    buildSummaryRows: vi.fn(original.buildSummaryRows),
+    buildStrategicForecast: vi.fn(original.buildStrategicForecast),
+  };
+});
 
 const preferences: DraftPreferences = {
   version: "campaign_configuration_v1",
@@ -98,6 +112,29 @@ function lastPrimary(onPrimaryActionChange: ReturnType<typeof setupUi>["onPrimar
 describe("NewGameCommissioningReviewScreen", () => {
   afterEach(() => {
     cleanup();
+  });
+
+  it("keeps the summary and forecast when only the launch status changes", () => {
+    vi.mocked(buildSummaryRows).mockClear();
+    vi.mocked(buildStrategicForecast).mockClear();
+    const props = {
+      nationId: "gb",
+      options,
+      preferences,
+      archetype,
+      identity,
+      fleetMethod: defaultFleetMethod(),
+      error: null,
+      onBack: vi.fn(),
+      onBeginCommission: vi.fn(),
+      onPrimaryActionChange: vi.fn<SetPrimaryAction>(),
+    };
+    const { rerender } = render(<NewGameCommissioningReviewScreen {...props} status="ready" />);
+
+    rerender(<NewGameCommissioningReviewScreen {...props} status="launching" />);
+
+    expect(buildSummaryRows).toHaveBeenCalledTimes(1);
+    expect(buildStrategicForecast).toHaveBeenCalledTimes(1);
   });
 
   it("renders every summary row from draft state, with no cut fields", () => {

@@ -85,16 +85,25 @@ export function NewGameCommissioningReviewScreen({
   );
   usePrimaryAction(primaryAction, onPrimaryActionChange);
 
-  const rows = buildSummaryRows({
-    nationId,
-    options,
-    preferences,
-    archetype,
-    identity,
-    fleetMethod,
-  });
-  const presetLabel = activePresetAnnotation(preferences);
-  const forecast = buildStrategicForecast(nationId, preferences);
+  const sections = useMemo(() => {
+    const rows = buildSummaryRows({
+      nationId,
+      options,
+      preferences,
+      archetype,
+      identity,
+      fleetMethod,
+    });
+    return SUMMARY_SECTIONS.map((section) => ({
+      ...section,
+      rows: rows.filter((row) => row.group === section.group),
+    }));
+  }, [nationId, options, preferences, archetype, identity, fleetMethod]);
+  const presetLabel = useMemo(() => activePresetAnnotation(preferences), [preferences]);
+  const forecast = useMemo(
+    () => buildStrategicForecast(nationId, preferences),
+    [nationId, preferences],
+  );
 
   return (
     <NewGameScreenLayout>
@@ -106,7 +115,7 @@ export function NewGameCommissioningReviewScreen({
 
       {error !== null && <p className="text-sm text-destructive">{error}</p>}
 
-      {SUMMARY_SECTIONS.map((section) => (
+      {sections.map((section) => (
         <ReviewSection
           key={section.group}
           title={section.title}
@@ -115,7 +124,7 @@ export function NewGameCommissioningReviewScreen({
           note={
             section.group === "uncertainty" ? `Rules of the Naval Age: ${presetLabel}` : undefined
           }
-          rows={rows.filter((row) => row.group === section.group)}
+          rows={section.rows}
         />
       ))}
 
