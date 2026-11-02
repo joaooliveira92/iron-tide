@@ -26,7 +26,9 @@ const NUMERIC_POLICY_KEYS = [
 const HOOK_SOURCES = [
   "scripts/hooks/pre-tool-use-bash.mjs",
   "scripts/hooks/user-prompt-context.mjs",
+  "scripts/hooks/session-telemetry.mjs",
   "scripts/lib/agent-guard.mjs",
+  "scripts/lib/hook-telemetry.mjs",
   "scripts/lib/transcript-context.mjs",
 ];
 const THRESHOLD_KEYS_TO_KEEP_OUT_OF_SOURCE = [
@@ -140,6 +142,8 @@ function checkSettings(root, failures) {
   const expectations = [
     ["PreToolUse", "scripts/hooks/pre-tool-use-bash.mjs", "Bash"],
     ["UserPromptSubmit", "scripts/hooks/user-prompt-context.mjs", undefined],
+    ["PostToolUse", "scripts/hooks/session-telemetry.mjs", undefined],
+    ["PreCompact", "scripts/hooks/session-telemetry.mjs", undefined],
   ];
   for (const [event, script, matcher] of expectations) {
     const groups = settings.hooks?.[event];

@@ -28,7 +28,9 @@ const FILES = [
   "scripts/data/agent-context-policy.json",
   "scripts/hooks/pre-tool-use-bash.mjs",
   "scripts/hooks/user-prompt-context.mjs",
+  "scripts/hooks/session-telemetry.mjs",
   "scripts/lib/agent-guard.mjs",
+  "scripts/lib/hook-telemetry.mjs",
   "scripts/lib/transcript-context.mjs",
 ];
 const created = [];
