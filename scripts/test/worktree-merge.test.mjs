@@ -27,6 +27,9 @@ function fixture() {
   const main = join(root, "main");
   mkdirSync(main);
   git(main, "init", "-q", "-b", "dev");
+  git(main, "config", "user.name", "t");
+  git(main, "config", "user.email", "t@example.test");
+  git(main, "config", "commit.gpgsign", "false");
   writeFileSync(join(main, "a.txt"), "base\n");
   git(main, "add", "a.txt");
   git(main, "commit", "-q", "-m", "chore: base");
