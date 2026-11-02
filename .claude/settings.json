@@ -1,0 +1,27 @@
+{
+  "model": "claude-sonnet-5-5",
+  "advisorModel": "claude-opus-5-5",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/pre-tool-use-bash.mjs\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/user-prompt-context.mjs\""
+          }
+        ]
+      }
+    ]
+  }
+}

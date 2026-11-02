@@ -253,6 +253,10 @@ export default defineConfig({
         command: "node scripts/verify-ui-acceptance-map.mjs",
         dependsOn: ["gate:git-state"],
       },
+      "gate:agent-context": {
+        command: "node scripts/verify-agent-context.mjs --check",
+        dependsOn: ["gate:git-state"],
+      },
       "gate:content-placeholder-gate": {
         command: "node scripts/verify-content-gate.mjs",
         dependsOn: ["gate:content-lock"],
@@ -308,6 +312,7 @@ export default defineConfig({
           "gate:reachability-ledger",
           "gate:explanation-coverage",
           "gate:ui-acceptance-map",
+          "gate:agent-context",
         ],
       },
     },
