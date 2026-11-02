@@ -15,4 +15,4 @@ fi
 # everything.
 node scripts/check-branch-discipline.mjs || exit 1
 node scripts/precommit-staged.mjs || exit 1
-exec pnpm preflight
+exec pnpm preflight:quiet
