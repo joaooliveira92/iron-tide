@@ -34,6 +34,10 @@ export const CatalogStage = memo(function CatalogStage({
   const [sort, setSort] = useState<CatalogSort>("year");
   const types = useMemo(() => catalogShipTypes(designs), [designs]);
   const visible = useMemo(() => catalogView(designs, shipType, sort), [designs, shipType, sort]);
+  const tiles = useMemo(
+    () => visible.map((design) => ({ design, fit: designFit(design, economy, workspace) })),
+    [visible, economy, workspace],
+  );
 
   if (designs.length === 0) {
     return (
@@ -88,11 +92,11 @@ export const CatalogStage = memo(function CatalogStage({
         aria-label="Approved designs"
         className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3"
       >
-        {visible.map((design) => (
+        {tiles.map(({ design, fit }) => (
           <DesignTile
             key={design.designId}
             design={design}
-            fit={designFit(design, economy, workspace)}
+            fit={fit}
             selected={design.designId === selectedDesignId}
             onSelect={onSelectDesign}
           />
