@@ -1,0 +1,19 @@
+{
+  "catMaxLines": 200,
+  "readRangeMaxLines": 120,
+  "overrideToken": "agent-guard: allow",
+  "overrideMinReasonChars": 3,
+  "contextOverrideToken": "ctx-override:",
+  "contextAdvisorTokens": 100000,
+  "contextWarnTokens": 150000,
+  "contextBlockTokens": 200000,
+  "idleResumeMinutes": 60,
+  "transcriptTailBytes": 600000,
+  "maxFileBytesForLineCount": 4000000,
+  "handoffMaxWords": 400,
+  "taskPromptMaxWords": 160,
+  "handoffExemptPromptPrefixes": ["/handoff", "/compact", "/clear"],
+  "resumePromptPattern": "^\\s*(continue|resume|keep going|go on)\\b",
+  "guardAuditLogEnv": "AGENT_GUARD_AUDIT_LOG",
+  "hookStderrMaxChars": 600
+}
