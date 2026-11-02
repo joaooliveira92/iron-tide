@@ -35,37 +35,27 @@ Start substantial tasks from a [task brief](.ai/templates/task-brief.md) or a sh
 Identical content, ruleset, inputs, seeds, and versions produce identical hashes across OSes.
 
 - No `Math.random`, random UUIDs, wall-clock, `process.env`, locale, filesystem order, network, pid, mutable globals, or platform path separators in authoritative code.
-- Hierarchical, domain-separated RNG only. Every draw records stream, entity, phase, version, input hash, outcome, and reason.
-- Integer/fixed-point arithmetic: branded safe-integer types, checked arithmetic, explicit bounds and rounding.
-- Versioned canonical serializer: defined key/collection ordering, Unicode normalization, integer representation; SHA-256 with domain-separated envelopes. Never rely on JS insertion order.
+- Hierarchical, domain-separated RNG; integer or fixed-point math; the versioned canonical serializer with domain-separated SHA-256 envelopes. Full rules: [RULES.md](RULES.md#determinism).
 
 ## Effect
 
-- `effect@4.0.2` vendored at `vendor/effect`. Import `effect` or `effect/<Subpath>`; no registry or `repos/`.
-- Runtime-free subset in domain packages: `Schema`, `SchemaIssue`, `Data`, `Equal`, `Hash`, `Option`, `Predicate`, `Result`. Full runtime at IO boundaries only (`persistence`, `compiler-cli`, `desktop/src/main`). See [runtime-free gate](docs/agents/runtime-free-gate.md).
+- `effect@4.0.2` vendored at `vendor/effect`: import `effect` or `effect/<Subpath>`. Domain packages use the runtime-free subset; the full runtime lives at IO boundaries only (`persistence`, `compiler-cli`, `desktop/src/main`). [Runtime-free gate](docs/agents/runtime-free-gate.md), [RULES.md](RULES.md#effect-source-of-truth).
 
 ## Errors
 
-- In-process: `Data.TaggedError`; wire: `Schema.TaggedError`. Every typed failure needs a stable `_tag`.
-- Discriminate by `_tag`, never `instanceof`. Handle at call site with `Effect.catchTag`/`catchTags`/`catchReason`. No `Effect.orDie` except where recovery is intentional.
-- Tests discriminate by `_tag` too. One class-based exception: `expect(fn).toThrow(ErrorClass)`.
+- `Data.TaggedError` in-process, `Schema.TaggedError` on the wire, each with a stable `_tag`. Discriminate by `_tag` (tests too), never `instanceof`; `expect(fn).toThrow(ErrorClass)` is the one exception. Handle with `Effect.catchTag`/`catchTags`; `Effect.orDie` only where recovery is intentional. [RULES.md](RULES.md#errors).
 
 ## Schema and boundaries
 
-- Effect Schema validates every boundary. `Schema.Struct` strips excess keys; decode with `{ onExcessProperty: "error" }` to reject them.
-- Never trust external boundaries: decode compiled YAML, saves, IPC envelopes, file contents with strict schema. No `JSON.parse(...) as T`. See [domain](docs/agents/domain.md).
-- Wire formats frozen; every schema change needs a parity test from existing fixtures. See [Effect Schema patterns](agent-patterns/effect-schema.md).
+- Effect Schema decodes every boundary strictly (`{ onExcessProperty: "error" }`); no `JSON.parse(...) as T`. Wire formats are frozen: a schema change needs a parity test from existing fixtures. [Domain](docs/agents/domain.md), [Effect Schema patterns](agent-patterns/effect-schema.md), [RULES.md](RULES.md#schema-and-boundaries).
 
 ## Content and compiler
 
-- Author content as declarative TypeScript; compile to canonical JSON. YAML for i18n and mandated infra only.
-- Compiler stages: explicit, statically ordered, typed, immutable, no ambient I/O, randomness, or artifact writes. Accumulate diagnostics; block downstream on invalid prerequisites.
-- Validation, normalization, repair are distinct. Repair is explicit, narrow, logged, limited to safely recomputable data. See [canonical content](docs/architecture/canonical-content-and-rulesets.md).
+- Content is declarative TypeScript compiled to canonical JSON (YAML for i18n and mandated infra only). Compiler stages are explicit, ordered, immutable, and accumulate diagnostics; validation, normalization, and repair stay distinct, and repair is explicit, narrow, and logged. [Canonical content](docs/architecture/canonical-content-and-rulesets.md), [RULES.md](RULES.md#content-and-compiler).
 
 ## Services and composition
 
-- `Context.Service` for stable dependencies; per-call inputs as args. A method is `Effect<A, E, never>` unless genuinely per-call.
-- PascalCase for types/services/schemas/errors; camelCase for values. Use `.pipe()` for linear composition, `Effect.gen` for sequential workflows. Stay in Effect (`Deferred`/`Queue`/`FiberSet`, not `runPromise`); log with `Effect.log*`, never `console.*`.
+- `Context.Service` for stable dependencies; stay in Effect (no `runPromise`); log with `Effect.log*`, never `console.*`. [RULES.md](RULES.md#services-layers-composition).
 
 ## Tests
 
