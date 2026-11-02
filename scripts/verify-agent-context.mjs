@@ -274,15 +274,15 @@ function checkNoDuplicatedThresholds(root, policy, failures) {
 }
 
 const DOC_THRESHOLDS = [
-  ["CLAUDE.md", ["contextWarnTokens", "contextBlockTokens"]],
-  [
-    "docs/agents/context-efficiency.md",
-    ["contextAdvisorTokens", "contextWarnTokens", "contextBlockTokens"],
-  ],
+  { path: "CLAUDE.md", keys: ["contextWarnTokens", "contextBlockTokens"] },
+  {
+    path: "docs/agents/context-efficiency.md",
+    keys: ["contextAdvisorTokens", "contextWarnTokens", "contextBlockTokens"],
+  },
 ];
 
 function checkDocsMatchPolicy(root, policy, failures) {
-  for (const [path, keys] of DOC_THRESHOLDS) {
+  for (const { path, keys } of DOC_THRESHOLDS) {
     const text = readText(root, path);
     if (text === null) continue;
     for (const key of keys) {
