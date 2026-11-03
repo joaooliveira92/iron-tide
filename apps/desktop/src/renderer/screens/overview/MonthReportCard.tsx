@@ -1,20 +1,22 @@
 import { Info } from "lucide-react";
 import type { MonthlyReportEntry } from "../../../shared/reports-contract.js";
-import { CardShell } from "../../components/shared/CardShell.js";
-import { CardDescription, CardTitle } from "../../components/ui/card.js";
+import { CardShell, type CardShellVariant } from "../../components/shared/CardShell.js";
+import { CardTitle } from "../../components/ui/card.js";
 import { humanizeId } from "../../lib/humanize-id.js";
 import { monthLabel } from "./month-report-format.js";
 import { MonthlyReportView } from "./components/MonthlyReportView.js";
 
+export interface MonthReportCardProps {
+  readonly reports: readonly MonthlyReportEntry[];
+  readonly areaName?: (id: string) => string;
+  readonly variant?: CardShellVariant;
+}
+
 export function MonthReportCard({
   reports,
   areaName = humanizeId,
-  embedded = false,
-}: {
-  readonly reports: readonly MonthlyReportEntry[];
-  readonly areaName?: (id: string) => string;
-  readonly embedded?: boolean;
-}) {
+  variant = "card",
+}: MonthReportCardProps) {
   const [latest, ...earlier] = reports;
   const description =
     latest === undefined
@@ -23,19 +25,16 @@ export function MonthReportCard({
   return (
     <CardShell
       testId="month-report-card"
-      embedded={embedded}
-      header={
-        <>
-          <CardTitle className="flex items-center gap-1.5 text-sm font-medium">
-            <Info className="h-4 w-4 text-muted-foreground" />
-            Recent Developments
-          </CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </>
+      variant={variant}
+      title={
+        <CardTitle className="flex items-center gap-1.5 text-sm font-medium">
+          <Info className="h-4 w-4 text-muted-foreground" />
+          Recent Developments
+        </CardTitle>
       }
+      description={description}
       contentClassName="space-y-3 text-xs"
     >
-      {embedded && <p className="text-muted-foreground">{description}</p>}
       {latest === undefined ? (
         <p className="text-muted-foreground">No months have been advanced yet in this campaign.</p>
       ) : (

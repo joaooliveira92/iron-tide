@@ -1,6 +1,6 @@
 import type { StrategicPriority } from "@bluewave/campaign-engine";
 import { AlertTriangle, ChevronRight, ShieldCheck } from "lucide-react";
-import { CardShell } from "../../components/shared/CardShell.js";
+import { CardShell, type CardShellVariant } from "../../components/shared/CardShell.js";
 import { CardTitle } from "../../components/ui/card.js";
 import { cn } from "../../lib/utils.js";
 import {
@@ -96,19 +96,19 @@ function PriorityRow({
 export function PrioritiesCard({
   state,
   onNavigate,
-  embedded = false,
+  variant = "card",
 }: {
   readonly state: PrioritiesState;
   readonly onNavigate: (screen: Screen) => void;
-  readonly embedded?: boolean;
+  readonly variant?: CardShellVariant;
 }) {
   const priorities = state.status === "ready" ? state.priorities : [];
   const hidden = Math.max(0, priorities.length - MAX_VISIBLE_PRIORITIES);
   return (
     <CardShell
       testId="priorities-card"
-      embedded={embedded}
-      header={
+      variant={variant}
+      title={
         <CardTitle className="flex items-center gap-1.5 text-sm font-medium">
           <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           Immediate Priorities

@@ -1,32 +1,40 @@
 import type { ReactNode } from "react";
 import { GlassCard } from "@/components/ui/glass-card.js";
-import { CardContent, CardHeader } from "../ui/card.js";
+import { CardDescription, CardHeader, CardContent } from "../ui/card.js";
+
+export type CardShellVariant = "card" | "embedded";
 
 export interface CardShellProps {
   readonly testId: string;
-  readonly header: ReactNode;
+  readonly variant?: CardShellVariant;
+  readonly title: ReactNode;
+  readonly description?: string;
   readonly contentClassName: string;
-  readonly embedded: boolean;
   readonly children: ReactNode;
 }
 
 export function CardShell({
   testId,
-  header,
+  variant = "card",
+  title,
+  description,
   contentClassName,
-  embedded,
   children,
 }: CardShellProps) {
-  if (embedded) {
+  if (variant === "embedded") {
     return (
       <div data-testid={testId} className={contentClassName}>
+        {description === undefined ? null : <p className="text-muted-foreground">{description}</p>}
         {children}
       </div>
     );
   }
   return (
     <GlassCard glassVariant="liquid-refract" data-testid={testId}>
-      <CardHeader className="pb-3">{header}</CardHeader>
+      <CardHeader className="pb-3">
+        {title}
+        {description === undefined ? null : <CardDescription>{description}</CardDescription>}
+      </CardHeader>
       <CardContent className={contentClassName}>{children}</CardContent>
     </GlassCard>
   );

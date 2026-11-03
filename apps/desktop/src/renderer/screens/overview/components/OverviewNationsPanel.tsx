@@ -36,7 +36,12 @@ export function OverviewNationsPanel({
       testId="home-nations"
       badge={badge}
     >
-      <NationRail state={state} playerName={playerName} onNavigate={onNavigate} embedded />
+      <NationRail
+        state={state}
+        playerName={playerName}
+        onNavigate={onNavigate}
+        variant="embedded"
+      />
     </CollapsiblePanel>
   );
 }
