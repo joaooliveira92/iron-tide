@@ -68,7 +68,7 @@ export function DossierAccordion({
           <DossierAccordionItem
             key={section.id}
             section={section}
-            active={active === section.id}
+            variant={active === section.id ? "open" : "closed"}
             handle={handle}
             onSelect={() => handle.open(triggerId(section.id))}
             onKeyDown={(event) => handleKeyDown(event, index)}

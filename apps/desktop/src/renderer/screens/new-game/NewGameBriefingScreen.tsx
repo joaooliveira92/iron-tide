@@ -219,7 +219,7 @@ export function NewGameBriefingScreen({
 
   if (error !== null) {
     return (
-      <NewGameScreenLayout size="sm" centered>
+      <NewGameScreenLayout size="sm" variant="centered">
         <ScreenHeader
           icon={<Flag />}
           title="Briefing unavailable"
@@ -231,7 +231,7 @@ export function NewGameBriefingScreen({
 
   if (projection === null) {
     return (
-      <NewGameScreenLayout size="sm" centered>
+      <NewGameScreenLayout size="sm" variant="centered">
         <ScreenHeader
           icon={<Landmark />}
           title="Opening strategic briefing"

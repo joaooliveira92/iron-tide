@@ -4,20 +4,46 @@ import type { CardPalette } from "@/components/card-deck/index.js";
 import type { PlayableSlotCountryId } from "@/content/nationAssetManifest.js";
 import { getCountryCode, getCountryName, resolveNationShip } from "./fleetDispatchUtils.js";
 
+export type FleetNationCardVariant = "focused" | "idle";
+
+type CardChrome = {
+  readonly shellClass: string;
+  readonly footerClass: string;
+  readonly borderColor: (palette: CardPalette) => string;
+  readonly accentShadow: (palette: CardPalette) => string | undefined;
+};
+
+const CARD_CHROME: Record<FleetNationCardVariant, CardChrome> = {
+  focused: {
+    shellClass:
+      "shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-admiralty-accent)_20%,transparent)]",
+    footerClass: "bg-admiralty-surface/35 backdrop-blur-md",
+    borderColor: () => "var(--color-admiralty-accent)",
+    accentShadow: (palette) => `0 0 18px ${palette.accent}`,
+  },
+  idle: {
+    shellClass: "",
+    footerClass: "bg-admiralty-surface/55",
+    borderColor: (palette) => palette.border,
+    accentShadow: () => undefined,
+  },
+};
+
 interface FleetNationCardProps {
   countryId: PlayableSlotCountryId;
   palette: CardPalette;
-  active: boolean;
+  variant: FleetNationCardVariant;
   listboxId: string;
 }
 
 export function FleetNationCard({
   countryId,
   palette,
-  active,
+  variant,
   listboxId,
 }: FleetNationCardProps): React.JSX.Element {
   const [imageFailed, setImageFailed] = useState(false);
+  const chrome = CARD_CHROME[variant];
   const countryName = getCountryName(countryId);
   const countryCode = getCountryCode(countryId);
   const shipAsset = useMemo(() => resolveNationShip(countryId), [countryId]);
@@ -29,14 +55,11 @@ export function FleetNationCard({
       role="option"
       tabIndex={-1}
       aria-label={countryName}
-      aria-selected={active}
-      style={{
-        background: palette.background,
-        borderColor: active ? "var(--color-admiralty-accent)" : palette.border,
-      }}
+      aria-selected={variant === "focused"}
+      style={{ background: palette.background, borderColor: chrome.borderColor(palette) }}
       className={`
         absolute inset-0 h-full w-full select-none overflow-hidden rounded-[1.15rem] border
-        ${active ? "shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-admiralty-accent)_20%,transparent)]" : ""}
+        ${chrome.shellClass}
       `}
     >
       {showImage ? (
@@ -82,18 +105,15 @@ export function FleetNationCard({
       <div
         aria-hidden="true"
         className="absolute inset-x-0 top-0 z-10 h-1.5"
-        style={{
-          backgroundColor: palette.accent,
-          boxShadow: active ? `0 0 18px ${palette.accent}` : undefined,
-        }}
+        style={{ backgroundColor: palette.accent, boxShadow: chrome.accentShadow(palette) }}
       />
 
-      {active ? <span aria-hidden="true" className="fleet-dispatch-activate-glow" /> : null}
+      {variant === "focused" && (
+        <span aria-hidden="true" className="fleet-dispatch-activate-glow" />
+      )}
 
       <div
-        className={`absolute inset-x-0 bottom-0 z-20 min-h-[4.8rem] border-t border-admiralty-ink/20 px-5 py-3 text-admiralty-ink ${
-          active ? "bg-admiralty-surface/35 backdrop-blur-md" : "bg-admiralty-surface/55"
-        }`}
+        className={`absolute inset-x-0 bottom-0 z-20 min-h-[4.8rem] border-t border-admiralty-ink/20 px-5 py-3 text-admiralty-ink ${chrome.footerClass}`}
       >
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -105,18 +125,25 @@ export function FleetNationCard({
             </p>
           </div>
 
-          {active ? (
-            <span className="fleet-dispatch-badge-pop flex shrink-0 items-center gap-1.5 rounded bg-admiralty-accent px-2.5 py-1 font-display text-[0.7rem] font-black uppercase tracking-wider text-admiralty-accent-foreground">
-              <Check className="h-3 w-3" aria-hidden="true" />
-              Active
-            </span>
-          ) : (
-            <span className="shrink-0 font-display text-[0.58rem] uppercase tracking-wider text-admiralty-ink/65">
-              Select
-            </span>
-          )}
+          <CardStatus variant={variant} />
         </div>
       </div>
     </div>
+  );
+}
+
+function CardStatus({ variant }: { variant: FleetNationCardVariant }) {
+  if (variant === "idle") {
+    return (
+      <span className="shrink-0 font-display text-[0.58rem] uppercase tracking-wider text-admiralty-ink/65">
+        Select
+      </span>
+    );
+  }
+  return (
+    <span className="fleet-dispatch-badge-pop flex shrink-0 items-center gap-1.5 rounded bg-admiralty-accent px-2.5 py-1 font-display text-[0.7rem] font-black uppercase tracking-wider text-admiralty-accent-foreground">
+      <Check className="h-3 w-3" aria-hidden="true" />
+      Active
+    </span>
   );
 }

@@ -92,7 +92,7 @@ export function RulesOfTheNavalAgeScreen({
   usePrimaryAction(primaryAction, onPrimaryActionChange);
 
   return (
-    <NewGameScreenLayout fullBleed>
+    <NewGameScreenLayout variant="bleed">
       {options === null && (
         <div className="flex flex-col items-start gap-6 p-8">
           {state.loading && <LoadingState message="Loading campaign options…" />}

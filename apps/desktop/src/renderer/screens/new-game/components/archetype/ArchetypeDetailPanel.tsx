@@ -118,7 +118,7 @@ export const ArchetypeDetailPanel = memo(function ArchetypeDetailPanel({
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Live preview
                 </p>
-                <ArchetypeConsequencePanel consequence={consequence} compact />
+                <ArchetypeConsequencePanel consequence={consequence} />
               </div>
             </div>
           ) : (
@@ -133,7 +133,7 @@ export const ArchetypeDetailPanel = memo(function ArchetypeDetailPanel({
                 </dl>
               </div>
 
-              <ArchetypeConsequencePanel consequence={consequence} compact />
+              <ArchetypeConsequencePanel consequence={consequence} />
             </>
           )}
         </CardContent>

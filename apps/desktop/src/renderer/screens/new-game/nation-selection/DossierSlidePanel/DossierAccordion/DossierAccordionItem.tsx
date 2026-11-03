@@ -4,9 +4,14 @@ import { cn } from "@/lib/utils.js";
 import { ACCENT_STYLES, DOSSIER_CLOSE_DELAY, DOSSIER_OPEN_DELAY } from "./constants.js";
 import type { DossierSection, DossierSectionId } from "./types.js";
 
+export type DossierAccordionItemVariant = "open" | "closed";
+
+const IDLE_CLASSES =
+  "border-admiralty-border/70 bg-admiralty-surface/50 hover:border-admiralty-border hover:bg-admiralty-ink/[0.05]";
+
 export interface DossierAccordionItemProps {
   readonly section: DossierSection;
-  readonly active: boolean;
+  readonly variant: DossierAccordionItemVariant;
   readonly handle: HoverCardHandle<DossierSectionId>;
   readonly onSelect: () => void;
   readonly onKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
@@ -14,7 +19,7 @@ export interface DossierAccordionItemProps {
 
 export function DossierAccordionItem({
   section,
-  active,
+  variant,
   handle,
   onSelect,
   onKeyDown,
@@ -33,17 +38,15 @@ export function DossierAccordionItem({
       closeDelay={DOSSIER_CLOSE_DELAY}
       data-dossier-section={section.id}
       aria-label={section.label}
-      aria-expanded={active}
-      aria-controls={active ? panelId : undefined}
+      aria-expanded={variant === "open"}
+      aria-controls={variant === "open" ? panelId : undefined}
       onClick={onSelect}
       onKeyDown={onKeyDown}
       render={<button type="button" />}
       className={cn(
         "group flex min-h-11 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-md border px-2 py-2 outline-none transition-colors",
         "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-admiralty-accent",
-        active
-          ? cn(accent.border, accent.bg)
-          : "border-admiralty-border/70 bg-admiralty-surface/50 hover:border-admiralty-border hover:bg-admiralty-ink/[0.05]",
+        variant === "open" ? cn(accent.border, accent.bg) : IDLE_CLASSES,
       )}
     >
       <Icon className={cn("h-4 w-4 shrink-0", accent.text)} aria-hidden="true" />

@@ -76,7 +76,7 @@ export function NewGameFleetMethodScreen({
   usePrimaryAction(primaryAction, onPrimaryActionChange);
 
   return (
-    <NewGameScreenLayout fullBleed>
+    <NewGameScreenLayout variant="bleed">
       {error !== null && (
         <div className="flex flex-col items-start gap-6 p-8">
           <p className="text-sm text-destructive">{error}</p>
