@@ -24,7 +24,6 @@ const GEOMETRY_EMITTERS: readonly string[] = [
   "components/world-map/MapMinimap.tsx",
   "components/world-map/bake-coastline.ts",
   "components/world-map/projection.ts",
-  "screens/new-game/components/bounce-cards/BounceCards.tsx",
 ];
 
 const RAW_FORMATTING = /\.toFixed\(|\bIntl\.|\.toLocale(?:String|DateString|TimeString)\(/u;

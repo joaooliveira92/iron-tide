@@ -240,7 +240,7 @@ describe("accessibility audit (axe-core)", () => {
     );
   });
 
-  it("Starting-fleet method picker (BounceCards deck, caption and comparison legend)", async () => {
+  it("Starting-fleet method picker (card deck, caption and comparison legend)", async () => {
     await audit(
       <NewGameFleetMethodScreen
         initialFleetMethod={defaultFleetMethod()}
