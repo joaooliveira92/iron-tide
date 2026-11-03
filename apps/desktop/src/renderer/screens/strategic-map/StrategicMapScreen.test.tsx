@@ -103,12 +103,16 @@ function state(overrides: Record<string, unknown> = {}) {
   };
 }
 
+let rendererWarning: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
   hookMocks.stateFn.mockReturnValue(state());
+  rendererWarning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 });
 
 afterEach(() => {
   cleanup();
+  rendererWarning.mockRestore();
   vi.clearAllMocks();
 });
 

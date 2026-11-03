@@ -478,6 +478,12 @@ function createBridge(overrides: Partial<BluewaveDesktopBridge> = {}): BluewaveD
   } as BluewaveDesktopBridge;
 }
 
+async function renderApp(): Promise<ReturnType<typeof render>> {
+  const rendered = render(<App />);
+  await act(async () => {});
+  return rendered;
+}
+
 describe("App", () => {
   beforeEach(() => {
     testState.background = "none";
@@ -486,8 +492,8 @@ describe("App", () => {
     window.bluewave = createBridge();
   });
 
-  it("renders the file variant when no campaign is open", () => {
-    render(<App />);
+  it("renders the file variant when no campaign is open", async () => {
+    await renderApp();
 
     expect(screen.getByRole("heading", { name: "Campaign files" })).toBeTruthy();
     expect(screen.queryByRole("complementary")).toBeNull();
@@ -495,35 +501,35 @@ describe("App", () => {
     expect(screen.getByTestId("site-header").dataset.searchTargetCount).toBe("0");
   });
 
-  it("renders a dedicated loading variant", () => {
+  it("renders a dedicated loading variant", async () => {
     testState.shell = createShell({ loading: true });
 
-    render(<App />);
+    await renderApp();
 
     expect(screen.getByText("Loading campaign…")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Campaign files" })).toBeNull();
   });
 
-  it("renders the file variant together with the opening error", () => {
+  it("renders the file variant together with the opening error", async () => {
     testState.shell = createShell({ error: "Inspection failed" });
 
-    render(<App />);
+    await renderApp();
 
     expect(screen.getByRole("heading", { name: "Campaign files" })).toBeTruthy();
     expect(screen.getByText("Inspection failed")).toBeTruthy();
   });
 
-  it("moves from file selection to the nation-confirmation variant", () => {
+  it("moves from file selection to the nation-confirmation variant", async () => {
     const shell = createShell();
     testState.shell = shell;
 
-    render(<App />);
+    await renderApp();
     fireEvent.click(screen.getByRole("button", { name: "Start new game" }));
 
     expect(shell.selectScreen).toHaveBeenCalledWith("new-game-nation");
   });
 
-  it("composes the active campaign shell, bottom nav, outlet, search, and primary action", () => {
+  it("composes the active campaign shell, bottom nav, outlet, search, and primary action", async () => {
     testState.shell = createShell({
       campaign: {
         sessionId: "ses-1",
@@ -542,7 +548,7 @@ describe("App", () => {
       },
     });
 
-    render(<App />);
+    await renderApp();
 
     expect(screen.getByTestId("bottom-nav")).toBeTruthy();
     expect(screen.getByTestId("campaign-outlet").textContent).toBe("overview");
@@ -554,7 +560,7 @@ describe("App", () => {
     expect(screen.getByText("Advance turn")).toBeTruthy();
   });
 
-  it("shows the battle offer dialog for an offer interruption and answers it with a typed response", () => {
+  it("shows the battle offer dialog for an offer interruption and answers it with a typed response", async () => {
     const shell = createShell({
       campaign: {
         sessionId: "ses-1",
@@ -593,7 +599,7 @@ describe("App", () => {
     });
     testState.shell = shell;
 
-    render(<App />);
+    await renderApp();
 
     const dialog = screen.getByRole("alertdialog");
     expect(dialog).toBeTruthy();
@@ -637,7 +643,7 @@ describe("App", () => {
     });
     testState.shell = shell;
 
-    render(<App />);
+    await renderApp();
 
     expect(await screen.findByTestId("player-battle-screen")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Finish battle" }));
@@ -650,10 +656,10 @@ describe("App", () => {
     });
   });
 
-  it("renders the selected background as an explicit variant", () => {
+  it("renders the selected background as an explicit variant", async () => {
     testState.background = "stars";
 
-    const { rerender } = render(<App />);
+    const { rerender } = await renderApp();
     expect(screen.getByTestId("stars-background")).toBeTruthy();
 
     testState.background = "water";
@@ -704,7 +710,7 @@ describe("App", () => {
     const execute = executeMock as unknown as CampaignCommandClient["execute"];
     window.bluewave = createBridge({ campaign: createCampaignClient(execute) });
 
-    const { rerender } = render(<App />);
+    const { rerender } = await renderApp();
     fireEvent.click(screen.getByRole("button", { name: "Confirm nation" }));
     expect(shell.selectScreen).toHaveBeenCalledWith("new-game-preferences");
 
@@ -734,7 +740,9 @@ describe("App", () => {
       fireEvent.click(screen.getByRole("button", { name: "Begin Commission" }));
       expect(shell.selectScreen).toHaveBeenCalledWith("new-game-launching");
 
-      await vi.advanceTimersByTimeAsync(COSMETIC_MINIMUM_DURATION_MS);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(COSMETIC_MINIMUM_DURATION_MS);
+      });
     } finally {
       vi.useRealTimers();
     }
@@ -769,6 +777,7 @@ describe("App", () => {
     triggerPrimary("Continue to Foreign Intelligence");
     triggerPrimary("Continue to Immediate Concerns");
     triggerPrimary("Take command");
+    await act(async () => {});
     expect(shell.openCampaign).toHaveBeenCalledWith("ses-created");
   });
 
@@ -782,7 +791,7 @@ describe("App", () => {
     })) as unknown as CampaignCommandClient["execute"];
     window.bluewave = createBridge({ campaign: createCampaignClient(execute) });
 
-    const { rerender } = render(<App />);
+    const { rerender } = await renderApp();
     fireEvent.click(screen.getByRole("button", { name: "Confirm nation" }));
 
     testState.shell = createShell({ ...shell, screen: "new-game-preferences" });

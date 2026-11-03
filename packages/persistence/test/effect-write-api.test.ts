@@ -59,25 +59,31 @@ describe("effect write api", () => {
     expect(store.list(dir)).toHaveLength(1);
   });
 
-  it("saveEffect fails with a typed IO error when the directory is unwritable", () => {
-    chmodSync(dir, 0o555);
-    const failure = expectFailureTag(
-      runExit(store.saveEffect(minimalCampaignState(), join(dir, "sub"))),
-      "PERSISTENCE_IO",
-    );
-    expect(failure.stage).toBe("persistence.save");
-  });
+  it.skipIf(process.platform === "win32")(
+    "saveEffect fails with a typed IO error when the directory is unwritable",
+    () => {
+      chmodSync(dir, 0o555);
+      const failure = expectFailureTag(
+        runExit(store.saveEffect(minimalCampaignState(), join(dir, "sub"))),
+        "PERSISTENCE_IO",
+      );
+      expect(failure.stage).toBe("persistence.save");
+    },
+  );
 
-  it("listEffect fails with a typed IO error when the directory is unreadable", () => {
-    const unreadable = join(dir, "unreadable");
-    mkdirSync(unreadable);
-    chmodSync(unreadable, 0o000);
-    try {
-      expectFailureTag(runExit(store.listEffect(unreadable)), "PERSISTENCE_IO");
-    } finally {
-      chmodSync(unreadable, 0o755);
-    }
-  });
+  it.skipIf(process.platform === "win32")(
+    "listEffect fails with a typed IO error when the directory is unreadable",
+    () => {
+      const unreadable = join(dir, "unreadable");
+      mkdirSync(unreadable);
+      chmodSync(unreadable, 0o000);
+      try {
+        expectFailureTag(runExit(store.listEffect(unreadable)), "PERSISTENCE_IO");
+      } finally {
+        chmodSync(unreadable, 0o755);
+      }
+    },
+  );
 
   it("listEffect reports an unreadable save as a warning instead of dropping it", () => {
     const saved = unwrapSuccess(runExit(store.saveEffect(minimalCampaignState(), dir)));

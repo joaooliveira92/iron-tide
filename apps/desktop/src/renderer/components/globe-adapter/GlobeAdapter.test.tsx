@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { GlobeAdapter } from "./GlobeAdapter.js";
 import type { AppCameraState } from "./camera-contract.js";
@@ -132,9 +132,11 @@ describe("GlobeAdapter parity interactions", () => {
     const map = await readyMap();
     await waitFor(() => expect(map.handlers.get("click")?.length).toBe(1));
     map.areaHits = [{ properties: { id: "area_north_sea" } }];
-    map.emit("click", {
-      point: { x: 10, y: 10 },
-      originalEvent: { shiftKey: true },
+    act(() => {
+      map.emit("click", {
+        point: { x: 10, y: 10 },
+        originalEvent: { shiftKey: true },
+      });
     });
     expect(onRuler).toHaveBeenCalledWith("area_north_sea");
   });
@@ -165,9 +167,11 @@ describe("GlobeAdapter parity interactions", () => {
         },
       },
     ];
-    map.emit("click", {
-      point: { x: 10, y: 10 },
-      originalEvent: { shiftKey: false },
+    act(() => {
+      map.emit("click", {
+        point: { x: 10, y: 10 },
+        originalEvent: { shiftKey: false },
+      });
     });
     expect(onSelectFleet).toHaveBeenCalledWith("fleet-home");
     expect(onSelect).not.toHaveBeenCalled();
@@ -190,17 +194,21 @@ describe("GlobeAdapter parity interactions", () => {
       },
     ];
     map.areaHits = [{ properties: { id: "area_western_approaches" } }];
-    map.canvas.dispatchEvent(
-      new MouseEvent("pointerdown", { bubbles: true, button: 0, clientX: 10, clientY: 10 }),
-    );
+    act(() => {
+      map.canvas.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true, button: 0, clientX: 10, clientY: 10 }),
+      );
+    });
     expect(onSelectFleet).toHaveBeenCalledWith("fleet-home");
     expect(map.dragPanCalls).toContain("disable");
-    map.canvas.dispatchEvent(
-      new MouseEvent("pointermove", { bubbles: true, clientX: 20, clientY: 10 }),
-    );
-    map.canvas.dispatchEvent(
-      new MouseEvent("pointerup", { bubbles: true, clientX: 20, clientY: 10 }),
-    );
+    act(() => {
+      map.canvas.dispatchEvent(
+        new MouseEvent("pointermove", { bubbles: true, clientX: 20, clientY: 10 }),
+      );
+      map.canvas.dispatchEvent(
+        new MouseEvent("pointerup", { bubbles: true, clientX: 20, clientY: 10 }),
+      );
+    });
     expect(onDrop).toHaveBeenCalledWith("fleet-home", "area_western_approaches");
     expect(map.dragPanCalls).toContain("enable");
   });
@@ -209,7 +217,7 @@ describe("GlobeAdapter parity interactions", () => {
     renderAdapter();
     const map = await readyMap();
     map.areaHits = [{ properties: { id: "area_north_sea" } }];
-    map.emit("mousemove", { point: { x: 30, y: 20 } });
+    act(() => map.emit("mousemove", { point: { x: 30, y: 20 } }));
     await waitFor(() => {
       expect(
         map.filterCalls.some(
@@ -497,8 +505,10 @@ describe("GlobeAdapter parity interactions", () => {
       const onCameraChange = vi.fn();
       renderAdapter({ camera: france, onCameraChange });
       const map = await readyMap();
-      map.jumpTo({ center: [-3.2, 55.9], zoom: 4 });
-      map.emit("idle", undefined);
+      act(() => {
+        map.jumpTo({ center: [-3.2, 55.9], zoom: 4 });
+        map.emit("idle", undefined);
+      });
       expect(onCameraChange).toHaveBeenLastCalledWith(
         expect.objectContaining({ centre: [-3.2, 55.9], zoom: 4, version: 1 }),
       );

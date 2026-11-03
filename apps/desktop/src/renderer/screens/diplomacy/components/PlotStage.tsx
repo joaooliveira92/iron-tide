@@ -45,14 +45,12 @@ export function PlotStage({
       <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
         <ButtonGroup aria-label="Diplomatic view mode">
           {PLOT_VIEWS.map((v) => (
-            <Tip label={v.hint}>
+            <Tip key={v.id} label={v.hint}>
               <Button
-                key={v.id}
                 type="button"
                 size="sm"
                 variant={view === v.id ? "default" : "outline"}
                 aria-pressed={view === v.id}
-
                 onClick={() => onView(v.id)}
               >
                 {v.label}

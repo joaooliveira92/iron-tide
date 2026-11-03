@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { buildWorkshopView } from "@bluewave/ship-design";
 import { batteryCards } from "../../components/design-workspace/batteryView.js";
@@ -106,11 +106,11 @@ describe("selecting sections", () => {
     fireEvent.click(label("Quarterdeck"));
     fireEvent.keyDown(document.body, { key: "Tab" });
     act(() => label("Aft service").focus());
-    await expect
-      .poll(() =>
+    await waitFor(() =>
+      expect(
         document.querySelector("[data-testid='section-card']")?.getAttribute("data-section"),
-      )
-      .toBe("aft-service");
+      ).toBe("aft-service"),
+    );
     fireEvent.keyDown(label("Aft service"), { key: "Escape" });
     expect(pressed()).toEqual(["Quarterdeck"]);
   });
@@ -361,9 +361,9 @@ describe("form-to-drawing linking", () => {
     fireEvent.click(label("Forecastle"));
     fireEvent.keyDown(document.body, { key: "Tab" });
     act(() => label("Quarterdeck").focus());
-    await expect
-      .poll(() => document.querySelector("[data-testid='section-highlight']"))
-      .not.toBeNull();
+    await waitFor(() =>
+      expect(document.querySelector("[data-testid='section-highlight']")).not.toBeNull(),
+    );
     const selected = document.querySelector("[data-testid='section-selected']")!;
     const preview = document.querySelector("[data-testid='section-highlight']")!;
     expect(selected.getAttribute("stroke-dasharray")).toBeNull();

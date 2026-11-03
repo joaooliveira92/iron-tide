@@ -97,9 +97,9 @@ describe("ConstructionScreen revise project", () => {
     serve(projectionWith([project()]));
     render(<ConstructionScreen sessionId="ses_1" />);
 
-    (await screen.findByRole("button", { name: /^Havock class, active/ })).click();
+    fireEvent.click(await screen.findByRole("button", { name: /^Havock class, active/ }));
     expect(mocks.revise).not.toHaveBeenCalled();
-    (await screen.findByRole("button", { name: "Havock class revise" })).click();
+    fireEvent.click(await screen.findByRole("button", { name: "Havock class revise" }));
 
     await waitFor(() => expect(mocks.revise).toHaveBeenCalledWith("project-1"));
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -109,7 +109,7 @@ describe("ConstructionScreen revise project", () => {
     serve(projectionWith([project({ revisable: false })]));
     render(<ConstructionScreen sessionId="ses_1" />);
 
-    (await screen.findByRole("button", { name: /^Havock class, active/ })).click();
+    fireEvent.click(await screen.findByRole("button", { name: /^Havock class, active/ }));
     await screen.findByRole("button", { name: "Havock class halt" });
     expect(screen.queryByRole("button", { name: "Havock class revise" })).toBeNull();
   });

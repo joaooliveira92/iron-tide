@@ -297,12 +297,31 @@ function checkDocsMatchPolicy(root, policy, failures) {
   }
 }
 
+const SHIM_EXEMPT_PREFIXES = [".agents/", "vendor/", "repos/"];
+
+function checkPackageShims(root, failures) {
+  const sources = trackedPaths(root, "**/AGENTS.md").filter(
+    (path) => path.includes("/") && !SHIM_EXEMPT_PREFIXES.some((prefix) => path.startsWith(prefix)),
+  );
+  const tracked = new Set(trackedPaths(root, "**/CLAUDE.md"));
+  for (const source of sources) {
+    const shim = source.replace(/AGENTS\.md$/u, "CLAUDE.md");
+    const text = readText(root, shim);
+    if (text === null || !tracked.has(shim)) {
+      failures.push(`${shim} must exist and be tracked next to ${source}`);
+    } else if (!text.startsWith("@AGENTS.md")) {
+      failures.push(`${shim} must start with @AGENTS.md`);
+    }
+  }
+}
+
 export function checkRepo(root = ROOT) {
   const failures = [];
   const policy = checkPolicy(root, failures);
   checkSettings(root, failures);
   checkAgents(root, failures);
   checkInstructions(root, failures);
+  checkPackageShims(root, failures);
   checkSnap(root, failures);
   if (policy !== null) {
     checkTemplates(root, policy, failures);

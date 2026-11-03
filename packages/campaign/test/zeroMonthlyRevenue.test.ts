@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import type { ContentPack } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -148,7 +149,7 @@ describe("ZERO_MONTHLY_REVENUE through the compiler", () => {
 describe("shipped 1880 pack", () => {
   const read = <T>(file: string): T =>
     readAuthoredFile(
-      new URL(`../../../content/production/1880/${file}`, import.meta.url).pathname,
+      fileURLToPath(new URL(`../../../content/production/1880/${file}`, import.meta.url)),
     ) as T;
 
   it("compiles without ZERO_MONTHLY_REVENUE, identically on repeated runs", () => {

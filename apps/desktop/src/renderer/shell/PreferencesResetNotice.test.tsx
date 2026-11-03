@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { dismissToast, Toaster } from "../components/ui/toast.js";
 import {
@@ -8,8 +8,10 @@ import {
 } from "./PreferencesResetNotice.js";
 
 describe("preferences reset notice", () => {
-  afterEach(() => {
-    dismissToast(PREFERENCES_RESET_TOAST_ID);
+  afterEach(async () => {
+    await act(async () => {
+      dismissToast(PREFERENCES_RESET_TOAST_ID);
+    });
   });
 
   it.each(["unparseable", "undecodable", "unknown-version:9"])(
@@ -36,7 +38,8 @@ describe("preferences reset notice", () => {
       </>,
     );
 
-    await waitFor(() => expect(screen.getByText(/could not read your preferences/)).toBeTruthy());
+    await act(async () => {});
+    expect(screen.getByText(/could not read your preferences/)).toBeTruthy();
     expect(screen.getByLabelText("Dismiss")).toBeTruthy();
   });
 
