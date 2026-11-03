@@ -9,14 +9,13 @@ import {
   worldText,
 } from "../world-situation-copy.js";
 import { OUTLOOK_TONE } from "../world-situation-presentation.js";
-import {
-  adjacentPowerId,
-  type PowerBrief,
-  type PowerGroup as PowerGroupModel,
-  type RelevanceTier,
-} from "../world-situation.js";
+import { adjacentPowerId, type PowerBrief, type RelevanceTier } from "../world-situation.js";
 import { NationGlyph } from "./NationGlyph.js";
 import { OutlookBadge } from "./RelationshipStatus.js";
+import {
+  useWorldSituationActions,
+  useWorldSituationMeta,
+} from "./WorldSituationWorkspaceProvider.js";
 
 type CardDensity = "feature" | "standard" | "dense";
 
@@ -100,18 +99,15 @@ export const PowerSummaryCard = memo(function PowerSummaryCard({
 });
 
 export interface PowerNavigatorProps {
-  readonly groups: readonly PowerGroupModel[];
-  readonly selectedId: string | null;
-  readonly onSelect: (nationId: string) => void;
-  readonly renderDossier: (power: PowerBrief) => ReactNode;
+  readonly children: ReactNode;
 }
 
-export function PowerNavigator({
-  groups,
-  selectedId,
-  onSelect,
-  renderDossier,
-}: PowerNavigatorProps) {
+export function PowerNavigator({ children }: PowerNavigatorProps) {
+  const {
+    situation: { groups },
+    selectedId,
+  } = useWorldSituationMeta();
+  const { selectPower } = useWorldSituationActions();
   const [expanded, setExpanded] = useState<ReadonlySet<RelevanceTier>>(new Set());
   const buttons = useRef(new Map<string, HTMLButtonElement>());
 
@@ -123,12 +119,8 @@ export function PowerNavigator({
     visible[0]?.nationId ??
     null;
 
-  const latest = useRef({ visible, onSelect });
-  latest.current = { visible, onSelect };
-
-  const selectPower = useCallback((nationId: string) => {
-    latest.current.onSelect(nationId);
-  }, []);
+  const latest = useRef({ visible, selectPower });
+  latest.current = { visible, selectPower };
 
   const move = useCallback((event: KeyboardEvent<HTMLButtonElement>, current: string) => {
     const step =
@@ -145,7 +137,7 @@ export function PowerNavigator({
     event.preventDefault();
     const target = adjacentPowerId(latest.current.visible, current, step);
     if (target === null) return;
-    latest.current.onSelect(target);
+    latest.current.selectPower(target);
     buttons.current.get(target)?.focus();
   }, []);
 
@@ -166,7 +158,7 @@ export function PowerNavigator({
         (candidate) => isOpen(candidate.tier) && candidate.tier !== tier,
       );
       if (hidesSelection && fallback?.powers[0] !== undefined)
-        onSelect(fallback.powers[0].nationId);
+        selectPower(fallback.powers[0].nationId);
     }
     setExpanded(next);
   };
@@ -234,9 +226,7 @@ export function PowerNavigator({
                       onKeyDown={move}
                       registerButton={registerButton}
                     />
-                    {power.nationId === selectedId && (
-                      <div className="mt-1.5 mb-2">{renderDossier(power)}</div>
-                    )}
+                    {power.nationId === selectedId && <div className="mt-1.5 mb-2">{children}</div>}
                   </li>
                 ))}
             </ul>
