@@ -89,7 +89,7 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
             <div data-testid="message-detail" className="mt-1 space-y-1">
               {message.effectRefs.map((effect, index) => (
                 <p key={index} className="text-xs text-muted-foreground">
-                  {`${effect.target.type}:${effect.target.id} ${effect.attribute}: `}
+                  {effect.target.type}:{effect.target.id} {effect.attribute}:{" "}
                   <SummaryDelta
                     from={summaryValueLabel(effect.previousValue)}
                     to={summaryValueLabel(effect.newValue)}

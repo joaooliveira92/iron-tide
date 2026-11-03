@@ -28,7 +28,7 @@ export function TurnSummaryHistoricalRecord({
       </p>
       {effects.map((effect, index) => (
         <p key={index} className="text-xs text-muted-foreground">
-          {`${effect.attribute}: `}
+          {effect.attribute}:{" "}
           <SummaryDelta
             from={summaryValueLabel(effect.previousValue)}
             to={summaryValueLabel(effect.newValue)}
