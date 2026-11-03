@@ -35,7 +35,9 @@ own expansion state while its parent owns selection and the screen-reader announ
 `FleetNationCard` and `DossierAccordionItem` branch five and two times on an `active` boolean.
 `NewGameBriefingScreen` picks a page component from a five-arm index comparison chain.
 `components/bounce-cards/BounceCards.tsx` (457 lines, `activeOnTop`, `shadow`, `enableHover`) has
-no production consumer at all.
+no production consumer at all. `NewGameFleetMethodScreen` and `RulesOfTheNavalAgeScreen` hold the
+same deck selection the same way the archetype screen did — pending id plus focus override in the
+screen, applied and pending handed down as props to a deck pane and a detail panel.
 
 ## Evidence
 
@@ -53,6 +55,10 @@ no production consumer at all.
   `scripts/presentation-formatting.baseline.json`.
 - Non-compact `ArchetypeConsequencePanel` is unreachable: only two call sites, both `compact`
   (`ArchetypeDetailPanel.tsx:121,136`).
+- Same drilled deck state in the other two deck groups at `4c1c9208`:
+  `NewGameFleetMethodScreen.tsx:30,33,35` into `FleetMethodDeckPane` (4 props, line 91) and
+  `FleetMethodDetailPanel` (3 props, line 108); `RulesOfTheNavalAgeScreen.tsx:37,65` into
+  `PresetDeckPane` (4 props, line 110) and `PresetDetailPanel` (3 props, line 127).
 - Precedent: #505, #506 and #494 landed state/actions/meta providers and variant unions in this effort.
 
 ## Constraints and non-goals
@@ -76,8 +82,10 @@ frame loop, `world-situation.ts` model sizing, and the three near-duplicate deck
   in particular why `applied`, `pending`, `selected`, `tabbable` and `canGoBack` stay booleans.
 - No boolean display mode left in scope: `compact`, `centered`, `fullBleed`, `active` replaced by
   explicit variants; the orphaned `activeOnTop`, `shadow` and `enableHover` removed with their host.
-- Sibling state in the archetype and world-situation groups lives behind one provider or hook each
-  with a state/actions/meta interface, read by the parts instead of received as props.
+- Sibling state in every deck group in the folder lives behind one provider or hook each with a
+  state/actions/meta interface, read by the parts instead of received as props: the archetype deck,
+  the world-situation navigator and dossier, the fleet-method deck and the preset deck. The last two
+  were found while verifying the criterion folder-wide, after the approved audit set was fixed.
 - `PowerNavigator` takes a dossier slot as children, not a `renderDossier` function.
 - No component over ~300 lines left in scope without a stated reason.
 - Folder tests pass; `pnpm snap` shows no visual regression on every new-game screen reached.
@@ -86,8 +94,9 @@ frame loop, `world-situation.ts` model sizing, and the three near-duplicate deck
 ## Approach
 
 `agent decides`. Clear the unreachable code first (BounceCards removal, dead consequence arm), then
-swap booleans for variant unions, then lift the two sibling groups into providers, then replace the
-render prop and the briefing page chain. Keep every `data-testid`, accessible name, DOM class and
+swap booleans for variant unions, then lift each sibling group into a provider, then replace the
+render prop and the briefing page chain. The last two groups join after the criterion is checked
+folder-wide rather than per approved item. Keep every `data-testid`, accessible name, DOM class and
 inline style so the snap comparison stays pixel-level.
 
 ## Required tests
@@ -99,7 +108,13 @@ and the dossier slot composition.
 
 ## Expected artifacts
 
-Before and after `pnpm snap` captures in `.dev-data/view/new-game-495/`, attached to the PR.
+Before and after `pnpm snap --strict --freeze` captures in
+`apps/desktop/.dev-data/view/new-game-495-walk-base/` and `new-game-495-walk-branch/`, attached to
+the PR. One recorded walk drives both: `--click "New Campaign"`, then `--click-at 1170,26` for every
+header primary action, `--click` for the two deck cards, and two `--fill` steps for the admiral and
+campaign name. The earlier per-build walks are not a valid pair: the header advances were matched by
+accessible name, so a card click that fell back to `dispatchEvent` left the pointer elsewhere and the
+next capture differed by one hover state rather than by the refactor.
 
 ## Delivery authority
 
