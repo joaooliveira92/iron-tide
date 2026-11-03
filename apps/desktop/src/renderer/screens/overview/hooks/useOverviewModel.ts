@@ -1,4 +1,5 @@
 import type { PlayerProjection } from "@bluewave/campaign-engine";
+import { useCallback, useMemo } from "react";
 import type { MonthlyReportEntry } from "../../../../shared/reports-contract.js";
 import type { TurnSummaryEntry } from "../../../../shared/turn-message-contract.js";
 import type { UiStateTurnMessages } from "../../../../shared/ui-state-contract.js";
@@ -41,10 +42,15 @@ export function useOverviewModel(sessionId: string): OverviewModel {
   const wide = useMinWidth(COMMAND_OVERLAY_MIN_WIDTH);
   const { projection, loadError } = useCampaignProjection(sessionId);
 
-  const areaNames = new Map(
-    (projection?.strategicAreas ?? []).map((area) => [area.id, area.name] as const),
+  const strategicAreas = projection?.strategicAreas;
+  const areaNames = useMemo(
+    () => new Map((strategicAreas ?? []).map((area) => [area.id, area.name] as const)),
+    [strategicAreas],
   );
-  const areaName = (id: string): string => areaNames.get(id) ?? humanizeId(id);
+  const areaName = useCallback(
+    (id: string): string => areaNames.get(id) ?? humanizeId(id),
+    [areaNames],
+  );
 
   return {
     loadError,

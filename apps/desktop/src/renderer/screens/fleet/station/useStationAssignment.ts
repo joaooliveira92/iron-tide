@@ -75,10 +75,11 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
   );
 
   const state = workflow.state;
-  const areaName = useCallback(
-    (areaId: string) => state.areas.find((area) => area.id === areaId)?.name ?? areaId,
+  const areaNames = useMemo(
+    () => new Map(state.areas.map((area) => [area.id, area.name] as const)),
     [state.areas],
   );
+  const areaName = useCallback((areaId: string) => areaNames.get(areaId) ?? areaId, [areaNames]);
   const rows = useMemo(() => stationRows(state.divisions, areaName), [state.divisions, areaName]);
   const selected = useMemo(() => pruneSelection(selection, rows), [selection, rows]);
 

@@ -1,4 +1,5 @@
 import { Swords } from "lucide-react";
+import { useMemo } from "react";
 
 import { Badge } from "../../../components/ui/badge.js";
 import {
@@ -85,7 +86,7 @@ export function FleetUpkeepTab({
   readonly income: number;
 }) {
   const format = usePresentationFormat();
-  const segments = upkeepSegments(fleet);
+  const segments = useMemo(() => upkeepSegments(fleet), [fleet]);
   const topShips = fleet.ships.slice(0, SHIP_LIST_LIMIT);
   const topCost = topShips[0]?.cost ?? 0;
   const hidden = fleet.ships.length - topShips.length;

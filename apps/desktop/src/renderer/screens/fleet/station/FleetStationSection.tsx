@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Button } from "../../../components/ui/button.js";
 import { Badge } from "../../../components/ui/badge.js";
 import { Card, CardContent } from "../../../components/ui/card.js";
@@ -172,6 +173,7 @@ export function FleetStationView({
 }: FleetStationViewProps) {
   const readout = presenceReadout(state.presence, state.overBaseShips, areaName);
   const none = selected.length === 0;
+  const selectedIds = useMemo(() => new Set(selected), [selected]);
   return (
     <section className="space-y-4" data-testid="fleet-station" aria-labelledby="fleet-station-h">
       <div className="flex items-center gap-2">
@@ -253,7 +255,7 @@ export function FleetStationView({
                       <input
                         type="checkbox"
                         className="size-4 accent-primary"
-                        checked={selected.includes(row.shipId)}
+                        checked={selectedIds.has(row.shipId)}
                         onChange={() => onToggle(row.shipId)}
                         aria-label={format("fleet.station.selectShip", {
                           ship: row.name,

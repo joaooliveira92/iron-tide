@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import type {
   EntityReferenceDto,
   TurnMessageDto,
@@ -16,6 +16,8 @@ import {
   turnLabel,
   type TurnSummaryFilters,
 } from "./turn-summary-format.js";
+
+const EMPTY_MESSAGES: readonly TurnMessageDto[] = [];
 
 const SEVERITY_CLASS: Readonly<Record<string, string>> = {
   CRITICAL: "bg-destructive text-destructive-foreground",
@@ -76,18 +78,18 @@ function EntityHistoricalRecord({
   );
 }
 
-function MessageRow({
+const MessageRow = memo(function MessageRow({
   message,
-  pinnedIds,
-  readIds,
+  pinned,
+  read,
   onTogglePinned,
   onToggleRead,
   onOpenEntity,
   isEntityAvailable,
 }: {
   readonly message: TurnMessageDto;
-  readonly pinnedIds: readonly string[];
-  readonly readIds: readonly string[];
+  readonly pinned: boolean;
+  readonly read: boolean;
   readonly onTogglePinned: (id: string) => void;
   readonly onToggleRead: (id: string) => void;
   readonly onOpenEntity?: (ref: EntityReferenceDto) => void;
@@ -95,8 +97,6 @@ function MessageRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [historicalRef, setHistoricalRef] = useState<EntityReferenceDto | null>(null);
-  const pinned = pinnedIds.includes(message.id);
-  const read = readIds.includes(message.id);
 
   const openEntity = (ref: EntityReferenceDto): void => {
     if (isEntityAvailable !== undefined && !isEntityAvailable(ref)) {
@@ -158,13 +158,13 @@ function MessageRow({
                     : ""}
                 </p>
               ))}
-              {message.debugMetadata && (
+              {message.debugMetadata ? (
                 <p className="text-xs text-muted-foreground">
                   {resolveMessage("ui.turnSummary.sources", {
                     sources: message.debugMetadata.sourceEventIds.join(", "),
                   })}
                 </p>
-              )}
+              ) : null}
             </div>
           )}
         </div>
@@ -199,7 +199,7 @@ function MessageRow({
       </div>
     </li>
   );
-}
+});
 
 export function TurnSummaryPanel({
   summaries,
@@ -215,10 +215,12 @@ export function TurnSummaryPanel({
 
   const selected =
     summaries.find((entry) => entry.turnId === selectedTurnId) ?? summaries[0] ?? null;
-  const messages = selected?.messages ?? [];
-  const visible = filterTurnMessages(messages, filters);
-  const groups = groupTurnMessages(visible);
-  const actionableCount = messages.filter(isActionable).length;
+  const messages = useMemo(() => selected?.messages ?? EMPTY_MESSAGES, [selected]);
+  const visible = useMemo(() => filterTurnMessages(messages, filters), [messages, filters]);
+  const groups = useMemo(() => groupTurnMessages(visible), [visible]);
+  const actionableCount = useMemo(() => messages.filter(isActionable).length, [messages]);
+  const pinnedSet = useMemo(() => new Set(turnMessages.pinnedIds), [turnMessages.pinnedIds]);
+  const readSet = useMemo(() => new Set(turnMessages.readIds), [turnMessages.readIds]);
 
   return (
     <div className="space-y-2" data-testid="turn-summary-panel">
@@ -340,8 +342,8 @@ export function TurnSummaryPanel({
               <MessageRow
                 key={message.id}
                 message={message}
-                pinnedIds={turnMessages.pinnedIds}
-                readIds={turnMessages.readIds}
+                pinned={pinnedSet.has(message.id)}
+                read={readSet.has(message.id)}
                 onTogglePinned={onTogglePinned}
                 onToggleRead={onToggleRead}
                 {...(onOpenEntity !== undefined ? { onOpenEntity } : {})}
