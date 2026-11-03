@@ -6,11 +6,11 @@ import { PrioritiesCard } from "./PrioritiesCard.js";
 
 const noop = () => undefined;
 
-describe("embedded cards (body only, for map-overlay panels)", () => {
+describe("embedded variant (body only, for map-overlay panels)", () => {
   afterEach(cleanup);
 
   it("the month report keeps its test id and description but drops its own title", () => {
-    render(<MonthReportCard reports={[]} embedded />);
+    render(<MonthReportCard reports={[]} variant="embedded" />);
     expect(screen.getByTestId("month-report-card")).toBeTruthy();
     expect(screen.queryByText("Recent Developments")).toBeNull();
     expect(screen.getByText(/appears here after you advance the month/)).toBeTruthy();
@@ -18,7 +18,11 @@ describe("embedded cards (body only, for map-overlay panels)", () => {
 
   it("the priorities card drops its title", () => {
     render(
-      <PrioritiesCard state={{ status: "ready", priorities: [] }} onNavigate={noop} embedded />,
+      <PrioritiesCard
+        state={{ status: "ready", priorities: [] }}
+        onNavigate={noop}
+        variant="embedded"
+      />,
     );
     expect(screen.getByTestId("priorities-card")).toBeTruthy();
     expect(screen.queryByText("Immediate Priorities")).toBeNull();
@@ -31,7 +35,7 @@ describe("embedded cards (body only, for map-overlay panels)", () => {
         state={{ status: "unavailable" }}
         playerName="Britain"
         onNavigate={noop}
-        embedded
+        variant="embedded"
       />,
     );
     expect(screen.getByTestId("nation-rail")).toBeTruthy();
@@ -39,7 +43,7 @@ describe("embedded cards (body only, for map-overlay panels)", () => {
     expect(screen.getByRole("button", { name: "All relations" })).toBeTruthy();
   });
 
-  it("the default (not embedded) still shows the titles", () => {
+  it("the card variant still shows the titles", () => {
     render(<MonthReportCard reports={[]} />);
     expect(screen.getByText("Recent Developments")).toBeTruthy();
   });
