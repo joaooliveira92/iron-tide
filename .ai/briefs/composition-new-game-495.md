@@ -116,6 +116,14 @@ campaign name. The earlier per-build walks are not a valid pair: the header adva
 accessible name, so a card click that fell back to `dispatchEvent` left the pointer elsewhere and the
 next capture differed by one hover state rather than by the refactor.
 
+The walk runs with `--wait 6000 --wait-max 20000`: the commissioning loading screen reveals its
+steps on a timer, and at the default wait the base and branch runs sampled it at different moments
+and showed different briefing pages. Compared pixel by pixel, the two runs are identical on the deck,
+identity, review and all five briefing captures. Three captures differ for reasons outside the
+refactor: `01-nation` by at most 14 levels on 234 pixels (the WebGL globe), `02-preferences` by the
+randomly generated campaign seed text, and `05-fleet-method` by at most 2 levels (deck rendering
+noise). Aria and text dumps match.
+
 ## Delivery authority
 
 - Pull request: may open after local gates pass.
