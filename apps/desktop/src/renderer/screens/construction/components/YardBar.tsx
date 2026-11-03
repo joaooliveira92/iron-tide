@@ -6,6 +6,8 @@ import { shipTypeIcon } from "../../../components/design-workspace/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Tip } from "../../../components/ui/tip.js";
 
+export type YardBarVariant = "bar" | "header";
+
 export interface YardBarProps {
   readonly design: CompiledDesignVersion | null;
   readonly designCount: number;
@@ -15,7 +17,7 @@ export interface YardBarProps {
   readonly onSubmit: () => void;
   readonly onBatch: () => void;
   readonly onRefresh: () => void;
-  readonly inHeader?: boolean;
+  readonly variant?: YardBarVariant;
 }
 
 export function YardBar({
@@ -27,8 +29,9 @@ export function YardBar({
   onSubmit,
   onBatch,
   onRefresh,
-  inHeader = false,
+  variant = "bar",
 }: YardBarProps) {
+  const inHeader = variant === "header";
   const format = usePresentationFormat();
   const btn = inHeader ? "h-8 gap-2 px-3" : undefined;
   const Icon = design === null ? null : shipTypeIcon(design.shipType);
