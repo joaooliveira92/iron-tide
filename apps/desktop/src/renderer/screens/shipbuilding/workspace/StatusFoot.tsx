@@ -1,3 +1,5 @@
+import { BudgetContextChips } from "../../../shell/BudgetContextChips.js";
+import { useCampaignReads } from "../../../shell/CampaignShellContext.js";
 import { DesignStatusChip } from "../components/DesignStatusChip.js";
 import { EngineeringStatusBar } from "../components/EngineeringStatusBar.js";
 import { FlawSlip } from "../components/FlawSlip.js";
@@ -6,6 +8,7 @@ import { useShipbuildingActions, useShipbuildingState } from "./WorkspaceContext
 export function StatusFoot() {
   const { flaws, readouts, format, status, needsName, view } = useShipbuildingState();
   const { showOnShip, openSection, focusClassName } = useShipbuildingActions();
+  const reads = useCampaignReads();
   return (
     <>
       <FlawSlip
@@ -19,6 +22,7 @@ export function StatusFoot() {
       <EngineeringStatusBar
         readouts={readouts}
         format={format}
+        {...(reads !== null ? { trail: <BudgetContextChips reads={reads} /> } : {})}
         lead={
           <DesignStatusChip
             status={status}

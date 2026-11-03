@@ -173,6 +173,10 @@ export function useCampaignShellContext(): CampaignShellContextValue {
   return value;
 }
 
+export function useCampaignReads(): CampaignShellContextValue["state"]["reads"] {
+  return use(CampaignShellStateContext)?.reads ?? null;
+}
+
 export function useCampaignRevision(): number | null {
   return use(CampaignShellStateContext)?.campaign?.revision ?? null;
 }

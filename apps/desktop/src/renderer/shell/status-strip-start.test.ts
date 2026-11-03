@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vite-plus/test";
-import { startsCollapsed } from "./status-strip-start.js";
+import { hidesStrip } from "./status-strip-start.js";
 
-describe("startsCollapsed", () => {
-  it("gives the ship drawing the room on the design screen", () => {
-    expect(startsCollapsed("ship-design")).toBe(true);
+describe("hidesStrip", () => {
+  it("replaces the strip with budget chips inside the design screen's own status bar", () => {
+    expect(hidesStrip("ship-design")).toBe(true);
   });
 
-  it("leaves every other screen expanded", () => {
-    expect(startsCollapsed("overview")).toBe(false);
-    expect(startsCollapsed("strategic-map")).toBe(false);
-    expect(startsCollapsed("fleet")).toBe(false);
+  it("keeps the strip on every other screen", () => {
+    expect(hidesStrip("overview")).toBe(false);
+    expect(hidesStrip("strategic-map")).toBe(false);
+    expect(hidesStrip("fleet")).toBe(false);
+    expect(hidesStrip("construction")).toBe(false);
   });
 });

@@ -8,10 +8,12 @@ export function EngineeringStatusBar({
   readouts,
   format,
   lead,
+  trail,
 }: {
   readonly readouts: readonly EngineeringReadout[];
   readonly format: PresentationFormat;
   readonly lead?: ReactNode;
+  readonly trail?: ReactNode;
 }) {
   return (
     <Slate
@@ -29,6 +31,7 @@ export function EngineeringStatusBar({
           <ReadoutItem readout={r} format={format} />
         </span>
       ))}
+      {trail !== undefined && <span className="ml-auto inline-flex items-center">{trail}</span>}
     </Slate>
   );
 }

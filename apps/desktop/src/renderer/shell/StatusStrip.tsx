@@ -698,7 +698,7 @@ function DeferredPopover({ model }: { readonly model: StatusStripModel }) {
   );
 }
 
-function BalanceChip({
+export function BalanceChip({
   model,
   trend,
 }: {
@@ -735,7 +735,7 @@ function BalanceChip({
   );
 }
 
-function TreasuryChip({
+export function TreasuryChip({
   model,
   trend,
 }: {
@@ -914,7 +914,10 @@ export interface StatusStripProps {
   readonly startCollapsed?: boolean;
 }
 
-export function StatusStrip({ reads, startCollapsed = false }: StatusStripProps) {
+export function useStatusStripReads(reads: CampaignReads): {
+  readonly model: StatusStripModel | null;
+  readonly trend: TrendDetail | null;
+} {
   const { projection, areas, reports } = reads;
   const format = usePresentationFormat();
   const model = useMemo(
@@ -933,6 +936,11 @@ export function StatusStrip({ reads, startCollapsed = false }: StatusStripProps)
     () => buildTrend(reports.status === "ready" ? reports.value : null, format),
     [reports, format],
   );
+  return { model, trend };
+}
+
+export function StatusStrip({ reads, startCollapsed = false }: StatusStripProps) {
+  const { model, trend } = useStatusStripReads(reads);
   if (model === null) return null;
   return <StatusStripView model={model} trend={trend} startCollapsed={startCollapsed} />;
 }
