@@ -110,6 +110,31 @@ void describe("checkRepo", () => {
     mutate(dir, "CLAUDE.md", (text) => text.replaceAll("200k", "300k"));
     assert.match(checkRepo(dir).join("\n"), /CLAUDE\.md must state contextBlockTokens as 200k/u);
   });
+  void test("fails when a package AGENTS.md has no CLAUDE.md that imports it", () => {
+    const dir = copyTree();
+    mkdirSync(join(dir, "packages/alpha"), { recursive: true });
+    writeFileSync(join(dir, "packages/alpha/AGENTS.md"), "# alpha\n");
+    execFileSync("git", ["add", "-A"], { cwd: dir });
+    assert.match(checkRepo(dir).join("\n"), /packages\/alpha\/CLAUDE\.md must exist/u);
+    writeFileSync(join(dir, "packages/alpha/CLAUDE.md"), "# alpha\n");
+    execFileSync("git", ["add", "-A"], { cwd: dir });
+    assert.match(
+      checkRepo(dir).join("\n"),
+      /packages\/alpha\/CLAUDE\.md must start with @AGENTS\.md/u,
+    );
+    writeFileSync(join(dir, "packages/alpha/CLAUDE.md"), "@AGENTS.md\n");
+    execFileSync("git", ["add", "-A"], { cwd: dir });
+    assert.deepEqual(checkRepo(dir), []);
+  });
+  void test("ignores skill payloads and vendored AGENTS.md files", () => {
+    const dir = copyTree();
+    for (const path of [".agents/skills/x/AGENTS.md", "vendor/y/AGENTS.md", "repos/z/AGENTS.md"]) {
+      mkdirSync(dirname(join(dir, path)), { recursive: true });
+      writeFileSync(join(dir, path), "# other\n");
+    }
+    execFileSync("git", ["add", "-f", "-A"], { cwd: dir });
+    assert.deepEqual(checkRepo(dir), []);
+  });
   void test("fails when the snap docs drift from the default size", () => {
     const dir = copyTree();
     mutate(dir, "docs/agents/desktop-snap.md", (t) => t.replaceAll("1280x800", "999x999"));
