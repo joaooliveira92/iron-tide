@@ -11,8 +11,9 @@ const HOOK = join(ROOT, "scripts/hooks/pre-tool-use-bash.mjs");
 const POLICY = JSON.parse(
   readFileSync(join(ROOT, "scripts/data/agent-context-policy.json"), "utf8"),
 );
-const CWD = "/work/repo";
-const FILE = "/work/repo/src/a.ts";
+const CWD = resolve("/work/repo");
+const FILE = join(CWD, "src", "a.ts");
+const posix = (path) => path.replaceAll("\\", "/");
 
 const toolUse = (name, input, id) => ({ type: "tool_use", id, name, input });
 const assistantLine = (...blocks) =>
@@ -31,7 +32,7 @@ void describe("rangeReadTargets", () => {
     assert.deepEqual(targets("tail -n 30 src/a.ts"), [FILE]);
   });
   void test("resolves absolute paths and leading cd", () => {
-    assert.deepEqual(targets(`sed -n 1,5p ${FILE}`), [FILE]);
+    assert.deepEqual(targets(`sed -n 1,5p ${posix(FILE)}`), [FILE]);
     assert.deepEqual(targets("cd src && sed -n 1,5p a.ts"), [FILE]);
   });
   void test("ignores whole-file reads, searches and piped input", () => {
@@ -113,7 +114,7 @@ void describe("hook deny on the third consecutive range read", () => {
   });
   after(() => rmSync(sandbox, { recursive: true, force: true }));
 
-  const target = () => join(sandbox, "a.ts");
+  const target = () => posix(join(sandbox, "a.ts"));
   const run = (command, history) => {
     writeFileSync(transcript, history.map((line) => `${line}\n`).join(""));
     const result = spawnSync(process.execPath, [HOOK], {
