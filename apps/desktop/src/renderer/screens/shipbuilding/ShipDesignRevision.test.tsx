@@ -4,6 +4,7 @@ import { loadDrawingBoardContent } from "../../components/design-workspace/conte
 import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
 
 vi.mock("../../shell/CampaignShellContext.js", () => ({
+  useCampaignReads: () => null,
   useCampaignRevision: () => 7,
   useCampaignMonthId: () => null,
   useActiveCampaignCurrencyContext: () => ({}),

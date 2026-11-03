@@ -9,6 +9,7 @@ const shell = vi.hoisted(() => ({
 }));
 
 vi.mock("../../shell/CampaignShellContext.js", () => ({
+  useCampaignReads: () => null,
   useCampaignRevision: () => 0,
   useCampaignMonthId: () => "1880-01",
   useActiveCampaignCurrencyContext: () => ({}),
