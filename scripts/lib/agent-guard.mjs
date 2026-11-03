@@ -196,12 +196,12 @@ function expandHome(path) {
   return path;
 }
 
-function resolvePath(base, path) {
+export function resolvePath(base, path) {
   const expanded = expandHome(path);
   return isAbsolute(expanded) ? expanded : resolve(base, expanded);
 }
 
-const hasDynamicText = (text) => /[$`*?[{]/u.test(text);
+export const hasDynamicText = (text) => /[$`*?[{]/u.test(text);
 
 const isScratchPath = (path) => {
   const scratch = tmpdir();

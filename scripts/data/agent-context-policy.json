@@ -1,6 +1,7 @@
 {
   "catMaxLines": 200,
   "readRangeMaxLines": 120,
+  "readChainDenyAt": 3,
   "overrideToken": "agent-guard: allow",
   "overrideMinReasonChars": 3,
   "contextOverrideToken": "ctx-override:",
