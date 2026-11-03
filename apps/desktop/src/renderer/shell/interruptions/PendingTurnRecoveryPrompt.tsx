@@ -1,4 +1,12 @@
 import type { PendingTurnDto } from "../../../shared/turn-message-contract.js";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog.js";
 import { resolveMessage } from "../../content/uiCatalogue.js";
 
 export function PendingTurnRecoveryPrompt({
@@ -13,36 +21,35 @@ export function PendingTurnRecoveryPrompt({
   readonly onAbandon: () => void;
 }) {
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={resolveMessage("ui.pendingTurn.label")}
-      data-testid="pending-turn-prompt"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-    >
-      <div className="w-full max-w-md rounded-lg border border-border bg-background p-4 shadow-xl">
-        {unavailable ? (
-          <>
-            <h2 className="text-sm font-semibold">
-              {resolveMessage("ui.pendingTurn.unavailableTitle")}
-            </h2>
-            <p className="mt-1 text-xs text-muted-foreground" data-testid="pending-unavailable">
-              {resolveMessage("ui.pendingTurn.unavailableBody")}
-            </p>
-          </>
-        ) : (
-          <>
-            <h2 className="text-sm font-semibold">{resolveMessage("ui.pendingTurn.title")}</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {pending?.createdAt !== undefined
-                ? resolveMessage("ui.pendingTurn.bodyWithDate", {
-                    createdAt: pending.createdAt,
-                  })
-                : resolveMessage("ui.pendingTurn.body")}
-            </p>
-          </>
-        )}
-        <div className="mt-3 flex gap-2">
+    <AlertDialog open onOpenChange={() => undefined}>
+      <AlertDialogContent
+        data-testid="pending-turn-prompt"
+        aria-label={resolveMessage("ui.pendingTurn.label")}
+      >
+        <AlertDialogHeader>
+          {unavailable ? (
+            <>
+              <AlertDialogTitle>
+                {resolveMessage("ui.pendingTurn.unavailableTitle")}
+              </AlertDialogTitle>
+              <AlertDialogDescription data-testid="pending-unavailable">
+                {resolveMessage("ui.pendingTurn.unavailableBody")}
+              </AlertDialogDescription>
+            </>
+          ) : (
+            <>
+              <AlertDialogTitle>{resolveMessage("ui.pendingTurn.title")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {pending?.createdAt !== undefined
+                  ? resolveMessage("ui.pendingTurn.bodyWithDate", {
+                      createdAt: pending.createdAt,
+                    })
+                  : resolveMessage("ui.pendingTurn.body")}
+              </AlertDialogDescription>
+            </>
+          )}
+        </AlertDialogHeader>
+        <AlertDialogFooter>
           {!unavailable && (
             <button
               type="button"
@@ -61,8 +68,8 @@ export function PendingTurnRecoveryPrompt({
           >
             {resolveMessage("ui.pendingTurn.discard")}
           </button>
-        </div>
-      </div>
-    </div>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

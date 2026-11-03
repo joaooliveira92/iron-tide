@@ -326,7 +326,7 @@ describe("newArmourRegion", () => {
   });
 });
 
-describe("manual-parity regions (ADR-0232)", () => {
+describe("manual-parity regions", () => {
   const deckAt = (region: ArmourRegion["region"], o: Partial<ArmourRegion> = {}) =>
     belt({ region, thicknessUm: 100_000, heightMm: 12_000, ...o });
   const reducedBal = { ...bal, deckPenetrationBp: 4_000 };

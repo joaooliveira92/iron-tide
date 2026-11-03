@@ -36,7 +36,7 @@ const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 // Directories that must stay runtime-free (ADR-0100 §2 runtime-free row, plus
 // the renderer-reachable `campaign-engine`). `persistence`/`content-compiler`
 // are IO boundaries and are deliberately NOT listed; `apps/desktop/src/main`
-// and `apps/compiler-cli` adopt the full runtime (ADR-0159) and are NOT listed.
+// and `apps/compiler-cli` adopt the full runtime and are NOT listed.
 export const RUNTIME_FREE_ROOTS = [
   "packages/ai/src",
   "packages/armament/src",
@@ -344,7 +344,7 @@ function main() {
     console.error(
       "Fix: the runtime-free packages may import only the runtime-free subset " +
         `(${[...RUNTIME_FREE_SYMBOLS].sort().join(", ")}). ` +
-        "Move IO/async orchestration behind an explicit entrypoint boundary (ADR-0100 §2, ADR-0159).",
+        "Move IO/async orchestration behind an explicit entrypoint boundary.",
     );
     process.exit(1);
   }

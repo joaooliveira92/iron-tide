@@ -3,7 +3,6 @@ import { Data } from "effect";
 
 export const CORRUPT_SAVE_CODE = "PERSISTENCE_CORRUPT_SAVE" as DiagnosticCode;
 export const MISSING_SAVE_CODE = "PERSISTENCE_MISSING_SAVE" as DiagnosticCode;
-export const CANCELLED_CODE = "PERSISTENCE_CANCELLED" as DiagnosticCode;
 export const LEGACY_SAVE_CODE = "PERSISTENCE_LEGACY_SAVE" as DiagnosticCode;
 export const COMPATIBILITY_MISMATCH_CODE = "PERSISTENCE_COMPATIBILITY_MISMATCH" as DiagnosticCode;
 export const IO_CODE = "PERSISTENCE_IO" as DiagnosticCode;
@@ -49,15 +48,6 @@ export class PersistenceMissingSaveError extends Data.TaggedError(
   }
 }
 
-export class PersistenceCancelledError extends Data.TaggedError(
-  "PERSISTENCE_CANCELLED",
-)<PersistenceErrorFields> {
-  readonly code: DiagnosticCode = CANCELLED_CODE;
-  toDiagnostic(severity: Severity = "error"): Diagnostic {
-    return projectDiagnostic(this.code, this, severity);
-  }
-}
-
 export class PersistenceLegacySaveError extends Data.TaggedError(
   "PERSISTENCE_LEGACY_SAVE",
 )<PersistenceErrorFields> {
@@ -90,5 +80,4 @@ export class PersistenceInvalidOptionError extends Data.TaggedError(
 export type PersistenceError =
   | PersistenceCorruptSaveError
   | PersistenceMissingSaveError
-  | PersistenceCancelledError
   | PersistenceCompatibilityMismatchError;

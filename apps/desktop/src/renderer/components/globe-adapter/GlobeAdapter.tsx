@@ -13,7 +13,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AREAS, AREAS_BY_ID } from "../world-map/map-geometry.js";
-import { formatFixed } from "../../lib/presentation-format/index.js";
+import { formatFixed } from "../../lib/presentation-format/format.js";
 import {
   BAKED_PROTOCOL,
   createBakedTileLoader,
@@ -32,9 +32,15 @@ import {
   adapterLandMode,
   type AdapterLandMode,
 } from "./globe-adapter-flag.js";
-import { fitWorldCamera, type AppCameraState, type CameraProjection } from "./camera-contract.js";
+import {
+  fitWorldCamera,
+  fromRendererCamera,
+  type AppCameraState,
+  type CameraProjection,
+} from "./camera-contract.js";
 import type { OverlayFeature, OverlaySnapshot } from "./overlay-contract.js";
 import { DisposalRegistry } from "./disposal.js";
+import { FLEET_GLYPH_ID, buildFleetGlyph } from "./fleet-glyph.js";
 import { srgbToCanvasHex } from "./display-color.js";
 import { projectOverlay } from "./overlay-projection.js";
 import { OverlayStore } from "./overlay-store.js";
@@ -47,7 +53,9 @@ import {
   buildFrontierCollection,
   buildGraticuleCollection,
   borderColorExpression,
+  fleetGlyphFilter,
   markerFilter,
+  nationMarkerColor,
   overlayClassFilter,
   ownershipPaintValues,
 } from "./adapter-layer-state.js";
@@ -91,6 +99,8 @@ export interface GlobeAdapterProps {
   readonly showMinimap?: boolean;
   readonly initialFocusAreaId?: string | null;
   readonly initialFocusNationId?: string | null;
+  readonly camera?: AppCameraState | null;
+  readonly onCameraChange?: ((camera: AppCameraState) => void) | undefined;
 }
 
 export interface AdapterDiagnostics {
@@ -166,6 +176,8 @@ function featureCollection(features: readonly OverlayFeature[]): GeoJSON.Feature
         routeClass: feature.routeClass ?? "",
         overlayClass: feature.overlayClass ?? "",
         areaId: feature.areaId ?? "",
+        nationId: feature.nationId ?? "",
+        color: nationMarkerColor(feature.nationId),
         lon: feature.geometry.type === "Point" ? feature.geometry.lon : 0,
         lat: feature.geometry.type === "Point" ? feature.geometry.lat : 0,
       },
@@ -264,6 +276,17 @@ const CLIMATE_ZONE_COLORS: readonly (readonly [number, string])[] = [
   [7, srgbToCanvasHex("#f4f8f8")],
 ];
 
+const DEPTH_COLORS: readonly (readonly [number, string])[] = [
+  [200, srgbToCanvasHex("#00bad6")],
+  [1000, srgbToCanvasHex("#00a6cc")],
+  [4000, srgbToCanvasHex("#0090bd")],
+];
+const REEF_COLOR = srgbToCanvasHex("#f2fffb");
+
+function depthFillColor(): unknown {
+  return ["match", ["get", "depth"], ...DEPTH_COLORS.flat(), SEA_COLOR];
+}
+
 function climateFillColor(): unknown {
   return ["match", ["get", "zone"], ...CLIMATE_ZONE_COLORS.flat(), LAND_COLOR];
 }
@@ -279,6 +302,14 @@ function mapLayers(
   const specs: LayerSpecification[] = [
     { id: "ocean", type: "background", paint: { "background-color": SEA_COLOR } },
     {
+      id: "bathymetry-fill",
+      type: "fill",
+      source: "land",
+      "source-layer": manifest.layers.bathymetry,
+      layout: { "fill-sort-key": ["get", "depth"] as never },
+      paint: { "fill-color": depthFillColor() as never, "fill-antialias": false },
+    },
+    {
       id: "land",
       type: "fill",
       source: "land",
@@ -291,6 +322,19 @@ function mapLayers(
       source: "land",
       "source-layer": manifest.layers.climate,
       paint: { "fill-color": climateFillColor() as never, "fill-antialias": false },
+    },
+    {
+      id: "reefs-line",
+      type: "line",
+      source: "land",
+      "source-layer": manifest.layers.reefs,
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": REEF_COLOR,
+        "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.6, 8, 1.4],
+        "line-dasharray": [2, 1.5],
+        "line-opacity": 0.85,
+      },
     },
     {
       id: "protected-water",
@@ -395,7 +439,12 @@ function mapLayers(
         "line-cap": "round",
         "line-join": "round",
       },
-      paint: { "line-color": "#3aa0e0", "line-width": 1, "line-opacity": 0.7 },
+      paint: {
+        "line-color": "#06425c",
+        "line-width": ["interpolate", ["linear"], ["zoom"], 1, 1.1, 5, 2],
+        "line-opacity": 0.75,
+        "line-dasharray": [2, 1.5],
+      },
     },
     {
       id: "adapter-routes",
@@ -427,19 +476,56 @@ function mapLayers(
       source: "adapter-markers",
       filter: markerFilter(visibility) as never,
       paint: {
-        "circle-radius": ["match", ["get", "markerClass"], "fleet", 7, 5],
+        "circle-radius": ["match", ["get", "markerClass"], "fleet", 8, 5],
         "circle-color": [
-          "match",
-          ["get", "markerClass"],
-          "fleet",
-          "#5fc0ff",
-          "alert",
+          "case",
+          ["==", ["get", "markerClass"], "alert"],
           "#ff5c5c",
-          "#ffd24a",
+          ["==", ["get", "color"], ""],
+          ["match", ["get", "markerClass"], "fleet", "#0b3a5c", "#ffd24a"],
+          ["to-color", ["get", "color"]],
         ],
         "circle-stroke-color": "#001018",
         "circle-stroke-width": 1.5,
-        "circle-opacity": ["case", ["boolean", ["feature-state", "hidden"], false], 0, 1],
+        "circle-opacity": [
+          "case",
+          ["boolean", ["feature-state", "hidden"], false],
+          0,
+          ["==", ["get", "markerClass"], "fleet"],
+          0,
+          1,
+        ],
+        "circle-stroke-opacity": [
+          "case",
+          ["boolean", ["feature-state", "hidden"], false],
+          0,
+          ["==", ["get", "markerClass"], "fleet"],
+          0,
+          1,
+        ],
+      },
+    },
+    {
+      id: "adapter-fleet-glyphs",
+      type: "symbol",
+      source: "adapter-markers",
+      filter: fleetGlyphFilter(visibility) as never,
+      layout: {
+        "icon-image": FLEET_GLYPH_ID,
+        "icon-size": 0.8,
+        "icon-allow-overlap": true,
+        "icon-ignore-placement": true,
+      },
+      paint: {
+        "icon-color": [
+          "case",
+          ["==", ["get", "color"], ""],
+          "#0b3a5c",
+          ["to-color", ["get", "color"]],
+        ],
+        "icon-halo-color": "#ffffff",
+        "icon-halo-width": 2,
+        "icon-opacity": ["case", ["boolean", ["feature-state", "hidden"], false], 0, 1],
       },
     },
     {
@@ -558,8 +644,13 @@ export function GlobeAdapter({
   showMinimap = true,
   initialFocusAreaId = null,
   initialFocusNationId = null,
+  camera: sharedCamera = null,
+  onCameraChange,
 }: GlobeAdapterProps) {
   const showAreas = variant !== "command";
+  const restoringCameraRef = useRef(sharedCamera !== null);
+  const onCameraChangeRef = useRef(onCameraChange);
+  onCameraChangeRef.current = onCameraChange;
   const hash = window.location.hash;
   const mode: AdapterLandMode = landMode ?? adapterLandMode(hash);
   const plan = useLandPlan(mode, GLOBE_ASSET_ROOT);
@@ -580,9 +671,12 @@ export function GlobeAdapter({
   const [status, setStatus] = useState("starting");
   const [liveMessage, setLiveMessage] = useState("");
   const [errorText, setErrorText] = useState<string | null>(null);
-  const [camera, setCamera] = useState<AppCameraState>(() =>
-    fitWorldCamera(adapterProjectionFromApp(state.projection)),
-  );
+  const [camera, setCamera] = useState<AppCameraState>(() => {
+    const adapterProjection = adapterProjectionFromApp(state.projection);
+    return sharedCamera === null
+      ? fitWorldCamera(adapterProjection)
+      : { ...sharedCamera, projection: adapterProjection };
+  });
   const [hoveredArea, setHoveredArea] = useState<string | null>(null);
   const [hoverTooltip, setHoverTooltip] = useState<{
     readonly x: number;
@@ -599,7 +693,7 @@ export function GlobeAdapter({
   } | null>(null);
   const [initialCamera] = useState<AppCameraState>(() => {
     const point = homeFocusPoint(initialFocusAreaId);
-    return point === null
+    return point === null || restoringCameraRef.current
       ? camera
       : {
           ...camera,
@@ -673,6 +767,7 @@ export function GlobeAdapter({
     set("adapter-lanes", visibility.lanes);
     set("adapter-routes", visibility.routes);
     map.setFilter("adapter-markers", markerFilter(visibility) as never);
+    map.setFilter("adapter-fleet-glyphs", fleetGlyphFilter(visibility) as never);
     map.setFilter("adapter-marker-labels", markerFilter(visibility) as never);
   }, [ready, showAreas, state.layers]);
 
@@ -689,7 +784,7 @@ export function GlobeAdapter({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map === null || !ready) return;
+    if (map === null || !ready || restoringCameraRef.current) return;
     map.setCenter([state.centre, map.getCenter().lat]);
   }, [ready, state.centre]);
 
@@ -874,6 +969,15 @@ export function GlobeAdapter({
         pitch: active.getPitch(),
         projection: projectionRef.current,
       }));
+      onCameraChangeRef.current?.(
+        fromRendererCamera({
+          centre: [active.getCenter().lng, active.getCenter().lat],
+          zoom,
+          bearing: active.getBearing(),
+          pitch: active.getPitch(),
+          projection: projectionRef.current,
+        }),
+      );
     };
     const onError = (event: { readonly error?: { readonly message?: string } }) => {
       const message = event.error?.message ?? "unknown";
@@ -1035,6 +1139,11 @@ export function GlobeAdapter({
     };
     const onPointerUp = (event: PointerEvent) => endDrag(event, true);
     const onPointerCancel = (event: PointerEvent) => endDrag(event, false);
+    const onImageMissing = (event: { readonly id: string }) => {
+      if (event.id !== FLEET_GLYPH_ID || active.hasImage(FLEET_GLYPH_ID)) return;
+      active.addImage(FLEET_GLYPH_ID, buildFleetGlyph(), { sdf: true });
+    };
+    active.on("styleimagemissing", onImageMissing);
     active.on("idle", onIdle);
     active.on("error", onError);
     active.on("click", onClick);
@@ -1199,6 +1308,7 @@ export function GlobeAdapter({
       whenIdle: waitIdle,
     };
 
+    disposal.add(() => active.off("styleimagemissing", onImageMissing));
     disposal.add(() => active.off("idle", onIdle));
     disposal.add(() => active.off("error", onError));
     disposal.add(() => active.off("click", onClick));
@@ -1320,12 +1430,16 @@ export function GlobeAdapter({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map === null || !ready) return;
+    if (map === null || !ready || restoringCameraRef.current) return;
     const point = homeFocusPoint(initialFocusAreaId);
     if (point === null) return;
     const target = nationFocusPoint(point, initialFocusNationId);
     map.jumpTo({ center: [target[0], target[1]], zoom: 3.5, bearing: 0, pitch: 0 });
   }, [initialFocusAreaId, initialFocusNationId, ready]);
+
+  useEffect(() => {
+    if (ready) restoringCameraRef.current = false;
+  }, [ready]);
 
   const hierarchy: TileHierarchy = NATURAL_EARTH_HIERARCHY;
   const statusLabel = errorText === null ? status : `error ${errorText}`;
@@ -1416,25 +1530,27 @@ export function GlobeAdapter({
       <div aria-live="polite" role="status" data-testid="globe-adapter-live" className="sr-only">
         {liveMessage}
       </div>
-      <table className="sr-only">
-        <caption>Globe adapter entities</caption>
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Kind</th>
-            <th scope="col">Area</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entityRows.map((entity) => (
-            <tr key={entity.id}>
-              <th scope="row">{entity.name}</th>
-              <td>{entity.kind}</td>
-              <td>{entity.areaId}</td>
+      <div className="sr-only">
+        <table>
+          <caption>Globe adapter entities</caption>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Kind</th>
+              <th scope="col">Area</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {entityRows.map((entity) => (
+              <tr key={entity.id}>
+                <th scope="row">{entity.name}</th>
+                <td>{entity.kind}</td>
+                <td>{entity.areaId}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <div className="sr-only" data-testid="globe-adapter-camera">
         {JSON.stringify(camera)}
       </div>

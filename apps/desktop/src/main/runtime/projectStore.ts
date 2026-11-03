@@ -194,7 +194,18 @@ export function projectStoreLayer(): Layer.Layer<ProjectStore> {
         for (const warning of loaded.warnings) collector.add(warning);
         return loaded.state;
       }),
-    list: (saveDir) => store.listEffect(saveDir).pipe(Effect.mapError(ioFailure("LOAD_FAILED"))),
+    list: (saveDir) =>
+      store.listEffect(saveDir).pipe(
+        Effect.tap((listing) =>
+          Effect.forEach(
+            listing.warnings,
+            (warning) => Effect.logWarning(`${warning.stage}: ${warning.message}`),
+            { discard: true },
+          ),
+        ),
+        Effect.map((listing) => listing.saves),
+        Effect.mapError(ioFailure("LOAD_FAILED")),
+      ),
     loadById: (saveDir, saveId, collector) =>
       Effect.gen(function* () {
         const loaded = yield* store

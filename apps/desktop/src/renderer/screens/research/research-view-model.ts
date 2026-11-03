@@ -192,13 +192,20 @@ export function buildResearchViewModel(state: ResearchScreenActiveData): Researc
 
   const technologies = new Map(projection.technologies.map((t) => [t.techId, viewOf(t)] as const));
 
+  const summaryByField = new Map(projection.fields.map((f) => [f.fieldId, f] as const));
+  const techsByField = new Map<string, ResearchTechView[]>();
+  for (const tech of projection.technologies) {
+    const view = technologies.get(tech.techId)!;
+    const bucket = techsByField.get(tech.researchFieldId);
+    if (bucket === undefined) techsByField.set(tech.researchFieldId, [view]);
+    else bucket.push(view);
+  }
+
   const fields = CANONICAL_RESEARCH_FIELD_IDS.map((fieldId): ResearchFieldView => {
-    const summary = projection.fields.find((f) => f.fieldId === fieldId);
+    const summary = summaryByField.get(fieldId);
     const weight = draft[fieldId] ?? RESEARCH_FIELD_PRIORITY_WEIGHTS.LOW;
     const projectedPoints = projected[fieldId] ?? 0;
-    const techs = projection.technologies
-      .filter((t) => t.researchFieldId === fieldId)
-      .map((t) => technologies.get(t.techId)!);
+    const techs = techsByField.get(fieldId) ?? [];
     const totalTechs = summary?.totalTechs ?? techs.length;
     const discoveredTechs = summary?.discoveredTechs ?? 0;
     const isEligible = summary?.eligible ?? false;
@@ -214,9 +221,13 @@ export function buildResearchViewModel(state: ResearchScreenActiveData): Researc
               : "unfunded"
             : "waiting";
 
-    const opening = techs
-      .filter((t) => t.status === "future" && t.missingPrerequisites.length === 0)
-      .sort((a, b) => a.monthsUntilAvailable - b.monthsUntilAvailable)[0];
+    let opening: ResearchTechView | undefined;
+    for (const t of techs) {
+      if (t.status !== "future" || t.missingPrerequisites.length > 0) continue;
+      if (opening === undefined || t.monthsUntilAvailable < opening.monthsUntilAvailable) {
+        opening = t;
+      }
+    }
     const nextOpening: ResearchNextOpening | null =
       opening === undefined || opening.availabilityLabel === null
         ? null
@@ -249,8 +260,11 @@ export function buildResearchViewModel(state: ResearchScreenActiveData): Researc
     };
   });
 
-  const counts = (status: ResearchTechStatus) =>
-    projection.technologies.filter((t) => t.status === status).length;
+  const statusCounts: Partial<Record<ResearchTechStatus, number>> = {};
+  for (const t of projection.technologies) {
+    statusCounts[t.status] = (statusCounts[t.status] ?? 0) + 1;
+  }
+  const counts = (status: ResearchTechStatus) => statusCounts[status] ?? 0;
   const projectedTotal = fields.reduce((sum, f) => sum + f.projectedPoints, 0);
 
   return {

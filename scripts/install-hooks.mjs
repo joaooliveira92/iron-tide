@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Install the tracked git hooks by pointing Git at `.githooks/` (ADR-0107).
+// Install the tracked git hooks by pointing Git at `.githooks/`.
 //
 // Dependency-free on purpose: ADR-0099 rejected adding hook tooling, and a
 // committed hook directory plus `core.hooksPath` needs no package. Runs from

@@ -5,7 +5,7 @@
 // and free of ambient I/O. The compiler's loader reads content at the boundary
 // and hands the stage an in-memory map; a stage that imports `node:fs` or
 // `node:child_process` has stepped outside that contract. This gate freezes the
-// rule over the stage directory (ADR-0106 ratchet pattern).
+// rule over the stage directory.
 //
 // Usage: `node scripts/assert-no-stage-io.mjs [--self-test]`
 //
@@ -186,7 +186,7 @@ function main() {
     const detail = findings.map((f) => `  ${f.file}:${String(f.line)} — ${f.detail}`).join("\n");
     throw new Error(
       "assert-no-stage-io: a compiler stage imports ambient I/O. The loader reads content and " +
-        "hands the stage an in-memory map; stages must stay I/O-free (ADR-0004).\n" +
+        "hands the stage an in-memory map; stages must stay I/O-free.\n" +
         detail,
     );
   }

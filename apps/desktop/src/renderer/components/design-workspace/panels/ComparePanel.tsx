@@ -1,9 +1,8 @@
 import type { WorkshopView } from "@bluewave/ship-design";
-import {
-  formatExplanation,
-  type PresentationFormat,
-} from "../../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../../shared/explanation-text.js";
+import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { Panel } from "./Panel.js";
 
 interface Row {
@@ -41,13 +40,12 @@ function rowsOf(baseline: WorkshopView, view: WorkshopView, format: Presentation
 
 export function ComparePanel({
   baseline,
-  view,
   name,
 }: {
   readonly baseline: WorkshopView;
-  readonly view: WorkshopView;
   readonly name: string;
 }) {
+  const { view } = useDesignState();
   const format = usePresentationFormat();
   const changed = rowsOf(baseline, view, format).filter((r) => r.before !== r.after);
   return (

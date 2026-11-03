@@ -52,7 +52,7 @@ const domestic: ComponentAccess = { status: "DOMESTIC" };
 const idsIn = (p: NationNavalProfile): string[] =>
   catalogueForNation(components, p, MONTH).catalogue.map((c) => c.id);
 
-describe("domestic vs imported gun ceiling (ADR-0114)", () => {
+describe("domestic vs imported gun ceiling", () => {
   const access = {
     gun_rml_11in_25ton: imported("Armstrong"),
     gun_rml_8in_9ton: imported("Krupp"),

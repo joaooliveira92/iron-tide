@@ -166,11 +166,13 @@ try {
     /z=.*tiles=[1-9]/.test(globeStatus),
     globeStatus,
   );
-  const globeAreas = page.getByRole("navigation", { name: "Map areas" }).getByRole("button");
+  const globeControls = page
+    .getByRole("button", { name: /^Layers & areas$|^Ports and fleets$/ })
+    .or(page.getByRole("navigation", { name: "Map areas" }).getByRole("button"));
   check(
-    "globe exposes every area as a keyboard button",
-    (await globeAreas.count()) >= 36,
-    `buttons=${await globeAreas.count()}`,
+    "globe exposes its docked controls as keyboard buttons",
+    (await globeControls.count()) >= 2,
+    `buttons=${await globeControls.count()}`,
   );
   check(
     "globe exposes the screen-reader area table",
@@ -200,7 +202,7 @@ try {
 
   // --- The Shipbuilding workspace renders the artifact-backed ship-building content ---
   await page.getByTestId("bottom-nav").getByRole("button", { name: "Ship design" }).click();
-  const workspace = page.getByTestId("shipbuilding-dialog");
+  const workspace = page.getByRole("main");
   await workspace.getByRole("img", { name: /Top-down plan/ }).waitFor({ timeout: 15_000 });
   check("shipbuilding workspace opens on the shipped content", true);
   check(

@@ -1,8 +1,6 @@
 export { AlternativesPanel } from "./AlternativesPanel.js";
 export { BatteryPanel } from "./BatteryPanel.js";
 export { BriefPanel } from "./BriefPanel.js";
-export { ShipTypePanel } from "./ShipTypePanel.js";
-export { ArmourPanel } from "./ArmourPanel.js";
 export { ComparePanel } from "./ComparePanel.js";
 export { FilePanel } from "./FilePanel.js";
 export { FindingsPanel } from "./FindingsPanel.js";
@@ -11,7 +9,6 @@ export { HullPlanPanel } from "./hull-plan/HullPlanPanel.js";
 export { HistoryPanel } from "./HistoryPanel.js";
 export { HullPanel } from "./HullPanel.js";
 export { LedgerPanel } from "./LedgerPanel.js";
-export { MachineryPanel } from "./MachineryPanel.js";
 export { MetricsPanel } from "./MetricsPanel.js";
 export { NationalIdentityPanel } from "./NationalIdentityPanel.js";
 export { PlacementsPanel } from "./PlacementsPanel.js";

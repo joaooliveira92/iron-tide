@@ -40,6 +40,14 @@ describe("camera contract", () => {
     expect(clamped.zoom).toBe(22);
   });
 
+  it("leaves an in-range longitude bit-for-bit unchanged across repeated round trips", () => {
+    let state: AppCameraState = { ...DEFAULT_APP_CAMERA, centre: [-3.2, 55.9] };
+    for (let pass = 0; pass < 5; pass += 1) {
+      state = fromRendererCamera(toRendererCamera(state));
+    }
+    expect(state.centre).toEqual([-3.2, 55.9]);
+  });
+
   it("rejects an unknown version or malformed state and falls back", () => {
     expect(decodeCameraState({ ...DEFAULT_APP_CAMERA, version: 2 })).toBeNull();
     expect(decodeCameraState({ ...DEFAULT_APP_CAMERA, centre: [0] })).toBeNull();

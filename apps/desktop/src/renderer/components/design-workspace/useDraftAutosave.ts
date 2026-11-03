@@ -13,24 +13,28 @@ export interface Restored {
 interface PendingDraft {
   readonly presetId: string;
   readonly log: EditLog;
+  readonly className: string;
 }
 
 export function useDraftAutosave({
   sessionId,
   presetId,
   log,
+  className,
   restore,
 }: {
   readonly sessionId: string | undefined;
   readonly presetId: string;
   readonly log: EditLog;
-  readonly restore: (presetId: string, log: EditLog) => boolean;
+  readonly className: string;
+  readonly restore: (presetId: string, log: EditLog, className: string | null) => boolean;
 }): {
   readonly restored: Restored | null;
   readonly dismiss: () => void;
   readonly enabled: boolean;
   readonly saveNow: () => boolean;
   readonly saveFailed: boolean;
+  readonly unsaved: boolean;
   readonly dismissSaveFailed: () => void;
 } {
   const bridge = useBridge();
@@ -67,7 +71,7 @@ export function useDraftAutosave({
         } catch {
           return;
         }
-        if (restoreRef.current(r.value.draft.presetId, saved))
+        if (restoreRef.current(r.value.draft.presetId, saved, r.value.draft.className ?? null))
           setRestored({ savedAt: r.value.draft.savedAt });
       })
       .catch(() => {})
@@ -105,7 +109,13 @@ export function useDraftAutosave({
     pending.current = null;
     writing.current = true;
     const draft =
-      next.log.edits.length === 0 ? null : { presetId: next.presetId, log: encodeLog(next.log) };
+      next.log.edits.length === 0
+        ? null
+        : {
+            presetId: next.presetId,
+            log: encodeLog(next.log),
+            ...(next.className === "" ? {} : { className: next.className }),
+          };
     const attempt = bridge.campaign
       .execute("writeDrawingBoardDraft", { sessionId, draft })
       .then((result) => {
@@ -139,12 +149,13 @@ export function useDraftAutosave({
   const writeRef = useRef(write);
   writeRef.current = write;
 
+  const name = className.trim();
   useEffect(() => {
     if (!enabled || !loaded) return;
-    pending.current = { presetId, log };
+    pending.current = { presetId, log, className: name };
     scheduleRetry(AUTOSAVE_DELAY_MS);
     return clearRetry;
-  }, [enabled, loaded, presetId, log]);
+  }, [enabled, loaded, presetId, log, name]);
 
   useEffect(
     () => () => {
@@ -158,11 +169,15 @@ export function useDraftAutosave({
     return registerAppFlush(() => writeRef.current());
   }, [enabled]);
 
-  const latest = useRef({ presetId, log, loaded });
-  latest.current = { presetId, log, loaded };
+  const latest = useRef({ presetId, log, name, loaded });
+  latest.current = { presetId, log, name, loaded };
   const saveNow = () => {
     if (!enabled || !latest.current.loaded) return false;
-    pending.current = { presetId: latest.current.presetId, log: latest.current.log };
+    pending.current = {
+      presetId: latest.current.presetId,
+      log: latest.current.log,
+      className: latest.current.name,
+    };
     void writeRef.current();
     return true;
   };
@@ -173,6 +188,7 @@ export function useDraftAutosave({
     enabled,
     saveNow,
     saveFailed: failed && !dismissed,
+    unsaved: failed,
     dismissSaveFailed: () => setDismissed(true),
   };
 }

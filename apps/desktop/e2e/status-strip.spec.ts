@@ -29,6 +29,22 @@ test("the status strip expands into Nation, Budget and Outlook cards that fit th
   await page.keyboard.press("Escape");
   await expect(popover).toBeHidden();
 
+  await test.step("reachable:read-priorities", async () => {
+    const priority = page
+      .getByRole("group", { name: "Immediate priorities" })
+      .getByRole("button")
+      .first();
+    await expect(priority).toBeVisible();
+    await expect(priority).toHaveAccessibleName(
+      /^(Critical|Warning|Advisory|Information): .+\. Go to .+/,
+    );
+    await expect(priority).toContainText(/\S/);
+    await expect(priority).toHaveAttribute(
+      "data-severity",
+      /^(critical|warning|advisory|information)$/,
+    );
+  });
+
   await e2e.app.evaluate(({ BrowserWindow }) => {
     const [window] = BrowserWindow.getAllWindows();
     window?.setContentSize(960, 640);

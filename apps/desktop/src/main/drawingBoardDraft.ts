@@ -1,6 +1,6 @@
 import { renameSync, rmSync } from "node:fs";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
-import { decodeLog, PersistenceError } from "@bluewave/ship-design";
+import { decodeLog, MAX_CLASS_NAME_LENGTH, PersistenceError } from "@bluewave/ship-design";
 import { Effect, Schema } from "effect";
 import type { DrawingBoardDraftRecord } from "../shared/design-contract.js";
 import {
@@ -23,6 +23,9 @@ const StoredSchema = Schema.Struct({
   savedAt: Schema.String,
   presetId: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
   log: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(MAX_DRAWING_BOARD_LOG_CHARS)),
+  className: Schema.optional(
+    Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(MAX_CLASS_NAME_LENGTH)),
+  ),
   compatibilityVersion: Schema.optional(Schema.String),
 });
 
@@ -44,6 +47,7 @@ const sidecar = defineSidecar<StoredDraft, DrawingBoardDraftRecord | null, strin
     return {
       presetId: stored.presetId,
       log: stored.log,
+      ...(stored.className === undefined ? {} : { className: stored.className }),
       savedAt: stored.savedAt,
     };
   },
@@ -58,7 +62,7 @@ export function loadDrawingBoardDraft(
 
 export function saveDrawingBoardDraft(
   saveDir: string,
-  draft: { readonly presetId: string; readonly log: string },
+  draft: { readonly presetId: string; readonly log: string; readonly className?: string },
   savedAt: string,
 ): void {
   sidecar.write(saveDir, {
@@ -66,6 +70,7 @@ export function saveDrawingBoardDraft(
     savedAt,
     presetId: draft.presetId,
     log: draft.log,
+    ...(draft.className === undefined ? {} : { className: draft.className }),
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   });
 }

@@ -10,6 +10,7 @@ export interface CompilerInput {
   manifestPath: string;
   contentDir: string;
   fileContents?: Readonly<Record<string, string>>;
+  fileReadFailures?: Readonly<Record<string, string>>;
   documents?: Readonly<Record<string, unknown>>;
   rulesetFiles: string[];
   countryFiles: string[];
@@ -40,6 +41,7 @@ export interface CompilerInput {
   researchFiles?: string[];
   designFiles?: string[];
   divisionFiles?: string[];
+  eventFiles?: string[];
   presentationFiles?: string[];
   uiFiles?: string[];
 }
@@ -69,6 +71,7 @@ export interface CampaignCollections {
   research: readonly unknown[];
   designs: readonly unknown[];
   divisions?: readonly unknown[];
+  events?: readonly unknown[];
 }
 
 export interface ContentBundle {
@@ -131,6 +134,8 @@ export {
 } from "./releaseGate.js";
 export { safePath } from "./safePath.js";
 export { battleOffersFromRulesets } from "./battleOfferRules.js";
+export { tensionDriftFromRulesets } from "./tensionDriftRules.js";
+export { eventResolutionFromRulesets } from "./eventResolutionRules.js";
 export { gunneryFromRulesets } from "./gunneryRules.js";
 export { missilesFromRulesets } from "./missilesRules.js";
 export { fleetManagementFromRulesets } from "./fleetManagementRules.js";

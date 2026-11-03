@@ -38,7 +38,7 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-describe("support bundle (ADR-0133)", () => {
+describe("support bundle", () => {
   it("writes a bundle carrying the crash message and app context", () => {
     const path = captureCrash(
       "main",
@@ -124,7 +124,7 @@ describe("renderer crash IPC boundary", () => {
   });
 });
 
-describe("privacy and bounded writes (ADR-0133 hardening)", () => {
+describe("privacy and bounded writes", () => {
   it("redacts the home directory and username segments from trace text", () => {
     expect(redactText("at /Users/tester/dev/app.ts:1", "/Users/tester")).toBe("at ~/dev/app.ts:1");
     expect(redactText("at /Users/someone/x.ts", "/Users/tester")).toBe("at /Users/[user]/x.ts");

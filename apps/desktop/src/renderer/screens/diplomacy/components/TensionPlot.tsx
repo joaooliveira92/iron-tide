@@ -1,4 +1,5 @@
 import { Anchor } from "lucide-react";
+import { useMemo } from "react";
 import { cn } from "../../../lib/utils.js";
 import {
   PLOT_CENTER,
@@ -258,8 +259,8 @@ export function TensionPlot({
   layers,
   onSelect,
 }: TensionPlotProps) {
-  const nodes = plotLayout(rows);
-  const rowById = new Map(rows.map((row) => [row.partnerNationId, row]));
+  const nodes = useMemo(() => plotLayout(rows), [rows]);
+  const rowById = useMemo(() => new Map(rows.map((row) => [row.partnerNationId, row])), [rows]);
   const centre = percentAt(PLOT_CENTER, PLOT_CENTER);
   return (
     <div

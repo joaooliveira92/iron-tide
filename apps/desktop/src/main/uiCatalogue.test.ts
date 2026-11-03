@@ -124,7 +124,7 @@ const REQUIRED_KEYS = [
   "ui.pendingTurn.discard",
 ] as const;
 
-describe("UI catalogue over the content IPC (ADR-0209)", () => {
+describe("UI catalogue over the content IPC", () => {
   it("serves the authored en-US catalogue as a data-only DTO", async () => {
     const result = await dispatchCampaignCommand("inspectUiCatalogue", undefined);
     expect(result.outcome).toBe("success");

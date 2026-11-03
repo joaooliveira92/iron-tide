@@ -53,6 +53,11 @@ import {
   type UnitRun,
 } from "./minuteStages.js";
 import { buildMinuteResult } from "./minuteResult.js";
+import type {
+  FormationContext,
+  FormationTrack,
+  ShipStationRecord,
+} from "../formation/contracts.js";
 
 export { DAMAGE_CONTROL_SUBSTEP } from "./minuteStages.js";
 
@@ -78,6 +83,7 @@ export interface AdvanceMinuteInput {
   airCombat?: AirCombatContext;
   airDefense?: AirDefenseContext;
   missiles?: MissileContext;
+  formation?: FormationContext;
 }
 
 export interface MinuteResult {
@@ -102,6 +108,8 @@ export interface MinuteResult {
   missileRecords?: readonly MissileRecord[];
   missileStates?: Readonly<Record<string, MissileLauncherState>>;
   missileSalvos?: readonly MissileSalvoInFlight[];
+  formationTracks?: Readonly<Record<string, FormationTrack>>;
+  formationRecords?: readonly ShipStationRecord[];
 }
 
 export function advanceMinute(input: AdvanceMinuteInput): MinuteResult {
@@ -184,6 +192,7 @@ export interface AdvanceMinutesInput {
   airCombat?: AirCombatContext;
   airDefense?: AirDefenseContext;
   missiles?: MissileContext;
+  formation?: FormationContext;
 }
 export interface AdvanceMinutesResult {
   results: MinuteResult[];
@@ -205,6 +214,7 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
     : undefined;
   let airDefense = input.airDefense;
   let missiles = input.missiles;
+  let formation = input.formation;
   let state: TacticalBattleState = {
     ...input.state,
     contacts: [...(input.state.contacts ?? [])],
@@ -227,6 +237,7 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
       airCombat,
       airDefense,
       missiles,
+      formation,
     });
     results.push(res);
     state = {
@@ -311,6 +322,9 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
           return ns ? { ...d, state: ns } : d;
         }),
       };
+    }
+    if (formation && res.formationTracks) {
+      formation = { ...formation, tracks: res.formationTracks };
     }
     if (missiles && (res.missileStates || res.missileSalvos)) {
       missiles = {

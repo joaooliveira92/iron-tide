@@ -1,7 +1,7 @@
 import type { ExplanationTree } from "@bluewave/events";
 import { describe, expect, it } from "vite-plus/test";
 
-import { createPresentationFormat } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import { netTone, treasuryReadouts } from "./treasury-readouts.js";
 import type { TreasuryBreakdown } from "./treasury-summary.js";
 

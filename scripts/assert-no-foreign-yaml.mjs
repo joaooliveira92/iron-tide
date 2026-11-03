@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// YAML boundary gate (ADR-0334). YAML is deprecated repository-wide: it is
+// YAML boundary gate. YAML is deprecated repository-wide: it is
 // permitted only for localization catalogues and for a closed set of externally
 // mandated infrastructure files. Every other tracked `.yaml`/`.yml` path is
 // migration debt, listed in scripts/data/yaml-boundary.ratchet.json, and the
@@ -153,7 +153,7 @@ export function writeRatchet(root, inventory) {
     `${JSON.stringify(
       {
         comment:
-          "YAML migration debt (ADR-0334). Every path here is foreign YAML that must migrate to TypeScript or canonical JSON. This list may only shrink: scripts/assert-no-foreign-yaml.mjs fails on a tracked path that is unlisted, on a listed path that no longer exists, and (with --base) on any entry added since the base ref. Regenerate deliberately with --write.",
+          "YAML migration debt. Every path here is foreign YAML that must migrate to TypeScript or canonical JSON. This list may only shrink: scripts/assert-no-foreign-yaml.mjs fails on a tracked path that is unlisted, on a listed path that no longer exists, and (with --base) on any entry added since the base ref. Regenerate deliberately with --write.",
         version: 1,
         entries,
       },
@@ -175,7 +175,7 @@ export function verifyYamlBoundary(root = ROOT, options = {}) {
   const problems = [];
   if (added.length > 0) {
     problems.push(
-      "new non-internationalization YAML is not allowed (ADR-0334). Author domain content as " +
+      "new non-internationalization YAML is not allowed. Author domain content as " +
         "TypeScript under content/production/<pack>/ or emit canonical JSON. Foreign paths not " +
         `in the ratchet:\n${added.map((path) => `  ${path}`).join("\n")}`,
     );
@@ -192,7 +192,7 @@ export function verifyYamlBoundary(root = ROOT, options = {}) {
     if (gained.length > 0) {
       problems.push(
         `the migration ratchet gained ${String(gained.length)} entry(ies) since ${options.base}; ` +
-          `it may only shrink (ADR-0334):\n${gained.map((path) => `  ${path}`).join("\n")}`,
+          `it may only shrink:\n${gained.map((path) => `  ${path}`).join("\n")}`,
       );
     }
   }

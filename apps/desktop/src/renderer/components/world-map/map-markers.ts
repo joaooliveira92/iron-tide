@@ -30,6 +30,7 @@ export interface PossessionPlacement {
 export interface FleetPlacement {
   readonly id: string;
   readonly area: string;
+  readonly at?: Point;
   readonly ships: number;
   readonly owner: string | null;
 }
@@ -55,10 +56,15 @@ export function portSingles(
   });
 }
 
-export function fleetSingles(fleets: readonly FleetPlacement[], anchors: AreaAnchors): FleetMark[] {
+export function fleetSingles(
+  fleets: readonly FleetPlacement[],
+  anchors: AreaAnchors,
+  locate?: (lonLat: Point) => Point,
+): FleetMark[] {
   const singles: FleetMark[] = [];
   fleets.forEach((fleet, index) => {
-    const anchor = anchors.get(fleet.area);
+    const anchor =
+      fleet.at !== undefined && locate !== undefined ? locate(fleet.at) : anchors.get(fleet.area);
     if (anchor === undefined) return;
     singles.push({
       id: fleet.id,

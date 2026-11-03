@@ -13,6 +13,13 @@ export type DiplomacyCommandBody =
       readonly warGoalsId?: string;
     }
   | { readonly type: "AcceptPeace"; readonly warId: string }
+  | {
+      readonly type: "ProposePeace";
+      readonly warId: string;
+      readonly term:
+        | { readonly _tag: "StatusQuo" }
+        | { readonly _tag: "CedeArea"; readonly areaId: string };
+    }
   | { readonly type: "FormAlliance"; readonly partnerNationId: string }
   | { readonly type: "BreakAlliance"; readonly partnerNationId: string }
   | { readonly type: "FormNonAggressionPact"; readonly partnerNationId: string }

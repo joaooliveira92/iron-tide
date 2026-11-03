@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Legacy probe retirement criterion (ADR-0246 decision 9, spec #207). Every probe pinned in
+// Legacy probe retirement criterion. Every probe pinned in
 // `golden/hashes.json` is classified in `golden/probe-retirement.json`: either it cites the
 // replay-corpus mutation test that catches the same class of break (the probe is then
 // retire-eligible), or it states why none does yet (the probe is retained). This check only

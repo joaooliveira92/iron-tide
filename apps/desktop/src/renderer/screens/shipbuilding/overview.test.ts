@@ -2,7 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { buildWorkshopView } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/index.js";
 import { batteryCards } from "../../components/design-workspace/batteryView.js";
-import { createPresentationFormat } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import { overviewModel } from "./overview.js";
 
 const content = loadDrawingBoardContent();

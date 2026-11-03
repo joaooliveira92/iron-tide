@@ -5,17 +5,22 @@ import {
   Flame,
   Gem,
   Orbit,
-  Palette,
   Settings,
+  Undo2,
   Sparkles,
   Waves,
+  type LucideIcon,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
-import { BloomMenu } from "../../components/motion/bloom-menu.js";
 import { PageHeader } from "../../components/shared/PageHeader.js";
+import {
+  SettingsModal,
+  SettingsRow,
+  SettingsSection,
+} from "../../components/shared/SettingsModal.js";
 import { Button } from "../../components/ui/button.js";
-import { CardContent, CardHeader, CardTitle } from "../../components/ui/card.js";
+import { Tip } from "../../components/ui/tip.js";
 import {
   CURRENCY_DISPLAY_MODES,
   DEFAULT_APP_PREFERENCES,
@@ -35,25 +40,32 @@ import { useBackground } from "../../shell/BackgroundContext.js";
 import { DENSITY_OPTIONS, useDensity } from "../../shell/DensityContext.js";
 import { SANS_FONT_OPTIONS, useFont } from "../../shell/FontContext.js";
 import { useTheme } from "../../shell/ThemeContext.js";
+import { formatMoney } from "../../lib/presentation-format/money.js";
 import {
   MEASUREMENT_CATEGORIES,
   defaultDisplayUnit,
   displayUnitsForCategory,
-  formatMoney,
-} from "../../lib/presentation-format/index.js";
+} from "../../lib/presentation-format/units.js";
 import { useCurrencyDisplayMode, usePreferences } from "../../lib/preferences-context.js";
 import { translate, type MessageKey } from "../../lib/strings.js";
 import { useActiveCampaignCurrencyContext } from "../../shell/CampaignShellContext.js";
-import { GlassCard } from "@/components/ui/glass-card.jsx";
-import { Tip } from "../../components/ui/tip.js";
+import {
+  OPTIONS_DEPARTMENT_ORDER,
+  optionsDepartmentMeta,
+  type OptionsDepartment,
+} from "./options-departments.js";
 
 const DEFAULTS = DEFAULT_APP_PREFERENCES;
 const TEXT_SCALE_STEP = 5;
 
+const SELECT_CLASS = "h-8 min-w-0 rounded-md border bg-background px-2 text-sm";
+
+const NAV_ITEMS = OPTIONS_DEPARTMENT_ORDER.map(optionsDepartmentMeta);
+
 const BACKGROUND_OPTIONS: {
   label: string;
   value: BackgroundStyle;
-  icon: typeof Waves;
+  icon: LucideIcon;
 }[] = [
   { label: "Water", value: "water", icon: Waves },
   { label: "Starfield", value: "stars", icon: Sparkles },
@@ -70,44 +82,34 @@ function OptionGroup<T extends string>({
   value,
   options,
   onChange,
-  disabled = false,
 }: {
   label: string;
   value: T;
-  options: readonly { readonly value: T; readonly label: string }[];
+  options: readonly { readonly value: T; readonly label: string; readonly icon?: LucideIcon }[];
   onChange: (value: T) => void;
-  disabled?: boolean;
 }) {
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
-      {options.map((option) => (
-        <Button
-          key={option.value}
-          type="button"
-          variant={option.value === value ? "default" : "outline"}
-          aria-pressed={option.value === value}
-          disabled={disabled}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </Button>
-      ))}
+    <div role="group" aria-label={label} className="flex flex-wrap justify-end gap-2">
+      {options.map((option) => {
+        const Icon = option.icon;
+        return (
+          <Button
+            key={option.value}
+            type="button"
+            variant={option.value === value ? "default" : "outline"}
+            aria-pressed={option.value === value}
+            onClick={() => onChange(option.value)}
+          >
+            {Icon !== undefined ? <Icon aria-hidden="true" /> : null}
+            {option.label}
+          </Button>
+        );
+      })}
     </div>
   );
 }
 
-function Section({ titleKey, children }: { titleKey: MessageKey; children: ReactNode }) {
-  return (
-    <GlassCard>
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">{translate(titleKey)}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">{children}</CardContent>
-    </GlassCard>
-  );
-}
-
-function MeasurementCategorySelects({
+function MeasurementCategoryRows({
   preset,
   selections,
   onChange,
@@ -116,34 +118,37 @@ function MeasurementCategorySelects({
   selections: AppPreferences["measurementSelections"];
   onChange: (category: string, unitId: string) => void;
 }) {
-  return (
-    <div className="space-y-2">
-      {MEASUREMENT_CATEGORIES.map((category) => {
-        const label = translate(`settings.measurement.category.${category}`);
-        const current = selections[category] ?? defaultDisplayUnit(category, preset).id;
-        return (
-          <label key={category} className="flex items-center justify-between gap-3 text-sm">
-            <span>{label}</span>
-            <select
-              aria-label={label}
-              className="rounded-md border border-input bg-background px-2 py-1"
-              value={current}
-              onChange={(event) => onChange(category, event.target.value)}
-            >
-              {displayUnitsForCategory(category).map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.symbol}
-                </option>
-              ))}
-            </select>
-          </label>
-        );
-      })}
-    </div>
-  );
+  return MEASUREMENT_CATEGORIES.map((category) => {
+    const label = translate(`settings.measurement.category.${category}` as MessageKey);
+    const current = selections[category] ?? defaultDisplayUnit(category, preset).id;
+    return (
+      <SettingsRow
+        key={category}
+        title={label}
+        control={
+          <select
+            aria-label={label}
+            className={SELECT_CLASS}
+            value={current}
+            onChange={(event) => onChange(category, event.target.value)}
+          >
+            {displayUnitsForCategory(category).map((unit) => (
+              <option key={unit.id} value={unit.id}>
+                {unit.symbol}
+              </option>
+            ))}
+          </select>
+        }
+      />
+    );
+  });
 }
 
-export function OptionsScreen() {
+export interface OptionsScreenProps {
+  readonly onClose?: () => void;
+}
+
+export function OptionsScreen({ onClose }: OptionsScreenProps = {}) {
   const { background, setBackground } = useBackground();
   const { density, setDensity } = useDensity();
   const { font, setFont } = useFont();
@@ -151,215 +156,239 @@ export function OptionsScreen() {
   const { preferences, setApp } = usePreferences();
   const currencyContext = useActiveCampaignCurrencyContext();
   const currency = useCurrencyDisplayMode(currencyContext);
-
-  const activeOption =
-    BACKGROUND_OPTIONS.find((option) => option.value === background) ?? BACKGROUND_OPTIONS[0];
-  const activeLabel = activeOption?.label ?? "Background";
-  const activeIcon = activeOption?.icon ?? Palette;
-
-  const resetSection = (patch: Partial<AppPreferences>) => setApp(patch);
-  const resetAll = () => setApp(DEFAULTS);
+  const [open, setOpen] = useState(true);
+  const [department, setDepartment] = useState<OptionsDepartment>("general");
 
   const clampTextScale = (next: number) => Math.min(TEXT_SCALE_MAX, Math.max(TEXT_SCALE_MIN, next));
 
   const currencyReason =
     currency.fallbackReason === undefined
       ? undefined
-      : translate(`settings.currency.unavailable.${currency.fallbackReason}`);
+      : translate(`settings.currency.unavailable.${currency.fallbackReason}` as MessageKey);
   const nationalAvailable =
     currency.requested === "nationalHistorical" && currencyReason === undefined;
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        icon={Settings}
-        title={translate("settings.title")}
-        description={translate("settings.description")}
-      />
+  const resetDepartment = (id: OptionsDepartment) => {
+    switch (id) {
+      case "general":
+        setApp(DEFAULTS);
+        return;
+      case "appearance":
+        setApp({
+          theme: DEFAULTS.theme,
+          background: DEFAULTS.background,
+          font: DEFAULTS.font,
+          interfaceDensity: DEFAULTS.interfaceDensity,
+          textScale: DEFAULTS.textScale,
+        });
+        return;
+      case "measurements":
+        setApp({
+          measurementPreset: DEFAULTS.measurementPreset,
+          measurementSelections: DEFAULTS.measurementSelections,
+        });
+        return;
+      case "currency":
+        setApp({
+          currencyDisplayMode: DEFAULTS.currencyDisplayMode,
+          numberScale: DEFAULTS.numberScale,
+        });
+        return;
+      case "language":
+        setApp({
+          language: DEFAULTS.language,
+          formattingLocale: DEFAULTS.formattingLocale,
+        });
+        return;
+      case "accessibility":
+        setApp({
+          reducedMotion: DEFAULTS.reducedMotion,
+          tooltipDetail: DEFAULTS.tooltipDetail,
+        });
+        return;
+    }
+  };
 
-      <Section titleKey="settings.section.general">
-        <p className="text-sm text-muted-foreground">
-          Your settings are stored for this profile and apply across every campaign.
-        </p>
-        <Button type="button" variant="outline" onClick={resetAll}>
-          {translate("settings.reset.all")}
-        </Button>
-      </Section>
-
-      <Section titleKey="settings.section.appearance">
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{translate("settings.theme.label")}</p>
-          <OptionGroup
-            label={translate("settings.theme.label")}
-            value={theme}
-            options={THEME_PREFERENCES.map((value) => ({
-              value,
-              label: translate(`settings.theme.${value}` as MessageKey),
-            }))}
-            onChange={setTheme}
-          />
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{translate("settings.background.label")}</p>
-          <BloomMenu
-            title={activeLabel}
-            triggerIcon={activeIcon}
-            selected={activeLabel}
-            items={BACKGROUND_OPTIONS.map((option) => ({ label: option.label, icon: option.icon }))}
-            onSelect={(label) => {
-              const option = BACKGROUND_OPTIONS.find((candidate) => candidate.label === label);
-              if (option !== undefined) setBackground(option.value);
-            }}
-          />
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{translate("settings.font.label")}</p>
-          <div
-            role="group"
-            aria-label={translate("settings.font.label")}
-            className="flex flex-wrap gap-2"
-          >
-            {SANS_FONT_OPTIONS.map((option) => (
-              <Tip label={option.description}>
-                <Button
-                  key={option.value}
-                  type="button"
-                  variant={option.value === font ? "default" : "outline"}
-                  aria-pressed={option.value === font}
-
-                  onClick={() => setFont(option.value)}
-                >
-                  <span data-font-option={option.value}>{option.label}</span>
-                </Button>
-              </Tip>
-            ))}
-          </div>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{translate("settings.density.label")}</p>
-          <OptionGroup
-            label={translate("settings.density.label")}
-            value={density}
-            options={DENSITY_OPTIONS.map((option) => ({
-              value: option.value,
-              label: option.label,
-            }))}
-            onChange={setDensity}
-          />
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm font-medium">
-            {translate("settings.textScale.label")}{" "}
-            <span className="text-muted-foreground">{preferences.textScale}%</span>
-          </p>
-          <div
-            role="group"
-            aria-label={translate("settings.textScale.label")}
-            className="flex gap-2"
-          >
-            <Button
-              type="button"
-              variant="outline"
-              aria-label={translate("settings.textScale.decrease")}
-              disabled={preferences.textScale <= TEXT_SCALE_MIN}
-              onClick={() =>
-                setApp({ textScale: clampTextScale(preferences.textScale - TEXT_SCALE_STEP) })
-              }
-            >
-              A-
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              aria-label={translate("settings.textScale.increase")}
-              disabled={preferences.textScale >= TEXT_SCALE_MAX}
-              onClick={() =>
-                setApp({ textScale: clampTextScale(preferences.textScale + TEXT_SCALE_STEP) })
-              }
-            >
-              A+
-            </Button>
-          </div>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() =>
-            resetSection({
-              theme: DEFAULTS.theme,
-              background: DEFAULTS.background,
-              font: DEFAULTS.font,
-              interfaceDensity: DEFAULTS.interfaceDensity,
-              textScale: DEFAULTS.textScale,
-            })
-          }
-        >
-          {translate("settings.reset.section")}
-        </Button>
-      </Section>
-
-      <Section titleKey="settings.section.measurements">
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{translate("settings.measurement.preset")}</p>
-          <OptionGroup
-            label={translate("settings.measurement.preset")}
-            value={preferences.measurementPreset}
-            options={MEASUREMENT_PRESETS.map((value) => ({
-              value,
-              label: translate(`settings.measurement.${value}` as MessageKey),
-            }))}
-            onChange={(value) => setApp({ measurementPreset: value })}
-          />
-        </div>
-        <MeasurementCategorySelects
-          preset={preferences.measurementPreset}
-          selections={preferences.measurementSelections}
-          onChange={(category, unitId) =>
-            setApp({
-              measurementSelections: { ...preferences.measurementSelections, [category]: unitId },
-            })
-          }
+  const panels: Readonly<Record<OptionsDepartment, ReactNode>> = {
+    general: (
+      <SettingsSection title={translate("settings.group.storage")}>
+        <SettingsRow
+          title={translate("settings.row.profile.title")}
+          description={translate("settings.row.profile.description")}
         />
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{translate("settings.numberScale.label")}</p>
-          <OptionGroup
-            label={translate("settings.numberScale.label")}
-            value={preferences.numberScale}
-            options={NUMBER_SCALE_PREFERENCES.map((value) => ({
-              value,
-              label: translate(`settings.numberScale.${value}` as MessageKey),
-            }))}
-            onChange={(value) => setApp({ numberScale: value })}
+        <SettingsRow
+          title={translate("settings.row.campaign.title")}
+          description={translate("settings.row.campaign.description")}
+        />
+      </SettingsSection>
+    ),
+    appearance: (
+      <>
+        <SettingsSection title={translate("settings.group.themeBackground")}>
+          <SettingsRow
+            title={translate("settings.theme.label")}
+            description={translate("settings.theme.description")}
+            control={
+              <OptionGroup
+                label={translate("settings.theme.label")}
+                value={theme}
+                options={THEME_PREFERENCES.map((value) => ({
+                  value,
+                  label: translate(`settings.theme.${value}` as MessageKey),
+                }))}
+                onChange={setTheme}
+              />
+            }
           />
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() =>
-            resetSection({
-              measurementPreset: DEFAULTS.measurementPreset,
-              measurementSelections: DEFAULTS.measurementSelections,
-              numberScale: DEFAULTS.numberScale,
-            })
+          <SettingsRow
+            stacked
+            title={translate("settings.background.label")}
+            description={translate("settings.background.description")}
+            control={
+              <OptionGroup
+                label={translate("settings.background.label")}
+                value={background}
+                options={BACKGROUND_OPTIONS}
+                onChange={setBackground}
+              />
+            }
+          />
+        </SettingsSection>
+        <SettingsSection title={translate("settings.group.typeLayout")}>
+          <SettingsRow
+            stacked
+            title={translate("settings.font.label")}
+            description={translate("settings.font.description")}
+            control={
+              <div
+                role="group"
+                aria-label={translate("settings.font.label")}
+                className="flex flex-wrap gap-2"
+              >
+                {SANS_FONT_OPTIONS.map((option) => (
+                  <Tip key={option.value} label={option.description}>
+                    <Button
+                      type="button"
+                      variant={option.value === font ? "default" : "outline"}
+                      aria-pressed={option.value === font}
+                      onClick={() => setFont(option.value)}
+                    >
+                      <span data-font-option={option.value}>{option.label}</span>
+                    </Button>
+                  </Tip>
+                ))}
+              </div>
+            }
+          />
+          <SettingsRow
+            title={translate("settings.density.label")}
+            description={translate("settings.density.description")}
+            control={
+              <OptionGroup
+                label={translate("settings.density.label")}
+                value={density}
+                options={DENSITY_OPTIONS.map((option) => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+                onChange={setDensity}
+              />
+            }
+          />
+          <SettingsRow
+            title={
+              <>
+                {translate("settings.textScale.label")}{" "}
+                <span className="font-display tabular-nums text-muted-foreground">
+                  {preferences.textScale}%
+                </span>
+              </>
+            }
+            description={translate("settings.textScale.description")}
+            control={
+              <div
+                role="group"
+                aria-label={translate("settings.textScale.label")}
+                className="flex gap-2"
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  aria-label={translate("settings.textScale.decrease")}
+                  disabled={preferences.textScale <= TEXT_SCALE_MIN}
+                  onClick={() =>
+                    setApp({ textScale: clampTextScale(preferences.textScale - TEXT_SCALE_STEP) })
+                  }
+                >
+                  A-
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  aria-label={translate("settings.textScale.increase")}
+                  disabled={preferences.textScale >= TEXT_SCALE_MAX}
+                  onClick={() =>
+                    setApp({ textScale: clampTextScale(preferences.textScale + TEXT_SCALE_STEP) })
+                  }
+                >
+                  A+
+                </Button>
+              </div>
+            }
+          />
+        </SettingsSection>
+      </>
+    ),
+    measurements: (
+      <>
+        <SettingsSection title={translate("settings.group.preset")}>
+          <SettingsRow
+            title={translate("settings.measurement.preset")}
+            description={translate("settings.measurement.presetDescription")}
+            control={
+              <OptionGroup
+                label={translate("settings.measurement.preset")}
+                value={preferences.measurementPreset}
+                options={MEASUREMENT_PRESETS.map((value) => ({
+                  value,
+                  label: translate(`settings.measurement.${value}` as MessageKey),
+                }))}
+                onChange={(value) => setApp({ measurementPreset: value })}
+              />
+            }
+          />
+        </SettingsSection>
+        <SettingsSection title={translate("settings.group.units")}>
+          <MeasurementCategoryRows
+            preset={preferences.measurementPreset}
+            selections={preferences.measurementSelections}
+            onChange={(category, unitId) =>
+              setApp({
+                measurementSelections: { ...preferences.measurementSelections, [category]: unitId },
+              })
+            }
+          />
+        </SettingsSection>
+      </>
+    ),
+    currency: (
+      <SettingsSection title={translate("settings.group.money")}>
+        <SettingsRow
+          title={translate("settings.currency.label")}
+          description={translate("settings.currency.description")}
+          control={
+            <OptionGroup
+              label={translate("settings.currency.label")}
+              value={currency.requested}
+              options={CURRENCY_DISPLAY_MODES.map((value) => ({
+                value,
+                label: translate(`settings.currency.${value}` as MessageKey),
+              }))}
+              onChange={currency.setRequested}
+            />
           }
         >
-          {translate("settings.reset.section")}
-        </Button>
-      </Section>
-
-      <Section titleKey="settings.section.currency">
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{translate("settings.currency.label")}</p>
-          <OptionGroup
-            label={translate("settings.currency.label")}
-            value={currency.requested}
-            options={CURRENCY_DISPLAY_MODES.map((value) => ({
-              value,
-              label: translate(`settings.currency.${value}` as MessageKey),
-            }))}
-            onChange={currency.setRequested}
-          />
-          <p className="text-sm text-muted-foreground" role="status">
+          <p className="text-xs text-muted-foreground" role="status">
             {nationalAvailable
               ? `${translate("settings.currency.nationalHistorical")}: ${formatMoney(12_000, {
                   locale: preferences.formattingLocale,
@@ -367,102 +396,143 @@ export function OptionsScreen() {
                 })}`
               : (currencyReason ?? "")}
           </p>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => resetSection({ currencyDisplayMode: DEFAULTS.currencyDisplayMode })}
-        >
-          {translate("settings.reset.section")}
-        </Button>
-      </Section>
-
-      <Section titleKey="settings.section.language">
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{translate("settings.language.label")}</p>
-          <OptionGroup
-            label={translate("settings.language.label")}
-            value={preferences.language}
-            options={LANGUAGE_PREFERENCES.map((value) => ({
-              value,
-              label: translate(`settings.language.${value}` as MessageKey),
-            }))}
-            onChange={(value) => setApp({ language: value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{translate("settings.locale.label")}</p>
-          <OptionGroup
-            label={translate("settings.locale.label")}
-            value={preferences.formattingLocale}
-            options={FORMATTING_LOCALES.map((value) => ({
-              value,
-              label: translate(`settings.locale.${value}` as MessageKey),
-            }))}
-            onChange={(value) => setApp({ formattingLocale: value })}
-          />
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() =>
-            resetSection({
-              language: DEFAULTS.language,
-              formattingLocale: DEFAULTS.formattingLocale,
-            })
+        </SettingsRow>
+        <SettingsRow
+          title={translate("settings.numberScale.label")}
+          description={translate("settings.numberScale.description")}
+          control={
+            <OptionGroup
+              label={translate("settings.numberScale.label")}
+              value={preferences.numberScale}
+              options={NUMBER_SCALE_PREFERENCES.map((value) => ({
+                value,
+                label: translate(`settings.numberScale.${value}` as MessageKey),
+              }))}
+              onChange={(value) => setApp({ numberScale: value })}
+            />
           }
-        >
-          {translate("settings.reset.section")}
-        </Button>
-      </Section>
-
-      <Section titleKey="settings.section.accessibility">
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{translate("settings.reducedMotion.label")}</p>
-          <OptionGroup
-            label={translate("settings.reducedMotion.label")}
-            value={preferences.reducedMotion}
-            options={REDUCED_MOTION_PREFERENCES.map((value) => ({
-              value,
-              label: translate(`settings.reducedMotion.${value}` as MessageKey),
-            }))}
-            onChange={(value) => setApp({ reducedMotion: value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{translate("settings.tooltipDetail.label")}</p>
-          <OptionGroup
-            label={translate("settings.tooltipDetail.label")}
-            value={preferences.tooltipDetail}
-            options={TOOLTIP_DETAIL_PREFERENCES.map((value) => ({
-              value,
-              label: translate(`settings.tooltipDetail.${value}` as MessageKey),
-            }))}
-            onChange={(value) => setApp({ tooltipDetail: value })}
-          />
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() =>
-            resetSection({
-              reducedMotion: DEFAULTS.reducedMotion,
-              tooltipDetail: DEFAULTS.tooltipDetail,
-            })
+        />
+      </SettingsSection>
+    ),
+    language: (
+      <SettingsSection title={translate("settings.group.language")}>
+        <SettingsRow
+          title={translate("settings.language.label")}
+          description={translate("settings.language.description")}
+          control={
+            <OptionGroup
+              label={translate("settings.language.label")}
+              value={preferences.language}
+              options={LANGUAGE_PREFERENCES.map((value) => ({
+                value,
+                label: translate(`settings.language.${value}` as MessageKey),
+              }))}
+              onChange={(value) => setApp({ language: value })}
+            />
           }
-        >
-          {translate("settings.reset.section")}
-        </Button>
-      </Section>
+        />
+        <SettingsRow
+          title={translate("settings.locale.label")}
+          description={translate("settings.locale.description")}
+          control={
+            <OptionGroup
+              label={translate("settings.locale.label")}
+              value={preferences.formattingLocale}
+              options={FORMATTING_LOCALES.map((value) => ({
+                value,
+                label: translate(`settings.locale.${value}` as MessageKey),
+              }))}
+              onChange={(value) => setApp({ formattingLocale: value })}
+            />
+          }
+        />
+      </SettingsSection>
+    ),
+    accessibility: (
+      <SettingsSection title={translate("settings.group.motion")}>
+        <SettingsRow
+          title={translate("settings.reducedMotion.label")}
+          description={translate("settings.reducedMotion.description")}
+          control={
+            <OptionGroup
+              label={translate("settings.reducedMotion.label")}
+              value={preferences.reducedMotion}
+              options={REDUCED_MOTION_PREFERENCES.map((value) => ({
+                value,
+                label: translate(`settings.reducedMotion.${value}` as MessageKey),
+              }))}
+              onChange={(value) => setApp({ reducedMotion: value })}
+            />
+          }
+        />
+        <SettingsRow
+          title={translate("settings.tooltipDetail.label")}
+          description={translate("settings.tooltipDetail.description")}
+          control={
+            <OptionGroup
+              label={translate("settings.tooltipDetail.label")}
+              value={preferences.tooltipDetail}
+              options={TOOLTIP_DETAIL_PREFERENCES.map((value) => ({
+                value,
+                label: translate(`settings.tooltipDetail.${value}` as MessageKey),
+              }))}
+              onChange={(value) => setApp({ tooltipDetail: value })}
+            />
+          }
+        />
+        <SettingsRow
+          title={translate("settings.contrast.title")}
+          description={translate("settings.contrast.description")}
+          control={
+            <Button type="button" variant="outline" onClick={() => setDepartment("appearance")}>
+              {translate("settings.contrast.open")}
+            </Button>
+          }
+        />
+      </SettingsSection>
+    ),
+  };
 
-      <Section titleKey="settings.section.advanced">
-        <p className="text-sm text-muted-foreground">
-          Advanced preferences are managed by the campaign and content packs.
-        </p>
-        <Button type="button" variant="ghost" onClick={resetAll}>
-          {translate("settings.reset.all")}
+  const meta = optionsDepartmentMeta(department);
+  const close = () => {
+    setOpen(false);
+    onClose?.();
+  };
+
+  return (
+    <div className="space-y-4">
+      <PageHeader
+        icon={Settings}
+        title={translate("settings.title")}
+        description={translate("settings.description")}
+      />
+      {!open && (
+        <Button type="button" variant="outline" onClick={() => setOpen(true)}>
+          {translate("settings.open")}
         </Button>
-      </Section>
+      )}
+      <SettingsModal
+        open={open}
+        onOpenChange={(next) => !next && close()}
+        title={translate("settings.modal.title")}
+        navLabel={translate("settings.modal.nav")}
+        items={NAV_ITEMS}
+        activeId={department}
+        onSelect={setDepartment}
+        testId="options-workbench"
+        headerAction={
+          <Button type="button" variant="ghost" size="sm" onClick={() => resetDepartment(meta.id)}>
+            <Undo2 aria-hidden="true" />
+            {meta.id === "general"
+              ? translate("settings.reset.all")
+              : translate("settings.reset.department", {
+                  department: translate(`settings.reset.noun.${meta.id}` as MessageKey),
+                })}
+          </Button>
+        }
+      >
+        {panels[meta.id]}
+      </SettingsModal>
     </div>
   );
 }

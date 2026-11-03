@@ -3,7 +3,7 @@ import { buildWorkshopView, type DesignDraft } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/index.js";
 import { batteryCards } from "../../components/design-workspace/batteryView.js";
 import { boardFindings } from "../../components/design-workspace/validation/boardFindings.js";
-import { createPresentationFormat } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import {
   armamentEntries,
   allMounts,

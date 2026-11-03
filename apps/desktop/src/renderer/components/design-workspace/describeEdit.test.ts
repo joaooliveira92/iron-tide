@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { createPresentationFormat } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import { describeEdit } from "./describeEdit.js";
 
 const FORMAT = createPresentationFormat({

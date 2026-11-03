@@ -171,6 +171,7 @@ export {
   type EditLog,
   encodeDesignFile,
   encodeLog,
+  MAX_CLASS_NAME_LENGTH,
   newLog,
   PersistenceError,
   pushEdit,

@@ -198,11 +198,11 @@ function designLoadout(design: Design): { platform: string; entries: LoadoutEntr
 }
 
 describe("fittings and sensors through the read path (ship-part-model 05)", () => {
-  it("covers the 614 non-gun, non-tube placements; with 264 guns and 31 tubes that is all 909", () => {
+  it("covers the 622 non-gun, non-tube placements; with 267 guns and 33 tubes that is all 922", () => {
     const all = designs.flatMap((d) => d.draft.placements);
-    expect(all.length).toBe(909);
-    expect(fittingRows.length).toBe(614);
-    expect(gunPlacements.length + 31 + fittingRows.length).toBe(909);
+    expect(all.length).toBe(922);
+    expect(fittingRows.length).toBe(622);
+    expect(gunPlacements.length + 33 + fittingRows.length).toBe(922);
     expect(fittingModel.unread).toEqual([]);
   });
 
@@ -689,7 +689,7 @@ describe("gun and launcher crew, volume and footprint (ship-part-model 05 over 0
         .filter((p) => categoryOf(p.componentId) === "TORPEDO_TUBE")
         .map((placement) => ({ design, placement })),
     );
-    expect(tubeRows.length).toBe(31);
+    expect(tubeRows.length).toBe(33);
     for (const { design, placement } of tubeRows) {
       const profile = present(
         navalProfiles.find((p) => p.nationId === design.draft.nationId),
@@ -1013,7 +1013,7 @@ describe("armour materials out of the balance tables (ship-part-model 05)", () =
 });
 
 describe("ammunition patterns as parts (ship-part-model 05)", () => {
-  it("reads the six patterns as national ammunition parts", () => {
+  it("reads the seven patterns as national ammunition parts", () => {
     expect(ammunitionModel.unread).toEqual([]);
     expect(
       ammunitionModel.records.map((r) => [r.part.id, r.part.nation, r.part.spec.shellType]),
@@ -1024,6 +1024,7 @@ describe("ammunition patterns as parts (ship-part-model 05)", () => {
       ["fr_melinite_he", "france", "MELINITE"],
       ["uk_ap_palliser", "uk", "AP"],
       ["uk_cpc", "uk", "CPC"],
+      ["uk_he_45in_45", "uk", "HE"],
     ]);
     for (const { part } of ammunitionModel.records) {
       expect(decodeStrict(FlattenedPartSchema, part), part.id).toEqual(part);

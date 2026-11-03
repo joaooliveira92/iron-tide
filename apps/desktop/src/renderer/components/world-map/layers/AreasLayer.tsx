@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import type { AreaControl } from "../map-state.js";
 import type { ProjectedArea } from "../projection.js";
 
@@ -24,7 +26,7 @@ export interface AreasLayerProps {
   readonly blockaded: ReadonlySet<string>;
 }
 
-export function AreasLayer({
+export const AreasLayer = memo(function AreasLayer({
   turn,
   areas,
   control,
@@ -104,4 +106,4 @@ export function AreasLayer({
       })}
     </>
   );
-}
+});

@@ -15,6 +15,7 @@ const row = (over: Partial<ProjectRow> = {}): ProjectRow => ({
   holdUntilMonth: null,
   packages: [],
   isForeign: false,
+  revisable: false,
   readout: null,
   ...over,
 });
@@ -99,6 +100,33 @@ describe("ProjectSteering (SB3-R5, SB3-R8)", () => {
     expect(cancel.getAttribute("aria-description")).toMatch(/releases its ship/);
     cancel.click();
     expect(cancelled).toBe("project-1");
+  });
+
+  it("offers a revise control for a revisable project and issues it", () => {
+    let revised: string | null = null;
+    render(
+      <ProjectSteering
+        row={row({ revisable: true })}
+        pending={false}
+        onRevise={(id) => {
+          revised = id;
+        }}
+      />,
+    );
+    screen.getByRole("button", { name: "Havock class revise" }).click();
+    expect(revised).toBe("project-1");
+  });
+
+  it("offers no revise control for an authored, foreign or finished project", () => {
+    for (const over of [
+      { revisable: false },
+      { revisable: true, isForeign: true },
+      { revisable: true, status: "CANCELLED" as const },
+    ]) {
+      render(<ProjectSteering row={row(over)} pending={false} onRevise={noop} />);
+      expect(screen.queryByRole("button", { name: "Havock class revise" })).toBeNull();
+      cleanup();
+    }
   });
 
   it("offers no cancel control when the screen does not wire it, and locks while pending", () => {

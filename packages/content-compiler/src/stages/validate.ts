@@ -8,6 +8,7 @@ import {
   CampaignEconomySchema,
   CampaignFleetSchema,
   CampaignResearchSchema,
+  EventSchema,
   GunFamilySchema,
   GunModelSchema,
   GunMountSchema,
@@ -33,6 +34,8 @@ import {
   validateAgainstSchema,
   type ContentSchema,
   decodeBattleOfferRules,
+  decodeTensionDriftRules,
+  decodeEventResolutionRules,
   decodeFleetManagementRules,
   decodeGunneryRules,
   decodeMissilesRules,
@@ -76,6 +79,7 @@ export interface ValidateOutput {
   research?: unknown[];
   designs?: unknown[];
   divisions?: unknown[];
+  events?: unknown[];
   presentation?: unknown;
   ui?: unknown;
 }
@@ -183,6 +187,7 @@ const CAMPAIGN_COLLECTIONS: readonly CampaignCollection[] = [
     idField: "id",
   },
   { key: "divisions", schema: CampaignDivisionSchema, label: "Division", idField: "id" },
+  { key: "events", schema: EventSchema, label: "Event", idField: "id" },
 ];
 
 interface CampaignCollection {
@@ -260,6 +265,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     validateFleetManagementRules(validated["rulesets"] ?? [], collector);
     validateGunneryRules(validated["rulesets"] ?? [], collector);
     validateMissilesRules(validated["rulesets"] ?? [], collector);
+    validateTensionDriftRules(validated["rulesets"] ?? [], collector);
     validateMissingReferences(validated, collector);
     validateTechnologyGraph(validated, input, collector);
 
@@ -269,11 +275,13 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     validateComponentUpgradeGraph(catalogue, input, collector);
 
     const campaign = validateCampaignCollections(validated, input, collector);
+    validateEventResolutionRules(validated["rulesets"] ?? [], campaign.events ?? [], collector);
 
     const presentation = validatePresentation(input, collector);
     validatePresentationRegions(validated, presentation, input, collector);
 
     const ui = validateUi(input, collector);
+    validateEventReferences(campaign.events ?? [], ui, input, collector);
 
     if (collector.hasErrors) return undefined;
 
@@ -302,6 +310,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
       research: [...campaign.research],
       designs: [...campaign.designs],
       divisions: [...(campaign.divisions ?? [])],
+      events: [...(campaign.events ?? [])],
       ...(presentation !== undefined ? { presentation } : {}),
       ...(ui !== undefined ? { ui } : {}),
     };
@@ -505,7 +514,68 @@ function validateCampaignCollections(
     research: out["research"] ?? [],
     designs: out["designs"] ?? [],
     divisions: out["divisions"] ?? [],
+    events: out["events"] ?? [],
   };
+}
+
+interface EventReferenceSource {
+  id: string;
+  titleKey: string;
+  bodyKey: string;
+  gates: { requiredFlags?: readonly string[]; excludedFlags?: readonly string[] };
+  answers: readonly { labelKey: string; effects: { setFlag?: string } }[];
+}
+
+function validateEventReferences(
+  events: readonly unknown[],
+  ui: unknown,
+  input: ParseOutput,
+  collector: DiagnosticCollector,
+): void {
+  if (events.length === 0) return;
+  const catalogue = events as readonly EventReferenceSource[];
+  const strings = asRecord(asRecord(ui)["strings"]);
+  const sources = sourceById(input, "events", "id");
+  const fail = (code: string, event: EventReferenceSource, message: string, remediation: string) =>
+    collector.addError(code, message, {
+      stage: "validate",
+      sourceLocation: { path: sources.get(event.id) ?? "events.ts", line: 1 },
+      entityId: event.id,
+      remediation,
+    });
+
+  for (const event of catalogue) {
+    const keys = [event.titleKey, event.bodyKey, ...event.answers.map((a) => a.labelKey)];
+    for (const key of keys) {
+      if (typeof strings[key] === "string") continue;
+      fail(
+        "EVENT_I18N_MISSING",
+        event,
+        `Event '${event.id}' uses i18n key '${key}' that the ui catalogue does not define`,
+        `Add '${key}' to the ui catalogue`,
+      );
+    }
+  }
+
+  const settable = new Set(
+    catalogue.flatMap((event) =>
+      event.answers.flatMap((answer) =>
+        answer.effects.setFlag === undefined ? [] : [answer.effects.setFlag],
+      ),
+    ),
+  );
+  for (const event of catalogue) {
+    const gated = [...(event.gates.requiredFlags ?? []), ...(event.gates.excludedFlags ?? [])];
+    for (const flag of gated) {
+      if (settable.has(flag)) continue;
+      fail(
+        "EVENT_FLAG_UNKNOWN",
+        event,
+        `Event '${event.id}' gates on flag '${flag}' that no answer sets`,
+        `Set '${flag}' from an answer or remove the gate`,
+      );
+    }
+  }
 }
 
 function validateCampaignReferences(
@@ -1216,6 +1286,79 @@ function validateBattleOfferRules(
         stage: "validate",
         entityId: rulesetId,
         remediation: `Author every battleOffers value in ruleset '${rulesetId}', or remove the section to leave it dormant`,
+      },
+    );
+  }
+}
+
+function validateTensionDriftRules(
+  rulesets: readonly unknown[],
+  collector: DiagnosticCollector,
+): void {
+  const carriers = rulesets.filter(
+    (ruleset) => (ruleset as Record<string, unknown>)["tensionDrift"] !== undefined,
+  );
+  if (carriers.length > 1)
+    collector.addError(
+      "TENSION_DRIFT_RULES_AMBIGUOUS",
+      `More than one ruleset carries a tensionDrift section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
+      { stage: "validate" },
+    );
+  for (const ruleset of rulesets) {
+    const record = ruleset as Record<string, unknown>;
+    if (record["tensionDrift"] === undefined) continue;
+    const rulesetId = String(record["id"]);
+    const decoded = decodeTensionDriftRules(record["tensionDrift"]);
+    if (decoded.ok) continue;
+    collector.addError(
+      "TENSION_DRIFT_RULES_INVALID",
+      `Ruleset '${rulesetId}' tensionDrift section is invalid at '${decoded.field}': ${decoded.message}`,
+      {
+        stage: "validate",
+        entityId: rulesetId,
+        remediation: `Author every tensionDrift value in ruleset '${rulesetId}', or remove the section to leave drift dormant`,
+      },
+    );
+  }
+}
+
+function validateEventResolutionRules(
+  rulesets: readonly unknown[],
+  events: readonly unknown[],
+  collector: DiagnosticCollector,
+): void {
+  const carriers = rulesets.filter(
+    (ruleset) => (ruleset as Record<string, unknown>)["eventResolution"] !== undefined,
+  );
+  if (carriers.length > 1)
+    collector.addError(
+      "EVENT_RESOLUTION_RULES_AMBIGUOUS",
+      `More than one ruleset carries an eventResolution section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
+      { stage: "validate" },
+    );
+  if (carriers.length === 0 && events.length > 0)
+    collector.addError(
+      "EVENT_RESOLUTION_RULES_MISSING",
+      "The pack authors events but no ruleset carries an eventResolution section",
+      {
+        stage: "validate",
+        remediation:
+          "Author the eventResolution section (default answer delay and AI stance weights) in a ruleset, or remove the events",
+      },
+    );
+  for (const ruleset of rulesets) {
+    const record = ruleset as Record<string, unknown>;
+    if (record["eventResolution"] === undefined) continue;
+    const rulesetId = String(record["id"]);
+    const decoded = decodeEventResolutionRules(record["eventResolution"]);
+    if (decoded.ok) continue;
+    collector.addError(
+      "EVENT_RESOLUTION_RULES_INVALID",
+      `Ruleset '${rulesetId}' eventResolution section is invalid at '${decoded.field}': ${decoded.message}`,
+      {
+        stage: "validate",
+        entityId: rulesetId,
+        remediation: `Author every eventResolution value in ruleset '${rulesetId}', or remove the section and the events`,
       },
     );
   }

@@ -10,9 +10,9 @@ import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/con
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
+import { CURRENT_COMPATIBILITY_VERSION, loadResult, SaveStore } from "@bluewave/persistence";
 import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
-import { Effect, Result } from "effect";
+import { Result } from "effect";
 import { FIXTURE_RULESETS_JSON, nationsDocument } from "@bluewave/test-support";
 
 import { buildProgressionLedger } from "./progression-ledger.js";
@@ -460,9 +460,9 @@ function run(): void {
     };
     store.save(saveableState, saveDir);
 
-    const loaded = Effect.runSync(Effect.result(store.load(saveDir)));
+    const loaded = loadResult(saveDir);
     if (Result.isFailure(loaded)) {
-      throw new Error("Save/load failed");
+      throw loaded.failure;
     }
 
     const replayVerifier = new ReplayVerifier();
@@ -515,6 +515,8 @@ const PRODUCTION_SMOKE_MONTHS = 12;
 const PRODUCTION_SMOKE_SEED = "ten-nation-smoke-1880";
 const PRODUCTION_TEN_YEAR_MONTHS = 120;
 const PRODUCTION_TEN_YEAR_SEED = "ten-year-progression-1880";
+const PRODUCTION_FULL_CENTURY_MONTHS = 1080;
+const PRODUCTION_FULL_CENTURY_SEED = "full-century-1880-1970";
 interface SmokeDiagnostic {
   readonly month: number;
   readonly nationId: string | null;
@@ -765,6 +767,43 @@ function runProductionProbes(): void {
   );
 }
 
+function runProductionFullCentury(): void {
+  const { state } = compileProductionCampaign();
+  const first = advanceProductionRun(
+    state.snapshot,
+    PRODUCTION_FULL_CENTURY_MONTHS,
+    PRODUCTION_FULL_CENTURY_SEED,
+  );
+  const second = advanceProductionRun(
+    state.snapshot,
+    PRODUCTION_FULL_CENTURY_MONTHS,
+    PRODUCTION_FULL_CENTURY_SEED,
+  );
+  const inProcessRepeatMatches =
+    canonicalSerialize(first.monthlyHashes) === canonicalSerialize(second.monthlyHashes) &&
+    first.closingSnapshotHash === second.closingSnapshotHash &&
+    canonicalSerialize(first.diagnostics) === canonicalSerialize(second.diagnostics);
+
+  process.stdout.write(
+    JSON.stringify({
+      mode: "production-full-century",
+      months: PRODUCTION_FULL_CENTURY_MONTHS,
+      inProcessRepeatMatches,
+      success: first.success && second.success,
+      initialSnapshotHash: first.initialSnapshotHash,
+      yearlyCheckpoints: first.yearStarts,
+      monthlyHashes: first.monthlyHashes,
+      monthlySuccess: first.monthlySuccess,
+      closingSnapshotHash: first.closingSnapshotHash,
+      diagnostics: first.diagnostics,
+      firstShortfallMonth: first.firstShortfallMonth,
+      firstDeficitMonth: first.firstDeficitMonth,
+      ledgerIdentityBreaks: first.ledgerIdentityBreaks,
+      hullCounts: first.hullCounts,
+    }) + "\n",
+  );
+}
+
 if (process.argv[2] === "production-ten-nation") {
   runProductionTenNationSmoke();
 } else if (process.argv[2] === "production-ten-year") {
@@ -773,6 +812,8 @@ if (process.argv[2] === "production-ten-nation") {
   runProductionProbes();
 } else if (process.argv[2] === "progression-ledger") {
   runProgressionLedger();
+} else if (process.argv[2] === "production-full-century") {
+  runProductionFullCentury();
 } else {
   run();
 }

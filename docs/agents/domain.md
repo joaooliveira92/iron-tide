@@ -47,7 +47,6 @@ per context; the root `GLOSSARY.md` symlinks `CONTEXT.md`.
 
 - Read `GLOSSARY-MAP.md` if present, else `CONTEXT.md`; also the relevant
   `packages/<context>/GLOSSARY.md`.
-- Read `docs/adr/` for decisions touching the area; context-scoped ones live in
-  `packages/<context>/docs/adr/`.
+- Read `RULES.md` and the package `AGENTS.md` for decisions touching the area.
 - If absent, proceed silently — don't flag it.
-- Use glossary vocabulary; surface ADR contradictions rather than overriding silently.
+- Use glossary vocabulary; surface rule contradictions rather than overriding silently.

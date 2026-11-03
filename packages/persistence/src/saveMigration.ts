@@ -41,7 +41,8 @@ export type MigrateSaveDirectoryResult =
       readonly status: "refused";
       readonly kind: Exclude<SaveMigrationKind, "current" | "migrated">;
       readonly reason: string;
-    };
+    }
+  | { readonly status: "failed"; readonly reason: string };
 
 const CAMPAIGN_FILE = "campaign.json";
 const METADATA_FILE = "metadata.json";
@@ -205,6 +206,9 @@ export function migrateSaveDirectory(
   } catch (error) {
     if (existsSync(tmpPath)) rmSync(tmpPath, { recursive: true, force: true });
     if (moved && !existsSync(savePath) && existsSync(backup)) renameSync(backup, savePath);
-    throw error;
+    return {
+      status: "failed",
+      reason: `migration of ${savePath} failed: ${error instanceof Error ? error.message : String(error)}`,
+    };
   }
 }

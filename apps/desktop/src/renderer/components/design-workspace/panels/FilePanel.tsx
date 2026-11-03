@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import type { DesignDraft, WorkshopView } from "@bluewave/ship-design";
+import type { DesignDraft } from "@bluewave/ship-design";
 import { FileText } from "lucide-react";
 import {
   Attachment,
@@ -11,27 +11,24 @@ import {
 import { Alert } from "../../ui/alert.js";
 import { Button } from "../../ui/button.js";
 import { ButtonGroup } from "../../ui/button-group.js";
-import type { DrawingBoardContent } from "../content.js";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { designFileName, exportDesign, importDesign } from "../designFile.js";
 import { ConfirmAction } from "../ConfirmAction.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 
 export function FilePanel({
-  draft,
-  view,
-  content,
   presetName,
+  className,
   onLoad,
   dirty,
 }: {
-  readonly draft: DesignDraft;
-  readonly view: WorkshopView;
-  readonly content: DrawingBoardContent;
   readonly presetName: string;
-  readonly onLoad: (draft: DesignDraft) => void;
+  readonly className: string;
+  readonly onLoad: (draft: DesignDraft, className: string | null) => void;
   readonly dirty: boolean;
 }) {
+  const { draft, view, content } = useDesignState();
   const format = usePresentationFormat();
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<{
@@ -42,11 +39,11 @@ export function FilePanel({
   } | null>(null);
   const [message, setMessage] = useState<{ tone: "ok" | "bad"; text: string } | null>(null);
   const save = () => {
-    const text = exportDesign(draft, content.components, view.compiled);
+    const text = exportDesign(draft, content.components, view.compiled, className);
     const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = designFileName(presetName);
+    a.download = designFileName(className.trim() === "" ? presetName : className);
     setFile({ name: a.download, bytes: new Blob([text]).size, how: "Saved", state: "done" });
     a.click();
     URL.revokeObjectURL(url);
@@ -59,7 +56,7 @@ export function FilePanel({
       return setMessage({ tone: "bad", text: r.error });
     }
     setFile({ name: picked.name, bytes: picked.size, how: "Opened", state: "done" });
-    onLoad(r.draft);
+    onLoad(r.draft, r.className);
     setMessage({ tone: "ok", text: ["Design opened.", ...r.notes].join(" ") });
   };
   return (

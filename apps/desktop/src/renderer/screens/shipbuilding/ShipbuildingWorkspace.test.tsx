@@ -15,21 +15,28 @@ const commit = (label: string | RegExp, value: string) => {
   fireEvent.change(input, { target: { value } });
   fireEvent.blur(input);
 };
-const openMap = (name: string) =>
-  fireEvent.click(
-    within(screen.getByRole("navigation", { name: "Design map" })).getByRole("button", {
-      name: new RegExp(name),
-    }),
-  );
+const sections = () => screen.getByRole("navigation", { name: "Design sections" });
+const drawer = () => screen.getByTestId("design-drawer");
+const drawerTabs = () => within(drawer()).getByRole("tablist", { name: /tabs$/ });
+const openBrief = () => {
+  openMap("Overview");
+  fireEvent.click(within(drawerTabs()).getByRole("tab", { name: "Brief" }));
+};
+const chip = () => within(statusBar()).getByRole("status");
+const openMap = (name: string) => {
+  const button = within(sections()).getByRole("button", { name: new RegExp(`^${name}`) });
+  if (button.getAttribute("aria-expanded") !== "true") fireEvent.click(button);
+};
 
 describe("Shipbuilding workspace shell", () => {
-  it("lays out a command bar, design map, ship view, inspector and engineering strip", () => {
+  it("opens on the ship alone: a command bar, section tabs and the engineering slip, with no panel", () => {
     render(<ShipbuildingWorkspace />);
     expect(commands()).toBeTruthy();
-    expect(screen.getByRole("navigation", { name: "Design map" })).toBeTruthy();
+    expect(sections()).toBeTruthy();
     const ship = screen.getByRole("region", { name: "Ship view" });
     expect(within(ship).getByRole("img", { name: /Top-down plan/ })).toBeTruthy();
-    expect(screen.getByRole("complementary", { name: /^Inspector/ })).toBeTruthy();
+    expect(screen.queryByTestId("design-drawer")).toBeNull();
+    expect(screen.queryByRole("img", { name: /^Side profile/ })).toBeNull();
     expect(statusBar()).toBeTruthy();
   });
 
@@ -38,15 +45,9 @@ describe("Shipbuilding workspace shell", () => {
     const inputs = within(commands()).queryAllByRole("textbox");
     expect(inputs.map((i) => i.getAttribute("aria-label"))).toEqual(["Class name"]);
     expect(within(commands()).queryAllByRole("spinbutton")).toEqual([]);
-    for (const name of [
-      "Undo",
-      "Redo",
-      "Compare",
-      "More design actions",
-      "Validate",
-      "Finish design",
-    ])
+    for (const name of ["Undo", "Redo", "Compare", "More design actions", "Finish design"])
       expect(within(commands()).getByRole("button", { name: new RegExp(name) })).toBeTruthy();
+    expect(within(commands()).queryByRole("button", { name: /Validate/ })).toBeNull();
   });
 
   it("shows the compiled validity, displacement and cost", () => {
@@ -66,10 +67,7 @@ describe("Shipbuilding workspace shell", () => {
     expect(statusOf("cost")).toContain(
       `${Math.round(view.forecast.costMicro / 1_000_000).toLocaleString("en-US")} NC`,
     );
-    expect(
-      within(screen.getByRole("navigation", { name: "Design map" })).getByRole("status")
-        .textContent,
-    ).toContain(view.valid ? "Can be submitted" : "Cannot be built");
+    expect(chip().textContent).toContain(view.valid ? "Can be submitted" : "Cannot be built");
   });
 
   it("edits the hull from the inspector, updates the strip, and undoes the edit", () => {
@@ -97,10 +95,16 @@ describe("Shipbuilding workspace shell", () => {
     expect((screen.getByLabelText(/^Installed power/) as HTMLInputElement).value).toBe(original);
   });
 
-  it("sends Validate and Finish to the Review section", () => {
+  it("sends Finish to the Review section's Finish tab", () => {
     render(<ShipbuildingWorkspace />);
-    fireEvent.click(within(commands()).getByRole("button", { name: /Validate/ }));
-    expect(screen.getByRole("complementary", { name: "Inspector: Review" })).toBeTruthy();
+    fireEvent.click(within(commands()).getByRole("button", { name: /Finish design/ }));
+    expect(screen.getByRole("dialog", { name: "Review" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Finish" }).getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("reaches the validation findings from the Review section tab", () => {
+    render(<ShipbuildingWorkspace />);
+    openMap("Review");
     expect(screen.getByRole("region", { name: "Validation" })).toBeTruthy();
   });
 
@@ -116,7 +120,8 @@ describe("Shipbuilding workspace shell", () => {
     const button = within(commands()).getByRole("button", {
       name: /Start from a reference design/,
     });
-    expect(within(button).getByLabelText(/^Current type /)).toBeTruthy();
+    expect(button.textContent).toMatch(/\S/);
+    expect(button.textContent).not.toMatch(/^[A-Z]{2,4}$/);
     fireEvent.click(button);
     expect(screen.getByRole("dialog", { name: "Start from a reference design" })).toBeTruthy();
   });
@@ -131,35 +136,25 @@ describe("Shipbuilding workspace shell", () => {
 
   it("flags an unnamed design in a campaign and sends Finish to the class name", () => {
     render(<ShipbuildingWorkspace sessionId="s1" />);
-    const status = within(screen.getByRole("navigation", { name: "Design map" })).getByRole(
-      "status",
-    );
-    expect(status.textContent).toContain("Needs a class name");
+    expect(chip().textContent).toContain("Needs a class name");
     fireEvent.click(within(commands()).getByRole("button", { name: /Finish design/ }));
     expect(document.activeElement).toBe(within(commands()).getByLabelText("Class name"));
     fireEvent.change(within(commands()).getByLabelText("Class name"), {
       target: { value: "Test class" },
     });
-    expect(
-      within(screen.getByRole("navigation", { name: "Design map" })).getByRole("status")
-        .textContent,
-    ).not.toContain("Needs a class name");
+    expect(chip().textContent).not.toContain("Needs a class name");
   });
 });
 
-describe("Design map and inspector routing", () => {
-  const map = () => screen.getByRole("navigation", { name: "Design map" });
-  const inspector = () => screen.getByRole("complementary", { name: /^Inspector/ });
-  const localTabs = () => within(inspector()).getByRole("tablist", { name: /tabs$/ });
+describe("Section tabs and panel routing", () => {
+  const inspector = drawer;
+  const localTabs = drawerTabs;
   const openTab = (name: string) => fireEvent.click(within(localTabs()).getByRole("tab", { name }));
 
   it("lists the seven sections, each announcing its status", () => {
     render(<ShipbuildingWorkspace />);
-    const names = within(map())
-      .getAllByRole("button")
-      .map((b) => b.getAttribute("aria-label") ?? "")
-      .filter((n) => n !== "Suggest a class name" && n !== "Browse class names");
-    expect(names.map((n) => n.split(",")[0])).toEqual([
+    const buttons = within(sections()).getAllByRole("button");
+    expect(buttons.map((b) => b.querySelector("span.font-display")?.textContent)).toEqual([
       "Overview",
       "Hull",
       "Machinery",
@@ -168,8 +163,22 @@ describe("Design map and inspector routing", () => {
       "Systems",
       "Review",
     ]);
-    for (const n of names)
-      expect(n).toMatch(/, (valid|\d+ warnings?|\d+ unresolved issues?|not configured)$/);
+    for (const b of buttons)
+      expect(b.textContent).toMatch(/(No problems|\d+ warnings?|\d+ problems?|Nothing fitted)$/);
+  });
+
+  it("opens one panel at a time, replaces it when another section is chosen, and closes it again", () => {
+    render(<ShipbuildingWorkspace />);
+    openMap("Hull");
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    openMap("Machinery");
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(screen.getByRole("dialog", { name: "Machinery" })).toBeTruthy();
+    fireEvent.click(within(sections()).getByRole("button", { name: /^Machinery/ }));
+    expect(screen.queryByTestId("design-drawer")).toBeNull();
+    openMap("Hull");
+    fireEvent.click(screen.getByRole("button", { name: "Close Hull" }));
+    expect(screen.queryByTestId("design-drawer")).toBeNull();
   });
 
   it("gives every section two to four local tabs in one flat row, and swaps them with the section", () => {
@@ -184,7 +193,7 @@ describe("Design map and inspector routing", () => {
       "Review",
     ]) {
       openMap(section);
-      expect(screen.getByRole("complementary", { name: `Inspector: ${section}` })).toBeTruthy();
+      expect(screen.getByRole("dialog", { name: section })).toBeTruthy();
       expect(within(inspector()).getAllByRole("tablist")).toHaveLength(1);
       const tabs = within(localTabs()).getAllByRole("tab");
       expect(tabs.length).toBeGreaterThanOrEqual(2);
@@ -277,16 +286,62 @@ describe("Central ship workspace views and overlays", () => {
   const overlay = (name: string) => within(overlays()).getByRole("checkbox", { name });
   const plan = () => screen.queryByRole("img", { name: /^Top-down plan/ });
 
-  it("switches the drawing among the five views", () => {
+  it("shows one drawing at a time and switches among top, side and isometric", () => {
     render(<ShipbuildingWorkspace />);
-    for (const name of ["Top", "Side", "Armour", "Compartments", "Firing arcs"])
-      expect(viewButton(name)).toBeTruthy();
+    expect(
+      within(viewGroup())
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["Top", "Side", "Isometric"]);
     expect(viewButton("Top").getAttribute("aria-pressed")).toBe("true");
+    expect(plan()).not.toBeNull();
     fireEvent.click(viewButton("Side"));
     expect(plan()).toBeNull();
     expect(screen.getByRole("img", { name: /^Side profile/ })).toBeTruthy();
+    expect(screen.queryByRole("img", { name: /^Isometric ship anatomy/ })).toBeNull();
+    fireEvent.click(viewButton("Isometric"));
+    expect(screen.queryByRole("img", { name: /^Side profile/ })).toBeNull();
+    expect(screen.getByRole("img", { name: /^Isometric ship anatomy/ })).toBeTruthy();
     fireEvent.click(viewButton("Top"));
     expect(plan()).not.toBeNull();
+    expect(screen.queryByRole("img", { name: /^Isometric ship anatomy/ })).toBeNull();
+  });
+
+  it("switches the drawing with the 1, 2 and 3 keys, but not while typing", () => {
+    render(<ShipbuildingWorkspace />);
+    const workspace = screen.getByTestId("shipbuilding-workspace");
+    fireEvent.keyDown(workspace, { key: "2" });
+    expect(viewButton("Side").getAttribute("aria-pressed")).toBe("true");
+    fireEvent.keyDown(workspace, { key: "3" });
+    expect(viewButton("Isometric").getAttribute("aria-pressed")).toBe("true");
+    fireEvent.keyDown(within(commands()).getByLabelText("Class name"), { key: "1" });
+    expect(viewButton("Isometric").getAttribute("aria-pressed")).toBe("true");
+    fireEvent.keyDown(workspace, { key: "1" });
+    expect(viewButton("Top").getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("turns the isometric drawing to the other side, and offers layers only on the top view", () => {
+    render(<ShipbuildingWorkspace />);
+    expect(within(ship()).getByRole("button", { name: /^Layers/ })).toBeTruthy();
+    fireEvent.click(viewButton("Isometric"));
+    expect(within(ship()).queryByRole("button", { name: /^Layers/ })).toBeNull();
+    const figure = () => screen.getByTestId("anatomy-ship");
+    expect(figure().getAttribute("data-azimuth")).toBe("135");
+    fireEvent.click(within(ship()).getByRole("button", { name: /Starboard side/ }));
+    expect(figure().getAttribute("data-azimuth")).toBe("225");
+  });
+
+  it("lights the layer that goes with the open section, and drops it when the panel closes", () => {
+    render(<ShipbuildingWorkspace />);
+    expect(overlay("Armour zones").getAttribute("aria-checked")).toBe("false");
+    openMap("Protection");
+    expect(overlay("Armour zones").getAttribute("aria-checked")).toBe("true");
+    openMap("Machinery");
+    expect(overlay("Armour zones").getAttribute("aria-checked")).toBe("false");
+    expect(overlay("Machinery layout").getAttribute("aria-checked")).toBe("true");
+    expect(overlay("Compartments").getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(within(sections()).getByRole("button", { name: /^Machinery/ }));
+    expect(overlay("Machinery layout").getAttribute("aria-checked")).toBe("false");
   });
 
   it("reaches the plan tools only from the plan's context menu, not from buttons or P and M", async () => {
@@ -305,6 +360,7 @@ describe("Central ship workspace views and overlays", () => {
 
   it("suggests class names from the nation's list for the ship type, one after another", () => {
     render(<ShipbuildingWorkspace />);
+    openBrief();
     const name = () => (within(commands()).getByLabelText("Class name") as HTMLInputElement).value;
     expect(name()).toBe("");
     const suggest = screen.getByRole("button", { name: "Suggest a class name" });
@@ -317,6 +373,7 @@ describe("Central ship workspace views and overlays", () => {
 
   it("opens a list of the nation's names and fills the class name from the one chosen", async () => {
     render(<ShipbuildingWorkspace />);
+    openBrief();
     fireEvent.click(screen.getByRole("button", { name: "Browse class names" }));
     const dialog = await screen.findByRole("dialog", { name: "Class names" });
     const pick = within(dialog).getAllByRole("button", { pressed: false })[0]!;
@@ -331,7 +388,7 @@ describe("Central ship workspace views and overlays", () => {
   it("points an empty battery at controls this workspace has, not at a panel it lacks", () => {
     render(<ShipbuildingWorkspace />);
     openMap("Armament");
-    const inspector = screen.getByRole("complementary", { name: /^Inspector/ });
+    const inspector = drawer();
     expect(within(inspector).getByText(/right-click the ship plan and choose Place/)).toBeTruthy();
     expect(within(inspector).queryByText(/Components and arrangement/)).toBeNull();
   });
@@ -369,7 +426,7 @@ describe("Central ship workspace views and overlays", () => {
     expect(screen.queryByLabelText("AA directors")).toBeNull();
   });
 
-  it("controls the overlays independently, and no view turns them all on", () => {
+  it("controls the overlays independently", () => {
     render(<ShipbuildingWorkspace />);
     expect(overlay("Turret arcs").getAttribute("aria-checked")).toBe("true");
     expect(overlay("Component footprint").getAttribute("aria-checked")).toBe("true");
@@ -383,9 +440,6 @@ describe("Central ship workspace views and overlays", () => {
 
     fireEvent.click(overlay("Turret arcs"));
     expect(plan()!.querySelectorAll("[data-arc]")).toHaveLength(0);
-    fireEvent.click(viewButton("Armour"));
-    expect(overlay("Armour zones").getAttribute("aria-checked")).toBe("true");
-    expect(overlay("Turret arcs").getAttribute("aria-checked")).toBe("false");
 
     const boxes = within(overlays()).getAllByRole("checkbox");
     expect(boxes.filter((b) => b.getAttribute("aria-checked") === "true").length).toBeLessThan(
@@ -399,25 +453,22 @@ describe("Selection synchronization", () => {
   const fittings = () => within(ship()).getByRole("toolbar", { name: "Fittings on the plan" });
   const fittingTarget = (id: string) =>
     fittings().querySelector<SVGGElement>(`[data-target="${id}"]`)!;
-  const localTabs = () =>
-    within(screen.getByRole("complementary", { name: /^Inspector/ })).getByRole("tablist", {
-      name: /tabs$/,
-    });
+  const localTabs = drawerTabs;
 
   it("opens the matching section, local tab and editor when a fitting on the ship is clicked", () => {
     render(<ShipbuildingWorkspace />);
     fireEvent.click(fittingTarget("gun_12pdr"));
-    expect(screen.getByRole("complementary", { name: "Inspector: Armament" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Armament" })).toBeTruthy();
     expect(
       within(localTabs()).getByRole("tab", { name: "Secondary" }).getAttribute("aria-selected"),
     ).toBe("true");
-    expect(screen.getByTestId("selection-banner").textContent).toMatch(/Selected on ship/);
+    expect(screen.getByTestId("selection-inspector").textContent).toMatch(/Selected fitting/);
     expect((document.activeElement as HTMLElement).getAttribute("aria-label")).toMatch(
       /^Select mount /,
     );
 
     fireEvent.click(fittingTarget("mag_fwd"));
-    expect(screen.getByRole("complementary", { name: "Inspector: Protection" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Protection" })).toBeTruthy();
     expect(
       within(localTabs()).getByRole("tab", { name: "Magazines" }).getAttribute("aria-selected"),
     ).toBe("true");
@@ -459,11 +510,7 @@ describe("Armament master-detail editor", () => {
   const mountButtons = () => within(battery()).getAllByRole("button", { name: /^Select mount / });
   const openSecondary = () => {
     openMap("Armament");
-    const tabs = within(screen.getByRole("complementary", { name: /^Inspector/ })).getByRole(
-      "tablist",
-      { name: /tabs$/ },
-    );
-    fireEvent.click(within(tabs).getByRole("tab", { name: "Secondary" }));
+    fireEvent.click(within(drawerTabs()).getByRole("tab", { name: "Secondary" }));
   };
 
   it("opens a selected mount's editor with its editable properties and readouts", () => {
@@ -513,11 +560,7 @@ describe("Armament master-detail editor", () => {
 describe("Systems section", () => {
   const openSystemTab = (name: string) => {
     openMap("Systems");
-    const tabs = within(screen.getByRole("complementary", { name: /^Inspector/ })).getByRole(
-      "tablist",
-      { name: /tabs$/ },
-    );
-    fireEvent.click(within(tabs).getByRole("tab", { name }));
+    fireEvent.click(within(drawerTabs()).getByRole("tab", { name }));
   };
   const panel = () => screen.getByRole("region", { name: "Systems" });
 
@@ -531,7 +574,7 @@ describe("Systems section", () => {
     expect(within(panel()).getAllByRole("button", { name: /^Add / }).length).toBeGreaterThan(0);
   });
 
-  it("fits colonial service on the Accommodation tab, states the production displacement share (ADR-0266), and undoes it", () => {
+  it("fits colonial service on the Accommodation tab, states the production displacement share, and undoes it", () => {
     render(<ShipbuildingWorkspace />);
     openSystemTab("Accommodation");
     const colonial = () => screen.getByRole("region", { name: "Colonial service" });
@@ -588,8 +631,8 @@ describe("Review section", () => {
   it("reaches finish from the Review section", () => {
     render(<ShipbuildingWorkspace />);
     openMap("Review");
-    const inspector = screen.getByRole("complementary", { name: /^Inspector/ });
-    const tabs = within(inspector).getByRole("tablist", { name: /tabs$/ });
+    const inspector = drawer();
+    const tabs = drawerTabs();
     fireEvent.click(within(tabs).getByRole("tab", { name: "Finish" }));
     expect(within(tabs).getByRole("tab", { name: "Finish" }).getAttribute("aria-selected")).toBe(
       "true",
@@ -619,16 +662,11 @@ describe("Overview summary section", () => {
     expect(within(warnings).getByText(/Advisories never prevent submission/)).toBeTruthy();
   });
 
-  it("records design priorities without modifying the design", () => {
+  it("offers no controls that leave the design unchanged", () => {
     render(<ShipbuildingWorkspace />);
     openMap("Overview");
-    const before = statusOf("displacement");
-    const priorities = within(panel()).getByRole("region", { name: "Design priorities" });
-    for (const label of ["Speed", "Protection", "Firepower", "Range", "Cost"])
-      expect(within(priorities).getByLabelText(`${label} priority`)).toBeTruthy();
-    expect(within(priorities).getAllByText("Normal").length).toBe(5);
-    expect(within(priorities).getByText(/does not modify the design/)).toBeTruthy();
-    expect(statusOf("displacement")).toBe(before);
+    expect(within(panel()).queryByRole("region", { name: "Design priorities" })).toBeNull();
+    expect(within(panel()).queryAllByRole("combobox")).toEqual([]);
   });
 });
 
@@ -657,6 +695,7 @@ describe("Machinery outcomes-first section", () => {
 
   it("previews what an alternative plant would change, without committing it", () => {
     render(<ShipbuildingWorkspace />);
+    openBrief();
     fireEvent.click(screen.getByRole("combobox", { name: "Technology as of" }));
     fireEvent.click(screen.getByRole("option", { name: "1885-01" }));
     openMap("Machinery");
@@ -704,7 +743,7 @@ describe("Engineering status strip", () => {
   const item = (id: string) => strip().querySelector<HTMLElement>(`[data-status="${id}"]`)!;
   const trigger = (id: string) => item(id).querySelector<HTMLElement>("button, a")!;
 
-  it("shows displacement, cost, speed, range, stability, topside load and warnings", () => {
+  it("shows displacement, cost, speed, range, stability, topside load and remaining weight", () => {
     render(<ShipbuildingWorkspace />);
     for (const id of [
       "displacement",
@@ -714,11 +753,14 @@ describe("Engineering status strip", () => {
       "stability",
       "topside",
       "remaining",
-      "warnings",
     ])
       expect(item(id)).toBeTruthy();
     expect(item("displacement").getAttribute("data-tone")).toBe("neutral");
-    expect(item("warnings").getAttribute("data-tone")).toBe("warn");
+  });
+
+  it("leaves finding counts to the section tabs rather than repeating them", () => {
+    render(<ShipbuildingWorkspace />);
+    expect(item("warnings")).toBeNull();
   });
 
   it("opens a weight breakdown, whose groups add up to current, on clicking displacement", () => {
@@ -755,55 +797,6 @@ describe("Engineering status strip", () => {
     expect(within(body).getByText("Committed")).toBeTruthy();
     expect(within(body).getByText("Reserved")).toBeTruthy();
     expect(within(body).getByText("Free")).toBeTruthy();
-  });
-});
-
-describe("Inspector layout", () => {
-  const workspace = () => screen.getByTestId("shipbuilding-workspace");
-  const grid = () => screen.getByTestId("workspace-grid");
-  const handle = () => screen.getByRole("separator", { name: "Resize inspector" });
-  const width = () => grid().style.getPropertyValue("--inspector-width");
-
-  it("opens the inspector at the default width, with a resize handle", () => {
-    render(<ShipbuildingWorkspace />);
-    expect(width()).toBe("440px");
-    expect(handle().getAttribute("aria-valuenow")).toBe("440");
-  });
-
-  it("resizes the inspector from the keyboard, within bounds", () => {
-    render(<ShipbuildingWorkspace />);
-    fireEvent.keyDown(handle(), { key: "ArrowLeft" });
-    expect(width()).toBe("456px");
-    fireEvent.keyDown(handle(), { key: "ArrowRight" });
-    expect(width()).toBe("440px");
-    fireEvent.keyDown(handle(), { key: "End" });
-    expect(width()).toBe("560px");
-    fireEvent.keyDown(handle(), { key: "Home" });
-    expect(width()).toBe("360px");
-    fireEvent.keyDown(handle(), { key: "Enter" });
-    expect(width()).toBe("440px");
-  });
-
-  it("collapses and restores the inspector with the keyboard shortcut", () => {
-    render(<ShipbuildingWorkspace />);
-    fireEvent.keyDown(workspace(), { key: "b", metaKey: true });
-    expect(width()).toBe("36px");
-    expect(screen.getByRole("button", { name: "Show inspector" })).toBeTruthy();
-    expect(screen.queryByRole("separator", { name: "Resize inspector" })).toBeNull();
-    expect(screen.queryByRole("tablist", { name: /tabs$/ })).toBeNull();
-
-    fireEvent.keyDown(workspace(), { key: "b", metaKey: true });
-    expect(width()).toBe("440px");
-    expect(screen.getByRole("button", { name: "Hide inspector" })).toBeTruthy();
-    expect(screen.queryByRole("separator", { name: "Resize inspector" })).not.toBeNull();
-  });
-
-  it("restores the inspector from the collapsed strip's button", () => {
-    render(<ShipbuildingWorkspace />);
-    fireEvent.click(screen.getByRole("button", { name: "Hide inspector" }));
-    fireEvent.click(screen.getByRole("button", { name: "Show inspector" }));
-    expect(screen.getByRole("complementary", { name: /^Inspector/ })).toBeTruthy();
-    expect(width()).toBe("440px");
   });
 });
 

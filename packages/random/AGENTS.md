@@ -11,6 +11,4 @@
 - No generic `nextRandom()`: every draw takes a hierarchical stream key and records stream, entity key, phase, ruleset version and reason code.
 - Adding or reordering draws changes outcomes; repin goldens deliberately.
 
-**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/random.md), with superseded records marked.
-
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/random test`.

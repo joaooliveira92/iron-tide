@@ -1,5 +1,5 @@
 // Tests for scripts/assert-no-stage-io.mjs — the ambient-I/O gate over the
-// compiler stage directory (ADR-0004). Covers the rejected I/O modules (import,
+// compiler stage directory. Covers the rejected I/O modules (import,
 // dynamic import, require), the permitted ones, and the fail-closed parse path.
 import assert from "node:assert/strict";
 import { test } from "node:test";

@@ -56,6 +56,7 @@ export interface CampaignShellState {
   readonly loading: boolean;
   readonly error: string | null;
   readonly history: NavigationHistory<Screen>;
+  readonly revisionProjectId: string | null;
   readonly saving: boolean;
   readonly saveMessage: string | null;
   readonly primaryAction: PrimaryAction | null;
@@ -110,6 +111,8 @@ export type CampaignShellEvent =
   | { readonly type: "campaign-open-failed"; readonly message: string }
   | { readonly type: "campaign-closed" }
   | { readonly type: "visit"; readonly screen: Screen }
+  | { readonly type: "revision-requested"; readonly projectId: string }
+  | { readonly type: "revision-cleared" }
   | {
       readonly type: "history-replaced";
       readonly history: NavigationHistory<Screen>;
@@ -143,6 +146,7 @@ export function initialCampaignShellState(): CampaignShellState {
     loading: false,
     error: null,
     history: initialHistory<Screen>("file"),
+    revisionProjectId: null,
     saving: false,
     saveMessage: null,
     primaryAction: null,
@@ -158,6 +162,7 @@ export function reduceCampaignShell(
 ): CampaignShellState {
   switch (event.type) {
     case "campaign-opening":
+      if (state.loading && state.error === null) return state;
       return { ...state, loading: true, error: null };
     case "campaign-opened":
       return {
@@ -168,18 +173,30 @@ export function reduceCampaignShell(
         history: visit(state.history, "overview"),
       };
     case "campaign-open-failed":
+      if (!state.loading && state.error === event.message) return state;
       return { ...state, loading: false, error: event.message };
     case "campaign-closed":
       return initialCampaignShellState();
     case "visit":
       return { ...state, history: visit(state.history, event.screen) };
+    case "revision-requested":
+      return {
+        ...state,
+        revisionProjectId: event.projectId,
+        history: visit(state.history, "ship-design"),
+      };
+    case "revision-cleared":
+      if (state.revisionProjectId === null) return state;
+      return { ...state, revisionProjectId: null };
     case "history-replaced":
       return { ...state, history: event.history };
     case "save-started":
+      if (state.saving && state.saveMessage === null) return state;
       return { ...state, saving: true, saveMessage: null };
     case "save-finished":
       return { ...state, saving: false, saveMessage: event.message };
     case "save-message-cleared":
+      if (state.saveMessage === null && state.commitFailure === null) return state;
       return { ...state, saveMessage: null, commitFailure: null };
     case "primary-action-changed": {
       const current = state.primaryAction;
@@ -196,6 +213,9 @@ export function reduceCampaignShell(
       return { ...state, primaryAction: next };
     }
     case "month-commit-started":
+      if (state.committing && state.saveMessage === null && state.commitFailure === null) {
+        return state;
+      }
       return {
         ...state,
         committing: true,
@@ -224,6 +244,7 @@ export function reduceCampaignShell(
     case "interruption-set":
       return { ...state, committing: false, interruption: event.interruption };
     case "interruption-cleared":
+      if (state.interruption === null) return state;
       return { ...state, interruption: null };
   }
 }

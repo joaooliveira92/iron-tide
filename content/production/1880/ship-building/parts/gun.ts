@@ -11871,4 +11871,106 @@ export default collection("parts", PartSchema, [
       weaponCategory: "SECONDARY_GUN",
     },
   },
+  {
+    family: "gun",
+    id: "standard_gun_qf_45in_45_twin",
+    lifecycle: {
+      availableFrom: "1952-01",
+      availableUntil: null,
+      requires: ["gun_dp_rapid_5in"],
+    },
+    metadata: {
+      displayName: "4.5-inch/45 QF Mark 6 gun in Mark 6 twin mount",
+      tags: ["gun", "light"],
+    },
+    name: "UK 4.5-inch/45 QF Mark 6 gun in Mark 6 twin mount",
+    origin: {
+      sourceFile: "ship-building/components/guns/british-quick-firing.yaml",
+    },
+    capabilities: [
+      {
+        kind: "ammunition_feed",
+        maxFeedPermille: 300,
+      },
+      {
+        class: "light",
+        kind: "fire_control_class",
+      },
+    ],
+    engineering: {
+      maintenance: {
+        monthlyBpOfCost: 20,
+      },
+      physical: {
+        centreOfGravity: {
+          datum: "PART_BASE",
+          zMm: 6000,
+        },
+        envelopeHeightMm: 2200,
+      },
+      power: {
+        consumption: [
+          {
+            basis: "PER_PART_UNIT",
+            id: "power",
+            kind: "powerKw",
+            value: 1,
+          },
+        ],
+      },
+    },
+    entryUnits: {
+      max: 2,
+      min: 2,
+      step: 1,
+    },
+    parameters: {
+      rounds: {
+        max: 600,
+        min: 200,
+        step: 50,
+      },
+    },
+    provenance: {
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "ticket #256. Navypedia and navweaps data; the component carries the derivations.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "https://www.navypedia.org/ships/uk/brit_dd_daring.htm",
+          section: "docs/research/e-1-1950s-gun-ships.md section 1",
+          title: "navypedia.org Daring class destroyers",
+        },
+      ],
+    },
+    provides: "gun",
+    quantities: [
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_mass",
+        kind: "massKg",
+        value: 2800,
+      },
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_cost",
+        kind: "costMicro",
+        value: 551600000,
+      },
+    ],
+    revisions: [],
+    spec: {
+      beamArcDeg: 150,
+      calibreUm: 120000,
+      gunFamily: "gun_qf_45in_45_twin",
+      gunMassKg: 2800,
+      mechanicalRateOfFireRoundsPerMinuteX100: 1600,
+      propellantChargeBp: 1706,
+      roundVolumeMl: 16900,
+      shellMassG: 29100,
+      supportedMountTypes: ["TURRET"],
+      weaponCategory: "SECONDARY_GUN",
+    },
+  },
 ]);

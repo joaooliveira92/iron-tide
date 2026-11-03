@@ -27,6 +27,8 @@ export interface NationFixtureSpec {
   homeArea?: string;
   prestige?: unknown;
   omitPrestige?: boolean;
+  governmentType?: string;
+  traits?: readonly string[];
 }
 
 export const FIXTURE_NATION_PRESTIGE = 20;
@@ -114,9 +116,11 @@ export function nationRecord(spec: NationFixtureSpec): Record<string, unknown> {
     slot: null,
     presentation: { colorBg: "#C8102E", colorFg: "#FFFFFF" },
     identity: { oneSentence: "x", fullIdentity: "x", strategicProblem: "x" },
+    traits: spec.traits ?? [],
     regime: {
       type: "monarchy",
       politicalSystem: "constitutional_monarchy",
+      governmentType: spec.governmentType ?? "limited_democracy",
       headOfState: "x",
       headOfGovernment: "x",
       leaderTitle: "x",

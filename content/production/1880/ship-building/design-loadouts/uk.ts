@@ -2558,4 +2558,204 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
     month: "1880-01",
     name: "Torpedo cruiser (1880, CL)",
   },
+  {
+    header: {
+      hull: {
+        beam: 13100,
+        blockCoeffBp: 6130,
+        depthToMainDeck: 6600,
+        designMarginBp: 200,
+        draught: 4140,
+        growthReserveBp: 0,
+        hullFormId: "postwar_destroyer_form",
+        lengthWl: 117000,
+        limitDisplacementKg: null,
+        materialId: "mild_steel",
+        structuralSchemeId: "mixed",
+        subdivisionGrade: 2,
+        targetDisplacementKg: 3580000,
+      },
+      machinery: {
+        foulingBp: 0,
+        fuelCapacityKg: 590000,
+        fuelStationPermille: 500,
+        fuelZoneId: "CENTRAL_MACHINERY",
+        rooms: [
+          {
+            shareBp: 10000,
+            stationPermille: 450,
+            zoneId: "CENTRAL_MACHINERY",
+          },
+        ],
+      },
+      nation: "uk",
+      protection: {
+        bunkerProtectionBp: 0,
+        citadelLengthMm: 0,
+        torpedoWarheadKg: 0,
+      },
+      requirement: {
+        accommodationStandard: "STANDARD",
+        category: "DD",
+        crewQualityBp: 10000,
+        cruiseSpeedMilliKnots: 20000,
+        designThreatId: "qf_6in",
+        modernizationExpectation: "NONE",
+        protectionGoal: "NONE",
+        requiredRangeNm: 2500,
+        requiredSpeedMilliKnots: 34750,
+      },
+    },
+    id: "daring_class_dd_1952",
+    loadout: {
+      entries: [
+        {
+          entries: {
+            guns: [
+              {
+                mountCount: 2,
+                params: {
+                  rounds: 250,
+                },
+                part: "standard_gun_qf_45in_45_twin",
+              },
+            ],
+          },
+          id: "gun_a",
+          magazineEntry: "mag_fwd",
+          mountCount: 1,
+          part: "gun_qf_45in_45_twin_turret_x2",
+          slot: "forecastle.gun_mount",
+          stationPermille: 40,
+        },
+        {
+          entries: {
+            guns: [
+              {
+                mountCount: 2,
+                params: {
+                  rounds: 250,
+                },
+                part: "standard_gun_qf_45in_45_twin",
+              },
+            ],
+          },
+          id: "gun_b",
+          magazineEntry: "mag_fwd",
+          mountCount: 1,
+          part: "gun_qf_45in_45_twin_turret_x2",
+          slot: "fwd_service.gun_mount",
+          stationPermille: 250,
+        },
+        {
+          entries: {
+            guns: [
+              {
+                mountCount: 2,
+                params: {
+                  rounds: 250,
+                },
+                part: "standard_gun_qf_45in_45_twin",
+              },
+            ],
+          },
+          id: "gun_c",
+          magazineEntry: "mag_aft",
+          mountCount: 1,
+          part: "gun_qf_45in_45_twin_turret_x2",
+          slot: "quarterdeck.gun_mount",
+          stationPermille: 900,
+        },
+        {
+          id: "tubes_a",
+          mountCount: 5,
+          part: "tube_21in_above_water",
+          slot: "superstructure.torpedo_launcher",
+          stationPermille: 600,
+        },
+        {
+          id: "tubes_b",
+          mountCount: 5,
+          part: "tube_21in_above_water",
+          slot: "superstructure.torpedo_launcher",
+          stationPermille: 620,
+        },
+        {
+          id: "mag_fwd",
+          mountCount: 1,
+          part: "magazine_heavy",
+          slot: "fwd_magazine.magazine",
+          stationPermille: 130,
+        },
+        {
+          id: "mag_aft",
+          mountCount: 1,
+          part: "magazine_heavy",
+          slot: "aft_magazine.magazine",
+          stationPermille: 830,
+        },
+        {
+          id: "rf",
+          mountCount: 1,
+          part: "rangefinder_optical",
+          slot: "superstructure.sensor",
+          stationPermille: 525,
+        },
+        {
+          id: "dyn",
+          mountCount: 1,
+          part: "dynamo_small",
+          slot: "fwd_service.electrical_plant",
+          stationPermille: 200,
+        },
+        {
+          id: "vent",
+          mountCount: 1,
+          part: "ventilation_plant",
+          slot: "fwd_service.ventilation",
+          stationPermille: 210,
+        },
+        {
+          id: "quarters",
+          mountCount: 45,
+          params: {
+            blocks: 45,
+          },
+          part: "quarters_crew",
+          slot: "fwd_service.accommodation",
+          stationPermille: 230,
+        },
+        {
+          id: "quarters_aft",
+          mountCount: 40,
+          params: {
+            blocks: 40,
+          },
+          part: "quarters_crew",
+          slot: "aft_service.accommodation",
+          stationPermille: 720,
+        },
+        {
+          id: "funnel",
+          mountCount: 1,
+          part: "funnel_single",
+          slot: "superstructure.funnel",
+          stationPermille: 630,
+        },
+        {
+          mountCount: 1,
+          params: {
+            installedKw: 40268,
+          },
+          part: "hp_steam_geared_turbine",
+          slot: "central_machinery.propulsion_plant",
+          stationPermille: 450,
+        },
+      ],
+      platform: "postwar_destroyer_form",
+    },
+    month: "1952-01",
+    name: "Daring-class destroyer (1952)",
+    starterFor: "DD",
+  },
 ]);

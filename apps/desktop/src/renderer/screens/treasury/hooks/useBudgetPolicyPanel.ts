@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { envelopeOf } from "../../../lib/command-envelope.js";
 import type {
@@ -62,28 +62,41 @@ export function useBudgetPolicyPanel(sessionId: string): BudgetPolicyPanelContro
   const { state } = workflow;
 
   const [draft, setDraft] = useState<AllocationDraft>(() => emptyDraft(state.revision));
-  const { current, rate, research } = resolveDraft(draft, state);
+  const { rate, research } = resolveDraft(draft, state);
+  const { execute } = workflow;
 
-  function apply(): void {
+  const apply = useCallback((): void => {
     if (!bridge) return;
-    void workflow.execute("submit", (stamp) =>
+    void execute("submit", (stamp) =>
       bridge.campaign.execute("submitBudgetAllocation", {
         ...envelopeOf(sessionId, stamp),
         appropriationRateBp: rate,
         researchBudget: research,
       }),
     );
-  }
+  }, [bridge, execute, sessionId, rate, research]);
+
+  const setRate = useCallback(
+    (value: number) =>
+      setDraft((previous) => setDraftRate(resolveDraft(previous, state).current, value)),
+    [state],
+  );
+  const setResearch = useCallback(
+    (value: number) =>
+      setDraft((previous) => setDraftResearch(resolveDraft(previous, state).current, value)),
+    [state],
+  );
+  const reset = useCallback(() => setDraft(emptyDraft(state.revision)), [state.revision]);
 
   return {
     state,
     loadError: workflow.loadError,
     rate,
     research,
-    setRate: (value) => setDraft(setDraftRate(current, value)),
-    setResearch: (value) => setDraft(setDraftResearch(current, value)),
+    setRate,
+    setResearch,
     apply,
-    reset: () => setDraft(emptyDraft(state.revision)),
+    reset,
   };
 }
 

@@ -164,7 +164,7 @@ describe("DESIGN-22 boundaries (strict versus inclusive)", () => {
   });
 });
 
-describe("protected-cruiser exception (ADR-0067, ticket 19)", () => {
+describe("protected-cruiser exception", () => {
   const nineInch = facts({
     displacementKg: 7_000_000,
     speedUms: 22 * UM_PER_KNOT,

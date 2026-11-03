@@ -3,6 +3,7 @@ import { NationSchema, list } from "@bluewave/content-authoring";
 export default list(NationSchema, [
   {
     id: "uk",
+    traits: [],
     tag: "GBR",
     name: "United Kingdom",
     displayNameKey: "nation.uk",
@@ -30,6 +31,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "constitutional_monarchy",
+      governmentType: "liberal_democracy",
       headOfState: "Queen Victoria",
       headOfGovernment: "William E. Gladstone",
       leaderTitle: "Prime Minister",
@@ -157,6 +159,7 @@ export default list(NationSchema, [
   },
   {
     id: "germany",
+    traits: [],
     tag: "GER",
     name: "German Empire",
     displayNameKey: "nation.germany",
@@ -184,6 +187,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "federal_constitutional_monarchy",
+      governmentType: "limited_democracy",
       headOfState: "Kaiser Wilhelm I",
       headOfGovernment: "Otto von Bismarck",
       leaderTitle: "Chancellor",
@@ -288,6 +292,7 @@ export default list(NationSchema, [
   },
   {
     id: "usa",
+    traits: [],
     tag: "USA",
     name: "United States",
     displayNameKey: "nation.usa",
@@ -315,6 +320,7 @@ export default list(NationSchema, [
     regime: {
       type: "republic",
       politicalSystem: "presidential_republic",
+      governmentType: "liberal_democracy",
       headOfState: "President Rutherford B. Hayes",
       headOfGovernment: "President Rutherford B. Hayes",
       leaderTitle: "President",
@@ -414,6 +420,7 @@ export default list(NationSchema, [
   },
   {
     id: "japan",
+    traits: [],
     tag: "JPN",
     name: "Empire of Japan",
     displayNameKey: "nation.japan",
@@ -441,6 +448,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "meiji_constitutional_monarchy",
+      governmentType: "eastern",
       headOfState: "Emperor Meiji",
       headOfGovernment: "Meiji Oligarchs",
       leaderTitle: "Emperor",
@@ -546,6 +554,7 @@ export default list(NationSchema, [
   },
   {
     id: "france",
+    traits: [],
     tag: "FRA",
     name: "French Republic",
     displayNameKey: "nation.france",
@@ -573,6 +582,7 @@ export default list(NationSchema, [
     regime: {
       type: "republic",
       politicalSystem: "parliamentary_republic",
+      governmentType: "liberal_democracy",
       headOfState: "President Jules Grévy",
       headOfGovernment: "President Jules Grévy",
       leaderTitle: "President",
@@ -678,6 +688,7 @@ export default list(NationSchema, [
   },
   {
     id: "italy",
+    traits: [],
     tag: "ITA",
     name: "Kingdom of Italy",
     displayNameKey: "nation.italy",
@@ -704,6 +715,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "constitutional_monarchy",
+      governmentType: "limited_democracy",
       headOfState: "King Umberto I",
       headOfGovernment: "Benedetto Cairoli",
       leaderTitle: "King",
@@ -797,6 +809,7 @@ export default list(NationSchema, [
   },
   {
     id: "russia",
+    traits: [],
     tag: "RUS",
     name: "Russian Empire",
     displayNameKey: "nation.russia",
@@ -823,6 +836,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "autocratic_monarchy",
+      governmentType: "autocratic",
       headOfState: "Tsar Alexander II",
       headOfGovernment: "Tsar Alexander II",
       leaderTitle: "Tsar",
@@ -915,6 +929,7 @@ export default list(NationSchema, [
   },
   {
     id: "austria_hungary",
+    traits: [],
     tag: "AUT",
     name: "Austro-Hungarian Empire",
     displayNameKey: "nation.austria_hungary",
@@ -942,6 +957,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "dual_monarchy",
+      governmentType: "limited_democracy",
       headOfState: "Emperor Franz Joseph I",
       headOfGovernment: "Count Eduard Taaffe / Kálmán Tisza",
       leaderTitle: "Emperor",
@@ -1029,6 +1045,7 @@ export default list(NationSchema, [
   },
   {
     id: "spain",
+    traits: [],
     tag: "ESP",
     name: "Kingdom of Spain",
     displayNameKey: "nation.spain",
@@ -1056,6 +1073,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "constitutional_monarchy",
+      governmentType: "limited_democracy",
       headOfState: "King Alfonso XII",
       headOfGovernment: "Antonio Cánovas del Castillo",
       leaderTitle: "King",
@@ -1150,6 +1168,7 @@ export default list(NationSchema, [
   },
   {
     id: "qing",
+    traits: [],
     tag: "CHI",
     name: "Qing Dynasty",
     displayNameKey: "nation.qing",
@@ -1177,6 +1196,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "absolute_monarchy",
+      governmentType: "eastern",
       headOfState: "Guangxu Emperor",
       headOfGovernment: "Empress Dowager Cixi / Li Hongzhang",
       leaderTitle: "Emperor",
@@ -1288,6 +1308,7 @@ export default list(NationSchema, [
   },
   {
     id: "ottoman_empire",
+    traits: [],
     tag: "OTT",
     name: "Ottoman Empire",
     displayNameKey: "nation.ottoman_empire",
@@ -1315,6 +1336,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "absolute_monarchy",
+      governmentType: "autocratic",
       headOfState: "Sultan Abdul Hamid II",
       headOfGovernment: "Sultan Abdul Hamid II",
       leaderTitle: "Sultan",
@@ -1420,6 +1442,7 @@ export default list(NationSchema, [
   },
   {
     id: "netherlands",
+    traits: [],
     tag: "NLD",
     name: "Netherlands",
     displayNameKey: "nation.netherlands",
@@ -1447,6 +1470,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "constitutional_monarchy",
+      governmentType: "liberal_democracy",
       headOfState: "King William III",
       headOfGovernment: "Theo van Lynden van Sandenburg",
       leaderTitle: "King",
@@ -1561,6 +1585,7 @@ export default list(NationSchema, [
   },
   {
     id: "portugal",
+    traits: [],
     tag: "POR",
     name: "Kingdom of Portugal",
     displayNameKey: "nation.portugal",
@@ -1588,6 +1613,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "constitutional_monarchy",
+      governmentType: "limited_democracy",
       headOfState: "King Luís I",
       headOfGovernment: "Anselmo José Braamcamp",
       leaderTitle: "King",
@@ -1688,6 +1714,7 @@ export default list(NationSchema, [
   },
   {
     id: "brazil",
+    traits: [],
     tag: "BRA",
     name: "Empire of Brazil",
     displayNameKey: "nation.brazil",
@@ -1715,6 +1742,7 @@ export default list(NationSchema, [
     regime: {
       type: "monarchy",
       politicalSystem: "constitutional_monarchy",
+      governmentType: "limited_democracy",
       headOfState: "Emperor Pedro II",
       headOfGovernment: "Viscount of Sinimbu",
       leaderTitle: "Emperor",

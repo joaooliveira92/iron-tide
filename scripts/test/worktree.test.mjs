@@ -1,5 +1,5 @@
 // Tests for scripts/worktree.mjs — the concurrent-agent worktree coordinator
-// (ADR-0220). Covers git-worktree porcelain parsing, the ledger block
+//. Covers git-worktree porcelain parsing, the ledger block
 // round-trip, and the pure hygiene classifier. Git mutation commands
 // (new/prune/remove) are exercised end-to-end by the workflow, not here.
 import assert from "node:assert/strict";

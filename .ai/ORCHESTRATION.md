@@ -1,8 +1,9 @@
 # Bluewave Orchestration Pipeline
 
-The orchestrator (the sprint/primary agent, launched by `.opencode/command/sprint.md`)
-drives every sprint through four subagent roles plus an orchestrator-owned
-validation gate. Subagents live in `.opencode/agents/`. The pipeline is
+The orchestrator (the primary agent session) drives every sprint through four
+subagent roles plus an orchestrator-owned validation gate. Each role is
+dispatched with a [task brief](templates/task-brief.md) and tracked through the
+[task lifecycle](../docs/agents/task-lifecycle.md). The pipeline is
 **ticket-driven** and built on four repo skills:
 
 | Skill        | Where                       | Phase                                                   |
@@ -23,8 +24,8 @@ validation gate. Subagents live in `.opencode/agents/`. The pipeline is
    GitHub issue tracker, wire blocking edges, and work it one ticket per
    session. If the way is already clear and fits one session, skip straight to Spec.
 2. **Ground (research)** — for content/spec-heavy sprints, the **research** role
-   spins up a background agent against primary sources and writes
-   `docs/research/<slug>-<topic>.md`.
+   spins up a background agent against primary sources and publishes a
+   `Research` discussion.
 3. **Spec (spec-creator)** — the **spec-creator** role synthesizes a spec in the
    **to-spec** format (Problem/Solution/User Stories/Implementation Decisions/
    Testing/Out of Scope), publishes it as a GitHub issue labelled `ready-for-agent`,
@@ -38,17 +39,17 @@ validation gate. Subagents live in `.opencode/agents/`. The pipeline is
 6. **Verify (reviewer)** — the **reviewer** adversarial-checks each ticket/batch
    against its acceptance criteria + the spec + contract + repo standards.
 7. **Gate + commit (orchestrator)** — orchestrator runs the validation gate, owns
-   git/traceability/ADRs, and auto-advances.
+   git/traceability, and auto-advances.
 
 ## Roles
 
-| Role              | `.opencode/agents/` | Skill                                     | Permissions         | Output                                                                  |
-| ----------------- | ------------------- | ----------------------------------------- | ------------------- | ----------------------------------------------------------------------- |
-| 1. spec-creator   | `spec-creator.md`   | `to-spec`                                 | write spec issue    | spec issue (`ready-for-agent`)                                          |
-| 2. research       | `research.md`       | `research`                                | write notes only    | `docs/research/<slug>-<topic>.md`                                       |
-| 3. implementator  | `implementator.md`  | — (works `to-tickets` output)             | edit+run            | frontier ticket done + code + tests + exact results + changed-file list |
-| 4. reviewer       | `reviewer.md`       | —                                         | read-only           | severity-tagged findings + APPROVE / NEEDS_REWORK                       |
-| orchestrator (me) | —                   | `wayfinder` (chart), `to-tickets` (slice) | owns git/validation | map + gate + git/traceability/ADRs                                      |
+| Role             | Skill                                     | Permissions         | Output                                                        |
+| ---------------- | ----------------------------------------- | ------------------- | ------------------------------------------------------------- |
+| 1. spec-creator  | `to-spec`                                 | write spec issue    | spec issue (`ready-for-agent`)                                |
+| 2. research      | `research`                                | write notes only    | `Research` discussion                                         |
+| 3. implementator | — (works `to-tickets` output)             | edit+run            | frontier ticket + code + tests + execution report             |
+| 4. reviewer      | — (`.ai/REVIEW-PROMPT.md`)                | read-only           | classified, severity-tagged findings + APPROVE / NEEDS_REWORK |
+| orchestrator     | `wayfinder` (chart), `to-tickets` (slice) | owns git/validation | map + gate + git/traceability                                 |
 
 Ordering: **chart/research → spec → slice → implement → review → (repair loop) →
 validation gate → commit**.
@@ -56,11 +57,10 @@ validation gate → commit**.
 ## Handoff contract
 
 - Each subagent's final report is a **spec for the next step, not the source of
-  truth**. The orchestrator re-reads files before editing and independently
-  verifies claimed results.
+  truth**. The orchestrator re-reads files, the diff and `git status`, and
+  re-runs claimed gates before acting.
 - Write scope is role-locked: spec-creator writes only the spec issue;
-  research writes only
-  `docs/research/<slug>-<topic>.md`; the reviewer writes nothing. The
+  research writes only a `Research` discussion; the reviewer writes nothing. The
   orchestrator re-reads those files (not the reports) before acting on them.
 - The implementator works one **frontier ticket** (from to-tickets); the reviewer
   checks that ticket against its acceptance criteria + the spec + contract.
@@ -79,15 +79,14 @@ the sprint's validation report (`.ai/reports/<slug>.md`):
 - full test suite;
 - determinism: cross-process child run twice (byte-identical) + golden verify
   (`node scripts/verify-golden-hashes.cjs`);
-- any authoritative hash changes get old/new + cause + migration assessment
-  (ADR-0007 process). A build alone is not acceptance (ENGINEERING-CONTRACT §Tests).
+- any authoritative hash changes get old/new + cause + migration assessment. A build alone is not acceptance (ENGINEERING-CONTRACT §Tests).
 
 ## Concurrent worktrees
 
-Run each effort in its own worktree (`.worktrees/<slug>`, ADR-0220) so several
-orchestrators progress in parallel without sharing a checkout. Track the live set
-in the shared registry `$(git rev-parse --git-common-dir)/ai/worktrees.json` via `pnpm worktrees` (`new`/`list`/`sync`/`prune`);
-`pnpm preflight` warns on stale or unregistered subtrees.
+Run each effort in its own worktree (`pnpm worktrees new <slug> --scope <issue>`,
+ADR-0364) so tasks progress in parallel without sharing a checkout. Set each
+task's state with `pnpm worktrees status`, and review only what
+`pnpm worktrees inbox` marks `NEEDS-YOU`. Do not watch running tasks.
 
 ## Orchestrator responsibilities
 
@@ -96,10 +95,11 @@ in the shared registry `$(git rev-parse --git-common-dir)/ai/worktrees.json` via
 - For huge/foggy efforts, chart via **wayfinder** (`map` + decision tickets on
   GitHub Issues); otherwise go spec → slice → implement directly.
 - Own all Git: small Conventional Commits on a short-lived branch (never
-  directly on `dev`), delivered by a checks-green pull request; no self-merge of
-  a release PR into `main`; leave the tree clean (ADR-0165).
+  directly on `dev`); merge into `dev` only under the brief's merge authority; never merge into `main`; leave the tree clean.
+- Close each task (merged/rejected/archived), prune its worktree, and record the
+  rollback in its report.
 - Update traceability (SPRINT-PLAN row done + pointer, `.ai/reports/*`).
-- Resolve routine decisions as ADRs; stop only on a genuine decision-request /
+- Resolve routine decisions locally; stop only on a genuine decision-request /
   stop condition.
 - Keep the roles tiny and focused so no single subagent accumulates the whole
   project context.

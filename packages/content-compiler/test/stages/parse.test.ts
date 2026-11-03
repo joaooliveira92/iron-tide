@@ -159,5 +159,24 @@ describe("ParseStage", () => {
 
     expect(errors[0]?.[0]).toBe("FILE-READ");
     expect(errors[0]?.[1]).toContain("countries.json");
+    expect(errors[0]?.[1]).toContain("absent from the compiler input");
+  });
+
+  it("reports the cause of a file that could not be read instead of calling it absent", () => {
+    const stage = new ParseStage();
+
+    const input = inputWith(
+      {},
+      {
+        countryFiles: ["countries.json"],
+        fileReadFailures: { "countries.json": "EACCES: permission denied" },
+      },
+    );
+    stage.run(input as never, new AbortController().signal, collector as never);
+
+    expect(errors[0]?.[0]).toBe("FILE-READ");
+    expect(errors[0]?.[1]).toContain("countries.json");
+    expect(errors[0]?.[1]).toContain("EACCES: permission denied");
+    expect(errors[0]?.[1]).not.toContain("absent from the compiler input");
   });
 });

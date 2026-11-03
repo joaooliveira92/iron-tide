@@ -9,7 +9,7 @@ vi.mock("../../shell/debug-flag.js", () => ({
   },
 }));
 
-describe("debugRevisionActions (ADR-0058)", () => {
+describe("debugRevisionActions", () => {
   afterEach(cleanup);
 
   it("renders nothing at all in a release build", () => {

@@ -1,7 +1,7 @@
 name: Determinism Gate
 
 # Pushes to dev and pull requests into dev run Ubuntu only: delivery into dev is
-# a local merge (ADR-0234), so a push trigger is what puts the unit suites and
+# a local merge, so a push trigger is what puts the unit suites and
 # golden hashes under CI on the integration branch. Pull requests into main, manual
 # dispatches, and the nightly run run the full Ubuntu, Windows and macOS matrix.
 # GitHub fires `schedule` only from the default branch's copy of this file, so
@@ -72,7 +72,7 @@ jobs:
       - run: pnpm exec vp run -r --concurrency-limit=2 test
       - name: Cross-process determinism
         run: node packages/cross-process-test/dist/run-child.js
-      # Replay corpus (ADR-0246): every golden/replays file re-executed through the
+      # Replay corpus: every golden/replays file re-executed through the
       # real engine in two fresh processes on each OS; output must be identical and a
       # divergence prints the first-divergence report. CI only verifies; it never
       # records or approves a replay.

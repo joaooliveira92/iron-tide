@@ -1,4 +1,4 @@
-import { formatCampaignMonth } from "../lib/presentation-format/index.js";
+import { formatCampaignMonth } from "../lib/presentation-format/dates.js";
 import type { PresentationFormat } from "../lib/presentation-format/index.js";
 
 export const TREND_MONTHS = 6;

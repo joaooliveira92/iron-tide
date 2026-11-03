@@ -4,14 +4,14 @@ import { join } from "node:path";
 
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { unifiedSnapshotHash } from "@bluewave/campaign";
-import { fleetManagementFromRulesets } from "@bluewave/content-compiler";
+import { fleetManagementFromRulesets, tensionDriftFromRulesets } from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { SaveStore, restampState } from "@bluewave/persistence";
+import { loadResult, SaveStore, restampState } from "@bluewave/persistence";
 import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
-import { Effect, Result } from "effect";
+import { Result } from "effect";
 
 import { compileProductionCampaign } from "../production-pack.js";
 import { LEDGER_ORDER, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
@@ -160,7 +160,7 @@ export function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
       snapshot.compatibilityVersion,
     );
     store.save(state, saveDir);
-    const loaded = Effect.runSync(Effect.result(store.load(saveDir)));
+    const loaded = loadResult(saveDir);
     if (Result.isFailure(loaded)) {
       return { ok: false, reason: loaded.failure.message };
     }
@@ -170,10 +170,22 @@ export function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
   }
 }
 
+function productionTensionDrift() {
+  const decoded = tensionDriftFromRulesets(production().bundle.rulesets);
+  if (decoded === undefined) return undefined;
+  if (!decoded.ok)
+    throw new ReplayFileError({
+      message: `production tensionDrift section is invalid at '${decoded.field}'`,
+    });
+  return decoded.value;
+}
+
 export function fleetManagementOptions(playerNationId?: string) {
   const fleetManagement = productionFleetManagement();
+  const tensionDrift = productionTensionDrift();
   return {
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
+    ...(tensionDrift === undefined ? {} : { tensionDrift }),
     ...(playerNationId === undefined ? {} : { playerNationId }),
   };
 }

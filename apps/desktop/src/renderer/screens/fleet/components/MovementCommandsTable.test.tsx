@@ -33,7 +33,7 @@ describe("movementStatusVariant", () => {
   });
 });
 
-describe("MovementCommandsTable release/debug display (ADR-0058)", () => {
+describe("MovementCommandsTable release/debug display", () => {
   afterEach(cleanup);
 
   it("shows readable names and no engine ids or revision in a release build", () => {

@@ -10,7 +10,7 @@ const EXPECTED: ReadonlyArray<readonly [id: string, field: string, year: number]
   ["mis_medium_ssm_quadruple", "MISSILES", 1966],
 ];
 
-describe("E-1 1960-1970 technology (ADR-0282, ADR-0283)", () => {
+describe("E-1 1960-1970 technology", () => {
   const { bundle, state } = compileProductionCampaign();
   const catalogue = new Map(
     (state.snapshot.world.technologies ?? []).map((tech) => [tech.techId, tech]),

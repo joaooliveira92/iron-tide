@@ -13,7 +13,7 @@ import {
 } from "../panels/hull-plan/geometry.js";
 import { SECTIONS, type ZoneRange } from "../panels/hull-plan/sections.js";
 import { machineryRooms } from "../selection/facts.js";
-import { sameEntity, type ShipEntity } from "../selection/store.js";
+import { entityKey, sameEntity, type ShipEntity } from "../selection/store.js";
 import { useSelectionStore, useShipSelection } from "../selection/useShipSelection.js";
 import type { BoardFinding } from "./boardFindings.js";
 import { valueLine } from "./format.js";
@@ -29,15 +29,6 @@ export interface MarkerGroup {
   readonly x: number;
   readonly y: number;
 }
-
-const entityKey = (e: ShipEntity) =>
-  e.kind === "fitting"
-    ? `f:${e.instanceId}`
-    : e.kind === "section"
-      ? `s:${e.id}`
-      : e.kind === "machinery-room"
-        ? `r:${e.index}`
-        : "ship";
 
 export function layoutMarkers(
   findings: readonly BoardFinding[],

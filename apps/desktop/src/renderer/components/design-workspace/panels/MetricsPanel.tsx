@@ -1,8 +1,9 @@
-import type { Metric, WorkshopView } from "@bluewave/ship-design";
+import type { Metric } from "@bluewave/ship-design";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
 import { SlateBody, SlateFoot, SlateHeader } from "../../ui/slate.js";
 import { cn } from "../../../lib/utils.js";
-import { formatExplanation } from "../../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { Panel } from "./Panel.js";
 
 const tone: Record<string, string> = {
@@ -76,7 +77,8 @@ function MetricRow({ m }: { readonly m: Metric }) {
   );
 }
 
-export function MetricsPanel({ view }: { readonly view: WorkshopView }) {
+export function MetricsPanel() {
+  const { view } = useDesignState();
   return (
     <Panel title="Performance">
       <dl className="grid grid-cols-1 gap-1 text-sm">

@@ -1,6 +1,6 @@
 # Bluewave Requirement Index
 
-Status: re-baselined 2026-10-15 by the G-1 sprint under ADR-0210 (DR-010).
+Status: re-baselined 2026-10-15 by the G-1 sprint.
 
 This file gives stable requirement IDs derived from `README.md` without changing its
 meaning. It distinguishes two trust classes:
@@ -9,12 +9,12 @@ meaning. It distinguishes two trust classes:
   `43177f4`, blob `55530625`). The normative statements below are as tracked; only the
   IDs and wording are carried forward.
 - **Newly accepted (2026-10-15)** — derived from the accepted decisions DR-001..DR-011,
-  now recorded as ADR-0201..ADR-0211.
+  recorded in this file.
 
 The traceability records that once accompanied these IDs (status claims, test names,
-and references to now-unavailable legacy ADRs) were never re-verified here. They are
-unavailable and unverified legacy references (ADR-0210) and are not restored. Evidence
-now lives in the named tests, the ADR corpus, and the gates.
+and references to now-unavailable legacy records) were never re-verified here. They are
+unavailable and unverified legacy references and are not restored. Evidence
+now lives in the named tests and the gates.
 
 ## Confirmed requirements (recovered)
 
@@ -66,28 +66,26 @@ Testing
 
 ## Newly accepted requirements (2026-10-15)
 
-- **BW-SCP-001** — 1880 is the sole start year and is production content (ADR-0201).
+- **BW-SCP-001** — 1880 is the sole start year and is production content.
 - **BW-SCP-002** — The authored horizon is 1970 (nuclear weapons out of scope), and no
-  empty scenario ID is selectable (ADR-0282, superseding ADR-0204).
+  empty scenario ID is selectable.
 - **BW-SCP-003** — Ten manual-backed nations are playable for the deliberate
   1880-only release: the manual's nine plus the USA; the other four are AI-only
-  behind a per-nation readiness gate (ADR-0214).
+  behind a per-nation readiness gate.
 - **BW-PRS-001** — Canonical internal values are unit-agnostic; units and currency are
-  presentation-only and never alter authoritative state (ADR-0202).
+  presentation-only and never alter authoritative state.
 - **BW-PRS-002** — Preferences are a versioned, validated, migrated, atomically
-  persisted domain with app, campaign, and session scopes (ADR-0203).
+  persisted domain with app, campaign, and session scopes.
 - **BW-PRS-003** — Currency display modes are Naval Credits, Budget Points, and
-  National Historical only; the default is Naval Credits; there is no custom currency
-  (ADR-0206..ADR-0208, ADR-0211).
+  National Historical only; the default is Naval Credits; there is no custom currency.
 - **BW-PRS-004** — UI language and formatting locale are separate concerns; strings are
-  externalized and the en-US fallback is complete (ADR-0209).
+  externalized and the en-US fallback is complete.
 - **BW-AUT-001** — Artifacts never tracked in reachable history are unavailable and
   unverified legacy references; replacements take new identifiers and the authority
-  order in ADR-0210 governs (ADR-0210).
+  order in `AGENTS.md` governs.
 
 ## Traceability
 
-For every requirement, evidence is a named deterministic test, a documented gate, or a
-recorded ADR. A requirement is not verified merely because code exists. The canonical
+For every requirement, evidence is a named deterministic test, or a documented gate. A requirement is not verified merely because code exists. The canonical
 evidence path is: run `pnpm preflight`, `pnpm test:scripts`, and `pnpm check`, and cite
-the test or gate in the change; see ADR-0210 for the authority order.
+the test or gate in the change.

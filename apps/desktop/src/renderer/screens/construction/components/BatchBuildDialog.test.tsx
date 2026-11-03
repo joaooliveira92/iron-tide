@@ -5,7 +5,7 @@ import type { CompiledDesignVersion } from "@bluewave/campaign-engine";
 import { axeViolations } from "../../../lib/axe.js";
 import type { ConstructionBatchPreviewOutcome } from "../../../../shared/construction-contract.js";
 import type { ForeignConstructionPreviewOutcome } from "../../../../shared/construction-contract.js";
-import { BatchBuildDialog, type BatchBuildDialogProps } from "./BatchBuildDialog.js";
+import { BatchBuild, BatchBuildDialog, type BatchBuildDialogProps } from "./BatchBuildDialog.js";
 
 afterEach(cleanup);
 
@@ -257,5 +257,34 @@ describe("BatchBuildDialog foreign builder (SB3-R20/R34, INC-9b)", () => {
       "disabled",
       true,
     );
+  });
+});
+
+describe("BatchBuild composed parts", () => {
+  it("renders only the parts a caller composes", () => {
+    const onCancel = vi.fn();
+    render(
+      <BatchBuild.Root>
+        <BatchBuild.Header />
+        <BatchBuild.Content>
+          <BatchBuild.Fields>
+            <BatchBuild.QuantityField value={3} onChange={() => {}} />
+          </BatchBuild.Fields>
+          <BatchBuild.Notice notice="Hold the order." />
+          <BatchBuild.Actions
+            canConfirm={false}
+            confirmLabel="Confirm batch"
+            onConfirm={() => {}}
+            onCancel={onCancel}
+          />
+        </BatchBuild.Content>
+      </BatchBuild.Root>,
+    );
+    expect(screen.queryByRole("combobox", { name: "Batch design" })).toBeNull();
+    expect(screen.getByRole("spinbutton", { name: "Batch quantity" })).toHaveProperty("value", "3");
+    expect(screen.getByText("Hold the order.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Confirm batch" })).toHaveProperty("disabled", true);
+    fireEvent.click(screen.getByRole("button", { name: "Back to catalog" }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

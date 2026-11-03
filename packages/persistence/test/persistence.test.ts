@@ -373,35 +373,6 @@ describe("SaveStore", () => {
     expect(error.code).toBe(COMPATIBILITY_MISMATCH_CODE);
   });
 
-  it("handles cancellation via AbortSignal during save", () => {
-    const state = createFixtureState();
-    const controller = new AbortController();
-    controller.abort();
-
-    let thrown: unknown;
-    try {
-      store.save(state, tmpDir, controller.signal);
-    } catch (err) {
-      thrown = err;
-    }
-    expect((thrown as Error).name).toBe("AbortError");
-  });
-
-  it("handles cancellation via AbortSignal during load", () => {
-    const state = createFixtureState();
-    store.save(state, tmpDir);
-
-    const controller = new AbortController();
-    controller.abort();
-
-    const error = expectFailureTag(
-      runExit(store.load(tmpDir, controller.signal)),
-      "PERSISTENCE_CANCELLED",
-    );
-
-    expect(error.message).toBe("Load operation was cancelled");
-  });
-
   it("maintains pointer integrity after multiple saves", () => {
     const state = createFixtureState();
     store.save(state, tmpDir);

@@ -222,10 +222,7 @@ void test("--apply strips only .ts and .tsx outside skipped trees, and --check t
   try {
     const failing = run(root, ["--scope", "packages", "--check"]);
     assert.equal(failing.code, EXIT.VALIDATION);
-    assert.match(
-      failing.err,
-      /Error: 2 comment\(s\) found\. Code carries no comments \(ADR-0268\)/,
-    );
+    assert.match(failing.err, /Error: 2 comment\(s\) found\. Code carries no comments;/);
     assert.match(failing.err, /packages\/p\/src\/a\.ts: 1/);
     assert.equal(run(root, ["--scope", "packages", "--apply"]).code, EXIT.OK);
     const read = (rel) => readFileSync(path.join(root, rel), "utf8");

@@ -6,11 +6,11 @@ import { CommandBar, type CommandBarProps } from "./CommandBar.js";
 afterEach(cleanup);
 
 const props = (over: Partial<CommandBarProps> = {}): CommandBarProps => ({
+  variant: "overlay",
   shipClassName: "",
   onShipClassName: () => {},
   onStartFromReference: () => {},
-  shipType: "DD",
-  shipTypeLabel: "DD · Torpedo boat",
+  shipTypeName: "Torpedo boat / early destroyer",
   shipTypeIcon: null,
   canUndo: false,
   canRedo: false,
@@ -18,7 +18,6 @@ const props = (over: Partial<CommandBarProps> = {}): CommandBarProps => ({
   onRedo: () => {},
   compare: null,
   autosaved: false,
-  onValidate: () => {},
   onFinish: () => {},
   overflow: [{ label: "Design", items: [{ label: "Edit history…", onSelect: () => {} }] }],
   ...over,
@@ -27,12 +26,13 @@ const props = (over: Partial<CommandBarProps> = {}): CommandBarProps => ({
 const bar = () => screen.getByRole("group", { name: "Design commands" });
 
 describe("CommandBar", () => {
-  it("keeps the current type on the reference button and opens the browser from it", () => {
+  it("names the current type on the reference button in words and opens the browser from it", () => {
     const onStartFromReference = vi.fn();
     render(<CommandBar {...props({ onStartFromReference })} />);
     const button = within(bar()).getByRole("button", { name: /Start from a reference design/ });
-    expect(button.getAttribute("aria-description")).toContain("DD · Torpedo boat");
-    expect(within(button).getByLabelText("Current type DD")).toBeTruthy();
+    expect(button.textContent).toBe("Torpedo boat / early destroyer");
+    expect(button.getAttribute("aria-label")).toContain("Torpedo boat / early destroyer");
+    expect(button.getAttribute("aria-description")).toContain("Torpedo boat / early destroyer");
     fireEvent.click(button);
     expect(onStartFromReference).toHaveBeenCalledOnce();
   });
@@ -51,13 +51,11 @@ describe("CommandBar", () => {
     expect(ref.current).toBe(within(bar()).getByLabelText("Class name"));
   });
 
-  it("fires Validate and Finish", () => {
-    const onValidate = vi.fn();
+  it("offers Finish as its one primary action, with no separate Validate", () => {
     const onFinish = vi.fn();
-    render(<CommandBar {...props({ onValidate, onFinish })} />);
-    fireEvent.click(within(bar()).getByRole("button", { name: /Validate/ }));
+    render(<CommandBar {...props({ onFinish })} />);
+    expect(within(bar()).queryByRole("button", { name: /Validate/ })).toBeNull();
     fireEvent.click(within(bar()).getByRole("button", { name: /Finish design/ }));
-    expect(onValidate).toHaveBeenCalledOnce();
     expect(onFinish).toHaveBeenCalledOnce();
   });
 });

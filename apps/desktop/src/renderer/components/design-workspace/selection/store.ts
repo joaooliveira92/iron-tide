@@ -36,6 +36,19 @@ export function sameEntity(a: ShipEntity | null, b: ShipEntity | null): boolean 
   }
 }
 
+export function entityKey(e: ShipEntity): string {
+  switch (e.kind) {
+    case "ship":
+      return "ship";
+    case "section":
+      return `s:${e.id}`;
+    case "fitting":
+      return `f:${e.instanceId}`;
+    case "machinery-room":
+      return `r:${e.index}`;
+  }
+}
+
 export interface SelectionStore {
   readonly get: () => SelectionState;
   readonly subscribe: (listener: () => void) => () => void;

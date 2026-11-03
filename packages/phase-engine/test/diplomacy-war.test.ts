@@ -5,6 +5,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
+import { presenceAreaIds } from "@bluewave/campaign";
 import { MonthExecutor, monthPipeline } from "../src/index.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
@@ -606,5 +607,347 @@ describe("B10c diplomacy & war acceptance (criteria 1-14)", () => {
     const r1 = run().finalSnapshot;
     const r2 = run().finalSnapshot;
     expect(sha256Hex(canonicalSerialize(r1))).toBe(sha256Hex(canonicalSerialize(r2)));
+  });
+
+  describe("ProposePeace with the status-quo term", () => {
+    const fixedIds = { commandId: "cmd-peace", idempotencyKey: "idem-peace" };
+
+    function atWar(commandingNationId = "GBR"): CampaignSnapshot {
+      const snapshot = withWar(makeSnapshot(threeNations()), {
+        attackerId: "GBR",
+        defenderId: "FRA",
+      });
+      const commanding = snapshot.slots.filter((slot) => slot.nationId === commandingNationId);
+      const others = snapshot.slots.filter((slot) => slot.nationId !== commandingNationId);
+      return {
+        ...snapshot,
+        slots: [...commanding.map((slot) => ({ ...slot, type: "playable" as const })), ...others],
+      };
+    }
+
+    function finalHashAfter(snapshot: CampaignSnapshot, body: CommandBody): string {
+      const cmd = makeCommand(snapshot, body, fixedIds);
+      const result = new MonthExecutor().execute(
+        snapshot,
+        [cmd],
+        "seed",
+        new DiagnosticCollector(),
+      );
+      expect(result.finalSnapshot.wars.wars[0]!.status).toBe("ENDED");
+      return sha256Hex(canonicalSerialize(result.finalSnapshot));
+    }
+
+    function rejectionCode(snapshot: CampaignSnapshot, body: CommandBody): string | null {
+      const outcome = new CommandLifecycle().validate(makeCommand(snapshot, body), snapshot);
+      if (outcome.ok || outcome.outcome.type !== "rejected") return null;
+      return outcome.outcome.diagnostic.code;
+    }
+
+    it.each(["GBR", "FRA"])("%s proposing status quo hashes identically to AcceptPeace", (id) => {
+      const snapshot = atWar(id);
+      const warId = snapshot.wars.wars[0]!.id;
+      const proposed = finalHashAfter(snapshot, {
+        type: "ProposePeace",
+        nationId: id,
+        warId,
+        term: { _tag: "StatusQuo" },
+      });
+      const accepted = finalHashAfter(snapshot, { type: "AcceptPeace", nationId: id, warId });
+      expect(proposed).toBe(accepted);
+    });
+
+    it("ends the war and resets relations to neutral tension 5", () => {
+      const snapshot = atWar();
+      const cmd = makeCommand(snapshot, {
+        type: "ProposePeace",
+        nationId: "GBR",
+        warId: snapshot.wars.wars[0]!.id,
+        term: { _tag: "StatusQuo" },
+      });
+      const result = new MonthExecutor().execute(
+        snapshot,
+        [cmd],
+        "seed",
+        new DiagnosticCollector(),
+      );
+      expect(result.finalSnapshot.wars.wars[0]!.status).toBe("ENDED");
+      const rel = findRelation(result.finalSnapshot, "GBR", "FRA")!;
+      expect(rel.relation).toBe("neutral");
+      expect(rel.tension).toBe(5);
+    });
+
+    it("is rejected with PEACE_INVALID for an unknown war", () => {
+      expect(
+        rejectionCode(atWar(), {
+          type: "ProposePeace",
+          nationId: "GBR",
+          warId: "missing",
+          term: { _tag: "StatusQuo" },
+        }),
+      ).toBe("PEACE_INVALID");
+    });
+
+    it("is rejected with PEACE_NO_ACTIVE_WAR for an ended war", () => {
+      const snapshot = atWar();
+      const ended = {
+        ...snapshot,
+        wars: {
+          ...snapshot.wars,
+          wars: snapshot.wars.wars.map((w) => ({ ...w, status: "ENDED" as const })),
+        },
+      };
+      expect(
+        rejectionCode(ended, {
+          type: "ProposePeace",
+          nationId: "GBR",
+          warId: ended.wars.wars[0]!.id,
+          term: { _tag: "StatusQuo" },
+        }),
+      ).toBe("PEACE_NO_ACTIVE_WAR");
+    });
+
+    it("is rejected with PEACE_NEGOTIATION_INELIGIBLE for a non-principal", () => {
+      const snapshot = atWar();
+      expect(
+        rejectionCode(snapshot, {
+          type: "ProposePeace",
+          nationId: "GER",
+          warId: snapshot.wars.wars[0]!.id,
+          term: { _tag: "StatusQuo" },
+        }),
+      ).toBe("PEACE_NEGOTIATION_INELIGIBLE");
+    });
+  });
+
+  describe("ProposePeace with a CedeArea term", () => {
+    const withAreas = (warScore = 10): CampaignSnapshot => {
+      const base = withWar(makeSnapshot(threeNations()), {
+        attackerId: "GBR",
+        defenderId: "FRA",
+        attackerWarScore: warScore,
+      });
+      const home = (id: string, areaId: string): [string, NationState] => [
+        id,
+        { ...base.nations.get(id)!, homeAreaId: areaId },
+      ];
+      return {
+        ...base,
+        world: {
+          areas: [
+            {
+              id: "fra_home",
+              name: "France",
+              type: "coastal",
+              controller: "FRA",
+              cessionCost: SafeInt(1),
+            },
+            {
+              id: "med_malta",
+              name: "Malta",
+              type: "coastal",
+              controller: "FRA",
+              cessionCost: SafeInt(6),
+            },
+            { id: "med_cyprus", name: "Cyprus", type: "coastal", controller: "FRA" },
+            {
+              id: "gbr_home",
+              name: "Britain",
+              type: "coastal",
+              controller: "GBR",
+              cessionCost: SafeInt(1),
+            },
+          ],
+          routes: [],
+          ports: [],
+          possessions: [
+            { id: "poss_fra_home", nationId: "FRA", areaId: "fra_home" },
+            { id: "poss_malta_a", nationId: "FRA", areaId: "med_malta" },
+            { id: "poss_malta_b", nationId: "FRA", areaId: "med_malta" },
+            { id: "poss_gbr_home", nationId: "GBR", areaId: "gbr_home" },
+          ],
+        },
+        nations: new Map([
+          home("GBR", "gbr_home"),
+          home("FRA", "fra_home"),
+          home("GER", "gbr_home"),
+        ]),
+      };
+    };
+
+    const cedeBody = (areaId: string, snapshot: CampaignSnapshot): CommandBody => ({
+      type: "ProposePeace",
+      nationId: "GBR",
+      warId: snapshot.wars.wars[0]!.id,
+      term: { _tag: "CedeArea", areaId },
+    });
+
+    const looseProposal = (
+      snapshot: CampaignSnapshot,
+      term: { _tag: string; areaId?: unknown },
+    ): CommandBody => {
+      const loose: { type: "ProposePeace"; nationId: string; warId: string; term: typeof term } = {
+        type: "ProposePeace",
+        nationId: "GBR",
+        warId: snapshot.wars.wars[0]!.id,
+        term,
+      };
+      return loose as CommandBody;
+    };
+
+    const execute = (snapshot: CampaignSnapshot, body: CommandBody) => {
+      const collector = new DiagnosticCollector();
+      const result = new MonthExecutor().execute(
+        snapshot,
+        [makeCommand(snapshot, body)],
+        "seed",
+        collector,
+      );
+      return { result, collector };
+    };
+
+    const rejectionOf = (snapshot: CampaignSnapshot, body: CommandBody): string | null => {
+      const outcome = new CommandLifecycle().validate(makeCommand(snapshot, body), snapshot);
+      return outcome.ok || outcome.outcome.type !== "rejected"
+        ? null
+        : outcome.outcome.diagnostic.code;
+    };
+
+    it("moves the area controller and every possession in it, then ends the war", () => {
+      const snapshot = withAreas();
+      const { result } = execute(snapshot, cedeBody("med_malta", snapshot));
+      const world = result.finalSnapshot.world;
+      expect(world.areas.find((a) => a.id === "med_malta")!.controller).toBe("GBR");
+      expect(
+        world.possessions!.filter((p) => p.areaId === "med_malta").map((p) => p.nationId),
+      ).toEqual(["GBR", "GBR"]);
+      expect(world.areas.find((a) => a.id === "fra_home")!.controller).toBe("FRA");
+      expect(world.possessions!.find((p) => p.id === "poss_fra_home")!.nationId).toBe("FRA");
+      expect(result.finalSnapshot.wars.wars[0]!.status).toBe("ENDED");
+    });
+
+    it("changes both nations' presence areas on the next evaluation", () => {
+      const snapshot = withAreas();
+      const { result } = execute(snapshot, cedeBody("med_malta", snapshot));
+      const before = snapshot.world.possessions!;
+      const after = result.finalSnapshot.world.possessions!;
+      expect(presenceAreaIds(before, "GBR")).toEqual(["gbr_home"]);
+      expect(presenceAreaIds(before, "FRA")).toEqual(["fra_home", "med_malta"]);
+      expect(presenceAreaIds(after, "GBR")).toEqual(["gbr_home", "med_malta"]);
+      expect(presenceAreaIds(after, "FRA")).toEqual(["fra_home"]);
+    });
+
+    it("emits one PossessionTransferred per possession in id order", () => {
+      const snapshot = withAreas();
+      const { result } = execute(snapshot, cedeBody("med_malta", snapshot));
+      const transfers = result.eventLedger.all.filter(
+        (e) => e.body.kind === "PossessionTransferred",
+      );
+      expect(transfers.map((e) => e.body)).toEqual([
+        {
+          kind: "PossessionTransferred",
+          possessionId: "poss_malta_a",
+          areaId: "med_malta",
+          fromNationId: "FRA",
+          toNationId: "GBR",
+          warId: snapshot.wars.wars[0]!.id,
+        },
+        {
+          kind: "PossessionTransferred",
+          possessionId: "poss_malta_b",
+          areaId: "med_malta",
+          fromNationId: "FRA",
+          toNationId: "GBR",
+          warId: snapshot.wars.wars[0]!.id,
+        },
+      ]);
+    });
+
+    it("hashes identically across two runs", () => {
+      const snapshot = withAreas();
+      const body = cedeBody("med_malta", snapshot);
+      const hashOf = () =>
+        sha256Hex(canonicalSerialize(execute(snapshot, body).result.finalSnapshot));
+      expect(hashOf()).toBe(hashOf());
+    });
+
+    it("produces a different hash than a status-quo peace", () => {
+      const snapshot = withAreas();
+      const statusQuo: CommandBody = {
+        type: "ProposePeace",
+        nationId: "GBR",
+        warId: snapshot.wars.wars[0]!.id,
+        term: { _tag: "StatusQuo" },
+      };
+      const ceded = execute(snapshot, cedeBody("med_malta", snapshot)).result.finalSnapshot;
+      const quo = execute(snapshot, statusQuo).result.finalSnapshot;
+      expect(sha256Hex(canonicalSerialize(ceded))).not.toBe(sha256Hex(canonicalSerialize(quo)));
+    });
+
+    it("rejects an area the other principal does not hold with PEACE_AREA_NOT_OWNED", () => {
+      const snapshot = withAreas();
+      expect(rejectionOf(snapshot, cedeBody("gbr_home", snapshot))).toBe("PEACE_AREA_NOT_OWNED");
+    });
+
+    it("rejects the loser's home area with PEACE_AREA_IS_HOME", () => {
+      const snapshot = withAreas();
+      expect(rejectionOf(snapshot, cedeBody("fra_home", snapshot))).toBe("PEACE_AREA_IS_HOME");
+    });
+
+    it("rejects an over-budget term with PEACE_TERM_OVER_BUDGET end to end", () => {
+      const snapshot = withAreas(5);
+      expect(rejectionOf(snapshot, cedeBody("med_malta", snapshot))).toBe("PEACE_TERM_OVER_BUDGET");
+    });
+
+    it("rejects an area without a cession cost with PEACE_AREA_UNPRICED", () => {
+      const snapshot = withAreas();
+      expect(rejectionOf(snapshot, cedeBody("med_cyprus", snapshot))).toBe("PEACE_AREA_UNPRICED");
+    });
+
+    it("rejects an unknown term tag with PEACE_TERM_UNSUPPORTED", () => {
+      const snapshot = withAreas();
+      expect(rejectionOf(snapshot, looseProposal(snapshot, { _tag: "Annex" }))).toBe(
+        "PEACE_TERM_UNSUPPORTED",
+      );
+    });
+
+    it("rejects a malformed cession with PEACE_OFFER_INVALID", () => {
+      const snapshot = withAreas();
+      expect(rejectionOf(snapshot, looseProposal(snapshot, { _tag: "CedeArea" }))).toBe(
+        "PEACE_OFFER_INVALID",
+      );
+    });
+
+    it("rejects the cession when the war is not active", () => {
+      const snapshot = withAreas();
+      const ended = {
+        ...snapshot,
+        wars: {
+          ...snapshot.wars,
+          wars: snapshot.wars.wars.map((w) => ({ ...w, status: "ENDED" as const })),
+        },
+      };
+      expect(rejectionOf(ended, cedeBody("med_malta", ended))).toBe("PEACE_NO_ACTIVE_WAR");
+    });
+
+    it("transfers nothing when the war ended earlier in the same month", () => {
+      const snapshot = withAreas();
+      const accept: CommandBody = {
+        type: "AcceptPeace",
+        nationId: "GBR",
+        warId: snapshot.wars.wars[0]!.id,
+      };
+      const result = new MonthExecutor().execute(
+        snapshot,
+        [makeCommand(snapshot, accept), makeCommand(snapshot, cedeBody("med_malta", snapshot))],
+        "seed",
+        new DiagnosticCollector(),
+      );
+      expect(result.finalSnapshot.world.areas.find((a) => a.id === "med_malta")!.controller).toBe(
+        "FRA",
+      );
+      expect(result.eventLedger.all.some((e) => e.body.kind === "PossessionTransferred")).toBe(
+        false,
+      );
+    });
   });
 });

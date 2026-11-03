@@ -5,6 +5,10 @@ export const PLAYER_BATTLE_STANCES = ["ENGAGE", "HOLD", "WITHDRAW"] as const;
 export const MIN_SPEED_PERCENT = 0;
 export const MAX_SPEED_PERCENT = 100;
 export const SPEED_PERCENT_STEP = 5;
+export const MIN_COURSE_DEG = 0;
+export const MAX_COURSE_DEG = 359;
+export const MIN_SPEED_KNOTS = 1;
+export const MAX_SPEED_KNOTS = 60;
 
 export interface OrdersView {
   readonly playerNationId: string;
@@ -16,6 +20,8 @@ export interface OrdersView {
 export interface DivisionOrder {
   readonly stance: PlayerBattleDivisionOrderDto["stance"];
   readonly speedPercent: number;
+  readonly courseDeg?: number;
+  readonly speedKnots?: number;
 }
 
 export type DivisionOrders = Readonly<Record<string, DivisionOrder>>;
@@ -40,14 +46,21 @@ export function defaultOrdersFor(view: OrdersView): DivisionOrders {
   return out;
 }
 
+function orderOf(order: Omit<PlayerBattleDivisionOrderDto, "divisionId">): DivisionOrder {
+  return {
+    stance: order.stance,
+    speedPercent: order.speedPercent,
+    ...(order.courseDeg === undefined ? {} : { courseDeg: order.courseDeg }),
+    ...(order.speedKnots === undefined ? {} : { speedKnots: order.speedKnots }),
+  };
+}
+
 export function standingOrdersFor(
   view: OrdersView,
   lastOrders: readonly PlayerBattleDivisionOrderDto[],
 ): DivisionOrders {
   const out: Record<string, DivisionOrder> = { ...defaultOrdersFor(view) };
-  for (const order of lastOrders) {
-    out[order.divisionId] = { stance: order.stance, speedPercent: order.speedPercent };
-  }
+  for (const order of lastOrders) out[order.divisionId] = orderOf(order);
   return out;
 }
 
@@ -59,8 +72,6 @@ export function toCombatOrders(
   divisions: readonly PlayerBattleDivisionOrderDto[],
 ): PlayerBattleOrders {
   const out: Record<string, DivisionOrder> = {};
-  for (const order of divisions) {
-    out[order.divisionId] = { stance: order.stance, speedPercent: order.speedPercent };
-  }
+  for (const order of divisions) out[order.divisionId] = orderOf(order);
   return { divisions: out };
 }

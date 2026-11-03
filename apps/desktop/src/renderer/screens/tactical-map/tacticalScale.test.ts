@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { createPresentationFormat } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import {
   TACTICAL_MAX_M_PER_PX,
   TACTICAL_MIN_M_PER_PX,

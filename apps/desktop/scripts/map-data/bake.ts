@@ -37,11 +37,18 @@ export interface NamedLine {
   readonly parts: readonly (readonly Position[])[];
 }
 
+export interface BathymetryBand {
+  readonly depthMetres: number;
+  readonly polygons: readonly (readonly (readonly Position[])[])[];
+}
+
 export interface GeometryInput {
   readonly landPolygons: readonly (readonly (readonly Position[])[])[];
   readonly riverLines: readonly NamedLine[];
   readonly areas: readonly PreparedArea[];
   readonly climate: readonly ClimateZoneGeometry[];
+  readonly bathymetry: readonly BathymetryBand[];
+  readonly reefLines: readonly NamedLine[];
 }
 
 export interface ResolvedOverlay {
@@ -84,6 +91,8 @@ export interface LevelStats {
   readonly landRings: number;
   readonly pinnedVertices: number;
   readonly climateVertices: number;
+  readonly bathymetryVertices: number;
+  readonly reefVertices: number;
   readonly areaTiles: number;
   readonly areaVertices: number;
   readonly labelTiles: number;
@@ -289,6 +298,29 @@ function overlayFeatures(
   return features;
 }
 
+function reefFeatures(lines: readonly NamedLine[]): {
+  features: GeoJSON.Feature[];
+  vertices: number;
+} {
+  const features: GeoJSON.Feature[] = [];
+  let vertices = 0;
+  for (const line of lines) {
+    for (const part of line.parts) {
+      if (part.length < 2) continue;
+      vertices += part.length;
+      features.push({
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: part.map((point) => [...clampToMercator(point)]),
+        },
+      });
+    }
+  }
+  return { features, vertices };
+}
+
 function toBytes(value: ArrayBufferView): Uint8Array {
   return new Uint8Array(value.buffer, value.byteOffset, value.byteLength).slice();
 }
@@ -315,6 +347,11 @@ export function bakeTiles(
     zone,
     polygons: prepareRings(zonePolygons, [], config.densifyToleranceMetres).polygons,
   }));
+  const bathymetryPrepared = input.bathymetry.map(({ depthMetres, polygons: bandPolygons }) => ({
+    depthMetres,
+    polygons: prepareRings(bandPolygons, [], config.densifyToleranceMetres).polygons,
+  }));
+  const reefs = reefFeatures(input.reefLines);
   const tiles: TilePackTile[] = [];
   const levels: LevelStats[] = [];
   const areaTilingOptions = {
@@ -353,6 +390,19 @@ export function bakeTiles(
       climateFeatures.push(...level.features);
       climateVertices += level.vertices;
     }
+    const bathymetryFeatures: GeoJSON.Feature[] = [];
+    let bathymetryVertices = 0;
+    for (const { depthMetres, polygons: bandPolygons } of bathymetryPrepared) {
+      const level = levelFeatures(
+        bandPolygons,
+        zoom,
+        { ...config, simplificationPixels: config.bathymetrySimplificationPixels },
+        { depth: depthMetres },
+      );
+      bathymetryFeatures.push(...level.features);
+      bathymetryVertices += level.vertices;
+    }
+    const reefLevel = zoom >= config.reefMinZoom ? reefs : { features: [], vertices: 0 };
     const tilingOptions = {
       maxZoom: zoom,
       indexMaxZoom: zoom,
@@ -373,6 +423,14 @@ export function bakeTiles(
       { type: "FeatureCollection", features: climateFeatures },
       tilingOptions,
     );
+    const bathymetryIndex = new geojsonvt(
+      { type: "FeatureCollection", features: bathymetryFeatures },
+      tilingOptions,
+    );
+    const reefIndex = new geojsonvt(
+      { type: "FeatureCollection", features: reefLevel.features },
+      tilingOptions,
+    );
     const levelTiles: TilePackTile[] = [];
     let areaTiles = 0;
     let labelTiles = 0;
@@ -383,7 +441,11 @@ export function bakeTiles(
         const landTile = landIndex.getTile(zoom, x, y);
         const overlayTile = overlayIndex.getTile(zoom, x, y);
         const climateTile = climateIndex.getTile(zoom, x, y);
+        const bathymetryTile = bathymetryIndex.getTile(zoom, x, y);
+        const reefTile = reefIndex.getTile(zoom, x, y);
         const layers: Record<string, unknown> = {};
+        if (bathymetryTile !== null) layers[config.layers.bathymetry] = bathymetryTile;
+        if (reefTile !== null) layers[config.layers.reefs] = reefTile;
         if (landTile !== null) layers[config.layers.land] = landTile;
         if (climateTile !== null) layers[config.layers.climate] = climateTile;
         if (overlayTile !== null) layers[config.layers.protected] = overlayTile;
@@ -425,6 +487,8 @@ export function bakeTiles(
       landRings: land.rings,
       pinnedVertices: land.pinned,
       climateVertices,
+      bathymetryVertices,
+      reefVertices: reefLevel.vertices,
       areaTiles,
       areaVertices,
       labelTiles,

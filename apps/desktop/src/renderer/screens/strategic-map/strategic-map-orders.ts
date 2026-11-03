@@ -56,6 +56,8 @@ export function pendingOrders(
         fleetId: command.divisionId,
         fromMapAreaId,
         toMapAreaId,
+        fromAreaId: command.fromAreaId,
+        toAreaId: command.toAreaId,
         destinationName: areaName.get(command.toAreaId) ?? command.toAreaId,
       },
     ];

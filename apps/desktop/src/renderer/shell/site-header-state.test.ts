@@ -6,7 +6,7 @@ import {
   formatTreasury,
   headerTitleFor,
 } from "./site-header-state.js";
-import { createPresentationFormat } from "../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../lib/presentation-format/profile.js";
 
 const FORMAT = createPresentationFormat({
   locale: "en-US",

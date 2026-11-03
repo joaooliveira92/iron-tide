@@ -11,6 +11,4 @@
 - Plan only commands the engine accepts as legal; never read `Math.random`.
 - Outcome changes move goldens: follow golden repinning.
 
-**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/ai.md), with superseded records marked.
-
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/ai test`.

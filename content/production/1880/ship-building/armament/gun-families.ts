@@ -797,4 +797,23 @@ export default collection("gunFamilies", GunFamilySchema, [
       ],
     },
   },
+  {
+    id: "gun_qf_45in_45_twin",
+    designation: "UK 4.5-inch/45 QF Mark 6 gun in Mark 6 twin mount",
+    category: "SECONDARY_GUN",
+    defaultMountType: "TURRET",
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "ticket #256. Navypedia and navweaps data; the component carries the derivations.",
+      sources: [
+        {
+          title: "navypedia.org Daring class destroyers",
+          archiveOrUrl: "https://www.navypedia.org/ships/uk/brit_dd_daring.htm",
+          section: "docs/research/e-1-1950s-gun-ships.md section 1",
+        },
+      ],
+    },
+  },
 ]);

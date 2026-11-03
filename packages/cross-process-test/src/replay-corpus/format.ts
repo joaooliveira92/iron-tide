@@ -89,6 +89,16 @@ const DeclareWarBody = Schema.Struct({
   targetNationId: Id,
 });
 
+const ProposePeaceBody = Schema.Struct({
+  type: Schema.Literal("ProposePeace"),
+  nationId: Id,
+  warId: Id,
+  term: Schema.Union([
+    Schema.Struct({ _tag: Schema.Literal("StatusQuo") }),
+    Schema.Struct({ _tag: Schema.Literal("CedeArea"), areaId: Id }),
+  ]),
+});
+
 const MoveFleetBody = Schema.Struct({
   type: Schema.Literal("MoveFleet"),
   nationId: Id,
@@ -107,6 +117,7 @@ export const ReplayCommandBodySchema = Schema.Union([
   AssignForeignStationBody,
   ClearForeignStationBody,
   DeclareWarBody,
+  ProposePeaceBody,
   MoveFleetBody,
 ]);
 

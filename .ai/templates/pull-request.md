@@ -13,7 +13,7 @@ List requirement IDs and approved interpretations.
 - Implementation
 - Tests
 - Artifacts and schemas
-- ADRs and traceability
+- Traceability
 
 ## Explicit non-goals
 

@@ -16,7 +16,7 @@ const versions = readdirSync(corpusDir, { withFileTypes: true })
   .map((entry) => entry.name)
   .sort();
 
-describe("save-compatibility corpus (ADR-0113 §5)", () => {
+describe("save-compatibility corpus", () => {
   const store = new SaveStore();
 
   it("contains a fixture for the current release version", () => {
@@ -27,12 +27,19 @@ describe("save-compatibility corpus (ADR-0113 §5)", () => {
     const dir = join(corpusDir, version);
 
     if (version === CURRENT_COMPATIBILITY_VERSION) {
-      it(`loads the released ${version} save and warns once that it predates the manifest`, () => {
+      it(`loads the released ${version} save and warns only when it predates the manifest`, () => {
         const loaded = unwrapSuccess(runExit(store.load(dir)));
+        const hasManifest = readdirSync(dir, { recursive: true }).some((entry) =>
+          String(entry).endsWith("manifest.json"),
+        );
 
         expect(loaded.state.snapshot.compatibilityVersion).toBe(CURRENT_COMPATIBILITY_VERSION);
-        expect(loaded.warnings).toHaveLength(1);
-        expect(loaded.warnings[0]!.code).toBe("PERSISTENCE_LEGACY_SAVE");
+        if (hasManifest) {
+          expect(loaded.warnings).toEqual([]);
+        } else {
+          expect(loaded.warnings).toHaveLength(1);
+          expect(loaded.warnings[0]!.code).toBe("PERSISTENCE_LEGACY_SAVE");
+        }
       });
     } else {
       it(`rejects the superseded ${version} save with the stable mismatch code`, () => {

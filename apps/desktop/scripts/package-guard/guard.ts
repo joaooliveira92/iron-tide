@@ -194,8 +194,9 @@ export function evaluatePackage(
     }
     const segments = file.path.split("/");
     if (
-      watchExtensions.has(extension(file.path)) ||
-      policy.duplicateWatchSegments.some((segment) => segments.includes(segment))
+      !policy.duplicateExemptSegments.some((segment) => segments.includes(segment)) &&
+      (watchExtensions.has(extension(file.path)) ||
+        policy.duplicateWatchSegments.some((segment) => segments.includes(segment)))
     ) {
       const key = `${file.size}:${sha256(file.read())}`;
       watched.set(key, [...(watched.get(key) ?? []), file]);

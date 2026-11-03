@@ -23,6 +23,7 @@ const shell = {
   committing: false,
   interruption: null,
   commitFailure: null,
+  revisionProjectId: null,
   reads: null,
   mode: { kind: "file", screen: "file" } as const,
   screen: "file" as const,
@@ -37,6 +38,9 @@ const shell = {
   abandonPendingTurn: vi.fn(async () => undefined),
   refreshCampaign: vi.fn(),
   selectScreen: vi.fn(),
+  reviseProject: vi.fn(),
+  clearRevision: vi.fn(),
+  setLeaveGuard: vi.fn(),
   setPrimaryAction: vi.fn(),
   goBack: vi.fn(),
   goForward: vi.fn(),
@@ -56,6 +60,11 @@ function Consumer() {
 function CurrencyConsumer() {
   const context = useActiveCampaignCurrencyContext();
   return <span data-testid="currency-context">{JSON.stringify(context)}</span>;
+}
+
+function ValueConsumer({ seen }: { readonly seen: unknown[] }) {
+  seen.push(useCampaignShellContext());
+  return null;
 }
 
 describe("CampaignShellProvider", () => {
@@ -133,5 +142,30 @@ describe("CampaignShellProvider", () => {
     unmount();
     render(<CurrencyConsumer />);
     expect(screen.getByTestId("currency-context").textContent).toBe("{}");
+  });
+
+  it("keeps the shell context value itself while no shell field moves", () => {
+    const seen: unknown[] = [];
+    vi.mocked(useCampaignShell).mockReturnValue(shell);
+    const { rerender } = render(
+      <CampaignShellProvider bridge={undefined}>
+        <ValueConsumer seen={seen} />
+      </CampaignShellProvider>,
+    );
+
+    rerender(
+      <CampaignShellProvider bridge={undefined}>
+        <ValueConsumer seen={seen} />
+      </CampaignShellProvider>,
+    );
+    expect(seen[1]).toBe(seen[0]);
+
+    vi.mocked(useCampaignShell).mockReturnValue({ ...shell, screen: "fleet" as const });
+    rerender(
+      <CampaignShellProvider bridge={undefined}>
+        <ValueConsumer seen={seen} />
+      </CampaignShellProvider>,
+    );
+    expect(seen[2]).not.toBe(seen[0]);
   });
 });

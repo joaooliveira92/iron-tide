@@ -15,7 +15,7 @@ const recorder = () => {
 
 afterEach(() => vi.restoreAllMocks());
 
-describe("renderer crash capture (ADR-0133)", () => {
+describe("renderer crash capture", () => {
   it("forwards a window error to the bridge and still logs it", () => {
     const { reports, bridge } = recorder();
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});

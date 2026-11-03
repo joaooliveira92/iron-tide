@@ -1,6 +1,6 @@
 // Tests for scripts/verify-tsgo-integration.mjs — the toolchain-matrix check and
 // the `.original` backup discovery that prove the install-time tsgo patch ran
-// (ADR-0139).
+//.
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

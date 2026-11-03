@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Same-commit golden re-pin guard (ADR-0007; precision in ADR-0136).
+// Same-commit golden re-pin guard.
 //
 // `verify-golden-hashes.cjs` proves the reference run matches `golden/hashes.json`.
 // That catches a behavioural change that moves the reference hashes, but not a
@@ -59,7 +59,7 @@ export const AUTHORITATIVE_PACKAGES = [
  * Reviewed, reasoned exemptions from the golden-repin guard: paths that cannot
  * move `golden/hashes.json` because the reference run (run-child.ts) never
  * consumes them. Each entry is either a `path` (exact file) or a `prefix` (tree).
- * Adding to this list is a gate change and must cite its evidence (ADR-0136).
+ * Adding to this list is a gate change and must cite its evidence.
  *
  * @type {{ path?: string, prefix?: string, reason: string }[]}
  */
@@ -72,17 +72,17 @@ export const REFERENCE_RUN_EXEMPTIONS = [
   {
     path: "packages/ship-design/src/dock.ts",
     reason:
-      "Dock-record derivation (ADR-0135); the reference fixture declares no naval profiles, so it is inert.",
+      "Dock-record derivation; the reference fixture declares no naval profiles, so it is inert.",
   },
   {
     path: "packages/ship-design/src/nationCompleteness.ts",
     reason:
-      "Naval-profile completeness check (ADR-0135); the reference fixture declares no naval profiles, so it is inert.",
+      "Naval-profile completeness check; the reference fixture declares no naval profiles, so it is inert.",
   },
   {
     path: "packages/ship-design/src/nationProfile.ts",
     reason:
-      "Naval-profile resolution (ADR-0135); the reference fixture declares no naval profiles, so it is inert.",
+      "Naval-profile resolution; the reference fixture declares no naval profiles, so it is inert.",
   },
   {
     path: "packages/campaign/src/state.ts",
@@ -92,17 +92,17 @@ export const REFERENCE_RUN_EXEMPTIONS = [
   {
     path: "packages/content-schema/src/naval-profile.ts",
     reason:
-      "Naval-profile schema (ADR-0135); the reference fixture declares no naval profiles, so it is never parsed.",
+      "Naval-profile schema; the reference fixture declares no naval profiles, so it is never parsed.",
   },
   {
     path: "packages/phase-engine/src/orderEligibility.ts",
     reason:
-      "Dock order eligibility (ADR-0135); the reference fixture orders no ship-building project through it.",
+      "Dock order eligibility; the reference fixture orders no ship-building project through it.",
   },
   {
     path: "packages/phase-engine/src/snapshotClone.ts",
     reason:
-      "Clones the optional dock field (ADR-0135); the reference fixture has no dock, so the clone is a no-op.",
+      "Clones the optional dock field; the reference fixture has no dock, so the clone is a no-op.",
   },
 ];
 

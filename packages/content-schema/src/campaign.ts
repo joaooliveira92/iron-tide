@@ -98,6 +98,9 @@ export const CampaignDiplomacySchema = Schema.Struct({
     Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 0, maximum: 10 })),
   ),
   nap: Schema.optional(Schema.Boolean),
+  frictionBp: Schema.optional(
+    Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 0, maximum: 10_000 })),
+  ),
   since: Schema.optional(month),
   provenance: Schema.optional(ProvenanceSchema),
 });

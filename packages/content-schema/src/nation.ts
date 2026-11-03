@@ -49,6 +49,33 @@ export const PoliticalSystemSchema = Schema.Literals([
 ]);
 export type PoliticalSystem = typeof PoliticalSystemSchema.Type;
 
+export const GOVERNMENT_TYPES = [
+  "liberal_democracy",
+  "limited_democracy",
+  "autocratic",
+  "fascist",
+  "communist",
+  "eastern",
+] as const;
+export const GovernmentTypeSchema = Schema.Literals(GOVERNMENT_TYPES);
+export type GovernmentType = typeof GovernmentTypeSchema.Type;
+
+export const NATION_TRAIT_IDS = [
+  "efficient_shipbuilding",
+  "undeveloped_shipbuilding",
+  "global_naval_power",
+  "cautious",
+  "poor_education",
+  "surprise_attack",
+  "inconsistent_naval_policy",
+  "attention_to_detail",
+  "technology_leader",
+  "hidden_faults",
+  "kamikaze",
+] as const;
+export const NationTraitSchema = Schema.Literals(NATION_TRAIT_IDS);
+export type NationTrait = typeof NationTraitSchema.Type;
+
 export const StabilityLevelSchema = Schema.Literals([
   "very_high",
   "high",
@@ -285,6 +312,9 @@ export const NationRegimeSchema = Schema.Struct({
   politicalSystem: PoliticalSystemSchema.annotate({
     description: "Specific 1880 political system",
   }),
+  governmentType: GovernmentTypeSchema.annotate({
+    description: "PROVISIONAL closed government type that gates event eligibility and weighting",
+  }),
   governmentForm: Schema.optional(Schema.String).annotate({
     description: "Deprecated — prefer politicalSystem",
   }),
@@ -377,6 +407,9 @@ export const NationSchema = Schema.Struct({
   prestige: Schema.optional(Schema.Finite),
   presentation: PresentationSchema,
   identity: IdentitySchema,
+  traits: Schema.Array(NationTraitSchema)
+    .check(Schema.isUnique())
+    .annotate({ description: "PROVISIONAL closed national trait ids; empty when none apply" }),
   regime: NationRegimeSchema,
   strategicObjectives: StrategicObjectivesSchema,
   baseResources: BaseResourcesSchema,

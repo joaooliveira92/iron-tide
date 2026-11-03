@@ -1,5 +1,5 @@
 // Tests for scripts/verify-probe-retirement.mjs: the checkable retirement criterion
-// for legacy golden probes (ADR-0246). A probe is retire-eligible only when the
+// for legacy golden probes. A probe is retire-eligible only when the
 // register cites a corpus mutation test that exists by name; every pinned probe
 // must be classified, and nothing is ever reported as retired by this check.
 import assert from "node:assert/strict";

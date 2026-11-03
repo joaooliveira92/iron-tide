@@ -45,6 +45,9 @@ const VIEW: PlayerBattleView = {
       maxHitPoints: 100,
       damageState: "CRIPPLED",
       position: [0, 0],
+      headingDeg: 90,
+      speedBp: 12_000,
+      contactConfidenceBp: null,
       gunneryAccuracy: {
         formulaId: "gunnery_accuracy",
         formulaVersion: "gunnery_accuracy_v1",

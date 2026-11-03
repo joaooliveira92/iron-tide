@@ -48,6 +48,7 @@ export interface PackagePolicy {
   readonly largeFileAllowances: readonly LargeFileAllowance[];
   readonly duplicateWatchExtensions: readonly string[];
   readonly duplicateWatchSegments: readonly string[];
+  readonly duplicateExemptSegments: readonly string[];
   readonly textExtensions: readonly string[];
   readonly textScanMaxBytes: number;
   readonly absolutePathPatterns: readonly { readonly id: string; readonly regex: string }[];
@@ -162,6 +163,10 @@ export function decodePolicy(value: unknown): PackagePolicy {
       "policy.duplicateWatchExtensions",
     ),
     duplicateWatchSegments: strings(source.duplicateWatchSegments, "policy.duplicateWatchSegments"),
+    duplicateExemptSegments: strings(
+      source.duplicateExemptSegments,
+      "policy.duplicateExemptSegments",
+    ),
     textExtensions: strings(source.textExtensions, "policy.textExtensions"),
     textScanMaxBytes: count(source.textScanMaxBytes, "policy.textScanMaxBytes"),
     absolutePathPatterns: list(source.absolutePathPatterns, "policy.absolutePathPatterns").map(

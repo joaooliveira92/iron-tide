@@ -44,6 +44,9 @@ export function shipTypeChoices(ctx: ShipContext, current: string): ShipTypeChoi
 
 export const shipTypeName = (id: ShipTypeId): string => SHIP_TYPES[id].name;
 
+export const plainShipTypeName = (category: string): string =>
+  isShipTypeId(category) ? SHIP_TYPES[category].name : category;
+
 export function shipTypeRole(category: string): string | undefined {
   return isShipTypeId(category) ? SHIP_TYPES[category].description : undefined;
 }

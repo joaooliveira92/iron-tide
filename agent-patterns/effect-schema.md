@@ -11,7 +11,7 @@ remains the final authority: `vendor/effect/src/Schema.ts`,
 ## Decode at boundaries, never assert
 
 Every untrusted input (compiled YAML, saves, IPC/event envelopes, files) is
-decoded with a strict schema before use (ADR-0102/0105). A bare `Schema.Struct`
+decoded with a strict schema before use. A bare `Schema.Struct`
 strips unknown keys by default; at a boundary reject them with
 `{ onExcessProperty: "error" }` (see
 [managing excess properties](https://effect.website/docs/v4/schema/getting-started#managing-excess-properties)).

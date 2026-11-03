@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import type { PortMark } from "../map-markers.js";
 import { pinned } from "../map-svg.js";
 
@@ -6,7 +8,7 @@ export interface PortsLayerProps {
   readonly strokeFor: (nation: string) => string;
 }
 
-export function PortsLayer({ marks, strokeFor }: PortsLayerProps) {
+export const PortsLayer = memo(function PortsLayer({ marks, strokeFor }: PortsLayerProps) {
   return (
     <>
       {marks.map((mark) => {
@@ -39,4 +41,4 @@ export function PortsLayer({ marks, strokeFor }: PortsLayerProps) {
       })}
     </>
   );
-}
+});

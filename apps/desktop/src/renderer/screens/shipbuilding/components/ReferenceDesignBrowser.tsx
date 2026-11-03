@@ -6,7 +6,7 @@ import {
 } from "@bluewave/ship-design";
 import { DeckMasterPane, paletteForIndex } from "@/components/card-deck/index.js";
 import type { DrawingBoardContent } from "../../../components/design-workspace/content.js";
-import { NationalIdentityPanel } from "../../../components/design-workspace/index.js";
+import { NationalIdentityPanel } from "../../../components/design-workspace/panels/NationalIdentityPanel.js";
 import { referenceDeck } from "../reference-deck.js";
 import { ReferenceDeckCard, referenceOptionId } from "./ReferenceDeckCard.js";
 import { ReferenceDeckDetail } from "./ReferenceDeckDetail.js";

@@ -6,6 +6,7 @@ import { buildNationStates } from "../src/nationCompilation.js";
 import { buildWorldState } from "../src/worldCompilation.js";
 import { presenceAreaIds } from "../src/presence.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import { STUB_REGIME, STUB_TRAITS } from "./stub-regime.js";
 import { readAuthoredFile } from "@bluewave/test-support";
 
 const CONTENT = resolve(import.meta.dirname, "../../../content/production/1880");
@@ -70,6 +71,28 @@ describe("buildWorldState possessions", () => {
   });
 });
 
+describe("buildWorldState area cession cost", () => {
+  it("carries an authored cession cost and leaves unpriced areas without the key", () => {
+    const world = buildWorldState(
+      {
+        areas: [
+          { id: "a", name: "A", type: "coastal", controller: "uk", cessionCost: 6 },
+          { id: "b", name: "B", type: "coastal", controller: "uk" },
+        ],
+      },
+      START,
+    );
+    expect(world.areas[0]).toEqual({
+      id: "a",
+      name: "A",
+      type: "coastal",
+      controller: "uk",
+      cessionCost: 6,
+    });
+    expect(Object.keys(world.areas[1]!)).not.toContain("cessionCost");
+  });
+});
+
 describe("buildNationStates home area", () => {
   it("carries the authored home area onto the nation state", () => {
     const pack = {
@@ -80,6 +103,8 @@ describe("buildNationStates home area", () => {
           tag: "GBR",
           isPlayable: true,
           prestige: 20,
+          traits: STUB_TRAITS,
+          regime: STUB_REGIME,
           homeArea: "eng_home_coast",
         },
       ],

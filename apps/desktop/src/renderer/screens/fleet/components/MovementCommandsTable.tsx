@@ -27,20 +27,26 @@ export function movementStatusVariant(
 
 export interface MovementCommandsTableProps {
   readonly rows: readonly MovementCommandRow[];
+  readonly compact?: boolean;
 }
 
 export const MovementCommandsTable = memo(function MovementCommandsTable({
   rows,
+  compact = false,
 }: MovementCommandsTableProps) {
   return (
     <section>
-      <div className="mb-3 flex items-center gap-2">
-        <h3 className="text-sm font-medium">Movement commands</h3>
-        <Badge variant="secondary" className="text-xs">
-          {rows.length}
-        </Badge>
-      </div>
-      {rows.length === 0 ? (
+      {!compact && (
+        <div className="mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-medium">Movement commands</h3>
+          <Badge variant="secondary" className="text-xs">
+            {rows.length}
+          </Badge>
+        </div>
+      )}
+      {rows.length === 0 && compact ? (
+        <p className="py-1 text-muted-foreground">No orders submitted this month.</p>
+      ) : rows.length === 0 ? (
         <Empty>
           <EmptyIcon />
           <EmptyTitle>No movement commands</EmptyTitle>

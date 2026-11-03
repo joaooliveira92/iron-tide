@@ -1,5 +1,6 @@
 import { CANONICAL_SCENARIO_IDS, FLEET_SIZE_IDS, RESEARCH_IDS } from "@bluewave/campaign";
 import { CANONICAL_RESEARCH_FIELD_IDS } from "@bluewave/campaign-engine";
+import { MAX_CLASS_NAME_LENGTH } from "@bluewave/ship-design";
 import { Schema } from "effect";
 import {
   boundedString,
@@ -132,6 +133,14 @@ export const DiplomacyCommandBodySchema = Schema.Union([
     warGoalsId: Schema.optional(nonEmptyString),
   }),
   Schema.Struct({ type: Schema.Literal("AcceptPeace"), warId: nonEmptyString }),
+  Schema.Struct({
+    type: Schema.Literal("ProposePeace"),
+    warId: nonEmptyString,
+    term: Schema.Union([
+      Schema.Struct({ _tag: Schema.Literal("StatusQuo") }),
+      Schema.Struct({ _tag: Schema.Literal("CedeArea"), areaId: nonEmptyString }),
+    ]),
+  }),
   Schema.Struct({
     type: Schema.Literal("FormAlliance"),
     partnerNationId: nonEmptyString,
@@ -361,6 +370,7 @@ export const WriteDrawingBoardDraftPayloadSchema = Schema.Struct({
     Schema.Struct({
       presetId: boundedString(1, 200),
       log: boundedString(1, MAX_DRAWING_BOARD_LOG_CHARS),
+      className: Schema.optional(boundedString(1, MAX_CLASS_NAME_LENGTH)),
     }),
   ),
 });

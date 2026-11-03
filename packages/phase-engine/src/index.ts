@@ -110,6 +110,7 @@ export {
 export {
   MonthPipeline,
   PHASE_ACCESS_DENIED,
+  type EventEngineContent,
   type MonthCheckpoint,
   type MonthPhase,
   type MonthPipelineNode,

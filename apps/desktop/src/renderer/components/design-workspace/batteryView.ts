@@ -8,7 +8,7 @@ import {
   type PartCatalogueEntry,
   type WorkshopView,
 } from "@bluewave/ship-design";
-import { formatCalibreInches } from "../../lib/presentation-format/index.js";
+import { formatCalibreInches } from "../../lib/presentation-format/armament.js";
 
 export interface BatteryMount {
   readonly instanceId: string;

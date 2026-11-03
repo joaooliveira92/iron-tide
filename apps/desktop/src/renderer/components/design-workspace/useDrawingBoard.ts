@@ -60,7 +60,10 @@ export function useDrawingBoard(fixedMonth: string | null = null): {
   actions: DrawingBoardActions;
 } {
   const content = useMemo(() => loadDrawingBoardContent(), []);
-  const initial = selectInitialReference(content.references, fixedMonth) ?? content.references[0]!;
+  const initial = useMemo(
+    () => selectInitialReference(content.references, fixedMonth) ?? content.references[0]!,
+    [content, fixedMonth],
+  );
   const [preset, setPreset] = useState<ReferenceDesign>(initial);
   const [log, setLog] = useState<EditLog>(() => newLog(initial.draft));
   const [chosenMonth, setMonthState] = useState(content.references[0]!.month);

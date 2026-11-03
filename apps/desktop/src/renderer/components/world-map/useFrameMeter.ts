@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 
-import { formatFixed } from "../../lib/presentation-format/index.js";
+import { formatFixed } from "../../lib/presentation-format/format.js";
 
 export interface FrameMeter {
   readonly sample: () => void;

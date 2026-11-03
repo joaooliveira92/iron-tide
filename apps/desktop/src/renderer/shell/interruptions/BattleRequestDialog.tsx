@@ -1,4 +1,12 @@
 import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog.js";
 import { resolveMessage } from "../../content/uiCatalogue.js";
 
 export type BattleChoice = "accept" | "decline" | "delegate";
@@ -13,21 +21,17 @@ export function BattleRequestDialog({
   readonly onAbandon: () => void;
 }) {
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={resolveMessage(request.titleKey, request.interpolation)}
-      data-testid="battle-dialog"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-    >
-      <div className="w-full max-w-md rounded-lg border border-border bg-background p-4 shadow-xl">
-        <h2 className="text-sm font-semibold">
-          {resolveMessage(request.titleKey, request.interpolation)}
-        </h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {resolveMessage(request.bodyKey, request.interpolation)}
-        </p>
-        <div className="mt-3 flex gap-2">
+    <AlertDialog open onOpenChange={() => undefined}>
+      <AlertDialogContent data-testid="battle-dialog">
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {resolveMessage(request.titleKey, request.interpolation)}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {resolveMessage(request.bodyKey, request.interpolation)}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="flex gap-2">
           <button
             type="button"
             data-testid="battle-accept"
@@ -53,15 +57,17 @@ export function BattleRequestDialog({
             {resolveMessage("ui.battle.delegate")}
           </button>
         </div>
-        <button
-          type="button"
-          data-testid="battle-abandon"
-          className="mt-3 text-xs text-muted-foreground hover:text-foreground"
-          onClick={onAbandon}
-        >
-          {resolveMessage("ui.interruption.abandon")}
-        </button>
-      </div>
-    </div>
+        <AlertDialogFooter>
+          <button
+            type="button"
+            data-testid="battle-abandon"
+            className="text-xs text-muted-foreground hover:text-foreground"
+            onClick={onAbandon}
+          >
+            {resolveMessage("ui.interruption.abandon")}
+          </button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

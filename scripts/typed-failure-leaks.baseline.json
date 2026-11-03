@@ -10,5 +10,29 @@
   },
   "packages/campaign/src/researchSpeed.ts": {
     "5d7ab18e7a9ddbae329d29275cc70a7461c09b3f823b3df1778da3c531022e70": 1
+  },
+  "packages/persistence/src/fileDecode.ts": {
+    "11ec0312bd31c6a6a6bc2a0e0a5e7d4adb8b7bb07a994bb1d50146525666fb24": 1
+  },
+  "packages/persistence/src/manifest.ts": {
+    "a950ce0a6ec385f57600672f52a0d414dbd815716a0da364be6c286fd1a73f72": 1
+  },
+  "packages/persistence/src/recovery.ts": {
+    "438d6bddd30109596764dfbda4c7ba049f2695fab699905febbeab1dd40ec133": 1
+  },
+  "packages/persistence/src/saveMigration.ts": {
+    "3a3af5c47986fbb2b154a1598c46dd7fb3d2740585389799d3f230a31d44c96f": 1,
+    "f0947021b3a455bb69a40285b6846acb64c1855cd5ec048b4b6c0fe1b7314f5d": 1
+  },
+  "packages/persistence/src/store.ts": {
+    "4905d8d497a4697275935bc894dd7a8d277f329a86acfd3989065499a0123330": 1,
+    "4f691b7aa8e09a24e305029e520096eeb4648bab19e9183832bee681635839dd": 1,
+    "553bbd631d981464b04dd2aae779b923acd57bf2bda857977103da7bac79e12c": 1,
+    "6f5486ef36a84a13e616a3bc5eaefd90e0fa2bdf1e32a21f737cf482b5b07a0f": 1,
+    "8a2cb5a5fc78e8b1a0ba980e83c89e8ad4812424abebb073a48fdd77fc60c451": 1,
+    "8ea563a91a2891d8352a91885ef999a47680f2084fd7c14bae1f8253191e514c": 1,
+    "b764ba3d490e781ea8d7a3bb34a92aa089b9611cc8bd5f30dab64145b42956b3": 1,
+    "cf2089f759c8870822885d0b5d4eda1615c96215a2633abb166121230b82ff52": 1,
+    "e06b6330f15268fa01ff70971fca2ca4320ecda735e238180df752fe9f0f1a71": 1
   }
 }

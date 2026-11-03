@@ -1,7 +1,7 @@
 import { type KeyboardEvent, useRef, useState } from "react";
 import type { DesignDraft } from "@bluewave/ship-design";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../../ui/hover-card.js";
-import { sameEntity, type ShipEntity } from "../../selection/store.js";
+import { entityKey, sameEntity, type ShipEntity } from "../../selection/store.js";
 import { useSelectionStore, useShipSelection } from "../../selection/useShipSelection.js";
 import { AnatomyCardContent } from "./anatomy/AnatomyCardContent.js";
 import type { AnatomyShip } from "./anatomy/ship-anatomy.js";
@@ -28,14 +28,14 @@ export function FittingTargets({
   draft,
   targets,
   disabled,
-  warns,
+  warned,
   anatomy,
 }: {
   readonly frame: PlanFrame;
   readonly draft: DesignDraft;
   readonly targets: ReadonlyMap<string, FittingTarget>;
   readonly disabled: boolean;
-  readonly warns: (instanceId: string) => boolean;
+  readonly warned: ReadonlySet<string>;
   readonly anatomy?: AnatomyViews;
 }) {
   const store = useSelectionStore();
@@ -145,7 +145,9 @@ export function FittingTargets({
                     strokeWidth={STROKE.guide}
                     {...NON_SCALING}
                   />
-                  {warns(p.instanceId) && <WarningGlyph x={x + HIT_R + 6} y={y - HIT_R - 4} />}
+                  {warned.has(entityKey(entity)) && (
+                    <WarningGlyph x={x + HIT_R + 6} y={y - HIT_R - 4} />
+                  )}
                 </g>
               )}
             </HoverCardTrigger>

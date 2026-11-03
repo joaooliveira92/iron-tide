@@ -17,7 +17,7 @@ Create the smallest production-quality foundation that proves strict package bou
 - Use strict TypeScript and declared package exports.
 - Pin runtime and package-manager policy.
 - Establish formatting, linting, type checking, tests, builds, dependency-boundary checks, secret scanning, and CI entry points.
-- Create the initial ADRs and requirement index.
+- Create the requirement index.
 - Implement minimal connected content schemas and a manifest-driven content compiler.
 - Reject unknown fields, duplicate IDs, unsafe YAML, undeclared authoritative files, missing references, invalid semantic combinations, unsafe paths, excessive size, and excessive nesting through stable diagnostics.
 - Implement deterministic safe-integer primitives, explicit rounding, canonical serialization, and SHA-256 envelopes.

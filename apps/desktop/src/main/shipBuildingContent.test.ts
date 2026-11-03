@@ -77,7 +77,7 @@ describe("ship-building runtime content (ADR-0093 Step 3, ADR-0123)", () => {
   });
 });
 
-describe("S-5 presence ruleset section reaching ship-building content (ADR-0242)", () => {
+describe("S-5 presence ruleset section reaching ship-building content", () => {
   const fixture = {
     colonialServiceDisplacementBp: 137,
     requiredTonsPerPossessionWeight: 100,

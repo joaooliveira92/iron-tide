@@ -315,6 +315,9 @@ const F = {
     "id",
     "name",
     "tag",
+    "governmentType",
+    "traits",
+    "eventHistory",
     "treasury",
     "income",
     "expenses",
@@ -350,11 +353,12 @@ const F = {
     "relation",
     "tension",
     "nap",
+    "frictionBp",
     "since",
   ),
   PoliticalState: fields<PoliticalState>()("relations", "shells"),
   IntelligenceState: fields<IntelligenceState>()("shells"),
-  AreaData: fields<AreaData>()("id", "name", "type", "controller"),
+  AreaData: fields<AreaData>()("id", "name", "type", "controller", "cessionCost"),
   RouteData: fields<RouteData>()("id", "from", "to", "type", "distance"),
   PortData: fields<PortData>()("id", "name", "areaId", "nationId", "level"),
   PossessionData: fields<PossessionData>()("id", "nationId", "areaId"),
@@ -699,6 +703,17 @@ const cloneForeignContractImpoundment = (
 ): ForeignContractImpoundmentRecord => recordClone(r, F.ForeignContractImpoundmentRecord);
 const cloneNation = (n: NationState): NationState =>
   recordClone(n, F.NationState, {
+    traits: (v) => (v === undefined ? undefined : [...(v as NonNullable<NationState["traits"]>)]),
+    eventHistory: (v) =>
+      v === undefined
+        ? undefined
+        : {
+            fired: (v as NonNullable<NationState["eventHistory"]>).fired.map((r) => ({ ...r })),
+            flags: [...(v as NonNullable<NationState["eventHistory"]>).flags],
+            ...((v as NonNullable<NationState["eventHistory"]>).pending === undefined
+              ? {}
+              : { pending: { ...(v as NonNullable<NationState["eventHistory"]>).pending! } }),
+          },
     fleets: (v) => (v as FleetState[]).map(cloneFleet),
     divisions: (v) => (v as PermanentDivision[]).map(cloneDivision),
     officers: (v) => (v === undefined ? undefined : (v as Officer[]).map((o) => ({ ...o }))),

@@ -108,6 +108,8 @@ describe("pendingOrders", () => {
         fleetId: "home-fleet",
         fromMapAreaId: "area_north_sea",
         toMapAreaId: "area_western_approaches",
+        fromAreaId: command.fromAreaId,
+        toAreaId: command.toAreaId,
         destinationName: "Western Approaches",
       },
     ]);

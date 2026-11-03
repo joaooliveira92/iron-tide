@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { formatCount } from "../lib/presentation-format/index.js";
+import { formatCount } from "../lib/presentation-format/format.js";
 import { formatMonth, formatOptional } from "./preTurnReviewFormat.js";
 
 describe("preTurnReviewFormat", () => {

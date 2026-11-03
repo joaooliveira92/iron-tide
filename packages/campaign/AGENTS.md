@@ -11,7 +11,6 @@
 - Authoritative state-shape changes carry a compatibility-version bump and a schema parity test from existing fixtures.
 - Vocabulary lives in `GLOSSARY.md` here and in `CONTEXT.md`.
 - Compile-time repair is explicit, narrow and logged.
-
-**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/campaign.md), with superseded records marked.
+- Turn identity is fixed from pre-execution inputs before any interruption is answered; campaign reopen goes through a main-process allow-list with canonical-path approval.
 
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/campaign test`.

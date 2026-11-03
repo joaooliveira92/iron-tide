@@ -31,7 +31,7 @@ describe("save integrity manifest", () => {
   afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
   const saved = () => {
-    store.save(minimalCampaignState(), dir, undefined, { monthInput: { month: 1 } });
+    store.save(minimalCampaignState(), dir, { monthInput: { month: 1 } });
     return store.getActiveSaveId(dir)!;
   };
 

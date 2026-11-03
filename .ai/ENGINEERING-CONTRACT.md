@@ -71,11 +71,11 @@ Use hierarchical, domain-separated random decisions. Do not expose a generic glo
 
 ## Content
 
-- Author domain content as declarative TypeScript and compile it to canonical JSON artifacts; YAML is permitted only for internationalization catalogues and the infrastructure files ADR-0334 lists (ADR-0334).
+- Author domain content as declarative TypeScript and compile it to canonical JSON artifacts; YAML is permitted only for internationalization catalogues and the externally mandated infrastructure files.
 - A content module is data, not application code: loaded at the IO boundary, decoded with a strict schema, never executed inside a stage.
 - Use strict boundary schemas and reject unknown fields by default.
-- Decode untrusted boundaries and serialization contracts with Effect `Schema` (Zod was replaced, ADR-0102/0105). Decode, never assert: a boundary `JSON.parse(...) as T` cast is rejected by `scripts/assert-boundary-decode.mjs` in the scopes it guards. Keep semantic rules and aggregate invariants in explicit domain code.
-- Content values embed no shell, database scripts or free-form executable text; the only executable surface is the gate-restricted authoring layer (ADR-0334).
+- Decode untrusted boundaries and serialization contracts with Effect `Schema` (Zod was replaced). Decode, never assert: a boundary `JSON.parse(...) as T` cast is rejected by `scripts/assert-boundary-decode.mjs` in the scopes it guards. Keep semantic rules and aggregate invariants in explicit domain code.
+- Content values embed no shell, database scripts or free-form executable text; the only executable surface is the gate-restricted authoring layer.
 - The pack manifest explicitly declares roots, collections, dependencies, versions, localization, and fixture or production classification.
 - Namespaced editor metadata cannot affect mechanics unless promoted into a versioned authoritative contract.
 
@@ -99,7 +99,7 @@ Use hierarchical, domain-separated random decisions. Do not expose a generic glo
 - Use explicit `main`, `preload`, and `renderer` boundaries.
 - Renderer code must not import authoritative engine packages or filesystem capabilities.
 - Use context isolation, disable renderer Node integration, sandbox where compatible, and expose narrow capability-specific preload methods.
-- Decode IPC requests and responses at the boundary with a strict Effect `Schema`; never trust a `JSON.parse(...) as T` cast (ADR-0102/0105, `scripts/assert-boundary-decode.mjs`).
+- Decode IPC requests and responses at the boundary with a strict Effect `Schema`; never trust a `JSON.parse(...) as T` cast (`scripts/assert-boundary-decode.mjs`).
 - Do not expose unrestricted IPC, arbitrary channels, shell execution, broad filesystem access, remote code, or raw internal errors.
 - Use restrictive navigation, popup, and Content Security Policy controls.
 
@@ -133,15 +133,11 @@ A build alone is not evidence of authoritative correctness. For relevant work, p
 - cancellation cleans up safely;
 - canonical output is independent of OS ordering, locale, and timezone.
 
-## ADR threshold
-
-Create an ADR for decisions that materially constrain architecture, determinism, compatibility, persistence, security, or replacement cost. This includes package boundaries, numeric representation, RNG, canonicalization, hashing, persistence, command/event models, formula registry, migrations, Electron boundaries, major production dependencies, and approved deviations from the canonical design.
-
 ## Definition of done (machine-checked)
 
 A change is done only when, on the exact commit:
 
-- `pnpm preflight` is green — git state, single-copy `effect`, dependency policy, docs links/anchors/ADR index/deferrals/amendments, doc budgets, and no new `as unknown` casts (the gate DAG in `vite.config.ts` `run.tasks`, ADR-0164);
+- `pnpm preflight` is green — git state, single-copy `effect`, dependency policy, docs links/anchors, doc budgets, and no new `as unknown` casts (the gate DAG in `vite.config.ts` `run.tasks`);
 - `pnpm test:scripts` is green (the gate fixtures);
 - `pnpm check` is green end-to-end (format, lint, `lint:effect`, licences, typecheck, build, tests, balance reports, desktop E2E);
 - subjects are Conventional Commits, the working tree is clean, and the ticket's acceptance criteria are met.
@@ -154,7 +150,6 @@ Every completed increment includes:
 
 - implementation and focused tests;
 - traceability updates;
-- ADRs when required;
 - exact validation commands and results;
 - deterministic evidence where applicable;
 - security and compatibility notes;

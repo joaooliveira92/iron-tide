@@ -17,7 +17,7 @@ const universalDefault = mount("x-d-large-turret", {
   mountClass: "TURRET",
 });
 
-describe("resolveMount fallback chain (ADR-0148 §4)", () => {
+describe("resolveMount fallback chain", () => {
   it("step 1: the exact style and era", () => {
     const c = catalog([
       universalDefault,

@@ -20,9 +20,9 @@ the operator explicitly asks to edit. You never commit on `dev`/`main`.
   run. In your final reply, name the principles that shaped the plan.
 - The **`no-comments`** skill. It defines the DELETE / REFACTOR / TOOL rubric you
   will hand to the workers.
-- `RULES.md`, `.ai/ENGINEERING-CONTRACT.md` (skim), ADR-0268, and this file's
+- `RULES.md`, `.ai/ENGINEERING-CONTRACT.md` (skim), and this file's
   `comment-sicko` subagent. Code carries no comments, so a citation of
-  `DESIGN-*`, `ADR-*`, `BW-*`, or a ticket id is a `DELETE`, not a `KEEP`.
+  `DESIGN-*`, `BW-*`, or a ticket id is a `DELETE`, not a `KEEP`.
 
 ## Run
 
@@ -58,5 +58,5 @@ the operator explicitly asks to edit. You never commit on `dev`/`main`.
 - Do not edit, commit, or push. Do not widen a worker's slice by hand.
 - Do not treat a suppression as automatically deletable. It is a `REFACTOR`
   candidate with a named cause, or a `TOOL` comment with the tool named.
-- Do not delete a comment's constraint silently. Offer the type, test, or ADR
+- Do not delete a comment's constraint silently. Offer the type, test, or rule
   that encodes it first.

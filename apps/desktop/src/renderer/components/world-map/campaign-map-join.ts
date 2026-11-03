@@ -1,6 +1,8 @@
 import type { WorldMapView } from "@bluewave/campaign-engine";
 import { fixtureAreaId } from "../../content/presentationContent.js";
+import { areaAnchor, lanePath, portAnchor, type LonLat } from "./campaign-anchors.js";
 import { AREAS_BY_ID, type AreaId, type NationId } from "./map-geometry.js";
+import type { MapPendingOrder } from "./map-orders.js";
 
 export interface LiveWorldMapOverlay {
   readonly ownership: ReadonlyMap<AreaId, NationId | null>;
@@ -10,6 +12,7 @@ export interface LiveWorldMapOverlay {
     readonly area: AreaId;
     readonly nation: NationId;
     readonly level: number;
+    readonly anchor?: LonLat | null;
   }[];
   readonly fleets: readonly {
     readonly id: string;
@@ -17,9 +20,11 @@ export interface LiveWorldMapOverlay {
     readonly area: AreaId;
     readonly nation: NationId;
     readonly ships: number;
+    readonly anchor?: LonLat | null;
   }[];
   readonly campaignAreas: readonly CampaignAreaEntry[];
   readonly lanes: readonly CampaignLane[] | null;
+  readonly seaLanes?: readonly CampaignSeaLane[];
   readonly playerNationId: string | null;
   readonly source: "campaign" | "none";
 }
@@ -27,6 +32,13 @@ export interface LiveWorldMapOverlay {
 export interface CampaignLane {
   readonly a: AreaId;
   readonly b: AreaId;
+}
+
+export interface CampaignSeaLane {
+  readonly id: string;
+  readonly from: string;
+  readonly to: string;
+  readonly path: readonly LonLat[];
 }
 
 export interface CampaignAreaEntry {
@@ -54,6 +66,7 @@ export function joinWorldMap(world: WorldMapView): LiveWorldMapOverlay {
         area: fixture,
         nation: port.nationId,
         level: port.level,
+        anchor: portAnchor(port.id, port.areaId),
       };
     })
     .filter((port): port is NonNullable<typeof port> => port !== null);
@@ -68,6 +81,7 @@ export function joinWorldMap(world: WorldMapView): LiveWorldMapOverlay {
         area: fixture,
         nation: fleet.nationId,
         ships: fleet.shipCount,
+        anchor: areaAnchor(fleet.areaId),
       };
     })
     .filter((fleet): fleet is NonNullable<typeof fleet> => fleet !== null);
@@ -94,12 +108,19 @@ export function joinWorldMap(world: WorldMapView): LiveWorldMapOverlay {
     .sort(([x], [y]) => (x < y ? -1 : x > y ? 1 : 0))
     .map(([, lane]) => lane);
 
+  const seaLanes = world.routes.flatMap<CampaignSeaLane>((route) => {
+    if (route.type !== "sea") return [];
+    const path = lanePath(route.id, route.from, route.to);
+    return path === null ? [] : [{ id: route.id, from: route.from, to: route.to, path }];
+  });
+
   return {
     ownership,
     ports,
     fleets,
     campaignAreas,
     lanes,
+    seaLanes,
     playerNationId: null,
     source: "campaign",
   };
@@ -111,6 +132,7 @@ export const EMPTY_LIVE_OVERLAY: LiveWorldMapOverlay = {
   fleets: [],
   campaignAreas: [],
   lanes: null,
+  seaLanes: [],
   playerNationId: null,
   source: "none",
 };
@@ -119,8 +141,32 @@ export function fixtureAnchor(area: AreaId): readonly [number, number] | null {
   return AREAS_BY_ID.get(area)?.label ?? null;
 }
 
+export function orderLonLatPath(
+  overlay: Pick<LiveWorldMapOverlay, "seaLanes">,
+  order: Pick<MapPendingOrder, "fromAreaId" | "toAreaId" | "fromMapAreaId" | "toMapAreaId">,
+): readonly LonLat[] | null {
+  if (order.fromAreaId !== undefined && order.toAreaId !== undefined) {
+    const lane = (overlay.seaLanes ?? []).find(
+      (candidate) =>
+        (candidate.from === order.fromAreaId && candidate.to === order.toAreaId) ||
+        (candidate.from === order.toAreaId && candidate.to === order.fromAreaId),
+    );
+    if (lane !== undefined) {
+      return lane.from === order.fromAreaId ? lane.path : [...lane.path].reverse();
+    }
+    const from = areaAnchor(order.fromAreaId);
+    const to = areaAnchor(order.toAreaId);
+    if (from !== null && to !== null) return [from, to];
+  }
+  const from = fixtureAnchor(order.fromMapAreaId);
+  const to = fixtureAnchor(order.toMapAreaId);
+  return from === null || to === null ? null : [from, to];
+}
+
 export function homeFocusPoint(campaignAreaId: string | null): readonly [number, number] | null {
   if (campaignAreaId === null) return null;
+  const anchor = areaAnchor(campaignAreaId);
+  if (anchor !== null) return anchor;
   const fixture = fixtureAreaId(campaignAreaId);
   return fixture === null ? null : fixtureAnchor(fixture);
 }

@@ -11,6 +11,4 @@
 - Nothing it produces may enter authoritative state or hashes.
 - The generated catalog must match `content/ship-visual/parts.yaml`.
 
-**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/ship-visual.md), with superseded records marked.
-
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/ship-visual test`.

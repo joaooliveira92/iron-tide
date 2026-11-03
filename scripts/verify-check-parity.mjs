@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// CI <-> `pnpm check` parity gate (ADR-0107, ADR-0140). Every step `pnpm check`
+// CI <-> `pnpm check` parity gate. Every step `pnpm check`
 // runs must also be invoked by some `.github/workflows/*.yml`, or be listed in
 // the inline ALLOWLIST below with the workflow and raw command that covers it.
 //
@@ -28,6 +28,8 @@ export const ALLOWLIST = {
     "preflight gate:reachability-ledger runs `node scripts/verify-reachability-ledger.mjs` — same command as pnpm check:reachability-ledger, so the check chain is always covered",
   "check:explanation-coverage":
     "preflight gate:explanation-coverage runs `node scripts/verify-explanation-coverage.mjs` — same command as pnpm check:explanation-coverage, so the check chain is always covered",
+  "check:ui-acceptance-map":
+    "preflight gate:ui-acceptance-map runs `node scripts/verify-ui-acceptance-map.mjs` — same command as pnpm check:ui-acceptance-map, so the check chain is always covered",
 };
 
 /**

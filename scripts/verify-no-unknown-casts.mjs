@@ -217,7 +217,7 @@ function writeBaseline(repoRoot, baseline) {
  * True when the run should treat retired baseline entries as fatal. CI is the
  * authority on the committed tree, so it is strict; a local run only warns,
  * because a concurrent editor retiring casts elsewhere must not block an
- * unrelated commit (ADR-0107). `--strict` opts a local run in.
+ * unrelated commit. `--strict` opts a local run in.
  * @returns {boolean}
  */
 export function isStrictEnvironment(env = process.env) {

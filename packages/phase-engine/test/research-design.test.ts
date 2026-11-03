@@ -490,7 +490,7 @@ describe("B10b design acceptance (criteria 12-13)", () => {
   });
 });
 
-describe("SetBudgetAllocation (ADR-0060)", () => {
+describe("SetBudgetAllocation", () => {
   const techs = () => [
     { techId: "basic_hull", investedPoints: SafeInt(0), completed: false },
     { techId: "basic_steam", investedPoints: SafeInt(0), completed: false },

@@ -1,4 +1,5 @@
-import { formatCount, type PresentationFormat } from "../../lib/presentation-format/index.js";
+import { formatCount } from "../../lib/presentation-format/format.js";
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 
 export function plural(
   n: number,

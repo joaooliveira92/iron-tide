@@ -7,6 +7,7 @@ import type {
   NumberScalePreference,
 } from "../../../shared/preferences-contract.js";
 import { formatNumber } from "./format.js";
+import { cachedNumberFormat } from "./intl-cache.js";
 import type { NationalCurrencyConfiguration } from "./national-currency.js";
 
 export const NAVAL_CREDITS_LABEL = "NC";
@@ -81,7 +82,7 @@ function renderNationalHistorical(
 ): string {
   const amount = applyNationalCurrencyScale(value, config);
   const negative = amount < 0;
-  const body = new Intl.NumberFormat(options.locale, {
+  const body = cachedNumberFormat(options.locale, {
     useGrouping: config.grouping,
     minimumFractionDigits: config.decimals,
     maximumFractionDigits: config.decimals,

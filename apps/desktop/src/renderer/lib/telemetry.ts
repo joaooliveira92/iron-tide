@@ -1,5 +1,7 @@
 /// <reference types="vite-plus/client" />
 
+import { createLogStore, isRecord, type LogStore } from "./versioned-log-store.js";
+
 export interface WideTelemetryEvent {
   readonly action: string;
   readonly timestamp: string;
@@ -12,33 +14,29 @@ export interface WideTelemetryEvent {
 
 export const STORAGE_KEY = "bluewave-telemetry-logs";
 const MAX_LOGS = 100;
-let cachedLogs: WideTelemetryEvent[] | null = null;
-let persistenceScheduled = false;
-function readLogs(): WideTelemetryEvent[] {
-  if (cachedLogs !== null) return cachedLogs;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    cachedLogs = raw ? (JSON.parse(raw) as WideTelemetryEvent[]) : [];
-  } catch {
-    cachedLogs = [];
-  }
-  return cachedLogs;
+const MAX_LOG_CHARS = 100_000;
+
+function isWideTelemetryEvent(value: unknown): value is WideTelemetryEvent {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.action === "string" &&
+    typeof value.timestamp === "string" &&
+    typeof value.sessionId === "string" &&
+    typeof value.duration_ms === "number" &&
+    (value.outcome === "success" || value.outcome === "rejected") &&
+    Array.isArray(value.diagnostics) &&
+    value.diagnostics.every((diagnostic) => typeof diagnostic === "string") &&
+    (value.payload === undefined || isRecord(value.payload))
+  );
 }
-function schedulePersistence(): void {
-  if (persistenceScheduled) return;
-  persistenceScheduled = true;
-  const persist = () => {
-    persistenceScheduled = false;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cachedLogs ?? []));
-    } catch (error) {
-      console.error("Failed to save telemetry event", error);
-    }
-  };
-  const requestIdleCallback = (window as Partial<typeof window>).requestIdleCallback;
-  if (requestIdleCallback) requestIdleCallback(persist);
-  else window.setTimeout(persist, 0);
-}
+
+const logStore: LogStore<WideTelemetryEvent> = createLogStore<WideTelemetryEvent>({
+  storageKey: STORAGE_KEY,
+  maxEntries: MAX_LOGS,
+  maxChars: MAX_LOG_CHARS,
+  isEntry: isWideTelemetryEvent,
+});
+
 export function emitWideEvent(
   action: string,
   sessionId: string,
@@ -56,10 +54,15 @@ export function emitWideEvent(
     diagnostics,
     ...(payload !== undefined ? { payload } : {}),
   };
-  const logs = readLogs();
-  logs.unshift(event);
-  cachedLogs = logs.slice(0, MAX_LOGS);
-  schedulePersistence();
+  logStore.prepend(event);
   if (import.meta.env.DEV) console.debug("[WIDE_EVENT]", event);
   return event;
+}
+
+export function getRecordedWideEvents(): readonly WideTelemetryEvent[] {
+  return logStore.entries();
+}
+
+export function clearWideEvents(): void {
+  logStore.clear();
 }

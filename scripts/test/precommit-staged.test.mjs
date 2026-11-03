@@ -3,7 +3,7 @@
 // PATH lacks the package manager (but has node), so the check must resolve the
 // formatter directly (the workspace vite-plus entry point) and never depend on
 // `pnpm` being on PATH, nor reject a valid commit with a misleading "not
-// formatted" error when the formatter cannot be found (ADR-0107).
+// formatted" error when the formatter cannot be found.
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";

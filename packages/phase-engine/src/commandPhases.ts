@@ -3,6 +3,7 @@ import { researchPriorityAllocation } from "@bluewave/ship-design";
 import { TENSION_ALLIANCE, TENSION_PEACE } from "@bluewave/campaign";
 import {
   type AcceptPeaceCommand,
+  type ProposePeaceCommand,
   type AssignOfficerCommand,
   type AuthorizeDockExpansionCommand,
   type BreakAllianceCommand,
@@ -45,6 +46,7 @@ import {
 } from "./commands.js";
 import {
   applyAcceptPeace,
+  applyProposePeace,
   applyDeclareBlockade,
   applyDeclareWar,
   applySetNap,
@@ -175,6 +177,21 @@ function applyDiplomacyCommand(ctx: PhaseContext, body: CommandBody): boolean {
       ctx.snapshot.current,
       body as DeclareWarCommand,
       campaignMonth,
+    );
+    return true;
+  }
+
+  if (body["type"] === "ProposePeace") {
+    ctx.snapshot.current = applyProposePeace(
+      ctx.snapshot.current,
+      body as ProposePeaceCommand,
+      campaignMonth,
+      {
+        nextSeq: () => ctx.nextSeq(),
+        append: (event) => ctx.eventLedger.append(event),
+        reject: (code, message) =>
+          ctx.collector.addError(code, message, { stage: "command-collection" }),
+      },
     );
     return true;
   }
@@ -454,7 +471,7 @@ export const commandCollectionPhase: MonthPhase = {
   name: "Command Collection",
   permissions: {
     reads: "all",
-    writes: ["nations", "wars", "politics", "designs", "designFamilies"],
+    writes: ["nations", "wars", "politics", "world", "designs", "designFamilies"],
     rng: false,
   },
   run: runCommandCollectionPhase,

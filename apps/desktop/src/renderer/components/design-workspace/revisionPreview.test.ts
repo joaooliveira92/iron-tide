@@ -77,7 +77,7 @@ describe("revision preview", () => {
   });
 });
 
-describe("progress read from work packages (ADR-0077)", () => {
+describe("progress read from work packages", () => {
   const pkg = (
     id: string,
     kind: string,

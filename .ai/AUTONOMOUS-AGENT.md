@@ -13,7 +13,7 @@ Before editing:
 1. Inspect the repository, Git status, branches, remotes, package manager, runtime, and available tooling.
 2. Read `README.md`.
 3. Read `.ai/ENGINEERING-CONTRACT.md`.
-4. Read `.ai/REQUIREMENTS.md` and applicable ADRs.
+4. Read `.ai/REQUIREMENTS.md` and the package's `AGENTS.md`.
 5. Read the current approved milestone brief.
 6. Inspect nearby code, tests, package exports, and CI rather than assuming they exist.
 
@@ -27,16 +27,15 @@ orchestrator validation gate). The loop below is what the pipeline must deliver
 at the repository level:
 
 1. Establish the actual baseline and record pre-existing failures.
-2. Map milestone acceptance criteria to requirement IDs and concrete tests.
-3. Produce a short implementation plan ordered by dependency.
+2. Map the task brief's acceptance criteria to requirement IDs and concrete tests.
+3. State the simplest viable solution, then a short plan ordered by dependency.
 4. Work in the smallest coherent increments.
 5. Run focused validation after each increment.
 6. Run the full mandated validation before delivery.
 7. Perform a secondary consistency check of artifacts, hashes, Git state, and reports.
 8. Create small Conventional Commits on a feature branch.
-9. Push and open a pull request only if credentials and tooling are available.
-10. Never self-merge a release PR into `main`; a checks-green feature PR into
-    `dev` is the delivery path (ADR-0165).
+9. Push and open a pull request only if the brief allows it and tooling is available.
+10. Merge into `dev` only under the brief's merge authority; never into `main`.
 
 ## Autonomous authority
 
@@ -59,12 +58,12 @@ Stop and write `.ai/templates/decision-request.md` when:
 - a dependency creates a material license or security concern;
 - determinism cannot be demonstrated or a golden hash changes without an understood authoritative cause.
 
-Do not stop for routine local design choices. Record materially constraining choices as ADRs.
+Do not stop for routine local design choices. Put the rule in a gate, type or test, or in `RULES.md`.
 
 ## Git policy
 
 - Create or use a dedicated feature branch in a dedicated worktree; never commit
-  on `dev`/`main` (ADR-0165).
+  on `dev`/`main`.
 - Do not commit to a protected branch.
 - Do not force-push or rewrite history.
 - Never commit secrets, `.env` files, stores, caches, generated temporary files, or machine-specific settings.
@@ -77,4 +76,4 @@ Diagnose before editing. Do not delete, skip, loosen, broadly rewrite, or blindl
 
 ## Delivery response
 
-Use `.ai/templates/validation-report.md`. Include exact commands and observed results, not invented summaries. Provide the commit hash or a suggested Conventional Commit if committing is unavailable. State clearly whether push and pull-request creation occurred.
+Use `.ai/templates/validation-report.md`. Include exact commands and observed results, not invented summaries. Mark each claim observed or hypothesis, and give the rollback. Provide the commit hash or a suggested Conventional Commit if committing is unavailable. State clearly whether push and pull-request creation occurred.

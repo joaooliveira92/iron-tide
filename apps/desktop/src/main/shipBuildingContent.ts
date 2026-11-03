@@ -1,10 +1,13 @@
 import { hashWithContext } from "@bluewave/deterministic";
+import type { EventEngineContent } from "@bluewave/phase-engine";
 import {
   battleOffersFromRulesets,
+  eventResolutionFromRulesets,
   fleetManagementFromRulesets,
   gunneryFromRulesets,
   missilesFromRulesets,
   presenceFromRulesets,
+  tensionDriftFromRulesets,
   type ShipBuildingCatalogue,
 } from "@bluewave/content-compiler";
 import {
@@ -120,6 +123,47 @@ export function loadMissilesRules(): MissilesRules | undefined {
   const { bundle } = readContentArtifact(resolveGeneratedContentDir());
   missilesRules = { rules: missilesFromRulesets(bundle.rulesets) };
   return missilesRules.rules;
+}
+
+type TensionDriftRules = Extract<
+  NonNullable<ReturnType<typeof tensionDriftFromRulesets>>,
+  { readonly ok: true }
+>["value"];
+
+let tensionDrift: { readonly rules: TensionDriftRules | undefined } | null = null;
+
+export function loadTensionDriftRules(): TensionDriftRules | undefined {
+  if (tensionDrift !== null) return tensionDrift.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const decoded = tensionDriftFromRulesets(bundle.rulesets);
+  if (decoded !== undefined && !decoded.ok)
+    throw new ContentArtifactError(
+      "CONTENT_ARTIFACT_INVALID",
+      `ruleset tensionDrift section is invalid at '${decoded.field}': ${decoded.message}`,
+    );
+  tensionDrift = { rules: decoded?.value };
+  return tensionDrift.rules;
+}
+
+let eventContent: { readonly content: EventEngineContent | undefined } | null = null;
+
+export function loadEventContent(): EventEngineContent | undefined {
+  if (eventContent !== null) return eventContent.content;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const decoded = eventResolutionFromRulesets(bundle.rulesets);
+  if (decoded !== undefined && !decoded.ok)
+    throw new ContentArtifactError(
+      "CONTENT_ARTIFACT_INVALID",
+      `ruleset eventResolution section is invalid at '${decoded.field}': ${decoded.message}`,
+    );
+  const catalogue = bundle.campaign?.events ?? [];
+  eventContent = {
+    content:
+      decoded === undefined || catalogue.length === 0
+        ? undefined
+        : { rules: decoded.value, catalogue },
+  };
+  return eventContent.content;
 }
 
 export function loadShipBuildingData(): ShipBuildingData {

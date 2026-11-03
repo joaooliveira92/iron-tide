@@ -352,7 +352,7 @@ describe("fleet commands (Effect programs)", () => {
     }
   });
 
-  describe("movement orders (ADR-0062)", () => {
+  describe("movement orders", () => {
     function submit(over: Partial<SubmitMovementCommandPayload> = {}) {
       return submitMovementCommand({
         sessionId: "mv",

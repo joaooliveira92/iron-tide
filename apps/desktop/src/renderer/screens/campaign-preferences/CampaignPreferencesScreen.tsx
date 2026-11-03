@@ -1,35 +1,75 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, type ReactNode } from "react";
+import { AlertTriangle, Eye, Globe, Settings2, SlidersHorizontal } from "lucide-react";
 import { useBridge } from "../../lib/bridge-context.js";
 import { useCampaignProjection } from "../../lib/use-campaign-projection.js";
-import { FileText, Settings2 } from "lucide-react";
 import { Button } from "../../components/ui/button.js";
 import { PageHeader } from "../../components/shared/PageHeader.js";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs.js";
+import {
+  SettingsModal,
+  SettingsRow,
+  SettingsSection,
+  type SettingsNavItem,
+} from "../../components/shared/SettingsModal.js";
 import { PreferencesLoadingState } from "./components/PreferencesLoadingState.js";
 import { PreferencesErrorState } from "./components/PreferencesErrorState.js";
 import { ScenarioPanel } from "./components/ScenarioPanel.js";
 import { RulesetPanel } from "./components/RulesetPanel.js";
 import { DisplayPreferencesPanel } from "./components/DisplayPreferencesPanel.js";
 import { DangerZonePanel } from "./components/DangerZonePanel.js";
+import { CloseCampaignDialog } from "./components/CloseCampaignDialog.js";
 import { useDisplayPreferences } from "./hooks/useDisplayPreferences.js";
 import { useClipboardCopy } from "./hooks/useClipboardCopy.js";
 import { inferConfig } from "./utils/infer-config.js";
 import { downloadCampaignConfig } from "./utils/export-campaign-config.js";
 
+type PreferencesSectionId = "scenario" | "ruleset" | "display" | "danger";
+
+const SECTIONS: readonly SettingsNavItem<PreferencesSectionId>[] = [
+  {
+    id: "scenario",
+    label: "Scenario",
+    summary: "The campaign's date, turn, difficulty and snapshot.",
+    icon: Globe,
+  },
+  {
+    id: "ruleset",
+    label: "Ruleset options",
+    summary: "Set at campaign creation and read-only during play.",
+    icon: SlidersHorizontal,
+  },
+  {
+    id: "display",
+    label: "Display preferences",
+    summary: "Local settings for how information is presented.",
+    icon: Eye,
+  },
+  {
+    id: "danger",
+    label: "Danger zone",
+    summary: "Irreversible actions that affect the campaign.",
+    icon: AlertTriangle,
+  },
+];
+
 export interface CampaignPreferencesScreenProps {
   readonly sessionId: string;
   readonly onCloseCampaign?: () => void;
+  readonly onClose?: () => void;
 }
 
 export function CampaignPreferencesScreen({
   sessionId,
   onCloseCampaign,
+  onClose,
 }: CampaignPreferencesScreenProps) {
   const { projection, loadError, reload } = useCampaignProjection(sessionId);
   const { displayPrefs, togglePref } = useDisplayPreferences(sessionId);
   const { copied, copy } = useClipboardCopy();
   const [restartMessage, setRestartMessage] = useState<string | null>(null);
   const bridge = useBridge();
+  const [open, setOpen] = useState(true);
+  const [section, setSection] = useState<PreferencesSectionId>("scenario");
+  const [confirmClose, setConfirmClose] = useState(false);
 
   const handleCopyId = useCallback(() => {
     void copy(sessionId);
@@ -66,71 +106,99 @@ export function CampaignPreferencesScreen({
 
   const config = inferConfig(projection);
 
+  const panels: Readonly<Record<PreferencesSectionId, ReactNode>> = {
+    scenario: (
+      <ScenarioPanel
+        sessionId={sessionId}
+        projection={projection}
+        difficulty={config.difficulty}
+        copied={copied}
+        onCopyId={handleCopyId}
+      />
+    ),
+    ruleset: <RulesetPanel config={config} />,
+    display: (
+      <>
+        <DisplayPreferencesPanel displayPrefs={displayPrefs} onTogglePref={togglePref} />
+        <SettingsSection title="Guided inspection">
+          <SettingsRow
+            title="First-month tour"
+            description="Restart the first-month guided tour for this campaign."
+            control={
+              <Button
+                variant="outline"
+                size="sm"
+                data-testid="restart-guided-inspection"
+                onClick={() => void handleRestartInspection()}
+              >
+                Restart guided inspection
+              </Button>
+            }
+          >
+            {restartMessage !== null && (
+              <p className="text-xs text-muted-foreground">{restartMessage}</p>
+            )}
+          </SettingsRow>
+        </SettingsSection>
+      </>
+    ),
+    danger: (
+      <DangerZonePanel
+        onExportConfig={handleExportConfig}
+        onReloadSnapshot={reload}
+        onCloseCampaign={
+          onCloseCampaign === undefined
+            ? undefined
+            : () => {
+                setOpen(false);
+                setConfirmClose(true);
+              }
+        }
+      />
+    ),
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         icon={Settings2}
         title="Campaign Preferences"
         description="View configuration, adjust display settings, and manage your campaign."
-        actions={
-          <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-            <FileText className="h-3 w-3" />
-            Display settings are stored locally and won&apos;t affect other players.
-          </div>
-        }
       />
-
-      <Tabs defaultValue="scenario">
-        <TabsList>
-          <TabsTrigger value="scenario">Scenario</TabsTrigger>
-          <TabsTrigger value="ruleset">Ruleset Options</TabsTrigger>
-          <TabsTrigger value="display">Display Preferences</TabsTrigger>
-          <TabsTrigger value="danger">Danger Zone</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="scenario">
-          <ScenarioPanel
-            sessionId={sessionId}
-            projection={projection}
-            difficulty={config.difficulty}
-            copied={copied}
-            onCopyId={handleCopyId}
-          />
-        </TabsContent>
-
-        <TabsContent value="ruleset">
-          <RulesetPanel config={config} />
-        </TabsContent>
-
-        <TabsContent value="display">
-          <DisplayPreferencesPanel displayPrefs={displayPrefs} onTogglePref={togglePref} />
-          <div className="mt-6 rounded-lg border p-4 space-y-2">
-            <h3 className="text-sm font-medium">Guided Inspection</h3>
-            <p className="text-xs text-muted-foreground">
-              Restart the first-month guided tour for this campaign.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              data-testid="restart-guided-inspection"
-              onClick={() => void handleRestartInspection()}
-            >
-              Restart guided inspection
-            </Button>
-            {restartMessage !== null && (
-              <p className="text-xs text-muted-foreground">{restartMessage}</p>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="danger">
-          <DangerZonePanel
-            onExportConfig={handleExportConfig}
-            onReloadSnapshot={reload}
-            onCloseCampaign={onCloseCampaign}
-          />
-        </TabsContent>
-      </Tabs>
+      {!open && !confirmClose && (
+        <Button type="button" variant="outline" onClick={() => setOpen(true)}>
+          Open campaign preferences
+        </Button>
+      )}
+      <SettingsModal
+        open={open}
+        onOpenChange={(next) => {
+          if (next) return;
+          setOpen(false);
+          onClose?.();
+        }}
+        title="Campaign preferences"
+        navLabel="Campaign preference sections"
+        items={SECTIONS}
+        activeId={section}
+        onSelect={setSection}
+        testId="campaign-preferences-modal"
+      >
+        {panels[section]}
+      </SettingsModal>
+      {onCloseCampaign !== undefined && (
+        <CloseCampaignDialog
+          open={confirmClose}
+          onCancel={() => {
+            setConfirmClose(false);
+            setOpen(true);
+          }}
+          onConfirm={() => {
+            setConfirmClose(false);
+            onCloseCampaign();
+          }}
+        />
+      )}
     </div>
   );
 }

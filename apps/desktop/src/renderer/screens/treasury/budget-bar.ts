@@ -1,5 +1,5 @@
 import type { TreasuryBreakdown } from "./treasury-summary.js";
-import { formatCount } from "../../lib/presentation-format/index.js";
+import { formatCount } from "../../lib/presentation-format/format.js";
 
 export type BudgetSegmentId = "obligations" | "maintenance" | "research";
 

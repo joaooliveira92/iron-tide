@@ -1,4 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
+import { useLayoutEffect } from "react";
 import { describe, expect, it, vi } from "vite-plus/test";
 
 import type { PrimaryAction } from "../../shell/primary-action.js";
@@ -99,6 +100,52 @@ describe("useBriefingPager", () => {
     expect(result.current.pageIndex).toBe(1);
 
     rerender({ sessionId: "s2" });
+
+    expect(result.current.pageIndex).toBe(0);
+  });
+
+  it("never commits the previous session's page after the session changes", () => {
+    const { onPrimaryActionChange, primary } = primaryRecorder();
+    const committed: Array<readonly [string, number]> = [];
+    const { rerender } = renderHook(
+      ({ sessionId }: { sessionId: string }) => {
+        const pager = useBriefingPager({
+          sessionId,
+          ready: true,
+          onTakeCommand: vi.fn(),
+          onPrimaryActionChange,
+        });
+        useLayoutEffect(() => {
+          committed.push([sessionId, pager.pageIndex]);
+        });
+        return pager;
+      },
+      { initialProps: { sessionId: "s1" } },
+    );
+    act(() => primary()?.onTrigger());
+    committed.length = 0;
+
+    rerender({ sessionId: "s2" });
+
+    expect(committed).toEqual([["s2", 0]]);
+  });
+
+  it("starts from the first page when returning to an earlier session", () => {
+    const { onPrimaryActionChange, primary } = primaryRecorder();
+    const { result, rerender } = renderHook(
+      ({ sessionId }: { sessionId: string }) =>
+        useBriefingPager({
+          sessionId,
+          ready: true,
+          onTakeCommand: vi.fn(),
+          onPrimaryActionChange,
+        }),
+      { initialProps: { sessionId: "s1" } },
+    );
+    act(() => primary()?.onTrigger());
+
+    rerender({ sessionId: "s2" });
+    rerender({ sessionId: "s1" });
 
     expect(result.current.pageIndex).toBe(0);
   });

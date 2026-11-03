@@ -31,7 +31,7 @@ describe("NavalProfileCatalogueSchema — authored production catalogue", () => 
     expect(decodeOk(NavalProfileCatalogueSchema, data)).toBe(false);
   });
 
-  it("accepts an optional imported gun ceiling on hardCapabilities (ADR-0114)", () => {
+  it("accepts an optional imported gun ceiling on hardCapabilities", () => {
     const data = read();
     const first = data.navalProfiles[0];
     data.navalProfiles[0] = {

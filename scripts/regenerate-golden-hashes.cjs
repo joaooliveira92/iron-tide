@@ -31,7 +31,7 @@ function runChild() {
 const golden = existsSync(goldenPath) ? JSON.parse(readFileSync(goldenPath, "utf8")) : null;
 
 // Reproducibility gate: two independent child runs MUST produce identical
-// hashes before any golden is accepted (ADR-0007 §"golden hash file").
+// hashes before any golden is accepted.
 const runA = runChild();
 const runB = runChild();
 for (const key of Object.keys(runA)) {

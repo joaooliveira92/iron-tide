@@ -4,6 +4,7 @@ import { RandomEngine } from "@bluewave/random";
 import type { ExplanationTree } from "@bluewave/events";
 import type { GunneryBattery } from "../gunnery/resolve.js";
 import { withGunneryStateHash } from "../gunnery/index.js";
+import { ageContact, isStale } from "../contact/neighbour.js";
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import type { TacticalDivision } from "../tactical/division.js";
@@ -33,6 +34,7 @@ import { withNightTraining, effectsOf, type TrainingEffectsBySide } from "./trai
 import {
   explainBattleLoss,
   explainDamageControl,
+  explainShipMotion,
   explainTorpedoSolution,
 } from "./battle-explanations.js";
 import { pursuitOrders } from "./pursuit.js";
@@ -45,11 +47,15 @@ import { battleLoss, initialDamageState, type DamageContext } from "../damage/mi
 import { decideBattleEnd, type BattleSide, type ShipViability } from "./viability.js";
 import { headingToward } from "./engagement.js";
 import {
+  DIVISION_ORDER_MAX_HEADING_DEG,
+  DIVISION_ORDER_MAX_KNOTS,
   DIVISION_STANCES,
   compileDivisionOrders,
   divisionOrdersFromLegacy,
+  type DivisionNavigation,
+  type DivisionOrderSet,
+  type DivisionSpeed,
   type DivisionStance,
-  type LegacyDivisionOrders,
 } from "../orders/index.js";
 
 export const PLAYER_BATTLE_STANCES = DIVISION_STANCES;
@@ -58,6 +64,8 @@ export type PlayerBattleStance = DivisionStance;
 export interface PlayerBattleDivisionOrder {
   readonly stance: PlayerBattleStance;
   readonly speedPercent: number;
+  readonly courseDeg?: number;
+  readonly speedKnots?: number;
 }
 
 export interface PlayerBattleOrders {
@@ -82,6 +90,10 @@ export interface PlayerBattleShipView {
   readonly maxHitPoints: number;
   readonly damageState: string;
   readonly position: readonly [number, number] | null;
+  readonly headingDeg: number | null;
+  readonly speedBp: number | null;
+  readonly contactConfidenceBp: number | null;
+  readonly motion?: ExplanationTree;
   readonly gunneryAccuracy?: ExplanationTree;
   readonly torpedoSolution?: ExplanationTree;
   readonly damageControl?: ExplanationTree;
@@ -293,6 +305,62 @@ function clampSpeedPercent(value: number): number {
   return Math.min(100, Math.max(0, value));
 }
 
+function requireInteger(field: string, value: number, minimum: number, maximum: number): number {
+  if (!Number.isInteger(value) || value < minimum || value > maximum) {
+    throw new BluewaveError(BATTLE_AUTO_RESOLUTION_FAILED, {
+      code: BATTLE_AUTO_RESOLUTION_FAILED,
+      reason: `${field} must be an integer from ${String(minimum)} to ${String(maximum)}`,
+      value,
+    });
+  }
+  return value;
+}
+
+function divisionOrderSet(
+  orders: PlayerBattleOrders,
+  divisions: readonly TacticalDivision[],
+): DivisionOrderSet {
+  const legacy: Record<string, { stance: PlayerBattleStance; speedPercent: number }> = {};
+  for (const [divisionId, order] of Object.entries(orders.divisions)) {
+    legacy[divisionId] = {
+      stance: order.stance,
+      speedPercent: clampSpeedPercent(order.speedPercent),
+    };
+  }
+  const base = divisionOrdersFromLegacy({ divisions: legacy }, divisions);
+  return {
+    ...base,
+    divisions: base.divisions.map((entry) => {
+      const requested = orders.divisions[entry.divisionId]!;
+      const navigation: DivisionNavigation =
+        requested.courseDeg === undefined
+          ? entry.navigation
+          : {
+              kind: "COURSE",
+              headingDeg: requireInteger(
+                "courseDeg",
+                requested.courseDeg,
+                0,
+                DIVISION_ORDER_MAX_HEADING_DEG,
+              ),
+            };
+      const speed: DivisionSpeed =
+        requested.speedKnots === undefined
+          ? entry.speed
+          : {
+              kind: "KNOTS",
+              knots: requireInteger(
+                "speedKnots",
+                requested.speedKnots,
+                1,
+                DIVISION_ORDER_MAX_KNOTS,
+              ),
+            };
+      return { ...entry, navigation, speed };
+    }),
+  };
+}
+
 function divisionOf(state: TacticalBattleState): ReadonlyMap<string, string> {
   const map = new Map<string, string>();
   for (const division of state.divisions) {
@@ -343,16 +411,8 @@ function resolveOrders(
     units: session.units,
     baseOrders: session.baseOrders,
   });
-  const escaped: Record<string, { stance: PlayerBattleStance; speedPercent: number }> = {};
-  for (const [divisionId, order] of Object.entries(orders.divisions)) {
-    escaped[divisionId] = {
-      stance: order.stance,
-      speedPercent: clampSpeedPercent(order.speedPercent),
-    };
-  }
-  const legacy: LegacyDivisionOrders = { divisions: escaped };
   return compileDivisionOrders({
-    orders: divisionOrdersFromLegacy(legacy, session.state.divisions),
+    orders: divisionOrderSet(orders, session.state.divisions),
     units: session.units,
     divisions: session.state.divisions,
     baseOrders: session.baseOrders,
@@ -390,13 +450,22 @@ function mercureTargets(session: PlayerBattleSession): TorpedoContext | undefine
   return { ...torpedoes, targets };
 }
 
+function withSurvivingContacts(state: TacticalBattleState): TacticalBattleState {
+  return {
+    ...state,
+    contacts: (state.contacts ?? [])
+      .map((contact) => ageContact(contact, 1))
+      .filter((contact) => !isStale(contact)),
+  };
+}
+
 function planTorpedoes(session: PlayerBattleSession, torpedoes: TorpedoContext): TorpedoContext {
   return {
     ...torpedoes,
     commands: planTorpedoCommands({
       battleId: session.battleId,
       torpedoes,
-      battleState: session.state,
+      battleState: withSurvivingContacts(session.state),
       damage: session.damage,
       units: session.units,
       trainingEffects: session.trainingEffects,
@@ -454,7 +523,7 @@ export function advancePlayerBattleMinute(
   const preparedTorpedoes = torpedoes === undefined ? undefined : planTorpedoes(session, torpedoes);
   const targets = assignTargetContactIds(
     session.batteries,
-    session.state,
+    withSurvivingContacts(session.state),
     session.damage,
     session.battleId,
     session.units,
@@ -677,11 +746,24 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
       .filter((battery) => battery.sideId === playerSide)
       .map((battery) => [battery.ownerShipId, battery] as const),
   );
+  const freshContacts = new Map(
+    (session.state.contacts ?? [])
+      .filter((contact) => contact.sideId !== playerSide && !contact.stale)
+      .map((contact) => [contact.assetId, contact] as const),
+  );
   const ships: PlayerBattleShipView[] = session.units.map((unit) => {
     const battery = batteryOf.get(unit.assetId);
     const damageState = session.damage.targets[unit.assetId]?.state;
     const movement: MovementState | undefined = session.state.movementStates?.[unit.assetId];
     const own = unit.sideId === playerSide;
+    const contact = own ? undefined : freshContacts.get(unit.assetId);
+    const observed = own
+      ? movement && {
+          position: movement.position,
+          heading: movement.heading,
+          speed: movement.currentSpeed,
+        }
+      : contact && { position: contact.position, heading: contact.course, speed: contact.speed };
     const loss =
       own && damageState !== undefined
         ? explainBattleLoss(unit.hitPoints as number, damageState, unit.maxHitPoints as number)
@@ -697,7 +779,11 @@ export function playerBattleView(session: PlayerBattleSession): PlayerBattleView
       hitPoints: unit.hitPoints as number,
       maxHitPoints: unit.maxHitPoints as number,
       damageState: damageState?.terminalStatus ?? "NORMAL",
-      position: movement ? [movement.position[0], movement.position[1]] : null,
+      position: observed ? [observed.position[0], observed.position[1]] : null,
+      headingDeg: observed ? observed.heading : null,
+      speedBp: observed ? observed.speed : null,
+      contactConfidenceBp: contact ? contact.confidence : null,
+      ...(own && movement ? { motion: explainShipMotion(movement) } : {}),
       ...(battery === undefined
         ? {}
         : { gunneryAccuracy: explainGunneryAccuracy(battery.accuracyFactors) }),

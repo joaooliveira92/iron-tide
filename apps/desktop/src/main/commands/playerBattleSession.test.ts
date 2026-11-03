@@ -214,6 +214,86 @@ describe("player battle session over in-memory sidecar stores", () => {
     await restarted.runtime.dispose();
   });
 
+  const steered = (value: StartValue, courseDeg: number, speedKnots: number) =>
+    ordersFor(value, 100).map((order) => ({
+      ...order,
+      stance: "ENGAGE" as const,
+      courseDeg,
+      speedKnots,
+    }));
+
+  it("steers a division and resumes the same hash and course orders after a restart", async () => {
+    const stores = memoryStores();
+    const first = app(stores);
+    const battleId = await acceptedBattle(first);
+    const started = await start(first, battleId);
+    const orders = steered(started, 90, 9);
+    await advance(first, battleId, "minute", orders);
+    await advance(first, battleId, "minute", orders);
+    const before = await advance(first, battleId, "minute", orders);
+    if (before.outcome !== "success") throw new Error("advance failed");
+    const beforeValue = before.value as StartValue;
+    await first.runtime.dispose();
+
+    const restarted = app(stores);
+    const resumed = await start(restarted, battleId);
+    expect(resumed.resumed).toBe(true);
+    expect(resumed.view.minute).toBe(3);
+    expect(resumed.sessionHash).toBe(beforeValue.sessionHash);
+    expect(resumed.lastOrders).toEqual(orders);
+    await restarted.runtime.dispose();
+  });
+
+  it("reaches the same hash whether the minutes arrive in one run or across a reload", async () => {
+    const straightStores = memoryStores();
+    const straight = app(straightStores);
+    const battleId = await acceptedBattle(straight);
+    const started = await start(straight, battleId);
+    const orders = steered(started, 45, 7);
+    let last: StartValue | null = null;
+    for (let minute = 0; minute < 4; minute += 1) {
+      const result = await advance(straight, battleId, "minute", orders);
+      if (result.outcome !== "success") throw new Error("advance failed");
+      last = result.value as StartValue;
+    }
+    await straight.runtime.dispose();
+    clearCampaignSessionsForTest();
+
+    const splitStores = memoryStores();
+    const split = app(splitStores);
+    const splitBattleId = await acceptedBattle(split);
+    const splitStart = await start(split, splitBattleId);
+    expect(splitStart.sessionHash).toBe(started.sessionHash);
+    await advance(split, splitBattleId, "minute", orders);
+    await advance(split, splitBattleId, "minute", orders);
+    await split.runtime.dispose();
+    const reloaded = app(splitStores);
+    await start(reloaded, splitBattleId);
+    await advance(reloaded, splitBattleId, "minute", orders);
+    const finalStep = await advance(reloaded, splitBattleId, "minute", orders);
+    if (finalStep.outcome !== "success") throw new Error("advance failed");
+    expect((finalStep.value as StartValue).sessionHash).toBe(last!.sessionHash);
+    await reloaded.runtime.dispose();
+  });
+
+  it("fights to the end after a division steers away from the enemy", async () => {
+    const a = app(memoryStores());
+    const battleId = await acceptedBattle(a);
+    const started = await start(a, battleId);
+    const [first, ...rest] = ordersFor(started, 100);
+    const orders = [
+      { ...first!, stance: "ENGAGE" as const, courseDeg: 45, speedKnots: 10 },
+      ...rest.map((order) => ({ ...order, stance: "ENGAGE" as const })),
+    ];
+    for (let minute = 0; minute < 9; minute += 1) {
+      const step = await advance(a, battleId, "minute", orders);
+      expect(step, JSON.stringify(step)).toMatchObject({ outcome: "success" });
+    }
+    const toEnd = await advance(a, battleId, "to_end", orders);
+    expect(toEnd, JSON.stringify(toEnd)).toMatchObject({ outcome: "success" });
+    await a.runtime.dispose();
+  });
+
   it("starts fresh and keeps a corrupt battle save instead of clearing it", async () => {
     const cleared: string[] = [];
     const spy = Layer.effect(

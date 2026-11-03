@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Branch-discipline hook (production-hardening ticket 03, ADR-0165).
+// Branch-discipline hook.
 //
 // Refuse a commit made directly on a protected integration branch (`dev`,
-// `main`). The incident this closes (ADR-0044): two agents committing in the
+// `main`). The incident this closes: two agents committing in the
 // same `dev` checkout, where one agent's `git add -A` swept the other's
 // uncommitted files into a commit and left `dev` self-inconsistent, and a later
 // `git reset` silently reverted uncommitted work. Work now lands on a
@@ -88,8 +88,7 @@ function main() {
     for (const problem of problems) console.error(`  - ${problem}`);
     console.error(
       "\nCommit on a short-lived branch in a dedicated worktree, and land it via a\n" +
-        "pull request that passes the required checks (ADR-0165; the divergence this\n" +
-        "prevents is recorded in ADR-0044). If this commit is genuinely exceptional,\n" +
+        "pull request that passes the required checks. If this commit is genuinely exceptional,\n" +
         "re-run it with `git commit --no-verify`.",
     );
     process.exit(1);

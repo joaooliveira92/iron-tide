@@ -1,3 +1,0 @@
-package guard: default policy 1.0.0: PASS
-  files 19555, allowed map assets 0, violations 0
-  app.asar 206228275 / 210200000 bytes; resources outside the archive 1680333 / 2100000 bytes

@@ -4,7 +4,7 @@ import { animate, motion, useInView, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EASE_OUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
-import { formatCount } from "../../lib/presentation-format/index.js";
+import { formatCount } from "../../lib/presentation-format/format.js";
 
 export interface NumberTickerProps {
   value: number;

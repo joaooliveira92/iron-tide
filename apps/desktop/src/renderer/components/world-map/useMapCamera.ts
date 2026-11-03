@@ -21,6 +21,16 @@ function bandFor(scale: number): ZoomBand {
 const MIN_SCALE = 0.9;
 const MAX_SCALE = 60;
 
+export interface CameraView {
+  readonly transform: Readonly<CameraTransform>;
+  readonly scale: number;
+  readonly pixelsPerUnit: number;
+  readonly minScale: number;
+  readonly wrapping: boolean;
+  readonly svgHeight: number;
+  readonly zoomBand: ZoomBand;
+}
+
 export interface MapCamera {
   readonly svgRef: React.RefObject<SVGSVGElement | null>;
   readonly worldRef: React.RefObject<SVGGElement | null>;
@@ -37,6 +47,7 @@ export interface MapCamera {
   readonly getMinScale: () => number;
   readonly getViewport: () => Viewport;
   readonly getTransform: () => Readonly<CameraTransform>;
+  readonly getView: () => CameraView;
   readonly subscribe: (listener: (transform: Readonly<CameraTransform>) => void) => () => void;
 }
 
@@ -268,10 +279,10 @@ export function useMapCamera(
     }
 
     svg.addEventListener("wheel", onWheel, { passive: false });
-    svg.addEventListener("pointerdown", onPointerDown);
-    svg.addEventListener("pointermove", onPointerMove);
-    svg.addEventListener("pointerup", onPointerUp);
-    svg.addEventListener("pointercancel", onPointerUp);
+    svg.addEventListener("pointerdown", onPointerDown, { passive: true });
+    svg.addEventListener("pointermove", onPointerMove, { passive: true });
+    svg.addEventListener("pointerup", onPointerUp, { passive: true });
+    svg.addEventListener("pointercancel", onPointerUp, { passive: true });
     return () => {
       svg.removeEventListener("wheel", onWheel);
       svg.removeEventListener("pointerdown", onPointerDown);
@@ -307,6 +318,22 @@ export function useMapCamera(
     };
   }, []);
 
+  const getTransform = useCallback((): Readonly<CameraTransform> => camera.current, []);
+  const isWrapping = useCallback(() => wrapping.current, []);
+
+  const getView = useCallback((): CameraView => {
+    const transform = { ...camera.current };
+    return {
+      transform,
+      scale: transform.scale,
+      pixelsPerUnit: pixelsPerUnit(),
+      minScale: minScale(),
+      wrapping: wrapping.current,
+      svgHeight: svgRef.current?.clientHeight ?? 0,
+      zoomBand: bandRef.current,
+    };
+  }, [minScale, pixelsPerUnit]);
+
   return {
     svgRef,
     worldRef,
@@ -319,10 +346,11 @@ export function useMapCamera(
     getPixelsPerUnit: pixelsPerUnit,
     isDraggingRef,
     holdRef,
-    isWrapping: () => wrapping.current,
+    isWrapping,
     getViewport: viewportUnits,
     getMinScale: minScale,
+    getView,
     subscribe,
-    getTransform: () => camera.current,
+    getTransform,
   };
 }

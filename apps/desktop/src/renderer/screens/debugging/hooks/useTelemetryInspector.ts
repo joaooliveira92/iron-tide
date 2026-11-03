@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { WideTelemetryEvent } from "../../../lib/telemetry.js";
-import { STORAGE_KEY } from "../../../lib/telemetry.js";
+import { clearWideEvents, getRecordedWideEvents } from "../../../lib/telemetry.js";
 import type { OutcomeFilter } from "../types.js";
 import { filterEvents } from "../utils/filter.js";
 
@@ -23,18 +23,11 @@ export function useTelemetryInspector(): UseTelemetryInspectorReturn {
   const [selectedEvent, setSelectedEvent] = useState<WideTelemetryEvent | null>(null);
 
   useEffect(() => {
-    try {
-      const rawLogs = localStorage.getItem(STORAGE_KEY);
-      if (rawLogs) {
-        setEvents(JSON.parse(rawLogs) as readonly WideTelemetryEvent[]);
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    setEvents(getRecordedWideEvents());
   }, []);
 
   const clearEvents = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+    clearWideEvents();
     setEvents([]);
     setSelectedEvent(null);
   }, []);

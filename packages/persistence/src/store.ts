@@ -18,7 +18,6 @@ import { CompatibilityChecker, CURRENT_COMPATIBILITY_VERSION } from "./compatibi
 import {
   PersistenceInvalidOptionError,
   PersistenceIoError,
-  PersistenceCancelledError,
   PersistenceCompatibilityMismatchError,
   PersistenceCorruptSaveError,
   PersistenceMissingSaveError,
@@ -50,12 +49,7 @@ import {
   toStorableSnapshot,
 } from "./snapshotSerialization.js";
 
-export {
-  CANCELLED_CODE,
-  CORRUPT_SAVE_CODE,
-  MISSING_SAVE_CODE,
-  LEGACY_SAVE_CODE,
-} from "./errors.js";
+export { CORRUPT_SAVE_CODE, MISSING_SAVE_CODE, LEGACY_SAVE_CODE } from "./errors.js";
 
 export type { SaveMetadata } from "./schemas.js";
 
@@ -64,6 +58,11 @@ export interface SaveResult {
   hash: string;
   metadata: SaveMetadata;
   warnings: readonly Diagnostic[];
+}
+
+export interface SaveListing {
+  readonly saves: SaveMetadata[];
+  readonly warnings: readonly Diagnostic[];
 }
 
 type PointerReadFailure = PersistenceIoError | PersistenceCorruptSaveError;
@@ -77,12 +76,6 @@ function isValidSaveId(saveId: string): boolean {
 function isContainedIn(parent: string, child: string): boolean {
   const rel = relative(parent, child);
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
-}
-
-function createAbortError(): Error {
-  const error = new Error("Save operation was cancelled");
-  error.name = "AbortError";
-  return error;
 }
 
 export interface SaveExtras {
@@ -101,7 +94,6 @@ export interface LoadedSave {
 export type LoadFailure =
   | PersistenceCorruptSaveError
   | PersistenceMissingSaveError
-  | PersistenceCancelledError
   | PersistenceCompatibilityMismatchError;
 
 const MONTH_INPUT_FILE = "month-input.json";
@@ -126,13 +118,6 @@ function corruptSave(message: string): PersistenceCorruptSaveError {
 
 function missingSave(message: string): PersistenceMissingSaveError {
   return new PersistenceMissingSaveError({ message, stage: LOAD_STAGE });
-}
-
-function cancelledLoad(): PersistenceCancelledError {
-  return new PersistenceCancelledError({
-    message: "Load operation was cancelled",
-    stage: LOAD_STAGE,
-  });
 }
 
 export interface SaveStoreOptions {
@@ -179,16 +164,7 @@ export class SaveStore {
     }
   }
 
-  save(
-    state: CampaignState,
-    saveDir: string,
-    signal?: AbortSignal,
-    extras: SaveExtras = {},
-  ): SaveResult {
-    if (signal?.aborted) {
-      throw createAbortError();
-    }
-
+  save(state: CampaignState, saveDir: string, extras: SaveExtras = {}): SaveResult {
     sweepStaleTemp(saveDir);
 
     const saveId = `${this.clock.nowMillis()}-${this.clock.uuid()}`;
@@ -244,18 +220,8 @@ export class SaveStore {
         writeFileSync(join(tmpDir, MONTH_INPUT_FILE), monthInput, "utf8");
       writeSaveManifest(tmpDir);
 
-      if (signal?.aborted) {
-        cleanup(tmpDir);
-        throw createAbortError();
-      }
-
       renameSync(tmpDir, savePath);
       published = true;
-
-      if (signal?.aborted) {
-        rmSync(savePath, { recursive: true, force: true });
-        throw createAbortError();
-      }
 
       updatePointer(saveDir, saveId, previousSaveId);
       if (this.retainSaves !== undefined && !pointerUnreadable) {
@@ -277,23 +243,16 @@ export class SaveStore {
     state: CampaignState,
     saveDir: string,
     extras: SaveExtras = {},
-    signal?: AbortSignal,
-  ): Effect.Effect<SaveResult, PersistenceCancelledError | PersistenceIoError> {
+  ): Effect.Effect<SaveResult, PersistenceIoError> {
     return Effect.try({
-      try: () => this.save(state, saveDir, signal, extras),
-      catch: (cause) =>
-        signal?.aborted === true
-          ? new PersistenceCancelledError({
-              message: "Save operation was cancelled",
-              stage: SAVE_STAGE,
-            })
-          : ioError(SAVE_STAGE, cause),
+      try: () => this.save(state, saveDir, extras),
+      catch: (cause) => ioError(SAVE_STAGE, cause),
     }).pipe(Effect.withSpan("persistence.save"));
   }
 
-  listEffect(saveDir: string): Effect.Effect<SaveMetadata[], PersistenceIoError> {
+  listEffect(saveDir: string): Effect.Effect<SaveListing, PersistenceIoError> {
     return Effect.try({
-      try: () => this.list(saveDir),
+      try: () => this.listing(saveDir),
       catch: (cause) => ioError(LIST_STAGE, cause),
     }).pipe(Effect.withSpan("persistence.list"));
   }
@@ -323,11 +282,11 @@ export class SaveStore {
     ).pipe(Effect.withSpan("persistence.previousSaveId"));
   }
 
-  load(saveDir: string, signal?: AbortSignal): Effect.Effect<LoadedSave, LoadFailure> {
+  load(saveDir: string): Effect.Effect<LoadedSave, LoadFailure> {
     const currentVersion = this.currentCompatibilityVersion;
-    return Effect.suspend(() =>
-      Effect.fromResult(loadResult(saveDir, currentVersion, signal)),
-    ).pipe(Effect.withSpan("persistence.load"));
+    return Effect.suspend(() => Effect.fromResult(loadResult(saveDir, currentVersion))).pipe(
+      Effect.withSpan("persistence.load"),
+    );
   }
 
   loadMonthInput(
@@ -339,24 +298,33 @@ export class SaveStore {
     );
   }
 
-  loadById(
-    saveDir: string,
-    saveId: string,
-    signal?: AbortSignal,
-  ): Effect.Effect<LoadedSave, LoadFailure> {
+  loadById(saveDir: string, saveId: string): Effect.Effect<LoadedSave, LoadFailure> {
     const currentVersion = this.currentCompatibilityVersion;
     return Effect.suspend(() =>
-      Effect.fromResult(loadByIdResult(saveDir, saveId, currentVersion, signal)),
+      Effect.fromResult(loadByIdResult(saveDir, saveId, currentVersion)),
     ).pipe(Effect.withSpan("persistence.loadById"));
   }
 
   list(saveDir: string): SaveMetadata[] {
+    return this.listing(saveDir).saves;
+  }
+
+  private listing(saveDir: string): SaveListing {
     if (!existsSync(saveDir)) {
-      return [];
+      return { saves: [], warnings: [] };
     }
 
     const entries = readdirSync(saveDir, { withFileTypes: true });
     const saves: SaveMetadata[] = [];
+    const warnings: Diagnostic[] = [];
+    const unlisted = (dirName: string, reason: string): void => {
+      warnings.push(
+        new PersistenceCorruptSaveError({
+          message: `Save ${dirName} was left out of the list: ${reason}`,
+          stage: LIST_STAGE,
+        }).toDiagnostic("warning"),
+      );
+    };
 
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
@@ -389,23 +357,29 @@ export class SaveStore {
 
       const campaignPath = join(saveDir, dirName, "campaign.json");
       if (!existsSync(campaignPath)) continue;
+      let campaignJson: string;
+      let parsed: unknown;
       try {
-        const campaignJson = readFileSync(campaignPath, "utf8");
-        const decoded = decodeSaveHeader(JSON.parse(campaignJson));
-        if (Result.isSuccess(decoded)) {
-          saves.push({
-            saveId: dirName,
-            timestamp: "",
-            turnNumber: 0,
-            campaignId: "",
-            snapshotHash: "",
-            compatibilityVersion: decoded.success.snapshot.compatibilityVersion,
-            contentArtifactHash: sha256Hex(campaignJson),
-          });
-        }
-      } catch {
+        campaignJson = readFileSync(campaignPath, "utf8");
+        parsed = JSON.parse(campaignJson);
+      } catch (cause) {
+        unlisted(dirName, cause instanceof Error ? cause.message : String(cause));
         continue;
       }
+      const decoded = decodeSaveHeader(parsed);
+      if (Result.isFailure(decoded)) {
+        unlisted(dirName, "the save header does not decode");
+        continue;
+      }
+      saves.push({
+        saveId: dirName,
+        timestamp: "",
+        turnNumber: 0,
+        campaignId: "",
+        snapshotHash: "",
+        compatibilityVersion: decoded.success.snapshot.compatibilityVersion,
+        contentArtifactHash: sha256Hex(campaignJson),
+      });
     }
 
     const chainRank = new Map<string, number>();
@@ -421,7 +395,7 @@ export class SaveStore {
       if (byChain !== 0) return byChain;
       return compareCodePoints(b.saveId, a.saveId);
     });
-    return saves;
+    return { saves, warnings };
   }
 
   isCurrent(state: CampaignState, saveDir: string): boolean {
@@ -499,10 +473,7 @@ export class SaveStore {
 export function loadResult(
   saveDir: string,
   currentVersion: string = CURRENT_COMPATIBILITY_VERSION,
-  signal?: AbortSignal,
 ): Result.Result<LoadedSave, LoadFailure> {
-  if (signal?.aborted) return Result.fail(cancelledLoad());
-
   if (!existsSync(saveDir)) {
     return Result.fail(missingSave(`Save directory not found: ${saveDir}`));
   }
@@ -524,9 +495,7 @@ export function loadByIdResult(
   saveDir: string,
   saveId: string,
   currentVersion: string = CURRENT_COMPATIBILITY_VERSION,
-  signal?: AbortSignal,
 ): Result.Result<LoadedSave, LoadFailure> {
-  if (signal?.aborted) return Result.fail(cancelledLoad());
   return loadByIdCore(saveDir, saveId, currentVersion);
 }
 

@@ -249,6 +249,15 @@ export const ForeignStationNoRouteSchema = Schema.Struct({
   targetAreaId: nonEmptyString,
 });
 
+export const PossessionTransferredSchema = Schema.Struct({
+  kind: Schema.Literal("PossessionTransferred"),
+  possessionId: nonEmptyString,
+  areaId: nonEmptyString,
+  fromNationId: nonEmptyString,
+  toNationId: nonEmptyString,
+  warId: nonEmptyString,
+});
+
 export const DomainEventBodySchema = Schema.Union([
   NationBudgetChangedSchema,
   ConstructionProgressedSchema,
@@ -268,6 +277,7 @@ export const DomainEventBodySchema = Schema.Union([
   ShipRemovedFromDivisionSchema,
   ForeignStationShipMovedSchema,
   ForeignStationNoRouteSchema,
+  PossessionTransferredSchema,
   BattleOfferAnsweredSchema,
   BattleDeclinedSchema,
   DeclineThresholdReachedSchema,
@@ -295,6 +305,7 @@ const eventKindList = [
   "ShipRemovedFromDivision",
   "ForeignStationShipMoved",
   "ForeignStationNoRoute",
+  "PossessionTransferred",
   "BattleOfferAnswered",
   "BattleDeclined",
   "DeclineThresholdReached",
@@ -348,6 +359,7 @@ export type ShipDetachedToFleet = Schema.Schema.Type<typeof ShipDetachedToFleetS
 export type ShipRemovedFromDivision = Schema.Schema.Type<typeof ShipRemovedFromDivisionSchema>;
 export type ForeignStationShipMoved = Schema.Schema.Type<typeof ForeignStationShipMovedSchema>;
 export type ForeignStationNoRoute = Schema.Schema.Type<typeof ForeignStationNoRouteSchema>;
+export type PossessionTransferred = Schema.Schema.Type<typeof PossessionTransferredSchema>;
 export type DomainEventBody = Schema.Schema.Type<typeof DomainEventBodySchema>;
 
 type EnvelopeShell = Omit<

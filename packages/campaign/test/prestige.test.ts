@@ -329,7 +329,7 @@ describe("applyPrestigeRule: fixed gain", () => {
   });
 });
 
-describe("applyPrestigeRule: fixed loss (ADR-0261)", () => {
+describe("applyPrestigeRule: fixed loss", () => {
   const set = fixtureSet();
   const fixedLoss: PrestigeRule = { kind: "FIXED_LOSS", amount: SafeInt(3) };
 
@@ -385,7 +385,7 @@ describe("applyPrestigeRule: fixed loss (ADR-0261)", () => {
   });
 });
 
-describe("decodePrestigeValueSet: the optional DECLINED_BATTLE rule (ADR-0261)", () => {
+describe("decodePrestigeValueSet: the optional DECLINED_BATTLE rule", () => {
   const withRules = (extra: Record<string, unknown>) =>
     decodePrestigeValueSet({ ...FIXTURE, rules: { ...(FIXTURE["rules"] as object), ...extra } });
 

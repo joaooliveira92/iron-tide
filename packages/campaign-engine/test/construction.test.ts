@@ -159,7 +159,7 @@ function makeDesignForCosts(displacementKg: SafeInt) {
   return fixtureDesign("uk", "des_amphitrite", { normalizedDisplacementKg: displacementKg });
 }
 
-describe("projectedConstructionOrderCosts and designed ships (ADR-0074)", () => {
+describe("projectedConstructionOrderCosts and designed ships", () => {
   const design = (extra: object = {}) =>
     ({ normalizedDisplacementKg: 2_000_000, ...extra }) as unknown as Parameters<
       typeof projectedConstructionOrderCosts
@@ -174,7 +174,7 @@ describe("projectedConstructionOrderCosts and designed ships (ADR-0074)", () => 
   });
 });
 
-describe("buildConstructionProjectQueue with work packages (ADR-0077)", () => {
+describe("buildConstructionProjectQueue with work packages", () => {
   const pk = (
     id: string,
     kind: "HULL" | "LAUNCH",

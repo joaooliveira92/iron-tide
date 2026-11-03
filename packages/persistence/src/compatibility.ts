@@ -4,7 +4,7 @@ import { COMPATIBILITY_MISMATCH_CODE, PersistenceCompatibilityMismatchError } fr
 
 export { COMPATIBILITY_MISMATCH_CODE } from "./errors.js";
 
-export const CURRENT_COMPATIBILITY_VERSION = "4.0.0";
+export const CURRENT_COMPATIBILITY_VERSION = "5.0.0";
 
 export const PART_MODEL_COMPATIBILITY_VERSION = "2.0.0";
 

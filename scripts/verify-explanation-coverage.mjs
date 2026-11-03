@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Explanation coverage gate (ADR-0304, issue #299). `scripts/data/explanation-coverage.json`
+// Explanation coverage gate. `scripts/data/explanation-coverage.json`
 // lists each displayed view contract under explanation coverage. For every listed contract
 // this gate scans the declared numeric and ExplanationTree fields and fails when a field has
 // neither a covered formula nor a recorded exemption. It also fails on stale entries and when

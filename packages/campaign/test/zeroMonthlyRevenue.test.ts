@@ -4,6 +4,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { buildNationStates, checkStartRevenue } from "../src/nationCompilation.js";
 import { FIXTURE_PRESTIGE_RULES, readAuthoredFile } from "@bluewave/test-support";
+import { STUB_REGIME, STUB_TRAITS } from "./stub-regime.js";
 
 const ZERO = "ZERO_MONTHLY_REVENUE";
 const codes = (c: DiagnosticCollector): string[] => c.all.map((d) => d.code as string);
@@ -14,7 +15,15 @@ type Economy = { nationId: string; treasury: number; income: number; expenses: n
 
 function compile(nations: NationRow[], economies: EconomyRows): DiagnosticCollector {
   const pack = {
-    nations: nations.map(({ id, name }) => ({ id, name, tag: id, isPlayable: true, prestige: 20 })),
+    nations: nations.map(({ id, name }) => ({
+      id,
+      name,
+      tag: id,
+      isPlayable: true,
+      prestige: 20,
+      traits: STUB_TRAITS,
+      regime: STUB_REGIME,
+    })),
   } as ContentPack;
   const collector = new DiagnosticCollector();
   buildNationStates(

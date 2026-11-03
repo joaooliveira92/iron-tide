@@ -31,7 +31,7 @@ const designs = readReferenceDesignEntries() as {
   draft: DesignDraft;
 }[];
 
-describe("1880 scenario classification ruleset (ADR-0116)", () => {
+describe("1880 scenario classification ruleset", () => {
   it("is authored in balance.ts, complete, and versioned", () => {
     expect(scenarioRules).toBeDefined();
     expect(() => classificationRulesFromRecord(scenarioRules)).not.toThrow();

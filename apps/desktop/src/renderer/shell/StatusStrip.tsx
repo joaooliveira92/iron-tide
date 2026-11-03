@@ -1,4 +1,11 @@
-import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
+import {
+  memo,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import {
   Bell,
   ChevronDown,
@@ -691,7 +698,7 @@ function DeferredPopover({ model }: { readonly model: StatusStripModel }) {
   );
 }
 
-function BalanceChip({
+export function BalanceChip({
   model,
   trend,
 }: {
@@ -728,7 +735,7 @@ function BalanceChip({
   );
 }
 
-function TreasuryChip({
+export function TreasuryChip({
   model,
   trend,
 }: {
@@ -836,16 +843,18 @@ function AlertsChip({ alerts }: { readonly alerts: string }) {
   );
 }
 
-export function StatusStripView({
+export const StatusStripView = memo(function StatusStripView({
   model,
   trend = null,
+  startCollapsed = false,
 }: {
   readonly model: StatusStripModel;
   readonly trend?: TrendDetail | null;
+  readonly startCollapsed?: boolean;
 }) {
   const { density } = useDensity();
   const [chosen, setChosen] = useState<boolean | null>(null);
-  const expanded = chosen ?? density !== "compact";
+  const expanded = chosen ?? (density !== "compact" && !startCollapsed);
   const { summary } = model;
   const controls = (
     <div className="flex shrink-0 items-center gap-1.5">
@@ -898,25 +907,40 @@ export function StatusStripView({
       )}
     </section>
   );
-}
+});
 
 export interface StatusStripProps {
   readonly reads: CampaignReads;
+  readonly startCollapsed?: boolean;
 }
 
-export function StatusStrip({ reads }: StatusStripProps) {
+export function useStatusStripReads(reads: CampaignReads): {
+  readonly model: StatusStripModel | null;
+  readonly trend: TrendDetail | null;
+} {
   const { projection, areas, reports } = reads;
   const format = usePresentationFormat();
-  if (projection.status !== "ready") return null;
-  return (
-    <StatusStripView
-      trend={buildTrend(reports.status === "ready" ? reports.value : null, format)}
-      model={buildStatusStrip({
-        projection: projection.value,
-        areas: areas.status === "ready" ? areas.value : null,
-        alertsCount: activeAlertsCount(reads),
-        format,
-      })}
-    />
+  const model = useMemo(
+    () =>
+      projection.status === "ready"
+        ? buildStatusStrip({
+            projection: projection.value,
+            areas: areas.status === "ready" ? areas.value : null,
+            alertsCount: activeAlertsCount(reads),
+            format,
+          })
+        : null,
+    [projection, areas, reads, format],
   );
+  const trend = useMemo(
+    () => buildTrend(reports.status === "ready" ? reports.value : null, format),
+    [reports, format],
+  );
+  return { model, trend };
+}
+
+export function StatusStrip({ reads, startCollapsed = false }: StatusStripProps) {
+  const { model, trend } = useStatusStripReads(reads);
+  if (model === null) return null;
+  return <StatusStripView model={model} trend={trend} startCollapsed={startCollapsed} />;
 }

@@ -210,7 +210,7 @@ describe("S-2 04: unpaid-funds prestige loss in the obligation phase", () => {
   });
 });
 
-describe("applyPrestigeChange with an explicitly supplied rule (ADR-0261)", () => {
+describe("applyPrestigeChange with an explicitly supplied rule", () => {
   function context(nationPrestige: number) {
     let current = makeSnapshot([
       ["GBR", makeNation("GBR", { ...FLUSH, prestige: SafeInt(nationPrestige) })],

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "../components/ui/button.js";
 import {
   GUIDED_INSPECTION_STEPS,
@@ -20,6 +20,16 @@ interface Rect {
   readonly y: number;
   readonly width: number;
   readonly height: number;
+}
+
+export function sameRect(current: Rect | null, next: Rect | null): boolean {
+  if (current === null || next === null) return current === next;
+  return (
+    current.x === next.x &&
+    current.y === next.y &&
+    current.width === next.width &&
+    current.height === next.height
+  );
 }
 
 function getTargetRect(selector: string): Rect | null {
@@ -44,7 +54,8 @@ export function GuidedInspectionOverlay({
   const scrollEndTimer = useRef<number | null>(null);
 
   const recompute = useCallback(() => {
-    setRect(getTargetRect(step.targetSelector));
+    const next = getTargetRect(step.targetSelector);
+    setRect((current) => (sameRect(current, next) ? current : next));
   }, [step.targetSelector]);
 
   useLayoutEffect(() => {
@@ -56,17 +67,15 @@ export function GuidedInspectionOverlay({
       scrollEndTimer.current = window.setTimeout(() => setScrolling(false), 120);
     };
     window.addEventListener("resize", recompute);
-    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("scroll", handleScroll, { passive: true, capture: true });
     const id = window.setInterval(recompute, 300);
     return () => {
       window.removeEventListener("resize", recompute);
-      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("scroll", handleScroll, { capture: true });
       window.clearInterval(id);
       if (scrollEndTimer.current !== null) window.clearTimeout(scrollEndTimer.current);
     };
   }, [recompute]);
-
-  useEffect(() => {}, [clamped]);
 
   const isLast = clamped === GUIDED_STEP_COUNT - 1;
 

@@ -30,6 +30,7 @@ export type CommandBody =
   | RelieveOfficerCommand
   | DeclareWarCommand
   | AcceptPeaceCommand
+  | ProposePeaceCommand
   | FormAllianceCommand
   | BreakAllianceCommand
   | FormNonAggressionPactCommand
@@ -158,6 +159,15 @@ export interface AcceptPeaceCommand {
   type: "AcceptPeace";
   nationId: string;
   warId: string;
+}
+export type PeaceTerm =
+  | { readonly _tag: "StatusQuo" }
+  | { readonly _tag: "CedeArea"; readonly areaId: string };
+export interface ProposePeaceCommand {
+  type: "ProposePeace";
+  nationId: string;
+  warId: string;
+  term: PeaceTerm;
 }
 export interface FormAllianceCommand {
   type: "FormAlliance";

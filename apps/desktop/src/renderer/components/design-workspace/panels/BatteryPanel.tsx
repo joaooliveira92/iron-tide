@@ -1,15 +1,13 @@
-import type { DesignDraft } from "@bluewave/ship-design";
 import { Badge } from "../../ui/badge.js";
 import { Button } from "../../ui/button.js";
 import { ConfirmAction } from "../ConfirmAction.js";
 import type { BatteryCard } from "../batteryView.js";
 import { batterySymmetry, clearBatteryEdit, setRoundsEdit } from "../batteryView.js";
-import type { DrawingBoardContent } from "../content.js";
+import { useDesignActions, useDesignState } from "../DesignWorkspaceContext.js";
 import { NumberField, SelectField } from "../fields.js";
 import type { ShipEntity } from "../selection/store.js";
 import { Panel } from "./Panel.js";
 import { gunQualityLine, NEUTRAL_GUN_QUALITY } from "./gun-quality.js";
-import type { Edit } from "./types.js";
 import { batteryAttrs, shipLinkAttrs } from "../selection/navigation.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
@@ -20,19 +18,15 @@ const sideText = { CENTRE: "centreline", PORT: "port", STBD: "starboard" } as co
 
 export function BatteryPanel({
   cards,
-  draft,
-  content,
-  edit,
   onSelect,
   selectedInstanceId,
 }: {
   readonly cards: readonly BatteryCard[];
-  readonly draft: DesignDraft;
-  readonly content: DrawingBoardContent;
-  readonly edit: Edit;
   readonly onSelect?: (entity: ShipEntity) => void;
   readonly selectedInstanceId?: string | null;
 }) {
+  const { draft, content } = useDesignState();
+  const { edit } = useDesignActions();
   const format = usePresentationFormat();
   const tonnes = (kg: number) => format.measurement(kg, "mass", { maximumFractionDigits: 0 });
   const defOf = (id: string) => content.catalogue.find((e) => e.id === id);

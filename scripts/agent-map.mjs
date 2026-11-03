@@ -5,13 +5,15 @@ import { basename, extname, isAbsolute, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
 import { isEntryPoint } from "./lib/paths.mjs";
+import { describeScreen, listScreens, renderScreen, renderScreenList } from "./lib/screen-map.mjs";
 import { discoverWorkspaces, toPosix, workspaceForPath } from "./lib/workspaces.mjs";
 
-export const FORMAT_VERSION = 1;
+export const FORMAT_VERSION = 2;
 const MAX_BUFFER = 32 * 1024 * 1024;
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/u;
 const SOURCE_ROOTS = ["packages", "apps", "content", "scripts"];
-const USAGE = "usage: pnpm agent:map <symbol-or-path> [--json] [--limit N] [--help]";
+const USAGE =
+  "usage: pnpm agent:map <symbol-or-path> [--json] [--limit N] [--help]\n       pnpm agent:map --screen [name] [--json] [--limit N]";
 
 export class MapError extends Error {
   constructor(message, code, details = []) {
@@ -33,6 +35,7 @@ export function parseArguments(argv) {
       options: {
         json: { type: "boolean", default: false },
         help: { type: "boolean", default: false },
+        screen: { type: "boolean", default: false },
         limit: { type: "string", default: "8" },
       },
     }));
@@ -40,11 +43,15 @@ export function parseArguments(argv) {
     throw new MapError(`${error.message}\n${USAGE}`, 2);
   }
   if (values.help) return { help: true };
-  if (positionals.length !== 1) throw new MapError(USAGE, 2);
   const limit = Number(values.limit);
   if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
     throw new MapError("--limit must be an integer between 1 and 50", 2);
   }
+  if (values.screen) {
+    if (positionals.length > 1) throw new MapError(USAGE, 2);
+    return { help: false, screen: true, query: positionals[0] ?? null, json: values.json, limit };
+  }
+  if (positionals.length !== 1) throw new MapError(USAGE, 2);
   return { help: false, query: positionals[0], json: values.json, limit };
 }
 
@@ -174,23 +181,6 @@ function scopedInstructions(root, workspace) {
   return files;
 }
 
-function scopePage(root, workspace, instructions) {
-  if (workspace === null) return "docs/adr/by-scope/repository.md";
-  const scoped = instructions.find((file) => file !== "AGENTS.md");
-  if (scoped === undefined) return null;
-  const text = readFileSync(resolve(root, scoped), "utf8");
-  const match = /by-scope\/([a-z0-9-]+)\.md/u.exec(text);
-  return match === null ? null : `docs/adr/by-scope/${match[1]}.md`;
-}
-
-function ruleEntries(root, page, limit) {
-  if (page === null || !existsSync(resolve(root, page))) return [];
-  return readFileSync(resolve(root, page), "utf8")
-    .split("\n")
-    .filter((line) => line.startsWith("- [ADR-"))
-    .slice(0, limit);
-}
-
 function exportEntries(manifest) {
   const exports = manifest?.exports;
   if (exports === null || typeof exports !== "object") return [];
@@ -279,7 +269,6 @@ export function buildReport(root, query, limit) {
       : (definitions[0]?.path ?? references[0]?.path ?? target.symbol);
   const workspace = workspaceForPath(path, workspaces);
   const instructions = scopedInstructions(root, workspace);
-  const page = scopePage(root, workspace, instructions);
   const manifest = workspace === null ? null : readJsonSafe(root, `${workspace.dir}/package.json`);
   return {
     formatVersion: FORMAT_VERSION,
@@ -291,7 +280,6 @@ export function buildReport(root, query, limit) {
         : { name: workspace.name, dir: workspace.dir, kind: workspace.kind },
     path,
     instructions,
-    rules: { path: page, entries: ruleEntries(root, page, limit) },
     manifest: workspace === null ? null : `${workspace.dir}/package.json`,
     exports: exportEntries(manifest),
     fileSymbols: target.kind === "path" ? fileExports(root, target.path) : [],
@@ -319,8 +307,6 @@ export function renderText(report) {
   lines.push(`owner: ${owner}`);
   lines.push(`path: ${report.path}`);
   lines.push(`instructions: ${report.instructions.join(", ")}`);
-  lines.push(`rules: ${report.rules.path ?? "none"}`);
-  for (const entry of report.rules.entries) lines.push(`  ${entry}`);
   if (report.manifest !== null) lines.push(`manifest: ${report.manifest}`);
   if (report.fileSymbols.length > 0) {
     lines.push(`symbols: ${report.fileSymbols.join(", ")}`);
@@ -355,6 +341,28 @@ function printError(error) {
   for (const detail of error.details ?? []) process.stderr.write(`  ${detail}\n`);
 }
 
+function runScreen(root, options) {
+  if (options.query === null) {
+    const screens = listScreens(root);
+    process.stdout.write(
+      options.json ? `${JSON.stringify(screens, null, 2)}\n` : renderScreenList(screens),
+    );
+    return 0;
+  }
+  const report = describeScreen(root, options.query, options.limit);
+  if (report === null) {
+    const names = listScreens(root)
+      .map((screen) => screen.name)
+      .join(", ");
+    printError(new MapError(`unknown screen "${options.query}". Known: ${names}`, 4));
+    return 4;
+  }
+  process.stdout.write(
+    options.json ? `${JSON.stringify(report, null, 2)}\n` : renderScreen(report),
+  );
+  return 0;
+}
+
 export function run(argv, root = resolve(import.meta.dirname, "..")) {
   let options;
   try {
@@ -370,6 +378,7 @@ export function run(argv, root = resolve(import.meta.dirname, "..")) {
     process.stdout.write(`${USAGE}\n`);
     return 0;
   }
+  if (options.screen) return runScreen(root, options);
   try {
     const report = buildReport(root, options.query, options.limit);
     process.stdout.write(

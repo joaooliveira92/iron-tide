@@ -1,46 +1,79 @@
+import { useState, type ComponentProps } from "react";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
+import { DesignWorkspaceFixture } from "../../DesignWorkspaceFixture.js";
 import { HullPlanPanel } from "./HullPlanPanel.js";
+import { PLAN_H, PLAN_W } from "./geometry.js";
+import { IDLE_TOOL } from "./plan-tool.js";
 import { content, reference, view } from "./test-fixtures.js";
 
 afterEach(cleanup);
 
-const draw = () =>
-  render(
-    <HullPlanPanel
+function DesignedHullPlan(props: ComponentProps<typeof HullPlanPanel>) {
+  return (
+    <DesignWorkspaceFixture
       draft={reference.draft}
       content={content}
       view={view}
       month={reference.month}
-      edit={() => {}}
-      findings={[]}
-    />,
+    >
+      <HullPlanPanel {...props} />
+    </DesignWorkspaceFixture>
   );
+}
+
+const draw = () => render(<DesignedHullPlan findings={[]} />);
 
 describe("HullPlanPanel", () => {
-  it("is the hull plan panel: a described plan and profile, a legend and a schematic note", () => {
+  it("is the hull plan panel: a described plan, a drawing key and a schematic note", () => {
     draw();
     const panel = screen.getByRole("region", { name: "Hull plan" });
     expect(within(panel).getByRole("img", { name: /^Top-down plan/ })).toBeTruthy();
-    expect(within(panel).getByRole("img", { name: /^Side profile/ })).toBeTruthy();
-    expect(within(panel).getByRole("group", { name: "Drawing legend" })).toBeTruthy();
+    expect(within(panel).queryByRole("img", { name: /^Side profile/ })).toBeNull();
     expect(panel.textContent).toMatch(/Schematic, not a lines plan\./);
+    expect(within(panel).getByRole("button", { name: "Drawing key" })).toBeTruthy();
+  });
+
+  it("draws one view at a time: top, side or isometric", () => {
+    const { rerender } = draw();
+    const show = (shipView: "top" | "side" | "iso") =>
+      rerender(<DesignedHullPlan findings={[]} shipView={shipView} />);
+    show("side");
+    expect(screen.getByRole("img", { name: /^Side profile/ })).toBeTruthy();
+    expect(screen.queryByRole("img", { name: /^Top-down plan/ })).toBeNull();
+    expect(screen.queryByTestId("anatomy-ship")).toBeNull();
+    show("iso");
+    expect(screen.getByTestId("anatomy-ship")).toBeTruthy();
+    expect(screen.queryByRole("img", { name: /^Side profile/ })).toBeNull();
+    expect(screen.queryByRole("img", { name: /^Top-down plan/ })).toBeNull();
+    show("top");
+    expect(screen.getByRole("img", { name: /^Top-down plan/ })).toBeTruthy();
+    expect(screen.queryByTestId("anatomy-ship")).toBeNull();
+  });
+
+  it("lights the highlighted fitting in the isometric drawing and turns it to the port side", () => {
+    const fitting = reference.draft.placements[0]!.instanceId;
+    const { rerender } = draw();
+    const show = (isoSide: "starboard" | "port") =>
+      rerender(
+        <DesignedHullPlan findings={[]} shipView="iso" isoSide={isoSide} highlightId={fitting} />,
+      );
+    show("starboard");
+    expect(screen.getByTestId("anatomy-ship").getAttribute("data-azimuth")).toBe("135");
+    expect(
+      screen
+        .getByTestId("anatomy-ship")
+        .querySelector(`[data-part="${fitting}"]`)
+        ?.hasAttribute("data-lit"),
+    ).toBe(true);
+    show("port");
+    expect(screen.getByTestId("anatomy-ship").getAttribute("data-azimuth")).toBe("225");
   });
 
   it("drops its own heading inside the workspace, where the view toolbar names the drawing", () => {
     const { rerender } = draw();
     expect(screen.getByText("Hull plan")).toBeTruthy();
-    rerender(
-      <HullPlanPanel
-        draft={reference.draft}
-        content={content}
-        view={view}
-        month={reference.month}
-        edit={() => {}}
-        findings={[]}
-        shipView="top"
-      />,
-    );
+    rerender(<DesignedHullPlan findings={[]} shipView="top" />);
     expect(screen.queryByText("Hull plan")).toBeNull();
     expect(screen.getByRole("region", { name: "Hull plan" })).toBeTruthy();
   });
@@ -51,15 +84,7 @@ describe("HullPlanPanel", () => {
     const strip = () => within(panel()).getByTestId("section-labels");
     expect(strip().textContent).not.toMatch(/^1/);
     rerender(
-      <HullPlanPanel
-        draft={reference.draft}
-        content={content}
-        view={view}
-        month={reference.month}
-        edit={() => {}}
-        findings={[]}
-        shipView="compartments"
-      />,
+      <DesignedHullPlan findings={[]} shipView="top" overlays={new Set(["compartments"])} />,
     );
     expect(strip().textContent).toMatch(/1.*2.*3.*4.*5.*6.*7.*8/);
   });
@@ -81,5 +106,46 @@ describe("HullPlanPanel", () => {
     expect(plan.querySelectorAll("[data-arc]")).toHaveLength(0);
     fireEvent.click(checkbox);
     expect(plan.querySelectorAll("[data-arc]")).toHaveLength(arcs);
+  });
+
+  it("moves only the ghost circle during a drag, without re-rendering the panel", async () => {
+    let renders = 0;
+    const Counting = () => {
+      const [tool, setTool] = useState(IDLE_TOOL);
+      renders++;
+      return <DesignedHullPlan findings={[]} shipView="top" tool={tool} onTool={setTool} />;
+    };
+    const { container } = render(<Counting />);
+    const plan = container.querySelector("svg[aria-label]") as SVGSVGElement;
+    plan.getBoundingClientRect = () =>
+      ({
+        left: 0,
+        top: 0,
+        width: PLAN_W,
+        height: PLAN_H,
+        right: PLAN_W,
+        bottom: PLAN_H,
+      }) as DOMRect;
+    fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Move" }));
+    const last = reference.draft.placements[reference.draft.placements.length - 1]!;
+    const items = await screen.findAllByRole("menuitem", {
+      name: new RegExp(`\\(${last.instanceId}\\)$`),
+    });
+    fireEvent.click(items[0]!);
+    const layer = screen.getByTestId("plan-click-layer");
+    const dot = container.querySelector<SVGCircleElement>(`[data-fitting='${last.instanceId}']`)!;
+    const x = Number(dot.getAttribute("cx"));
+    const y = Number(dot.getAttribute("cy"));
+    const stable = renders;
+    fireEvent.pointerDown(layer, { clientX: x, clientY: y, pointerId: 1 });
+    fireEvent.pointerMove(layer, { clientX: x + 20, clientY: y, pointerId: 1 });
+    const ghost = screen.getByTestId("plan-drag-ghost");
+    expect(Number(ghost.getAttribute("cx"))).toBe(x + 20);
+    fireEvent.pointerMove(layer, { clientX: x + 40, clientY: y, pointerId: 1 });
+    expect(Number(screen.getByTestId("plan-drag-ghost").getAttribute("cx"))).toBe(x + 40);
+    expect(renders).toBe(stable);
+    fireEvent.pointerUp(layer, { clientX: x + 40, clientY: y, pointerId: 1 });
+    expect(screen.queryByTestId("plan-drag-ghost")).toBeNull();
   });
 });

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Cross-process determinism proof (ADR-0007): run the reference child twice in
+// Cross-process determinism proof: run the reference child twice in
 // separate processes and assert the two canonical hash reports are byte-identical.
 //
 // `verify-golden-hashes.cjs` compares one run against the committed reference;

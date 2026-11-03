@@ -53,6 +53,20 @@ describe("validateAgainstSchema (Effect Schema)", () => {
     expect(diagnostic.remediation).toBe("Add missing field 'id'");
   });
 
+  it("accepts a whole-number cession cost and rejects a negative or fractional one", () => {
+    const decode = (cessionCost: number) =>
+      validateAgainstSchema(
+        { id: "lon", name: "London", type: "land", cessionCost },
+        AreaSchema,
+        "Area",
+        "areas.json",
+        new DiagnosticCollector(),
+      );
+    expect(decode(6)).toEqual({ id: "lon", name: "London", type: "land", cessionCost: 6 });
+    expect(decode(-1)).toBeUndefined();
+    expect(decode(1.5)).toBeUndefined();
+  });
+
   it("uses (root) when the failure is not attached to a property path", () => {
     const collector = new DiagnosticCollector();
     const out = validateAgainstSchema(42, AreaSchema, "Area", "areas.json", collector);

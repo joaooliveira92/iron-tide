@@ -4,7 +4,7 @@
 // Electron app have no Effect runtime to log through, so a small, reviewed
 // allowlist names the genuine boundary sites where `console.*` is the logger;
 // everything else in a library module must not use it. The gate fails closed on
-// any new console call (ADR-0106 ratchet pattern).
+// any new console call.
 //
 // Usage: `node scripts/assert-no-library-console.mjs [--self-test]`
 //

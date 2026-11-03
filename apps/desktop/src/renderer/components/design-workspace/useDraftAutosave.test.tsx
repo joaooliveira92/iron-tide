@@ -25,13 +25,16 @@ function logWithPower(power: number): EditLog {
   });
 }
 
-function makeBridge(results: Array<typeof writeFailure | typeof writeSuccess>) {
+function makeBridge(
+  results: Array<typeof writeFailure | typeof writeSuccess>,
+  stored: unknown = null,
+) {
   const writes: Array<{ readonly sessionId: string; readonly draft: unknown }> = [];
   const execute = vi.fn<CampaignCommandClient["execute"]>((command, payload) => {
     if (command === "readDrawingBoardDraft") {
       return Promise.resolve({
         outcome: "success",
-        value: { draft: null },
+        value: { draft: stored },
         diagnostics: [],
       } as never);
     }
@@ -62,16 +65,32 @@ function wrapperFor(bridge: BluewaveDesktopBridge) {
   };
 }
 
-function renderAutosave(bridge: BluewaveDesktopBridge, log: EditLog) {
-  return renderHook(
-    ({ currentLog }: { readonly currentLog: EditLog }) =>
+interface AutosaveProps {
+  readonly currentLog: EditLog;
+  readonly currentName?: string | undefined;
+}
+
+function renderAutosave(
+  bridge: BluewaveDesktopBridge,
+  log: EditLog,
+  options: {
+    readonly className?: string;
+    readonly restore?: (presetId: string, log: EditLog, className: string | null) => boolean;
+  } = {},
+) {
+  return renderHook<ReturnType<typeof useDraftAutosave>, AutosaveProps>(
+    ({ currentLog, currentName }) =>
       useDraftAutosave({
         sessionId: "session-1",
         presetId: "preset-1",
         log: currentLog,
-        restore: () => false,
+        className: currentName ?? "",
+        restore: options.restore ?? (() => false),
       }),
-    { initialProps: { currentLog: log }, wrapper: wrapperFor(bridge) },
+    {
+      initialProps: { currentLog: log, currentName: options.className },
+      wrapper: wrapperFor(bridge),
+    },
   );
 }
 
@@ -165,6 +184,70 @@ describe("useDraftAutosave retry", () => {
     });
     expect(writes).toHaveLength(3);
     expect(result.current.saveFailed).toBe(true);
+  });
+});
+
+describe("useDraftAutosave class name", () => {
+  const draftOf = (write: { readonly draft: unknown }) =>
+    write.draft as { readonly className?: string };
+
+  it("saves the trimmed name with the draft and leaves it out when blank", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const { bridge, writes } = makeBridge([]);
+    const { rerender } = renderAutosave(bridge, logWithPower(2_500), { className: "  Dido  " });
+
+    await act(async () => {});
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS);
+    });
+    expect(draftOf(writes[0]!).className).toBe("Dido");
+
+    rerender({ currentLog: logWithPower(2_500), currentName: "   " });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS);
+    });
+    expect(writes).toHaveLength(2);
+    expect(draftOf(writes[1]!)).not.toHaveProperty("className");
+  });
+
+  it("writes again when only the name changes", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const { bridge, writes } = makeBridge([]);
+    const log = logWithPower(2_500);
+    const { rerender } = renderAutosave(bridge, log, { className: "Dido" });
+
+    await act(async () => {});
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS);
+    });
+    rerender({ currentLog: log, currentName: "Dido II" });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS);
+    });
+    expect(writes.map((w) => draftOf(w).className)).toEqual(["Dido", "Dido II"]);
+  });
+
+  it("hands the stored name to restore, and null when the draft had none", async () => {
+    const restore = vi.fn<(presetId: string, log: EditLog, className: string | null) => boolean>(
+      () => true,
+    );
+    const saved = logWithPower(2_500);
+    const stored = (className?: string) => ({
+      presetId: "preset-1",
+      log: encodeLog(saved),
+      savedAt: "2026-01-01T00:00:00.000Z",
+      ...(className === undefined ? {} : { className }),
+    });
+
+    const named = makeBridge([], stored("Dido"));
+    renderAutosave(named.bridge, newLog(reference.draft), { restore });
+    await act(async () => {});
+    expect(restore).toHaveBeenLastCalledWith("preset-1", expect.anything(), "Dido");
+
+    const unnamed = makeBridge([], stored());
+    renderAutosave(unnamed.bridge, newLog(reference.draft), { restore });
+    await act(async () => {});
+    expect(restore).toHaveBeenLastCalledWith("preset-1", expect.anything(), null);
   });
 });
 

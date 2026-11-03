@@ -219,11 +219,11 @@ describe("commitMonth", () => {
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "a4f45846ffd913fc1d1fe668a47b75f380db13d62a1e604498511a97a800996b",
-        bodyLength: 210936,
+        bodyHash: "b05a3476f3403b7c68518af45f0795a9e25420fbf12afe0b7866f1973026cfb2",
+        bodyLength: 212470,
       });
       expect(updated.state.rawHash).toBe(
-        "c83d17fabe87292c3f23c94a1ac64f8b5088b2a56e3195a1a09a1db7171bc6f2",
+        "32523361eba2c5b6a5751361d73c8683b5e731f5ca83123f7a8d81b5e87b0776",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",
@@ -750,7 +750,7 @@ describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 f
     expect(outcome.explanation.join(" ")).toContain("unavailable on the pre-month snapshot");
   });
 
-  it("a non-decided battle (null winner/loser) -> warScoreDelta 0 (ADR-0026 §7)", () => {
+  it("a non-decided battle (null winner/loser) -> warScoreDelta 0", () => {
     const battle: BattleInstance = {
       ...makeBattle(),
       result: {

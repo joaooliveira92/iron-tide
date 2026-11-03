@@ -17,8 +17,8 @@ const commitLength = (value: string) => {
 };
 const openHull = () =>
   fireEvent.click(
-    within(screen.getByRole("navigation", { name: "Design map" })).getByRole("button", {
-      name: /Hull/,
+    within(screen.getByRole("navigation", { name: "Design sections" })).getByRole("button", {
+      name: /^Hull/,
     }),
   );
 
@@ -60,8 +60,8 @@ describe("inline errors beyond the hull", () => {
   it("marks the machinery field whose change broke the design", () => {
     render(<ShipbuildingWorkspace />);
     fireEvent.click(
-      within(screen.getByRole("navigation", { name: "Design map" })).getByRole("button", {
-        name: /Machinery/,
+      within(screen.getByRole("navigation", { name: "Design sections" })).getByRole("button", {
+        name: /^Machinery/,
       }),
     );
     const power = screen.getByLabelText(/^Installed power/) as HTMLInputElement;
@@ -75,8 +75,8 @@ describe("inline errors beyond the hull", () => {
   it("marks the armour region whose addition broke the design", () => {
     render(<ShipbuildingWorkspace />);
     fireEvent.click(
-      within(screen.getByRole("navigation", { name: "Design map" })).getByRole("button", {
-        name: /Protection/,
+      within(screen.getByRole("navigation", { name: "Design sections" })).getByRole("button", {
+        name: /^Protection/,
       }),
     );
     const panel = screen.getByRole("region", { name: "Protection" });

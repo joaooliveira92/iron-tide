@@ -1,8 +1,8 @@
 import type { DesignDraft, PartCatalogueEntry, WorkshopView } from "@bluewave/ship-design";
 import type { DrawingBoardContent } from "../../content.js";
 import { type BatteryCard, batteryCards, mountNameMap } from "../../batteryView.js";
-import type { ShipEntity } from "../../selection/store.js";
-import { boardFindings, entityWarns, type BoardFinding } from "../../validation/boardFindings.js";
+import { entityKey, type ShipEntity } from "../../selection/store.js";
+import { boardFindings, type BoardFinding } from "../../validation/boardFindings.js";
 import type { DrawingFacts } from "./describe.js";
 import type { FittingTarget } from "./FittingTargets.js";
 import { funnelPlacements } from "./funnelPlacements.js";
@@ -30,7 +30,7 @@ export interface PlanModel {
   readonly look: VisualLook;
   readonly masts: MastSummary | undefined;
   readonly facts: DrawingFacts;
-  readonly warns: (entity: ShipEntity) => boolean;
+  readonly warned: ReadonlySet<string>;
   readonly entityName: (entity: ShipEntity) => string;
 }
 
@@ -83,6 +83,9 @@ export function planModel(
     funnels: placedFunnels.length,
     superstructure,
   };
+  const warned = new Set<string>();
+  for (const f of findings)
+    if (f.severity !== "ADVISORY") for (const e of f.entities) warned.add(entityKey(e));
   const entityName = (e: ShipEntity): string => {
     switch (e.kind) {
       case "ship":
@@ -114,7 +117,7 @@ export function planModel(
     look,
     masts: mastSummary(look, superstructure !== undefined),
     facts,
-    warns: (entity) => entityWarns(entity, findings),
+    warned,
     entityName,
   };
 }

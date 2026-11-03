@@ -1,10 +1,10 @@
 import * as d3Drag from "d3-drag";
 import * as d3Selection from "d3-selection";
 import * as d3Zoom from "d3-zoom";
-import { type JSX, useEffect, useRef } from "react";
+import { type JSX, useEffect, useRef, useState } from "react";
 import type { PlayableSlotCountryId } from "@/content/nationAssetManifest.js";
 
-import { dominantFlagColors, globePoints } from "./globePins.js";
+import { globePins } from "./globePins.js";
 import type { GlobePoint } from "./globeTypes.js";
 import { GlobeShell } from "./GlobeShell.js";
 import {
@@ -34,6 +34,7 @@ export function InteractiveGlobe({
   onNationClick,
 }: InteractiveGlobeProps): JSX.Element {
   const globe = useSvgGlobe();
+  const [{ points, colors }] = useState(globePins);
   const focusedRef = useRef(focusedCountryId);
   const onNationClickRef = useRef(onNationClick);
 
@@ -52,8 +53,6 @@ export function InteractiveGlobe({
     const svg = d3Selection.select(svgEl);
     const pinSel = d3Selection.select(globe.pinRef.current);
     const ringSel = d3Selection.select(globe.ringRef.current);
-    const points = globePoints();
-    const colors = dominantFlagColors();
     const focused = (): GlobePoint | undefined =>
       focusedRef.current ? points.find((p) => p.countryId === focusedRef.current) : undefined;
 
@@ -214,7 +213,7 @@ export function InteractiveGlobe({
     if (!focusedCountryId) return;
     const projection = globe.projection();
     if (!projection) return;
-    const target = globePoints().find((p) => p.countryId === focusedCountryId);
+    const target = points.find((p) => p.countryId === focusedCountryId);
     if (!target) return;
 
     const [fromLambda, fromPhi] = projection.rotate();

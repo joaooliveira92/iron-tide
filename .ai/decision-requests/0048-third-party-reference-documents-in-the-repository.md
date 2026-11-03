@@ -11,7 +11,7 @@ Audit finding MONO-008 (`docs/audits/monorepo-audit.md`). Three third-party docu
 
 ## Evidence
 
-- [ADR-0210](../../docs/adr/ADR-0210-unavailable-artifacts-and-authority-order.md) names the RTW3 manual as an authority source, and ADRs cite it by page (for example "manual p.48"), so deleting the file removes the provenance behind those citations.
+- ADR-0210 names the RTW3 manual as an authority source, and ADRs cite it by page (for example "manual p.48"), so deleting the file removes the provenance behind those citations.
 - No licence note, `NOTICE` or permission statement covers these files (`pnpm check:licenses` covers npm dependencies only).
 - Together they are the largest tracked files outside `vendor/`, and every clone carries them.
 

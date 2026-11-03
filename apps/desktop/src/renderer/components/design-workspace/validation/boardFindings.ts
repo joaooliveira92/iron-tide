@@ -8,7 +8,7 @@ import {
   type WorkshopView,
 } from "@bluewave/ship-design";
 import type { BatteryCard } from "../batteryView.js";
-import { formatExplanation } from "../../../lib/presentation-format/index.js";
+import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { SECTION_IDS, SECTIONS } from "../panels/hull-plan/sections.js";
 import { sameEntity, type ShipEntity } from "../selection/store.js";
 import { inferEntities } from "./legacyInference.js";
@@ -103,5 +103,7 @@ export function findingsFor(
 }
 
 export function entityWarns(entity: ShipEntity, findings: readonly BoardFinding[]): boolean {
-  return findingsFor(entity, findings).some((f) => f.severity !== "ADVISORY");
+  return findings.some(
+    (f) => f.severity !== "ADVISORY" && f.entities.some((e) => sameEntity(e, entity)),
+  );
 }

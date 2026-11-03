@@ -1,0 +1,161 @@
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { decodeLog, encodeLog, newLog, pushEdit } from "@bluewave/ship-design";
+import { Toaster } from "../../components/ui/toast.js";
+import { loadDrawingBoardContent } from "../../components/design-workspace/content.js";
+import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
+import { enteredSessions } from "./entered-sessions.js";
+
+vi.mock("../../shell/CampaignShellContext.js", () => ({
+  useCampaignReads: () => null,
+  useCampaignRevision: () => 0,
+  useCampaignMonthId: () => "1880-01",
+  useActiveCampaignCurrencyContext: () => ({}),
+  useLeaveGuard: () => () => undefined,
+}));
+
+const renderWorkspace = (sessionId = "s1"): ReturnType<typeof render> =>
+  render(
+    <>
+      <Toaster />
+      <ShipbuildingWorkspace sessionId={sessionId} />
+    </>,
+  );
+
+const content = loadDrawingBoardContent();
+const start = content.references.find((r) => r.month <= "1880-01")!;
+const savedLog = pushEdit(newLog(start.draft), {
+  kind: "set_machinery",
+  patch: { installedKw: start.draft.machinery.installedKw + 100 },
+});
+
+const execute = vi.fn();
+let stored: { presetId: string; log: string; className?: string; savedAt: string } | null = null;
+let releaseRead: () => void = () => {};
+let holdRead = false;
+
+beforeEach(() => {
+  stored = null;
+  holdRead = false;
+  enteredSessions.reset();
+  execute.mockReset();
+  execute.mockImplementation(async (command: string, payload: unknown) => {
+    if (command === "readDrawingBoardDraft") {
+      if (holdRead) await new Promise<void>((r) => (releaseRead = r));
+      return { outcome: "success", value: { draft: stored }, diagnostics: [] };
+    }
+    if (command === "writeDrawingBoardDraft") {
+      const d = (payload as { draft: { presetId: string; log: string; className?: string } | null })
+        .draft;
+      stored = d === null ? null : { ...d, savedAt: "2026-10-09T10:00:00.000Z" };
+      return { outcome: "success", value: { saved: d !== null }, diagnostics: [] };
+    }
+    return { outcome: "error", reason: "UNEXPECTED", diagnostics: [] };
+  });
+  Reflect.set(window, "bluewave", { campaign: { execute } });
+});
+afterEach(() => {
+  cleanup();
+  Reflect.deleteProperty(window, "bluewave");
+});
+
+const writes = () => execute.mock.calls.filter((c) => c[0] === "writeDrawingBoardDraft");
+const undo = () => screen.getByRole("button", { name: "Undo" });
+const editPower = (kw: number) => {
+  const sections = screen.getByRole("navigation", { name: "Design sections" });
+  if (screen.queryByRole("dialog", { name: "Machinery" }) === null)
+    fireEvent.click(within(sections).getByRole("button", { name: /^Machinery/ }));
+  const input = screen.getByLabelText(/^Installed power/) as HTMLInputElement;
+  fireEvent.change(input, { target: { value: String(kw) } });
+  fireEvent.blur(input);
+};
+
+describe("Ship design autosave", () => {
+  it("restores the saved design with its history, and says so", async () => {
+    stored = { presetId: start.id, log: encodeLog(savedLog), savedAt: "2026-10-09T09:00:00.000Z" };
+    renderWorkspace();
+    expect(await screen.findByText(/unsubmitted design was restored/)).toBeTruthy();
+    expect(undo().hasAttribute("disabled")).toBe(false);
+  });
+
+  it("restores the class name beside the design, and leaves the field empty for an older draft", async () => {
+    stored = {
+      presetId: start.id,
+      log: encodeLog(savedLog),
+      className: "Dido",
+      savedAt: "2026-10-09T09:00:00.000Z",
+    };
+    const first = renderWorkspace();
+    expect(await screen.findByText(/unsubmitted design was restored/)).toBeTruthy();
+    expect((screen.getByLabelText("Class name") as HTMLInputElement).value).toBe("Dido");
+    first.unmount();
+    cleanup();
+
+    stored = { presetId: start.id, log: encodeLog(savedLog), savedAt: "2026-10-09T09:00:00.000Z" };
+    enteredSessions.reset();
+    renderWorkspace();
+    expect(await screen.findByText(/unsubmitted design was restored/)).toBeTruthy();
+    expect((screen.getByLabelText("Class name") as HTMLInputElement).value).toBe("");
+  });
+
+  it("saves the class name with the design, and again when only the name changes", async () => {
+    renderWorkspace();
+    await waitFor(() => expect(execute).toHaveBeenCalledWith("readDrawingBoardDraft", "s1"));
+    editPower(start.draft.machinery.installedKw + 250);
+    await waitFor(() => expect(stored).not.toBeNull(), { timeout: 3000 });
+    expect(stored).not.toHaveProperty("className");
+    fireEvent.change(screen.getByLabelText("Class name"), { target: { value: "  Dido  " } });
+    await waitFor(() => expect(stored?.className).toBe("Dido"), { timeout: 3000 });
+  });
+
+  it("restores quietly when the player comes back to the screen in the same session", async () => {
+    stored = { presetId: start.id, log: encodeLog(savedLog), savedAt: "2026-10-09T09:00:00.000Z" };
+    const first = renderWorkspace();
+    expect(await screen.findByText(/unsubmitted design was restored/)).toBeTruthy();
+    first.unmount();
+    cleanup();
+    renderWorkspace();
+    await waitFor(() => expect(undo().hasAttribute("disabled")).toBe(false));
+    expect(screen.queryByText(/unsubmitted design was restored/)).toBeNull();
+  });
+
+  it("saves shortly after an edit, and flushes a waiting save when the screen is left", async () => {
+    const { unmount } = renderWorkspace();
+    await waitFor(() => expect(execute).toHaveBeenCalledWith("readDrawingBoardDraft", "s1"));
+    editPower(start.draft.machinery.installedKw + 250);
+    await waitFor(() => expect(stored).not.toBeNull(), { timeout: 3000 });
+    expect(decodeLog(stored!.log).edits).toHaveLength(1);
+    editPower(start.draft.machinery.installedKw + 500);
+    unmount();
+    expect(decodeLog(stored!.log).edits).toHaveLength(2);
+  });
+
+  it("never writes before the saved design has been read", async () => {
+    holdRead = true;
+    stored = { presetId: start.id, log: encodeLog(savedLog), savedAt: "2026-10-09T09:00:00.000Z" };
+    renderWorkspace();
+    await new Promise((r) => setTimeout(r, 600));
+    expect(writes()).toHaveLength(0);
+    await act(async () => releaseRead());
+    expect(await screen.findByText(/unsubmitted design was restored/)).toBeTruthy();
+    expect(decodeLog(stored!.log).edits).toHaveLength(1);
+  });
+
+  it("start over drops the saved design and removes the file", async () => {
+    stored = { presetId: start.id, log: encodeLog(savedLog), savedAt: "2026-10-09T09:00:00.000Z" };
+    renderWorkspace();
+    fireEvent.click(await screen.findByRole("button", { name: "Start over" }));
+    expect(undo().hasAttribute("disabled")).toBe(true);
+    await waitFor(() => expect(stored).toBeNull(), { timeout: 3000 });
+    expect(screen.queryByText(/unsubmitted design was restored/)).toBeNull();
+  });
+
+  it("keeps the fresh start when the saved log no longer applies to this content", async () => {
+    stored = { presetId: "a_design_that_was_removed", log: encodeLog(savedLog), savedAt: "x" };
+    renderWorkspace();
+    await waitFor(() => expect(execute).toHaveBeenCalledWith("readDrawingBoardDraft", "s1"));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText(/unsubmitted design was restored/)).toBeNull();
+    expect(undo().hasAttribute("disabled")).toBe(true);
+  });
+});

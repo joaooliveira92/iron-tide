@@ -1,5 +1,4 @@
-import { memo } from "react";
-import { SwitchCamera } from "lucide-react";
+import { memo, useRef } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,23 +8,32 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "../../../components/ui/alert-dialog.js";
-import { Button } from "../../../components/ui/button.js";
 
 export interface CloseCampaignDialogProps {
-  readonly onCloseCampaign: () => void;
+  readonly open: boolean;
+  readonly onCancel: () => void;
+  readonly onConfirm: () => void;
 }
 
 export const CloseCampaignDialog = memo(function CloseCampaignDialog({
-  onCloseCampaign,
+  open,
+  onCancel,
+  onConfirm,
 }: CloseCampaignDialogProps) {
+  const confirmed = useRef(false);
   return (
-    <AlertDialog>
-      <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
-        <SwitchCamera className="h-3.5 w-3.5" />
-        Close Campaign
-      </AlertDialogTrigger>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) return;
+        if (confirmed.current) {
+          confirmed.current = false;
+          return;
+        }
+        onCancel();
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Close this campaign?</AlertDialogTitle>
@@ -35,7 +43,14 @@ export const CloseCampaignDialog = memo(function CloseCampaignDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onCloseCampaign}>Close Campaign</AlertDialogAction>
+          <AlertDialogAction
+            onClick={() => {
+              confirmed.current = true;
+              onConfirm();
+            }}
+          >
+            Close Campaign
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

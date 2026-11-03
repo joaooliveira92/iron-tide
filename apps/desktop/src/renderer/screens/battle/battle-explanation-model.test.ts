@@ -76,3 +76,22 @@ describe("battle explanation model", () => {
     }
   });
 });
+
+describe("ship motion explanation", () => {
+  const motion = tree("ship_motion", 12_500, "mkn", [
+    child("ship_motion.orderedSpeed", 14_000, "mkn"),
+  ]);
+
+  it("formats milli-knots as knots, never as a percentage", () => {
+    const model = battleExplanationModel(motion, "battle.ship_motion.summary", "en-US");
+    expect(model.summary).toBe("Speed 12.5 kn");
+    expect(model.rows).toEqual([
+      { key: "ship_motion.orderedSpeed", label: "Ordered speed", valueText: "14 kn" },
+    ]);
+  });
+
+  it("has an authored message for every key it uses", () => {
+    expect(hasAuthoredMessage("battle.ship_motion.summary")).toBe(true);
+    expect(hasAuthoredMessage("battle.ship_motion.orderedSpeed")).toBe(true);
+  });
+});

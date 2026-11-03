@@ -1,9 +1,7 @@
 import { useMemo } from "react";
 
-import {
-  createPresentationFormat,
-  type PresentationFormat,
-} from "../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../lib/presentation-format/profile.js";
+import type { PresentationFormat } from "../lib/presentation-format/index.js";
 import { useCurrencyDisplayMode, usePreferences } from "../lib/preferences-context.js";
 import { useActiveCampaignCurrencyContext } from "./CampaignShellContext.js";
 

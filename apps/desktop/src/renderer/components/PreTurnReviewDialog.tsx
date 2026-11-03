@@ -7,7 +7,7 @@ import type { StrategicPriority } from "@bluewave/campaign-engine";
 import { cn } from "../lib/utils.js";
 import { usePresentationFormat } from "../shell/usePresentationFormat.js";
 import { Button } from "./ui/button.js";
-import { Dialog, DialogContent } from "./ui/dialog.js";
+import { Dialog, DialogBody, DialogContent } from "./ui/dialog.js";
 import { Slipways } from "./pre-turn-review/Slipways.js";
 import { TransitHeader } from "./pre-turn-review/TransitHeader.js";
 import { TreasuryLedger } from "./pre-turn-review/TreasuryLedger.js";
@@ -90,14 +90,14 @@ export function PreTurnReviewDialogView({
 
   return (
     <Dialog open={open} onOpenChange={changeOpen}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] max-w-4xl gap-0 overflow-y-auto p-0 sm:rounded-xl">
+      <DialogContent flush>
         <TransitHeader
           current={formatMonth(campaign.month)}
           next={formatMonth(nextMonth)}
           verdict={verdict}
         />
 
-        <div className="grid divide-border/70 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:divide-x">
+        <DialogBody className="grid content-start divide-border/70 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] md:divide-x">
           <TreasuryLedger
             economy={data.economy}
             loading={data.loading}
@@ -121,9 +121,9 @@ export function PreTurnReviewDialogView({
               onOpen={onOpenPriority}
             />
           </div>
-        </div>
+        </DialogBody>
 
-        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 bg-muted/30 px-6 py-3">
+        <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border/70 bg-muted/30 px-6 py-3">
           <div className="min-w-0">
             {confirming ? (
               <p

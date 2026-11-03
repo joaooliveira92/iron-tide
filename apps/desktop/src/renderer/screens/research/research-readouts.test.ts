@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { createPresentationFormat } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import { researchLoadSuccess } from "./research-screen-state.js";
 import { researchReadouts } from "./research-readouts.js";
 import { fixtureProjection } from "./research-test-fixtures.js";

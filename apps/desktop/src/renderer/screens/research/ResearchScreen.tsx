@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { debugRevisionActions } from "../../components/shared/debugRevisionActions.js";
 import { ResearchLoadErrorState, ResearchLoadingState } from "./components/index.js";
 import { ResearchWorkspace } from "./ResearchWorkspace.js";
@@ -7,16 +8,15 @@ import { buildResearchViewModel } from "./research-view-model.js";
 export function ResearchScreen({ sessionId }: { readonly sessionId: string }) {
   const { state, loadError, setFieldWeight, revert, submit, reload, canSubmit } =
     useResearchScreen(sessionId);
+  const vm = useMemo(() => (state.kind === "idle" ? null : buildResearchViewModel(state)), [state]);
 
   if (loadError !== null) {
     return <ResearchLoadErrorState message={loadError} onRetry={() => void reload()} />;
   }
 
-  if (state.kind === "idle") {
+  if (vm === null || state.kind === "idle") {
     return <ResearchLoadingState />;
   }
-
-  const vm = buildResearchViewModel(state);
 
   return (
     <div data-guided-target="research">

@@ -198,7 +198,7 @@ describe("engine-level: a seeded FireRecord progresses without any gunnery", () 
 
 describe("§32 battle-end decision with persisted sources", () => {
   const seeds = ["fid-a", "fid-b", "fid-c", "fid-d", "fid-e"];
-  it("every unarmed battle ends by one side breaking off (ADR-0073), with persisted sources deterministic", () => {
+  it("every unarmed battle ends by one side breaking off, with persisted sources deterministic", () => {
     for (const seed of seeds) {
       const r = resolveBattleAuto({
         ...makeAutoInput({ nations: makeNations({ attackerGuns: [4, 4], defenderGuns: [4, 4] }) }),

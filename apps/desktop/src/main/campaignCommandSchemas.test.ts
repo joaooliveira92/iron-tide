@@ -209,6 +209,57 @@ describe("DiplomacyCommandBodySchema (tagged union)", () => {
     });
   });
 
+  it("accepts a ProposePeace carrying the status-quo term", () => {
+    expectSuccess(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "w",
+      term: { _tag: "StatusQuo" },
+    });
+  });
+
+  it("accepts a ProposePeace carrying a cede-area term and rejects one without an area", () => {
+    expectSuccess(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "w",
+      term: { _tag: "CedeArea", areaId: "med_malta" },
+    });
+    expectFailure(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "w",
+      term: { _tag: "CedeArea" },
+    });
+    expectFailure(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "w",
+      term: { _tag: "CedeArea", areaId: "" },
+    });
+  });
+
+  it("rejects a ProposePeace with an unknown, missing or malformed term", () => {
+    expectFailure(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "w",
+      term: { _tag: "Annex" },
+    });
+    expectFailure(DiplomacyCommandBodySchema, { type: "ProposePeace", warId: "w" });
+    expectFailure(DiplomacyCommandBodySchema, {
+      type: "ProposePeace",
+      warId: "",
+      term: { _tag: "StatusQuo" },
+    });
+  });
+
+  it("still decodes an AcceptPeace body unchanged", () => {
+    const decoded = Schema.decodeUnknownResult(DiplomacyCommandBodySchema)({
+      type: "AcceptPeace",
+      warId: "w",
+    });
+    expect(Result.isSuccess(decoded) ? decoded.success : null).toEqual({
+      type: "AcceptPeace",
+      warId: "w",
+    });
+  });
+
   it("rejects an unknown discriminant", () => {
     expectFailure(DiplomacyCommandBodySchema, {
       type: "NotACommand",
@@ -669,6 +720,18 @@ describe("WriteDrawingBoardDraftPayloadSchema (nullable draft)", () => {
       sessionId: "s",
       draft: { presetId: "p", log: "[]" },
     });
+  });
+
+  it("accepts an optional class name of 1 to 60 characters and refuses any other", () => {
+    expectSuccess(WriteDrawingBoardDraftPayloadSchema, {
+      sessionId: "s",
+      draft: { presetId: "p", log: "[]", className: "x".repeat(60) },
+    });
+    for (const className of ["", "x".repeat(61), 3])
+      expectFailure(WriteDrawingBoardDraftPayloadSchema, {
+        sessionId: "s",
+        draft: { presetId: "p", log: "[]", className },
+      });
   });
 
   it("rejects a malformed draft", () => {

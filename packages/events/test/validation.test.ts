@@ -213,6 +213,14 @@ describe("event validation parity (Zod → Effect Schema)", () => {
         areaId: "a1",
         targetAreaId: "a3",
       },
+      {
+        kind: "PossessionTransferred",
+        possessionId: "p1",
+        areaId: "a1",
+        fromNationId: "n1",
+        toNationId: "n2",
+        warId: "w1",
+      },
       { kind: "PrestigeLossRequested", nationId: "n1", areaId: "a1", shortfallTons: 300 },
       { kind: "RevoltPressureRequested", nationId: "n1", areaId: "a1", shortfallTons: 300 },
     ] as const;

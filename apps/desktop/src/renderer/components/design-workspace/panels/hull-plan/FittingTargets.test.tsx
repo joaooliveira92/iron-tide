@@ -48,7 +48,7 @@ const draw = (
         draft={draft}
         targets={targets}
         disabled={false}
-        warns={() => false}
+        warned={new Set()}
         {...over}
       />
     </ShipSelectionProvider>,
@@ -85,7 +85,7 @@ describe("FittingTargets", () => {
 
   it("selects the fitting on Enter or Space, and shows its selected ring with a warning glyph", () => {
     const store = createSelectionStore();
-    const { container } = draw({ warns: (id) => id === "a" }, store);
+    const { container } = draw({ warned: new Set(["f:a"]) }, store);
     fireEvent.keyDown(buttons(container)[0]!, { key: "Enter" });
     expect(buttons(container)[0]!.getAttribute("aria-pressed")).toBe("true");
     expect(container.querySelector("[data-testid='fitting-selected-ring']")).not.toBeNull();

@@ -75,7 +75,7 @@ function run(
 }
 
 describe("SubmitDesign through the month", () => {
-  it("keeps the submitted draft with the design so it can be revised later (ADR-0070)", () => {
+  it("keeps the submitted draft with the design so it can be revised later", () => {
     const snapshot = snapshotIn(1895);
     const { designs } = run(snapshot, [submit(snapshot)]);
     const d = designs.get("des_test_destroyer")!;
@@ -196,7 +196,7 @@ describe("SubmitDesign lifecycle validation", () => {
   });
 });
 
-describe("construction price of a designed ship (ADR-0074)", () => {
+describe("construction price of a designed ship", () => {
   it("is the cost model's price in treasury units, the same figure the Drawing Board forecasts", () => {
     const snapshot = snapshotIn(1895);
     const { designs } = run(snapshot, [submit(snapshot)]);
@@ -219,7 +219,7 @@ describe("construction price of a designed ship (ADR-0074)", () => {
   });
 });
 
-describe("construction plan of a designed ship (ADR-0077)", () => {
+describe("construction plan of a designed ship", () => {
   const submitted = () => {
     const snapshot = snapshotIn(1895);
     return run(snapshot, [submit(snapshot)]).designs.get("des_test_destroyer")!;

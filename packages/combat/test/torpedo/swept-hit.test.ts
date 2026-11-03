@@ -6,7 +6,7 @@ import {
 
 const M = 1_000_000;
 
-describe("sweptPathIntersectsCollisionGeometry (ADR-0046)", () => {
+describe("sweptPathIntersectsCollisionGeometry", () => {
   it("hits a target crossed mid-segment that the end-point test misses", () => {
     const from: [number, number] = [0, 0];
     const to: [number, number] = [1_000 * M, 0];

@@ -1,7 +1,7 @@
 import type { ExplanationTree } from "@bluewave/events";
 
 import { explanationLabelKey } from "../../lib/explanation.js";
-import { formatPercent } from "../../lib/presentation-format/index.js";
+import { formatPercent } from "../../lib/presentation-format/format.js";
 import type { FormattingLocale } from "../../../shared/preferences-contract.js";
 import { translate } from "../../lib/strings.js";
 

@@ -10,7 +10,7 @@ const ownKeysShape = (value: object) => ({
   symbols: Object.getOwnPropertySymbols(value).map(String),
 });
 
-describe("Schema.Struct excess-key mechanism (ADR-0155)", () => {
+describe("Schema.Struct excess-key mechanism", () => {
   it("strips unmodeled string and symbol keys by default", () => {
     const decoded = Schema.decodeUnknownSync(schema)(input);
     expect(ownKeysShape(decoded)).toEqual({ strings: ["a"], symbols: [] });

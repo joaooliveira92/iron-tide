@@ -1,4 +1,4 @@
-import { Ban, Gauge, Pause, Play } from "lucide-react";
+import { Ban, Gauge, Pause, PencilRuler, Play } from "lucide-react";
 import { Button } from "../../../components/ui/button.js";
 import type { ProjectRow } from "../project-progress.js";
 import { Tip } from "../../../components/ui/tip.js";
@@ -10,6 +10,7 @@ export interface ProjectSteeringProps {
   readonly onResume?: (projectId: string) => void;
   readonly onAccelerate?: (projectId: string, accelerated: boolean) => void;
   readonly onCancelProject?: (projectId: string) => void;
+  readonly onRevise?: (projectId: string) => void;
 }
 
 const STEERABLE = new Set(["ACTIVE", "ACCELERATED", "HALTED", "DELAYED", "AWAITING_CAPACITY"]);
@@ -22,6 +23,7 @@ export function ProjectSteering({
   onResume,
   onAccelerate,
   onCancelProject,
+  onRevise,
 }: ProjectSteeringProps) {
   const isHeld = HELD.has(row.status);
   const steerable = !row.isForeign && STEERABLE.has(row.status);
@@ -77,6 +79,20 @@ export function ProjectSteering({
         >
           Stop accelerating
         </Button>
+      )}
+      {onRevise !== undefined && row.revisable && (
+        <Tip label="Revise this project's design on the drawing board. How much it costs depends on how far the hull has progressed.">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={pending}
+            aria-label={`${row.className} revise`}
+            onClick={() => onRevise(row.projectId)}
+          >
+            <PencilRuler aria-hidden="true" />
+            Revise
+          </Button>
+        </Tip>
       )}
       {onCancelProject !== undefined && (
         <Tip label="Cancel this project. Work already done is forfeited and is not refunded; a cancelled rebuild releases its ship on its old design.">

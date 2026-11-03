@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import type { FleetMark } from "../map-markers.js";
 import { pinned } from "../map-svg.js";
 
@@ -10,7 +12,7 @@ export interface FleetsLayerProps {
   readonly selectedFleetId: string | null;
 }
 
-export function FleetsLayer({
+export const FleetsLayer = memo(function FleetsLayer({
   marks,
   strokeFor,
   live,
@@ -72,4 +74,4 @@ export function FleetsLayer({
       })}
     </>
   );
-}
+});

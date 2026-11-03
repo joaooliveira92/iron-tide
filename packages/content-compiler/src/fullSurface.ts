@@ -198,6 +198,7 @@ export function buildFullSurfaceInput(
     researchFiles: (files.research ?? []).map(toAbsolute),
     designFiles: (files.designs ?? []).map(toAbsolute),
     divisionFiles: (files.divisions ?? []).map(toAbsolute),
+    eventFiles: (files.events ?? []).map(toAbsolute),
     presentationFiles: (files.presentation ?? []).map(toAbsolute),
     uiFiles: (files.ui ?? []).map(toAbsolute),
   };

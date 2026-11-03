@@ -18,7 +18,6 @@ function fixture() {
   git(dir, ["init", "-q", "-b", "main"]);
   mkdirSync(join(dir, "packages", "a", "src"), { recursive: true });
   mkdirSync(join(dir, "packages", "a", "test"), { recursive: true });
-  mkdirSync(join(dir, "docs", "adr", "by-scope"), { recursive: true });
   mkdirSync(join(dir, "golden"), { recursive: true });
   writeFileSync(join(dir, "golden", "hashes.json"), "{}\n");
   writeFileSync(
@@ -35,11 +34,7 @@ function fixture() {
   );
   writeFileSync(
     join(dir, "packages", "a", "AGENTS.md"),
-    "# @bluewave/a\n\n**Governing ADRs:** [every current ADR for this package](../../docs/adr/by-scope/a.md)\n\nGoldens move with the gate.\n",
-  );
-  writeFileSync(
-    join(dir, "docs", "adr", "by-scope", "a.md"),
-    "# ADRs governing a\n\n- [ADR-9001](../ADR-9001-test.md) A rule that applies.\n",
+    "# @bluewave/a\n\nGoldens move with the gate.\n",
   );
   writeFileSync(
     join(dir, "packages", "a", "src", "index.ts"),
@@ -76,7 +71,7 @@ void test("agent:map parses its arguments and rejects bad input", () => {
   });
 });
 
-void test("agent:map resolves a path with spaces and reports ownership, rules, tests and validation", () => {
+void test("agent:map resolves a path with spaces and reports ownership, tests and validation", () => {
   const dir = fixture();
   try {
     assert.deepEqual(resolveTarget(dir, "packages/a/src/with space.ts"), {
@@ -87,8 +82,6 @@ void test("agent:map resolves a path with spaces and reports ownership, rules, t
     assert.equal(report.owner.name, "@bluewave/a");
     assert.equal(report.path, "packages/a/src/with space.ts");
     assert.deepEqual(report.instructions, ["AGENTS.md", "packages/a/AGENTS.md"]);
-    assert.equal(report.rules.path, "docs/adr/by-scope/a.md");
-    assert.equal(report.rules.entries.length, 1);
     assert.deepEqual(report.validation, [
       "pnpm --filter @bluewave/a build",
       "pnpm --filter @bluewave/a test",
@@ -164,6 +157,6 @@ void test("agent:map works on the real repository", () => {
     },
   );
   assert.match(output, /owner: @bluewave\/combat \(packages\/combat\)/u);
-  assert.match(output, /rules: docs\/adr\/by-scope\/combat\.md/u);
+  assert.match(output, /instructions: AGENTS\.md, packages\/combat\/AGENTS\.md/u);
   assert.match(output, /pnpm --filter @bluewave\/combat test/u);
 });

@@ -10,5 +10,7 @@ export function selectInitialReference(
   if (fixedMonth === null || !MONTH.test(fixedMonth)) return references[0];
   const available = references.filter((r) => r.month <= fixedMonth);
   if (available.length === 0) return references[0];
-  return [...available].sort((a, b) => b.month.localeCompare(a.month))[0];
+  let latest = available[0]!;
+  for (const r of available) if (r.month > latest.month) latest = r;
+  return latest;
 }

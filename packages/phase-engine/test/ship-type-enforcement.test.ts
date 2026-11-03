@@ -89,7 +89,7 @@ const withCategory = (id: string, category: string) => {
 const rejectedWith = (collector: DiagnosticCollector) =>
   collector.all.filter((x) => x.code === "DESIGN_REJECTED").map((x) => x.message);
 
-describe("ship-type enforcement at the engine boundary (ADR-0088)", () => {
+describe("ship-type enforcement at the engine boundary", () => {
   it.each(STARTERS)("accepts the %s starter design in January 1880", (type, id) => {
     const snapshot = snapshotIn(1880, 1);
     const hull = HULL_TYPE_FOR_SHIP_TYPE[type];

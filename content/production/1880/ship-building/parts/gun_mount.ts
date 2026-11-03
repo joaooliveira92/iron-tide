@@ -12777,4 +12777,85 @@ export default collection("parts", PartSchema, [
       mountType: "TURRET",
     },
   },
+  {
+    family: "gun_mount",
+    id: "gun_qf_45in_45_twin_turret_x2",
+    lifecycle: {
+      availableFrom: "1952-01",
+      availableUntil: null,
+    },
+    name: "gun_qf_45in_45_twin_turret_x2",
+    origin: {
+      sourceFile: "ship-building/components/guns/british-quick-firing.yaml",
+    },
+    provenance: {
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "ticket #256. Navypedia and navweaps data; the component carries the derivations.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "https://www.navypedia.org/ships/uk/brit_dd_daring.htm",
+          section: "docs/research/e-1-1950s-gun-ships.md section 1",
+          title: "navypedia.org Daring class destroyers",
+        },
+      ],
+    },
+    provides: "gun_mount",
+    quantities: [
+      {
+        basis: "PER_LOADOUT_ENTRY",
+        id: "installation_fixed",
+        kind: "massKg",
+        value: 2800,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "installation_per_gun",
+        kind: "massKg",
+        value: 6100,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "mount_cost_per_gun",
+        kind: "costMicro",
+        value: 2960000000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "crew_per_gun",
+        kind: "crew",
+        value: 4,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "volume_per_gun",
+        kind: "volumeLitre",
+        value: 45600,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "deck_footprint_per_gun",
+        kind: "deckFootprintMm2",
+        value: 7150000,
+      },
+    ],
+    revisions: [],
+    slots: [
+      {
+        accepts: ["gun"],
+        id: "guns",
+        mountCount: {
+          max: 2,
+          min: 2,
+        },
+      },
+    ],
+    spec: {
+      compatibleGunFamilies: ["gun_qf_45in_45_twin"],
+      firingArcDeg: 150,
+      gunsPerMount: 2,
+      mountType: "TURRET",
+    },
+  },
 ]);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, type ReactNode, Suspense, useEffect, useMemo, useState } from "react";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { WindowState } from "../../shared/bridge-contract.js";
 import {
@@ -21,6 +21,7 @@ import {
   CampaignScreenOutlet,
   type Screen,
 } from "./campaign-screen-registry.js";
+import { isMapUnderlayScreen } from "./map-underlay-screens.js";
 import { type CampaignShellMode, describeMonthCommitFailure } from "./campaign-shell-state.js";
 import { AppFrame } from "./AppFrame.js";
 import { BackgroundLayer } from "./BackgroundLayer.js";
@@ -30,10 +31,10 @@ import { CampaignUnavailableView } from "./CampaignUnavailableView.js";
 import { CampaignShellProvider, useCampaignShellContext } from "./CampaignShellContext.js";
 import { GuidedInspectionOverlay } from "./GuidedInspectionOverlay.js";
 import { UiCatalogueGate } from "../content/UiCatalogueGate.js";
-import { PlayerBattleScreen } from "../screens/battle/PlayerBattleScreen.js";
 import { OfferDialog } from "./interruptions/OfferDialog.js";
 import { DecisionDialog } from "./interruptions/DecisionDialog.js";
 import { PendingTurnRecoveryPrompt } from "./interruptions/PendingTurnRecoveryPrompt.js";
+import { SharedWorldMapProvider } from "../components/world-map/shared-world-map.js";
 import { MapSheet } from "./MapSheet.js";
 import { ScreenHeaderProvider } from "./screen-header.js";
 import { SiteHeader } from "./SiteHeader.js";
@@ -57,6 +58,12 @@ declare global {
     bluewave?: BluewaveDesktopBridge;
   }
 }
+
+const PlayerBattleScreen = lazy(() =>
+  import("../screens/battle/PlayerBattleScreen.js").then((module) => ({
+    default: module.PlayerBattleScreen,
+  })),
+);
 
 const NEW_GAME_MODE_KINDS: ReadonlySet<CampaignShellMode["kind"]> = new Set([
   "new-game-nation",
@@ -87,7 +94,7 @@ function activeViewFor(mode: CampaignShellMode): ActiveView {
 
 function ActiveCampaignView({ screen }: { readonly screen: Screen }) {
   return (
-    <div className={screen === "overview" ? "h-full font-sans" : "p-4 font-sans"}>
+    <div className={isMapUnderlayScreen(screen) ? "h-full font-sans" : "p-4 font-sans"}>
       <CampaignScreenOutlet screen={screen} />
     </div>
   );
@@ -292,14 +299,16 @@ function CampaignShellApplication({
               onAbandon={shell.actions.abandonPendingTurn}
             />
           ) : (
-            <PlayerBattleScreen
-              request={shell.state.interruption.request}
-              sessionId={shell.state.campaign.sessionId}
-              onSubmitResult={(outcome) =>
-                void shell.actions.answerInterruption({ kind: "battle-outcome", outcome })
-              }
-              onAbandon={shell.actions.abandonPendingTurn}
-            />
+            <Suspense fallback={<MonthlyResolutionLoading committing />}>
+              <PlayerBattleScreen
+                request={shell.state.interruption.request}
+                sessionId={shell.state.campaign.sessionId}
+                onSubmitResult={(outcome) =>
+                  void shell.actions.answerInterruption({ kind: "battle-outcome", outcome })
+                }
+                onAbandon={shell.actions.abandonPendingTurn}
+              />
+            </Suspense>
           ))}
         {guided.visible && !guided.loading && (
           <GuidedInspectionOverlay
@@ -317,6 +326,15 @@ function CampaignShellApplication({
   );
 }
 
+function CampaignWorldMap({ children }: { readonly children: ReactNode }) {
+  const shell = useCampaignShellContext();
+  return (
+    <SharedWorldMapProvider key={shell.state.campaign?.sessionId ?? "no-campaign"}>
+      {children}
+    </SharedWorldMapProvider>
+  );
+}
+
 export function App({
   bridge = window.bluewave,
   initialWindowState,
@@ -329,7 +347,9 @@ export function App({
       <PresentationContentGate>
         <UiCatalogueGate>
           <CampaignShellProvider bridge={bridge}>
-            <CampaignShellApplication bridge={bridge} initialWindowState={initialWindowState} />
+            <CampaignWorldMap>
+              <CampaignShellApplication bridge={bridge} initialWindowState={initialWindowState} />
+            </CampaignWorldMap>
           </CampaignShellProvider>
         </UiCatalogueGate>
       </PresentationContentGate>

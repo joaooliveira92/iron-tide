@@ -1,3 +1,0 @@
-package guard: spike policy 1.0.0: PASS
-  files 19575, allowed map assets 16, violations 0
-  app.asar 214932641 / 219200000 bytes; resources outside the archive 1680333 / 2100000 bytes

@@ -27,8 +27,9 @@ lose ships in poor visibility and at night; heavy ships in line abreast disorder
 - `tactical/division.ts`: formation legality and role eligibility (matches manual p.85, including the 1500 t
   destroyer scout rule), division effects (`formationCohesion`, `signaling`).
 - Player battle: `battleResolution/playerSession.ts` compiles the legacy stance plus speed percent through
-  `@bluewave/combat/orders` (`DivisionOrderSet` -> `UnitOrders`, ADR-0321). The UI (`PlayerBattleScreen.tsx`) still
-  exposes only stance and speed; course, waypoint, formation, role and force orders have no control.
+  `@bluewave/combat/orders` (`DivisionOrderSet` -> `UnitOrders`, ADR-0321). The UI (`PlayerBattleScreen.tsx`) is a paced
+  tactical map that orders stance, speed and a course in knots per division; waypoint, formation, role and force
+  orders have no control.
 - Campaign side is separate: F-1 strategic map covers one-hop fleet moves and is out of scope here.
 
 ## Progress
@@ -45,19 +46,19 @@ moved. The next dependency-ordered slice is formation keeping (slice 2, #328).
 
 ## Gaps against the manual
 
-| Manual feature                                      | State                                                            |
-| --------------------------------------------------- | ---------------------------------------------------------------- |
-| Division course and speed orders                    | Versioned order model compiles; UI exposes stance and speed only |
-| Formation keeping (4 formations)                    | Station maths only, not wired                                    |
-| Roles and lead division behaviour (AI)              | Eligibility only; no behaviour                                   |
-| Turn together vs follow-the-leader turns            | Absent                                                           |
-| Go-to-point with pause on arrival                   | Absent                                                           |
-| AI vs manual division control and realism gating    | Absent                                                           |
-| Speed penalties (grates, stokers, breakdown, flood) | Absent (T-3 lists grates and stokers)                            |
-| Separation of ships in poor visibility or at night  | Absent                                                           |
-| Collision, grounding, land targets                  | Stub                                                             |
-| Force orders (flotilla attack, rally, disengage...) | Absent                                                           |
-| Pause-on-event, run N minutes                       | Not specified at engine level                                    |
+| Manual feature                                      | State                                                |
+| --------------------------------------------------- | ---------------------------------------------------- |
+| Division course and speed orders                    | Stance, knots and course ordered on the tactical map |
+| Formation keeping (4 formations)                    | Station maths only, not wired                        |
+| Roles and lead division behaviour (AI)              | Eligibility only; no behaviour                       |
+| Turn together vs follow-the-leader turns            | Absent                                               |
+| Go-to-point with pause on arrival                   | Absent                                               |
+| AI vs manual division control and realism gating    | Absent                                               |
+| Speed penalties (grates, stokers, breakdown, flood) | Absent (T-3 lists grates and stokers)                |
+| Separation of ships in poor visibility or at night  | Absent                                               |
+| Collision, grounding, land targets                  | Stub                                                 |
+| Force orders (flotilla attack, rally, disengage...) | Absent                                               |
+| Pause-on-event, run N minutes                       | Not specified at engine level                        |
 
 ## Principles
 

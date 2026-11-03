@@ -1,7 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 import { Anchor, LayoutGrid, ScrollText, Waves } from "lucide-react";
 import type { CompiledDesignVersion } from "@bluewave/campaign-engine";
-import { KG_PER_TONNE, type PresentationFormat } from "../../lib/presentation-format/index.js";
+import { KG_PER_TONNE } from "../../lib/presentation-format/units.js";
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 import type { EngineeringReadout } from "../shipbuilding/engineering-status.js";
 import type { ConstructionScreenProjection } from "../../../shared/construction-contract.js";
 import type { ProjectRow } from "./project-progress.js";

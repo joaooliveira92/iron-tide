@@ -1,6 +1,7 @@
 import type { DesignDraft, WorkshopEnvironment, WorkshopView } from "@bluewave/ship-design";
 import { previewOptionDeltas, type Delta } from "../../components/design-workspace/optionDelta.js";
-import { formatPowerBoth, type PresentationFormat } from "../../lib/presentation-format/index.js";
+import { formatPowerBoth } from "../../lib/presentation-format/power.js";
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 
 export interface PlantOption {
   readonly id: string;

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Worktree hygiene gate (ADR-0220). Warn-only, never fails preflight.
+// Worktree hygiene gate. Warn-only, never fails preflight.
 //
 // A stale or unregistered worktree is a coordination smell — an agent may think
 // a subtree is live when its branch is already merged, or two sessions may pick

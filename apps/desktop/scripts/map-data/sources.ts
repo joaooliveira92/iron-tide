@@ -28,6 +28,7 @@ export interface LoadedLayer {
     readonly name: string;
     readonly parts: readonly (readonly Position[])[];
   }[];
+  readonly depthMetres: number | null;
   readonly licenceFiles: ReadonlyMap<string, Uint8Array>;
   readonly extractedBytes: number;
 }
@@ -106,7 +107,10 @@ export async function loadLayer(pin: SourcePin, cacheDir: string): Promise<Loade
   const collection = await readShapefile(toArrayBuffer(shp), toArrayBuffer(dbf));
   const polygons: (readonly (readonly Position[])[])[] = [];
   const lines: { name: string; parts: (readonly Position[])[] }[] = [];
+  const depths = new Set<number>();
   for (const feature of collection.features) {
+    const depth = feature.properties?.depth;
+    if (typeof depth === "number") depths.add(depth);
     const geometry = feature.geometry;
     if (geometry.type === "Polygon") polygons.push(geometry.coordinates.map(toRing));
     else if (geometry.type === "MultiPolygon") {
@@ -130,5 +134,9 @@ export async function loadLayer(pin: SourcePin, cacheDir: string): Promise<Loade
   }
   let extractedBytes = 0;
   for (const data of files.values()) extractedBytes += data.length;
-  return { pin, polygons, lines, licenceFiles, extractedBytes };
+  if (depths.size > 1) {
+    throw new MapDataError(`${pin.id}: mixed depth values ${[...depths].join(", ")}`);
+  }
+  const depthMetres = depths.size === 1 ? ([...depths][0] ?? null) : null;
+  return { pin, polygons, lines, depthMetres, licenceFiles, extractedBytes };
 }

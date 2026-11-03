@@ -1,6 +1,7 @@
 ---
 name: ambition
-description: Raise the ambition of a task before executing it, along Altitude (the outcome beyond the task), Depth (what a top expert would do), and Range (other fields to borrow from). Use when the user says "be more ambitious", "go deeper", "think bigger", or asks to rethink or upgrade a prompt or plan.
+description: Raise the ambition of a task along Altitude, Depth, and Range before executing it.
+disable-model-invocation: true
 ---
 
 Do not execute the task as literally written. First lift it along the axes below, then show the user the upgraded task and run it once they agree. Speed (the same work faster) is the default; ignore it here.

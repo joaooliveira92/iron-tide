@@ -716,7 +716,7 @@ describe("construction commands", () => {
     expect(cancel.value.command.status).toBe("cancelled");
   });
 
-  it("refuses an armed merchant cruiser order past the auxiliary fleet limit (ADR-0088)", async () => {
+  it("refuses an armed merchant cruiser order past the auxiliary fleet limit", async () => {
     registerProductionSession("session-amc", resolve(saveRoot, "save-amc"));
     const record = getCampaignSession("session-amc")!;
     const snapshot = record.state.snapshot;

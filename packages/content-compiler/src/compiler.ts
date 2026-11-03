@@ -55,6 +55,7 @@ export class Compiler {
 function withFileContents(input: CompilerInput): CompilerInput {
   if (input.fileContents !== undefined) return input;
   const fileContents: Record<string, string> = {};
+  const fileReadFailures: Record<string, string> = {};
   const paths = [
     input.manifestPath,
     ...input.rulesetFiles,
@@ -86,6 +87,7 @@ function withFileContents(input: CompilerInput): CompilerInput {
     ...(input.researchFiles ?? []),
     ...(input.designFiles ?? []),
     ...(input.divisionFiles ?? []),
+    ...(input.eventFiles ?? []),
     ...(input.presentationFiles ?? []),
     ...(input.uiFiles ?? []),
   ];
@@ -94,7 +96,19 @@ function withFileContents(input: CompilerInput): CompilerInput {
     if (path in fileContents || path in documents) continue;
     try {
       fileContents[path] = readFileSync(resolve(input.contentDir, path), "utf8");
-    } catch {}
+    } catch (cause) {
+      if (!isMissingFile(cause)) fileReadFailures[path] = describeReadFailure(cause);
+    }
   }
-  return { ...input, fileContents };
+  return { ...input, fileContents, fileReadFailures };
+}
+
+function isMissingFile(cause: unknown): boolean {
+  return (
+    typeof cause === "object" && cause !== null && (cause as { code?: unknown }).code === "ENOENT"
+  );
+}
+
+function describeReadFailure(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
 }

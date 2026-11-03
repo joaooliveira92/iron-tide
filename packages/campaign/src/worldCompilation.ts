@@ -51,6 +51,7 @@ export function buildWorldState(
       name: a.name,
       type: a.type,
       controller: a.controller,
+      ...(a.cessionCost === undefined ? {} : { cessionCost: SafeInt(a.cessionCost) }),
     }))
     .sort((a, b) => compareCodePoints(a.id, b.id));
 

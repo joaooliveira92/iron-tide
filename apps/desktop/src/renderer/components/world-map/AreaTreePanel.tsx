@@ -14,6 +14,9 @@ const MODES: readonly { readonly id: AreaTreeMode; readonly label: string }[] = 
   { id: "possessions", label: "Possessions" },
 ];
 
+const GROUP_VISIBILITY = "[content-visibility:auto] [contain-intrinsic-size:auto_9rem]";
+const AREA_ROW_VISIBILITY = "[content-visibility:auto] [contain-intrinsic-size:auto_1.5rem]";
+
 function rowDetail(row: AreaTreeRow, mode: AreaTreeMode): string {
   if (mode === "ships") return `${row.ships} ${row.ships === 1 ? "ship" : "ships"}`;
   return row.owner ?? "Unclaimed";
@@ -70,7 +73,7 @@ export function AreaTreePanel({ rows, onSelectArea, className }: AreaTreePanelPr
           </li>
         )}
         {groups.map((group) => (
-          <li key={group.id}>
+          <li key={group.id} className={GROUP_VISIBILITY}>
             <button
               type="button"
               aria-expanded={group.expanded}
@@ -93,7 +96,7 @@ export function AreaTreePanel({ rows, onSelectArea, className }: AreaTreePanelPr
             {group.expanded && (
               <ul className="ml-4 space-y-0.5" aria-label={group.label}>
                 {group.rows.map((row) => (
-                  <li key={row.id}>
+                  <li key={row.id} className={AREA_ROW_VISIBILITY}>
                     <button
                       type="button"
                       onClick={() => onSelectArea(row)}

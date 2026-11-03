@@ -296,7 +296,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(load.value.sessionId).toBe("test-session-1");
   });
 
-  it("surfaces a human-readable incompatible-version message through the load bridge result (ADR-0113)", async () => {
+  it("surfaces a human-readable incompatible-version message through the load bridge result", async () => {
     const saveDir = resolve(saveRoot, "save-incompat");
     await compileAndSave(saveDir);
 

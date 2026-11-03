@@ -1,4 +1,5 @@
 import { Wallet } from "lucide-react";
+import { useMemo } from "react";
 import { ScreenStage } from "../../components/shared/ScreenStage.js";
 import { useCampaignProjection } from "../../lib/use-campaign-projection.js";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
@@ -21,11 +22,18 @@ export function TreasuryScreen({ sessionId }: TreasuryScreenProps) {
   const { projection, loadError } = useCampaignProjection(sessionId);
   const policy = useBudgetPolicy(sessionId);
   const format = usePresentationFormat();
+  const breakdown = useMemo(
+    () => (projection === null ? null : summarizeTreasury(projection)),
+    [projection],
+  );
+  const carryingTotal = policy.controller.state.commitments?.construction.carryingTotal ?? 0;
+  const readouts = useMemo(
+    () => (breakdown === null ? null : treasuryReadouts(breakdown, format, carryingTotal)),
+    [breakdown, format, carryingTotal],
+  );
 
   if (loadError !== null) return <TreasuryLoadErrorState message={loadError} />;
-  if (projection === null) return <TreasuryLoadingState />;
-
-  const breakdown = summarizeTreasury(projection);
+  if (breakdown === null || readouts === null) return <TreasuryLoadingState />;
 
   return (
     <ScreenStage
@@ -49,14 +57,7 @@ export function TreasuryScreen({ sessionId }: TreasuryScreenProps) {
           />
           <BudgetPolicyPanel policy={policy} />
         </div>
-        <TreasuryStatusBar
-          format={format}
-          readouts={treasuryReadouts(
-            breakdown,
-            format,
-            policy.controller.state.commitments?.construction.carryingTotal ?? 0,
-          )}
-        />
+        <TreasuryStatusBar format={format} readouts={readouts} />
       </div>
     </ScreenStage>
   );

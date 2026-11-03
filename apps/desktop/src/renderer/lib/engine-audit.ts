@@ -1,5 +1,7 @@
 import type { EngineAuditInput, RandomDecisionRecord } from "@bluewave/campaign-engine";
 
+import { createLogStore, isRecord, type LogStore } from "./versioned-log-store.js";
+
 export interface StoredEngineAudit {
   readonly action: string;
   readonly timestamp: string;
@@ -8,35 +10,21 @@ export interface StoredEngineAudit {
 
 export const ENGINE_AUDIT_STORAGE_KEY = "bluewave-engine-audit-logs";
 const MAX_AUDITS = 20;
-let cachedAudits: StoredEngineAudit[] | null = null;
-let persistenceScheduled = false;
+const MAX_AUDIT_CHARS = 200_000;
 
-function readAudits(): StoredEngineAudit[] {
-  if (cachedAudits !== null) return cachedAudits;
-  try {
-    const raw = localStorage.getItem(ENGINE_AUDIT_STORAGE_KEY);
-    cachedAudits = raw ? (JSON.parse(raw) as StoredEngineAudit[]) : [];
-  } catch {
-    cachedAudits = [];
-  }
-  return cachedAudits;
+function isStoredEngineAudit(value: unknown): value is StoredEngineAudit {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.action === "string" && typeof value.timestamp === "string" && isRecord(value.input)
+  );
 }
 
-function schedulePersistence(): void {
-  if (persistenceScheduled) return;
-  persistenceScheduled = true;
-  const persist = () => {
-    persistenceScheduled = false;
-    try {
-      localStorage.setItem(ENGINE_AUDIT_STORAGE_KEY, JSON.stringify(cachedAudits ?? []));
-    } catch (error) {
-      console.error("Failed to save engine audit", error);
-    }
-  };
-  const requestIdleCallback = (window as Partial<typeof window>).requestIdleCallback;
-  if (requestIdleCallback) requestIdleCallback(persist);
-  else window.setTimeout(persist, 0);
-}
+const auditStore: LogStore<StoredEngineAudit> = createLogStore<StoredEngineAudit>({
+  storageKey: ENGINE_AUDIT_STORAGE_KEY,
+  maxEntries: MAX_AUDITS,
+  maxChars: MAX_AUDIT_CHARS,
+  isEntry: isStoredEngineAudit,
+});
 
 export function recordEngineAudit(action: string, input: EngineAuditInput): StoredEngineAudit {
   const audit: StoredEngineAudit = {
@@ -44,20 +32,16 @@ export function recordEngineAudit(action: string, input: EngineAuditInput): Stor
     timestamp: new Date().toISOString(),
     input,
   };
-  const audits = readAudits();
-  audits.unshift(audit);
-  cachedAudits = audits.slice(0, MAX_AUDITS);
-  schedulePersistence();
+  auditStore.prepend(audit);
   return audit;
 }
 
 export function clearEngineAudits(): void {
-  cachedAudits = [];
-  localStorage.removeItem(ENGINE_AUDIT_STORAGE_KEY);
+  auditStore.clear();
 }
 
 export function getRecordedEngineAudits(): readonly StoredEngineAudit[] {
-  return readAudits();
+  return auditStore.entries();
 }
 
 export function auditInputFromDecisions(

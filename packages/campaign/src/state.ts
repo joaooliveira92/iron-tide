@@ -1,5 +1,5 @@
 import type { Bp, Money, SafeInt } from "@bluewave/contracts";
-import type { CapabilityData } from "@bluewave/content-schema";
+import type { CapabilityData, GovernmentType, NationTrait } from "@bluewave/content-schema";
 import type {
   AppliedPrestigeRule,
   CareerResult,
@@ -147,6 +147,7 @@ export interface DiplomaticRelation {
   relation: "neutral" | "allied" | "at_war" | "trade_agreement";
   tension: number;
   nap: boolean;
+  frictionBp?: number;
   since: string;
 }
 
@@ -354,10 +355,33 @@ export interface ForeignContractImpoundmentRecord {
   month: string;
 }
 
+export type EventResolver = "PLAYER" | "AI" | "DEFAULT";
+
+export interface FiredEventRecord {
+  eventId: string;
+  month: string;
+  answerId: string;
+  resolvedBy: EventResolver;
+}
+
+export interface PendingDilemma {
+  eventId: string;
+  drawnMonth: string;
+}
+
+export interface NationEventHistory {
+  fired: FiredEventRecord[];
+  flags: string[];
+  pending?: PendingDilemma;
+}
+
 export interface NationState {
   id: string;
   name: string;
   tag: string;
+  governmentType?: GovernmentType;
+  traits?: NationTrait[];
+  eventHistory?: NationEventHistory;
   treasury: SafeInt;
   income: SafeInt;
   expenses: SafeInt;
@@ -531,6 +555,7 @@ export interface AreaData {
   name: string;
   type: "land" | "sea" | "coastal";
   controller?: string;
+  cessionCost?: SafeInt;
 }
 
 export interface RouteData {

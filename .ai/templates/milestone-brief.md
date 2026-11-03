@@ -52,7 +52,6 @@ List milestone-specific decision triggers in addition to the permanent agent rul
 
 - code and tests;
 - traceability;
-- ADRs;
 - validation report;
 - changed-file summary;
 - Conventional Commits;

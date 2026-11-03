@@ -1,4 +1,5 @@
 import type { FormattingLocale } from "../../../shared/preferences-contract.js";
+import { cachedDateTimeFormat, cachedNumberFormat } from "./intl-cache.js";
 
 export interface CampaignMonth {
   readonly year: number;
@@ -46,15 +47,30 @@ export function localizedMonthName(
 
 export type TimestampStyle = "time" | "dateTime";
 
+const CLOCK_OPTIONS: Intl.DateTimeFormatOptions = {
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric",
+};
+
+const CALENDAR_CLOCK_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric",
+};
+
+const UNGROUPED_YEAR_OPTIONS: Intl.NumberFormatOptions = { useGrouping: false };
+
 export function formatTimestamp(
   timestamp: string,
   options: { readonly locale: FormattingLocale; readonly style: TimestampStyle },
 ): string {
-  const clock = { hour: "numeric", minute: "numeric", second: "numeric" } as const;
-  const calendar = { year: "numeric", month: "numeric", day: "numeric" } as const;
-  return new Intl.DateTimeFormat(
+  return cachedDateTimeFormat(
     options.locale,
-    options.style === "time" ? clock : { ...calendar, ...clock },
+    options.style === "time" ? CLOCK_OPTIONS : CALENDAR_CLOCK_OPTIONS,
   ).format(new Date(timestamp));
 }
 
@@ -63,6 +79,6 @@ export function formatCampaignMonth(
   options: { readonly locale: FormattingLocale; readonly style?: MonthNameStyle },
 ): string {
   const name = localizedMonthName(month.month, options.locale, options.style ?? "long");
-  const year = new Intl.NumberFormat(options.locale, { useGrouping: false }).format(month.year);
+  const year = cachedNumberFormat(options.locale, UNGROUPED_YEAR_OPTIONS).format(month.year);
   return name === undefined ? `${month.month} ${year}` : `${name} ${year}`;
 }

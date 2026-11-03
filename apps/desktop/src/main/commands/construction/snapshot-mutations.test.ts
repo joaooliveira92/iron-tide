@@ -16,7 +16,7 @@ const plan = (units: number[]): ConstructionPlanRecord => ({
   capacityUnits: { slipway: SafeInt(5) },
 });
 
-describe("constructionProjectFor with a design's construction plan (ADR-0077)", () => {
+describe("constructionProjectFor with a design's construction plan", () => {
   it("starts every package with no work done, and records the yard, when the plan adds up to the cost", () => {
     const p = constructionProjectFor("cmd-1", "d1", 10, MONTH, plan([7, 3]));
     expect(p.totalWork).toBe(10);

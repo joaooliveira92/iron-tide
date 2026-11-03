@@ -2,17 +2,13 @@ import { PLAYABLE_SLOT_COUNTRY_IDS } from "@/content/nationAssetManifest.js";
 import { getNationPresentation } from "@/content/nationPresentationCatalog.js";
 import type { GlobePoint } from "./globeTypes.js";
 
-export function dominantFlagColors(): Readonly<Record<string, string>> {
-  return Object.fromEntries(
-    PLAYABLE_SLOT_COUNTRY_IDS.map((countryId) => [
-      countryId,
-      getNationPresentation(countryId).markerColour,
-    ]),
-  );
+export interface GlobePins {
+  readonly points: readonly GlobePoint[];
+  readonly colors: Readonly<Record<string, string>>;
 }
 
-export function globePoints(): GlobePoint[] {
-  return PLAYABLE_SLOT_COUNTRY_IDS.map((countryId) => {
+export function globePins(): GlobePins {
+  const points = PLAYABLE_SLOT_COUNTRY_IDS.map((countryId): GlobePoint => {
     const nation = getNationPresentation(countryId);
     return {
       countryId,
@@ -22,4 +18,8 @@ export function globePoints(): GlobePoint[] {
       flagColor: nation.markerColour,
     };
   });
+  return {
+    points,
+    colors: Object.fromEntries(points.map((point) => [point.countryId, point.flagColor])),
+  };
 }

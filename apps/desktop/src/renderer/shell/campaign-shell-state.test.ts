@@ -339,4 +339,57 @@ describe("month commit", () => {
     expect(failed.commitFailure).toEqual({ _tag: "TransportFailure", message: "boom" });
     expect(failed.saveMessage).toBe("boom");
   });
+
+  it("sends a revision request to Ship design and forgets it when cleared", () => {
+    const opened = reduceCampaignShell(initialCampaignShellState(), {
+      type: "campaign-opened",
+      campaign,
+    });
+    const requested = reduceCampaignShell(opened, {
+      type: "revision-requested",
+      projectId: "project-1",
+    });
+    expect(currentShellScreen(requested)).toBe("ship-design");
+    expect(requested.revisionProjectId).toBe("project-1");
+    const cleared = reduceCampaignShell(requested, { type: "revision-cleared" });
+    expect(cleared.revisionProjectId).toBeNull();
+    expect(currentShellScreen(cleared)).toBe("ship-design");
+  });
+
+  describe("state identity", () => {
+    it("keeps the same state object when a clear event has nothing to clear", () => {
+      const state = initialCampaignShellState();
+      expect(reduceCampaignShell(state, { type: "save-message-cleared" })).toBe(state);
+      expect(reduceCampaignShell(state, { type: "interruption-cleared" })).toBe(state);
+      expect(reduceCampaignShell(state, { type: "revision-cleared" })).toBe(state);
+    });
+
+    it("keeps the same state object when a start event repeats an active phase", () => {
+      const loading = reduceCampaignShell(initialCampaignShellState(), {
+        type: "campaign-opening",
+      });
+      expect(reduceCampaignShell(loading, { type: "campaign-opening" })).toBe(loading);
+      const saving = reduceCampaignShell(loading, { type: "save-started" });
+      expect(reduceCampaignShell(saving, { type: "save-started" })).toBe(saving);
+      const committing = reduceCampaignShell(saving, { type: "month-commit-started" });
+      expect(reduceCampaignShell(committing, { type: "month-commit-started" })).toBe(committing);
+    });
+
+    it("keeps the same state object when a saved message matches the current one", () => {
+      const saved = reduceCampaignShell(initialCampaignShellState(), {
+        type: "save-finished",
+        message: "Campaign saved — revision 3.",
+      });
+      expect(
+        reduceCampaignShell(saved, { type: "campaign-open-failed", message: "not found" }),
+      ).not.toBe(saved);
+      const failed = reduceCampaignShell(saved, {
+        type: "campaign-open-failed",
+        message: "not found",
+      });
+      expect(
+        reduceCampaignShell(failed, { type: "campaign-open-failed", message: "not found" }),
+      ).toBe(failed);
+    });
+  });
 });

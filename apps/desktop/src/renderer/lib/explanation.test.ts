@@ -2,7 +2,7 @@ import type { ExplanationTree } from "@bluewave/events";
 import { describe, expect, it } from "vite-plus/test";
 
 import { explanationLabelKey, explanationModel, formatTreeValue } from "./explanation.js";
-import { createPresentationFormat } from "./presentation-format/index.js";
+import { createPresentationFormat } from "./presentation-format/profile.js";
 
 const FORMAT = createPresentationFormat({
   locale: "en-US",

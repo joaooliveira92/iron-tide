@@ -32,6 +32,7 @@ export function WeightControl({
         const blocked = option.isHigh && highBlocked && weight !== option.weight;
         return (
           <Tip
+            key={option.label}
             label={
               blocked
                 ? `At most ${highCap} fields may be High — lower another High field first`
@@ -39,7 +40,6 @@ export function WeightControl({
             }
           >
             <Toggle
-              key={option.label}
               pressed={weight === option.weight}
               onPressedChange={() => onSetWeight(option.weight)}
               disabled={disabled || blocked}

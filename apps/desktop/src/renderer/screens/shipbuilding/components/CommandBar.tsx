@@ -1,14 +1,13 @@
 import { Fragment, type ReactNode, type Ref } from "react";
 import {
   CheckCircle2,
-  ClipboardCheck,
+  ChevronDown,
   GitCompare,
   MoreHorizontal,
   Redo2,
   Check,
   Undo2,
 } from "lucide-react";
-import { Badge } from "../../../components/ui/badge.js";
 import { Button, buttonVariants } from "../../../components/ui/button.js";
 import { ButtonGroup } from "../../../components/ui/button-group.js";
 import {
@@ -21,23 +20,17 @@ import {
   DropdownMenuTrigger,
 } from "../../../components/ui/dropdown-menu.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover.js";
-import { SHORTCUT_MOD, SHORTCUT_SHIFT } from "../../../components/design-workspace/index.js";
+import { SHORTCUT_MOD, SHORTCUT_SHIFT } from "../../../components/design-workspace/undoShortcut.js";
 import { cn } from "../../../lib/utils.js";
 import { Tip } from "../../../components/ui/tip.js";
 
-export interface DesignStatus {
-  readonly label: string;
-  readonly tone: "ok" | "warn" | "bad";
-  readonly detail: string;
-}
-
 export interface CommandBarProps {
+  readonly variant: "header" | "overlay";
   readonly shipClassName: string;
   readonly onShipClassName: (name: string) => void;
   readonly nameInputRef?: Ref<HTMLInputElement>;
   readonly onStartFromReference: () => void;
-  readonly shipType: string;
-  readonly shipTypeLabel: string;
+  readonly shipTypeName: string;
   readonly shipTypeIcon: ReactNode;
   readonly canUndo: boolean;
   readonly canRedo: boolean;
@@ -45,7 +38,6 @@ export interface CommandBarProps {
   readonly onRedo: () => void;
   readonly compare: ReactNode;
   readonly autosaved: boolean;
-  readonly onValidate: () => void;
   readonly onFinish: () => void;
   readonly overflow: readonly {
     readonly label: string;
@@ -58,12 +50,12 @@ export interface CommandBarProps {
 }
 
 export function CommandBar({
+  variant,
   shipClassName,
   onShipClassName,
   nameInputRef,
   onStartFromReference,
-  shipType,
-  shipTypeLabel,
+  shipTypeName,
   shipTypeIcon,
   canUndo,
   canRedo,
@@ -71,7 +63,6 @@ export function CommandBar({
   onRedo,
   compare,
   autosaved,
-  onValidate,
   onFinish,
   overflow,
 }: CommandBarProps) {
@@ -79,7 +70,10 @@ export function CommandBar({
     <div
       role="group"
       aria-label="Design commands"
-      className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b bg-muted/40 px-3 py-2"
+      className={cn(
+        "flex flex-wrap items-center gap-x-4 gap-y-2",
+        variant === "header" ? "min-w-0 flex-1" : "border-b bg-muted/40 px-3 py-2",
+      )}
     >
       <div className="flex min-w-0 flex-1 basis-[28rem] flex-wrap items-center gap-2">
         <label className="flex min-w-40 max-w-xs flex-1 items-center gap-2 text-xs text-muted-foreground">
@@ -95,23 +89,17 @@ export function CommandBar({
           />
         </label>
         <Tip
-          label={`Current type: ${shipTypeLabel}. Pick a reference design to start from another type.`}
+          label={`Current type: ${shipTypeName}. Start from a reference design for another type; this replaces your design once you confirm.`}
         >
           <Button
             variant="outline"
-            className="gap-1.5"
-
+            className="min-w-0 max-w-[20rem] gap-1.5"
+            aria-label={`Start from a reference design. Current type: ${shipTypeName}`}
             onClick={onStartFromReference}
           >
             {shipTypeIcon}
-            Start from a reference design
-            <Badge
-              variant="secondary"
-              className="ml-1 px-1.5 py-0"
-              aria-label={`Current type ${shipType}`}
-            >
-              {shipType}
-            </Badge>
+            <span className="truncate">{shipTypeName}</span>
+            <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
           </Button>
         </Tip>
       </div>
@@ -119,10 +107,9 @@ export function CommandBar({
         <ButtonGroup aria-label="History">
           <Tip label={`Undo (${SHORTCUT_MOD}Z)`}>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               aria-label="Undo"
-
               disabled={!canUndo}
               onClick={onUndo}
             >
@@ -131,10 +118,9 @@ export function CommandBar({
           </Tip>
           <Tip label={`Redo (${SHORTCUT_SHIFT}${SHORTCUT_MOD}Z)`}>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               aria-label="Redo"
-
               disabled={!canRedo}
               onClick={onRedo}
             >
@@ -143,7 +129,7 @@ export function CommandBar({
           </Tip>
         </ButtonGroup>
         <Popover>
-          <PopoverTrigger className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}>
+          <PopoverTrigger className={cn(buttonVariants({ variant: "ghost" }), "gap-1.5")}>
             <GitCompare aria-hidden="true" className="size-4" />
             Compare
           </PopoverTrigger>
@@ -154,7 +140,7 @@ export function CommandBar({
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="More design actions"
-            className={cn(buttonVariants({ variant: "outline", size: "icon" }))}
+            className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
           >
             <MoreHorizontal aria-hidden="true" />
           </DropdownMenuTrigger>
@@ -188,10 +174,6 @@ export function CommandBar({
             </span>
           </Tip>
         )}
-        <Button variant="outline" onClick={onValidate}>
-          <ClipboardCheck aria-hidden="true" className="mr-1 size-4" />
-          Validate
-        </Button>
         <Button onClick={onFinish}>
           <CheckCircle2 aria-hidden="true" className="mr-1 size-4" />
           Finish design

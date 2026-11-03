@@ -72,6 +72,7 @@ export function buildPoliticalState(
       relation,
       tension,
       nap,
+      ...(r.frictionBp === undefined ? {} : { frictionBp: r.frictionBp }),
       since: r.since ?? "1880-01",
     });
     seen.add(pairKey(nationA, nationB));

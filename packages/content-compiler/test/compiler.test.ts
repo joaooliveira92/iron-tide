@@ -39,9 +39,11 @@ function nationRecord(
     slot: null,
     presentation: { colorBg: "#C8102E", colorFg: "#FFFFFF" },
     identity: { oneSentence: "x", fullIdentity: "x", strategicProblem: "x" },
+    traits: [],
     regime: {
       type: "monarchy",
       politicalSystem: "constitutional_monarchy",
+      governmentType: "limited_democracy",
       headOfState: "x",
       headOfGovernment: "x",
       leaderTitle: "x",
@@ -1073,6 +1075,45 @@ describe("Compiler", () => {
 
       expect(collector.hasErrors).toBe(false);
       expect(output).toBeDefined();
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  it("tells a file that cannot be read from one that is missing", () => {
+    const fixture = createFixtureDir();
+    try {
+      writeFixture(
+        fixture.path,
+        "pack.json",
+        JSON.stringify({ name: "test-pack", version: "0.4.0", type: "fixture", files: {} }),
+      );
+      mkdirSync(resolve(fixture.path, "countries.json"));
+
+      const collector = new DiagnosticCollector();
+      new Compiler().compile(
+        {
+          manifestPath: "pack.json",
+          contentDir: fixture.path,
+          rulesetFiles: [],
+          countryFiles: ["countries.json", "missing.json"],
+          areaFiles: [],
+          routeFiles: [],
+          possessionFiles: [],
+          portFiles: [],
+          technologyFiles: [],
+        },
+        new AbortController().signal,
+        collector,
+      );
+
+      const messages = collector.errors
+        .filter((diagnostic) => diagnostic.code === "FILE-READ")
+        .map((diagnostic) => diagnostic.message);
+      expect(messages).toHaveLength(2);
+      expect(messages[0]).toContain("countries.json");
+      expect(messages[0]).toContain("EISDIR");
+      expect(messages[1]).toContain("absent from the compiler input");
     } finally {
       fixture.cleanup();
     }

@@ -14,7 +14,7 @@ engine, no filesystem, no parsing.
 
 ## Bridge channels
 
-Every channel is declared once in `src/shared/ipc-contract.ts` (ADR-0328).
+Every channel is declared once in `src/shared/ipc-contract.ts`.
 Preload and main derive channel names and payload types from that table, so they
 never spell a channel string themselves; main still decodes each payload
 strictly before a handler sees it.
@@ -44,12 +44,22 @@ fixture DTO directly.
 ## Screens and shell
 
 Screens live in `src/renderer/screens/` (campaign-list, overview, fleet, treasury,
-research, construction, shipbuilding, diplomacy, strategic-map, tactical-map, …) and are
-registered through a screen registry/routes. The strategic map reads the compiled
+research, construction, shipbuilding (the `ship-design` screen), diplomacy, strategic-map,
+tactical-map, …) and are registered through a screen registry/routes. The strategic map reads the compiled
 campaign only (`inspectMap.strategic`), orders fleets through the shared
 `useMovementOrders` payload builder, and carries no fixture world. Debug-only screens (simulation,
 tactical-sandbox, debugging) are gated behind the build-time debug flag and absent
 from release builds.
+
+## Ship design
+
+`ship-design` is a first-class screen, not a dialog: the ship drawing is the full-bleed
+backdrop and the Fleet slate primitives (`ChartDesk`, `IndexTabs`, `DepartmentDrawer`)
+float over it. One drawing shows at a time (top, side, isometric; keys 1-3), one section
+panel is open at a time, and blocking or critical findings surface as a problem slip with
+**Show on ship** and **Fix in …** actions. The design autosaves; leaving with a failed save
+asks first (`useLeaveGuard`). Construction opens it to revise a project through
+`reviseProject`.
 
 ## Presentation-only state
 
@@ -64,6 +74,21 @@ is surfaced rather than leaving a blank window, a crashed renderer stays
 recoverable, shutdown is bounded by a renderer flush handshake, a second launch
 focuses the running window, and a local support bundle captures crash/error
 observability with bounded, privacy-respecting writes.
+
+## Screen map
+
+`pnpm agent:map --screen [name]` lists every screen, or one screen's entry, routes, largest files, tests and e2e specs, generated from `git ls-files`. Hand-linked anchors:
+[strategic map](../../apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.tsx),
+[fleet](../../apps/desktop/src/renderer/screens/fleet/FleetScreen.tsx),
+[ship design](../../apps/desktop/src/renderer/screens/shipbuilding/ShipbuildingWorkspace.tsx) (read by range),
+[options](../../apps/desktop/src/renderer/screens/options/OptionsScreen.tsx),
+[shell](../../apps/desktop/src/renderer/shell/App.tsx),
+[routes](../../apps/desktop/src/renderer/shell/campaign-screen-routes.tsx),
+[globe](../../apps/desktop/src/renderer/components/globe-adapter/GlobeAdapter.tsx).
+
+## UI acceptance
+
+Match the existing screen's density and navigation pattern, avoid decorative defaults, and keep every prior capability. Check the aria tree first, then one screenshot per changed screen.
 
 ## Seeing the app
 

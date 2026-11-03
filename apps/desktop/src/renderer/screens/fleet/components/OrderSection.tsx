@@ -1,12 +1,12 @@
 import type { MovementCommand } from "@bluewave/campaign-engine";
 import { memo } from "react";
 import type { FleetScreenProjection } from "../../../../shared/fleet-contract.js";
+import { DispatchSlip } from "../../../components/slate/DispatchSlip.js";
 import type { OrderStatusView } from "../fleet-screen-state.js";
 import { DestinationPicker } from "./DestinationPicker.js";
 import { OrderActions } from "./OrderActions.js";
 import { OrderNotice } from "./OrderNotice.js";
 import { OrderStatusSummary } from "./OrderStatusSummary.js";
-import { Card, CardContent } from "../../../components/ui/card.js";
 
 export interface OrderSectionOrder {
   readonly status: OrderStatusView;
@@ -41,36 +41,28 @@ export const OrderSection = memo(function OrderSection({
   notice,
 }: OrderSectionProps) {
   return (
-    <>
-      <section>
-        <h3 className="mb-3 text-sm font-medium">Order</h3>
-        <Card className=" bg-background/80 backdrop-blur-md select-none">
-          <CardContent className="space-y-4 py-4">
-            <DestinationPicker
-              areas={destinations}
-              value={destinationAreaId}
-              onChange={onDestinationChange}
-            />
-
-            <OrderStatusSummary status={order.status} />
-
-            <OrderActions
-              busy={actions.busy}
-              canSubmit={order.status.divisionName !== null && destinationAreaId !== null}
-              canReplace={destinationAreaId !== null}
-              pendingRoute={order.pendingRoute}
-              hasPendingRequest={actions.hasPendingRequest}
-              onSubmit={actions.onSubmit}
-              onReplace={actions.onReplace}
-              onCancel={actions.onCancel}
-              onRefresh={actions.onRefresh}
-              onRetry={actions.onRetry}
-            />
-          </CardContent>
-        </Card>
-      </section>
-
+    <DispatchSlip label="Fleet dispatch" sealed={order.pendingRoute !== null} testId="fleet-order">
+      <OrderStatusSummary status={order.status} />
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+        <DestinationPicker
+          areas={destinations}
+          value={destinationAreaId}
+          onChange={onDestinationChange}
+        />
+        <OrderActions
+          busy={actions.busy}
+          canSubmit={order.status.divisionName !== null && destinationAreaId !== null}
+          canReplace={destinationAreaId !== null}
+          pendingRoute={order.pendingRoute}
+          hasPendingRequest={actions.hasPendingRequest}
+          onSubmit={actions.onSubmit}
+          onReplace={actions.onReplace}
+          onCancel={actions.onCancel}
+          onRefresh={actions.onRefresh}
+          onRetry={actions.onRetry}
+        />
+      </div>
       <OrderNotice notice={notice} />
-    </>
+    </DispatchSlip>
   );
 });

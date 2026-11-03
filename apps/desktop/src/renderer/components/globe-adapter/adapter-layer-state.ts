@@ -47,6 +47,11 @@ export function markerFilter(visibility: AdapterLayerVisibility): AdapterFilter 
   return clauses.length === 1 ? (clauses[0] as AdapterFilter) : ["any", ...clauses];
 }
 
+export function fleetGlyphFilter(visibility: AdapterLayerVisibility): AdapterFilter {
+  if (!visibility.fleets) return ["==", ["get", "id"], "__none__"];
+  return ["==", ["get", "markerClass"], "fleet"];
+}
+
 export function overlayClassFilter(overlayClass: "lane" | "route"): AdapterFilter {
   return ["==", ["get", "overlayClass"], overlayClass];
 }
@@ -149,6 +154,10 @@ export function borderColorExpression(
     .sort()
     .flatMap((nation) => [nation, `hsl(${campaignNationHue(nation)} 65% 45%)`]);
   return ["match", ["get", "id"], ...entries, "#93a9b8"];
+}
+
+export function nationMarkerColor(nationId: string | undefined): string {
+  return nationId === undefined ? "" : `hsl(${campaignNationHue(nationId)} 70% 48%)`;
 }
 
 export function buildGraticuleCollection(): GeoJSON.FeatureCollection {

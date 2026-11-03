@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { createPresentationFormat } from "../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../lib/presentation-format/profile.js";
 import { buildTrend, TREND_MONTHS, type TrendReport } from "./status-strip-trend.js";
 
 const FORMAT = createPresentationFormat({

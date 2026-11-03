@@ -1452,4 +1452,178 @@ export default collection("designs", ReferenceDesignSchema, [
       ],
     },
   },
+  // HMS Daring (Daring-class destroyer, 1952): destroyer starter for the United Kingdom, E-1 1950-1959 (ticket #256).
+  // 2,830 t standard / 3,580 t full-load displacement, 54,000 shp (40,268 kW), 34.75 kn, 590 t oil and 4,400 nm at
+  // 20 kn are the navypedia figures of docs/research/e-1-1950s-gun-ships.md section 1 (SINGLE-SOURCE); the three
+  // twin 4.5-inch/45 QF Mark 6 turrets and two quintuple 533 mm tubes are the class armament. The 40 mm STAAG and
+  // Squid have no part family (#283) and are not modelled. The 34.75 kn requirement and the 4,400 nm range are not
+  // reached by the balance-target speed and fuel-rate curves (WARNINGS; ADR-0284 decision 8 precedent), so
+  // requiredRangeNm is set to the 2,520 nm the plant returns. lengthWl, moulded depth, design margin, rounds,
+  // quarters and fire-control fit are ESTIMATES, not recorded outfit. The date is 1952-01 because the 4.5-inch
+  // Mark 6 component is dated 1952-01.
+  {
+    id: "daring_class_dd_1952",
+    starterFor: "DD",
+    name: "Daring-class destroyer (1952)",
+    month: "1952-01",
+    draft: {
+      nationId: "uk",
+      requirement: {
+        category: "DD",
+        requiredSpeedMilliKnots: 34750,
+        cruiseSpeedMilliKnots: 20000,
+        requiredRangeNm: 2500,
+        designThreatId: "qf_6in",
+        modernizationExpectation: "NONE",
+        crewQualityBp: 10000,
+        accommodationStandard: "STANDARD",
+        protectionGoal: "NONE",
+      },
+      hull: {
+        hullFormId: "postwar_destroyer_form",
+        lengthWl: 117000,
+        beam: 13100,
+        draught: 4140,
+        depthToMainDeck: 6600,
+        blockCoeffBp: 6130,
+        materialId: "mild_steel",
+        structuralSchemeId: "mixed",
+        subdivisionGrade: 2,
+        targetDisplacementKg: 3580000,
+        limitDisplacementKg: null,
+        designMarginBp: 200,
+        growthReserveBp: 0,
+      },
+      machinery: {
+        plantId: "hp_steam_geared_turbine",
+        installedKw: 40268,
+        zoneId: "CENTRAL_MACHINERY",
+        stationPermille: 450,
+        fuelCapacityKg: 590000,
+        fuelZoneId: "CENTRAL_MACHINERY",
+        fuelStationPermille: 500,
+        foulingBp: 0,
+        rooms: [
+          {
+            zoneId: "CENTRAL_MACHINERY",
+            stationPermille: 450,
+            shareBp: 10000,
+          },
+        ],
+      },
+      armour: {
+        regions: [],
+        citadelLengthMm: 0,
+        torpedoWarheadKg: 0,
+        bunkerProtectionBp: 0,
+      },
+      placements: [
+        {
+          instanceId: "gun_a",
+          componentId: "gun_qf_45in_45_twin",
+          zoneId: "FORECASTLE",
+          stationPermille: 40,
+          params: {
+            barrels: 2,
+            rounds: 250,
+          },
+          magazineRef: "mag_fwd",
+        },
+        {
+          instanceId: "gun_b",
+          componentId: "gun_qf_45in_45_twin",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 250,
+          params: {
+            barrels: 2,
+            rounds: 250,
+          },
+          magazineRef: "mag_fwd",
+        },
+        {
+          instanceId: "gun_c",
+          componentId: "gun_qf_45in_45_twin",
+          zoneId: "QUARTERDECK",
+          stationPermille: 900,
+          params: {
+            barrels: 2,
+            rounds: 250,
+          },
+          magazineRef: "mag_aft",
+        },
+        {
+          instanceId: "tubes_a",
+          componentId: "tube_21in_above_water",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 600,
+          params: {
+            tubes: 5,
+          },
+        },
+        {
+          instanceId: "tubes_b",
+          componentId: "tube_21in_above_water",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 620,
+          params: {
+            tubes: 5,
+          },
+        },
+        {
+          instanceId: "mag_fwd",
+          componentId: "magazine_heavy",
+          zoneId: "FWD_MAGAZINE",
+          stationPermille: 130,
+        },
+        {
+          instanceId: "mag_aft",
+          componentId: "magazine_heavy",
+          zoneId: "AFT_MAGAZINE",
+          stationPermille: 830,
+        },
+        {
+          instanceId: "rf",
+          componentId: "rangefinder_optical",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 525,
+        },
+        {
+          instanceId: "dyn",
+          componentId: "dynamo_small",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 200,
+        },
+        {
+          instanceId: "vent",
+          componentId: "ventilation_plant",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 210,
+        },
+        {
+          instanceId: "quarters",
+          componentId: "quarters_crew",
+          zoneId: "FWD_SERVICE",
+          stationPermille: 230,
+          params: {
+            blocks: 45,
+          },
+        },
+        {
+          instanceId: "quarters_aft",
+          componentId: "quarters_crew",
+          zoneId: "AFT_SERVICE",
+          stationPermille: 720,
+          params: {
+            blocks: 40,
+          },
+        },
+        {
+          instanceId: "funnel",
+          componentId: "funnel_single",
+          zoneId: "SUPERSTRUCTURE",
+          stationPermille: 630,
+        },
+      ],
+    },
+  },
 ]);

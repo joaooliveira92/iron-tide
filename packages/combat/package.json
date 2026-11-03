@@ -44,6 +44,10 @@
       "types": "./src/damage/index.ts",
       "default": "./dist/damage/index.js"
     },
+    "./formation": {
+      "types": "./src/formation/index.ts",
+      "default": "./dist/formation/index.js"
+    },
     "./generation": {
       "types": "./src/generation/index.ts",
       "default": "./dist/generation/index.js"

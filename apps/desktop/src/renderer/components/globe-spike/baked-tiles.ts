@@ -5,7 +5,7 @@ export const BAKED_PROTOCOL = "bwtiles";
 export const BAKED_PACK_FILE = "land.bwtp";
 export const BAKED_MANIFEST_FILE = "manifest.json";
 
-export const BAKED_MANIFEST_VERSION = 4;
+export const BAKED_MANIFEST_VERSION = 5;
 
 export interface BakedAreaOutlines {
   readonly datasetVersion: string;
@@ -44,6 +44,8 @@ export interface BakedManifest {
     readonly areaOutlines: string;
     readonly areaLabels: string;
     readonly climate: string;
+    readonly bathymetry: string;
+    readonly reefs: string;
   };
   readonly packSha256: string;
   readonly packBytes: number;
@@ -158,6 +160,8 @@ export function parseBakedManifest(value: unknown): BakedManifest {
       areaOutlines: stringAt(layers, "areaOutlines"),
       areaLabels: stringAt(layers, "areaLabels"),
       climate: stringAt(layers, "climate"),
+      bathymetry: stringAt(layers, "bathymetry"),
+      reefs: stringAt(layers, "reefs"),
     },
     packSha256: stringAt(integrity, "packSha256"),
     packBytes: numberAt(sizes, "packBytes"),

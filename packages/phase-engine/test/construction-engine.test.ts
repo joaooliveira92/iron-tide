@@ -180,7 +180,7 @@ function runUntilComplete(snapshot: CampaignSnapshot, max = 60) {
   return { history, treasury, final: current };
 }
 
-describe("per-package construction through the month executor (ADR-0077)", () => {
+describe("per-package construction through the month executor", () => {
   it("completes in exactly the forecast's number of months for several yard capacities", () => {
     for (const cap of [20, 45, 1_000]) {
       const sim = simulateConstruction(
@@ -239,7 +239,7 @@ describe("per-package construction through the month executor (ADR-0077)", () =>
   });
 });
 
-describe("budget_project on a project with work packages (ADR-0077)", () => {
+describe("budget_project on a project with work packages", () => {
   const budget = (snapshot: CampaignSnapshot, amount: number, month: string) => {
     const collector = new DiagnosticCollector();
     let n = 0;

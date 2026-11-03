@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
-import type { DesignDraft } from "@bluewave/ship-design";
 import { Alert } from "../../ui/alert.js";
 import { Button } from "../../ui/button.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
+import { useDesignState } from "../DesignWorkspaceContext.js";
 import { Panel } from "./Panel.js";
 import { plural } from "../plural.js";
 import type { DesignStudyPreview } from "../../../../shared/design-contract.js";
@@ -59,17 +59,19 @@ export function rejectionLead(reason: string): string {
 
 export function SubmitPanel({
   sessionId,
-  draft,
-  valid,
   name,
   onNameChange,
+  onRequestName,
 }: {
   readonly sessionId: string;
-  readonly draft: DesignDraft;
-  readonly valid: boolean;
   readonly name?: string;
   readonly onNameChange?: (name: string) => void;
+  readonly onRequestName?: () => void;
 }) {
+  const {
+    draft,
+    view: { valid },
+  } = useDesignState();
   const revision = useCampaignRevision();
   const bridge = useBridge();
   const format = usePresentationFormat();
@@ -121,20 +123,32 @@ export function SubmitPanel({
       setBusy(false);
     }
   };
+  const hostNamed = onNameChange !== undefined;
   return (
     <Panel title="Submit for construction">
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <label htmlFor="class-name" className="block text-xs text-muted-foreground">
-            Class name
-          </label>
-          <input
-            id="class-name"
-            className="h-8 w-64 rounded-md border bg-background px-2 text-sm"
-            value={className}
-            maxLength={60}
-            onChange={(e) => setClassName(e.target.value)}
-          />
+          {hostNamed ? (
+            <>
+              <p className="text-xs text-muted-foreground">Class name</p>
+              <p className="flex h-8 items-center text-sm font-medium">
+                {className.trim() === "" ? "Not named yet" : className.trim()}
+              </p>
+            </>
+          ) : (
+            <>
+              <label htmlFor="class-name" className="block text-xs text-muted-foreground">
+                Class name
+              </label>
+              <input
+                id="class-name"
+                className="h-8 w-64 rounded-md border bg-background px-2 text-sm"
+                value={className}
+                maxLength={60}
+                onChange={(e) => setClassName(e.target.value)}
+              />
+            </>
+          )}
         </div>
         <Button onClick={() => void submit()} disabled={!canSubmit}>
           {busy ? "Submitting…" : alreadyQueued ? "Queued" : "Submit design"}
@@ -143,6 +157,16 @@ export function SubmitPanel({
       {!valid && (
         <p className="text-xs text-muted-foreground">
           Resolve the blocking findings before submitting.
+        </p>
+      )}
+      {valid && className.trim() === "" && (
+        <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          Name the class to submit it.
+          {onRequestName !== undefined && (
+            <Button variant="outline" size="sm" onClick={onRequestName}>
+              Enter a class name
+            </Button>
+          )}
         </p>
       )}
       {result !== null && (

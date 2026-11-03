@@ -29,6 +29,8 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
     airDefenseRecords,
     airDefenseStates,
     salvos,
+    formationTracks,
+    formationRecords,
   } = run;
   const events = ledger.sorted();
   const hasTorpedoSurface =
@@ -141,6 +143,20 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
           },
         }
       : {}),
+    ...(formationRecords
+      ? {
+          formation: {
+            records: formationRecords.map((r) => ({
+              assetId: r.assetId,
+              divisionId: r.divisionId,
+              mode: r.mode,
+              offStation: r.offStation,
+              stationErrorM: r.stationErrorM,
+              divisionSpeedBp: r.divisionSpeedBp,
+            })),
+          },
+        }
+      : {}),
     ...(smokeRecords && smokeRecords.length > 0
       ? {
           smoke: {
@@ -209,5 +225,7 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
     ...(airCombatSummary ? { airCombatSummary } : {}),
     ...(airDefenseRecords ? { airDefenseRecords } : {}),
     ...(airDefenseStates ? { airDefenseStates } : {}),
+    ...(formationTracks ? { formationTracks } : {}),
+    ...(formationRecords ? { formationRecords } : {}),
   };
 }

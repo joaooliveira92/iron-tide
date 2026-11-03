@@ -42,15 +42,16 @@ function Commitment({
   label,
   reserved,
   total,
-  render,
+  unit,
 }: {
   readonly icon: LucideIcon;
   readonly label: string;
   readonly reserved: number;
   readonly total: number;
-  readonly render: (value: number) => string;
+  readonly unit: "money" | "count";
 }) {
   const format = usePresentationFormat();
+  const render = unit === "money" ? format.money : format.count;
   const pct = total > 0 ? Math.min(100, (reserved / total) * 100) : 0;
   const over = reserved > total;
   return (
@@ -102,14 +103,14 @@ export const YardOverview = memo(function YardOverview({ economy, workspace }: Y
           label="Treasury committed"
           reserved={workspace.treasuryReserved}
           total={economy.treasury}
-          render={format.money}
+          unit="money"
         />
         <Commitment
           icon={Layers}
           label="Capacity committed"
           reserved={workspace.capacityReserved}
           total={economy.shipyardCapacity}
-          render={format.count}
+          unit="count"
         />
       </section>
     </div>

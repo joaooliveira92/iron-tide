@@ -1,3 +1,23 @@
+export type {
+  EventAnswer,
+  EventCounterpartRole,
+  EventEffects,
+  EventGates,
+  EventPrestigeEffect,
+  EventStance,
+  GameEvent,
+} from "./event.js";
+export {
+  EVENT_COUNTERPART_ROLES,
+  EVENT_STANCES,
+  EventAnswerSchema,
+  EventCounterpartRoleSchema,
+  EventEffectsSchema,
+  EventGatesSchema,
+  EventPrestigeEffectSchema,
+  EventSchema,
+  EventStanceSchema,
+} from "./event.js";
 export type { Area } from "./area.js";
 export { AreaSchema } from "./area.js";
 export type { DesignTemplate } from "./design.js";
@@ -65,6 +85,7 @@ export type {
   Economy,
   GameplayFeel,
   GdpTier,
+  GovernmentType,
   Identity,
   IndustrialBase,
   IndustrializationLevel,
@@ -73,6 +94,7 @@ export type {
   NationId,
   NationRegime,
   NationSlot,
+  NationTrait,
   NavalAppropriation,
   NavalBudgetLevel,
   NavalInstitution,
@@ -97,15 +119,19 @@ export {
   EconomySchema,
   GameplayFeelSchema,
   GdpTierSchema,
+  GOVERNMENT_TYPES,
+  GovernmentTypeSchema,
   IdentitySchema,
   IndustrialBaseSchema,
   IndustrializationLevelSchema,
   MilitarySchema,
   NATION_IDS,
+  NATION_TRAIT_IDS,
   NationIdSchema,
   NationRegimeSchema,
   NationSchema,
   NationSlotSchema,
+  NationTraitSchema,
   NavalAppropriationSchema,
   NavalBudgetLevelSchema,
   NavalInstitutionSchema,
@@ -183,6 +209,20 @@ export {
   MissilesRulesSchema,
   decodeMissilesRules,
 } from "./missiles-rules.js";
+export type {
+  EventResolutionRules,
+  EventResolutionRulesDecoded,
+  EventStanceWeights,
+  EventTraitShift,
+} from "./event-resolution-rules.js";
+export {
+  decodeEventResolutionRules,
+  EventResolutionRulesSchema,
+  EventStanceWeightsSchema,
+  EventTraitShiftSchema,
+} from "./event-resolution-rules.js";
+export type { TensionDriftRules, TensionDriftRulesDecoded } from "./tension-drift-rules.js";
+export { decodeTensionDriftRules, TensionDriftRulesSchema } from "./tension-drift-rules.js";
 export type { PresenceRules, PresenceRulesDecoded } from "./presence-rules.js";
 export { decodePresenceRules, PresenceRulesSchema } from "./presence-rules.js";
 export {

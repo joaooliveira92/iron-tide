@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Button } from "../../../components/ui/button.js";
 import { Badge } from "../../../components/ui/badge.js";
 import { Card, CardContent } from "../../../components/ui/card.js";
@@ -24,6 +25,7 @@ import {
   type StationRow,
 } from "./fleet-station-state.js";
 import type { FleetStationState } from "./fleet-station-model.js";
+import { useFleetHotkeys } from "../hooks/useFleetHotkeys.js";
 import { useStationAssignment } from "./useStationAssignment.js";
 
 export interface FleetStationViewProps {
@@ -171,6 +173,7 @@ export function FleetStationView({
 }: FleetStationViewProps) {
   const readout = presenceReadout(state.presence, state.overBaseShips, areaName);
   const none = selected.length === 0;
+  const selectedIds = useMemo(() => new Set(selected), [selected]);
   return (
     <section className="space-y-4" data-testid="fleet-station" aria-labelledby="fleet-station-h">
       <div className="flex items-center gap-2">
@@ -252,7 +255,7 @@ export function FleetStationView({
                       <input
                         type="checkbox"
                         className="size-4 accent-primary"
-                        checked={selected.includes(row.shipId)}
+                        checked={selectedIds.has(row.shipId)}
                         onChange={() => onToggle(row.shipId)}
                         aria-label={format("fleet.station.selectShip", {
                           ship: row.name,
@@ -326,6 +329,13 @@ export function FleetStationView({
 
 export function FleetStationSection({ sessionId }: { readonly sessionId: string }) {
   const station = useStationAssignment(sessionId);
+  const { selected, busy, sendReadiness } = station;
+  useFleetHotkeys({
+    "reserve-selected": () => {
+      if (selected.length === 0 || busy) return;
+      void sendReadiness("RESERVE");
+    },
+  });
   return (
     <FleetStationView
       state={station.state}

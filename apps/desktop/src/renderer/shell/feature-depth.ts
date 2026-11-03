@@ -60,10 +60,5 @@ export const FEATURE_DEPTH: readonly FeatureDepthEntry[] = [
   { feature: "message-history", screen: "overview", path: ["Overview"] },
   { feature: "copy-game", screen: "options", path: ["Options"] },
   { feature: "resign", screen: null, planned: true, path: ["Options", "Resign"] },
-  {
-    feature: "ship-designer",
-    screen: null,
-    planned: true,
-    path: ["Construction", "Design ship", "Edit"],
-  },
+  { feature: "ship-designer", screen: "ship-design", path: ["Ship design"] },
 ];

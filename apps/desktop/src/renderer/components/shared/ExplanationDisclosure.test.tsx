@@ -4,7 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { axeViolations } from "../../lib/axe.js";
-import { createPresentationFormat } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import { ExplanationDisclosure } from "./ExplanationDisclosure.js";
 
 const FORMAT = createPresentationFormat({

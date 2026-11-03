@@ -608,7 +608,7 @@ describe("division commands (AC-3)", () => {
   });
 });
 
-describe("StartRebuild validation (ADR-0078)", () => {
+describe("StartRebuild validation", () => {
   const ship = (over: Record<string, unknown> = {}) => ({
     id: "s1",
     name: "HMS Test",

@@ -1,11 +1,9 @@
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import {
-  CANCELLED_CODE,
   COMPATIBILITY_MISMATCH_CODE,
   CORRUPT_SAVE_CODE,
   MISSING_SAVE_CODE,
-  PersistenceCancelledError,
   PersistenceCompatibilityMismatchError,
   PersistenceCorruptSaveError,
   PersistenceMissingSaveError,
@@ -26,7 +24,6 @@ describe("PERSISTENCE_* tagged errors (MIG-WIRE-1)", () => {
         MISSING_SAVE_CODE,
         "PERSISTENCE_MISSING_SAVE",
       ],
-      [new PersistenceCancelledError({ message: "m" }), CANCELLED_CODE, "PERSISTENCE_CANCELLED"],
       [
         new PersistenceLegacySaveError({ message: "m" }),
         LEGACY_SAVE_CODE,

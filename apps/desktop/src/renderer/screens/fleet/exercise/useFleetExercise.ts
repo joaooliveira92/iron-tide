@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { envelopeOf } from "../../../lib/command-envelope.js";
 import type {
   FleetExerciseOutcome,
@@ -57,9 +57,16 @@ export function useFleetExercise(sessionId: string): UseFleetExerciseReturn {
   );
 
   const rows = useMemo(() => exerciseRows(workflow.state.divisions), [workflow.state.divisions]);
-  const selected = useMemo(
-    () => selection.filter((id) => rows.some((row) => row.shipId === id && row.eligible)),
-    [selection, rows],
+  const selected = useMemo(() => {
+    const eligibleIds = new Set(rows.filter((row) => row.eligible).map((row) => row.shipId));
+    return selection.filter((id) => eligibleIds.has(id));
+  }, [selection, rows]);
+  const toggle = useCallback(
+    (shipId: string) =>
+      setSelection((current) =>
+        current.includes(shipId) ? current.filter((id) => id !== shipId) : [...current, shipId],
+      ),
+    [],
   );
 
   const hold = (): Promise<CommandOutcome> => {
@@ -91,10 +98,7 @@ export function useFleetExercise(sessionId: string): UseFleetExerciseReturn {
     outcomeUnknown: workflow.request.outcomeUnknown,
     retry: workflow.request.retry,
     reload: () => void workflow.loadScreen(),
-    toggle: (shipId) =>
-      setSelection((current) =>
-        current.includes(shipId) ? current.filter((id) => id !== shipId) : [...current, shipId],
-      ),
+    toggle,
     hold,
   };
 }

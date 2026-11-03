@@ -1,10 +1,9 @@
 # Campaign economy glossary
 
-The economy context of Bluewave: one term, one meaning. The model is
-[ADR-0230](../../docs/adr/ADR-0230-campaign-economy-model.md); the shared root
+The economy context of Bluewave: one term, one meaning. The shared root
 vocabulary is [CONTEXT.md](../../CONTEXT.md).
 
-- **Treasury unit (TU)** — the unit of every economy figure: £10,000 (ADR-0216).
+- **Treasury unit (TU)** — the unit of every economy figure: £10,000.
 - **Treasury** — the stock of money a nation holds. Never negative.
 - **Monthly gross naval appropriation** — authored `income`: the money credited to the
   treasury each month at the 2000 bp start rate. After the start state it is derived, not read.

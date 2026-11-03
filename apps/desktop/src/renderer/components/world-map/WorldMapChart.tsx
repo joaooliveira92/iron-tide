@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../ui/button.js";
 import { CollapsiblePanel } from "../shared/CollapsiblePanel.js";
 import { AreaTreePanel } from "./AreaTreePanel.js";
@@ -17,8 +17,13 @@ import { useInitialFocusArea } from "./useInitialFocusArea.js";
 import { useMapCamera } from "./useMapCamera.js";
 import { useMapPalette } from "./map-palette.js";
 import { useWorldMapModel } from "./useWorldMapModel.js";
-import { EMPTY_LIVE_OVERLAY, type LiveWorldMapOverlay } from "./campaign-map-join.js";
-import { projectionById, type ProjectedArea } from "./projection.js";
+import {
+  EMPTY_LIVE_OVERLAY,
+  orderLonLatPath,
+  type LiveWorldMapOverlay,
+} from "./campaign-map-join.js";
+import { projectContinuousPath } from "./map-lanes.js";
+import { projectPoint, projectionById, type ProjectedArea } from "./projection.js";
 import { orderModeMapAreas, pendingRoutes, type MapOrders } from "./map-orders.js";
 import { areaAtPoint } from "./map-hit-test.js";
 import type { AreaTreeRow } from "./area-tree.js";
@@ -82,31 +87,51 @@ export function WorldMapChart({
 
   useInitialFocusArea(camera, initialFocusAreaId, projection, state.centre, initialFocusNationId);
 
-  const fleetFor = (fleetId: string | null | undefined) =>
-    fleetId === null || fleetId === undefined
-      ? null
-      : (orders?.fleets.find((fleet) => fleet.fleetId === fleetId) ?? null);
-
-  const activeFleet = fleetFor(pickUp?.fleetId ?? orders?.selectedFleetId);
-  const mode = orderModeMapAreas(activeFleet);
+  const activeFleetId = pickUp?.fleetId ?? orders?.selectedFleetId ?? null;
+  const activeFleet = useMemo(
+    () =>
+      activeFleetId === null
+        ? null
+        : (orders?.fleets.find((fleet) => fleet.fleetId === activeFleetId) ?? null),
+    [activeFleetId, orders?.fleets],
+  );
+  const mode = useMemo(() => orderModeMapAreas(activeFleet), [activeFleet]);
   const modeActive = pickUp !== null || (orders !== undefined && orders.selectedFleetId !== null);
   const legalAreas = modeActive ? mode.legal : EMPTY_AREAS;
-  const dimmedAreas = new Set<string>();
-  if (modeActive && mode.active) {
+  const homeAreaId = activeFleet?.mapAreaId ?? null;
+  const dimmedAreas = useMemo(() => {
+    if (!modeActive || !mode.active) return EMPTY_AREAS;
     const keep = new Set(mode.legal);
-    if (activeFleet?.mapAreaId !== null && activeFleet?.mapAreaId !== undefined) {
-      keep.add(activeFleet.mapAreaId);
-    }
+    if (homeAreaId !== null) keep.add(homeAreaId);
+    const dimmed = new Set<string>();
     for (const area of model.areas) {
-      if (!keep.has(area.id)) dimmedAreas.add(area.id);
+      if (!keep.has(area.id)) dimmed.add(area.id);
     }
-  }
+    return dimmed;
+  }, [homeAreaId, mode, model.areas, modeActive]);
   const blockadedAreas = orders?.blockadedMapAreas ?? EMPTY_AREAS;
-  const pending = pendingRoutes(orders?.pending ?? [], (areaId) => model.anchorOf(areaId));
-  const draggableFleets = new Set(
-    (orders?.fleets ?? [])
-      .filter((fleet) => fleet.mapAreaId !== null && fleet.legalDestinations.length > 0)
-      .map((fleet) => fleet.fleetId),
+  const pendingOrders = useMemo(
+    () =>
+      pendingRoutes(orders?.pending ?? [], model.anchorOf, (order) => {
+        const path = orderLonLatPath(overlay, order);
+        return path === null
+          ? null
+          : projectContinuousPath(
+              path,
+              (lonLat) => projectPoint(lonLat, projection, state.centre),
+              projection.width,
+            );
+      }),
+    [model.anchorOf, orders?.pending, overlay, projection, state.centre],
+  );
+  const draggableFleets = useMemo(
+    () =>
+      new Set(
+        (orders?.fleets ?? [])
+          .filter((fleet) => fleet.mapAreaId !== null && fleet.legalDestinations.length > 0)
+          .map((fleet) => fleet.fleetId),
+      ),
+    [orders?.fleets],
   );
 
   function handleMapKey(event: React.KeyboardEvent<SVGSVGElement>): void {
@@ -147,11 +172,14 @@ export function WorldMapChart({
     event.preventDefault();
   }
 
-  function handleAreaClick(id: string, shiftKey: boolean): void {
-    if (camera.isDraggingRef.current) return;
-    if (shiftKey) onRuler(id);
-    else onSelect(id);
-  }
+  const handleAreaClick = useCallback(
+    (id: string, shiftKey: boolean) => {
+      if (camera.isDraggingRef.current) return;
+      if (shiftKey) onRuler(id);
+      else onSelect(id);
+    },
+    [camera.isDraggingRef, onRuler, onSelect],
+  );
 
   function handlePointerDown(event: React.PointerEvent<SVGSVGElement>): void {
     if (orders === undefined || event.button !== 0) return;
@@ -264,34 +292,36 @@ export function WorldMapChart({
             legalAreas={legalAreas}
             dimmedAreas={dimmedAreas}
             blockadedAreas={blockadedAreas}
-            pendingOrders={pending}
+            pendingOrders={pendingOrders}
             draggableFleets={draggableFleets}
-            selectedFleetId={pickUp?.fleetId ?? orders?.selectedFleetId ?? null}
+            selectedFleetId={activeFleetId}
           />
         </g>
       </svg>
 
-      <table className="sr-only">
-        <caption>Area control</caption>
-        <thead>
-          <tr>
-            <th scope="col">Area</th>
-            <th scope="col">Controlled by</th>
-            <th scope="col">Fleets</th>
-            <th scope="col">Strength</th>
-          </tr>
-        </thead>
-        <tbody>
-          {model.ownershipRows.map((row) => (
-            <tr key={row.id} aria-selected={row.selected}>
-              <th scope="row">{row.name}</th>
-              <td>{row.owner ?? "Unclaimed"}</td>
-              <td>{row.fleets}</td>
-              <td>{row.strength ?? "No ships"}</td>
+      <div className="sr-only">
+        <table>
+          <caption>Area control</caption>
+          <thead>
+            <tr>
+              <th scope="col">Area</th>
+              <th scope="col">Controlled by</th>
+              <th scope="col">Fleets</th>
+              <th scope="col">Strength</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {model.ownershipRows.map((row) => (
+              <tr key={row.id} aria-selected={row.selected}>
+                <th scope="row">{row.name}</th>
+                <td>{row.owner ?? "Unclaimed"}</td>
+                <td>{row.fleets}</td>
+                <td>{row.strength ?? "No ships"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <div
         data-map-obstacle
@@ -390,10 +420,7 @@ export function WorldMapChart({
         />
       </div>
 
-      <RouteReadout
-        className={cn(layout.routeReadout, layout.routeHideWhenEmpty && route === null && "hidden")}
-        route={route}
-      />
+      <RouteReadout className={layout.routeReadout} route={route} />
     </div>
   );
 }
