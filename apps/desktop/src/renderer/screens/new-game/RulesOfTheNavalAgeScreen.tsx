@@ -1,4 +1,3 @@
-import { useCallback, useMemo, useState } from "react";
 import type { NewGameOptions } from "../../../shared/new-game-contract.js";
 import { Button } from "../../components/ui/button.js";
 import type { SetPrimaryAction } from "../../shell/primary-action.js";
@@ -9,14 +8,13 @@ import { ErrorState } from "./components/ErrorState.js";
 import { HistoricalUncertaintySection } from "./components/HistoricalUncertaintySection.js";
 import { LoadingState } from "./components/LoadingState.js";
 import { NewGameScreenLayout } from "./components/NewGameScreenLayout.js";
-import { PresetDeckPane, PresetDetailPanel } from "./components/preset-deck/index.js";
-import type { DraftPreferences } from "./new-game-preferences-screen-state.js";
 import {
-  applyPreset,
-  PRESET_DEFINITIONS,
-  type PresetId,
-} from "./rules-of-the-naval-age-presets.js";
-import { useNavalAgePreferences } from "./useNavalAgePreferences.js";
+  PresetDeckPane,
+  PresetDetailPanel,
+  PresetWorkspaceProvider,
+  usePresetWorkspace,
+} from "./components/preset-deck/index.js";
+import type { DraftPreferences } from "./new-game-preferences-screen-state.js";
 
 export interface RulesOfTheNavalAgeScreenProps {
   readonly recommendedPreset: AdmiralPresetValues | null;
@@ -31,73 +29,19 @@ export function RulesOfTheNavalAgeScreen({
   onNext,
   onPrimaryActionChange,
 }: RulesOfTheNavalAgeScreenProps) {
-  const { state, options, preferences, ready, activePreset, setPreference, selectPreset } =
-    useNavalAgePreferences(recommendedPreset);
+  const workspace = usePresetWorkspace({ recommendedPreset, onNext });
+  const { state, actions, meta } = workspace;
+  const { appliedName, detail, primaryAction } = meta;
 
-  const [pendingPresetId, setPendingPresetId] = useState<PresetId | null>(null);
-
-  const handlePreferenceChange = useCallback(
-    (field: keyof DraftPreferences, value: string) => {
-      setPendingPresetId(null);
-      setPreference(field, value);
-    },
-    [setPreference],
-  );
-
-  const onScenarioChange = useCallback(
-    (value: string) => setPreference("scenarioId", value),
-    [setPreference],
-  );
-
-  const onFleetSizeChange = useCallback(
-    (value: string) => {
-      setPendingPresetId(null);
-      setPreference("fleetSize", value);
-    },
-    [setPreference],
-  );
-
-  const onSeedChange = useCallback(
-    (value: string) => setPreference("campaignSeed", value),
-    [setPreference],
-  );
-
-  const [focusOverride, setFocusOverride] = useState<number | null>(null);
-  const appliedIndex = PRESET_DEFINITIONS.findIndex((preset) => preset.id === activePreset);
-  const focusedIndex = focusOverride ?? Math.max(0, appliedIndex);
-
-  const focusedPreset = PRESET_DEFINITIONS[focusedIndex] ?? PRESET_DEFINITIONS[0];
-  const appliedPresetName =
-    PRESET_DEFINITIONS.find((preset) => preset.id === activePreset)?.name ?? "Custom";
-
-  const onFocusIndex = useCallback((index: number) => {
-    setFocusOverride(index);
-    setPendingPresetId(PRESET_DEFINITIONS[index]?.id ?? null);
-  }, []);
-
-  const handleNext = useCallback(() => {
-    if (options === null || !ready) return;
-    if (pendingPresetId === null) {
-      onNext(preferences, options);
-      return;
-    }
-    selectPreset(pendingPresetId);
-    onNext(applyPreset(preferences, pendingPresetId), options);
-  }, [options, ready, preferences, pendingPresetId, selectPreset, onNext]);
-
-  const primaryAction = useMemo(
-    () => ({ label: "Next: Choose Archetype", disabled: !ready, onTrigger: handleNext }),
-    [ready, handleNext],
-  );
   usePrimaryAction(primaryAction, onPrimaryActionChange);
 
   return (
     <NewGameScreenLayout variant="bleed">
-      {options === null && (
+      {state.options === null && (
         <div className="flex flex-col items-start gap-6 p-8">
-          {state.loading && <LoadingState message="Loading campaign options…" />}
-          {state.error !== null && (
-            <ErrorState message={`Failed to load campaign options: ${state.error}`} />
+          {state.screen.loading && <LoadingState message="Loading campaign options…" />}
+          {state.screen.error !== null && (
+            <ErrorState message={`Failed to load campaign options: ${state.screen.error}`} />
           )}
           <Button type="button" variant="outline" onClick={onCancel}>
             Back
@@ -105,57 +49,48 @@ export function RulesOfTheNavalAgeScreen({
         </div>
       )}
 
-      {options !== null && focusedPreset !== undefined && (
-        <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:overflow-hidden">
-          <PresetDeckPane
-            activePreset={activePreset}
-            focusedIndex={focusedIndex}
-            onFocusIndex={onFocusIndex}
-            onSelectPreset={selectPreset}
-          />
+      {state.options !== null && detail.preset !== null && (
+        <PresetWorkspaceProvider workspace={workspace}>
+          <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:overflow-hidden">
+            <PresetDeckPane />
 
-          <section
-            aria-label="Preset details"
-            className="themed-scrollbar relative z-10 min-w-0 flex-1 lg:h-full lg:overflow-y-auto"
-          >
-            <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6 lg:p-8">
-              <p role="status" className="text-sm text-muted-foreground">
-                Current setup:{" "}
-                <span className="font-medium text-foreground">{appliedPresetName}</span>
-              </p>
+            <section
+              aria-label="Preset details"
+              className="themed-scrollbar relative z-10 min-w-0 flex-1 lg:h-full lg:overflow-y-auto"
+            >
+              <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6 lg:p-8">
+                <p role="status" className="text-sm text-muted-foreground">
+                  Current setup: <span className="font-medium text-foreground">{appliedName}</span>
+                </p>
 
-              <PresetDetailPanel
-                key={focusedPreset.id}
-                preset={focusedPreset}
-                applied={focusedPreset.id === activePreset}
-                pending={pendingPresetId === focusedPreset.id && focusedPreset.id !== activePreset}
-              />
+                <PresetDetailPanel key={detail.preset.id} />
 
-              <EraScaleSection
-                scenarioId={preferences.scenarioId}
-                campaignSeed={preferences.campaignSeed}
-                fleetSize={preferences.fleetSize}
-                scenarios={options.scenarios}
-                fleetSizeOptions={options.supportedValues.fleetSize ?? []}
-                onScenarioChange={onScenarioChange}
-                onFleetSizeChange={onFleetSizeChange}
-                onSeedChange={onSeedChange}
-              />
+                <EraScaleSection
+                  scenarioId={state.preferences.scenarioId}
+                  campaignSeed={state.preferences.campaignSeed}
+                  fleetSize={state.preferences.fleetSize}
+                  scenarios={state.options.scenarios}
+                  fleetSizeOptions={state.options.supportedValues.fleetSize ?? []}
+                  onScenarioChange={actions.changeScenario}
+                  onFleetSizeChange={actions.changeFleetSize}
+                  onSeedChange={actions.changeSeed}
+                />
 
-              <HistoricalUncertaintySection
-                preferences={preferences}
-                supportedValues={options.supportedValues}
-                onPreferenceChange={handlePreferenceChange}
-              />
+                <HistoricalUncertaintySection
+                  preferences={state.preferences}
+                  supportedValues={state.options.supportedValues}
+                  onPreferenceChange={actions.changePreference}
+                />
 
-              <div className="flex justify-between">
-                <Button type="button" variant="outline" onClick={onCancel}>
-                  Back
-                </Button>
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={onCancel}>
+                    Back
+                  </Button>
+                </div>
               </div>
-            </div>
-          </section>
-        </div>
+            </section>
+          </div>
+        </PresetWorkspaceProvider>
       )}
     </NewGameScreenLayout>
   );

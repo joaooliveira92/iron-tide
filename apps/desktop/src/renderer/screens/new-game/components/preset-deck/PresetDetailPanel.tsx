@@ -4,20 +4,12 @@ import { SlidePanel } from "@/components/slide-panel/index.js";
 import { CardContent, CardHeader } from "@/components/ui/card.js";
 import { GlassCard } from "@/components/ui/glass-card.js";
 import { presetSettingRows } from "../../preset-detail-view.js";
-import type { PresetDefinition } from "../../rules-of-the-naval-age-presets.js";
+import { usePresetMeta } from "./PresetWorkspaceProvider.js";
 
-export interface PresetDetailPanelProps {
-  readonly preset: PresetDefinition;
-  readonly applied: boolean;
-  readonly pending: boolean;
-}
-
-export const PresetDetailPanel = memo(function PresetDetailPanel({
-  preset,
-  applied,
-  pending,
-}: PresetDetailPanelProps) {
-  const rows = useMemo(() => presetSettingRows(preset.bundle), [preset]);
+export const PresetDetailPanel = memo(function PresetDetailPanel() {
+  const { preset, applied, pending } = usePresetMeta().detail;
+  const rows = useMemo(() => (preset === null ? [] : presetSettingRows(preset.bundle)), [preset]);
+  if (preset === null) return null;
   const headingId = `preset-detail-heading-${preset.id}`;
 
   return (

@@ -1,26 +1,13 @@
-import { memo, useCallback, useId, useMemo } from "react";
+import { memo, useId, useMemo } from "react";
 import { DeckMasterPane, paletteForIndex } from "@/components/card-deck/index.js";
-import {
-  PRESET_DEFINITIONS,
-  type ActivePresetId,
-  type PresetId,
-} from "../../rules-of-the-naval-age-presets.js";
+import { PRESET_DEFINITIONS } from "../../rules-of-the-naval-age-presets.js";
 import { PresetCard, presetOptionId } from "./PresetCard.js";
+import { usePresetActions, usePresetMeta } from "./PresetWorkspaceProvider.js";
 
-export interface PresetDeckPaneProps {
-  readonly activePreset: ActivePresetId;
-  readonly focusedIndex: number;
-  readonly onFocusIndex: (index: number) => void;
-  readonly onSelectPreset: (presetId: PresetId) => void;
-}
-
-export const PresetDeckPane = memo(function PresetDeckPane({
-  activePreset,
-  focusedIndex,
-  onFocusIndex,
-  onSelectPreset,
-}: PresetDeckPaneProps) {
+export const PresetDeckPane = memo(function PresetDeckPane() {
   const listboxId = useId();
+  const { activePresetId, focusedIndex } = usePresetMeta().deck;
+  const { focusIndex, activateIndex } = usePresetActions();
 
   const cards = useMemo(
     () =>
@@ -29,25 +16,15 @@ export const PresetDeckPane = memo(function PresetDeckPane({
           key={preset.id}
           preset={preset}
           palette={paletteForIndex(index)}
-          applied={preset.id === activePreset}
+          applied={preset.id === activePresetId}
           listboxId={listboxId}
         />
       )),
-    [activePreset, listboxId],
+    [activePresetId, listboxId],
   );
   const optionIds = useMemo(
     () => PRESET_DEFINITIONS.map((preset) => presetOptionId(listboxId, preset.id)),
     [listboxId],
-  );
-
-  const selectIndex = useCallback(
-    (index: number) => {
-      const preset = PRESET_DEFINITIONS[index];
-      if (preset === undefined) return;
-      onFocusIndex(index);
-      onSelectPreset(preset.id);
-    },
-    [onFocusIndex, onSelectPreset],
   );
 
   return (
@@ -62,9 +39,9 @@ export const PresetDeckPane = memo(function PresetDeckPane({
       cards={cards}
       optionIds={optionIds}
       focusedIndex={focusedIndex}
-      onFocusIndex={onFocusIndex}
-      onActivateIndex={selectIndex}
-      onConfirmIndex={selectIndex}
+      onFocusIndex={focusIndex}
+      onActivateIndex={activateIndex}
+      onConfirmIndex={activateIndex}
     />
   );
 });
