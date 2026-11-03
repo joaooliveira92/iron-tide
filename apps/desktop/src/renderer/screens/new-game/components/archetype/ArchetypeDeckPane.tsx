@@ -1,48 +1,16 @@
 import { ARCHETYPE_POINT_TOTAL, ARCHETYPE_PRESETS } from "@bluewave/campaign-engine";
-import { paletteForIndex } from "@/components/card-deck/index.js";
-import { DeckMasterPane } from "@/components/card-deck/index.js";
 import { memo, useId, useMemo } from "react";
-import { ArchetypeCard, archetypeOptionId } from "./ArchetypeCard.js";
-import { ArchetypeCustomDeckCard, customArchetypeOptionId } from "./ArchetypeCustomDeckCard.js";
+import { DeckMasterPane, paletteForIndex } from "@/components/card-deck/index.js";
+import { ArchetypeCard } from "./ArchetypeCard.js";
+import { ArchetypeCustomDeckCard } from "./ArchetypeCustomDeckCard.js";
+import { ARCHETYPE_DECK_ENTRIES, archetypeDeckOptionId } from "./archetype-deck-entries.js";
+import { useArchetypeActions, useArchetypeMeta } from "./ArchetypeWorkspaceProvider.js";
 
-export const ARCHETYPE_DECK_ENTRIES: readonly (
-  | { readonly kind: "preset"; readonly id: string }
-  | { readonly kind: "custom" }
-)[] = [
-  ...ARCHETYPE_PRESETS.map((preset) => ({ kind: "preset" as const, id: preset.id })),
-  { kind: "custom" as const },
-];
-
-export function archetypeDeckOptionId(listboxId: string, index: number): string {
-  const entry = ARCHETYPE_DECK_ENTRIES[index];
-  if (entry === undefined) return "";
-  return entry.kind === "custom"
-    ? customArchetypeOptionId(listboxId)
-    : archetypeOptionId(listboxId, entry.id);
-}
-
-export interface ArchetypeDeckPaneProps {
-  readonly focusedIndex: number;
-  readonly onFocusIndex: (index: number) => void;
-  readonly onActivateIndex: (index: number) => void;
-  readonly appliedPresetId: string | null;
-  readonly customApplied: boolean;
-  readonly customAllocation: {
-    readonly economy: number;
-    readonly industry: number;
-    readonly combat: number;
-  } | null;
-}
-
-export const ArchetypeDeckPane = memo(function ArchetypeDeckPane({
-  focusedIndex,
-  onFocusIndex,
-  onActivateIndex,
-  appliedPresetId,
-  customApplied,
-  customAllocation,
-}: ArchetypeDeckPaneProps) {
+export const ArchetypeDeckPane = memo(function ArchetypeDeckPane() {
   const listboxId = useId();
+  const { focusedIndex, appliedPresetId, customApplied, customAllocation } =
+    useArchetypeMeta().deck;
+  const { focusIndex, activateIndex } = useArchetypeActions();
 
   const cards = useMemo(
     () =>
@@ -91,9 +59,9 @@ export const ArchetypeDeckPane = memo(function ArchetypeDeckPane({
       cards={cards}
       optionIds={optionIds}
       focusedIndex={focusedIndex}
-      onFocusIndex={onFocusIndex}
-      onActivateIndex={onActivateIndex}
-      onConfirmIndex={onActivateIndex}
+      onFocusIndex={focusIndex}
+      onActivateIndex={activateIndex}
+      onConfirmIndex={activateIndex}
     />
   );
 });
