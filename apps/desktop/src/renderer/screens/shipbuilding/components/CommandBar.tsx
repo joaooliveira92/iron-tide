@@ -25,7 +25,7 @@ import { cn } from "../../../lib/utils.js";
 import { Tip } from "../../../components/ui/tip.js";
 
 export interface CommandBarProps {
-  readonly embedded?: boolean;
+  readonly variant: "header" | "overlay";
   readonly shipClassName: string;
   readonly onShipClassName: (name: string) => void;
   readonly nameInputRef?: Ref<HTMLInputElement>;
@@ -50,7 +50,7 @@ export interface CommandBarProps {
 }
 
 export function CommandBar({
-  embedded = false,
+  variant,
   shipClassName,
   onShipClassName,
   nameInputRef,
@@ -72,7 +72,7 @@ export function CommandBar({
       aria-label="Design commands"
       className={cn(
         "flex flex-wrap items-center gap-x-4 gap-y-2",
-        embedded ? "min-w-0 flex-1" : "border-b bg-muted/40 px-3 py-2",
+        variant === "header" ? "min-w-0 flex-1" : "border-b bg-muted/40 px-3 py-2",
       )}
     >
       <div className="flex min-w-0 flex-1 basis-[28rem] flex-wrap items-center gap-2">

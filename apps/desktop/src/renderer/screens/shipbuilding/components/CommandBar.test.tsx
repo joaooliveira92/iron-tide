@@ -6,6 +6,7 @@ import { CommandBar, type CommandBarProps } from "./CommandBar.js";
 afterEach(cleanup);
 
 const props = (over: Partial<CommandBarProps> = {}): CommandBarProps => ({
+  variant: "overlay",
   shipClassName: "",
   onShipClassName: () => {},
   onStartFromReference: () => {},
