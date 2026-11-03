@@ -1,6 +1,7 @@
 /* @vitest-environment jsdom */
 import type { BattleResolution, TacticalBattleOutcome } from "@bluewave/campaign-engine";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { BattleResolutionPanel } from "./BattleResolutionPanel.js";
 
@@ -32,14 +33,20 @@ const ResizeObserverMock = vi.hoisted(
     },
 );
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+Element.prototype.getAnimations = () => [];
 
 afterEach(() => {
   cleanup();
 });
 
+async function renderSettled(ui: ReactElement): Promise<void> {
+  render(ui);
+  await act(async () => {});
+}
+
 describe("BattleResolutionPanel", () => {
-  it("renders both resolver outputs when both have run", () => {
-    render(
+  it("renders both resolver outputs when both have run", async () => {
+    await renderSettled(
       <BattleResolutionPanel autoResolution={autoResolution} tacticalOutcome={tacticalOutcome} />,
     );
 
@@ -86,8 +93,10 @@ describe("BattleResolutionPanel", () => {
     expect(screen.queryByText("Tactical Turn-by-Turn Resolver Outcome")).toBeNull();
   });
 
-  it("shows only the tactical outcome when no auto resolution exists", () => {
-    render(<BattleResolutionPanel autoResolution={null} tacticalOutcome={tacticalOutcome} />);
+  it("shows only the tactical outcome when no auto resolution exists", async () => {
+    await renderSettled(
+      <BattleResolutionPanel autoResolution={null} tacticalOutcome={tacticalOutcome} />,
+    );
 
     expect(screen.getByText("Tactical Turn-by-Turn Resolver Outcome")).not.toBeNull();
     expect(screen.queryByText("Auto-Resolution Completed")).toBeNull();

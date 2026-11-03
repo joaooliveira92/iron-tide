@@ -18,9 +18,11 @@ export function ArchetypeAllocationBar({
       aria-label="Allocation breakdown"
     >
       {ARCHETYPE_DIMENSION_DESCRIPTORS.map((descriptor) => (
-        <Tip label={`${descriptor.label}: ${allocation[descriptor.dimension]}`}>
+        <Tip
+          key={descriptor.dimension}
+          label={`${descriptor.label}: ${allocation[descriptor.dimension]}`}
+        >
           <div
-            key={descriptor.dimension}
             className={descriptor.barClassName}
             style={{ width: `${(allocation[descriptor.dimension] / max) * 100}%` }}
           />

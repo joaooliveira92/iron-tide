@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { loadDrawingBoardContent } from "../../components/design-workspace/content.js";
 import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
@@ -125,8 +125,9 @@ describe("Revising an ordered project from Ship design", () => {
     await waitFor(() => expect(preview().textContent).toContain("needs a rebuild project"));
   });
 
-  it("an authored ship has no load or apply buttons and says it cannot be revised", () => {
+  it("an authored ship has no load or apply buttons and says it cannot be revised", async () => {
     render(<ShipbuildingWorkspace sessionId="s1" projects={[{ ...project, revisable: false }]} />);
+    await act(async () => {});
     openFinish();
     expect(screen.queryByRole("button", { name: /apply revision/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /load this ship/i })).toBeNull();
@@ -138,8 +139,9 @@ describe("Revising an ordered project from Ship design", () => {
     ).toBe(false);
   });
 
-  it("offers no revision panel when no project is being revised", () => {
+  it("offers no revision panel when no project is being revised", async () => {
     render(<ShipbuildingWorkspace sessionId="s1" />);
+    await act(async () => {});
     openFinish();
     expect(screen.queryByRole("region", { name: "Revision preview" })).toBeNull();
   });

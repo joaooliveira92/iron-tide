@@ -186,10 +186,10 @@ export function RevisionPanel({
         <p className="text-sm">No changes yet, so nothing would need revising.</p>
       ) : (
         <div role="status" className="space-y-1 text-sm">
-          <p className="font-medium">
+          <div className="font-medium">
             <Badge variant={TIER_BADGE[d.tier]}>{TIER_LABEL[d.tier]}</Badge>{" "}
             <span className="font-normal">at {pct(d.progressBp)} hull progress</span>
-          </p>
+          </div>
           <ul className="list-disc pl-5 text-muted-foreground">
             {d.reasonCodes.map((c) => (
               <li key={c}>{REASON_TEXT[c] ?? c}</li>

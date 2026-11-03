@@ -164,8 +164,10 @@ describe("useNewGameFlow", () => {
         launchPromise = result.current.actions.launch();
       });
       expect(selectScreen).toHaveBeenLastCalledWith("new-game-launching");
-      await vi.advanceTimersByTimeAsync(COSMETIC_MINIMUM_DURATION_MS);
-      await act(() => launchPromise);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(COSMETIC_MINIMUM_DURATION_MS);
+        await launchPromise;
+      });
     } finally {
       vi.useRealTimers();
     }
@@ -195,8 +197,10 @@ describe("useNewGameFlow", () => {
       act(() => {
         launchPromise = result.current.actions.launch();
       });
-      await vi.advanceTimersByTimeAsync(COSMETIC_MINIMUM_DURATION_MS);
-      await act(() => launchPromise);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(COSMETIC_MINIMUM_DURATION_MS);
+        await launchPromise;
+      });
     } finally {
       vi.useRealTimers();
     }
@@ -217,8 +221,10 @@ describe("useNewGameFlow", () => {
       act(() => {
         launchPromise = result.current.actions.launch();
       });
-      await vi.advanceTimersByTimeAsync(COSMETIC_MINIMUM_DURATION_MS);
-      await act(() => launchPromise);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(COSMETIC_MINIMUM_DURATION_MS);
+        await launchPromise;
+      });
     } finally {
       vi.useRealTimers();
     }
@@ -317,8 +323,10 @@ describe("useNewGameFlow", () => {
         value: { sessionId: "ses-created" },
         diagnostics: [],
       });
-      await vi.advanceTimersByTimeAsync(COSMETIC_MINIMUM_DURATION_MS);
-      await act(() => launchPromise);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(COSMETIC_MINIMUM_DURATION_MS);
+        await launchPromise;
+      });
     } finally {
       vi.useRealTimers();
     }

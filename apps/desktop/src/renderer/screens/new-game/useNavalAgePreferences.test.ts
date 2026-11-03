@@ -44,7 +44,8 @@ describe("useNavalAgePreferences", () => {
       diagnostics: [],
     }));
 
-    const { result } = renderHook(() => useNavalAgePreferences(null, portFor(execute)));
+    const port = portFor(execute);
+    const { result } = renderHook(() => useNavalAgePreferences(null, port));
 
     await waitFor(() => expect(result.current.state.loading).toBe(false));
     expect(execute).toHaveBeenCalledWith("listNewGameOptions", undefined);
@@ -59,7 +60,8 @@ describe("useNavalAgePreferences", () => {
       diagnostics: [],
     }));
 
-    const { result } = renderHook(() => useNavalAgePreferences(null, portFor(execute)));
+    const port = portFor(execute);
+    const { result } = renderHook(() => useNavalAgePreferences(null, port));
 
     await waitFor(() => expect(result.current.state.loading).toBe(false));
     expect(result.current.state.error).toBe("OPTIONS_UNAVAILABLE");
@@ -73,7 +75,8 @@ describe("useNavalAgePreferences", () => {
       value: options,
       diagnostics: [],
     }));
-    const { result } = renderHook(() => useNavalAgePreferences(null, portFor(execute)));
+    const port = portFor(execute);
+    const { result } = renderHook(() => useNavalAgePreferences(null, port));
     await waitFor(() => expect(result.current.ready).toBe(true));
     const before = result.current.preferences;
 

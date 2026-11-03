@@ -52,8 +52,12 @@ describe("shader program", () => {
       getProgramParameter: vi.fn(() => false),
     });
 
+    const logged = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
     expect(createShaderProgram(gl, "vertex", "fragment")).toBeNull();
     expect(deleteProgram).toHaveBeenCalledWith(program);
     expect(deleteShader).toHaveBeenCalledTimes(2);
+    expect(logged).toHaveBeenCalledWith("Program link error:", expect.anything());
+    logged.mockRestore();
   });
 });

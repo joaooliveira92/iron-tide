@@ -20,6 +20,7 @@ describe("string resolver alias (U-4 ticket 06)", () => {
   });
 
   it("never returns a raw key when a key is absent", () => {
+    setMissingKeyWarner(vi.fn());
     setUiCatalogue({ locale: "en-US", strings: {} });
     const text = translate("settings.does.not.exist");
     expect(text).toBe("Something happened this month.");

@@ -1,6 +1,7 @@
 /* @vitest-environment jsdom */
 import type { CommitMonthResponse } from "@bluewave/campaign-engine";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { TurnReportTab } from "./TurnReportTab.js";
 
@@ -39,14 +40,20 @@ const ResizeObserverMock = vi.hoisted(
     },
 );
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+Element.prototype.getAnimations = () => [];
 
 afterEach(() => {
   cleanup();
 });
 
+async function renderSettled(ui: ReactElement): Promise<void> {
+  render(ui);
+  await act(async () => {});
+}
+
 describe("TurnReportTab Battle Outcomes", () => {
-  it("renders resolved battles with raw ids, winner/loser, war-score delta and ship losses", () => {
-    render(
+  it("renders resolved battles with raw ids, winner/loser, war-score delta and ship losses", async () => {
+    await renderSettled(
       <TurnReportTab
         commitResult={makeCommitResult([
           {
@@ -98,8 +105,8 @@ describe("TurnReportTab Battle Outcomes", () => {
     expect(screen.getByText("Deck damage assessment complete.")).not.toBeNull();
   });
 
-  it("renders an undecided battle honestly, without fabricating a winner or war score", () => {
-    render(
+  it("renders an undecided battle honestly, without fabricating a winner or war score", async () => {
+    await renderSettled(
       <TurnReportTab
         commitResult={makeCommitResult([
           {
@@ -126,8 +133,8 @@ describe("TurnReportTab Battle Outcomes", () => {
     expect(screen.queryByText(/\+[1-9]/)).toBeNull();
   });
 
-  it("renders an honest empty state (no battles) instead of hiding the section", () => {
-    render(<TurnReportTab commitResult={makeCommitResult([])} />);
+  it("renders an honest empty state (no battles) instead of hiding the section", async () => {
+    await renderSettled(<TurnReportTab commitResult={makeCommitResult([])} />);
 
     expect(screen.getByText("Battle Outcomes")).not.toBeNull();
     expect(screen.getByText("No battles resolved this month.")).not.toBeNull();

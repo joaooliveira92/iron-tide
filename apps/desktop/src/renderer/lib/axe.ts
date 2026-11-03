@@ -1,3 +1,4 @@
+import { act } from "@testing-library/react";
 import axe, { type AxeResults, type Result } from "axe-core";
 
 let pending: Promise<unknown> = Promise.resolve();
@@ -7,7 +8,7 @@ export async function axeViolations(container: Element): Promise<string[]> {
     axe.run(container, { rules: { "color-contrast": { enabled: false } } }),
   );
   pending = run.catch(() => undefined);
-  const results: AxeResults = await run;
+  const results: AxeResults = await act(() => run);
   return results.violations.map(
     (violation: Result) =>
       `${violation.id} (${violation.impact ?? "n/a"}): ${violation.help} — ${violation.nodes
