@@ -1,22 +1,13 @@
-import { memo, useCallback, useId, useMemo } from "react";
+import { memo, useId, useMemo } from "react";
 import { DeckMasterPane, paletteForIndex } from "@/components/card-deck/index.js";
 import { FLEET_METHOD_CARDS } from "../../fleet-method-content.js";
+import { useFleetMethodActions, useFleetMethodMeta } from "./FleetMethodWorkspaceProvider.js";
 import { FleetMethodCard, fleetMethodOptionId } from "./FleetMethodCard.js";
 
-export interface FleetMethodDeckPaneProps {
-  readonly activeId: string;
-  readonly focusedIndex: number;
-  readonly onFocusIndex: (index: number) => void;
-  readonly onSelectMethod: (cardId: string) => void;
-}
-
-export const FleetMethodDeckPane = memo(function FleetMethodDeckPane({
-  activeId,
-  focusedIndex,
-  onFocusIndex,
-  onSelectMethod,
-}: FleetMethodDeckPaneProps) {
+export const FleetMethodDeckPane = memo(function FleetMethodDeckPane() {
   const listboxId = useId();
+  const { activeId, focusedIndex } = useFleetMethodMeta().deck;
+  const { focusIndex, activateIndex } = useFleetMethodActions();
 
   const cards = useMemo(
     () =>
@@ -36,16 +27,6 @@ export const FleetMethodDeckPane = memo(function FleetMethodDeckPane({
     [listboxId],
   );
 
-  const selectIndex = useCallback(
-    (index: number) => {
-      const card = FLEET_METHOD_CARDS[index];
-      if (card === undefined) return;
-      onFocusIndex(index);
-      onSelectMethod(card.id);
-    },
-    [onFocusIndex, onSelectMethod],
-  );
-
   return (
     <DeckMasterPane
       listboxId={listboxId}
@@ -58,9 +39,9 @@ export const FleetMethodDeckPane = memo(function FleetMethodDeckPane({
       cards={cards}
       optionIds={optionIds}
       focusedIndex={focusedIndex}
-      onFocusIndex={onFocusIndex}
-      onActivateIndex={selectIndex}
-      onConfirmIndex={selectIndex}
+      onFocusIndex={focusIndex}
+      onActivateIndex={activateIndex}
+      onConfirmIndex={activateIndex}
     />
   );
 });

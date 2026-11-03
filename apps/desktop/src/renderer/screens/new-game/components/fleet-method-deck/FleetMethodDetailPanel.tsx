@@ -3,19 +3,11 @@ import { memo } from "react";
 import { SlidePanel } from "@/components/slide-panel/index.js";
 import { CardContent, CardHeader } from "@/components/ui/card.js";
 import { GlassCard } from "@/components/ui/glass-card.js";
-import type { FleetMethodCardContent } from "../../fleet-method-content.js";
+import { useFleetMethodMeta } from "./FleetMethodWorkspaceProvider.js";
 
-export interface FleetMethodDetailPanelProps {
-  readonly card: FleetMethodCardContent;
-  readonly applied: boolean;
-  readonly pending: boolean;
-}
-
-export const FleetMethodDetailPanel = memo(function FleetMethodDetailPanel({
-  card,
-  applied,
-  pending,
-}: FleetMethodDetailPanelProps) {
+export const FleetMethodDetailPanel = memo(function FleetMethodDetailPanel() {
+  const { card, applied, pending } = useFleetMethodMeta().detail;
+  if (card === null) return null;
   const headingId = `fleet-method-detail-heading-${card.id}`;
 
   return (
