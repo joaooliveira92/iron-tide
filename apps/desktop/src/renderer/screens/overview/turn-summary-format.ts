@@ -90,3 +90,16 @@ export function groupTurnMessages(
 export function turnLabel(entry: TurnSummaryEntry): string {
   return entry.occurredAt.length > 0 ? entry.occurredAt : entry.turnId.slice(0, 8);
 }
+
+export function categoryLabelKey(category: string): string {
+  return `ui.turnSummary.category.${category}`;
+}
+
+export function severityLabelKey(severity: string): string {
+  return `ui.turnSummary.severity.${severity}`;
+}
+
+export const SEVERITY_FILTER_OPTIONS = [
+  "ALL",
+  ...SEVERITY_ORDER.filter((severity) => severity !== "TRACE"),
+] as const;
