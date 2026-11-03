@@ -125,7 +125,7 @@ describe("TurnSummaryProvider", () => {
     );
 
     expect(screen.getByTestId("turn-message-group").getAttribute("data-category")).toBe("FINANCE");
-    fireEvent.click(screen.getAllByTestId("turn-history-item")[1]);
+    fireEvent.click(screen.getByRole("button", { name: "1880-03" }));
     expect(screen.getByTestId("turn-message-group").getAttribute("data-category")).toBe("WAR");
     expect(screen.getByTestId("severity-badge").textContent).toBe("Critical");
   });
@@ -247,6 +247,7 @@ describe("TurnSummaryProvider", () => {
                   previousValue: 10,
                   newValue: 4,
                   delta: -6,
+                  visibility: "exact",
                 },
               ],
             }),
