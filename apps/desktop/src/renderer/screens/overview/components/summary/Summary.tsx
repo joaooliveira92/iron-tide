@@ -117,6 +117,6 @@ export function summaryDeltaLabel(value: number): string {
   return `${value >= 0 ? "+" : ""}${value}`;
 }
 
-export function summaryValueLabel(value: unknown): string {
+export function summaryValueLabel(value: string | number | boolean | undefined): string {
   return String(value ?? "—");
 }
