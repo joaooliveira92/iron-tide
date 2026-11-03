@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { isAbsolute, resolve } from "node:path";
+import { resolve } from "node:path";
 
 const INTERPRETERS = /^(python3?|node|perl|ruby)$/u;
 const WRITE_SIGNATURES = [
@@ -198,7 +198,7 @@ function expandHome(path) {
 
 export function resolvePath(base, path) {
   const expanded = expandHome(path);
-  return isAbsolute(expanded) ? expanded : resolve(base, expanded);
+  return resolve(base, expanded);
 }
 
 export const hasDynamicText = (text) => /[$`*?[{]/u.test(text);

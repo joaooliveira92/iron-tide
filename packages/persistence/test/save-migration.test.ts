@@ -163,7 +163,7 @@ describe("save migration (ticket 11d)", () => {
     if (result.status === "refused") expect(result.kind).toBe("unknown");
   });
 
-  it.skipIf(process.getuid?.() === 0)(
+  it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
     "reports a failed migration with its cause and leaves the original save in place",
     () => {
       const savePath = saveAt("1.2.0", tmpDir);
