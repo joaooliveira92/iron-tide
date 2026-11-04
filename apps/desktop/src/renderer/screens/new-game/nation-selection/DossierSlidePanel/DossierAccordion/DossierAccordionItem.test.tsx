@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { Coins } from "lucide-react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { createHoverCardHandle } from "@/components/ui/hover-card.js";
-import { DossierAccordionItem } from "./DossierAccordionItem.js";
+import { type DossierAccordionItemVariant, DossierAccordionItem } from "./DossierAccordionItem.js";
 import type { DossierSection, DossierSectionId } from "./types.js";
 
 const section: DossierSection = {
@@ -14,12 +14,12 @@ const section: DossierSection = {
   accent: "gold",
 };
 
-function renderItem(active: boolean) {
+function renderItem(variant: DossierAccordionItemVariant) {
   const handle = createHoverCardHandle<DossierSectionId>();
   return render(
     <DossierAccordionItem
       section={section}
-      active={active}
+      variant={variant}
       handle={handle}
       onSelect={vi.fn()}
       onKeyDown={vi.fn()}
@@ -33,7 +33,7 @@ describe("DossierAccordionItem", () => {
   });
 
   it("renders a labelled tab that controls its intelligence panel", () => {
-    renderItem(true);
+    renderItem("open");
 
     const trigger = screen.getByRole("button", { name: "Economy" });
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
@@ -41,7 +41,7 @@ describe("DossierAccordionItem", () => {
   });
 
   it("leaves the panel unlinked while the card is closed", () => {
-    renderItem(false);
+    renderItem("closed");
 
     const trigger = screen.getByRole("button", { name: "Economy" });
     expect(trigger.getAttribute("aria-expanded")).toBe("false");

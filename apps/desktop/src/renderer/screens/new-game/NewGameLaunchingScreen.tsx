@@ -17,7 +17,7 @@ export function NewGameLaunchingScreen({ error, onBackToReview }: NewGameLaunchi
 
   if (error !== null) {
     return (
-      <NewGameScreenLayout size="sm" centered>
+      <NewGameScreenLayout size="sm" variant="centered">
         <ScreenHeader
           icon={<Anchor className="h-5 w-5" />}
           title="Commissioning failed"
@@ -31,7 +31,7 @@ export function NewGameLaunchingScreen({ error, onBackToReview }: NewGameLaunchi
   }
 
   return (
-    <NewGameScreenLayout size="sm" centered>
+    <NewGameScreenLayout size="sm" variant="centered">
       <ScreenHeader
         icon={<Anchor className="h-5 w-5" />}
         title="Establishing the Naval Order"

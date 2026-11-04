@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button } from "../../components/ui/button.js";
-import { CardShell } from "../../components/shared/CardShell.js";
+import { CardShell, type CardShellVariant } from "../../components/shared/CardShell.js";
 import { CardTitle } from "../../components/ui/card.js";
 import type { Screen } from "../../shell/campaign-screen-registry.js";
 import { NationDeferredIntel } from "./components/NationDeferredIntel.js";
@@ -19,10 +19,10 @@ export interface NationRailProps {
   readonly state: NationRailLoad;
   readonly playerName: string;
   readonly onNavigate: (screen: Screen) => void;
-  readonly embedded?: boolean;
+  readonly variant?: CardShellVariant;
 }
 
-export function NationRail({ state, playerName, onNavigate, embedded = false }: NationRailProps) {
+export function NationRail({ state, playerName, onNavigate, variant = "card" }: NationRailProps) {
   const rows = useMemo(
     () => (state.status === "ready" ? buildNationRail(state.projection, playerName) : []),
     [state, playerName],
@@ -36,8 +36,8 @@ export function NationRail({ state, playerName, onNavigate, embedded = false }: 
   return (
     <CardShell
       testId="nation-rail"
-      embedded={embedded}
-      header={<CardTitle className="text-sm font-medium">Nations</CardTitle>}
+      variant={variant}
+      title={<CardTitle className="text-sm font-medium">Nations</CardTitle>}
       contentClassName="space-y-3 text-xs"
     >
       {state.status === "loading" && <p className="text-muted-foreground">Reading relations…</p>}

@@ -4,6 +4,7 @@ import type { PresentationFormat } from "../../../lib/presentation-format/index.
 import { formatCount } from "../../../lib/presentation-format/format.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { signed } from "../month-report-format.js";
+import { SummaryDelta, SummaryList, SummaryRow, SummarySection } from "./summary/index.js";
 
 const n = formatCount;
 
@@ -32,13 +33,23 @@ export function MonthReportTreasurySection({
 }) {
   const format = usePresentationFormat();
   return (
-    <section aria-label="Treasury" className="space-y-1">
-      <p className="font-medium">
-        Treasury {formatCount(treasury.openingTreasury)} → {formatCount(treasury.closingTreasury)}{" "}
-        <span className={treasury.netChange < 0 ? "text-destructive" : "text-success"}>
-          ({signed(treasury.netChange, format)})
-        </span>
-      </p>
+    <SummarySection
+      variant="report"
+      ariaLabel="Treasury"
+      className="space-y-1"
+      title={
+        <>
+          {"Treasury "}
+          <SummaryDelta
+            from={formatCount(treasury.openingTreasury)}
+            to={formatCount(treasury.closingTreasury)}
+          />{" "}
+          <span className={treasury.netChange < 0 ? "text-destructive" : "text-success"}>
+            ({signed(treasury.netChange, format)})
+          </span>
+        </>
+      }
+    >
       <p className="text-muted-foreground">
         Fleet maintenance {formatCount(treasury.maintenanceCost)} · New construction{" "}
         {formatCount(treasury.constructionSpending)} · Research{" "}
@@ -63,9 +74,9 @@ export function MonthReportTreasurySection({
         />
       )}
       {treasury.ledgerRows.length > 0 && (
-        <ul className="text-muted-foreground" aria-label="Financial ledger">
+        <SummaryList variant="report" ariaLabel="Financial ledger">
           {treasury.ledgerRows.map((row) => (
-            <li key={row.id}>
+            <SummaryRow key={row.id} variant="report">
               {row.description} ({signed(row.amount, format)})
               {row.requested !== undefined && (row.shortfall ?? 0) > 0 && (
                 <span className="text-destructive">
@@ -74,10 +85,10 @@ export function MonthReportTreasurySection({
                   shortfall {n(row.shortfall ?? 0)}
                 </span>
               )}
-            </li>
+            </SummaryRow>
           ))}
-        </ul>
+        </SummaryList>
       )}
-    </section>
+    </SummarySection>
   );
 }

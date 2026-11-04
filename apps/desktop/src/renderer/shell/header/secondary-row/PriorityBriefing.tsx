@@ -102,7 +102,7 @@ function MorePriorities({
         </p>
         <PrioritiesCard
           state={state}
-          embedded
+          variant="embedded"
           onNavigate={(screen) => {
             setOpen(false);
             onNavigate(screen);

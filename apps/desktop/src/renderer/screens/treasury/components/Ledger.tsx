@@ -1,94 +1,11 @@
-import type { ReactNode } from "react";
-
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "../../../components/ui/hover-card.js";
 import { researchNote } from "../../../lib/economy-wording.js";
 import { cn } from "../../../lib/utils.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { buildBudgetBar, type BudgetSegmentId } from "../budget-bar.js";
 import type { TreasuryBreakdown } from "../treasury-summary.js";
 import { segmentFacts } from "./FlowBar.js";
+import { GROWING_FILL, LedgerTable } from "./LedgerTable.js";
 import { SegmentCard } from "./SegmentCard.js";
-
-const ROW =
-  "grid w-full grid-cols-[0.75rem_minmax(0,1fr)_minmax(3rem,8rem)_5rem_3rem] items-center gap-x-3 rounded-md px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring";
-
-interface LedgerRowProps {
-  readonly swatchClassName?: string;
-  readonly label: string;
-  readonly amount: string;
-  readonly share: number | null;
-  readonly shareLabel: string;
-  readonly muted?: boolean;
-  readonly dashed?: boolean;
-  readonly highlighted?: boolean;
-  readonly dimmed?: boolean;
-  readonly onActive?: (active: boolean) => void;
-  readonly onOpen?: () => void;
-  readonly detail: ReactNode;
-}
-
-function LedgerRow({
-  swatchClassName,
-  label,
-  amount,
-  share,
-  shareLabel,
-  muted = false,
-  dashed = false,
-  highlighted = false,
-  dimmed = false,
-  onActive,
-  onOpen,
-  detail,
-}: LedgerRowProps) {
-  return (
-    <HoverCard>
-      <HoverCardTrigger
-        delay={0}
-        closeDelay={0}
-        render={<button type="button" />}
-        onMouseEnter={() => onActive?.(true)}
-        onMouseLeave={() => onActive?.(false)}
-        onFocus={() => onActive?.(true)}
-        onBlur={() => onActive?.(false)}
-        onClick={onOpen}
-        aria-label={`${label}: ${amount} — show detail`}
-        className={cn(ROW, highlighted && "bg-muted/60", dimmed && "opacity-60")}
-      >
-        <span
-          aria-hidden="true"
-          className={cn(
-            "size-2.5 rounded-sm",
-            swatchClassName ?? "bg-foreground",
-            dashed && "border border-dashed border-foreground/60 bg-transparent",
-          )}
-        />
-        <span className={muted ? "text-muted-foreground" : undefined}>{label}</span>
-        <span aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-muted">
-          {share !== null && (
-            <span
-              className={cn(
-                "block h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none",
-                swatchClassName ?? "bg-foreground/70",
-                dashed && "opacity-50",
-              )}
-              style={{ width: `${Math.min(1, share) * 100}%` }}
-            />
-          )}
-        </span>
-        <span className="text-right font-medium tabular-nums">{amount}</span>
-        <span className="text-right text-xs tabular-nums text-muted-foreground">{shareLabel}</span>
-      </HoverCardTrigger>
-      <HoverCardContent side="left" align="center" className="w-72">
-        {detail}
-      </HoverCardContent>
-    </HoverCard>
-  );
-}
 
 export type LedgerDetail = "fleet" | "construction";
 
@@ -113,15 +30,12 @@ export function Ledger({ breakdown, previewResearch, active, onActive, onOpen }:
   const note = researchNote(breakdown);
   const pct = (value: number) =>
     `${format.number((value / income) * 100, { maximumFractionDigits: 0 })}%`;
+  const showDetail = (label: string, amount: string) => `${label}: ${amount} — show detail`;
 
   return (
-    <div className="space-y-0.5" data-testid="treasury-ledger">
-      <LedgerRow
-        swatchClassName="bg-foreground"
-        label="Monthly naval appropriation"
-        amount={format.count(breakdown.income)}
-        share={1}
-        shareLabel="100%"
+    <LedgerTable.Root columns="flow" testId="treasury-ledger">
+      <LedgerTable.Row
+        ariaLabel={showDetail("Monthly naval appropriation", format.count(breakdown.income))}
         detail={
           <SegmentCard
             swatchClassName="bg-foreground"
@@ -130,18 +44,20 @@ export function Ledger({ breakdown, previewResearch, active, onActive, onOpen }:
             description="Voted to the navy each month. Raise or lower it with the appropriation rate in the allocation panel."
           />
         }
-      />
-      <div className="my-1 h-px bg-border" />
+      >
+        <LedgerTable.Swatch className="bg-foreground" />
+        <LedgerTable.Label>Monthly naval appropriation</LedgerTable.Label>
+        <LedgerTable.Bar share={1} fillClassName={cn(GROWING_FILL, "bg-foreground")} />
+        <LedgerTable.Amount>{format.count(breakdown.income)}</LedgerTable.Amount>
+        <LedgerTable.Note>100%</LedgerTable.Note>
+      </LedgerTable.Row>
+      <LedgerTable.Divider />
       {bar.segments.map((segment) => {
         const delta = segment.previewDelta;
         return (
           <div key={segment.id}>
-            <LedgerRow
-              swatchClassName={segment.className}
-              label={SEGMENT_LABEL[segment.id]}
-              amount={format.count(segment.value)}
-              share={segment.shareOfIncome}
-              shareLabel={pct(segment.value)}
+            <LedgerTable.Row
+              ariaLabel={showDetail(SEGMENT_LABEL[segment.id], format.count(segment.value))}
               highlighted={active === segment.id}
               dimmed={active !== null && active !== segment.id}
               onActive={(on) => onActive(on ? segment.id : null)}
@@ -162,7 +78,16 @@ export function Ledger({ breakdown, previewResearch, active, onActive, onOpen }:
                   }
                 />
               }
-            />
+            >
+              <LedgerTable.Swatch className={segment.className} />
+              <LedgerTable.Label>{SEGMENT_LABEL[segment.id]}</LedgerTable.Label>
+              <LedgerTable.Bar
+                share={segment.shareOfIncome}
+                fillClassName={cn(GROWING_FILL, segment.className)}
+              />
+              <LedgerTable.Amount>{format.count(segment.value)}</LedgerTable.Amount>
+              <LedgerTable.Note>{pct(segment.value)}</LedgerTable.Note>
+            </LedgerTable.Row>
             {segment.id === "research" && delta !== 0 && (
               <p className="px-7 pb-1 text-xs text-muted-foreground">
                 Pending: {format.count(segment.value)} → {format.count(segment.value + delta)} once
@@ -175,12 +100,9 @@ export function Ledger({ breakdown, previewResearch, active, onActive, onOpen }:
           </div>
         );
       })}
-      <div className="my-1 h-px bg-border" />
-      <LedgerRow
-        label="Committed expenditure"
-        amount={format.count(breakdown.totalExpenditure)}
-        share={bar.totalExpenditure / income}
-        shareLabel={pct(bar.totalExpenditure)}
+      <LedgerTable.Divider />
+      <LedgerTable.Row
+        ariaLabel={showDetail("Committed expenditure", format.count(breakdown.totalExpenditure))}
         detail={
           <SegmentCard
             title="Committed expenditure"
@@ -194,14 +116,18 @@ export function Ledger({ breakdown, previewResearch, active, onActive, onOpen }:
             ]}
           />
         }
-      />
-      <LedgerRow
-        dashed
-        muted
-        label="Construction (up to)"
-        amount={format.count(breakdown.plannedConstruction)}
-        share={breakdown.plannedConstruction / income}
-        shareLabel={pct(breakdown.plannedConstruction)}
+      >
+        <LedgerTable.Swatch />
+        <LedgerTable.Label>Committed expenditure</LedgerTable.Label>
+        <LedgerTable.Bar
+          share={bar.totalExpenditure / income}
+          fillClassName={cn(GROWING_FILL, "bg-foreground/70")}
+        />
+        <LedgerTable.Amount>{format.count(breakdown.totalExpenditure)}</LedgerTable.Amount>
+        <LedgerTable.Note>{pct(bar.totalExpenditure)}</LedgerTable.Note>
+      </LedgerTable.Row>
+      <LedgerTable.Row
+        ariaLabel={showDetail("Construction (up to)", format.count(breakdown.plannedConstruction))}
         onOpen={() => onOpen("construction")}
         detail={
           <SegmentCard
@@ -211,7 +137,18 @@ export function Ledger({ breakdown, previewResearch, active, onActive, onOpen }:
             note="Select to see the projects behind it."
           />
         }
-      />
-    </div>
+      >
+        <LedgerTable.Swatch variant="dashed" />
+        <LedgerTable.Label className="text-muted-foreground">
+          Construction (up to)
+        </LedgerTable.Label>
+        <LedgerTable.Bar
+          share={breakdown.plannedConstruction / income}
+          fillClassName={cn(GROWING_FILL, "bg-foreground/70 opacity-50")}
+        />
+        <LedgerTable.Amount>{format.count(breakdown.plannedConstruction)}</LedgerTable.Amount>
+        <LedgerTable.Note>{pct(breakdown.plannedConstruction)}</LedgerTable.Note>
+      </LedgerTable.Row>
+    </LedgerTable.Root>
   );
 }

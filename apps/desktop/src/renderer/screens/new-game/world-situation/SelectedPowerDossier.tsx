@@ -4,6 +4,7 @@ import { OUTLOOK_TONE } from "../world-situation-presentation.js";
 import type { PowerBrief, PowerOutlook } from "../world-situation.js";
 import { NationGlyph } from "./NationGlyph.js";
 import { RelationshipStatus } from "./RelationshipStatus.js";
+import { useWorldSituationMeta } from "./WorldSituationWorkspaceProvider.js";
 
 function Section({
   title,
@@ -45,7 +46,8 @@ export function whyItMatters(power: PowerBrief): string {
   });
 }
 
-export function SelectedPowerDossier({ power }: { readonly power: PowerBrief | null }) {
+export function SelectedPowerDossier() {
+  const { selected: power } = useWorldSituationMeta();
   if (power === null) {
     return (
       <section
@@ -139,11 +141,4 @@ export function SelectedPowerDossier({ power }: { readonly power: PowerBrief | n
       </div>
     </section>
   );
-}
-
-export function dossierAnnouncement(
-  power: PowerBrief,
-  labels: { readonly status: string; readonly attitude: string; readonly outlook: string },
-): string {
-  return worldText("dossier.announce", { power: power.name, ...labels });
 }

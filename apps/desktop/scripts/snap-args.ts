@@ -289,6 +289,10 @@ export function parseSnapArgs(argv: readonly string[]): SnapOptions {
 
   assertUniqueShotNames(actions);
 
+  if (values.save !== undefined && values["make-save"] !== undefined) {
+    return fail("--save and --make-save are mutually exclusive");
+  }
+
   let size: SnapOptions["size"];
   if (values.size !== undefined) {
     const match = /^(\d+)x(\d+)$/.exec(values.size);

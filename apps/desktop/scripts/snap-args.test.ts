@@ -95,8 +95,6 @@ describe("parseSnapArgs", () => {
       "document.title",
       "--save",
       "existing-save",
-      "--make-save",
-      "new-save",
       "--selector",
       "#app",
       "--tour",
@@ -110,11 +108,24 @@ describe("parseSnapArgs", () => {
       waitMaxMs: 3000,
       evalSource: "document.title",
       save: "existing-save",
-      makeSave: "new-save",
       selector: "#app",
       tour: true,
       strict: true,
     });
+  });
+
+  it("accepts --make-save on its own", () => {
+    expect(parseSnapArgs(["--make-save", "new-save"])).toMatchObject({ makeSave: "new-save" });
+  });
+
+  it("rejects --save together with --make-save in either order", () => {
+    for (const argv of [
+      ["--save", "a", "--make-save", "b"],
+      ["--make-save=b", "--save=a"],
+    ]) {
+      expect(() => parseSnapArgs(argv)).toThrow(SnapUsageError);
+      expect(() => parseSnapArgs(argv)).toThrow("mutually exclusive");
+    }
   });
 
   it("leaves the window size alone with --full-res", () => {

@@ -696,7 +696,7 @@ function main() {
       const detail = added.map((f) => `  ${f.file}:${String(f.line)} — ${f.snippet}`).join("\n");
       throw new Error(
         'assert-boundary-decode (decode-options): Schema decodes must pass { onExcessProperty: "error" } ' +
-          '(AGENTS.md "Schema and boundaries"); the default strips excess keys.\n' +
+          '(.claude/rules/code.md "Schema and boundaries"); the default strips excess keys.\n' +
           detail,
       );
     }

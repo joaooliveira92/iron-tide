@@ -30,7 +30,7 @@ export function FleetDispatchBoard({
           key={countryId}
           countryId={countryId}
           palette={paletteForIndex(index)}
-          active={index === normalizedFocusedIndex}
+          variant={index === normalizedFocusedIndex ? "focused" : "idle"}
           listboxId={listboxId}
         />
       )),

@@ -83,7 +83,7 @@ export function OverviewHeaderReports({
         label="Recent developments"
         icon={<Newspaper aria-hidden="true" className="size-3.5 text-muted-foreground" />}
       >
-        <MonthReportCard reports={reports} areaName={areaName} embedded />
+        <MonthReportCard reports={reports} areaName={areaName} variant="embedded" />
       </ReportChip>
     </HeaderToolbar>
   );
