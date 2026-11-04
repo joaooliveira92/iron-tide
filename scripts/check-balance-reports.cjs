@@ -9,7 +9,11 @@
 //   node scripts/check-balance-reports.cjs
 const { execFileSync, spawnSync } = require("child_process");
 
-const REPORTS = ["docs/research/p1-tactical-benchmark.md", "docs/research/p1-balance-sweep.md"];
+const REPORTS = [
+  "docs/research/p1-tactical-benchmark.md",
+  "docs/research/p1-balance-sweep.md",
+  "docs/research/p5-peace-behaviour.md",
+];
 
 const run = spawnSync(
   "pnpm",
@@ -32,6 +36,20 @@ const run = spawnSync(
 if (run.status !== 0) {
   console.error("balance-report check: the benchmark tests failed; reports cannot be trusted");
   process.exit(run.status ?? 1);
+}
+
+const peaceRun = spawnSync(
+  "pnpm",
+  ["--filter", "@bluewave/ai", "exec", "vp", "test", "run", "test/peaceBehaviour.test.ts"],
+  {
+    stdio: "inherit",
+    shell: process.platform === "win32",
+    env: { ...process.env, PEACE_REPORT_WRITE: "1" },
+  },
+);
+if (peaceRun.status !== 0) {
+  console.error("balance-report check: the peace behaviour test failed; report cannot be trusted");
+  process.exit(peaceRun.status ?? 1);
 }
 
 const changed = execFileSync("git", ["diff", "--name-only", "--", ...REPORTS], {
