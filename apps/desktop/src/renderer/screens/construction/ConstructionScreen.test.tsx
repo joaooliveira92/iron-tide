@@ -1,4 +1,7 @@
-import type { ConstructionProjectQueueEntry } from "@bluewave/campaign-engine";
+import {
+  createCompiledDesignVersion,
+  type ConstructionProjectQueueEntry,
+} from "@bluewave/campaign-engine";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { memo, type ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
@@ -11,6 +14,16 @@ vi.mock("../../shell/CampaignShellContext.js", async (original) => ({
   useReviseProject: () => mocks.revise,
 }));
 const stageRenders = vi.hoisted(() => ({ slipways: vi.fn() }));
+const tileRenders = vi.hoisted(() => ({ byDesign: new Map<string, number>() }));
+vi.mock("./components/DesignTile.js", async (original) => {
+  const real = await original<typeof import("./components/DesignTile.js")>();
+  const Counted = memo(function Counted(props: ComponentProps<typeof real.DesignTile>) {
+    const id = props.design.designId;
+    tileRenders.byDesign.set(id, (tileRenders.byDesign.get(id) ?? 0) + 1);
+    return <real.DesignTile {...props} />;
+  });
+  return { ...real, DesignTile: Counted };
+});
 vi.mock("./components/SlipwaysStage.js", async (original) => {
   const real = await original<typeof import("./components/SlipwaysStage.js")>();
   const Counted = memo(function Counted(props: ComponentProps<typeof real.SlipwaysStage>) {
@@ -28,6 +41,7 @@ afterEach(() => {
   mocks.execute.mockReset();
   mocks.revise.mockReset();
   stageRenders.slipways.mockClear();
+  tileRenders.byDesign.clear();
 });
 
 const project = (
@@ -89,6 +103,37 @@ describe("ConstructionScreen stage memoization", () => {
     await screen.findByRole("button", { name: "Show inspector" });
 
     expect(stageRenders.slipways.mock.calls.length).toBe(rendersBefore);
+  });
+
+  it("re-renders only the design tiles whose selection changed", async () => {
+    const designs = ["d1", "d2", "d3"].map((id) =>
+      createCompiledDesignVersion(id, {
+        className: id,
+        shipType: "battleship",
+        nationId: "uk",
+        year: 1906,
+        available: true,
+        mass: 18_000,
+        speed: 21,
+        machineryType: "steam_turbine",
+        requiredTechnologyIds: [],
+        projectedCost: 180,
+        projectedCapacityUnits: 18,
+        costBasis: "displacement_formula",
+      }),
+    );
+    serve({ ...projectionWith([]), designs });
+    render(<ConstructionScreen sessionId="ses_1" />);
+    fireEvent.click(await screen.findByRole("button", { name: /Design catalog/ }));
+    const tiles = await screen.findAllByRole("radio");
+    const second = tiles[1];
+    if (second === undefined) throw new Error("expected three design tiles");
+    const thirdBefore = tileRenders.byDesign.get("d3") ?? 0;
+
+    fireEvent.click(second);
+
+    await waitFor(() => expect(second.getAttribute("aria-checked")).toBe("true"));
+    expect(tileRenders.byDesign.get("d3") ?? 0).toBe(thirdBefore);
   });
 });
 
