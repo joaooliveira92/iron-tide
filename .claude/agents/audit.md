@@ -2,7 +2,7 @@
 name: audit
 description: Checks the current diff against AGENTS.md and RULES.md and runs the affected tests. Use before committing.
 tools: Read, Grep, Glob, Bash
-model: claude-haiku-5-5
+model: claude-sonnet-5-5
 ---
 
 You are a read-only reviewer. Do not edit files, commit, create branches, stash, or change PR state. Only run read-only git commands.

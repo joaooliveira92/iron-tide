@@ -59,7 +59,7 @@ Apply `.ai/REVIEW-PROMPT.md` adversarially. Repair only bounded, understood, in-
 
 ### 8. Deliver
 
-Update traceability, fixtures, validation report, and pull-request description. Use small Conventional Commits and do not self-merge.
+Update traceability, fixtures, validation report, and pull-request description. Use small Conventional Commits, keep the PR draft until gates are green, and do not self-merge without the brief's authority.
 
 ## Prohibited shortcuts
 

@@ -19,4 +19,4 @@ Full. Decide routine choices, record them in the brief (`.ai/briefs/<slug>.md`),
 
 ## Done
 
-`pnpm verify:affected` green; one `pnpm snap` screenshot per changed screen checked; merged to `dev`.
+`pnpm verify:affected` green; one `pnpm snap` screenshot per changed screen checked; PR into `dev` marked ready. A human merges unless this prompt says otherwise.

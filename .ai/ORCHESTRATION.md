@@ -1,7 +1,9 @@
 # Bluewave Orchestration Pipeline
 
-The orchestrator (the primary agent session) drives every sprint through four
-subagent roles plus an orchestrator-owned validation gate. Each role is
+This pipeline is **T2** (multi-session or foggy work, see
+[AGENTS.md](../AGENTS.md#agent-workflow)); T0 and T1 tasks skip it and use the
+Delivery path directly. The orchestrator (the primary agent session) drives every
+sprint through four subagent roles plus an orchestrator-owned validation gate. Each role is
 dispatched with a [task brief](templates/task-brief.md) and tracked through the
 [task lifecycle](../docs/agents/task-lifecycle.md). The pipeline is
 **ticket-driven** and built on four repo skills:
@@ -83,8 +85,8 @@ the sprint's validation report (`.ai/reports/<slug>.md`):
 
 ## Concurrent worktrees
 
-Run each effort in its own worktree (`pnpm worktrees new <slug> --scope <issue>`,
-ADR-0364) so tasks progress in parallel without sharing a checkout. Set each
+Run each effort in its own worktree (`pnpm worktrees new <slug> --scope <issue>`)
+so tasks progress in parallel without sharing a checkout. Set each
 task's state with `pnpm worktrees status`, and review only what
 `pnpm worktrees inbox` marks `NEEDS-YOU`. Do not watch running tasks.
 
@@ -94,12 +96,9 @@ task's state with `pnpm worktrees status`, and review only what
   `$ARGUMENTS`; auto-advance per plan dependency order.
 - For huge/foggy efforts, chart via **wayfinder** (`map` + decision tickets on
   GitHub Issues); otherwise go spec → slice → implement directly.
-- Own all Git: small Conventional Commits on a short-lived branch (never
-  directly on `dev`); merge into `dev` only under the brief's merge authority; never merge into `main`; leave the tree clean.
+- Own all Git through the [Delivery path](../AGENTS.md#delivery): a draft PR into
+  `dev` from the first push; merge only under the brief's merge authority; never into `main`; leave the tree clean.
 - Close each task (merged/rejected/archived), prune its worktree, and record the
   rollback in its report.
 - Update traceability (SPRINT-PLAN row done + pointer, `.ai/reports/*`).
-- Resolve routine decisions locally; stop only on a genuine decision-request /
-  stop condition.
-- Keep the roles tiny and focused so no single subagent accumulates the whole
-  project context.
+- Resolve routine decisions locally; stop only on a stop condition.
