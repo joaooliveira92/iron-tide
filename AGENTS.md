@@ -19,6 +19,10 @@ Run `pnpm agent:map <symbol|path>` (or `--screen <name>`) before reading, `pnpm 
 
 Start substantial tasks from a [task brief](.ai/templates/task-brief.md) or a short [task prompt](.ai/templates/task-prompt.md): problem and evidence first, then the simplest viable solution. Record routine decisions in the brief and continue. Track state with `pnpm worktrees status`/`inbox`; return only for a stop condition. Merge only with the brief's authority; report rollback. See [task lifecycle](docs/agents/task-lifecycle.md), [rollback](docs/agents/rollback.md), [autonomy and access](docs/agents/autonomy-and-access.md).
 
+- Standing user authorization: use the `search`, `grep`, `audit`, `runner` subagents (`.claude/agents/`) without asking, for repo-wide searches, call-site hunts, diff audits, and test runs over ~30 s. They return paths, one-line summaries, or failures only.
+- Start from the handoff or brief if one is given; do not re-derive what it states.
+- Context cap: hooks warn at 150k tokens and block a resume above 200k (`scripts/data/agent-context-policy.json`). At the warning, commit and write the handoff (`handoff` skill). [Context efficiency](docs/agents/context-efficiency.md).
+
 ## Rules
 
 - Check `git status`, `git pull --rebase`, and `pnpm preflight` at session start; rebase before every push.
