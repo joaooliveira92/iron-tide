@@ -6,6 +6,8 @@ import { writeAppPreferences } from "../e2e/preferences-fixture.ts";
 import { copyFixturePackage, launchHarness, teardownHarness } from "../e2e/fixtures.ts";
 import { waitForQuiet } from "./snap-quiet.ts";
 import { createProblemLog } from "./snap-problems.ts";
+import { buildManifest, createStepRecorder, MANIFEST_FILE } from "./snap-manifest.ts";
+import { clearStaleArtifacts } from "./snap-output.ts";
 import { parseSnapArgs, SnapUsageError, type SnapAction, type SnapOptions } from "./snap-args.ts";
 
 const CHURN_THRESHOLD = 500;
@@ -24,6 +26,12 @@ try {
 
 const outDir = resolve(opts.out);
 await mkdir(outDir, { recursive: true });
+await clearStaleArtifacts(
+  outDir,
+  opts.actions.flatMap((a) => (a.kind === "shot" ? [a.name] : [])),
+);
+const recorder = createStepRecorder(opts.actions);
+const artifacts: string[] = [];
 
 let saveScratch: string | undefined;
 let saveDir: string | undefined;
@@ -82,7 +90,7 @@ function controlLocator(arg: string) {
   return { label, byRole };
 }
 
-async function resolveControl(arg: string) {
+async function resolveControl(arg: string, step: number) {
   const { label, byRole } = controlLocator(arg);
   const appeared = await byRole
     .waitFor({ timeout: 30_000 })
@@ -90,24 +98,35 @@ async function resolveControl(arg: string) {
     .catch(() => false);
   if (appeared) return byRole;
   problem(
-    `"${arg}" matched no accessible control; fell back to a visible-text match`,
-    `control:${arg}`,
+    recorder.warn(
+      step,
+      `"${arg}" matched no accessible control; fell back to a visible-text match`,
+      "text-match",
+    ),
+    `step:${step}:control:${arg}`,
   );
   return h.page.getByText(label).first();
 }
 
-async function runAction(action: SnapAction): Promise<void> {
+async function runAction(action: SnapAction, step: number): Promise<void> {
   switch (action.kind) {
     case "click":
     case "hover": {
       const arg = action.target;
-      const target = await resolveControl(arg);
+      const target = await resolveControl(arg, step);
       if (action.kind === "hover") {
         await target.hover({ timeout: 5_000 });
         break;
       }
       await target.click({ timeout: 5_000 }).catch(async () => {
-        problem(`"${arg}" never stabilised; used dispatchEvent click`, `control:${arg}`);
+        problem(
+          recorder.warn(
+            step,
+            `"${arg}" never stabilised; used dispatchEvent click`,
+            "dispatch-click",
+          ),
+          `step:${step}:control:${arg}`,
+        );
         await target.dispatchEvent("click");
       });
       break;
@@ -130,9 +149,21 @@ async function runAction(action: SnapAction): Promise<void> {
       break;
     case "shot":
       await h.page.screenshot({ path: resolve(outDir, `${action.name}.png`), ...shotOptions });
-      log.push(`[snap] shot ${action.name}.png`);
+      artifacts.push(`${action.name}.png`);
+      log.push(`[snap] step ${step}: shot ${action.name}.png`);
       break;
   }
+}
+
+async function writeManifest(aborted: boolean): Promise<void> {
+  const manifest = buildManifest({
+    options: opts,
+    steps: recorder.steps(),
+    problems: problems.list(),
+    artifacts: aborted ? artifacts.filter((n) => n !== MANIFEST_FILE) : artifacts,
+    aborted,
+  });
+  await writeFile(resolve(outDir, MANIFEST_FILE), JSON.stringify(manifest, null, 2) + "\n");
 }
 
 try {
@@ -180,11 +211,15 @@ try {
     if (shown) await dismissTour(h.page);
   };
   await tidy(1500);
-  for (const action of opts.actions) {
-    await runAction(action).catch((e: unknown) =>
+  for (const [index, action] of opts.actions.entries()) {
+    const step = index + 1;
+    await runAction(action, step).catch((e: unknown) =>
       problem(
-        `${action.kind} failed: ${(e instanceof Error ? e.message : String(e)).split("\n")[0]}`,
-        "target" in action ? `control:${action.target}` : undefined,
+        recorder.fail(
+          step,
+          `${action.kind} failed: ${(e instanceof Error ? e.message : String(e)).split("\n")[0]}`,
+        ),
+        `step:${step}:${"target" in action ? `control:${action.target}` : "action"}`,
       ),
     );
     await settle();
@@ -224,14 +259,24 @@ try {
   const shot = { path: resolve(outDir, "screenshot.png"), ...shotOptions };
   if (opts.selector) await h.page.locator(opts.selector).first().screenshot(shot);
   else await h.page.screenshot(shot);
+  artifacts.push("screenshot.png");
   await writeFile(resolve(outDir, "aria.txt"), await h.page.locator("body").ariaSnapshot());
+  artifacts.push("aria.txt");
   await writeFile(resolve(outDir, "text.txt"), await h.page.locator("body").innerText());
+  artifacts.push("text.txt");
   await writeFile(resolve(outDir, "console.log"), log.join("\n") + "\n");
-  console.log(`captured -> ${outDir}\n  screenshot.png  aria.txt  text.txt  console.log`);
+  artifacts.push("console.log", MANIFEST_FILE);
+  await writeManifest(false);
+  console.log(
+    `captured -> ${outDir}\n  screenshot.png  aria.txt  text.txt  console.log  ${MANIFEST_FILE}`,
+  );
   if (log.some((l) => l.includes("WARNING"))) console.log("  ! warnings — see console.log");
   const failure = problems.summary();
   if (opts.strict && failure) console.error(failure);
   process.exitCode = problems.exitCode(opts.strict);
+} catch (e) {
+  await writeManifest(true).catch(() => {});
+  throw e;
 } finally {
   await teardownHarness(h);
   if (saveScratch) await rm(saveScratch, { recursive: true, force: true }).catch(() => {});
