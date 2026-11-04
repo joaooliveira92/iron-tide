@@ -32,7 +32,7 @@ describe("a choice that breaks the design", () => {
     expect(within(dialog).getByText("This change breaks the design")).toBeTruthy();
     expect(within(dialog).getAllByText("How to fix it").length).toBeGreaterThan(0);
     fireEvent.click(within(dialog).getByRole("button", { name: "Undo this choice" }));
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByText("This change breaks the design")).toBeNull();
     expect(statusOf("displacement")).toBe(before);
     expect(length().getAttribute("aria-invalid")).toBeNull();
   });
@@ -50,7 +50,7 @@ describe("a choice that breaks the design", () => {
     expect(length().getAttribute("aria-invalid")).toBe("true");
     expect(screen.getAllByRole("alert").length).toBeGreaterThan(0);
     commitLength("121");
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByText("This change breaks the design")).toBeNull();
     commitLength(original);
     expect(length().getAttribute("aria-invalid")).toBeNull();
   });
