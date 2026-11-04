@@ -9,6 +9,7 @@ import {
   useContext,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -18,6 +19,7 @@ import { cn } from "../../lib/utils.js";
 type MoveDirection = -1 | 1 | "first" | "last";
 type ListContextValue = {
   ids: string[];
+  positions: Map<string, number>;
   labels: Map<string, string>;
   label: string;
   disabled: boolean;
@@ -84,7 +86,7 @@ export function SortableList<T extends { id: string }>({
 }: SortableListProps<T>) {
   const [internalItems, setInternalItems] = useState(defaultItems);
   const items = controlledItems ?? internalItems;
-  const ids = items.map((item) => item.id);
+  const ids = useMemo(() => items.map((item) => item.id), [items]);
   if (new Set(ids).size !== ids.length) throw new Error("SortableList requires unique item ids.");
   if (children === undefined && !renderItem)
     throw new Error("SortableList requires children or renderItem.");
@@ -106,79 +108,104 @@ export function SortableList<T extends { id: string }>({
     }
   });
 
-  const change = (next: T[]) => {
-    live.current = next;
-    if (controlledItems === undefined) setInternalItems(next);
-    onItemsChange?.(next);
-  };
-  const reorder = (nextIds: string[]) => {
-    if (disabled) return;
-    const byId = new Map(live.current.map((item) => [item.id, item]));
-    const next = nextIds.flatMap((id) => {
-      const item = byId.get(id);
-      return item ? [item] : [];
-    });
-    if (next.length === live.current.length && new Set(nextIds).size === next.length) change(next);
-  };
-  const move = (id: string, direction: MoveDirection) => {
-    const current = live.current;
-    const from = current.findIndex((item) => item.id === id);
-    const to =
-      direction === "first" ? 0 : direction === "last" ? current.length - 1 : from + direction;
-    if (disabled || from < 0 || to < 0 || to >= current.length || from === to) return;
-    const next = [...current];
-    const [item] = next.splice(from, 1);
-    if (item === undefined) return;
-    next.splice(to, 0, item);
-    setPrevious(current.map((entry) => entry.id));
-    change(next);
-    setAnnouncement(`${getItemLabel(item)} moved to position ${to + 1} of ${current.length}.`);
-  };
+  const labels = useMemo(
+    () => new Map(items.map((item): [string, string] => [item.id, getItemLabel(item)])),
+    [items, getItemLabel],
+  );
+  const positions = useMemo(
+    () => new Map(ids.map((id, index): [string, number] => [id, index])),
+    [ids],
+  );
   if (
     previous !== null &&
-    (previous.length !== ids.length || previous.some((id) => !ids.includes(id)))
+    (previous.length !== ids.length || previous.some((id) => !positions.has(id)))
   )
     setPrevious(null);
   const canUndo =
     previous !== null &&
     previous.length === ids.length &&
-    previous.every((id) => ids.includes(id)) &&
+    previous.every((id) => positions.has(id)) &&
     previous.some((id, index) => id !== ids[index]);
-  const undo = () => {
-    if (disabled || !previous || !canUndo) return;
-    pendingFocus.current = previous.find((id, index) => id !== ids[index]) ?? previous[0] ?? null;
-    reorder(previous);
-    setPrevious(null);
-    setAnnouncement("Previous order restored.");
-  };
-  const context: ListContextValue = {
-    ids,
-    labels: new Map(items.map((item) => [item.id, getItemLabel(item)])),
-    label,
+  const context = useMemo<ListContextValue>(() => {
+    const change = (next: T[]) => {
+      live.current = next;
+      if (controlledItems === undefined) setInternalItems(next);
+      onItemsChange?.(next);
+    };
+    const reorder = (nextIds: string[]) => {
+      if (disabled) return;
+      const byId = new Map(live.current.map((item) => [item.id, item]));
+      const next = nextIds.flatMap((id) => {
+        const item = byId.get(id);
+        return item ? [item] : [];
+      });
+      if (next.length === live.current.length && new Set(nextIds).size === next.length)
+        change(next);
+    };
+    const move = (id: string, direction: MoveDirection) => {
+      const current = live.current;
+      const from = current.findIndex((item) => item.id === id);
+      const to =
+        direction === "first" ? 0 : direction === "last" ? current.length - 1 : from + direction;
+      if (disabled || from < 0 || to < 0 || to >= current.length || from === to) return;
+      const next = [...current];
+      const [item] = next.splice(from, 1);
+      if (item === undefined) return;
+      next.splice(to, 0, item);
+      setPrevious(current.map((entry) => entry.id));
+      change(next);
+      setAnnouncement(`${getItemLabel(item)} moved to position ${to + 1} of ${current.length}.`);
+    };
+    const undo = () => {
+      if (disabled || !previous || !canUndo) return;
+      pendingFocus.current = previous.find((id, index) => id !== ids[index]) ?? previous[0] ?? null;
+      reorder(previous);
+      setPrevious(null);
+      setAnnouncement("Previous order restored.");
+    };
+    return {
+      ids,
+      positions,
+      labels,
+      label,
+      disabled,
+      instructions,
+      itemClassName,
+      canUndo,
+      reorder,
+      move,
+      undo,
+      beginDrag: () => {
+        dragStart.current = live.current.map((item) => item.id);
+      },
+      finishDrag: (id) => {
+        const before = dragStart.current;
+        dragStart.current = null;
+        const current = live.current;
+        const index = current.findIndex((item) => item.id === id);
+        const item = current[index];
+        if (item && before?.some((oldId, at) => oldId !== current[at]?.id)) {
+          setPrevious(before);
+          setAnnouncement(
+            `${getItemLabel(item)} moved to position ${index + 1} of ${current.length}.`,
+          );
+        }
+      },
+    };
+  }, [
+    controlledItems,
+    onItemsChange,
     disabled,
+    getItemLabel,
+    ids,
+    positions,
+    labels,
+    label,
     instructions,
     itemClassName,
+    previous,
     canUndo,
-    reorder,
-    move,
-    undo,
-    beginDrag: () => {
-      dragStart.current = live.current.map((item) => item.id);
-    },
-    finishDrag: (id) => {
-      const before = dragStart.current;
-      dragStart.current = null;
-      const current = live.current;
-      const index = current.findIndex((item) => item.id === id);
-      const item = current[index];
-      if (item && before?.some((oldId, at) => oldId !== current[at]?.id)) {
-        setPrevious(before);
-        setAnnouncement(
-          `${getItemLabel(item)} moved to position ${index + 1} of ${current.length}.`,
-        );
-      }
-    },
-  };
+  ]);
 
   return (
     <ListContext.Provider value={context}>
@@ -273,7 +300,7 @@ export function SortableListItem({
           onDragEnd?.(event, info);
         }}
         whileDrag={reduce ? undefined : { scale: 1.025 }}
-        aria-posinset={context.ids.indexOf(id) + 1}
+        aria-posinset={(context.positions.get(id) ?? -1) + 1}
         aria-setsize={context.ids.length}
         className={cn(
           "relative flex items-center gap-3 rounded-2xl border border-border bg-background p-3",
