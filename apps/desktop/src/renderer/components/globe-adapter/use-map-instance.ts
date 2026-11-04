@@ -72,7 +72,7 @@ export interface MapInstanceSinks {
   readonly setLiveMessage: Dispatch<SetStateAction<string>>;
   readonly setSelectedFleet: Dispatch<SetStateAction<string | null>>;
   readonly setHoveredArea: Dispatch<SetStateAction<string | null>>;
-  readonly setHoverTooltip: Dispatch<SetStateAction<HoverTooltip | null>>;
+  readonly setHoverTooltip: (tooltip: HoverTooltip | null) => void;
   readonly setProjection: Dispatch<SetStateAction<CameraProjection>>;
 }
 

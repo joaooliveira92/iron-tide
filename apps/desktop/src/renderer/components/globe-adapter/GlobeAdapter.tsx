@@ -20,7 +20,7 @@ import { GlobeAdapterChrome } from "./GlobeAdapterChrome.js";
 import { GlobeAdapterStatusStrip } from "./GlobeAdapterStatusStrip.js";
 import { GlobeAdapterScreenReader } from "./GlobeAdapterScreenReader.js";
 import { useLayerSet } from "./use-layer-set.js";
-import { useMapInstance } from "./use-map-instance.js";
+import { useMapInstance, type HoverTooltip } from "./use-map-instance.js";
 import { fleetIdFromMarker, routeAnnouncement } from "./adapter-interaction.js";
 import { buildEntityRows } from "./entity-rows.js";
 import { useMapKeyboard } from "./use-map-keyboard.js";
@@ -150,11 +150,28 @@ export function GlobeAdapter({
       : { ...sharedCamera, projection: adapterProjection };
   });
   const [hoveredArea, setHoveredArea] = useState<string | null>(null);
-  const [hoverTooltip, setHoverTooltip] = useState<{
-    readonly x: number;
-    readonly y: number;
-    readonly text: string;
-  } | null>(null);
+  const [hoverText, setHoverText] = useState<string | null>(null);
+  const hoverTextRef = useRef<string | null>(null);
+  const hoverPointRef = useRef<{ readonly x: number; readonly y: number } | null>(null);
+  const hoverTooltipElRef = useRef<HTMLDivElement | null>(null);
+  const placeHoverTooltip = useCallback((element: HTMLDivElement | null) => {
+    hoverTooltipElRef.current = element;
+    const point = hoverPointRef.current;
+    if (element === null || point === null) return;
+    element.style.left = `${point.x + 12}px`;
+    element.style.top = `${point.y + 12}px`;
+  }, []);
+  const setHoverTooltip = useCallback(
+    (tooltip: HoverTooltip | null) => {
+      hoverPointRef.current = tooltip === null ? null : { x: tooltip.x, y: tooltip.y };
+      placeHoverTooltip(hoverTooltipElRef.current);
+      const text = tooltip?.text ?? null;
+      if (text === hoverTextRef.current) return;
+      hoverTextRef.current = text;
+      setHoverText(text);
+    },
+    [placeHoverTooltip],
+  );
   const [selectedFleet, setSelectedFleet] = useState<string | null>(null);
   const dragRef = useRef<{
     readonly fleetId: string;
@@ -369,14 +386,14 @@ export function GlobeAdapter({
         }
         onNorth={() => mapRef.current?.setBearing(0)}
       />
-      {hoverTooltip === null ? null : (
+      {hoverText === null ? null : (
         <div
+          ref={placeHoverTooltip}
           role="tooltip"
           data-testid="globe-adapter-tooltip"
           className="pointer-events-none absolute z-30 max-w-64 rounded bg-black/85 px-2 py-1 text-xs text-white"
-          style={{ left: hoverTooltip.x + 12, top: hoverTooltip.y + 12 }}
         >
-          {hoverTooltip.text}
+          {hoverText}
         </div>
       )}
       <GlobeAdapterChrome

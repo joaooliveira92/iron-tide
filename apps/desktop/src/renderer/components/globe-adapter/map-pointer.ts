@@ -211,7 +211,7 @@ export function attachMapPointer({
   active.on("mousemove", onMove);
   active.on("mouseout", onMouseOut);
   canvas.addEventListener("pointerdown", onPointerDown, true);
-  canvas.addEventListener("pointermove", onPointerMove, true);
+  canvas.addEventListener("pointermove", onPointerMove, { capture: true, passive: true });
   canvas.addEventListener("pointerup", onPointerUp, true);
   canvas.addEventListener("pointercancel", onPointerCancel, true);
   return () => {
