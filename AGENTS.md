@@ -39,7 +39,7 @@ Determinism (no `Math.random`, wall-clock, `process.env`; canonical hashes ident
 
 Steps 1–2 need no permission.
 
-1. **Branch** off `dev` (`feat|fix|refactor|docs/<slug>`); never commit on `dev`/`main`. A branch the harness names is the PR target: if it is `dev`, say so once and continue.
+1. **Branch** off `dev` (`feat|fix|refactor|docs/<slug>`); commit directly on `dev` only when the user or harness names it as the working branch (small, gated commits); never on `main`. A branch the harness names is the PR target: if it is `dev`, say so once and continue.
 2. **Push early** and open a **draft PR into `dev`** (only `pr: none` opts out). Containers are ephemeral.
 3. **Verify**: `pnpm verify:affected` while iterating; `pnpm preflight`, `pnpm test:scripts`, `pnpm check` on the final commit. Await every gate you start; never end a turn with one pending. If a gate cannot run here, CI is the gate: subscribe to the PR.
 4. **Ready** when gates are green, the tree is clean, the subject is Conventional and ACS are met. The PR body lists each gate as `passed`, `failed` or `not run (reason)`.
