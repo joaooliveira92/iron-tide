@@ -302,27 +302,27 @@ export function GlobeAdapterChrome({
           />
 
           <nav
-              aria-label="Map areas"
-              data-testid="globe-adapter-area-list"
-              className="rounded border border-white/25 bg-black/80 p-2 text-xs text-white"
-            >
-              <ul className="grid max-h-56 gap-0.5 overflow-y-auto">
-                {ownershipRows.map((row) => (
-                  <li key={row.id}>
-                    <button
-                      type="button"
-                      aria-pressed={row.selected}
-                      aria-label={`${row.name}: ${row.owner ?? "Unclaimed"}, ${row.fleets} fleets${row.strength === null ? "" : `, ${row.strength}`}`}
-                      title={row.name}
-                      data-adapter-area={row.id}
-                      onClick={() => onSelect(row.id)}
-                      className="w-full rounded px-2 py-1 text-left hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white aria-pressed:bg-white aria-pressed:text-black"
-                    >
-                      {row.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            aria-label="Map areas"
+            data-testid="globe-adapter-area-list"
+            className="rounded border border-white/25 bg-black/80 p-2 text-xs text-white"
+          >
+            <ul className="grid max-h-56 gap-0.5 overflow-y-auto">
+              {ownershipRows.map((row) => (
+                <li key={row.id}>
+                  <button
+                    type="button"
+                    aria-pressed={row.selected}
+                    aria-label={`${row.name}: ${row.owner ?? "Unclaimed"}, ${row.fleets} fleets${row.strength === null ? "" : `, ${row.strength}`}`}
+                    title={row.name}
+                    data-adapter-area={row.id}
+                    onClick={() => onSelect(row.id)}
+                    className="w-full rounded px-2 py-1 text-left hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white aria-pressed:bg-white aria-pressed:text-black"
+                  >
+                    {row.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
           </nav>
 
           {entityList}
