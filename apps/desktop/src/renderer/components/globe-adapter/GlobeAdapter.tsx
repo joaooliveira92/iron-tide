@@ -37,16 +37,12 @@ import { FLEET_GLYPH_ID, buildFleetGlyph } from "./fleet-glyph.js";
 import { projectOverlay } from "./overlay-projection.js";
 import { OverlayStore } from "./overlay-store.js";
 import { selectPointerTarget } from "./pointer-visibility.js";
-import {
-  adapterLayerVisibility,
-  adapterProjectionFromApp,
-  appProjectionFromAdapter,
-  fleetGlyphFilter,
-  markerFilter,
-  ownershipPaintValues,
-} from "./adapter-layer-state.js";
+import { adapterProjectionFromApp, appProjectionFromAdapter } from "./adapter-layer-state.js";
 import { deriveAdapterModel } from "./adapter-derivations.js";
 import { GlobeAdapterChrome } from "./GlobeAdapterChrome.js";
+import { GlobeAdapterStatusStrip } from "./GlobeAdapterStatusStrip.js";
+import { GlobeAdapterScreenReader } from "./GlobeAdapterScreenReader.js";
+import { useLayerSet } from "./use-layer-set.js";
 import {
   adapterDrop,
   dragThresholdMet,
@@ -290,22 +286,17 @@ export function GlobeAdapter({
     applyProjection();
   }, [applyProjection]);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map === null || !ready) return;
-    const visibility = adapterLayerVisibility(state.layers);
-    const set = (id: string, visible: boolean) =>
-      map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
-    set("area-labels-list", variant !== "command" && visibility.labels);
-    set("adapter-borders-fill", visibility.borders);
-    set("adapter-borders-line", visibility.borders);
-    set("adapter-graticule", visibility.graticule);
-    set("adapter-lanes", visibility.lanes);
-    set("adapter-routes", visibility.routes);
-    map.setFilter("adapter-markers", markerFilter(visibility) as never);
-    map.setFilter("adapter-fleet-glyphs", fleetGlyphFilter(visibility) as never);
-    map.setFilter("adapter-marker-labels", markerFilter(visibility) as never);
-  }, [ready, variant, state.layers]);
+  useLayerSet({
+    mapRef,
+    ready,
+    variant,
+    layers: state.layers,
+    ownership: overlay.ownership,
+    selected: state.selected,
+    selectedAreaRef,
+    hoveredArea,
+    selectedFleet,
+  });
 
   useEffect(() => {
     const map = mapRef.current;
@@ -323,40 +314,6 @@ export function GlobeAdapter({
     if (map === null || !ready || restoringCameraRef.current) return;
     map.setCenter([state.centre, map.getCenter().lat]);
   }, [ready, state.centre]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map === null || !ready) return;
-    const paint = ownershipPaintValues({ ownership: overlay.ownership }, state.layers.ownership);
-    map.setPaintProperty("areas-fill", "fill-color", paint.color as never);
-    map.setPaintProperty("areas-fill", "fill-opacity", paint.opacity);
-  }, [overlay, ready, state.layers.ownership]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map === null || !ready) return;
-    map.setFilter("areas-selected", ["==", ["get", "id"], state.selected ?? "__none__"]);
-    map.setFilter("adapter-selected-ring", ["==", ["get", "areaId"], state.selected ?? "__none__"]);
-    selectedAreaRef.current = state.selected;
-  }, [ready, state.selected]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map === null || !ready) return;
-    const filter = ["==", ["get", "id"], hoveredArea ?? "__none__"];
-    map.setFilter("areas-hover", filter as never);
-    map.setFilter("areas-hover-line", filter as never);
-  }, [hoveredArea, ready]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map === null || !ready) return;
-    map.setFilter("adapter-selected-fleet-ring", [
-      "==",
-      ["get", "id"],
-      selectedFleet === null ? "" : `fleet:${selectedFleet}`,
-    ]);
-  }, [ready, selectedFleet]);
 
   useEffect(() => {
     setLiveMessage(routeAnnouncement(route));
@@ -1002,28 +959,16 @@ export function GlobeAdapter({
         className="absolute inset-0"
         style={MAP_CONTAINER_STYLE}
       />
-      <div className="absolute left-2 top-2 z-20 flex items-center gap-2 rounded bg-black/75 px-2 py-1 font-mono text-xs text-white">
-        <span data-testid="globe-adapter-status">{statusLabel}</span>
-        <button
-          type="button"
-          className="rounded border border-white/40 px-1"
-          onClick={() =>
-            handleSetProjection(
-              appProjectionFromAdapter(projection === "globe" ? "mercator" : "globe"),
-            )
-          }
-        >
-          {projection === "globe" ? "Mercator" : "Globe"}
-        </button>
-        <button
-          type="button"
-          className="rounded border border-white/40 px-1"
-          onClick={() => mapRef.current?.setBearing(0)}
-        >
-          North
-        </button>
-        <span className="opacity-70">z{NATURAL_EARTH_HIERARCHY.sourceMaxZoom} source</span>
-      </div>
+      <GlobeAdapterStatusStrip
+        label={statusLabel}
+        projection={projection}
+        onToggleProjection={() =>
+          handleSetProjection(
+            appProjectionFromAdapter(projection === "globe" ? "mercator" : "globe"),
+          )
+        }
+        onNorth={() => mapRef.current?.setBearing(0)}
+      />
       {hoverTooltip === null ? null : (
         <div
           role="tooltip"
@@ -1066,42 +1011,12 @@ export function GlobeAdapter({
         }}
         showMinimap={showMinimap}
       />
-      <div aria-live="polite" role="status" data-testid="globe-adapter-live" className="sr-only">
-        {liveMessage}
-      </div>
-      <div className="sr-only">
-        <table>
-          <caption>Globe adapter entities</caption>
-          <thead>
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Kind</th>
-              <th scope="col">Area</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entityRows.map((entity) => (
-              <tr key={entity.id}>
-                <th scope="row">{entity.name}</th>
-                <td>{entity.kind}</td>
-                <td>{entity.areaId}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="sr-only" data-testid="globe-adapter-camera">
-        {JSON.stringify(camera)}
-      </div>
-      <div className="sr-only" data-testid="globe-adapter-hierarchy">
-        {JSON.stringify({
-          version: hierarchy.version,
-          sourceMaxZoom: hierarchy.sourceMaxZoom,
-          fitForPurposeMaxZoom: hierarchy.fitForPurposeMaxZoom,
-          overscaleMaxZoom: hierarchy.overscaleMaxZoom,
-          cacheVersion: hierarchy.cacheVersion,
-        })}
-      </div>
+      <GlobeAdapterScreenReader
+        liveMessage={liveMessage}
+        entityRows={entityRows}
+        camera={camera}
+        hierarchy={hierarchy}
+      />
     </div>
   );
 }
