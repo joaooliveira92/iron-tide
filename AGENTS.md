@@ -25,18 +25,9 @@ Read in order: `README.md`, `.ai/ENGINEERING-CONTRACT.md`, `RULES.md`, `.ai/REQU
 - No ADRs: enforce a rule in a gate, type or test, else add a line to `RULES.md` or the package `AGENTS.md`.
 - Research and working notes go to GitHub Discussions (`gh discussion create --category Research`), never the repo. [Issue tracker](docs/agents/issue-tracker.md).
 
-## Determinism
+## Code conventions
 
-Same content, ruleset, inputs, seeds, versions → same hashes on every OS. In authoritative code: no `Math.random`, UUIDs, wall-clock, `process.env`, locale, fs order, network, pid, mutable globals, path separators. Use domain-separated hierarchical RNG, integer/fixed-point math, the versioned canonical serializer with domain-separated SHA-256. [RULES.md](RULES.md#determinism).
-
-## Code
-
-- **Effect** (`effect@4.0.2`, vendored): domain packages use the runtime-free subset; full runtime only at IO boundaries (`persistence`, `compiler-cli`, `desktop/src/main`). Stay in Effect (no `runPromise`); log with `Effect.log*`, never `console.*`; `Context.Service` for stable dependencies. [Gate](docs/agents/runtime-free-gate.md).
-- **Errors**: `Data.TaggedError` in-process, `Schema.TaggedError` on the wire, stable `_tag`. Discriminate by `_tag`, never `instanceof` (except `expect(fn).toThrow(Class)`); `Effect.catchTag(s)`; `Effect.orDie` only for intentional recovery.
-- **Schema and boundaries**: Effect Schema decodes every boundary with `{ onExcessProperty: "error" }`; no `JSON.parse(...) as T`. Wire formats are frozen: schema changes need a parity test from existing fixtures. [Domain](docs/agents/domain.md), [patterns](agent-patterns/effect-schema.md).
-- **Content/compiler**: content is declarative TypeScript compiled to canonical JSON (YAML only for i18n and mandated infra). Stages are explicit, ordered, immutable, accumulate diagnostics; validation, normalization, repair stay distinct; repair is narrow and logged. [Canonical content](docs/architecture/canonical-content-and-rulesets.md).
-
-Details: [RULES.md](RULES.md).
+Determinism (no `Math.random`, wall-clock, `process.env`; canonical hashes identical across OSes), Effect usage, tagged errors, strict schema decoding at boundaries, and the content compiler are in `.claude/rules/` (loaded for `packages/`, `apps/`, `content/`) and [RULES.md](RULES.md).
 
 ## Tests
 
