@@ -33,7 +33,6 @@ import { DisposalRegistry } from "./disposal.js";
 import { FLEET_GLYPH_ID, buildFleetGlyph } from "./fleet-glyph.js";
 import { projectOverlay } from "./overlay-projection.js";
 import { OverlayStore } from "./overlay-store.js";
-import { selectPointerTarget } from "./pointer-visibility.js";
 import {
   adapterLayerVisibility,
   adapterProjectionFromApp,
@@ -44,13 +43,7 @@ import {
 } from "./adapter-layer-state.js";
 import { deriveAdapterModel } from "./adapter-derivations.js";
 import { GlobeAdapterChrome } from "./GlobeAdapterChrome.js";
-import {
-  adapterDrop,
-  dragThresholdMet,
-  fleetIdFromMarker,
-  isDraggableFleet,
-  routeAnnouncement,
-} from "./adapter-interaction.js";
+import { fleetIdFromMarker, routeAnnouncement } from "./adapter-interaction.js";
 import {
   NATURAL_EARTH_HIERARCHY,
   TileCache,
@@ -61,7 +54,8 @@ import {
 } from "./tile-hierarchy.js";
 
 import { GLOBE_ASSET_ROOT, type GlobeAdapterProps } from "./globe-adapter-types.js";
-import { horizonFor, mapHealth } from "./map-camera.js";
+import { mapHealth } from "./map-camera.js";
+import { createMapInteractions } from "./map-interactions.js";
 import { installDebugBridge } from "./debug-bridge.js";
 import { buildStyle } from "./map-style.js";
 import { markerCollection, routeCollection } from "./map-sources.js";
@@ -104,9 +98,6 @@ export function GlobeAdapter({
   const abortRef = useRef<AbortController | null>(null);
   const selectedAreaRef = useRef<string | null>(null);
   const projectionRef = useRef<CameraProjection>(adapterProjectionFromApp(state.projection));
-  const hoverFrameRef = useRef<number | null>(null);
-  const hoveredRef = useRef<string | null>(null);
-  const hoveredAreaRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
   const [projection, setProjection] = useState<CameraProjection>(() =>
     adapterProjectionFromApp(state.projection),
@@ -127,13 +118,6 @@ export function GlobeAdapter({
     readonly text: string;
   } | null>(null);
   const [selectedFleet, setSelectedFleet] = useState<string | null>(null);
-  const dragRef = useRef<{
-    readonly fleetId: string;
-    readonly pointerId: number;
-    readonly startX: number;
-    readonly startY: number;
-    dragging: boolean;
-  } | null>(null);
   const [initialCamera] = useState<AppCameraState>(() => {
     const point = homeFocusPoint(initialFocusAreaId);
     return point === null || restoringCameraRef.current
@@ -427,161 +411,29 @@ export function GlobeAdapter({
       errors.push(message);
       setErrorText(message);
     };
-    const pick = (x: number, y: number, shiftKey: boolean) => {
-      const hits = active.queryRenderedFeatures([x, y], { layers: ["adapter-markers"] });
-      const candidates = hits.map((feature) => {
-        const properties = feature.properties ?? {};
-        const lon = Number(properties.lon);
-        const lat = Number(properties.lat);
-        return {
-          id: String(properties.id ?? ""),
-          rendered: true,
-          projectVisible: true,
-          horizon: horizonFor(active, lon, lat, projectionRef.current),
-        };
-      });
-      const target = selectPointerTarget(candidates);
-      if (target !== null) {
-        const hit = hits.find((feature) => String(feature.properties?.id) === target);
-        const areaId = String(hit?.properties?.areaId ?? "");
-        const markerId = String(hit?.properties?.id ?? "");
-        const fleetId = fleetIdFromMarker(markerId);
-        if (!shiftKey && fleetId !== null) {
-          ordersRef.current?.onSelectFleet(fleetId);
-          setSelectedFleet(fleetId);
-          setLiveMessage(`Selected fleet ${String(hit?.properties?.name ?? fleetId)}`);
-          return;
-        }
-        if (areaId.length > 0) {
-          if (shiftKey) onRuler(areaId);
-          else onSelect(areaId);
-          setLiveMessage(
-            `${shiftKey ? "Route from " : "Selected "}${String(hit?.properties?.name ?? areaId)}`,
-          );
-        }
-        return;
-      }
-      const areas = active.queryRenderedFeatures([x, y], { layers: ["areas-fill"] });
-      const areaId = areas.length === 0 ? null : String(areas[0]?.properties?.id ?? "");
-      if (areaId === null || areaId.length === 0) {
-        if (!shiftKey) onSelect(null);
-        return;
-      }
-      if (shiftKey) {
-        onRuler(areaId);
-        setLiveMessage(`Route via ${derivedRef.current.areaName(areaId)}`);
-      } else {
-        onSelect(areaId);
-        setLiveMessage(`Selected ${derivedRef.current.describeAreaFor(areaId)}`);
-      }
-    };
-    const onClick = (event: {
-      readonly point: { readonly x: number; readonly y: number };
-      readonly originalEvent: MouseEvent;
-    }) => {
-      pick(event.point.x, event.point.y, event.originalEvent.shiftKey);
-    };
-    const onMove = (event: { readonly point: { readonly x: number; readonly y: number } }) => {
-      if (hoverFrameRef.current !== null) cancelAnimationFrame(hoverFrameRef.current);
-      hoverFrameRef.current = requestAnimationFrame(() => {
-        const markerHits = active.queryRenderedFeatures([event.point.x, event.point.y], {
-          layers: ["adapter-markers"],
-        });
-        const markerId =
-          markerHits.length === 0 ? null : String(markerHits[0]?.properties?.id ?? "");
-        if (markerId !== hoveredRef.current) {
-          hoveredRef.current = markerId;
-          store.setHovered(markerId);
-        }
-        const areaHits = active.queryRenderedFeatures([event.point.x, event.point.y], {
-          layers: ["areas-fill"],
-        });
-        const areaId = areaHits.length === 0 ? null : String(areaHits[0]?.properties?.id ?? "");
-        if (areaId !== hoveredAreaRef.current) {
-          hoveredAreaRef.current = areaId;
-          setHoveredArea(areaId);
-        }
-        if (areaId === null) {
-          setHoverTooltip(null);
-        } else {
-          setHoverTooltip({
-            x: event.point.x,
-            y: event.point.y,
-            text: derivedRef.current.describeAreaFor(areaId),
-          });
-        }
-        active.getCanvas().style.cursor =
-          markerId === null ? (areaId === null ? "" : "crosshair") : "pointer";
-      });
-    };
-    const onMouseOut = () => {
-      hoveredRef.current = null;
-      hoveredAreaRef.current = null;
-      store.setHovered(null);
-      setHoveredArea(null);
-      setHoverTooltip(null);
-    };
+    const interactions = createMapInteractions({
+      active,
+      store,
+      projectionRef,
+      ordersRef,
+      derivedRef,
+      onSelect,
+      onRuler,
+      setSelectedFleet,
+      setLiveMessage,
+      setHoveredArea,
+      setHoverTooltip,
+    });
+    const {
+      onClick,
+      onMove,
+      onMouseOut,
+      onPointerDown,
+      onPointerMove,
+      onPointerUp,
+      onPointerCancel,
+    } = interactions;
     const canvas = active.getCanvas();
-    const pointOf = (event: PointerEvent): { readonly x: number; readonly y: number } => {
-      const box = canvas.getBoundingClientRect();
-      return { x: event.clientX - box.left, y: event.clientY - box.top };
-    };
-    const onPointerDown = (event: PointerEvent) => {
-      const currentOrders = ordersRef.current;
-      if (currentOrders === undefined || event.button !== 0) return;
-      const at = pointOf(event);
-      const hits = active.queryRenderedFeatures([at.x, at.y], { layers: ["adapter-markers"] });
-      const markerId = hits.length === 0 ? null : String(hits[0]?.properties?.id ?? "");
-      const fleetId = fleetIdFromMarker(markerId);
-      if (!isDraggableFleet(currentOrders, fleetId) || fleetId === null) return;
-      active.dragPan.disable();
-      canvas.setPointerCapture?.(event.pointerId);
-      dragRef.current = {
-        fleetId,
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-        dragging: false,
-      };
-      currentOrders.onSelectFleet(fleetId);
-      setSelectedFleet(fleetId);
-    };
-    const onPointerMove = (event: PointerEvent) => {
-      const drag = dragRef.current;
-      if (drag === null || drag.pointerId !== event.pointerId || drag.dragging) return;
-      if (
-        dragThresholdMet({ x: drag.startX, y: drag.startY }, { x: event.clientX, y: event.clientY })
-      ) {
-        drag.dragging = true;
-        canvas.style.cursor = "grabbing";
-      }
-    };
-    const endDrag = (event: PointerEvent, drop: boolean) => {
-      const drag = dragRef.current;
-      if (drag === null || drag.pointerId !== event.pointerId) return;
-      if (canvas.hasPointerCapture?.(event.pointerId)) {
-        canvas.releasePointerCapture(event.pointerId);
-      }
-      active.dragPan.enable();
-      canvas.style.cursor = "";
-      dragRef.current = null;
-      if (!drop || !drag.dragging) return;
-      const at = pointOf(event);
-      const areas = active.queryRenderedFeatures([at.x, at.y], { layers: ["areas-fill"] });
-      const areaId = areas.length === 0 ? null : String(areas[0]?.properties?.id ?? "");
-      const currentOrders = ordersRef.current;
-      const resolution = adapterDrop(currentOrders, drag.fleetId, areaId);
-      if (resolution.kind === "ignored") {
-        setLiveMessage("That fleet destination is not available.");
-        return;
-      }
-      currentOrders?.onDrop(drag.fleetId, areaId as string);
-      setLiveMessage(
-        `Ordered fleet to ${areaId === null ? "an area" : derivedRef.current.areaName(areaId)}`,
-      );
-    };
-    const onPointerUp = (event: PointerEvent) => endDrag(event, true);
-    const onPointerCancel = (event: PointerEvent) => endDrag(event, false);
     const onImageMissing = (event: { readonly id: string }) => {
       if (event.id !== FLEET_GLYPH_ID || active.hasImage(FLEET_GLYPH_ID)) return;
       active.addImage(FLEET_GLYPH_ID, buildFleetGlyph(), { sdf: true });
@@ -623,7 +475,7 @@ export function GlobeAdapter({
     disposal.add(() => canvas.removeEventListener("pointerup", onPointerUp, true));
     disposal.add(() => canvas.removeEventListener("pointercancel", onPointerCancel, true));
     disposal.add(() => {
-      if (hoverFrameRef.current !== null) cancelAnimationFrame(hoverFrameRef.current);
+      interactions.dispose();
     });
     disposal.add(() => active.remove());
     disposal.add(() => {
