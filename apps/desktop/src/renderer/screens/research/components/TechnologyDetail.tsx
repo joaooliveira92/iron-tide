@@ -14,23 +14,25 @@ function Row({ label, value }: { readonly label: string; readonly value: string 
   );
 }
 
+export type TechnologyDetailVariant = "titled" | "bare";
+
 export function TechnologyDetail({
   tech,
   fieldLabel,
   className,
-  showHeading = true,
+  variant = "titled",
 }: {
   readonly tech: ResearchTechView;
   readonly fieldLabel: string;
   readonly className?: string;
-  readonly showHeading?: boolean;
+  readonly variant?: TechnologyDetailVariant;
 }) {
   const status = TECH_STATUS[tech.status];
   const Icon = status.icon;
 
   return (
     <div className={cn("space-y-2.5 text-xs", className)}>
-      {showHeading && (
+      {variant === "titled" && (
         <div className="flex items-start gap-2">
           <Icon aria-hidden="true" className={cn("mt-0.5 size-4 shrink-0", status.iconTone)} />
           <div className="min-w-0">

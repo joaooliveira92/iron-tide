@@ -29,6 +29,7 @@ const FILES = [
   "scripts/hooks/pre-tool-use-bash.mjs",
   "scripts/hooks/user-prompt-context.mjs",
   "scripts/hooks/session-telemetry.mjs",
+  "scripts/hooks/stop-gate.mjs",
   "scripts/lib/agent-guard.mjs",
   "scripts/lib/hook-telemetry.mjs",
   "scripts/lib/transcript-context.mjs",
@@ -77,7 +78,7 @@ void describe("checkRepo", () => {
   });
   void test("fails when the standing subagent authorization or autonomy sections vanish", () => {
     const dir = copyTree();
-    mutate(dir, "CLAUDE.md", (t) => t.replace("Standing user authorization", "Maybe"));
+    mutate(dir, "AGENTS.md", (t) => t.replace("Standing user authorization", "Maybe"));
     mutate(dir, ".ai/templates/task-prompt.md", (t) => t.replace("## Autonomy", "## Style"));
     mutate(dir, "AGENTS.md", (t) => t.replace("## Stop conditions", "## Halting"));
     const text = checkRepo(dir).join("\n");
@@ -107,8 +108,8 @@ void describe("checkRepo", () => {
   });
   void test("fails when a doc states a different context limit than the policy", () => {
     const dir = copyTree();
-    mutate(dir, "CLAUDE.md", (text) => text.replaceAll("200k", "300k"));
-    assert.match(checkRepo(dir).join("\n"), /CLAUDE\.md must state contextBlockTokens as 200k/u);
+    mutate(dir, "AGENTS.md", (text) => text.replaceAll("200k", "300k"));
+    assert.match(checkRepo(dir).join("\n"), /AGENTS\.md must state contextBlockTokens as 200k/u);
   });
   void test("fails when a package AGENTS.md has no CLAUDE.md that imports it", () => {
     const dir = copyTree();

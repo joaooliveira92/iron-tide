@@ -8,7 +8,7 @@ Implement the approved milestone in a strict-TypeScript monorepo while preservin
 
 ## Before editing
 
-Follow the reading order in [AGENTS.md](../AGENTS.md#authority-and-reading-order). Inspect Git status, branches, remotes, tooling, nearby code, tests, exports and CI instead of assuming them. Never claim tools, credentials, remotes, files, or successful commands you did not observe.
+Follow the reading order in [AGENTS.md](../AGENTS.md#authority). Inspect Git status, branches, remotes, tooling, nearby code, tests, exports and CI instead of assuming them. Never claim tools, credentials, remotes, files, or successful commands you did not observe.
 
 ## Operating loop
 
