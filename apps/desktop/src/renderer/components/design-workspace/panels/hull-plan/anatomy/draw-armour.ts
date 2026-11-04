@@ -56,7 +56,7 @@ export function drawArmour(scene: AnatomyShipScene): void {
       solids: [
         solid(ribbon(top, bottom), beltMm >= 250 ? "mid" : "hi", {
           crease: "none",
-          fill: "face",
+          fill: "plate",
           flat: true,
         }),
       ],
@@ -134,7 +134,7 @@ export function drawArmour(scene: AnatomyShipScene): void {
         id: "armour:belt-upper",
         label: "Upper belt",
         solids: [
-          solid(ribbon(edge(z1), edge(z0)), "mid", { crease: "none", fill: "face", flat: true }),
+          solid(ribbon(edge(z1), edge(z0)), "mid", { crease: "none", fill: "plate", flat: true }),
         ],
         inks: [],
         lines: [{ d: pathOf(edge(z1), false), tone: "mid", heavy: true }],

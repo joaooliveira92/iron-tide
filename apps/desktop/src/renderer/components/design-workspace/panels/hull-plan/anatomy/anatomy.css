@@ -1,6 +1,7 @@
 .an-ship {
   --an-paper: #fbfbfa;
   --an-face: #ffffff;
+  --an-plate: #b4bac2;
   --an-top: #ffffff;
   --an-shade-0: #d8d8d4;
   --an-shade-1: #e3e3df;
@@ -35,6 +36,7 @@
 .dark .an-ship {
   --an-paper: #38383b;
   --an-face: #424246;
+  --an-plate: #6c737d;
   --an-top: #5b5b61;
   --an-shade-0: #29292c;
   --an-shade-1: #333336;
@@ -74,6 +76,10 @@
 
 .an-solid[data-fill="face"] .an-fill {
   fill: var(--an-face);
+}
+
+.an-solid[data-fill="plate"] .an-fill {
+  fill: var(--an-plate);
 }
 
 .an-solid[data-fill="ink"] .an-fill {
@@ -305,5 +311,259 @@
 @media (prefers-reduced-motion: reduce) {
   .an-ring {
     stroke-dasharray: none;
+  }
+}
+
+.an-smoke {
+  fill: var(--an-mid);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.an-part {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .an-ship {
+    --an-step: 55ms;
+    --an-cap: 900ms;
+  }
+
+  .an-part[data-kind]:not([data-kind="slipway"]) {
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation-delay: min(calc(var(--an-i, 0) * var(--an-step)), var(--an-cap));
+  }
+
+  .an-ship[data-section="overview"] .an-part[data-kind]:not([data-kind="slipway"]) {
+    animation-name: an-muster;
+    animation-duration: 640ms;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-edge,
+  .an-ship[data-section="hull"] .an-part[data-kind="deck"] .an-edge {
+    stroke-dasharray: 2600;
+    animation: an-draft 1500ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-fill,
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-shade {
+    animation: an-ink-in 900ms ease-out 700ms both;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="slipway"] .an-line {
+    animation: an-ink-in 900ms ease-out both;
+  }
+
+  .an-ship[data-section="machinery"] .an-part[data-kind="funnel"] {
+    animation: an-fire 2400ms ease-in-out infinite;
+  }
+
+  .an-ship[data-section="machinery"] .an-part[data-kind="fitting"] {
+    animation: an-heartbeat 1600ms ease-in-out infinite;
+    animation-delay: calc(var(--an-i, 0) * 120ms);
+  }
+
+  .an-ship[data-section="machinery"] .an-smoke {
+    animation: an-plume 3200ms ease-out infinite;
+    animation-delay: calc(var(--an-puff, 0) * 1050ms);
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] {
+    animation: an-plate 720ms both;
+    transform-origin: 50% 50%;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-edge {
+    animation: an-strike 1300ms ease-out 200ms both;
+  }
+
+  .an-ship[data-section="armament"] .an-part[data-kind="weapon"] {
+    animation: an-traverse 3600ms ease-in-out infinite;
+    transform-origin: 50% 70%;
+  }
+
+  .an-ship[data-section="systems"] .an-part[data-kind="mast"] {
+    animation: an-sway 4200ms ease-in-out infinite;
+  }
+
+  .an-ship[data-section="systems"] .an-part[data-kind="weapon"] .an-dot,
+  .an-ship[data-section="systems"] .an-part[data-kind="fitting"] .an-dot {
+    animation: an-beacon 1800ms ease-in-out infinite;
+  }
+
+  .an-ship[data-section="review"] .an-part:not([data-kind="slipway"]) {
+    animation: an-launch 2200ms cubic-bezier(0.3, 0.7, 0.2, 1) both;
+  }
+
+  .an-ship[data-section="review"] .an-part[data-kind="slipway"] .an-line {
+    animation: an-ink-in 1400ms ease-out both;
+  }
+
+  .an-ring {
+    animation: an-march 1.6s linear infinite;
+  }
+
+  .an-ring-halo {
+    animation: an-breathe 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes an-muster {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes an-draft {
+  from {
+    stroke-dashoffset: 2600;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes an-ink-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes an-fire {
+  0%,
+  100% {
+    filter: none;
+  }
+  50% {
+    filter: drop-shadow(0 0 5px var(--an-lit)) brightness(1.12);
+  }
+}
+
+@keyframes an-heartbeat {
+  0%,
+  26%,
+  100% {
+    transform: none;
+  }
+  12% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes an-plume {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  15% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(14px, -46px) scale(3.2);
+  }
+}
+
+@keyframes an-plate {
+  0% {
+    opacity: 0;
+    transform: translateY(-18px) scaleY(0.9);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(1.5px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes an-strike {
+  0% {
+    stroke: var(--an-lit);
+    stroke-width: 2.4px;
+  }
+  100% {
+    stroke: var(--an-edge);
+    stroke-width: 0.8px;
+  }
+}
+
+@keyframes an-traverse {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-5deg);
+  }
+  70% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes an-sway {
+  0%,
+  100% {
+    transform: rotate(-0.9deg);
+  }
+  50% {
+    transform: rotate(0.9deg);
+  }
+}
+
+@keyframes an-beacon {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes an-launch {
+  0% {
+    opacity: 0;
+    transform: translate(-46px, 20px);
+  }
+  25% {
+    opacity: 1;
+  }
+  80% {
+    transform: translate(2px, -1px);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes an-march {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+@keyframes an-breathe {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.34;
   }
 }

@@ -58,7 +58,7 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
     const original = await belt.inputValue();
     await belt.fill("100");
     await belt.press("Enter");
-    const explanation = page.getByRole("alertdialog");
+    const explanation = page.getByRole("dialog", { name: "This change breaks the design" });
     await expect(explanation.getByText("This change breaks the design")).toBeVisible();
     await explanation.getByRole("button", { name: "Keep it and fix it myself" }).click();
     const status = page.getByRole("region", { name: "Engineering status" });

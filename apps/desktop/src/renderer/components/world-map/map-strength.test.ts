@@ -131,11 +131,11 @@ describe("buildRegionStrengths", () => {
 describe("barHeight compact", () => {
   it("shortens every bar on a small map, keeping the order and a visible stub", () => {
     for (const fraction of [0.01, 0.25, 0.5, 1]) {
-      expect(barHeight(fraction, true)).toBeLessThan(barHeight(fraction));
+      expect(barHeight(fraction, "compact")).toBeLessThan(barHeight(fraction));
     }
-    expect(barHeight(1, true)).toBe(BAR_MAX_COMPACT);
-    expect(barHeight(0.01, true)).toBeGreaterThanOrEqual(5);
-    expect(barHeight(0.25, true)).toBeLessThan(barHeight(0.5, true));
+    expect(barHeight(1, "compact")).toBe(BAR_MAX_COMPACT);
+    expect(barHeight(0.01, "compact")).toBeGreaterThanOrEqual(5);
+    expect(barHeight(0.25, "compact")).toBeLessThan(barHeight(0.5, "compact"));
   });
 });
 

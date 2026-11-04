@@ -1,6 +1,6 @@
 import { round1 } from "./anatomy-helpers.js";
 import { createAnatomyShipScene } from "./anatomy-scene.js";
-import type { AnatomyInput, AnatomyShip } from "./anatomy-types.js";
+import type { AnatomyInput, AnatomyPart, AnatomyShip, PartKind } from "./anatomy-types.js";
 import { drawArmour } from "./draw-armour.js";
 import { drawBoats } from "./draw-boats.js";
 import { drawConning } from "./draw-conning-tower.js";
@@ -21,22 +21,29 @@ export type {
   AnatomyDot,
   AnatomyPart,
   AnatomyShip,
+  PartKind,
   AnatomySolid,
 } from "./anatomy-types.js";
 
 export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
   const scene = createAnatomyShipScene(input);
-  drawSlipway(scene);
-  drawHull(scene);
-  drawDeck(scene);
-  drawMasts(scene);
-  drawArmour(scene);
-  drawSuperstructure(scene);
-  drawFunnels(scene);
-  drawBoats(scene);
-  drawWeapons(scene);
-  drawFittings(scene);
-  drawConning(scene);
+  const kinds = new Map<string, PartKind>();
+  const stage = (kind: PartKind, draw: (target: typeof scene) => void) => {
+    const before = scene.parts.length;
+    draw(scene);
+    for (const part of scene.parts.slice(before)) kinds.set(part.id, kind);
+  };
+  stage("slipway", drawSlipway);
+  stage("hull", drawHull);
+  stage("deck", drawDeck);
+  stage("mast", drawMasts);
+  stage("armour", drawArmour);
+  stage("superstructure", drawSuperstructure);
+  stage("funnel", drawFunnels);
+  stage("boat", drawBoats);
+  stage("weapon", drawWeapons);
+  stage("fitting", drawFittings);
+  stage("conning", drawConning);
 
   const { draft, profile, L, B, shownB, funnels, facts, parts, anchors } = scene;
   facts.set(
@@ -49,7 +56,7 @@ export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
     height: scene.height,
     label: `Isometric ship anatomy of a ${profile.name.toLowerCase()}: ${round1(L)} metres long, ${round1(shownB)} metres in the beam, with ${funnels.length} funnel${funnels.length === 1 ? "" : "s"} and ${draft.placements.length} fitted part${draft.placements.length === 1 ? "" : "s"}.`,
     azimuth: scene.azimuth,
-    parts,
+    parts: parts.map((part): AnatomyPart => ({ ...part, kind: kinds.get(part.id) ?? "fitting" })),
     anchors,
     facts,
   };

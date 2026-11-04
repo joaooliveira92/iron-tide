@@ -4,7 +4,7 @@ import type { DivisionCommandBody } from "../../../../shared/division-contract.j
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
 import { useDivisionOrganization } from "../hooks/useDivisionOrganization.js";
 import { CreateDivisionForm } from "./CreateDivisionForm.js";
-import { DivisionCard } from "./DivisionCard.js";
+import { DefaultDivisionCard } from "./DivisionCard.js";
 import type { DivisionOrganizationState } from "./division-organization-state.js";
 
 export interface FleetOrganizationViewProps {
@@ -75,7 +75,7 @@ export function FleetOrganizationView({
       ) : (
         <div className="space-y-3">
           {state.divisions.map((division) => (
-            <DivisionCard
+            <DefaultDivisionCard
               key={division.divisionId}
               division={division}
               state={state}

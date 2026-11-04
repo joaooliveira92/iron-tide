@@ -52,7 +52,7 @@ test("a player tunes a battleship, saves it, keeps experimenting and goes back t
     await nameTheClass(page, "Scratch Name");
     const narrowed = await openHullDimensions(page);
     await setNumber(narrowed, "Beam (m)", "18.50");
-    const warning = page.getByRole("alertdialog", { name: "This change breaks the design" });
+    const warning = page.getByRole("dialog", { name: "This change breaks the design" });
     await expect(warning).toBeVisible();
     await warning.getByRole("button", { name: "Undo this choice" }).click();
     await expect(warning).toBeHidden();

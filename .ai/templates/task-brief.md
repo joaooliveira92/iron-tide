@@ -18,7 +18,7 @@ task:
   model: "<model and client>"
   risk: "low | high"
   pull_request: null
-  pr_authorized: false
+  pr_authorized: true
   merge_authorized: false
   validation:
     - "pnpm verify:affected"
@@ -63,7 +63,8 @@ Report under `.ai/reports/`, `pnpm snap` screenshots, balance reports, PR link.
 
 ## Delivery authority
 
-- Pull request: `may open after local gates pass` | `do not open`.
+- Pull request: `draft at first push, ready when gates pass` (default) | `do not open`
+  (sets `pr_authorized: false`; the agent then ends at `DRAFT` or `BLOCKED` with the branch pushed).
 - Merge: `not authorized` | `authorized when: <every condition, machine-checkable>`.
   The default conditions are in the task lifecycle.
 - High-risk: independent review required before `ready-to-merge`.

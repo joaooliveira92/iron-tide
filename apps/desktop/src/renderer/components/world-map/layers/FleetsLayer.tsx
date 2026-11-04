@@ -2,10 +2,10 @@ import { memo } from "react";
 
 import type { FleetMark } from "../map-markers.js";
 import { pinned } from "../map-svg.js";
+import { useWorldMapLayer } from "./WorldMapLayerContext.js";
 
 export interface FleetsLayerProps {
   readonly marks: readonly FleetMark[];
-  readonly strokeFor: (nation: string) => string;
   readonly live: boolean;
   readonly playerNationId: string | null;
   readonly draggable: ReadonlySet<string>;
@@ -14,12 +14,14 @@ export interface FleetsLayerProps {
 
 export const FleetsLayer = memo(function FleetsLayer({
   marks,
-  strokeFor,
   live,
   playerNationId,
   draggable,
   selectedFleetId,
 }: FleetsLayerProps) {
+  const {
+    actions: { strokeFor },
+  } = useWorldMapLayer();
   return (
     <>
       {marks.map((mark) => {

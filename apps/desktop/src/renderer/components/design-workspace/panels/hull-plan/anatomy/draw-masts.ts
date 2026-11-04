@@ -1,5 +1,6 @@
 import { cylinder, iso, lineOf, pathOf } from "./iso.js";
 import { clamp, solid } from "./anatomy-helpers.js";
+import type { Point3 } from "./iso.js";
 import type { PartDraft } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
 
@@ -14,6 +15,7 @@ export function drawMasts(scene: AnatomyShipScene): void {
     hasHouse,
     houseT0,
     houseT1,
+    houseHalf,
     lowerTop,
     upperTop,
     mastRise,
@@ -115,16 +117,25 @@ export function drawMasts(scene: AnatomyShipScene): void {
       }
       const stays = era === "VICTORIAN" ? [0.02, 0.98] : index === 0 ? [0.02] : [0.98];
       for (const end of stays) {
-        part.lines.push({
-          d: lineOf(
-            [
-              [x, 0, topZ],
-              [end * L, 0, deckZ(end) + 0.02 * D],
-            ],
-            P,
-          ),
-          tone: "faint",
-        });
+        const anchor: Point3 = [end * L, 0, deckZ(end) + 0.02 * D];
+        part.lines.push({ d: lineOf([[x, 0, topZ], anchor], P), tone: "faint" });
+        const [ax, ay] = iso(anchor, P);
+        part.dots.push({ x: ax, y: ay, r: 0.8, tone: "mid" });
+      }
+      for (const side of [-1, 1]) {
+        for (const shift of [-0.35, 0.35]) {
+          const anchor: Point3 = [
+            x + shift * (houseT1 - houseT0) * L * 0.5,
+            side * houseHalf,
+            baseZ,
+          ];
+          part.lines.push({
+            d: lineOf([[x, 0, baseZ + mastRise * 0.58], anchor], P),
+            tone: "faint",
+          });
+          const [sx, sy] = iso(anchor, P);
+          part.dots.push({ x: sx, y: sy, r: 0.7, tone: "mid" });
+        }
       }
       add(part, text(x, 0, baseZ + mastRise * 0.5, 10));
     });

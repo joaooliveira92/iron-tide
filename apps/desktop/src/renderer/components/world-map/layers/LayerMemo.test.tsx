@@ -9,6 +9,7 @@ import { AreasLayer } from "./AreasLayer.js";
 import { FleetsLayer } from "./FleetsLayer.js";
 import { PortsLayer } from "./PortsLayer.js";
 import { StrengthLayer } from "./StrengthLayer.js";
+import { WorldMapLayerProvider } from "./WorldMapLayerContext.js";
 import { DARK_MAP_PALETTE } from "../map-palette.js";
 import type { AreaControl } from "../map-state.js";
 import type { ProjectedArea } from "../projection.js";
@@ -51,7 +52,13 @@ const regionStrength: RegionStrength = {
   overflowShips: 0,
 };
 
-function Churn({ children }: { readonly children: ReactNode }) {
+function Churn({
+  children,
+  strokeFor = () => "oklch(0.5 0 0)",
+}: {
+  readonly children: ReactNode;
+  readonly strokeFor?: (nation: string | null) => string;
+}) {
   const [tick, setTick] = useState(0);
   return (
     <div>
@@ -59,7 +66,11 @@ function Churn({ children }: { readonly children: ReactNode }) {
         {`tick ${tick}`}
       </button>
       <svg>
-        <g>{children}</g>
+        <g>
+          <WorldMapLayerProvider palette={DARK_MAP_PALETTE} strokeFor={strokeFor}>
+            {children}
+          </WorldMapLayerProvider>
+        </g>
       </svg>
     </div>
   );
@@ -113,9 +124,9 @@ describe("memoised map layers", () => {
 
   it("keeps PortsLayer out of a parent re-render when its props are unchanged", () => {
     const strokeFor = vi.fn(() => "oklch(0.5 0 0)");
-    const props: PortsLayerProps = { marks: [portMark], strokeFor };
+    const props: PortsLayerProps = { marks: [portMark] };
     const view = render(
-      <Churn>
+      <Churn strokeFor={strokeFor}>
         <PortsLayer {...props} />
       </Churn>,
     );
@@ -131,14 +142,13 @@ describe("memoised map layers", () => {
     const strokeFor = vi.fn(() => "oklch(0.5 0 0)");
     const props: FleetsLayerProps = {
       marks: [fleetMark],
-      strokeFor,
       live: true,
       playerNationId: "uk",
       draggable: new Set([fleetMark.id]),
       selectedFleetId: fleetMark.id,
     };
     const view = render(
-      <Churn>
+      <Churn strokeFor={strokeFor}>
         <FleetsLayer {...props} />
       </Churn>,
     );
@@ -156,13 +166,11 @@ describe("memoised map layers", () => {
     const props: StrengthLayerProps = {
       regions: [regionStrength],
       anchorOf,
-      strokeFor,
-      palette: DARK_MAP_PALETTE,
-      compact: false,
+      variant: "standard",
       offsets: new Map<string, number>(),
     };
     const view = render(
-      <Churn>
+      <Churn strokeFor={strokeFor}>
         <StrengthLayer {...props} />
       </Churn>,
     );

@@ -12,6 +12,7 @@ All thresholds live in `scripts/data/agent-context-policy.json`; hooks, tests an
 | --- | --- | --- |
 | Bash guard | blocks `cat` above the line limit, `sed -i`, write-mode script heredocs, heredoc overwrite of existing files | `scripts/hooks/pre-tool-use-bash.mjs` |
 | Context hook | advises at 100k, warns at 150k, blocks a resume or post-idle prompt above 200k | `scripts/hooks/user-prompt-context.mjs` |
+| Stop gate | blocks a stop with dirty tree or unpushed commits | `scripts/hooks/stop-gate.mjs` |
 | Snap defaults | 1280x800 window, CSS-pixel screenshots, `--full-res` opt-out | `pnpm snap` |
 | Screen map | owners, tests and e2e per screen, generated from `git ls-files` | `pnpm agent:map --screen` |
 | Quiet gates | one line on pass, the failing tail and log path on failure | `pnpm preflight:quiet`, `pnpm check:quiet` |

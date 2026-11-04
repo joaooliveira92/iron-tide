@@ -144,6 +144,7 @@ function checkSettings(root, failures) {
     ["UserPromptSubmit", "scripts/hooks/user-prompt-context.mjs", undefined],
     ["PostToolUse", "scripts/hooks/session-telemetry.mjs", undefined],
     ["PreCompact", "scripts/hooks/session-telemetry.mjs", undefined],
+    ["Stop", "scripts/hooks/stop-gate.mjs", undefined],
   ];
   for (const [event, script, matcher] of expectations) {
     const groups = settings.hooks?.[event];
@@ -189,19 +190,18 @@ function checkInstructions(root, failures) {
   if (claude === null || !trackedPaths(root, "CLAUDE.md").length) {
     failures.push("CLAUDE.md must exist and be tracked");
   } else {
-    if (!claude.startsWith("@AGENTS.md")) failures.push("CLAUDE.md must import @AGENTS.md first");
-    if (!claude.includes("Standing user authorization")) {
-      failures.push("CLAUDE.md lacks the standing subagent authorization");
-    }
-    for (const name of REQUIRED_AGENTS) {
-      if (!claude.includes(`\`${name}\``))
-        failures.push(`CLAUDE.md does not name the ${name} agent`);
-    }
+    if (claude !== "@AGENTS.md\n") failures.push("CLAUDE.md must contain only @AGENTS.md");
   }
   const agents = readText(root, "AGENTS.md");
   if (agents === null) {
     failures.push("AGENTS.md is missing");
     return;
+  }
+  if (!agents.includes("Standing user authorization")) {
+    failures.push("AGENTS.md lacks the standing subagent authorization");
+  }
+  for (const name of REQUIRED_AGENTS) {
+    if (!agents.includes(`\`${name}\``)) failures.push(`AGENTS.md does not name the ${name} agent`);
   }
   const present = new Set(headingsOf(agents));
   for (const heading of ["Agent workflow", "Stop conditions"]) {
@@ -279,7 +279,7 @@ function checkNoDuplicatedThresholds(root, policy, failures) {
 }
 
 const DOC_THRESHOLDS = [
-  { path: "CLAUDE.md", keys: ["contextWarnTokens", "contextBlockTokens"] },
+  { path: "AGENTS.md", keys: ["contextWarnTokens", "contextBlockTokens"] },
   {
     path: "docs/agents/context-efficiency.md",
     keys: ["contextAdvisorTokens", "contextWarnTokens", "contextBlockTokens"],

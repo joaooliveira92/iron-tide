@@ -8,7 +8,7 @@ may run agents here.
 | Task type | May do alone | Stops at |
 | --- | --- | --- |
 | Review, triage, investigation | Read, run read-only commands, file issues | Report |
-| Low-risk implementation | Edit, test, commit on its branch, open a PR if the brief allows | `ready-for-review` |
+| Low-risk implementation | Edit, test, commit on its branch, push, open a draft PR into `dev` (default), mark it ready | `ready-for-review` |
 | High-risk implementation | Same, plus request independent review | `ready-to-merge` unless merge is authorized |
 | Merge | Merge into `dev` under the task-lifecycle merge conditions | Any failed condition |
 

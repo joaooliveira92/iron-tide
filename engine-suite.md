@@ -34,7 +34,6 @@ If two applicable instructions conflict, stop and create a decision request. Nev
 2. For a greenfield repository, run `.ai/BOOTSTRAP-PROMPT.md`.
 3. For subsequent work, combine `.ai/IMPLEMENTATION-PROMPT.md` with one approved milestone brief.
 4. Before acceptance, run `.ai/REVIEW-PROMPT.md` in a fresh review context.
-5. Use `.ai/RELEASE-PROMPT.md` at release or compatibility gates.
 
 ## Roadmap
 

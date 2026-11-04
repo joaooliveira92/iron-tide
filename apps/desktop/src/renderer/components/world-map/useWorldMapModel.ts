@@ -27,7 +27,8 @@ import { separateGlyphs } from "./map-glyph-layout.js";
 import { buildLanes, buildSeaLanes, type LaneMark } from "./map-lanes.js";
 import {
   buildRegionStrengths,
-  compactGlyphs,
+  glyphVariant as glyphVariantFor,
+  type GlyphVariant,
   describeStrength,
   type RegionStrength,
 } from "./map-strength.js";
@@ -53,7 +54,7 @@ export interface WorldMapModel {
   readonly lanes: readonly LaneMark[];
   readonly strengths: readonly RegionStrength[];
   readonly glyphOffsets: ReadonlyMap<string, number>;
-  readonly compactGlyphs: boolean;
+  readonly glyphVariant: GlyphVariant;
   readonly unavailable: ReadonlySet<string>;
   readonly anchorOf: (areaId: string) => readonly [number, number] | undefined;
   readonly placedLabels: readonly PlacedLabel[];
@@ -181,7 +182,7 @@ export function useWorldMapModel({
     () => new Map(strengths.map((region) => [region.areaId, region])),
     [strengths],
   );
-  const compact = useMemo(() => compactGlyphs(view.svgHeight), [view.svgHeight]);
+  const compact = useMemo(() => glyphVariantFor(view.svgHeight), [view.svgHeight]);
   const glyphOffsets = useMemo(() => {
     const factor = view.scale * view.pixelsPerUnit;
     return separateGlyphs(
@@ -351,7 +352,7 @@ export function useWorldMapModel({
       fleetMarks,
       lanes,
       strengths,
-      compactGlyphs: compact,
+      glyphVariant: compact,
       glyphOffsets,
       unavailable: source.unavailable,
       anchorOf,

@@ -76,7 +76,24 @@ export function drawWeapons(scene: AnatomyShipScene): void {
     const entry = model.entryOf(placement.componentId);
     const name =
       model.targets.get(placement.instanceId)?.name ?? entry?.displayName ?? placement.componentId;
-    const t = clamp(placement.stationPermille / 1000, 0.02, 0.98);
+    const caliberM = (mount.caliberUm ?? 0) / 1_000_000;
+    const radius = clamp(caliberM * 12, 0.7, B * 0.22);
+    const gunArmour =
+      mountClass === "TURRET" || mountClass === "BARBETTE"
+        ? regionOf("TURRET")
+        : mountClass === "SHIELDED" || mountClass === "CASEMATE"
+          ? regionOf("SECONDARY_GUN")
+          : undefined;
+    const gunArmourMm = gunArmour ? Math.round(gunArmour.thicknessUm / 1000) : 0;
+    const stationT = clamp(placement.stationPermille / 1000, 0.02, 0.98);
+    const isDrum = mountClass === "TURRET" || mountClass === "BARBETTE";
+    const drumFit = radius * (1.28 + clamp(gunArmourMm, 0, 400) / 2500) * 1.08;
+    const fitsBeam = (at: number) => halfAt(at) >= drumFit;
+    let t = stationT;
+    if (isDrum && !fitsBeam(t)) {
+      const step = t < 0.5 ? 0.005 : -0.005;
+      while (t > 0.02 && t < 0.98 && !fitsBeam(t)) t += step;
+    }
     const x = t * L;
     const side = placement.side ?? "CENTRE";
     const y =
@@ -87,17 +104,8 @@ export function drawWeapons(scene: AnatomyShipScene): void {
           : category === "MAIN_GUN"
             ? 0
             : near * halfAt(t) * 0.32;
-    const caliberM = (mount.caliberUm ?? 0) / 1_000_000;
-    const radius = clamp(caliberM * 12, 0.7, B * 0.22);
     const barrels = clamp(Math.round(mount.gunCount), 1, 4);
     const inHouseNow = hasHouse && t >= houseT0 && t <= houseT1;
-    const gunArmour =
-      mountClass === "TURRET" || mountClass === "BARBETTE"
-        ? regionOf("TURRET")
-        : mountClass === "SHIELDED" || mountClass === "CASEMATE"
-          ? regionOf("SECONDARY_GUN")
-          : undefined;
-    const gunArmourMm = gunArmour ? Math.round(gunArmour.thicknessUm / 1000) : 0;
     const lightweight = category === "AA_WEAPON" || category === "DUAL_PURPOSE_GUN";
     const deck = (inHouseNow && lightweight ? lowerTop : deckZ(t)) + 0.005 * D;
 

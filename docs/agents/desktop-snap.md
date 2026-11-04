@@ -35,7 +35,33 @@ Read `aria.txt` first. The default window is 1280x800 and screenshots are writte
   backdrop. WebGL and canvas content keeps moving.
 - `--strict` exits 1 on page or console errors, a click that fell back or failed, a
   missing Overview, or an idle render loop. A failed action never loses the capture.
-- Bad arguments exit 2 with a message.
+- Bad arguments exit 2 with a message, including `--save` together with `--make-save`.
+- Every action warning or failure is prefixed `step N (action): ...` with the one-based step.
+
+## Evidence runs
+
+- Without `--strict`, `snap` exits 0 even when it recorded problems, so a run is not
+  evidence. Use `--strict` for any run whose output backs a claim.
+- `snap` captures diagnostics; it does not compare images or manage baselines. A base/branch
+  comparison is two explicit executions into two `--out` directories, one per checkout, and
+  you compare the results yourself.
+- A tour (`End inspection`) is dismissed on launch and after every action unless `--tour`.
+- Every action, `--shot` included, is followed by the `--wait` and quiet settle, so the next
+  action starts on a settled screen.
+
+## Output directory and `steps.json`
+
+Before running, `snap` deletes only files it owns: `screenshot.png`, `aria.txt`, `text.txt`,
+`console.log`, `steps.json`, this run's `--shot` names, and the artifacts listed in a previous
+`steps.json`. Anything else in `--out` is left alone, so a failed run never passes off an
+earlier run's capture as its own.
+
+`steps.json` (schema version 1) holds the effective options, the ordered actions, per-step
+outcome (`ok`/`warning`/`failed`), selector fallbacks (`text-match`, `dispatch-click`), recorded
+problems, produced artifact names, and `result.classification`
+(`clean`/`problems`/`strict-failure`/`aborted`) with the exit code. It omits `--fill` values,
+`--eval` source, and `--out`/`--save`/`--make-save` paths.
 
 Parsing lives in `snap-args.ts`, problem tracking in `snap-problems.ts`, settling in
-`snap-quiet.ts`; each has unit tests beside it.
+`snap-quiet.ts`, the manifest in `snap-manifest.ts`, stale-output cleanup in `snap-output.ts`;
+each has unit tests beside it.

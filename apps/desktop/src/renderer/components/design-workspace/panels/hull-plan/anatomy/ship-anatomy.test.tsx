@@ -222,6 +222,24 @@ describe("AnatomyShipFigure", () => {
     expect(container.querySelector("[data-testid='anatomy-highlight']")).not.toBeNull();
   });
 
+  it("tags every part with its kind and carries the active section to the svg", () => {
+    const plate = ship();
+    expect(plate.parts.find((part) => part.id === "hull")!.kind).toBe("hull");
+    expect(plate.parts.find((part) => part.id === "armour:belt")!.kind).toBe("armour");
+    const { container } = render(<AnatomyShipFigure ship={plate} section="protection" />);
+    expect(
+      container.querySelector("[data-testid='anatomy-ship']")!.getAttribute("data-section"),
+    ).toBe("protection");
+    expect(container.querySelectorAll("[data-kind='armour']").length).toBeGreaterThan(0);
+    expect(container.querySelector(".an-smoke")).toBeNull();
+  });
+
+  it("raises a plume over each funnel while the machinery section is open", () => {
+    const funnels = ship().parts.filter((part) => part.kind === "funnel").length;
+    const { container } = render(<AnatomyShipFigure ship={ship()} section="machinery" />);
+    expect(container.querySelectorAll(".an-smoke").length).toBe(funnels * 3);
+  });
+
   it("rings nothing when the highlight is not on the plate", () => {
     const { container } = render(<AnatomyShipFigure ship={ship()} highlight="not-a-fitting" />);
     expect(container.querySelector("[data-testid='anatomy-highlight']")).toBeNull();
