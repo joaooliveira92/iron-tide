@@ -28,11 +28,11 @@ describe("a choice that breaks the design", () => {
     openHull();
     const before = statusOf("displacement");
     commitLength("120");
-    const dialog = screen.getByRole("alertdialog");
+    const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByText("This change breaks the design")).toBeTruthy();
     expect(within(dialog).getAllByText("How to fix it").length).toBeGreaterThan(0);
     fireEvent.click(within(dialog).getByRole("button", { name: "Undo this choice" }));
-    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(statusOf("displacement")).toBe(before);
     expect(length().getAttribute("aria-invalid")).toBeNull();
   });
@@ -43,14 +43,14 @@ describe("a choice that breaks the design", () => {
     const original = (length() as HTMLInputElement).value;
     commitLength("120");
     fireEvent.click(
-      within(screen.getByRole("alertdialog")).getByRole("button", {
+      within(screen.getByRole("dialog")).getByRole("button", {
         name: "Keep it and fix it myself",
       }),
     );
     expect(length().getAttribute("aria-invalid")).toBe("true");
     expect(screen.getAllByRole("alert").length).toBeGreaterThan(0);
     commitLength("121");
-    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
     commitLength(original);
     expect(length().getAttribute("aria-invalid")).toBeNull();
   });
@@ -67,7 +67,7 @@ describe("inline errors beyond the hull", () => {
     const power = screen.getByLabelText(/^Installed power/) as HTMLInputElement;
     fireEvent.change(power, { target: { value: "1" } });
     fireEvent.blur(power);
-    const dialog = screen.getByRole("alertdialog");
+    const dialog = screen.getByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Keep it and fix it myself" }));
     expect(power.getAttribute("aria-invalid")).toBe("true");
   });
@@ -82,7 +82,7 @@ describe("inline errors beyond the hull", () => {
     const panel = screen.getByRole("region", { name: "Protection" });
     fireEvent.click(within(panel).getByRole("button", { name: "Add region" }));
     fireEvent.click(
-      within(screen.getByRole("alertdialog")).getByRole("button", {
+      within(screen.getByRole("dialog")).getByRole("button", {
         name: "Keep it and fix it myself",
       }),
     );
