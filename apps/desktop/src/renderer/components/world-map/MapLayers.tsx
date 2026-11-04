@@ -15,6 +15,7 @@ import { OrdersLayer } from "./layers/OrdersLayer.js";
 import { PortsLayer } from "./layers/PortsLayer.js";
 import { RoutesLayer } from "./layers/RoutesLayer.js";
 import { StrengthLayer } from "./layers/StrengthLayer.js";
+import { WorldMapLayerProvider } from "./layers/WorldMapLayerContext.js";
 
 export interface MapLayersProps {
   readonly model: WorldMapModel;
@@ -57,7 +58,7 @@ export const MapLayers = memo(function MapLayers({
     return grouped;
   }, [model.placedLabels]);
   return (
-    <>
+    <WorldMapLayerProvider palette={palette} strokeFor={model.strokeFor}>
       {WORLD_WRAP_TURNS.map((turn) => (
         <g
           key={turn}
@@ -93,18 +94,13 @@ export const MapLayers = memo(function MapLayers({
 
           <RoutesLayer d={model.routePath} stroke={palette.route} casing={palette.routeCasing} />
 
-          {pendingOrders.length > 0 && (
-            <OrdersLayer pending={pendingOrders} palette={palette} worldWidth={width} />
-          )}
+          {pendingOrders.length > 0 && <OrdersLayer pending={pendingOrders} worldWidth={width} />}
 
-          {state.layers.possessions && (
-            <PortsLayer marks={model.portMarks} strokeFor={model.strokeFor} />
-          )}
+          {state.layers.possessions && <PortsLayer marks={model.portMarks} />}
 
           {state.layers.fleets && (
             <FleetsLayer
               marks={model.fleetMarks}
-              strokeFor={model.strokeFor}
               live={model.live}
               playerNationId={model.playerNationId}
               draggable={draggableFleets}
@@ -116,9 +112,7 @@ export const MapLayers = memo(function MapLayers({
             <StrengthLayer
               regions={model.strengths}
               anchorOf={model.anchorOf}
-              strokeFor={model.strokeFor}
-              palette={palette}
-              compact={model.compactGlyphs}
+              variant={model.glyphVariant}
               offsets={model.glyphOffsets}
             />
           )}
@@ -130,6 +124,6 @@ export const MapLayers = memo(function MapLayers({
           />
         </g>
       ))}
-    </>
+    </WorldMapLayerProvider>
   );
 });

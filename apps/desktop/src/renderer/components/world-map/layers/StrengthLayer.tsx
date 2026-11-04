@@ -1,8 +1,14 @@
 import { memo } from "react";
 
 import { pinned, screenText } from "../map-svg.js";
-import { barHeight, type NationStrength, type RegionStrength } from "../map-strength.js";
+import {
+  barHeight,
+  type GlyphVariant,
+  type NationStrength,
+  type RegionStrength,
+} from "../map-strength.js";
 import type { MapPalette } from "../map-palette.js";
+import { useWorldMapLayer } from "./WorldMapLayerContext.js";
 
 export const STRENGTH_GLYPH = {
   flagWidth: 15,
@@ -15,12 +21,12 @@ export const STRENGTH_GLYPH = {
 
 export function strengthExtent(
   region: RegionStrength,
-  compact = false,
+  variant: GlyphVariant = "standard",
 ): { top: number; bottom: number } {
   const { flagsBottom, flagHeight, countRoom } = STRENGTH_GLYPH;
   const flagsTop = flagsBottom - flagHeight;
   return {
-    top: flagsTop - 2 - barHeight(region.fraction, compact) - countRoom,
+    top: flagsTop - 2 - barHeight(region.fraction, variant) - countRoom,
     bottom: flagsBottom,
   };
 }
@@ -34,20 +40,20 @@ export function strengthHalfWidth(region: RegionStrength): number {
 export interface StrengthLayerProps {
   readonly regions: readonly RegionStrength[];
   readonly anchorOf: (areaId: string) => readonly [number, number] | undefined;
-  readonly strokeFor: (nation: string | null) => string;
-  readonly palette: MapPalette;
-  readonly compact?: boolean;
+  readonly variant?: GlyphVariant;
   readonly offsets?: ReadonlyMap<string, number>;
 }
 
 export const StrengthLayer = memo(function StrengthLayer({
   regions,
   anchorOf,
-  strokeFor,
-  palette,
-  compact = false,
+  variant = "standard",
   offsets,
 }: StrengthLayerProps) {
+  const {
+    meta: { palette },
+    actions: { strokeFor },
+  } = useWorldMapLayer();
   return (
     <g data-layer="strength" aria-hidden="true" pointerEvents="none">
       {regions.map((region) => {
@@ -58,11 +64,11 @@ export const StrengthLayer = memo(function StrengthLayer({
             key={region.areaId}
             data-region={region.areaId}
             data-ships={region.total}
-            data-compact={compact ? "" : undefined}
+            data-compact={variant === "compact" ? "" : undefined}
             style={pinned(anchor[0], anchor[1])}
           >
             <g transform={`translate(${offsets?.get(region.areaId) ?? 0} 0)`}>
-              <Glyph region={region} strokeFor={strokeFor} palette={palette} compact={compact} />
+              <Glyph region={region} strokeFor={strokeFor} palette={palette} variant={variant} />
             </g>
           </g>
         );
@@ -75,15 +81,15 @@ function Glyph({
   region,
   strokeFor,
   palette,
-  compact,
+  variant,
 }: {
   region: RegionStrength;
   strokeFor: (nation: string | null) => string;
   palette: MapPalette;
-  compact: boolean;
+  variant: GlyphVariant;
 }) {
   const { flagWidth, flagHeight, flagGap, barWidth, flagsBottom, countRoom } = STRENGTH_GLYPH;
-  const height = barHeight(region.fraction, compact);
+  const height = barHeight(region.fraction, variant);
   const flagsTop = flagsBottom - flagHeight;
   const barBottom = flagsTop - 2;
   const barTop = barBottom - height;

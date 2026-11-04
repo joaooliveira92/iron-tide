@@ -1,9 +1,9 @@
 import { memo } from "react";
 
 import { CHART } from "../chart-theme.js";
-import type { MapPalette } from "../map-palette.js";
 import type { MapPendingOrder } from "../map-orders.js";
 import type { Point } from "../projection.js";
+import { useWorldMapLayer } from "./WorldMapLayerContext.js";
 
 export interface OrdersLayerProps {
   readonly pending: readonly (MapPendingOrder & {
@@ -11,15 +11,13 @@ export interface OrdersLayerProps {
     readonly to: Point;
     readonly via?: readonly Point[];
   })[];
-  readonly palette: MapPalette;
   readonly worldWidth: number;
 }
 
-export const OrdersLayer = memo(function OrdersLayer({
-  pending,
-  palette,
-  worldWidth,
-}: OrdersLayerProps) {
+export const OrdersLayer = memo(function OrdersLayer({ pending, worldWidth }: OrdersLayerProps) {
+  const {
+    meta: { palette },
+  } = useWorldMapLayer();
   return (
     <g data-layer="orders" aria-hidden="true" pointerEvents="none">
       {pending.map((order) => {
