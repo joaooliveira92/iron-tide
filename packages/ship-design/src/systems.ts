@@ -61,6 +61,7 @@ export interface SystemsInput {
   readonly directors: readonly DirectorUnit[];
   readonly funnelStationsPermille: readonly number[];
   readonly fireControlPositions?: number;
+  readonly directorFittable?: boolean;
 }
 
 export interface GunControl {
@@ -272,7 +273,7 @@ export function compileSystems(i: SystemsInput, b: SystemsBalance): SystemsResul
     });
   }
   const uncontrolled = control.filter((c) => c.directorId === null);
-  if (uncontrolled.length > 0 && i.guns.length > 0) {
+  if (uncontrolled.length > 0 && i.guns.length > 0 && (i.directorFittable ?? true)) {
     findings.push({
       id: "FC_INCOMPATIBLE",
       severity: "WARNING",
