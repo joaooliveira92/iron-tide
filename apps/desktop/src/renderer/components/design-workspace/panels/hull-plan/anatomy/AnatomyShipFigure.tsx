@@ -7,15 +7,23 @@ const d = (value: string) => (value.length > 0 ? value : undefined);
 export function AnatomyShipFigure({
   ship,
   highlight,
+  section,
   className,
   style,
 }: {
   readonly ship: AnatomyShip;
   readonly highlight?: string | undefined;
+  readonly section?: string | undefined;
   readonly className?: string;
   readonly style?: CSSProperties;
 }) {
   const anchor = highlight === undefined ? undefined : ship.anchors.get(highlight);
+  const seen = new Map<string, number>();
+  const order = (kind: string) => {
+    const next = seen.get(kind) ?? 0;
+    seen.set(kind, next + 1);
+    return next;
+  };
   return (
     <svg
       viewBox={`0 0 ${ship.width} ${ship.height}`}
@@ -25,11 +33,34 @@ export function AnatomyShipFigure({
       style={style}
       data-testid="anatomy-ship"
       data-azimuth={ship.azimuth}
+      data-section={section}
     >
       {ship.parts.map((part) => {
         const lit = part.id === highlight;
+        const smokeAt =
+          part.kind === "funnel" && section === "machinery" ? ship.anchors.get(part.id) : undefined;
         return (
-          <g key={part.id} className="an-part" data-part={part.id} data-lit={lit ? "" : undefined}>
+          <g
+            key={part.id}
+            className="an-part"
+            data-part={part.id}
+            data-kind={part.kind}
+            data-lit={lit ? "" : undefined}
+            style={{ "--an-i": order(part.kind) } as CSSProperties}
+          >
+            {smokeAt !== undefined &&
+              [0, 1, 2].map((puff) => (
+                <ellipse
+                  key={puff}
+                  className="an-smoke"
+                  aria-hidden="true"
+                  cx={smokeAt.at[0]}
+                  cy={smokeAt.at[1] - smokeAt.radius}
+                  rx={5}
+                  ry={3.5}
+                  style={{ "--an-puff": puff } as CSSProperties}
+                />
+              ))}
             {part.halo !== undefined && <path className="an-halo" d={part.halo} />}
             {part.solids.map((shape, index) => (
               <g key={index} className="an-solid" data-tone={shape.tone} data-fill={shape.fill}>
