@@ -8,13 +8,13 @@ import type {
   StationAssignmentOutcome,
 } from "../../../../shared/fleet-contract.js";
 import { useBridge } from "../../../lib/bridge-context.js";
-import { loadThroughBridge } from "../../../lib/bridge-read.js";
 import {
   type CommandOutcome,
   requestLifecycleAdapter,
   useCommandScreenWorkflow,
 } from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
+import { useFleetInspectionLoader } from "../hooks/useFleetInspection.js";
 import {
   explainReadinessRejection,
   explainStationRejection,
@@ -47,6 +47,7 @@ export interface UseStationAssignmentReturn {
 export function useStationAssignment(sessionId: string): UseStationAssignmentReturn {
   const bridge = useBridge();
   const campaignRevision = useCampaignRevision();
+  const load = useFleetInspectionLoader(sessionId);
   const [selection, setSelection] = useState<readonly string[]>([]);
   const workflow = useCommandScreenWorkflow<
     FleetStationState,
@@ -55,8 +56,7 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
   >(
     requestLifecycleAdapter({
       initialState: initialFleetStationState,
-      load: () =>
-        loadThroughBridge(bridge, (b) => b.campaign.execute("inspectFleetScreen", sessionId)),
+      load,
       project: projectFleetStation,
       accept: (value) => ({
         patch: {},
@@ -83,53 +83,59 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
   const rows = useMemo(() => stationRows(state.divisions, areaName), [state.divisions, areaName]);
   const selected = useMemo(() => pruneSelection(selection, rows), [selection, rows]);
 
-  const send = (intent: StationAssignmentIntent): Promise<CommandOutcome> => {
-    if (!bridge || selected.length === 0) return Promise.resolve("transport-failure");
-    const shipIds = [...selected];
-    return workflow
-      .execute(intent === "assign" ? "assign-station" : "clear-station", async (stamp) => {
-        const result = await bridge.campaign.execute("submitStationAssignment", {
-          ...envelopeOf(sessionId, stamp),
-          intent,
-          shipIds,
+  const send = useCallback(
+    (intent: StationAssignmentIntent): Promise<CommandOutcome> => {
+      if (!bridge || selected.length === 0) return Promise.resolve("transport-failure");
+      const shipIds = [...selected];
+      return workflow
+        .execute(intent === "assign" ? "assign-station" : "clear-station", async (stamp) => {
+          const result = await bridge.campaign.execute("submitStationAssignment", {
+            ...envelopeOf(sessionId, stamp),
+            intent,
+            shipIds,
+          });
+          if (result.outcome !== "rejected" || result.reason !== "STATION_ASSIGNMENT_REJECTED") {
+            return result;
+          }
+          return {
+            ...result,
+            diagnostics: explainStationRejection(intent, result.diagnostics, rows),
+          };
+        })
+        .then((outcome) => {
+          if (outcome === "accepted") setSelection([]);
+          return outcome;
         });
-        if (result.outcome !== "rejected" || result.reason !== "STATION_ASSIGNMENT_REJECTED") {
-          return result;
-        }
-        return {
-          ...result,
-          diagnostics: explainStationRejection(intent, result.diagnostics, rows),
-        };
-      })
-      .then((outcome) => {
-        if (outcome === "accepted") setSelection([]);
-        return outcome;
-      });
-  };
+    },
+    [bridge, rows, selected, sessionId, workflow.execute],
+  );
 
-  const sendReadiness = (readiness: CommandableReadiness): Promise<CommandOutcome> => {
-    if (!bridge || selected.length === 0) return Promise.resolve("transport-failure");
-    const shipIds = [...selected];
-    return workflow
-      .execute("set-readiness", async (stamp) => {
-        const result = await bridge.campaign.execute("submitShipReadiness", {
-          ...envelopeOf(sessionId, stamp),
-          readiness,
-          shipIds,
+  const sendReadiness = useCallback(
+    (readiness: CommandableReadiness): Promise<CommandOutcome> => {
+      if (!bridge || selected.length === 0) return Promise.resolve("transport-failure");
+      const shipIds = [...selected];
+      return workflow
+        .execute("set-readiness", async (stamp) => {
+          const result = await bridge.campaign.execute("submitShipReadiness", {
+            ...envelopeOf(sessionId, stamp),
+            readiness,
+            shipIds,
+          });
+          if (result.outcome !== "rejected" || result.reason !== "SHIP_READINESS_REJECTED") {
+            return result;
+          }
+          return {
+            ...result,
+            diagnostics: explainReadinessRejection(result.diagnostics, rows),
+          };
+        })
+        .then((outcome) => {
+          if (outcome === "accepted") setSelection([]);
+          return outcome;
         });
-        if (result.outcome !== "rejected" || result.reason !== "SHIP_READINESS_REJECTED") {
-          return result;
-        }
-        return {
-          ...result,
-          diagnostics: explainReadinessRejection(result.diagnostics, rows),
-        };
-      })
-      .then((outcome) => {
-        if (outcome === "accepted") setSelection([]);
-        return outcome;
-      });
-  };
+    },
+    [bridge, rows, selected, sessionId, workflow.execute],
+  );
 
   return {
     state,

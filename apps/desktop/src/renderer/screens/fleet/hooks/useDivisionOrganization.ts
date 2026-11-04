@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import type {
   DivisionCommandBody,
   DivisionCommandOutcome,
@@ -46,15 +47,18 @@ export function useDivisionOrganization(sessionId: string): UseDivisionOrganizat
     { refreshKey: campaignRevision },
   );
 
-  function send(command: DivisionCommandBody): Promise<CommandOutcome> {
-    if (!bridge) return Promise.resolve("transport-failure");
-    return workflow.execute("submit", (stamp) =>
-      bridge.campaign.execute("submitDivisionCommand", {
-        ...envelopeOf(sessionId, stamp),
-        command,
-      }),
-    );
-  }
+  const send = useCallback(
+    (command: DivisionCommandBody): Promise<CommandOutcome> => {
+      if (!bridge) return Promise.resolve("transport-failure");
+      return workflow.execute("submit", (stamp) =>
+        bridge.campaign.execute("submitDivisionCommand", {
+          ...envelopeOf(sessionId, stamp),
+          command,
+        }),
+      );
+    },
+    [bridge, sessionId, workflow.execute],
+  );
 
   const state = workflow.state;
   return {
