@@ -12,6 +12,7 @@ export function drawMasts(scene: AnatomyShipScene): void {
     profile,
     era,
     hasHouse,
+    houseHalf,
     houseT0,
     houseT1,
     lowerTop,
@@ -115,16 +116,20 @@ export function drawMasts(scene: AnatomyShipScene): void {
       }
       const stays = era === "VICTORIAN" ? [0.02, 0.98] : index === 0 ? [0.02] : [0.98];
       for (const end of stays) {
-        part.lines.push({
-          d: lineOf(
-            [
-              [x, 0, topZ],
-              [end * L, 0, deckZ(end) + 0.02 * D],
-            ],
-            P,
-          ),
-          tone: "faint",
-        });
+        const footing: [number, number, number] = [end * L, 0, deckZ(end) + 0.02 * D];
+        part.lines.push({ d: lineOf([[x, 0, topZ], footing], P), tone: "faint" });
+        const [fx, fy] = iso(footing, P);
+        part.dots.push({ x: fx, y: fy, r: 0.8, tone: "mid" });
+      }
+      for (const side of [-1, 1]) {
+        const footing: [number, number, number] = [
+          x + 0.012 * L,
+          side * houseHalf * 0.95,
+          lowerTop,
+        ];
+        part.lines.push({ d: lineOf([[x, 0, nestZ], footing], P), tone: "lo" });
+        const [fx, fy] = iso(footing, P);
+        part.dots.push({ x: fx, y: fy, r: 0.75, tone: "mid" });
       }
       add(part, text(x, 0, baseZ + mastRise * 0.5, 10));
     });

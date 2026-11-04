@@ -76,7 +76,12 @@ export function drawWeapons(scene: AnatomyShipScene): void {
     const entry = model.entryOf(placement.componentId);
     const name =
       model.targets.get(placement.instanceId)?.name ?? entry?.displayName ?? placement.componentId;
-    const t = clamp(placement.stationPermille / 1000, 0.02, 0.98);
+    const caliberForFit = (mount.caliberUm ?? 0) / 1_000_000;
+    const fitRadius = clamp(caliberForFit * 12, 0.7, B * 0.22) * 1.7;
+    const wanted = clamp(placement.stationPermille / 1000, 0.02, 0.98);
+    const inward = wanted < 0.5 ? 0.004 : -0.004;
+    let t = wanted;
+    while (t > 0.02 && t < 0.98 && halfAt(t) < fitRadius) t += inward;
     const x = t * L;
     const side = placement.side ?? "CENTRE";
     const y =
