@@ -1,4 +1,5 @@
-import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useMemo, type KeyboardEvent, type ReactNode } from "react";
+import { ResearchSelectionProvider, useResearchSelection } from "./ResearchSelection.js";
 import { CANONICAL_RESEARCH_FIELD_IDS } from "@bluewave/campaign-engine";
 import { cn } from "../../lib/utils.js";
 import { useScreenHeaderHost } from "../../shell/screen-header.js";
@@ -50,7 +51,15 @@ function initialField(vm: ResearchViewModel): string {
   return busiest.projectedPoints > 0 ? busiest.fieldId : (CANONICAL_RESEARCH_FIELD_IDS[0] ?? "");
 }
 
-export function ResearchWorkspace({
+export function ResearchWorkspace(props: ResearchWorkspaceProps) {
+  return (
+    <ResearchSelectionProvider initialFieldId={initialField(props.vm)}>
+      <ResearchWorkspaceBody {...props} />
+    </ResearchSelectionProvider>
+  );
+}
+
+function ResearchWorkspaceBody({
   vm,
   busy,
   canSubmit,
@@ -62,34 +71,12 @@ export function ResearchWorkspace({
   onSubmit,
 }: ResearchWorkspaceProps) {
   const format = usePresentationFormat();
-  const [selectedFieldId, setSelectedFieldId] = useState(() => initialField(vm));
-  const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
-  const [briefingOpen, setBriefingOpen] = useState(false);
-  const [archiveOpen, setArchiveOpen] = useState(false);
-  const [techModalOpen, setTechModalOpen] = useState(false);
+  const { state, actions } = useResearchSelection();
 
-  const field = vm.fields.find((f) => f.fieldId === selectedFieldId) ?? vm.fields[0]!;
-  const selectedTech = selectedTechId === null ? undefined : vm.technologies.get(selectedTechId);
+  const field = vm.fields.find((f) => f.fieldId === state.fieldId) ?? vm.fields[0]!;
+  const selectedTech = state.techId === null ? undefined : vm.technologies.get(state.techId);
   const highCapReached = vm.highCount >= vm.highCap;
   const readouts = useMemo(() => researchReadouts(vm, format), [vm, format]);
-
-  const selectField = (fieldId: string) => {
-    setSelectedFieldId(fieldId);
-    setSelectedTechId(null);
-  };
-
-  const selectTech = (techId: string) => {
-    if (techId === selectedTechId && techModalOpen) {
-      setTechModalOpen(false);
-    } else {
-      setSelectedTechId(techId);
-      setTechModalOpen(true);
-    }
-  };
-
-  const onTechModalChange = (open: boolean) => {
-    setTechModalOpen(open);
-  };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
@@ -121,7 +108,7 @@ export function ResearchWorkspace({
         extras={
           <>
             {commandExtras}
-            <Dialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+            <Dialog>
               <DialogTrigger
                 render={
                   <Button variant="ghost" size="sm" type="button">
@@ -160,11 +147,9 @@ export function ResearchWorkspace({
           <div className="themed-scrollbar min-h-0 flex-1 overflow-y-auto">
             <FieldMap
               fields={vm.fields}
-              selectedFieldId={field.fieldId}
               highCapReached={highCapReached}
               highCap={vm.highCap}
               busy={busy}
-              onSelect={selectField}
               onSetWeight={onSetFieldWeight}
             />
           </div>
@@ -188,7 +173,7 @@ export function ResearchWorkspace({
               <span>Floor {format.count(vm.budget.floor)}</span>
               <span>Cap {format.count(vm.budget.cap)}</span>
             </div>
-            <Dialog open={briefingOpen} onOpenChange={setBriefingOpen}>
+            <Dialog>
               <DialogTrigger
                 render={
                   <Button
@@ -222,13 +207,7 @@ export function ResearchWorkspace({
 
         <section aria-label="Technology chart" className="flex min-h-0 min-w-0 flex-col">
           <div className="shrink-0 border-b bg-muted/15 px-3 py-1.5">
-            <AllocationSpectrum
-              fields={vm.fields}
-              totals={vm.totals}
-              budget={vm.budget.monthly}
-              selectedFieldId={field.fieldId}
-              onSelect={selectField}
-            />
+            <AllocationSpectrum fields={vm.fields} totals={vm.totals} budget={vm.budget.monthly} />
           </div>
           <FieldHeader
             field={field}
@@ -238,25 +217,20 @@ export function ResearchWorkspace({
             onSetWeight={(weight) => onSetFieldWeight(field.fieldId, weight)}
           />
           <div className="min-h-0 flex-1">
-            <TechnologyChart
-              key={field.fieldId}
-              field={field}
-              selectedTechId={selectedTechId}
-              onSelectTech={selectTech}
-            />
+            <TechnologyChart key={field.fieldId} field={field} />
           </div>
         </section>
       </div>
 
       {selectedTech !== undefined && (
-        <Dialog open={techModalOpen} onOpenChange={onTechModalChange}>
+        <Dialog open={state.techModalOpen} onOpenChange={actions.setTechModalOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{selectedTech.label}</DialogTitle>
               <DialogDescription>{`${field.label} · ${TECH_STATUS[selectedTech.status].label}`}</DialogDescription>
             </DialogHeader>
             <DialogBody>
-              <TechnologyDetail tech={selectedTech} fieldLabel={field.label} showHeading={false} />
+              <TechnologyDetail tech={selectedTech} fieldLabel={field.label} variant="bare" />
             </DialogBody>
           </DialogContent>
         </Dialog>
