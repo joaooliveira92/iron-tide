@@ -23,6 +23,10 @@ const SHIP_LIST_LIMIT = 12;
 
 function GroupRow({ segment }: { readonly segment: UpkeepSegment }) {
   const format = usePresentationFormat();
+  const multiplier = format.number(segment.multiplier, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
   return (
     <LedgerTable.Row
       ariaLabel={`${segment.label}: ${format.count(segment.cost)} for ${segment.ships} ships — show detail`}
@@ -34,10 +38,7 @@ function GroupRow({ segment }: { readonly segment: UpkeepSegment }) {
           description={segment.description}
           facts={[
             { label: "Ships", value: format.count(segment.ships) },
-            {
-              label: "Rate against active",
-              value: `×${format.number(segment.multiplier, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            },
+            { label: "Rate against active", value: `×${multiplier}` },
             {
               label: "Share of upkeep",
               value: `${format.number(segment.shareOfUpkeep * 100, { maximumFractionDigits: 0 })}%`,
@@ -46,22 +47,16 @@ function GroupRow({ segment }: { readonly segment: UpkeepSegment }) {
         />
       }
     >
-      <span aria-hidden="true" className={cn("size-2.5 rounded-sm", segment.className)} />
-      <span>
+      <LedgerTable.Swatch className={segment.className} />
+      <LedgerTable.Label>
         {segment.label}{" "}
         <span className="text-xs text-muted-foreground">
           {segment.ships} {segment.ships === 1 ? "ship" : "ships"}
         </span>
-      </span>
+      </LedgerTable.Label>
       <LedgerTable.Bar share={segment.shareOfUpkeep} fillClassName={segment.className} />
-      <span className="text-right font-medium tabular-nums">{format.count(segment.cost)}</span>
-      <span className="text-right text-xs tabular-nums text-muted-foreground">
-        ×
-        {format.number(segment.multiplier, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}
-      </span>
+      <LedgerTable.Amount>{format.count(segment.cost)}</LedgerTable.Amount>
+      <LedgerTable.Note>×{multiplier}</LedgerTable.Note>
     </LedgerTable.Row>
   );
 }
@@ -134,12 +129,10 @@ export function FleetUpkeepTab({
               />
             ))}
           </div>
-          <LedgerTable.Root layout="upkeep">
-            <div className="space-y-0.5">
-              {segments.map((segment) => (
-                <GroupRow key={segment.readiness} segment={segment} />
-              ))}
-            </div>
+          <LedgerTable.Root columns="fleet">
+            {segments.map((segment) => (
+              <GroupRow key={segment.readiness} segment={segment} />
+            ))}
           </LedgerTable.Root>
         </>
       )}
@@ -147,54 +140,44 @@ export function FleetUpkeepTab({
       {topShips.length > 0 && (
         <section aria-label="Dearest ships" className="space-y-1">
           <h4 className="px-2 text-xs text-muted-foreground">Dearest ships to keep</h4>
-          <LedgerTable.Root layout="upkeep">
-            <ul className="space-y-0.5">
-              {topShips.map((ship) => {
-                const style = READINESS_STYLE[ship.readiness];
-                return (
-                  <li key={ship.id}>
-                    <LedgerTable.Row
-                      ariaLabel={`${ship.name}: ${format.count(ship.cost)} a month, ${style.label} — show detail`}
-                      detail={
-                        <SegmentCard
-                          swatchClassName={style.className}
-                          title={ship.name}
-                          amount={format.money(ship.cost)}
-                          description={style.description}
-                          facts={[
-                            {
-                              label: "Share of fleet upkeep",
-                              value: `${format.number(shareOf(ship.cost, fleet.total) * 100, { maximumFractionDigits: 1 })}%`,
-                            },
-                          ]}
-                          note={
-                            ship.overBase
-                              ? "Stationed beyond its base, which adds to its upkeep."
-                              : null
-                          }
-                        />
+          <LedgerTable.Root columns="fleet">
+            {topShips.map((ship) => {
+              const style = READINESS_STYLE[ship.readiness];
+              return (
+                <LedgerTable.Row
+                  key={ship.id}
+                  ariaLabel={`${ship.name}: ${format.count(ship.cost)} a month, ${style.label} — show detail`}
+                  detail={
+                    <SegmentCard
+                      swatchClassName={style.className}
+                      title={ship.name}
+                      amount={format.money(ship.cost)}
+                      description={style.description}
+                      facts={[
+                        {
+                          label: "Share of fleet upkeep",
+                          value: `${format.number(shareOf(ship.cost, fleet.total) * 100, { maximumFractionDigits: 1 })}%`,
+                        },
+                      ]}
+                      note={
+                        ship.overBase
+                          ? "Stationed beyond its base, which adds to its upkeep."
+                          : null
                       }
-                    >
-                      <span
-                        aria-hidden="true"
-                        className={cn("size-2.5 rounded-sm", style.className)}
-                      />
-                      <span className="truncate">{ship.name}</span>
-                      <LedgerTable.Bar
-                        share={shareOf(ship.cost, topCost)}
-                        fillClassName={style.className}
-                      />
-                      <span className="text-right font-medium tabular-nums">
-                        {format.count(ship.cost)}
-                      </span>
-                      <span className="text-right text-xs text-muted-foreground">
-                        {style.label}
-                      </span>
-                    </LedgerTable.Row>
-                  </li>
-                );
-              })}
-            </ul>
+                    />
+                  }
+                >
+                  <LedgerTable.Swatch className={style.className} />
+                  <LedgerTable.Label className="truncate">{ship.name}</LedgerTable.Label>
+                  <LedgerTable.Bar
+                    share={shareOf(ship.cost, topCost)}
+                    fillClassName={style.className}
+                  />
+                  <LedgerTable.Amount>{format.count(ship.cost)}</LedgerTable.Amount>
+                  <LedgerTable.Note>{style.label}</LedgerTable.Note>
+                </LedgerTable.Row>
+              );
+            })}
           </LedgerTable.Root>
           {hidden > 0 && (
             <p className="px-2 text-xs text-muted-foreground">

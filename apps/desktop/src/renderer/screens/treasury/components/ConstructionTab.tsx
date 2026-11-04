@@ -3,7 +3,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
-import { cn } from "../../../lib/utils.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Zap } from "lucide-react";
 import type {
@@ -104,15 +103,15 @@ function ProjectLine({ row, peak }: { readonly row: ProjectRow; readonly peak: n
         />
       }
     >
-      <span className="truncate">
+      <LedgerTable.Label className="truncate">
         {row.className} <span className="text-xs text-muted-foreground">{row.shipType}</span>
-      </span>
+      </LedgerTable.Label>
       <LedgerTable.Bar
         share={shareOf(row.monthlyCost, peak)}
         fillClassName={row.carryingCost > 0 ? "bg-destructive/70" : "bg-primary"}
       />
-      <span className={cn("text-right text-xs", TONE[row.style.tone])}>{row.style.label}</span>
-      <span className="text-right font-medium tabular-nums">{amount}</span>
+      <LedgerTable.Note className={TONE[row.style.tone]}>{row.style.label}</LedgerTable.Note>
+      <LedgerTable.Amount>{amount}</LedgerTable.Amount>
     </LedgerTable.Row>
   );
 }
@@ -152,14 +151,10 @@ export function ConstructionTab({
           {format.count(construction.carryingTotal)} a month to keep, and builds nothing.
         </p>
       )}
-      <LedgerTable.Root layout="projects">
-        <ul className="space-y-0.5">
-          {rows.map((row) => (
-            <li key={row.projectId}>
-              <ProjectLine row={row} peak={peak} />
-            </li>
-          ))}
-        </ul>
+      <LedgerTable.Root columns="construction">
+        {rows.map((row) => (
+          <ProjectLine key={row.projectId} row={row} peak={peak} />
+        ))}
       </LedgerTable.Root>
       <p className="px-2 text-xs text-muted-foreground">
         These are ceilings. Each project draws only what its yard can absorb this month.
