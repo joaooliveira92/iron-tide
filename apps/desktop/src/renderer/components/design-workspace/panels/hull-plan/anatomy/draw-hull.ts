@@ -191,6 +191,20 @@ export function drawHull(scene: AnatomyShipScene): void {
       [0.02 * L, -bowHalf, 0.5 * T],
     ];
     part.solids.push(solid(loft(ramTop, ramBottom, P), "hi", { crease: "mid" }));
+    part.lines.push({
+      d: lineOf(
+        [
+          [-0.026 * L, 0, 0.5 * T],
+          [-0.002 * L, 0, 0.74 * T],
+          [0.02 * L, 0, 0.95 * T],
+        ],
+        P,
+      ),
+      tone: "lo",
+      heavy: true,
+    });
+    const [tipX, tipY] = iso([-0.026 * L, 0, 0.5 * T], P);
+    part.dots.push({ x: tipX, y: tipY, r: 0.9, tone: "lo" });
   }
   const shaftZ = 0.28 * T;
   const rudderX = L + WATER_REACH.stern - 0.01 * L;
@@ -198,13 +212,29 @@ export function drawHull(scene: AnatomyShipScene): void {
     solid(
       extrude(
         roundedPlan({ x: rudderX, y: -0.006 * B, w: 0.016 * L, d: 0.01 * B, r: 0.003 * L }, 3),
-        0.16 * T,
-        0.5 * T,
+        0.08 * T,
+        0.78 * T,
         P,
       ),
       "mid",
+      { crease: "lo" },
     ),
   );
+  part.lines.push({
+    d: lineOf(
+      [
+        [rudderX + 0.004 * L, 0, 0.08 * T],
+        [rudderX + 0.004 * L, 0, 0.86 * T],
+      ],
+      P,
+    ),
+    tone: "lo",
+    heavy: true,
+  });
+  for (const z of [0.2 * T, 0.45 * T, 0.7 * T]) {
+    const [px, py] = iso([rudderX + 0.004 * L, 0, z], P);
+    part.dots.push({ x: px, y: py, r: 0.7, tone: "mid" });
+  }
   part.lines.push({
     d: lineOf(
       [

@@ -20,6 +20,7 @@ import { CATEGORY_LABEL, MOUNT_LABEL } from "./ship-profile.js";
 export function drawWeapons(scene: AnatomyShipScene): void {
   const {
     draft,
+    funnelMetrics,
     model,
     near,
     L,
@@ -93,6 +94,12 @@ export function drawWeapons(scene: AnatomyShipScene): void {
     if (isDrum && !fitsBeam(t)) {
       const step = t < 0.5 ? 0.005 : -0.005;
       while (t > 0.02 && t < 0.98 && !fitsBeam(t)) t += step;
+    }
+    if (mountClass === "CASEMATE" || mountClass === "SHIELDED") {
+      for (const funnel of funnelMetrics) {
+        const gap = (funnel.radius + radius * 1.7) / L;
+        if (Math.abs(t - funnel.t) < gap) t = funnel.t + (t >= funnel.t ? gap : -gap);
+      }
     }
     const x = t * L;
     const side = placement.side ?? "CENTRE";
