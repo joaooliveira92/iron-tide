@@ -1,65 +1,29 @@
-import {
-  Map as MapLibreMap,
-  addProtocol,
-  removeProtocol,
-  setWorkerUrl,
-  type GeoJSONSource,
-} from "maplibre-gl";
-import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
+import { Map as MapLibreMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { AREAS, AREAS_BY_ID } from "../world-map/map-geometry.js";
-import { formatFixed } from "../../lib/presentation-format/format.js";
-import { BAKED_PROTOCOL, createBakedTileLoader } from "../globe-spike/baked-tiles.js";
-import { classifyHorizon, type GlobeCamera } from "../globe-spike/horizon.js";
-import { MAP_CONTAINER_STYLE, hasRenderableSize } from "../globe-spike/map-container.js";
+import { AREAS_BY_ID } from "../world-map/map-geometry.js";
+import { MAP_CONTAINER_STYLE } from "../globe-spike/map-container.js";
 import { useLandPlan } from "../globe-spike/use-land-plan.js";
 import type { WorldMapChartProps } from "../world-map/WorldMapChart.js";
 import type { MapVariant } from "../world-map/map-variant-layout.js";
 import { MAP_VARIANT_LAYOUT } from "../world-map/map-variant-layout.js";
 import { homeFocusPoint } from "../world-map/campaign-map-join.js";
 import { nationFocusPoint } from "../world-map/useInitialFocusArea.js";
-import {
-  adapterFailureRequested,
-  adapterLandMode,
-  type AdapterLandMode,
-} from "./globe-adapter-flag.js";
-import {
-  fitWorldCamera,
-  fromRendererCamera,
-  type AppCameraState,
-  type CameraProjection,
-} from "./camera-contract.js";
-import { GLOBE_ASSET_ROOT, buildStyle, markerCollection, routeCollection } from "./map-style.js";
-import { DisposalRegistry } from "./disposal.js";
-import { FLEET_GLYPH_ID, buildFleetGlyph } from "./fleet-glyph.js";
+import { adapterLandMode, type AdapterLandMode } from "./globe-adapter-flag.js";
+import { fitWorldCamera, type AppCameraState, type CameraProjection } from "./camera-contract.js";
+import { GLOBE_ASSET_ROOT } from "./map-style.js";
 import { projectOverlay } from "./overlay-projection.js";
 import { OverlayStore } from "./overlay-store.js";
-import { selectPointerTarget } from "./pointer-visibility.js";
 import { adapterProjectionFromApp, appProjectionFromAdapter } from "./adapter-layer-state.js";
 import { deriveAdapterModel } from "./adapter-derivations.js";
 import { GlobeAdapterChrome } from "./GlobeAdapterChrome.js";
 import { GlobeAdapterStatusStrip } from "./GlobeAdapterStatusStrip.js";
 import { GlobeAdapterScreenReader } from "./GlobeAdapterScreenReader.js";
 import { useLayerSet } from "./use-layer-set.js";
-import {
-  adapterDrop,
-  dragThresholdMet,
-  fleetIdFromMarker,
-  isDraggableFleet,
-  routeAnnouncement,
-} from "./adapter-interaction.js";
-import {
-  NATURAL_EARTH_HIERARCHY,
-  TileCache,
-  hierarchyForManifest,
-  isOverscaled,
-  selectTiles,
-  sourceLevelForDisplay,
-  tileCacheKey,
-  type TileHierarchy,
-} from "./tile-hierarchy.js";
+import { useMapInstance } from "./use-map-instance.js";
+import { fleetIdFromMarker, routeAnnouncement } from "./adapter-interaction.js";
+import { NATURAL_EARTH_HIERARCHY, TileCache, type TileHierarchy } from "./tile-hierarchy.js";
 
 export { GLOBE_ASSET_ROOT };
 
@@ -131,31 +95,6 @@ declare global {
       readonly setProjection: (projection: CameraProjection) => void;
       readonly whenIdle: () => Promise<void>;
     };
-  }
-}
-
-function cameraFromMap(map: MapLibreMap, projection: CameraProjection): GlobeCamera {
-  const centre = map.getCenter();
-  return {
-    centre: [centre.lng, centre.lat],
-    zoom: map.getZoom(),
-    pitchDegrees: map.getPitch(),
-    bearingDegrees: map.getBearing(),
-    viewportHeightPx: map.getContainer().clientHeight,
-    projection,
-  } as GlobeCamera & { readonly projection: CameraProjection };
-}
-
-function horizonFor(map: MapLibreMap, lon: number, lat: number, projection: CameraProjection) {
-  if (projection === "mercator") return "front" as const;
-  return classifyHorizon(cameraFromMap(map, projection), [lon, lat]);
-}
-
-function mapHealth(map: MapLibreMap): boolean {
-  try {
-    return map.getCanvas() !== null;
-  } catch {
-    return false;
   }
 }
 
@@ -319,519 +258,44 @@ export function GlobeAdapter({
     setLiveMessage(routeAnnouncement(route));
   }, [route]);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (container === null) return;
-    if (plan.kind === "loading") return;
-    if (plan.kind === "failed") {
-      onUnavailable(plan.reason);
-      return;
-    }
-    if (plan.kind === "runtime") {
-      onUnavailable(plan.reason ?? "tile pack unavailable");
-      return;
-    }
-    if (!hasRenderableSize(container.clientWidth, container.clientHeight)) {
-      onUnavailable("map container has no renderable size");
-      return;
-    }
-    if (forceFailure || adapterFailureRequested(window.location.hash)) {
-      onUnavailable("forced adapter failure");
-      return;
-    }
-    const abort = new AbortController();
-    abortRef.current = abort;
-    let hierarchy: TileHierarchy;
-    try {
-      hierarchy = hierarchyForManifest(NATURAL_EARTH_HIERARCHY, plan.tiles.manifest);
-    } catch (error) {
-      onUnavailable(error instanceof Error ? error.message : String(error));
-      return;
-    }
-    const disposal = new DisposalRegistry();
-    disposal.add(() => abort.abort());
-    const cache = new TileCache(hierarchy);
-    disposal.add(() => cache.dispose());
-    cacheRef.current = cache;
-    const store = new OverlayStore({ disposeSignal: abort.signal });
-    storeRef.current = store;
-    disposal.add(() => store.dispose());
-    const errors: string[] = [];
-    let registeredProtocol = false;
-    let map: MapLibreMap | null = null;
-    const baseLoader = createBakedTileLoader(plan.tiles.pack, plan.tiles.diagnostics);
-    try {
-      setWorkerUrl(new URL(workerUrl, document.baseURI).href);
-      addProtocol(BAKED_PROTOCOL, async (params) => {
-        const match = /(\d+)\/(\d+)\/(\d+)$/.exec(params.url);
-        if (match === null) return baseLoader(params);
-        const key = tileCacheKey(
-          { z: Number(match[1]), x: Number(match[2]), y: Number(match[3]) },
-          hierarchy,
-        );
-        if (cache.get(key) !== null) return baseLoader(params);
-        if (!cache.begin(key)) {
-          errors.push(`tile cache in-flight budget reached at ${params.url}`);
-          return { data: new ArrayBuffer(0) };
-        }
-        try {
-          const response = await baseLoader(params);
-          cache.complete(key, response.data.byteLength);
-          return response;
-        } catch (error) {
-          cache.fail(key);
-          throw error;
-        }
-      });
-      registeredProtocol = true;
-      map = new MapLibreMap({
-        container,
-        style: buildStyle(plan, {
-          ownership: initialOverlayRef.current.ownership,
-          layers: initialLayersRef.current,
-          variant,
-        }),
-        center: [initialCamera.centre[0], initialCamera.centre[1]],
-        zoom: initialCamera.zoom,
-        bearing: initialCamera.bearing,
-        pitch: initialCamera.pitch,
-        maxZoom: hierarchy.displayMaxZoom,
-        fadeDuration: 0,
-        attributionControl: false,
-        canvasContextAttributes: { antialias: true },
-      });
-      map.boxZoom.disable();
-      map.doubleClickZoom.disable();
-      map.keyboard.disable();
-    } catch (error) {
-      if (registeredProtocol) removeProtocol(BAKED_PROTOCOL);
-      store.dispose();
-      cache.dispose();
-      onUnavailable(error instanceof Error ? error.message : String(error));
-      return;
-    }
-    const active = map;
-    mapRef.current = active;
-    const unsubscribe = store.subscribe((changeSet) => {
-      if (changeSet.changes.length === 0) return;
-      const snapshot = store.snapshot();
-      const markers = active.getSource("adapter-markers") as GeoJSONSource | undefined;
-      const routes = active.getSource("adapter-routes") as GeoJSONSource | undefined;
-      void markers?.setData(markerCollection(snapshot));
-      void routes?.setData(routeCollection(snapshot));
-    });
-    disposal.add(unsubscribe);
-    const unsubscribeVisibility = store.subscribeVisibility((change) => {
-      active.setFeatureState(
-        { source: "adapter-markers", id: change.id },
-        { hidden: !change.visible },
-      );
-      active.setFeatureState(
-        { source: "adapter-routes", id: change.id },
-        { hidden: !change.visible },
-      );
-    });
-    disposal.add(unsubscribeVisibility);
-
-    const onIdle = () => {
-      if (!mapHealth(active)) {
-        errors.push("renderer health check failed");
-        onUnavailable("renderer health check failed");
-        return;
-      }
-      const zoom = active.getZoom();
-      const selection = selectTiles(
-        {
-          centre: [active.getCenter().lng, active.getCenter().lat],
-          zoom,
-          pitchDegrees: active.getPitch(),
-          bearingDegrees: active.getBearing(),
-          viewport: {
-            width: active.getContainer().clientWidth,
-            height: active.getContainer().clientHeight,
-          },
-          dpr: window.devicePixelRatio,
-          mode: projectionRef.current,
-        },
-        hierarchy,
-      );
-      setStatus(
-        `idle z=${formatFixed(zoom, { locale: "en-US", digits: 2 })} source z${selection.level}${selection.overscaled ? " overscaled" : ""} tiles=${selection.tiles.length}`,
-      );
-      setCamera((current) => ({
-        ...current,
-        centre: [active.getCenter().lng, active.getCenter().lat],
-        zoom,
-        bearing: active.getBearing(),
-        pitch: active.getPitch(),
-        projection: projectionRef.current,
-      }));
-      onCameraChangeRef.current?.(
-        fromRendererCamera({
-          centre: [active.getCenter().lng, active.getCenter().lat],
-          zoom,
-          bearing: active.getBearing(),
-          pitch: active.getPitch(),
-          projection: projectionRef.current,
-        }),
-      );
-    };
-    const onError = (event: { readonly error?: { readonly message?: string } }) => {
-      const message = event.error?.message ?? "unknown";
-      errors.push(message);
-      setErrorText(message);
-    };
-    const pick = (x: number, y: number, shiftKey: boolean) => {
-      const hits = active.queryRenderedFeatures([x, y], { layers: ["adapter-markers"] });
-      const candidates = hits.map((feature) => {
-        const properties = feature.properties ?? {};
-        const lon = Number(properties.lon);
-        const lat = Number(properties.lat);
-        return {
-          id: String(properties.id ?? ""),
-          rendered: true,
-          projectVisible: true,
-          horizon: horizonFor(active, lon, lat, projectionRef.current),
-        };
-      });
-      const target = selectPointerTarget(candidates);
-      if (target !== null) {
-        const hit = hits.find((feature) => String(feature.properties?.id) === target);
-        const areaId = String(hit?.properties?.areaId ?? "");
-        const markerId = String(hit?.properties?.id ?? "");
-        const fleetId = fleetIdFromMarker(markerId);
-        if (!shiftKey && fleetId !== null) {
-          ordersRef.current?.onSelectFleet(fleetId);
-          setSelectedFleet(fleetId);
-          setLiveMessage(`Selected fleet ${String(hit?.properties?.name ?? fleetId)}`);
-          return;
-        }
-        if (areaId.length > 0) {
-          if (shiftKey) onRuler(areaId);
-          else onSelect(areaId);
-          setLiveMessage(
-            `${shiftKey ? "Route from " : "Selected "}${String(hit?.properties?.name ?? areaId)}`,
-          );
-        }
-        return;
-      }
-      const areas = active.queryRenderedFeatures([x, y], { layers: ["areas-fill"] });
-      const areaId = areas.length === 0 ? null : String(areas[0]?.properties?.id ?? "");
-      if (areaId === null || areaId.length === 0) {
-        if (!shiftKey) onSelect(null);
-        return;
-      }
-      if (shiftKey) {
-        onRuler(areaId);
-        setLiveMessage(`Route via ${derivedRef.current.areaName(areaId)}`);
-      } else {
-        onSelect(areaId);
-        setLiveMessage(`Selected ${derivedRef.current.describeAreaFor(areaId)}`);
-      }
-    };
-    const onClick = (event: {
-      readonly point: { readonly x: number; readonly y: number };
-      readonly originalEvent: MouseEvent;
-    }) => {
-      pick(event.point.x, event.point.y, event.originalEvent.shiftKey);
-    };
-    const onMove = (event: { readonly point: { readonly x: number; readonly y: number } }) => {
-      if (hoverFrameRef.current !== null) cancelAnimationFrame(hoverFrameRef.current);
-      hoverFrameRef.current = requestAnimationFrame(() => {
-        const markerHits = active.queryRenderedFeatures([event.point.x, event.point.y], {
-          layers: ["adapter-markers"],
-        });
-        const markerId =
-          markerHits.length === 0 ? null : String(markerHits[0]?.properties?.id ?? "");
-        if (markerId !== hoveredRef.current) {
-          hoveredRef.current = markerId;
-          store.setHovered(markerId);
-        }
-        const areaHits = active.queryRenderedFeatures([event.point.x, event.point.y], {
-          layers: ["areas-fill"],
-        });
-        const areaId = areaHits.length === 0 ? null : String(areaHits[0]?.properties?.id ?? "");
-        if (areaId !== hoveredAreaRef.current) {
-          hoveredAreaRef.current = areaId;
-          setHoveredArea(areaId);
-        }
-        if (areaId === null) {
-          setHoverTooltip(null);
-        } else {
-          setHoverTooltip({
-            x: event.point.x,
-            y: event.point.y,
-            text: derivedRef.current.describeAreaFor(areaId),
-          });
-        }
-        active.getCanvas().style.cursor =
-          markerId === null ? (areaId === null ? "" : "crosshair") : "pointer";
-      });
-    };
-    const onMouseOut = () => {
-      hoveredRef.current = null;
-      hoveredAreaRef.current = null;
-      store.setHovered(null);
-      setHoveredArea(null);
-      setHoverTooltip(null);
-    };
-    const canvas = active.getCanvas();
-    const pointOf = (event: PointerEvent): { readonly x: number; readonly y: number } => {
-      const box = canvas.getBoundingClientRect();
-      return { x: event.clientX - box.left, y: event.clientY - box.top };
-    };
-    const onPointerDown = (event: PointerEvent) => {
-      const currentOrders = ordersRef.current;
-      if (currentOrders === undefined || event.button !== 0) return;
-      const at = pointOf(event);
-      const hits = active.queryRenderedFeatures([at.x, at.y], { layers: ["adapter-markers"] });
-      const markerId = hits.length === 0 ? null : String(hits[0]?.properties?.id ?? "");
-      const fleetId = fleetIdFromMarker(markerId);
-      if (!isDraggableFleet(currentOrders, fleetId) || fleetId === null) return;
-      active.dragPan.disable();
-      canvas.setPointerCapture?.(event.pointerId);
-      dragRef.current = {
-        fleetId,
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-        dragging: false,
-      };
-      currentOrders.onSelectFleet(fleetId);
-      setSelectedFleet(fleetId);
-    };
-    const onPointerMove = (event: PointerEvent) => {
-      const drag = dragRef.current;
-      if (drag === null || drag.pointerId !== event.pointerId || drag.dragging) return;
-      if (
-        dragThresholdMet({ x: drag.startX, y: drag.startY }, { x: event.clientX, y: event.clientY })
-      ) {
-        drag.dragging = true;
-        canvas.style.cursor = "grabbing";
-      }
-    };
-    const endDrag = (event: PointerEvent, drop: boolean) => {
-      const drag = dragRef.current;
-      if (drag === null || drag.pointerId !== event.pointerId) return;
-      if (canvas.hasPointerCapture?.(event.pointerId)) {
-        canvas.releasePointerCapture(event.pointerId);
-      }
-      active.dragPan.enable();
-      canvas.style.cursor = "";
-      dragRef.current = null;
-      if (!drop || !drag.dragging) return;
-      const at = pointOf(event);
-      const areas = active.queryRenderedFeatures([at.x, at.y], { layers: ["areas-fill"] });
-      const areaId = areas.length === 0 ? null : String(areas[0]?.properties?.id ?? "");
-      const currentOrders = ordersRef.current;
-      const resolution = adapterDrop(currentOrders, drag.fleetId, areaId);
-      if (resolution.kind === "ignored") {
-        setLiveMessage("That fleet destination is not available.");
-        return;
-      }
-      currentOrders?.onDrop(drag.fleetId, areaId as string);
-      setLiveMessage(
-        `Ordered fleet to ${areaId === null ? "an area" : derivedRef.current.areaName(areaId)}`,
-      );
-    };
-    const onPointerUp = (event: PointerEvent) => endDrag(event, true);
-    const onPointerCancel = (event: PointerEvent) => endDrag(event, false);
-    const onImageMissing = (event: { readonly id: string }) => {
-      if (event.id !== FLEET_GLYPH_ID || active.hasImage(FLEET_GLYPH_ID)) return;
-      active.addImage(FLEET_GLYPH_ID, buildFleetGlyph(), { sdf: true });
-    };
-    active.on("styleimagemissing", onImageMissing);
-    active.on("idle", onIdle);
-    active.on("error", onError);
-    active.on("click", onClick);
-    active.on("mousemove", onMove);
-    active.on("mouseout", onMouseOut);
-    canvas.addEventListener("pointerdown", onPointerDown, true);
-    canvas.addEventListener("pointermove", onPointerMove, true);
-    canvas.addEventListener("pointerup", onPointerUp, true);
-    canvas.addEventListener("pointercancel", onPointerCancel, true);
-    active.once("load", () => {
-      setReady(true);
-      onIdle();
-    });
-
-    const waitIdle = (): Promise<void> =>
-      new Promise((resolve) => {
-        if (active.loaded() && !active.isMoving()) {
-          requestAnimationFrame(() => resolve());
-          return;
-        }
-        active.once("idle", () => resolve());
-      });
-
-    window.__globeAdapter = {
-      diagnostics: () => {
-        const selection = selectTiles(
-          {
-            centre: [active.getCenter().lng, active.getCenter().lat],
-            zoom: active.getZoom(),
-            pitchDegrees: active.getPitch(),
-            bearingDegrees: active.getBearing(),
-            viewport: {
-              width: active.getContainer().clientWidth,
-              height: active.getContainer().clientHeight,
-            },
-            dpr: window.devicePixelRatio,
-            mode: projectionRef.current,
-          },
-          hierarchy,
-        );
-        const snapshot = store.snapshot();
-        return {
-          zoom: active.getZoom(),
-          centre: [active.getCenter().lng, active.getCenter().lat],
-          bearing: active.getBearing(),
-          pitch: active.getPitch(),
-          projection: projectionRef.current,
-          sourceLevel: sourceLevelForDisplay(active.getZoom(), hierarchy),
-          overscaled: isOverscaled(active.getZoom(), hierarchy),
-          visibleTiles: selection.tiles.length,
-          storeVersion: snapshot.version,
-          markerCount: snapshot.features.filter((feature) => feature.kind === "marker").length,
-          routeCount: snapshot.features.filter((feature) => feature.kind === "route").length,
-          cache: cache.stats(),
-          errors,
-        };
-      },
-      updateMarker: (id, lon, lat) => {
-        const current = store.snapshot().features.find((feature) => feature.id === id);
-        if (current === undefined || current.geometry.type !== "Point") return false;
-        store.apply([
-          {
-            type: "upsert",
-            id,
-            feature: { ...current, geometry: { type: "Point", lon, lat } },
-          },
-        ]);
-        return true;
-      },
-      setMarkerVisible: (id, visible) => store.setVisible(id, visible) !== null,
-      benchmarkMarkers: (count) => {
-        const total = Math.max(0, Math.min(5000, Math.floor(count)));
-        const changes = Array.from({ length: total }, (_, index) => {
-          const area = AREAS[index % AREAS.length] as (typeof AREAS)[number];
-          const feature = {
-            id: `bench-marker-${index}`,
-            kind: "marker" as const,
-            order: 10_000 + index,
-            minZoom: 0,
-            markerClass: "port" as const,
-            label: `Bench ${index}`,
-            areaId: area.id,
-            geometry: { type: "Point" as const, lon: area.label[0], lat: area.label[1] },
-          };
-          return { type: "upsert" as const, id: feature.id, feature };
-        });
-        const started = performance.now();
-        const changeSet = store.apply(changes);
-        const ms = performance.now() - started;
-        return {
-          requested: total,
-          applied: changeSet.changes.length,
-          ms: Math.round(ms * 1000) / 1000,
-          storeVersion: changeSet.version,
-          markerCount: store.snapshot().features.filter((feature) => feature.kind === "marker")
-            .length,
-        };
-      },
-      benchmarkBatch: (count) => {
-        const total = Math.max(0, Math.min(5000, Math.floor(count)));
-        const changes = Array.from({ length: total }, (_, index) => {
-          const area = AREAS[(index * 3) % AREAS.length] as (typeof AREAS)[number];
-          const id = `bench-marker-${index}`;
-          const current = store.snapshot().features.find((feature) => feature.id === id);
-          const feature = current ?? {
-            id,
-            kind: "marker" as const,
-            order: 10_000 + index,
-            minZoom: 0,
-            markerClass: "port" as const,
-            label: `Bench ${index}`,
-            areaId: area.id,
-            geometry: { type: "Point" as const, lon: area.label[0], lat: area.label[1] },
-          };
-          if (feature.geometry.type !== "Point") return null;
-          return {
-            type: "upsert" as const,
-            id,
-            feature: {
-              ...feature,
-              geometry: {
-                type: "Point" as const,
-                lon: area.label[0] + 0.01,
-                lat: area.label[1] + 0.01,
-              },
-            },
-          };
-        }).filter((change): change is NonNullable<typeof change> => change !== null);
-        const started = performance.now();
-        const changeSet = store.apply(changes);
-        return {
-          requested: total,
-          applied: changeSet.changes.length,
-          ms: Math.round((performance.now() - started) * 1000) / 1000,
-          storeVersion: changeSet.version,
-        };
-      },
-      selectArea: (id) => onSelect(id),
-      featureIds: () => store.snapshot().features.map((feature) => feature.id),
-      featureScreenPoint: (id) => {
-        const feature = store.snapshot().features.find((entry) => entry.id === id);
-        if (feature === undefined || feature.geometry.type !== "Point") return null;
-        const point = active.project([feature.geometry.lon, feature.geometry.lat]);
-        const rect = active.getCanvas().getBoundingClientRect();
-        return { x: rect.left + point.x, y: rect.top + point.y };
-      },
-      areaScreenPoint: (id) => {
-        const area = AREAS_BY_ID.get(id);
-        if (area === undefined) return null;
-        const point = active.project([area.label[0], area.label[1]]);
-        const rect = active.getCanvas().getBoundingClientRect();
-        return { x: rect.left + point.x, y: rect.top + point.y };
-      },
-      areaLabelsRendered: () =>
-        active.queryRenderedFeatures({ layers: ["area-labels-list"] }).length,
-      jumpTo: (lon, lat, zoom) => active.jumpTo({ center: [lon, lat], zoom }),
-      setProjection: (next) => {
-        active.setProjection({ type: next });
-        setProjection(next);
-        projectionRef.current = next;
-      },
-      whenIdle: waitIdle,
-    };
-
-    disposal.add(() => active.off("styleimagemissing", onImageMissing));
-    disposal.add(() => active.off("idle", onIdle));
-    disposal.add(() => active.off("error", onError));
-    disposal.add(() => active.off("click", onClick));
-    disposal.add(() => active.off("mousemove", onMove));
-    disposal.add(() => active.off("mouseout", onMouseOut));
-    disposal.add(() => canvas.removeEventListener("pointerdown", onPointerDown, true));
-    disposal.add(() => canvas.removeEventListener("pointermove", onPointerMove, true));
-    disposal.add(() => canvas.removeEventListener("pointerup", onPointerUp, true));
-    disposal.add(() => canvas.removeEventListener("pointercancel", onPointerCancel, true));
-    disposal.add(() => {
-      if (hoverFrameRef.current !== null) cancelAnimationFrame(hoverFrameRef.current);
-    });
-    disposal.add(() => active.remove());
-    disposal.add(() => {
-      if (registeredProtocol) removeProtocol(BAKED_PROTOCOL);
-    });
-    disposal.add(() => {
-      delete window.__globeAdapter;
-      setReady(false);
-      mapRef.current = null;
-      storeRef.current = null;
-      cacheRef.current = null;
-    });
-
-    return () => disposal.dispose();
-  }, [forceFailure, mode, onRuler, onSelect, onUnavailable, plan]);
+  useMapInstance({
+    refs: {
+      container: containerRef,
+      map: mapRef,
+      store: storeRef,
+      cache: cacheRef,
+      abort: abortRef,
+      projection: projectionRef,
+      hoverFrame: hoverFrameRef,
+      hovered: hoveredRef,
+      hoveredArea: hoveredAreaRef,
+      drag: dragRef,
+      onCameraChange: onCameraChangeRef,
+      orders: ordersRef,
+      derived: derivedRef,
+      initialOverlay: initialOverlayRef,
+      initialLayers: initialLayersRef,
+    },
+    sinks: {
+      setReady,
+      setStatus,
+      setCamera,
+      setErrorText,
+      setLiveMessage,
+      setSelectedFleet,
+      setHoveredArea,
+      setHoverTooltip,
+      setProjection,
+    },
+    plan,
+    mode,
+    variant,
+    initialCamera,
+    forceFailure,
+    onUnavailable,
+    onSelect,
+    onRuler,
+  });
 
   const resetView = useCallback(() => {
     const map = mapRef.current;
