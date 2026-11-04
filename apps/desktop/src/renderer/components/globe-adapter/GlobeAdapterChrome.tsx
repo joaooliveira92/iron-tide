@@ -76,7 +76,6 @@ export interface GlobeAdapterChromeProps {
     readonly areaId: string;
   }) => void;
   readonly showMinimap?: boolean;
-  readonly showAreas?: boolean;
   readonly defaultControlsOpen?: boolean;
 }
 
@@ -173,7 +172,6 @@ export function GlobeAdapterChrome({
   entityRows = [],
   onSelectEntity,
   showMinimap = true,
-  showAreas = true,
   defaultControlsOpen = true,
 }: GlobeAdapterChromeProps) {
   const layout = MAP_VARIANT_LAYOUT[variant];
@@ -205,7 +203,7 @@ export function GlobeAdapterChrome({
       onSetCentre={onSetCentre}
       onReset={onReset}
       meterRef={meterRef}
-      inlineAreas={showAreas}
+      inlineAreas={variant !== "command"}
       treeRows={treeRows}
       onFocusTreeRow={(row) => {
         if (row.mapAreaId !== null) onSelect(row.mapAreaId);
@@ -296,17 +294,14 @@ export function GlobeAdapterChrome({
 
       {!docked && (
         <div className="pointer-events-auto absolute right-[calc(0.75rem+var(--chrome-right,0px))] top-[calc(0.75rem+var(--chrome-top,0px))] z-10 flex max-h-[70%] w-72 flex-col gap-2 overflow-y-auto">
-          {showAreas && (
-            <AreaInspector
-              className="rounded-lg border p-3 text-xs shadow-lg backdrop-blur"
-              summary={summary}
-              nameFor={nameFor}
-              onSelect={onSelect}
-            />
-          )}
+          <AreaInspector
+            className="rounded-lg border p-3 text-xs shadow-lg backdrop-blur"
+            summary={summary}
+            nameFor={nameFor}
+            onSelect={onSelect}
+          />
 
-          {showAreas && (
-            <nav
+          <nav
               aria-label="Map areas"
               data-testid="globe-adapter-area-list"
               className="rounded border border-white/25 bg-black/80 p-2 text-xs text-white"
@@ -328,8 +323,7 @@ export function GlobeAdapterChrome({
                   </li>
                 ))}
               </ul>
-            </nav>
-          )}
+          </nav>
 
           {entityList}
         </div>

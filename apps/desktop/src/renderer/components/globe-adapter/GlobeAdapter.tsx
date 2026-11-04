@@ -295,7 +295,7 @@ function mapLayers(
   plan: Extract<ReturnType<typeof useLandPlan>, { readonly kind: "baked" }>,
   overlay: GlobeAdapterProps["overlay"],
   layers: GlobeAdapterProps["state"]["layers"],
-  showAreas: boolean,
+  variant: MapVariant,
 ): LayerSpecification[] {
   const { manifest } = plan.tiles;
   const visibility = adapterLayerVisibility(layers);
@@ -569,7 +569,7 @@ function mapLayers(
       },
     },
   ];
-  if (showAreas) return specs;
+  if (variant !== "command") return specs;
   return specs.map((spec) =>
     AREA_LAYER_IDS.has(spec.id)
       ? { ...spec, layout: { ...spec.layout, visibility: "none" } }
@@ -581,7 +581,7 @@ function buildStyle(
   plan: Extract<ReturnType<typeof useLandPlan>, { readonly kind: "baked" }>,
   overlay: GlobeAdapterProps["overlay"],
   layers: GlobeAdapterProps["state"]["layers"],
-  showAreas: boolean,
+  variant: MapVariant,
 ): StyleSpecification {
   return {
     version: 8,
@@ -597,7 +597,7 @@ function buildStyle(
       "atmosphere-blend": 1,
     },
     sources: mapSources(plan),
-    layers: mapLayers(plan, overlay, layers, showAreas),
+    layers: mapLayers(plan, overlay, layers, variant),
   };
 }
 
@@ -647,7 +647,6 @@ export function GlobeAdapter({
   camera: sharedCamera = null,
   onCameraChange,
 }: GlobeAdapterProps) {
-  const showAreas = variant !== "command";
   const restoringCameraRef = useRef(sharedCamera !== null);
   const onCameraChangeRef = useRef(onCameraChange);
   onCameraChangeRef.current = onCameraChange;
@@ -760,7 +759,7 @@ export function GlobeAdapter({
     const visibility = adapterLayerVisibility(state.layers);
     const set = (id: string, visible: boolean) =>
       map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
-    set("area-labels-list", showAreas && visibility.labels);
+    set("area-labels-list", variant !== "command" && visibility.labels);
     set("adapter-borders-fill", visibility.borders);
     set("adapter-borders-line", visibility.borders);
     set("adapter-graticule", visibility.graticule);
@@ -769,7 +768,7 @@ export function GlobeAdapter({
     map.setFilter("adapter-markers", markerFilter(visibility) as never);
     map.setFilter("adapter-fleet-glyphs", fleetGlyphFilter(visibility) as never);
     map.setFilter("adapter-marker-labels", markerFilter(visibility) as never);
-  }, [ready, showAreas, state.layers]);
+  }, [ready, variant, state.layers]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -893,7 +892,7 @@ export function GlobeAdapter({
       registeredProtocol = true;
       map = new MapLibreMap({
         container,
-        style: buildStyle(plan, initialOverlayRef.current, initialLayersRef.current, showAreas),
+        style: buildStyle(plan, initialOverlayRef.current, initialLayersRef.current, variant),
         center: [initialCamera.centre[0], initialCamera.centre[1]],
         zoom: initialCamera.zoom,
         bearing: initialCamera.bearing,
@@ -1499,7 +1498,6 @@ export function GlobeAdapter({
         route={route}
         viewport={viewport}
         variant={variant}
-        showAreas={showAreas}
         treeRows={derived.treeRows}
         ownershipRows={derived.ownershipRows}
         summary={derived.summary}
