@@ -2,7 +2,7 @@ import type { DesignDraft, WorkshopView } from "@bluewave/ship-design";
 import type { PlanModel } from "../planModel.js";
 import type { Flat, SolidPaths, Tone } from "./iso.js";
 
-export type Fill = "paper" | "face" | "ink" | "boot" | "under";
+export type Fill = "paper" | "face" | "plate" | "ink" | "boot" | "under";
 
 export interface AnatomySolid {
   readonly paths: SolidPaths;

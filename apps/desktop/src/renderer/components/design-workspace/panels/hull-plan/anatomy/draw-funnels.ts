@@ -1,8 +1,23 @@
-import { circle, cylinder, discPath, iso, lineOf, loft } from "./iso.js";
+import { circle, cylinder, discPath, iso, lineOf, loft, towardViewer } from "./iso.js";
 import type { Point3 } from "./iso.js";
 import { solid } from "./anatomy-helpers.js";
 import type { PartDraft } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
+
+function frontArc(
+  cx: number,
+  radius: number,
+  z: number,
+  P: AnatomyShipScene["P"],
+  steps: number,
+): Point3[] {
+  const [tx, ty] = towardViewer(P);
+  const centre = Math.atan2(ty, tx);
+  return Array.from({ length: steps + 1 }, (_, step) => {
+    const angle = centre - Math.PI / 2 + (step / steps) * Math.PI;
+    return [cx + radius * Math.cos(angle), radius * Math.sin(angle), z] as Point3;
+  });
+}
 
 export function drawFunnels(scene: AnatomyShipScene): void {
   const { near, L, D, funnelMetrics, P, facts, add, text } = scene;
@@ -44,37 +59,25 @@ export function drawFunnels(scene: AnatomyShipScene): void {
       const cx = x + rake * share;
       const r = radius + (topRadius - radius) * share;
       part.lines.push({
-        d: lineOf(
-          circle(cx, 0, r, 20).map(
-            ([px, py]) => [px, py, baseZ + (topZ - baseZ) * share] as Point3,
-          ),
-          P,
-          true,
-        ),
+        d: lineOf(frontArc(cx, r, baseZ + (topZ - baseZ) * share, P, 14), P),
         tone: "lo",
       });
     }
     part.lines.push({
-      d: lineOf(
-        circle(x + rake, 0, topRadius * 1.06, 24).map(
-          ([px, py]) => [px, py, topZ - 0.012 * D] as Point3,
-        ),
-        P,
-        true,
-      ),
+      d: lineOf(frontArc(x + rake, topRadius * 1.06, topZ - 0.012 * D, P, 16), P),
       tone: "hi",
     });
     for (const side of [-1, 1]) {
+      const anchor: Point3 = [x + rake * 0.4 - radius * 1.4, side * radius * 2.4, baseZ];
       part.lines.push({
         d: lineOf(
-          [
-            [x + rake * 0.7, side * radius * 0.7, baseZ + (topZ - baseZ) * 0.78],
-            [x + rake * 0.4 - radius * 1.4, side * radius * 2.4, baseZ],
-          ],
+          [[x + rake * 0.7, side * radius * 0.7, baseZ + (topZ - baseZ) * 0.78], anchor],
           P,
         ),
         tone: "faint",
       });
+      const [gx, gy] = iso(anchor, P);
+      part.dots.push({ x: gx, y: gy, r: 0.8, tone: "mid" });
     }
     const pipeX = x - radius * 0.2;
     const pipeY = near * radius * 1.02;
