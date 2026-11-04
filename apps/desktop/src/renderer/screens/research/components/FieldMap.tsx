@@ -8,6 +8,7 @@ import { Hourglass } from "lucide-react";
 import { Progress } from "../../../components/ui/progress.js";
 import { Kbd } from "../../../components/ui/kbd.js";
 import { cn } from "../../../lib/utils.js";
+import { useResearchSelection } from "../ResearchSelection.js";
 import type { FieldWeightOption } from "../research-field-priorities.js";
 import { WEIGHT_OPTIONS } from "../research-field-priorities.js";
 import type { ResearchFieldView } from "../research-view-model.js";
@@ -17,11 +18,9 @@ import { WeightControl } from "./WeightControl.js";
 
 export interface FieldMapProps {
   readonly fields: readonly ResearchFieldView[];
-  readonly selectedFieldId: string;
   readonly highCapReached: boolean;
   readonly highCap: number;
   readonly busy: boolean;
-  readonly onSelect: (fieldId: string) => void;
   readonly onSetWeight: (fieldId: string, weight: FieldWeightOption) => void;
 }
 
@@ -33,15 +32,10 @@ const WEIGHT_RAIL: Readonly<Record<string, string>> = {
 
 const KEY_WEIGHT = new Map(WEIGHT_OPTIONS.map((o) => [o.label.charAt(0).toLowerCase(), o.weight]));
 
-export function FieldMap({
-  fields,
-  selectedFieldId,
-  highCapReached,
-  highCap,
-  busy,
-  onSelect,
-  onSetWeight,
-}: FieldMapProps) {
+export function FieldMap({ fields, highCapReached, highCap, busy, onSetWeight }: FieldMapProps) {
+  const { state, actions, meta } = useResearchSelection();
+  const selectedFieldId = state.fieldId;
+  const onSelect = actions.selectField;
   const listRef = useRef<HTMLUListElement>(null);
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -72,7 +66,7 @@ export function FieldMap({
       >
         {fields.map((field) => {
           const Icon = fieldIcon(field.fieldId);
-          const active = field.fieldId === selectedFieldId;
+          const active = meta.isFieldSelected(field.fieldId);
           const muted = field.state === "waiting" || field.state === "empty";
           const showProgress = field.activeTech !== null && field.activeTech.progressPct > 0;
           return (
