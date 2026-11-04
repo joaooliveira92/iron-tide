@@ -21,7 +21,6 @@ Read in order: `README.md`, `.ai/ENGINEERING-CONTRACT.md`, `RULES.md`, `.ai/REQU
 - No code comments; rationale goes in the commit message.
 - Max 5 worktrees, one session per checkout.
 - Review agents are read-only and their reports are pointers: verify diff, gates, `git status`.
-- Doc budgets (`scripts/doc-budgets.manifest.json`) ratchet down; justify raises.
 - No ADRs: enforce a rule in a gate, type or test, else add a line to `RULES.md` or the package `AGENTS.md`.
 - Research and working notes go to GitHub Discussions (`gh discussion create --category Research`), never the repo. [Issue tracker](docs/agents/issue-tracker.md).
 
@@ -46,8 +45,6 @@ Steps 1–2 need no permission.
 5. **Merge** only with the brief's authority, else a human merges. No force-push or history rewrite; no secrets, `.env`, stores, caches, machine config. Delete the branch after merge only.
 6. **Report** `READY`, `DRAFT (gates pending: <which>)` or `BLOCKED (<stop condition>)` first, then the PR link and observed versus assumed.
 
-`pnpm change-scope` for change-based filtering: [docs](docs/agents/change-scope.md).
-
 ## Shipping bar
 
 Playable, Seen (`pnpm snap` for UI), Tunable, Reachable, Explainable, Measured: [shipping bar](docs/agents/shipping-bar.md).
@@ -62,4 +59,4 @@ Playable, Seen (`pnpm snap` for UI), Tunable, Reachable, Explainable, Measured: 
 
 Write a decision request (`.ai/templates/decision-request.md`) and stop when: plausible interpretations change gameplay; design contradicts itself; required high-authority content is missing; repair would fabricate canonical information; migration changes unapproved authoritative outcomes; a fix expands into a deferred subsystem; destructive data or history rewrite is needed; credentials/secrets/signing/publishing are involved; a dependency raises licence/security concern; determinism cannot be demonstrated; a golden hash changes without understood cause.
 
-Do not stop for routine design choices. Pipeline: [`.ai/ORCHESTRATION.md`](.ai/ORCHESTRATION.md).
+Do not stop for routine design choices.
