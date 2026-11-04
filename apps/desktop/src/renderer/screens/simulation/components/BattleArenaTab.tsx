@@ -85,7 +85,7 @@ export function BattleArenaTab({
           </div>
         )}
 
-        {battleError !== null && <ErrorAlert message={battleError} fontMono />}
+        {battleError !== null && <ErrorAlert message={battleError} variant="technical" />}
 
         {battleManifest === null && !battleLoading ? (
           <Empty>
