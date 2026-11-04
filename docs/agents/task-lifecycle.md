@@ -13,7 +13,8 @@ substantial task from [the task brief](../../.ai/templates/task-brief.md).
 | `blocked` | Stop condition or decision request open | yes |
 | `ready-for-review` | Gates green, review or preview to look at | yes |
 | `ready-to-merge` | Reviewed, gates green, no merge authority | yes |
-| `monitoring-pr` | PR open, agent supervising CI and review | no |
+| `draft-pr` | Draft PR open, gates or CI pending, agent still working | no |
+| `monitoring-pr` | PR ready, agent supervising CI and review | no |
 | `merged` / `rejected` / `archived` | Closed | no |
 
 ```sh
@@ -52,7 +53,11 @@ Classify every finding:
 
 ## Pull-request supervision
 
-Open a PR only after local gates pass and the brief allows it. Then loop:
+Open a draft PR at the first push (`pr: none` in the brief is the only opt-out);
+a draft carries unverified work honestly, a branch with no PR hides it. Mark it
+ready only after local gates pass or, where they cannot run, CI is green. Never
+end a turn while a gate or CI run you started is pending: wait for it, or report
+`DRAFT (gates pending: <which>)` with the PR link. Then loop:
 
 1. Wait for required checks to reach a terminal state, using an event-driven
    watcher (not a `sleep` loop).

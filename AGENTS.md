@@ -4,31 +4,26 @@ Bluewave is a deterministic naval strategy game: engine, content compiler, and E
 
 ## Authority and reading order
 
-1. `README.md` — design baseline.
-2. `.ai/ENGINEERING-CONTRACT.md` — highest code authority.
-3. `RULES.md` — binding rules.
-4. `.ai/REQUIREMENTS.md` and the package's `AGENTS.md`.
-5. `.ai/SPRINT-PLAN.md` / `.ai/briefs/` — approved milestone.
-6. The nearby code, tests, exports, and CI.
+`README.md` (design baseline) → `.ai/ENGINEERING-CONTRACT.md` (code authority) → `RULES.md` → `.ai/REQUIREMENTS.md` and the package's `AGENTS.md` → the approved milestone in `.ai/SPRINT-PLAN.md` or `.ai/briefs/` → nearby code, tests, exports, CI.
 
-Precedence: safety/legal/credential → canonical design → contract → rules → brief → local conventions. On conflict, **stop** (see Stop conditions).
+Precedence: safety/legal/credential → canonical design → contract → rules → brief → local conventions. A higher layer wins: apply it, note it in one line, continue. **Stop** only when no layer clearly wins. Session or harness instructions (target branch, tools) set where work lands; this file sets how the repo changes.
 
 ## Agent workflow
 
-Run `pnpm agent:map <symbol|path>` (or `--screen <name>`) before reading, `pnpm verify:affected` before committing, and `pnpm heavy <cmd>` (not `sleep`) for long gates. Read code by range, not whole files; `.claude/settings.json` hooks enforce it. See [agent tools](docs/agents/agent-tools.md) and [context efficiency](docs/agents/context-efficiency.md).
+Run `pnpm agent:map <symbol|path>` before reading, `pnpm verify:affected` before committing, and `pnpm heavy <cmd>` (not `sleep`) for long gates. Read code by range; hooks in `.claude/settings.json` enforce it. See [agent tools](docs/agents/agent-tools.md) and [context efficiency](docs/agents/context-efficiency.md).
 
-Start substantial tasks from a [task brief](.ai/templates/task-brief.md) or a short [task prompt](.ai/templates/task-prompt.md): problem and evidence first, then the simplest viable solution. Record routine decisions in the brief and continue. Track state with `pnpm worktrees status`/`inbox`; return only for a stop condition. Merge only with the brief's authority; report rollback. See [task lifecycle](docs/agents/task-lifecycle.md), [rollback](docs/agents/rollback.md), [autonomy and access](docs/agents/autonomy-and-access.md).
+Size the task, then follow [Delivery](#delivery). **T0** one file, docs or config: no brief. **T1** the default: a short [task prompt](.ai/templates/task-prompt.md). **T2** multi-session or foggy: a [task brief](.ai/templates/task-brief.md) and [ORCHESTRATION](.ai/ORCHESTRATION.md). Problem and evidence first, then the simplest viable solution; record routine decisions and continue. Track state with `pnpm worktrees status`/`inbox`. See [task lifecycle](docs/agents/task-lifecycle.md), [rollback](docs/agents/rollback.md), [autonomy and access](docs/agents/autonomy-and-access.md).
 
 ## Rules
 
 - Check `git status`, `git pull --rebase`, and `pnpm preflight` at session start; rebase before every push.
 - Never overwrite or reformat others' work. Keep commits narrow, Conventional.
 - No code comments. Names, types, tests carry intent; rationale in the commit message.
-- Short-lived branch from `dev`; max 5 worktrees, one session per checkout.
+- Max 5 worktrees, one session per checkout.
 - Review agents are read-only: no edits, commits, branches, or PR state. Reports are pointers, not evidence: verify the diff, gates, and `git status`.
 - Doc budgets in `scripts/doc-budgets.manifest.json`; ratchet down, justify raises.
 - No ADRs. Enforce a rule in a gate, type or test; otherwise add a line to `RULES.md` or the package `AGENTS.md`.
-- Research notes and working documentation live in GitHub Discussions, never in the repository: `gh discussion create --category Research`. The repo keeps code, canonical authority, agent instructions, and generated gate artifacts. See [issue tracker](docs/agents/issue-tracker.md).
+- Research and working notes live in GitHub Discussions or the PR body, never in the repository. See [issue tracker](docs/agents/issue-tracker.md).
 
 ## Determinism
 
@@ -39,19 +34,19 @@ Identical content, ruleset, inputs, seeds, and versions produce identical hashes
 
 ## Effect
 
-- `effect@4.0.2` vendored at `vendor/effect`: import `effect` or `effect/<Subpath>`. Domain packages use the runtime-free subset; the full runtime lives at IO boundaries only (`persistence`, `compiler-cli`, `desktop/src/main`). [Runtime-free gate](docs/agents/runtime-free-gate.md), [RULES.md](RULES.md#effect-source-of-truth).
+- `effect@4.0.2` vendored at `vendor/effect`: import `effect` or `effect/<Subpath>`. Domain packages use the runtime-free subset; the full runtime lives at IO boundaries only. [Runtime-free gate](docs/agents/runtime-free-gate.md), [RULES.md](RULES.md#effect-source-of-truth).
 
 ## Errors
 
-- `Data.TaggedError` in-process, `Schema.TaggedError` on the wire, each with a stable `_tag`. Discriminate by `_tag` (tests too), never `instanceof`; `expect(fn).toThrow(ErrorClass)` is the one exception. Handle with `Effect.catchTag`/`catchTags`; `Effect.orDie` only where recovery is intentional. [RULES.md](RULES.md#errors).
+- `Data.TaggedError` in-process, `Schema.TaggedError` on the wire, each with a stable `_tag`. Discriminate by `_tag`, never `instanceof` (`expect(fn).toThrow(ErrorClass)` excepted). Handle with `Effect.catchTag`/`catchTags`. [RULES.md](RULES.md#errors).
 
 ## Schema and boundaries
 
-- Effect Schema decodes every boundary strictly (`{ onExcessProperty: "error" }`); no `JSON.parse(...) as T`. Wire formats are frozen: a schema change needs a parity test from existing fixtures. [Domain](docs/agents/domain.md), [Effect Schema patterns](agent-patterns/effect-schema.md), [RULES.md](RULES.md#schema-and-boundaries).
+- Effect Schema decodes every boundary strictly (`{ onExcessProperty: "error" }`); no `JSON.parse(...) as T`. Wire formats are frozen: a schema change needs a parity test. [Domain](docs/agents/domain.md), [patterns](agent-patterns/effect-schema.md), [RULES.md](RULES.md#schema-and-boundaries).
 
 ## Content and compiler
 
-- Content is declarative TypeScript compiled to canonical JSON (YAML for i18n and mandated infra only). Compiler stages are explicit, ordered, immutable, and accumulate diagnostics; validation, normalization, and repair stay distinct, and repair is explicit, narrow, and logged. [Canonical content](docs/architecture/canonical-content-and-rulesets.md), [RULES.md](RULES.md#content-and-compiler).
+- Content is declarative TypeScript compiled to canonical JSON (YAML for i18n and mandated infra only). Compiler stages are explicit, ordered, immutable; validation, normalization, and repair stay distinct. [Canonical content](docs/architecture/canonical-content-and-rulesets.md), [RULES.md](RULES.md#content-and-compiler).
 
 ## Services and composition
 
@@ -61,22 +56,24 @@ Identical content, ruleset, inputs, seeds, and versions produce identical hashes
 
 - Red, Green, Refactor. Bug unconfirmed until a regression test fails before the fix and passes after.
 - Tests on `vite-plus/test`. Exercise production composition; replace only true external boundaries. No sleep-based synchronization or wall-clock-dependent tests.
-- Done: `pnpm preflight`, `pnpm test:scripts`, `pnpm check` green; clean tree; Conventional subject; ACS met. Never weaken gates. Golden re-pins: [golden repinning](docs/agents/golden-repinning.md).
+- Never weaken gates. Golden re-pins: [golden repinning](docs/agents/golden-repinning.md).
 
-## Git
+## Delivery
 
-- No commits on `dev`/`main`. Merge branch into `dev` when gates green; PR optional. Delete branch only after merge.
-- No force-push, no history rewrite. No secrets, `.env`, stores, caches, or machine-specific config.
-- Use `pnpm change-scope` for change-based filtering: [change scope](docs/agents/change-scope.md).
+One path from task to merge; steps 1–2 need no permission.
+
+1. **Branch**: short-lived `feat|fix|refactor|docs/<slug>` off `dev`; never commit on `dev`/`main`. A branch the session or harness names is the PR target, not the working branch: if it is `dev`, say so in your first message and continue.
+2. **Push early**: push after the first commit and open a **draft PR into `dev`** (only `pr: none` in the brief opts out). Cloud containers are ephemeral; unpushed work is lost.
+3. **Verify**: `pnpm verify:affected` while iterating; `pnpm preflight`, `pnpm test:scripts`, `pnpm check` once on the final commit. Await every gate you start; never end a turn with one pending. A gate that cannot run here defers to CI: subscribe to the PR and wait.
+4. **Ready**: mark the PR ready when gates are green, the tree is clean, the subject is Conventional and ACS are met. The PR body lists each gate as `passed`, `failed` or `not run (reason)`.
+5. **Merge**: only with the brief's authority; otherwise a human merges. No force-push or history rewrite; no secrets, `.env`, stores, caches, or machine config. Delete the branch after merge only.
+6. **Report**: open with `READY`, `DRAFT (gates pending: <which>)` or `BLOCKED (<stop condition>)`, then the PR link and what is observed versus assumed.
+
+Use `pnpm change-scope` for change-based filtering: [change scope](docs/agents/change-scope.md).
 
 ## Shipping bar
 
-- **Playable**: desktop launches, vertical slice runs on every merge.
-- **Seen**: UI change verified with `pnpm snap` before done.
-- **Tunable**: numbers in content/balance data, marked PROVISIONAL until sourced; code holds mechanisms, not magic numbers.
-- **Reachable**: a change that adds player-facing engine capability names its UI path or adds a `dormant-by-decision` row to `scripts/data/reachability-ledger.json` (`pnpm check:reachability-ledger`).
-- **Explainable**: every player-facing number traces to an explanation tree.
-- **Measured**: balance claims cite generated reports (`pnpm check:balance-reports`), not intuition.
+Playable, Seen (`pnpm snap` for UI), Tunable, Reachable, Explainable, Measured: see [shipping bar](docs/agents/shipping-bar.md).
 
 ## Task guides
 
