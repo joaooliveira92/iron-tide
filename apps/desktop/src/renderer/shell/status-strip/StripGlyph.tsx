@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 
-import { cn } from "../lib/utils.js";
-import type { AllocationSegment, StripTone } from "./status-strip-state.js";
+import { cn } from "../../lib/utils.js";
+import { clamp01, percentString } from "../../components/ui/slate.js";
+import type { AllocationSegment, StripTone } from "../status-strip-state.js";
 
 export type SegmentId = AllocationSegment["id"];
 
@@ -36,12 +37,128 @@ export {
   Registration,
   SlateFoot as CardFoot,
   SlateHeader as CardHeader,
-  SlateMeter as Meter,
   SlateStat as Stat,
-} from "../components/ui/slate.js";
-import { clamp01, percentString } from "../components/ui/slate.js";
+} from "../../components/ui/slate.js";
 
-export function Ring({
+interface MeterGlyph {
+  readonly variant: "meter";
+  readonly fraction: number;
+  readonly fill: string;
+  readonly className?: string;
+  readonly mark?: number;
+}
+
+interface PipsGlyph {
+  readonly variant: "pips";
+  readonly filled: number;
+  readonly total: number;
+  readonly fill: string;
+  readonly className?: string;
+}
+
+interface HistogramGlyph {
+  readonly variant: "histogram";
+  readonly fractions: readonly number[];
+  readonly className?: string;
+}
+
+interface LineGlyph {
+  readonly variant: "line";
+  readonly values: readonly number[];
+  readonly tone: StripTone;
+  readonly className?: string;
+}
+
+interface RingGlyph {
+  readonly variant: "ring";
+  readonly fraction: number;
+  readonly tone: string;
+  readonly children?: ReactNode;
+}
+
+interface StackGlyph {
+  readonly variant: "stack";
+  readonly segments: readonly { readonly id: SegmentId; readonly fraction: number }[];
+  readonly className?: string;
+}
+
+export type StripGlyphProps =
+  | MeterGlyph
+  | PipsGlyph
+  | HistogramGlyph
+  | LineGlyph
+  | RingGlyph
+  | StackGlyph;
+
+export function StripGlyph(props: StripGlyphProps) {
+  switch (props.variant) {
+    case "meter":
+      return (
+        <Meter
+          fraction={props.fraction}
+          fill={props.fill}
+          mark={props.mark}
+          className={props.className}
+        />
+      );
+    case "pips":
+      return (
+        <Pips
+          filled={props.filled}
+          total={props.total}
+          fill={props.fill}
+          className={props.className}
+        />
+      );
+    case "histogram":
+      return <Histogram fractions={props.fractions} className={props.className} />;
+    case "line":
+      return <MiniLine values={props.values} tone={props.tone} className={props.className} />;
+    case "ring":
+      return (
+        <Ring fraction={props.fraction} tone={props.tone}>
+          {props.children}
+        </Ring>
+      );
+    case "stack":
+      return <SegmentStack segments={props.segments} className={props.className} />;
+  }
+}
+
+function Meter({
+  fraction,
+  fill,
+  className,
+  mark,
+}: {
+  readonly fraction: number;
+  readonly fill: string;
+  readonly className?: string;
+  readonly mark?: number;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "relative block h-1.5 w-full overflow-hidden rounded-full bg-muted shadow-inner",
+        className,
+      )}
+    >
+      <span
+        className={cn("block h-full rounded-full transition-[width] duration-500", fill)}
+        style={{ width: percentString(fraction) }}
+      />
+      {mark !== undefined && (
+        <span
+          className="absolute inset-y-0 w-px bg-foreground/80"
+          style={{ left: percentString(mark) }}
+        />
+      )}
+    </span>
+  );
+}
+
+function Ring({
   fraction,
   tone,
   children,
@@ -73,7 +190,7 @@ export function Ring({
   );
 }
 
-export function Pips({
+function Pips({
   filled,
   total,
   fill,
@@ -96,7 +213,7 @@ export function Pips({
   );
 }
 
-export function Histogram({
+function Histogram({
   fractions,
   className,
 }: {
@@ -119,7 +236,7 @@ export function Histogram({
   );
 }
 
-export function MiniLine({
+function MiniLine({
   values,
   tone,
   className,
@@ -156,7 +273,7 @@ export function MiniLine({
   );
 }
 
-export function SegmentStack({
+function SegmentStack({
   segments,
   className,
 }: {
