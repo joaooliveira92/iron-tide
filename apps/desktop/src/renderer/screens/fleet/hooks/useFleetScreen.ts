@@ -1,7 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
 import type { MovementCommand } from "@bluewave/campaign-engine";
-import { useBridge } from "../../../lib/bridge-context.js";
-import { loadThroughBridge } from "../../../lib/bridge-read.js";
 import { useMovementOrders } from "../../../lib/movement-orders.js";
 import type {
   FleetDivisionView,
@@ -14,6 +12,7 @@ import {
 } from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
 import type { FleetScreenState } from "../fleet-screen-state.js";
+import type { LoadFleetInspection } from "./useFleetInspection.js";
 import {
   acceptMovementCommand,
   initialFleetScreenState,
@@ -43,10 +42,9 @@ export interface UseFleetScreenReturn {
   readonly cancel: (commandId: string) => void;
 }
 
-export function useFleetScreen(sessionId: string): UseFleetScreenReturn {
+export function useFleetScreen(sessionId: string, load: LoadFleetInspection): UseFleetScreenReturn {
   const [selectedDivisionId, setSelectedDivisionId] = useState<string | null>(null);
   const [destinationAreaId, setDestinationAreaId] = useState<string | null>(null);
-  const bridge = useBridge();
   const campaignRevision = useCampaignRevision();
   const workflow = useCommandScreenWorkflow<
     FleetScreenState,
@@ -55,8 +53,7 @@ export function useFleetScreen(sessionId: string): UseFleetScreenReturn {
   >(
     requestLifecycleAdapter({
       initialState: initialFleetScreenState,
-      load: () =>
-        loadThroughBridge(bridge, (b) => b.campaign.execute("inspectFleetScreen", sessionId)),
+      load,
       project: projectFleetScreen,
       accept: acceptMovementCommand,
       onProjection: (projection) => {

@@ -20,6 +20,11 @@ import { AreaOverviewTable } from "./components/AreaOverviewTable.js";
 import { orderHotkeyIntent, stepDivisionSelection } from "./fleet-hotkeys.js";
 import { useFleetHotkeys } from "./hooks/useFleetHotkeys.js";
 import { useFleetScreen } from "./hooks/useFleetScreen.js";
+import {
+  FleetInspectionContext,
+  useFleetInspectionCache,
+  type LoadFleetInspection,
+} from "./hooks/useFleetInspection.js";
 import { translate } from "../../lib/strings.js";
 import { ChartDesk, INDEX_TABS_CLEARANCE } from "../../components/slate/ChartDesk.js";
 import { DepartmentDrawer } from "../../components/slate/DepartmentDrawer.js";
@@ -34,6 +39,21 @@ import { LoadErrorCard } from "./components/LoadErrorCard.js";
 import { LoadingState } from "./components/LoadingState.js";
 
 function FleetScreen({ sessionId }: { readonly sessionId: string }) {
+  const load = useFleetInspectionCache(sessionId);
+  return (
+    <FleetInspectionContext value={load}>
+      <FleetScreenContent sessionId={sessionId} load={load} />
+    </FleetInspectionContext>
+  );
+}
+
+function FleetScreenContent({
+  sessionId,
+  load,
+}: {
+  readonly sessionId: string;
+  readonly load: LoadFleetInspection;
+}) {
   const {
     state,
     loadError,
@@ -49,7 +69,7 @@ function FleetScreen({ sessionId }: { readonly sessionId: string }) {
     submit,
     replace,
     cancel,
-  } = useFleetScreen(sessionId);
+  } = useFleetScreen(sessionId, load);
   const wide = useMinWidth(COMMAND_OVERLAY_MIN_WIDTH);
   const [department, setDepartment] = useState<FleetDepartment | null>(null);
 

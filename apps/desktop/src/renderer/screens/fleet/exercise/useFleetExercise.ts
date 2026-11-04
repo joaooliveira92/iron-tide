@@ -5,13 +5,13 @@ import type {
   FleetScreenProjection,
 } from "../../../../shared/fleet-contract.js";
 import { useBridge } from "../../../lib/bridge-context.js";
-import { loadThroughBridge } from "../../../lib/bridge-read.js";
 import {
   type CommandOutcome,
   requestLifecycleAdapter,
   useCommandScreenWorkflow,
 } from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
+import { useFleetInspectionLoader } from "../hooks/useFleetInspection.js";
 import {
   explainExerciseRejection,
   exerciseRows,
@@ -37,6 +37,7 @@ export interface UseFleetExerciseReturn {
 export function useFleetExercise(sessionId: string): UseFleetExerciseReturn {
   const bridge = useBridge();
   const campaignRevision = useCampaignRevision();
+  const load = useFleetInspectionLoader(sessionId);
   const [selection, setSelection] = useState<readonly string[]>([]);
   const workflow = useCommandScreenWorkflow<
     ExerciseState,
@@ -45,8 +46,7 @@ export function useFleetExercise(sessionId: string): UseFleetExerciseReturn {
   >(
     requestLifecycleAdapter({
       initialState: initialExerciseState,
-      load: () =>
-        loadThroughBridge(bridge, (b) => b.campaign.execute("inspectFleetScreen", sessionId)),
+      load,
       project: projectExercise,
       accept: (value) => ({
         patch: {},
@@ -69,7 +69,7 @@ export function useFleetExercise(sessionId: string): UseFleetExerciseReturn {
     [],
   );
 
-  const hold = (): Promise<CommandOutcome> => {
+  const hold = useCallback((): Promise<CommandOutcome> => {
     if (!bridge || selected.length === 0) return Promise.resolve("transport-failure");
     const shipIds = [...selected];
     return workflow
@@ -87,7 +87,7 @@ export function useFleetExercise(sessionId: string): UseFleetExerciseReturn {
         if (outcome === "accepted") setSelection([]);
         return outcome;
       });
-  };
+  }, [bridge, rows, selected, sessionId, workflow.execute]);
 
   return {
     state: workflow.state,
