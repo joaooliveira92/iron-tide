@@ -2,13 +2,16 @@ import { memo } from "react";
 
 import type { PortMark } from "../map-markers.js";
 import { pinned } from "../map-svg.js";
+import { useWorldMapLayer } from "./WorldMapLayerContext.js";
 
 export interface PortsLayerProps {
   readonly marks: readonly PortMark[];
-  readonly strokeFor: (nation: string) => string;
 }
 
-export const PortsLayer = memo(function PortsLayer({ marks, strokeFor }: PortsLayerProps) {
+export const PortsLayer = memo(function PortsLayer({ marks }: PortsLayerProps) {
+  const {
+    actions: { strokeFor },
+  } = useWorldMapLayer();
   return (
     <>
       {marks.map((mark) => {
