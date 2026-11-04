@@ -2,7 +2,6 @@ import { Map as MapLibreMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { AREAS_BY_ID } from "../world-map/map-geometry.js";
 import { MAP_CONTAINER_STYLE } from "../globe-spike/map-container.js";
 import { useLandPlan } from "../globe-spike/use-land-plan.js";
 import type { WorldMapChartProps } from "../world-map/WorldMapChart.js";
@@ -23,6 +22,8 @@ import { GlobeAdapterScreenReader } from "./GlobeAdapterScreenReader.js";
 import { useLayerSet } from "./use-layer-set.js";
 import { useMapInstance } from "./use-map-instance.js";
 import { fleetIdFromMarker, routeAnnouncement } from "./adapter-interaction.js";
+import { buildEntityRows } from "./entity-rows.js";
+import { useMapKeyboard } from "./use-map-keyboard.js";
 import { NATURAL_EARTH_HIERARCHY, TileCache, type TileHierarchy } from "./tile-hierarchy.js";
 
 export { GLOBE_ASSET_ROOT };
@@ -187,25 +188,7 @@ export function GlobeAdapter({
 
   projectionRef.current = projection;
 
-  const entityRows = useMemo(() => {
-    const ports = [...overlay.ports]
-      .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))
-      .map((port) => ({
-        id: `port:${port.id}`,
-        name: port.name,
-        kind: "port" as const,
-        areaId: port.area,
-      }));
-    const fleets = [...overlay.fleets]
-      .sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0))
-      .map((fleet) => ({
-        id: `fleet:${fleet.id}`,
-        name: fleet.name,
-        kind: "fleet" as const,
-        areaId: fleet.area,
-      }));
-    return [...ports, ...fleets];
-  }, [overlay.fleets, overlay.ports]);
+  const entityRows = useMemo(() => buildEntityRows(overlay), [overlay.fleets, overlay.ports]);
 
   const applyProjection = useCallback(() => {
     const map = mapRef.current;
@@ -309,61 +292,14 @@ export function GlobeAdapter({
     });
   }, [state.centre]);
 
-  const onKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
-      const map = mapRef.current;
-      const fleets = orders?.fleets ?? [];
-      const cycleFleet = () => {
-        if (fleets.length === 0) return;
-        const current = fleets.findIndex((fleet) => fleet.fleetId === orders?.selectedFleetId);
-        const next = fleets[(current + 1) % fleets.length];
-        if (next === undefined) return;
-        orders?.onSelectFleet(next.fleetId);
-        setSelectedFleet(next.fleetId);
-        const anchor = next.mapAreaId === null ? null : AREAS_BY_ID.get(next.mapAreaId)?.label;
-        if (map !== null && anchor !== undefined && anchor !== null) {
-          map.jumpTo({ center: [anchor[0], anchor[1]], zoom: Math.max(3.5, map.getZoom()) });
-        }
-        setLiveMessage(`Focused fleet ${next.fleetName}`);
-      };
-      if (!event.ctrlKey && !event.metaKey && !event.altKey) {
-        if (event.key === "f" || event.key === "F") {
-          event.preventDefault();
-          cycleFleet();
-          return;
-        }
-        if (event.key === "Escape") {
-          event.preventDefault();
-          setSelectedFleet(null);
-          onSelect(null);
-          return;
-        }
-      }
-      if (map === null) return;
-      const step = event.shiftKey ? 240 : 120;
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const move = (dx: number, dy: number) =>
-        map.panBy([dx, dy], { animate: !reduced, duration: reduced ? 0 : 250 });
-      const handlers: Record<string, () => void> = {
-        ArrowLeft: () => move(step, 0),
-        ArrowRight: () => move(-step, 0),
-        ArrowUp: () => move(0, step),
-        ArrowDown: () => move(0, -step),
-        "+": () => map.setZoom(map.getZoom() + 0.5),
-        "=": () => map.setZoom(map.getZoom() + 0.5),
-        "-": () => map.setZoom(map.getZoom() - 0.5),
-        _: () => map.setZoom(map.getZoom() - 0.5),
-        "0": resetView,
-        n: () => map.setBearing(0),
-        N: () => map.setBearing(0),
-      };
-      const handler = handlers[event.key];
-      if (handler === undefined) return;
-      event.preventDefault();
-      handler();
-    },
-    [onSelect, orders, resetView],
-  );
+  const onKeyDown = useMapKeyboard({
+    mapRef,
+    orders,
+    onSelect,
+    onResetView: resetView,
+    setSelectedFleet,
+    setLiveMessage,
+  });
 
   const setProjectionMode = useCallback((next: CameraProjection) => {
     const map = mapRef.current;
