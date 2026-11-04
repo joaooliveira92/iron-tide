@@ -1,452 +1,60 @@
-import type { DivisionView, UnassignedShipView } from "@bluewave/campaign-engine";
-import { Star } from "lucide-react";
-import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../../../components/ui/alert-dialog.js";
-import { Badge } from "../../../components/ui/badge.js";
-import { Button } from "../../../components/ui/button.js";
-import { Card, CardContent } from "../../../components/ui/card.js";
-import { Progress } from "../../../components/ui/progress.js";
-import {
-  SortableList,
-  SortableListGroup,
-  SortableListHandle,
-  SortableListItem,
-  SortableListItemContent,
-} from "../../../components/motion/sortable-list.js";
+import type { DivisionView } from "@bluewave/campaign-engine";
+import type { ReactNode } from "react";
 import type { DivisionCommandBody } from "../../../../shared/division-contract.js";
+import { Card, CardContent } from "../../../components/ui/card.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
-import { humanizeId } from "../../../lib/humanize-id.js";
+import { DivisionCardActions } from "./DivisionCardActions.js";
+import { DivisionCardProvider } from "./division-card-context.js";
 import {
-  canRemoveShip,
-  costText,
-  divisionTitle,
-  formationLabel,
-  roleLabel,
-  shipsAvailableToAdd,
-  type DivisionOrganizationState,
-} from "./division-organization-state.js";
-import { Tip } from "../../../components/ui/tip.js";
+  DivisionCardCommander,
+  DivisionCardDoctrine,
+  DivisionCardHeader,
+  DivisionCardStatus,
+} from "./DivisionCardIdentity.js";
+import { DivisionCardFleetOrder, DivisionCardFlagship } from "./DivisionCardShips.js";
+import type { DivisionOrganizationState } from "./division-organization-state.js";
 
-export interface DivisionCardProps {
+export interface DivisionCardRootProps {
   readonly division: DivisionView;
   readonly state: DivisionOrganizationState;
   readonly busy: boolean;
   readonly send: (command: DivisionCommandBody) => Promise<CommandOutcome>;
+  readonly children: ReactNode;
 }
 
-function Meter({ label, value }: { readonly label: string; readonly value: number }) {
+function DivisionCardRoot({ division, state, busy, send, children }: DivisionCardRootProps) {
   return (
-    <div className="space-y-1">
-      <div className="flex items-baseline justify-between text-xs">
-        <span className="text-muted-foreground">{label}</span>
-        <span className="tabular-nums font-medium">{value}</span>
-      </div>
-      <Progress value={value} aria-label={label} />
-    </div>
+    <DivisionCardProvider division={division} organization={state} busy={busy} send={send}>
+      <Card>
+        <CardContent className="space-y-4 p-4">{children}</CardContent>
+      </Card>
+    </DivisionCardProvider>
   );
 }
 
-const SELECT_CLASS = "h-8 min-w-0 rounded-md border bg-background px-2 text-sm disabled:opacity-50";
+export const DivisionCard = {
+  Root: DivisionCardRoot,
+  Header: DivisionCardHeader,
+  Commander: DivisionCardCommander,
+  Status: DivisionCardStatus,
+  Doctrine: DivisionCardDoctrine,
+  Flagship: DivisionCardFlagship,
+  FleetOrder: DivisionCardFleetOrder,
+  Actions: DivisionCardActions,
+};
 
-export function DivisionCard({ division, state, busy, send }: DivisionCardProps) {
-  const addable = shipsAvailableToAdd(division, state.unassignedShips, state.maxShips);
-  const [toAdd, setToAdd] = useState("");
-  const selected = addable.some((ship) => ship.shipId === toAdd)
-    ? toAdd
-    : (addable[0]?.shipId ?? "");
-  const title = divisionTitle(division);
-  const availableOfficers = state.officers.filter((officer) => officer.divisionId === undefined);
-  const [officerDraft, setOfficerDraft] = useState("");
-  const selectedOfficer = availableOfficers.some((officer) => officer.officerId === officerDraft)
-    ? officerDraft
-    : (availableOfficers[0]?.officerId ?? "");
+export type DivisionCardProps = Omit<DivisionCardRootProps, "children">;
 
-  const [roleDraft, setRoleDraft] = useState(division.role);
-  const [formationDraft, setFormationDraft] = useState(division.formation);
-  const doctrineChange = {
-    ...(roleDraft === division.role ? {} : { role: roleDraft }),
-    ...(formationDraft === division.formation ? {} : { formation: formationDraft }),
-  };
-  const doctrineDirty = Object.keys(doctrineChange).length > 0;
-
-  const flagship = division.ships.find((ship) => ship.shipId === division.flagshipShipId);
-  const shipName = new Map(division.ships.map((ship) => [ship.shipId, ship.name]));
-  const authoritativeRest = division.ships
-    .filter((ship) => ship.shipId !== division.flagshipShipId)
-    .map((ship) => ship.shipId);
-  const restKey = authoritativeRest.join("\u0000");
-  const [draftRest, setDraftRest] = useState(authoritativeRest);
-  const [syncedRestKey, setSyncedRestKey] = useState(restKey);
-  const [submittedRestKey, setSubmittedRestKey] = useState<string | null>(null);
-  if (syncedRestKey !== restKey) {
-    setSyncedRestKey(restKey);
-    setDraftRest(authoritativeRest);
-    setSubmittedRestKey(null);
-  }
-  const draftKey = draftRest.join("\u0000");
-  const reorderDirty = draftKey !== restKey;
-  const reorderSubmitted = submittedRestKey === draftKey;
-
+export function DefaultDivisionCard(props: DivisionCardProps) {
   return (
-    <Card>
-      <CardContent className="space-y-4 p-4">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h4 className="truncate font-medium">{title}</h4>
-            <p className="text-xs text-muted-foreground">{division.areaName}</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant="secondary">{roleLabel(division.role)}</Badge>
-            <Badge variant="outline">{formationLabel(division.formation)}</Badge>
-            {division.commanderVacant && (
-              <Tip label="No officer commands this division yet. Its ships fight with a command penalty.">
-                <Badge variant="outline">Commander vacant</Badge>
-              </Tip>
-            )}
-          </div>
-        </div>
-
-        {division.commander === undefined ? (
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-              Commander
-              <select
-                aria-label={`Commander of ${title}`}
-                className={SELECT_CLASS}
-                value={selectedOfficer}
-                disabled={busy || availableOfficers.length === 0}
-                onChange={(event) => setOfficerDraft(event.target.value)}
-              >
-                {availableOfficers.length === 0 && <option value="">No officer available</option>}
-                {availableOfficers.map((officer) => (
-                  <option key={officer.officerId} value={officer.officerId}>
-                    {humanizeId(officer.rank)} {officer.name} · command rating {officer.skill}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={busy || selectedOfficer === ""}
-              onClick={() =>
-                send({
-                  type: "AssignOfficer",
-                  divisionId: division.divisionId,
-                  officerId: selectedOfficer,
-                })
-              }
-            >
-              Assign commander
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-end gap-3">
-            <span className="text-xs text-muted-foreground">
-              {humanizeId(division.commander.rank)} {division.commander.name} · command rating{" "}
-              {division.commander.skill}
-            </span>
-            <Tip label={`Relieving a commander ${costText(state.penalties.changeCommander)}`}>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={busy}
-                onClick={() => send({ type: "RelieveOfficer", divisionId: division.divisionId })}
-              >
-                Relieve commander
-              </Button>
-            </Tip>
-          </div>
-        )}
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Meter label="Experience" value={division.experience} />
-          <Meter label="Cohesion" value={division.cohesion} />
-        </div>
-
-        {division.speedWarning !== undefined && (
-          <p className="text-xs text-amber-600" role="note">
-            {division.speedWarning.slowestShipName} holds this division to speed{" "}
-            {division.speedWarning.slowestSpeed}; its fastest ship could make{" "}
-            {division.speedWarning.fastestSpeed}.
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Role
-            <select
-              aria-label={`Role of ${title}`}
-              className={SELECT_CLASS}
-              value={roleDraft}
-              disabled={busy}
-              onChange={(event) => setRoleDraft(event.target.value)}
-            >
-              {state.roles.map((role) => (
-                <option key={role} value={role}>
-                  {roleLabel(role)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Formation
-            <select
-              aria-label={`Formation of ${title}`}
-              className={SELECT_CLASS}
-              value={formationDraft}
-              disabled={busy}
-              onChange={(event) => setFormationDraft(event.target.value)}
-            >
-              {state.formations.map((formation) => (
-                <option key={formation} value={formation}>
-                  {formationLabel(formation)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={busy || !doctrineDirty}
-            onClick={() =>
-              send({
-                type: "ChangeDivisionDoctrine",
-                divisionId: division.divisionId,
-                ...doctrineChange,
-              })
-            }
-          >
-            Change doctrine
-          </Button>
-          <span className="text-xs text-muted-foreground">
-            Changing the role {costText(state.penalties.changeRole)}; changing the formation{" "}
-            {costText(state.penalties.changeFormation)}.
-          </span>
-        </div>
-
-        {flagship !== undefined && (
-          <ul className="space-y-1.5" aria-label={`Flagship of ${title}`}>
-            <li className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-1.5 text-sm">
-              <span className="flex items-center gap-1.5">
-                <Star
-                  className="h-3.5 w-3.5 fill-current text-amber-500"
-                  aria-label="Flagship"
-                  role="img"
-                />
-                {flagship.name}
-              </span>
-              {canRemoveShip(division) && (
-                <Tip label={`Removing a ship ${costText(state.penalties.removeShip)}`}>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={busy}
-
-                    onClick={() =>
-                      send({
-                        type: "RemoveShipFromDivision",
-                        divisionId: division.divisionId,
-                        shipId: flagship.shipId,
-                      })
-                    }
-                  >
-                    Remove
-                  </Button>
-                </Tip>
-              )}
-            </li>
-          </ul>
-        )}
-
-        {authoritativeRest.length > 0 && (
-          <>
-            <p className="text-xs text-muted-foreground">
-              Drag the ships below, or focus a handle and use the arrow keys, to set their order.
-              The flagship stays first.
-            </p>
-            <SortableList
-              items={draftRest.map((id) => ({ id, name: shipName.get(id) ?? id }))}
-              onItemsChange={(items) => setDraftRest(items.map((item) => item.id))}
-              getItemLabel={(item) => item.name}
-              label={`Reorder ${title} ships`}
-              showUndo={false}
-              className="max-w-none"
-              itemClassName="rounded-md gap-2 p-2"
-            >
-              {(items) => (
-                <SortableListGroup>
-                  {items.map((item) => (
-                    <SortableListItem key={item.id} id={item.id}>
-                      <SortableListHandle />
-                      <SortableListItemContent>
-                        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                          <span>{item.name}</span>
-                          <span className="flex gap-1.5">
-                            <Tip
-                              label={`Changing the flagship ${costText(state.penalties.changeFlagship)}`}
-                            >
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                disabled={busy}
-
-                                onClick={() =>
-                                  send({
-                                    type: "ChangeDivisionFlagship",
-                                    divisionId: division.divisionId,
-                                    newFlagshipShipId: item.id,
-                                  })
-                                }
-                              >
-                                Make flagship
-                              </Button>
-                            </Tip>
-                            {canRemoveShip(division) && (
-                              <Tip
-                                label={`Removing a ship ${costText(state.penalties.removeShip)}`}
-                              >
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={busy}
-
-                                  onClick={() =>
-                                    send({
-                                      type: "RemoveShipFromDivision",
-                                      divisionId: division.divisionId,
-                                      shipId: item.id,
-                                    })
-                                  }
-                                >
-                                  Remove
-                                </Button>
-                              </Tip>
-                            )}
-                          </span>
-                        </div>
-                      </SortableListItemContent>
-                    </SortableListItem>
-                  ))}
-                </SortableListGroup>
-              )}
-            </SortableList>
-            {(reorderDirty || reorderSubmitted) && (
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs text-muted-foreground">
-                  Reordering ships {costText(state.penalties.reorder)}.
-                </span>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={!reorderDirty || reorderSubmitted || busy}
-                  onClick={() => {
-                    setSubmittedRestKey(draftKey);
-                    void send({
-                      type: "ReorderDivisionShips",
-                      divisionId: division.divisionId,
-                      shipOrder: [division.flagshipShipId, ...draftRest],
-                    }).then((outcome) => {
-                      if (outcome !== "accepted")
-                        setSubmittedRestKey((key) => (key === draftKey ? null : key));
-                    });
-                  }}
-                >
-                  {reorderSubmitted ? "Reorder queued" : "Apply order"}
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            {division.ships.length >= state.maxShips ? (
-              <span className="text-xs text-muted-foreground">
-                Full ({state.maxShips} ships maximum)
-              </span>
-            ) : addable.length === 0 ? (
-              <span className="text-xs text-muted-foreground">
-                No unassigned ships in {division.areaName} to add.
-              </span>
-            ) : (
-              <>
-                <select
-                  aria-label={`Ship to add to ${title}`}
-                  className={SELECT_CLASS}
-                  value={selected}
-                  disabled={busy}
-                  onChange={(event) => setToAdd(event.target.value)}
-                >
-                  {addable.map((ship: UnassignedShipView) => (
-                    <option key={ship.shipId} value={ship.shipId}>
-                      {ship.name}
-                    </option>
-                  ))}
-                </select>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={busy || selected === ""}
-                  onClick={() =>
-                    send({
-                      type: "AddShipToDivision",
-                      divisionId: division.divisionId,
-                      shipId: selected,
-                    })
-                  }
-                >
-                  Add ship
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  Adding a ship {costText(state.penalties.addShip)}.
-                </span>
-              </>
-            )}
-          </div>
-
-          <AlertDialog>
-            <AlertDialogTrigger render={<Button variant="outline" size="sm" disabled={busy} />}>
-              Dissolve division
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Dissolve {title}?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Its ships return to the unassigned pool and the division&apos;s experience and
-                  cohesion are lost. This takes effect when you advance the month.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Keep division</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() =>
-                    send({ type: "DissolveDivision", divisionId: division.divisionId })
-                  }
-                >
-                  Dissolve
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </CardContent>
-    </Card>
+    <DivisionCard.Root {...props}>
+      <DivisionCard.Header />
+      <DivisionCard.Commander />
+      <DivisionCard.Status />
+      <DivisionCard.Doctrine />
+      <DivisionCard.Flagship />
+      <DivisionCard.FleetOrder />
+      <DivisionCard.Actions />
+    </DivisionCard.Root>
   );
 }
