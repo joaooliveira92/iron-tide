@@ -11,10 +11,8 @@ import type {
   ConstructionCommitments,
 } from "../../../../shared/budget-contract.js";
 import { projectRows, shareOf, type ProjectRow } from "../commitments-view.js";
+import { LedgerTable } from "./LedgerTable.js";
 import { SegmentCard } from "./SegmentCard.js";
-
-const ROW =
-  "grid w-full grid-cols-[minmax(0,1fr)_minmax(3rem,7rem)_4.5rem_6rem] items-center gap-x-3 rounded-md px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring";
 
 const TONE = {
   neutral: "text-muted-foreground",
@@ -77,30 +75,9 @@ function ProjectLine({ row, peak }: { readonly row: ProjectRow; readonly peak: n
   const format = usePresentationFormat();
   const amount = row.foreign ? "Contract" : format.count(row.monthlyCost);
   return (
-    <HoverCard>
-      <HoverCardTrigger
-        delay={0}
-        closeDelay={0}
-        render={<button type="button" />}
-        aria-label={`${row.className}: ${row.style.label}, ${amount} this month — show detail`}
-        className={ROW}
-      >
-        <span className="truncate">
-          {row.className} <span className="text-xs text-muted-foreground">{row.shipType}</span>
-        </span>
-        <span aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-muted">
-          <span
-            className={cn(
-              "block h-full rounded-full",
-              row.carryingCost > 0 ? "bg-destructive/70" : "bg-primary",
-            )}
-            style={{ width: `${shareOf(row.monthlyCost, peak) * 100}%` }}
-          />
-        </span>
-        <span className={cn("text-right text-xs", TONE[row.style.tone])}>{row.style.label}</span>
-        <span className="text-right font-medium tabular-nums">{amount}</span>
-      </HoverCardTrigger>
-      <HoverCardContent side="left" align="center" className="w-72">
+    <LedgerTable.Row
+      ariaLabel={`${row.className}: ${row.style.label}, ${amount} this month — show detail`}
+      detail={
         <SegmentCard
           title={row.className}
           amount={row.foreign ? "Contract" : format.money(row.monthlyCost)}
@@ -125,8 +102,18 @@ function ProjectLine({ row, peak }: { readonly row: ProjectRow; readonly peak: n
           }
           note={costNote(row)}
         />
-      </HoverCardContent>
-    </HoverCard>
+      }
+    >
+      <span className="truncate">
+        {row.className} <span className="text-xs text-muted-foreground">{row.shipType}</span>
+      </span>
+      <LedgerTable.Bar
+        share={shareOf(row.monthlyCost, peak)}
+        fillClassName={row.carryingCost > 0 ? "bg-destructive/70" : "bg-primary"}
+      />
+      <span className={cn("text-right text-xs", TONE[row.style.tone])}>{row.style.label}</span>
+      <span className="text-right font-medium tabular-nums">{amount}</span>
+    </LedgerTable.Row>
   );
 }
 
@@ -165,13 +152,15 @@ export function ConstructionTab({
           {format.count(construction.carryingTotal)} a month to keep, and builds nothing.
         </p>
       )}
-      <ul className="space-y-0.5">
-        {rows.map((row) => (
-          <li key={row.projectId}>
-            <ProjectLine row={row} peak={peak} />
-          </li>
-        ))}
-      </ul>
+      <LedgerTable.Root layout="projects">
+        <ul className="space-y-0.5">
+          {rows.map((row) => (
+            <li key={row.projectId}>
+              <ProjectLine row={row} peak={peak} />
+            </li>
+          ))}
+        </ul>
+      </LedgerTable.Root>
       <p className="px-2 text-xs text-muted-foreground">
         These are ceilings. Each project draws only what its yard can absorb this month.
       </p>
