@@ -7,13 +7,23 @@ export {
   customArchetypeOptionId,
 } from "./ArchetypeCustomDeckCard.js";
 export {
-  ArchetypeDeckPane,
   ARCHETYPE_DECK_ENTRIES,
   archetypeDeckOptionId,
-  type ArchetypeDeckPaneProps,
-} from "./ArchetypeDeckPane.js";
+  type ArchetypeDeckEntry,
+} from "./archetype-deck-entries.js";
+export { ArchetypeDeckPane } from "./ArchetypeDeckPane.js";
+export { ArchetypeDetailPanel } from "./ArchetypeDetailPanel.js";
 export {
-  ArchetypeDetailPanel,
-  type ArchetypeDetailEditor,
-  type ArchetypeDetailPanelProps,
-} from "./ArchetypeDetailPanel.js";
+  ArchetypeWorkspaceProvider,
+  useArchetypeActions,
+  useArchetypeMeta,
+  useArchetypeState,
+  type ArchetypeWorkspaceProviderProps,
+} from "./ArchetypeWorkspaceProvider.js";
+export {
+  useArchetypeWorkspace,
+  type ArchetypeDetailMeta,
+  type ArchetypeDeckMeta,
+  type ArchetypeWorkspace,
+  type ArchetypeWorkspaceInput,
+} from "./useArchetypeWorkspace.js";

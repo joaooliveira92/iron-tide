@@ -16,10 +16,7 @@ const EXCLUDED_SEGMENTS = [
   ".test.",
 ];
 
-const ALLOWLIST = new Set([
-  "screens/new-game/components/bounce-cards/newGameBounceCardsPreset.ts",
-  "screens/new-game/components/bounce-cards/BounceCards.tsx",
-]);
+const ALLOWLIST = new Set<string>([]);
 
 const SCAN_ROOTS = ["screens", "shell"];
 const HEX = /#[0-9a-fA-F]{6}\b/u;

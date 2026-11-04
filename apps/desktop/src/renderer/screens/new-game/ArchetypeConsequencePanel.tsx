@@ -1,58 +1,15 @@
 import { BALANCED_ALLOCATION } from "@bluewave/campaign-engine";
-import {
-  ArrowDown,
-  ArrowUp,
-  Coins,
-  Factory,
-  Info,
-  Minus,
-  ShieldCheck,
-  Swords,
-  Target,
-  TrendingDown,
-  TrendingUp,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, Info, Minus, Target, TrendingDown, TrendingUp } from "lucide-react";
 import { Badge } from "../../components/ui/badge.js";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../components/ui/hover-card.js";
-import { SlateBody, SlateHeader } from "../../components/ui/slate.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover.js";
 import { Progress } from "../../components/ui/progress.js";
-import { type ArchetypeNumericEffect, type ArchetypeConsequence } from "./archetype-consequence.js";
+import type { ArchetypeConsequence } from "./archetype-consequence.js";
 import { archetypeDimensionDescriptor } from "./archetype-dimensions.js";
 import { GlassCard } from "@/components/ui/glass-card.js";
 
-const EFFECT_META: Record<string, { readonly icon: typeof Coins; readonly description: string }> = {
-  "Starting treasury": {
-    icon: Coins,
-    description:
-      "A multiplier on the treasury you begin the campaign with, relative to the balanced allocation.",
-  },
-  "Monthly appropriation": {
-    icon: TrendingUp,
-    description: "A multiplier on each month's appropriation relative to the balanced baseline.",
-  },
-  "Shipyard capacity": {
-    icon: Factory,
-    description: "A multiplier on the construction throughput your shipyards can sustain.",
-  },
-  "Commander bonus in battle": {
-    icon: ShieldCheck,
-    description: "A flat bonus to commander effectiveness when battle is resolved.",
-  },
-  "Doctrine bonus in battle": {
-    icon: Swords,
-    description: "A flat bonus to doctrine effectiveness when battle is resolved.",
-  },
-};
-
-export function ArchetypeConsequencePanel({
-  consequence,
-  compact = false,
-}: {
-  consequence: ArchetypeConsequence;
-  compact?: boolean;
-}) {
+export function ArchetypeConsequencePanel({ consequence }: { consequence: ArchetypeConsequence }) {
   return (
     <div className="@container">
       <GlassCard glassVariant="liquid-refract">
@@ -78,14 +35,10 @@ export function ArchetypeConsequencePanel({
         <CardContent className="space-y-6">
           <DimensionDeltas consequence={consequence} />
 
-          {!compact && <NumericEffects consequence={consequence} />}
-
           <div className="grid grid-cols-1 gap-6 @lg:grid-cols-2">
             <Strengths consequence={consequence} />
             <OpportunityCosts consequence={consequence} />
           </div>
-
-          {!compact && <Systems consequence={consequence} />}
         </CardContent>
       </GlassCard>
     </div>
@@ -131,51 +84,6 @@ function DimensionDeltas({ consequence }: { consequence: ArchetypeConsequence })
         );
       })}
     </div>
-  );
-}
-
-function NumericEffects({ consequence }: { consequence: ArchetypeConsequence }) {
-  return (
-    <div>
-      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Numerical effects (vs balanced)
-      </h4>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {consequence.numericEffects.map((effect) => (
-          <EffectTile key={effect.label} effect={effect} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function EffectTile({ effect }: { effect: ArchetypeNumericEffect }) {
-  const meta = EFFECT_META[effect.label];
-  const Icon = meta?.icon ?? Info;
-  return (
-    <HoverCard>
-      <HoverCardTrigger render={<div />} className="h-full">
-        <div className="flex h-full flex-col gap-1 rounded-lg border bg-muted/40 p-3">
-          <Icon className="h-4 w-4 text-muted-foreground" />
-          <span className="text-base font-semibold tabular-nums">{effect.value}</span>
-          <span className="text-xs text-muted-foreground">{effect.label}</span>
-        </div>
-      </HoverCardTrigger>
-      <HoverCardContent className="w-72">
-        <SlateHeader
-          title={effect.label}
-          icon={<Icon className="size-3.5" />}
-          aside={
-            <span className="font-display text-sm font-semibold tabular-nums">{effect.value}</span>
-          }
-        />
-        <SlateBody>
-          <p className="text-xs text-muted-foreground">
-            {meta?.description ?? "Effect derived from the engine's model."}
-          </p>
-        </SlateBody>
-      </HoverCardContent>
-    </HoverCard>
   );
 }
 
@@ -226,27 +134,6 @@ function OpportunityCosts({ consequence }: { consequence: ArchetypeConsequence }
             Points taken above balanced are unavailable elsewhere.
           </li>
         )}
-      </ul>
-    </div>
-  );
-}
-
-function Systems({ consequence }: { consequence: ArchetypeConsequence }) {
-  return (
-    <div>
-      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Systems affected
-      </h4>
-      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {consequence.systems.map((system) => (
-          <li
-            key={system}
-            className="flex items-start gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm"
-          >
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            {system}
-          </li>
-        ))}
       </ul>
     </div>
   );
