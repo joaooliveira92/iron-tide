@@ -398,9 +398,9 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
   const [statusText, setStatusText] = useState("starting");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
-  const [indicator, setIndicator] = useState<{ x: number; y: number; bearing: number } | null>(
-    null,
-  );
+  const [indicatorBearing, setIndicatorBearing] = useState<number | null>(null);
+  const indicatorRef = useRef<HTMLButtonElement | null>(null);
+  const indicatorOriginRef = useRef<{ readonly x: number; readonly y: number } | null>(null);
   const selectedRef = useRef<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const list = useMemo(entities, []);
@@ -414,11 +414,20 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
     [],
   );
 
+  const placeIndicator = useCallback((element: HTMLButtonElement | null) => {
+    indicatorRef.current = element;
+    const origin = indicatorOriginRef.current;
+    if (element === null || origin === null) return;
+    element.style.left = `${origin.x - 14}px`;
+    element.style.top = `${origin.y - 14}px`;
+  }, []);
+
   const refreshIndicator = useCallback(() => {
     const map = mapRef.current;
     const id = selectedRef.current;
     if (map === null || id === null) {
-      setIndicator(null);
+      indicatorOriginRef.current = null;
+      setIndicatorBearing(null);
       return;
     }
     const entry = SPIKE_MARKERS.find((candidate) => candidate.id === id);
@@ -439,13 +448,16 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
       .some((feature) => feature.properties?.id === id);
     const behind = !rendered;
     if (onScreen && !behind) {
-      setIndicator(null);
+      indicatorOriginRef.current = null;
+      setIndicatorBearing(null);
       return;
     }
     const bearing = initialBearingDegrees([centre.lng, centre.lat], [entry.lon, entry.lat]);
     const placed = edgeIndicator(bearing, map.getBearing(), { width, height }, 28);
-    setIndicator({ x: placed.x, y: placed.y, bearing });
-  }, []);
+    indicatorOriginRef.current = { x: placed.x, y: placed.y };
+    placeIndicator(indicatorRef.current);
+    setIndicatorBearing(Math.round(bearing));
+  }, [placeIndicator]);
 
   const select = useCallback(
     (id: string) => {
@@ -883,12 +895,12 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
       <div aria-live="polite" role="status" data-testid="globe-spike-live" className="sr-only">
         {liveMessage}
       </div>
-      {indicator === null || selectedId === null ? null : (
+      {indicatorBearing === null || selectedId === null ? null : (
         <button
+          ref={placeIndicator}
           type="button"
           data-testid="globe-spike-indicator"
-          aria-label={`${selectedName} is off screen at bearing ${Math.round(indicator.bearing)} degrees. Activate to centre it.`}
-          style={{ left: indicator.x - 14, top: indicator.y - 14 }}
+          aria-label={`${selectedName} is off screen at bearing ${indicatorBearing} degrees. Activate to centre it.`}
           className="absolute h-7 w-7 rounded-full border-2 border-white bg-black text-white"
           onClick={() => select(selectedId)}
         >

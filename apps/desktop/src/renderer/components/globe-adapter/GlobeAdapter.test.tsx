@@ -1,4 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { Profiler } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { GlobeAdapter } from "./GlobeAdapter.js";
 import type { AppCameraState } from "./camera-contract.js";
@@ -229,6 +230,38 @@ describe("GlobeAdapter parity interactions", () => {
     expect(document.querySelector('[data-testid="globe-adapter-tooltip"]')?.textContent).toContain(
       "North Sea",
     );
+  });
+
+  it("follows the pointer without re-rendering the adapter for each move", async () => {
+    const onRender = vi.fn();
+    render(
+      <Profiler id="globe-adapter" onRender={onRender}>
+        <GlobeAdapter
+          state={{ ...initialMapPrototypeState, projection: "equirectangular" }}
+          route={null}
+          overlay={overlay}
+          orders={orders}
+          onSelect={() => undefined}
+          onRuler={() => undefined}
+          onToggleLayer={() => undefined}
+          onSetProjection={() => undefined}
+          onSetCentre={() => undefined}
+          onUnavailable={() => undefined}
+        />
+      </Profiler>,
+    );
+    const map = await readyMap();
+    map.areaHits = [{ properties: { id: "area_north_sea" } }];
+    act(() => map.emit("mousemove", { point: { x: 30, y: 20 } }));
+    const tooltip = await screen.findByTestId("globe-adapter-tooltip");
+    await waitFor(() => expect(tooltip.style.left).toBe("42px"));
+    const commitsBefore = onRender.mock.calls.length;
+    act(() => map.emit("mousemove", { point: { x: 50, y: 40 } }));
+    await waitFor(() => expect(tooltip.style.left).toBe("62px"));
+    act(() => map.emit("mousemove", { point: { x: 70, y: 60 } }));
+    await waitFor(() => expect(tooltip.style.top).toBe("72px"));
+    expect(onRender.mock.calls.length).toBe(commitsBefore);
+    expect(tooltip.textContent).toContain("North Sea");
   });
 
   it("focuses the home area on open and cycles fleets with f", async () => {
