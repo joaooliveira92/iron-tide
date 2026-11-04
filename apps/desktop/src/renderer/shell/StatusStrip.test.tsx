@@ -7,7 +7,7 @@ import { createPreferencesBridgeStub } from "../lib/preferences-test-bridge.js";
 import { DensityProvider } from "./DensityContext.js";
 import { axeViolations } from "../lib/axe.js";
 import { StatusStrip, StatusStripView } from "./StatusStrip.js";
-import { PrestigeCard } from "./StatusStripCards.js";
+import { PrestigeCard } from "./status-strip/cards/PrestigeCard.js";
 import type { CampaignReads } from "./campaign-reads.js";
 import { buildStatusStrip } from "./status-strip-state.js";
 import { buildTrend, type TrendReport } from "./status-strip-trend.js";
