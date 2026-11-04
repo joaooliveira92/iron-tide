@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 
 import { LedgerTable } from "./LedgerTable.js";
@@ -19,5 +19,43 @@ describe("LedgerTable", () => {
     expect(row.textContent).toContain("Alpha");
     expect(row.textContent).toContain("5");
     expect(row.className).toContain("grid-cols-[minmax(0,1fr)_minmax(3rem,7rem)_4.5rem_6rem]");
+  });
+
+  it("opens on click and reports hover and focus as activity", () => {
+    const opened: string[] = [];
+    const activity: boolean[] = [];
+    render(
+      <LedgerTable.Root columns="flow">
+        <LedgerTable.Row
+          ariaLabel="Beta"
+          detail={<p>detail</p>}
+          onOpen={() => opened.push("beta")}
+          onActive={(on) => activity.push(on)}
+        >
+          <LedgerTable.Label>Beta</LedgerTable.Label>
+        </LedgerTable.Row>
+      </LedgerTable.Root>,
+    );
+    const row = screen.getByRole("button", { name: "Beta" });
+    fireEvent.click(row);
+    fireEvent.mouseEnter(row);
+    fireEvent.mouseLeave(row);
+    fireEvent.focus(row);
+    fireEvent.blur(row);
+    expect(opened).toEqual(["beta"]);
+    expect(activity).toEqual([true, false, true, false]);
+  });
+
+  it("dims and highlights rows through the existing state props", () => {
+    render(
+      <LedgerTable.Root columns="flow">
+        <LedgerTable.Row ariaLabel="Gamma" detail={null} highlighted dimmed>
+          <LedgerTable.Label>Gamma</LedgerTable.Label>
+        </LedgerTable.Row>
+      </LedgerTable.Root>,
+    );
+    const row = screen.getByRole("button", { name: "Gamma" });
+    expect(row.className).toContain("bg-muted/60");
+    expect(row.className).toContain("opacity-60");
   });
 });
