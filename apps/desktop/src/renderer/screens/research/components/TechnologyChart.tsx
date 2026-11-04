@@ -10,11 +10,9 @@ const GRID =
 
 export interface TechnologyChartProps {
   readonly field: ResearchFieldView;
-  readonly selectedTechId: string | null;
-  readonly onSelectTech: (techId: string) => void;
 }
 
-export function TechnologyChart({ field, selectedTechId, onSelectTech }: TechnologyChartProps) {
+export function TechnologyChart({ field }: TechnologyChartProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const layout = useMemo(
     () =>
@@ -88,10 +86,8 @@ export function TechnologyChart({ field, selectedTechId, onSelectTech }: Technol
                 fieldLabel={field.label}
                 x={node.x}
                 y={node.y}
-                dimmed={related !== null && !related.has(node.techId)}
-                selected={selectedTechId === node.techId}
+                emphasis={related === null || related.has(node.techId) ? "normal" : "dimmed"}
                 onHover={setHovered}
-                onSelect={onSelectTech}
               />
             );
           })}

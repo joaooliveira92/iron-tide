@@ -5,6 +5,7 @@ import {
 } from "../../../components/ui/hover-card.js";
 import { formatConjunctionList } from "../../../lib/presentation-format/list.js";
 import { cn } from "../../../lib/utils.js";
+import { useResearchSelection } from "../ResearchSelection.js";
 import type { ResearchFieldView, ResearchTotals } from "../research-view-model.js";
 import { fieldIcon } from "./field-icons.js";
 import { FieldSummary } from "./FieldSummary.js";
@@ -13,8 +14,6 @@ export interface AllocationSpectrumProps {
   readonly fields: readonly ResearchFieldView[];
   readonly totals: ResearchTotals;
   readonly budget: number;
-  readonly selectedFieldId: string;
-  readonly onSelect: (fieldId: string) => void;
 }
 
 const SEGMENT_TONE: Readonly<Record<string, string>> = {
@@ -23,13 +22,10 @@ const SEGMENT_TONE: Readonly<Record<string, string>> = {
   Low: "bg-primary/45 text-foreground",
 };
 
-export function AllocationSpectrum({
-  fields,
-  totals,
-  budget,
-  selectedFieldId,
-  onSelect,
-}: AllocationSpectrumProps) {
+export function AllocationSpectrum({ fields, totals, budget }: AllocationSpectrumProps) {
+  const { state, actions } = useResearchSelection();
+  const selectedFieldId = state.fieldId;
+  const onSelect = actions.selectField;
   const funded = fields.filter((f) => f.projectedPoints > 0);
   const stalledHigh = fields.filter((f) => f.isHigh && f.state === "waiting");
 

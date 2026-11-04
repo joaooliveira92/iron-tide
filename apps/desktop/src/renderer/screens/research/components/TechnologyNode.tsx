@@ -4,6 +4,7 @@ import {
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
 import { cn } from "../../../lib/utils.js";
+import { useResearchSelection } from "../ResearchSelection.js";
 import { SlateBody, SlateHeader } from "../../../components/ui/slate.js";
 import { CHART_NODE_HEIGHT, CHART_NODE_WIDTH } from "../research-chart-layout.js";
 import { monthsPhrase } from "../research-calendar.js";
@@ -11,15 +12,20 @@ import type { ResearchTechView } from "../research-view-model.js";
 import { TechnologyDetail } from "./TechnologyDetail.js";
 import { TECH_STATUS } from "./tech-status.js";
 
+export type NodeEmphasis = "normal" | "dimmed";
+
+const EMPHASIS_CLASS: Readonly<Record<NodeEmphasis, string>> = {
+  normal: "",
+  dimmed: "opacity-25",
+};
+
 export interface TechnologyNodeProps {
   readonly tech: ResearchTechView;
   readonly fieldLabel: string;
   readonly x: number;
   readonly y: number;
-  readonly dimmed: boolean;
-  readonly selected: boolean;
+  readonly emphasis: NodeEmphasis;
   readonly onHover: (techId: string | null) => void;
-  readonly onSelect: (techId: string) => void;
 }
 
 function chipFor(tech: ResearchTechView): string {
@@ -41,16 +47,9 @@ function chipFor(tech: ResearchTechView): string {
   }
 }
 
-export function TechnologyNode({
-  tech,
-  fieldLabel,
-  x,
-  y,
-  dimmed,
-  selected,
-  onHover,
-  onSelect,
-}: TechnologyNodeProps) {
+export function TechnologyNode({ tech, fieldLabel, x, y, emphasis, onHover }: TechnologyNodeProps) {
+  const { actions, meta } = useResearchSelection();
+  const selected = meta.isTechSelected(tech.techId);
   const status = TECH_STATUS[tech.status];
   const Icon = status.icon;
   const showProgress = tech.status === "researching" || tech.investedPoints > 0;
@@ -71,14 +70,14 @@ export function TechnologyNode({
             onMouseLeave={() => onHover(null)}
             onFocus={() => onHover(tech.techId)}
             onBlur={() => onHover(null)}
-            onClick={() => onSelect(tech.techId)}
+            onClick={() => actions.selectTech(tech.techId)}
             style={{ left: x, top: y, width: CHART_NODE_WIDTH, height: CHART_NODE_HEIGHT }}
             className={cn(
               "absolute flex flex-col justify-between rounded-lg border p-2.5 text-left outline-none",
               "transition-[opacity,box-shadow,border-color,transform] duration-200 motion-reduce:transition-none",
               "hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-ring",
               status.node,
-              dimmed && "opacity-25",
+              EMPHASIS_CLASS[emphasis],
               selected && "ring-2 ring-ring",
             )}
           />
@@ -125,7 +124,7 @@ export function TechnologyNode({
           }
         />
         <SlateBody>
-          <TechnologyDetail tech={tech} fieldLabel={fieldLabel} showHeading={false} />
+          <TechnologyDetail tech={tech} fieldLabel={fieldLabel} variant="bare" />
         </SlateBody>
       </HoverCardContent>
     </HoverCard>
