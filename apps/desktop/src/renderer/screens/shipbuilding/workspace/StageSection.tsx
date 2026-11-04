@@ -18,6 +18,7 @@ export function StageSection() {
     isoSide,
     findingsView,
     armourHighlight,
+    place,
     selectedInstanceId,
     focusArcs,
   } = useShipbuildingMeta();
@@ -49,6 +50,7 @@ export function StageSection() {
           onFindingsView={setFindingsView}
           isoSide={isoSide}
           highlightId={selectedInstanceId ?? undefined}
+          section={place?.section}
           focusArcs={focusArcs}
         />
       </ShipViewBoundary>

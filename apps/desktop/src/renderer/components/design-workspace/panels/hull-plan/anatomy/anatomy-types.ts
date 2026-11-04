@@ -31,8 +31,22 @@ export interface AnatomyInk {
   readonly tone?: "ink" | "glass" | "shadow";
 }
 
+export type PartKind =
+  | "slipway"
+  | "hull"
+  | "deck"
+  | "mast"
+  | "armour"
+  | "superstructure"
+  | "funnel"
+  | "boat"
+  | "weapon"
+  | "fitting"
+  | "conning";
+
 export interface AnatomyPart {
   readonly id: string;
+  readonly kind: PartKind;
   readonly label: string;
   readonly solids: readonly AnatomySolid[];
   readonly inks: readonly AnatomyInk[];

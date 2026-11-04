@@ -42,8 +42,10 @@ export function HullPlanPanel({
   armourHighlight,
   isoSide = "starboard",
   highlightId,
+  section,
   focusArcs = false,
 }: {
+  readonly section?: string;
   readonly findings?: readonly BoardFinding[];
   readonly model?: PlanModel;
   readonly editing?: HullPlanEditing;
@@ -185,6 +187,7 @@ export function HullPlanPanel({
           <AnatomyShipFigure
             ship={isoShip}
             highlight={highlightId}
+            section={section}
             className="mx-auto min-h-64"
             style={{ height: ISO_HEIGHT }}
           />
