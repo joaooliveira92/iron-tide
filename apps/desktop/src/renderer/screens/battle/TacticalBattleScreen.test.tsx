@@ -7,9 +7,14 @@ import { DEFAULT_APP_PREFERENCES } from "../../../shared/preferences-contract.js
 import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
 import { axeViolations } from "../../lib/axe.js";
 import { BridgeProvider } from "../../lib/bridge-context.js";
-import { PreferencesProvider } from "../../lib/preferences-context.js";
+import { PreferencesProvider, usePreferences } from "../../lib/preferences-context.js";
 import { PlayerBattleScreen } from "./PlayerBattleScreen.js";
 import { stepIntervalMs } from "./tactical/tactical-time.js";
+
+vi.mock("../../lib/preferences-context.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../lib/preferences-context.js")>();
+  return { ...actual, usePreferences: vi.fn(actual.usePreferences) };
+});
 
 const NM_UM = 1_852_000_000;
 
@@ -542,6 +547,21 @@ describe("tactical battle screen", () => {
     );
     fireEvent.pointerLeave(map);
     expect(screen.queryByTestId("tactical-cursor-distance")).toBeNull();
+  });
+
+  it("does not re-render the map for each pointer move", async () => {
+    mount();
+    const map = await screen.findByTestId("tactical-map");
+    fireEvent.click(await screen.findByTestId("tactical-ship-a1"));
+    fireEvent.pointerMove(map, { clientX: 300, clientY: 200 });
+    const rendersBefore = vi.mocked(usePreferences).mock.calls.length;
+    for (let x = 301; x < 340; x += 1) {
+      fireEvent.pointerMove(map, { clientX: x, clientY: 200 });
+    }
+    expect(vi.mocked(usePreferences).mock.calls.length).toBe(rendersBefore);
+    expect(screen.getByTestId("tactical-cursor-distance").textContent).toMatch(
+      /Distance to cursor: .+/u,
+    );
   });
 
   it("plots a standing course line once a course order is in effect", async () => {
