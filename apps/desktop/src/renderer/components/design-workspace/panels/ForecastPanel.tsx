@@ -1,36 +1,35 @@
-import { treasuryCostUnits } from "@bluewave/ship-design";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { useDesignState } from "../DesignWorkspaceContext.js";
+import { useDesignPriceView } from "../design-price-view.js";
 import { Panel } from "./Panel.js";
 import { YardList } from "./YardList.js";
 
 export function ForecastPanel() {
-  const {
-    view,
-    content: { treasuryUnitMicro },
-  } = useDesignState();
+  const { view } = useDesignState();
+  const price = useDesignPriceView();
   const format = usePresentationFormat();
   return (
     <Panel title="Cost and construction forecast">
       <dl className="grid grid-cols-1 gap-1 text-sm">
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">Build cost (first of class)</dt>
-          <dd className="tabular-nums">{format.moneyFromMicro(view.forecast.costMicro)}</dd>
+          <dd className="tabular-nums">{format.moneyFromMicro(price.price.costMicro)}</dd>
         </div>
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">Charged to the treasury when ordered</dt>
           <dd className="tabular-nums">
-            {format.count(treasuryCostUnits(view.forecast.costMicro, treasuryUnitMicro))} units{" "}
-            <span className="text-muted-foreground">
-              ({format.moneyFromMicro(treasuryUnitMicro)} each)
-            </span>
+            {price.treasuryText ?? price.unitsText}{" "}
+            <span className="text-muted-foreground">({price.unitSizeText})</span>
           </dd>
         </div>
+        {price.overBudgetText !== null && (
+          <div role="status" className="font-medium text-destructive">
+            {price.overBudgetText}
+          </div>
+        )}
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">Monthly upkeep</dt>
-          <dd className="tabular-nums">
-            {format.moneyFromMicro(view.forecast.monthlyMaintenanceMicro)}
-          </dd>
+          <dd className="tabular-nums">{price.upkeepText}</dd>
         </div>
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">Build time</dt>

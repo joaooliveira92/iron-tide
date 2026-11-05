@@ -55,6 +55,7 @@ import {
   GenerateBattlePayloadSchema,
   HaltConstructionCommandPayloadSchema,
   LoadProjectDraftPayloadSchema,
+  PreviewDesignStudyPayloadSchema,
   LoadShipDraftPayloadSchema,
   OrderConstructionBatchCommandPayloadSchema,
   PlaceForeignConstructionCommandPayloadSchema,
@@ -103,6 +104,7 @@ import type {
 } from "./continuity-contract.js";
 import type {
   DesignCommandOutcome,
+  DesignStudyPreviewOutcome,
   ProjectDraftView,
   ReadDrawingBoardDraftResult,
   RebuildCheckView,
@@ -335,6 +337,10 @@ export const campaignCommandShapes = {
   submitDesignCommand: command(
     SubmitDesignCommandPayloadSchema,
     resultType<DesignCommandOutcome>(),
+  ),
+  previewDesignStudy: command(
+    PreviewDesignStudyPayloadSchema,
+    resultType<DesignStudyPreviewOutcome>(),
   ),
   reviseProjectCommand: command(
     ReviseProjectCommandPayloadSchema,

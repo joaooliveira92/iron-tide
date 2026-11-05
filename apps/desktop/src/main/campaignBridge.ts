@@ -50,6 +50,7 @@ import {
   reviseProjectCommandProgram,
   startRebuildCommandProgram,
   submitDesignCommandProgram,
+  previewDesignStudyProgram,
 } from "./commands/designCommands.js";
 import {
   inspectDiplomacyScreenProgram,
@@ -149,6 +150,7 @@ export const commandHandlers: CommandHandlers = {
   replaceMovementCommand: replaceMovementCommandProgram,
   cancelMovementCommand: cancelMovementCommandProgram,
   submitDesignCommand: submitDesignCommandProgram,
+  previewDesignStudy: previewDesignStudyProgram,
   reviseProjectCommand: reviseProjectCommandProgram,
   loadProjectDraft: loadProjectDraftProgram,
   readDrawingBoardDraft: readDrawingBoardDraftProgram,

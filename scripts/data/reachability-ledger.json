@@ -105,12 +105,17 @@
     },
     {
       "id": "submit-design",
-      "player_verb": "Draw a ship design and submit it for construction",
+      "player_verb": "Design and submit a ship",
       "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": ["designVersion"],
       "engine_symbols": ["applySubmitDesign"],
-      "main_commands": ["submitDesignCommand", "readDrawingBoardDraft", "writeDrawingBoardDraft"],
+      "main_commands": [
+        "submitDesignCommand",
+        "previewDesignStudy",
+        "readDrawingBoardDraft",
+        "writeDrawingBoardDraft"
+      ],
       "renderer_screen": "components/design-workspace/panels/SubmitPanel.tsx",
       "evidence_test": "apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx",
       "decision": null

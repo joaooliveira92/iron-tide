@@ -87,6 +87,12 @@ export { buildProgressOf, scalePlanToUnits } from "./constructionProgress.js";
 export { type HullFormRecord, shipBalanceFromRecord } from "./contextBuilder.js";
 export { computeCost, type CostBalance, type CostContext, treasuryCostUnits } from "./cost.js";
 export {
+  designPrice,
+  type DesignPrice,
+  type DesignPriceInput,
+  type DesignTreasuryFit,
+} from "./designPrice.js";
+export {
   type DockRecord,
   dockRecordFor,
   dockRecordFromDefinition,

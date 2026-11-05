@@ -3,6 +3,7 @@ import { buildWorkshopView } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/index.js";
 import { batteryCards } from "../../components/design-workspace/batteryView.js";
 import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
+import { designPriceView } from "../../components/design-workspace/design-price-view.js";
 import { overviewModel } from "./overview.js";
 
 const content = loadDrawingBoardContent();
@@ -18,7 +19,14 @@ const format = createPresentationFormat({
 });
 
 describe("overview view model", () => {
-  const model = overviewModel(ref.draft, view, batteries, ref.month, format);
+  const model = overviewModel(
+    ref.draft,
+    view,
+    batteries,
+    ref.month,
+    format,
+    designPriceView(view.forecast, content.treasuryUnitMicro, null, format),
+  );
   const value = (id: string) => model.values.find((v) => v.id === id)?.value ?? "";
 
   it("summarises the design from compiled state", () => {
@@ -27,6 +35,7 @@ describe("overview view model", () => {
       format.measurement(view.buoyantKg, "mass", { maximumFractionDigits: 0 }),
     );
     expect(value("cost")).toContain(format.moneyFromMicro(view.forecast.costMicro));
+    expect(value("cost")).toContain("unit");
     expect(value("year")).toBe(ref.month.slice(0, 4));
     expect(value("type")).toContain(view.classCode);
     expect(value("accommodation")).not.toBe("");

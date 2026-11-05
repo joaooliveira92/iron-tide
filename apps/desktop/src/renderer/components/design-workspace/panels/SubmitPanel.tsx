@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDesignPriceView } from "../design-price-view.js";
 import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
 import { Alert } from "../../ui/alert.js";
@@ -40,6 +41,49 @@ export function queuedLines(
     `"${name}" joins the Design Catalog when the study is done. A month without the money makes no progress.`,
   );
   return lines;
+}
+
+export function studyPreviewLine(
+  study: DesignStudyPreview | undefined,
+  unitsText: string,
+  format: PresentationFormat,
+): string {
+  if (study === undefined)
+    return `Charged to the treasury when ordered: ${unitsText}. Name the class to see its design study.`;
+  return `Design study before this can be ordered: ${plural(study.months, "month", undefined, undefined, format)} and ${plural(study.cost, "treasury unit", undefined, undefined, format)}${study.derived ? `, ${format.percent(study.discountBp, 0)} less as a variant of ${study.baselineClassName ?? "an earlier class"}` : ""}. Build cost ${unitsText}.`;
+}
+
+export function useStudyPreview(
+  bridge: ReturnType<typeof useBridge>,
+  sessionId: string,
+  className: string,
+  draft: unknown,
+  valid: boolean,
+): DesignStudyPreview | undefined {
+  const [study, setStudy] = useState<DesignStudyPreview | undefined>(undefined);
+  useEffect(() => {
+    if (!bridge || !valid || className === "") {
+      setStudy(undefined);
+      return;
+    }
+    let current = true;
+    void bridge.campaign
+      .execute("previewDesignStudy", {
+        sessionId,
+        className,
+        draft: draft as Record<string, unknown>,
+      })
+      .then((r) => {
+        if (current) setStudy(r.outcome === "success" ? r.value.study : undefined);
+      })
+      .catch(() => {
+        if (current) setStudy(undefined);
+      });
+    return () => {
+      current = false;
+    };
+  }, [bridge, sessionId, className, draft, valid]);
+  return study;
 }
 
 export function rejectionLead(reason: string): string {
@@ -84,6 +128,9 @@ export function SubmitPanel({
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [queuedKey, setQueuedKey] = useState<string | null>(null);
+  const trimmedName = className.trim();
+  const preview = useStudyPreview(bridge, sessionId, trimmedName, draft, valid);
+  const priceView = useDesignPriceView();
   if (!bridge) return null;
   const key = `${revision ?? ""}|${className.trim()}|${JSON.stringify(draft)}`;
   const alreadyQueued = queuedKey === key;
@@ -154,6 +201,11 @@ export function SubmitPanel({
           {busy ? "Submitting…" : alreadyQueued ? "Queued" : "Submit design"}
         </Button>
       </div>
+      {valid && (
+        <p className="text-xs text-muted-foreground" data-testid="study-preview">
+          {studyPreviewLine(preview, priceView.unitsText, format)}
+        </p>
+      )}
       {!valid && (
         <p className="text-xs text-muted-foreground">
           Resolve the blocking findings before submitting.

@@ -5,12 +5,14 @@ import { rejectionLead, SubmitPanel } from "./SubmitPanel.js";
 
 vi.mock("../../../shell/CampaignShellContext.js", () => ({
   useCampaignRevision: () => 3,
+  useCampaignReads: () => null,
   useActiveCampaignCurrencyContext: () => ({}),
 }));
 
 const execute = vi.fn();
 beforeEach(() => {
   execute.mockReset();
+  execute.mockResolvedValue({ outcome: "success", value: {}, diagnostics: [] });
   (window as unknown as { bluewave: unknown }).bluewave = { campaign: { execute } };
 });
 afterEach(() => {
@@ -39,8 +41,9 @@ describe("SubmitPanel", () => {
     expect(await screen.findByText(/Design queued/)).toBeTruthy();
     const button = screen.getByRole("button", { name: "Queued" }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
-    expect(execute).toHaveBeenCalledTimes(1);
-    expect(execute.mock.calls[0]![1]).toMatchObject({
+    const submits = execute.mock.calls.filter((c) => c[0] === "submitDesignCommand");
+    expect(submits).toHaveLength(1);
+    expect(submits[0]![1]).toMatchObject({
       sessionId: "s",
       expectedRevision: 3,
       className: "Arethusa",
@@ -49,6 +52,43 @@ describe("SubmitPanel", () => {
     expect(
       (screen.getByRole("button", { name: "Submit design" }) as HTMLButtonElement).disabled,
     ).toBe(false);
+  });
+
+  it("shows the design study before Submit and ignores a slower earlier answer", async () => {
+    const study = (months: number, cost: number) => ({
+      months,
+      cost,
+      derived: false,
+      discountBp: 0,
+      baselineClassName: null,
+      newFamily: true,
+      failedCriteria: [],
+    });
+    const pending: Array<(value: unknown) => void> = [];
+    execute.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          pending.push(resolve);
+        }),
+    );
+    render(
+      <DesignWorkspaceFixture>
+        <SubmitPanel sessionId="s" />
+      </DesignWorkspaceFixture>,
+    );
+    name("First");
+    name("Second");
+    await waitFor(() => expect(pending).toHaveLength(2));
+    pending[1]!({ outcome: "success", value: { study: study(7, 9) }, diagnostics: [] });
+    expect(await screen.findByText(/7 months and 9 treasury units/)).toBeTruthy();
+    pending[0]!({ outcome: "success", value: { study: study(2, 3) }, diagnostics: [] });
+    await Promise.resolve();
+    expect(screen.queryByText(/2 months/)).toBeNull();
+    expect(screen.getByText(/7 months and 9 treasury units/)).toBeTruthy();
+    expect(execute.mock.calls.map((c) => c[0])).toEqual([
+      "previewDesignStudy",
+      "previewDesignStudy",
+    ]);
   });
 
   it("says why Submit is unavailable until the class has a name", () => {
