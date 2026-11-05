@@ -24,7 +24,19 @@ beforeEach(() => localStorage.clear());
 
 const content = loadDrawingBoardContent();
 const ref = content.references[0]!;
-const env = content.environmentFor(ref.month);
+const baseEnv = content.environmentFor(ref.month);
+const env = {
+  ...baseEnv,
+  ctx: {
+    ...baseEnv.ctx,
+    unlockedTechs: new Set([...baseEnv.ctx.unlockedTechs, "fc_basic_rangefinding"]),
+    catalogue: baseEnv.ctx.catalogue.map((c) =>
+      c.category === "RANGEFINDER"
+        ? { ...c, introduction: { ...c.introduction, fromMonth: ref.month } }
+        : c,
+    ),
+  },
+};
 const view = buildWorkshopView(ref.draft, env);
 const form = content.hullForms.find((f) => f.id === ref.draft.hull.hullFormId)!;
 const frame = planFrame(ref.draft.hull, {
@@ -183,12 +195,12 @@ describe("markers on the drawing", () => {
   it("shows a grouped marker with the highest severity and the count, and a useful name", () => {
     render(<ShipbuildingWorkspace />);
     openSection("Armament", "Secondary");
-    commit(/^Station of gun_12pdr /, "120");
+    commit(/^Station of gun_12pdr /, "600");
     const m = marker("f:gun_12pdr")!;
     expect(m.getAttribute("data-severity")).toBe("BLOCKING");
-    expect(m.getAttribute("data-count")).toBe("2");
+    expect(m.getAttribute("data-count")).toBe("3");
     expect(m.getAttribute("aria-label")).toMatch(
-      /^Blocking: .*outside zone.*\(.*mount .*\), 2 findings$/,
+      /^Blocking: .*outside zone.*\(.*mount .*\), 3 findings$/,
     );
     expect(marker("s:forecastle")?.getAttribute("data-severity")).toBe("BLOCKING");
   });
@@ -286,7 +298,7 @@ describe("live resolution", () => {
       /^Station of gun_12pdr /,
       String(ref.draft.placements.find((p) => p.instanceId === "gun_12pdr")!.stationPermille),
     );
-    expect(marker("f:gun_12pdr")?.getAttribute("data-severity")).toBe("WARNING");
+    expect(marker("f:gun_12pdr")).toBeNull();
     expect(marker("s:forecastle")).toBeNull();
     expect(document.querySelector('[data-target="gun_12pdr"]')?.getAttribute("aria-pressed")).toBe(
       "true",
@@ -378,7 +390,8 @@ describe("Escape", () => {
 
 describe("one source of findings", () => {
   it("shows every finding of an entity in the inspector exactly as the Analysis tab lists it", () => {
-    const fs = boardFindings(view, ref.draft, batteries);
+    const realView = buildWorkshopView(ref.draft, baseEnv);
+    const fs = boardFindings(realView, ref.draft, batteryCards(realView, ref.draft));
     render(<ShipbuildingWorkspace />);
     openSection("Review", "Findings");
     const keys = [...document.querySelectorAll("[data-finding-key]")].map((e) =>

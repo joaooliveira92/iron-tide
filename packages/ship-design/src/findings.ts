@@ -103,6 +103,9 @@ export function checkFindingShape(f: Finding): string[] {
   if (f.remedies.length < MIN_REMEDIES[f.severity]) {
     problems.push(`${f.severity} requires >= ${MIN_REMEDIES[f.severity]} remedies`);
   }
+  if (f.severity === "WARNING" && f.remedies.every((r) => r.id.startsWith("accept"))) {
+    problems.push("WARNING requires a remedy that is not an accept");
+  }
   return problems;
 }
 

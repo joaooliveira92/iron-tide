@@ -480,7 +480,7 @@ export function compileSystemsAndMachinery(args: {
   b: ShipBalance;
   findings: Finding[];
 }): { systems: SystemsResult; machineryRaw: MachineryResult } {
-  const { draft, resolved, gunRes, plant, b, findings } = args;
+  const { draft, ctx, resolved, gunRes, plant, b, findings } = args;
   const hull = draft.hull;
 
   const accommodationVolume = resolved
@@ -518,6 +518,14 @@ export function compileSystemsAndMachinery(args: {
       coolingSupplyKw: resolved.reduce((a, r) => a + (r.attr.coolingSupplyKw ?? 0), 0),
       displacementKg: hull.targetDisplacementKg,
       fireControlPositions: draft.fireControl?.positions ?? 0,
+      directorFittable: ctx.catalogue.some(
+        (c) =>
+          (c.category === "DIRECTOR" || c.category === "RANGEFINDER") &&
+          (c.fcClasses?.length ?? 0) > 0 &&
+          c.introduction.fromMonth <= ctx.month &&
+          (c.introduction.obsoleteMonth === null || c.introduction.obsoleteMonth > ctx.month) &&
+          c.requires.every((t) => ctx.unlockedTechs.has(t)),
+      ),
       accommodationStandard: draft.requirement.accommodationStandard,
       accommodationVolumeLitre: accommodationVolume,
       guns,
