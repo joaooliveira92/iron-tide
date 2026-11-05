@@ -239,6 +239,19 @@ US 1945 destroyer and 1948 cruisers and still lacks the 1940s battleship and oth
 slices. #249/#260 follow those content slices. The T-2 build map is not yet sliced into tickets
 beyond slice 1.
 
+**E-1 air decision (2026-11-05).** Decision request 0047 is resolved as Option A, research-first,
+and the research pass is published in discussion 592. It narrows the #280/#295 block and moves part
+of it: the carrier and jet rules are `manual`-grounded and already shipped as
+`CVL_MIN_CAPACITY`, `CVL_MAX_CAPACITY`, `OVERSIZED_CARRIER_THRESHOLD`,
+`ORDINARY_SLOT_CAPACITY_UNITS` and the `determineJetCapability` displacement thresholds, so the air
+gap is input data plus the unimplemented 1.5x jet capacity multiplier, and `createAirDefenseSystemDefinition`
+defaults every AA effect field, so an AA table is geometry rather than probabilities. Three of the
+six jet predicates have no source in pp. 110-111. Two new blockers: `classification.ts:68` hardcodes
+`aircraftCapacity: 0` with no producer for `ship.compiledAircraftCapacity`, the only carrier signal
+the phase engine reads, and the 1880 pack has no aviation hull type, so #295 now waits on the E-1
+content arc for a carrier to manifest. CV/CVL/AV are held with the air decision. Nine decisions
+remain, in discussion 592 section H; #282/#296 still wait on the W-2 submarine wiring.
+
 **Immediate next action (2026-10-23):** finish **S-2** (#90-#94), then S-3 (spec under
 `docs/`, decisions 0010/0011 = ADR-0240) and S-4. **F-1** has a spec and brief
 (#231, `.ai/briefs/f-1-strategic-map.md`; requests 0036-0039 resolved). **T-2** has its
