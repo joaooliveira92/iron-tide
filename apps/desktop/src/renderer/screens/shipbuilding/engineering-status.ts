@@ -2,6 +2,7 @@ import type { ExplanationTree } from "@bluewave/events";
 import { topsideLoad, type Finding, type Severity, type WorkshopView } from "@bluewave/ship-design";
 import { passesFilter } from "../../components/design-workspace/validation/severity.js";
 import { formatExplanation } from "../../../shared/explanation-text.js";
+import type { DesignPriceView } from "../../components/design-workspace/design-price-view.js";
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 
 export type ReadoutTone = "neutral" | "warn" | "bad";
@@ -89,6 +90,7 @@ function splitTonnes(
 export function engineeringStatus(
   view: WorkshopView,
   format: PresentationFormat,
+  price: DesignPriceView,
 ): readonly EngineeringReadout[] {
   const findings = view.compiled.findings;
   const marginKg = view.ledger.find((r) => r.category === "margin")?.kg ?? 0;
@@ -129,8 +131,8 @@ export function engineeringStatus(
     {
       id: "cost",
       label: "Cost",
-      value: pounds(format, cb.total),
-      tone: "neutral",
+      value: price.treasuryText ?? price.unitsText,
+      tone: price.overBudgetText === null ? "neutral" : "bad",
       breakdown: {
         title: "Cost breakdown",
         rows: [
@@ -147,8 +149,11 @@ export function engineeringStatus(
             ? [{ label: "Acceleration", value: pounds(format, cb.accelerationPremium) }]
             : []),
         ],
-        footer: [{ label: "Total", value: pounds(format, cb.total) }],
-        causes: [],
+        footer: [
+          { label: "Total", value: pounds(format, cb.total) },
+          { label: "Charged to the treasury", value: `${price.unitsText} (${price.unitSizeText})` },
+        ],
+        causes: price.overBudgetText === null ? [] : [price.overBudgetText],
       },
     },
     {

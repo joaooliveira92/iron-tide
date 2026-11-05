@@ -15,6 +15,10 @@ export interface DesignStudyPreview {
   readonly failedCriteria: readonly string[];
 }
 
+export interface DesignStudyPreviewOutcome {
+  readonly study?: DesignStudyPreview;
+}
+
 export interface DesignCommandOutcome {
   readonly commandId: string;
   readonly designVersionId: string;

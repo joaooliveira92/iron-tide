@@ -243,6 +243,12 @@ export const SubmitDesignCommandPayloadSchema = Schema.Struct({
   draft: DraftObjectSchema,
 });
 
+export const PreviewDesignStudyPayloadSchema = Schema.Struct({
+  sessionId: nonEmptyString,
+  className: Schema.Trim.check(Schema.isMinLength(1), Schema.isMaxLength(60)),
+  draft: DraftObjectSchema,
+});
+
 export const ReviseProjectCommandPayloadSchema = Schema.Struct({
   ...CommandEnvelopePayloadSchema.fields,
   projectId: nonEmptyString,

@@ -61,7 +61,7 @@ import { TAB_BATTERY, isTyping, tabLabel } from "./inspector-place.js";
 export type WorkspaceDialog = "start" | "file" | "history" | "alternatives" | "names";
 
 export function useWorkspaceNavigation({ state, actions: session }: WorkspaceSession) {
-  const { format, draft, view, content, env, batteries, findings, selection } = state;
+  const { format, price, draft, view, content, env, batteries, findings, selection } = state;
   const month = state.month;
 
   const wide = useMinWidth(COMMAND_OVERLAY_MIN_WIDTH);
@@ -150,8 +150,10 @@ export function useWorkspaceNavigation({ state, actions: session }: WorkspaceSes
   );
   const overview = useMemo(
     () =>
-      placeSection === "overview" ? overviewModel(draft, view, batteries, month, format) : null,
-    [placeSection, draft, view, batteries, month, format],
+      placeSection === "overview"
+        ? overviewModel(draft, view, batteries, month, format, price)
+        : null,
+    [placeSection, draft, view, batteries, month, format, price],
   );
   const machinery = useMemo(
     () => (placeSection === "machinery" ? machineryModel(draft, view, env, format) : null),

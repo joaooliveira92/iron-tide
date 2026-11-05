@@ -2,6 +2,7 @@ import type { BatteryCard } from "../../components/design-workspace/batteryView.
 import type { DesignDraft, Severity, WorkshopView } from "@bluewave/ship-design";
 import { plural } from "../../components/design-workspace/plural.js";
 import { formatExplanation } from "../../../shared/explanation-text.js";
+import type { DesignPriceView } from "../../components/design-workspace/design-price-view.js";
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 
 export interface OverviewValue {
@@ -31,6 +32,7 @@ export function overviewModel(
   batteries: readonly BatteryCard[],
   month: string,
   format: PresentationFormat,
+  price: DesignPriceView,
 ): OverviewModel {
   const armour = view.compiled.armour;
   const main = batteries.filter((b) => b.row.role === "MAIN");
@@ -55,7 +57,11 @@ export function overviewModel(
     {
       id: "cost",
       label: "Cost",
-      value: format.moneyFromMicro(view.forecast.costMicro),
+      value: [
+        price.treasuryText ?? price.unitsText,
+        format.moneyFromMicro(view.forecast.costMicro),
+        ...(price.overBudgetText === null ? [] : [price.overBudgetText]),
+      ].join(" · "),
     },
     { id: "speed", label: "Speed", value: metric(view, "speed") },
     { id: "range", label: "Range", value: metric(view, "range") },
