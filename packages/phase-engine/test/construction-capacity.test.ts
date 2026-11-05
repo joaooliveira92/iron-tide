@@ -4,7 +4,12 @@ import { HULL_TYPE_FOR_SHIP_TYPE, constructionPoolForProjectKind } from "@bluewa
 import { describe, expect, it } from "vite-plus/test";
 import { placeConstructionOrder } from "../src/index.js";
 import { committedNewConstructionMassKg, nationalConstructionCapacity } from "../src/index.js";
-import { makeBattleSnapshot, makeDesign, makeNation } from "./battle-fixtures.js";
+import {
+  FIXTURE_CONSTRUCTION_PLAN,
+  makeBattleSnapshot,
+  makeDesign,
+  makeNation,
+} from "./battle-fixtures.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
 
 const MONTH = { year: 1880, month: 1 };
@@ -15,6 +20,7 @@ type Design = CampaignSnapshot["designs"] extends Map<string, infer D> ? D : nev
 
 const design = (id: string, hullType: string, displacementKg: number): Design => ({
   ...makeDesign(id, "uk"),
+  constructionPlan: FIXTURE_CONSTRUCTION_PLAN,
   hullType,
   normalizedDisplacementKg: SafeInt(displacementKg),
 });

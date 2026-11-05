@@ -15,6 +15,10 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import {
   allocateShipNames,
+  historicalBuildMonths,
+  scalePlanToUnits,
+  type LineId,
+  type PackageKind,
   tryResolveNationalConstruction,
   shipTypeForHullType,
   type ShipBuildingContent,
@@ -30,13 +34,29 @@ function packagesFor(
 ): Pick<ConstructionProject, "packages" | "yardId"> {
   if (plan === undefined) return {};
   const total = plan.packages.reduce((sum, p) => sum + Number(p.totalWork), 0);
-  if (total !== projectedCost) return {};
+  if (total <= 0) return {};
+  const scaled =
+    total === projectedCost
+      ? plan.packages
+      : scalePlanToUnits(
+          {
+            packages: plan.packages.map((p) => ({
+              id: p.id,
+              kind: p.kind as PackageKind,
+              line: p.line as LineId,
+              totalWork: Number(p.totalWork),
+              dependsOn: [...p.dependsOn],
+            })),
+            totalWork: total,
+          },
+          projectedCost,
+        ).packages;
   return {
-    packages: plan.packages.map((p) => ({
+    packages: scaled.map((p) => ({
       id: p.id,
       kind: p.kind,
       line: p.line,
-      totalWork: p.totalWork,
+      totalWork: SafeInt(Number(p.totalWork)),
       doneWork: SafeInt.ZERO,
       dependsOn: [...p.dependsOn],
     })),
@@ -51,6 +71,7 @@ export function constructionProjectFor(
   month: { month: number; year: number },
   plan?: ConstructionPlanRecord,
   national?: { profileId: string; costMultiplierBp: number; buildTimeMultiplierBp: number },
+  buildMonths?: number,
 ): ConstructionProject {
   return {
     id: constructionProjectIdForCommand(commandId),
@@ -64,6 +85,7 @@ export function constructionProjectFor(
     status: "PLANNED",
     startedAt: `${String(month.year)}-${String(month.month).padStart(2, "0")}`,
     ...packagesFor(plan, projectedCost),
+    ...(buildMonths !== undefined ? { buildMonths } : {}),
     ...(national !== undefined
       ? {
           nationalProfileId: national.profileId,
@@ -137,6 +159,32 @@ function resolveOrderCosts(
   };
 }
 
+const CONSTRUCTION_PLAN_MISSING = "CONSTRUCTION_PLAN_MISSING" as const;
+
+function orderBuildMonths(
+  content: ShipBuildingContent | undefined,
+  nationId: string,
+  design: CompiledDesignVersion,
+  monthId: string,
+  national: ResolvedOrderCosts["national"],
+): number | undefined {
+  if (content === undefined) return undefined;
+  const balance = content.environmentFor(monthId, nationId).constructionBalance;
+  const historical = historicalBuildMonths(Number(design["normalizedDisplacementKg"]), balance, {
+    month: monthId,
+  });
+  const nationalBp = national?.buildTimeMultiplierBp ?? 10_000;
+  return Math.max(1, Math.round((historical * nationalBp) / 10_000));
+}
+
+function missingPlan(design: CompiledDesignVersion): readonly string[] | null {
+  return design["constructionPlan"] === undefined
+    ? [
+        `Design ${design["designVersionId"]} carries no construction plan, so its build cannot be paced`,
+      ]
+    : null;
+}
+
 export interface ConstructionOrderRequest {
   readonly nationId: string;
   readonly commandId: string;
@@ -193,6 +241,9 @@ export function placeConstructionOrder(
       reason: "NATIONAL_SUPPLY_UNAVAILABLE",
       diagnostics: [`Nation ${request.nationId} cannot obtain its main armament or armour plate`],
     };
+  const planDiagnostics = missingPlan(design);
+  if (planDiagnostics !== null)
+    return { ok: false, reason: CONSTRUCTION_PLAN_MISSING, diagnostics: planDiagnostics };
   const project = {
     ...constructionProjectFor(
       request.commandId,
@@ -201,6 +252,7 @@ export function placeConstructionOrder(
       request.month,
       design["constructionPlan"],
       costs.national,
+      orderBuildMonths(content, request.nationId, design, monthId, costs.national),
     ),
     ...(eligibility.newConstructionReservedMassKg !== undefined
       ? { newConstructionReservedMassKg: eligibility.newConstructionReservedMassKg }
@@ -319,6 +371,9 @@ export function placeConstructionBatch(
     placeholderStem: design["className"],
   });
 
+  const planDiagnostics = missingPlan(design);
+  if (planDiagnostics !== null)
+    return { ok: false, reason: CONSTRUCTION_PLAN_MISSING, diagnostics: planDiagnostics };
   const baseProject = constructionProjectFor(
     request.commandId,
     request.designVersionId,
@@ -326,6 +381,7 @@ export function placeConstructionBatch(
     request.month,
     design["constructionPlan"],
     costs.national,
+    orderBuildMonths(content, request.nationId, design, monthId, costs.national),
   );
   const projects = naming.allocations
     .map((allocation, index): ConstructionProject => {

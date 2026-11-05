@@ -213,6 +213,7 @@ const F = {
     "nationalProfileId",
     "costMultiplierBp",
     "buildTimeMultiplierBp",
+    "buildMonths",
     "capacityUnits",
     "newConstructionReservedMassKg",
     "shipName",

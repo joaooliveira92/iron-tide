@@ -225,6 +225,7 @@ function makeRichSnapshot(): CampaignSnapshot {
       nationalProfileId: "uk",
       costMultiplierBp: 9800,
       buildTimeMultiplierBp: 9300,
+      buildMonths: 54,
       capacityUnits: { slipway: SafeInt(4) },
       newConstructionReservedMassKg: 2_000_000,
       shipName: "Devastation",

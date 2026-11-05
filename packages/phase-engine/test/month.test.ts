@@ -44,6 +44,16 @@ function createSnapshot(overrides?: Partial<CampaignSnapshot>): CampaignSnapshot
         paidWork: SafeInt(0),
         status: "ACTIVE",
         startedAt: "1880-01",
+        packages: [
+          {
+            id: "hull",
+            kind: "HULL",
+            line: "slipway",
+            totalWork: SafeInt(200),
+            doneWork: SafeInt(50),
+            dependsOn: [],
+          },
+        ],
       },
       {
         id: "proj-2",
@@ -494,6 +504,16 @@ describe("MonthExecutor", () => {
           paidWork: SafeInt(0),
           status: "PLANNED",
           startedAt: "1880-01",
+          packages: [
+            {
+              id: "hull",
+              kind: "HULL",
+              line: "slipway",
+              totalWork: SafeInt(150),
+              doneWork: SafeInt(0),
+              dependsOn: [],
+            },
+          ],
         },
       ],
       isPlayable: false,

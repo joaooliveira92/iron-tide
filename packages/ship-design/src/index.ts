@@ -64,6 +64,7 @@ export {
   advanceConstructionMonth,
   type ConstructionBalance,
   type ConstructionPlan,
+  historicalBuildMonths,
   LINE_IDS,
   type LineId,
   PACKAGE_ORDER,
@@ -82,7 +83,7 @@ export {
   reservedNewConstructionMassKg,
   shippedConstructionCapacityExemptions,
 } from "./constructionCapacity.js";
-export { buildProgressOf } from "./constructionProgress.js";
+export { buildProgressOf, scalePlanToUnits } from "./constructionProgress.js";
 export { type HullFormRecord, shipBalanceFromRecord } from "./contextBuilder.js";
 export { computeCost, type CostBalance, type CostContext, treasuryCostUnits } from "./cost.js";
 export {

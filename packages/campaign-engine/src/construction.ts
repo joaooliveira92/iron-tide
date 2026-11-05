@@ -2,6 +2,7 @@ import {
   advanceMonth,
   monthId,
   monthlyAbsorbableDetail,
+  projectMonthsToComplete,
   umsToKnots,
   type CampaignSnapshot,
   type CompiledDesignVersion as CompiledEngineDesignVersion,
@@ -323,7 +324,9 @@ export function constructionProjectReadout(
   const remainingMonths =
     remainingWork <= 0 || monthlyInstalmentUnits <= 0
       ? 0
-      : Math.ceil(remainingWork / monthlyInstalmentUnits);
+      : project.buildMonths !== undefined && project.packages !== undefined
+        ? projectMonthsToComplete(project, capacityUnits, campaignMonth)
+        : Math.ceil(remainingWork / monthlyInstalmentUnits);
   return {
     totalCostUnits,
     monthlyInstalmentUnits,

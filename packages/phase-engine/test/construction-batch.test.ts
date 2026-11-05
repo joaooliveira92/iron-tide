@@ -8,7 +8,12 @@ import {
   MonthExecutor,
   placeConstructionBatch,
 } from "../src/index.js";
-import { makeBattleSnapshot, makeDesign, makeNation } from "./battle-fixtures.js";
+import {
+  FIXTURE_CONSTRUCTION_PLAN,
+  makeBattleSnapshot,
+  makeDesign,
+  makeNation,
+} from "./battle-fixtures.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
 
 const MONTH = { year: 1880, month: 1 };
@@ -19,6 +24,7 @@ type Design = CampaignSnapshot["designs"] extends Map<string, infer D> ? D : nev
 function design(id: string, displacementKg = 1_000_000, over: Partial<Design> = {}): Design {
   return {
     ...makeDesign(id, "uk"),
+    constructionPlan: FIXTURE_CONSTRUCTION_PLAN,
     hullType: HULL_TYPE_FOR_SHIP_TYPE.B,
     normalizedDisplacementKg: SafeInt(displacementKg),
     ...over,

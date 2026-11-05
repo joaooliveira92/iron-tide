@@ -20,6 +20,22 @@ export const CAMPAIGN_SEED = "b6-inc3-seed";
 
 const UMS_PER_KNOT = 514_444;
 
+export const FIXTURE_CONSTRUCTION_PLAN: NonNullable<CompiledDesignVersion["constructionPlan"]> = {
+  yardId: "yard_large",
+  packages: [
+    { id: "hull", kind: "HULL", line: "slipway", totalWork: SafeInt(20), dependsOn: [] },
+    { id: "fit_out", kind: "FIT_OUT", line: "quay", totalWork: SafeInt(10), dependsOn: ["hull"] },
+    {
+      id: "acceptance",
+      kind: "ACCEPTANCE",
+      line: "trials",
+      totalWork: SafeInt(2),
+      dependsOn: ["fit_out"],
+    },
+  ],
+  capacityUnits: { slipway: SafeInt(2), quay: SafeInt(2), trials: SafeInt(2) },
+};
+
 export function makeDesign(
   designVersionId: string,
   nationId: string,

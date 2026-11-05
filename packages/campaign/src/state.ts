@@ -510,6 +510,7 @@ export interface ConstructionProject {
   nationalProfileId?: string;
   costMultiplierBp?: number;
   buildTimeMultiplierBp?: number;
+  buildMonths?: number;
   newConstructionReservedMassKg?: number;
   shipName?: string;
   batchId?: string;

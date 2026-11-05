@@ -108,6 +108,17 @@ export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
   return { status: "continue" };
 }
 
+export const UNPACED_CONSTRUCTION_NOT_FUNDED = "UNPACED_CONSTRUCTION_NOT_FUNDED" as const;
+
+export function isUnpacedNewConstruction(project: ConstructionProject): boolean {
+  return (
+    project["type"] === "ship" &&
+    project["projectType"] === "NEW_CONSTRUCTION" &&
+    project["packages"] === undefined &&
+    project["foreignContractId"] === undefined
+  );
+}
+
 export function capacityOf(
   designs: CampaignSnapshot["designs"],
   project: ConstructionProject,
@@ -229,6 +240,13 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
       SafeInt.sub(nation["treasury"], SafeInt(preservationDelta)),
       expenseReserve,
     );
+    for (const unpaced of updatedProjects.filter(isUnpacedNewConstruction))
+      if (unpaced["status"] !== "COMPLETED" && unpaced["status"] !== "CANCELLED")
+        collector.addWarning(
+          UNPACED_CONSTRUCTION_NOT_FUNDED,
+          `Project ${unpaced["id"]} of nation ${nationId} has no work packages, so it is not funded`,
+          { stage: "appropriation", entityId: unpaced["id"] },
+        );
     const fundable =
       (available as number) > 0
         ? updatedProjects.filter(
@@ -238,6 +256,7 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
               p["status"] !== "CANCELLED" &&
               p["status"] !== "HALTED" &&
               p["status"] !== "DELAYED" &&
+              !isUnpacedNewConstruction(p) &&
               !(foreignSkip?.has(p["id"]) ?? false),
           )
         : [];
@@ -450,6 +469,7 @@ function applyLeftoverFunding(
   const firstIncomplete = projects.find(
     (p) =>
       p["packages"] === undefined &&
+      !isUnpacedNewConstruction(p) &&
       (p["completedWork"] as number) < (p["totalWork"] as number) &&
       p["status"] !== "COMPLETED" &&
       p["status"] !== "CANCELLED" &&

@@ -217,11 +217,12 @@ describe("per-package construction through the month executor", () => {
     expect(last.paidWork).toBe(TOTAL);
   });
 
-  it("a legacy project (no packages) is unaffected: the same funds finish it in far fewer months", () => {
-    const legacy = runUntilComplete(snapshotOf([project(false)], 20));
-    const packaged = runUntilComplete(snapshotOf([project(true)], 20));
-    expect(legacy.history.length).toBeLessThan(packaged.history.length);
-    expect(legacy.history.at(-1)!.packages).toBeUndefined();
+  it("never funds a new-construction ship that carries no packages", () => {
+    const unpaced = runUntilComplete(snapshotOf([project(false)], 20), 6);
+    const last = unpaced.history.at(-1)!;
+    expect(last.completedWork).toBe(0);
+    expect(last.status).not.toBe("COMPLETED");
+    expect(unpaced.treasury.at(-1)).toBeGreaterThanOrEqual(unpaced.treasury[0]!);
   });
 
   it("is deterministic", () => {

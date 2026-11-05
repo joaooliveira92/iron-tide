@@ -7,6 +7,7 @@ import { HULL_TYPE_FOR_SHIP_TYPE } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
 import { FOREIGN_INSTALMENT_COUNT, MonthExecutor } from "../src/index.js";
 import { DOCK_EXPANSION_PROJECT_TYPE } from "../src/dockExpansion.js";
+import { FIXTURE_CONSTRUCTION_PLAN } from "./battle-fixtures.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
@@ -31,6 +32,7 @@ function design(id: string, over: Partial<Design> = {}): Design {
     crewComplement: SafeInt(10),
     contentVersion: "t",
     compiledHash: `h-${id}`,
+    constructionPlan: FIXTURE_CONSTRUCTION_PLAN,
     ...over,
   } as Design;
 }

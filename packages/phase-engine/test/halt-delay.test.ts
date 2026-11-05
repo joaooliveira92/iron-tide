@@ -43,6 +43,7 @@ interface ProjectOverrides {
   readonly totalWork?: number;
   readonly completedWork?: number;
   readonly designVersionId?: string;
+  readonly packaged?: boolean;
 }
 
 function project(over: ProjectOverrides = {}): ConstructionProject {
@@ -57,6 +58,20 @@ function project(over: ProjectOverrides = {}): ConstructionProject {
     paidWork: SafeInt(0),
     status: over.status ?? "ACTIVE",
     startedAt: "1880-01",
+    ...(over.packaged === true
+      ? {
+          packages: [
+            {
+              id: "hull",
+              kind: "HULL" as const,
+              line: "slipway",
+              totalWork: SafeInt(over.totalWork ?? 200),
+              doneWork: SafeInt(over.completedWork ?? 0),
+              dependsOn: [],
+            },
+          ],
+        }
+      : {}),
   };
 }
 
@@ -299,7 +314,7 @@ describe("a DELAYED month (SB3-R6)", () => {
   });
 
   it("the month after a delay resumes charged work", () => {
-    const first = executeMonth(snapshot([project({ status: "DELAYED" })]));
+    const first = executeMonth(snapshot([project({ status: "DELAYED", packaged: true })]));
     const advanced: CampaignSnapshot = {
       ...first.finalSnapshot,
       turnNumber: SafeInt.add(first.finalSnapshot.turnNumber, SafeInt(1)),

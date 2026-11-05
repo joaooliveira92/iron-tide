@@ -60,7 +60,8 @@ export function remainingMonthlyCapacityUnits(
   capacityUnits: Readonly<Record<string, number>> | undefined,
   month: string,
 ): Record<LineId, number> | undefined {
-  const buildTimeBp = project["buildTimeMultiplierBp"];
+  const buildTimeBp =
+    project["buildMonths"] === undefined ? project["buildTimeMultiplierBp"] : undefined;
   const paced =
     capacityUnits === undefined || buildTimeBp === undefined || buildTimeBp === BP
       ? capacityUnits
@@ -75,6 +76,44 @@ export function remainingMonthlyCapacityUnits(
   return Object.fromEntries(
     LINE_IDS.map((line) => [line, Math.max(0, (effective[line] ?? 0) - Number(used?.[line] ?? 0))]),
   ) as Record<LineId, number>;
+}
+
+const MONTH_ID = /^(\d{4})-(0[1-9]|1[0-2])$/;
+
+function monthIndex(month: string): number | null {
+  const match = MONTH_ID.exec(month);
+  return match === null ? null : Number(match[1]) * 12 + Number(match[2]) - 1;
+}
+
+export function monthsSinceStart(project: ConstructionProject, month: string): number {
+  const start = monthIndex(project["startedAt"]);
+  const now = monthIndex(month);
+  return start === null || now === null ? 0 : Math.max(0, now - start);
+}
+
+function isPaced(project: ConstructionProject): project is ConstructionProject & {
+  readonly buildMonths: number;
+} {
+  return (
+    project["buildMonths"] !== undefined &&
+    project["packages"] !== undefined &&
+    project["status"] !== "ACCELERATED"
+  );
+}
+
+function cumulativeAllowance(totalWork: number, buildMonths: number, elapsed: number): number {
+  const months = Math.min(buildMonths, elapsed + 1);
+  return Math.floor((totalWork * months) / buildMonths);
+}
+
+export function paceRoomUnits(project: ConstructionProject, month: string): number {
+  if (!isPaced(project)) return Number.MAX_SAFE_INTEGER;
+  const allowed = cumulativeAllowance(
+    Number(project["totalWork"]),
+    project["buildMonths"],
+    monthsSinceStart(project, month),
+  );
+  return Math.max(0, allowed - Number(project["completedWork"]));
 }
 
 export interface MonthlyAbsorbableDetail {
@@ -124,11 +163,12 @@ export function monthlyAbsorbableDetail(
       LineId,
       number
     >);
+  const room = paceRoomUnits(project, month);
   const step = advanceConstructionMonth(
     constructionPlanOf(packages),
     packageProgressOf(packages),
     capacity,
-    null,
+    room === Number.MAX_SAFE_INTEGER ? null : room,
     startDone,
   );
   const applied = Object.values(step.applied).reduce((sum, work) => sum + work, 0);
@@ -152,4 +192,57 @@ export function monthlyAbsorbable(
   month: string,
 ): number {
   return monthlyAbsorbableDetail(project, capacityUnits, month).amount;
+}
+
+export function projectMonthsToComplete(
+  project: ConstructionProject,
+  capacityUnits: Readonly<Record<string, number>> | undefined,
+  month: string,
+  maxMonths = 1_200,
+): number {
+  const packages = project["packages"];
+  if (packages === undefined) return 0;
+  const plan = constructionPlanOf(packages);
+  const total = Number(project["totalWork"]);
+  let progress = packageProgressOf(packages);
+  let done = Number(project["completedWork"]);
+  const first = remainingMonthlyCapacityUnits(project, capacityUnits, month);
+  const full = remainingMonthlyCapacityUnits(
+    { ...project, monthUsage: undefined } as ConstructionProject,
+    capacityUnits,
+    month,
+  );
+  const usage = project["monthUsage"];
+  let startDone: PackageProgress =
+    usage !== undefined && usage["month"] === month
+      ? Object.fromEntries(
+          Object.entries(usage["startDone"]).map(([id, value]) => [id, value as number]),
+        )
+      : progress;
+  for (let months = 1; months <= maxMonths; months += 1) {
+    if (done >= total) return months - 1;
+    const capacity =
+      (months === 1 ? first : full) ??
+      (Object.fromEntries(LINE_IDS.map((line) => [line, Number.MAX_SAFE_INTEGER])) as Record<
+        LineId,
+        number
+      >);
+    const room = isPaced(project)
+      ? Math.max(
+          0,
+          cumulativeAllowance(
+            total,
+            project["buildMonths"],
+            monthsSinceStart(project, month) + months - 1,
+          ) - done,
+        )
+      : null;
+    const step = advanceConstructionMonth(plan, progress, capacity, room, startDone);
+    const applied = Object.values(step.applied).reduce((sum, work) => sum + work, 0);
+    progress = step.progress;
+    startDone = progress;
+    done += applied;
+    if (done >= total) return months;
+  }
+  return maxMonths;
 }
