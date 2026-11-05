@@ -34,13 +34,17 @@ describe("constructionProjectFor with a design's construction plan", () => {
     expect(p.packages![1]!.dependsOn).not.toBe(source.packages[1]!.dependsOn);
   });
 
-  it("keeps the single-figure model when there is no plan, or the plan does not add up", () => {
+  it("keeps the single-figure model when there is no plan", () => {
     const none = constructionProjectFor("cmd-1", "d1", 10, MONTH);
     expect("packages" in none).toBe(false);
     expect("yardId" in none).toBe(false);
+  });
+
+  it("rescales a plan that does not add up to the cost so the project stays paced", () => {
     const off = constructionProjectFor("cmd-1", "d1", 10, MONTH, plan([7, 4]));
-    expect("packages" in off).toBe(false);
     expect(off.totalWork).toBe(10);
+    const total = off.packages!.reduce((sum, p) => sum + Number(p.totalWork), 0);
+    expect(total).toBe(10);
   });
 
   it("is unchanged for everything else: id, status and start month", () => {

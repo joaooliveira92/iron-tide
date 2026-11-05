@@ -137,7 +137,7 @@ describe("home construction takes its historical build time (#565)", () => {
     expect(readout.remainingMonths).toBe(completedAfter.findIndex(Boolean) + 1);
   });
 
-  it("rejects an order whose design carries no construction plan", () => {
+  it("derives a plan for a design that carries none, so its order is paced and takes months", () => {
     const unplanned: CompiledDesignVersion = { ...design };
     delete unplanned.constructionPlan;
     const result = placeConstructionOrder(
@@ -145,6 +145,23 @@ describe("home construction takes its historical build time (#565)", () => {
       { nationId: "uk", commandId: "cmd-bare", designVersionId: "dv-home", month: MONTH },
       content,
     );
-    expect(result).toMatchObject({ ok: false, reason: "CONSTRUCTION_PLAN_MISSING" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.project.packages).toBeDefined();
+    expect(result.project.buildMonths).toBeGreaterThan(36);
+    const { completedAfter } = replay(result.snapshot, 2);
+    expect(completedAfter).toEqual([false, false]);
+  });
+
+  it("never funds a new-construction ship that carries no packages", () => {
+    if (!placed.ok) throw new Error("order rejected");
+    const { packages: _packages, ...unpaced } = placed.project;
+    const nation = placed.snapshot.nations.get("uk")!;
+    const snap: CampaignSnapshot = {
+      ...placed.snapshot,
+      nations: new Map([["uk", { ...nation, constructionProjects: [unpaced] }]]),
+    };
+    const { workAfter } = replay(snap, 3);
+    expect(workAfter).toEqual([0, 0, 0]);
   });
 });

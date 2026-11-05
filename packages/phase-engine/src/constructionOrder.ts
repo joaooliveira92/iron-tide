@@ -17,6 +17,7 @@ import {
   allocateShipNames,
   historicalBuildMonths,
   scalePlanToUnits,
+  trySeededConstructionPlan,
   type LineId,
   type PackageKind,
   tryResolveNationalConstruction,
@@ -177,12 +178,73 @@ function orderBuildMonths(
   return Math.max(1, Math.round((historical * nationalBp) / 10_000));
 }
 
-function missingPlan(design: CompiledDesignVersion): readonly string[] | null {
-  return design["constructionPlan"] === undefined
-    ? [
-        `Design ${design["designVersionId"]} carries no construction plan, so its build cannot be paced`,
-      ]
-    : null;
+type OrderedProject =
+  | { readonly ok: true; readonly project: ConstructionProject }
+  | { readonly ok: false; readonly reason: string; readonly diagnostics: readonly string[] };
+
+function orderedProject(
+  content: ShipBuildingContent | undefined,
+  request: {
+    readonly nationId: string;
+    readonly commandId: string;
+    readonly designVersionId: string;
+    readonly month: { readonly month: number; readonly year: number };
+  },
+  design: CompiledDesignVersion,
+  monthId: string,
+  costs: ResolvedOrderCosts,
+): OrderedProject {
+  const buildMonths = orderBuildMonths(content, request.nationId, design, monthId, costs.national);
+  const projectedCost = costs.costs.projectedCost;
+  const build = (plan: ConstructionPlanRecord | undefined, repaired: boolean) => {
+    const project = constructionProjectFor(
+      request.commandId,
+      request.designVersionId,
+      projectedCost,
+      request.month,
+      plan,
+      costs.national,
+      buildMonths,
+    );
+    if (!repaired || plan === undefined) return project;
+    const { yardId: _unassigned, ...withoutYard } = project;
+    return {
+      ...withoutYard,
+      capacityUnits: { ...plan.capacityUnits },
+    };
+  };
+  if (design["constructionPlan"] !== undefined)
+    return { ok: true, project: build(design["constructionPlan"], false) };
+  const balance = content?.environmentFor(monthId, request.nationId).constructionBalance;
+  if (balance === undefined || !(projectedCost > 0))
+    return { ok: true, project: build(undefined, false) };
+  const derived = trySeededConstructionPlan({
+    displacementKg: Number(design["normalizedDisplacementKg"]),
+    totalUnits: projectedCost,
+    completedUnits: 0,
+    balance,
+    month: monthId,
+  });
+  if (Result.isFailure(derived))
+    return {
+      ok: false,
+      reason: CONSTRUCTION_PLAN_MISSING,
+      diagnostics: [derived.failure.message],
+    };
+  const record: ConstructionPlanRecord = {
+    yardId: "",
+    packages: derived.success.packages.map((p) => ({
+      id: p.id,
+      kind: p.kind,
+      line: p.line,
+      totalWork: SafeInt(p.totalWork),
+      dependsOn: [...p.dependsOn],
+    })),
+    capacityUnits: Object.fromEntries(
+      Object.entries(derived.success.capacityUnits).map(([line, units]) => [line, SafeInt(units)]),
+    ),
+  };
+  return { ok: true, project: build(record, true) };
 }
 
 export interface ConstructionOrderRequest {
@@ -241,19 +303,10 @@ export function placeConstructionOrder(
       reason: "NATIONAL_SUPPLY_UNAVAILABLE",
       diagnostics: [`Nation ${request.nationId} cannot obtain its main armament or armour plate`],
     };
-  const planDiagnostics = missingPlan(design);
-  if (planDiagnostics !== null)
-    return { ok: false, reason: CONSTRUCTION_PLAN_MISSING, diagnostics: planDiagnostics };
+  const ordered = orderedProject(content, request, design, monthId, costs);
+  if (!ordered.ok) return { ok: false, reason: ordered.reason, diagnostics: ordered.diagnostics };
   const project = {
-    ...constructionProjectFor(
-      request.commandId,
-      request.designVersionId,
-      costs.costs.projectedCost,
-      request.month,
-      design["constructionPlan"],
-      costs.national,
-      orderBuildMonths(content, request.nationId, design, monthId, costs.national),
-    ),
+    ...ordered.project,
     ...(eligibility.newConstructionReservedMassKg !== undefined
       ? { newConstructionReservedMassKg: eligibility.newConstructionReservedMassKg }
       : {}),
@@ -371,18 +424,9 @@ export function placeConstructionBatch(
     placeholderStem: design["className"],
   });
 
-  const planDiagnostics = missingPlan(design);
-  if (planDiagnostics !== null)
-    return { ok: false, reason: CONSTRUCTION_PLAN_MISSING, diagnostics: planDiagnostics };
-  const baseProject = constructionProjectFor(
-    request.commandId,
-    request.designVersionId,
-    costs.costs.projectedCost,
-    request.month,
-    design["constructionPlan"],
-    costs.national,
-    orderBuildMonths(content, request.nationId, design, monthId, costs.national),
-  );
+  const ordered = orderedProject(content, request, design, monthId, costs);
+  if (!ordered.ok) return { ok: false, reason: ordered.reason, diagnostics: ordered.diagnostics };
+  const baseProject = ordered.project;
   const projects = naming.allocations
     .map((allocation, index): ConstructionProject => {
       const ordinal = index + 1;
