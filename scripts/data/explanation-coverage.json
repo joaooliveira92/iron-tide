@@ -141,9 +141,13 @@
       "issue": "#301",
       "covered": {
         "maintenanceAdderExplanation": "fleet_training_adder",
-        "progressExplanation": "fleet_training_progress"
+        "progressExplanation": "fleet_training_progress",
+        "effectExplanation": "fleet_training_effect",
+        "monthlyCostExplanation": "fleet_training_cost"
       },
       "exempt": {
+        "effectBp": "Explained by effectExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "monthlyCost": "Explained by monthlyCostExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
         "maintenanceAdderBp": "Explained by maintenanceAdderExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
         "fundedMonths": "Accumulated monthly counter; progressExplanation explains the months still needed, but the counter itself has no replayable per-month source in the view.",
         "monthsToProficiency": "Explained by progressExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree."

@@ -507,6 +507,8 @@ export const EN_US_MESSAGES = {
   "fleet.fleet_training_adder.summary": "Maintenance adder {value}",
   "fleet.fleet_training_adder.base": "Base subject adder",
   "fleet.fleet_training_adder.nation": "Nation cost adjustment",
+  "fleet.fleet_training_cost.summary": "Extra maintenance {value} per month",
+  "fleet.fleet_training_effect.summary": "Battle bonus {value}",
   "fleet.fleet_training_progress.summary": "Proficient in {value} months",
   "fleet.fleet_training_progress.proficiency": "Proficiency threshold",
   "fleet.fleet_training_progress.funded": "Months funded",

@@ -18,6 +18,7 @@ export * from "./divisionCohesionGrowth.js";
 export * from "./divisionDoctrine.js";
 export * from "./divisionExperience.js";
 export * from "./specialTraining.js";
+export * from "./trainingPreview.js";
 export * from "./fleetExercise.js";
 export * from "./tensionDrift.js";
 export * from "./eventDraw.js";

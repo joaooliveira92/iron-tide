@@ -1,12 +1,17 @@
 import {
   buildFleetScreenView,
   explainExerciseGain,
+  explainTrainingEffect,
   explainTrainingMaintenanceAdder,
+  explainTrainingMonthlyCost,
   explainTrainingProgress,
   type MovementCommand,
 } from "@bluewave/campaign-engine";
 import {
   campaignMonthId,
+  nationIsAtWar,
+  trainingSelectionCost,
+  trainingSelections,
   exerciseLimitReached,
   exerciseMonthAfter,
   FLEET_EXERCISE_DORMANT,
@@ -166,12 +171,34 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
         : { month: record.month, rules: shipBuilding.presence },
     );
     const fleetManagement = yield* contentArtifact.loadFleetManagementRules();
+    const trainingMonth = campaignMonthId(
+      record.state.snapshot.startYear,
+      record.state.snapshot.startMonth,
+      Number(record.state.snapshot.turnNumber),
+    );
+    const trainingAtWar = nationIsAtWar(record.state.snapshot.wars.wars, nation.id);
+    const selectionCostOf = (subjects: readonly (typeof TRAINING_SUBJECTS)[number][]) => {
+      const cost = trainingSelectionCost(
+        nation,
+        fleetManagement!.training,
+        trainingAtWar,
+        trainingMonth,
+        subjects,
+      );
+      return {
+        monthlyCost: cost.monthlyCost,
+        monthlyCostExplanation: explainTrainingMonthlyCost(cost),
+      };
+    };
     const training: FleetTrainingProjection | undefined =
       fleetManagement === undefined
         ? undefined
         : {
             maxSubjects: fleetManagement.training.maxSubjects,
             proficiencyMonths: fleetManagement.training.proficiencyMonths,
+            selections: trainingSelections(fleetManagement.training.maxSubjects).map(
+              (subjects) => ({ subjects, ...selectionCostOf(subjects) }),
+            ),
             subjects: TRAINING_SUBJECTS.map((subject) => {
               const entry = nation.specialTraining?.find((e) => e.subject === subject);
               const fundedMonths = entry?.fundedMonths ?? 0;
@@ -183,6 +210,11 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
                 subject,
                 maintenanceAdderBp: detail.adderBp,
                 maintenanceAdderExplanation: explainTrainingMaintenanceAdder(detail),
+                effectBp: fleetManagement.training.subjects[subject].effectBp,
+                effectExplanation: explainTrainingEffect(
+                  fleetManagement.training.subjects[subject].effectBp,
+                ),
+                ...selectionCostOf([subject]),
                 funded: entry !== undefined,
                 fundedMonths,
                 monthsToProficiency: Math.max(0, proficiencyMonths - fundedMonths),
