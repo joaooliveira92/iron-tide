@@ -12,6 +12,7 @@ export {
 export * from "./continuity.js";
 export * from "./constructionStatus.js";
 export * from "./constructionDraw.js";
+export * from "./constructionFunding.js";
 export * from "./division.js";
 export * from "./divisionCohesionGrowth.js";
 export * from "./divisionDoctrine.js";

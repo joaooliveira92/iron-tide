@@ -1,5 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import { monthlyAbsorbable } from "./constructionDraw.js";
+import { allocateConstructionFunds } from "./constructionFunding.js";
 import {
   monthlyNetBeforeConstruction,
   monthlyRevenue,
@@ -41,6 +42,7 @@ export interface EconomyOutlook {
   readonly researchCap: number;
   readonly researchUnfundedReason?: ResearchUnfundedReason;
   readonly plannedConstruction: number;
+  readonly constructionDraws: readonly ConstructionDraw[];
   readonly projectedNet: number;
   readonly shortfall: number;
   readonly obligationShortfall: number;
@@ -81,17 +83,6 @@ export function constructionDrawByProject(
   return draws;
 }
 
-function plannedConstructionOf(
-  nation: NationState,
-  snapshot: CampaignSnapshot,
-  month: string,
-): number {
-  return constructionDrawByProject(nation, snapshot, month).reduce(
-    (total, entry) => total + entry.draw,
-    0,
-  );
-}
-
 export interface EconomyOutlookOptions {
   readonly carryingCostPerHaltedProject?: number;
 }
@@ -130,7 +121,6 @@ export function economyOutlook(
   if ((requested as number) > 0 && !hasField) unfundedReason = "NO_ELIGIBLE_RESEARCH_FIELD";
   else if ((requested as number) > (cap as number)) unfundedReason = "ABOVE_CAP";
 
-  const planned = plannedConstructionOf(nation, snapshot, month);
   const net = monthlyNetBeforeConstruction({ revenue, obligations, maintenance, research });
 
   let funds = SafeInt.add(nation["treasury"], revenue);
@@ -143,7 +133,21 @@ export function economyOutlook(
   let shortfall: SafeInt = carrying.shortfall;
   let obligationShortfall: SafeInt = SafeInt.ZERO;
   const constructionRoom = SafeInt.sub(funds, obligations);
-  const construction = SafeInt(Math.min(planned, Math.max(0, constructionRoom as number)));
+  const allocation = allocateConstructionFunds({
+    projects: nation["constructionProjects"],
+    available: SafeInt(Math.max(0, constructionRoom as number)),
+    designs: snapshot["designs"],
+    month,
+    foreignSkip: new Set(
+      nation["constructionProjects"]
+        .filter((project) => project["foreignContractId"] !== undefined)
+        .map((project) => project["id"]),
+    ),
+  });
+  const construction = allocation.delta;
+  const draws = [...allocation.draws]
+    .filter(([, draw]) => draw > 0)
+    .map(([projectId, draw]) => ({ projectId, draw }));
   funds = SafeInt.sub(funds, construction);
   const paid: Record<"maintenance" | "obligations" | "research", SafeInt> = {
     maintenance: SafeInt.ZERO,
@@ -172,7 +176,8 @@ export function economyOutlook(
     plannedResearch: research as number,
     researchCap: cap as number,
     ...(unfundedReason === undefined ? {} : { researchUnfundedReason: unfundedReason }),
-    plannedConstruction: planned,
+    plannedConstruction: construction as number,
+    constructionDraws: draws,
     projectedNet: net as number,
     status: economyStatus(net as number, revenue as number),
     shortfall: shortfall as number,
