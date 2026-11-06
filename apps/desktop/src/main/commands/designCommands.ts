@@ -170,12 +170,28 @@ const prepareSubmission = (payload: SubmissionInput) =>
   });
 
 export const previewDesignStudyProgram: CommandHandler<"previewDesignStudy"> = (payload) =>
-  prepareSubmission(payload).pipe(
-    Effect.map((prepared) => ({
+  Effect.gen(function* () {
+    const prepared = yield* prepareSubmission(payload);
+    if (prepared.study === undefined)
+      return { outcome: "success" as const, value: {}, diagnostics: [] };
+    const sessions = yield* CampaignSessionStore;
+    const record = yield* sessions.get(payload.sessionId);
+    const nation = record.state.snapshot.nations.get(record.playerSlotId);
+    const treasuryUnits = Number(nation?.treasury ?? 0);
+    const freeTreasury = treasuryUnits - Number(nation?.expenses ?? 0);
+    const { months, cost } = prepared.study;
+    const firstPayment = Math.ceil(cost / Math.max(1, months));
+    return {
       outcome: "success" as const,
-      value: prepared.study === undefined ? {} : { study: prepared.study },
+      value: {
+        study: prepared.study,
+        treasuryUnits,
+        freeTreasury,
+        affordable: firstPayment <= freeTreasury,
+      },
       diagnostics: [],
-    })),
+    };
+  }).pipe(
     Effect.catchTag("CommandRejected", () =>
       Effect.succeed({ outcome: "success" as const, value: {}, diagnostics: [] }),
     ),

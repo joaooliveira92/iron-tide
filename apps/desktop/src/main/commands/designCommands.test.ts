@@ -262,6 +262,83 @@ describe("submitDesignCommand", () => {
     expect(queued.value.study).toEqual(preview.value.study);
   });
 
+  it("previews without touching the snapshot or the revision", async () => {
+    const before = getCampaignSession("ds")!.state;
+    const turn = before.snapshot.turnNumber;
+    const snapshot = before.snapshot;
+    const designs = snapshot.designs;
+    const uk = snapshot.nations.get("uk")!;
+    const studies = uk.designStudies;
+    const preview = await runProgram<DesignStudyPreviewOutcome>(previewDesignStudyProgram, {
+      sessionId: "ds",
+      className: "Test Cruiser",
+      draft: cruiser,
+    });
+    expect(preview.outcome).toBe("success");
+    const after = getCampaignSession("ds")!.state;
+    expect(after).toBe(before);
+    expect(after.snapshot).toBe(snapshot);
+    expect(after.snapshot.turnNumber).toBe(turn);
+    expect(after.snapshot.designs).toBe(designs);
+    expect(after.snapshot.nations.get("uk")).toBe(uk);
+    expect(after.snapshot.nations.get("uk")!.designStudies).toBe(studies);
+  });
+
+  const withTreasury = (treasury: number) => {
+    const snapshot = getCampaignSession("ds")!.state.snapshot;
+    const uk = snapshot.nations.get("uk")!;
+    snapshot.nations.set("uk", { ...uk, treasury: SafeInt(treasury), expenses: SafeInt(0) });
+  };
+  const previewValue = async () => {
+    const preview = await runProgram<DesignStudyPreviewOutcome>(previewDesignStudyProgram, {
+      sessionId: "ds",
+      className: "Test Cruiser",
+      draft: cruiser,
+    });
+    if (preview.outcome !== "success") throw new Error("preview failed");
+    return preview.value;
+  };
+
+  it("states the treasury and affordability next to the study", async () => {
+    const plain = await previewValue();
+    const study = plain.study!;
+    const monthly = Math.ceil(study.cost / study.months);
+
+    withTreasury(study.cost * 10);
+    const rich = await previewValue();
+    expect(rich).toMatchObject({
+      treasuryUnits: study.cost * 10,
+      freeTreasury: study.cost * 10,
+      affordable: true,
+    });
+    expect(rich.study).toEqual(study);
+
+    withTreasury(monthly);
+    expect(await previewValue()).toMatchObject({
+      treasuryUnits: monthly,
+      freeTreasury: monthly,
+      affordable: true,
+    });
+
+    withTreasury(monthly - 1);
+    expect(await previewValue()).toMatchObject({ freeTreasury: monthly - 1, affordable: false });
+  });
+
+  it("takes the month's expenses off the free treasury", async () => {
+    const study = (await previewValue()).study!;
+    const snapshot = getCampaignSession("ds")!.state.snapshot;
+    const uk = snapshot.nations.get("uk")!;
+    snapshot.nations.set("uk", {
+      ...uk,
+      treasury: SafeInt(study.cost * 10),
+      expenses: SafeInt(study.cost * 4),
+    });
+    expect(await previewValue()).toMatchObject({
+      treasuryUnits: study.cost * 10,
+      freeTreasury: study.cost * 6,
+    });
+  });
+
   it("previews nothing for an unbuildable design instead of failing", async () => {
     const preview = await runProgram<DesignStudyPreviewOutcome>(previewDesignStudyProgram, {
       sessionId: "ds",
