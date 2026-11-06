@@ -21,7 +21,7 @@ export function HistoryPanel({
   const format = usePresentationFormat();
   const names = new Map(content.catalogue.map((e) => [e.id, e.displayName]));
   const nameOf = (id: string) => names.get(id) ?? id;
-  const steps = [`Start: ${startName}`, ...history.map((e) => describeEdit(e, nameOf, format))];
+  const steps = [`Start: ${startName}`, ...history.map((e) => describeEdit(e, { nameOf }, format))];
   return (
     <Panel title="Edit history">
       <ol className="max-h-64 space-y-1 overflow-y-auto text-sm">

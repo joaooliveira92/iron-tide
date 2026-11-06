@@ -37,6 +37,20 @@ describe("a choice that breaks the design", () => {
     expect(length().getAttribute("aria-invalid")).toBeNull();
   });
 
+  it("says what changed, from and to, and the value against its limit in player units", () => {
+    render(<ShipbuildingWorkspace />);
+    openHull();
+    commitLength("120");
+    const dialog = screen.getByRole("dialog");
+    const headline = within(dialog).getByText(/^Changing /).textContent ?? "";
+    expect(headline).toMatch(/^Changing Length \(waterline\) from .+ to .+ leaves the design/);
+    expect(headline).not.toMatch(/_|[a-z][A-Z]|[{}‰]|\b120000\b/);
+    expect(within(dialog).getByText(/^Current .+; must not exceed .+/).textContent).toMatch(
+      /^Current 131\.2 yd; must not exceed 76\.6 yd$/,
+    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Undo this choice" }));
+  });
+
   it("keeps the invalid field marked after dismissing, and does not reopen for a finding already shown", () => {
     render(<ShipbuildingWorkspace />);
     openHull();

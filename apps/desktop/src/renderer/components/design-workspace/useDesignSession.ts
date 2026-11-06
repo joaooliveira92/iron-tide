@@ -38,14 +38,14 @@ export function useDesignSession(fixedMonth: string | null) {
   const choiceCheck = useChoiceCheck(findings);
   const { guard } = choiceCheck;
   const boardEdit = boardActions.edit;
+  const nameOf = useMemo(() => {
+    const names = new Map(content.catalogue.map((c) => [c.id, c.displayName]));
+    return (componentId: string) => names.get(componentId) ?? componentId.replaceAll("_", " ");
+  }, [content]);
   const edit = useCallback(
     (e: DraftEdit) =>
-      guard(
-        editField(e),
-        describeEdit(e, (id) => id.replaceAll("_", " "), format),
-        () => boardEdit(e),
-      ),
-    [guard, boardEdit, format],
+      guard(editField(e), describeEdit(e, { draft, nameOf }, format), () => boardEdit(e)),
+    [guard, boardEdit, format, draft, nameOf],
   );
   const actions = useMemo(() => ({ ...boardActions, edit }), [boardActions, edit]);
   const [selection] = useState(createSelectionStore);

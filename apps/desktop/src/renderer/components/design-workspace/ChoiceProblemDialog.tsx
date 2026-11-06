@@ -1,5 +1,6 @@
 import { OctagonX } from "lucide-react";
 import { formatExplanation } from "../../../shared/explanation-text.js";
+import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { Badge } from "../ui/badge.js";
 import { Button } from "../ui/button.js";
 import {
@@ -12,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog.js";
+import { findingValue } from "./describeEdit.js";
 import type { ChoiceProblem } from "./useChoiceCheck.js";
 import { SEVERITY_STYLE } from "./validation/severity.js";
 
@@ -26,6 +28,7 @@ export function ChoiceProblemDialog({
   readonly onOpenChange: (open: boolean) => void;
   readonly onUndo: () => void;
 }) {
+  const format = usePresentationFormat();
   return (
     <Dialog open={open && problem !== null} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -37,7 +40,7 @@ export function ChoiceProblemDialog({
                 This change breaks the design
               </DialogTitle>
               <DialogDescription>
-                {problem.choice} leaves the design unable to work as it should. Review what
+                Changing {problem.choice} leaves the design unable to work as it should. Review what
                 happened, then keep the change or undo it.
               </DialogDescription>
             </DialogHeader>
@@ -52,6 +55,7 @@ export function ChoiceProblemDialog({
                       <p className="font-medium">{f.title}</p>
                     </div>
                     <p className="text-muted-foreground">{f.explanation}</p>
+                    {findingValue(f, format) !== undefined && <p>{findingValue(f, format)}</p>}
                     <p>
                       <span className="font-medium">In play: </span>
                       {formatExplanation(f.finding.consequence)}
