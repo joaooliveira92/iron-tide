@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { translate } from "../../../lib/strings.js";
 import { cn } from "../../../lib/utils.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { dockGauge, type DockFigures } from "../yard-workspace.js";
@@ -21,7 +22,7 @@ export const DockGauge = memo(function DockGauge({ economy, className }: DockGau
         <div
           tabIndex={0}
           role="meter"
-          aria-label="Tonnage on the ways"
+          aria-label={translate("construction.gauge.tonnageLimit")}
           aria-valuemin={0}
           aria-valuemax={gauge.capKg}
           aria-valuenow={gauge.usedKg}
@@ -32,7 +33,9 @@ export const DockGauge = memo(function DockGauge({ economy, className }: DockGau
           )}
         >
           <div className="flex items-baseline justify-between gap-3">
-            <p className="text-sm font-medium">On the ways</p>
+            <p className="text-sm font-medium">
+              {translate("construction.gauge.underConstruction")}
+            </p>
             <p
               className={cn(
                 "font-mono text-xs tabular-nums",
@@ -69,11 +72,11 @@ export const DockGauge = memo(function DockGauge({ economy, className }: DockGau
       }
     >
       <PeekRows
-        title="New tonnage under construction"
+        title={translate("construction.gauge.underConstructionAtOnce")}
         rows={[
-          { label: "Counted against the cap", value: mass(gauge.usedKg) },
-          { label: "Exempt (AMC / small corvette)", value: mass(gauge.exemptKg) },
-          { label: "Concurrency cap", value: mass(gauge.capKg) },
+          { label: translate("construction.gauge.underConstruction"), value: mass(gauge.usedKg) },
+          { label: translate("construction.gauge.exemptSmallCraft"), value: mass(gauge.exemptKg) },
+          { label: translate("construction.gauge.tonnageLimit"), value: mass(gauge.capKg) },
           { label: "Room left", value: mass(gauge.freeKg) },
         ]}
         note="The tick marks the largest single hull your dock can take, on the same scale."

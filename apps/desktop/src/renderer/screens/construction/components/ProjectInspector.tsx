@@ -2,6 +2,8 @@ import { memo } from "react";
 import { Badge } from "../../../components/ui/badge.js";
 import { Progress } from "../../../components/ui/progress.js";
 import { cn } from "../../../lib/utils.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import { formatMonthKey } from "../month-key.js";
 import type { ProjectRow } from "../project-progress.js";
 import { packageStateText } from "./PackagePipeline.js";
 import { ProjectReadout } from "./ProjectReadout.js";
@@ -16,6 +18,7 @@ export const ProjectInspector = memo(function ProjectInspector({
   row,
   ...steering
 }: ProjectInspectorProps) {
+  const format = usePresentationFormat();
   if (row === null) {
     return (
       <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
@@ -34,7 +37,9 @@ export const ProjectInspector = memo(function ProjectInspector({
         <p className="text-xs text-muted-foreground">
           {row.shipType}
           {row.yard !== null ? ` · ${row.yard}` : ""}
-          {row.holdUntilMonth !== null ? ` · on hold until ${row.holdUntilMonth}` : ""}
+          {row.holdUntilMonth !== null
+            ? ` · on hold until ${formatMonthKey(format, row.holdUntilMonth)}`
+            : ""}
         </p>
         <div className="flex items-center gap-3">
           <Progress value={row.percent} aria-label={`${row.className} build progress`} />

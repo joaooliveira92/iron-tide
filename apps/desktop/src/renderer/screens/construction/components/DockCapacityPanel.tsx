@@ -1,6 +1,7 @@
 import { memo, useState } from "react";
 import { Anchor, ArrowUpFromLine } from "lucide-react";
 import { Button } from "../../../components/ui/button.js";
+import { translate } from "../../../lib/strings.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { DockGauge } from "./DockGauge.js";
 
@@ -86,17 +87,17 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
           value={dockMaxBuildDisplacementKg === null ? "no dock" : mass(dockMaxBuildDisplacementKg)}
         />
         <Plate
-          label="Concurrency cap"
+          label={translate("construction.gauge.tonnageLimit")}
           testId="concurrency-cap"
           value={mass(maxConcurrentConstructionMassKg)}
         />
         <Plate
-          label="Capacity in use"
+          label={translate("construction.gauge.underConstruction")}
           testId="capacity-in-use"
           value={mass(committedNewConstructionMassKg)}
         />
         <Plate
-          label="Exempt (AMC / small corvette)"
+          label={translate("construction.gauge.exemptSmallCraft")}
           testId="capacity-exempt"
           value={mass(exemptNewConstructionMassKg)}
         />

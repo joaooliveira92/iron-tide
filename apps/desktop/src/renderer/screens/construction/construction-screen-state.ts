@@ -1,5 +1,4 @@
 import { NEAR_COMPLETION_WORK_RATIO } from "@bluewave/campaign-engine";
-import type { DeferredFeature } from "../../components/shared/DeferredFeaturesPanel.js";
 import type {
   ConstructionCommandOutcome,
   ConstructionCommandQueuedOutcome,
@@ -85,21 +84,3 @@ export function expectedConstructionCompletions(
     return total > 0 && project.completedWork / total >= NEAR_COMPLETION_WORK_RATIO;
   }).length;
 }
-
-export const DEFERRED_CONSTRUCTION_ITEMS: readonly DeferredFeature[] = [
-  {
-    id: "build-submarine",
-    name: "Build submarine",
-    reason: "1880 content has no submarine hull or design, so there is nothing to order.",
-  },
-  {
-    id: "build-fort-base",
-    name: "Build fort or base",
-    reason: "Coastal defence exists only in tactical combat, not as campaign construction.",
-  },
-  {
-    id: "coastal-fortifications",
-    name: "Coastal fortifications",
-    reason: "The campaign holds no fortification state, so none can be listed.",
-  },
-];

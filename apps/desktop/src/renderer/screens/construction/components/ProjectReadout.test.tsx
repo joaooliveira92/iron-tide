@@ -38,7 +38,7 @@ describe("ProjectReadout", () => {
     expect(screen.getByText("Total cost")).toBeTruthy();
     expect(screen.getByText("640 NC")).toBeTruthy();
     expect(screen.getByText("Launch")).toBeTruthy();
-    expect(screen.getByText("1880-07")).toBeTruthy();
+    expect(screen.getByText("July 1880")).toBeTruthy();
     expect(screen.queryByText("Carrying cost")).toBeNull();
   });
 
@@ -129,7 +129,7 @@ describe("ProjectReadout", () => {
     );
     expect(screen.getByText("100 NC/mo")).toBeTruthy();
     expect(screen.getByText("5")).toBeTruthy();
-    expect(screen.getByText("1880-08")).toBeTruthy();
+    expect(screen.getByText("August 1880")).toBeTruthy();
   });
 
   it('labels the readout by role and name, and says "complete" when there is no launch month', () => {
