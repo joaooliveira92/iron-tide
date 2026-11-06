@@ -51,7 +51,7 @@ describe("the design's supporting panels", () => {
     commit(/^Installed power/, "3400");
     const history = within(openHistory()).getByRole("region", { name: "Edit history" });
     expect(within(history).getByText(/Start:/)).toBeTruthy();
-    expect(within(history).getByText(/Machinery: installed kw → 3400/)).toBeTruthy();
+    expect(within(history).getByText(/Installed power set to \S+ hp/)).toBeTruthy();
     fireEvent.click(within(history).getByRole("button", { name: /0\. Start:/ }));
     fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
     openSection("Machinery", "Performance");

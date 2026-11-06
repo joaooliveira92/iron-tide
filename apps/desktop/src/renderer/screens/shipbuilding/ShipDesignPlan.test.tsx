@@ -65,7 +65,7 @@ describe("plan tools on the top view", () => {
       within(panel()).getByRole("button", { name: /Move 10 permille toward the stern/ }),
     );
     expect(notice()).toMatch(/10‰ toward the stern/);
-    expect(historyEntries()).toMatch(/Move .* at \d+‰/);
+    expect(historyEntries()).toMatch(/Move .* at \d+%/);
   });
 
   it("offers to move the fitting under a right-click directly", async () => {
@@ -105,7 +105,7 @@ describe("plan tools on the top view", () => {
     fireEvent.click(layer, { clientX: toX, clientY: first.y });
     expect(screen.queryByTestId("plan-drag-ghost")).toBeNull();
     expect(notice()).toMatch(new RegExp(`^Moved ${first.id} to \\d+‰`));
-    expect(historyEntries().match(/Move .* at \d+‰/g)).toHaveLength(1);
+    expect(historyEntries().match(/Move .* at \d+%/g)).toHaveLength(1);
   });
 
   it("treats a shaky click on a fitting as a click, not a drag", async () => {
