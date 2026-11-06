@@ -37,8 +37,12 @@ describe("overview view model", () => {
     expect(value("cost")).toContain(format.moneyFromMicro(view.forecast.costMicro));
     expect(value("cost")).toContain("unit");
     expect(value("year")).toBe(ref.month.slice(0, 4));
-    expect(value("type")).toContain(view.classCode);
-    expect(value("accommodation")).not.toBe("");
+    expect(value("type")).toContain(ref.draft.requirement.category);
+    expect(value("accommodation")).toBe(
+      { SPARTAN: "Spartan", STANDARD: "Standard", GENEROUS: "Generous" }[
+        ref.draft.requirement.accommodationStandard
+      ],
+    );
     if (view.compiled.armour !== null) {
       expect(value("armour")).toContain(format.percent(view.compiled.armour.coverageBp, 0));
     }
@@ -56,5 +60,16 @@ describe("overview view model", () => {
 
   it("summarises the main battery or says there is none", () => {
     expect(value("armament")).not.toBe("");
+  });
+
+  it("uses plain type names with no bare type code in the qualification row", () => {
+    expect(value("role")).not.toMatch(/^[A-Z]{1,4}$/);
+    expect(value("role")).not.toBe("");
+  });
+
+  it("glosses the blocking and critical severities for screen readers", () => {
+    const gloss = (s: string) => model.warnings.find((w) => w.severity === s)?.gloss;
+    expect(gloss("BLOCKING")).toBe("cannot be built");
+    expect(gloss("CRITICAL")).toBe("can be built but will fail in play");
   });
 });

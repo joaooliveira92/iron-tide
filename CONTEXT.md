@@ -36,6 +36,11 @@ inventing a synonym. (`GLOSSARY.md` is a symlink to this file.)
 - **Ship design** — a component-level draft compiled into a validated design.
   A **design study** precedes catalog entry; a **construction project** tracks
   funded progress; a **rebuild** applies a changed design to an existing ship.
+- **Ship type** (shown with its name, never the bare code, e.g. "Torpedo boat /
+  early destroyer [DD]") — the category a design is drafted as. **Qualifies as** is the natural
+  class the compiled design earns; it can differ from the chosen ship type.
+- **Planned upgrades** — a design's modernization expectation: none, minor or
+  major.
 - **Division / fleet** — groupings of ships and their officers on the map.
 - **Officer** — a named commander, or `VACANT`.
 - **War score** — the accumulated measure that classifies a war's outcome.

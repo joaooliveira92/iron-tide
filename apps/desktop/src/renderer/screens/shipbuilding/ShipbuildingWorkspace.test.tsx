@@ -646,14 +646,7 @@ describe("Overview summary section", () => {
     render(<ShipbuildingWorkspace />);
     openMap("Overview");
     const summary = within(panel()).getByTestId("overview-summary").textContent ?? "";
-    for (const label of [
-      "Type and role",
-      "Displacement",
-      "Cost",
-      "Armour",
-      "Main armament",
-      "Crew",
-    ])
+    for (const label of ["Ship type", "Displacement", "Cost", "Armour", "Main armament", "Crew"])
       expect(summary).toContain(label);
     const warnings = within(panel()).getByRole("region", { name: "Design warnings" });
     expect(warnings.textContent).toMatch(/blocking/i);

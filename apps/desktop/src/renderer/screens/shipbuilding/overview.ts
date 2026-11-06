@@ -4,6 +4,7 @@ import { plural } from "../../components/design-workspace/plural.js";
 import { formatExplanation } from "../../../shared/explanation-text.js";
 import type { DesignPriceView } from "../../components/design-workspace/design-price-view.js";
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
+import { plainShipTypeName } from "../../components/design-workspace/shipTypes.js";
 
 export interface OverviewValue {
   readonly id: string;
@@ -14,7 +15,28 @@ export interface OverviewValue {
 export interface OverviewWarning {
   readonly severity: Severity;
   readonly count: number;
+  readonly gloss: string | null;
 }
+
+type Requirement = DesignDraft["requirement"];
+
+const ACCOMMODATION_NAME: Record<Requirement["accommodationStandard"], string> = {
+  SPARTAN: "Spartan",
+  STANDARD: "Standard",
+  GENEROUS: "Generous",
+};
+
+const UPGRADE_NAME: Record<Requirement["modernizationExpectation"], string> = {
+  NONE: "none",
+  MINOR: "minor",
+  MAJOR: "major",
+};
+
+const SEVERITY_GLOSS: Partial<Record<Severity, string>> = {
+  BLOCKING: "cannot be built",
+  CRITICAL: "can be built but will fail in play",
+  ADVISORY: "does not prevent submission",
+};
 
 export interface OverviewModel {
   readonly values: readonly OverviewValue[];
@@ -43,8 +65,8 @@ export function overviewModel(
   const values: OverviewValue[] = [
     {
       id: "type",
-      label: "Type and role",
-      value: `${words(draft.requirement.category)} · ${view.classCode}`,
+      label: "Ship type",
+      value: `${plainShipTypeName(draft.requirement.category)} [${draft.requirement.category}]`,
     },
     { id: "year", label: "Design year", value: month.slice(0, 4) },
     {
@@ -82,19 +104,27 @@ export function overviewModel(
     {
       id: "accommodation",
       label: "Accommodation",
-      value: `${words(draft.requirement.accommodationStandard)} standard`,
+      value: ACCOMMODATION_NAME[draft.requirement.accommodationStandard],
     },
     {
       id: "technology",
-      label: "Technology",
-      value: `${words(draft.requirement.modernizationExpectation)} modernization · threat ${words(
+      label: "Planned upgrades",
+      value: `${UPGRADE_NAME[draft.requirement.modernizationExpectation]} · expected threat ${words(
         draft.requirement.designThreatId,
       )}`,
     },
-    { id: "role", label: "Role estimate", value: view.naturalClass ?? view.classCode },
+    {
+      id: "role",
+      label: "Qualifies as",
+      value: plainShipTypeName(view.naturalClass ?? view.classCode),
+    },
   ];
   const warnings: OverviewWarning[] = (
     ["BLOCKING", "CRITICAL", "WARNING", "ADVISORY"] as const
-  ).map((severity) => ({ severity, count: view.counts[severity] }));
+  ).map((severity) => ({
+    severity,
+    count: view.counts[severity],
+    gloss: SEVERITY_GLOSS[severity] ?? null,
+  }));
   return { values, warnings };
 }
