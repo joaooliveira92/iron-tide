@@ -1,4 +1,4 @@
-import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
+import type { ConstructionProject, NationState } from "@bluewave/campaign";
 import {
   allocateConstructionFunds,
   capacityOf,
