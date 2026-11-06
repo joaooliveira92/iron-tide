@@ -3,6 +3,7 @@ import {
   ACCELERATION_WORK_RATE_MULTIPLIER_BP,
   accelerateCapacityUnits,
   constructionAccelerationAllowed,
+  constructionWorkStatus,
   monthlyAbsorbable,
 } from "@bluewave/campaign";
 import { checkedMul, roundToInt, SafeInt } from "@bluewave/contracts";
@@ -13,6 +14,7 @@ export {
   ACCELERATION_WORK_RATE_MULTIPLIER_BP,
   accelerateCapacityUnits,
   constructionAccelerationAllowed,
+  constructionWorkStatus,
 };
 
 export const CONSTRUCTION_ACCELERATION_POLICY_ID = "construction_acceleration_v1" as const;
@@ -30,12 +32,6 @@ export const ACCELERATION_PREMIUM_ALREADY_APPLIED = "ACCELERATION_PREMIUM_ALREAD
 export const ACCELERATION_PRESSURE_CONTINUED = "ACCELERATION_PRESSURE_CONTINUED" as const;
 
 const BP = 10_000;
-
-export function constructionWorkStatus(
-  status: ConstructionProject["status"],
-): "ACTIVE" | "ACCELERATED" {
-  return status === "ACCELERATED" ? "ACCELERATED" : "ACTIVE";
-}
 
 export function acceleratedRemainingWork(remainingWorkBefore: number): number {
   if (!Number.isSafeInteger(remainingWorkBefore) || remainingWorkBefore < 0)

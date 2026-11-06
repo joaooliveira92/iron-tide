@@ -24,6 +24,7 @@ export {
   type ConstructionResumeTarget,
 } from "./constructionHaltResume.js";
 export { constructionProjectQueueWithReadouts } from "./constructionReadout.js";
+export { snapshotWithQueuedConstruction } from "./queuedConstructionForecast.js";
 export {
   ACCELERATION_CAPACITY_PRESSURE_DELAY,
   ACCELERATION_CAPACITY_PRESSURE_WEIGHT_BP,

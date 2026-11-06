@@ -1,7 +1,6 @@
 import {
   applyPrestigeRule,
   campaignMonthId,
-  constructionDrawByProject,
   economyOutlook,
   fleetMaintenanceBreakdown,
   nationIsAtWar,
@@ -100,10 +99,7 @@ export function buildTreasuryCommitments(
     nationMaintenanceAdders(nation, month),
   );
   const draws = new Map(
-    constructionDrawByProject(nation, snapshot, month).map((entry) => [
-      entry.projectId,
-      entry.draw,
-    ]),
+    (outlook?.constructionDraws ?? []).map((entry) => [entry.projectId, entry.draw]),
   );
   const queue = constructionProjectQueueWithReadouts(snapshot, nation.id, content, month);
   const accelerated = new Map<string, ProjectAcceleration>();

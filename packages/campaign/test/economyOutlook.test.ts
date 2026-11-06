@@ -162,7 +162,7 @@ describe("economyOutlook", () => {
     expect(o.researchUnfundedReason).toBe("ABOVE_CAP");
   });
 
-  it("bounds planned construction by the shared monthly draw and leaves held projects out", () => {
+  it("plans only what the phase funds: paced projects, not held, foreign or unpaced new orders", () => {
     const o = economyOutlook(
       snapshot(
         nation({
@@ -193,8 +193,9 @@ describe("economyOutlook", () => {
       ),
       "n",
     )!;
-    expect(o.plannedConstruction).toBe(53);
-    expect(o.monthEndTreasury).toBe(500 + 41 - 53);
+    expect(o.constructionDraws).toEqual([{ projectId: "f", draw: 11 }]);
+    expect(o.plannedConstruction).toBe(11);
+    expect(o.monthEndTreasury).toBe(500 + 41 - 11);
   });
 
   it("reports the runway and the first shortfall of a structural deficit", () => {

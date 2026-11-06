@@ -158,7 +158,8 @@
         "constructionOrder",
         "constructionReadout",
         "newConstructionCapacity",
-        "orderEligibility"
+        "orderEligibility",
+        "queuedConstructionForecast"
       ],
       "engine_symbols": ["applyOrderConstruction"],
       "main_commands": [
