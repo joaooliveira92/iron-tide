@@ -113,11 +113,14 @@ const DIRECTIONAL: Readonly<Record<MountSide, string>> = {
 
 export interface EditContext {
   readonly draft?: DesignDraft;
+  readonly parts?: readonly { readonly instanceId: string; readonly componentId: string }[];
   readonly nameOf: (componentId: string) => string;
 }
 
 function partName(instanceId: string, ctx: EditContext): string {
-  const placement = ctx.draft?.placements.find((p) => p.instanceId === instanceId);
+  const placement = (ctx.parts ?? ctx.draft?.placements ?? []).find(
+    (p) => p.instanceId === instanceId,
+  );
   return placement ? ctx.nameOf(placement.componentId) : "a fitting";
 }
 
