@@ -76,7 +76,7 @@
     "check:yaml-boundary": "node scripts/assert-no-foreign-yaml.mjs"
   },
   "devDependencies": {
-    "@effect/tsgo": "0.63.0",
+    "@effect/tsgo": "0.64.1",
     "@types/node": "^26.6.6",
     "oxc-parser": "0.156.0",
     "oxlint": "1.90.0",
