@@ -1,5 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { buildWorkshopView } from "@bluewave/ship-design";
+import { loadDrawingBoardContent } from "../content.js";
 import { DesignWorkspaceFixture } from "../DesignWorkspaceFixture.js";
 import { rejectionLead, SubmitPanel } from "./SubmitPanel.js";
 
@@ -89,6 +91,132 @@ describe("SubmitPanel", () => {
       "previewDesignStudy",
       "previewDesignStudy",
     ]);
+  });
+
+  const reviewed = (freeTreasury: number, affordable: boolean) => ({
+    outcome: "success",
+    value: {
+      study: {
+        months: 4,
+        cost: 8,
+        derived: false,
+        discountBp: 0,
+        baselineClassName: null,
+        newFamily: true,
+        failedCriteria: [],
+      },
+      treasuryUnits: freeTreasury + 3,
+      freeTreasury,
+      affordable,
+    },
+    diagnostics: [],
+  });
+
+  it("reviews months, cost, payments and the treasury before and after, when affordable", async () => {
+    execute.mockResolvedValue(reviewed(100, true));
+    render(
+      <DesignWorkspaceFixture>
+        <SubmitPanel sessionId="s" name="Arethusa" onNameChange={() => {}} />
+      </DesignWorkspaceFixture>,
+    );
+    const review = await screen.findByTestId("submit-review");
+    const text = review.textContent ?? "";
+    expect(text).toContain("Arethusa");
+    expect(text).toContain("4 months");
+    expect(text).toContain("8 treasury units");
+    expect(text).toContain("2 treasury units a month for 4 months");
+    expect(text).toContain("100");
+    expect(text).toContain("92");
+    expect(screen.getByTestId("affordability").textContent).toBe(
+      "The treasury covers the whole study.",
+    );
+    expect(
+      (screen.getByRole("button", { name: "Submit design" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+  });
+
+  it("warns, without blocking, when only the first payment fits", async () => {
+    execute.mockResolvedValue(reviewed(5, true));
+    render(
+      <DesignWorkspaceFixture>
+        <SubmitPanel sessionId="s" name="Arethusa" onNameChange={() => {}} />
+      </DesignWorkspaceFixture>,
+    );
+    const message = (await screen.findByTestId("affordability")).textContent ?? "";
+    expect(message).toContain("first payment of 2");
+    expect(message).toContain("not the whole study (8)");
+    expect(message).toContain("A month without the money makes no progress");
+    expect(
+      (screen.getByRole("button", { name: "Submit design" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+  });
+
+  it("warns, without blocking, when the treasury cannot pay this month", async () => {
+    execute.mockResolvedValue(reviewed(1, false));
+    render(
+      <DesignWorkspaceFixture>
+        <SubmitPanel sessionId="s" name="Arethusa" onNameChange={() => {}} />
+      </DesignWorkspaceFixture>,
+    );
+    const message = (await screen.findByTestId("affordability")).textContent ?? "";
+    expect(message).toContain("cannot pay the first monthly payment of 2");
+    expect(message).toContain("You can still submit");
+    expect(
+      (screen.getByRole("button", { name: "Submit design" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+  });
+
+  it("names a variant discount in the review", async () => {
+    const base = reviewed(100, true);
+    execute.mockResolvedValue({
+      ...base,
+      value: {
+        ...base.value,
+        study: {
+          ...base.value.study,
+          derived: true,
+          discountBp: 2500,
+          baselineClassName: "Orlando",
+        },
+      },
+    });
+    render(
+      <DesignWorkspaceFixture>
+        <SubmitPanel sessionId="s" name="Arethusa" onNameChange={() => {}} />
+      </DesignWorkspaceFixture>,
+    );
+    expect((await screen.findByTestId("submit-review")).textContent).toMatch(
+      /variant of Orlando.*25%/,
+    );
+  });
+
+  it("lists the blocking findings as links, gives a plain reason and disables Submit", () => {
+    const onSelect = vi.fn();
+    const content = loadDrawingBoardContent();
+    const reference = content.references[0]!;
+    const view = buildWorkshopView(reference.draft, content.environmentFor(reference.month));
+    render(
+      <DesignWorkspaceFixture view={{ ...view, valid: false }}>
+        <SubmitPanel
+          sessionId="s"
+          name="Arethusa"
+          onNameChange={() => {}}
+          blockers={[
+            { id: "b1", text: "Hull too heavy", actionLabel: "Fix in Hull", onSelect },
+            { id: "b2", text: "No machinery", actionLabel: "Review finding", onSelect: vi.fn() },
+          ]}
+        />
+      </DesignWorkspaceFixture>,
+    );
+    expect(screen.getByText(/Submit is unavailable: 2 blocking findings/)).toBeTruthy();
+    expect(screen.getByText("Hull too heavy")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Fix in Hull" }));
+    expect(onSelect).toHaveBeenCalledOnce();
+    expect(
+      (screen.getByRole("button", { name: "Submit design" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(screen.queryByTestId("submit-review")).toBeNull();
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("says why Submit is unavailable until the class has a name", () => {

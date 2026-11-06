@@ -22,6 +22,7 @@ import { NotAvailable } from "../components/NotAvailable.js";
 import { OverviewPanel } from "../components/OverviewPanel.js";
 import { ProtectionEditor } from "../components/ProtectionEditor.js";
 import { SystemsPanel } from "../components/SystemsPanel.js";
+import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { armamentEntries } from "../armament.js";
 import { categoriesOf, type InspectorPlace } from "../design-sections.js";
 import { addSystemEdit } from "../systems-view.js";
@@ -41,6 +42,7 @@ export function SectionBody({ at }: { readonly at: InspectorPlace }) {
     view,
     content,
     findings,
+    flaws,
     batteries,
     month,
     format,
@@ -253,6 +255,24 @@ export function SectionBody({ at }: { readonly at: InspectorPlace }) {
               name={shipClassName}
               onNameChange={actions.setShipClassName}
               onRequestName={actions.focusClassName}
+              blockers={flaws
+                .filter((flaw) => flaw.tier === "blocking")
+                .map((flaw) => ({
+                  id: flaw.finding.key,
+                  text: formatExplanation(flaw.finding.finding.what),
+                  actionLabel:
+                    flaw.fix !== null
+                      ? flaw.fix.label
+                      : flaw.showOn !== null
+                        ? "Show on ship"
+                        : "Open in Findings",
+                  onSelect: () => {
+                    if (flaw.fix !== null)
+                      actions.openSection(flaw.fix.place.section, flaw.fix.place.tab);
+                    else if (flaw.showOn !== null) actions.showOnShip(flaw.finding);
+                    else actions.openSection("review", "findings");
+                  },
+                }))}
             />
           ) : (
             <NotAvailable title="Finishing: not available">
