@@ -3,6 +3,7 @@ import type { ConstructionScheduleUnavailableReason } from "@bluewave/campaign-e
 import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import { formatMonthKey } from "../month-key.js";
 import type { ProjectRow } from "../project-progress.js";
 
 export interface ProjectReadoutProps {
@@ -19,17 +20,21 @@ function ReadoutItem({ label, value }: { readonly label: string; readonly value:
   );
 }
 
-const SCHEDULE_UNAVAILABLE_LABEL: Readonly<
-  Partial<Record<ConstructionScheduleUnavailableReason, string>>
-> = {
-  HALTED: "halted",
-  DELAYED: "delayed",
-  AWAITING_CAPACITY: "awaiting capacity",
-  IMPOUNDED: "impounded",
-  CANCELLED: "cancelled",
-  REVISION_HOLD: "on hold",
-  FOREIGN_CONTRACT_MISSING: "contract missing",
-};
+const SCHEDULE_UNAVAILABLE_LABEL: Readonly<Record<ConstructionScheduleUnavailableReason, string>> =
+  {
+    PLANNED: "planned",
+    AUTHORIZED: "authorized",
+    ACTIVE: "active",
+    ACCELERATED: "accelerated",
+    HALTED: "halted",
+    DELAYED: "delayed",
+    AWAITING_CAPACITY: "awaiting capacity",
+    IMPOUNDED: "impounded",
+    COMPLETED: "completed",
+    CANCELLED: "cancelled",
+    REVISION_HOLD: "on hold",
+    FOREIGN_CONTRACT_MISSING: "contract missing",
+  };
 
 export interface ReadoutLine {
   readonly label: string;
@@ -55,7 +60,7 @@ export function readoutLines(row: ProjectRow, format: PresentationFormat): reado
         ? "payment default"
         : unavailableReason === null
           ? "unavailable"
-          : (SCHEDULE_UNAVAILABLE_LABEL[unavailableReason] ?? unavailableReason);
+          : SCHEDULE_UNAVAILABLE_LABEL[unavailableReason];
     return [
       { label: "Schedule", value: `not building (${reasonLabel})` },
       { label: "Total cost", value: format.money(readout.totalCostUnits) },
@@ -66,7 +71,11 @@ export function readoutLines(row: ProjectRow, format: PresentationFormat): reado
     { label: "Instalment", value: `${format.money(readout.monthlyInstalmentUnits)}/mo` },
     { label: "Months left", value: format.count(readout.remainingMonths) },
     { label: "Total cost", value: format.money(readout.totalCostUnits) },
-    { label: "Launch", value: readout.launchMonth ?? "complete" },
+    {
+      label: "Launch",
+      value:
+        readout.launchMonth === null ? "complete" : formatMonthKey(format, readout.launchMonth),
+    },
     ...carrying,
   ];
 }

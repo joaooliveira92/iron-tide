@@ -68,7 +68,7 @@ describe("SlipwaysStage", () => {
   it("shows only overall progress for a project with one figure, and says when it is on hold", () => {
     render(stage([row({ packages: [], yard: null, holdUntilMonth: "1880-05" })]));
     expect(screen.queryByRole("list", { name: "Havock class work packages" })).toBeNull();
-    expect(screen.getByText("on hold until 1880-05")).toBeTruthy();
+    expect(screen.getByText("on hold until May 1880")).toBeTruthy();
   });
 
   it("selects a ship from its lane and reports which is selected", () => {
@@ -111,7 +111,7 @@ describe("SlipwaysStage", () => {
 
   it("draws the dock gauge from the economy", () => {
     render(stage([]));
-    const gauge = screen.getByRole("meter", { name: "Tonnage on the ways" });
+    const gauge = screen.getByRole("meter", { name: "Dock tonnage limit" });
     expect(gauge.getAttribute("aria-valuetext")).toBe("2,000 t of 39,000 t");
   });
 

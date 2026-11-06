@@ -592,6 +592,13 @@ export const EN_US_MESSAGES = {
 
   "designWorkspace.draftRestored":
     "Your unsubmitted design was restored, with its edit history (last changed {savedAt}). Changes are saved as you work.",
+
+  "construction.gauge.tonnageLimit": "Dock tonnage limit",
+  "construction.gauge.underConstruction": "Under construction",
+  "construction.gauge.underConstructionAtOnce": "New tonnage under construction at once",
+  "construction.gauge.exemptSmallCraft": "Exempt small craft",
+  "construction.gauge.yardWorkCapacity": "Yard work capacity",
+  "construction.gauge.workCommitted": "Work committed",
 } as const;
 
 export type MessageKey = keyof typeof EN_US_MESSAGES;

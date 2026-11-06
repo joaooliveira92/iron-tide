@@ -11,6 +11,8 @@ import type { ProjectRow } from "../project-progress.js";
 import { DockGauge } from "./DockGauge.js";
 import { PackagePipeline } from "./PackagePipeline.js";
 import { Peek, PeekRows } from "./Peek.js";
+import { formatMonthKey } from "../month-key.js";
+import { statusMeta } from "../yard-workspace.js";
 import { readoutLines } from "./ProjectReadout.js";
 import { StatusChip } from "./StatusChip.js";
 
@@ -50,7 +52,7 @@ const SlipLane = memo(function SlipLane({
           <button
             type="button"
             aria-pressed={selected}
-            aria-label={`${row.className}, ${row.status.toLowerCase().replaceAll("_", " ")}, ${row.percent}%`}
+            aria-label={`${row.className}, ${statusMeta(row.status).label}, ${row.percent}%`}
             onClick={() => onSelect(row.projectId)}
             className="flex w-full items-center gap-3 rounded-t-lg p-3 text-left outline-none hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring"
           >
@@ -67,7 +69,9 @@ const SlipLane = memo(function SlipLane({
             <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
               {row.yard !== null && <Badge variant="outline">{row.yard}</Badge>}
               {row.holdUntilMonth !== null && (
-                <Badge variant="secondary">on hold until {row.holdUntilMonth}</Badge>
+                <Badge variant="secondary">
+                  on hold until {formatMonthKey(format, row.holdUntilMonth)}
+                </Badge>
               )}
               <StatusChip status={row.status} />
             </span>

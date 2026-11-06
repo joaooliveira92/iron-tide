@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { DEBUG_MODE } from "../../../shell/debug-flag.js";
+import { translate } from "../../../lib/strings.js";
 import type { ConstructionCommand } from "@bluewave/campaign-engine";
 import { Button } from "../../../components/ui/button.js";
 import { ButtonGroup } from "../../../components/ui/button-group.js";
@@ -94,7 +95,10 @@ const OrderRow = memo(function OrderRow({
                 label: "Share of the treasury",
                 value: `${format.number(treasuryShare, { maximumFractionDigits: 1 })}%`,
               },
-              { label: "Capacity units", value: format.count(command.projectedCapacityUnits) },
+              {
+                label: translate("construction.gauge.yardWorkCapacity"),
+                value: format.count(command.projectedCapacityUnits),
+              },
             ]}
           />
         </Peek>
@@ -161,7 +165,9 @@ export const OrdersStage = memo(function OrdersStage({
               {DEBUG_MODE && <TableHead>Command</TableHead>}
               {DEBUG_MODE && <TableHead className="text-right">Rev</TableHead>}
               <TableHead className="text-right">Cost</TableHead>
-              <TableHead className="text-right">Capacity</TableHead>
+              <TableHead className="text-right">
+                {translate("construction.gauge.yardWorkCapacity")}
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>

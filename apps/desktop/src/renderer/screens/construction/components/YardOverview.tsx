@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { Banknote, Coins, Hammer, Layers, Lock } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { translate } from "../../../lib/strings.js";
 import { cn } from "../../../lib/utils.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Meter } from "./Meter.js";
@@ -87,7 +88,7 @@ export const YardOverview = memo(function YardOverview({ economy, workspace }: Y
         />
         <Figure
           icon={Hammer}
-          label="Shipyard capacity"
+          label={translate("construction.gauge.yardWorkCapacity")}
           value={format.count(economy.shipyardCapacity)}
         />
       </div>
@@ -107,7 +108,7 @@ export const YardOverview = memo(function YardOverview({ economy, workspace }: Y
         />
         <Commitment
           icon={Layers}
-          label="Capacity committed"
+          label={translate("construction.gauge.workCommitted")}
           reserved={workspace.capacityReserved}
           total={economy.shipyardCapacity}
           unit="count"
