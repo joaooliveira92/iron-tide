@@ -41,6 +41,20 @@ describe("warnings the player can clear", () => {
     }
   });
 
+  it("every WARNING passes the finding shape check on every reference design in every era", () => {
+    const months = ["1880-01", "1893-06", "1905-01", "1913-06"];
+    const bad: string[] = [];
+    for (const d of designs) {
+      for (const month of months) {
+        const r = compileDesign(d.draft, earlyContext(month));
+        for (const f of r.findings.filter((x) => x.severity === "WARNING")) {
+          for (const p of checkFindingShape(f)) bad.push(`${d.id}@${month}:${f.id}:${p}`);
+        }
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+
   it("the finding shape rejects a WARNING whose only escape is accepting it", () => {
     const f: Finding = {
       id: "X",
