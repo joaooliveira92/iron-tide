@@ -17,6 +17,9 @@ export interface DesignStudyPreview {
 
 export interface DesignStudyPreviewOutcome {
   readonly study?: DesignStudyPreview;
+  readonly treasuryUnits?: number;
+  readonly freeTreasury?: number;
+  readonly affordable?: boolean;
 }
 
 export interface DesignCommandOutcome {

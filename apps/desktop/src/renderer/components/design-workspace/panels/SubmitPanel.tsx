@@ -10,7 +10,11 @@ import type { PresentationFormat } from "../../../lib/presentation-format/index.
 import { useDesignState } from "../DesignWorkspaceContext.js";
 import { Panel } from "./Panel.js";
 import { plural } from "../plural.js";
-import type { DesignStudyPreview } from "../../../../shared/design-contract.js";
+import { plainShipTypeName } from "../shipTypes.js";
+import type {
+  DesignStudyPreview,
+  DesignStudyPreviewOutcome,
+} from "../../../../shared/design-contract.js";
 
 export function queuedLines(
   name: string,
@@ -59,11 +63,11 @@ export function useStudyPreview(
   className: string,
   draft: unknown,
   valid: boolean,
-): DesignStudyPreview | undefined {
-  const [study, setStudy] = useState<DesignStudyPreview | undefined>(undefined);
+): DesignStudyPreviewOutcome | undefined {
+  const [outcome, setOutcome] = useState<DesignStudyPreviewOutcome | undefined>(undefined);
   useEffect(() => {
     if (!bridge || !valid || className === "") {
-      setStudy(undefined);
+      setOutcome(undefined);
       return;
     }
     let current = true;
@@ -74,16 +78,140 @@ export function useStudyPreview(
         draft: draft as Record<string, unknown>,
       })
       .then((r) => {
-        if (current) setStudy(r.outcome === "success" ? r.value.study : undefined);
+        if (current) setOutcome(r.outcome === "success" ? r.value : undefined);
       })
       .catch(() => {
-        if (current) setStudy(undefined);
+        if (current) setOutcome(undefined);
       });
     return () => {
       current = false;
     };
   }, [bridge, sessionId, className, draft, valid]);
-  return study;
+  return outcome;
+}
+
+export type Affordability = "affordable" | "tight" | "unaffordable";
+
+export interface StudyReview {
+  readonly monthlyPayment: number;
+  readonly freeTreasury: number | null;
+  readonly after: number | null;
+  readonly affordability: Affordability | null;
+}
+
+export function reviewOf(
+  outcome: DesignStudyPreviewOutcome,
+  study: DesignStudyPreview,
+): StudyReview {
+  const monthlyPayment = Math.ceil(study.cost / Math.max(1, study.months));
+  const free = outcome.freeTreasury ?? null;
+  const affordability: Affordability | null =
+    free === null || outcome.affordable === undefined
+      ? null
+      : !outcome.affordable
+        ? "unaffordable"
+        : study.cost > free
+          ? "tight"
+          : "affordable";
+  return {
+    monthlyPayment,
+    freeTreasury: free,
+    after: free === null ? null : free - study.cost,
+    affordability,
+  };
+}
+
+export function affordabilityLine(
+  review: StudyReview,
+  study: DesignStudyPreview,
+  format: PresentationFormat,
+): string | null {
+  const payment = format.count(review.monthlyPayment);
+  switch (review.affordability) {
+    case null:
+      return null;
+    case "affordable":
+      return "The treasury covers the whole study.";
+    case "tight":
+      return `The treasury covers the first payment of ${payment} but not the whole study (${format.count(study.cost)}). Later months depend on income. A month without the money makes no progress.`;
+    case "unaffordable":
+      return `The treasury cannot pay the first monthly payment of ${payment} this month. The study makes no progress until it can. You can still submit.`;
+  }
+}
+
+export interface SubmitBlocker {
+  readonly id: string;
+  readonly text: string;
+  readonly actionLabel: string;
+  readonly onSelect: () => void;
+}
+
+function ReviewStep({
+  className,
+  category,
+  study,
+  review,
+  format,
+}: {
+  readonly className: string;
+  readonly category: string;
+  readonly study: DesignStudyPreview;
+  readonly review: StudyReview;
+  readonly format: PresentationFormat;
+}) {
+  const message = affordabilityLine(review, study, format);
+  const rows: Array<readonly [string, string]> = [
+    ["Class", className],
+    ["Type", plainShipTypeName(category)],
+    ["Study length", plural(study.months, "month", undefined, undefined, format)],
+    ["Study cost", plural(study.cost, "treasury unit", undefined, undefined, format)],
+    [
+      "Monthly payments",
+      `${plural(review.monthlyPayment, "treasury unit", undefined, undefined, format)} a month for ${plural(study.months, "month", undefined, undefined, format)}`,
+    ],
+    ...(review.freeTreasury === null
+      ? []
+      : ([
+          ["Treasury now", format.count(review.freeTreasury)],
+          ["After the whole study", format.count(review.after ?? 0)],
+        ] as const)),
+    ...(study.derived && study.baselineClassName !== null
+      ? ([
+          [
+            "Variant discount",
+            `A variant of ${study.baselineClassName}: ${format.percent(study.discountBp, 0)} shorter and cheaper`,
+          ],
+        ] as const)
+      : []),
+  ];
+  return (
+    <section
+      aria-label="Review before submitting"
+      data-testid="submit-review"
+      className="space-y-2"
+    >
+      <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
+        {rows.map(([label, value]) => (
+          <div key={label} className="contents">
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {message !== null && (
+        <p
+          data-testid="affordability"
+          className={
+            review.affordability === "affordable"
+              ? "text-xs text-muted-foreground"
+              : "text-xs text-amber-600"
+          }
+        >
+          {message}
+        </p>
+      )}
+    </section>
+  );
 }
 
 export function rejectionLead(reason: string): string {
@@ -106,11 +234,13 @@ export function SubmitPanel({
   name,
   onNameChange,
   onRequestName,
+  blockers = [],
 }: {
   readonly sessionId: string;
   readonly name?: string;
   readonly onNameChange?: (name: string) => void;
   readonly onRequestName?: () => void;
+  readonly blockers?: readonly SubmitBlocker[];
 }) {
   const {
     draft,
@@ -129,7 +259,8 @@ export function SubmitPanel({
   const [busy, setBusy] = useState(false);
   const [queuedKey, setQueuedKey] = useState<string | null>(null);
   const trimmedName = className.trim();
-  const preview = useStudyPreview(bridge, sessionId, trimmedName, draft, valid);
+  const previewOutcome = useStudyPreview(bridge, sessionId, trimmedName, draft, valid);
+  const preview = previewOutcome?.study;
   const priceView = useDesignPriceView();
   if (!bridge) return null;
   const key = `${revision ?? ""}|${className.trim()}|${JSON.stringify(draft)}`;
@@ -206,10 +337,35 @@ export function SubmitPanel({
           {studyPreviewLine(preview, priceView.unitsText, format)}
         </p>
       )}
+      {valid && previewOutcome !== undefined && preview !== undefined && (
+        <ReviewStep
+          className={trimmedName}
+          category={draft.requirement.category}
+          study={preview}
+          review={reviewOf(previewOutcome, preview)}
+          format={format}
+        />
+      )}
       {!valid && (
-        <p className="text-xs text-muted-foreground">
-          Resolve the blocking findings before submitting.
-        </p>
+        <div className="space-y-1.5 text-xs text-muted-foreground">
+          <p>
+            {blockers.length > 0
+              ? `Submit is unavailable: ${plural(blockers.length, "blocking finding", undefined, undefined, format)} must be fixed first.`
+              : "Submit is unavailable: resolve the blocking findings first."}
+          </p>
+          {blockers.length > 0 && (
+            <ul className="space-y-1">
+              {blockers.map((b) => (
+                <li key={b.id} className="flex flex-wrap items-center gap-2">
+                  <span className="text-foreground">{b.text}</span>
+                  <Button variant="outline" size="sm" onClick={b.onSelect}>
+                    {b.actionLabel}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
       {valid && className.trim() === "" && (
         <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
