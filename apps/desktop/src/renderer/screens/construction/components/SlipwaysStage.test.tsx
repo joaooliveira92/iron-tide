@@ -1,3 +1,4 @@
+import { CONSTRUCTION_PROJECT_STATUSES } from "@bluewave/campaign";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { axeViolations } from "../../../lib/axe.js";
@@ -64,6 +65,19 @@ describe("SlipwaysStage", () => {
     expect(within(packages).getByRole("group", { name: "Launch: Waiting" })).toBeTruthy();
     expect(within(packages).getByRole("group", { name: "Fit-out: Ready to start" })).toBeTruthy();
   });
+
+  it.each(CONSTRUCTION_PROJECT_STATUSES)(
+    "renders a %s ship with no raw enum or month key in its text or labels",
+    (status) => {
+      const { container } = render(stage([row({ status, holdUntilMonth: "1880-05" })]));
+      const labels = Array.from(container.querySelectorAll("[aria-label]")).map(
+        (node) => node.getAttribute("aria-label") ?? "",
+      );
+      const text = [container.textContent ?? "", ...labels].join(" ");
+      expect(text).not.toMatch(/[A-Z]{2,}_[A-Z]/);
+      expect(text).not.toMatch(/\d{4}-\d{2}/);
+    },
+  );
 
   it("shows only overall progress for a project with one figure, and says when it is on hold", () => {
     render(stage([row({ packages: [], yard: null, holdUntilMonth: "1880-05" })]));
