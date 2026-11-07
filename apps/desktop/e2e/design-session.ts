@@ -11,16 +11,22 @@ export interface EngineeringStatus {
   readonly speed: number;
 }
 
-const toNumber = (text: string | undefined): number => Number((text ?? "NaN").replaceAll(",", ""));
+const toNumber = (field: string, text: string | undefined): number => {
+  const value = Number((text ?? "").replaceAll(",", ""));
+  if (text === undefined || !Number.isFinite(value)) {
+    throw new Error(`Engineering status: could not read ${field}`);
+  }
+  return value;
+};
 
 export async function readEngineeringStatus(page: Page): Promise<EngineeringStatus> {
   const text = await page.getByRole("region", { name: "Engineering status" }).innerText();
   const displacement = /Displacement\s+([\d,]+)\s*t\s*\/\s*([\d,]+)\s*t/.exec(text);
   return {
-    displacement: toNumber(displacement?.[1]),
-    capacity: toNumber(displacement?.[2]),
-    cost: toNumber(/Cost\s+([\d,]+)\s*NC/.exec(text)?.[1]),
-    speed: toNumber(/Speed\s+([\d.]+)\s*kn/.exec(text)?.[1]),
+    displacement: toNumber("displacement", displacement?.[1]),
+    capacity: toNumber("capacity", displacement?.[2]),
+    cost: toNumber("cost", /Cost\s+([\d,]+)\s*units?\b/.exec(text)?.[1]),
+    speed: toNumber("speed", /Speed\s+([\d.]+)\s*kn/.exec(text)?.[1]),
   };
 }
 

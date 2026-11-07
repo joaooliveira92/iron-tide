@@ -42,7 +42,7 @@ test("a player tunes a battleship, saves it, keeps experimenting and goes back t
   await torpedoes.getByRole("button", { name: "Remove tubes" }).click();
   await expect.poll(() => fittingRows(torpedoes)).toHaveLength(0);
   const tuned = await readEngineeringStatus(page);
-  expect(tuned.cost).toBeLessThan(widened.cost);
+  expect(tuned.displacement).toBeLessThan(widened.displacement);
 
   await saveDesignFile(e2e.app, page, file);
   await closeFileDialog(page);
