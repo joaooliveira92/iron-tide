@@ -41,7 +41,6 @@ export interface ArmourRegion {
 
 export interface ThreatProfile {
   readonly id: string;
-  readonly name?: string;
   readonly penetrationUm: number;
 }
 
