@@ -4,6 +4,29 @@ import type { FleetTrainingProjection } from "../../../../shared/fleet-contract.
 import { FleetTrainingView } from "./FleetTrainingSection.js";
 import { initialTrainingState, type TrainingState } from "./training-model.js";
 
+type Subject = "GUNNERY" | "NIGHT_FIGHTING" | "TORPEDO_TACTICS" | "DAMAGE_CONTROL";
+
+const SINGLE_COST: Record<Subject, number> = {
+  GUNNERY: 300,
+  NIGHT_FIGHTING: 200,
+  TORPEDO_TACTICS: 200,
+  DAMAGE_CONTROL: 200,
+};
+
+const SELECTIONS: FleetTrainingProjection["selections"] = [
+  { subjects: [], monthlyCost: 0 },
+  ...(Object.keys(SINGLE_COST) as Subject[]).map((subject) => ({
+    subjects: [subject],
+    monthlyCost: SINGLE_COST[subject],
+  })),
+  { subjects: ["GUNNERY", "NIGHT_FIGHTING"], monthlyCost: 499 },
+  { subjects: ["GUNNERY", "TORPEDO_TACTICS"], monthlyCost: 500 },
+  { subjects: ["GUNNERY", "DAMAGE_CONTROL"], monthlyCost: 500 },
+  { subjects: ["NIGHT_FIGHTING", "TORPEDO_TACTICS"], monthlyCost: 400 },
+  { subjects: ["NIGHT_FIGHTING", "DAMAGE_CONTROL"], monthlyCost: 400 },
+  { subjects: ["TORPEDO_TACTICS", "DAMAGE_CONTROL"], monthlyCost: 400 },
+];
+
 const training = (funded: Record<string, number> = {}): FleetTrainingProjection => ({
   maxSubjects: 2,
   proficiencyMonths: 12,
@@ -23,8 +46,11 @@ const training = (funded: Record<string, number> = {}): FleetTrainingProjection 
       fundedMonths,
       monthsToProficiency: Math.max(0, 12 - fundedMonths),
       proficient: fundedMonths >= 12,
+      effectBp: 1000,
+      monthlyCost: SINGLE_COST[subject],
     };
   }),
+  selections: SELECTIONS,
 });
 
 const stateOf = (projection: FleetTrainingProjection | null): TrainingState => ({
@@ -158,6 +184,75 @@ describe("FleetTrainingView", () => {
     for (const box of screen.getAllByRole("checkbox"))
       expect((box as HTMLInputElement).disabled).toBe(true);
     expect(apply().disabled).toBe(true);
+  });
+
+  it("shows each subject's monthly cost and battle-only effect beside its maintenance adder", () => {
+    renderView(training());
+    expect(screen.getByTestId("fleet-training-cost-GUNNERY").textContent).toContain("300");
+    expect(screen.getByTestId("fleet-training-cost-NIGHT_FIGHTING").textContent).toContain("200");
+    expect(screen.getByTestId("fleet-training-effect-GUNNERY").textContent).toBe(
+      "Battle only: +10% gunnery accuracy",
+    );
+    expect(screen.getByTestId("fleet-training-effect-NIGHT_FIGHTING").textContent).toBe(
+      "Battle only: +10% gunnery accuracy at night",
+    );
+    expect(screen.getByTestId("fleet-training-effect-TORPEDO_TACTICS").textContent).toBe(
+      "Battle only: +10% automatic torpedo solution quality",
+    );
+    expect(screen.getByTestId("fleet-training-effect-DAMAGE_CONTROL").textContent).toBe(
+      "Battle only: +10% pumping and firefighting capacity",
+    );
+    expect(screen.getByTestId("fleet-training-battle-only").textContent).toBe(
+      "Training bonuses apply in battle only, and only once a subject is proficient.",
+    );
+  });
+
+  it("updates the draft total from the projected selection, not from a sum of rows", () => {
+    renderView(training());
+    expect(screen.getByTestId("fleet-training-total").textContent).toBe(
+      "No training selected: no extra maintenance",
+    );
+    fireEvent.click(screen.getByLabelText("Fund Gunnery"));
+    expect(screen.getByTestId("fleet-training-total").textContent).toContain("300");
+    fireEvent.click(screen.getByLabelText("Fund Night fighting"));
+    const total = screen.getByTestId("fleet-training-total").textContent ?? "";
+    expect(total).toContain("499");
+    expect(total).not.toContain("500");
+    fireEvent.click(screen.getByLabelText("Fund Gunnery"));
+    expect(screen.getByTestId("fleet-training-total").textContent).toContain("200");
+  });
+
+  it("shows the cost and effect explanation trees when supplied", () => {
+    const base = training();
+    const projection = {
+      ...base,
+      subjects: base.subjects.map((subject) =>
+        subject.subject === "GUNNERY"
+          ? {
+              ...subject,
+              monthlyCostExplanation: {
+                formulaId: "fleet_training_cost",
+                formulaVersion: "fleet_v1",
+                inputs: { trainingAdderBp: 3000 },
+                intermediate: {},
+                result: 300,
+                unit: "nc",
+              },
+              effectExplanation: {
+                formulaId: "fleet_training_effect",
+                formulaVersion: "fleet_v1",
+                inputs: { effectBp: 1000 },
+                intermediate: {},
+                result: 1000,
+                unit: "bp",
+              },
+            }
+          : subject,
+      ),
+    };
+    renderView(projection);
+    expect(screen.getByTestId("fleet-training-cost-explanation-GUNNERY")).toBeTruthy();
+    expect(screen.getByTestId("fleet-training-effect-explanation-GUNNERY")).toBeTruthy();
   });
 
   it("drops an unsent selection when the projection changes underneath it", () => {

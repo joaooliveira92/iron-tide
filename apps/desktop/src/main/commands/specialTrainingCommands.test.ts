@@ -16,7 +16,11 @@ import type {
   SpecialTrainingOutcome,
   TrainingSubjectId,
 } from "../../shared/fleet-contract.js";
-import { clearCampaignSessionsForTest, registerCampaignSession } from "../campaignSessions.js";
+import {
+  clearCampaignSessionsForTest,
+  getCampaignSession,
+  registerCampaignSession,
+} from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
@@ -74,7 +78,7 @@ describe("special training commands", () => {
     clearCampaignSessionsForTest();
   });
 
-  function registerSession(sessionId: string): void {
+  function registerSession(sessionId: string, nationId = "uk", atWar = false): void {
     const collector = new DiagnosticCollector();
     const output = compileProductionCampaignFromArtifact(
       GENERATED_ARTIFACT,
@@ -83,6 +87,25 @@ describe("special training commands", () => {
     );
     if (!output) throw new Error("production pack failed to compile");
     const snapshot: CampaignSnapshot = structuredClone(output.state.snapshot);
+    for (const fleet of snapshot.nations.get(nationId)!.fleets)
+      for (const ship of fleet.ships)
+        ship.hitPoints = (Number(ship.hitPoints) * 50) as typeof ship.hitPoints;
+    if (atWar) {
+      const opponent = [...snapshot.nations.keys()].find((id) => id !== nationId)!;
+      snapshot.wars.wars.push({
+        id: "war-test",
+        attackerSideId: "side-a",
+        defenderSideId: "side-b",
+        attackerSideMembers: [nationId],
+        defenderSideMembers: [opponent],
+        attackerWarScore: 0,
+        defenderWarScore: 0,
+        attackerId: nationId,
+        defenderId: opponent,
+        startDate: "1880-01",
+        status: "ACTIVE",
+      });
+    }
     const state: CampaignState = {
       snapshot,
       envelope: createEnvelope("campaign-snapshot", snapshot.compatibilityVersion, snapshot),
@@ -94,7 +117,7 @@ describe("special training commands", () => {
     registerCampaignSession({
       sessionId,
       saveDir,
-      playerSlotId: "uk",
+      playerSlotId: nationId,
       campaignSeed: "a".repeat(32),
       month: { month: 1, year: 1880 },
       state: saveable,
@@ -188,5 +211,83 @@ describe("special training commands", () => {
       outcome: "rejected",
       reason: "TRAINING_SUBJECT_LIMIT_EXCEEDED",
     });
+  });
+
+  const chargedOf = (sessionId: string, nationId: string) =>
+    Number(getCampaignSession(sessionId)!.state.snapshot.nations.get(nationId)!.maintenanceCost);
+
+  const SELECTIONS: readonly TrainingSubjectId[][] = [
+    ["GUNNERY"],
+    ["NIGHT_FIGHTING"],
+    ["GUNNERY", "DAMAGE_CONTROL"],
+    ["NIGHT_FIGHTING", "TORPEDO_TACTICS"],
+  ];
+
+  it.each([
+    ["uk", false],
+    ["uk", true],
+    ["japan", false],
+    ["japan", true],
+  ] as const)(
+    "previews exactly the maintenance the engine charges next month (%s, at war: %s)",
+    async (nationId, atWar) => {
+      const baseId = `base-${nationId}-${atWar}`;
+      registerSession(baseId, nationId, atWar);
+      const base = await fleet(sectionRuntime, baseId);
+      await commit(sectionRuntime, baseId, base.revision);
+      const baseline = chargedOf(baseId, nationId);
+      for (const subjects of SELECTIONS) {
+        const id = `sel-${nationId}-${atWar}-${subjects.join("-")}`;
+        registerSession(id, nationId, atWar);
+        const before = await fleet(sectionRuntime, id);
+        const preview = before.training?.selections.find(
+          (entry) => entry.subjects.join() === subjects.join(),
+        );
+        expect(preview).toBeDefined();
+        expect(preview!.monthlyCost).toBeGreaterThan(0);
+        await fund(sectionRuntime, id, before.revision, [...subjects]);
+        await commit(sectionRuntime, id, before.revision);
+        expect(chargedOf(id, nationId) - baseline, subjects.join("+")).toBe(preview!.monthlyCost);
+      }
+    },
+  );
+
+  it("projects every valid selection once, the empty one free, and the effect only for known subjects", async () => {
+    registerSession("shape");
+    const projection = (await fleet(sectionRuntime, "shape")).training!;
+    expect(projection.selections.map((entry) => entry.subjects.join("+"))).toEqual([
+      "",
+      "GUNNERY",
+      "NIGHT_FIGHTING",
+      "TORPEDO_TACTICS",
+      "DAMAGE_CONTROL",
+      "GUNNERY+NIGHT_FIGHTING",
+      "GUNNERY+TORPEDO_TACTICS",
+      "GUNNERY+DAMAGE_CONTROL",
+      "NIGHT_FIGHTING+TORPEDO_TACTICS",
+      "NIGHT_FIGHTING+DAMAGE_CONTROL",
+      "TORPEDO_TACTICS+DAMAGE_CONTROL",
+    ]);
+    expect(projection.selections[0]!.monthlyCost).toBe(0);
+    expect(projection.subjects.map((s) => [s.subject, s.effectBp])).toEqual([
+      ["GUNNERY", 1000],
+      ["NIGHT_FIGHTING", 1000],
+      ["TORPEDO_TACTICS", 1000],
+      ["DAMAGE_CONTROL", 1000],
+    ]);
+    for (const subject of projection.subjects) {
+      expect(subject.monthlyCost).toBe(
+        projection.selections.find((entry) => entry.subjects.join() === subject.subject)!
+          .monthlyCost,
+      );
+      expect(subject.monthlyCostExplanation?.formulaId).toBe("fleet_training_cost");
+    }
+  });
+
+  it("leaves the snapshot untouched when previewing", async () => {
+    registerSession("pure");
+    const before = structuredClone(getCampaignSession("pure")!.state.snapshot);
+    await fleet(sectionRuntime, "pure");
+    expect(getCampaignSession("pure")!.state.snapshot).toEqual(before);
   });
 });

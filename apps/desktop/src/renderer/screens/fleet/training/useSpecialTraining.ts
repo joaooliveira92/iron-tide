@@ -13,6 +13,7 @@ import {
 } from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
 import { useFleetInspectionLoader } from "../hooks/useFleetInspection.js";
+import { format } from "../station/fleet-station-state.js";
 import { initialTrainingState, projectTraining, type TrainingState } from "./training-model.js";
 
 export interface UseSpecialTrainingReturn {
@@ -42,8 +43,8 @@ export function useSpecialTraining(sessionId: string): UseSpecialTrainingReturn 
         patch: {},
         notice:
           value.subjects.length === 0
-            ? "Special training will stop when you advance the month; progress is lost."
-            : "Special training queued. It takes effect when you advance the month.",
+            ? format("fleet.training.notice.stopped")
+            : format("fleet.training.notice.queued"),
       }),
     }),
     { refreshKey: campaignRevision },

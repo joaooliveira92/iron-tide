@@ -1,4 +1,4 @@
-import type { TrainingAdderDetail } from "@bluewave/campaign";
+import type { TrainingAdderDetail, TrainingSelectionCost } from "@bluewave/campaign";
 import { ExplanationBuilder, type ExplanationTree } from "@bluewave/events";
 
 export const FLEET_FORMULA_VERSION = "fleet_v1";
@@ -19,6 +19,7 @@ const EXERCISE_SOURCE = {
 const UNIT_TONS = "tons";
 const UNIT_BP = "bp";
 const UNIT_MONTHS = "months";
+const UNIT_MONEY = "nc";
 
 function tonChild(formulaId: string, amount: number): ExplanationTree {
   return new ExplanationBuilder(formulaId, FLEET_FORMULA_VERSION)
@@ -52,6 +53,29 @@ export function explainTrainingMaintenanceAdder(detail: TrainingAdderDetail): Ex
     builder.addChild(bpChild("fleet_training_adder.nation", nationAdjustment));
   }
   return builder.build();
+}
+
+export function explainTrainingMonthlyCost(cost: TrainingSelectionCost): ExplanationTree {
+  return new ExplanationBuilder("fleet_training_cost", FLEET_FORMULA_VERSION)
+    .withInput("trainingAdderBp", cost.adderBp)
+    .withInput("activeWartimeMultiplierBp", cost.activeWartimeMultiplierBp)
+    .withInput("maintenanceWithoutTraining", cost.maintenanceWithoutTraining)
+    .withInput("maintenanceWithTraining", cost.maintenanceWithTraining)
+    .withResult(cost.monthlyCost)
+    .withUnit(UNIT_MONEY)
+    .withOperation("subtract")
+    .withSource(TRAINING_ADVANCE_SOURCE)
+    .build();
+}
+
+export function explainTrainingEffect(effectBp: number): ExplanationTree {
+  return new ExplanationBuilder("fleet_training_effect", FLEET_FORMULA_VERSION)
+    .withInput("effectBp", effectBp)
+    .withResult(effectBp)
+    .withUnit(UNIT_BP)
+    .withOperation("identity")
+    .withSource(TRAINING_SOURCE)
+    .build();
 }
 
 export function explainTrainingProgress(
