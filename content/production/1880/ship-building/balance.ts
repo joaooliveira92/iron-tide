@@ -1014,44 +1014,54 @@ export default {
     threats: [
       {
         id: "bl_12in",
+        name: "12-inch breech-loader",
         penetrationUm: 521000,
       },
       {
         id: "bl_92in",
+        name: "9.2-inch breech-loader",
         penetrationUm: 300000,
       },
       {
         id: "qf_6in",
+        name: "6-inch quick-firer",
         penetrationUm: 150000,
       },
       {
         id: "qf_47in",
+        name: "4.7-inch quick-firer",
         penetrationUm: 100000,
       },
       {
         id: "qf_12pdr",
+        name: "12-pounder quick-firer",
         penetrationUm: 50000,
       },
       // Pre-1880 rifled muzzle-loaders (point-blank wrought-iron perforation, Brassey's Naval Annual 1886 French
       // Commission table; docs/research/ship-building-1880-pre-era-armament.md). The expected adversary of the 1880 ships.
       {
         id: "rml_16in",
+        name: "16-inch rifled muzzle-loader",
         penetrationUm: 740000,
       },
       {
         id: "rml_125in",
+        name: "12.5-inch rifled muzzle-loader",
         penetrationUm: 460000,
       },
       {
         id: "rml_12in",
+        name: "12-inch rifled muzzle-loader",
         penetrationUm: 370000,
       },
       {
         id: "rml_10in",
+        name: "10-inch rifled muzzle-loader",
         penetrationUm: 300000,
       },
       {
         id: "rml_9in",
+        name: "9-inch rifled muzzle-loader",
         penetrationUm: 250000,
       },
     ],
