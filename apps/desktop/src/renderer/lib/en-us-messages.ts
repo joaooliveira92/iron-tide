@@ -636,6 +636,17 @@ export const EN_US_MESSAGES = {
   "construction.gauge.exemptSmallCraft": "Exempt small craft",
   "construction.gauge.yardWorkCapacity": "Yard work capacity",
   "construction.gauge.workCommitted": "Work committed",
+  "shipbuilding.threat.bl_12in": "12-inch breech-loader",
+  "shipbuilding.threat.bl_92in": "9.2-inch breech-loader",
+  "shipbuilding.threat.qf_6in": "6-inch quick-firer",
+  "shipbuilding.threat.qf_47in": "4.7-inch quick-firer",
+  "shipbuilding.threat.qf_12pdr": "12-pounder quick-firer",
+  "shipbuilding.threat.rml_16in": "16-inch rifled muzzle-loader",
+  "shipbuilding.threat.rml_125in": "12.5-inch rifled muzzle-loader",
+  "shipbuilding.threat.rml_12in": "12-inch rifled muzzle-loader",
+  "shipbuilding.threat.rml_10in": "10-inch rifled muzzle-loader",
+  "shipbuilding.threat.rml_9in": "9-inch rifled muzzle-loader",
+  "shipbuilding.threat.unnamed": "unnamed threat",
 } as const;
 
 export type MessageKey = keyof typeof EN_US_MESSAGES;

@@ -4,8 +4,11 @@ import { loadDrawingBoardContent } from "../../components/design-workspace/index
 import { batteryCards } from "../../components/design-workspace/batteryView.js";
 import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
 import { designPriceView } from "../../components/design-workspace/design-price-view.js";
-import { TERMS } from "../../components/design-workspace/design-terms.js";
+import { TERMS, threatDisplayName } from "../../components/design-workspace/design-terms.js";
+import { EN_US_MESSAGES } from "../../lib/en-us-messages.js";
 import { overviewModel } from "./overview.js";
+
+const UNNAMED_THREAT = EN_US_MESSAGES["shipbuilding.threat.unnamed"];
 
 const content = loadDrawingBoardContent();
 const ref = content.references[0]!;
@@ -28,7 +31,6 @@ describe("overview view model", () => {
     ref.month,
     format,
     designPriceView(view.forecast, content.treasuryUnitMicro, null, format),
-    threats,
   );
   const value = (id: string) => model.values.find((v) => v.id === id)?.value ?? "";
   const RAW_ID = /[a-z]+_[a-z0-9]+/;
@@ -39,28 +41,32 @@ describe("overview view model", () => {
 
   it("names every production threat so the expected enemy gun is never an id", () => {
     expect(threats.length).toBeGreaterThan(0);
-    for (const t of threats) expect(t.name, t.id).toMatch(/\S/);
+    for (const t of threats) {
+      expect(threatDisplayName(t.id), t.id).not.toBe(UNNAMED_THREAT);
+      expect(threatDisplayName(t.id), t.id).not.toMatch(RAW_ID);
+    }
   });
 
   it("shows the expected enemy gun by its display name", () => {
-    const threat = threats.find((t) => t.id === ref.draft.requirement.designThreatId);
-    expect(threat?.name).toBeDefined();
-    expect(value("technology")).toContain(threat?.name ?? "");
+    expect(value("technology")).toContain(threatDisplayName(ref.draft.requirement.designThreatId));
   });
 
   it("falls back to a neutral label, never the id, when a threat has no name", () => {
+    const unnamedDraft = {
+      ...ref.draft,
+      requirement: { ...ref.draft.requirement, designThreatId: "zz_0in" },
+    };
     const unnamed = overviewModel(
-      ref.draft,
+      unnamedDraft,
       view,
       batteries,
       ref.month,
       format,
       designPriceView(view.forecast, content.treasuryUnitMicro, null, format),
-      threats.map((t) => ({ id: t.id, penetrationUm: t.penetrationUm })),
     );
     const technology = unnamed.values.find((v) => v.id === "technology")?.value ?? "";
     expect(technology).not.toMatch(RAW_ID);
-    expect(technology).toContain("unnamed threat");
+    expect(technology).toContain(UNNAMED_THREAT);
   });
 
   it("uses the shared glossary terms for the rows Brief and Overview both show", () => {

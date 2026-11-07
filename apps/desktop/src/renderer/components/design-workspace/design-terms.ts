@@ -1,4 +1,4 @@
-import type { ThreatProfile } from "@bluewave/ship-design";
+import { EN_US_MESSAGES, type MessageKey } from "../../lib/en-us-messages.js";
 import { plainShipTypeName } from "./shipTypes.js";
 
 export const TERMS = {
@@ -7,8 +7,6 @@ export const TERMS = {
   naturalClass: "Qualifies as",
   plannedUpgrades: "Planned upgrades",
 } as const;
-
-export const UNNAMED_THREAT = "unnamed threat";
 
 export const NOT_CLASSIFIED = "Not classified";
 
@@ -22,10 +20,9 @@ export const naturalClassValue = (naturalClass: string | null, chosenType: strin
     : `${name} · differs from the chosen type (${plainShipTypeName(chosenType)})`;
 };
 
-export const threatDisplayName = (
-  threats: readonly Pick<ThreatProfile, "id" | "name">[],
-  id: string,
-): string => {
-  const name = threats.find((t) => t.id === id)?.name;
-  return name === undefined || name.trim() === "" ? UNNAMED_THREAT : name;
+const isMessageKey = (key: string): key is MessageKey => Object.hasOwn(EN_US_MESSAGES, key);
+
+export const threatDisplayName = (threatId: string): string => {
+  const key = `shipbuilding.threat.${threatId}`;
+  return isMessageKey(key) ? EN_US_MESSAGES[key] : EN_US_MESSAGES["shipbuilding.threat.unnamed"];
 };

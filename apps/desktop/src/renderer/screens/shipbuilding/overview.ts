@@ -1,5 +1,5 @@
 import type { BatteryCard } from "../../components/design-workspace/batteryView.js";
-import type { DesignDraft, Severity, ThreatProfile, WorkshopView } from "@bluewave/ship-design";
+import type { DesignDraft, Severity, WorkshopView } from "@bluewave/ship-design";
 import { plural } from "../../components/design-workspace/plural.js";
 import { formatExplanation } from "../../../shared/explanation-text.js";
 import type { DesignPriceView } from "../../components/design-workspace/design-price-view.js";
@@ -59,7 +59,6 @@ export function overviewModel(
   month: string,
   format: PresentationFormat,
   price: DesignPriceView,
-  threats: readonly ThreatProfile[],
 ): OverviewModel {
   const armour = view.compiled.armour;
   const main = batteries.filter((b) => b.row.role === "MAIN");
@@ -114,10 +113,7 @@ export function overviewModel(
     {
       id: "technology",
       label: TERMS.plannedUpgrades,
-      value: `${UPGRADE_NAME[draft.requirement.modernizationExpectation]} · expected enemy gun ${threatDisplayName(
-        threats,
-        draft.requirement.designThreatId,
-      )}`,
+      value: `${UPGRADE_NAME[draft.requirement.modernizationExpectation]} · expected enemy gun ${threatDisplayName(draft.requirement.designThreatId)}`,
     },
     {
       id: "role",

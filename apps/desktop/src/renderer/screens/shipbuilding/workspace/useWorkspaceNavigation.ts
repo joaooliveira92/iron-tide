@@ -151,9 +151,9 @@ export function useWorkspaceNavigation({ state, actions: session }: WorkspaceSes
   const overview = useMemo(
     () =>
       placeSection === "overview"
-        ? overviewModel(draft, view, batteries, month, format, price, env.ctx.threats)
+        ? overviewModel(draft, view, batteries, month, format, price)
         : null,
-    [placeSection, draft, view, batteries, month, format, price, env],
+    [placeSection, draft, view, batteries, month, format, price],
   );
   const machinery = useMemo(
     () => (placeSection === "machinery" ? machineryModel(draft, view, env, format) : null),
