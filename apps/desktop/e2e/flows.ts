@@ -169,6 +169,43 @@ export async function submitReferenceDesign(
   await expect(workspace.getByText(new RegExp(`Design queued\\. .*"${className}"`))).toBeVisible();
 }
 
+async function openSlipways(page: Page): Promise<void> {
+  await navigateTo(page, "Construction");
+  await page
+    .getByRole("navigation", { name: "Yard" })
+    .getByRole("button", { name: /^Slipways/ })
+    .click();
+  await page.getByRole("list", { name: "Ships under construction" }).waitFor();
+}
+
+export async function advanceUntilProjectStarts(
+  page: Page,
+  className: string,
+  maxMonths = 12,
+): Promise<void> {
+  for (let elapsed = 0; elapsed <= maxMonths; elapsed++) {
+    await openSlipways(page);
+    const started = page.getByRole("button", { name: new RegExp(`^${className}, (?!planned)`) });
+    if ((await started.count()) > 0) return;
+    if (elapsed < maxMonths) await advanceMonths(page, 1);
+  }
+  throw new Error(`${className} did not start within ${maxMonths} months`);
+}
+
+export async function advanceUntilShipLaunches(
+  page: Page,
+  className: string,
+  maxMonths = 48,
+): Promise<void> {
+  for (let elapsed = 0; elapsed <= maxMonths; elapsed++) {
+    await openSlipways(page);
+    const launched = page.getByRole("button", { name: new RegExp(`^${className}, completed`) });
+    if ((await launched.count()) > 0) return;
+    if (elapsed < maxMonths) await advanceMonths(page, 1);
+  }
+  throw new Error(`${className} did not launch within ${maxMonths} months`);
+}
+
 export async function orderDesignFromCatalog(page: Page, className: string): Promise<void> {
   await navigateTo(page, "Construction");
   await page

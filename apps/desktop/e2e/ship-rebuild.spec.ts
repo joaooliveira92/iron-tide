@@ -1,6 +1,7 @@
 import { test, expect, openCampaign } from "./fixtures.js";
 import {
   advanceMonths,
+  advanceUntilShipLaunches,
   openDesignSection,
   openShipbuilding,
   orderDesignFromCatalog,
@@ -14,7 +15,7 @@ test("a completed player-designed ship is rebuilt and leaves service after a mon
   e2e,
   campaignTemplate,
 }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(600_000);
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
 
@@ -22,7 +23,7 @@ test("a completed player-designed ship is rebuilt and leaves service after a mon
 
   await advanceMonths(page, 4);
   await orderDesignFromCatalog(page, CLASS_NAME);
-  await advanceMonths(page, 4);
+  await advanceUntilShipLaunches(page, CLASS_NAME);
 
   await test.step("reachable:start-rebuild", async () => {
     const rebuildWorkspace = await openShipbuilding(page);

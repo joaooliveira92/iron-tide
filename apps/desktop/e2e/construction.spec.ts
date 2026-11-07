@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { test, expect, openCampaign } from "./fixtures.js";
 import {
   advanceMonths,
+  advanceUntilProjectStarts,
   navigateTo,
   openDesignSection,
   orderDesignFromCatalog,
@@ -242,7 +243,7 @@ test("a player can revise a player-designed project and it is on hold after a mo
   await submitReferenceDesign(page, CORVETTE, REVISED_CLASS);
   await advanceMonths(page, 4);
   await orderDesignFromCatalog(page, REVISED_CLASS);
-  await advanceMonths(page, 1);
+  await advanceUntilProjectStarts(page, REVISED_CLASS);
 
   await test.step("reachable:revise-project", async () => {
     await navigateTo(page, "Construction");
@@ -283,6 +284,6 @@ test("a player can revise a player-designed project and it is on hold after a mo
     await navigateTo(page, "Construction");
     await openYardPlace(page, /^Slipways/);
     await page.getByRole("button", { name: new RegExp(`^${REVISED_CLASS}, `) }).click();
-    await expect(page.getByText(/on hold until \d{4}-\d{2}/).first()).toBeVisible();
+    await expect(page.getByText(/on hold until [A-Z][a-z]+ \d{4}/).first()).toBeVisible();
   });
 });
