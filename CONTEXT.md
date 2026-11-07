@@ -41,8 +41,8 @@ inventing a synonym. (`GLOSSARY.md` is a symlink to this file.)
   class the compiled design earns; it can differ from the chosen ship type.
 - **Planned upgrades** — a design's modernization expectation: none, minor or
   major.
-- **Expected enemy gun** — the threat a design is armoured against, by content
-  display name, never id.
+- **Expected enemy gun** — the threat a design is armoured against, by display
+  name, never id.
 - **Class code** — shown only beside its ship type name.
 - **Division / fleet** — groupings of ships and their officers on the map.
 - **Officer** — a named commander, or `VACANT`.
