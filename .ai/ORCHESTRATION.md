@@ -90,6 +90,20 @@ so tasks progress in parallel without sharing a checkout. Set each
 task's state with `pnpm worktrees status`, and review only what
 `pnpm worktrees inbox` marks `NEEDS-YOU`. Do not watch running tasks.
 
+## Dispatch
+
+Before each delegation:
+
+- **Dev green**: the latest `dev` run is green, else fix `dev` first or give the worker the known failures to exclude.
+- **Live target**: the issue is open and no merged PR or `git log origin/dev --grep '#N'` commit fixes it. A claim is an open PR or a `pnpm worktrees status` scope; skip claimed issues.
+- **Viable**: a read-only `search` pass confirms the acceptance criteria fit the code. A decision-needed issue goes to the user, not a worker.
+- **Sized**: one slice fits about 100k tokens of worker context, else slice it (`to-tickets`) or give final gates to `runner`.
+- **Routed**: Haiku for copy, single-file changes and narrow follow-ups on an existing PR; Sonnet for state shape, content, replays, explanation coverage or more than about 5 files.
+
+The brief holds the issue number, acceptance criteria, likely files and the report format; it links AGENTS.md instead of restating it. Gates start in the background and the worker blocks on `t3_background_wait`; it never ends a turn with one pending or sleeps.
+
+A report not starting `READY`, `DRAFT`, `BLOCKED` or `DONE` is non-terminal: do not re-delegate on it.
+
 ## Orchestrator responsibilities
 
 - Pick the sprint from `.ai/SPRINT-PLAN.md`; optionally override with
@@ -101,5 +115,5 @@ task's state with `pnpm worktrees status`, and review only what
 - Close each task (merged/rejected/archived), prune its worktree, and record the
   rollback in its report.
 - Update traceability (SPRINT-PLAN row done + pointer, `.ai/reports/*`).
-- Run `pnpm dispatch:check <issues>` before every delegation; delegate only on `CLEAR` and `DEV-GREEN` (exit 0).
+- Run `pnpm dispatch:check <issues>` before every delegation; delegate only on exit 0.
 - Resolve routine decisions locally; stop only on a stop condition.
