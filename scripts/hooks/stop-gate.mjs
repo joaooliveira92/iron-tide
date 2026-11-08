@@ -26,7 +26,9 @@ function main() {
     try {
       unpushedCommits = Number(git(cwd, ["rev-list", "--count", "@{upstream}..HEAD"]).trim());
     } catch {
-      unpushedCommits = Number(git(cwd, ["rev-list", "--count", "origin/dev..HEAD"]).trim());
+      unpushedCommits = Number(
+        git(cwd, ["rev-list", "--count", "HEAD", "--not", "--remotes"]).trim(),
+      );
     }
     state = { branch, dirtyPaths, unpushedCommits };
   } catch {
