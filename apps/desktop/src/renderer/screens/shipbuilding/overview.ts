@@ -4,7 +4,12 @@ import { plural } from "../../components/design-workspace/plural.js";
 import { formatExplanation } from "../../../shared/explanation-text.js";
 import type { DesignPriceView } from "../../components/design-workspace/design-price-view.js";
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
-import { plainShipTypeName } from "../../components/design-workspace/shipTypes.js";
+import {
+  naturalClassValue,
+  shipTypeValue,
+  TERMS,
+  threatDisplayName,
+} from "../../components/design-workspace/design-terms.js";
 
 export interface OverviewValue {
   readonly id: string;
@@ -32,9 +37,10 @@ const UPGRADE_NAME: Record<Requirement["modernizationExpectation"], string> = {
   MAJOR: "major",
 };
 
-const SEVERITY_GLOSS: Partial<Record<Severity, string>> = {
+const SEVERITY_GLOSS: Record<Severity, string> = {
   BLOCKING: "cannot be built",
   CRITICAL: "can be built but will fail in play",
+  WARNING: "can be built; worth reviewing before submission",
   ADVISORY: "does not prevent submission",
 };
 
@@ -42,8 +48,6 @@ export interface OverviewModel {
   readonly values: readonly OverviewValue[];
   readonly warnings: readonly OverviewWarning[];
 }
-
-const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
 
 const metric = (view: WorkshopView, id: string): string =>
   formatExplanation(view.metrics.find((m) => m.id === id)?.value ?? "n/a");
@@ -65,8 +69,8 @@ export function overviewModel(
   const values: OverviewValue[] = [
     {
       id: "type",
-      label: "Ship type",
-      value: `${plainShipTypeName(draft.requirement.category)} [${draft.requirement.category}]`,
+      label: TERMS.shipType,
+      value: shipTypeValue(draft.requirement.category),
     },
     { id: "year", label: "Design year", value: month.slice(0, 4) },
     {
@@ -108,15 +112,13 @@ export function overviewModel(
     },
     {
       id: "technology",
-      label: "Planned upgrades",
-      value: `${UPGRADE_NAME[draft.requirement.modernizationExpectation]} · expected threat ${words(
-        draft.requirement.designThreatId,
-      )}`,
+      label: TERMS.plannedUpgrades,
+      value: `${UPGRADE_NAME[draft.requirement.modernizationExpectation]} · expected enemy gun ${threatDisplayName(draft.requirement.designThreatId)}`,
     },
     {
       id: "role",
-      label: "Qualifies as",
-      value: plainShipTypeName(view.naturalClass ?? view.classCode),
+      label: TERMS.naturalClass,
+      value: naturalClassValue(view.naturalClass, draft.requirement.category),
     },
   ];
   const warnings: OverviewWarning[] = (
