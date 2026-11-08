@@ -77,8 +77,7 @@ export function RevisionPanel({
     if (!bridge || sessionId === undefined || projectId === undefined || !revisable) return;
     let live = true;
     void bridge.campaign.execute("loadProjectDraft", { sessionId, projectId }).then((r) => {
-      if (live && r.outcome === "success")
-        setReal({ projectId, draft: r.value.draft as unknown as DesignDraft });
+      if (live && r.outcome === "success") setReal({ projectId, draft: r.value.draft });
     });
     return () => {
       live = false;

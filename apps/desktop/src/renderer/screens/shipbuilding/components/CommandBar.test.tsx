@@ -12,6 +12,7 @@ const props = (over: Partial<CommandBarProps> = {}): CommandBarProps => ({
   onStartFromReference: () => {},
   shipTypeName: "Torpedo boat / early destroyer",
   shipTypeIcon: null,
+  developedFrom: "Starting design",
   canUndo: false,
   canRedo: false,
   onUndo: () => {},
@@ -35,6 +36,16 @@ describe("CommandBar", () => {
     expect(button.getAttribute("aria-description")).toContain("Torpedo boat / early destroyer");
     fireEvent.click(button);
     expect(onStartFromReference).toHaveBeenCalledOnce();
+  });
+
+  it("names the design this one was developed from in the header", () => {
+    const { rerender } = render(
+      <CommandBar {...props({ developedFrom: "Britain 1880 Cruiser" })} />,
+    );
+    expect(within(bar()).getByText("Developed from Britain 1880 Cruiser")).toBeTruthy();
+    rerender(<CommandBar {...props({ developedFrom: "Nelson Pilot" })} />);
+    expect(within(bar()).getByText("Developed from Nelson Pilot")).toBeTruthy();
+    expect(within(bar()).queryByText("Developed from Britain 1880 Cruiser")).toBeNull();
   });
 
   it("shows Autosaved only when the design autosaves, and never a save button", () => {

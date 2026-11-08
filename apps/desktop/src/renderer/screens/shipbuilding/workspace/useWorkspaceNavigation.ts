@@ -58,7 +58,7 @@ import { systemsModel } from "../systems-view.js";
 import type { WorkspaceSession } from "./useWorkspaceSession.js";
 import { TAB_BATTERY, isTyping, tabLabel } from "./inspector-place.js";
 
-export type WorkspaceDialog = "start" | "file" | "history" | "alternatives" | "names";
+export type WorkspaceDialog = "start" | "open" | "file" | "history" | "alternatives" | "names";
 
 export function useWorkspaceNavigation({ state, actions: session }: WorkspaceSession) {
   const { format, price, draft, view, content, env, batteries, findings, selection } = state;

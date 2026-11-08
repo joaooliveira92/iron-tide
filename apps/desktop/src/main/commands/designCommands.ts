@@ -266,7 +266,7 @@ export const loadProjectDraftProgram: CommandHandler<"loadProjectDraft"> = (payl
       outcome: "success" as const,
       value: {
         className: found.design.className,
-        draft: found.draft as unknown as Record<string, unknown>,
+        draft: found.draft,
       },
       diagnostics: [],
     };
@@ -449,7 +449,7 @@ export const loadShipDraftProgram: CommandHandler<"loadShipDraft"> = (payload) =
       outcome: "success" as const,
       value: {
         className: found.design.className,
-        draft: found.draft as unknown as Record<string, unknown>,
+        draft: found.draft,
       },
       diagnostics: [],
     };
