@@ -100,7 +100,7 @@ Before each delegation:
 - **Sized**: one slice fits about 100k tokens of worker context, else slice it (`to-tickets`) or give final gates to `runner`.
 - **Routed**: Haiku for copy, single-file changes and narrow follow-ups on an existing PR; Sonnet for state shape, content, replays, explanation coverage or more than about 5 files.
 
-The brief holds the issue number, acceptance criteria, likely files and the report format; it links AGENTS.md instead of restating it. Gates start in the background and the worker blocks on `t3_background_wait`; it never ends a turn with one pending or sleeps.
+The brief holds the issue number, acceptance criteria, likely files and the report format; it links AGENTS.md instead of restating it. Workers run gates in the background, register each task id with `t3_background_wait` (returns at once, keeps the thread Working), read the log after the exit notification, and never sleep or poll.
 
 A report not starting `READY`, `DRAFT`, `BLOCKED` or `DONE` is non-terminal: do not re-delegate on it.
 

@@ -19,7 +19,7 @@ Full. Decide routine choices, record them in the brief (`.ai/briefs/<slug>.md`),
 
 ## Wait
 
-Run each gate in the background, then block on `t3_background_wait`; never end a turn with one pending or `sleep`.
+Run gates in the background and register each task id with `t3_background_wait` (returns at once, keeps the thread Working); read the log after the exit notification; never `sleep` or poll.
 
 ## Done
 
