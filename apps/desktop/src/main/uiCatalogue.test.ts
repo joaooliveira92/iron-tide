@@ -30,6 +30,8 @@ const REQUIRED_KEYS = [
   "messages.construction.noProgress.body",
   "messages.construction.rebuilt.title",
   "messages.construction.rebuilt.body",
+  "messages.construction.delivered.title",
+  "messages.construction.delivered.body",
   "messages.construction.delayed.title",
   "messages.construction.delayed.body",
   "messages.construction.cancelled.title",

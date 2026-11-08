@@ -36,6 +36,25 @@ describe("toDomainEvents", () => {
     });
   });
 
+  it("describes a delivered ship with its name, id and month", () => {
+    const [event] = toDomainEvents([
+      envelope("ShipDelivered", {
+        kind: "ShipDelivered",
+        projectId: "con_1",
+        nationId: "GBR",
+        shipId: "ship-con_1",
+        shipName: "HMS Delivered",
+        classId: "class_a",
+        deliveredMonth: "1880-02",
+        actualMonths: SafeInt(4),
+      }),
+    ]);
+    expect(event).toMatchObject({
+      kind: "ShipDelivered",
+      message: "GBR: ship HMS Delivered (ship-con_1) delivered in 1880-02",
+    });
+  });
+
   it("describes construction progress as before", () => {
     const [event] = toDomainEvents([
       envelope("ConstructionProgressed", {

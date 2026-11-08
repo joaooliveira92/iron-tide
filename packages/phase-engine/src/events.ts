@@ -65,6 +65,50 @@ export function shipRebuiltEvent(
   };
 }
 
+export interface ShipDeliveredInput {
+  readonly projectId: string;
+  readonly nationId: string;
+  readonly shipId: string;
+  readonly shipName: string;
+  readonly classId: string;
+  readonly designVersionId: string;
+  readonly deliveredMonth: string;
+  readonly yardId?: string | undefined;
+  readonly builderNationId?: string | undefined;
+  readonly plannedMonths?: number | undefined;
+  readonly actualMonths: number;
+}
+
+export function shipDeliveredEvent(
+  input: ShipDeliveredInput,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `ShipDelivered-${input.projectId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "construction",
+    aggregateId: input.projectId,
+    eventType: "ShipDelivered",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "ShipDelivered",
+      projectId: input.projectId,
+      nationId: input.nationId,
+      shipId: input.shipId,
+      shipName: input.shipName,
+      classId: input.classId,
+      ...(input.designVersionId !== "" ? { designVersionId: input.designVersionId } : {}),
+      deliveredMonth: input.deliveredMonth,
+      ...(input.yardId !== undefined ? { yardId: input.yardId } : {}),
+      ...(input.builderNationId !== undefined ? { builderNationId: input.builderNationId } : {}),
+      ...(input.plannedMonths !== undefined ? { plannedMonths: SafeInt(input.plannedMonths) } : {}),
+      actualMonths: SafeInt(input.actualMonths),
+    },
+    sequenceNumber: seq,
+  };
+}
+
 export function constructionProgressedEvent(
   projectId: string,
   nationId: string,

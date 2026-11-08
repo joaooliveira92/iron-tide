@@ -107,6 +107,49 @@ describe("ShipRebuilt", () => {
   });
 });
 
+describe("ShipDelivered", () => {
+  const body = {
+    kind: "ShipDelivered",
+    projectId: "con_1",
+    nationId: "GBR",
+    shipId: "ship-con_1",
+    shipName: "HMS Delivered",
+    classId: "class_a",
+    designVersionId: "d1",
+    deliveredMonth: "1880-02",
+    yardId: "yard_a",
+    plannedMonths: 3,
+    actualMonths: 4,
+  } as const;
+  it("parses as a domain event body and a full envelope", () => {
+    expect(parseDomainEventBody(body)).toEqual(body);
+    const envelope = {
+      eventId: "ShipDelivered-con_1-1",
+      version: "0.1.0",
+      aggregateType: "construction",
+      aggregateId: "con_1",
+      eventType: "ShipDelivered",
+      timestamp: "1880-02-01T00:00:00.000Z",
+      body,
+      sequenceNumber: SafeInt(1),
+    };
+    expect(parseDomainEventEnvelope(envelope)["body"]["kind"]).toBe("ShipDelivered");
+  });
+  it("accepts a delivery without design, yard, builder or planned months", () => {
+    const { yardId: _yard, plannedMonths: _planned, designVersionId: _design, ...bare } = body;
+    expect(parseDomainEventBody(bare)).toEqual(bare);
+    expect(parseDomainEventBody({ ...bare, builderNationId: "FRA" })).toMatchObject({
+      builderNationId: "FRA",
+    });
+  });
+  it("rejects a malformed month, a missing ship, and an unknown field", () => {
+    expect(() => parseDomainEventBody({ ...body, deliveredMonth: "1880-13" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, shipId: "" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, actualMonths: -1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
+  });
+});
+
 describe("ConstructionProjectCancelled", () => {
   const body = {
     kind: "ConstructionProjectCancelled",
