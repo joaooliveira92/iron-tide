@@ -537,6 +537,7 @@ export const EN_US_MESSAGES = {
   "construction.construction_schedule.summary": "Ready in {value} months",
   "construction.construction_schedule.remainingWork": "Work remaining",
   "construction.construction_schedule.instalment": "Work per month",
+  "construction.construction_schedule.monthly": "Work carried month to month",
   "construction.construction_instalment.summary": "Work this month {value}",
   "construction.construction_instalment.slipway": "Slipway work",
   "construction.construction_instalment.armour_plate": "Armour plate work",

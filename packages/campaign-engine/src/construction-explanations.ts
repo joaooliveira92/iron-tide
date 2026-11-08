@@ -2,7 +2,7 @@ import type { ConstructionPackage, MonthlyAbsorbableDetail } from "@bluewave/cam
 import { CONSTRUCTION_LINE_IDS } from "@bluewave/campaign";
 import { ExplanationBuilder, type ExplanationSource, type ExplanationTree } from "@bluewave/events";
 
-export const CONSTRUCTION_FORMULA_VERSION = "construction_v1";
+export const CONSTRUCTION_FORMULA_VERSION = "construction_v2";
 
 const SOURCE = { kind: "code", ref: "packages/campaign-engine/src/construction.ts" } as const;
 const INSTALMENT_SOURCE = {
@@ -20,22 +20,66 @@ function workChild(formulaId: string, amount: number, source: ExplanationSource)
     .build();
 }
 
+export interface ConstructionScheduleTrace {
+  readonly workByMonth: readonly number[];
+  readonly acceleration?: {
+    readonly workMultiplierBp: number;
+    readonly timeBp: number;
+    readonly monthsAccelerated: number;
+  };
+}
+
+function monthlyWorkChild(remainingWork: number, workByMonth: readonly number[]): ExplanationTree {
+  const builder = new ExplanationBuilder(
+    "construction_schedule.monthly",
+    CONSTRUCTION_FORMULA_VERSION,
+  )
+    .withIntermediate("monthCount", workByMonth.length)
+    .withResult(remainingWork)
+    .withUnit(UNIT_WORK)
+    .withOperation("add")
+    .withSource(INSTALMENT_SOURCE);
+  let left = remainingWork;
+  workByMonth.forEach((applied, offset) => {
+    const work = Math.min(left, applied);
+    left -= work;
+    builder.addChild(
+      new ExplanationBuilder("construction_schedule.month", CONSTRUCTION_FORMULA_VERSION)
+        .withInput("monthOffset", offset)
+        .withInput("amount", work)
+        .withResult(work)
+        .withUnit(UNIT_WORK)
+        .withSource(INSTALMENT_SOURCE)
+        .build(),
+    );
+  });
+  return builder.build();
+}
+
 export function explainConstructionSchedule(
   totalCostUnits: number,
   completedWork: number,
   monthlyInstalmentUnits: number,
   remainingMonths: number,
+  trace?: ConstructionScheduleTrace,
 ): ExplanationTree {
   const remainingWork = Math.max(0, totalCostUnits - completedWork);
-  return new ExplanationBuilder("construction_schedule", CONSTRUCTION_FORMULA_VERSION)
+  const builder = new ExplanationBuilder("construction_schedule", CONSTRUCTION_FORMULA_VERSION)
     .withInput("totalCostUnits", totalCostUnits)
     .withInput("completedWork", completedWork)
     .withIntermediate("remainingWork", remainingWork)
     .withInput("monthlyInstalmentUnits", monthlyInstalmentUnits)
     .withResult(remainingMonths)
     .withUnit("months")
-    .withOperation("divide")
-    .withSource(SOURCE)
+    .withSource(SOURCE);
+  if (trace === undefined) builder.withOperation("divide");
+  else if (trace.acceleration !== undefined) {
+    builder
+      .withInput("workMultiplierBp", trace.acceleration.workMultiplierBp)
+      .withInput("timeBp", trace.acceleration.timeBp)
+      .withInput("monthsAccelerated", trace.acceleration.monthsAccelerated);
+  }
+  builder
     .addChild(
       new ExplanationBuilder("construction_schedule.remainingWork", CONSTRUCTION_FORMULA_VERSION)
         .withInput("amount", remainingWork)
@@ -51,8 +95,9 @@ export function explainConstructionSchedule(
         .withUnit(UNIT_WORK)
         .withSource(SOURCE)
         .build(),
-    )
-    .build();
+    );
+  if (trace !== undefined) builder.addChild(monthlyWorkChild(remainingWork, trace.workByMonth));
+  return builder.build();
 }
 
 export function explainConstructionInstalment(detail: MonthlyAbsorbableDetail): ExplanationTree {

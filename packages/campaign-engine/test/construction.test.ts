@@ -268,7 +268,7 @@ describe("construction explanations", () => {
     expect(entry.readout?.remainingMonths).toBe(6);
     const tree = entry.readout?.scheduleExplanation;
     expect(Number(tree?.result)).toBe(entry.readout?.remainingMonths);
-    expect(tree?.children?.map((child) => Number(child.result))).toEqual([6, 1]);
+    expect(tree?.children?.map((child) => Number(child.result))).toEqual([6, 1, 6]);
 
     const instalment = entry.readout?.instalmentExplanation;
     expect(Number(instalment?.result)).toBe(entry.readout?.monthlyInstalmentUnits);
@@ -281,6 +281,76 @@ describe("construction explanations", () => {
     expect(cost?.children?.map((child) => [child.formulaId, Number(child.result)])).toEqual([
       ["construction_cost.slipway", 10],
     ]);
+  });
+
+  it("recomputes the months of an accelerated ship from the work carried each month", () => {
+    const terms = {
+      workMultiplierBp: 15_000,
+      timeBp: 10_000,
+      pressureWeightBp: 0,
+      delayThresholdBp: 10_000,
+      delayProbabilityCapBp: 0,
+      poolMultipleBp: 10_000,
+    };
+    const snapshot = fixtureSnapshot(
+      [
+        fixtureNation({
+          id: "uk",
+          constructionProjects: [
+            fixtureConstructionProject({
+              status: "ACCELERATED",
+              acceleratedFromMonth: "1880-01",
+              totalWork: SafeInt(6),
+              completedWork: SafeInt(0),
+              capacityUnits: { slipway: SafeInt(1) },
+              packages: [
+                {
+                  id: "hull",
+                  kind: "HULL",
+                  line: "slipway",
+                  totalWork: SafeInt(6),
+                  doneWork: SafeInt(0),
+                  dependsOn: [],
+                },
+              ],
+            }),
+          ],
+        }),
+      ],
+      [fixtureDesign("uk", "design-1")],
+    );
+    const readout = buildConstructionProjectQueueWithReadouts(
+      snapshot,
+      "uk",
+      "1880-01",
+      null,
+      terms,
+    )[0]!.readout!;
+    const tree = readout.scheduleExplanation!;
+    const monthly = tree.children!.find(
+      (child) => child.formulaId === "construction_schedule.monthly",
+    )!;
+    const work = monthly.children!.map((child) => Number(child.result));
+    const remaining = Number(tree.intermediate!["remainingWork"]);
+
+    expect(Math.ceil(remaining / readout.monthlyInstalmentUnits)).toBe(6);
+    expect(work).toEqual([1, 2, 1, 2]);
+    let carried = 0;
+    let months = 0;
+    for (const amount of work) {
+      carried += amount;
+      months += 1;
+      if (carried >= remaining) break;
+    }
+    expect(carried).toBe(remaining);
+    expect(months).toBe(readout.remainingMonths);
+    expect(months).toBe(Number(tree.result));
+    expect(readout.launchMonth).toBe("1880-05");
+    expect(tree.inputs).toMatchObject({
+      workMultiplierBp: 15_000,
+      timeBp: 10_000,
+      monthsAccelerated: 0,
+    });
   });
 
   it("omits the instalment and cost trees when the project has no package breakdown or draw", () => {

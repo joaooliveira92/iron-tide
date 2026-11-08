@@ -120,6 +120,12 @@ export function monthsSinceStart(project: ConstructionProject, month: string): n
   return start === null || now === null ? 0 : Math.max(0, now - start);
 }
 
+export function monthsSinceAcceleration(project: ConstructionProject, month: string): number {
+  const from = monthIndex(project["acceleratedFromMonth"] ?? "");
+  const now = monthIndex(month);
+  return from === null || now === null ? 0 : Math.max(0, now - from);
+}
+
 function isPaced(project: ConstructionProject): project is ConstructionProject & {
   readonly buildMonths: number;
 } {
@@ -269,15 +275,16 @@ export function monthlyAbsorbable(
   return monthlyAbsorbableDetail(project, capacityUnits, month, terms).amount;
 }
 
-export function projectMonthsToComplete(
+export function projectMonthlyWorkTrace(
   project: ConstructionProject,
   capacityUnits: Readonly<Record<string, number>> | undefined,
   month: string,
   maxMonths = 1_200,
   terms?: AccelerationTerms,
-): number {
+): number[] {
   const packages = project["packages"];
-  if (packages === undefined) return 0;
+  if (packages === undefined) return [];
+  const trace: number[] = [];
   const plan = constructionPlanOf(packages);
   const total = Number(project["totalWork"]);
   let progress = packageProgressOf(packages);
@@ -292,7 +299,7 @@ export function projectMonthsToComplete(
         )
       : progress;
   for (let months = 1; months <= maxMonths; months += 1) {
-    if (done >= total) return months - 1;
+    if (done >= total) return trace;
     const capacity =
       (months === 1
         ? first
@@ -309,7 +316,18 @@ export function projectMonthsToComplete(
     progress = step.progress;
     startDone = progress;
     done += applied;
-    if (done >= total) return months;
+    trace.push(applied);
+    if (done >= total) return trace;
   }
-  return maxMonths;
+  return trace;
+}
+
+export function projectMonthsToComplete(
+  project: ConstructionProject,
+  capacityUnits: Readonly<Record<string, number>> | undefined,
+  month: string,
+  maxMonths = 1_200,
+  terms?: AccelerationTerms,
+): number {
+  return projectMonthlyWorkTrace(project, capacityUnits, month, maxMonths, terms).length;
 }
