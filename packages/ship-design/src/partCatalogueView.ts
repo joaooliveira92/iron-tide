@@ -38,6 +38,38 @@ export interface PartCatalogueEntry {
   readonly allowedZones?: readonly string[];
   readonly entryUnits: ParameterRange | null;
   readonly rounds: ParameterRange | null;
+  readonly nationIds?: readonly string[];
+  readonly caliberUm?: number;
+  readonly roleTags?: readonly string[];
+}
+
+type NationsByGunFamily = ReadonlyMap<string, readonly string[]>;
+
+function nationsByGunFamily(parts: readonly FlattenedPart[]): NationsByGunFamily {
+  const sets = new Map<string, Set<string>>();
+  for (const part of parts) {
+    if (part.family !== "gun" || part.nation === undefined) continue;
+    const family = part.spec.gunFamily;
+    if (family === undefined) continue;
+    const set = sets.get(family) ?? new Set<string>();
+    set.add(part.nation);
+    sets.set(family, set);
+  }
+  return new Map([...sets].map(([family, set]) => [family, [...set].sort(compareCodePoints)]));
+}
+
+function pickerFieldsOf(
+  part: FlattenedPart,
+  nations: NationsByGunFamily,
+): Pick<PartCatalogueEntry, "nationIds" | "caliberUm" | "roleTags"> {
+  if (part.family !== "gun") return {};
+  const nationIds = nations.get(part.spec.gunFamily ?? "");
+  const roleTags = (part.metadata?.tags ?? []).filter((tag) => tag !== "gun");
+  return {
+    ...(nationIds === undefined ? {} : { nationIds }),
+    caliberUm: part.spec.calibreUm,
+    ...(roleTags.length === 0 ? {} : { roleTags }),
+  };
 }
 
 function entryIdOf(part: FlattenedPart): string {
@@ -98,7 +130,7 @@ function fcClassOf(part: FlattenedPart): string | null {
     : null;
 }
 
-function entryOfPart(part: FlattenedPart): PartCatalogueEntry {
+function entryOfPart(part: FlattenedPart, nations: NationsByGunFamily): PartCatalogueEntry {
   const category = categoryOf(part);
   if (category === null) {
     throw designInvariant(
@@ -125,6 +157,7 @@ function entryOfPart(part: FlattenedPart): PartCatalogueEntry {
     parameters,
     entryUnits,
     rounds,
+    ...pickerFieldsOf(part, nations),
   };
 }
 
@@ -132,7 +165,12 @@ const byId = (a: PartCatalogueEntry, b: PartCatalogueEntry): number =>
   compareCodePoints(a.id, b.id);
 
 export function buildPartCatalogueView(model: CompiledPartModel): readonly PartCatalogueEntry[] {
-  return Object.values(model.partIndex.byId).filter(isFamilyLevelPart).map(entryOfPart).sort(byId);
+  const parts = Object.values(model.partIndex.byId);
+  const nations = nationsByGunFamily(parts);
+  return parts
+    .filter(isFamilyLevelPart)
+    .map((part) => entryOfPart(part, nations))
+    .sort(byId);
 }
 
 export function legacyCatalogueView(

@@ -1,4 +1,4 @@
-import { legacyCatalogueView } from "@bluewave/ship-design";
+import { legacyCatalogueView, type PartCatalogueEntry } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
 import { catalogueView, loadDrawingBoardContent } from "./content.js";
 
@@ -7,10 +7,18 @@ describe("drawing-board catalogue view (17b-1)", () => {
     const content = loadDrawingBoardContent();
     const legacyIds = new Set(content.components.map((component) => component.id));
     const legacy = legacyCatalogueView(content.components);
+    const frozen = ({
+      nationIds: _nationIds,
+      caliberUm: _caliberUm,
+      roleTags: _roleTags,
+      ...rest
+    }: PartCatalogueEntry): PartCatalogueEntry => rest;
     expect(
-      catalogueView(content.components, content.partModel).filter((e) => legacyIds.has(e.id)),
+      catalogueView(content.components, content.partModel)
+        .filter((e) => legacyIds.has(e.id))
+        .map(frozen),
     ).toEqual(legacy);
-    expect(content.catalogue.filter((e) => legacyIds.has(e.id))).toEqual(legacy);
+    expect(content.catalogue.filter((e) => legacyIds.has(e.id)).map(frozen)).toEqual(legacy);
     expect(content.catalogue.map((e) => e.id)).toEqual(
       expect.arrayContaining(["rad_type_286_search", "rad_type_284_fire_control"]),
     );
