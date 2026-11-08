@@ -34,6 +34,10 @@ Plain `prune` deletes merged subtrees: run `--check` first. `merge` dry-runs a c
 
 Lists open tasks from the worktree registry, `NEEDS-YOU` rows first; `pnpm worktrees status <slug> <state>` moves one. See [task lifecycle](task-lifecycle.md).
 
+## `pnpm dispatch:check <issue-number>...`
+
+One line per issue (`CLEAR`, `STALE`, `CLAIMED`, `NEEDS-DECISION`) after a `DEV-GREEN|DEV-RED` and worktree-count header. Exit `0` only when all are `CLEAR` and dev is green, `2` otherwise, `1` on tool errors.
+
 ## Long gates
 
 Run long commands blocking through `pnpm heavy <command>`; it serialises across worktrees and forwards signals. Do not background a gate and poll it with `sleep`.

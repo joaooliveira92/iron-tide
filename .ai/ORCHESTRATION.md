@@ -115,4 +115,5 @@ A report not starting `READY`, `DRAFT`, `BLOCKED` or `DONE` is non-terminal: do 
 - Close each task (merged/rejected/archived), prune its worktree, and record the
   rollback in its report.
 - Update traceability (SPRINT-PLAN row done + pointer, `.ai/reports/*`).
+- Run `pnpm dispatch:check <issues>` before every delegation; delegate only on exit 0.
 - Resolve routine decisions locally; stop only on a stop condition.
