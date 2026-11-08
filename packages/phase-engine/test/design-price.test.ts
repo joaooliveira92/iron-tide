@@ -6,7 +6,7 @@ import {
   type DesignDraft,
 } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
-import { buildDesignVersion, planDesignStudy, pricingFor } from "../src/index.js";
+import { buildDesignVersion, PhaseEngineError, planDesignStudy, pricingFor } from "../src/index.js";
 import { ATTACKER_NATION, makeBattleSnapshot } from "./battle-fixtures.js";
 import {
   productionShipBuildingContent,
@@ -86,5 +86,14 @@ describe("one design price shared by designer, study and catalog", () => {
     expect(enough.overBudget).toBe(false);
     expect(enough.remainingUnits).toBe(5);
     expect(designPrice(input).treasury).toBeNull();
+  });
+
+  it("refuses to plan a study for a design that carries no priced construction cost", () => {
+    const { compiled, version } = setup();
+    const { constructionCostUnits: _priced, ...unpriced } = version;
+    const snapshot = makeBattleSnapshot({ areas: ["a-1"], wars: [] });
+    expect(() =>
+      planDesignStudy(snapshot, ATTACKER_NATION, unpriced, { compiled, draft }, content, month),
+    ).toThrow(PhaseEngineError);
   });
 });
