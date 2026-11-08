@@ -12,6 +12,7 @@ export interface ConstructionScreenState extends RequestLifecycle {
   readonly economy: ConstructionScreenProjection["economy"] | null;
   readonly designs: ConstructionScreenProjection["designs"];
   readonly projects: ConstructionScreenProjection["projects"];
+  readonly steering: ConstructionScreenProjection["steering"];
   readonly workspace: ConstructionScreenProjection["workspace"] | null;
 }
 
@@ -22,6 +23,7 @@ export function initialConstructionScreenState(): ConstructionScreenState {
     economy: null,
     designs: [],
     projects: [],
+    steering: {},
     workspace: null,
     pendingRequest: null,
     requiresRefresh: false,
@@ -37,6 +39,7 @@ export function projectConstructionScreen(
     economy: projection.economy,
     designs: projection.designs,
     projects: projection.projects,
+    steering: projection.steering,
     workspace: projection.workspace,
   };
 }

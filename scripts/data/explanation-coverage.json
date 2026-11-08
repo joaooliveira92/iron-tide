@@ -351,6 +351,37 @@
       }
     },
     {
+      "file": "packages/phase-engine/src/constructionSteeringPreview.ts",
+      "type": "AccelerationPreview",
+      "area": "construction",
+      "issue": "#574",
+      "covered": {
+        "monthsExplanation": "construction_acceleration_months",
+        "premiumExplanation": "construction_acceleration_premium",
+        "delayExplanation": "construction_acceleration_delay"
+      },
+      "exempt": {
+        "monthsNow": "Explained by monthsExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "monthsAccelerated": "Explained by monthsExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "monthsSaved": "Explained by monthsExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "premiumUnits": "Explained by premiumExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "premiumRateBp": "Explained by premiumExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "delayChanceBp": "Explained by delayExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree."
+      }
+    },
+    {
+      "file": "packages/phase-engine/src/constructionSteeringPreview.ts",
+      "type": "HaltPreview",
+      "area": "construction",
+      "issue": "#574",
+      "covered": {
+        "carryingExplanation": "construction_halt_carrying"
+      },
+      "exempt": {
+        "carryingCostUnits": "Explained by carryingExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree."
+      }
+    },
+    {
       "file": "packages/campaign-engine/src/construction.ts",
       "type": "ConstructionProjectQueueEntry",
       "area": "construction",
