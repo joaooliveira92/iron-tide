@@ -284,7 +284,14 @@ describe("construction explanations", () => {
   });
 
   it("recomputes the months of an accelerated ship from the work carried each month", () => {
-    const terms = { workMultiplierBp: 15_000, timeBp: 10_000 };
+    const terms = {
+      workMultiplierBp: 15_000,
+      timeBp: 10_000,
+      pressureWeightBp: 0,
+      delayThresholdBp: 10_000,
+      delayProbabilityCapBp: 0,
+      poolMultipleBp: 10_000,
+    };
     const snapshot = fixtureSnapshot(
       [
         fixtureNation({
