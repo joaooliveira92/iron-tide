@@ -482,7 +482,7 @@ export const EN_US_MESSAGES = {
   "research.research_floor.appropriation": "Appropriation",
   "research.research_floor.guidanceShare": "Guidance share of appropriation",
   "construction.explanation.none": "No lines apply.",
-  "construction.construction_acceleration_months.summary": "Saves {value} months",
+  "construction.construction_acceleration_months.summary": "Months saved: {value}",
   "construction.construction_acceleration_months.now": "Months at the normal pace",
   "construction.construction_acceleration_months.accelerated": "Months accelerated",
   "construction.construction_acceleration_premium.summary": "Premium {value}",
