@@ -10,6 +10,16 @@ import type {
 } from "@bluewave/phase-engine";
 import type { CommandEnvelope } from "./bridge-contract.js";
 
+export interface ConstructionRebuildTarget {
+  readonly shipId: string;
+  readonly shipName: string;
+  readonly designVersionId: string;
+}
+
+export type ConstructionProjectEntry = ConstructionProjectQueueEntry & {
+  readonly rebuild?: ConstructionRebuildTarget;
+};
+
 export interface ConstructionScreenProjection {
   readonly revision: number;
   readonly month: { readonly month: number; readonly year: number };
@@ -30,7 +40,7 @@ export interface ConstructionScreenProjection {
     }[];
   };
   readonly designs: readonly CompiledDesignVersion[];
-  readonly projects: readonly ConstructionProjectQueueEntry[];
+  readonly projects: readonly ConstructionProjectEntry[];
   readonly steering: Readonly<Record<string, ConstructionSteeringPreview>>;
   readonly workspace: {
     readonly commands: readonly ConstructionCommand[];
