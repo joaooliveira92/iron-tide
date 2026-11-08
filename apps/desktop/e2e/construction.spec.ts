@@ -193,6 +193,9 @@ test("a player can authorize a dock expansion and it is under way after a month"
     await openYardPlace(page, /^Dock/);
     await expect(page.getByTestId("dock-size")).toBeVisible();
     await page.getByRole("button", { name: "Authorize dock expansion" }).click();
+    const confirm = page.getByRole("alertdialog", { name: "Authorize dock expansion?" });
+    await confirm.getByRole("button", { name: "Authorize expansion" }).click();
+    await expect(confirm).toBeHidden();
     await expect(
       page.getByRole("status").filter({ hasText: "AuthorizeDockExpansion queued" }),
     ).toBeVisible();
