@@ -336,7 +336,7 @@ describe("the national acceleration pool", () => {
     Array.from({ length: count }, (_, i) => pacedProject(`a${String(i)}`, "ACCELERATED"));
 
   it("is the content multiple of the largest per-project line rate, ignoring finished projects", () => {
-    const rates = (project: ConstructionProject) =>
+    const rates = (project: ConstructionProject): Record<string, number> =>
       project["id"] === "big" ? { slipway: 80, quay: 20 } : { slipway: 50 };
     expect(
       accelerationPoolUnitsOf(
