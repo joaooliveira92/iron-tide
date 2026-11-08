@@ -16,6 +16,7 @@ import {
   type DesignDraft,
   type ShipBuildingContent,
 } from "@bluewave/ship-design";
+import { PhaseEngineError } from "./errors.js";
 import { budgetChangedEvent, makeLedgerEntry } from "./events.js";
 import type { PhaseContext } from "./pipeline.js";
 
@@ -62,7 +63,12 @@ export function planDesignStudy(
     existingFamily && !derived
       ? `fam_${design.designVersionId.replace(/^des_/, "")}`.slice(0, 64)
       : design.designFamilyId;
-  const terms = studyTerms(Number(design.constructionCostUnits ?? 0), derived, study);
+  if (design.constructionCostUnits === undefined)
+    throw new PhaseEngineError({
+      message: `design ${design.designVersionId} has no priced construction cost for its study`,
+      code: "DESIGN_STUDY_UNPRICED",
+    });
+  const terms = studyTerms(Number(design.constructionCostUnits), derived, study);
   const identity = {
     designStudyId: `study_${design.designVersionId}`,
     nationId,
