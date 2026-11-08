@@ -95,7 +95,7 @@ task's state with `pnpm worktrees status`, and review only what
 Before each delegation:
 
 - **Dev green**: the latest `dev` run is green, else fix `dev` first or give the worker the known failures to exclude.
-- **Live target**: the issue is open and no merged PR or `git log origin/dev --grep '#N'` commit fixes it. A claim is an open PR or a `pnpm worktrees status` scope; skip claimed issues.
+- **Live target**: the issue is open, no merged PR or `origin/dev` commit fixes it, no open PR or worktree scope claims it.
 - **Viable**: a read-only `search` pass confirms the acceptance criteria fit the code. A decision-needed issue goes to the user, not a worker.
 - **Sized**: one slice fits about 100k tokens of worker context, else slice it (`to-tickets`) or give final gates to `runner`.
 - **Routed**: Haiku for copy, single-file changes and narrow follow-ups on an existing PR; Sonnet for state shape, content, replays, explanation coverage or more than about 5 files.
