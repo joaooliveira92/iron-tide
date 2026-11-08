@@ -1,3 +1,6 @@
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import type {
   CampaignSnapshot,
   CompiledDesignVersion,
@@ -9,7 +12,34 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { MonthExecutor } from "@bluewave/phase-engine";
-import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import {
+  buildShipBuildingContent,
+  type ShipBuildingContent,
+  type ShipBuildingData,
+} from "@bluewave/ship-design";
+import { FIXTURE_PRESTIGE_RULES, readAuthoredFile } from "@bluewave/test-support";
+
+const BALANCE_PATH = resolve(
+  fileURLToPath(new URL(".", import.meta.url)),
+  "..",
+  "..",
+  "..",
+  "content",
+  "production",
+  "1880",
+  "ship-building",
+  "balance.ts",
+);
+
+function shipBuilding(): ShipBuildingContent {
+  return buildShipBuildingContent({
+    components: [],
+    plants: [],
+    hullForms: [],
+    balance: readAuthoredFile(BALANCE_PATH) as ShipBuildingData["balance"],
+    technologies: [],
+  });
+}
 
 const LINES: readonly string[] = [
   "slipway",
@@ -136,6 +166,8 @@ function run(): void {
       [],
       "accel-cross-process-seed",
       new DiagnosticCollector(),
+      undefined,
+      { shipBuilding: shipBuilding() },
     );
     const output = {
       snapshotHash: sha256Hex(canonicalSerialize(result.finalSnapshot)),
