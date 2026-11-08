@@ -2,6 +2,7 @@ import { SafeInt } from "@bluewave/contracts";
 import {
   advanceConstructionMonth,
   LINE_IDS,
+  type AccelerationTerms,
   type LineId,
   type PackageProgress,
 } from "@bluewave/ship-design";
@@ -77,6 +78,7 @@ export function fundConstructionProject(
   capacityUnits: Readonly<Record<string, number>> | undefined,
   funds: number,
   month: string,
+  terms?: AccelerationTerms,
 ): FundingResult {
   const packages = project["packages"];
   if (packages === undefined) return { project, applied: 0 };
@@ -90,14 +92,14 @@ export function fundConstructionProject(
     ? Object.fromEntries(Object.entries(usage["used"]).map(([line, v]) => [line, v as number]))
     : {};
   const remainingCapacity =
-    remainingMonthlyCapacityUnits(project, capacityUnits, month) ??
+    remainingMonthlyCapacityUnits(project, capacityUnits, month, terms) ??
     (Object.fromEntries(LINE_IDS.map((line) => [line, Number.MAX_SAFE_INTEGER])) as Record<
       LineId,
       number
     >);
   const draw = Math.min(
     Math.max(0, Math.floor(funds)),
-    monthlyAbsorbable(project, capacityUnits, month),
+    monthlyAbsorbable(project, capacityUnits, month, terms),
   );
   const step = advanceConstructionMonth(
     plan,
@@ -143,6 +145,7 @@ function applyLeftoverFunding(
   designs: CampaignSnapshot["designs"],
   campaignMonth: string,
   foreignSkip: ReadonlySet<string> | undefined,
+  terms: AccelerationTerms | undefined,
 ): { projects: ConstructionProject[]; delta: SafeInt } {
   if ((remainingFunds as number) <= 0) {
     return { projects, delta: SafeInt.ZERO };
@@ -163,6 +166,7 @@ function applyLeftoverFunding(
       capacityOf(designs, candidate),
       remainingFunds as number,
       campaignMonth,
+      terms,
     );
     if (funded.applied <= 0) continue;
     return {
@@ -214,8 +218,9 @@ export function allocateConstructionFunds(input: {
   readonly designs: CampaignSnapshot["designs"];
   readonly month: string;
   readonly foreignSkip?: ReadonlySet<string> | undefined;
+  readonly terms?: AccelerationTerms | undefined;
 }): ConstructionFundingAllocation {
-  const { available, designs, month, foreignSkip } = input;
+  const { available, designs, month, foreignSkip, terms } = input;
   let updatedProjects = [...input.projects];
   let totalDelta = SafeInt.ZERO;
   const fundable =
@@ -239,6 +244,7 @@ export function allocateConstructionFunds(input: {
       capacityOf(designs, p),
       Number.MAX_SAFE_INTEGER,
       month,
+      terms,
     ).applied;
     return sum + Math.min(remaining, absorbable);
   }, 0);
@@ -269,6 +275,7 @@ export function allocateConstructionFunds(input: {
             capacityOf(designs, project),
             clampedAlloc as number,
             month,
+            terms,
           );
           if (funded.applied <= 0) continue;
           const applied = SafeInt(funded.applied);
@@ -300,6 +307,7 @@ export function allocateConstructionFunds(input: {
         designs,
         month,
         foreignSkip,
+        terms,
       );
       updatedProjects = leftover.projects;
       totalDelta = SafeInt.add(totalDelta, leftover.delta);

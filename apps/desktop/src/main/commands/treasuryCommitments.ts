@@ -10,14 +10,17 @@ import {
   type NationState,
 } from "@bluewave/campaign";
 import {
-  ACCELERATION_TOTAL_WORK_MULTIPLIER_BP,
   accelerationDelayEligible,
-  accelerationDemandOf,
   accelerationPremiumAlreadyApplied,
   accelerationPremiumWork,
-  accelerationPressureOf,
   constructionProjectQueueWithReadouts,
+  nationAccelerationPressureOf,
 } from "@bluewave/phase-engine";
+import {
+  accelerationTermsOf,
+  type AccelerationTerms,
+  type ShipBuildingContent,
+} from "@bluewave/ship-design";
 import { Result } from "effect";
 import type {
   ConstructionAcceleration,
@@ -46,13 +49,16 @@ function unpaidCostsPrestige(
 
 const BP = 10_000;
 
-function projectAcceleration(project: ConstructionProject): ProjectAcceleration | null {
+function projectAcceleration(
+  project: ConstructionProject,
+  terms: AccelerationTerms,
+): ProjectAcceleration | null {
   if (project.status !== "ACCELERATED") return null;
   const premiumApplied = accelerationPremiumAlreadyApplied(project);
   const remaining = Number(project.totalWork) - Number(project.completedWork);
   return {
     premiumApplied,
-    premiumWork: premiumApplied ? 0 : accelerationPremiumWork(Math.max(0, remaining)),
+    premiumWork: premiumApplied ? 0 : accelerationPremiumWork(Math.max(0, remaining), terms),
   };
 }
 
@@ -60,24 +66,24 @@ function nationAcceleration(
   snapshot: CampaignSnapshot,
   nation: NationState,
   month: string,
+  terms: AccelerationTerms,
   perProject: ReadonlyMap<string, ProjectAcceleration>,
 ): ConstructionAcceleration {
-  const pressure = accelerationPressureOf(
-    accelerationDemandOf(
-      nation.constructionProjects,
-      (project) =>
-        project.capacityUnits ??
-        snapshot.designs.get(project.designVersionId)?.constructionPlan?.capacityUnits,
-      month,
-    ),
+  const pressure = nationAccelerationPressureOf(
+    nation.constructionProjects,
+    (project) =>
+      project.capacityUnits ??
+      snapshot.designs.get(project.designVersionId)?.constructionPlan?.capacityUnits,
+    month,
+    terms,
   );
   return {
     acceleratedCount: perProject.size,
     delayChanceBp:
-      perProject.size > 0 && accelerationDelayEligible(pressure.capacityPressureBp)
+      perProject.size > 0 && accelerationDelayEligible(pressure.capacityPressureBp, terms)
         ? pressure.delayProbabilityBp
         : 0,
-    premiumBp: ACCELERATION_TOTAL_WORK_MULTIPLIER_BP - BP,
+    premiumBp: terms.workMultiplierBp - BP,
     premiumPending: [...perProject.values()].reduce((sum, entry) => sum + entry.premiumWork, 0),
   };
 }
@@ -87,7 +93,9 @@ export function buildTreasuryCommitments(
   nation: NationState,
 ): TreasuryCommitments {
   const month = campaignMonthId(snapshot.startYear, snapshot.startMonth, snapshot.turnNumber);
-  const content = loadShipBuildingContent();
+  const content: ShipBuildingContent = loadShipBuildingContent();
+  const environment = content.environmentFor(month);
+  const terms = accelerationTermsOf(environment.constructionBalance, environment.costBalance);
   const outlook = economyOutlook(
     snapshot,
     nation.id,
@@ -104,7 +112,7 @@ export function buildTreasuryCommitments(
   const queue = constructionProjectQueueWithReadouts(snapshot, nation.id, content, month);
   const accelerated = new Map<string, ProjectAcceleration>();
   for (const project of nation.constructionProjects) {
-    const acceleration = projectAcceleration(project);
+    const acceleration = projectAcceleration(project, terms);
     if (acceleration !== null) accelerated.set(project.id, acceleration);
   }
   const projects: ConstructionCommitment[] = queue
@@ -128,7 +136,7 @@ export function buildTreasuryCommitments(
       drawTotal: projects.reduce((sum, project) => sum + project.draw, 0),
       carryingTotal: projects.reduce((sum, project) => sum + project.carryingCost, 0),
       haltedCount: projects.filter((project) => project.status === "HALTED").length,
-      acceleration: nationAcceleration(snapshot, nation, month, accelerated),
+      acceleration: nationAcceleration(snapshot, nation, month, terms, accelerated),
     },
     unpaidCostsPrestige: unpaidCostsPrestige(
       snapshot,

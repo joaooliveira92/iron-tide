@@ -21,8 +21,8 @@ import {
 import { constructionResumeTarget } from "./constructionHaltResume.js";
 import {
   ACCELERATION_CAPACITY_PRESSURE_DELAY,
-  ACCELERATION_POOL_UNDEFINED_UNITS,
-  accelerationDemandOf,
+  accelerationTermsFor,
+  nationAccelerationPressureOf,
   resolveAccelerationCapacityPressure,
 } from "./constructionAcceleration.js";
 import { fundDesignStudies } from "./designStudies.js";
@@ -123,19 +123,28 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
     const delayedAtStart = projects.filter((p) => p["status"] === "DELAYED");
 
     const acceleratedProjects = projects.filter((p) => p["status"] === "ACCELERATED");
+    const accelerationTerms = accelerationTermsFor(shipBuilding, campaignMonth);
     let delayedByPressure = new Set<string>();
-    if (acceleratedProjects.length > 0) {
-      const { normalDemand, acceleratedDemand } = accelerationDemandOf(
+    if (acceleratedProjects.length > 0 && accelerationTerms === undefined)
+      collector.addWarning(
+        "CONSTRUCTION_ACCELERATION_BALANCE_MISSING",
+        `Nation ${nationId} has ${acceleratedProjects.length} accelerated project(s) but no ship-building balance; no speed-up or pressure applied`,
+        { stage: "appropriation" },
+      );
+    if (acceleratedProjects.length > 0 && accelerationTerms !== undefined) {
+      const { demand, poolUnits } = nationAccelerationPressureOf(
         projects,
         (project) => capacityOf(designs, project),
         campaignMonth,
+        accelerationTerms,
       );
       const pressure = resolveAccelerationCapacityPressure({
         nationId,
         campaignMonth,
-        normalDemand,
-        acceleratedDemand,
-        availableCapacity: ACCELERATION_POOL_UNDEFINED_UNITS,
+        normalDemand: demand.normalDemand,
+        acceleratedDemand: demand.acceleratedDemand,
+        availableCapacity: poolUnits,
+        terms: accelerationTerms,
         acceleratedProjects,
         randomEngine: accelerationRng,
         randomLedger: ctx.randomLedger,
@@ -209,6 +218,7 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
       designs: ctx.snapshot.read("designs"),
       month: campaignMonth,
       foreignSkip,
+      terms: accelerationTerms,
     });
     updatedProjects = allocation.projects;
     const totalDelta = allocation.delta;

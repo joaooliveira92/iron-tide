@@ -32,6 +32,7 @@ import type {
 import {
   compileDesign,
   HULL_TYPE_FOR_SHIP_TYPE,
+  type AccelerationTerms,
   type DesignDraft,
   type ShipBuildingContent,
 } from "@bluewave/ship-design";
@@ -47,7 +48,7 @@ import {
 } from "./constructionHaltResume.js";
 import {
   ACCELERATION_NOT_ALLOWED,
-  applyAccelerationPremium,
+  accelerationStartedProject,
   constructionAccelerationAllowed,
   constructionWorkStatus,
 } from "./constructionAcceleration.js";
@@ -545,6 +546,8 @@ export function applySetAcceleration(
   currentSnapshot: CampaignSnapshot,
   body: SetAccelerationCommand,
   collector: DiagnosticCollector,
+  terms: AccelerationTerms | undefined,
+  campaignMonth: string,
 ): CampaignSnapshot {
   const found = dockyardProject(currentSnapshot, body["nationId"], body["projectId"], collector);
   if (found === undefined) return currentSnapshot;
@@ -577,11 +580,19 @@ export function applySetAcceleration(
 
   let updated: ConstructionProject;
   if (body["accelerated"]) {
-    const premium = applyAccelerationPremium(project);
-    updated = transitionConstructionProject(premium.project, "ACCELERATED");
+    if (terms === undefined) {
+      collector.addError(
+        "CONSTRUCTION_ACCELERATION_BALANCE_MISSING",
+        `Project ${body["projectId"]} cannot be accelerated without a ship-building balance`,
+        { stage: "command_collection", entityId: body["projectId"] },
+      );
+      return currentSnapshot;
+    }
+    const started = accelerationStartedProject(project, terms, campaignMonth);
+    updated = transitionConstructionProject(started, "ACCELERATED");
     collector.addInfo(
       "CONSTRUCTION_ACCELERATED",
-      `Project ${body["projectId"]} accelerated (premium ${String(premium.premiumWork)} work)`,
+      `Project ${body["projectId"]} accelerated (premium ${String(Number(started["totalWork"]) - Number(project["totalWork"]))} work)`,
       { stage: "command_collection", entityId: body["projectId"] },
     );
   } else {

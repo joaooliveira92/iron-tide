@@ -520,6 +520,8 @@ export interface ConstructionProject {
   namePoolOrdinal?: number;
   monthUsage?: ConstructionMonthUsage;
   accelerationPremiumAppliedAtWorkPosition?: SafeInt;
+  acceleratedFromMonth?: string;
+  acceleratedFromWork?: SafeInt;
   elapsedActiveMonths?: number;
   dockExpansionDurationMonths?: number;
   dockExpansionStepKg?: number;

@@ -75,6 +75,11 @@ export {
   type WorkPackage,
 } from "./construction.js";
 export {
+  acceleratedWorkRate,
+  accelerationTermsOf,
+  type AccelerationTerms,
+} from "./accelerationTerms.js";
+export {
   type ConstructionCapacityBalance,
   type ConstructionCapacityExemptionDefinition,
   constructionPoolForProjectKind,

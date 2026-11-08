@@ -1,4 +1,5 @@
 import { SafeInt } from "@bluewave/contracts";
+import type { AccelerationTerms } from "@bluewave/ship-design";
 import { monthlyAbsorbable } from "./constructionDraw.js";
 import { allocateConstructionFunds } from "./constructionFunding.js";
 import {
@@ -63,6 +64,7 @@ export function constructionDrawByProject(
   nation: NationState,
   snapshot: CampaignSnapshot,
   month: string,
+  terms?: AccelerationTerms,
 ): readonly ConstructionDraw[] {
   const draws: ConstructionDraw[] = [];
   for (const project of nation["constructionProjects"]) {
@@ -77,6 +79,7 @@ export function constructionDrawByProject(
             "capacityUnits"
           ],
         month,
+        terms,
       ),
     });
   }
@@ -85,6 +88,7 @@ export function constructionDrawByProject(
 
 export interface EconomyOutlookOptions {
   readonly carryingCostPerHaltedProject?: number;
+  readonly acceleration?: AccelerationTerms;
 }
 
 export function economyOutlook(
@@ -138,6 +142,7 @@ export function economyOutlook(
     available: SafeInt(Math.max(0, constructionRoom as number)),
     designs: snapshot["designs"],
     month,
+    terms: options.acceleration,
     foreignSkip: new Set(
       nation["constructionProjects"]
         .filter((project) => project["foreignContractId"] !== undefined)
