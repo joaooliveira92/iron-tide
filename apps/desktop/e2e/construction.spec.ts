@@ -166,7 +166,7 @@ test("a player can accelerate a building hull and it is accelerated after a mont
     await page.getByRole("button", { name: /^Inflexible, active/ }).click();
     await page.getByRole("button", { name: "Inflexible accelerate" }).click();
     const confirm = page.getByRole("alertdialog", { name: /^Accelerate Inflexible/ });
-    await expect(confirm.getByText("Months saved")).toBeVisible();
+    await expect(confirm.getByText("Months saved", { exact: true })).toBeVisible();
     await confirm.getByRole("button", { name: "Accelerate", exact: true }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "SetAcceleration queued" }),
