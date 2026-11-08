@@ -725,6 +725,7 @@ describe("constructionWorkStatus", () => {
 describe("the steering preview matches the month run (issue 574)", () => {
   const BUILD_MONTHS = 10;
   const TOTAL_WORK = 600;
+  const BASIS = 10_000;
 
   const pacedSnapshot = (treasury = 1_000_000): CampaignSnapshot =>
     snapshot(
@@ -809,6 +810,46 @@ describe("the steering preview matches the month run (issue 574)", () => {
     expect(halt.resumeStatus).toBe("ACTIVE");
     expect(halt.losesAcceleration).toBe(false);
     expect(previewOf(accelerated(pacedSnapshot())).halt!.losesAcceleration).toBe(true);
+  });
+
+  it("lets each tree reproduce its figure from its own inputs with the engine's rounding", () => {
+    const preview = previewOf(pacedSnapshot());
+    const premium = preview.accelerate!.premiumExplanation;
+    const remaining = Number(premium.inputs["remainingWork"]);
+    const rate = Number(premium.inputs["premiumRateBp"]);
+    expect(premium.inputs["rounding"]).toBe("ceil");
+    expect(Math.ceil((remaining * (BASIS + rate)) / BASIS) - remaining).toBe(premium.result);
+    expect(premium.intermediate["acceleratedRemainingWork"]).toBe(
+      remaining + Number(premium.result),
+    );
+
+    const months = preview.accelerate!.monthsExplanation;
+    expect(Number(months.inputs["monthsNow"]) - Number(months.inputs["monthsAccelerated"])).toBe(
+      months.result,
+    );
+
+    const carrying = preview.halt!.carryingExplanation;
+    const micro = Math.floor(
+      (Number(carrying.inputs["mothballedMaintenancePerMonthMicro"]) *
+        Number(carrying.inputs["preservationCostBp"])) /
+        BASIS,
+    );
+    expect(carrying.intermediate["preservationCostPerMonthMicro"]).toBe(micro);
+    expect(Math.max(1, Math.ceil(micro / Number(carrying.inputs["treasuryUnitMicro"])))).toBe(
+      carrying.result,
+    );
+    expect(carrying.children).toHaveLength(3);
+  });
+
+  it("lets the delay tree reproduce the chance from the pressure it was priced at", () => {
+    const delay = previewOf(pacedSnapshot()).accelerate!.delayExplanation;
+    const pressure = Number(delay.inputs["capacityPressureBp"]);
+    const threshold = Number(delay.inputs["delayThresholdBp"]);
+    const cap = Number(delay.inputs["delayProbabilityCapBp"]);
+    const excess = Math.max(0, Math.min(BASIS, pressure - threshold));
+    expect(delay.intermediate["excessPressureBp"]).toBe(excess);
+    expect(Math.floor((excess * cap) / BASIS)).toBe(delay.result);
+    expect(delay.inputs["poolUnits"]).toBeGreaterThan(0);
   });
 
   it("offers no acceleration preview for a project that is already accelerated", () => {

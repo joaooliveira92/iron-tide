@@ -7,12 +7,19 @@ import {
 } from "@bluewave/campaign";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { ExplanationBuilder, type ExplanationTree } from "@bluewave/events";
-import type { ShipBuildingContent } from "@bluewave/ship-design";
+import {
+  preservationCostPerMonthMicro,
+  type AccelerationTerms,
+  type ConstructionBalance,
+  type ShipBuildingContent,
+} from "@bluewave/ship-design";
 import { applySetAcceleration } from "./commands.js";
 import {
   accelerationDelayEligible,
+  accelerationExcessPressureBp,
   accelerationTermsFor,
   nationAccelerationPressureOf,
+  type NationAccelerationPressure,
 } from "./constructionAcceleration.js";
 import { constructionResumeTarget } from "./constructionHaltResume.js";
 import { constructionProjectQueueWithReadouts as queueWithReadouts } from "./constructionReadout.js";
@@ -81,6 +88,9 @@ function premiumTree(remainingWork: number, rateBp: number, premiumUnits: number
   return new ExplanationBuilder("construction_acceleration_premium", FORMULA_VERSION)
     .withInput("remainingWork", remainingWork)
     .withInput("premiumRateBp", rateBp)
+    .withInput("divisorBp", BP)
+    .withInput("rounding", "ceil")
+    .withIntermediate("acceleratedRemainingWork", remainingWork + premiumUnits)
     .withResult(premiumUnits)
     .withUnit("nc")
     .withOperation("multiply")
@@ -91,18 +101,25 @@ function premiumTree(remainingWork: number, rateBp: number, premiumUnits: number
 }
 
 function delayTree(
-  pressureBp: number,
-  thresholdBp: number,
-  ceilingBp: number,
+  pressure: NationAccelerationPressure,
+  terms: AccelerationTerms,
   chanceBp: number,
 ): ExplanationTree {
+  const pressureBp = pressure.capacityPressureBp;
+  const thresholdBp = terms.delayThresholdBp;
+  const ceilingBp = terms.delayProbabilityCapBp;
   return new ExplanationBuilder("construction_acceleration_delay", FORMULA_VERSION)
+    .withInput("weightedDemand", pressure.weightedDemand)
+    .withInput("poolUnits", pressure.poolUnits)
     .withInput("capacityPressureBp", pressureBp)
     .withInput("delayThresholdBp", thresholdBp)
     .withInput("delayProbabilityCapBp", ceilingBp)
+    .withInput("divisorBp", BP)
+    .withInput("rounding", "floor")
+    .withIntermediate("excessPressureBp", accelerationExcessPressureBp(pressureBp, terms))
     .withResult(chanceBp)
     .withUnit("bp")
-    .withOperation("clamp")
+    .withOperation("multiply")
     .withSource(SOURCE)
     .addChild(leaf("construction_acceleration_delay.pressure", pressureBp, "bp"))
     .addChild(leaf("construction_acceleration_delay.threshold", thresholdBp, "bp"))
@@ -110,14 +127,27 @@ function delayTree(
     .build();
 }
 
-function carryingTree(rateBp: number, carryingCostUnits: number): ExplanationTree {
+function carryingTree(
+  balance: ConstructionBalance,
+  treasuryUnitMicro: number,
+  carryingCostUnits: number,
+): ExplanationTree {
+  const baseMicro = balance.mothballedMaintenancePerMonthMicro;
+  const rateBp = balance.preservationCostBp;
   return new ExplanationBuilder("construction_halt_carrying", FORMULA_VERSION)
+    .withInput("mothballedMaintenancePerMonthMicro", baseMicro)
     .withInput("preservationCostBp", rateBp)
+    .withInput("divisorBp", BP)
+    .withInput("treasuryUnitMicro", treasuryUnitMicro)
+    .withInput("rounding", "ceil")
+    .withIntermediate("preservationCostPerMonthMicro", preservationCostPerMonthMicro(balance))
     .withResult(carryingCostUnits)
     .withUnit("nc")
     .withOperation("multiply")
     .withSource(SOURCE)
+    .addChild(leaf("construction_halt_carrying.base", baseMicro, "micro"))
     .addChild(leaf("construction_halt_carrying.rate", rateBp, "bp"))
+    .addChild(leaf("construction_halt_carrying.unit", treasuryUnitMicro, "micro"))
     .build();
 }
 
@@ -195,12 +225,7 @@ function acceleratePreview(
     fundsLimited: funded < absorbable,
     monthsExplanation: monthsTree(monthsNow, monthsAccelerated),
     premiumExplanation: premiumTree(remainingWork, premiumRateBp, premiumUnits),
-    delayExplanation: delayTree(
-      pressure.capacityPressureBp,
-      terms.delayThresholdBp,
-      terms.delayProbabilityCapBp,
-      delayChanceBp,
-    ),
+    delayExplanation: delayTree(pressure, terms, delayChanceBp),
   };
 }
 
@@ -218,7 +243,7 @@ function haltPreview(
     carryingCostUnits,
     resumeStatus: target.status,
     losesAcceleration: project.status === "ACCELERATED",
-    carryingExplanation: carryingTree(balance.preservationCostBp, carryingCostUnits),
+    carryingExplanation: carryingTree(balance, content.treasuryUnitMicro, carryingCostUnits),
   };
 }
 
