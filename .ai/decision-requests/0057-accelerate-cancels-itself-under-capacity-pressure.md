@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision.
+Decided: Option A (2026-11-08, Coordinator under owner delegation)
 
 ## Trigger
 
