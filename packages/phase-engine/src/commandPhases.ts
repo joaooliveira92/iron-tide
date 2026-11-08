@@ -1,5 +1,6 @@
 import { AiPhaseExecutor } from "@bluewave/ai";
 import { researchPriorityAllocation } from "@bluewave/ship-design";
+import { accelerationTermsFor } from "./constructionAcceleration.js";
 import { TENSION_ALLIANCE, TENSION_PEACE } from "@bluewave/campaign";
 import {
   type AcceptPeaceCommand,
@@ -341,6 +342,8 @@ function applyConstructionCommand(ctx: PhaseContext, body: CommandBody, commandI
       ctx.snapshot.current,
       body as SetAccelerationCommand,
       collector,
+      accelerationTermsFor(ctx.engineOptions?.shipBuilding, ctx.campaignMonth),
+      ctx.campaignMonth,
     );
     return;
   }

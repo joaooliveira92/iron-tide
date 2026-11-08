@@ -223,6 +223,8 @@ const F = {
     "namePoolId",
     "namePoolOrdinal",
     "accelerationPremiumAppliedAtWorkPosition",
+    "acceleratedFromMonth",
+    "acceleratedFromWork",
     "elapsedActiveMonths",
     "dockExpansionDurationMonths",
     "dockExpansionStepKg",

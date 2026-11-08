@@ -235,6 +235,8 @@ function makeRichSnapshot(): CampaignSnapshot {
       namePoolId: "name_pool:uk:B",
       namePoolOrdinal: 1,
       accelerationPremiumAppliedAtWorkPosition: SafeInt(50),
+      acceleratedFromMonth: "1880-03",
+      acceleratedFromWork: SafeInt(25),
       elapsedActiveMonths: 3,
       dockExpansionDurationMonths: 12,
       dockExpansionStepKg: 1_000_000,
