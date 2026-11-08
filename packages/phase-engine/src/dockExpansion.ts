@@ -1,4 +1,10 @@
-import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
+import {
+  type CampaignSnapshot,
+  type ConstructionProject,
+  type NationState,
+  fromLinear,
+  monthId,
+} from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { RandomDecision, RandomEngine, RandomLedger } from "@bluewave/random";
@@ -69,6 +75,18 @@ export function dockExpansionProjectFor(input: DockExpansionProjectInput): Const
     dockExpansionDurationMonths: input.durationMonths ?? DOCK_EXPANSION_BASE_DURATION_MONTHS,
     dockExpansionStepKg: input.stepKg,
   };
+}
+
+const MONTH_KEY = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+export function dockExpansionEarliestCompletionMonth(project: ConstructionProject): string | null {
+  if (!isDockExpansionProject(project)) return null;
+  const duration = project.dockExpansionDurationMonths;
+  if (duration === undefined || !Number.isSafeInteger(duration) || duration <= 0) return null;
+  const started = project.startedAt;
+  if (!MONTH_KEY.test(started)) return null;
+  const { year, month } = fromLinear(monthIndex(started) + duration - 1);
+  return monthId(year, month);
 }
 
 export type DockExpansionAuthorizationReason = "AUTHORIZED" | "NO_ERA_STEP" | "INVALID_DURATION";

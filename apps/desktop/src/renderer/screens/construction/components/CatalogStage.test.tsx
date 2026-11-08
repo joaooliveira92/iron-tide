@@ -33,6 +33,7 @@ const economy = {
   exemptNewConstructionMassKg: 0,
   dockExpansionDurationMonths: 12,
   dockExpansionNextStepKg: null,
+  dockExpansionReadyMonth: null,
   dockPossessions: [],
 };
 const workspace = { commands: [], treasuryReserved: 0, capacityReserved: 0 };

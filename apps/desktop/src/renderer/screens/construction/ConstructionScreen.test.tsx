@@ -78,6 +78,7 @@ const projectionWith = (
     exemptNewConstructionMassKg: 0,
     dockExpansionDurationMonths: 12,
     dockExpansionNextStepKg: 1_000_000,
+    dockExpansionReadyMonth: "1880-12",
     dockPossessions: [],
   },
   designs: [],

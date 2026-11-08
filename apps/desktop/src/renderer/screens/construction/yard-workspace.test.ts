@@ -20,6 +20,7 @@ const economy = {
   exemptNewConstructionMassKg: 8_000_000,
   dockExpansionDurationMonths: 12,
   dockExpansionNextStepKg: 1_000_000,
+  dockExpansionReadyMonth: "1880-12",
   dockPossessions: [],
 };
 

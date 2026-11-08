@@ -4,8 +4,10 @@ import {
   DOCK_EXPANSION_NEUTRAL_DURATION_MULTIPLIER_BP,
   builderDockRecord,
   constructionCapacityUtilization,
+  dockExpansionEarliestCompletionMonth,
   dockExpansionEraStepForMonth,
   dockExpansionFinalDurationMonths,
+  dockExpansionProjectFor,
   nationalConstructionCapacity,
 } from "@bluewave/phase-engine";
 import type { ConstructionScreenProjection } from "../../shared/construction-contract.js";
@@ -33,6 +35,22 @@ export function constructionEconomy(
   const capacity = nationalConstructionCapacity(balance, dockMaxBuildDisplacementKg ?? 0);
   const utilization = constructionCapacityUtilization(snapshot, record.playerSlotId, capacity);
 
+  const expansionDurationMonths = dockExpansionFinalDurationMonths(
+    DOCK_EXPANSION_BASE_DURATION_MONTHS,
+    DOCK_EXPANSION_NEUTRAL_DURATION_MULTIPLIER_BP,
+  );
+  const expansionStepKg = dockExpansionEraStepForMonth(monthId);
+  const expansionProject =
+    expansionStepKg === null
+      ? null
+      : dockExpansionProjectFor({
+          projectId: "dock-expansion-preview",
+          possessionId: "preview",
+          authorizedMonth: monthId,
+          stepKg: expansionStepKg,
+          durationMonths: expansionDurationMonths,
+        });
+
   const dockPossessions = snapshot.world.ports
     .filter((port) => port.nationId === record.playerSlotId)
     .map((port) => ({ id: port.id, name: port.name }))
@@ -46,11 +64,10 @@ export function constructionEconomy(
     maxConcurrentConstructionMassKg: utilization.maxConcurrentMassKg,
     committedNewConstructionMassKg: utilization.committedMassKg,
     exemptNewConstructionMassKg: utilization.exemptMassKg,
-    dockExpansionDurationMonths: dockExpansionFinalDurationMonths(
-      DOCK_EXPANSION_BASE_DURATION_MONTHS,
-      DOCK_EXPANSION_NEUTRAL_DURATION_MULTIPLIER_BP,
-    ),
-    dockExpansionNextStepKg: dockExpansionEraStepForMonth(monthId),
+    dockExpansionDurationMonths: expansionDurationMonths,
+    dockExpansionNextStepKg: expansionStepKg,
+    dockExpansionReadyMonth:
+      expansionProject === null ? null : dockExpansionEarliestCompletionMonth(expansionProject),
     dockPossessions,
   };
 }
