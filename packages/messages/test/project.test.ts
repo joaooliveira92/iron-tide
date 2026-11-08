@@ -64,12 +64,47 @@ describe("TurnMessage projection", () => {
     expect(message.debugMetadata?.contentVersion).toBe("0.5.0");
   });
 
+  it("projects a ship delivery as a player-visible construction message linking the ship", () => {
+    const delivered = envelope(
+      {
+        kind: "ShipDelivered",
+        projectId: "con-1",
+        nationId: "uk",
+        shipId: "ship-con-1",
+        shipName: "HMS Delivered",
+        classId: "class_a",
+        designVersionId: "d1",
+        deliveredMonth: "1880-02",
+        plannedMonths: SafeInt(3),
+        actualMonths: SafeInt(4),
+      },
+      "con-1",
+      1,
+    );
+    const messages = playerVisibleMessages(projectTurnMessages(input([delivered])));
+    expect(messages).toHaveLength(1);
+    const message = messages[0]!;
+    expect(message.category).toBe("CONSTRUCTION");
+    expect(message.severity).toBe("NORMAL");
+    expect(message.titleKey).toBe("messages.construction.delivered.title");
+    expect(message.bodyKey).toBe("messages.construction.delivered.body");
+    expect(message.subjectRefs).toContainEqual({ type: "ship", id: "ship-con-1" });
+    expect(message.interpolation).toMatchObject({
+      shipId: "ship-con-1",
+      shipName: "HMS Delivered",
+      plannedMonths: 3,
+      actualMonths: 4,
+    });
+    expect(decodeTurnMessage(message)).toEqual(message);
+  });
+
   it("is total over every event kind", () => {
     const bodies = [
       "NationBudgetChanged",
       "ConstructionProgressed",
       "ConstructionDelayed",
       "ShipRebuilt",
+      "ShipDelivered",
       "ConstructionProjectCancelled",
       "ResearchProgressed",
       "BattleInitiated",

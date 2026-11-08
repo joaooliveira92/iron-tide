@@ -27,6 +27,7 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   ConstructionDelayed: "construction_processing",
   ConstructionProjectCancelled: "construction_processing",
   ShipRebuilt: "construction_processing",
+  ShipDelivered: "construction_processing",
   ShipReadinessChanged: "maintenance",
   ResearchProgressed: "resolve_research",
   TechnologyDiscovered: "resolve_research",

@@ -25,6 +25,7 @@ export type {
   RevoltPressureRequested,
   Reason,
   ResearchProgressed,
+  ShipDelivered,
   ShipDetachedToFleet,
   ShipReadinessChanged,
   ShipRebuilt,
@@ -65,6 +66,7 @@ export {
   parseDomainEventBody,
   parseDomainEventEnvelope,
   ResearchProgressedSchema,
+  ShipDeliveredSchema,
   ShipRebuiltSchema,
   TechnologyDiscoveredSchema,
 } from "./validation.js";

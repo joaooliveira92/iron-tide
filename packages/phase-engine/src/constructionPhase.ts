@@ -18,7 +18,7 @@ import {
   dockExpansionMonthIsActive,
   isDockExpansionProject,
 } from "./dockExpansion.js";
-import { constructionProgressedEvent, shipRebuiltEvent } from "./events.js";
+import { constructionProgressedEvent, shipDeliveredEvent, shipRebuiltEvent } from "./events.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { checkRebuildClassification } from "./rebuildClassification.js";
 
@@ -131,6 +131,25 @@ function applyConstructionToNation(ctx: PhaseContext, nationId: string, nation: 
       updatedFleets = updatedFleets.map((f) =>
         f["id"] === ensured.fleet["id"] ? { ...f, ships: [...f["ships"], newShip] } : f,
       );
+      eventLedger.append(
+        shipDeliveredEvent(
+          {
+            projectId: project["id"],
+            nationId,
+            shipId: newShip["id"],
+            shipName: newShip["name"],
+            classId: newShip["classId"],
+            designVersionId: newShip["designVersionId"],
+            deliveredMonth: campaignMonth,
+            yardId: project["yardId"],
+            builderNationId: project["foreignBuilderNationId"],
+            plannedMonths: project["buildMonths"],
+            actualMonths: monthsInBuild(project["startedAt"], campaignMonth),
+          },
+          nextSeq(),
+          campaignMonth,
+        ),
+      );
     }
 
     if (
@@ -211,6 +230,16 @@ function applyConstructionToNation(ctx: PhaseContext, nationId: string, nation: 
     updatedNations.set(nationId, updatedNation);
     ctx.snapshot.write("nations", updatedNations);
   }
+}
+
+const MONTH_KEY = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+const monthOrdinal = (m: string): number =>
+  Number(m.slice(0, 4)) * 12 + (Number(m.slice(5, 7)) - 1);
+
+function monthsInBuild(startedAt: string, campaignMonth: string): number {
+  if (!MONTH_KEY.test(startedAt) || !MONTH_KEY.test(campaignMonth)) return 0;
+  return Math.max(0, monthOrdinal(campaignMonth) - monthOrdinal(startedAt) + 1);
 }
 
 function ensureNationFleet(

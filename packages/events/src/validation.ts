@@ -63,6 +63,21 @@ export const ShipRebuiltSchema = Schema.Struct({
   toDesignVersionId: nonEmptyString,
 });
 
+export const ShipDeliveredSchema = Schema.Struct({
+  kind: Schema.Literal("ShipDelivered"),
+  projectId: nonEmptyString,
+  nationId: nonEmptyString,
+  shipId: nonEmptyString,
+  shipName: nonEmptyString,
+  classId: nonEmptyString,
+  designVersionId: Schema.optionalKey(nonEmptyString),
+  deliveredMonth: discoveryMonth,
+  yardId: Schema.optionalKey(nonEmptyString),
+  builderNationId: Schema.optionalKey(nonEmptyString),
+  plannedMonths: Schema.optionalKey(nonNegativeSafeInt),
+  actualMonths: nonNegativeSafeInt,
+});
+
 export const ConstructionProjectCancelledSchema = Schema.Struct({
   kind: Schema.Literal("ConstructionProjectCancelled"),
   projectId: nonEmptyString,
@@ -263,6 +278,7 @@ export const DomainEventBodySchema = Schema.Union([
   ConstructionProgressedSchema,
   ConstructionDelayedSchema,
   ShipRebuiltSchema,
+  ShipDeliveredSchema,
   ConstructionProjectCancelledSchema,
   ResearchProgressedSchema,
   BattleInitiatedSchema,
@@ -291,6 +307,7 @@ const eventKindList = [
   "ConstructionProgressed",
   "ConstructionDelayed",
   "ShipRebuilt",
+  "ShipDelivered",
   "ConstructionProjectCancelled",
   "ResearchProgressed",
   "BattleInitiated",
@@ -335,6 +352,7 @@ export type NationBudgetChanged = Schema.Schema.Type<typeof NationBudgetChangedS
 export type ConstructionProgressed = Schema.Schema.Type<typeof ConstructionProgressedSchema>;
 export type ConstructionDelayed = Schema.Schema.Type<typeof ConstructionDelayedSchema>;
 export type ShipRebuilt = Schema.Schema.Type<typeof ShipRebuiltSchema>;
+export type ShipDelivered = Schema.Schema.Type<typeof ShipDeliveredSchema>;
 export type ConstructionProjectCancelled = Schema.Schema.Type<
   typeof ConstructionProjectCancelledSchema
 >;
