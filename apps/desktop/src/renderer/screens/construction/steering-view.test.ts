@@ -37,6 +37,20 @@ describe("steering view model", () => {
     expect(view.tip).toContain("Delay risk: None at the current load.");
   });
 
+  it("says plainly when accelerating would not finish the ship sooner", () => {
+    const view = accelerateView(
+      "Havock class",
+      accelerationPreview({ monthsNow: 20, monthsAccelerated: 21, monthsSaved: -1 }),
+      format,
+    );
+    expect(view.tip).toContain("Would not finish sooner: 21 months against 20 months now.");
+    expect(view.rows.find((row) => row.label === "Months saved")?.value).toBe(
+      "None; it would not finish sooner",
+    );
+    expect(view.notes).toHaveLength(1);
+    expect(view.tip).not.toContain("-1");
+  });
+
   it("flags a funds-limited saving in the tip and as a note", () => {
     const view = accelerateView(
       "Havock class",

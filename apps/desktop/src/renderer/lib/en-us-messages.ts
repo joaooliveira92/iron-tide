@@ -513,6 +513,11 @@ export const EN_US_MESSAGES = {
     "Funds, not yard capacity, limit this ship's monthly work, so the months saved are the best case.",
   "construction.steering.accelerate.tip":
     "Saves {saved} for a premium of {premium}. Delay risk: {risk}.",
+  "construction.steering.accelerate.tipNoSaving":
+    "Would not finish sooner: {months} against {now} now. Premium {premium}. Delay risk: {risk}.",
+  "construction.steering.accelerate.savedNone": "None; it would not finish sooner",
+  "construction.steering.accelerate.noSavingNote":
+    "At this ship's pace, accelerating adds work without bringing the launch forward.",
   "construction.steering.accelerate.tipFundsLimited":
     " Funds limit the monthly work, so the saving is the best case.",
   "construction.steering.halt.title": "Halt {ship}?",

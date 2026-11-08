@@ -44,13 +44,25 @@ export function accelerateView(
   format: PresentationFormat,
 ): SteeringConfirmView {
   const risk = riskText(format, preview);
-  const saved = monthsText(format, preview.monthsSaved);
+  const saves = preview.monthsSaved > 0;
+  const saved = saves
+    ? monthsText(format, preview.monthsSaved)
+    : translate(`${PREFIX}.accelerate.savedNone`);
   const premium = format.money(preview.premiumUnits);
-  const fundsNote = preview.fundsLimited ? [translate(`${PREFIX}.accelerate.fundsLimited`)] : [];
+  const notes = [
+    ...(saves ? [] : [translate(`${PREFIX}.accelerate.noSavingNote`)]),
+    ...(preview.fundsLimited ? [translate(`${PREFIX}.accelerate.fundsLimited`)] : []),
+  ];
+  const lead = saves
+    ? translate(`${PREFIX}.accelerate.tip`, { saved, premium, risk })
+    : translate(`${PREFIX}.accelerate.tipNoSaving`, {
+        months: monthsText(format, preview.monthsAccelerated),
+        now: monthsText(format, preview.monthsNow),
+        premium,
+        risk,
+      });
   return {
-    tip:
-      translate(`${PREFIX}.accelerate.tip`, { saved, premium, risk }) +
-      (preview.fundsLimited ? translate(`${PREFIX}.accelerate.tipFundsLimited`) : ""),
+    tip: lead + (preview.fundsLimited ? translate(`${PREFIX}.accelerate.tipFundsLimited`) : ""),
     title: translate(`${PREFIX}.accelerate.title`, { ship: shipName }),
     description: translate(`${PREFIX}.accelerate.description`),
     rows: [
@@ -87,7 +99,7 @@ export function accelerateView(
         },
       },
     ],
-    notes: fundsNote,
+    notes,
     confirmLabel: translate(`${PREFIX}.accelerate.confirm`),
     cancelLabel: translate(`${PREFIX}.cancel`),
   };
