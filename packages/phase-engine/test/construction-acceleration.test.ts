@@ -679,6 +679,26 @@ describe("accelerating a paced project actually shortens the build (issue 574)",
     expect(fast.randomDecisions).toBe(0);
     expect(fast.statuses.slice(0, -1).every((status) => status === "ACCELERATED")).toBe(true);
   });
+
+  it("loads and plays on a save that predates the acceleration anchors, at the normal pace", () => {
+    const accelerated = accelerate(pacedSnapshot());
+    const nationState = accelerated.nations.get("GBR")!;
+    const stripped = nationState.constructionProjects.map((entry) => {
+      const { acceleratedFromMonth, acceleratedFromWork, ...legacy } = entry;
+      void acceleratedFromMonth;
+      void acceleratedFromWork;
+      return legacy;
+    });
+    expect(stripped[0]).not.toHaveProperty("acceleratedFromMonth");
+    const legacySnapshot: CampaignSnapshot = {
+      ...accelerated,
+      nations: new Map([["GBR", { ...nationState, constructionProjects: stripped }]]),
+    };
+    const finish = buildToCompletion(legacySnapshot);
+    expect(finish.months).toBe(BUILD_MONTHS);
+    expect(finish.statuses.slice(0, -1).every((status) => status === "ACCELERATED")).toBe(true);
+    expect(finish.randomDecisions).toBe(0);
+  });
 });
 
 describe("SetAcceleration command definition (SB3-R8)", () => {
