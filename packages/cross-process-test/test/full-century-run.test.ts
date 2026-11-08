@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vite-plus/test";
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 const thisDir = dirname(fileURLToPath(import.meta.url));
 const childScript = resolve(thisDir, "..", "dist", "run-child.js");
@@ -32,20 +33,29 @@ interface FullCenturyOutput {
   readonly hullCounts: Readonly<Record<string, number>>;
 }
 
-function runFullCenturyChild(): { readonly output: FullCenturyOutput; readonly stdout: string } {
-  const stdout = execFileSync(process.execPath, [childScript, "production-full-century"], {
-    encoding: "utf8",
-    timeout: 600_000,
-    env: { ...process.env, NODE_OPTIONS: "" },
-  });
+const execFileAsync = promisify(execFile);
+
+async function runFullCenturyChild(): Promise<{
+  readonly output: FullCenturyOutput;
+  readonly stdout: string;
+}> {
+  const { stdout } = await execFileAsync(
+    process.execPath,
+    [childScript, "production-full-century"],
+    {
+      encoding: "utf8",
+      timeout: 600_000,
+      maxBuffer: 64 * 1024 * 1024,
+      env: { ...process.env, NODE_OPTIONS: "" },
+    },
+  );
   const lines = stdout.trim().split("\n");
   return { output: JSON.parse(lines[lines.length - 1]!) as FullCenturyOutput, stdout };
 }
 
 describe("E-1 1880-1970 unattended run", () => {
-  it("runs 1080 command-free months with yearly checkpoints, byte-identical across processes", () => {
-    const first = runFullCenturyChild();
-    const second = runFullCenturyChild();
+  it("runs 1080 command-free months with yearly checkpoints, byte-identical across processes", async () => {
+    const [first, second] = await Promise.all([runFullCenturyChild(), runFullCenturyChild()]);
 
     expect(first.stdout).toBe(second.stdout);
     expect(first.output.mode).toBe("production-full-century");
