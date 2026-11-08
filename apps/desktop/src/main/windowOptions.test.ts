@@ -5,7 +5,11 @@ import {
   installContentSecurityPolicy,
   type CspHeaderDetails,
 } from "./csp.js";
-import { desktopWindowOptions } from "./windowOptions.js";
+import {
+  BACKGROUND_WINDOW_SWITCH,
+  desktopWindowOptions,
+  isBackgroundLaunch,
+} from "./windowOptions.js";
 
 describe("desktopWindowOptions", () => {
   it("uses the fixed window frame and sandboxed web preferences", () => {
@@ -24,6 +28,30 @@ describe("desktopWindowOptions", () => {
         sandbox: true,
       },
     });
+  });
+
+  it("stays hidden and unthrottled when launched for background automation", () => {
+    const options = desktopWindowOptions("darwin", "preload", { background: true });
+    expect(options.show).toBe(false);
+    expect(options.webPreferences.backgroundThrottling).toBe(false);
+    expect(options.webPreferences.sandbox).toBe(true);
+    expect(options.webPreferences.contextIsolation).toBe(true);
+  });
+
+  it("shows a normal window and leaves throttling alone by default", () => {
+    for (const options of [
+      desktopWindowOptions("darwin", "preload"),
+      desktopWindowOptions("darwin", "preload", { background: false }),
+    ]) {
+      expect(options.show).toBeUndefined();
+      expect(options.webPreferences.backgroundThrottling).toBeUndefined();
+    }
+  });
+
+  it("treats only the exact switch as a background launch", () => {
+    expect(isBackgroundLaunch(["electron", "main.js", BACKGROUND_WINDOW_SWITCH])).toBe(true);
+    expect(isBackgroundLaunch(["electron", "main.js"])).toBe(false);
+    expect(isBackgroundLaunch(["electron", "main.js", "--bluewave-background"])).toBe(false);
   });
 
   it("omits macOS title-bar options on other platforms", () => {

@@ -16,6 +16,12 @@ const LANDING_TEXT = "Bluewave Naval Staff";
 
 const EXPECT_DEBUG_BUILD = process.env.BLUEWAVE_E2E_DEBUG_BUILD === "true";
 
+const VISIBLE_WINDOWS = process.env.BLUEWAVE_E2E_VISIBLE === "true";
+
+function backgroundArgs(): string[] {
+  return VISIBLE_WINDOWS ? [] : ["--bluewave-background-window"];
+}
+
 export interface E2EHarness {
   readonly app: ElectronApplication;
   readonly page: Page;
@@ -38,7 +44,7 @@ export async function launchHarness(opts: { saveDir?: string } = {}): Promise<E2
     await mkdir(saveDir, { recursive: true });
 
     const app = await electron.launch({
-      args: [OUT_MAIN, `--user-data-dir=${userDataDir}`],
+      args: [OUT_MAIN, `--user-data-dir=${userDataDir}`, ...backgroundArgs()],
       env: { ...process.env, ELECTRON_RUN_AS_NODE: "" },
       timeout: 60_000,
     });
