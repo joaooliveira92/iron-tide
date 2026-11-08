@@ -1,15 +1,21 @@
 import { createContext, use, useMemo, useState, type ReactNode } from "react";
-import type {
-  DesignDraft,
-  DraftEdit,
-  MountSide,
-  PartCatalogueEntry,
-  ZoneId,
+import {
+  pickerOptions,
+  type DesignDraft,
+  type DraftEdit,
+  type MountSide,
+  type PartCatalogueEntry,
+  type ZoneId,
 } from "@bluewave/ship-design";
 import { BluewaveError } from "@bluewave/contracts";
 import type { DrawingBoardContent } from "../../../../components/design-workspace/content.js";
 import type { BoardFinding } from "../../../../components/design-workspace/validation/boardFindings.js";
 import type { ShipEntity } from "../../../../components/design-workspace/selection/store.js";
+import {
+  pickerQueryOf,
+  usePickerFilters,
+  type PickerFilters,
+} from "../../../../components/design-workspace/pickerFilters.js";
 import { usePresentationFormat } from "../../../../shell/usePresentationFormat.js";
 import {
   allMounts,
@@ -29,6 +35,8 @@ export interface ArmamentEditingState {
   readonly mirror: ArmamentMount | null;
   readonly entry: PartCatalogueEntry | undefined;
   readonly replaceCandidates: readonly PartCatalogueEntry[];
+  readonly replacePool: readonly PartCatalogueEntry[];
+  readonly pickerFilters: PickerFilters;
   readonly conflicts: readonly BoardFinding[];
   readonly linked: boolean;
   readonly replaceTo: string;
@@ -38,6 +46,7 @@ export interface ArmamentEditingActions {
   readonly select: (mount: ArmamentMount) => void;
   readonly setLinked: (linked: boolean) => void;
   readonly setReplaceTo: (componentId: string) => void;
+  readonly setPickerFilters: (patch: Partial<PickerFilters>) => void;
   readonly setNumber: (mount: ArmamentMount, param: "barrels" | "rounds", value: number) => void;
   readonly setStation: (mount: ArmamentMount, value: number) => void;
   readonly setSide: (mount: ArmamentMount, side: MountSide) => void;
@@ -63,6 +72,7 @@ export interface ArmamentEditingProviderProps {
   readonly content: DrawingBoardContent;
   readonly findings: readonly BoardFinding[];
   readonly month: string;
+  readonly unlockedTechs: ReadonlySet<string>;
   readonly edit: (edit: DraftEdit) => void;
   readonly onSelect?: (entity: ShipEntity) => void;
   readonly selectedInstanceId?: string | null;
@@ -75,6 +85,7 @@ export function ArmamentEditingProvider({
   content,
   findings,
   month,
+  unlockedTechs,
   edit,
   onSelect,
   selectedInstanceId,
@@ -194,12 +205,24 @@ export function ArmamentEditingProvider({
         : content.catalogue.find((e) => e.id === entryComponentId),
     [entryComponentId, content.catalogue],
   );
-  const replaceCandidates = useMemo(
+  const [pickerFilters, setPickerFilters] = usePickerFilters();
+  const nationId = draft.nationId;
+  const replacePool = useMemo(
     () =>
       entry === undefined
         ? []
         : content.catalogue.filter((e) => e.category === entry.category && e.id !== entry.id),
     [entry, content.catalogue],
+  );
+  const replaceCandidates = useMemo(
+    () =>
+      entry === undefined
+        ? []
+        : pickerOptions(
+            content.catalogue,
+            pickerQueryOf({ month, unlockedTechs, nationId }, pickerFilters, entry.category),
+          ).available.filter((e) => e.id !== entry.id),
+    [entry, content.catalogue, month, unlockedTechs, nationId, pickerFilters],
   );
   const conflicts = selected === null ? [] : conflictsFor(selected.instanceId, findings);
 
@@ -213,6 +236,8 @@ export function ArmamentEditingProvider({
       mirror,
       entry,
       replaceCandidates,
+      replacePool,
+      pickerFilters,
       conflicts,
       linked,
       replaceTo,
@@ -226,6 +251,8 @@ export function ArmamentEditingProvider({
       mirror,
       entry,
       replaceCandidates,
+      replacePool,
+      pickerFilters,
       conflicts,
       linked,
       replaceTo,
@@ -235,6 +262,7 @@ export function ArmamentEditingProvider({
     select,
     setLinked,
     setReplaceTo,
+    setPickerFilters,
     setNumber,
     setStation,
     setSide,
