@@ -62,6 +62,10 @@ export interface ConstructionBalance {
   readonly buildTimeEraProvenance: readonly BuildTimeProvenance[];
   readonly efficientIndustryBp: number;
   readonly accelerationTimeBp: number;
+  readonly accelerationPressureWeightBp: number;
+  readonly accelerationDelayThresholdBp: number;
+  readonly accelerationDelayProbabilityCapBp: number;
+  readonly accelerationPoolMultipleBp: number;
   readonly mothballedMaintenancePerMonthMicro: number;
   readonly preservationCostBp: number;
   readonly shipyardCapacityMultipleBp: number;

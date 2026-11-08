@@ -699,6 +699,16 @@ export default {
     efficientIndustryBp: 6700,
     // Accelerated construction: 10 % faster (RTW3 official manual p. 31, a game rule).
     accelerationTimeBp: 9000,
+    // Acceleration delay pressure (SB3-R9, SB3-R10): PROVISIONAL BALANCE TARGETS; the RTW3 manual gives no delay rule.
+    // Accelerated demand counts 1.25x (12500 bp); pressure above 90 % (9000 bp) of the national pool starts delaying
+    // accelerated projects, with a delay chance that scales with the excess up to 50 % (5000 bp). Calibrate from play.
+    accelerationPressureWeightBp: 12500,
+    accelerationDelayThresholdBp: 9000,
+    accelerationDelayProbabilityCapBp: 5000,
+    // National acceleration pool: PROVISIONAL BALANCE TARGET. The pool is this multiple of the nation's largest
+    // per-project monthly yard rate (30000 bp = 3x, mirroring shipyardCapacityMultipleBp's three dock-sized hulls), so
+    // one accelerated ship never risks a delay and several accelerated together do. Calibrate from play.
+    accelerationPoolMultipleBp: 30000,
     // Mothballing and halting (DESIGN-23 section 7; RTW3 official manual pp. 30-31). The manual gives only the HALF
     // rule: a halted hull pays "half its mothballed maintenance" (preservation cost) while stopped. It never gives the
     // mothballing base, so `mothballedMaintenancePerMonthMicro` is a PLACEHOLDER BALANCE TARGET (currency micro-units per
