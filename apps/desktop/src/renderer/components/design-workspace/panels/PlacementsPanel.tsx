@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { ComponentCategory } from "@bluewave/ship-design";
 import { useDesignActions, useDesignState } from "../DesignWorkspaceContext.js";
 import { Panel } from "./Panel.js";
@@ -20,8 +21,12 @@ export function PlacementsPanel({
   readonly onSelect?: (instanceId: string) => void;
   readonly selectedInstanceId?: string | null;
 }) {
-  const { draft, content, month, view } = useDesignState();
+  const { draft, content, month, view, ctx } = useDesignState();
   const { edit } = useDesignActions();
+  const picker = useMemo(
+    () => ({ month, unlockedTechs: ctx.unlockedTechs, nationId: draft.nationId }),
+    [month, ctx.unlockedTechs, draft.nationId],
+  );
   const { state, actions } = usePlacementsState({ draft, content, view, edit, categories });
 
   return (
@@ -46,7 +51,7 @@ export function PlacementsPanel({
       </PlacementsTable>
       <AddComponentBar
         catalogue={state.catalogue}
-        month={month}
+        picker={picker}
         zoneId={state.zoneId}
         onAdd={actions.add}
         onZoneChange={actions.setZoneId}

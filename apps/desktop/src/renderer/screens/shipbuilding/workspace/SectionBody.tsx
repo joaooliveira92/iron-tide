@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useDesignState } from "../../../components/design-workspace/DesignWorkspaceContext.js";
 import { mountNameMap } from "../../../components/design-workspace/batteryView.js";
 import { technologyMonths } from "../../../components/design-workspace/useDesignSession.js";
 import { BriefPanel } from "../../../components/design-workspace/panels/BriefPanel.js";
@@ -37,6 +38,7 @@ export function SectionBody({ at }: { readonly at: InspectorPlace }) {
   const state = useShipbuildingState();
   const meta = useShipbuildingMeta();
   const actions = useShipbuildingActions();
+  const { unlockedTechs } = useDesignState().ctx;
   const {
     draft,
     view,
@@ -199,6 +201,7 @@ export function SectionBody({ at }: { readonly at: InspectorPlace }) {
             content={content}
             findings={findings}
             month={month}
+            unlockedTechs={unlockedTechs}
             edit={actions.edit}
             onSelect={selection.select}
             selectedInstanceId={selectedInstanceId}

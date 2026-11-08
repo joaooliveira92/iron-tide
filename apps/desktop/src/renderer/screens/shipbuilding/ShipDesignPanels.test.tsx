@@ -106,6 +106,51 @@ describe("the design's supporting panels", () => {
     expect(rows()).toBe(n);
   });
 
+  describe("armament picker filters", () => {
+    const menuText = async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Add component" }));
+      const items = await screen.findAllByRole("menuitem");
+      return items.map((i) => i.textContent ?? "").join("\n");
+    };
+    const closeMenu = async () => {
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+      await waitFor(() => expect(screen.queryAllByRole("menuitem")).toHaveLength(0));
+    };
+
+    it("hides later-era and other-nation guns for a British draft and shows them on request", async () => {
+      render(<ShipbuildingWorkspace />);
+      openSection("Armament", "Secondary");
+      const text = await menuText();
+      expect(text).toMatch(/QF 6-inch\/40/);
+      expect(text).not.toMatch(/5-inch\/38/);
+      expect(text).not.toMatch(/Krupp RK L\/22/);
+      await closeMenu();
+
+      fireEvent.click(screen.getByRole("checkbox", { name: "Show all nations" }));
+      const withNations = await menuText();
+      expect(withNations).toMatch(/Krupp RK L\/22/);
+      expect(withNations).not.toMatch(/5-inch\/38/);
+      await closeMenu();
+
+      fireEvent.click(screen.getByRole("checkbox", { name: "Show unavailable parts" }));
+      const withUnavailable = await menuText();
+      expect(withUnavailable).toMatch(/5-inch\/38[\s\S]*not yet available/);
+    });
+
+    it("keeps the chosen filters after an edit", async () => {
+      render(<ShipbuildingWorkspace />);
+      openSection("Armament", "Secondary");
+      fireEvent.click(screen.getByRole("checkbox", { name: "Show all nations" }));
+      fireEvent.click(screen.getByRole("button", { name: "Add component" }));
+      const items = await screen.findAllByRole("menuitem");
+      fireEvent.click(items.find((i) => /6-pounder|6 pounder|6pdr/i.test(i.textContent ?? ""))!);
+      await waitFor(() => expect(screen.queryAllByRole("menuitem")).toHaveLength(0));
+      const box = screen.getByRole("checkbox", { name: "Show all nations" });
+      expect(box.getAttribute("aria-checked")).toBe("true");
+      expect(await menuText()).toMatch(/Krupp RK L\/22/);
+    });
+  });
+
   it("duplicates a fitting from its row menu, and offers the same actions on a right-click", async () => {
     render(<ShipbuildingWorkspace />);
     openSection("Systems", "Accommodation");

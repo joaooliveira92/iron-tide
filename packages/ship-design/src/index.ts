@@ -170,6 +170,14 @@ export {
   legacyCatalogueView,
   type PartCatalogueEntry,
 } from "./partCatalogueView.js";
+export {
+  pickerOptions,
+  type CaliberRange,
+  type HiddenPickerEntry,
+  type PickerHiddenReason,
+  type PickerOptions,
+  type PickerQuery,
+} from "./pickerOptions.js";
 export { buildCompatibilitySlots } from "./partCompatibility.js";
 export { lifecycleStatus, shiftMonth } from "./partLifecycle.js";
 export { partCatalogue } from "./partQueries.js";
