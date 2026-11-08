@@ -122,7 +122,7 @@ describe("Build tab rebuild entry", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Rebuild a ship" }));
     const dialog = await screen.findByRole("dialog", { name: "Rebuild a ship" });
     expect(await within(dialog).findByRole("combobox", { name: "Ship to rebuild" })).toBeTruthy();
-    expect(within(dialog).getByText("HMS Havock (Havock class)")).toBeTruthy();
+    expect(await within(dialog).findByText("HMS Havock (Havock class)")).toBeTruthy();
 
     fireEvent.click(
       within(dialog).getByRole("button", { name: "Load this ship's design to rebuild it" }),
