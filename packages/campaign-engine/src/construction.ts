@@ -4,6 +4,7 @@ import {
   monthlyAbsorbableDetail,
   projectMonthsToComplete,
   umsToKnots,
+  type AccelerationTerms,
   type CampaignSnapshot,
   type CompiledDesignVersion as CompiledEngineDesignVersion,
   type ConstructionProject,
@@ -248,6 +249,7 @@ export function constructionProjectReadout(
   design: CompiledEngineDesignVersion | undefined,
   campaignMonth: string,
   foreign?: ConstructionProjectForeignSchedule,
+  terms?: AccelerationTerms,
 ): ConstructionProjectReadout {
   const totalCostUnits = Number(project.totalWork);
   const remainingWork = Math.max(0, totalCostUnits - Number(project.completedWork));
@@ -319,13 +321,13 @@ export function constructionProjectReadout(
   }
 
   const capacityUnits = project.capacityUnits ?? design?.constructionPlan?.capacityUnits;
-  const detail = monthlyAbsorbableDetail(project, capacityUnits, campaignMonth);
+  const detail = monthlyAbsorbableDetail(project, capacityUnits, campaignMonth, terms);
   const monthlyInstalmentUnits = detail.amount;
   const remainingMonths =
     remainingWork <= 0 || monthlyInstalmentUnits <= 0
       ? 0
       : project.buildMonths !== undefined && project.packages !== undefined
-        ? projectMonthsToComplete(project, capacityUnits, campaignMonth)
+        ? projectMonthsToComplete(project, capacityUnits, campaignMonth, undefined, terms)
         : Math.ceil(remainingWork / monthlyInstalmentUnits);
   return {
     totalCostUnits,
@@ -354,6 +356,7 @@ export function buildConstructionProjectQueueWithReadouts(
   nationId: string,
   campaignMonth: string,
   haltedCarryingCostUnits: number | null,
+  terms?: AccelerationTerms,
 ): ConstructionProjectQueueEntry[] {
   const entries = buildConstructionProjectQueue(snapshot, nationId);
   const nation = snapshot.nations.get(nationId);
@@ -388,6 +391,7 @@ export function buildConstructionProjectQueueWithReadouts(
       snapshot.designs.get(entry.designVersionId),
       campaignMonth,
       foreign,
+      terms,
     );
     return {
       ...entry,

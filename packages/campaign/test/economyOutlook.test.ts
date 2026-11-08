@@ -3,6 +3,16 @@ import { describe, expect, it } from "vite-plus/test";
 import { constructionDrawByProject, economyOutlook } from "../src/economyOutlook.js";
 import type { CampaignSnapshot, ConstructionProject, NationState } from "../src/state.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import type { AccelerationTerms } from "@bluewave/ship-design";
+
+const ACCELERATION_TERMS: AccelerationTerms = {
+  workMultiplierBp: 10_500,
+  timeBp: 9_000,
+  pressureWeightBp: 12_500,
+  delayThresholdBp: 9_000,
+  delayProbabilityCapBp: 5_000,
+  poolMultipleBp: 30_000,
+};
 
 function ship(hitPoints: number) {
   return {
@@ -192,6 +202,7 @@ describe("economyOutlook", () => {
         }),
       ),
       "n",
+      { acceleration: ACCELERATION_TERMS },
     )!;
     expect(o.constructionDraws).toEqual([{ projectId: "f", draw: 11 }]);
     expect(o.plannedConstruction).toBe(11);

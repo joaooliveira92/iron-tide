@@ -1,14 +1,15 @@
-import { checkedMul, roundToInt } from "@bluewave/contracts";
 import {
+  acceleratedWorkRate,
   advanceConstructionMonth,
   LINE_IDS,
+  type AccelerationTerms,
   type ConstructionPlan,
   type LineId,
   type PackageProgress,
 } from "@bluewave/ship-design";
 import type { ConstructionPackage, ConstructionProject } from "./state.js";
 
-export const ACCELERATION_WORK_RATE_MULTIPLIER_BP = 11_000 as const;
+export type { AccelerationTerms };
 
 export const CONSTRUCTION_LINE_IDS = LINE_IDS;
 
@@ -29,12 +30,10 @@ function scaleCapacityUnits(
 
 export function accelerateCapacityUnits(
   capacityUnits: Readonly<Record<string, number>>,
+  terms: AccelerationTerms,
 ): Record<string, number> {
   return Object.fromEntries(
-    Object.entries(capacityUnits).map(([line, value]) => [
-      line,
-      roundToInt(checkedMul(value, ACCELERATION_WORK_RATE_MULTIPLIER_BP) / BP, "floor"),
-    ]),
+    Object.entries(capacityUnits).map(([line, value]) => [line, acceleratedWorkRate(value, terms)]),
   );
 }
 
@@ -59,6 +58,7 @@ export function remainingMonthlyCapacityUnits(
   project: ConstructionProject,
   capacityUnits: Readonly<Record<string, number>> | undefined,
   month: string,
+  terms?: AccelerationTerms,
 ): Record<LineId, number> | undefined {
   const buildTimeBp =
     project["buildMonths"] === undefined ? project["buildTimeMultiplierBp"] : undefined;
@@ -67,8 +67,8 @@ export function remainingMonthlyCapacityUnits(
       ? capacityUnits
       : scaleCapacityUnits(capacityUnits, BP, buildTimeBp);
   const effective =
-    paced !== undefined && project["status"] === "ACCELERATED"
-      ? accelerateCapacityUnits(paced)
+    paced !== undefined && terms !== undefined && project["status"] === "ACCELERATED"
+      ? accelerateCapacityUnits(paced, terms)
       : paced;
   if (effective === undefined) return undefined;
   const usage = project["monthUsage"];
@@ -94,11 +94,7 @@ export function monthsSinceStart(project: ConstructionProject, month: string): n
 function isPaced(project: ConstructionProject): project is ConstructionProject & {
   readonly buildMonths: number;
 } {
-  return (
-    project["buildMonths"] !== undefined &&
-    project["packages"] !== undefined &&
-    project["status"] !== "ACCELERATED"
-  );
+  return project["buildMonths"] !== undefined && project["packages"] !== undefined;
 }
 
 function cumulativeAllowance(totalWork: number, buildMonths: number, elapsed: number): number {
@@ -106,14 +102,62 @@ function cumulativeAllowance(totalWork: number, buildMonths: number, elapsed: nu
   return Math.floor((totalWork * months) / buildMonths);
 }
 
-export function paceRoomUnits(project: ConstructionProject, month: string): number {
-  if (!isPaced(project)) return Number.MAX_SAFE_INTEGER;
-  const allowed = cumulativeAllowance(
+function acceleratedAllowance(
+  project: ConstructionProject & { readonly buildMonths: number },
+  fromMonth: string,
+  fromWork: number,
+  month: string,
+  monthsAhead: number,
+  terms: AccelerationTerms,
+): number {
+  const from = monthIndex(fromMonth);
+  const now = monthIndex(month);
+  if (from === null || now === null)
+    return cumulativeAllowance(
+      Number(project["totalWork"]),
+      project["buildMonths"],
+      monthsSinceStart(project, month) + monthsAhead,
+    );
+  const remainingMonths = Math.max(
+    1,
+    project["buildMonths"] - monthsSinceStart(project, fromMonth),
+  );
+  const compressed = Math.max(1, Math.round((remainingMonths * terms.timeBp) / BP));
+  const elapsed = Math.max(0, now - from) + monthsAhead;
+  const months = Math.min(compressed, elapsed + 1);
+  const remainingWork = Math.max(0, Number(project["totalWork"]) - fromWork);
+  return fromWork + Math.floor((remainingWork * months) / compressed);
+}
+
+function paceAllowance(
+  project: ConstructionProject & { readonly buildMonths: number },
+  month: string,
+  monthsAhead: number,
+  terms: AccelerationTerms | undefined,
+): number {
+  const fromMonth = project["acceleratedFromMonth"];
+  const fromWork = project["acceleratedFromWork"];
+  if (
+    project["status"] === "ACCELERATED" &&
+    terms !== undefined &&
+    fromMonth !== undefined &&
+    fromWork !== undefined
+  )
+    return acceleratedAllowance(project, fromMonth, Number(fromWork), month, monthsAhead, terms);
+  return cumulativeAllowance(
     Number(project["totalWork"]),
     project["buildMonths"],
-    monthsSinceStart(project, month),
+    monthsSinceStart(project, month) + monthsAhead,
   );
-  return Math.max(0, allowed - Number(project["completedWork"]));
+}
+
+export function paceRoomUnits(
+  project: ConstructionProject,
+  month: string,
+  terms?: AccelerationTerms,
+): number {
+  if (!isPaced(project)) return Number.MAX_SAFE_INTEGER;
+  return Math.max(0, paceAllowance(project, month, 0, terms) - Number(project["completedWork"]));
 }
 
 export interface MonthlyAbsorbableDetail {
@@ -131,6 +175,7 @@ export function monthlyAbsorbableDetail(
   project: ConstructionProject,
   capacityUnits: Readonly<Record<string, number>> | undefined,
   month: string,
+  terms?: AccelerationTerms,
 ): MonthlyAbsorbableDetail {
   const remaining = Number(project["totalWork"]) - Number(project["completedWork"]);
   if (remaining <= 0) {
@@ -158,12 +203,12 @@ export function monthlyAbsorbableDetail(
       )
     : packageProgressOf(packages);
   const capacity =
-    remainingMonthlyCapacityUnits(project, capacityUnits, month) ??
+    remainingMonthlyCapacityUnits(project, capacityUnits, month, terms) ??
     (Object.fromEntries(LINE_IDS.map((line) => [line, Number.MAX_SAFE_INTEGER])) as Record<
       LineId,
       number
     >);
-  const room = paceRoomUnits(project, month);
+  const room = paceRoomUnits(project, month, terms);
   const step = advanceConstructionMonth(
     constructionPlanOf(packages),
     packageProgressOf(packages),
@@ -190,8 +235,9 @@ export function monthlyAbsorbable(
   project: ConstructionProject,
   capacityUnits: Readonly<Record<string, number>> | undefined,
   month: string,
+  terms?: AccelerationTerms,
 ): number {
-  return monthlyAbsorbableDetail(project, capacityUnits, month).amount;
+  return monthlyAbsorbableDetail(project, capacityUnits, month, terms).amount;
 }
 
 export function projectMonthsToComplete(
@@ -199,6 +245,7 @@ export function projectMonthsToComplete(
   capacityUnits: Readonly<Record<string, number>> | undefined,
   month: string,
   maxMonths = 1_200,
+  terms?: AccelerationTerms,
 ): number {
   const packages = project["packages"];
   if (packages === undefined) return 0;
@@ -206,11 +253,12 @@ export function projectMonthsToComplete(
   const total = Number(project["totalWork"]);
   let progress = packageProgressOf(packages);
   let done = Number(project["completedWork"]);
-  const first = remainingMonthlyCapacityUnits(project, capacityUnits, month);
+  const first = remainingMonthlyCapacityUnits(project, capacityUnits, month, terms);
   const full = remainingMonthlyCapacityUnits(
     { ...project, monthUsage: undefined } as ConstructionProject,
     capacityUnits,
     month,
+    terms,
   );
   const usage = project["monthUsage"];
   let startDone: PackageProgress =
@@ -228,14 +276,7 @@ export function projectMonthsToComplete(
         number
       >);
     const room = isPaced(project)
-      ? Math.max(
-          0,
-          cumulativeAllowance(
-            total,
-            project["buildMonths"],
-            monthsSinceStart(project, month) + months - 1,
-          ) - done,
-        )
+      ? Math.max(0, paceAllowance(project, month, months - 1, terms) - done)
       : null;
     const step = advanceConstructionMonth(plan, progress, capacity, room, startDone);
     const applied = Object.values(step.applied).reduce((sum, work) => sum + work, 0);
