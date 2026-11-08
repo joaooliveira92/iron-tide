@@ -121,6 +121,18 @@ export interface ClassRuleFailure {
   readonly suggestion?: string;
 }
 
+const scaled = (value: number, per: number): string => {
+  const hundredths = Math.round((value * 100) / per);
+  const whole = Math.trunc(hundredths / 100);
+  const frac = hundredths % 100;
+  if (frac === 0) return String(whole);
+  return `${whole}.${String(frac).padStart(2, "0").replace(/0$/, "")}`;
+};
+export const inchesText = (um: number): string => scaled(um, UM_PER_INCH);
+export const knotsText = (ums: number): string => scaled(ums, UM_PER_KNOT);
+const COUNT_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"];
+const countWord = (n: number): string => COUNT_WORDS[n] ?? String(n);
+
 const fail = (
   code: string,
   field: ClassRuleField,
@@ -148,7 +160,7 @@ export const classRuleFailures: Record<
         fail(
           "DD_SPEED_TOO_LOW",
           "speed",
-          `speed must exceed ${r.ddMinSpeedUms} um/s (19 kn)`,
+          `speed must exceed ${r.ddMinSpeedUms} um/s (${knotsText(r.ddMinSpeedUms)} kn)`,
           "Raise installed power or choose a faster plant.",
         ),
       );
@@ -167,7 +179,7 @@ export const classRuleFailures: Record<
           "DD_QUALIFYING_ARMOR_PROHIBITED",
           "qualifyingArmour",
           `has qualifying armour (>= ${r.qualifyingArmourUm} um)`,
-          "Remove armour of 2 inches or more.",
+          `Remove armour of ${inchesText(r.qualifyingArmourUm)} inches or more.`,
         ),
       );
     if (f.maxGunUm > r.ddMaxGunUm)
@@ -175,8 +187,8 @@ export const classRuleFailures: Record<
         fail(
           "DD_GUN_TOO_LARGE",
           "mainGun",
-          "guns must be 6 inches or smaller (larger guns are cruiser-scale weapons)",
-          "Use guns of 6 inches or less.",
+          `guns must be ${inchesText(r.ddMaxGunUm)} inches or smaller (larger guns are cruiser-scale weapons)`,
+          `Use guns of ${inchesText(r.ddMaxGunUm)} inches or less.`,
         ),
       );
     if (f.aircraftCapacity !== 0)
@@ -195,15 +207,20 @@ export const classRuleFailures: Record<
       );
     if (!(f.speedUms > r.clMinSpeedUms))
       why.push(
-        fail("CL_SPEED_TOO_LOW", "speed", "speed must exceed 16 kn", "Raise installed power."),
+        fail(
+          "CL_SPEED_TOO_LOW",
+          "speed",
+          `speed must exceed ${knotsText(r.clMinSpeedUms)} kn`,
+          "Raise installed power.",
+        ),
       );
     if (!(f.maxMainGunUm <= r.clMaxGunUm) && !isProtectedCruiser(f, r))
       why.push(
         fail(
           "CL_MAIN_CALIBER_EXCEEDED",
           "mainGun",
-          "main guns must be 6 inches or smaller (protected cruisers: single mounts up to 8 inches, armour deck, no main belt)",
-          "Use guns of 6 inches or less, or drop the main belt and fit single 8-inch mounts under an armour deck.",
+          `main guns must be ${inchesText(r.clMaxGunUm)} inches or smaller (protected cruisers: single mounts up to ${inchesText(r.clProtectedMaxGunUm)} inches, armour deck, no main belt)`,
+          `Use guns of ${inchesText(r.clMaxGunUm)} inches or less, or drop the main belt and fit single ${inchesText(r.clProtectedMaxGunUm)}-inch mounts under an armour deck.`,
         ),
       );
     if (!(f.beltUm <= r.clBeltMaxUm))
@@ -211,12 +228,14 @@ export const classRuleFailures: Record<
         fail(
           "CL_BELT_TOO_THICK",
           "belt",
-          "main belt must be 2 inches or less (a protected cruiser relies on its armour deck)",
-          "Thin the belt to 2 inches or remove it and armour the deck; a belted cruiser is an armoured cruiser.",
+          `main belt must be ${inchesText(r.clBeltMaxUm)} inches or less (a protected cruiser relies on its armour deck)`,
+          `Thin the belt to ${inchesText(r.clBeltMaxUm)} inches or remove it and armour the deck; a belted cruiser is an armoured cruiser.`,
         ),
       );
     if (f.aircraftCapacity >= r.aircraftLimit)
-      why.push(fail("CL_AIRCRAFT_LIMIT", "aircraft", "aircraft capacity must be below 4"));
+      why.push(
+        fail("CL_AIRCRAFT_LIMIT", "aircraft", `aircraft capacity must be below ${r.aircraftLimit}`),
+      );
     return why;
   },
   CA: (f, r) => {
@@ -230,15 +249,29 @@ export const classRuleFailures: Record<
         ),
       );
     if (!(f.speedUms > r.caMinSpeedUms))
-      why.push(fail("CA_BOUNDARY_FAILED", "speed", "speed must exceed 19 kn"));
+      why.push(
+        fail("CA_BOUNDARY_FAILED", "speed", `speed must exceed ${knotsText(r.caMinSpeedUms)} kn`),
+      );
     if (!(f.beltUm > r.caBeltMinUm && f.beltUm <= r.caBeltMaxUm))
-      why.push(fail("CA_BOUNDARY_FAILED", "belt", "main belt must be over 2 and up to 12 inches"));
+      why.push(
+        fail(
+          "CA_BOUNDARY_FAILED",
+          "belt",
+          `main belt must be over ${inchesText(r.caBeltMinUm)} and up to ${inchesText(r.caBeltMaxUm)} inches`,
+        ),
+      );
     if (!(f.maxMainGunUm > r.clMaxGunUm && f.maxMainGunUm <= r.caGunMaxUm))
       why.push(
-        fail("CA_BOUNDARY_FAILED", "mainGun", "main guns must be over 6 and up to 11 inches"),
+        fail(
+          "CA_BOUNDARY_FAILED",
+          "mainGun",
+          `main guns must be over ${inchesText(r.clMaxGunUm)} and up to ${inchesText(r.caGunMaxUm)} inches`,
+        ),
       );
     if (f.aircraftCapacity >= r.aircraftLimit)
-      why.push(fail("CA_AIRCRAFT_LIMIT", "aircraft", "aircraft capacity must be below 4"));
+      why.push(
+        fail("CA_AIRCRAFT_LIMIT", "aircraft", `aircraft capacity must be below ${r.aircraftLimit}`),
+      );
     return why;
   },
   B: (f, r) => {
@@ -256,32 +289,40 @@ export const classRuleFailures: Record<
         fail(
           "B_BELT_TOO_THIN",
           "belt",
-          "main belt must be at least 6 inches",
-          "Thicken the main belt to 6 inches or more.",
+          `main belt must be at least ${inchesText(r.bBeltMinUm)} inches`,
+          `Thicken the main belt to ${inchesText(r.bBeltMinUm)} inches or more.`,
         ),
       );
     if (!(f.maxMainGunUm > r.clMaxGunUm))
-      why.push(fail("B_MAIN_GUN_TOO_SMALL", "mainGun", "main guns must be over 6 inches"));
+      why.push(
+        fail(
+          "B_MAIN_GUN_TOO_SMALL",
+          "mainGun",
+          `main guns must be over ${inchesText(r.clMaxGunUm)} inches`,
+        ),
+      );
     if (!(f.speedUms < r.bMaxSpeedUms))
       why.push(
         fail(
           "B_SPEED_TOO_HIGH",
           "speed",
-          "speed must be below 20 kn",
-          "Lower installed power below the 20-knot battle-line boundary.",
+          `speed must be below ${knotsText(r.bMaxSpeedUms)} kn`,
+          `Lower installed power below the ${knotsText(r.bMaxSpeedUms)}-knot battle-line boundary.`,
         ),
       );
-    if (!(f.mainTurretCount === 1 || f.mainTurretCount === 2))
+    if (!(f.mainTurretCount >= 1 && f.mainTurretCount <= r.bMaxTurrets))
       why.push(
         fail(
           "B_TURRET_ARRANGEMENT",
           "turrets",
-          "needs 1 or 2 main-battery turrets",
-          "Fit one or two main-battery mounts; three or more is a dreadnought-style arrangement.",
+          `needs 1 or ${r.bMaxTurrets} main-battery turrets`,
+          `Fit one or ${countWord(r.bMaxTurrets)} main-battery mounts; ${countWord(r.bMaxTurrets + 1)} or more is a dreadnought-style arrangement.`,
         ),
       );
     if (f.aircraftCapacity >= r.aircraftLimit)
-      why.push(fail("B_AIRCRAFT_LIMIT", "aircraft", "aircraft capacity must be below 4"));
+      why.push(
+        fail("B_AIRCRAFT_LIMIT", "aircraft", `aircraft capacity must be below ${r.aircraftLimit}`),
+      );
     return why;
   },
   BB: (f, r) => {
@@ -295,13 +336,33 @@ export const classRuleFailures: Record<
         ),
       );
     if (!(f.mainTurretCount >= r.bbMinTurrets))
-      why.push(fail("BB_TURRET_ARRANGEMENT", "turrets", "needs at least 3 main-battery turrets"));
+      why.push(
+        fail(
+          "BB_TURRET_ARRANGEMENT",
+          "turrets",
+          `needs at least ${r.bbMinTurrets} main-battery turrets`,
+        ),
+      );
     if (!(f.beltUm > r.bbBeltMinUm))
-      why.push(fail("BB_BELT_TOO_THIN", "belt", "main belt must exceed 6 inches"));
+      why.push(
+        fail(
+          "BB_BELT_TOO_THIN",
+          "belt",
+          `main belt must exceed ${inchesText(r.bbBeltMinUm)} inches`,
+        ),
+      );
     if (!(f.maxMainGunUm > r.bbGunMinUm))
-      why.push(fail("BB_MAIN_GUN_TOO_SMALL", "mainGun", "main guns must exceed 10 inches"));
+      why.push(
+        fail(
+          "BB_MAIN_GUN_TOO_SMALL",
+          "mainGun",
+          `main guns must exceed ${inchesText(r.bbGunMinUm)} inches`,
+        ),
+      );
     if (f.aircraftCapacity >= r.aircraftLimit)
-      why.push(fail("BB_AIRCRAFT_LIMIT", "aircraft", "aircraft capacity must be below 4"));
+      why.push(
+        fail("BB_AIRCRAFT_LIMIT", "aircraft", `aircraft capacity must be below ${r.aircraftLimit}`),
+      );
     return why;
   },
   KE: (f, r) => {
@@ -320,8 +381,8 @@ export const classRuleFailures: Record<
         fail(
           "KE_BELT_TOO_THICK",
           "belt",
-          "main belt must be 2 inches or less",
-          "Thin the main belt to 2 inches or remove it.",
+          `main belt must be ${inchesText(r.keBeltMaxUm)} inches or less`,
+          `Thin the main belt to ${inchesText(r.keBeltMaxUm)} inches or remove it.`,
         ),
       );
     if (!(f.maxGunUm <= r.keGunMaxUm))
@@ -329,8 +390,8 @@ export const classRuleFailures: Record<
         fail(
           "KE_MAIN_GUN_TOO_LARGE",
           "mainGun",
-          "main guns must be 6 inches or smaller",
-          "Use guns of 6 inches or less.",
+          `main guns must be ${inchesText(r.keGunMaxUm)} inches or smaller`,
+          `Use guns of ${inchesText(r.keGunMaxUm)} inches or less.`,
         ),
       );
     if (f.torpedoTubes > 0)
@@ -371,7 +432,7 @@ export const classRuleFailures: Record<
           "AMC_QUALIFYING_ARMOR_PROHIBITED",
           "qualifyingArmour",
           `has qualifying armour (>= ${r.qualifyingArmourUm} um)`,
-          "Remove armour of 2 inches or more.",
+          `Remove armour of ${inchesText(r.qualifyingArmourUm)} inches or more.`,
         ),
       );
     if (!(f.maxGunUm <= r.amcGunMaxUm))
@@ -379,12 +440,18 @@ export const classRuleFailures: Record<
         fail(
           "AMC_MAIN_GUN_TOO_LARGE",
           "mainGun",
-          "main guns must be 6 inches or smaller",
-          "Use guns of 6 inches or less.",
+          `main guns must be ${inchesText(r.amcGunMaxUm)} inches or smaller`,
+          `Use guns of ${inchesText(r.amcGunMaxUm)} inches or less.`,
         ),
       );
     if (f.aircraftCapacity >= r.aircraftLimit)
-      why.push(fail("AMC_AIRCRAFT_LIMIT", "aircraft", "aircraft capacity must be below 4"));
+      why.push(
+        fail(
+          "AMC_AIRCRAFT_LIMIT",
+          "aircraft",
+          `aircraft capacity must be below ${r.aircraftLimit}`,
+        ),
+      );
     return why;
   },
 };

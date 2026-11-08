@@ -38,6 +38,19 @@ describe("buildWorkshopView", () => {
     expect(v.valid).toBe(true);
     expect(v.naturalClass).toBe("DD");
   });
+  it("measures the draft against the limits of its chosen type, from the era's rules", () => {
+    expect(v.requirements.status).toBe("CLASSIFIED");
+    if (v.requirements.status !== "CLASSIFIED") return;
+    expect(v.requirements.checks.every((c) => c.met)).toBe(true);
+    const asB = buildWorkshopView(
+      applyEdit(havock, { kind: "set_requirement", patch: { category: "B" } }),
+      env("1895-06"),
+    );
+    if (asB.requirements.status !== "CLASSIFIED") throw new Error("B is classified");
+    const belt = asB.requirements.checks.find((c) => c.field === "belt");
+    expect(belt).toMatchObject({ bound: "atLeast", unit: "in", met: false });
+    expect(asB.requirements.checks.find((c) => c.field === "speed")?.met).toBe(false);
+  });
   it("forecasts cost and build time for a valid design, and labels the dev metric", () => {
     expect(v.forecast.costMicro).toBeGreaterThan(0);
     expect(v.forecast.months).toBeGreaterThan(0);

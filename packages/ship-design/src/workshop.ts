@@ -12,7 +12,13 @@ import {
 } from "./construction.js";
 import { groupedInteger } from "./numberText.js";
 import { quantity, type ExplanationText } from "./explanation.js";
-import { classCode } from "./classification.js";
+import { classCode, classFacts } from "./classification.js";
+import { DESIGN_22_EARLY } from "./classificationRules.js";
+import {
+  checkShipTypeRequirements,
+  type ShipTypeRequirementCheck,
+} from "./shipTypeRequirements.js";
+import { isShipTypeId } from "./shipTypes.js";
 import { computeCost, type CostBalance, type CostBreakdown, type CostContext } from "./cost.js";
 import { computeCve, CVE_LABEL, type CveBalance } from "./cve.js";
 import type { Finding, Severity } from "./findings.js";
@@ -54,8 +60,13 @@ export interface YardOption {
   readonly chosen: boolean;
 }
 
+export type WorkshopRequirements =
+  | { readonly status: "CLASSIFIED"; readonly checks: readonly ShipTypeRequirementCheck[] }
+  | { readonly status: "UNCLASSIFIED" };
+
 export interface WorkshopView {
   readonly valid: boolean;
+  readonly requirements: WorkshopRequirements;
   readonly naturalClass: string | null;
   readonly classCode: string;
   readonly totalKg: number;
@@ -231,8 +242,24 @@ export function buildWorkshopView(draft: DesignDraft, env: WorkshopEnvironment):
     c.machinery?.reliabilityBp ?? plant?.reliabilityBp ?? 0,
     env.cveBalance,
   );
+  const rules = env.ctx.balance.classification ?? DESIGN_22_EARLY;
+  const category = draft.requirement.category;
+  const checks = isShipTypeId(category)
+    ? checkShipTypeRequirements(
+        category,
+        rules,
+        classFacts(
+          c,
+          draft,
+          rules,
+          env.ctx.hullForms[draft.hull.hullFormId]?.traits?.includes("merchant_derived") ?? false,
+        ),
+      )
+    : [];
   return {
     valid: c.valid,
+    requirements:
+      checks.length === 0 ? { status: "UNCLASSIFIED" } : { status: "CLASSIFIED", checks },
     naturalClass: c.naturalClass,
     classCode: classCode(draft.requirement.category, c.components),
     totalKg: c.totalKg,

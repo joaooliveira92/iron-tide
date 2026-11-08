@@ -5,6 +5,7 @@ import { NumberField, SelectField } from "../fields.js";
 import { shipTypeChoices } from "../shipTypes.js";
 import { NOT_CLASSIFIED, shipTypeValue, TERMS } from "../design-terms.js";
 import { Panel } from "./Panel.js";
+import { TypeRequirements } from "./TypeRequirements.js";
 import { useDesignActions, useDesignState } from "../DesignWorkspaceContext.js";
 
 const ACCOMMODATION_OPTIONS = [
@@ -97,6 +98,7 @@ export function BriefPanel() {
           }
         />
       </div>
+      <TypeRequirements requirements={view.requirements} />
       {briefFindings.length > 0 && (
         <ul aria-label="Findings about the ship type" className="space-y-1 text-xs">
           {briefFindings.map((f, i) => (

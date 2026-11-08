@@ -1,0 +1,286 @@
+{
+  "BB": {
+    "high": [
+      {
+        "code": "BB_AIRCRAFT_LIMIT",
+        "field": "aircraft",
+        "message": "aircraft capacity must be below 4"
+      }
+    ],
+    "low": [
+      {
+        "code": "BB_DISPLACEMENT_TOO_LOW",
+        "field": "displacement",
+        "message": "displacement must exceed 8000000 kg"
+      },
+      {
+        "code": "BB_TURRET_ARRANGEMENT",
+        "field": "turrets",
+        "message": "needs at least 3 main-battery turrets"
+      },
+      {
+        "code": "BB_BELT_TOO_THIN",
+        "field": "belt",
+        "message": "main belt must exceed 6 inches"
+      },
+      {
+        "code": "BB_MAIN_GUN_TOO_SMALL",
+        "field": "mainGun",
+        "message": "main guns must exceed 10 inches"
+      }
+    ]
+  },
+  "B": {
+    "high": [
+      {
+        "code": "B_SPEED_TOO_HIGH",
+        "field": "speed",
+        "message": "speed must be below 20 kn",
+        "suggestion": "Lower installed power below the 20-knot battle-line boundary."
+      },
+      {
+        "code": "B_TURRET_ARRANGEMENT",
+        "field": "turrets",
+        "message": "needs 1 or 2 main-battery turrets",
+        "suggestion": "Fit one or two main-battery mounts; three or more is a dreadnought-style arrangement."
+      },
+      {
+        "code": "B_AIRCRAFT_LIMIT",
+        "field": "aircraft",
+        "message": "aircraft capacity must be below 4"
+      }
+    ],
+    "low": [
+      {
+        "code": "B_DISPLACEMENT_TOO_LOW",
+        "field": "displacement",
+        "message": "displacement must be at least 5000000 kg"
+      },
+      {
+        "code": "B_BELT_TOO_THIN",
+        "field": "belt",
+        "message": "main belt must be at least 6 inches",
+        "suggestion": "Thicken the main belt to 6 inches or more."
+      },
+      {
+        "code": "B_MAIN_GUN_TOO_SMALL",
+        "field": "mainGun",
+        "message": "main guns must be over 6 inches"
+      },
+      {
+        "code": "B_TURRET_ARRANGEMENT",
+        "field": "turrets",
+        "message": "needs 1 or 2 main-battery turrets",
+        "suggestion": "Fit one or two main-battery mounts; three or more is a dreadnought-style arrangement."
+      }
+    ]
+  },
+  "CA": {
+    "high": [
+      {
+        "code": "CA_BOUNDARY_FAILED",
+        "field": "belt",
+        "message": "main belt must be over 2 and up to 12 inches"
+      },
+      {
+        "code": "CA_BOUNDARY_FAILED",
+        "field": "mainGun",
+        "message": "main guns must be over 6 and up to 11 inches"
+      },
+      {
+        "code": "CA_AIRCRAFT_LIMIT",
+        "field": "aircraft",
+        "message": "aircraft capacity must be below 4"
+      }
+    ],
+    "low": [
+      {
+        "code": "CA_BOUNDARY_FAILED",
+        "field": "displacement",
+        "message": "displacement must exceed 4000000 kg"
+      },
+      {
+        "code": "CA_BOUNDARY_FAILED",
+        "field": "speed",
+        "message": "speed must exceed 19 kn"
+      },
+      {
+        "code": "CA_BOUNDARY_FAILED",
+        "field": "belt",
+        "message": "main belt must be over 2 and up to 12 inches"
+      },
+      {
+        "code": "CA_BOUNDARY_FAILED",
+        "field": "mainGun",
+        "message": "main guns must be over 6 and up to 11 inches"
+      }
+    ]
+  },
+  "AMC": {
+    "high": [
+      {
+        "code": "AMC_MERCHANT_HULL_REQUIRED",
+        "field": "hull",
+        "message": "needs a merchant-derived hull form",
+        "suggestion": "Choose the merchant liner hull form."
+      },
+      {
+        "code": "AMC_QUALIFYING_ARMOR_PROHIBITED",
+        "field": "qualifyingArmour",
+        "message": "has qualifying armour (>= 50800 um)",
+        "suggestion": "Remove armour of 2 inches or more."
+      },
+      {
+        "code": "AMC_MAIN_GUN_TOO_LARGE",
+        "field": "mainGun",
+        "message": "main guns must be 6 inches or smaller",
+        "suggestion": "Use guns of 6 inches or less."
+      },
+      {
+        "code": "AMC_AIRCRAFT_LIMIT",
+        "field": "aircraft",
+        "message": "aircraft capacity must be below 4"
+      }
+    ],
+    "low": [
+      {
+        "code": "AMC_MERCHANT_HULL_REQUIRED",
+        "field": "hull",
+        "message": "needs a merchant-derived hull form",
+        "suggestion": "Choose the merchant liner hull form."
+      },
+      {
+        "code": "AMC_DISPLACEMENT_TOO_LOW",
+        "field": "displacement",
+        "message": "displacement must exceed 1700000 kg"
+      }
+    ]
+  },
+  "CL": {
+    "high": [
+      {
+        "code": "CL_DISPLACEMENT_RANGE",
+        "field": "displacement",
+        "message": "displacement must be 2000000..7999999 kg"
+      },
+      {
+        "code": "CL_MAIN_CALIBER_EXCEEDED",
+        "field": "mainGun",
+        "message": "main guns must be 6 inches or smaller (protected cruisers: single mounts up to 8 inches, armour deck, no main belt)",
+        "suggestion": "Use guns of 6 inches or less, or drop the main belt and fit single 8-inch mounts under an armour deck."
+      },
+      {
+        "code": "CL_BELT_TOO_THICK",
+        "field": "belt",
+        "message": "main belt must be 2 inches or less (a protected cruiser relies on its armour deck)",
+        "suggestion": "Thin the belt to 2 inches or remove it and armour the deck; a belted cruiser is an armoured cruiser."
+      },
+      {
+        "code": "CL_AIRCRAFT_LIMIT",
+        "field": "aircraft",
+        "message": "aircraft capacity must be below 4"
+      }
+    ],
+    "low": [
+      {
+        "code": "CL_DISPLACEMENT_RANGE",
+        "field": "displacement",
+        "message": "displacement must be 2000000..7999999 kg"
+      },
+      {
+        "code": "CL_SPEED_TOO_LOW",
+        "field": "speed",
+        "message": "speed must exceed 16 kn",
+        "suggestion": "Raise installed power."
+      }
+    ]
+  },
+  "DD": {
+    "high": [
+      {
+        "code": "DD_DISPLACEMENT_LIMIT_EXCEEDED",
+        "field": "displacement",
+        "message": "displacement 30000000 kg must be below 2000000",
+        "suggestion": "Reduce the target displacement or fit a lighter armament."
+      },
+      {
+        "code": "DD_QUALIFYING_ARMOR_PROHIBITED",
+        "field": "qualifyingArmour",
+        "message": "has qualifying armour (>= 50800 um)",
+        "suggestion": "Remove armour of 2 inches or more."
+      },
+      {
+        "code": "DD_GUN_TOO_LARGE",
+        "field": "mainGun",
+        "message": "guns must be 6 inches or smaller (larger guns are cruiser-scale weapons)",
+        "suggestion": "Use guns of 6 inches or less."
+      },
+      {
+        "code": "DD_AIRCRAFT_PROHIBITED",
+        "field": "aircraft",
+        "message": "aircraft capacity must be 0"
+      }
+    ],
+    "low": [
+      {
+        "code": "DD_DISPLACEMENT_LIMIT_EXCEEDED",
+        "field": "displacement",
+        "message": "displacement 0 kg must be below 2000000",
+        "suggestion": "Reduce the target displacement or fit a lighter armament."
+      },
+      {
+        "code": "DD_SPEED_TOO_LOW",
+        "field": "speed",
+        "message": "speed must exceed 9774436 um/s (19 kn)",
+        "suggestion": "Raise installed power or choose a faster plant."
+      },
+      {
+        "code": "DD_TORPEDO_REQUIRED",
+        "field": "torpedoes",
+        "message": "needs at least one usable torpedo tube",
+        "suggestion": "Fit a torpedo tube."
+      }
+    ]
+  },
+  "KE": {
+    "high": [
+      {
+        "code": "KE_DISPLACEMENT_LIMIT_EXCEEDED",
+        "field": "displacement",
+        "message": "displacement must be below 2500000 kg",
+        "suggestion": "Reduce the target displacement."
+      },
+      {
+        "code": "KE_BELT_TOO_THICK",
+        "field": "belt",
+        "message": "main belt must be 2 inches or less",
+        "suggestion": "Thin the main belt to 2 inches or remove it."
+      },
+      {
+        "code": "KE_MAIN_GUN_TOO_LARGE",
+        "field": "mainGun",
+        "message": "main guns must be 6 inches or smaller",
+        "suggestion": "Use guns of 6 inches or less."
+      },
+      {
+        "code": "KE_TORPEDO_PROHIBITED",
+        "field": "torpedoes",
+        "message": "no torpedo tube may be installed",
+        "suggestion": "Remove the torpedo tubes (a torpedo-armed small ship is a destroyer)."
+      },
+      {
+        "code": "KE_AIRCRAFT_PROHIBITED",
+        "field": "aircraft",
+        "message": "aircraft capacity must be 0"
+      }
+    ],
+    "low": [
+      {
+        "code": "KE_DISPLACEMENT_LIMIT_EXCEEDED",
+        "field": "displacement",
+        "message": "displacement must be below 2500000 kg",
+        "suggestion": "Reduce the target displacement."
+      }
+    ]
+  }
+}
