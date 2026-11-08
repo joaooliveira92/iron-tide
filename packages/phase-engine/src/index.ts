@@ -178,6 +178,7 @@ export {
   applyDockExpansionStep,
   authorizeDockExpansion,
   dockExpansionCompletes,
+  dockExpansionEarliestCompletionMonth,
   dockExpansionEraStepForMonth,
   dockExpansionFinalDurationMonths,
   dockExpansionMonthIsActive,

@@ -18,7 +18,9 @@ import {
   PRIVATE_DOCK_EXPANSION_STREAM_FAMILY,
   authorizeDockExpansion,
   dockExpansionCompletes,
+  dockExpansionEarliestCompletionMonth,
   dockExpansionMonthIsActive,
+  dockExpansionProjectFor,
   isDockExpansionProject,
   privateDockExpansionEligibility,
   resolvePrivateDockExpansion,
@@ -402,5 +404,55 @@ describe("private dock-expansion opportunity (SB3-R17)", () => {
   it("uses the documented threshold and cooldown constants", () => {
     expect(PRIVATE_DOCK_EXPANSION_MIN_UTILIZATION_BP).toBe(7_500);
     expect(PRIVATE_DOCK_EXPANSION_COOLDOWN_MONTHS).toBe(60);
+  });
+});
+
+describe("dock expansion earliest completion month (preview parity)", () => {
+  const monthOfTurn = (turn: number): string => {
+    const index = 1880 * 12 + turn;
+    return `${String(Math.floor(index / 12))}-${String((index % 12) + 1).padStart(2, "0")}`;
+  };
+
+  it("names the authorization month plus duration minus one for an active, fully paid project", () => {
+    const project = dockExpansionProjectFor({
+      projectId: "dock-expansion-GBR-home-1880-06",
+      possessionId: "gbr-home",
+      authorizedMonth: "1880-06",
+      stepKg: 1_000_000,
+    });
+    expect(dockExpansionEarliestCompletionMonth(project)).toBe("1881-05");
+  });
+
+  it("matches the month the real monthly pipeline completes a fully funded project", () => {
+    const project = dockExpansionProjectFor({
+      projectId: "dock-expansion-GBR-home-1880-06",
+      possessionId: "gbr-home",
+      authorizedMonth: "1880-06",
+      stepKg: 1_000_000,
+    });
+    const funded = { ...project, status: "ACTIVE" as const, paidWork: project.totalWork };
+    let state = snapshot([nation("GBR", { dock: DOCK, constructionProjects: [funded] })]);
+    let completedTurn: number | null = null;
+    for (let turn = 5; turn < 40 && completedTurn === null; turn++) {
+      const result = new MonthExecutor().execute(
+        { ...state, turnNumber: SafeInt(turn) },
+        [],
+        "dock-parity",
+        new DiagnosticCollector(),
+      );
+      state = result.finalSnapshot;
+      const after = state.nations
+        .get("GBR")!
+        .constructionProjects.find((p) => p.id === project.id)!;
+      if (after.status === "COMPLETED") completedTurn = turn;
+    }
+    expect(completedTurn).not.toBeNull();
+    expect(monthOfTurn(completedTurn!)).toBe(dockExpansionEarliestCompletionMonth(project));
+  });
+
+  it("is null for a project that is not a dock expansion", () => {
+    expect(
+      dockExpansionEarliestCompletionMonth(expansionProject({ projectType: "NEW_CONSTRUCTION" })),
+    ).toBeNull();
   });
 });
