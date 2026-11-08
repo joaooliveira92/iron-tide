@@ -158,4 +158,14 @@
 # violate the repository history policy, so the ratchet is advanced past it as the
 # documented fallback. Every later commit stays gated, including this branch's, which
 # re-pins golden/hashes.json in-commit for the fixture format change.
-2e281f6943f5fdc85a8f4b2f2778c5ebdce60c29
+#
+# The baseline is advanced again to 0514d73bd599877722af84567811305a6361d753, the flagged
+# commit itself. 0514d73b ("feat(ai): deterministic peace proposal and response rule") added
+# packages/ai/src/peaceBehaviour.ts and the content-schema peace-behaviour module without a
+# re-pin or a `Golden-Repin: not-needed` trailer. Its message states the functions are not
+# wired into the planner, and `node scripts/verify-golden-hashes.cjs` reports all 11 hashes
+# match the committed golden while `pnpm check:determinism` shows two byte-identical runs, so
+# no reference hash moved. It is already on origin/dev and rewriting shared history is
+# prohibited, so the ratchet is advanced past it as the documented fallback. Every later
+# commit stays gated; wiring the rule into the planner must re-pin or carry the trailer.
+0514d73bd599877722af84567811305a6361d753
