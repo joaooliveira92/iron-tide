@@ -22,7 +22,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | set-budget-allocation | Set the budget allocation across spending categories | `screens/treasury/TreasuryScreen.tsx` | `apps/desktop/src/renderer/screens/treasury/components/BudgetPolicyPanel.test.tsx` |
 | submit-design | Design and submit a ship | `components/design-workspace/panels/SubmitPanel.tsx` | `apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx` |
 | revise-project | Revise a ship project that is already ordered | `components/design-workspace/panels/RevisionPanel.tsx` | `apps/desktop/src/renderer/screens/shipbuilding/ShipDesignRevision.test.tsx` |
-| start-rebuild | Rebuild or convert an existing ship | `components/design-workspace/panels/RebuildPanel.tsx` | `apps/desktop/src/renderer/components/design-workspace/panels/RebuildPanel.test.tsx` |
+| start-rebuild | Rebuild or convert an existing ship | `screens/construction/components/RebuildShipDialog.tsx` | `apps/desktop/src/renderer/screens/construction/ConstructionScreen.rebuild.test.tsx` |
 | order-construction | Order, replace, cancel or batch-build ships and read the project queue | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/renderer/screens/construction/hooks/useConstructionScreen.test.tsx` |
 | halt-or-resume-construction | Halt or resume a construction project | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
 | accelerate-construction | Accelerate a construction project at a premium | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |

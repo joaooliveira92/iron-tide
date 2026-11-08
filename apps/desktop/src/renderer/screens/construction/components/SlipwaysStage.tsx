@@ -65,8 +65,14 @@ const SlipLane = memo(function SlipLane({
                 {row.shipType}
                 {row.isForeign ? " · foreign yard" : ""}
               </span>
+              {row.rebuild !== undefined && (
+                <span className="block truncate text-xs text-muted-foreground">
+                  Rebuilding {row.rebuild.shipName} to design {row.rebuild.designVersionId}
+                </span>
+              )}
             </span>
             <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+              {row.rebuild !== undefined && <Badge variant="secondary">Rebuild</Badge>}
               {row.yard !== null && <Badge variant="outline">{row.yard}</Badge>}
               {row.holdUntilMonth !== null && (
                 <Badge variant="secondary">

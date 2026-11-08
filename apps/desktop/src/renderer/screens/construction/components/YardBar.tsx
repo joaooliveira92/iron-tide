@@ -1,4 +1,4 @@
-import { Layers, RefreshCw, Send } from "lucide-react";
+import { Hammer, Layers, RefreshCw, Send } from "lucide-react";
 import type { CompiledDesignVersion } from "@bluewave/campaign-engine";
 import { Button } from "../../../components/ui/button.js";
 import { ButtonGroup } from "../../../components/ui/button-group.js";
@@ -16,6 +16,7 @@ export interface YardBarProps {
   readonly onRetry: (() => void) | undefined;
   readonly onSubmit: () => void;
   readonly onBatch: () => void;
+  readonly onRebuild: () => void;
   readonly onRefresh: () => void;
   readonly variant?: YardBarVariant;
 }
@@ -28,6 +29,7 @@ export function YardBar({
   onRetry,
   onSubmit,
   onBatch,
+  onRebuild,
   onRefresh,
   variant = "bar",
 }: YardBarProps) {
@@ -93,6 +95,10 @@ export function YardBar({
           >
             <Layers aria-hidden="true" />
             Order a class batch (1–12)
+          </Button>
+          <Button variant="outline" size="sm" className={btn} onClick={onRebuild}>
+            <Hammer aria-hidden="true" />
+            Rebuild a ship
           </Button>
         </ButtonGroup>
         <Tip label="Refresh">

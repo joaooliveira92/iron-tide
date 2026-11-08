@@ -145,8 +145,8 @@
         "checkRebuild",
         "startRebuildCommand"
       ],
-      "renderer_screen": "components/design-workspace/panels/RebuildPanel.tsx",
-      "evidence_test": "apps/desktop/src/renderer/components/design-workspace/panels/RebuildPanel.test.tsx",
+      "renderer_screen": "screens/construction/components/RebuildShipDialog.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/construction/ConstructionScreen.rebuild.test.tsx",
       "decision": null
     },
     {

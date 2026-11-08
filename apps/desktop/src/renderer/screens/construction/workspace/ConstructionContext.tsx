@@ -13,6 +13,7 @@ import {
 } from "./useYardWorkspace.js";
 
 export interface ConstructionState {
+  readonly sessionId: string;
   readonly screen: ConstructionScreenState;
   readonly selectedDesignId: string | null;
   readonly loadError: string | null;
@@ -61,12 +62,13 @@ export function ConstructionProvider({ sessionId, children }: ConstructionProvid
 
   const state = useMemo<ConstructionState>(
     () => ({
+      sessionId,
       screen: session.state,
       selectedDesignId: session.selectedDesignId,
       loadError: session.loadError,
       batch: batch.state,
     }),
-    [session.state, session.selectedDesignId, session.loadError, batch.state],
+    [sessionId, session.state, session.selectedDesignId, session.loadError, batch.state],
   );
 
   const actions = useMemo<ConstructionActions>(
