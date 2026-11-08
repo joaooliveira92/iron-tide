@@ -74,7 +74,7 @@ await test("never loops once the hook already fired", () => {
   assert.equal(evaluateStop({ ...clean, hookActive: true, dirtyPaths: 3 }).action, "allow");
 });
 
-await await test("hook allows a detached HEAD already on a remote branch", () => {
+await test("hook allows a detached HEAD already on a remote branch", () => {
   const work = cloneWithRemoteFeature();
   git(work, "checkout", "-q", "--detach", "feat/x");
   assert.equal(runHook(work), "");
