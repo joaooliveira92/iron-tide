@@ -326,7 +326,7 @@ export function constructionProjectReadout(
   const remainingMonths =
     remainingWork <= 0 || monthlyInstalmentUnits <= 0
       ? 0
-      : project.buildMonths !== undefined && project.packages !== undefined
+      : project.packages !== undefined
         ? projectMonthsToComplete(project, capacityUnits, campaignMonth, undefined, terms)
         : Math.ceil(remainingWork / monthlyInstalmentUnits);
   return {
