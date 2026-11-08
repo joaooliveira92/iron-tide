@@ -257,12 +257,13 @@ export { assessSimilarity, similarityProfile, studyTerms } from "./study.js";
 export { type SuggestedFix, suggestFixes } from "./suggest.js";
 export { TOPSIDE_WARN_BP, topsideLoad, type TopsideStatus } from "./topside.js";
 export { type TorpedoModelSource } from "./torpedoPartBuilder.js";
-export { bp, kg, mm, UM_PER_INCH } from "./units.js";
+export { bp, kg, mm, UM_PER_INCH, UM_PER_KNOT } from "./units.js";
 export { type MountSide } from "./weapons.js";
 export {
   buildWorkshopView,
   type Metric,
   type WorkshopEnvironment,
+  type WorkshopRequirements,
   type WorkshopView,
   type YardOption,
 } from "./workshop.js";
