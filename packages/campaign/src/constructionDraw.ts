@@ -54,11 +54,40 @@ export function packageProgressOf(
   return Object.fromEntries(packages.map((p) => [p["id"], p["doneWork"] as number]));
 }
 
+export function accelerateCapacityUnitsAt(
+  capacityUnits: Readonly<Record<string, number>>,
+  terms: AccelerationTerms,
+  monthsSinceAnchor: number,
+): Record<string, number> {
+  const through = (units: number, months: number): number =>
+    Math.floor((units * terms.workMultiplierBp * months) / terms.timeBp);
+  return Object.fromEntries(
+    Object.entries(capacityUnits).map(([line, value]) => [
+      line,
+      through(value, monthsSinceAnchor + 1) - through(value, monthsSinceAnchor),
+    ]),
+  );
+}
+
+function acceleratedCapacityUnits(
+  project: ConstructionProject,
+  paced: Readonly<Record<string, number>>,
+  month: string,
+  monthsAhead: number,
+  terms: AccelerationTerms,
+): Record<string, number> {
+  const from = monthIndex(project["acceleratedFromMonth"] ?? "");
+  const now = monthIndex(month);
+  if (from === null || now === null) return accelerateCapacityUnits(paced, terms);
+  return accelerateCapacityUnitsAt(paced, terms, Math.max(0, now - from) + monthsAhead);
+}
+
 export function remainingMonthlyCapacityUnits(
   project: ConstructionProject,
   capacityUnits: Readonly<Record<string, number>> | undefined,
   month: string,
   terms?: AccelerationTerms,
+  monthsAhead = 0,
 ): Record<LineId, number> | undefined {
   const buildTimeBp =
     project["buildMonths"] === undefined ? project["buildTimeMultiplierBp"] : undefined;
@@ -68,7 +97,7 @@ export function remainingMonthlyCapacityUnits(
       : scaleCapacityUnits(capacityUnits, BP, buildTimeBp);
   const effective =
     paced !== undefined && terms !== undefined && project["status"] === "ACCELERATED"
-      ? accelerateCapacityUnits(paced, terms)
+      ? acceleratedCapacityUnits(project, paced, month, monthsAhead, terms)
       : paced;
   if (effective === undefined) return undefined;
   const usage = project["monthUsage"];
@@ -254,12 +283,7 @@ export function projectMonthsToComplete(
   let progress = packageProgressOf(packages);
   let done = Number(project["completedWork"]);
   const first = remainingMonthlyCapacityUnits(project, capacityUnits, month, terms);
-  const full = remainingMonthlyCapacityUnits(
-    { ...project, monthUsage: undefined } as ConstructionProject,
-    capacityUnits,
-    month,
-    terms,
-  );
+  const unused = { ...project, monthUsage: undefined } as ConstructionProject;
   const usage = project["monthUsage"];
   let startDone: PackageProgress =
     usage !== undefined && usage["month"] === month
@@ -270,7 +294,9 @@ export function projectMonthsToComplete(
   for (let months = 1; months <= maxMonths; months += 1) {
     if (done >= total) return months - 1;
     const capacity =
-      (months === 1 ? first : full) ??
+      (months === 1
+        ? first
+        : remainingMonthlyCapacityUnits(unused, capacityUnits, month, terms, months - 1)) ??
       (Object.fromEntries(LINE_IDS.map((line) => [line, Number.MAX_SAFE_INTEGER])) as Record<
         LineId,
         number

@@ -41,6 +41,7 @@ import {
   weightedConstructionDemand,
 } from "../src/constructionAcceleration.js";
 import { applySetAcceleration } from "../src/commands.js";
+import { constructionProjectQueueWithReadouts } from "../src/constructionReadout.js";
 import { fundConstructionProject } from "../src/constructionFunding.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
@@ -717,5 +718,174 @@ describe("constructionWorkStatus", () => {
     expect(constructionWorkStatus("ACCELERATED")).toBe("ACCELERATED");
     expect(constructionWorkStatus("ACTIVE")).toBe("ACTIVE");
     expect(constructionWorkStatus("PLANNED")).toBe("ACTIVE");
+  });
+});
+
+describe("accelerating an unpaced packaged ship never lengthens it (issue 574)", () => {
+  const INFLEXIBLE_PACKAGES: ConstructionPackage[] = [
+    {
+      id: "hull",
+      kind: "HULL",
+      line: "slipway",
+      totalWork: SafeInt(74),
+      doneWork: SafeInt(60),
+      dependsOn: [],
+    },
+    {
+      id: "launch",
+      kind: "LAUNCH",
+      line: "slipway",
+      totalWork: SafeInt(2),
+      doneWork: SafeInt(0),
+      dependsOn: ["hull"],
+    },
+    {
+      id: "fit_out",
+      kind: "FIT_OUT",
+      line: "quay",
+      totalWork: SafeInt(19),
+      doneWork: SafeInt(0),
+      dependsOn: ["launch"],
+    },
+    {
+      id: "trials",
+      kind: "TRIALS",
+      line: "trials",
+      totalWork: SafeInt(4),
+      doneWork: SafeInt(0),
+      dependsOn: ["fit_out"],
+    },
+    {
+      id: "acceptance",
+      kind: "ACCEPTANCE",
+      line: "trials",
+      totalWork: SafeInt(1),
+      doneWork: SafeInt(0),
+      dependsOn: ["trials"],
+    },
+  ];
+
+  const inflexibleSnapshot = (): CampaignSnapshot =>
+    snapshot(
+      [
+        {
+          ...project({ withPackages: true, designVersionId: "d1" }),
+          id: "proj-1",
+          totalWork: SafeInt(100),
+          completedWork: SafeInt(60),
+          startedAt: "1880-01",
+          packages: INFLEXIBLE_PACKAGES,
+          capacityUnits: { slipway: SafeInt(2), quay: SafeInt(2), trials: SafeInt(2) },
+          buildTimeMultiplierBp: SafeInt(9_300),
+        },
+      ],
+      new Map([["d1", design("d1", 2)]]),
+      0,
+      1_000_000,
+    );
+
+  const accelerate = (from: CampaignSnapshot): CampaignSnapshot =>
+    applySetAcceleration(
+      from,
+      { type: "SetAcceleration", nationId: "GBR", projectId: "proj-1", accelerated: true },
+      new DiagnosticCollector(),
+      terms,
+      "1880-01",
+    );
+
+  function monthsToFinish(start: CampaignSnapshot): { months: number; paid: number } {
+    let current = start;
+    for (let m = 1; m <= 60; m++) {
+      const result = executeMonth(current, [], "inflexible-seed");
+      current = {
+        ...result.finalSnapshot,
+        turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt(1)),
+      };
+      const built = current.nations.get("GBR")!.constructionProjects[0]!;
+      if (Number(built.completedWork) >= Number(built.totalWork))
+        return { months: m, paid: Number(built.paidWork) };
+    }
+    throw new Error("project never completed");
+  }
+
+  const readoutMonths = (from: CampaignSnapshot): number =>
+    constructionProjectQueueWithReadouts(from, "GBR", content, "1880-01")[0]!.readout!
+      .remainingMonths;
+
+  it("finishes sooner, by about the content time factor, and pays exactly the premium more", () => {
+    const normal = monthsToFinish(inflexibleSnapshot());
+    const fast = monthsToFinish(accelerate(inflexibleSnapshot()));
+    expect(normal.months).toBe(21);
+    expect(fast.months).toBe(20);
+    expect(fast.months).toBeLessThan(normal.months);
+    expect(
+      Math.abs(fast.months - Math.ceil((normal.months * terms.timeBp) / 10_000)),
+    ).toBeLessThanOrEqual(1);
+    expect(fast.paid - normal.paid).toBe(2);
+  });
+
+  const monthIdAt = (offset: number): string =>
+    `${String(1880 + Math.floor(offset / 12))}-${String((offset % 12) + 1).padStart(2, "0")}`;
+
+  function fundedMonths(start: ConstructionProject, units: number, accelerated: boolean): number {
+    const lineUnits = Object.fromEntries(
+      ["slipway", "quay", "trials"].map((line) => [line, units]),
+    );
+    let current = start;
+    if (accelerated) {
+      const snap = applySetAcceleration(
+        snapshot([start]),
+        { type: "SetAcceleration", nationId: "GBR", projectId: "proj-1", accelerated: true },
+        new DiagnosticCollector(),
+        terms,
+        "1880-01",
+      );
+      current = snap.nations.get("GBR")!.constructionProjects[0]!;
+    }
+    for (let offset = 0; offset < 400; offset++) {
+      current = fundConstructionProject(
+        current,
+        lineUnits,
+        1_000_000,
+        monthIdAt(offset),
+        terms,
+      ).project;
+      if (Number(current.completedWork) >= Number(current.totalWork)) return offset + 1;
+    }
+    throw new Error("project never completed");
+  }
+
+  it("never takes longer accelerated than normal at any yard rate, progress or build-time scale", () => {
+    const lengthened: string[] = [];
+    for (const units of [1, 2, 3, 4, 5, 7, 9, 12, 20]) {
+      for (const hullDone of [0, 20, 45, 60, 74]) {
+        for (const scale of [8_000, 9_300, 10_000]) {
+          const packages = INFLEXIBLE_PACKAGES.map((entry) =>
+            entry.id === "hull" ? { ...entry, doneWork: SafeInt(hullDone) } : entry,
+          );
+          const start: ConstructionProject = {
+            ...inflexibleSnapshot().nations.get("GBR")!.constructionProjects[0]!,
+            completedWork: SafeInt(hullDone),
+            packages,
+            buildTimeMultiplierBp: SafeInt(scale),
+          };
+          const normal = fundedMonths(start, units, false);
+          const fast = fundedMonths(start, units, true);
+          if (fast > normal)
+            lengthened.push(
+              `units=${String(units)} hullDone=${String(hullDone)} scale=${String(scale)}: ${String(normal)} -> ${String(fast)}`,
+            );
+        }
+      }
+    }
+    expect(lengthened).toEqual([]);
+  });
+
+  it("reads the same months from the engine readout as the month run produces", () => {
+    const normalStart = inflexibleSnapshot();
+    const fastStart = accelerate(inflexibleSnapshot());
+    expect(readoutMonths(normalStart)).toBe(monthsToFinish(normalStart).months);
+    expect(readoutMonths(fastStart)).toBe(monthsToFinish(fastStart).months);
+    expect(readoutMonths(fastStart)).toBeLessThan(readoutMonths(normalStart));
   });
 });
