@@ -1024,4 +1024,16 @@ describe("accelerating an unpaced packaged ship never lengthens it (issue 574)",
     expect(readoutMonths(fastStart)).toBe(monthsToFinish(fastStart).months);
     expect(readoutMonths(fastStart)).toBeLessThan(readoutMonths(normalStart));
   });
+
+  it("previews a positive saving that the month run then produces, never a negative one", () => {
+    const start = inflexibleSnapshot();
+    const preview = constructionSteeringPreviews(start, "GBR", content, {
+      acceleration: terms,
+    }).get("proj-1")!.accelerate!;
+    expect(preview.monthsNow).toBe(monthsToFinish(start).months);
+    expect(preview.monthsAccelerated).toBe(monthsToFinish(accelerate(start)).months);
+    expect(preview.monthsSaved).toBe(1);
+    expect(preview.premiumUnits).toBe(2);
+    expect(preview.fundsLimited).toBe(false);
+  });
 });

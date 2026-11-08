@@ -37,17 +37,22 @@ describe("steering view model", () => {
     expect(view.tip).toContain("Delay risk: None at the current load.");
   });
 
-  it("says plainly when accelerating would not finish the ship sooner", () => {
+  it("says plainly when the treasury leaves no saving, and never prints a negative month count", () => {
     const view = accelerateView(
       "Havock class",
-      accelerationPreview({ monthsNow: 20, monthsAccelerated: 21, monthsSaved: -1 }),
+      accelerationPreview({
+        monthsNow: 10,
+        monthsAccelerated: 11,
+        monthsSaved: -1,
+        fundsLimited: true,
+      }),
       format,
     );
-    expect(view.tip).toContain("Would not finish sooner: 21 months against 20 months now.");
+    expect(view.tip).toContain("Would not finish sooner: 11 months against 10 months now.");
     expect(view.rows.find((row) => row.label === "Months saved")?.value).toBe(
       "None; it would not finish sooner",
     );
-    expect(view.notes).toHaveLength(1);
+    expect(view.notes).toHaveLength(2);
     expect(view.tip).not.toContain("-1");
   });
 
