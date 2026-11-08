@@ -2,6 +2,7 @@ import type {
   ConstructionProjectQueueEntry,
   ConstructionProjectReadoutView,
 } from "@bluewave/campaign-engine";
+import type { ConstructionSteeringPreview } from "@bluewave/phase-engine";
 
 export type PackageState = "done" | "active" | "ready" | "waiting";
 
@@ -25,6 +26,7 @@ export interface ProjectRow {
   readonly isForeign: boolean;
   readonly revisable: boolean;
   readonly readout: ConstructionProjectReadoutView | null;
+  readonly steering?: ConstructionSteeringPreview;
 }
 
 const PACKAGE_LABEL: Readonly<Record<string, string>> = {
@@ -80,9 +82,16 @@ export function projectRow(entry: ConstructionProjectQueueEntry): ProjectRow {
   };
 }
 
-export function projectRows(entries: readonly ConstructionProjectQueueEntry[]): ProjectRow[] {
+export function projectRows(
+  entries: readonly ConstructionProjectQueueEntry[],
+  steering: Readonly<Record<string, ConstructionSteeringPreview>> = {},
+): ProjectRow[] {
   return entries
-    .map(projectRow)
+    .map((entry) => {
+      const row = projectRow(entry);
+      const preview = steering[entry.projectId];
+      return preview === undefined ? row : { ...row, steering: preview };
+    })
     .sort(
       (a, b) =>
         Number(a.status === "COMPLETED") - Number(b.status === "COMPLETED") ||

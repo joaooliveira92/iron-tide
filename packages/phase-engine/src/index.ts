@@ -24,6 +24,13 @@ export {
   type ConstructionResumeTarget,
 } from "./constructionHaltResume.js";
 export { constructionProjectQueueWithReadouts } from "./constructionReadout.js";
+export {
+  constructionSteeringPreviews,
+  type AccelerationDelayRisk,
+  type AccelerationPreview,
+  type ConstructionSteeringPreview,
+  type HaltPreview,
+} from "./constructionSteeringPreview.js";
 export { snapshotWithQueuedConstruction } from "./queuedConstructionForecast.js";
 export {
   ACCELERATION_CAPACITY_PRESSURE_DELAY,

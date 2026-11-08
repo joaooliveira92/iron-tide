@@ -7,6 +7,7 @@ import { memo, type ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { ConstructionScreenProjection } from "../../../shared/construction-contract.js";
 import { ConstructionScreen } from "./ConstructionScreen.js";
+import { steeringPreview } from "./steering-test-fixtures.js";
 
 const mocks = vi.hoisted(() => ({ execute: vi.fn(), revise: vi.fn() }));
 vi.mock("../../shell/CampaignShellContext.js", async (original) => ({
@@ -83,6 +84,7 @@ const projectionWith = (
   },
   designs: [],
   projects,
+  steering: {},
   workspace: { commands: [], treasuryReserved: 0, capacityReserved: 0 },
 });
 
@@ -152,7 +154,10 @@ describe("ConstructionScreen revise project", () => {
   });
 
   it("offers no revise control for a project built from an authored design", async () => {
-    serve(projectionWith([project({ revisable: false })]));
+    serve({
+      ...projectionWith([project({ revisable: false })]),
+      steering: { "project-1": steeringPreview() },
+    });
     render(<ConstructionScreen sessionId="ses_1" />);
 
     fireEvent.click(await screen.findByRole("button", { name: /^Havock class, active/ }));

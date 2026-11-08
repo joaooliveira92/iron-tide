@@ -3,7 +3,11 @@ import type {
   ConstructionCommand,
   ConstructionProjectQueueEntry,
 } from "@bluewave/campaign-engine";
-import type { ConstructionBatchPreview, ForeignConstructionPreview } from "@bluewave/phase-engine";
+import type {
+  ConstructionBatchPreview,
+  ConstructionSteeringPreview,
+  ForeignConstructionPreview,
+} from "@bluewave/phase-engine";
 import type { CommandEnvelope } from "./bridge-contract.js";
 
 export interface ConstructionScreenProjection {
@@ -27,6 +31,7 @@ export interface ConstructionScreenProjection {
   };
   readonly designs: readonly CompiledDesignVersion[];
   readonly projects: readonly ConstructionProjectQueueEntry[];
+  readonly steering: Readonly<Record<string, ConstructionSteeringPreview>>;
   readonly workspace: {
     readonly commands: readonly ConstructionCommand[];
     readonly treasuryReserved: number;

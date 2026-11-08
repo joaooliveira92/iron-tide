@@ -93,7 +93,10 @@ export function useYardWorkspace(
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedCommandId, setSelectedCommandId] = useState<string | null>(null);
 
-  const rows = useMemo(() => projectRows(state.projects), [state.projects]);
+  const rows = useMemo(
+    () => projectRows(state.projects, state.steering),
+    [state.projects, state.steering],
+  );
   const selectedDesign = useMemo(
     () => state.designs.find((design) => design.designId === selectedDesignId) ?? null,
     [state.designs, selectedDesignId],

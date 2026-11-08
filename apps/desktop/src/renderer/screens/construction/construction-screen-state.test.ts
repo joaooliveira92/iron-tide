@@ -71,6 +71,7 @@ const projection = {
   },
   designs: [design],
   projects: [],
+  steering: {},
   workspace: {
     commands: [],
     movementCommands: [],
@@ -98,6 +99,7 @@ describe("construction screen state", () => {
       economy: projection.economy,
       designs: projection.designs,
       projects: projection.projects,
+      steering: projection.steering,
       workspace: projection.workspace,
     });
   });

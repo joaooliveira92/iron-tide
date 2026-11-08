@@ -40,8 +40,9 @@ import {
   resolveAccelerationCapacityPressure,
   weightedConstructionDemand,
 } from "../src/constructionAcceleration.js";
-import { applySetAcceleration } from "../src/commands.js";
+import { applyHaltConstruction, applySetAcceleration } from "../src/commands.js";
 import { constructionProjectQueueWithReadouts } from "../src/constructionReadout.js";
+import { constructionSteeringPreviews } from "../src/constructionSteeringPreview.js";
 import { fundConstructionProject } from "../src/constructionFunding.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
@@ -721,6 +722,141 @@ describe("constructionWorkStatus", () => {
   });
 });
 
+describe("the steering preview matches the month run (issue 574)", () => {
+  const BUILD_MONTHS = 10;
+  const TOTAL_WORK = 600;
+  const BASIS = 10_000;
+
+  const pacedSnapshot = (treasury = 1_000_000): CampaignSnapshot =>
+    snapshot(
+      [
+        {
+          ...project({ withPackages: true, designVersionId: "d1" }),
+          buildMonths: BUILD_MONTHS,
+          startedAt: "1880-02",
+        },
+      ],
+      new Map([["d1", design("d1", TOTAL_WORK / BUILD_MONTHS)]]),
+      0,
+      treasury,
+    );
+
+  const previewOf = (from: CampaignSnapshot) =>
+    constructionSteeringPreviews(from, "GBR", content, { acceleration: terms }).get("proj-1")!;
+
+  function replay(start: CampaignSnapshot): { months: number; paid: number; decisions: number } {
+    let current = start;
+    let decisions = 0;
+    for (let m = 1; m <= 24; m++) {
+      const result = executeMonth(current, [], "preview-seed");
+      decisions += result.randomLedger.all.filter(
+        (d) => d.streamId === ACCELERATION_STREAM_FAMILY,
+      ).length;
+      current = {
+        ...result.finalSnapshot,
+        turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt(1)),
+      };
+      const built = current.nations.get("GBR")!.constructionProjects[0]!;
+      if (Number(built.completedWork) >= Number(built.totalWork))
+        return { months: m, paid: Number(built.paidWork), decisions };
+    }
+    throw new Error("project never completed");
+  }
+
+  const accelerated = (from: CampaignSnapshot): CampaignSnapshot =>
+    applySetAcceleration(
+      from,
+      { type: "SetAcceleration", nationId: "GBR", projectId: "proj-1", accelerated: true },
+      new DiagnosticCollector(),
+      terms,
+      "1880-02",
+    );
+
+  it("states the months, months saved and premium that a month-by-month replay then produces", () => {
+    const preview = previewOf(pacedSnapshot()).accelerate!;
+    const normal = replay(pacedSnapshot());
+    const fast = replay(accelerated(pacedSnapshot()));
+    expect(preview.monthsSaved).toBeGreaterThan(0);
+    expect(preview.monthsNow).toBe(normal.months);
+    expect(preview.monthsAccelerated).toBe(fast.months);
+    expect(preview.monthsSaved).toBe(normal.months - fast.months);
+    expect(preview.premiumUnits).toBe(fast.paid - normal.paid);
+    expect(preview.premiumExplanation.result).toBe(preview.premiumUnits);
+    expect(preview.monthsExplanation.result).toBe(preview.monthsSaved);
+  });
+
+  it("states no delay risk for a lone ship, and the replay draws nothing", () => {
+    const preview = previewOf(pacedSnapshot()).accelerate!;
+    expect(preview.delayRisk).toBe("NONE");
+    expect(preview.delayChanceBp).toBe(0);
+    expect(replay(accelerated(pacedSnapshot())).decisions).toBe(0);
+  });
+
+  it("says funds, not capacity, are the limiter when the treasury cannot pay the monthly work", () => {
+    expect(previewOf(pacedSnapshot()).accelerate!.fundsLimited).toBe(false);
+    expect(previewOf(pacedSnapshot(1)).accelerate!.fundsLimited).toBe(true);
+  });
+
+  it("gives the carrying cost and resume behaviour the halted project then shows", () => {
+    const halt = previewOf(pacedSnapshot()).halt!;
+    const halted = applyHaltConstruction(
+      pacedSnapshot(),
+      { type: "HaltConstruction", nationId: "GBR", projectId: "proj-1" },
+      new DiagnosticCollector(),
+    );
+    const readout = constructionProjectQueueWithReadouts(halted, "GBR", content, "1880-02")[0]!
+      .readout!;
+    expect(halt.carryingCostUnits).toBe(readout.haltedCarryingCostUnits);
+    expect(halt.resumeStatus).toBe("ACTIVE");
+    expect(halt.losesAcceleration).toBe(false);
+    expect(previewOf(accelerated(pacedSnapshot())).halt!.losesAcceleration).toBe(true);
+  });
+
+  it("lets each tree reproduce its figure from its own inputs with the engine's rounding", () => {
+    const preview = previewOf(pacedSnapshot());
+    const premium = preview.accelerate!.premiumExplanation;
+    const remaining = Number(premium.inputs["remainingWork"]);
+    const rate = Number(premium.inputs["premiumRateBp"]);
+    expect(premium.inputs["rounding"]).toBe("ceil");
+    expect(Math.ceil((remaining * (BASIS + rate)) / BASIS) - remaining).toBe(premium.result);
+    expect(premium.intermediate["acceleratedRemainingWork"]).toBe(
+      remaining + Number(premium.result),
+    );
+
+    const months = preview.accelerate!.monthsExplanation;
+    expect(Number(months.inputs["monthsNow"]) - Number(months.inputs["monthsAccelerated"])).toBe(
+      months.result,
+    );
+
+    const carrying = preview.halt!.carryingExplanation;
+    const micro = Math.floor(
+      (Number(carrying.inputs["mothballedMaintenancePerMonthMicro"]) *
+        Number(carrying.inputs["preservationCostBp"])) /
+        BASIS,
+    );
+    expect(carrying.intermediate["preservationCostPerMonthMicro"]).toBe(micro);
+    expect(Math.max(1, Math.ceil(micro / Number(carrying.inputs["treasuryUnitMicro"])))).toBe(
+      carrying.result,
+    );
+    expect(carrying.children).toHaveLength(3);
+  });
+
+  it("lets the delay tree reproduce the chance from the pressure it was priced at", () => {
+    const delay = previewOf(pacedSnapshot()).accelerate!.delayExplanation;
+    const pressure = Number(delay.inputs["capacityPressureBp"]);
+    const threshold = Number(delay.inputs["delayThresholdBp"]);
+    const cap = Number(delay.inputs["delayProbabilityCapBp"]);
+    const excess = Math.max(0, Math.min(BASIS, pressure - threshold));
+    expect(delay.intermediate["excessPressureBp"]).toBe(excess);
+    expect(Math.floor((excess * cap) / BASIS)).toBe(delay.result);
+    expect(delay.inputs["poolUnits"]).toBeGreaterThan(0);
+  });
+
+  it("offers no acceleration preview for a project that is already accelerated", () => {
+    expect(previewOf(accelerated(pacedSnapshot())).accelerate).toBeNull();
+  });
+});
+
 describe("accelerating an unpaced packaged ship never lengthens it (issue 574)", () => {
   const INFLEXIBLE_PACKAGES: ConstructionPackage[] = [
     {
@@ -887,5 +1023,17 @@ describe("accelerating an unpaced packaged ship never lengthens it (issue 574)",
     expect(readoutMonths(normalStart)).toBe(monthsToFinish(normalStart).months);
     expect(readoutMonths(fastStart)).toBe(monthsToFinish(fastStart).months);
     expect(readoutMonths(fastStart)).toBeLessThan(readoutMonths(normalStart));
+  });
+
+  it("previews a positive saving that the month run then produces, never a negative one", () => {
+    const start = inflexibleSnapshot();
+    const preview = constructionSteeringPreviews(start, "GBR", content, {
+      acceleration: terms,
+    }).get("proj-1")!.accelerate!;
+    expect(preview.monthsNow).toBe(monthsToFinish(start).months);
+    expect(preview.monthsAccelerated).toBe(monthsToFinish(accelerate(start)).months);
+    expect(preview.monthsSaved).toBe(1);
+    expect(preview.premiumUnits).toBe(2);
+    expect(preview.fundsLimited).toBe(false);
   });
 });
