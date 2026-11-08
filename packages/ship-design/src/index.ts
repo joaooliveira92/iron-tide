@@ -233,6 +233,15 @@ export {
   evaluateShipTypeAvailability,
 } from "./shipTypeAvailability.js";
 export { type Range } from "./shipTypeEnvelope.js";
+export {
+  checkShipTypeRequirements,
+  shipTypeRequirements,
+  type RequirementBound,
+  type RequirementUnit,
+  type ShipTypeRequirement,
+  type ShipTypeRequirementCheck,
+  type ShipTypeRequirements,
+} from "./shipTypeRequirements.js";
 export { buildShipTypeRoster, type RosterEntry, type StarterDesign } from "./shipTypeRoster.js";
 export {
   HULL_TYPE_FOR_SHIP_TYPE,
