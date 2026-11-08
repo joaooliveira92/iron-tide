@@ -90,6 +90,7 @@ export function StageOutlet() {
           maxConcurrentConstructionMassKg={economy.maxConcurrentConstructionMassKg}
           committedNewConstructionMassKg={economy.committedNewConstructionMassKg}
           exemptNewConstructionMassKg={economy.exemptNewConstructionMassKg}
+          dockExpansionReadyMonth={economy.dockExpansionReadyMonth}
           dockExpansionDurationMonths={economy.dockExpansionDurationMonths}
           dockExpansionNextStepKg={economy.dockExpansionNextStepKg}
           dockPossessions={economy.dockPossessions}

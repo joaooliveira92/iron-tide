@@ -631,6 +631,13 @@ export const EN_US_MESSAGES = {
     "Your unsubmitted design was restored, with its edit history (last changed {savedAt}). Changes are saved as you work.",
 
   "construction.gauge.tonnageLimit": "Dock tonnage limit",
+  "construction.expansion.title": "Authorize dock expansion?",
+  "construction.expansion.description":
+    "This expansion is funded from the construction budget, and the dock limit rises once the work is complete.",
+  "construction.expansion.completion": "Earliest completion",
+  "construction.expansion.duration": "Duration",
+  "construction.expansion.nextStep": "Next step",
+  "construction.expansion.dockLimit": "Current dock limit",
   "construction.gauge.underConstruction": "Under construction",
   "construction.gauge.underConstructionAtOnce": "New tonnage under construction at once",
   "construction.gauge.exemptSmallCraft": "Exempt small craft",
