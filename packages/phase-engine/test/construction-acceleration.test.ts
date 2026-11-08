@@ -40,7 +40,9 @@ import {
   resolveAccelerationCapacityPressure,
   weightedConstructionDemand,
 } from "../src/constructionAcceleration.js";
-import { applySetAcceleration } from "../src/commands.js";
+import { applyHaltConstruction, applySetAcceleration } from "../src/commands.js";
+import { constructionProjectQueueWithReadouts } from "../src/constructionReadout.js";
+import { constructionSteeringPreviews } from "../src/constructionSteeringPreview.js";
 import { fundConstructionProject } from "../src/constructionFunding.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
@@ -717,5 +719,99 @@ describe("constructionWorkStatus", () => {
     expect(constructionWorkStatus("ACCELERATED")).toBe("ACCELERATED");
     expect(constructionWorkStatus("ACTIVE")).toBe("ACTIVE");
     expect(constructionWorkStatus("PLANNED")).toBe("ACTIVE");
+  });
+});
+
+describe("the steering preview matches the month run (issue 574)", () => {
+  const BUILD_MONTHS = 10;
+  const TOTAL_WORK = 600;
+
+  const pacedSnapshot = (treasury = 1_000_000): CampaignSnapshot =>
+    snapshot(
+      [
+        {
+          ...project({ withPackages: true, designVersionId: "d1" }),
+          buildMonths: BUILD_MONTHS,
+          startedAt: "1880-02",
+        },
+      ],
+      new Map([["d1", design("d1", TOTAL_WORK / BUILD_MONTHS)]]),
+      0,
+      treasury,
+    );
+
+  const previewOf = (from: CampaignSnapshot) =>
+    constructionSteeringPreviews(from, "GBR", content, { acceleration: terms }).get("proj-1")!;
+
+  function replay(start: CampaignSnapshot): { months: number; paid: number; decisions: number } {
+    let current = start;
+    let decisions = 0;
+    for (let m = 1; m <= 24; m++) {
+      const result = executeMonth(current, [], "preview-seed");
+      decisions += result.randomLedger.all.filter(
+        (d) => d.streamId === ACCELERATION_STREAM_FAMILY,
+      ).length;
+      current = {
+        ...result.finalSnapshot,
+        turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt(1)),
+      };
+      const built = current.nations.get("GBR")!.constructionProjects[0]!;
+      if (Number(built.completedWork) >= Number(built.totalWork))
+        return { months: m, paid: Number(built.paidWork), decisions };
+    }
+    throw new Error("project never completed");
+  }
+
+  const accelerated = (from: CampaignSnapshot): CampaignSnapshot =>
+    applySetAcceleration(
+      from,
+      { type: "SetAcceleration", nationId: "GBR", projectId: "proj-1", accelerated: true },
+      new DiagnosticCollector(),
+      terms,
+      "1880-02",
+    );
+
+  it("states the months, months saved and premium that a month-by-month replay then produces", () => {
+    const preview = previewOf(pacedSnapshot()).accelerate!;
+    const normal = replay(pacedSnapshot());
+    const fast = replay(accelerated(pacedSnapshot()));
+    expect(preview.monthsSaved).toBeGreaterThan(0);
+    expect(preview.monthsNow).toBe(normal.months);
+    expect(preview.monthsAccelerated).toBe(fast.months);
+    expect(preview.monthsSaved).toBe(normal.months - fast.months);
+    expect(preview.premiumUnits).toBe(fast.paid - normal.paid);
+    expect(preview.premiumExplanation.result).toBe(preview.premiumUnits);
+    expect(preview.monthsExplanation.result).toBe(preview.monthsSaved);
+  });
+
+  it("states no delay risk for a lone ship, and the replay draws nothing", () => {
+    const preview = previewOf(pacedSnapshot()).accelerate!;
+    expect(preview.delayRisk).toBe("NONE");
+    expect(preview.delayChanceBp).toBe(0);
+    expect(replay(accelerated(pacedSnapshot())).decisions).toBe(0);
+  });
+
+  it("says funds, not capacity, are the limiter when the treasury cannot pay the monthly work", () => {
+    expect(previewOf(pacedSnapshot()).accelerate!.fundsLimited).toBe(false);
+    expect(previewOf(pacedSnapshot(1)).accelerate!.fundsLimited).toBe(true);
+  });
+
+  it("gives the carrying cost and resume behaviour the halted project then shows", () => {
+    const halt = previewOf(pacedSnapshot()).halt!;
+    const halted = applyHaltConstruction(
+      pacedSnapshot(),
+      { type: "HaltConstruction", nationId: "GBR", projectId: "proj-1" },
+      new DiagnosticCollector(),
+    );
+    const readout = constructionProjectQueueWithReadouts(halted, "GBR", content, "1880-02")[0]!
+      .readout!;
+    expect(halt.carryingCostUnits).toBe(readout.haltedCarryingCostUnits);
+    expect(halt.resumeStatus).toBe("ACTIVE");
+    expect(halt.losesAcceleration).toBe(false);
+    expect(previewOf(accelerated(pacedSnapshot())).halt!.losesAcceleration).toBe(true);
+  });
+
+  it("offers no acceleration preview for a project that is already accelerated", () => {
+    expect(previewOf(accelerated(pacedSnapshot())).accelerate).toBeNull();
   });
 });

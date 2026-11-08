@@ -71,7 +71,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Row | Capability | Commands |
 | --- | --- | --- |
 | budget-project-command | Budget a project (AI command only) | - |
-| command-lifecycle-definitions | Command type definitions for budget, halt, resume and acceleration | - |
+| command-lifecycle-definitions | Command definitions for budget, halt, resume and acceleration | - |
 | design-studies | Design study bookkeeping | - |
 | foreign-contract-monthly | Monthly foreign-contract, insight and war-policy steps | - |
 | phase-engine-infrastructure | Errors, ledger, month pipeline and replay verification | - |

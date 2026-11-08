@@ -191,7 +191,7 @@
       "player_verb": "Accelerate a construction project at a premium",
       "status": "reachable",
       "engine_package": "phase-engine",
-      "engine_modules": ["constructionAcceleration"],
+      "engine_modules": ["constructionAcceleration", "constructionSteeringPreview"],
       "engine_symbols": ["applySetAcceleration", "applyAccelerationPremium"],
       "main_commands": ["setAccelerationCommand"],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
@@ -420,7 +420,7 @@
     },
     {
       "id": "command-lifecycle-definitions",
-      "player_verb": "Command type definitions for budget, halt, resume and acceleration",
+      "player_verb": "Command definitions for budget, halt, resume and acceleration",
       "status": "internal",
       "engine_package": "phase-engine",
       "engine_modules": ["commandDefinitions"],
