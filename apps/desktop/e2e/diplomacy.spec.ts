@@ -46,24 +46,28 @@ const declareWar = async (page: Page, nation: string) => {
   await submitDrafted(page, "Declare war");
 };
 
-test("a war is declared on a rival and stands open after the month advances", async ({
+test("one diplomatic order a month: war, blockade, alliance and pact are formed, then both treaties broken", async ({
   e2e,
   campaignTemplate,
 }) => {
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
+  const dossier = page.getByTestId("nation-dossier");
+  const war = page.getByTestId("war-front");
 
   await test.step("reachable:declare-war", async () => {
     await openDiplomacy(page);
-    await expect(page.getByTestId("war-front")).toHaveCount(0);
+    await expect(war).toHaveCount(0);
     await expect(nationRow(page, "French Republic")).toHaveAccessibleName(/Neutral/);
 
     await declareWar(page, "French Republic");
-    await expect(page.getByTestId("war-front")).toHaveCount(0);
+    await expect(war).toHaveCount(0);
+  });
 
-    await advanceMonths(page, 1);
-    await openDiplomacy(page);
-    const war = page.getByTestId("war-front");
+  await advanceMonths(page, 1);
+  await openDiplomacy(page);
+
+  await test.step("the war stands open", async () => {
     await expect(war).toContainText("Declared");
     await expect(war).toContainText("Attacker, you");
     await expect(war).toContainText("French Republic");
@@ -71,118 +75,101 @@ test("a war is declared on a rival and stands open after the month advances", as
     await expect(nationRow(page, "French Republic")).toHaveAccessibleName(/At war/);
 
     await selectNation(page, "French Republic");
-    const dossier = page.getByTestId("nation-dossier");
     await expect(dossier.getByRole("button", { name: /^Declare war/ })).toHaveCount(0);
     await expect(dossier.getByRole("button", { name: /^Blockade/ })).toBeVisible();
   });
-});
 
-test("an alliance is formed with a neutral power and then dissolved", async ({
-  e2e,
-  campaignTemplate,
-}) => {
-  const page = e2e.page;
-  await openCampaign(e2e, campaignTemplate);
-
-  await test.step("reachable:form-or-break-alliance", async () => {
-    await openDiplomacy(page);
-    await expect(nationRow(page, "Netherlands")).toHaveAccessibleName(/Neutral/);
-
-    await orderOn(page, "Netherlands", /^Form alliance/);
-    await advanceMonths(page, 1);
-    await openDiplomacy(page);
-    await expect(nationRow(page, "Netherlands")).toHaveAccessibleName(/Allied/);
-    await selectNation(page, "Netherlands");
-    const dossier = page.getByTestId("nation-dossier");
-    await expect(dossier.getByText("Allied", { exact: true })).toBeVisible();
-    await expect(dossier.getByRole("button", { name: /^Form alliance/ })).toHaveCount(0);
-
-    await draftAction(page, /^Break alliance/);
-    await submitDrafted(page, "Submit command");
-    await advanceMonths(page, 1);
-    await openDiplomacy(page);
-    await expect(nationRow(page, "Netherlands")).toHaveAccessibleName(/Neutral/);
-    await selectNation(page, "Netherlands");
-    await expect(dossier.getByRole("button", { name: /^Form alliance/ })).toBeVisible();
-    await expect(dossier.getByRole("button", { name: /^Break alliance/ })).toHaveCount(0);
-  });
-});
-
-test("a non-aggression pact is formed with a rival and then withdrawn", async ({
-  e2e,
-  campaignTemplate,
-}) => {
-  const page = e2e.page;
-  await openCampaign(e2e, campaignTemplate);
-
-  await test.step("reachable:form-or-break-non-aggression-pact", async () => {
-    await openDiplomacy(page);
-    await selectNation(page, "Russian Empire");
-    const dossier = page.getByTestId("nation-dossier");
-    await expect(dossier.getByText("Pact")).toBeVisible();
-    await expect(dossier.getByText("None", { exact: true }).first()).toBeVisible();
-
-    await draftAction(page, /^Form NAP/);
-    await submitDrafted(page, "Submit command");
-    await advanceMonths(page, 1);
-    await openDiplomacy(page);
-    await expect(nationRow(page, "Russian Empire")).toContainText("NAP");
-    await selectNation(page, "Russian Empire");
-    await expect(dossier.getByText("Non-aggression", { exact: true })).toBeVisible();
-    await expect(dossier.getByRole("button", { name: /^Form NAP/ })).toHaveCount(0);
-
-    await draftAction(page, /^Break NAP/);
-    await submitDrafted(page, "Submit command");
-    await advanceMonths(page, 1);
-    await openDiplomacy(page);
-    await expect(nationRow(page, "Russian Empire")).not.toContainText("NAP");
-    await selectNation(page, "Russian Empire");
-    await expect(dossier.getByText("Non-aggression", { exact: true })).toHaveCount(0);
-    await expect(dossier.getByRole("button", { name: /^Form NAP/ })).toBeVisible();
-  });
-});
-
-test("a blockade is declared in an area during a war and shows on the war front", async ({
-  e2e,
-  campaignTemplate,
-}) => {
-  const page = e2e.page;
-  await openCampaign(e2e, campaignTemplate);
-  await openDiplomacy(page);
-  await declareWar(page, "French Republic");
-  await advanceMonths(page, 1);
-  await openDiplomacy(page);
+  let areaName = "";
+  let scoreBefore: string | null = null;
 
   await test.step("reachable:declare-blockade", async () => {
-    const war = page.getByTestId("war-front");
     await expect(war.getByRole("list", { name: "Blockades in this war" })).toHaveCount(0);
-    const scoreBefore = await war
-      .getByRole("img", { name: /^War score: / })
-      .getAttribute("aria-label");
+    scoreBefore = await war.getByRole("img", { name: /^War score: / }).getAttribute("aria-label");
 
-    await selectNation(page, "French Republic");
     await draftAction(page, /^Blockade/);
     const area = page.getByRole("combobox", { name: "Blockade area" });
     await expect(area).toBeVisible();
-    const areaName = (await area.innerText()).trim();
+    areaName = (await area.innerText()).trim();
     expect(areaName).not.toBe("");
     await submitDrafted(page, "Submit command");
+  });
 
-    await advanceMonths(page, 1);
-    await openDiplomacy(page);
+  await advanceMonths(page, 1);
+  await openDiplomacy(page);
+
+  await test.step("the blockade shows on the war front", async () => {
     const blockades = war.getByRole("list", { name: "Blockades in this war" });
     await expect(blockades.getByRole("listitem")).toHaveCount(1);
     await expect(blockades).toContainText(areaName);
     await expect(blockades).toContainText("since 1880-02");
     await selectNation(page, "French Republic");
     await expect(
-      page.getByTestId("nation-dossier").getByRole("list", {
-        name: "Blockades involving this nation",
-      }),
+      dossier.getByRole("list", { name: "Blockades involving this nation" }),
     ).toBeVisible();
     await expect(war.getByRole("img", { name: /^War score: / })).not.toHaveAttribute(
       "aria-label",
       scoreBefore!,
     );
+  });
+
+  await test.step("reachable:form-or-break-alliance", async () => {
+    await expect(nationRow(page, "Netherlands")).toHaveAccessibleName(/Neutral/);
+    await orderOn(page, "Netherlands", /^Form alliance/);
+  });
+
+  await advanceMonths(page, 1);
+  await openDiplomacy(page);
+
+  await test.step("the alliance is in force", async () => {
+    await expect(nationRow(page, "Netherlands")).toHaveAccessibleName(/Allied/);
+    await selectNation(page, "Netherlands");
+    await expect(dossier.getByText("Allied", { exact: true })).toBeVisible();
+    await expect(dossier.getByRole("button", { name: /^Form alliance/ })).toHaveCount(0);
+  });
+
+  await test.step("reachable:form-or-break-non-aggression-pact", async () => {
+    await selectNation(page, "Russian Empire");
+    await expect(dossier.getByText("Pact")).toBeVisible();
+    await expect(dossier.getByText("None", { exact: true }).first()).toBeVisible();
+    await draftAction(page, /^Form NAP/);
+    await submitDrafted(page, "Submit command");
+  });
+
+  await advanceMonths(page, 1);
+  await openDiplomacy(page);
+
+  await test.step("the pact is in force and the alliance is broken", async () => {
+    await expect(nationRow(page, "Russian Empire")).toContainText("NAP");
+    await selectNation(page, "Russian Empire");
+    await expect(dossier.getByText("Non-aggression", { exact: true })).toBeVisible();
+    await expect(dossier.getByRole("button", { name: /^Form NAP/ })).toHaveCount(0);
+
+    await selectNation(page, "Netherlands");
+    await draftAction(page, /^Break alliance/);
+    await submitDrafted(page, "Submit command");
+  });
+
+  await advanceMonths(page, 1);
+  await openDiplomacy(page);
+
+  await test.step("the alliance is dissolved and the pact is broken", async () => {
+    await expect(nationRow(page, "Netherlands")).toHaveAccessibleName(/Neutral/);
+    await selectNation(page, "Netherlands");
+    await expect(dossier.getByRole("button", { name: /^Form alliance/ })).toBeVisible();
+    await expect(dossier.getByRole("button", { name: /^Break alliance/ })).toHaveCount(0);
+
+    await selectNation(page, "Russian Empire");
+    await draftAction(page, /^Break NAP/);
+    await submitDrafted(page, "Submit command");
+  });
+
+  await advanceMonths(page, 1);
+  await openDiplomacy(page);
+
+  await test.step("the pact is dissolved", async () => {
+    await expect(nationRow(page, "Russian Empire")).not.toContainText("NAP");
+    await selectNation(page, "Russian Empire");
+    await expect(dossier.getByText("Non-aggression", { exact: true })).toHaveCount(0);
+    await expect(dossier.getByRole("button", { name: /^Form NAP/ })).toBeVisible();
   });
 });
