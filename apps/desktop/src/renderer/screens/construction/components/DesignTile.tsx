@@ -3,6 +3,7 @@ import { Plane } from "lucide-react";
 import type { CompiledDesignVersion } from "@bluewave/campaign-engine";
 import { cn } from "../../../lib/utils.js";
 import { humanizeId } from "../../../lib/humanize-id.js";
+import { translate } from "../../../lib/strings.js";
 import { shipTypeIcon } from "../../../components/design-workspace/index.js";
 import { KG_PER_TONNE } from "../../../lib/presentation-format/units.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
@@ -48,7 +49,10 @@ export function DesignSpecRows({
           ? []
           : [{ label: "Aircraft", value: String(design.carrierAttributes.aircraftCapacity) }]),
         { label: "Projected cost", value: format.money(design.projectedCost) },
-        { label: "Capacity units", value: format.count(design.projectedCapacityUnits) },
+        {
+          label: translate("construction.gauge.yardWorkCapacity"),
+          value: format.count(design.projectedCapacityUnits),
+        },
         {
           label: "Treasury left after",
           value: format.money(fit.freeTreasury - design.projectedCost),
