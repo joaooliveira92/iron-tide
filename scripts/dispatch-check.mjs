@@ -110,7 +110,7 @@ export function collectDevHealth(runs) {
   const red = [...latest.entries()]
     .filter(([, conclusion]) => FAILING_CONCLUSIONS.has(conclusion))
     .map(([name]) => name)
-    .sort();
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   return { red, workflows: latest.size };
 }
 
