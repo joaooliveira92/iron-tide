@@ -9,7 +9,9 @@ import {
   DOCK_EXPANSION_BASE_DURATION_MONTHS,
   builderDockRecord,
   constructionCapacityUtilization,
+  dockExpansionEarliestCompletionMonth,
   dockExpansionEraStepForMonth,
+  dockExpansionProjectFor,
   nationalConstructionCapacity,
 } from "@bluewave/phase-engine";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
@@ -84,6 +86,43 @@ describe("constructionEconomy dock/capacity readouts", () => {
     expect(economy.dockExpansionDurationMonths).toBe(12);
     expect(economy.dockExpansionNextStepKg).toBe(dockExpansionEraStepForMonth(monthId));
     expect(economy.dockExpansionNextStepKg).not.toBeNull();
+
+    const step = dockExpansionEraStepForMonth(monthId)!;
+    expect(economy.dockExpansionReadyMonth).toBe("1880-12");
+    expect(economy.dockExpansionReadyMonth).toBe(
+      dockExpansionEarliestCompletionMonth(
+        dockExpansionProjectFor({
+          projectId: "dock-expansion-preview",
+          possessionId: "preview",
+          authorizedMonth: monthId,
+          stepKg: step,
+          durationMonths: economy.dockExpansionDurationMonths,
+        }),
+      ),
+    );
+    expect(Object.keys(economy).sort()).toEqual(
+      [
+        "committedNewConstructionMassKg",
+        "dockExpansionDurationMonths",
+        "dockExpansionNextStepKg",
+        "dockExpansionReadyMonth",
+        "dockMaxBuildDisplacementKg",
+        "dockPossessions",
+        "exemptNewConstructionMassKg",
+        "maxConcurrentConstructionMassKg",
+        "monthlyAppropriation",
+        "shipyardCapacity",
+        "treasury",
+      ].sort(),
+    );
+  });
+
+  it("previews no ready month once the era has no expansion step", () => {
+    registerProductionSession("s-no-step", resolve(saveRoot, "save"));
+    const record = { ...getCampaignSession("s-no-step")!, month: { year: 1990, month: 1 } };
+    const economy = constructionEconomy(record);
+    expect(economy.dockExpansionNextStepKg).toBeNull();
+    expect(economy.dockExpansionReadyMonth).toBeNull();
   });
 
   it("lists the nation's ports ascending by id as the expansion targets", () => {

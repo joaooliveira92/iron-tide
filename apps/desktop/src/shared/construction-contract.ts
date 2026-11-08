@@ -19,6 +19,7 @@ export interface ConstructionScreenProjection {
     readonly exemptNewConstructionMassKg: number;
     readonly dockExpansionDurationMonths: number;
     readonly dockExpansionNextStepKg: number | null;
+    readonly dockExpansionReadyMonth: string | null;
     readonly dockPossessions: readonly {
       readonly id: string;
       readonly name: string;

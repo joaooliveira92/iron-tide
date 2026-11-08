@@ -25,6 +25,7 @@ const projection = {
     exemptNewConstructionMassKg: 0,
     dockExpansionDurationMonths: 12,
     dockExpansionNextStepKg: 1_000_000,
+    dockExpansionReadyMonth: "1880-12",
     dockPossessions: [{ id: "pos-1", name: "Portsmouth" }],
   },
   designs: [{ designId: "d1" }],
