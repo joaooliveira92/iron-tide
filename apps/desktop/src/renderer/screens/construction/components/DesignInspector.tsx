@@ -3,45 +3,23 @@ import type { CompiledDesignVersion } from "@bluewave/campaign-engine";
 import type { ConstructionScreenProjection } from "../../../../shared/construction-contract.js";
 import { Button } from "../../../components/ui/button.js";
 import { designFit } from "../yard-workspace.js";
-import { ConstructionWizard } from "./ConstructionWizard.js";
 import { DesignSpecRows } from "./DesignTile.js";
 
 export interface DesignInspectorProps {
-  readonly tab: string;
   readonly design: CompiledDesignVersion | null;
   readonly economy: ConstructionScreenProjection["economy"];
   readonly workspace: ConstructionScreenProjection["workspace"];
   readonly busy: boolean;
-  readonly notice: string | null;
-  readonly onConfirm: () => void;
-  readonly onBackToDesign: () => void;
   readonly onOrder: () => void;
 }
 
 export const DesignInspector = memo(function DesignInspector({
-  tab,
   design,
   economy,
   workspace,
   busy,
-  notice,
-  onConfirm,
-  onBackToDesign,
   onOrder,
 }: DesignInspectorProps) {
-  if (tab === "order") {
-    return (
-      <ConstructionWizard
-        design={design}
-        economy={economy}
-        workspace={workspace}
-        busy={busy}
-        notice={notice}
-        onConfirm={onConfirm}
-        onCancelWizard={onBackToDesign}
-      />
-    );
-  }
   if (design === null) {
     return (
       <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">

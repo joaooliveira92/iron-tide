@@ -37,10 +37,7 @@ export const YARD_PLACES: readonly YardPlace[] = [
     id: "catalog",
     label: "Design catalog",
     icon: LayoutGrid,
-    tabs: [
-      { id: "design", label: "Design" },
-      { id: "order", label: "Order" },
-    ],
+    tabs: [{ id: "design", label: "Design" }],
   },
   {
     id: "orders",

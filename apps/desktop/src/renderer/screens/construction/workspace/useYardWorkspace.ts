@@ -35,9 +35,6 @@ export interface YardWorkspaceActions {
   readonly selectDesign: (designId: string) => void;
   readonly selectCommand: (commandId: string) => void;
   readonly browseCatalog: () => void;
-  readonly openWizard: () => void;
-  readonly closeWizard: () => void;
-  readonly confirmOrder: () => void;
   readonly refresh: () => void;
   readonly clearSelection: () => void;
   readonly toggleInspector: () => void;
@@ -76,7 +73,7 @@ export function useYardWorkspace(
   orderOpen: boolean,
   sessionId: string,
 ): YardWorkspace {
-  const { state, selectedDesignId, setSelectedDesignId, submit, loadScreen } = session;
+  const { state, selectedDesignId, setSelectedDesignId, loadScreen } = session;
   const format = usePresentationFormat();
   const hosted = useScreenHeaderHost();
   const inspector = useInspectorLayout(sessionId);
@@ -147,15 +144,6 @@ export function useYardWorkspace(
     [setTab],
   );
   const browseCatalog = useCallback(() => setPlace("catalog"), []);
-  const closeWizard = useCallback(() => setTab("catalog", "design"), [setTab]);
-  const openWizard = useCallback(() => {
-    setPlace("catalog");
-    setTab("catalog", "order");
-  }, [setTab]);
-  const confirmOrder = useCallback(() => {
-    submit();
-    closeWizard();
-  }, [submit, closeWizard]);
   const refresh = useCallback(() => void loadScreen(), [loadScreen]);
   const clearSelection = useCallback(() => {
     if (place === "slipways") setSelectedProjectId(null);
@@ -188,7 +176,6 @@ export function useYardWorkspace(
   );
   const selectedCommand =
     state.workspace?.commands.find((command) => command.commandId === selectedCommandId) ?? null;
-  const reviewing = orderOpen || (place === "catalog" && tab.id === "order");
 
   return {
     state: { place, tabs, selectedProjectId, selectedCommandId },
@@ -199,9 +186,6 @@ export function useYardWorkspace(
       selectDesign,
       selectCommand,
       browseCatalog,
-      openWizard,
-      closeWizard,
-      confirmOrder,
       refresh,
       clearSelection,
       toggleInspector: inspector.toggleCollapsed,
@@ -221,7 +205,7 @@ export function useYardWorkspace(
       currentPlace,
       tab,
       selectedCommandId,
-      reviewing,
+      reviewing: orderOpen,
       monthLabel: `${state.month?.year ?? ""}-${String(state.month?.month ?? 0).padStart(2, "0")}`,
       busy: state.pendingRequest !== null || state.requiresRefresh,
       inspector,

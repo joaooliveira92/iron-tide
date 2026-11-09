@@ -15,16 +15,8 @@ import {
 
 export function InspectorPanel() {
   const { screen } = useConstructionState();
-  const {
-    closeWizard,
-    confirmOrder,
-    halt,
-    resume,
-    setAcceleration,
-    cancelProject,
-    setTab,
-    openOrderDialog,
-  } = useConstructionActions();
+  const { halt, resume, setAcceleration, cancelProject, setTab, openOrderDialog } =
+    useConstructionActions();
   const {
     place,
     tab,
@@ -59,14 +51,10 @@ export function InspectorPanel() {
     if (place === "catalog") {
       return (
         <DesignInspector
-          tab={tab.id}
           design={selectedDesign}
           economy={economy}
           workspace={workspace}
           busy={busy}
-          notice={screen.notice}
-          onConfirm={confirmOrder}
-          onBackToDesign={closeWizard}
           onOrder={() => openOrderDialog()}
         />
       );

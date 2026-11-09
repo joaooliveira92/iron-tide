@@ -27,7 +27,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | halt-or-resume-construction | Halt or resume a construction project | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
 | accelerate-construction | Accelerate a construction project at a premium | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
 | authorize-dock-expansion | Authorize a dock expansion | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/renderer/screens/construction/hooks/useConstructionScreen.test.tsx` |
-| order-foreign-construction | Preview and place a ship order with a foreign builder | `screens/construction/components/ForeignContractPanel.tsx` | `apps/desktop/src/renderer/screens/construction/components/ForeignContractPanel.test.tsx` |
+| order-foreign-construction | Preview and place a ship order with a foreign builder | `screens/construction/order/OrderDialog.tsx` | `apps/desktop/src/renderer/screens/construction/ConstructionScreen.order.test.tsx` |
 | cancel-construction-project | Cancel a construction project; work done is forfeited and nothing is refunded | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
 | declare-war | Declare war on a nation | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | form-or-break-alliance | Form or break an alliance | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
