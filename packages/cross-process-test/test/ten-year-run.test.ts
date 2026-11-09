@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vite-plus/test";
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 const thisDir = dirname(fileURLToPath(import.meta.url));
 const childScript = resolve(thisDir, "..", "dist", "run-child.js");
@@ -36,10 +37,16 @@ interface TenYearOutput {
   readonly hullCounts: Readonly<Record<string, number>>;
 }
 
-function runTenYearChild(): { readonly output: TenYearOutput; readonly stdout: string } {
-  const stdout = execFileSync(process.execPath, [childScript, "production-ten-year"], {
+const execFileAsync = promisify(execFile);
+
+async function runTenYearChild(): Promise<{
+  readonly output: TenYearOutput;
+  readonly stdout: string;
+}> {
+  const { stdout } = await execFileAsync(process.execPath, [childScript, "production-ten-year"], {
     encoding: "utf8",
     timeout: 300_000,
+    maxBuffer: 64 * 1024 * 1024,
     env: { ...process.env, NODE_OPTIONS: "" },
   });
   const lines = stdout.trim().split("\n");
@@ -47,9 +54,8 @@ function runTenYearChild(): { readonly output: TenYearOutput; readonly stdout: s
 }
 
 describe("N-3 ten-year progression run", () => {
-  it("runs 120 command-free months with yearly checkpoints, byte-identical across processes", () => {
-    const first = runTenYearChild();
-    const second = runTenYearChild();
+  it("runs 120 command-free months with yearly checkpoints, byte-identical across processes", async () => {
+    const [first, second] = await Promise.all([runTenYearChild(), runTenYearChild()]);
 
     expect(first.stdout).toBe(second.stdout);
     expect(first.output.mode).toBe("production-ten-year");

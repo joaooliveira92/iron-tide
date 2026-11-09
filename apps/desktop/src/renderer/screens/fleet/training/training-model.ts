@@ -1,9 +1,11 @@
 import type {
   FleetScreenProjection,
   FleetTrainingProjection,
+  FleetTrainingSelectionView,
   TrainingSubjectId,
 } from "../../../../shared/fleet-contract.js";
 import type { RequestLifecycle } from "../../../lib/command-screen-workflow.js";
+import { format } from "../station/fleet-station-state.js";
 
 export interface TrainingState extends RequestLifecycle {
   readonly training: FleetTrainingProjection | null;
@@ -23,12 +25,28 @@ export function projectTraining(projection: FleetScreenProjection): Partial<Trai
   return { training: projection.training ?? null };
 }
 
-export const TRAINING_SUBJECT_LABELS: Readonly<Record<TrainingSubjectId, string>> = {
-  GUNNERY: "Gunnery",
-  NIGHT_FIGHTING: "Night fighting",
-  TORPEDO_TACTICS: "Torpedo tactics",
-  DAMAGE_CONTROL: "Damage control",
-};
+const TRAINING_SUBJECT_ORDER: readonly TrainingSubjectId[] = [
+  "GUNNERY",
+  "NIGHT_FIGHTING",
+  "TORPEDO_TACTICS",
+  "DAMAGE_CONTROL",
+];
+
+export function subjectLabel(subject: TrainingSubjectId): string {
+  return format(`fleet.training.subject.${subject}`);
+}
+
+export function selectionKey(subjects: readonly TrainingSubjectId[]): string {
+  return TRAINING_SUBJECT_ORDER.filter((subject) => subjects.includes(subject)).join("+");
+}
+
+export function selectionFor(
+  training: FleetTrainingProjection,
+  subjects: readonly TrainingSubjectId[],
+): FleetTrainingSelectionView | undefined {
+  const key = selectionKey(subjects);
+  return training.selections.find((entry) => selectionKey(entry.subjects) === key);
+}
 
 export function fundedSubjects(training: FleetTrainingProjection): TrainingSubjectId[] {
   return training.subjects.filter((subject) => subject.funded).map((subject) => subject.subject);
@@ -39,14 +57,21 @@ export function sameSubjects(a: readonly string[], b: readonly string[]): boolea
 }
 
 export function adderText(maintenanceAdderBp: number): string {
-  return `+${maintenanceAdderBp / 100}% maintenance on active ships`;
+  return format("fleet.training.adder", { percent: maintenanceAdderBp / 100 });
+}
+
+export function effectText(subject: TrainingSubjectId, effectBp: number): string {
+  return format(`fleet.training.effect.${subject}`, { percent: effectBp / 100 });
 }
 
 export function progressText(
   subject: FleetTrainingProjection["subjects"][number],
   proficiencyMonths: number,
 ): string {
-  if (!subject.funded) return "Not funded";
-  if (subject.proficient) return "Proficient";
-  return `${subject.fundedMonths} of ${proficiencyMonths} months`;
+  if (!subject.funded) return format("fleet.training.progress.notFunded");
+  if (subject.proficient) return format("fleet.training.progress.proficient");
+  return format("fleet.training.progress.months", {
+    funded: subject.fundedMonths,
+    months: proficiencyMonths,
+  });
 }

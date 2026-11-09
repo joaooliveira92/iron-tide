@@ -42,7 +42,7 @@ test("a player tunes a battleship, saves it, keeps experimenting and goes back t
   await torpedoes.getByRole("button", { name: "Remove tubes" }).click();
   await expect.poll(() => fittingRows(torpedoes)).toHaveLength(0);
   const tuned = await readEngineeringStatus(page);
-  expect(tuned.cost).toBeLessThan(widened.cost);
+  expect(tuned.displacement).toBeLessThan(widened.displacement);
 
   await saveDesignFile(e2e.app, page, file);
   await closeFileDialog(page);
@@ -52,7 +52,7 @@ test("a player tunes a battleship, saves it, keeps experimenting and goes back t
     await nameTheClass(page, "Scratch Name");
     const narrowed = await openHullDimensions(page);
     await setNumber(narrowed, "Beam (m)", "18.50");
-    const warning = page.getByRole("alertdialog", { name: "This change breaks the design" });
+    const warning = page.getByRole("dialog", { name: "This change breaks the design" });
     await expect(warning).toBeVisible();
     await warning.getByRole("button", { name: "Undo this choice" }).click();
     await expect(warning).toBeHidden();

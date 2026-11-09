@@ -8,6 +8,7 @@ import { guardIpc, installShellGuards, type ShellTrust } from "./shellGuards.js"
 import { commandHandlers, createCampaignCommandDispatcher } from "./campaignBridge.js";
 import { ContentArtifactError, loadContentArtifact } from "./contentArtifact.js";
 import { createDesktopWindow } from "./desktopWindow.js";
+import { isBackgroundLaunch } from "./windowOptions.js";
 import { attachDevToolsPageHook } from "./devToolsHook.js";
 import { createIpcHandlers, registerIpcChannels, type GuardedIpcMain } from "./ipc.js";
 import { createPreferencesBridge } from "./preferences/preferencesBridge.js";
@@ -147,6 +148,7 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   void app.whenReady().then(async () => {
+    if (isBackgroundLaunch(process.argv)) app.dock?.hide();
     const runtime = ManagedRuntime.make(desktopMainLayer());
 
     await runtime.runPromise(

@@ -93,9 +93,9 @@ export interface TransportPolicy {
  */
 export interface StatelessRuntimeProfile {
     readonly protocolVersion: string;
-    readonly clientCapabilities: Schema.JsonObject;
+    readonly clientCapabilities: Readonly<Record<string, unknown>>;
     readonly clientInfo?: McpSchema.Implementation | undefined;
-    readonly requestMetadata: Schema.JsonObject;
+    readonly requestMetadata: Readonly<Record<string, unknown>>;
 }
 /**
  * Stateful lifecycle runtime declaration carried by a protocol adapter.

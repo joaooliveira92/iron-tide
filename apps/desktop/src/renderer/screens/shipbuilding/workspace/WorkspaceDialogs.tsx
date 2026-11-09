@@ -1,5 +1,6 @@
 import { AlternativesPanel } from "../../../components/design-workspace/panels/AlternativesPanel.js";
 import { FilePanel } from "../../../components/design-workspace/panels/FilePanel.js";
+import { OpenDesignPanel } from "../../../components/design-workspace/panels/OpenDesignPanel.js";
 import { HistoryPanel } from "../../../components/design-workspace/panels/HistoryPanel.js";
 import { ChoiceProblemDialog } from "../../../components/design-workspace/ChoiceProblemDialog.js";
 import { ConfirmDialog } from "../../../components/design-workspace/ConfirmAction.js";
@@ -27,6 +28,8 @@ export function WorkspaceDialogs() {
     month,
     draft,
     choiceCheck,
+    sessionId,
+    projects,
   } = useShipbuildingState();
   const { dialog, pendingLeave } = useShipbuildingMeta();
   const {
@@ -34,6 +37,7 @@ export function WorkspaceDialogs() {
     setPendingPreset,
     loadPreset,
     loadDraft,
+    openDesign,
     setShipClassName,
     requestPreset,
     jumpTo,
@@ -106,6 +110,22 @@ export function WorkspaceDialogs() {
           onStart={(id) => {
             setDialog(null);
             requestPreset(id);
+          }}
+        />
+      </WorkspaceDialog>
+      <WorkspaceDialog
+        open={dialog === "open"}
+        onClose={() => setDialog(null)}
+        title="Open a design"
+        description="Ships under construction. Opening one makes it the design you compare against."
+      >
+        <OpenDesignPanel
+          sessionId={sessionId}
+          projects={projects}
+          dirty={editCount > 0}
+          onOpen={(design, name) => {
+            setDialog(null);
+            openDesign(design, name);
           }}
         />
       </WorkspaceDialog>

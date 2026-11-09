@@ -17,11 +17,11 @@ import * as Result from "../Result.js";
 import * as Scheduler from "../Scheduler.js";
 import * as Tracer from "../Tracer.js";
 import { internalCall } from "../Utils.js";
-import { args, causeAnnotate, causeCombine, causeEmpty, causeFromReasons, CauseImpl, constEmptyAnnotations, contA, contAll, contE, evaluate, exitDie, exitFail, exitFailCause, exitSucceed, ExitTypeId, Fail, InterruptorStackTrace, isCause, isDieReason, isEffect, isFailReason, isInterruptReason, isNoSuchElementError, makePrimitive, makePrimitiveProto, NoSuchElementError, ReasonBase, StackTraceKey as CauseStackTrace, TaggedError, withFiber, Yield } from "./core.js";
+import { args, causeAddInterrupts, causeAnnotate, causeCombine, causeEmpty, causeFromReasons, CauseImpl, constEmptyAnnotations, contA, contAll, contE, Die, evaluate, exitDie, exitFail, exitFailCause, exitSucceed, ExitTypeId, Fail, InterruptorStackTrace, isCause, isDieReason, isDone, isEffect, isFailReason, isInterruptReason, isNoSuchElementError, makePrimitive, makePrimitiveProto, NoSuchElementError, ReasonBase, StackTraceKey as CauseStackTrace, TaggedError, withFiber, Yield } from "./core.js";
 import * as doNotation from "./doNotation.js";
 import * as InternalMetric from "./metric.js";
 import * as InternalRecord from "./record.js";
-import { CurrentErrorReporters, CurrentLogAnnotations, CurrentLogLevel, CurrentLogSpans, CurrentStackFrame, MinimumLogLevel, TracerEnabled, TracerSpanAnnotations, TracerSpanLinks, TracerTimingEnabled } from "./references.js";
+import { CurrentErrorReporters, CurrentLogAnnotations, CurrentLogLevel, CurrentLogSpans, CurrentStackFrame, MinimumLogLevel, TracerEnabled, TracerSpanAnnotations, TracerSpanLinks, TracerTimingEnabled, UnhandledLogLevel } from "./references.js";
 import { getStackTraceLimit, setStackTraceLimit } from "./stackTraceLimit.js";
 import { addSpanStackTrace, makeStackCleaner } from "./tracer.js";
 // ----------------------------------------------------------------------------
@@ -46,7 +46,9 @@ export class Interrupt extends ReasonBase {
     return isInterruptReason(that) && this.fiberId === that.fiberId && this.annotations === that.annotations;
   }
   [Hash.symbol]() {
-    return Hash.combine(Hash.string(`${this._tag}:${this.fiberId}`))(Hash.random(this.annotations));
+    // Equality compares annotations by reference, so leave them out instead of
+    // hashing them randomly.
+    return Hash.string(`${this._tag}:${this.fiberId}`);
   }
 }
 /** @internal */
@@ -74,6 +76,21 @@ export const findError = self => {
 export const findErrorOption = /*#__PURE__*/Filter.toOption(findError);
 /** @internal */
 export const hasDies = self => self.reasons.some(isDieReason);
+/**
+ * Defects take precedence over typed failures when causes are combined: if
+ * the cause contains a `Die`, every `Fail` becomes a `Die`. `Done` signals
+ * stay typed so pulls still complete.
+ *
+ * @internal
+ */
+export const causeElectDefects = self => hasDies(self) && hasFails(self) ? causeFromReasons(self.reasons.map(reason => reason._tag === "Fail" && !isDone(reason.error) ? new Die(reason.error, reason.annotations) : reason)) : self;
+/**
+ * Selects the first typed error unless a defect is present, in which case
+ * every `Fail` is elected to `Die`. Interrupts do not block typed recovery.
+ *
+ * @internal
+ */
+export const findRecoverableError = self => hasDies(self) ? Result.fail(causeElectDefects(self)) : findError(self);
 /** @internal */
 export const findDie = self => {
   const reason = self.reasons.find(isDieReason);
@@ -181,12 +198,14 @@ export const causePrettyErrors = (self, options) => {
   return errors;
 };
 /** @internal */
-export const causePrettyError = (original, annotations, options) => {
+export const causePrettyError = (original, annotations, options, seen = new Set()) => {
   const kind = typeof original;
   let error;
   if (original && kind === "object") {
+    seen.add(original);
+    const cause = original.cause;
     error = new globalThis.Error(causePrettyMessage(original), {
-      cause: original.cause ? causePrettyError(original.cause) : undefined
+      cause: cause !== undefined && !seen.has(cause) ? causePrettyError(cause, undefined, undefined, seen) : undefined
     });
     if (typeof original.name === "string") {
       error.name = original.name;
@@ -373,7 +392,7 @@ export class FiberImpl {
     if (annotations) {
       cause = causeAnnotate(cause, annotations);
     }
-    this._interruptedCause = this._interruptedCause ? causeCombine(this._interruptedCause, cause) : cause;
+    this._interruptedCause = this._interruptedCause ? causeAddInterrupts(this._interruptedCause, cause) : cause;
     if (this.interruptible) {
       if (this._running) {
         this._deferredInterrupt = true;
@@ -391,7 +410,13 @@ export class FiberImpl {
     } else if (this._asyncContext !== undefined) {
       const asyncContext = this._asyncContext;
       this._asyncContext = undefined;
-      return asyncContext.runInAsyncScope(this.evaluate, this, effect);
+      try {
+        return asyncContext.runInAsyncScope(this.evaluate, this, effect);
+      } finally {
+        // Each captured context is resumed once, so release it for async_hooks
+        // consumers like vitest's detectAsyncLeaks.
+        asyncContext.emitDestroy();
+      }
     } else if (this._yielded !== undefined) {
       const yielded = this._yielded;
       this._yielded = undefined;
@@ -424,6 +449,16 @@ export class FiberImpl {
     this._stack.length = 0;
     this._children = undefined;
     this.context = Context.empty();
+    // The cache is shared with other fibers, so replace it rather than mutate
+    // it, letting the ended span and its parents be collected
+    const cache = this.cache;
+    if (cache.span !== undefined || cache.stackFrame !== undefined) {
+      this.cache = {
+        ...cache,
+        span: undefined,
+        stackFrame: undefined
+      };
+    }
   }
   runLoop(effect) {
     const prevFiber = globalThis[currentFiberTypeId];
@@ -695,7 +730,10 @@ export const fail = exitFail;
 export const sync = /*#__PURE__*/makePrimitive({
   op: "Sync",
   [evaluate](fiber) {
-    const value = this[args]();
+    // call the thunk without a receiver, so V8 does not name its frame after
+    // the args property, which the stack cleaner cuts at
+    const thunk = this[args];
+    const value = thunk();
     const cont = fiber.getCont(contA);
     return cont ? cont[contA](value, fiber) : fiber.yieldWith(exitSucceed(value));
   }
@@ -704,11 +742,13 @@ export const sync = /*#__PURE__*/makePrimitive({
 export const suspend = /*#__PURE__*/makePrimitive({
   op: "Suspend",
   [evaluate](_fiber) {
-    return this[args]();
+    // see Sync
+    const thunk = this[args];
+    return thunk();
   }
 });
 /** @internal */
-export const fromOption = /*#__PURE__*/dual(args => args.length >= 2 || Option.isOption(args[0]), (option, onNone) => Option.isNone(option) ? fail(onNone ? onNone() : new NoSuchElementError("Effect.fromOption: Option.none")) : succeed(option.value));
+export const fromOption = /*#__PURE__*/dual(args => args.length >= 2 || Option.isOption(args[0]), (option, onNone) => Option.isNone(option) ? onNone ? failSync(onNone) : fail(new NoSuchElementError("Effect.fromOption: Option.none")) : succeed(option.value));
 /** @internal */
 export const fromResult = /*#__PURE__*/Result.match({
   onFailure: fail,
@@ -810,9 +850,10 @@ const callbackOptions = /*#__PURE__*/function () {
       }, controller?.signal);
       if (yielded !== false) return yielded;
       yielded = true;
-      fiber._yielded = () => {
+      // V8 pretenures closures assigned to a property; a method argument avoids that and survives minification
+      fiber.yieldWith(() => {
         resumed = true;
-      };
+      });
       if (controller === undefined && onCancel === undefined) {
         return Yield;
       }
@@ -858,8 +899,11 @@ export const gen = (...args) => {
   const [options, body] = args;
   return suspend(() => fromIteratorUnsafe(body.call(options.self)));
 };
+// With `{ self }` the body is `pipeables[0]`, so take it out and bind it.
+const fnBody = (bodyOrOptions, pipeables) => typeof bodyOrOptions === "function" ? bodyOrOptions : pipeables.shift().bind(bodyOrOptions.self);
 /** @internal */
-export const fnUntraced = (body, ...pipeables) => {
+export const fnUntraced = (bodyOrOptions, ...pipeables) => {
+  const body = fnBody(bodyOrOptions, pipeables);
   const fn = pipeables.length === 0 ? function () {
     return suspend(() => fromIteratorUnsafe(body.apply(this, arguments)));
   } : function () {
@@ -894,9 +938,20 @@ export const fn = function () {
   return makeFn(name, arguments[0], defError, Array.prototype.slice.call(arguments, 1), nameFirst, spanOptions);
 };
 const makeFn = (name, bodyOrOptions, defError, pipeables, addSpan, spanOptions) => {
-  const body = typeof bodyOrOptions === "function" ? bodyOrOptions : pipeables.shift().bind(bodyOrOptions.self);
+  const body = fnBody(bodyOrOptions, pipeables);
   const definitionName = `${name} (definition)`;
   const definitionStack = defError ? fnStackCleaner(() => defError.stack) : constUndefined;
+  // Built outside the traced function so the frame cannot capture its `arguments`,
+  // which forked fibers inheriting the frame would otherwise keep alive.
+  const makeCallFrame = callError => prev => ({
+    name,
+    stack: callError ? fnStackCleaner(() => callError.stack) : constUndefined,
+    parent: {
+      name: definitionName,
+      stack: definitionStack,
+      parent: prev
+    }
+  });
   return defineFunctionLength(body.length, function (...args) {
     let result = suspend(() => {
       const iter = body.apply(this, arguments);
@@ -915,27 +970,22 @@ const makeFn = (name, bodyOrOptions, defError, pipeables, addSpan, spanOptions) 
       callError = new globalThis.Error();
       setStackTraceLimit(prevLimit);
     }
-    return updateService(addSpan ? useSpan(name, spanOptions, span => provideParentSpan(result, span)) : result, CurrentStackFrame, prev => ({
-      name,
-      stack: callError ? fnStackCleaner(() => callError.stack) : constUndefined,
-      parent: {
-        name: definitionName,
-        stack: definitionStack,
-        parent: prev
-      }
-    }));
+    return updateService(addSpan ? useSpan(name, spanOptions, span => provideParentSpan(result, span)) : result, CurrentStackFrame, makeCallFrame(callError));
   });
 };
 /** @internal */
-export const fnUntracedEager = (body, ...pipeables) => defineFunctionLength(body.length, pipeables.length === 0 ? function () {
-  return fromIteratorEagerUnsafe(() => body.apply(this, arguments));
-} : function () {
-  let effect = fromIteratorEagerUnsafe(() => body.apply(this, arguments));
-  for (const pipeable of pipeables) {
-    effect = pipeable(effect, ...arguments);
-  }
-  return effect;
-});
+export const fnUntracedEager = (bodyOrOptions, ...pipeables) => {
+  const body = fnBody(bodyOrOptions, pipeables);
+  return defineFunctionLength(body.length, pipeables.length === 0 ? function () {
+    return fromIteratorEagerUnsafe(() => body.apply(this, arguments));
+  } : function () {
+    let effect = fromIteratorEagerUnsafe(() => body.apply(this, arguments));
+    for (const pipeable of pipeables) {
+      effect = pipeable(effect, ...arguments);
+    }
+    return effect;
+  });
+};
 const fromIteratorEagerUnsafe = evaluate => {
   try {
     const iterator = evaluate();
@@ -1030,13 +1080,19 @@ const succeedPayload = function (_value, fiber) {
 // V8 includes the property name of a stored continuation in its stack trace.
 // Other engines need an explicit frame for the stack cleaner to cut at.
 const continuationMarksStack = /*#__PURE__*/(() => {
+  const limit = /*#__PURE__*/getStackTraceLimit();
+  if (limit === 0) return false;
   const marker = "~effect/Effect/stackProbe";
   const probe = {
     [marker]: function stackProbe() {
-      return new Error().stack;
+      return new Error();
     }
   };
-  return probe[marker]()?.includes("[as " + marker + "]") === true;
+  // Only the probe frame is needed to detect the continuation property name.
+  setStackTraceLimit(1);
+  const error = /*#__PURE__*/probe[marker]();
+  setStackTraceLimit(limit);
+  return error.stack?.includes("[as " + marker + "]") === true;
 })();
 const mapCont = function (value, fiber) {
   const f = this.payload;
@@ -1084,7 +1140,7 @@ export const raceAll = (all, options) => withFiber(parent => {
       if (exit._tag === "Failure") {
         failures.push(...exit.cause.reasons);
         if (doneCount >= len) {
-          resume(failCause(causeFromReasons(failures)));
+          resume(failCause(causeElectDefects(causeFromReasons(failures))));
         }
         return;
       }
@@ -1177,8 +1233,8 @@ export const mapBothEager = /*#__PURE__*/dual(2, (self, options) => effectIsExit
 export const catchEager = /*#__PURE__*/dual(2, (self, f) => {
   if (effectIsExit(self)) {
     if (self._tag === "Success") return self;
-    const error = findError(self.cause);
-    if (Result.isFailure(error)) return self;
+    const error = findRecoverableError(self.cause);
+    if (Result.isFailure(error)) return exitFailCause(error.failure);
     return f(error.success);
   }
   return catch_(self, f);
@@ -1217,16 +1273,12 @@ export const exitMap = /*#__PURE__*/dual(2, (self, f) => self._tag === "Success"
 /** @internal */
 export const exitMapError = /*#__PURE__*/dual(2, (self, f) => {
   if (self._tag === "Success") return self;
-  const error = findError(self.cause);
-  if (Result.isFailure(error)) return self;
-  return exitFail(f(error.success));
+  return exitFailCause(causeMap(self.cause, f));
 });
 /** @internal */
 export const exitMapBoth = /*#__PURE__*/dual(2, (self, options) => {
   if (self._tag === "Success") return exitSucceed(options.onSuccess(self.value));
-  const error = findError(self.cause);
-  if (Result.isFailure(error)) return self;
-  return exitFail(options.onFailure(error.success));
+  return exitFailCause(causeMap(self.cause, options.onFailure));
 });
 /** @internal */
 export const exitAs = /*#__PURE__*/dual(2, (self, b) => exitIsSuccess(self) ? exitSucceed(b) : self);
@@ -1385,7 +1437,7 @@ export const catchCauseFilter = /*#__PURE__*/dual(3, (self, filter, f) => catchC
   return Result.isFailure(eb) ? failCause(eb.failure) : f(eb.success, cause);
 }));
 /** @internal */
-export const catch_ = /*#__PURE__*/dual(2, (self, f) => catchCauseFilter(self, findError, e => f(e)));
+export const catch_ = /*#__PURE__*/dual(2, (self, f) => catchCauseFilter(self, findRecoverableError, e => f(e)));
 /** @internal */
 export const catchNoSuchElement = self => matchEffect(self, {
   onFailure: error => isNoSuchElementError(error) ? succeedNone : fail(error),
@@ -1416,7 +1468,7 @@ export const tapErrorTag = /*#__PURE__*/dual(3, (self, k, f) => {
 export const tapDefect = /*#__PURE__*/dual(2, (self, f) => tapCauseFilter(self, findDefect, _ => f(_)));
 /** @internal */
 export const catchIf = /*#__PURE__*/dual(args => isEffect(args[0]), (self, predicate, f, orElse) => catchCause(self, cause => {
-  const error = findError(cause);
+  const error = findRecoverableError(cause);
   if (Result.isFailure(error)) return failCause(error.failure);
   if (!predicate(error.success)) {
     return orElse ? orElse(error.success) : failCause(cause);
@@ -1425,7 +1477,7 @@ export const catchIf = /*#__PURE__*/dual(args => isEffect(args[0]), (self, predi
 }));
 /** @internal */
 export const catchFilter = /*#__PURE__*/dual(args => isEffect(args[0]), (self, filter, f, orElse) => catchCause(self, cause => {
-  const error = findError(cause);
+  const error = findRecoverableError(cause);
   if (Result.isFailure(error)) return failCause(error.failure);
   const result = filter(error.success);
   if (Result.isFailure(result)) {
@@ -1472,10 +1524,10 @@ export const unwrapReason = /*#__PURE__*/dual(2, (self, errorTag) => catchFilter
   return Result.fail(e);
 }, fail));
 /** @internal */
-export const mapError = /*#__PURE__*/dual(2, (self, f) => catch_(self, error => failSync(() => f(error))));
+export const mapError = /*#__PURE__*/dual(2, (self, f) => catchCause(self, cause => failCause(causeMap(cause, f))));
 /** @internal */
-export const mapBoth = /*#__PURE__*/dual(2, (self, options) => matchEffect(self, {
-  onFailure: e => failSync(() => options.onFailure(e)),
+export const mapBoth = /*#__PURE__*/dual(2, (self, options) => matchCauseEffect(self, {
+  onFailure: cause => failCause(causeMap(cause, options.onFailure)),
   onSuccess: a => sync(() => options.onSuccess(a))
 }));
 /** @internal */
@@ -1499,6 +1551,11 @@ export const firstSuccessOf = effects => suspend(() => {
 /** @internal */
 export const eventually = self => catch_(self, _ => flatMap(yieldNow, () => eventually(self)));
 /** @internal */
+export const ignoreCauseLogger = log => log === "Unhandled" ? (...message) => withFiber(fiber => {
+  const level = fiber.getRef(UnhandledLogLevel);
+  return level === undefined ? void_ : logWithLevel(level)(...message);
+}) : logWithLevel(log === true ? undefined : log);
+/** @internal */
 export const ignore = /*#__PURE__*/dual(args => isEffect(args[0]), (self, options) => {
   if (!options?.log) {
     return matchEffect(self, {
@@ -1506,11 +1563,11 @@ export const ignore = /*#__PURE__*/dual(args => isEffect(args[0]), (self, option
       onSuccess: _ => void_
     });
   }
-  const logEffect = logWithLevel(options.log === true ? undefined : options.log);
+  const logEffect = ignoreCauseLogger(options.log);
   return matchCauseEffect(self, {
     onFailure(cause) {
-      const failure = findFail(cause);
-      return Result.isFailure(failure) ? failCause(failure.failure) : options.message === undefined ? logEffect(cause) : logEffect(options.message, cause);
+      const error = findRecoverableError(cause);
+      return Result.isFailure(error) ? failCause(error.failure) : options.message === undefined ? logEffect(cause) : logEffect(options.message, cause);
     },
     onSuccess: _ => void_
   });
@@ -1523,7 +1580,7 @@ export const ignoreCause = /*#__PURE__*/dual(args => isEffect(args[0]), (self, o
       onSuccess: _ => void_
     });
   }
-  const logEffect = logWithLevel(options.log === true ? undefined : options.log);
+  const logEffect = ignoreCauseLogger(options.log);
   return matchCauseEffect(self, {
     onFailure: cause => options.message === undefined ? logEffect(cause) : logEffect(options.message, cause),
     onSuccess: _ => void_
@@ -1575,10 +1632,10 @@ const makeMatch = (op, onFailure) => {
   return MatchImpl;
 };
 const MatchImpl = /*#__PURE__*/makeMatch("Match", function (cause, fiber) {
-  const fail = cause.reasons.find(isFailReason);
-  if (fail === undefined) return failCause(cause);
+  const error = findRecoverableError(cause);
+  if (Result.isFailure(error)) return failCause(error.failure);
   const handlers = this.payload;
-  return fiber.succeedWith(continuationMarksStack ? handlers.onFailure(fail.error) : internalCall(() => handlers.onFailure(fail.error)));
+  return fiber.succeedWith(continuationMarksStack ? handlers.onFailure(error.success) : internalCall(() => handlers.onFailure(error.success)));
 });
 const MatchCauseImpl = /*#__PURE__*/makeMatch("MatchCause", function (cause, fiber) {
   const handlers = this.payload;
@@ -1589,8 +1646,8 @@ export const matchCause = /*#__PURE__*/dual(2, (self, options) => new MatchCause
 /** @internal */
 export const matchEffect = /*#__PURE__*/dual(2, (self, options) => matchCauseEffect(self, {
   onFailure: cause => {
-    const fail = cause.reasons.find(isFailReason);
-    return fail ? options.onFailure(fail.error) : failCause(cause);
+    const error = findRecoverableError(cause);
+    return Result.isFailure(error) ? failCause(error.failure) : options.onFailure(error.success);
   },
   onSuccess: options.onSuccess
 }));
@@ -1600,8 +1657,8 @@ export const match = /*#__PURE__*/dual(2, (self, options) => new MatchImpl(self,
 export const matchEager = /*#__PURE__*/dual(2, (self, options) => {
   if (effectIsExit(self)) {
     if (self._tag === "Success") return exitSucceed(options.onSuccess(self.value));
-    const error = findError(self.cause);
-    if (Result.isFailure(error)) return self;
+    const error = findRecoverableError(self.cause);
+    if (Result.isFailure(error)) return exitFailCause(error.failure);
     return exitSucceed(options.onFailure(error.success));
   }
   return match(self, options);
@@ -1708,17 +1765,19 @@ const runFinalizer = (finalizer, exit_) => {
     return exitDie(defect);
   }
 };
-const combineFinalizerCause = (exit_, finalizer) => exitIsSuccess(exit_) ? finalizer : catchCause(finalizer, cause => failCause(causeCombine(exit_.cause, cause)));
+const combineFinalizerCause = (exit_, finalizer) => exitIsSuccess(exit_) ? finalizer : catchCause(finalizer, cause => failCause(causeElectDefects(causeCombine(exit_.cause, cause))));
 const scopeCloseFinalizers = /*#__PURE__*/fnUntraced(function* (self, finalizers, exit_) {
   let exits = [];
   const fibers = [];
-  const arr = Array.from(finalizers.values());
+  const arr = Array.from(finalizers);
   const parent = getCurrentFiber();
   for (let i = arr.length - 1; i >= 0; i--) {
-    const finalizer = arr[i];
+    const [key, finalizer] = arr[i];
     if (self.strategy === "sequential") {
       exits.push(yield* exit(runFinalizer(finalizer, exit_)));
-    } else {
+    } else if (key !== parent) {
+      // Skip the closing fiber's own `forkIn` / `Fiber.runIn` finalizer, as
+      // running it in another fiber would wait for the closing fiber to exit.
       fibers.push(forkUnsafe(parent, runFinalizer(finalizer, exit_), true, true, "inherit"));
     }
   }
@@ -1929,29 +1988,35 @@ const makeCachedUnsafe = (self, ttlMillis) => {
   const join = (fiber, run) => {
     run.awaiters++;
     onExitUnsafe(fiber, () => {
-      // Abandon the run once every caller has left, unless it already finished.
-      if (--run.awaiters > 0 || current !== run) return;
-      // Detach it first so new callers start a fresh run instead of joining
-      // one that is being interrupted.
-      current = undefined;
+      // Abandon the run once every caller has left, unless its source already finished.
+      if (--run.awaiters > 0 || run.done) return;
+      // Detach before interruption so new callers start a fresh run.
+      if (current === run) current = undefined;
       return fiberInterrupt(run.fiber);
     });
     return fiberJoin(run.fiber);
   };
   return [withFiber(fiber => {
-    if (current !== undefined) return join(fiber, current);
+    if (current !== undefined) {
+      // A run joining itself is not an awaiter, so external callers can still abandon it.
+      return fiber === current.fiber ? fiberJoin(current.fiber) : join(fiber, current);
+    }
     if (exit !== undefined && (expiresAt === Infinity || fiber.getRef(ClockRef).currentTimeMillisUnsafe() < expiresAt)) {
       return exit;
     }
     exit = undefined;
     const clock = fiber.getRef(ClockRef);
     const run = {
-      fiber: undefined,
-      awaiters: 0
+      fiber: new FiberImpl(fiber.context),
+      awaiters: 0,
+      done: false
     };
     current = run;
-    run.fiber = forkUnsafe(fiber, onExitPrimitive(self, exit_ => {
-      // An abandoned run must not overwrite or clear a replacement run.
+    // Join before evaluating, which may synchronously re-enter and interrupt other awaiters.
+    const joined = join(fiber, run);
+    run.fiber.evaluate(onExitPrimitive(self, exit_ => {
+      run.done = true;
+      // A detached run must not publish its result or clear a replacement run.
       if (current !== run) return;
       current = undefined;
       // Interruption is abandonment, so it is never cached.
@@ -1959,9 +2024,11 @@ const makeCachedUnsafe = (self, ttlMillis) => {
       const duration = ttlMillis(exit_);
       expiresAt = duration === Infinity ? Infinity : clock.currentTimeMillisUnsafe() + duration;
       exit = exit_;
-    }), true, true);
-    return run.fiber._exit ?? join(fiber, run);
+    }));
+    return run.fiber._exit ?? joined;
   }), sync(() => {
+    // Existing callers keep the in-flight run; new callers start a fresh one.
+    current = undefined;
     exit = undefined;
   })];
 };
@@ -2052,15 +2119,9 @@ export const all = (arg, options) => {
   } else if (options?.discard) {
     return options.mode === "result" ? forEach(Object.values(arg), result, options) : forEach(Object.values(arg), identity, options);
   }
-  return suspend(() => {
-    const out = {};
-    return as(forEach(Object.entries(arg), ([key, effect]) => map(options?.mode === "result" ? result(effect) : effect, value => {
-      InternalRecord.assignProperty(out, key, value);
-    }), {
-      discard: true,
-      concurrency: options?.concurrency
-    }), out);
-  });
+  return suspend(() => map(forEach(Object.entries(arg), ([key, effect]) => map(options?.mode === "result" ? result(effect) : effect, value => [key, value]), {
+    concurrency: options?.concurrency
+  }), Object.fromEntries));
 };
 /** @internal */
 export const partition = /*#__PURE__*/dual(args => isIterable(args[0]) && !isEffect(args[0]), (elements, f, options) => map(forEach(elements, (a, i) => result(f(a, i)), options), results => Arr.partition(results, identity)));
@@ -2270,7 +2331,7 @@ const iterateConcurrentImpl = options => {
                   const reasons = exit.cause.reasons.filter(reason => reason._tag !== "Interrupt");
                   if (reasons.length > 0) {
                     const cause = causeFromReasons(reasons);
-                    terminal = exitFailCause(terminal._tag === "Failure" ? causeCombine(terminal.cause, cause) : cause);
+                    terminal = exitFailCause(terminal._tag === "Failure" ? causeElectDefects(causeCombine(terminal.cause, cause)) : cause);
                   }
                 }
               } else {
@@ -2339,24 +2400,13 @@ export const filterMapOrElse = /*#__PURE__*/dual(3, (self, filter, orElse) => fl
 /** @internal */
 export const filterMapOrFail = /*#__PURE__*/dual(args => isEffect(args[0]), (self, filter, orFailWith) => filterMapOrElse(self, filter, orFailWith ? x => fail(orFailWith(x)) : () => fail(new NoSuchElementError())));
 /** @internal */
-export const filter = /*#__PURE__*/dual(args => isIterable(args[0]) && !isEffect(args[0]), (elements, predicate, options) => suspend(() => {
-  const out = [];
-  return as(forEach(elements, (a, i) => {
-    const result = predicate(a, i);
-    if (typeof result === "boolean") {
-      if (result) out.push(a);
-      return void_;
-    }
-    return map(result, keep => {
-      if (keep) {
-        out.push(a);
-      }
-    });
-  }, {
-    discard: true,
-    concurrency: options?.concurrency
-  }), out);
-}));
+export const filter = /*#__PURE__*/dual(args => isIterable(args[0]) && !isEffect(args[0]), (elements, predicate, options) => map(forEach(elements, (a, i) => {
+  const result = predicate(a, i);
+  if (typeof result === "boolean") {
+    return succeed(result ? Option.some(a) : Option.none());
+  }
+  return map(result, keep => keep ? Option.some(a) : Option.none());
+}, options), Arr.getSomes));
 /** @internal */
 export const filterMap = /*#__PURE__*/dual(args => isIterable(args[0]) && !isEffect(args[0]), (elements, filter) => suspend(() => {
   const out = [];
@@ -2436,15 +2486,17 @@ export const awaitAllChildren = self => withFiber(fiber => {
     return isInterruptible ? interruptible(awaitChildren) : awaitChildren;
   });
 });
+// Interrupts the attached fiber, unless it is the fiber running the close. It is
+// keyed by the fiber, so that parallel scopes can skip it on the closing fiber.
+const fiberScopeFinalizer = fiber => () => withFiber(current => current === fiber ? void_ : fiberInterrupt(fiber));
 /** @internal */
 export const forkIn = /*#__PURE__*/dual(args => isEffect(args[0]), (self, scope, options) => withFiber(parent => {
-  const fiber = forkUnsafe(parent, self, options?.startImmediately, true, options?.uninterruptible);
+  // A closed scope gets an unstarted fiber, which is interrupted below
+  const fiber = scope.state._tag === "Closed" ? new FiberImpl(parent.context) : forkUnsafe(parent, self, options?.startImmediately, true, options?.uninterruptible);
   if (!fiber._exit) {
     if (scope.state._tag !== "Closed") {
-      const key = {};
-      const finalizer = () => withFiberId(interruptor => interruptor === fiber.id ? void_ : fiberInterrupt(fiber));
-      scopeAddFinalizerUnsafe(scope, key, finalizer);
-      fiber.addObserver(() => scopeRemoveFinalizerUnsafe(scope, key));
+      scopeAddFinalizerUnsafe(scope, fiber, fiberScopeFinalizer(fiber));
+      fiber.addObserver(() => scopeRemoveFinalizerUnsafe(scope, fiber));
     } else {
       fiber.interruptUnsafe(parent.id, fiberStackAnnotations(parent));
     }
@@ -2486,7 +2538,7 @@ export const fiberRunIn = /*#__PURE__*/dual(2, (self, scope) => {
     return self;
   }
   scopeRemoveFinalizerUnsafe(scope, self);
-  scopeAddFinalizerUnsafe(scope, self, () => fiberInterrupt(self));
+  scopeAddFinalizerUnsafe(scope, self, fiberScopeFinalizer(self));
   self.addObserver(() => scopeRemoveFinalizerUnsafe(scope, self));
   return self;
 });
@@ -2828,7 +2880,7 @@ export const annotateSpans = /*#__PURE__*/dual(args => isEffect(args[0]), (effec
 /** @internal */
 export const annotateCurrentSpan = (...args) => withFiber(fiber => {
   const span = fiber.currentSpanLocal;
-  if (span) {
+  if (span && span.status._tag !== "Ended") {
     if (args.length === 1) {
       for (const [key, value] of Object.entries(args[0])) {
         span.attribute(key, value);
@@ -3373,7 +3425,7 @@ export const tracerLogger = /*#__PURE__*/loggerMake(({
   const clock = fiber.getRef(ClockRef);
   const annotations = fiber.getRef(CurrentLogAnnotations);
   const span = fiber.cache.span;
-  if (span === undefined || span._tag === "ExternalSpan") return;
+  if (span === undefined || span._tag === "ExternalSpan" || span.status._tag === "Ended") return;
   const attributes = {};
   for (const [key, value] of Object.entries(annotations)) {
     InternalRecord.assignProperty(attributes, key, value);

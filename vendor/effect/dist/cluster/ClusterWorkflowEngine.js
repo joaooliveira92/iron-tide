@@ -7,6 +7,7 @@
  * @stability unstable
  * @since 4.0.0
  */
+import * as Cause from "../Cause.js";
 import * as Context from "../Context.js";
 import * as DateTime from "../DateTime.js";
 import * as Deferred from "../Deferred.js";
@@ -15,7 +16,6 @@ import * as Effect from "../Effect.js";
 import * as Exit from "../Exit.js";
 import * as Fiber from "../Fiber.js";
 import * as Headers from "../http/Headers.js";
-import * as Latch from "../Latch.js";
 import * as Layer from "../Layer.js";
 import * as Option from "../Option.js";
 import * as PrimaryKey from "../PrimaryKey.js";
@@ -24,6 +24,7 @@ import * as Rpc from "../rpc/Rpc.js";
 import { ClientAbort } from "../rpc/RpcSchema.js";
 import * as Schedule from "../Schedule.js";
 import * as Schema from "../Schema.js";
+import * as Scope from "../Scope.js";
 import * as Semaphore from "../Semaphore.js";
 import * as Activity from "../workflow/Activity.js";
 import * as DurableClock from "../workflow/DurableClock.js";
@@ -82,12 +83,24 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
   };
   const activities = new Map();
   const interruptedActivities = new Set();
-  const activityLatches = new Map();
   const deferredState = WorkflowEngine.makeDeferredState();
   // Rebuilds share an activation; overlapping activations have separate results.
   // Weak keys do not retain scopes, but contexts captured by clients, activities,
   // or finalizers can keep a closed scope (and its results) reachable until later.
   const pendingByActivation = new WeakMap();
+  // Closes the scopes retained by suspended runs. The latest run already closed
+  // its own scope with its real exit, so earlier finalizers observe success and
+  // skip superseded compensations. Abandonment releases owner-local resources
+  // without running durable finalizers, so the run can replay elsewhere.
+  const closeRuns = (state, abandoned) => Effect.suspend(() => {
+    const scope = state.scope;
+    if (abandoned) {
+      for (const instance of state.instances) instance.abandoned = true;
+    }
+    state.instances.clear();
+    state.scope = Scope.makeUnsafe();
+    return Scope.close(scope, Exit.void);
+  });
   const clients = yield* RcMap.make({
     lookup: Effect.fnUntraced(function* (workflowName) {
       const entity = entities.get(workflowName);
@@ -169,7 +182,13 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
       id: activityPrimaryKey(options.activity.name, options.attempt)
     });
     if (Option.isNone(requestId)) return;
-    yield* sharding.reset(requestId.value);
+    // Reset only the Suspended reply this runner saw. If another runner has
+    // stored a newer reply, storage skips the reset and the caller reads it.
+    const reply = yield* replyForRequestId(requestId.value);
+    if (Option.isNone(reply) || !isSuspendedReply(reply.value)) return;
+    yield* sharding.reset(requestId.value, {
+      expectedReplyId: Snowflake.Snowflake(reply.value.id)
+    });
   }, Effect.retry({
     times: 3,
     schedule: Schedule.exponential(250)
@@ -185,7 +204,7 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
     });
     yield* storage.clearAddress(clockAddress);
   });
-  const resume = Effect.fnUntraced(function* (workflow, executionId) {
+  const resume = Effect.fnUntraced(function* (workflow, executionId, mode) {
     const maybeReply = yield* requestReply({
       workflow,
       entityType: `Workflow/${workflow._tag}`,
@@ -193,14 +212,22 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
       tag: "run",
       id: ""
     });
-    const maybeSuspended = Option.filter(maybeReply, reply => reply.exit._tag === "Success" && reply.exit.value._tag === "Suspended");
+    const maybeSuspended = Option.filter(maybeReply, isSuspendedReply);
     if (Option.isNone(maybeSuspended)) return;
+    // Replies without `failed` retain automatic wakes for compatibility.
+    if (mode === "automatic" && isFailedReply(maybeSuspended.value)) return;
     if (!(yield* sharding.reset(Snowflake.Snowflake(maybeSuspended.value.requestId), {
       expectedReplyId: Snowflake.Snowflake(maybeSuspended.value.id)
     }))) {
       return yield* Effect.fail(new Error("Failed to reset workflow run"));
     }
     yield* sharding.pollStorage;
+  });
+  // Activations load a persisted interrupt when they start, so the per-call
+  // check reads only memory.
+  const interruptPending = instance => Effect.map(Effect.serviceOption(CurrentActivationScope), activation => {
+    const pending = Option.isSome(activation) ? pendingByActivation.get(activation.value) : undefined;
+    return pending?.workflowName === instance.workflow._tag && pending.executionId === instance.executionId && pending.results.has(InterruptSignal.name);
   });
   const sendResumeParent = Effect.fnUntraced(function* (options, childExecutionId) {
     const requestId = yield* requestIdFor({
@@ -220,12 +247,14 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
     }
     const reply = yield* replyForRequestId(requestId.value);
     if (Option.isNone(reply)) return;
-    yield* sharding.reset(requestId.value);
+    yield* sharding.reset(requestId.value, {
+      expectedReplyId: Snowflake.Snowflake(reply.value.id)
+    });
   }, Effect.scoped);
-  // A child or deferred may complete while a run is still unwinding. Subscribe
-  // to the run's reply before reading storage so the wake cannot fall between
-  // the run's last read and its suspended reply.
-  const waitForRunReply = Effect.fnUntraced(function* (workflow, request) {
+  // Subscribe to the run's next reply before reading storage, so a reply
+  // cannot fall between the read and the subscription. Returns `true` when the
+  // stored reply already settles the wait, `false` when a new reply arrived.
+  const awaitRunReply = Effect.fnUntraced(function* (workflow, request, isSettled) {
     const waiter = yield* storage.registerReplyHandler(new Message.OutgoingRequest({
       envelope: request,
       context: Context.empty(),
@@ -237,9 +266,45 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
       startImmediately: true
     }));
     const reply = yield* replyForRequestId(request.requestId);
-    if (Option.isSome(reply)) return;
-    yield* Fiber.join(waiter).pipe(Effect.catchTag("EntityNotAssignedToRunner", () => ClusterAbandon.interrupt), Effect.catchCause(cause => ClusterAbandon.isCause(cause) ? ClusterAbandon.interrupt : Effect.failCause(cause)));
+    if (Option.isSome(reply) && isSettled(reply.value)) return true;
+    yield* Fiber.join(waiter);
+    return false;
   }, Effect.scoped);
+  // A child or deferred may complete while a run is still unwinding. Wait for
+  // the run's reply so the wake cannot fall between the run's last read and
+  // its suspended reply.
+  const waitForRunReply = (workflow, request) => awaitRunReply(workflow, request, () => true).pipe(Effect.asVoid, Effect.catchTag("EntityNotAssignedToRunner", () => ClusterAbandon.interrupt), Effect.catchCause(cause => ClusterAbandon.isCause(cause) ? ClusterAbandon.interrupt : Effect.failCause(cause)));
+  // Wake an external caller once its run publishes a reply other than
+  // `Suspended`. Replies are only observed on the runner that saves them, so
+  // callers on other runners, and any failure here, leave delivery to the
+  // caller's retry schedule.
+  const awaitComplete = Effect.fnUntraced(function* (workflow, executionId) {
+    const address = entityAddressFor({
+      workflow,
+      entityType: `Workflow/${workflow._tag}`,
+      executionId
+    });
+    if (!sharding.hasShardId(address.shardId)) return yield* Effect.never;
+    const requestId = yield* storage.requestIdForPrimaryKey({
+      address,
+      tag: "run",
+      id: ""
+    });
+    if (Option.isNone(requestId)) return yield* Effect.never;
+    const request = Envelope.makeRequest({
+      requestId: requestId.value,
+      address,
+      tag: "run",
+      payload: {},
+      headers: Headers.empty
+    });
+    // A replay that suspends again re-arms the wait, so it does not spend a
+    // step of the caller's retry schedule.
+    let settled = false;
+    while (!settled) {
+      settled = yield* awaitRunReply(workflow, request, reply => !isSuspendedReply(reply));
+    }
+  }, Effect.catchCause(() => Effect.never));
   const interrupt = Effect.fnUntraced(function* (workflow, executionId) {
     ensureEntity(workflow);
     const requestId = yield* requestIdFor({
@@ -253,7 +318,7 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
       return Option.none();
     }
     const reply = yield* replyForRequestId(requestId.value);
-    const nonSuspendedReply = Option.filter(reply, reply => reply.exit._tag !== "Success" || reply.exit.value._tag !== "Suspended");
+    const nonSuspendedReply = Option.filter(reply, reply => !isSuspendedReply(reply));
     if (Option.isSome(nonSuspendedReply)) {
       return Option.none();
     }
@@ -278,28 +343,56 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
         const activation = yield* CurrentActivationScope;
         let pending = pendingByActivation.get(activation);
         if (!pending) {
+          const results = new Map();
+          // A new owner must see an interrupt persisted before it took over.
+          // Publish the cache only once loaded, so a retried build repeats
+          // a failed lookup.
+          const interrupt = yield* Effect.orDie(requestReply({
+            workflow,
+            entityType: `Workflow/${workflow._tag}`,
+            executionId,
+            tag: "deferred",
+            id: InterruptSignal.name
+          }));
+          if (Option.isSome(interrupt)) {
+            const decoded = decodeDeferredWithExit(interrupt.value);
+            results.set(InterruptSignal.name, decoded.exit._tag === "Success" ? decoded.exit.value : decoded.exit);
+          }
           pending = {
             workflowName: workflow._tag,
             executionId,
-            results: new Map()
+            results,
+            instances: new Set(),
+            scope: Scope.makeUnsafe()
           };
+          yield* Scope.addFinalizer(activation, closeRuns(pending, true));
           pendingByActivation.set(activation, pending);
         }
         // Retain awaited names through reply persistence, including suspension.
         // Replays reuse the request id but track a fresh set of awaits.
         let currentRun;
-        // Concurrent wakes share one wait for the current run to publish its reply.
+        // Concurrent automatic wakes share one wait for the current run to
+        // publish its reply. Explicit wakes cannot be dropped, because an
+        // automatic wake skips the reset of a failure suspension, so they
+        // wait outside the gate. Operator resume does not use the gate.
         const resumeGate = Semaphore.makeUnsafe(1);
-        const resumeCurrentRun = Effect.suspend(() => resumeGate.withPermitsIfAvailable(1)(currentRun ? waitForRunReply(workflow, currentRun.request) : Effect.void)).pipe(
+        const waitForCurrentRunReply = Effect.suspend(() => currentRun ? waitForRunReply(workflow, currentRun.request) : Effect.void);
+        const resumeCurrentRun = mode => ensureSuccess(mode === "explicit" ? Effect.andThen(waitForCurrentRunReply, resume(workflow, executionId, mode)) : resumeGate.withPermitsIfAvailable(1)(waitForCurrentRunReply).pipe(
         // Release the gate before reset can start another run, so later
         // completions can wake that replay.
-        Effect.flatMap(waited => Option.isSome(waited) ? resume(workflow, executionId) : Effect.void), ensureSuccess);
+        Effect.flatMap(waited => Option.isSome(waited) ? resume(workflow, executionId, mode) : Effect.void)));
         return {
           run: request => {
-            const instance = WorkflowEngine.WorkflowInstance.initial(workflow, executionId);
+            // Each run gets a fresh scope under the activation's parent, so
+            // replays rebuild compensations while suspended runs keep theirs.
+            const instance = WorkflowEngine.WorkflowInstance.initial(workflow, executionId, {
+              scope: Scope.forkUnsafe(pending.scope)
+            });
+            pending.instances.add(instance);
             currentRun = {
               request,
-              instance
+              instance,
+              activityAwaits: new Map()
             };
             const parent = request.payload[payloadParentKey];
             return execute(workflow.payloadSchema.make(request.payload), executionId).pipe(Effect.onExit(exit => {
@@ -311,8 +404,23 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
               if (instance.abandoned) {
                 instance.suspended = false;
               }
+              // Abandoned runs never wake the parent; another owner replays them.
+              const resumeParent = parent && !parent.detached && !instance.abandoned ? ensureSuccess(sendResumeParent(parent, executionId)) : Effect.void;
               if (!instance.suspended && !instance.abandoned && !(suspendOnFailure && exit._tag === "Failure")) {
-                return parent ? ensureSuccess(sendResumeParent(parent, executionId)) : Effect.void;
+                if (exit._tag === "Success" || !Cause.hasInterruptsOnly(exit.cause)) {
+                  return resumeParent;
+                }
+                // `interruptUnsafe` cuts the run off without a result and
+                // its replay applies the interrupt. Retain the scope like a
+                // suspended run, so `closeRuns` supersedes it and only the
+                // final run's compensations observe the interrupt.
+                return engine.deferredResult(InterruptSignal).pipe(Effect.flatMap(maybeExit => {
+                  if (Option.isNone(maybeExit)) {
+                    return resumeParent;
+                  }
+                  instance.suspended = true;
+                  return Effect.void;
+                }), Effect.orDie);
               }
               return engine.deferredResult(InterruptSignal).pipe(Effect.flatMap(maybeExit => {
                 if (Option.isNone(maybeExit)) {
@@ -320,31 +428,34 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
                 }
                 instance.suspended = false;
                 instance.interrupted = true;
-                return Effect.andThen(Effect.ignore(clearClock({
+                // The interrupt completes the run, so wake the parent
+                // to observe it.
+                return Effect.ignore(clearClock({
                   workflow,
                   executionId
-                })), Effect.withFiber(fiber => Effect.interruptible(Fiber.interrupt(fiber))));
+                })).pipe(Effect.andThen(resumeParent), Effect.andThen(Effect.withFiber(fiber => Effect.interruptible(Fiber.interrupt(fiber)))));
               }), Effect.orDie);
-            }), Workflow.intoResult, effect => deferredState.trackRun(instance, effect),
+            }), Workflow.intoResult, Effect.onExit(exit => Exit.isSuccess(exit) && exit.value._tag === "Suspended" ? Effect.void : closeRuns(pending, instance.abandoned)), effect => deferredState.trackRun(instance, effect),
             // Request middleware and local callers may carry another entity's context.
             Effect.provideService(CurrentActivationScope, activation));
           },
           activity(request) {
             const payload = request.payload;
             const activityId = `${executionId}/${payload.name}`;
-            const instance = WorkflowEngine.WorkflowInstance.initial(workflow, executionId);
+            const instance = WorkflowEngine.WorkflowInstance.initial(workflow, executionId, {
+              awaitedDeferreds: currentRun?.activityAwaits
+            });
             interruptedActivities.delete(activityId);
-            return Effect.gen(function* () {
-              let entry = activities.get(activityId);
-              while (!entry) {
-                const latch = Latch.makeUnsafe();
-                activityLatches.set(activityId, latch);
-                yield* latch.await;
-                entry = activities.get(activityId);
-              }
-              const context = entry.context.pipe(Context.add(WorkflowEngine.WorkflowInstance, instance), Context.add(CurrentActivationScope, activation), Context.add(Activity.CurrentAttempt, payload.attempt));
-              return yield* entry.activity.executeEncoded.pipe(Effect.provideContext(context));
-            }).pipe(Workflow.intoResult, Effect.catchCause(cause => {
+            const entry = activities.get(activityId);
+            if (!entry) {
+              // Replay may never register a losing race activity. Answer it
+              // without waiting; a later registration can reset this reply.
+              return Effect.succeed(new Workflow.Suspended({})).pipe(Rpc.wrap({
+                fork: true
+              }));
+            }
+            const context = entry.context.pipe(Context.add(WorkflowEngine.WorkflowInstance, instance), Context.add(CurrentActivationScope, activation), Context.add(Activity.CurrentAttempt, payload.attempt));
+            return entry.activity.executeEncoded.pipe(Effect.provideContext(context), Workflow.intoResult, Effect.catchCause(cause => {
               // we only want to store interrupts as suspends when the
               // client requested it
               const suspend = cause.reasons.some(f => f._tag === "Interrupt" && f.annotations.has(ClientAbort.key));
@@ -363,13 +474,18 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
           deferred: request => {
             const payload = request.payload;
             pending.results.set(payload.name, payload.exit);
+            const mode = payload.name === InterruptSignal.name ? "explicit" : "automatic";
             // Await registers before reading the cache. If this run has not
             // registered yet, a later await will see the result just stored.
             // Check when the wake runs and skip preemption too: interrupting
             // a later await would require waiting for its reply before reset.
             // A run completing its own deferred also reads it from the cache
-            // when it awaits later, so that completion never wakes the run.
-            const wake = Effect.suspend(() => currentRun && !currentRun.instance.awaitedDeferreds.has(payload.name) ? currentRun.instance.completedDeferreds.has(payload.name) ? Effect.void : ensureSuccess(resume(workflow, executionId)) : deferredState.deferredDone(executionId, payload.name).pipe(Effect.andThen(resumeCurrentRun)));
+            // when it awaits later, unless an activity is already parked on it.
+            // A run only reads InterruptSignal while suspending, so an interrupt
+            // always waits for the current run's reply before it resets the run.
+            const wake = Effect.suspend(() => currentRun && mode === "automatic" && !currentRun.instance.awaitedDeferreds.has(payload.name) ? currentRun.activityAwaits.has(payload.name)
+            // Hold an activity wake until the run has published its reply.
+            ? resumeCurrentRun(mode) : currentRun.instance.completedDeferreds.has(payload.name) ? Effect.void : ensureSuccess(resume(workflow, executionId, mode)) : deferredState.deferredDone(executionId, payload.name).pipe(Effect.andThen(resumeCurrentRun(mode))));
             // An asynchronous reply releases the RPC concurrency permit while
             // the wake waits; the pending request still occupies mailbox capacity.
             // The activation owns the wake so it survives handler rebuilds,
@@ -379,7 +495,7 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
               startImmediately: true
             }), Effect.as(reply));
           },
-          resume: () => resumeCurrentRun.pipe(Rpc.wrap({
+          resume: () => resumeCurrentRun("automatic").pipe(Rpc.wrap({
             fork: true,
             uninterruptible: true
           }))
@@ -395,6 +511,7 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
       return Effect.logWarning(`Workflow "${workflow._tag}" is already registered with payload shape ${payloadShape(existing)}; ignoring duplicate definition with payload shape ${payloadShape(workflow)}`).pipe(Effect.andThen(registration));
     }),
     execute: (workflow, {
+      detached,
       discard,
       executionId,
       parent,
@@ -403,7 +520,12 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
       ensureEntity(workflow);
       return RcMap.get(clients, workflow._tag).pipe(Effect.flatMap(make => make(executionId).run(parent ? {
         ...payload,
-        [payloadParentKey]: {
+        // A detached child keeps its parent for observability only.
+        [payloadParentKey]: detached ? {
+          workflowName: parent.workflow._tag,
+          executionId: parent.executionId,
+          detached: true
+        } : {
           workflowName: parent.workflow._tag,
           executionId: parent.executionId
         }
@@ -444,12 +566,28 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
         })
       }), false));
     }),
-    resume: (workflow, executionId) => ensureSuccess(resume(workflow, executionId)),
+    resume: (workflow, executionId) => ensureSuccess(resume(workflow, executionId, "explicit")),
+    awaitComplete,
     activityExecute: Effect.fnUntraced(function* (activity, attempt) {
       const services = yield* Effect.context();
       const instance = Context.get(services, WorkflowEngine.WorkflowInstance);
       yield* Effect.annotateCurrentSpan("executionId", instance.executionId);
       const activityId = `${instance.executionId}/${activity.name}`;
+      // A pending interrupt replays only to rebuild compensations, so it must
+      // not run new activities. Finalizers run once `interrupted` is set.
+      if (!instance.interrupted && (yield* interruptPending(instance))) {
+        const reply = yield* retryPersistence(requestReply({
+          workflow: instance.workflow,
+          entityType: `Workflow/${instance.workflow._tag}`,
+          executionId: instance.executionId,
+          tag: "activity",
+          id: activityPrimaryKey(activity.name, attempt)
+        }));
+        // Suspend so `onExit` applies the interrupt to the run.
+        if (Option.isNone(reply) || isSuspendedReply(reply.value)) {
+          return new Workflow.Suspended({});
+        }
+      }
       const client = (yield* RcMap.get(clientsPartial, instance.workflow._tag))(instance.executionId);
       while (true) {
         if (!activities.has(activityId)) {
@@ -457,13 +595,8 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
             activity,
             context: services
           });
-          const latch = activityLatches.get(activityId);
-          if (latch) {
-            yield* latch.open;
-            activityLatches.delete(activityId);
-          }
         }
-        const result = yield* Effect.orDie(client.activity({
+        const result = yield* retryPersistence(client.activity({
           name: activity.name,
           attempt,
           withTransaction: Context.get(activity.annotations, ClusterSchema.WithTransaction)
@@ -492,19 +625,28 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
       if (exit) {
         return Option.some(exit);
       }
-      return yield* requestReply({
+      const requestId = yield* requestIdFor({
         workflow: instance.workflow,
         entityType: `Workflow/${instance.workflow._tag}`,
         executionId: instance.executionId,
         tag: "deferred",
         id: deferred.name
-      }).pipe(Effect.map(reply => {
-        if (Option.isNone(reply)) {
-          return Option.none();
-        }
-        const decoded = decodeDeferredWithExit(reply.value);
-        return Option.some(decoded.exit._tag === "Success" ? decoded.exit.value : decoded.exit);
-      }));
+      });
+      if (Option.isNone(requestId)) {
+        return Option.none();
+      }
+      const reply = yield* replyForRequestId(requestId.value);
+      if (Option.isSome(reply)) {
+        return Option.some(deferredReplyExit(reply.value));
+      }
+      // The first completion saved under the deferred name wins, so a
+      // request the owner has not processed yet already holds the result.
+      const [request] = yield* storage.unprocessedMessagesById([requestId.value]);
+      if (request?.envelope._tag === "Request") {
+        return Option.some(decodeDeferredPayload(request.envelope.payload).exit);
+      }
+      // It was processed after the first read, so its reply is stored now.
+      return Option.map(yield* replyForRequestId(requestId.value), deferredReplyExit);
     })), Effect.retry({
       while: e => e._tag === "PersistenceError",
       times: 3,
@@ -525,7 +667,7 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
       }
       const workflow = workflows.get(workflowName);
       if (workflow) {
-        return yield* Effect.orDie(sendDiscard({
+        return yield* retryPersistence(sendDiscard({
           rpc: DeferredRpc,
           address: entityAddressFor({
             workflow,
@@ -539,7 +681,7 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
         }));
       }
       const client = yield* RcMap.get(clientsPartial, workflowName);
-      return yield* Effect.orDie(client(executionId).deferred({
+      return yield* retryPersistence(client(executionId).deferred({
         name: deferredName,
         exit
       }, {
@@ -547,7 +689,8 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
       }));
     }, Effect.scoped),
     scheduleClock(workflow, options) {
-      return DateTime.now.pipe(Effect.flatMap(now => sendDiscard({
+      // Compute the deadline once, so a retried save keeps the original wake-up.
+      return Effect.flatMap(DateTime.now, now => retryPersistence(sendDiscard({
         rpc: ClockRpc,
         address: entityAddressFor({
           workflow,
@@ -559,13 +702,26 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
           workflowName: workflow._tag,
           wakeUp: DateTime.mapEpochMillis(DateTime.addDuration(now, options.clock.duration), Math.ceil)
         }
-      })), Effect.orDie);
+      })));
     }
   });
   return engine;
 });
 const retryPolicy = /*#__PURE__*/Schedule.min([/*#__PURE__*/Schedule.exponential(200, 1.5), /*#__PURE__*/Schedule.spaced("1 minute")]);
-const ensureSuccess = effect => effect.pipe(Effect.sandbox, Effect.retry(retryPolicy), Effect.orDie);
+// A transient storage failure must not become the workflow result. Activity,
+// clock and deferred requests are saved under a primary key, so a retry after
+// a lost acknowledgement is deduplicated instead of stored twice.
+const retryPersistence = effect => effect.pipe(Effect.retry({
+  schedule: retryPolicy,
+  while: e => e._tag === "PersistenceError"
+}), Effect.orDie);
+// A cluster abandonment means this owner can no longer complete the effect, so
+// retrying it would only wait on a retired run. Re-raise it as an annotated
+// interrupt, so the activation can unwind and its shard can be released.
+const ensureSuccess = effect => effect.pipe(Effect.sandbox, Effect.retry({
+  schedule: retryPolicy,
+  while: cause => !ClusterAbandon.isCause(cause)
+}), Effect.catchIf(ClusterAbandon.isCause, () => ClusterAbandon.interrupt), Effect.orDie);
 const AnyOrVoid = /*#__PURE__*/Schema.Union([Schema.Undefined, Schema.Any]);
 const ExitUnknown = /*#__PURE__*/Schema.Exit(AnyOrVoid, AnyOrVoid, Schema.Any);
 const ActivityRpc = /*#__PURE__*/Rpc.make("activity", {
@@ -593,7 +749,14 @@ const DeferredRpc = /*#__PURE__*/Rpc.make("deferred", {
   }) => name,
   success: ExitUnknown
 }).annotate(ClusterSchema.Persisted, true).annotate(ClusterSchema.Uninterruptible, true);
+const isSuspendedReply = reply => reply.exit._tag === "Success" && reply.exit.value._tag === "Suspended";
+const isFailedReply = reply => reply.exit._tag === "Success" && reply.exit.value._tag === "Suspended" && reply.exit.value.failed === true;
 const decodeDeferredWithExit = /*#__PURE__*/Schema.decodeSync(/*#__PURE__*/Schema.toCodecJson(/*#__PURE__*/Reply.WithExit.schema(DeferredRpc)));
+const decodeDeferredPayload = /*#__PURE__*/Schema.decodeUnknownSync(/*#__PURE__*/Schema.toCodecJson(DeferredRpc.payloadSchema));
+const deferredReplyExit = reply => {
+  const decoded = decodeDeferredWithExit(reply);
+  return decoded.exit._tag === "Success" ? decoded.exit.value : decoded.exit;
+};
 const ResumeRpc = /*#__PURE__*/Rpc.make("resume", {
   // Older persisted resume envelopes have an empty payload and use the empty key.
   payload: {
@@ -616,7 +779,8 @@ const makeWorkflowEntity = workflow => Entity.make(`Workflow/${workflow._tag}`, 
     ...workflow.payloadSchema.fields,
     [payloadParentKey]: Schema.optional(Schema.Struct({
       workflowName: Schema.String,
-      executionId: Schema.String
+      executionId: Schema.String,
+      detached: Schema.optional(Schema.Boolean)
     }))
   },
   primaryKey: () => "",

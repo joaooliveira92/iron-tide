@@ -521,8 +521,10 @@ export const fromOption: <A>(self: Option.Option<A>) => Array<A> = Option.toArra
  *
  * **Details**
  *
- * `onNonEmpty` receives a `NonEmptyReadonlyArray`. Supports both data-first and
- * data-last usage.
+ * `onNonEmpty` receives a `NonEmptyArray` for mutable arrays and a
+ * `NonEmptyReadonlyArray` otherwise. Data-last calls default to the readonly
+ * callback, so the returned function still accepts `ReadonlyArray`. Supports
+ * both data-first and data-last usage.
  *
  * **Example** (Branching on emptiness)
  *
@@ -555,8 +557,10 @@ export const match: {
    *
    * **Details**
    *
-   * `onNonEmpty` receives a `NonEmptyReadonlyArray`. Supports both data-first and
-   * data-last usage.
+   * `onNonEmpty` receives a `NonEmptyArray` for mutable arrays and a
+   * `NonEmptyReadonlyArray` otherwise. Data-last calls default to the readonly
+   * callback, so the returned function still accepts `ReadonlyArray`. Supports
+   * both data-first and data-last usage.
    *
    * **Example** (Branching on emptiness)
    *
@@ -594,8 +598,93 @@ export const match: {
    *
    * **Details**
    *
-   * `onNonEmpty` receives a `NonEmptyReadonlyArray`. Supports both data-first and
-   * data-last usage.
+   * `onNonEmpty` receives a `NonEmptyArray` for mutable arrays and a
+   * `NonEmptyReadonlyArray` otherwise. Data-last calls default to the readonly
+   * callback, so the returned function still accepts `ReadonlyArray`. Supports
+   * both data-first and data-last usage.
+   *
+   * **Example** (Branching on emptiness)
+   *
+   * ```ts import.meta.vitest
+   * import { Array } from "effect"
+   *
+   * const describe = Array.match({
+   *   onEmpty: () => "empty",
+   *   onNonEmpty: ([head, ...tail]) => `head: ${head}, tail: ${tail.length}`
+   * })
+   *
+   * describe([]) // => "empty"
+   * describe([1, 2, 3]) // => "head: 1, tail: 2"
+   * ```
+   *
+   * @see {@link matchLeft} — destructures into head + tail
+   * @see {@link matchRight} — destructures into init + last
+   *
+   * @stability stable
+   * @category pattern matching
+   * @since 2.0.0
+   */
+  <B, A, C = B>(
+    options: {
+      readonly onEmpty: LazyArg<B>
+      readonly onNonEmpty: (self: NonEmptyArray<A>) => C
+    }
+  ): (self: Array<A>) => B | C
+  /**
+   * Pattern-matches on an array, handling empty and non-empty cases separately.
+   *
+   * **When to use**
+   *
+   * Use when you need to branch on whether an array is empty.
+   *
+   * **Details**
+   *
+   * `onNonEmpty` receives a `NonEmptyArray` for mutable arrays and a
+   * `NonEmptyReadonlyArray` otherwise. Data-last calls default to the readonly
+   * callback, so the returned function still accepts `ReadonlyArray`. Supports
+   * both data-first and data-last usage.
+   *
+   * **Example** (Branching on emptiness)
+   *
+   * ```ts import.meta.vitest
+   * import { Array } from "effect"
+   *
+   * const describe = Array.match({
+   *   onEmpty: () => "empty",
+   *   onNonEmpty: ([head, ...tail]) => `head: ${head}, tail: ${tail.length}`
+   * })
+   *
+   * describe([]) // => "empty"
+   * describe([1, 2, 3]) // => "head: 1, tail: 2"
+   * ```
+   *
+   * @see {@link matchLeft} — destructures into head + tail
+   * @see {@link matchRight} — destructures into init + last
+   *
+   * @stability stable
+   * @category pattern matching
+   * @since 2.0.0
+   */
+  <A, B, C = B>(
+    self: Array<A>,
+    options: {
+      readonly onEmpty: LazyArg<B>
+      readonly onNonEmpty: (self: NonEmptyArray<A>) => C
+    }
+  ): B | C
+  /**
+   * Pattern-matches on an array, handling empty and non-empty cases separately.
+   *
+   * **When to use**
+   *
+   * Use when you need to branch on whether an array is empty.
+   *
+   * **Details**
+   *
+   * `onNonEmpty` receives a `NonEmptyArray` for mutable arrays and a
+   * `NonEmptyReadonlyArray` otherwise. Data-last calls default to the readonly
+   * callback, so the returned function still accepts `ReadonlyArray`. Supports
+   * both data-first and data-last usage.
    *
    * **Example** (Branching on emptiness)
    *
@@ -5646,7 +5735,7 @@ export const rotate: {
  * **When to use**
  *
  * Use when checking membership with caller-provided equality instead of
- * `Equal.equivalence()`.
+ * `Equal.asEquivalence()`.
  *
  * **Example** (Checking with custom equality)
  *
@@ -5658,7 +5747,7 @@ export const rotate: {
  * pipe([1, 2, 3, 4], containsNumber(3)) // => true
  * ```
  *
- * @see {@link contains} for the `Equal.equivalence()` variant
+ * @see {@link contains} for the `Equal.asEquivalence()` variant
  *
  * @stability stable
  * @category predicates
@@ -5678,7 +5767,7 @@ export const containsWith = <A>(isEquivalent: (self: A, that: A) => boolean): {
   })
 
 /**
- * Checks whether an array contains a value, using `Equal.equivalence()` for
+ * Checks whether an array contains a value, using `Equal.asEquivalence()` for
  * comparison.
  *
  * **When to use**
@@ -5702,7 +5791,7 @@ export const containsWith = <A>(isEquivalent: (self: A, that: A) => boolean): {
  */
 export const contains: {
   /**
-   * Checks whether an array contains a value, using `Equal.equivalence()` for
+   * Checks whether an array contains a value, using `Equal.asEquivalence()` for
    * comparison.
    *
    * **When to use**
@@ -5726,7 +5815,7 @@ export const contains: {
    */
   <A>(a: A): (self: Iterable<A>) => boolean
   /**
-   * Checks whether an array contains a value, using `Equal.equivalence()` for
+   * Checks whether an array contains a value, using `Equal.asEquivalence()` for
    * comparison.
    *
    * **When to use**
@@ -6717,7 +6806,7 @@ export const window: {
  * ) // => [["a", "a"], ["b", "b", "b"], ["c"], ["a"]]
  * ```
  *
- * @see {@link group} for grouping adjacent elements with `Equal.equivalence()`
+ * @see {@link group} for grouping adjacent elements with `Equal.asEquivalence()`
  * @see {@link groupBy} for grouping all elements into a record by key, regardless of adjacency
  *
  * @stability stable
@@ -6749,7 +6838,7 @@ export const groupWith: {
    * ) // => [["a", "a"], ["b", "b", "b"], ["c"], ["a"]]
    * ```
    *
-   * @see {@link group} for grouping adjacent elements with `Equal.equivalence()`
+   * @see {@link group} for grouping adjacent elements with `Equal.asEquivalence()`
    * @see {@link groupBy} for grouping all elements into a record by key, regardless of adjacency
    *
    * @stability stable
@@ -6781,7 +6870,7 @@ export const groupWith: {
    * ) // => [["a", "a"], ["b", "b", "b"], ["c"], ["a"]]
    * ```
    *
-   * @see {@link group} for grouping adjacent elements with `Equal.equivalence()`
+   * @see {@link group} for grouping adjacent elements with `Equal.asEquivalence()`
    * @see {@link groupBy} for grouping all elements into a record by key, regardless of adjacency
    *
    * @stability stable
@@ -6812,7 +6901,7 @@ export const groupWith: {
 )
 
 /**
- * Groups consecutive equal elements using `Equal.equivalence()`.
+ * Groups consecutive equal elements using `Equal.asEquivalence()`.
  *
  * **When to use**
  *
@@ -7025,13 +7114,22 @@ const hashBucketsHas = (buckets: HashBuckets, value: unknown): boolean => {
 }
 
 /**
- * Computes the union of two arrays using a custom equivalence, removing
- * duplicates.
+ * Computes the union of two iterables using a custom equivalence.
  *
  * **When to use**
  *
  * Use when you need the union of two arrays but duplicate detection must use a
- * custom equivalence instead of the default `Equal.equivalence()`.
+ * custom equivalence instead of the default `Equal.asEquivalence()`.
+ *
+ * **Details**
+ *
+ * Keeps the elements of `self`, then appends elements of `that` that have no
+ * equivalent in `self`. Calls `isEquivalent` with an element from `self` first
+ * and an element from `that` second.
+ *
+ * **Gotchas**
+ *
+ * Each input must already be deduplicated.
  *
  * **Example** (Computing unions with custom equality)
  *
@@ -7041,7 +7139,7 @@ const hashBucketsHas = (buckets: HashBuckets, value: unknown): boolean => {
  * Array.unionWith([1, 2], [2, 3], (a, b) => a === b) // => [1, 2, 3]
  * ```
  *
- * @see {@link union} for the `Equal.equivalence()` variant
+ * @see {@link union} for the `Equal.asEquivalence()` variant
  * @see {@link intersectionWith} for keeping elements present in both arrays
  * @see {@link differenceWith} for keeping elements present only in the first array
  *
@@ -7051,13 +7149,22 @@ const hashBucketsHas = (buckets: HashBuckets, value: unknown): boolean => {
  */
 export const unionWith: {
   /**
-   * Computes the union of two arrays using a custom equivalence, removing
-   * duplicates.
+   * Computes the union of two iterables using a custom equivalence.
    *
    * **When to use**
    *
    * Use when you need the union of two arrays but duplicate detection must use a
-   * custom equivalence instead of the default `Equal.equivalence()`.
+   * custom equivalence instead of the default `Equal.asEquivalence()`.
+   *
+   * **Details**
+   *
+   * Keeps the elements of `self`, then appends elements of `that` that have no
+   * equivalent in `self`. Calls `isEquivalent` with an element from `self` first
+   * and an element from `that` second.
+   *
+   * **Gotchas**
+   *
+   * Each input must already be deduplicated.
    *
    * **Example** (Computing unions with custom equality)
    *
@@ -7067,7 +7174,7 @@ export const unionWith: {
    * Array.unionWith([1, 2], [2, 3], (a, b) => a === b) // => [1, 2, 3]
    * ```
    *
-   * @see {@link union} for the `Equal.equivalence()` variant
+   * @see {@link union} for the `Equal.asEquivalence()` variant
    * @see {@link intersectionWith} for keeping elements present in both arrays
    * @see {@link differenceWith} for keeping elements present only in the first array
    *
@@ -7080,13 +7187,22 @@ export const unionWith: {
     isEquivalent: (self: ReadonlyArray.Infer<S>, that: ReadonlyArray.Infer<T>) => boolean
   ): (self: S) => ReadonlyArray.OrNonEmpty<S, T, ReadonlyArray.Infer<S> | ReadonlyArray.Infer<T>>
   /**
-   * Computes the union of two arrays using a custom equivalence, removing
-   * duplicates.
+   * Computes the union of two iterables using a custom equivalence.
    *
    * **When to use**
    *
    * Use when you need the union of two arrays but duplicate detection must use a
-   * custom equivalence instead of the default `Equal.equivalence()`.
+   * custom equivalence instead of the default `Equal.asEquivalence()`.
+   *
+   * **Details**
+   *
+   * Keeps the elements of `self`, then appends elements of `that` that have no
+   * equivalent in `self`. Calls `isEquivalent` with an element from `self` first
+   * and an element from `that` second.
+   *
+   * **Gotchas**
+   *
+   * Each input must already be deduplicated.
    *
    * **Example** (Computing unions with custom equality)
    *
@@ -7096,7 +7212,7 @@ export const unionWith: {
    * Array.unionWith([1, 2], [2, 3], (a, b) => a === b) // => [1, 2, 3]
    * ```
    *
-   * @see {@link union} for the `Equal.equivalence()` variant
+   * @see {@link union} for the `Equal.asEquivalence()` variant
    * @see {@link intersectionWith} for keeping elements present in both arrays
    * @see {@link differenceWith} for keeping elements present only in the first array
    *
@@ -7110,13 +7226,22 @@ export const unionWith: {
     isEquivalent: (self: A, that: B) => boolean
   ): NonEmptyArray<A | B>
   /**
-   * Computes the union of two arrays using a custom equivalence, removing
-   * duplicates.
+   * Computes the union of two iterables using a custom equivalence.
    *
    * **When to use**
    *
    * Use when you need the union of two arrays but duplicate detection must use a
-   * custom equivalence instead of the default `Equal.equivalence()`.
+   * custom equivalence instead of the default `Equal.asEquivalence()`.
+   *
+   * **Details**
+   *
+   * Keeps the elements of `self`, then appends elements of `that` that have no
+   * equivalent in `self`. Calls `isEquivalent` with an element from `self` first
+   * and an element from `that` second.
+   *
+   * **Gotchas**
+   *
+   * Each input must already be deduplicated.
    *
    * **Example** (Computing unions with custom equality)
    *
@@ -7126,7 +7251,7 @@ export const unionWith: {
    * Array.unionWith([1, 2], [2, 3], (a, b) => a === b) // => [1, 2, 3]
    * ```
    *
-   * @see {@link union} for the `Equal.equivalence()` variant
+   * @see {@link union} for the `Equal.asEquivalence()` variant
    * @see {@link intersectionWith} for keeping elements present in both arrays
    * @see {@link differenceWith} for keeping elements present only in the first array
    *
@@ -7140,13 +7265,22 @@ export const unionWith: {
     isEquivalent: (self: A, that: B) => boolean
   ): NonEmptyArray<A | B>
   /**
-   * Computes the union of two arrays using a custom equivalence, removing
-   * duplicates.
+   * Computes the union of two iterables using a custom equivalence.
    *
    * **When to use**
    *
    * Use when you need the union of two arrays but duplicate detection must use a
-   * custom equivalence instead of the default `Equal.equivalence()`.
+   * custom equivalence instead of the default `Equal.asEquivalence()`.
+   *
+   * **Details**
+   *
+   * Keeps the elements of `self`, then appends elements of `that` that have no
+   * equivalent in `self`. Calls `isEquivalent` with an element from `self` first
+   * and an element from `that` second.
+   *
+   * **Gotchas**
+   *
+   * Each input must already be deduplicated.
    *
    * **Example** (Computing unions with custom equality)
    *
@@ -7156,7 +7290,7 @@ export const unionWith: {
    * Array.unionWith([1, 2], [2, 3], (a, b) => a === b) // => [1, 2, 3]
    * ```
    *
-   * @see {@link union} for the `Equal.equivalence()` variant
+   * @see {@link union} for the `Equal.asEquivalence()` variant
    * @see {@link intersectionWith} for keeping elements present in both arrays
    * @see {@link differenceWith} for keeping elements present only in the first array
    *
@@ -7169,13 +7303,21 @@ export const unionWith: {
     that: Iterable<B>,
     isEquivalent: (self: A, that: B) => boolean
   ): Array<A | B>
-} = dual(3, <A>(self: Iterable<A>, that: Iterable<A>, isEquivalent: (self: A, that: A) => boolean): Array<A> => {
+} = dual(3, <A, B>(self: Iterable<A>, that: Iterable<B>, isEquivalent: (self: A, that: B) => boolean): Array<A | B> => {
   const a = fromIterable(self)
   const b = fromIterable(that)
   if (isReadonlyArrayNonEmpty(a)) {
     if (isReadonlyArrayNonEmpty(b)) {
-      const dedupe = dedupeWith(isEquivalent)
-      return dedupe(appendAll(a, b))
+      const out: Array<A | B> = [...a]
+      next: for (const value of b) {
+        for (const candidate of a) {
+          if (isEquivalent(candidate, value)) {
+            continue next
+          }
+        }
+        out.push(value)
+      }
+      return out
     }
     return a
   }
@@ -7183,8 +7325,12 @@ export const unionWith: {
 })
 
 /**
- * Computes the union of two arrays, removing duplicates using
- * `Equal.equivalence()`.
+ * Computes the union of two iterables using `Equal.asEquivalence()`.
+ *
+ * **Gotchas**
+ *
+ * Each input must already be deduplicated. Use {@link dedupe} to remove
+ * duplicates from an input first.
  *
  * **Example** (Computing array unions)
  *
@@ -7204,8 +7350,12 @@ export const unionWith: {
  */
 export const union: {
   /**
-   * Computes the union of two arrays, removing duplicates using
-   * `Equal.equivalence()`.
+   * Computes the union of two iterables using `Equal.asEquivalence()`.
+   *
+   * **Gotchas**
+   *
+   * Each input must already be deduplicated. Use {@link dedupe} to remove
+   * duplicates from an input first.
    *
    * **Example** (Computing array unions)
    *
@@ -7227,8 +7377,12 @@ export const union: {
     self: S
   ) => ReadonlyArray.OrNonEmpty<S, T, ReadonlyArray.Infer<S> | ReadonlyArray.Infer<T>>
   /**
-   * Computes the union of two arrays, removing duplicates using
-   * `Equal.equivalence()`.
+   * Computes the union of two iterables using `Equal.asEquivalence()`.
+   *
+   * **Gotchas**
+   *
+   * Each input must already be deduplicated. Use {@link dedupe} to remove
+   * duplicates from an input first.
    *
    * **Example** (Computing array unions)
    *
@@ -7248,8 +7402,12 @@ export const union: {
    */
   <A, B>(self: NonEmptyReadonlyArray<A>, that: ReadonlyArray<B>): NonEmptyArray<A | B>
   /**
-   * Computes the union of two arrays, removing duplicates using
-   * `Equal.equivalence()`.
+   * Computes the union of two iterables using `Equal.asEquivalence()`.
+   *
+   * **Gotchas**
+   *
+   * Each input must already be deduplicated. Use {@link dedupe} to remove
+   * duplicates from an input first.
    *
    * **Example** (Computing array unions)
    *
@@ -7269,8 +7427,12 @@ export const union: {
    */
   <A, B>(self: ReadonlyArray<A>, that: NonEmptyReadonlyArray<B>): NonEmptyArray<A | B>
   /**
-   * Computes the union of two arrays, removing duplicates using
-   * `Equal.equivalence()`.
+   * Computes the union of two iterables using `Equal.asEquivalence()`.
+   *
+   * **Gotchas**
+   *
+   * Each input must already be deduplicated. Use {@link dedupe} to remove
+   * duplicates from an input first.
    *
    * **Example** (Computing array unions)
    *
@@ -7322,7 +7484,7 @@ export const union: {
  * Array.intersectionWith(isEquivalent)(array2)(array1) // => [{ id: 1 }, { id: 3 }]
  * ```
  *
- * @see {@link intersection} for the `Equal.equivalence()` variant
+ * @see {@link intersection} for the `Equal.asEquivalence()` variant
  * @see {@link unionWith} for keeping values from either array with custom equality
  * @see {@link differenceWith} for keeping values only from the first array with custom equality
  *
@@ -7345,7 +7507,7 @@ export const intersectionWith = <A>(isEquivalent: (self: A, that: A) => boolean)
 }
 
 /**
- * Computes the intersection of two arrays using `Equal.equivalence()`. Order is
+ * Computes the intersection of two arrays using `Equal.asEquivalence()`. Order is
  * determined by the first array.
  *
  * **When to use**
@@ -7371,7 +7533,7 @@ export const intersectionWith = <A>(isEquivalent: (self: A, that: A) => boolean)
  */
 export const intersection: {
   /**
-   * Computes the intersection of two arrays using `Equal.equivalence()`. Order is
+   * Computes the intersection of two arrays using `Equal.asEquivalence()`. Order is
    * determined by the first array.
    *
    * **When to use**
@@ -7397,7 +7559,7 @@ export const intersection: {
    */
   <B>(that: Iterable<B>): <A>(self: Iterable<A>) => Array<A & B>
   /**
-   * Computes the intersection of two arrays using `Equal.equivalence()`. Order is
+   * Computes the intersection of two arrays using `Equal.asEquivalence()`. Order is
    * determined by the first array.
    *
    * **When to use**
@@ -7449,7 +7611,7 @@ export const intersection: {
  * Array.differenceWith<number>((a, b) => a === b)([1, 2, 3], [2, 3, 4]) // => [1]
  * ```
  *
- * @see {@link difference} for the `Equal.equivalence()` variant
+ * @see {@link difference} for the `Equal.asEquivalence()` variant
  * @see {@link unionWith} for keeping values from either array with custom equality
  * @see {@link intersectionWith} for keeping values present in both arrays with custom equality
  *
@@ -7473,12 +7635,12 @@ export const differenceWith = <A>(isEquivalent: (self: A, that: A) => boolean): 
 
 /**
  * Computes elements in the first array that are not in the second, using
- * `Equal.equivalence()`.
+ * `Equal.asEquivalence()`.
  *
  * **When to use**
  *
  * Use when you need to keep values from the first array that are absent from
- * the second and the default `Equal.equivalence()` comparison is appropriate.
+ * the second and the default `Equal.asEquivalence()` comparison is appropriate.
  *
  * **Example** (Computing array differences)
  *
@@ -7499,12 +7661,12 @@ export const differenceWith = <A>(isEquivalent: (self: A, that: A) => boolean): 
 export const difference: {
   /**
    * Computes elements in the first array that are not in the second, using
-   * `Equal.equivalence()`.
+   * `Equal.asEquivalence()`.
    *
    * **When to use**
    *
    * Use when you need to keep values from the first array that are absent from
-   * the second and the default `Equal.equivalence()` comparison is appropriate.
+   * the second and the default `Equal.asEquivalence()` comparison is appropriate.
    *
    * **Example** (Computing array differences)
    *
@@ -7525,12 +7687,12 @@ export const difference: {
   <A>(that: Iterable<A>): (self: Iterable<A>) => Array<A>
   /**
    * Computes elements in the first array that are not in the second, using
-   * `Equal.equivalence()`.
+   * `Equal.asEquivalence()`.
    *
    * **When to use**
    *
    * Use when you need to keep values from the first array that are absent from
-   * the second and the default `Equal.equivalence()` comparison is appropriate.
+   * the second and the default `Equal.asEquivalence()` comparison is appropriate.
    *
    * **Example** (Computing array differences)
    *
@@ -9613,7 +9775,7 @@ export const dedupeWith: {
 )
 
 /**
- * Removes duplicates using `Equal.equivalence()`, preserving the order of the
+ * Removes duplicates using `Equal.asEquivalence()`, preserving the order of the
  * first occurrence.
  *
  * **When to use**
@@ -9753,7 +9915,7 @@ export const dedupeAdjacentWith: {
 })
 
 /**
- * Removes consecutive duplicate elements using `Equal.equivalence()`.
+ * Removes consecutive duplicate elements using `Equal.asEquivalence()`.
  *
  * **When to use**
  *

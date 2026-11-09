@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { applyEdit, buildWorkshopView, type WorkshopView } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/index.js";
 import { createPresentationFormat } from "../../lib/presentation-format/profile.js";
+import { designPriceView } from "../../components/design-workspace/design-price-view.js";
 import { engineeringStatus, type EngineeringReadout } from "./engineering-status.js";
 
 const content = loadDrawingBoardContent();
@@ -17,8 +18,15 @@ const format = createPresentationFormat({
 const viewOf = (draft = reference.draft): WorkshopView =>
   buildWorkshopView(draft, content.environmentFor(reference.month, draft.nationId));
 
-const readout = (view: WorkshopView, id: string): EngineeringReadout =>
-  engineeringStatus(view, format).find((r) => r.id === id)!;
+const priceOf = (view: WorkshopView, treasury: number | null = null) =>
+  designPriceView(view.forecast, content.treasuryUnitMicro, treasury, format);
+
+const readout = (
+  view: WorkshopView,
+  id: string,
+  treasury: number | null = null,
+): EngineeringReadout =>
+  engineeringStatus(view, format, priceOf(view, treasury)).find((r) => r.id === id)!;
 
 const t = (kg: number) => format.measurement(kg, "mass", { maximumFractionDigits: 0 });
 const money = (micro: number) => format.moneyFromMicro(micro);
@@ -26,7 +34,7 @@ const tonnesOf = (value: string) => Number(value.replace(/[^0-9.-]/g, ""));
 
 describe("engineeringStatus", () => {
   it("shows the strip's outcomes from compiled state, in reading order", () => {
-    expect(engineeringStatus(viewOf(), format).map((r) => r.id)).toEqual([
+    expect(engineeringStatus(viewOf(), format, priceOf(viewOf())).map((r) => r.id)).toEqual([
       "displacement",
       "cost",
       "speed",
@@ -67,7 +75,13 @@ describe("engineeringStatus", () => {
     expect(by["Fittings"]).toBe(Math.round(cb.components / 1_000_000));
     expect(by["Subtotal"]).toBe(Math.round(cb.subtotal / 1_000_000));
     expect(by["Overheads"]).toBe(Math.round(cb.overheads / 1_000_000));
-    expect(footer).toEqual([{ label: "Total", value: money(cb.total) }]);
+    expect(footer).toEqual([
+      { label: "Total", value: money(cb.total) },
+      {
+        label: "Charged to the treasury",
+        value: `${priceOf(v).unitsText} (${priceOf(v).unitSizeText})`,
+      },
+    ]);
   });
 
   it("opens the causes behind stability: the GM terms and the findings that flag it", () => {
@@ -132,5 +146,17 @@ describe("engineeringStatus", () => {
   it("turns topside load red only when the deck is exceeded", () => {
     const v = viewOf();
     expect(["neutral", "warn", "bad"]).toContain(readout(v, "topside").tone);
+  });
+
+  it("shows the cost in treasury units against the treasury, with a text over-budget state", () => {
+    const v = viewOf();
+    const units = priceOf(v).price.treasuryUnits;
+    const enough = readout(v, "cost", units + 10);
+    expect(enough.value).toContain(`of ${format.count(units + 10)} in the treasury`);
+    expect(enough.tone).toBe("neutral");
+    const short = readout(v, "cost", units - 1);
+    expect(short.tone).toBe("bad");
+    expect(short.breakdown!.causes.join(" ")).toContain("Over budget");
+    expect(readout(v, "cost").value).toBe(priceOf(v).unitsText);
   });
 });

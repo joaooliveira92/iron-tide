@@ -42,7 +42,7 @@ test("a player refits a battleship, regrets it, steps back through the history a
     await torpedoes.getByRole("button", { name: "Remove tubes" }).click();
     await expect.poll(() => fittingRows(torpedoes)).toHaveLength(0);
     stripped = await readEngineeringStatus(page);
-    expect(stripped.cost).toBeLessThan(original.cost);
+    expect(stripped.displacement).toBeLessThan(original.displacement);
 
     await undo.click();
     await expect.poll(() => fittingRows(torpedoes)).toHaveLength(1);
@@ -59,8 +59,8 @@ test("a player refits a battleship, regrets it, steps back through the history a
     await expect.poll(() => fittingRows(torpedoes)).toHaveLength(1);
     await expect(torpedoes.getByRole("row").filter({ hasText: "quarterdeck" })).toBeVisible();
     await expect
-      .poll(async () => (await readEngineeringStatus(page)).cost)
-      .toBeGreaterThan(stripped.cost);
+      .poll(async () => (await readEngineeringStatus(page)).displacement)
+      .toBeGreaterThan(stripped.displacement);
   });
 
   await test.step("jump back to the start through the edit history", async () => {

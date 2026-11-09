@@ -25,5 +25,6 @@ import type * as RpcGroup from "./RpcGroup.ts";
  */
 export declare const makeClient: <Rpcs extends Rpc.Any, const Flatten extends boolean = false>(group: RpcGroup.RpcGroup<Rpcs>, options?: {
     readonly flatten?: Flatten | undefined;
+    readonly disableFatalDefects?: boolean | undefined;
 }) => Effect.Effect<Flatten extends true ? RpcClient.RpcClient.Flat<Rpcs> : RpcClient.RpcClient<Rpcs>, never, Scope.Scope | Rpc.ToHandler<Rpcs> | Rpc.Middleware<Rpcs> | Rpc.MiddlewareClient<Rpcs>>;
 //# sourceMappingURL=RpcTest.d.ts.map

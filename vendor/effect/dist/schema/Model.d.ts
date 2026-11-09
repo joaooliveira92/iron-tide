@@ -16,7 +16,7 @@ import type { Brand } from "../Brand.ts";
 import * as DateTime from "../DateTime.ts";
 import * as Schema from "../Schema.ts";
 import * as VariantSchema from "./VariantSchema.ts";
-declare const Class: <Self = never>(identifier: string) => <const Fields extends VariantSchema.Struct.Fields>(fields: Fields & VariantSchema.Struct.Validate<Fields, "insert" | "json" | "jsonCreate" | "jsonUpdate" | "select" | "update">, annotations?: Schema.Annotations.Declaration<Self, readonly [Schema.Struct<VariantSchema.ExtractFields<"select", Fields, true>>]> | undefined) => [Self] extends [never] ? "Missing `Self` generic - use `class Self extends Class<Self>()({ ... })`" : VariantSchema.Class<Self, Fields, Schema.Struct<VariantSchema.ExtractFields<"select", Fields, true>>> & {
+declare const Class: <Self = never>(identifier: string) => <const Fields extends VariantSchema.Struct.Fields>(fields: Fields & VariantSchema.Struct.Validate<Fields, "insert" | "json" | "jsonCreate" | "jsonUpdate" | "select" | "update">, annotations?: Schema.Annotations.Declaration<Self, readonly [Schema.Struct<VariantSchema.ExtractFields<"select", Fields, true>>]> | undefined) => [Self] extends [never] ? "Missing `Self` generic - use `class Self extends Class<Self>()({ ... })`" : VariantSchema.Class<Self, Fields, Schema.Struct<VariantSchema.ExtractFields<"select", Fields, true>>, "insert" | "json" | "jsonCreate" | "jsonUpdate" | "select" | "update", "select", {}> & {
     readonly insert: Schema.Struct<VariantSchema.ExtractFields<"insert", Fields, false> extends infer T ? { [K in keyof T]: T[K]; } : never>;
     readonly json: Schema.Struct<VariantSchema.ExtractFields<"json", Fields, false> extends infer T_1 ? { [K in keyof T_1]: T_1[K]; } : never>;
     readonly jsonCreate: Schema.Struct<VariantSchema.ExtractFields<"jsonCreate", Fields, false> extends infer T_2 ? { [K in keyof T_2]: T_2[K]; } : never>;
@@ -711,6 +711,20 @@ export interface UuidV7Insert<B extends string> extends VariantSchema.Field<{
 }
 /**
  * Adds a constructor default that generates a string UUID v7.
+ *
+ * **Details**
+ *
+ * The UUID takes its timestamp from the `Clock`, and shares its ordering with
+ * `SecureRandom.uuidV7Unsafe` and every other `Model.UuidV7WithGenerate` in the
+ * JS realm, so below the maximum timestamp each UUID sorts after the previous
+ * one.
+ *
+ * **Gotchas**
+ *
+ * The shared ordering never moves the timestamp back, so a `Clock` behind the
+ * realm's latest timestamp, such as a `TestClock` after `Date.now()`-based
+ * UUIDs were generated, produces UUIDs with that latest timestamp rather than
+ * the `Clock` time.
  *
  * @stability unstable
  * @category schemas

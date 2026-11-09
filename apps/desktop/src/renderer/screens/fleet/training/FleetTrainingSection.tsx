@@ -6,12 +6,15 @@ import { ExplanationDisclosure } from "../../../components/shared/ExplanationDis
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { TrainingSubjectId } from "../../../../shared/fleet-contract.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
+import { format as message } from "../station/fleet-station-state.js";
 import {
   adderText,
+  effectText,
   fundedSubjects,
   progressText,
   sameSubjects,
-  TRAINING_SUBJECT_LABELS,
+  selectionFor,
+  subjectLabel,
   type TrainingState,
 } from "./training-model.js";
 import { useSpecialTraining } from "./useSpecialTraining.js";
@@ -48,6 +51,7 @@ export function FleetTrainingView({
   if (training === null) return null;
   const dirty = !sameSubjects(draft, authoritative);
   const atLimit = draft.length >= training.maxSubjects;
+  const draftSelection = selectionFor(training, draft);
   return (
     <section
       className="space-y-3 border-t pt-4"
@@ -56,23 +60,30 @@ export function FleetTrainingView({
     >
       <div className="flex items-center gap-2">
         <h3 id="fleet-training-h" className="text-sm font-medium">
-          Special training
+          {message("fleet.training.heading")}
         </h3>
         <Badge variant="secondary" className="text-xs">
-          {authoritative.length} of {training.maxSubjects}
+          {message("fleet.training.badge", {
+            funded: authoritative.length,
+            max: training.maxSubjects,
+          })}
         </Badge>
       </div>
       <p className="text-xs text-muted-foreground">
-        Fund up to {training.maxSubjects} subjects. A subject is proficient after{" "}
-        {training.proficiencyMonths} funded months and is lost the moment you stop funding it.
-        Training raises the maintenance of your active ships.
+        {message("fleet.training.intro", {
+          max: training.maxSubjects,
+          months: training.proficiencyMonths,
+        })}
+      </p>
+      <p className="text-xs text-muted-foreground" data-testid="fleet-training-battle-only">
+        {message("fleet.training.battleOnly")}
       </p>
 
       {loadError !== null && (
         <div role="alert" className="space-y-2 rounded-md border border-destructive/50 p-3 text-sm">
           <p className="whitespace-pre-line text-destructive">{loadError}</p>
           <Button type="button" size="sm" variant="outline" onClick={onReload}>
-            Reload
+            {message("fleet.training.reload")}
           </Button>
         </div>
       )}
@@ -83,9 +94,9 @@ export function FleetTrainingView({
       )}
       {outcomeUnknown && (
         <div role="alert" className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-          <span>The outcome of the last request is unknown.</span>
+          <span>{message("fleet.training.outcomeUnknown")}</span>
           <Button type="button" size="sm" variant="outline" onClick={onRetry}>
-            Retry
+            {message("fleet.training.retry")}
           </Button>
         </div>
       )}
@@ -105,7 +116,7 @@ export function FleetTrainingView({
                       disabled={busy || (!chosen && atLimit)}
                       title={
                         !chosen && atLimit
-                          ? `At most ${training.maxSubjects} subjects can be funded at once`
+                          ? message("fleet.training.limitTooltip", { max: training.maxSubjects })
                           : undefined
                       }
                       onChange={() =>
@@ -115,14 +126,28 @@ export function FleetTrainingView({
                             : [...current, subject.subject],
                         )
                       }
-                      aria-label={`Fund ${TRAINING_SUBJECT_LABELS[subject.subject]}`}
+                      aria-label={message("fleet.training.fundLabel", {
+                        subject: subjectLabel(subject.subject),
+                      })}
                     />
                     <span className="flex flex-col">
-                      <span className="font-medium">
-                        {TRAINING_SUBJECT_LABELS[subject.subject]}
-                      </span>
+                      <span className="font-medium">{subjectLabel(subject.subject)}</span>
                       <span className="text-xs text-muted-foreground">
                         {adderText(subject.maintenanceAdderBp)}
+                      </span>
+                      <span
+                        className="text-xs"
+                        data-testid={`fleet-training-cost-${subject.subject}`}
+                      >
+                        {message("fleet.training.cost", {
+                          cost: format.money(subject.monthlyCost),
+                        })}
+                      </span>
+                      <span
+                        className="text-xs text-muted-foreground"
+                        data-testid={`fleet-training-effect-${subject.subject}`}
+                      >
+                        {effectText(subject.subject, subject.effectBp)}
                       </span>
                     </span>
                   </span>
@@ -138,6 +163,28 @@ export function FleetTrainingView({
                       summaryKey="fleet.fleet_training_adder.summary"
                       format={format}
                       testId={`fleet-training-adder-${subject.subject}`}
+                    />
+                  </div>
+                )}
+                {subject.monthlyCostExplanation !== undefined && (
+                  <div className="pl-6">
+                    <ExplanationDisclosure
+                      tree={subject.monthlyCostExplanation}
+                      area="fleet"
+                      summaryKey="fleet.fleet_training_cost.summary"
+                      format={format}
+                      testId={`fleet-training-cost-explanation-${subject.subject}`}
+                    />
+                  </div>
+                )}
+                {subject.effectExplanation !== undefined && (
+                  <div className="pl-6">
+                    <ExplanationDisclosure
+                      tree={subject.effectExplanation}
+                      area="fleet"
+                      summaryKey="fleet.fleet_training_effect.summary"
+                      format={format}
+                      testId={`fleet-training-effect-explanation-${subject.subject}`}
                     />
                   </div>
                 )}
@@ -158,6 +205,25 @@ export function FleetTrainingView({
         </CardContent>
       </Card>
 
+      {draftSelection !== undefined && (
+        <div className="space-y-1" data-testid="fleet-training-total">
+          <p className="text-sm font-medium">
+            {draft.length === 0
+              ? message("fleet.training.totalNone")
+              : message("fleet.training.total", { cost: format.money(draftSelection.monthlyCost) })}
+          </p>
+          {draftSelection.monthlyCostExplanation !== undefined && draft.length > 0 && (
+            <ExplanationDisclosure
+              tree={draftSelection.monthlyCostExplanation}
+              area="fleet"
+              summaryKey="fleet.fleet_training_cost.summary"
+              format={format}
+              testId="fleet-training-total-explanation"
+            />
+          )}
+        </div>
+      )}
+
       <div className="flex items-center gap-2">
         <Button
           type="button"
@@ -165,12 +231,10 @@ export function FleetTrainingView({
           disabled={busy || !dirty}
           onClick={() => void onFund(draft)}
         >
-          Apply training
+          {message("fleet.training.apply")}
         </Button>
         {dirty && draft.length < authoritative.length && (
-          <span className="text-xs text-muted-foreground">
-            Dropped subjects lose their progress.
-          </span>
+          <span className="text-xs text-muted-foreground">{message("fleet.training.dropped")}</span>
         )}
       </div>
     </section>

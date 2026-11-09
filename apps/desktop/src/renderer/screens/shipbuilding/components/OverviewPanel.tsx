@@ -23,6 +23,11 @@ export function OverviewPanel({ model }: { readonly model: OverviewModel }) {
               <li key={w.severity}>
                 <Badge variant={SEVERITY_STYLE[w.severity].badge} data-severity={w.severity}>
                   {w.count} {SEVERITY_STYLE[w.severity].label.toLowerCase()}
+                  {w.gloss === null ? null : (
+                    <span className="sr-only">
+                      {SEVERITY_STYLE[w.severity].label}: {w.gloss}
+                    </span>
+                  )}
                 </Badge>
               </li>
             ))}

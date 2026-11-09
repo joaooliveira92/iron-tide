@@ -1,5 +1,6 @@
 import * as Context from "../Context.js";
 import * as Effect from "../Effect.js";
+import * as Base64 from "../encoding/Base64.js";
 import { dual } from "../Function.js";
 import * as Inspectable from "../Inspectable.js";
 import { stringOrRedacted } from "../internal/redacted.js";
@@ -12,6 +13,7 @@ import * as Stream from "../Stream.js";
 import * as Headers from "./Headers.js";
 import * as HttpBody from "./HttpBody.js";
 import { hasBody } from "./HttpMethod.js";
+import * as compression from "./internal/compressionBody.js";
 import * as bodyInternal from "./internal/httpBody.js";
 import * as Url from "./Url.js";
 import * as UrlParams from "./UrlParams.js";
@@ -31,7 +33,7 @@ const Proto = {
     return {
       _id: "HttpClientRequest",
       method: this.method,
-      url: this.url,
+      url: UrlParams.redactUrl(this.url),
       urlParams: this.urlParams,
       hash: this.hash,
       headers: redact(this.headers),
@@ -232,13 +234,14 @@ export const updateHeaders = /*#__PURE__*/dual(2, (self, f) => makeWith(self.met
  */
 export const removeHeader = /*#__PURE__*/dual(2, (self, key) => updateHeaders(self, Headers.remove(key)));
 /**
- * Sets the `Authorization` header using HTTP Basic authentication credentials.
+ * Sets the `Authorization` header using HTTP Basic authentication credentials,
+ * encoded as UTF-8 before base64 encoding.
  *
  * @stability unstable
  * @category combinators
  * @since 4.0.0
  */
-export const basicAuth = /*#__PURE__*/dual(3, (self, username, password) => setHeader(self, "Authorization", `Basic ${btoa(`${stringOrRedacted(username)}:${stringOrRedacted(password)}`)}`));
+export const basicAuth = /*#__PURE__*/dual(3, (self, username, password) => setHeader(self, "Authorization", `Basic ${Base64.encode(`${stringOrRedacted(username)}:${stringOrRedacted(password)}`)}`));
 /**
  * Sets the `Authorization` header using a bearer token.
  *
@@ -263,6 +266,46 @@ export const accept = /*#__PURE__*/dual(2, (self, mediaType) => setHeader(self, 
  * @since 4.0.0
  */
 export const acceptJson = /*#__PURE__*/accept("application/json");
+/**
+ * Asks the server to switch the connection to another protocol by setting the
+ * `Connection: Upgrade` and `Upgrade` headers.
+ *
+ * **When to use**
+ *
+ * Use to switch an HTTP/1.1 connection to a raw byte stream, such as Docker's
+ * `Upgrade: tcp` for container attach. For WebSocket, use `Socket.makeWebSocket`.
+ *
+ * **Details**
+ *
+ * The request is otherwise ordinary, so client transforms such as base URLs,
+ * authentication, and tracing apply to it. When the server answers `101
+ * Switching Protocols`, `HttpClientResponse.upgrade` hands over the
+ * connection as a `Socket`. Any other response is read as usual.
+ *
+ * **Example** (Attaching to a Docker container)
+ *
+ * ```ts
+ * import { Effect } from "effect"
+ * import { HttpClient, HttpClientRequest } from "effect/http"
+ *
+ * const program = Effect.gen(function*() {
+ *   const client = yield* HttpClient.HttpClient
+ *   const response = yield* client.execute(
+ *     HttpClientRequest.post("/containers/abc/attach?stream=1&stdout=1").pipe(
+ *       HttpClientRequest.upgrade("tcp")
+ *     )
+ *   )
+ *   const socket = yield* response.upgrade
+ *   const reader = yield* socket.reader
+ *   return yield* reader.pull
+ * })
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.0.6
+ */
+export const upgrade = /*#__PURE__*/dual(2, (self, protocol) => makeWith(self.method, self.url, self.urlParams, self.hash, Headers.set(Headers.set(self.headers, "connection", "Upgrade"), "upgrade", protocol), self.body));
 /**
  * Sets the request URL. When given a `URL`, its search parameters and hash are extracted into the request's structured fields.
  *
@@ -321,6 +364,10 @@ export const updateUrl = /*#__PURE__*/dual(2, (self, f) => makeWith(self.method,
 /**
  * Sets one query parameter, replacing existing values for that parameter name.
  *
+ * **Details**
+ *
+ * A `Redacted` value is sent unwrapped and stays redacted in inspection, errors and spans.
+ *
  * @stability unstable
  * @category combinators
  * @since 4.0.0
@@ -336,6 +383,10 @@ export const setUrlParam = /*#__PURE__*/dual(3, (self, key, value) => makeWith(s
 export const setUrlParams = /*#__PURE__*/dual(2, (self, input) => makeWith(self.method, self.url, UrlParams.setAll(self.urlParams, input), self.hash, self.headers, self.body));
 /**
  * Appends one query parameter value without removing existing values for the same name.
+ *
+ * **Details**
+ *
+ * A `Redacted` value is sent unwrapped and stays redacted in inspection, errors and spans.
  *
  * @stability unstable
  * @category combinators
@@ -375,6 +426,43 @@ export const removeHash = self => makeWith(self.method, self.url, self.urlParams
  */
 export const setBody = /*#__PURE__*/dual(2, (self, body) => {
   return makeWith(self.method, self.url, self.urlParams, self.hash, bodyInternal.updateHeaders(self.headers, body), body);
+});
+/**
+ * Compresses a request body using Web `CompressionStream` and sets `Content-Encoding`.
+ *
+ * **Details**
+ *
+ * Byte-array bodies (including text, JSON, and URL-encoded bodies) are compressed
+ * into a new `Uint8Array` body, preserving the content type and updating
+ * `Content-Length`. The compressed body does not retain the original lazy text.
+ * Stream bodies are compressed lazily and have their content length removed.
+ * They still require a client runtime that supports streaming request bodies
+ * (stable Safari and Firefox do not; see `FetchHttpClient.StreamBodyFallback`).
+ *
+ * Returns the original request unchanged for empty, FormData, and raw bodies,
+ * bodies with a known length below `options.minSize`, or requests with any
+ * existing `Content-Encoding` header, including `identity`. Unknown-length
+ * streams are always compressed. The default minimum is 1024 bytes because
+ * gzip can make very small bodies larger.
+ *
+ * Requires `CompressionStream` (available in browsers, Node 18+, Bun, and Deno).
+ * There is no typed error channel: byte compression failures are defects;
+ * stream failures surface when the body is sent.
+ *
+ * To compress every request, use
+ * `HttpClient.mapRequestEffect(HttpClientRequest.compressBody("gzip"))`.
+ * `HttpClient.retryTransient` re-runs preprocessing, so this recompresses on
+ * every retry. For large bodies, compress once before calling `client.execute`.
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.0.0
+ */
+export const compressBody = /*#__PURE__*/dual(args => isHttpClientRequest(args[0]), (self, algorithm, options) => {
+  if (self.headers["content-encoding"] !== undefined) {
+    return Effect.succeed(self);
+  }
+  return Effect.map(compression.compressBody(self.body, algorithm, options), body => body === self.body ? self : makeWith(self.method, self.url, self.urlParams, self.hash, Headers.set(bodyInternal.updateContentLength(self.headers, body), "content-encoding", algorithm), body));
 });
 /**
  * Sets a `Uint8Array` request body with an optional content type.
@@ -498,8 +586,7 @@ export function toUrl(self) {
  */
 export const fromWeb = request => {
   const method = request.method.toUpperCase();
-  return modify(empty, {
-    method,
+  return modify(makeWith(method, "", UrlParams.empty, Option.none(), Headers.empty, HttpBody.empty), {
     url: new URL(request.url),
     headers: request.headers,
     body: fromWebBody(request, method)

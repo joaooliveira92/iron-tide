@@ -122,7 +122,9 @@ export const fromCommand = (cmd, inheritedFlags = []) => {
         name: single.name,
         aliases: single.aliases,
         description: Option.getOrUndefined(single.description),
-        type: toFlagType(single)
+        type: toFlagType(single),
+        optionalValue: single.optionalValue !== undefined,
+        negation: single.negation
       });
     }
   }
@@ -166,4 +168,17 @@ export const fromCommand = (cmd, inheritedFlags = []) => {
     subcommands
   };
 };
+/**
+ * Whether the flag reads its value from the next word.
+ *
+ * @internal
+ */
+export const takesSeparateValue = flag => flag.type._tag !== "Boolean" && flag.optionalValue !== true;
+/**
+ * Long name that sets a boolean flag to `false`, or `undefined` when the flag
+ * has no negated form.
+ *
+ * @internal
+ */
+export const negatedName = flag => flag.type._tag !== "Boolean" || flag.negation === false ? undefined : flag.negation ?? `no-${flag.name}`;
 //# sourceMappingURL=descriptor.js.map

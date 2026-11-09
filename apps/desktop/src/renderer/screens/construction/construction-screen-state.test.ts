@@ -66,10 +66,13 @@ const projection = {
     exemptNewConstructionMassKg: 0,
     dockExpansionDurationMonths: 12,
     dockExpansionNextStepKg: 1_000_000,
+    dockExpansionReadyMonth: "1880-12",
     dockPossessions: [{ id: "pos-1", name: "Portsmouth" }],
   },
   designs: [design],
+  studies: [],
   projects: [],
+  steering: {},
   workspace: {
     commands: [],
     movementCommands: [],
@@ -96,7 +99,9 @@ describe("construction screen state", () => {
       month: projection.month,
       economy: projection.economy,
       designs: projection.designs,
+      studies: projection.studies,
       projects: projection.projects,
+      steering: projection.steering,
       workspace: projection.workspace,
     });
   });

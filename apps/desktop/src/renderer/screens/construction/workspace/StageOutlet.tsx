@@ -1,10 +1,10 @@
 import {
-  BatchBuildDialog,
   CatalogStage,
   DockCapacityPanel,
   OrdersStage,
   SlipwaysStage,
 } from "../components/index.js";
+import { OrderDialog } from "../order/OrderDialog.js";
 import {
   useConstructionActions,
   useConstructionMeta,
@@ -12,7 +12,16 @@ import {
 } from "./ConstructionContext.js";
 
 export function StageOutlet() {
-  const { screen, selectedDesignId, batch } = useConstructionState();
+  return (
+    <>
+      <Stage />
+      <OrderDialog />
+    </>
+  );
+}
+
+function Stage() {
+  const { screen, selectedDesignId } = useConstructionState();
   const {
     selectProject,
     selectDesign,
@@ -20,11 +29,7 @@ export function StageOutlet() {
     browseCatalog,
     replace,
     cancel,
-    setSelectedDesignId,
-    setBatchQuantity,
-    setBatchBuilder,
-    closeBatch,
-    confirmBatch,
+    openOrderDialog,
     authorizeDockExpansion,
   } = useConstructionActions();
   const { place, rows, selectedRow, selectedCommandId, busy, figures } = useConstructionMeta();
@@ -44,29 +49,15 @@ export function StageOutlet() {
         />
       );
     case "catalog":
-      return batch.open ? (
-        <BatchBuildDialog
-          designs={screen.designs}
-          selectedDesignId={selectedDesignId}
-          onSelectDesign={setSelectedDesignId}
-          quantity={batch.quantity}
-          onQuantityChange={setBatchQuantity}
-          preview={batch.preview}
-          foreignPreview={batch.foreignPreview}
-          builderNationId={batch.builderNationId}
-          onSelectBuilder={setBatchBuilder}
-          busy={busy || batch.fetching}
-          notice={screen.notice}
-          onConfirm={confirmBatch}
-          onCancel={closeBatch}
-        />
-      ) : (
+      return (
         <CatalogStage
           designs={screen.designs}
           economy={economy}
           workspace={workspace}
+          studies={screen.studies}
           selectedDesignId={selectedDesignId}
           onSelectDesign={selectDesign}
+          onOpenStudy={openOrderDialog}
         />
       );
     case "orders":
@@ -90,6 +81,7 @@ export function StageOutlet() {
           maxConcurrentConstructionMassKg={economy.maxConcurrentConstructionMassKg}
           committedNewConstructionMassKg={economy.committedNewConstructionMassKg}
           exemptNewConstructionMassKg={economy.exemptNewConstructionMassKg}
+          dockExpansionReadyMonth={economy.dockExpansionReadyMonth}
           dockExpansionDurationMonths={economy.dockExpansionDurationMonths}
           dockExpansionNextStepKg={economy.dockExpansionNextStepKg}
           dockPossessions={economy.dockPossessions}

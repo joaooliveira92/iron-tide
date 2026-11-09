@@ -1,3 +1,14 @@
+/**
+ * Low-level devtools client and tracer wiring over the current `Socket`.
+ *
+ * `DevToolsClient` speaks the devtools NDJSON protocol used by the unstable
+ * devtools integration. It sends span starts, span events, span completions,
+ * ping messages, and metric snapshots through a socket, then exposes tracer
+ * layers that forward telemetry while preserving the current tracer's behavior.
+ *
+ * @stability unstable
+ * @since 4.0.0
+ */
 import * as Context from "../Context.ts";
 import * as Effect from "../Effect.ts";
 import * as Layer from "../Layer.ts";

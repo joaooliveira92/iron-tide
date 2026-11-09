@@ -17,17 +17,6 @@ export function drawDeck(scene: AnatomyShipScene): void {
   };
   part.lines.push({
     d: lineOf(
-      ring(0.975, (t) => deckZ(t) + 0.006 * D, {
-        bow: DECK_REACH.bow * 0.97,
-        stern: DECK_REACH.stern * 0.97,
-      }),
-      P,
-      true,
-    ),
-    tone: "mid",
-  });
-  part.lines.push({
-    d: lineOf(
       [
         [0, 0, deckZ(0) + 0.008 * D],
         [L, 0, deckZ(1) + 0.008 * D],
@@ -37,14 +26,14 @@ export function drawDeck(scene: AnatomyShipScene): void {
     tone: "faint",
   });
   const laneWidth = 0.075 * B;
-  const lanes = Math.floor((halfAt(0.5) * 0.97) / laneWidth);
+  const lanes = Math.floor((halfAt(0.5) * 0.92) / laneWidth);
   for (let lane = -lanes; lane <= lanes; lane++) {
     const y = lane * laneWidth;
     const run: Point3[] = [];
     const seams: string[] = [];
     for (let step = 0; step <= 60; step++) {
       const t = 0.04 + (0.92 * step) / 60;
-      if (halfAt(t) * 0.97 > Math.abs(y)) run.push([t * L, y, deckZ(t) + 0.006 * D]);
+      if (halfAt(t) * 0.92 > Math.abs(y)) run.push([t * L, y, deckZ(t) + 0.006 * D]);
       else if (run.length > 1) {
         seams.push(lineOf(run.splice(0), P));
       } else run.length = 0;
@@ -56,23 +45,23 @@ export function drawDeck(scene: AnatomyShipScene): void {
     const butts: Point3[] = [];
     const spacing = 0.062;
     for (let t = 0.07 + (((lane % 4) + 4) % 4) * (spacing / 4); t < 0.95; t += spacing) {
-      if (halfAt(t) * 0.97 <= Math.abs(y) + laneWidth * 0.5) continue;
+      if (halfAt(t) * 0.92 <= Math.abs(y) + laneWidth * 0.5) continue;
       const z = deckZ(t) + 0.006 * D;
       butts.push([t * L, y - laneWidth / 2, z], [t * L, y + laneWidth / 2, z]);
     }
     if (butts.length > 0) part.lines.push({ d: lineOf(butts, P), tone: "faint" });
   }
-  const railReach: Reach = { bow: DECK_REACH.bow * 0.985, stern: DECK_REACH.stern * 0.985 };
+  const railReach: Reach = { bow: DECK_REACH.bow * 0.94, stern: DECK_REACH.stern * 0.94 };
   part.lines.push({
     d: lineOf(
-      ring(0.985, (t) => deckZ(t) + 0.045 * D, railReach),
+      ring(0.94, (t) => deckZ(t) + 0.045 * D, railReach),
       P,
       true,
     ),
     tone: "lo",
   });
   for (let t = 0.1; t < 0.93; t += 0.05) {
-    const y = near * halfAt(t) * 0.985;
+    const y = near * halfAt(t) * 0.94;
     const [px, py] = iso([t * L, y, deckZ(t) + 0.045 * D], P);
     part.dots.push({ x: px, y: py, r: 0.6, tone: "mid" });
   }

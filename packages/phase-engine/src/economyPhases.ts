@@ -1,6 +1,10 @@
-import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
+import type { ConstructionProject, NationState } from "@bluewave/campaign";
 import {
+  allocateConstructionFunds,
+  capacityOf,
+  isUnpacedNewConstruction,
   monthlyRevenue,
+  splitLargestRemainder,
   nationIsAtWar,
   nationMonthlyMaintenance,
   nationMaintenanceAdders,
@@ -14,13 +18,11 @@ import {
   treasuryCostUnits,
   type ConstructionBalance,
 } from "@bluewave/ship-design";
-import { fundConstructionProject } from "./constructionFunding.js";
 import { constructionResumeTarget } from "./constructionHaltResume.js";
 import {
   ACCELERATION_CAPACITY_PRESSURE_DELAY,
-  ACCELERATION_POOL_UNDEFINED_UNITS,
-  accelerationDemandOf,
-  constructionWorkStatus,
+  accelerationTermsFor,
+  nationAccelerationPressureOf,
   resolveAccelerationCapacityPressure,
 } from "./constructionAcceleration.js";
 import { fundDesignStudies } from "./designStudies.js";
@@ -32,31 +34,7 @@ import { applyPrestigeChange } from "./prestigeApplication.js";
 import { reportOutflowShortfall } from "./outflowShortfall.js";
 import { applyReadinessEvolution } from "./readinessEvolution.js";
 
-export function splitLargestRemainder(total: number, weights: readonly number[]): number[] {
-  const weightSum = weights.reduce((sum, weight) => sum + weight, 0);
-  if (weightSum <= 0) return weights.map(() => 0);
-  const totalBig = BigInt(total);
-  const weightSumBig = BigInt(weightSum);
-  const base: number[] = [];
-  const remainders: { index: number; remainder: bigint }[] = [];
-  let assigned = 0n;
-  for (let index = 0; index < weights.length; index += 1) {
-    const numerator = totalBig * BigInt(weights[index]!);
-    const quotient = numerator / weightSumBig;
-    base.push(Number(quotient));
-    remainders.push({ index, remainder: numerator % weightSumBig });
-    assigned += quotient;
-  }
-  const leftover = Number(totalBig - assigned);
-  remainders.sort((a, b) =>
-    b.remainder === a.remainder ? a.index - b.index : b.remainder > a.remainder ? 1 : -1,
-  );
-  for (let i = 0; i < leftover; i += 1) {
-    const index = remainders[i]!.index;
-    base[index] = base[index]! + 1;
-  }
-  return base;
-}
+export { capacityOf, isUnpacedNewConstruction, splitLargestRemainder };
 
 export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
   const { campaignMonth, eventLedger, financialLedger, nextSeq } = ctx;
@@ -108,17 +86,7 @@ export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
   return { status: "continue" };
 }
 
-export function capacityOf(
-  designs: CampaignSnapshot["designs"],
-  project: ConstructionProject,
-): Record<string, number> | undefined {
-  const capacity =
-    project["capacityUnits"] ??
-    designs.get(project["designVersionId"])?.constructionPlan?.capacityUnits;
-  return capacity === undefined
-    ? undefined
-    : Object.fromEntries(Object.entries(capacity).map(([line, v]) => [line, v as number]));
-}
+export const UNPACED_CONSTRUCTION_NOT_FUNDED = "UNPACED_CONSTRUCTION_NOT_FUNDED" as const;
 
 export const PROJECT_DELAYED_ZERO_WORK = "PROJECT_DELAYED_ZERO_WORK" as const;
 
@@ -155,19 +123,28 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
     const delayedAtStart = projects.filter((p) => p["status"] === "DELAYED");
 
     const acceleratedProjects = projects.filter((p) => p["status"] === "ACCELERATED");
+    const accelerationTerms = accelerationTermsFor(shipBuilding, campaignMonth);
     let delayedByPressure = new Set<string>();
-    if (acceleratedProjects.length > 0) {
-      const { normalDemand, acceleratedDemand } = accelerationDemandOf(
+    if (acceleratedProjects.length > 0 && accelerationTerms === undefined)
+      collector.addWarning(
+        "CONSTRUCTION_ACCELERATION_BALANCE_MISSING",
+        `Nation ${nationId} has ${acceleratedProjects.length} accelerated project(s) but no ship-building balance; no speed-up or pressure applied`,
+        { stage: "appropriation" },
+      );
+    if (acceleratedProjects.length > 0 && accelerationTerms !== undefined) {
+      const { demand, poolUnits } = nationAccelerationPressureOf(
         projects,
         (project) => capacityOf(designs, project),
         campaignMonth,
+        accelerationTerms,
       );
       const pressure = resolveAccelerationCapacityPressure({
         nationId,
         campaignMonth,
-        normalDemand,
-        acceleratedDemand,
-        availableCapacity: ACCELERATION_POOL_UNDEFINED_UNITS,
+        normalDemand: demand.normalDemand,
+        acceleratedDemand: demand.acceleratedDemand,
+        availableCapacity: poolUnits,
+        terms: accelerationTerms,
         acceleratedProjects,
         randomEngine: accelerationRng,
         randomLedger: ctx.randomLedger,
@@ -222,101 +199,30 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
       updatedProjects = projects.map((p) =>
         delayedByPressure.has(p["id"]) ? transitionConstructionProject(p, "DELAYED") : p,
       );
-    let totalDelta = SafeInt.ZERO;
 
     const expenseReserve = nation["expenses"];
     const available = SafeInt.sub(
       SafeInt.sub(nation["treasury"], SafeInt(preservationDelta)),
       expenseReserve,
     );
-    const fundable =
-      (available as number) > 0
-        ? updatedProjects.filter(
-            (p) =>
-              (p["completedWork"] as number) < (p["totalWork"] as number) &&
-              p["status"] !== "COMPLETED" &&
-              p["status"] !== "CANCELLED" &&
-              p["status"] !== "HALTED" &&
-              p["status"] !== "DELAYED" &&
-              !(foreignSkip?.has(p["id"]) ?? false),
-          )
-        : [];
-    const constructionRequested = fundable.reduce((sum: number, p) => {
-      const remaining = (p["totalWork"] as number) - (p["completedWork"] as number);
-      if (p["packages"] === undefined) return sum + remaining;
-      const absorbable = fundConstructionProject(
-        p,
-        capacityOf(ctx.snapshot.read("designs"), p),
-        Number.MAX_SAFE_INTEGER,
-        campaignMonth,
-      ).applied;
-      return sum + Math.min(remaining, absorbable);
-    }, 0);
-    if (fundable.length > 0) {
-      const totalRemainingWork = fundable.reduce(
-        (sum: SafeInt, p) => SafeInt.add(sum, SafeInt.sub(p["totalWork"], p["completedWork"])),
-        SafeInt.ZERO,
-      );
-      if ((totalRemainingWork as number) > 0) {
-        let remainingFunds = available;
-        updatedProjects = [...updatedProjects];
-
-        const remainingWorks = fundable.map((p) =>
-          Number(SafeInt.sub(p["totalWork"], p["completedWork"])),
+    for (const unpaced of updatedProjects.filter(isUnpacedNewConstruction))
+      if (unpaced["status"] !== "COMPLETED" && unpaced["status"] !== "CANCELLED")
+        collector.addWarning(
+          UNPACED_CONSTRUCTION_NOT_FUNDED,
+          `Project ${unpaced["id"]} of nation ${nationId} has no work packages, so it is not funded`,
+          { stage: "appropriation", entityId: unpaced["id"] },
         );
-        const allocations = splitLargestRemainder(available as number, remainingWorks);
-
-        for (let fi = 0; fi < fundable.length; fi += 1) {
-          const project = fundable[fi]!;
-          if ((remainingFunds as number) <= 0) break;
-
-          const remainingWork = SafeInt.sub(project["totalWork"], project["completedWork"]);
-          const alloc = SafeInt(allocations[fi]!);
-          const clampedAlloc = alloc > remainingWork ? remainingWork : alloc;
-          if ((clampedAlloc as number) <= 0) continue;
-
-          if (project["packages"] !== undefined) {
-            const funded = fundConstructionProject(
-              project,
-              capacityOf(ctx.snapshot.read("designs"), project),
-              clampedAlloc as number,
-              campaignMonth,
-            );
-            if (funded.applied <= 0) continue;
-            const applied = SafeInt(funded.applied);
-            totalDelta = SafeInt.add(totalDelta, applied);
-            remainingFunds = SafeInt.sub(remainingFunds, applied);
-            updatedProjects = updatedProjects.map((p) =>
-              p["id"] === project["id"] ? funded.project : p,
-            );
-            continue;
-          }
-
-          totalDelta = SafeInt.add(totalDelta, clampedAlloc);
-          remainingFunds = SafeInt.sub(remainingFunds, clampedAlloc);
-
-          updatedProjects = updatedProjects.map((p) =>
-            p["id"] === project["id"]
-              ? {
-                  ...transitionConstructionProject(p, constructionWorkStatus(p["status"])),
-                  completedWork: SafeInt.add(p["completedWork"], clampedAlloc),
-                  paidWork: SafeInt.add(p["paidWork"], clampedAlloc),
-                }
-              : p,
-          );
-        }
-
-        const leftover = applyLeftoverFunding(
-          updatedProjects,
-          remainingFunds,
-          ctx.snapshot.read("designs"),
-          campaignMonth,
-          foreignSkip,
-        );
-        updatedProjects = leftover.projects;
-        totalDelta = SafeInt.add(totalDelta, leftover.delta);
-      }
-    }
+    const allocation = allocateConstructionFunds({
+      projects: updatedProjects,
+      available,
+      designs: ctx.snapshot.read("designs"),
+      month: campaignMonth,
+      foreignSkip,
+      terms: accelerationTerms,
+    });
+    updatedProjects = allocation.projects;
+    const totalDelta = allocation.delta;
+    const constructionRequested = allocation.requested;
 
     if (delayedAtStart.length > 0) {
       updatedProjects = updatedProjects.map((p) =>
@@ -412,69 +318,6 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
   });
   ctx.snapshot.current = privateExpansion.snapshot;
   return { status: "continue" };
-}
-
-function applyLeftoverFunding(
-  projects: ConstructionProject[],
-  remainingFunds: SafeInt,
-  designs: CampaignSnapshot["designs"],
-  campaignMonth: string,
-  foreignSkip: ReadonlySet<string> | undefined,
-): { projects: ConstructionProject[]; delta: SafeInt } {
-  if ((remainingFunds as number) <= 0) {
-    return { projects, delta: SafeInt.ZERO };
-  }
-  const skipped = (p: ConstructionProject): boolean => foreignSkip?.has(p["id"]) ?? false;
-  for (const candidate of projects) {
-    if (
-      candidate["packages"] === undefined ||
-      candidate["status"] === "COMPLETED" ||
-      candidate["status"] === "CANCELLED"
-    )
-      continue;
-    if (candidate["status"] === "HALTED" || candidate["status"] === "DELAYED") continue;
-    if (skipped(candidate)) continue;
-    if ((candidate["completedWork"] as number) >= (candidate["totalWork"] as number)) continue;
-    const funded = fundConstructionProject(
-      candidate,
-      capacityOf(designs, candidate),
-      remainingFunds as number,
-      campaignMonth,
-    );
-    if (funded.applied <= 0) continue;
-    return {
-      projects: projects.map((p) => (p["id"] === candidate["id"] ? funded.project : p)),
-      delta: SafeInt(funded.applied),
-    };
-  }
-  const firstIncomplete = projects.find(
-    (p) =>
-      p["packages"] === undefined &&
-      (p["completedWork"] as number) < (p["totalWork"] as number) &&
-      p["status"] !== "COMPLETED" &&
-      p["status"] !== "CANCELLED" &&
-      p["status"] !== "HALTED" &&
-      p["status"] !== "DELAYED" &&
-      !skipped(p),
-  );
-  if (!firstIncomplete) return { projects, delta: SafeInt.ZERO };
-
-  const remainingWork = SafeInt.sub(firstIncomplete["totalWork"], firstIncomplete["completedWork"]);
-  const extra = remainingFunds > remainingWork ? remainingWork : remainingFunds;
-  if ((extra as number) <= 0) return { projects, delta: SafeInt.ZERO };
-
-  return {
-    projects: projects.map((p) =>
-      p["id"] === firstIncomplete["id"]
-        ? {
-            ...transitionConstructionProject(p, constructionWorkStatus(p["status"])),
-            completedWork: SafeInt.add(p["completedWork"], extra),
-            paidWork: SafeInt.add(p["paidWork"], extra),
-          }
-        : p,
-    ),
-    delta: extra,
-  };
 }
 
 export function runMaintenancePhase(ctx: PhaseContext): PhaseRunOutcome {

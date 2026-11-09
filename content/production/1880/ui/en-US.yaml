@@ -12,6 +12,8 @@ strings:
   messages.construction.noProgress.body: "No construction work was recorded this month."
   messages.construction.rebuilt.title: "Ship rebuilt"
   messages.construction.rebuilt.body: "{shipId} was rebuilt from design {fromDesignVersionId} to {toDesignVersionId}."
+  messages.construction.delivered.title: "Ship delivered"
+  messages.construction.delivered.body: "{shipName} was delivered after {actualMonths} month(s) of construction."
   messages.construction.delayed.title: "Construction delayed"
   messages.construction.delayed.body: "Project {projectId} was delayed ({reason}) into {delayMonth}."
   messages.construction.cancelled.title: "Project cancelled"

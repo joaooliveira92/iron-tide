@@ -22,6 +22,7 @@ import * as Schema from "../Schema.js";
 import * as CliError from "./CliError.js";
 import * as Primitive from "./Primitive.js";
 import * as Prompt from "./Prompt.js";
+import * as TerminalCapabilities from "./TerminalCapabilities.js";
 const TypeId = "~effect/cli/Param";
 /**
  * Defines the kind discriminator for positional argument parameters.
@@ -766,6 +767,7 @@ const transform = (self, f, alternatives = []) => {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -823,6 +825,7 @@ export const mapEffect = /*#__PURE__*/dual(2, (self, f) => transform(self, parse
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -1000,6 +1003,9 @@ export const withFallbackConfig = /*#__PURE__*/dual(2, (self, config) => {
  *
  * This only handles missing options and missing arguments. Invalid values do not
  * prompt, and prompt cancellation re-fails with the original missing error.
+ * When `TerminalCapabilities.canPrompt` is `false`, the fallback is skipped
+ * entirely: no prompt is built or shown, and the original missing error is
+ * returned.
  *
  * @see {@link FallbackPrompt} for accepted fallback prompt forms
  * @see {@link withFallbackConfig} for loading a fallback from config
@@ -1010,7 +1016,15 @@ export const withFallbackConfig = /*#__PURE__*/dual(2, (self, config) => {
  * @since 4.0.0
  */
 export const withFallbackPrompt = /*#__PURE__*/dual(2, (self, prompt) => {
-  const runPrompt = (error, args) => Effect.flatMap(Prompt.isPrompt(prompt) ? Effect.succeed(prompt) : prompt, Prompt.run).pipe(Effect.map(value => [args.arguments, value]), Effect.catchTag("QuitError", () => Effect.fail(error)));
+  const runPrompt = Effect.fnUntraced(function* (error, args) {
+    const {
+      canPrompt
+    } = yield* TerminalCapabilities.TerminalCapabilities;
+    if (!canPrompt) return yield* Effect.fail(error);
+    const built = Prompt.isPrompt(prompt) ? prompt : yield* prompt;
+    const value = yield* Effect.catchTag(Prompt.run(built), "QuitError", () => Effect.fail(error));
+    return [args.arguments, value];
+  });
   return transform(self, parse => args => parse(args).pipe(Effect.catchTag(["MissingOption", "MissingArgument"], error => runPrompt(error, args))));
 });
 /**
@@ -1279,6 +1293,92 @@ export const withMetavar = /*#__PURE__*/dual(2, (self, metavar) => transformSing
   typeName: metavar
 })));
 /**
+ * Lets a flag be given without a value, in which case `value` is used.
+ *
+ * **Details**
+ *
+ * Follows GNU-style optional values. An explicit value must be attached with
+ * `=` (`--watch=until-done`), and a bare `--watch` is parsed as
+ * `--watch=<value>`. The flag never consumes the next token. It is still
+ * required unless it is made optional or given a default.
+ *
+ * **Example** (Flag with an optional value)
+ *
+ * ```ts import.meta.vitest
+ * import { Param } from "effect/cli"
+ *
+ * const watch = Param.String(Param.flagKind, "watch").pipe(
+ *   Param.withOptionalValue("first-failure"),
+ *   Param.optional
+ * )
+ * watch.kind // => "flag"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.1.0
+ */
+export const withOptionalValue = /*#__PURE__*/dual(2, (self, value) => transformSingle(self, single => makeSingle({
+  ...single,
+  optionalValue: value
+})));
+/**
+ * Renames the negated form of a boolean flag, which defaults to `--no-<name>`.
+ *
+ * **Details**
+ *
+ * The new name replaces the default, so `--no-<name>` is no longer accepted.
+ * Has no effect on non-boolean flags.
+ *
+ * **Example** (Renaming a boolean flag's negation)
+ *
+ * ```ts import.meta.vitest
+ * import { Param } from "effect/cli"
+ *
+ * // --validate sets true, --skip-validate sets false
+ * const validate = Param.Boolean(Param.flagKind, "validate").pipe(
+ *   Param.withNegation("skip-validate")
+ * )
+ * validate.kind // => "flag"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.1.0
+ */
+export const withNegation = /*#__PURE__*/dual(2, (self, name) => transformSingle(self, single => makeSingle({
+  ...single,
+  negation: name
+})));
+/**
+ * Removes the negated `--no-<name>` form of a boolean flag.
+ *
+ * **Details**
+ *
+ * The negated form is then rejected as an unrecognized flag and left out of
+ * shell completions. Has no effect on non-boolean flags.
+ *
+ * **Example** (Disabling a boolean flag's negation)
+ *
+ * ```ts import.meta.vitest
+ * import { Param } from "effect/cli"
+ *
+ * // --unsafe sets true, --no-unsafe is rejected
+ * const unsafe = Param.Boolean(Param.flagKind, "unsafe").pipe(
+ *   Param.withoutNegation
+ * )
+ * unsafe.kind // => "flag"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.1.0
+ */
+export const withoutNegation = self => transformSingle(self, single => makeSingle({
+  ...single,
+  negation: false
+}));
+/**
  * Validates parsed values against a Schema, providing detailed error messages.
  *
  * **Example** (Validating with schemas)
@@ -1386,7 +1486,14 @@ const parseFlag = /*#__PURE__*/Effect.fnUntraced(function* (name, primitiveType,
       option: name
     });
   }
-  // Parse the first value (later we can handle multiple)
+  if (providedValues.length > 1) {
+    return yield* new CliError.InvalidValue({
+      option: name,
+      value: `${providedValues.length} occurrences`,
+      expected: "at most 1 value",
+      kind: "flag"
+    });
+  }
   const arg = providedValues[0];
   const value = yield* Effect.mapError(primitiveType.parse(arg), error => new CliError.InvalidValue({
     option: name,

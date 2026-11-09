@@ -140,6 +140,11 @@ export * as Multipart from "./Multipart.js";
 export * as MultipartParser from "./MultipartParser.js";
 /**
  * @stability unstable
+ * @since 4.0.6
+ */
+export * as ProblemDetails from "./ProblemDetails.js";
+/**
+ * @stability unstable
  * @since 4.0.0
  */
 export * as Template from "./Template.js";

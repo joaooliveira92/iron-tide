@@ -7,11 +7,14 @@ import {
   researchCap,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
+import { snapshotWithQueuedConstruction } from "@bluewave/phase-engine";
 import { Effect } from "effect";
 import type { BudgetScreenProjection } from "../../shared/budget-contract.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
+import { CommandQueue } from "../runtime/commandQueue.js";
+import { loadShipBuildingContent } from "../shipBuildingContent.js";
 import { buildTreasuryCommitments } from "./treasuryCommitments.js";
 import { currentRevision, submitPlayerCommand } from "./playerCommandSupport.js";
 
@@ -41,6 +44,14 @@ export const inspectBudgetScreenProgram: CommandHandler<"inspectBudgetScreen"> =
       });
     }
 
+    const queue = yield* CommandQueue;
+    const queued = yield* queue.entries(sessionId);
+    const forecast = snapshotWithQueuedConstruction(
+      record.state.snapshot,
+      queued.map((entry) => entry.envelope),
+      loadShipBuildingContent(),
+    );
+
     const value: BudgetScreenProjection = {
       revision: currentRevision(record),
       month: record.month,
@@ -55,7 +66,7 @@ export const inspectBudgetScreenProgram: CommandHandler<"inspectBudgetScreen"> =
         researchBudgetMax: RESEARCH_BUDGET_MAX,
       },
       researchCaps: researchCapsByRate(nation.baseResources),
-      commitments: buildTreasuryCommitments(record.state.snapshot, nation),
+      commitments: buildTreasuryCommitments(forecast, forecast.nations.get(nation.id) ?? nation),
     };
     return { outcome: "success" as const, value, diagnostics: [] };
   });

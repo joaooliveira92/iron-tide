@@ -57,7 +57,12 @@ export declare const RequestId: (id: string | number) => RequestId;
  * **Details**
  *
  * Requests flow in both directions: servers use them for server-originated
- * requests and, with `isNotification` set, for server notifications.
+ * requests and, with `isNotification` set, for requests that get no reply,
+ * such as server notifications and inbound JSON-RPC notifications.
+ *
+ * A client call made with `discard` sets `discard` instead. It keeps its id,
+ * and the server acknowledges it with a successful `Exit` once the handler
+ * starts, then sends nothing more for it.
  *
  * @stability unstable
  * @category models
@@ -70,6 +75,7 @@ export interface RequestEncoded {
     readonly payload: unknown;
     readonly headers: ReadonlyArray<[string, string]>;
     readonly isNotification?: true;
+    readonly discard?: true;
     readonly traceId?: string;
     readonly spanId?: string;
     readonly sampled?: boolean;
@@ -88,6 +94,8 @@ export interface Request<A extends Rpc.Any> {
     readonly tag: Rpc.Tag<A>;
     readonly payload: Rpc.Payload<A>;
     readonly headers: Headers;
+    readonly isNotification?: true;
+    readonly discard?: true;
     readonly traceId?: string;
     readonly spanId?: string;
     readonly sampled?: boolean;
@@ -281,8 +289,8 @@ export interface ResponseExitEncoded {
     readonly exit: ExitEncoded<unknown, unknown>;
 }
 /**
- * A server-to-client protocol message reporting a client protocol error to all
- * affected in-flight requests.
+ * A server-to-client protocol message failing in-flight requests with a client
+ * protocol error: those in `requestIds`, or all of them when it is omitted.
  *
  * @stability unstable
  * @category models
@@ -291,6 +299,7 @@ export interface ResponseExitEncoded {
 export interface ClientProtocolError {
     readonly _tag: "ClientProtocolError";
     readonly error: RpcClientError;
+    readonly requestIds?: ReadonlyArray<string | number>;
 }
 /**
  * The decoded terminal response for a request, carrying the typed `Rpc.Exit`
@@ -402,6 +411,7 @@ export declare const EncodedSchema: Schema.Union<readonly [Schema.Struct<{
     readonly payload: Schema.Uint8Array;
     readonly headers: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
     readonly isNotification: Schema.optional<Schema.Literal<true>>;
+    readonly discard: Schema.optional<Schema.Literal<true>>;
     readonly traceId: Schema.optional<Schema.String>;
     readonly spanId: Schema.optional<Schema.String>;
     readonly sampled: Schema.optional<Schema.Boolean>;

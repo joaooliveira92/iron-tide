@@ -108,6 +108,7 @@ export declare namespace Vitest {
         readonly layer: <R2, E>(layer: Layer.Layer<R2, E, R>, options?: {
             readonly concurrent?: boolean;
             readonly timeout?: Duration.Input;
+            readonly buildPerTest?: boolean;
         }) => {
             (f: (it: Vitest.MethodsNonLive<R | R2, ExtraContext>) => void): void;
             (name: string, f: (it: Vitest.MethodsNonLive<R | R2, ExtraContext>) => void): void;
@@ -117,8 +118,8 @@ export declare namespace Vitest {
          *
          * **Details**
          *
-         * Returning `false` or throwing falsifies the property and triggers shrinking. A callback that returns normally
-         * without returning `false` passes for that generated input.
+         * Returning `false` or throwing falsifies the property and triggers shrinking. Returning `true` or `undefined`
+         * passes for that generated input. Other return values are rejected; use `it.effect.prop` for Effect callbacks.
          *
          * The Vitest timeout interrupts the Effect fiber running generation and shrinking.
          *
@@ -130,7 +131,7 @@ export declare namespace Vitest {
          */
         readonly prop: <const Arbs extends Arbitraries>(name: string, arbitraries: Arbs, self: (properties: {
             [K in keyof Arbs]: ArbitraryValue<Arbs[K]>;
-        }, ctx: V.TestContext) => void, timeout?: number | (V.TestOptions & {
+        }, ctx: V.TestContext) => boolean | void, timeout?: number | (V.TestOptions & {
             arbitrary?: Arbitrary.CheckOptions;
         })) => void;
     }
@@ -146,6 +147,7 @@ export declare namespace Vitest {
             readonly memoMap?: Layer.MemoMap;
             readonly timeout?: Duration.Input;
             readonly excludeTestServices?: boolean;
+            readonly buildPerTest?: boolean;
         }) => {
             (f: (it: Vitest.MethodsNonLive<R | R2, ExtraContext>) => void): void;
             (name: string, f: (it: Vitest.MethodsNonLive<R | R2, ExtraContext>) => void): void;
@@ -160,6 +162,34 @@ export declare namespace Vitest {
  * @since 4.0.0
  */
 export declare const addEqualityTesters: () => void;
+/**
+ * Registers a callback to run once before all tests in the current suite. If
+ * the callback returns an `Effect`, it is run and awaited with a `Scope` that
+ * closes in a cleanup after the suite's `afterAll` hooks, within the hook's
+ * timeout. The `Effect` must not require any other services.
+ *
+ * **Details**
+ *
+ * If Vitest stops waiting for the setup, the setup is interrupted before the
+ * `Scope` closes. As with any `beforeAll` cleanup, Vitest reports a closing
+ * that exceeds the hook's timeout and does not wait for it.
+ *
+ * @stability unstable
+ * @category hooks
+ * @since 4.0.0
+ */
+export declare const beforeAll: typeof V.beforeAll;
+/**
+ * Registers a callback to run before each test in the current suite. If the
+ * callback returns an `Effect`, it is run and awaited with a `Scope` that
+ * closes when the test finishes, and interrupted if the hook times out. The
+ * `Effect` must not require any other services.
+ *
+ * @stability unstable
+ * @category hooks
+ * @since 4.0.0
+ */
+export declare const beforeEach: typeof V.beforeEach;
 /**
  * Runs a scoped Effect test with test clock and console services.
  *
@@ -185,6 +215,13 @@ export declare const live: Vitest.Tester<Scope.Scope>;
  * Named layers accept `concurrent` to override inherited suite concurrency.
  * Anonymous layers always inherit the enclosing suite's concurrency.
  * Use `ctx.expect` in concurrent tests for test-local snapshots and assertion counts.
+ *
+ * Pass `buildPerTest: true` to build the layer once per test instead of once
+ * per block. Each test gets new services, released when the test finishes,
+ * while services from an enclosing `layer` block stay shared. A build failure
+ * fails only that test. Blocks nested inside a per-test block are built per
+ * test as well. `timeout` has no effect on a per-test block, since the test's
+ * own timeout covers the build.
  *
  * **Example** (Sharing layers between tests)
  *
@@ -222,6 +259,42 @@ export declare const live: Vitest.Tester<Scope.Scope>;
  * })
  * ```
  *
+ * **Example** (Building a layer for each test)
+ *
+ * ```ts
+ * import { assert, layer } from "@effect/vitest"
+ * import { Effect, Layer, Context, Ref } from "effect"
+ *
+ * class Database extends Context.Service<Database, "database">()("Database") {
+ *   static layer = Layer.succeed(Database, "database")
+ * }
+ *
+ * class Cache extends Context.Service<Cache, Ref.Ref<Array<string>>>()("Cache") {
+ *   static layer = Layer.effect(
+ *     Cache,
+ *     Effect.andThen(Database, Ref.make<Array<string>>([]))
+ *   )
+ * }
+ *
+ * layer(Database.layer)("repository", (it) => {
+ *   // Database is shared, Cache is built for each test
+ *   it.layer(Cache.layer, { buildPerTest: true })((it) => {
+ *     it.effect("writes to the cache", () =>
+ *       Effect.gen(function*() {
+ *         const cache = yield* Cache
+ *         yield* Ref.update(cache, (keys) => [...keys, "a"])
+ *         assert.deepStrictEqual(yield* Ref.get(cache), ["a"])
+ *       }))
+ *
+ *     it.effect("starts with an empty cache", () =>
+ *       Effect.gen(function*() {
+ *         const cache = yield* Cache
+ *         assert.deepStrictEqual(yield* Ref.get(cache), [])
+ *       }))
+ *   })
+ * })
+ * ```
+ *
  * @stability unstable
  * @category testing
  * @since 4.0.0
@@ -231,6 +304,7 @@ export declare const layer: <R, E>(layer_: Layer.Layer<R, E>, options?: {
     readonly memoMap?: Layer.MemoMap;
     readonly timeout?: Duration.Input;
     readonly excludeTestServices?: boolean;
+    readonly buildPerTest?: boolean;
 }) => {
     (f: (it: Vitest.MethodsNonLive<R>) => void): void;
     (name: string, f: (it: Vitest.MethodsNonLive<R>) => void): void;

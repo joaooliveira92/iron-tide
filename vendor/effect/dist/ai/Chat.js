@@ -18,7 +18,7 @@ import * as Duration from "../Duration.js";
 import * as Effect from "../Effect.js";
 import * as Layer from "../Layer.js";
 import * as Option from "../Option.js";
-import { BackingPersistence } from "../persistence/Persistence.js";
+import { BackingPersistence, PersistenceError } from "../persistence/Persistence.js";
 import * as Predicate from "../Predicate.js";
 import * as Ref from "../Ref.js";
 import * as Schema from "../Schema.js";
@@ -450,12 +450,15 @@ export const makePersisted = /*#__PURE__*/Effect.fnUntraced(function* (options) 
       });
     }
     // Decode the encoded previous history
-    const history = yield* decodeHistory(previousHistory);
+    const history = yield* decodeHistory(previousHistory).pipe(Effect.mapError(cause => new PersistenceError({
+      message: `Failed to decode persisted history for chat "${chatId}"`,
+      cause
+    })));
     // Hydrate the chat history
     yield* Ref.set(chat.history, history);
     // Convert the chat to a persisted chat
     return yield* toPersisted(chatId, chat, ttl);
-  }, Effect.catchTag("SchemaError", Effect.die));
+  });
   const get = Effect.fnUntraced(function* (chatId, options) {
     return yield* getChat(chatId, options?.timeToLive);
   }, effect => Effect.withSpan(effect, "PersistedChat.get", {

@@ -1,26 +1,28 @@
 import type { ConstructionPackage, ConstructionProject } from "@bluewave/campaign";
 import {
-  ACCELERATION_WORK_RATE_MULTIPLIER_BP,
   accelerateCapacityUnits,
   constructionAccelerationAllowed,
+  constructionWorkStatus,
   monthlyAbsorbable,
 } from "@bluewave/campaign";
 import { checkedMul, roundToInt, SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { RandomDecision, RandomEngine, RandomLedger, RandomStream } from "@bluewave/random";
+import {
+  accelerationTermsOf,
+  type AccelerationTerms,
+  type ShipBuildingContent,
+} from "@bluewave/ship-design";
 
 export {
-  ACCELERATION_WORK_RATE_MULTIPLIER_BP,
   accelerateCapacityUnits,
   constructionAccelerationAllowed,
+  constructionWorkStatus,
+  type AccelerationTerms,
 };
 
 export const CONSTRUCTION_ACCELERATION_POLICY_ID = "construction_acceleration_v1" as const;
 
-export const ACCELERATION_TOTAL_WORK_MULTIPLIER_BP = 10_500 as const;
-export const ACCELERATION_CAPACITY_PRESSURE_WEIGHT_BP = 12_500 as const;
-export const ACCELERATION_DELAY_THRESHOLD_BP = 9_000 as const;
-export const ACCELERATION_DELAY_PROBABILITY_CAP_BP = 5_000 as const;
 export const ACCELERATION_STREAM_FAMILY =
   "construction/month/project/acceleration_pressure" as const;
 
@@ -31,25 +33,22 @@ export const ACCELERATION_PRESSURE_CONTINUED = "ACCELERATION_PRESSURE_CONTINUED"
 
 const BP = 10_000;
 
-export function constructionWorkStatus(
-  status: ConstructionProject["status"],
-): "ACTIVE" | "ACCELERATED" {
-  return status === "ACCELERATED" ? "ACCELERATED" : "ACTIVE";
-}
-
-export function acceleratedRemainingWork(remainingWorkBefore: number): number {
+export function acceleratedRemainingWork(
+  remainingWorkBefore: number,
+  terms: AccelerationTerms,
+): number {
   if (!Number.isSafeInteger(remainingWorkBefore) || remainingWorkBefore < 0)
     throw new RangeError(
       `remainingWorkBefore must be a non-negative safe integer, got ${String(remainingWorkBefore)}`,
     );
-  return roundToInt(
-    checkedMul(remainingWorkBefore, ACCELERATION_TOTAL_WORK_MULTIPLIER_BP) / BP,
-    "ceil",
-  );
+  return roundToInt(checkedMul(remainingWorkBefore, terms.workMultiplierBp) / BP, "ceil");
 }
 
-export function accelerationPremiumWork(remainingWorkBefore: number): number {
-  return acceleratedRemainingWork(remainingWorkBefore) - remainingWorkBefore;
+export function accelerationPremiumWork(
+  remainingWorkBefore: number,
+  terms: AccelerationTerms,
+): number {
+  return acceleratedRemainingWork(remainingWorkBefore, terms) - remainingWorkBefore;
 }
 
 export function accelerationPremiumAlreadyApplied(project: ConstructionProject): boolean {
@@ -85,11 +84,14 @@ export interface AccelerationPremiumResult {
   readonly premiumWork: number;
 }
 
-export function applyAccelerationPremium(project: ConstructionProject): AccelerationPremiumResult {
+export function applyAccelerationPremium(
+  project: ConstructionProject,
+  terms: AccelerationTerms,
+): AccelerationPremiumResult {
   const remaining = Number(project["totalWork"]) - Number(project["completedWork"]);
   if (remaining <= 0 || accelerationPremiumAlreadyApplied(project))
     return { project, charged: false, premiumWork: 0 };
-  const acceleratedRemaining = acceleratedRemainingWork(remaining);
+  const acceleratedRemaining = acceleratedRemainingWork(remaining, terms);
   const premiumWork = acceleratedRemaining - remaining;
   const newTotal = Number(project["completedWork"]) + acceleratedRemaining;
   const packages = project["packages"];
@@ -109,24 +111,44 @@ export function applyAccelerationPremium(project: ConstructionProject): Accelera
   };
 }
 
+export function accelerationTermsFor(
+  shipBuilding: Pick<ShipBuildingContent, "environmentFor"> | undefined,
+  month: string,
+): AccelerationTerms | undefined {
+  if (shipBuilding === undefined) return undefined;
+  const environment = shipBuilding.environmentFor(month);
+  return accelerationTermsOf(environment.constructionBalance, environment.costBalance);
+}
+
+export function accelerationStartedProject(
+  project: ConstructionProject,
+  terms: AccelerationTerms,
+  month: string,
+): ConstructionProject {
+  const premium = applyAccelerationPremium(project, terms);
+  return {
+    ...premium.project,
+    acceleratedFromMonth: month,
+    acceleratedFromWork: premium.project["completedWork"],
+  };
+}
+
 export function projectConstructionDemand(
   project: ConstructionProject,
   capacityUnits: Readonly<Record<string, number>> | undefined,
   month: string,
+  terms?: AccelerationTerms,
 ): number {
-  return monthlyAbsorbable(project, capacityUnits, month);
+  return monthlyAbsorbable(project, capacityUnits, month, terms);
 }
 
 export function weightedConstructionDemand(
   normalDemand: number,
   acceleratedDemand: number,
+  terms: AccelerationTerms,
 ): number {
   return (
-    normalDemand +
-    roundToInt(
-      checkedMul(acceleratedDemand, ACCELERATION_CAPACITY_PRESSURE_WEIGHT_BP) / BP,
-      "floor",
-    )
+    normalDemand + roundToInt(checkedMul(acceleratedDemand, terms.pressureWeightBp) / BP, "floor")
   );
 }
 
@@ -137,19 +159,28 @@ export function constructionCapacityPressureBp(
   return roundToInt(checkedMul(weightedDemand, BP) / Math.max(1, availableCapacity), "floor");
 }
 
-export function accelerationDelayEligible(capacityPressureBp: number): boolean {
-  return capacityPressureBp > ACCELERATION_DELAY_THRESHOLD_BP;
+export function accelerationDelayEligible(
+  capacityPressureBp: number,
+  terms: AccelerationTerms,
+): boolean {
+  return capacityPressureBp > terms.delayThresholdBp;
 }
 
-export function accelerationExcessPressureBp(capacityPressureBp: number): number {
-  return Math.max(0, Math.min(BP, capacityPressureBp - ACCELERATION_DELAY_THRESHOLD_BP));
+export function accelerationExcessPressureBp(
+  capacityPressureBp: number,
+  terms: AccelerationTerms,
+): number {
+  return Math.max(0, Math.min(BP, capacityPressureBp - terms.delayThresholdBp));
 }
 
-export function accelerationDelayProbabilityBp(capacityPressureBp: number): number {
+export function accelerationDelayProbabilityBp(
+  capacityPressureBp: number,
+  terms: AccelerationTerms,
+): number {
   return roundToInt(
     checkedMul(
-      accelerationExcessPressureBp(capacityPressureBp),
-      ACCELERATION_DELAY_PROBABILITY_CAP_BP,
+      accelerationExcessPressureBp(capacityPressureBp, terms),
+      terms.delayProbabilityCapBp,
     ) / BP,
     "floor",
   );
@@ -169,6 +200,7 @@ export interface AccelerationPressureInput {
   readonly normalDemand: number;
   readonly acceleratedDemand: number;
   readonly availableCapacity: number;
+  readonly terms: AccelerationTerms;
   readonly acceleratedProjects: readonly ConstructionProject[];
   readonly randomEngine: RandomEngine;
   readonly randomLedger: RandomLedger;
@@ -193,14 +225,18 @@ const EMPTY_PRESSURE: Omit<
 export function resolveAccelerationCapacityPressure(
   input: AccelerationPressureInput,
 ): AccelerationPressureOutcome {
-  const weightedDemand = weightedConstructionDemand(input.normalDemand, input.acceleratedDemand);
+  const weightedDemand = weightedConstructionDemand(
+    input.normalDemand,
+    input.acceleratedDemand,
+    input.terms,
+  );
   const capacityPressureBp = constructionCapacityPressureBp(
     weightedDemand,
     input.availableCapacity,
   );
-  const delayProbabilityBp = accelerationDelayProbabilityBp(capacityPressureBp);
+  const delayProbabilityBp = accelerationDelayProbabilityBp(capacityPressureBp, input.terms);
   const projects = [...input.acceleratedProjects].sort(byProjectId);
-  if (projects.length === 0 || !accelerationDelayEligible(capacityPressureBp))
+  if (projects.length === 0 || !accelerationDelayEligible(capacityPressureBp, input.terms))
     return {
       ...EMPTY_PRESSURE,
       weightedDemand,
@@ -242,7 +278,22 @@ export function resolveAccelerationCapacityPressure(
   return { delayedProjectIds, weightedDemand, capacityPressureBp, delayProbabilityBp, decisions };
 }
 
-export const ACCELERATION_POOL_UNDEFINED_UNITS = 0;
+const POOL_EXCLUDED = new Set<ConstructionProject["status"]>(["COMPLETED", "CANCELLED"]);
+
+export function accelerationPoolUnitsOf(
+  projects: readonly ConstructionProject[],
+  capacityOf: (project: ConstructionProject) => Readonly<Record<string, number>> | undefined,
+  terms: AccelerationTerms,
+): number {
+  let largestRate = 0;
+  for (const project of projects) {
+    if (POOL_EXCLUDED.has(project["status"])) continue;
+    const capacity = capacityOf(project);
+    if (capacity === undefined) continue;
+    largestRate = Math.max(largestRate, ...Object.values(capacity));
+  }
+  return roundToInt(checkedMul(largestRate, terms.poolMultipleBp) / BP, "floor");
+}
 
 export interface AccelerationDemand {
   readonly normalDemand: number;
@@ -255,12 +306,13 @@ export function accelerationDemandOf(
   projects: readonly ConstructionProject[],
   capacityOf: (project: ConstructionProject) => Readonly<Record<string, number>> | undefined,
   month: string,
+  terms: AccelerationTerms,
 ): AccelerationDemand {
   let normalDemand = 0;
   let acceleratedDemand = 0;
   for (const project of projects) {
     if (DEMAND_EXCLUDED.has(project["status"])) continue;
-    const demand = projectConstructionDemand(project, capacityOf(project), month);
+    const demand = projectConstructionDemand(project, capacityOf(project), month, terms);
     if (project["status"] === "ACCELERATED") acceleratedDemand += demand;
     else normalDemand += demand;
   }
@@ -273,15 +325,36 @@ export interface AccelerationPressure {
   readonly delayProbabilityBp: number;
 }
 
-export function accelerationPressureOf(demand: AccelerationDemand): AccelerationPressure {
-  const weightedDemand = weightedConstructionDemand(demand.normalDemand, demand.acceleratedDemand);
-  const capacityPressureBp = constructionCapacityPressureBp(
-    weightedDemand,
-    ACCELERATION_POOL_UNDEFINED_UNITS,
+export function accelerationPressureOf(
+  demand: AccelerationDemand,
+  poolUnits: number,
+  terms: AccelerationTerms,
+): AccelerationPressure {
+  const weightedDemand = weightedConstructionDemand(
+    demand.normalDemand,
+    demand.acceleratedDemand,
+    terms,
   );
+  const capacityPressureBp = constructionCapacityPressureBp(weightedDemand, poolUnits);
   return {
     weightedDemand,
     capacityPressureBp,
-    delayProbabilityBp: accelerationDelayProbabilityBp(capacityPressureBp),
+    delayProbabilityBp: accelerationDelayProbabilityBp(capacityPressureBp, terms),
   };
+}
+
+export interface NationAccelerationPressure extends AccelerationPressure {
+  readonly poolUnits: number;
+  readonly demand: AccelerationDemand;
+}
+
+export function nationAccelerationPressureOf(
+  projects: readonly ConstructionProject[],
+  capacityOf: (project: ConstructionProject) => Readonly<Record<string, number>> | undefined,
+  month: string,
+  terms: AccelerationTerms,
+): NationAccelerationPressure {
+  const demand = accelerationDemandOf(projects, capacityOf, month, terms);
+  const poolUnits = accelerationPoolUnitsOf(projects, capacityOf, terms);
+  return { ...accelerationPressureOf(demand, poolUnits, terms), poolUnits, demand };
 }

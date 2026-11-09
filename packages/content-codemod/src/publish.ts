@@ -121,7 +121,11 @@ export function publishMigration(
     rmSync(backupDir, { recursive: true, force: true });
     return { ok: true, value: { stagingDir, files: all.length, noop: false } };
   } catch (error) {
-    rmSync(tmpDir, { recursive: true, force: true });
+    try {
+      rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      return ioFailure(stagingDir, error);
+    }
     return ioFailure(stagingDir, error);
   }
 }

@@ -6,7 +6,6 @@ import { debugRevisionActions } from "../../../components/shared/debugRevisionAc
 import { INSPECTOR_COLLAPSED_PX } from "../../shipbuilding/inspector-layout.js";
 import { cn } from "../../../lib/utils.js";
 import { LoadErrorCard, YardRail, YardStatusBar } from "../components/index.js";
-import { DeferredConstruction } from "./DeferredConstruction.js";
 import { InspectorPanel } from "./InspectorPanel.js";
 import { StageOutlet } from "./StageOutlet.js";
 import { YardOrdersBar } from "./YardOrdersBar.js";
@@ -109,8 +108,6 @@ export function ConstructionLayout() {
 
         <YardStatusBar readouts={readouts} />
       </div>
-
-      <DeferredConstruction />
     </ScreenStage>
   );
 }

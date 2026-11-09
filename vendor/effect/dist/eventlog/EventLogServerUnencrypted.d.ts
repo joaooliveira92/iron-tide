@@ -1,3 +1,18 @@
+/**
+ * Plaintext server implementation for the event-log remote protocol.
+ *
+ * This module accepts unencrypted event batches from remote clients, runs the
+ * registered event handlers, stores journal entries, and streams backlog plus
+ * live changes through the shared `EventLogServer` RPC protocol. It is intended
+ * for trusted deployments, local development, and tests where event data does
+ * not need a server-side encryption layer. The module also provides the
+ * services and layers needed to authorize requests, map stores, persist entries,
+ * and install the plaintext server.
+ *
+ * @stability unstable
+ * @since 4.0.0
+ */
+import * as Arr from "../Array.ts";
 import * as Context from "../Context.ts";
 import * as Effect from "../Effect.ts";
 import * as Layer from "../Layer.ts";
@@ -52,8 +67,9 @@ export declare const makeWrite: <Groups extends EventGroup.Any>(schema: EventLog
  * **Details**
  *
  * Incoming plaintext entries are authorized, mapped to a server store, checked
- * for conflicts, run through registered handlers, and persisted; change streams
- * include compacted backlog entries when compactors are registered.
+ * for conflicts, run through registered handlers, and persisted. Acknowledgements
+ * include duplicates with their original sequences. Change streams apply registered
+ * compactors to backlog entries and exclude this connection's writes.
  *
  * @stability unstable
  * @category layers
@@ -107,6 +123,7 @@ declare const EventLogServerAuthorization_base: Context.ServiceClass<EventLogSer
     }) => Effect.Effect<void, EventLogServerAuthError>;
     readonly authorizeIdentity: (options: {
         readonly publicKey: string;
+        readonly signingPublicKey?: Uint8Array<ArrayBuffer> | undefined;
     }) => Effect.Effect<void, EventLogServerAuthError>;
 }>;
 /**
@@ -117,6 +134,17 @@ declare const EventLogServerAuthorization_base: Context.ServiceClass<EventLogSer
  *
  * Use to provide authorization checks for plaintext event-log writes, reads,
  * and identity authentication.
+ *
+ * **Gotchas**
+ *
+ * An identity's `publicKey` is an identifier, not a secret. The server binds
+ * the first signing key that authenticates for an identity and rejects any
+ * other key afterwards. `authorizeIdentity` also receives the presented
+ * `signingPublicKey`, so a deployment that records each identity's signing key
+ * at provisioning time, with `EventLogSessionAuth.deriveSigningPublicKey`, can
+ * reject every other key, including on first use. The server always supplies
+ * `signingPublicKey`; it is optional only so that existing callers keep
+ * compiling, and a policy that checks it should reject when it is missing.
  *
  * @stability unstable
  * @category services
@@ -162,8 +190,24 @@ export declare const layerStoreMappingStatic: (options: {
 }) => Layer.Layer<StoreMapping>;
 declare const Storage_base: Context.ServiceClass<Storage, "effect/eventlog/EventLogServerUnencrypted/Storage", {
     readonly getId: Effect.Effect<RemoteId>;
+    /**
+     * Lowest assigned sequence (default 0). Overestimating skips entries.
+     */
+    readonly firstSequence?: number | undefined;
+    /**
+     * Returns the signing key bound to `publicKey`, binding `signingPublicKey`
+     * when none is bound yet. The server only passes keys whose signature it
+     * has verified, and rejects a key that differs from the returned binding.
+     */
     readonly getOrCreateSessionAuthBinding: (publicKey: string, signingPublicKey: Uint8Array<ArrayBuffer>) => Effect.Effect<Uint8Array<ArrayBuffer>>;
-    readonly entriesAfter: (storeId: StoreId, entry: Entry) => Effect.Effect<Array<Entry>>;
+    /**
+     * Returns the stored entries at or after `entry`, in sequence order.
+     *
+     * The server also passes the incoming `batch`, sorted and starting with
+     * `entry`. Implementations may use it to return only the entries that share
+     * an id, or an event and primary key, with a batch entry.
+     */
+    readonly entriesAfter: (storeId: StoreId, entry: Entry, batch?: Arr.NonEmptyReadonlyArray<Entry>) => Effect.Effect<Array<RemoteEntry>>;
     readonly write: (storeId: StoreId, entries: ReadonlyArray<Entry>) => Effect.Effect<ReadonlyArray<RemoteEntry>>;
     readonly changes: (options: {
         readonly storeId: StoreId;
@@ -184,7 +228,8 @@ declare const Storage_base: Context.ServiceClass<Storage, "effect/eventlog/Event
  *
  * It provides the server remote id, stores session authentication bindings,
  * allocates remote sequence numbers, persists entries, streams changes, and
- * exposes a transaction boundary.
+ * exposes a transaction boundary. `entriesAfter` returns stored entries with
+ * their sequences, so that duplicate writes can be acknowledged.
  *
  * @stability unstable
  * @category services
@@ -196,7 +241,7 @@ type RegisteredCompactor = {
     readonly events: ReadonlySet<string>;
     readonly effect: (options: {
         readonly entries: ReadonlyArray<Entry>;
-        readonly write: (entry: Entry) => Effect.Effect<void>;
+        readonly write: (entry: Entry, source?: Entry) => Effect.Effect<void>;
     }) => Effect.Effect<void>;
 };
 /**
@@ -212,6 +257,12 @@ type RegisteredCompactor = {
  * Contiguous entries handled by the same compactor may be replaced with compacted
  * entries when the replacement count can be mapped back to increasing remote
  * sequence numbers; otherwise the original entries are kept.
+ *
+ * Outputs are ordered by the position of `source ?? entry` within the run, as in
+ * client replay. Unknown positions go to the start; ties keep write order.
+ *
+ * Client replay groups the whole batch per compactor; the server calls each
+ * compactor per contiguous run, so batch boundaries can differ.
  *
  * @stability unstable
  * @category compaction

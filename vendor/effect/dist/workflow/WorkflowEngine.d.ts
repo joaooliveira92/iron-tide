@@ -31,11 +31,23 @@ declare const WorkflowEngine_base: Context.ServiceClass<WorkflowEngine, "effect/
     readonly register: <Name extends string, Payload extends Workflow.AnyStructSchema, Success extends Schema.Top, Error extends Schema.Top, R>(workflow: Workflow.Workflow<Name, Payload, Success, Error>, execute: (payload: Payload["Type"], executionId: string) => Effect.Effect<Success["Type"], Error["Type"], R>) => Effect.Effect<void, never, Scope.Scope | Exclude<R, WorkflowEngine | WorkflowInstance | Workflow.Execution<Name> | Scope.Scope> | Payload["DecodingServices"] | Payload["EncodingServices"] | Success["DecodingServices"] | Success["EncodingServices"] | Error["DecodingServices"] | Error["EncodingServices"]>;
     /**
      * Execute a registered workflow.
+     *
+     * **Details**
+     *
+     * Unless `discard` is set, a caller outside any workflow waits for the
+     * result. While the execution is suspended, the caller retries on
+     * `suspendedRetrySchedule`; engines that observe the final result wake it
+     * sooner. `ClusterWorkflowEngine` does so only for callers on the runner
+     * that owns the execution.
+     *
+     * `detached: true` requires `discard: true` and skips parent completion
+     * wakes and interruption linkage. Otherwise, it is a defect.
      */
     readonly execute: <Name extends string, Payload extends Workflow.AnyStructSchema, Success extends Schema.Top, Error extends Schema.Top, const Discard extends boolean = false>(workflow: Workflow.Workflow<Name, Payload, Success, Error>, options: {
         readonly executionId: string;
         readonly payload: Payload["Type"];
         readonly discard?: Discard | undefined;
+        readonly detached?: boolean | undefined;
         readonly suspendedRetrySchedule?: Schedule.Schedule<any, unknown> | undefined;
     }) => Effect.Effect<Discard extends true ? string : Success["Type"], Error["Type"], Payload["EncodingServices"] | Success["DecodingServices"] | Error["DecodingServices"]>;
     /**
@@ -126,8 +138,16 @@ declare const WorkflowInstance_base: Context.ServiceClass<WorkflowInstance, "eff
      * here.
      */
     cause: Cause.Cause<never> | undefined;
-    /** Deferred names this run parked on; their completions preempt the run. */
-    readonly awaitedDeferreds: Set<string>;
+    /**
+     * Whether this workflow or an activity hit `SuspendOnFailure`, excluding
+     * inherited child failures.
+     */
+    failed: boolean;
+    /**
+     * Deferred names this run waits on, counted per live wait; their
+     * completions preempt the run.
+     */
+    readonly awaitedDeferreds: Map<string, number>;
     /** Deferred names this run completed itself; their completions need not wake it. */
     readonly completedDeferreds: Set<string>;
     readonly activityState: {
@@ -155,7 +175,15 @@ declare const WorkflowInstance_base: Context.ServiceClass<WorkflowInstance, "eff
  * @since 4.0.0
  */
 export declare class WorkflowInstance extends WorkflowInstance_base {
-    static initial(workflow: Workflow.Any, executionId: string, scope?: Scope.Closeable): WorkflowInstance["Service"];
+    static initial(workflow: Workflow.Any, executionId: string, options?: {
+        readonly scope?: Scope.Closeable | undefined;
+        /**
+         * Awaited deferred names shared with the run this instance belongs to.
+         * An activity instance registers its durable waits there so the run
+         * can be woken once it suspends, without those waits preempting it.
+         */
+        readonly awaitedDeferreds?: Map<string, number> | undefined;
+    }): WorkflowInstance["Service"];
 }
 /**
  * Tracks live workflow runs so deferred completions can wake them.
@@ -193,11 +221,24 @@ export interface Encoded {
         readonly payload: object;
         readonly discard: Discard;
         readonly parent?: WorkflowInstance["Service"] | undefined;
+        /** Skip parent completion wakes and interruption linkage. */
+        readonly detached?: boolean | undefined;
     }) => Effect.Effect<Discard extends true ? void : Workflow.Result<unknown, unknown>>;
     readonly poll: (workflow: Workflow.Any, executionId: string) => Effect.Effect<Option.Option<Workflow.Result<unknown, unknown>>>;
     readonly interrupt: (workflow: Workflow.Any, executionId: string) => Effect.Effect<void>;
     readonly interruptUnsafe: (workflow: Workflow.Any, executionId: string) => Effect.Effect<void>;
     readonly resume: (workflow: Workflow.Any, executionId: string) => Effect.Effect<void>;
+    /**
+     * Waits until a suspended execution has a result other than `Suspended`.
+     *
+     * **Gotchas**
+     *
+     * External callers race this with their `suspendedRetrySchedule`, so it may
+     * never complete when the engine cannot observe the result. Completing while
+     * the execution is still suspended skips the sleep and spends a step of that
+     * schedule. A hook that keeps completing early makes the caller spin.
+     */
+    readonly awaitComplete?: (workflow: Workflow.Any, executionId: string) => Effect.Effect<void>;
     readonly activityExecute: (activity: Activity.Any, attempt: number) => Effect.Effect<Workflow.Result<unknown, unknown>, never, WorkflowInstance>;
     readonly deferredResult: (deferred: DurableDeferred.Any) => Effect.Effect<Option.Option<Exit.Exit<unknown, unknown>>, never, WorkflowInstance>;
     readonly deferredDone: (options: {

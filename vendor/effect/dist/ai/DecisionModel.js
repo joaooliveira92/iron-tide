@@ -2,14 +2,20 @@
  * Defines the provider-neutral service for structured decisions.
  * `decide` encodes one input as JSON, sends its named decisions in one provider
  * call, and validates the answers. Failures are reported as `AiError` values.
+ * `decideSettled` makes the same call but reports each decision separately, so
+ * valid answers survive when others are missing, refused, or invalid.
  * @stability unstable
  * @since 4.0.0
  */
 import * as Context from "../Context.js";
 import * as Effect from "../Effect.js";
+import * as Uuid from "../internal/uuid.js";
 import * as Predicate from "../Predicate.js";
+import * as Random from "../Random.js";
+import * as Result from "../Result.js";
 import * as Schema from "../Schema.js";
 import * as AiError from "./AiError.js";
+import * as Decision from "./Decision.js";
 /**
  * Service key for answering decisions about an input. Create implementations
  * with `make`.
@@ -40,13 +46,85 @@ export class DecisionUsage extends /*#__PURE__*/Schema.Class("effect/ai/Decision
   inputTokens: /*#__PURE__*/Schema.optional(Schema.Finite),
   outputTokens: /*#__PURE__*/Schema.optional(Schema.Finite)
 }) {}
-const invalidOutput = description => AiError.make({
-  module: "DecisionModel",
-  method: "decide",
-  reason: new AiError.InvalidOutputError({
-    description
-  })
+const unanswered = (reason, description) => Result.fail({
+  _tag: "Unanswered",
+  reason,
+  description
 });
+const invalid = description => unanswered("Invalid", description);
+const aiError = (method, reason) => AiError.make({
+  module: "DecisionModel",
+  method,
+  reason
+});
+const invalidUserInput = (method, description) => aiError(method, new AiError.InvalidUserInputError({
+  description
+}));
+const toProviderImage = value => {
+  if (!Predicate.isObject(value) || Object.keys(value).length !== 1) return undefined;
+  const image = value[Decision.ImageKey];
+  if (!Predicate.isObject(image) || Object.keys(image).length !== 2 || !Predicate.isString(image.mediaType)) {
+    return undefined;
+  }
+  if (Predicate.isString(image.base64)) return {
+    mediaType: image.mediaType,
+    data: image.base64
+  };
+  if (Predicate.isString(image.url) && URL.canParse(image.url)) {
+    return {
+      mediaType: image.mediaType,
+      data: new URL(image.url)
+    };
+  }
+  return undefined;
+};
+const formatPath = path => path.map((segment, index) => typeof segment === "number" ? `[${segment}]` : index === 0 ? segment : `.${segment}`).join("");
+const randomUuid = random => {
+  const bytes = new Uint8Array(16);
+  for (let index = 0; index < bytes.length; index++) {
+    bytes[index] = Math.floor(random.nextDoubleUnsafe() * 256);
+  }
+  return Uuid.v4String(bytes);
+};
+/**
+ * Replaces each encoded `Decision.Image` in `state` with a reference. Equal
+ * images share one reference. `paths` holds every path where an image was found.
+ */
+const extractImages = (state, random) => {
+  const images = [];
+  const references = new Map();
+  const paths = new Set();
+  const walk = (value, path) => {
+    const image = toProviderImage(value);
+    if (image !== undefined) {
+      paths.add(formatPath(path));
+      const key = `${image.mediaType}\n${typeof image.data === "string" ? `base64:${image.data}` : `url:${image.data.href}`}`;
+      let reference = references.get(key);
+      if (reference === undefined) {
+        reference = randomUuid(random);
+        references.set(key, reference);
+        images.push({
+          reference,
+          path,
+          image
+        });
+      }
+      return reference;
+    }
+    if (Array.isArray(value)) {
+      return value.map((item, index) => walk(item, [...path, index]));
+    }
+    if (Predicate.isObject(value)) {
+      return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, walk(item, [...path, key])]));
+    }
+    return value;
+  };
+  return {
+    state: walk(state, []),
+    images,
+    paths
+  };
+};
 const isFiniteNumber = value => Predicate.isNumber(value) && Number.isFinite(value);
 const isUnitInterval = value => isFiniteNumber(value) && value >= 0 && value <= 1;
 const sumTolerance = 1e-6;
@@ -58,125 +136,175 @@ const sumTolerance = 1e-6;
 const validateDistribution = (key, labels, answer, roundingError) => {
   const raw = answer.probabilities;
   if (!Predicate.isObject(raw)) {
-    return invalidOutput(`Provider returned no probabilities for decision "${key}"`);
+    return unanswered("NoDistribution", `Provider returned no probabilities for decision "${key}"`);
   }
   const probabilities = Object.create(null);
   let total = 0;
   for (const label of labels) {
     const value = raw[label];
     if (!isUnitInterval(value)) {
-      return invalidOutput(`Provider returned no probability for label "${label}" of decision "${key}"`);
+      return invalid(`Provider returned no probability for label "${label}" of decision "${key}"`);
     }
     probabilities[label] = value;
     total += value;
   }
   const drift = Math.abs(total - 1);
   if (total === 0 || drift > labels.length * roundingError + sumTolerance) {
-    return invalidOutput(`Provider returned probabilities that do not sum to 1 for decision "${key}"`);
+    return invalid(`Provider returned probabilities that do not sum to 1 for decision "${key}"`);
   }
   if (drift > sumTolerance) {
     for (const label of labels) probabilities[label] /= total;
   }
-  return probabilities;
+  return Result.succeed(probabilities);
 };
 const validateConfidence = (key, answer) => {
   if (answer.confidence === undefined) {
-    return undefined;
+    return Result.succeed(undefined);
   }
-  return isUnitInterval(answer.confidence) ? answer.confidence : invalidOutput(`Provider returned confidence outside [0, 1] for decision "${key}"`);
+  return isUnitInterval(answer.confidence) ? Result.succeed(answer.confidence) : invalid(`Provider returned confidence outside [0, 1] for decision "${key}"`);
 };
 const validateAnswer = (key, decision, answer, roundingError) => {
   if (!Predicate.isObject(answer)) {
-    return invalidOutput(`Provider returned no answer for decision "${key}"`);
+    return unanswered("Missing", `Provider returned no answer for decision "${key}"`);
+  }
+  if (answer._tag === "Refusal") {
+    return unanswered("Refused", `Provider refused to answer decision "${key}"`);
   }
   if (answer._tag !== decision._tag) {
-    return invalidOutput(`Provider returned a "${String(answer._tag)}" answer for decision "${key}", expected "${decision._tag}"`);
+    return invalid(`Provider returned a "${String(answer._tag)}" answer for decision "${key}", expected "${decision._tag}"`);
   }
   switch (decision._tag) {
     case "Classify":
       {
         const labels = Object.keys(decision.criteria);
-        if (!Predicate.isString(answer.label) || !labels.includes(answer.label)) {
-          return invalidOutput(`Provider returned an unknown label for decision "${key}"`);
+        const label = answer.label;
+        if (!Predicate.isString(label) || !labels.includes(label)) {
+          return invalid(`Provider returned an unknown label for decision "${key}"`);
         }
-        const confidence = validateConfidence(key, answer);
-        if (AiError.isAiError(confidence)) {
-          return confidence;
-        }
-        const probabilities = validateDistribution(key, labels, answer, roundingError);
-        if (AiError.isAiError(probabilities)) {
-          return probabilities;
-        }
-        return {
-          label: answer.label,
-          probabilities,
-          ...(confidence === undefined ? undefined : {
-            confidence
-          })
-        };
+        return Result.gen(function* () {
+          const confidence = yield* validateConfidence(key, answer);
+          const probabilities = yield* validateDistribution(key, labels, answer, roundingError);
+          return {
+            label,
+            probabilities,
+            ...(confidence === undefined ? undefined : {
+              confidence
+            })
+          };
+        });
       }
     case "Rate":
       {
-        const levels = decision.criteria;
-        if (!isFiniteNumber(answer.rating) || answer.rating < 0 || answer.rating > levels.length - 1) {
-          return invalidOutput(`Provider returned a rating outside [0, ${levels.length - 1}] for decision "${key}"`);
+        const levels = decision.criteria.map(level => level.label);
+        const rating = answer.rating;
+        if (!isFiniteNumber(rating) || rating < 0 || rating > levels.length - 1) {
+          return invalid(`Provider returned a rating outside [0, ${levels.length - 1}] for decision "${key}"`);
         }
-        const confidence = validateConfidence(key, answer);
-        if (AiError.isAiError(confidence)) {
-          return confidence;
-        }
-        const probabilities = validateDistribution(key, levels, answer, roundingError);
-        if (AiError.isAiError(probabilities)) {
-          return probabilities;
-        }
-        let label = levels[0];
-        for (let i = 1; i < levels.length; i++) {
-          if (probabilities[levels[i]] > probabilities[label]) {
-            label = levels[i];
+        return Result.gen(function* () {
+          const confidence = yield* validateConfidence(key, answer);
+          const probabilities = yield* validateDistribution(key, levels, answer, roundingError);
+          let label = levels[0];
+          for (let i = 1; i < levels.length; i++) {
+            if (probabilities[levels[i]] > probabilities[label]) {
+              label = levels[i];
+            }
           }
-        }
-        return {
-          rating: answer.rating,
-          label,
-          probabilities,
-          ...(confidence === undefined ? undefined : {
-            confidence
-          })
-        };
+          return {
+            rating,
+            label,
+            probabilities,
+            ...(confidence === undefined ? undefined : {
+              confidence
+            })
+          };
+        });
       }
     case "Probability":
       {
         if (!isUnitInterval(answer.probability)) {
-          return invalidOutput(`Provider returned a probability outside [0, 1] for decision "${key}"`);
+          return invalid(`Provider returned a probability outside [0, 1] for decision "${key}"`);
         }
-        return {
+        return Result.succeed({
           probability: answer.probability
+        });
+      }
+    case "Locate":
+      {
+        const box = answer.box;
+        if (!Predicate.isObject(box) || !isUnitInterval(box.left) || !isUnitInterval(box.top) || !isUnitInterval(box.right) || !isUnitInterval(box.bottom)) {
+          return invalid(`Provider returned a box with edges outside [0, 1] for decision "${key}"`);
+        }
+        if (box.left > box.right || box.top > box.bottom) {
+          return invalid(`Provider returned a box with crossed edges for decision "${key}"`);
+        }
+        const bounds = {
+          left: box.left,
+          top: box.top,
+          right: box.right,
+          bottom: box.bottom
         };
+        return Result.map(validateConfidence(key, answer), confidence => ({
+          box: bounds,
+          ...(confidence === undefined ? undefined : {
+            confidence
+          })
+        }));
       }
   }
 };
-const validateAnswers = (decisions, answers, roundingError) => {
-  const validated = Object.create(null);
+const settleAnswers = (decisions, answers, roundingError) => {
+  const outcomes = Object.create(null);
   for (const key of Object.keys(decisions)) {
-    const answer = validateAnswer(key, decisions[key], answers[key], roundingError);
-    if (AiError.isAiError(answer)) {
-      return Effect.fail(answer);
-    }
-    validated[key] = answer;
+    outcomes[key] = validateAnswer(key, decisions[key], answers[key], roundingError);
   }
-  return Effect.succeed(validated);
+  return outcomes;
+};
+const requireAnswers = outcomes => {
+  const answers = Object.create(null);
+  const refused = [];
+  let firstUnanswered;
+  for (const [key, outcome] of Object.entries(outcomes)) {
+    if (Result.isSuccess(outcome)) {
+      answers[key] = outcome.success;
+    } else if (outcome.failure.reason === "Refused") {
+      refused.push(`"${key}"`);
+    } else {
+      firstUnanswered ??= outcome.failure;
+    }
+  }
+  if (refused.length > 0) {
+    return Effect.fail(aiError("decide", new AiError.ContentPolicyError({
+      description: `Provider refused to answer decisions ${refused.join(", ")}`
+    })));
+  }
+  if (firstUnanswered !== undefined) {
+    return Effect.fail(aiError("decide", new AiError.InvalidOutputError({
+      description: firstUnanswered.description
+    })));
+  }
+  return Effect.succeed(answers);
 };
 /**
  * Creates a `DecisionModel` that encodes inputs as JSON and validates provider answers.
  * Answers must cover every decision and use its labels. Distributions must
  * sum to 1 within `1e-6`, optional confidence must be in `[0, 1]`, and ratings must be
- * in `[0, criteria.length - 1]`. Invalid answers fail with
- * `AiError.InvalidOutputError`; encoding failures use `AiError.InvalidUserInputError`.
+ * in `[0, criteria.length - 1]`, and boxes must have edges in `[0, 1]` that do
+ * not cross. With `decide`, refused decisions fail with
+ * `AiError.ContentPolicyError` and other unanswered decisions fail with
+ * `AiError.InvalidOutputError`; `decideSettled` reports them per decision
+ * instead. Encoding failures use `AiError.InvalidUserInputError`.
  *
  * **Details**
  *
- * Set `supportsImages: true` to accept images. Otherwise, nonempty image input
+ * After encoding, each `Decision.Image` in the input is replaced with a
+ * reference string, and the provider receives the images in `images`. Set
+ * `supportsImages: true` to accept images. Otherwise, an input with images
  * fails with `AiError.InvalidUserInputError`.
+ *
+ * Set `supportsLocate: true` to accept locate decisions; only then does
+ * `decide` receive them. Otherwise, a definition with a locate decision fails
+ * with `AiError.InvalidUserInputError`, as does a locate decision whose path
+ * holds no image.
  *
  * Providers that round each probability to `probabilityPrecision` decimal
  * places may return distributions whose sum drifts from 1 by up to half a unit
@@ -193,39 +321,58 @@ const validateAnswers = (decisions, answers, roundingError) => {
  */
 export const make = params => Effect.sync(() => {
   const roundingError = params.probabilityPrecision === undefined ? 0 : 0.5 * 10 ** -params.probabilityPrecision;
+  const settle = (method, definition, options) => Schema.encodeEffect(Schema.toCodecJson(definition.input))(options.input).pipe(Effect.mapError(error => invalidUserInput(method, error.message)), Effect.flatMap(encoded => Effect.withFiber(fiber => Effect.succeed(extractImages(encoded, fiber.getRef(Random.Random))))), Effect.flatMap(({
+    state,
+    images,
+    paths
+  }) => {
+    if (images.length > 0 && params.supportsImages !== true) {
+      return Effect.fail(invalidUserInput(method, "This decision model does not accept images"));
+    }
+    for (const [key, decision] of Object.entries(definition.decisions)) {
+      if (decision._tag !== "Locate") continue;
+      if (params.supportsLocate !== true) {
+        return Effect.fail(invalidUserInput(method, "This decision model does not support locate decisions"));
+      }
+      if (!paths.has(decision.image)) {
+        return Effect.fail(invalidUserInput(method, `Locate decision "${key}" targets "${decision.image}", which holds no image`));
+      }
+    }
+    // Locate decisions were rejected above unless `supportsLocate` is true.
+    const decide = params.decide;
+    return decide({
+      state,
+      decisions: definition.decisions,
+      ...(images.length === 0 ? undefined : {
+        images
+      })
+    });
+  }), Effect.map(response => ({
+    outcomes: settleAnswers(definition.decisions, response.answers, roundingError),
+    usage: new DecisionUsage({
+      inputTokens: response.usage.inputTokens,
+      outputTokens: response.usage.outputTokens
+    }),
+    ...(response.id === undefined ? undefined : {
+      id: response.id
+    }),
+    ...(response.modelId === undefined ? undefined : {
+      modelId: response.modelId
+    }),
+    metadata: response.metadata ?? {}
+  })));
   return DecisionModel.of({
     [TypeId]: TypeId,
-    decide: (definition, options) => Schema.encodeEffect(Schema.toCodecJson(definition.input))(options.input).pipe(Effect.mapError(error => AiError.make({
-      module: "DecisionModel",
-      method: "decide",
-      reason: new AiError.InvalidUserInputError({
-        description: error.message
-      })
-    })), Effect.flatMap(state => {
-      const images = options.images?.length ? options.images : undefined;
-      if (images !== undefined && params.supportsImages !== true) {
-        return Effect.fail(AiError.make({
-          module: "DecisionModel",
-          method: "decide",
-          reason: new AiError.InvalidUserInputError({
-            description: "This decision model does not accept images"
-          })
-        }));
-      }
-      return params.decide({
-        state,
-        decisions: definition.decisions,
-        ...(images === undefined ? undefined : {
-          images
-        })
-      });
-    }), Effect.flatMap(response => Effect.map(validateAnswers(definition.decisions, response.answers, roundingError), answers => ({
+    decide: (definition, options) => settle("decide", definition, options).pipe(Effect.flatMap(({
+      outcomes,
+      ...response
+    }) => Effect.map(requireAnswers(outcomes), answers => ({
       answers,
-      usage: new DecisionUsage({
-        inputTokens: response.usage.inputTokens,
-        outputTokens: response.usage.outputTokens
-      })
+      ...response
     }))), effect => Effect.withSpan(effect, "DecisionModel.decide", {
+      captureStackTrace: false
+    })),
+    decideSettled: (definition, options) => settle("decideSettled", definition, options).pipe(effect => Effect.withSpan(effect, "DecisionModel.decideSettled", {
       captureStackTrace: false
     }))
   });
@@ -236,6 +383,9 @@ export const make = params => Effect.sync(() => {
  * Explicit `undefined` fields become `null`; absent fields stay absent.
  * Custom declarations need a JSON codec annotation or encoding fails.
  * Returned answers and probability dictionaries have null prototypes.
+ * Fails with `AiError.ContentPolicyError` if the provider refuses any decision,
+ * and otherwise with `AiError.InvalidOutputError` for the first unanswered
+ * decision in definition order.
  *
  * **Example** (Triaging a ticket)
  *
@@ -262,10 +412,59 @@ export const make = params => Effect.sync(() => {
  * ```
  *
  * @see {@link DecisionModel} for the service this function requires
+ * @see {@link decideSettled} for keeping valid answers when others fail
  *
  * @stability unstable
  * @category decisions
  * @since 4.0.0
  */
 export const decide = (definition, options) => DecisionModel.use(model => model.decide(definition, options));
+/**
+ * Answers each decision with a `Result` containing a validated answer or a
+ * `Decision.Unanswered` reason. Input encoding and provider failures still
+ * fail the effect. Token usage covers the whole call.
+ *
+ * **Details**
+ *
+ * Provider response decoding errors fail the whole call. Per-decision reasons
+ * reflect the first failed validation check; `"NoDistribution"` requires an
+ * otherwise valid answer.
+ *
+ * **Example** (Falling back for unanswered decisions)
+ *
+ * ```ts
+ * import { Effect, Result, Schema } from "effect"
+ * import { Decision, DecisionModel } from "effect/ai"
+ *
+ * const TicketTriage = Decision.make({
+ *   input: Schema.String,
+ *   decisions: {
+ *     department: Decision.classify({
+ *       instructions: "Which team should handle this",
+ *       criteria: { billing: "payments", technical: "bugs" }
+ *     }),
+ *     urgent: Decision.probability({ instructions: "The message is time-sensitive" })
+ *   }
+ * })
+ *
+ * const program = Effect.gen(function*() {
+ *   const { outcomes } = yield* DecisionModel.decideSettled(TicketTriage, {
+ *     input: "My card was charged twice, please fix this today"
+ *   })
+ *   const department = Result.isSuccess(outcomes.department) &&
+ *       outcomes.department.success.probabilities.billing >= 0.8
+ *     ? "billing"
+ *     : "needs review"
+ *   const urgent = Result.isSuccess(outcomes.urgent) ? outcomes.urgent.success.probability : undefined
+ *   return { department, urgent }
+ * })
+ * ```
+ *
+ * @see {@link decide} for failing unless every decision is answered
+ *
+ * @stability unstable
+ * @category decisions
+ * @since 4.0.6
+ */
+export const decideSettled = (definition, options) => DecisionModel.use(model => model.decideSettled(definition, options));
 //# sourceMappingURL=DecisionModel.js.map

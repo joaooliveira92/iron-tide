@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type KeyboardEvent,
   type PointerEvent,
   type WheelEvent,
@@ -84,6 +85,51 @@ function symbolSize(band: ReturnType<typeof lodBandFor>): number {
   return 12;
 }
 
+type ScreenPoint = readonly [number, number];
+
+function createCursorStore() {
+  let point: ScreenPoint | null = null;
+  const listeners = new Set<() => void>();
+  return {
+    read: () => point,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    write: (next: ScreenPoint | null) => {
+      point = next;
+      for (const listener of listeners) listener();
+    },
+  };
+}
+
+type CursorStore = ReturnType<typeof createCursorStore>;
+
+interface CursorDistanceProps {
+  readonly cursor: CursorStore;
+  readonly camera: TacticalCamera;
+  readonly viewport: TacticalViewport;
+  readonly origin: readonly [number, number] | null;
+  readonly measurement: Parameters<typeof formatMeasurement>[1];
+}
+
+function CursorDistance({ cursor, camera, viewport, origin, measurement }: CursorDistanceProps) {
+  const point = useSyncExternalStore(cursor.subscribe, cursor.read);
+  if (point === null || origin === null) return null;
+  const world = screenToWorld(camera, viewport, point);
+  const distance = formatMeasurement(
+    Math.round(Math.hypot(world[0] - origin[0], world[1] - origin[1])),
+    measurement,
+  );
+  return (
+    <p data-testid="tactical-cursor-distance">
+      {translate("tactical.cursor.distance", { distance })}
+    </p>
+  );
+}
+
 export function TacticalMap(props: TacticalMapProps) {
   const {
     view,
@@ -104,7 +150,7 @@ export function TacticalMap(props: TacticalMapProps) {
   const frame = useRef<HTMLDivElement | null>(null);
   const [viewport, setViewport] = useState<TacticalViewport>(FALLBACK_VIEWPORT);
   const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
-  const [cursor, setCursor] = useState<readonly [number, number] | null>(null);
+  const [cursor] = useState(createCursorStore);
 
   useEffect(() => {
     const element = frame.current;
@@ -186,14 +232,6 @@ export function TacticalMap(props: TacticalMapProps) {
     selections: preferences.measurementSelections,
   } as const;
   const selectedPoint = selected === undefined ? null : shipPoint(selected);
-  let cursorDistance: string | null = null;
-  if (cursor !== null && selectedPoint !== null) {
-    const world = screenToWorld(camera, viewport, cursor);
-    cursorDistance = formatMeasurement(
-      Math.round(Math.hypot(world[0] - selectedPoint[0], world[1] - selectedPoint[1])),
-      measurement,
-    );
-  }
   const centre: readonly [number, number] = [viewport.width / 2, viewport.height / 2];
 
   const onWheel = (event: WheelEvent<SVGSVGElement>) => {
@@ -216,7 +254,7 @@ export function TacticalMap(props: TacticalMapProps) {
 
   const onPointerMove = (event: PointerEvent<SVGSVGElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    setCursor([event.clientX - rect.left, event.clientY - rect.top]);
+    cursor.write([event.clientX - rect.left, event.clientY - rect.top]);
     const state = drag.current;
     if (state === null) return;
     const dx = event.clientX - state.x;
@@ -282,7 +320,7 @@ export function TacticalMap(props: TacticalMapProps) {
         onWheel={onWheel}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerLeave={() => setCursor(null)}
+        onPointerLeave={() => cursor.write(null)}
         onPointerUp={onPointerUp}
         onKeyDown={onKeyDown}
       >
@@ -599,11 +637,13 @@ export function TacticalMap(props: TacticalMapProps) {
             range: formatMeasurement(view.weather.visibilityNm * UM_PER_NAUTICAL_MILE, measurement),
           })}
         </p>
-        {cursorDistance === null ? null : (
-          <p data-testid="tactical-cursor-distance">
-            {translate("tactical.cursor.distance", { distance: cursorDistance })}
-          </p>
-        )}
+        <CursorDistance
+          cursor={cursor}
+          camera={camera}
+          viewport={viewport}
+          origin={selectedPoint}
+          measurement={measurement}
+        />
       </div>
       {selected?.headingDeg == null ? null : (
         <span className="sr-only" data-testid="tactical-selected-bearing">

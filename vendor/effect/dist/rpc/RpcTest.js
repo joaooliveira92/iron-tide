@@ -25,6 +25,7 @@ export const makeClient = /*#__PURE__*/Effect.fnUntraced(function* (group, optio
   // oxlint-disable-next-line prefer-const
   let client;
   const server = yield* RpcServer.makeNoSerialization(group, {
+    disableFatalDefects: options?.disableFatalDefects,
     onFromServer(response) {
       return client.write(response);
     }

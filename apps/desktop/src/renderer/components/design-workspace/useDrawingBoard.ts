@@ -29,6 +29,7 @@ import { selectInitialReference } from "./initialReference.js";
 export interface DrawingBoardState {
   readonly content: DrawingBoardContent;
   readonly preset: ReferenceDesign;
+  readonly developedFrom: string;
   readonly month: string;
   readonly draft: DesignDraft;
   readonly env: WorkshopEnvironment;
@@ -52,6 +53,7 @@ export interface DrawingBoardActions {
   readonly suggest: () => SuggestedFix[];
   readonly generateAlternatives: () => Candidate[];
   readonly loadDraft: (draft: DesignDraft) => void;
+  readonly openDesign: (draft: DesignDraft, name: string) => void;
   readonly restore: (presetId: string, log: EditLog) => boolean;
 }
 
@@ -65,6 +67,9 @@ export function useDrawingBoard(fixedMonth: string | null = null): {
     [content, fixedMonth],
   );
   const [preset, setPreset] = useState<ReferenceDesign>(initial);
+  const [origin, setOrigin] = useState<{ readonly name: string; readonly draft: DesignDraft }>(
+    () => ({ name: initial.name, draft: initial.draft }),
+  );
   const [log, setLog] = useState<EditLog>(() => newLog(initial.draft));
   const [chosenMonth, setMonthState] = useState(content.references[0]!.month);
   const month = fixedMonth ?? chosenMonth;
@@ -83,7 +88,7 @@ export function useDrawingBoard(fixedMonth: string | null = null): {
   );
   const view = useMemo(() => buildWorkshopView(draft, env), [draft, env]);
 
-  const baseline = useMemo(() => buildWorkshopView(preset.draft, env), [preset, env]);
+  const baseline = useMemo(() => buildWorkshopView(origin.draft, env), [origin, env]);
 
   const edit = useCallback(
     (e: DraftEdit) => {
@@ -101,6 +106,7 @@ export function useDrawingBoard(fixedMonth: string | null = null): {
     state: {
       content,
       preset,
+      developedFrom: origin.name,
       month,
       draft,
       env,
@@ -125,6 +131,7 @@ export function useDrawingBoard(fixedMonth: string | null = null): {
         const p = content.references.find((r) => r.id === id);
         if (!p) return;
         setPreset(p);
+        setOrigin({ name: p.name, draft: p.draft });
         commit(newLog(p.draft));
         if (fixedMonth === null) setMonthState(p.month);
         setEditError(null);
@@ -143,6 +150,11 @@ export function useDrawingBoard(fixedMonth: string | null = null): {
         commit(newLog(d));
         setEditError(null);
       },
+      openDesign: (d, name) => {
+        setOrigin({ name, draft: d });
+        commit(newLog(d));
+        setEditError(null);
+      },
       restore: (presetId, saved) => {
         const p = content.references.find((r) => r.id === presetId);
         if (!p) return false;
@@ -152,6 +164,7 @@ export function useDrawingBoard(fixedMonth: string | null = null): {
           return false;
         }
         setPreset(p);
+        setOrigin({ name: p.name, draft: p.draft });
         commit(saved);
         if (fixedMonth === null) setMonthState(p.month);
         setEditError(null);

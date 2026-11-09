@@ -530,7 +530,12 @@ export const sync = evaluate => fromChannel(Channel.sync(() => Arr.of(evaluate()
  * @category constructors
  * @since 2.0.0
  */
-export const suspend = stream => fromChannel(Channel.suspend(() => stream().channel));
+export const suspend = stream => {
+  const suspended = fromChannel(Channel.suspend(() => stream().channel));
+  suspendedStreams.set(suspended, stream);
+  return suspended;
+};
+const suspendedStreams = /*#__PURE__*/new WeakMap();
 /**
  * Terminates with the specified error.
  *
@@ -929,9 +934,10 @@ export const fromPubSubTake = pubsub => fromChannel(Channel.fromPubSubTake(pubsu
  *
  * **Details**
  *
- * The stream reads from a `ReadableStreamDefaultReader`, maps read failures
- * with `onError`, and closes the reader when the stream finalizes. By default
- * the reader is canceled; set `releaseLockOnEnd` to release the lock instead.
+ * The stream reads from a `ReadableStreamDefaultReader` and maps read failures
+ * with `onError`. Finalization cancels the reader and releases its lock, or
+ * only releases the lock when `releaseLockOnEnd` is set. A rejected cancel
+ * hook becomes a defect.
  *
  * **Example** (Creating a stream from a ReadableStream)
  *
@@ -1055,6 +1061,11 @@ export const fromSchedule = schedule => fromPull(Effect.map(Schedule.toStepWithS
 export const fromSubscription = pubsub => fromChannel(Channel.fromSubscriptionArray(pubsub));
 /**
  * Creates a stream from an event listener.
+ *
+ * **Gotchas**
+ *
+ * Event listeners cannot backpressure the source. When a bounded `bufferSize`
+ * is full, additional events are dropped rather than suspending the listener.
  *
  * **Example** (Creating a stream from an event listener)
  *
@@ -1370,6 +1381,11 @@ export const map = /*#__PURE__*/dual(2, (self, f) => suspend(() => {
 export const as = /*#__PURE__*/dual(2, (self, value) => map(self, () => value));
 /**
  * Maps both the failure and success channels of a stream.
+ *
+ * **Details**
+ *
+ * Maps every typed error in the cause, preserving defects, interrupts and
+ * reason order. Unlike typed recovery, mapping does not convert errors to defects.
  *
  * **Example** (Mapping both the failure and success channels of a stream)
  *
@@ -2148,13 +2164,30 @@ export const concat = /*#__PURE__*/dual(2, (self, that) => {
 // The operands of each `concat` result, so a chain of `concat` calls can run as
 // a single layer instead of one layer per call
 const concatParts = /*#__PURE__*/new WeakMap();
-// Yields the channel of each non-`concat` stream in a chain, in order
+// Yields the channel of each non-`concat` stream in a chain, in order. A
+// `suspend` part is evaluated when it is reached and its result joins the chain
 function* concatChannels(self, that) {
   const stack = [that, self];
   while (stack.length > 0) {
     const stream = stack.pop();
     const parts = concatParts.get(stream);
-    if (parts === undefined) yield stream.channel;else stack.push(parts[1], parts[0]);
+    if (parts !== undefined) {
+      stack.push(parts[1], parts[0]);
+      continue;
+    }
+    const evaluate = suspendedStreams.get(stream);
+    if (evaluate === undefined) {
+      yield stream.channel;
+      continue;
+    }
+    // Evaluated here rather than in an effect, so retrying an interrupted pull
+    // cannot evaluate it twice. `Channel.empty` keeps a yield point
+    try {
+      stack.push(evaluate());
+    } catch (defect) {
+      stack.push(die(defect));
+    }
+    yield Channel.empty;
   }
 }
 /**
@@ -2487,15 +2520,22 @@ export const crossWith = /*#__PURE__*/dual(3, (left, right, f) => flatMap(left, 
  * @category zipping
  * @since 2.0.0
  */
-export const zipWith = /*#__PURE__*/dual(3, (left, right, f) => zipWithArray(left, right, zipArrays(f)));
-const zipArrays = f => (leftArr, rightArr) => {
-  const minLength = Math.min(leftArr.length, rightArr.length);
-  const result = [];
-  for (let i = 0; i < minLength; i++) {
-    result.push(f(leftArr[i], rightArr[i]));
-  }
-  return [result, leftArr.slice(minLength), rightArr.slice(minLength)];
-};
+export const zipWith = /*#__PURE__*/dual(3, (left, right, f) => suspend(() => {
+  // Track consumed elements with cursors instead of slicing leftovers
+  let leftIndex = 0;
+  let rightIndex = 0;
+  return zipWithArray(left, right, (leftArr, rightArr) => {
+    const length = Math.min(leftArr.length - leftIndex, rightArr.length - rightIndex);
+    const output = Arr.makeBy(length, i => f(leftArr[leftIndex + i], rightArr[rightIndex + i]));
+    leftIndex += length;
+    rightIndex += length;
+    const leftDone = leftIndex === leftArr.length;
+    const rightDone = rightIndex === rightArr.length;
+    if (leftDone) leftIndex = 0;
+    if (rightDone) rightIndex = 0;
+    return [output, leftDone ? [] : leftArr, rightDone ? [] : rightArr];
+  });
+}));
 /**
  * Zips two streams by applying a function to non-empty arrays of elements.
  *
@@ -2538,28 +2578,14 @@ export const zipWithArray = /*#__PURE__*/dual(3, (left, right, f) => fromChannel
     const fiberRight = yield* Effect.forkIn(pullRight, scope);
     return yield* Fiber.joinAll([fiberLeft, fiberRight]);
   });
-  let state = {
-    _tag: "PullBoth"
-  };
+  let leftArray;
+  let rightArray;
   const pull = Effect.gen(function* () {
-    const [left, right] = state._tag === "PullBoth" ? yield* pullBoth : state._tag === "PullLeft" ? [yield* pullLeft, state.rightArray] : [state.leftArray, yield* pullRight];
-    const result = f(left, right);
-    if (Arr.isReadonlyArrayNonEmpty(result[1])) {
-      state = {
-        _tag: "PullRight",
-        leftArray: result[1]
-      };
-    } else if (Arr.isReadonlyArrayNonEmpty(result[2])) {
-      state = {
-        _tag: "PullLeft",
-        rightArray: result[2]
-      };
-    } else {
-      state = {
-        _tag: "PullBoth"
-      };
-    }
-    return result[0];
+    const [left, right] = leftArray ? [leftArray, rightArray ?? (yield* pullRight)] : rightArray ? [yield* pullLeft, rightArray] : yield* pullBoth;
+    const [output, leftoverLeft, leftoverRight] = f(left, right);
+    leftArray = Arr.isReadonlyArrayNonEmpty(leftoverLeft) ? leftoverLeft : undefined;
+    rightArray = Arr.isReadonlyArrayNonEmpty(leftoverRight) ? leftoverRight : undefined;
+    return output;
   });
   return pull;
 }))));
@@ -2618,13 +2644,7 @@ export const zip = /*#__PURE__*/dual(2, (self, that) => zipWith(self, that, (a, 
  * @category zipping
  * @since 2.0.0
  */
-export const zipLeft = /*#__PURE__*/dual(2, (left, right) => zipWithArray(left, right, (leftArr, rightArr) => {
-  const minLength = Math.min(leftArr.length, rightArr.length);
-  const output = leftArr.slice(0, minLength);
-  const leftoverLeft = leftArr.slice(minLength);
-  const leftoverRight = rightArr.slice(minLength);
-  return [output, leftoverLeft, leftoverRight];
-}));
+export const zipLeft = /*#__PURE__*/dual(2, (left, right) => zipWith(left, right, a => a));
 /**
  * Zips this stream with another point-wise, keeping only right values and ending when either stream ends.
  *
@@ -2648,13 +2668,7 @@ export const zipLeft = /*#__PURE__*/dual(2, (left, right) => zipWithArray(left, 
  * @category zipping
  * @since 2.0.0
  */
-export const zipRight = /*#__PURE__*/dual(2, (left, right) => zipWithArray(left, right, (leftArr, rightArr) => {
-  const minLength = Math.min(leftArr.length, rightArr.length);
-  const output = rightArr.slice(0, minLength);
-  const leftoverLeft = leftArr.slice(minLength);
-  const leftoverRight = rightArr.slice(minLength);
-  return [output, leftoverLeft, leftoverRight];
-}));
+export const zipRight = /*#__PURE__*/dual(2, (left, right) => zipWith(left, right, (_, a) => a));
 /**
  * Zips this stream with another point-wise and emits tuples of elements from
  * both streams, flattening the left tuple.
@@ -3339,7 +3353,7 @@ export const peel = /*#__PURE__*/dual(2, /*#__PURE__*/Effect.fnUntraced(function
     cause = cause_;
     return Effect.failCause(cause_);
   });
-  const [result, leftover] = yield* Effect.scopedWith(scope => sink.transform(pull, scope));
+  const [result, leftover] = yield* Effect.scopedWith(scope => runSink(sink, pull, scope));
   let stream = cause ? empty : fromPull(Effect.succeed(originalPull));
   if (leftover) {
     stream = concat(fromArray(leftover), stream);
@@ -3449,6 +3463,12 @@ export const catchCause = /*#__PURE__*/dual(2, (self, f) => self.channel.pipe(Ch
  *
  * Typed failures and interruptions are not caught.
  *
+ * **Gotchas**
+ *
+ * `catchDefect` recovers any cause that contains a defect, including causes
+ * that also contain typed errors. Typed error handlers such as `catch` skip
+ * those causes, so defects always take precedence.
+ *
  * **Example** (Recovering from a defect)
  *
  * ```ts import.meta.vitest
@@ -3501,6 +3521,13 @@ const catch_ = /*#__PURE__*/dual(2, (self, f) => fromChannel(Channel.catch(self.
 export {
 /**
  * Switches over to the stream produced by the provided function if this one fails.
+ *
+ * **Gotchas**
+ *
+ * Defects take precedence over typed errors. If the cause also contains a
+ * defect, the handler does not run and the failure is propagated with every
+ * typed error converted to a defect. An interruption alongside a typed error
+ * does not prevent recovery.
  *
  * **Example** (Catching stream failures)
  *
@@ -3642,6 +3669,12 @@ export const tapDefect = /*#__PURE__*/dual(2, (self, f) => tapCause(self, cause 
  * stream. Non-matching failures propagate downstream, so the error type is
  * preserved unless the filter narrows it.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * **Example** (Catching matching failures)
  *
  * ```ts import.meta.vitest
@@ -3682,6 +3715,12 @@ export const catchIf = /*#__PURE__*/dual(args => isStream(args[0]), (self, predi
  * Successful filter results are passed to `f`. Failed filter results go to
  * `orElse` when provided; otherwise the filter failure is re-failed.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * @see {@link catchIf} for predicate or refinement based recovery
  * @see {@link catchTag} for `_tag` based recovery from one tagged error
  * @see {@link catchTags} for `_tag` based recovery from multiple tagged errors
@@ -3700,6 +3739,12 @@ export const catchFilter = /*#__PURE__*/dual(args => isStream(args[0]), (self, f
  *
  * Use when you need to handle a specific error case from a stream whose error
  * type is a tagged union with a readonly `_tag` field.
+ *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
  *
  * **Example** (Catching tagged failures)
  *
@@ -3732,6 +3777,12 @@ export const catchTag = /*#__PURE__*/dual(args => isStream(args[0]), (self, k, f
 });
 /**
  * Switches to a recovery stream based on matching `_tag` handlers.
+ *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
  *
  * **Example** (Catching tagged failures with handlers)
  *
@@ -3787,6 +3838,12 @@ export const catchTags = /*#__PURE__*/dual(args => isStream(args[0]), (self, cas
  *
  * The handler receives the unwrapped reason.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * **Example** (Catching a tagged error reason)
  *
  * ```ts import.meta.vitest
@@ -3828,6 +3885,12 @@ export const catchTags = /*#__PURE__*/dual(args => isStream(args[0]), (self, cas
 export const catchReason = /*#__PURE__*/dual(args => isStream(args[0]), (self, errorTag, reasonTag, f, orElse) => fromChannel(Channel.catchReason(toChannel(self), errorTag, reasonTag, (reason, error) => f(reason, error).channel, orElse && ((reason, error) => orElse(reason, error).channel))));
 /**
  * Catches multiple reasons within a tagged error using an object of handlers.
+ *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
  *
  * **Example** (Catching tagged error reasons)
  *
@@ -3929,6 +3992,11 @@ export const unwrapReason = /*#__PURE__*/dual(2, (self, errorTag) => catchFilter
 }, fail));
 /**
  * Transforms the errors emitted by this stream using `f`.
+ *
+ * **Details**
+ *
+ * Maps every typed error in the cause, preserving defects, interrupts and
+ * reason order. Unlike typed recovery, mapping does not convert errors to defects.
  *
  * **Example** (Mapping stream errors)
  *
@@ -4033,6 +4101,12 @@ export const orElseIfEmpty = /*#__PURE__*/dual(2, (self, orElse) => fromChannel(
 /**
  * Returns a stream that emits a fallback value when this stream fails.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * **Example** (Recovering with a fallback value)
  *
  * ```ts import.meta.vitest
@@ -4092,6 +4166,16 @@ export const orDie = self => fromChannel(Channel.orDie(self.channel));
  *
  * The `log` option controls whether the failure is logged before the stream
  * terminates.
+ * Set `log: "Unhandled"` to read `References.UnhandledLogLevel` when the
+ * failure occurs; `undefined` disables logging. Minimum log level filtering
+ * still applies.
+ *
+ * **Gotchas**
+ *
+ * Defects take precedence over typed errors. If the cause also contains a
+ * defect, the failure is not ignored and is propagated with every typed error
+ * converted to a defect. An interruption alongside a typed error does not
+ * prevent the error from being ignored.
  *
  * **Example** (Ignoring stream failures)
  *
@@ -4140,6 +4224,12 @@ export const ignore = /*#__PURE__*/dual(args => isStream(args[0]), (self, option
  * Use when you need to silently suppress a stream's entire failure cause,
  * including both typed errors and defects, rather than propagate it downstream.
  *
+ * **Details**
+ *
+ * Set `log: "Unhandled"` to read `References.UnhandledLogLevel` when the
+ * failure occurs; `undefined` disables logging. Minimum log level filtering
+ * still applies.
+ *
  * **Example** (Ignoring stream failure causes)
  *
  * ```ts import.meta.vitest
@@ -4173,6 +4263,12 @@ export const ignoreCause = /*#__PURE__*/dual(args => isStream(args[0]), (self, o
  *
  * The schedule is reset as soon as the first element passes through the
  * stream again.
+ *
+ * **Gotchas**
+ *
+ * Defects take precedence over typed errors. A failure whose cause contains a
+ * defect is not retried and is propagated with every typed error converted to a
+ * defect. A typed error alongside an interruption is retried.
  *
  * **Example** (Retrying stream failures)
  *
@@ -4420,7 +4516,7 @@ export const takeRight = /*#__PURE__*/dual(2, (self, n) => {
   const count = Count.normalize(n);
   if (count === 0) return empty;
   return mapAccumArray(self, MutableList.make, (list, arr) => {
-    MutableList.appendAll(list, arr);
+    MutableList.appendAllUnsafe(list, arr);
     if (list.length > count) {
       MutableList.takeNVoid(list, list.length - count);
     }
@@ -4934,9 +5030,9 @@ export const rechunk = /*#__PURE__*/dual(2, (self, target) => {
     let chunk = Arr.empty();
     let index = 0;
     let current;
-    let done = false;
+    let cause;
     return Effect.suspend(function loop() {
-      if (done) return Cause.done();else if (current === undefined) {
+      if (cause) return Effect.failCause(cause);else if (current === undefined) {
         return Effect.flatMap(pull, arr => {
           if (chunk.length === 0 && arr.length === target) {
             return Effect.succeed(arr);
@@ -4961,10 +5057,10 @@ export const rechunk = /*#__PURE__*/dual(2, (self, target) => {
       index = 0;
       current = undefined;
       return loop();
-    }).pipe(Pull.catchDone(() => {
-      if (chunk.length === 0) return Cause.done();
+    }).pipe(Effect.catchCause(cause_ => {
+      if (chunk.length === 0) return Effect.failCause(cause_);
       const result = chunk;
-      done = true;
+      cause = cause_;
       chunk = [];
       return Effect.succeed(result);
     }));
@@ -5225,7 +5321,9 @@ export const mapAccum = /*#__PURE__*/dual(args => isStream(args[0]), (self, init
   for (let index = 0; index < arr.length; index++) {
     const [newState, values] = f(state, arr[index]);
     state = newState;
-    acc.push(...values);
+    for (let i = 0; i < values.length; i++) {
+      acc.push(values[i]);
+    }
   }
   return [state, Arr.isArrayNonEmpty(acc) ? Arr.of(acc) : emptyArr];
 }, options?.onHalt ? {
@@ -5823,7 +5921,12 @@ const groupByImpl = (self, f, options) => transformPullBracket(self, Effect.fnUn
     while: constTrue,
     body: constant(Effect.flatMap(pull, arr => f(arr, queues, queueMap))),
     step: constVoid
-  }).pipe(Effect.catchCause(cause => Queue.failCause(out, cause)), Effect.forkIn(scope));
+  }).pipe(Effect.catchCause(cause => {
+    for (const [, queue] of queueMap) {
+      Queue.endUnsafe(queue);
+    }
+    return Queue.failCause(out, cause);
+  }), Effect.forkIn(scope));
   return Queue.takeAll(out);
 }));
 /**
@@ -5875,12 +5978,13 @@ export const groupAdjacentBy = /*#__PURE__*/dual(2, (self, f) => transformPull(s
     }
     return loop;
   }));
-  let done = false;
-  return Pull.catchDone(Effect.suspend(() => done ? Cause.done() : loop), () => {
-    done = true;
-    const out = group;
+  let cause;
+  return Effect.catchCause(Effect.suspend(() => cause ? Effect.failCause(cause) : loop), cause_ => {
+    cause = cause_;
+    if (group === undefined) return Effect.failCause(cause_);
+    const out = Arr.of([currentKey, group]);
     group = undefined;
-    return out && Arr.isArrayNonEmpty(out) ? Effect.succeed(Arr.of([currentKey, out])) : Cause.done();
+    return Effect.succeed(out);
   });
 })));
 /**
@@ -6053,7 +6157,7 @@ export const aggregateWithin = /*#__PURE__*/dual(3, (self, sink, schedule) => fr
       return buffer.state.exit;
     }
     hasInput.closeUnsafe();
-    const pull = emit(Effect.suspend(() => sink.transform(sinkUpstream, scope)));
+    const pull = emit(Effect.suspend(() => runSink(sink, sinkUpstream, scope)));
     return buffer.state._tag === "Open" ? Effect.raceFirst(pull, stepToBuffer) : pull;
   });
 }))));
@@ -6499,12 +6603,7 @@ export const changesWithEffect = /*#__PURE__*/dual(2, (self, f) => transformPull
  * @category text
  * @since 2.0.0
  */
-export const decodeText = /*#__PURE__*/dual(args => isStream(args[0]), (self, options) => suspend(() => {
-  const decoder = new TextDecoder(options?.encoding);
-  return map(self, chunk => decoder.decode(chunk, {
-    stream: true
-  }));
-}));
+export const decodeText = /*#__PURE__*/dual(args => isStream(args[0]), (self, options) => self.channel.pipe(Channel.pipeTo(Channel.decodeText(options?.encoding)), fromChannel));
 /**
  * Encodes a stream of strings into UTF-8 `Uint8Array` chunks.
  *
@@ -6949,7 +7048,8 @@ export const ensuring = /*#__PURE__*/dual(2, (self, finalizer) => fromChannel(Ch
 /**
  * Provides a layer or context to the stream, removing the corresponding
  * service requirements. Use `options.local` to build the layer every time; by
- * default, layers are shared between provide calls.
+ * default, a layer already built by an enclosing provide or runtime is reused;
+ * sibling provide calls build their own copies.
  *
  * **Example** (Providing stream requirements)
  *
@@ -7337,7 +7437,14 @@ export const bindTo = /*#__PURE__*/dual(2, (self, name) => map(self, a => ({
  * @category destructors
  * @since 2.0.0
  */
-export const run = /*#__PURE__*/dual(2, (self, sink) => Effect.scopedWith(scope => Channel.toPullScoped(self.channel, scope).pipe(Effect.flatMap(upstream => sink.transform(upstream, scope)), Effect.map(([a]) => a))));
+export const run = /*#__PURE__*/dual(2, (self, sink) => Effect.scopedWith(scope => Channel.toPullScoped(self.channel, scope).pipe(Effect.flatMap(upstream => runSink(sink, upstream, scope)), Effect.map(([a]) => a))));
+/**
+ * Runs `sink` against `upstream`. Upstream failures bypass the sink's error
+ * handlers and are restored once the sink has exited.
+ */
+const runSink = (sink, upstream, scope) => Channel.restoreUpstreamFailure(
+// The upstream pull runs in this fiber, which already provides `R`.
+sink.transform(Channel.upstreamFailureToDefect(upstream), scope));
 /**
  * Runs the stream and collects all elements into an array.
  *
@@ -7778,6 +7885,9 @@ export const mkUint8Array = self => Channel.mkUint8Array(self.channel);
  *
  * See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream.
  *
+ * When `signal` aborts, the stream is interrupted even if the reader has
+ * stopped pulling, and the `ReadableStream` closes.
+ *
  * **Example** (Converting to a ReadableStream with services)
  *
  * ```ts import.meta.vitest
@@ -7785,7 +7895,7 @@ export const mkUint8Array = self => Channel.mkUint8Array(self.channel);
  *
  * const stream = Stream.make(1, 2, 3, 4, 5)
  * const readableStream = Stream.toReadableStreamWith(stream, Context.empty())
- * const values = await Array.fromAsync(readableStream)
+ * const values = await globalThis.Array.fromAsync(readableStream)
  * values // => [ 1, 2, 3, 4, 5 ]
  * ```
  *
@@ -7796,24 +7906,35 @@ export const mkUint8Array = self => Channel.mkUint8Array(self.channel);
 export const toReadableStreamWith = /*#__PURE__*/dual(args => isStream(args[0]), (self, context, options) => {
   let currentResolve = undefined;
   let fiber = undefined;
+  let cancelled = false;
   const latch = Latch.makeUnsafe(false);
+  const signal = options?.signal;
+  // Interrupting the fiber directly also stops a consumer waiting for a pull.
+  const onAbort = () => fiber.interruptUnsafe();
   return new ReadableStream({
     start(controller) {
-      fiber = Effect.runFork(Effect.provideContext(runForEachArray(self, chunk => latch.whenOpen(Effect.sync(() => {
+      fiber = Effect.runFork(Effect.provideContext(Channel.runForEach(Channel.transformPull(self.channel, pull => Effect.succeed(latch.whenOpen(pull))), chunk => Effect.sync(() => {
         latch.closeUnsafe();
         for (let i = 0; i < chunk.length; i++) {
           controller.enqueue(chunk[i]);
         }
         currentResolve();
         currentResolve = undefined;
-      }))), context));
+      })), context));
       fiber.addObserver(exit => {
-        if (exit._tag === "Failure") {
+        signal?.removeEventListener("abort", onAbort);
+        if (cancelled) return;
+        if (exit._tag === "Failure" && signal?.aborted !== true) {
           controller.error(Cause.squash(exit.cause));
         } else {
           controller.close();
         }
       });
+      if (signal !== undefined && fiber.pollUnsafe() === undefined) {
+        if (signal.aborted) onAbort();else signal.addEventListener("abort", onAbort, {
+          once: true
+        });
+      }
     },
     pull() {
       return new Promise(resolve => {
@@ -7823,6 +7944,7 @@ export const toReadableStreamWith = /*#__PURE__*/dual(args => isStream(args[0]),
     },
     cancel() {
       if (!fiber) return;
+      cancelled = true;
       return Effect.runPromise(Effect.asVoid(Fiber.interrupt(fiber)));
     }
   }, options?.strategy);
@@ -7840,7 +7962,7 @@ export const toReadableStreamWith = /*#__PURE__*/dual(args => isStream(args[0]),
  * import { Stream } from "effect"
  *
  * const readableStream = Stream.toReadableStream(Stream.make(1, 2, 3))
- * const values = await Array.fromAsync(readableStream)
+ * const values = await globalThis.Array.fromAsync(readableStream)
  * values // => [ 1, 2, 3 ]
  * ```
  *
@@ -7897,7 +8019,7 @@ export const toReadableStreamEffect = /*#__PURE__*/dual(args => isStream(args[0]
  * const stream = Stream.make(1, 2, 3)
  * const iterable = Stream.toAsyncIterableWith(stream, Context.empty())
  *
- * await Array.fromAsync(iterable) // => [1, 2, 3]
+ * await globalThis.Array.fromAsync(iterable) // => [1, 2, 3]
  * ```
  *
  * @stability stable
@@ -7985,7 +8107,7 @@ export const toAsyncIterableWith = /*#__PURE__*/dual(2, (self, context) => ({
  *
  * const program = Effect.gen(function*() {
  *   const iterable = yield* Stream.toAsyncIterableEffect(stream)
- *   return yield* Effect.promise(() => Array.fromAsync(iterable))
+ *   return yield* Effect.promise(() => globalThis.Array.fromAsync(iterable))
  * })
  *
  * await Effect.runPromise(program) // => [1, 2, 3]
@@ -8006,7 +8128,7 @@ export const toAsyncIterableEffect = self => Effect.map(Effect.context(), contex
  *
  * const stream = Stream.make(1, 2, 3)
  *
- * await Array.fromAsync(Stream.toAsyncIterable(stream)) // => [1, 2, 3]
+ * await globalThis.Array.fromAsync(Stream.toAsyncIterable(stream)) // => [1, 2, 3]
  * ```
  *
  * @stability stable

@@ -12,6 +12,7 @@ const props = (over: Partial<DockCapacityPanelProps> = {}): DockCapacityPanelPro
   exemptNewConstructionMassKg: 8_000_000,
   dockExpansionDurationMonths: 12,
   dockExpansionNextStepKg: 1_000_000,
+  dockExpansionReadyMonth: "1880-12",
   dockPossessions: [{ id: "pos-1", name: "Portsmouth" }],
   pending: false,
   onAuthorizeDockExpansion: () => {},
@@ -40,19 +41,40 @@ describe("DockCapacityPanel (SB3-R15/R16/R18/R19/R33)", () => {
     expect(screen.getByTestId("dock-size").textContent).toBe("no dock");
   });
 
-  it("issues the expansion for the first possession when the action is used", () => {
-    let issued: string | null = null;
-    render(
-      <DockCapacityPanel
-        {...props({
-          onAuthorizeDockExpansion: (id) => {
-            issued = id;
-          },
-        })}
-      />,
-    );
-    screen.getByRole("button", { name: "Authorize dock expansion" }).click();
-    expect(issued).toBe("pos-1");
+  it("opens the confirmation without sending a command", () => {
+    const issued: string[] = [];
+    render(<DockCapacityPanel {...props({ onAuthorizeDockExpansion: (id) => issued.push(id) })} />);
+    fireEvent.click(screen.getByRole("button", { name: "Authorize dock expansion" }));
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+    expect(issued).toEqual([]);
+  });
+
+  it("cancelling the confirmation sends no command", () => {
+    const issued: string[] = [];
+    render(<DockCapacityPanel {...props({ onAuthorizeDockExpansion: (id) => issued.push(id) })} />);
+    fireEvent.click(screen.getByRole("button", { name: "Authorize dock expansion" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(issued).toEqual([]);
+  });
+
+  it("confirming sends exactly one expansion command for the chosen possession", () => {
+    const issued: string[] = [];
+    render(<DockCapacityPanel {...props({ onAuthorizeDockExpansion: (id) => issued.push(id) })} />);
+    fireEvent.click(screen.getByRole("button", { name: "Authorize dock expansion" }));
+    fireEvent.click(screen.getByRole("button", { name: "Authorize expansion" }));
+    expect(issued).toEqual(["pos-1"]);
+  });
+
+  it("shows the earliest completion month, duration, next step and current dock limit in the confirmation", () => {
+    render(<DockCapacityPanel {...props()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Authorize dock expansion" }));
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog.textContent).toContain("funded from the construction budget");
+    expect(screen.getByTestId("expansion-ready-month").textContent).toContain("1880");
+    expect(screen.getByTestId("expansion-duration").textContent).toContain("12");
+    expect(screen.getByTestId("expansion-next-step").textContent).toBe("+1,000 t");
+    expect(screen.getByTestId("expansion-dock-limit").textContent).toBe("13,000 t");
+    expect(dialog.textContent).not.toMatch(/price|instalment|cost|after/i);
   });
 
   it("disables the action when there is no era step", () => {
@@ -88,7 +110,8 @@ describe("DockCapacityPanel (SB3-R15/R16/R18/R19/R33)", () => {
     );
     const select = screen.getByRole("combobox", { name: "Dock expansion possession" });
     fireEvent.change(select, { target: { value: "pos-2" } });
-    screen.getByRole("button", { name: "Authorize dock expansion" }).click();
+    fireEvent.click(screen.getByRole("button", { name: "Authorize dock expansion" }));
+    fireEvent.click(screen.getByRole("button", { name: "Authorize expansion" }));
     expect(issued).toBe("pos-2");
   });
 

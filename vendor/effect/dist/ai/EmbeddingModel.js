@@ -139,7 +139,16 @@ const invalidProviderResponse = description => AiError.make({
  * provider, while `embedMany([])` returns an empty response without calling the
  * provider.
  *
+ * Concurrent `embed` calls share one `embedMany` call when `batchKey` returns
+ * equal keys under `Equal.equals`. The batch runs with the first caller's
+ * context, so return every value `embedMany` reads from that context. Without
+ * `batchKey`, all callers share one batch.
+ *
  * **Gotchas**
+ *
+ * Context that `batchKey` does not return is not isolated. Per-call
+ * `FetchHttpClient.RequestInit`, or any service read by an injected HTTP
+ * client, takes the first caller's value for the whole batch.
  *
  * Provider responses are interpreted positionally and must contain exactly one
  * result for each requested input. If the provider returns a different number
@@ -154,13 +163,18 @@ const invalidProviderResponse = description => AiError.make({
  * @since 4.0.0
  */
 export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
-  const resolver = RequestResolver.make(entries => Effect.flatMap(params.embedMany({
-    inputs: entries.map(entry => entry.request.input)
-  }), response => Effect.map(mapProviderResults(entries.length, response.results), embeddings => {
-    for (let i = 0; i < entries.length; i++) {
-      entries[i].completeUnsafe(Exit.succeed(embeddings[i]));
-    }
-  }))).pipe(RequestResolver.withSpan("EmbeddingModel.resolver"));
+  const resolver = RequestResolver.makeGrouped({
+    key: ({
+      context
+    }) => params.batchKey?.(context),
+    resolver: entries => Effect.flatMap(params.embedMany({
+      inputs: entries.map(entry => entry.request.input)
+    }), response => Effect.map(mapProviderResults(entries.length, response.results), embeddings => {
+      for (let i = 0; i < entries.length; i++) {
+        entries[i].completeUnsafe(Exit.succeed(embeddings[i]));
+      }
+    }))
+  }).pipe(RequestResolver.withSpan("EmbeddingModel.resolver"));
   return EmbeddingModel.of({
     [TypeId]: TypeId,
     resolver,

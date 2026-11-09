@@ -76,6 +76,9 @@ export declare const RateLimiter: Context.Service<RateLimiter, RateLimiter>;
  * The limiter supports fixed-window and token-bucket algorithms and either
  * fails or returns a delay when a limit is exceeded.
  *
+ * A nonpositive `limit` admits no positive token requests: fail mode rejects
+ * them and delay mode returns an infinite delay without touching the store.
+ *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
@@ -469,6 +472,11 @@ export declare class RateLimiterStore extends RateLimiterStore_base {
 /**
  * Provides a process-local in-memory `RateLimiterStore`.
  *
+ * **Details**
+ *
+ * Entries expire once their state is indistinguishable from an unseen key, and
+ * a background sweep scoped to the layer removes expired entries periodically.
+ *
  * @stability unstable
  * @category layers
  * @since 4.0.0
@@ -477,6 +485,13 @@ export declare const layerStoreMemory: Layer.Layer<RateLimiterStore>;
 /**
  * Creates a Redis-backed `RateLimiterStore` using Lua scripts and the
  * configured key prefix.
+ *
+ * **Details**
+ *
+ * State for a rate-limit key is stored under `<prefix><key>`, with
+ * `<prefix><key>:refill` holding token-bucket refill times and
+ * `<prefix><key>:adaptive` holding adaptive state. `%` and `:` in the key are
+ * percent-encoded so different keys never share Redis state.
  *
  * @stability unstable
  * @category constructors

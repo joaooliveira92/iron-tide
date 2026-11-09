@@ -71,6 +71,7 @@ export const make = options => ({
   [TypeId]: TypeId,
   stdinIsTerminal: Effect.succeed(false),
   stdoutIsTerminal: Effect.succeed(false),
+  stderrIsTerminal: Effect.succeed(false),
   ...options
 });
 /**

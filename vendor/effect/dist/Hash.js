@@ -11,7 +11,7 @@
  * @since 2.0.0
  */
 import { dual } from "./Function.js";
-import { byReferenceInstances, getAllObjectKeys, viewBytes } from "./internal/equal.js";
+import { bufferBytes, byReferenceInstances, getAllObjectKeys, isArrayBufferLike, viewBytes } from "./internal/equal.js";
 import { addBackEdge, backEdges } from "./internal/hash.js";
 import { hasProperty } from "./Predicate.js";
 /**
@@ -103,10 +103,13 @@ export const hash = self => {
           const seen = backEdges;
           let h;
           try {
-            if (symbol in self) {
+            if (isHash(self)) {
               h = self[symbol]();
             } else if (typeof self === "function") {
               h = random(self);
+            } else if (isArrayBufferLike(self)) {
+              const bytes = bufferBytes(self);
+              h = bytes === undefined ? random(self) : array(bytes);
             } else if (self instanceof DataView) {
               h = array(viewBytes(self));
             } else if (Array.isArray(self) || ArrayBuffer.isView(self)) {
@@ -241,8 +244,9 @@ export const optimize = n => n & 0xbfffffff | n >>> 1 & 0x40000000;
  *
  * **Details**
  *
- * This function determines whether a given value has the Hash symbol property,
- * indicating that it can provide its own hash value implementation.
+ * This function determines whether a given value has a function under the Hash
+ * symbol, indicating that it can provide its own hash value implementation.
+ * Data that merely carries the key, such as parsed JSON, is hashed as data.
  *
  * **Example** (Checking for Hash support)
  *
@@ -264,7 +268,7 @@ export const optimize = n => n & 0xbfffffff | n >>> 1 & 0x40000000;
  * @category guards
  * @since 2.0.0
  */
-export const isHash = u => hasProperty(u, symbol);
+export const isHash = u => hasProperty(u, symbol) && typeof u[symbol] === "function";
 const float64 = /*#__PURE__*/new DataView(/*#__PURE__*/new ArrayBuffer(8));
 /**
  * Computes a hash value for a number.

@@ -54,6 +54,28 @@ export function describeEventBody(body: DomainEventBody): EventDescription {
           },
         ],
       };
+    case "ShipDelivered":
+      return {
+        interpolation: {
+          projectId: body.projectId,
+          nationId: body.nationId,
+          shipId: body.shipId,
+          shipName: body.shipName,
+          classId: body.classId,
+          deliveredMonth: body.deliveredMonth,
+          actualMonths: body.actualMonths,
+          ...(body.designVersionId !== undefined ? { designVersionId: body.designVersionId } : {}),
+          ...(body.plannedMonths !== undefined ? { plannedMonths: body.plannedMonths } : {}),
+          ...(body.yardId !== undefined ? { yardId: body.yardId } : {}),
+          ...(body.builderNationId !== undefined ? { builderNationId: body.builderNationId } : {}),
+        },
+        subjectRefs: [
+          { type: "ship", id: body.shipId },
+          { type: "constructionProject", id: body.projectId },
+          nation(body.nationId),
+        ],
+        effectRefs: [],
+      };
     case "ShipRebuilt":
       return {
         interpolation: {

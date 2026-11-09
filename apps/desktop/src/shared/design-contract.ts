@@ -1,3 +1,4 @@
+import type { DesignDraft } from "@bluewave/ship-design";
 import type { CommandEnvelope } from "./bridge-contract.js";
 
 export interface SubmitDesignCommandPayload extends CommandEnvelope {
@@ -13,6 +14,13 @@ export interface DesignStudyPreview {
   readonly baselineClassName: string | null;
   readonly newFamily: boolean;
   readonly failedCriteria: readonly string[];
+}
+
+export interface DesignStudyPreviewOutcome {
+  readonly study?: DesignStudyPreview;
+  readonly treasuryUnits?: number;
+  readonly freeTreasury?: number;
+  readonly affordable?: boolean;
 }
 
 export interface DesignCommandOutcome {
@@ -44,7 +52,7 @@ export interface LoadProjectDraftPayload {
 
 export interface ProjectDraftView {
   readonly className: string;
-  readonly draft: Record<string, unknown>;
+  readonly draft: DesignDraft;
 }
 
 export interface RebuildableShipView {

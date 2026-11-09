@@ -16,7 +16,9 @@ import * as Context from "../Context.js";
 import * as Duration from "../Duration.js";
 import * as Effect from "../Effect.js";
 import { flow, identity } from "../Function.js";
+import { escapeKeySegment } from "../internal/persistence.js";
 import * as Layer from "../Layer.js";
+import * as Schedule from "../Schedule.js";
 import * as Schema from "../Schema.js";
 import * as Redis from "./Redis.js";
 /**
@@ -48,6 +50,9 @@ export const RateLimiter = /*#__PURE__*/Context.Service(TypeId);
  * The limiter supports fixed-window and token-bucket algorithms and either
  * fails or returns a delay when a limit is exceeded.
  *
+ * A nonpositive `limit` admits no positive token requests: fail mode rejects
+ * them and delay mode returns an infinite delay without touching the store.
+ *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
@@ -64,23 +69,28 @@ export const make = /*#__PURE__*/Effect.gen(function* () {
       const algorithm = options.algorithm ?? "fixed-window";
       const window = Duration.max(Duration.fromInputUnsafe(options.window), Duration.millis(1));
       const windowMillis = Duration.toMillis(window);
-      const refillRate = Duration.divideUnsafe(window, options.limit);
-      const refillRateMillis = Duration.toMillis(refillRate);
-      if (tokens > options.limit) {
-        return onExceeded === "fail" ? Effect.fail(new RateLimiterError({
+      const exceeded = tokens > options.limit;
+      if (onExceeded === "fail" && exceeded) {
+        return Effect.fail(new RateLimiterError({
           reason: new RateLimitExceeded({
             key: options.key,
             retryAfter: window,
             limit: options.limit,
             remaining: 0
           })
-        })) : Effect.succeed({
-          delay: window,
+        }));
+      }
+      // A nonpositive limit never refills, so skip the store and its infinite refill rate.
+      if (options.limit <= 0) {
+        return Effect.succeed({
+          delay: exceeded ? Duration.infinity : Duration.zero,
           limit: options.limit,
-          remaining: 0,
-          resetAfter: window
+          remaining: options.limit - tokens,
+          resetAfter: exceeded ? Duration.infinity : Duration.zero
         });
       }
+      const refillRate = Duration.divideUnsafe(window, options.limit);
+      const refillRateMillis = Duration.toMillis(refillRate);
       if (algorithm === "fixed-window") {
         return Effect.flatMap(store.fixedWindow({
           key: options.key,
@@ -323,14 +333,15 @@ const clampAdaptiveDurationMillis = millis => {
   if (Number.isNaN(millis) || millis <= 0) return 1;
   return Math.min(millis, adaptiveStateMaxWindowMillis);
 };
+const memoryStoreSweepInterval = /*#__PURE__*/Duration.minutes(1);
 /**
- * Provides a process-local in-memory `RateLimiterStore`.
+ * Creates a process-local `RateLimiterStore`. Every entry expires once its
+ * state is indistinguishable from a missing key, and a background sweep tied to
+ * the scope removes expired entries, so an idle store drains to empty.
  *
- * @stability unstable
- * @category layers
- * @since 4.0.0
+ * @internal
  */
-export const layerStoreMemory = /*#__PURE__*/Layer.sync(RateLimiterStore, () => {
+export const makeMemoryStore = /*#__PURE__*/Effect.gen(function* () {
   const fixedCounters = new Map();
   const tokenBuckets = new Map();
   const adaptiveStates = new Map();
@@ -346,7 +357,7 @@ export const layerStoreMemory = /*#__PURE__*/Layer.sync(RateLimiterStore, () => 
   const cooldownExpiresAt = cooldownUntil => cooldownUntil + adaptiveStateTtlGraceMillis;
   const learningExpiresAt = (now, fallbackWindow) => now + Duration.toMillis(fallbackWindow) + adaptiveStateTtlGraceMillis;
   const learnedExpiresAt = (now, learnedWindowMillis) => now + learnedWindowMillis + adaptiveStateTtlGraceMillis;
-  return RateLimiterStore.of({
+  const store = RateLimiterStore.of({
     fixedWindow: options => Effect.clockWith(clock => Effect.sync(() => {
       const refillRateMillis = Duration.toMillis(options.refillRate);
       const now = clock.currentTimeMillisUnsafe();
@@ -358,7 +369,7 @@ export const layerStoreMemory = /*#__PURE__*/Layer.sync(RateLimiterStore, () => 
         };
         fixedCounters.set(options.key, counter);
       }
-      if (options.limit && counter.count + options.tokens > options.limit) {
+      if (options.limit !== undefined && counter.count + options.tokens > options.limit) {
         return [counter.count + options.tokens, counter.expiresAt - now];
       }
       counter.count += options.tokens;
@@ -369,10 +380,11 @@ export const layerStoreMemory = /*#__PURE__*/Layer.sync(RateLimiterStore, () => 
       const refillRateMillis = Duration.toMillis(options.refillRate);
       const now = clock.currentTimeMillisUnsafe();
       let bucket = tokenBuckets.get(options.key);
-      if (!bucket) {
+      if (!bucket || bucket.expiresAt <= now) {
         bucket = {
           tokens: options.limit,
-          lastRefill: now
+          lastRefill: now,
+          expiresAt: now
         };
         tokenBuckets.set(options.key, bucket);
       }
@@ -388,6 +400,8 @@ export const layerStoreMemory = /*#__PURE__*/Layer.sync(RateLimiterStore, () => 
       if (options.allowOverflow || newTokenCount >= 0) {
         bucket.tokens = newTokenCount;
       }
+      // The bucket is indistinguishable from a fresh one once fully refilled
+      bucket.expiresAt = bucket.lastRefill + Math.ceil(options.limit - bucket.tokens) * refillRateMillis;
       return [newTokenCount, Math.max(0, now - bucket.lastRefill)];
     })),
     adaptiveConsume: options => Effect.clockWith(clock => Effect.sync(() => {
@@ -511,10 +525,47 @@ export const layerStoreMemory = /*#__PURE__*/Layer.sync(RateLimiterStore, () => 
       }
     }))
   });
+  const sweep = Effect.clockWith(clock => Effect.sync(() => {
+    const now = clock.currentTimeMillisUnsafe();
+    for (const map of [fixedCounters, tokenBuckets, adaptiveStates]) {
+      for (const [key, entry] of map) {
+        if (entry.expiresAt <= now) {
+          map.delete(key);
+        }
+      }
+    }
+  }));
+  yield* sweep.pipe(Effect.repeat(Schedule.spaced(memoryStoreSweepInterval)), Effect.forkScoped);
+  return {
+    store,
+    get size() {
+      return fixedCounters.size + tokenBuckets.size + adaptiveStates.size;
+    }
+  };
 });
+/**
+ * Provides a process-local in-memory `RateLimiterStore`.
+ *
+ * **Details**
+ *
+ * Entries expire once their state is indistinguishable from an unseen key, and
+ * a background sweep scoped to the layer removes expired entries periodically.
+ *
+ * @stability unstable
+ * @category layers
+ * @since 4.0.0
+ */
+export const layerStoreMemory = /*#__PURE__*/Layer.effect(RateLimiterStore)(/*#__PURE__*/Effect.map(makeMemoryStore, memory => memory.store));
 /**
  * Creates a Redis-backed `RateLimiterStore` using Lua scripts and the
  * configured key prefix.
+ *
+ * **Details**
+ *
+ * State for a rate-limit key is stored under `<prefix><key>`, with
+ * `<prefix><key>:refill` holding token-bucket refill times and
+ * `<prefix><key>:adaptive` holding adaptive state. `%` and `:` in the key are
+ * percent-encoded so different keys never share Redis state.
  *
  * @stability unstable
  * @category constructors
@@ -523,15 +574,16 @@ export const layerStoreMemory = /*#__PURE__*/Layer.sync(RateLimiterStore, () => 
 export const makeStoreRedis = /*#__PURE__*/Effect.fnUntraced(function* (options) {
   const prefix = options?.prefix ?? "ratelimiter:";
   const redis = yield* Redis.Redis;
+  const redisKey = key => `${prefix}${escapeKeySegment(key)}`;
   const fixedWindow = redis.eval(fixedWindowScript);
   const tokenBucket = redis.eval(tokenBucketScript);
   const adaptiveConsume = redis.eval(adaptiveConsumeScript);
   const adaptiveFeedback = redis.eval(adaptiveFeedbackScript);
   return RateLimiterStore.of({
     fixedWindow(options) {
-      const key = `${prefix}${options.key}`;
+      const key = redisKey(options.key);
       const refillMillis = Duration.toMillis(options.refillRate);
-      return Effect.mapError(fixedWindow(key, options.tokens, refillMillis, options.limit), cause => new RateLimiterError({
+      return Effect.mapError(Effect.map(fixedWindow(key, options.tokens, refillMillis, options.limit), ([currentTokens, nextPttl]) => [Number(currentTokens), nextPttl]), cause => new RateLimiterError({
         reason: new RateLimitStoreError({
           message: `Failed to execute fixedWindow rate limiting command`,
           cause: cause.cause
@@ -539,7 +591,7 @@ export const makeStoreRedis = /*#__PURE__*/Effect.fnUntraced(function* (options)
       }));
     },
     tokenBucket(options) {
-      const key = `${prefix}${options.key}`;
+      const key = redisKey(options.key);
       const lastRefillKey = `${key}:refill`;
       const refillMillis = Duration.toMillis(options.refillRate);
       return Effect.clockWith(clock => Effect.mapError(Effect.map(tokenBucket(key, lastRefillKey, options.tokens, refillMillis, options.limit, clock.currentTimeMillisUnsafe(), options.allowOverflow ? 1 : 0), ([remaining, elapsedMillis]) => [Number(remaining), Number(elapsedMillis)]), cause => new RateLimiterError({
@@ -550,7 +602,7 @@ export const makeStoreRedis = /*#__PURE__*/Effect.fnUntraced(function* (options)
       })));
     },
     adaptiveConsume(options) {
-      const key = `${prefix}${options.key}:adaptive`;
+      const key = `${redisKey(options.key)}:adaptive`;
       return Effect.map(Effect.mapError(adaptiveConsume(key, options.tokens, Duration.toMillis(options.fallbackWindow), adaptiveStateTtlGraceMillis), cause => new RateLimiterError({
         reason: new RateLimitStoreError({
           message: `Failed to execute adaptiveConsume rate limiting command`,
@@ -565,7 +617,7 @@ export const makeStoreRedis = /*#__PURE__*/Effect.fnUntraced(function* (options)
     adaptiveFeedback(options) {
       if (options.status !== 429 || options.retryAfter === undefined) return Effect.void;
       const retryAfterMillis = clampAdaptiveDurationMillis(Duration.toMillis(options.retryAfter));
-      const key = `${prefix}${options.key}:adaptive`;
+      const key = `${redisKey(options.key)}:adaptive`;
       return Effect.asVoid(Effect.mapError(adaptiveFeedback(key, options.epoch, options.tokens, retryAfterMillis, adaptiveStateTtlGraceMillis, adaptiveStateMaxWindowMillis), cause => new RateLimiterError({
         reason: new RateLimitStoreError({
           message: `Failed to execute adaptiveFeedback rate limiting command`,
@@ -585,20 +637,24 @@ local limit = tonumber(ARGV[3])
 local current = tonumber(redis.call("GET", key))
 
 if not current then
+  if limit and tokens > limit then
+    return { string.format("%.17g", tokens), 0 }
+  end
   local nextpttl = math.max(1, math.ceil(refillms * tokens))
   redis.call("SET", key, tokens, "PX", nextpttl)
-  return { tokens, nextpttl }
+  return { string.format("%.17g", tokens), nextpttl }
 end
 
 local currentpttl = tonumber(redis.call("PTTL", key) or "0")
 local next = current + tokens
 if limit and next > limit then
-  return { next, currentpttl }
+  return { string.format("%.17g", next), currentpttl }
 end
 
 local nextpttl = math.max(1, math.ceil(currentpttl + (refillms * tokens)))
 redis.call("SET", key, next, "PX", nextpttl)
-return { next, nextpttl }
+-- Use 17 significant digits to round-trip fractional token counts.
+return { string.format("%.17g", next), nextpttl }
 `
 }).withReturnType();
 const tokenBucketScript = /*#__PURE__*/Redis.script((key, lastRefillKey, tokens, refillMillis, limit, now, overflow) => [key, lastRefillKey, tokens, refillMillis, limit, now, overflow], {

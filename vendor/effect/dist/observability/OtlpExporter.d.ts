@@ -84,6 +84,16 @@ export declare const layerFlusher: Layer.Layer<Flusher>;
  * after unhandled failures, and flushes during scope finalization up to
  * `shutdownTimeout`.
  *
+ * The export interval starts with the first push and stops once an export
+ * empties the buffer, so an idle exporter keeps no timer pending. With
+ * `exportEmpty` and batching disabled, it exports on every interval instead.
+ *
+ * Optional gzip compression uses `HttpClientRequest.compressBody` before the
+ * retry loop, so retries reuse the compressed bytes. Bodies smaller than 1KB
+ * remain uncompressed. Compression requires runtime `CompressionStream` support;
+ * compression failures follow the same temporary-disable behavior as transport
+ * failures and do not fail flushing or shutdown.
+ *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
@@ -91,6 +101,8 @@ export declare const layerFlusher: Layer.Layer<Flusher>;
 export declare const make: (options: {
     readonly url: string;
     readonly headers: Headers.Input | undefined;
+    /** Gzip uses the default 1KB minimum body size; smaller batches remain uncompressed. */
+    readonly compression?: "gzip" | "none" | undefined;
     readonly label: string;
     readonly exportInterval: Duration.Input;
     readonly maxBatchSize: number | "disabled";

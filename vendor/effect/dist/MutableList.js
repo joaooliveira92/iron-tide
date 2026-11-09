@@ -9,7 +9,6 @@
  * @stability stable
  * @since 4.0.0
  */
-import * as Arr from "./Array.js";
 import * as Count from "./internal/count.js";
 /**
  * Defines the unique symbol used to represent an empty result when taking elements from a MutableList.
@@ -147,7 +146,8 @@ export const prepend = (self, message) => {
 /**
  * Prepends all elements from an iterable to the beginning of the MutableList.
  * The elements are added in order, so the first element in the iterable becomes
- * the new head of the list.
+ * the new head of the list. The elements are copied, so the input can be reused
+ * afterward. Use `prependAllUnsafe` to transfer ownership of an array instead.
  *
  * **Example** (Prepending multiple elements)
  *
@@ -166,7 +166,7 @@ export const prepend = (self, message) => {
  * @category mutations
  * @since 4.0.0
  */
-export const prependAll = (self, messages) => prependAllUnsafe(self, Arr.fromIterable(messages), !Array.isArray(messages));
+export const prependAll = (self, messages) => prependAllUnsafe(self, Array.from(messages), true);
 /**
  * Prepends all elements from a ReadonlyArray to the beginning of the MutableList.
  * This is an optimized version that can reuse the array when mutable=true.
@@ -213,7 +213,9 @@ export const prependAllUnsafe = (self, messages, mutable = false) => {
 };
 /**
  * Appends all elements from an iterable to the end of the MutableList.
- * Returns the number of elements added.
+ * Returns the number of elements added. The elements are copied, so the input
+ * can be reused afterward. Use `appendAllUnsafe` to transfer ownership of an
+ * array instead.
  *
  * **Example** (Appending multiple elements)
  *
@@ -233,7 +235,7 @@ export const prependAllUnsafe = (self, messages, mutable = false) => {
  * @category mutations
  * @since 4.0.0
  */
-export const appendAll = (self, messages) => appendAllUnsafe(self, Arr.fromIterable(messages), !Array.isArray(messages));
+export const appendAll = (self, messages) => appendAllUnsafe(self, Array.from(messages), true);
 /**
  * Appends all elements from a ReadonlyArray to the end of the MutableList.
  * This is an optimized version that can reuse the array when mutable=true.

@@ -56,13 +56,14 @@ export type PreResponseHandler = (request: HttpServerRequest, response: HttpServ
  */
 export declare const appendPreResponseHandler: (handler: PreResponseHandler) => Effect.Effect<void, never, HttpServerRequest>;
 /**
- * Registers a pre-response handler for the supplied HTTP server request.
+ * Registers a pre-response handler for the HTTP server request that owns the
+ * supplied fiber context. Does nothing outside a server request.
  *
  * @stability unstable
  * @category unsafe
  * @since 4.0.0
  */
-export declare const appendPreResponseHandlerUnsafe: (request: HttpServerRequest, handler: PreResponseHandler) => void;
+export declare const appendPreResponseHandlerUnsafe: (context: Context.Context<never>, handler: PreResponseHandler) => void;
 /**
  * Runs an effect after registering a pre-response handler for the current HTTP server request.
  *
@@ -108,6 +109,9 @@ export declare const toWebHandler: <E>(self: Effect.Effect<HttpServerResponse, E
  * Builds a Web `Request` handler from a layer and handler factory, returning the handler with a `dispose` function for the layer scope.
  *
  * **Details**
+ *
+ * Every call to `dispose` returns the same promise, which resolves once the
+ * layer resources have been released.
  *
  * The layer is built immediately, so the cost is paid when the handler is
  * created rather than on the first request. A layer that performs asynchronous

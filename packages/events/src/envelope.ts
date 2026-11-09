@@ -22,6 +22,7 @@ export type {
   PrestigeLossRequested,
   ResearchProgressed,
   RevoltPressureRequested,
+  ShipDelivered,
   ShipDetachedToFleet,
   ShipReadinessChanged,
   ShipRebuilt,

@@ -94,9 +94,16 @@ export function buildRegionStrengths(
     });
 }
 
-export function barHeight(fraction: number, compact = false): number {
+export type GlyphVariant = "standard" | "compact";
+
+export function glyphVariant(mapHeightPx: number): GlyphVariant {
+  return compactGlyphs(mapHeightPx) ? "compact" : "standard";
+}
+
+export function barHeight(fraction: number, variant: GlyphVariant = "standard"): number {
   const clamped = Math.min(1, Math.max(0, fraction));
-  const [min, max] = compact ? [BAR_MIN_COMPACT, BAR_MAX_COMPACT] : [BAR_MIN, BAR_MAX];
+  const [min, max] =
+    variant === "compact" ? [BAR_MIN_COMPACT, BAR_MAX_COMPACT] : [BAR_MIN, BAR_MAX];
   return Math.round(min + (max - min) * clamped);
 }
 

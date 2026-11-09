@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentCategory } from "@bluewave/ship-design";
 import { useDesignSession } from "../../../components/design-workspace/useDesignSession.js";
+import {
+  designPriceView,
+  useTreasuryUnits,
+} from "../../../components/design-workspace/design-price-view.js";
 import { useDraftAutosave } from "../../../components/design-workspace/useDraftAutosave.js";
 import { useRestoredDraftToast } from "../../../components/design-workspace/useRestoredDraftToast.js";
 import { plural } from "../../../components/design-workspace/plural.js";
@@ -70,7 +74,12 @@ export function useWorkspaceSession(
     () => flawQueue(findings, { draft, content }).filter((flaw) => flaw.tier !== "warning"),
     [findings, draft, content],
   );
-  const readouts = useMemo(() => engineeringStatus(view, format), [view, format]);
+  const treasuryUnits = useTreasuryUnits();
+  const price = useMemo(
+    () => designPriceView(view.forecast, content.treasuryUnitMicro, treasuryUnits, format),
+    [view.forecast, content.treasuryUnitMicro, treasuryUnits, format],
+  );
+  const readouts = useMemo(() => engineeringStatus(view, format, price), [view, format, price]);
 
   const nationEnv = useMemo(
     () => content.environmentFor(state.month, draft.nationId),
@@ -106,12 +115,14 @@ export function useWorkspaceSession(
       projects,
       campaignMonth,
       format,
+      price,
       draft,
       view,
       content,
       env,
       month: state.month,
       preset: state.preset,
+      developedFrom: state.developedFrom,
       baseline: state.baseline,
       canUndo: state.canUndo,
       canRedo: state.canRedo,
@@ -148,6 +159,7 @@ export function useWorkspaceSession(
       suggest: actions.suggest,
       generateAlternatives: actions.generateAlternatives,
       loadDraft: session.loadDraft,
+      openDesign: session.openDesign,
       loadPreset: session.loadPreset,
       requestPreset: session.requestPreset,
       setPendingPreset: session.setPendingPreset,

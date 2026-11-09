@@ -14,8 +14,10 @@
 import * as Arr from "../Array.js";
 import * as Cause from "../Cause.js";
 import * as Context from "../Context.js";
+import * as Digest from "../crypto/Digest.js";
 import * as Data from "../Data.js";
 import * as Deferred from "../Deferred.js";
+import * as Duration from "../Duration.js";
 import * as Effect from "../Effect.js";
 import * as ErrorReporter from "../ErrorReporter.js";
 import * as Exit from "../Exit.js";
@@ -43,16 +45,25 @@ import * as Schema from "../Schema.js";
 import * as SchemaAST from "../SchemaAST.js";
 import * as Scope from "../Scope.js";
 import * as Stream from "../Stream.js";
+import * as Tracer from "../Tracer.js";
 import * as AiError from "./AiError.js";
 import * as McpCore from "./internal/mcpCore.js";
 import * as McpProtocolInternal from "./internal/mcpProtocol.js";
 import * as McpRuntime from "./internal/mcpRuntime.js";
+import * as McpSkills from "./internal/mcpSkills.js";
 import * as InternalStructuredOutput from "./internal/structured-output.js";
 import * as McpSchema from "./McpSchema.js";
 import { CallToolResult, ElicitationDeclined, EnabledWhen, GetPromptResult, InternalError, InvalidParams, InvalidRequest, isParam, McpRequestContext, McpServerClient, McpServerClientMiddleware, MethodNotFound, Prompt, Resource, ResourceTemplate, ServerNotificationRpcs, TextContent, Tool as McpTool, ToolJson } from "./McpSchema.js";
 import * as Tool from "./Tool.js";
 import * as Toolkit from "./Toolkit.js";
 const internalState = /*#__PURE__*/new WeakMap();
+// Request-scoped HTTP servers deliver a request's own notifications through
+// that request's server instead of the shared notification queue.
+const RequestNotificationQueue = /*#__PURE__*/Context.Reference("effect/ai/McpServer/RequestNotificationQueue", {
+  defaultValue: () => undefined
+});
+// Progress and logs belong to the request that emitted them.
+const isRequestNotification = notification => notification._tag === "Progress" || notification._tag === "LoggingMessage";
 const BroadcastServerNotificationRpcs = /*#__PURE__*/ServerNotificationRpcs.omit("notifications/elicitation/complete");
 const isLoggingLevel = /*#__PURE__*/Schema.is(McpSchema.LoggingLevel);
 const toInternalServerNotification = message => {
@@ -99,8 +110,18 @@ const toInternalServerNotification = message => {
       return undefined;
   }
 };
-// Request services must come from the invocation, including when a handler is registered during a request.
-const omitRequestServices = /*#__PURE__*/Context.omit(McpRequestContext, McpServerClient, HttpServerRequest.HttpServerRequest, CurrentLogLevel);
+const middlewareKeyPrefix = "effect/ai/McpServer/Middleware-";
+// Do not capture request services or middleware stacks at registration.
+const requestServiceKeys = /*#__PURE__*/new Set([McpRequestContext.key, McpServerClient.key, HttpServerRequest.HttpServerRequest.key, HttpServerRequest.ParsedSearchParams.key, HttpRouter.RouteContext.key, CurrentLogLevel.key, Scope.Scope.key, Tracer.ParentSpan.key]);
+const omitRequestServices = context => {
+  const services = new Map();
+  for (const [key, value] of context.mapUnsafe) {
+    if (!requestServiceKeys.has(key) && !key.startsWith(middlewareKeyPrefix)) {
+      services.set(key, value);
+    }
+  }
+  return Context.makeUnsafe(services);
+};
 const provideInvocationContext = (effect, invocation) => {
   let provided = Effect.provideService(effect, McpRequestContext, invocation.requestContext);
   const requestMetadata = invocation.requestContext.requestMetadata;
@@ -110,6 +131,358 @@ const provideInvocationContext = (effect, invocation) => {
   }
   return invocation.serverClient === undefined ? provided : Effect.provideService(provided, McpServerClient, invocation.serverClient);
 };
+const MiddlewareTypeId = "~effect/ai/McpServer/Middleware";
+/**
+ * Creates MCP middleware that runs around `tools/call`, `resources/read`,
+ * `prompts/get` and `completion/complete` requests.
+ *
+ * **Details**
+ *
+ * Middleware is how request-level dependencies are satisfied: declare the
+ * services it provides with `middleware<{ provides: S }>()` and provide them to
+ * the handler effect. It receives the request headers, session id and request
+ * context, so it can resolve the current user per request.
+ *
+ * Pass a function, or an Effect that builds the function. Services the Effect
+ * reads are requirements of the middleware layer. Services the function reads
+ * per request, other than `McpRequestContext`, are per-request requirements
+ * of the result; see {@link Middleware} for how they are met.
+ *
+ * Failures must be `McpErrorBase` values. A middleware failure is sent as a
+ * JSON-RPC error with its `code`, `message` and `data`, never as a tool
+ * result. Pick custom codes from the implementation-defined range
+ * (-32000 to -32019): any numeric `code` is sent as is. Defects are logged,
+ * reported to the `ErrorReporter` and sent as `InternalError("Internal error")`.
+ * Interruption propagates.
+ *
+ * Local middleware runs inside global middleware, and middleware provided both
+ * locally and globally runs once. Middleware never runs for `initialize`. It
+ * runs for list requests only when it wraps a {@link visibility}, so that the
+ * visibility check can read the services it provides.
+ *
+ * **Example** (Resolving the current user per request)
+ *
+ * ```ts
+ * import { Context, Effect, Layer, Schema } from "effect"
+ * import { McpSchema, McpServer, Tool, Toolkit } from "effect/ai"
+ *
+ * class CurrentUser extends Context.Service<CurrentUser, { readonly id: string }>()("CurrentUser") {}
+ *
+ * class Unauthorized extends Schema.Error<Unauthorized>("Unauthorized")({
+ *   ...McpSchema.McpErrorBase.fields,
+ *   _tag: Schema.tag("Unauthorized"),
+ *   code: Schema.tag(-32001)
+ * }) {}
+ *
+ * const WhoAmI = Tool.make("WhoAmI", { success: Schema.String, dependencies: [CurrentUser] })
+ * const Tools = Toolkit.make(WhoAmI)
+ *
+ * const Auth = McpServer.middleware<{ provides: CurrentUser }>()((effect, { headers }) => {
+ *   const token = headers["authorization"]
+ *   return token === undefined
+ *     ? Effect.fail(new Unauthorized({ message: "Missing credentials" }))
+ *     : Effect.provideService(effect, CurrentUser, { id: token })
+ * })
+ *
+ * const Registrations = McpServer.toolkit(Tools).pipe(
+ *   Layer.provide(Auth.layer),
+ *   Layer.provide(Tools.toLayer({
+ *     WhoAmI: () => Effect.map(CurrentUser, (user) => user.id)
+ *   }))
+ * )
+ * ```
+ *
+ * @stability unstable
+ * @category middleware
+ * @since 4.0.0
+ */
+export const middleware = function () {
+  if (arguments.length === 0) {
+    return makeMiddleware;
+  }
+  return makeMiddleware(arguments[0], arguments[1]);
+};
+/**
+ * Creates middleware that hides registrations per request.
+ *
+ * **Details**
+ *
+ * The check runs for every registration the middleware is provided to, on list
+ * requests and on calls, reads, gets and completions. When it returns `false`
+ * the registration is left out of list results, and requests for it fail as if
+ * it was not registered.
+ *
+ * The result is a `Middleware` and composes like one. The check receives the
+ * same {@link MiddlewareOptions} as middleware, and services it reads per
+ * request, other than `McpRequestContext`, are met the same way. Scope a
+ * visibility to some tools by providing its layer to their toolkit only, or
+ * branch on `target`.
+ *
+ * On a list request, the check and the middleware outside the innermost
+ * visibility run once for each registration. Middleware inside it does not
+ * run. A failure of that middleware or of a check fails the whole list
+ * request. It never hides a registration.
+ *
+ * Unlike `EnabledWhen`, a visibility runs the middleware around it on list
+ * requests, and middleware sees requests for hidden registrations.
+ *
+ * **Example** (Hiding admin tools from other users)
+ *
+ * ```ts
+ * import { Context, Effect, Layer, Schema } from "effect"
+ * import { McpServer, Tool, Toolkit } from "effect/ai"
+ *
+ * class CurrentUser extends Context.Service<CurrentUser, { readonly isAdmin: boolean }>()("CurrentUser") {}
+ *
+ * const AdminTools = Toolkit.make(Tool.make("DeleteUser", { success: Schema.String }))
+ *
+ * const Auth = McpServer.middleware<{ provides: CurrentUser }>()((effect, { headers }) =>
+ *   Effect.provideService(effect, CurrentUser, { isAdmin: headers["x-role"] === "admin" })
+ * )
+ * const AdminOnly = McpServer.visibility(() => Effect.map(CurrentUser, (user) => user.isAdmin))
+ *
+ * const Registrations = McpServer.toolkit(AdminTools).pipe(
+ *   Layer.provide(AdminOnly.combine(Auth).layer),
+ *   Layer.provide(AdminTools.toLayer({ DeleteUser: () => Effect.succeed("deleted") }))
+ * )
+ * ```
+ *
+ * @see {@link middleware} for providing the services a check reads
+ *
+ * @stability unstable
+ * @category middleware
+ * @since 4.0.0
+ */
+export const visibility = (check, options) => makeMiddleware(Effect.isEffect(check) ? Effect.map(check, makeGate) : makeGate(check), options);
+// Raised by a visibility gate. It is left out of the types because `makeInvoke`
+// replaces it with the not-found error of the request. It still has the shape
+// of an MCP error, since middleware outside the gate sees it as one.
+class Hidden extends /*#__PURE__*/Data.TaggedError("effect/ai/McpServer/Hidden") {}
+const failHidden = /*#__PURE__*/Effect.fail(/*#__PURE__*/new Hidden({
+  code: McpSchema.INVALID_PARAMS_ERROR_CODE,
+  message: "Not found"
+}));
+// Marks the middleware functions created by `visibility`.
+const gates = /*#__PURE__*/new WeakSet();
+const makeGate = check => {
+  const gate = (effect, options) => Effect.flatMap(check(options), visible => visible ? effect : failHidden);
+  gates.add(gate);
+  return gate;
+};
+class MiddlewareFn extends /*#__PURE__*/Context.Service()("effect/ai/McpServer/MiddlewareFn") {}
+const makeMiddleware = (fn, options) => {
+  const middleware = new MiddlewareImpl(Effect.isEffect(fn) ? Layer.effect(MiddlewareFn)(fn) : Layer.succeed(MiddlewareFn, fn));
+  return options?.global ? middleware.layerGlobal : middleware;
+};
+let middlewareId = 0;
+class MiddlewareImpl {
+  [MiddlewareTypeId] = {};
+  layer;
+  layerGlobal;
+  layerFn;
+  dependencies;
+  constructor(layerFn, dependencies) {
+    this.layerFn = layerFn;
+    this.dependencies = dependencies;
+    const contextKey = `${middlewareKeyPrefix}${++middlewareId}`;
+    this.layer = Layer.effectContext(Effect.gen(function* () {
+      const stack = [yield* MiddlewareFn];
+      if (dependencies) {
+        const memoMap = yield* Layer.CurrentMemoMap;
+        const scope = yield* Effect.scope;
+        stack.push(...getMiddleware(yield* Layer.buildWithMemoMap(dependencies, memoMap, scope)));
+      }
+      return Context.makeUnsafe(new Map([[contextKey, stack]]));
+    })).pipe(Layer.provide(layerFn));
+    this.layerGlobal = Layer.effectDiscard(Effect.gen(function* () {
+      const stack = Context.getOrUndefinedUnsafe(yield* Effect.context(), contextKey);
+      const {
+        globalMiddleware
+      } = internalState.get(yield* McpServer);
+      yield* Effect.acquireRelease(Effect.sync(() => {
+        globalMiddleware.push(...stack);
+      }), () => Effect.sync(() => {
+        for (const fn of stack) {
+          const index = globalMiddleware.indexOf(fn);
+          if (index !== -1) globalMiddleware.splice(index, 1);
+        }
+      }));
+    })).pipe(Layer.provide(this.layer));
+  }
+  combine(other) {
+    return new MiddlewareImpl(this.layerFn, this.dependencies ? Layer.provideMerge(this.dependencies, other.layer) : other.layer);
+  }
+}
+// The innermost middleware comes first. Each stack keeps its own order, and
+// where that leaves the order open, stacks provided further outside, which come
+// first in the context, run further outside. Stacks that order the same
+// middleware both ways have no common order, so insertion order decides.
+const getMiddleware = context => {
+  // The middleware directly inside each middleware, and how many of those
+  // directly outside it are still unplaced.
+  const inners = new Map();
+  const unplacedOuters = new Map();
+  for (const [key, stack] of context.mapUnsafe) {
+    if (!key.startsWith(middlewareKeyPrefix)) continue;
+    for (let i = stack.length - 1; i >= 0; i--) {
+      const fn = stack[i];
+      if (!inners.has(fn)) {
+        inners.set(fn, []);
+        unplacedOuters.set(fn, 0);
+      }
+      const outer = stack[i + 1];
+      if (outer !== undefined && outer !== fn) {
+        inners.get(outer).push(fn);
+        unplacedOuters.set(fn, unplacedOuters.get(fn) + 1);
+      }
+    }
+  }
+  // Repeatedly places the first middleware with nothing left to place outside it.
+  const outermostFirst = [];
+  while (unplacedOuters.size > 0) {
+    let next = unplacedOuters.keys().next().value;
+    for (const [fn, count] of unplacedOuters) {
+      if (count === 0) {
+        next = fn;
+        break;
+      }
+    }
+    unplacedOuters.delete(next);
+    outermostFirst.push(next);
+    for (const fn of inners.get(next)) {
+      const count = unplacedOuters.get(fn);
+      if (count !== undefined) unplacedOuters.set(fn, count - 1);
+    }
+  }
+  return outermostFirst.reverse();
+};
+const isMcpError = error => Predicate.hasProperty(error, "code") && typeof error.code === "number" && Predicate.hasProperty(error, "message") && typeof error.message === "string";
+// Distinguishes handler failures from failures raised or rewritten by middleware.
+const HandlerFailure = /*#__PURE__*/Context.Reference("effect/ai/McpServer/HandlerFailure", {
+  defaultValue: () => false
+});
+const handlerFailure = /*#__PURE__*/Context.make(HandlerFailure, true);
+const internalError = /*#__PURE__*/new InternalError({
+  message: "Internal error"
+});
+const rejectWith = error => Effect.fail(new McpCore.RequestRejected({
+  code: error.code,
+  message: error.message,
+  data: error.data,
+  error
+}));
+const notFound = (method, target) => {
+  switch (method) {
+    case "tools/call":
+      return new McpCore.ToolNotFound({
+        name: target
+      });
+    case "resources/read":
+      return new McpCore.ResourceNotFound({
+        uri: target
+      });
+    case "prompts/get":
+      return new McpCore.PromptNotFound({
+        name: target
+      });
+    case "completion/complete":
+      return new InvalidParams({
+        message: "Unknown completion reference or argument"
+      });
+    case "skills/get":
+      return new McpCore.SkillNotFound({
+        uri: target
+      });
+  }
+};
+const isHidden = error => error instanceof Hidden;
+// Recovers a request rejected by a visibility gate. Any other cause, including
+// one that also holds an interrupt, is propagated unchanged.
+const catchHidden = onHidden => self => Effect.catchCause(self, cause => {
+  const failure = Cause.findFail(cause);
+  return !Cause.hasInterrupts(cause) && Result.isSuccess(failure) && isHidden(failure.success.error) ? onHidden() : Effect.failCause(cause);
+});
+// The innermost middleware comes first. Middleware provided both locally and
+// globally runs once, at its outermost position.
+const middlewareStack = (localMiddleware, globalMiddleware) => {
+  if (globalMiddleware.length === 0) {
+    return localMiddleware;
+  }
+  if (localMiddleware.length === 0) {
+    return globalMiddleware;
+  }
+  const stack = [...localMiddleware, ...globalMiddleware];
+  return stack.filter((fn, index) => stack.lastIndexOf(fn) === index);
+};
+// Runs a handler inside middleware. The handler's own failures pass through, a
+// visibility gate fails with `Hidden`, and other failures become
+// `RequestRejected`: middleware failures as JSON-RPC errors, anything else as
+// a reported internal error.
+const runMiddleware = (handler, middleware, invocation, request) => {
+  const effect = middleware.length === 0 ? handler : Effect.withFiber(fiber => {
+    const headers = Context.getOrUndefined(fiber.context, HttpServerRequest.HttpServerRequest)?.headers ?? Headers.empty;
+    const options = {
+      ...request,
+      requestContext: invocation.requestContext,
+      headers,
+      sessionId: headers[MCP_SESSION_ID_HEADER]
+    };
+    const handled = Effect.catchCause(handler, cause => Effect.failCause(Cause.annotate(cause, handlerFailure)));
+    return middleware.reduce((effect, fn) => fn(effect, options), handled);
+  });
+  return provideInvocationContext(effect, invocation).pipe(Effect.catchCause(cause => {
+    if (Cause.hasInterrupts(cause)) {
+      return Effect.failCause(cause);
+    }
+    const failure = Cause.findFail(cause);
+    if (Result.isSuccess(failure) && !Cause.hasDies(cause)) {
+      const error = failure.success.error;
+      if (isHidden(error)) {
+        return Effect.fail(error);
+      }
+      if (middleware.length === 0 || Context.get(Cause.reasonAnnotations(failure.success), HandlerFailure)) {
+        return Effect.failCause(cause);
+      }
+      if (isMcpError(error)) {
+        return rejectWith(error);
+      }
+    }
+    return Effect.logError(cause).pipe(Effect.andThen(ErrorReporter.report(cause)), Effect.andThen(rejectWith(internalError)));
+  }));
+};
+// Request services override captured services; global middleware wraps local middleware.
+const makeInvoke = (context, globalMiddleware) => {
+  const services = context === undefined ? Context.empty() : omitRequestServices(context);
+  const localMiddleware = context === undefined ? [] : getMiddleware(context);
+  const invoke = (handler, invocation, request) => runMiddleware(services.mapUnsafe.size === 0 ? handler : Effect.updateContext(handler, context => Context.merge(services, context)), middlewareStack(localMiddleware, globalMiddleware), invocation, request).pipe(catchHidden(() => Effect.fail(notFound(request.method, request.target))));
+  // On list requests only the middleware outside the innermost visibility runs.
+  const visible = (method, target) => invocation => {
+    const middleware = middlewareStack(localMiddleware, globalMiddleware);
+    const innermost = middleware.findIndex(fn => gates.has(fn));
+    if (innermost === -1) {
+      return Effect.succeed(true);
+    }
+    return runMiddleware(Effect.void, middleware.slice(innermost), invocation, {
+      method,
+      target,
+      payload: undefined
+    }).pipe(Effect.as(true), catchHidden(() => Effect.succeed(false)));
+  };
+  return {
+    invoke,
+    visible
+  };
+};
+// Applies the `EnabledWhen` annotation of a registration.
+const isEnabled = annotations => {
+  const enabledWhen = Context.getOrUndefined(annotations, EnabledWhen);
+  return profile => enabledWhen === undefined || enabledWhen({
+    protocolVersion: profile.protocolVersion,
+    capabilities: profile.clientCapabilities,
+    clientInfo: profile.clientInfo
+  });
+};
+const rejectedError = rejected => Effect.fail(rejected.error);
 /**
  * Service that stores and serves an MCP server's registered tools, resources,
  * prompts, completions, and outgoing notifications.
@@ -137,10 +510,15 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
     const resourceTemplates = [];
     const prompts = [];
     const notificationsQueue = yield* Queue.make();
+    const globalMiddleware = [];
     const notificationDelivery = {
-      consumers: 0
+      consumers: 0,
+      listChangeRevision: 0,
+      requestEndpoints: 0
     };
-    const pendingListChanges = new Set();
+    // With only request-scoped endpoints, no long-lived server ever takes from the shared queue.
+    const withoutSharedConsumer = () => notificationDelivery.consumers === 0 && notificationDelivery.requestEndpoints > 0;
+    const pendingListChanges = new Map();
     const dispatcher = (yield* Scheduler).makeDispatcher();
     const notifications = yield* RpcClient.makeNoSerialization(BroadcastServerNotificationRpcs, {
       spanPrefix: "McpServer/Notifications",
@@ -159,21 +537,6 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
           requestContext: Context.getOrUndefined(fiber.context, McpRequestContext),
           requestHeaders: Context.getOrUndefined(fiber.context, HttpServerRequest.HttpServerRequest)?.headers
         };
-        let enqueued = false;
-        if (message.tag.includes("list_changed")) {
-          if (!pendingListChanges.has(message.tag)) {
-            enqueued = true;
-            const tag = message.tag;
-            dispatcher.scheduleTask(() => {
-              Queue.offerUnsafe(notificationsQueue, queued);
-              pendingListChanges.delete(message.tag);
-            }, 0);
-            pendingListChanges.add(tag);
-          }
-        } else {
-          enqueued = true;
-          Queue.offerUnsafe(notificationsQueue, queued);
-        }
         // write resumes the caller synchronously, so defer it until delivery completes.
         const acknowledge = Effect.suspend(() => notifications.write({
           clientId: 0,
@@ -181,15 +544,76 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
           _tag: "Exit",
           exit: Exit.void
         }));
+        // A request-scoped endpoint delivers its request's own progress and logs on that request's response.
+        const requestQueue = Context.get(fiber.context, RequestNotificationQueue);
+        if (requestQueue !== undefined && queued.requestContext !== undefined && isRequestNotification(notification)) {
+          Queue.offerUnsafe(requestQueue, queued);
+          return Effect.andThen(Deferred.await(delivered), acknowledge);
+        }
+        if (withoutSharedConsumer()) {
+          return acknowledge;
+        }
+        let enqueued = false;
+        if (message.tag.includes("list_changed")) {
+          const revision = ++notificationDelivery.listChangeRevision;
+          const pending = pendingListChanges.get(message.tag);
+          if (pending !== undefined) {
+            // A coalesced change may be newer than an intervening subscription.
+            pending.listChangeRevision = revision;
+          } else {
+            queued.listChangeRevision = revision;
+            enqueued = true;
+            pendingListChanges.set(message.tag, queued);
+            dispatcher.scheduleTask(() => {
+              pendingListChanges.delete(message.tag);
+              Queue.offerUnsafe(notificationsQueue, queued);
+            }, 0);
+          }
+        } else {
+          enqueued = true;
+          Queue.offerUnsafe(notificationsQueue, queued);
+        }
         return enqueued && queued.requestContext !== undefined && notificationDelivery.consumers > 0 ? Effect.andThen(Deferred.await(delivered), acknowledge) : acknowledge;
       })))
+    });
+    // Checking skill ownership and both writes happen in one synchronous step,
+    // so a skill cannot claim the URI in between. Skill files skip the check.
+    const addResource = (options, checkOwnership) => Effect.suspend(() => {
+      if (checkOwnership && internalCore.skills.ownsFile(options.resource.uri)) {
+        return Effect.die(new Cause.IllegalArgumentError(`Resource ${options.resource.uri} is a file of a registered skill`));
+      }
+      const existingIndex = resources.findIndex(({
+        resource
+      }) => resource.uri === options.resource.uri);
+      if (existingIndex === -1) {
+        resources.push(options);
+      } else {
+        resources[existingIndex] = options;
+      }
+      const {
+        invoke,
+        visible
+      } = makeInvoke(options.services, globalMiddleware);
+      internalCore.resources.register({
+        descriptor: options.resource,
+        visible: visible("resources/list", options.resource.uri),
+        isVisible: isEnabled(options.annotations),
+        read: invocation => invoke(options.handle, invocation, {
+          method: "resources/read",
+          target: options.resource.uri,
+          payload: {
+            uri: options.resource.uri
+          }
+        })
+      });
+      return notifications.client["notifications/resources/list_changed"]({});
     });
     const service = McpServer.of({
       notifications: notifications.client,
       notifyElicitationComplete: ({
         clientId,
         elicitationId
-      }) => Deferred.make().pipe(Effect.flatMap(delivered => Queue.offer(notificationsQueue, {
+      }) => withoutSharedConsumer() ? Effect.void : Deferred.make().pipe(Effect.flatMap(delivered => Queue.offer(notificationsQueue, {
         notification: McpCore.ServerNotification.ElicitationComplete({
           elicitationId
         }),
@@ -199,7 +623,7 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
       get tools() {
         return tools;
       },
-      addTool: options => Effect.gen(function* () {
+      addTool: Effect.fnUntraced(function* (options) {
         const existingIndex = tools.findIndex(({
           tool
         }) => tool.name === options.tool.name);
@@ -208,18 +632,22 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
         } else {
           tools[existingIndex] = options;
         }
-        const enabledWhen = Context.getOrUndefined(options.annotations, EnabledWhen);
+        const {
+          invoke,
+          visible
+        } = makeInvoke(options.services, globalMiddleware);
         yield* internalCore.tools.register({
           descriptor: new McpTool({
             ...options.tool,
             title: options.tool.title ?? options.tool.annotations?.title
           }),
-          isVisible: profile => enabledWhen === undefined || enabledWhen({
-            protocolVersion: profile.protocolVersion,
-            capabilities: profile.clientCapabilities,
-            clientInfo: profile.clientInfo
-          }),
-          handle: (call, invocation) => provideInvocationContext(options.handle(call.arguments), invocation).pipe(Effect.catchTags({
+          visible: visible("tools/list", options.tool.name),
+          isVisible: isEnabled(options.annotations),
+          handle: (call, invocation) => invoke(options.handle(call.arguments), invocation, {
+            method: "tools/call",
+            target: call.name,
+            payload: call
+          }).pipe(Effect.catchTags({
             InternalError: error => Effect.fail(new McpCore.ToolExecutionError({
               name: options.tool.name,
               message: error.message
@@ -232,11 +660,11 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
         });
         yield* notifications.client["notifications/tools/list_changed"]({});
       }),
-      callTool: request => Effect.gen(function* () {
+      callTool: Effect.fnUntraced(function* (request) {
         const client = yield* McpServerClient;
-        const result = yield* internalCore.tools.call(request, McpProtocolInternal.invocationFromClient(client)).pipe(Effect.mapError(error => new InvalidParams({
+        const result = yield* internalCore.tools.call(request, McpProtocolInternal.invocationFromClient(client)).pipe(Effect.catch(error => error._tag === "RequestRejected" ? rejectedError(error) : Effect.fail(new InvalidParams({
           message: error._tag === "ToolNotFound" ? `Tool '${error.name}' not found` : error.message
-        })));
+        }))));
         if (result._tag === "InputRequired") {
           return yield* new InvalidParams({
             message: "Client input is not supported by this MCP protocol"
@@ -250,36 +678,15 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
       get resourceTemplates() {
         return resourceTemplates;
       },
-      addResource: options => Effect.gen(function* () {
-        const existingIndex = resources.findIndex(({
-          resource
-        }) => resource.uri === options.resource.uri);
-        if (existingIndex === -1) {
-          resources.push(options);
-        } else {
-          resources[existingIndex] = options;
-        }
-        yield* internalCore.resources.register({
-          descriptor: options.resource,
-          isVisible: profile => {
-            const enabledWhen = Context.getOrUndefined(options.annotations, EnabledWhen);
-            return enabledWhen === undefined || enabledWhen({
-              protocolVersion: profile.protocolVersion,
-              capabilities: profile.clientCapabilities,
-              clientInfo: profile.clientInfo
-            });
-          },
-          read: invocation => provideInvocationContext(options.handle, invocation)
-        });
-        yield* notifications.client["notifications/resources/list_changed"]({});
-      }),
-      addResourceTemplate: ({
+      addResource: options => addResource(options, true),
+      addResourceTemplate: Effect.fnUntraced(function* ({
         annotations,
         completions,
         handle,
         routerPath,
+        services,
         template
-      }) => Effect.gen(function* () {
+      }) {
         const existingIndex = resourceTemplates.findIndex(({
           template: current
         }) => current.uriTemplate === template.uriTemplate);
@@ -294,18 +701,16 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
             annotations
           };
         }
+        const {
+          invoke,
+          visible
+        } = makeInvoke(services, globalMiddleware);
         const templateMatcher = makeUriMatcher();
         templateMatcher.add(routerPath, true);
         yield* internalCore.resources.registerTemplate({
           descriptor: template,
-          isVisible: profile => {
-            const enabledWhen = Context.getOrUndefined(annotations, EnabledWhen);
-            return enabledWhen === undefined || enabledWhen({
-              protocolVersion: profile.protocolVersion,
-              capabilities: profile.clientCapabilities,
-              clientInfo: profile.clientInfo
-            });
-          },
+          visible: visible("resources/templates/list", template.uriTemplate),
+          isVisible: isEnabled(annotations),
           match: uri => {
             const match = templateMatcher.find(uri);
             if (match === undefined) {
@@ -317,10 +722,20 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
             }
             return params;
           },
-          read: (uri, params, invocation) => provideInvocationContext(handle(uri, Array.from(params)), invocation)
+          read: (uri, params, invocation) => invoke(handle(uri, Array.from(params)), invocation, {
+            method: "resources/read",
+            target: uri,
+            payload: {
+              uri
+            }
+          })
         });
         for (const [param, handle] of Object.entries(completions)) {
-          yield* internalCore.completions.register(`resource/${template.uriTemplate}/${param}`, (request, invocation) => provideInvocationContext(handle(request.argument.value, request.context), invocation).pipe(Effect.map(result => ({
+          yield* internalCore.completions.register(`resource/${template.uriTemplate}/${param}`, (request, invocation) => invoke(handle(request.argument.value, request.context), invocation, {
+            method: "completion/complete",
+            target: template.uriTemplate,
+            payload: request
+          }).pipe(Effect.map(result => ({
             values: result.completion.values,
             total: result.completion.total,
             hasMore: result.completion.hasMore,
@@ -329,16 +744,19 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
         }
         yield* notifications.client["notifications/resources/list_changed"]({});
       }),
-      findResource: uri => Effect.gen(function* () {
+      findResource: Effect.fnUntraced(function* (uri) {
         const client = yield* McpServerClient;
-        return yield* internalCore.resources.read(uri, McpProtocolInternal.invocationFromClient(client)).pipe(Effect.catchTag("ResourceNotFound", error => Effect.fail(new InvalidParams({
-          message: `Resource '${error.uri}' not found`
-        }))));
+        return yield* internalCore.resources.read(uri, McpProtocolInternal.invocationFromClient(client)).pipe(Effect.catchTags({
+          ResourceNotFound: error => Effect.fail(new InvalidParams({
+            message: `Resource '${error.uri}' not found`
+          })),
+          RequestRejected: rejectedError
+        }));
       }),
       get prompts() {
         return prompts;
       },
-      addPrompt: options => Effect.gen(function* () {
+      addPrompt: Effect.fnUntraced(function* (options) {
         const existingIndex = prompts.findIndex(({
           prompt
         }) => prompt.name === options.prompt.name);
@@ -347,20 +765,29 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
         } else {
           prompts[existingIndex] = options;
         }
+        const {
+          invoke,
+          visible
+        } = makeInvoke(options.services, globalMiddleware);
         yield* internalCore.prompts.register({
           descriptor: options.prompt,
-          isVisible: profile => {
-            const enabledWhen = Context.getOrUndefined(options.annotations, EnabledWhen);
-            return enabledWhen === undefined || enabledWhen({
-              protocolVersion: profile.protocolVersion,
-              capabilities: profile.clientCapabilities,
-              clientInfo: profile.clientInfo
-            });
-          },
-          get: (params, invocation) => provideInvocationContext(options.handle(params), invocation).pipe(Effect.map(result => Predicate.isTagged(result, "InputRequired") ? McpCore.OperationOutcome.InputRequired(result) : McpCore.OperationOutcome.Complete(result)))
+          visible: visible("prompts/list", options.prompt.name),
+          isVisible: isEnabled(options.annotations),
+          get: (params, invocation) => invoke(options.handle(params), invocation, {
+            method: "prompts/get",
+            target: options.prompt.name,
+            payload: {
+              name: options.prompt.name,
+              arguments: params
+            }
+          }).pipe(Effect.map(result => Predicate.isTagged(result, "InputRequired") ? McpCore.OperationOutcome.InputRequired(result) : McpCore.OperationOutcome.Complete(result)))
         });
         for (const [param, handle] of Object.entries(options.completions)) {
-          yield* internalCore.completions.register(`prompt/${options.prompt.name}/${param}`, (request, invocation) => provideInvocationContext(handle(request.argument.value, request.context), invocation).pipe(Effect.map(result => ({
+          yield* internalCore.completions.register(`prompt/${options.prompt.name}/${param}`, (request, invocation) => invoke(handle(request.argument.value, request.context), invocation, {
+            method: "completion/complete",
+            target: options.prompt.name,
+            payload: request
+          }).pipe(Effect.map(result => ({
             values: result.completion.values,
             total: result.completion.total,
             hasMore: result.completion.hasMore,
@@ -374,9 +801,12 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
         name
       }) {
         const client = yield* McpServerClient;
-        const outcome = yield* internalCore.prompts.get(name, params ?? {}, McpProtocolInternal.invocationFromClient(client)).pipe(Effect.catchTag("PromptNotFound", () => new InvalidParams({
-          message: `Prompt '${name}' not found`
-        })));
+        const outcome = yield* internalCore.prompts.get(name, params ?? {}, McpProtocolInternal.invocationFromClient(client)).pipe(Effect.catchTags({
+          PromptNotFound: () => new InvalidParams({
+            message: `Prompt '${name}' not found`
+          }),
+          RequestRejected: rejectedError
+        }));
         return outcome._tag === "Complete" ? outcome.value : yield* new InvalidParams({
           message: "Client input is not supported by this MCP protocol"
         });
@@ -394,7 +824,7 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
           },
           argument: complete.argument,
           context: complete.context
-        }, McpProtocolInternal.invocationFromClient(client));
+        }, McpProtocolInternal.invocationFromClient(client)).pipe(Effect.catchTag("RequestRejected", rejectedError));
         return {
           _meta: result.metadata,
           completion: {
@@ -407,13 +837,21 @@ export class McpServer extends /*#__PURE__*/Context.Service()("effect/ai/McpServ
     });
     internalState.set(service, {
       core: internalCore,
+      addSkillFile: options => addResource(options, false),
       notifications: notificationsQueue,
-      notificationDelivery
+      notificationDelivery,
+      globalMiddleware
     });
     return service;
   });
   /**
-   * Layer that provides the MCP server and client services.
+   * Layer that provides the MCP server service.
+   *
+   * **Details**
+   *
+   * It doesn't run a transport or discharge request-level dependencies. Use it
+   * to call registrations in process, providing their request-level
+   * dependencies with MCP middleware.
    *
    * @stability unstable
    * @since 4.0.0
@@ -424,8 +862,29 @@ const MCP_SESSION_ID_HEADER = "mcp-session-id";
 const MCP_PROTOCOL_VERSION_HEADER = "mcp-protocol-version";
 const MCP_INVALID_BATCH_METHOD = "invalid/json-rpc-batch";
 const cancelledResponses = /*#__PURE__*/new WeakMap();
+const httpPostResponses = /*#__PURE__*/new WeakMap();
 const requestKey = requestId => `${typeof requestId}:${requestId}`;
 class McpClientKey extends Data.Class {}
+// Converts each hint to the wire's nonnegative integer `ttlMs` once, when the server is built.
+const normalizeCacheHints = cacheHints => {
+  if (cacheHints === undefined) return Effect.succeed(undefined);
+  const normalized = {};
+  for (const [name, hint] of Object.entries(cacheHints)) {
+    if (hint === undefined) continue;
+    const ttlMs = Option.match(Duration.fromInput(hint.ttl), {
+      onNone: () => NaN,
+      onSome: ttl => Math.floor(Duration.toMillis(ttl))
+    });
+    if (!Number.isSafeInteger(ttlMs) || ttlMs < 0 || hint.cacheScope !== "private") {
+      return Effect.fail(new Cause.IllegalArgumentError(`McpServer cacheHints.${name} must have a finite, nonnegative ttl and a "private" cacheScope`));
+    }
+    normalized[name] = {
+      ttlMs,
+      cacheScope: "private"
+    };
+  }
+  return Effect.succeed(normalized);
+};
 /**
  * Runs an MCP server over the current `RpcServer.Protocol`.
  *
@@ -440,11 +899,15 @@ class McpClientKey extends Data.Class {}
  * @since 4.0.0
  */
 export const run = /*#__PURE__*/Effect.fnUntraced(function* (options) {
+  const cacheHints = yield* normalizeCacheHints(options.cacheHints);
   const runtimeOption = yield* Effect.serviceOption(McpRuntime.ServerRuntime);
   const runtime = Option.isSome(runtimeOption) ? runtimeOption.value : yield* McpRuntime.make(options.protocols);
-  return yield* runWithRuntime(options, runtime, "custom");
+  return yield* runWithRuntime({
+    ...options,
+    cacheHints
+  }, runtime, "custom");
 });
-const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtime, transport) {
+const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtime, transport, requestScoped) {
   const protocol = yield* RpcServer.Protocol;
   const server = yield* McpServer;
   const defaultLogLevel = yield* CurrentLogLevel;
@@ -457,14 +920,26 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
     clientStates.delete(clientId);
     runtime.disconnect(clientId);
   };
-  const sendRequestError = (clientId, requestId, error) => protocol.send(clientId, {
+  // The exit is sent already encoded, so it must carry only the JSON-RPC error members.
+  const sendRequestError = (clientId, requestId, {
+    code,
+    data,
+    message
+  }) => protocol.send(clientId, {
     _tag: "Exit",
     requestId,
     exit: {
       _tag: "Failure",
       cause: [{
         _tag: "Fail",
-        error
+        error: data === undefined ? {
+          code,
+          message
+        } : {
+          code,
+          message,
+          data
+        }
       }]
     }
   });
@@ -518,10 +993,16 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
     });
   });
   let writeFromClient;
-  const handlers = yield* runtime.installHandlers({
-    core: internalState.get(server).core,
+  const {
+    core,
+    notificationDelivery,
+    notifications
+  } = internalState.get(server);
+  const handlers = requestScoped?.handlers ?? (yield* runtime.installHandlers({
+    core,
     subscribeServerNotifications: PubSub.subscribe(serverNotifications),
-    ...(!protocol.supportsNotifications ? {} : {
+    getListChangeRevision: () => notificationDelivery.listChangeRevision,
+    ...(!protocol.supportsNotifications || options.allowSubscriptions === false ? {} : {
       sendNotification,
       markSubscriptionCancelled: (clientId, requestId) => Effect.sync(() => {
         cancelRequest(clientId, requestId);
@@ -530,7 +1011,7 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
     }),
     defaultLogLevel,
     serverInfo: options
-  });
+  }));
   const clients = yield* RcMap.make({
     lookup: Effect.fnUntraced(function* (key) {
       const selectedProtocol = runtime.selectProtocol(key.profile.protocolVersion);
@@ -557,10 +1038,15 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
             if (request._tag === "Interrupt") {
               // A cancelled reverse request may never receive a reply.
               removeReverseRequestClient(requestKey(request.requestId), key);
+              return sendNotification(key.profile.protocolVersion, key.clientId, {
+                tag: "notifications/cancelled",
+                payload: {
+                  requestId: request.requestId
+                }
+              });
             }
-            // Ack & co are not part of FromServerEncoded, but the JSON-RPC
-            // serializer encodes them symmetrically for reverse control flow
-            return protocol.send(key.clientId, request);
+            // Effect RPC control messages are not part of the MCP protocol.
+            return Effect.void;
           },
           supportsAck: true,
           supportsTransferables: false,
@@ -586,12 +1072,9 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
     const isInitialize = rpc._tag.endsWith("/initialize");
     if (!isInitialize && !session) {
       const fiber = Fiber.getCurrent();
-      const httpRequest = Context.getOrUndefined(fiber.context, HttpServerRequest.HttpServerRequest);
-      if (httpRequest) {
-        appendPreResponseHandlerUnsafe(httpRequest, () => Effect.succeed(HttpServerResponse.empty({
-          status: headers[MCP_SESSION_ID_HEADER] === undefined ? 400 : 404
-        })));
-      }
+      appendPreResponseHandlerUnsafe(fiber.context, () => Effect.succeed(HttpServerResponse.empty({
+        status: headers[MCP_SESSION_ID_HEADER] === undefined ? 400 : 404
+      })));
       return Effect.die(new Error(`Mcp-Session-Id does not exist`));
     }
     // RPC middleware erases the correlation between the initialize tag
@@ -637,28 +1120,20 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
       if (response._tag === "Exit") {
         const requests = activeRequests.get(clientId);
         const key = requestKey(response.requestId);
-        const cancelled = requests?.get(key)?.cancelled;
+        const active = requests?.get(key);
         if (requests !== undefined && requests.delete(key) && requests.size === 0) {
           activeRequests.delete(clientId);
         }
-        if (cancelled === true) {
+        if (active?.cancelled === true) {
           if (transport === "custom") return Effect.void;
+          if (active.httpPost !== undefined) active.httpPost.expected--;
           cancelledResponses.set(response, response.requestId);
           return protocol.send(clientId, response);
         }
         if (response.exit._tag === "Failure" && !response.exit.cause.some(failure => failure._tag === "Fail")) {
-          return protocol.send(clientId, {
-            _tag: "Exit",
-            requestId: response.requestId,
-            exit: {
-              _tag: "Failure",
-              cause: [{
-                _tag: "Fail",
-                error: new InternalError({
-                  message: "Internal error"
-                })
-              }]
-            }
+          return sendRequestError(clientId, response.requestId, {
+            code: McpSchema.INTERNAL_ERROR_CODE,
+            message: "Internal error"
           });
         }
       }
@@ -671,7 +1146,7 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
         const request = request_;
         const httpRequest = isHttp ? Context.getOrUndefined(fiber.context, HttpServerRequest.HttpServerRequest) : undefined;
         if (httpRequest !== undefined && request._tag !== "Eof") {
-          appendPreResponseHandlerUnsafe(httpRequest, (_, response) => Effect.succeed(response.status === 200 && response.body._tag === "Uint8Array" && response.body.contentLength === 0 ? HttpServerResponse.empty({
+          appendPreResponseHandlerUnsafe(fiber.context, (_, response) => Effect.succeed(response.status === 200 && response.body._tag === "Uint8Array" && response.body.contentLength === 0 ? HttpServerResponse.empty({
             headers: Headers.remove(response.headers, "content-type"),
             status: 202
           }) : response));
@@ -679,6 +1154,13 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
         switch (request._tag) {
           case "Request":
             {
+              if (httpRequest !== undefined && request.isNotification !== true) {
+                const httpPost = httpPostResponses.get(httpRequest) ?? {
+                  expected: 0
+                };
+                httpPost.expected++;
+                httpPostResponses.set(httpRequest, httpPost);
+              }
               const headers = isHttp ? Context.getUnsafe(Fiber.getCurrent().context, HttpServerRequest.HttpServerRequest).headers : Headers.fromInput(request.headers);
               const cancellationRequest = request.tag === "notifications/cancelled" && typeof request.payload === "object" && request.payload !== null && "requestId" in request.payload && (typeof request.payload.requestId === "string" || typeof request.payload.requestId === "number") ? activeRequests.get(clientId)?.get(requestKey(request.payload.requestId)) : undefined;
               const prepare = cancellationRequest === undefined ? runtime.prepareRequest(clientId, headers, request) : Effect.succeed(cancellationRequest.prepared);
@@ -706,7 +1188,7 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
                   }));
                 }
                 if (httpRequest !== undefined && session !== undefined) {
-                  appendPreResponseHandlerUnsafe(httpRequest, (_, res) => Effect.succeed(runtime.resolveRequest(clientId, headers) === undefined ? HttpServerResponse.empty({
+                  appendPreResponseHandlerUnsafe(fiber.context, (_, res) => Effect.succeed(runtime.resolveRequest(clientId, headers) === undefined ? HttpServerResponse.empty({
                     status: 404
                   }) : HttpServerResponse.setHeader(res, MCP_PROTOCOL_VERSION_HEADER, session.protocol.protocolVersion)));
                 }
@@ -715,11 +1197,9 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
                 const isClientNotification = selectedProtocol.clientNotificationRpcs.requests.has(request.tag);
                 if (rpc && isClientNotification && request.isNotification) {
                   if (!session && selectedProtocol.runtime._tag === "Stateful") {
-                    if (httpRequest) {
-                      appendPreResponseHandlerUnsafe(httpRequest, () => Effect.succeed(HttpServerResponse.empty({
-                        status: headers[MCP_SESSION_ID_HEADER] === undefined ? 400 : 404
-                      })));
-                    }
+                    appendPreResponseHandlerUnsafe(fiber.context, () => Effect.succeed(HttpServerResponse.empty({
+                      status: headers[MCP_SESSION_ID_HEADER] === undefined ? 400 : 404
+                    })));
                     return;
                   }
                   const decode = selectedProtocol.payloadCodecs(rpc).decode(request.payload);
@@ -777,7 +1257,8 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
                   requests.set(requestKey(request.id), {
                     requestId: RpcMessage.RequestId(request.id),
                     prepared,
-                    cancelled: false
+                    cancelled: false,
+                    httpPost: httpRequest === undefined ? undefined : httpPostResponses.get(httpRequest)
                   });
                   activeRequests.set(clientId, requests);
                 }
@@ -817,7 +1298,7 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
               const selectedProtocol = clientState?.protocol ?? runtime.protocols[0];
               const profile = reverseKey?.profile ?? clientState?.profile ?? {
                 protocolVersion: selectedProtocol.protocolVersion,
-                clientCapabilities: {},
+                clientCapabilities: new McpSchema.ClientCapabilities({}),
                 clientInfo: {
                   name: "unknown",
                   version: "unknown"
@@ -856,19 +1337,18 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
       });
     });
   }
-  const {
-    notificationDelivery,
-    notifications
-  } = internalState.get(server);
-  yield* Effect.acquireRelease(Effect.sync(() => {
-    notificationDelivery.consumers++;
-  }), () => Effect.sync(() => {
-    notificationDelivery.consumers--;
-  }));
+  if (requestScoped === undefined) {
+    yield* Effect.acquireRelease(Effect.sync(() => {
+      notificationDelivery.consumers++;
+    }), () => Effect.sync(() => {
+      notificationDelivery.consumers--;
+    }));
+  }
   const notificationTails = new Map();
-  yield* Queue.take(notifications).pipe(Effect.flatMap(Effect.fnUntraced(function* (queued) {
+  yield* Queue.take(requestScoped?.notifications ?? notifications).pipe(Effect.flatMap(Effect.fnUntraced(function* (queued) {
     const {
       delivered,
+      listChangeRevision,
       notification,
       targetClientId,
       requestContext,
@@ -877,7 +1357,8 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
     if (McpProtocolInternal.isSubscriptionServerNotification(notification)) {
       yield* PubSub.publish(serverNotifications, {
         notification,
-        targetClientId
+        targetClientId,
+        listChangeRevision
       });
     }
     const clientIds = yield* patchedProtocol.clientIds;
@@ -888,7 +1369,7 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
         runtime.disconnect(clientId);
       }
     }
-    const requestNotification = notification._tag === "LoggingMessage" || notification._tag === "Progress";
+    const requestNotification = isRequestNotification(notification);
     const deliveryClientIds = requestNotification && requestContext !== undefined ? [requestContext.clientId] : targetClientId === undefined ? isHttp ? clientStates.keys() : runtime.deliveryClientIds() : [targetClientId];
     const deliveries = [];
     let hasOriginDelivery = false;
@@ -931,7 +1412,7 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
           if (requestContext?.clientId !== clientId || !isLoggingLevel(level) || McpSchema.LoggingLevel.literals.indexOf(notification.level) < McpSchema.LoggingLevel.literals.indexOf(level)) {
             return;
           }
-        } else if (!runtime.canDeliver(clientId, (requestContext?.clientId === clientId ? requestHeaders : undefined) ?? clientStates.get(clientId)?.sessionHeaders ?? Headers.empty, notification, defaultLogLevel)) {
+        } else if (!runtime.canDeliver(clientId, (requestContext?.clientId === clientId ? requestHeaders : undefined) ?? clientStates.get(clientId)?.sessionHeaders ?? Headers.empty, notification, defaultLogLevel, listChangeRevision)) {
           return;
         }
         const rpc = selectedProtocol.serverNotificationRpcs.requests.get(projected.tag);
@@ -984,6 +1465,11 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
  * `McpServer.layer`, so registration layers can use the `McpServer` service
  * while the server is running.
  *
+ * Pass registration layers as `registrations` to build them before the server
+ * reads its first request. The transport discharges the request-level
+ * dependencies it supplies (see `ProvidedServices`); any other `McpRequest`
+ * marker stays in the layer's requirements and must be met by MCP middleware.
+ *
  * **Gotchas**
  *
  * Unlike `layerStdio` and `layerHttp`, this layer does not install a concrete
@@ -999,9 +1485,13 @@ const runWithRuntime = /*#__PURE__*/Effect.fnUntraced(function* (options, runtim
  */
 export const layer = options => layerWithRuntime(options, "custom").pipe(Layer.provide(McpRuntime.layer(options.protocols)));
 const layerWithRuntime = (options, transport) => Layer.effectDiscard(Effect.gen(function* () {
+  const cacheHints = yield* normalizeCacheHints(options.cacheHints);
   const runtime = yield* McpRuntime.ServerRuntime;
-  yield* Effect.forkScoped(runWithRuntime(options, runtime, transport));
-})).pipe(Layer.provideMerge(McpServer.layer));
+  yield* Effect.forkScoped(runWithRuntime({
+    ...options,
+    cacheHints
+  }, runtime, transport));
+})).pipe(Layer.provide(options.registrations ?? Layer.empty), Layer.provideMerge(McpServer.layer));
 /**
  * Creates a layer that runs an MCP server over standard input and output.
  *
@@ -1016,6 +1506,11 @@ const layerWithRuntime = (options, transport) => Layer.effectDiscard(Effect.gen(
  * batch policy. The layer provides `McpServer`, supplies request-scoped
  * `McpRequestContext` and legacy `McpServerClient` services to handlers, and
  * requires `Stdio`.
+ *
+ * Pass registration layers as `registrations` to build them before the server
+ * reads its first request. The transport discharges the request-level
+ * dependencies it supplies (see `ProvidedServices`); any other `McpRequest`
+ * marker stays in the layer's requirements and must be met by MCP middleware.
  *
  * @see {@link layer} for running over an existing `RpcServer.Protocol`
  * @see {@link layerHttp} for the single-endpoint HTTP transport
@@ -1108,10 +1603,31 @@ const mcpStdioSerialization = protocols => {
  * holding a session id can end that session, so authenticate requests in the
  * surrounding router.
  *
+ * Set `allowSubscriptions: false` to disable `v2026_07_28` subscriptions.
+ * Discovery advertises `listChanged: false`, and `subscriptions/listen` returns
+ * Method not found. Request-scoped progress and logs, legacy protocols, and
+ * default subscription behavior are unchanged.
+ *
+ * The layer runs one long-lived MCP server that every POST shares. For
+ * serverless hosts where execution must belong to each request, use
+ * `layerHttpRequestScoped` instead.
+ *
+ * Pass registration layers as `registrations` to build them before the
+ * endpoint serves its first request. The transport discharges the
+ * request-level dependencies it supplies (see `ProvidedServices`) and converts
+ * the remaining `McpRequest` markers into `HttpRouter.Request` markers, so
+ * `HttpRouter.middleware` can provide them, for example to authenticate the
+ * request and resolve the current user.
+ *
  * `layerHttp` always implements the single-endpoint Streamable HTTP topology.
  * Using `v2024_11_05` here is a custom compatibility transport for that
  * revision's schema. It does not implement the historical two-endpoint
  * HTTP+SSE transport, GET SSE, event resumption, or session expiry.
+ *
+ * **Gotchas**
+ *
+ * This layer starts a scoped server fiber. For sharing it across Cloudflare
+ * Workers requests, see `HttpRouter.toWebHandler` for setup and limitations.
  *
  * @see {@link layerStdio} for exposing the server over stdio
  * @see {@link layer} for the base MCP server layer without a transport protocol
@@ -1124,12 +1640,101 @@ export const layerHttp = options => {
   const runtime = McpRuntime.layer(options.protocols);
   return layerWithRuntime(options, "http").pipe(Layer.provide(layerMcpProtocolHttp(options)), Layer.provide(runtime), Layer.provide(RpcSerialization.layerJsonRpc()));
 };
-const layerMcpProtocolHttp = options => Layer.effect(RpcServer.Protocol)(Effect.gen(function* () {
+/**
+ * Registers a request-scoped Streamable HTTP MCP endpoint at `options.path`.
+ *
+ * **When to use**
+ *
+ * Use when serving on serverless hosts such as Cloudflare Workers, where execution must
+ * belong to the HTTP request rather than a shared long-lived server.
+ *
+ * **Details**
+ *
+ * Each POST runs its own server in the request scope, with no background
+ * fiber, timer, or queue consumer left after the response body completes.
+ * Only sessionless protocols such as `v2026_07_28` are accepted. Tools,
+ * resources, prompts, completions, multi round-trip input requests, and the
+ * request's own progress and log notifications are supported. Legacy reverse
+ * requests through `McpServer.elicit` are not available.
+ *
+ * Discovery advertises `listChanged: false`, `subscriptions/listen` returns
+ * Method not found, and DELETE returns `405`. Request-scoped clients receive
+ * no broadcast notifications such as list changes. Those still reach clients
+ * of a `layerHttp` endpoint sharing the same `McpServer`, and are dropped when
+ * no such endpoint exists. Use `layerHttp` on a long-lived host for sessions,
+ * subscriptions, or legacy reverse requests.
+ *
+ * HTTP admission, origin checks, and JSON-RPC errors follow `layerHttp`.
+ * Configuring a sessionful protocol through an untyped caller fails layer
+ * construction with `IllegalArgumentError`.
+ *
+ * Registrations passed as `registrations` are built once, before the routes
+ * are added, and shared by every POST. Remaining `McpRequest` markers become
+ * `HttpRouter.Request` markers, as with `layerHttp`.
+ *
+ * @see {@link layerHttp} for the long-lived HTTP transport and HTTP admission policy
+ *
+ * @stability unstable
+ * @category layers
+ * @since 4.0.0
+ */
+export const layerHttpRequestScoped = options => Layer.effectDiscard(Effect.gen(function* () {
   const runtime = yield* McpRuntime.ServerRuntime;
+  const stateful = runtime.protocols.find(protocol => protocol.runtime._tag === "Stateful");
+  if (stateful !== undefined) {
+    return yield* new Cause.IllegalArgumentError(`McpServer.layerHttpRequestScoped does not support the sessionful MCP protocol ${stateful.protocolVersion}`);
+  }
+  const serverOptions = {
+    ...options,
+    cacheHints: yield* normalizeCacheHints(options.cacheHints)
+  };
+  const server = yield* McpServer;
+  const {
+    core,
+    notificationDelivery
+  } = internalState.get(server);
+  // Subscriptions are disabled, so handlers hold no per-request state and
+  // read registrations from the shared core on every call. Request services
+  // still take precedence over the layer context captured here.
+  const handlers = yield* runtime.installHandlers({
+    core,
+    subscribeServerNotifications: Effect.die("Subscriptions are disabled for request-scoped MCP servers"),
+    getListChangeRevision: () => notificationDelivery.listChangeRevision,
+    defaultLogLevel: yield* CurrentLogLevel,
+    serverInfo: serverOptions
+  });
+  yield* Effect.acquireRelease(Effect.sync(() => {
+    notificationDelivery.requestEndpoints++;
+  }), () => Effect.sync(() => {
+    notificationDelivery.requestEndpoints--;
+  }));
+  // Each POST runs its own RPC server in the request scope, so no fiber,
+  // timer, or queue consumer outlives the request that created it.
+  yield* addMcpHttpRoutes(options, Effect.gen(function* () {
+    const {
+      httpEffect,
+      protocol
+    } = yield* RpcServer.makeProtocolWithHttpEffect().pipe(Effect.provideService(RpcSerialization.RpcSerialization, mcpHttpSerialization));
+    const notifications = yield* Queue.make();
+    yield* runWithRuntime(serverOptions, runtime, "http", {
+      notifications,
+      handlers
+    }).pipe(Effect.provideService(RpcServer.Protocol, protocol), Effect.provideService(McpServer, server), Effect.forkScoped({
+      startImmediately: true
+    }));
+    return yield* Effect.provideService(httpEffect, RequestNotificationQueue, notifications);
+  }));
+})).pipe(Layer.provide(options.registrations ?? Layer.empty), Layer.provideMerge(McpServer.layer), Layer.provide(McpRuntime.layer(options.protocols)));
+const layerMcpProtocolHttp = options => Layer.effect(RpcServer.Protocol)(Effect.gen(function* () {
   const {
     httpEffect,
     protocol
   } = yield* RpcServer.makeProtocolWithHttpEffect().pipe(Effect.provideService(RpcSerialization.RpcSerialization, mcpHttpSerialization));
+  yield* addMcpHttpRoutes(options, httpEffect);
+  return protocol;
+}));
+const addMcpHttpRoutes = /*#__PURE__*/Effect.fnUntraced(function* (options, httpEffect) {
+  const runtime = yield* McpRuntime.ServerRuntime;
   const router = yield* HttpRouter.HttpRouter;
   const allowSessionTermination = options.allowSessionTermination === true && runtime.protocols.some(protocol => protocol.runtime._tag === "Stateful");
   const forbidden = Effect.succeed(HttpServerResponse.empty({
@@ -1170,18 +1775,29 @@ const layerMcpProtocolHttp = options => Layer.effect(RpcServer.Protocol)(Effect.
       if (admission._tag === "Rejected") {
         return admission.response;
       }
-      const response = Effect.map(httpEffect, response => {
+      const toResponse = response => {
         // Completed responses may already contain notifications followed by the result.
         const hasMultipleMessages = response.body._tag === "Uint8Array" && response.body.body.subarray(0, -1).includes(10);
         return admission.isSubscription || response.body._tag === "Stream" || hasMultipleMessages ? toServerSentEvents(response, admission.isSubscription) : response;
+      };
+      if (admission.acknowledge) {
+        return yield* Effect.catchCause(Effect.map(httpEffect, toResponse), () => Effect.succeed(HttpServerResponse.empty({
+          status: 202
+        })));
+      }
+      return yield* Effect.flatMap(httpEffect, response => {
+        if (response.body._tag !== "Uint8Array" || response.body.body.length > 0) {
+          return Effect.succeed(toResponse(response));
+        }
+        // Only fully cancelled request POSTs may return an empty SSE response.
+        // https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#sending-messages-to-the-server
+        return httpPostResponses.get(request)?.expected === 0 ? Effect.succeed(HttpServerResponse.stream(Stream.empty, {
+          contentType: "text/event-stream"
+        })) : Effect.die(new Error("MCP request ended without writing its response"));
       });
-      return yield* admission.acknowledge ? Effect.catchCause(response, () => Effect.succeed(HttpServerResponse.empty({
-        status: 202
-      }))) : response;
     });
   });
-  return protocol;
-}));
+});
 const mcpHttpSerialization = /*#__PURE__*/(() => {
   const serialization = /*#__PURE__*/mcpJsonRpcSerialization();
   return RpcSerialization.RpcSerialization.of({
@@ -1219,7 +1835,10 @@ const normalizeMcpJsonRpcResponse = response => {
   } : response;
 };
 function mcpJsonRpcSerialization(options) {
-  const serialization = RpcSerialization.jsonRpc(options);
+  const serialization = RpcSerialization.jsonRpc({
+    ...options,
+    controlMessages: false
+  });
   return RpcSerialization.RpcSerialization.of({
     ...serialization,
     makeUnsafe: () => {
@@ -1327,6 +1946,13 @@ const toolResultContent = encoded => encoded === undefined ? [] : [{
 /**
  * Registers a `Toolkit` with the `McpServer`.
  *
+ * **Details**
+ *
+ * The MCP middleware in the current context, provided with
+ * `Effect.provide(middleware.layer)`, runs around every call to the toolkit.
+ *
+ * @see {@link ToolkitRequirements} for which services are request-level
+ *
  * @stability unstable
  * @category handlers
  * @since 4.0.0
@@ -1347,12 +1973,11 @@ export const registerToolkit = /*#__PURE__*/Effect.fnUntraced(function* (toolkit
     }
     return Context.makeUnsafe(services);
   }));
-  const services = omitRequestServices(yield* Effect.context());
-  const reportCause = cause => Effect.provideContext(ErrorReporter.report(cause), services);
+  const services = yield* Effect.context();
   // Interruption propagates; anything else is logged, reported and scrubbed.
   const internalToolError = cause => {
     const failure = Cause.findFail(cause);
-    return Result.isFailure(failure) && !Cause.hasDies(cause) ? Effect.failCause(failure.failure) : Effect.logError(cause).pipe(Effect.andThen(reportCause(cause)), Effect.as(toolErrorResult(INTERNAL_TOOL_ERROR_MESSAGE)));
+    return Result.isFailure(failure) && !Cause.hasDies(cause) ? Effect.failCause(failure.failure) : Effect.logError(cause).pipe(Effect.andThen(ErrorReporter.report(cause)), Effect.as(toolErrorResult(INTERNAL_TOOL_ERROR_MESSAGE)));
   };
   const registrations = [];
   for (const tool of Object.values(built.tools)) {
@@ -1368,10 +1993,32 @@ export const registerToolkit = /*#__PURE__*/Effect.fnUntraced(function* (toolkit
     const annotations = tool.annotations;
     const toolMeta = Context.getOrUndefined(annotations, Tool.Meta);
     const isDeclaredFailure = Schema.is(tool.failureSchema);
-    const encodeFailure = Schema.encodeUnknownEffect(tool.failureSchema);
-    const declaredFailureResult = error => error instanceof Error && error.message !== "" ? Effect.succeed(toolErrorResult(error.message)) : Effect.map(encodeFailure(error), encoded => new CallToolResult({
+    // MCP content is JSON, so results and declared failures go through their JSON codec.
+    const encodeJson = schema => {
+      const encode = Schema.encodeUnknownEffect(Schema.toCodecJson(schema));
+      return toolResult => Effect.mapError(encode(toolResult), cause => AiError.make({
+        module: "McpServer",
+        method: "registerToolkit",
+        reason: new AiError.ToolResultEncodingError({
+          toolName: tool.name,
+          toolResult,
+          description: cause.message
+        })
+      }));
+    };
+    const encodeFailure = encodeJson(tool.failureSchema);
+    // Successes and "return"-mode failures arrive already encoded by the Toolkit; only their JSON conversion runs here.
+    const encodeReturnedFailure = encodeJson(Schema.toEncoded(tool.failureSchema));
+    const encodeStructured = encodeJson(Schema.toEncoded(tool.successSchema));
+    const failureResult = encoded => new CallToolResult({
       isError: true,
       content: toolResultContent(encoded)
+    });
+    const declaredFailureResult = error => error instanceof Error && error.message !== "" ? Effect.succeed(toolErrorResult(error.message)) : Effect.map(encodeFailure(error), failureResult);
+    const successResult = result => Effect.map(encodeStructured(result), structuredContent => new CallToolResult({
+      isError: false,
+      structuredContent,
+      content: toolResultContent(structuredContent)
     }));
     const handleCause = cause => {
       const failure = Cause.findFail(cause);
@@ -1411,14 +2058,19 @@ export const registerToolkit = /*#__PURE__*/Effect.fnUntraced(function* (toolkit
       tool: mcpTool,
       annotations,
       handle(payload) {
-        return built.handle(tool.name, payload ?? {}, undefined, decodeOptions).pipe(Stream.unwrap, Stream.runLast, Effect.flatMap(Effect.fromOption), Effect.flatMap(result =>
-        // Declared failures return their encoded payload; anything else is classified by origin.
-        result.isFailure && result.failureOrigin !== "handler" ? Effect.failCause(Cause.annotate(Cause.fail(result.result), Context.make(Toolkit.FailureOrigin, result.failureOrigin ?? "result"))) : Effect.succeed(new CallToolResult({
-          isError: result.isFailure,
-          structuredContent: result.isFailure ? undefined : result.encodedResult,
-          content: toolResultContent(result.encodedResult)
-        }))), Effect.catchCause(handleCause), Effect.provideContext(services));
-      }
+        return built.handle(tool.name, payload ?? {}, undefined, decodeOptions).pipe(Stream.unwrap, Stream.runLast, Effect.flatMap(Effect.fromOption), Effect.flatMap(result => {
+          if (!result.isFailure) {
+            // An absent result, such as `Schema.Void`, has no structured form.
+            return result.encodedResult === undefined ? Effect.succeed(new CallToolResult({
+              isError: false,
+              content: []
+            })) : successResult(result.encodedResult);
+          }
+          // Declared failures return their encoded payload; anything else is classified by origin.
+          return result.failureOrigin === "handler" ? Effect.map(encodeReturnedFailure(result.encodedResult), failureResult) : Effect.failCause(Cause.annotate(Cause.fail(result.result), Context.make(Toolkit.FailureOrigin, result.failureOrigin ?? "result")));
+        }), Effect.catchCause(handleCause));
+      },
+      services
     });
   }
   for (const registration of registrations) {
@@ -1426,10 +2078,18 @@ export const registerToolkit = /*#__PURE__*/Effect.fnUntraced(function* (toolkit
   }
 });
 const isParameterValidationError = error => AiError.isAiError(error) && error.reason._tag === "ToolParameterValidationError";
-// MCP requires an object root, so a top-level `$ref` is inlined.
+// MCP requires an object root. A non-recursive root is compiled inline rather
+// than as a definition; a recursive root keeps its definition and the top-level
+// `$ref` is inlined.
 const toolJsonSchema = (schema, strict) => {
+  const root = SchemaAST.getContextOwner(SchemaAST.getLastEncoding(Schema.toCodecJson(schema).ast));
   const document = InternalStructuredOutput.resolveTopLevelReference(Schema.toJsonSchemaDocument(schema, {
-    onExcessProperty: strict ? "error" : "ignore"
+    onExcessProperty: strict ? "error" : "ignore",
+    referencePolicy: ({
+      ast,
+      identifier,
+      occurrences
+    }) => ast === root && occurrences === 1 ? undefined : identifier
   }));
   return Object.keys(document.definitions).length === 0 ? document.schema : {
     ...document.schema,
@@ -1437,21 +2097,33 @@ const toolJsonSchema = (schema, strict) => {
   };
 };
 /**
- * Registers an `AiToolkit` with the `McpServer`.
+ * Creates a layer that registers a `Toolkit` with the `McpServer`.
+ *
+ * **Details**
+ *
+ * The layer requires `McpServer`. Pass it to a transport through the
+ * `registrations` option, or provide the transport layer to it.
+ *
+ * @see {@link ToolkitRequirements} for which services are request-level
  *
  * @stability unstable
  * @category layers
  * @since 4.0.0
  */
-export const toolkit = toolkit => Layer.effectDiscard(registerToolkit(toolkit)).pipe(Layer.provide(McpServer.layer));
+export const toolkit = toolkit => Layer.effectDiscard(registerToolkit(toolkit));
+// Leave defects and interruption to makeInvoke; convert only expected failures.
+const handlerFailureToInternalError = cause => Cause.hasDies(cause) || Cause.hasInterrupts(cause) ? Effect.failCause(cause) : Effect.fail(new InternalError({
+  message: Cause.prettyErrors(cause)[0].message
+}));
+const completionHandler = (handle, encodeValues) => (input, context) => handle(input, context).pipe(Effect.flatMap(encodeValues), Effect.map(values => ({
+  completion: {
+    values: values,
+    total: values.length,
+    hasMore: false
+  }
+})), Effect.catchCause(handlerFailureToInternalError));
 /**
  * Registers an MCP resource or resource template from an Effect program.
- *
- * **When to use**
- *
- * Use when you are already inside an Effect program with an `McpServer`
- * service and need to add a concrete resource or URI-template resource
- * directly.
  *
  * @see {@link resource} for the layer-based resource registration wrapper
  *
@@ -1463,19 +2135,15 @@ export const registerResource = function () {
   if (arguments.length === 1) {
     const options = arguments[0];
     return Effect.gen(function* () {
-      const services = omitRequestServices(yield* Effect.context());
+      const services = yield* Effect.context();
       const registry = yield* McpServer;
       yield* registry.addResource({
         resource: new Resource({
           ...options,
           annotations: options
         }),
-        handle: options.content.pipe(Effect.provideContext(services), Effect.map(content => resolveResourceContent(options.uri, content)), Effect.catchCause(cause => {
-          const prettyError = Cause.prettyErrors(cause)[0];
-          return Effect.fail(new InternalError({
-            message: prettyError.message
-          }));
-        })),
+        services,
+        handle: options.content.pipe(Effect.map(content => resolveResourceContent(options.uri, content)), Effect.catchCause(handlerFailureToInternalError)),
         annotations: options.annotations ?? Context.empty()
       });
     });
@@ -1487,7 +2155,7 @@ export const registerResource = function () {
     uriPath
   } = compileUriTemplate(...arguments);
   return Effect.fnUntraced(function* (options) {
-    const services = omitRequestServices(yield* Effect.context());
+    const services = yield* Effect.context();
     const registry = yield* McpServer;
     const decode = Schema.decodeUnknownEffect(schema);
     const template = new ResourceTemplate({
@@ -1497,45 +2165,32 @@ export const registerResource = function () {
     });
     const completions = Object.create(null);
     for (const [param, handle] of Object.entries(options.completion ?? {})) {
-      const encodeArray = Schema.encodeUnknownEffect(Schema.Array(params[param]));
-      const handler = (input, context) => handle(input, context).pipe(Effect.flatMap(encodeArray), Effect.map(values => ({
-        completion: {
-          values: values,
-          total: values.length,
-          hasMore: false
-        }
-      })), Effect.catchCause(cause => {
-        const prettyError = Cause.prettyErrors(cause)[0];
-        return Effect.fail(new InternalError({
-          message: prettyError.message
-        }));
-      }), Effect.provideContext(services));
-      completions[param] = handler;
+      completions[param] = completionHandler(handle, Schema.encodeUnknownEffect(Schema.Array(params[param])));
     }
     yield* registry.addResourceTemplate({
       template,
       routerPath,
       completions,
+      services,
       annotations: options.annotations ?? Context.empty(),
       handle: (uri, params) => decode(params).pipe(Effect.mapError(error => new InvalidParams({
         message: error.message
-      })), Effect.flatMap(params => options.content(uri, ...params).pipe(Effect.map(content => resolveResourceContent(uri, content)), Effect.catchCause(cause => {
-        const prettyError = Cause.prettyErrors(cause)[0];
-        return Effect.fail(new InternalError({
-          message: prettyError.message
-        }));
-      }))), Effect.provideContext(services))
+      })), Effect.flatMap(params => options.content(uri, ...params).pipe(Effect.map(content => resolveResourceContent(uri, content)), Effect.catchCause(handlerFailureToInternalError))))
     });
   });
 };
 /**
  * Creates a layer that registers an MCP resource or resource template.
  *
- * **When to use**
+ * **Details**
  *
- * Use to compose resource registration into an MCP server layer.
+ * Services read by the content and completion handlers are request-level, so
+ * providing them with `Layer.provide` doesn't satisfy them. Read
+ * construction-time services in an enclosing `Layer.unwrap` and close over
+ * them, and provide per-request services with MCP middleware.
  *
  * @see {@link registerResource} for the Effect-level resource registration API
+ * @see {@link middleware} for providing request-level dependencies
  *
  * @stability unstable
  * @category layers
@@ -1543,24 +2198,163 @@ export const registerResource = function () {
  */
 export const resource = function () {
   if (arguments.length === 1) {
-    return Layer.effectDiscard(registerResource(arguments[0])).pipe(Layer.provide(McpServer.layer));
+    return Layer.effectDiscard(registerResource(arguments[0]));
   }
   const register = registerResource(...arguments);
-  return options => Layer.effectDiscard(register(options)).pipe(Layer.provide(McpServer.layer));
+  return options => Layer.effectDiscard(register(options));
+};
+const skillFileEncoder = /*#__PURE__*/new TextEncoder();
+// Bytes are copied so that later changes by the caller cannot alter what is
+// served under the listed digest. `Buffer#slice` shares memory, so copy with
+// the `Uint8Array` constructor.
+const toSkillSourceFile = (path, file) => {
+  const {
+    content,
+    mimeType
+  } = typeof file === "string" || file instanceof Uint8Array ? {
+    content: file
+  } : file;
+  return {
+    path,
+    content: typeof content === "string" ? skillFileEncoder.encode(content) : new Uint8Array(content),
+    mimeType
+  };
 };
 /**
- * Registers an MCP prompt from an Effect program.
- *
- * **When to use**
- *
- * Use when you are already inside an Effect program with an `McpServer`
- * service and need to add a prompt handler directly.
+ * Registers an Agent Skill under the MCP Skills extension (SEP-2640).
  *
  * **Details**
  *
- * Parameters are decoded with the supplied schema, completion handlers encode
- * per-parameter suggestions, and string prompt content is converted into a user
- * text message.
+ * Each file is registered as a resource, and the skill is listed by
+ * `skills/list` and `skills/get` with a manifest of every file's SHA-256
+ * digest and size, computed from the bytes served. Every directory of the
+ * skill namespace is readable with `resources/directory/read`. The server
+ * declares the extension once any skill is registered.
+ *
+ * Fails when the skill breaks the extension's rules: a name that does not
+ * match the URI, a `SKILL.md` without YAML frontmatter, frontmatter that is
+ * not valid {@link McpSchema.SkillFrontmatter}, a file path that leaves the
+ * skill, or more than 512 files or 16 MiB in all. It also fails when the
+ * skill's directory contains or lies inside another skill's, or one of its
+ * files is already registered as a resource. Registering a resource at the
+ * URI of a skill's file afterwards is a defect.
+ *
+ * SHA-256 runs on `crypto.subtle`.
+ *
+ * @see {@link skill} for the layer-based skill registration wrapper
+ *
+ * @stability unstable
+ * @category handlers
+ * @since 4.1.1
+ */
+export const registerSkill = /*#__PURE__*/Effect.fnUntraced(function* (options) {
+  const files = Object.entries(options.files).map(([path, file]) => toSkillSourceFile(path, file));
+  const skill = yield* McpSkills.makeStaticSkill({
+    uri: options.uri,
+    files
+  }).pipe(Effect.provide(Digest.layerWebCrypto));
+  const registry = yield* McpServer;
+  const {
+    addSkillFile,
+    core,
+    globalMiddleware
+  } = internalState.get(registry);
+  const services = yield* Effect.context();
+  const annotations = options.annotations ?? Context.empty();
+  const {
+    invoke,
+    visible
+  } = makeInvoke(services, globalMiddleware);
+  // Claims the skill's file URIs before they are registered as resources.
+  yield* core.skills.register({
+    entry: skill.entry,
+    isVisible: isEnabled(annotations),
+    visible: visible("skills/list", options.uri),
+    visibleInDirectories: visible("resources/directory/read", options.uri),
+    get: invocation => invoke(Effect.succeed(skill.entry), invocation, {
+      method: "skills/get",
+      target: options.uri,
+      payload: {
+        uri: options.uri
+      }
+    }),
+    directory: uri => skill.directories.get(uri)
+  });
+  for (const {
+    content,
+    resource,
+    text
+  } of skill.files) {
+    const {
+      uri,
+      mimeType
+    } = resource;
+    yield* addSkillFile({
+      resource: new Resource(resource),
+      annotations,
+      services,
+      handle: Effect.succeed({
+        contents: [text === undefined ? {
+          uri,
+          mimeType,
+          blob: content
+        } : {
+          uri,
+          mimeType,
+          text
+        }]
+      })
+    });
+  }
+});
+/**
+ * Creates a layer that registers an Agent Skill under the MCP Skills extension
+ * (SEP-2640).
+ *
+ * **Example** (Publishing a skill with a supporting file)
+ *
+ * ```ts
+ * import { Layer } from "effect"
+ * import { McpProtocol, McpServer } from "effect/ai"
+ *
+ * const RefundsSkill = McpServer.skill({
+ *   uri: "skill://billing/refunds/SKILL.md",
+ *   files: {
+ *     "SKILL.md": `---
+ * name: refunds
+ * description: Process refunds using the billing tools
+ * ---
+ *
+ * Read references/policy.md before issuing a refund.
+ * `,
+ *     "references/policy.md": "Refunds above CHF 500 require manager approval.\n"
+ *   }
+ * })
+ *
+ * const ServerLayer = RefundsSkill.pipe(
+ *   Layer.provide(McpServer.layerHttp({
+ *     name: "billing",
+ *     version: "1.0.0",
+ *     path: "/mcp",
+ *     protocols: [McpProtocol.v2026_07_28, McpProtocol.v2025_11_25]
+ *   }))
+ * )
+ * ```
+ *
+ * @see {@link registerSkill} for the Effect-level skill registration API
+ *
+ * @stability unstable
+ * @category layers
+ * @since 4.1.1
+ */
+export const skill = options => Layer.effectDiscard(registerSkill(options));
+/**
+ * Registers an MCP prompt from an Effect program.
+ *
+ * **Details**
+ *
+ * Decodes parameters and encodes completion suggestions using their schemas.
+ * String content becomes a user text message.
  *
  * @see {@link prompt} for the layer-based prompt registration wrapper
  *
@@ -1588,36 +2382,19 @@ export const registerPrompt = options => {
   const completion = options.completion ?? {};
   return Effect.gen(function* () {
     const registry = yield* McpServer;
-    const services = omitRequestServices(yield* Effect.context());
+    const services = yield* Effect.context();
     const completions = Object.create(null);
     for (const [param, handle] of Object.entries(completion)) {
-      const encodeArray = Schema.encodeEffect(Schema.Array(props[param]));
-      const handler = (input, context) => handle(input, context).pipe(Effect.flatMap(encodeArray), Effect.map(values => ({
-        completion: {
-          values: values,
-          total: values.length,
-          hasMore: false
-        }
-      })), Effect.catchCause(cause => {
-        const prettyError = Cause.prettyErrors(cause)[0];
-        return Effect.fail(new InternalError({
-          message: prettyError.message
-        }));
-      }), Effect.provide(services));
-      completions[param] = handler;
+      completions[param] = completionHandler(handle, Schema.encodeUnknownEffect(Schema.Array(props[param])));
     }
     yield* registry.addPrompt({
       prompt,
       completions,
+      services,
       annotations: options.annotations ?? Context.empty(),
       handle: params => decode(params).pipe(Effect.mapError(error => new InvalidParams({
         message: error.message
-      })), Effect.flatMap(params => options.content(params).pipe(Effect.catchCause(cause => {
-        const prettyError = Cause.prettyErrors(cause)[0];
-        return Effect.fail(new InternalError({
-          message: prettyError.message
-        }));
-      }))), Effect.map(messages => {
+      })), Effect.flatMap(params => options.content(params).pipe(Effect.catchCause(handlerFailureToInternalError))), Effect.map(messages => {
         messages = typeof messages === "string" ? [{
           role: "user",
           content: TextContent.make({
@@ -1628,30 +2405,28 @@ export const registerPrompt = options => {
           messages,
           description: prompt.description
         });
-      }), Effect.provideContext(services))
+      }))
     });
   });
 };
 /**
  * Creates a layer that registers an MCP prompt.
  *
- * **When to use**
- *
- * Use to compose prompt registration into an MCP server layer.
- *
  * **Details**
  *
- * Parameters are decoded with the supplied schema, completion handlers encode
- * per-parameter suggestions, and string prompt content is converted into a user
- * text message.
+ * Services read by the content and completion handlers are request-level, so
+ * providing them with `Layer.provide` doesn't satisfy them. Read
+ * construction-time services in an enclosing `Layer.unwrap` and close over
+ * them, and provide per-request services with MCP middleware.
  *
  * @see {@link registerPrompt} for the Effect-level prompt registration API
+ * @see {@link middleware} for providing request-level dependencies
  *
  * @stability unstable
  * @category layers
  * @since 4.0.0
  */
-export const prompt = options => Layer.effectDiscard(registerPrompt(options)).pipe(Layer.provide(McpServer.layer));
+export const prompt = options => Layer.effectDiscard(registerPrompt(options));
 /**
  * Collects structured input from the current MCP client and decodes the
  * accepted response with `schema`.
@@ -1699,6 +2474,21 @@ export const elicit = /*#__PURE__*/Effect.fnUntraced(function* (options) {
  * @since 4.0.0
  */
 export const clientCapabilities = /*#__PURE__*/McpRequestContext.useSync(_ => _.clientCapabilities);
+/**
+ * Decodes an `Mcp-Name` header, including base64-wrapped values.
+ * Returns `undefined` for malformed values.
+ *
+ * **Details**
+ *
+ * Use in `HttpRouter.middleware` to identify the tool, prompt or resource
+ * targeted by a `2026-07-28` request. Earlier protocols carry the name only
+ * in the JSON-RPC body.
+ *
+ * @stability unstable
+ * @category decoding
+ * @since 4.0.0
+ */
+export const decodeNameHeader = value => McpProtocolInternal.decodeRoutingHeader(value);
 // -----------------------------------------------------------------------------
 // Internal
 // -----------------------------------------------------------------------------

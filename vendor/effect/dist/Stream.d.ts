@@ -1086,9 +1086,10 @@ export declare const fromPubSubTake: <A, E>(pubsub: PubSub.PubSub<Take.Take<A, E
  *
  * **Details**
  *
- * The stream reads from a `ReadableStreamDefaultReader`, maps read failures
- * with `onError`, and closes the reader when the stream finalizes. By default
- * the reader is canceled; set `releaseLockOnEnd` to release the lock instead.
+ * The stream reads from a `ReadableStreamDefaultReader` and maps read failures
+ * with `onError`. Finalization cancels the reader and releases its lock, or
+ * only releases the lock when `releaseLockOnEnd` is set. A rejected cancel
+ * hook becomes a defect.
  *
  * **Example** (Creating a stream from a ReadableStream)
  *
@@ -1234,6 +1235,11 @@ export interface EventListener<A = unknown> {
 }
 /**
  * Creates a stream from an event listener.
+ *
+ * **Gotchas**
+ *
+ * Event listeners cannot backpressure the source. When a bounded `bufferSize`
+ * is full, additional events are dropped rather than suspending the listener.
  *
  * **Example** (Creating a stream from an event listener)
  *
@@ -1593,6 +1599,11 @@ export declare const as: {
 /**
  * Maps both the failure and success channels of a stream.
  *
+ * **Details**
+ *
+ * Maps every typed error in the cause, preserving defects, interrupts and
+ * reason order. Unlike typed recovery, mapping does not convert errors to defects.
+ *
  * **Example** (Mapping both the failure and success channels of a stream)
  *
  * ```ts import.meta.vitest
@@ -1628,6 +1639,11 @@ export declare const as: {
 export declare const mapBoth: {
     /**
      * Maps both the failure and success channels of a stream.
+     *
+     * **Details**
+     *
+     * Maps every typed error in the cause, preserving defects, interrupts and
+     * reason order. Unlike typed recovery, mapping does not convert errors to defects.
      *
      * **Example** (Mapping both the failure and success channels of a stream)
      *
@@ -1667,6 +1683,11 @@ export declare const mapBoth: {
     }): <R>(self: Stream<A, E, R>) => Stream<A2, E2, R>;
     /**
      * Maps both the failure and success channels of a stream.
+     *
+     * **Details**
+     *
+     * Maps every typed error in the cause, preserving defects, interrupts and
+     * reason order. Unlike typed recovery, mapping does not convert errors to defects.
      *
      * **Example** (Mapping both the failure and success channels of a stream)
      *
@@ -6333,6 +6354,12 @@ export declare const catchCause: {
  *
  * Typed failures and interruptions are not caught.
  *
+ * **Gotchas**
+ *
+ * `catchDefect` recovers any cause that contains a defect, including causes
+ * that also contain typed errors. Typed error handlers such as `catch` skip
+ * those causes, so defects always take precedence.
+ *
  * **Example** (Recovering from a defect)
  *
  * ```ts import.meta.vitest
@@ -6358,6 +6385,12 @@ export declare const catchDefect: {
      *
      * Typed failures and interruptions are not caught.
      *
+     * **Gotchas**
+     *
+     * `catchDefect` recovers any cause that contains a defect, including causes
+     * that also contain typed errors. Typed error handlers such as `catch` skip
+     * those causes, so defects always take precedence.
+     *
      * **Example** (Recovering from a defect)
      *
      * ```ts import.meta.vitest
@@ -6382,6 +6415,12 @@ export declare const catchDefect: {
      * **Details**
      *
      * Typed failures and interruptions are not caught.
+     *
+     * **Gotchas**
+     *
+     * `catchDefect` recovers any cause that contains a defect, including causes
+     * that also contain typed errors. Typed error handlers such as `catch` skip
+     * those causes, so defects always take precedence.
      *
      * **Example** (Recovering from a defect)
      *
@@ -6500,6 +6539,13 @@ declare const catch_: {
 export { 
 /**
  * Switches over to the stream produced by the provided function if this one fails.
+ *
+ * **Gotchas**
+ *
+ * Defects take precedence over typed errors. If the cause also contains a
+ * defect, the handler does not run and the failure is propagated with every
+ * typed error converted to a defect. An interruption alongside a typed error
+ * does not prevent recovery.
  *
  * **Example** (Catching stream failures)
  *
@@ -6842,6 +6888,12 @@ export declare const tapDefect: {
  * stream. Non-matching failures propagate downstream, so the error type is
  * preserved unless the filter narrows it.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * **Example** (Catching matching failures)
  *
  * ```ts import.meta.vitest
@@ -6876,6 +6928,12 @@ export declare const catchIf: {
      * When a failure matches the filter, the stream switches to the recovery
      * stream. Non-matching failures propagate downstream, so the error type is
      * preserved unless the filter narrows it.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * **Example** (Catching matching failures)
      *
@@ -6912,6 +6970,12 @@ export declare const catchIf: {
      * stream. Non-matching failures propagate downstream, so the error type is
      * preserved unless the filter narrows it.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * **Example** (Catching matching failures)
      *
      * ```ts import.meta.vitest
@@ -6947,6 +7011,12 @@ export declare const catchIf: {
      * stream. Non-matching failures propagate downstream, so the error type is
      * preserved unless the filter narrows it.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * **Example** (Catching matching failures)
      *
      * ```ts import.meta.vitest
@@ -6972,7 +7042,7 @@ export declare const catchIf: {
      * @category error handling
      * @since 4.0.0
      */
-    <A, E, R, EB extends E, A2, E2, R2, A3 = unassigned, E3 = never, R3 = never>(self: Stream<A, E, R>, refinement: Refinement<E, EB>, f: (e: EB) => Stream<A2, E2, R2>, orElse?: ((e: Exclude<E, EB>) => Stream<A3, E3, R3>) | undefined): Stream<A | A2 | Exclude<A3, unassigned>, E2 | E3 | (A3 extends unassigned ? Exclude<E, EB> : never), R | R2 | R3>;
+    <A, E, R, EB extends E, A2, E2, R2, A3 = unassigned, E3 = never, R3 = never>(self: Stream<A, E, R>, refinement: Refinement<NoInfer<E>, EB>, f: (e: EB) => Stream<A2, E2, R2>, orElse?: ((e: Exclude<E, EB>) => Stream<A3, E3, R3>) | undefined): Stream<A | A2 | Exclude<A3, unassigned>, E2 | E3 | (A3 extends unassigned ? Exclude<E, EB> : never), R | R2 | R3>;
     /**
      * Recovers from errors that match a predicate by switching to a recovery stream.
      *
@@ -6981,6 +7051,12 @@ export declare const catchIf: {
      * When a failure matches the filter, the stream switches to the recovery
      * stream. Non-matching failures propagate downstream, so the error type is
      * preserved unless the filter narrows it.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * **Example** (Catching matching failures)
      *
@@ -7023,6 +7099,12 @@ export declare const catchIf: {
  * Successful filter results are passed to `f`. Failed filter results go to
  * `orElse` when provided; otherwise the filter failure is re-failed.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * @see {@link catchIf} for predicate or refinement based recovery
  * @see {@link catchTag} for `_tag` based recovery from one tagged error
  * @see {@link catchTags} for `_tag` based recovery from multiple tagged errors
@@ -7046,6 +7128,12 @@ export declare const catchFilter: {
      *
      * Successful filter results are passed to `f`. Failed filter results go to
      * `orElse` when provided; otherwise the filter failure is re-failed.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * @see {@link catchIf} for predicate or refinement based recovery
      * @see {@link catchTag} for `_tag` based recovery from one tagged error
@@ -7071,6 +7159,12 @@ export declare const catchFilter: {
      * Successful filter results are passed to `f`. Failed filter results go to
      * `orElse` when provided; otherwise the filter failure is re-failed.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * @see {@link catchIf} for predicate or refinement based recovery
      * @see {@link catchTag} for `_tag` based recovery from one tagged error
      * @see {@link catchTags} for `_tag` based recovery from multiple tagged errors
@@ -7090,6 +7184,12 @@ export declare const catchFilter: {
  *
  * Use when you need to handle a specific error case from a stream whose error
  * type is a tagged union with a readonly `_tag` field.
+ *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
  *
  * **Example** (Catching tagged failures)
  *
@@ -7126,6 +7226,12 @@ export declare const catchTag: {
      * Use when you need to handle a specific error case from a stream whose error
      * type is a tagged union with a readonly `_tag` field.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * **Example** (Catching tagged failures)
      *
      * ```ts import.meta.vitest
@@ -7161,6 +7267,12 @@ export declare const catchTag: {
      * Use when you need to handle a specific error case from a stream whose error
      * type is a tagged union with a readonly `_tag` field.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * **Example** (Catching tagged failures)
      *
      * ```ts import.meta.vitest
@@ -7190,6 +7302,12 @@ export declare const catchTag: {
 };
 /**
  * Switches to a recovery stream based on matching `_tag` handlers.
+ *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
  *
  * **Example** (Catching tagged failures with handlers)
  *
@@ -7229,6 +7347,12 @@ export declare const catchTag: {
 export declare const catchTags: {
     /**
      * Switches to a recovery stream based on matching `_tag` handlers.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * **Example** (Catching tagged failures with handlers)
      *
@@ -7288,6 +7412,12 @@ export declare const catchTags: {
     }[keyof Cases]>;
     /**
      * Switches to a recovery stream based on matching `_tag` handlers.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * **Example** (Catching tagged failures with handlers)
      *
@@ -7358,6 +7488,12 @@ export declare const catchTags: {
  *
  * The handler receives the unwrapped reason.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * **Example** (Catching a tagged error reason)
  *
  * ```ts import.meta.vitest
@@ -7408,6 +7544,12 @@ export declare const catchReason: {
      * **Details**
      *
      * The handler receives the unwrapped reason.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * **Example** (Catching a tagged error reason)
      *
@@ -7460,6 +7602,12 @@ export declare const catchReason: {
      *
      * The handler receives the unwrapped reason.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * **Example** (Catching a tagged error reason)
      *
      * ```ts import.meta.vitest
@@ -7503,6 +7651,12 @@ export declare const catchReason: {
 /**
  * Catches multiple reasons within a tagged error using an object of handlers.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * **Example** (Catching tagged error reasons)
  *
  * ```ts import.meta.vitest
@@ -7545,6 +7699,12 @@ export declare const catchReason: {
 export declare const catchReasons: {
     /**
      * Catches multiple reasons within a tagged error using an object of handlers.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * **Example** (Catching tagged error reasons)
      *
@@ -7596,6 +7756,12 @@ export declare const catchReasons: {
     }[keyof Cases]>;
     /**
      * Catches multiple reasons within a tagged error using an object of handlers.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * **Example** (Catching tagged error reasons)
      *
@@ -7785,6 +7951,11 @@ export declare const unwrapReason: {
 /**
  * Transforms the errors emitted by this stream using `f`.
  *
+ * **Details**
+ *
+ * Maps every typed error in the cause, preserving defects, interrupts and
+ * reason order. Unlike typed recovery, mapping does not convert errors to defects.
+ *
  * **Example** (Mapping stream errors)
  *
  * ```ts import.meta.vitest
@@ -7810,6 +7981,11 @@ export declare const mapError: {
     /**
      * Transforms the errors emitted by this stream using `f`.
      *
+     * **Details**
+     *
+     * Maps every typed error in the cause, preserving defects, interrupts and
+     * reason order. Unlike typed recovery, mapping does not convert errors to defects.
+     *
      * **Example** (Mapping stream errors)
      *
      * ```ts import.meta.vitest
@@ -7834,6 +8010,11 @@ export declare const mapError: {
     <E, E2>(f: (error: E) => E2): <A, R>(self: Stream<A, E, R>) => Stream<A, E2, R>;
     /**
      * Transforms the errors emitted by this stream using `f`.
+     *
+     * **Details**
+     *
+     * Maps every typed error in the cause, preserving defects, interrupts and
+     * reason order. Unlike typed recovery, mapping does not convert errors to defects.
      *
      * **Example** (Mapping stream errors)
      *
@@ -8098,6 +8279,12 @@ export declare const orElseIfEmpty: {
 /**
  * Returns a stream that emits a fallback value when this stream fails.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * **Example** (Recovering with a fallback value)
  *
  * ```ts import.meta.vitest
@@ -8123,6 +8310,12 @@ export declare const orElseSucceed: {
     /**
      * Returns a stream that emits a fallback value when this stream fails.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * **Example** (Recovering with a fallback value)
      *
      * ```ts import.meta.vitest
@@ -8147,6 +8340,12 @@ export declare const orElseSucceed: {
     <E, A2>(f: (error: E) => A2): <A, R>(self: Stream<A, E, R>) => Stream<A | A2, never, R>;
     /**
      * Returns a stream that emits a fallback value when this stream fails.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * **Example** (Recovering with a fallback value)
      *
@@ -8208,6 +8407,16 @@ export declare const orDie: <A, E, R>(self: Stream<A, E, R>) => Stream<A, never,
  *
  * The `log` option controls whether the failure is logged before the stream
  * terminates.
+ * Set `log: "Unhandled"` to read `References.UnhandledLogLevel` when the
+ * failure occurs; `undefined` disables logging. Minimum log level filtering
+ * still applies.
+ *
+ * **Gotchas**
+ *
+ * Defects take precedence over typed errors. If the cause also contains a
+ * defect, the failure is not ignored and is propagated with every typed error
+ * converted to a defect. An interruption alongside a typed error does not
+ * prevent the error from being ignored.
  *
  * **Example** (Ignoring stream failures)
  *
@@ -8248,9 +8457,9 @@ export declare const orDie: <A, E, R>(self: Stream<A, E, R>) => Stream<A, never,
  * @since 4.0.0
  */
 export declare const ignore: <Arg extends Stream<any, any, any> | {
-    readonly log?: boolean | Severity | undefined;
+    readonly log?: boolean | Severity | "Unhandled" | undefined;
 } | undefined>(selfOrOptions: Arg, options?: {
-    readonly log?: boolean | Severity | undefined;
+    readonly log?: boolean | Severity | "Unhandled" | undefined;
 } | undefined) => [Arg] extends [Stream<infer A, infer _E, infer R>] ? Stream<A, never, R> : <A, E, R>(self: Stream<A, E, R>) => Stream<A, never, R>;
 /**
  * Ignores the stream's failure cause, including defects, and ends the stream.
@@ -8259,6 +8468,12 @@ export declare const ignore: <Arg extends Stream<any, any, any> | {
  *
  * Use when you need to silently suppress a stream's entire failure cause,
  * including both typed errors and defects, rather than propagate it downstream.
+ *
+ * **Details**
+ *
+ * Set `log: "Unhandled"` to read `References.UnhandledLogLevel` when the
+ * failure occurs; `undefined` disables logging. Minimum log level filtering
+ * still applies.
  *
  * **Example** (Ignoring stream failure causes)
  *
@@ -8283,9 +8498,9 @@ export declare const ignore: <Arg extends Stream<any, any, any> | {
  * @since 4.0.0
  */
 export declare const ignoreCause: <Arg extends Stream<any, any, any> | {
-    readonly log?: boolean | Severity | undefined;
+    readonly log?: boolean | Severity | "Unhandled" | undefined;
 } | undefined>(streamOrOptions: Arg, options?: {
-    readonly log?: boolean | Severity | undefined;
+    readonly log?: boolean | Severity | "Unhandled" | undefined;
 } | undefined) => [Arg] extends [Stream<infer A, infer _E, infer R>] ? Stream<A, never, R> : <A, E, R>(self: Stream<A, E, R>) => Stream<A, never, R>;
 /**
  * Retries the stream according to the given schedule when it fails.
@@ -8297,6 +8512,12 @@ export declare const ignoreCause: <Arg extends Stream<any, any, any> | {
  *
  * The schedule is reset as soon as the first element passes through the
  * stream again.
+ *
+ * **Gotchas**
+ *
+ * Defects take precedence over typed errors. A failure whose cause contains a
+ * defect is not retried and is propagated with every typed error converted to a
+ * defect. A typed error alongside an interruption is retried.
  *
  * **Example** (Retrying stream failures)
  *
@@ -8333,6 +8554,12 @@ export declare const retry: {
      * The schedule is reset as soon as the first element passes through the
      * stream again.
      *
+     * **Gotchas**
+     *
+     * Defects take precedence over typed errors. A failure whose cause contains a
+     * defect is not retried and is propagated with every typed error converted to a
+     * defect. A typed error alongside an interruption is retried.
+     *
      * **Example** (Retrying stream failures)
      *
      * ```ts import.meta.vitest
@@ -8367,6 +8594,12 @@ export declare const retry: {
      *
      * The schedule is reset as soon as the first element passes through the
      * stream again.
+     *
+     * **Gotchas**
+     *
+     * Defects take precedence over typed errors. A failure whose cause contains a
+     * defect is not retried and is propagated with every typed error converted to a
+     * defect. A typed error alongside an interruption is retried.
      *
      * **Example** (Retrying stream failures)
      *
@@ -14371,7 +14604,8 @@ export declare const ensuring: {
 /**
  * Provides a layer or context to the stream, removing the corresponding
  * service requirements. Use `options.local` to build the layer every time; by
- * default, layers are shared between provide calls.
+ * default, a layer already built by an enclosing provide or runtime is reused;
+ * sibling provide calls build their own copies.
  *
  * **Example** (Providing stream requirements)
  *
@@ -14402,7 +14636,8 @@ export declare const provide: {
     /**
      * Provides a layer or context to the stream, removing the corresponding
      * service requirements. Use `options.local` to build the layer every time; by
-     * default, layers are shared between provide calls.
+     * default, a layer already built by an enclosing provide or runtime is reused;
+     * sibling provide calls build their own copies.
      *
      * **Example** (Providing stream requirements)
      *
@@ -14435,7 +14670,8 @@ export declare const provide: {
     /**
      * Provides a layer or context to the stream, removing the corresponding
      * service requirements. Use `options.local` to build the layer every time; by
-     * default, layers are shared between provide calls.
+     * default, a layer already built by an enclosing provide or runtime is reused;
+     * sibling provide calls build their own copies.
      *
      * **Example** (Providing stream requirements)
      *
@@ -16068,7 +16304,7 @@ export declare const mkArrayBuffer: <E, R>(self: Stream<Uint8Array, E, R>) => Ef
  * @category destructors
  * @since 4.0.0
  */
-export declare const mkUint8Array: <E, R>(self: Stream<Uint8Array, E, R>) => Effect.Effect<Uint8Array, E, R>;
+export declare const mkUint8Array: <E, R>(self: Stream<Uint8Array, E, R>) => Effect.Effect<Uint8Array<ArrayBuffer>, E, R>;
 /**
  * Converts the stream to a `ReadableStream` using the provided services.
  *
@@ -16081,6 +16317,9 @@ export declare const mkUint8Array: <E, R>(self: Stream<Uint8Array, E, R>) => Eff
  *
  * See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream.
  *
+ * When `signal` aborts, the stream is interrupted even if the reader has
+ * stopped pulling, and the `ReadableStream` closes.
+ *
  * **Example** (Converting to a ReadableStream with services)
  *
  * ```ts import.meta.vitest
@@ -16088,7 +16327,7 @@ export declare const mkUint8Array: <E, R>(self: Stream<Uint8Array, E, R>) => Eff
  *
  * const stream = Stream.make(1, 2, 3, 4, 5)
  * const readableStream = Stream.toReadableStreamWith(stream, Context.empty())
- * const values = await Array.fromAsync(readableStream)
+ * const values = await globalThis.Array.fromAsync(readableStream)
  * values // => [ 1, 2, 3, 4, 5 ]
  * ```
  *
@@ -16109,6 +16348,9 @@ export declare const toReadableStreamWith: {
      *
      * See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream.
      *
+     * When `signal` aborts, the stream is interrupted even if the reader has
+     * stopped pulling, and the `ReadableStream` closes.
+     *
      * **Example** (Converting to a ReadableStream with services)
      *
      * ```ts import.meta.vitest
@@ -16116,7 +16358,7 @@ export declare const toReadableStreamWith: {
      *
      * const stream = Stream.make(1, 2, 3, 4, 5)
      * const readableStream = Stream.toReadableStreamWith(stream, Context.empty())
-     * const values = await Array.fromAsync(readableStream)
+     * const values = await globalThis.Array.fromAsync(readableStream)
      * values // => [ 1, 2, 3, 4, 5 ]
      * ```
      *
@@ -16126,6 +16368,7 @@ export declare const toReadableStreamWith: {
      */
     <A, XR>(context: Context.Context<XR>, options?: {
         readonly strategy?: QueuingStrategy<A> | undefined;
+        readonly signal?: AbortSignal | undefined;
     }): <E, R extends XR>(self: Stream<A, E, R>) => ReadableStream<A>;
     /**
      * Converts the stream to a `ReadableStream` using the provided services.
@@ -16139,6 +16382,9 @@ export declare const toReadableStreamWith: {
      *
      * See https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream.
      *
+     * When `signal` aborts, the stream is interrupted even if the reader has
+     * stopped pulling, and the `ReadableStream` closes.
+     *
      * **Example** (Converting to a ReadableStream with services)
      *
      * ```ts import.meta.vitest
@@ -16146,7 +16392,7 @@ export declare const toReadableStreamWith: {
      *
      * const stream = Stream.make(1, 2, 3, 4, 5)
      * const readableStream = Stream.toReadableStreamWith(stream, Context.empty())
-     * const values = await Array.fromAsync(readableStream)
+     * const values = await globalThis.Array.fromAsync(readableStream)
      * values // => [ 1, 2, 3, 4, 5 ]
      * ```
      *
@@ -16156,6 +16402,7 @@ export declare const toReadableStreamWith: {
      */
     <A, E, XR, R extends XR>(self: Stream<A, E, R>, context: Context.Context<XR>, options?: {
         readonly strategy?: QueuingStrategy<A> | undefined;
+        readonly signal?: AbortSignal | undefined;
     }): ReadableStream<A>;
 };
 /**
@@ -16171,7 +16418,7 @@ export declare const toReadableStreamWith: {
  * import { Stream } from "effect"
  *
  * const readableStream = Stream.toReadableStream(Stream.make(1, 2, 3))
- * const values = await Array.fromAsync(readableStream)
+ * const values = await globalThis.Array.fromAsync(readableStream)
  * values // => [ 1, 2, 3 ]
  * ```
  *
@@ -16193,7 +16440,7 @@ export declare const toReadableStream: {
      * import { Stream } from "effect"
      *
      * const readableStream = Stream.toReadableStream(Stream.make(1, 2, 3))
-     * const values = await Array.fromAsync(readableStream)
+     * const values = await globalThis.Array.fromAsync(readableStream)
      * values // => [ 1, 2, 3 ]
      * ```
      *
@@ -16217,7 +16464,7 @@ export declare const toReadableStream: {
      * import { Stream } from "effect"
      *
      * const readableStream = Stream.toReadableStream(Stream.make(1, 2, 3))
-     * const values = await Array.fromAsync(readableStream)
+     * const values = await globalThis.Array.fromAsync(readableStream)
      * values // => [ 1, 2, 3 ]
      * ```
      *
@@ -16346,7 +16593,7 @@ export declare const toReadableStreamEffect: {
  * const stream = Stream.make(1, 2, 3)
  * const iterable = Stream.toAsyncIterableWith(stream, Context.empty())
  *
- * await Array.fromAsync(iterable) // => [1, 2, 3]
+ * await globalThis.Array.fromAsync(iterable) // => [1, 2, 3]
  * ```
  *
  * @stability stable
@@ -16370,7 +16617,7 @@ export declare const toAsyncIterableWith: {
      * const stream = Stream.make(1, 2, 3)
      * const iterable = Stream.toAsyncIterableWith(stream, Context.empty())
      *
-     * await Array.fromAsync(iterable) // => [1, 2, 3]
+     * await globalThis.Array.fromAsync(iterable) // => [1, 2, 3]
      * ```
      *
      * @stability stable
@@ -16394,7 +16641,7 @@ export declare const toAsyncIterableWith: {
      * const stream = Stream.make(1, 2, 3)
      * const iterable = Stream.toAsyncIterableWith(stream, Context.empty())
      *
-     * await Array.fromAsync(iterable) // => [1, 2, 3]
+     * await globalThis.Array.fromAsync(iterable) // => [1, 2, 3]
      * ```
      *
      * @stability stable
@@ -16420,7 +16667,7 @@ export declare const toAsyncIterableWith: {
  *
  * const program = Effect.gen(function*() {
  *   const iterable = yield* Stream.toAsyncIterableEffect(stream)
- *   return yield* Effect.promise(() => Array.fromAsync(iterable))
+ *   return yield* Effect.promise(() => globalThis.Array.fromAsync(iterable))
  * })
  *
  * await Effect.runPromise(program) // => [1, 2, 3]
@@ -16441,7 +16688,7 @@ export declare const toAsyncIterableEffect: <A, E, R>(self: Stream<A, E, R>) => 
  *
  * const stream = Stream.make(1, 2, 3)
  *
- * await Array.fromAsync(Stream.toAsyncIterable(stream)) // => [1, 2, 3]
+ * await globalThis.Array.fromAsync(Stream.toAsyncIterable(stream)) // => [1, 2, 3]
  * ```
  *
  * @stability stable

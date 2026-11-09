@@ -1,64 +1,72 @@
-/**
- * Cryptographic service for encrypted event-log replication.
- *
- * `EventLogEncryption` turns local journal entries into encrypted remote
- * payloads and decrypts encrypted changes received from a server. It also
- * hashes byte data and creates event-log identities, so remote replication can
- * use storage or transport that should not see plaintext event data.
- *
- * @stability unstable
- * @since 4.0.0
- */
 import * as Context from "../Context.ts";
+import * as Aead from "../crypto/Aead.ts";
+import * as Digest from "../crypto/Digest.ts";
+import * as SecureRandom from "../crypto/SecureRandom.ts";
 import * as Effect from "../Effect.ts";
 import * as Layer from "../Layer.ts";
 import * as Schema from "../Schema.ts";
 import * as Transferable from "../workers/Transferable.ts";
-import { Entry, RemoteEntry } from "./EventJournal.ts";
+import { type Entry, RemoteEntry } from "./EventJournal.ts";
 import type { Identity } from "./EventLog.ts";
 /**
- * Schema for an encrypted journal entry paired with its initialization vector
- * and the id of the original entry.
+ * Schema for a batch of journal entries encrypted as one AES-GCM message.
+ *
+ * **Details**
+ *
+ * `entryIds` lists the ids of the encrypted entries in order. It is sent in
+ * plaintext so the server can deduplicate batches, and it is authenticated
+ * together with the store id, so a server cannot alter it or move the batch to
+ * another store.
  *
  * @stability unstable
  * @category models
  * @since 4.0.0
  */
-export declare const EncryptedEntry: Schema.Struct<{
-    readonly entryId: Schema.brand<Schema.instanceOf<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>, "effect/eventlog/EventJournal/EntryId">;
+export declare const EncryptedBatch: Schema.Struct<{
+    readonly entryIds: Schema.NonEmptyArray<Schema.brand<Schema.instanceOf<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>, "effect/eventlog/EventJournal/EntryId">>;
     readonly iv: Transferable.Transferable<Schema.instanceOf<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>>;
-    readonly encryptedEntry: Transferable.Transferable<Schema.instanceOf<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>>;
+    readonly encryptedBatch: Transferable.Transferable<Schema.instanceOf<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>>;
 }>;
 /**
- * Type of an encrypted remote entry, including its remote sequence number,
- * initialization vector, entry id, and encrypted entry bytes.
+ * Type of an encrypted batch.
  *
  * @stability unstable
  * @category models
  * @since 4.0.0
  */
-export interface EncryptedRemoteEntry extends Schema.Schema.Type<typeof EncryptedRemoteEntry> {
+export interface EncryptedBatch extends Schema.Schema.Type<typeof EncryptedBatch> {
 }
 /**
- * Schema for encrypted entries exchanged with a remote event-log server.
+ * Type of an encrypted batch stored by a remote server, including the remote
+ * sequence of its first entry.
  *
  * @stability unstable
  * @category models
  * @since 4.0.0
  */
-export declare const EncryptedRemoteEntry: Schema.Struct<{
-    readonly sequence: Schema.Natural;
+export interface EncryptedRemoteBatch extends Schema.Schema.Type<typeof EncryptedRemoteBatch> {
+}
+/**
+ * Schema for encrypted batches exchanged with a remote event-log server.
+ *
+ * **Details**
+ *
+ * The entries of a batch have consecutive remote sequences starting at
+ * `sequence`.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export declare const EncryptedRemoteBatch: Schema.Struct<{
+    readonly entryIds: Schema.NonEmptyArray<Schema.brand<Schema.instanceOf<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>, "effect/eventlog/EventJournal/EntryId">>;
     readonly iv: Transferable.Transferable<Schema.instanceOf<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>>;
-    readonly entryId: Schema.brand<Schema.instanceOf<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>, "effect/eventlog/EventJournal/EntryId">;
-    readonly encryptedEntry: Transferable.Transferable<Schema.instanceOf<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>>;
+    readonly encryptedBatch: Transferable.Transferable<Schema.instanceOf<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>>;
+    readonly sequence: Schema.Natural;
 }>;
 declare const EventLogEncryption_base: Context.ServiceClass<EventLogEncryption, "effect/eventlog/EventLogEncryption", {
-    readonly encrypt: (identity: Identity["Service"], entries: ReadonlyArray<Entry>) => Effect.Effect<ReadonlyArray<{
-        readonly iv: Uint8Array<ArrayBuffer>;
-        readonly encryptedEntry: Uint8Array<ArrayBuffer>;
-    }>>;
-    readonly decrypt: (identity: Identity["Service"], entries: ReadonlyArray<EncryptedRemoteEntry>) => Effect.Effect<Array<RemoteEntry>>;
-    readonly sha256String: (data: Uint8Array) => Effect.Effect<string>;
+    readonly encrypt: (identity: Identity["Service"], storeId: string, entries: ReadonlyArray<Entry>) => Effect.Effect<Array<EncryptedBatch>>;
+    readonly decrypt: (identity: Identity["Service"], storeId: string, batches: ReadonlyArray<EncryptedRemoteBatch>) => Effect.Effect<Array<RemoteEntry>>;
     readonly sha256: (data: Uint8Array) => Effect.Effect<Uint8Array>;
     readonly generateIdentity: Effect.Effect<Identity["Service"]>;
 }>;
@@ -78,8 +86,37 @@ declare const EventLogEncryption_base: Context.ServiceClass<EventLogEncryption, 
 export declare class EventLogEncryption extends EventLogEncryption_base {
 }
 /**
- * Creates an `EventLogEncryption` service backed by the Web Crypto `SubtleCrypto`
- * APIs from the supplied `Crypto` implementation.
+ * Creates an `EventLogEncryption` service from the `effect/crypto` services.
+ *
+ * **Details**
+ *
+ * Each identity's AES-256-GCM key is derived from its root secret with
+ * `Digest` and cached per identity. Batches are encrypted with `Aead` under a
+ * random 12-byte nonce from `SecureRandom`, which also generates identities.
+ * A batch that fails authentication, or whose entries do not match its entry
+ * ids, is a defect.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const make: Effect.Effect<EventLogEncryption["Service"], never, Aead.Aead | Digest.Digest | SecureRandom.SecureRandom>;
+/**
+ * Provides `EventLogEncryption` from the `Aead`, `Digest` and `SecureRandom`
+ * services.
+ *
+ * **When to use**
+ *
+ * Use to choose the crypto layers yourself, such as the `NodeCrypto` layers.
+ *
+ * @stability unstable
+ * @category layers
+ * @since 4.0.0
+ */
+export declare const layer: Layer.Layer<EventLogEncryption, never, Aead.Aead | Digest.Digest | SecureRandom.SecureRandom>;
+/**
+ * Creates an `EventLogEncryption` service on the Web Crypto layers of
+ * `Aead`, `Digest` and `SecureRandom`, using the supplied `Crypto` object.
  *
  * @stability unstable
  * @category encryption
@@ -87,7 +124,13 @@ export declare class EventLogEncryption extends EventLogEncryption_base {
  */
 export declare const makeEncryptionSubtle: (crypto: Crypto) => Effect.Effect<EventLogEncryption["Service"]>;
 /**
- * Provides `EventLogEncryption` using `globalThis.crypto`.
+ * Provides `EventLogEncryption` on the Web Crypto layers of `Aead`, `Digest`
+ * and `SecureRandom`.
+ *
+ * **Details**
+ *
+ * The layers use the `Crypto` object of the `WebCrypto` reference, which
+ * defaults to `globalThis.crypto`.
  *
  * @stability unstable
  * @category layers

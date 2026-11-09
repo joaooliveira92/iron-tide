@@ -33,7 +33,8 @@ function toPojo(cron) {
     hours: Arr.fromIterable(cron.hours),
     days: Arr.fromIterable(cron.days),
     months: Arr.fromIterable(cron.months),
-    weekdays: Arr.fromIterable(cron.weekdays)
+    weekdays: Arr.fromIterable(cron.weekdays),
+    onDstOverlap: cron.onDstOverlap
   };
   return out;
 }
@@ -43,7 +44,7 @@ const CronProto = {
     return isCron(that) && equals(this, that);
   },
   [Hash.symbol]() {
-    return pipe(Hash.hash(this.tz), Hash.combine(Hash.hash(this.and)), Hash.combine(Hash.array(Arr.fromIterable(this.seconds))), Hash.combine(Hash.array(Arr.fromIterable(this.minutes))), Hash.combine(Hash.array(Arr.fromIterable(this.hours))), Hash.combine(Hash.array(Arr.fromIterable(this.days))), Hash.combine(Hash.array(Arr.fromIterable(this.months))), Hash.combine(Hash.array(Arr.fromIterable(this.weekdays))));
+    return pipe(Hash.hash(this.tz), Hash.combine(Hash.hash(this.and)), Hash.combine(Hash.array(Arr.fromIterable(this.seconds))), Hash.combine(Hash.array(Arr.fromIterable(this.minutes))), Hash.combine(Hash.array(Arr.fromIterable(this.hours))), Hash.combine(Hash.array(Arr.fromIterable(this.days))), Hash.combine(Hash.array(Arr.fromIterable(this.months))), Hash.combine(Hash.array(Arr.fromIterable(this.weekdays))), Hash.combine(Hash.hash(this.onDstOverlap)));
   },
   toObject() {
     return toPojo(this);
@@ -116,8 +117,9 @@ export const isCron = u => hasProperty(u, TypeId);
  * time unit unrestricted. If only days or weekdays are restricted, that field
  * must match. When both are restricted, the default matches either field; set
  * `and: true` to require both fields to match. Weekdays range from `0` (Sunday)
- * to `7` (also Sunday). The constructor throws a `RangeError` when a field
- * contains a non-integer or out-of-range value.
+ * to `7` (also Sunday). `onDstOverlap` chooses which occurrences of repeated
+ * local times are included and defaults to `"earlier"`. The constructor throws a
+ * `RangeError` when a field contains a non-integer or out-of-range value.
  *
  * **Example** (Creating schedules from constraints)
  *
@@ -198,6 +200,7 @@ export const make = values => {
   o.weekdays = restrictions.weekdays(values.weekdays);
   o.and = values.and === true;
   o.tz = Option.fromUndefinedOr(values.tz);
+  o.onDstOverlap = values.onDstOverlap ?? "earlier";
   const seconds = Array.from(o.seconds);
   const minutes = Array.from(o.minutes);
   const hours = Array.from(o.hours);
@@ -383,6 +386,8 @@ export const isCronParseError = u => hasProperty(u, CronParseErrorTypeId);
  * `CronParseError`. When both the day-of-month and weekday fields are
  * restricted, a date matches if either field matches. When either field starts
  * with `*`, both fields must match; an unrestricted field always matches.
+ * `options.onDstOverlap` chooses which occurrences of repeated local times are
+ * included and defaults to `"earlier"`.
  *
  * **Example** (Parsing cron expressions)
  *
@@ -403,7 +408,7 @@ export const isCronParseError = u => hasProperty(u, CronParseErrorTypeId);
  * @category constructors
  * @since 2.0.0
  */
-export const parse = (cron, tz) => {
+export const parse = (cron, tz, options) => {
   const segments = cron.trim().split(/\s+/).filter(String.isNonEmpty);
   if (segments.length !== 5 && segments.length !== 6) {
     return Result.fail(new CronParseError({
@@ -443,7 +448,8 @@ export const parse = (cron, tz) => {
     days: days.values,
     months: months.values,
     weekdays: weekdays.values,
-    and: (days.wildcard || weekdays.wildcard) && days.values.size !== 0 && weekdays.values.size !== 0
+    and: (days.wildcard || weekdays.wildcard) && days.values.size !== 0 && weekdays.values.size !== 0,
+    onDstOverlap: options?.onDstOverlap
   })));
 };
 /**
@@ -475,7 +481,7 @@ export const parse = (cron, tz) => {
  * @category constructors
  * @since 4.0.0
  */
-export const parseUnsafe = (cron, tz) => Result.getOrThrow(parse(cron, tz));
+export const parseUnsafe = (cron, tz, options) => Result.getOrThrow(parse(cron, tz, options));
 /**
  * Formats a `Cron` instance as a cron expression.
  *
@@ -486,8 +492,8 @@ export const parseUnsafe = (cron, tz) => Result.getOrThrow(parse(cron, tz));
  *
  * **Gotchas**
  *
- * Formatting drops the timezone information and the `and` restriction between
- * days and weekdays. Parsing the result is therefore not guaranteed to produce
+ * Formatting drops the timezone information, the `onDstOverlap` policy, and
+ * the `and` restriction between days and weekdays. Parsing the result is therefore not guaranteed to produce
  * an equivalent schedule.
  *
  * **Example** (Formatting a cron expression)
@@ -613,7 +619,9 @@ const daysInMonth = date => new Date(Date.UTC(date.getUTCFullYear(), date.getUTC
  *
  * Searches for the next date and time when the cron schedule should trigger,
  * starting after the specified date/time or after the current time when no
- * date is provided.
+ * date is provided. The result is always strictly after the starting point.
+ * Repeated local times are included according to the schedule's
+ * `onDstOverlap` policy.
  *
  * **Example** (Finding the next occurrence)
  *
@@ -647,11 +655,13 @@ export const next = (cron, now) => {
  * **Details**
  *
  * When no date/time is provided, the search starts from the current time.
+ * Repeated local times are included according to the schedule's
+ * `onDstOverlap` policy.
  *
  * **Gotchas**
  *
- * The search is strict: if the supplied date/time already matches the schedule,
- * the result is the earlier occurrence.
+ * The search is strict: if the supplied date/time is exactly an occurrence of
+ * the schedule, the result is the earlier occurrence.
  *
  * @see {@link next} for finding the next scheduled occurrence
  *
@@ -663,8 +673,22 @@ export const prev = (cron, now) => {
   return stepCron(cron, now, "prev");
 };
 const stepCron = (cron, now, direction) => {
+  const start = now ?? new Date();
+  if (cron.onDstOverlap !== "both") {
+    return searchCron(cron, start, direction, cron.onDstOverlap);
+  }
+  // Both occurrences are eligible, so the result is the nearest of the two
+  // single-occurrence searches in the search direction.
+  const earlier = searchCron(cron, start, direction, "earlier");
+  const later = searchCron(cron, start, direction, "later");
+  if (direction === "next") {
+    return earlier <= later ? earlier : later;
+  }
+  return earlier >= later ? earlier : later;
+};
+const searchCron = (cron, now, direction, onDstOverlap) => {
   const tz = Option.getOrUndefined(cron.tz);
-  const zoned = dateTime.makeZonedUnsafe(now ?? new Date(), {
+  const zoned = dateTime.makeZonedUnsafe(now, {
     timeZone: tz
   });
   const reverse = direction === "prev";
@@ -673,25 +697,75 @@ const stepCron = (cron, now, direction) => {
   const boundary = reverse ? cron.last : cron.first;
   const needsStep = reverse ? (next, current) => next < current : (next, current) => next > current;
   const utc = tz !== undefined && dateTime.isTimeZoneNamed(tz) && tz.id === "UTC";
-  const adjustDst = utc ? constVoid : current => {
+  // Going backward, a candidate inside a gap is left in place: it resolves to
+  // the instant after the gap, and the range check below rejects it when that
+  // instant is not before the input.
+  const adjustDst = utc || reverse ? constVoid : current => {
     const adjusted = dateTime.makeZonedUnsafe(current, {
       timeZone: zoned.zone,
-      adjustForTimeZone: true,
-      disambiguation: reverse ? "later" : undefined
+      adjustForTimeZone: true
     }).pipe(dateTime.toDate);
     const drift = current.getTime() - adjusted.getTime();
-    if (reverse ? drift !== 0 : drift > 0) {
-      current.setTime(reverse ? adjusted.getTime() : current.getTime() + drift);
+    if (drift > 0) {
+      current.setTime(current.getTime() + drift);
     }
   };
-  // Repeated wall times resolve to their first occurrence, so when the search
-  // starts in the second occurrence, matches inside that fold are in the past.
-  const isBeforeStart = reverse || utc ? constFalse : current => dateTime.makeZonedUnsafe(current, {
+  // Repeated wall times resolve to the occurrence chosen by the policy. Gaps
+  // resolve to the instant after the gap under either disambiguation.
+  const disambiguation = onDstOverlap === "later" ? "later" : "compatible";
+  const resolve = wallMillis => dateTime.makeZonedUnsafe(wallMillis, {
     timeZone: zoned.zone,
-    adjustForTimeZone: true
-  }).epochMilliseconds <= zoned.epochMilliseconds;
+    adjustForTimeZone: true,
+    disambiguation
+  }).epochMilliseconds;
+  // Inside a fold, wall-clock order differs from instant order, so a candidate
+  // can resolve to an instant on the wrong side of the input.
+  const isOutOfRange = utc ? constFalse : reverse ? wallMillis => resolve(wallMillis) >= zoned.epochMilliseconds : wallMillis => resolve(wallMillis) <= zoned.epochMilliseconds;
+  // A fold near the input shows as a larger offset a day before it than a day
+  // after it (DateTime disambiguation assumes the same single transition).
+  // Inside a fold the resolved instant moves in the same direction as the wall
+  // time, so the rejected candidates form one interval no longer than the
+  // fold: when the wall time one fold length ahead is in range, binary search
+  // for the first second in range instead of stepping through the interval.
+  // Gaps break that ordering, so they keep stepping one second at a time.
+  let foldSeconds;
+  const skipOutOfRange = current => {
+    if (foldSeconds === undefined) {
+      const offsetAt = millis => dateTime.zonedOffset(dateTime.makeZonedUnsafe(millis, {
+        timeZone: zoned.zone
+      }));
+      foldSeconds = Math.floor((offsetAt(zoned.epochMilliseconds - 86_400_000) - offsetAt(zoned.epochMilliseconds + 86_400_000)) / 1000);
+    }
+    const after = seconds => current.getTime() + tick * seconds * 1000;
+    let outOfRange = 0;
+    let inRange = 1;
+    if (foldSeconds > 0 && !isOutOfRange(after(foldSeconds))) {
+      inRange = foldSeconds;
+      while (inRange - outOfRange > 1) {
+        const mid = outOfRange + Math.floor((inRange - outOfRange) / 2);
+        if (isOutOfRange(after(mid))) {
+          outOfRange = mid;
+        } else {
+          inRange = mid;
+        }
+      }
+    }
+    current.setTime(after(inRange));
+  };
   const result = dateTime.mutate(zoned, current => {
-    current.setUTCSeconds(current.getUTCSeconds() + tick, 0);
+    // When the input is in the occurrence the policy excludes, eligible
+    // instants of the same fold can lie behind its wall time in the search
+    // direction. Start from the wall time of the input under the policy's
+    // offset so they are visited; candidates that resolve on the wrong side
+    // of the input are skipped below.
+    const shift = utc ? 0 : zoned.epochMilliseconds - resolve(current.getTime());
+    if (reverse ? shift > 0 : shift < 0) {
+      current.setTime(current.getTime() + shift);
+    }
+    // Start from the nearest whole second strictly past the input in the search
+    // direction. Going backward, a fractional input already has one.
+    const offset = reverse && current.getUTCMilliseconds() > 0 ? 0 : tick;
+    current.setUTCSeconds(current.getUTCSeconds() + offset, 0);
     for (let i = 0; i < 10_000; i++) {
       if (cron.seconds.size !== 0) {
         const currentSecond = current.getUTCSeconds();
@@ -822,14 +896,16 @@ const stepCron = (cron, now, direction) => {
           continue;
         }
       }
-      if (isBeforeStart(current)) {
-        current.setUTCSeconds(current.getUTCSeconds() + 1);
+      if (isOutOfRange(current.getTime())) {
+        skipOutOfRange(current);
         i = -1; // skipped fold candidates do not count against the search budget
         continue;
       }
       return;
     }
     throw new Error("Unable to find cron date");
+  }, {
+    disambiguation
   });
   return dateTime.toDateUtc(result);
 };
@@ -890,7 +966,8 @@ export const sequence = function* (cron, now) {
  * **Details**
  *
  * This comparison checks the optional timezone, the `and` day-matching mode,
- * seconds, minutes, hours, days, months, and weekdays.
+ * the `onDstOverlap` policy, seconds, minutes, hours, days, months, and
+ * weekdays.
  *
  * **Example** (Comparing schedules with equivalence)
  *
@@ -922,7 +999,7 @@ export const sequence = function* (cron, now) {
  * @category instances
  * @since 2.0.0
  */
-export const Equivalence = /*#__PURE__*/Equ.make((self, that) => Equal.equals(self.tz, that.tz) && self.and === that.and && restrictionsEquals(self.seconds, that.seconds) && restrictionsEquals(self.minutes, that.minutes) && restrictionsEquals(self.hours, that.hours) && restrictionsEquals(self.days, that.days) && restrictionsEquals(self.months, that.months) && restrictionsEquals(self.weekdays, that.weekdays));
+export const Equivalence = /*#__PURE__*/Equ.make((self, that) => Equal.equals(self.tz, that.tz) && self.and === that.and && self.onDstOverlap === that.onDstOverlap && restrictionsEquals(self.seconds, that.seconds) && restrictionsEquals(self.minutes, that.minutes) && restrictionsEquals(self.hours, that.hours) && restrictionsEquals(self.days, that.days) && restrictionsEquals(self.months, that.months) && restrictionsEquals(self.weekdays, that.weekdays));
 const restrictionsArrayEquals = /*#__PURE__*/Equ.Array(/*#__PURE__*/Equ.strictEqual());
 const restrictionsEquals = (self, that) => restrictionsArrayEquals(Arr.fromIterable(self), Arr.fromIterable(that));
 /**
@@ -937,7 +1014,8 @@ const restrictionsEquals = (self, that) => restrictionsArrayEquals(Arr.fromItera
  * **Details**
  *
  * The comparison checks the optional timezone, the `and` day-matching mode,
- * seconds, minutes, hours, days, months, and weekdays.
+ * the `onDstOverlap` policy, seconds, minutes, hours, days, months, and
+ * weekdays.
  *
  * **Example** (Checking schedule equality)
  *

@@ -1,4 +1,4 @@
-import { dual } from "./Function.js";
+import { dual, identity } from "./Function.js";
 import * as core from "./internal/core.js";
 import * as internal from "./internal/effect.js";
 /**
@@ -42,17 +42,45 @@ import * as internal from "./internal/effect.js";
  * @since 4.0.0
  */
 export const makeUnsafe = permits => new SemaphoreImpl(permits);
-const waitForPermits = (self, n, effect) => internal.callback(resume => {
-  if (self.free >= n) return resume(effect);
-  const observer = () => {
-    if (self.free < n) return;
-    self.waiters.delete(observer);
-    resume(effect);
+// The first queued request that fits in the free permits. Larger requests
+// ahead of it keep their place but are overtaken, as documented on `take`.
+const firstAvailableWaiter = self => {
+  for (const waiter of self.waiters) {
+    if (waiter.permits <= self.free) return waiter;
+  }
+};
+const takePermits = (self, n, onAcquire, restore = identity) => core.withFiber(fiber => {
+  if (self.free >= n && firstAvailableWaiter(self) === undefined) {
+    self.taken += n;
+    return onAcquire();
+  }
+  // A wake does not reserve permits: the waiter keeps its queue entry until
+  // it acquires or is interrupted, and re-checks eligibility when it runs.
+  const waiter = {
+    permits: n,
+    resume: undefined
   };
-  self.waiters.add(observer);
-  return internal.sync(() => {
-    self.waiters.delete(observer);
+  const remove = () => {
+    if (self.waiters.delete(waiter)) self.releaseUnsafe(fiber, 0);
+    return undefined;
+  };
+  self.waiters.add(waiter);
+  internal.onExitUnsafe(fiber, remove);
+  const wait = restore(internal.callback(resume => {
+    // The fiber may have yielded since the last check, missing a wake.
+    if (firstAvailableWaiter(self) === waiter) {
+      resume(internal.void);
+    } else {
+      waiter.resume = resume;
+    }
+  }));
+  const loop = internal.flatMap(wait, () => {
+    if (firstAvailableWaiter(self) !== waiter) return loop;
+    self.taken += n;
+    remove();
+    return onAcquire();
   });
+  return loop;
 });
 class SemaphoreImpl {
   waiters = /*#__PURE__*/new Set();
@@ -65,14 +93,10 @@ class SemaphoreImpl {
     return this.permits - this.taken;
   }
   take(n) {
-    const take = internal.suspend(() => {
-      if (this.free < n) {
-        return waitForPermits(this, n, take);
-      }
-      this.taken += n;
-      return internal.succeed(n);
-    });
-    return take;
+    return takePermits(this, n, () => internal.succeed(n));
+  }
+  takeScoped(n) {
+    return internal.uninterruptibleMask(restore => internal.flatMap(internal.scope, scope => takePermits(this, n, () => internal.scopeAddFinalizer(scope, this.release(n)), restore)));
   }
   takeIfAvailable(n) {
     return internal.suspend(() => {
@@ -85,9 +109,17 @@ class SemaphoreImpl {
     this.taken -= n;
     if (this.waiters.size > 0) {
       fiber.currentDispatcher.scheduleTask(() => {
-        for (const observer of this.waiters) {
-          if (this.free <= 0) break;
-          observer();
+        // Wake every queued request that fits in the free permits. Waiters
+        // that were already woken still count against the budget, since they
+        // keep their place until they acquire. Resumed fibers run inline and
+        // can add or remove waiters, so iterate over a snapshot.
+        let remaining = this.free;
+        for (const waiter of Array.from(this.waiters)) {
+          if (!this.waiters.has(waiter) || waiter.permits > remaining) continue;
+          remaining -= waiter.permits;
+          const resume = waiter.resume;
+          waiter.resume = undefined;
+          resume?.(internal.void);
         }
       }, 0);
     }
@@ -108,20 +140,10 @@ class SemaphoreImpl {
     return core.withFiber(fiber => internal.succeed(this.releaseUnsafe(fiber, this.taken)));
   }
   withPermits(n) {
-    return self => internal.uninterruptibleMask(restore => {
-      const acquire = internal.suspend(() => {
-        if (this.free < n) {
-          const wait = waitForPermits(this, n, internal.void);
-          return internal.flatMap(restore(wait), () => acquire);
-        }
-        this.taken += n;
-        return internal.onExitPrimitive(restore(self), () => {
-          this.releaseUnsafe(internal.getCurrentFiber(), n);
-          return undefined;
-        }, true);
-      });
-      return acquire;
-    });
+    return self => internal.uninterruptibleMask(restore => takePermits(this, n, () => internal.onExitPrimitive(restore(self), () => {
+      this.releaseUnsafe(internal.getCurrentFiber(), n);
+      return undefined;
+    }, true), restore));
   }
   withPermit = /*#__PURE__*/this.withPermits(1);
   withPermitsIfAvailable(n) {
@@ -291,6 +313,43 @@ export const withPermitsIfAvailable = (self, permits, effect) => {
  * @since 4.0.0
  */
 export const take = /*#__PURE__*/dual(2, (self, permits) => self.take(permits));
+/**
+ * Acquires the specified number of permits until the current scope closes.
+ *
+ * **When to use**
+ *
+ * Use when permits should be held for the lifetime of a scope, such as while a
+ * scoped resource is leased.
+ *
+ * **Details**
+ *
+ * The effect waits until enough permits are available. The wait can be
+ * interrupted unless the caller is uninterruptible. The permits are taken and
+ * their release is added to the scope in one uninterruptible step, so acquired
+ * permits are always returned when the scope closes.
+ *
+ * **Example** (Holding a permit for a scope)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect, Semaphore } from "effect"
+ *
+ * const program = Effect.gen(function*() {
+ *   const semaphore = yield* Semaphore.make(1)
+ *   yield* Effect.scoped(Semaphore.takeScoped(semaphore, 1))
+ *   return yield* Semaphore.takeIfAvailable(semaphore, 1)
+ * })
+ *
+ * Effect.runSync(program) // => true
+ * ```
+ *
+ * @see {@link take} for acquiring permits that are released manually
+ * @see {@link withPermits} for holding permits while one effect runs
+ *
+ * @stability stable
+ * @category combinators
+ * @since 4.0.7
+ */
+export const takeScoped = /*#__PURE__*/dual(2, (self, permits) => self.takeScoped(permits));
 /**
  * Acquires the specified number of permits only if they are immediately
  * available.

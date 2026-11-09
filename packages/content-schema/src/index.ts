@@ -18,6 +18,13 @@ export {
   EventSchema,
   EventStanceSchema,
 } from "./event.js";
+export type { ConstructionEvent, ConstructionEventKind } from "./construction-event.js";
+export {
+  CONSTRUCTION_EVENT_KINDS,
+  ConstructionEventEraWindowSchema,
+  ConstructionEventKindSchema,
+  ConstructionEventSchema,
+} from "./construction-event.js";
 export type { Area } from "./area.js";
 export { AreaSchema } from "./area.js";
 export type { DesignTemplate } from "./design.js";
@@ -183,6 +190,7 @@ export {
   MAX_HIGH_PRIORITY_FIELDS,
   RESEARCH_FIELD_PRIORITY_WEIGHTS,
 } from "./research-fields.js";
+export { PEACE_BEHAVIOUR } from "./peace-behaviour.js";
 export type { RouteEdge } from "./route.js";
 export { RouteEdgeSchema } from "./route.js";
 export { validateAgainstSchema } from "./schema-validator.js";

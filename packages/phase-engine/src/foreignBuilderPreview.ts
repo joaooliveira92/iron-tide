@@ -51,6 +51,15 @@ export interface ForeignBuilderCandidate {
   readonly capabilityFailureCode: string | null;
   readonly impoundmentRiskBp: number;
   readonly deliveryGuarantee: boolean;
+  readonly quote: ForeignBuilderQuote;
+}
+
+export interface ForeignBuilderQuote {
+  readonly totalPriceUnits: number;
+  readonly firstInstalmentUnits: number;
+  readonly firstInstalmentMonth: string | null;
+  readonly plannedDeliveryMonth: string;
+  readonly months: number;
 }
 
 export interface ForeignContractTermsPreview {
@@ -114,6 +123,7 @@ export function previewForeignConstruction(
 
   const builders: ForeignBuilderCandidate[] = [];
   let selected: ForeignBuilderCandidate | null = null;
+  let selectedContract: ForeignContractTermsPreview | null = null;
   for (const nation of snapshot["nations"].values()) {
     if (nation.id === orderingNationId) continue;
     const dock = builderDockRecord(snapshot, nation.id, content, month);
@@ -156,7 +166,7 @@ export function previewForeignConstruction(
     const dockCeilingKg = dock?.maximumNewConstructionMassKg ?? null;
     const rel = relationAndTension(snapshot, orderingNationId, nation.id);
     const capabilityReasons = capability.reasons.map((r) => `${r.field}: ${r.message}`);
-    const candidate: ForeignBuilderCandidate = {
+    const candidate: Omit<ForeignBuilderCandidate, "quote"> = {
       nationId: nation.id,
       name: nation.name,
       tag: nation.tag,
@@ -181,13 +191,27 @@ export function previewForeignConstruction(
       impoundmentRiskBp: rel.relation === "at_war" ? impoundmentProbabilityBp(rel.tension) : 0,
       deliveryGuarantee: false,
     };
-    builders.push(candidate);
-    if (options.builderNationId === nation.id) selected = candidate;
+    const terms = contractPreview(design, candidate, quantity, content, month, options);
+    const first = terms.paymentSchedule[0];
+    const withQuote: ForeignBuilderCandidate = {
+      ...candidate,
+      quote: {
+        totalPriceUnits: terms.totalPriceUnits,
+        firstInstalmentUnits: first?.amountUnits ?? 0,
+        firstInstalmentMonth: first?.dueMonth ?? null,
+        plannedDeliveryMonth: terms.plannedDeliveryMonth,
+        months: monthIndexOf(terms.plannedDeliveryMonth) - monthIndexOf(month),
+      },
+    };
+    builders.push(withQuote);
+    if (options.builderNationId === nation.id) {
+      selected = withQuote;
+      selectedContract = terms;
+    }
   }
   builders.sort((a, b) => (a.nationId < b.nationId ? -1 : a.nationId > b.nationId ? 1 : 0));
 
-  const contract =
-    selected === null ? null : contractPreview(design, selected, quantity, content, month, options);
+  const contract = selected === null ? null : selectedContract;
 
   return {
     ok: true,
@@ -201,9 +225,13 @@ export function previewForeignConstruction(
   };
 }
 
+function monthIndexOf(month: string): number {
+  return Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1;
+}
+
 function contractPreview(
   design: ForeignContractTermsInput["design"],
-  builder: ForeignBuilderCandidate,
+  builder: Omit<ForeignBuilderCandidate, "quote">,
   quantity: number,
   content: ShipBuildingContent | undefined,
   month: string,

@@ -2,6 +2,11 @@ import type {
   ConstructionProjectQueueEntry,
   ConstructionProjectReadoutView,
 } from "@bluewave/campaign-engine";
+import type { ConstructionSteeringPreview } from "@bluewave/phase-engine";
+import type {
+  ConstructionProjectEntry,
+  ConstructionRebuildTarget,
+} from "../../../shared/construction-contract.js";
 
 export type PackageState = "done" | "active" | "ready" | "waiting";
 
@@ -23,8 +28,10 @@ export interface ProjectRow {
   readonly packages: readonly PackageRow[];
   readonly holdUntilMonth: string | null;
   readonly isForeign: boolean;
+  readonly rebuild?: ConstructionRebuildTarget;
   readonly revisable: boolean;
   readonly readout: ConstructionProjectReadoutView | null;
+  readonly steering?: ConstructionSteeringPreview;
 }
 
 const PACKAGE_LABEL: Readonly<Record<string, string>> = {
@@ -43,7 +50,7 @@ const packageLabel = (kind: string) => PACKAGE_LABEL[kind] ?? words(kind.toLower
 const percentOf = (done: number, total: number) =>
   total <= 0 ? 0 : Math.max(0, Math.min(100, Math.floor((done * 100) / total)));
 
-export function projectRow(entry: ConstructionProjectQueueEntry): ProjectRow {
+export function projectRow(entry: ConstructionProjectEntry): ProjectRow {
   const byId = new Map((entry.packages ?? []).map((p) => [p.id, p]));
   const complete = (id: string, seen: ReadonlySet<string> = new Set()): boolean => {
     const p = byId.get(id);
@@ -75,14 +82,22 @@ export function projectRow(entry: ConstructionProjectQueueEntry): ProjectRow {
     packages,
     holdUntilMonth: entry.holdUntilMonth,
     isForeign: entry.isForeign,
+    ...(entry.rebuild === undefined ? {} : { rebuild: entry.rebuild }),
     revisable: entry.revisable,
     readout: entry.readout ?? null,
   };
 }
 
-export function projectRows(entries: readonly ConstructionProjectQueueEntry[]): ProjectRow[] {
+export function projectRows(
+  entries: readonly ConstructionProjectEntry[],
+  steering: Readonly<Record<string, ConstructionSteeringPreview>> = {},
+): ProjectRow[] {
   return entries
-    .map(projectRow)
+    .map((entry) => {
+      const row = projectRow(entry);
+      const preview = steering[entry.projectId];
+      return preview === undefined ? row : { ...row, steering: preview };
+    })
     .sort(
       (a, b) =>
         Number(a.status === "COMPLETED") - Number(b.status === "COMPLETED") ||

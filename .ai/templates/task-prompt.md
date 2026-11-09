@@ -17,6 +17,10 @@
 
 Full. Decide routine choices, record them in the brief (`.ai/briefs/<slug>.md`), and continue. Stop only at the [stop conditions](../../AGENTS.md#stop-conditions).
 
+## Wait
+
+Run gates in the background and register each task id with `t3_background_wait` (returns at once, keeps the thread Working); read the log after the exit notification; never `sleep` or poll.
+
 ## Done
 
-`pnpm verify:affected` green; one `pnpm snap` screenshot per changed screen checked; merged to `dev`.
+`pnpm verify:affected` green; one `pnpm snap` screenshot per changed screen checked; PR into `dev` marked ready. A human merges unless this prompt says otherwise.

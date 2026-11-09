@@ -11,6 +11,8 @@
  * @stability unstable
  * @since 4.0.0
  */
+import { shouldHydrate } from "../internal/hydration.js";
+import * as Option from "../Option.js";
 import * as Schema from "../Schema.js";
 import * as AsyncResult from "./AsyncResult.js";
 import * as Atom from "./Atom.js";
@@ -18,6 +20,14 @@ const Skipped = /*#__PURE__*/Symbol.for("effect/reactivity/Hydration/Skipped");
 const encodeOrSkip = (atom, value) => {
   try {
     return atom[Atom.SerializableTypeId].encode(value);
+  } catch (error) {
+    if (Schema.isSchemaError(error)) return Skipped;
+    throw error;
+  }
+};
+const decodeOrSkip = (atom, value) => {
+  try {
+    return atom[Atom.SerializableTypeId].decode(value);
   } catch (error) {
     if (Schema.isSchemaError(error)) return Skipped;
     throw error;
@@ -102,26 +112,50 @@ export const toValues = state => state;
 export const hydrate = (registry, dehydratedState) => {
   for (const datom of dehydratedState) {
     registry.setSerializable(datom.key, datom.value);
+    // Apply hydration immediately to existing subscribers.
+    const existing = registry.getNodes().get(datom.key);
+    if (existing !== undefined) registry.ensureNode(existing.atom);
     // If there's a resultPromise, it means this was in Initial state when dehydrated
     // and we should wait for it to resolve to a non-Initial state, then update the registry
     if (!datom.resultPromise) continue;
     datom.resultPromise.then(resolvedValue => {
-      if (resolvedValue === Skipped) return;
       // Try to update the existing node directly instead of using setSerializable
-      const nodes = registry.getNodes();
-      const node = nodes.get(datom.key);
-      if (node) {
-        // Decode the resolved value using the node's atom serializable decoder
-        const atom = node.atom;
-        if (atom[Atom.SerializableTypeId]) {
-          const decoded = atom[Atom.SerializableTypeId].decode(resolvedValue);
-          node.setValue(decoded);
+      const node = registry.getNodes().get(datom.key);
+      if (resolvedValue !== Skipped) {
+        if (node === undefined) {
+          // Fallback to setSerializable if node doesn't exist yet
+          registry.setSerializable(datom.key, resolvedValue);
+          return;
         }
-      } else {
-        // Fallback to setSerializable if node doesn't exist yet
-        registry.setSerializable(datom.key, resolvedValue);
+        const decoded = decodeOrSkip(node.atom, resolvedValue);
+        if (decoded !== Skipped) {
+          if (shouldHydrate(Option.getOrUndefined(node.valueOption()), decoded)) {
+            ;
+            node.setValue(decoded);
+          }
+          return;
+        }
       }
+      // The result is unusable, so release the hydrated Initial and compute on the client
+      registry.preloadedSerializable.delete(datom.key);
+      if (node === undefined) return;
+      let target = node.atom;
+      while (target.initialValueTarget) {
+        target = target.initialValueTarget;
+      }
+      if (target !== node.atom) {
+        releaseInitial(registry.ensureNode(target));
+      } // Derived atoms may not have read their source yet, so invalidate them directly too
+      releaseInitial(node);
     });
   }
+};
+const releaseInitial = node => {
+  const internal = node;
+  // An unbuilt target can hold hydration through preserveInitialValueOnBuild,
+  // which valueOption does not expose. Only release an Initial, not newer client results.
+  if (!AsyncResult.isAsyncResult(internal._value) || !AsyncResult.isInitial(internal._value)) return;
+  internal.preserveInitialValueOnBuild = false;
+  internal.invalidate();
 };
 //# sourceMappingURL=Hydration.js.map

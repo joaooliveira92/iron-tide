@@ -28,13 +28,27 @@ describe("a choice that breaks the design", () => {
     openHull();
     const before = statusOf("displacement");
     commitLength("120");
-    const dialog = screen.getByRole("alertdialog");
+    const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByText("This change breaks the design")).toBeTruthy();
     expect(within(dialog).getAllByText("How to fix it").length).toBeGreaterThan(0);
     fireEvent.click(within(dialog).getByRole("button", { name: "Undo this choice" }));
-    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.queryByText("This change breaks the design")).toBeNull();
     expect(statusOf("displacement")).toBe(before);
     expect(length().getAttribute("aria-invalid")).toBeNull();
+  });
+
+  it("says what changed, from and to, and the value against its limit in player units", () => {
+    render(<ShipbuildingWorkspace />);
+    openHull();
+    commitLength("120");
+    const dialog = screen.getByRole("dialog");
+    const headline = within(dialog).getByText(/^Changing /).textContent ?? "";
+    expect(headline).toMatch(/^Changing Length \(waterline\) from .+ to .+ leaves the design/);
+    expect(headline).not.toMatch(/_|[a-z][A-Z]|[{}‰]|\b120000\b/);
+    expect(within(dialog).getByText(/^Current .+; must not exceed .+/).textContent).toMatch(
+      /^Current 131\.2 yd; must not exceed 76\.6 yd$/,
+    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Undo this choice" }));
   });
 
   it("keeps the invalid field marked after dismissing, and does not reopen for a finding already shown", () => {
@@ -43,14 +57,14 @@ describe("a choice that breaks the design", () => {
     const original = (length() as HTMLInputElement).value;
     commitLength("120");
     fireEvent.click(
-      within(screen.getByRole("alertdialog")).getByRole("button", {
+      within(screen.getByRole("dialog")).getByRole("button", {
         name: "Keep it and fix it myself",
       }),
     );
     expect(length().getAttribute("aria-invalid")).toBe("true");
     expect(screen.getAllByRole("alert").length).toBeGreaterThan(0);
     commitLength("121");
-    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(screen.queryByText("This change breaks the design")).toBeNull();
     commitLength(original);
     expect(length().getAttribute("aria-invalid")).toBeNull();
   });
@@ -67,7 +81,7 @@ describe("inline errors beyond the hull", () => {
     const power = screen.getByLabelText(/^Installed power/) as HTMLInputElement;
     fireEvent.change(power, { target: { value: "1" } });
     fireEvent.blur(power);
-    const dialog = screen.getByRole("alertdialog");
+    const dialog = screen.getByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Keep it and fix it myself" }));
     expect(power.getAttribute("aria-invalid")).toBe("true");
   });
@@ -82,7 +96,7 @@ describe("inline errors beyond the hull", () => {
     const panel = screen.getByRole("region", { name: "Protection" });
     fireEvent.click(within(panel).getByRole("button", { name: "Add region" }));
     fireEvent.click(
-      within(screen.getByRole("alertdialog")).getByRole("button", {
+      within(screen.getByRole("dialog")).getByRole("button", {
         name: "Keep it and fix it myself",
       }),
     );

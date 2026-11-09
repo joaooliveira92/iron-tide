@@ -144,6 +144,7 @@ function checkSettings(root, failures) {
     ["UserPromptSubmit", "scripts/hooks/user-prompt-context.mjs", undefined],
     ["PostToolUse", "scripts/hooks/session-telemetry.mjs", undefined],
     ["PreCompact", "scripts/hooks/session-telemetry.mjs", undefined],
+    ["Stop", "scripts/hooks/stop-gate.mjs", undefined],
   ];
   for (const [event, script, matcher] of expectations) {
     const groups = settings.hooks?.[event];

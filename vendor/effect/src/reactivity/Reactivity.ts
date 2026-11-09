@@ -41,6 +41,71 @@ export type TypeId = "~effect/reactivity/Reactivity"
 export const TypeId: TypeId = "~effect/reactivity/Reactivity"
 
 /**
+ * Registry of reactivity keys and the ID type each key accepts.
+ *
+ * **Details**
+ *
+ * The registry is empty by default, and every key name and ID is accepted.
+ * Once an application declares keys through module augmentation, the public
+ * reactivity APIs (`Reactivity.mutation`, `Reactivity.query`,
+ * `Reactivity.stream`, `Reactivity.invalidate`, `Atom`, `AtomHttpApi`,
+ * `AtomRpc`, `SqlClient.reactive` and `EventLog.groupReactivity`) only accept
+ * declared key names, and record IDs must match the declared ID type. Declare
+ * a key as `never` if it is only used in array form.
+ *
+ * **Gotchas**
+ *
+ * Only applications should augment this interface, never libraries. The
+ * augmentation applies to the whole program, so a library declaring keys would
+ * switch every consumer to strict keys.
+ *
+ * Methods on the `Reactivity` service still accept any key, for code that only
+ * knows its keys at runtime.
+ *
+ * **Example** (Declaring reactivity keys)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect } from "effect"
+ * import { Reactivity } from "effect/reactivity"
+ *
+ * declare module "effect/reactivity/Reactivity" {
+ *   interface Keys {
+ *     readonly users: number
+ *     readonly events: never
+ *   }
+ * }
+ *
+ * // Invalidates the `users` query with ID 1 and every `events` query
+ * const program = Effect.succeed("saved").pipe(
+ *   Reactivity.mutation({ users: [1] }),
+ *   Effect.andThen(Reactivity.invalidate(["events"]))
+ * )
+ * ```
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface Keys {}
+
+/**
+ * Keys accepted by the public reactivity APIs.
+ *
+ * **Details**
+ *
+ * With no keys declared in {@link Keys}, any array of keys or record of key IDs
+ * is accepted. Once keys are declared, only declared key names and their ID
+ * types are accepted.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type KeysInput = [keyof Keys] extends [never]
+  ? ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
+  : ReadonlyArray<keyof Keys> | { readonly [K in keyof Keys]?: ReadonlyArray<Keys[K]> }
+
+/**
  * Registers handlers and reruns queries when their keys are invalidated.
  *
  * @stability unstable
@@ -96,12 +161,21 @@ export const Reactivity: Context.Service<Reactivity, Reactivity> = Context.Servi
 export const make = Effect.sync(() => {
   const handlers = new Map<number | string, Set<() => void>>()
 
+  const runHandlers = (hashes: Iterable<string | number>): void => {
+    const ran = new Set<() => void>()
+    for (const hash of hashes) {
+      handlers.get(hash)?.forEach((run) => {
+        if (ran.has(run)) return
+        ran.add(run)
+        run()
+      })
+    }
+  }
+
   const invalidateUnsafe = (keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>): void => {
-    keysToHashes(keys, (hash) => {
-      const set = handlers.get(hash)
-      if (set === undefined) return
-      set.forEach((run) => run())
-    })
+    const hashes = new Set<string | number>()
+    keysToHashes(keys, (hash) => hashes.add(hash))
+    runHandlers(hashes)
   }
 
   const invalidate = (
@@ -162,9 +236,15 @@ export const make = Effect.sync(() => {
 
       let running = false
       let pending = false
+      let stopped = false
       const handleExit = (exit: Exit.Exit<A, E>) => {
         if (exit._tag === "Failure") {
+          stopped = true
+          pending = false
+          running = false
+          cancel()
           Queue.failCauseUnsafe(results, exit.cause)
+          return
         } else {
           Queue.offerUnsafe(results, exit.value)
         }
@@ -177,6 +257,7 @@ export const make = Effect.sync(() => {
       }
 
       function run() {
+        if (stopped) return
         if (running) {
           pending = true
           return
@@ -206,15 +287,7 @@ export const make = Effect.sync(() => {
       const pending = new Set<string | number>()
       return effect.pipe(
         Effect.provideService(PendingInvalidation, pending),
-        Effect.onExit((_) =>
-          Effect.sync(() => {
-            pending.forEach((hash) => {
-              const set = handlers.get(hash)
-              if (set === undefined) return
-              set.forEach((run) => run())
-            })
-          })
-        )
+        Effect.onExit((_) => Effect.sync(() => runHandlers(pending)))
       )
     })
 
@@ -257,9 +330,7 @@ export const mutation: {
    * @category accessors
    * @since 4.0.0
    */
-  (
-    keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
-  ): <A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R | Reactivity>
+  (keys: KeysInput): <A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R | Reactivity>
   /**
    * Wraps an effect so the supplied keys are invalidated after the effect succeeds.
    *
@@ -271,13 +342,10 @@ export const mutation: {
    * @category accessors
    * @since 4.0.0
    */
-  <A, E, R>(
-    effect: Effect.Effect<A, E, R>,
-    keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
-  ): Effect.Effect<A, E, R | Reactivity>
+  <A, E, R>(effect: Effect.Effect<A, E, R>, keys: KeysInput): Effect.Effect<A, E, R | Reactivity>
 } = dual(2, <A, E, R>(
   effect: Effect.Effect<A, E, R>,
-  keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
+  keys: KeysInput
 ): Effect.Effect<A, E, R | Reactivity> => Reactivity.use((_) => _.mutation(keys, effect)))
 
 /**
@@ -305,9 +373,7 @@ export const query: {
    * @category accessors
    * @since 4.0.0
    */
-  (
-    keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
-  ): <A, E, R>(
+  (keys: KeysInput): <A, E, R>(
     effect: Effect.Effect<A, E, R>
   ) => Effect.Effect<Queue.Dequeue<A, E>, never, R | Scope.Scope | Reactivity>
   /**
@@ -322,13 +388,10 @@ export const query: {
    * @category accessors
    * @since 4.0.0
    */
-  <A, E, R>(
-    effect: Effect.Effect<A, E, R>,
-    keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
-  ): Effect.Effect<Queue.Dequeue<A, E>, never, R | Scope.Scope | Reactivity>
+  <A, E, R>(effect: Effect.Effect<A, E, R>, keys: KeysInput): Effect.Effect<Queue.Dequeue<A, E>, never, R | Scope.Scope | Reactivity>
 } = dual(2, <A, E, R>(
   effect: Effect.Effect<A, E, R>,
-  keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
+  keys: KeysInput
 ): Effect.Effect<Queue.Dequeue<A, E>, never, R | Scope.Scope | Reactivity> =>
   Reactivity.use((r) => r.query(keys, effect)))
 
@@ -357,9 +420,7 @@ export const stream: {
    * @category accessors
    * @since 4.0.0
    */
-  (
-    keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
-  ): <A, E, R>(effect: Effect.Effect<A, E, R>) => Stream.Stream<A, E, Exclude<R, Scope.Scope> | Reactivity>
+  (keys: KeysInput): <A, E, R>(effect: Effect.Effect<A, E, R>) => Stream.Stream<A, E, Exclude<R, Scope.Scope> | Reactivity>
   /**
    * Runs an effect as a stream of query results tied to the supplied invalidation
    * keys.
@@ -372,13 +433,10 @@ export const stream: {
    * @category accessors
    * @since 4.0.0
    */
-  <A, E, R>(
-    effect: Effect.Effect<A, E, R>,
-    keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
-  ): Stream.Stream<A, E, Exclude<R, Scope.Scope> | Reactivity>
+  <A, E, R>(effect: Effect.Effect<A, E, R>, keys: KeysInput): Stream.Stream<A, E, Exclude<R, Scope.Scope> | Reactivity>
 } = dual(2, <A, E, R>(
   effect: Effect.Effect<A, E, R>,
-  keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
+  keys: KeysInput
 ): Stream.Stream<A, E, Exclude<R, Scope.Scope> | Reactivity> =>
   Reactivity.use((r) => r.query(keys, effect)).pipe(
     Effect.map(Stream.fromQueue),
@@ -398,7 +456,7 @@ export const stream: {
  * @since 4.0.0
  */
 export const invalidate = (
-  keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>
+  keys: KeysInput
 ): Effect.Effect<void, never, Reactivity> => Reactivity.use((r) => r.invalidate(keys))
 
 /**

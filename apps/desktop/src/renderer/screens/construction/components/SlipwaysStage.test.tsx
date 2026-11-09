@@ -1,3 +1,4 @@
+import { CONSTRUCTION_PROJECT_STATUSES } from "@bluewave/campaign";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { axeViolations } from "../../../lib/axe.js";
@@ -16,6 +17,7 @@ const economy = {
   exemptNewConstructionMassKg: 0,
   dockExpansionDurationMonths: 12,
   dockExpansionNextStepKg: null,
+  dockExpansionReadyMonth: null,
   dockPossessions: [],
 };
 
@@ -65,10 +67,23 @@ describe("SlipwaysStage", () => {
     expect(within(packages).getByRole("group", { name: "Fit-out: Ready to start" })).toBeTruthy();
   });
 
+  it.each(CONSTRUCTION_PROJECT_STATUSES)(
+    "renders a %s ship with no raw enum or month key in its text or labels",
+    (status) => {
+      const { container } = render(stage([row({ status, holdUntilMonth: "1880-05" })]));
+      const labels = Array.from(container.querySelectorAll("[aria-label]")).map(
+        (node) => node.getAttribute("aria-label") ?? "",
+      );
+      const text = [container.textContent ?? "", ...labels].join(" ");
+      expect(text).not.toMatch(/[A-Z]{2,}_[A-Z]/);
+      expect(text).not.toMatch(/\d{4}-\d{2}/);
+    },
+  );
+
   it("shows only overall progress for a project with one figure, and says when it is on hold", () => {
     render(stage([row({ packages: [], yard: null, holdUntilMonth: "1880-05" })]));
     expect(screen.queryByRole("list", { name: "Havock class work packages" })).toBeNull();
-    expect(screen.getByText("on hold until 1880-05")).toBeTruthy();
+    expect(screen.getByText("on hold until May 1880")).toBeTruthy();
   });
 
   it("selects a ship from its lane and reports which is selected", () => {
@@ -111,7 +126,7 @@ describe("SlipwaysStage", () => {
 
   it("draws the dock gauge from the economy", () => {
     render(stage([]));
-    const gauge = screen.getByRole("meter", { name: "Tonnage on the ways" });
+    const gauge = screen.getByRole("meter", { name: "Dock tonnage limit" });
     expect(gauge.getAttribute("aria-valuetext")).toBe("2,000 t of 39,000 t");
   });
 

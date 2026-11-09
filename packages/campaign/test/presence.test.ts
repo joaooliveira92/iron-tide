@@ -4,7 +4,7 @@ import type { ContentPack } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { buildNationStates } from "../src/nationCompilation.js";
 import { buildWorldState } from "../src/worldCompilation.js";
-import { presenceAreaIds } from "../src/presence.js";
+import { stationAreaIds } from "../src/presence.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 import { STUB_REGIME, STUB_TRAITS } from "./stub-regime.js";
 import { readAuthoredFile } from "@bluewave/test-support";
@@ -24,7 +24,7 @@ const loadPossessions = (): PossessionRow[] =>
 const poss = (id: string, nationId: string, areaId: string) => ({ id, nationId, areaId });
 const START = { startYear: 1880, startMonth: 1 } as const;
 
-describe("presenceAreaIds", () => {
+describe("stationAreaIds", () => {
   const possessions = [
     poss("p3", "uk", "med_malta"),
     poss("p1", "uk", "eng_home_coast"),
@@ -33,19 +33,19 @@ describe("presenceAreaIds", () => {
   ];
 
   it("lists the distinct possession areas of the nation ordered by area id", () => {
-    expect(presenceAreaIds(possessions, "uk")).toEqual(["eng_home_coast", "med_malta"]);
+    expect(stationAreaIds(possessions, "uk")).toEqual(["eng_home_coast", "med_malta"]);
   });
 
   it("is empty for a nation that owns nothing", () => {
-    expect(presenceAreaIds(possessions, "japan")).toEqual([]);
+    expect(stationAreaIds(possessions, "japan")).toEqual([]);
   });
 
   it("changes when a possession changes hands", () => {
     const ceded = possessions.map((p) => (p.id === "p3" ? { ...p, nationId: "france" } : p));
-    expect(presenceAreaIds(ceded, "uk")).toEqual(["eng_home_coast", "med_malta"]);
+    expect(stationAreaIds(ceded, "uk")).toEqual(["eng_home_coast", "med_malta"]);
     const both = ceded.map((p) => (p.id === "p2" ? { ...p, nationId: "france" } : p));
-    expect(presenceAreaIds(both, "uk")).toEqual(["eng_home_coast"]);
-    expect(presenceAreaIds(both, "france")).toEqual(["fra_chan_coast", "med_malta"]);
+    expect(stationAreaIds(both, "uk")).toEqual(["eng_home_coast"]);
+    expect(stationAreaIds(both, "france")).toEqual(["fra_chan_coast", "med_malta"]);
   });
 });
 
@@ -66,7 +66,7 @@ describe("buildWorldState possessions", () => {
       const expected = [
         ...new Set(possessions.filter((p) => p.nationId === id).map((p) => p.areaId)),
       ].sort();
-      expect(presenceAreaIds(world.possessions ?? [], id)).toEqual(expected);
+      expect(stationAreaIds(world.possessions ?? [], id)).toEqual(expected);
     }
   });
 });

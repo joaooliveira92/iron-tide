@@ -11,9 +11,11 @@
  * @since 4.0.0
  */
 import * as Effect from "../Effect.ts";
+import * as Option from "../Option.ts";
 import { type Pipeable } from "../Pipeable.ts";
 import * as Schema from "../Schema.ts";
 import type { ParseOptions } from "../SchemaAST.ts";
+import type * as Socket from "../socket/Socket.ts";
 import * as Stream from "../Stream.ts";
 import type { Unify } from "../Unify.ts";
 import * as Cookies from "./Cookies.ts";
@@ -74,6 +76,23 @@ export interface HttpClientResponse extends HttpIncomingMessage.HttpIncomingMess
     readonly status: number;
     readonly cookies: Cookies.Cookies;
     readonly formData: Effect.Effect<FormData, Error.HttpClientError>;
+    /**
+     * Hands over the connection of a `101 Switching Protocols` response as a
+     * `Socket`.
+     *
+     * **Details**
+     *
+     * Ask for an upgrade with `HttpClientRequest.upgrade`. Bytes the server
+     * sent after the response head come first on the reader. Releasing the
+     * writer's scope half-closes the connection, and releasing the reader's
+     * scope closes it. Closing the request's scope (see `HttpClient.withScope`)
+     * also closes it.
+     *
+     * Fails with a `StatusCodeError` for any other status, so a refusal can be
+     * read from the response body as usual. Backends that cannot hand over a
+     * connection, such as fetch, never produce a `101` and fail the same way.
+     */
+    readonly upgrade: Effect.Effect<Socket.Socket, Error.HttpClientError>;
 }
 /**
  * Wraps a Web `Response` and its original `HttpClientRequest` as an `HttpClientResponse`.
@@ -83,6 +102,40 @@ export interface HttpClientResponse extends HttpIncomingMessage.HttpIncomingMess
  * @since 4.0.0
  */
 export declare const fromWeb: (request: HttpClientRequest.HttpClientRequest, source: Response) => HttpClientResponse;
+/**
+ * Returns the original Web `Response` of a fetch-backed `HttpClientResponse`.
+ *
+ * **When to use**
+ *
+ * Use to hand a response body to a Web API without copying it, such as
+ * writing a fetched file to Cloudflare R2. The original body keeps runtime
+ * capabilities, such as workerd's known length, that a stream converted from
+ * `stream` does not.
+ *
+ * **Details**
+ *
+ * Returns `Some` for responses created with `fromWeb`, which includes every
+ * response from `FetchHttpClient`, and `None` for other backends.
+ *
+ * Calling `toWeb` hands the body over: the response is no longer aborted when
+ * the `HttpClientResponse` is garbage collected, so read or cancel the body
+ * through the returned `Response`.
+ *
+ * **Gotchas**
+ *
+ * The body can be read once. After converting, read it from the returned
+ * `Response`, not from the `HttpClientResponse`.
+ *
+ * After the hand-off, Effect aborts the request only when the scope of
+ * `HttpClient.withScope` closes. When the request streams its body, finishing
+ * or cancelling the returned body does not stop the upload; execute the
+ * request with `HttpClient.withScope` and close the scope to stop it.
+ *
+ * @stability unstable
+ * @category converting
+ * @since 4.0.0
+ */
+export declare const toWeb: (self: HttpClientResponse) => Option.Option<globalThis.Response>;
 /**
  * Creates a decoder for a response's status, headers, and JSON body using the supplied schema.
  *

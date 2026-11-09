@@ -49,12 +49,20 @@ export const Reactivity = /*#__PURE__*/Context.Service("effect/reactivity/Reacti
  */
 export const make = /*#__PURE__*/Effect.sync(() => {
   const handlers = new Map();
+  const runHandlers = hashes => {
+    const ran = new Set();
+    for (const hash of hashes) {
+      handlers.get(hash)?.forEach(run => {
+        if (ran.has(run)) return;
+        ran.add(run);
+        run();
+      });
+    }
+  };
   const invalidateUnsafe = keys => {
-    keysToHashes(keys, hash => {
-      const set = handlers.get(hash);
-      if (set === undefined) return;
-      set.forEach(run => run());
-    });
+    const hashes = new Set();
+    keysToHashes(keys, hash => hashes.add(hash));
+    runHandlers(hashes);
   };
   const invalidate = keys => Effect.contextWith(services => {
     const pending = Context.getOrUndefined(services, PendingInvalidation);
@@ -97,9 +105,15 @@ export const make = /*#__PURE__*/Effect.sync(() => {
     const runFork = flow(Effect.runForkWith(services), Fiber.runIn(scope));
     let running = false;
     let pending = false;
+    let stopped = false;
     const handleExit = exit => {
       if (exit._tag === "Failure") {
+        stopped = true;
+        pending = false;
+        running = false;
+        cancel();
         Queue.failCauseUnsafe(results, exit.cause);
+        return;
       } else {
         Queue.offerUnsafe(results, exit.value);
       }
@@ -111,6 +125,7 @@ export const make = /*#__PURE__*/Effect.sync(() => {
       }
     };
     function run() {
+      if (stopped) return;
       if (running) {
         pending = true;
         return;
@@ -126,13 +141,7 @@ export const make = /*#__PURE__*/Effect.sync(() => {
   const stream = (tables, effect) => query(tables, effect).pipe(Effect.map(Stream.fromQueue), Stream.unwrap);
   const withBatch = effect => Effect.suspend(() => {
     const pending = new Set();
-    return effect.pipe(Effect.provideService(PendingInvalidation, pending), Effect.onExit(_ => Effect.sync(() => {
-      pending.forEach(hash => {
-        const set = handlers.get(hash);
-        if (set === undefined) return;
-        set.forEach(run => run());
-      });
-    })));
+    return effect.pipe(Effect.provideService(PendingInvalidation, pending), Effect.onExit(_ => Effect.sync(() => runHandlers(pending))));
   });
   return Reactivity.of({
     [TypeId]: TypeId,

@@ -1,6 +1,7 @@
 import { test, expect, openCampaign } from "./fixtures.js";
 import {
   advanceMonths,
+  advanceUntilProjectStarts,
   navigateTo,
   openDesignSection,
   orderDesignFromCatalog,
@@ -30,7 +31,7 @@ test("a player reopens the design of a ship under construction, changes it and q
   await submitReferenceDesign(page, CORVETTE, CLASS_NAME);
   await advanceMonths(page, 4);
   await orderDesignFromCatalog(page, CLASS_NAME);
-  await advanceMonths(page, 1);
+  await advanceUntilProjectStarts(page, CLASS_NAME);
 
   const workspace = await startFromReference(page, BATTLESHIP);
   const torpedoes = await openArmamentTab(page, "Torpedoes");

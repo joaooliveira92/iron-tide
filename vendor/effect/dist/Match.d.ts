@@ -17,6 +17,16 @@ type ValueTagHandlers<I> = {
         readonly _tag: Tag;
     }>) => any;
 };
+type LiteralKeys<R, All = Extract<R, string | number>> = R extends string | number ? {} extends Record<R, unknown> ? never : R extends number ? `${R}` extends All ? never : R : R extends `${infer N extends number}` ? N extends All ? never : R : R extends "NaN" | "Infinity" | "-Infinity" ? number extends All ? never : R : R : never;
+type LiteralHandlers<R, Ret> = [Exclude<R, LiteralKeys<R>>] extends [never] ? {
+    readonly [K in LiteralKeys<R>]: (_: K) => Ret;
+} : never;
+type PartialLiteralHandlers<R, Ret> = {
+    readonly [K in LiteralKeys<R>]?: ((_: K) => Ret) | undefined;
+};
+type HandledLiterals<P> = {
+    readonly [K in keyof P]-?: undefined extends P[K] ? never : K;
+}[keyof P];
 /**
  * Marker used by `Matcher` to distinguish matchers created with `Match.value`.
  *
@@ -637,6 +647,15 @@ export declare const typeTags: {
  * @since 4.0.0
  */
 export declare const withReturnType: <Ret>() => <I, F, R, A, Pr, _, Args extends Array<any>>(self: Matcher<I, F, R, A, Pr, _, Args>) => [Ret] extends [[A] extends [never] ? any : A] ? Matcher<I, F, R, A, Pr, Ret, Args> : "withReturnType constraint does not extend Result type";
+type PatternKey<K> = K extends number ? `${K}` : K;
+type PatternKeys<A> = object extends A ? PropertyKey : A extends object ? PatternKey<keyof A> : never;
+type ObjectPatternGuard<A, P> = [P] extends [Function | ReadonlyArray<any> | SafeRefinement<never, any>] ? unknown : [P] extends [object] ? {
+    readonly [K in Exclude<PatternKey<keyof P>, PatternKeys<A>>]: never;
+} : unknown;
+type ExactPattern<R, P> = (Types.PatternPrimitive<R> | Types.PatternBase<R>) & ObjectPatternGuard<R, P>;
+type ExactPatterns<R, P> = {
+    readonly [I in keyof P]: I extends number | `${number}` ? P[I] & ExactPattern<R, P[I]> : P[I];
+};
 /**
  * Defines a condition for matching values.
  *
@@ -686,7 +705,7 @@ export declare const withReturnType: <Ret>() => <I, F, R, A, Pr, _, Args extends
  * @category defining patterns
  * @since 4.0.0
  */
-export declare const when: <R, const P extends Types.PatternPrimitive<R> | Types.PatternBase<R>, Ret, Args extends Array<any>, Fn extends (_: Types.WhenMatch<R, P>, ...args: Args) => Ret>(pattern: P, f: Fn) => <I, F, A, Pr>(self: Matcher<I, F, R, A, Pr, Ret, Args>) => Matcher<I, Types.AddWithout<F, Types.PForExclude<P>>, Types.ApplyFilters<I, Types.AddWithout<F, Types.PForExclude<P>>>, A | ReturnType<Fn>, Pr, Ret, Args>;
+export declare const when: <R, const P extends ExactPattern<R, P>, Ret, Args extends Array<any>, Fn extends (_: Types.WhenMatch<R, P>, ...args: Args) => Ret>(pattern: P, f: Fn) => <I, F, A, Pr>(self: Matcher<I, F, R, A, Pr, Ret, Args>) => Matcher<I, Types.AddWithout<F, Types.PForExclude<P>>, Types.ApplyFilters<I, Types.AddWithout<F, Types.PForExclude<P>>>, A | ReturnType<Fn>, Pr, Ret, Args>;
 /**
  * Matches one of multiple patterns in a single condition.
  *
@@ -729,7 +748,7 @@ export declare const when: <R, const P extends Types.PatternPrimitive<R> | Types
  * @category defining patterns
  * @since 4.0.0
  */
-export declare const whenOr: <R, const P extends ReadonlyArray<Types.PatternPrimitive<R> | Types.PatternBase<R>>, Ret, Args extends Array<any>, Fn extends (_: Types.WhenMatch<R, P[number]>, ...args: Args) => Ret>(...args: [...patterns: P, f: Fn]) => <I, F, A, Pr>(self: Matcher<I, F, R, A, Pr, Ret, Args>) => Matcher<I, Types.AddWithout<F, Types.PForExclude<P[number]>>, Types.ApplyFilters<I, Types.AddWithout<F, Types.PForExclude<P[number]>>>, A | ReturnType<Fn>, Pr, Ret, Args>;
+export declare const whenOr: <R, const P extends ReadonlyArray<Types.PatternPrimitive<R> | Types.PatternBase<R>>, Ret, Args extends Array<any>, Fn extends (_: Types.WhenMatch<R, P[number]>, ...args: Args) => Ret>(...args: [...patterns: ExactPatterns<R, P>, f: Fn]) => <I, F, A, Pr>(self: Matcher<I, F, R, A, Pr, Ret, Args>) => Matcher<I, Types.AddWithout<F, Types.PForExclude<P[number]>>, Types.ApplyFilters<I, Types.AddWithout<F, Types.PForExclude<P[number]>>>, A | ReturnType<Fn>, Pr, Ret, Args>;
 /**
  * Matches a value that satisfies all provided patterns.
  *
@@ -769,7 +788,7 @@ export declare const whenOr: <R, const P extends ReadonlyArray<Types.PatternPrim
  * @category defining patterns
  * @since 4.0.0
  */
-export declare const whenAnd: <R, const P extends ReadonlyArray<Types.PatternPrimitive<R> | Types.PatternBase<R>>, Ret, Args extends Array<any>, Fn extends (_: Types.WhenMatch<R, T.UnionToIntersection<P[number]>>, ...args: Args) => Ret>(...args: [...patterns: P, f: Fn]) => <I, F, A, Pr>(self: Matcher<I, F, R, A, Pr, Ret, Args>) => Matcher<I, Types.AddWithout<F, Types.PForExclude<T.UnionToIntersection<P[number]>>>, Types.ApplyFilters<I, Types.AddWithout<F, Types.PForExclude<T.UnionToIntersection<P[number]>>>>, A | ReturnType<Fn>, Pr, Ret, Args>;
+export declare const whenAnd: <R, const P extends ReadonlyArray<Types.PatternPrimitive<R> | Types.PatternBase<R>>, Ret, Args extends Array<any>, Fn extends (_: Types.WhenMatch<R, T.UnionToIntersection<P[number]>>, ...args: Args) => Ret>(...args: [...patterns: ExactPatterns<R, P>, f: Fn]) => <I, F, A, Pr>(self: Matcher<I, F, R, A, Pr, Ret, Args>) => Matcher<I, Types.AddWithout<F, Types.PForExclude<T.UnionToIntersection<P[number]>>>, Types.ApplyFilters<I, Types.AddWithout<F, Types.PForExclude<T.UnionToIntersection<P[number]>>>>, A | ReturnType<Fn>, Pr, Ret, Args>;
 /**
  * Matches values based on a specified discriminant field.
  *
@@ -1105,6 +1124,82 @@ export declare const tagsExhaustive: <R, Ret, P extends TagHandlers<"_tag", R, R
     readonly [Tag in Exclude<keyof P, Types.Tags<"_tag", R>>]: never;
 }>(fields: Contextual<P, TagHandlers<"_tag", R, Ret>>) => <I, F, A, Pr>(self: Matcher<I, F, R, A, Pr, Ret>) => [Pr] extends [never] ? (u: I) => Unify<A | ReturnType<P[keyof P]>> : Unify<A | ReturnType<P[keyof P]>>;
 /**
+ * Matches string and number literal values, mapping each literal to a
+ * corresponding handler.
+ *
+ * **Details**
+ *
+ * Each handler receives the matched literal. Handled literals are removed from
+ * the remaining input, while unhandled literals and any other members (such as
+ * `null`, objects, or widened `string` / `number` types) are left for later
+ * cases. Keys must be finite string or number literals of the remaining input;
+ * unions containing both a number and its string spelling, such as
+ * `1 | "1"`, are rejected because both share the same runtime key.
+ *
+ * **Example** (Mapping literal handlers)
+ *
+ * ```ts import.meta.vitest
+ * import { Match } from "effect"
+ *
+ * type Status = "draft" | "review" | "published"
+ *
+ * const isEditable = Match.type<Status>().pipe(
+ *   Match.literals({ draft: () => true, review: () => true }),
+ *   Match.orElse(() => false)
+ * )
+ *
+ * isEditable("review") // => true
+ * isEditable("published") // => false
+ * ```
+ *
+ * @see {@link literalsExhaustive} for handling every literal and finalizing the matcher
+ *
+ * @stability unstable
+ * @category defining patterns
+ * @since 4.1.0
+ */
+export declare const literals: <R, Ret, P extends PartialLiteralHandlers<R, Ret> & {
+    readonly [K in Exclude<keyof P, LiteralKeys<R>>]: never;
+}>(fields: Contextual<P, PartialLiteralHandlers<R, Ret>>) => <I, F, A, Pr>(self: Matcher<I, F, R, A, Pr, Ret>) => Matcher<I, Types.AddWithout<F, Extract<R, HandledLiterals<P>>>, Types.ApplyFilters<I, Types.AddWithout<F, Extract<R, HandledLiterals<P>>>>, A | ReturnType<P[keyof P] & {}>, Pr, Ret>;
+/**
+ * Matches string and number literal values and requires handling of all
+ * remaining cases.
+ *
+ * **Details**
+ *
+ * This is the exhaustive variant of {@link literals}. Every remaining member
+ * must be a finite string or number literal with a corresponding handler, so a
+ * missing literal, a widened `string` / `number` type, or any other unhandled
+ * member is reported by TypeScript.
+ *
+ * **Example** (Handling all literal cases)
+ *
+ * ```ts import.meta.vitest
+ * import { Match } from "effect"
+ *
+ * type Status = "draft" | "review" | "published"
+ *
+ * const label = Match.type<Status>().pipe(
+ *   Match.literalsExhaustive({
+ *     draft: () => "Draft",
+ *     review: () => "In review",
+ *     published: () => "Live"
+ *   })
+ * )
+ *
+ * label("review") // => "In review"
+ * ```
+ *
+ * @see {@link literals} for defining literal handlers without finalizing the matcher
+ *
+ * @stability unstable
+ * @category defining patterns
+ * @since 4.1.0
+ */
+export declare const literalsExhaustive: <R, Ret, P extends LiteralHandlers<R, Ret> & {
+    readonly [K in Exclude<keyof P, LiteralKeys<R>>]: never;
+}>(fields: Contextual<P, LiteralHandlers<R, Ret>>) => <I, F, A, Pr>(self: Matcher<I, F, R, A, Pr, Ret>) => [Pr] extends [never] ? (u: I) => Unify<A | ReturnType<P[keyof P]>> : Unify<A | ReturnType<P[keyof P]>>;
+/**
  * Creates a pattern that excludes a specific value while allowing all others.
  *
  * **When to use**
@@ -1141,7 +1236,7 @@ export declare const tagsExhaustive: <R, Ret, P extends TagHandlers<"_tag", R, R
  * @category defining patterns
  * @since 4.0.0
  */
-export declare const not: <R, const P extends Types.PatternPrimitive<R> | Types.PatternBase<R>, Ret, Args extends Array<any>, Fn extends (_: Types.NotMatch<R, P>, ...args: Args) => Ret>(pattern: P, f: Fn) => <I, F, A, Pr>(self: Matcher<I, F, R, A, Pr, Ret, Args>) => Matcher<I, Types.AddOnly<F, Types.WhenMatch<R, P>>, Types.ApplyFilters<I, Types.AddOnly<F, Types.WhenMatch<R, P>>>, A | ReturnType<Fn>, Pr, Ret, Args>;
+export declare const not: <R, const P extends ExactPattern<R, P>, Ret, Args extends Array<any>, Fn extends (_: Types.NotMatch<R, P>, ...args: Args) => Ret>(pattern: P, f: Fn) => <I, F, A, Pr>(self: Matcher<I, F, R, A, Pr, Ret, Args>) => Matcher<I, Types.AddOnly<F, Types.WhenMatch<R, P>>, Types.ApplyFilters<I, Types.AddOnly<F, Types.WhenMatch<R, P>>>, A | ReturnType<Fn>, Pr, Ret, Args>;
 /**
  * Matches non-empty strings.
  *
@@ -2435,9 +2530,14 @@ export declare namespace Types {
     type Simplify<A> = {
         [K in keyof A]: A[K];
     } & {};
-    type ExtractAndNarrow<Input, P> = P extends Predicate.Refinement<infer _In, infer _Out> ? _Out extends Input ? Extract<_Out, Input> : Extract<Input, _Out> : P extends SafeRefinement<infer _In, infer _R> ? [0] extends [1 & _R] ? Input : _In extends Input ? Extract<_In, Input> : Extract<Input, _In> : P extends Predicate.Predicate<infer _In> ? Extract<Input, _In> : Input extends infer I ? Exclude<I extends ReadonlyArray<any> ? P extends ReadonlyArray<any> ? {
+    type NarrowArrayPattern<I extends ReadonlyArray<any>, P extends ReadonlyArray<any>> = number extends I["length"] ? number extends P["length"] ? MapArrayPattern<I, P> : P["length"] extends Required<P>["length"] ? NarrowArrayPrefix<I, P> : MapArrayPattern<I, P> : MapArrayPattern<I, P>;
+    type MapArrayPattern<I, P> = {
         readonly [K in keyof I]: K extends keyof P ? ExtractAndNarrow<I[K], P[K]> : I[K];
-    } extends infer R ? Fail extends R[keyof R] ? never : R : never : never : IsPlainObject<I> extends true ? string extends keyof I ? I extends P ? I : never : symbol extends keyof I ? I extends P ? I : never : Simplify<{
+    } extends infer R ? Fail extends R[keyof R] ? never : R : never;
+    type NarrowArrayPrefix<I extends ReadonlyArray<any>, P extends ReadonlyArray<any>, Out extends ReadonlyArray<any> = readonly []> = P extends readonly [infer PH, ...infer PT] ? I extends readonly [infer IH, ...infer IT] ? [
+        ExtractAndNarrow<IH, PH>
+    ] extends [infer N] ? [N] extends [never] ? never : NarrowArrayPrefix<IT, PT, readonly [...Out, N]> : never : NarrowArrayPrefix<readonly [I[number], ...Array<I[number]>], P, Out> : readonly [...Out, ...I];
+    type ExtractAndNarrow<Input, P> = P extends Predicate.Refinement<infer _In, infer _Out> ? _Out extends Input ? Extract<_Out, Input> : Extract<Input, _Out> : P extends SafeRefinement<infer _In, infer _R> ? [0] extends [1 & _R] ? Input : _In extends Input ? Extract<_In, Input> : Extract<Input, _In> : P extends Predicate.Predicate<infer _In> ? Extract<Input, _In> : Input extends infer I ? Exclude<I extends ReadonlyArray<any> ? P extends ReadonlyArray<any> ? NarrowArrayPattern<I, P> : never : IsPlainObject<I> extends true ? string extends keyof I ? I extends P ? I : never : symbol extends keyof I ? I extends P ? I : never : Simplify<{
         [RK in Extract<keyof I, keyof P>]-?: ExtractAndNarrow<I[RK], P[RK]>;
     } & Omit<I, keyof P>> extends infer R ? keyof P extends NonFailKeys<R> ? R : never : never : MaybeReplace<I, P> extends infer R ? [I] extends [R] ? I : R : never, Fail> : never;
     type NonFailKeys<A> = keyof A & {} extends infer K ? K extends keyof A ? A[K] extends Fail ? never : K : never : never;

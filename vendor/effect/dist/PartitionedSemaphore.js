@@ -68,6 +68,7 @@ export const makeUnsafe = options => {
   let iterator = partitions[Symbol.iterator]();
   let releasing = false;
   let pendingPermits = 0;
+  let partial;
   const releaseUnsafe = permits => {
     if (permits > 0) {
       pendingPermits += permits;
@@ -78,23 +79,29 @@ export const makeUnsafe = options => {
       releasing = true;
       try {
         while (pendingPermits > 0 && waitingPermits > 0) {
-          let state = iterator.next();
-          if (state.done) {
-            iterator = partitions[Symbol.iterator]();
-            state = iterator.next();
+          let waiter = partial;
+          if (waiter === undefined) {
+            let state = iterator.next();
             if (state.done) {
-              break;
+              iterator = partitions[Symbol.iterator]();
+              state = iterator.next();
+              if (state.done) {
+                break;
+              }
+            }
+            waiter = state.value[1].values().next().value;
+            if (waiter === undefined) {
+              continue;
             }
           }
-          const waiter = state.value[1].values().next().value;
-          if (waiter === undefined) {
-            continue;
-          }
-          waiter.permits -= 1;
-          waitingPermits -= 1;
-          pendingPermits -= 1;
+          const granted = Math.min(waiter.permits, pendingPermits);
+          waiter.permits -= granted;
+          waitingPermits -= granted;
+          pendingPermits -= granted;
           if (waiter.permits === 0) {
             waiter.resume();
+          } else {
+            partial = waiter;
           }
         }
       } finally {
@@ -150,6 +157,9 @@ export const makeUnsafe = options => {
           }
         };
         const cleanup = () => {
+          if (partial === entry) {
+            partial = undefined;
+          }
           if (waiters.delete(entry) && waiters.size === 0) {
             MutableHashMap.remove(partitions, key);
           }

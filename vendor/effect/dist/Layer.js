@@ -894,7 +894,7 @@ const mergeAllEffect = (layers, memoMap, scope) => {
  * @category zipping
  * @since 2.0.0
  */
-export const mergeAll = (...layers) => fromBuild((memoMap, scope) => mergeAllEffect(layers, memoMap, scope));
+export const mergeAll = (...layers) => fromBuildMemo((memoMap, scope) => mergeAllEffect(layers, memoMap, scope));
 /**
  * Merges this layer with another layer concurrently, producing a new layer with
  * combined input, error, and output types.
@@ -942,7 +942,7 @@ export const mergeAll = (...layers) => fromBuild((memoMap, scope) => mergeAllEff
  * @since 2.0.0
  */
 export const merge = /*#__PURE__*/dual(2, (self, that) => mergeAll(self, ...(Array.isArray(that) ? that : [that])));
-const provideWith = (self, that, f) => fromBuild((memoMap, scope) => internalEffect.flatMap(Array.isArray(that) ? mergeAllEffect(that, memoMap, scope) : that.build(memoMap, scope), context => self.build(memoMap, scope).pipe(internalEffect.provideContext(context), internalEffect.map(merged => f(merged, context)))));
+const provideWith = (self, that, f) => fromBuildMemo((memoMap, scope) => internalEffect.flatMap(Array.isArray(that) ? mergeAllEffect(that, memoMap, scope) : that.build(memoMap, scope), context => self.build(memoMap, scope).pipe(internalEffect.provideContext(context), internalEffect.map(merged => f(merged, context)))));
 /**
  * Feeds the output services of the dependency layer into the requirements of
  * this layer, returning a layer that only provides the services from this layer.

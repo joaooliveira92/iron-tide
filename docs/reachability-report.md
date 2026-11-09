@@ -5,7 +5,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Status | Rows |
 | --- | --- |
 | reachable | 32 |
-| dormant-by-decision | 16 |
+| dormant-by-decision | 17 |
 | internal | 14 |
 
 ## Reachable
@@ -20,14 +20,14 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | hold-fleet-exercise | Hold the annual fleet exercise with chosen ships | `screens/fleet/exercise/FleetExerciseSection.tsx` | `apps/desktop/src/renderer/screens/fleet/exercise/FleetExerciseView.test.tsx` |
 | organise-divisions | Create, change and dissolve divisions and pick flagships | `screens/fleet/organization/FleetOrganizationSection.tsx` | `apps/desktop/src/main/commands/divisionCommands.test.ts` |
 | set-budget-allocation | Set the budget allocation across spending categories | `screens/treasury/TreasuryScreen.tsx` | `apps/desktop/src/renderer/screens/treasury/components/BudgetPolicyPanel.test.tsx` |
-| submit-design | Draw a ship design and submit it for construction | `components/design-workspace/panels/SubmitPanel.tsx` | `apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx` |
+| submit-design | Design and submit a ship | `components/design-workspace/panels/SubmitPanel.tsx` | `apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx` |
 | revise-project | Revise a ship project that is already ordered | `components/design-workspace/panels/RevisionPanel.tsx` | `apps/desktop/src/renderer/screens/shipbuilding/ShipDesignRevision.test.tsx` |
-| start-rebuild | Rebuild or convert an existing ship | `components/design-workspace/panels/RebuildPanel.tsx` | `apps/desktop/src/renderer/components/design-workspace/panels/RebuildPanel.test.tsx` |
+| start-rebuild | Rebuild or convert an existing ship | `screens/construction/components/RebuildShipDialog.tsx` | `apps/desktop/src/renderer/screens/construction/ConstructionScreen.rebuild.test.tsx` |
 | order-construction | Order, replace, cancel or batch-build ships and read the project queue | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/renderer/screens/construction/hooks/useConstructionScreen.test.tsx` |
 | halt-or-resume-construction | Halt or resume a construction project | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
 | accelerate-construction | Accelerate a construction project at a premium | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
 | authorize-dock-expansion | Authorize a dock expansion | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/renderer/screens/construction/hooks/useConstructionScreen.test.tsx` |
-| order-foreign-construction | Preview and place a ship order with a foreign builder | `screens/construction/components/ForeignContractPanel.tsx` | `apps/desktop/src/renderer/screens/construction/components/ForeignContractPanel.test.tsx` |
+| order-foreign-construction | Preview and place a ship order with a foreign builder | `screens/construction/order/OrderDialog.tsx` | `apps/desktop/src/renderer/screens/construction/ConstructionScreen.order.test.tsx` |
 | cancel-construction-project | Cancel a construction project; work done is forfeited and nothing is refunded | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
 | declare-war | Declare war on a nation | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | form-or-break-alliance | Form or break an alliance | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
@@ -49,6 +49,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 
 | Row | Player verb | Decision |
 | --- | --- | --- |
+| construction-events | Learn why a build slipped or cost more | #584 |
 | accept-peace | Accept a peace settlement | #422, #483, #484 |
 | fight-or-decline-battle | Accept or decline a battle offer and fight it with stance, speed and course orders | #422 |
 | prestige | See and act on national prestige | #223 |
@@ -71,7 +72,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Row | Capability | Commands |
 | --- | --- | --- |
 | budget-project-command | Budget a project (AI command only) | - |
-| command-lifecycle-definitions | Command type definitions for budget, halt, resume and acceleration | - |
+| command-lifecycle-definitions | Command definitions for budget, halt, resume and acceleration | - |
 | design-studies | Design study bookkeeping | - |
 | foreign-contract-monthly | Monthly foreign-contract, insight and war-policy steps | - |
 | phase-engine-infrastructure | Errors, ledger, month pipeline and replay verification | - |

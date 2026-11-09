@@ -11,6 +11,7 @@
  * @stability unstable
  * @since 4.0.0
  */
+import * as ByteSize from "../ByteSize.js";
 import * as Cause from "../Cause.js";
 import { Clock } from "../Clock.js";
 import * as Context from "../Context.js";
@@ -20,9 +21,13 @@ import { constant, constFalse } from "../Function.js";
 import * as internalEffect from "../internal/effect.js";
 import { getStackTraceLimit, setStackTraceLimit } from "../internal/stackTraceLimit.js";
 import * as Layer from "../Layer.js";
+import * as IpNetwork from "../net/IpNetwork.js";
+import * as NetAddress from "../net/NetAddress.js";
 import * as Option from "../Option.js";
+import * as Result from "../Result.js";
 import { nativeTracer, ParentSpan, Tracer } from "../Tracer.js";
 import * as Headers from "./Headers.js";
+import { hasBody } from "./HttpMethod.js";
 import { HttpPlatform } from "./HttpPlatform.js";
 import { causeResponseStripped, ClientAbort, HttpServerError, ResponseError } from "./HttpServerError.js";
 import { HttpServerRequest } from "./HttpServerRequest.js";
@@ -30,29 +35,70 @@ import * as Request from "./HttpServerRequest.js";
 import * as Response from "./HttpServerResponse.js";
 import * as TraceContext from "./HttpTraceContext.js";
 import * as compressionInternal from "./internal/compression.js";
+import * as decompressionInternal from "./internal/decompression.js";
 import * as bodyInternal from "./internal/httpBody.js";
-import { appendPreResponseHandlerUnsafe } from "./internal/preResponseHandler.js";
+import { appendPreResponseHandlerUnsafe, CurrentRequestState } from "./internal/requestState.js";
 import * as tracing from "./internal/tracing.js";
+import * as internalUrlParams from "./internal/urlParams.js";
+import * as UrlParams from "./UrlParams.js";
 /**
  * Defines an `HttpMiddleware` while preserving its precise type.
+ *
+ * **Gotchas**
+ *
+ * TypeScript cannot infer the `app` parameter of an `Effect.fn` or
+ * `Effect.fnUntraced` generator passed directly to `make`, so `app` becomes
+ * `any` and the middleware loses the app's error and service types. Prefer an
+ * arrow function, as in the first example. To use `Effect.fn`, declare `E`
+ * and `R` type parameters and annotate `app` with them.
+ *
+ * **Example** (Defining middleware)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect } from "effect"
+ * import { HttpMiddleware, HttpServerResponse } from "effect/http"
+ *
+ * const withHeader = HttpMiddleware.make((app) =>
+ *   Effect.gen(function*() {
+ *     const response = yield* app
+ *     return HttpServerResponse.setHeader(response, "x-service", "example")
+ *   })
+ * )
+ *
+ * const app: Effect.Effect<HttpServerResponse.HttpServerResponse, "Unauthorized"> =
+ *   Effect.fail("Unauthorized")
+ *
+ * // Effect<HttpServerResponse, "Unauthorized", HttpServerRequest>
+ * const withHeaderApp = withHeader(app)
+ * ```
+ *
+ * **Example** (Defining middleware with Effect.fn)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect } from "effect"
+ * import { HttpMiddleware, HttpServerResponse } from "effect/http"
+ *
+ * const withHeader = HttpMiddleware.make(
+ *   Effect.fn("withHeader")(function*<E, R>(
+ *     app: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>
+ *   ) {
+ *     const response = yield* app
+ *     return HttpServerResponse.setHeader(response, "x-service", "example")
+ *   })
+ * )
+ *
+ * const app: Effect.Effect<HttpServerResponse.HttpServerResponse, "Unauthorized"> =
+ *   Effect.fail("Unauthorized")
+ *
+ * // Effect<HttpServerResponse, "Unauthorized", never>
+ * const withHeaderApp = withHeader(app)
+ * ```
  *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
 export const make = middleware => middleware;
-const loggerDisabledRequests = /*#__PURE__*/new WeakSet();
-const stripSearchAndHash = url => {
-  const queryIndex = url.indexOf("?");
-  const hashIndex = url.indexOf("#");
-  if (queryIndex === -1) {
-    return hashIndex === -1 ? url : url.slice(0, hashIndex);
-  }
-  if (hashIndex === -1) {
-    return url.slice(0, queryIndex);
-  }
-  return url.slice(0, Math.min(queryIndex, hashIndex));
-};
 /**
  * Runs an effect with HTTP response logging disabled for the current server request.
  *
@@ -61,8 +107,8 @@ const stripSearchAndHash = url => {
  * @since 4.0.0
  */
 export const withLoggerDisabled = self => Effect.withFiber(fiber => {
-  const request = Context.getUnsafe(fiber.context, HttpServerRequest);
-  loggerDisabledRequests.add(request.source);
+  const state = Context.getOrUndefined(fiber.context, CurrentRequestState);
+  if (state !== undefined) state.loggerDisabled = true;
   return self;
 });
 /**
@@ -121,9 +167,10 @@ export const TracerHeaderFilter = /*#__PURE__*/Context.Reference("effect/http/Ht
  */
 export const logger = /*#__PURE__*/make(httpApp => Effect.withFiber(fiber => {
   const request = Context.getUnsafe(fiber.context, HttpServerRequest);
-  const path = stripSearchAndHash(request.url);
+  const state = Context.getOrUndefined(fiber.context, CurrentRequestState);
+  const path = internalUrlParams.stripSearchAndHash(request.url);
   return Effect.withLogSpan(Effect.flatMap(Effect.exit(httpApp), exit => {
-    if (loggerDisabledRequests.has(request.source)) {
+    if (state?.loggerDisabled) {
       return exit;
     } else if (exit._tag === "Failure") {
       const [response, cause] = causeResponseStripped(exit.cause);
@@ -146,9 +193,17 @@ export const logger = /*#__PURE__*/make(httpApp => Effect.withFiber(fiber => {
  */
 export const isTracerDisabledUnsafe = (fiber, request) => !fiber.cache.tracerEnabled || fiber.getRef(TracerDisabledWhen)(request);
 // OpenTelemetry requires failed server spans for 5xx responses.
-const responseSpanExit = (request, response) => {
+const responseSpanExit = (fiber, request, response) => {
   if (!(response.status >= 500 && response.status < 600)) {
     return Exit.succeed(response);
+  }
+  // The message is path-only, but exporters can still read `error.request.url`
+  // after the request-scoped redacted names are gone.
+  const url = UrlParams.redactUrl(request.url, fiber.getRef(UrlParams.CurrentRedactedNames));
+  if (url !== request.url) {
+    request = request.modify({
+      url
+    });
   }
   const stackTraceLimit = getStackTraceLimit();
   setStackTraceLimit(0);
@@ -186,60 +241,149 @@ export const tracer = /*#__PURE__*/make(httpApp => Effect.withFiber(fiber => {
     fiber.setContext(prevServices);
     const endTime = fiber.getRef(Clock).currentTimeNanosUnsafe();
     if (Exit.isSuccess(exit) && (!span.sampled || fiber.getRef(Tracer) === nativeTracer)) {
-      span.end(endTime, responseSpanExit(request, exit.value));
+      span.end(endTime, responseSpanExit(fiber, request, exit.value));
       return undefined;
     }
     const redactedHeaderNames = fiber.getRef(Headers.CurrentRedactedNames);
     const headerFilter = fiber.getRef(TracerHeaderFilter);
-    fiber.currentDispatcher.scheduleTask(() => {
-      let response;
-      let spanExit;
-      if (Exit.isFailure(exit)) {
-        const [failureResponse, cause] = causeResponseStripped(exit.cause);
-        response = failureResponse;
-        // OpenTelemetry only treats 5xx responses as server span errors; interrupts still fail the span.
-        spanExit = Option.isSome(cause) && (response.status >= 500 || Cause.hasInterrupts(cause.value)) ? Exit.failCause(cause.value) : responseSpanExit(request, response);
-      } else {
-        response = exit.value;
-        spanExit = responseSpanExit(request, response);
+    // Complete the span before the request fiber exits so shutdown can flush it.
+    let response;
+    let spanExit;
+    if (Exit.isFailure(exit)) {
+      const [failureResponse, cause] = causeResponseStripped(exit.cause);
+      response = failureResponse;
+      // OpenTelemetry only treats 5xx responses as server span errors; interrupts still fail the span.
+      spanExit = Option.isSome(cause) && (response.status >= 500 || Cause.hasInterrupts(cause.value)) ? Exit.failCause(cause.value) : responseSpanExit(fiber, request, response);
+    } else {
+      response = exit.value;
+      spanExit = responseSpanExit(fiber, request, response);
+    }
+    if (span.sampled) {
+      span.attribute("http.request.method", request.method);
+      const url = Request.toURL(request);
+      if (Option.isSome(url)) {
+        tracing.addUrlAttributes(span, url.value, fiber.getRef(UrlParams.CurrentRedactedNames));
       }
-      if (span.sampled) {
-        span.attribute("http.request.method", request.method);
-        const url = Request.toURL(request);
-        if (Option.isSome(url)) {
-          if (!request.url.startsWith("/") && (url.value.username !== "" || url.value.password !== "")) {
-            url.value.username = "REDACTED";
-            url.value.password = "REDACTED";
-          }
-          tracing.addUrlAttributes(span, url.value);
-        }
-        if (request.headers["user-agent"] !== undefined) {
-          span.attribute("user_agent.original", request.headers["user-agent"]);
-        }
-        tracing.addHeaderAttributes(span, "request", request.headers, headerFilter, redactedHeaderNames);
-        if (Option.isSome(request.remoteAddress)) {
-          span.attribute("client.address", request.remoteAddress.value);
-        }
-        span.attribute("http.response.status_code", response.status);
-        tracing.addHeaderAttributes(span, "response", response.headers, headerFilter, redactedHeaderNames);
+      if (request.headers["user-agent"] !== undefined) {
+        span.attribute("user_agent.original", request.headers["user-agent"]);
       }
-      span.end(endTime, spanExit);
-    }, 0);
+      tracing.addHeaderAttributes(span, "request", request.headers, headerFilter, redactedHeaderNames);
+      if (Option.isSome(request.remoteAddress)) {
+        span.attribute("client.address", request.remoteAddress.value);
+      }
+      span.attribute("http.response.status_code", response.status);
+      tracing.addHeaderAttributes(span, "response", response.headers, headerFilter, redactedHeaderNames);
+    }
+    span.end(endTime, spanExit);
     return undefined;
   });
   return httpApp;
 }));
 /**
- * Middleware that trusts `X-Forwarded-Host` and `X-Forwarded-For`, updating the request host header and remote address.
+ * Creates middleware that applies `X-Forwarded-For`, `X-Forwarded-Host`, and
+ * `X-Forwarded-Proto` sent by trusted proxies.
+ *
+ * **When to use**
+ *
+ * Use when the app runs behind proxies that append to `X-Forwarded-For`, such
+ * as most load balancers and TLS terminators.
+ *
+ * **Details**
+ *
+ * Headers are ignored unless the original transport peer
+ * (`request.peerAddress`) is trusted. `X-Forwarded-For` is then walked from
+ * the right, skipping trusted proxies. The first untrusted address becomes
+ * `remoteAddress`. When every address is trusted, the leftmost one is used. An
+ * entry that is not an IP address, such as `unknown`, stops the walk and
+ * leaves the request unchanged.
+ *
+ * `X-Forwarded-Host` and `X-Forwarded-Proto` are only used when they list one
+ * value per `X-Forwarded-For` entry; the value at the selected position
+ * replaces the `host` header and sets `protocol` (`http` or `https`), which
+ * `HttpServerRequest.toURL` uses. Otherwise the transport values are kept.
+ *
+ * `request.peerAddress` keeps the transport peer after `remoteAddress` is
+ * replaced.
+ *
+ * **Example** (Reading the client address behind a load balancer)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect, Option } from "effect"
+ * import { HttpMiddleware, HttpServerRequest, HttpServerResponse } from "effect/http"
+ * import { IpNetwork } from "effect/net"
+ *
+ * const app = HttpServerRequest.HttpServerRequest.use((request) =>
+ *   Effect.succeed(HttpServerResponse.text(Option.getOrElse(request.remoteAddress, () => "unknown")))
+ * ).pipe(
+ *   HttpMiddleware.xForwardedHeaders({
+ *     trustedProxies: [IpNetwork.fromStringUnsafe("10.0.0.0/8")]
+ *   })
+ * )
+ *
+ * // The load balancer at 10.0.0.1 appended the client address to a spoofed entry
+ * const request = HttpServerRequest.fromWeb(
+ *   new Request("http://app.test/", { headers: { "x-forwarded-for": "6.6.6.6, 198.51.100.7" } })
+ * ).modify({ remoteAddress: Option.some("10.0.0.1") })
+ *
+ * const response = await Effect.runPromise(
+ *   Effect.provideService(app, HttpServerRequest.HttpServerRequest, request)
+ * )
+ * await HttpServerResponse.toWeb(response).text() // => "198.51.100.7"
+ * ```
  *
  * @stability unstable
  * @category proxying
  * @since 4.0.0
  */
-export const xForwardedHeaders = /*#__PURE__*/make(httpApp => Effect.updateService(httpApp, HttpServerRequest, request => request.headers["x-forwarded-host"] ? request.modify({
-  headers: Headers.set(request.headers, "host", request.headers["x-forwarded-host"]),
-  remoteAddress: Option.fromNullishOr(request.headers["x-forwarded-for"]?.split(",")[0].trim())
-}) : request));
+export const xForwardedHeaders = options => {
+  const {
+    trustedProxies
+  } = options;
+  const isTrusted = typeof trustedProxies === "function" ? trustedProxies : address => trustedProxies.some(network => IpNetwork.contains(network, address));
+  return make(httpApp => Effect.updateService(httpApp, HttpServerRequest, request => applyXForwarded(request, isTrusted)));
+};
+const applyXForwarded = (request, isTrusted) => {
+  const peer = parseForwardedAddress(Option.getOrUndefined(request.peerAddress));
+  if (peer === undefined || !isTrusted(peer)) return request;
+  const addresses = splitList(request.headers["x-forwarded-for"]);
+  if (addresses === undefined) return request;
+  for (let index = addresses.length - 1; index >= 0; index--) {
+    const address = parseForwardedAddress(addresses[index]);
+    if (address === undefined) return request;
+    if (index > 0 && isTrusted(address)) continue;
+    const host = alignedValue(request.headers["x-forwarded-host"], addresses.length, index);
+    const protocol = alignedValue(request.headers["x-forwarded-proto"], addresses.length, index)?.toLowerCase();
+    return request.modify({
+      remoteAddress: Option.some(NetAddress.formatIp(address)),
+      peerAddress: request.peerAddress,
+      ...(host !== undefined && isValidHost(host) ? {
+        headers: Headers.set(request.headers, "host", host)
+      } : {}),
+      ...(protocol === "http" || protocol === "https" ? {
+        protocol
+      } : {})
+    });
+  }
+  return request;
+};
+const splitList = value => value?.split(",").map(_ => _.trim());
+// Host and proto lists are only associated with a hop when they have one value
+// per `X-Forwarded-For` entry.
+const alignedValue = (header, length, index) => {
+  const values = splitList(header);
+  return values?.length === length ? values[index] : undefined;
+};
+const parseForwardedAddress = input => {
+  if (input === undefined) return undefined;
+  const ip = NetAddress.ipFromString(input.startsWith("[") && input.endsWith("]") ? input.slice(1, -1) : input);
+  if (Result.isSuccess(ip)) return NetAddress.toCanonical(ip.success);
+  const inet = NetAddress.inetAddressFromString(input);
+  return Result.isSuccess(inet) ? NetAddress.toCanonical(inet.success.address) : undefined;
+};
+const hostShape = /^(?:\[[0-9a-f:.]+\]|[a-z0-9._-]+)(?::\d{1,5})?$/i;
+// The shape check rules out paths, userinfo and lists; the URL parser rejects
+// invalid IP literals and out-of-range ports, matching what `toURL` accepts.
+const isValidHost = host => hostShape.test(host) && URL.canParse(`http://${host}`);
 /**
  * Middleware that parses the current request URL's search parameters and provides them as `ParsedSearchParams`.
  *
@@ -348,7 +492,7 @@ export const cors = options => {
         headers: headersFromRequestOptions(request)
       }));
     }
-    appendPreResponseHandlerUnsafe(request, preResponseHandler);
+    appendPreResponseHandlerUnsafe(fiber.context, preResponseHandler);
     return httpApp;
   });
 };
@@ -448,10 +592,71 @@ export const compression = options => {
     return compression.compressResponse(response, algorithm, levelOptions[algorithm]);
   };
   return httpApp => Effect.withFiber(fiber => {
-    const request = Context.getUnsafe(fiber.context, HttpServerRequest);
     const compression = Context.getUnsafe(fiber.context, HttpPlatform).compression;
-    appendPreResponseHandlerUnsafe(request, (request, response) => transform(compression, request.headers["accept-encoding"], response));
+    appendPreResponseHandlerUnsafe(fiber.context, (request, response) => transform(compression, request.headers["accept-encoding"], response));
     return httpApp;
+  });
+};
+/**
+ * Middleware that decompresses request bodies sent with a `Content-Encoding`
+ * of `gzip` or `deflate`.
+ *
+ * **Details**
+ *
+ * The request service is replaced with a view whose body accessors (`stream`,
+ * `text`, `json`, `arrayBuffer`, `urlParamsBody`, `multipart`) yield the
+ * decompressed body, and whose headers no longer include `Content-Encoding`
+ * or `Content-Length`. Decompression is lazy and only happens when the body
+ * is read. Stacked codings such as `deflate, gzip` are undone in reverse
+ * order, and `identity` members are ignored.
+ *
+ * Requests whose `Content-Encoding` includes any other coding are rejected
+ * with `415 Unsupported Media Type` and `Accept-Encoding: gzip, deflate`,
+ * without running the app. Malformed compressed data fails the body read
+ * with a `RequestParseError`, or a `MultipartError` with reason `Parse` when
+ * reading multipart data.
+ *
+ * The decompressed size is limited to `maxDecompressedSize`, falling back to
+ * the `MaxBodySize` reference and then to 10 MiB. Exceeding it fails the body
+ * read with a `RequestParseError`, or a `MultipartError` with reason
+ * `BodyTooLarge` when reading multipart data. The limit applies to every body
+ * accessor, including `stream`.
+ *
+ * Decompression uses the global `DecompressionStream`. `deflate` means the
+ * zlib format (RFC 1950); raw deflate data is rejected.
+ *
+ * **Gotchas**
+ *
+ * `request.source` is still the original, compressed request.
+ * `HttpServerRequest.toWeb` returns that compressed request only when the
+ * source is a Web `Request`. On other platforms, such as Node, it builds a new
+ * `Request` from the decompressed body and the stripped headers.
+ *
+ * @stability unstable
+ * @category compression
+ * @since 4.0.0
+ */
+export const decompression = options => {
+  const maxDecompressedSize = options?.maxDecompressedSize === undefined ? undefined : ByteSize.fromInputUnsafe(options.maxDecompressedSize);
+  return httpApp => Effect.withFiber(fiber => {
+    const request = Context.getUnsafe(fiber.context, HttpServerRequest);
+    const contentEncoding = request.headers["content-encoding"];
+    if (contentEncoding === undefined || !hasBody(request.method)) {
+      return httpApp;
+    }
+    const codings = decompressionInternal.parseContentEncoding(contentEncoding);
+    if (codings === undefined) {
+      return Effect.succeed(Response.empty({
+        status: 415,
+        headers: {
+          "accept-encoding": "gzip, deflate"
+        }
+      }));
+    }
+    if (codings.length === 0) {
+      return httpApp;
+    }
+    return Effect.provideService(httpApp, HttpServerRequest, new decompressionInternal.DecompressedRequest(request, codings, maxDecompressedSize));
   });
 };
 const withVary = response => {

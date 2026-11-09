@@ -538,7 +538,7 @@ describe("dispatchCampaignCommand", () => {
       const result = await dispatchCampaignCommand("previewConstructionBatchCommand", {
         sessionId,
         designVersionId: "des_gbr_inflexible",
-        quantity: 3,
+        quantity: 2,
       });
       expect(result.outcome).toBe("success");
       if (result.outcome !== "success") return;
@@ -547,17 +547,28 @@ describe("dispatchCampaignCommand", () => {
         ok: true,
         preview: {
           designVersionId: "des_gbr_inflexible",
-          quantity: 3,
+          quantity: 2,
           dockCeilingKg: 13_000_000,
           fitsDock: true,
         },
       });
       if (!value.ok) return;
-      expect(value.preview.names).toHaveLength(3);
+      expect(value.preview.names).toHaveLength(2);
       for (const allocation of value.preview.names) {
         expect(allocation.name.length).toBeGreaterThan(0);
       }
       expect(value.preview.designDisplacementKg).toBeGreaterThan(0);
+    });
+
+    it("refuses a batch the national capacity cannot hold, as the order would", async () => {
+      const result = await dispatchCampaignCommand("previewConstructionBatchCommand", {
+        sessionId,
+        designVersionId: "des_gbr_inflexible",
+        quantity: 3,
+      });
+      expect(result.outcome).toBe("success");
+      if (result.outcome !== "success") return;
+      expect(result.value).toMatchObject({ ok: false, reason: "INSUFFICIENT_PROJECT_CAPACITY" });
     });
 
     it("returns the engine's CONSTRUCTION_BATCH_LIMIT_EXCEEDED reason for a quantity above 12", async () => {

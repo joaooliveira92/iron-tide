@@ -3,6 +3,8 @@ import { identity } from "../../Function.js";
 import * as Stream from "../../Stream.js";
 import * as HttpBody from "../HttpBody.js";
 import * as Response from "../HttpServerResponse.js";
+import { compressionTransformWeb, singleChunkStream } from "./compressionBody.js";
+export { compressionTransformWeb } from "./compressionBody.js";
 /**
  * @internal
  */
@@ -36,10 +38,6 @@ export const wrapCompression = impl => ({
     });
   }
 });
-/**
- * @internal
- */
-export const compressionTransformWeb = format => stream => stream.pipeThrough(new CompressionStream(format));
 /**
  * @internal
  */
@@ -83,12 +81,6 @@ const streamBody = (response, evaluate, contentType) => setBodyWithoutLength(res
   evaluate,
   onError: identity
 }), contentType));
-const singleChunkStream = data => new ReadableStream({
-  start(controller) {
-    controller.enqueue(data);
-    controller.close();
-  }
-});
 const rawReadableStream = raw => {
   if (typeof ReadableStream !== "undefined" && raw instanceof ReadableStream) {
     return raw;
@@ -130,13 +122,12 @@ const acceptMember = /^([a-z0-9!#$%&'*+.^_`|~-]+)(?:;q=(0(?:\.[0-9]{0,3})?|1(?:\
  * @internal
  */
 export const parseAcceptEncoding = header => {
-  const trimmed = header.trim();
-  if (trimmed === "") {
-    return undefined;
-  }
   const accepted = new Map();
-  for (const part of trimmed.split(",")) {
+  for (const part of header.split(",")) {
     const member = part.trim().toLowerCase().replace(/[ \t]*;[ \t]*/g, ";");
+    if (member === "") {
+      continue;
+    }
     const match = acceptMember.exec(member);
     if (match === null) {
       return undefined;

@@ -1,3 +1,15 @@
+/**
+ * Defines named wait points for durable workflow executions.
+ *
+ * A `DurableDeferred` has a stable name and schemas for the value that will be
+ * recorded later. Workflows can await it, suspend when no result exists yet, and
+ * resume after its result is recorded. Tokens identify the workflow name,
+ * execution id, and deferred name so external code can complete the correct
+ * wait point later.
+ *
+ * @stability unstable
+ * @since 4.0.0
+ */
 import type { NonEmptyReadonlyArray } from "../Array.ts";
 import type * as Brand from "../Brand.ts";
 import * as Cause from "../Cause.ts";
@@ -80,6 +92,20 @@ await_ as await };
  * Runs an effect and records its exit into the durable deferred, resuming
  * workflows that are waiting on that deferred.
  *
+ * **Details**
+ *
+ * The effect and the write of its exit count as one in-flight activity of the
+ * workflow, so concurrent branches parked on durable waits do not suspend the
+ * run until the exit is recorded. This applies even when the effect itself is
+ * not an activity. If the effect parks on a durable wait, the run suspends
+ * once the other in-flight activities finish, and nothing is recorded.
+ *
+ * **Gotchas**
+ *
+ * A long-running effect keeps the run active instead of letting a parked
+ * sibling suspend it. Completing a deferred the run is waiting on still
+ * interrupts and replays the run.
+ *
  * @stability unstable
  * @category combinators
  * @since 4.0.0
@@ -89,6 +115,20 @@ export declare const into: {
      * Runs an effect and records its exit into the durable deferred, resuming
      * workflows that are waiting on that deferred.
      *
+     * **Details**
+     *
+     * The effect and the write of its exit count as one in-flight activity of the
+     * workflow, so concurrent branches parked on durable waits do not suspend the
+     * run until the exit is recorded. This applies even when the effect itself is
+     * not an activity. If the effect parks on a durable wait, the run suspends
+     * once the other in-flight activities finish, and nothing is recorded.
+     *
+     * **Gotchas**
+     *
+     * A long-running effect keeps the run active instead of letting a parked
+     * sibling suspend it. Completing a deferred the run is waiting on still
+     * interrupts and replays the run.
+     *
      * @stability unstable
      * @category combinators
      * @since 4.0.0
@@ -97,6 +137,20 @@ export declare const into: {
     /**
      * Runs an effect and records its exit into the durable deferred, resuming
      * workflows that are waiting on that deferred.
+     *
+     * **Details**
+     *
+     * The effect and the write of its exit count as one in-flight activity of the
+     * workflow, so concurrent branches parked on durable waits do not suspend the
+     * run until the exit is recorded. This applies even when the effect itself is
+     * not an activity. If the effect parks on a durable wait, the run suspends
+     * once the other in-flight activities finish, and nothing is recorded.
+     *
+     * **Gotchas**
+     *
+     * A long-running effect keeps the run active instead of letting a parked
+     * sibling suspend it. Completing a deferred the run is waiting on still
+     * interrupts and replays the run.
      *
      * @stability unstable
      * @category combinators

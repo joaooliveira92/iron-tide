@@ -25,6 +25,11 @@ export * as OtlpLogger from "./OtlpLogger.js";
 export * as OtlpMetrics from "./OtlpMetrics.js";
 /**
  * @stability unstable
+ * @since 4.0.7
+ */
+export * as OtlpProxy from "./OtlpProxy.js";
+/**
+ * @stability unstable
  * @since 4.0.0
  */
 export * as OtlpResource from "./OtlpResource.js";

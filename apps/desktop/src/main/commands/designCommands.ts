@@ -48,7 +48,13 @@ function slug(name: string): string {
   return s.length >= 2 ? s.slice(0, 40) : "design";
 }
 
-export const submitDesignCommandProgram: CommandHandler<"submitDesignCommand"> = (payload) =>
+interface SubmissionInput {
+  readonly sessionId: string;
+  readonly className: string;
+  readonly draft: Record<string, unknown>;
+}
+
+const prepareSubmission = (payload: SubmissionInput) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const contentArtifact = yield* ContentArtifact;
@@ -160,6 +166,41 @@ export const submitDesignCommandProgram: CommandHandler<"submitDesignCommand"> =
         failedCriteria: planned.failedCriteria,
       };
     }
+    return { designVersionId, designFamilyId, hullType, draft, study };
+  });
+
+export const previewDesignStudyProgram: CommandHandler<"previewDesignStudy"> = (payload) =>
+  Effect.gen(function* () {
+    const prepared = yield* prepareSubmission(payload);
+    if (prepared.study === undefined)
+      return { outcome: "success" as const, value: {}, diagnostics: [] };
+    const sessions = yield* CampaignSessionStore;
+    const record = yield* sessions.get(payload.sessionId);
+    const nation = record.state.snapshot.nations.get(record.playerSlotId);
+    const treasuryUnits = Number(nation?.treasury ?? 0);
+    const freeTreasury = treasuryUnits - Number(nation?.expenses ?? 0);
+    const { months, cost } = prepared.study;
+    const firstPayment = Math.ceil(cost / Math.max(1, months));
+    return {
+      outcome: "success" as const,
+      value: {
+        study: prepared.study,
+        treasuryUnits,
+        freeTreasury,
+        affordable: firstPayment <= freeTreasury,
+      },
+      diagnostics: [],
+    };
+  }).pipe(
+    Effect.catchTag("CommandRejected", () =>
+      Effect.succeed({ outcome: "success" as const, value: {}, diagnostics: [] }),
+    ),
+  );
+
+export const submitDesignCommandProgram: CommandHandler<"submitDesignCommand"> = (payload) =>
+  Effect.gen(function* () {
+    const { designVersionId, designFamilyId, hullType, draft, study } =
+      yield* prepareSubmission(payload);
     const result = yield* submitPlayerCommand({
       sessionId: payload.sessionId,
       expectedRevision: payload.expectedRevision,
@@ -225,7 +266,7 @@ export const loadProjectDraftProgram: CommandHandler<"loadProjectDraft"> = (payl
       outcome: "success" as const,
       value: {
         className: found.design.className,
-        draft: found.draft as unknown as Record<string, unknown>,
+        draft: found.draft,
       },
       diagnostics: [],
     };
@@ -408,7 +449,7 @@ export const loadShipDraftProgram: CommandHandler<"loadShipDraft"> = (payload) =
       outcome: "success" as const,
       value: {
         className: found.design.className,
-        draft: found.draft as unknown as Record<string, unknown>,
+        draft: found.draft,
       },
       diagnostics: [],
     };

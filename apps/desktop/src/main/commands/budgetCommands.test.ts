@@ -157,7 +157,30 @@ describe("budget allocation", () => {
     expect(acceleration.premiumBp).toBe(500);
     expect(acceleration.premiumPending).toBe(accelerated[0]?.acceleration?.premiumWork);
     expect(acceleration.premiumPending).toBeGreaterThan(0);
-    expect(acceleration.delayChanceBp).toBe(5000);
+    expect(acceleration.delayChanceBp).toBe(0);
+  });
+
+  it("reports the engine's delay chance once accelerated projects outgrow the capacity pool", async () => {
+    const copies = 6;
+    registerSession("b", (snapshot) => {
+      const nation = snapshot.nations.get("uk");
+      const project = nation?.constructionProjects[0];
+      if (nation === undefined || project === undefined) {
+        throw new Error("expected a seeded UK construction project");
+      }
+      project.status = "ACCELERATED";
+      for (let index = 0; index < copies; index += 1) {
+        nation.constructionProjects.push({
+          ...structuredClone(project),
+          id: `${project.id}-copy-${String(index)}`,
+        });
+      }
+    });
+    const result = await inspectBudgetScreen("b");
+    if (result.outcome !== "success") throw new Error(result.reason);
+    const { acceleration } = result.value.commitments.construction;
+    expect(acceleration.acceleratedCount).toBe(copies + 1);
+    expect(acceleration.delayChanceBp).toBeGreaterThan(0);
   });
 
   it("reports no acceleration cost when nothing is accelerated", async () => {

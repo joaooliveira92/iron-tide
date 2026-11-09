@@ -561,7 +561,7 @@ export interface GaugeState<in Input extends number | bigint> {
  *         start: 1,
  *         factor: 2,
  *         count: 10
- *       }) // 1, 2, 4, 8, ..., 512
+ *       }) // 1, 2, 4, 8, ..., 256, Infinity
  *     }
  *   )
  *
@@ -681,8 +681,8 @@ export interface Histogram<Input> extends Metric<Input, HistogramState> {
  *       totalRequests: state.count, // 5
  *       fastestResponse: state.min, // 50
  *       slowestResponse: state.max, // 750
- *       averageResponse: state.sum / state.count, // 268
- *       totalTime: state.sum, // 1340
+ *       averageResponse: state.sum / state.count, // 259
+ *       totalTime: state.sum, // 1295
  *       distribution: bucketAnalysis
  *       // Example distribution:
  *       // [{ range: "0-100ms", count: 2, percentage: 40.0 },
@@ -2725,6 +2725,138 @@ export declare const update: {
      */
     <Input, State>(self: Metric<Input, State>, input: Input): Effect<void>;
 };
+/**
+ * Handle for a series registered with `Metric.registerUnsafe`.
+ *
+ * **Details**
+ *
+ * `remove` deletes the series from the registry it was registered into, but
+ * only while the registry still holds this registration. Calling it again, or
+ * after another registration has replaced the series, does nothing.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface Registration {
+    readonly remove: () => void;
+}
+/**
+ * Removes the series of a metric for the current attributes from the metric
+ * registry.
+ *
+ * **When to use**
+ *
+ * Use when a series describes something that has gone away, such as a
+ * connection or an entity, so the registry and exporters stop tracking it.
+ *
+ * **Details**
+ *
+ * The series is identified the same way `update` identifies it: by the metric
+ * and its attributes merged with `CurrentMetricAttributes`. Other series of the
+ * same metric are left alone. A later update creates the series again from its
+ * initial state. Removing a series that does not exist does nothing.
+ *
+ * **Example** (Removing a series)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect, Metric } from "effect"
+ *
+ * const connections = Metric.gauge("connections")
+ *
+ * const program = Effect.gen(function*() {
+ *   yield* Metric.update(connections, 3).pipe(
+ *     Effect.provideService(Metric.CurrentMetricAttributes, { pool: "a" })
+ *   )
+ *   yield* Metric.update(connections, 5).pipe(
+ *     Effect.provideService(Metric.CurrentMetricAttributes, { pool: "b" })
+ *   )
+ *   yield* Metric.remove(connections).pipe(
+ *     Effect.provideService(Metric.CurrentMetricAttributes, { pool: "a" })
+ *   )
+ *   const snapshots = yield* Metric.snapshot
+ *   return snapshots.map((snapshot) => snapshot.attributes)
+ * })
+ *
+ * await Effect.runPromise(Effect.provideService(program, Metric.MetricRegistry, new Map())) // => [{ pool: "b" }]
+ * ```
+ *
+ * @see {@link removeUnsafe} for removing a series with an explicit `Context`
+ *
+ * @stability unstable
+ * @category mutations
+ * @since 4.0.6
+ */
+export declare const remove: <Input, State>(self: Metric<Input, State>) => Effect<void>;
+/**
+ * Removes the series of a metric for the attributes in the provided `Context`
+ * from the metric registry in that `Context`.
+ *
+ * **When to use**
+ *
+ * Use when a low-level integration already holds a `Context`. Use `remove`
+ * in application code.
+ *
+ * @see {@link remove} for the `Effect` version
+ *
+ * @stability unstable
+ * @category mutations
+ * @since 4.0.6
+ */
+export declare const removeUnsafe: <Input, State>(self: Metric<Input, State>, context: Context.Context<never>) => void;
+/**
+ * Registers a series backed by caller-supplied hooks, for gauges whose value is
+ * read when metrics are snapshotted rather than pushed with updates.
+ *
+ * **When to use**
+ *
+ * Use when the value already lives in some data structure, such as a queue
+ * size, and updating a metric on every change would cost more than reading the
+ * value at export time.
+ *
+ * **Details**
+ *
+ * The series is identified as in `remove`, using the attributes and registry
+ * from `context`, and replaces any series with the same identity. `hooks.get`
+ * is called each time the series is read, for example by `snapshot` or an
+ * exporter. The returned {@link Registration} removes it again.
+ * `update` and `modify` on this series do nothing; the supplied mutation hooks
+ * are ignored.
+ *
+ * **Gotchas**
+ *
+ * The registry keeps `hooks.get` reachable until the series is removed, along
+ * with anything it closes over. Call `remove` once the source goes away.
+ *
+ * **Example** (Reporting a queue size on snapshot)
+ *
+ * ```ts import.meta.vitest
+ * import { Context, Metric } from "effect"
+ *
+ * const context = Context.make(Metric.MetricRegistry, new Map())
+ * const queueSize = Metric.gauge("queue_size")
+ * const queue: Array<string> = ["a", "b"]
+ *
+ * const registration = Metric.registerUnsafe(queueSize, context, {
+ *   get: () => ({ value: queue.length }),
+ *   update: () => {},
+ *   modify: () => {}
+ * })
+ * queue.push("c")
+ * const sizes = Metric.snapshotUnsafe(context).map((snapshot) => snapshot.state)
+ * registration.remove()
+ *
+ * sizes // => [{ value: 3 }]
+ * Metric.snapshotUnsafe(context).length // => 0
+ * ```
+ *
+ * @see {@link remove} for removing a series updated with `update`
+ *
+ * @stability unstable
+ * @category mutations
+ * @since 4.0.6
+ */
+export declare const registerUnsafe: <Input, State>(self: Metric<Input, State>, context: Context.Context<never>, hooks: Metric.Hooks<Input, State>) => Registration;
 /**
  * Returns a new metric that is powered by this one, but which accepts updates
  * of the specified new type, which must be transformable to the input type of

@@ -59,8 +59,9 @@ export const makeWrite = schema => EventLogServerUnencrypted.useSync(_ => _.make
  * **Details**
  *
  * Incoming plaintext entries are authorized, mapped to a server store, checked
- * for conflicts, run through registered handlers, and persisted; change streams
- * include compacted backlog entries when compactors are registered.
+ * for conflicts, run through registered handlers, and persisted. Acknowledgements
+ * include duplicates with their original sequences. Change streams apply registered
+ * compactors to backlog entries and exclude this connection's writes.
  *
  * @stability unstable
  * @category layers
@@ -75,12 +76,12 @@ export const layerRpcHandlers = /*#__PURE__*/Layer.unwrap(/*#__PURE__*/Effect.ge
   const remoteId = yield* storage.getId;
   const processEntries = Effect.fnUntraced(function* (options) {
     const entries = Arr.sort(options.entries, Entry.Order);
-    let history = yield* storage.entriesAfter(options.storeId, entries[0]);
+    const stored = yield* storage.entriesAfter(options.storeId, entries[0], entries);
+    const index = new HistoryIndex(stored.map(remoteEntry => remoteEntry.entry));
     const persistedEntries = Arr.empty();
     for (const entry of entries) {
-      const [duplicate, conflicts, newHistory] = toConflicts(history, entry);
-      if (duplicate) continue;
-      history = newHistory;
+      if (index.has(entry)) continue;
+      const conflicts = index.conflicts(entry);
       yield* handler({
         publicKey: options.publicKey,
         storeId: options.storeId,
@@ -89,12 +90,30 @@ export const layerRpcHandlers = /*#__PURE__*/Layer.unwrap(/*#__PURE__*/Effect.ge
       });
       persistedEntries.push(entry);
     }
-    yield* storage.write(options.storeId, persistedEntries);
+    const committed = yield* storage.write(options.storeId, persistedEntries);
+    const sequences = new Map();
+    for (const remoteEntry of stored) {
+      sequences.set(remoteEntry.entry.idString, remoteEntry.remoteSequence);
+    }
+    for (const remoteEntry of committed) {
+      sequences.set(remoteEntry.entry.idString, remoteEntry.remoteSequence);
+    }
+    const acks = [];
+    for (const entry of options.entries) {
+      const sequence = sequences.get(entry.idString);
+      if (sequence !== undefined) acks.push({
+        entryId: entry.id,
+        sequence
+      });
+    }
+    return acks;
   }, storage.withTransaction);
   return EventLogServer.layerRpcHandlers({
     remoteId,
-    authorizeIdentity: publicKey => auth.authorizeIdentity({
-      publicKey
+    firstSequence: storage.firstSequence,
+    authorizeIdentity: (publicKey, signingPublicKey) => auth.authorizeIdentity({
+      publicKey,
+      signingPublicKey
     }).pipe(Effect.mapError(error => new EventLogProtocolError({
       requestTag: "Authenticate",
       publicKey,
@@ -102,7 +121,7 @@ export const layerRpcHandlers = /*#__PURE__*/Layer.unwrap(/*#__PURE__*/Effect.ge
       message: error.message
     }))),
     getOrCreateSessionAuthBinding: (publicKey, signingPublicKey) => storage.getOrCreateSessionAuthBinding(publicKey, signingPublicKey),
-    onWrite: Effect.fnUntraced(function* (data, authenticatedPublicKeys) {
+    onWrite: Effect.fnUntraced(function* (data, authenticatedPublicKeys, writes) {
       const request = yield* WriteEntriesUnencrypted.decode(data).pipe(Effect.mapError(_ => new EventLogProtocolError({
         requestTag: "WriteEntries",
         publicKey: undefined,
@@ -117,7 +136,7 @@ export const layerRpcHandlers = /*#__PURE__*/Layer.unwrap(/*#__PURE__*/Effect.ge
           message: "Identity is not authenticated"
         });
       }
-      if (!Arr.isReadonlyArrayNonEmpty(request.entries)) return;
+      if (!Arr.isReadonlyArrayNonEmpty(request.entries)) return [];
       const resolvedStoreId = yield* mapping.resolve({
         publicKey: request.publicKey,
         storeId: request.storeId
@@ -139,11 +158,15 @@ export const layerRpcHandlers = /*#__PURE__*/Layer.unwrap(/*#__PURE__*/Effect.ge
         code: "Unauthorized",
         message: _.message
       })));
-      yield* processEntries({
+      return yield* processEntries({
         publicKey: request.publicKey,
         storeId: resolvedStoreId,
         entries: request.entries
-      }).pipe(Effect.catchCause(_ => Effect.fail(new EventLogProtocolError({
+      }).pipe(write => writes.track({
+        publicKey: request.publicKey,
+        storeId: request.storeId,
+        entryIds: request.entries.map(entry => entry.id)
+      }, write), Effect.catchCause(_ => Effect.fail(new EventLogProtocolError({
         requestTag: "WriteEntries",
         publicKey: request.publicKey,
         code: "InternalServerError",
@@ -159,11 +182,16 @@ export const layerRpcHandlers = /*#__PURE__*/Layer.unwrap(/*#__PURE__*/Effect.ge
         publicKey: request.publicKey,
         storeId
       });
-      return storage.changes({
+      return request.writes.filter({
+        publicKey: request.publicKey,
+        storeId: request.storeId,
+        entryIds: remoteEntry => [remoteEntry.entry.id],
+        sequence: remoteEntry => remoteEntry.remoteSequence
+      }, storage.changes({
         storeId,
         startSequence: request.startSequence,
         compactors: registry.compactors
-      }).pipe(Stream.mapArrayEffect(entries => Effect.map(ChangesRpc.encodeUnencrypted(entries), Arr.of)));
+      })).pipe(Stream.mapArrayEffect(entries => Effect.map(ChangesRpc.encodeUnencrypted(entries), Arr.of)));
     }, Stream.unwrap)
   });
 }));
@@ -192,6 +220,17 @@ export class EventLogServerAuthError extends /*#__PURE__*/Data.TaggedError("Even
  *
  * Use to provide authorization checks for plaintext event-log writes, reads,
  * and identity authentication.
+ *
+ * **Gotchas**
+ *
+ * An identity's `publicKey` is an identifier, not a secret. The server binds
+ * the first signing key that authenticates for an identity and rejects any
+ * other key afterwards. `authorizeIdentity` also receives the presented
+ * `signingPublicKey`, so a deployment that records each identity's signing key
+ * at provisioning time, with `EventLogSessionAuth.deriveSigningPublicKey`, can
+ * reject every other key, including on first use. The server always supplies
+ * `signingPublicKey`; it is optional only so that existing callers keep
+ * compiling, and a policy that checks it should reject when it is missing.
  *
  * @stability unstable
  * @category services
@@ -249,7 +288,8 @@ export const layerStoreMappingStatic = options => Layer.succeed(StoreMapping, {
  *
  * It provides the server remote id, stores session authentication bindings,
  * allocates remote sequence numbers, persists entries, streams changes, and
- * exposes a transaction boundary.
+ * exposes a transaction boundary. `entriesAfter` returns stored entries with
+ * their sequences, so that duplicate writes can be acknowledged.
  *
  * @stability unstable
  * @category services
@@ -262,29 +302,64 @@ const makeClientIdentity = publicKey => ({
 });
 const constEmptyPrivateKey = /*#__PURE__*/Redacted.make(/*#__PURE__*/new Uint8Array(32));
 const makeServerWriteIdentityPublicKey = storeId => `effect-eventlog-server-write:${storeId}`;
-const entriesAfter = (journal, startSequence) => journal.filter(entry => entry.remoteSequence >= startSequence);
-const toConflicts = (history, originEntry) => {
-  let duplicate = false;
-  for (let i = 0; i < history.length; i++) {
-    const entry = history[i];
-    if (entry.createdAtMillis < originEntry.createdAtMillis) {
-      continue;
-    } else if (entry.idString === originEntry.idString) {
-      duplicate = true;
-      continue;
+// The memory journal is append-only with strictly increasing sequences.
+const entriesAfter = (journal, startSequence) => {
+  let low = 0;
+  let high = journal.length;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (journal[mid].remoteSequence >= startSequence) {
+      high = mid;
+    } else {
+      low = mid + 1;
     }
-    const newHistory = history.slice(i);
-    let conflicts = [];
-    for (let j = 0; j < newHistory.length; j++) {
-      const scannedEntry = newHistory[j];
-      if (scannedEntry.event === originEntry.event && scannedEntry.primaryKey === originEntry.primaryKey) {
-        conflicts.push(scannedEntry);
-      }
-    }
-    return [duplicate, conflicts, newHistory];
   }
-  return [duplicate, [], []];
+  return journal.slice(low);
 };
+class KeyIndex {
+  byEvent = /*#__PURE__*/new Map();
+  add(event, primaryKey, value) {
+    let byKey = this.byEvent.get(event);
+    if (byKey === undefined) {
+      byKey = new Map();
+      this.byEvent.set(event, byKey);
+    }
+    const values = byKey.get(primaryKey);
+    if (values === undefined) {
+      byKey.set(primaryKey, [value]);
+    } else {
+      values.push(value);
+    }
+  }
+  get(event, primaryKey) {
+    return this.byEvent.get(event)?.get(primaryKey);
+  }
+}
+/**
+ * Indexes the history returned by `Storage.entriesAfter` for one batch. A
+ * conflict is a stored entry with the same event and primary key and a
+ * strictly greater id, reported in id order. Batch entries are never added, so
+ * they do not conflict with each other.
+ */
+class HistoryIndex {
+  ids = /*#__PURE__*/new Set();
+  byKey = /*#__PURE__*/new KeyIndex();
+  constructor(history) {
+    // Storage returns history in sequence order; conflicts are reported in id order.
+    for (const entry of Arr.sort(history, Entry.Order)) {
+      this.ids.add(entry.idString);
+      this.byKey.add(entry.event, entry.primaryKey, entry);
+    }
+  }
+  has(entry) {
+    return this.ids.has(entry.idString);
+  }
+  conflicts(entry) {
+    const stored = this.byKey.get(entry.event, entry.primaryKey);
+    if (stored === undefined) return [];
+    return stored.filter(candidate => Entry.Order(candidate, entry) > 0);
+  }
+}
 const representativeSequences = options => {
   if (options.compactedCount === 0) {
     return [];
@@ -334,6 +409,12 @@ const toCompactedRemoteEntries = options => {
  * entries when the replacement count can be mapped back to increasing remote
  * sequence numbers; otherwise the original entries are kept.
  *
+ * Outputs are ordered by the position of `source ?? entry` within the run, as in
+ * client replay. Unknown positions go to the start; ties keep write order.
+ *
+ * Client replay groups the whole batch per compactor; the server calls each
+ * compactor per contiguous run, so batch boundaries can differ.
+ *
  * @stability unstable
  * @category compaction
  * @since 4.0.0
@@ -354,7 +435,6 @@ export const compactBacklog = /*#__PURE__*/Effect.fnUntraced(function* (options)
     }
     const entries = [remoteEntry.entry];
     const remoteGroup = [remoteEntry];
-    const compacted = [];
     index++;
     while (index < options.remoteEntries.length) {
       const nextRemoteEntry = options.remoteEntries[index];
@@ -366,23 +446,27 @@ export const compactBacklog = /*#__PURE__*/Effect.fnUntraced(function* (options)
       remoteGroup.push(nextRemoteEntry);
       index++;
     }
+    const positions = new Map();
+    const compacted = [];
+    for (let i = 0; i < entries.length; i++) {
+      positions.set(entries[i].idString, i);
+      compacted.push([]);
+    }
     yield* compactor.effect({
       entries,
-      write(entry) {
+      write(entry, source) {
         return Effect.sync(() => {
-          compacted.push(entry);
+          compacted[positions.get((source ?? entry).idString) ?? 0].push(entry);
         });
       }
     }).pipe(Effect.orDie);
     const projected = toCompactedRemoteEntries({
-      compacted,
+      compacted: compacted.flat(),
       remoteEntries: remoteGroup
     });
-    if (projected === undefined) {
-      compactedRemoteEntries.push(...remoteGroup);
-      continue;
+    for (const entry of projected ?? remoteGroup) {
+      compactedRemoteEntries.push(entry);
     }
-    compactedRemoteEntries.push(...projected);
   }
   return compactedRemoteEntries;
 });
@@ -400,35 +484,29 @@ export const compactBacklog = /*#__PURE__*/Effect.fnUntraced(function* (options)
  * @since 4.0.0
  */
 export const makeStorageMemory = /*#__PURE__*/Effect.gen(function* () {
-  const knownIds = new Map();
-  const journals = new Map();
+  const stores = new Map();
   const sessionAuthBindings = new Map();
   const remoteId = makeRemoteIdUnsafe();
-  const ensureKnownIds = storeId => {
-    let storeKnownIds = knownIds.get(storeId);
-    if (storeKnownIds) return storeKnownIds;
-    storeKnownIds = new Map();
-    knownIds.set(storeId, storeKnownIds);
-    return storeKnownIds;
-  };
-  const ensureJournal = storeId => {
-    let journal = journals.get(storeId);
-    if (journal) return journal;
-    journal = [];
-    journals.set(storeId, journal);
-    return journal;
+  const ensureStore = storeId => {
+    let store = stores.get(storeId);
+    if (store) return store;
+    store = {
+      journal: [],
+      byId: new Map(),
+      byKey: new KeyIndex()
+    };
+    stores.set(storeId, store);
+    return store;
   };
   const pubsubs = yield* RcMap.make({
     lookup: _storeId => Effect.acquireRelease(PubSub.unbounded(), PubSub.shutdown),
     idleTimeToLive: 60000
   });
   const write = Effect.fnUntraced(function* (storeId, entries) {
-    const sequenceNumbers = [];
     const committed = [];
-    const storeKnownIds = ensureKnownIds(storeId);
-    const journal = ensureJournal(storeId);
-    let lastSequenceNumber = Arr.last(journal).pipe(Option.map(entry => entry.remoteSequence), Option.getOrElse(() => 0));
-    if (entries.some(entry => storeKnownIds.has(entry.idString))) {
+    const store = ensureStore(storeId);
+    let lastSequenceNumber = Arr.last(store.journal).pipe(Option.map(entry => entry.remoteSequence), Option.getOrElse(() => 0));
+    if (entries.some(entry => store.byId.has(entry.idString))) {
       return yield* Effect.die("Duplicate entries");
     }
     for (const entry of entries) {
@@ -438,10 +516,10 @@ export const makeStorageMemory = /*#__PURE__*/Effect.gen(function* () {
       }, {
         disableChecks: true
       });
-      sequenceNumbers.push(remoteEntry.remoteSequence);
       committed.push(remoteEntry);
-      journal.push(remoteEntry);
-      storeKnownIds.set(entry.idString, remoteEntry.remoteSequence);
+      store.journal.push(remoteEntry);
+      store.byId.set(entry.idString, remoteEntry);
+      store.byKey.add(entry.event, entry.primaryKey, remoteEntry);
     }
     const pubsub = yield* RcMap.get(pubsubs, storeId);
     yield* PubSub.publishAll(pubsub, committed);
@@ -450,15 +528,31 @@ export const makeStorageMemory = /*#__PURE__*/Effect.gen(function* () {
   const transactionSemaphore = yield* Semaphore.make(1);
   return Storage.of({
     getId: Effect.succeed(remoteId),
+    firstSequence: 1,
     getOrCreateSessionAuthBinding: (publicKey, signingPublicKey) => Effect.sync(() => {
       const existing = sessionAuthBindings.get(publicKey);
       if (existing) return existing;
       sessionAuthBindings.set(publicKey, signingPublicKey);
       return signingPublicKey;
     }),
-    entriesAfter: (storeId, entry) => Effect.sync(() => {
-      const journal = ensureJournal(storeId);
-      return journal.filter(e => Entry.Order(e.entry, entry) >= 0).map(e => e.entry);
+    entriesAfter: (storeId, oldest, batch) => Effect.sync(() => {
+      const store = ensureStore(storeId);
+      if (batch === undefined) {
+        return store.journal.filter(remoteEntry => Entry.Order(remoteEntry.entry, oldest) >= 0);
+      }
+      const found = new Set();
+      const scanned = new Set();
+      for (const entry of batch) {
+        const known = store.byId.get(entry.idString);
+        if (known !== undefined) found.add(known);
+        const sameKey = store.byKey.get(entry.event, entry.primaryKey);
+        if (sameKey === undefined || scanned.has(sameKey)) continue;
+        scanned.add(sameKey);
+        for (const remoteEntry of sameKey) {
+          if (Entry.Order(remoteEntry.entry, oldest) >= 0) found.add(remoteEntry);
+        }
+      }
+      return Array.from(found).sort((a, b) => a.remoteSequence - b.remoteSequence);
     }),
     write,
     changes: Effect.fnUntraced(function* ({
@@ -469,7 +563,7 @@ export const makeStorageMemory = /*#__PURE__*/Effect.gen(function* () {
       const pubsub = yield* RcMap.get(pubsubs, storeId);
       const subscription = yield* PubSub.subscribe(pubsub);
       const backlog = yield* compactBacklog({
-        remoteEntries: entriesAfter(ensureJournal(storeId), startSequence),
+        remoteEntries: entriesAfter(ensureStore(storeId).journal, startSequence),
         compactors
       });
       const replayedUpTo = backlog.length > 0 ? backlog[backlog.length - 1].remoteSequence : startSequence - 1;

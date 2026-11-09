@@ -4,6 +4,7 @@ import {
 } from "@bluewave/campaign-engine";
 import {
   constructionProjectQueueWithReadouts,
+  constructionSteeringPreviews,
   previewConstructionBatch,
   previewForeignConstruction,
 } from "@bluewave/phase-engine";
@@ -23,7 +24,9 @@ import {
   forecastCostOf,
   withRecordStatus,
 } from "../construction/commandRecord.js";
+import { withRebuildTargets } from "../construction/rebuildTargets.js";
 import { settleAndRelease } from "../construction/settlement.js";
+import { openStudies } from "../construction/studies.js";
 import { workspaceView } from "../construction/view.js";
 import type { ConstructionWorkspace } from "../construction/workspaceState.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
@@ -36,6 +39,7 @@ import { isTerminal, uiStatusFor } from "./construction/command-status.js";
 import { resolveUiDesign, toUiCommand } from "./construction/command-view.js";
 import { placeOrderFor } from "./construction/design-validation.js";
 import { replayIdempotent } from "./construction/idempotency.js";
+import { economyOutlookOptions } from "./economyOutlookOptions.js";
 import {
   canReserveReplacement,
   reserveForOrder,
@@ -62,11 +66,31 @@ export const inspectConstructionScreenProgram: CommandHandler<"inspectConstructi
         record.playerSlotId,
         record.month.year,
       ),
-      projects: constructionProjectQueueWithReadouts(
-        record.state.snapshot,
-        record.playerSlotId,
-        content,
+      studies: openStudies(
+        record.state.snapshot.nations.get(record.playerSlotId),
         campaignMonthKey(record),
+      ),
+      projects: withRebuildTargets(
+        record.state.snapshot.nations.get(record.playerSlotId),
+        constructionProjectQueueWithReadouts(
+          record.state.snapshot,
+          record.playerSlotId,
+          content,
+          campaignMonthKey(record),
+        ),
+      ),
+      steering: Object.fromEntries(
+        constructionSteeringPreviews(
+          record.state.snapshot,
+          record.playerSlotId,
+          content,
+          economyOutlookOptions(
+            record.state.snapshot,
+            record.playerSlotId,
+            content,
+            campaignMonthKey(record),
+          ),
+        ),
       ),
       workspace: workspaceView(workspace),
     };

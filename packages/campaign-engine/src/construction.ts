@@ -2,7 +2,10 @@ import {
   advanceMonth,
   monthId,
   monthlyAbsorbableDetail,
+  monthsSinceAcceleration,
+  projectMonthlyWorkTrace,
   umsToKnots,
+  type AccelerationTerms,
   type CampaignSnapshot,
   type CompiledDesignVersion as CompiledEngineDesignVersion,
   type ConstructionProject,
@@ -16,6 +19,7 @@ import {
   explainConstructionCost,
   explainConstructionInstalment,
   explainConstructionSchedule,
+  type ConstructionScheduleTrace,
 } from "./construction-explanations.js";
 
 const CONSTRUCTION_SHIP_TYPE_LABELS: Readonly<Record<string, string>> = {
@@ -247,6 +251,7 @@ export function constructionProjectReadout(
   design: CompiledEngineDesignVersion | undefined,
   campaignMonth: string,
   foreign?: ConstructionProjectForeignSchedule,
+  terms?: AccelerationTerms,
 ): ConstructionProjectReadout {
   const totalCostUnits = Number(project.totalWork);
   const remainingWork = Math.max(0, totalCostUnits - Number(project.completedWork));
@@ -318,12 +323,33 @@ export function constructionProjectReadout(
   }
 
   const capacityUnits = project.capacityUnits ?? design?.constructionPlan?.capacityUnits;
-  const detail = monthlyAbsorbableDetail(project, capacityUnits, campaignMonth);
+  const detail = monthlyAbsorbableDetail(project, capacityUnits, campaignMonth, terms);
   const monthlyInstalmentUnits = detail.amount;
+  const workByMonth =
+    remainingWork <= 0 || monthlyInstalmentUnits <= 0 || project.packages === undefined
+      ? undefined
+      : projectMonthlyWorkTrace(project, capacityUnits, campaignMonth, undefined, terms);
   const remainingMonths =
     remainingWork <= 0 || monthlyInstalmentUnits <= 0
       ? 0
-      : Math.ceil(remainingWork / monthlyInstalmentUnits);
+      : workByMonth !== undefined
+        ? workByMonth.length
+        : Math.ceil(remainingWork / monthlyInstalmentUnits);
+  const scheduleTrace: ConstructionScheduleTrace | undefined =
+    workByMonth === undefined
+      ? undefined
+      : {
+          workByMonth,
+          ...(project.status === "ACCELERATED" && terms !== undefined
+            ? {
+                acceleration: {
+                  workMultiplierBp: terms.workMultiplierBp,
+                  timeBp: terms.timeBp,
+                  monthsAccelerated: monthsSinceAcceleration(project, campaignMonth),
+                },
+              }
+            : {}),
+        };
   return {
     totalCostUnits,
     monthlyInstalmentUnits,
@@ -340,6 +366,7 @@ export function constructionProjectReadout(
             Number(project.completedWork),
             monthlyInstalmentUnits,
             remainingMonths,
+            scheduleTrace,
           ),
         }
       : {}),
@@ -351,6 +378,7 @@ export function buildConstructionProjectQueueWithReadouts(
   nationId: string,
   campaignMonth: string,
   haltedCarryingCostUnits: number | null,
+  terms?: AccelerationTerms,
 ): ConstructionProjectQueueEntry[] {
   const entries = buildConstructionProjectQueue(snapshot, nationId);
   const nation = snapshot.nations.get(nationId);
@@ -385,6 +413,7 @@ export function buildConstructionProjectQueueWithReadouts(
       snapshot.designs.get(entry.designVersionId),
       campaignMonth,
       foreign,
+      terms,
     );
     return {
       ...entry,

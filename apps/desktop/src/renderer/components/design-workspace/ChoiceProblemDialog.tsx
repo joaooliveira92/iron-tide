@@ -1,17 +1,19 @@
 import { OctagonX } from "lucide-react";
 import { formatExplanation } from "../../../shared/explanation-text.js";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogBody,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../ui/alert-dialog.js";
+import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { Badge } from "../ui/badge.js";
+import { Button } from "../ui/button.js";
+import {
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog.js";
+import { findingValue } from "./describeEdit.js";
 import type { ChoiceProblem } from "./useChoiceCheck.js";
 import { SEVERITY_STYLE } from "./validation/severity.js";
 
@@ -26,22 +28,23 @@ export function ChoiceProblemDialog({
   readonly onOpenChange: (open: boolean) => void;
   readonly onUndo: () => void;
 }) {
+  const format = usePresentationFormat();
   return (
-    <AlertDialog open={open && problem !== null} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+    <Dialog open={open && problem !== null} onOpenChange={onOpenChange}>
+      <DialogContent>
         {problem && (
           <>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
                 <OctagonX className="size-5 text-destructive" aria-hidden />
                 This change breaks the design
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {problem.choice}. This leaves the design unable to work as it should; here is what
-                happened and how to fix it.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogBody>
+              </DialogTitle>
+              <DialogDescription>
+                Changing {problem.choice} leaves the design unable to work as it should. Review what
+                happened, then keep the change or undo it.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogBody>
               <ul className="space-y-4">
                 {problem.findings.map((f) => (
                   <li key={f.key} className="space-y-2 rounded-md border p-3 text-sm">
@@ -52,6 +55,7 @@ export function ChoiceProblemDialog({
                       <p className="font-medium">{f.title}</p>
                     </div>
                     <p className="text-muted-foreground">{f.explanation}</p>
+                    {findingValue(f, format) !== undefined && <p>{findingValue(f, format)}</p>}
                     <p>
                       <span className="font-medium">In play: </span>
                       {formatExplanation(f.finding.consequence)}
@@ -69,14 +73,18 @@ export function ChoiceProblemDialog({
                   </li>
                 ))}
               </ul>
-            </AlertDialogBody>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Keep it and fix it myself</AlertDialogCancel>
-              <AlertDialogAction onClick={onUndo}>Undo this choice</AlertDialogAction>
-            </AlertDialogFooter>
+            </DialogBody>
+            <DialogFooter>
+              <DialogClose render={<Button variant="outline" />}>
+                Keep it and fix it myself
+              </DialogClose>
+              <Button variant="destructive" onClick={onUndo}>
+                Undo this choice
+              </Button>
+            </DialogFooter>
           </>
         )}
-      </AlertDialogContent>
-    </AlertDialog>
+      </DialogContent>
+    </Dialog>
   );
 }

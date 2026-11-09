@@ -3,8 +3,31 @@ import type {
   ConstructionCommand,
   ConstructionProjectQueueEntry,
 } from "@bluewave/campaign-engine";
-import type { ConstructionBatchPreview, ForeignConstructionPreview } from "@bluewave/phase-engine";
+import type {
+  ConstructionBatchPreview,
+  ConstructionSteeringPreview,
+  ForeignConstructionPreview,
+} from "@bluewave/phase-engine";
 import type { CommandEnvelope } from "./bridge-contract.js";
+
+export interface ConstructionRebuildTarget {
+  readonly shipId: string;
+  readonly shipName: string;
+  readonly designVersionId: string;
+}
+
+export type ConstructionProjectEntry = ConstructionProjectQueueEntry & {
+  readonly rebuild?: ConstructionRebuildTarget;
+};
+
+export interface ConstructionStudyEntry {
+  readonly designStudyId: string;
+  readonly designVersionId: string;
+  readonly className: string;
+  readonly monthsRemaining: number;
+  readonly costRemaining: number;
+  readonly readyMonth: string;
+}
 
 export interface ConstructionScreenProjection {
   readonly revision: number;
@@ -19,13 +42,16 @@ export interface ConstructionScreenProjection {
     readonly exemptNewConstructionMassKg: number;
     readonly dockExpansionDurationMonths: number;
     readonly dockExpansionNextStepKg: number | null;
+    readonly dockExpansionReadyMonth: string | null;
     readonly dockPossessions: readonly {
       readonly id: string;
       readonly name: string;
     }[];
   };
   readonly designs: readonly CompiledDesignVersion[];
-  readonly projects: readonly ConstructionProjectQueueEntry[];
+  readonly studies: readonly ConstructionStudyEntry[];
+  readonly projects: readonly ConstructionProjectEntry[];
+  readonly steering: Readonly<Record<string, ConstructionSteeringPreview>>;
   readonly workspace: {
     readonly commands: readonly ConstructionCommand[];
     readonly treasuryReserved: number;

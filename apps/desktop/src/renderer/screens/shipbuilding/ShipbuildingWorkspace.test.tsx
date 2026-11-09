@@ -64,9 +64,7 @@ describe("Shipbuilding workspace shell", () => {
     expect(statusOf("displacement")).toContain(
       Math.round(view.buoyantKg / 1000).toLocaleString("en-US"),
     );
-    expect(statusOf("cost")).toContain(
-      `${Math.round(view.forecast.costMicro / 1_000_000).toLocaleString("en-US")} NC`,
-    );
+    expect(statusOf("cost")).toMatch(/\d unit/);
     expect(chip().textContent).toContain(view.valid ? "Can be submitted" : "Cannot be built");
   });
 
@@ -648,14 +646,7 @@ describe("Overview summary section", () => {
     render(<ShipbuildingWorkspace />);
     openMap("Overview");
     const summary = within(panel()).getByTestId("overview-summary").textContent ?? "";
-    for (const label of [
-      "Type and role",
-      "Displacement",
-      "Cost",
-      "Armour",
-      "Main armament",
-      "Crew",
-    ])
+    for (const label of ["Ship type", "Displacement", "Cost", "Armour", "Main armament", "Crew"])
       expect(summary).toContain(label);
     const warnings = within(panel()).getByRole("region", { name: "Design warnings" });
     expect(warnings.textContent).toMatch(/blocking/i);

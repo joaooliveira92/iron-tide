@@ -30,6 +30,12 @@ const MILLI_KNOTS_PER_KNOT = 1_000;
 
 const pad = (degrees: number): string => String(degrees).padStart(3, "0");
 
+const courseTextFor = (headingDeg: number | undefined): string =>
+  headingDeg === undefined ? "" : pad(compassFromHeading(headingDeg));
+
+const speedTextFor = (speedKnots: number | undefined): string =>
+  speedKnots === undefined ? "" : String(speedKnots);
+
 export function UnitCommandPanel(props: UnitCommandPanelProps) {
   const { view, selectedShipId, orderFor, acceptedOrders } = props;
   const ship = selectedShip(view, selectedShipId);
@@ -38,16 +44,20 @@ export function UnitCommandPanel(props: UnitCommandPanelProps) {
   const division = divisionId === null ? undefined : orderFor(divisionId);
   const accepted = divisionId === null ? undefined : acceptedOrders[divisionId];
 
-  const [courseText, setCourseText] = useState("");
-  const [speedText, setSpeedText] = useState("");
+  const standingCourse = division?.courseDeg;
+  const standingSpeed = division?.speedKnots;
+  const formSource = `${String(divisionId)}|${String(standingCourse)}|${String(standingSpeed)}`;
+  const [syncedSource, setSyncedSource] = useState(formSource);
+  const [courseText, setCourseText] = useState(() => courseTextFor(standingCourse));
+  const [speedText, setSpeedText] = useState(() => speedTextFor(standingSpeed));
   const [touched, setTouched] = useState(false);
 
-  useEffect(() => {
+  if (syncedSource !== formSource) {
+    setSyncedSource(formSource);
     setTouched(false);
-    const standing = division?.courseDeg;
-    setCourseText(standing === undefined ? "" : pad(compassFromHeading(standing)));
-    setSpeedText(division?.speedKnots === undefined ? "" : String(division.speedKnots));
-  }, [divisionId, division?.courseDeg, division?.speedKnots]);
+    setCourseText(courseTextFor(standingCourse));
+    setSpeedText(speedTextFor(standingSpeed));
+  }
 
   useEffect(() => {
     const parsed = parseCourse(courseText);

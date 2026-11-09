@@ -16,14 +16,15 @@ declare const TypeId = "~effect/ScopedCache";
  * **When to use**
  *
  * Use to cache values that acquire scoped resources and must release those
- * resources when entries expire, are evicted, or are invalidated.
+ * resources when entries are removed or the owning scope closes.
  *
  * **Details**
  *
  * Concurrent requests for the same key share the same in-flight lookup.
  * Entries can expire based on the lookup exit, are evicted when capacity is
- * exceeded, and release their entry scopes when invalidated, evicted, expired,
- * or when the cache's owning scope closes.
+ * exceeded, and release their entry scopes when invalidated, evicted, or when
+ * the cache's owning scope closes. Expired entries are cleaned up lazily on
+ * access to that key or a `keys`/`values`/`entries` scan, never in the background.
  *
  * @see {@link make} for creating a scoped cache with a fixed time-to-live
  * @see {@link makeWith} for creating a scoped cache with dynamic time-to-live
@@ -101,8 +102,9 @@ export interface Entry<A, E> {
  * **Details**
  *
  * The cache must be constructed in a `Scope`. Each lookup runs in its own entry
- * scope, and that scope is closed when the entry expires, is invalidated, is
- * evicted by capacity, or when the cache's owning scope closes.
+ * scope, and that scope is closed when the entry is invalidated, is evicted by
+ * capacity, or when the cache's owning scope closes. Expired entries are cleaned
+ * up on access to that key or a `keys`/`values`/`entries` scan, not in the background.
  * `requireServicesAt` controls whether lookup services are captured at
  * construction time or required when lookup operations run.
  *
@@ -130,8 +132,9 @@ export declare const makeWith: <Key, A, E = never, R = never, ServiceMode extend
  *
  * This is the constant-TTL variant of `makeWith`: values are acquired by the
  * lookup effect in per-entry scopes, capacity can evict older entries, and
- * entry scopes are closed when entries expire, are invalidated, are evicted, or
- * when the cache's owning scope closes.
+ * entry scopes are closed when entries are invalidated, are evicted, or when
+ * the cache's owning scope closes. Expiry cleanup is lazy: expired entries close
+ * on access to that key or a `keys`/`values`/`entries` scan, not in the background.
  *
  * @see {@link makeWith} for computing time-to-live from each lookup result and key
  *

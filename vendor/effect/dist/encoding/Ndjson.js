@@ -9,14 +9,20 @@
  * @since 4.0.0
  */
 import * as Arr from "../Array.js";
+import * as Cause from "../Cause.js";
 import * as Channel from "../Channel.js";
 import * as ChannelSchema from "../ChannelSchema.js";
 import * as Data from "../Data.js";
 import * as Effect from "../Effect.js";
-import { dual, identity } from "../Function.js";
+import { dual } from "../Function.js";
 import * as Predicate from "../Predicate.js";
+import * as Pull from "../Pull.js";
 const NdjsonErrorTypeId = "~effect/encoding/Ndjson/NdjsonError";
 const encoder = /*#__PURE__*/new TextEncoder();
+const utf8Decoder = /*#__PURE__*/new TextDecoder("utf-8", {
+  fatal: true,
+  ignoreBOM: true
+});
 /**
  * Error raised when NDJSON encoding or decoding fails.
  *
@@ -24,6 +30,10 @@ const encoder = /*#__PURE__*/new TextEncoder();
  *
  * The `kind` field identifies whether the failure happened while packing or
  * unpacking, and `cause` preserves the original error.
+ *
+ * Decoders also set `reason` to say why a line was rejected, and
+ * `unterminated` when that line is the final line of the input and has no
+ * line terminator.
  *
  * @stability unstable
  * @category errors
@@ -117,6 +127,48 @@ export const encodeSchema = schema => () => Channel.pipeTo(ChannelSchema.encode(
  * @since 4.0.0
  */
 export const encodeSchemaString = schema => () => Channel.pipeTo(ChannelSchema.encode(schema)(), encodeString());
+const makeDecodePull = (upstream, step, flush) => {
+  let failure;
+  let done;
+  const emit = (out, error) => {
+    failure = error;
+    if (Arr.isArrayNonEmpty(out)) return Effect.succeed(out);
+    return error !== undefined ? Effect.fail(error) : undefined;
+  };
+  const pull = Effect.suspend(() => {
+    if (failure !== undefined) return Effect.fail(failure);
+    if (done !== undefined) return Cause.done(done.leftover);
+    return Pull.matchEffect(upstream, {
+      onSuccess: input => {
+        const out = [];
+        return emit(out, step(input, out)) ?? pull;
+      },
+      onFailure: Effect.failCause,
+      onDone: leftover => {
+        done = {
+          leftover
+        };
+        const out = [];
+        return emit(out, flush(out)) ?? Cause.done(leftover);
+      }
+    });
+  });
+  return pull;
+};
+const parseLine = (line, out, ignoreEmptyLines, unterminated) => {
+  if (ignoreEmptyLines && /^[ \t]*$/.test(line)) return;
+  try {
+    out.push(JSON.parse(line));
+  } catch (cause) {
+    return new NdjsonError({
+      kind: "Unpack",
+      reason: "InvalidJson",
+      unterminated,
+      cause
+    });
+  }
+};
+const flushNothing = () => undefined;
 /**
  * Creates a channel that parses NDJSON string chunks into values.
  *
@@ -127,45 +179,145 @@ export const encodeSchemaString = schema => () => Channel.pipeTo(ChannelSchema.e
  *
  * **Details**
  *
- * Lines may span input chunks.
+ * Lines may span input chunks. `\n`, `\r\n` and a bare `\r` end a line. The
+ * first line that fails to parse fails the channel with
+ * `reason: "InvalidJson"`, after the lines before it have been emitted.
  *
  * **Gotchas**
  *
- * Set `ignoreEmptyLines` to skip blank lines before calling `JSON.parse`;
- * otherwise blank lines are parsed and fail as invalid JSON.
+ * Set `ignoreEmptyLines` to skip empty lines and lines containing only spaces
+ * or tabs before calling `JSON.parse`; otherwise these lines fail as invalid
+ * JSON.
  *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
-export const decodeString = options => {
-  const lines = Channel.splitLines().pipe(options?.ignoreEmptyLines === true ? Channel.filterArray(line => line.length > 0) : identity);
-  return Channel.mapEffect(lines, chunk => {
-    try {
-      return Effect.succeed(Arr.map(chunk, line => JSON.parse(line)));
-    } catch (cause) {
-      return Effect.fail(new NdjsonError({
-        kind: "Unpack",
-        cause
-      }));
+export const decodeString = options => Channel.fromTransform((upstream, scope) => {
+  const ignoreEmptyLines = options?.ignoreEmptyLines === true;
+  // splitLines only emits a line after its input has ended when that line
+  // has no terminator
+  let ended = false;
+  const input = Pull.matchEffect(upstream, {
+    onSuccess: Effect.succeed,
+    onFailure: Effect.failCause,
+    onDone: leftover => {
+      ended = true;
+      return Cause.done(leftover);
     }
   });
-};
+  return Effect.map(Channel.toTransform(Channel.splitLines())(input, scope), lines => makeDecodePull(lines, (chunk, out) => {
+    for (const line of chunk) {
+      const error = parseLine(line, out, ignoreEmptyLines, ended);
+      if (error !== undefined) return error;
+    }
+  }, flushNothing));
+});
+const LF = 0x0a;
+const CR = 0x0d;
+const emptyBytes = /*#__PURE__*/new Uint8Array(0);
 /**
  * Creates a channel that decodes UTF-8 byte chunks and parses them as NDJSON.
  *
  * **Details**
  *
- * Lines may span input chunks, and `ignoreEmptyLines` controls whether blank
- * lines are skipped before JSON parsing.
+ * Lines may span input chunks. `\n`, `\r\n` and a bare `\r` end a line, and a
+ * leading UTF-8 BOM is skipped. `ignoreEmptyLines` skips empty lines and lines
+ * containing only spaces or tabs before JSON parsing.
+ *
+ * The first bad line fails the channel after the lines before it have been
+ * emitted. A line that is not valid UTF-8 fails with `reason: "InvalidUtf8"`
+ * and a line that is not valid JSON fails with `reason: "InvalidJson"`.
+ *
+ * `maxLineBytes` limits the UTF-8 bytes of a line, not counting its
+ * terminator. A longer line fails with `reason: "LineTooLarge"` as soon as the
+ * limit is passed, without reading the rest of the line. Lines are unbounded
+ * by default.
  *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
-export const decode = options => {
-  return Channel.pipeTo(Channel.decodeText(), decodeString(options));
-};
+export const decode = options => Channel.fromTransform((upstream, _scope) => Effect.sync(() => {
+  const ignoreEmptyLines = options?.ignoreEmptyLines === true;
+  const maxLineBytes = options?.maxLineBytes ?? Number.POSITIVE_INFINITY;
+  // The first decoder strips a leading BOM. `\n` and `\r` never occur
+  // inside a multi-byte character, so each line is decoded on its own.
+  let decoder = new TextDecoder("utf-8", {
+    fatal: true
+  });
+  // Bytes of the current line from earlier chunks
+  let pending = [];
+  let pendingBytes = 0;
+  // The previous byte was `\r`, so a `\n` right after it ends nothing
+  let afterCR = false;
+  const takeLine = (chunk, start, end) => {
+    if (pendingBytes === 0) return chunk.subarray(start, end);
+    const line = new Uint8Array(pendingBytes + end - start);
+    let offset = 0;
+    for (const bytes of pending) {
+      line.set(bytes, offset);
+      offset += bytes.length;
+    }
+    line.set(chunk.subarray(start, end), offset);
+    pending = [];
+    pendingBytes = 0;
+    return line;
+  };
+  const decodeLine = (bytes, out, unterminated) => {
+    let line;
+    try {
+      line = decoder.decode(bytes);
+    } catch (cause) {
+      return new NdjsonError({
+        kind: "Unpack",
+        reason: "InvalidUtf8",
+        unterminated,
+        cause
+      });
+    }
+    const firstLine = decoder !== utf8Decoder;
+    decoder = utf8Decoder;
+    // A stripped BOM alone is not an unterminated record.
+    if (firstLine && unterminated && line.length === 0) return;
+    return parseLine(line, out, ignoreEmptyLines, unterminated);
+  };
+  const step = (chunks, out) => {
+    for (const chunk of chunks) {
+      let start = 0;
+      for (let i = 0; i < chunk.length; i++) {
+        const byte = chunk[i];
+        if (byte === LF || byte === CR) {
+          if (byte === LF && afterCR) {
+            start = i + 1;
+          } else {
+            const error = decodeLine(takeLine(chunk, start, i), out, false);
+            if (error !== undefined) return error;
+            start = i + 1;
+          }
+          afterCR = byte === CR;
+        } else {
+          afterCR = false;
+          if (pendingBytes + i + 1 - start > maxLineBytes) {
+            return new NdjsonError({
+              kind: "Unpack",
+              reason: "LineTooLarge",
+              unterminated: false,
+              cause: new RangeError(`NDJSON line exceeds maxLineBytes of ${maxLineBytes}`)
+            });
+          }
+        }
+      }
+      if (start < chunk.length) {
+        // Copy, so a reused upstream buffer cannot change the line
+        pending.push(chunk.slice(start));
+        pendingBytes += chunk.length - start;
+      }
+    }
+  };
+  const flush = out => pendingBytes === 0 ? undefined : decodeLine(takeLine(emptyBytes, 0, 0), out, true);
+  return makeDecodePull(upstream, step, flush);
+}));
 /**
  * Creates an NDJSON byte decoder channel for values of a schema.
  *

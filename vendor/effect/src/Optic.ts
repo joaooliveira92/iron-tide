@@ -1352,49 +1352,7 @@ export const get: {
    */
   <S, A>(self: NoInfer<S>, optic: Lens<S, A>): A
 } = dual<
-  // ---------------------------------------------
-  // Derived APIs
-  // ---------------------------------------------
-
-  /**
-   * Reads the focused value from a `Lens`.
-   *
-   * **When to use**
-   *
-   * Use when the optic always focuses exactly one value.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms.
-   *
-   * @see {@link getResult} for optics whose focus may be absent
-   *
-   * @stability stable
-   * @category getters
-   * @since 4.0.0
-   */
   <S, A>(optic: Lens<S, A>) => (self: NoInfer<S>) => A,
-  // ---------------------------------------------
-  // Derived APIs
-  // ---------------------------------------------
-
-  /**
-   * Reads the focused value from a `Lens`.
-   *
-   * **When to use**
-   *
-   * Use when the optic always focuses exactly one value.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms.
-   *
-   * @see {@link getResult} for optics whose focus may be absent
-   *
-   * @stability stable
-   * @category getters
-   * @since 4.0.0
-   */
   <S, A>(self: NoInfer<S>, optic: Lens<S, A>) => A
 >(2, (self, optic) => optic.get(self))
 
@@ -1453,41 +1411,7 @@ export const getResult: {
    */
   <S, A>(self: NoInfer<S>, optic: Optional<S, A>): Result.Result<A, SchemaIssue.Issue>
 } = dual<
-  /**
-   * Attempts to read the focused value from an `Optional`.
-   *
-   * **When to use**
-   *
-   * Use when the optic may not focus and you need the failure as a `Result`.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms.
-   *
-   * @see {@link get} for optics that always focus
-   *
-   * @stability stable
-   * @category getters
-   * @since 4.0.0
-   */
   <S, A>(optic: Optional<S, A>) => (self: NoInfer<S>) => Result.Result<A, SchemaIssue.Issue>,
-  /**
-   * Attempts to read the focused value from an `Optional`.
-   *
-   * **When to use**
-   *
-   * Use when the optic may not focus and you need the failure as a `Result`.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms.
-   *
-   * @see {@link get} for optics that always focus
-   *
-   * @stability stable
-   * @category getters
-   * @since 4.0.0
-   */
   <S, A>(self: NoInfer<S>, optic: Optional<S, A>) => Result.Result<A, SchemaIssue.Issue>
 >(2, (self, optic) => optic.getResult(self))
 
@@ -1546,41 +1470,7 @@ export const set: {
    */
   <S, A>(self: NoInfer<A>, optic: Prism<S, A>): S
 } = dual<
-  /**
-   * Builds a source value from a focused value using a `Prism`.
-   *
-   * **When to use**
-   *
-   * Use when the optic can construct the source without an existing source value.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms. The focused value is `self`.
-   *
-   * @see {@link replace} for updates that use an existing source
-   *
-   * @stability stable
-   * @category transforming
-   * @since 4.0.0
-   */
   <S, A>(optic: Prism<S, A>) => (self: NoInfer<A>) => S,
-  /**
-   * Builds a source value from a focused value using a `Prism`.
-   *
-   * **When to use**
-   *
-   * Use when the optic can construct the source without an existing source value.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms. The focused value is `self`.
-   *
-   * @see {@link replace} for updates that use an existing source
-   *
-   * @stability stable
-   * @category transforming
-   * @since 4.0.0
-   */
   <S, A>(self: NoInfer<A>, optic: Prism<S, A>) => S
 >(2, (self, optic) => optic.set(self))
 
@@ -1639,41 +1529,7 @@ export const replace: {
    */
   <S, A>(self: NoInfer<S>, optic: Optional<S, A>, value: NoInfer<A>): S
 } = dual<
-  /**
-   * Replaces the focused value in a source.
-   *
-   * **When to use**
-   *
-   * Use when a failed focus should leave the source unchanged.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms.
-   *
-   * @see {@link replaceResult} for an explicit replacement failure
-   *
-   * @stability stable
-   * @category transforming
-   * @since 4.0.0
-   */
   <S, A>(optic: Optional<S, A>, value: NoInfer<A>) => (self: NoInfer<S>) => S,
-  /**
-   * Replaces the focused value in a source.
-   *
-   * **When to use**
-   *
-   * Use when a failed focus should leave the source unchanged.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms.
-   *
-   * @see {@link replaceResult} for an explicit replacement failure
-   *
-   * @stability stable
-   * @category transforming
-   * @since 4.0.0
-   */
   <S, A>(self: NoInfer<S>, optic: Optional<S, A>, value: NoInfer<A>) => S
 >(3, (self, optic, value) => optic.replace(value, self))
 
@@ -1732,42 +1588,15 @@ export const replaceResult: {
    */
   <S, A>(self: NoInfer<S>, optic: Optional<S, A>, value: NoInfer<A>): Result.Result<S, SchemaIssue.Issue>
 } = dual<
-  /**
-   * Attempts to replace the focused value in a source.
-   *
-   * **When to use**
-   *
-   * Use when you need an explicit `Result` for a replacement failure.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms.
-   *
-   * @see {@link replace} for returning the original source on failure
-   *
-   * @stability stable
-   * @category transforming
-   * @since 4.0.0
-   */
-  <S, A>(optic: Optional<S, A>, value: NoInfer<A>) => (self: NoInfer<S>) => Result.Result<S, SchemaIssue.Issue>,
-  /**
-   * Attempts to replace the focused value in a source.
-   *
-   * **When to use**
-   *
-   * Use when you need an explicit `Result` for a replacement failure.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms.
-   *
-   * @see {@link replace} for returning the original source on failure
-   *
-   * @stability stable
-   * @category transforming
-   * @since 4.0.0
-   */
-  <S, A>(self: NoInfer<S>, optic: Optional<S, A>, value: NoInfer<A>) => Result.Result<S, SchemaIssue.Issue>
+  <S, A>(
+    optic: Optional<S, A>,
+    value: NoInfer<A>
+  ) => (self: NoInfer<S>) => Result.Result<S, SchemaIssue.Issue>,
+  <S, A>(
+    self: NoInfer<S>,
+    optic: Optional<S, A>,
+    value: NoInfer<A>
+  ) => Result.Result<S, SchemaIssue.Issue>
 >(3, (self, optic, value) => optic.replaceResult(value, self))
 
 /**
@@ -1832,43 +1661,10 @@ export const modify: {
     f: (value: NoInfer<A>) => NoInfer<A>
   ): S
 } = dual<
-  /**
-   * Transforms the focused value in a source.
-   *
-   * **When to use**
-   *
-   * Use when you want to update a focus with a function.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms. A failed focus leaves the
-   * source unchanged.
-   *
-   * @see {@link modifyAll} for transforming every value in a traversal
-   *
-   * @stability stable
-   * @category transforming
-   * @since 4.0.0
-   */
-  <S, A>(optic: Optional<S, A>, f: (value: NoInfer<A>) => NoInfer<A>) => (self: NoInfer<S>) => S,
-  /**
-   * Transforms the focused value in a source.
-   *
-   * **When to use**
-   *
-   * Use when you want to update a focus with a function.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms. A failed focus leaves the
-   * source unchanged.
-   *
-   * @see {@link modifyAll} for transforming every value in a traversal
-   *
-   * @stability stable
-   * @category transforming
-   * @since 4.0.0
-   */
+  <S, A>(
+    optic: Optional<S, A>,
+    f: (value: NoInfer<A>) => NoInfer<A>
+  ) => (self: NoInfer<S>) => S,
   <S, A>(
     self: NoInfer<S>,
     optic: Optional<S, A>,
@@ -1994,83 +1790,7 @@ export const getAll: {
    */
   <S, A>(self: NoInfer<S>, traversal: Traversal<S, A>): Array<A>
 } = dual<
-  /**
-   * Extracts all values focused by a `Traversal` as a plain mutable array.
-   *
-   * **When to use**
-   *
-   * Use when you need the focused values as a simple `Array<A>` for further
-   *   processing.
-   *
-   * **Details**
-   *
-   * - Returns an empty array when the traversal cannot focus.
-   * - Always returns a fresh array (safe to mutate).
-   * - Supports both data-first and data-last forms.
-   *
-   * **Example** (Collecting positive numbers)
-   *
-   * ```ts import.meta.vitest
-   * import { Optic, Schema } from "effect"
-   *
-   * type S = { readonly values: ReadonlyArray<number> }
-   *
-   * const _pos = Optic.id<S>()
-   *   .key("values")
-   *   .forEach((n) => n.check(Schema.isGreaterThan(0)))
-   *
-   * const getPositive = Optic.getAll(_pos)
-   *
-   * getPositive({ values: [3, -1, 5] }) // => [3, 5]
-   *
-   * getPositive({ values: [-1, -2] }) // => []
-   * ```
-   *
-   * @see {@link Traversal} — the optic type this operates on
-   *
-   * @stability stable
-   * @category getters
-   * @since 4.0.0
-   */
   <S, A>(traversal: Traversal<S, A>) => (self: NoInfer<S>) => Array<A>,
-  /**
-   * Extracts all values focused by a `Traversal` as a plain mutable array.
-   *
-   * **When to use**
-   *
-   * Use when you need the focused values as a simple `Array<A>` for further
-   *   processing.
-   *
-   * **Details**
-   *
-   * - Returns an empty array when the traversal cannot focus.
-   * - Always returns a fresh array (safe to mutate).
-   * - Supports both data-first and data-last forms.
-   *
-   * **Example** (Collecting positive numbers)
-   *
-   * ```ts import.meta.vitest
-   * import { Optic, Schema } from "effect"
-   *
-   * type S = { readonly values: ReadonlyArray<number> }
-   *
-   * const _pos = Optic.id<S>()
-   *   .key("values")
-   *   .forEach((n) => n.check(Schema.isGreaterThan(0)))
-   *
-   * const getPositive = Optic.getAll(_pos)
-   *
-   * getPositive({ values: [3, -1, 5] }) // => [3, 5]
-   *
-   * getPositive({ values: [-1, -2] }) // => []
-   * ```
-   *
-   * @see {@link Traversal} — the optic type this operates on
-   *
-   * @stability stable
-   * @category getters
-   * @since 4.0.0
-   */
   <S, A>(self: NoInfer<S>, traversal: Traversal<S, A>) => Array<A>
 >(2, (self, traversal) =>
   Result.match(traversal.getResult(self), {
@@ -2143,45 +1863,10 @@ export const modifyAll: {
     f: (value: NoInfer<A>) => NoInfer<A>
   ): S
 } = dual<
-  /**
-   * Transforms every value focused by a `Traversal`.
-   *
-   * **When to use**
-   *
-   * Use when you want to update each value selected by a traversal.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms. A failed traversal leaves the
-   * source unchanged.
-   *
-   * @see {@link modify} for transforming the focus as a whole
-   * @see {@link getAll} for reading every focused value
-   *
-   * @stability stable
-   * @category transforming
-   * @since 4.0.0
-   */
-  <S, A>(traversal: Traversal<S, A>, f: (value: NoInfer<A>) => NoInfer<A>) => (self: NoInfer<S>) => S,
-  /**
-   * Transforms every value focused by a `Traversal`.
-   *
-   * **When to use**
-   *
-   * Use when you want to update each value selected by a traversal.
-   *
-   * **Details**
-   *
-   * Supports both data-first and data-last forms. A failed traversal leaves the
-   * source unchanged.
-   *
-   * @see {@link modify} for transforming the focus as a whole
-   * @see {@link getAll} for reading every focused value
-   *
-   * @stability stable
-   * @category transforming
-   * @since 4.0.0
-   */
+  <S, A>(
+    traversal: Traversal<S, A>,
+    f: (value: NoInfer<A>) => NoInfer<A>
+  ) => (self: NoInfer<S>) => S,
   <S, A>(
     self: NoInfer<S>,
     traversal: Traversal<S, A>,

@@ -8,7 +8,7 @@ import {
   type CampaignConfiguration,
   type CommitMonthResponse,
 } from "@bluewave/campaign-engine";
-import { SafeInt } from "@bluewave/contracts";
+import { SafeInt, bp, money } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
@@ -240,6 +240,67 @@ describe("construction commands", () => {
         expect(entry.readout!.haltedCarryingCostUnits).not.toBeNull();
       else expect(entry.readout!.haltedCarryingCostUnits).toBeNull();
     }
+  });
+
+  it("lists the player's open design studies with months, cost remaining and the ready month", async () => {
+    const saveDir = resolve(saveRoot, "save-studies");
+    registerProductionSession("session-studies", saveDir);
+    const record = getCampaignSession("session-studies")!;
+    const snapshot = record.state.snapshot;
+    const uk = snapshot.nations.get("uk")!;
+    const base = [...snapshot.designs.values()].find((d) => d.nationId === "uk")!;
+    const study = (id: string, status: "IN_PROGRESS" | "COMPLETED", workDone: number) => ({
+      designStudyId: `study_${id}`,
+      nationId: "uk",
+      builderContext: "NATIONAL" as const,
+      baselineDesignVersionId: "NONE",
+      designFamilyId: base.designFamilyId,
+      newFamily: true,
+      derived: false,
+      failedCriteria: [],
+      baseStudyWork: 5,
+      baseStudyCost: money(5000),
+      discountBp: bp(0),
+      finalStudyWork: 5,
+      finalStudyCost: money(5000),
+      workDone,
+      costPaid: money(workDone * 1000),
+      status,
+      startMonth: "1880-01",
+      completionMonth: status === "COMPLETED" ? "1880-01" : null,
+      rulesetVersion: snapshot.rulesetVersion,
+      formulaVersion: "design_study_v1" as const,
+      projectHash: "h",
+      design: { ...base, designVersionId: id, designId: id, className: `Class ${id}` },
+    });
+    const withStudies = {
+      ...snapshot,
+      nations: new Map(snapshot.nations).set("uk", {
+        ...uk,
+        designStudies: [study("des_open", "IN_PROGRESS", 2), study("des_done", "COMPLETED", 5)],
+      }),
+    };
+    const state = toSaveableState({
+      snapshot: withStudies,
+      envelope: createEnvelope("campaign-snapshot", withStudies.compatibilityVersion, withStudies),
+      rawHash: "",
+    });
+    new SaveStore().save(state, saveDir);
+    registerCampaignSession({ ...record, state });
+
+    const result = await inspectConstructionScreen("session-studies");
+    expect(result.outcome).toBe("success");
+    if (result.outcome !== "success") return;
+    expect(result.value.studies).toEqual([
+      {
+        designStudyId: "study_des_open",
+        designVersionId: "des_open",
+        className: "Class des_open",
+        monthsRemaining: 3,
+        costRemaining: 3000,
+        readyMonth: "1880-04",
+      },
+    ]);
   });
 
   it("submitting against a real design queues a real project, visible on next inspect and round-tripped through save/load", async () => {

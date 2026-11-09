@@ -32,6 +32,7 @@ export interface CommandBarProps {
   readonly onStartFromReference: () => void;
   readonly shipTypeName: string;
   readonly shipTypeIcon: ReactNode;
+  readonly developedFrom: string;
   readonly canUndo: boolean;
   readonly canRedo: boolean;
   readonly onUndo: () => void;
@@ -57,6 +58,7 @@ export function CommandBar({
   onStartFromReference,
   shipTypeName,
   shipTypeIcon,
+  developedFrom,
   canUndo,
   canRedo,
   onUndo,
@@ -102,6 +104,9 @@ export function CommandBar({
             <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
           </Button>
         </Tip>
+        <p className="min-w-0 truncate text-xs text-muted-foreground">
+          Developed from {developedFrom}
+        </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <ButtonGroup aria-label="History">

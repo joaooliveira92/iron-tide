@@ -216,7 +216,7 @@ export declare const toUpperCase: <S extends string>(self: S) => Uppercase<S>;
  */
 export declare const toLowerCase: <T extends string>(self: T) => Lowercase<T>;
 /**
- * Capitalizes the first character of a string.
+ * Capitalizes the first character (Unicode code point) of a string.
  *
  * **Example** (Capitalizing a string)
  *
@@ -225,6 +225,7 @@ export declare const toLowerCase: <T extends string>(self: T) => Lowercase<T>;
  *
  * pipe("abc", String.capitalize) // => "Abc"
  * String.capitalize("hello") // => "Hello"
+ * String.capitalize("𐐨foo") // => "𐐀foo"
  * ```
  *
  * @stability stable
@@ -233,7 +234,7 @@ export declare const toLowerCase: <T extends string>(self: T) => Lowercase<T>;
  */
 export declare const capitalize: <T extends string>(self: T) => Capitalize<T>;
 /**
- * Uncapitalizes the first character of a string.
+ * Uncapitalizes the first character (Unicode code point) of a string.
  *
  * **Example** (Uncapitalizing a string)
  *
@@ -242,6 +243,7 @@ export declare const capitalize: <T extends string>(self: T) => Capitalize<T>;
  *
  * pipe("ABC", String.uncapitalize) // => "aBC"
  * String.uncapitalize("Hello") // => "hello"
+ * String.uncapitalize("𐐀FOO") // => "𐐨FOO"
  * ```
  *
  * @stability stable
@@ -1324,6 +1326,12 @@ export declare const stripMargin: (self: string) => string;
 /**
  * Converts a snake_case string to camelCase.
  *
+ * **Details**
+ *
+ * Keeps the first character, then replaces each later underscore and the
+ * character after it with that character uppercased. A trailing underscore is
+ * dropped. Input made only of an even number of underscores returns `""`.
+ *
  * **Example** (Converting snake_case to camelCase)
  *
  * ```ts import.meta.vitest
@@ -1340,6 +1348,12 @@ export declare const stripMargin: (self: string) => string;
 export declare const snakeToCamel: (self: string) => string;
 /**
  * Converts a snake_case string to PascalCase.
+ *
+ * **Details**
+ *
+ * Uppercases the first character, then replaces each later underscore and the
+ * character after it with that character uppercased. A trailing underscore is
+ * dropped. Input made only of an even number of underscores returns `""`.
  *
  * **Example** (Converting snake_case to PascalCase)
  *
@@ -1573,6 +1587,9 @@ export declare const constantCase: (self: string) => string;
  *
  * Unlike {@link constantCase}, digit-letter boundaries are not split. For
  * example, `"api-v2 xml"` becomes `"API_V2_XML"`.
+ *
+ * `configCase` is not idempotent: `"field2value"` becomes `"FIELD2VALUE"`, and
+ * applying it again gives `"FIELD2_VALUE"`.
  *
  * @see {@link constantCase} for standard uppercase underscore-separated output
  * @stability stable

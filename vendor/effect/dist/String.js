@@ -164,7 +164,7 @@ export const toUpperCase = self => self.toUpperCase();
  */
 export const toLowerCase = self => self.toLowerCase();
 /**
- * Capitalizes the first character of a string.
+ * Capitalizes the first character (Unicode code point) of a string.
  *
  * **Example** (Capitalizing a string)
  *
@@ -173,6 +173,7 @@ export const toLowerCase = self => self.toLowerCase();
  *
  * pipe("abc", String.capitalize) // => "Abc"
  * String.capitalize("hello") // => "Hello"
+ * String.capitalize("𐐨foo") // => "𐐀foo"
  * ```
  *
  * @stability stable
@@ -180,11 +181,11 @@ export const toLowerCase = self => self.toLowerCase();
  * @since 2.0.0
  */
 export const capitalize = self => {
-  if (self.length === 0) return self;
-  return toUpperCase(self[0]) + self.slice(1);
+  const [first = ""] = self;
+  return toUpperCase(first) + self.slice(first.length);
 };
 /**
- * Uncapitalizes the first character of a string.
+ * Uncapitalizes the first character (Unicode code point) of a string.
  *
  * **Example** (Uncapitalizing a string)
  *
@@ -193,6 +194,7 @@ export const capitalize = self => {
  *
  * pipe("ABC", String.uncapitalize) // => "aBC"
  * String.uncapitalize("Hello") // => "hello"
+ * String.uncapitalize("𐐀FOO") // => "𐐨FOO"
  * ```
  *
  * @stability stable
@@ -200,8 +202,8 @@ export const capitalize = self => {
  * @since 2.0.0
  */
 export const uncapitalize = self => {
-  if (self.length === 0) return self;
-  return toLowerCase(self[0]) + self.slice(1);
+  const [first = ""] = self;
+  return toLowerCase(first) + self.slice(first.length);
 };
 /**
  * Replaces matches in a string using `String.prototype.replace`.
@@ -883,6 +885,12 @@ export const stripMargin = self => stripMarginWith(self, "|");
 /**
  * Converts a snake_case string to camelCase.
  *
+ * **Details**
+ *
+ * Keeps the first character, then replaces each later underscore and the
+ * character after it with that character uppercased. A trailing underscore is
+ * dropped. Input made only of an even number of underscores returns `""`.
+ *
  * **Example** (Converting snake_case to camelCase)
  *
  * ```ts import.meta.vitest
@@ -897,15 +905,21 @@ export const stripMargin = self => stripMarginWith(self, "|");
  * @since 2.0.0
  */
 export const snakeToCamel = self => {
-  if (self.length === 0) return self;
+  if (self.length === 0 || self.length % 2 === 0 && self[0] === "_" && /^_+$/.test(self)) return "";
   let str = self[0];
   for (let i = 1; i < self.length; i++) {
-    str += self[i] === "_" ? self[++i].toUpperCase() : self[i];
+    str += self[i] === "_" ? self.charAt(++i).toUpperCase() : self[i];
   }
   return str;
 };
 /**
  * Converts a snake_case string to PascalCase.
+ *
+ * **Details**
+ *
+ * Uppercases the first character, then replaces each later underscore and the
+ * character after it with that character uppercased. A trailing underscore is
+ * dropped. Input made only of an even number of underscores returns `""`.
  *
  * **Example** (Converting snake_case to PascalCase)
  *
@@ -921,10 +935,10 @@ export const snakeToCamel = self => {
  * @since 2.0.0
  */
 export const snakeToPascal = self => {
-  if (self.length === 0) return self;
+  if (self.length === 0 || self.length % 2 === 0 && self[0] === "_" && /^_+$/.test(self)) return "";
   let str = self[0].toUpperCase();
   for (let i = 1; i < self.length; i++) {
-    str += self[i] === "_" ? self[++i].toUpperCase() : self[i];
+    str += self[i] === "_" ? self.charAt(++i).toUpperCase() : self[i];
   }
   return str;
 };
@@ -1099,6 +1113,7 @@ const normalizeCase = (input, splitRegExp, stripRegExp, delimiter, transform) =>
   while (result.charAt(end - 1) === "\0") {
     end--;
   }
+  if (start >= end) return "";
   // Transform each token independently.
   return result.slice(start, end).split("\0").map(transform).join(delimiter);
 };
@@ -1193,6 +1208,9 @@ export const constantCase = /*#__PURE__*/noCase({
  *
  * Unlike {@link constantCase}, digit-letter boundaries are not split. For
  * example, `"api-v2 xml"` becomes `"API_V2_XML"`.
+ *
+ * `configCase` is not idempotent: `"field2value"` becomes `"FIELD2VALUE"`, and
+ * applying it again gives `"FIELD2_VALUE"`.
  *
  * @see {@link constantCase} for standard uppercase underscore-separated output
  * @stability stable

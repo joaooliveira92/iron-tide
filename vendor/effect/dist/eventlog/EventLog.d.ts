@@ -7,14 +7,55 @@
  * committed only after the handler succeeds. This module also contains the
  * layers and helpers needed to assemble that runtime.
  *
+ * **Remote compaction**
+ *
+ * An encrypted remote whose server sets `HelloResponse.compaction` can store a
+ * compacted snapshot of its history, so a new device replays the snapshot and
+ * a recent tail instead of every write. Clients build the snapshots because
+ * only they can decrypt the entries.
+ *
+ * Only a client with a `remote: true` compactor, on a remote not built with
+ * `compaction: false`, calls the compaction RPCs. It polls the status on
+ * connect and about hourly. When the server wants compaction and the journal
+ * has caught up, it starts a background run after a random delay of a few
+ * minutes. The run reads the input, taking entries from the journal where it
+ * can and fetching the rest, runs the opted-in compactors and uploads the
+ * entries they keep. The server lets one run per store hold a stage and
+ * answers the others `Busy`, so devices that start together download the
+ * input once. `EventLog.compact` starts a run immediately, for example from
+ * a worker holding the identity.
+ *
+ * An operator can roll back a bad snapshot on the server. The server then
+ * re-appends the snapshot's input at the head, so every client, including
+ * ones from before remote compaction, receives the dropped entries through
+ * `changes` and skips the ones it already holds.
+ *
+ * Known limitations:
+ *
+ * - A run holds every kept entry in memory. A device with a large store can
+ *   opt out with `compaction: false` and leave compaction to a device or
+ *   worker with more memory.
+ * - The library can't check that a compactor keeps the `remote` contract (see
+ *   `groupCompaction`). The drop-only and idempotence checks catch common
+ *   mistakes. A snapshot that drops too much can only be undone by a rollback
+ *   before the server prunes the history.
+ * - Changes to a field's meaning between schema versions aren't detected.
+ *   Strict decoding only catches unknown fields.
+ * - A new device still replays the newest day or so of writes, because the
+ *   server only compacts data older than its lag.
+ * - A client that stops partway through a run holds the server's busy claim
+ *   until its stage expires.
+ *
  * @stability unstable
  * @since 4.0.0
  */
+import * as Arr from "../Array.ts";
 import * as Context from "../Context.ts";
 import * as Effect from "../Effect.ts";
 import * as Layer from "../Layer.ts";
 import type { Pipeable } from "../Pipeable.ts";
 import { Reactivity } from "../reactivity/Reactivity.ts";
+import * as ReactivityLayer from "../reactivity/Reactivity.ts";
 import type * as Record from "../Record.ts";
 import * as Redacted from "../Redacted.ts";
 import * as Schema from "../Schema.ts";
@@ -22,18 +63,51 @@ import type * as Scope from "../Scope.ts";
 import type { Covariant } from "../Types.ts";
 import type * as Event from "./Event.ts";
 import type * as EventGroup from "./EventGroup.ts";
-import { Entry, EventJournal, type EventJournalError } from "./EventJournal.ts";
+import { Entry, EventJournal, type EventJournalError, type RemoteId } from "./EventJournal.ts";
 import * as EventLogEncryption from "./EventLogEncryption.ts";
 import { StoreId } from "./EventLogMessage.ts";
-import type { EventLogRemote } from "./EventLogRemote.ts";
+import type { EventLogRemote, EventLogRemoteError } from "./EventLogRemote.ts";
 declare const EventLog_base: Context.ServiceClass<EventLog, "effect/eventlog/EventLog", {
     readonly write: <Groups extends EventGroup.Any, Tag extends Event.Tag<EventGroup.Events<Groups>>>(options: {
         readonly schema: EventLogSchema<Groups>;
         readonly event: Tag;
         readonly payload: Event.PayloadWithTag<EventGroup.Events<Groups>, Tag>;
     }) => Effect.Effect<Event.SuccessWithTag<EventGroup.Events<Groups>, Tag>, Event.ErrorWithTag<EventGroup.Events<Groups>, Tag> | EventJournalError>;
+    /**
+     * Write several events under one journal lock and one `HandlerTransaction`,
+     * returning each handler's result in input order. If any handler fails,
+     * none of the events are committed.
+     */
+    readonly writeMany: <Groups extends EventGroup.Any, Item extends { readonly [Tag in Event.Tag<EventGroup.Events<Groups>>]: {
+        readonly event: Tag;
+        readonly payload: Event.PayloadWithTag<EventGroup.Events<Groups>, Tag>;
+    }; }[Event.Tag<EventGroup.Events<Groups>>]>(options: {
+        readonly schema: EventLogSchema<Groups>;
+        readonly events: Arr.NonEmptyReadonlyArray<Item>;
+    }) => Effect.Effect<Arr.NonEmptyArray<Event.SuccessWithTag<EventGroup.Events<Groups>, Item["event"]>>, Event.ErrorWithTag<EventGroup.Events<Groups>, Item["event"]> | EventJournalError>;
     readonly entries: Effect.Effect<ReadonlyArray<Entry>, EventJournalError>;
     readonly destroy: Effect.Effect<void, EventJournalError>;
+    /**
+     * Runs one remote compaction now, on every registered remote that offers
+     * compaction or only on `remoteId`.
+     *
+     * Unlike the background trigger, it doesn't wait for the journal to catch
+     * up, and it works from an empty journal. Remotes built with
+     * `compaction: false` are skipped, and nothing runs when no compactor is
+     * registered with `remote: true`.
+     *
+     * `Committed` and `Superseded` mean a snapshot was uploaded, `NoOp` that
+     * nothing was dropped, and `NotWanted` and `Busy` come from the server.
+     * `Aborted` means nothing was uploaded and the stage was released, because
+     * a compactor died, the idempotence check failed, every entry was dropped
+     * or the input was pruned during the run.
+     */
+    readonly compact: (options?: {
+        readonly remoteId?: RemoteId | undefined;
+    }) => Effect.Effect<ReadonlyArray<{
+        readonly remoteId: RemoteId;
+        readonly result: "Committed" | "Superseded" | "NoOp" | "NotWanted" | "Busy" | "Aborted";
+    }>, EventJournalError | EventLogRemoteError>;
 }>;
 /**
  * Service for writing typed event-log events through registered handlers.
@@ -58,19 +132,32 @@ declare const Registry_base: Context.ServiceClass<Registry, "effect/eventlog/Eve
     readonly handlers: ReadonlyMap<string, Handlers.Item<any>>;
     readonly registerCompaction: (options: {
         readonly events: ReadonlyArray<string>;
+        /**
+         * Also run this compactor over a remote's history to build snapshots. The
+         * kept entries must depend only on the set of input entries and compose:
+         * `drop(drop(a) ++ b)` keeps the same entries as `drop(a ++ b)`, even when
+         * `b` holds entries older than `a`. A call that writes an entry it wasn't
+         * given keeps its whole input.
+         */
+        readonly remote?: boolean | undefined;
         readonly effect: (options: {
             readonly entries: ReadonlyArray<Entry>;
-            readonly write: (entry: Entry) => Effect.Effect<void>;
+            /** True during a remote compaction, which only drops entries. */
+            readonly remote?: boolean | undefined;
+            readonly write: (entry: Entry, source?: Entry) => Effect.Effect<void>;
         }) => Effect.Effect<void>;
     }) => Effect.Effect<void, never, Scope.Scope>;
     readonly compactors: ReadonlyMap<string, {
         readonly events: ReadonlySet<string>;
+        readonly remote: boolean;
         readonly effect: (options: {
             readonly entries: ReadonlyArray<Entry>;
-            readonly write: (entry: Entry) => Effect.Effect<void>;
+            readonly remote?: boolean | undefined;
+            readonly write: (entry: Entry, source?: Entry) => Effect.Effect<void>;
         }) => Effect.Effect<void>;
     }>;
     readonly registerRemote: (remote: EventLogRemote["Service"]) => Effect.Effect<void, never, Scope.Scope>;
+    readonly remotes: ReadonlyMap<RemoteId, EventLogRemote["Service"]>;
     readonly handleRemote: (handler: (remote: EventLogRemote["Service"]) => Effect.Effect<void>) => Effect.Effect<void>;
     readonly registerReactivity: (keys: Record<string, ReadonlyArray<string>>) => Effect.Effect<void, never, Scope.Scope>;
     readonly reactivityKeys: Record<string, ReadonlyArray<string>>;
@@ -106,6 +193,13 @@ declare const Identity_base: Context.ServiceClass<Identity, "effect/eventlog/Eve
  *
  * The identity is used by remote replication for authentication and by the
  * encryption service to derive signing and encryption keys.
+ *
+ * **Gotchas**
+ *
+ * `publicKey` identifies the identity but is not a secret, and nothing ties it
+ * to the signing key derived from `privateKey`. A server binds the first
+ * signing key that authenticates for a `publicKey`, unless its authorization
+ * checks the presented signing key.
  *
  * @stability unstable
  * @category services
@@ -291,6 +385,65 @@ declare const CurrentStoreId_base: Context.Reference<StoreId>;
  */
 export declare class CurrentStoreId extends CurrentStoreId_base {
 }
+declare const HandlerTransaction_base: Context.Reference<<A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R>>;
+/**
+ * Context reference for a transaction that wraps the event handlers of each
+ * batch replayed from a remote and of each local `write` or `writeMany`.
+ *
+ * **When to use**
+ *
+ * Use when handlers project into a store with transactions, such as
+ * `sql.withTransaction` or an IndexedDB transaction over the projection
+ * tables, so a batch of N events commits once instead of N times.
+ *
+ * **Details**
+ *
+ * The journal performs no I/O while the transaction is open: it reads replay
+ * conflicts before the transaction starts and commits the batch after it
+ * completes. Defaults to running the handlers without a transaction.
+ *
+ * If the transaction fails, the journal commits nothing from the batch. For a
+ * replayed batch, the remote is subscribed again after a backoff of up to 10
+ * seconds and the batch is delivered again, so later batches from that remote
+ * wait until it succeeds; local writes and other remotes are not blocked. A
+ * local write fails with the error and is not retried.
+ *
+ * **Gotchas**
+ *
+ * - A replayed entry that fails to decode, or whose handler fails or dies,
+ *   fails the whole batch, which is retried as above. A failure that repeats
+ *   on every attempt, such as a payload written by a newer schema, stops sync
+ *   from that remote until the app is updated to handle it.
+ * - In a local write, an error returned by a handler fails the transaction
+ *   and the write, and the journal commits none of its events.
+ * - Failures that abort the underlying transaction fail the whole batch, even
+ *   when the handler recovers from them. In IndexedDB, any failed request that
+ *   is not prevented aborts the whole transaction, and in PostgreSQL so does a
+ *   failed statement outside a savepoint.
+ * - Failing the batch does not undo side effects of handlers that already ran.
+ *   Only changes made inside a transaction that rolls back are undone.
+ * - Replay handlers must tolerate running more than once for the same entry.
+ * - Unless the transaction and the journal share a database connection, the
+ *   transaction commits before the journal does, and the two commits are not
+ *   atomic. A crash between them replays a remote batch on restart, but a
+ *   local write is lost from the journal while its projection changes remain.
+ * - An IndexedDB transaction commits once it has no pending requests and
+ *   control returns to the event loop. A custom wrapper must stop the fiber
+ *   from yielding to the scheduler while it is open, by providing
+ *   `References.PreventSchedulerYield` as `withTransaction` from
+ *   `@effect/platform-browser` does. Otherwise it can commit partway through a
+ *   batch, and the remaining handlers fail.
+ * - The transaction stays open for the whole batch, so other read-write
+ *   transactions on the same tables wait for it.
+ * - The transaction must not change the error or success of the wrapped
+ *   effect. Convert its own failures into defects.
+ *
+ * @stability unstable
+ * @category services
+ * @since 4.0.6
+ */
+export declare class HandlerTransaction extends HandlerTransaction_base {
+}
 /**
  * Schema for an event-log identity with a string public key and redacted
  * base64-encoded private key bytes.
@@ -347,12 +500,101 @@ export declare const makeIdentity: Effect.Effect<Identity["Service"], never, Eve
  */
 export declare const group: <Events extends Event.Any, Return>(group: EventGroup.EventGroup<Events>, f: (handlers: Handlers<never, Events>) => Handlers.ValidateReturn<Return>) => Layer.Layer<Event.ToService<Events>, Handlers.Error<Return>, Exclude<Handlers.Services<Return>, Scope.Scope | Identity> | Registry>;
 /**
+ * Registers a batch compaction handler for an event group.
+ *
+ * **When to use**
+ *
+ * Use when an event under one primary key affects entries under other keys.
+ *
+ * **Details**
+ *
+ * The compaction effect receives every entry for the group in batch order, with
+ * its decoded event or `event: undefined` if the payload cannot be decoded.
+ *
+ * Only entries that the effect outputs are kept:
+ *
+ * - `forward(entry)` keeps an input entry unchanged, with the same id, payload,
+ *   and primary key.
+ * - `write(tag, payload)` encodes a replacement entry anchored to the first
+ *   entry in the batch, with a fresh id in that entry's millisecond.
+ *
+ * Entries that are neither forwarded nor replaced are dropped, including entries
+ * that could not be decoded. During remote replay, kept entries are replayed in
+ * the id order of their anchors, then in write order, and a replacement's
+ * conflicts are the stored entries newer than its anchor.
+ *
+ * **Gotchas**
+ *
+ * Compaction runs before conflicts are read, so it never sees stored entries.
+ * Collapsing several entries into one is only safe when no stored entry for
+ * the same event and primary key has an id between theirs. Otherwise that
+ * stored entry should have applied between the collapsed ones, and replicas
+ * that received the entries in separate batches end up different.
+ *
+ * @see {@link groupCompaction} for compaction grouped by primary key
+ *
+ * @stability unstable
+ * @category compaction
+ * @since 4.0.0
+ */
+export declare const groupBatchCompaction: <Events extends Event.Any, R>(group: EventGroup.EventGroup<Events>, effect: (options: {
+    readonly entries: ReadonlyArray<{
+        readonly entry: Entry;
+        readonly event: Event.TaggedPayload<Events> | undefined;
+    }>;
+    readonly write: <Tag extends Event.Tag<Events>>(tag: Tag, payload: Event.PayloadWithTag<Events, Tag>) => Effect.Effect<void, never, Event.PayloadSchemaWithTag<Events, Tag>["EncodingServices"]>;
+    readonly forward: (entry: Entry) => Effect.Effect<void>;
+}) => Effect.Effect<void, never, R>, options?: {
+    /**
+     * Also run this compactor over a remote's history to build snapshots.
+     *
+     * Opting in promises a contract the library can't check. The kept entries
+     * depend only on the set of input entries, never on services, the clock
+     * or input order, and compaction composes: `drop(drop(a) ++ b)` keeps the
+     * same entries as `drop(a ++ b)`, even when `b` holds entries older than
+     * `a`.
+     *
+     * Remote compaction only drops entries. A call that uses `write` keeps its
+     * whole input, and entries that fail to decode, including ones with fields
+     * the schema doesn't know, are always kept. Before uploading, a run passes
+     * the kept entries through the compactors again and uploads nothing if
+     * that drops more or a compactor dies.
+     *
+     * A snapshot that drops too much can be rolled back on the server until
+     * the history it replaced is pruned. The module docs cover when runs start
+     * and other limitations.
+     */
+    readonly remote?: boolean | undefined;
+}) => Layer.Layer<never, never, R | Event.PayloadSchema<Events>["DecodingServices"] | Registry>;
+/**
  * Registers a compaction handler for an event group.
  *
  * **Details**
  *
- * During remote replay, matching entries are decoded, grouped by primary key, and
- * passed to the compaction effect, which may write replacement entries.
+ * During remote replay, decoded entries are grouped by primary key and passed to
+ * the compaction effect, which outputs the entries to keep:
+ *
+ * - `forward(entry)` keeps an input entry unchanged, with the same id, payload,
+ *   and primary key.
+ * - `write(tag, payload)` encodes a replacement entry anchored to the first
+ *   decoded entry for the primary key, with a fresh id in that entry's
+ *   millisecond.
+ *
+ * Entries that are neither forwarded nor replaced are dropped. Entries that
+ * cannot be decoded are not passed to the effect and are kept unchanged.
+ * During remote replay, kept entries are replayed in the id order of their
+ * anchors, then in write order, and a replacement's conflicts are the stored
+ * entries newer than its anchor.
+ *
+ * **Gotchas**
+ *
+ * Compaction runs before conflicts are read, so it never sees stored entries.
+ * Collapsing several entries into one is only safe when no stored entry for
+ * the same event and primary key has an id between theirs. Otherwise that
+ * stored entry should have applied between the collapsed ones, and replicas
+ * that received the entries in separate batches end up different.
+ *
+ * @see {@link groupBatchCompaction} for compaction across primary keys
  *
  * @stability unstable
  * @category compaction
@@ -363,7 +605,30 @@ export declare const groupCompaction: <Events extends Event.Any, R>(group: Event
     readonly entries: ReadonlyArray<Entry>;
     readonly events: ReadonlyArray<Event.TaggedPayload<Events>>;
     readonly write: <Tag extends Event.Tag<Events>>(tag: Tag, payload: Event.PayloadWithTag<Events, Tag>) => Effect.Effect<void, never, Event.PayloadSchemaWithTag<Events, Tag>["EncodingServices"]>;
-}) => Effect.Effect<void, never, R>) => Layer.Layer<never, never, R | Event.PayloadSchema<Events>["DecodingServices"] | Registry>;
+    readonly forward: (entry: Entry) => Effect.Effect<void>;
+}) => Effect.Effect<void, never, R>, options?: {
+    /**
+     * Also run this compactor over a remote's history to build snapshots.
+     *
+     * Opting in promises a contract the library can't check. The kept entries
+     * depend only on the set of input entries, never on services, the clock
+     * or input order, and compaction composes: `drop(drop(a) ++ b)` keeps the
+     * same entries as `drop(a ++ b)`, even when `b` holds entries older than
+     * `a`.
+     *
+     * Remote compaction only drops entries. A call that uses `write` keeps its
+     * whole input, and entries that fail to decode, including ones with fields
+     * the schema doesn't know, are always kept. Before uploading, a run passes
+     * the kept entries through the compactors again and uploads nothing if
+     * that drops more or a compactor dies.
+     *
+     * A snapshot that drops too much can be rolled back on the server until
+     * the history it replaced is pruned. The module docs cover when runs start
+     * and other limitations.
+     */
+    readonly remote?: boolean | undefined;
+}) => Layer.Layer<never, never, R | Event.PayloadSchema<Events>["DecodingServices"] | Registry>;
+type ReactivityKeyName = [keyof ReactivityLayer.Keys] extends [never] ? string : keyof ReactivityLayer.Keys;
 /**
  * Registers reactivity keys to invalidate when events from a group are written or
  * replayed.
@@ -376,15 +641,17 @@ export declare const groupCompaction: <Events extends Event.Any, R>(group: Event
  * @category reactivity
  * @since 4.0.0
  */
-export declare const groupReactivity: <Events extends Event.Any>(group: EventGroup.EventGroup<Events>, keys: { readonly [Tag in Event.Tag<Events>]?: ReadonlyArray<string>; } | ReadonlyArray<string>) => Layer.Layer<never, never, Registry>;
+export declare const groupReactivity: <Events extends Event.Any>(group: EventGroup.EventGroup<Events>, keys: { readonly [Tag in Event.Tag<Events>]?: ReadonlyArray<ReactivityKeyName>; } | ReadonlyArray<ReactivityKeyName>) => Layer.Layer<never, never, Registry>;
 /**
  * Builds the effect used to replay entries received from a remote event log.
  *
  * **Details**
  *
  * The returned handler decodes the entry and conflicts with the registered event
- * schema, runs the matching handler with the supplied identity and store id, logs
- * failures, and invalidates configured reactivity keys.
+ * schema, runs the matching handler with the supplied identity and store id, and
+ * invalidates configured reactivity keys. Decode and handler failures are logged
+ * and fail the effect. Invalidations are deferred until the end of an enclosing
+ * `Reactivity.withBatch`.
  *
  * @stability unstable
  * @category handlers
@@ -400,10 +667,11 @@ export declare const makeReplayFromRemote: (options: {
         readonly service: string;
         readonly effect: string;
     };
-}) => (args_0: {
+}) => (input: ReplayInput) => Effect.Effect<void, unknown, never>;
+type ReplayInput = {
     readonly entry: Entry;
     readonly conflicts: ReadonlyArray<Entry>;
-}) => Effect.Effect<void, never, never>;
+};
 /**
  * Provides `EventLog` and `Registry` using the configured `EventJournal` and
  * `Identity`.
@@ -450,13 +718,35 @@ export declare const layer: <Groups extends EventGroup.Any, E, R>(_schema: Event
  *
  * **Details**
  *
- * The returned function delegates to the `EventLog` service and preserves each
- * event's success and error types.
+ * The returned function takes one `{ event, payload }` object, typed so the
+ * payload matches the event, as `writeMany` items are. It delegates to the
+ * `EventLog` service and preserves each event's success and error types.
+ *
+ * **Example** (Writing events with a client)
+ *
+ * ```ts
+ * import { Effect, Schema } from "effect"
+ * import { EventGroup, EventLog } from "effect/eventlog"
+ *
+ * const Users = EventGroup.empty.add({
+ *   tag: "UserCreated",
+ *   primaryKey: (payload) => payload.id,
+ *   payload: Schema.Struct({ id: Schema.String })
+ * })
+ *
+ * export const createUser = Effect.gen(function*() {
+ *   const client = yield* EventLog.makeClient(EventLog.schema(Users))
+ *   yield* client({ event: "UserCreated", payload: { id: "user-1" } })
+ * })
+ * ```
  *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
-export declare const makeClient: <Groups extends EventGroup.Any>(schema: EventLogSchema<Groups>) => Effect.Effect<(<Tag extends Event.Tag<EventGroup.Events<Groups>>>(event: Tag, payload: Event.PayloadWithTag<EventGroup.Events<Groups>, Tag>) => Effect.Effect<Event.SuccessWithTag<EventGroup.Events<Groups>, Tag>, Event.ErrorWithTag<EventGroup.Events<Groups>, Tag> | EventJournalError>), never, EventLog>;
+export declare const makeClient: <Groups extends EventGroup.Any>(schema: EventLogSchema<Groups>) => Effect.Effect<<Item extends { readonly [Tag in Event.Tag<EventGroup.Events<Groups>>]: {
+    readonly event: Tag;
+    readonly payload: Event.PayloadWithTag<EventGroup.Events<Groups>, Tag>;
+}; }[Event.Tag<EventGroup.Events<Groups>>]>(item: Item) => Effect.Effect<Event.SuccessWithTag<EventGroup.Events<Groups>, Item["event"]>, Event.ErrorWithTag<EventGroup.Events<Groups>, Item["event"]> | EventJournalError>, never, EventLog>;
 export {};
 //# sourceMappingURL=EventLog.d.ts.map

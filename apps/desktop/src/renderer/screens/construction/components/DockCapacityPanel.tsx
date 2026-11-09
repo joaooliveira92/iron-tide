@@ -1,7 +1,19 @@
 import { memo, useState } from "react";
 import { Anchor, ArrowUpFromLine } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../../components/ui/alert-dialog.js";
 import { Button } from "../../../components/ui/button.js";
+import { translate } from "../../../lib/strings.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import { formatMonthKey } from "../month-key.js";
 import { DockGauge } from "./DockGauge.js";
 
 export interface DockCapacityPanelProps {
@@ -11,6 +23,7 @@ export interface DockCapacityPanelProps {
   readonly exemptNewConstructionMassKg: number;
   readonly dockExpansionDurationMonths: number;
   readonly dockExpansionNextStepKg: number | null;
+  readonly dockExpansionReadyMonth: string | null;
   readonly dockPossessions: readonly { readonly id: string; readonly name: string }[];
   readonly pending: boolean;
   readonly onAuthorizeDockExpansion: (possessionId: string) => void;
@@ -42,18 +55,28 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
   exemptNewConstructionMassKg,
   dockExpansionDurationMonths,
   dockExpansionNextStepKg,
+  dockExpansionReadyMonth,
   dockPossessions,
   pending,
   onAuthorizeDockExpansion,
 }: DockCapacityPanelProps) {
   const format = usePresentationFormat();
   const [chosenPossessionId, setChosenPossessionId] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const selectedPossessionId =
     chosenPossessionId !== null && dockPossessions.some((p) => p.id === chosenPossessionId)
       ? chosenPossessionId
       : dockPossessions[0]?.id;
   const canExpand = dockExpansionNextStepKg !== null && selectedPossessionId !== undefined;
   const mass = (kg: number) => format.measurement(kg, "mass", { maximumFractionDigits: 0 });
+  const readyText =
+    dockExpansionReadyMonth === null
+      ? "no era step"
+      : formatMonthKey(format, dockExpansionReadyMonth);
+  const nextStepText =
+    dockExpansionNextStepKg === null ? "no era step" : `+${mass(dockExpansionNextStepKg)}`;
+  const currentLimitText =
+    dockMaxBuildDisplacementKg === null ? "no dock" : mass(dockMaxBuildDisplacementKg);
   const expansionValue =
     dockExpansionNextStepKg === null
       ? `${format.count(dockExpansionDurationMonths)} months · no era step`
@@ -86,17 +109,17 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
           value={dockMaxBuildDisplacementKg === null ? "no dock" : mass(dockMaxBuildDisplacementKg)}
         />
         <Plate
-          label="Concurrency cap"
+          label={translate("construction.gauge.tonnageLimit")}
           testId="concurrency-cap"
           value={mass(maxConcurrentConstructionMassKg)}
         />
         <Plate
-          label="Capacity in use"
+          label={translate("construction.gauge.underConstruction")}
           testId="capacity-in-use"
           value={mass(committedNewConstructionMassKg)}
         />
         <Plate
-          label="Exempt (AMC / small corvette)"
+          label={translate("construction.gauge.exemptSmallCraft")}
           testId="capacity-exempt"
           value={mass(exemptNewConstructionMassKg)}
         />
@@ -129,13 +152,58 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
           size="sm"
           variant="outline"
           disabled={pending || !canExpand}
-          onClick={() => {
-            if (selectedPossessionId !== undefined) onAuthorizeDockExpansion(selectedPossessionId);
-          }}
+          onClick={() => setConfirming(true)}
         >
           <ArrowUpFromLine aria-hidden="true" />
           Authorize dock expansion
         </Button>
+        <AlertDialog open={confirming} onOpenChange={setConfirming}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{translate("construction.expansion.title")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {translate("construction.expansion.description")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+              <dt className="text-muted-foreground">
+                {translate("construction.expansion.completion")}
+              </dt>
+              <dd className="font-mono tabular-nums" data-testid="expansion-ready-month">
+                {readyText}
+              </dd>
+              <dt className="text-muted-foreground">
+                {translate("construction.expansion.duration")}
+              </dt>
+              <dd className="font-mono tabular-nums" data-testid="expansion-duration">
+                {`${format.count(dockExpansionDurationMonths)} months`}
+              </dd>
+              <dt className="text-muted-foreground">
+                {translate("construction.expansion.nextStep")}
+              </dt>
+              <dd className="font-mono tabular-nums" data-testid="expansion-next-step">
+                {nextStepText}
+              </dd>
+              <dt className="text-muted-foreground">
+                {translate("construction.expansion.dockLimit")}
+              </dt>
+              <dd className="font-mono tabular-nums" data-testid="expansion-dock-limit">
+                {currentLimitText}
+              </dd>
+            </dl>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (selectedPossessionId !== undefined)
+                    onAuthorizeDockExpansion(selectedPossessionId);
+                }}
+              >
+                Authorize expansion
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         {dockExpansionNextStepKg === null && (
           <p className="text-xs text-muted-foreground">No expansion step is open in this era.</p>
         )}

@@ -9,8 +9,17 @@ import {
 } from "./WorkspaceContext.js";
 
 export function CommandBarSection() {
-  const { shipClassName, shipType, canUndo, canRedo, baseline, preset, autosave, nameInputRef } =
-    useShipbuildingState();
+  const {
+    shipClassName,
+    shipType,
+    canUndo,
+    canRedo,
+    baseline,
+    preset,
+    developedFrom,
+    autosave,
+    nameInputRef,
+  } = useShipbuildingState();
   const { hosted } = useShipbuildingMeta();
   const { setShipClassName, undo, redo, setDialog, openSection, setPendingPreset, finish } =
     useShipbuildingActions();
@@ -24,6 +33,7 @@ export function CommandBarSection() {
       onStartFromReference={() => setDialog("start")}
       shipTypeName={plainShipTypeName(shipType)}
       shipTypeIcon={<ShipTypeIcon aria-hidden="true" className="size-4" />}
+      developedFrom={developedFrom}
       canUndo={canUndo}
       canRedo={canRedo}
       onUndo={undo}
@@ -45,7 +55,10 @@ export function CommandBarSection() {
         },
         {
           label: "File",
-          items: [{ label: "Import or export design…", onSelect: () => setDialog("file") }],
+          items: [
+            { label: "Open design…", onSelect: () => setDialog("open") },
+            { label: "Import or export design…", onSelect: () => setDialog("file") },
+          ],
         },
         {
           label: "Danger zone",

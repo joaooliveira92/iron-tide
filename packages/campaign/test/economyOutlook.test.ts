@@ -3,6 +3,16 @@ import { describe, expect, it } from "vite-plus/test";
 import { constructionDrawByProject, economyOutlook } from "../src/economyOutlook.js";
 import type { CampaignSnapshot, ConstructionProject, NationState } from "../src/state.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import type { AccelerationTerms } from "@bluewave/ship-design";
+
+const ACCELERATION_TERMS: AccelerationTerms = {
+  workMultiplierBp: 10_500,
+  timeBp: 9_000,
+  pressureWeightBp: 12_500,
+  delayThresholdBp: 9_000,
+  delayProbabilityCapBp: 5_000,
+  poolMultipleBp: 30_000,
+};
 
 function ship(hitPoints: number) {
   return {
@@ -162,7 +172,7 @@ describe("economyOutlook", () => {
     expect(o.researchUnfundedReason).toBe("ABOVE_CAP");
   });
 
-  it("bounds planned construction by the shared monthly draw and leaves held projects out", () => {
+  it("plans only what the phase funds: paced projects, not held, foreign or unpaced new orders", () => {
     const o = economyOutlook(
       snapshot(
         nation({
@@ -192,9 +202,11 @@ describe("economyOutlook", () => {
         }),
       ),
       "n",
+      { acceleration: ACCELERATION_TERMS },
     )!;
-    expect(o.plannedConstruction).toBe(53);
-    expect(o.monthEndTreasury).toBe(500 + 41 - 53);
+    expect(o.constructionDraws).toEqual([{ projectId: "f", draw: 11 }]);
+    expect(o.plannedConstruction).toBe(11);
+    expect(o.monthEndTreasury).toBe(500 + 41 - 11);
   });
 
   it("reports the runway and the first shortfall of a structural deficit", () => {

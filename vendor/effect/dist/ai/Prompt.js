@@ -138,6 +138,18 @@ export const ReasoningPart = /*#__PURE__*/Schema.Struct({
  * @since 4.0.0
  */
 export const reasoningPart = params => makePart("reasoning", params);
+const TaggedURL = /*#__PURE__*/Schema.TaggedStruct("URL", {
+  href: Schema.URLFromString
+});
+const urlFromTaggedURL = /*#__PURE__*/SchemaTransformation.transform({
+  decode: ({
+    href
+  }) => href,
+  encode: href => ({
+    _tag: "URL",
+    href
+  })
+});
 /**
  * Schema for validation and encoding of file parts.
  *
@@ -150,7 +162,26 @@ export const FilePart = /*#__PURE__*/Schema.Struct({
   type: Schema.Literal("file"),
   mediaType: Schema.String,
   fileName: Schema.optional(Schema.String),
-  data: Schema.Union([Schema.String, Schema.Uint8Array, Schema.URL])
+  // The tagged members come first so that encoding produces JSON-safe data,
+  // while the raw members keep decoding byte arrays and URLs directly
+  data: Schema.Union([Schema.String, Schema.TaggedStruct("Uint8Array", {
+    base64: Schema.Uint8ArrayFromBase64
+  }).pipe(Schema.decodeTo(Schema.Uint8Array, SchemaTransformation.transform({
+    decode: ({
+      base64
+    }) => base64,
+    encode: base64 => ({
+      _tag: "Uint8Array",
+      base64
+    })
+  }))), TaggedURL.pipe(Schema.decodeTo(Schema.URL, urlFromTaggedURL)), Schema.Uint8Array,
+  // Under the JSON and binary codecs a raw `URL` would serialize as a plain
+  // string, indistinguishable from the `Schema.String` member. Serialize it
+  // through the same `TaggedURL` instance instead, so the codecs see a
+  // single `{ _tag: "URL" }` member rather than two
+  Schema.URL.annotate({
+    toCodecJson: () => Schema.link()(TaggedURL, urlFromTaggedURL)
+  })])
 }).annotate({
   identifier: "FilePart"
 });
@@ -195,6 +226,40 @@ export const ToolCallPart = /*#__PURE__*/Schema.Struct({
  */
 export const toolCallPart = params => makePart("tool-call", params);
 /**
+ * Schema for validation and encoding of tool model output parts.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export const ToolModelOutputPart = /*#__PURE__*/Schema.Union([TextPart, FilePart]);
+/**
+ * Converts tool model output to text for providers that only accept text tool
+ * results.
+ *
+ * **Details**
+ *
+ * Joins text parts with newlines and replaces each file part with a placeholder
+ * naming its media type and file name.
+ *
+ * **Example** (Converting tool model output to text)
+ *
+ * ```ts import.meta.vitest
+ * import { Prompt } from "effect/ai"
+ *
+ * const text = Prompt.toolModelOutputToText([
+ *   Prompt.textPart({ text: "Screenshot" }),
+ *   Prompt.filePart({ mediaType: "image/png", fileName: "screenshot.png", data: "iVBORw0KGgo=" })
+ * ])
+ * text // => "Screenshot\n[image/png screenshot.png omitted]"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.0.0
+ */
+export const toolModelOutputToText = parts => parts.map(part => part.type === "text" ? part.text : `[${part.mediaType}${part.fileName === undefined ? "" : ` ${part.fileName}`} omitted]`).join("\n");
+/**
  * Schema for validation and encoding of tool result parts.
  *
  * @stability unstable
@@ -208,6 +273,7 @@ export const ToolResultPart = /*#__PURE__*/Schema.Struct({
   name: Schema.String,
   isFailure: Schema.Boolean,
   result: Schema.Unknown,
+  modelOutput: Schema.optional(Schema.Array(ToolModelOutputPart)),
   providerExecuted: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false)))
 }).annotate({
   identifier: "ToolResultPart"
@@ -688,9 +754,11 @@ export const fromResponseParts = parts => {
       case "text-start":
         {
           activeTextDeltas.set(part.id, {
+            index: assistantParts.length,
             text: "",
             options: part.metadata
           });
+          assistantParts.push(undefined);
           break;
         }
       case "text-delta":
@@ -707,7 +775,11 @@ export const fromResponseParts = parts => {
           if (activeTextDeltas.has(part.id)) {
             const active = activeTextDeltas.get(part.id);
             active.options = mergeOptions(active.options, part.metadata);
-            assistantParts.push(makePart("text", active));
+            assistantParts[active.index] = makePart("text", {
+              text: active.text,
+              options: active.options
+            });
+            activeTextDeltas.delete(part.id);
           }
           break;
         }
@@ -724,9 +796,11 @@ export const fromResponseParts = parts => {
       case "reasoning-start":
         {
           activeReasoningDeltas.set(part.id, {
+            index: assistantParts.length,
             text: "",
             options: part.metadata
           });
+          assistantParts.push(undefined);
           break;
         }
       case "reasoning-delta":
@@ -743,7 +817,11 @@ export const fromResponseParts = parts => {
           if (activeReasoningDeltas.has(part.id)) {
             const active = activeReasoningDeltas.get(part.id);
             active.options = mergeOptions(active.options, part.metadata);
-            assistantParts.push(makePart("reasoning", active));
+            assistantParts[active.index] = makePart("reasoning", {
+              text: active.text,
+              options: active.options
+            });
+            activeReasoningDeltas.delete(part.id);
           }
           break;
         }
@@ -779,6 +857,9 @@ export const fromResponseParts = parts => {
               name: part.name,
               isFailure: part.isFailure,
               result: part.encodedResult,
+              ...(part.modelOutput !== undefined ? {
+                modelOutput: part.modelOutput
+              } : undefined),
               providerExecuted: part.providerExecuted ?? false,
               options: part.metadata
             }));
@@ -796,13 +877,24 @@ export const fromResponseParts = parts => {
         }
     }
   }
-  if (assistantParts.length === 0 && toolParts.length === 0) {
+  // Keep partial text from unended blocks. Unended reasoning is dropped since it
+  // may lack the signature or encrypted content providers require for replay.
+  for (const active of activeTextDeltas.values()) {
+    if (active.text.length > 0) {
+      assistantParts[active.index] = makePart("text", {
+        text: active.text,
+        options: active.options
+      });
+    }
+  }
+  const assistantContent = assistantParts.filter(part => part !== undefined);
+  if (assistantContent.length === 0 && toolParts.length === 0) {
     return empty;
   }
   const messages = [];
-  if (assistantParts.length > 0) {
+  if (assistantContent.length > 0) {
     messages.push(makeMessage("assistant", {
-      content: assistantParts
+      content: assistantContent
     }));
   }
   if (toolParts.length > 0) {

@@ -13,6 +13,7 @@ import {
   applyResumeConstruction,
   applySetAcceleration,
 } from "../src/commands.js";
+import { accelerationTermsFor } from "../src/constructionAcceleration.js";
 import { applyReviseProject } from "../src/reviseProject.js";
 import {
   FOREIGN_BUILDER_CAPABILITY_INSUFFICIENT,
@@ -1063,6 +1064,8 @@ describe("INC-9e foreign-project command guards and monthly hardening", () => {
         accelerated: true,
       },
       accelCollector,
+      accelerationTermsFor(content, MONTH_ID),
+      MONTH_ID,
     );
     expect(accelerated).toBe(placed.snapshot);
     expect(accelCollector.errors.map((e) => e.code)).toContain(FOREIGN_CONTRACT_FUNDED_BY_SCHEDULE);

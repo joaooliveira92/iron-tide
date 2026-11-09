@@ -105,12 +105,17 @@
     },
     {
       "id": "submit-design",
-      "player_verb": "Draw a ship design and submit it for construction",
+      "player_verb": "Design and submit a ship",
       "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": ["designVersion"],
       "engine_symbols": ["applySubmitDesign"],
-      "main_commands": ["submitDesignCommand", "readDrawingBoardDraft", "writeDrawingBoardDraft"],
+      "main_commands": [
+        "submitDesignCommand",
+        "previewDesignStudy",
+        "readDrawingBoardDraft",
+        "writeDrawingBoardDraft"
+      ],
       "renderer_screen": "components/design-workspace/panels/SubmitPanel.tsx",
       "evidence_test": "apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx",
       "decision": null
@@ -140,8 +145,8 @@
         "checkRebuild",
         "startRebuildCommand"
       ],
-      "renderer_screen": "components/design-workspace/panels/RebuildPanel.tsx",
-      "evidence_test": "apps/desktop/src/renderer/components/design-workspace/panels/RebuildPanel.test.tsx",
+      "renderer_screen": "screens/construction/components/RebuildShipDialog.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/construction/ConstructionScreen.rebuild.test.tsx",
       "decision": null
     },
     {
@@ -153,7 +158,8 @@
         "constructionOrder",
         "constructionReadout",
         "newConstructionCapacity",
-        "orderEligibility"
+        "orderEligibility",
+        "queuedConstructionForecast"
       ],
       "engine_symbols": ["applyOrderConstruction"],
       "main_commands": [
@@ -185,12 +191,24 @@
       "player_verb": "Accelerate a construction project at a premium",
       "status": "reachable",
       "engine_package": "phase-engine",
-      "engine_modules": ["constructionAcceleration"],
+      "engine_modules": ["constructionAcceleration", "constructionSteeringPreview"],
       "engine_symbols": ["applySetAcceleration", "applyAccelerationPremium"],
       "main_commands": ["setAccelerationCommand"],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
       "evidence_test": "apps/desktop/src/main/commands/constructionStatusCommands.test.ts",
       "decision": null
+    },
+    {
+      "id": "construction-events",
+      "player_verb": "Learn why a build slipped or cost more",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": ["constructionEvents"],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#584"
     },
     {
       "id": "authorize-dock-expansion",
@@ -212,8 +230,8 @@
       "engine_modules": ["foreignBuilderPreview", "foreignConstruction", "foreignTerms"],
       "engine_symbols": ["applyOrderForeignConstruction", "applyForeignPaymentOutcome"],
       "main_commands": ["placeForeignConstructionCommand", "previewForeignConstructionCommand"],
-      "renderer_screen": "screens/construction/components/ForeignContractPanel.tsx",
-      "evidence_test": "apps/desktop/src/renderer/screens/construction/components/ForeignContractPanel.test.tsx",
+      "renderer_screen": "screens/construction/order/OrderDialog.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/construction/ConstructionScreen.order.test.tsx",
       "decision": null
     },
     {
@@ -414,7 +432,7 @@
     },
     {
       "id": "command-lifecycle-definitions",
-      "player_verb": "Command type definitions for budget, halt, resume and acceleration",
+      "player_verb": "Command definitions for budget, halt, resume and acceleration",
       "status": "internal",
       "engine_package": "phase-engine",
       "engine_modules": ["commandDefinitions"],

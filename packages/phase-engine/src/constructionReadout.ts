@@ -2,6 +2,7 @@ import { buildConstructionProjectQueueWithReadouts } from "@bluewave/campaign-en
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { ConstructionProjectQueueEntry } from "@bluewave/campaign-engine";
 import type { ShipBuildingContent } from "@bluewave/ship-design";
+import { accelerationTermsFor } from "./constructionAcceleration.js";
 import { preservationCostUnits } from "./economyPhases.js";
 
 export function constructionProjectQueueWithReadouts(
@@ -22,5 +23,6 @@ export function constructionProjectQueueWithReadouts(
     nationId,
     campaignMonth,
     haltedCarryingCostUnits,
+    accelerationTermsFor(content, campaignMonth),
   );
 }

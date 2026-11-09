@@ -1,3 +1,4 @@
+/// <reference lib="esnext.disposable" preserve="true" />
 /**
  * Runs many effects against services built once from a `Layer`.
  *
@@ -10,7 +11,7 @@
  * @stability stable
  * @since 2.0.0
  */
-import type * as Context from "./Context.ts";
+import * as Context from "./Context.ts";
 import * as Effect from "./Effect.ts";
 import * as Exit from "./Exit.ts";
 import * as Fiber from "./Fiber.ts";
@@ -179,6 +180,10 @@ export interface ManagedRuntime<in R, out ER> {
      * **When to use**
      *
      * Use to release this runtime's layer resources from Promise-based code.
+     *
+     * **Details**
+     *
+     * Calls made while a disposal is in progress wait for it to finish.
      */
     readonly dispose: () => Promise<void>;
     /**
@@ -196,6 +201,14 @@ export interface ManagedRuntime<in R, out ER> {
      * **When to use**
      *
      * Use to release this runtime's layer resources from an `Effect` workflow.
+     *
+     * **Details**
+     *
+     * Disposal runs uninterruptibly. Calls made while a disposal is in progress
+     * wait for it to finish, and interrupting a waiting call only stops the wait.
+     * Fibers started by this runtime, their child fibers, and the runtime's
+     * finalizers do not wait: the disposal interrupts or runs them, so waiting
+     * would deadlock.
      */
     readonly disposeEffect: Effect.Effect<void, never, never>;
 }
@@ -218,6 +231,11 @@ export interface ManagedRuntime<in R, out ER> {
  *
  * Dispose the runtime when it is no longer needed. A runtime cannot be reused
  * after disposal.
+ *
+ * A failed layer build is also cached: subsequent runs return the same build
+ * failure without rebuilding the layer. For transient failures, retry inside
+ * the layer before passing it to `make`, or dispose the runtime and create a
+ * new one to attempt a fresh build.
  *
  * **Example** (Creating a managed runtime)
  *

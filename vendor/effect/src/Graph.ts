@@ -1254,115 +1254,7 @@ export const compose: {
     const getEdgeIdentity = options?.edgeIdentity ?? ((edge: E) => edge as unknown as EI)
     const selfMaps = buildNodeMaps(self, getNodeIdentity)
     const thatMaps = buildNodeMaps(that, getNodeIdentity)
-    const nodes = MutableHashMap.empty</**
-     * Composes two graphs, merging nodes by identity.
-     *
-     * **When to use**
-     *
-     * Use when combining graphs that describe overlapping logical entities and
-     * should merge those entities by payload or a projected identity.
-     *
-     * **Details**
-     *
-     * Nodes and edges present in both graphs use data from `that`. The result has
-     * the same graph kind as `self`. Throws a `GraphError` when the graph kinds do
-     * not match. `nodeIdentity` and `edgeIdentity` default to the complete node and
-     * edge data. Edge identity also includes the endpoint identities.
-     *
-     * `G1 ∪ G2 = {V1 ∪ V2, E1 ∪ E2}`
-     *
-     * **Gotchas**
-     *
-     * Nodes with equal identities in one input graph are coalesced. The last node
-     * supplies the data, and redirected edges can collapse or become self-loops.
-     * Parallel edges with equal identities are also coalesced, with the last edge
-     * supplying the data. The result allocates new node and edge identifiers.
-     *
-     * **Example** (Combining graphs)
-     *
-     * ```ts import.meta.vitest
-     * import { Graph } from "effect"
-     *
-     * const left = Graph.directed<{ id: string }, string>((mutable) => {
-     *   const a = Graph.addNode(mutable, { id: "A" })
-     *   const b = Graph.addNode(mutable, { id: "B" })
-     *   Graph.addEdge(mutable, a, b, "A-B")
-     * })
-     *
-     * const right = Graph.directed<{ id: string }, string>((mutable) => {
-     *   const b = Graph.addNode(mutable, { id: "B" })
-     *   const c = Graph.addNode(mutable, { id: "C" })
-     *   Graph.addEdge(mutable, b, c, "B-C")
-     * })
-     *
-     * const result = Graph.compose(left, right, {
-     *   nodeIdentity: (node) => node.id
-     * })
-     *
-     * Graph.nodeCount(result) // => 3
-     * Graph.edgeCount(result) // => 2
-     * ```
-     *
-     * @see {@link sum} for combining graphs without merging equal nodes
-     * @stability unstable
-     * @category set operations
-     * @since 4.0.0
-     */
-    NI, /**
-     * Composes two graphs, merging nodes by identity.
-     *
-     * **When to use**
-     *
-     * Use when combining graphs that describe overlapping logical entities and
-     * should merge those entities by payload or a projected identity.
-     *
-     * **Details**
-     *
-     * Nodes and edges present in both graphs use data from `that`. The result has
-     * the same graph kind as `self`. Throws a `GraphError` when the graph kinds do
-     * not match. `nodeIdentity` and `edgeIdentity` default to the complete node and
-     * edge data. Edge identity also includes the endpoint identities.
-     *
-     * `G1 ∪ G2 = {V1 ∪ V2, E1 ∪ E2}`
-     *
-     * **Gotchas**
-     *
-     * Nodes with equal identities in one input graph are coalesced. The last node
-     * supplies the data, and redirected edges can collapse or become self-loops.
-     * Parallel edges with equal identities are also coalesced, with the last edge
-     * supplying the data. The result allocates new node and edge identifiers.
-     *
-     * **Example** (Combining graphs)
-     *
-     * ```ts import.meta.vitest
-     * import { Graph } from "effect"
-     *
-     * const left = Graph.directed<{ id: string }, string>((mutable) => {
-     *   const a = Graph.addNode(mutable, { id: "A" })
-     *   const b = Graph.addNode(mutable, { id: "B" })
-     *   Graph.addEdge(mutable, a, b, "A-B")
-     * })
-     *
-     * const right = Graph.directed<{ id: string }, string>((mutable) => {
-     *   const b = Graph.addNode(mutable, { id: "B" })
-     *   const c = Graph.addNode(mutable, { id: "C" })
-     *   Graph.addEdge(mutable, b, c, "B-C")
-     * })
-     *
-     * const result = Graph.compose(left, right, {
-     *   nodeIdentity: (node) => node.id
-     * })
-     *
-     * Graph.nodeCount(result) // => 3
-     * Graph.edgeCount(result) // => 2
-     * ```
-     *
-     * @see {@link sum} for combining graphs without merging equal nodes
-     * @stability unstable
-     * @category set operations
-     * @since 4.0.0
-     */
-    N>()
+    const nodes = MutableHashMap.empty<NI, N>()
     const edges = buildEdgeMap(self, selfMaps, getEdgeIdentity)
 
     for (const [identity, data] of selfMaps.byIdentity) {
@@ -1376,121 +1268,13 @@ export const compose: {
       MutableHashMap.set(edges, identity, data)
     }
 
-    return make(self.type)</**
-     * Composes two graphs, merging nodes by identity.
-     *
-     * **When to use**
-     *
-     * Use when combining graphs that describe overlapping logical entities and
-     * should merge those entities by payload or a projected identity.
-     *
-     * **Details**
-     *
-     * Nodes and edges present in both graphs use data from `that`. The result has
-     * the same graph kind as `self`. Throws a `GraphError` when the graph kinds do
-     * not match. `nodeIdentity` and `edgeIdentity` default to the complete node and
-     * edge data. Edge identity also includes the endpoint identities.
-     *
-     * `G1 ∪ G2 = {V1 ∪ V2, E1 ∪ E2}`
-     *
-     * **Gotchas**
-     *
-     * Nodes with equal identities in one input graph are coalesced. The last node
-     * supplies the data, and redirected edges can collapse or become self-loops.
-     * Parallel edges with equal identities are also coalesced, with the last edge
-     * supplying the data. The result allocates new node and edge identifiers.
-     *
-     * **Example** (Combining graphs)
-     *
-     * ```ts import.meta.vitest
-     * import { Graph } from "effect"
-     *
-     * const left = Graph.directed<{ id: string }, string>((mutable) => {
-     *   const a = Graph.addNode(mutable, { id: "A" })
-     *   const b = Graph.addNode(mutable, { id: "B" })
-     *   Graph.addEdge(mutable, a, b, "A-B")
-     * })
-     *
-     * const right = Graph.directed<{ id: string }, string>((mutable) => {
-     *   const b = Graph.addNode(mutable, { id: "B" })
-     *   const c = Graph.addNode(mutable, { id: "C" })
-     *   Graph.addEdge(mutable, b, c, "B-C")
-     * })
-     *
-     * const result = Graph.compose(left, right, {
-     *   nodeIdentity: (node) => node.id
-     * })
-     *
-     * Graph.nodeCount(result) // => 3
-     * Graph.edgeCount(result) // => 2
-     * ```
-     *
-     * @see {@link sum} for combining graphs without merging equal nodes
-     * @stability unstable
-     * @category set operations
-     * @since 4.0.0
-     */
-    N, /**
-     * Composes two graphs, merging nodes by identity.
-     *
-     * **When to use**
-     *
-     * Use when combining graphs that describe overlapping logical entities and
-     * should merge those entities by payload or a projected identity.
-     *
-     * **Details**
-     *
-     * Nodes and edges present in both graphs use data from `that`. The result has
-     * the same graph kind as `self`. Throws a `GraphError` when the graph kinds do
-     * not match. `nodeIdentity` and `edgeIdentity` default to the complete node and
-     * edge data. Edge identity also includes the endpoint identities.
-     *
-     * `G1 ∪ G2 = {V1 ∪ V2, E1 ∪ E2}`
-     *
-     * **Gotchas**
-     *
-     * Nodes with equal identities in one input graph are coalesced. The last node
-     * supplies the data, and redirected edges can collapse or become self-loops.
-     * Parallel edges with equal identities are also coalesced, with the last edge
-     * supplying the data. The result allocates new node and edge identifiers.
-     *
-     * **Example** (Combining graphs)
-     *
-     * ```ts import.meta.vitest
-     * import { Graph } from "effect"
-     *
-     * const left = Graph.directed<{ id: string }, string>((mutable) => {
-     *   const a = Graph.addNode(mutable, { id: "A" })
-     *   const b = Graph.addNode(mutable, { id: "B" })
-     *   Graph.addEdge(mutable, a, b, "A-B")
-     * })
-     *
-     * const right = Graph.directed<{ id: string }, string>((mutable) => {
-     *   const b = Graph.addNode(mutable, { id: "B" })
-     *   const c = Graph.addNode(mutable, { id: "C" })
-     *   Graph.addEdge(mutable, b, c, "B-C")
-     * })
-     *
-     * const result = Graph.compose(left, right, {
-     *   nodeIdentity: (node) => node.id
-     * })
-     *
-     * Graph.nodeCount(result) // => 3
-     * Graph.edgeCount(result) // => 2
-     * ```
-     *
-     * @see {@link sum} for combining graphs without merging equal nodes
-     * @stability unstable
-     * @category set operations
-     * @since 4.0.0
-     */
-    E>((mutable) => {
+    return make(self.type)<N, E>((mutable) => {
       const indexByIdentity = addNodesByIdentity(mutable, nodes)
 
       for (const [identity, data] of edges) {
         addEdgeByIdentity(mutable, indexByIdentity, identity, data)
       }
-    });
+    })
   }
 )
 
@@ -1668,217 +1452,9 @@ export const intersection: {
   const getEdgeIdentity = options?.edgeIdentity ?? ((edge: E) => edge as unknown as EI)
   const selfMaps = buildNodeMaps(self, getNodeIdentity)
   const thatMaps = buildNodeMaps(that, getNodeIdentity)
-  const nodes = MutableHashMap.empty</**
-   * Returns the intersection of two graphs, matching nodes by identity.
-   *
-   * **When to use**
-   *
-   * Use when extracting nodes and edges that represent the same logical
-   * structure in both graphs.
-   *
-   * **Details**
-   *
-   * Node data comes from `self`, and edge data comes from `that`. The result has
-   * the same graph kind as `self`. Throws a `GraphError` when the graph kinds do
-   * not match. `nodeIdentity` and `edgeIdentity` default to the complete node and
-   * edge data. Edge identity also includes the endpoint identities.
-   *
-   * `G1 ∩ G2 = {V1 ∩ V2, E1 ∩ E2}`
-   *
-   * **Gotchas**
-   *
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * The result contains at most one edge for each shared edge identity and
-   * allocates new node and edge identifiers.
-   *
-   * **Example** (Finding shared structure)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const result = Graph.intersection(left, right)
-   *
-   * Graph.nodeCount(result) // => 2
-   * Graph.edgeCount(result) // => 1
-   * ```
-   *
-   * @see {@link compose} for identity-based graph union
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  NI, /**
-   * Returns the intersection of two graphs, matching nodes by identity.
-   *
-   * **When to use**
-   *
-   * Use when extracting nodes and edges that represent the same logical
-   * structure in both graphs.
-   *
-   * **Details**
-   *
-   * Node data comes from `self`, and edge data comes from `that`. The result has
-   * the same graph kind as `self`. Throws a `GraphError` when the graph kinds do
-   * not match. `nodeIdentity` and `edgeIdentity` default to the complete node and
-   * edge data. Edge identity also includes the endpoint identities.
-   *
-   * `G1 ∩ G2 = {V1 ∩ V2, E1 ∩ E2}`
-   *
-   * **Gotchas**
-   *
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * The result contains at most one edge for each shared edge identity and
-   * allocates new node and edge identifiers.
-   *
-   * **Example** (Finding shared structure)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const result = Graph.intersection(left, right)
-   *
-   * Graph.nodeCount(result) // => 2
-   * Graph.edgeCount(result) // => 1
-   * ```
-   *
-   * @see {@link compose} for identity-based graph union
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  N>()
+  const nodes = MutableHashMap.empty<NI, N>()
   const selfEdges = buildEdgeMap(self, selfMaps, getEdgeIdentity)
-  const thatEdges = MutableHashMap.empty</**
-   * Returns the intersection of two graphs, matching nodes by identity.
-   *
-   * **When to use**
-   *
-   * Use when extracting nodes and edges that represent the same logical
-   * structure in both graphs.
-   *
-   * **Details**
-   *
-   * Node data comes from `self`, and edge data comes from `that`. The result has
-   * the same graph kind as `self`. Throws a `GraphError` when the graph kinds do
-   * not match. `nodeIdentity` and `edgeIdentity` default to the complete node and
-   * edge data. Edge identity also includes the endpoint identities.
-   *
-   * `G1 ∩ G2 = {V1 ∩ V2, E1 ∩ E2}`
-   *
-   * **Gotchas**
-   *
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * The result contains at most one edge for each shared edge identity and
-   * allocates new node and edge identifiers.
-   *
-   * **Example** (Finding shared structure)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const result = Graph.intersection(left, right)
-   *
-   * Graph.nodeCount(result) // => 2
-   * Graph.edgeCount(result) // => 1
-   * ```
-   *
-   * @see {@link compose} for identity-based graph union
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  EdgeIdentity<NI, EI>, /**
-   * Returns the intersection of two graphs, matching nodes by identity.
-   *
-   * **When to use**
-   *
-   * Use when extracting nodes and edges that represent the same logical
-   * structure in both graphs.
-   *
-   * **Details**
-   *
-   * Node data comes from `self`, and edge data comes from `that`. The result has
-   * the same graph kind as `self`. Throws a `GraphError` when the graph kinds do
-   * not match. `nodeIdentity` and `edgeIdentity` default to the complete node and
-   * edge data. Edge identity also includes the endpoint identities.
-   *
-   * `G1 ∩ G2 = {V1 ∩ V2, E1 ∩ E2}`
-   *
-   * **Gotchas**
-   *
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * The result contains at most one edge for each shared edge identity and
-   * allocates new node and edge identifiers.
-   *
-   * **Example** (Finding shared structure)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const result = Graph.intersection(left, right)
-   *
-   * Graph.nodeCount(result) // => 2
-   * Graph.edgeCount(result) // => 1
-   * ```
-   *
-   * @see {@link compose} for identity-based graph union
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  E>()
+  const thatEdges = MutableHashMap.empty<EdgeIdentity<NI, EI>, E>()
 
   for (const [identity, data] of selfMaps.byIdentity) {
     if (MutableHashMap.has(thatMaps.byIdentity, identity)) {
@@ -1895,111 +1471,7 @@ export const intersection: {
     }
   }
 
-  return make(self.type)</**
-   * Returns the intersection of two graphs, matching nodes by identity.
-   *
-   * **When to use**
-   *
-   * Use when extracting nodes and edges that represent the same logical
-   * structure in both graphs.
-   *
-   * **Details**
-   *
-   * Node data comes from `self`, and edge data comes from `that`. The result has
-   * the same graph kind as `self`. Throws a `GraphError` when the graph kinds do
-   * not match. `nodeIdentity` and `edgeIdentity` default to the complete node and
-   * edge data. Edge identity also includes the endpoint identities.
-   *
-   * `G1 ∩ G2 = {V1 ∩ V2, E1 ∩ E2}`
-   *
-   * **Gotchas**
-   *
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * The result contains at most one edge for each shared edge identity and
-   * allocates new node and edge identifiers.
-   *
-   * **Example** (Finding shared structure)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const result = Graph.intersection(left, right)
-   *
-   * Graph.nodeCount(result) // => 2
-   * Graph.edgeCount(result) // => 1
-   * ```
-   *
-   * @see {@link compose} for identity-based graph union
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  N, /**
-   * Returns the intersection of two graphs, matching nodes by identity.
-   *
-   * **When to use**
-   *
-   * Use when extracting nodes and edges that represent the same logical
-   * structure in both graphs.
-   *
-   * **Details**
-   *
-   * Node data comes from `self`, and edge data comes from `that`. The result has
-   * the same graph kind as `self`. Throws a `GraphError` when the graph kinds do
-   * not match. `nodeIdentity` and `edgeIdentity` default to the complete node and
-   * edge data. Edge identity also includes the endpoint identities.
-   *
-   * `G1 ∩ G2 = {V1 ∩ V2, E1 ∩ E2}`
-   *
-   * **Gotchas**
-   *
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * The result contains at most one edge for each shared edge identity and
-   * allocates new node and edge identifiers.
-   *
-   * **Example** (Finding shared structure)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "shared")
-   * })
-   *
-   * const result = Graph.intersection(left, right)
-   *
-   * Graph.nodeCount(result) // => 2
-   * Graph.edgeCount(result) // => 1
-   * ```
-   *
-   * @see {@link compose} for identity-based graph union
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  E>((mutable) => {
+  return make(self.type)<N, E>((mutable) => {
     const indexByIdentity = addNodesByIdentity(mutable, nodes)
 
     for (const [identity, data] of thatEdges) {
@@ -2007,7 +1479,7 @@ export const intersection: {
         addEdgeByIdentity(mutable, indexByIdentity, identity, data)
       }
     }
-  });
+  })
 })
 
 /**
@@ -2192,115 +1664,7 @@ export const difference: {
   const thatMaps = buildNodeMaps(that, getNodeIdentity)
   const thatEdges = buildEdgeMap(that, thatMaps, getEdgeIdentity)
 
-  return make(self.type)</**
-   * Returns `self` without edges also present in `that`.
-   *
-   * **When to use**
-   *
-   * Use when retaining all logical nodes from one graph while removing edge
-   * relationships also represented by another graph.
-   *
-   * **Details**
-   *
-   * All nodes from `self` are preserved. Edges are matched by endpoint and edge
-   * identities. The result has the same graph kind as `self`. Throws a
-   * `GraphError` when the graph kinds do not match. `nodeIdentity` and
-   * `edgeIdentity` default to the complete node and edge data.
-   *
-   * `G1 \ G2 = {V1, E1 \ E2}`
-   *
-   * **Gotchas**
-   *
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * If `that` contains an edge identity, every parallel edge with that identity
-   * is removed from `self`. The result allocates new node and edge identifiers.
-   *
-   * **Example** (Removing shared edges)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   Graph.addEdge(mutable, a, b, "A-B")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   * })
-   *
-   * const result = Graph.difference(left, right)
-   *
-   * Graph.nodeCount(result) // => 3
-   * Graph.edgeCount(result) // => 1
-   * ```
-   *
-   * @see {@link symmetricDifference} for retaining edges unique to either graph
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  N, /**
-   * Returns `self` without edges also present in `that`.
-   *
-   * **When to use**
-   *
-   * Use when retaining all logical nodes from one graph while removing edge
-   * relationships also represented by another graph.
-   *
-   * **Details**
-   *
-   * All nodes from `self` are preserved. Edges are matched by endpoint and edge
-   * identities. The result has the same graph kind as `self`. Throws a
-   * `GraphError` when the graph kinds do not match. `nodeIdentity` and
-   * `edgeIdentity` default to the complete node and edge data.
-   *
-   * `G1 \ G2 = {V1, E1 \ E2}`
-   *
-   * **Gotchas**
-   *
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * If `that` contains an edge identity, every parallel edge with that identity
-   * is removed from `self`. The result allocates new node and edge identifiers.
-   *
-   * **Example** (Removing shared edges)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   Graph.addEdge(mutable, a, b, "A-B")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   * })
-   *
-   * const result = Graph.difference(left, right)
-   *
-   * Graph.nodeCount(result) // => 3
-   * Graph.edgeCount(result) // => 1
-   * ```
-   *
-   * @see {@link symmetricDifference} for retaining edges unique to either graph
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  E>((mutable) => {
+  return make(self.type)<N, E>((mutable) => {
     const indexByIdentity = addNodesByIdentity(mutable, selfMaps.byIdentity)
 
     for (const edge of selfImpl.edges.values()) {
@@ -2311,7 +1675,7 @@ export const difference: {
         addEdgeByIdentity(mutable, indexByIdentity, edgeIdentity, edge.data)
       }
     }
-  });
+  })
 })
 
 /**
@@ -2502,121 +1866,7 @@ export const symmetricDifference: {
   const getEdgeIdentity = options?.edgeIdentity ?? ((edge: E) => edge as unknown as EI)
   const selfMaps = buildNodeMaps(self, getNodeIdentity)
   const thatMaps = buildNodeMaps(that, getNodeIdentity)
-  const nodes = MutableHashMap.empty</**
-   * Returns edges present in exactly one of two graphs.
-   *
-   * **When to use**
-   *
-   * Use when comparing graphs and retaining relationships unique to either one.
-   *
-   * **Details**
-   *
-   * Keeps nodes from both graphs. Overlapping nodes use data from `that`. The
-   * result has the same graph kind as `self`. Throws a `GraphError` when the
-   * graph kinds do not match. `nodeIdentity` and `edgeIdentity` default to the
-   * complete node and edge data. Edge identity also includes the endpoint
-   * identities.
-   *
-   * `G1 Δ G2 = {V1 ∪ V2, (E1 ∪ E2) \ (E1 ∩ E2)}`
-   *
-   * **Gotchas**
-   *
-   * Edges with different projected identities are distinct.
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * Parallel edges with equal identities are coalesced before the graphs are
-   * compared. The result allocates new node and edge identifiers.
-   *
-   * **Example** (Finding differing edges)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   Graph.addEdge(mutable, a, b, "A-B")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   const d = Graph.addNode(mutable, "D")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   *   Graph.addEdge(mutable, c, d, "C-D")
-   * })
-   *
-   * const result = Graph.symmetricDifference(left, right)
-   *
-   * Graph.nodeCount(result) // => 4
-   * Graph.edgeCount(result) // => 2
-   * ```
-   *
-   * @see {@link difference} for removing only the edges found in another graph
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  NI, /**
-   * Returns edges present in exactly one of two graphs.
-   *
-   * **When to use**
-   *
-   * Use when comparing graphs and retaining relationships unique to either one.
-   *
-   * **Details**
-   *
-   * Keeps nodes from both graphs. Overlapping nodes use data from `that`. The
-   * result has the same graph kind as `self`. Throws a `GraphError` when the
-   * graph kinds do not match. `nodeIdentity` and `edgeIdentity` default to the
-   * complete node and edge data. Edge identity also includes the endpoint
-   * identities.
-   *
-   * `G1 Δ G2 = {V1 ∪ V2, (E1 ∪ E2) \ (E1 ∩ E2)}`
-   *
-   * **Gotchas**
-   *
-   * Edges with different projected identities are distinct.
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * Parallel edges with equal identities are coalesced before the graphs are
-   * compared. The result allocates new node and edge identifiers.
-   *
-   * **Example** (Finding differing edges)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   Graph.addEdge(mutable, a, b, "A-B")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   const d = Graph.addNode(mutable, "D")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   *   Graph.addEdge(mutable, c, d, "C-D")
-   * })
-   *
-   * const result = Graph.symmetricDifference(left, right)
-   *
-   * Graph.nodeCount(result) // => 4
-   * Graph.edgeCount(result) // => 2
-   * ```
-   *
-   * @see {@link difference} for removing only the edges found in another graph
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  N>()
+  const nodes = MutableHashMap.empty<NI, N>()
   const selfEdges = buildEdgeMap(self, selfMaps, getEdgeIdentity)
   const thatEdges = buildEdgeMap(that, thatMaps, getEdgeIdentity)
 
@@ -2628,121 +1878,7 @@ export const symmetricDifference: {
     MutableHashMap.set(nodes, identity, data)
   }
 
-  return make(self.type)</**
-   * Returns edges present in exactly one of two graphs.
-   *
-   * **When to use**
-   *
-   * Use when comparing graphs and retaining relationships unique to either one.
-   *
-   * **Details**
-   *
-   * Keeps nodes from both graphs. Overlapping nodes use data from `that`. The
-   * result has the same graph kind as `self`. Throws a `GraphError` when the
-   * graph kinds do not match. `nodeIdentity` and `edgeIdentity` default to the
-   * complete node and edge data. Edge identity also includes the endpoint
-   * identities.
-   *
-   * `G1 Δ G2 = {V1 ∪ V2, (E1 ∪ E2) \ (E1 ∩ E2)}`
-   *
-   * **Gotchas**
-   *
-   * Edges with different projected identities are distinct.
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * Parallel edges with equal identities are coalesced before the graphs are
-   * compared. The result allocates new node and edge identifiers.
-   *
-   * **Example** (Finding differing edges)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   Graph.addEdge(mutable, a, b, "A-B")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   const d = Graph.addNode(mutable, "D")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   *   Graph.addEdge(mutable, c, d, "C-D")
-   * })
-   *
-   * const result = Graph.symmetricDifference(left, right)
-   *
-   * Graph.nodeCount(result) // => 4
-   * Graph.edgeCount(result) // => 2
-   * ```
-   *
-   * @see {@link difference} for removing only the edges found in another graph
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  N, /**
-   * Returns edges present in exactly one of two graphs.
-   *
-   * **When to use**
-   *
-   * Use when comparing graphs and retaining relationships unique to either one.
-   *
-   * **Details**
-   *
-   * Keeps nodes from both graphs. Overlapping nodes use data from `that`. The
-   * result has the same graph kind as `self`. Throws a `GraphError` when the
-   * graph kinds do not match. `nodeIdentity` and `edgeIdentity` default to the
-   * complete node and edge data. Edge identity also includes the endpoint
-   * identities.
-   *
-   * `G1 Δ G2 = {V1 ∪ V2, (E1 ∪ E2) \ (E1 ∩ E2)}`
-   *
-   * **Gotchas**
-   *
-   * Edges with different projected identities are distinct.
-   * Nodes with equal identities in one input graph are coalesced. The last node
-   * supplies the data, and redirected edges can collapse or become self-loops.
-   * Parallel edges with equal identities are coalesced before the graphs are
-   * compared. The result allocates new node and edge identifiers.
-   *
-   * **Example** (Finding differing edges)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const left = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   Graph.addEdge(mutable, a, b, "A-B")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   * })
-   *
-   * const right = Graph.directed<string, string>((mutable) => {
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   const d = Graph.addNode(mutable, "D")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   *   Graph.addEdge(mutable, c, d, "C-D")
-   * })
-   *
-   * const result = Graph.symmetricDifference(left, right)
-   *
-   * Graph.nodeCount(result) // => 4
-   * Graph.edgeCount(result) // => 2
-   * ```
-   *
-   * @see {@link difference} for removing only the edges found in another graph
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  E>((mutable) => {
+  return make(self.type)<N, E>((mutable) => {
     const indexByIdentity = addNodesByIdentity(mutable, nodes)
 
     for (const [identity, data] of selfEdges) {
@@ -2756,7 +1892,7 @@ export const symmetricDifference: {
         addEdgeByIdentity(mutable, indexByIdentity, identity, data)
       }
     }
-  });
+  })
 })
 
 /**
@@ -2899,93 +2035,7 @@ export const complement: {
   const outgoing = csr.getOutgoing(cache)
   const neighborMarks = new Uint32Array(cache.nodeIds.length)
 
-  return make(self.type)</**
-   * Returns the complement over the existing node set.
-   *
-   * **When to use**
-   *
-   * Use when materializing every relationship that is currently absent between
-   * distinct nodes.
-   *
-   * **Details**
-   *
-   * Directed graphs add each missing ordered pair. Undirected graphs add each
-   * missing unordered pair once. The `createEdge` function receives the source
-   * and target node data for each added edge. The result has the same graph kind
-   * as `self`.
-   *
-   * `G' = {V, ((V x V) without self-pairs) \ E}`
-   *
-   * **Gotchas**
-   *
-   * Self-loops are never created. If any edge already connects a pair, parallel
-   * complement edges are not added. The result allocates new identifiers.
-   *
-   * **Example** (Finding missing relationships)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const graph = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "A-B")
-   * })
-   *
-   * const result = Graph.complement(graph, (source, target) => `${source}-${target}`)
-   *
-   * Graph.edgeCount(result) // => 1
-   * ```
-   *
-   * @see {@link hasEdge} for testing one relationship
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  N, /**
-   * Returns the complement over the existing node set.
-   *
-   * **When to use**
-   *
-   * Use when materializing every relationship that is currently absent between
-   * distinct nodes.
-   *
-   * **Details**
-   *
-   * Directed graphs add each missing ordered pair. Undirected graphs add each
-   * missing unordered pair once. The `createEdge` function receives the source
-   * and target node data for each added edge. The result has the same graph kind
-   * as `self`.
-   *
-   * `G' = {V, ((V x V) without self-pairs) \ E}`
-   *
-   * **Gotchas**
-   *
-   * Self-loops are never created. If any edge already connects a pair, parallel
-   * complement edges are not added. The result allocates new identifiers.
-   *
-   * **Example** (Finding missing relationships)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const graph = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   Graph.addEdge(mutable, a, b, "A-B")
-   * })
-   *
-   * const result = Graph.complement(graph, (source, target) => `${source}-${target}`)
-   *
-   * Graph.edgeCount(result) // => 1
-   * ```
-   *
-   * @see {@link hasEdge} for testing one relationship
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  E>((mutable) => {
+  return make(self.type)<N, E>((mutable) => {
     const newIndices = new Uint32Array(cache.nodeIds.length)
 
     for (let i = 0; i < cache.nodeIds.length; i++) {
@@ -3006,7 +2056,7 @@ export const complement: {
         addEdge(mutable, newIndices[i], newIndices[j], createEdge(cache.nodeData[i] as N, cache.nodeData[j] as N))
       }
     }
-  });
+  })
 })
 
 /**
@@ -3180,97 +2230,7 @@ export const neighborhood: {
     reached.add(index)
   }
 
-  return make(self.type)</**
-   * Returns the induced subgraph containing nodes within a radius of a node.
-   *
-   * **When to use**
-   *
-   * Use when extracting a local reachable region around one node.
-   *
-   * **Details**
-   *
-   * The `radius` option is the maximum edge distance from `nodeIndex`, accepts
-   * non-negative integers and `Infinity`, and defaults to `1`. Invalid radii
-   * throw a `GraphError`. The `direction` option controls directed graph
-   * traversal and defaults to `"outgoing"`. The result has the same graph kind
-   * as `self` and keeps all original edges whose endpoints are both reached.
-   * `"undirected"` ignores edge direction while finding reachable nodes.
-   *
-   * **Gotchas**
-   *
-   * Traversal chooses the nodes, then all original edges between reached nodes
-   * are retained. The result is not merely a traversal tree, and it allocates new
-   * node and edge identifiers.
-   *
-   * **Example** (Getting a local neighborhood)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const graph = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   Graph.addEdge(mutable, a, b, "A-B")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   * })
-   *
-   * const result = Graph.neighborhood(graph, 1, { radius: 1 })
-   *
-   * Graph.nodeCount(result) // => 2
-   * ```
-   *
-   * @see {@link inducedSubgraph} for selecting nodes while preserving identifiers
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  N, /**
-   * Returns the induced subgraph containing nodes within a radius of a node.
-   *
-   * **When to use**
-   *
-   * Use when extracting a local reachable region around one node.
-   *
-   * **Details**
-   *
-   * The `radius` option is the maximum edge distance from `nodeIndex`, accepts
-   * non-negative integers and `Infinity`, and defaults to `1`. Invalid radii
-   * throw a `GraphError`. The `direction` option controls directed graph
-   * traversal and defaults to `"outgoing"`. The result has the same graph kind
-   * as `self` and keeps all original edges whose endpoints are both reached.
-   * `"undirected"` ignores edge direction while finding reachable nodes.
-   *
-   * **Gotchas**
-   *
-   * Traversal chooses the nodes, then all original edges between reached nodes
-   * are retained. The result is not merely a traversal tree, and it allocates new
-   * node and edge identifiers.
-   *
-   * **Example** (Getting a local neighborhood)
-   *
-   * ```ts import.meta.vitest
-   * import { Graph } from "effect"
-   *
-   * const graph = Graph.directed<string, string>((mutable) => {
-   *   const a = Graph.addNode(mutable, "A")
-   *   const b = Graph.addNode(mutable, "B")
-   *   const c = Graph.addNode(mutable, "C")
-   *   Graph.addEdge(mutable, a, b, "A-B")
-   *   Graph.addEdge(mutable, b, c, "B-C")
-   * })
-   *
-   * const result = Graph.neighborhood(graph, 1, { radius: 1 })
-   *
-   * Graph.nodeCount(result) // => 2
-   * ```
-   *
-   * @see {@link inducedSubgraph} for selecting nodes while preserving identifiers
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  E>((mutable) => {
+  return make(self.type)<N, E>((mutable) => {
     const newIndexMap = new Map<NodeIndex, NodeIndex>()
 
     for (const oldIndex of reached) {
@@ -3286,7 +2246,7 @@ export const neighborhood: {
         }
       }
     }
-  });
+  })
 })
 
 /**
@@ -3475,59 +2435,7 @@ export const sum: {
   <N, E, T extends Kind>(self: Graph<N, E, T>, that: Graph<N, E, NoInfer<T>>): Graph<N, E, T>
 } = dual(2, <N, E, T extends Kind>(self: Graph<N, E, T>, that: Graph<N, E, T>): Graph<N, E, T> => {
   assertSameKind(self, that)
-  return make(self.type)</**
-   * Returns the disjoint union of two graphs.
-   *
-   * **When to use**
-   *
-   * Use when combining graphs while keeping every node distinct, even when node
-   * payloads are equal.
-   *
-   * **Details**
-   *
-   * Copies all nodes and edges from both graphs without merging equal node data.
-   * The result has the same graph kind as `self`. Throws a `GraphError` when the
-   * graph kinds do not match.
-   *
-   * `G1 + G2 = {disjoint V1 + V2, disjoint E1 + E2}`
-   *
-   * **Gotchas**
-   *
-   * All node and edge identifiers are newly allocated.
-   *
-   * @see {@link compose} for merging overlapping logical nodes by identity
-   *
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  N, /**
-   * Returns the disjoint union of two graphs.
-   *
-   * **When to use**
-   *
-   * Use when combining graphs while keeping every node distinct, even when node
-   * payloads are equal.
-   *
-   * **Details**
-   *
-   * Copies all nodes and edges from both graphs without merging equal node data.
-   * The result has the same graph kind as `self`. Throws a `GraphError` when the
-   * graph kinds do not match.
-   *
-   * `G1 + G2 = {disjoint V1 + V2, disjoint E1 + E2}`
-   *
-   * **Gotchas**
-   *
-   * All node and edge identifiers are newly allocated.
-   *
-   * @see {@link compose} for merging overlapping logical nodes by identity
-   *
-   * @stability unstable
-   * @category set operations
-   * @since 4.0.0
-   */
-  E>((mutable) => {
+  return make(self.type)<N, E>((mutable) => {
     const copyInto = (graph: Graph<N, E, T>) => {
       const impl = internal.toImpl(graph)
       const indexMap = new Map<NodeIndex, NodeIndex>()
@@ -3547,7 +2455,7 @@ export const sum: {
 
     copyInto(self)
     copyInto(that)
-  });
+  })
 })
 
 // =============================================================================

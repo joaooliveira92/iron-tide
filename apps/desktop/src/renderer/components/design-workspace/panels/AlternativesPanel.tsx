@@ -3,6 +3,8 @@ import type { Candidate, DesignDraft } from "@bluewave/ship-design";
 import { Button } from "../../ui/button.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { ConfirmAction } from "../ConfirmAction.js";
+import { useDesignState } from "../DesignWorkspaceContext.js";
+import { designPriceView, useTreasuryUnits } from "../design-price-view.js";
 import { Panel } from "./Panel.js";
 import { plural } from "../plural.js";
 
@@ -25,6 +27,10 @@ export function AlternativesPanel({
   readonly dirty: boolean;
 }) {
   const format = usePresentationFormat();
+  const {
+    content: { treasuryUnitMicro },
+  } = useDesignState();
+  const treasury = useTreasuryUnits();
   const [state, setState] = useState<{
     readonly status: "idle" | "working" | "done";
     readonly list: Candidate[];
@@ -64,7 +70,15 @@ export function AlternativesPanel({
                         maximumFractionDigits: 1,
                       })}{" "}
                       kn · {format.number(k.machinery?.rangeNmAtCruise ?? 0)} nm · cost{" "}
-                      {format.moneyFromMicro(c.costMicro)} ·{" "}
+                      {
+                        designPriceView(
+                          { costMicro: c.costMicro, monthlyMaintenanceMicro: 0 },
+                          treasuryUnitMicro,
+                          treasury,
+                          format,
+                        ).unitsText
+                      }{" "}
+                      ·{" "}
                       {plural(
                         k.findings.filter((f) => f.severity !== "ADVISORY").length,
                         "finding",

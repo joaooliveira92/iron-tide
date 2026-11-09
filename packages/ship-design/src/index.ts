@@ -64,6 +64,7 @@ export {
   advanceConstructionMonth,
   type ConstructionBalance,
   type ConstructionPlan,
+  historicalBuildMonths,
   LINE_IDS,
   type LineId,
   PACKAGE_ORDER,
@@ -74,6 +75,11 @@ export {
   type WorkPackage,
 } from "./construction.js";
 export {
+  acceleratedWorkRate,
+  accelerationTermsOf,
+  type AccelerationTerms,
+} from "./accelerationTerms.js";
+export {
   type ConstructionCapacityBalance,
   type ConstructionCapacityExemptionDefinition,
   constructionPoolForProjectKind,
@@ -82,9 +88,15 @@ export {
   reservedNewConstructionMassKg,
   shippedConstructionCapacityExemptions,
 } from "./constructionCapacity.js";
-export { buildProgressOf } from "./constructionProgress.js";
+export { buildProgressOf, scalePlanToUnits } from "./constructionProgress.js";
 export { type HullFormRecord, shipBalanceFromRecord } from "./contextBuilder.js";
 export { computeCost, type CostBalance, type CostContext, treasuryCostUnits } from "./cost.js";
+export {
+  designPrice,
+  type DesignPrice,
+  type DesignPriceInput,
+  type DesignTreasuryFit,
+} from "./designPrice.js";
 export {
   type DockRecord,
   dockRecordFor,
@@ -158,6 +170,14 @@ export {
   legacyCatalogueView,
   type PartCatalogueEntry,
 } from "./partCatalogueView.js";
+export {
+  pickerOptions,
+  type CaliberRange,
+  type HiddenPickerEntry,
+  type PickerHiddenReason,
+  type PickerOptions,
+  type PickerQuery,
+} from "./pickerOptions.js";
 export { buildCompatibilitySlots } from "./partCompatibility.js";
 export { lifecycleStatus, shiftMonth } from "./partLifecycle.js";
 export { partCatalogue } from "./partQueries.js";
@@ -213,6 +233,15 @@ export {
   evaluateShipTypeAvailability,
 } from "./shipTypeAvailability.js";
 export { type Range } from "./shipTypeEnvelope.js";
+export {
+  checkShipTypeRequirements,
+  shipTypeRequirements,
+  type RequirementBound,
+  type RequirementUnit,
+  type ShipTypeRequirement,
+  type ShipTypeRequirementCheck,
+  type ShipTypeRequirements,
+} from "./shipTypeRequirements.js";
 export { buildShipTypeRoster, type RosterEntry, type StarterDesign } from "./shipTypeRoster.js";
 export {
   HULL_TYPE_FOR_SHIP_TYPE,
@@ -228,12 +257,13 @@ export { assessSimilarity, similarityProfile, studyTerms } from "./study.js";
 export { type SuggestedFix, suggestFixes } from "./suggest.js";
 export { TOPSIDE_WARN_BP, topsideLoad, type TopsideStatus } from "./topside.js";
 export { type TorpedoModelSource } from "./torpedoPartBuilder.js";
-export { bp, kg, mm, UM_PER_INCH } from "./units.js";
+export { bp, kg, mm, UM_PER_INCH, UM_PER_KNOT } from "./units.js";
 export { type MountSide } from "./weapons.js";
 export {
   buildWorkshopView,
   type Metric,
   type WorkshopEnvironment,
+  type WorkshopRequirements,
   type WorkshopView,
   type YardOption,
 } from "./workshop.js";

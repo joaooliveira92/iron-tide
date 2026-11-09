@@ -69,12 +69,12 @@ const collectDeclaredGlobalFlags = command => {
   visit(command);
   return dedupeGlobalFlags(collected);
 };
-const getSharedFlagsForCommandPath = (commands, currentFlags) => {
+const getInheritedFlagsForCommandPath = (commands, currentFlags) => {
   if (commands.length <= 1) {
     return [];
   }
   const seen = new Set(currentFlags.map(flag => flag.name));
-  const sharedFlags = [];
+  const inheritedFlags = [];
   for (const ancestor of commands.slice(0, -1)) {
     const ancestorImpl = toImpl(ancestor);
     for (const flag of ancestorImpl.contextConfig.flags) {
@@ -84,18 +84,15 @@ const getSharedFlagsForCommandPath = (commands, currentFlags) => {
         if (seen.has(single.name)) {
           continue;
         }
-        // Hidden ancestor flags are excluded from the shared-flags section
-        // of subcommand help, the same way they're excluded from the owning
-        // command's own help output.
         if (single.hidden) {
           continue;
         }
         seen.add(single.name);
-        sharedFlags.push(toFlagDoc(single, metadata));
+        inheritedFlags.push(toFlagDoc(single, metadata));
       }
     }
   }
-  return sharedFlags;
+  return inheritedFlags;
 };
 /**
  * Returns all global flags declared in a command tree.
@@ -111,7 +108,7 @@ export const getHelpForCommandPath = (command, commandPath, builtIns) => Effect.
   const commands = getCommandsForCommandPath(command, commandPath);
   const currentCommand = commands.length > 0 ? commands[commands.length - 1] : command;
   const baseDoc = toImpl(currentCommand).buildHelpDoc(commandPath);
-  const sharedFlags = getSharedFlagsForCommandPath(commands, baseDoc.flags);
+  const inheritedFlags = getInheritedFlagsForCommandPath(commands, baseDoc.flags);
   const flags = getGlobalFlagsForCommandPath(command, commandPath, builtIns);
   const globalFlagDocs = [];
   for (const flag of flags) {
@@ -128,10 +125,20 @@ export const getHelpForCommandPath = (command, commandPath, builtIns) => Effect.
       });
     }
   }
+  // Globals accumulate along the path, so the deepest declaring scope lists them all.
+  let scopeLength = 1;
+  for (let i = commands.length - 1; i > 0; i--) {
+    if (toImpl(commands[i]).globalFlags.length > 0) {
+      scopeLength = i + 1;
+      break;
+    }
+  }
   return {
     ...baseDoc,
-    flags: [...sharedFlags, ...baseDoc.flags],
-    globalFlags: globalFlagDocs
+    inheritedFlags,
+    globalFlags: globalFlagDocs,
+    globalFlagsScope: commandPath.slice(0, scopeLength),
+    commandPath
   };
 });
 //# sourceMappingURL=help.js.map

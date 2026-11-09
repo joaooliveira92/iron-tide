@@ -1,6 +1,10 @@
 import { BrowserWindow } from "electron";
-import { desktopWindowOptions } from "./windowOptions.js";
+import { desktopWindowOptions, isBackgroundLaunch } from "./windowOptions.js";
 
 export function createDesktopWindow(preloadPath: string): BrowserWindow {
-  return new BrowserWindow(desktopWindowOptions(process.platform, preloadPath));
+  return new BrowserWindow(
+    desktopWindowOptions(process.platform, preloadPath, {
+      background: isBackgroundLaunch(process.argv),
+    }),
+  );
 }

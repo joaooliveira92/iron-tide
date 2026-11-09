@@ -15,7 +15,6 @@
  * @since 4.0.0
  */
 import * as assert from "node:assert";
-import { isDeepStrictEqual } from "node:util";
 import * as Arbitrary from "../Arbitrary.js";
 import * as Cause from "../Cause.js";
 import * as Effect from "../Effect.js";
@@ -217,7 +216,7 @@ export class Asserts {
     };
   }
   /**
-   * Runs a property-based test that encodes arbitrary values and then decodes them, asserting the decoded value equals the original.
+   * Runs a property-based test that encodes arbitrary values and then decodes them, asserting the decoded value is equivalent to the original.
    *
    * **When to use**
    *
@@ -228,6 +227,9 @@ export class Asserts {
    *
    * The native Schema arbitrary generates values matching the schema's `Type`. The assertion fails with the minimized
    * shrunk input and replay token if any generated value does not round-trip.
+   *
+   * Uses {@link Schema.toEquivalence}, including custom equivalence annotations,
+   * to compare each decoded value with the original.
    *
    * **Example** (Verifying round trips)
    *
@@ -256,6 +258,9 @@ export class Asserts {
    *
    * **Details**
    *
+   * Uses {@link Schema.toEquivalence}, including custom equivalence annotations,
+   * to compare each decoded value with the original.
+   *
    * Assertion mismatches are defects containing the shrunk input and replay token.
    * Schema defects and interruption propagate without becoming assertion failures.
    *
@@ -280,8 +285,9 @@ export class Asserts {
     return Effect.suspend(() => {
       const decodeUnknownEffect = SchemaParser.decodeUnknownEffect(this.schema);
       const encodeEffect = SchemaParser.encodeEffect(this.schema);
+      const equivalence = Schema.toEquivalence(this.schema);
       const arbitrary = Arbitrary.schema(this.schema);
-      return Arbitrary.checkEffect(arbitrary, value => Effect.suspend(() => encodeEffect(value)).pipe(Effect.flatMapEager(encoded => decodeUnknownEffect(encoded)), schemaResult, Effect.mapEager(result => isDeepStrictEqual(result, Result.succeed(value)))), options).pipe(Effect.mapEager(assertPropertyPassed));
+      return Arbitrary.checkEffect(arbitrary, value => Effect.suspend(() => encodeEffect(value)).pipe(Effect.flatMapEager(encoded => decodeUnknownEffect(encoded)), schemaResult, Effect.mapEager(result => Result.isSuccess(result) && equivalence(result.success, value))), options).pipe(Effect.mapEager(assertPropertyPassed));
     });
   }
   /**

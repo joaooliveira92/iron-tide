@@ -144,6 +144,7 @@ const makeExecute = /*#__PURE__*/Effect.fnUntraced(function* (activity) {
   });
   const result = yield* Workflow.wrapActivityResult(engine.activityExecute(activity, attempt), _ => _._tag === "Suspended");
   if (result._tag === "Suspended") {
+    if (result.failed) instance.failed = true;
     return yield* Workflow.suspend(instance);
   }
   return yield* result.exit;

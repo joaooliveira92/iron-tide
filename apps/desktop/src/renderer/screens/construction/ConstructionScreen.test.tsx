@@ -1,9 +1,13 @@
-import type { ConstructionProjectQueueEntry } from "@bluewave/campaign-engine";
+import {
+  createCompiledDesignVersion,
+  type ConstructionProjectQueueEntry,
+} from "@bluewave/campaign-engine";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { memo, type ComponentProps } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { ConstructionScreenProjection } from "../../../shared/construction-contract.js";
 import { ConstructionScreen } from "./ConstructionScreen.js";
+import { steeringPreview } from "./steering-test-fixtures.js";
 
 const mocks = vi.hoisted(() => ({ execute: vi.fn(), revise: vi.fn() }));
 vi.mock("../../shell/CampaignShellContext.js", async (original) => ({
@@ -11,6 +15,16 @@ vi.mock("../../shell/CampaignShellContext.js", async (original) => ({
   useReviseProject: () => mocks.revise,
 }));
 const stageRenders = vi.hoisted(() => ({ slipways: vi.fn() }));
+const tileRenders = vi.hoisted(() => ({ byDesign: new Map<string, number>() }));
+vi.mock("./components/DesignTile.js", async (original) => {
+  const real = await original<typeof import("./components/DesignTile.js")>();
+  const Counted = memo(function Counted(props: ComponentProps<typeof real.DesignTile>) {
+    const id = props.design.designId;
+    tileRenders.byDesign.set(id, (tileRenders.byDesign.get(id) ?? 0) + 1);
+    return <real.DesignTile {...props} />;
+  });
+  return { ...real, DesignTile: Counted };
+});
 vi.mock("./components/SlipwaysStage.js", async (original) => {
   const real = await original<typeof import("./components/SlipwaysStage.js")>();
   const Counted = memo(function Counted(props: ComponentProps<typeof real.SlipwaysStage>) {
@@ -28,6 +42,7 @@ afterEach(() => {
   mocks.execute.mockReset();
   mocks.revise.mockReset();
   stageRenders.slipways.mockClear();
+  tileRenders.byDesign.clear();
 });
 
 const project = (
@@ -64,10 +79,13 @@ const projectionWith = (
     exemptNewConstructionMassKg: 0,
     dockExpansionDurationMonths: 12,
     dockExpansionNextStepKg: 1_000_000,
+    dockExpansionReadyMonth: "1880-12",
     dockPossessions: [],
   },
   designs: [],
   projects,
+  studies: [],
+  steering: {},
   workspace: { commands: [], treasuryReserved: 0, capacityReserved: 0 },
 });
 
@@ -90,6 +108,37 @@ describe("ConstructionScreen stage memoization", () => {
 
     expect(stageRenders.slipways.mock.calls.length).toBe(rendersBefore);
   });
+
+  it("re-renders only the design tiles whose selection changed", async () => {
+    const designs = ["d1", "d2", "d3"].map((id) =>
+      createCompiledDesignVersion(id, {
+        className: id,
+        shipType: "battleship",
+        nationId: "uk",
+        year: 1906,
+        available: true,
+        mass: 18_000,
+        speed: 21,
+        machineryType: "steam_turbine",
+        requiredTechnologyIds: [],
+        projectedCost: 180,
+        projectedCapacityUnits: 18,
+        costBasis: "displacement_formula",
+      }),
+    );
+    serve({ ...projectionWith([]), designs });
+    render(<ConstructionScreen sessionId="ses_1" />);
+    fireEvent.click(await screen.findByRole("button", { name: /Design catalog/ }));
+    const tiles = await screen.findAllByRole("radio");
+    const second = tiles[1];
+    if (second === undefined) throw new Error("expected three design tiles");
+    const thirdBefore = tileRenders.byDesign.get("d3") ?? 0;
+
+    fireEvent.click(second);
+
+    await waitFor(() => expect(second.getAttribute("aria-checked")).toBe("true"));
+    expect(tileRenders.byDesign.get("d3") ?? 0).toBe(thirdBefore);
+  });
 });
 
 describe("ConstructionScreen revise project", () => {
@@ -106,7 +155,10 @@ describe("ConstructionScreen revise project", () => {
   });
 
   it("offers no revise control for a project built from an authored design", async () => {
-    serve(projectionWith([project({ revisable: false })]));
+    serve({
+      ...projectionWith([project({ revisable: false })]),
+      steering: { "project-1": steeringPreview() },
+    });
     render(<ConstructionScreen sessionId="ses_1" />);
 
     fireEvent.click(await screen.findByRole("button", { name: /^Havock class, active/ }));

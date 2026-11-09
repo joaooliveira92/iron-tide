@@ -8,5 +8,11 @@ export {
 export type { AiExecutionResult } from "./aiPhaseExecutor.js";
 export { AiPhaseExecutor } from "./aiPhaseExecutor.js";
 export { AiError } from "./errors.js";
+export type {
+  PeaceProposalDecision,
+  PeaceReason,
+  PeaceResponseDecision,
+} from "./peaceBehaviour.js";
+export { decidePeaceProposal, decidePeaceResponse } from "./peaceBehaviour.js";
 export type { AiPlanningResult } from "./aiPlanner.js";
 export { AI_RNG_STREAM_PREFIX, AiPlanner } from "./aiPlanner.js";

@@ -83,7 +83,7 @@ export const manual = acquire => Effect.contextWith(context => {
  * @category constructors
  * @since 2.0.0
  */
-export const auto = (acquire, policy) => Effect.tap(manual(acquire), self => Effect.forkScoped(Effect.repeat(refresh(self), policy)));
+export const auto = (acquire, policy) => Effect.tap(manual(acquire), self => Effect.forkScoped(Effect.schedule(Effect.ignoreCause(refresh(self)), policy)));
 /**
  * Retrieves the current value stored in this resource.
  *

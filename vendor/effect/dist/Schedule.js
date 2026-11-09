@@ -388,6 +388,11 @@ const maxDuration = results => {
  * Returns a new `Schedule` that recurs on the specified `Cron` schedule and
  * outputs the duration between recurrences.
  *
+ * **Details**
+ *
+ * A string expression is parsed with `Cron.parse`, using the optional time zone
+ * and `onDstOverlap` policy. A pre-parsed `Cron` value keeps its own policy.
+ *
  * **Example** (Scheduling work with cron expressions)
  *
  * ```ts import.meta.vitest
@@ -401,14 +406,15 @@ const maxDuration = results => {
  * @category constructors
  * @since 2.0.0
  */
-export const cron = (expression, tz) => {
-  const parsed = Cron.isCron(expression) ? Result.succeed(expression) : Cron.parse(expression, tz);
+export const cron = (expression, tz, options) => {
+  const parsed = Cron.isCron(expression) ? Result.succeed(expression) : Cron.parse(expression, tz, options);
   return fromStep(effect.map(effect.fromResult(parsed), cron => (now, _) => {
     if (now === Number.POSITIVE_INFINITY) {
       return Cause.done(Duration.zero);
     }
     return effect.sync(() => {
-      const next = Cron.next(cron, now).getTime();
+      let next = Cron.next(cron, now).getTime();
+      if (Duration.isZero(Duration.millis(next - now))) next = Cron.next(cron, next).getTime();
       const duration = Duration.millis(next - now);
       return [duration, duration];
     });
@@ -573,10 +579,10 @@ export const fibonacci = one => {
     let a = 0;
     let b = oneMillis;
     return constant(effect.sync(() => {
+      const duration = Duration.millis(b);
       const next = a + b;
       a = b;
       b = next;
-      const duration = Duration.millis(next);
       return [duration, duration];
     }));
   }));
@@ -634,7 +640,7 @@ export const fixed = interval => {
       }
       const runningBehind = meta.now > lastRun + window;
       const boundary = window - (meta.now - start) % window;
-      const delay = runningBehind ? 0 : boundary === 0 ? window : boundary;
+      const delay = runningBehind ? 0 : Duration.isZero(Duration.millis(boundary)) ? window : boundary;
       lastRun = runningBehind ? meta.now : meta.now + delay;
       return [meta.attempt - 1, Duration.millis(delay)];
     });
@@ -1006,7 +1012,11 @@ while_ as while };
  */
 export const windowed = interval => {
   const window = Duration.toMillis(Duration.fromInputUnsafe(interval));
-  return fromStepWithMetadata(effect.succeed(meta => effect.sync(() => [meta.attempt - 1, window === 0 ? Duration.zero : Duration.millis(window - meta.elapsed % window)])));
+  return fromStepWithMetadata(effect.succeed(meta => effect.sync(() => {
+    if (window === 0) return [meta.attempt - 1, Duration.zero];
+    const delay = Duration.millis(window - meta.elapsed % window);
+    return [meta.attempt - 1, Duration.isZero(delay) ? Duration.millis(window) : delay];
+  })));
 };
 /**
  * Returns a new `Schedule` that will recur forever.

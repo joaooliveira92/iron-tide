@@ -82,6 +82,12 @@ export interface DecodeOptions {
      * Maximum number of string code units retained for a pending event. The default is 10 MiB.
      */
     readonly maxEventSize?: number | undefined;
+    /**
+     * Also dispatch an event that sets an `event:` name but has no `data:`
+     * line, with empty `data`. The WHATWG algorithm drops such events, but some
+     * protocols use them, such as graphql-sse's `complete`. Defaults to `false`.
+     */
+    readonly dispatchEmptyNamedEvents?: boolean | undefined;
 }
 /**
  * Creates a channel that parses Server-Sent Events text chunks into `Event` values.
@@ -336,7 +342,9 @@ export type AnyEvent = Event | Retry;
  * **Details**
  *
  * It renders `Event` values as `id`, `event`, and `data` lines and renders
- * `Retry` values as `retry:` directives.
+ * `Retry` values as `retry:` directives. CR and LF are removed from `id` and
+ * `event`, and NUL is removed from `id`, so those values cannot inject fields
+ * or events.
  *
  * @stability unstable
  * @category encoding

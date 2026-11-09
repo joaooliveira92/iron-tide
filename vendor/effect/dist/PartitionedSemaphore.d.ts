@@ -52,7 +52,8 @@ export type PartitionedTypeId = "~effect/PartitionedSemaphore";
  *
  * **Details**
  *
- * Waiting permits are distributed across partitions in round-robin order.
+ * Waiters are served across partitions in round-robin order, completing each
+ * waiter's permit request before moving to the next partition.
  *
  * @stability unstable
  * @category models

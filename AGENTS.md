@@ -4,7 +4,7 @@ Deterministic naval strategy game: engine, content compiler, Electron app, one T
 
 ## Authority
 
-Read in order: `README.md`, `.ai/ENGINEERING-CONTRACT.md`, `RULES.md`, `.ai/REQUIREMENTS.md` + package `AGENTS.md`, `.ai/SPRINT-PLAN.md` / `.ai/briefs/`, nearby code and tests. Precedence: safety/legal/credential → design → contract → rules → brief → local. On conflict, stop.
+Read in order: `README.md`, `.ai/ENGINEERING-CONTRACT.md`, `RULES.md`, `.ai/REQUIREMENTS.md` + package `AGENTS.md`, `.ai/SPRINT-PLAN.md` / `.ai/briefs/`, nearby code and tests. Precedence: safety/legal/credential → design → contract → rules → brief → local. A higher layer wins: apply it, note it in one line, continue; stop only when none clearly wins. Harness or session instructions set where work lands (target branch, tools); this file sets how the repo changes.
 
 ## Agent workflow
 
@@ -12,16 +12,15 @@ Read in order: `README.md`, `.ai/ENGINEERING-CONTRACT.md`, `RULES.md`, `.ai/REQU
 - Start from the handoff or brief if given; do not re-derive it.
 - Context cap: hooks warn at 150k tokens and block a resume above 200k (`scripts/data/agent-context-policy.json`). At the warning, commit and write the handoff (`handoff` skill). [Context efficiency](docs/agents/context-efficiency.md).
 - `pnpm agent:map <symbol|path>` before reading (read by range); `pnpm verify:affected` before committing; `pnpm heavy <cmd>`, never `sleep`. [Agent tools](docs/agents/agent-tools.md).
-- Substantial work starts from a [task brief](.ai/templates/task-brief.md) or [task prompt](.ai/templates/task-prompt.md): problem and evidence, then the simplest solution. Log routine decisions in the brief and continue; return only at a stop condition. Merge only with the brief's authority; report rollback. [Lifecycle](docs/agents/task-lifecycle.md), [rollback](docs/agents/rollback.md), [access](docs/agents/autonomy-and-access.md). State: `pnpm worktrees status|inbox`.
+- Size the task, then follow [Delivery](#delivery). **T0** one file, docs or config: no brief. **T1** default: a short [task prompt](.ai/templates/task-prompt.md). **T2** multi-session or foggy: a [task brief](.ai/templates/task-brief.md) and [ORCHESTRATION](.ai/ORCHESTRATION.md). Problem and evidence, then the simplest solution; log routine decisions and continue. [Lifecycle](docs/agents/task-lifecycle.md), [rollback](docs/agents/rollback.md), [access](docs/agents/autonomy-and-access.md). State: `pnpm worktrees status|inbox`.
 
 ## Rules
 
 - Session start: `git status`, `git pull --rebase`, `pnpm preflight`. Rebase before every push.
 - Never overwrite or reformat others' work. Narrow Conventional commits.
 - No code comments; rationale goes in the commit message.
-- Short-lived branch from `dev`; max 5 worktrees, one session per checkout.
+- Max 5 worktrees, one session per checkout.
 - Review agents are read-only and their reports are pointers: verify diff, gates, `git status`.
-- Doc budgets (`scripts/doc-budgets.manifest.json`) ratchet down; justify raises.
 - No ADRs: enforce a rule in a gate, type or test, else add a line to `RULES.md` or the package `AGENTS.md`.
 - Research and working notes go to GitHub Discussions (`gh discussion create --category Research`), never the repo. [Issue tracker](docs/agents/issue-tracker.md).
 
@@ -33,22 +32,22 @@ Determinism (no `Math.random`, wall-clock, `process.env`; canonical hashes ident
 
 - Red, Green, Refactor; a bug is unconfirmed until a regression test fails before the fix and passes after.
 - `vite-plus/test`; exercise production composition, replace only true external boundaries; no sleeps or wall-clock.
-- Done = `pnpm preflight`, `pnpm test:scripts`, `pnpm check` green; clean tree; Conventional subject; ACS met. Never weaken gates. [Golden repinning](docs/agents/golden-repinning.md).
+- Never weaken gates. [Golden repinning](docs/agents/golden-repinning.md).
 
-## Git
+## Delivery
 
-- No commits on `dev`/`main`; merge branch into `dev` when green (PR optional); delete branch only after merge.
-- No force-push or history rewrite. No secrets, `.env`, stores, caches, machine config.
-- `pnpm change-scope` for change-based filtering. [Docs](docs/agents/change-scope.md).
+Steps 1–2 need no permission.
+
+1. **Branch** off `dev` (`feat|fix|refactor|docs/<slug>`); commit directly on `dev` only when the user or harness names it as the working branch (small, gated commits); never on `main`. A branch the harness names is the PR target: if it is `dev`, say so once and continue.
+2. **Push early** and open a **draft PR into `dev`** (only `pr: none` opts out). Containers are ephemeral.
+3. **Verify**: `pnpm verify:affected` while iterating; `pnpm preflight`, `pnpm test:scripts`, `pnpm check` on the final commit. Await every gate you start; never end a turn with one pending. If a gate cannot run here, CI is the gate: subscribe to the PR.
+4. **Ready** when gates are green, the tree is clean, the subject is Conventional and ACS are met. The PR body lists each gate as `passed`, `failed` or `not run (reason)`.
+5. **Merge** only with the brief's authority, else a human merges. No force-push or history rewrite; no secrets, `.env`, stores, caches, machine config. Delete the branch after merge only.
+6. **Report** `READY`, `DRAFT (gates pending: <which>)` or `BLOCKED (<stop condition>)` first, then the PR link and observed versus assumed.
 
 ## Shipping bar
 
-- **Playable**: desktop launches, vertical slice runs on every merge.
-- **Seen**: UI changes verified with `pnpm snap`.
-- **Tunable**: numbers live in content/balance data, PROVISIONAL until sourced; no magic numbers in code.
-- **Reachable**: new player-facing engine capability names its UI path or adds a `dormant-by-decision` row to `scripts/data/reachability-ledger.json`.
-- **Explainable**: every player-facing number traces to an explanation tree.
-- **Measured**: balance claims cite generated reports (`pnpm check:balance-reports`).
+Playable, Seen (`pnpm snap` for UI), Tunable, Reachable, Explainable, Measured: [shipping bar](docs/agents/shipping-bar.md).
 
 ## Guides
 
@@ -60,4 +59,4 @@ Determinism (no `Math.random`, wall-clock, `process.env`; canonical hashes ident
 
 Write a decision request (`.ai/templates/decision-request.md`) and stop when: plausible interpretations change gameplay; design contradicts itself; required high-authority content is missing; repair would fabricate canonical information; migration changes unapproved authoritative outcomes; a fix expands into a deferred subsystem; destructive data or history rewrite is needed; credentials/secrets/signing/publishing are involved; a dependency raises licence/security concern; determinism cannot be demonstrated; a golden hash changes without understood cause.
 
-Do not stop for routine design choices. Pipeline: [`.ai/ORCHESTRATION.md`](.ai/ORCHESTRATION.md).
+Do not stop for routine design choices.

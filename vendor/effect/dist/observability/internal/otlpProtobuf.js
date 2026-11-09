@@ -218,7 +218,7 @@ export const encodeTracesData = tracesData => Proto.repeatedField(1, tracesData.
  *
  * @internal
  */
-export const encodeNumberDataPoint = point => Proto.concat(Proto.fixed64Field(2, BigInt(point.startTimeUnixNano)), Proto.fixed64Field(3, BigInt(point.timeUnixNano)), point.asDouble !== undefined ? Proto.doubleField(4, point.asDouble) : new Uint8Array(0), point.asInt !== undefined ? Proto.fixed64Field(6, BigInt(point.asInt)) : new Uint8Array(0), Proto.repeatedField(7, point.attributes, encodeKeyValue), point.flags !== undefined ? Proto.varintField(8, point.flags) : new Uint8Array(0));
+export const encodeNumberDataPoint = point => Proto.concat(Proto.optionalFixed64Field(2, point.startTimeUnixNano), Proto.fixed64Field(3, BigInt(point.timeUnixNano)), point.asDouble !== undefined ? Proto.doubleField(4, point.asDouble) : new Uint8Array(0), point.asInt !== undefined ? Proto.fixed64Field(6, BigInt(point.asInt)) : new Uint8Array(0), Proto.repeatedField(7, point.attributes, encodeKeyValue), point.flags !== undefined ? Proto.varintField(8, point.flags) : new Uint8Array(0));
 /**
  * Encodes a HistogramDataPoint message.
  *
@@ -242,7 +242,7 @@ export const encodeHistogramDataPoint = point => {
   const bucketCountsEncoded = Proto.concat(...point.bucketCounts.map(count => Proto.fixed64Field(6, BigInt(count))));
   // Pack explicit bounds as repeated double
   const explicitBoundsEncoded = Proto.concat(...point.explicitBounds.map(bound => Proto.doubleField(7, bound)));
-  return Proto.concat(Proto.fixed64Field(2, BigInt(point.startTimeUnixNano)), Proto.fixed64Field(3, BigInt(point.timeUnixNano)), Proto.fixed64Field(4, BigInt(point.count)), point.sum !== undefined ? Proto.doubleField(5, point.sum) : new Uint8Array(0), bucketCountsEncoded, explicitBoundsEncoded, Proto.repeatedField(9, point.attributes, encodeKeyValue), point.flags !== undefined ? Proto.varintField(10, point.flags) : new Uint8Array(0), point.min !== undefined ? Proto.doubleField(11, point.min) : new Uint8Array(0), point.max !== undefined ? Proto.doubleField(12, point.max) : new Uint8Array(0));
+  return Proto.concat(Proto.optionalFixed64Field(2, point.startTimeUnixNano), Proto.fixed64Field(3, BigInt(point.timeUnixNano)), Proto.fixed64Field(4, BigInt(point.count)), point.sum !== undefined ? Proto.doubleField(5, point.sum) : new Uint8Array(0), bucketCountsEncoded, explicitBoundsEncoded, Proto.repeatedField(9, point.attributes, encodeKeyValue), point.flags !== undefined ? Proto.varintField(10, point.flags) : new Uint8Array(0), point.min !== undefined ? Proto.doubleField(11, point.min) : new Uint8Array(0), point.max !== undefined ? Proto.doubleField(12, point.max) : new Uint8Array(0));
 };
 /**
  * Encodes a Gauge message.
@@ -297,7 +297,7 @@ export const encodeHistogram = histogram => Proto.concat(Proto.repeatedField(1, 
  *
  * @internal
  */
-export const encodeSummaryDataPoint = point => Proto.concat(Proto.fixed64Field(2, BigInt(point.startTimeUnixNano)), Proto.fixed64Field(3, BigInt(point.timeUnixNano)), Proto.fixed64Field(4, BigInt(point.count)), Proto.doubleField(5, point.sum), Proto.repeatedField(6, point.quantileValues, q => Proto.concat(Proto.doubleField(1, q.quantile), Proto.doubleField(2, q.value))), Proto.repeatedField(7, point.attributes, encodeKeyValue), point.flags !== undefined ? Proto.varintField(8, point.flags) : new Uint8Array(0));
+export const encodeSummaryDataPoint = point => Proto.concat(Proto.optionalFixed64Field(2, point.startTimeUnixNano), Proto.fixed64Field(3, BigInt(point.timeUnixNano)), Proto.fixed64Field(4, BigInt(point.count)), Proto.doubleField(5, point.sum), Proto.repeatedField(6, point.quantileValues, q => Proto.concat(Proto.doubleField(1, q.quantile), Proto.doubleField(2, q.value))), Proto.repeatedField(7, point.attributes, encodeKeyValue), point.flags !== undefined ? Proto.varintField(8, point.flags) : new Uint8Array(0));
 /**
  * Encodes a Summary message.
  *

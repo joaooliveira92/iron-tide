@@ -16,8 +16,8 @@ export * from "./v2025_06_18.js";
  */
 export const protocolVersion = "2025-11-25";
 const optional = Previous.optional;
-const JsonObject = Schema.JsonObject;
-const Meta = /*#__PURE__*/optional(JsonObject);
+const UnknownObject = Previous.UnknownObject;
+const Meta = /*#__PURE__*/optional(UnknownObject);
 /**
  * @internal
  */
@@ -42,12 +42,12 @@ export const Implementation = /*#__PURE__*/Schema.Struct({
 export const ClientCapabilities = /*#__PURE__*/Schema.Struct({
   ...Previous.ClientCapabilities.fields,
   sampling: /*#__PURE__*/optional(/*#__PURE__*/Schema.Struct({
-    context: /*#__PURE__*/optional(JsonObject),
-    tools: /*#__PURE__*/optional(JsonObject)
+    context: /*#__PURE__*/optional(UnknownObject),
+    tools: /*#__PURE__*/optional(UnknownObject)
   })),
   elicitation: /*#__PURE__*/optional(/*#__PURE__*/Schema.Struct({
-    form: /*#__PURE__*/optional(JsonObject),
-    url: /*#__PURE__*/optional(JsonObject)
+    form: /*#__PURE__*/optional(UnknownObject),
+    url: /*#__PURE__*/optional(UnknownObject)
   }))
 });
 /**
@@ -155,7 +155,7 @@ export const ToolUseContent = /*#__PURE__*/Schema.Struct({
   type: /*#__PURE__*/Schema.Literal("tool_use"),
   id: Schema.String,
   name: Schema.String,
-  input: JsonObject,
+  input: UnknownObject,
   _meta: Meta
 });
 /**
@@ -165,7 +165,7 @@ export const ToolResultContent = /*#__PURE__*/Schema.Struct({
   type: /*#__PURE__*/Schema.Literal("tool_result"),
   toolUseId: Schema.String,
   content: /*#__PURE__*/Schema.Array(ContentBlock),
-  structuredContent: /*#__PURE__*/optional(JsonObject),
+  structuredContent: /*#__PURE__*/optional(UnknownObject),
   isError: /*#__PURE__*/optional(Schema.Boolean),
   _meta: Meta
 });

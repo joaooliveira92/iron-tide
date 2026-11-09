@@ -14,6 +14,7 @@
 import * as Context from "../Context.js";
 import * as Effect from "../Effect.js";
 import * as Exit from "../Exit.js";
+import * as Fiber from "../Fiber.js";
 import * as Latch from "../Latch.js";
 import * as Layer from "../Layer.js";
 import * as Option from "../Option.js";
@@ -27,6 +28,7 @@ import * as Schema from "../Schema.js";
 import { AlreadyProcessingMessage, EntityNotAssignedToRunner, MailboxFull, RunnerUnavailable } from "./ClusterError.js";
 import { Persisted } from "./ClusterSchema.js";
 import * as Envelope from "./Envelope.js";
+import { TransactionNotifications } from "./internal/transactionNotifications.js";
 import * as Message from "./Message.js";
 import * as MessageStorage from "./MessageStorage.js";
 import * as Reply from "./Reply.js";
@@ -79,6 +81,16 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
     ...serviceOptions
   } = options;
   const requestIdRewrites = new Map();
+  // A message saved in a transaction is invisible to readers until the commit,
+  // so its wake-up waits for the commit. A failure then can no longer be
+  // returned and is dropped; the next storage poll delivers the message.
+  const notifyAfterCommit = (message, notify) => {
+    const rpc = message.rpc;
+    if (!Context.get(rpc.annotations, Persisted)) return notify;
+    return TransactionNotifications.use(notifications => notifications === undefined ? notify : Effect.sync(() => {
+      notifications.push(Effect.ignore(notify));
+    }));
+  };
   function notifyWith(message, afterPersist) {
     const rpc = message.rpc;
     const persisted = Context.get(rpc.annotations, Persisted);
@@ -133,36 +145,33 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
   }
   const storageRequests = new Map();
   const waitingStorageRequests = new Map();
-  const replyFromStorage = Effect.fnUntraced(function* (message) {
-    let entry = storageRequests.get(message.envelope.requestId);
-    if (entry) {
-      entry.messages.add(message);
-      entry.doneLatch ??= Latch.makeUnsafe(false);
-      return yield* entry.doneLatch.await;
-    } else {
-      entry = {
-        latch: Latch.makeUnsafe(false),
-        doneLatch: undefined,
-        replies: [],
-        messages: new Set([message])
-      };
-      storageRequests.set(message.envelope.requestId, entry);
-    }
+  // A reset request can register a replacement entry under the same id, which
+  // must survive the old entry's cleanup.
+  const removeStorageRequest = (requestId, entry) => {
+    if (storageRequests.get(requestId) !== entry) return;
+    storageRequests.delete(requestId);
+    waitingStorageRequests.delete(requestId);
+  };
+  // The pump is owned by the shared entry rather than the first caller, so any
+  // waiter can be interrupted without stopping delivery to the others.
+  //
+  // `replyFromStorage` registers the request with the storage loop before the
+  // pump starts, so the pump only re-registers after a stream chunk is acked.
+  const pumpReplies = Effect.fnUntraced(function* (requestId, entry) {
     while (true) {
       // wait for the storage loop to notify us
-      entry.latch.closeUnsafe();
-      waitingStorageRequests.set(message.envelope.requestId, message);
-      storageLatch.openUnsafe();
       yield* entry.latch.await;
       // send the replies back
       for (let i = 0; i < entry.replies.length; i++) {
         const reply = entry.replies[i];
         // we have reached the end
         if (reply._tag === "WithExit") {
+          // A reply can immediately reset and resend the same request. Do not
+          // let that sender attach to this completed entry.
+          removeStorageRequest(requestId, entry);
           for (const message of entry.messages) {
             yield* message.respond(reply);
           }
-          entry.doneLatch?.openUnsafe();
           return;
         }
         entry.latch.closeUnsafe();
@@ -173,16 +182,80 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
         yield* entry.latch.await;
       }
       entry.replies = [];
+      // ask the storage loop for the next chunk
+      entry.latch.closeUnsafe();
+      const message = entry.messages.values().next().value;
+      if (!message) return;
+      waitingStorageRequests.set(requestId, message);
+      storageLatch.openUnsafe();
     }
-  }, (effect, message) => Effect.ensuring(effect, Effect.sync(() => {
-    const entry = storageRequests.get(message.envelope.requestId);
-    if (!entry || entry.messages.size > 1) {
-      entry?.messages.delete(message);
-      return;
+  });
+  const replyFromStorage = message => Effect.uninterruptibleMask(restore => Effect.gen(function* () {
+    const requestId = message.envelope.requestId;
+    let entry = storageRequests.get(requestId);
+    if (!entry) {
+      const state = {
+        latch: Latch.makeUnsafe(false),
+        messages: new Set(),
+        replies: []
+      };
+      entry = Object.assign(state, {
+        pump: yield* Effect.forkIn(pumpReplies(requestId, state), runnersScope)
+      });
+      storageRequests.set(requestId, entry);
+      waitingStorageRequests.set(requestId, message);
     }
-    storageRequests.delete(message.envelope.requestId);
-    waitingStorageRequests.delete(message.envelope.requestId);
-  })));
+    const current = entry;
+    current.messages.add(message);
+    // A waiter that joins an existing entry, such as a duplicate, reads
+    // now. A reply committed without a notification would otherwise wait
+    // for the next poll.
+    storageLatch.openUnsafe();
+    return yield* restore(Fiber.join(current.pump)).pipe(Effect.ensuring(Effect.suspend(() => {
+      current.messages.delete(message);
+      if (current.messages.size === 0) {
+        removeStorageRequest(requestId, current);
+        return Fiber.interrupt(current.pump);
+      }
+      // The storage loop decodes replies using the waiting message.
+      if (waitingStorageRequests.get(requestId) === message) {
+        waitingStorageRequests.set(requestId, current.messages.values().next().value);
+      }
+      return Effect.void;
+    })));
+  }));
+  // A request that may already be processing has to read its replies back
+  // from storage. A local reply handler wakes the storage loop, so streams do
+  // not have to wait for the next poll.
+  const replyFromStorageWithWake = message => Effect.raceFirst(replyFromStorage(message), storage.registerReplyHandler(new Message.OutgoingRequest({
+    ...message,
+    respond: () => storageLatch.open
+  })).pipe(Effect.ignore, Effect.andThen(Effect.never)));
+  // Stream replies stay on the storage loop, which delivers chunks in order
+  // and waits for their acks.
+  const canReplyLocally = message => {
+    const rpc = message.rpc;
+    return storage !== MessageStorage.noop && Context.get(rpc.annotations, Persisted) && !RpcSchema.isStreamSchema(rpc.successSchema);
+  };
+  // A request can be processed as soon as it is saved, so its reply handler is
+  // registered first. `registerReplyHandler` registers as soon as it starts,
+  // so a fresh request gets its reply from the handler without reading it
+  // back from storage.
+  const notifyLocalRequest = Effect.fnUntraced(function* (message, notifyEntity) {
+    const handler = yield* Effect.forkScoped(storage.registerReplyHandler(message), {
+      startImmediately: true
+    });
+    return yield* notifyWith(message, (message, duplicate) => {
+      const outgoing = message;
+      // A duplicate is answered under its original request id.
+      if (duplicate) {
+        return Fiber.interrupt(handler).pipe(Effect.andThen(notifyEntity(message)), Effect.andThen(replyFromStorageWithWake(outgoing)));
+      }
+      // The handler can be dropped, for example when its shard moves or a
+      // commit error hides the notification. The reply is then in storage.
+      return notifyEntity(message).pipe(Effect.andThen(Fiber.join(handler)), Effect.catchTag("EntityNotAssignedToRunner", () => replyFromStorage(outgoing)));
+    });
+  }, Effect.scoped);
   const storageLatch = Latch.makeUnsafe(false);
   if (storage !== MessageStorage.noop) {
     yield* Effect.gen(function* () {
@@ -240,7 +313,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
       } = options_;
       return notifyWith(message, (message, duplicate) => {
         if (discard || message._tag === "OutgoingEnvelope") {
-          return options.notify(options_);
+          return notifyAfterCommit(message, options.notify(options_));
         } else if (!duplicate && Option.isSome(options_.address)) {
           return Effect.catch(options.send({
             address: options_.address.value,
@@ -251,13 +324,16 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
       });
     },
     notifyLocal(options) {
-      return notifyWith(options.message, (message, duplicate) => {
+      const message = options.message;
+      const notifyEntity = message => Effect.catchTag(options.notify(Message.incomingLocalFromOutgoing(message)), "EntityNotAssignedToRunner", () => Effect.void);
+      if (message._tag === "OutgoingRequest" && !options.discard && !options.storageOnly && canReplyLocally(message)) {
+        return notifyLocalRequest(message, notifyEntity);
+      }
+      return notifyWith(message, message => {
         if (options.discard || message._tag === "OutgoingEnvelope") {
-          return Effect.catchTag(options.notify(Message.incomingLocalFromOutgoing(message)), "EntityNotAssignedToRunner", () => Effect.void);
-        } else if (!duplicate && options.storageOnly !== true) {
-          return options.notify(Message.incomingLocalFromOutgoing(message)).pipe(Effect.andThen(storage.registerReplyHandler(message)), Effect.catchTag("EntityNotAssignedToRunner", () => replyFromStorage(message)));
+          return notifyAfterCommit(message, notifyEntity(message));
         }
-        return options.notify(Message.incomingLocalFromOutgoing(message)).pipe(Effect.catchTag("EntityNotAssignedToRunner", () => Effect.void), Effect.andThen(replyFromStorage(message)));
+        return Effect.andThen(notifyEntity(message), options.storageOnly ? replyFromStorage(message) : replyFromStorageWithWake(message));
       });
     }
   });

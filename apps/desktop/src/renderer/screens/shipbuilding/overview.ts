@@ -2,7 +2,14 @@ import type { BatteryCard } from "../../components/design-workspace/batteryView.
 import type { DesignDraft, Severity, WorkshopView } from "@bluewave/ship-design";
 import { plural } from "../../components/design-workspace/plural.js";
 import { formatExplanation } from "../../../shared/explanation-text.js";
+import type { DesignPriceView } from "../../components/design-workspace/design-price-view.js";
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
+import {
+  naturalClassValue,
+  shipTypeValue,
+  TERMS,
+  threatDisplayName,
+} from "../../components/design-workspace/design-terms.js";
 
 export interface OverviewValue {
   readonly id: string;
@@ -13,14 +20,34 @@ export interface OverviewValue {
 export interface OverviewWarning {
   readonly severity: Severity;
   readonly count: number;
+  readonly gloss: string | null;
 }
+
+type Requirement = DesignDraft["requirement"];
+
+const ACCOMMODATION_NAME: Record<Requirement["accommodationStandard"], string> = {
+  SPARTAN: "Spartan",
+  STANDARD: "Standard",
+  GENEROUS: "Generous",
+};
+
+const UPGRADE_NAME: Record<Requirement["modernizationExpectation"], string> = {
+  NONE: "none",
+  MINOR: "minor",
+  MAJOR: "major",
+};
+
+const SEVERITY_GLOSS: Record<Severity, string> = {
+  BLOCKING: "cannot be built",
+  CRITICAL: "can be built but will fail in play",
+  WARNING: "can be built; worth reviewing before submission",
+  ADVISORY: "does not prevent submission",
+};
 
 export interface OverviewModel {
   readonly values: readonly OverviewValue[];
   readonly warnings: readonly OverviewWarning[];
 }
-
-const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
 
 const metric = (view: WorkshopView, id: string): string =>
   formatExplanation(view.metrics.find((m) => m.id === id)?.value ?? "n/a");
@@ -31,6 +58,7 @@ export function overviewModel(
   batteries: readonly BatteryCard[],
   month: string,
   format: PresentationFormat,
+  price: DesignPriceView,
 ): OverviewModel {
   const armour = view.compiled.armour;
   const main = batteries.filter((b) => b.row.role === "MAIN");
@@ -41,8 +69,8 @@ export function overviewModel(
   const values: OverviewValue[] = [
     {
       id: "type",
-      label: "Type and role",
-      value: `${words(draft.requirement.category)} · ${view.classCode}`,
+      label: TERMS.shipType,
+      value: shipTypeValue(draft.requirement.category),
     },
     { id: "year", label: "Design year", value: month.slice(0, 4) },
     {
@@ -55,7 +83,11 @@ export function overviewModel(
     {
       id: "cost",
       label: "Cost",
-      value: format.moneyFromMicro(view.forecast.costMicro),
+      value: [
+        price.treasuryText ?? price.unitsText,
+        format.moneyFromMicro(view.forecast.costMicro),
+        ...(price.overBudgetText === null ? [] : [price.overBudgetText]),
+      ].join(" · "),
     },
     { id: "speed", label: "Speed", value: metric(view, "speed") },
     { id: "range", label: "Range", value: metric(view, "range") },
@@ -76,19 +108,25 @@ export function overviewModel(
     {
       id: "accommodation",
       label: "Accommodation",
-      value: `${words(draft.requirement.accommodationStandard)} standard`,
+      value: ACCOMMODATION_NAME[draft.requirement.accommodationStandard],
     },
     {
       id: "technology",
-      label: "Technology",
-      value: `${words(draft.requirement.modernizationExpectation)} modernization · threat ${words(
-        draft.requirement.designThreatId,
-      )}`,
+      label: TERMS.plannedUpgrades,
+      value: `${UPGRADE_NAME[draft.requirement.modernizationExpectation]} · expected enemy gun ${threatDisplayName(draft.requirement.designThreatId)}`,
     },
-    { id: "role", label: "Role estimate", value: view.naturalClass ?? view.classCode },
+    {
+      id: "role",
+      label: TERMS.naturalClass,
+      value: naturalClassValue(view.naturalClass, draft.requirement.category),
+    },
   ];
   const warnings: OverviewWarning[] = (
     ["BLOCKING", "CRITICAL", "WARNING", "ADVISORY"] as const
-  ).map((severity) => ({ severity, count: view.counts[severity] }));
+  ).map((severity) => ({
+    severity,
+    count: view.counts[severity],
+    gloss: SEVERITY_GLOSS[severity] ?? null,
+  }));
   return { values, warnings };
 }

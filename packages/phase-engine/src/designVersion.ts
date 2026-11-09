@@ -5,8 +5,8 @@ import {
   compileTorpedo,
   computeCost,
   constructionOrderPlan,
+  designPrice,
   toEngineDesign,
-  treasuryCostUnits,
   type CompiledDesign,
   type DesignDraft,
   type ConstructionBalance,
@@ -66,7 +66,11 @@ export function buildDesignVersion(
 ): CompiledDesignVersion {
   const e = toEngineDesign(compiled, draft, options);
   const cost = computeCost(compiled, draft, pricing.costBalance, pricing.costCtx);
-  const units = treasuryCostUnits(cost.total, pricing.treasuryUnitMicro);
+  const units = designPrice({
+    costMicro: cost.total,
+    monthlyMaintenanceMicro: cost.monthlyMaintenance,
+    treasuryUnitMicro: pricing.treasuryUnitMicro,
+  }).treasuryUnits;
   const orderPlan = pricing.construction
     ? constructionOrderPlan(
         {

@@ -18,7 +18,7 @@ export type {
   FleetPort,
   FleetShipView,
   PlayerProjectionPresence,
-  PlayerProjectionPresenceArea,
+  PlayerProjectionStation,
   ShipCondition,
 } from "@bluewave/campaign-engine";
 
@@ -48,12 +48,23 @@ export interface FleetTrainingSubjectView {
   readonly monthsToProficiency: number;
   readonly progressExplanation?: ExplanationTree;
   readonly proficient: boolean;
+  readonly effectBp: number;
+  readonly effectExplanation?: ExplanationTree;
+  readonly monthlyCost: number;
+  readonly monthlyCostExplanation?: ExplanationTree;
+}
+
+export interface FleetTrainingSelectionView {
+  readonly subjects: readonly TrainingSubjectId[];
+  readonly monthlyCost: number;
+  readonly monthlyCostExplanation?: ExplanationTree;
 }
 
 export interface FleetTrainingProjection {
   readonly maxSubjects: number;
   readonly proficiencyMonths: number;
   readonly subjects: readonly FleetTrainingSubjectView[];
+  readonly selections: readonly FleetTrainingSelectionView[];
 }
 
 export interface FleetExerciseProjection {

@@ -5,7 +5,7 @@ import {
   useConstructionScreen,
   type UseConstructionScreenReturn,
 } from "../hooks/useConstructionScreen.js";
-import { useBatchOrder, type BatchOrderState } from "./useBatchOrder.js";
+import { useOrderDialog, type OrderDialogState } from "../order/useOrderDialog.js";
 import {
   useYardWorkspace,
   type YardWorkspaceActions,
@@ -13,10 +13,11 @@ import {
 } from "./useYardWorkspace.js";
 
 export interface ConstructionState {
+  readonly sessionId: string;
   readonly screen: ConstructionScreenState;
   readonly selectedDesignId: string | null;
   readonly loadError: string | null;
-  readonly batch: BatchOrderState;
+  readonly order: OrderDialogState;
 }
 
 export type ConstructionActions = Pick<
@@ -35,10 +36,11 @@ export type ConstructionActions = Pick<
 > &
   YardWorkspaceActions & {
     readonly retryRequest: () => void;
-    readonly closeBatch: () => void;
-    readonly setBatchQuantity: (quantity: number) => void;
-    readonly setBatchBuilder: (nationId: string | null) => void;
-    readonly confirmBatch: () => void;
+    readonly openOrderDialog: (designVersionId?: string) => void;
+    readonly closeOrderDialog: () => void;
+    readonly setOrderQuantity: (quantity: number) => void;
+    readonly setOrderBuilder: (nationId: string | null) => void;
+    readonly placeOrder: () => void;
   };
 
 export type ConstructionMeta = YardWorkspaceMeta & {
@@ -56,17 +58,18 @@ export interface ConstructionProviderProps {
 
 export function ConstructionProvider({ sessionId, children }: ConstructionProviderProps) {
   const session = useConstructionScreen(sessionId);
-  const batch = useBatchOrder(session);
-  const yard = useYardWorkspace(session, batch, sessionId);
+  const order = useOrderDialog(session);
+  const yard = useYardWorkspace(session, order.state.open, sessionId);
 
   const state = useMemo<ConstructionState>(
     () => ({
+      sessionId,
       screen: session.state,
       selectedDesignId: session.selectedDesignId,
       loadError: session.loadError,
-      batch: batch.state,
+      order: order.state,
     }),
-    [session.state, session.selectedDesignId, session.loadError, batch.state],
+    [sessionId, session.state, session.selectedDesignId, session.loadError, order.state],
   );
 
   const actions = useMemo<ConstructionActions>(
@@ -84,10 +87,11 @@ export function ConstructionProvider({ sessionId, children }: ConstructionProvid
       orderBatch: session.orderBatch,
       authorizeDockExpansion: session.authorizeDockExpansion,
       ...yard.actions,
-      closeBatch: batch.actions.close,
-      setBatchQuantity: batch.actions.setQuantity,
-      setBatchBuilder: batch.actions.setBuilder,
-      confirmBatch: batch.actions.confirm,
+      openOrderDialog: order.actions.open,
+      closeOrderDialog: order.actions.close,
+      setOrderQuantity: order.actions.setQuantity,
+      setOrderBuilder: order.actions.setBuilder,
+      placeOrder: order.actions.confirm,
     }),
     [
       session.loadScreen,
@@ -103,7 +107,7 @@ export function ConstructionProvider({ sessionId, children }: ConstructionProvid
       session.orderBatch,
       session.authorizeDockExpansion,
       yard.actions,
-      batch.actions,
+      order.actions,
     ],
   );
 

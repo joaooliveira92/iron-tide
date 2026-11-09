@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { envelopeOf } from "../../../lib/command-envelope.js";
 import type {
   FleetScreenProjection,
@@ -5,13 +6,14 @@ import type {
   TrainingSubjectId,
 } from "../../../../shared/fleet-contract.js";
 import { useBridge } from "../../../lib/bridge-context.js";
-import { loadThroughBridge } from "../../../lib/bridge-read.js";
 import {
   type CommandOutcome,
   requestLifecycleAdapter,
   useCommandScreenWorkflow,
 } from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
+import { useFleetInspectionLoader } from "../hooks/useFleetInspection.js";
+import { format } from "../station/fleet-station-state.js";
 import { initialTrainingState, projectTraining, type TrainingState } from "./training-model.js";
 
 export interface UseSpecialTrainingReturn {
@@ -27,6 +29,7 @@ export interface UseSpecialTrainingReturn {
 export function useSpecialTraining(sessionId: string): UseSpecialTrainingReturn {
   const bridge = useBridge();
   const campaignRevision = useCampaignRevision();
+  const load = useFleetInspectionLoader(sessionId);
   const workflow = useCommandScreenWorkflow<
     TrainingState,
     FleetScreenProjection,
@@ -34,29 +37,31 @@ export function useSpecialTraining(sessionId: string): UseSpecialTrainingReturn 
   >(
     requestLifecycleAdapter({
       initialState: initialTrainingState,
-      load: () =>
-        loadThroughBridge(bridge, (b) => b.campaign.execute("inspectFleetScreen", sessionId)),
+      load,
       project: projectTraining,
       accept: (value) => ({
         patch: {},
         notice:
           value.subjects.length === 0
-            ? "Special training will stop when you advance the month; progress is lost."
-            : "Special training queued. It takes effect when you advance the month.",
+            ? format("fleet.training.notice.stopped")
+            : format("fleet.training.notice.queued"),
       }),
     }),
     { refreshKey: campaignRevision },
   );
 
-  const fund = (subjects: readonly TrainingSubjectId[]): Promise<CommandOutcome> => {
-    if (!bridge) return Promise.resolve("transport-failure");
-    return workflow.execute("set-training", (stamp) =>
-      bridge.campaign.execute("submitSpecialTraining", {
-        ...envelopeOf(sessionId, stamp),
-        subjects: [...subjects],
-      }),
-    );
-  };
+  const fund = useCallback(
+    (subjects: readonly TrainingSubjectId[]): Promise<CommandOutcome> => {
+      if (!bridge) return Promise.resolve("transport-failure");
+      return workflow.execute("set-training", (stamp) =>
+        bridge.campaign.execute("submitSpecialTraining", {
+          ...envelopeOf(sessionId, stamp),
+          subjects: [...subjects],
+        }),
+      );
+    },
+    [bridge, sessionId, workflow.execute],
+  );
 
   return {
     state: workflow.state,

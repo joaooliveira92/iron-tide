@@ -1,3 +1,17 @@
+/**
+ * Low-level SQL statement and fragment primitives.
+ *
+ * `SqlClient` uses this module to build executable, parameterized SQL from
+ * reusable fragments. A statement can be executed, streamed, run without row
+ * transformation, or compiled to SQL text and parameters for a specific
+ * dialect. The module also contains helpers for identifiers, parameters,
+ * inserts, updates, custom dialect fragments, statement compilation, and row
+ * transformation.
+ *
+ * @stability unstable
+ * @since 4.0.0
+ */
+import type * as Arr from "../Array.ts";
 import * as Context from "../Context.ts";
 import * as Effect from "../Effect.ts";
 import type * as Fiber from "../Fiber.ts";
@@ -5,7 +19,38 @@ import * as Stream from "../Stream.ts";
 import * as Tracer from "../Tracer.ts";
 import type { Acquirer, Borrower, Row } from "./SqlConnection.ts";
 import type { SqlError } from "./SqlError.ts";
-declare const FragmentTypeId = "~effect/sql/Statement/Fragment";
+/**
+ * Runtime type identifier for SQL `Fragment` values.
+ *
+ * @stability unstable
+ * @category Type ID
+ * @since 4.1.1
+ */
+export declare const FragmentTypeId: unique symbol;
+/**
+ * Type of the unique symbol used to brand SQL `Fragment` values.
+ *
+ * @stability unstable
+ * @category Type ID
+ * @since 4.1.1
+ */
+export type FragmentTypeId = typeof FragmentTypeId;
+/**
+ * Runtime type identifier for SQL `Segment` values.
+ *
+ * @stability unstable
+ * @category Type ID
+ * @since 4.1.1
+ */
+export declare const SegmentTypeId: unique symbol;
+/**
+ * Type of the unique symbol used to brand SQL `Segment` values.
+ *
+ * @stability unstable
+ * @category Type ID
+ * @since 4.1.1
+ */
+export type SegmentTypeId = typeof SegmentTypeId;
 /**
  * Composable SQL fragment represented as low-level segments that can be
  * interpolated into statements.
@@ -15,7 +60,7 @@ declare const FragmentTypeId = "~effect/sql/Statement/Fragment";
  * @since 4.0.0
  */
 export interface Fragment {
-    readonly [FragmentTypeId]: typeof FragmentTypeId;
+    readonly [FragmentTypeId]: FragmentTypeId;
     readonly segments: ReadonlyArray<Segment>;
 }
 /**
@@ -75,7 +120,14 @@ export type Transformer = (self: Statement<unknown>, sql: Constructor, fiber: Fi
 export declare const CurrentTransformer: Context.Reference<Transformer | undefined>;
 /**
  * Parents driver spans under the statement span for every client in the current scope,
- * including acquisition and stream pulls. Defaults to `false`; ignored when tracing is disabled.
+ * including acquisition and stream pulls, and records how long each statement
+ * waited for a connection as `db.client.connection.wait_time_ms`. Defaults to
+ * `false`; ignored when tracing is disabled.
+ *
+ * **Details**
+ *
+ * A top-level transaction also records how long it waited for its
+ * connection on its `sql.transaction` span.
  *
  * @stability unstable
  * @category services
@@ -115,6 +167,7 @@ export type Segment = Literal | Identifier | Parameter | ArrayHelper | RecordIns
  * @since 4.0.0
  */
 export interface Literal {
+    readonly [SegmentTypeId]: SegmentTypeId;
     readonly _tag: "Literal";
     readonly value: string;
     readonly params?: ReadonlyArray<unknown> | undefined;
@@ -136,6 +189,7 @@ export declare const literal: (value: string, params?: ReadonlyArray<unknown> | 
  * @since 4.0.0
  */
 export interface Identifier {
+    readonly [SegmentTypeId]: SegmentTypeId;
     readonly _tag: "Identifier";
     readonly value: string;
 }
@@ -157,6 +211,7 @@ export declare const identifier: (value: string) => Identifier;
  * @since 4.0.0
  */
 export interface Parameter {
+    readonly [SegmentTypeId]: SegmentTypeId;
     readonly _tag: "Parameter";
     readonly value: unknown;
 }
@@ -177,6 +232,7 @@ export declare const parameter: (value: unknown) => Parameter;
  * @since 4.0.0
  */
 export interface ArrayHelper {
+    readonly [SegmentTypeId]: SegmentTypeId;
     readonly _tag: "ArrayHelper";
     readonly value: ReadonlyArray<unknown | Fragment>;
 }
@@ -197,8 +253,9 @@ export declare const arrayHelper: (value: ReadonlyArray<unknown | Fragment>) => 
  * @since 4.0.0
  */
 export interface RecordInsertHelper {
+    readonly [SegmentTypeId]: SegmentTypeId;
     readonly _tag: "RecordInsertHelper";
-    readonly value: ReadonlyArray<Record<string, unknown>>;
+    readonly value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>;
     readonly returning: (sql: string | Identifier | Fragment) => RecordInsertHelper;
 }
 /**
@@ -208,7 +265,7 @@ export interface RecordInsertHelper {
  * @category constructors
  * @since 4.0.0
  */
-export declare const recordInsertHelper: (value: ReadonlyArray<Record<string, unknown>>) => RecordInsertHelper;
+export declare const recordInsertHelper: (value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>) => RecordInsertHelper;
 /**
  * Helper segment for compiling multi-row update values with a table alias and
  * optional returning output.
@@ -218,8 +275,9 @@ export declare const recordInsertHelper: (value: ReadonlyArray<Record<string, un
  * @since 4.0.0
  */
 export interface RecordUpdateHelper {
+    readonly [SegmentTypeId]: SegmentTypeId;
     readonly _tag: "RecordUpdateHelper";
-    readonly value: ReadonlyArray<Record<string, unknown>>;
+    readonly value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>;
     readonly alias: string;
     readonly returning: (sql: string | Identifier | Fragment) => RecordUpdateHelper;
 }
@@ -231,7 +289,7 @@ export interface RecordUpdateHelper {
  * @category constructors
  * @since 4.0.0
  */
-export declare const recordUpdateHelper: (value: ReadonlyArray<Record<string, unknown>>, alias: string) => RecordUpdateHelper;
+export declare const recordUpdateHelper: (value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>, alias: string) => RecordUpdateHelper;
 /**
  * Helper segment for compiling a single record into update assignments,
  * omitting selected columns and optionally returning output.
@@ -241,6 +299,7 @@ export declare const recordUpdateHelper: (value: ReadonlyArray<Record<string, un
  * @since 4.0.0
  */
 export interface RecordUpdateHelperSingle {
+    readonly [SegmentTypeId]: SegmentTypeId;
     readonly _tag: "RecordUpdateHelperSingle";
     readonly value: Record<string, unknown>;
     readonly omit: ReadonlyArray<string>;
@@ -264,6 +323,7 @@ export declare const recordUpdateHelperSingle: (value: Record<string, unknown>, 
  * @since 4.0.0
  */
 export interface Custom<T extends string = string, A = void, B = void, C = void> {
+    readonly [SegmentTypeId]: SegmentTypeId;
     readonly _tag: "Custom";
     readonly kind: T;
     readonly paramA: A;
@@ -319,7 +379,7 @@ export interface Constructor {
         (column: string, value: ReadonlyArray<unknown>): Fragment;
     };
     readonly insert: {
-        (value: ReadonlyArray<Record<string, unknown>>): RecordInsertHelper;
+        (value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>): RecordInsertHelper;
         (value: Record<string, unknown>): RecordInsertHelper;
     };
     /** Update a single row */
@@ -330,8 +390,11 @@ export interface Constructor {
      * **Gotchas**
      *
      * Not supported in sqlite.
+     *
+     * The alias is escaped as an identifier and is not passed through name
+     * transforms.
      */
-    readonly updateValues: (value: ReadonlyArray<Record<string, unknown>>, alias: string) => RecordUpdateHelper;
+    readonly updateValues: (value: Arr.NonEmptyReadonlyArray<Record<string, unknown>>, alias: string) => RecordUpdateHelper;
     /**
      * Create an `AND` chain for a where clause
      */
@@ -468,6 +531,10 @@ export type CompilerOptions<C extends Custom<any, any, any, any> = any> = {
     readonly dialect: Dialect;
     readonly placeholder: (index: number, value: unknown) => string;
     readonly onIdentifier: (value: string, withoutTransform: boolean) => string;
+    /**
+     * Renders `updateValues`. The `alias` is already escaped with
+     * `onIdentifier(alias, true)` and must be inserted as is.
+     */
     readonly onRecordUpdate: (placeholders: string, alias: string, columns: string, values: ReadonlyArray<ReadonlyArray<unknown>>, returning: readonly [sql: string, params: ReadonlyArray<unknown>] | undefined) => readonly [sql: string, params: ReadonlyArray<unknown>];
     readonly onCustom: (type: C, placeholder: (u: unknown) => string, withoutTransform: boolean) => readonly [sql: string, params: ReadonlyArray<unknown>];
     readonly onInsert?: (columns: ReadonlyArray<string>, placeholders: string, values: ReadonlyArray<ReadonlyArray<unknown>>, returning: readonly [sql: string, params: ReadonlyArray<unknown>] | undefined) => readonly [sql: string, binds: ReadonlyArray<unknown>];
@@ -542,5 +609,4 @@ export declare const spanTarget: (spanAttributes: ReadonlyArray<readonly [string
  * @since 4.0.1
  */
 export declare const spanName: (spanAttributes: ReadonlyArray<readonly [string, unknown]>) => string;
-export {};
 //# sourceMappingURL=Statement.d.ts.map

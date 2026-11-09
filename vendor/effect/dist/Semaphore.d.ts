@@ -13,6 +13,7 @@
  */
 import type * as Effect from "./Effect.ts";
 import type * as Option from "./Option.ts";
+import type * as Scope from "./Scope.ts";
 /**
  * A counting semaphore that coordinates concurrent access with permits.
  *
@@ -121,6 +122,23 @@ export interface Semaphore {
      * Use to manually acquire permits for lower-level coordination protocols.
      */
     take(this: Semaphore, permits: number): Effect.Effect<number>;
+    /**
+     * Acquires the specified number of permits for the lifetime of the current
+     * scope, suspending the task if they are not yet available.
+     *
+     * **When to use**
+     *
+     * Use to hold permits until a scope closes, such as while a scoped resource
+     * is leased.
+     *
+     * **Details**
+     *
+     * Waiting can be interrupted unless the caller is uninterruptible. The
+     * permits are taken and their release is added to the scope in one
+     * uninterruptible step, so acquired permits are always returned when the
+     * scope closes.
+     */
+    takeScoped(this: Semaphore, permits: number): Effect.Effect<void, never, Scope.Scope>;
     /**
      * Acquires the specified number of permits only if they are immediately
      * available.
@@ -570,6 +588,118 @@ export declare const take: {
      * @since 4.0.0
      */
     (self: Semaphore, permits: number): Effect.Effect<number>;
+};
+/**
+ * Acquires the specified number of permits until the current scope closes.
+ *
+ * **When to use**
+ *
+ * Use when permits should be held for the lifetime of a scope, such as while a
+ * scoped resource is leased.
+ *
+ * **Details**
+ *
+ * The effect waits until enough permits are available. The wait can be
+ * interrupted unless the caller is uninterruptible. The permits are taken and
+ * their release is added to the scope in one uninterruptible step, so acquired
+ * permits are always returned when the scope closes.
+ *
+ * **Example** (Holding a permit for a scope)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect, Semaphore } from "effect"
+ *
+ * const program = Effect.gen(function*() {
+ *   const semaphore = yield* Semaphore.make(1)
+ *   yield* Effect.scoped(Semaphore.takeScoped(semaphore, 1))
+ *   return yield* Semaphore.takeIfAvailable(semaphore, 1)
+ * })
+ *
+ * Effect.runSync(program) // => true
+ * ```
+ *
+ * @see {@link take} for acquiring permits that are released manually
+ * @see {@link withPermits} for holding permits while one effect runs
+ *
+ * @stability stable
+ * @category combinators
+ * @since 4.0.7
+ */
+export declare const takeScoped: {
+    /**
+     * Acquires the specified number of permits until the current scope closes.
+     *
+     * **When to use**
+     *
+     * Use when permits should be held for the lifetime of a scope, such as while a
+     * scoped resource is leased.
+     *
+     * **Details**
+     *
+     * The effect waits until enough permits are available. The wait can be
+     * interrupted unless the caller is uninterruptible. The permits are taken and
+     * their release is added to the scope in one uninterruptible step, so acquired
+     * permits are always returned when the scope closes.
+     *
+     * **Example** (Holding a permit for a scope)
+     *
+     * ```ts import.meta.vitest
+     * import { Effect, Semaphore } from "effect"
+     *
+     * const program = Effect.gen(function*() {
+     *   const semaphore = yield* Semaphore.make(1)
+     *   yield* Effect.scoped(Semaphore.takeScoped(semaphore, 1))
+     *   return yield* Semaphore.takeIfAvailable(semaphore, 1)
+     * })
+     *
+     * Effect.runSync(program) // => true
+     * ```
+     *
+     * @see {@link take} for acquiring permits that are released manually
+     * @see {@link withPermits} for holding permits while one effect runs
+     *
+     * @stability stable
+     * @category combinators
+     * @since 4.0.7
+     */
+    (permits: number): (self: Semaphore) => Effect.Effect<void, never, Scope.Scope>;
+    /**
+     * Acquires the specified number of permits until the current scope closes.
+     *
+     * **When to use**
+     *
+     * Use when permits should be held for the lifetime of a scope, such as while a
+     * scoped resource is leased.
+     *
+     * **Details**
+     *
+     * The effect waits until enough permits are available. The wait can be
+     * interrupted unless the caller is uninterruptible. The permits are taken and
+     * their release is added to the scope in one uninterruptible step, so acquired
+     * permits are always returned when the scope closes.
+     *
+     * **Example** (Holding a permit for a scope)
+     *
+     * ```ts import.meta.vitest
+     * import { Effect, Semaphore } from "effect"
+     *
+     * const program = Effect.gen(function*() {
+     *   const semaphore = yield* Semaphore.make(1)
+     *   yield* Effect.scoped(Semaphore.takeScoped(semaphore, 1))
+     *   return yield* Semaphore.takeIfAvailable(semaphore, 1)
+     * })
+     *
+     * Effect.runSync(program) // => true
+     * ```
+     *
+     * @see {@link take} for acquiring permits that are released manually
+     * @see {@link withPermits} for holding permits while one effect runs
+     *
+     * @stability stable
+     * @category combinators
+     * @since 4.0.7
+     */
+    (self: Semaphore, permits: number): Effect.Effect<void, never, Scope.Scope>;
 };
 /**
  * Acquires the specified number of permits only if they are immediately

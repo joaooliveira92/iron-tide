@@ -671,50 +671,7 @@ export const orElse: {
    */
   <A, A2>(self: Config<A>, that: (error: ConfigError) => Config<A2>): Config<A | A2>
 } = dual(2, <A, A2>(self: Config<A>, that: (error: ConfigError) => Config<A2>): Config<A | A2> => {
-  return make</**
-   * Provides a fallback config when parsing fails with a `ConfigError`.
-   *
-   * **When to use**
-   *
-   * Use when you need to try an alternative config source after the primary one
-   * fails.
-   *
-   * **Details**
-   *
-   * Unlike {@link withDefault}, this handles both semantic absence and **all**
-   * `ConfigError`s. The fallback function receives the error and returns a new
-   * `Config`.
-   *
-   * **Gotchas**
-   *
-   * The fallback's result replaces the original failure. If the fallback is
-   * absent, an outer {@link withDefault} or {@link option} can recover it. If the
-   * fallback fails, only its error propagates. Defects and interruptions never
-   * reach the fallback; they propagate unchanged.
-   *
-   * **Example** (Trying another port before using a default)
-   *
-   * ```ts import.meta.vitest
-   * import { Config, ConfigProvider, Effect } from "effect"
-   *
-   * const port = Config.Int("PORT").pipe(
-   *   Config.orElse(() => Config.Int("BACKUP_PORT")),
-   *   Config.withDefault(3000)
-   * )
-   * const provider = ConfigProvider.fromUnknown({ PORT: "invalid", BACKUP_PORT: "8080" })
-   * await Effect.runPromise(port.parse(provider)) // => 8080
-   *
-   * const missingBackup = ConfigProvider.fromUnknown({ PORT: "invalid" })
-   * await Effect.runPromise(port.parse(missingBackup)) // => 3000
-   * ```
-   *
-   * @see {@link withDefault} – fallback only on semantic absence
-   *
-   * @stability stable
-   * @category combinators
-   * @since 2.0.0
-   */
-  A | A2>((provider, pathPrefix) =>
+  return make<A | A2>((provider, pathPrefix) =>
     Effect.matchCauseEffect(evaluateAt(self, provider, pathPrefix), {
       // Only plain failures reach the fallback; defects and interruptions propagate unchanged.
       onFailure: (cause) => {
@@ -728,7 +685,7 @@ export const orElse: {
           ? evaluateAt(that(resolution.failure), provider, pathPrefix)
           : Effect.succeed(resolution)
     })
-  );
+  )
 })
 
 /**
@@ -916,48 +873,12 @@ export const withDefault: {
    */
   <A, const A2>(self: Config<A>, defaultValue: A2): Config<A | A2>
 } = dual(2, <A, const A2>(self: Config<A>, defaultValue: A2): Config<A | A2> => {
-  return make</**
-   * Provides a fallback value when the config is absent.
-   *
-   * **When to use**
-   *
-   * Use when you need to make a config key optional with a sensible default.
-   *
-   * **Gotchas**
-   *
-   * Validation and source errors still propagate. For an {@link all} group, any
-   * absent child causes the default to replace the entire group unless another
-   * child fails. Apply defaults to individual children to preserve other values.
-   *
-   * A schema that successfully decodes absent input keeps its decoded value
-   * instead of using the default. Schema configs first represent a missing or
-   * incompatible provider shape as `undefined`; the default is used only when
-   * the schema rejects that value and no relevant input was found.
-   *
-   * **Example** (Defaulting a missing port)
-   *
-   * ```ts import.meta.vitest
-   * import { Config, ConfigProvider, Effect } from "effect"
-   *
-   * const port = Config.Number("port").pipe(Config.withDefault(3000))
-   *
-   * const provider = ConfigProvider.fromUnknown({})
-   * Effect.runSync(port.parse(provider)) // => 3000
-   * ```
-   *
-   * @see {@link option} – returns `Option` instead of a default value
-   * @see {@link orElse} – catches all errors, not just absent input
-   *
-   * @stability stable
-   * @category combinators
-   * @since 2.0.0
-   */
-  A | A2>((provider, pathPrefix) =>
+  return make<A | A2>((provider, pathPrefix) =>
     Effect.mapEager(
       evaluateAt(self, provider, pathPrefix),
       (resolution) => Result.isFailure(resolution) ? Result.succeed(defaultValue) : resolution
     )
-  );
+  )
 })
 
 /**
@@ -1171,7 +1092,6 @@ const toConfigCursorAST = memoize((root: SchemaAST.AST): SchemaAST.AST => {
     seen.add(ast)
     switch (ast._tag) {
       case "Objects": {
-        const matchesIndex = ast.indexSignatures.map((is) => SchemaParser._is(is.parameter))
         const materialize = Effect.fnUntraced(function*(cursor: ConfigCursor) {
           if (cursor.node?._tag !== "Record") {
             return undefined
@@ -1181,9 +1101,15 @@ const toConfigCursorAST = memoize((root: SchemaAST.AST): SchemaAST.AST => {
           for (const property of ast.propertySignatures) {
             if (typeof property.name === "string") keys.add(property.name)
           }
-          if (matchesIndex.length > 0) {
+          if (ast.indexSignatures.length > 0) {
+            const input: Record<string, undefined> = {}
             for (const key of node.keys) {
-              if (matchesIndex.some((matches) => matches(key))) keys.add(key)
+              InternalRecord.assignProperty(input, key, undefined)
+            }
+            for (const is of ast.indexSignatures) {
+              for (const key of SchemaAST.getIndexSignatureKeys(input, is.parameter)) {
+                if (typeof key === "string") keys.add(key)
+              }
             }
           }
           const out: Record<string, ConfigCursor> = {}
@@ -1354,6 +1280,8 @@ interface ArrayOptions {
 interface RecordOptions {
   readonly separator?: string | undefined
   readonly keyValueSeparator?: string | undefined
+  readonly trim?: boolean | undefined
+  readonly keepEmptyValues?: boolean | undefined
 }
 
 const isPath = (u: unknown): u is string | Path => Predicate.isString(u) || globalThis.Array.isArray(u)
@@ -1662,7 +1590,11 @@ export function Array<V extends Schema.ConstraintCodec<unknown, unknown>>(
  *
  * Pass a string or `ConfigProvider.Path` as the third argument to set the lookup
  * path. When no path is needed, pass the options object directly. The `separator`
- * defaults to `","` and `keyValueSeparator` defaults to `"="`.
+ * defaults to `","` and `keyValueSeparator` defaults to `"="`. For string input,
+ * set `trim: true` to trim keys and values before entries with an empty key are
+ * skipped, and `keepEmptyValues: true` to keep entries with an empty value as
+ * `""` instead of skipping them. Entries without a `keyValueSeparator` are
+ * always skipped.
  *
  * **Example** (Reading a comma-separated record)
  *

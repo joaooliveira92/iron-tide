@@ -11,7 +11,7 @@ export interface Result {
     readonly displayArgs: Array<string>;
 }
 export declare const run: (command: Command.Command.Any, options?: Options) => Effect.Effect<Result, CliError.CliError | Terminal.QuitError, Command.Environment>;
-export declare const renderIntroduction: (name: string, version: string, summary: string | undefined) => string;
-export declare const renderCompletion: (commandLine: ReadonlyArray<string>) => string;
-export declare const renderQuit: () => string;
+export declare const renderIntroduction: (name: string, version: string, summary: string | undefined, colors: boolean) => string;
+export declare const renderCompletion: (commandLine: ReadonlyArray<string>, colors: boolean) => string;
+export declare const renderQuit: (colors: boolean) => string;
 //# sourceMappingURL=wizard.d.ts.map

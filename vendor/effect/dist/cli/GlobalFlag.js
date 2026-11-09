@@ -18,7 +18,6 @@ import * as Option from "../Option.js";
 import * as CliOutput from "./CliOutput.js";
 import * as Completions_ from "./Completions.js";
 import * as Flag from "./Flag.js";
-import * as CommandDescriptor from "./internal/completions/descriptor.js";
 import * as HelpInternal from "./internal/help.js";
 /* ========================================================================== */
 /* Constructors                                                               */
@@ -73,9 +72,14 @@ export const Help = /*#__PURE__*/Action({
     command,
     commandPath
   }) {
-    const formatter = yield* CliOutput.Formatter;
+    const presenter = yield* CliOutput.Presenter;
     const helpDoc = yield* HelpInternal.getHelpForCommandPath(command, commandPath, builtIns);
-    yield* Console.log(formatter.formatHelpDoc(helpDoc));
+    yield* presenter.present({
+      _tag: "Help",
+      reason: "Requested",
+      commandPath,
+      helpDoc
+    });
   })
 });
 /**
@@ -95,8 +99,12 @@ export const Version = /*#__PURE__*/Action({
     command,
     version
   }) {
-    const formatter = yield* CliOutput.Formatter;
-    yield* Console.log(formatter.formatVersion(command.name, version));
+    const presenter = yield* CliOutput.Presenter;
+    yield* presenter.present({
+      _tag: "Version",
+      name: command.name,
+      version
+    });
   })
 });
 /**
@@ -121,20 +129,20 @@ export const Wizard = /*#__PURE__*/Action({
  *
  * **Details**
  *
- * Accepted values are `bash`, `zsh`, `fish`, and `sh`; `sh` is normalized to
- * `bash`.
+ * Accepted values are `bash`, `zsh`, `fish`, `powershell`, `sh`, and `pwsh`;
+ * `sh` is normalized to `bash` and `pwsh` to `powershell`.
  *
  * @stability unstable
  * @category references
  * @since 4.0.0
  */
 export const Completions = /*#__PURE__*/Action({
-  flag: /*#__PURE__*/Flag.Literals("completions", ["bash", "zsh", "fish", "sh"]).pipe(Flag.optional, /*#__PURE__*/Flag.map(v => Option.map(v, s => s === "sh" ? "bash" : s)), /*#__PURE__*/Flag.withMetavar("<bash|zsh|fish|sh>"), /*#__PURE__*/Flag.withDescription("Print shell completion script")),
+  flag: /*#__PURE__*/Flag.ChoiceWithValue("completions", [["bash", "bash"], ["zsh", "zsh"], ["fish", "fish"], ["powershell", "powershell"], ["sh", "bash"], ["pwsh", "powershell"]]).pipe(Flag.optional, /*#__PURE__*/Flag.withMetavar("<bash|zsh|fish|powershell|sh|pwsh>"), /*#__PURE__*/Flag.withDescription("Print shell completion script")),
   run: /*#__PURE__*/Effect.fnUntraced(function* (shell, {
     command
   }) {
     if (Option.isNone(shell)) return;
-    const descriptor = CommandDescriptor.fromCommand(command);
+    const descriptor = Completions_.fromCommand(command);
     yield* Console.log(Completions_.generate(command.name, shell.value, descriptor));
   })
 });

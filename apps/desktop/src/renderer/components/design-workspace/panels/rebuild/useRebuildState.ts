@@ -22,7 +22,7 @@ export function useRebuildState({
 }: {
   readonly bridge: BluewaveDesktopBridge | undefined;
   readonly sessionId: string | undefined;
-  readonly draft: DesignDraft;
+  readonly draft: DesignDraft | null;
   readonly onLoad: (draft: Record<string, unknown>) => void;
 }) {
   const revision = useCampaignRevision();
@@ -37,7 +37,10 @@ export function useRebuildState({
   const ship = ships.find((s) => s.shipId === chosen) ?? ships[0];
   const shipId = ship?.shipId;
   const massKg = bulgeMassKg(action, blisterMassKg);
-  const checkedDraft = useMemo<DesignDraft>(() => withBulgeMass(draft, massKg), [draft, massKg]);
+  const checkedDraft = useMemo<DesignDraft | null>(
+    () => (draft === null ? null : withBulgeMass(draft, massKg)),
+    [draft, massKg],
+  );
   const rebuildKind = action === "BULGE" ? "BULGE" : undefined;
   const checkedDraftKey = useMemo(() => JSON.stringify(checkedDraft), [checkedDraft]);
 
@@ -56,7 +59,7 @@ export function useRebuildState({
   useEffect(() => {
     setCheck(null);
     if (!bridge || sessionId === undefined || shipId === undefined) return;
-    if (loaded?.shipId !== shipId) return;
+    if (loaded?.shipId !== shipId || checkedDraft === null) return;
     let live = true;
     void bridge.campaign
       .execute("checkRebuild", {
@@ -90,7 +93,14 @@ export function useRebuildState({
   };
 
   const start = async () => {
-    if (!bridge || sessionId === undefined || ship === undefined || revision === null) return;
+    if (
+      !bridge ||
+      sessionId === undefined ||
+      ship === undefined ||
+      revision === null ||
+      checkedDraft === null
+    )
+      return;
     setBusy(true);
     try {
       const r = await bridge.campaign.execute("startRebuildCommand", {

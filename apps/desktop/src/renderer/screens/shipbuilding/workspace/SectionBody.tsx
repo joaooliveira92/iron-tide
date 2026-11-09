@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useDesignState } from "../../../components/design-workspace/DesignWorkspaceContext.js";
 import { mountNameMap } from "../../../components/design-workspace/batteryView.js";
 import { technologyMonths } from "../../../components/design-workspace/useDesignSession.js";
 import { BriefPanel } from "../../../components/design-workspace/panels/BriefPanel.js";
@@ -22,6 +23,7 @@ import { NotAvailable } from "../components/NotAvailable.js";
 import { OverviewPanel } from "../components/OverviewPanel.js";
 import { ProtectionEditor } from "../components/ProtectionEditor.js";
 import { SystemsPanel } from "../components/SystemsPanel.js";
+import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { armamentEntries } from "../armament.js";
 import { categoriesOf, type InspectorPlace } from "../design-sections.js";
 import { addSystemEdit } from "../systems-view.js";
@@ -36,11 +38,13 @@ export function SectionBody({ at }: { readonly at: InspectorPlace }) {
   const state = useShipbuildingState();
   const meta = useShipbuildingMeta();
   const actions = useShipbuildingActions();
+  const { unlockedTechs } = useDesignState().ctx;
   const {
     draft,
     view,
     content,
     findings,
+    flaws,
     batteries,
     month,
     format,
@@ -197,6 +201,7 @@ export function SectionBody({ at }: { readonly at: InspectorPlace }) {
             content={content}
             findings={findings}
             month={month}
+            unlockedTechs={unlockedTechs}
             edit={actions.edit}
             onSelect={selection.select}
             selectedInstanceId={selectedInstanceId}
@@ -253,6 +258,24 @@ export function SectionBody({ at }: { readonly at: InspectorPlace }) {
               name={shipClassName}
               onNameChange={actions.setShipClassName}
               onRequestName={actions.focusClassName}
+              blockers={flaws
+                .filter((flaw) => flaw.tier === "blocking")
+                .map((flaw) => ({
+                  id: flaw.finding.key,
+                  text: formatExplanation(flaw.finding.finding.what),
+                  actionLabel:
+                    flaw.fix !== null
+                      ? flaw.fix.label
+                      : flaw.showOn !== null
+                        ? "Show on ship"
+                        : "Open in Findings",
+                  onSelect: () => {
+                    if (flaw.fix !== null)
+                      actions.openSection(flaw.fix.place.section, flaw.fix.place.tab);
+                    else if (flaw.showOn !== null) actions.showOnShip(flaw.finding);
+                    else actions.openSection("review", "findings");
+                  },
+                }))}
             />
           ) : (
             <NotAvailable title="Finishing: not available">

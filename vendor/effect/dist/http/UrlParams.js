@@ -10,6 +10,7 @@
  * @since 4.0.0
  */
 import * as Arr from "../Array.js";
+import * as Context from "../Context.js";
 import * as Equal from "../Equal.js";
 import * as Equ from "../Equivalence.js";
 import { dual } from "../Function.js";
@@ -18,7 +19,11 @@ import { PipeInspectableProto } from "../internal/core.js";
 import * as InternalRecord from "../internal/record.js";
 import * as Option from "../Option.js";
 import { hasProperty } from "../Predicate.js";
+import * as Redactable from "../Redactable.js";
+import * as Redacted from "../Redacted.js";
 import * as Tuple from "../Tuple.js";
+import * as Headers from "./Headers.js";
+import * as internal from "./internal/urlParams.js";
 const TypeId = "~effect/http/UrlParams";
 /**
  * Returns `true` when a value is a `UrlParams` instance.
@@ -34,11 +39,14 @@ const Proto = {
   [Symbol.iterator]() {
     return this.params[Symbol.iterator]();
   },
-  toJSON() {
+  [Redactable.symbolRedactable](context) {
     return {
       _id: "UrlParams",
-      params: Object.fromEntries(this.params)
+      params: Object.fromEntries(redact(this, Context.get(context, CurrentRedactedNames)))
     };
+  },
+  toJSON() {
+    return Redactable.redact(this);
   },
   [Equal.symbol](that) {
     return Equivalence(this, that);
@@ -48,7 +56,7 @@ const Proto = {
   }
 };
 /**
- * Creates `UrlParams` from ordered string key-value pairs.
+ * Creates `UrlParams` from ordered key-value pairs.
  *
  * **Details**
  *
@@ -70,6 +78,7 @@ export const make = params => {
  *
  * Primitive values are converted to strings, arrays produce repeated parameters,
  * nested records use bracket notation, and `undefined` values are omitted.
+ * `Redacted` values are kept as-is.
  *
  * @stability unstable
  * @category constructors
@@ -98,20 +107,21 @@ const fromInputNested = input => {
     if (Array.isArray(value)) {
       for (let i = 0; i < value.length; i++) {
         if (value[i] !== undefined) {
-          out.push([key, String(value[i])]);
+          out.push([key, coerce(value[i])]);
         }
       }
-    } else if (value !== null && typeof value === "object") {
+    } else if (value !== null && typeof value === "object" && !Redacted.isRedacted(value)) {
       const nested = fromInputNested(value);
       for (const [k, v] of nested) {
         out.push([[key, ...(typeof k === "string" ? [k] : k)], v]);
       }
     } else if (value !== undefined) {
-      out.push([key, String(value)]);
+      out.push([key, coerce(value)]);
     }
   }
   return out;
 };
+const coerce = value => Redacted.isRedacted(value) ? value : String(value);
 /**
  * Provides an order-sensitive `Equivalence` instance for `UrlParams`.
  *
@@ -125,7 +135,7 @@ const fromInputNested = input => {
  * @since 4.0.0
  */
 export const Equivalence = /*#__PURE__*/Equ.make((a, b) => arrayEquivalence(a.params, b.params));
-const arrayEquivalence = /*#__PURE__*/Arr.makeEquivalence(/*#__PURE__*/Tuple.makeEquivalence([/*#__PURE__*/Equ.strictEqual(), /*#__PURE__*/Equ.strictEqual()]));
+const arrayEquivalence = /*#__PURE__*/Arr.makeEquivalence(/*#__PURE__*/Tuple.makeEquivalence([/*#__PURE__*/Equ.strictEqual(), /*#__PURE__*/Equal.asEquivalence()]));
 /**
  * An empty `UrlParams` value.
  *
@@ -147,7 +157,7 @@ export const empty = /*#__PURE__*/make([]);
  */
 export const getAll = /*#__PURE__*/dual(2, (self, key) => Arr.reduce(self.params, [], (acc, [k, value]) => {
   if (k === key) {
-    acc.push(value);
+    acc.push(internal.unwrap(value));
   }
   return acc;
 }));
@@ -167,7 +177,7 @@ export const getAll = /*#__PURE__*/dual(2, (self, key) => Arr.reduce(self.params
  * @category combinators
  * @since 4.0.0
  */
-export const getFirst = /*#__PURE__*/dual(2, (self, key) => Arr.findFirst(self.params, ([k]) => k === key).pipe(Option.map(([, value]) => value)));
+export const getFirst = /*#__PURE__*/dual(2, (self, key) => Arr.findFirst(self.params, ([k]) => k === key).pipe(Option.map(([, value]) => internal.unwrap(value))));
 /**
  * Returns the last value for a query parameter key safely.
  *
@@ -184,7 +194,7 @@ export const getFirst = /*#__PURE__*/dual(2, (self, key) => Arr.findFirst(self.p
  * @category combinators
  * @since 4.0.0
  */
-export const getLast = /*#__PURE__*/dual(2, (self, key) => Arr.findLast(self.params, ([k]) => k === key).pipe(Option.map(([, value]) => value)));
+export const getLast = /*#__PURE__*/dual(2, (self, key) => Arr.findLast(self.params, ([k]) => k === key).pipe(Option.map(([, value]) => internal.unwrap(value))));
 /**
  * Sets a query parameter to a single value.
  *
@@ -197,7 +207,7 @@ export const getLast = /*#__PURE__*/dual(2, (self, key) => Arr.findLast(self.par
  * @category combinators
  * @since 4.0.0
  */
-export const set = /*#__PURE__*/dual(3, (self, key, value) => make(Arr.append(Arr.filter(self.params, ([k]) => k !== key), [key, String(value)])));
+export const set = /*#__PURE__*/dual(3, (self, key, value) => make(Arr.append(Arr.filter(self.params, ([k]) => k !== key), [key, coerce(value)])));
 /**
  * Transforms the underlying ordered key-value pairs of `UrlParams`.
  *
@@ -241,7 +251,7 @@ export const setAll = /*#__PURE__*/dual(2, (self, input) => {
  * @category combinators
  * @since 4.0.0
  */
-export const append = /*#__PURE__*/dual(3, (self, key, value) => make(Arr.append(self.params, [key, String(value)])));
+export const append = /*#__PURE__*/dual(3, (self, key, value) => make(Arr.append(self.params, [key, coerce(value)])));
 /**
  * Appends all query parameters produced from the supplied input.
  *
@@ -265,11 +275,15 @@ export const remove = /*#__PURE__*/dual(2, (self, key) => transform(self, Arr.fi
 /**
  * Serializes `UrlParams` to a URL query string without a leading question mark.
  *
+ * **Gotchas**
+ *
+ * The output contains the unwrapped values of `Redacted` parameters.
+ *
  * @stability unstable
  * @category converting
  * @since 4.0.0
  */
-export const toString = input => new URLSearchParams(fromInput(input).params).toString();
+export const toString = input => new URLSearchParams(fromInput(input).params.map(([key, value]) => [key, internal.unwrap(value)])).toString();
 /**
  * Builds a `Record` containing all the key-value pairs in the given `UrlParams`
  * as `string` (if only one value for a key) or a `NonEmptyArray<string>`
@@ -295,7 +309,8 @@ export const toString = input => new URLSearchParams(fromInput(input).params).to
  */
 export const toRecord = self => {
   const out = {};
-  for (const [k, value] of self.params) {
+  for (const [k, v] of self.params) {
+    const value = internal.unwrap(v);
     if (!Object.hasOwn(out, k)) {
       InternalRecord.assignProperty(out, k, value);
     } else {
@@ -322,4 +337,118 @@ export const toRecord = self => {
  * @since 4.0.0
  */
 export const toReadonlyRecord = toRecord;
+/**
+ * Returns the parameter pairs with selected values wrapped in `Redacted`.
+ *
+ * **Details**
+ *
+ * Keeps `Redacted` values and wraps values whose names match `isRedactedName`,
+ * preserving order and repeated names.
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.0.0
+ */
+export const redact = /*#__PURE__*/dual(2, (self, key) => {
+  const patterns = Array.isArray(key) ? key : [key];
+  return self.params.map(([name, value]) => [name, typeof value === "string" && isRedactedName(name, patterns) ? Redacted.make(value) : value]);
+});
+/**
+ * Checks whether a parameter name matches one of the redaction patterns.
+ *
+ * **Details**
+ *
+ * String patterns match case-insensitively; regular expressions test the name.
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.0.0
+ */
+export const isRedactedName = Headers.isRedactedName;
+/**
+ * Redacts URL userinfo and the values of matching query parameters.
+ *
+ * **Details**
+ *
+ * Replaces userinfo with `REDACTED:REDACTED` and query values with `REDACTED`
+ * when their decoded names match `isRedactedName`. Preserves all other text.
+ * When names are omitted, uses the current fiber's `CurrentRedactedNames`,
+ * falling back to the defaults outside a fiber.
+ *
+ * **Example** (Redacting a signed URL)
+ *
+ * ```ts import.meta.vitest
+ * import { UrlParams } from "effect/http"
+ *
+ * const url = UrlParams.redactUrl("https://bucket.test/file?Signature=abc&size=1")
+ * url // => "https://bucket.test/file?Signature=REDACTED&size=1"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.0.0
+ */
+export const redactUrl = (url, redactedNames = currentRedactedNames()) => {
+  if (url.includes("@")) url = redactUserinfo(url);
+  const queryStart = url.indexOf("?");
+  if (queryStart === -1 || redactedNames.length === 0) return url;
+  const hashStart = url.indexOf("#");
+  if (hashStart !== -1 && hashStart < queryStart) return url;
+  const queryEnd = hashStart === -1 ? url.length : hashStart;
+  return url.slice(0, queryStart + 1) + redactQuery(url.slice(queryStart + 1, queryEnd), redactedNames) + url.slice(queryEnd);
+};
+const authorityStart = /^(?:(https?|ftp|wss?):[/\\]*|[a-z][a-z\d+.-]*:\/\/|[/\\]{2,})/i;
+const specialAuthorityEnd = /[/\\?#]/;
+const authorityEnd = /[/?#]/;
+// Normalize only to locate userinfo; offsets preserve the original URL spelling.
+const redactUserinfo = url => {
+  let normalized = "";
+  const offsets = [];
+  for (let i = 0; i < url.length; i++) {
+    const code = url.charCodeAt(i);
+    if (code === 9 || code === 10 || code === 13 || normalized === "" && code <= 32) continue;
+    normalized += url[i];
+    offsets.push(i);
+  }
+  const authority = authorityStart.exec(normalized);
+  if (authority === null) return url;
+  const start = authority[0].length;
+  const special = authority[1] !== undefined || !authority[0].includes(":");
+  const rest = normalized.slice(start);
+  const end = rest.search(special ? specialAuthorityEnd : authorityEnd);
+  const userinfoEnd = (end === -1 ? rest : rest.slice(0, end)).lastIndexOf("@");
+  return userinfoEnd === -1 ? url : url.slice(0, offsets[start]) + "REDACTED:REDACTED" + url.slice(offsets[start + userinfoEnd]);
+};
+const redactQuery = (query, redactedNames) => query.split("&").map(part => {
+  const index = part.indexOf("=");
+  return index !== -1 && isRedactedName(decodeQueryKey(part.slice(0, index)), redactedNames) ? part.slice(0, index + 1) + "REDACTED" : part;
+}).join("&");
+const decodeQueryKey = key => {
+  if (!key.includes("%") && !key.includes("+")) return key;
+  try {
+    return decodeURIComponent(key.replace(/\+/g, " "));
+  } catch {
+    return key;
+  }
+};
+const currentRedactedNames = () => Context.get(globalThis[Redactable.currentFiberTypeId]?.context ?? Context.empty(), CurrentRedactedNames);
+/**
+ * Query parameter names or patterns to redact in inspection, spans and errors.
+ *
+ * **Details**
+ *
+ * Defaults match the OpenTelemetry `url.full` list: `X-Amz-Signature`,
+ * `X-Amz-Credential`, `X-Amz-Security-Token`, `AWSAccessKeyId`, `Signature`,
+ * `sig` and `X-Goog-Signature`.
+ * A custom list replaces the defaults. Matching uses `isRedactedName`.
+ * Redaction leaves request URLs and parameter values unchanged. `Redacted`
+ * values are redacted regardless of this list.
+ *
+ * @stability unstable
+ * @category services
+ * @since 4.0.0
+ */
+export const CurrentRedactedNames = /*#__PURE__*/Context.Reference("effect/http/UrlParams/CurrentRedactedNames", {
+  defaultValue: () => ["X-Amz-Signature", "X-Amz-Credential", "X-Amz-Security-Token", "AWSAccessKeyId", "Signature", "sig", "X-Goog-Signature"]
+});
 //# sourceMappingURL=UrlParams.js.map

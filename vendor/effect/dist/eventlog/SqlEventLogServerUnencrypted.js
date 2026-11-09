@@ -11,7 +11,6 @@
  * @since 4.0.0
  */
 import * as Arr from "../Array.js";
-import * as Context from "../Context.js";
 import * as Effect from "../Effect.js";
 import * as Layer from "../Layer.js";
 import * as PubSub from "../PubSub.js";
@@ -24,8 +23,9 @@ import * as SqlError from "../sql/SqlError.js";
 import * as Stream from "../Stream.js";
 import { Entry, EntryId, makeRemoteIdUnsafe, RemoteEntry } from "./EventJournal.js";
 import * as EventLogServerUnencrypted from "./EventLogServerUnencrypted.js";
-let storageIdCounter = 0;
 const withTracerDisabled = /*#__PURE__*/Effect.withTracerEnabled(false);
+// Keeps each history lookup within dialect parameter limits.
+const lookupBatchSize = 200;
 /**
  * Creates unencrypted event-log server `Storage` backed by SQL.
  *
@@ -33,7 +33,13 @@ const withTracerDisabled = /*#__PURE__*/Effect.withTracerEnabled(false);
  *
  * The implementation creates tables for the server remote id, store sequences,
  * entries, and session authentication bindings, then persists and streams
- * plaintext remote entries.
+ * plaintext remote entries. Writes reach `changes` subscribers once the
+ * outermost SQL transaction commits, including caller-owned transactions, and are
+ * dropped if it rolls back.
+ *
+ * **Gotchas**
+ *
+ * Concurrent caller-owned transactions can publish writes out of sequence order.
  *
  * @stability unstable
  * @category constructors
@@ -118,6 +124,33 @@ export const makeStorage = /*#__PURE__*/Effect.fnUntraced(function* (options) {
             UNIQUE (store_id, entry_id)
           )`
   });
+  // Serves the batch lookup in `entriesAfter`. Postgres indexes hashes to stay
+  // under its B-tree row limit, MySQL indexes prefixes, and MSSQL has no
+  // bounded index yet.
+  const eventKeyIndex = `${entriesTable}_event_key_idx`;
+  yield* sql.onDialectOrElse({
+    pg: () => sql`
+          CREATE INDEX IF NOT EXISTS ${sql(eventKeyIndex)}
+          ON ${entriesTableSql} (store_id, hashtextextended(event, 0), hashtextextended(primary_key, 0), entry_id)
+        `,
+    mysql: () => {
+      const indexExists = sql`
+          SELECT COUNT(*) AS count FROM information_schema.statistics
+          WHERE table_schema = DATABASE()
+            AND table_name = ${entriesTable}
+            AND index_name = ${eventKeyIndex}
+        `.pipe(Effect.map(rows => Number(rows[0].count) > 0));
+      return sql`
+          CREATE INDEX ${sql(eventKeyIndex)}
+          ON ${entriesTableSql} (store_id, event(191), primary_key(191), entry_id)
+        `.pipe(Effect.catch(error => Effect.flatMap(indexExists, exists => exists ? Effect.void : Effect.fail(error))));
+    },
+    mssql: () => Effect.void,
+    orElse: () => sql`
+          CREATE INDEX IF NOT EXISTS ${sql(eventKeyIndex)}
+          ON ${entriesTableSql} (store_id, event, primary_key, entry_id)
+        `
+  });
   yield* sql.onDialectOrElse({
     pg: () => sql`
           CREATE TABLE IF NOT EXISTS ${storesTableSql} (
@@ -183,44 +216,10 @@ export const makeStorage = /*#__PURE__*/Effect.fnUntraced(function* (options) {
     idleTimeToLive: "5 minutes"
   });
   const transactionSemaphore = yield* Semaphore.make(1);
-  const pendingWrites = Context.Service(`effect/eventlog/SqlEventLogServerUnencrypted/PendingWrites/${storageIdCounter++}`);
-  const publish = Effect.fnUntraced(function* ([storeId, entries]) {
-    const pubsub = yield* RcMap.get(pubsubs, storeId);
-    return yield* PubSub.publishAll(pubsub, entries);
-  }, Effect.scoped);
-  // Merge nested buffers on success; publish only after the outer commit.
-  // Hold the outer permit through publication to prevent later commits from overtaking it.
-  const withTransaction = Effect.fnUntraced(function* (effect) {
-    const parent = yield* Effect.serviceOption(pendingWrites);
-    // Allow body interruption, but mask commit through publication.
-    const transaction = Effect.uninterruptibleMask(Effect.fnUntraced(function* (restore) {
-      const writes = [];
-      const result = yield* sql.withTransaction(Effect.provideService(restore(effect), pendingWrites, writes));
-      if (parent._tag === "Some") {
-        parent.value.push(...writes);
-      } else {
-        const stores = new Map();
-        for (const [storeId, entries] of writes) {
-          const existing = stores.get(storeId);
-          if (existing === undefined) {
-            stores.set(storeId, [...entries]);
-          } else {
-            existing.push(...entries);
-          }
-        }
-        // Sibling buffers may merge out of sequence order.
-        for (const entries of stores.values()) {
-          entries.sort((a, b) => a.remoteSequence - b.remoteSequence);
-        }
-        yield* Effect.forEach(stores, publish, {
-          discard: true
-        });
-      }
-      return result;
-    }));
-    // Wait interruptibly; nested transactions reuse the outer permit.
-    return yield* parent._tag === "Some" ? transaction : transactionSemaphore.withPermit(transaction);
-  });
+  const publish = (storeId, entries) => RcMap.get(pubsubs, storeId).pipe(Effect.flatMap(pubsub => PubSub.publishAll(pubsub, entries)), Effect.asVoid, Effect.scoped);
+  // Hold the permit through commit and publication to preserve commit order
+  // for storage-owned transactions.
+  const withTransaction = effect => Effect.flatMap(Effect.serviceOption(sql.transactionService), transaction => transaction._tag === "Some" ? sql.withTransaction(effect) : transactionSemaphore.withPermit(sql.withTransaction(effect)));
   const ensureStore = storeId => sql.onDialectOrElse({
     pg: () => sql`
             INSERT INTO ${storesTableSql} (store_id, next_sequence)
@@ -282,6 +281,60 @@ export const makeStorage = /*#__PURE__*/Effect.fnUntraced(function* (options) {
         WHERE store_id = ${storeId} AND sequence >= ${startSequence}
         ORDER BY sequence ASC
       `.pipe(Effect.flatMap(decodeRemoteEntries));
+  // Postgres matches on the indexed hashes, then on the values to rule out
+  // collisions.
+  const matchesKey = sql.onDialectOrElse({
+    pg: () => (event, primaryKeys) => sql`
+          hashtextextended(event, 0) = hashtextextended(${event}, 0) AND event = ${event}
+          AND hashtextextended(primary_key, 0) IN (${sql.csv(primaryKeys.map(primaryKey => sql`hashtextextended(${primaryKey}, 0)`))})
+          AND ${sql.in("primary_key", primaryKeys)}
+        `,
+    orElse: () => (event, primaryKeys) => sql`event = ${event} AND ${sql.in("primary_key", primaryKeys)}`
+  });
+  // One SELECT per index lookup, joined with UNION ALL: MySQL scans the whole
+  // store for the equivalent OR.
+  const selectChunkHistory = (storeId, oldest, entries) => {
+    const primaryKeysByEvent = new Map();
+    for (const entry of entries) {
+      const primaryKeys = primaryKeysByEvent.get(entry.event);
+      if (primaryKeys === undefined) {
+        primaryKeysByEvent.set(entry.event, new Set([entry.primaryKey]));
+      } else {
+        primaryKeys.add(entry.primaryKey);
+      }
+    }
+    let statement = sql`
+        SELECT sequence, entry_id, event, primary_key, payload
+        FROM ${entriesTableSql}
+        WHERE store_id = ${storeId} AND ${sql.in("entry_id", entries.map(entry => entry.id))}
+      `;
+    for (const [event, primaryKeys] of primaryKeysByEvent) {
+      statement = sql`
+          ${statement}
+          UNION ALL
+          SELECT sequence, entry_id, event, primary_key, payload
+          FROM ${entriesTableSql}
+          WHERE store_id = ${storeId}
+            AND ${matchesKey(event, Array.from(primaryKeys))}
+            AND entry_id >= ${oldest.id}
+        `;
+    }
+    return Effect.flatMap(statement, decodeRemoteEntries);
+  };
+  // Chunks and the UNION ALL branches can return the same row more than once.
+  const selectBatchHistory = (storeId, oldest, batch) => Effect.forEach(Arr.chunksOf(batch, lookupBatchSize), chunk => selectChunkHistory(storeId, oldest, chunk)).pipe(Effect.map(chunks => {
+    const bySequence = new Map();
+    for (const remoteEntry of chunks.flat()) {
+      bySequence.set(remoteEntry.remoteSequence, remoteEntry);
+    }
+    return Array.from(bySequence.values()).sort((a, b) => a.remoteSequence - b.remoteSequence);
+  }));
+  const selectEntriesFrom = (storeId, entry) => sql`
+        SELECT sequence, entry_id, event, primary_key, payload
+        FROM ${entriesTableSql}
+        WHERE store_id = ${storeId} AND entry_id >= ${entry.id}
+        ORDER BY sequence ASC
+      `.pipe(Effect.flatMap(decodeRemoteEntries));
   const getSessionAuthBinding = publicKey => sql`
         SELECT public_key, signing_public_key
         FROM ${sessionAuthBindingsTableSql}
@@ -292,6 +345,7 @@ export const makeStorage = /*#__PURE__*/Effect.fnUntraced(function* (options) {
   }), Effect.orDie);
   return EventLogServerUnencrypted.Storage.of({
     getId: Effect.succeed(remoteId),
+    firstSequence: 1,
     getOrCreateSessionAuthBinding: Effect.fnUntraced(function* (publicKey, signingPublicKey) {
       const existing = yield* getSessionAuthBinding(publicKey);
       if (existing !== undefined) {
@@ -302,12 +356,7 @@ export const makeStorage = /*#__PURE__*/Effect.fnUntraced(function* (options) {
             VALUES (${publicKey}, ${signingPublicKey})
           `.pipe(Effect.as(signingPublicKey));
     }, sql.withTransaction, Effect.orDie, withTracerDisabled),
-    entriesAfter: (storeId, entry) => sql`
-          SELECT sequence, entry_id, event, primary_key, payload
-          FROM ${entriesTableSql}
-          WHERE store_id = ${storeId} AND entry_id >= ${entry.id}
-          ORDER BY sequence ASC
-        `.pipe(Effect.flatMap(decodeRemoteEntries), Effect.map(Arr.map(r => r.entry)), Effect.orDie, withTracerDisabled),
+    entriesAfter: (storeId, entry, batch) => (batch === undefined ? selectEntriesFrom(storeId, entry) : selectBatchHistory(storeId, entry, batch)).pipe(Effect.orDie, withTracerDisabled),
     write: Effect.fnUntraced(function* (storeId, entries) {
       if (entries.length === 0) {
         return [];
@@ -333,18 +382,17 @@ export const makeStorage = /*#__PURE__*/Effect.fnUntraced(function* (options) {
           primary_key: entry.primaryKey,
           payload: entry.payload
         });
-        if (rowsForInsert.length >= insertBatchSize) {
+        if (rowsForInsert.length >= insertBatchSize && Arr.isArrayNonEmpty(rowsForInsert)) {
           yield* sql`INSERT INTO ${entriesTableSql} ${sql.insert(rowsForInsert)}`;
           rowsForInsert = [];
         }
       }
-      if (rowsForInsert.length > 0) {
+      if (Arr.isArrayNonEmpty(rowsForInsert)) {
         yield* sql`INSERT INTO ${entriesTableSql} ${sql.insert(rowsForInsert)}`;
       }
       const nextSequence = currentNextSequence + entries.length;
       yield* setNextSequence(storeId, nextSequence);
-      const writes = yield* pendingWrites;
-      writes.push([storeId, committed]);
+      yield* sql.afterCommit(publish(storeId, committed));
       return committed;
     }, withTransaction, withTracerDisabled, Effect.orDie),
     changes: Effect.fnUntraced(function* ({
@@ -354,11 +402,14 @@ export const makeStorage = /*#__PURE__*/Effect.fnUntraced(function* (options) {
     }) {
       const pubsub = yield* RcMap.get(pubsubs, storeId);
       const subscription = yield* PubSub.subscribe(pubsub);
+      const remoteEntries = yield* selectEntriesAfter(storeId, startSequence);
       const backlog = yield* EventLogServerUnencrypted.compactBacklog({
         compactors,
-        remoteEntries: yield* selectEntriesAfter(storeId, startSequence)
+        remoteEntries
       });
-      let watermark = backlog.length > 0 ? backlog[backlog.length - 1].remoteSequence : startSequence - 1;
+      // Compaction can drop trailing entries, so skip live entries up to the
+      // last uncompacted one.
+      const watermark = remoteEntries.length > 0 ? remoteEntries[remoteEntries.length - 1].remoteSequence : startSequence - 1;
       return Stream.fromArray(backlog).pipe(Stream.concat(Stream.fromSubscription(subscription).pipe(Stream.filter(entry => entry.remoteSequence > watermark))));
     }, Effect.orDie, withTracerDisabled, Stream.unwrap),
     withTransaction: effect => withTransaction(effect).pipe(Effect.catchIf(SqlError.isSqlError, Effect.die))

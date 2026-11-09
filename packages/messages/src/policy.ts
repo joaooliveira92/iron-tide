@@ -77,6 +77,15 @@ export function classifyEventBody(body: DomainEventBody): MessageClassification 
         bodyKey: "messages.construction.rebuilt.body",
         deduplicationKey: `construction:rebuilt:${body.shipId}`,
       });
+    case "ShipDelivered":
+      return classification({
+        category: "CONSTRUCTION",
+        severity: "NORMAL",
+        phase: "construction_processing",
+        titleKey: "messages.construction.delivered.title",
+        bodyKey: "messages.construction.delivered.body",
+        deduplicationKey: `construction:delivered:${body.shipId}`,
+      });
     case "ConstructionDelayed":
       return classification({
         category: "CONSTRUCTION",

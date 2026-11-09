@@ -1,13 +1,14 @@
+import * as Digest from "../../crypto/Digest.js";
+import { webCryptoDigest } from "../../crypto/internal/digest.js";
+import { WebCrypto } from "../../crypto/WebCrypto.js";
 import * as Effect from "../../Effect.js";
+import * as Hex from "../../encoding/Hex.js";
+const encoder = /*#__PURE__*/new TextEncoder();
 /**
+ * Execution ids and idempotency keys are persisted, so they keep the first 16
+ * bytes of the SHA-256 digest as 32 hex characters.
+ *
  * @internal
  */
-export const makeHashDigest = original => Effect.map(Effect.promise(() => crypto.subtle.digest("SHA-256", new TextEncoder().encode(original))), buffer => {
-  const data = new Uint8Array(buffer);
-  let hexString = "";
-  for (let i = 0; i < 16; i++) {
-    hexString += data[i].toString(16).padStart(2, "0");
-  }
-  return hexString;
-});
+export const makeHashDigest = original => WebCrypto.use(crypto => Effect.map(webCryptoDigest(crypto, Digest.sha256, encoder.encode(original)), bytes => Hex.encode(bytes).slice(0, 32)));
 //# sourceMappingURL=crypto.js.map

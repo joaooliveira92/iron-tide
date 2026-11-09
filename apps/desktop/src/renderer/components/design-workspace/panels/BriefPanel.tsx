@@ -3,7 +3,9 @@ import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { shipTypeIcon } from "../ship-type-icon.js";
 import { NumberField, SelectField } from "../fields.js";
 import { shipTypeChoices } from "../shipTypes.js";
+import { NOT_CLASSIFIED, shipTypeValue, TERMS } from "../design-terms.js";
 import { Panel } from "./Panel.js";
+import { TypeRequirements } from "./TypeRequirements.js";
 import { useDesignActions, useDesignState } from "../DesignWorkspaceContext.js";
 
 const ACCOMMODATION_OPTIONS = [
@@ -35,22 +37,22 @@ export function BriefPanel() {
   return (
     <Panel title="Design brief">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-muted-foreground">Class code</span>
+        <span className="text-muted-foreground">{TERMS.classCode}</span>
         <Badge
           variant="outline"
           className="tabular-nums"
-          aria-label={`Class code ${view.classCode}`}
+          aria-label={`${TERMS.classCode} ${view.classCode}`}
         >
           {view.classCode}
         </Badge>
-        <span className="text-muted-foreground">Natural class</span>
+        <span className="text-muted-foreground">{TERMS.naturalClass}</span>
         <Badge variant={mismatch ? "destructive" : "secondary"}>
-          {view.naturalClass ?? "none"}
+          {view.naturalClass === null ? NOT_CLASSIFIED : shipTypeValue(view.naturalClass)}
         </Badge>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <SelectField
-          label="Ship type"
+          label={TERMS.shipType}
           className="col-span-2"
           value={r.category}
           options={options}
@@ -96,6 +98,7 @@ export function BriefPanel() {
           }
         />
       </div>
+      <TypeRequirements requirements={view.requirements} />
       {briefFindings.length > 0 && (
         <ul aria-label="Findings about the ship type" className="space-y-1 text-xs">
           {briefFindings.map((f, i) => (

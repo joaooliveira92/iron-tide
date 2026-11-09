@@ -402,6 +402,11 @@ export const reverse = reverseChunk;
  * Gets the value at an index in a `Chunk` safely, returning `None` when the index is
  * out of bounds.
  *
+ * **Details**
+ *
+ * The index is floored to an integer. `NaN` and infinite indexes are out of
+ * bounds. This never throws.
+ *
  * **Example** (Accessing elements safely)
  *
  * ```ts import.meta.vitest
@@ -421,7 +426,10 @@ export const reverse = reverseChunk;
  * @category getters
  * @since 2.0.0
  */
-export const get = /*#__PURE__*/dual(2, (self, index) => index < 0 || index >= self.length ? O.none() : O.some(getUnsafe(self, index)));
+export const get = /*#__PURE__*/dual(2, (self, index) => {
+  const i = Math.floor(index);
+  return i >= 0 && i < self.length ? O.some(getUnchecked(self, i)) : O.none();
+});
 /**
  * Wraps an array into a chunk without copying.
  *
@@ -496,7 +504,8 @@ export const fromNonEmptyArrayUnsafe = self => fromArrayUnsafe(self);
  *
  * **Gotchas**
  *
- * Throws if the index is out of bounds.
+ * Throws if the floored index is out of bounds, including for `NaN` and
+ * infinite indexes.
  *
  * **Example** (Accessing elements unsafely)
  *
@@ -518,6 +527,12 @@ export const fromNonEmptyArrayUnsafe = self => fromArrayUnsafe(self);
  */
 export const getUnsafe = /*#__PURE__*/dual(2, (self, index) => {
   const i = Math.floor(index);
+  if (!(i >= 0 && i < self.length)) {
+    throw new Error(`Index out of bounds: ${i}`);
+  }
+  return getUnchecked(self, i);
+});
+const getUnchecked = (self, i) => {
   switch (self.backing._tag) {
     case "IEmpty":
       {
@@ -525,28 +540,22 @@ export const getUnsafe = /*#__PURE__*/dual(2, (self, index) => {
       }
     case "ISingleton":
       {
-        if (index !== 0) {
-          throw new Error(`Index out of bounds: ${i}`);
-        }
         return self.backing.a;
       }
     case "IArray":
       {
-        if (i >= self.length || i < 0) {
-          throw new Error(`Index out of bounds: ${i}`);
-        }
         return self.backing.array[i];
       }
     case "IConcat":
       {
-        return i < self.left.length ? getUnsafe(self.left, i) : getUnsafe(self.right, i - self.left.length);
+        return i < self.left.length ? getUnchecked(self.left, i) : getUnchecked(self.right, i - self.left.length);
       }
     case "ISlice":
       {
-        return getUnsafe(self.backing.chunk, i + self.backing.offset);
+        return getUnchecked(self.backing.chunk, i + self.backing.offset);
       }
   }
-});
+};
 /**
  * Appends the specified element to the end of the `Chunk`.
  *
@@ -1812,7 +1821,12 @@ export const takeWhile = /*#__PURE__*/dual(2, (self, predicate) => {
   return fromArrayUnsafe(out);
 });
 /**
- * Creates a Chunks of unique values, in order, from all given Chunks.
+ * Computes the union of two chunks using Effect equality.
+ *
+ * **Gotchas**
+ *
+ * Each input must already be deduplicated. Use {@link dedupe} to remove
+ * duplicates from an input first.
  *
  * **Example** (Unioning chunks)
  *
@@ -1822,11 +1836,6 @@ export const takeWhile = /*#__PURE__*/dual(2, (self, predicate) => {
  * const chunk1 = Chunk.make(1, 2, 3)
  * const chunk2 = Chunk.make(3, 4, 5)
  * Chunk.toArray(Chunk.union(chunk1, chunk2)) // => [1, 2, 3, 4, 5]
- *
- * // Handles duplicates within the same chunk
- * const withDupes1 = Chunk.make(1, 1, 2)
- * const withDupes2 = Chunk.make(2, 3, 3)
- * Chunk.toArray(Chunk.union(withDupes1, withDupes2)) // => [1, 2, 3]
  * ```
  *
  * @stability stable

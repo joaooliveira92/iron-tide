@@ -149,6 +149,12 @@ export interface Writer {
  * @since 4.0.0
  */
 export interface TlsUpgradeOptions {
+    /**
+     * DNS hostname used for Server Name Indication (SNI) and certificate identity
+     * verification during client upgrades. Server upgrades ignore this option.
+     * When omitted, the adapter retains its existing hostname behavior.
+     */
+    readonly servername?: string | undefined;
     readonly key?: Redacted.Redacted<string | Uint8Array> | ReadonlyArray<Redacted.Redacted<string | Uint8Array>> | undefined;
     readonly cert?: string | Uint8Array | ReadonlyArray<string | Uint8Array> | undefined;
     readonly ca?: string | Uint8Array | ReadonlyArray<string | Uint8Array> | undefined;
@@ -194,7 +200,17 @@ export declare const readerBytes: (self: Socket) => Effect.Effect<Effect.Effect<
  *
  * **Details**
  *
- * The `TextDecoder` is created once per acquisition.
+ * Each acquisition has its own streaming decoder. Characters may span binary
+ * frames and pulls; each frame produces one string, possibly empty. A string
+ * frame flushes incomplete characters as U+FFFD before its text. Close code 1000
+ * flushes remaining text once before propagating the close error; other failures
+ * do not flush.
+ *
+ * **Gotchas**
+ *
+ * Binary WebSocket messages share decoder state: incomplete characters carry
+ * into the next binary frame, and BOM handling resets only after a flush. Use
+ * `readerBytes` and decode each frame separately for per-message decoding.
  *
  * @stability unstable
  * @category combinators
@@ -434,6 +450,10 @@ export declare const toChannel: <IE = never>(self: Socket) => Channel.Channel<No
  * Converts a `Socket` into a bidirectional string `Channel`, decoding binary
  * frames with the optional text encoding.
  *
+ * **Details**
+ *
+ * Uses `readerString` for decoding and close handling.
+ *
  * @stability unstable
  * @category combinators
  * @since 4.0.0
@@ -443,6 +463,10 @@ export declare const toChannelString: {
      * Converts a `Socket` into a bidirectional string `Channel`, decoding binary
      * frames with the optional text encoding.
      *
+     * **Details**
+     *
+     * Uses `readerString` for decoding and close handling.
+     *
      * @stability unstable
      * @category combinators
      * @since 4.0.0
@@ -451,6 +475,10 @@ export declare const toChannelString: {
     /**
      * Converts a `Socket` into a bidirectional string `Channel`, decoding binary
      * frames with the optional text encoding.
+     *
+     * **Details**
+     *
+     * Uses `readerString` for decoding and close handling.
      *
      * @stability unstable
      * @category combinators
@@ -527,13 +555,18 @@ export interface WebSocketLike {
     send(data: string | Uint8Array<ArrayBuffer>): void;
 }
 /**
- * Common options understood by a WebSocket client implementation.
+ * Client options for Node and Bun WebSocket implementations, allowing
+ * handshake headers and subprotocols to be supplied together.
  *
  * @stability unstable
  * @category models
  * @since 4.0.0
  */
 export interface WebSocketClientOptions {
+    /**
+     * Subprotocols to offer in the opening handshake.
+     */
+    readonly protocols?: string | Array<string> | undefined;
     /**
      * Headers to include in the opening handshake.
      *
@@ -580,6 +613,7 @@ export declare class WebSocketConstructor extends WebSocketConstructor_base {
 }
 /**
  * Layer that provides `WebSocketConstructor` using `globalThis.WebSocket`.
+ * Rejects client options objects, including those with handshake headers.
  *
  * @stability unstable
  * @category layers
@@ -589,6 +623,8 @@ export declare const layerWebSocketConstructorGlobal: Layer.Layer<WebSocketConst
 /**
  * Creates a `Socket` backed by a `WebSocketConstructor`, dialing the
  * WebSocket for each reader acquisition.
+ * Optional handshake headers require a Node or Bun constructor; without
+ * headers, protocols are passed directly for browser compatibility.
  *
  * @stability unstable
  * @category constructors
@@ -597,6 +633,7 @@ export declare const layerWebSocketConstructorGlobal: Layer.Layer<WebSocketConst
 export declare const makeWebSocket: (url: string | Effect.Effect<string>, options?: {
     readonly openTimeout?: Duration.Input | undefined;
     readonly protocols?: string | Array<string> | undefined;
+    readonly headers?: Readonly<Record<string, string>> | undefined;
     readonly highWaterMark?: number | undefined;
 }) => Effect.Effect<Socket, never, WebSocketConstructor>;
 /**
@@ -625,6 +662,7 @@ export declare const fromWebSocket: <RO, WS extends WebSocketLike>(acquire: Effe
 /**
  * Creates a binary `Channel` backed by a WebSocket URL, requiring a
  * `WebSocketConstructor` service.
+ * Supports subprotocols and, with a Node or Bun constructor, handshake headers.
  *
  * @stability unstable
  * @category constructors
@@ -633,11 +671,13 @@ export declare const fromWebSocket: <RO, WS extends WebSocketLike>(acquire: Effe
 export declare const makeWebSocketChannel: <IE = never>(url: string, options?: {
     readonly openTimeout?: Duration.Input | undefined;
     readonly protocols?: string | Array<string> | undefined;
+    readonly headers?: Readonly<Record<string, string>> | undefined;
     readonly highWaterMark?: number | undefined;
 }) => Channel.Channel<NonEmptyReadonlyArray<Uint8Array>, SocketError | IE, void, NonEmptyReadonlyArray<Uint8Array | string | CloseEvent>, IE, unknown, WebSocketConstructor>;
 /**
  * Layer that provides a `Socket` service backed by a WebSocket URL or URL
  * effect.
+ * Supports subprotocols and, with a Node or Bun constructor, handshake headers.
  *
  * @stability unstable
  * @category layers
@@ -646,6 +686,7 @@ export declare const makeWebSocketChannel: <IE = never>(url: string, options?: {
 export declare const layerWebSocket: (url: string | Effect.Effect<string>, options?: {
     readonly openTimeout?: Duration.Input | undefined;
     readonly protocols?: string | Array<string> | undefined;
+    readonly headers?: Readonly<Record<string, string>> | undefined;
     readonly highWaterMark?: number | undefined;
 } | undefined) => Layer.Layer<Socket, never, WebSocketConstructor>;
 /**

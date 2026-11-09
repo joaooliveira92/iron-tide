@@ -59,6 +59,28 @@ describe("previewForeignConstruction (SB3-R20/R23/R34)", () => {
     expect(france.deliveryGuarantee).toBe(false);
   });
 
+  it("quotes every builder with the terms choosing that builder would show (#580)", () => {
+    const listed = preview(snapshot(), 3);
+    expect(listed.ok).toBe(true);
+    if (!listed.ok) return;
+    for (const builder of listed.preview.builders) {
+      const chosen = preview(snapshot(), 3, { builderNationId: builder.nationId });
+      expect(chosen.ok).toBe(true);
+      if (!chosen.ok) return;
+      const contract = chosen.preview.contract!;
+      expect(builder.quote).toEqual({
+        totalPriceUnits: contract.totalPriceUnits,
+        firstInstalmentUnits: contract.paymentSchedule[0]!.amountUnits,
+        firstInstalmentMonth: contract.paymentSchedule[0]!.dueMonth,
+        plannedDeliveryMonth: contract.plannedDeliveryMonth,
+        months:
+          Number(contract.plannedDeliveryMonth.slice(0, 4)) * 12 +
+          Number(contract.plannedDeliveryMonth.slice(5)) -
+          (1880 * 12 + 1),
+      });
+    }
+  });
+
   it("refuses a quantity outside 1..12 with the command's own reason code", () => {
     const result = preview(snapshot(), 13);
     expect(result).toEqual({

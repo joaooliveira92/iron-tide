@@ -20,7 +20,6 @@ import {
   type YardPlaceId,
   type YardTab,
 } from "../yard-workspace.js";
-import type { BatchOrder } from "./useBatchOrder.js";
 
 export interface YardWorkspaceState {
   readonly place: YardPlaceId;
@@ -36,10 +35,6 @@ export interface YardWorkspaceActions {
   readonly selectDesign: (designId: string) => void;
   readonly selectCommand: (commandId: string) => void;
   readonly browseCatalog: () => void;
-  readonly openWizard: () => void;
-  readonly closeWizard: () => void;
-  readonly confirmOrder: () => void;
-  readonly openBatch: () => void;
   readonly refresh: () => void;
   readonly clearSelection: () => void;
   readonly toggleInspector: () => void;
@@ -75,10 +70,10 @@ export interface YardWorkspace {
 
 export function useYardWorkspace(
   session: UseConstructionScreenReturn,
-  batch: BatchOrder,
+  orderOpen: boolean,
   sessionId: string,
 ): YardWorkspace {
-  const { state, selectedDesignId, setSelectedDesignId, submit, loadScreen } = session;
+  const { state, selectedDesignId, setSelectedDesignId, loadScreen } = session;
   const format = usePresentationFormat();
   const hosted = useScreenHeaderHost();
   const inspector = useInspectorLayout(sessionId);
@@ -93,7 +88,10 @@ export function useYardWorkspace(
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedCommandId, setSelectedCommandId] = useState<string | null>(null);
 
-  const rows = useMemo(() => projectRows(state.projects), [state.projects]);
+  const rows = useMemo(
+    () => projectRows(state.projects, state.steering),
+    [state.projects, state.steering],
+  );
   const selectedDesign = useMemo(
     () => state.designs.find((design) => design.designId === selectedDesignId) ?? null,
     [state.designs, selectedDesignId],
@@ -146,21 +144,6 @@ export function useYardWorkspace(
     [setTab],
   );
   const browseCatalog = useCallback(() => setPlace("catalog"), []);
-  const closeWizard = useCallback(() => setTab("catalog", "design"), [setTab]);
-  const openWizard = useCallback(() => {
-    batch.actions.close();
-    setPlace("catalog");
-    setTab("catalog", "order");
-  }, [batch.actions, setTab]);
-  const openBatch = useCallback(() => {
-    setPlace("catalog");
-    setTab("catalog", "design");
-    batch.actions.open();
-  }, [batch.actions, setTab]);
-  const confirmOrder = useCallback(() => {
-    submit();
-    closeWizard();
-  }, [submit, closeWizard]);
   const refresh = useCallback(() => void loadScreen(), [loadScreen]);
   const clearSelection = useCallback(() => {
     if (place === "slipways") setSelectedProjectId(null);
@@ -193,7 +176,6 @@ export function useYardWorkspace(
   );
   const selectedCommand =
     state.workspace?.commands.find((command) => command.commandId === selectedCommandId) ?? null;
-  const reviewing = place === "catalog" && (batch.state.open || tab.id === "order");
 
   return {
     state: { place, tabs, selectedProjectId, selectedCommandId },
@@ -204,10 +186,6 @@ export function useYardWorkspace(
       selectDesign,
       selectCommand,
       browseCatalog,
-      openWizard,
-      closeWizard,
-      confirmOrder,
-      openBatch,
       refresh,
       clearSelection,
       toggleInspector: inspector.toggleCollapsed,
@@ -227,7 +205,7 @@ export function useYardWorkspace(
       currentPlace,
       tab,
       selectedCommandId,
-      reviewing,
+      reviewing: orderOpen,
       monthLabel: `${state.month?.year ?? ""}-${String(state.month?.month ?? 0).padStart(2, "0")}`,
       busy: state.pendingRequest !== null || state.requiresRefresh,
       inspector,

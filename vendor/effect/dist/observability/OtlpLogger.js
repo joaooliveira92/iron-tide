@@ -48,6 +48,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
     label: "OtlpLogger",
     url: options.url,
     headers: options.headers,
+    compression: options.compression,
     maxBatchSize: options.maxBatchSize ?? 1000,
     exportInterval: options.exportInterval ?? Duration.seconds(1),
     body: data => [serialization.logs({
@@ -86,6 +87,13 @@ export const layer = options => Logger.layer([make(options)], {
 /**
  * Creates an OTLP logs layer from OpenTelemetry configuration.
  *
+ * **Details**
+ *
+ * Compression accepts "gzip" or "none".
+ * `OTEL_EXPORTER_OTLP_LOGS_COMPRESSION` takes precedence over
+ * `OTEL_EXPORTER_OTLP_COMPRESSION`, defaulting to "none". Gzip uses
+ * HttpClientRequest's default minimum body size of 1KB.
+ *
  * @stability unstable
  * @category layers
  * @since 4.0.0
@@ -104,12 +112,16 @@ export const layerFromConfig = options => Effect.gen(function* () {
     return Exporter.layerFlusher;
   }
   const {
+    baseCompression,
+    compression,
     baseTimeout,
     logsTimeout,
     exportTimeout,
     scheduleDelay,
     maxBatchSize
   } = yield* Config.all({
+    baseCompression: Config.option(Config.Literals(["gzip", "none"], "OTEL_EXPORTER_OTLP_COMPRESSION")),
+    compression: Config.option(Config.Literals(["gzip", "none"], "OTEL_EXPORTER_OTLP_LOGS_COMPRESSION")),
     baseTimeout: Config.option(Config.Int("OTEL_EXPORTER_OTLP_TIMEOUT")),
     logsTimeout: Config.option(Config.Int("OTEL_EXPORTER_OTLP_LOGS_TIMEOUT")),
     exportTimeout: Config.option(Config.Int("OTEL_BLRP_EXPORT_TIMEOUT")),
@@ -122,6 +134,7 @@ export const layerFromConfig = options => Effect.gen(function* () {
     url: endpoint.toString(),
     resource: options?.resource,
     headers: options?.headers ?? (yield* OtlpEnv.headers("LOGS")),
+    compression: Option.getOrElse(Option.firstSomeOf([compression, baseCompression]), () => "none"),
     exportInterval: Option.getOrUndefined(exportInterval),
     maxBatchSize: Option.getOrUndefined(maxBatchSize),
     shutdownTimeout: Option.getOrUndefined(shutdownTimeout),
@@ -164,7 +177,7 @@ const makeLogRecord = (options, opts) => {
     droppedAttributesCount: 0
   };
   if (options.fiber.cache.span) {
-    logRecord.traceId = options.fiber.cache.span.traceId;
+    logRecord.traceId = options.fiber.cache.span.traceId.padStart(32, "0");
     logRecord.spanId = options.fiber.cache.span.spanId;
   }
   return logRecord;

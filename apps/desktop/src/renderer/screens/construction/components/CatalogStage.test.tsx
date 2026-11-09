@@ -33,6 +33,7 @@ const economy = {
   exemptNewConstructionMassKg: 0,
   dockExpansionDurationMonths: 12,
   dockExpansionNextStepKg: null,
+  dockExpansionReadyMonth: null,
   dockPossessions: [],
 };
 const workspace = { commands: [], treasuryReserved: 0, capacityReserved: 0 };
@@ -46,8 +47,10 @@ const stage = (
     designs={designs}
     economy={economy}
     workspace={workspace}
+    studies={[]}
     selectedDesignId={selected}
     onSelectDesign={pick}
+    onOpenStudy={() => {}}
   />
 );
 
@@ -70,8 +73,10 @@ describe("CatalogStage", () => {
         designs={[design("Dreadnought")]}
         economy={economy}
         workspace={workspace}
+        studies={[]}
         selectedDesignId="Dreadnought"
         onSelectDesign={(id) => picked.push(id)}
+        onOpenStudy={() => {}}
       />,
     );
     const tile = screen.getByRole("radio", { name: /Dreadnought/ });

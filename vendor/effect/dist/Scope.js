@@ -289,6 +289,11 @@ export const forkUnsafe = effect.scopeForkUnsafe;
  * By default, finalizers run uninterruptibly, so interrupting the closing fiber
  * waits for them to finish; a finalizer can explicitly restore interruptibility.
  *
+ * **Gotchas**
+ *
+ * Closing a scope that is already closed returns immediately, even when the
+ * finalizers of an earlier close are still running.
+ *
  * **Example** (Running scope finalizers)
  *
  * ```ts import.meta.vitest

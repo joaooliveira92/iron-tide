@@ -9,6 +9,7 @@
  * @stability stable
  * @since 4.0.0
  */
+import * as InternalJsonSchema from "./internal/jsonSchema.js";
 import * as InternalRecord from "./internal/record.js";
 import { formatUriFragment, parseUriFragment } from "./JsonPointer.js";
 import * as Predicate from "./Predicate.js";
@@ -256,9 +257,15 @@ export function fromSchemaOpenApi3_1(js) {
  *
  * **Gotchas**
  *
- * OpenAPI 3.0 `nullable` is applied only when the same Schema Object has an
- * explicit string `type`; other constraints such as `enum` are left
- * unchanged. Unknown keywords, vendor extensions, and annotation values are
+ * OpenAPI 3.0 specifies that `nullable` applies only when the same Schema
+ * Object has an explicit string `type`. For compatibility with tooling that
+ * uses a single-member `allOf` for nullable references, this converter also
+ * rewrites `{ nullable: true, allOf: [schema] }` to
+ * `{ anyOf: [schema, { type: "null" }] }` when there is no string `type` or
+ * existing `anyOf`. Sibling constraints such as `enum` remain unchanged and
+ * may still reject null.
+ *
+ * Unknown keywords, vendor extensions, and annotation values are
  * copied opaquely unless their name would become active in Draft 2020-12 and
  * change meaning, in which case conversion throws. Siblings of a valid
  * OpenAPI 3.0 `$ref` are ignored.
@@ -338,9 +345,19 @@ export function fromSchemaOpenApi3_0(schema) {
  * @since 4.0.0
  */
 export function toDocumentDraft07(document) {
+  return toDocumentDraft07WithDefinitionsPath(document);
+}
+/**
+ * Converts to Draft-07 with definitions located at `definitionsPath`, such as
+ * `["components", "schemas"]` after {@link toMultiDocumentComponents}, so
+ * references into them stay in place. Defaults to `$defs` → `definitions`.
+ *
+ * @internal
+ */
+export function toDocumentDraft07WithDefinitionsPath(document, definitionsPath) {
   return {
     dialect: "draft-07",
-    ...convertDocument(document, draft07Adapter)
+    ...convertDocument(document, draft07Adapter, undefined, definitionsPath)
   };
 }
 /**
@@ -452,6 +469,18 @@ export function toDocumentDraft04(document) {
  * @since 4.0.0
  */
 export function toMultiDocumentOpenApi3_1(multiDocument) {
+  return {
+    dialect: "openapi-3.1",
+    ...toMultiDocumentComponents(multiDocument, {
+      target: "OpenAPI 3.1",
+      checkSchema(schema) {
+        rejectKeywordCollisions(schema, OPEN_API_31_TARGET_COLLISIONS, "OpenAPI 3.1", "Draft 2020-12");
+      }
+    })
+  };
+}
+/** @internal */
+export function toMultiDocumentComponents(multiDocument, options) {
   const definitionKeys = Object.keys(multiDocument.definitions);
   const keyMap = new Map();
   const usedKeys = new Set(definitionKeys.filter(key => VALID_OPEN_API_COMPONENTS_SCHEMAS_KEY_REGEXP.test(key)));
@@ -473,14 +502,14 @@ export function toMultiDocumentOpenApi3_1(multiDocument) {
     const isRootResource = createsResource(schema.$id);
     const localDefinitions = Predicate.isObject(schema.$defs) ? schema.$defs : undefined;
     return transformSchema(schema, (schema, inEmbeddedResource) => {
-      rejectKeywordCollisions(schema, OPEN_API_31_TARGET_COLLISIONS, "OpenAPI 3.1", "Draft 2020-12");
+      options.checkSchema?.(schema);
       rewriteSchemaRef(schema, (reference, keyword) => {
         const path = reference.startsWith("#") ? parseUriFragment(reference) : undefined;
         if (path === undefined || path[0] !== "$defs" || path.length < 2) return reference;
         const key = path[1];
         if (isRootResource) {
           if (rejectSharedDefinitionRefs && !inEmbeddedResource && Object.hasOwn(multiDocument.definitions, key) && (localDefinitions === undefined || !Object.hasOwn(localDefinitions, key))) {
-            unsupported(keyword, "OpenAPI 3.1", "a schema resource cannot reference the shared definitions pool");
+            unsupported(keyword, options.target, "a schema resource cannot reference the shared definitions pool");
           }
           return reference;
         }
@@ -494,7 +523,6 @@ export function toMultiDocumentOpenApi3_1(multiDocument) {
     InternalRecord.assignProperty(definitions, keyMap.get(key) ?? key, rewrite(multiDocument.definitions[key]));
   }
   return {
-    dialect: "openapi-3.1",
     schemas,
     definitions
   };
@@ -524,30 +552,14 @@ function transformSchema(node, transform) {
     for (const key of Object.keys(node)) {
       const value = node[key];
       let transformed = value;
-      switch (key) {
-        case "$defs":
-        case "properties":
-        case "patternProperties":
-        case "dependentSchemas":
+      switch (InternalJsonSchema.getSubschemaKind(key)) {
+        case "map":
           transformed = mapObject(value, value => walk(value, inEmbeddedResource)) ?? value;
           break;
-        case "allOf":
-        case "anyOf":
-        case "oneOf":
-        case "prefixItems":
+        case "array":
           transformed = Array.isArray(value) ? value.map(value => walk(value, inEmbeddedResource)) : value;
           break;
-        case "not":
-        case "additionalProperties":
-        case "propertyNames":
-        case "unevaluatedProperties":
-        case "items":
-        case "contains":
-        case "unevaluatedItems":
-        case "if":
-        case "then":
-        case "else":
-        case "contentSchema":
+        case "schema":
           transformed = walk(value, inEmbeddedResource);
       }
       InternalRecord.assignProperty(out, key, transformed);
@@ -694,13 +706,13 @@ function createsResource(id) {
 function convertSchema(root, adapter, options) {
   return runConverter(adapter, options, convert => convert(root));
 }
-function convertDocument(document, adapter, options) {
+function convertDocument(document, adapter, options, definitionsPath) {
   return runConverter(adapter, {
     ...options,
     trackIds: true
   }, convert => ({
     schema: convert(document.schema),
-    definitions: mapObject(document.definitions, (definition, key) => convert(definition, ["$defs", key], ["definitions", key]))
+    definitions: mapObject(document.definitions, (definition, key) => convert(definition, [...(definitionsPath ?? ["$defs"]), key], [...(definitionsPath ?? ["definitions"]), key]))
   }));
 }
 const SCHEMA_MAP_KEYWORDS = /*#__PURE__*/new Set(["properties", "patternProperties"]);
@@ -868,6 +880,7 @@ function draft07Adapter(source, context) {
       case "unevaluatedItems":
         unsupported(key, "Draft-07", "the target dialect has no equivalent");
       case "required":
+      case "enum":
         if (Array.isArray(value) && value.length === 0) break;
         InternalRecord.assignProperty(out, key, value);
         break;
@@ -889,6 +902,9 @@ function draft07Adapter(source, context) {
   }
   convertDependencies(source, out, context, "draft-07");
   convertLegacyId(source, out, "$id", "Draft-07");
+  if (Array.isArray(source.enum) && source.enum.length === 0) appendAllOf(out, {
+    not: {}
+  });
   convertReference(out, reference, context);
   return out;
 }
@@ -944,8 +960,15 @@ function convertOpenApi30(root) {
       return out;
     }
     rejectKeywordCollisions(source, OPEN_API_30_TO_2020_COLLISIONS, "Draft 2020-12", "OpenAPI 3.0");
+    const nullableAllOf = isOpenApi30NullableAllOf(source);
     for (const key of Object.keys(source)) {
       const value = source[key];
+      if (nullableAllOf && key === "allOf") {
+        InternalRecord.assignProperty(out, "anyOf", [context.schemaAt(source.allOf[0], ["allOf", "0"], ["anyOf", "0"]), {
+          type: "null"
+        }]);
+        continue;
+      }
       if (convertSubschemaKeyword(out, key, value, context, OPEN_API_30_SCHEMA_SINGLE_KEYWORDS, OPEN_API_30_SCHEMA_MAP_KEYWORDS)) {
         continue;
       }
@@ -968,6 +991,9 @@ function convertOpenApi30(root) {
     }
     return out;
   });
+}
+function isOpenApi30NullableAllOf(source) {
+  return source.nullable === true && typeof source.type !== "string" && source.anyOf === undefined && Array.isArray(source.allOf) && source.allOf.length === 1;
 }
 function convertOpenApiExclusiveBound(source, out, boundKey) {
   const exclusiveKey = boundKey === "minimum" ? "exclusiveMinimum" : "exclusiveMaximum";
@@ -1109,30 +1135,14 @@ function hasSchemaIdentifier(node) {
   if (Object.hasOwn(node, "$id") || Object.hasOwn(node, "$anchor")) return true;
   for (const key of Object.keys(node)) {
     const value = node[key];
-    switch (key) {
-      case "$defs":
-      case "properties":
-      case "patternProperties":
-      case "dependentSchemas":
+    switch (InternalJsonSchema.getSubschemaKind(key)) {
+      case "map":
         if (Predicate.isObject(value) && Object.values(value).some(hasSchemaIdentifier)) return true;
         break;
-      case "allOf":
-      case "anyOf":
-      case "oneOf":
-      case "prefixItems":
+      case "array":
         if (Array.isArray(value) && value.some(hasSchemaIdentifier)) return true;
         break;
-      case "not":
-      case "additionalProperties":
-      case "propertyNames":
-      case "unevaluatedProperties":
-      case "items":
-      case "contains":
-      case "unevaluatedItems":
-      case "if":
-      case "then":
-      case "else":
-      case "contentSchema":
+      case "schema":
         if (hasSchemaIdentifier(value)) return true;
     }
   }

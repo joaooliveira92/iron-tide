@@ -251,6 +251,8 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
   const parentSpanTransformer = yield* Effect.serviceOption(CurrentSpanTransformer);
   const getSpanTransformer = Effect.serviceOption(CurrentSpanTransformer).pipe(Effect.map(Option.orElse(() => parentSpanTransformer)));
   const idGenerator = yield* Effect.serviceOption(IdGenerator).pipe(Effect.map(Option.getOrElse(() => defaultIdGenerator)));
+  const contentDecoderFor = makeResponseDecoder((toolkit, deferred) => Schema.decodeEffect(Schema.mutable(Schema.Array(withUndeclaredToolCalls(Response.Part(toolkit), deferred)))));
+  const streamDecoderFor = makeResponseDecoder((toolkit, deferred) => Schema.decodeEffect(Schema.NonEmptyArray(withUndeclaredToolCalls(Response.StreamPart(toolkit), deferred))));
   const generateText = options => Effect.useSpan("LanguageModel.generateText", {
     kind: "client"
   }, Effect.fnUntraced(function* (span) {
@@ -366,6 +368,10 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
     const toolChoice = options.toolChoice ?? "auto";
     const concurrency = options.concurrency ?? "unbounded";
     annotateRequestOptions(providerOptions, toolChoice, concurrency);
+    const deferToolCallValidation = isToolCallValidationDeferred(options);
+    if (deferToolCallValidation) {
+      providerOptions.toolCallValidation = "deferred";
+    }
     const generateWithNonIncrementalFallback = () => {
       const requestOptions = {
         ...providerOptions
@@ -382,11 +388,11 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
     };
     // Check for pending approvals that need resolution
     const {
-      approved,
-      denied
-    } = collectToolApprovals(providerOptions.prompt.content, {
-      excludeResolved: true
-    });
+      approved: allResolved,
+      denied: allDenied,
+      pendingApproved: approved,
+      pendingDenied: denied
+    } = collectToolApprovals(providerOptions.prompt.content);
     const hasPendingApprovals = approved.length > 0 || denied.length > 0;
     // If there is no toolkit, the generated content can be returned immediately
     if (Predicate.isUndefined(options.toolkit)) {
@@ -407,7 +413,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
           providerOptions.incrementalPrompt = prepared.value.prompt;
         }
       }
-      const ResponseSchema = Schema.mutable(Schema.Array(Response.Part(Toolkit.empty)));
+      const ResponseSchema = Schema.mutable(Schema.Array(withUndeclaredToolCalls(Response.Part(Toolkit.empty), deferToolCallValidation)));
       const rawContent = yield* generateWithNonIncrementalFallback();
       const content = yield* Schema.decodeEffect(ResponseSchema)(rawContent);
       if (tracker) {
@@ -439,7 +445,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
           providerOptions.incrementalPrompt = prepared.value.prompt;
         }
       }
-      const ResponseSchema = Schema.mutable(Schema.Array(Response.Part(Toolkit.empty)));
+      const ResponseSchema = Schema.mutable(Schema.Array(withUndeclaredToolCalls(Response.Part(Toolkit.empty), deferToolCallValidation)));
       const rawContent = yield* generateWithNonIncrementalFallback();
       const content = yield* Schema.decodeEffect(ResponseSchema)(rawContent);
       if (tracker) {
@@ -474,14 +480,8 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
     }
     // Strip all resolved approval artifacts (both current and from previous
     // rounds) in a single pass before sending to the provider.
-    {
-      const {
-        approved: allResolved,
-        denied: allDenied
-      } = collectToolApprovals(providerOptions.prompt.content);
-      if (allResolved.length > 0 || allDenied.length > 0) {
-        providerOptions.prompt = stripResolvedApprovals(providerOptions.prompt, allResolved, allDenied);
-      }
+    if (allResolved.length > 0 || allDenied.length > 0) {
+      providerOptions.prompt = stripResolvedApprovals(providerOptions.prompt, allResolved, allDenied);
     }
     const tools = typeof toolChoice === "object" && "oneOf" in toolChoice ? Object.values(toolkit.tools).filter(tool => toolChoice.oneOf.includes(tool.name)) : Object.values(toolkit.tools);
     providerOptions.tools = tools;
@@ -493,12 +493,15 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
         providerOptions.incrementalPrompt = prepared.value.prompt;
       }
     }
-    const ResponseSchema = Schema.mutable(Schema.Array(Response.Part(options.disableToolCallResolution === true ? makeToolkitWithEncodedParameters(toolkit) : makeToolkitWithOpaqueParameters(toolkit))));
+    const decodeContent = contentDecoderFor(toolkit, options.disableToolCallResolution === true && !deferToolCallValidation, deferToolCallValidation);
     // If tool call resolution is disabled, return the response without
     // resolving the tool calls that were generated
     if (options.disableToolCallResolution === true) {
       const rawContent = yield* generateWithNonIncrementalFallback();
-      const content = yield* Schema.decodeEffect(ResponseSchema)(rawContent);
+      const content = yield* decodeContent(rawContent);
+      if (deferToolCallValidation) {
+        yield* validateProviderExecutedToolCalls(makeToolkitWithEncodedParameters(toolkit), rawContent);
+      }
       if (tracker) {
         const responseMetadata = content.find(part => part.type === "response-metadata");
         if (Predicate.isNotUndefined(responseMetadata) && Predicate.isNotUndefined(responseMetadata.id)) {
@@ -509,7 +512,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
     }
     const rawContent = yield* generateWithNonIncrementalFallback();
     // Validate before running tool handlers.
-    const content = yield* Schema.decodeEffect(ResponseSchema)(rawContent);
+    const content = yield* decodeContent(rawContent);
     yield* validateProviderExecutedToolCalls(toolkit, rawContent);
     // Resolve the generated tool calls. When the finish reason indicates an
     // incomplete response, handlers do not run and every executable tool call
@@ -530,6 +533,10 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
     const toolChoice = options.toolChoice ?? "auto";
     const concurrency = options.concurrency ?? "unbounded";
     annotateRequestOptions(providerOptions, toolChoice, concurrency);
+    const deferToolCallValidation = isToolCallValidationDeferred(options);
+    if (deferToolCallValidation) {
+      providerOptions.toolCallValidation = "deferred";
+    }
     const streamWithNonIncrementalFallback = () => {
       const requestOptions = {
         ...providerOptions
@@ -551,11 +558,11 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
     };
     // Check for pending approvals that need resolution
     const {
-      approved: pendingApproved,
-      denied: pendingDenied
-    } = collectToolApprovals(providerOptions.prompt.content, {
-      excludeResolved: true
-    });
+      approved: allResolved,
+      denied: allDenied,
+      pendingApproved,
+      pendingDenied
+    } = collectToolApprovals(providerOptions.prompt.content);
     const hasPendingApprovals = pendingApproved.length > 0 || pendingDenied.length > 0;
     // If there is no toolkit, return immediately
     if (Predicate.isUndefined(options.toolkit)) {
@@ -576,7 +583,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
           providerOptions.incrementalPrompt = prepared.value.prompt;
         }
       }
-      const schema = Schema.NonEmptyArray(Response.StreamPart(Toolkit.empty));
+      const schema = Schema.NonEmptyArray(withUndeclaredToolCalls(Response.StreamPart(Toolkit.empty), deferToolCallValidation));
       const decodeParts = Schema.decodeEffect(schema);
       return pipe(streamWithNonIncrementalFallback(), Stream.mapArrayEffect(parts => decodeParts(parts).pipe(tracker ? Effect.tap(decodedParts => {
         for (const part of decodedParts) {
@@ -608,7 +615,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
           providerOptions.incrementalPrompt = prepared.value.prompt;
         }
       }
-      const schema = Schema.NonEmptyArray(Response.StreamPart(Toolkit.empty));
+      const schema = Schema.NonEmptyArray(withUndeclaredToolCalls(Response.StreamPart(Toolkit.empty), deferToolCallValidation));
       const decodeParts = Schema.decodeEffect(schema);
       return pipe(streamWithNonIncrementalFallback(), Stream.mapArrayEffect(parts => decodeParts(parts).pipe(tracker ? Effect.tap(decodedParts => {
         for (const part of decodedParts) {
@@ -652,16 +659,13 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
           preliminary: false,
           result: r.encodedResult,
           encodedResult: r.encodedResult,
+          ...modelOutputField(r.modelOutput),
           isFailure: r.isFailure
         }));
       }
     }
     // Strip all resolved approval artifacts (both current and from previous
     // rounds) in a single pass before sending to the provider.
-    const {
-      approved: allResolved,
-      denied: allDenied
-    } = collectToolApprovals(providerOptions.prompt.content);
     if (allResolved.length > 0 || allDenied.length > 0) {
       providerOptions.prompt = stripResolvedApprovals(providerOptions.prompt, allResolved, allDenied);
     }
@@ -675,12 +679,12 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
         providerOptions.incrementalPrompt = prepared.value.prompt;
       }
     }
-    const ResponseSchema = Schema.NonEmptyArray(Response.StreamPart(options.disableToolCallResolution === true ? makeToolkitWithEncodedParameters(toolkit) : makeToolkitWithOpaqueParameters(toolkit)));
-    const decodeParts = Schema.decodeEffect(ResponseSchema);
+    const decodeParts = streamDecoderFor(toolkit, options.disableToolCallResolution === true && !deferToolCallValidation, deferToolCallValidation);
     // If tool call resolution is disabled, return the response without
     // resolving the tool calls that were generated
     if (options.disableToolCallResolution === true) {
-      return streamWithNonIncrementalFallback().pipe(Stream.mapArrayEffect(parts => decodeParts(parts).pipe(tracker ? Effect.tap(decodedParts => {
+      const encodedToolkit = deferToolCallValidation ? makeToolkitWithEncodedParameters(toolkit) : undefined;
+      return streamWithNonIncrementalFallback().pipe(Stream.mapArrayEffect(parts => decodeParts(parts).pipe(encodedToolkit ? Effect.tap(() => validateProviderExecutedToolCalls(encodedToolkit, parts)) : identity, tracker ? Effect.tap(decodedParts => {
         for (const part of decodedParts) {
           if (part.type === "response-metadata" && Predicate.isNotUndefined(part.id)) {
             tracker.markParts(providerOptions.prompt.content, part.id);
@@ -693,8 +697,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
     const queue = yield* Queue.make();
     const deferredFinishParts = [];
     // Emit pre-resolved tool results so Chat.streamText persists them to
-    // history. This ensures collectToolApprovals({ excludeResolved }) can
-    // find the corresponding tool-results on future rounds.
+    // history, where collectToolApprovals finds them on future rounds.
     if (preResolvedStreamParts.length > 0) {
       yield* Queue.offerAll(queue, preResolvedStreamParts);
     }
@@ -733,6 +736,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (params) {
           providerExecuted: false,
           result: result.result,
           encodedResult: result.encodedResult,
+          ...modelOutputField(result.modelOutput),
           isFailure: result.isFailure,
           preliminary: result.preliminary
         });
@@ -961,7 +965,7 @@ export const generateObject = options => Effect.flatMap(Effect.service(LanguageM
  * @since 4.0.0
  */
 export const streamText = options => Stream.unwrap(Effect.map(Effect.service(LanguageModel), model => model.streamText(options)));
-const collectToolApprovals = (messages, options) => {
+const collectToolApprovals = messages => {
   const requests = new Map();
   const responses = [];
   const toolCallsById = new Map();
@@ -998,13 +1002,11 @@ const collectToolApprovals = (messages, options) => {
   }
   const approved = [];
   const denied = [];
+  const pendingApproved = [];
+  const pendingDenied = [];
   for (const response of responses) {
     const request = requests.get(response.approvalId);
     if (Predicate.isNotUndefined(request)) {
-      // Skip if already resolved
-      if (options?.excludeResolved && toolResultIds.has(request.toolCallId)) {
-        continue;
-      }
       const result = {
         ...response,
         toolCallId: request.toolCallId,
@@ -1012,14 +1014,18 @@ const collectToolApprovals = (messages, options) => {
       };
       if (response.approved) {
         approved.push(result);
+        if (!toolResultIds.has(request.toolCallId)) pendingApproved.push(result);
       } else {
         denied.push(result);
+        if (!toolResultIds.has(request.toolCallId)) pendingDenied.push(result);
       }
     }
   }
   return {
     approved,
-    denied
+    denied,
+    pendingApproved,
+    pendingDenied
   };
 };
 /**
@@ -1100,6 +1106,7 @@ const executeApprovedToolCalls = (approvals, toolkit, concurrency) => {
       name: toolCall.name,
       result: terminalResult.result,
       encodedResult: terminalResult.encodedResult,
+      ...modelOutputField(terminalResult.modelOutput),
       isFailure: terminalResult.isFailure,
       preliminary: terminalResult.preliminary,
       providerExecuted: false
@@ -1166,6 +1173,10 @@ const makeInterruptedToolResult = (toolCall, finishReason) => {
     isFailure: true
   });
 };
+// Omits the key entirely so unmapped tool result parts keep their shape.
+const modelOutputField = modelOutput => modelOutput === undefined ? undefined : {
+  modelOutput
+};
 const resolveToolCalls = (content, toolkit, messages, concurrency) => {
   const toolCalls = [];
   for (const part of content) {
@@ -1212,6 +1223,7 @@ const resolveToolCalls = (content, toolkit, messages, concurrency) => {
         providerExecuted: false,
         result: result.result,
         encodedResult: result.encodedResult,
+        ...modelOutputField(result.modelOutput),
         isFailure: result.isFailure,
         preliminary: result.preliminary
       })));
@@ -1231,6 +1243,7 @@ const resolveToolCalls = (content, toolkit, messages, concurrency) => {
       providerExecuted: false,
       result: result.result,
       encodedResult: result.encodedResult,
+      ...modelOutputField(result.modelOutput),
       isFailure: result.isFailure,
       preliminary: result.preliminary
     })));
@@ -1242,6 +1255,26 @@ const resolveToolCalls = (content, toolkit, messages, concurrency) => {
 // =============================================================================
 // Utilities
 // =============================================================================
+// Cache one decoder per model and response kind, keyed by validation mode
+// and tool names and schema identities in insertion order.
+const makeResponseDecoder = make => {
+  let cached;
+  return (toolkit, encoded, deferred) => {
+    const key = [encoded, deferred];
+    for (const tool of Object.values(toolkit.tools)) {
+      key.push(tool.name, tool.parametersSchema, tool.successSchema, tool.failureSchema);
+    }
+    if (cached !== undefined && cached.key.length === key.length && cached.key.every((part, i) => part === key[i])) {
+      return cached.decode;
+    }
+    const decode = make(encoded ? makeToolkitWithEncodedParameters(toolkit) : makeToolkitWithOpaqueParameters(toolkit), deferred);
+    cached = {
+      key,
+      decode
+    };
+    return decode;
+  };
+};
 // Stable parameter-mode copies let Response reuse each tool's part schemas.
 const parameterModeTools = /*#__PURE__*/new WeakMap();
 const withParameterMode = (tool, mode) => {
@@ -1254,6 +1287,12 @@ const withParameterMode = (tool, mode) => {
 };
 const makeToolkitWithEncodedParameters = toolkit => Toolkit.make(...Object.values(toolkit.tools).map(tool => withParameterMode(tool, "encoded")));
 const makeToolkitWithOpaqueParameters = toolkit => Toolkit.make(...Object.values(toolkit.tools).map(tool => withParameterMode(tool, "opaque")));
+const isToolCallValidationDeferred = options => options.disableToolCallResolution === true && options.toolCallValidation === "deferred";
+const UndeclaredToolCallPart = /*#__PURE__*/Response.ToolCallPart("", Schema.Unknown).mapFields(fields => ({
+  ...fields,
+  name: Schema.String
+}));
+const withUndeclaredToolCalls = (partSchema, deferToolCallValidation) => deferToolCallValidation ? Schema.Union([partSchema, UndeclaredToolCallPart]) : partSchema;
 // Provider-executed tools bypass Toolkit, so validate their parameters here.
 const validateProviderExecutedToolCalls = (toolkit, parts) => Effect.forEach(parts, part => {
   if (part.type !== "tool-call" || part.providerExecuted !== true) {

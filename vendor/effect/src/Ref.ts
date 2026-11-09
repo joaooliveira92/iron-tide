@@ -1081,110 +1081,13 @@ export const modifySome: {
    */
   <A, B>(self: Ref<A>, pf: (a: A) => readonly [B, Option.Option<A>]): Effect.Effect<B>
 } = dual<
-  /**
-   * Computes a result atomically and optionally updates the value of the `Ref`.
-   *
-   * **When to use**
-   *
-   * Use to compute a return value while optionally updating a plain `Ref`.
-   *
-   * **Details**
-   *
-   * The callback receives the current value and returns `[result, nextValue]`,
-   * where `nextValue` is an `Option`. If `nextValue` is `Option.some(value)`,
-   * the `Ref` is updated to `value`; if it is `Option.none()`, the `Ref` is left
-   * unchanged. The returned effect always succeeds with `result`.
-   *
-   * **Example** (Conditionally modifying a value)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Option, Ref } from "effect"
-   *
-   * const program = Effect.gen(function*() {
-   *   const counter = yield* Ref.make(5)
-   *
-   *   const result1 = yield* Ref.modifySome(
-   *     counter,
-   *     (n) =>
-   *       n > 3
-   *         ? [`incremented ${n}`, Option.some(n + 10)]
-   *         : ["no change", Option.none()]
-   *   )
-   *   const current1 = yield* Ref.get(counter)
-   *   const result2 = yield* Ref.modifySome(
-   *     counter,
-   *     (n) =>
-   *       n < 10
-   *         ? [`decremented ${n}`, Option.some(n - 5)]
-   *         : ["no change", Option.none()]
-   *   )
-   *   const current2 = yield* Ref.get(counter)
-   *   return [result1, current1, result2, current2]
-   * })
-   *
-   * await Effect.runPromise(program) // => ["incremented 5", 15, "no change", 15]
-   * ```
-   *
-   * @see {@link modify} for always storing a new value
-   * @see {@link updateSome} for optional updates without a separate return value
-   *
-   * @stability stable
-   * @category mutations
-   * @since 2.0.0
-   */
-  <B, A>(pf: (a: A) => readonly [B, Option.Option<A>]) => (self: Ref<A>) => Effect.Effect<B>,
-  /**
-   * Computes a result atomically and optionally updates the value of the `Ref`.
-   *
-   * **When to use**
-   *
-   * Use to compute a return value while optionally updating a plain `Ref`.
-   *
-   * **Details**
-   *
-   * The callback receives the current value and returns `[result, nextValue]`,
-   * where `nextValue` is an `Option`. If `nextValue` is `Option.some(value)`,
-   * the `Ref` is updated to `value`; if it is `Option.none()`, the `Ref` is left
-   * unchanged. The returned effect always succeeds with `result`.
-   *
-   * **Example** (Conditionally modifying a value)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Option, Ref } from "effect"
-   *
-   * const program = Effect.gen(function*() {
-   *   const counter = yield* Ref.make(5)
-   *
-   *   const result1 = yield* Ref.modifySome(
-   *     counter,
-   *     (n) =>
-   *       n > 3
-   *         ? [`incremented ${n}`, Option.some(n + 10)]
-   *         : ["no change", Option.none()]
-   *   )
-   *   const current1 = yield* Ref.get(counter)
-   *   const result2 = yield* Ref.modifySome(
-   *     counter,
-   *     (n) =>
-   *       n < 10
-   *         ? [`decremented ${n}`, Option.some(n - 5)]
-   *         : ["no change", Option.none()]
-   *   )
-   *   const current2 = yield* Ref.get(counter)
-   *   return [result1, current1, result2, current2]
-   * })
-   *
-   * await Effect.runPromise(program) // => ["incremented 5", 15, "no change", 15]
-   * ```
-   *
-   * @see {@link modify} for always storing a new value
-   * @see {@link updateSome} for optional updates without a separate return value
-   *
-   * @stability stable
-   * @category mutations
-   * @since 2.0.0
-   */
-  <A, B>(self: Ref<A>, pf: (a: A) => readonly [B, Option.Option<A>]) => Effect.Effect<B>
+  <B, A>(
+    pf: (a: A) => readonly [B, Option.Option<A>]
+  ) => (self: Ref<A>) => Effect.Effect<B>,
+  <A, B>(
+    self: Ref<A>,
+    pf: (a: A) => readonly [B, Option.Option<A>]
+  ) => Effect.Effect<B>
 >(2, (self, pf) =>
   modify(self, (value) => {
     const [b, option] = pf(value)

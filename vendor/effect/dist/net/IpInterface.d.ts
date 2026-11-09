@@ -6,6 +6,7 @@
  */
 import * as Equal from "../Equal.ts";
 import * as Hash from "../Hash.ts";
+import * as Inspectable from "../Inspectable.ts";
 import * as Result from "../Result.ts";
 import * as NetAddress from "./NetAddress.ts";
 declare const TypeId: "~effect/net/IpInterface";
@@ -19,13 +20,11 @@ declare const TypeId: "~effect/net/IpInterface";
  * @category models
  * @since 4.0.0
  */
-export interface IpInterface<out A extends NetAddress.IpAddress = NetAddress.IpAddress> extends Equal.Equal, Hash.Hash {
+export interface IpInterface<out A extends NetAddress.IpAddress = NetAddress.IpAddress> extends Equal.Equal, Hash.Hash, Inspectable.Inspectable {
     readonly _tag: "IpInterface";
     readonly address: A;
     readonly prefixLength: number;
     readonly [TypeId]: typeof TypeId;
-    toString(): string;
-    toJSON(): string;
 }
 /**
  * An IPv4 host address and prefix length.
@@ -43,6 +42,42 @@ export type Ipv4Interface = IpInterface<NetAddress.Ipv4Address>;
  * @since 4.0.0
  */
 export type Ipv6Interface = IpInterface<NetAddress.Ipv6Address>;
+/**
+ * An address and prefix length, generic over the accepted address input.
+ *
+ * @see {@link make} for the checked constructor
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface IpInterfaceParts<A extends NetAddress.IpAddressInput = NetAddress.IpAddressInput> {
+    readonly address: A;
+    readonly prefixLength: number;
+}
+/**
+ * An interface address, or a string or parts to convert to one.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type IpInterfaceInput = IpInterface | string | IpInterfaceParts;
+/**
+ * An IPv4 interface address, or a string or parts to convert to one.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type Ipv4InterfaceInput = Ipv4Interface | string | IpInterfaceParts<NetAddress.Ipv4AddressInput>;
+/**
+ * An IPv6 interface address, or a string or parts to convert to one.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type Ipv6InterfaceInput = Ipv6Interface | string | IpInterfaceParts<NetAddress.Ipv6AddressInput>;
 /**
  * Companion types for parsing IP interface addresses.
  *
@@ -131,6 +166,44 @@ export declare const ipv6FromString: (input: string, options?: IpInterface.Parse
  * @since 4.0.0
  */
 export declare const fromString: (input: string, options?: IpInterface.ParseOptions) => Result.Result<IpInterface, NetAddress.NetAddressError>;
+/**
+ * Converts an `Ipv4InterfaceInput` to an IPv4 interface address, parsing
+ * strings like `ipv4FromString` with the given options, converting parts like
+ * `make`, and returning interface addresses unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const ipv4FromInput: (input: Ipv4InterfaceInput, options?: IpInterface.ParseOptions) => Result.Result<Ipv4Interface, NetAddress.NetAddressError>;
+/**
+ * Converts an `Ipv6InterfaceInput` to an IPv6 interface address, parsing
+ * strings like `ipv6FromString` with the given options, converting parts like
+ * `make`, and returning interface addresses unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const ipv6FromInput: (input: Ipv6InterfaceInput, options?: IpInterface.ParseOptions) => Result.Result<Ipv6Interface, NetAddress.NetAddressError>;
+/**
+ * Converts an `IpInterfaceInput` to an interface address, parsing strings like
+ * `fromString` with the given options, converting parts like `make`, and
+ * returning interface addresses unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const fromInput: (input: IpInterfaceInput, options?: IpInterface.ParseOptions) => Result.Result<IpInterface, NetAddress.NetAddressError>;
+/**
+ * Converts a trusted `IpInterfaceInput` to an interface address, throwing on failure.
+ *
+ * @stability unstable
+ * @category unsafe
+ * @since 4.0.0
+ */
+export declare const fromInputUnsafe: (input: IpInterfaceInput, options?: IpInterface.ParseOptions) => IpInterface;
 /**
  * Creates a trusted interface address, throwing when its prefix length is invalid.
  *

@@ -140,7 +140,7 @@ const RuntimeProto = {
 const makeFnRuntime = (self, arg, options) => {
   const [read, write, argAtom] = makeResultFn(options?.reactivityKeys ? (a, get) => {
     const effect = arg(a, get);
-    return Effect.isEffect(effect) ? Reactivity.mutation(effect, options.reactivityKeys) : Stream.ensuring(effect, Reactivity.invalidate(options.reactivityKeys));
+    return Effect.isEffect(effect) ? Reactivity.mutation(effect, options.reactivityKeys) : Stream.onEnd(effect, Reactivity.invalidate(options.reactivityKeys));
   } : arg, options);
   return writable(get => {
     get.get(argAtom);
@@ -260,16 +260,24 @@ const effect = (get, effect, options, services) => {
 };
 function makeEffect(ctx, effect, initialValue, services = Context.empty(), uninterruptible = false) {
   const previous = ctx.self();
+  if (previous._tag === "Some" && Registry.consumeSkipInitialRun(ctx)) {
+    return previous.value;
+  }
+  const getServices = typeof services === "function" ? services : constant(services);
   const scope = Scope.makeUnsafe();
   ctx.addFinalizer(() => {
-    Effect.runForkWith(services)(Scope.close(scope, Exit.void));
+    Effect.runForkWith(getServices())(closeScope(scope));
   });
   let syncResult;
   let isAsync = false;
-  const cancel = runCallbackSync(services.pipe(Context.add(Scope.Scope, scope), Context.add(AtomRegistry, ctx.registry), Context.add(Scheduler.Scheduler, ctx.registry.scheduler)), effect, function (exit) {
-    syncResult = AsyncResult.fromExitWithPrevious(exit, previous);
+  const cancel = runCallbackSync(getServices().pipe(Context.add(Scope.Scope, scope), Context.add(AtomRegistry, ctx.registry), Context.add(Scheduler.Scheduler, ctx.registry.scheduler)), effect, function (exit) {
     if (isAsync) {
-      ctx.setSelf(syncResult);
+      // Read the live value rather than `previous`: while the effect was
+      // running, the atom may have exposed `initialValue` or a `setSelf`
+      // success, and a failure should retain the latest success shown.
+      ctx.setSelf(AsyncResult.fromExitWithPrevious(exit, ctx.self()));
+    } else {
+      syncResult = AsyncResult.fromExitWithPrevious(exit, previous);
     }
   }, uninterruptible);
   isAsync = true;
@@ -283,6 +291,10 @@ function makeEffect(ctx, effect, initialValue, services = Context.empty(), unint
   }
   return AsyncResult.waiting(initialValue);
 }
+const closeScope = scope => Effect.catchCause(Scope.close(scope, Exit.void), cause => Cause.hasInterruptsOnly(cause) ? Effect.void : Effect.ignoreCause(Effect.failCause(cause), {
+  log: "Unhandled",
+  message: "Unhandled error in atom finalizer"
+}));
 function runCallbackSync(services, effect, onExit, uninterruptible = false) {
   if (Exit.isExit(effect)) {
     onExit(effect);
@@ -318,14 +330,18 @@ export function context(options) {
     self.lazy = true;
     self.refresh = undefined;
     self.factory = factory;
-    const layerAtom = keepAlive(typeof create === "function" ? readable(get => Layer.provideMerge(create(get), globalLayer)) : readable(() => Layer.provideMerge(create, globalLayer)));
+    const layerAtom = keepAlive(typeof create === "function" ? readable(create) : readable(() => create));
     self.layer = layerAtom;
     self.read = function read(get) {
-      const layer = get(layerAtom);
-      const build = Effect.flatMap(Effect.scope, scope => Layer.buildWithMemoMap(layer, resolveMemoMap(get), scope));
-      return effect(get, build, {
-        uninterruptible: true
-      });
+      const layer = Layer.provideMerge(get(layerAtom), globalLayer);
+      // Teardown failures are logged with the built services. A scoped logger
+      // from this layer is closed by then, so those reports may be dropped.
+      let services = Context.empty();
+      const build = Effect.flatMap(Effect.scope, scope => Effect.map(Layer.buildWithMemoMap(layer, resolveMemoMap(get), scope), context => {
+        services = context;
+        return context;
+      }));
+      return makeEffect(get, build, AsyncResult.initial(), () => services, true);
     };
     return self;
   }
@@ -355,7 +371,7 @@ export function context(options) {
  */
 export const runtime = /*#__PURE__*/context();
 /**
- * Returns `Rx.runtime.withReactivity` for refreshing an atom whenever the
+ * Alias for `Atom.runtime.withReactivity` for refreshing an atom whenever the
  * keys change in the `Reactivity` service.
  *
  * **When to use**
@@ -377,6 +393,9 @@ const stream = (get, stream, options, services) => {
 };
 function makeStream(ctx, stream, initialValue, services = Context.empty()) {
   const previous = ctx.self();
+  if (previous._tag === "Some" && Registry.consumeSkipInitialRun(ctx)) {
+    return previous.value;
+  }
   services = Context.add(services, AtomRegistry, ctx.registry);
   const run = Effect.scopedWith(scope => Effect.flatMap(Channel.toPullScoped(stream.channel, scope), pull => Effect.whileLoop({
     while: constTrue,
@@ -808,13 +827,15 @@ export const withLabel = /*#__PURE__*/dual(2, (self, name) => Object.assign(Obje
  * **Details**
  *
  * The returned tuple can be supplied to `AtomRegistry` initial values so the atom
- * starts with the provided value before it is first rebuilt.
+ * starts with the provided value before it is first rebuilt. Pass
+ * `{ skipInitialRun: true }` to keep the value of an effect or stream atom
+ * instead of running its effect on mount (see {@link InitialValueOptions}).
  *
  * @stability unstable
  * @category combinators
  * @since 4.0.0
  */
-export const initialValue = /*#__PURE__*/dual(2, (self, initialValue) => [self, initialValue]);
+export const initialValue = /*#__PURE__*/dual(args => args.length >= 2, (self, initialValue, options) => options === undefined ? [self, initialValue] : [self, initialValue, options]);
 /**
  * Creates a derived atom by reading another atom with a custom `AtomContext`
  * function.
@@ -1480,6 +1501,8 @@ export const isSerializable = self => SerializableTypeId in self;
  *
  * The schema is converted to a JSON codec for synchronous encode/decode, and the
  * key is also used as the atom label when the atom does not already have one.
+ * Set `skipInitialRun` to keep a hydrated value of an effect or stream atom
+ * instead of running its effect on mount (see {@link InitialValueOptions}).
  *
  * @stability unstable
  * @category combinators
@@ -1493,7 +1516,8 @@ export const serializable = /*#__PURE__*/dual(2, (self, options) => {
     [SerializableTypeId]: {
       key: options.key,
       encode: Schema.encodeSync(codecJson),
-      decode: Schema.decodeSync(codecJson)
+      decode: Schema.decodeSync(codecJson),
+      skipInitialRun: options.skipInitialRun
     }
   });
 });

@@ -1,6 +1,8 @@
+import * as ByteSize from "../ByteSize.js";
 import * as Context from "../Context.js";
 import * as Effect from "../Effect.js";
 import * as Base64 from "../encoding/Base64.js";
+import * as Ndjson from "../encoding/Ndjson.js";
 import * as Sse from "../encoding/Sse.js";
 import * as Fiber from "../Fiber.js";
 import * as Function from "../Function.js";
@@ -9,6 +11,7 @@ import * as HttpMethod from "../http/HttpMethod.js";
 import * as HttpRouter from "../http/HttpRouter.js";
 import * as Request from "../http/HttpServerRequest.js";
 import { HttpServerRequest } from "../http/HttpServerRequest.js";
+import * as Respondable from "../http/HttpServerRespondable.js";
 import * as Response from "../http/HttpServerResponse.js";
 import * as Multipart from "../http/Multipart.js";
 import * as UrlParams from "../http/UrlParams.js";
@@ -27,7 +30,7 @@ import * as Stream from "../Stream.js";
 import * as UndefinedOr from "../UndefinedOr.js";
 import * as HttpApi from "./HttpApi.js";
 import * as HttpApiEndpoint from "./HttpApiEndpoint.js";
-import { HttpApiSchemaError } from "./HttpApiError.js";
+import { HttpApiPayloadTooLarge, HttpApiSchemaError } from "./HttpApiError.js";
 import * as HttpApiMiddleware from "./HttpApiMiddleware.js";
 import * as HttpApiSchema from "./HttpApiSchema.js";
 import * as MediaType from "./internal/mediaType.js";
@@ -43,15 +46,27 @@ import * as OpenApi from "./OpenApi.js";
 export const layer = (api, options) => HttpRouter.use(Effect.fnUntraced(function* (router) {
   const services = yield* Effect.context();
   const routes = [];
+  const routeOwners = new Map();
   const availableGroups = Array.from(services.mapUnsafe.keys()).filter(key => key.startsWith("effect/http-api/HttpApiGroup/"));
   const groups = Object.values(api.groups);
   for (const group of groups) {
-    const groupRoutes = services.mapUnsafe.get(group.key)?.routes;
-    if (groupRoutes === undefined) {
+    const service = services.mapUnsafe.get(group.key);
+    if (service === undefined) {
       const available = availableGroups.length === 0 ? "none" : availableGroups.join(", ");
       return yield* Effect.die(`HttpApiGroup "${group.identifier}" not found (key: "${group.key}"). Did you forget to provide HttpApiBuilder.group(api, "${group.identifier}", ...)? Available groups: ${available}`);
     }
-    routes.push(...groupRoutes);
+    for (const {
+      endpoint
+    } of service.handlers.values()) {
+      const owner = `${group.identifier}.${endpoint.identifier}`;
+      const key = `${endpoint.method} ${HttpApiPath.toRouterPath(endpoint.path, endpoint.params)}`;
+      const existing = routeOwners.get(key);
+      if (existing !== undefined) {
+        return yield* Effect.die(new Error(`HttpApiEndpoint "${owner}" (${endpoint.method} ${endpoint.path}) has the same method and path as "${existing}". Declare one endpoint whose query, headers, payload or success schemas cover each variant instead.`));
+      }
+      routeOwners.set(key, owner);
+    }
+    routes.push(...service.routes);
   }
   yield* router.addAll(routes);
   if (options?.openapiPath) {
@@ -81,10 +96,11 @@ export const group = (api, groupIdentifier, build) => Layer.effectContext(Effect
   for (const item of handlers.handlers.values()) {
     routes.push(handlerToRoute(api, group, item, services));
   }
-  return Context.makeUnsafe(new Map([[group.key, {
+  const service = {
     routes,
     handlers: handlers.handlers
-  }]]));
+  };
+  return Context.makeUnsafe(new Map([[group.key, service]]));
 }));
 /**
  * Creates a reusable handler for a single endpoint in an API group.
@@ -241,6 +257,15 @@ function buildPayloadDecoders(payloadMap, options) {
     encoding,
     schemas
   }, contentType) => {
+    if (encoding._tag === "Stream") {
+      const schema = schemas[0];
+      result.set(contentType, {
+        _tag: "Stream",
+        maxBytes: schema.maxBytes === undefined ? undefined : ByteSize.toNumberUnsafe(schema.maxBytes),
+        decode: makePayloadStreamDecoder(schema, options)
+      });
+      return;
+    }
     const schema = Schema.Union(schemas);
     const decode = Schema.decodeUnknownEffect(encoding._tag === "FormUrlEncoded" ? Schema.toCodecArrayFromSingle(schema) : schema, options);
     if (encoding._tag === "Multipart") {
@@ -268,6 +293,14 @@ function decodePayload(payloadBy, httpRequest, query) {
     return Response.text(`Unsupported content-type: ${contentType}`, {
       status: 415
     });
+  }
+  if (existing._tag === "Stream") {
+    if (existing.maxBytes !== undefined && Number(httpRequest.headers["content-length"]) > existing.maxBytes) {
+      return payloadTooLargeResponse;
+    }
+    // The stream can be pulled after the handler returns, inside a streaming
+    // response, so it carries the element schema's services with it.
+    return Effect.map(Effect.context(), context => Stream.provideContext(existing.decode(httpRequest), context));
   }
   const {
     _tag,
@@ -309,6 +342,65 @@ function decodePayload(payloadBy, httpRequest, query) {
       return Effect.flatMap(Effect.map(Effect.orDie(httpRequest.arrayBuffer), buffer => new Uint8Array(buffer)), decode);
   }
 }
+const payloadTooLargeResponse = /*#__PURE__*/Response.empty({
+  status: 413,
+  headers: {
+    connection: "close"
+  }
+});
+// The handler pulls the body itself, so nothing is read ahead of it. Body read
+// failures stay defects, as they are for buffered payloads.
+function makePayloadStreamDecoder(schema, options) {
+  const maxBytes = schema.maxBytes;
+  const readBody = request => {
+    const body = Stream.orDie(request.stream);
+    return maxBytes === undefined ? body : limitBytes(body, maxBytes);
+  };
+  if (HttpApiSchema.isStreamUint8Array(schema)) {
+    return readBody;
+  }
+  const decodeElement = Schema.decodeUnknownEffect(Schema.toCodecJson(schema.schema), options);
+  const maxElementBytes = schema.maxElementBytes;
+  const elementTooLarge = new HttpApiPayloadTooLarge({
+    limit: "maxElementBytes",
+    size: maxElementBytes
+  });
+  const maxLineBytes = ByteSize.toNumberUnsafe(maxElementBytes);
+  return request => readBody(request).pipe(Stream.pipeThroughChannel(Ndjson.decode({
+    ignoreEmptyLines: true,
+    maxLineBytes
+  })), Stream.mapEffect(json => decodeElement(json)), Stream.mapError(error => {
+    if (HttpApiPayloadTooLarge.is(error)) return error;
+    if (!Ndjson.isNdjsonError(error)) return new HttpApiSchemaError({
+      kind: "Payload",
+      cause: error
+    });
+    if (error.reason === "LineTooLarge") return elementTooLarge;
+    return new HttpApiSchemaError({
+      kind: "Payload",
+      cause: ndjsonSchemaError(error)
+    });
+  }));
+}
+// `JSON.stringify` found no JSON representation for an encoded element
+const isNdjsonPackError = error => Ndjson.isNdjsonError(error) && error.kind === "Pack";
+const ndjsonSchemaError = error => new Schema.SchemaError(new SchemaIssue.InvalidValue({
+  message: error.reason === "InvalidUtf8" ? "Expected valid UTF-8" : error.unterminated ? "Expected a valid JSON line, got an unterminated final line" : "Expected a valid JSON line"
+}));
+function limitBytes(self, maxBytes) {
+  const limit = ByteSize.toNumberUnsafe(maxBytes);
+  const error = new HttpApiPayloadTooLarge({
+    limit: "maxBytes",
+    size: maxBytes
+  });
+  return Stream.suspend(() => {
+    let total = 0;
+    return Stream.mapArrayEffect(self, chunks => {
+      for (const chunk of chunks) total += chunk.length;
+      return total > limit ? Effect.fail(error) : Effect.succeed(chunks);
+    });
+  });
+}
 function handlerToHttpEffect(api, group, endpoint, context, handler, isRaw) {
   const annotations = Context.merge(Context.merge(api.annotations, group.annotations), endpoint.annotations);
   const options = HttpApi.getSlotParseOptions(annotations);
@@ -319,6 +411,10 @@ function handlerToHttpEffect(api, group, endpoint, context, handler, isRaw) {
   const decodeQuery = UndefinedOr.map(endpoint.query, schema => Schema.decodeUnknownEffect(Schema.toCodecArrayFromSingle(schema), options.query));
   const encodeStream = makeStreamEncoder(endpoint, options.success);
   const encodeWithHeaders = makeWithHeadersEncoder(endpoint, options.success, options.headers);
+  const upgrade = getUpgradeSuccessSchema(endpoint);
+  // The handler of a mixed endpoint may decline the upgrade and return one of the other successes.
+  const upgradeOnly = upgrade !== undefined && endpoint.success.size === 1;
+  const encodeUpgradeHeaders = UndefinedOr.map(upgrade?.headers, schema => Schema.encodeUnknownEffect(schema, options.headers));
   const shouldParsePayload = endpoint.payload.size > 0 && !isRaw;
   const payloadBy = shouldParsePayload ? buildPayloadDecoders(endpoint.payload, options.payload) : undefined;
   return applyMiddleware(group, endpoint, context, Effect.gen(function* () {
@@ -341,6 +437,18 @@ function handlerToHttpEffect(api, group, endpoint, context, handler, isRaw) {
     if (decodeQuery) {
       request.query = yield* HttpApiSchemaError.wrap("Query", decodeQuery(query));
     }
+    let upgraded = false;
+    if (upgrade !== undefined) {
+      if (!isUpgradeRequest(httpRequest, upgrade.protocol)) {
+        return upgradeRequired(upgrade.protocol);
+      }
+      request.upgrade = options => Effect.suspend(() => {
+        upgraded = true;
+        return Effect.orDie(encodeUpgradeHeaders === undefined ? httpRequest.upgrade : Effect.flatMap(HttpApiSchemaError.wrap("ResponseHeaders", encodeUpgradeHeaders(options?.headers)), headers => httpRequest.upgradeWith({
+          headers: headers
+        })));
+      });
+    }
     if (payloadBy) {
       const result = decodePayload(payloadBy, httpRequest, query);
       if (Response.isHttpServerResponse(result)) {
@@ -354,6 +462,13 @@ function handlerToHttpEffect(api, group, endpoint, context, handler, isRaw) {
     if (Response.isHttpServerResponse(response)) {
       return response;
     }
+    if (upgradeOnly || upgraded) {
+      if (response !== undefined && !upgradeOnly) {
+        return yield* Effect.die(new Error("Cannot return a success value after calling upgrade()"));
+      }
+      // The server replaces this with the 101 once the connection is upgraded.
+      return Response.empty();
+    }
     let responseHeaders;
     if (encodeWithHeaders !== undefined && HttpApiSchema.isWithHeadersValue(response)) {
       responseHeaders = response.headers;
@@ -364,8 +479,8 @@ function handlerToHttpEffect(api, group, endpoint, context, handler, isRaw) {
     const encodedHeaders = yield* HttpApiSchemaError.wrap("ResponseHeaders", encodeWithHeaders.encodeHeaders.get(encoded.status)(responseHeaders));
     return Response.setHeaders(encoded, encodedHeaders);
   })).pipe(Effect.withErrorReporting, Effect.catch(error => {
-    if (HttpApiSchemaError.is(error)) return Effect.die(error);
-    return Effect.orDie(encodeError(error));
+    if (HttpApiSchemaError.is(error) || HttpApiPayloadTooLarge.is(error)) return Effect.die(error);
+    return Effect.catch(encodeError(error), schemaError => Respondable.isRespondable(error) ? Respondable.toResponse(error) : Effect.die(schemaError));
   }), Effect.provideContext(context));
 }
 /**
@@ -468,32 +583,45 @@ function makeStreamEncoder(endpoint, options) {
   const hasBuffered = hasBufferedSuccess(endpoint);
   const status = HttpApiSchema.getStatusSuccessSchema(successSchema.schema);
   const contentType = streamSchema.contentType;
-  if (HttpApiSchema.isStreamUint8Array(streamSchema)) {
-    return (response, context) => {
-      if (!Stream.isStream(response)) {
-        return hasBuffered ? undefined : new Schema.SchemaError(new SchemaIssue.InvalidValue({
-          message: "Expected a streaming response"
-        }));
-      }
-      return Effect.succeed(Response.stream(Stream.provideContext(response, context), {
-        status,
-        contentType
-      }));
-    };
-  }
-  const sseEncoder = makeSseEncoder(streamSchema, options);
+  const encodeBody = makeStreamBodyEncoder(streamSchema, options);
   return (response, context) => {
     if (!Stream.isStream(response)) {
       return hasBuffered ? undefined : new Schema.SchemaError(new SchemaIssue.InvalidValue({
         message: "Expected a streaming response"
       }));
     }
-    return Effect.succeed(Response.stream(Stream.provideContext(encodeSseStream(response, sseEncoder), context), {
+    return Effect.succeed(Response.stream(Stream.provideContext(encodeBody(response), context), {
       status,
       contentType
     }));
   };
 }
+function makeStreamBodyEncoder(streamSchema, options) {
+  if (HttpApiSchema.isStreamUint8Array(streamSchema)) {
+    return stream => stream;
+  }
+  if (HttpApiSchema.isStreamNdjson(streamSchema)) {
+    const encodeElements = Schema.encodeUnknownEffect(Schema.NonEmptyArray(Schema.toCodecJson(streamSchema.schema)), options);
+    // There is no error schema, so a bad element aborts the response
+    return stream => stream.pipe(Stream.mapArrayEffect(elements => Effect.orDie(encodeElements(elements))), Stream.pipeThroughChannel(Ndjson.encode()), Stream.catchIf(isNdjsonPackError, Stream.die));
+  }
+  const sseEncoder = makeSseEncoder(streamSchema, options);
+  return stream => encodeSseStream(stream, sseEncoder);
+}
+function getUpgradeSuccessSchema(endpoint) {
+  for (const schema of endpoint.success) {
+    if (HttpApiSchema.isUpgrade(schema)) return schema;
+  }
+}
+// RFC 9110 §7.8: `Upgrade` only applies with an `upgrade` connection option.
+const isUpgradeRequest = (request, protocol) => request.headers.upgrade?.toLowerCase() === protocol.toLowerCase() && /(?:^|,)\s*upgrade\s*(?:,|$)/i.test(request.headers.connection ?? "");
+const upgradeRequired = protocol => Response.empty({
+  status: 426,
+  headers: {
+    connection: "Upgrade",
+    upgrade: protocol
+  }
+});
 function getStreamSuccessSchema(endpoint) {
   for (const schema of endpoint.success) {
     const body = HttpApiSchema.isWithHeaders(schema) ? schema.schema : schema;
@@ -558,7 +686,12 @@ function toResponseErrorSchema(schema, headersOptions) {
   });
 }
 function makeSuccessSchema(endpoint, headersOptions) {
-  const schemas = HttpApiEndpoint.getSuccessSchemas(endpoint).map(schema => toResponseSuccessSchema(schema, headersOptions));
+  const schemas = [];
+  for (const schema of HttpApiEndpoint.getSuccessSchemas(endpoint)) {
+    // The 101 is written by the transport, so the upgrade has no response encoder.
+    if (HttpApiSchema.isUpgrade(schema)) continue;
+    schemas.push(toResponseSuccessSchema(schema, headersOptions));
+  }
   return schemas.length === 1 ? schemas[0] : Schema.Union(schemas);
 }
 function makeErrorSchema(endpoint, headersOptions) {

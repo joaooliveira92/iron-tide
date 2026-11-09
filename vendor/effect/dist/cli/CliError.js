@@ -3,10 +3,12 @@
  *
  * CLI errors describe problems such as unknown or duplicate flags, missing
  * flags or arguments, unexpected positional arguments, invalid values, unknown
- * subcommands, user handler failures, and requests to show command help. This
- * module includes the `CliError` union, the `isCliError` guard, schema-backed
- * error classes with display messages, and the `NonShowHelpErrors` union used
- * when parse or validation errors should be shown with help output.
+ * subcommands, rejected input combinations, user handler failures, and
+ * requests to show command help. This module includes the `CliError` union,
+ * the `isCliError` guard, the `userMessage` annotation for rendering handler
+ * failures, schema-backed error classes with display messages, and the
+ * `NonShowHelpErrors` union used when parse or validation errors should be
+ * shown with help output.
  *
  * @stability unstable
  * @since 4.0.0
@@ -42,6 +44,58 @@ const TypeId = "~effect/cli/CliError";
  * @since 4.0.0
  */
 export const isCliError = u => Predicate.hasProperty(u, TypeId);
+/**
+ * Defines the runtime property key used to give an object error a user-facing
+ * message.
+ *
+ * **When to use**
+ *
+ * Use when a handler fails with a domain error that should be shown to the
+ * user without wrapping it in {@link UserError}.
+ *
+ * **Details**
+ *
+ * When a handler failure has a string `[CliError.userMessage]`, `Command.run`
+ * renders it with the installed formatter, sets `Runtime.errorReported` to
+ * `false`, and rethrows the original error, so its tag is preserved. The
+ * global `Error` interface declares this key as an optional string.
+ *
+ * **Example** (Rendering a tagged handler failure)
+ *
+ * ```ts import.meta.vitest
+ * import { Schema } from "effect"
+ * import { CliError } from "effect/cli"
+ *
+ * class Occupied extends Schema.TaggedError<Occupied>()("Occupied", {
+ *   path: Schema.String
+ * }) {
+ *   override get [CliError.userMessage]() {
+ *     return `${this.path} already exists`
+ *   }
+ * }
+ *
+ * const error = new Occupied({ path: "config.yaml" })
+ * CliError.getUserMessage(error) // => "config.yaml already exists"
+ * ```
+ *
+ * @see {@link getUserMessage} for reading the message stored under this key
+ *
+ * @stability unstable
+ * @category annotations
+ * @since 4.0.0
+ */
+export const userMessage = "~effect/cli/CliError/userMessage";
+/**
+ * Reads the `CliError.userMessage` annotation from an error object, returning
+ * `undefined` when it is unset or not a string.
+ *
+ * @see {@link userMessage} for the annotation key this getter reads
+ *
+ * @stability unstable
+ * @category annotations
+ * @since 4.0.0
+ */
+export const getUserMessage = error => userMessage in error && typeof error[userMessage] === "string" ? error[userMessage] : undefined;
 /**
  * Error thrown when an unrecognized option is encountered.
  *
@@ -418,6 +472,44 @@ export class UnknownSubcommand extends /*#__PURE__*/Schema.TaggedError(`${TypeId
   }
 }
 /**
+ * Error for parsed input that fails a rule of your own, such as two flags
+ * that cannot be used together.
+ *
+ * **Details**
+ *
+ * Fail with it from `Command.validate`, `Flag.mapEffect` or
+ * `Argument.mapEffect`. The runner shows it with the command help, like any
+ * other parse error. Handlers report their own failures with `UserError`.
+ *
+ * **Example** (Rejecting a flag combination)
+ *
+ * ```ts import.meta.vitest
+ * import { CliError } from "effect/cli"
+ *
+ * const error = new CliError.ValidationError({
+ *   message: "--use-api and --use-docker are mutually exclusive"
+ * })
+ *
+ * error._tag // => "ValidationError"
+ * error.message // => "--use-api and --use-docker are mutually exclusive"
+ * ```
+ *
+ * @stability unstable
+ * @category errors
+ * @since 4.1.0
+ */
+export class ValidationError extends /*#__PURE__*/Schema.TaggedError(`${TypeId}/ValidationError`)("ValidationError", {
+  message: Schema.String
+}) {
+  /**
+   * Marks this value as a CLI validation error for runtime guards.
+   *
+   * @stability unstable
+   * @since 4.1.0
+   */
+  [TypeId] = TypeId;
+}
+/**
  * Error wrapper for user handler failures in the CLI error channel.
  *
  * **Details**
@@ -494,6 +586,15 @@ export class UserError extends /*#__PURE__*/Schema.TaggedError(`${TypeId}/UserEr
     if (this.cause instanceof Error && this.cause.message) return this.cause.message;
     return "An error occurred";
   }
+  /**
+   * Exposes `message` as the user-facing message rendered by `Command.run`.
+   *
+   * @stability unstable
+   * @since 4.0.0
+   */
+  get [userMessage]() {
+    return this.message;
+  }
 }
 /**
  * Schema for concrete CLI errors that can be reported together with help output.
@@ -507,7 +608,7 @@ export class UserError extends /*#__PURE__*/Schema.TaggedError(`${TypeId}/UserEr
  * @category schemas
  * @since 4.0.0
  */
-export const NonShowHelpErrors = /*#__PURE__*/Schema.Union([UnrecognizedOption, DuplicateOption, MissingOption, MissingArgument, UnexpectedArgument, InvalidValue, UnknownSubcommand, UserError]);
+export const NonShowHelpErrors = /*#__PURE__*/Schema.Union([UnrecognizedOption, DuplicateOption, MissingOption, MissingArgument, UnexpectedArgument, InvalidValue, UnknownSubcommand, ValidationError, UserError]);
 /**
  * Error data requesting CLI help rendering for a command path.
  *

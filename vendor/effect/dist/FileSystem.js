@@ -17,6 +17,7 @@ import * as Cause from "./Cause.js";
 import * as Context from "./Context.js";
 import * as Effect from "./Effect.js";
 import { pipe } from "./Function.js";
+import * as Glob from "./internal/glob.js";
 import * as Layer from "./Layer.js";
 import * as Option from "./Option.js";
 import { badArgument, systemError } from "./PlatformError.js";
@@ -79,8 +80,10 @@ export const FileSystem = /*#__PURE__*/Context.Service("effect/FileSystem");
  * **Details**
  *
  * This function takes a partial FileSystem implementation and automatically provides
- * default implementations for `exists`, `readFileString`, `stream`, `sink`, and
- * `writeFileString` methods based on the provided core methods.
+ * default implementations for `exists`, `glob`, `readFileString`, `stream`, `sink`,
+ * and `writeFileString` methods based on the provided core methods. `glob` walks
+ * the tree with `readDirectoryEntries`, using `stat` and `readLink` for entries
+ * whose type is `"Unknown"`.
  *
  * @see {@link makeNoop} for a testing stub that accepts method overrides without requiring a complete implementation
  * @see {@link layerNoop} for providing a no-op `FileSystem` as a `Layer` in tests
@@ -92,6 +95,7 @@ export const FileSystem = /*#__PURE__*/Context.Service("effect/FileSystem");
 export const make = impl => FileSystem.of({
   ...impl,
   [TypeId]: TypeId,
+  glob: Glob.make(impl),
   exists: path => pipe(impl.access(path), Effect.as(true), Effect.catchTag("PlatformError", e => e.reason._tag === "NotFound" ? Effect.succeed(false) : Effect.fail(e))),
   readFileString: (path, encoding) => Effect.flatMap(impl.readFile(path), _ => Effect.try({
     try: () => new TextDecoder(encoding).decode(_),
@@ -228,6 +232,9 @@ export const makeNoop = fileSystem => FileSystem.of({
   link(path) {
     return Effect.fail(notFound("link", path));
   },
+  lstat(path) {
+    return Effect.fail(notFound("lstat", path));
+  },
   makeDirectory() {
     return Effect.die("not implemented");
   },
@@ -248,6 +255,9 @@ export const makeNoop = fileSystem => FileSystem.of({
   },
   readDirectory(path) {
     return Effect.fail(notFound("readDirectory", path));
+  },
+  readDirectoryEntries(path) {
+    return Effect.fail(notFound("readDirectoryEntries", path));
   },
   readFile(path) {
     return Effect.fail(notFound("readFile", path));

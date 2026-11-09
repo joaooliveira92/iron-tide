@@ -510,6 +510,7 @@ export interface ConstructionProject {
   nationalProfileId?: string;
   costMultiplierBp?: number;
   buildTimeMultiplierBp?: number;
+  buildMonths?: number;
   newConstructionReservedMassKg?: number;
   shipName?: string;
   batchId?: string;
@@ -519,6 +520,8 @@ export interface ConstructionProject {
   namePoolOrdinal?: number;
   monthUsage?: ConstructionMonthUsage;
   accelerationPremiumAppliedAtWorkPosition?: SafeInt;
+  acceleratedFromMonth?: string;
+  acceleratedFromWork?: SafeInt;
   elapsedActiveMonths?: number;
   dockExpansionDurationMonths?: number;
   dockExpansionStepKg?: number;

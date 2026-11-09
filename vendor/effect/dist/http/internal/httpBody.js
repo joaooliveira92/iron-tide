@@ -7,7 +7,14 @@ export const updateHeaders = (headers, body) => {
     return Headers.remove(Headers.remove(headers, "content-type"), "content-length");
   }
   headers = body.contentType === undefined ? Headers.remove(headers, "content-type") : Headers.set(headers, "content-type", body.contentType);
-  return body.contentLength === undefined ? Headers.remove(headers, "content-length") : Headers.set(headers, "content-length", body.contentLength.toString());
+  return updateContentLength(headers, body);
+};
+/**
+ * @internal
+ */
+export const updateContentLength = (headers, body) => {
+  const contentLength = body._tag === "Empty" || body._tag === "FormData" ? undefined : body.contentLength;
+  return contentLength === undefined ? Headers.remove(headers, "content-length") : Headers.set(headers, "content-length", contentLength.toString());
 };
 /**
  * @internal

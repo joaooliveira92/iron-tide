@@ -34,7 +34,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (lookup, options) {
     timeToLive: options.timeToLive
   });
   const inMemory = yield* Cache.makeWith(Effect.fnUntraced(function* (key) {
-    const exit = yield* store.get(key);
+    const exit = yield* store.get(key).pipe(Effect.catchTag("SchemaError", () => Effect.undefined));
     if (exit) {
       return yield* exit;
     }

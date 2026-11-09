@@ -466,6 +466,11 @@ export declare const withFallbackConfig: {
 /**
  * Adds a fallback prompt that is shown when a required argument is missing.
  *
+ * **Gotchas**
+ *
+ * When `TerminalCapabilities.canPrompt` is `false`, the prompt is skipped and
+ * the original `MissingArgument` error is returned.
+ *
  * **Example** (Showing a fallback prompt)
  *
  * ```ts import.meta.vitest
@@ -485,6 +490,11 @@ export declare const withFallbackPrompt: {
     /**
      * Adds a fallback prompt that is shown when a required argument is missing.
      *
+     * **Gotchas**
+     *
+     * When `TerminalCapabilities.canPrompt` is `false`, the prompt is skipped and
+     * the original `MissingArgument` error is returned.
+     *
      * **Example** (Showing a fallback prompt)
      *
      * ```ts import.meta.vitest
@@ -503,6 +513,11 @@ export declare const withFallbackPrompt: {
     <B>(prompt: Param.FallbackPrompt<B>): <A>(self: Argument<A>) => Argument<A | B>;
     /**
      * Adds a fallback prompt that is shown when a required argument is missing.
+     *
+     * **Gotchas**
+     *
+     * When `TerminalCapabilities.canPrompt` is `false`, the prompt is skipped and
+     * the original `MissingArgument` error is returned.
      *
      * **Example** (Showing a fallback prompt)
      *
@@ -684,6 +699,7 @@ export declare const map: {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -735,6 +751,7 @@ export declare const mapEffect: {
      *   Layer.succeed(Terminal.Terminal, Terminal.make({
      *     columns: Effect.succeed(80),
      *     rows: Effect.succeed(24),
+     *     size: Effect.die("unused"),
      *     readInput: Effect.die("unused"),
      *     readLine: Effect.die("unused"),
      *     display: () => Effect.void
@@ -786,6 +803,7 @@ export declare const mapEffect: {
      *   Layer.succeed(Terminal.Terminal, Terminal.make({
      *     columns: Effect.succeed(80),
      *     rows: Effect.succeed(24),
+     *     size: Effect.die("unused"),
      *     readInput: Effect.die("unused"),
      *     readLine: Effect.die("unused"),
      *     display: () => Effect.void
@@ -838,6 +856,7 @@ export declare const mapEffect: {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -884,6 +903,7 @@ export declare const mapTryCatch: {
      *   Layer.succeed(Terminal.Terminal, Terminal.make({
      *     columns: Effect.succeed(80),
      *     rows: Effect.succeed(24),
+     *     size: Effect.die("unused"),
      *     readInput: Effect.die("unused"),
      *     readLine: Effect.die("unused"),
      *     display: () => Effect.void
@@ -930,6 +950,7 @@ export declare const mapTryCatch: {
      *   Layer.succeed(Terminal.Terminal, Terminal.make({
      *     columns: Effect.succeed(80),
      *     rows: Effect.succeed(24),
+     *     size: Effect.die("unused"),
      *     readInput: Effect.die("unused"),
      *     readLine: Effect.die("unused"),
      *     display: () => Effect.void

@@ -1,6 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 import { Anchor, LayoutGrid, ScrollText, Waves } from "lucide-react";
+import type { ConstructionProjectStatus } from "@bluewave/campaign";
 import type { CompiledDesignVersion } from "@bluewave/campaign-engine";
+import { translate } from "../../lib/strings.js";
 import { KG_PER_TONNE } from "../../lib/presentation-format/units.js";
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 import type { EngineeringReadout } from "../shipbuilding/engineering-status.js";
@@ -35,10 +37,7 @@ export const YARD_PLACES: readonly YardPlace[] = [
     id: "catalog",
     label: "Design catalog",
     icon: LayoutGrid,
-    tabs: [
-      { id: "design", label: "Design" },
-      { id: "order", label: "Order" },
-    ],
+    tabs: [{ id: "design", label: "Design" }],
   },
   {
     id: "orders",
@@ -98,7 +97,7 @@ export function railMarks(figures: YardFigures): Readonly<Record<YardPlaceId, Ra
     },
     dock: {
       text: used > cap ? "!" : "–",
-      meaning: used > cap ? "over the concurrency cap" : "within the concurrency cap",
+      meaning: used > cap ? "over the dock tonnage limit" : "within the dock tonnage limit",
       tone: used > cap ? "alert" : "quiet",
     },
   };
@@ -112,7 +111,11 @@ export const HELD_STATUSES: ReadonlySet<string> = new Set([
 
 export type StatusTone = "live" | "fast" | "held" | "bad" | "done";
 
-export const STATUS_META: Readonly<Record<string, { label: string; tone: StatusTone }>> = {
+export const STATUS_META: Readonly<
+  Record<ConstructionProjectStatus, { label: string; tone: StatusTone }>
+> = {
+  PLANNED: { label: "planned", tone: "live" },
+  AUTHORIZED: { label: "authorized", tone: "live" },
   ACTIVE: { label: "active", tone: "live" },
   ACCELERATED: { label: "accelerated", tone: "fast" },
   HALTED: { label: "halted", tone: "held" },
@@ -120,10 +123,16 @@ export const STATUS_META: Readonly<Record<string, { label: string; tone: StatusT
   AWAITING_CAPACITY: { label: "awaiting capacity", tone: "held" },
   IMPOUNDED: { label: "impounded", tone: "bad" },
   COMPLETED: { label: "completed", tone: "done" },
+  CANCELLED: { label: "cancelled", tone: "live" },
 };
 
+const isProjectStatus = (status: string): status is ConstructionProjectStatus =>
+  Object.hasOwn(STATUS_META, status);
+
 export const statusMeta = (status: string): { label: string; tone: StatusTone } =>
-  STATUS_META[status] ?? { label: status.toLowerCase().replaceAll("_", " "), tone: "live" };
+  isProjectStatus(status)
+    ? STATUS_META[status]
+    : { label: status.toLowerCase().replaceAll("_", " "), tone: "live" };
 
 export interface DockGauge {
   readonly capKg: number;
@@ -307,13 +316,16 @@ export function yardReadouts(
     },
     {
       id: "capacity",
-      label: "Yard capacity",
+      label: translate("construction.gauge.yardWorkCapacity"),
       value: `${format.count(workspace.capacityReserved)} / ${format.count(economy.shipyardCapacity)}`,
       tone: toneOfLoad(workspace.capacityReserved, economy.shipyardCapacity),
       breakdown: {
-        title: "Drydock capacity committed this month",
+        title: "Yard work committed this month",
         rows: [
-          { label: "Total capacity", value: format.count(economy.shipyardCapacity) },
+          {
+            label: translate("construction.gauge.yardWorkCapacity"),
+            value: format.count(economy.shipyardCapacity),
+          },
           { label: "Reserved by orders", value: format.count(workspace.capacityReserved) },
         ],
         footer: [{ label: "Available", value: format.count(freeCapacity) }],
@@ -364,18 +376,24 @@ export function yardReadouts(
     },
     {
       id: "ways",
-      label: "On the ways",
+      label: translate("construction.gauge.underConstruction"),
       value: `${mass(format, gauge.usedKg)} / ${mass(format, gauge.capKg)}`,
       tone: toneOfLoad(gauge.usedKg, gauge.capKg),
       breakdown: {
-        title: "New tonnage under construction at once",
+        title: translate("construction.gauge.underConstructionAtOnce"),
         rows: [
-          { label: "Concurrency cap", value: mass(format, gauge.capKg) },
-          { label: "Counted against it", value: mass(format, gauge.usedKg) },
-          { label: "Exempt (AMC / small corvette)", value: mass(format, gauge.exemptKg) },
+          { label: translate("construction.gauge.tonnageLimit"), value: mass(format, gauge.capKg) },
+          {
+            label: translate("construction.gauge.underConstruction"),
+            value: mass(format, gauge.usedKg),
+          },
+          {
+            label: translate("construction.gauge.exemptSmallCraft"),
+            value: mass(format, gauge.exemptKg),
+          },
         ],
         footer: [{ label: "Room left", value: mass(format, gauge.freeKg) }],
-        causes: gauge.over ? ["Tonnage in use is over the concurrency cap."] : [],
+        causes: gauge.over ? ["Tonnage under construction is over the dock tonnage limit."] : [],
       },
     },
   ];

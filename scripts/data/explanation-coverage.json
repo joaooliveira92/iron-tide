@@ -141,9 +141,13 @@
       "issue": "#301",
       "covered": {
         "maintenanceAdderExplanation": "fleet_training_adder",
-        "progressExplanation": "fleet_training_progress"
+        "progressExplanation": "fleet_training_progress",
+        "effectExplanation": "fleet_training_effect",
+        "monthlyCostExplanation": "fleet_training_cost"
       },
       "exempt": {
+        "effectBp": "Explained by effectExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "monthlyCost": "Explained by monthlyCostExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
         "maintenanceAdderBp": "Explained by maintenanceAdderExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
         "fundedMonths": "Accumulated monthly counter; progressExplanation explains the months still needed, but the counter itself has no replayable per-month source in the view.",
         "monthsToProficiency": "Explained by progressExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree."
@@ -274,7 +278,7 @@
     },
     {
       "file": "packages/campaign-engine/src/projection.ts",
-      "type": "PlayerProjectionPresenceArea",
+      "type": "PlayerProjectionStation",
       "area": "fleet",
       "issue": "#301",
       "covered": {
@@ -344,6 +348,37 @@
       "covered": {},
       "exempt": {
         "haltedCarryingCostUnits": "Accumulated halted-project carrying cost; the view carries no rate or elapsed-month components, so a tree would invent provenance."
+      }
+    },
+    {
+      "file": "packages/phase-engine/src/constructionSteeringPreview.ts",
+      "type": "AccelerationPreview",
+      "area": "construction",
+      "issue": "#574",
+      "covered": {
+        "monthsExplanation": "construction_acceleration_months",
+        "premiumExplanation": "construction_acceleration_premium",
+        "delayExplanation": "construction_acceleration_delay"
+      },
+      "exempt": {
+        "monthsNow": "Explained by monthsExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "monthsAccelerated": "Explained by monthsExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "monthsSaved": "Explained by monthsExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "premiumUnits": "Explained by premiumExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "premiumRateBp": "Explained by premiumExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "delayChanceBp": "Explained by delayExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree."
+      }
+    },
+    {
+      "file": "packages/phase-engine/src/constructionSteeringPreview.ts",
+      "type": "HaltPreview",
+      "area": "construction",
+      "issue": "#574",
+      "covered": {
+        "carryingExplanation": "construction_halt_carrying"
+      },
+      "exempt": {
+        "carryingCostUnits": "Explained by carryingExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree."
       }
     },
     {

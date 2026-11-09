@@ -12,7 +12,6 @@
  * @stability unstable
  * @since 4.0.0
  */
-import * as Arr from "../Array.js";
 import { Clock } from "../Clock.js";
 import * as Config from "../Config.js";
 import * as Duration from "../Duration.js";
@@ -61,9 +60,11 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
     const currentSnapshotSequence = snapshotSequence++;
     const nowNanos = clock.currentTimeNanosUnsafe();
     const nowTime = String(nowNanos);
-    const nextCounterState = new Map(previousCounterState);
-    const nextHistogramState = new Map(previousHistogramState);
-    const nextFrequencyState = new Map(previousFrequencyState);
+    // Only series in this snapshot carry their delta state forward, so removed
+    // series do not leak state or report a negative delta when recreated.
+    const nextCounterState = new Map();
+    const nextHistogramState = new Map();
+    const nextFrequencyState = new Map();
     const metricData = [];
     const metricDataByName = new Map();
     const addMetricData = data => {
@@ -159,43 +160,36 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
           }
         case "Histogram":
           {
-            const size = state.state.buckets.length;
             const currentBuckets = {
-              boundaries: Arr.allocate(size - 1),
-              counts: Arr.allocate(size)
+              boundaries: [],
+              counts: []
             };
-            let idx = 0;
             let prev = 0;
             for (const [boundary, value] of state.state.buckets) {
-              if (idx < size - 1) {
-                currentBuckets.boundaries[idx] = boundary;
-              }
-              currentBuckets.counts[idx] = value - prev;
+              if (boundary === Number.POSITIVE_INFINITY) break;
+              currentBuckets.boundaries.push(boundary);
+              currentBuckets.counts.push(value - prev);
               prev = value;
-              idx++;
             }
+            // Derive overflow from the total count, whether or not boundaries include Infinity.
+            currentBuckets.counts.push(state.state.count - prev);
             let reportCount = state.state.count;
             let reportSum = state.state.sum;
             let reportBucketCounts = currentBuckets.counts;
-            const reportMin = state.state.min;
-            const reportMax = state.state.max;
+            let reportExtrema = true;
             if (isDelta) {
               const previousState = previousHistogramState.get(metricKey);
               if (previousState !== undefined) {
                 reportCount = state.state.count - previousState.count;
                 reportSum = state.state.sum - previousState.sum;
                 reportBucketCounts = currentBuckets.counts.map((c, i) => Math.max(0, c - (previousState.bucketCounts[i] ?? 0)));
-                // For delta, min/max represent the interval's min/max
-                // We can't compute these from cumulative state, so we use current values
-                // Note: This is a limitation - true delta min/max would require tracking
-                // observations within each interval
+                // Cumulative extrema cannot describe a later delta interval.
+                reportExtrema = false;
               }
               nextHistogramState.set(metricKey, {
                 count: state.state.count,
                 sum: state.state.sum,
-                bucketCounts: currentBuckets.counts.slice(),
-                min: state.state.min,
-                max: state.state.max
+                bucketCounts: currentBuckets.counts.slice()
               });
             }
             const dataPoint = {
@@ -203,8 +197,10 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
               startTimeUnixNano: intervalStartTime,
               timeUnixNano: nowTime,
               count: reportCount,
-              min: reportMin,
-              max: reportMax,
+              ...(reportExtrema ? {
+                min: state.state.min,
+                max: state.state.max
+              } : undefined),
               sum: reportSum,
               bucketCounts: reportBucketCounts,
               explicitBounds: currentBuckets.boundaries
@@ -322,6 +318,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
     label: "OtlpMetrics",
     url: options.url,
     headers: options.headers,
+    compression: options.compression,
     maxBatchSize: "disabled",
     exportEmpty: true,
     exportInterval: options.exportInterval ?? Duration.seconds(10),
@@ -339,6 +336,13 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
 export const layer = options => Layer.effectDiscard(make(options)).pipe(Layer.provideMerge(Exporter.layerFlusher));
 /**
  * Creates an OTLP metrics layer from OpenTelemetry configuration.
+ *
+ * **Details**
+ *
+ * Compression accepts "gzip" or "none".
+ * `OTEL_EXPORTER_OTLP_METRICS_COMPRESSION` takes precedence over
+ * `OTEL_EXPORTER_OTLP_COMPRESSION`, defaulting to "none". Gzip uses
+ * HttpClientRequest's default minimum body size of 1KB.
  *
  * @stability unstable
  * @category layers
@@ -358,12 +362,16 @@ export const layerFromConfig = options => Effect.gen(function* () {
     return Exporter.layerFlusher;
   }
   const {
+    baseCompression,
+    compression,
     baseTimeout,
     metricsTimeout,
     exportTimeout,
     exportInterval,
     temporalityPreference
   } = yield* Config.all({
+    baseCompression: Config.option(Config.Literals(["gzip", "none"], "OTEL_EXPORTER_OTLP_COMPRESSION")),
+    compression: Config.option(Config.Literals(["gzip", "none"], "OTEL_EXPORTER_OTLP_METRICS_COMPRESSION")),
     baseTimeout: Config.option(Config.Int("OTEL_EXPORTER_OTLP_TIMEOUT")),
     metricsTimeout: Config.option(Config.Int("OTEL_EXPORTER_OTLP_METRICS_TIMEOUT")),
     exportTimeout: Config.option(Config.Int("OTEL_METRIC_EXPORT_TIMEOUT")),
@@ -375,6 +383,7 @@ export const layerFromConfig = options => Effect.gen(function* () {
     url: endpoint.toString(),
     resource: options?.resource,
     headers: options?.headers ?? (yield* OtlpEnv.headers("METRICS")),
+    compression: Option.getOrElse(Option.firstSomeOf([compression, baseCompression]), () => "none"),
     exportInterval: Option.getOrUndefined(exportInterval),
     shutdownTimeout: Option.getOrUndefined(shutdownTimeout),
     temporality: Option.getOrUndefined(temporalityPreference)

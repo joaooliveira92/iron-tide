@@ -62,12 +62,22 @@ export const make = options => ({
  * precedence over matching attributes in `OTEL_RESOURCE_ATTRIBUTES`. Missing
  * required configuration is converted to a defect.
  *
+ * Keys and values in `OTEL_RESOURCE_ATTRIBUTES` are trimmed, then
+ * percent-decoded. Entries with an empty value are kept as `""`; entries
+ * without `=` or with an empty key are skipped. When a key is repeated as
+ * written, the last entry wins and the earlier ones are not decoded. Invalid
+ * percent-encoding in the remaining entries is a `ConfigError` and is
+ * converted to a defect.
+ *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
 export const fromConfig = /*#__PURE__*/Effect.fnUntraced(function* (options) {
-  const env = yield* Config.Record(Schema.StringFromUriComponent, Schema.StringFromUriComponent, "OTEL_RESOURCE_ATTRIBUTES").pipe(Config.withDefault(undefined));
+  const env = yield* Config.Record(Schema.StringFromUriComponent, Schema.StringFromUriComponent, "OTEL_RESOURCE_ATTRIBUTES", {
+    trim: true,
+    keepEmptyValues: true
+  }).pipe(Config.withDefault(undefined));
   const serviceName = options?.serviceName ?? options?.attributes?.["service.name"] ?? (yield* Config.schema(Schema.UndefinedOr(Schema.String), "OTEL_SERVICE_NAME")) ?? env?.["service.name"] ?? (yield* Config.String("OTEL_SERVICE_NAME"));
   const serviceVersion = options?.serviceVersion ?? options?.attributes?.["service.version"] ?? (yield* Config.schema(Schema.UndefinedOr(Schema.String), "OTEL_SERVICE_VERSION")) ?? env?.["service.version"];
   const attributes = {
@@ -122,13 +132,17 @@ export const entriesToAttributes = entries => {
   }
   return attributes;
 };
+// OTLP `intValue` is a signed 64-bit integer
+const int64Bound = 2 ** 63;
 /**
  * Converts an arbitrary JavaScript value into an OTLP `AnyValue`.
  *
  * **Details**
  *
  * Arrays are converted recursively, primitive values use their matching OTLP
- * fields, and unsupported values are formatted as strings.
+ * fields, and unsupported values are formatted as strings. Integers outside the
+ * signed 64-bit range fall back to `doubleValue` for numbers and `stringValue`
+ * for bigints.
  *
  * @stability unstable
  * @category attributes
@@ -148,12 +162,15 @@ export const unknownToAttributeValue = value => {
         stringValue: value
       };
     case "bigint":
-      return {
+      return BigInt.asIntN(64, value) === value ? {
         intValue: String(value)
+      } : {
+        stringValue: String(value)
       };
     case "number":
-      return Number.isInteger(value) ? {
-        intValue: value
+      return Number.isInteger(value) && value >= -int64Bound && value < int64Bound ? {
+        // Unsafe integers would be rounded when written as JSON numbers
+        intValue: Number.isSafeInteger(value) ? value : String(BigInt(value))
       } : {
         doubleValue: value
       };

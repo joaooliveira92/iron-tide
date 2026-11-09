@@ -28,6 +28,11 @@ export declare const make: (options: {
         readonly attributes?: Record<string, unknown>;
     } | undefined;
     readonly headers?: Headers.Input | undefined;
+    /**
+     * Request compression. Defaults to "none". Gzip uses
+     * HttpClientRequest's default minimum body size of 1KB.
+     */
+    readonly compression?: "gzip" | "none" | undefined;
     readonly exportInterval?: Duration.Input | undefined;
     readonly maxBatchSize?: number | undefined;
     readonly context?: (<X>(primitive: Tracer.EffectPrimitive<X>, span: Tracer.AnySpan) => X) | undefined;
@@ -48,6 +53,11 @@ export declare const layer: (options: {
         readonly attributes?: Record<string, unknown>;
     } | undefined;
     readonly headers?: Headers.Input | undefined;
+    /**
+     * Request compression. Defaults to "none". Gzip uses
+     * HttpClientRequest's default minimum body size of 1KB.
+     */
+    readonly compression?: "gzip" | "none" | undefined;
     readonly exportInterval?: Duration.Input | undefined;
     readonly maxBatchSize?: number | undefined;
     readonly context?: (<X>(primitive: Tracer.EffectPrimitive<X>, span: Tracer.AnySpan) => X) | undefined;
@@ -55,6 +65,13 @@ export declare const layer: (options: {
 }) => Layer.Layer<Exporter.Flusher, never, OtlpSerialization | HttpClient.HttpClient>;
 /**
  * Creates an OTLP traces layer from OpenTelemetry configuration.
+ *
+ * **Details**
+ *
+ * Compression accepts "gzip" or "none".
+ * `OTEL_EXPORTER_OTLP_TRACES_COMPRESSION` takes precedence over
+ * `OTEL_EXPORTER_OTLP_COMPRESSION`, defaulting to "none". Gzip uses
+ * HttpClientRequest's default minimum body size of 1KB.
  *
  * @stability unstable
  * @category layers

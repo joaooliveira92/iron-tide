@@ -7,15 +7,37 @@
  * for distributed maintenance work where the job should be owned by the cluster
  * rather than by every runner independently.
  *
+ * With `calculateNextRunFromPrevious`, every run is processed by a single
+ * entity per cron job, so runs never overlap and are caught up in order. The
+ * scheduled time of the current run is available through
+ * `CurrentScheduledTime`.
+ *
  * @stability unstable
  * @since 4.0.0
  */
+import * as Context from "../Context.ts";
 import * as Cron from "../Cron.ts";
+import * as DateTime from "../DateTime.ts";
 import * as Duration from "../Duration.ts";
 import * as Effect from "../Effect.ts";
 import * as Layer from "../Layer.ts";
 import type { Scope } from "../Scope.ts";
 import type { Sharding } from "./Sharding.ts";
+declare const CurrentScheduledTime_base: Context.ServiceClass<CurrentScheduledTime, "effect/cluster/ClusterCron/CurrentScheduledTime", DateTime.Utc>;
+/**
+ * Service tag for the scheduled time of the cron run currently executing.
+ *
+ * **When to use**
+ *
+ * Use to read the time the current run was scheduled for, inside the
+ * `execute` effect of `make`.
+ *
+ * @stability unstable
+ * @category services
+ * @since 4.0.0
+ */
+export declare class CurrentScheduledTime extends CurrentScheduledTime_base {
+}
 /**
  * Creates a layer that runs a cron job through the cluster sharding system.
  *
@@ -45,6 +67,11 @@ export declare const make: <E, R>(options: {
      *
      * Defaults to `false`, meaning the next run will be calculated from the
      * current time.
+     *
+     * When enabled, all runs are processed one at a time by a single entity, so
+     * missed runs are caught up in order without overlapping. A run that fails
+     * is retried in place and blocks later runs until it succeeds or is older
+     * than `skipIfOlderThan`.
      */
     readonly calculateNextRunFromPrevious?: boolean | undefined;
     /**
@@ -60,5 +87,6 @@ export declare const make: <E, R>(options: {
      * Defaults to "1 day".
      */
     readonly skipIfOlderThan?: Duration.Input | undefined;
-}) => Layer.Layer<never, never, Sharding | Exclude<R, Scope>>;
+}) => Layer.Layer<never, never, Sharding | Exclude<Exclude<R, CurrentScheduledTime>, Scope>>;
+export {};
 //# sourceMappingURL=ClusterCron.d.ts.map

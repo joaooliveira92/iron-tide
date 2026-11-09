@@ -1,54 +1,76 @@
-/**
- * Cryptographic service for encrypted event-log replication.
- *
- * `EventLogEncryption` turns local journal entries into encrypted remote
- * payloads and decrypts encrypted changes received from a server. It also
- * hashes byte data and creates event-log identities, so remote replication can
- * use storage or transport that should not see plaintext event data.
- *
- * @stability unstable
- * @since 4.0.0
- */
 import * as Context from "../Context.js";
+import * as Aead from "../crypto/Aead.js";
+import * as Digest from "../crypto/Digest.js";
+import * as SecureRandom from "../crypto/SecureRandom.js";
+import * as WebCrypto from "../crypto/WebCrypto.js";
 import * as Effect from "../Effect.js";
+import * as SchemaBinary from "../encoding/SchemaBinary.js";
 import * as Layer from "../Layer.js";
 import * as Redacted from "../Redacted.js";
 import * as Schema from "../Schema.js";
 import * as Transferable from "../workers/Transferable.js";
-import { Entry, EntryId, RemoteEntry } from "./EventJournal.js";
-import { makeGetIdentityRootSecretMaterial } from "./internal/identityRootSecretDerivation.js";
+import { EntryFields, entryFromFields, EntryId, RemoteEntry } from "./EventJournal.js";
+import { toBatches } from "./internal/batches.js";
+import { cachedByIdentity, deriveEncryptionKey } from "./internal/identityRootSecretDerivation.js";
 /**
- * Schema for an encrypted journal entry paired with its initialization vector
- * and the id of the original entry.
+ * Schema for a batch of journal entries encrypted as one AES-GCM message.
+ *
+ * **Details**
+ *
+ * `entryIds` lists the ids of the encrypted entries in order. It is sent in
+ * plaintext so the server can deduplicate batches, and it is authenticated
+ * together with the store id, so a server cannot alter it or move the batch to
+ * another store.
  *
  * @stability unstable
  * @category models
  * @since 4.0.0
  */
-export const EncryptedEntry = /*#__PURE__*/Schema.Struct({
-  entryId: EntryId,
+export const EncryptedBatch = /*#__PURE__*/Schema.Struct({
+  entryIds: /*#__PURE__*/Schema.NonEmptyArray(EntryId),
   iv: Transferable.Uint8Array,
-  encryptedEntry: Transferable.Uint8Array
+  encryptedBatch: Transferable.Uint8Array
 });
 /**
- * Schema for encrypted entries exchanged with a remote event-log server.
+ * Schema for encrypted batches exchanged with a remote event-log server.
+ *
+ * **Details**
+ *
+ * The entries of a batch have consecutive remote sequences starting at
+ * `sequence`.
  *
  * @stability unstable
  * @category models
  * @since 4.0.0
  */
-export const EncryptedRemoteEntry = /*#__PURE__*/Schema.Struct({
+export const EncryptedRemoteBatch = /*#__PURE__*/Schema.Struct({
   sequence: Schema.Natural,
-  iv: Transferable.Uint8Array,
-  entryId: EntryId,
-  encryptedEntry: Transferable.Uint8Array
+  ...EncryptedBatch.fields
 });
-const toArrayBuffer = data => {
-  const buffer = new ArrayBuffer(data.byteLength);
-  new Uint8Array(buffer).set(data);
-  return buffer;
+const textEncoder = /*#__PURE__*/new TextEncoder();
+// The store id is length-prefixed, followed by the 16-byte entry ids.
+const additionalData = (storeId, entryIds) => {
+  const store = textEncoder.encode(storeId);
+  const data = new Uint8Array(4 + store.byteLength + entryIds.length * 16);
+  new DataView(data.buffer).setUint32(0, store.byteLength);
+  data.set(store, 4);
+  let offset = 4 + store.byteLength;
+  for (const id of entryIds) {
+    data.set(id, offset);
+    offset += 16;
+  }
+  return data;
 };
-const toBufferSource = data => new Uint8Array(toArrayBuffer(data));
+const equalBytes = (a, b) => {
+  if (a.byteLength !== b.byteLength) return false;
+  for (let i = 0; i < a.byteLength; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+};
+const BatchFromSchemaBinary = /*#__PURE__*/SchemaBinary.toCodec(/*#__PURE__*/Schema.NonEmptyArray(EntryFields));
+const encodeBatch = /*#__PURE__*/Schema.encodeEffect(BatchFromSchemaBinary);
+const decodeBatch = /*#__PURE__*/Schema.decodeEffect(BatchFromSchemaBinary);
 /**
  * Service that provides identity generation, entry
  * encryption and decryption, and SHA-256 hashing for event-log replication.
@@ -64,62 +86,118 @@ const toBufferSource = data => new Uint8Array(toArrayBuffer(data));
  */
 export class EventLogEncryption extends /*#__PURE__*/Context.Service()("effect/eventlog/EventLogEncryption") {}
 /**
- * Creates an `EventLogEncryption` service backed by the Web Crypto `SubtleCrypto`
- * APIs from the supplied `Crypto` implementation.
+ * Creates an `EventLogEncryption` service from the `effect/crypto` services.
+ *
+ * **Details**
+ *
+ * Each identity's AES-256-GCM key is derived from its root secret with
+ * `Digest` and cached per identity. Batches are encrypted with `Aead` under a
+ * random 12-byte nonce from `SecureRandom`, which also generates identities.
+ * A batch that fails authentication, or whose entries do not match its entry
+ * ids, is a defect.
  *
  * @stability unstable
- * @category encryption
+ * @category constructors
  * @since 4.0.0
  */
-export const makeEncryptionSubtle = crypto => Effect.sync(() => {
-  const getIdentityRootSecretMaterial = makeGetIdentityRootSecretMaterial(crypto);
+export const make = /*#__PURE__*/Effect.gen(function* () {
+  const aead = yield* Aead.Aead;
+  const digest = yield* Digest.Digest;
+  const random = yield* SecureRandom.SecureRandom;
+  const getEncryptionKey = cachedByIdentity(rootSecret => deriveEncryptionKey(rootSecret).pipe(Effect.map(({
+    encryptionKey
+  }) => encryptionKey), Effect.provideService(Digest.Digest, digest)));
   return EventLogEncryption.of({
-    encrypt: Effect.fnUntraced(function* (identity, entries) {
-      const data = yield* Effect.orDie(Entry.encodeArray(entries));
-      const key = (yield* getIdentityRootSecretMaterial(identity)).encryptionKey;
-      return yield* Effect.promise(() => Promise.all(data.map(entry => {
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        return crypto.subtle.encrypt({
-          name: "AES-GCM",
-          iv: toBufferSource(iv),
-          tagLength: 128
-        }, key, toBufferSource(entry)).then(encryptedEntry => ({
-          iv,
-          encryptedEntry: new Uint8Array(encryptedEntry)
-        }));
-      })));
+    encrypt: Effect.fnUntraced(function* (identity, storeId, entries) {
+      const key = yield* getEncryptionKey(identity);
+      const batches = toBatches(entries);
+      const data = yield* Effect.orDie(Effect.forEach(batches, batch => encodeBatch(batch)));
+      return yield* Effect.forEach(batches, (batch, i) => {
+        const entryIds = batch.map(entry => entry.id);
+        return Effect.flatMap(random.randomBytes(12), iv => Effect.map(aead.encrypt(key, data[i], {
+          nonce: iv,
+          aad: additionalData(storeId, entryIds)
+        }), encryptedBatch => ({
+          entryIds,
+          iv: iv,
+          encryptedBatch: encryptedBatch
+        })));
+      }, {
+        concurrency: "unbounded"
+      }).pipe(Effect.orDie);
     }),
-    decrypt: Effect.fnUntraced(function* (identity, entries) {
-      const key = (yield* getIdentityRootSecretMaterial(identity)).encryptionKey;
-      const decryptedData = (yield* Effect.promise(() => Promise.all(entries.map(data => crypto.subtle.decrypt({
-        name: "AES-GCM",
-        iv: toBufferSource(data.iv),
-        tagLength: 128
-      }, key, toBufferSource(data.encryptedEntry)))))).map(buffer => new Uint8Array(buffer));
-      const decoded = yield* Effect.orDie(Entry.decodeArray(decryptedData));
-      return decoded.map((entry, index) => new RemoteEntry({
-        remoteSequence: entries[index].sequence,
-        entry
-      }));
+    decrypt: Effect.fnUntraced(function* (identity, storeId, batches) {
+      const key = yield* getEncryptionKey(identity);
+      const decrypted = yield* Effect.forEach(batches, batch => aead.decrypt(key, batch.encryptedBatch, {
+        nonce: batch.iv,
+        aad: additionalData(storeId, batch.entryIds)
+      }), {
+        concurrency: "unbounded"
+      }).pipe(Effect.orDie);
+      const result = [];
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        const fields = yield* Effect.orDie(decodeBatch(decrypted[i]));
+        const entries = fields.map(entryFromFields);
+        if (entries.length !== batch.entryIds.length || entries.some((entry, j) => !equalBytes(entry.id, batch.entryIds[j]))) {
+          return yield* Effect.die(new Error("Encrypted batch entries do not match its entry ids"));
+        }
+        for (let j = 0; j < entries.length; j++) {
+          result.push(new RemoteEntry({
+            remoteSequence: batch.sequence + j,
+            entry: entries[j]
+          }));
+        }
+      }
+      return result;
     }),
-    sha256: data => Effect.promise(() => crypto.subtle.digest("SHA-256", toArrayBuffer(data))).pipe(Effect.map(hash => new Uint8Array(hash))),
-    sha256String: data => Effect.map(Effect.promise(() => crypto.subtle.digest("SHA-256", toArrayBuffer(data))), hash => {
-      const hashArray = Array.from(new Uint8Array(hash));
-      const hashHex = hashArray.map(bytes => bytes.toString(16).padStart(2, "0")).join("");
-      return hashHex;
-    }),
-    generateIdentity: Effect.sync(() => ({
-      publicKey: crypto.randomUUID(),
-      privateKey: Redacted.make(crypto.getRandomValues(new Uint8Array(32)))
+    sha256: data => digest.digest(Digest.sha256, data),
+    generateIdentity: Effect.zipWith(random.uuidV4(), random.randomBytes(32), (publicKey, privateKey) => ({
+      publicKey,
+      privateKey: Redacted.make(privateKey)
     }))
   });
 });
 /**
- * Provides `EventLogEncryption` using `globalThis.crypto`.
+ * Provides `EventLogEncryption` from the `Aead`, `Digest` and `SecureRandom`
+ * services.
+ *
+ * **When to use**
+ *
+ * Use to choose the crypto layers yourself, such as the `NodeCrypto` layers.
  *
  * @stability unstable
  * @category layers
  * @since 4.0.0
  */
-export const layerSubtle = /*#__PURE__*/Layer.effect(EventLogEncryption, /*#__PURE__*/makeEncryptionSubtle(globalThis.crypto));
+export const layer = /*#__PURE__*/Layer.effect(EventLogEncryption, make);
+const layerWebCrypto = /*#__PURE__*/Layer.mergeAll(Aead.layerWebCrypto, Digest.layerWebCrypto).pipe(/*#__PURE__*/Layer.provideMerge(SecureRandom.layerWebCrypto));
+/**
+ * Creates an `EventLogEncryption` service on the Web Crypto layers of
+ * `Aead`, `Digest` and `SecureRandom`, using the supplied `Crypto` object.
+ *
+ * @stability unstable
+ * @category encryption
+ * @since 4.0.0
+ */
+export const makeEncryptionSubtle = crypto =>
+// `local` keeps enclosing Web Crypto layers, built on another `Crypto`, from
+// being reused.
+Effect.provide(make, Layer.provide(layerWebCrypto, WebCrypto.layer(crypto)), {
+  local: true
+});
+/**
+ * Provides `EventLogEncryption` on the Web Crypto layers of `Aead`, `Digest`
+ * and `SecureRandom`.
+ *
+ * **Details**
+ *
+ * The layers use the `Crypto` object of the `WebCrypto` reference, which
+ * defaults to `globalThis.crypto`.
+ *
+ * @stability unstable
+ * @category layers
+ * @since 4.0.0
+ */
+export const layerSubtle = /*#__PURE__*/Layer.provide(layer, layerWebCrypto);
 //# sourceMappingURL=EventLogEncryption.js.map

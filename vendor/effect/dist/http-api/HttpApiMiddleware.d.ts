@@ -1,19 +1,3 @@
-/**
- * Declares middleware for schema-driven HTTP APIs.
- *
- * HTTP API middleware wraps endpoint execution on the server and, when the API
- * requires it, can also wrap requests made by generated clients. It is used for
- * cross-cutting behavior that belongs to the API contract, such as
- * authentication, authorization, logging, tracing, rate limiting,
- * request-scoped services, schema-error handling, and client request
- * decoration. This module defines the middleware service keys and helpers used
- * by `HttpApi` declarations.
- *
- * @stability unstable
- * @since 4.0.0
- */
-/** @effect-diagnostics floatingEffect:skip-file */
-/** @effect-diagnostics classSelfMismatch:off */
 import * as Context from "../Context.ts";
 import * as Effect from "../Effect.ts";
 import type * as HttpClientError from "../http/HttpClientError.ts";
@@ -26,7 +10,7 @@ import type * as Schema from "../Schema.ts";
 import { Scope } from "../Scope.ts";
 import type { unhandled } from "../Types.ts";
 import type * as HttpApiEndpoint from "./HttpApiEndpoint.ts";
-import { HttpApiSchemaError } from "./HttpApiError.ts";
+import { BadRequestProblem, HttpApiSchemaError, InternalServerErrorProblem } from "./HttpApiError.ts";
 import type * as HttpApiGroup from "./HttpApiGroup.ts";
 import type * as HttpApiSecurity from "./HttpApiSecurity.ts";
 declare const TypeId = "~effect/http-api/HttpApiMiddleware";
@@ -397,6 +381,69 @@ export declare const layerSchemaErrorTransform: <Id, E extends ErrorConstraint, 
     readonly endpoint: HttpApiEndpoint.Top;
     readonly group: HttpApiGroup.Top;
 }) => Effect.Effect<HttpServerResponse, ErrorSchemaFromConstraint<E>["Type"] | HttpApiSchemaError, Requires | HttpRouter.Provided>) => Layer.Layer<Id>;
+declare const ProblemDetails_base: ServiceClass<ProblemDetails, "effect/http-api/HttpApiMiddleware/ProblemDetails", {
+    requires: never;
+    provides: never;
+    error: readonly [typeof BadRequestProblem, typeof InternalServerErrorProblem];
+    clientError: never;
+    requiredForClient: false;
+    security: never;
+}, HttpApiMiddleware<never, readonly [typeof BadRequestProblem, typeof InternalServerErrorProblem], never>>;
+/**
+ * Middleware that renders request decoding and response encoding failures as
+ * RFC 9457 problems.
+ *
+ * **Details**
+ *
+ * It declares `HttpApiError.BadRequestProblem` at 400 and
+ * `HttpApiError.InternalServerErrorProblem` at 500, so the OpenAPI document and
+ * generated clients of an API using it know both responses. Provide it with
+ * {@link layerProblemDetails}.
+ *
+ * **Example** (Opting in to problem details)
+ *
+ * ```ts
+ * import { Layer, Schema } from "effect"
+ * import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiGroup, HttpApiMiddleware } from "effect/http-api"
+ *
+ * const Users = HttpApiGroup.make("users").add(
+ *   HttpApiEndpoint.get("list", "/users", { query: { page: Schema.Number } })
+ * )
+ * const Api = HttpApi.make("api").add(Users).middleware(HttpApiMiddleware.ProblemDetails)
+ *
+ * // A request whose query fails decoding now responds with 400 and
+ * // { "type": "about:blank", "title": "Bad Request", "status": 400, "detail": "Request validation failed" }
+ * const ServerLive = HttpApiBuilder.layer(Api).pipe(
+ *   Layer.provide(HttpApiMiddleware.layerProblemDetails())
+ * )
+ * ```
+ *
+ * @stability unstable
+ * @category services
+ * @since 4.0.6
+ */
+export declare class ProblemDetails extends ProblemDetails_base {
+}
+/**
+ * Provides the {@link ProblemDetails} middleware.
+ *
+ * **Details**
+ *
+ * A request decoding failure becomes a `400` problem with a generic `detail`
+ * and no information about the request or the schema. With
+ * `includeDetails: true` the problem also carries `errors`, one entry per
+ * issue with the path of the offending value prefixed by its request slot and
+ * the issue message. A response encoding failure is reported to the configured
+ * error reporters, as it is without the middleware, and becomes a `500`
+ * problem with no detail.
+ *
+ * @stability unstable
+ * @category layers
+ * @since 4.0.6
+ */
+export declare const layerProblemDetails: (options?: {
+    readonly includeDetails?: boolean | undefined;
+}) => Layer.Layer<ProblemDetails>;
 /**
  * Provides a client-side middleware implementation for a middleware that is required by generated clients.
  *

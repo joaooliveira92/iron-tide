@@ -18,6 +18,7 @@ import * as HttpClientResponse from "./HttpClientResponse.js";
 import * as HttpIncomingMessage from "./HttpIncomingMessage.js";
 import * as headersInternal from "./internal/headers.js";
 import * as bodyInternal from "./internal/httpBody.js";
+import * as internalUrlParams from "./internal/urlParams.js";
 import * as Template from "./Template.js";
 import * as UrlParams from "./UrlParams.js";
 const TypeId = "~effect/http/HttpServerResponse";
@@ -564,23 +565,36 @@ export const setStatus = /*#__PURE__*/dual(args => isHttpServerResponse(args[0])
  * @since 4.0.0
  */
 export const omitsBody = (response, withoutBody = false) => withoutBody || response.status === 204 || response.status === 205 || response.status === 304;
+// HEAD and 304 retain the representation length; 204 and 205 omit it.
+const omitsContentLength = status => status === 204 || status === 205;
+const mergeHeaders = (target, headers) => {
+  for (const [key, value] of headers) {
+    if (key === "set-cookie") {
+      target.append(key, value);
+    } else {
+      target.set(key, value);
+    }
+  }
+  return target;
+};
 /**
  * Converts an `HttpServerResponse` to a Web `Response`.
  *
  * **Details**
  *
  * Cookies are appended as `Set-Cookie` headers. Stream bodies are converted using
- * the supplied context.
+ * the supplied context, and are interrupted when `signal` aborts.
  *
  * Bodies are omitted for statuses 204, 205, and 304, or when `withoutBody` is true
- * (for example, for HEAD responses). Omitted raw `ReadableStream` bodies are
- * cancelled without awaiting completion, and cancellation errors are ignored.
+ * (for example, for HEAD responses). Statuses 204 and 205 also omit
+ * `content-length`. Omitted raw `ReadableStream` bodies are cancelled without
+ * awaiting completion, and cancellation errors are ignored.
  *
- * A raw `Response` body is returned as-is after the outer headers are merged
- * into it: outer headers replace native ones, and cookies are appended. When
- * its body is omitted, the bodyless `Response` keeps those merged headers and
- * uses the outer status for 204, 205 and 304, or the raw `Response` status
- * otherwise.
+ * A raw `Response` is returned as-is unless its body or `content-length` must
+ * be omitted, or outer headers or cookies must be merged. Copies leave the
+ * original unchanged: outer headers replace native ones, and cookies append.
+ * Bodyless copies use the outer status for 204, 205 and 304; otherwise they keep
+ * the raw status.
  *
  * @stability unstable
  * @category converting
@@ -599,29 +613,26 @@ export const toWeb = (response, options) => {
   const withoutBody = outerOmitsBody || options?.withoutBody === true;
   if (body._tag === "Raw" && body.body instanceof Response) {
     const raw = body.body;
-    for (const [key, value] of headers) {
-      if (key === "set-cookie") {
-        raw.headers.append(key, value);
-      } else {
-        raw.headers.set(key, value);
-      }
-    }
-    if (!withoutBody) {
+    // HEAD preserves the raw status; an explicit bodyless status overrides it.
+    const source = outerOmitsBody ? response : raw;
+    const omitContentLength = omitsContentLength(source.status);
+    if (!withoutBody && headers.keys().next().done && !(omitContentLength && raw.headers.has("content-length"))) {
       return raw;
     }
-    // A bodyless outer status is what the caller chose to send; otherwise the
-    // body is only omitted for HEAD and the raw Response describes the resource.
-    const source = outerOmitsBody ? response : raw;
-    return new Response(undefined, {
+    const copy = withoutBody ? new Response(undefined, {
       status: source.status,
       statusText: source.statusText,
       headers: raw.headers
-    });
+    }) : new Response(raw.body, raw);
+    mergeHeaders(copy.headers, headers);
+    if (omitContentLength) copy.headers.delete("content-length");
+    return copy;
   }
   if (withoutBody) {
     if (body._tag === "Raw" && isReadableStream(body.body)) {
       body.body.cancel().catch(constVoid);
     }
+    if (omitsContentLength(response.status)) headers.delete("content-length");
     return new Response(undefined, {
       status: response.status,
       statusText: response.statusText,
@@ -663,7 +674,9 @@ export const toWeb = (response, options) => {
       }
     case "Stream":
       {
-        return new Response(Stream.toReadableStreamWith(body.stream, options?.context ?? Context.empty()), {
+        return new Response(Stream.toReadableStreamWith(body.stream, options?.context ?? Context.empty(), {
+          signal: options?.signal
+        }), {
           status: response.status,
           statusText: response.statusText,
           headers
@@ -821,8 +834,8 @@ class ServerHttpClientResponse extends Inspectable.Class {
     return Effect.map(this.bytes, bytes => textDecoder.decode(bytes));
   }
   get urlParamsBody() {
-    return Effect.flatMap(this.text, _ => Effect.try({
-      try: () => UrlParams.fromInput(new URLSearchParams(_)),
+    return Effect.flatMap(this.bytes, bytes => Effect.try({
+      try: () => UrlParams.fromInput(internalUrlParams.fromBody(bytes)),
       catch: cause => new HttpClientError.HttpClientError({
         reason: new HttpClientError.DecodeError({
           request: this.request,
@@ -864,6 +877,15 @@ class ServerHttpClientResponse extends Inspectable.Class {
   formDataResponse;
   getFormDataResponse() {
     return this.formDataResponse ??= new Response(this.response.body.formData);
+  }
+  get upgrade() {
+    return Effect.fail(new HttpClientError.HttpClientError({
+      reason: new HttpClientError.StatusCodeError({
+        request: this.request,
+        response: this,
+        description: "a server response has no connection to hand over"
+      })
+    }));
   }
   pipe() {
     return pipeArguments(this, arguments);
@@ -941,6 +963,12 @@ const makeResponse = (options, ownedHeaders) => {
  *
  * `Set-Cookie` headers are parsed into the response cookie collection and removed
  * from the header map. A present Web body is exposed as a stream body.
+ *
+ * **Gotchas**
+ *
+ * Preserves `content-length`, which must match the body. When proxying a
+ * compressed response decoded by `fetch`, remove the stale length from a copy
+ * (`new Response(response.body, response)`) before converting it.
  *
  * @stability unstable
  * @category converting

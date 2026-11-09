@@ -1,9 +1,6 @@
 import type { PossessionData } from "./state.js";
 
-export function presenceAreaIds(
-  possessions: readonly PossessionData[],
-  nationId: string,
-): string[] {
+export function stationAreaIds(possessions: readonly PossessionData[], nationId: string): string[] {
   const areas = new Set<string>();
   for (const possession of possessions) {
     if (possession.nationId === nationId) areas.add(possession.areaId);

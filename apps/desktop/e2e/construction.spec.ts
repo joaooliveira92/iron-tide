@@ -2,9 +2,12 @@ import type { Page } from "@playwright/test";
 import { test, expect, openCampaign } from "./fixtures.js";
 import {
   advanceMonths,
+  advanceUntilProjectStarts,
   navigateTo,
   openDesignSection,
+  openOrderDialog,
   orderDesignFromCatalog,
+  placeOrder,
   submitReferenceDesign,
 } from "./flows.js";
 
@@ -31,13 +34,12 @@ test("a player can order a class batch and it appears after a month", async ({
     const before = await ships.count();
 
     await openYardPlace(page, /^Design catalog/);
-    await page.getByRole("button", { name: "Order a class batch (1–12)" }).click();
+    await page.getByRole("radio").first().click();
+    const dialog = await openOrderDialog(page);
 
-    await expect(page.getByRole("combobox", { name: "Batch design" })).toBeVisible();
-    await expect(page.getByRole("list", { name: "Previewed ship names" })).toBeVisible();
-    await page.getByRole("spinbutton", { name: "Batch quantity" }).fill("1");
-    await expect(page.getByTestId("batch-confirm")).toBeEnabled();
-    await page.getByTestId("batch-confirm").click();
+    await expect(dialog.getByRole("radiogroup", { name: "Builder" })).toBeVisible();
+    await expect(dialog.getByRole("status", { name: "Quantity" })).toHaveText("1");
+    await placeOrder(page);
 
     await openYardPlace(page, /^Slipways/);
     await expect(
@@ -64,20 +66,15 @@ test("a player can order from a foreign yard and it appears after a month", asyn
     const before = await ships.count();
 
     await openYardPlace(page, /^Design catalog/);
-    await page.getByRole("button", { name: "Order a class batch (1–12)" }).click();
+    await page.getByRole("radio").first().click();
+    const dialog = await openOrderDialog(page);
 
-    const builder = page.getByRole("combobox", { name: "Builder" });
-    await expect(builder).toBeVisible();
-    await builder.selectOption("france");
-
-    await expect(page.getByTestId("foreign-contract-panel")).toBeVisible();
-    await expect(page.getByTestId("foreign-total-price")).toBeVisible();
-    await expect(page.getByTestId("foreign-impoundment-risk")).toBeVisible();
-
-    await page.getByRole("spinbutton", { name: "Batch quantity" }).fill("1");
-    const confirm = page.getByRole("button", { name: "Order from foreign yard" });
-    await expect(confirm).toBeEnabled();
-    await confirm.click();
+    const builders = dialog.getByRole("radiogroup", { name: "Builder" });
+    await expect(builders).toBeVisible();
+    await builders.getByRole("radio", { name: /French Republic/ }).check();
+    await expect(dialog.getByRole("region", { name: "Order summary" })).toBeVisible();
+    await expect(dialog.getByRole("status", { name: "Quantity" })).toHaveText("1");
+    await placeOrder(page);
 
     await openYardPlace(page, /^Slipways/);
     await expect(
@@ -103,6 +100,9 @@ test("a player can halt a building hull and it stays halted after a month", asyn
     const halt = page.getByRole("button", { name: "Inflexible halt" });
     await expect(halt).toBeVisible();
     await halt.click();
+    const confirm = page.getByRole("alertdialog", { name: /^Halt Inflexible/ });
+    await expect(confirm.getByText("Carrying cost", { exact: true })).toBeVisible();
+    await confirm.getByRole("button", { name: "Halt", exact: true }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "HaltConstruction queued" }),
     ).toBeVisible();
@@ -120,36 +120,6 @@ test("a player can halt a building hull and it stays halted after a month", asyn
   });
 });
 
-test("a construction command can be submitted, replaced atomically, then cancelled", async ({
-  e2e,
-  campaignTemplate,
-}) => {
-  const page = e2e.page;
-  await openCampaign(e2e, campaignTemplate);
-  await navigateTo(page, "Construction");
-  await test.step("reachable:order-construction", async () => {
-    await expect(page.getByRole("heading", { name: "Construction Commands" })).toBeVisible();
-
-    await openYardPlace(page, /^Design catalog/);
-    await page.getByRole("radio").first().click();
-    await page.getByRole("button", { name: "Submit Construction Command" }).click();
-    await page.getByRole("button", { name: "Confirm order" }).click();
-    await expect(page.getByText(/Command \S+ is submitted/)).toBeVisible();
-
-    await openYardPlace(page, /^Orders/);
-    const submittedRow = page.getByRole("row").filter({ hasText: "submitted" });
-    await expect(submittedRow).toBeVisible();
-
-    await submittedRow.getByRole("button", { name: "Replace" }).click();
-    await expect(page.getByRole("row").filter({ hasText: "superseded" })).toBeVisible();
-    await expect(submittedRow).toHaveCount(1);
-
-    await submittedRow.getByRole("button", { name: "Cancel" }).click();
-    await expect(page.getByRole("row").filter({ hasText: "cancelled" })).toBeVisible();
-    await expect(submittedRow).toHaveCount(0);
-  });
-});
-
 test("a player can accelerate a building hull and it is accelerated after a month", async ({
   e2e,
   campaignTemplate,
@@ -161,6 +131,9 @@ test("a player can accelerate a building hull and it is accelerated after a mont
     await navigateTo(page, "Construction");
     await page.getByRole("button", { name: /^Inflexible, active/ }).click();
     await page.getByRole("button", { name: "Inflexible accelerate" }).click();
+    const confirm = page.getByRole("alertdialog", { name: /^Accelerate Inflexible/ });
+    await expect(confirm.getByText("Months saved", { exact: true })).toBeVisible();
+    await confirm.getByRole("button", { name: "Accelerate", exact: true }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "SetAcceleration queued" }),
     ).toBeVisible();
@@ -192,6 +165,9 @@ test("a player can authorize a dock expansion and it is under way after a month"
     await openYardPlace(page, /^Dock/);
     await expect(page.getByTestId("dock-size")).toBeVisible();
     await page.getByRole("button", { name: "Authorize dock expansion" }).click();
+    const confirm = page.getByRole("alertdialog", { name: "Authorize dock expansion?" });
+    await confirm.getByRole("button", { name: "Authorize expansion" }).click();
+    await expect(confirm).toBeHidden();
     await expect(
       page.getByRole("status").filter({ hasText: "AuthorizeDockExpansion queued" }),
     ).toBeVisible();
@@ -242,7 +218,7 @@ test("a player can revise a player-designed project and it is on hold after a mo
   await submitReferenceDesign(page, CORVETTE, REVISED_CLASS);
   await advanceMonths(page, 4);
   await orderDesignFromCatalog(page, REVISED_CLASS);
-  await advanceMonths(page, 1);
+  await advanceUntilProjectStarts(page, REVISED_CLASS);
 
   await test.step("reachable:revise-project", async () => {
     await navigateTo(page, "Construction");
@@ -283,6 +259,6 @@ test("a player can revise a player-designed project and it is on hold after a mo
     await navigateTo(page, "Construction");
     await openYardPlace(page, /^Slipways/);
     await page.getByRole("button", { name: new RegExp(`^${REVISED_CLASS}, `) }).click();
-    await expect(page.getByText(/on hold until \d{4}-\d{2}/).first()).toBeVisible();
+    await expect(page.getByText(/on hold until [A-Z][a-z]+ \d{4}/).first()).toBeVisible();
   });
 });

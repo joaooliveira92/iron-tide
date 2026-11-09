@@ -30,7 +30,10 @@ describe("structured finding subjects", () => {
   });
 
   it("names each uncontrolled gun of a fire-control finding", () => {
-    const f = compile(havock).findings.find((x) => x.id === "FC_INCOMPATIBLE")!;
+    const f = compileDesign(havock, {
+      ...ctx,
+      unlockedTechs: new Set([...ctx.unlockedTechs, "fc_basic_rangefinding"]),
+    }).findings.find((x) => x.id === "FC_INCOMPATIBLE")!;
     expect(
       f.subject?.targets.map((t) => (t.kind === "placement" ? t.instanceId : t.kind)).sort(),
     ).toEqual(["gun_12pdr", "gun_6pdr_a", "gun_6pdr_b"]);

@@ -52,27 +52,38 @@ const TrieProto = {
     return pipeArguments(this, arguments);
   }
 };
-const makeImpl = root => {
+const makeImpl = (root, emptyEntry) => {
   const trie = Object.create(TrieProto);
   trie._root = root;
-  trie._count = root?.count ?? 0;
+  trie._empty = emptyEntry;
+  trie._count = (root?.count ?? 0) + (emptyEntry === undefined ? 0 : 1);
   return trie;
 };
 class TrieIterator {
   stack = [];
-  trie;
+  emptyEntry;
   f;
   filter;
   constructor(trie, f, filter) {
-    this.trie = trie;
     this.f = f;
     this.filter = filter;
+    this.emptyEntry = trie._empty;
     const root = trie._root !== undefined ? trie._root : undefined;
     if (root !== undefined) {
       this.stack.push([root, "", false]);
     }
   }
   next() {
+    const emptyEntry = this.emptyEntry;
+    if (emptyEntry !== undefined) {
+      this.emptyEntry = undefined;
+      if (this.filter("", emptyEntry.value)) {
+        return {
+          done: false,
+          value: this.f("", emptyEntry.value)
+        };
+      }
+    }
     while (this.stack.length > 0) {
       const [node, keyString, isAdded] = this.stack.pop();
       if (isAdded) {
@@ -108,13 +119,13 @@ class TrieIterator {
     }
   }
   [Symbol.iterator]() {
-    return new TrieIterator(this.trie, this.f, this.filter);
+    return this;
   }
 }
 /** @internal */
 export const isTrie = u => hasProperty(u, TrieTypeId);
 /** @internal */
-export const empty = () => makeImpl(undefined);
+export const empty = () => makeImpl(undefined, undefined);
 /** @internal */
 export const fromIterable = entries => {
   let trie = empty();
@@ -129,7 +140,9 @@ export const make = (...entries) => {
 };
 /** @internal */
 export const insert = /*#__PURE__*/dual(3, (self, key, value) => {
-  if (key.length === 0) return self;
+  if (key.length === 0) return makeImpl(self._root, {
+    value
+  });
   // -1:left | 0:mid | 1:right
   const dStack = [];
   const nStack = [];
@@ -227,10 +240,10 @@ export const insert = /*#__PURE__*/dual(3, (self, key, value) => {
     }
   }
   nStack[0].count = count;
-  return makeImpl(nStack[0]);
+  return makeImpl(nStack[0], self._empty);
 });
 /** @internal */
-export const size = self => self._root?.count ?? 0;
+export const size = self => self._count;
 /** @internal */
 export const isEmpty = self => size(self) === 0;
 /** @internal */
@@ -270,8 +283,12 @@ export const entriesWithPrefix = /*#__PURE__*/dual(2, (self, prefix) => new Trie
 export const toEntriesWithPrefix = /*#__PURE__*/dual(2, (self, prefix) => Array.from(entriesWithPrefix(self, prefix)));
 /** @internal */
 export const get = /*#__PURE__*/dual(2, (self, key) => {
+  if (key.length === 0) {
+    const emptyEntry = self._empty;
+    return emptyEntry === undefined ? Option.none() : Option.some(emptyEntry.value);
+  }
   let n = self._root;
-  if (n === undefined || key.length === 0) return Option.none();
+  if (n === undefined) return Option.none();
   let cIndex = 0;
   while (cIndex < key.length) {
     const c = key[cIndex];
@@ -314,8 +331,11 @@ export const getUnsafe = /*#__PURE__*/dual(2, (self, key) => {
 });
 /** @internal */
 export const remove = /*#__PURE__*/dual(2, (self, key) => {
+  if (key.length === 0) {
+    return self._empty === undefined ? self : makeImpl(self._root, undefined);
+  }
   let n = self._root;
-  if (n === undefined || key.length === 0) return self;
+  if (n === undefined) return self;
   const count = n.count - 1;
   // -1:left | 0:mid | 1:right
   const dStack = [];
@@ -407,7 +427,7 @@ export const remove = /*#__PURE__*/dual(2, (self, key) => {
     }
   }
   nStack[0].count = count;
-  return makeImpl(nStack[0]);
+  return makeImpl(nStack[0], self._empty);
 });
 /** @internal */
 export const removeMany = /*#__PURE__*/dual(2, (self, keys) => {
@@ -427,8 +447,14 @@ export const insertMany = /*#__PURE__*/dual(2, (self, iter) => {
 });
 /** @internal */
 export const modify = /*#__PURE__*/dual(3, (self, key, f) => {
+  if (key.length === 0) {
+    const emptyEntry = self._empty;
+    return emptyEntry === undefined ? self : makeImpl(self._root, {
+      value: f(emptyEntry.value)
+    });
+  }
   let n = self._root;
-  if (n === undefined || key.length === 0) return self;
+  if (n === undefined) return self;
   // -1:left | 0:mid | 1:right
   const dStack = [];
   const nStack = [];
@@ -524,13 +550,14 @@ export const modify = /*#__PURE__*/dual(3, (self, key, f) => {
       };
     }
   }
-  return makeImpl(nStack[0]);
+  return makeImpl(nStack[0], self._empty);
 });
 /** @internal */
 export const longestPrefixOf = /*#__PURE__*/dual(2, (self, key) => {
+  const emptyEntry = self._empty;
+  let longestPrefixNode = emptyEntry === undefined ? Option.none() : Option.some(["", emptyEntry.value]);
   let n = self._root;
-  if (n === undefined || key.length === 0) return Option.none();
-  let longestPrefixNode = Option.none();
+  if (n === undefined || key.length === 0) return longestPrefixNode;
   let cIndex = 0;
   while (cIndex < key.length) {
     const c = key[cIndex];

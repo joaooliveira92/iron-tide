@@ -137,7 +137,7 @@ class LeafNode extends Node {
   set(edit, shift, hash, key, value, added) {
     if (this.canEdit(edit)) this._hash = undefined;
     if (this.hash === hash && Equal_.equals(this.key, key)) {
-      if (Equal_.equals(this.value, value)) {
+      if (Object.is(this.value, value)) {
         return this;
       }
       // Can mutate in-place if edit matches
@@ -219,7 +219,7 @@ class CollisionNode extends Node {
     // Same hash - update or add to collision list
     for (let i = 0; i < this.entries.length; i++) {
       if (Equal_.equals(this.entries[i][0], key)) {
-        if (Equal_.equals(this.entries[i][1], value)) {
+        if (Object.is(this.entries[i][1], value)) {
           return this;
         }
         if (this.canEdit(edit)) {
