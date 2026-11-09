@@ -225,7 +225,8 @@ export class AiPlanner {
         completedWork?: unknown;
       };
       if (typeof proj.id !== "string" || proj.id.length === 0) continue;
-      if (proj.status === "COMPLETED") continue;
+      if (proj.status === "COMPLETED" || proj.status === "HALTED" || proj.status === "DELAYED")
+        continue;
       try {
         const totalWork = proj.totalWork as SafeInt;
         const completedWork = proj.completedWork as SafeInt;
