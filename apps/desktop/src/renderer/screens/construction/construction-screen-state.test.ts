@@ -70,6 +70,7 @@ const projection = {
     dockPossessions: [{ id: "pos-1", name: "Portsmouth" }],
   },
   designs: [design],
+  studies: [],
   projects: [],
   steering: {},
   workspace: {
@@ -98,6 +99,7 @@ describe("construction screen state", () => {
       month: projection.month,
       economy: projection.economy,
       designs: projection.designs,
+      studies: projection.studies,
       projects: projection.projects,
       steering: projection.steering,
       workspace: projection.workspace,
