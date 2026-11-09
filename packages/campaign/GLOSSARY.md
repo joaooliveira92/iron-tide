@@ -29,3 +29,12 @@ vocabulary is [CONTEXT.md](../../CONTEXT.md).
   bound lines (construction).
 
 Retired: bare **"budget"**. Say appropriation, allocation or spend.
+
+## Stations and sea areas
+
+- **Sea area** — any non-land `AreaData` (`isSeaArea`): `sea` and `coastal` both count. The UI says "area".
+- **Station** — a possession's area, where a nation owes a presence requirement (`stationAreaIds`, `StationPresenceRow`).
+- **Presence** — tonnage kept at a station against the tonnage required. Never "presence area".
+- **Foreign station posting** — the ship assignment (`stationAssignment`); it carries no area, only `locationAreaId`.
+
+Frozen aliases: `presenceAreaIds` on `WorldMapNationView`, `areaId` on station rows, `FOREIGN_STATION`.

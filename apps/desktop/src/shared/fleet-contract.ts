@@ -18,7 +18,7 @@ export type {
   FleetPort,
   FleetShipView,
   PlayerProjectionPresence,
-  PlayerProjectionPresenceArea,
+  PlayerProjectionStation,
   ShipCondition,
 } from "@bluewave/campaign-engine";
 

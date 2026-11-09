@@ -85,16 +85,17 @@ export type {
 export { isShipOperational } from "./state.js";
 export type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
 export { BattleAbsenceSchema, type BattleAbsence } from "./battleAbsence.js";
-export { presenceAreaIds } from "./presence.js";
+export { isSeaArea } from "./seaArea.js";
+export { stationAreaIds } from "./presence.js";
 export {
   contributesToPresence,
   isPresenceExempt,
   measurePresence,
   requiredTonsInArea,
   shipCountedKg,
-  type PresenceAreaRow,
   type PresenceMeasurementRules,
   type ShipCountingTraits,
+  type StationPresenceRow,
 } from "./presenceMeasurement.js";
 export {
   baseLimitInArea,

@@ -82,7 +82,7 @@ export interface PlayerProjectionStrategicArea {
   readonly name: string;
 }
 
-export interface PlayerProjectionPresenceArea {
+export interface PlayerProjectionStation {
   readonly areaId: string;
   readonly requiredTons: number;
   readonly presentTons: number;
@@ -95,7 +95,7 @@ export type PlayerProjectionPresence =
   | {
       readonly configured: true;
       readonly exempt: boolean;
-      readonly areas: readonly PlayerProjectionPresenceArea[];
+      readonly areas: readonly PlayerProjectionStation[];
     };
 
 export interface PlayerProjectionMonth {

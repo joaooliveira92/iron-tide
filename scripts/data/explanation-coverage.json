@@ -278,7 +278,7 @@
     },
     {
       "file": "packages/campaign-engine/src/projection.ts",
-      "type": "PlayerProjectionPresenceArea",
+      "type": "PlayerProjectionStation",
       "area": "fleet",
       "issue": "#301",
       "covered": {

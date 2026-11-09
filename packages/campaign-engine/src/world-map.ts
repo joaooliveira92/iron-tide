@@ -1,4 +1,4 @@
-import { presenceAreaIds } from "@bluewave/campaign";
+import { stationAreaIds } from "@bluewave/campaign";
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { compareCodePoints } from "@bluewave/deterministic";
 
@@ -56,7 +56,7 @@ export function buildWorldMapView(snapshot: CampaignSnapshot): WorldMapView {
       name: nation.name,
       tag: nation.tag,
       homeAreaId: nation.homeAreaId ?? null,
-      presenceAreaIds: presenceAreaIds(snapshot.world.possessions ?? [], nation.id),
+      presenceAreaIds: stationAreaIds(snapshot.world.possessions ?? [], nation.id),
     }))
     .sort((a, b) => compareCodePoints(a.id, b.id));
 

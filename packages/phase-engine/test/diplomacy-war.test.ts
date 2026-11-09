@@ -5,7 +5,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
-import { presenceAreaIds } from "@bluewave/campaign";
+import { stationAreaIds } from "@bluewave/campaign";
 import { MonthExecutor, monthPipeline } from "../src/index.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
@@ -830,10 +830,10 @@ describe("B10c diplomacy & war acceptance (criteria 1-14)", () => {
       const { result } = execute(snapshot, cedeBody("med_malta", snapshot));
       const before = snapshot.world.possessions!;
       const after = result.finalSnapshot.world.possessions!;
-      expect(presenceAreaIds(before, "GBR")).toEqual(["gbr_home"]);
-      expect(presenceAreaIds(before, "FRA")).toEqual(["fra_home", "med_malta"]);
-      expect(presenceAreaIds(after, "GBR")).toEqual(["gbr_home", "med_malta"]);
-      expect(presenceAreaIds(after, "FRA")).toEqual(["fra_home"]);
+      expect(stationAreaIds(before, "GBR")).toEqual(["gbr_home"]);
+      expect(stationAreaIds(before, "FRA")).toEqual(["fra_home", "med_malta"]);
+      expect(stationAreaIds(after, "GBR")).toEqual(["gbr_home", "med_malta"]);
+      expect(stationAreaIds(after, "FRA")).toEqual(["fra_home"]);
     });
 
     it("emits one PossessionTransferred per possession in id order", () => {
