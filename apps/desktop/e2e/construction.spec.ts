@@ -71,7 +71,7 @@ test("a player can order from a foreign yard and it appears after a month", asyn
 
     const builders = dialog.getByRole("radiogroup", { name: "Builder" });
     await expect(builders).toBeVisible();
-    await builders.getByRole("radio", { name: /France/ }).check();
+    await builders.getByRole("radio", { name: /French Republic/ }).check();
     await expect(dialog.getByRole("region", { name: "Order summary" })).toBeVisible();
     await expect(dialog.getByRole("status", { name: "Quantity" })).toHaveText("1");
     await placeOrder(page);

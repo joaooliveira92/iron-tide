@@ -102,11 +102,12 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
   try {
     const last = third.page;
     await navigateTo(last, "Construction");
-    await last
-      .getByRole("navigation", { name: "Yard" })
-      .getByRole("button", { name: /^Orders/ })
-      .click();
-    await expect(last.getByRole("row").filter({ hasText: "submitted" })).toBeVisible();
+    const ships = last.getByRole("list", { name: "Ships under construction" }).locator("> li");
+    await expect(ships.first()).toBeVisible();
+    const before = await ships.count();
+    await advanceMonths(last, 1);
+    await navigateTo(last, "Construction");
+    await expect(ships).toHaveCount(before + 1);
     await last
       .getByRole("navigation", { name: "Yard" })
       .getByRole("button", { name: /^Design catalog/ })
