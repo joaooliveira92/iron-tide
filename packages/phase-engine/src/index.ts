@@ -158,6 +158,8 @@ export {
   CONSTRUCTION_BATCH_MAX_QUANTITY,
   CONSTRUCTION_BATCH_MIN_QUANTITY,
   constructionProjectFor,
+  DESIGN_STUDY_IN_PROGRESS,
+  quoteConstructionOrder,
   placeConstructionBatch,
   placeConstructionOrder,
   previewConstructionBatch,
@@ -165,6 +167,7 @@ export {
   type ConstructionBatchPreviewResult,
   type ConstructionBatchRequest,
   type ConstructionBatchResult,
+  type ConstructionOrderQuote,
   type ConstructionOrderRequest,
   type ConstructionOrderResult,
 } from "./constructionOrder.js";
@@ -289,6 +292,7 @@ export {
 export {
   previewForeignConstruction,
   type ForeignBuilderCandidate,
+  type ForeignBuilderQuote,
   type ForeignConstructionPreview,
   type ForeignConstructionPreviewOptions,
   type ForeignConstructionPreviewResult,

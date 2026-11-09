@@ -1,8 +1,12 @@
-import type { CampaignSnapshot, ConstructionProject } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import type { CampaignSnapshot, ConstructionProject, DesignStudy } from "@bluewave/campaign";
+import { SafeInt, bp, money } from "@bluewave/contracts";
 import { HULL_TYPE_FOR_SHIP_TYPE } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
-import { CONSTRUCTION_BATCH_LIMIT_EXCEEDED, previewConstructionBatch } from "../src/index.js";
+import {
+  CONSTRUCTION_BATCH_LIMIT_EXCEEDED,
+  placeConstructionBatch,
+  previewConstructionBatch,
+} from "../src/index.js";
 import { makeBattleSnapshot, makeDesign, makeNation } from "./battle-fixtures.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
 
@@ -47,7 +51,7 @@ describe("previewConstructionBatch shows names and dock fit without reserving (S
     const r = preview(snapshot([design("dv-b")]), "dv-b", 1);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.preview).toEqual({
+    expect(r.preview).toMatchObject({
       designVersionId: "dv-b",
       quantity: 1,
       names: [{ name: "Devastation", pool: "name_pool:uk:B", ordinal: 1 }],
@@ -69,13 +73,9 @@ describe("previewConstructionBatch shows names and dock fit without reserving (S
     expect(r.preview.names[10]).toMatchObject({ name: "Devastation 2" });
   });
 
-  it("reports the design as not fitting when it exceeds the dock ceiling", () => {
+  it("refuses a design that exceeds the dock ceiling, as the order would", () => {
     const r = preview(snapshot([design("dv-b", 13_000_001)]), "dv-b", 1);
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.preview.dockCeilingKg).toBe(13_000_000);
-    expect(r.preview.designDisplacementKg).toBe(13_000_001);
-    expect(r.preview.fitsDock).toBe(false);
+    expect(r).toMatchObject({ ok: false, reason: "SHIP_EXCEEDS_DOMESTIC_DOCK_LIMIT" });
   });
 
   it("reports fitsDock false with an honest null ceiling when the dock cannot be resolved", () => {
@@ -140,5 +140,89 @@ describe("previewConstructionBatch shows names and dock fit without reserving (S
     const first = preview(snap, "dv-b", 5);
     const second = preview(snap, "dv-b", 5);
     expect(second).toEqual(first);
+  });
+});
+
+describe("previewConstructionBatch quotes what placeConstructionBatch will place (#580)", () => {
+  const priced = (id: string) => design(id, 1_000_000, { constructionCostUnits: SafeInt(1_200) });
+  const place = (snap: CampaignSnapshot, quantity: number) =>
+    placeConstructionBatch(
+      snap,
+      {
+        nationId: "uk",
+        commandId: "cmd-q",
+        designVersionId: "dv-b",
+        quantity,
+        month: { month: 1, year: 1880 },
+      },
+      content,
+    );
+
+  it.each([1, 3, 12])("quotes %i ships at the placed projects' cost and months", (quantity) => {
+    const snap = snapshot([priced("dv-b")]);
+    const quoted = preview(snap, "dv-b", quantity);
+    const placed = place(snap, quantity);
+    expect(quoted.ok && placed.ok).toBe(true);
+    if (!quoted.ok || !placed.ok) return;
+    const quote = quoted.preview.quote;
+    const unit = Number(placed.projects[0]!.totalWork);
+    const months = placed.projects[0]!.buildMonths;
+    expect(quote.unitPrice).toBe(unit);
+    expect(quote.totalPrice).toBe(placed.projects.reduce((sum, p) => sum + Number(p.totalWork), 0));
+    expect(quote.buildMonths).toBe(months);
+    expect(quote.monthlyInstalment).toBe(Math.floor(unit / (months ?? 1)) * quantity);
+    const index = 1880 * 12 + (months ?? 0);
+    expect(quote.deliveryMonth).toBe(
+      `${String(Math.floor(index / 12))}-${String((index % 12) + 1).padStart(2, "0")}`,
+    );
+  });
+
+  it("refuses what placement refuses, with the same reason", () => {
+    const crowded = snapshot([priced("dv-b")]);
+    for (const quantity of [1, 12]) {
+      const quoted = preview(crowded, "dv-b", quantity);
+      const placed = place(crowded, quantity);
+      expect(quoted.ok).toBe(placed.ok);
+      if (!quoted.ok && !placed.ok) expect(quoted.reason).toBe(placed.reason);
+    }
+  });
+});
+
+describe("a design whose study is still open", () => {
+  it("is refused with DESIGN_STUDY_IN_PROGRESS rather than UNKNOWN_DESIGN", () => {
+    const snap = snapshot([]);
+    const uk = snap.nations.get("uk")!;
+    const study: DesignStudy = {
+      designStudyId: "study_dv-study",
+      nationId: "uk",
+      builderContext: "NATIONAL",
+      baselineDesignVersionId: "NONE",
+      designFamilyId: "",
+      newFamily: true,
+      derived: false,
+      failedCriteria: [],
+      baseStudyWork: 3,
+      baseStudyCost: money(300),
+      discountBp: bp(0),
+      finalStudyWork: 3,
+      finalStudyCost: money(300),
+      workDone: 0,
+      costPaid: money(0),
+      status: "IN_PROGRESS",
+      startMonth: MONTH,
+      completionMonth: null,
+      rulesetVersion: "test",
+      formulaVersion: "design_study_v1",
+      projectHash: "hash",
+      design: makeDesign("dv-study", "uk"),
+    };
+    const withStudy: CampaignSnapshot = {
+      ...snap,
+      nations: new Map([["uk", { ...uk, designStudies: [study] }]]),
+    };
+    expect(preview(withStudy, "dv-study", 1)).toMatchObject({
+      ok: false,
+      reason: "DESIGN_STUDY_IN_PROGRESS",
+    });
   });
 });
