@@ -68,6 +68,16 @@ export {
   type AccelerationPressureInput,
   type AccelerationPressureOutcome,
 } from "./constructionAcceleration.js";
+export {
+  CONSTRUCTION_EVENT_CONTINUED,
+  CONSTRUCTION_EVENT_POLICY_ID,
+  CONSTRUCTION_EVENT_STREAM_FAMILY,
+  resolveConstructionEvents,
+  type ConstructionEventDelay,
+  type ConstructionEventInput,
+  type ConstructionEventResolution,
+  type ConstructionEventSubject,
+} from "./constructionEvents.js";
 export type {
   MonthExecutorEngineOptions,
   MonthResult,

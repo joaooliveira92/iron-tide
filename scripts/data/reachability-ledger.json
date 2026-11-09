@@ -199,6 +199,18 @@
       "decision": null
     },
     {
+      "id": "construction-events",
+      "player_verb": "Learn why a build slipped or cost more",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": ["constructionEvents"],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#584"
+    },
+    {
       "id": "authorize-dock-expansion",
       "player_verb": "Authorize a dock expansion",
       "status": "reachable",
