@@ -26,6 +26,7 @@ import {
 } from "../construction/commandRecord.js";
 import { withRebuildTargets } from "../construction/rebuildTargets.js";
 import { settleAndRelease } from "../construction/settlement.js";
+import { openStudies } from "../construction/studies.js";
 import { workspaceView } from "../construction/view.js";
 import type { ConstructionWorkspace } from "../construction/workspaceState.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
@@ -64,6 +65,10 @@ export const inspectConstructionScreenProgram: CommandHandler<"inspectConstructi
         record.state.snapshot,
         record.playerSlotId,
         record.month.year,
+      ),
+      studies: openStudies(
+        record.state.snapshot.nations.get(record.playerSlotId),
+        campaignMonthKey(record),
       ),
       projects: withRebuildTargets(
         record.state.snapshot.nations.get(record.playerSlotId),
