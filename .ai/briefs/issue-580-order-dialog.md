@@ -19,6 +19,7 @@ T2. Branch `feat/issue-580-order-dialog`, draft PR into `dev`.
 4. Foreign price and months per builder: the foreign preview computes terms for each capable candidate with the same `deriveForeignContractTerms`; no new rules.
 5. Home Confirm sends `orderConstructionBatchCommand` (quantity 1 included); foreign Confirm sends `placeForeignConstructionCommand`. Backend submit/replace stay.
 6. Result types stay TypeScript types (IPC results are not decoded; payload schemas are unchanged), so no new schema is needed.
+7. A refused home preview stays a refusal with its reason and no quote. The dialog renders its blocked state from `refusalWording(reason)` alone (`order-view-model.ts`, status `blocked`, `summary: null`), so it needs no numbers. The bridge fixture (UK 1880, 3 x `des_gbr_inflexible`) is refused with `INSUFFICIENT_PROJECT_CAPACITY` by the national cap, not by treasury; the preview test now uses quantity 2 and a second test pins the quantity-3 refusal reason.
 
 ## Order of commits
 
