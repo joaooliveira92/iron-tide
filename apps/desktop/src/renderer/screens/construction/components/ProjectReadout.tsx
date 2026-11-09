@@ -1,5 +1,6 @@
 import { memo } from "react";
 import type { ConstructionScheduleUnavailableReason } from "@bluewave/campaign-engine";
+import { constructionEventCause } from "../../../content/uiCatalogue.js";
 import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
@@ -55,12 +56,18 @@ export function readoutLines(row: ProjectRow, format: PresentationFormat): reado
         ];
   if (readout.scheduleBasis === "UNAVAILABLE") {
     const unavailableReason = readout.scheduleUnavailableReason;
+    const eventCause =
+      unavailableReason === "DELAYED" && readout.delayReasonCode !== undefined
+        ? constructionEventCause(readout.delayReasonCode)
+        : undefined;
     const reasonLabel =
       unavailableReason === "DELAYED" && readout.delayReasonCode === "PAYMENT_DEFAULT_DELAYED"
         ? "payment default"
-        : unavailableReason === null
-          ? "unavailable"
-          : SCHEDULE_UNAVAILABLE_LABEL[unavailableReason];
+        : eventCause !== undefined
+          ? eventCause
+          : unavailableReason === null
+            ? "unavailable"
+            : SCHEDULE_UNAVAILABLE_LABEL[unavailableReason];
     return [
       { label: "Schedule", value: `not building (${reasonLabel})` },
       { label: "Total cost", value: format.money(readout.totalCostUnits) },
