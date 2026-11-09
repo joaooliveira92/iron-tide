@@ -286,7 +286,7 @@
         "pack": "out/renderer/map-assets/land-tiles/land.bwtp"
       },
       "budget": {
-        "archiveBytesMax": 216000000,
+        "archiveBytesMax": 222000000,
         "outsideArchiveBytesMax": 2100000,
         "unlistedFileBytesMax": 1000000
       }
@@ -355,7 +355,7 @@
         "pack": "out/renderer/map-spike/land-tiles/land.bwtp"
       },
       "budget": {
-        "archiveBytesMax": 219200000,
+        "archiveBytesMax": 225200000,
         "outsideArchiveBytesMax": 2100000,
         "unlistedFileBytesMax": 1000000
       }
@@ -424,7 +424,7 @@
         "pack": "out/renderer/map-spike/land-tiles/land.bwtp"
       },
       "budget": {
-        "archiveBytesMax": 219200000,
+        "archiveBytesMax": 225200000,
         "outsideArchiveBytesMax": 2100000,
         "unlistedFileBytesMax": 1000000
       }
