@@ -11,14 +11,14 @@ catalog:
   vite: npm:@voidzero-dev/vite-plus-core@1.4.0
   vite-plus: 1.4.0
 minimumReleaseAgeExclude:
-  - "@effect/tsgo-darwin-arm64@0.63.0"
-  - "@effect/tsgo-darwin-x64@0.63.0"
-  - "@effect/tsgo-linux-arm64@0.63.0"
-  - "@effect/tsgo-linux-arm@0.63.0"
-  - "@effect/tsgo-linux-x64@0.63.0"
-  - "@effect/tsgo-win32-arm64@0.63.0"
-  - "@effect/tsgo-win32-x64@0.63.0"
-  - "@effect/tsgo@0.63.0"
+  - "@effect/tsgo-darwin-arm64@0.67.5"
+  - "@effect/tsgo-darwin-x64@0.67.5"
+  - "@effect/tsgo-linux-arm64@0.67.5"
+  - "@effect/tsgo-linux-arm@0.67.5"
+  - "@effect/tsgo-linux-x64@0.67.5"
+  - "@effect/tsgo-win32-arm64@0.67.5"
+  - "@effect/tsgo-win32-x64@0.67.5"
+  - "@effect/tsgo@0.67.5"
 overrides:
   # Single-copy invariant (MIG-GRAPH-1/2): every transitive `effect`/`@effect/vitest`
   # request resolves to the vendored workspace packages, never the npm registry.
