@@ -1,4 +1,5 @@
 import { evaluateShipGates, type GateReasonTag, type ShipGateSubject } from "./eligibility.js";
+import { isSeaArea } from "./seaArea.js";
 import type { CampaignSnapshot } from "./state.js";
 
 export interface FleetMoveProblem {
@@ -44,7 +45,7 @@ export function fleetMoveProblem(
     };
   const target = snapshot.world.areas.find((a) => a.id === toAreaId);
   if (!target) return { code: "INVALID_ROUTE", message: `Unknown destination area ${toAreaId}` };
-  if (target.type === "land")
+  if (!isSeaArea(target))
     return { code: "INVALID_ROUTE", message: `${target.name} is land; a fleet cannot sail there` };
   if (fleet.locationAreaId === toAreaId)
     return { code: "INVALID_ROUTE", message: `${fleet.name} is already in ${target.name}` };

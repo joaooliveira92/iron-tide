@@ -2,7 +2,7 @@ import {
   isPresenceExempt,
   measurePresence,
   type CampaignSnapshot,
-  type PresenceAreaRow,
+  type StationPresenceRow,
   type PresenceMeasurementRules,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
@@ -15,8 +15,8 @@ export function presenceDemand(
   snapshot: PresenceSnapshot,
   rules: PresenceMeasurementRules,
   campaignMonth: string,
-): PresenceAreaRow[] {
-  const demand: PresenceAreaRow[] = [];
+): StationPresenceRow[] {
+  const demand: StationPresenceRow[] = [];
   const exempt = new Map<string, boolean>();
   for (const row of measurePresence(snapshot, rules)) {
     if (row.shortfallTons === 0) continue;

@@ -1,6 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { BaseLimitRules } from "./baseLimits.js";
-import { presenceAreaIds } from "./presence.js";
+import { stationAreaIds } from "./presence.js";
 import { isShipOperational, type CampaignSnapshot, type Ship } from "./state.js";
 
 export interface PresenceMeasurementRules {
@@ -11,7 +11,7 @@ export interface PresenceMeasurementRules {
   readonly baseLimits?: BaseLimitRules;
 }
 
-export interface PresenceAreaRow {
+export interface StationPresenceRow {
   readonly nationId: string;
   readonly areaId: string;
   readonly requiredTons: number;
@@ -69,12 +69,12 @@ const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 export function measurePresence(
   snapshot: Pick<CampaignSnapshot, "nations" | "world" | "designs">,
   rules: PresenceMeasurementRules,
-): PresenceAreaRow[] {
-  const rows: PresenceAreaRow[] = [];
+): StationPresenceRow[] {
+  const rows: StationPresenceRow[] = [];
   const possessions = snapshot.world.possessions ?? [];
   for (const nationId of [...snapshot.nations.keys()].sort(byId)) {
     const nation = snapshot.nations.get(nationId)!;
-    const areas = presenceAreaIds(possessions, nationId);
+    const areas = stationAreaIds(possessions, nationId);
     if (areas.length === 0) continue;
     const ships = nation.fleets
       .flatMap((fleet) => fleet.ships)

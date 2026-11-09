@@ -2,11 +2,12 @@ import {
   applyDivisionCommand,
   checkDivisionInvariants,
   DIVISION_STATE_INVARIANT_FAILED,
+  isSeaArea,
   type CampaignSnapshot,
   type FleetState,
   type PermanentDivision,
-  type PresenceAreaRow,
   type Ship,
+  type StationPresenceRow,
 } from "@bluewave/campaign";
 import { Result } from "effect";
 import { divisionAssetsFor } from "./divisionCommands.js";
@@ -23,7 +24,7 @@ export function detachedFleetId(shipId: string): string {
 }
 
 function seaAdjacency(snapshot: CampaignSnapshot): Map<string, string[]> {
-  const sea = new Set(snapshot.world.areas.filter((a) => a.type !== "land").map((a) => a.id));
+  const sea = new Set(snapshot.world.areas.filter(isSeaArea).map((a) => a.id));
   const adjacency = new Map<string, string[]>();
   const link = (from: string, to: string): void => {
     if (!sea.has(from) || !sea.has(to)) return;
@@ -65,8 +66,8 @@ export function nextHopToward(
   return (adjacency.get(from) ?? []).find((n) => distance.get(n) === here - 1) ?? null;
 }
 
-function largestShortfall(rows: readonly PresenceAreaRow[]): PresenceAreaRow | undefined {
-  let best: PresenceAreaRow | undefined;
+function largestShortfall(rows: readonly StationPresenceRow[]): StationPresenceRow | undefined {
+  let best: StationPresenceRow | undefined;
   for (const row of rows) {
     if (
       best === undefined ||
@@ -82,7 +83,11 @@ function largestShortfall(rows: readonly PresenceAreaRow[]): PresenceAreaRow | u
 export function runForeignStationDeploymentPhase(ctx: PhaseContext): PhaseRunOutcome {
   const rules = ctx.engineOptions?.presence;
   if (rules === undefined) return { status: "continue" };
-  const demand: PresenceAreaRow[] = presenceDemand(ctx.snapshot.view(), rules, ctx.campaignMonth);
+  const demand: StationPresenceRow[] = presenceDemand(
+    ctx.snapshot.view(),
+    rules,
+    ctx.campaignMonth,
+  );
   if (demand.length === 0) return { status: "continue" };
 
   const adjacency = seaAdjacency(ctx.snapshot.view());
