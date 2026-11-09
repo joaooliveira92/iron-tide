@@ -36,7 +36,9 @@ const extract = /*#__PURE__*/dual(args => isStruct(args[0]), (self, variant, opt
   if (options?.isDefault === true && Schema.isSchema(self)) {
     return self;
   }
-  const cache = options?.isDefault === true ? self[defaultCacheSymbol] ?? (self[defaultCacheSymbol] = Object.create(null)) : self[cacheSymbol] ?? (self[cacheSymbol] = Object.create(null));
+  // own caches only, so extended classes never reuse their parent's variants
+  const cacheKey = options?.isDefault === true ? defaultCacheSymbol : cacheSymbol;
+  const cache = Object.hasOwn(self, cacheKey) ? self[cacheKey] : self[cacheKey] = Object.create(null);
   if (Object.hasOwn(cache, variant)) {
     return cache[variant];
   }
@@ -86,24 +88,36 @@ export const fields = self => self[TypeId];
 export const make = options => {
   function Class(identifier) {
     return function (fields, annotations) {
-      const variantStruct = Struct(fields);
-      const schema = extract(variantStruct, options.defaultVariant, {
-        isDefault: true
-      });
-      const SClass = Schema.Class;
-      class Base extends SClass(identifier)(schema.fields, annotations) {
-        static [TypeId] = fields;
-      }
-      for (const variant of options.variants) {
-        Object.defineProperty(Base, variant, {
-          value: extract(variantStruct, variant).annotate({
-            id: `${identifier}.${variant}`,
-            title: `${identifier}.${variant}`
-          })
-        });
-      }
-      return Base;
+      return makeClass(fields, defaultFields => Schema.Class(identifier)(defaultFields, annotations));
     };
+  }
+  function makeClass(fields, makeSchemaClass) {
+    const struct = Struct(fields);
+    const SchemaClass = makeSchemaClass(extract(struct, options.defaultVariant, {
+      isDefault: true
+    }).fields);
+    class Base extends SchemaClass {
+      static [TypeId] = fields;
+      static extend(identifier) {
+        const extend = super.extend(identifier);
+        return (extension, annotations) => Schema.isSchema(extension) ? makeClass({
+          ...fields,
+          ...extension.fields
+        }, () => extend(extension, annotations)) : makeClass({
+          ...fields,
+          ...extension
+        }, defaultFields => extend(defaultFields, annotations));
+      }
+    }
+    for (const variant of options.variants) {
+      Object.defineProperty(Base, variant, {
+        value: extract(struct, variant).annotate({
+          id: `${SchemaClass.identifier}.${variant}`,
+          title: `${SchemaClass.identifier}.${variant}`
+        })
+      });
+    }
+    return Base;
   }
   function FieldOnly(keys) {
     return function (schema) {

@@ -1,6 +1,4 @@
 import * as Effect from "../Effect.ts";
-import { FileSystem } from "../FileSystem.ts";
-import { Path } from "../Path.ts";
 import * as Client from "./SqlClient.ts";
 import type { SqlError } from "./SqlError.ts";
 /**
@@ -71,13 +69,22 @@ export declare class MigrationError extends MigrationError_base<{
 /**
  * Creates a migrator that ensures the migrations table exists, runs pending
  * migrations in a transaction, and optionally dumps the schema after successful
- * migrations.
+ * migrations. ClickHouse runs without a transaction and records each migration
+ * only after it succeeds.
+ *
+ * **Details**
+ *
+ * `transformWrites` transforms only the effects that create the migrations
+ * table and insert into it, for clients such as ClickHouse that run row-less
+ * statements differently from queries. Reads of the migrations table and the
+ * migrations themselves are not transformed. It defaults to `identity`.
  *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
-export declare const make: <RD = never>({ dumpSchema }: {
+export declare const make: <RD = never>({ transformWrites, dumpSchema }: {
+    transformWrites?: <A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R>;
     dumpSchema?: (path: string, migrationsTable: string) => Effect.Effect<void, MigrationError, RD>;
 }) => <R2 = never>({ loader, schemaDirectory, table }: MigratorOptions<R2>) => Effect.Effect<ReadonlyArray<readonly [id: number, name: string]>, MigrationError | SqlError, Client.SqlClient | RD | R2>;
 /**
@@ -109,22 +116,5 @@ export declare const fromBabelGlob: (migrations: Record<string, any>) => Loader;
  * @since 4.0.0
  */
 export declare const fromRecord: (migrations: Record<string, Effect.Effect<void, unknown, Client.SqlClient>>) => Loader;
-/**
- * Creates a migration loader that reads a directory with `FileSystem`, imports
- * files named `<id>_<name>.js`, `<id>_<name>.ts`,
- * `<id>_<name>.mjs`, or `<id>_<name>.mts`, and sorts migrations by id.
- *
- * **Details**
- *
- * Requires a `Path` service appropriate for the migration directory's path
- * syntax. On Windows, prefer a platform-aware implementation such as
- * `NodePath.layer`; the core `Path.layer` uses POSIX semantics and does not
- * preserve Windows drive-letter paths.
- *
- * @stability unstable
- * @category loaders
- * @since 4.0.0
- */
-export declare const fromFileSystem: (directory: string) => Loader<FileSystem | Path>;
 export {};
 //# sourceMappingURL=Migrator.d.ts.map

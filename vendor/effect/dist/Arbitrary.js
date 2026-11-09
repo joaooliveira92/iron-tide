@@ -306,7 +306,8 @@ export function sampleEffect(self, options) {
  *
  * A property must also produce the same outcome for the same input and initial environment. The runner may evaluate
  * it repeatedly and does not restore mutable services between evaluations. Stateful properties should acquire and
- * release an independent fixture inside each evaluation.
+ * release an independent fixture inside each evaluation. Concurrent evaluations inherit the provided services;
+ * the runner does not rebuild layers. Their outcomes must not depend on scheduling or shared mutable state.
  *
  * @stability unstable
  * @category running

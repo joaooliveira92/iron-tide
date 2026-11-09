@@ -20,25 +20,19 @@ import * as Headers from "../http/Headers.js";
 import * as HttpClient from "../http/HttpClient.js";
 import * as HttpClientError from "../http/HttpClientError.js";
 import * as HttpClientRequest from "../http/HttpClientRequest.js";
+import * as Latch from "../Latch.js";
 import * as Layer from "../Layer.js";
-import * as Num from "../Number.js";
-import * as Option from "../Option.js";
+import * as Result from "../Result.js";
 import * as Schedule from "../Schedule.js";
 import * as Scope from "../Scope.js";
 import * as Version from "../Version.js";
+// A missing or invalid Retry-After falls back to a fixed delay.
 const retryAfterDelay = value => {
-  const seconds = Option.fromUndefinedOr(value).pipe(Option.flatMap(Num.parse));
-  if (Option.isSome(seconds)) {
-    return Effect.succeed(Duration.seconds(seconds.value));
-  }
-  if (value === undefined) {
+  const retryAfter = value === undefined ? undefined : Headers.parseRetryAfter(value);
+  if (retryAfter === undefined || Result.isFailure(retryAfter)) {
     return Effect.succeed(Duration.seconds(5));
   }
-  const timestamp = Date.parse(value);
-  if (Number.isNaN(timestamp)) {
-    return Effect.succeed(Duration.seconds(5));
-  }
-  return Effect.map(Clock, clock => Duration.millis(Math.max(timestamp - clock.currentTimeMillisUnsafe(), 1)));
+  return Effect.map(Clock, clock => Headers.retryAfterDelay(retryAfter.success, clock.currentTimeMillisUnsafe()));
 };
 const policy = /*#__PURE__*/Schedule.forever.pipe(Schedule.passthrough, /*#__PURE__*/Schedule.addDelay(({
   output: error
@@ -115,6 +109,16 @@ export const layerFlusher = /*#__PURE__*/Layer.sync(Flusher, () => {
  * after unhandled failures, and flushes during scope finalization up to
  * `shutdownTimeout`.
  *
+ * The export interval starts with the first push and stops once an export
+ * empties the buffer, so an idle exporter keeps no timer pending. With
+ * `exportEmpty` and batching disabled, it exports on every interval instead.
+ *
+ * Optional gzip compression uses `HttpClientRequest.compressBody` before the
+ * retry loop, so retries reuse the compressed bytes. Bodies smaller than 1KB
+ * remain uncompressed. Compression requires runtime `CompressionStream` support;
+ * compression failures follow the same temporary-disable behavior as transport
+ * failures and do not fail flushing or shutdown.
+ *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
@@ -124,7 +128,6 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
   const clock = Context.get(services, Clock);
   const scope = Context.get(services, Scope.Scope);
   const exportInterval = Duration.max(Duration.fromInputUnsafe(options.exportInterval), Duration.zero);
-  let disabledUntil = undefined;
   const client = Context.get(services, HttpClient.HttpClient).pipe(HttpClient.tap(response => Effect.ignore(response.arrayBuffer)), HttpClient.tapError(error => error.response ? Effect.ignore(error.response.arrayBuffer) : Effect.void), HttpClient.filterStatusOk, HttpClient.transformResponse(Effect.provideService(HttpClient.TracerPropagationEnabled, false)), HttpClient.retryTransient({
     schedule: policy,
     times: 3
@@ -136,20 +139,26 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
   const request = HttpClientRequest.post(options.url, {
     headers
   });
+  const exportsEmpty = options.maxBatchSize === "disabled" && options.exportEmpty === true;
   let buffer = [];
+  let disabledUntil = undefined;
+  const isDisabled = () => {
+    if (disabledUntil === undefined) return false;
+    if (clock.currentTimeMillisUnsafe() < disabledUntil) return true;
+    disabledUntil = undefined;
+    return false;
+  };
   const runExport = Effect.suspend(() => {
-    if (disabledUntil !== undefined && clock.currentTimeMillisUnsafe() < disabledUntil) {
-      return Effect.void;
-    } else if (disabledUntil !== undefined) {
-      disabledUntil = undefined;
-    }
-    if (buffer.length === 0 && (options.maxBatchSize !== "disabled" || options.exportEmpty !== true)) {
+    if (isDisabled() || buffer.length === 0 && !exportsEmpty) {
       return Effect.void;
     }
     const items = buffer;
     buffer = [];
     const [body, onSuccess] = options.body(items);
-    return client.execute(HttpClientRequest.setBody(request, body)).pipe(Effect.andThen(onSuccess), Effect.asVoid, Effect.withTracerEnabled(false));
+    const batchRequest = HttpClientRequest.setBody(request, body);
+    // Compress before client.execute so transient retries reuse the encoded bytes.
+    const response = options.compression === "gzip" ? HttpClientRequest.compressBody(batchRequest, "gzip").pipe(Effect.flatMap(client.execute)) : client.execute(batchRequest);
+    return response.pipe(Effect.andThen(onSuccess), Effect.asVoid, Effect.withTracerEnabled(false));
   }).pipe(Effect.catchCause(cause => {
     if (disabledUntil !== undefined) return Effect.void;
     disabledUntil = clock.currentTimeMillisUnsafe() + 60_000;
@@ -161,20 +170,41 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
   }));
   const exportFibers = yield* FiberSet.make();
   const runExportFork = yield* FiberSet.runtime(exportFibers)();
-  const flusher = yield* Flusher;
-  yield* flusher.register(runExport);
   yield* Scope.addFinalizer(scope, Effect.suspend(() => {
     if (disabledUntil !== undefined) return Effect.void;
     runExportFork(runExport);
     return FiberSet.awaitEmpty(exportFibers);
   }).pipe(Effect.ignore, Effect.interruptible, Effect.timeoutOption(options.shutdownTimeout)));
-  yield* Effect.sleep(exportInterval).pipe(Effect.andThen(FiberSet.run(exportFibers, runExport)), Effect.flatMap(Fiber.await), Effect.forever, Effect.forkIn(scope));
+  // `armed` is open while there is something to export. It changes in the
+  // same synchronous step as the buffer check, so a push is never stranded.
+  const armed = yield* Latch.make(exportsEmpty);
+  const wake = yield* Latch.make();
+  const disarmIfEmpty = Effect.sync(() => {
+    if (exportsEmpty || buffer.length > 0 || !armed.closeUnsafe()) return;
+    wake.openUnsafe();
+  });
+  // Forked after the shutdown finalizer, so the loop stops before the shutdown flush.
+  yield* Effect.gen(function* () {
+    while (true) {
+      wake.closeUnsafe();
+      yield* armed.await;
+      yield* Effect.race(Effect.sleep(exportInterval), wake.await);
+      yield* Fiber.await(yield* FiberSet.run(exportFibers, runExport));
+      yield* disarmIfEmpty;
+    }
+  }).pipe(Effect.forkIn(scope));
+  const exportNow = Effect.andThen(runExport, disarmIfEmpty);
+  const flusher = yield* Flusher;
+  yield* flusher.register(exportNow);
   return {
     push(data) {
-      if (disabledUntil !== undefined) return;
+      // With no idle timer, the next push ends the disabled window.
+      if (isDisabled()) return;
       buffer.push(data);
       if (options.maxBatchSize !== "disabled" && buffer.length >= options.maxBatchSize) {
-        runExportFork(runExport);
+        runExportFork(exportNow);
+      } else {
+        armed.openUnsafe();
       }
     }
   };

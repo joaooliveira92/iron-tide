@@ -939,71 +939,11 @@ export const filter: {
   <V>(self: HashSet<V>, predicate: Predicate<V>): HashSet<V>
 } = Dual.dual<
   {
-    /**
-     * Filters the HashSet keeping only values that satisfy the predicate.
-     *
-     * **Example** (Filtering HashSet values)
-     *
-     * ```ts import.meta.vitest
-     * import { HashSet } from "effect"
-     *
-     * HashSet.filter(HashSet.make(1, 2, 3, 4, 5, 6), (n) => n % 2 === 0) // => HashSet.make(2, 4, 6)
-     * ```
-     *
-     * @stability stable
-     * @category filtering
-     * @since 2.0.0
-     */
     <V, U extends V>(refinement: Refinement<NoInfer<V>, U>): (self: HashSet<V>) => HashSet<U>
-    /**
-     * Filters the HashSet keeping only values that satisfy the predicate.
-     *
-     * **Example** (Filtering HashSet values)
-     *
-     * ```ts import.meta.vitest
-     * import { HashSet } from "effect"
-     *
-     * HashSet.filter(HashSet.make(1, 2, 3, 4, 5, 6), (n) => n % 2 === 0) // => HashSet.make(2, 4, 6)
-     * ```
-     *
-     * @stability stable
-     * @category filtering
-     * @since 2.0.0
-     */
     <V>(predicate: Predicate<NoInfer<V>>): (self: HashSet<V>) => HashSet<V>
   },
   {
-    /**
-     * Filters the HashSet keeping only values that satisfy the predicate.
-     *
-     * **Example** (Filtering HashSet values)
-     *
-     * ```ts import.meta.vitest
-     * import { HashSet } from "effect"
-     *
-     * HashSet.filter(HashSet.make(1, 2, 3, 4, 5, 6), (n) => n % 2 === 0) // => HashSet.make(2, 4, 6)
-     * ```
-     *
-     * @stability stable
-     * @category filtering
-     * @since 2.0.0
-     */
     <V, U extends V>(self: HashSet<V>, refinement: Refinement<V, U>): HashSet<U>
-    /**
-     * Filters the HashSet keeping only values that satisfy the predicate.
-     *
-     * **Example** (Filtering HashSet values)
-     *
-     * ```ts import.meta.vitest
-     * import { HashSet } from "effect"
-     *
-     * HashSet.filter(HashSet.make(1, 2, 3, 4, 5, 6), (n) => n % 2 === 0) // => HashSet.make(2, 4, 6)
-     * ```
-     *
-     * @stability stable
-     * @category filtering
-     * @since 2.0.0
-     */
     <V>(self: HashSet<V>, predicate: Predicate<V>): HashSet<V>
   }
 >(2, internal.filter)

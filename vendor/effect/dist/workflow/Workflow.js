@@ -65,6 +65,7 @@ const Proto = {
         executionId,
         payload,
         discard: opts?.discard,
+        detached: opts?.detached,
         suspendedRetrySchedule: this.suspendedRetrySchedule
       }))));
       // Register with the parent before the execution id is computed, so a
@@ -200,13 +201,19 @@ export class Complete extends /*#__PURE__*/Data.TaggedClass("Complete") {
  * Represents a suspended workflow execution, optionally carrying the cause that
  * triggered suspension.
  *
+ * **Details**
+ *
+ * `failed` marks this execution's own `SuspendOnFailure` and requires explicit
+ * `resume` or `interrupt`. Inherited child failures do not set it.
+ *
  * @stability unstable
  * @category schemas
  * @since 4.0.0
  */
 export class Suspended extends /*#__PURE__*/Schema.Class("effect/workflow/Workflow/Suspended")({
   _tag: /*#__PURE__*/Schema.tag("Suspended"),
-  cause: /*#__PURE__*/Schema.optional(/*#__PURE__*/Schema.Cause(Schema.Never, /*#__PURE__*/Schema.Defect()))
+  cause: /*#__PURE__*/Schema.optional(/*#__PURE__*/Schema.Cause(Schema.Never, /*#__PURE__*/Schema.Defect())),
+  failed: /*#__PURE__*/Schema.optional(Schema.Boolean)
 }) {
   /**
    * Marks this value as a workflow result for runtime guards.
@@ -255,11 +262,13 @@ export const intoResult = effect => Effect.contextWith(context => {
   Effect.forkChild({
     startImmediately: true
   }), Effect.flatMap(fiber => Effect.onInterrupt(Fiber.join(fiber), () => Fiber.interrupt(fiber))), Effect.interruptible, suspendOnFailure ? Effect.catchCause(cause => {
-    if (instance.abandoned) {
+    if (instance.abandoned || instance.interrupted) {
       return Effect.failCause(cause);
     }
     instance.suspended = true;
+    // Ordinary suspension is a self-interrupt and also reaches here.
     if (!Cause.hasInterruptsOnly(cause)) {
+      instance.failed = true;
       instance.cause = Cause.die(Cause.squash(cause));
     }
     return Effect.interrupt;
@@ -274,7 +283,10 @@ export const intoResult = effect => Effect.contextWith(context => {
       const abandoned = instance.abandoned && !instance.interrupted && hasInterruptsOnly;
       instance.abandoned = abandoned;
       if (instance.suspended && hasInterruptsOnly && !abandoned) {
-        return Effect.succeed(new Suspended({
+        return Effect.succeed(new Suspended(instance.failed ? {
+          cause: instance.cause,
+          failed: true
+        } : {
           cause: instance.cause
         }));
       }

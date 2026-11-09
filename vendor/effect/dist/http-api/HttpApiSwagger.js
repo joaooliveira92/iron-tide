@@ -14,7 +14,6 @@ import * as Function from "../Function.js";
 import * as HttpRouter from "../http/HttpRouter.js";
 import * as HttpServerResponse from "../http/HttpServerResponse.js";
 import * as Html from "./internal/html.js";
-import * as internal from "./internal/httpApiSwagger.js";
 import * as OpenApi from "./OpenApi.js";
 const makeHandler = options => {
   const makeResponse = Function.memoize(api => {
@@ -25,7 +24,7 @@ const makeHandler = options => {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${Html.escape(spec.info.title)} Documentation</title>
-  <style>${internal.css}</style>
+  <style>${options.css}</style>
 </head>
 <body>
   <div id="swagger-ui"></div>
@@ -33,7 +32,7 @@ const makeHandler = options => {
     ${Html.escapeJson(spec)}
   </script>
   <script>
-    ${internal.javascript}
+    ${options.javascript}
     window.onload = () => {
       window.ui = SwaggerUIBundle({
         spec: JSON.parse(document.getElementById("swagger-spec").textContent),
@@ -50,13 +49,24 @@ const makeHandler = options => {
  * Mounts Swagger UI for an `HttpApi` at the configured path, defaulting to
  * `/docs`, using the OpenAPI specification generated from the API.
  *
+ * **Details**
+ *
+ * The bundled Swagger UI assets are loaded when the layer is built, not when
+ * this module is imported.
+ *
  * @stability unstable
  * @category layers
  * @since 4.0.0
  */
 export const layer = (api, options) => HttpRouter.use(Effect.fnUntraced(function* (router) {
+  const {
+    css,
+    javascript
+  } = yield* Effect.promise(() => import("./internal/httpApiSwagger.js"));
   const handler = makeHandler({
-    api
+    api,
+    javascript,
+    css
   });
   yield* router.add("GET", options?.path ?? "/docs", handler);
 }));

@@ -16,9 +16,11 @@ import type { NonEmptyReadonlyArray } from "../Array.ts";
 import * as Context from "../Context.ts";
 import * as Duration from "../Duration.ts";
 import * as Effect from "../Effect.ts";
+import * as Exit from "../Exit.ts";
 import * as Fiber from "../Fiber.ts";
 import * as Inspectable from "../Inspectable.ts";
 import * as Layer from "../Layer.ts";
+import type * as CircuitBreaker from "../persistence/CircuitBreaker.ts";
 import type * as RateLimiter from "../persistence/RateLimiter.ts";
 import { type Pipeable } from "../Pipeable.ts";
 import * as Predicate from "../Predicate.ts";
@@ -672,6 +674,9 @@ export declare const retry: {
  * Specifying a `while` predicate allows you to consider other errors as
  * transient, and is ignored in "response-only" mode.
  *
+ * A `Retry-After` header on a transient response, or on the response of a
+ * status code error, sets the minimum delay before the next attempt.
+ *
  * @stability unstable
  * @category error handling
  * @since 4.0.0
@@ -688,6 +693,9 @@ export declare const retryTransient: {
      *
      * Specifying a `while` predicate allows you to consider other errors as
      * transient, and is ignored in "response-only" mode.
+     *
+     * A `Retry-After` header on a transient response, or on the response of a
+     * status code error, sets the minimum delay before the next attempt.
      *
      * @stability unstable
      * @category error handling
@@ -711,6 +719,9 @@ export declare const retryTransient: {
      * Specifying a `while` predicate allows you to consider other errors as
      * transient, and is ignored in "response-only" mode.
      *
+     * A `Retry-After` header on a transient response, or on the response of a
+     * status code error, sets the minimum delay before the next attempt.
+     *
      * @stability unstable
      * @category error handling
      * @since 4.0.0
@@ -733,6 +744,9 @@ export declare const retryTransient: {
      * Specifying a `while` predicate allows you to consider other errors as
      * transient, and is ignored in "response-only" mode.
      *
+     * A `Retry-After` header on a transient response, or on the response of a
+     * status code error, sets the minimum delay before the next attempt.
+     *
      * @stability unstable
      * @category error handling
      * @since 4.0.0
@@ -750,11 +764,195 @@ export declare const retryTransient: {
      * Specifying a `while` predicate allows you to consider other errors as
      * transient, and is ignored in "response-only" mode.
      *
+     * A `Retry-After` header on a transient response, or on the response of a
+     * status code error, sets the minimum delay before the next attempt.
+     *
      * @stability unstable
      * @category error handling
      * @since 4.0.0
      */
     <E, R, B, ES = never, R1 = never>(self: HttpClient.With<E, R>, options: Schedule.Schedule<B, NoInfer<HttpClientResponse.HttpClientResponse | E>, ES, R1>): HttpClient.With<E | ES, R1 | R>;
+};
+/**
+ * Fails requests that do not receive a response within the given duration.
+ *
+ * **When to use**
+ *
+ * Use to configure a timeout once on the client, for example when providing
+ * the `HttpClient` service, while keeping the standard `HttpClientError` error
+ * model.
+ *
+ * **Details**
+ *
+ * A timed out request is interrupted and fails with an `HttpClientError` whose
+ * reason is a `TransportError` with a `Cause.TimeoutError` cause.
+ * `retryTransient` treats it as transient. Interrupting a request aborts the
+ * underlying transport, unless the request is attached to a scope with
+ * `withScope`, in which case it stays open until the scope closes.
+ *
+ * The timer starts after request preprocessing and covers everything the
+ * wrapped client does to produce a response. For a plain client this ends when
+ * the response headers arrive, but response middleware applied before
+ * `timeout`, such as `tap` or `retryTransient`, runs inside the budget,
+ * including any body reads it performs. Composition order therefore decides
+ * how it interacts with retries: applying `timeout` before `retryTransient`
+ * gives each attempt its own budget, while applying it after bounds the whole
+ * retry loop.
+ *
+ * **Gotchas**
+ *
+ * Body reads outside the timed client are not covered, including those made
+ * by response middleware applied after `timeout` and by consumers of the
+ * `HttpClient` service. Apply a separate timeout to body reads such as
+ * `response.json` or `response.stream` when needed.
+ *
+ * **Example** (Timing out each attempt)
+ *
+ * ```ts
+ * import { Effect, Layer } from "effect"
+ * import { FetchHttpClient, HttpClient } from "effect/http"
+ *
+ * const TimedHttpClient = Layer.effect(
+ *   HttpClient.HttpClient,
+ *   Effect.map(
+ *     HttpClient.HttpClient,
+ *     HttpClient.timeout("5 seconds")
+ *   )
+ * ).pipe(Layer.provide(FetchHttpClient.layer))
+ *
+ * const program = Effect.gen(function*() {
+ *   const client = (yield* HttpClient.HttpClient).pipe(
+ *     HttpClient.retryTransient({ times: 3 })
+ *   )
+ *   return yield* client.get("https://example.com")
+ * }).pipe(Effect.provide(TimedHttpClient))
+ * ```
+ *
+ * @stability unstable
+ * @category error handling
+ * @since 4.1.0
+ */
+export declare const timeout: {
+    /**
+     * Fails requests that do not receive a response within the given duration.
+     *
+     * **When to use**
+     *
+     * Use to configure a timeout once on the client, for example when providing
+     * the `HttpClient` service, while keeping the standard `HttpClientError` error
+     * model.
+     *
+     * **Details**
+     *
+     * A timed out request is interrupted and fails with an `HttpClientError` whose
+     * reason is a `TransportError` with a `Cause.TimeoutError` cause.
+     * `retryTransient` treats it as transient. Interrupting a request aborts the
+     * underlying transport, unless the request is attached to a scope with
+     * `withScope`, in which case it stays open until the scope closes.
+     *
+     * The timer starts after request preprocessing and covers everything the
+     * wrapped client does to produce a response. For a plain client this ends when
+     * the response headers arrive, but response middleware applied before
+     * `timeout`, such as `tap` or `retryTransient`, runs inside the budget,
+     * including any body reads it performs. Composition order therefore decides
+     * how it interacts with retries: applying `timeout` before `retryTransient`
+     * gives each attempt its own budget, while applying it after bounds the whole
+     * retry loop.
+     *
+     * **Gotchas**
+     *
+     * Body reads outside the timed client are not covered, including those made
+     * by response middleware applied after `timeout` and by consumers of the
+     * `HttpClient` service. Apply a separate timeout to body reads such as
+     * `response.json` or `response.stream` when needed.
+     *
+     * **Example** (Timing out each attempt)
+     *
+     * ```ts
+     * import { Effect, Layer } from "effect"
+     * import { FetchHttpClient, HttpClient } from "effect/http"
+     *
+     * const TimedHttpClient = Layer.effect(
+     *   HttpClient.HttpClient,
+     *   Effect.map(
+     *     HttpClient.HttpClient,
+     *     HttpClient.timeout("5 seconds")
+     *   )
+     * ).pipe(Layer.provide(FetchHttpClient.layer))
+     *
+     * const program = Effect.gen(function*() {
+     *   const client = (yield* HttpClient.HttpClient).pipe(
+     *     HttpClient.retryTransient({ times: 3 })
+     *   )
+     *   return yield* client.get("https://example.com")
+     * }).pipe(Effect.provide(TimedHttpClient))
+     * ```
+     *
+     * @stability unstable
+     * @category error handling
+     * @since 4.1.0
+     */
+    (duration: Duration.Input): <E, R>(self: HttpClient.With<E, R>) => HttpClient.With<E | Error.HttpClientError, R>;
+    /**
+     * Fails requests that do not receive a response within the given duration.
+     *
+     * **When to use**
+     *
+     * Use to configure a timeout once on the client, for example when providing
+     * the `HttpClient` service, while keeping the standard `HttpClientError` error
+     * model.
+     *
+     * **Details**
+     *
+     * A timed out request is interrupted and fails with an `HttpClientError` whose
+     * reason is a `TransportError` with a `Cause.TimeoutError` cause.
+     * `retryTransient` treats it as transient. Interrupting a request aborts the
+     * underlying transport, unless the request is attached to a scope with
+     * `withScope`, in which case it stays open until the scope closes.
+     *
+     * The timer starts after request preprocessing and covers everything the
+     * wrapped client does to produce a response. For a plain client this ends when
+     * the response headers arrive, but response middleware applied before
+     * `timeout`, such as `tap` or `retryTransient`, runs inside the budget,
+     * including any body reads it performs. Composition order therefore decides
+     * how it interacts with retries: applying `timeout` before `retryTransient`
+     * gives each attempt its own budget, while applying it after bounds the whole
+     * retry loop.
+     *
+     * **Gotchas**
+     *
+     * Body reads outside the timed client are not covered, including those made
+     * by response middleware applied after `timeout` and by consumers of the
+     * `HttpClient` service. Apply a separate timeout to body reads such as
+     * `response.json` or `response.stream` when needed.
+     *
+     * **Example** (Timing out each attempt)
+     *
+     * ```ts
+     * import { Effect, Layer } from "effect"
+     * import { FetchHttpClient, HttpClient } from "effect/http"
+     *
+     * const TimedHttpClient = Layer.effect(
+     *   HttpClient.HttpClient,
+     *   Effect.map(
+     *     HttpClient.HttpClient,
+     *     HttpClient.timeout("5 seconds")
+     *   )
+     * ).pipe(Layer.provide(FetchHttpClient.layer))
+     *
+     * const program = Effect.gen(function*() {
+     *   const client = (yield* HttpClient.HttpClient).pipe(
+     *     HttpClient.retryTransient({ times: 3 })
+     *   )
+     *   return yield* client.get("https://example.com")
+     * }).pipe(Effect.provide(TimedHttpClient))
+     * ```
+     *
+     * @stability unstable
+     * @category error handling
+     * @since 4.1.0
+     */
+    <E, R>(self: HttpClient.With<E, R>, duration: Duration.Input): HttpClient.With<E | Error.HttpClientError, R>;
 };
 /**
  * Namespace containing configuration types for `withRateLimiter`.
@@ -857,6 +1055,8 @@ export declare namespace WithRateLimiter {
  * It can update limits by inspecting common rate limit response headers and
  * automatically retries HTTP `429` responses (or `HttpClientError` values
  * wrapping a `429` response) by forcing the retry back through the limiter.
+ * When a response reports the remaining budget, requests wait for the
+ * reported reset once that budget is exhausted.
  *
  * **Gotchas**
  *
@@ -877,6 +1077,8 @@ export declare const withRateLimiter: {
      * It can update limits by inspecting common rate limit response headers and
      * automatically retries HTTP `429` responses (or `HttpClientError` values
      * wrapping a `429` response) by forcing the retry back through the limiter.
+     * When a response reports the remaining budget, requests wait for the
+     * reported reset once that budget is exhausted.
      *
      * **Gotchas**
      *
@@ -897,6 +1099,8 @@ export declare const withRateLimiter: {
      * It can update limits by inspecting common rate limit response headers and
      * automatically retries HTTP `429` responses (or `HttpClientError` values
      * wrapping a `429` response) by forcing the retry back through the limiter.
+     * When a response reports the remaining budget, requests wait for the
+     * reported reset once that budget is exhausted.
      *
      * **Gotchas**
      *
@@ -910,6 +1114,428 @@ export declare const withRateLimiter: {
      */
     <E, R>(self: HttpClient.With<E, R>, options: WithRateLimiter.Options): HttpClient.With<E | RateLimiter.RateLimiterError, R>;
 };
+/**
+ * Namespace containing configuration types for `withCircuitBreaker`.
+ *
+ * @stability experimental
+ * @since 4.0.7
+ */
+export declare namespace WithCircuitBreaker {
+    /**
+     * Options used to configure `withCircuitBreaker`.
+     *
+     * @stability experimental
+     * @category circuit breaking
+     * @since 4.0.7
+     */
+    interface Options<E, R2 = never> {
+        /**
+         * The `CircuitBreaker` service that guards each request.
+         */
+        readonly breaker: CircuitBreaker.CircuitBreaker;
+        /**
+         * The circuit key for a request. Requests with the same key share one
+         * circuit. Defaults to the request origin, falling back to the raw request
+         * URL when it cannot be parsed.
+         */
+        readonly key?: string | ((request: HttpClientRequest.HttpClientRequest) => string) | undefined;
+        /**
+         * Classifies the `Exit` of each request that the breaker admitted.
+         * `context.probe` is `true` when the request is the HalfOpen probe.
+         * Defaults to `circuitBreakerClassifier`.
+         */
+        readonly classify?: CircuitBreaker.Classifier<HttpClientResponse.HttpClientResponse, E, R2> | undefined;
+    }
+}
+/**
+ * Guards requests with a `CircuitBreaker`.
+ *
+ * **Details**
+ *
+ * Requests are keyed by origin unless `key` is set, and classified with
+ * `circuitBreakerClassifier` unless `classify` is set. A rejected request
+ * fails with `CircuitBreakerError` without reaching the wrapped client.
+ *
+ * Apply it after `withRateLimiter` and `retryTransient`, so the breaker sees
+ * one outcome per call and an open circuit skips the retry loop.
+ * `retryTransient` never retries a `CircuitBreakerError`. A custom `classify`
+ * can delegate the cases it doesn't handle to `circuitBreakerClassifier`.
+ *
+ * **Gotchas**
+ *
+ * - The breaker only sees the response headers. To count an error in the
+ *   body, lift it into the error channel below the breaker with
+ *   `transformResponse` and count it in `classify`.
+ * - `withRateLimiter` retries `429` without limit by default, which can hold
+ *   the probe slot for minutes. Set its `times`.
+ * - A rejected request has no client span. The rejection fails the caller's
+ *   span instead.
+ *
+ * **Example** (Guarding an API in the recommended order)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect, Layer, Ref, Schedule } from "effect"
+ * import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http"
+ * import { CircuitBreaker, RateLimiter } from "effect/persistence"
+ *
+ * const program = Effect.gen(function*() {
+ *   const requests = yield* Ref.make(0)
+ *   // A dependency that always answers 503.
+ *   const unavailable = HttpClient.make((request) =>
+ *     Effect.as(Ref.update(requests, (n) => n + 1), HttpClientResponse.fromWeb(request, new Response(null, { status: 503 })))
+ *   )
+ *
+ *   const breaker = yield* CircuitBreaker.make({
+ *     tripPolicy: CircuitBreaker.consecutive(1),
+ *     openDuration: "30 seconds"
+ *   })
+ *   const client = unavailable.pipe(
+ *     HttpClient.withRateLimiter({
+ *       limiter: yield* RateLimiter.RateLimiter,
+ *       key: "inventory",
+ *       limit: 100,
+ *       window: "1 second",
+ *       times: 3
+ *     }),
+ *     HttpClient.retryTransient({ times: 2, schedule: Schedule.exponential("1 millis") }),
+ *     HttpClient.withCircuitBreaker({ breaker })
+ *   )
+ *
+ *   // Three attempts, then the breaker records one failure and opens.
+ *   yield* client.execute(HttpClientRequest.get("http://inventory.test/items"))
+ *   // Rejected before the retry loop starts, so no further request is sent.
+ *   const rejected = yield* Effect.flip(client.execute(HttpClientRequest.get("http://inventory.test/items")))
+ *
+ *   return [yield* Ref.get(requests), rejected._tag]
+ * }).pipe(
+ *   Effect.scoped,
+ *   Effect.provide(Layer.merge(
+ *     CircuitBreaker.layerStoreMemory(),
+ *     RateLimiter.layer.pipe(Layer.provide(RateLimiter.layerStoreMemory))
+ *   ))
+ * )
+ *
+ * await Effect.runPromise(program) // => [3, "CircuitBreakerError"]
+ * ```
+ *
+ * **Example** (Counting an error in the body as a failure)
+ *
+ * This API answers `200` with `{ "status": "degraded" }` when it is failing.
+ *
+ * ```ts import.meta.vitest
+ * import { Data, Effect, Exit, Option } from "effect"
+ * import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http"
+ * import { CircuitBreaker } from "effect/persistence"
+ *
+ * class Degraded extends Data.TaggedError("Degraded") {}
+ *
+ * const degraded = HttpClient.make((request) =>
+ *   Effect.succeed(HttpClientResponse.fromWeb(request, Response.json({ status: "degraded" })))
+ * )
+ *
+ * const program = Effect.gen(function*() {
+ *   const breaker = yield* CircuitBreaker.make({
+ *     tripPolicy: CircuitBreaker.consecutive(1),
+ *     openDuration: "30 seconds"
+ *   })
+ *   const client = degraded.pipe(
+ *     HttpClient.transformResponse(Effect.flatMap((response) =>
+ *       Effect.flatMap(response.json, (body) =>
+ *         typeof body === "object" && body !== null && "status" in body && body.status === "degraded"
+ *           ? Effect.fail(new Degraded())
+ *           : Effect.succeed(response))
+ *     )),
+ *     HttpClient.withCircuitBreaker({
+ *       breaker,
+ *       classify: (exit) =>
+ *         Option.exists(Exit.findErrorOption(exit), (error) => error._tag === "Degraded")
+ *           ? CircuitBreaker.failure()
+ *           : HttpClient.circuitBreakerClassifier(exit)
+ *     })
+ *   )
+ *
+ *   yield* Effect.flip(client.get("http://status.test/"))
+ *   const state = yield* breaker.state("http://status.test")
+ *   return state._tag
+ * }).pipe(Effect.scoped, Effect.provide(CircuitBreaker.layerStoreMemory()))
+ *
+ * await Effect.runPromise(program) // => "Open"
+ * ```
+ *
+ * @stability experimental
+ * @category circuit breaking
+ * @since 4.0.7
+ */
+export declare const withCircuitBreaker: {
+    /**
+     * Guards requests with a `CircuitBreaker`.
+     *
+     * **Details**
+     *
+     * Requests are keyed by origin unless `key` is set, and classified with
+     * `circuitBreakerClassifier` unless `classify` is set. A rejected request
+     * fails with `CircuitBreakerError` without reaching the wrapped client.
+     *
+     * Apply it after `withRateLimiter` and `retryTransient`, so the breaker sees
+     * one outcome per call and an open circuit skips the retry loop.
+     * `retryTransient` never retries a `CircuitBreakerError`. A custom `classify`
+     * can delegate the cases it doesn't handle to `circuitBreakerClassifier`.
+     *
+     * **Gotchas**
+     *
+     * - The breaker only sees the response headers. To count an error in the
+     *   body, lift it into the error channel below the breaker with
+     *   `transformResponse` and count it in `classify`.
+     * - `withRateLimiter` retries `429` without limit by default, which can hold
+     *   the probe slot for minutes. Set its `times`.
+     * - A rejected request has no client span. The rejection fails the caller's
+     *   span instead.
+     *
+     * **Example** (Guarding an API in the recommended order)
+     *
+     * ```ts import.meta.vitest
+     * import { Effect, Layer, Ref, Schedule } from "effect"
+     * import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http"
+     * import { CircuitBreaker, RateLimiter } from "effect/persistence"
+     *
+     * const program = Effect.gen(function*() {
+     *   const requests = yield* Ref.make(0)
+     *   // A dependency that always answers 503.
+     *   const unavailable = HttpClient.make((request) =>
+     *     Effect.as(Ref.update(requests, (n) => n + 1), HttpClientResponse.fromWeb(request, new Response(null, { status: 503 })))
+     *   )
+     *
+     *   const breaker = yield* CircuitBreaker.make({
+     *     tripPolicy: CircuitBreaker.consecutive(1),
+     *     openDuration: "30 seconds"
+     *   })
+     *   const client = unavailable.pipe(
+     *     HttpClient.withRateLimiter({
+     *       limiter: yield* RateLimiter.RateLimiter,
+     *       key: "inventory",
+     *       limit: 100,
+     *       window: "1 second",
+     *       times: 3
+     *     }),
+     *     HttpClient.retryTransient({ times: 2, schedule: Schedule.exponential("1 millis") }),
+     *     HttpClient.withCircuitBreaker({ breaker })
+     *   )
+     *
+     *   // Three attempts, then the breaker records one failure and opens.
+     *   yield* client.execute(HttpClientRequest.get("http://inventory.test/items"))
+     *   // Rejected before the retry loop starts, so no further request is sent.
+     *   const rejected = yield* Effect.flip(client.execute(HttpClientRequest.get("http://inventory.test/items")))
+     *
+     *   return [yield* Ref.get(requests), rejected._tag]
+     * }).pipe(
+     *   Effect.scoped,
+     *   Effect.provide(Layer.merge(
+     *     CircuitBreaker.layerStoreMemory(),
+     *     RateLimiter.layer.pipe(Layer.provide(RateLimiter.layerStoreMemory))
+     *   ))
+     * )
+     *
+     * await Effect.runPromise(program) // => [3, "CircuitBreakerError"]
+     * ```
+     *
+     * **Example** (Counting an error in the body as a failure)
+     *
+     * This API answers `200` with `{ "status": "degraded" }` when it is failing.
+     *
+     * ```ts import.meta.vitest
+     * import { Data, Effect, Exit, Option } from "effect"
+     * import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http"
+     * import { CircuitBreaker } from "effect/persistence"
+     *
+     * class Degraded extends Data.TaggedError("Degraded") {}
+     *
+     * const degraded = HttpClient.make((request) =>
+     *   Effect.succeed(HttpClientResponse.fromWeb(request, Response.json({ status: "degraded" })))
+     * )
+     *
+     * const program = Effect.gen(function*() {
+     *   const breaker = yield* CircuitBreaker.make({
+     *     tripPolicy: CircuitBreaker.consecutive(1),
+     *     openDuration: "30 seconds"
+     *   })
+     *   const client = degraded.pipe(
+     *     HttpClient.transformResponse(Effect.flatMap((response) =>
+     *       Effect.flatMap(response.json, (body) =>
+     *         typeof body === "object" && body !== null && "status" in body && body.status === "degraded"
+     *           ? Effect.fail(new Degraded())
+     *           : Effect.succeed(response))
+     *     )),
+     *     HttpClient.withCircuitBreaker({
+     *       breaker,
+     *       classify: (exit) =>
+     *         Option.exists(Exit.findErrorOption(exit), (error) => error._tag === "Degraded")
+     *           ? CircuitBreaker.failure()
+     *           : HttpClient.circuitBreakerClassifier(exit)
+     *     })
+     *   )
+     *
+     *   yield* Effect.flip(client.get("http://status.test/"))
+     *   const state = yield* breaker.state("http://status.test")
+     *   return state._tag
+     * }).pipe(Effect.scoped, Effect.provide(CircuitBreaker.layerStoreMemory()))
+     *
+     * await Effect.runPromise(program) // => "Open"
+     * ```
+     *
+     * @stability experimental
+     * @category circuit breaking
+     * @since 4.0.7
+     */
+    <E, R2 = never>(options: WithCircuitBreaker.Options<E, R2>): <R>(self: HttpClient.With<E, R>) => HttpClient.With<E | CircuitBreaker.CircuitBreakerError, R | R2>;
+    /**
+     * Guards requests with a `CircuitBreaker`.
+     *
+     * **Details**
+     *
+     * Requests are keyed by origin unless `key` is set, and classified with
+     * `circuitBreakerClassifier` unless `classify` is set. A rejected request
+     * fails with `CircuitBreakerError` without reaching the wrapped client.
+     *
+     * Apply it after `withRateLimiter` and `retryTransient`, so the breaker sees
+     * one outcome per call and an open circuit skips the retry loop.
+     * `retryTransient` never retries a `CircuitBreakerError`. A custom `classify`
+     * can delegate the cases it doesn't handle to `circuitBreakerClassifier`.
+     *
+     * **Gotchas**
+     *
+     * - The breaker only sees the response headers. To count an error in the
+     *   body, lift it into the error channel below the breaker with
+     *   `transformResponse` and count it in `classify`.
+     * - `withRateLimiter` retries `429` without limit by default, which can hold
+     *   the probe slot for minutes. Set its `times`.
+     * - A rejected request has no client span. The rejection fails the caller's
+     *   span instead.
+     *
+     * **Example** (Guarding an API in the recommended order)
+     *
+     * ```ts import.meta.vitest
+     * import { Effect, Layer, Ref, Schedule } from "effect"
+     * import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http"
+     * import { CircuitBreaker, RateLimiter } from "effect/persistence"
+     *
+     * const program = Effect.gen(function*() {
+     *   const requests = yield* Ref.make(0)
+     *   // A dependency that always answers 503.
+     *   const unavailable = HttpClient.make((request) =>
+     *     Effect.as(Ref.update(requests, (n) => n + 1), HttpClientResponse.fromWeb(request, new Response(null, { status: 503 })))
+     *   )
+     *
+     *   const breaker = yield* CircuitBreaker.make({
+     *     tripPolicy: CircuitBreaker.consecutive(1),
+     *     openDuration: "30 seconds"
+     *   })
+     *   const client = unavailable.pipe(
+     *     HttpClient.withRateLimiter({
+     *       limiter: yield* RateLimiter.RateLimiter,
+     *       key: "inventory",
+     *       limit: 100,
+     *       window: "1 second",
+     *       times: 3
+     *     }),
+     *     HttpClient.retryTransient({ times: 2, schedule: Schedule.exponential("1 millis") }),
+     *     HttpClient.withCircuitBreaker({ breaker })
+     *   )
+     *
+     *   // Three attempts, then the breaker records one failure and opens.
+     *   yield* client.execute(HttpClientRequest.get("http://inventory.test/items"))
+     *   // Rejected before the retry loop starts, so no further request is sent.
+     *   const rejected = yield* Effect.flip(client.execute(HttpClientRequest.get("http://inventory.test/items")))
+     *
+     *   return [yield* Ref.get(requests), rejected._tag]
+     * }).pipe(
+     *   Effect.scoped,
+     *   Effect.provide(Layer.merge(
+     *     CircuitBreaker.layerStoreMemory(),
+     *     RateLimiter.layer.pipe(Layer.provide(RateLimiter.layerStoreMemory))
+     *   ))
+     * )
+     *
+     * await Effect.runPromise(program) // => [3, "CircuitBreakerError"]
+     * ```
+     *
+     * **Example** (Counting an error in the body as a failure)
+     *
+     * This API answers `200` with `{ "status": "degraded" }` when it is failing.
+     *
+     * ```ts import.meta.vitest
+     * import { Data, Effect, Exit, Option } from "effect"
+     * import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http"
+     * import { CircuitBreaker } from "effect/persistence"
+     *
+     * class Degraded extends Data.TaggedError("Degraded") {}
+     *
+     * const degraded = HttpClient.make((request) =>
+     *   Effect.succeed(HttpClientResponse.fromWeb(request, Response.json({ status: "degraded" })))
+     * )
+     *
+     * const program = Effect.gen(function*() {
+     *   const breaker = yield* CircuitBreaker.make({
+     *     tripPolicy: CircuitBreaker.consecutive(1),
+     *     openDuration: "30 seconds"
+     *   })
+     *   const client = degraded.pipe(
+     *     HttpClient.transformResponse(Effect.flatMap((response) =>
+     *       Effect.flatMap(response.json, (body) =>
+     *         typeof body === "object" && body !== null && "status" in body && body.status === "degraded"
+     *           ? Effect.fail(new Degraded())
+     *           : Effect.succeed(response))
+     *     )),
+     *     HttpClient.withCircuitBreaker({
+     *       breaker,
+     *       classify: (exit) =>
+     *         Option.exists(Exit.findErrorOption(exit), (error) => error._tag === "Degraded")
+     *           ? CircuitBreaker.failure()
+     *           : HttpClient.circuitBreakerClassifier(exit)
+     *     })
+     *   )
+     *
+     *   yield* Effect.flip(client.get("http://status.test/"))
+     *   const state = yield* breaker.state("http://status.test")
+     *   return state._tag
+     * }).pipe(Effect.scoped, Effect.provide(CircuitBreaker.layerStoreMemory()))
+     *
+     * await Effect.runPromise(program) // => "Open"
+     * ```
+     *
+     * @stability experimental
+     * @category circuit breaking
+     * @since 4.0.7
+     */
+    <E, R, R2 = never>(self: HttpClient.With<E, R>, options: WithCircuitBreaker.Options<E, R2>): HttpClient.With<E | CircuitBreaker.CircuitBreakerError, R | R2>;
+};
+/**
+ * The default `withCircuitBreaker` classifier.
+ *
+ * **Details**
+ *
+ * - Failure: status 408, 500, 502, 503 or 504, returned or wrapped in a
+ *   `StatusCodeError`, and any `TransportError` or `Cause.TimeoutError`.
+ * - Success: any other response, including other 4xx, since the dependency
+ *   answered.
+ * - Ignored: status 429 (left to `withRateLimiter`), `EncodeError`,
+ *   `InvalidUrlError`, `DecodeError`, `EmptyBodyError`, unknown typed errors
+ *   and defects. HttpClient errors are typed, so a defect here is a bug in
+ *   the caller.
+ *
+ * When a cause holds several errors, a failure beats a success and a success
+ * beats an ignored outcome. A failure carries the longest `Retry-After` it
+ * saw. The result is an `Effect` only because parsing an HTTP-date
+ * `Retry-After` reads `Clock`.
+ *
+ * **Gotchas**
+ *
+ * `TransportError` also covers client-side refusals, which count as failures.
+ *
+ * @stability experimental
+ * @category circuit breaking
+ * @since 4.0.7
+ */
+export declare const circuitBreakerClassifier: <E>(exit: Exit.Exit<HttpClientResponse.HttpClientResponse, E>) => Effect.Effect<CircuitBreaker.Outcome>;
 /**
  * Performs an additional effect after a successful request.
  *
@@ -986,12 +1612,22 @@ export declare const tapRequest: {
     <E, R, _, E2, R2>(self: HttpClient.With<E, R>, f: (a: HttpClientRequest.HttpClientRequest) => Effect.Effect<_, E2, R2>): HttpClient.With<E | E2, R | R2>;
 };
 /**
- * Adds a `Ref` of cookies to the client for handling cookies across requests.
+ * Adds a `Ref` of stored cookies to the client for handling cookies across
+ * requests.
  *
  * **When to use**
  *
  * Use to add shared cookie storage to a client so response cookies are retained
- * and sent by later requests.
+ * and sent by later requests to a matching host, path, and scheme.
+ *
+ * **Details**
+ *
+ * Response cookies are merged into the ref with `Cookies.mergeIntoArray` for
+ * the response URL. When a request is sent, `Cookies.toRequestCookieHeader`
+ * selects the cookies for its final URL, after later transformations such as
+ * `HttpClientRequest.prependUrl`, and sets them as the `cookie` header. With
+ * `followRedirects` applied after `withCookiesRef`, this runs for every hop.
+ * Expiry uses the current `Clock`.
  *
  * @stability unstable
  * @category cookies
@@ -999,31 +1635,51 @@ export declare const tapRequest: {
  */
 export declare const withCookiesRef: {
     /**
-     * Adds a `Ref` of cookies to the client for handling cookies across requests.
+     * Adds a `Ref` of stored cookies to the client for handling cookies across
+     * requests.
      *
      * **When to use**
      *
      * Use to add shared cookie storage to a client so response cookies are retained
-     * and sent by later requests.
+     * and sent by later requests to a matching host, path, and scheme.
+     *
+     * **Details**
+     *
+     * Response cookies are merged into the ref with `Cookies.mergeIntoArray` for
+     * the response URL. When a request is sent, `Cookies.toRequestCookieHeader`
+     * selects the cookies for its final URL, after later transformations such as
+     * `HttpClientRequest.prependUrl`, and sets them as the `cookie` header. With
+     * `followRedirects` applied after `withCookiesRef`, this runs for every hop.
+     * Expiry uses the current `Clock`.
      *
      * @stability unstable
      * @category cookies
      * @since 4.0.0
      */
-    (ref: Ref.Ref<Cookies.Cookies>): <E, R>(self: HttpClient.With<E, R>) => HttpClient.With<E, R>;
+    (ref: Ref.Ref<ReadonlyArray<Cookies.Cookie>>): <E, R>(self: HttpClient.With<E, R>) => HttpClient.With<E, R>;
     /**
-     * Adds a `Ref` of cookies to the client for handling cookies across requests.
+     * Adds a `Ref` of stored cookies to the client for handling cookies across
+     * requests.
      *
      * **When to use**
      *
      * Use to add shared cookie storage to a client so response cookies are retained
-     * and sent by later requests.
+     * and sent by later requests to a matching host, path, and scheme.
+     *
+     * **Details**
+     *
+     * Response cookies are merged into the ref with `Cookies.mergeIntoArray` for
+     * the response URL. When a request is sent, `Cookies.toRequestCookieHeader`
+     * selects the cookies for its final URL, after later transformations such as
+     * `HttpClientRequest.prependUrl`, and sets them as the `cookie` header. With
+     * `followRedirects` applied after `withCookiesRef`, this runs for every hop.
+     * Expiry uses the current `Clock`.
      *
      * @stability unstable
      * @category cookies
      * @since 4.0.0
      */
-    <E, R>(self: HttpClient.With<E, R>, ref: Ref.Ref<Cookies.Cookies>): HttpClient.With<E, R>;
+    <E, R>(self: HttpClient.With<E, R>, ref: Ref.Ref<ReadonlyArray<Cookies.Cookie>>): HttpClient.With<E, R>;
 };
 /**
  * Attaches the lifetime of the `HttpClientRequest` to a `Scope`.
@@ -1036,6 +1692,37 @@ export declare const withScope: <E, R>(self: HttpClient.With<E, R>) => HttpClien
 /**
  * Enables following HTTP redirects up to a specified number of times.
  *
+ * **Details**
+ *
+ * Follows `3xx` responses that include a `Location` header, up to
+ * `maxRedirects` (default `10`) times. When the limit is reached or the
+ * `Location` header is not a valid URL, the last redirect response is returned.
+ *
+ * **Gotchas**
+ *
+ * This only sees redirects that the underlying client returns. `fetch`
+ * follows redirects itself by default, so with `FetchHttpClient` provide
+ * `FetchHttpClient.RequestInit` with `{ redirect: "manual" }`. Browsers return
+ * an opaque response without a `Location` header for manual redirects, so
+ * this cannot follow them there.
+ *
+ * **Example** (Following redirects with FetchHttpClient)
+ *
+ * ```ts
+ * import { Effect } from "effect"
+ * import { FetchHttpClient, HttpClient } from "effect/http"
+ *
+ * const program = Effect.gen(function*() {
+ *   const client = (yield* HttpClient.HttpClient).pipe(
+ *     HttpClient.followRedirects(5)
+ *   )
+ *   return yield* client.get("https://example.com/redirect")
+ * }).pipe(
+ *   Effect.provide(FetchHttpClient.layer),
+ *   Effect.provideService(FetchHttpClient.RequestInit, { redirect: "manual" })
+ * )
+ * ```
+ *
  * @stability unstable
  * @category redirects
  * @since 4.0.0
@@ -1044,6 +1731,37 @@ export declare const followRedirects: {
     /**
      * Enables following HTTP redirects up to a specified number of times.
      *
+     * **Details**
+     *
+     * Follows `3xx` responses that include a `Location` header, up to
+     * `maxRedirects` (default `10`) times. When the limit is reached or the
+     * `Location` header is not a valid URL, the last redirect response is returned.
+     *
+     * **Gotchas**
+     *
+     * This only sees redirects that the underlying client returns. `fetch`
+     * follows redirects itself by default, so with `FetchHttpClient` provide
+     * `FetchHttpClient.RequestInit` with `{ redirect: "manual" }`. Browsers return
+     * an opaque response without a `Location` header for manual redirects, so
+     * this cannot follow them there.
+     *
+     * **Example** (Following redirects with FetchHttpClient)
+     *
+     * ```ts
+     * import { Effect } from "effect"
+     * import { FetchHttpClient, HttpClient } from "effect/http"
+     *
+     * const program = Effect.gen(function*() {
+     *   const client = (yield* HttpClient.HttpClient).pipe(
+     *     HttpClient.followRedirects(5)
+     *   )
+     *   return yield* client.get("https://example.com/redirect")
+     * }).pipe(
+     *   Effect.provide(FetchHttpClient.layer),
+     *   Effect.provideService(FetchHttpClient.RequestInit, { redirect: "manual" })
+     * )
+     * ```
+     *
      * @stability unstable
      * @category redirects
      * @since 4.0.0
@@ -1051,6 +1769,37 @@ export declare const followRedirects: {
     (maxRedirects?: number | undefined): <E, R>(self: HttpClient.With<E, R>) => HttpClient.With<E, R>;
     /**
      * Enables following HTTP redirects up to a specified number of times.
+     *
+     * **Details**
+     *
+     * Follows `3xx` responses that include a `Location` header, up to
+     * `maxRedirects` (default `10`) times. When the limit is reached or the
+     * `Location` header is not a valid URL, the last redirect response is returned.
+     *
+     * **Gotchas**
+     *
+     * This only sees redirects that the underlying client returns. `fetch`
+     * follows redirects itself by default, so with `FetchHttpClient` provide
+     * `FetchHttpClient.RequestInit` with `{ redirect: "manual" }`. Browsers return
+     * an opaque response without a `Location` header for manual redirects, so
+     * this cannot follow them there.
+     *
+     * **Example** (Following redirects with FetchHttpClient)
+     *
+     * ```ts
+     * import { Effect } from "effect"
+     * import { FetchHttpClient, HttpClient } from "effect/http"
+     *
+     * const program = Effect.gen(function*() {
+     *   const client = (yield* HttpClient.HttpClient).pipe(
+     *     HttpClient.followRedirects(5)
+     *   )
+     *   return yield* client.get("https://example.com/redirect")
+     * }).pipe(
+     *   Effect.provide(FetchHttpClient.layer),
+     *   Effect.provideService(FetchHttpClient.RequestInit, { redirect: "manual" })
+     * )
+     * ```
      *
      * @stability unstable
      * @category redirects
@@ -1082,6 +1831,18 @@ export declare const TracerHeaderFilter: Context.Reference<(headerName: string, 
 /**
  * Context reference that controls whether outgoing client spans are propagated to request headers.
  *
+ * **Details**
+ *
+ * When this is `true`, the client writes the compact B3 `b3` header and the
+ * W3C `traceparent` header. The default is on. The client span is still
+ * created when this is `false`.
+ *
+ * **Gotchas**
+ *
+ * A browser preflight fails when the target does not list `b3` and
+ * `traceparent` in `Access-Control-Allow-Headers`. Set this to `false` for
+ * those requests.
+ *
  * @stability unstable
  * @category services
  * @since 4.0.0
@@ -1107,4 +1868,51 @@ export declare const SpanNameGenerator: Context.Reference<(request: HttpClientRe
  * @since 4.0.0
  */
 export declare const layerMergedContext: <E, R>(effect: Effect.Effect<HttpClient, E, R>) => Layer.Layer<HttpClient, E, R>;
+/**
+ * Returns `true` for an error that `retryTransient` retries by default: a
+ * timeout, a transport error, or a status code error with a transient response.
+ *
+ * **When to use**
+ *
+ * Use to classify failures the same way `retryTransient` does, for example in a
+ * custom retry policy or a circuit breaker.
+ *
+ * **Example** (Classifying client errors)
+ *
+ * ```ts import.meta.vitest
+ * import { Cause } from "effect"
+ * import { HttpClient, HttpClientError, HttpClientRequest } from "effect/http"
+ *
+ * const request = HttpClientRequest.get("https://example.com")
+ * const transportError = new HttpClientError.HttpClientError({
+ *   reason: new HttpClientError.TransportError({ request })
+ * })
+ *
+ * HttpClient.isTransientError(transportError) // => true
+ * HttpClient.isTransientError(new Cause.TimeoutError()) // => true
+ * HttpClient.isTransientError(new Error("boom")) // => false
+ * ```
+ *
+ * @see {@link isTransientResponse} for the response statuses it accepts
+ * @see {@link retryTransient} for the retry policy that uses it
+ * @stability unstable
+ * @category predicates
+ * @since 4.1.0
+ */
+export declare const isTransientError: (error: unknown) => boolean;
+/**
+ * Returns `true` for a response whose status `retryTransient` retries by
+ * default: 408, 429, 500, 502, 503 or 504.
+ *
+ * **When to use**
+ *
+ * Use to retry the same responses as `retryTransient` in a custom retry policy.
+ *
+ * @see {@link isTransientError} for the matching error predicate
+ * @see {@link retryTransient} for the retry policy that uses it
+ * @stability unstable
+ * @category predicates
+ * @since 4.1.0
+ */
+export declare const isTransientResponse: (response: HttpClientResponse.HttpClientResponse) => boolean;
 //# sourceMappingURL=HttpClient.d.ts.map

@@ -13,27 +13,35 @@
  */
 import * as Arr from "../Array.js";
 import * as Clock from "../Clock.js";
+import * as Console from "../Console.js";
+import * as Context from "../Context.js";
 import * as Data from "../Data.js";
 import * as Duration from "../Duration.js";
 import * as Effect from "../Effect.js";
 import * as Fiber from "../Fiber.js";
-import { flow } from "../Function.js";
 import * as Latch from "../Latch.js";
 import * as Layer from "../Layer.js";
-import * as Order from "../Order.js";
+import * as Scheduler from "../Scheduler.js";
 import * as Semaphore from "../Semaphore.js";
 /**
  * The warning message that will be displayed if a test is using time but is
  * not advancing the `TestClock`.
  */
 const warningMessage = "A test is using time, but is not advancing the test " + "clock, which may result in the test hanging. Use TestClock.adjust to " + "manually advance the time.";
+/**
+ * The warning message that will be displayed if a fiber woken by the
+ * `TestClock` does not suspend within the warning delay.
+ */
+const busyWarningMessage = "A fiber woken by the test clock is still running " + "without suspending, so the test clock stopped waiting for it. Sleeps it " + "starts later may be scheduled relative to a later time.";
+/**
+ * The live clock of each `TestClock`, so a `TestClock` constructed while
+ * another one is the current clock uses the outer clock's live clock instead
+ * of the outer `TestClock`, which only advances when adjusted.
+ */
+const liveClocks = /*#__PURE__*/new WeakMap();
 const defaultOptions = {
   warningDelay: "1 second"
 };
-const SleepOrder = /*#__PURE__*/Order.flip(/*#__PURE__*/Order.Struct({
-  timestamp: Order.Number,
-  sequence: Order.Number
-}));
 const nanosPerMilli = /*#__PURE__*/BigInt(1_000_000);
 const millisToNanos = millis => {
   const wholeMillis = Math.floor(millis);
@@ -42,6 +50,14 @@ const millisToNanos = millis => {
 };
 /**
  * Creates a `TestClock` with optional configuration.
+ *
+ * **Gotchas**
+ *
+ * The guarantee that sleeps registered after multiple scheduler hops run in
+ * order applies only to fibers running under {@link layer}, which
+ * `@effect/vitest`'s `it.effect` uses. Providing a clock from `make` by hand
+ * waits only one scheduler turn after each woken sleep. Prefer `layer` when
+ * forked fibers sleep.
  *
  * **Example** (Creating a test clock)
  *
@@ -71,15 +87,19 @@ const millisToNanos = millis => {
  * @category constructors
  * @since 4.0.0
  */
-export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
+export const make = options => Effect.map(makeWithScheduler(options), ([testClock]) => testClock);
+const makeWithScheduler = /*#__PURE__*/Effect.fnUntraced(function* (options) {
   const config = {
     ...defaultOptions,
     ...options
   };
-  let sequence = 0;
+  // Sorted by descending timestamp, so `pop` wakes the earliest sleep first
   const sleeps = [];
-  const liveClock = yield* Clock.clockWith(Effect.succeed);
+  const currentClock = yield* Clock.clockWith(Effect.succeed);
+  const liveClock = liveClocks.get(currentClock) ?? currentClock;
+  const liveConsole = yield* Console.Console;
   const warningSemaphore = yield* Semaphore.make(1);
+  const parentScheduler = yield* Scheduler.Scheduler;
   let currentTimestamp = new Date(0).getTime();
   let currentWallNanos = BigInt(0);
   let currentMonotonicNanos = BigInt(0);
@@ -105,7 +125,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
    */
   const warningStart = warningSemaphore.withPermits(1)(Effect.suspend(() => {
     if (warningState._tag === "Start") {
-      return Effect.logWarning(warningMessage).pipe(Effect.delay(config.warningDelay), withLive, Effect.forkChild, Effect.interruptible, Effect.flatMap(fiber => Effect.sync(() => {
+      return Effect.logWarning(warningMessage).pipe(Effect.provideService(Console.Console, liveConsole), Effect.delay(config.warningDelay), withLive, Effect.forkChild, Effect.interruptible, Effect.flatMap(fiber => Effect.sync(() => {
         warningState = WarningState.Pending({
           fiber
         });
@@ -137,15 +157,86 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
     const millis = Duration.toMillis(duration);
     const end = currentTimestamp + millis;
     if (end <= currentTimestamp) return;
-    const latch = Latch.makeUnsafe();
-    sleeps.push({
-      sequence: sequence++,
-      timestamp: end,
-      latch
-    });
-    sleeps.sort(SleepOrder);
-    yield* warningStart;
-    yield* latch.await;
+    yield* Effect.acquireUseRelease(Effect.sync(() => {
+      const entry = {
+        timestamp: end,
+        latch: Latch.makeUnsafe()
+      };
+      // Insert before entries with an equal timestamp, so they wake in
+      // registration order
+      let low = 0;
+      let high = sleeps.length;
+      while (low < high) {
+        const mid = low + high >>> 1;
+        if (sleeps[mid].timestamp > end) low = mid + 1;else high = mid;
+      }
+      sleeps.splice(low, 0, entry);
+      return entry;
+    }), entry => Effect.andThen(warningStart, entry.latch.await), entry => Effect.sync(() => {
+      // The entry is already gone if `run` popped it
+      const index = sleeps.indexOf(entry);
+      if (index !== -1) sleeps.splice(index, 1);
+    }));
+  });
+  /**
+   * Tasks scheduled while waking a sleeper, and tasks scheduled by those tasks,
+   * are counted by that wake's tracker so `run` can wait for the woken fiber,
+   * and any fibers it resumes or forks, to suspend before checking the next
+   * sleep.
+   */
+  let currentTracker = undefined;
+  function runTracked(tracker, f) {
+    const previous = currentTracker;
+    currentTracker = tracker;
+    try {
+      f();
+    } finally {
+      currentTracker = previous;
+    }
+  }
+  const scheduler = {
+    executionMode: parentScheduler.executionMode,
+    shouldYield: fiber => parentScheduler.shouldYield(fiber),
+    makeDispatcher() {
+      const dispatcher = parentScheduler.makeDispatcher();
+      return {
+        scheduleTask(task, priority) {
+          const tracker = currentTracker;
+          if (tracker === undefined) {
+            return dispatcher.scheduleTask(task, priority);
+          }
+          tracker.pending++;
+          dispatcher.scheduleTask(() => {
+            try {
+              runTracked(tracker, task);
+            } finally {
+              if (--tracker.pending === 0) tracker.onIdle?.();
+            }
+          }, priority);
+        },
+        flush() {
+          dispatcher.flush();
+        }
+      };
+    }
+  };
+  const wake = latch => Effect.suspend(() => {
+    const tracker = {
+      pending: 0,
+      onIdle: undefined
+    };
+    runTracked(tracker, () => latch.openUnsafe());
+    if (tracker.pending === 0) return Effect.yieldNow;
+    return Effect.callback(resume => {
+      if (tracker.pending === 0) return resume(Effect.void);
+      tracker.onIdle = () => resume(Effect.void);
+      return Effect.sync(() => {
+        tracker.onIdle = undefined;
+      });
+    }).pipe(Effect.timeoutOrElse({
+      duration: config.warningDelay,
+      orElse: () => Effect.provideService(Effect.logWarning(busyWarningMessage), Console.Console, liveConsole)
+    }), withLive, Effect.andThen(Effect.yieldNow));
   });
   const runSemaphore = yield* Semaphore.make(1);
   const run = Effect.fnUntraced(function* (step, adjustmentNanos) {
@@ -167,8 +258,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
       if (Arr.lastNonEmpty(sleeps).timestamp > endTimestamp) break;
       const entry = sleeps.pop();
       advanceTo(entry.timestamp);
-      entry.latch.openUnsafe();
-      yield* Effect.yieldNow;
+      yield* wake(entry.latch);
     }
     advanceTo(endTimestamp);
     if (adjustmentNanos !== undefined && Number.isFinite(endTimestamp)) {
@@ -188,7 +278,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
     return warningDone.pipe(Effect.andThen(run(() => timestamp)));
   }
   yield* Effect.addFinalizer(() => warningDone);
-  return {
+  const testClock = {
     currentTimeMillisUnsafe,
     currentTimeNanosUnsafe,
     monotonicTimeNanosUnsafe,
@@ -200,6 +290,8 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
     sleep,
     withLive
   };
+  liveClocks.set(testClock, liveClock);
+  return [testClock, scheduler];
 });
 /**
  * Creates a `Layer` which constructs a `TestClock`.
@@ -234,7 +326,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (options) {
  * @category layers
  * @since 4.0.0
  */
-export const layer = /*#__PURE__*/flow(make, /*#__PURE__*/Layer.effect(Clock.Clock));
+export const layer = options => Layer.effectContext(Effect.map(makeWithScheduler(options), ([testClock, scheduler]) => Context.make(Clock.Clock, testClock).pipe(Context.add(Scheduler.Scheduler, scheduler))));
 /**
  * Retrieves the `TestClock` service for this test and uses it to run the
  * specified workflow.

@@ -8,6 +8,19 @@
  * grouped, id-based, and side-effect-only resolver constructors, and keeps
  * batches separated by the active SQL transaction connection.
  *
+ * The active transaction is found through the `SqlClient` in each request's
+ * context, and otherwise through the innermost transaction started with
+ * `SqlClient.makeWithTransaction`.
+ *
+ * Only the transaction connection separates batches. Other differences in
+ * caller services do not: `execute` and result decoding are provided with the
+ * first entry's context, while request encoding uses each entry's own context.
+ * In particular, callers outside a transaction can share one batch even when
+ * they provide different tenant or authorization services. Do not rely on
+ * per-caller services to isolate such SQL operations; use separate resolver
+ * instances for different tenants or authorization settings, or include those
+ * values in the request payload and handle them explicitly in `execute`.
+ *
  * @stability unstable
  * @since 4.0.0
  */

@@ -261,7 +261,8 @@ export const combine = /*#__PURE__*/dual(2, (self, that) => make((x, y) => self(
  * comparison stops at the first equivalence that returns `false`. Empty
  * collections return an equivalence that always returns `true`. The result is
  * also an equivalence that satisfies reflexive, symmetric, and transitive
- * properties.
+ * properties. The collection is materialized when the equivalence is created,
+ * so it must be finite.
  *
  * **Example** (Combining multiple field equivalences)
  *
@@ -313,14 +314,17 @@ export const combine = /*#__PURE__*/dual(2, (self, that) => make((x, y) => self(
  * @category combining
  * @since 2.0.0
  */
-export const combineAll = collection => make((x, y) => {
-  for (const equivalence of collection) {
-    if (!equivalence(x, y)) {
-      return false;
+export const combineAll = collection => {
+  const equivalences = Array.from(collection);
+  return make((x, y) => {
+    for (const equivalence of equivalences) {
+      if (!equivalence(x, y)) {
+        return false;
+      }
     }
-  }
-  return true;
-});
+    return true;
+  });
+};
 /**
  * Transforms an equivalence relation by mapping the input values before comparison.
  *

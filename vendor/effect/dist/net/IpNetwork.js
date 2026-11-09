@@ -7,7 +7,7 @@
 import * as Equal from "../Equal.js";
 import { dual } from "../Function.js";
 import * as Hash from "../Hash.js";
-import { NodeInspectSymbol } from "../Inspectable.js";
+import * as Inspectable from "../Inspectable.js";
 import { hasProperty } from "../Predicate.js";
 import * as Result from "../Result.js";
 import * as IpInterface from "./IpInterface.js";
@@ -38,6 +38,7 @@ export const isIpv6Network = u => isIpNetwork(u) && NetAddress.isIpv6Address(u.a
  */
 export const isIpNetwork = u => hasProperty(u, TypeId);
 const IpNetworkProto = {
+  ...Inspectable.BaseProto,
   _tag: "IpNetwork",
   [TypeId]: TypeId,
   [Equal.symbol](that) {
@@ -51,9 +52,6 @@ const IpNetworkProto = {
   },
   toJSON() {
     return this.toString();
-  },
-  [NodeInspectSymbol]() {
-    return this.toJSON();
   }
 };
 const fromInterfaceValue = value => {
@@ -165,6 +163,64 @@ export const fromString = input => {
     prefix: "required"
   }), value => make(value.address, value.prefixLength));
 };
+const fromParts = (input, toAddress) => hasProperty(input, "address") && hasProperty(input, "prefixLength") ? Result.flatMap(toAddress(input.address), address => make(address, input.prefixLength)) : Result.fail(new NetAddress.NetAddressError({
+  input,
+  message: "expected an address and prefix length"
+}));
+/**
+ * Converts an `Ipv4NetworkInput` to an IPv4 network prefix, parsing strings
+ * like `ipv4FromString`, converting parts like `make`, and returning network
+ * prefixes unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export const ipv4FromInput = input => {
+  if (isIpv4Network(input)) return Result.succeed(input);
+  if (typeof input === "string") return ipv4FromString(input);
+  return fromParts(input, NetAddress.ipv4FromInput);
+};
+/**
+ * Converts an `Ipv6NetworkInput` to an IPv6 network prefix, parsing strings
+ * like `ipv6FromString`, converting parts like `make`, and returning network
+ * prefixes unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export const ipv6FromInput = input => {
+  if (isIpv6Network(input)) return Result.succeed(input);
+  if (typeof input === "string") return ipv6FromString(input);
+  return fromParts(input, NetAddress.ipv6FromInput);
+};
+/**
+ * Converts an `IpNetworkInput` to a network prefix, parsing strings like
+ * `fromString`, converting parts like `make`, and returning network prefixes
+ * unchanged.
+ *
+ * **Gotchas**
+ *
+ * Like `make`, an address with host bits set is rejected rather than truncated.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export const fromInput = input => {
+  if (isIpNetwork(input)) return Result.succeed(input);
+  if (typeof input === "string") return fromString(input);
+  return fromParts(input, NetAddress.ipFromInput);
+};
+/**
+ * Converts a trusted `IpNetworkInput` to a network prefix, throwing on failure.
+ *
+ * @stability unstable
+ * @category unsafe
+ * @since 4.0.0
+ */
+export const fromInputUnsafe = input => Result.getOrThrow(fromInput(input));
 /**
  * Creates a trusted network prefix, throwing when its address or prefix is invalid.
  *

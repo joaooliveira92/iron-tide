@@ -32,6 +32,11 @@ export declare class OtlpSerialization extends OtlpSerialization_base {
 /**
  * Provides `OtlpSerialization` using OTLP/HTTP JSON bodies.
  *
+ * **Details**
+ *
+ * `NaN`, `Infinity` and `-Infinity` are written as the strings OTLP/JSON
+ * expects, not as `null`. `bytesValue` data is written as a base64 string.
+ *
  * @stability unstable
  * @category layers
  * @since 4.0.0

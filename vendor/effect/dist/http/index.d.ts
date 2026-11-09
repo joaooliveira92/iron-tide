@@ -139,6 +139,11 @@ export * as Multipart from "./Multipart.ts";
 export * as MultipartParser from "./MultipartParser.ts";
 /**
  * @stability unstable
+ * @since 4.0.6
+ */
+export * as ProblemDetails from "./ProblemDetails.ts";
+/**
+ * @stability unstable
  * @since 4.0.0
  */
 export * as Template from "./Template.ts";

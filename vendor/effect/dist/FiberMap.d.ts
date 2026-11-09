@@ -43,6 +43,8 @@ export interface FiberMap<in out K, out A = unknown, out E = unknown> extends Pi
     state: {
         readonly _tag: "Open";
         readonly backing: MutableHashMap.MutableHashMap<K, Fiber.Fiber<A, E>>;
+        /** Every fiber the map still owns: the keyed ones plus replaced fibers that are still interrupting. */
+        readonly fibers: Set<Fiber.Fiber<A, E>>;
     } | {
         readonly _tag: "Closed";
     };

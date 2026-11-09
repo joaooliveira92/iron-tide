@@ -66,13 +66,19 @@ const windowsTheme = {
 /**
  * Creates a prompt theme using the current platform defaults.
  *
+ * **Details**
+ *
+ * Unless `colors` is provided, it is detected when the theme is created:
+ * colors are enabled when stdout is a TTY and `NO_COLOR` is unset or empty.
+ *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
 export const makeTheme = options => ({
   ...(process.platform === "win32" ? windowsTheme : defaultTheme),
-  ...options
+  ...options,
+  colors: options?.colors ?? Ansi.detectColors()
 });
 /**
  * Context reference for the theme used by built-in prompts.
@@ -80,7 +86,13 @@ export const makeTheme = options => ({
  * **Details**
  *
  * Provide this reference once to theme every prompt in an application. A
- * prompt's `theme` option takes precedence over the context value.
+ * prompt's `theme` option takes precedence over the context value. The
+ * command wizard also reads `colors` from this reference, so provide a theme
+ * with `colors: false` to disable wizard styling.
+ *
+ * The default value is created with `makeTheme` the first time it is read,
+ * so color detection runs once per process. Changes to `NO_COLOR` after the
+ * first prompt do not affect the default theme.
  *
  * @stability unstable
  * @category services
@@ -111,6 +123,7 @@ const getTheme = options => Effect.map(Theme, theme => ({
  * const terminal = Terminal.make({
  *   columns: Effect.succeed(80),
  *   rows: Effect.succeed(24),
+ *   size: Effect.die("unused"),
  *   readInput: Effect.succeed({} as never),
  *   readLine: Effect.die("unused"),
  *   display: () => Effect.void
@@ -165,9 +178,8 @@ export const all = function () {
   }
   return allTupled(arguments[0]);
 };
-const annotateLine = line => Ansi.annotate(line, Ansi.bold);
-const annotateErrorLine = (line, color) => Ansi.annotate(line, Ansi.combine(Ansi.italicized, color));
-const annotateSymbol = (symbol, ...styles) => symbol.length === 0 ? "" : Ansi.annotate(symbol, ...styles);
+const annotateErrorLine = (theme, line) => Ansi.annotate(theme.colors, line, Ansi.combine(Ansi.italicized, theme.errorColor));
+const annotateSymbol = (theme, symbol, ...styles) => symbol.length === 0 ? "" : Ansi.annotate(theme.colors, symbol, ...styles);
 const separateSymbol = (symbol, text) => symbol.length === 0 ? text : symbol + " " + text;
 const renderPagingPrefix = (theme, showArrowUp, showArrowDown) => {
   const width = Math.max(theme.arrowUp.length, theme.arrowDown.length);
@@ -512,7 +524,7 @@ export const Password = options => basePrompt(options, "password").pipe(map(Reda
  */
 export const run = /*#__PURE__*/Effect.fnUntraced(function* (self) {
   const terminal = yield* Terminal.Terminal;
-  const input = yield* terminal.readInput;
+  const input = yield* Effect.cached(terminal.readInput);
   return yield* runWithInput(self, terminal, input);
 }, /*#__PURE__*/Effect.mapError(() => new Terminal.QuitError({})), Effect.scoped);
 const getSelectInitialIndex = choices => {
@@ -723,7 +735,7 @@ const runWithInput = (prompt, terminal, input) => Effect.suspend(() => {
   switch (op._tag) {
     case "Loop":
       {
-        return runLoop(op, terminal, input);
+        return Effect.flatMap(input, queue => runLoop(op, terminal, queue));
       }
     case "OnSuccess":
       {
@@ -811,7 +823,7 @@ const handleConfirmClear = options => {
     const columns = yield* terminal.columns;
     const figures = yield* getTheme(options);
     const confirmMessage = state.value ? options.placeholder.defaultConfirm : options.placeholder.defaultDeny;
-    const promptText = renderConfirmOutput(confirmMessage, figures.prefix, figures.pointerSmall, options, {
+    const promptText = renderPrompt(confirmMessage, options.message, figures.prefix, figures.pointerSmall, figures, {
       plain: true
     });
     const clearOutput = eraseText(promptText, columns);
@@ -819,25 +831,24 @@ const handleConfirmClear = options => {
     return clearOutput + resetCurrentLine;
   });
 };
-const renderConfirmOutput = (confirm, leadingSymbol, trailingSymbol, options, renderOptions) => renderPrompt(confirm, options.message, leadingSymbol, trailingSymbol, renderOptions);
 const renderConfirmNextFrame = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
-  const leadingSymbol = annotateSymbol(figures.prefix, figures.primaryColor);
-  const trailingSymbol = annotateSymbol(figures.pointerSmall, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.prefix, figures.primaryColor);
+  const trailingSymbol = annotateSymbol(figures, figures.pointerSmall, figures.mutedColor);
   // Marking these explicitly as present with `!` because they always will be
   // and there is really no value in adding a `DeepRequired` type helper just
   // for these internal cases
   const confirmMessage = state.value ? options.placeholder.defaultConfirm : options.placeholder.defaultDeny;
-  const confirm = Ansi.annotate(confirmMessage, figures.mutedColor);
-  const promptMsg = renderConfirmOutput(confirm, leadingSymbol, trailingSymbol, options);
+  const confirm = Ansi.annotate(figures.colors, confirmMessage, figures.mutedColor);
+  const promptMsg = renderPrompt(confirm, options.message, leadingSymbol, trailingSymbol, figures);
   return Ansi.cursorHide + promptMsg;
 });
 const renderConfirmSubmission = /*#__PURE__*/Effect.fnUntraced(function* (value, options) {
   const figures = yield* getTheme(options);
-  const leadingSymbol = annotateSymbol(figures.tick, figures.successColor);
-  const trailingSymbol = annotateSymbol(figures.ellipsis, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.tick, figures.successColor);
+  const trailingSymbol = annotateSymbol(figures, figures.ellipsis, figures.mutedColor);
   const confirmMessage = value ? options.label.confirm : options.label.deny;
-  const promptMsg = renderConfirmOutput(confirmMessage, leadingSymbol, trailingSymbol, options);
+  const promptMsg = renderPrompt(confirmMessage, options.message, leadingSymbol, trailingSymbol, figures);
   return promptMsg + "\n";
 });
 const handleConfirmRender = options => {
@@ -881,7 +892,7 @@ const handleDateClear = options => {
     const figures = yield* getTheme(options);
     const resetCurrentLine = Ansi.eraseLine + Ansi.cursorLeft;
     const parts = Arr.reduce(state.dateParts, "", (doc, part) => doc + part.toString());
-    const promptText = renderDateOutput(figures.prefix, figures.pointerSmall, parts, options, {
+    const promptText = renderPrompt(parts, options.message, figures.prefix, figures.pointerSmall, figures, {
       plain: true
     });
     const errorText = Option.isSome(state.error) ? Arr.match(state.error.value.split(NEWLINE_REGEXP), {
@@ -896,8 +907,8 @@ const renderDateError = (state, pointer, theme) => {
   if (Option.isSome(state.error)) {
     const errorLines = state.error.value.split(NEWLINE_REGEXP);
     if (Arr.isReadonlyArrayNonEmpty(errorLines)) {
-      const prefix = annotateSymbol(pointer, theme.errorColor);
-      const lines = Arr.map(errorLines, str => annotateErrorLine(str, theme.errorColor));
+      const prefix = annotateSymbol(theme, pointer, theme.errorColor);
+      const lines = Arr.map(errorLines, str => annotateErrorLine(theme, str));
       return Ansi.cursorSavePosition + "\n" + separateSymbol(prefix, lines.join("\n")) + Ansi.cursorRestorePosition;
     }
   }
@@ -908,27 +919,26 @@ const renderParts = (state, theme, submitted = false) => {
     const partDoc = part.toString();
     if (currentIndex === state.cursor && !submitted) {
       const annotation = Ansi.combine(Ansi.underlined, theme.primaryColor);
-      return doc + Ansi.annotate(partDoc, annotation);
+      return doc + Ansi.annotate(theme.colors, partDoc, annotation);
     }
     return doc + partDoc;
   });
 };
-const renderDateOutput = (leadingSymbol, trailingSymbol, parts, options, renderOptions) => renderPrompt(parts, options.message, leadingSymbol, trailingSymbol, renderOptions);
 const renderDateNextFrame = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
-  const leadingSymbol = annotateSymbol(figures.prefix, figures.primaryColor);
-  const trailingSymbol = annotateSymbol(figures.pointerSmall, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.prefix, figures.primaryColor);
+  const trailingSymbol = annotateSymbol(figures, figures.pointerSmall, figures.mutedColor);
   const parts = renderParts(state, figures);
-  const promptMsg = renderDateOutput(leadingSymbol, trailingSymbol, parts, options);
+  const promptMsg = renderPrompt(parts, options.message, leadingSymbol, trailingSymbol, figures);
   const errorMsg = renderDateError(state, figures.pointerSmall, figures);
   return Ansi.cursorHide + promptMsg + errorMsg;
 });
 const renderDateSubmission = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
-  const leadingSymbol = annotateSymbol(figures.tick, figures.successColor);
-  const trailingSymbol = annotateSymbol(figures.ellipsis, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.tick, figures.successColor);
+  const trailingSymbol = annotateSymbol(figures, figures.ellipsis, figures.mutedColor);
   const parts = renderParts(state, figures, true);
-  const promptMsg = renderDateOutput(leadingSymbol, trailingSymbol, parts, options);
+  const promptMsg = renderPrompt(parts, options.message, leadingSymbol, trailingSymbol, figures);
   return promptMsg + "\n";
 });
 const processUp = state => {
@@ -1407,11 +1417,11 @@ const handleFileClear = options => {
     const resolvedPath = selectedPath === undefined ? currentPath : path.resolve(currentPath, selectedPath);
     const resolvedPathText = separateSymbol(figures.pointerSmall, resolvedPath);
     const isConfirming = showConfirmation(state.confirm);
-    const promptText = isConfirming ? renderPrompt("(Y/n)", CONFIRM_MESSAGE, figures.prefix, figures.pointerSmall, {
+    const promptText = isConfirming ? renderPrompt("(Y/n)", CONFIRM_MESSAGE, figures.prefix, figures.pointerSmall, figures, {
       plain: true
     }) : renderPrompt(renderFileFilter(state, figures, {
       plain: true
-    }), options.message, figures.tick, figures.ellipsis, {
+    }), options.message, figures.tick, figures.ellipsis, figures, {
       plain: true
     });
     const filesText = isConfirming ? "" : renderFiles(state, state.files, figures, options, {
@@ -1423,7 +1433,7 @@ const handleFileClear = options => {
     return clearOutput + resetCurrentLine;
   });
 };
-const renderPrompt = (confirm, message, leadingSymbol, trailingSymbol, options) => {
+const renderPrompt = (confirm, message, leadingSymbol, trailingSymbol, theme, options) => {
   const prefix = leadingSymbol.length === 0 ? "" : leadingSymbol + " ";
   const renderLine = line => {
     let output = prefix + line;
@@ -1437,11 +1447,10 @@ const renderPrompt = (confirm, message, leadingSymbol, trailingSymbol, options) 
     }
     return output;
   };
-  const annotate = options?.plain === true ? line => line : annotateLine;
   return Arr.match(message.split(NEWLINE_REGEXP), {
     onEmpty: () => renderLine(""),
     onNonEmpty: promptLines => {
-      const lines = Arr.map(promptLines, line => annotate(line));
+      const lines = options?.plain === true ? promptLines : Arr.map(promptLines, line => Ansi.annotate(theme.colors, line, Ansi.bold));
       return renderLine(lines.join("\n"));
     }
   });
@@ -1449,7 +1458,7 @@ const renderPrompt = (confirm, message, leadingSymbol, trailingSymbol, options) 
 const renderPrefix = (state, toDisplay, currentIndex, length, figures, renderOptions) => {
   const prefix = renderPagingPrefix(figures, currentIndex === toDisplay.startIndex && toDisplay.startIndex > 0, currentIndex === toDisplay.endIndex - 1 && toDisplay.endIndex < length);
   if (state.cursor === currentIndex) {
-    return renderOptions?.plain === true ? figures.pointer + prefix : annotateSymbol(figures.pointer, figures.primaryColor) + prefix;
+    return renderOptions?.plain === true ? figures.pointer + prefix : annotateSymbol(figures, figures.pointer, figures.primaryColor) + prefix;
   }
   return prefix + " ".repeat(figures.pointer.length);
 };
@@ -1457,16 +1466,16 @@ const renderFileName = (file, isSelected, theme, renderOptions) => {
   if (renderOptions?.plain === true) {
     return file;
   }
-  return isSelected ? Ansi.annotate(file, Ansi.combine(Ansi.underlined, theme.primaryColor)) : file;
+  return isSelected ? Ansi.annotate(theme.colors, file, Ansi.combine(Ansi.underlined, theme.primaryColor)) : file;
 };
 const renderFileFilter = (state, theme, renderOptions) => {
-  const filterValue = state.query.length === 0 ? renderOptions?.plain === true ? FILE_FILTER_PLACEHOLDER : Ansi.annotate(FILE_FILTER_PLACEHOLDER, theme.mutedColor) : renderOptions?.plain === true ? state.query : Ansi.annotate(state.query, Ansi.combine(Ansi.underlined, theme.primaryColor));
+  const filterValue = state.query.length === 0 ? renderOptions?.plain === true ? FILE_FILTER_PLACEHOLDER : Ansi.annotate(theme.colors, FILE_FILTER_PLACEHOLDER, theme.mutedColor) : renderOptions?.plain === true ? state.query : Ansi.annotate(theme.colors, state.query, Ansi.combine(Ansi.underlined, theme.primaryColor));
   return `[${FILE_FILTER_LABEL}: ${filterValue}]`;
 };
 const renderFiles = (state, files, figures, options, renderOptions) => {
   const length = files.length;
   if (length === 0) {
-    return renderOptions?.plain === true ? FILE_EMPTY_MESSAGE : Ansi.annotate(FILE_EMPTY_MESSAGE, figures.mutedColor);
+    return renderOptions?.plain === true ? FILE_EMPTY_MESSAGE : Ansi.annotate(figures.colors, FILE_EMPTY_MESSAGE, figures.mutedColor);
   }
   const toDisplay = entriesToDisplay(state.cursor, length, options.maxPerPage);
   const documents = [];
@@ -1484,26 +1493,26 @@ const renderFileNextFrame = /*#__PURE__*/Effect.fnUntraced(function* (state, opt
   const currentPath = yield* resolveCurrentPath(state.path, options);
   const selectedPath = state.files[state.cursor];
   const resolvedPath = selectedPath === undefined ? currentPath : path.resolve(currentPath, selectedPath);
-  const resolvedPathMsg = Ansi.annotate(separateSymbol(figures.pointerSmall, resolvedPath), figures.mutedColor);
+  const resolvedPathMsg = Ansi.annotate(figures.colors, separateSymbol(figures.pointerSmall, resolvedPath), figures.mutedColor);
   if (showConfirmation(state.confirm)) {
-    const leadingSymbol = annotateSymbol(figures.prefix, figures.primaryColor);
-    const trailingSymbol = annotateSymbol(figures.pointerSmall, figures.mutedColor);
-    const confirm = Ansi.annotate("(Y/n)", figures.mutedColor);
-    const promptMsg = renderPrompt(confirm, CONFIRM_MESSAGE, leadingSymbol, trailingSymbol);
+    const leadingSymbol = annotateSymbol(figures, figures.prefix, figures.primaryColor);
+    const trailingSymbol = annotateSymbol(figures, figures.pointerSmall, figures.mutedColor);
+    const confirm = Ansi.annotate(figures.colors, "(Y/n)", figures.mutedColor);
+    const promptMsg = renderPrompt(confirm, CONFIRM_MESSAGE, leadingSymbol, trailingSymbol, figures);
     return Ansi.cursorHide + promptMsg + "\n" + resolvedPathMsg;
   }
-  const leadingSymbol = annotateSymbol(figures.tick, figures.successColor);
-  const trailingSymbol = annotateSymbol(figures.ellipsis, figures.mutedColor);
-  const promptMsg = renderPrompt(renderFileFilter(state, figures), options.message, leadingSymbol, trailingSymbol);
+  const leadingSymbol = annotateSymbol(figures, figures.tick, figures.successColor);
+  const trailingSymbol = annotateSymbol(figures, figures.ellipsis, figures.mutedColor);
+  const promptMsg = renderPrompt(renderFileFilter(state, figures), options.message, leadingSymbol, trailingSymbol, figures);
   const files = renderFiles(state, state.files, figures, options);
   return Ansi.cursorHide + promptMsg + "\n" + resolvedPathMsg + "\n" + files;
 });
 const renderFileSubmission = /*#__PURE__*/Effect.fnUntraced(function* (state, value, options) {
   const figures = yield* getTheme(options);
-  const leadingSymbol = annotateSymbol(figures.tick, figures.successColor);
-  const trailingSymbol = annotateSymbol(figures.ellipsis, figures.mutedColor);
-  const promptMsg = renderPrompt(renderFileFilter(state, figures), options.message, leadingSymbol, trailingSymbol);
-  return promptMsg + " " + Ansi.annotate(value, figures.submittedColor) + "\n";
+  const leadingSymbol = annotateSymbol(figures, figures.tick, figures.successColor);
+  const trailingSymbol = annotateSymbol(figures, figures.ellipsis, figures.mutedColor);
+  const promptMsg = renderPrompt(renderFileFilter(state, figures), options.message, leadingSymbol, trailingSymbol, figures);
+  return promptMsg + " " + Ansi.annotate(figures.colors, value, figures.submittedColor) + "\n";
 });
 const handleFileRender = options => {
   return (state, action) => {
@@ -1712,8 +1721,8 @@ const renderMultiSelectError = (state, pointer, theme, renderOptions) => {
         if (renderOptions?.plain === true) {
           return separateSymbol(pointer, errorLines.join("\n"));
         }
-        const prefix = annotateSymbol(pointer, theme.errorColor);
-        const lines = Arr.map(errorLines, str => annotateErrorLine(str, theme.errorColor));
+        const prefix = annotateSymbol(theme, pointer, theme.errorColor);
+        const lines = Arr.map(errorLines, str => annotateErrorLine(theme, str));
         return Ansi.cursorSavePosition + "\n" + separateSymbol(prefix, lines.join("\n")) + Ansi.cursorRestorePosition;
       }
     });
@@ -1723,7 +1732,7 @@ const renderMultiSelectError = (state, pointer, theme, renderOptions) => {
 const renderChoiceDescription = (choice, isActive, theme, renderOptions) => {
   if (!choice.disabled && choice.description && isActive) {
     const text = theme.descriptionSeparator + choice.description;
-    return renderOptions?.plain === true ? text : Ansi.annotate(text, theme.mutedColor);
+    return renderOptions?.plain === true ? text : Ansi.annotate(theme.colors, text, theme.mutedColor);
   }
   return "";
 };
@@ -1732,7 +1741,7 @@ const renderMultiSelectTitle = (title, isHighlighted, theme, renderOptions) => {
   if (renderOptions?.plain === true || !isHighlighted) {
     return title;
   }
-  return Ansi.annotate(title, Ansi.combine(Ansi.underlined, theme.primaryColor));
+  return Ansi.annotate(theme.colors, title, Ansi.combine(Ansi.underlined, theme.primaryColor));
 };
 const renderMultiSelectChoices = (state, options, figures, renderOptions) => {
   const choices = options.choices;
@@ -1763,7 +1772,7 @@ const renderMultiSelectChoices = (state, options, figures, renderOptions) => {
       const choiceIndex = index - metaOptions.length;
       const isSelected = state.selectedIndices.has(choiceIndex);
       const checkbox = isSelected ? figures.checkboxOn : figures.checkboxOff;
-      const annotatedCheckbox = isHighlighted && renderOptions?.plain !== true ? Ansi.annotate(checkbox, figures.primaryColor) : checkbox;
+      const annotatedCheckbox = isHighlighted && renderOptions?.plain !== true ? Ansi.annotate(figures.colors, checkbox, figures.primaryColor) : checkbox;
       const selectChoice = choice;
       const title = renderChoiceTitle(selectChoice, isHighlighted, figures, renderOptions);
       const description = renderChoiceDescription(selectChoice, isHighlighted, figures, renderOptions);
@@ -1776,9 +1785,9 @@ const renderMultiSelectChoices = (state, options, figures, renderOptions) => {
 const renderMultiSelectNextFrame = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
   const choices = renderMultiSelectChoices(state, options, figures);
-  const leadingSymbol = annotateSymbol(figures.prefix, figures.primaryColor);
-  const trailingSymbol = annotateSymbol(figures.pointerSmall, figures.mutedColor);
-  const promptMsg = renderSelectOutput(leadingSymbol, trailingSymbol, options);
+  const leadingSymbol = annotateSymbol(figures, figures.prefix, figures.primaryColor);
+  const trailingSymbol = annotateSymbol(figures, figures.pointerSmall, figures.mutedColor);
+  const promptMsg = renderSelectOutput(leadingSymbol, trailingSymbol, options, figures);
   const error = renderMultiSelectError(state, figures.pointer, figures);
   return Ansi.cursorHide + withSelectHeader(promptMsg, choices) + error;
 });
@@ -1786,10 +1795,10 @@ const renderMultiSelectSubmission = /*#__PURE__*/Effect.fnUntraced(function* (st
   const figures = yield* getTheme(options);
   const selectedChoices = Array.from(state.selectedIndices).sort(EffectNumber.Order).map(index => options.choices[index].title);
   const selectedText = selectedChoices.join(", ");
-  const leadingSymbol = annotateSymbol(figures.tick, figures.successColor);
-  const trailingSymbol = annotateSymbol(figures.ellipsis, figures.mutedColor);
-  const promptMsg = renderSelectOutput(leadingSymbol, trailingSymbol, options) ?? leadingSymbol;
-  return promptMsg + " " + Ansi.annotate(selectedText, figures.submittedColor) + "\n";
+  const leadingSymbol = annotateSymbol(figures, figures.tick, figures.successColor);
+  const trailingSymbol = annotateSymbol(figures, figures.ellipsis, figures.mutedColor);
+  const promptMsg = renderSelectOutput(leadingSymbol, trailingSymbol, options, figures) ?? leadingSymbol;
+  return promptMsg + " " + Ansi.annotate(figures.colors, selectedText, figures.submittedColor) + "\n";
 });
 const processMultiSelectCursorUp = (state, totalChoices) => {
   const newIndex = state.index === 0 ? totalChoices - 1 : state.index - 1;
@@ -1853,7 +1862,7 @@ const handleMultiSelectClear = options => Effect.fnUntraced(function* (state, _)
   const columns = yield* terminal.columns;
   const figures = yield* getTheme(options);
   const clearPrompt = Ansi.eraseLine + Ansi.cursorLeft;
-  const promptText = renderSelectOutput(figures.prefix, figures.pointerSmall, options, {
+  const promptText = renderSelectOutput(figures.prefix, figures.pointerSmall, options, figures, {
     plain: true
   });
   const choicesText = renderMultiSelectChoices(state, options, figures, {
@@ -1956,7 +1965,7 @@ const renderNumberInput = (state, submitted, theme, renderOptions) => {
     return value;
   }
   const annotation = Option.isSome(state.error) ? theme.errorColor : Ansi.combine(Ansi.underlined, theme.primaryColor);
-  return Ansi.annotate(value, annotation);
+  return Ansi.annotate(theme.colors, value, annotation);
 };
 const renderNumberError = (state, pointer, theme, renderOptions) => {
   if (Option.isSome(state.error)) {
@@ -1966,8 +1975,8 @@ const renderNumberError = (state, pointer, theme, renderOptions) => {
         if (renderOptions?.plain === true) {
           return separateSymbol(pointer, errorLines.join("\n"));
         }
-        const prefix = annotateSymbol(pointer, theme.errorColor);
-        const lines = Arr.map(errorLines, str => annotateErrorLine(str, theme.errorColor));
+        const prefix = annotateSymbol(theme, pointer, theme.errorColor);
+        const lines = Arr.map(errorLines, str => annotateErrorLine(theme, str));
         return Ansi.cursorSavePosition + "\n" + separateSymbol(prefix, lines.join("\n")) + Ansi.cursorRestorePosition;
       }
     });
@@ -1976,20 +1985,20 @@ const renderNumberError = (state, pointer, theme, renderOptions) => {
 };
 const renderNumberOutput = (state, leadingSymbol, trailingSymbol, options, theme, renderOptions, submitted = false) => {
   const value = renderNumberInput(state, submitted, theme, renderOptions);
-  return renderPrompt(value, options.message, leadingSymbol, trailingSymbol, renderOptions);
+  return renderPrompt(value, options.message, leadingSymbol, trailingSymbol, theme, renderOptions);
 };
 const renderNumberNextFrame = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
-  const leadingSymbol = annotateSymbol(figures.prefix, figures.primaryColor);
-  const trailingSymbol = annotateSymbol(figures.pointerSmall, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.prefix, figures.primaryColor);
+  const trailingSymbol = annotateSymbol(figures, figures.pointerSmall, figures.mutedColor);
   const errorMsg = renderNumberError(state, figures.pointerSmall, figures);
   const promptMsg = renderNumberOutput(state, leadingSymbol, trailingSymbol, options, figures);
   return promptMsg + errorMsg;
 });
 const renderNumberSubmission = /*#__PURE__*/Effect.fnUntraced(function* (nextState, options) {
   const figures = yield* getTheme(options);
-  const leadingSymbol = annotateSymbol(figures.tick, figures.successColor);
-  const trailingSymbol = annotateSymbol(figures.ellipsis, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.tick, figures.successColor);
+  const trailingSymbol = annotateSymbol(figures, figures.ellipsis, figures.mutedColor);
   const promptMsg = renderNumberOutput(nextState, leadingSymbol, trailingSymbol, options, figures, undefined, true);
   return promptMsg + "\n";
 });
@@ -2248,15 +2257,15 @@ const updateAutoCompleteState = (state, options, query) => {
   };
 };
 const autoCompleteCursor = state => Option.getOrElse(Arr.findFirstIndex(state.filtered, index => index === state.index), () => 0);
-const renderSelectOutput = (leadingSymbol, trailingSymbol, options, renderOptions) => options.message === undefined ? undefined : renderPrompt("", options.message, leadingSymbol, trailingSymbol, renderOptions);
+const renderSelectOutput = (leadingSymbol, trailingSymbol, options, theme, renderOptions) => options.message === undefined ? undefined : renderPrompt("", options.message, leadingSymbol, trailingSymbol, theme, renderOptions);
 const withSelectHeader = (header, body) => header === undefined ? body : header + "\n" + body;
 const renderAutoCompleteFilter = (state, options, theme, renderOptions) => {
-  const filterValue = state.query.length === 0 ? renderOptions?.plain === true ? options.filterPlaceholder : Ansi.annotate(options.filterPlaceholder, theme.mutedColor) : renderOptions?.plain === true ? state.query : Ansi.annotate(state.query, Ansi.combine(Ansi.underlined, theme.primaryColor));
+  const filterValue = state.query.length === 0 ? renderOptions?.plain === true ? options.filterPlaceholder : Ansi.annotate(theme.colors, options.filterPlaceholder, theme.mutedColor) : renderOptions?.plain === true ? state.query : Ansi.annotate(theme.colors, state.query, Ansi.combine(Ansi.underlined, theme.primaryColor));
   return `[${options.filterLabel}: ${filterValue}]`;
 };
 const renderAutoCompleteOutput = (state, leadingSymbol, trailingSymbol, options, theme, renderOptions) => {
   const filter = renderAutoCompleteFilter(state, options, theme, renderOptions);
-  return renderPrompt(filter, options.message, leadingSymbol, trailingSymbol, renderOptions);
+  return renderPrompt(filter, options.message, leadingSymbol, trailingSymbol, theme, renderOptions);
 };
 const renderChoicePrefix = (state, choices, toDisplay, currentIndex, figures, renderOptions) => {
   const prefix = renderPagingPrefix(figures, currentIndex === toDisplay.startIndex && toDisplay.startIndex > 0, currentIndex === toDisplay.endIndex - 1 && toDisplay.endIndex < choices.length);
@@ -2265,9 +2274,9 @@ const renderChoicePrefix = (state, choices, toDisplay, currentIndex, figures, re
   }
   if (choices[currentIndex].disabled) {
     const annotation = Ansi.combine(Ansi.bold, figures.mutedColor);
-    return state === currentIndex ? annotateSymbol(figures.pointer, annotation) + prefix : prefix + " ".repeat(figures.pointer.length);
+    return state === currentIndex ? annotateSymbol(figures, figures.pointer, annotation) + prefix : prefix + " ".repeat(figures.pointer.length);
   }
-  return state === currentIndex ? annotateSymbol(figures.pointer, figures.primaryColor) + prefix : prefix + " ".repeat(figures.pointer.length);
+  return state === currentIndex ? annotateSymbol(figures, figures.pointer, figures.primaryColor) + prefix : prefix + " ".repeat(figures.pointer.length);
 };
 const renderAutoCompleteChoicePrefix = (state, options, toDisplay, currentIndex, figures, renderOptions) => {
   const prefix = renderPagingPrefix(figures, currentIndex === toDisplay.startIndex && toDisplay.startIndex > 0, currentIndex === toDisplay.endIndex - 1 && toDisplay.endIndex < state.filtered.length);
@@ -2278,9 +2287,9 @@ const renderAutoCompleteChoicePrefix = (state, options, toDisplay, currentIndex,
   const choice = options.choices[choiceIndex];
   if (choice.disabled) {
     const annotation = Ansi.combine(Ansi.bold, figures.mutedColor);
-    return state.index === choiceIndex ? annotateSymbol(figures.pointer, annotation) + prefix : prefix + " ".repeat(figures.pointer.length);
+    return state.index === choiceIndex ? annotateSymbol(figures, figures.pointer, annotation) + prefix : prefix + " ".repeat(figures.pointer.length);
   }
-  return state.index === choiceIndex ? annotateSymbol(figures.pointer, figures.primaryColor) + prefix : prefix + " ".repeat(figures.pointer.length);
+  return state.index === choiceIndex ? annotateSymbol(figures, figures.pointer, figures.primaryColor) + prefix : prefix + " ".repeat(figures.pointer.length);
 };
 const renderChoiceTitle = (choice, isSelected, theme, renderOptions) => {
   if (renderOptions?.plain === true) {
@@ -2288,9 +2297,9 @@ const renderChoiceTitle = (choice, isSelected, theme, renderOptions) => {
   }
   const title = choice.title;
   if (isSelected) {
-    return choice.disabled ? Ansi.annotate(title, Ansi.combine(Ansi.underlined, theme.mutedColor)) : Ansi.annotate(title, Ansi.combine(Ansi.underlined, theme.primaryColor));
+    return choice.disabled ? Ansi.annotate(theme.colors, title, Ansi.combine(Ansi.underlined, theme.mutedColor)) : Ansi.annotate(theme.colors, title, Ansi.combine(Ansi.underlined, theme.primaryColor));
   }
-  return choice.disabled ? Ansi.annotate(title, Ansi.combine(Ansi.strikethrough, theme.mutedColor)) : title;
+  return choice.disabled ? Ansi.annotate(theme.colors, title, Ansi.combine(Ansi.strikethrough, theme.mutedColor)) : title;
 };
 const renderSelectChoices = (state, options, figures, renderOptions) => {
   const choices = options.choices;
@@ -2308,7 +2317,7 @@ const renderSelectChoices = (state, options, figures, renderOptions) => {
 };
 const renderAutoCompleteChoices = (state, options, figures, renderOptions) => {
   if (state.filtered.length === 0) {
-    return renderOptions?.plain === true ? options.emptyMessage : Ansi.annotate(options.emptyMessage, figures.mutedColor);
+    return renderOptions?.plain === true ? options.emptyMessage : Ansi.annotate(figures.colors, options.emptyMessage, figures.mutedColor);
   }
   const cursor = autoCompleteCursor(state);
   const toDisplay = entriesToDisplay(cursor, state.filtered.length, options.maxPerPage);
@@ -2327,34 +2336,34 @@ const renderAutoCompleteChoices = (state, options, figures, renderOptions) => {
 const renderSelectNextFrame = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
   const choices = renderSelectChoices(state, options, figures);
-  const leadingSymbol = annotateSymbol(figures.prefix, figures.primaryColor);
-  const trailingSymbol = annotateSymbol(figures.pointerSmall, figures.mutedColor);
-  const promptMsg = renderSelectOutput(leadingSymbol, trailingSymbol, options);
+  const leadingSymbol = annotateSymbol(figures, figures.prefix, figures.primaryColor);
+  const trailingSymbol = annotateSymbol(figures, figures.pointerSmall, figures.mutedColor);
+  const promptMsg = renderSelectOutput(leadingSymbol, trailingSymbol, options, figures);
   return Ansi.cursorHide + withSelectHeader(promptMsg, choices);
 });
 const renderAutoCompleteNextFrame = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
   const choices = renderAutoCompleteChoices(state, options, figures);
-  const leadingSymbol = annotateSymbol(figures.prefix, figures.primaryColor);
-  const trailingSymbol = annotateSymbol(figures.pointerSmall, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.prefix, figures.primaryColor);
+  const trailingSymbol = annotateSymbol(figures, figures.pointerSmall, figures.mutedColor);
   const promptMsg = renderAutoCompleteOutput(state, leadingSymbol, trailingSymbol, options, figures);
   return Ansi.cursorHide + promptMsg + "\n" + choices;
 });
 const renderSelectSubmission = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
   const selected = options.choices[state].title;
-  const leadingSymbol = annotateSymbol(figures.tick, figures.successColor);
-  const trailingSymbol = annotateSymbol(figures.ellipsis, figures.mutedColor);
-  const promptMsg = renderSelectOutput(leadingSymbol, trailingSymbol, options) ?? leadingSymbol;
-  return promptMsg + " " + Ansi.annotate(selected, figures.submittedColor) + "\n";
+  const leadingSymbol = annotateSymbol(figures, figures.tick, figures.successColor);
+  const trailingSymbol = annotateSymbol(figures, figures.ellipsis, figures.mutedColor);
+  const promptMsg = renderSelectOutput(leadingSymbol, trailingSymbol, options, figures) ?? leadingSymbol;
+  return promptMsg + " " + Ansi.annotate(figures.colors, selected, figures.submittedColor) + "\n";
 });
 const renderAutoCompleteSubmission = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
   const selected = options.choices[state.index].title;
-  const leadingSymbol = annotateSymbol(figures.tick, figures.successColor);
-  const trailingSymbol = annotateSymbol(figures.ellipsis, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.tick, figures.successColor);
+  const trailingSymbol = annotateSymbol(figures, figures.ellipsis, figures.mutedColor);
   const promptMsg = renderAutoCompleteOutput(state, leadingSymbol, trailingSymbol, options, figures);
-  return promptMsg + " " + Ansi.annotate(selected, figures.submittedColor) + "\n";
+  return promptMsg + " " + Ansi.annotate(figures.colors, selected, figures.submittedColor) + "\n";
 });
 const processSelectCursorUp = (state, choices) => {
   if (state === 0) {
@@ -2456,7 +2465,7 @@ const handleSelectClear = options => Effect.fnUntraced(function* (state, _) {
   const columns = yield* terminal.columns;
   const figures = yield* getTheme(options);
   const clearPrompt = Ansi.eraseLine + Ansi.cursorLeft;
-  const promptText = renderSelectOutput(figures.prefix, figures.pointerSmall, options, {
+  const promptText = renderSelectOutput(figures.prefix, figures.pointerSmall, options, figures, {
     plain: true
   });
   const choicesText = renderSelectChoices(state, options, figures, {
@@ -2621,11 +2630,11 @@ const renderTextInput = (nextState, options, theme, submitted, renderOptions) =>
       }
     case "password":
       {
-        return annotateSymbol(theme.passwordMask.repeat(text.length), annotation);
+        return annotateSymbol(theme, theme.passwordMask.repeat(text.length), annotation);
       }
     case "text":
       {
-        return Ansi.annotate(text, annotation);
+        return Ansi.annotate(theme.colors, text, annotation);
       }
   }
 };
@@ -2637,8 +2646,8 @@ const renderTextError = (nextState, pointer, theme, renderOptions) => {
         if (renderOptions?.plain === true) {
           return separateSymbol(pointer, errorLines.join("\n"));
         }
-        const prefix = annotateSymbol(pointer, theme.errorColor);
-        const lines = Arr.map(errorLines, str => annotateErrorLine(str, theme.errorColor));
+        const prefix = annotateSymbol(theme, pointer, theme.errorColor);
+        const lines = Arr.map(errorLines, str => annotateErrorLine(theme, str));
         return Ansi.cursorSavePosition + "\n" + separateSymbol(prefix, lines.join("\n")) + Ansi.cursorRestorePosition;
       }
     });
@@ -2647,12 +2656,12 @@ const renderTextError = (nextState, pointer, theme, renderOptions) => {
 };
 const renderTextOutput = (nextState, leadingSymbol, trailingSymbol, options, theme, renderOptions, submitted = false) => {
   const value = renderTextInput(nextState, options, theme, submitted, renderOptions);
-  return renderPrompt(value, options.message, leadingSymbol, trailingSymbol, renderOptions);
+  return renderPrompt(value, options.message, leadingSymbol, trailingSymbol, theme, renderOptions);
 };
 const renderTextNextFrame = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
-  const leadingSymbol = annotateSymbol(figures.prefix, figures.primaryColor);
-  const trailingSymbol = annotateSymbol(figures.pointerSmall, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.prefix, figures.primaryColor);
+  const trailingSymbol = annotateSymbol(figures, figures.pointerSmall, figures.mutedColor);
   const promptMsg = renderTextOutput(state, leadingSymbol, trailingSymbol, options, figures);
   const errorMsg = renderTextError(state, figures.pointerSmall, figures);
   const cursorWidth = options.type === "password" ? figures.passwordMask.length : 1;
@@ -2661,8 +2670,8 @@ const renderTextNextFrame = /*#__PURE__*/Effect.fnUntraced(function* (state, opt
 });
 const renderTextSubmission = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
-  const leadingSymbol = annotateSymbol(figures.tick, figures.successColor);
-  const trailingSymbol = annotateSymbol(figures.ellipsis, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.tick, figures.successColor);
+  const trailingSymbol = annotateSymbol(figures, figures.ellipsis, figures.mutedColor);
   const promptMsg = renderTextOutput(state, leadingSymbol, trailingSymbol, options, figures, undefined, true);
   return promptMsg + "\n";
 });
@@ -2870,36 +2879,33 @@ const handleToggleClear = /*#__PURE__*/Effect.fnUntraced(function* (options) {
   const figures = yield* getTheme(options);
   const clearPrompt = Ansi.eraseLine + Ansi.cursorLeft;
   const toggleText = options.active + " " + separateSymbol(figures.toggleSeparator, options.inactive);
-  const promptText = renderPrompt(toggleText, options.message, figures.prefix, figures.pointerSmall, {
+  const promptText = renderPrompt(toggleText, options.message, figures.prefix, figures.pointerSmall, figures, {
     plain: true
   });
   const clearOutput = eraseText(promptText, columns);
   return clearOutput + clearPrompt;
 });
 const renderToggle = (value, options, theme, submitted = false) => {
-  const separator = annotateSymbol(theme.toggleSeparator, theme.mutedColor);
+  const separator = annotateSymbol(theme, theme.toggleSeparator, theme.mutedColor);
   const selectedAnnotation = Ansi.combine(Ansi.underlined, submitted ? theme.submittedColor : theme.primaryColor);
-  const inactive = value ? options.inactive : Ansi.annotate(options.inactive, selectedAnnotation);
-  const active = value ? Ansi.annotate(options.active, selectedAnnotation) : options.active;
+  const inactive = value ? options.inactive : Ansi.annotate(theme.colors, options.inactive, selectedAnnotation);
+  const active = value ? Ansi.annotate(theme.colors, options.active, selectedAnnotation) : options.active;
   return active + " " + separateSymbol(separator, inactive);
-};
-const renderToggleOutput = (toggle, leadingSymbol, trailingSymbol, options) => {
-  return renderPrompt(toggle, options.message, leadingSymbol, trailingSymbol);
 };
 const renderToggleNextFrame = /*#__PURE__*/Effect.fnUntraced(function* (state, options) {
   const figures = yield* getTheme(options);
-  const leadingSymbol = annotateSymbol(figures.prefix, figures.primaryColor);
-  const trailingSymbol = annotateSymbol(figures.pointerSmall, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.prefix, figures.primaryColor);
+  const trailingSymbol = annotateSymbol(figures, figures.pointerSmall, figures.mutedColor);
   const toggle = renderToggle(state, options, figures);
-  const promptMsg = renderToggleOutput(toggle, leadingSymbol, trailingSymbol, options);
+  const promptMsg = renderPrompt(toggle, options.message, leadingSymbol, trailingSymbol, figures);
   return Ansi.cursorHide + promptMsg;
 });
 const renderToggleSubmission = /*#__PURE__*/Effect.fnUntraced(function* (value, options) {
   const figures = yield* getTheme(options);
-  const leadingSymbol = annotateSymbol(figures.tick, figures.successColor);
-  const trailingSymbol = annotateSymbol(figures.ellipsis, figures.mutedColor);
+  const leadingSymbol = annotateSymbol(figures, figures.tick, figures.successColor);
+  const trailingSymbol = annotateSymbol(figures, figures.ellipsis, figures.mutedColor);
   const toggle = renderToggle(value, options, figures, true);
-  const promptMsg = renderToggleOutput(toggle, leadingSymbol, trailingSymbol, options);
+  const promptMsg = renderPrompt(toggle, options.message, leadingSymbol, trailingSymbol, figures);
   return promptMsg + "\n";
 });
 const activate = /*#__PURE__*/Effect.succeed(/*#__PURE__*/Action.NextFrame({

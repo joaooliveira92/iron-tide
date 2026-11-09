@@ -21,7 +21,8 @@ import * as PublicMcpSchema from "../../McpSchema.js";
 import * as McpCore from "../mcpCore.js";
 import * as McpProtocol from "../mcpProtocol.js";
 import * as McpSchema from "../mcpSchema/v2026_07_28.js";
-const InputResponses = /*#__PURE__*/Schema.Record(Schema.String, Schema.JsonObject);
+import * as McpSkills from "../mcpSkills.js";
+const InputResponses = /*#__PURE__*/Schema.Record(Schema.String, /*#__PURE__*/Schema.Record(Schema.String, Schema.Unknown));
 const decodeRequestMetadata = /*#__PURE__*/Schema.decodeUnknownEffect(McpSchema.RequestMetaObject);
 const decodeCancellation = /*#__PURE__*/Schema.decodeUnknownEffect(McpSchema.CancelledNotification.payloadSchema);
 const isJson = /*#__PURE__*/Schema.is(Schema.Json);
@@ -148,9 +149,10 @@ const projectContent = /*#__PURE__*/Match.type().pipe(/*#__PURE__*/Match.when({
   annotations: content.annotations,
   _meta: content._meta
 })), Match.exhaustive);
-const projectResource = resource => McpSchema.Resource.make(resource);
-const projectResourceTemplate = resourceTemplate => McpSchema.ResourceTemplate.make(resourceTemplate);
-const projectPrompt = prompt => McpProtocol.transcode(PublicMcpSchema.Prompt, McpSchema.Prompt, prompt);
+// Registrations may be plain objects, so encode with the wire struct.
+const projectResource = resource => Schema.encodeEffect(McpSchema.Resource)(resource);
+const projectResourceTemplate = resourceTemplate => Schema.encodeEffect(McpSchema.ResourceTemplate)(resourceTemplate);
+const projectPrompt = prompt => Schema.encodeEffect(McpSchema.Prompt)(prompt);
 const projectTool = tool => McpProtocol.transcode(PublicMcpSchema.Tool, McpSchema.Tool, tool);
 const privateStaleCache = {
   ttlMs: 0,
@@ -181,12 +183,9 @@ const projectError = error => {
     } : {})
   });
 };
-const failWithHttpStatus = /*#__PURE__*/Effect.fnUntraced(function* (status, error) {
-  const request = yield* Effect.serviceOption(HttpServerRequest.HttpServerRequest);
-  if (Option.isSome(request)) {
-    appendPreResponseHandlerUnsafe(request.value, (_request, response) => Effect.succeed(HttpServerResponse.setStatus(response, status)));
-  }
-  return yield* error;
+const failWithHttpStatus = (status, error) => Effect.withFiber(fiber => {
+  appendPreResponseHandlerUnsafe(fiber.context, (_request, response) => Effect.succeed(HttpServerResponse.setStatus(response, status)));
+  return Effect.fail(error);
 });
 /**
  * @internal
@@ -204,7 +203,7 @@ const unsupported = operation => new PublicMcpSchema.McpReverseOperationUnsuppor
 /**
  * @internal
  */
-export const handlerRpcs = /*#__PURE__*/McpSchema.ClientRequestRpcs.merge(McpSchema.ClientNotificationRpcs);
+export const handlerRpcs = /*#__PURE__*/McpSchema.ClientRequestRpcs.merge(McpSchema.ClientNotificationRpcs, McpSkills.StatelessRpcs);
 /**
  * @internal
  */
@@ -219,16 +218,28 @@ export const makeHandlers = (core, _lifecycle, context) => {
   const decodePromptOutcome = Schema.decodeUnknownEffect(Schema.Union([McpSchema.GetPromptResult, McpSchema.InputRequiredResult]));
   const decodeCompleteResult = Schema.decodeUnknownEffect(McpSchema.CompleteResult);
   const decodeListToolsResult = Schema.decodeUnknownEffect(McpSchema.ListToolsResult);
+  const decodeListSkillsResult = Schema.decodeUnknownEffect(McpSkills.ListSkillsResult);
+  const decodeGetSkillResult = Schema.decodeUnknownEffect(McpSkills.GetSkillResult);
+  const decodeReadResourceDirectoryResult = Schema.decodeUnknownEffect(McpSkills.ReadResourceDirectoryResult);
   const sendNotification = context.sendNotification;
   const supportsSubscriptions = sendNotification !== undefined;
   // Older adapters accept arbitrary JSON; this binding requires extension settings objects.
   const extensions = context.serverInfo.extensions === undefined ? undefined : Record.filter(context.serverInfo.extensions, value => Predicate.isReadonlyObject(value));
+  // Project only the wire fields; structurally compatible hints can carry extra properties.
+  const cacheHint = family => {
+    const hint = context.serverInfo.cacheHints?.[family];
+    return hint === undefined ? privateStaleCache : {
+      ttlMs: hint.ttlMs,
+      cacheScope: hint.cacheScope
+    };
+  };
   const getDiscovery = Effect.map(context.registrationPresence, presence => {
     const capabilities = {
       completions: {},
       logging: {}
     };
-    if (extensions !== undefined) capabilities.extensions = extensions;
+    const declared = McpSkills.declareExtension(extensions, presence.skills);
+    if (declared !== undefined) capabilities.extensions = declared;
     if (presence.tools) capabilities.tools = {
       listChanged: supportsSubscriptions
     };
@@ -247,6 +258,7 @@ export const makeHandlers = (core, _lifecycle, context) => {
       serverInfo: context.serverInfo
     };
   });
+  const requireSkills = method => McpSkills.requireSkills(core, method).pipe(Effect.catch(error => failWithHttpStatus(404, error)));
   const getInvocation = PublicMcpSchema.McpRequestContext.useSync(McpProtocol.invocationFromRequestContext);
   const getInputInvocation = Effect.fnUntraced(function* (request) {
     const context = yield* PublicMcpSchema.McpRequestContext;
@@ -285,6 +297,8 @@ export const makeHandlers = (core, _lifecycle, context) => {
       }
       const presence = yield* context.registrationPresence;
       const eventsScope = yield* Scope.fork(yield* Effect.scope);
+      // Ignore changes emitted before this subscription, even if delivery was deferred.
+      const listChangeRevision = context.getListChangeRevision?.() ?? 0;
       const events = yield* Scope.provide(context.subscribeServerNotifications, eventsScope);
       const honored = {
         ...(presence.tools && request.notifications.toolsListChanged === true ? {
@@ -309,6 +323,9 @@ export const makeHandlers = (core, _lifecycle, context) => {
       yield* Effect.gen(function* () {
         while (true) {
           const event = yield* PubSub.take(events);
+          if (event.listChangeRevision !== undefined && event.listChangeRevision <= listChangeRevision) {
+            continue;
+          }
           if (event.targetClientId !== undefined && event.targetClientId !== client.id) {
             continue;
           }
@@ -363,7 +380,7 @@ export const makeHandlers = (core, _lifecycle, context) => {
     "server/discover": Effect.fnUntraced(function* (_request) {
       const discovery = yield* getDiscovery;
       const result = yield* projectCompleteResult({
-        ...privateStaleCache,
+        ...cacheHint("discover"),
         supportedVersions: Array.from(discovery.supportedVersions),
         capabilities: discovery.capabilities,
         instructions: context.serverInfo.instructions
@@ -372,19 +389,19 @@ export const makeHandlers = (core, _lifecycle, context) => {
     }, Effect.mapError(projectError)),
     "resources/list": Effect.fnUntraced(function* (_request) {
       const invocation = yield* getInvocation;
-      const resources = yield* core.resources.list(invocation.protocol);
+      const resources = yield* core.resources.list(invocation);
       const result = yield* projectCompleteResult({
-        ...privateStaleCache,
-        resources: resources.map(projectResource)
+        ...cacheHint("resources"),
+        resources: yield* Effect.forEach(resources, projectResource)
       }, context.serverInfo);
       return yield* decodeListResourcesResult(result);
     }, Effect.mapError(projectError)),
     "resources/templates/list": Effect.fnUntraced(function* (_request) {
       const invocation = yield* getInvocation;
-      const resourceTemplates = yield* core.resources.listTemplates(invocation.protocol);
+      const resourceTemplates = yield* core.resources.listTemplates(invocation);
       const result = yield* projectCompleteResult({
-        ...privateStaleCache,
-        resourceTemplates: resourceTemplates.map(projectResourceTemplate)
+        ...cacheHint("resourceTemplates"),
+        resourceTemplates: yield* Effect.forEach(resourceTemplates, projectResourceTemplate)
       }, context.serverInfo);
       return yield* decodeListResourceTemplatesResult(result);
     }, Effect.mapError(projectError)),
@@ -408,10 +425,10 @@ export const makeHandlers = (core, _lifecycle, context) => {
         }));
       }
       const invocation = yield* getInvocation;
-      const prompts = yield* core.prompts.list(invocation.protocol);
+      const prompts = yield* core.prompts.list(invocation);
       const projectedPrompts = yield* Effect.forEach(prompts, projectPrompt);
       const result = yield* projectCompleteResult({
-        ...privateStaleCache,
+        ...cacheHint("prompts"),
         prompts: projectedPrompts
       }, context.serverInfo);
       return yield* decodeListPromptsResult(result);
@@ -465,17 +482,17 @@ export const makeHandlers = (core, _lifecycle, context) => {
     }, Effect.mapError(projectError)),
     "tools/list": Effect.fnUntraced(function* (_request) {
       const invocation = yield* getInvocation;
-      const tools = yield* core.tools.list(invocation.protocol);
+      const tools = yield* core.tools.list(invocation);
       const projectedTools = yield* Effect.forEach(tools, projectTool);
       const result = yield* projectCompleteResult({
-        ...privateStaleCache,
+        ...cacheHint("tools"),
         tools: projectedTools
       }, context.serverInfo);
       return yield* decodeListToolsResult(result);
     }, Effect.mapError(projectError)),
     "tools/call": Effect.fnUntraced(function* (request) {
       const invocation = yield* getInputInvocation(request);
-      const tool = (yield* core.tools.list(invocation.protocol)).find(tool => tool.name === request.name);
+      const tool = core.tools.find(request.name, invocation.protocol);
       const httpRequest = yield* Effect.serviceOption(HttpServerRequest.HttpServerRequest);
       if (tool !== undefined && Option.isSome(httpRequest)) {
         const pending = [{
@@ -535,6 +552,35 @@ export const makeHandlers = (core, _lifecycle, context) => {
         _meta: toolResult._meta
       }), context.serverInfo);
     }, Effect.mapError(projectError)),
+    "skills/list": Effect.fnUntraced(function* (request) {
+      yield* requireSkills("skills/list");
+      yield* McpSkills.rejectCursor(request.cursor);
+      const skills = yield* core.skills.list(yield* getInvocation);
+      const result = yield* projectCompleteResult({
+        ...cacheHint("skills"),
+        skills
+      }, context.serverInfo);
+      return yield* decodeListSkillsResult(result);
+    }, Effect.mapError(projectError)),
+    "skills/get": Effect.fnUntraced(function* (request) {
+      yield* requireSkills("skills/get");
+      const skill = yield* core.skills.get(request.uri, yield* getInvocation);
+      const result = yield* projectCompleteResult({
+        ...cacheHint("skills"),
+        skill
+      }, context.serverInfo);
+      return yield* decodeGetSkillResult(result);
+    }, Effect.mapError(projectError)),
+    "resources/directory/read": Effect.fnUntraced(function* (request) {
+      yield* requireSkills("resources/directory/read");
+      yield* McpSkills.rejectCursor(request.cursor);
+      const resources = yield* core.skills.readDirectory(request.uri, yield* getInvocation);
+      const result = yield* projectCompleteResult({
+        ...cacheHint("skills"),
+        resources
+      }, context.serverInfo);
+      return yield* decodeReadResourceDirectoryResult(result);
+    }, Effect.mapError(projectError)),
     "notifications/cancelled": Effect.fnUntraced(function* (_request) {
       return yield* Effect.void;
     })
@@ -556,7 +602,7 @@ const runtime = {
 export const protocol = /*#__PURE__*/McpProtocol.make({
   protocolVersion: McpSchema.protocolVersion,
   runtime,
-  clientRpcs: McpSchema.ClientRpcs,
+  clientRpcs: /*#__PURE__*/McpSchema.ClientRpcs.merge(McpSkills.StatelessRpcs),
   clientNotificationRpcs: McpSchema.ClientNotificationRpcs,
   serverRequestRpcs: McpSchema.ServerRequestRpcs,
   serverNotificationRpcs: McpSchema.ServerNotificationRpcs,

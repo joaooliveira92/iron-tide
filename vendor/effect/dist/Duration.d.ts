@@ -492,6 +492,23 @@ export declare const days: (days: number) => Duration;
  */
 export declare const weeks: (weeks: number) => Duration;
 /**
+ * Converts a Duration to microseconds.
+ *
+ * **Example** (Converting durations to microseconds)
+ *
+ * ```ts import.meta.vitest
+ * import { Duration } from "effect"
+ *
+ * Duration.toMicros(Duration.millis(5)) // => 5000
+ * Duration.toMicros(Duration.nanos(123n)) // => 0.123
+ * ```
+ *
+ * @stability stable
+ * @category getters
+ * @since 4.1.0
+ */
+export declare const toMicros: (self: Input) => number;
+/**
  * Converts a Duration to milliseconds.
  *
  * **Example** (Converting durations to milliseconds)
@@ -1311,8 +1328,8 @@ export declare const divideUnsafe: {
  *
  * **Details**
  *
- * For nanosecond-backed durations, the multiplier must be convertible to a
- * `bigint`; fractional or non-finite multipliers can throw. Infinite
+ * Fractional multipliers on nanosecond-backed durations round the result to
+ * the nearest nanosecond, with ties rounding away from zero. Infinite
  * durations return positive infinity, negative infinity, or zero depending on
  * the multiplier sign.
  *
@@ -1334,8 +1351,8 @@ export declare const times: {
      *
      * **Details**
      *
-     * For nanosecond-backed durations, the multiplier must be convertible to a
-     * `bigint`; fractional or non-finite multipliers can throw. Infinite
+     * Fractional multipliers on nanosecond-backed durations round the result to
+     * the nearest nanosecond, with ties rounding away from zero. Infinite
      * durations return positive infinity, negative infinity, or zero depending on
      * the multiplier sign.
      *
@@ -1357,8 +1374,8 @@ export declare const times: {
      *
      * **Details**
      *
-     * For nanosecond-backed durations, the multiplier must be convertible to a
-     * `bigint`; fractional or non-finite multipliers can throw. Infinite
+     * Fractional multipliers on nanosecond-backed durations round the result to
+     * the nearest nanosecond, with ties rounding away from zero. Infinite
      * durations return positive infinity, negative infinity, or zero depending on
      * the multiplier sign.
      *
@@ -1851,6 +1868,67 @@ export declare const parts: (self: Duration) => {
  * @since 2.0.0
  */
 export declare const format: (self: Duration) => string;
+/**
+ * Formats a `Duration` as an ISO 8601 duration string.
+ *
+ * **Details**
+ *
+ * The duration is balanced into days (24 hours), hours, minutes and seconds,
+ * with up to nine fractional second digits. Weeks, months and years are never
+ * produced. Negative durations get a leading `-`, zero is `"PT0S"` and
+ * infinite durations return `Option.none()`.
+ *
+ * **Example** (Formatting durations as ISO 8601)
+ *
+ * ```ts import.meta.vitest
+ * import { Duration, Option } from "effect"
+ *
+ * Duration.formatIso(Duration.minutes(90)) // => Option.some("PT1H30M")
+ * Duration.formatIso(Duration.millis(-1500)) // => Option.some("-PT1.5S")
+ * Duration.formatIso(Duration.hours(26)) // => Option.some("P1DT2H")
+ * Duration.formatIso(Duration.infinity) // => Option.none()
+ * ```
+ *
+ * @see {@link fromIso} for parsing ISO 8601 duration strings
+ *
+ * @stability stable
+ * @category converting
+ * @since 4.1.0
+ */
+export declare const formatIso: (self: Duration) => Option.Option<string>;
+/**
+ * Parses an ISO 8601 duration string into a `Duration`.
+ *
+ * **Details**
+ *
+ * Accepts an optional `+` or `-` sign followed by weeks (`W`), days (`D`),
+ * hours (`H`), minutes (`M`) and seconds (`S`). A day is 24 hours and a week
+ * is 7 days. Only the last time component may have a fraction, of up to nine
+ * digits, separated by `.` or `,`.
+ *
+ * **Gotchas**
+ *
+ * Years (`Y`) and months (`M` before `T`) are rejected because they have no
+ * fixed length. Fractional weeks and days are rejected.
+ *
+ * **Example** (Parsing ISO 8601 durations)
+ *
+ * ```ts import.meta.vitest
+ * import { Duration, Option } from "effect"
+ *
+ * Duration.fromIso("PT1H30M") // => Option.some(Duration.minutes(90))
+ * Duration.fromIso("-PT1.5S") // => Option.some(Duration.millis(-1500))
+ * Duration.fromIso("P1W2D") // => Option.some(Duration.days(9))
+ * Duration.fromIso("P1M") // => Option.none()
+ * ```
+ *
+ * @see {@link formatIso} for formatting a `Duration` as an ISO 8601 string
+ *
+ * @stability stable
+ * @category constructors
+ * @since 4.1.0
+ */
+export declare const fromIso: (input: string) => Option.Option<Duration>;
 /**
  * Reducer for summing `Duration`s.
  *

@@ -20,6 +20,9 @@ import * as Layer from "../Layer.ts";
  * the time is set to on or after the time they are scheduled to run. Fork the
  * effect being tested, then adjust the clock time, and finally verify that the
  * expected effects have been performed.
+ * The ordered execution of sleeps registered after multiple scheduler hops
+ * requires fibers running under {@link layer}; providing a clock from
+ * {@link make} by hand does not install the tracking scheduler.
  *
  * **Example** (Testing timeouts deterministically)
  *
@@ -121,7 +124,8 @@ export declare namespace TestClock {
     /**
      * Options used when constructing a `TestClock`. `warningDelay` controls how
      * long the live clock waits before logging a warning when a test uses time
-     * without advancing the test clock.
+     * without advancing the test clock, or when a fiber woken by the test clock
+     * keeps running without suspending.
      *
      * **Example** (Configuring the warning delay)
      *
@@ -149,7 +153,8 @@ export declare namespace TestClock {
     interface Options {
         /**
          * The amount of time to wait before displaying a warning message when a
-         * test is using time but is not advancing the `TestClock`.
+         * test is using time but is not advancing the `TestClock`, or when a fiber
+         * woken by `adjust` or `setTime` keeps running without suspending.
          */
         readonly warningDelay?: Duration.Input;
     }
@@ -168,6 +173,14 @@ export declare namespace TestClock {
 }
 /**
  * Creates a `TestClock` with optional configuration.
+ *
+ * **Gotchas**
+ *
+ * The guarantee that sleeps registered after multiple scheduler hops run in
+ * order applies only to fibers running under {@link layer}, which
+ * `@effect/vitest`'s `it.effect` uses. Providing a clock from `make` by hand
+ * waits only one scheduler turn after each woken sleep. Prefer `layer` when
+ * forked fibers sleep.
  *
  * **Example** (Creating a test clock)
  *
@@ -197,7 +210,7 @@ export declare namespace TestClock {
  * @category constructors
  * @since 4.0.0
  */
-export declare const make: (options?: TestClock.Options | undefined) => Effect.Effect<{
+export declare const make: (options?: TestClock.Options) => Effect.Effect<{
     currentTimeMillisUnsafe: () => number;
     currentTimeNanosUnsafe: () => bigint;
     monotonicTimeNanosUnsafe: () => bigint;

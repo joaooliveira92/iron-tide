@@ -15,7 +15,7 @@ import { causeResponse, ClientAbort, HttpServerError, InternalError } from "./Ht
 import { HttpServerRequest } from "./HttpServerRequest.js";
 import * as Request from "./HttpServerRequest.js";
 import * as Response from "./HttpServerResponse.js";
-import * as preResponseHandler from "./internal/preResponseHandler.js";
+import * as requestState from "./internal/requestState.js";
 /**
  * Runs an HTTP server effect, sends the produced response with the supplied handler, and converts failures into HTTP responses.
  * On handler failure, the request scope closes with the original cause.
@@ -34,7 +34,7 @@ export const toHandled = (self, handleResponse, middleware) => {
     return Effect.flatMapEager(causeResponse(cause), ([response, cause]) => {
       const fiber = Fiber.getCurrent();
       reportCauseUnsafe(fiber, cause);
-      const handler = preResponseHandler.requestPreResponseHandlers.get(request.source);
+      const handler = frame.preResponseHandler;
       const cont = cause.reasons.length === 0 ? Effect.succeed(response) : Effect.failCause(cause);
       if (handler === undefined) {
         ;
@@ -50,8 +50,9 @@ export const toHandled = (self, handleResponse, middleware) => {
   };
   // Writes the response, applying any registered pre-response handler first.
   // Returns an `Exit` when the write completes synchronously.
-  const sendResponse = (request, response) => {
-    const handler = preResponseHandler.requestPreResponseHandlers.get(request.source);
+  const sendResponse = (frame, response) => {
+    const request = frame.request;
+    const handler = frame.preResponseHandler;
     if (handler === undefined) {
       ;
       request[handledSymbol] = true;
@@ -66,7 +67,7 @@ export const toHandled = (self, handleResponse, middleware) => {
   const withMiddleware = frame => {
     const request = frame.request;
     const responded = Effect.matchCauseEffect(self, {
-      onSuccess: response => sendResponse(request, response),
+      onSuccess: response => sendResponse(frame, response),
       onFailure: cause => handleCause(frame, cause)
     });
     return middleware === undefined ? responded : Effect.matchCauseEffect(tracer(middleware(responded)), {
@@ -98,18 +99,19 @@ export const toHandled = (self, handleResponse, middleware) => {
     if (scopeEjected in frame.scope) return undefined;
     return Scope.closeUnsafe(frame.scope, frame.cause === undefined ? exit : Exit.failCause(frame.cause));
   }, true);
-  class RequestFrame {
+  class RequestFrame extends requestState.RequestState {
     scope;
     prev;
     request;
     cause;
     constructor(scope, prev, request) {
+      super();
       this.scope = scope;
       this.prev = prev;
       this.request = request;
     }
     [contA](response, fiber) {
-      const sent = sendResponse(this.request, response);
+      const sent = sendResponse(this, response);
       // Most response writes complete synchronously.
       if (effectIsExit(sent) && sent._tag === "Success") {
         fiber.setContext(this.prev);
@@ -127,7 +129,7 @@ export const toHandled = (self, handleResponse, middleware) => {
     fiberEnterUninterruptibleUnsafe(fiber);
     const scope = Scope.makeUnsafe();
     const frame = new RequestFrame(scope, fiber.context, Context.getUnsafe(fiber.context, HttpServerRequest));
-    fiber.setContext(Context.add(frame.prev, Scope.Scope, scope));
+    fiber.setContext(Context.add(Context.add(frame.prev, Scope.Scope, scope), requestState.CurrentRequestState, frame));
     // The native tracer has no backend, so its spans are unobservable.
     const currentTracer = fiber.cache.tracer;
     if (middleware === undefined && (currentTracer === undefined || currentTracer === nativeTracer || isTracerDisabledUnsafe(fiber, frame.request))) {
@@ -179,18 +181,16 @@ const scopeEjected = /*#__PURE__*/Symbol.for("effect/http/HttpEffect/scopeEjecte
  * @category handlers
  * @since 4.0.0
  */
-export const appendPreResponseHandler = handler => HttpServerRequest.use(request => {
-  appendPreResponseHandlerUnsafe(request, handler);
-  return Effect.void;
-});
+export const appendPreResponseHandler = handler => withPreResponseHandler(Effect.void, handler);
 /**
- * Registers a pre-response handler for the supplied HTTP server request.
+ * Registers a pre-response handler for the HTTP server request that owns the
+ * supplied fiber context. Does nothing outside a server request.
  *
  * @stability unstable
  * @category unsafe
  * @since 4.0.0
  */
-export const appendPreResponseHandlerUnsafe = preResponseHandler.appendPreResponseHandlerUnsafe;
+export const appendPreResponseHandlerUnsafe = requestState.appendPreResponseHandlerUnsafe;
 /**
  * Runs an effect after registering a pre-response handler for the current HTTP server request.
  *
@@ -198,8 +198,8 @@ export const appendPreResponseHandlerUnsafe = preResponseHandler.appendPreRespon
  * @category handlers
  * @since 4.0.0
  */
-export const withPreResponseHandler = /*#__PURE__*/dual(2, (self, handler) => HttpServerRequest.use(request => {
-  appendPreResponseHandlerUnsafe(request, handler);
+export const withPreResponseHandler = /*#__PURE__*/dual(2, (self, handler) => Effect.withFiber(fiber => {
+  appendPreResponseHandlerUnsafe(fiber.context, handler);
   return self;
 }));
 /**
@@ -214,12 +214,14 @@ export const toWebHandlerWith = context => (self, middleware) => {
   const httpApp = toHandled(self, (request, response) => {
     const withoutBody = request.method === "HEAD";
     if (!Response.omitsBody(response, withoutBody)) {
+      // The transferred request scope closes when an abort interrupts the body, even if it is no longer read.
       response = scopeTransferToStream(response);
     }
     ;
     request[resolveSymbol](Response.toWeb(response, {
       withoutBody,
-      context
+      context,
+      signal: request.source.signal
     }));
     return Effect.void;
   }, middleware);
@@ -234,12 +236,17 @@ export const toWebHandlerWith = context => (self, middleware) => {
     reqContext = Context.add(reqContext, HttpServerRequest, httpServerRequest);
     httpServerRequest[resolveSymbol] = resolve;
     const fiber = Effect.runForkWith(reqContext)(httpApp);
-    if (fiber.pollUnsafe() === undefined) {
-      request.signal?.addEventListener("abort", () => {
-        fiber.interruptUnsafe(undefined, ClientAbort.annotation);
-      }, {
-        once: true
-      });
+    const signal = request.signal;
+    if (fiber.pollUnsafe() === undefined && signal) {
+      const onAbort = () => fiber.interruptUnsafe(undefined, ClientAbort.annotation);
+      if (signal.aborted) {
+        onAbort();
+      } else {
+        signal.addEventListener("abort", onAbort, {
+          once: true
+        });
+        fiber.addObserver(() => signal.removeEventListener("abort", onAbort));
+      }
     }
   });
 };
@@ -256,6 +263,9 @@ export const toWebHandler = /*#__PURE__*/toWebHandlerWith(/*#__PURE__*/Context.e
  *
  * **Details**
  *
+ * Every call to `dispose` returns the same promise, which resolves once the
+ * layer resources have been released.
+ *
  * The layer is built immediately, so the cost is paid when the handler is
  * created rather than on the first request. A layer that performs asynchronous
  * work while building may still be in progress when the first request arrives,
@@ -268,7 +278,8 @@ export const toWebHandler = /*#__PURE__*/toWebHandlerWith(/*#__PURE__*/Context.e
  */
 export const toWebHandlerLayerWith = (layer, options) => {
   const scope = Scope.makeUnsafe();
-  const dispose = () => Effect.runPromise(Scope.close(scope, Exit.void));
+  let disposing;
+  const dispose = () => disposing ??= Effect.runPromise(Scope.close(scope, Exit.void));
   let handlerCache;
   const handlerPromise = Effect.runPromise(Effect.gen(function* () {
     const context = yield* options.memoMap ? Layer.buildWithMemoMap(layer, options.memoMap, scope) : Layer.buildWithScope(layer, scope);

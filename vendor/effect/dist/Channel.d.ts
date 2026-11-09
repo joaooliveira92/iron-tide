@@ -1426,6 +1426,12 @@ export declare const fromSchedule: <O, E, R>(schedule: Schedule.Schedule<O, unkn
 /**
  * Creates a channel from a lazily supplied Web `ReadableStream`.
  *
+ * **Details**
+ *
+ * Read failures are mapped with `onError`. Finalization cancels the reader and
+ * releases its lock, or only releases the lock when `releaseLockOnEnd` is set.
+ * A rejected cancel hook becomes a defect.
+ *
  * **Example** (Reading from a Web stream)
  *
  * ```ts import.meta.vitest
@@ -1534,7 +1540,9 @@ export declare const fromTransformStream: <IE, I, O, E>(options: {
  * Each yielded value is emitted as an output element. The iterator's return
  * value becomes the channel's done value. Thrown or rejected iterator errors
  * are converted with `onError`. If the channel scope closes early and the
- * iterator has a `return` method, that method is called.
+ * iterator has a `return` method, that method is called. It is awaited unless
+ * a `next()` call is still pending, in which case its result is ignored and an
+ * async generator may not run its cleanup until that pull settles.
  *
  * @stability stable
  * @category constructors
@@ -1550,6 +1558,9 @@ export declare const fromAsyncIterable: <A, D, E>(iterable: AsyncIterable<A, D>,
  * The iterator's return value becomes the channel's done value. Thrown or
  * rejected iterator errors are converted with `onError`. If the channel scope
  * closes early and the iterator has a `return` method, that method is called.
+ * It is awaited unless a `next()` call is still pending, in which case its
+ * result is ignored and an async generator may not run its cleanup until that
+ * pull settles.
  *
  * @stability stable
  * @category constructors
@@ -3803,6 +3814,12 @@ export declare const catchCause: {
  *
  * Typed failures and interruptions are not caught.
  *
+ * **Gotchas**
+ *
+ * `catchDefect` recovers any cause that contains a defect, including causes
+ * that also contain typed errors. Typed error handlers such as `catch` skip
+ * those causes, so defects always take precedence.
+ *
  * **Example** (Recovering from a defect)
  *
  * ```ts import.meta.vitest
@@ -3827,6 +3844,12 @@ export declare const catchDefect: {
      *
      * Typed failures and interruptions are not caught.
      *
+     * **Gotchas**
+     *
+     * `catchDefect` recovers any cause that contains a defect, including causes
+     * that also contain typed errors. Typed error handlers such as `catch` skip
+     * those causes, so defects always take precedence.
+     *
      * **Example** (Recovering from a defect)
      *
      * ```ts import.meta.vitest
@@ -3850,6 +3873,12 @@ export declare const catchDefect: {
      * **Details**
      *
      * Typed failures and interruptions are not caught.
+     *
+     * **Gotchas**
+     *
+     * `catchDefect` recovers any cause that contains a defect, including causes
+     * that also contain typed errors. Typed error handlers such as `catch` skip
+     * those causes, so defects always take precedence.
      *
      * **Example** (Recovering from a defect)
      *
@@ -4081,6 +4110,13 @@ export {
 /**
  * Recovers from typed channel errors by running a fallback channel.
  *
+ * **Gotchas**
+ *
+ * Defects take precedence over typed errors. If the cause also contains a
+ * defect, the handler does not run and the failure is propagated with every
+ * typed error converted to a defect. An interruption alongside a typed error
+ * does not prevent recovery.
+ *
  * @stability stable
  * @category error handling
  * @since 4.0.0
@@ -4143,6 +4179,12 @@ export declare const tapError: {
  * are handled by `orElse` when provided. Without `orElse`, non-matching errors
  * are re-failed.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * @see {@link catch_ catch} for recovering from every typed channel error
  * @see {@link catchFilter} for selecting typed errors with a `Filter`
  * @see {@link catchTag} for selecting tagged typed errors
@@ -4167,6 +4209,12 @@ export declare const catchIf: {
      * are handled by `orElse` when provided. Without `orElse`, non-matching errors
      * are re-failed.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * @see {@link catch_ catch} for recovering from every typed channel error
      * @see {@link catchFilter} for selecting typed errors with a `Filter`
      * @see {@link catchTag} for selecting tagged typed errors
@@ -4176,7 +4224,7 @@ export declare const catchIf: {
      * @category error handling
      * @since 4.0.0
      */
-    <OutErr, EB extends OutErr, OutElem1, OutErr1, OutDone1, InElem1, InErr1, InDone1, Env1, OutElem2 = Types.unassigned, OutErr2 = never, OutDone2 = never, InElem2 = unknown, InErr2 = unknown, InDone2 = unknown, Env2 = never>(refinement: Predicate.Refinement<OutErr, EB>, f: (failure: EB) => Channel<OutElem1, OutErr1, OutDone1, InElem1, InErr1, InDone1, Env1>, orElse?: ((failure: Exclude<OutErr, EB>) => Channel<OutElem2, OutErr2, OutDone2, InElem2, InErr2, InDone2, Env2>) | undefined): <OutElem, OutDone, InElem, InErr, InDone, Env>(self: Channel<OutElem, OutErr, OutDone, InElem, InErr, InDone, Env>) => Channel<OutElem | OutElem1 | Exclude<OutElem2, Types.unassigned>, OutErr1 | OutErr2 | (OutElem2 extends Types.unassigned ? Exclude<OutErr, EB> : never), OutDone | OutDone1 | OutDone2, InElem & InElem1 & InElem2, InErr & InErr1 & InErr2, InDone & InDone1 & InDone2, Env | Env1 | Env2>;
+    <OutErr, EB extends OutErr, OutElem1, OutErr1, OutDone1, InElem1, InErr1, InDone1, Env1, OutElem2 = Types.unassigned, OutErr2 = never, OutDone2 = never, InElem2 = unknown, InErr2 = unknown, InDone2 = unknown, Env2 = never>(refinement: Predicate.Refinement<NoInfer<OutErr>, EB>, f: (failure: EB) => Channel<OutElem1, OutErr1, OutDone1, InElem1, InErr1, InDone1, Env1>, orElse?: ((failure: Exclude<OutErr, EB>) => Channel<OutElem2, OutErr2, OutDone2, InElem2, InErr2, InDone2, Env2>) | undefined): <OutElem, OutDone, InElem, InErr, InDone, Env>(self: Channel<OutElem, OutErr, OutDone, InElem, InErr, InDone, Env>) => Channel<OutElem | OutElem1 | Exclude<OutElem2, Types.unassigned>, OutErr1 | OutErr2 | (OutElem2 extends Types.unassigned ? Exclude<OutErr, EB> : never), OutDone | OutDone1 | OutDone2, InElem & InElem1 & InElem2, InErr & InErr1 & InErr2, InDone & InDone1 & InDone2, Env | Env1 | Env2>;
     /**
      * Recovers from typed channel errors that match a predicate or refinement.
      *
@@ -4190,6 +4238,12 @@ export declare const catchIf: {
      * Matching errors are handled by the recovery function. Non-matching errors
      * are handled by `orElse` when provided. Without `orElse`, non-matching errors
      * are re-failed.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * @see {@link catch_ catch} for recovering from every typed channel error
      * @see {@link catchFilter} for selecting typed errors with a `Filter`
@@ -4215,6 +4269,12 @@ export declare const catchIf: {
      * are handled by `orElse` when provided. Without `orElse`, non-matching errors
      * are re-failed.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * @see {@link catch_ catch} for recovering from every typed channel error
      * @see {@link catchFilter} for selecting typed errors with a `Filter`
      * @see {@link catchTag} for selecting tagged typed errors
@@ -4224,7 +4284,7 @@ export declare const catchIf: {
      * @category error handling
      * @since 4.0.0
      */
-    <OutElem, OutErr, OutDone, InElem, InErr, InDone, Env, EB extends OutErr, OutElem1, OutErr1, OutDone1, InElem1, InErr1, InDone1, Env1, OutElem2 = Types.unassigned, OutErr2 = never, OutDone2 = never, InElem2 = unknown, InErr2 = unknown, InDone2 = unknown, Env2 = never>(self: Channel<OutElem, OutErr, OutDone, InElem, InErr, InDone, Env>, refinement: Predicate.Refinement<OutErr, EB>, f: (failure: EB) => Channel<OutElem1, OutErr1, OutDone1, InElem1, InErr1, InDone1, Env1>, orElse?: ((failure: Exclude<OutErr, EB>) => Channel<OutElem2, OutErr2, OutDone2, InElem2, InErr2, InDone2, Env2>) | undefined): Channel<OutElem | OutElem1 | Exclude<OutElem2, Types.unassigned>, OutErr1 | OutErr2 | (OutElem2 extends Types.unassigned ? Exclude<OutErr, EB> : never), OutDone | OutDone1 | OutDone2, InElem & InElem1 & InElem2, InErr & InErr1 & InErr2, InDone & InDone1 & InDone2, Env | Env1 | Env2>;
+    <OutElem, OutErr, OutDone, InElem, InErr, InDone, Env, EB extends OutErr, OutElem1, OutErr1, OutDone1, InElem1, InErr1, InDone1, Env1, OutElem2 = Types.unassigned, OutErr2 = never, OutDone2 = never, InElem2 = unknown, InErr2 = unknown, InDone2 = unknown, Env2 = never>(self: Channel<OutElem, OutErr, OutDone, InElem, InErr, InDone, Env>, refinement: Predicate.Refinement<NoInfer<OutErr>, EB>, f: (failure: EB) => Channel<OutElem1, OutErr1, OutDone1, InElem1, InErr1, InDone1, Env1>, orElse?: ((failure: Exclude<OutErr, EB>) => Channel<OutElem2, OutErr2, OutDone2, InElem2, InErr2, InDone2, Env2>) | undefined): Channel<OutElem | OutElem1 | Exclude<OutElem2, Types.unassigned>, OutErr1 | OutErr2 | (OutElem2 extends Types.unassigned ? Exclude<OutErr, EB> : never), OutDone | OutDone1 | OutDone2, InElem & InElem1 & InElem2, InErr & InErr1 & InErr2, InDone & InDone1 & InDone2, Env | Env1 | Env2>;
     /**
      * Recovers from typed channel errors that match a predicate or refinement.
      *
@@ -4238,6 +4298,12 @@ export declare const catchIf: {
      * Matching errors are handled by the recovery function. Non-matching errors
      * are handled by `orElse` when provided. Without `orElse`, non-matching errors
      * are re-failed.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * @see {@link catch_ catch} for recovering from every typed channel error
      * @see {@link catchFilter} for selecting typed errors with a `Filter`
@@ -4264,6 +4330,12 @@ export declare const catchIf: {
  * filter results are handled by `orElse` when provided. Without `orElse`,
  * failed filter results are re-failed.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * @see {@link catchIf} for selecting typed errors with a predicate
  * @see {@link catchTag} for selecting tagged typed errors
  * @see {@link catchCauseFilter} for selecting full causes with a `Filter`
@@ -4286,6 +4358,12 @@ export declare const catchFilter: {
      * Successful filter results are handled by the recovery function. Failed
      * filter results are handled by `orElse` when provided. Without `orElse`,
      * failed filter results are re-failed.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * @see {@link catchIf} for selecting typed errors with a predicate
      * @see {@link catchTag} for selecting tagged typed errors
@@ -4310,6 +4388,12 @@ export declare const catchFilter: {
      * filter results are handled by `orElse` when provided. Without `orElse`,
      * failed filter results are re-failed.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * @see {@link catchIf} for selecting typed errors with a predicate
      * @see {@link catchTag} for selecting tagged typed errors
      * @see {@link catchCauseFilter} for selecting full causes with a `Filter`
@@ -4329,6 +4413,12 @@ export declare const catchFilter: {
  * errors are handled by `orElse` when provided. Without `orElse`,
  * non-matching errors are re-failed.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * @stability stable
  * @category error handling
  * @since 4.0.0
@@ -4342,6 +4432,12 @@ export declare const catchTag: {
      * Matching tagged errors are handled by the recovery function. Non-matching
      * errors are handled by `orElse` when provided. Without `orElse`,
      * non-matching errors are re-failed.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * @stability stable
      * @category error handling
@@ -4357,6 +4453,12 @@ export declare const catchTag: {
      * errors are handled by `orElse` when provided. Without `orElse`,
      * non-matching errors are re-failed.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * @stability stable
      * @category error handling
      * @since 4.0.0
@@ -4365,6 +4467,12 @@ export declare const catchTag: {
 };
 /**
  * Catches a specific reason within a tagged error.
+ *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
  *
  * **Example** (Recovering from nested reasons)
  *
@@ -4402,6 +4510,12 @@ export declare const catchReason: {
     /**
      * Catches a specific reason within a tagged error.
      *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
+     *
      * **Example** (Recovering from nested reasons)
      *
      * ```ts import.meta.vitest
@@ -4437,6 +4551,12 @@ export declare const catchReason: {
     <OutErr, K extends Types.Tags<OutErr>, RK extends Types.ReasonTags<Types.ExtractTag<Types.NoInfer<OutErr>, K>>, OutElem1, OutErr1, OutDone1, InElem1, InErr1, InDone1, Env1, OutElem2 = Types.unassigned, OutErr2 = never, OutDone2 = never, InElem2 = unknown, InErr2 = unknown, InDone2 = unknown, Env2 = never>(errorTag: K, reasonTag: RK, f: (reason: Types.ExtractReason<Types.ExtractTag<Types.NoInfer<OutErr>, K>, RK>, error: Types.NarrowReason<Types.ExtractTag<Types.NoInfer<OutErr>, K>, RK>) => Channel<OutElem1, OutErr1, OutDone1, InElem1, InErr1, InDone1, Env1>, orElse?: ((reason: Types.ExcludeReason<Types.ExtractTag<Types.NoInfer<OutErr>, K>, RK>, error: Types.OmitReason<Types.ExtractTag<Types.NoInfer<OutErr>, K>, RK>) => Channel<OutElem2, OutErr2, OutDone2, InElem2, InErr2, InDone2, Env2>) | undefined): <OutElem, OutDone, InElem, InErr, InDone, Env>(self: Channel<OutElem, OutErr, OutDone, InElem, InErr, InDone, Env>) => Channel<OutElem | OutElem1 | Exclude<OutElem2, Types.unassigned>, Types.ExcludeTag<OutErr, K> | OutErr1 | OutErr2 | (OutElem2 extends Types.unassigned ? Types.ExtractTag<OutErr, K> : never), OutDone | OutDone1 | OutDone2, InElem & InElem1 & InElem2, InErr & InErr1 & InErr2, InDone & InDone1 & InDone2, Env | Env1 | Env2>;
     /**
      * Catches a specific reason within a tagged error.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * **Example** (Recovering from nested reasons)
      *
@@ -4475,6 +4595,12 @@ export declare const catchReason: {
 /**
  * Catches multiple reasons within a tagged error using an object of handlers.
  *
+ * **Gotchas**
+ *
+ * If the cause contains a defect, the handler is skipped and every typed error
+ * is converted to a defect, preserving reason order and interrupts. An
+ * interruption alongside a typed error does not prevent recovery.
+ *
  * @stability stable
  * @category error handling
  * @since 4.0.0
@@ -4482,6 +4608,12 @@ export declare const catchReason: {
 export declare const catchReasons: {
     /**
      * Catches multiple reasons within a tagged error using an object of handlers.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * @stability stable
      * @category error handling
@@ -4506,6 +4638,12 @@ export declare const catchReasons: {
     }[keyof Cases]>;
     /**
      * Catches multiple reasons within a tagged error using an object of handlers.
+     *
+     * **Gotchas**
+     *
+     * If the cause contains a defect, the handler is skipped and every typed error
+     * is converted to a defect, preserving reason order and interrupts. An
+     * interruption alongside a typed error does not prevent recovery.
      *
      * @stability stable
      * @category error handling
@@ -4627,9 +4765,12 @@ export declare const unwrapReason: {
     <OutElem, OutErr, OutDone, InElem, InErr, InDone, Env, K extends TagsWithReason<OutErr>>(self: Channel<OutElem, OutErr, OutDone, InElem, InErr, InDone, Env>, errorTag: K): Channel<OutElem, Types.ExcludeTag<OutErr, K> | Types.ReasonOf<Types.ExtractTag<OutErr, K>>, OutDone, InElem, InErr, InDone, Env>;
 };
 /**
- * Returns a new channel, which is the same as this one, except the failure
- * value of the returned channel is created by applying the specified function
- * to the failure value of this channel.
+ * Transforms the typed errors of a channel using the specified function.
+ *
+ * **Details**
+ *
+ * Maps every typed error in the cause, preserving defects, interrupts and
+ * reason order. Unlike typed recovery, mapping does not convert errors to defects.
  *
  * @stability stable
  * @category error handling
@@ -4637,9 +4778,12 @@ export declare const unwrapReason: {
  */
 export declare const mapError: {
     /**
-     * Returns a new channel, which is the same as this one, except the failure
-     * value of the returned channel is created by applying the specified function
-     * to the failure value of this channel.
+     * Transforms the typed errors of a channel using the specified function.
+     *
+     * **Details**
+     *
+     * Maps every typed error in the cause, preserving defects, interrupts and
+     * reason order. Unlike typed recovery, mapping does not convert errors to defects.
      *
      * @stability stable
      * @category error handling
@@ -4647,9 +4791,12 @@ export declare const mapError: {
      */
     <OutErr, OutErr2>(f: (err: OutErr) => OutErr2): <OutElem, OutDone, InElem, InErr, InDone, Env>(self: Channel<OutElem, OutErr, OutDone, InElem, InErr, InDone, Env>) => Channel<OutElem, OutErr2, OutDone, InElem, InErr, InDone, Env>;
     /**
-     * Returns a new channel, which is the same as this one, except the failure
-     * value of the returned channel is created by applying the specified function
-     * to the failure value of this channel.
+     * Transforms the typed errors of a channel using the specified function.
+     *
+     * **Details**
+     *
+     * Maps every typed error in the cause, preserving defects, interrupts and
+     * reason order. Unlike typed recovery, mapping does not convert errors to defects.
      *
      * @stability stable
      * @category error handling
@@ -4691,17 +4838,27 @@ export declare const orDie: <OutElem, OutErr, OutDone, InElem, InErr, InDone, En
  * **Details**
  *
  * Use the `log` option to emit the full {@link Cause} when the channel fails.
+ * Set `log: "Unhandled"` to read `References.UnhandledLogLevel` when the
+ * failure occurs; `undefined` disables logging. Minimum log level filtering
+ * still applies.
+ *
+ * **Gotchas**
+ *
+ * Defects take precedence over typed errors. If the cause also contains a
+ * defect, the failure is not ignored and is propagated with every typed error
+ * converted to a defect. An interruption alongside a typed error does not
+ * prevent the error from being ignored.
  *
  * @stability stable
  * @category error handling
  * @since 4.0.0
  */
 export declare const ignore: <Arg extends Channel<any, any, any, any, any, any, any> | {
-    readonly log?: boolean | Severity | undefined;
+    readonly log?: boolean | Severity | "Unhandled" | undefined;
 } | undefined = {
-    readonly log?: boolean | Severity | undefined;
+    readonly log?: boolean | Severity | "Unhandled" | undefined;
 }>(selfOrOptions: Arg, options?: {
-    readonly log?: boolean | Severity | undefined;
+    readonly log?: boolean | Severity | "Unhandled" | undefined;
 } | undefined) => [Arg] extends [
     Channel<infer OutElem, infer _OutErr, infer OutDone, infer InElem, infer InErr, infer InDone, infer Env>
 ] ? Channel<OutElem, never, OutDone | void, InElem, InErr, InDone, Env> : <OutElem, OutErr, OutDone, InElem, InErr, InDone, Env>(self: Channel<OutElem, OutErr, OutDone, InElem, InErr, InDone, Env>) => Channel<OutElem, never, OutDone | void, InElem, InErr, InDone, Env>;
@@ -4716,23 +4873,32 @@ export declare const ignore: <Arg extends Channel<any, any, any, any, any, any, 
  * **Details**
  *
  * Use the `log` option to emit the full {@link Cause} when the channel fails.
+ * Set `log: "Unhandled"` to read `References.UnhandledLogLevel` when the
+ * failure occurs; `undefined` disables logging. Minimum log level filtering
+ * still applies.
  *
  * @stability stable
  * @category error handling
  * @since 4.0.0
  */
 export declare const ignoreCause: <Arg extends Channel<any, any, any, any, any, any, any> | {
-    readonly log?: boolean | Severity | undefined;
+    readonly log?: boolean | Severity | "Unhandled" | undefined;
 } | undefined = {
-    readonly log?: boolean | Severity | undefined;
+    readonly log?: boolean | Severity | "Unhandled" | undefined;
 }>(selfOrOptions: Arg, options?: {
-    readonly log?: boolean | Severity | undefined;
+    readonly log?: boolean | Severity | "Unhandled" | undefined;
 } | undefined) => [Arg] extends [
     Channel<infer OutElem, infer _OutErr, infer OutDone, infer InElem, infer InErr, infer InDone, infer Env>
 ] ? Channel<OutElem, never, OutDone | void, InElem, InErr, InDone, Env> : <OutElem, OutErr, OutDone, InElem, InErr, InDone, Env>(self: Channel<OutElem, OutErr, OutDone, InElem, InErr, InDone, Env>) => Channel<OutElem, never, OutDone | void, InElem, InErr, InDone, Env>;
 /**
  * Returns a new channel that retries this channel according to the specified
  * schedule whenever it fails.
+ *
+ * **Gotchas**
+ *
+ * Defects take precedence over typed errors. A failure whose cause contains a
+ * defect is not retried and is propagated with every typed error converted to a
+ * defect. A typed error alongside an interruption is retried.
  *
  * @stability stable
  * @category error handling
@@ -4743,6 +4909,12 @@ export declare const retry: {
      * Returns a new channel that retries this channel according to the specified
      * schedule whenever it fails.
      *
+     * **Gotchas**
+     *
+     * Defects take precedence over typed errors. A failure whose cause contains a
+     * defect is not retried and is propagated with every typed error converted to a
+     * defect. A typed error alongside an interruption is retried.
+     *
      * @stability stable
      * @category error handling
      * @since 4.0.0
@@ -4751,6 +4923,12 @@ export declare const retry: {
     /**
      * Returns a new channel that retries this channel according to the specified
      * schedule whenever it fails.
+     *
+     * **Gotchas**
+     *
+     * Defects take precedence over typed errors. A failure whose cause contains a
+     * defect is not retried and is propagated with every typed error converted to a
+     * defect. A typed error alongside an interruption is retried.
      *
      * @stability stable
      * @category error handling
@@ -5185,8 +5363,9 @@ export declare const splitLines: <Err, Done>() => Channel<Arr.NonEmptyReadonlyAr
  * **Details**
  *
  * Input chunks are decoded with streaming enabled so multi-byte characters may
- * span `Uint8Array` boundaries. The optional `encoding` and `options` are
- * passed to `TextDecoder`.
+ * span `Uint8Array` boundaries. On normal completion, incomplete trailing
+ * characters become U+FFFD or, with `fatal: true`, a defect. The optional
+ * `encoding` and `options` are passed to `TextDecoder`.
  *
  * @stability stable
  * @category decoding

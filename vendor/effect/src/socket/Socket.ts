@@ -161,6 +161,12 @@ export interface Writer {
  * @since 4.0.0
  */
 export interface TlsUpgradeOptions {
+  /**
+   * DNS hostname used for Server Name Indication (SNI) and certificate identity
+   * verification during client upgrades. Server upgrades ignore this option.
+   * When omitted, the adapter retains its existing hostname behavior.
+   */
+  readonly servername?: string | undefined
   readonly key?:
     | Redacted.Redacted<string | Uint8Array>
     | ReadonlyArray<Redacted.Redacted<string | Uint8Array>>
@@ -239,7 +245,17 @@ export const readerBytes = (
  *
  * **Details**
  *
- * The `TextDecoder` is created once per acquisition.
+ * Each acquisition has its own streaming decoder. Characters may span binary
+ * frames and pulls; each frame produces one string, possibly empty. A string
+ * frame flushes incomplete characters as U+FFFD before its text. Close code 1000
+ * flushes remaining text once before propagating the close error; other failures
+ * do not flush.
+ *
+ * **Gotchas**
+ *
+ * Binary WebSocket messages share decoder state: incomplete characters carry
+ * into the next binary frame, and BOM handling resets only after a flush. Use
+ * `readerBytes` and decode each frame separately for per-message decoding.
  *
  * @stability unstable
  * @category combinators
@@ -255,14 +271,31 @@ export const readerString = (
 > =>
   Effect.map(self.reader, ({ pull }) => {
     const decoder = new TextDecoder(encoding)
+    const streamOptions = { stream: true }
+    let needsFlush = false
     return Effect.map(pull, (chunk) => {
       const out = new Array<string>(chunk.length)
       for (let i = 0; i < chunk.length; i++) {
         const item = chunk[i]
-        out[i] = typeof item === "string" ? item : decoder.decode(item)
+        if (typeof item === "string") {
+          out[i] = needsFlush ? decoder.decode() + item : item
+          needsFlush = false
+        } else {
+          out[i] = decoder.decode(item, streamOptions)
+          needsFlush = true
+        }
       }
       return out as unknown as NonEmptyReadonlyArray<string>
-    })
+    }).pipe(
+      Effect.catch((error) => {
+        if (needsFlush && error.reason._tag === "SocketCloseError" && error.reason.code === 1000) {
+          needsFlush = false
+          const last = decoder.decode()
+          if (last.length > 0) return Effect.succeed([last] as const)
+        }
+        return Effect.fail(error)
+      })
+    )
   })
 
 const CloseEventTypeId = "~effect/socket/Socket/CloseEvent"
@@ -636,6 +669,10 @@ export const toChannel = <IE = never>(
  * Converts a `Socket` into a bidirectional string `Channel`, decoding binary
  * frames with the optional text encoding.
  *
+ * **Details**
+ *
+ * Uses `readerString` for decoding and close handling.
+ *
  * @stability unstable
  * @category combinators
  * @since 4.0.0
@@ -644,6 +681,10 @@ export const toChannelString: {
   /**
    * Converts a `Socket` into a bidirectional string `Channel`, decoding binary
    * frames with the optional text encoding.
+   *
+   * **Details**
+   *
+   * Uses `readerString` for decoding and close handling.
    *
    * @stability unstable
    * @category combinators
@@ -659,6 +700,10 @@ export const toChannelString: {
   /**
    * Converts a `Socket` into a bidirectional string `Channel`, decoding binary
    * frames with the optional text encoding.
+   *
+   * **Details**
+   *
+   * Uses `readerString` for decoding and close handling.
    *
    * @stability unstable
    * @category combinators
@@ -680,23 +725,7 @@ export const toChannelString: {
   void,
   NonEmptyReadonlyArray<Uint8Array | string | CloseEvent>,
   IE
-> => toChannelWithReader</**
- * Converts a `Socket` into a bidirectional string `Channel`, decoding binary
- * frames with the optional text encoding.
- *
- * @stability unstable
- * @category combinators
- * @since 4.0.0
- */
-string, /**
- * Converts a `Socket` into a bidirectional string `Channel`, decoding binary
- * frames with the optional text encoding.
- *
- * @stability unstable
- * @category combinators
- * @since 4.0.0
- */
-IE>(self, readerString(self, encoding)))
+> => toChannelWithReader<string, IE>(self, readerString(self, encoding)))
 
 /**
  * Creates a `Socket` to binary `Channel` adapter with a fixed upstream error
@@ -799,13 +828,18 @@ export interface WebSocketLike {
 }
 
 /**
- * Common options understood by a WebSocket client implementation.
+ * Client options for Node and Bun WebSocket implementations, allowing
+ * handshake headers and subprotocols to be supplied together.
  *
  * @stability unstable
  * @category models
  * @since 4.0.0
  */
 export interface WebSocketClientOptions {
+  /**
+   * Subprotocols to offer in the opening handshake.
+   */
+  readonly protocols?: string | Array<string> | undefined
   /**
    * Headers to include in the opening handshake.
    *
@@ -857,6 +891,7 @@ export class WebSocketConstructor extends Context.Service<
 
 /**
  * Layer that provides `WebSocketConstructor` using `globalThis.WebSocket`.
+ * Rejects client options objects, including those with handshake headers.
  *
  * @stability unstable
  * @category layers
@@ -874,6 +909,8 @@ export const layerWebSocketConstructorGlobal: Layer.Layer<WebSocketConstructor> 
 /**
  * Creates a `Socket` backed by a `WebSocketConstructor`, dialing the
  * WebSocket for each reader acquisition.
+ * Optional handshake headers require a Node or Bun constructor; without
+ * headers, protocols are passed directly for browser compatibility.
  *
  * @stability unstable
  * @category constructors
@@ -882,13 +919,21 @@ export const layerWebSocketConstructorGlobal: Layer.Layer<WebSocketConstructor> 
 export const makeWebSocket = (url: string | Effect.Effect<string>, options?: {
   readonly openTimeout?: Duration.Input | undefined
   readonly protocols?: string | Array<string> | undefined
+  readonly headers?: Readonly<Record<string, string>> | undefined
   readonly highWaterMark?: number | undefined
 }): Effect.Effect<Socket, never, WebSocketConstructor> =>
   WebSocketConstructor.use((makeWs) =>
     fromWebSocket(
       Effect.acquireRelease(
         (typeof url === "string" ? Effect.succeed(url) : url).pipe(
-          Effect.map((url) => makeWs(url, options?.protocols))
+          Effect.map((url) =>
+            makeWs(
+              url,
+              options?.headers === undefined
+                ? options?.protocols
+                : { protocols: options.protocols, headers: options.headers }
+            )
+          )
         ),
         (ws) => Effect.sync(() => ws.close(1000))
       ),
@@ -1054,6 +1099,8 @@ export const fromWebSocket = <RO, WS extends WebSocketLike>(
           // resume a pull blocked in another fiber before detaching
           fail(closeError(1006))
           ws.removeEventListener("message", onMessage)
+          // Keep late errors handled when release aborts a pending ws handshake.
+          ws.addEventListener("error", constVoid)
           ws.removeEventListener("error", onError)
           ws.removeEventListener("close", onClose)
           // let the close handshake proceed once nothing is pulling
@@ -1165,6 +1212,7 @@ const defaultHighWaterMark = 64 * 1024
 /**
  * Creates a binary `Channel` backed by a WebSocket URL, requiring a
  * `WebSocketConstructor` service.
+ * Supports subprotocols and, with a Node or Bun constructor, handshake headers.
  *
  * @stability unstable
  * @category constructors
@@ -1175,6 +1223,7 @@ export const makeWebSocketChannel = <IE = never>(
   options?: {
     readonly openTimeout?: Duration.Input | undefined
     readonly protocols?: string | Array<string> | undefined
+    readonly headers?: Readonly<Record<string, string>> | undefined
     readonly highWaterMark?: number | undefined
   }
 ): Channel.Channel<
@@ -1193,6 +1242,7 @@ export const makeWebSocketChannel = <IE = never>(
 /**
  * Layer that provides a `Socket` service backed by a WebSocket URL or URL
  * effect.
+ * Supports subprotocols and, with a Node or Bun constructor, handshake headers.
  *
  * @stability unstable
  * @category layers
@@ -1203,6 +1253,7 @@ export const layerWebSocket: (
   options?: {
     readonly openTimeout?: Duration.Input | undefined
     readonly protocols?: string | Array<string> | undefined
+    readonly headers?: Readonly<Record<string, string>> | undefined
     readonly highWaterMark?: number | undefined
   } | undefined
 ) => Layer.Layer<Socket, never, WebSocketConstructor> = flow(makeWebSocket, Layer.effect(Socket))

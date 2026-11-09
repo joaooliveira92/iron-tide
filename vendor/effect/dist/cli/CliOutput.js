@@ -1,18 +1,21 @@
 /**
- * Formats CLI help and errors as text.
+ * Formats and presents CLI help, errors, and version information.
  *
- * This module turns help documents, CLI errors, grouped errors, and version
- * information into strings. It does not write those strings to the terminal
- * itself. It includes the `Formatter` interface, the formatter service, a layer
- * for custom formatters, and the default formatter with configurable color
- * support.
+ * The `Formatter` service turns help documents, errors, and version
+ * information into strings. The `Presenter` service decides where the built-in
+ * help, version, and invalid-invocation output of `Command.runWith` is written,
+ * and can be replaced to suppress or redirect it.
  *
  * @stability unstable
  * @since 4.0.0
  */
+import * as Console from "../Console.js";
 import * as Context from "../Context.js";
+import * as Effect from "../Effect.js";
 import * as Layer from "../Layer.js";
 import * as Option from "../Option.js";
+import * as Ansi from "./internal/ansi.js";
+import * as TerminalCapabilities from "./TerminalCapabilities.js";
 /**
  * Service reference for the CLI output formatter. Provides a default implementation
  * that can be overridden for custom formatting or testing.
@@ -45,6 +48,51 @@ export const Formatter = /*#__PURE__*/Context.Reference("effect/cli/CliOutput", 
   defaultValue: () => defaultFormatter()
 });
 /**
+ * Default presenter that renders events with the current `Formatter` and
+ * writes them with `Console`.
+ *
+ * **Details**
+ *
+ * Help and version output goes to `Console.log`. Invalid invocations write
+ * help to `Console.log` and errors to `Console.error`. When no `Formatter` is
+ * installed, the default formatter colors output when `TerminalCapabilities`
+ * says it can.
+ *
+ * @see {@link Presenter} for replacing the default output
+ * @stability unstable
+ * @category defaults
+ * @since 4.0.0
+ */
+export const defaultPresenter = {
+  present: /*#__PURE__*/Effect.fnUntraced(function* (event) {
+    const context = yield* Effect.context();
+    const formatter = Context.getOrUndefined(context, Formatter) ?? defaultFormatter({
+      colors: Context.get(context, TerminalCapabilities.TerminalCapabilities).canColor
+    });
+    switch (event._tag) {
+      case "Help":
+        return yield* Console.log(formatter.formatHelpDoc(event.helpDoc));
+      case "InvalidInvocation":
+        yield* Console.log(formatter.formatHelpDoc(event.helpDoc));
+        return yield* Console.error(formatter.formatErrors(event.errors));
+      case "Version":
+        return yield* Console.log(formatter.formatVersion(event.name, event.version));
+    }
+  })
+};
+/**
+ * Service reference for the CLI output presenter. Defaults to
+ * `defaultPresenter`.
+ *
+ * @see {@link layerPresenter} for providing a custom presenter
+ * @stability unstable
+ * @category services
+ * @since 4.0.0
+ */
+export const Presenter = /*#__PURE__*/Context.Reference("effect/cli/CliOutput/Presenter", {
+  defaultValue: () => defaultPresenter
+});
+/**
  * Creates a Layer that provides a custom Formatter implementation.
  *
  * **Example** (Providing a custom formatter)
@@ -73,11 +121,37 @@ export const Formatter = /*#__PURE__*/Context.Reference("effect/cli/CliOutput", 
  * @since 4.0.0
  */
 export const layer = formatter => Layer.succeed(Formatter)(formatter);
+/**
+ * Creates a Layer that provides a custom Presenter implementation.
+ *
+ * @see {@link Presenter} for the events a presenter receives
+ * @stability unstable
+ * @category layers
+ * @since 4.0.0
+ */
+export const layerPresenter = presenter => Layer.succeed(Presenter)(presenter);
 const escapeControlCharacters = text =>
 // oxlint-disable-next-line no-control-regex
 text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, character => `\\x${character.charCodeAt(0).toString(16).padStart(2, "0")}`);
 /**
  * Creates a default formatter with configurable options.
+ *
+ * **Details**
+ *
+ * - `colors`: force ANSI colors on or off. Defaults to terminal detection.
+ * - `inheritedFlags`: how subcommand help renders flags inherited from
+ *   ancestor commands. `"full"` (default) lists them under `INHERITED FLAGS`,
+ *   `"summary"` replaces the section with a pointer to the parent command's
+ *   help, and `"none"` omits it.
+ * - `globalFlags`: the same choice for `GLOBAL FLAGS`, with the summary
+ *   pointing at the help of the nearest command that declares global flags
+ *   (the root command for built-in flags). Commands that declare global flags
+ *   always list them in full.
+ *
+ * **Gotchas**
+ *
+ * Per-flag filtering in a custom formatter matches names, not flag identities.
+ * Renaming a flag without updating the filter silently stops it from matching.
  *
  * **Example** (Creating default formatters)
  *
@@ -93,6 +167,9 @@ text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, character => `\\
  * // Auto-detect colors based on terminal support (default behavior)
  * const autoFormatter = CliOutput.defaultFormatter()
  *
+ * // Point subcommand help at the declaring scope for global flags
+ * const compactFormatter = CliOutput.defaultFormatter({ globalFlags: "summary" })
+ *
  * const error = new CliError.InvalidValue({
  *   option: "foo",
  *   value: "bar",
@@ -103,6 +180,48 @@ text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, character => `\\
  * noColorFormatter.formatError(error).includes("Invalid value") // => true
  * colorFormatter.formatVersion("my-tool", "1.2.3").includes("my-tool") // => true
  * autoFormatter.formatVersion("my-tool", "1.2.3").includes("1.2.3") // => true
+ * compactFormatter.formatVersion("my-tool", "1.2.3").includes("my-tool") // => true
+ * ```
+ *
+ * **Example** (Hiding one inherited flag)
+ *
+ * Filter only `inheritedFlags` to keep `--profile` visible on its declaring
+ * command while hiding it on descendants. Other inherited flags still render.
+ *
+ * ```ts import.meta.vitest
+ * import { Context, Effect, Option } from "effect"
+ * import { CliOutput } from "effect/cli"
+ *
+ * const base = CliOutput.defaultFormatter({ colors: false })
+ * const formatter: CliOutput.Formatter = {
+ *   ...base,
+ *   formatHelpDoc: (doc) =>
+ *     base.formatHelpDoc({
+ *       ...doc,
+ *       inheritedFlags: doc.inheritedFlags?.filter((flag) => flag.name !== "profile")
+ *     })
+ * }
+ *
+ * const program = Effect.gen(function*() {
+ *   const output = yield* CliOutput.Formatter
+ *   return output.formatHelpDoc({
+ *     description: "Deploy the application",
+ *     usage: "app deploy",
+ *     annotations: Context.empty(),
+ *     flags: [],
+ *     inheritedFlags: ["profile", "region"].map((name) => ({
+ *       name,
+ *       aliases: [],
+ *       type: "string",
+ *       description: Option.none(),
+ *       required: false
+ *     }))
+ *   })
+ * }).pipe(Effect.provide(CliOutput.layer(formatter)))
+ *
+ * const help = await Effect.runPromise(program)
+ * help.includes("--profile") // => false
+ * help.includes("--region") // => true
  * ```
  *
  * @stability unstable
@@ -110,11 +229,11 @@ text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, character => `\\
  * @since 4.0.0
  */
 export const defaultFormatter = options => {
-  const globalProcess = globalThis.process;
-  const hasProcess = typeof globalProcess === "object" && globalProcess !== null;
-  const useColor = options?.colors !== undefined ? options.colors
-  // Auto-detect based on environment
-  : hasProcess && typeof globalProcess.stdout === "object" && globalProcess.stdout !== null && globalProcess.stdout.isTTY === true && !globalProcess.env?.NO_COLOR;
+  const useColor = options?.colors ?? Ansi.detectColors();
+  const helpOptions = {
+    inheritedFlags: options?.inheritedFlags ?? "full",
+    globalFlags: options?.globalFlags ?? "full"
+  };
   // Color palette using ANSI escape codes
   const colors = useColor ? {
     bold: text => `\x1b[1m${text}\x1b[0m`,
@@ -137,7 +256,7 @@ export const defaultFormatter = options => {
   const red = useColor ? "\x1b[31m" : "";
   const bold = useColor ? "\x1b[1m" : "";
   return {
-    formatHelpDoc: doc => formatHelpDocImpl(doc, colors),
+    formatHelpDoc: doc => formatHelpDocImpl(doc, colors, helpOptions),
     formatCliError: error => escapeControlCharacters(error.message),
     formatError: error => {
       return `\n${bold}${red}ERROR${reset}\n  ${escapeControlCharacters(error.message)}${reset}`;
@@ -176,7 +295,7 @@ const stripAnsi = text => {
   return text.replace(/\u001B\[[0-9;]*m/g, "");
 };
 /**
- * Gets the terminal display width of a string (excluding ANSI codes).
+ * Segments text into grapheme clusters.
  * @internal
  */
 const graphemeSegmenter = /*#__PURE__*/new Intl.Segmenter(undefined, {
@@ -194,7 +313,33 @@ const graphemeWidth = grapheme => {
   if (emojiPresentation.test(grapheme) || grapheme.includes("\uFE0F")) return 2;
   return isFullWidthCodePoint(visible.codePointAt(0)) ? 2 : 1;
 };
-const visualLength = text => {
+/**
+ * Measures the number of terminal cells a string occupies.
+ *
+ * **Details**
+ *
+ * Uses the same measurement as built-in help and table rendering. ANSI styling
+ * is stripped before measuring graphemes: zero-width graphemes count as `0`,
+ * emoji presentation sequences and fullwidth characters as `2`, and other
+ * graphemes as `1`.
+ *
+ * **Example** (Measuring terminal-cell widths)
+ *
+ * ```ts import.meta.vitest
+ * import { CliOutput } from "effect/cli"
+ *
+ * CliOutput.displayWidth("file") // => 4
+ * CliOutput.displayWidth("ファイル") // => 8
+ * CliOutput.displayWidth("é") // => 1
+ * CliOutput.displayWidth("1️⃣") // => 2
+ * CliOutput.displayWidth("\u001B[1mbold\u001B[0m") // => 4
+ * ```
+ *
+ * @stability unstable
+ * @category measuring
+ * @since 4.0.3
+ */
+export const displayWidth = text => {
   let length = 0;
   for (const {
     segment
@@ -208,7 +353,7 @@ const visualLength = text => {
  * @internal
  */
 const pad = (s, width) => {
-  const actualLength = visualLength(s);
+  const actualLength = displayWidth(s);
   const padding = Math.max(0, width - actualLength);
   return s + " ".repeat(padding);
 };
@@ -217,19 +362,19 @@ const pad = (s, width) => {
  * @internal
  */
 const renderTable = (rows, widthCap) => {
-  const maxColumn = Math.max(...rows.map(r => visualLength(r.left))) + 4;
+  const maxColumn = Math.max(...rows.map(r => displayWidth(r.left))) + 4;
   const col = widthCap === undefined ? maxColumn : Math.min(maxColumn, widthCap);
   return rows.map(({
     left,
     right
-  }) => `  ${pad(left, Math.max(col, visualLength(left) + 1))}${right}`).join("\n");
+  }) => `  ${pad(left, Math.max(col, displayWidth(left) + 1))}${right}`).join("\n");
 };
 const formatSubcommandName = (name, alias) => alias ? `${name}, ${alias}` : name;
 /**
  * Internal implementation of help formatting that accepts configurable color functions.
  * @internal
  */
-const formatHelpDocImpl = (doc, colors) => {
+const formatHelpDocImpl = (doc, colors, options) => {
   const sections = [];
   // Description section
   if (doc.description) {
@@ -262,47 +407,38 @@ const formatHelpDocImpl = (doc, colors) => {
     sections.push(renderTable(argRows, 25));
     sections.push("");
   }
-  // Flags section
+  const renderFlags = (title, flags) => {
+    sections.push(colors.bold(title));
+    sections.push(renderTable(flags.map(flag => {
+      const names = [`--${flag.name}`, ...flag.aliases].map(colors.green).join(", ");
+      const typePart = flag.type !== "boolean" ? ` ${colors.dim(flag.type)}` : "";
+      return {
+        left: names + typePart,
+        right: Option.getOrElse(flag.description, () => "")
+      };
+    })));
+    sections.push("");
+  };
+  const summaries = [];
+  const renderFlagSection = (title, flags, mode, summaryPath) => {
+    if (!flags || flags.length === 0 || mode === "none") return;
+    if (mode === "summary" && summaryPath && summaryPath.length > 0) {
+      summaries.push(`Run '${summaryPath.join(" ")} --help' for ${title.toLowerCase()}`);
+    } else {
+      renderFlags(title, flags);
+    }
+  };
   if (doc.flags.length > 0) {
-    sections.push(colors.bold("FLAGS"));
-    const flagRows = doc.flags.map(flag => {
-      const names = [];
-      // Add main name with -- prefix first
-      names.push(colors.green(`--${flag.name}`));
-      // Add aliases after (like -f) to match expected ordering
-      for (const alias of flag.aliases) {
-        names.push(colors.green(alias));
-      }
-      const namesPart = names.join(", ");
-      const typePart = flag.type !== "boolean" ? ` ${colors.dim(flag.type)}` : "";
-      return {
-        left: namesPart + typePart,
-        right: Option.getOrElse(flag.description, () => "")
-      };
-    });
-    sections.push(renderTable(flagRows));
-    sections.push("");
+    renderFlags("FLAGS", doc.flags);
   }
-  // Global Flags section
-  if (doc.globalFlags && doc.globalFlags.length > 0) {
-    sections.push(colors.bold("GLOBAL FLAGS"));
-    const globalFlagRows = doc.globalFlags.map(flag => {
-      const names = [];
-      // Add main name with -- prefix first
-      names.push(colors.green(`--${flag.name}`));
-      // Add aliases after (like -f) to match expected ordering
-      for (const alias of flag.aliases) {
-        names.push(colors.green(alias));
-      }
-      const namesPart = names.join(", ");
-      const typePart = flag.type !== "boolean" ? ` ${colors.dim(flag.type)}` : "";
-      return {
-        left: namesPart + typePart,
-        right: Option.getOrElse(flag.description, () => "")
-      };
-    });
-    sections.push(renderTable(globalFlagRows));
-    sections.push("");
+  const commandPath = doc.commandPath;
+  renderFlagSection("INHERITED FLAGS", doc.inheritedFlags, options.inheritedFlags, commandPath?.slice(0, -1));
+  // Keep globals discoverable on their declaring command, even in "none" mode.
+  const globalFlagsScope = doc.globalFlagsScope ?? commandPath?.slice(0, 1);
+  const declaresGlobalFlags = commandPath === undefined || globalFlagsScope?.length === commandPath.length;
+  renderFlagSection("GLOBAL FLAGS", doc.globalFlags, declaresGlobalFlags ? "full" : options.globalFlags, globalFlagsScope);
+  if (summaries.length > 0) {
+    sections.push(...summaries, "");
   }
   // Subcommands section
   if (doc.subcommands && doc.subcommands.length > 0) {

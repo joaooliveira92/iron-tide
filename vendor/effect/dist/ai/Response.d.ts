@@ -13,6 +13,7 @@
  */
 import type * as DateTime from "../DateTime.ts";
 import * as Schema from "../Schema.ts";
+import * as Prompt from "./Prompt.ts";
 import * as Tool from "./Tool.ts";
 import type * as Toolkit from "./Toolkit.ts";
 declare const PartTypeId: "~effect/ai/Response/Part";
@@ -56,6 +57,11 @@ export type AllParts<Tools extends Record<string, Tool.Any>> = TextPart | TextSt
  * @since 4.0.0
  */
 export type AllPartsEncoded = TextPartEncoded | TextStartPartEncoded | TextDeltaPartEncoded | TextEndPartEncoded | ReasoningPartEncoded | ReasoningStartPartEncoded | ReasoningDeltaPartEncoded | ReasoningEndPartEncoded | ToolParamsStartPartEncoded | ToolParamsDeltaPartEncoded | ToolParamsEndPartEncoded | ToolCallPartEncoded | ToolResultPartEncoded | ToolApprovalRequestPartEncoded | FilePartEncoded | DocumentSourcePartEncoded | UrlSourcePartEncoded | ResponseMetadataPartEncoded | FinishPartEncoded | ErrorPartEncoded;
+type AnyToolParts = ToolCallPart<string, unknown> | ToolResultPart<string, unknown, unknown>;
+type ToolkitTools<T> = T extends Toolkit.Any ? Toolkit.Tools<T> : Toolkit.WithHandlerTools<T>;
+type ToolkitTool<T> = ToolkitTools<T>[keyof ToolkitTools<T>];
+type ToolkitDecodingServices<T> = Tool.ParametersDecodingServices<ToolkitTool<T>> | Tool.ResultDecodingServices<ToolkitTool<T>>;
+type ToolkitEncodingServices<T> = Tool.ParametersEncodingServices<ToolkitTool<T>> | Tool.ResultEncodingServices<ToolkitTool<T>>;
 /**
  * Creates a Schema for all response parts based on a toolkit.
  *
@@ -63,6 +69,9 @@ export type AllPartsEncoded = TextPartEncoded | TextStartPartEncoded | TextDelta
  *
  * Generates a schema that includes all possible response parts, with tool call
  * and tool result parts dynamically created based on the provided toolkit.
+ *
+ * When no toolkit is provided, tool call and tool result parts accept any tool
+ * name, with parameters and results decoded as `unknown`.
  *
  * **Example** (Building a response parts schema)
  *
@@ -79,13 +88,89 @@ export type AllPartsEncoded = TextPartEncoded | TextStartPartEncoded | TextDelta
  *
  * const allPartsSchema = Response.AllParts(myToolkit)
  * Schema.isSchema(allPartsSchema) // => true
+ *
+ * const anyToolPartsSchema = Response.AllParts()
+ * Schema.isSchema(anyToolPartsSchema) // => true
  * ```
  *
  * @stability unstable
  * @category schemas
  * @since 4.0.0
  */
-export declare const AllParts: <T extends Toolkit.Any | Toolkit.WithHandler<any>>(toolkit: T) => Schema.Codec<AllParts<T extends Toolkit.Any ? Toolkit.Tools<T> : Toolkit.WithHandlerTools<T>>, AllPartsEncoded, Tool.ResultDecodingServices<Toolkit.Tools<T>[keyof Toolkit.Tools<T>]>, Tool.ResultEncodingServices<Toolkit.Tools<T>[keyof Toolkit.Tools<T>]>>;
+export declare const AllParts: {
+    /**
+     * Creates a Schema for all response parts based on a toolkit.
+     *
+     * **Details**
+     *
+     * Generates a schema that includes all possible response parts, with tool call
+     * and tool result parts dynamically created based on the provided toolkit.
+     *
+     * When no toolkit is provided, tool call and tool result parts accept any tool
+     * name, with parameters and results decoded as `unknown`.
+     *
+     * **Example** (Building a response parts schema)
+     *
+     * ```ts import.meta.vitest
+     * import { Schema } from "effect"
+     * import { Response, Tool, Toolkit } from "effect/ai"
+     *
+     * const myToolkit = Toolkit.make(
+     *   Tool.make("GetWeather", {
+     *     parameters: Schema.Struct({ city: Schema.String }),
+     *     success: Schema.Struct({ temperature: Schema.Number })
+     *   })
+     * )
+     *
+     * const allPartsSchema = Response.AllParts(myToolkit)
+     * Schema.isSchema(allPartsSchema) // => true
+     *
+     * const anyToolPartsSchema = Response.AllParts()
+     * Schema.isSchema(anyToolPartsSchema) // => true
+     * ```
+     *
+     * @stability unstable
+     * @category schemas
+     * @since 4.0.0
+     */
+    <T extends Toolkit.Any | Toolkit.WithHandler<any>>(toolkit: T): Schema.Codec<AllParts<ToolkitTools<T>>, AllPartsEncoded, ToolkitDecodingServices<T>, ToolkitEncodingServices<T>>;
+    /**
+     * Creates a Schema for all response parts based on a toolkit.
+     *
+     * **Details**
+     *
+     * Generates a schema that includes all possible response parts, with tool call
+     * and tool result parts dynamically created based on the provided toolkit.
+     *
+     * When no toolkit is provided, tool call and tool result parts accept any tool
+     * name, with parameters and results decoded as `unknown`.
+     *
+     * **Example** (Building a response parts schema)
+     *
+     * ```ts import.meta.vitest
+     * import { Schema } from "effect"
+     * import { Response, Tool, Toolkit } from "effect/ai"
+     *
+     * const myToolkit = Toolkit.make(
+     *   Tool.make("GetWeather", {
+     *     parameters: Schema.Struct({ city: Schema.String }),
+     *     success: Schema.Struct({ temperature: Schema.Number })
+     *   })
+     * )
+     *
+     * const allPartsSchema = Response.AllParts(myToolkit)
+     * Schema.isSchema(allPartsSchema) // => true
+     *
+     * const anyToolPartsSchema = Response.AllParts()
+     * Schema.isSchema(anyToolPartsSchema) // => true
+     * ```
+     *
+     * @stability unstable
+     * @category schemas
+     * @since 4.0.0
+     */
+    (): Schema.Codec<AllParts<{}> | AnyToolParts, AllPartsEncoded>;
+};
 /**
  * A type for representing non-streaming response parts with tool-specific
  * typing.
@@ -106,11 +191,43 @@ export type PartEncoded = TextPartEncoded | ReasoningPartEncoded | ReasoningDelt
 /**
  * Creates a Schema for non-streaming response parts based on a toolkit.
  *
+ * **Details**
+ *
+ * When no toolkit is provided, tool call and tool result parts accept any tool
+ * name, with parameters and results decoded as `unknown`.
+ *
  * @stability unstable
  * @category schemas
  * @since 4.0.0
  */
-export declare const Part: <T extends Toolkit.Any | Toolkit.WithHandler<any>>(toolkit: T) => Schema.Codec<Part<T extends Toolkit.Any ? Toolkit.Tools<T> : Toolkit.WithHandlerTools<T>>, PartEncoded, Tool.ResultDecodingServices<Toolkit.Tools<T>[keyof Toolkit.Tools<T>]>, Tool.ResultEncodingServices<Toolkit.Tools<T>[keyof Toolkit.Tools<T>]>>;
+export declare const Part: {
+    /**
+     * Creates a Schema for non-streaming response parts based on a toolkit.
+     *
+     * **Details**
+     *
+     * When no toolkit is provided, tool call and tool result parts accept any tool
+     * name, with parameters and results decoded as `unknown`.
+     *
+     * @stability unstable
+     * @category schemas
+     * @since 4.0.0
+     */
+    <T extends Toolkit.Any | Toolkit.WithHandler<any>>(toolkit: T): Schema.Codec<Part<ToolkitTools<T>>, PartEncoded, ToolkitDecodingServices<T>, ToolkitEncodingServices<T>>;
+    /**
+     * Creates a Schema for non-streaming response parts based on a toolkit.
+     *
+     * **Details**
+     *
+     * When no toolkit is provided, tool call and tool result parts accept any tool
+     * name, with parameters and results decoded as `unknown`.
+     *
+     * @stability unstable
+     * @category schemas
+     * @since 4.0.0
+     */
+    (): Schema.Codec<Part<{}> | AnyToolParts, PartEncoded>;
+};
 /**
  * A type for representing streaming response parts with tool-specific typing.
  *
@@ -130,11 +247,43 @@ export type StreamPartEncoded = TextStartPartEncoded | TextDeltaPartEncoded | Te
 /**
  * Creates a Schema for streaming response parts based on a toolkit.
  *
+ * **Details**
+ *
+ * When no toolkit is provided, tool call and tool result parts accept any tool
+ * name, with parameters and results decoded as `unknown`.
+ *
  * @stability unstable
  * @category schemas
  * @since 4.0.0
  */
-export declare const StreamPart: <T extends Toolkit.Any | Toolkit.WithHandler<any>>(toolkit: T) => Schema.Codec<StreamPart<T extends Toolkit.Any ? Toolkit.Tools<T> : Toolkit.WithHandlerTools<T>>, StreamPartEncoded, Tool.ResultDecodingServices<Toolkit.Tools<T>[keyof Toolkit.Tools<T>]>, Tool.ResultEncodingServices<Toolkit.Tools<T>[keyof Toolkit.Tools<T>]>>;
+export declare const StreamPart: {
+    /**
+     * Creates a Schema for streaming response parts based on a toolkit.
+     *
+     * **Details**
+     *
+     * When no toolkit is provided, tool call and tool result parts accept any tool
+     * name, with parameters and results decoded as `unknown`.
+     *
+     * @stability unstable
+     * @category schemas
+     * @since 4.0.0
+     */
+    <T extends Toolkit.Any | Toolkit.WithHandler<any>>(toolkit: T): Schema.Codec<StreamPart<ToolkitTools<T>>, StreamPartEncoded, ToolkitDecodingServices<T>, ToolkitEncodingServices<T>>;
+    /**
+     * Creates a Schema for streaming response parts based on a toolkit.
+     *
+     * **Details**
+     *
+     * When no toolkit is provided, tool call and tool result parts accept any tool
+     * name, with parameters and results decoded as `unknown`.
+     *
+     * @stability unstable
+     * @category schemas
+     * @since 4.0.0
+     */
+    (): Schema.Codec<StreamPart<{}> | AnyToolParts, StreamPartEncoded>;
+};
 /**
  * Utility type that extracts tool call parts from a set of tools.
  *
@@ -142,15 +291,16 @@ export declare const StreamPart: <T extends Toolkit.Any | Toolkit.WithHandler<an
  * @category utility types
  * @since 4.0.0
  */
-export type ToolCallParts<Tools extends Record<string, Tool.Any>, ParametersMode extends ToolParametersMode = "decoded"> = ToolCallPartForName<Tools, ParametersMode, keyof Tools>;
+export type ToolCallParts<Tools extends Record<string, Tool.Any>, ParametersMode extends ToolParametersMode = "decoded"> = ParametersMode extends "deferred" ? ToolCallPartForName<Tools, "opaque", keyof Tools> | ToolCallPart<string, unknown> : ToolCallPartForName<Tools, ParametersMode, keyof Tools>;
 /**
- * Controls whether tool parameters are decoded, encoded, or opaque.
+ * Controls tool parameter decoding. `"deferred"` allows undeclared tool names
+ * with opaque parameters, leaving validation to the caller.
  *
  * @stability unstable
  * @category utility types
  * @since 4.0.0
  */
-export type ToolParametersMode = "decoded" | "encoded" | "opaque";
+export type ToolParametersMode = "decoded" | "encoded" | "opaque" | "deferred";
 type ToolCallPartForName<Tools extends Record<string, Tool.Any>, ParametersMode extends ToolParametersMode, Name extends keyof Tools> = Name extends string ? ToolCallPart<Name, ParametersMode extends "encoded" ? Tool.ParametersEncoded<Tools[Name]> : ParametersMode extends "opaque" ? unknown : Tool.Parameters<Tools[Name]>> : never;
 /**
  * Utility type that extracts tool result parts from a set of tools.
@@ -1039,6 +1189,10 @@ export interface BaseToolResult<Name extends string> extends BasePart<"tool-resu
      */
     readonly encodedResult: unknown;
     /**
+     * Content sent to the model in place of the encoded result.
+     */
+    readonly modelOutput?: ReadonlyArray<Prompt.ToolModelOutputPart> | undefined;
+    /**
      * Whether the tool was executed by the provider (true) or framework (false).
      */
     readonly providerExecuted: boolean;
@@ -1155,6 +1309,10 @@ export interface ToolResultPartEncoded extends BasePartEncoded<"tool-result", To
      * The result returned by the tool execution.
      */
     readonly result: unknown;
+    /**
+     * Content sent to the model in place of the result.
+     */
+    readonly modelOutput?: ReadonlyArray<Prompt.TextPartEncoded | Prompt.FilePartEncoded> | undefined;
     /**
      * Whether or not the result of executing the tool call handler was an error.
      */
@@ -1550,20 +1708,6 @@ export declare const UrlSourcePart: Schema.Struct<{
     readonly metadata: Schema.withDecodingDefault<Schema.$Record<Schema.String, Schema.Codec<Schema.Json>>>;
 }>;
 /**
- * Alias of {@link AiError.HttpRequestDetails}.
- *
- * @stability unstable
- * @category schemas
- * @since 4.0.0
- */
-export declare const HttpRequestDetails: Schema.Struct<{
-    readonly method: Schema.Literals<readonly ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "QUERY"]>;
-    readonly url: Schema.String;
-    readonly urlParams: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
-    readonly hash: Schema.optional<Schema.String>;
-    readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
-}>;
-/**
  * Alias of {@link AiError.HttpResponseDetails}.
  *
  * @stability unstable
@@ -1588,8 +1732,7 @@ export declare const HttpResponseDetails: Schema.Struct<{
  *   {
  *     id: "resp_123",
  *     modelId: "gpt-4",
- *     timestamp: DateTime.makeUnsafe("2024-01-01T00:00:00Z"),
- *     request: undefined
+ *     timestamp: DateTime.makeUnsafe("2024-01-01T00:00:00Z")
  *   }
  * )
  * const result = [metadataPart.id, metadataPart.modelId] // => ["resp_123", "gpt-4"]
@@ -1612,10 +1755,6 @@ export interface ResponseMetadataPart extends BasePart<"response-metadata", Resp
      * Optional timestamp when the response was generated.
      */
     readonly timestamp?: DateTime.Utc | undefined;
-    /**
-     * Optional HTTP request details for the request made to the AI provider.
-     */
-    readonly request?: typeof HttpRequestDetails.Type | undefined;
 }
 /**
  * Encoded representation of response metadata parts for serialization.
@@ -1637,10 +1776,6 @@ export interface ResponseMetadataPartEncoded extends BasePartEncoded<"response-m
      * Optional timestamp when the response was generated.
      */
     readonly timestamp?: string | undefined;
-    /**
-     * Optional HTTP request details for the request made to the AI provider.
-     */
-    readonly request?: typeof HttpRequestDetails.Encoded | undefined;
 }
 /**
  * Represents provider-specific metadata that can be associated with a
@@ -1664,7 +1799,6 @@ export declare const ResponseMetadataPart: Schema.Struct<{
     readonly id: Schema.optional<Schema.String>;
     readonly modelId: Schema.optional<Schema.String>;
     readonly timestamp: Schema.optional<Schema.DateTimeUtcFromString>;
-    readonly request: Schema.optional<typeof HttpRequestDetails>;
     readonly "~effect/ai/Response/Part": Schema.withDecodingDefaultKey<Schema.tag<"~effect/ai/Response/Part">>;
     readonly metadata: Schema.withDecodingDefault<Schema.$Record<Schema.String, Schema.Codec<Schema.Json>>>;
 }>;

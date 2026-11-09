@@ -146,12 +146,15 @@ export const decodeDataSchema = (schema, options) => {
  */
 export function makeParser(onParse, options) {
   const maxEventSize = options?.maxEventSize ?? defaultMaxEventSize;
+  const dispatchEmptyNamedEvents = options?.dispatchEmptyNamedEvents === true;
   // Processing state
   let isFirstChunk;
-  let buffer;
-  let startingPosition;
-  let startingFieldLength;
+  // Pieces of the unterminated line, joined once when the line ends
+  let pending;
+  let pendingLength;
   let discardTrailingNewline;
+  // Incremented by `reset`, so `feed` can stop if `onParse` resets the parser
+  let generation = 0;
   // Event state
   let lastEventId;
   let eventName;
@@ -162,74 +165,62 @@ export function makeParser(onParse, options) {
     reset
   };
   function reset() {
+    generation++;
     isFirstChunk = true;
-    buffer = "";
-    startingPosition = 0;
-    startingFieldLength = -1;
+    pending = [];
+    pendingLength = 0;
     discardTrailingNewline = false;
     lastEventId = undefined;
     eventName = undefined;
     data = "";
   }
   function feed(chunk) {
-    buffer = buffer ? buffer + chunk : chunk;
-    // Strip any UTF-8 byte order mark (BOM) at the start of the stream.
-    // Note that we do not strip any non - UTF8 BOM, as eventsource streams are
-    // always decoded as UTF8 as per the specification.
-    if (isFirstChunk && buffer.startsWith(BOM)) {
-      buffer = buffer.slice(BOM.length);
+    // Empty chunks must not consume the leading BOM check below
+    if (chunk.length === 0) return;
+    // Strip a UTF-8 byte order mark (BOM) at the start of the stream
+    if (isFirstChunk && chunk.startsWith(BOM)) {
+      chunk = chunk.slice(BOM.length);
     }
     isFirstChunk = false;
-    // Set up chunk-specific processing state
-    const length = buffer.length;
+    const length = chunk.length;
+    const currentGeneration = generation;
     let position = 0;
-    // Read the current buffer byte by byte
     while (position < length) {
-      // EventSource allows for carriage return + line feed, which means we
-      // need to ignore a linefeed character if the previous character was a
-      // carriage return
-      // @todo refactor to reduce nesting, consider checking previous byte?
-      // @todo but consider multiple chunks etc
+      // Skip the LF of a CRLF, whose CR may have ended the previous chunk
       if (discardTrailingNewline) {
-        if (buffer[position] === "\n") {
-          ++position;
-        }
         discardTrailingNewline = false;
-      }
-      let lineLength = -1;
-      let fieldLength = startingFieldLength;
-      let character;
-      for (let index = position + startingPosition; lineLength < 0 && index < length; ++index) {
-        character = buffer[index];
-        if (character === ":" && fieldLength < 0) {
-          fieldLength = index - position;
-        } else if (character === "\r") {
-          discardTrailingNewline = true;
-          lineLength = index - position;
-        } else if (character === "\n") {
-          lineLength = index - position;
+        if (chunk.charCodeAt(position) === LF) {
+          ++position;
+          continue;
         }
       }
-      if (lineLength < 0) {
-        startingPosition = length - position;
-        startingFieldLength = fieldLength;
-        break;
-      } else {
-        startingPosition = 0;
-        startingFieldLength = -1;
+      let lineEnd = position;
+      while (lineEnd < length) {
+        const code = chunk.charCodeAt(lineEnd);
+        if (code === CR || code === LF) break;
+        ++lineEnd;
       }
-      parseEventStreamLine(buffer, position, fieldLength, lineLength);
-      position += lineLength + 1;
+      if (lineEnd === length) {
+        pending.push(chunk.slice(position));
+        pendingLength += length - position;
+        break;
+      }
+      discardTrailingNewline = chunk.charCodeAt(lineEnd) === CR;
+      let line = chunk.slice(position, lineEnd);
+      if (pending.length > 0) {
+        pending.push(line);
+        line = pending.join("");
+        pending = [];
+        pendingLength = 0;
+      }
+      parseLine(line);
+      if (generation !== currentGeneration) {
+        // `onParse` reset the parser, so drop the rest of this chunk
+        return;
+      }
+      position = lineEnd + 1;
     }
-    if (position === length) {
-      // If we consumed the entire buffer to read the event, reset the buffer
-      buffer = "";
-    } else if (position > 0) {
-      // If there are bytes left to process, set the buffer to the unprocessed
-      // portion of the buffer only
-      buffer = buffer.slice(position);
-    }
-    if (buffer.length + data.length > maxEventSize) {
+    if (pendingLength + data.length > maxEventSize) {
       const error = new SseError({
         reason: new EventTooLarge({
           maxEventSize
@@ -239,36 +230,34 @@ export function makeParser(onParse, options) {
       return error;
     }
   }
-  function parseEventStreamLine(lineBuffer, index, fieldLength, lineLength) {
-    if (lineLength === 0) {
-      // We reached the last line of this event
-      if (data.length > 0) {
+  function parseLine(line) {
+    if (line.length === 0) {
+      // End of event. Clear the state first so a throwing `onParse` cannot
+      // leak it into the next event
+      const named = eventName !== undefined && eventName !== "";
+      const event = eventName || "message";
+      const eventData = data;
+      eventName = undefined;
+      data = "";
+      if (eventData.length > 0 || dispatchEmptyNamedEvents && named) {
         onParse({
           _tag: "Event",
           id: lastEventId,
-          event: eventName || "message",
-          data: data.slice(0, -1) // remove trailing newline
+          event,
+          data: eventData.slice(0, -1) // remove trailing newline
         });
-        data = "";
       }
-      eventName = undefined;
       return;
     }
-    const noValue = fieldLength < 0;
-    const field = lineBuffer.slice(index, index + (noValue ? lineLength : fieldLength));
-    let step = 0;
-    if (noValue) {
-      step = lineLength;
-    } else if (lineBuffer[index + fieldLength + 1] === " ") {
-      step = fieldLength + 2;
-    } else {
-      step = fieldLength + 1;
+    const colon = line.indexOf(":");
+    let field = line;
+    let value = "";
+    if (colon >= 0) {
+      field = line.slice(0, colon);
+      value = line.slice(line.charCodeAt(colon + 1) === SPACE ? colon + 2 : colon + 1);
     }
-    const position = index + step;
-    const valueLength = lineLength - step;
-    const value = lineBuffer.slice(position, position + valueLength).toString();
     if (field === "data") {
-      data += value ? `${value}\n` : "\n";
+      data += value + "\n";
     } else if (field === "event") {
       eventName = value;
     } else if (field === "id" && !value.includes("\u0000")) {
@@ -283,6 +272,9 @@ export function makeParser(onParse, options) {
   }
 }
 const BOM = "\uFEFF";
+const LF = 10;
+const CR = 13;
+const SPACE = 32;
 /**
  * Creates a channel that encodes `Event` values as Server-Sent Events text.
  *
@@ -411,7 +403,9 @@ export class Retry extends /*#__PURE__*/Data.TaggedClass("Retry") {
  * **Details**
  *
  * It renders `Event` values as `id`, `event`, and `data` lines and renders
- * `Retry` values as `retry:` directives.
+ * `Retry` values as `retry:` directives. CR and LF are removed from `id` and
+ * `event`, and NUL is removed from `id`, so those values cannot inject fields
+ * or events.
  *
  * @stability unstable
  * @category encoding
@@ -424,12 +418,12 @@ export const encoder = {
         {
           let data = "";
           if (event.id !== undefined) {
-            data += `id: ${event.id}\n`;
+            data += `id: ${event.id.replace(/[\r\n\0]/g, "")}\n`;
           }
           if (event.event !== "message") {
-            data += `event: ${event.event}\n`;
+            data += `event: ${event.event.replace(/[\r\n]/g, "")}\n`;
           }
-          data += `data: ${event.data.replace(/\n/g, "\ndata: ")}\n`;
+          data += `data: ${event.data.replace(/\r\n|\r|\n/g, "\ndata: ")}\n`;
           return data + "\n";
         }
       case "Retry":

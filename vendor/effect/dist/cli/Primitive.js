@@ -20,6 +20,7 @@ import { format } from "../Formatter.js";
 import { identity } from "../Function.js";
 import * as Path_ from "../Path.js";
 import * as Redacted_ from "../Redacted.js";
+import * as Result from "../Result.js";
 import * as Schema from "../Schema.js";
 const TypeId = "~effect/cli/Primitive";
 const Proto = {
@@ -71,6 +72,7 @@ const makeSchemaPrimitive = (tag, schema) => {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -113,6 +115,7 @@ export const Boolean = /*#__PURE__*/makeSchemaPrimitive("Boolean", Schema.Boolea
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -154,6 +157,7 @@ export const Finite = /*#__PURE__*/makeSchemaPrimitive("Finite", Schema.Finite);
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -195,6 +199,7 @@ export const Int = /*#__PURE__*/makeSchemaPrimitive("Int", Schema.Int);
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -235,6 +240,7 @@ export const Date = /*#__PURE__*/makeSchemaPrimitive("Date", Schema.Date);
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -276,6 +282,7 @@ export const String = /*#__PURE__*/makePrimitive("String", value => Effect.succe
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -340,6 +347,7 @@ export const Choice = choices => {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -413,6 +421,7 @@ export const Path = (pathType, mustExist) => {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -457,6 +466,7 @@ export const Redacted = /*#__PURE__*/makePrimitive("Redacted", value => Effect.s
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -501,7 +511,7 @@ export const FileText = /*#__PURE__*/makePrimitive("FileText", /*#__PURE__*/Effe
 const fileParsers = {
   ini: content => Ini.parse(content),
   json: content => JSON.parse(content),
-  toml: content => Toml.parse(content),
+  toml: content => Result.getOrThrow(Toml.parse(content)),
   yml: content => Yaml.parse(content),
   yaml: content => Yaml.parse(content)
 };
@@ -532,6 +542,7 @@ const fileParsers = {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -591,6 +602,7 @@ export const FileParse = options => {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -648,6 +660,7 @@ export const FileSchema = (schema, options) => {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -703,6 +716,7 @@ export const KeyValuePair = /*#__PURE__*/makePrimitive("KeyValuePair", /*#__PURE
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void

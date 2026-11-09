@@ -73,9 +73,9 @@ export const defaultTeardown = (exit, onExit) => {
  *
  * **Details**
  *
- * The runner executes Effect programs as main entry points. The provided
- * function receives a forked fiber and a teardown callback so it can install
- * platform-specific signal handling, fiber observers, and final exit behavior.
+ * The setup function runs before user code and receives the main fiber and a
+ * teardown callback to install platform-specific signal handlers, observers,
+ * and exit behavior.
  *
  * Most applications should use a platform-provided runner, such as
  * `NodeRuntime.runMain`, rather than constructing one directly.
@@ -130,22 +130,25 @@ export const defaultTeardown = (exit, onExit) => {
  * @since 4.0.0
  */
 export const makeRunMain = f => dual(args => Effect.isEffect(args[0]), (effect, options) => {
-  const fiber = options?.disableErrorReporting === true ? Effect.runFork(effect) : Effect.runFork(Effect.tapCause(effect, cause => {
+  const main = options?.disableErrorReporting === true ? effect : Effect.tapCause(effect, cause => {
     if (Cause.hasInterruptsOnly(cause)) return Effect.void;
     const isReported = getErrorReported(Cause.squash(cause));
     return isReported ? Effect.logError(cause) : Effect.void;
-  }));
-  try {
-    const keepAlive = globalThis.setInterval(constVoid, 2_147_483_647);
-    fiber.addObserver(() => {
-      clearInterval(keepAlive);
-    });
-  } catch {}
-  const teardown = options?.teardown ?? defaultTeardown;
-  return f({
-    fiber,
-    teardown
   });
+  const teardown = options?.teardown ?? defaultTeardown;
+  Effect.runFork(Effect.withFiber(fiber => {
+    try {
+      const keepAlive = globalThis.setInterval(constVoid, 2_147_483_647);
+      fiber.addObserver(() => {
+        clearInterval(keepAlive);
+      });
+    } catch {}
+    f({
+      fiber,
+      teardown
+    });
+    return main;
+  }));
 });
 /**
  * Allows associating an exit code with an error for determining the process

@@ -240,8 +240,9 @@ function safeGet(input, key) {
  */
 export function formatJson(input, options) {
   const ancestors = [];
+  const sources = new WeakMap();
   return JSON.stringify(input, function (key, value) {
-    const original = Object.getOwnPropertyDescriptor(this, key)?.value;
+    const original = Object.getOwnPropertyDescriptor(sources.get(this) ?? this, key)?.value;
     const redacted = Predicate.hasProperty(original, symbolRedactable) ? redact(original) : redact(value);
     if (typeof redacted === "bigint") {
       return format(redacted);
@@ -268,18 +269,10 @@ export function formatJson(input, options) {
     if (!hasGetter(current) || isJsonPrimitiveWrapper(current)) {
       return current;
     }
-    // JSON.stringify reads a getter once, then calls toJSON on the result
-    // before the replacer sees it. Intercept that read to redact the value
-    // first, instead of re-reading the getter in the replacer, which could
-    // repeat side effects or return a different value.
-    const serialized = new Proxy(current, {
-      get(target, key) {
-        const value = Reflect.get(target, key, target);
-        return Object.getOwnPropertyDescriptor(target, key)?.get !== undefined ? redact(value) : value;
-      }
-    });
-    ancestors.push(serialized);
-    return serialized;
+    const view = redactingView(current);
+    sources.set(view, current);
+    ancestors.push(view);
+    return view;
   }, options?.space) ?? "null";
 }
 function hasGetter(object) {
@@ -289,6 +282,27 @@ function hasGetter(object) {
     }
   }
   return false;
+}
+// JSON.stringify reads a getter once, then calls toJSON on the result before
+// the replacer sees it, so getter results are redacted at the read. A Proxy
+// would do, but not every engine has one, so each key becomes a getter that
+// reads the source lazily, with the source as receiver.
+function redactingView(object) {
+  const view = Array.isArray(object) ? [] : {};
+  // JSON.stringify reads every array index, regardless of enumerability
+  const keys = Array.isArray(object) ? Array.from({
+    length: object.length
+  }, (_, i) => String(i)) : Object.keys(object);
+  for (const key of keys) {
+    Object.defineProperty(view, key, {
+      enumerable: true,
+      get: () => {
+        const value = Reflect.get(object, key);
+        return Object.getOwnPropertyDescriptor(object, key)?.get !== undefined ? redact(value) : value;
+      }
+    });
+  }
+  return view;
 }
 function isJsonPrimitiveWrapper(object) {
   // Built-in valueOf checks internal slots across realms without calling user code.

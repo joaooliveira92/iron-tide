@@ -442,8 +442,8 @@ export declare const InvalidType: new (ast: SchemaAST.AST, input?: unknown, opti
  *
  * **When to use**
  *
- * Use when you need to detect constraint violations from `Schema.filter`,
- * `Schema.minLength`, `Schema.greaterThan`, or similar checks.
+ * Use when you need to detect constraint violations from `Schema.check` with
+ * `Schema.isMinLength`, `Schema.isGreaterThan`, or similar checks.
  *
  * **Details**
  *
@@ -724,8 +724,8 @@ export type CheckHook = (issue: Filter) => string | undefined;
  *
  * **Details**
  *
- * - Looks for a `message` annotation on the inner issue first, then on the
- *   filter itself.
+ * - Looks for a `message` annotation on the filter first, then on the inner
+ *   issue.
  * - Returns `undefined` when no annotation is found, causing the formatter to
  *   fall back to `"Expected <filter>"` or, when the filter reports input,
  *   `"Expected <filter>, got <input>"`.

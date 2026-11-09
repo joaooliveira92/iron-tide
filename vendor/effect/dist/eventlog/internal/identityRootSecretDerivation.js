@@ -1,8 +1,13 @@
+import * as Aead from "../../crypto/Aead.js";
+import * as Digest from "../../crypto/Digest.js";
+import * as KeyFormat from "../../crypto/KeyFormat.js";
+import * as SecureRandom from "../../crypto/SecureRandom.js";
+import * as Signature from "../../crypto/Signature.js";
+import * as WebCrypto from "../../crypto/WebCrypto.js";
 import * as Effect from "../../Effect.js";
+import * as Layer from "../../Layer.js";
 import * as Redacted from "../../Redacted.js";
 const textEncoder = /*#__PURE__*/new TextEncoder();
-const Ed25519PublicKeyLength = 32;
-const Ed25519Pkcs8SeedPrefix = /*#__PURE__*/Uint8Array.from([0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20]);
 /**
  * @internal
  */
@@ -11,87 +16,81 @@ export const EncryptionDerivationLabelV1 = "effect/eventlog/identity/v1/encrypti
  * @internal
  */
 export const SigningDerivationLabelV1 = "effect/eventlog/identity/v1/signing";
-const toArrayBuffer = data => {
-  const copy = new Uint8Array(data.byteLength);
-  copy.set(data);
-  return copy.buffer;
-};
-const decodeBase64Url = value => {
-  const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
-  const remainder = normalized.length % 4;
-  const padded = remainder === 0 ? normalized : `${normalized}${"=".repeat(4 - remainder)}`;
-  const decoded = atob(padded);
-  const bytes = new Uint8Array(decoded.length);
-  for (let i = 0; i < decoded.length; i++) {
-    bytes[i] = decoded.charCodeAt(i);
-  }
-  return bytes;
-};
-const makeEd25519Pkcs8FromSeed = seed => {
-  const key = new Uint8Array(Ed25519Pkcs8SeedPrefix.byteLength + seed.byteLength);
-  key.set(Ed25519Pkcs8SeedPrefix, 0);
-  key.set(seed, Ed25519Pkcs8SeedPrefix.byteLength);
-  return key;
-};
-const deriveSecretBytes = /*#__PURE__*/Effect.fnUntraced(function* (options) {
-  const labelBytes = textEncoder.encode(options.label);
-  const derivationInput = new Uint8Array(labelBytes.byteLength + 1 + options.rootSecret.byteLength);
+// The crypto services return fresh arrays over an `ArrayBuffer`.
+const toArrayBufferBytes = bytes => bytes;
+// Each secret is SHA-256(label || 0x00 || root secret).
+const deriveSecretBytes = (rootSecret, label) => Digest.Digest.use(digest => {
+  const labelBytes = textEncoder.encode(label);
+  const derivationInput = new Uint8Array(labelBytes.byteLength + 1 + rootSecret.byteLength);
   derivationInput.set(labelBytes, 0);
-  derivationInput[labelBytes.byteLength] = 0;
-  derivationInput.set(options.rootSecret, labelBytes.byteLength + 1);
-  const digest = yield* Effect.promise(() => options.crypto.subtle.digest("SHA-256", toArrayBuffer(derivationInput)));
-  return new Uint8Array(digest);
+  derivationInput.set(rootSecret, labelBytes.byteLength + 1);
+  return digest.digest(Digest.sha256, derivationInput);
 });
 /**
+ * Derives the AES-256-GCM key that encrypts an identity's entries.
+ *
  * @internal
  */
-export const deriveIdentityRootSecretMaterial = /*#__PURE__*/Effect.fnUntraced(function* (options) {
-  const encryptionKeyMaterial = yield* deriveSecretBytes({
-    crypto: options.crypto,
-    rootSecret: options.rootSecret,
-    label: EncryptionDerivationLabelV1
-  });
-  const signingSeed = yield* deriveSecretBytes({
-    crypto: options.crypto,
-    rootSecret: options.rootSecret,
-    label: SigningDerivationLabelV1
-  });
-  const signingPrivateKeyBytes = makeEd25519Pkcs8FromSeed(signingSeed);
-  const encryptionKey = yield* Effect.promise(() => options.crypto.subtle.importKey("raw", toArrayBuffer(encryptionKeyMaterial), "AES-GCM", true, ["encrypt", "decrypt"]));
-  const signingPrivateKey = yield* Effect.promise(() => options.crypto.subtle.importKey("pkcs8", toArrayBuffer(signingPrivateKeyBytes), "Ed25519", true, ["sign"]));
-  const signingJwk = yield* Effect.promise(() => options.crypto.subtle.exportKey("jwk", signingPrivateKey));
-  if (typeof signingJwk.x !== "string") {
-    return yield* Effect.die(new Error("Unable to export deterministic Ed25519 public key"));
-  }
-  const signingPublicKey = decodeBase64Url(signingJwk.x);
-  if (signingPublicKey.byteLength !== Ed25519PublicKeyLength) {
-    return yield* Effect.die(new Error(`Expected derived signing public key to be ${Ed25519PublicKeyLength} bytes`));
-  }
+export const deriveEncryptionKey = /*#__PURE__*/Effect.fnUntraced(function* (rootSecret) {
+  const encryptionKeyMaterial = yield* deriveSecretBytes(rootSecret, EncryptionDerivationLabelV1);
+  const encryptionKey = yield* Effect.orDie(Aead.key(Aead.aes256Gcm, encryptionKeyMaterial));
   return {
-    encryptionKeyMaterial,
-    encryptionKey,
-    signingPublicKey,
-    signingPrivateKey: Redacted.make(signingPrivateKeyBytes)
+    encryptionKeyMaterial: toArrayBufferBytes(encryptionKeyMaterial),
+    encryptionKey
   };
 });
 /**
+ * Derives the Ed25519 key an identity signs session authentication payloads
+ * with.
+ *
  * @internal
  */
-export const makeGetIdentityRootSecretMaterial = crypto => {
+const deriveSigningKey = /*#__PURE__*/Effect.fnUntraced(function* (rootSecret) {
+  const signature = yield* Signature.Signature;
+  const seed = yield* deriveSecretBytes(rootSecret, SigningDerivationLabelV1);
+  const privateKey = yield* Signature.privateKey(Signature.ed25519, seed);
+  const signingPublicKey = yield* Effect.flatMap(signature.publicKeyOf(privateKey), Signature.toBytes);
+  const signingPrivateKey = yield* KeyFormat.encode(KeyFormat.pkcs8, privateKey);
+  return {
+    signingPublicKey: toArrayBufferBytes(signingPublicKey),
+    signingPrivateKey: Redacted.make(toArrayBufferBytes(signingPrivateKey))
+  };
+}, Effect.orDie);
+/**
+ * @internal
+ */
+export const deriveIdentityRootSecretMaterial = rootSecret => Effect.zipWith(deriveEncryptionKey(rootSecret), deriveSigningKey(rootSecret), (encryption, signing) => ({
+  ...encryption,
+  ...signing
+}));
+/**
+ * Memoizes a derivation from an identity's root secret per identity instance.
+ *
+ * @internal
+ */
+export const cachedByIdentity = derive => {
   const cache = new WeakMap();
-  return Effect.fnUntraced(function* (identity) {
+  return identity => Effect.suspend(() => {
     const cached = cache.get(identity);
     if (cached !== undefined) {
-      return cached;
+      return Effect.succeed(cached);
     }
-    const derived = yield* deriveIdentityRootSecretMaterial({
-      crypto,
-      rootSecret: Redacted.value(identity.privateKey)
-    });
-    yield* Effect.sync(() => {
+    return Effect.tap(derive(Redacted.value(identity.privateKey)), derived => Effect.sync(() => {
       cache.set(identity, derived);
-    });
-    return derived;
+    }));
   });
 };
+const layerWebCrypto = /*#__PURE__*/Layer.mergeAll(Digest.layerWebCrypto, Signature.layerWebCrypto).pipe(/*#__PURE__*/Layer.provide(SecureRandom.layerWebCrypto));
+/**
+ * Derives identity material on the Web Crypto layers, using `crypto` when it
+ * is given and the `WebCrypto` reference otherwise.
+ *
+ * @internal
+ */
+export const makeGetIdentityRootSecretMaterial = crypto => cachedByIdentity(rootSecret => crypto === undefined ? Effect.provide(deriveIdentityRootSecretMaterial(rootSecret), layerWebCrypto)
+// `local` keeps enclosing Web Crypto layers, built on another `Crypto`,
+// from being reused.
+: Effect.provide(deriveIdentityRootSecretMaterial(rootSecret), Layer.provideMerge(layerWebCrypto, WebCrypto.layer(crypto)), {
+  local: true
+}));
 //# sourceMappingURL=identityRootSecretDerivation.js.map

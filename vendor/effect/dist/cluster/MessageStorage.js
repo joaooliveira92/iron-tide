@@ -26,6 +26,7 @@ import { EntityNotAssignedToRunner, MalformedMessage } from "./ClusterError.js";
 import * as DeliverAt from "./DeliverAt.js";
 import * as Envelope from "./Envelope.js";
 import * as ClusterAbandon from "./internal/clusterAbandon.js";
+import { TransactionNotifications } from "./internal/transactionNotifications.js";
 import * as Message from "./Message.js";
 import * as Reply from "./Reply.js";
 import * as ShardId from "./ShardId.js";
@@ -77,8 +78,20 @@ export const SaveResultEncoded = /*#__PURE__*/Data.taggedEnum();
 export const make = storage => Effect.sync(() => {
   const replyHandlers = new Map();
   const replyHandlersShard = new Map();
+  const resumeUnregistered = (handler, options) => handler.resume(options?.interrupt ? ClusterAbandon.interrupt : Effect.fail(new EntityNotAssignedToRunner({
+    address: handler.message.envelope.address
+  })));
   return MessageStorage.of({
     ...storage,
+    // Nested transactions defer notifications to the outermost commit.
+    withTransaction: effect => TransactionNotifications.use(outer => {
+      const notifications = [];
+      return storage.withTransaction(Effect.provideService(effect, TransactionNotifications, notifications)).pipe(Effect.tap(() => outer ? Effect.sync(() => {
+        outer.push(...notifications);
+      }) : Effect.orDie(Effect.forEach(notifications, identity, {
+        discard: true
+      }))));
+    }),
     registerReplyHandler: message => {
       const requestId = message.envelope.requestId;
       return Effect.callback(resume => {
@@ -108,16 +121,14 @@ export const make = storage => Effect.sync(() => {
         });
       });
     },
-    unregisterReplyHandler: requestId => Effect.sync(() => {
+    unregisterReplyHandler: (requestId, options) => Effect.sync(() => {
       const handlers = replyHandlers.get(requestId);
       if (!handlers) return;
       replyHandlers.delete(requestId);
       for (let i = 0; i < handlers.length; i++) {
         const handler = handlers[i];
         handler.shardSet.delete(handler);
-        handler.resume(Effect.fail(new EntityNotAssignedToRunner({
-          address: handler.message.envelope.address
-        })));
+        resumeUnregistered(handler, options);
       }
     }),
     unregisterShardReplyHandlers: (shardId, options) => Effect.sync(() => {
@@ -127,26 +138,32 @@ export const make = storage => Effect.sync(() => {
       replyHandlersShard.delete(id);
       shardSet.forEach(handler => {
         replyHandlers.delete(handler.message.envelope.requestId);
-        handler.resume(options?.interrupt ? ClusterAbandon.interrupt : Effect.fail(new EntityNotAssignedToRunner({
-          address: handler.message.envelope.address
-        })));
+        resumeUnregistered(handler, options);
       });
     }),
     saveReply(reply) {
       const requestId = reply.reply.requestId;
       return Effect.flatMap(storage.saveReply(reply), persisted => {
-        const handlers = replyHandlers.get(requestId);
-        if (!handlers) {
-          return Effect.void;
-        } else if (persisted.reply._tag === "WithExit") {
-          replyHandlers.delete(requestId);
-          for (let i = 0; i < handlers.length; i++) {
-            const handler = handlers[i];
-            handler.shardSet.delete(handler);
-            handler.resume(Effect.void);
+        const notify = Effect.suspend(() => {
+          const handlers = replyHandlers.get(requestId);
+          if (!handlers) {
+            return Effect.void;
+          } else if (persisted.reply._tag === "WithExit") {
+            replyHandlers.delete(requestId);
+            for (let i = 0; i < handlers.length; i++) {
+              const handler = handlers[i];
+              handler.shardSet.delete(handler);
+              handler.resume(Effect.void);
+            }
           }
-        }
-        return handlers.length === 1 ? handlers[0].respond(persisted) : Effect.forEach(handlers, handler => handler.respond(persisted));
+          return handlers.length === 1 ? handlers[0].respond(persisted) : Effect.forEach(handlers, handler => handler.respond(persisted), {
+            discard: true
+          });
+        });
+        if (persisted.reply._tag !== "WithExit") return notify;
+        return TransactionNotifications.use(notifications => notifications === undefined ? notify : Effect.sync(() => {
+          notifications.push(notify);
+        }));
       });
     }
   });
@@ -463,18 +480,26 @@ export class MemoryDriver extends /*#__PURE__*/Context.Service()("effect/cluster
         journal.push(envelope);
         return SaveResultEncoded.Success();
       }),
-      saveReply: reply_ => Effect.sync(() => {
-        const reply = JSON.parse(JSON.stringify(reply_));
-        const entry = requests.get(reply.requestId);
-        if (!entry || replyIds.has(reply.id)) return;
-        if (reply._tag === "WithExit") {
-          unprocessed.delete(entry.envelope);
-          lastRead.delete(entry.envelope);
-        }
-        entry.replies.push(reply);
-        replyIds.add(reply.id);
-        replyLatch.openUnsafe();
-      }),
+      saveReply: reply_ => {
+        const save = Effect.sync(() => {
+          const reply = JSON.parse(JSON.stringify(reply_));
+          const entry = requests.get(reply.requestId);
+          if (!entry || replyIds.has(reply.id)) return;
+          if (reply._tag === "WithExit") {
+            unprocessed.delete(entry.envelope);
+            lastRead.delete(entry.envelope);
+          }
+          entry.replies.push(reply);
+          replyIds.add(reply.id);
+          replyLatch.openUnsafe();
+        });
+        // Memory has no transaction isolation. Publish terminal replies at the
+        // outer commit boundary, before their queued handler notifications, so
+        // reply readers cannot deliver a success that may still be rolled back.
+        return TransactionNotifications.use(notifications => reply_._tag === "WithExit" && notifications ? Effect.sync(() => {
+          notifications.push(save);
+        }) : save);
+      },
       clearReplies: (id, options) => Effect.sync(() => {
         const entry = requests.get(String(id));
         if (!entry) return;

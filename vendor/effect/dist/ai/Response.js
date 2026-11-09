@@ -4,6 +4,7 @@ import * as Predicate from "../Predicate.js";
 import * as Schema from "../Schema.js";
 import * as SchemaTransformation from "../SchemaTransformation.js";
 import * as AiError from "./AiError.js";
+import * as Prompt from "./Prompt.js";
 import * as Tool from "./Tool.js";
 const PartTypeId = "~effect/ai/Response/Part";
 // =============================================================================
@@ -30,6 +31,13 @@ const toolPartSchemas = tool => {
   }
   return parts;
 };
+const toolPartSchemasFor = toolkit => {
+  if (toolkit === undefined) {
+    return [makeToolCallPart(Schema.String, Schema.Unknown), makeToolResultPart(Schema.String, Schema.Unknown, Schema.Unknown)];
+  }
+  const parts = Object.values(toolkit.tools).map(toolPartSchemas);
+  return [...parts.map(part => part.toolCall), ...parts.map(part => part.toolResult)];
+};
 /**
  * Creates a Schema for all response parts based on a toolkit.
  *
@@ -37,6 +45,9 @@ const toolPartSchemas = tool => {
  *
  * Generates a schema that includes all possible response parts, with tool call
  * and tool result parts dynamically created based on the provided toolkit.
+ *
+ * When no toolkit is provided, tool call and tool result parts accept any tool
+ * name, with parameters and results decoded as `unknown`.
  *
  * **Example** (Building a response parts schema)
  *
@@ -53,56 +64,42 @@ const toolPartSchemas = tool => {
  *
  * const allPartsSchema = Response.AllParts(myToolkit)
  * Schema.isSchema(allPartsSchema) // => true
+ *
+ * const anyToolPartsSchema = Response.AllParts()
+ * Schema.isSchema(anyToolPartsSchema) // => true
  * ```
  *
  * @stability unstable
  * @category schemas
  * @since 4.0.0
  */
-export const AllParts = toolkit => {
-  const toolCalls = [];
-  const toolResults = [];
-  for (const tool of Object.values(toolkit.tools)) {
-    const parts = toolPartSchemas(tool);
-    toolCalls.push(parts.toolCall);
-    toolResults.push(parts.toolResult);
-  }
-  return Schema.Union([TextPart, TextStartPart, TextDeltaPart, TextEndPart, ReasoningPart, ReasoningStartPart, ReasoningDeltaPart, ReasoningEndPart, ToolParamsStartPart, ToolParamsDeltaPart, ToolParamsEndPart, ToolApprovalRequestPart, FilePart, DocumentSourcePart, UrlSourcePart, ResponseMetadataPart, FinishPart, ErrorPart, ...toolCalls, ...toolResults]);
-};
+export const AllParts = toolkit => Schema.Union([TextPart, TextStartPart, TextDeltaPart, TextEndPart, ReasoningPart, ReasoningStartPart, ReasoningDeltaPart, ReasoningEndPart, ToolParamsStartPart, ToolParamsDeltaPart, ToolParamsEndPart, ToolApprovalRequestPart, FilePart, DocumentSourcePart, UrlSourcePart, ResponseMetadataPart, FinishPart, ErrorPart, ...toolPartSchemasFor(toolkit)]);
 /**
  * Creates a Schema for non-streaming response parts based on a toolkit.
  *
- * @stability unstable
- * @category schemas
- * @since 4.0.0
- */
-export const Part = toolkit => {
-  const toolCalls = [];
-  const toolResults = [];
-  for (const tool of Object.values(toolkit.tools)) {
-    const parts = toolPartSchemas(tool);
-    toolCalls.push(parts.toolCall);
-    toolResults.push(parts.toolResult);
-  }
-  return Schema.Union([TextPart, ReasoningPart, ToolApprovalRequestPart, FilePart, DocumentSourcePart, UrlSourcePart, ResponseMetadataPart, FinishPart, ...toolCalls, ...toolResults]);
-};
-/**
- * Creates a Schema for streaming response parts based on a toolkit.
+ * **Details**
+ *
+ * When no toolkit is provided, tool call and tool result parts accept any tool
+ * name, with parameters and results decoded as `unknown`.
  *
  * @stability unstable
  * @category schemas
  * @since 4.0.0
  */
-export const StreamPart = toolkit => {
-  const toolCalls = [];
-  const toolResults = [];
-  for (const tool of Object.values(toolkit.tools)) {
-    const parts = toolPartSchemas(tool);
-    toolCalls.push(parts.toolCall);
-    toolResults.push(parts.toolResult);
-  }
-  return Schema.Union([TextStartPart, TextDeltaPart, TextEndPart, ReasoningStartPart, ReasoningDeltaPart, ReasoningEndPart, ToolParamsStartPart, ToolParamsDeltaPart, ToolParamsEndPart, ToolApprovalRequestPart, FilePart, DocumentSourcePart, UrlSourcePart, ResponseMetadataPart, FinishPart, ErrorPart, ...toolCalls, ...toolResults]);
-};
+export const Part = toolkit => Schema.Union([TextPart, ReasoningPart, ToolApprovalRequestPart, FilePart, DocumentSourcePart, UrlSourcePart, ResponseMetadataPart, FinishPart, ...toolPartSchemasFor(toolkit)]);
+/**
+ * Creates a Schema for streaming response parts based on a toolkit.
+ *
+ * **Details**
+ *
+ * When no toolkit is provided, tool call and tool result parts accept any tool
+ * name, with parameters and results decoded as `unknown`.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export const StreamPart = toolkit => Schema.Union([TextStartPart, TextDeltaPart, TextEndPart, ReasoningStartPart, ReasoningDeltaPart, ReasoningEndPart, ToolParamsStartPart, ToolParamsDeltaPart, ToolParamsEndPart, ToolApprovalRequestPart, FilePart, DocumentSourcePart, UrlSourcePart, ResponseMetadataPart, FinishPart, ErrorPart, ...toolPartSchemasFor(toolkit)]);
 // =============================================================================
 // Base Part
 // =============================================================================
@@ -327,11 +324,12 @@ export const ToolParamsEndPart = /*#__PURE__*/Schema.Struct({
  * @category schemas
  * @since 4.0.0
  */
-export const ToolCallPart = (name, params) => Schema.Struct({
+export const ToolCallPart = (name, params) => makeToolCallPart(Schema.Literal(name), params);
+const makeToolCallPart = (name, params) => Schema.Struct({
   ...BasePart.fields,
   type: Schema.Literal("tool-call"),
   id: Schema.String,
-  name: Schema.Literal(name),
+  name,
   params,
   providerExecuted: Schema.Boolean.pipe(Schema.withDecodingDefaultKey(Effect.succeed(false)))
 }).annotate({
@@ -352,14 +350,18 @@ export const toolCallPart = params => makePart("tool-call", params);
  * @category schemas
  * @since 4.0.0
  */
-export const ToolResultPart = (name, success, failure) => {
+export const ToolResultPart = (name, success, failure) => makeToolResultPart(Schema.Literal(name), success, failure).annotate({
+  identifier: `ToolResultPart(${name})`
+});
+const ModelOutput = /*#__PURE__*/Schema.Array(Prompt.ToolModelOutputPart);
+const makeToolResultPart = (name, success, failure) => {
   const makeSchema = (result, isFailure) => {
     const encodedResult = Schema.toEncoded(result);
     const Common = {
       id: Schema.String,
       type: Schema.Literal("tool-result"),
       isFailure: Schema.Literal(isFailure),
-      name: Schema.Literal(name)
+      name
     };
     const Decoded = Schema.Struct({
       ...Common,
@@ -368,11 +370,13 @@ export const ToolResultPart = (name, success, failure) => {
       providerExecuted: Schema.Boolean,
       metadata: ProviderMetadata,
       encodedResult,
+      modelOutput: Schema.optional(ModelOutput),
       preliminary: Schema.Boolean
     });
     const Encoded = Schema.Struct({
       ...Common,
       result: encodedResult,
+      modelOutput: Schema.optional(Schema.toEncoded(ModelOutput)),
       providerExecuted: Schema.optional(Schema.Boolean),
       metadata: Schema.optional(ProviderMetadata),
       preliminary: Schema.optional(Schema.Boolean)
@@ -389,9 +393,7 @@ export const ToolResultPart = (name, success, failure) => {
       encode: identity
     })));
   };
-  return Schema.Union([makeSchema(success, false), makeSchema(failure, true)]).annotate({
-    identifier: `ToolResultPart(${name})`
-  });
+  return Schema.Union([makeSchema(success, false), makeSchema(failure, true)]);
 };
 /**
  * Constructs a new tool result part.
@@ -497,14 +499,6 @@ export const UrlSourcePart = /*#__PURE__*/Schema.Struct({
 // HTTP Details
 // =============================================================================
 /**
- * Alias of {@link AiError.HttpRequestDetails}.
- *
- * @stability unstable
- * @category schemas
- * @since 4.0.0
- */
-export const HttpRequestDetails = AiError.HttpRequestDetails;
-/**
  * Alias of {@link AiError.HttpResponseDetails}.
  *
  * @stability unstable
@@ -524,8 +518,7 @@ export const ResponseMetadataPart = /*#__PURE__*/Schema.Struct({
   type: Schema.tag("response-metadata"),
   id: Schema.optional(Schema.String),
   modelId: Schema.optional(Schema.String),
-  timestamp: Schema.optional(Schema.DateTimeUtcFromString),
-  request: Schema.optional(HttpRequestDetails)
+  timestamp: Schema.optional(Schema.DateTimeUtcFromString)
 }).annotate({
   identifier: "ResponseMetadataPart"
 });

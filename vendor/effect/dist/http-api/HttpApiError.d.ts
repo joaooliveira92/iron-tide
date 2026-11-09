@@ -1,12 +1,27 @@
+/**
+ * Built-in error schemas for common HTTP API failure responses.
+ *
+ * This module provides reusable `Schema.Error` values for common HTTP
+ * status codes, plus `HttpApiSchemaError` for request decoding failures raised
+ * by the HTTP API runtime. The status errors can be used in endpoint or
+ * middleware error declarations and are understood by builders, generated
+ * clients, reflection, and OpenAPI generation.
+ *
+ * @stability unstable
+ * @since 4.0.0
+ */
+import type * as ByteSize from "../ByteSize.ts";
+import type * as Cause from "../Cause.ts";
 import * as Effect from "../Effect.ts";
 import * as ErrorReporter from "../ErrorReporter.ts";
 import * as HttpServerRespondable from "../http/HttpServerRespondable.ts";
 import * as HttpServerResponse from "../http/HttpServerResponse.ts";
 import * as Schema from "../Schema.ts";
+import type { Simplify } from "../Struct.ts";
 import * as HttpApiSchema from "./HttpApiSchema.ts";
 declare const BadRequest_base: Schema.Class<BadRequest, Schema.Struct<{
     readonly _tag: Schema.tag<"BadRequest">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `400 Bad Request` response. When used directly as
  * a server response, it renders as an empty response with status 400.
@@ -31,7 +46,7 @@ export declare class BadRequest extends BadRequest_base {
 export declare const BadRequestNoContent: HttpApiSchema.asNoContent<typeof BadRequest>;
 declare const Unauthorized_base: Schema.Class<Unauthorized, Schema.Struct<{
     readonly _tag: Schema.tag<"Unauthorized">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `401 Unauthorized` response. When used directly as
  * a server response, it renders as an empty response with status 401.
@@ -55,7 +70,7 @@ export declare class Unauthorized extends Unauthorized_base {
 export declare const UnauthorizedNoContent: HttpApiSchema.asNoContent<typeof Unauthorized>;
 declare const Forbidden_base: Schema.Class<Forbidden, Schema.Struct<{
     readonly _tag: Schema.tag<"Forbidden">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `403 Forbidden` response. When used directly as a
  * server response, it renders as an empty response with status 403.
@@ -79,7 +94,7 @@ export declare class Forbidden extends Forbidden_base {
 export declare const ForbiddenNoContent: HttpApiSchema.asNoContent<typeof Forbidden>;
 declare const NotFound_base: Schema.Class<NotFound, Schema.Struct<{
     readonly _tag: Schema.tag<"NotFound">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `404 Not Found` response. When used directly as a
  * server response, it renders as an empty response with status 404.
@@ -103,7 +118,7 @@ export declare class NotFound extends NotFound_base {
 export declare const NotFoundNoContent: HttpApiSchema.asNoContent<typeof NotFound>;
 declare const MethodNotAllowed_base: Schema.Class<MethodNotAllowed, Schema.Struct<{
     readonly _tag: Schema.tag<"MethodNotAllowed">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `405 Method Not Allowed` response. When used
  * directly as a server response, it renders as an empty response with status 405.
@@ -127,7 +142,7 @@ export declare class MethodNotAllowed extends MethodNotAllowed_base {
 export declare const MethodNotAllowedNoContent: HttpApiSchema.asNoContent<typeof MethodNotAllowed>;
 declare const NotAcceptable_base: Schema.Class<NotAcceptable, Schema.Struct<{
     readonly _tag: Schema.tag<"NotAcceptable">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `406 Not Acceptable` response. When used directly
  * as a server response, it renders as an empty response with status 406.
@@ -151,7 +166,7 @@ export declare class NotAcceptable extends NotAcceptable_base {
 export declare const NotAcceptableNoContent: HttpApiSchema.asNoContent<typeof NotAcceptable>;
 declare const RequestTimeout_base: Schema.Class<RequestTimeout, Schema.Struct<{
     readonly _tag: Schema.tag<"RequestTimeout">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `408 Request Timeout` response. When used directly
  * as a server response, it renders as an empty response with status 408.
@@ -175,7 +190,7 @@ export declare class RequestTimeout extends RequestTimeout_base {
 export declare const RequestTimeoutNoContent: HttpApiSchema.asNoContent<typeof RequestTimeout>;
 declare const Conflict_base: Schema.Class<Conflict, Schema.Struct<{
     readonly _tag: Schema.tag<"Conflict">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `409 Conflict` response. When used directly as a
  * server response, it renders as an empty response with status 409.
@@ -199,7 +214,7 @@ export declare class Conflict extends Conflict_base {
 export declare const ConflictNoContent: HttpApiSchema.asNoContent<typeof Conflict>;
 declare const Gone_base: Schema.Class<Gone, Schema.Struct<{
     readonly _tag: Schema.tag<"Gone">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `410 Gone` response. When used directly as a
  * server response, it renders as an empty response with status 410.
@@ -223,7 +238,7 @@ export declare class Gone extends Gone_base {
 export declare const GoneNoContent: HttpApiSchema.asNoContent<typeof Gone>;
 declare const UnprocessableEntity_base: Schema.Class<UnprocessableEntity, Schema.Struct<{
     readonly _tag: Schema.tag<"UnprocessableEntity">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `422 Unprocessable Entity` response. When used
  * directly as a server response, it renders as an empty response with status 422.
@@ -247,7 +262,7 @@ export declare class UnprocessableEntity extends UnprocessableEntity_base {
 export declare const UnprocessableEntityNoContent: HttpApiSchema.asNoContent<typeof UnprocessableEntity>;
 declare const InternalServerError_base: Schema.Class<InternalServerError, Schema.Struct<{
     readonly _tag: Schema.tag<"InternalServerError">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `500 Internal Server Error` response. When used
  * directly as a server response, it renders as an empty response with status 500.
@@ -270,7 +285,7 @@ export declare class InternalServerError extends InternalServerError_base {
 export declare const InternalServerErrorNoContent: HttpApiSchema.asNoContent<typeof InternalServerError>;
 declare const NotImplemented_base: Schema.Class<NotImplemented, Schema.Struct<{
     readonly _tag: Schema.tag<"NotImplemented">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `501 Not Implemented` response. When used directly
  * as a server response, it renders as an empty response with status 501.
@@ -293,7 +308,7 @@ export declare class NotImplemented extends NotImplemented_base {
 export declare const NotImplementedNoContent: HttpApiSchema.asNoContent<typeof NotImplemented>;
 declare const ServiceUnavailable_base: Schema.Class<ServiceUnavailable, Schema.Struct<{
     readonly _tag: Schema.tag<"ServiceUnavailable">;
-}>, import("../Cause.ts").YieldableError>;
+}>, Cause.YieldableError>;
 /**
  * Built-in HTTP API error for a `503 Service Unavailable` response. When used
  * directly as a server response, it renders as an empty response with status 503.
@@ -314,6 +329,176 @@ export declare class ServiceUnavailable extends ServiceUnavailable_base {
  * @since 4.0.0
  */
 export declare const ServiceUnavailableNoContent: HttpApiSchema.asNoContent<typeof ServiceUnavailable>;
+/**
+ * The constant members of a typed problem declaration.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface ProblemDeclaration<Type extends string, Status extends number> {
+    /**
+     * The problem type URI. It is the discriminator between problem classes that
+     * share a status.
+     */
+    readonly type: Type;
+    /**
+     * The HTTP status of the response.
+     */
+    readonly status: Status;
+    /**
+     * The short human-readable summary of the problem type.
+     */
+    readonly title: string;
+}
+/**
+ * The standard problem members of a typed problem class.
+ *
+ * **Details**
+ *
+ * `type`, `status` and `title` are fixed by the declaration and are constructor
+ * defaults that are always encoded. `type` is the discriminator: a body with a
+ * different `type` is rejected. `status` and `title` decode to the declared
+ * value whatever the body carries, so the HTTP status stays authoritative.
+ * `detail` and `instance` are optional per-instance members that declared
+ * fields may replace.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface ProblemMembers<Type extends string, Status extends number> {
+    readonly type: Schema.tag<Type>;
+    readonly status: FixedMember<Status>;
+    readonly title: FixedMember<string>;
+    readonly detail: OptionalMember<Schema.String>;
+    readonly instance: OptionalMember<Schema.String>;
+}
+type FixedMember<L extends string | number> = Schema.middlewareDecoding<Schema.withDecodingDefaultKey<Schema.tag<L>>, never>;
+type OptionalMember<S extends Schema.Constraint> = Schema.middlewareDecoding<Schema.optionalKey<S>, never>;
+/**
+ * The fields of a typed problem class: the standard members plus the declared
+ * extension fields.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export type ProblemFields<Type extends string, Status extends number, Fields extends Schema.Struct.Fields> = Simplify<Omit<ProblemMembers<Type, Status>, keyof Fields> & Fields>;
+/**
+ * The extension fields a typed problem may declare. The fixed members `type`,
+ * `status` and `title` are reserved.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export type ProblemExtensionFields = Schema.Struct.Fields & {
+    readonly type?: never;
+    readonly status?: never;
+    readonly title?: never;
+};
+/**
+ * The class returned by {@link Problem}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface ProblemClass<Self, Tag extends string, Type extends string, Status extends number, Fields extends Schema.Struct.Fields, Brand> extends Schema.Class<Self, Schema.Struct<ProblemFields<Type, Status, Fields>>, Cause.YieldableError & HttpServerRespondable.Respondable & Brand & {
+    readonly _tag: Tag;
+}> {
+}
+type MissingSelfGeneric = "Missing `Self` generic - use `class Self extends HttpApiError.Problem<Self>()(...)`";
+/**
+ * Declares a typed RFC 9457 problem as a yieldable error class.
+ *
+ * **Details**
+ *
+ * The class is a `Schema.Error` whose `_tag` is the given tag, so `Effect.catchTag`
+ * works without `_tag` on the wire. It carries the `httpApiStatus` and
+ * `application/problem+json` annotations, so endpoints that declare it as an
+ * error render, document and decode it as a problem. Problem classes that
+ * share a status are told apart by `type`. The extension fields are validated
+ * on both sides and cannot replace `type`, `status` or `title`; unknown
+ * extensions are not kept. An undeclared instance still renders as a problem
+ * through `HttpServerRespondable`.
+ *
+ * **Example** (Declaring and using a typed problem)
+ *
+ * ```ts
+ * import { Effect, Schema } from "effect"
+ * import { HttpApiEndpoint, HttpApiError } from "effect/http-api"
+ *
+ * class OutOfCredit extends HttpApiError.Problem<OutOfCredit>()("OutOfCredit", {
+ *   type: "https://example.com/probs/out-of-credit",
+ *   status: 403,
+ *   title: "You do not have enough credit."
+ * }, {
+ *   balance: Schema.Number
+ * }) {}
+ *
+ * const buy = HttpApiEndpoint.post("buy", "/buy", { error: OutOfCredit })
+ *
+ * const failing = Effect.fail(new OutOfCredit({ balance: 30 }))
+ * // Responds with 403 and { "type": "https://example.com/probs/out-of-credit",
+ * //   "status": 403, "title": "You do not have enough credit.", "balance": 30 }
+ * ```
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.6
+ */
+export declare const Problem: <Self = never, Brand = {}>() => <const Tag extends string, const Type extends string, const Status extends number, const Fields extends ProblemExtensionFields = {}>(tag: Tag, declaration: ProblemDeclaration<Type, Status>, fields?: Fields, annotations?: Schema.Annotations.Declaration<Self, readonly [Schema.Struct<ProblemFields<Type, Status, Fields>>]>) => [Self] extends [never] ? MissingSelfGeneric : ProblemClass<Self, Tag, Type, Status, Fields, Brand>;
+/**
+ * One entry of `BadRequestProblem.errors`: the location of a request value
+ * that failed decoding and the reason.
+ *
+ * **Details**
+ *
+ * The first path segment names the request slot (`params`, `headers`, `query`
+ * or `payload`).
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export declare const ProblemIssue: Schema.Struct<{
+    readonly path: Schema.$Array<Schema.Union<readonly [Schema.String, Schema.Number]>>;
+    readonly message: Schema.String;
+}>;
+declare const BadRequestProblem_base: ProblemClass<BadRequestProblem, "BadRequestProblem", "about:blank", 400, {
+    readonly errors: Schema.optionalKey<Schema.$Array<Schema.Struct<{
+        readonly path: Schema.$Array<Schema.Union<readonly [Schema.String, Schema.Number]>>;
+        readonly message: Schema.String;
+    }>>>;
+}, {}>;
+/**
+ * The problem rendered by `HttpApiMiddleware.layerProblemDetails` when a
+ * request fails decoding.
+ *
+ * **Details**
+ *
+ * The body is generic by default. `errors` is only filled when the layer is
+ * built with `includeDetails: true`.
+ *
+ * @stability unstable
+ * @category errors
+ * @since 4.0.6
+ */
+export declare class BadRequestProblem extends BadRequestProblem_base {
+}
+declare const InternalServerErrorProblem_base: ProblemClass<InternalServerErrorProblem, "InternalServerErrorProblem", "about:blank", 500, {}, {}>;
+/**
+ * The problem rendered by `HttpApiMiddleware.layerProblemDetails` when a
+ * response fails encoding.
+ *
+ * @stability unstable
+ * @category errors
+ * @since 4.0.6
+ */
+export declare class InternalServerErrorProblem extends InternalServerErrorProblem_base {
+}
 /**
  * Type-level identifier used to mark `HttpApiSchemaError` values.
  *
@@ -353,6 +538,51 @@ export declare class HttpApiSchemaError extends HttpApiSchemaError_base<{
     static wrap<A, R>(kind: HttpApiSchemaError["kind"], effect: Effect.Effect<A, Schema.SchemaError, R>): Effect.Effect<A, HttpApiSchemaError, R>;
     readonly name = "HttpApiSchemaError";
     readonly message: "Body" | "Headers" | "Params" | "Payload" | "Query" | "ResponseHeaders";
+    [HttpServerRespondable.symbol](): Effect.Effect<HttpServerResponse.HttpServerResponse, never, never>;
+}
+/**
+ * Type-level identifier used to mark `HttpApiPayloadTooLarge` values.
+ *
+ * @stability unstable
+ * @category type IDs
+ * @since 4.0.6
+ */
+export type HttpApiPayloadTooLargeTypeId = "~effect/http-api/HttpApiError/HttpApiPayloadTooLarge";
+/**
+ * Runtime identifier used to mark and detect `HttpApiPayloadTooLarge` values.
+ *
+ * @stability unstable
+ * @category type IDs
+ * @since 4.0.6
+ */
+export declare const HttpApiPayloadTooLargeTypeId: HttpApiPayloadTooLargeTypeId;
+declare const HttpApiPayloadTooLarge_base: new <A extends Record<string, any> = {}>(args: import("../Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => Readonly<A> & {
+    readonly _tag: "HttpApiPayloadTooLarge";
+} & import("../Pipeable.ts").Pipeable;
+/**
+ * Error raised when a streaming request payload exceeds a limit declared on
+ * its `HttpApiSchema.StreamUint8Array` or `HttpApiSchema.StreamNdjson` schema.
+ * It responds with an empty `413 Payload Too Large` and is ignored by error
+ * reporters.
+ *
+ * **Details**
+ *
+ * `limit` names the option that was exceeded: `maxBytes` caps the whole body
+ * and `maxElementBytes` caps one NDJSON line. `size` is its configured value.
+ *
+ * @stability unstable
+ * @category errors
+ * @since 4.0.6
+ */
+export declare class HttpApiPayloadTooLarge extends HttpApiPayloadTooLarge_base<{
+    readonly limit: "maxBytes" | "maxElementBytes";
+    readonly size: ByteSize.ByteSize;
+}> {
+    readonly [HttpApiPayloadTooLargeTypeId]: HttpApiPayloadTooLargeTypeId;
+    readonly [ErrorReporter.ignore] = true;
+    static is(u: unknown): u is HttpApiPayloadTooLarge;
+    readonly name = "HttpApiPayloadTooLarge";
+    readonly message: string;
     [HttpServerRespondable.symbol](): Effect.Effect<HttpServerResponse.HttpServerResponse, never, never>;
 }
 export {};

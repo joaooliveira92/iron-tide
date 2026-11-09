@@ -9,8 +9,14 @@
  * @stability unstable
  * @since 4.0.0
  */
+import * as KeyFormat from "../crypto/KeyFormat.js";
+import * as SecureRandom from "../crypto/SecureRandom.js";
+import * as Signature from "../crypto/Signature.js";
+import { WebCrypto } from "../crypto/WebCrypto.js";
 import * as Data from "../Data.js";
 import * as Effect from "../Effect.js";
+import * as Layer from "../Layer.js";
+import { makeGetIdentityRootSecretMaterial } from "./internal/identityRootSecretDerivation.js";
 const textEncoder = /*#__PURE__*/new TextEncoder();
 const textDecoder = /*#__PURE__*/new TextDecoder("utf-8", {
   fatal: true
@@ -93,11 +99,6 @@ export const SessionAuthChallengeTimeToLiveMillis = 30_000;
  * @since 4.0.0
  */
 export class EventLogSessionAuthError extends /*#__PURE__*/Data.TaggedError("EventLogSessionAuthError") {}
-const toArrayBuffer = data => {
-  const copy = new Uint8Array(data.byteLength);
-  copy.set(data);
-  return copy.buffer;
-};
 const decodeUtf8 = bytes => Effect.try({
   try: () => textDecoder.decode(bytes),
   catch: cause => new EventLogSessionAuthError({
@@ -120,26 +121,18 @@ const assertSignatureLength = signature => {
     message: `Expected signature length to be ${Ed25519SignatureLength} bytes, received ${signature.byteLength}`
   }));
 };
-const getSubtle = /*#__PURE__*/Effect.suspend(() => {
-  const subtle = globalThis.crypto?.subtle;
-  if (subtle === undefined) {
+// The Web Crypto layers read the `WebCrypto` reference, so a runtime without
+// Web Crypto fails here rather than with a defect inside the layer.
+const requireWebCrypto = needsSubtle => WebCrypto.use(crypto => {
+  if (crypto === undefined || needsSubtle && crypto.subtle === undefined) {
     return Effect.fail(new EventLogSessionAuthError({
       reason: "CryptoUnavailable",
-      message: "globalThis.crypto.subtle is not available"
+      message: needsSubtle ? "crypto.subtle is not available" : "crypto is not available"
     }));
   }
-  return Effect.succeed(subtle);
+  return Effect.void;
 });
-const getCrypto = /*#__PURE__*/Effect.suspend(() => {
-  const crypto = globalThis.crypto;
-  if (crypto === undefined) {
-    return Effect.fail(new EventLogSessionAuthError({
-      reason: "CryptoUnavailable",
-      message: "globalThis.crypto is not available"
-    }));
-  }
-  return Effect.succeed(crypto);
-});
+const layerSignature = /*#__PURE__*/Signature.layerWebCrypto.pipe(/*#__PURE__*/Layer.provide(SecureRandom.layerWebCrypto));
 const writeLength = (target, offset, length) => {
   if (length < 0 || length > 0xffff_ffff) {
     return Effect.fail(new EventLogSessionAuthError({
@@ -257,7 +250,8 @@ export const decodeSessionAuthPayload = /*#__PURE__*/Effect.fnUntraced(function*
  *
  * **Details**
  *
- * The private key must be PKCS#8-encoded bytes importable by `SubtleCrypto`.
+ * The private key must be PKCS#8-encoded Ed25519 bytes. Signing runs on
+ * `Signature.layerWebCrypto` with the `WebCrypto` reference.
  *
  * @stability unstable
  * @category signing
@@ -265,24 +259,18 @@ export const decodeSessionAuthPayload = /*#__PURE__*/Effect.fnUntraced(function*
  */
 export const signSessionAuthPayloadBytes = /*#__PURE__*/Effect.fnUntraced(function* (options) {
   yield* decodeSessionAuthPayload(options.payload);
-  const subtle = yield* getSubtle;
-  let privateKey = yield* Effect.tryPromise({
-    try: () => subtle.importKey("pkcs8", toArrayBuffer(options.signingPrivateKey), "Ed25519", false, ["sign"]),
-    catch: cause => new EventLogSessionAuthError({
-      reason: "InvalidSigningPrivateKey",
-      message: "Failed to import Ed25519 signing private key (expected PKCS#8 bytes)",
-      cause
-    })
-  });
-  const signature = yield* Effect.tryPromise({
-    try: () => subtle.sign("Ed25519", privateKey, toArrayBuffer(options.payload)),
-    catch: cause => new EventLogSessionAuthError({
-      reason: "CryptoFailure",
-      message: "Failed to sign canonical session auth payload",
-      cause
-    })
-  });
-  return new Uint8Array(signature);
+  yield* requireWebCrypto(true);
+  const privateKey = yield* KeyFormat.decodePrivate(KeyFormat.pkcs8, Signature.ed25519, options.signingPrivateKey).pipe(Effect.mapError(cause => new EventLogSessionAuthError({
+    reason: "InvalidSigningPrivateKey",
+    message: "Failed to import Ed25519 signing private key (expected PKCS#8 bytes)",
+    cause
+  })));
+  const signature = yield* Signature.Signature.use(signature => signature.sign(privateKey, options.payload)).pipe(Effect.provide(layerSignature), Effect.mapError(cause => new EventLogSessionAuthError({
+    reason: "CryptoFailure",
+    message: "Failed to sign canonical session auth payload",
+    cause
+  })));
+  return signature;
 });
 /**
  * Verifies an Ed25519 signature for canonical session authentication payload
@@ -291,7 +279,7 @@ export const signSessionAuthPayloadBytes = /*#__PURE__*/Effect.fnUntraced(functi
  * **Details**
  *
  * The payload, signing public key, and signature lengths are validated before
- * calling `SubtleCrypto.verify`.
+ * verifying on `Signature.layerWebCrypto` with the `WebCrypto` reference.
  *
  * @stability unstable
  * @category verification
@@ -301,23 +289,17 @@ export const verifySessionAuthPayloadBytes = /*#__PURE__*/Effect.fnUntraced(func
   yield* decodeSessionAuthPayload(options.payload);
   yield* assertSigningPublicKeyLength(options.signingPublicKey);
   yield* assertSignatureLength(options.signature);
-  const subtle = yield* getSubtle;
-  const publicKey = yield* Effect.tryPromise({
-    try: () => subtle.importKey("raw", toArrayBuffer(options.signingPublicKey), "Ed25519", false, ["verify"]),
-    catch: cause => new EventLogSessionAuthError({
-      reason: "InvalidSigningPublicKeyLength",
-      message: "Failed to import Ed25519 signing public key",
-      cause
-    })
-  });
-  return yield* Effect.tryPromise({
-    try: () => subtle.verify("Ed25519", publicKey, toArrayBuffer(options.signature), toArrayBuffer(options.payload)),
-    catch: cause => new EventLogSessionAuthError({
-      reason: "CryptoFailure",
-      message: "Failed to verify canonical session auth payload signature",
-      cause
-    })
-  });
+  yield* requireWebCrypto(true);
+  const publicKey = yield* Signature.publicKey(Signature.ed25519, options.signingPublicKey).pipe(Effect.mapError(cause => new EventLogSessionAuthError({
+    reason: "InvalidSigningPublicKeyLength",
+    message: "Failed to import Ed25519 signing public key",
+    cause
+  })));
+  return yield* Signature.Signature.use(signature => signature.verify(publicKey, options.signature, options.payload)).pipe(Effect.provide(layerSignature), Effect.mapError(cause => new EventLogSessionAuthError({
+    reason: "CryptoFailure",
+    message: "Failed to verify canonical session auth payload signature",
+    cause
+  })));
 });
 /**
  * Encodes a session authentication payload in canonical form and signs it with an
@@ -345,18 +327,14 @@ export const verifySessionAuthPayload = options => encodeSessionAuthPayload(opti
   signature: options.signature
 })));
 /**
- * Generates a random session authentication challenge using `globalThis.crypto`.
+ * Generates a random session authentication challenge from `SecureRandom` on
+ * the `WebCrypto` reference.
  *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
-export const makeSessionAuthChallenge = /*#__PURE__*/Effect.gen(function* () {
-  const crypto = yield* getCrypto;
-  const challenge = new Uint8Array(SessionAuthChallengeLength);
-  crypto.getRandomValues(challenge);
-  return challenge;
-});
+export const makeSessionAuthChallenge = /*#__PURE__*/requireWebCrypto(false).pipe(/*#__PURE__*/Effect.andThen(/*#__PURE__*/SecureRandom.SecureRandom.use(random => random.randomBytes(SessionAuthChallengeLength))), /*#__PURE__*/Effect.provide(SecureRandom.layerWebCrypto));
 /**
  * Verifies an authentication request by requiring the `Ed25519` algorithm and
  * checking the signature over the canonical session authentication payload.
@@ -380,4 +358,25 @@ export const verifySessionAuthenticateRequest = /*#__PURE__*/Effect.fnUntraced(f
     signature: options.signature
   });
 });
+const getIdentityRootSecretMaterial = /*#__PURE__*/makeGetIdentityRootSecretMaterial();
+/**
+ * Derives the Ed25519 signing public key an identity presents during session
+ * authentication.
+ *
+ * **When to use**
+ *
+ * Use when provisioning an identity to record its signing key, so that server
+ * authorization can reject any other key presented for the identity's
+ * `publicKey`.
+ *
+ * **Details**
+ *
+ * The key is derived from the identity's private key on the `WebCrypto`
+ * reference.
+ *
+ * @stability unstable
+ * @category signing
+ * @since 4.1.1
+ */
+export const deriveSigningPublicKey = identity => Effect.map(getIdentityRootSecretMaterial(identity), material => material.signingPublicKey);
 //# sourceMappingURL=EventLogSessionAuth.js.map

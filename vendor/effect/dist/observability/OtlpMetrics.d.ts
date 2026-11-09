@@ -67,6 +67,11 @@ export declare const make: (options: {
         readonly attributes?: Record<string, unknown>;
     } | undefined;
     readonly headers?: Headers.Input | undefined;
+    /**
+     * Request compression. Defaults to "none". Gzip uses
+     * HttpClientRequest's default minimum body size of 1KB.
+     */
+    readonly compression?: "gzip" | "none" | undefined;
     readonly exportInterval?: Duration.Input | undefined;
     readonly shutdownTimeout?: Duration.Input | undefined;
     readonly temporality?: AggregationTemporality | undefined;
@@ -86,12 +91,24 @@ export declare const layer: (options: {
         readonly attributes?: Record<string, unknown>;
     } | undefined;
     readonly headers?: Headers.Input | undefined;
+    /**
+     * Request compression. Defaults to "none". Gzip uses
+     * HttpClientRequest's default minimum body size of 1KB.
+     */
+    readonly compression?: "gzip" | "none" | undefined;
     readonly exportInterval?: Duration.Input | undefined;
     readonly shutdownTimeout?: Duration.Input | undefined;
     readonly temporality?: AggregationTemporality | undefined;
 }) => Layer.Layer<Exporter.Flusher, never, HttpClient.HttpClient | OtlpSerialization>;
 /**
  * Creates an OTLP metrics layer from OpenTelemetry configuration.
+ *
+ * **Details**
+ *
+ * Compression accepts "gzip" or "none".
+ * `OTEL_EXPORTER_OTLP_METRICS_COMPRESSION` takes precedence over
+ * `OTEL_EXPORTER_OTLP_COMPRESSION`, defaulting to "none". Gzip uses
+ * HttpClientRequest's default minimum body size of 1KB.
  *
  * @stability unstable
  * @category layers

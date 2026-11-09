@@ -1,11 +1,3 @@
-var __rewriteRelativeImportExtension = this && this.__rewriteRelativeImportExtension || function (path, preserveJsx) {
-  if (typeof path === "string" && /^\.\.?\//.test(path)) {
-    return path.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function (m, tsx, d, ext, cm) {
-      return tsx ? preserveJsx ? ".jsx" : ".js" : d && (!ext || !cm) ? m : d + ext + "." + cm.toLowerCase() + "js";
-    });
-  }
-  return path;
-};
 /**
  * Runs SQL migrations with `SqlClient`.
  *
@@ -20,11 +12,9 @@ var __rewriteRelativeImportExtension = this && this.__rewriteRelativeImportExten
 import * as Arr from "../Array.js";
 import * as Data from "../Data.js";
 import * as Effect from "../Effect.js";
-import { FileSystem } from "../FileSystem.js";
-import { pipe } from "../Function.js";
+import { identity, pipe } from "../Function.js";
 import * as Option from "../Option.js";
 import * as Order from "../Order.js";
-import { Path } from "../Path.js";
 import * as Client from "./SqlClient.js";
 /**
  * Error raised while loading, validating, locking, or running SQL migrations.
@@ -37,13 +27,22 @@ export class MigrationError extends /*#__PURE__*/Data.TaggedError("MigrationErro
 /**
  * Creates a migrator that ensures the migrations table exists, runs pending
  * migrations in a transaction, and optionally dumps the schema after successful
- * migrations.
+ * migrations. ClickHouse runs without a transaction and records each migration
+ * only after it succeeds.
+ *
+ * **Details**
+ *
+ * `transformWrites` transforms only the effects that create the migrations
+ * table and insert into it, for clients such as ClickHouse that run row-less
+ * statements differently from queries. Reads of the migrations table and the
+ * migrations themselves are not transformed. It defaults to `identity`.
  *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
 export const make = ({
+  transformWrites = identity,
   dumpSchema = () => Effect.void
 }) => ({
   loader,
@@ -51,7 +50,7 @@ export const make = ({
   table = "effect_sql_migrations"
 }) => Effect.gen(function* () {
   const sql = yield* Client.SqlClient;
-  const ensureMigrationsTable = sql.onDialectOrElse({
+  const createMigrationsTable = transformWrites(sql.onDialectOrElse({
     mssql: () => sql`IF OBJECT_ID(N'${sql.literal(table)}', N'U') IS NULL
   CREATE TABLE ${sql(table)} (
     migration_id INT NOT NULL PRIMARY KEY,
@@ -64,21 +63,33 @@ export const make = ({
   name VARCHAR(255) NOT NULL,
   PRIMARY KEY (migration_id)
 )`,
-    pg: () => Effect.catch(sql`select ${table}::regclass`, () => sql`CREATE TABLE ${sql(table)} (
+    clickhouse: () =>
+    // sqlite's `PRIMARY KEY NOT NULL` is a syntax error here
+    sql`CREATE TABLE IF NOT EXISTS ${sql(table)} (
+  migration_id Int32,
+  created_at DateTime DEFAULT now(),
+  name String
+) ENGINE = MergeTree
+ORDER BY migration_id`,
+    pg: () => sql`CREATE TABLE ${sql(table)} (
   migration_id integer primary key,
   created_at timestamp with time zone not null default now(),
   name text not null
-)`),
+)`,
     orElse: () => sql`CREATE TABLE IF NOT EXISTS ${sql(table)} (
   migration_id integer PRIMARY KEY NOT NULL,
   created_at datetime NOT NULL DEFAULT current_timestamp,
   name VARCHAR(255) NOT NULL
 )`
+  }));
+  const ensureMigrationsTable = sql.onDialectOrElse({
+    pg: () => Effect.flatMap(migrationsTableExists(sql, table), exists => exists ? Effect.void : Effect.asVoid(createMigrationsTable).pipe(Effect.catch(error => Effect.flatMap(migrationsTableExists(sql, table), exists => exists ? Effect.void : Effect.fail(error))))),
+    orElse: () => createMigrationsTable
   });
-  const insertMigrations = rows => sql`INSERT INTO ${sql(table)} ${sql.insert(rows.map(([migration_id, name]) => ({
+  const insertMigrations = rows => transformWrites(sql`INSERT INTO ${sql(table)} ${sql.insert(Arr.map(rows, ([migration_id, name]) => ({
     migration_id,
     name
-  })))}`.withoutTransform;
+  })))}`.withoutTransform);
   const latestMigration = Effect.map(sql`SELECT migration_id, name, created_at FROM ${sql(table)} ORDER BY migration_id DESC`.withoutTransform, _ => Option.map(Option.fromNullishOr(_[0]), ({
     created_at,
     migration_id,
@@ -98,12 +109,17 @@ export const make = ({
     kind: "ImportError",
     message: `Default export was not an Effect for migration "${id}_${name}"`
   })));
-  const runMigration = (id, name, effect) => Effect.catch(effect, error => Effect.die(new MigrationError({
+  const runMigration = (id, name, effect) => Effect.mapError(effect, error => new MigrationError({
     cause: error,
     kind: "Failed",
     message: `Migration "${id}_${name}" failed`
-  })));
+  }));
   // === run
+  // BEGIN is still experimental on clickhouse
+  const transactional = sql.onDialectOrElse({
+    clickhouse: () => false,
+    orElse: () => true
+  });
   const run = Effect.gen(function* () {
     yield* sql.onDialectOrElse({
       pg: () => sql`LOCK TABLE ${sql(table)} IN ACCESS EXCLUSIVE MODE`,
@@ -127,13 +143,14 @@ export const make = ({
       }
       required.push([currentId, currentName, yield* loadMigration(resolved)]);
     }
-    if (required.length > 0) {
-      yield* pipe(insertMigrations(required.map(([id, name]) => [id, name])), Effect.mapError(error => isConstraintConflict(error) ? new MigrationError({
+    // rows recorded up front are only rolled back inside a transaction
+    if (transactional && Arr.isArrayNonEmpty(required)) {
+      yield* pipe(insertMigrations(Arr.map(required, ([id, name]) => [id, name])), Effect.mapError(error => isConstraintConflict(error) ? new MigrationError({
         kind: "Locked",
         message: "Migrations already running"
       }) : error));
     }
-    yield* Effect.forEach(required, ([id, name, effect]) => Effect.logDebug(`Running migration`).pipe(Effect.flatMap(() => runMigration(id, name, effect)), Effect.annotateLogs("migration_id", String(id)), Effect.annotateLogs("migration_name", name), Effect.withSpan(`Migrator ${id}_${name}`)), {
+    yield* Effect.forEach(required, ([id, name, effect]) => Effect.logDebug(`Running migration`).pipe(Effect.flatMap(() => runMigration(id, name, effect)), Effect.andThen(transactional ? Effect.void : insertMigrations([[id, name]])), Effect.annotateLogs("migration_id", String(id)), Effect.annotateLogs("migration_name", name), Effect.withSpan(`Migrator ${id}_${name}`)), {
       discard: true
     });
     yield* pipe(latestMigration, Effect.flatMap(Option.match({
@@ -143,12 +160,17 @@ export const make = ({
     return required.map(([id, name]) => [id, name]);
   });
   yield* ensureMigrationsTable;
-  const completed = yield* pipe(sql.withTransaction(run), Effect.catchTag("MigrationError", _ => _.kind === "Locked" ? Effect.as(Effect.logDebug(_.message), []) : Effect.fail(_)));
+  const completed = yield* pipe(transactional ? sql.withTransaction(run) : run, Effect.catchTag("MigrationError", _ => _.kind === "Locked" ? Effect.as(Effect.logDebug(_.message), []) : Effect.fail(_)));
   if (schemaDirectory && completed.length > 0) {
     yield* dumpSchema(`${schemaDirectory}/_schema.sql`, table).pipe(Effect.catchCause(cause => Effect.logInfo("Could not dump schema", cause)));
   }
   return completed;
 });
+const migrationsTableExists = (sql, table) => {
+  // Match query quoting: to_regclass folds unquoted names to lowercase.
+  const quotedTable = sql`${sql(table)}`.compile(true)[0];
+  return Effect.map(sql`SELECT 1 AS found WHERE to_regclass(${quotedTable}) IS NOT NULL`.withoutTransform, rows => rows.length > 0);
+};
 const migrationOrder = /*#__PURE__*/Order.make(([a], [b]) => Order.Number(a, b));
 const isConstraintConflict = error => error.reason._tag === "ConstraintError" || error.reason._tag === "UniqueViolation";
 /**
@@ -180,39 +202,4 @@ export const fromBabelGlob = migrations => pipe(Object.keys(migrations), Arr.fla
  * @since 4.0.0
  */
 export const fromRecord = migrations => pipe(Object.keys(migrations), Arr.flatMapNullishOr(_ => _.match(/^(\d+)_(.+)$/)), Arr.map(([key, id, name]) => [Number(id), name, Effect.succeed(migrations[key])]), Arr.sort(migrationOrder), Effect.succeed);
-/**
- * Creates a migration loader that reads a directory with `FileSystem`, imports
- * files named `<id>_<name>.js`, `<id>_<name>.ts`,
- * `<id>_<name>.mjs`, or `<id>_<name>.mts`, and sorts migrations by id.
- *
- * **Details**
- *
- * Requires a `Path` service appropriate for the migration directory's path
- * syntax. On Windows, prefer a platform-aware implementation such as
- * `NodePath.layer`; the core `Path.layer` uses POSIX semantics and does not
- * preserve Windows drive-letter paths.
- *
- * @stability unstable
- * @category loaders
- * @since 4.0.0
- */
-export const fromFileSystem = /*#__PURE__*/Effect.fnUntraced(function* (directory) {
-  const Fs = yield* FileSystem;
-  const path = yield* Path;
-  const files = yield* Effect.mapError(Fs.readDirectory(directory), cause => new MigrationError({
-    kind: "Failed",
-    cause,
-    message: "Failed to read migrations directory"
-  }));
-  return files.map(file => Option.fromNullishOr(file.match(/^(?:.*\/)?(\d+)_([^.]+)\.(js|ts|mjs|mts)$/))).flatMap(Option.match({
-    onNone: () => [],
-    onSome: ([basename, id, name]) => [[Number(id), name,
-    // `import` needs a file URL: on Windows an absolute path such as
-    // `D:\migrations\1_init.ts` is rejected by the ESM loader. `orDie` keeps the
-    // failure a defect so `loadMigration` reports it as an import error.
-    Effect.flatMap(Effect.orDie(path.toFileUrl(path.join(directory, basename))), url => Effect.promise(() => import(__rewriteRelativeImportExtension(/* @vite-ignore */
-    /* webpackIgnore: true */
-    url.href))))]]
-  })).sort(([a], [b]) => a - b);
-});
 //# sourceMappingURL=Migrator.js.map

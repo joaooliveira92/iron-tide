@@ -28,7 +28,9 @@ import * as HttpIncomingMessage from "./HttpIncomingMessage.js";
 import * as HttpMethod from "./HttpMethod.js";
 import * as TraceContext from "./HttpTraceContext.js";
 import * as tracing from "./internal/tracing.js";
+import { getWebSource, WebSourceSymbol } from "./internal/webResponse.js";
 import * as Url from "./Url.js";
+import * as UrlParams from "./UrlParams.js";
 const TypeId = "~effect/http/HttpClient";
 /**
  * Returns `true` if the provided value is an `HttpClient`.
@@ -267,11 +269,10 @@ export const make = f => makeWith(effect => Effect.flatMap(effect, request => Ef
   const tracerDisabled = fiber.getRef(Tracer.DisablePropagation) || fiber.getRef(TracerDisabledWhen)(request);
   if (tracerDisabled) {
     const effect = f(request, url, controller.signal, fiber);
-    if (scopedController) return effect;
+    if (scopedController) return Effect.map(effect, response => trackResponse(response, controller, true));
     return Effect.uninterruptibleMask(restore => Effect.matchCauseEffect(restore(effect), {
       onSuccess(response) {
-        responseRegistry.register(response, controller);
-        return Effect.succeed(new InterruptibleResponse(response, controller));
+        return Effect.succeed(trackResponse(response, controller, false));
       },
       onFailure(cause) {
         if (Cause.hasInterrupts(cause)) {
@@ -286,7 +287,7 @@ export const make = f => makeWith(effect => Effect.flatMap(effect, request => Ef
   }, span => {
     span.attribute("http.request.method", request.method);
     const redactedHeaderNames = fiber.getRef(Headers.CurrentRedactedNames);
-    tracing.addUrlAttributes(span, url);
+    tracing.addUrlAttributes(span, url, tracing.redactedNames(request.urlParams, fiber.getRef(UrlParams.CurrentRedactedNames)));
     const headerFilter = fiber.getRef(TracerHeaderFilter);
     tracing.addHeaderAttributes(span, "request", request.headers, headerFilter, redactedHeaderNames);
     request = fiber.getRef(TracerPropagationEnabled) ? HttpClientRequest.setHeaders(request, TraceContext.toHeaders(span)) : request;
@@ -302,9 +303,7 @@ export const make = f => makeWith(effect => Effect.flatMap(effect, request => Ef
           span.attribute("error.type", String(response.status));
           endSpanWithStatusError(fiber, span, request, response);
         }
-        if (scopedController) return Effect.succeed(response);
-        responseRegistry.register(response, controller);
-        return Effect.succeed(new InterruptibleResponse(response, controller));
+        return Effect.succeed(trackResponse(response, controller, scopedController !== undefined));
       },
       onFailure(cause) {
         if (!scopedController && Cause.hasInterrupts(cause)) {
@@ -383,6 +382,9 @@ export const retry = /*#__PURE__*/dual(2, (self, policy) => transformResponse(se
  * Specifying a `while` predicate allows you to consider other errors as
  * transient, and is ignored in "response-only" mode.
  *
+ * A `Retry-After` header on a transient response, or on the response of a
+ * status code error, sets the minimum delay before the next attempt.
+ *
  * @stability unstable
  * @category error handling
  * @since 4.0.0
@@ -390,11 +392,10 @@ export const retry = /*#__PURE__*/dual(2, (self, policy) => transformResponse(se
 export const retryTransient = /*#__PURE__*/dual(2, (self, options) => {
   const isOnlySchedule = Schedule.isSchedule(options);
   const retryOn = isOnlySchedule ? "errors-and-responses" : options.retryOn ?? "errors-and-responses";
-  const schedule = isOnlySchedule ? options : options.schedule;
-  const passthroughSchedule = schedule && Schedule.passthrough(schedule);
+  const schedule = withRetryAfter(isOnlySchedule ? options : options.schedule ?? Schedule.forever);
   const times = isOnlySchedule ? undefined : options.times;
   return transformResponse(self, flow(retryOn === "errors-only" ? identity : Effect.repeat({
-    schedule: passthroughSchedule,
+    schedule,
     times,
     while: isTransientResponse
   }), retryOn === "response-only" ? identity : Effect.retry({
@@ -404,6 +405,79 @@ export const retryTransient = /*#__PURE__*/dual(2, (self, options) => {
   })));
 });
 /**
+ * Fails requests that do not receive a response within the given duration.
+ *
+ * **When to use**
+ *
+ * Use to configure a timeout once on the client, for example when providing
+ * the `HttpClient` service, while keeping the standard `HttpClientError` error
+ * model.
+ *
+ * **Details**
+ *
+ * A timed out request is interrupted and fails with an `HttpClientError` whose
+ * reason is a `TransportError` with a `Cause.TimeoutError` cause.
+ * `retryTransient` treats it as transient. Interrupting a request aborts the
+ * underlying transport, unless the request is attached to a scope with
+ * `withScope`, in which case it stays open until the scope closes.
+ *
+ * The timer starts after request preprocessing and covers everything the
+ * wrapped client does to produce a response. For a plain client this ends when
+ * the response headers arrive, but response middleware applied before
+ * `timeout`, such as `tap` or `retryTransient`, runs inside the budget,
+ * including any body reads it performs. Composition order therefore decides
+ * how it interacts with retries: applying `timeout` before `retryTransient`
+ * gives each attempt its own budget, while applying it after bounds the whole
+ * retry loop.
+ *
+ * **Gotchas**
+ *
+ * Body reads outside the timed client are not covered, including those made
+ * by response middleware applied after `timeout` and by consumers of the
+ * `HttpClient` service. Apply a separate timeout to body reads such as
+ * `response.json` or `response.stream` when needed.
+ *
+ * **Example** (Timing out each attempt)
+ *
+ * ```ts
+ * import { Effect, Layer } from "effect"
+ * import { FetchHttpClient, HttpClient } from "effect/http"
+ *
+ * const TimedHttpClient = Layer.effect(
+ *   HttpClient.HttpClient,
+ *   Effect.map(
+ *     HttpClient.HttpClient,
+ *     HttpClient.timeout("5 seconds")
+ *   )
+ * ).pipe(Layer.provide(FetchHttpClient.layer))
+ *
+ * const program = Effect.gen(function*() {
+ *   const client = (yield* HttpClient.HttpClient).pipe(
+ *     HttpClient.retryTransient({ times: 3 })
+ *   )
+ *   return yield* client.get("https://example.com")
+ * }).pipe(Effect.provide(TimedHttpClient))
+ * ```
+ *
+ * @stability unstable
+ * @category error handling
+ * @since 4.1.0
+ */
+export const timeout = /*#__PURE__*/dual(2, (self, duration) => {
+  const decoded = Duration.fromInputUnsafe(duration);
+  const description = `timed out after ${Duration.format(decoded)}`;
+  return transform(self, (effect, request) => Effect.timeoutOrElse(effect, {
+    duration: decoded,
+    orElse: () => Effect.fail(new Error.HttpClientError({
+      reason: new Error.TransportError({
+        request,
+        cause: new Cause.TimeoutError(`Operation ${description}`),
+        description
+      })
+    }))
+  }));
+});
+/**
  * Applies request rate limiting using the `RateLimiter` service.
  *
  * **Details**
@@ -411,6 +485,8 @@ export const retryTransient = /*#__PURE__*/dual(2, (self, options) => {
  * It can update limits by inspecting common rate limit response headers and
  * automatically retries HTTP `429` responses (or `HttpClientError` values
  * wrapping a `429` response) by forcing the retry back through the limiter.
+ * When a response reports the remaining budget, requests wait for the
+ * reported reset once that budget is exhausted.
  *
  * **Gotchas**
  *
@@ -443,11 +519,37 @@ export const withRateLimiter = /*#__PURE__*/dual(2, (self, options) => {
     states.set(key, initialState);
     return initialState;
   };
-  const onResponse = options.disableResponseInspection ? undefined : (clock, key, headers, tokens) => {
+  const budgets = new Map();
+  const getBudget = key => {
+    let budget = budgets.get(key);
+    if (budget === undefined) {
+      budget = {
+        sent: 0,
+        observed: 0,
+        remaining: 0,
+        resetAt: 0
+      };
+      budgets.set(key, budget);
+    }
+    return budget;
+  };
+  const onResponse = options.disableResponseInspection ? undefined : (clock, key, headers, tokens, sent) => {
     const current = getState(key);
     const next = parseRateLimiterState(current, clock, headers, tokens, headerNames);
     if (next.limit !== current.limit || !Duration.equals(next.window, current.window)) {
       states.set(key, next);
+    }
+    const remaining = parseRateLimitRemaining(headers, headerNames);
+    const budget = getBudget(key);
+    // responses to earlier requests carry stale counts
+    if (remaining === undefined || sent <= budget.observed) {
+      return;
+    }
+    const resetAfter = parseRateLimitWindow(clock, headers, headerNames);
+    budget.observed = sent;
+    budget.remaining = remaining;
+    if (resetAfter !== undefined) {
+      budget.resetAt = clock.currentTimeMillisUnsafe() + Duration.toMillis(resetAfter);
     }
   };
   return transform(self, function loop(effect, request, retries = 0) {
@@ -455,17 +557,26 @@ export const withRateLimiter = /*#__PURE__*/dual(2, (self, options) => {
     const clock = fiber.getRef(Clock);
     const key = resolveKey(request);
     const tokens = Math.max(resolveTokens(request), 1);
+    const budget = getBudget(key);
+    const now = clock.currentTimeMillisUnsafe();
+    // requests admitted after the observed one are not reflected in its count
+    if (budget.resetAt > now && budget.remaining - (budget.sent - budget.observed) < tokens) {
+      return Effect.flatMap(Effect.sleep(budget.resetAt - now), () => loop(effect, request, retries));
+    }
+    // counted at admission, so requests already admitted are sent even if a
+    // later response exhausts the budget
+    const sent = budget.sent += tokens;
     const current = getState(key);
     const canRetry = options.times === undefined || retries < options.times;
     function retry(retryAfter) {
       return retryAfter ? Effect.flatMap(Effect.sleep(retryAfter), () => loop(effect, request, retries + 1)) : loop(effect, request, retries + 1);
     }
     const inspectResponse = (response, adaptive) => {
-      onResponse?.(clock, key, response.headers, tokens);
+      onResponse?.(clock, key, response.headers, tokens, sent);
       if (options.disableResponseInspection || response.status !== 429) {
         return Effect.succeed(undefined);
       }
-      const retryAfter = parseRetryAfter(clock, getHeader(response.headers, ...headerNames.retryAfter));
+      const retryAfter = parseRetryAfter(clock.currentTimeMillisUnsafe(), getHeader(response.headers, ...headerNames.retryAfter));
       if (retryAfter === undefined) {
         return Effect.succeed(undefined);
       }
@@ -528,6 +639,216 @@ export const withRateLimiter = /*#__PURE__*/dual(2, (self, options) => {
     });
   });
 });
+/**
+ * Guards requests with a `CircuitBreaker`.
+ *
+ * **Details**
+ *
+ * Requests are keyed by origin unless `key` is set, and classified with
+ * `circuitBreakerClassifier` unless `classify` is set. A rejected request
+ * fails with `CircuitBreakerError` without reaching the wrapped client.
+ *
+ * Apply it after `withRateLimiter` and `retryTransient`, so the breaker sees
+ * one outcome per call and an open circuit skips the retry loop.
+ * `retryTransient` never retries a `CircuitBreakerError`. A custom `classify`
+ * can delegate the cases it doesn't handle to `circuitBreakerClassifier`.
+ *
+ * **Gotchas**
+ *
+ * - The breaker only sees the response headers. To count an error in the
+ *   body, lift it into the error channel below the breaker with
+ *   `transformResponse` and count it in `classify`.
+ * - `withRateLimiter` retries `429` without limit by default, which can hold
+ *   the probe slot for minutes. Set its `times`.
+ * - A rejected request has no client span. The rejection fails the caller's
+ *   span instead.
+ *
+ * **Example** (Guarding an API in the recommended order)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect, Layer, Ref, Schedule } from "effect"
+ * import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http"
+ * import { CircuitBreaker, RateLimiter } from "effect/persistence"
+ *
+ * const program = Effect.gen(function*() {
+ *   const requests = yield* Ref.make(0)
+ *   // A dependency that always answers 503.
+ *   const unavailable = HttpClient.make((request) =>
+ *     Effect.as(Ref.update(requests, (n) => n + 1), HttpClientResponse.fromWeb(request, new Response(null, { status: 503 })))
+ *   )
+ *
+ *   const breaker = yield* CircuitBreaker.make({
+ *     tripPolicy: CircuitBreaker.consecutive(1),
+ *     openDuration: "30 seconds"
+ *   })
+ *   const client = unavailable.pipe(
+ *     HttpClient.withRateLimiter({
+ *       limiter: yield* RateLimiter.RateLimiter,
+ *       key: "inventory",
+ *       limit: 100,
+ *       window: "1 second",
+ *       times: 3
+ *     }),
+ *     HttpClient.retryTransient({ times: 2, schedule: Schedule.exponential("1 millis") }),
+ *     HttpClient.withCircuitBreaker({ breaker })
+ *   )
+ *
+ *   // Three attempts, then the breaker records one failure and opens.
+ *   yield* client.execute(HttpClientRequest.get("http://inventory.test/items"))
+ *   // Rejected before the retry loop starts, so no further request is sent.
+ *   const rejected = yield* Effect.flip(client.execute(HttpClientRequest.get("http://inventory.test/items")))
+ *
+ *   return [yield* Ref.get(requests), rejected._tag]
+ * }).pipe(
+ *   Effect.scoped,
+ *   Effect.provide(Layer.merge(
+ *     CircuitBreaker.layerStoreMemory(),
+ *     RateLimiter.layer.pipe(Layer.provide(RateLimiter.layerStoreMemory))
+ *   ))
+ * )
+ *
+ * await Effect.runPromise(program) // => [3, "CircuitBreakerError"]
+ * ```
+ *
+ * **Example** (Counting an error in the body as a failure)
+ *
+ * This API answers `200` with `{ "status": "degraded" }` when it is failing.
+ *
+ * ```ts import.meta.vitest
+ * import { Data, Effect, Exit, Option } from "effect"
+ * import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http"
+ * import { CircuitBreaker } from "effect/persistence"
+ *
+ * class Degraded extends Data.TaggedError("Degraded") {}
+ *
+ * const degraded = HttpClient.make((request) =>
+ *   Effect.succeed(HttpClientResponse.fromWeb(request, Response.json({ status: "degraded" })))
+ * )
+ *
+ * const program = Effect.gen(function*() {
+ *   const breaker = yield* CircuitBreaker.make({
+ *     tripPolicy: CircuitBreaker.consecutive(1),
+ *     openDuration: "30 seconds"
+ *   })
+ *   const client = degraded.pipe(
+ *     HttpClient.transformResponse(Effect.flatMap((response) =>
+ *       Effect.flatMap(response.json, (body) =>
+ *         typeof body === "object" && body !== null && "status" in body && body.status === "degraded"
+ *           ? Effect.fail(new Degraded())
+ *           : Effect.succeed(response))
+ *     )),
+ *     HttpClient.withCircuitBreaker({
+ *       breaker,
+ *       classify: (exit) =>
+ *         Option.exists(Exit.findErrorOption(exit), (error) => error._tag === "Degraded")
+ *           ? CircuitBreaker.failure()
+ *           : HttpClient.circuitBreakerClassifier(exit)
+ *     })
+ *   )
+ *
+ *   yield* Effect.flip(client.get("http://status.test/"))
+ *   const state = yield* breaker.state("http://status.test")
+ *   return state._tag
+ * }).pipe(Effect.scoped, Effect.provide(CircuitBreaker.layerStoreMemory()))
+ *
+ * await Effect.runPromise(program) // => "Open"
+ * ```
+ *
+ * @stability experimental
+ * @category circuit breaking
+ * @since 4.0.7
+ */
+export const withCircuitBreaker = /*#__PURE__*/dual(2, (self, options) => {
+  const keyOption = options.key;
+  const resolveKey = typeof keyOption === "function" ? keyOption : keyOption === undefined ? requestOrigin : constant(keyOption);
+  const classify = options.classify ?? circuitBreakerClassifier;
+  return transform(self, (effect, request) => options.breaker.execute(effect, {
+    key: resolveKey(request),
+    classify
+  }));
+});
+const requestOrigin = request => Option.match(HttpClientRequest.toUrl(request), {
+  onNone: () => request.url,
+  onSome: url => url.origin
+});
+/**
+ * The default `withCircuitBreaker` classifier.
+ *
+ * **Details**
+ *
+ * - Failure: status 408, 500, 502, 503 or 504, returned or wrapped in a
+ *   `StatusCodeError`, and any `TransportError` or `Cause.TimeoutError`.
+ * - Success: any other response, including other 4xx, since the dependency
+ *   answered.
+ * - Ignored: status 429 (left to `withRateLimiter`), `EncodeError`,
+ *   `InvalidUrlError`, `DecodeError`, `EmptyBodyError`, unknown typed errors
+ *   and defects. HttpClient errors are typed, so a defect here is a bug in
+ *   the caller.
+ *
+ * When a cause holds several errors, a failure beats a success and a success
+ * beats an ignored outcome. A failure carries the longest `Retry-After` it
+ * saw. The result is an `Effect` only because parsing an HTTP-date
+ * `Retry-After` reads `Clock`.
+ *
+ * **Gotchas**
+ *
+ * `TransportError` also covers client-side refusals, which count as failures.
+ *
+ * @stability experimental
+ * @category circuit breaking
+ * @since 4.0.7
+ */
+export const circuitBreakerClassifier = exit => Effect.clockWith(clock => Effect.succeed(classifyCircuitBreakerExit(exit, clock.currentTimeMillisUnsafe())));
+const classifyCircuitBreakerExit = (exit, nowMillis) => {
+  if (Exit.isSuccess(exit)) {
+    const outcome = circuitBreakerStatusOutcome(exit.value.status);
+    return outcome === "Failure" ? circuitBreakerFailure(retryAfterOf(exit.value, nowMillis)) : {
+      _tag: outcome
+    };
+  }
+  let failed = false;
+  let succeeded = false;
+  let retryAfter;
+  for (const reason of exit.cause.reasons) {
+    if (!Cause.isFailReason(reason)) {
+      continue;
+    }
+    const outcome = circuitBreakerErrorOutcome(reason.error);
+    if (outcome === "Failure") {
+      failed = true;
+      const hint = retryAfterOf(reason.error, nowMillis);
+      if (hint !== undefined) {
+        retryAfter = retryAfter === undefined ? hint : Duration.max(retryAfter, hint);
+      }
+    } else if (outcome === "Success") {
+      succeeded = true;
+    }
+  }
+  return failed ? circuitBreakerFailure(retryAfter) : {
+    _tag: succeeded ? "Success" : "Ignored"
+  };
+};
+const circuitBreakerFailure = retryAfter => ({
+  _tag: "Failure",
+  retryAfter
+});
+const circuitBreakerErrorOutcome = error => {
+  if (Cause.isTimeoutError(error)) {
+    return "Failure";
+  }
+  if (!Error.isHttpClientError(error)) {
+    return "Ignored";
+  }
+  switch (error.reason._tag) {
+    case "TransportError":
+      return "Failure";
+    case "StatusCodeError":
+      return circuitBreakerStatusOutcome(error.reason.response.status);
+    default:
+      return "Ignored";
+  }
+};
+const circuitBreakerStatusOutcome = status => status === 429 ? "Ignored" : status === 408 || status === 500 || status === 502 || status === 503 || status === 504 ? "Failure" : "Success";
 const resolveRateLimiterHeaderNames = responseHeaders => ({
   limit: responseHeaders?.limit === undefined ? ["ratelimit-limit", "x-ratelimit-limit"] : [responseHeaders.limit.toLowerCase()],
   remaining: responseHeaders?.remaining === undefined ? ["ratelimit-remaining", "x-ratelimit-remaining"] : [responseHeaders.remaining.toLowerCase()],
@@ -571,23 +892,14 @@ const parseRateLimitWindow = (clock, headers, headerNames) => {
   }
   return parseResetHeader(clock, getHeader(headers, ...headerNames.reset));
 };
-const parseRetryAfter = (clock, value) => {
+// An invalid Retry-After is treated as absent (RFC 9110 §10.2.3); the
+// one millisecond floor keeps a past date or `0` from retrying immediately.
+const parseRetryAfter = (nowMillis, value) => {
   if (value === undefined) {
     return undefined;
   }
-  const numeric = parseNumberHeader(value);
-  if (numeric !== undefined) {
-    return Duration.max(Duration.seconds(numeric), Duration.millis(1));
-  }
-  const parsedDate = Date.parse(value);
-  if (Number.isNaN(parsedDate)) {
-    return undefined;
-  }
-  const millis = parsedDate - clock.currentTimeMillisUnsafe();
-  if (millis <= 0) {
-    return Duration.millis(1);
-  }
-  return Duration.millis(millis);
+  const retryAfter = Headers.parseRetryAfter(value);
+  return Result.isSuccess(retryAfter) ? Duration.max(Headers.retryAfterDelay(retryAfter.success, nowMillis), Duration.millis(1)) : undefined;
 };
 const parseResetAfter = value => {
   const numeric = parseNumberHeader(value);
@@ -655,18 +967,40 @@ export const tapError = /*#__PURE__*/dual(2, (self, f) => transformResponse(self
  */
 export const tapRequest = /*#__PURE__*/dual(2, (self, f) => makeWith(self.postprocess, request => Effect.tap(self.preprocess(request), f)));
 /**
- * Adds a `Ref` of cookies to the client for handling cookies across requests.
+ * Adds a `Ref` of stored cookies to the client for handling cookies across
+ * requests.
  *
  * **When to use**
  *
  * Use to add shared cookie storage to a client so response cookies are retained
- * and sent by later requests.
+ * and sent by later requests to a matching host, path, and scheme.
+ *
+ * **Details**
+ *
+ * Response cookies are merged into the ref with `Cookies.mergeIntoArray` for
+ * the response URL. When a request is sent, `Cookies.toRequestCookieHeader`
+ * selects the cookies for its final URL, after later transformations such as
+ * `HttpClientRequest.prependUrl`, and sets them as the `cookie` header. With
+ * `followRedirects` applied after `withCookiesRef`, this runs for every hop.
+ * Expiry uses the current `Clock`.
  *
  * @stability unstable
  * @category cookies
  * @since 4.0.0
  */
-export const withCookiesRef = /*#__PURE__*/dual(2, (self, ref) => makeWith(request => Effect.tap(self.postprocess(request), response => Ref.update(ref, cookies => Cookies.merge(cookies, response.cookies))), request => Effect.flatMap(self.preprocess(request), request => Effect.map(Ref.get(ref), cookies => Cookies.isEmpty(cookies) ? request : HttpClientRequest.setHeader(request, "cookie", Cookies.toCookieHeader(cookies))))));
+export const withCookiesRef = /*#__PURE__*/dual(2, (self, ref) => {
+  const now = () => Fiber.getCurrent().getRef(Clock).currentTimeMillisUnsafe();
+  const addCookies = request => Effect.map(Ref.get(ref), cookies => {
+    const header = Cookies.toRequestCookieHeader(cookies, request.url, now());
+    if (header === undefined) return request;
+    const withCookies = HttpClientRequest.setHeader(request, "cookie", header);
+    // setHeader returns a new request, so carry over the withScope controller
+    const controller = scopedRequests.get(request);
+    if (controller !== undefined) scopedRequests.set(withCookies, controller);
+    return withCookies;
+  });
+  return makeWith(request => Effect.tap(self.postprocess(Effect.flatMap(request, addCookies)), response => Ref.update(ref, Cookies.mergeIntoArray(response.url, response.cookies, now()))), self.preprocess);
+});
 /**
  * Attaches the lifetime of the `HttpClientRequest` to a `Scope`.
  *
@@ -682,6 +1016,37 @@ export const withScope = self => transform(self, (effect, request) => {
 /**
  * Enables following HTTP redirects up to a specified number of times.
  *
+ * **Details**
+ *
+ * Follows `3xx` responses that include a `Location` header, up to
+ * `maxRedirects` (default `10`) times. When the limit is reached or the
+ * `Location` header is not a valid URL, the last redirect response is returned.
+ *
+ * **Gotchas**
+ *
+ * This only sees redirects that the underlying client returns. `fetch`
+ * follows redirects itself by default, so with `FetchHttpClient` provide
+ * `FetchHttpClient.RequestInit` with `{ redirect: "manual" }`. Browsers return
+ * an opaque response without a `Location` header for manual redirects, so
+ * this cannot follow them there.
+ *
+ * **Example** (Following redirects with FetchHttpClient)
+ *
+ * ```ts
+ * import { Effect } from "effect"
+ * import { FetchHttpClient, HttpClient } from "effect/http"
+ *
+ * const program = Effect.gen(function*() {
+ *   const client = (yield* HttpClient.HttpClient).pipe(
+ *     HttpClient.followRedirects(5)
+ *   )
+ *   return yield* client.get("https://example.com/redirect")
+ * }).pipe(
+ *   Effect.provide(FetchHttpClient.layer),
+ *   Effect.provideService(FetchHttpClient.RequestInit, { redirect: "manual" })
+ * )
+ * ```
+ *
  * @stability unstable
  * @category redirects
  * @since 4.0.0
@@ -696,19 +1061,31 @@ export const followRedirects = /*#__PURE__*/dual(args => isHttpClient(args[0]), 
       if (response.status < 300 || response.status >= 400 || !response.headers.location || redirects >= (maxRedirects ?? 10)) {
         return Effect.succeed(response);
       }
-      const url = new URL(response.headers.location, response.request.url);
+      const urlResult = Url.fromString(response.headers.location, response.request.url);
+      if (Result.isFailure(urlResult)) {
+        return Effect.succeed(response);
+      }
+      const url = urlResult.success;
       const request = currentRequest ?? response.request;
       let nextRequest = request;
       if ((response.status === 301 || response.status === 302) && request.method === "POST" || response.status === 303 && request.method !== "GET" && request.method !== "HEAD") {
         nextRequest = HttpClientRequest.setMethod(nextRequest, "GET");
         nextRequest = HttpClientRequest.setBody(nextRequest, HttpBody.empty);
+        nextRequest = HttpClientRequest.removeHeader(nextRequest, "content-encoding");
+        nextRequest = HttpClientRequest.removeHeader(nextRequest, "content-language");
+        nextRequest = HttpClientRequest.removeHeader(nextRequest, "content-location");
       }
       if (url.origin !== new URL(response.request.url).origin) {
         nextRequest = HttpClientRequest.removeHeader(nextRequest, "authorization");
         nextRequest = HttpClientRequest.removeHeader(nextRequest, "proxy-authorization");
         nextRequest = HttpClientRequest.removeHeader(nextRequest, "cookie");
       }
-      return loop(Effect.succeed(HttpClientRequest.setUrl(nextRequest, url)), redirects + 1);
+      // Request the Location as sent: setUrl with a URL object would re-encode its query
+      const hash = url.hash === "" ? Option.none() : Option.some(url.hash.slice(1));
+      url.hash = "";
+      nextRequest = HttpClientRequest.makeWith(nextRequest.method, url.href, UrlParams.empty, hash, nextRequest.headers, nextRequest.body);
+      // Abort the discarded response to release its connection without reading the body
+      return Effect.andThen(Effect.sync(() => responseControllers.get(response)?.abort()), loop(Effect.succeed(nextRequest), redirects + 1));
     });
   });
   return loop(request, 0);
@@ -740,6 +1117,18 @@ export const TracerHeaderFilter = /*#__PURE__*/Context.Reference("effect/http/Ht
 });
 /**
  * Context reference that controls whether outgoing client spans are propagated to request headers.
+ *
+ * **Details**
+ *
+ * When this is `true`, the client writes the compact B3 `b3` header and the
+ * W3C `traceparent` header. The default is on. The client span is still
+ * created when this is `false`.
+ *
+ * **Gotchas**
+ *
+ * A browser preflight fails when the target does not list `b3` and
+ * `traceparent` in `Access-Control-Allow-Headers`. Set this to `false` for
+ * those requests.
  *
  * @stability unstable
  * @category services
@@ -776,7 +1165,11 @@ export const layerMergedContext = effect => Layer.effect(HttpClient)(Effect.cont
 const responseRegistry = /*#__PURE__*/(() => {
   if ("FinalizationRegistry" in globalThis && globalThis.FinalizationRegistry) {
     const registry = /*#__PURE__*/new FinalizationRegistry(controller => {
-      controller.abort();
+      try {
+        controller.abort();
+      } catch {
+        // Runtimes such as workerd disallow aborting I/O outside its request context.
+      }
     });
     return {
       register(response, controller) {
@@ -801,6 +1194,15 @@ const responseRegistry = /*#__PURE__*/(() => {
   };
 })();
 const scopedRequests = /*#__PURE__*/new WeakMap();
+const responseControllers = /*#__PURE__*/new WeakMap();
+const trackResponse = (response, controller, scoped) => {
+  if (!scoped) {
+    responseRegistry.register(response, controller);
+    response = new InterruptibleResponse(response, controller);
+  }
+  responseControllers.set(response, controller);
+  return response;
+};
 class InterruptibleResponse {
   original;
   controller;
@@ -851,6 +1253,15 @@ class InterruptibleResponse {
   get arrayBuffer() {
     return this.applyInterrupt(this.original.arrayBuffer);
   }
+  get upgrade() {
+    return this.applyInterrupt(this.original.upgrade);
+  }
+  [WebSourceSymbol]() {
+    const source = getWebSource(this.original);
+    // A handed-over Web body outlives this wrapper, so collecting it must not abort the request.
+    if (source !== undefined) responseRegistry.unregister(this.original);
+    return source;
+  }
   get stream() {
     return Stream.suspend(() => {
       responseRegistry.unregister(this.original);
@@ -869,8 +1280,64 @@ class InterruptibleResponse {
     return pipeArguments(this, arguments);
   }
 }
-const isTransientError = error => Cause.isTimeoutError(error) || isTransientHttpError(error);
+/**
+ * Returns `true` for an error that `retryTransient` retries by default: a
+ * timeout, a transport error, or a status code error with a transient response.
+ *
+ * **When to use**
+ *
+ * Use to classify failures the same way `retryTransient` does, for example in a
+ * custom retry policy or a circuit breaker.
+ *
+ * **Example** (Classifying client errors)
+ *
+ * ```ts import.meta.vitest
+ * import { Cause } from "effect"
+ * import { HttpClient, HttpClientError, HttpClientRequest } from "effect/http"
+ *
+ * const request = HttpClientRequest.get("https://example.com")
+ * const transportError = new HttpClientError.HttpClientError({
+ *   reason: new HttpClientError.TransportError({ request })
+ * })
+ *
+ * HttpClient.isTransientError(transportError) // => true
+ * HttpClient.isTransientError(new Cause.TimeoutError()) // => true
+ * HttpClient.isTransientError(new Error("boom")) // => false
+ * ```
+ *
+ * @see {@link isTransientResponse} for the response statuses it accepts
+ * @see {@link retryTransient} for the retry policy that uses it
+ * @stability unstable
+ * @category predicates
+ * @since 4.1.0
+ */
+export const isTransientError = error => Cause.isTimeoutError(error) || isTransientHttpError(error);
 const isTransientHttpError = error => Error.isHttpClientError(error) && (error.reason._tag === "TransportError" || error.reason._tag === "StatusCodeError" && isTransientResponse(error.reason.response));
+const retryAfterOf = (input, nowMillis) => {
+  const response = Error.isHttpClientError(input) ? input.response : Predicate.hasProperty(input, HttpClientResponse.TypeId) ? input : undefined;
+  return parseRetryAfter(nowMillis, response?.headers["retry-after"]);
+};
+const withRetryAfter = schedule => Schedule.fromStep(Effect.map(Schedule.toStep(schedule), step => (now, input) => {
+  const retryAfter = retryAfterOf(input, now);
+  if (retryAfter === undefined) {
+    return step(now, input);
+  }
+  return Effect.map(step(now, input), ([output, delay]) => [output, Duration.max(delay, retryAfter)]);
+}));
 const isTooManyRequestsHttpClientError = error => Error.isHttpClientError(error) && error.reason._tag === "StatusCodeError" && error.reason.response.status === 429;
-const isTransientResponse = response => response.status === 408 || response.status === 429 || response.status === 500 || response.status === 502 || response.status === 503 || response.status === 504;
+/**
+ * Returns `true` for a response whose status `retryTransient` retries by
+ * default: 408, 429, 500, 502, 503 or 504.
+ *
+ * **When to use**
+ *
+ * Use to retry the same responses as `retryTransient` in a custom retry policy.
+ *
+ * @see {@link isTransientError} for the matching error predicate
+ * @see {@link retryTransient} for the retry policy that uses it
+ * @stability unstable
+ * @category predicates
+ * @since 4.1.0
+ */
+export const isTransientResponse = response => response.status === 408 || response.status === 429 || response.status === 500 || response.status === 502 || response.status === 503 || response.status === 504;
 //# sourceMappingURL=HttpClient.js.map

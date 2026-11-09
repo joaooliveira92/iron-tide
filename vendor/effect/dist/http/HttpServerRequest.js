@@ -16,6 +16,8 @@ import * as HttpIncomingMessage from "./HttpIncomingMessage.js";
 import { hasBody } from "./HttpMethod.js";
 import { HttpServerError, RequestParseError } from "./HttpServerError.js";
 import * as bodyInternal from "./internal/httpBody.js";
+import * as lazyStream from "./internal/lazyStream.js";
+import * as internalUrlParams from "./internal/urlParams.js";
 import * as Multipart from "./Multipart.js";
 import * as UrlParams from "./UrlParams.js";
 /**
@@ -315,7 +317,9 @@ class ServerRequestImpl extends Inspectable.Class {
   url;
   headersOverride;
   remoteAddressOverride;
-  constructor(source, url, headersOverride, remoteAddressOverride) {
+  peerAddressOverride;
+  protocol;
+  constructor(source, url, headersOverride, remoteAddressOverride, peerAddressOverride, protocol) {
     super();
     this[TypeId] = TypeId;
     this[HttpIncomingMessage.TypeId] = HttpIncomingMessage.TypeId;
@@ -323,16 +327,18 @@ class ServerRequestImpl extends Inspectable.Class {
     this.url = url;
     this.headersOverride = headersOverride;
     this.remoteAddressOverride = remoteAddressOverride;
+    this.peerAddressOverride = peerAddressOverride;
+    this.protocol = protocol;
   }
   toJSON() {
     return HttpIncomingMessage.inspect(this, {
       _id: "HttpServerRequest",
       method: this.method,
-      url: this.originalUrl
+      url: UrlParams.redactUrl(this.originalUrl)
     });
   }
   modify(options) {
-    return new ServerRequestImpl(this.source, options.url ?? this.url, options.headers ?? this.headersOverride, "remoteAddress" in options ? options.remoteAddress : this.remoteAddressOverride);
+    return new ServerRequestImpl(this.source, options.url ?? this.url, options.headers ?? this.headersOverride, "remoteAddress" in options ? options.remoteAddress : this.remoteAddressOverride, options.peerAddress ?? this.peerAddressOverride, options.protocol ?? this.protocol);
   }
   get method() {
     return this.source.method.toUpperCase();
@@ -342,6 +348,9 @@ class ServerRequestImpl extends Inspectable.Class {
   }
   get remoteAddress() {
     return this.remoteAddressOverride ?? Option.none();
+  }
+  get peerAddress() {
+    return this.peerAddressOverride ?? this.remoteAddress;
   }
   get headers() {
     this.headersOverride ??= Headers.fromInput(this.source.headers);
@@ -372,19 +381,7 @@ class ServerRequestImpl extends Inspectable.Class {
   }
   textEffect;
   get text() {
-    if (this.textEffect) {
-      return this.textEffect;
-    }
-    this.textEffect = Effect.runSync(Effect.cached(Effect.tryPromise({
-      try: () => this.source.text(),
-      catch: cause => new HttpServerError({
-        reason: new RequestParseError({
-          request: this,
-          cause
-        })
-      })
-    })));
-    return this.textEffect;
+    return this.textEffect ??= Effect.map(this.arrayBuffer, buffer => textDecoder.decode(buffer));
   }
   get json() {
     return Effect.flatMap(this.text, text => Effect.try({
@@ -398,8 +395,8 @@ class ServerRequestImpl extends Inspectable.Class {
     }));
   }
   get urlParamsBody() {
-    return Effect.flatMap(this.text, _ => Effect.try({
-      try: () => UrlParams.fromInput(new URLSearchParams(_)),
+    return Effect.flatMap(this.arrayBuffer, bytes => Effect.try({
+      try: () => UrlParams.fromInput(internalUrlParams.fromBody(bytes)),
       catch: cause => new HttpServerError({
         reason: new RequestParseError({
           request: this,
@@ -424,18 +421,25 @@ class ServerRequestImpl extends Inspectable.Class {
     if (this.arrayBufferEffect) {
       return this.arrayBufferEffect;
     }
-    this.arrayBufferEffect = Effect.runSync(Effect.cached(Effect.tryPromise({
-      try: () => this.source.arrayBuffer(),
-      catch: cause => new HttpServerError({
-        reason: new RequestParseError({
-          request: this,
-          cause
+    this.arrayBufferEffect = Effect.withFiber(fiber => {
+      const maxBodySize = fiber.getRef(HttpIncomingMessage.MaxBodySize);
+      return Effect.tryPromise({
+        try: signal => maxBodySize === undefined ? this.source.arrayBuffer() : readArrayBufferLimited(this.source, Number(maxBodySize), signal),
+        catch: cause => new HttpServerError({
+          reason: new RequestParseError({
+            request: this,
+            reason: cause instanceof BodyTooLargeError ? "BodyTooLarge" : "Parse",
+            cause
+          })
         })
-      })
-    })));
+      });
+    }).pipe(Effect.cached, Effect.runSync);
     return this.arrayBufferEffect;
   }
   get upgrade() {
+    return this.upgradeWith({});
+  }
+  upgradeWith(_options) {
     return Effect.fail(new HttpServerError({
       reason: new RequestParseError({
         request: this,
@@ -451,8 +455,10 @@ class ClientRequestImpl extends Inspectable.Class {
   originalUrl;
   headersOverride;
   remoteAddressOverride;
+  peerAddressOverride;
+  protocol;
   urlOverride;
-  constructor(source, originalUrl, urlOverride, headersOverride, remoteAddressOverride) {
+  constructor(source, originalUrl, urlOverride, headersOverride, remoteAddressOverride, peerAddressOverride, protocol) {
     super();
     this[TypeId] = TypeId;
     this[HttpIncomingMessage.TypeId] = HttpIncomingMessage.TypeId;
@@ -461,16 +467,18 @@ class ClientRequestImpl extends Inspectable.Class {
     this.urlOverride = urlOverride;
     this.headersOverride = headersOverride;
     this.remoteAddressOverride = remoteAddressOverride;
+    this.peerAddressOverride = peerAddressOverride;
+    this.protocol = protocol;
   }
   toJSON() {
     return HttpIncomingMessage.inspect(this, {
       _id: "HttpServerRequest",
       method: this.method,
-      url: this.originalUrl
+      url: UrlParams.redactUrl(this.originalUrl)
     });
   }
   modify(options) {
-    return new ClientRequestImpl(this.source, this.originalUrl, options.url ?? this.url, options.headers ?? this.headersOverride, "remoteAddress" in options ? options.remoteAddress : this.remoteAddressOverride);
+    return new ClientRequestImpl(this.source, this.originalUrl, options.url ?? this.url, options.headers ?? this.headersOverride, "remoteAddress" in options ? options.remoteAddress : this.remoteAddressOverride, options.peerAddress ?? this.peerAddressOverride, options.protocol ?? this.protocol);
   }
   get method() {
     return this.source.method;
@@ -480,6 +488,9 @@ class ClientRequestImpl extends Inspectable.Class {
   }
   get remoteAddress() {
     return this.remoteAddressOverride ?? Option.none();
+  }
+  get peerAddress() {
+    return this.peerAddressOverride ?? this.remoteAddress;
   }
   get headers() {
     return this.headersOverride ??= this.source.headers;
@@ -521,37 +532,36 @@ class ClientRequestImpl extends Inspectable.Class {
     if (this.bytesEffect) {
       return this.bytesEffect;
     }
+    this.bytesEffect = Effect.withFiber(fiber => {
+      const maxBodySize = fiber.getRef(HttpIncomingMessage.MaxBodySize);
+      return this.readBytes(maxBodySize === undefined ? undefined : Number(maxBodySize));
+    }).pipe(Effect.cached, Effect.runSync);
+    return this.bytesEffect;
+  }
+  readBytes(maxBytes) {
     const body = this.source.body;
-    let effect;
     switch (body._tag) {
       case "Empty":
         {
-          effect = Effect.succeed(new Uint8Array(0));
-          break;
+          return Effect.succeed(new Uint8Array(0));
         }
       case "Uint8Array":
         {
-          effect = Effect.succeed(body.body);
-          break;
+          return maxBytes !== undefined && body.body.byteLength > maxBytes ? Effect.fail(bodyTooLargeError(this, new BodyTooLargeError(maxBytes))) : Effect.succeed(body.body);
         }
       case "FormData":
         {
-          effect = bytesFromBodyInit(this, body.formData);
-          break;
+          return bytesFromWeb(this, () => new Response(body.formData), maxBytes);
         }
       case "Stream":
         {
-          effect = Stream.mkUint8Array(this.stream);
-          break;
+          return Stream.mkUint8Array(maxBytes === undefined ? this.stream : limitStream(this, this.stream, maxBytes));
         }
       case "Raw":
         {
-          effect = rawBodyBytes(this, body.body);
-          break;
+          return rawBodyBytes(this, body.body, maxBytes);
         }
     }
-    this.bytesEffect = Effect.runSync(Effect.cached(effect));
-    return this.bytesEffect;
   }
   get text() {
     return Effect.map(this.bytes, bytes => textDecoder.decode(bytes));
@@ -563,8 +573,8 @@ class ClientRequestImpl extends Inspectable.Class {
     }));
   }
   get urlParamsBody() {
-    return Effect.flatMap(this.text, _ => Effect.try({
-      try: () => UrlParams.fromInput(new URLSearchParams(_)),
+    return Effect.flatMap(this.bytes, bytes => Effect.try({
+      try: () => UrlParams.fromInput(internalUrlParams.fromBody(bytes)),
       catch: cause => requestParseError(this, undefined, cause)
     }));
   }
@@ -589,6 +599,9 @@ class ClientRequestImpl extends Inspectable.Class {
     bytes => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
   }
   get upgrade() {
+    return this.upgradeWith({});
+  }
+  upgradeWith(_options) {
     return Effect.fail(requestParseError(this, "Not an upgradeable ServerRequest"));
   }
 }
@@ -617,21 +630,24 @@ const rawBodyStream = (request, body) => {
   }
   return Stream.fail(requestParseError(request, "Unsupported body type"));
 };
-const rawBodyBytes = (request, body) => {
+const rawBodyBytes = (request, body, maxBytes) => {
   if (body instanceof Request) {
-    return Effect.tryPromise({
-      try: () => body.arrayBuffer().then(buffer => new Uint8Array(buffer)),
-      catch: cause => requestParseError(request, undefined, cause)
-    });
+    return bytesFromWeb(request, () => body, maxBytes);
   }
   if (isBodyInit(body)) {
-    return bytesFromBodyInit(request, body);
+    return bytesFromWeb(request, () => new Response(body), maxBytes);
   }
   return Effect.fail(requestParseError(request, "Unsupported body type"));
 };
-const bytesFromBodyInit = (request, body) => Effect.tryPromise({
-  try: () => new Response(body).arrayBuffer().then(buffer => new Uint8Array(buffer)),
-  catch: cause => requestParseError(request, undefined, cause)
+const bytesFromWeb = (request,
+// Evaluated inside `try`, as wrapping an unreadable body in a `Response` throws.
+evaluate, maxBytes) => Effect.tryPromise({
+  try: async signal => {
+    const source = evaluate();
+    const buffer = maxBytes === undefined ? await source.arrayBuffer() : await readArrayBufferLimited(source, maxBytes, signal);
+    return new Uint8Array(buffer);
+  },
+  catch: cause => cause instanceof BodyTooLargeError ? bodyTooLargeError(request, cause) : requestParseError(request, undefined, cause)
 });
 const streamFromReadable = (request, body) => body ? Stream.fromReadableStream({
   evaluate: () => body,
@@ -646,6 +662,20 @@ const requestParseError = (request, description, cause) => new HttpServerError({
     ...(cause === undefined ? undefined : {
       cause
     })
+  })
+});
+const limitStream = (request, stream, maxBytes) => Stream.suspend(() => {
+  let bytes = 0;
+  return Stream.mapEffect(stream, chunk => {
+    bytes += chunk.byteLength;
+    return bytes > maxBytes ? Effect.fail(bodyTooLargeError(request, new BodyTooLargeError(maxBytes))) : Effect.succeed(chunk);
+  });
+});
+const bodyTooLargeError = (request, cause) => new HttpServerError({
+  reason: new RequestParseError({
+    request,
+    reason: "BodyTooLarge",
+    cause
   })
 });
 const formDataToParts = formData => {
@@ -714,14 +744,71 @@ const isReadableStream = u => typeof ReadableStream !== "undefined" && u instanc
 const isFormData = u => typeof FormData !== "undefined" && u instanceof FormData;
 const isBodyInit = u => typeof u === "string" || typeof ArrayBuffer !== "undefined" && (u instanceof ArrayBuffer || ArrayBuffer.isView(u)) || typeof Blob !== "undefined" && u instanceof Blob || isFormData(u) || typeof URLSearchParams !== "undefined" && u instanceof URLSearchParams || isReadableStream(u);
 const textDecoder = /*#__PURE__*/new TextDecoder();
+class BodyTooLargeError extends Error {
+  constructor(maxBytes) {
+    super(`Request body exceeds ${maxBytes} bytes`);
+  }
+}
+const readArrayBufferLimited = async (source, maxBytes, signal) => {
+  const header = source.headers.get("content-length");
+  const contentLength = header !== null && /^\d+$/.test(header) ? Number(header) : undefined;
+  if (contentLength !== undefined && contentLength > maxBytes) {
+    throw new BodyTooLargeError(maxBytes);
+  }
+  if (source.body === null) {
+    return new ArrayBuffer(0);
+  }
+  // A constructed request can understate its content-length, so bytes are
+  // counted on every runtime. Cancellation is not awaited, as the source's
+  // cleanup may never settle.
+  const limit = contentLength ?? maxBytes;
+  const reader = source.body.getReader();
+  const cancel = () => {
+    reader.cancel().catch(() => {});
+  };
+  signal.addEventListener("abort", cancel, {
+    once: true
+  });
+  const chunks = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const {
+        done,
+        value
+      } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > limit) {
+        cancel();
+        throw bytes > maxBytes ? new BodyTooLargeError(maxBytes) : new Error(`Request body is longer than its content-length of ${contentLength}`);
+      }
+      chunks.push(value);
+    }
+  } finally {
+    signal.removeEventListener("abort", cancel);
+    reader.releaseLock();
+  }
+  const buffer = new Uint8Array(bytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    buffer.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return buffer.buffer;
+};
 /**
  * Attempts to construct an absolute `URL` for a server request safely.
  *
  * **Details**
  *
- * The host comes from the `host` header, defaulting to `localhost`, and the
- * protocol is `https` only when `x-forwarded-proto` is `https`; invalid URLs
- * return `Option.none`.
+ * Uses `host` (defaulting to `localhost`) and the request `protocol` set by
+ * trusted proxy middleware. Otherwise, infers HTTPS from a case-insensitive
+ * `https:` prefix in `originalUrl`, defaulting to HTTP. Forwarding headers such
+ * as `x-forwarded-proto` are never read directly; use
+ * `HttpMiddleware.xForwardedHeaders` behind a TLS-terminating proxy. An
+ * absolute `url` keeps its own protocol and host. Invalid URLs return
+ * `Option.none`.
  *
  * @stability unstable
  * @category converting
@@ -729,9 +816,10 @@ const textDecoder = /*#__PURE__*/new TextDecoder();
  */
 export const toURL = self => {
   const host = self.headers.host ?? "localhost";
-  const protocol = self.headers["x-forwarded-proto"] === "https" ? "https" : "http";
+  const protocol = self.protocol ?? (/^https:/i.test(self.originalUrl) ? "https" : "http");
   try {
-    return Option.some(new URL(self.url, `${protocol}://${host}`));
+    // Prefix paths with `.` so leading `//` cannot replace the host.
+    return Option.some(new URL(self.url.startsWith("/") ? `.${self.url}` : self.url, `${protocol}://${host}`));
   } catch {
     return Option.none();
   }
@@ -768,7 +856,13 @@ export const toWebResult = (self, options) => {
     requestInit.signal = options.signal;
   }
   if (hasBody(self.method)) {
-    requestInit.body = Stream.toReadableStreamWith(self.stream, options?.context ?? Context.empty());
+    // Opening on the first pull with a zero high-water mark reads the body only
+    // when the Web body is read, so converting a request leaves it readable.
+    requestInit.body = Stream.toReadableStreamWith(lazyStream.openOnFirstPull(self.stream), options?.context ?? Context.empty(), {
+      strategy: {
+        highWaterMark: 0
+      }
+    });
     requestInit.duplex = "half";
   }
   return Result.succeed(new Request(url.value, requestInit));

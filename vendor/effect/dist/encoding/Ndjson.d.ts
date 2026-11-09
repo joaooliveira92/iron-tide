@@ -9,10 +9,11 @@
  * @since 4.0.0
  */
 import * as Arr from "../Array.ts";
+import * as Cause from "../Cause.ts";
 import * as Channel from "../Channel.ts";
 import type * as Schema from "../Schema.ts";
 declare const NdjsonErrorTypeId = "~effect/encoding/Ndjson/NdjsonError";
-declare const NdjsonError_base: new <A extends Record<string, any> = {}>(args: import("../Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => import("../Cause.ts").YieldableError & {
+declare const NdjsonError_base: new <A extends Record<string, any> = {}>(args: import("../Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => Cause.YieldableError & {
     readonly _tag: "NdjsonError";
 } & Readonly<A>;
 /**
@@ -23,12 +24,18 @@ declare const NdjsonError_base: new <A extends Record<string, any> = {}>(args: i
  * The `kind` field identifies whether the failure happened while packing or
  * unpacking, and `cause` preserves the original error.
  *
+ * Decoders also set `reason` to say why a line was rejected, and
+ * `unterminated` when that line is the final line of the input and has no
+ * line terminator.
+ *
  * @stability unstable
  * @category errors
  * @since 4.0.0
  */
 export declare class NdjsonError extends NdjsonError_base<{
     readonly kind: "Pack" | "Unpack";
+    readonly reason?: NdjsonErrorReason | undefined;
+    readonly unterminated?: boolean | undefined;
     readonly cause: unknown;
 }> {
     /**
@@ -46,6 +53,20 @@ export declare class NdjsonError extends NdjsonError_base<{
      */
     get message(): "Pack" | "Unpack";
 }
+/**
+ * Why a decoder rejected a line.
+ *
+ * **Details**
+ *
+ * - `InvalidJson`: the line is not valid JSON.
+ * - `InvalidUtf8`: the line is not valid UTF-8 (byte decoders only).
+ * - `LineTooLarge`: the line is longer than `maxLineBytes` (byte decoders only).
+ *
+ * @stability unstable
+ * @category errors
+ * @since 4.0.6
+ */
+export type NdjsonErrorReason = "InvalidJson" | "InvalidUtf8" | "LineTooLarge";
 /**
  * Checks whether a value is an `NdjsonError`.
  *
@@ -111,12 +132,15 @@ export declare const encodeSchemaString: <S extends Schema.Constraint>(schema: S
  *
  * **Details**
  *
- * Lines may span input chunks.
+ * Lines may span input chunks. `\n`, `\r\n` and a bare `\r` end a line. The
+ * first line that fails to parse fails the channel with
+ * `reason: "InvalidJson"`, after the lines before it have been emitted.
  *
  * **Gotchas**
  *
- * Set `ignoreEmptyLines` to skip blank lines before calling `JSON.parse`;
- * otherwise blank lines are parsed and fail as invalid JSON.
+ * Set `ignoreEmptyLines` to skip empty lines and lines containing only spaces
+ * or tabs before calling `JSON.parse`; otherwise these lines fail as invalid
+ * JSON.
  *
  * @stability unstable
  * @category constructors
@@ -130,8 +154,18 @@ export declare const decodeString: <IE = never, Done = unknown>(options?: {
  *
  * **Details**
  *
- * Lines may span input chunks, and `ignoreEmptyLines` controls whether blank
- * lines are skipped before JSON parsing.
+ * Lines may span input chunks. `\n`, `\r\n` and a bare `\r` end a line, and a
+ * leading UTF-8 BOM is skipped. `ignoreEmptyLines` skips empty lines and lines
+ * containing only spaces or tabs before JSON parsing.
+ *
+ * The first bad line fails the channel after the lines before it have been
+ * emitted. A line that is not valid UTF-8 fails with `reason: "InvalidUtf8"`
+ * and a line that is not valid JSON fails with `reason: "InvalidJson"`.
+ *
+ * `maxLineBytes` limits the UTF-8 bytes of a line, not counting its
+ * terminator. A longer line fails with `reason: "LineTooLarge"` as soon as the
+ * limit is passed, without reading the rest of the line. Lines are unbounded
+ * by default.
  *
  * @stability unstable
  * @category constructors
@@ -139,6 +173,7 @@ export declare const decodeString: <IE = never, Done = unknown>(options?: {
  */
 export declare const decode: <IE = never, Done = unknown>(options?: {
     readonly ignoreEmptyLines?: boolean | undefined;
+    readonly maxLineBytes?: number | undefined;
 }) => Channel.Channel<Arr.NonEmptyReadonlyArray<unknown>, IE | NdjsonError, Done, Arr.NonEmptyReadonlyArray<Uint8Array>, IE, Done>;
 /**
  * Creates an NDJSON byte decoder channel for values of a schema.
@@ -154,6 +189,7 @@ export declare const decode: <IE = never, Done = unknown>(options?: {
  */
 export declare const decodeSchema: <S extends Schema.Constraint>(schema: S) => <IE = never, Done = unknown>(options?: {
     readonly ignoreEmptyLines?: boolean | undefined;
+    readonly maxLineBytes?: number | undefined;
 }) => Channel.Channel<Arr.NonEmptyReadonlyArray<S["Type"]>, Schema.SchemaError | NdjsonError | IE, Done, Arr.NonEmptyReadonlyArray<Uint8Array>, IE, Done, S["DecodingServices"]>;
 /**
  * Creates an NDJSON string decoder channel for values of a schema.
@@ -197,6 +233,7 @@ export declare const duplex: {
      */
     (options?: {
         readonly ignoreEmptyLines?: boolean | undefined;
+        readonly maxLineBytes?: number | undefined;
     }): <R, IE, OE, OutDone, InDone>(self: Channel.Channel<Arr.NonEmptyReadonlyArray<Uint8Array>, OE, OutDone, Arr.NonEmptyReadonlyArray<Uint8Array>, IE | NdjsonError, InDone, R>) => Channel.Channel<Arr.NonEmptyReadonlyArray<unknown>, NdjsonError | OE, OutDone, Arr.NonEmptyReadonlyArray<unknown>, IE, InDone, R>;
     /**
      * Wraps a bidirectional byte channel with NDJSON encoding and decoding.
@@ -212,6 +249,7 @@ export declare const duplex: {
      */
     <R, IE, OE, OutDone, InDone>(self: Channel.Channel<Arr.NonEmptyReadonlyArray<Uint8Array>, OE, OutDone, Arr.NonEmptyReadonlyArray<Uint8Array>, IE | NdjsonError, InDone, R>, options?: {
         readonly ignoreEmptyLines?: boolean | undefined;
+        readonly maxLineBytes?: number | undefined;
     }): Channel.Channel<Arr.NonEmptyReadonlyArray<unknown>, NdjsonError | OE, OutDone, Arr.NonEmptyReadonlyArray<unknown>, IE, InDone, R>;
 };
 /**
@@ -289,6 +327,7 @@ export declare const duplexSchema: {
         readonly inputSchema: In;
         readonly outputSchema: Out;
         readonly ignoreEmptyLines?: boolean | undefined;
+        readonly maxLineBytes?: number | undefined;
     }): <OutErr, OutDone, InErr, InDone, R>(self: Channel.Channel<Arr.NonEmptyReadonlyArray<Uint8Array>, OutErr, OutDone, Arr.NonEmptyReadonlyArray<Uint8Array>, NdjsonError | Schema.SchemaError | InErr, InDone, R>) => Channel.Channel<Arr.NonEmptyReadonlyArray<Out["Type"]>, NdjsonError | Schema.SchemaError | OutErr, OutDone, Arr.NonEmptyReadonlyArray<In["Type"]>, InErr, InDone, R | In["EncodingServices"] | Out["DecodingServices"]>;
     /**
      * Wraps a bidirectional byte channel with schema-aware NDJSON encoding and
@@ -307,6 +346,7 @@ export declare const duplexSchema: {
         readonly inputSchema: In;
         readonly outputSchema: Out;
         readonly ignoreEmptyLines?: boolean | undefined;
+        readonly maxLineBytes?: number | undefined;
     }): Channel.Channel<Arr.NonEmptyReadonlyArray<Out["Type"]>, NdjsonError | Schema.SchemaError | OutErr, OutDone, Arr.NonEmptyReadonlyArray<In["Type"]>, InErr, InDone, R | In["EncodingServices"] | Out["DecodingServices"]>;
 };
 /**

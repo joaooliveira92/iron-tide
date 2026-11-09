@@ -29,7 +29,7 @@ export const toHeaders = span => Headers.fromRecordUnsafe({
     onNone: () => "",
     onSome: parent => `-${parent.spanId}`
   })}`,
-  traceparent: `00-${span.traceId}-${span.spanId}-${span.sampled ? "01" : "00"}`
+  traceparent: `00-${span.traceId.padStart(32, "0")}-${span.spanId}-${span.sampled ? "01" : "00"}`
 });
 /**
  * Decodes an external span safely from HTTP trace propagation headers.
@@ -71,7 +71,7 @@ export const b3 = headers => {
     return Option.none();
   }
   const parts = headers["b3"].split("-");
-  if (parts.length < 2) {
+  if (parts.length < 2 || isB3Ids(parts[0], parts[1]) === false) {
     return Option.none();
   }
   return Option.some(Tracer.externalSpan({
@@ -93,7 +93,7 @@ export const b3 = headers => {
  * @since 4.0.0
  */
 export const xb3 = headers => {
-  if (!headers["x-b3-traceid"] || !headers["x-b3-spanid"]) {
+  if (!headers["x-b3-traceid"] || !headers["x-b3-spanid"] || isB3Ids(headers["x-b3-traceid"], headers["x-b3-spanid"]) === false) {
     return Option.none();
   }
   return Option.some(Tracer.externalSpan({
@@ -102,14 +102,18 @@ export const xb3 = headers => {
     sampled: headers["x-b3-flags"] === "1" || (headers["x-b3-sampled"] ? headers["x-b3-sampled"] === "1" || headers["x-b3-sampled"] === "true" : true)
   }));
 };
-const w3cTraceId = /^[0-9a-f]{32}$/i;
-const w3cSpanId = /^[0-9a-f]{16}$/i;
+const w3cTraceId = /^[0-9a-f]{32}$/;
+const w3cSpanId = /^[0-9a-f]{16}$/;
+const w3cTraceFlags = /^[0-9a-f]{2}$/;
+const b3TraceId = /^(?:[0-9a-f]{16}|[0-9a-f]{32})$/;
+const isB3Ids = (traceId, spanId) => b3TraceId.test(traceId) && w3cSpanId.test(spanId);
 /**
  * Decodes an external span safely from the W3C `traceparent` header.
  *
  * **Details**
  *
- * Only version `00` headers with valid trace and span identifiers are accepted.
+ * Only version `00` headers with valid trace and span identifiers and trace
+ * flags are accepted.
  *
  * @stability unstable
  * @category decoding
@@ -127,7 +131,7 @@ export const w3c = headers => {
   switch (version) {
     case "00":
       {
-        if (w3cTraceId.test(traceId) === false || w3cSpanId.test(spanId) === false || traceId === "00000000000000000000000000000000" || spanId === "0000000000000000") {
+        if (w3cTraceId.test(traceId) === false || w3cSpanId.test(spanId) === false || w3cTraceFlags.test(flags) === false || traceId === "00000000000000000000000000000000" || spanId === "0000000000000000") {
           return Option.none();
         }
         return Option.some(Tracer.externalSpan({

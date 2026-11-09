@@ -1,20 +1,23 @@
+import { negatedName } from "./descriptor.js";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 const escapeZsh = s => s.replace(/\\/g, "\\\\").replace(/'/g, "'\\''").replace(/:/g, "\\:");
+const escapeZshExplanation = s => escapeZsh(s).replace(/]/g, "\\]");
 /** Escape choices for the second parse of a Zsh `_arguments` action. */
 const escapeZshChoice = s => s.replace(/[^A-Za-z0-9_.,/@%+-]/gu, "\\$&").replace(/'/g, "'\\''");
 const sanitize = s => s.replace(/[^a-zA-Z0-9_]/g, "_");
 /**
- * All forms of a flag (--name, -alias, --no-name) for the exclusion group.
+ * All forms of a flag (--name, -alias, negation) for the exclusion group.
  */
 const allForms = flag => {
   const forms = [`--${flag.name}`];
   for (const alias of flag.aliases) {
     forms.push(alias.length === 1 ? `-${alias}` : `--${alias}`);
   }
-  if (flag.type._tag === "Boolean") {
-    forms.push(`--no-${flag.name}`);
+  const negation = negatedName(flag);
+  if (negation !== undefined) {
+    forms.push(`--${negation}`);
   }
   return forms;
 };
@@ -52,20 +55,25 @@ const argAction = type => {
  */
 const flagSpecs = flag => {
   const specs = [];
-  const desc = flag.description ? `[${escapeZsh(flag.description)}]` : "";
-  const action = valueAction(flag.type);
+  const desc = flag.description ? `[${escapeZshExplanation(flag.description)}]` : "";
+  // An optional value must follow `=` in the same word (`--name=-`), and `::`
+  // marks it optional.
+  const optional = flag.optionalValue === true && flag.type._tag !== "Boolean";
+  const valueSuffix = optional ? "=-" : "";
+  const action = optional ? `:${valueAction(flag.type)}` : valueAction(flag.type);
   const excl = `(${allForms(flag).join(" ")})`;
   // Primary long name
-  specs.push(`'${excl}--${flag.name}${desc}${action}'`);
+  specs.push(`'${excl}--${flag.name}${valueSuffix}${desc}${action}'`);
   // Aliases
   for (const alias of flag.aliases) {
     const prefix = alias.length === 1 ? "-" : "--";
-    specs.push(`'${excl}${prefix}${alias}${desc}${action}'`);
+    specs.push(`'${excl}${prefix}${alias}${valueSuffix}${desc}${action}'`);
   }
   // Boolean negation
-  if (flag.type._tag === "Boolean") {
-    const negDesc = flag.description ? `[${escapeZsh(`Disable ${flag.name}`)}]` : "";
-    specs.push(`'${excl}--no-${flag.name}${negDesc}'`);
+  const negation = negatedName(flag);
+  if (negation !== undefined) {
+    const negDesc = flag.description ? `[${escapeZshExplanation(`Disable ${flag.name}`)}]` : "";
+    specs.push(`'${excl}--${negation}${negDesc}'`);
   }
   return specs;
 };

@@ -30,6 +30,7 @@ import { EncodingError } from "./EncodingError.ts";
  * Base64Url.encode(bytes) // => "SGVsbG8_"
  * ```
  *
+ * @see {@link encodePadded} for output that keeps `=` padding
  * @see {@link decode} for decoding URL-safe Base64 to bytes
  * @see {@link decodeString} for decoding URL-safe Base64 to UTF-8 text
  *
@@ -38,6 +39,34 @@ import { EncodingError } from "./EncodingError.ts";
  * @since 4.0.0
  */
 export declare const encode: (input: Uint8Array | string) => string;
+/**
+ * Encodes the given value into a padded URL-safe Base64 string.
+ *
+ * **When to use**
+ *
+ * Use when a consumer requires `=` padding on URL-safe Base64, such as Go's
+ * `base64.URLEncoding`.
+ *
+ * **Details**
+ *
+ * Same as {@link encode}, but keeps the `=` padding. {@link decode} accepts
+ * both forms.
+ *
+ * **Example** (Encoding padded URL-safe Base64)
+ *
+ * ```ts import.meta.vitest
+ * import { Base64Url } from "effect/encoding"
+ *
+ * Base64Url.encodePadded("fo") // => "Zm8="
+ * ```
+ *
+ * @see {@link encode} for unpadded output
+ *
+ * @stability stable
+ * @category encoding
+ * @since 4.0.6
+ */
+export declare const encodePadded: (input: Uint8Array | string) => string;
 /**
  * Decodes a padded or unpadded URL-safe Base64 string into bytes safely.
  *

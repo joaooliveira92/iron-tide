@@ -14,6 +14,7 @@ import * as Context from "./Context.js";
 import * as Effect from "./Effect.js";
 import { identity } from "./Function.js";
 import * as Layer from "./Layer.js";
+import * as Option from "./Option.js";
 import { BadArgument } from "./PlatformError.js";
 /**
  * Runtime type identifier used to mark implementations of the `Path` service.
@@ -44,8 +45,7 @@ export const TypeId = "~effect/Path";
  * import { Effect, Layer, Path } from "effect"
  *
  * // Create a custom path implementation
- * const customPath: Path.Path = {
- *   [Path.TypeId]: Path.TypeId,
+ * const customPath = Path.make({
  *   sep: "/",
  *   basename: (path: string, suffix?: string) => {
  *     const base = path.split("/").pop() || ""
@@ -79,7 +79,7 @@ export const TypeId = "~effect/Path";
  *   resolve: (...pathSegments: ReadonlyArray<string>) => pathSegments.join("/"),
  *   toFileUrl: (path: string) => Effect.succeed(new URL(`file://${path}`)),
  *   toNamespacedPath: (path: string) => path
- * }
+ * })
  *
  * // Provide the path service
  * const customPathLayer = Layer.succeed(Path.Path)(customPath)
@@ -98,6 +98,38 @@ export const TypeId = "~effect/Path";
  * @since 4.0.0
  */
 export const Path = /*#__PURE__*/Context.Service("effect/Path");
+/**
+ * Creates a `Path` service from platform path operations.
+ *
+ * **When to use**
+ *
+ * Use to build a `Path` implementation, such as a platform layer or a test
+ * double, without implementing the operations that can be derived from the
+ * others.
+ *
+ * **Details**
+ *
+ * Adds the `Path` type marker and derives `resolveWithin` from the provided
+ * `parse`, `resolve`, `relative`, `isAbsolute`, and `sep`, so containment
+ * follows the same platform rules as those operations.
+ *
+ * @see {@link layer} for the built-in POSIX `Path` service layer
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export const make = impl => Path.of({
+  ...impl,
+  [TypeId]: TypeId,
+  resolveWithin(root, input) {
+    if (impl.parse(input).root !== "") return Option.none();
+    const base = impl.resolve(root);
+    const candidate = impl.resolve(base, input);
+    const relative = impl.relative(base, candidate);
+    return relative === ".." || relative.startsWith(`..${impl.sep}`) || impl.isAbsolute(relative) ? Option.none() : Option.some(candidate);
+  }
+});
 /**
  * The following functions are adapted from the Node.js source code:
  * https://github.com/nodejs/node/blob/main/lib/internal/url.js
@@ -173,9 +205,13 @@ function normalizeStringPosix(path, allowAboveRoot) {
   }
   return res;
 }
+function formatExt(ext) {
+  if (!ext) return "";
+  return ext.startsWith(".") ? ext : `.${ext}`;
+}
 function _format(sep, pathObject) {
   const dir = pathObject.dir || pathObject.root;
-  const base = pathObject.base || (pathObject.name || "") + (pathObject.ext || "");
+  const base = pathObject.base || (pathObject.name || "") + formatExt(pathObject.ext);
   if (!dir) {
     return base;
   }
@@ -211,7 +247,14 @@ function fromFileUrl(url) {
       }
     }
   }
-  return Effect.succeed(decodeURIComponent(pathname));
+  return Effect.try({
+    try: () => decodeURIComponent(pathname),
+    catch: cause => new BadArgument({
+      module: "Path",
+      method: "fromFileUrl",
+      cause
+    })
+  });
 }
 const resolve = function resolve() {
   let resolvedPath = "";
@@ -286,8 +329,7 @@ function encodePathChars(filepath) {
   }
   return filepath;
 }
-const posixImpl = /*#__PURE__*/Path.of({
-  [TypeId]: TypeId,
+const posixImpl = /*#__PURE__*/make({
   resolve,
   normalize(path) {
     if (path.length === 0) return ".";

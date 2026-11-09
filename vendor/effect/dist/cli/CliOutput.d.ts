@@ -1,16 +1,16 @@
 /**
- * Formats CLI help and errors as text.
+ * Formats and presents CLI help, errors, and version information.
  *
- * This module turns help documents, CLI errors, grouped errors, and version
- * information into strings. It does not write those strings to the terminal
- * itself. It includes the `Formatter` interface, the formatter service, a layer
- * for custom formatters, and the default formatter with configurable color
- * support.
+ * The `Formatter` service turns help documents, errors, and version
+ * information into strings. The `Presenter` service decides where the built-in
+ * help, version, and invalid-invocation output of `Command.runWith` is written,
+ * and can be replaced to suppress or redirect it.
  *
  * @stability unstable
  * @since 4.0.0
  */
 import * as Context from "../Context.ts";
+import * as Effect from "../Effect.ts";
 import * as Layer from "../Layer.ts";
 import type * as CliError from "./CliError.ts";
 import type { HelpDoc } from "./HelpDoc.ts";
@@ -197,6 +197,119 @@ export interface Formatter {
     readonly formatErrors: (errors: ReadonlyArray<CliError.CliError>) => string;
 }
 /**
+ * Presents the built-in help, version, and invalid-invocation output of
+ * `Command.runWith`.
+ *
+ * **When to use**
+ *
+ * Use to suppress, redirect, or replace that output, for example to keep
+ * stdout clean for machine-readable results.
+ *
+ * **Details**
+ *
+ * Events carry the help document and errors rather than rendered text, so a
+ * presenter can still render them with the `Formatter` service. Presenting an
+ * event does not change the result of the run: implicit help and invalid
+ * invocations still fail with `CliError.ShowHelp`.
+ *
+ * **Gotchas**
+ *
+ * `--completions` scripts, wizard mode output, and handler failures rendered
+ * through `CliError.userMessage` do not go through the presenter.
+ *
+ * **Example** (Writing invalid-invocation output to stderr)
+ *
+ * ```ts import.meta.vitest
+ * import { Console, Effect } from "effect"
+ * import { CliOutput } from "effect/cli"
+ *
+ * const StderrPresenter = CliOutput.layerPresenter({
+ *   present: (event) =>
+ *     event._tag === "InvalidInvocation"
+ *       ? Effect.gen(function*() {
+ *         const formatter = yield* CliOutput.Formatter
+ *         yield* Console.error(formatter.formatHelpDoc(event.helpDoc))
+ *         yield* Console.error(formatter.formatErrors(event.errors))
+ *       })
+ *       : CliOutput.defaultPresenter.present(event)
+ * })
+ * ```
+ *
+ * @see {@link defaultPresenter} for the default console output
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface Presenter {
+    /**
+     * Presents a CLI output event.
+     *
+     * @stability unstable
+     * @since 4.0.0
+     */
+    readonly present: (event: Presenter.Event) => Effect.Effect<void>;
+}
+/**
+ * Types used by the `Presenter` service.
+ *
+ * @stability unstable
+ * @since 4.0.0
+ */
+export declare namespace Presenter {
+    /**
+     * Output events produced while running a CLI command.
+     *
+     * @stability unstable
+     * @category models
+     * @since 4.0.0
+     */
+    type Event = Help | InvalidInvocation | Version;
+    /**
+     * Help for a command path.
+     *
+     * **Details**
+     *
+     * `reason` is `"Requested"` for `--help`, and `"Implicit"` when the run
+     * fails with a `CliError.ShowHelp` that carries no errors, such as selecting
+     * a command that has no handler, or when `renderErrors` is `false`.
+     *
+     * @stability unstable
+     * @category models
+     * @since 4.0.0
+     */
+    interface Help {
+        readonly _tag: "Help";
+        readonly reason: "Requested" | "Implicit";
+        readonly commandPath: ReadonlyArray<string>;
+        readonly helpDoc: HelpDoc;
+    }
+    /**
+     * Help and parse or validation errors for an invalid invocation.
+     *
+     * @stability unstable
+     * @category models
+     * @since 4.0.0
+     */
+    interface InvalidInvocation {
+        readonly _tag: "InvalidInvocation";
+        readonly commandPath: ReadonlyArray<string>;
+        readonly helpDoc: HelpDoc;
+        readonly errors: ReadonlyArray<CliError.NonShowHelpErrors>;
+    }
+    /**
+     * Version information requested with `--version`.
+     *
+     * @stability unstable
+     * @category models
+     * @since 4.0.0
+     */
+    interface Version {
+        readonly _tag: "Version";
+        readonly name: string;
+        readonly version: string;
+    }
+}
+/**
  * Service reference for the CLI output formatter. Provides a default implementation
  * that can be overridden for custom formatting or testing.
  *
@@ -225,6 +338,33 @@ export interface Formatter {
  * @since 4.0.0
  */
 export declare const Formatter: Context.Reference<Formatter>;
+/**
+ * Default presenter that renders events with the current `Formatter` and
+ * writes them with `Console`.
+ *
+ * **Details**
+ *
+ * Help and version output goes to `Console.log`. Invalid invocations write
+ * help to `Console.log` and errors to `Console.error`. When no `Formatter` is
+ * installed, the default formatter colors output when `TerminalCapabilities`
+ * says it can.
+ *
+ * @see {@link Presenter} for replacing the default output
+ * @stability unstable
+ * @category defaults
+ * @since 4.0.0
+ */
+export declare const defaultPresenter: Presenter;
+/**
+ * Service reference for the CLI output presenter. Defaults to
+ * `defaultPresenter`.
+ *
+ * @see {@link layerPresenter} for providing a custom presenter
+ * @stability unstable
+ * @category services
+ * @since 4.0.0
+ */
+export declare const Presenter: Context.Reference<Presenter>;
 /**
  * Creates a Layer that provides a custom Formatter implementation.
  *
@@ -255,7 +395,33 @@ export declare const Formatter: Context.Reference<Formatter>;
  */
 export declare const layer: (formatter: Formatter) => Layer.Layer<never>;
 /**
+ * Creates a Layer that provides a custom Presenter implementation.
+ *
+ * @see {@link Presenter} for the events a presenter receives
+ * @stability unstable
+ * @category layers
+ * @since 4.0.0
+ */
+export declare const layerPresenter: (presenter: Presenter) => Layer.Layer<never>;
+/**
  * Creates a default formatter with configurable options.
+ *
+ * **Details**
+ *
+ * - `colors`: force ANSI colors on or off. Defaults to terminal detection.
+ * - `inheritedFlags`: how subcommand help renders flags inherited from
+ *   ancestor commands. `"full"` (default) lists them under `INHERITED FLAGS`,
+ *   `"summary"` replaces the section with a pointer to the parent command's
+ *   help, and `"none"` omits it.
+ * - `globalFlags`: the same choice for `GLOBAL FLAGS`, with the summary
+ *   pointing at the help of the nearest command that declares global flags
+ *   (the root command for built-in flags). Commands that declare global flags
+ *   always list them in full.
+ *
+ * **Gotchas**
+ *
+ * Per-flag filtering in a custom formatter matches names, not flag identities.
+ * Renaming a flag without updating the filter silently stops it from matching.
  *
  * **Example** (Creating default formatters)
  *
@@ -271,6 +437,9 @@ export declare const layer: (formatter: Formatter) => Layer.Layer<never>;
  * // Auto-detect colors based on terminal support (default behavior)
  * const autoFormatter = CliOutput.defaultFormatter()
  *
+ * // Point subcommand help at the declaring scope for global flags
+ * const compactFormatter = CliOutput.defaultFormatter({ globalFlags: "summary" })
+ *
  * const error = new CliError.InvalidValue({
  *   option: "foo",
  *   value: "bar",
@@ -281,6 +450,48 @@ export declare const layer: (formatter: Formatter) => Layer.Layer<never>;
  * noColorFormatter.formatError(error).includes("Invalid value") // => true
  * colorFormatter.formatVersion("my-tool", "1.2.3").includes("my-tool") // => true
  * autoFormatter.formatVersion("my-tool", "1.2.3").includes("1.2.3") // => true
+ * compactFormatter.formatVersion("my-tool", "1.2.3").includes("my-tool") // => true
+ * ```
+ *
+ * **Example** (Hiding one inherited flag)
+ *
+ * Filter only `inheritedFlags` to keep `--profile` visible on its declaring
+ * command while hiding it on descendants. Other inherited flags still render.
+ *
+ * ```ts import.meta.vitest
+ * import { Context, Effect, Option } from "effect"
+ * import { CliOutput } from "effect/cli"
+ *
+ * const base = CliOutput.defaultFormatter({ colors: false })
+ * const formatter: CliOutput.Formatter = {
+ *   ...base,
+ *   formatHelpDoc: (doc) =>
+ *     base.formatHelpDoc({
+ *       ...doc,
+ *       inheritedFlags: doc.inheritedFlags?.filter((flag) => flag.name !== "profile")
+ *     })
+ * }
+ *
+ * const program = Effect.gen(function*() {
+ *   const output = yield* CliOutput.Formatter
+ *   return output.formatHelpDoc({
+ *     description: "Deploy the application",
+ *     usage: "app deploy",
+ *     annotations: Context.empty(),
+ *     flags: [],
+ *     inheritedFlags: ["profile", "region"].map((name) => ({
+ *       name,
+ *       aliases: [],
+ *       type: "string",
+ *       description: Option.none(),
+ *       required: false
+ *     }))
+ *   })
+ * }).pipe(Effect.provide(CliOutput.layer(formatter)))
+ *
+ * const help = await Effect.runPromise(program)
+ * help.includes("--profile") // => false
+ * help.includes("--region") // => true
  * ```
  *
  * @stability unstable
@@ -288,6 +499,35 @@ export declare const layer: (formatter: Formatter) => Layer.Layer<never>;
  * @since 4.0.0
  */
 export declare const defaultFormatter: (options?: {
-    colors?: boolean;
+    readonly colors?: boolean | undefined;
+    readonly inheritedFlags?: "full" | "summary" | "none" | undefined;
+    readonly globalFlags?: "full" | "summary" | "none" | undefined;
 }) => Formatter;
+/**
+ * Measures the number of terminal cells a string occupies.
+ *
+ * **Details**
+ *
+ * Uses the same measurement as built-in help and table rendering. ANSI styling
+ * is stripped before measuring graphemes: zero-width graphemes count as `0`,
+ * emoji presentation sequences and fullwidth characters as `2`, and other
+ * graphemes as `1`.
+ *
+ * **Example** (Measuring terminal-cell widths)
+ *
+ * ```ts import.meta.vitest
+ * import { CliOutput } from "effect/cli"
+ *
+ * CliOutput.displayWidth("file") // => 4
+ * CliOutput.displayWidth("ファイル") // => 8
+ * CliOutput.displayWidth("é") // => 1
+ * CliOutput.displayWidth("1️⃣") // => 2
+ * CliOutput.displayWidth("\u001B[1mbold\u001B[0m") // => 4
+ * ```
+ *
+ * @stability unstable
+ * @category measuring
+ * @since 4.0.3
+ */
+export declare const displayWidth: (text: string) => number;
 //# sourceMappingURL=CliOutput.d.ts.map

@@ -73,7 +73,56 @@ const TypeId = "~effect/ai/Toolkit";
 export const FailureOrigin = /*#__PURE__*/Context.Reference("effect/ai/Toolkit/FailureOrigin", {
   defaultValue: () => "result"
 });
+/**
+ * Limits how many preliminary results `Toolkit.handle` buffers per tool call.
+ *
+ * **Details**
+ *
+ * Defaults to `"unbounded"`. Provide it as a positive integer around `handle`,
+ * or around a program that calls it, and `HandlerContext.preliminary` suspends
+ * once that many results are unconsumed. Any other value is a defect.
+ *
+ * The bound only applies to the stream returned by `handle`. Consume that
+ * stream while the handler runs; waiting for the handler before reading it
+ * deadlocks once the buffer fills. `LanguageModel` moves results into its own
+ * buffers, so the bound does not limit memory end to end there.
+ *
+ * **Example** (Bounding preliminary results)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect, Schema, Stream } from "effect"
+ * import { Tool, Toolkit } from "effect/ai"
+ *
+ * const toolkit = Toolkit.make(Tool.make("Progress", { success: Schema.Number }))
+ *
+ * const program = Effect.gen(function*() {
+ *   const handlers = yield* toolkit
+ *   const stream = yield* handlers.handle("Progress", {}).pipe(
+ *     Effect.provideService(Toolkit.PreliminaryBuffer, 16)
+ *   )
+ *   const results = yield* Stream.runCollect(stream)
+ *   return results.length
+ * }).pipe(
+ *   Effect.provide(toolkit.toLayer({
+ *     Progress: Effect.fnUntraced(function*(_, ctx) {
+ *       for (let i = 0; i < 64; i++) yield* ctx.preliminary(i)
+ *       return 64
+ *     })
+ *   }))
+ * )
+ *
+ * await Effect.runPromise(program) // => 65
+ * ```
+ *
+ * @stability unstable
+ * @category services
+ * @since 4.1.0
+ */
+export const PreliminaryBuffer = /*#__PURE__*/Context.Reference("effect/ai/Toolkit/PreliminaryBuffer", {
+  defaultValue: () => "unbounded"
+});
 const failureCause = (error, origin) => Cause.annotate(Cause.fail(error), Context.make(FailureOrigin, origin));
+const failureOrigin = error => Schema.isSchemaError(error) ? "result" : "handler";
 const Proto = {
   ... /*#__PURE__*/Effectable.Prototype({
     label: "Toolkit",
@@ -147,7 +196,13 @@ const Proto = {
           })));
         }
         const decodedParams = decodedParamsResult.success;
-        const queue = yield* Queue.make();
+        const capacity = yield* PreliminaryBuffer;
+        if (capacity !== "unbounded" && !(Number.isInteger(capacity) && capacity > 0)) {
+          return yield* Effect.die(`Tool "${name}": PreliminaryBuffer must be a positive integer, got ${capacity}`);
+        }
+        const queue = yield* Queue.make(capacity === "unbounded" ? undefined : {
+          capacity
+        });
         const context = {
           toolCallId,
           preliminary: result => Effect.asVoid(Queue.offer(queue, {
@@ -179,22 +234,27 @@ const Proto = {
           }) : error;
           return normalizedError;
         };
-        return Stream.fromQueue(queue).pipe(Stream.catch(error => {
-          const normalizedError = normalizeError(error);
-          const failureOrigin = Schema.isSchemaError(error) ? "result" : "handler";
-          return tool.failureMode === "error" ? Stream.failCause(failureCause(normalizedError, failureOrigin)) : Stream.succeed({
-            result: normalizedError,
-            isFailure: true,
-            failureOrigin,
-            preliminary: false
-          });
-        }), Stream.mapEffect(Effect.fnUntraced(function* (output) {
+        return Stream.fromQueue(queue).pipe(tool.failureMode === "error" ? Stream.catchCause(cause => Stream.failCause(Cause.map(Cause.fromReasons(cause.reasons.map(reason => Cause.isFailReason(reason) ? reason.annotate(Context.make(FailureOrigin, failureOrigin(reason.error)), {
+          overwrite: true
+        }) : reason)), normalizeError))) : Stream.catch(error => Stream.succeed({
+          result: normalizeError(error),
+          isFailure: true,
+          failureOrigin: failureOrigin(error),
+          preliminary: false
+        })), Stream.mapEffect(Effect.fnUntraced(function* (output) {
           const encodedResult = yield* encodeResult(output.result, output.isFailure);
+          if (output.isFailure || output.preliminary || tool.toModelOutput === undefined) {
+            return {
+              ...output,
+              encodedResult
+            };
+          }
           return {
             ...output,
-            encodedResult
+            encodedResult,
+            modelOutput: tool.toModelOutput(output.result)
           };
-        })), Stream.onEnd(Fiber.interrupt(fiber)));
+        })), Stream.ensuring(Fiber.interrupt(fiber)));
       });
       return {
         tools,

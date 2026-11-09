@@ -72,7 +72,7 @@ export const Terminal = /*#__PURE__*/Context.Service("effect/Terminal");
  *
  * **Details**
  *
- * The implementation object supplies `columns`, `rows`, `readInput`,
+ * The implementation object supplies `columns`, `rows`, `size`, `readInput`,
  * `readLine`, and `display`; `make` attaches the `Terminal` service marker so
  * the result can be provided through the `Terminal` context service.
  *

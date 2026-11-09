@@ -60,6 +60,9 @@ export const optional = schema => Schema.optionalKey(schema).pipe(Schema.decodeT
   decode: SchemaGetter.passthrough(),
   encode: SchemaGetter.transformOptional(Option.flatMap(Option.fromUndefinedOr))
 }));
+// Objects are checked one level deep. Incoming payloads come from JSON.parse and
+// outgoing ones are serialized through Schema.toCodecJson.
+const UnknownObject = /*#__PURE__*/Schema.Record(Schema.String, Schema.Unknown);
 // =============================================================================
 // Common
 // =============================================================================
@@ -71,6 +74,64 @@ export const optional = schema => Schema.optionalKey(schema).pipe(Schema.decodeT
  * @since 4.0.0
  */
 export const RequestId = /*#__PURE__*/Schema.Union([Schema.String, Schema.Finite]);
+/**
+ * A JSON-RPC request.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export const JsonRpcRequest = /*#__PURE__*/Schema.Struct({
+  jsonrpc: /*#__PURE__*/Schema.Literal("2.0"),
+  id: RequestId,
+  method: Schema.String,
+  params: /*#__PURE__*/Schema.optional(/*#__PURE__*/Schema.Record(Schema.String, Schema.Unknown))
+});
+/**
+ * A JSON-RPC notification without a request identifier.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export const JsonRpcNotification = /*#__PURE__*/Schema.Struct({
+  jsonrpc: /*#__PURE__*/Schema.Literal("2.0"),
+  method: Schema.String,
+  params: /*#__PURE__*/Schema.optional(/*#__PURE__*/Schema.Record(Schema.String, Schema.Unknown))
+});
+/**
+ * A JSON-RPC response carrying a result or remote error.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export const JsonRpcResponse = /*#__PURE__*/Schema.Union([/*#__PURE__*/Schema.Struct({
+  jsonrpc: /*#__PURE__*/Schema.Literal("2.0"),
+  id: RequestId,
+  result: Schema.Unknown
+}), /*#__PURE__*/Schema.Struct({
+  jsonrpc: /*#__PURE__*/Schema.Literal("2.0"),
+  id: /*#__PURE__*/Schema.optional(/*#__PURE__*/Schema.Union([RequestId, Schema.Null])),
+  error: /*#__PURE__*/Schema.Struct({
+    code: Schema.Int,
+    message: Schema.String,
+    data: /*#__PURE__*/Schema.optional(Schema.Unknown)
+  })
+})]);
+/**
+ * Schema for JSON-RPC messages exchanged by MCP peers.
+ *
+ * **Details**
+ *
+ * Only the envelope is validated. `params`, `result` and error `data` are left
+ * for the method's own schema to decode.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export const JsonRpcMessage = /*#__PURE__*/Schema.Union([JsonRpcRequest, JsonRpcNotification, JsonRpcResponse]);
 /**
  * Schema for MCP progress tokens that associate progress notifications with the
  * original request.
@@ -102,7 +163,7 @@ export class RequestMeta extends /*#__PURE__*/Schema.Opaque()(/*#__PURE__*/Schem
      * notifications.
      */
     progressToken: /*#__PURE__*/optional(ProgressToken)
-  }), [Schema.JsonObject]))
+  }), [UnknownObject]))
 })) {}
 /**
  * Schema for optional MCP result metadata.
@@ -121,7 +182,7 @@ export class ResultMeta extends /*#__PURE__*/Schema.Opaque()(/*#__PURE__*/Schema
    * This result property is reserved by the protocol to allow clients and
    * servers to attach additional metadata to their responses.
    */
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 })) {}
 /**
  * Schema for optional MCP notification metadata.
@@ -140,7 +201,7 @@ export class NotificationMeta extends /*#__PURE__*/Schema.Opaque()(/*#__PURE__*/
    * This parameter name is reserved by MCP to allow clients and servers to
    * attach additional metadata to their notifications.
    */
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 })) {}
 /**
  * Schema for opaque cursor tokens used in pagination.
@@ -301,7 +362,7 @@ export class ClientCapabilities extends /*#__PURE__*/Schema.Class("@effect/ai/Mc
    * Optional extensions capabilities advertised by the client.
    * Keys are extension identifiers following <vendor-prefix>/<extension-name> (e.g. "io.modelcontextprotocol/ui").
    */
-  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(/*#__PURE__*/Schema.TemplateLiteral([Schema.String, "/", Schema.String]), Schema.Json)),
+  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(/*#__PURE__*/Schema.TemplateLiteral([Schema.String, "/", Schema.String]), Schema.Unknown)),
   /**
    * Present if the client supports listing roots.
    */
@@ -364,7 +425,7 @@ export class ServerCapabilities extends /*#__PURE__*/Schema.Opaque()(/*#__PURE__
    * Optional extensions capabilities advertised by the server.
    * Keys are extension identifiers following <vendor-prefix>/<extension-name> (e.g. "io.modelcontextprotocol/ui").
    */
-  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(/*#__PURE__*/Schema.TemplateLiteral([Schema.String, "/", Schema.String]), Schema.Json)),
+  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(/*#__PURE__*/Schema.TemplateLiteral([Schema.String, "/", Schema.String]), Schema.Unknown)),
   /**
    * Present if the server supports sending log messages to the client.
    */
@@ -516,6 +577,15 @@ export const PARSE_ERROR_CODE = -32700;
  * @since 4.0.0
  */
 export const HEADER_MISMATCH_ERROR_CODE = -32020;
+/**
+ * Represents the MCP error code returned when a server does not support the
+ * protocol version requested by a client.
+ *
+ * @stability unstable
+ * @category constants
+ * @since 4.0.6
+ */
+export const UNSUPPORTED_PROTOCOL_VERSION_ERROR_CODE = -32022;
 /**
  * Represents an MCP/JSON-RPC error for invalid JSON that could not be parsed.
  *
@@ -847,7 +917,7 @@ export class Resource extends /*#__PURE__*/Schema.Class("@effect/ai/McpSchema/Re
    * This parameter name is reserved by MCP to allow clients and servers to
    * attach additional metadata to resources.
    */
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 }) {}
 /**
  * Schema for a template description of resources available on the server.
@@ -892,7 +962,7 @@ export class ResourceTemplate extends /*#__PURE__*/Schema.Class("@effect/ai/McpS
   /**
    * Optional additional metadata for the client.
    */
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 }) {}
 /**
  * Schema for the contents of a specific resource or sub-resource.
@@ -913,7 +983,7 @@ export class ResourceContents extends /*#__PURE__*/Schema.Opaque()(/*#__PURE__*/
   /**
    * Optional additional metadata for the client.
    */
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 })) {}
 /**
  * Schema for text resource contents represented as a string.
@@ -1102,6 +1172,105 @@ export class ResourceUpdatedNotification extends /*#__PURE__*/Rpc.make("notifica
   }
 }) {}
 // =============================================================================
+// Skills
+// =============================================================================
+/**
+ * Schema for a file of an Agent Skill served under the MCP Skills extension
+ * (SEP-2640), with the digest and size of its content.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.1.1
+ */
+export class SkillResource extends /*#__PURE__*/Schema.Class("@effect/ai/McpSchema/SkillResource")({
+  /**
+   * The resource URI of the file.
+   */
+  uri: Schema.String,
+  /**
+   * The SHA-256 digest of the file's bytes, as `sha256:` followed by 64
+   * lowercase hexadecimal digits.
+   */
+  digest: /*#__PURE__*/Schema.String.check(/*#__PURE__*/Schema.isPattern(/^sha256:[0-9a-f]{64}$/)),
+  /**
+   * The length of the file's bytes.
+   */
+  size: Schema.Natural
+}) {}
+/**
+ * Schema for the YAML frontmatter of an Agent Skill's `SKILL.md`, as the
+ * Agent Skills specification defines it (https://agentskills.io/specification).
+ *
+ * **Details**
+ *
+ * Fields the specification does not define are kept unchanged. `McpServer`
+ * checks a skill's frontmatter against this schema before serving it. The
+ * frontmatter of a {@link Skill} received from a server is only checked for
+ * the `name` and `description` that the Skills extension requires; decode it
+ * with this schema for the other fields.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.1.1
+ */
+export const SkillFrontmatter = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
+  /**
+   * 1 to 64 lowercase letters, digits and hyphens, with no leading, trailing
+   * or consecutive hyphen. It names the directory holding `SKILL.md`.
+   */
+  name: /*#__PURE__*/Schema.String.check(/*#__PURE__*/Schema.isMaxLength(64), /*#__PURE__*/Schema.isPattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
+  /**
+   * What the skill does and when to use it, in 1 to 1024 characters.
+   */
+  description: /*#__PURE__*/Schema.String.check(/*#__PURE__*/Schema.isNonEmpty(), /*#__PURE__*/Schema.isMaxLength(1024)),
+  /**
+   * The skill's license, or the name of a bundled license file.
+   */
+  license: /*#__PURE__*/Schema.optionalKey(Schema.String),
+  /**
+   * Environment requirements, in 1 to 500 characters.
+   */
+  compatibility: /*#__PURE__*/Schema.optionalKey(/*#__PURE__*/Schema.String.check(/*#__PURE__*/Schema.isNonEmpty(), /*#__PURE__*/Schema.isMaxLength(500))),
+  /**
+   * Additional properties not defined by the specification.
+   */
+  metadata: /*#__PURE__*/Schema.optionalKey(/*#__PURE__*/Schema.Record(Schema.String, Schema.String)),
+  /**
+   * Space-separated tools the skill asks to run without approval. Hosts must
+   * ignore it for a skill served over MCP unless the user approved the grant.
+   */
+  "allowed-tools": /*#__PURE__*/Schema.optionalKey(Schema.String)
+}), [UnknownObject]);
+/**
+ * Schema for an Agent Skill served under the MCP Skills extension (SEP-2640),
+ * as `skills/list` and `skills/get` describe it.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.1.1
+ */
+export class Skill extends /*#__PURE__*/Schema.Class("@effect/ai/McpSchema/Skill")({
+  /**
+   * The resource URI of the skill's `SKILL.md`.
+   */
+  uri: Schema.String,
+  /**
+   * The YAML frontmatter of the skill's `SKILL.md`, as a JSON object, with
+   * every field the author wrote. See {@link SkillFrontmatter} for the fields
+   * the Agent Skills specification defines.
+   */
+  frontmatter: /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
+    name: Schema.String,
+    description: Schema.String
+  }), [UnknownObject]),
+  /**
+   * Every file of the skill, `SKILL.md` included, or `"dynamic"` when the
+   * server generates the skill's content and publishes no digests.
+   */
+  resources: /*#__PURE__*/Schema.Union([/*#__PURE__*/Schema.Array(SkillResource), /*#__PURE__*/Schema.Literal("dynamic")]),
+  _meta: /*#__PURE__*/optional(UnknownObject)
+}) {}
+// =============================================================================
 // Prompts
 // =============================================================================
 /**
@@ -1151,7 +1320,7 @@ export class Prompt extends /*#__PURE__*/Schema.Class("@effect/ai/McpSchema/Prom
    * Icons that clients can display for this prompt.
    */
   icons: /*#__PURE__*/optional(/*#__PURE__*/Schema.Array(Icon)),
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 }) {}
 /**
  * Represents text content provided to or from an LLM.
@@ -1170,7 +1339,7 @@ export class TextContent extends /*#__PURE__*/Schema.Opaque()(/*#__PURE__*/Schem
    * Optional annotations for the client.
    */
   annotations: /*#__PURE__*/optional(Annotations),
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 })) {}
 /**
  * Represents image content provided to or from an LLM.
@@ -1194,7 +1363,7 @@ export class ImageContent extends /*#__PURE__*/Schema.Opaque()(/*#__PURE__*/Sche
    * Optional annotations for the client.
    */
   annotations: /*#__PURE__*/optional(Annotations),
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 })) {}
 /**
  * Represents audio content provided to or from an LLM.
@@ -1218,7 +1387,7 @@ export class AudioContent extends /*#__PURE__*/Schema.Opaque()(/*#__PURE__*/Sche
    * Optional annotations for the client.
    */
   annotations: /*#__PURE__*/optional(Annotations),
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 })) {}
 /**
  * Represents resource contents embedded into a prompt or tool call result.
@@ -1239,7 +1408,7 @@ export class EmbeddedResource extends /*#__PURE__*/Schema.Opaque()(/*#__PURE__*/
    * Optional annotations for the client.
    */
   annotations: /*#__PURE__*/optional(Annotations),
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 })) {}
 /**
  * Represents a readable resource included in a prompt or tool call result.
@@ -1431,9 +1600,9 @@ export class ToolAnnotations extends /*#__PURE__*/Schema.Opaque()(/*#__PURE__*/S
  */
 export const ToolJson = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
   type: /*#__PURE__*/Schema.Literal("object"),
-  properties: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, Schema.JsonObject)),
+  properties: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, /*#__PURE__*/Schema.Union([UnknownObject, Schema.Boolean]))),
   required: /*#__PURE__*/optional(/*#__PURE__*/Schema.Array(Schema.String))
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * Schema for {@link ToolOutputJson}.
  *
@@ -1441,7 +1610,7 @@ export const ToolJson = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.S
  * @category tools
  * @since 4.0.0
  */
-export const ToolOutputJson = Schema.JsonObject;
+export const ToolOutputJson = UnknownObject;
 /**
  * Schema for the definition of a tool the client can call.
  *
@@ -1483,7 +1652,7 @@ export class Tool extends /*#__PURE__*/Schema.Class("@effect/ai/McpSchema/Tool")
    * This parameter name is reserved by MCP to allow clients and servers to
    * attach additional metadata to resources.
    */
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 }) {}
 /**
  * Schema for the server's response to a tools/list request from the client.
@@ -1530,7 +1699,7 @@ export class CallToolResult extends /*#__PURE__*/Schema.Class("@effect/ai/McpSch
   /**
    * An optional JSON value containing the structured result of the tool call.
    */
-  structuredContent: /*#__PURE__*/optional(Schema.Json),
+  structuredContent: /*#__PURE__*/optional(Schema.Unknown),
   /**
    * Whether the tool call ended in an error.
    *
@@ -1667,7 +1836,7 @@ export class ToolUseContent extends /*#__PURE__*/Schema.Class("@effect/ai/McpSch
    * Arguments supplied to the tool.
    */
   input: /*#__PURE__*/Schema.Record(Schema.String, Schema.Unknown),
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 }) {}
 /**
  * Schema for the result of a tool use supplied in a sampling message.
@@ -1689,12 +1858,12 @@ export class ToolResultContent extends /*#__PURE__*/Schema.Class("@effect/ai/Mcp
   /**
    * Optional structured result returned by the tool.
    */
-  structuredContent: /*#__PURE__*/optional(Schema.Json),
+  structuredContent: /*#__PURE__*/optional(Schema.Unknown),
   /**
    * Whether tool execution ended in an error.
    */
   isError: /*#__PURE__*/optional(Schema.Boolean),
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 }) {}
 /**
  * Schema for content blocks accepted in MCP sampling messages.
@@ -1714,7 +1883,7 @@ export const SamplingMessageContentBlock = /*#__PURE__*/Schema.Union([TextConten
 export class SamplingMessage extends /*#__PURE__*/Schema.Opaque()(/*#__PURE__*/Schema.Struct({
   role: Role,
   content: /*#__PURE__*/Schema.Union([SamplingMessageContentBlock, /*#__PURE__*/Schema.Array(SamplingMessageContentBlock)]),
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 })) {}
 /**
  * Schema for controlling tool selection during MCP sampling.
@@ -1836,7 +2005,7 @@ export class ModelPreferences extends /*#__PURE__*/Schema.Class("@effect/ai/McpS
 export class CreateMessageResult extends /*#__PURE__*/Schema.Class("@effect/ai/McpSchema/CreateMessageResult")({
   role: Role,
   content: /*#__PURE__*/Schema.Union([SamplingMessageContentBlock, /*#__PURE__*/Schema.Array(SamplingMessageContentBlock)]),
-  _meta: /*#__PURE__*/optional(Schema.JsonObject),
+  _meta: /*#__PURE__*/optional(UnknownObject),
   /**
    * The name of the model that generated the message.
    */
@@ -2041,7 +2210,7 @@ export class Root extends /*#__PURE__*/Schema.Class("@effect/ai/McpSchema/Root")
   /**
    * Optional additional metadata associated with the root.
    */
-  _meta: /*#__PURE__*/optional(Schema.JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 }) {}
 /**
  * Represents a client response containing the roots available to the server.

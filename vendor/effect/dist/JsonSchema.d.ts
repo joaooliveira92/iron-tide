@@ -350,9 +350,15 @@ export declare function fromSchemaOpenApi3_1(js: JsonSchema): Document<"draft-20
  *
  * **Gotchas**
  *
- * OpenAPI 3.0 `nullable` is applied only when the same Schema Object has an
- * explicit string `type`; other constraints such as `enum` are left
- * unchanged. Unknown keywords, vendor extensions, and annotation values are
+ * OpenAPI 3.0 specifies that `nullable` applies only when the same Schema
+ * Object has an explicit string `type`. For compatibility with tooling that
+ * uses a single-member `allOf` for nullable references, this converter also
+ * rewrites `{ nullable: true, allOf: [schema] }` to
+ * `{ anyOf: [schema, { type: "null" }] }` when there is no string `type` or
+ * existing `anyOf`. Sibling constraints such as `enum` remain unchanged and
+ * may still reject null.
+ *
+ * Unknown keywords, vendor extensions, and annotation values are
  * copied opaquely unless their name would become active in Draft 2020-12 and
  * change meaning, in which case conversion throws. Siblings of a valid
  * OpenAPI 3.0 `$ref` are ignored.

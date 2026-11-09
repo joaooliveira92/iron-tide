@@ -79,6 +79,21 @@ export declare class MaxBufferSizeExceeded extends MaxBufferSizeExceeded_base<{
 }> {
     get message(): string;
 }
+declare const NdjsonDecodeError_base: new <A extends Record<string, any> = {}>(args: import("../Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => import("../Cause.ts").YieldableError & {
+    readonly _tag: "NdjsonDecodeError";
+} & Readonly<A>;
+/**
+ * Error raised when a non-empty NDJSON frame is not valid JSON.
+ * The `cause` field preserves the original JSON parsing error.
+ *
+ * @stability unstable
+ * @category errors
+ * @since 4.0.0
+ */
+export declare class NdjsonDecodeError extends NdjsonDecodeError_base<{
+    readonly cause: unknown;
+}> {
+}
 /**
  * Options shared by streaming RPC serialization formats.
  *
@@ -124,16 +139,27 @@ export declare const ndjson: RpcSerialization["Service"];
  * Creates a JSON-RPC 2.0 serialization for RPC protocol messages without
  * additional message framing.
  *
+ * **Details**
+ *
+ * Set `controlMessages` to `false` for plain JSON-RPC peers, so
+ * `@effect/rpc/*` methods are not decoded as RPC control messages.
+ *
  * @stability unstable
  * @category serialization
  * @since 4.0.0
  */
 export declare const jsonRpc: (options?: {
     readonly contentType?: string | undefined;
+    readonly controlMessages?: boolean | undefined;
 }) => RpcSerialization["Service"];
 /**
  * Creates a newline-delimited JSON-RPC 2.0 serialization for RPC protocol
  * messages.
+ *
+ * **Details**
+ *
+ * Set `controlMessages` to `false` for plain JSON-RPC peers, so
+ * `@effect/rpc/*` methods are not decoded as RPC control messages.
  *
  * @stability unstable
  * @category serialization
@@ -142,6 +168,7 @@ export declare const jsonRpc: (options?: {
 export declare const ndJsonRpc: (options?: {
     readonly contentType?: string | undefined;
     readonly maxBufferSize?: number | "unbounded" | undefined;
+    readonly controlMessages?: boolean | undefined;
 }) => RpcSerialization["Service"];
 /**
  * RPC serialization layer that uses JSON for serialization.
@@ -188,6 +215,7 @@ export declare const layerNdjsonWith: (options?: StreamOptions) => Layer.Layer<R
  */
 export declare const layerJsonRpc: (options?: {
     readonly contentType?: string | undefined;
+    readonly controlMessages?: boolean | undefined;
 }) => Layer.Layer<RpcSerialization>;
 /**
  * RPC serialization layer that uses newline-delimited JSON-RPC for
@@ -200,6 +228,7 @@ export declare const layerJsonRpc: (options?: {
 export declare const layerNdJsonRpc: (options?: {
     readonly contentType?: string | undefined;
     readonly maxBufferSize?: number | "unbounded" | undefined;
+    readonly controlMessages?: boolean | undefined;
 }) => Layer.Layer<RpcSerialization>;
 /**
  * RPC serialization layer that uses SchemaBinary with fingerprinted RPC

@@ -346,6 +346,11 @@ export declare const reverse: <S extends Chunk<any>>(self: S) => Chunk.With<S, C
  * Gets the value at an index in a `Chunk` safely, returning `None` when the index is
  * out of bounds.
  *
+ * **Details**
+ *
+ * The index is floored to an integer. `NaN` and infinite indexes are out of
+ * bounds. This never throws.
+ *
  * **Example** (Accessing elements safely)
  *
  * ```ts import.meta.vitest
@@ -370,6 +375,11 @@ export declare const get: {
      * Gets the value at an index in a `Chunk` safely, returning `None` when the index is
      * out of bounds.
      *
+     * **Details**
+     *
+     * The index is floored to an integer. `NaN` and infinite indexes are out of
+     * bounds. This never throws.
+     *
      * **Example** (Accessing elements safely)
      *
      * ```ts import.meta.vitest
@@ -393,6 +403,11 @@ export declare const get: {
     /**
      * Gets the value at an index in a `Chunk` safely, returning `None` when the index is
      * out of bounds.
+     *
+     * **Details**
+     *
+     * The index is floored to an integer. `NaN` and infinite indexes are out of
+     * bounds. This never throws.
      *
      * **Example** (Accessing elements safely)
      *
@@ -486,7 +501,8 @@ export declare const fromNonEmptyArrayUnsafe: <A>(self: NonEmptyReadonlyArray<A>
  *
  * **Gotchas**
  *
- * Throws if the index is out of bounds.
+ * Throws if the floored index is out of bounds, including for `NaN` and
+ * infinite indexes.
  *
  * **Example** (Accessing elements unsafely)
  *
@@ -517,7 +533,8 @@ export declare const getUnsafe: {
      *
      * **Gotchas**
      *
-     * Throws if the index is out of bounds.
+     * Throws if the floored index is out of bounds, including for `NaN` and
+     * infinite indexes.
      *
      * **Example** (Accessing elements unsafely)
      *
@@ -548,7 +565,8 @@ export declare const getUnsafe: {
      *
      * **Gotchas**
      *
-     * Throws if the index is out of bounds.
+     * Throws if the floored index is out of bounds, including for `NaN` and
+     * infinite indexes.
      *
      * **Example** (Accessing elements unsafely)
      *
@@ -3352,7 +3370,12 @@ export declare const takeWhile: {
     <A>(self: Chunk<A>, predicate: Predicate<A>): Chunk<A>;
 };
 /**
- * Creates a Chunks of unique values, in order, from all given Chunks.
+ * Computes the union of two chunks using Effect equality.
+ *
+ * **Gotchas**
+ *
+ * Each input must already be deduplicated. Use {@link dedupe} to remove
+ * duplicates from an input first.
  *
  * **Example** (Unioning chunks)
  *
@@ -3362,11 +3385,6 @@ export declare const takeWhile: {
  * const chunk1 = Chunk.make(1, 2, 3)
  * const chunk2 = Chunk.make(3, 4, 5)
  * Chunk.toArray(Chunk.union(chunk1, chunk2)) // => [1, 2, 3, 4, 5]
- *
- * // Handles duplicates within the same chunk
- * const withDupes1 = Chunk.make(1, 1, 2)
- * const withDupes2 = Chunk.make(2, 3, 3)
- * Chunk.toArray(Chunk.union(withDupes1, withDupes2)) // => [1, 2, 3]
  * ```
  *
  * @stability stable
@@ -3375,7 +3393,12 @@ export declare const takeWhile: {
  */
 export declare const union: {
     /**
-     * Creates a Chunks of unique values, in order, from all given Chunks.
+     * Computes the union of two chunks using Effect equality.
+     *
+     * **Gotchas**
+     *
+     * Each input must already be deduplicated. Use {@link dedupe} to remove
+     * duplicates from an input first.
      *
      * **Example** (Unioning chunks)
      *
@@ -3385,11 +3408,6 @@ export declare const union: {
      * const chunk1 = Chunk.make(1, 2, 3)
      * const chunk2 = Chunk.make(3, 4, 5)
      * Chunk.toArray(Chunk.union(chunk1, chunk2)) // => [1, 2, 3, 4, 5]
-     *
-     * // Handles duplicates within the same chunk
-     * const withDupes1 = Chunk.make(1, 1, 2)
-     * const withDupes2 = Chunk.make(2, 3, 3)
-     * Chunk.toArray(Chunk.union(withDupes1, withDupes2)) // => [1, 2, 3]
      * ```
      *
      * @stability stable
@@ -3398,7 +3416,12 @@ export declare const union: {
      */
     <A>(that: Chunk<A>): <B>(self: Chunk<B>) => Chunk<A | B>;
     /**
-     * Creates a Chunks of unique values, in order, from all given Chunks.
+     * Computes the union of two chunks using Effect equality.
+     *
+     * **Gotchas**
+     *
+     * Each input must already be deduplicated. Use {@link dedupe} to remove
+     * duplicates from an input first.
      *
      * **Example** (Unioning chunks)
      *
@@ -3408,11 +3431,6 @@ export declare const union: {
      * const chunk1 = Chunk.make(1, 2, 3)
      * const chunk2 = Chunk.make(3, 4, 5)
      * Chunk.toArray(Chunk.union(chunk1, chunk2)) // => [1, 2, 3, 4, 5]
-     *
-     * // Handles duplicates within the same chunk
-     * const withDupes1 = Chunk.make(1, 1, 2)
-     * const withDupes2 = Chunk.make(2, 3, 3)
-     * Chunk.toArray(Chunk.union(withDupes1, withDupes2)) // => [1, 2, 3]
      * ```
      *
      * @stability stable

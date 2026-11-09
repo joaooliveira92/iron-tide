@@ -535,7 +535,22 @@ export interface Context<in Services> extends Equal.Equal, Pipeable, Inspectable
  * Use when constructing a low-level `Context` from a trusted map whose lifecycle
  * you control.
  *
+ * **Details**
+ *
+ * `options.maxDepth` sets how many `add` calls are kept as overlays before the
+ * context is rebased into a flat map (default `8`). Lower values make lookups
+ * cheaper, higher values make additions to a large base cheaper. Invalid
+ * values fall back to the default.
+ *
+ * Contexts derived with `add`, `pick`, `omit`, and `merge` keep the setting
+ * (`merge` from its first non-empty argument). `make`, `empty`, and `mergeAll`
+ * use the default. Layers are combined with `mergeAll`, so apply it to the
+ * final context rather than inside a layer.
+ *
  * **Gotchas**
+ *
+ * Excessively large `maxDepth` values can cause stack overflow when overlays
+ * are materialized or rebased. Choose a modest value.
  *
  * The provided map is retained without copying and must not be mutated after
  * construction. Prefer `empty`, `make`, `add`, or `merge` for normal Context
@@ -559,7 +574,9 @@ export interface Context<in Services> extends Equal.Equal, Pipeable, Inspectable
  * @category constructors
  * @since 4.0.0
  */
-export declare const makeUnsafe: <Services = never>(mapUnsafe: ReadonlyMap<string, any>) => Context<Services>;
+export declare const makeUnsafe: <Services = never>(mapUnsafe: ReadonlyMap<string, any>, options?: {
+    readonly maxDepth?: number;
+}) => Context<Services>;
 /**
  * Checks whether the provided argument is a `Context`.
  *

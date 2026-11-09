@@ -1,15 +1,3 @@
-/**
- * Serves static files for Effect HTTP applications.
- *
- * `HttpStaticServer` turns request paths into file responses under a configured
- * root directory. It can be used as an application value or mounted onto an
- * `HttpRouter`, and it handles index files, optional single-page application
- * fallback, MIME type headers, cache-control headers, byte ranges, and
- * conditional `304 Not Modified` responses.
- *
- * @stability unstable
- * @since 4.0.0
- */
 import * as Effect from "../Effect.ts";
 import * as FileSystem from "../FileSystem.ts";
 import * as Layer from "../Layer.ts";

@@ -31,6 +31,7 @@ export interface CommandInternal<Name extends string, Input, E, R, ContextInput>
     readonly parseContext: (input: ParsedTokens) => Effect.Effect<ContextInput, CliError.CliError, Environment>;
     readonly handle: (input: Input, commandPath: ReadonlyArray<string>) => Effect.Effect<void, E | CliError.CliError, R | Environment>;
     readonly buildHelpDoc: (commandPath: ReadonlyArray<string>) => HelpDoc;
+    readonly resolveExamples: (commandPath: ReadonlyArray<string>) => ReadonlyArray<Command.Example>;
 }
 export declare const TypeId: "~effect/cli/Command";
 /**
@@ -53,7 +54,7 @@ export declare const makeCommand: <const Name extends string, Input, E, R, Conte
     readonly shortDescription?: string | undefined;
     readonly alias?: string | undefined;
     readonly unlisted?: boolean | undefined;
-    readonly examples?: ReadonlyArray<Command.Example> | undefined;
+    readonly resolveExamples?: ((commandPath: ReadonlyArray<string>) => ReadonlyArray<Command.Example>) | undefined;
     readonly subcommands?: ReadonlyArray<SubcommandGroup> | undefined;
     readonly parse?: ((input: ParsedTokens) => Effect.Effect<Input, CliError.CliError, Environment>) | undefined;
     readonly parseContext?: ((input: ParsedTokens) => Effect.Effect<ContextInput, CliError.CliError, Environment>) | undefined;

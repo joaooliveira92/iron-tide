@@ -34,6 +34,21 @@ export interface RpcServer<A extends Rpc.Any> {
  * handlers for a group and sending decoded server responses through
  * `onFromServer`.
  *
+ * **Details**
+ *
+ * If writing a stream `Chunk` fails with anything other than an interruption,
+ * the request fails with that cause. `onFromServer` is assumed to have already
+ * answered the client and reported it, so nothing else is sent or reported.
+ *
+ * A request with `isNotification` set runs like any other, but no `Exit`,
+ * `Chunk` or `Defect` is sent for it. Its failures are still reported.
+ *
+ * A request with `discard` set is acknowledged with a successful `Exit` once
+ * its handler starts, after the concurrency permit is taken and the
+ * middleware has run. Nothing else is sent for it after that, and its
+ * failures are only reported. A failure before the acknowledgement is sent as
+ * a failed `Exit` for that request.
+ *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
@@ -53,6 +68,23 @@ export declare const makeNoSerialization: <Rpcs extends Rpc.Any>(group: RpcGroup
  * requests, invoking handlers, encoding responses, and managing in-flight
  * request lifetime.
  *
+ * **Details**
+ *
+ * The server consumes `Protocol.disconnects` to interrupt a disconnected
+ * client's requests, so use the `onDisconnect` option to observe disconnects
+ * instead of taking from that queue.
+ *
+ * `onDisconnect` is called for each disconnect reported by the `Protocol`,
+ * after the server has requested interruption of that client's in-flight
+ * requests. It does not wait for those requests to finish. It is not called
+ * when a client ends its input normally, or for clients still connected when
+ * the server stops.
+ *
+ * Each callback runs in its own fiber, so a slow callback does not delay
+ * cleanup for other clients, and callbacks may run concurrently. Pending
+ * callbacks are interrupted when the server stops. Failures are ignored and
+ * logged at `References.UnhandledLogLevel`.
+ *
  * @stability unstable
  * @category running
  * @since 4.0.0
@@ -63,6 +95,7 @@ export declare const make: <Rpcs extends Rpc.Any>(group: RpcGroup.RpcGroup<Rpcs>
     readonly spanAttributes?: Record<string, unknown> | undefined;
     readonly concurrency?: number | "unbounded" | undefined;
     readonly disableFatalDefects?: boolean | undefined;
+    readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined;
 } | undefined) => Effect.Effect<never, never, Protocol | Rpc.ToHandler<Rpcs> | Rpc.Middleware<Rpcs> | Rpc.ServicesServer<Rpcs>>;
 /**
  * Provides a scoped layer that starts an RPC server for a group using the
@@ -78,6 +111,7 @@ export declare const layer: <Rpcs extends Rpc.Any>(group: RpcGroup.RpcGroup<Rpcs
     readonly spanAttributes?: Record<string, unknown> | undefined;
     readonly concurrency?: number | "unbounded" | undefined;
     readonly disableFatalDefects?: boolean | undefined;
+    readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined;
 }) => Layer.Layer<never, never, Protocol | Rpc.ToHandler<Rpcs> | Rpc.Middleware<Rpcs> | Rpc.ServicesServer<Rpcs>>;
 /**
  * Creates a RPC server that registers a HTTP route with a `HttpRouter`.
@@ -100,6 +134,7 @@ export declare const layerHttp: <Rpcs extends Rpc.Any>(options: {
     readonly spanAttributes?: Record<string, unknown> | undefined;
     readonly concurrency?: number | "unbounded" | undefined;
     readonly disableFatalDefects?: boolean | undefined;
+    readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined;
     readonly streamBufferSize?: number | "unbounded" | undefined;
 }) => Layer.Layer<never, never, RpcSerialization.RpcSerialization | HttpRouter.HttpRouter | Rpc.ToHandler<Rpcs> | Rpc.Middleware<Rpcs> | Rpc.ServicesServer<Rpcs>>;
 declare const Protocol_base: Context.ServiceClass<Protocol, "effect/rpc/RpcServer/Protocol", {
@@ -292,6 +327,7 @@ export declare const toHttpEffect: <Rpcs extends Rpc.Any>(group: RpcGroup.RpcGro
     readonly spanPrefix?: string | undefined;
     readonly spanAttributes?: Record<string, unknown> | undefined;
     readonly disableFatalDefects?: boolean | undefined;
+    readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined;
     readonly streamBufferSize?: number | "unbounded" | undefined;
 } | undefined) => Effect.Effect<Effect.Effect<HttpServerResponse.HttpServerResponse, never, Scope.Scope | HttpServerRequest.HttpServerRequest>, never, Scope.Scope | RpcSerialization.RpcSerialization | Rpc.ToHandler<Rpcs> | Rpc.Middleware<Rpcs> | Rpc.ServicesServer<Rpcs>>;
 /**
@@ -307,6 +343,7 @@ export declare const toHttpEffectWebsocket: <Rpcs extends Rpc.Any>(group: RpcGro
     readonly spanPrefix?: string | undefined;
     readonly spanAttributes?: Record<string, unknown> | undefined;
     readonly disableFatalDefects?: boolean | undefined;
+    readonly onDisconnect?: ((clientId: number) => Effect.Effect<void>) | undefined;
 } | undefined) => Effect.Effect<Effect.Effect<HttpServerResponse.HttpServerResponse, never, Scope.Scope | HttpServerRequest.HttpServerRequest>, never, Scope.Scope | RpcSerialization.RpcSerialization | Rpc.ToHandler<Rpcs> | Rpc.Middleware<Rpcs> | Rpc.ServicesServer<Rpcs>>;
 /**
  * Creates a server `Protocol` that reads RPC messages from `Stdio.stdin` and

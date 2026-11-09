@@ -12,8 +12,10 @@
  * @since 4.0.0
  */
 import * as Arr from "../Array.js";
+import * as ByteSize from "../ByteSize.js";
 import * as Cause from "../Cause.js";
 import * as Effect from "../Effect.js";
+import * as Ndjson from "../encoding/Ndjson.js";
 import * as Sse from "../encoding/Sse.js";
 import { identity } from "../Function.js";
 import * as HttpBody from "../http/HttpBody.js";
@@ -21,6 +23,7 @@ import * as HttpClient from "../http/HttpClient.js";
 import * as HttpClientError from "../http/HttpClientError.js";
 import * as HttpClientRequest from "../http/HttpClientRequest.js";
 import * as HttpMethod from "../http/HttpMethod.js";
+import * as internalUrlParams from "../http/internal/urlParams.js";
 import * as UrlParams from "../http/UrlParams.js";
 import * as InternalRecord from "../internal/record.js";
 import * as Predicate from "../Predicate.js";
@@ -35,6 +38,56 @@ import * as HttpApiEndpoint from "./HttpApiEndpoint.js";
 import * as HttpApiSchema from "./HttpApiSchema.js";
 import * as MediaType from "./internal/mediaType.js";
 import * as HttpApiPath from "./internal/path.js";
+/**
+ * Runtime brand key used to mark `Upgraded` values.
+ *
+ * @stability unstable
+ * @category type IDs
+ * @since 4.1.0
+ */
+export const UpgradedTypeId = "~effect/http-api/HttpApiClient/Upgraded";
+/**
+ * Returns `true` when a client method result is an upgraded connection.
+ *
+ * **Details**
+ *
+ * An endpoint may declare `HttpApiSchema.Upgrade` alongside ordinary success
+ * responses, because a server can decline an upgrade (RFC 9110 §7.8). The
+ * client method then returns either an `Upgraded` value or the decoded
+ * ordinary success, depending on the response status. This predicate narrows
+ * that union.
+ *
+ * **Example** (Handling a declined upgrade)
+ *
+ * ```ts
+ * import { Effect, Schema } from "effect"
+ * import { HttpApi, HttpApiClient, HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "effect/http-api"
+ *
+ * const Api = HttpApi.make("docker").add(
+ *   HttpApiGroup.make("exec").add(
+ *     HttpApiEndpoint.post("start", "/exec/:id/start", {
+ *       params: { id: Schema.String },
+ *       payload: Schema.Struct({ Detach: Schema.Boolean }),
+ *       success: [HttpApiSchema.Upgrade({ protocol: "tcp" }), HttpApiSchema.Empty(200)]
+ *     })
+ *   )
+ * )
+ *
+ * const program = Effect.gen(function*() {
+ *   const client = yield* HttpApiClient.make(Api)
+ *   const result = yield* client.exec.start({ params: { id: "abc" }, payload: { Detach: false } })
+ *   if (HttpApiClient.isUpgraded(result)) {
+ *     const writer = yield* result.socket.writer
+ *     yield* writer.write("ls\n")
+ *   }
+ * })
+ * ```
+ *
+ * @stability unstable
+ * @category guards
+ * @since 4.1.0
+ */
+export const isUpgraded = u => Predicate.hasProperty(u, UpgradedTypeId);
 /**
  * @internal
  */
@@ -67,47 +120,26 @@ export const makeClient = (api, options) => Effect.gen(function* () {
       const {
         group,
         endpoint,
-        errors,
-        successes,
         mergedAnnotations
       } = onEndpointOptions;
       const parseOptions = HttpApi.getSlotParseOptions(mergedAnnotations);
       const makeUrl = compilePath(endpoint.path, endpoint.params);
-      const decodeMap = {
-        orElse: statusOrElse
-      };
-      const errorAlternatives = new Map();
-      for (const [status, schemas] of errors.entries()) {
-        const grouped = groupSchemasByContentType(schemas);
-        for (const [contentType, schemas] of grouped.entries()) {
-          addResponseAlternative(errorAlternatives, status, contentType, schemasToResponse(schemas, parseOptions.error, parseOptions.headers));
-        }
-      }
-      for (const [status, alternatives] of errorAlternatives.entries()) {
-        const decode = makeResponseDecoder(alternatives);
-        decodeMap[status] = response => Effect.flatMap(Effect.catchCause(decode(response), cause => Effect.failCause(Cause.combine(Cause.fail(new HttpClientError.HttpClientError({
-          reason: new HttpClientError.StatusCodeError({
-            request: response.request,
-            response
-          })
-        })), cause))), Effect.fail);
-      }
-      const successAlternatives = new Map();
-      for (const [status, schemas] of successes.entries()) {
-        const grouped = groupSchemasByContentType(schemas);
-        for (const [contentType, schemas] of grouped.entries()) {
-          addResponseAlternative(successAlternatives, status, contentType, schemasToResponse(schemas, parseOptions.success, parseOptions.headers));
-        }
-      }
-      for (const streamSuccess of getStreamSuccessSchemas(endpoint)) {
-        const streamSchema = isWithHeadersStreamSuccess(streamSuccess) ? streamSuccess.schema : streamSuccess;
-        addResponseAlternative(successAlternatives, HttpApiSchema.getStatusSuccessSchema(streamSuccess), streamSchema.contentType, streamToResponse(streamSuccess, parseOptions.success, parseOptions.headers));
-      }
-      for (const [status, alternatives] of successAlternatives.entries()) {
-        decodeMap[status] = makeResponseDecoder(alternatives);
-      }
+      const upgrade = getUpgradeSuccessSchema(endpoint);
+      const decodeEndpointResponse = makeEndpointDecoder(onEndpointOptions);
       const encodeParams = UndefinedOr.map(endpoint.params, schema => Schema.encodeUnknownEffect(schema, parseOptions.params));
-      const payloadSchemas = HttpApiEndpoint.getPayloadSchemas(endpoint);
+      const payloadSchemas = [];
+      let streamPayload;
+      for (const schema of HttpApiEndpoint.getPayloadSchemas(endpoint)) {
+        if (HttpApiSchema.isStreamUint8Array(schema) || HttpApiSchema.isStreamNdjson(schema)) {
+          streamPayload = schema;
+        } else {
+          payloadSchemas.push(schema);
+        }
+      }
+      const streamPayloadEncoder = UndefinedOr.map(streamPayload, schema => ({
+        contentType: schema.contentType,
+        encode: makeStreamPayloadEncoder(schema, parseOptions.payload)
+      }));
       const encodePayload = Arr.isArrayNonEmpty(payloadSchemas) ? Schema.encodeUnknownEffect(HttpMethod.hasBody(endpoint.method) ? getEncodePayloadSchema(payloadSchemas, endpoint.method) : Schema.Union(payloadSchemas), parseOptions.payload) : undefined;
       const encodeHeaders = UndefinedOr.map(endpoint.headers, schema => Schema.encodeUnknownEffect(schema, parseOptions.headers));
       const encodeQuery = UndefinedOr.map(endpoint.query, schema => Schema.encodeUnknownEffect(schema, parseOptions.query));
@@ -121,7 +153,10 @@ export const makeClient = (api, options) => Effect.gen(function* () {
             httpRequest = HttpClientRequest.setUrl(httpRequest, makeUrl(params));
           }
           // payload
-          if (encodePayload !== undefined) {
+          if (streamPayloadEncoder !== undefined && Stream.isStream(request.payload)) {
+            const context = yield* Effect.context();
+            httpRequest = HttpClientRequest.setBody(httpRequest, HttpBody.stream(Stream.provideContext(streamPayloadEncoder.encode(request.payload), context), streamPayloadEncoder.contentType));
+          } else if (encodePayload !== undefined) {
             if (HttpMethod.hasBody(endpoint.method)) {
               if (request.payload instanceof FormData) {
                 httpRequest = HttpClientRequest.bodyFormData(httpRequest, request.payload);
@@ -133,6 +168,10 @@ export const makeClient = (api, options) => Effect.gen(function* () {
               const urlParams = yield* encodePayload(request.payload);
               httpRequest = HttpClientRequest.appendUrlParams(httpRequest, urlParams);
             }
+          } else if (streamPayloadEncoder !== undefined) {
+            return yield* new Schema.SchemaError(new SchemaIssue.InvalidValue({
+              message: "Expected a Stream payload"
+            }, request.payload));
           }
           // headers
           if (encodeHeaders !== undefined) {
@@ -145,11 +184,14 @@ export const makeClient = (api, options) => Effect.gen(function* () {
             httpRequest = HttpClientRequest.appendUrlParams(httpRequest, query);
           }
         }
+        if (upgrade !== undefined) {
+          httpRequest = HttpClientRequest.upgrade(httpRequest, upgrade.protocol);
+        }
         const response = yield* executeMiddleware(group, endpoint, httpRequest, middlewareKeys, middlewareKeys.length - 1);
         if (request?.responseMode === "response-only") {
           return response;
         }
-        const decoded = (decodeMap[response.status] ?? decodeMap.orElse)(response, request?.sseOptions);
+        const decoded = decodeEndpointResponse(response, request?.sseOptions);
         const value = yield* options.transformResponse === undefined ? decoded : options.transformResponse(decoded);
         return request?.responseMode === "decoded-and-response" ? [value, response] : value;
       });
@@ -248,6 +290,79 @@ export const endpoint = (api, options) => {
   }).pipe(Effect.map(() => client));
 };
 /**
+ * Builds a decoder for raw responses of one endpoint in one API group, using
+ * the same success and error decoding as a generated client method in
+ * `"decoded-only"` mode.
+ *
+ * **When to use**
+ *
+ * Use with `responseMode: "response-only"` when the response head and body
+ * arrive at different times, such as long polling, and the body should be
+ * decoded later.
+ *
+ * **Details**
+ *
+ * The response does not need to come from a generated client. Declared error
+ * responses fail with the decoded error, and undeclared statuses fail with an
+ * `HttpClientError` whose reason is a `DecodeError`. Parse options are resolved
+ * from the API, group and endpoint annotations. The body is only read when the
+ * returned effect runs, so it must run inside the scope that owns the response.
+ * Middleware and `transformResponse` are not applied.
+ *
+ * Building the decoder walks the API declaration, so build it once per
+ * endpoint and reuse it.
+ *
+ * **Example** (Decoding a response body after the head arrives)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect, Schema } from "effect"
+ * import { HttpApi, HttpApiClient, HttpApiEndpoint, HttpApiGroup } from "effect/http-api"
+ *
+ * const Api = HttpApi.make("Api").add(
+ *   HttpApiGroup.make("containers").add(
+ *     HttpApiEndpoint.post("wait", "/containers/:id/wait", {
+ *       params: { id: Schema.String },
+ *       success: Schema.Struct({ StatusCode: Schema.Number })
+ *     })
+ *   )
+ * )
+ *
+ * const decodeWait = HttpApiClient.decodeResponse(Api, {
+ *   group: "containers",
+ *   endpoint: "wait"
+ * })
+ *
+ * const program = Effect.gen(function*() {
+ *   const client = yield* HttpApiClient.make(Api)
+ *   // Succeeds as soon as the response head arrives
+ *   const response = yield* client.containers.wait({
+ *     params: { id: "my-container" },
+ *     responseMode: "response-only"
+ *   })
+ *   // Waits for the body, then decodes it with the endpoint schemas
+ *   return yield* decodeWait(response)
+ * })
+ * ```
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.7
+ */
+export const decodeResponse = (api, options) => {
+  let decode;
+  HttpApi.reflect(api, {
+    predicate: ({
+      endpoint,
+      group
+    }) => group.identifier === options.group && endpoint.identifier === options.endpoint,
+    onGroup() {},
+    onEndpoint(endpointOptions) {
+      decode = makeEndpointDecoder(endpointOptions);
+    }
+  });
+  return (response, decodeOptions) => decode(response, decodeOptions?.sseOptions);
+};
+/**
  * Creates a type-safe URL builder that mirrors `HttpApiClient.make`.
  *
  * **Example** (Building typed URLs)
@@ -307,7 +422,7 @@ export const urlBuilder = (api, options) => {
         const url = new URL(HttpClientRequest.prependUrl(HttpClientRequest.get(path), options.baseUrl.toString()).url);
         for (const [key, value] of urlParams.params) {
           if (value !== undefined) {
-            url.searchParams.append(key, value);
+            url.searchParams.append(key, internalUrlParams.unwrap(value));
           }
         }
         return url.toString();
@@ -318,27 +433,21 @@ export const urlBuilder = (api, options) => {
   return builder;
 };
 // ----------------------------------------------------------------------------
-const paramsRegExp = /(\/?):(\w+)(\?)?/g;
 const compilePath = (path, schema) => {
   if (schema === undefined || !path.includes(":")) {
     return _ => path;
   }
   const paramNames = HttpApiPath.getParamNames(schema);
-  return params => {
-    return path.replace(paramsRegExp, (match, slash, key, optional) => {
-      if (paramNames !== undefined && !paramNames.has(key)) {
-        return match;
-      }
-      const value = params[key];
-      if (value === undefined) {
-        if (optional !== undefined) {
-          return "";
-        }
-        throw new Error(`Missing path parameter: ${key}`);
-      }
-      return `${slash}${encodeURIComponent(value)}`;
-    });
-  };
+  return params => HttpApiPath.replaceParams(path, paramNames, (key, optional) => {
+    const value = params[key];
+    if (value === "." || value === "..") {
+      // dot segments survive encoding and would be resolved by URL normalization
+      throw new Error(`Invalid path parameter: ${key}`);
+    }
+    if (value !== undefined) return encodeURIComponent(value);
+    if (optional) return undefined;
+    throw new Error(`Missing path parameter: ${key}`);
+  });
 };
 function schemasToResponse(schemas, options, headersOptions) {
   const hasWithHeaders = schemas.some(schema => HttpApiSchema.isWithHeaders(schema) || HttpApiSchema.getWithHeadersAnnotation(schema.ast) !== undefined);
@@ -382,6 +491,67 @@ function toCodecArrayBufferWithHeaders(schema, options, headersOptions) {
     }, input, options))
   })));
 }
+const makeEndpointDecoder = options => {
+  const {
+    endpoint,
+    errors,
+    successes,
+    mergedAnnotations
+  } = options;
+  const parseOptions = HttpApi.getSlotParseOptions(mergedAnnotations);
+  const decodeMap = {
+    orElse: statusOrElse
+  };
+  const errorAlternatives = new Map();
+  for (const [status, schemas] of errors.entries()) {
+    const grouped = groupSchemasByContentType(schemas);
+    for (const [contentType, schemas] of grouped.entries()) {
+      addResponseAlternative(errorAlternatives, status, contentType, schemasToResponse(schemas, parseOptions.error, parseOptions.headers));
+    }
+  }
+  for (const [status, alternatives] of errorAlternatives.entries()) {
+    const decode = makeResponseDecoder(alternatives);
+    decodeMap[status] = response => Effect.flatMap(Effect.catchCause(decode(response), cause => Effect.failCause(Cause.combine(Cause.fail(new HttpClientError.HttpClientError({
+      reason: new HttpClientError.StatusCodeError({
+        request: response.request,
+        response
+      })
+    })), cause))), Effect.fail);
+  }
+  const successAlternatives = new Map();
+  for (const [status, schemas] of successes.entries()) {
+    const grouped = groupSchemasByContentType(schemas);
+    for (const [contentType, schemas] of grouped.entries()) {
+      addResponseAlternative(successAlternatives, status, contentType, schemasToResponse(schemas, parseOptions.success, parseOptions.headers));
+    }
+  }
+  for (const streamSuccess of getStreamSuccessSchemas(endpoint)) {
+    const streamSchema = isWithHeadersStreamSuccess(streamSuccess) ? streamSuccess.schema : streamSuccess;
+    const status = HttpApiSchema.getStatusSuccessSchema(streamSuccess);
+    const decode = streamToResponse(streamSuccess, parseOptions.success, parseOptions.headers);
+    for (const contentType of streamSchema.contentTypes) {
+      addResponseAlternative(successAlternatives, status, contentType, decode);
+    }
+  }
+  for (const [status, alternatives] of successAlternatives.entries()) {
+    decodeMap[status] = makeResponseDecoder(alternatives);
+  }
+  const upgrade = getUpgradeSuccessSchema(endpoint);
+  if (upgrade !== undefined) {
+    const decodeHeaders = upgrade.headers === undefined ? Effect.succeed : Schema.decodeUnknownEffect(upgrade.headers, parseOptions.headers);
+    decodeMap[101] = response =>
+    // the cleanup must be in place before an interruption can be observed
+    Effect.uninterruptibleMask(restore => Effect.flatMap(response.upgrade, socket => restore(decodeHeaders(response.headers)).pipe(Effect.map(headers => ({
+      [UpgradedTypeId]: UpgradedTypeId,
+      headers,
+      socket
+    })),
+    // nothing takes the connection on failure, so close it: releasing
+    // the reader's scope closes the connection
+    Effect.onError(() => Effect.ignore(Effect.scoped(socket.reader))))));
+  }
+  return (response, sseOptions) => (decodeMap[response.status] ?? decodeMap.orElse)(response, sseOptions);
+};
 function addResponseAlternative(map, status, contentType, decode) {
   const normalizedContentType = MediaType.normalize(contentType);
   const alternatives = map.get(status);
@@ -399,7 +569,7 @@ function addResponseAlternative(map, status, contentType, decode) {
 }
 function makeResponseDecoder(alternatives) {
   const first = alternatives[0];
-  if (alternatives.length === 1 && first !== undefined) {
+  if (first !== undefined && alternatives.every(alternative => alternative.decode === first.decode)) {
     return first.decode;
   }
   return (response, sseOptions) => {
@@ -434,6 +604,11 @@ function failUnsupportedContentType(response, contentType, alternatives) {
 }
 const reservedStreamFailureEvent = "effect/http-api/stream/failure";
 const isWithHeadersStreamSuccess = schema => HttpApiSchema.isWithHeaders(schema);
+function getUpgradeSuccessSchema(endpoint) {
+  for (const schema of endpoint.success) {
+    if (HttpApiSchema.isUpgrade(schema)) return schema;
+  }
+}
 function getStreamSuccessSchemas(endpoint) {
   const schemas = [];
   for (const schema of endpoint.success) {
@@ -447,11 +622,8 @@ function getStreamSuccessSchemas(endpoint) {
 function streamToResponse(successSchema, options, headersOptions) {
   const isWithHeaders = isWithHeadersStreamSuccess(successSchema);
   const streamSchema = isWithHeaders ? successSchema.schema : successSchema;
-  const sse = HttpApiSchema.isStreamUint8Array(streamSchema) ? undefined : {
-    declaration: streamSchema,
-    decoder: makeSseDecoder(streamSchema, options)
-  };
-  const toStream = (response, sseOptions) => Effect.map(Effect.context(), context => Stream.provideContext(sse === undefined ? response.stream : decodeSseStream(response.stream, sse.declaration, sse.decoder(sseOptions)), context));
+  const decodeBody = makeStreamBodyDecoder(streamSchema, options);
+  const toStream = (response, sseOptions) => Effect.map(Effect.context(), context => Stream.provideContext(decodeBody(response, sseOptions), context));
   if (!isWithHeaders) return toStream;
   const decodeHeaders = Schema.decodeUnknownEffect(successSchema.headers, headersOptions);
   return (response, sseOptions) => Effect.flatMap(decodeHeaders(response.headers), headers => Effect.map(toStream(response, sseOptions), body => HttpApiSchema.withHeaders({
@@ -459,6 +631,36 @@ function streamToResponse(successSchema, options, headersOptions) {
     headers
   })));
 }
+function makeStreamBodyDecoder(streamSchema, options) {
+  if (HttpApiSchema.isStreamUint8Array(streamSchema)) {
+    return response => response.stream;
+  }
+  if (HttpApiSchema.isStreamNdjson(streamSchema)) {
+    const decodeElement = Schema.decodeUnknownEffect(Schema.toCodecJson(streamSchema.schema), options);
+    const maxElementBytes = ByteSize.toNumberUnsafe(streamSchema.maxElementBytes);
+    return response => response.stream.pipe(Stream.pipeThroughChannel(Ndjson.decode({
+      ignoreEmptyLines: true,
+      maxLineBytes: maxElementBytes
+    })), Stream.mapError(error => {
+      if (!Ndjson.isNdjsonError(error)) return error;
+      if (error.reason !== "LineTooLarge") return ndjsonSchemaError(error);
+      return new HttpClientError.HttpClientError({
+        reason: new HttpClientError.DecodeError({
+          request: response.request,
+          response,
+          description: `NDJSON line exceeds maxElementBytes of ${maxElementBytes} bytes`
+        })
+      });
+    }), Stream.mapEffect(json => decodeElement(json)));
+  }
+  const decoder = makeSseDecoder(streamSchema, options);
+  return (response, sseOptions) => decodeSseStream(response.stream, streamSchema, decoder(sseOptions));
+}
+// `JSON.stringify` found no JSON representation for an encoded element
+const isNdjsonPackError = error => Ndjson.isNdjsonError(error) && error.kind === "Pack";
+const ndjsonSchemaError = error => new Schema.SchemaError(new SchemaIssue.InvalidValue({
+  message: error.reason === "InvalidUtf8" ? "Expected valid UTF-8" : error.unterminated ? "Expected a valid JSON line, got an unterminated final line" : "Expected a valid JSON line"
+}));
 function makeSseDecoder(declaration, parseOptions) {
   const Event = Schema.Union([Schema.Struct({
     id: Schema.optional(Schema.String),
@@ -558,10 +760,18 @@ function fromArrayBuffer(schema) {
 const statusOrElse = response => Effect.fail(new HttpClientError.HttpClientError({
   reason: new HttpClientError.DecodeError({
     request: response.request,
-    response
+    response,
+    description: "undeclared status code"
   })
 }));
 const $HttpBody = /*#__PURE__*/Schema.declare(HttpBody.isHttpBody);
+function makeStreamPayloadEncoder(schema, options) {
+  if (HttpApiSchema.isStreamUint8Array(schema)) {
+    return stream => stream;
+  }
+  const encodeElements = Schema.encodeUnknownEffect(Schema.NonEmptyArray(Schema.toCodecJson(schema.schema)), options);
+  return stream => stream.pipe(Stream.mapArrayEffect(elements => encodeElements(elements)), Stream.pipeThroughChannel(Ndjson.encode()), Stream.catchIf(isNdjsonPackError, Stream.die));
+}
 function getEncodePayloadSchema(schemas, method) {
   return Schema.Union(schemas.map(s => getEncodePayloadSchemaFromBody(s, method)));
 }

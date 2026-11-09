@@ -74,12 +74,25 @@ declare const MessageStorage_base: Context.ServiceClass<MessageStorage, "effect/
     }) => Effect.Effect<Option.Option<Snowflake.Snowflake>, PersistenceError>;
     /**
      * For locally sent messages, register a handler to process the replies.
+     *
+     * **Details**
+     *
+     * The handler must be registered as soon as the effect starts, before it
+     * first suspends. Callers fork it with `startImmediately` before saving or
+     * notifying the request, and rely on it to see every reply saved after that
+     * point. The effect completes when a `WithExit` reply arrives.
      */
     readonly registerReplyHandler: <R extends Rpc.Any>(message: Message.OutgoingRequest<R> | Message.IncomingRequest<R>) => Effect.Effect<void, EntityNotAssignedToRunner>;
     /**
      * Unregister the reply handler for the specified message.
+     *
+     * By default the waiters are resumed with `EntityNotAssignedToRunner`. With
+     * `interrupt: true` they are interrupted with a cluster-abandon annotation
+     * instead, for when the request will not be served by this runner.
      */
-    readonly unregisterReplyHandler: (requestId: Snowflake.Snowflake) => Effect.Effect<void>;
+    readonly unregisterReplyHandler: (requestId: Snowflake.Snowflake, options?: {
+        readonly interrupt?: boolean | undefined;
+    }) => Effect.Effect<void>;
     /**
      * Unregister the reply handlers for the specified ShardId.
      *
@@ -134,7 +147,12 @@ declare const MessageStorage_base: Context.ServiceClass<MessageStorage, "effect/
      */
     readonly clearAddress: (address: EntityAddress) => Effect.Effect<void, PersistenceError>;
     /**
-     * Used to wrap requests with transactions.
+     * Wraps requests in storage transactions.
+     *
+     * `WithExit` replies and discarded sends saved in a transaction notify after
+     * the outermost commit; stream chunks notify immediately. Replies saved in a failed
+     * transaction must be discarded. The wrapper may fail only with the wrapped
+     * effect's own failure or a defect.
      */
     readonly withTransaction: <A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R>;
 }>;
@@ -173,31 +191,7 @@ export type SaveResult<R extends Rpc.Any> = SaveResult.Success | SaveResult.Dupl
  * @category constructors
  * @since 4.0.0
  */
-export declare const SaveResult: {
-    readonly $is: <Tag extends "Duplicate" | "Success">(tag: Tag) => {
-        <T extends Data.TaggedEnum.Kind<SaveResult.Constructor, any, any, any, any>>(u: T): u is T & {
-            readonly _tag: Tag;
-        };
-        (u: unknown): u is Extract<SaveResult.Duplicate<never>, {
-            readonly _tag: Tag;
-        }> | Extract<SaveResult.Success, {
-            readonly _tag: Tag;
-        }>;
-    };
-    readonly $match: {
-        <A, B, C, D, Cases extends { readonly [Tag in "Duplicate" | "Success"]: (args: Extract<Data.TaggedEnum.Kind<SaveResult.Constructor, A, B, C, D>, {
-            readonly _tag: Tag;
-        }>) => any; }>(cases: Cases): (self: SaveResult<A extends Rpc.Any ? A : never>) => import("../Unify.ts").Unify<ReturnType<Cases["Duplicate" | "Success"]>>;
-        <A, B, C, D, Cases extends { readonly [Tag in "Duplicate" | "Success"]: (args: Extract<Data.TaggedEnum.Kind<SaveResult.Constructor, A, B, C, D>, {
-            readonly _tag: Tag;
-        }>) => any; }>(self: SaveResult<A extends Rpc.Any ? A : never>, cases: Cases): import("../Unify.ts").Unify<ReturnType<Cases["Duplicate" | "Success"]>>;
-    };
-    readonly Duplicate: <A>(args: {
-        readonly originalId: Snowflake.Snowflake;
-        readonly lastReceivedReply: Option.Option<Reply.Reply<A extends Rpc.Any ? A : never>>;
-    }) => SaveResult.Duplicate<A extends Rpc.Any ? A : never>;
-    readonly Success: <A>(args: void) => SaveResult.Success;
-};
+export declare const SaveResult: Data.TaggedEnum.GenericConstructor<SaveResult.Constructor>;
 /**
  * Constructors and matchers for encoded save results returned by storage
  * drivers.
@@ -206,23 +200,7 @@ export declare const SaveResult: {
  * @category constructors
  * @since 4.0.0
  */
-export declare const SaveResultEncoded: {
-    readonly $is: <Tag extends "Duplicate" | "Success">(tag: Tag) => (u: unknown) => u is Extract<SaveResult.DuplicateEncoded, {
-        readonly _tag: Tag;
-    }> | Extract<SaveResult.Success, {
-        readonly _tag: Tag;
-    }>;
-    readonly $match: {
-        <Cases extends { readonly [Tag in "Duplicate" | "Success"]: (args: Extract<SaveResult.Encoded, {
-            readonly _tag: Tag;
-        }>) => any; }>(cases: Cases): (value: SaveResult.Encoded) => import("../Unify.ts").Unify<ReturnType<Cases["Duplicate" | "Success"]>>;
-        <Cases extends { readonly [Tag in "Duplicate" | "Success"]: (args: Extract<SaveResult.Encoded, {
-            readonly _tag: Tag;
-        }>) => any; }>(value: SaveResult.Encoded, cases: Cases): import("../Unify.ts").Unify<ReturnType<Cases["Duplicate" | "Success"]>>;
-    };
-    readonly Duplicate: Data.TaggedEnum.ConstructorFrom<SaveResult.DuplicateEncoded, "_tag">;
-    readonly Success: Data.TaggedEnum.ConstructorFrom<SaveResult.Success, "_tag">;
-};
+export declare const SaveResultEncoded: Data.TaggedEnum.Constructor<SaveResult.Encoded>;
 /**
  * Variants and helper types for `SaveResult`.
  *
@@ -554,12 +532,25 @@ declare const MemoryDriver_base: Context.ServiceClass<MemoryDriver, "effect/clus
         }) => Effect.Effect<Option.Option<Snowflake.Snowflake>, PersistenceError>;
         /**
          * For locally sent messages, register a handler to process the replies.
+         *
+         * **Details**
+         *
+         * The handler must be registered as soon as the effect starts, before it
+         * first suspends. Callers fork it with `startImmediately` before saving or
+         * notifying the request, and rely on it to see every reply saved after that
+         * point. The effect completes when a `WithExit` reply arrives.
          */
         readonly registerReplyHandler: <R extends Rpc.Any>(message: Message.OutgoingRequest<R> | Message.IncomingRequest<R>) => Effect.Effect<void, EntityNotAssignedToRunner>;
         /**
          * Unregister the reply handler for the specified message.
+         *
+         * By default the waiters are resumed with `EntityNotAssignedToRunner`. With
+         * `interrupt: true` they are interrupted with a cluster-abandon annotation
+         * instead, for when the request will not be served by this runner.
          */
-        readonly unregisterReplyHandler: (requestId: Snowflake.Snowflake) => Effect.Effect<void>;
+        readonly unregisterReplyHandler: (requestId: Snowflake.Snowflake, options?: {
+            readonly interrupt?: boolean | undefined;
+        }) => Effect.Effect<void>;
         /**
          * Unregister the reply handlers for the specified ShardId.
          *
@@ -614,7 +605,12 @@ declare const MemoryDriver_base: Context.ServiceClass<MemoryDriver, "effect/clus
          */
         readonly clearAddress: (address: EntityAddress) => Effect.Effect<void, PersistenceError>;
         /**
-         * Used to wrap requests with transactions.
+         * Wraps requests in storage transactions.
+         *
+         * `WithExit` replies and discarded sends saved in a transaction notify after
+         * the outermost commit; stream chunks notify immediately. Replies saved in a failed
+         * transaction must be discarded. The wrapper may fail only with the wrapped
+         * effect's own failure or a defect.
          */
         readonly withTransaction: <A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R>;
     };
@@ -675,12 +671,25 @@ declare const MemoryDriver_base: Context.ServiceClass<MemoryDriver, "effect/clus
             }) => Effect.Effect<Option.Option<Snowflake.Snowflake>, PersistenceError>;
             /**
              * For locally sent messages, register a handler to process the replies.
+             *
+             * **Details**
+             *
+             * The handler must be registered as soon as the effect starts, before it
+             * first suspends. Callers fork it with `startImmediately` before saving or
+             * notifying the request, and rely on it to see every reply saved after that
+             * point. The effect completes when a `WithExit` reply arrives.
              */
             readonly registerReplyHandler: <R extends Rpc.Any>(message: Message.OutgoingRequest<R> | Message.IncomingRequest<R>) => Effect.Effect<void, EntityNotAssignedToRunner>;
             /**
              * Unregister the reply handler for the specified message.
+             *
+             * By default the waiters are resumed with `EntityNotAssignedToRunner`. With
+             * `interrupt: true` they are interrupted with a cluster-abandon annotation
+             * instead, for when the request will not be served by this runner.
              */
-            readonly unregisterReplyHandler: (requestId: Snowflake.Snowflake) => Effect.Effect<void>;
+            readonly unregisterReplyHandler: (requestId: Snowflake.Snowflake, options?: {
+                readonly interrupt?: boolean | undefined;
+            }) => Effect.Effect<void>;
             /**
              * Unregister the reply handlers for the specified ShardId.
              *
@@ -735,7 +744,12 @@ declare const MemoryDriver_base: Context.ServiceClass<MemoryDriver, "effect/clus
              */
             readonly clearAddress: (address: EntityAddress) => Effect.Effect<void, PersistenceError>;
             /**
-             * Used to wrap requests with transactions.
+             * Wraps requests in storage transactions.
+             *
+             * `WithExit` replies and discarded sends saved in a transaction notify after
+             * the outermost commit; stream chunks notify immediately. Replies saved in a failed
+             * transaction must be discarded. The wrapper may fail only with the wrapped
+             * effect's own failure or a defect.
              */
             readonly withTransaction: <A, E, R>(effect: Effect.Effect<A, E, R>) => Effect.Effect<A, E, R>;
         };

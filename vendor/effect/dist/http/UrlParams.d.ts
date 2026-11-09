@@ -10,27 +10,31 @@
  * @since 4.0.0
  */
 import * as Arr from "../Array.ts";
+import * as Context from "../Context.ts";
 import * as Equ from "../Equivalence.ts";
 import type { Inspectable } from "../Inspectable.ts";
 import * as Option from "../Option.ts";
 import type { Pipeable } from "../Pipeable.ts";
 import type { ReadonlyRecord } from "../Record.ts";
+import * as Redactable from "../Redactable.ts";
+import * as Redacted from "../Redacted.ts";
 declare const TypeId = "~effect/http/UrlParams";
 /**
  * Immutable collection of URL query parameters.
  *
  * **Details**
  *
- * Parameters are stored as ordered string key-value pairs and can contain multiple
- * values for the same key.
+ * Parameters are ordered key-value pairs, and a key can repeat. Each value is a
+ * string or a `Redacted` string, which is sent unwrapped. Inspection redacts
+ * `Redacted` values and values whose names match `CurrentRedactedNames`.
  *
  * @stability unstable
  * @category models
  * @since 4.0.0
  */
-export interface UrlParams extends Pipeable, Inspectable, Iterable<readonly [string, string]> {
+export interface UrlParams extends Pipeable, Inspectable, Redactable.Redactable, Iterable<readonly [string, string | Redacted.Redacted]> {
     readonly [TypeId]: typeof TypeId;
-    readonly params: ReadonlyArray<readonly [string, string]>;
+    readonly params: ReadonlyArray<readonly [string, string | Redacted.Redacted]>;
 }
 /**
  * Returns `true` when a value is a `UrlParams` instance.
@@ -57,7 +61,11 @@ type CoercibleRecordInput = CoercibleRecord & {
     readonly [Symbol.iterator]?: never;
 };
 /**
- * Primitive value that can be converted into a URL parameter string.
+ * Value that can be converted into a URL parameter string.
+ *
+ * **Details**
+ *
+ * `Redacted` values are stored wrapped and sent unwrapped.
  *
  * **Gotchas**
  *
@@ -67,7 +75,7 @@ type CoercibleRecordInput = CoercibleRecord & {
  * @category models
  * @since 4.0.0
  */
-export type Coercible = string | number | bigint | boolean | null | undefined;
+export type Coercible = string | number | bigint | boolean | null | undefined | Redacted.Redacted;
 /**
  * @stability unstable
  * @category models
@@ -90,7 +98,7 @@ export type CoercibleRecord<A extends object = any> = {
     readonly [K in keyof A]: CoercibleRecordField<A[K]>;
 };
 /**
- * Creates `UrlParams` from ordered string key-value pairs.
+ * Creates `UrlParams` from ordered key-value pairs.
  *
  * **Details**
  *
@@ -100,7 +108,7 @@ export type CoercibleRecord<A extends object = any> = {
  * @category constructors
  * @since 4.0.0
  */
-export declare const make: (params: ReadonlyArray<readonly [string, string]>) => UrlParams;
+export declare const make: (params: ReadonlyArray<readonly [string, string | Redacted.Redacted]>) => UrlParams;
 /**
  * Creates `UrlParams` from a supported input shape.
  *
@@ -108,6 +116,7 @@ export declare const make: (params: ReadonlyArray<readonly [string, string]>) =>
  *
  * Primitive values are converted to strings, arrays produce repeated parameters,
  * nested records use bracket notation, and `undefined` values are omitted.
+ * `Redacted` values are kept as-is.
  *
  * @stability unstable
  * @category constructors
@@ -483,6 +492,10 @@ export declare const remove: {
 /**
  * Serializes `UrlParams` to a URL query string without a leading question mark.
  *
+ * **Gotchas**
+ *
+ * The output contains the unwrapped values of `Redacted` parameters.
+ *
  * @stability unstable
  * @category converting
  * @since 4.0.0
@@ -525,5 +538,98 @@ export declare const toRecord: (self: UrlParams) => Record<string, string | Arr.
  * @since 4.0.0
  */
 export declare const toReadonlyRecord: (self: UrlParams) => ReadonlyRecord<string, string | Arr.NonEmptyReadonlyArray<string>>;
+/**
+ * Returns the parameter pairs with selected values wrapped in `Redacted`.
+ *
+ * **Details**
+ *
+ * Keeps `Redacted` values and wraps values whose names match `isRedactedName`,
+ * preserving order and repeated names.
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.0.0
+ */
+export declare const redact: {
+    /**
+     * Returns the parameter pairs with selected values wrapped in `Redacted`.
+     *
+     * **Details**
+     *
+     * Keeps `Redacted` values and wraps values whose names match `isRedactedName`,
+     * preserving order and repeated names.
+     *
+     * @stability unstable
+     * @category combinators
+     * @since 4.0.0
+     */
+    (key: string | RegExp | ReadonlyArray<string | RegExp>): (self: UrlParams) => Array<[string, string | Redacted.Redacted<string>]>;
+    /**
+     * Returns the parameter pairs with selected values wrapped in `Redacted`.
+     *
+     * **Details**
+     *
+     * Keeps `Redacted` values and wraps values whose names match `isRedactedName`,
+     * preserving order and repeated names.
+     *
+     * @stability unstable
+     * @category combinators
+     * @since 4.0.0
+     */
+    (self: UrlParams, key: string | RegExp | ReadonlyArray<string | RegExp>): Array<[string, string | Redacted.Redacted<string>]>;
+};
+/**
+ * Checks whether a parameter name matches one of the redaction patterns.
+ *
+ * **Details**
+ *
+ * String patterns match case-insensitively; regular expressions test the name.
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.0.0
+ */
+export declare const isRedactedName: (name: string, patterns: ReadonlyArray<string | RegExp>) => boolean;
+/**
+ * Redacts URL userinfo and the values of matching query parameters.
+ *
+ * **Details**
+ *
+ * Replaces userinfo with `REDACTED:REDACTED` and query values with `REDACTED`
+ * when their decoded names match `isRedactedName`. Preserves all other text.
+ * When names are omitted, uses the current fiber's `CurrentRedactedNames`,
+ * falling back to the defaults outside a fiber.
+ *
+ * **Example** (Redacting a signed URL)
+ *
+ * ```ts import.meta.vitest
+ * import { UrlParams } from "effect/http"
+ *
+ * const url = UrlParams.redactUrl("https://bucket.test/file?Signature=abc&size=1")
+ * url // => "https://bucket.test/file?Signature=REDACTED&size=1"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.0.0
+ */
+export declare const redactUrl: (url: string, redactedNames?: ReadonlyArray<string | RegExp>) => string;
+/**
+ * Query parameter names or patterns to redact in inspection, spans and errors.
+ *
+ * **Details**
+ *
+ * Defaults match the OpenTelemetry `url.full` list: `X-Amz-Signature`,
+ * `X-Amz-Credential`, `X-Amz-Security-Token`, `AWSAccessKeyId`, `Signature`,
+ * `sig` and `X-Goog-Signature`.
+ * A custom list replaces the defaults. Matching uses `isRedactedName`.
+ * Redaction leaves request URLs and parameter values unchanged. `Redacted`
+ * values are redacted regardless of this list.
+ *
+ * @stability unstable
+ * @category services
+ * @since 4.0.0
+ */
+export declare const CurrentRedactedNames: Context.Reference<readonly (string | RegExp)[]>;
 export {};
 //# sourceMappingURL=UrlParams.d.ts.map

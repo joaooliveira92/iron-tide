@@ -101,7 +101,7 @@ export function toFormatter(ast, options) {
                 return map => {
                   const size = map.size;
                   if (size === 0) return "ReadonlyMap(0) {}";
-                  const entries = globalThis.Array.from(map.entries()).sort().map(([key_, value_]) => `${key(key_)} => ${value(value_)}`);
+                  const entries = globalThis.Array.from(map.entries()).map(([key_, value_]) => `${key(key_)} => ${value(value_)}`).sort();
                   return `ReadonlyMap(${size}) { ${entries.join(", ")} }`;
                 };
               }
@@ -111,7 +111,7 @@ export function toFormatter(ast, options) {
                 return map => {
                   const size = HashMap.size(map);
                   if (size === 0) return "HashMap(0) {}";
-                  const entries = HashMap.toEntries(map).sort().map(([key_, value_]) => `${key(key_)} => ${value(value_)}`);
+                  const entries = HashMap.toEntries(map).map(([key_, value_]) => `${key(key_)} => ${value(value_)}`).sort();
                   return `HashMap(${size}) { ${entries.join(", ")} }`;
                 };
               }
@@ -121,7 +121,7 @@ export function toFormatter(ast, options) {
                 return set => {
                   const size = set.size;
                   if (size === 0) return "ReadonlySet(0) {}";
-                  const values = globalThis.Array.from(set.values()).sort().map(item => `${value(item)}`);
+                  const values = globalThis.Array.from(set.values()).map(item => `${value(item)}`).sort();
                   return `ReadonlySet(${size}) { ${values.join(", ")} }`;
                 };
               }
@@ -131,7 +131,7 @@ export function toFormatter(ast, options) {
                 return set => {
                   const size = HashSet.size(set);
                   if (size === 0) return "HashSet(0) {}";
-                  const values = globalThis.Array.from(set).sort().map(item => `${value(item)}`);
+                  const values = globalThis.Array.from(set).map(item => `${value(item)}`).sort();
                   return `HashSet(${size}) { ${values.join(", ")} }`;
                 };
               }
@@ -141,7 +141,7 @@ export function toFormatter(ast, options) {
                 return chunk => {
                   const size = Chunk.size(chunk);
                   if (size === 0) return "Chunk(0) {}";
-                  const values = globalThis.Array.from(chunk).sort().map(item => `${value(item)}`);
+                  const values = globalThis.Array.from(chunk).map(item => `${value(item)}`);
                   return `Chunk(${size}) { ${values.join(", ")} }`;
                 };
               }

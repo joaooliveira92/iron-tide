@@ -182,8 +182,8 @@ export declare function equals<A, B>(self: A, that: B): boolean;
  * **Details**
  *
  * - Pure function, no side effects.
- * - Returns `true` if and only if `u` has a property keyed by
- *   {@link symbol}.
+ * - Returns `true` if and only if `u` has a function keyed by {@link symbol}.
+ *   Data that merely carries the key, such as parsed JSON, is not `Equal`.
  * - Acts as a TypeScript type guard, narrowing the input to {@link Equal}.
  *
  * **Example** (Checking Equal values)

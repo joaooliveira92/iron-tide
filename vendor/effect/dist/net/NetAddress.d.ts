@@ -7,8 +7,10 @@
 import type * as Brand from "../Brand.ts";
 import * as Equal from "../Equal.ts";
 import * as Hash from "../Hash.ts";
+import * as Inspectable from "../Inspectable.ts";
 import * as Option from "../Option.ts";
 import * as Result from "../Result.ts";
+import type { TupleOf } from "../Types.ts";
 declare const TypeId: "~effect/net/NetAddress";
 /**
  * An immutable 32-bit IPv4 address.
@@ -17,11 +19,9 @@ declare const TypeId: "~effect/net/NetAddress";
  * @category models
  * @since 4.0.0
  */
-export interface Ipv4Address extends Equal.Equal, Hash.Hash {
+export interface Ipv4Address extends Equal.Equal, Hash.Hash, Inspectable.Inspectable {
     readonly _tag: "Ipv4Address";
     readonly [TypeId]: typeof TypeId;
-    toString(): string;
-    toJSON(): string;
 }
 /**
  * An immutable 128-bit IPv6 address without socket scope metadata.
@@ -30,11 +30,9 @@ export interface Ipv4Address extends Equal.Equal, Hash.Hash {
  * @category models
  * @since 4.0.0
  */
-export interface Ipv6Address extends Equal.Equal, Hash.Hash {
+export interface Ipv6Address extends Equal.Equal, Hash.Hash, Inspectable.Inspectable {
     readonly _tag: "Ipv6Address";
     readonly [TypeId]: typeof TypeId;
-    toString(): string;
-    toJSON(): string;
 }
 /**
  * A numeric IPv4 or IPv6 address.
@@ -45,18 +43,99 @@ export interface Ipv6Address extends Equal.Equal, Hash.Hash {
  */
 export type IpAddress = Ipv4Address | Ipv6Address;
 /**
+ * The four octets of an IPv4 address in network order.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type Ipv4Octets = Readonly<TupleOf<4, number>>;
+/**
+ * The eight 16-bit segments of an IPv6 address in network order.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type Ipv6Segments = Readonly<TupleOf<8, number>>;
+/**
+ * The six octets of a MAC address in transmission order.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type MacAddressOctets = Readonly<TupleOf<6, number>>;
+/**
+ * An IPv4 address, or a string, four octets, or four network-order bytes to
+ * convert to one.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type Ipv4AddressInput = Ipv4Address | string | Ipv4Octets | Uint8Array;
+/**
+ * An IPv6 address, or a string, eight 16-bit segments, or sixteen
+ * network-order bytes to convert to one.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type Ipv6AddressInput = Ipv6Address | string | Ipv6Segments | Uint8Array;
+/**
+ * An IP address, or any `Ipv4AddressInput` or `Ipv6AddressInput` to convert to
+ * one.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type IpAddressInput = Ipv4AddressInput | Ipv6AddressInput;
+/**
+ * An IPv6 literal with a zone, such as `fe80::1%eth0` or `fe80::1%3`.
+ *
+ * **Details**
+ *
+ * Named zones are kept as written because mapping an interface name to a
+ * numeric scope ID requires the operating system's interface table. Numeric
+ * zones must be unsigned 32-bit integers and are stored without leading zeros,
+ * and the address part is stored in canonical form.
+ *
+ * @see {@link scopedIpv6LiteralFromString} for parsing scoped IPv6 literals
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export type ScopedIpv6Literal = Brand.Branded<string, "~effect/net/NetAddress/ScopedIpv6Literal">;
+/**
+ * A scoped IPv6 literal or a string to parse as one.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export type ScopedIpv6LiteralInput = ScopedIpv6Literal | string;
+/**
  * An immutable 48-bit IEEE 802 MAC address.
  *
  * @stability unstable
  * @category models
  * @since 4.0.0
  */
-export interface MacAddress extends Equal.Equal, Hash.Hash {
+export interface MacAddress extends Equal.Equal, Hash.Hash, Inspectable.Inspectable {
     readonly _tag: "MacAddress";
     readonly [TypeId]: typeof TypeId;
-    toString(): string;
-    toJSON(): string;
 }
+/**
+ * A MAC address, or a string or six octets to convert to one.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type MacAddressInput = MacAddress | string | MacAddressOctets;
 declare const MulticastTypeId: "~effect/net/NetAddress/MulticastAddress";
 declare const UnicastTypeId: "~effect/net/NetAddress/UnicastAddress";
 declare const BroadcastTypeId: "~effect/net/NetAddress/BroadcastAddress";
@@ -180,13 +259,11 @@ export type UniversallyAdministeredAddress<A extends MacAddress = MacAddress> = 
  * @category models
  * @since 4.0.0
  */
-export interface InetAddressV4 extends Equal.Equal, Hash.Hash {
+export interface InetAddressV4 extends Equal.Equal, Hash.Hash, Inspectable.Inspectable {
     readonly _tag: "InetAddressV4";
     readonly address: Ipv4Address;
     readonly port: number;
     readonly [TypeId]: typeof TypeId;
-    toString(): string;
-    toJSON(): string;
 }
 /**
  * A resolved IPv6 internet address, port, and scope identifier.
@@ -195,14 +272,12 @@ export interface InetAddressV4 extends Equal.Equal, Hash.Hash {
  * @category models
  * @since 4.0.0
  */
-export interface InetAddressV6 extends Equal.Equal, Hash.Hash {
+export interface InetAddressV6 extends Equal.Equal, Hash.Hash, Inspectable.Inspectable {
     readonly _tag: "InetAddressV6";
     readonly address: Ipv6Address;
     readonly port: number;
     readonly scopeId: number;
     readonly [TypeId]: typeof TypeId;
-    toString(): string;
-    toJSON(): string;
 }
 /**
  * A resolved IPv4 or IPv6 internet address and port.
@@ -213,18 +288,40 @@ export interface InetAddressV6 extends Equal.Equal, Hash.Hash {
  */
 export type InetAddress = InetAddressV4 | InetAddressV6;
 /**
+ * The address, port, and optional IPv6 scope identifier of an internet address.
+ *
+ * **Details**
+ *
+ * A nonzero `scopeId` is only valid with an IPv6 address.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface InetAddressParts<A extends IpAddressInput = IpAddressInput> {
+    readonly address: A;
+    readonly port: number;
+    readonly scopeId?: number | undefined;
+}
+/**
+ * An internet address and port, or a string or parts to convert to one.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type InetAddressInput = InetAddress | string | InetAddressParts;
+/**
  * An opaque Unix-domain filesystem socket path.
  *
  * @stability unstable
  * @category models
  * @since 4.0.0
  */
-export interface UnixPathAddress extends Equal.Equal, Hash.Hash {
+export interface UnixPathAddress extends Equal.Equal, Hash.Hash, Inspectable.Inspectable {
     readonly _tag: "UnixPathAddress";
     readonly path: string;
     readonly [TypeId]: typeof TypeId;
-    toString(): string;
-    toJSON(): string;
 }
 /**
  * A portable concrete internet or Unix-domain filesystem address.
@@ -234,6 +331,16 @@ export interface UnixPathAddress extends Equal.Equal, Hash.Hash {
  * @since 4.0.0
  */
 export type SocketAddress = InetAddress | UnixPathAddress;
+/**
+ * The path of a Unix-domain socket address.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface UnixPathAddressParts {
+    readonly path: string;
+}
 /**
  * Companion types for constructing socket addresses.
  *
@@ -247,19 +354,14 @@ export declare namespace SocketAddress {
      *
      * **Details**
      *
-     * String inputs must use `IPv4:port` or `[IPv6]:port` notation. Address
-     * properties must be numeric IPv4 or IPv6 literals.
+     * Accepts any `InetAddressInput` or a Unix path. String inputs must use
+     * `IPv4:port` or `[IPv6]:port` notation.
      *
      * @stability unstable
      * @category models
      * @since 4.0.0
      */
-    type Input = SocketAddress | string | {
-        readonly address: IpAddress | string;
-        readonly port: number;
-    } | {
-        readonly path: string;
-    };
+    type Input = SocketAddress | InetAddressInput | UnixPathAddressParts;
 }
 /**
  * The IPv4 or IPv6 family of an IP address or internet address type.
@@ -283,6 +385,27 @@ export declare namespace SocketAddress {
  * @since 4.0.0
  */
 export type Family<A extends IpAddress | InetAddress> = A extends Ipv4Address | InetAddressV4 ? Ipv4Address : Ipv6Address;
+/**
+ * The name of an IP address family, spelled as in `os.networkInterfaces()` and
+ * socket address information on Node.js, Deno, and Bun.
+ *
+ * @see {@link familyOf} for reading the family of an address
+ * @see {@link FamilyAddress} for the address type of a family
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export type IpFamily = "IPv4" | "IPv6";
+/**
+ * The IP address type for an IP address family name. `FamilyAddress<IpFamily>`
+ * is `IpAddress`.
+ *
+ * @see {@link Family} for the inverse mapping from an address type
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export type FamilyAddress<F extends IpFamily> = F extends "IPv4" ? Ipv4Address : Ipv6Address;
 /**
  * The internet address type for an IP address family.
  *
@@ -385,6 +508,87 @@ export declare const isIpAddress: (u: unknown) => u is IpAddress;
  */
 export declare const width: (address: IpAddress) => 32 | 128;
 /**
+ * Returns the family of an IP address or internet address.
+ *
+ * **Example** (Reading address families)
+ *
+ * ```ts import.meta.vitest
+ * import { NetAddress } from "effect/net"
+ *
+ * NetAddress.familyOf(NetAddress.ipv4Loopback) // => "IPv4"
+ * NetAddress.familyOf(NetAddress.inetAddressFromStringUnsafe("[::1]:80")) // => "IPv6"
+ * ```
+ *
+ * @stability experimental
+ * @category getters
+ * @since 4.0.0
+ */
+export declare const familyOf: (self: IpAddress | InetAddress) => IpFamily;
+/**
+ * Returns `true` when an IP address or internet address belongs to a family,
+ * narrowing it to that family.
+ *
+ * @stability experimental
+ * @category predicates
+ * @since 4.0.0
+ */
+export declare const isFamily: {
+    /**
+     * Returns `true` when an IP address or internet address belongs to a family,
+     * narrowing it to that family.
+     *
+     * @stability experimental
+     * @category predicates
+     * @since 4.0.0
+     */
+    (family: "IPv4"): <A extends IpAddress | InetAddress>(self: A) => self is Extract<A, Ipv4Address | InetAddressV4>;
+    /**
+     * Returns `true` when an IP address or internet address belongs to a family,
+     * narrowing it to that family.
+     *
+     * @stability experimental
+     * @category predicates
+     * @since 4.0.0
+     */
+    (family: "IPv6"): <A extends IpAddress | InetAddress>(self: A) => self is Extract<A, Ipv6Address | InetAddressV6>;
+    /**
+     * Returns `true` when an IP address or internet address belongs to a family,
+     * narrowing it to that family.
+     *
+     * @stability experimental
+     * @category predicates
+     * @since 4.0.0
+     */
+    (family: IpFamily): (self: IpAddress | InetAddress) => boolean;
+    /**
+     * Returns `true` when an IP address or internet address belongs to a family,
+     * narrowing it to that family.
+     *
+     * @stability experimental
+     * @category predicates
+     * @since 4.0.0
+     */
+    <A extends IpAddress | InetAddress>(self: A, family: "IPv4"): self is Extract<A, Ipv4Address | InetAddressV4>;
+    /**
+     * Returns `true` when an IP address or internet address belongs to a family,
+     * narrowing it to that family.
+     *
+     * @stability experimental
+     * @category predicates
+     * @since 4.0.0
+     */
+    <A extends IpAddress | InetAddress>(self: A, family: "IPv6"): self is Extract<A, Ipv6Address | InetAddressV6>;
+    /**
+     * Returns `true` when an IP address or internet address belongs to a family,
+     * narrowing it to that family.
+     *
+     * @stability experimental
+     * @category predicates
+     * @since 4.0.0
+     */
+    (self: IpAddress | InetAddress, family: IpFamily): boolean;
+};
+/**
  * Returns `true` when a value is a MAC address.
  *
  * @stability unstable
@@ -465,6 +669,14 @@ export declare const ipv4Loopback: Ipv4Address;
  */
 export declare const ipv6Loopback: Ipv6Address;
 /**
+ * The loopback addresses `127.0.0.1` and `::1`.
+ *
+ * @stability unstable
+ * @category constants
+ * @since 4.0.0
+ */
+export declare const loopbackAddresses: readonly [Ipv4Address, Ipv6Address];
+/**
  * The unspecified IPv4 address `0.0.0.0`.
  *
  * @stability unstable
@@ -495,7 +707,7 @@ export declare const ipv4Broadcast: Ipv4Address;
  * @category constructors
  * @since 4.0.0
  */
-export declare const ipv4FromOctets: (octets: readonly [number, number, number, number]) => Result.Result<Ipv4Address, NetAddressError>;
+export declare const ipv4FromOctets: (octets: Ipv4Octets) => Result.Result<Ipv4Address, NetAddressError>;
 /**
  * Creates an IPv6 address from eight checked 16-bit segments.
  *
@@ -503,7 +715,7 @@ export declare const ipv4FromOctets: (octets: readonly [number, number, number, 
  * @category constructors
  * @since 4.0.0
  */
-export declare const ipv6FromSegments: (segments: readonly [number, number, number, number, number, number, number, number]) => Result.Result<Ipv6Address, NetAddressError>;
+export declare const ipv6FromSegments: (segments: Ipv6Segments) => Result.Result<Ipv6Address, NetAddressError>;
 /**
  * Creates a MAC address from six checked octets.
  *
@@ -511,7 +723,7 @@ export declare const ipv6FromSegments: (segments: readonly [number, number, numb
  * @category constructors
  * @since 4.0.0
  */
-export declare const macAddressFromOctets: (octets: readonly [number, number, number, number, number, number]) => Result.Result<MacAddress, NetAddressError>;
+export declare const macAddressFromOctets: (octets: MacAddressOctets) => Result.Result<MacAddress, NetAddressError>;
 /**
  * Parses a colon-separated MAC address containing six two-digit hexadecimal octets.
  *
@@ -528,6 +740,24 @@ export declare const macAddressFromString: (input: string) => Result.Result<MacA
  * @since 4.0.0
  */
 export declare const macAddressFromStringUnsafe: (input: string) => MacAddress;
+/**
+ * Converts a `MacAddressInput` to a MAC address, parsing strings like
+ * `macAddressFromString`, checking octets like `macAddressFromOctets`, and
+ * returning MAC addresses unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const macAddressFromInput: (input: MacAddressInput) => Result.Result<MacAddress, NetAddressError>;
+/**
+ * Converts a trusted `MacAddressInput` to a MAC address, throwing on failure.
+ *
+ * @stability unstable
+ * @category unsafe
+ * @since 4.0.0
+ */
+export declare const macAddressFromInputUnsafe: (input: MacAddressInput) => MacAddress;
 /**
  * Parses a strict dotted-decimal IPv4 address.
  *
@@ -565,13 +795,97 @@ export declare const ipFromString: (input: string) => Result.Result<IpAddress, N
  */
 export declare const ipFromStringUnsafe: (input: string) => IpAddress;
 /**
+ * Converts an `IpAddressInput` to an IP address, returning IP addresses
+ * unchanged.
+ *
+ * **Details**
+ *
+ * Strings are parsed like `ipFromString`. Four octets or bytes make an IPv4
+ * address, and eight segments or sixteen bytes make an IPv6 address.
+ *
+ * **Example** (Converting IP address inputs)
+ *
+ * ```ts import.meta.vitest
+ * import { Result } from "effect"
+ * import { NetAddress } from "effect/net"
+ *
+ * const address = Result.getOrThrow(NetAddress.ipFromInput("192.0.2.1"))
+ * NetAddress.formatIp(address) // => "192.0.2.1"
+ * Result.getOrThrow(NetAddress.ipFromInput(address)) === address // => true
+ * NetAddress.formatIp(Result.getOrThrow(NetAddress.ipFromInput([192, 0, 2, 1]))) // => "192.0.2.1"
+ * Result.isFailure(NetAddress.ipFromInput("example.com")) // => true
+ * ```
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const ipFromInput: (input: IpAddressInput) => Result.Result<IpAddress, NetAddressError>;
+/**
+ * Converts a trusted `IpAddressInput` to an IP address, throwing on failure.
+ *
+ * @stability unstable
+ * @category unsafe
+ * @since 4.0.0
+ */
+export declare const ipFromInputUnsafe: (input: IpAddressInput) => IpAddress;
+/**
+ * Converts an `Ipv4AddressInput` to an IPv4 address, parsing strings like
+ * `ipv4FromString`, checking octets like `ipv4FromOctets`, and returning IPv4
+ * addresses unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const ipv4FromInput: (input: Ipv4AddressInput) => Result.Result<Ipv4Address, NetAddressError>;
+/**
+ * Converts an `Ipv6AddressInput` to an IPv6 address, parsing strings like
+ * `ipv6FromString`, checking segments like `ipv6FromSegments`, and returning
+ * IPv6 addresses unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const ipv6FromInput: (input: Ipv6AddressInput) => Result.Result<Ipv6Address, NetAddressError>;
+/**
+ * Returns `true` when a value is a canonical scoped IPv6 literal.
+ *
+ * @stability experimental
+ * @category guards
+ * @since 4.0.0
+ */
+export declare const isScopedIpv6Literal: (u: unknown) => u is ScopedIpv6Literal;
+/**
+ * Parses an IPv6 literal with a numeric or named zone, such as `fe80::1%eth0`.
+ *
+ * @stability experimental
+ * @category decoding
+ * @since 4.0.0
+ */
+export declare const scopedIpv6LiteralFromString: (input: string) => Result.Result<ScopedIpv6Literal, NetAddressError>;
+/**
+ * Converts a `ScopedIpv6LiteralInput` to a scoped IPv6 literal, parsing it
+ * like `scopedIpv6LiteralFromString`.
+ *
+ * **Details**
+ *
+ * Scoped IPv6 literals are strings, so every input is parsed.
+ *
+ * @stability experimental
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const scopedIpv6LiteralFromInput: (input: ScopedIpv6LiteralInput) => Result.Result<ScopedIpv6Literal, NetAddressError>;
+/**
  * Returns the four numeric octets of an IPv4 address in a fresh tuple.
  *
  * @stability unstable
  * @category getters
  * @since 4.0.0
  */
-export declare const ipv4ToOctets: (self: Ipv4Address) => readonly [number, number, number, number];
+export declare const ipv4ToOctets: (self: Ipv4Address) => Ipv4Octets;
 /**
  * Returns the eight numeric segments of an IPv6 address in a fresh tuple.
  *
@@ -579,7 +893,7 @@ export declare const ipv4ToOctets: (self: Ipv4Address) => readonly [number, numb
  * @category getters
  * @since 4.0.0
  */
-export declare const ipv6ToSegments: (self: Ipv6Address) => readonly [number, number, number, number, number, number, number, number];
+export declare const ipv6ToSegments: (self: Ipv6Address) => Ipv6Segments;
 /**
  * Returns the sixteen numeric octets of an IPv6 address in a fresh array.
  *
@@ -595,7 +909,7 @@ export declare const ipv6ToOctets: (self: Ipv6Address) => ReadonlyArray<number>;
  * @category getters
  * @since 4.0.0
  */
-export declare const macAddressToOctets: (self: MacAddress) => readonly [number, number, number, number, number, number];
+export declare const macAddressToOctets: (self: MacAddress) => MacAddressOctets;
 /**
  * Formats a MAC address as six lowercase hexadecimal octets separated by colons.
  *
@@ -886,6 +1200,18 @@ export declare const inetAddressFromIpString: (address: string, port: number) =>
  */
 export declare const inetAddressFromIpStringUnsafe: (address: string, port: number) => InetAddress;
 /**
+ * Creates an internet address from a trusted native numeric host and port.
+ * Named IPv6 zones are resolved using the supplied interface-to-scope map.
+ * Use only for runtime-supplied socket addresses: this skips input validation,
+ * so malformed strings or ports may silently produce incorrect values. An
+ * unknown named IPv6 zone throws rather than losing its scope.
+ *
+ * @stability unstable
+ * @category unsafe
+ * @since 4.0.0
+ */
+export declare const inetAddressFromNativeUnsafe: (host: string, port: number, scopeIds?: ReadonlyMap<string, number>) => InetAddress;
+/**
  * Parses an unbracketed numeric host and port, resolving named IPv6 zones using
  * a supplied map of interface names to numeric scope IDs.
  *
@@ -911,8 +1237,24 @@ export declare const inetAddressFromHostString: (host: string, port: number, sco
  */
 export interface NetworkInterfaceAddress {
     readonly family: string;
-    readonly scopeid?: number | undefined;
+    readonly scopeid?: number | null | undefined;
 }
+/**
+ * Returns the IPv6 scope ID of a network interface from its addresses.
+ *
+ * **Details**
+ *
+ * The first IPv6 address with a positive scope ID supplies the result. Accepts
+ * the addresses of one interface, such as `os.networkInterfaces()[name]` or the
+ * entries of `Deno.networkInterfaces()` with that name, without performing any
+ * operating-system lookup itself.
+ *
+ * @see {@link scopeIdsFromInterfaces} for mapping every interface at once
+ * @stability experimental
+ * @category converting
+ * @since 4.0.0
+ */
+export declare const scopeIdFromInterface: (addresses: ReadonlyArray<NetworkInterfaceAddress> | undefined) => Option.Option<number>;
 /**
  * Creates a map from interface names to IPv6 scope IDs using supplied interface
  * entries.
@@ -947,6 +1289,24 @@ export declare const inetAddressFromString: (input: string) => Result.Result<Ine
  * @since 4.0.0
  */
 export declare const inetAddressFromStringUnsafe: (input: string) => InetAddress;
+/**
+ * Converts an `InetAddressInput` to an internet address, parsing strings like
+ * `inetAddressFromString`, converting parts like `inetAddressV4` and
+ * `inetAddressV6`, and returning internet addresses unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const inetAddressFromInput: (input: InetAddressInput) => Result.Result<InetAddress, NetAddressError>;
+/**
+ * Converts a trusted `InetAddressInput` to an internet address, throwing on failure.
+ *
+ * @stability unstable
+ * @category unsafe
+ * @since 4.0.0
+ */
+export declare const inetAddressFromInputUnsafe: (input: InetAddressInput) => InetAddress;
 /**
  * Formats the numeric host of an internet address without brackets or a port,
  * preserving a nonzero IPv6 scope ID as a `%` suffix.
@@ -1102,8 +1462,9 @@ export declare const formatUnixPath: (self: UnixPathAddress) => string;
  *
  * **Details**
  *
- * Numeric IP strings are parsed without hostname resolution. Invalid IP
- * literals, ports, and input shapes return a `NetAddressError`.
+ * Internet addresses are converted like `inetAddressFromInput`, without
+ * hostname resolution. Invalid IP literals, ports, and input shapes return a
+ * `NetAddressError`.
  *
  * @stability unstable
  * @category constructors

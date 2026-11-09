@@ -56,6 +56,15 @@ export declare namespace RpcClient {
         } : {
             readonly headers?: Headers.Input | undefined;
             readonly context?: Context.Context<never> | undefined;
+            /**
+             * Completes once the server acknowledges the call as its handler starts,
+             * after the middleware has run, instead of waiting for the result. The
+             * handler's result and error are not returned, but transport errors,
+             * middleware errors and failures before the handler starts still fail the
+             * call. Over HTTP and workers the call completes after the handler has
+             * finished. A protocol that only delivers requests acknowledges the call
+             * itself once it has delivered the request.
+             */
             readonly discard?: Discard | undefined;
         }) => Current extends Rpc.Rpc<infer _Tag, infer _Payload, infer _Success, infer _Error, infer _Middleware, infer _Requires> ? [_Success] extends [RpcSchema.Stream<infer _A, infer _E>] ? AsQueue extends true ? Effect.Effect<Queue.Dequeue<_A["Type"], _E["Type"] | _Error["Type"] | E | _Middleware["error"]["Type"] | _Middleware["~ClientError"] | Cause.Done>, never, Scope.Scope | _Payload["EncodingServices"] | _Success["DecodingServices"] | _Error["DecodingServices"] | _Middleware["error"]["DecodingServices"]> : Stream.Stream<_A["Type"], _E["Type"] | _Error["Type"] | E | _Middleware["error"]["Type"] | _Middleware["~ClientError"], _Payload["EncodingServices"] | _Success["DecodingServices"] | _Error["DecodingServices"] | _Middleware["error"]["DecodingServices"]> : Effect.Effect<Discard extends true ? void : _Success["Type"], (Discard extends true ? never : _Error["Type"]) | E | _Middleware["error"]["Type"] | _Middleware["~ClientError"], _Payload["EncodingServices"] | _Success["DecodingServices"] | _Error["DecodingServices"] | _Middleware["error"]["DecodingServices"]> : never;
     };
@@ -75,6 +84,15 @@ export declare namespace RpcClient {
     } : {
         readonly headers?: Headers.Input | undefined;
         readonly context?: Context.Context<never> | undefined;
+        /**
+         * Completes once the server acknowledges the call as its handler starts,
+         * after the middleware has run, instead of waiting for the result. The
+         * handler's result and error are not returned, but transport errors,
+         * middleware errors and failures before the handler starts still fail the
+         * call. Over HTTP and workers the call completes after the handler has
+         * finished. A protocol that only delivers requests acknowledges the call
+         * itself once it has delivered the request.
+         */
         readonly discard?: Discard | undefined;
     }) => Rpcs extends Rpc.Rpc<infer _Tag extends Tag, infer _Payload, infer _Success, infer _Error, infer _Middleware, infer _Requires> ? [_Success] extends [RpcSchema.Stream<infer _A, infer _E>] ? AsQueue extends true ? Effect.Effect<Queue.Dequeue<_A["Type"], _E["Type"] | _Error["Type"] | E | _Middleware["error"]["Type"] | _Middleware["~ClientError"]>, never, Scope.Scope | _Payload["EncodingServices"] | _Success["DecodingServices"] | _Error["DecodingServices"] | _Middleware["error"]["DecodingServices"]> : Stream.Stream<_A["Type"], _E["Type"] | _Error["Type"] | E | _Middleware["error"]["Type"] | _Middleware["~ClientError"], _Payload["EncodingServices"] | _Success["DecodingServices"] | _Error["DecodingServices"] | _Middleware["error"]["DecodingServices"]> : Effect.Effect<Discard extends true ? void : _Success["Type"], (Discard extends true ? never : _Error["Type"]) | E | _Middleware["error"]["Type"] | _Middleware["~ClientError"], _Payload["EncodingServices"] | _Success["DecodingServices"] | _Error["DecodingServices"] | _Middleware["error"]["DecodingServices"]> : never;
 }
@@ -100,7 +118,6 @@ export declare const makeNoSerialization: <Rpcs extends Rpc.Any, E, const Flatte
     readonly onFromClient: (options: {
         readonly message: FromClient<Rpcs>;
         readonly context: Context.Context<never>;
-        readonly discard: boolean;
     }) => Effect.Effect<void, E>;
     readonly supportsAck?: boolean | undefined;
     readonly spanPrefix?: string | undefined;
@@ -189,6 +206,16 @@ declare const Protocol_base: Context.ServiceClass<Protocol, "effect/rpc/RpcClien
  * Use to provide the transport boundary for RPC clients over HTTP, WebSocket,
  * workers, sockets, or custom protocols.
  *
+ * **Details**
+ *
+ * A `Request` that `send` accepts stays pending until a reply names its id: an
+ * `Exit`, or a `ClientProtocolError` that lists it in `requestIds`. Until then
+ * the client keeps the request and the caller's context, unless the caller is
+ * interrupted, the client closes or the connection fails. A transport that
+ * only delivers requests, such as a message queue, writes a void `Exit` for a
+ * `discard` request once the request is delivered, and fails `send` with an
+ * `RpcClientError` for any other request.
+ *
  * @stability unstable
  * @category services
  * @since 4.0.0
@@ -203,17 +230,37 @@ export declare class Protocol extends Protocol_base {
     static make: typeof withRunClient;
 }
 /**
- * Creates a client `Protocol` that sends each RPC request through the supplied
+ * Creates a client `Protocol` that sends RPC requests through the supplied
  * `HttpClient` and decodes responses with the current `RpcSerialization`.
+ *
+ * **Details**
+ *
+ * Each request is sent as its own HTTP request unless `batch` is set. With
+ * `batch`, the first request for a client opens a batch. Requests from the
+ * same client made before `window` elapses join it, and the batch is sent once
+ * the window elapses or it reaches `maxSize` requests, whichever comes first.
  *
  * @stability unstable
  * @category protocols
  * @since 4.0.0
  */
-export declare const makeProtocolHttp: (client: HttpClient.HttpClient) => Effect.Effect<Protocol["Service"], never, RpcSerialization.RpcSerialization>;
+export declare const makeProtocolHttp: (client: HttpClient.HttpClient, options?: {
+    readonly batch?: {
+        readonly window: Duration.Input;
+        readonly maxSize?: number | undefined;
+    } | undefined;
+}) => Effect.Effect<Protocol["Service"], never, RpcSerialization.RpcSerialization>;
 /**
  * Provides a client `Protocol` backed by `HttpClient`, targeting the configured
  * URL and optionally transforming the client before use.
+ *
+ * **Details**
+ *
+ * Set `batch` to send concurrent requests from the same client in a single
+ * HTTP request. The first request for a client opens a batch. Requests from
+ * the same client made before `window` elapses join it, and the batch is sent
+ * once the window elapses or it reaches `maxSize` requests, whichever comes
+ * first.
  *
  * @stability unstable
  * @category layers
@@ -222,6 +269,10 @@ export declare const makeProtocolHttp: (client: HttpClient.HttpClient) => Effect
 export declare const layerProtocolHttp: (options: {
     readonly url: string;
     readonly transformClient?: <E, R>(client: HttpClient.HttpClient.With<E, R>) => HttpClient.HttpClient.With<E, R>;
+    readonly batch?: {
+        readonly window: Duration.Input;
+        readonly maxSize?: number | undefined;
+    } | undefined;
 }) => Layer.Layer<Protocol, never, RpcSerialization.RpcSerialization | HttpClient.HttpClient>;
 /**
  * Creates a client `Protocol` over the current `Socket`, using the current
@@ -245,11 +296,19 @@ export declare const makeProtocolSocket: (options?: {
     readonly retryPolicy?: Schedule.Schedule<any, Socket.SocketError> | undefined;
     /**
      * Runs for each retried `SocketOpenError` when `retryTransientErrors` is enabled.
-     * A ping timeout fails in-flight calls and is not reported through this hook.
-     * The returned `Effect<void>` cannot fail with a typed error or require
-     * services; defects are logged and ignored so retries can continue.
+     * A ping timeout fails in-flight calls and is reported through `onPingTimeout`
+     * instead. The returned `Effect<void>` cannot fail with a typed error or
+     * require services; defects are logged and ignored so retries can continue.
      */
     readonly onTransientError?: ((error: RpcClientError) => Effect.Effect<void>) | undefined;
+    /**
+     * Runs when an open connection is dropped because no server frame arrived
+     * within `pingTimeout`, before `ConnectionHooks.onDisconnect` and before
+     * in-flight calls fail with a `SocketReadError`. Defects are logged and ignored.
+     *
+     * @since 4.0.3
+     */
+    readonly onPingTimeout?: Effect.Effect<void> | undefined;
 }) => Effect.Effect<Protocol["Service"], never, Scope.Scope | RpcSerialization.RpcSerialization | Socket.Socket>;
 /**
  * Provides a client `Protocol` backed by the current `Socket` and
@@ -273,11 +332,19 @@ export declare const layerProtocolSocket: (options?: {
     readonly retryPolicy?: Schedule.Schedule<any, Socket.SocketError> | undefined;
     /**
      * Runs for each retried `SocketOpenError` when `retryTransientErrors` is enabled.
-     * A ping timeout fails in-flight calls and is not reported through this hook.
-     * The returned `Effect<void>` cannot fail with a typed error or require
-     * services; defects are logged and ignored so retries can continue.
+     * A ping timeout fails in-flight calls and is reported through `onPingTimeout`
+     * instead. The returned `Effect<void>` cannot fail with a typed error or
+     * require services; defects are logged and ignored so retries can continue.
      */
     readonly onTransientError?: ((error: RpcClientError) => Effect.Effect<void>) | undefined;
+    /**
+     * Runs when an open connection is dropped because no server frame arrived
+     * within `pingTimeout`, before `ConnectionHooks.onDisconnect` and before
+     * in-flight calls fail with a `SocketReadError`. Defects are logged and ignored.
+     *
+     * @since 4.0.3
+     */
+    readonly onPingTimeout?: Effect.Effect<void> | undefined;
 }) => Layer.Layer<Protocol, never, Socket.Socket | RpcSerialization.RpcSerialization>;
 /**
  * Creates a client `Protocol` backed by a pool of workers, routing RPC requests

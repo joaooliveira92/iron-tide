@@ -1,10 +1,11 @@
+import * as Bytes from "../Bytes.js";
 import * as Data from "../Data.js";
 import * as Equal from "../Equal.js";
 import { dual } from "../Function.js";
 import * as Hash from "../Hash.js";
-import { NodeInspectSymbol } from "../Inspectable.js";
+import * as Inspectable from "../Inspectable.js";
 import * as Option from "../Option.js";
-import { hasProperty } from "../Predicate.js";
+import { hasProperty, isTupleOf } from "../Predicate.js";
 import * as Result from "../Result.js";
 const TypeId = "~effect/net/NetAddress";
 const MulticastTypeId = "~effect/net/NetAddress/MulticastAddress";
@@ -72,6 +73,32 @@ export const isIpAddress = u => isIpv4Address(u) || isIpv6Address(u);
  */
 export const width = address => isIpv4Address(address) ? 32 : 128;
 /**
+ * Returns the family of an IP address or internet address.
+ *
+ * **Example** (Reading address families)
+ *
+ * ```ts import.meta.vitest
+ * import { NetAddress } from "effect/net"
+ *
+ * NetAddress.familyOf(NetAddress.ipv4Loopback) // => "IPv4"
+ * NetAddress.familyOf(NetAddress.inetAddressFromStringUnsafe("[::1]:80")) // => "IPv6"
+ * ```
+ *
+ * @stability experimental
+ * @category getters
+ * @since 4.0.0
+ */
+export const familyOf = self => isIpv4Address(self) || isInetAddressV4(self) ? "IPv4" : "IPv6";
+/**
+ * Returns `true` when an IP address or internet address belongs to a family,
+ * narrowing it to that family.
+ *
+ * @stability experimental
+ * @category predicates
+ * @since 4.0.0
+ */
+export const isFamily = /*#__PURE__*/dual(2, (self, family) => familyOf(self) === family);
+/**
  * Returns `true` when a value is a MAC address.
  *
  * @stability unstable
@@ -120,6 +147,7 @@ export const isUnixPathAddress = u => isAddress(u) && u._tag === "UnixPathAddres
  */
 export const isSocketAddress = u => isInetAddress(u) || isUnixPathAddress(u);
 const Ipv4Proto = {
+  ...Inspectable.BaseProto,
   _tag: "Ipv4Address",
   [TypeId]: TypeId,
   [Equal.symbol](that) {
@@ -133,12 +161,10 @@ const Ipv4Proto = {
   },
   toJSON() {
     return this.toString();
-  },
-  [NodeInspectSymbol]() {
-    return this.toJSON();
   }
 };
 const Ipv6Proto = {
+  ...Inspectable.BaseProto,
   _tag: "Ipv6Address",
   [TypeId]: TypeId,
   [Equal.symbol](that) {
@@ -159,16 +185,14 @@ const Ipv6Proto = {
   },
   toJSON() {
     return this.toString();
-  },
-  [NodeInspectSymbol]() {
-    return this.toJSON();
   }
 };
 const MacProto = {
+  ...Inspectable.BaseProto,
   _tag: "MacAddress",
   [TypeId]: TypeId,
   [Equal.symbol](that) {
-    return isMacAddress(that) && bytesEqual(getMacBytes(this), getMacBytes(that));
+    return isMacAddress(that) && Bytes.Equivalence(getMacBytes(this), getMacBytes(that));
   },
   [Hash.symbol]() {
     return Hash.combine(macHashSeed, Hash.array(getMacBytes(this)));
@@ -178,17 +202,7 @@ const MacProto = {
   },
   toJSON() {
     return this.toString();
-  },
-  [NodeInspectSymbol]() {
-    return this.toJSON();
   }
-};
-const bytesEqual = (self, that) => {
-  if (self.length !== that.length) return false;
-  for (let index = 0; index < self.length; index++) {
-    if (self[index] !== that[index]) return false;
-  }
-  return true;
 };
 const ipv4HashSeed = /*#__PURE__*/Hash.string("Ipv4Address");
 const ipv6HashSeed = /*#__PURE__*/Hash.string("Ipv6Address");
@@ -248,6 +262,14 @@ export const ipv4Loopback = /*#__PURE__*/makeIpv4(0x7f000001);
  */
 export const ipv6Loopback = /*#__PURE__*/makeIpv6(0, 0, 0, 1);
 /**
+ * The loopback addresses `127.0.0.1` and `::1`.
+ *
+ * @stability unstable
+ * @category constants
+ * @since 4.0.0
+ */
+export const loopbackAddresses = [ipv4Loopback, ipv6Loopback];
+/**
  * The unspecified IPv4 address `0.0.0.0`.
  *
  * @stability unstable
@@ -275,6 +297,14 @@ const addressError = (input, message) => Result.fail(new NetAddressError({
   input,
   message
 }));
+// Checks by index because `every` skips holes in sparse arrays.
+const allIntegersInRange = (values, max) => {
+  for (let i = 0; i < values.length; i++) {
+    const n = values[i];
+    if (!Number.isInteger(n) || n < 0 || n > max) return false;
+  }
+  return true;
+};
 /**
  * Creates an IPv4 address from four checked octets.
  *
@@ -283,7 +313,7 @@ const addressError = (input, message) => Result.fail(new NetAddressError({
  * @since 4.0.0
  */
 export const ipv4FromOctets = octets => {
-  if (!octets.every(n => Number.isInteger(n) && n >= 0 && n <= 255)) {
+  if (!allIntegersInRange(octets, 255)) {
     return addressError(octets, "octets must be integers from 0 through 255");
   }
   return Result.succeed(makeIpv4(packOctets(octets[0], octets[1], octets[2], octets[3])));
@@ -296,7 +326,7 @@ export const ipv4FromOctets = octets => {
  * @since 4.0.0
  */
 export const ipv6FromSegments = segments => {
-  if (!segments.every(n => Number.isInteger(n) && n >= 0 && n <= 0xffff)) {
+  if (!allIntegersInRange(segments, 0xffff)) {
     return addressError(segments, "segments must be integers from 0 through 65535");
   }
   return Result.succeed(makeIpv6(segments[0] * 0x10000 + segments[1], segments[2] * 0x10000 + segments[3], segments[4] * 0x10000 + segments[5], segments[6] * 0x10000 + segments[7]));
@@ -309,7 +339,7 @@ export const ipv6FromSegments = segments => {
  * @since 4.0.0
  */
 export const macAddressFromOctets = octets => {
-  if (!octets.every(n => Number.isInteger(n) && n >= 0 && n <= 255)) {
+  if (!allIntegersInRange(octets, 255)) {
     return addressError(octets, "octets must be integers from 0 through 255");
   }
   return Result.succeed(makeMac(new Uint8Array(octets)));
@@ -335,6 +365,29 @@ export const macAddressFromString = input => {
  * @since 4.0.0
  */
 export const macAddressFromStringUnsafe = input => Result.getOrThrow(macAddressFromString(input));
+/**
+ * Converts a `MacAddressInput` to a MAC address, parsing strings like
+ * `macAddressFromString`, checking octets like `macAddressFromOctets`, and
+ * returning MAC addresses unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export const macAddressFromInput = input => {
+  if (isMacAddress(input)) return Result.succeed(input);
+  if (typeof input === "string") return macAddressFromString(input);
+  if (Array.isArray(input) && isTupleOf(input, 6)) return macAddressFromOctets(input);
+  return addressError(input, "expected a MAC address, string, or 6 octets");
+};
+/**
+ * Converts a trusted `MacAddressInput` to a MAC address, throwing on failure.
+ *
+ * @stability unstable
+ * @category unsafe
+ * @since 4.0.0
+ */
+export const macAddressFromInputUnsafe = input => Result.getOrThrow(macAddressFromInput(input));
 /**
  * Parses a strict dotted-decimal IPv4 address.
  *
@@ -426,6 +479,127 @@ export const ipFromString = input => {
  * @since 4.0.0
  */
 export const ipFromStringUnsafe = input => Result.getOrThrow(ipFromString(input));
+/**
+ * Converts an `IpAddressInput` to an IP address, returning IP addresses
+ * unchanged.
+ *
+ * **Details**
+ *
+ * Strings are parsed like `ipFromString`. Four octets or bytes make an IPv4
+ * address, and eight segments or sixteen bytes make an IPv6 address.
+ *
+ * **Example** (Converting IP address inputs)
+ *
+ * ```ts import.meta.vitest
+ * import { Result } from "effect"
+ * import { NetAddress } from "effect/net"
+ *
+ * const address = Result.getOrThrow(NetAddress.ipFromInput("192.0.2.1"))
+ * NetAddress.formatIp(address) // => "192.0.2.1"
+ * Result.getOrThrow(NetAddress.ipFromInput(address)) === address // => true
+ * NetAddress.formatIp(Result.getOrThrow(NetAddress.ipFromInput([192, 0, 2, 1]))) // => "192.0.2.1"
+ * Result.isFailure(NetAddress.ipFromInput("example.com")) // => true
+ * ```
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export const ipFromInput = input => {
+  if (isIpAddress(input)) return Result.succeed(input);
+  if (typeof input === "string") return ipFromString(input);
+  if (input instanceof Uint8Array && input.length === 4) return Result.succeed(ipv4FromBytesUnsafe(input));
+  if (input instanceof Uint8Array && input.length === 16) return Result.succeed(ipv6FromBytesUnsafe(input));
+  if (Array.isArray(input) && isTupleOf(input, 4)) return ipv4FromOctets(input);
+  if (Array.isArray(input) && isTupleOf(input, 8)) return ipv6FromSegments(input);
+  return addressError(input, "expected an IP address, string, 4 octets, 8 segments, or 4 or 16 bytes");
+};
+/**
+ * Converts a trusted `IpAddressInput` to an IP address, throwing on failure.
+ *
+ * @stability unstable
+ * @category unsafe
+ * @since 4.0.0
+ */
+export const ipFromInputUnsafe = input => Result.getOrThrow(ipFromInput(input));
+/**
+ * Converts an `Ipv4AddressInput` to an IPv4 address, parsing strings like
+ * `ipv4FromString`, checking octets like `ipv4FromOctets`, and returning IPv4
+ * addresses unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export const ipv4FromInput = input => {
+  if (isIpv4Address(input)) return Result.succeed(input);
+  if (typeof input === "string") return ipv4FromString(input);
+  if (input instanceof Uint8Array && input.length === 4) return Result.succeed(ipv4FromBytesUnsafe(input));
+  if (Array.isArray(input) && isTupleOf(input, 4)) return ipv4FromOctets(input);
+  return addressError(input, "expected an IPv4 address, string, 4 octets, or 4 bytes");
+};
+/**
+ * Converts an `Ipv6AddressInput` to an IPv6 address, parsing strings like
+ * `ipv6FromString`, checking segments like `ipv6FromSegments`, and returning
+ * IPv6 addresses unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export const ipv6FromInput = input => {
+  if (isIpv6Address(input)) return Result.succeed(input);
+  if (typeof input === "string") return ipv6FromString(input);
+  if (input instanceof Uint8Array && input.length === 16) return Result.succeed(ipv6FromBytesUnsafe(input));
+  if (Array.isArray(input) && isTupleOf(input, 8)) return ipv6FromSegments(input);
+  return addressError(input, "expected an IPv6 address, string, 8 segments, or 16 bytes");
+};
+/**
+ * Returns `true` when a value is a canonical scoped IPv6 literal.
+ *
+ * @stability experimental
+ * @category guards
+ * @since 4.0.0
+ */
+export const isScopedIpv6Literal = u => {
+  if (typeof u !== "string" || !u.includes("%")) return false;
+  const result = scopedIpv6LiteralFromString(u);
+  return Result.isSuccess(result) && result.success === u;
+};
+/**
+ * Parses an IPv6 literal with a numeric or named zone, such as `fe80::1%eth0`.
+ *
+ * @stability experimental
+ * @category decoding
+ * @since 4.0.0
+ */
+export const scopedIpv6LiteralFromString = input => {
+  const separator = input.indexOf("%");
+  if (separator === -1) return addressError(input, "expected an IPv6 zone");
+  let zone = input.slice(separator + 1);
+  if (zone.length === 0 || /[%[\]/\s\p{Cc}]/u.test(zone)) {
+    return addressError(input, "invalid IPv6 scope identifier");
+  }
+  if (/^\d+$/.test(zone)) {
+    const scopeId = Number(zone);
+    if (scopeId > 0xffffffff) return addressError(input, "scope identifier must be an unsigned 32-bit integer");
+    zone = String(scopeId);
+  }
+  return Result.map(ipv6FromString(input.slice(0, separator)), address => `${formatIp(address)}%${zone}`);
+};
+/**
+ * Converts a `ScopedIpv6LiteralInput` to a scoped IPv6 literal, parsing it
+ * like `scopedIpv6LiteralFromString`.
+ *
+ * **Details**
+ *
+ * Scoped IPv6 literals are strings, so every input is parsed.
+ *
+ * @stability experimental
+ * @category constructors
+ * @since 4.0.0
+ */
+export const scopedIpv6LiteralFromInput = input => scopedIpv6LiteralFromString(input);
 /**
  * Returns the four numeric octets of an IPv4 address in a fresh tuple.
  *
@@ -738,6 +912,7 @@ export function toCanonical(self) {
   return isIpv6Address(self) ? Option.getOrElse(fromIpv4Mapped(self), () => self) : self;
 }
 const InetV4Proto = {
+  ...Inspectable.BaseProto,
   _tag: "InetAddressV4",
   [TypeId]: TypeId,
   [Equal.symbol](that) {
@@ -751,12 +926,10 @@ const InetV4Proto = {
   },
   toJSON() {
     return this.toString();
-  },
-  [NodeInspectSymbol]() {
-    return this.toJSON();
   }
 };
 const InetV6Proto = {
+  ...Inspectable.BaseProto,
   _tag: "InetAddressV6",
   [TypeId]: TypeId,
   [Equal.symbol](that) {
@@ -770,9 +943,6 @@ const InetV6Proto = {
   },
   toJSON() {
     return this.toString();
-  },
-  [NodeInspectSymbol]() {
-    return this.toJSON();
   }
 };
 const checkPort = port => Number.isInteger(port) && port >= 0 && port <= 0xffff;
@@ -858,6 +1028,103 @@ export const inetAddressFromIpString = (address, port) => {
  */
 export const inetAddressFromIpStringUnsafe = (address, port) => Result.getOrThrow(inetAddressFromIpString(address, port));
 /**
+ * Creates an internet address from a trusted native numeric host and port.
+ * Named IPv6 zones are resolved using the supplied interface-to-scope map.
+ * Use only for runtime-supplied socket addresses: this skips input validation,
+ * so malformed strings or ports may silently produce incorrect values. An
+ * unknown named IPv6 zone throws rather than losing its scope.
+ *
+ * @stability unstable
+ * @category unsafe
+ * @since 4.0.0
+ */
+export const inetAddressFromNativeUnsafe = (host, port, scopeIds) => {
+  const zoneStart = host.indexOf("%");
+  const end = zoneStart === -1 ? host.length : zoneStart;
+  if (host.indexOf(":") === -1) {
+    const self = Object.create(InetV4Proto);
+    self.address = makeIpv4(parseNativeIpv4(host, 0, end));
+    self.port = port;
+    return Object.freeze(self);
+  }
+  let scopeId = 0;
+  if (zoneStart !== -1) {
+    const zone = host.slice(zoneStart + 1);
+    const resolved = numericZone.test(zone) ? Number(zone) : scopeIds?.get(zone);
+    if (resolved === undefined) throw new Error(`unknown IPv6 interface: ${zone}`);
+    scopeId = resolved;
+  }
+  let w0 = 0;
+  let w1 = 0;
+  let w2 = 0;
+  let w3 = 0;
+  let segment = 0;
+  let i = 0;
+  while (i < end) {
+    if (host.charCodeAt(i) === 58) {
+      // The rest of a compressed address is anchored at the last segment.
+      i += 2;
+      if (i === end) break;
+      let remaining = 1;
+      for (let j = i; j < end; j++) {
+        if (host.charCodeAt(j) === 58) remaining++;
+      }
+      const dot = host.indexOf(".", i);
+      if (dot !== -1 && dot < end) remaining++;
+      segment = 8 - remaining;
+    }
+    const start = i;
+    let value = 0;
+    while (i < end) {
+      const ch = host.charCodeAt(i);
+      if (ch === 58 || ch === 46) break;
+      value = value << 4 | (ch <= 57 ? ch - 48 : (ch & 0x5f) - 55);
+      i++;
+    }
+    if (i < end && host.charCodeAt(i) === 46) {
+      w3 = parseNativeIpv4(host, start, end);
+      break;
+    }
+    // even segments fill the high half of their 32-bit word
+    const shifted = value << (1 - (segment & 1)) * 16;
+    switch (segment >>> 1) {
+      case 0:
+        w0 |= shifted;
+        break;
+      case 1:
+        w1 |= shifted;
+        break;
+      case 2:
+        w2 |= shifted;
+        break;
+      default:
+        w3 |= shifted;
+    }
+    segment++;
+    if (i < end && host.charCodeAt(i + 1) !== 58) i++;
+  }
+  const self = Object.create(InetV6Proto);
+  self.address = makeIpv6(w0, w1, w2, w3);
+  self.port = port;
+  self.scopeId = scopeId;
+  return Object.freeze(self);
+};
+const numericZone = /^\d+$/;
+const parseNativeIpv4 = (host, start, end) => {
+  let value = 0;
+  let octet = 0;
+  for (let i = start; i < end; i++) {
+    const ch = host.charCodeAt(i);
+    if (ch === 46) {
+      value = value << 8 | octet;
+      octet = 0;
+    } else {
+      octet = octet * 10 + ch - 48;
+    }
+  }
+  return (value << 8 | octet) >>> 0;
+};
+/**
  * Parses an unbracketed numeric host and port, resolving named IPv6 zones using
  * a supplied map of interface names to numeric scope IDs.
  *
@@ -890,6 +1157,29 @@ export const inetAddressFromHostString = (host, port, scopeIds) => {
   return inetAddressFromString(host.includes(":") ? `[${host}]:${port}` : `${host}:${port}`);
 };
 /**
+ * Returns the IPv6 scope ID of a network interface from its addresses.
+ *
+ * **Details**
+ *
+ * The first IPv6 address with a positive scope ID supplies the result. Accepts
+ * the addresses of one interface, such as `os.networkInterfaces()[name]` or the
+ * entries of `Deno.networkInterfaces()` with that name, without performing any
+ * operating-system lookup itself.
+ *
+ * @see {@link scopeIdsFromInterfaces} for mapping every interface at once
+ * @stability experimental
+ * @category converting
+ * @since 4.0.0
+ */
+export const scopeIdFromInterface = addresses => {
+  for (const address of addresses ?? []) {
+    if (address.family === "IPv6" && typeof address.scopeid === "number" && address.scopeid > 0) {
+      return Option.some(address.scopeid);
+    }
+  }
+  return Option.none();
+};
+/**
  * Creates a map from interface names to IPv6 scope IDs using supplied interface
  * entries.
  *
@@ -909,8 +1199,8 @@ export const inetAddressFromHostString = (host, port, scopeIds) => {
 export const scopeIdsFromInterfaces = interfaces => {
   const scopeIds = new Map();
   for (const [name, addresses] of interfaces) {
-    const address = addresses?.find(address => address.family === "IPv6" && (address.scopeid ?? 0) > 0);
-    if (address?.scopeid !== undefined) scopeIds.set(name, address.scopeid);
+    const scopeId = scopeIdFromInterface(addresses);
+    if (Option.isSome(scopeId)) scopeIds.set(name, scopeId.value);
   }
   return scopeIds;
 };
@@ -976,6 +1266,40 @@ export const inetAddressFromString = input => {
  * @since 4.0.0
  */
 export const inetAddressFromStringUnsafe = input => Result.getOrThrow(inetAddressFromString(input));
+/**
+ * Converts an `InetAddressInput` to an internet address, parsing strings like
+ * `inetAddressFromString`, converting parts like `inetAddressV4` and
+ * `inetAddressV6`, and returning internet addresses unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export const inetAddressFromInput = input => {
+  if (isInetAddress(input)) return Result.succeed(input);
+  if (typeof input === "string") return inetAddressFromString(input);
+  if (!hasProperty(input, "address") || !hasProperty(input, "port")) {
+    return addressError(input, "expected an address and port");
+  }
+  const {
+    port,
+    scopeId
+  } = input;
+  return Result.flatMap(ipFromInput(input.address), address => {
+    if (isIpv6Address(address)) return inetAddressV6(address, port, {
+      scopeId
+    });
+    return (scopeId ?? 0) === 0 ? inetAddressV4(address, port) : addressError(input, "scopeId requires an IPv6 address");
+  });
+};
+/**
+ * Converts a trusted `InetAddressInput` to an internet address, throwing on failure.
+ *
+ * @stability unstable
+ * @category unsafe
+ * @since 4.0.0
+ */
+export const inetAddressFromInputUnsafe = input => Result.getOrThrow(inetAddressFromInput(input));
 /**
  * Formats the numeric host of an internet address without brackets or a port,
  * preserving a nonzero IPv6 scope ID as a `%` suffix.
@@ -1137,6 +1461,7 @@ export const formatUrlUnsafe = (self, scheme = "http") => Result.getOrThrow(form
  */
 export const formatUrlHostString = host => host.includes(":") && !host.startsWith("[") ? `[${host}]` : host;
 const UnixPathProto = {
+  ...Inspectable.BaseProto,
   _tag: "UnixPathAddress",
   [TypeId]: TypeId,
   [Equal.symbol](that) {
@@ -1150,9 +1475,6 @@ const UnixPathProto = {
   },
   toJSON() {
     return this.toString();
-  },
-  [NodeInspectSymbol]() {
-    return this.toJSON();
   }
 };
 /**
@@ -1185,24 +1507,20 @@ export const formatUnixPath = self => `unix://${self.path}`;
  *
  * **Details**
  *
- * Numeric IP strings are parsed without hostname resolution. Invalid IP
- * literals, ports, and input shapes return a `NetAddressError`.
+ * Internet addresses are converted like `inetAddressFromInput`, without
+ * hostname resolution. Invalid IP literals, ports, and input shapes return a
+ * `NetAddressError`.
  *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
 export const socketAddressFromInput = input => {
-  if (isSocketAddress(input)) return Result.succeed(input);
-  if (typeof input === "string") return inetAddressFromString(input);
+  if (isUnixPathAddress(input)) return Result.succeed(input);
   if (hasProperty(input, "path")) {
     return typeof input.path === "string" ? Result.succeed(unixPathAddress(input.path)) : addressError(input, "path must be a string");
   }
-  if (!hasProperty(input, "address") || !hasProperty(input, "port")) {
-    return addressError(input, "expected an address and port or a Unix path");
-  }
-  const address = typeof input.address === "string" ? ipFromString(input.address) : isIpAddress(input.address) ? Result.succeed(input.address) : addressError(input, "address must be an IP address or numeric IP string");
-  return Result.flatMap(address, address => inetAddress(address, input.port));
+  return inetAddressFromInput(input);
 };
 /**
  * Converts a trusted `SocketAddress.Input` to a concrete socket address,

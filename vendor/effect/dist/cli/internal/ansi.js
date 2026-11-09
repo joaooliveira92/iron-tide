@@ -86,9 +86,26 @@ export const blackBright = `${ESC}90m`;
  * @internal
  */
 export const cyanBright = `${ESC}96m`;
-export const annotate = (text, ...styles) => {
-  const flat = styles.flat();
-  return `${flat.join("")}${text}${reset}`;
+/**
+ * Wraps `text` in the given styles followed by a reset. When `colors` is
+ * `false` the text is returned unchanged, so callers gate color and style
+ * escapes in one place while cursor and erase controls stay untouched.
+ *
+ * @internal
+ */
+export const annotate = (colors, text, ...styles) => {
+  if (!colors) return text;
+  return `${styles.flat().join("")}${text}${reset}`;
+};
+/**
+ * Detects whether CLI output should use color and style escapes: stdout must
+ * be a TTY and `NO_COLOR` must be unset or empty.
+ *
+ * @internal
+ */
+export const detectColors = () => {
+  const globalProcess = globalThis.process;
+  return typeof globalProcess === "object" && globalProcess !== null && typeof globalProcess.stdout === "object" && globalProcess.stdout !== null && globalProcess.stdout.isTTY === true && !globalProcess.env?.NO_COLOR;
 };
 export const combine = (...styles) => styles;
 /**

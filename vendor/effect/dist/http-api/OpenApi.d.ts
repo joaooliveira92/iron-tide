@@ -2,6 +2,7 @@ import type { NonEmptyArray } from "../Array.ts";
 import * as Context from "../Context.ts";
 import * as HttpMethod from "../http/HttpMethod.ts";
 import * as JsonSchema from "../JsonSchema.ts";
+import * as Schema from "../Schema.ts";
 import type * as SchemaRepresentation from "../SchemaRepresentation.ts";
 import * as HttpApi from "./HttpApi.ts";
 import type * as HttpApiGroup from "./HttpApiGroup.ts";
@@ -167,6 +168,15 @@ export declare const annotations: (options: {
     readonly transform?: ((openApiSpec: Record<string, any>) => Record<string, any>) | undefined;
 }) => Context.Context<never>;
 /**
+ * Options for {@link fromApi}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface FromApiOptions extends SchemaRepresentation.ToRepresentationOptions, Pick<Schema.ToJsonSchemaOptions, "includeAnnotationKey"> {
+}
+/**
  * Generates an OpenAPI 3.1 specification from an `HttpApi`.
  *
  * **When to use**
@@ -186,7 +196,8 @@ export declare const annotations: (options: {
  * integrates annotations like descriptions, summaries, external documentation,
  * and overrides. The optional reference policy receives canonical JSON encoded
  * ASTs and controls which schemas are extracted into components. By default, only candidates with resolved identifiers
- * become references; anonymous non-recursive schemas remain inline.
+ * become references; anonymous non-recursive schemas remain inline. The optional `includeAnnotationKey` predicate selects
+ * custom schema annotation keys, such as `x-*` vendor extensions, to include in the generated schemas.
  *
  * **Gotchas**
  *
@@ -198,7 +209,7 @@ export declare const annotations: (options: {
  * @category constructors
  * @since 4.0.0
  */
-export declare function fromApi<Id extends string, Groups extends HttpApiGroup.Constraint>(api: HttpApi.HttpApi<Id, Groups>, options?: SchemaRepresentation.ToRepresentationOptions): OpenAPISpec;
+export declare function fromApi<Id extends string, Groups extends HttpApiGroup.Constraint>(api: HttpApi.HttpApi<Id, Groups>, options?: FromApiOptions): OpenAPISpec;
 /**
  * This model describes the OpenAPI specification (version 3.1.0) returned by
  * {@link fromApi}. It is not intended to describe the entire OpenAPI
@@ -385,7 +396,8 @@ export interface OpenApiSpecMediaType {
     "x-effect-stream"?: OpenApiSpecEffectStream;
 }
 /**
- * Effect-specific metadata for generated streaming response media types.
+ * Effect-specific metadata for generated streaming request and response media
+ * types.
  *
  * @stability unstable
  * @category models
@@ -398,6 +410,8 @@ export type OpenApiSpecEffectStream = {
     failureEvent: "effect/http-api/stream/failure";
 } | {
     encoding: "uint8array";
+} | {
+    encoding: "ndjson";
 };
 /**
  * Generated OpenAPI request body object for endpoint payloads.

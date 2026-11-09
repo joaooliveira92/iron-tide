@@ -7,9 +7,53 @@
  * @stability unstable
  * @since 4.0.0
  */
+/*
+ * The behavior is based on `toml` 4.1.2.
+ *
+ * Copyright (c) 2012 Michelle Tilley
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+import * as Result from "../Result.js";
+import { EncodingError } from "./EncodingError.js";
 const hasOwn = Object.prototype.hasOwnProperty;
 const makeTable = () => Object.create(null);
 const isTable = value => typeof value === "object" && value !== null && !Array.isArray(value) && !(value instanceof Date);
+const localDatePattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+const localTimePattern = /^(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?$/;
+const numericOffsetPattern = /^[+-](\d{2}):(\d{2})$/;
+const dateTimePattern = /^(\d{4}-\d{2}-\d{2})[Tt](\d{2}:\d{2}:\d{2}(?:\.\d+)?)([Zz]|[+-]\d{2}:\d{2})?$/;
+const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const isValidDate = date => {
+  const [, year, month, day] = localDatePattern.exec(date).map(Number);
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = month === 2 && leap ? 29 : daysInMonth[month - 1];
+  return month >= 1 && month <= 12 && day >= 1 && day <= days;
+};
+const isValidTime = time => {
+  const [, hour, minute, second] = localTimePattern.exec(time).map(Number);
+  return hour <= 23 && minute <= 59 && second <= 60;
+};
+const isValidOffset = offset => {
+  const numeric = numericOffsetPattern.exec(offset);
+  return numeric === null || Number(numeric[1]) <= 23 && Number(numeric[2]) <= 59;
+};
 class TomlParser {
   root = /*#__PURE__*/makeTable();
   input;
@@ -18,6 +62,10 @@ class TomlParser {
   line = 1;
   column = 1;
   explicitTables = /*#__PURE__*/new Set();
+  // Tables defined by dotted keys; a header cannot define them again.
+  dottedTables = /*#__PURE__*/new Set();
+  // Values parsed from `[...]` or `{...}` are complete; headers and dotted keys cannot extend them.
+  inlineValues = /*#__PURE__*/new Set();
   constructor(input) {
     this.input = input;
   }
@@ -54,7 +102,7 @@ class TomlParser {
     }
     this.finishStatement();
     const table = this.resolveTable(path, array);
-    if (!array && this.explicitTables.has(table)) {
+    if (!array && (this.explicitTables.has(table) || this.dottedTables.has(table))) {
       this.fail(`Cannot redefine table '${path.join(".")}'`);
     }
     if (!array) {
@@ -68,6 +116,9 @@ class TomlParser {
       const key = path[index];
       const last = index === path.length - 1;
       let value = table[key];
+      if (this.inlineValues.has(value)) {
+        this.fail(`Cannot redefine existing key '${path.slice(0, index + 1).join(".")}'`);
+      }
       if (last && array) {
         if (value === undefined) {
           value = [];
@@ -84,7 +135,7 @@ class TomlParser {
         value = makeTable();
         table[key] = value;
       }
-      if (Array.isArray(value)) {
+      if (Array.isArray(value) && !last) {
         value = value[value.length - 1];
       }
       if (!isTable(value)) {
@@ -103,11 +154,12 @@ class TomlParser {
         const child = makeTable();
         table[key] = child;
         table = child;
-      } else if (isTable(existing)) {
+      } else if (isTable(existing) && !this.explicitTables.has(existing) && !this.inlineValues.has(existing)) {
         table = existing;
       } else {
         this.fail(`Cannot redefine existing key '${keys.slice(0, index + 1).join(".")}'`);
       }
+      this.dottedTables.add(table);
     }
     const key = keys[keys.length - 1];
     if (hasOwn.call(table, key)) {
@@ -131,9 +183,9 @@ class TomlParser {
           this.advance();
         }
         key = this.input.slice(start, this.index);
-      }
-      if (key.length === 0) {
-        this.fail("Expected a key");
+        if (key.length === 0) {
+          this.fail("Expected a key");
+        }
       }
       keys.push(key);
       this.skipInlineWhitespace();
@@ -156,10 +208,14 @@ class TomlParser {
       return this.parseLiteralString(this.input.startsWith("'''", this.index));
     }
     if (character === "[") {
-      return this.parseArray();
+      const array = this.parseArray();
+      this.inlineValues.add(array);
+      return array;
     }
     if (character === "{") {
-      return this.parseInlineTable();
+      const table = this.parseInlineTable();
+      this.inlineValues.add(table);
+      return table;
     }
     const spaceSeparatedDateTime = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})?)/.exec(this.input.slice(this.index));
     if (spaceSeparatedDateTime !== null) {
@@ -185,17 +241,21 @@ class TomlParser {
     this.fail(`Invalid value '${token}'`);
   }
   parseDate(token) {
-    const date = "\\d{4}-\\d{2}-\\d{2}";
-    const time = "\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?";
-    if (new RegExp(`^${date}[Tt]${time}(?:[Zz]|[+-]\\d{2}:\\d{2})$`).test(token)) {
-      const value = new Date(token.replace("t", "T").replace("z", "Z"));
-      if (Number.isNaN(value.getTime())) {
+    const dateTime = dateTimePattern.exec(token);
+    if (dateTime !== null) {
+      const [, date, time, offset] = dateTime;
+      // `Date` cannot represent a leap second, so offset date-times reject `:60`
+      const offsetValid = offset === undefined || isValidOffset(offset) && time.slice(6, 8) !== "60";
+      if (!isValidDate(date) || !isValidTime(time) || !offsetValid) {
         this.fail(`Invalid date-time '${token}'`);
       }
-      return value;
+      return offset === undefined ? `${date}T${time}` : new Date(`${date}T${time}${offset.toUpperCase()}`);
     }
-    if (new RegExp(`^${date}[Tt]${time}$`).test(token) || new RegExp(`^${date}$`).test(token) || new RegExp(`^${time}$`).test(token)) {
-      return token.replace("t", "T");
+    if (localDatePattern.test(token)) {
+      return isValidDate(token) ? token : this.fail(`Invalid date-time '${token}'`);
+    }
+    if (localTimePattern.test(token)) {
+      return isValidTime(token) ? token : this.fail(`Invalid date-time '${token}'`);
     }
     return undefined;
   }
@@ -205,17 +265,12 @@ class TomlParser {
       if (normalized.endsWith("nan")) return Number.NaN;
       return normalized[0] === "-" ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
     }
-    if (/^0x[0-9A-Fa-f](?:_?[0-9A-Fa-f])*$/.test(token)) {
-      return Number.parseInt(normalized.slice(2), 16);
-    }
-    if (/^0o[0-7](?:_?[0-7])*$/.test(token)) {
-      return Number.parseInt(normalized.slice(2), 8);
-    }
-    if (/^0b[01](?:_?[01])*$/.test(token)) {
-      return Number.parseInt(normalized.slice(2), 2);
-    }
-    if (/^[+-]?(?:0|[1-9](?:_?\d)*)$/.test(token)) {
-      return Number(normalized);
+    if (/^0x[0-9A-Fa-f](?:_?[0-9A-Fa-f])*$/.test(token) || /^0o[0-7](?:_?[0-7])*$/.test(token) || /^0b[01](?:_?[01])*$/.test(token) || /^[+-]?(?:0|[1-9](?:_?\d)*)$/.test(token)) {
+      const value = Number(normalized);
+      if (!Number.isSafeInteger(value)) {
+        this.fail(`Integer out of range '${token}'`);
+      }
+      return value;
     }
     if (/^[+-]?(?:(?:0|[1-9](?:_?\d)*)\.\d(?:_?\d)*(?:[eE][+-]?\d(?:_?\d)*)?|(?:0|[1-9](?:_?\d)*)[eE][+-]?\d(?:_?\d)*)$/.test(token)) {
       return Number(normalized);
@@ -233,7 +288,7 @@ class TomlParser {
     while (!this.done) {
       if (multiline && this.input.startsWith("\"\"\"", this.index)) {
         this.advance(3);
-        return output;
+        return output + this.closingQuotes("\"");
       }
       const character = this.peek();
       if (!multiline && character === "\"") {
@@ -273,10 +328,11 @@ class TomlParser {
       } else if (escape === "u" || escape === "U") {
         const length = escape === "u" ? 4 : 8;
         const hex = this.input.slice(this.index, this.index + length);
-        if (!new RegExp(`^[0-9A-Fa-f]{${length}}$`).test(hex)) {
+        const codePoint = Number.parseInt(hex, 16);
+        if (!new RegExp(`^[0-9A-Fa-f]{${length}}$`).test(hex) || codePoint >= 0xD800 && codePoint <= 0xDFFF || codePoint > 0x10FFFF) {
           this.fail("Invalid unicode escape");
         }
-        output += String.fromCodePoint(Number.parseInt(hex, 16));
+        output += String.fromCodePoint(codePoint);
         this.advance(length);
       } else {
         this.fail(`Invalid escape '\\${escape}'`);
@@ -296,7 +352,7 @@ class TomlParser {
       if (multiline && this.input.startsWith("'''", this.index)) {
         const output = this.input.slice(start, this.index);
         this.advance(3);
-        return output;
+        return output + this.closingQuotes("'");
       }
       if (!multiline && this.peek() === "'") {
         const output = this.input.slice(start, this.index);
@@ -309,6 +365,14 @@ class TomlParser {
       this.advance();
     }
     this.fail("Unterminated literal string");
+  }
+  closingQuotes(quote) {
+    let quotes = "";
+    while (quotes.length < 2 && this.peek() === quote) {
+      quotes += quote;
+      this.advance();
+    }
+    return quotes;
   }
   parseArray() {
     this.expect("[");
@@ -403,9 +467,15 @@ class TomlParser {
   }
   advance(count = 1) {
     for (let offset = 0; offset < count; offset++) {
+      const code = this.input.charCodeAt(this.index);
+      if (code < 0x20 && code !== 0x09 && code !== 0x0A && !(code === 0x0D && this.input[this.index + 1] === "\n") || code === 0x7F) {
+        this.fail("Invalid control character");
+      }
       if (this.input[this.index] === "\n") {
         this.line++;
         this.column = 1;
+      } else if (this.input[this.index] === "\r" && this.input[this.index + 1] !== "\n") {
+        this.fail("Bare carriage return");
       } else {
         this.column++;
       }
@@ -427,12 +497,35 @@ class TomlParser {
  *
  * **Details**
  *
- * Offset date-times are represented by `Date`, matching the package this
- * parser replaces. Local dates and times remain strings.
+ * Returns `Result.succeed` with the parsed record, or `Result.fail` with an
+ * `EncodingError` when the input is not valid TOML. Offset date-times are
+ * represented by `Date`, matching the package this parser replaces. Local
+ * dates and times remain strings.
+ *
+ * **Example** (Parsing a TOML document)
+ *
+ * ```ts import.meta.vitest
+ * import { Result } from "effect"
+ * import { Toml } from "effect/encoding"
+ *
+ * Toml.parse("port = 8080") // => Result.succeed({ port: 8080 })
+ * Result.isFailure(Toml.parse("port = ")) // => true
+ * ```
  *
  * @stability unstable
  * @category decoding
  * @since 4.0.0
  */
-export const parse = input => new TomlParser(input.replace(/^\uFEFF/, "")).parse();
+export const parse = input => {
+  try {
+    return Result.succeed(new TomlParser(input.replace(/^\uFEFF/, "")).parse());
+  } catch (e) {
+    return Result.fail(new EncodingError({
+      module: "Toml",
+      kind: "Decode",
+      input,
+      message: e instanceof Error ? e.message : "Invalid input"
+    }));
+  }
+};
 //# sourceMappingURL=Toml.js.map

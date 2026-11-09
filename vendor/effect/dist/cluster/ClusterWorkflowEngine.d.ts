@@ -4,7 +4,7 @@ import * as Layer from "../Layer.ts";
 import * as Option from "../Option.ts";
 import * as Schedule from "../Schedule.ts";
 import * as Schema from "../Schema.ts";
-import type * as Scope from "../Scope.ts";
+import * as Scope from "../Scope.ts";
 import * as Activity from "../workflow/Activity.ts";
 import * as DurableClock from "../workflow/DurableClock.ts";
 import * as DurableDeferred from "../workflow/DurableDeferred.ts";
@@ -31,6 +31,7 @@ export declare const make: Effect.Effect<{
         readonly executionId: string;
         readonly payload: Payload["Type"];
         readonly discard?: Discard | undefined;
+        readonly detached?: boolean | undefined;
         readonly suspendedRetrySchedule?: Schedule.Schedule<any, unknown> | undefined;
     }) => Effect.Effect<Discard extends true ? string : Success["Type"], Error["Type"], Payload["EncodingServices"] | Success["DecodingServices"] | Error["DecodingServices"]>;
     readonly poll: <Name extends string, Payload extends Workflow.AnyStructSchema, Success extends Schema.Top, Error extends Schema.Top>(workflow: Workflow.Workflow<Name, Payload, Success, Error>, executionId: string) => Effect.Effect<Option.Option<Workflow.Result<Success["Type"], Error["Type"]>>, never, Success["DecodingServices"] | Error["DecodingServices"]>;

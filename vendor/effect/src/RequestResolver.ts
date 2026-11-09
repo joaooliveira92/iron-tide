@@ -172,7 +172,9 @@ export const isRequestResolver = (u: unknown): u is RequestResolver<any> => hasP
  *
  * `batchKey` groups request entries, `delay` schedules batch execution,
  * `collectWhile` can end collection early, and `runAll` receives a non-empty
- * batch for one key.
+ * batch for one key. The batch runs with the context of the caller that created
+ * it, even when a later caller ends collection. Each entry retains its own
+ * caller context in `entry.context`.
  *
  * **Gotchas**
  *
@@ -208,6 +210,17 @@ const defaultKey = (_request: unknown): unknown => defaultKeyObject
 
 /**
  * Constructs a request resolver with the specified method to run requests.
+ *
+ * **Details**
+ *
+ * `runAll` runs with the context of the caller that created the batch, including
+ * when `collectWhile` ends collection early (for example with `batchN`).
+ *
+ * **Gotchas**
+ *
+ * Different caller contexts do not split batches. Use `entry.context` for
+ * per-entry services, or `makeGrouped` to separate requests by the services
+ * that affect the backend operation, such as tenant or authorization settings.
  *
  * **Example** (Creating a request resolver)
  *
@@ -256,6 +269,14 @@ export const make = <A extends Request.Any>(
  * **Details**
  *
  * The key can use the Equal trait to determine if two keys are equal.
+ * Each batch runs with the context of the caller that created that batch,
+ * whether collection ends after the delay or at a `collectWhile` cutoff.
+ *
+ * **Gotchas**
+ *
+ * Caller services that are not included in the key do not split batches. Include
+ * tenant or authorization settings in the key when they affect the backend
+ * operation, or read each caller's services from `entry.context`.
  *
  * **Example** (Grouping requests by key)
  *
@@ -311,16 +332,10 @@ export const makeGrouped = <A extends Request.Any, K>(options: {
   })
 
 const hashGroupKey = <A, K>(get: (entry: Request.Entry<A>) => K) => {
-  const groupKeys = MutableHashMap.empty<K, K>()
-  return (entry: Request.Entry<A>): unknown => {
-    const key = get(entry)
-    const okey = MutableHashMap.get(groupKeys, key)
-    if (okey._tag === "Some") {
-      return okey.value
-    }
-    MutableHashMap.set(groupKeys, key, key)
-    return key
-  }
+  // Pending batches match equal keys, so they share one batch.
+  const batchKey = (entry: Request.Entry<A>): unknown => get(entry)
+  internal.equalBatchKeys.add(batchKey)
+  return batchKey
 }
 
 /**
@@ -417,6 +432,15 @@ export const fromFunctionBatched = <A extends Request.Any>(
 /**
  * Constructs a request resolver from an effectual function.
  *
+ * **Details**
+ *
+ * Each entry's effect runs with its own caller context. Services provided around
+ * `runAll` are not visible to it; provide them inside `f` instead. Entries with
+ * different caller contexts can still share a batch.
+ *
+ * With `withSpan`, spans created inside `f` are children of the caller's span,
+ * not the resolver span. The resolver span still links to each caller's span.
+ *
  * **Example** (Creating a resolver from an effectful function)
  *
  * ```ts import.meta.vitest
@@ -457,7 +481,11 @@ export const fromEffect = <A extends Request.Any>(
       let done = 0
       for (let i = 0; i < entries.length; i++) {
         const entry = entries[i]
-        const fiber = effect.forkUnsafe(parent as any, f(entry), true)
+        const fiber = effect.forkUnsafe(
+          parent as any,
+          effect.setContext(f(entry), entry.context),
+          true
+        )
         fiber.addObserver((exit) => {
           entry.completeUnsafe(exit)
           done++
@@ -1677,7 +1705,7 @@ export const withSpan: {
           links.push({ span: span.value, attributes: {} })
         }
         return Effect.withSpan(self.runAll(entries, key), name, {
-          ...options,
+          ...opts,
           links,
           attributes: {
             batchSize: entries.length,
@@ -1944,63 +1972,7 @@ export const withCache: {
 }): Effect.Effect<RequestResolver<A>> =>
   Effect.sync(() => {
     const strategy = options.strategy ?? "lru"
-    const cache = MutableHashMap.empty</**
-     * Adds a bounded in-memory cache to a request resolver.
-     *
-     * **When to use**
-     *
-     * Use to reuse completed results for repeated equal request values while still
-     * passing a `RequestResolver` to `Effect.request`.
-     *
-     * **Details**
-     *
-     * Running the returned effect creates the cache and returns a wrapped resolver.
-     * The cache stores completed success or failure results by request equality up
-     * to `capacity`. The `strategy` option controls eviction order and defaults to
-     * `"lru"`; `"fifo"` keeps insertion order.
-     *
-     * **Gotchas**
-     *
-     * Entries do not expire by time, and completed failures without interruptions
-     * are cached the same as successes. Results containing interruptions are not
-     * cached. Request equality controls cache hits.
-     *
-     * @see {@link asCache} for exposing the resolver as a `Cache` with time-to-live and service lookup controls
-     * @see {@link persisted} for backing persistable requests with the configured persistence store
-     *
-     * @stability stable
-     * @category caching
-     * @since 4.0.0
-     */
-    A, /**
-     * Adds a bounded in-memory cache to a request resolver.
-     *
-     * **When to use**
-     *
-     * Use to reuse completed results for repeated equal request values while still
-     * passing a `RequestResolver` to `Effect.request`.
-     *
-     * **Details**
-     *
-     * Running the returned effect creates the cache and returns a wrapped resolver.
-     * The cache stores completed success or failure results by request equality up
-     * to `capacity`. The `strategy` option controls eviction order and defaults to
-     * `"lru"`; `"fifo"` keeps insertion order.
-     *
-     * **Gotchas**
-     *
-     * Entries do not expire by time, and completed failures without interruptions
-     * are cached the same as successes. Results containing interruptions are not
-     * cached. Request equality controls cache hits.
-     *
-     * @see {@link asCache} for exposing the resolver as a `Cache` with time-to-live and service lookup controls
-     * @see {@link persisted} for backing persistable requests with the configured persistence store
-     *
-     * @stability stable
-     * @category caching
-     * @since 4.0.0
-     */
-    CacheEntry<A>>()
+    const cache = MutableHashMap.empty<A, CacheEntry<A>>()
     return makeWith({
       ...self,
       runAll(entries, key) {
@@ -2018,6 +1990,9 @@ export const withCache: {
       preCheck(entry) {
         const ocached = MutableHashMap.get(cache, entry.request)
         if (ocached._tag === "None") {
+          if (self.preCheck !== undefined && !self.preCheck(entry)) {
+            return false
+          }
           const cached: CacheEntry<A> = { entry, exit: undefined, pending: [] }
           MutableHashMap.set(cache, entry.request, cached)
           const prevComplete = entry.completeUnsafe
@@ -2168,31 +2143,7 @@ export const persisted: {
     }
   ) {
     const store = yield* (yield* Persistence.Persistence).make(options as any)
-    return makeWith</**
-     * Wraps a request resolver with persistent storage for persistable requests.
-     *
-     * **When to use**
-     *
-     * Use to keep a `RequestResolver` interface while reusing completed
-     * `Persistable` request results through a `Persistence` store.
-     *
-     * **Details**
-     *
-     * Cached results are loaded from the configured persistence store before
-     * running the underlying resolver. Missing entries are resolved normally and
-     * written back to the store. Entries marked stale by `staleWhileRevalidate`
-     * receive the stored result and are also resolved again so the refreshed result
-     * can be written back to the store. Creating the persisted resolver requires
-     * `Persistence.Persistence` and `Scope`.
-     *
-     * @see {@link withCache} for in-memory resolver caching that does not require persistable request values or a persistence store
-     * @see {@link asCache} for exposing resolver results through a `Cache` instead of returning another resolver
-     *
-     * @stability unstable
-     * @category caching
-     * @since 4.0.0
-     */
-    A>({
+    return makeWith<A>({
       ...self,
       runAll: Effect.fnUntraced(function*(entries, key) {
         const results = yield* (store.getMany(Iterable.map(entries, (_) => _.request)).pipe(
@@ -2211,6 +2162,8 @@ export const persisted: {
             exit === undefined ||
             (options.staleWhileRevalidate && options.staleWhileRevalidate(exit as any, entry.request))
           ) {
+            // Deliver stale results before tracking refresh completions for persistence.
+            if (exit !== undefined) entry.completeUnsafe(exit as any)
             const prevComplete = entry.completeUnsafe
             entry.completeUnsafe = function(exit) {
               completed.add(entry)
@@ -2218,7 +2171,7 @@ export const persisted: {
               prevComplete(exit)
             }
             leftover.push(entry)
-            if (exit === undefined) continue
+            continue
           }
           entry.completeUnsafe(exit as any)
         }
@@ -2237,6 +2190,6 @@ export const persisted: {
           Effect.provideContext(entries[0].context)
         ) as Effect.Effect<void, Request.Error<A>>)
       })
-    });
+    })
   })
 )

@@ -21,6 +21,7 @@ import * as Option from "../Option.js";
 import { hasProperty } from "../Predicate.js";
 import * as Respondable from "./HttpServerRespondable.js";
 import * as Response from "./HttpServerResponse.js";
+import * as internalUrlParams from "./internal/urlParams.js";
 const TypeId = "~effect/http/HttpServerError";
 /**
  * Tagged error for failures that occur while handling an HTTP server request.
@@ -69,7 +70,8 @@ export class HttpServerError extends /*#__PURE__*/Data.TaggedError("HttpServerEr
  *
  * **Details**
  *
- * When converted to a response it produces an empty `400` response.
+ * When converted to a response it produces an empty `413` response for
+ * `BodyTooLarge`, or an empty `400` response for other parse failures.
  *
  * @stability unstable
  * @category errors
@@ -77,18 +79,19 @@ export class HttpServerError extends /*#__PURE__*/Data.TaggedError("HttpServerEr
  */
 export class RequestParseError extends /*#__PURE__*/Data.TaggedError("RequestParseError") {
   /**
-   * Converts the request error into a `400 Bad Request` response.
+   * Converts the request error into a `413 Content Too Large` response for body
+   * size breaches, or a `400 Bad Request` response for other parse failures.
    *
    * @stability unstable
    * @since 4.0.0
    */
   [Respondable.symbol]() {
     return Effect.succeed(Response.empty({
-      status: 400
+      status: this.reason === "BodyTooLarge" ? 413 : 400
     }));
   }
   get methodAndUrl() {
-    return `${this.request.method} ${this.request.url}`;
+    return formatMethodAndUrl(this.request);
   }
   get message() {
     return formatRequestMessage(this._tag, this.description, this.methodAndUrl);
@@ -114,7 +117,7 @@ export class RouteNotFound extends /*#__PURE__*/Data.TaggedError("RouteNotFound"
   }
   [ErrorReporter.ignore] = true;
   get methodAndUrl() {
-    return `${this.request.method} ${this.request.url}`;
+    return formatMethodAndUrl(this.request);
   }
   get message() {
     return formatRequestMessage(this._tag, this.description, this.methodAndUrl);
@@ -144,7 +147,7 @@ export class InternalError extends /*#__PURE__*/Data.TaggedError("InternalError"
     }));
   }
   get methodAndUrl() {
-    return `${this.request.method} ${this.request.url}`;
+    return formatMethodAndUrl(this.request);
   }
   get message() {
     return formatRequestMessage(this._tag, this.description, this.methodAndUrl);
@@ -177,7 +180,7 @@ export class ResponseError extends /*#__PURE__*/Data.TaggedError("ResponseError"
     }));
   }
   get methodAndUrl() {
-    return `${this.request.method} ${this.request.url}`;
+    return formatMethodAndUrl(this.request);
   }
   get message() {
     const info = `${this._tag} (${this.response.status} ${this.methodAndUrl})`;
@@ -212,6 +215,7 @@ export class ClientAbort extends /*#__PURE__*/Context.Service()("effect/http/Htt
     parent: undefined
   }));
 }
+const formatMethodAndUrl = request => `${request.method} ${internalUrlParams.toPath(request.url)}`;
 const formatRequestMessage = (reason, description, info) => {
   const prefix = `${reason} (${info})`;
   return description ? `${prefix}: ${description}` : prefix;

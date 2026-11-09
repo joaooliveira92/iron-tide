@@ -1,4 +1,5 @@
 import * as Headers from "../Headers.js";
+import * as UrlParams from "../UrlParams.js";
 const defaultPorts = {
   "http:": 80,
   "https:": 443,
@@ -6,13 +7,13 @@ const defaultPorts = {
   "wss:": 443
 };
 /**
- * Records the `url.*` and `server.*` attributes for a request URL.
+ * Records `url.*` and `server.*` attributes with URL redaction.
  *
  * @internal
  */
-export const addUrlAttributes = (span, url) => {
-  const query = url.search.slice(1);
-  span.attribute("url.full", url.toString());
+export const addUrlAttributes = (span, url, redactedNames) => {
+  const query = UrlParams.redactUrl(url.search, redactedNames).slice(1);
+  span.attribute("url.full", UrlParams.redactUrl(url.href, redactedNames));
   span.attribute("url.path", url.pathname);
   if (query !== "") {
     span.attribute("url.query", query);
@@ -26,6 +27,15 @@ export const addUrlAttributes = (span, url) => {
       span.attribute("server.port", port);
     }
   }
+};
+/**
+ * Adds the names of `Redacted` parameters to the redacted names.
+ *
+ * @internal
+ */
+export const redactedNames = (urlParams, redactedNames) => {
+  const keys = urlParams.params.filter(([, value]) => typeof value !== "string").map(([key]) => key);
+  return keys.length === 0 ? redactedNames : [...redactedNames, ...new URLSearchParams(keys.map(key => [key, ""])).keys()];
 };
 /** @internal */
 export const addHeaderAttributes = (span, phase, headers, filter, redactedNames) => {

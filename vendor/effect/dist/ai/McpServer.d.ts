@@ -14,8 +14,11 @@
 import * as Arr from "../Array.ts";
 import * as Cause from "../Cause.ts";
 import * as Context from "../Context.ts";
+import * as Duration from "../Duration.ts";
 import * as Effect from "../Effect.ts";
+import * as Headers from "../http/Headers.ts";
 import * as HttpRouter from "../http/HttpRouter.ts";
+import * as HttpServerRequest from "../http/HttpServerRequest.ts";
 import * as Layer from "../Layer.ts";
 import * as RpcClient from "../rpc/RpcClient.ts";
 import type * as RpcGroup from "../rpc/RpcGroup.ts";
@@ -23,6 +26,7 @@ import * as RpcServer from "../rpc/RpcServer.ts";
 import * as Schema from "../Schema.ts";
 import * as Scope from "../Scope.ts";
 import type { Stdio } from "../Stdio.ts";
+import type * as Types from "../Types.ts";
 import type * as McpProtocol from "./McpProtocol.ts";
 import * as McpSchema from "./McpSchema.ts";
 import { CallToolResult, ElicitationDeclined, GetPromptResult, InternalError, InvalidParams, McpRequestContext, McpServerClient, Prompt, Resource, ResourceTemplate, Tool as McpTool } from "./McpSchema.ts";
@@ -32,6 +36,374 @@ import * as Toolkit from "./Toolkit.ts";
 type CompletionContext = typeof Complete.payloadSchema.Type["context"];
 type ServerExtensions = NonNullable<ServerCapabilities["extensions"]>;
 declare const BroadcastServerNotificationRpcs: RpcGroup.RpcGroup<typeof McpSchema.CancelledNotification | typeof McpSchema.ProgressNotification | typeof McpSchema.ResourceListChangedNotification | typeof McpSchema.ResourceUpdatedNotification | typeof McpSchema.PromptListChangedNotification | typeof McpSchema.ToolListChangedNotification | typeof McpSchema.LoggingMessageNotification>;
+/**
+ * Marks a request-level dependency of an MCP registration or middleware.
+ *
+ * **Details**
+ *
+ * Registrations carry handler dependencies as `McpRequest<"Requires", S>`.
+ * MCP middleware and transports discharge these markers; providing `S` with
+ * `Layer.provide` or `Effect.provide` does not.
+ *
+ * `layerHttp` and `layerHttpRequestScoped` convert the markers they don't
+ * discharge into `HttpRouter.Request` markers, so `HttpRouter.middleware` can
+ * satisfy them. On stdio and custom transports an undischarged marker is a
+ * compile error.
+ *
+ * @see {@link middleware} for discharging request-level dependencies
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.0.0
+ */
+export interface McpRequest<Kind extends string, T> {
+    readonly _: unique symbol;
+    readonly kind: Kind;
+    readonly type: T;
+}
+/**
+ * Helper types for `McpRequest` markers.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.0.0
+ */
+export declare namespace McpRequest {
+    /**
+     * Wraps each member of a union in an `McpRequest` marker of the supplied kind.
+     *
+     * @stability unstable
+     * @category utility types
+     * @since 4.0.0
+     */
+    type From<Kind extends string, R> = R extends infer T ? McpRequest<Kind, T> : never;
+    /**
+     * Extracts the services from `McpRequest` markers of the supplied kind.
+     *
+     * @stability unstable
+     * @category utility types
+     * @since 4.0.0
+     */
+    type Only<Kind extends string, A> = A extends McpRequest<Kind, infer T> ? T : never;
+    /**
+     * Removes `McpRequest` markers from a union.
+     *
+     * @stability unstable
+     * @category utility types
+     * @since 4.0.0
+     */
+    type Without<A> = A extends McpRequest<infer _Kind, infer _> ? never : A;
+}
+/**
+ * Opaque handler result. Middleware can wrap execution and provide services,
+ * but cannot inspect or replace the result.
+ *
+ * @stability unstable
+ * @category middleware
+ * @since 4.0.0
+ */
+export interface MiddlewareSuccess {
+    readonly _: unique symbol;
+}
+/**
+ * The request methods that run MCP middleware. More methods may be added, so
+ * don't `switch` on it exhaustively without a default case.
+ *
+ * @stability unstable
+ * @category middleware
+ * @since 4.0.0
+ */
+export type MiddlewareMethod = "tools/call" | "resources/read" | "prompts/get" | "completion/complete" | "tools/list" | "resources/list" | "resources/templates/list" | "prompts/list" | "skills/list" | "skills/get" | "resources/directory/read";
+/**
+ * Request metadata passed to MCP middleware.
+ *
+ * **Details**
+ *
+ * `target` is the tool name, the requested resource URI, or the prompt name.
+ * For `completion/complete` it is the prompt name, or the URI template of the
+ * resource template being completed. For `skills/get` it is the URI of the
+ * skill's `SKILL.md`. `payload` holds the request parameters.
+ *
+ * On list requests, middleware runs only when it wraps a {@link visibility},
+ * once for each registration it wraps. `target` is then the tool name, the
+ * resource URI, the URI template or the prompt name of that registration, and
+ * `payload` is `undefined`. `skills/list` and `resources/directory/read` are
+ * list requests whose `target` is the `SKILL.md` URI of each skill; a
+ * directory read checks only the skills that have the directory. A skill's
+ * files are resources, checked as `resources/list` and `resources/read` with
+ * their own URIs.
+ *
+ * `headers` are the HTTP request headers. They are empty on stdio, on custom
+ * transports and for in-process calls. `sessionId` is the `Mcp-Session-Id`
+ * header, so it is `undefined` outside sessionful HTTP.
+ *
+ * @stability unstable
+ * @category middleware
+ * @since 4.0.0
+ */
+export interface MiddlewareOptions {
+    readonly method: MiddlewareMethod;
+    readonly target: string;
+    readonly payload: unknown;
+    readonly requestContext: McpRequestContext["Service"];
+    readonly headers: Headers.Headers;
+    readonly sessionId: string | undefined;
+}
+declare const MiddlewareTypeId = "~effect/ai/McpServer/Middleware";
+type MiddlewareConfig = {
+    provides: any;
+    error: McpErrorBase;
+    requires: any;
+    layerError: any;
+    layerRequires: any;
+};
+type MiddlewareLayer<Config extends MiddlewareConfig, R> = Layer.Layer<McpRequest.From<"Requires", Config["provides"]>, Config["layerError"], R | Config["layerRequires"] | McpRequest.From<"Requires", Config["requires"]>>;
+/**
+ * Composable MCP middleware.
+ *
+ * **Details**
+ *
+ * Provide `layer` to registration layers, or to the Effect form of a
+ * registration, to run the middleware for those registrations. Use
+ * `layerGlobal` to run it for every request on the server.
+ *
+ * Services the middleware reads per request are `McpRequest<"Requires", S>`
+ * requirements of `layer` and `layerGlobal`, like the request-level
+ * dependencies of a registration. A middleware that provides `S` meets them
+ * when it runs outside this one: `a.combine(b)` runs `b` outside `a`, and so
+ * does providing `b.layer` or `b.layerGlobal` outside `a.layer`, though
+ * `layerGlobal` installs `b` for the whole server. The transport discharges
+ * the services it supplies, and `layerHttp` turns the rest into
+ * `HttpRouter.Request` requirements that an `HttpRouter.middleware` can meet.
+ *
+ * @see {@link middleware} for creating MCP middleware
+ *
+ * @stability unstable
+ * @category middleware
+ * @since 4.0.0
+ */
+export interface Middleware<Config extends MiddlewareConfig> {
+    readonly [MiddlewareTypeId]: Config;
+    readonly layer: MiddlewareLayer<Config, never>;
+    readonly layerGlobal: MiddlewareLayer<Config, McpServer>;
+    readonly combine: <Config2 extends MiddlewareConfig>(other: Middleware<Config2>) => Middleware<{
+        provides: Config2["provides"] | Config["provides"];
+        error: Config2["error"] | Config["error"];
+        requires: Exclude<Config["requires"], Config2["provides"]> | Config2["requires"];
+        layerError: Config["layerError"] | Config2["layerError"];
+        layerRequires: Config["layerRequires"] | Config2["layerRequires"];
+    }>;
+}
+/**
+ * Creates MCP middleware that runs around `tools/call`, `resources/read`,
+ * `prompts/get` and `completion/complete` requests.
+ *
+ * **Details**
+ *
+ * Middleware is how request-level dependencies are satisfied: declare the
+ * services it provides with `middleware<{ provides: S }>()` and provide them to
+ * the handler effect. It receives the request headers, session id and request
+ * context, so it can resolve the current user per request.
+ *
+ * Pass a function, or an Effect that builds the function. Services the Effect
+ * reads are requirements of the middleware layer. Services the function reads
+ * per request, other than `McpRequestContext`, are per-request requirements
+ * of the result; see {@link Middleware} for how they are met.
+ *
+ * Failures must be `McpErrorBase` values. A middleware failure is sent as a
+ * JSON-RPC error with its `code`, `message` and `data`, never as a tool
+ * result. Pick custom codes from the implementation-defined range
+ * (-32000 to -32019): any numeric `code` is sent as is. Defects are logged,
+ * reported to the `ErrorReporter` and sent as `InternalError("Internal error")`.
+ * Interruption propagates.
+ *
+ * Local middleware runs inside global middleware, and middleware provided both
+ * locally and globally runs once. Middleware never runs for `initialize`. It
+ * runs for list requests only when it wraps a {@link visibility}, so that the
+ * visibility check can read the services it provides.
+ *
+ * **Example** (Resolving the current user per request)
+ *
+ * ```ts
+ * import { Context, Effect, Layer, Schema } from "effect"
+ * import { McpSchema, McpServer, Tool, Toolkit } from "effect/ai"
+ *
+ * class CurrentUser extends Context.Service<CurrentUser, { readonly id: string }>()("CurrentUser") {}
+ *
+ * class Unauthorized extends Schema.Error<Unauthorized>("Unauthorized")({
+ *   ...McpSchema.McpErrorBase.fields,
+ *   _tag: Schema.tag("Unauthorized"),
+ *   code: Schema.tag(-32001)
+ * }) {}
+ *
+ * const WhoAmI = Tool.make("WhoAmI", { success: Schema.String, dependencies: [CurrentUser] })
+ * const Tools = Toolkit.make(WhoAmI)
+ *
+ * const Auth = McpServer.middleware<{ provides: CurrentUser }>()((effect, { headers }) => {
+ *   const token = headers["authorization"]
+ *   return token === undefined
+ *     ? Effect.fail(new Unauthorized({ message: "Missing credentials" }))
+ *     : Effect.provideService(effect, CurrentUser, { id: token })
+ * })
+ *
+ * const Registrations = McpServer.toolkit(Tools).pipe(
+ *   Layer.provide(Auth.layer),
+ *   Layer.provide(Tools.toLayer({
+ *     WhoAmI: () => Effect.map(CurrentUser, (user) => user.id)
+ *   }))
+ * )
+ * ```
+ *
+ * @stability unstable
+ * @category middleware
+ * @since 4.0.0
+ */
+export declare const middleware: middleware.Make<never> & (<Config extends {
+    provides?: any;
+} = {}>() => middleware.Make<Config extends {
+    provides: infer P;
+} ? P : never>);
+/**
+ * Types used by `middleware`.
+ *
+ * @stability unstable
+ * @category middleware
+ * @since 4.0.0
+ */
+export declare namespace middleware {
+    /**
+     * The middleware function.
+     *
+     * @stability unstable
+     * @category middleware
+     * @since 4.0.0
+     */
+    type Fn<Provides, E, R> = (effect: Effect.Effect<MiddlewareSuccess, McpErrorBase, Types.NoInfer<Provides>>, options: MiddlewareOptions) => Effect.Effect<MiddlewareSuccess, E, R>;
+    /**
+     * The overloads of a middleware constructor.
+     *
+     * @stability unstable
+     * @category middleware
+     * @since 4.0.0
+     */
+    type Make<Provides> = {
+        <E extends McpErrorBase, R, EX, RX, const Global extends boolean = false>(middleware: Effect.Effect<Fn<Provides, E, R>, EX, RX>, options?: {
+            readonly global?: Global | undefined;
+        }): Made<Global, {
+            provides: Provides;
+            error: E;
+            requires: Exclude<R, McpRequestContext>;
+            layerError: EX;
+            layerRequires: Exclude<RX, Scope.Scope>;
+        }>;
+        <E extends McpErrorBase, R, const Global extends boolean = false>(middleware: Fn<Provides, E, R>, options?: {
+            readonly global?: Global | undefined;
+        }): Made<Global, {
+            provides: Provides;
+            error: E;
+            requires: Exclude<R, McpRequestContext>;
+            layerError: never;
+            layerRequires: never;
+        }>;
+    };
+}
+/**
+ * Creates middleware that hides registrations per request.
+ *
+ * **Details**
+ *
+ * The check runs for every registration the middleware is provided to, on list
+ * requests and on calls, reads, gets and completions. When it returns `false`
+ * the registration is left out of list results, and requests for it fail as if
+ * it was not registered.
+ *
+ * The result is a `Middleware` and composes like one. The check receives the
+ * same {@link MiddlewareOptions} as middleware, and services it reads per
+ * request, other than `McpRequestContext`, are met the same way. Scope a
+ * visibility to some tools by providing its layer to their toolkit only, or
+ * branch on `target`.
+ *
+ * On a list request, the check and the middleware outside the innermost
+ * visibility run once for each registration. Middleware inside it does not
+ * run. A failure of that middleware or of a check fails the whole list
+ * request. It never hides a registration.
+ *
+ * Unlike `EnabledWhen`, a visibility runs the middleware around it on list
+ * requests, and middleware sees requests for hidden registrations.
+ *
+ * **Example** (Hiding admin tools from other users)
+ *
+ * ```ts
+ * import { Context, Effect, Layer, Schema } from "effect"
+ * import { McpServer, Tool, Toolkit } from "effect/ai"
+ *
+ * class CurrentUser extends Context.Service<CurrentUser, { readonly isAdmin: boolean }>()("CurrentUser") {}
+ *
+ * const AdminTools = Toolkit.make(Tool.make("DeleteUser", { success: Schema.String }))
+ *
+ * const Auth = McpServer.middleware<{ provides: CurrentUser }>()((effect, { headers }) =>
+ *   Effect.provideService(effect, CurrentUser, { isAdmin: headers["x-role"] === "admin" })
+ * )
+ * const AdminOnly = McpServer.visibility(() => Effect.map(CurrentUser, (user) => user.isAdmin))
+ *
+ * const Registrations = McpServer.toolkit(AdminTools).pipe(
+ *   Layer.provide(AdminOnly.combine(Auth).layer),
+ *   Layer.provide(AdminTools.toLayer({ DeleteUser: () => Effect.succeed("deleted") }))
+ * )
+ * ```
+ *
+ * @see {@link middleware} for providing the services a check reads
+ *
+ * @stability unstable
+ * @category middleware
+ * @since 4.0.0
+ */
+export declare const visibility: visibility.Make;
+/**
+ * Types used by `visibility`.
+ *
+ * @stability unstable
+ * @category middleware
+ * @since 4.0.0
+ */
+export declare namespace visibility {
+    /**
+     * The visibility check.
+     *
+     * @stability unstable
+     * @category middleware
+     * @since 4.0.0
+     */
+    type Check<E, R> = (options: MiddlewareOptions) => Effect.Effect<boolean, E, R>;
+    /**
+     * The overloads of `visibility`.
+     *
+     * @stability unstable
+     * @category middleware
+     * @since 4.0.0
+     */
+    type Make = {
+        <E extends McpErrorBase, R, EX, RX, const Global extends boolean = false>(check: Effect.Effect<Check<E, R>, EX, RX>, options?: {
+            readonly global?: Global | undefined;
+        }): Made<Global, {
+            provides: never;
+            error: E;
+            requires: Exclude<R, McpRequestContext>;
+            layerError: EX;
+            layerRequires: Exclude<RX, Scope.Scope>;
+        }>;
+        <E extends McpErrorBase, R, const Global extends boolean = false>(check: Check<E, R>, options?: {
+            readonly global?: Global | undefined;
+        }): Made<Global, {
+            provides: never;
+            error: E;
+            requires: Exclude<R, McpRequestContext>;
+            layerError: never;
+            layerRequires: never;
+        }>;
+    };
+}
+type Made<Global extends boolean, Config extends MiddlewareConfig> = Global extends true ? MiddlewareLayer<Config, McpServer> : Middleware<Config>;
 declare const McpServer_base: Context.ServiceClass<McpServer, "effect/ai/McpServer", {
     readonly notifications: RpcClient.RpcClient<RpcGroup.Rpcs<typeof BroadcastServerNotificationRpcs>>;
     readonly notifyElicitationComplete: (options: {
@@ -45,9 +417,10 @@ declare const McpServer_base: Context.ServiceClass<McpServer, "effect/ai/McpServ
     readonly addTool: (options: {
         readonly tool: McpTool;
         readonly annotations: Context.Context<never>;
+        readonly services?: Context.Context<never> | undefined;
         readonly handle: (payload: any) => Effect.Effect<CallToolResult | McpSchema.InputRequired, InternalError | InvalidParams, McpRequestContext>;
     }) => Effect.Effect<void>;
-    readonly callTool: (requests: typeof CallTool.payloadSchema.Type) => Effect.Effect<CallToolResult, InternalError | InvalidParams, McpServerClient>;
+    readonly callTool: (requests: typeof CallTool.payloadSchema.Type) => Effect.Effect<CallToolResult, McpErrorBase | InternalError | InvalidParams, McpServerClient>;
     readonly resources: ReadonlyArray<{
         readonly resource: Resource;
         readonly annotations: Context.Context<never>;
@@ -55,6 +428,7 @@ declare const McpServer_base: Context.ServiceClass<McpServer, "effect/ai/McpServ
     readonly addResource: (options: {
         readonly resource: Resource;
         readonly annotations: Context.Context<never>;
+        readonly services?: Context.Context<never> | undefined;
         readonly handle: Effect.Effect<ReadResourceResult, InternalError, McpRequestContext>;
     }) => Effect.Effect<void>;
     readonly resourceTemplates: ReadonlyArray<{
@@ -64,6 +438,7 @@ declare const McpServer_base: Context.ServiceClass<McpServer, "effect/ai/McpServ
     readonly addResourceTemplate: (options: {
         readonly template: ResourceTemplate;
         readonly annotations: Context.Context<never>;
+        readonly services?: Context.Context<never> | undefined;
         readonly routerPath: string;
         readonly completions: Record<string, (input: string, context: CompletionContext) => Effect.Effect<CompleteResult, InternalError>>;
         readonly handle: (uri: string, params: Array<string>) => Effect.Effect<ReadResourceResult, InvalidParams | InternalError, McpRequestContext>;
@@ -76,11 +451,12 @@ declare const McpServer_base: Context.ServiceClass<McpServer, "effect/ai/McpServ
     readonly addPrompt: (options: {
         readonly prompt: Prompt;
         readonly annotations: Context.Context<never>;
+        readonly services?: Context.Context<never> | undefined;
         readonly completions: Record<string, (input: string, context: CompletionContext) => Effect.Effect<CompleteResult, InternalError, McpRequestContext>>;
         readonly handle: (params: Record<string, string>) => Effect.Effect<GetPromptResult | McpSchema.InputRequired, InternalError | InvalidParams, McpRequestContext>;
     }) => Effect.Effect<void>;
-    readonly getPromptResult: (request: typeof GetPrompt.payloadSchema.Type) => Effect.Effect<GetPromptResult, InternalError | InvalidParams, McpServerClient>;
-    readonly completion: (complete: typeof Complete.payloadSchema.Type) => Effect.Effect<CompleteResult, InvalidParams | InternalError, McpServerClient>;
+    readonly getPromptResult: (request: typeof GetPrompt.payloadSchema.Type) => Effect.Effect<GetPromptResult, McpErrorBase | InternalError | InvalidParams, McpServerClient>;
+    readonly completion: (complete: typeof Complete.payloadSchema.Type) => Effect.Effect<CompleteResult, McpErrorBase | InvalidParams | InternalError, McpServerClient>;
 }>;
 /**
  * Service that stores and serves an MCP server's registered tools, resources,
@@ -115,9 +491,10 @@ export declare class McpServer extends McpServer_base {
         readonly addTool: (options: {
             readonly tool: McpTool;
             readonly annotations: Context.Context<never>;
+            readonly services?: Context.Context<never> | undefined;
             readonly handle: (payload: any) => Effect.Effect<CallToolResult | McpSchema.InputRequired, InternalError | InvalidParams, McpRequestContext>;
         }) => Effect.Effect<void>;
-        readonly callTool: (requests: typeof CallTool.payloadSchema.Type) => Effect.Effect<CallToolResult, InternalError | InvalidParams, McpServerClient>;
+        readonly callTool: (requests: typeof CallTool.payloadSchema.Type) => Effect.Effect<CallToolResult, McpErrorBase | InternalError | InvalidParams, McpServerClient>;
         readonly resources: ReadonlyArray<{
             readonly resource: Resource;
             readonly annotations: Context.Context<never>;
@@ -125,6 +502,7 @@ export declare class McpServer extends McpServer_base {
         readonly addResource: (options: {
             readonly resource: Resource;
             readonly annotations: Context.Context<never>;
+            readonly services?: Context.Context<never> | undefined;
             readonly handle: Effect.Effect<ReadResourceResult, InternalError, McpRequestContext>;
         }) => Effect.Effect<void>;
         readonly resourceTemplates: ReadonlyArray<{
@@ -134,6 +512,7 @@ export declare class McpServer extends McpServer_base {
         readonly addResourceTemplate: (options: {
             readonly template: ResourceTemplate;
             readonly annotations: Context.Context<never>;
+            readonly services?: Context.Context<never> | undefined;
             readonly routerPath: string;
             readonly completions: Record<string, (input: string, context: CompletionContext) => Effect.Effect<CompleteResult, InternalError>>;
             readonly handle: (uri: string, params: Array<string>) => Effect.Effect<ReadResourceResult, InvalidParams | InternalError, McpRequestContext>;
@@ -146,19 +525,79 @@ export declare class McpServer extends McpServer_base {
         readonly addPrompt: (options: {
             readonly prompt: Prompt;
             readonly annotations: Context.Context<never>;
+            readonly services?: Context.Context<never> | undefined;
             readonly completions: Record<string, (input: string, context: CompletionContext) => Effect.Effect<CompleteResult, InternalError, McpRequestContext>>;
             readonly handle: (params: Record<string, string>) => Effect.Effect<GetPromptResult | McpSchema.InputRequired, InternalError | InvalidParams, McpRequestContext>;
         }) => Effect.Effect<void>;
-        readonly getPromptResult: (request: typeof GetPrompt.payloadSchema.Type) => Effect.Effect<GetPromptResult, InternalError | InvalidParams, McpServerClient>;
-        readonly completion: (complete: typeof Complete.payloadSchema.Type) => Effect.Effect<CompleteResult, InvalidParams | InternalError, McpServerClient>;
+        readonly getPromptResult: (request: typeof GetPrompt.payloadSchema.Type) => Effect.Effect<GetPromptResult, McpErrorBase | InternalError | InvalidParams, McpServerClient>;
+        readonly completion: (complete: typeof Complete.payloadSchema.Type) => Effect.Effect<CompleteResult, McpErrorBase | InvalidParams | InternalError, McpServerClient>;
     }, never, Scope.Scope>;
     /**
-     * Layer that provides the MCP server and client services.
+     * Layer that provides the MCP server service.
+     *
+     * **Details**
+     *
+     * It doesn't run a transport or discharge request-level dependencies. Use it
+     * to call registrations in process, providing their request-level
+     * dependencies with MCP middleware.
      *
      * @stability unstable
      * @since 4.0.0
      */
-    static readonly layer: Layer.Layer<McpServer | McpServerClient>;
+    static readonly layer: Layer.Layer<McpServer>;
+}
+/**
+ * A client cache hint for one kind of `v2026_07_28` result.
+ *
+ * **Details**
+ *
+ * `ttl` is how long a client may treat the result as fresh. It is sent as a
+ * whole number of milliseconds, rounded down, so it must be finite,
+ * nonnegative and at most `Number.MAX_SAFE_INTEGER` milliseconds. Only
+ * `"private"` scope is supported, so shared caches must not store the result.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.1.0
+ */
+export interface CacheHint {
+    readonly ttl: Duration.Input;
+    readonly cacheScope: "private";
+}
+/**
+ * Client cache hints for `v2026_07_28` discovery and list results.
+ *
+ * **Details**
+ *
+ * Each entry sets the freshness and `cacheScope` of one result kind:
+ * `server/discover`, `tools/list`, `resources/list`,
+ * `resources/templates/list` and `prompts/list`. `skills` covers the Skills
+ * extension's `skills/list`, `skills/get` and `resources/directory/read`.
+ * Omitted entries, and `resources/read` results, keep
+ * `{ ttlMs: 0, cacheScope: "private" }`. Earlier protocol revisions have no
+ * cache hints and ignore this option.
+ *
+ * These are hints for clients. The server does not cache results, and
+ * visibility and invocation checks still run on every request.
+ *
+ * **Gotchas**
+ *
+ * A positive `ttl` lets a client keep showing a list after registrations or
+ * per-request visibility change, until the hint expires. Private scope does
+ * not key a client's cache by user, so a client shared between users can
+ * reuse one user's list for another.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.1.0
+ */
+export interface CacheHints {
+    readonly discover?: CacheHint | undefined;
+    readonly tools?: CacheHint | undefined;
+    readonly resources?: CacheHint | undefined;
+    readonly resourceTemplates?: CacheHint | undefined;
+    readonly prompts?: CacheHint | undefined;
+    readonly skills?: CacheHint | undefined;
 }
 /**
  * Runs an MCP server over the current `RpcServer.Protocol`.
@@ -182,7 +621,26 @@ export declare const run: (options: {
     readonly icons?: ReadonlyArray<McpSchema.Icon> | undefined;
     readonly protocols: Arr.NonEmptyReadonlyArray<McpProtocol.ProtocolAdapter>;
     readonly extensions?: ServerExtensions | undefined;
+    readonly cacheHints?: CacheHints | undefined;
 }) => Effect.Effect<never, Cause.IllegalArgumentError, McpServer | RpcServer.Protocol>;
+type StatefulProtocolAdapter = McpProtocol.ProtocolAdapter<McpProtocol.ProtocolVersion, McpProtocol.StatefulRuntimeDescriptor>;
+/**
+ * Request-level services supplied by a transport.
+ *
+ * **Details**
+ *
+ * Every transport supplies `Scope`. `McpServerClient` is supplied only when
+ * every configured protocol is known to be sessionful: a `v2026_07_28` request
+ * has no client session, and a protocol array widened to `ProtocolAdapter`
+ * might contain one. HTTP transports also supply `HttpServerRequest`.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.0.0
+ */
+export type ProvidedServices<Protocols extends ReadonlyArray<McpProtocol.ProtocolAdapter>, Http extends boolean = false> = Scope.Scope | (Protocols[number] extends StatefulProtocolAdapter ? McpServerClient : never) | (Http extends true ? HttpServerRequest.HttpServerRequest : never);
+type RemainingRequestServices<RR, Provided> = Exclude<McpRequest.Only<"Requires", RR>, Provided>;
+type RegistrationServices<RR> = Exclude<McpRequest.Without<RR>, McpServer>;
 /**
  * Creates a layer that starts an MCP server over an existing
  * `RpcServer.Protocol` and provides `McpServer`. Request handlers receive
@@ -201,6 +659,11 @@ export declare const run: (options: {
  * `McpServer.layer`, so registration layers can use the `McpServer` service
  * while the server is running.
  *
+ * Pass registration layers as `registrations` to build them before the server
+ * reads its first request. The transport discharges the request-level
+ * dependencies it supplies (see `ProvidedServices`); any other `McpRequest`
+ * marker stays in the layer's requirements and must be met by MCP middleware.
+ *
  * **Gotchas**
  *
  * Unlike `layerStdio` and `layerHttp`, this layer does not install a concrete
@@ -214,16 +677,18 @@ export declare const run: (options: {
  * @category layers
  * @since 4.0.0
  */
-export declare const layer: (options: {
+export declare const layer: <const Protocols extends Arr.NonEmptyReadonlyArray<McpProtocol.ProtocolAdapter>, RA = never, RE = never, RR = never>(options: {
     readonly name: string;
     readonly version: string;
     readonly instructions?: string | undefined;
     readonly description?: string | undefined;
     readonly websiteUrl?: string | undefined;
     readonly icons?: ReadonlyArray<McpSchema.Icon> | undefined;
-    readonly protocols: Arr.NonEmptyReadonlyArray<McpProtocol.ProtocolAdapter>;
+    readonly protocols: Protocols;
     readonly extensions?: ServerExtensions | undefined;
-}) => Layer.Layer<McpServer | McpServerClient, Cause.IllegalArgumentError, RpcServer.Protocol>;
+    readonly cacheHints?: CacheHints | undefined;
+    readonly registrations?: Layer.Layer<RA, RE, RR> | undefined;
+}) => Layer.Layer<McpServer | McpRequest.From<"Requires", ProvidedServices<Protocols>>, Cause.IllegalArgumentError | RE, RpcServer.Protocol | RegistrationServices<RR> | McpRequest.From<"Requires", RemainingRequestServices<RR, ProvidedServices<Protocols>>>>;
 /**
  * Creates a layer that runs an MCP server over standard input and output.
  *
@@ -239,6 +704,11 @@ export declare const layer: (options: {
  * `McpRequestContext` and legacy `McpServerClient` services to handlers, and
  * requires `Stdio`.
  *
+ * Pass registration layers as `registrations` to build them before the server
+ * reads its first request. The transport discharges the request-level
+ * dependencies it supplies (see `ProvidedServices`); any other `McpRequest`
+ * marker stays in the layer's requirements and must be met by MCP middleware.
+ *
  * @see {@link layer} for running over an existing `RpcServer.Protocol`
  * @see {@link layerHttp} for the single-endpoint HTTP transport
  *
@@ -246,16 +716,18 @@ export declare const layer: (options: {
  * @category layers
  * @since 4.0.0
  */
-export declare const layerStdio: (options: {
+export declare const layerStdio: <const Protocols extends Arr.NonEmptyReadonlyArray<McpProtocol.ProtocolAdapter>, RA = never, RE = never, RR = never>(options: {
     readonly name: string;
     readonly version: string;
     readonly instructions?: string | undefined;
     readonly description?: string | undefined;
     readonly websiteUrl?: string | undefined;
     readonly icons?: ReadonlyArray<McpSchema.Icon> | undefined;
-    readonly protocols: Arr.NonEmptyReadonlyArray<McpProtocol.ProtocolAdapter>;
+    readonly protocols: Protocols;
     readonly extensions?: ServerExtensions | undefined;
-}) => Layer.Layer<McpServer | McpServerClient, Cause.IllegalArgumentError, Stdio>;
+    readonly cacheHints?: CacheHints | undefined;
+    readonly registrations?: Layer.Layer<RA, RE, RR> | undefined;
+}) => Layer.Layer<McpServer | McpRequest.From<"Requires", ProvidedServices<Protocols>>, Cause.IllegalArgumentError | RE, Stdio | RegistrationServices<RR> | McpRequest.From<"Requires", RemainingRequestServices<RR, ProvidedServices<Protocols>>>>;
 /**
  * Registers a Streamable HTTP MCP endpoint at `options.path`.
  *
@@ -284,10 +756,31 @@ export declare const layerStdio: (options: {
  * holding a session id can end that session, so authenticate requests in the
  * surrounding router.
  *
+ * Set `allowSubscriptions: false` to disable `v2026_07_28` subscriptions.
+ * Discovery advertises `listChanged: false`, and `subscriptions/listen` returns
+ * Method not found. Request-scoped progress and logs, legacy protocols, and
+ * default subscription behavior are unchanged.
+ *
+ * The layer runs one long-lived MCP server that every POST shares. For
+ * serverless hosts where execution must belong to each request, use
+ * `layerHttpRequestScoped` instead.
+ *
+ * Pass registration layers as `registrations` to build them before the
+ * endpoint serves its first request. The transport discharges the
+ * request-level dependencies it supplies (see `ProvidedServices`) and converts
+ * the remaining `McpRequest` markers into `HttpRouter.Request` markers, so
+ * `HttpRouter.middleware` can provide them, for example to authenticate the
+ * request and resolve the current user.
+ *
  * `layerHttp` always implements the single-endpoint Streamable HTTP topology.
  * Using `v2024_11_05` here is a custom compatibility transport for that
  * revision's schema. It does not implement the historical two-endpoint
  * HTTP+SSE transport, GET SSE, event resumption, or session expiry.
+ *
+ * **Gotchas**
+ *
+ * This layer starts a scoped server fiber. For sharing it across Cloudflare
+ * Workers requests, see `HttpRouter.toWebHandler` for setup and limitations.
  *
  * @see {@link layerStdio} for exposing the server over stdio
  * @see {@link layer} for the base MCP server layer without a transport protocol
@@ -296,7 +789,7 @@ export declare const layerStdio: (options: {
  * @category layers
  * @since 4.0.0
  */
-export declare const layerHttp: (options: {
+export declare const layerHttp: <const Protocols extends Arr.NonEmptyReadonlyArray<McpProtocol.ProtocolAdapter>, RA = never, RE = never, RR = never>(options: {
     readonly name: string;
     readonly version: string;
     readonly instructions?: string | undefined;
@@ -304,27 +797,113 @@ export declare const layerHttp: (options: {
     readonly websiteUrl?: string | undefined;
     readonly icons?: ReadonlyArray<McpSchema.Icon> | undefined;
     readonly path: HttpRouter.PathInput;
-    readonly protocols: Arr.NonEmptyReadonlyArray<McpProtocol.ProtocolAdapter>;
+    readonly protocols: Protocols;
     readonly extensions?: ServerExtensions | undefined;
+    readonly cacheHints?: CacheHints | undefined;
     readonly allowedOrigins?: ReadonlyArray<string> | undefined;
     readonly allowSessionTermination?: boolean | undefined;
-}) => Layer.Layer<McpServer | McpServerClient, Cause.IllegalArgumentError, HttpRouter.HttpRouter>;
+    readonly allowSubscriptions?: boolean | undefined;
+    readonly registrations?: Layer.Layer<RA, RE, RR> | undefined;
+}) => Layer.Layer<McpServer | McpRequest.From<"Requires", ProvidedServices<Protocols, true>>, Cause.IllegalArgumentError | RE, HttpRouter.HttpRouter | RegistrationServices<RR> | HttpRouter.Request.From<"Requires", RemainingRequestServices<RR, ProvidedServices<Protocols, true>>>>;
 /**
- * Registers a `Toolkit` with the `McpServer`.
+ * Registers a request-scoped Streamable HTTP MCP endpoint at `options.path`.
  *
- * @stability unstable
- * @category handlers
- * @since 4.0.0
- */
-export declare const registerToolkit: <Tools extends Record<string, Tool.Any>>(toolkit: Toolkit.Toolkit<Tools>) => Effect.Effect<void, never, McpServer | Tool.HandlersFor<Tools> | Exclude<Tool.HandlerServices<Tools[keyof Tools]>, McpRequestContext>>;
-/**
- * Registers an `AiToolkit` with the `McpServer`.
+ * **When to use**
+ *
+ * Use when serving on serverless hosts such as Cloudflare Workers, where execution must
+ * belong to the HTTP request rather than a shared long-lived server.
+ *
+ * **Details**
+ *
+ * Each POST runs its own server in the request scope, with no background
+ * fiber, timer, or queue consumer left after the response body completes.
+ * Only sessionless protocols such as `v2026_07_28` are accepted. Tools,
+ * resources, prompts, completions, multi round-trip input requests, and the
+ * request's own progress and log notifications are supported. Legacy reverse
+ * requests through `McpServer.elicit` are not available.
+ *
+ * Discovery advertises `listChanged: false`, `subscriptions/listen` returns
+ * Method not found, and DELETE returns `405`. Request-scoped clients receive
+ * no broadcast notifications such as list changes. Those still reach clients
+ * of a `layerHttp` endpoint sharing the same `McpServer`, and are dropped when
+ * no such endpoint exists. Use `layerHttp` on a long-lived host for sessions,
+ * subscriptions, or legacy reverse requests.
+ *
+ * HTTP admission, origin checks, and JSON-RPC errors follow `layerHttp`.
+ * Configuring a sessionful protocol through an untyped caller fails layer
+ * construction with `IllegalArgumentError`.
+ *
+ * Registrations passed as `registrations` are built once, before the routes
+ * are added, and shared by every POST. Remaining `McpRequest` markers become
+ * `HttpRouter.Request` markers, as with `layerHttp`.
+ *
+ * @see {@link layerHttp} for the long-lived HTTP transport and HTTP admission policy
  *
  * @stability unstable
  * @category layers
  * @since 4.0.0
  */
-export declare const toolkit: <Tools extends Record<string, Tool.Any>>(toolkit: Toolkit.Toolkit<Tools>) => Layer.Layer<never, never, Tool.HandlersFor<Tools> | Exclude<Tool.HandlerServices<Tools[keyof Tools]>, McpRequestContext>>;
+export declare const layerHttpRequestScoped: <const Protocols extends Arr.NonEmptyReadonlyArray<McpProtocol.ProtocolAdapter<McpProtocol.ProtocolVersion, McpProtocol.StatelessRuntimeDescriptor>>, RA = never, RE = never, RR = never>(options: {
+    readonly name: string;
+    readonly version: string;
+    readonly instructions?: string | undefined;
+    readonly description?: string | undefined;
+    readonly websiteUrl?: string | undefined;
+    readonly icons?: ReadonlyArray<McpSchema.Icon> | undefined;
+    readonly path: HttpRouter.PathInput;
+    readonly protocols: Protocols;
+    readonly extensions?: ServerExtensions | undefined;
+    readonly cacheHints?: CacheHints | undefined;
+    readonly allowedOrigins?: ReadonlyArray<string> | undefined;
+    readonly registrations?: Layer.Layer<RA, RE, RR> | undefined;
+}) => Layer.Layer<McpServer | McpRequest.From<"Requires", ProvidedServices<Protocols, true>>, Cause.IllegalArgumentError | RE, HttpRouter.HttpRouter | RegistrationServices<RR> | HttpRouter.Request.From<"Requires", RemainingRequestServices<RR, ProvidedServices<Protocols, true>>>>;
+/**
+ * The requirements of a toolkit registration.
+ *
+ * **Details**
+ *
+ * Services a tool declares with `dependencies` or `Tool.addDependency` are
+ * request-level: they are carried as `McpRequest<"Requires", S>` markers and
+ * must be provided by MCP middleware or the transport. Parameter decoding and
+ * result encoding services are required when the toolkit is registered,
+ * unless a tool also declares them.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.0.0
+ */
+export type ToolkitRequirements<Tools extends Record<string, Tool.Any>> = 0 extends (1 & Tool.Requirements<Tools[keyof Tools]>) ? any : Tool.HandlersFor<Tools> | RegistrationRequirements<Tool.SchemaServices<Tools[keyof Tools]>, Tool.Requirements<Tools[keyof Tools]>>;
+type RegistrationRequirements<SchemaServices, RequestServices> = McpServer | Exclude<SchemaServices, RequestServices | McpRequestContext> | McpRequest.From<"Requires", Exclude<RequestServices, McpRequestContext>>;
+/**
+ * Registers a `Toolkit` with the `McpServer`.
+ *
+ * **Details**
+ *
+ * The MCP middleware in the current context, provided with
+ * `Effect.provide(middleware.layer)`, runs around every call to the toolkit.
+ *
+ * @see {@link ToolkitRequirements} for which services are request-level
+ *
+ * @stability unstable
+ * @category handlers
+ * @since 4.0.0
+ */
+export declare const registerToolkit: <Tools extends Record<string, Tool.Any>>(toolkit: Toolkit.Toolkit<Tools>) => Effect.Effect<void, never, ToolkitRequirements<Tools>>;
+/**
+ * Creates a layer that registers a `Toolkit` with the `McpServer`.
+ *
+ * **Details**
+ *
+ * The layer requires `McpServer`. Pass it to a transport through the
+ * `registrations` option, or provide the transport layer to it.
+ *
+ * @see {@link ToolkitRequirements} for which services are request-level
+ *
+ * @stability unstable
+ * @category layers
+ * @since 4.0.0
+ */
+export declare const toolkit: <Tools extends Record<string, Tool.Any>>(toolkit: Toolkit.Toolkit<Tools>) => Layer.Layer<never, never, ToolkitRequirements<Tools>>;
 /**
  * Utility type that validates a completion-handler record against the allowed
  * parameter keys.
@@ -363,14 +942,52 @@ export type CompletionServices<Completions> = {
 export type ResourceCompletions<Schemas extends ReadonlyArray<Schema.Constraint>> = {
     readonly [K in Extract<keyof Schemas, `${number}`> as Schemas[K] extends Param<infer Id, infer _S> ? Id : `param${K}`]: (input: string, context: CompletionContext) => Effect.Effect<Array<Schemas[K]["Type"]>, any, any>;
 };
+type TemplateParamKey<Schemas extends ReadonlyArray<Schema.Constraint>, K extends keyof Schemas> = Schemas[K] extends Param<infer Id, infer _S> ? Id : `param${K & string}`;
+type TemplateSchemaServices<Schemas extends ReadonlyArray<Schema.Constraint>, Completions> = Schemas[number]["DecodingServices"] | {
+    [K in Extract<keyof Schemas, `${number}`>]: TemplateParamKey<Schemas, K> extends keyof Completions ? Schemas[K]["EncodingServices"] : never;
+}[Extract<keyof Schemas, `${number}`>];
+type PromptSchemaServices<Params extends Schema.Struct.Fields, Completions> = Schema.Struct.DecodingServices<Params> | Params[Extract<keyof Completions, keyof Params>]["EncodingServices"];
+/**
+ * The requirements of a resource registration: the content handler's services
+ * are request-level.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.0.0
+ */
+export type ResourceRequirements<R> = RegistrationRequirements<never, R>;
+/**
+ * The requirements of a resource template registration.
+ *
+ * **Details**
+ *
+ * Services read by the content and completion handlers are request-level.
+ * Parameter decoding services, and the encoding services of parameters with a
+ * completion handler, are required when the template is registered, unless a
+ * handler also reads them.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.0.0
+ */
+export type ResourceTemplateRequirements<Schemas extends ReadonlyArray<Schema.Constraint>, R, Completions> = RegistrationRequirements<TemplateSchemaServices<Schemas, Completions>, R | CompletionServices<Completions>>;
+/**
+ * The requirements of a prompt registration.
+ *
+ * **Details**
+ *
+ * Services read by the content and completion handlers are request-level.
+ * Parameter decoding services, and the encoding services of parameters with a
+ * completion handler, are required when the prompt is registered, unless a
+ * handler also reads them.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.0.0
+ */
+export type PromptRequirements<Params extends Schema.Struct.Fields, R, Completions> = RegistrationRequirements<PromptSchemaServices<Params, Completions>, R | CompletionServices<Completions>>;
 /**
  * Registers an MCP resource or resource template from an Effect program.
- *
- * **When to use**
- *
- * Use when you are already inside an Effect program with an `McpServer`
- * service and need to add a concrete resource or URI-template resource
- * directly.
  *
  * @see {@link resource} for the layer-based resource registration wrapper
  *
@@ -382,12 +999,6 @@ export declare const registerResource: {
     /**
      * Registers an MCP resource or resource template from an Effect program.
      *
-     * **When to use**
-     *
-     * Use when you are already inside an Effect program with an `McpServer`
-     * service and need to add a concrete resource or URI-template resource
-     * directly.
-     *
      * @see {@link resource} for the layer-based resource registration wrapper
      *
      * @stability unstable
@@ -403,15 +1014,9 @@ export declare const registerResource: {
         readonly priority?: number | undefined;
         readonly content: Effect.Effect<ReadResourceResult | string | Uint8Array, E, R>;
         readonly annotations?: Context.Context<never> | undefined;
-    }): Effect.Effect<void, never, Exclude<R, McpRequestContext> | McpServer>;
+    }): Effect.Effect<void, never, ResourceRequirements<R>>;
     /**
      * Registers an MCP resource or resource template from an Effect program.
-     *
-     * **When to use**
-     *
-     * Use when you are already inside an Effect program with an `McpServer`
-     * service and need to add a concrete resource or URI-template resource
-     * directly.
      *
      * @see {@link resource} for the layer-based resource registration wrapper
      *
@@ -430,16 +1035,20 @@ export declare const registerResource: {
             readonly [K in keyof Schemas]: Schemas[K]["Type"];
         }) => Effect.Effect<ReadResourceResult | string | Uint8Array, E, R>;
         readonly annotations?: Context.Context<never> | undefined;
-    }) => Effect.Effect<void, never, Exclude<Schemas[number]["DecodingServices"] | Schemas[number]["EncodingServices"] | R | (Completions[keyof Completions] extends (input: string) => infer Ret ? Ret extends Effect.Effect<infer _A, infer _E, infer _R> ? _R : never : never), McpRequestContext> | McpServer>;
+    }) => Effect.Effect<void, never, ResourceTemplateRequirements<Schemas, R, Completions>>;
 };
 /**
  * Creates a layer that registers an MCP resource or resource template.
  *
- * **When to use**
+ * **Details**
  *
- * Use to compose resource registration into an MCP server layer.
+ * Services read by the content and completion handlers are request-level, so
+ * providing them with `Layer.provide` doesn't satisfy them. Read
+ * construction-time services in an enclosing `Layer.unwrap` and close over
+ * them, and provide per-request services with MCP middleware.
  *
  * @see {@link registerResource} for the Effect-level resource registration API
+ * @see {@link middleware} for providing request-level dependencies
  *
  * @stability unstable
  * @category layers
@@ -449,11 +1058,15 @@ export declare const resource: {
     /**
      * Creates a layer that registers an MCP resource or resource template.
      *
-     * **When to use**
+     * **Details**
      *
-     * Use to compose resource registration into an MCP server layer.
+     * Services read by the content and completion handlers are request-level, so
+     * providing them with `Layer.provide` doesn't satisfy them. Read
+     * construction-time services in an enclosing `Layer.unwrap` and close over
+     * them, and provide per-request services with MCP middleware.
      *
      * @see {@link registerResource} for the Effect-level resource registration API
+     * @see {@link middleware} for providing request-level dependencies
      *
      * @stability unstable
      * @category layers
@@ -467,15 +1080,19 @@ export declare const resource: {
         readonly audience?: ReadonlyArray<"user" | "assistant"> | undefined;
         readonly priority?: number | undefined;
         readonly content: Effect.Effect<ReadResourceResult | string | Uint8Array, E, R>;
-    }): Layer.Layer<never, never, Exclude<R, McpRequestContext>>;
+    }): Layer.Layer<never, never, ResourceRequirements<R>>;
     /**
      * Creates a layer that registers an MCP resource or resource template.
      *
-     * **When to use**
+     * **Details**
      *
-     * Use to compose resource registration into an MCP server layer.
+     * Services read by the content and completion handlers are request-level, so
+     * providing them with `Layer.provide` doesn't satisfy them. Read
+     * construction-time services in an enclosing `Layer.unwrap` and close over
+     * them, and provide per-request services with MCP middleware.
      *
      * @see {@link registerResource} for the Effect-level resource registration API
+     * @see {@link middleware} for providing request-level dependencies
      *
      * @stability unstable
      * @category layers
@@ -491,21 +1108,121 @@ export declare const resource: {
         readonly content: (uri: string, ...params: {
             readonly [K in keyof Schemas]: Schemas[K]["Type"];
         }) => Effect.Effect<ReadResourceResult | string | Uint8Array, E, R>;
-    }) => Layer.Layer<never, never, Exclude<R | (Completions[keyof Completions] extends (input: string) => infer Ret ? Ret extends Effect.Effect<infer _A, infer _E, infer _R> ? _R : never : never), McpRequestContext>>;
+    }) => Layer.Layer<never, never, ResourceTemplateRequirements<Schemas, R, Completions>>;
 };
 /**
- * Registers an MCP prompt from an Effect program.
+ * A file of a skill: its text, its bytes, or either with an explicit MIME
+ * type. Without one, the MIME type is inferred from the file extension.
  *
- * **When to use**
- *
- * Use when you are already inside an Effect program with an `McpServer`
- * service and need to add a prompt handler directly.
+ * @stability unstable
+ * @category models
+ * @since 4.1.1
+ */
+export type SkillFile = string | Uint8Array | {
+    readonly content: string | Uint8Array;
+    readonly mimeType?: string | undefined;
+};
+/**
+ * Options for {@link registerSkill} and {@link skill}.
  *
  * **Details**
  *
- * Parameters are decoded with the supplied schema, completion handlers encode
- * per-parameter suggestions, and string prompt content is converted into a user
- * text message.
+ * `uri` addresses the skill's `SKILL.md`, as
+ * `skill://<skill-path>/SKILL.md`. Its last path segment is the skill's name,
+ * which must equal the frontmatter's `name`. Other schemes work the same way.
+ *
+ * `files` maps paths relative to the skill root to the skill's files,
+ * `SKILL.md` included. Files are served verbatim, and the skill's listed
+ * frontmatter is parsed from `SKILL.md`. Quote frontmatter strings that a YAML
+ * 1.1 parser reads as another type, such as `yes` or `1.0`.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.1.1
+ */
+export interface SkillOptions {
+    readonly uri: string;
+    readonly files: {
+        readonly "SKILL.md": SkillFile;
+    } & Readonly<Record<string, SkillFile>>;
+    readonly annotations?: Context.Context<never> | undefined;
+}
+/**
+ * Registers an Agent Skill under the MCP Skills extension (SEP-2640).
+ *
+ * **Details**
+ *
+ * Each file is registered as a resource, and the skill is listed by
+ * `skills/list` and `skills/get` with a manifest of every file's SHA-256
+ * digest and size, computed from the bytes served. Every directory of the
+ * skill namespace is readable with `resources/directory/read`. The server
+ * declares the extension once any skill is registered.
+ *
+ * Fails when the skill breaks the extension's rules: a name that does not
+ * match the URI, a `SKILL.md` without YAML frontmatter, frontmatter that is
+ * not valid {@link McpSchema.SkillFrontmatter}, a file path that leaves the
+ * skill, or more than 512 files or 16 MiB in all. It also fails when the
+ * skill's directory contains or lies inside another skill's, or one of its
+ * files is already registered as a resource. Registering a resource at the
+ * URI of a skill's file afterwards is a defect.
+ *
+ * SHA-256 runs on `crypto.subtle`.
+ *
+ * @see {@link skill} for the layer-based skill registration wrapper
+ *
+ * @stability unstable
+ * @category handlers
+ * @since 4.1.1
+ */
+export declare const registerSkill: (options: SkillOptions) => Effect.Effect<void, Cause.IllegalArgumentError, McpServer>;
+/**
+ * Creates a layer that registers an Agent Skill under the MCP Skills extension
+ * (SEP-2640).
+ *
+ * **Example** (Publishing a skill with a supporting file)
+ *
+ * ```ts
+ * import { Layer } from "effect"
+ * import { McpProtocol, McpServer } from "effect/ai"
+ *
+ * const RefundsSkill = McpServer.skill({
+ *   uri: "skill://billing/refunds/SKILL.md",
+ *   files: {
+ *     "SKILL.md": `---
+ * name: refunds
+ * description: Process refunds using the billing tools
+ * ---
+ *
+ * Read references/policy.md before issuing a refund.
+ * `,
+ *     "references/policy.md": "Refunds above CHF 500 require manager approval.\n"
+ *   }
+ * })
+ *
+ * const ServerLayer = RefundsSkill.pipe(
+ *   Layer.provide(McpServer.layerHttp({
+ *     name: "billing",
+ *     version: "1.0.0",
+ *     path: "/mcp",
+ *     protocols: [McpProtocol.v2026_07_28, McpProtocol.v2025_11_25]
+ *   }))
+ * )
+ * ```
+ *
+ * @see {@link registerSkill} for the Effect-level skill registration API
+ *
+ * @stability unstable
+ * @category layers
+ * @since 4.1.1
+ */
+export declare const skill: (options: SkillOptions) => Layer.Layer<never, Cause.IllegalArgumentError, McpServer>;
+/**
+ * Registers an MCP prompt from an Effect program.
+ *
+ * **Details**
+ *
+ * Decodes parameters and encodes completion suggestions using their schemas.
+ * String content becomes a user text message.
  *
  * @see {@link prompt} for the layer-based prompt registration wrapper
  *
@@ -521,21 +1238,19 @@ export declare const registerPrompt: <E, R, Params extends Schema.Struct.Fields 
     readonly completion?: ValidateCompletions<Completions, Extract<keyof Params, string>> | undefined;
     readonly content: (params: Schema.Struct.Type<Params>) => Effect.Effect<Array<PromptMessage> | string, E, R>;
     readonly annotations?: Context.Context<never> | undefined;
-}) => Effect.Effect<void, never, Exclude<Schema.Struct.DecodingServices<Params> | R | CompletionServices<Completions>, McpRequestContext> | McpServer>;
+}) => Effect.Effect<void, never, PromptRequirements<Params, R, Completions>>;
 /**
  * Creates a layer that registers an MCP prompt.
  *
- * **When to use**
- *
- * Use to compose prompt registration into an MCP server layer.
- *
  * **Details**
  *
- * Parameters are decoded with the supplied schema, completion handlers encode
- * per-parameter suggestions, and string prompt content is converted into a user
- * text message.
+ * Services read by the content and completion handlers are request-level, so
+ * providing them with `Layer.provide` doesn't satisfy them. Read
+ * construction-time services in an enclosing `Layer.unwrap` and close over
+ * them, and provide per-request services with MCP middleware.
  *
  * @see {@link registerPrompt} for the Effect-level prompt registration API
+ * @see {@link middleware} for providing request-level dependencies
  *
  * @stability unstable
  * @category layers
@@ -549,7 +1264,7 @@ export declare const prompt: <E, R, Params extends Schema.Struct.Fields = {}, co
     readonly completion?: ValidateCompletions<Completions, Extract<keyof Params, string>> | undefined;
     readonly content: (params: Schema.Struct.Type<Params>) => Effect.Effect<Array<PromptMessage> | string, E, R>;
     readonly annotations?: Context.Context<never> | undefined;
-}) => Layer.Layer<never, never, Exclude<Schema.Struct.DecodingServices<Params> | R | CompletionServices<Completions>, McpRequestContext>>;
+}) => Layer.Layer<never, never, PromptRequirements<Params, R, Completions>>;
 /**
  * Collects structured input from the current MCP client and decodes the
  * accepted response with `schema`.
@@ -575,5 +1290,20 @@ export declare const elicit: <S extends Schema.ConstraintEncoder<Record<string, 
  * @since 4.0.0
  */
 export declare const clientCapabilities: Effect.Effect<ClientCapabilities, never, McpRequestContext>;
+/**
+ * Decodes an `Mcp-Name` header, including base64-wrapped values.
+ * Returns `undefined` for malformed values.
+ *
+ * **Details**
+ *
+ * Use in `HttpRouter.middleware` to identify the tool, prompt or resource
+ * targeted by a `2026-07-28` request. Earlier protocols carry the name only
+ * in the JSON-RPC body.
+ *
+ * @stability unstable
+ * @category decoding
+ * @since 4.0.0
+ */
+export declare const decodeNameHeader: (value: string) => string | undefined;
 export {};
 //# sourceMappingURL=McpServer.d.ts.map

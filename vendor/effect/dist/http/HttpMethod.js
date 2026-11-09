@@ -9,14 +9,9 @@
  * @stability unstable
  * @since 4.0.0
  */
-/**
- * Returns `true` when a method can carry a request body and narrows it to `HttpMethod.WithBody`.
- *
- * @stability unstable
- * @category guards
- * @since 4.0.0
- */
-export const hasBody = method => method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE";
+export function hasBody(method) {
+  return method !== "GET" && method !== "HEAD" && method !== "OPTIONS" && method !== "TRACE";
+}
 /**
  * Provides a readonly set containing every supported `HttpMethod` literal.
  *

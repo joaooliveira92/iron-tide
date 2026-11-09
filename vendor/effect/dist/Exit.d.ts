@@ -445,7 +445,7 @@ export declare const isFailure: <A, E>(self: Exit<A, E>) => self is Failure<A, E
  * @category guards
  * @since 4.0.0
  */
-export declare const hasFails: <A, E>(self: Exit<A, E>) => self is Failure<A, E>;
+export declare const hasFails: <A, E>(self: Exit<A, E>) => boolean;
 /**
  * Checks whether a failed Exit contains defects (Die reasons).
  *
@@ -475,7 +475,7 @@ export declare const hasFails: <A, E>(self: Exit<A, E>) => self is Failure<A, E>
  * @category guards
  * @since 4.0.0
  */
-export declare const hasDies: <A, E>(self: Exit<A, E>) => self is Failure<A, E>;
+export declare const hasDies: <A, E>(self: Exit<A, E>) => boolean;
 /**
  * Checks whether a failed Exit contains interruptions (Interrupt reasons).
  *
@@ -505,7 +505,7 @@ export declare const hasDies: <A, E>(self: Exit<A, E>) => self is Failure<A, E>;
  * @category guards
  * @since 4.0.0
  */
-export declare const hasInterrupts: <A, E>(self: Exit<A, E>) => self is Failure<A, E>;
+export declare const hasInterrupts: <A, E>(self: Exit<A, E>) => boolean;
 /**
  * Extracts the Success variant from an Exit as a Result.
  *
@@ -916,8 +916,10 @@ export declare const map: {
  *
  * **Gotchas**
  *
- * Only transforms typed errors (Fail reasons). If the Cause contains only
- * defects or interruptions, the failure passes through unchanged.
+ * Maps every typed error in the cause, preserving defects, interrupts and
+ * reason order. Unlike typed recovery, mapping does not convert errors to defects.
+ *
+ * If the Cause contains only defects or interruptions, no mapper is called.
  *
  * **Example** (Mapping over an error)
  *
@@ -950,8 +952,10 @@ export declare const mapError: {
      *
      * **Gotchas**
      *
-     * Only transforms typed errors (Fail reasons). If the Cause contains only
-     * defects or interruptions, the failure passes through unchanged.
+     * Maps every typed error in the cause, preserving defects, interrupts and
+     * reason order. Unlike typed recovery, mapping does not convert errors to defects.
+     *
+     * If the Cause contains only defects or interruptions, no mapper is called.
      *
      * **Example** (Mapping over an error)
      *
@@ -984,8 +988,10 @@ export declare const mapError: {
      *
      * **Gotchas**
      *
-     * Only transforms typed errors (Fail reasons). If the Cause contains only
-     * defects or interruptions, the failure passes through unchanged.
+     * Maps every typed error in the cause, preserving defects, interrupts and
+     * reason order. Unlike typed recovery, mapping does not convert errors to defects.
+     *
+     * If the Cause contains only defects or interruptions, no mapper is called.
      *
      * **Example** (Mapping over an error)
      *
@@ -1014,10 +1020,13 @@ export declare const mapError: {
  * **Details**
  *
  * `onSuccess` transforms the value if the Exit is a Success. `onFailure`
- * transforms the typed error if the Exit is a Failure with a Fail reason.
+ * transforms each typed error if the Exit is a Failure with Fail reasons.
  * Allocates a new Exit.
  *
  * **Gotchas**
+ *
+ * Maps every typed error in the cause, preserving defects, interrupts and
+ * reason order. Unlike typed recovery, mapping does not convert errors to defects.
  *
  * If the Cause contains only defects or interruptions, the failure passes
  * through unchanged.
@@ -1051,10 +1060,13 @@ export declare const mapBoth: {
      * **Details**
      *
      * `onSuccess` transforms the value if the Exit is a Success. `onFailure`
-     * transforms the typed error if the Exit is a Failure with a Fail reason.
+     * transforms each typed error if the Exit is a Failure with Fail reasons.
      * Allocates a new Exit.
      *
      * **Gotchas**
+     *
+     * Maps every typed error in the cause, preserving defects, interrupts and
+     * reason order. Unlike typed recovery, mapping does not convert errors to defects.
      *
      * If the Cause contains only defects or interruptions, the failure passes
      * through unchanged.
@@ -1091,10 +1103,13 @@ export declare const mapBoth: {
      * **Details**
      *
      * `onSuccess` transforms the value if the Exit is a Success. `onFailure`
-     * transforms the typed error if the Exit is a Failure with a Fail reason.
+     * transforms each typed error if the Exit is a Failure with Fail reasons.
      * Allocates a new Exit.
      *
      * **Gotchas**
+     *
+     * Maps every typed error in the cause, preserving defects, interrupts and
+     * reason order. Unlike typed recovery, mapping does not convert errors to defects.
      *
      * If the Cause contains only defects or interruptions, the failure passes
      * through unchanged.

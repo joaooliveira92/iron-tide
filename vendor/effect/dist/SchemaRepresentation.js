@@ -222,6 +222,22 @@ export const isULIDReviver = /*#__PURE__*/makeReviverFilter("effect/schema/isULI
   annotations
 }) => Schema.isULID(annotations));
 /**
+ * Reviver for persisted `isAscii` checks.
+ *
+ * **When to use**
+ *
+ * Use when reconstructing documents that may contain checks created by {@link Schema.isAscii}.
+ *
+ * @see {@link Schema.isAscii} for creating the corresponding check
+ *
+ * @stability unstable
+ * @category validation
+ * @since 4.0.6
+ */
+export const isAsciiReviver = /*#__PURE__*/makeReviverFilter("effect/schema/isAscii", Schema.Null, ({
+  annotations
+}) => Schema.isAscii(annotations));
+/**
  * Reviver for persisted `isBase64` checks.
  *
  * **When to use**
@@ -1123,6 +1139,24 @@ export const ByteSizeReviver = /*#__PURE__*/makeFixedDeclarationReviver("effect/
  */
 export const BigDecimalReviver = /*#__PURE__*/makeFixedDeclarationReviver("effect/schema/BigDecimal", Schema.BigDecimal);
 /**
+ * Reviver for persisted {@link Schema.SemVer} declarations.
+ *
+ * @see {@link Schema.SemVer} for the corresponding schema
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export const SemVerReviver = /*#__PURE__*/makeFixedDeclarationReviver("effect/schema/SemVer", Schema.SemVer);
+/**
+ * Reviver for persisted {@link Schema.SemVerRange} declarations.
+ *
+ * @see {@link Schema.SemVerRange} for the corresponding schema
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export const SemVerRangeReviver = /*#__PURE__*/makeFixedDeclarationReviver("effect/schema/SemVerRange", Schema.SemVerRange);
+/**
  * Reviver for persisted `File` declarations.
  *
  * **When to use**
@@ -1472,7 +1506,6 @@ export const JsonReviver = /*#__PURE__*/makeFixedDeclarationReviver("effect/sche
  * @since 4.0.0
  */
 export const MutableJsonReviver = /*#__PURE__*/makeFixedDeclarationReviver("effect/schema/MutableJson", Schema.MutableJson);
-const jsonSchemaRevivers = [JsonReviver, isPatternReviver, isFiniteReviver, isGreaterThanReviver, isGreaterThanOrEqualToReviver, isLessThanReviver, isLessThanOrEqualToReviver, isMultipleOfReviver, isIntReviver, isMinLengthReviver, isMaxLengthReviver, isMinCodePointsReviver, isMaxCodePointsReviver, isMinPropertiesReviver, isMaxPropertiesReviver, isPropertyNamesReviver, isUniqueReviver];
 /**
  * Creates generated runtime and TypeScript source strings for a schema.
  *
@@ -1774,7 +1807,14 @@ const ReferenceSchema = /*#__PURE__*/Schema.Struct({
   _tag: /*#__PURE__*/Schema.tag("Reference"),
   $ref: Schema.NonEmptyString
 });
-const RepresentationUnion = /*#__PURE__*/Schema.Union([DeclarationSchema, ReferenceSchema, SuspendSchema, /*#__PURE__*/makeKeywordSchema("Null"), /*#__PURE__*/makeKeywordSchema("Undefined"), /*#__PURE__*/makeKeywordSchema("Void"), /*#__PURE__*/makeKeywordSchema("Never"), /*#__PURE__*/makeKeywordSchema("Unknown"), /*#__PURE__*/makeKeywordSchema("Any"), /*#__PURE__*/makeKeywordSchema("String"), /*#__PURE__*/makeKeywordSchema("Number"), /*#__PURE__*/makeKeywordSchema("Boolean"), /*#__PURE__*/makeKeywordSchema("BigInt"), /*#__PURE__*/makeKeywordSchema("Symbol"), /*#__PURE__*/makeKeywordSchema("ObjectKeyword"), LiteralSchema, UniqueSymbolSchema, EnumSchema, TemplateLiteralSchema, ArraysSchema, ObjectsSchema, UnionSchema]);
+const RepresentationUnion = /*#__PURE__*/Schema.Union([DeclarationSchema, ReferenceSchema, SuspendSchema, /*#__PURE__*/makeKeywordSchema("Null"), /*#__PURE__*/makeKeywordSchema("Undefined"), /*#__PURE__*/makeKeywordSchema("Void"), /*#__PURE__*/makeKeywordSchema("Never"), /*#__PURE__*/makeKeywordSchema("Unknown"), /*#__PURE__*/makeKeywordSchema("Any"), /*#__PURE__*/Schema.Struct({
+  _tag: /*#__PURE__*/Schema.tag("String"),
+  ...KeywordFields,
+  content: /*#__PURE__*/Schema.optional(/*#__PURE__*/Schema.Struct({
+    mediaType: Schema.String,
+    schema: /*#__PURE__*/Schema.optional(RepresentationSchema)
+  }))
+}), /*#__PURE__*/makeKeywordSchema("Number"), /*#__PURE__*/makeKeywordSchema("Boolean"), /*#__PURE__*/makeKeywordSchema("BigInt"), /*#__PURE__*/makeKeywordSchema("Symbol"), /*#__PURE__*/makeKeywordSchema("ObjectKeyword"), LiteralSchema, UniqueSymbolSchema, EnumSchema, TemplateLiteralSchema, ArraysSchema, ObjectsSchema, UnionSchema]);
 const ReferencesSchema = /*#__PURE__*/Schema.Record(Schema.String, RepresentationSchema);
 const DocumentFromJson = /*#__PURE__*/Schema.toCodecJson(/*#__PURE__*/Schema.Struct({
   representation: RepresentationSchema,
@@ -1965,13 +2005,16 @@ export function fromRepresentations(document, options) {
  * - Objects and arrays used as `const` values or `enum` members are rejected. Only strings, numbers, booleans, and null
  *   are supported.
  * - Intersections of overlapping unions are limited to disjoint root-type partitions and finite primitive `anyOf`
- *   literal sets. Other union intersections, including cases that would duplicate a nested choice, are rejected.
+ *   literal sets, which may also be duplicated across branches. Other union intersections, including cases that would
+ *   duplicate any other nested choice, are rejected.
  * - Unknown extension keywords are ignored and their semantics are not enforced.
- * - Only direct local references to top-level definitions in the form `#/$defs/<escaped-token>` are supported. Root
- *   references, external references, and pointers below a definition are rejected with the supported reference format.
- *   Missing definitions are reported by name. References reached inside nested schema
- *   resources introduced by `$id` are rejected instead of resolved against the top-level definitions.
- * - Built-in declarations and checks are reconstructed with importer-owned revivers.
+ * - Only local references to top-level definitions in the form `#/$defs/<escaped-token>` are supported, optionally
+ *   followed by a pointer below the definition. A pointer target becomes a definition keyed by its escaped tokens, such
+ *   as `Name/properties/field`, and is rejected if a top-level definition already uses that key. Root references and
+ *   external references are rejected with the supported reference format. Missing definitions are reported by name.
+ *   References reached inside nested schema resources introduced by `$id` are rejected instead of resolved against the
+ *   top-level definitions.
+ * - Imported constraints use built-in schemas and checks.
  * - Pattern constraints reached during translation cause an error by default. Use `patterns: "apply"` only for trusted
  *   documents, or `patterns: "ignore"` to skip them. Ignoring patterns can both admit invalid values and reject valid
  *   values when `oneOf` branches start overlapping.
@@ -1986,7 +2029,7 @@ export function fromRepresentations(document, options) {
  * @since 4.0.0
  */
 export function fromJsonSchemaDocument(document, options) {
-  return InternalFromJsonSchemaDocument.fromJsonSchemaDocument(document, options, jsonSchemaRevivers);
+  return InternalFromJsonSchemaDocument.fromJsonSchemaDocument(document, options);
 }
 /**
  * Imports multiple JSON Schema Draft 2020-12 roots as runtime schemas with shared definitions.
@@ -2008,11 +2051,14 @@ export function fromJsonSchemaDocument(document, options) {
  * - Objects and arrays used as `const` values or `enum` members are rejected. Only strings, numbers, booleans, and null
  *   are supported.
  * - Intersections of overlapping unions are limited to disjoint root-type partitions and finite primitive `anyOf`
- *   literal sets. Other union intersections, including cases that would duplicate a nested choice, are rejected.
- * - Only direct local references to top-level definitions in the form `#/$defs/<escaped-token>` are supported. Root
- *   references, external references, and pointers below a definition are rejected with the supported reference format.
- *   Missing definitions are reported by name. References reached inside nested schema
- *   resources introduced by `$id` are rejected instead of resolved against the top-level definitions.
+ *   literal sets, which may also be duplicated across branches. Other union intersections, including cases that would
+ *   duplicate any other nested choice, are rejected.
+ * - Only local references to top-level definitions in the form `#/$defs/<escaped-token>` are supported, optionally
+ *   followed by a pointer below the definition. A pointer target becomes a definition keyed by its escaped tokens, such
+ *   as `Name/properties/field`, and is rejected if a top-level definition already uses that key. Root references and
+ *   external references are rejected with the supported reference format. Missing definitions are reported by name.
+ *   References reached inside nested schema resources introduced by `$id` are rejected instead of resolved against the
+ *   top-level definitions.
  * - Pattern constraints reached during translation cause an error by default. Use `patterns: "apply"` only for trusted
  *   documents, or `patterns: "ignore"` to skip them. Ignoring patterns can both admit invalid values and reject valid
  *   values when `oneOf` branches start overlapping.
@@ -2026,6 +2072,6 @@ export function fromJsonSchemaDocument(document, options) {
  * @since 4.0.0
  */
 export function fromJsonSchemaMultiDocument(document, options) {
-  return InternalFromJsonSchemaDocument.fromJsonSchemaMultiDocument(document, options, jsonSchemaRevivers);
+  return InternalFromJsonSchemaDocument.fromJsonSchemaMultiDocument(document, options);
 }
 //# sourceMappingURL=SchemaRepresentation.js.map

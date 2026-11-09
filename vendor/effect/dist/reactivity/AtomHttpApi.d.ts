@@ -20,11 +20,11 @@ import type * as HttpApiGroup from "../http-api/HttpApiGroup.ts";
 import type * as HttpApiMiddleware from "../http-api/HttpApiMiddleware.ts";
 import type * as HttpClient from "../http/HttpClient.ts";
 import * as Layer from "../Layer.ts";
-import type { ReadonlyRecord } from "../Record.ts";
 import * as Schema from "../Schema.ts";
 import type { Simplify } from "../Types.ts";
 import * as AsyncResult from "./AsyncResult.ts";
 import * as Atom from "./Atom.ts";
+import * as Reactivity from "./Reactivity.ts";
 /**
  * A `Context.Service` for an HTTP API client integrated with atom reactivity.
  *
@@ -45,15 +45,15 @@ export interface AtomHttpApiClient<Self, Id extends string, Groups extends HttpA
     }) => [Endpoint] extends [
         HttpApiEndpoint.HttpApiEndpoint<infer _Identifier, infer _Method, infer _Path, infer _Params, infer _Query, infer _Payload, infer _Headers, infer _Success, infer _Error, infer _Middleware, infer _RE>
     ] ? Atom.AtomResultFn<Simplify<HttpApiEndpoint.ClientRequest<_Params, _Query, _Payload, _Headers, "decoded-only"> & {
-        readonly reactivityKeys?: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>> | undefined;
+        readonly reactivityKeys?: Reactivity.KeysInput | undefined;
     }>, ResponseByMode<Endpoint, ResponseMode>, ErrorByMode<_Error, _Middleware, ResponseMode>> : never;
     readonly query: <GroupIdentifier extends HttpApiGroup.Identifier<Groups>, EndpointIdentifier extends HttpApiEndpoint.Identifier<HttpApiGroup.Endpoints<Group>>, Group extends HttpApiGroup.Constraint = HttpApiGroup.WithIdentifier<Groups, GroupIdentifier>, Endpoint extends HttpApiEndpoint.Constraint = HttpApiEndpoint.WithIdentifier<HttpApiGroup.Endpoints<Group>, EndpointIdentifier>, const ResponseMode extends HttpApiEndpoint.ClientResponseMode = "decoded-only">(group: GroupIdentifier, endpoint: EndpointIdentifier, request: [Endpoint] extends [
         HttpApiEndpoint.HttpApiEndpoint<infer _Identifier, infer _Method, infer _Path, infer _Params, infer _Query, infer _Payload, infer _Headers, infer _Success, infer _Error, infer _R, infer _RE>
-    ] ? Simplify<HttpApiEndpoint.ClientRequest<_Params, _Query, _Payload, _Headers, ResponseMode> & {
-        readonly reactivityKeys?: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>> | undefined;
+    ] ? HttpApiEndpoint.ClientRequest<_Params, _Query, _Payload, _Headers, ResponseMode> & {
+        readonly reactivityKeys?: Reactivity.KeysInput | undefined;
         readonly timeToLive?: Duration.Input | undefined;
         readonly serializationKey?: string | undefined;
-    }> : never) => [Endpoint] extends [
+    } : never) => [Endpoint] extends [
         HttpApiEndpoint.HttpApiEndpoint<infer _Identifier, infer _Method, infer _Path, infer _Params, infer _Query, infer _Payload, infer _Headers, infer _Success, infer _Error, infer _Middleware, infer _RE>
     ] ? Atom.Atom<AsyncResult.AsyncResult<ResponseByMode<Endpoint, ResponseMode>, ErrorByMode<_Error, _Middleware, ResponseMode>>> : never;
 }

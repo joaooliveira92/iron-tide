@@ -53,7 +53,9 @@ export const isRequestResolver = u => hasProperty(u, TypeId);
  *
  * `batchKey` groups request entries, `delay` schedules batch execution,
  * `collectWhile` can end collection early, and `runAll` receives a non-empty
- * batch for one key.
+ * batch for one key. The batch runs with the context of the caller that created
+ * it, even when a later caller ends collection. Each entry retains its own
+ * caller context in `entry.context`.
  *
  * **Gotchas**
  *
@@ -81,6 +83,17 @@ const defaultKeyObject = {};
 const defaultKey = _request => defaultKeyObject;
 /**
  * Constructs a request resolver with the specified method to run requests.
+ *
+ * **Details**
+ *
+ * `runAll` runs with the context of the caller that created the batch, including
+ * when `collectWhile` ends collection early (for example with `batchN`).
+ *
+ * **Gotchas**
+ *
+ * Different caller contexts do not split batches. Use `entry.context` for
+ * per-entry services, or `makeGrouped` to separate requests by the services
+ * that affect the backend operation, such as tenant or authorization settings.
  *
  * **Example** (Creating a request resolver)
  *
@@ -125,6 +138,14 @@ export const make = runAll => makeWith({
  * **Details**
  *
  * The key can use the Equal trait to determine if two keys are equal.
+ * Each batch runs with the context of the caller that created that batch,
+ * whether collection ends after the delay or at a `collectWhile` cutoff.
+ *
+ * **Gotchas**
+ *
+ * Caller services that are not included in the key do not split batches. Include
+ * tenant or authorization settings in the key when they affect the backend
+ * operation, or read each caller's services from `entry.context`.
  *
  * **Example** (Grouping requests by key)
  *
@@ -175,16 +196,10 @@ export const makeGrouped = options => makeWith({
   runAll: options.resolver
 });
 const hashGroupKey = get => {
-  const groupKeys = MutableHashMap.empty();
-  return entry => {
-    const key = get(entry);
-    const okey = MutableHashMap.get(groupKeys, key);
-    if (okey._tag === "Some") {
-      return okey.value;
-    }
-    MutableHashMap.set(groupKeys, key, key);
-    return key;
-  };
+  // Pending batches match equal keys, so they share one batch.
+  const batchKey = entry => get(entry);
+  internal.equalBatchKeys.add(batchKey);
+  return batchKey;
 };
 /**
  * Constructs a request resolver from a pure function.
@@ -266,6 +281,15 @@ export const fromFunctionBatched = f => make(entries => Effect.sync(() => {
 /**
  * Constructs a request resolver from an effectual function.
  *
+ * **Details**
+ *
+ * Each entry's effect runs with its own caller context. Services provided around
+ * `runAll` are not visible to it; provide them inside `f` instead. Entries with
+ * different caller contexts can still share a batch.
+ *
+ * With `withSpan`, spans created inside `f` are children of the caller's span,
+ * not the resolver span. The resolver span still links to each caller's span.
+ *
  * **Example** (Creating a resolver from an effectful function)
  *
  * ```ts import.meta.vitest
@@ -303,7 +327,7 @@ export const fromEffect = f => {
     let done = 0;
     for (let i = 0; i < entries.length; i++) {
       const entry = entries[i];
-      const fiber = effect.forkUnsafe(parent, f(entry), true);
+      const fiber = effect.forkUnsafe(parent, effect.setContext(f(entry), entry.context), true);
       fiber.addObserver(exit => {
         entry.completeUnsafe(exit);
         done++;
@@ -775,7 +799,7 @@ export const withSpan = /*#__PURE__*/dual(args => isRequestResolver(args[0]), (s
       });
     }
     return Effect.withSpan(self.runAll(entries, key), name, {
-      ...options,
+      ...opts,
       links,
       attributes: {
         batchSize: entries.length,
@@ -865,6 +889,9 @@ export const withCache = /*#__PURE__*/dual(2, (self, options) => Effect.sync(() 
     preCheck(entry) {
       const ocached = MutableHashMap.get(cache, entry.request);
       if (ocached._tag === "None") {
+        if (self.preCheck !== undefined && !self.preCheck(entry)) {
+          return false;
+        }
         const cached = {
           entry,
           exit: undefined,
@@ -944,6 +971,8 @@ export const persisted = /*#__PURE__*/dual(2, /*#__PURE__*/Effect.fnUntraced(fun
         const entry = entries[i];
         const exit = results[i];
         if (exit === undefined || options.staleWhileRevalidate && options.staleWhileRevalidate(exit, entry.request)) {
+          // Deliver stale results before tracking refresh completions for persistence.
+          if (exit !== undefined) entry.completeUnsafe(exit);
           const prevComplete = entry.completeUnsafe;
           entry.completeUnsafe = function (exit) {
             completed.add(entry);
@@ -951,7 +980,7 @@ export const persisted = /*#__PURE__*/dual(2, /*#__PURE__*/Effect.fnUntraced(fun
             prevComplete(exit);
           };
           leftover.push(entry);
-          if (exit === undefined) continue;
+          continue;
         }
         entry.completeUnsafe(exit);
       }

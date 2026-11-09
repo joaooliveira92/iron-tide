@@ -56,7 +56,7 @@ export const Service = () => (id, options) => {
       });
       return yield* reactivityKeys ? Reactivity.mutation(effect, reactivityKeys) : effect;
     })).pipe(Atom.serializable({
-      key: `AtomRpc:mutation:${tag}`,
+      key: `AtomRpc:mutation:${JSON.stringify([id, tag])}`,
       schema: AsyncResult.Schema({
         success: rpc.successSchema,
         error: makeErrorSchema(rpc)

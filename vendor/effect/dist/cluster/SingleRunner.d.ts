@@ -13,7 +13,7 @@
  */
 import * as Layer from "effect/Layer";
 import type { ConfigError } from "../Config.ts";
-import type * as Crypto from "../Crypto.ts";
+import type * as Digest from "../crypto/Digest.ts";
 import type * as SqlClient from "../sql/SqlClient.ts";
 import type * as MessageStorage from "./MessageStorage.ts";
 import * as Runners from "./Runners.ts";
@@ -39,7 +39,7 @@ import * as ShardingConfig from "./ShardingConfig.ts";
  * **Gotchas**
  *
  * - Even when `runnerStorage` is `"memory"`, message storage remains
- *   SQL-backed, so callers must still provide `SqlClient` and `Crypto.Crypto`
+ *   SQL-backed, so callers must still provide `SqlClient` and `Digest.Digest`
  *   (used to hash over-length message deduplication keys).
  * - Runner communication and runner health are no-op services, so this layer is
  *   for single-process use rather than multi-runner coordination.
@@ -56,5 +56,5 @@ import * as ShardingConfig from "./ShardingConfig.ts";
 export declare const layer: (options?: {
     readonly shardingConfig?: Partial<ShardingConfig.ShardingConfig["Service"]> | undefined;
     readonly runnerStorage?: "memory" | "sql" | undefined;
-}) => Layer.Layer<Sharding.Sharding | Runners.Runners | MessageStorage.MessageStorage, ConfigError, SqlClient.SqlClient | Crypto.Crypto>;
+}) => Layer.Layer<Sharding.Sharding | Runners.Runners | MessageStorage.MessageStorage, ConfigError, SqlClient.SqlClient | Digest.Digest>;
 //# sourceMappingURL=SingleRunner.d.ts.map

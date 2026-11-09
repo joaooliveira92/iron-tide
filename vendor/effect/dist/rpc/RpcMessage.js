@@ -89,6 +89,7 @@ const RequestEncodedSchema = /*#__PURE__*/Schema.Struct({
   payload: Schema.Uint8Array,
   headers: /*#__PURE__*/Schema.Array(/*#__PURE__*/Schema.Tuple([Schema.String, Schema.String])),
   isNotification: /*#__PURE__*/Schema.optional(/*#__PURE__*/Schema.Literal(true)),
+  discard: /*#__PURE__*/Schema.optional(/*#__PURE__*/Schema.Literal(true)),
   traceId: /*#__PURE__*/Schema.optional(Schema.String),
   spanId: /*#__PURE__*/Schema.optional(Schema.String),
   sampled: /*#__PURE__*/Schema.optional(Schema.Boolean)

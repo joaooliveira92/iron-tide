@@ -62,11 +62,14 @@ export const makeHandle = params => Object.setPrototypeOf({
  * @since 4.0.0
  */
 export const make = spawn => {
-  const streamString = (command, options) => spawn(command).pipe(Effect.map(handle => Stream.decodeText(options?.includeStderr === true ? handle.all : handle.stdout)), Stream.unwrap);
+  // The helpers own the handle, so they drain any output they do not return
+  // to keep a full pipe from blocking the child.
+  const streamString = (command, options) => spawn(command).pipe(Effect.map(handle => Stream.decodeText(options?.includeStderr === true ? handle.all : Stream.drainFork(handle.stdout, handle.stderr))), Stream.unwrap);
   const streamLines = (command, options) => Stream.splitLines(streamString(command, options));
   return ChildProcessSpawner.of({
     spawn,
-    exitCode: command => Effect.scoped(Effect.flatMap(spawn(command), handle => handle.exitCode)),
+    // Return once the process exits, even if descendants keep the pipes open.
+    exitCode: command => Effect.scoped(Effect.flatMap(spawn(command), handle => Effect.raceFirst(handle.exitCode, Effect.andThen(Stream.runDrain(handle.all), Effect.never)))),
     streamString,
     streamLines,
     lines: (command, options) => Stream.runCollect(streamLines(command, options)),

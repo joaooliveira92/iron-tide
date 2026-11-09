@@ -51,6 +51,15 @@ export class MaxBufferSizeExceeded extends /*#__PURE__*/Data.TaggedError("MaxBuf
     return `RPC serialization buffer exceeded the maximum size of ${this.maxBufferSize}`;
   }
 }
+/**
+ * Error raised when a non-empty NDJSON frame is not valid JSON.
+ * The `cause` field preserves the original JSON parsing error.
+ *
+ * @stability unstable
+ * @category errors
+ * @since 4.0.0
+ */
+export class NdjsonDecodeError extends /*#__PURE__*/Data.TaggedError("NdjsonDecodeError") {}
 const defaultMaxBufferSize = 16 * 1024 * 1024;
 const isBufferSizeExceeded = (bufferSize, maxBufferSize) => maxBufferSize !== "unbounded" && bufferSize > maxBufferSize;
 /**
@@ -85,7 +94,7 @@ export const json = /*#__PURE__*/RpcSerialization.of({
 export const makeNdjson = options => {
   const maxBufferSize = options?.maxBufferSize ?? defaultMaxBufferSize;
   return RpcSerialization.of({
-    contentType: "application/ndjson",
+    contentType: "application/x-ndjson",
     includesFraming: true,
     codecFor: codecForJson,
     makeUnsafe: () => {
@@ -110,11 +119,18 @@ export const makeNdjson = options => {
             if (isBufferSizeExceeded(nlIndex - position, maxBufferSize)) {
               failMaxBufferSize(maxBufferSize);
             }
-            const line = buffer.slice(position, nlIndex);
+            const line = buffer.slice(position, buffer[nlIndex - 1] === "\r" ? nlIndex - 1 : nlIndex);
             position = nlIndex + 1;
-            try {
-              items.push(JSON.parse(line));
-            } catch {}
+            if (line.length > 0) {
+              try {
+                items.push(JSON.parse(line));
+              } catch (cause) {
+                buffer = "";
+                throw new NdjsonDecodeError({
+                  cause
+                });
+              }
+            }
             nlIndex = buffer.indexOf("\n", position);
           }
           buffer = buffer.slice(position);
@@ -150,6 +166,11 @@ export const ndjson = /*#__PURE__*/makeNdjson();
  * Creates a JSON-RPC 2.0 serialization for RPC protocol messages without
  * additional message framing.
  *
+ * **Details**
+ *
+ * Set `controlMessages` to `false` for plain JSON-RPC peers, so
+ * `@effect/rpc/*` methods are not decoded as RPC control messages.
+ *
  * @stability unstable
  * @category serialization
  * @since 4.0.0
@@ -159,11 +180,12 @@ export const jsonRpc = options => RpcSerialization.of({
   includesFraming: false,
   codecFor: codecForJson,
   makeUnsafe: () => {
+    const controlMessages = options?.controlMessages ?? true;
     const batches = new Map();
     return {
       decode: bytes => {
         const decoded = JSON.parse(typeof bytes === "string" ? bytes : decodeText(bytes));
-        return decodeJsonRpcRaw(decoded, batches);
+        return decodeJsonRpcRaw(decoded, batches, controlMessages);
       },
       encode: response => {
         const encoded = encodeJsonRpcResponse(response, batches);
@@ -175,6 +197,11 @@ export const jsonRpc = options => RpcSerialization.of({
 /**
  * Creates a newline-delimited JSON-RPC 2.0 serialization for RPC protocol
  * messages.
+ *
+ * **Details**
+ *
+ * Set `controlMessages` to `false` for plain JSON-RPC peers, so
+ * `@effect/rpc/*` methods are not decoded as RPC control messages.
  *
  * @stability unstable
  * @category serialization
@@ -188,6 +215,7 @@ export const ndJsonRpc = options => RpcSerialization.of({
     const parser = makeNdjson({
       maxBufferSize: options?.maxBufferSize
     }).makeUnsafe();
+    const controlMessages = options?.controlMessages ?? true;
     const batches = new Map();
     return {
       decode: bytes => {
@@ -195,7 +223,7 @@ export const ndJsonRpc = options => RpcSerialization.of({
         if (frames.length === 0) return [];
         const messages = [];
         for (let i = 0; i < frames.length; i++) {
-          messages.push(...decodeJsonRpcRaw(frames[i], batches));
+          messages.push(...decodeJsonRpcRaw(frames[i], batches, controlMessages));
         }
         return messages;
       },
@@ -206,7 +234,7 @@ export const ndJsonRpc = options => RpcSerialization.of({
     };
   }
 });
-function decodeJsonRpcRaw(decoded, batches) {
+function decodeJsonRpcRaw(decoded, batches, controlMessages) {
   if (Array.isArray(decoded)) {
     const batch = {
       size: 0,
@@ -216,7 +244,7 @@ function decodeJsonRpcRaw(decoded, batches) {
     for (let i = 0; i < decoded.length; i++) {
       const item = decoded[i];
       if (!Predicate.isObject(item)) continue;
-      const message = decodeJsonRpcMessage(item);
+      const message = decodeJsonRpcMessage(item, controlMessages);
       messages.push(message);
       if (message._tag === "Request" && !message.isNotification) {
         batch.size++;
@@ -225,12 +253,12 @@ function decodeJsonRpcRaw(decoded, batches) {
     }
     return messages;
   }
-  return Predicate.isObject(decoded) ? [decodeJsonRpcMessage(decoded)] : [];
+  return Predicate.isObject(decoded) ? [decodeJsonRpcMessage(decoded, controlMessages)] : [];
 }
-function decodeJsonRpcMessage(decoded) {
+function decodeJsonRpcMessage(decoded, controlMessages) {
   if (Object.hasOwn(decoded, "method")) {
     const request = decoded;
-    if (Predicate.isNullish(request.id) && Predicate.isString(request.method) && request.method.startsWith("@effect/rpc/")) {
+    if (controlMessages && Predicate.isNullish(request.id) && Predicate.isString(request.method) && request.method.startsWith("@effect/rpc/")) {
       const tag = request.method.slice("@effect/rpc/".length);
       const requestId = request.params?.requestId;
       return requestId !== undefined ? {
@@ -249,6 +277,9 @@ function decodeJsonRpcMessage(decoded) {
       ...(Predicate.hasProperty(request, "id") ? {} : {
         isNotification: true
       }),
+      ...(request.discard === true ? {
+        discard: true
+      } : {}),
       ...(request.spanId ? {
         traceId: request.traceId,
         spanId: request.spanId,
@@ -286,7 +317,7 @@ function decodeJsonRpcMessage(decoded) {
   };
 }
 function encodeJsonRpcRaw(response, batches) {
-  if (!("requestId" in response)) {
+  if (response._tag !== "Exit") {
     return encodeJsonRpcMessage(response);
   }
   const batch = batches.get(response.requestId);
@@ -344,6 +375,9 @@ function encodeJsonRpcMessage(response) {
         }),
         ...(response.headers?.length > 0 ? {
           headers: response.headers
+        } : {}),
+        ...(response.discard ? {
+          discard: true
         } : {}),
         traceId: response.traceId,
         spanId: response.spanId,

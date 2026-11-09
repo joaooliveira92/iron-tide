@@ -16,8 +16,8 @@ export * from "./v2025_03_26.js";
  */
 export const protocolVersion = "2025-06-18";
 const optional = Previous.optional;
-const JsonObject = Schema.JsonObject;
-const Meta = /*#__PURE__*/optional(JsonObject);
+const UnknownObject = Previous.UnknownObject;
+const Meta = /*#__PURE__*/optional(UnknownObject);
 /**
  * @internal
  */
@@ -188,9 +188,9 @@ export class Initialize extends /*#__PURE__*/Rpc.make("initialize", {
 }) {}
 const ToolJsonSchema = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
   type: /*#__PURE__*/Schema.Literal("object"),
-  properties: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, JsonObject)),
+  properties: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, /*#__PURE__*/Schema.Union([UnknownObject, Schema.Boolean]))),
   required: /*#__PURE__*/optional(/*#__PURE__*/Schema.Array(Schema.String))
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -209,7 +209,7 @@ export const Tool = /*#__PURE__*/Schema.Struct({
 export const CallToolResult = /*#__PURE__*/Schema.Struct({
   ...Previous.ResultMeta.fields,
   content: /*#__PURE__*/Schema.Array(ContentBlock),
-  structuredContent: /*#__PURE__*/optional(JsonObject),
+  structuredContent: /*#__PURE__*/optional(UnknownObject),
   isError: /*#__PURE__*/optional(Schema.Boolean)
 });
 /**
@@ -237,7 +237,7 @@ export class CreateMessage extends /*#__PURE__*/Rpc.make("sampling/createMessage
     temperature: /*#__PURE__*/optional(Schema.Finite),
     maxTokens: Schema.Finite,
     stopSequences: /*#__PURE__*/optional(/*#__PURE__*/Schema.Array(Schema.String)),
-    metadata: /*#__PURE__*/optional(JsonObject)
+    metadata: /*#__PURE__*/optional(UnknownObject)
   }
 }) {}
 /**
@@ -383,7 +383,7 @@ export class CallTool extends /*#__PURE__*/Rpc.make("tools/call", {
   payload: {
     ...Previous.RequestMeta.fields,
     name: Schema.String,
-    arguments: /*#__PURE__*/optional(JsonObject)
+    arguments: /*#__PURE__*/optional(UnknownObject)
   }
 }) {}
 /**

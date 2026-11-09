@@ -8,8 +8,20 @@ import * as EventJournal from "./EventJournal.ts";
  *
  * **Details**
  *
- * The constructor creates the entry and remote metadata tables when needed,
- * persists local and remote entries, and uses the configured `SqlClient`.
+ * Maintains `entryTable`, `${entryTable}_sequence`, `${entryTable}_sources`,
+ * `${remotesTable}_checkpoints` and `remoteCursorsTable` (default
+ * `${remotesTable}_cursors`) using the configured `SqlClient`.
+ *
+ * **Gotchas**
+ *
+ * Creating or migrating the schema requires a writable connection. Migrated
+ * databases can be reopened read-only.
+ *
+ * Journals from earlier releases keep one `remotesTable` row per entry per
+ * remote. Opening one replaces those rows with entry sources and drops the
+ * table; an entry known to several remotes keeps one of them as its source.
+ *
+ * Upload acknowledgements do not advance past unseen entries.
  *
  * @stability unstable
  * @category constructors
@@ -18,27 +30,14 @@ import * as EventJournal from "./EventJournal.ts";
 export declare const make: (options?: {
     readonly entryTable?: string;
     readonly remotesTable?: string;
+    readonly remoteCursorsTable?: string;
 }) => Effect.Effect<EventJournal.EventJournal["Service"], SqlError.SqlError, SqlClient.SqlClient>;
 /**
- * Provides `EventJournal` using the SQL-backed implementation created by
- * `make`.
- *
- * **When to use**
- *
- * Use when composing a Layer graph that should provide a persistent SQL-backed
- * `EventJournal` from an existing `SqlClient` service.
- *
- * **Details**
- *
- * The layer delegates to `make(options)`, so the same optional `entryTable` and
- * `remotesTable` settings are used and construction requires `SqlClient` and
- * may fail with `SqlError`.
+ * Provides a SQL-backed `EventJournal` from an existing `SqlClient` service.
  *
  * **Gotchas**
  *
- * Layer construction performs the same minimal `CREATE TABLE IF NOT EXISTS`
- * setup as `make`; manage indexes and schema migrations outside this layer when
- * your SQL schema needs more than the built-in tables.
+ * Creating or migrating the schema requires a writable connection.
  *
  * @see {@link make} for constructing the SQL-backed service directly
  * @see {@link EventJournal.layerMemory} for an in-memory `EventJournal` layer
@@ -51,5 +50,6 @@ export declare const make: (options?: {
 export declare const layer: (options?: {
     readonly entryTable?: string;
     readonly remotesTable?: string;
+    readonly remoteCursorsTable?: string;
 }) => Layer.Layer<EventJournal.EventJournal, SqlError.SqlError, SqlClient.SqlClient>;
 //# sourceMappingURL=SqlEventJournal.d.ts.map

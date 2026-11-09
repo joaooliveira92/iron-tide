@@ -74,7 +74,7 @@ const makePredicate = pattern => {
     const predicates = pattern.map(makePredicate);
     const len = predicates.length;
     return u => {
-      if (!Array.isArray(u)) {
+      if (!Array.isArray(u) || u.length < len) {
         return false;
       }
       for (let i = 0; i < len; i++) {
@@ -188,6 +188,16 @@ export const tagStartsWith = /*#__PURE__*/discriminatorStartsWith("_tag");
 export const tags = /*#__PURE__*/discriminators("_tag");
 /** @internal */
 export const tagsExhaustive = /*#__PURE__*/discriminatorsExhaustive("_tag");
+/** @internal */
+export const literals = fields => {
+  const predicate = makeWhen(arg => (typeof arg === "string" || typeof arg === "number") && Object.hasOwn(fields, arg) && fields[arg] !== undefined, data => fields[data](data));
+  return self => self.add(predicate);
+};
+/** @internal */
+export const literalsExhaustive = fields => {
+  const addCases = literals(fields);
+  return matcher => exhaustive(addCases(matcher));
+};
 /** @internal */
 export const not = (pattern, f) => self => self.add(makeNot(makePredicate(pattern), f));
 /** @internal */

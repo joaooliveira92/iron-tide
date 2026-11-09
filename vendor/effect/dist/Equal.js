@@ -1,5 +1,5 @@
 import * as Hash from "./Hash.js";
-import { byReferenceInstances, getAllObjectKeys, viewBytes } from "./internal/equal.js";
+import { bufferBytes, byReferenceInstances, getAllObjectKeys, isArrayBufferLike, viewBytes } from "./internal/equal.js";
 import { hasProperty } from "./Predicate.js";
 /**
  * Defines the unique string identifier for the `Equal` interface.
@@ -115,6 +115,13 @@ function compareStructure(self, that) {
       return false;
     }
     return compareArrays(self, that);
+  } else if (isArrayBufferLike(self)) {
+    if (!isArrayBufferLike(that) || self instanceof ArrayBuffer !== that instanceof ArrayBuffer) {
+      return false;
+    }
+    const selfBytes = bufferBytes(self);
+    const thatBytes = bufferBytes(that);
+    return selfBytes !== undefined && thatBytes !== undefined && compareTypedArrays(selfBytes, thatBytes);
   } else if (ArrayBuffer.isView(self)) {
     const selfIsDataView = self instanceof DataView;
     if (!ArrayBuffer.isView(that) || self.byteLength !== that.byteLength || selfIsDataView !== that instanceof DataView) {
@@ -219,8 +226,8 @@ export function makeCompareSet(equivalence) {
  * **Details**
  *
  * - Pure function, no side effects.
- * - Returns `true` if and only if `u` has a property keyed by
- *   {@link symbol}.
+ * - Returns `true` if and only if `u` has a function keyed by {@link symbol}.
+ *   Data that merely carries the key, such as parsed JSON, is not `Equal`.
  * - Acts as a TypeScript type guard, narrowing the input to {@link Equal}.
  *
  * **Example** (Checking Equal values)
@@ -249,7 +256,7 @@ export function makeCompareSet(equivalence) {
  * @category guards
  * @since 2.0.0
  */
-export const isEqual = u => hasProperty(u, symbol);
+export const isEqual = u => hasProperty(u, symbol) && typeof u[symbol] === "function";
 /**
  * Wraps {@link equals} as an `Equivalence<A>`.
  *

@@ -132,6 +132,9 @@ export interface ChildProcessHandle {
      *
      * **Details**
      *
+     * Available for `"input"` and `"duplex"` file descriptors. The write side is
+     * ended when the sink completes.
+     *
      * If a file descriptor is accessed that was not configured, returns a drain
      * `Sink`.
      */
@@ -141,6 +144,8 @@ export interface ChildProcessHandle {
      * `ChildProcessOptions.additionalFds`.
      *
      * **Details**
+     *
+     * Available for `"output"` and `"duplex"` file descriptors.
      *
      * If a file descriptor is accessed that was not configured, returns an empty
      * `Stream`.
@@ -218,11 +223,23 @@ declare const ChildProcessSpawner_base: Context.ServiceClass<ChildProcessSpawner
     spawn(command: Command): Effect.Effect<ChildProcessHandle, PlatformError.PlatformError, Scope.Scope>;
     /**
      * Run a command and return its exit code.
+     *
+     * **Details**
+     *
+     * Piped `stdout` and `stderr` are read and discarded until the process
+     * exits. A read failure before then, such as from an output `Sink`, fails
+     * the effect.
      */
     exitCode(command: Command): Effect.Effect<ExitCode, PlatformError.PlatformError>;
     /**
      * Stream the output of a command as strings. Optionally include stderr output
      * interleaved with stdout.
+     *
+     * **Details**
+     *
+     * Without `includeStderr`, piped `stderr` is read and discarded until
+     * `stdout` ends. A read failure before then, such as from an output `Sink`,
+     * fails the result.
      */
     streamString(command: Command, options?: {
         readonly includeStderr?: boolean | undefined;
@@ -230,18 +247,36 @@ declare const ChildProcessSpawner_base: Context.ServiceClass<ChildProcessSpawner
     /**
      * Stream the output of a command as lines. Optionally include stderr output
      * interleaved with stdout.
+     *
+     * **Details**
+     *
+     * Without `includeStderr`, piped `stderr` is read and discarded until
+     * `stdout` ends. A read failure before then, such as from an output `Sink`,
+     * fails the result.
      */
     streamLines(command: Command, options?: {
         readonly includeStderr?: boolean | undefined;
     }): Stream.Stream<string, PlatformError.PlatformError>;
     /**
      * Run a command and return the lines of its output as an array of strings.
+     *
+     * **Details**
+     *
+     * Without `includeStderr`, piped `stderr` is read and discarded until
+     * `stdout` ends. A read failure before then, such as from an output `Sink`,
+     * fails the result.
      */
     lines(command: Command, options?: {
         readonly includeStderr?: boolean | undefined;
     }): Effect.Effect<Array<string>, PlatformError.PlatformError>;
     /**
      * Run a command and return its output as a string.
+     *
+     * **Details**
+     *
+     * Without `includeStderr`, piped `stderr` is read and discarded until
+     * `stdout` ends. A read failure before then, such as from an output `Sink`,
+     * fails the result.
      */
     string(command: Command, options?: {
         readonly includeStderr?: boolean | undefined;

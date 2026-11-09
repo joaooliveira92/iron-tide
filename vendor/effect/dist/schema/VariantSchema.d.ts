@@ -193,7 +193,7 @@ export declare const fields: <A extends Struct<any>>(self: A) => A[typeof TypeId
  */
 export interface Class<Self, Fields extends Struct.Fields, S extends Schema.Top & {
     readonly fields: Schema.Struct.Fields;
-}> extends Schema.Class<Self, S, {}>, Struct<Struct_.Simplify<Fields>> {
+}, Variants extends string = never, Default extends string = never, Inherited = {}> extends Schema.Class<Self, S, Inherited>, Struct<Struct_.Simplify<Fields>> {
     readonly "Type": Self;
     readonly "Encoded": S["Encoded"];
     readonly "DecodingServices": S["DecodingServices"];
@@ -203,12 +203,31 @@ export interface Class<Self, Fields extends Struct.Fields, S extends Schema.Top 
     readonly "Iso": S["Iso"];
     new (props: S["~type.make.in"], options?: {
         readonly disableChecks?: boolean;
-    } | undefined): S["Type"];
+    } | undefined): S["Type"] & Inherited;
     make<Args extends Array<any>, X>(this: {
         new (...args: Args): X;
     }, ...args: Args): X;
     readonly fields: S["fields"];
+    /**
+     * Returns a function that creates a variant schema subclass with this
+     * class's fields plus additional fields, regenerating every variant schema
+     * from the merged fields.
+     *
+     * **Gotchas**
+     *
+     * Fields with the same name replace inherited fields in every variant. A
+     * replacement that omits an inherited field from the default variant does
+     * not remove it from the class schema; the caller must ensure replacements
+     * preserve the base class contract.
+     */
+    readonly extend: (<Extended = never, Static = {}, Brand = {}>(identifier: string) => {
+        <const NewFields extends Struct.Fields>(fields: NewFields & Struct.Validate<NewFields, Variants>, annotations?: Schema.Annotations.Declaration<Extended, readonly [Schema.Struct<ExtractFields<Default, Struct_.Assign<Fields, NewFields>, true>>]> | undefined): ExtendedClass<Extended, Static, Self & Brand, Struct_.Assign<Fields, NewFields>, Variants, Default>;
+        <Extension extends Schema.Struct<Schema.Struct.Fields>>(schema: Extension, annotations?: Schema.Annotations.Declaration<Extended, readonly [Schema.Struct<ExtractFields<Default, Struct_.Assign<Fields, Extension["fields"]>, true>>]> | undefined): ExtendedClass<Extended, Static, Self & Brand, Struct_.Assign<Fields, Extension["fields"]>, Variants, Default>;
+    }) & Schema.Class<Self, S, Inherited>["extend"];
 }
+type ExtendedClass<Self, Static, Inherited, Fields extends Struct.Fields, Variants extends string, Default extends string> = [Self] extends [never] ? "Missing `Self` generic - use `class Self extends Base.extend<Self>(...)`" : Class<Self, Fields, Schema.Struct<ExtractFields<Default, Fields, true>>, Variants, Default, Inherited> & {
+    readonly [V in Variants]: Extract<V, Struct<Fields>>;
+} & Pick<Static, Exclude<keyof Static, keyof Class<any, any, any> | Variants>>;
 type MissingSelfGeneric<Params extends string = ""> = `Missing \`Self\` generic - use \`class Self extends Class<Self>()(${Params}{ ... })\``;
 /**
  * Union schema over the default schemas of a list of variant schema structs.
@@ -261,7 +280,7 @@ export declare const make: <const Variants extends ReadonlyArray<string>, const 
         <Self extends Field<any> | Schema.Top, const Mapping extends (Self extends Field<infer S> ? { readonly [K in keyof S]?: (variant: S[K]) => Schema.Top; } : { readonly [K in Variants[number]]?: (variant: Self) => Schema.Top; })>(f: Mapping): (self: Self) => Field<Self extends Field<infer S> ? { readonly [K in keyof S]: K extends keyof Mapping ? Mapping[K] extends (arg: any) => any ? ReturnType<Mapping[K]> : S[K] : S[K]; } : { readonly [K in Variants[number]]: K extends keyof Mapping ? Mapping[K] extends (arg: any) => any ? ReturnType<Mapping[K]> : Self : Self; }>;
         <Self extends Field<any> | Schema.Top, const Mapping extends (Self extends Field<infer S> ? { readonly [K in keyof S]?: (variant: S[K]) => Schema.Top; } : { readonly [K in Variants[number]]?: (variant: Self) => Schema.Top; })>(self: Self, f: Mapping): Field<Self extends Field<infer S> ? { readonly [K in keyof S]: K extends keyof Mapping ? Mapping[K] extends (arg: any) => any ? ReturnType<Mapping[K]> : S[K] : S[K]; } : { readonly [K in Variants[number]]: K extends keyof Mapping ? Mapping[K] extends (arg: any) => any ? ReturnType<Mapping[K]> : Self : Self; }>;
     };
-    readonly Class: <Self = never>(identifier: string) => <const Fields extends Struct.Fields>(fields: Fields & Struct.Validate<Fields, Variants[number]>, annotations?: Schema.Annotations.Declaration<Self, readonly [Schema.Struct<ExtractFields<Default, Fields, true>>]> | undefined) => [Self] extends [never] ? MissingSelfGeneric : Class<Self, Fields, Schema.Struct<ExtractFields<Default, Fields, true>>> & { readonly [V in Variants[number]]: Extract<V, Struct<Fields>>; };
+    readonly Class: <Self = never>(identifier: string) => <const Fields extends Struct.Fields>(fields: Fields & Struct.Validate<Fields, Variants[number]>, annotations?: Schema.Annotations.Declaration<Self, readonly [Schema.Struct<ExtractFields<Default, Fields, true>>]> | undefined) => [Self] extends [never] ? MissingSelfGeneric : Class<Self, Fields, Schema.Struct<ExtractFields<Default, Fields, true>>, Variants[number], Default> & { readonly [V in Variants[number]]: Extract<V, Struct<Fields>>; };
     readonly Union: <const Members extends ReadonlyArray<Struct<any>>>(members: Members) => Union<Members, Default> & Union.Variants<Members, Variants[number]>;
     readonly extract: {
         <V extends Variants[number]>(variant: V): <A extends Struct<any>>(self: A) => Extract<V, A, V extends Default ? true : false>;

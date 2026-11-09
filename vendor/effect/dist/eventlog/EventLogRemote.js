@@ -11,6 +11,7 @@
  * @stability unstable
  * @since 4.0.0
  */
+import * as Arr from "../Array.js";
 import * as Cache from "../Cache.js";
 import * as Context from "../Context.js";
 import * as Data from "../Data.js";
@@ -19,11 +20,15 @@ import * as Layer from "../Layer.js";
 import * as Predicate from "../Predicate.js";
 import * as Queue from "../Queue.js";
 import * as Redacted from "../Redacted.js";
+import * as Result from "../Result.js";
 import * as RpcClient from "../rpc/RpcClient.js";
+import * as Stream from "../Stream.js";
+import { RemoteEntry } from "./EventJournal.js";
 import { Registry } from "./EventLog.js";
 import { EventLogEncryption, layerSubtle } from "./EventLogEncryption.js";
-import { Authenticate, ChangesRpc, ChunkedMessage, EventLogProtocolError, EventLogRemoteRpcs, WriteEntries, WriteEntriesUnencrypted } from "./EventLogMessage.js";
+import { Authenticate, ChangesRpc, ChunkedMessage, CompactionInputRpc, CompactionPartRpc, EventLogCompactionRpcs, EventLogProtocolError, EventLogRemoteRpcs, WriteEntries, WriteEntriesUnencrypted } from "./EventLogMessage.js";
 import { encodeSessionAuthPayload, signSessionAuthPayloadBytes } from "./EventLogSessionAuth.js";
+import { toBatches } from "./internal/batches.js";
 import { makeGetIdentityRootSecretMaterial } from "./internal/identityRootSecretDerivation.js";
 /**
  * Service that represents a remote event-log replica.
@@ -37,6 +42,10 @@ import { makeGetIdentityRootSecretMaterial } from "./internal/identityRootSecret
  *
  * It can write local entries to the remote, stream remote changes from a sequence
  * number, and run effects only after the supplied identity has authenticated.
+ *
+ * Built-in remotes acknowledge writes instead of echoing them through `changes`.
+ * Custom remotes may return `void` from `write` to confirm uploads through
+ * `changes` instead.
  *
  * @stability unstable
  * @category services
@@ -62,7 +71,7 @@ export class EventLogRemoteError extends /*#__PURE__*/Data.TaggedError("EventLog
     return Predicate.isTagged(u, "EventLogRemoteError");
   }
 }
-const getIdentityRootSecretMaterial = /*#__PURE__*/makeGetIdentityRootSecretMaterial(globalThis.crypto);
+const getIdentityRootSecretMaterial = /*#__PURE__*/makeGetIdentityRootSecretMaterial();
 const makeAuthenticate = /*#__PURE__*/Effect.fnUntraced(function* (options) {
   const rootSecretMaterial = yield* getIdentityRootSecretMaterial(options.identity);
   const payload = yield* encodeSessionAuthPayload({
@@ -90,15 +99,22 @@ const makeAuthenticate = /*#__PURE__*/Effect.fnUntraced(function* (options) {
  * Use to provide the RPC client used by remote event-log replicas to
  * authenticate, write entries, and subscribe to changes.
  *
+ * **Details**
+ *
+ * The `EventLogCompactionRpcs` methods are optional. The encrypted remote
+ * offers compaction only when the client has them. `layer` builds the client
+ * from both groups.
+ *
  * @stability unstable
  * @category services
  * @since 4.0.0
  */
 export class EventLogRemoteClient extends /*#__PURE__*/Context.Service()("effect/eventlog/EventLogRemote/EventLogRemoteClient") {
-  static layer = /*#__PURE__*/Layer.effect(EventLogRemoteClient, /*#__PURE__*/RpcClient.make(EventLogRemoteRpcs, {
+  static layer = /*#__PURE__*/Layer.effect(EventLogRemoteClient, /*#__PURE__*/RpcClient.make(/*#__PURE__*/EventLogRemoteRpcs.merge(EventLogCompactionRpcs), {
     disableTracing: true
   }));
 }
+const getCompactionClient = client => client["EventLog.CompactionStatus"] === undefined ? undefined : client;
 /**
  * Creates an `EventLogRemote` from custom write encoding and change decoding
  * functions.
@@ -113,9 +129,11 @@ export class EventLogRemoteClient extends /*#__PURE__*/Context.Service()("effect
  * @category constructors
  * @since 4.0.0
  */
-export const makeWith = /*#__PURE__*/Effect.fnUntraced(function* ({
+export const makeWith = options => makeRemote(options);
+const makeRemote = /*#__PURE__*/Effect.fnUntraced(function* ({
   encodeWrite,
-  decodeChanges
+  decodeChanges,
+  makeCompaction
 }) {
   const client = yield* EventLogRemoteClient;
   const registry = yield* Registry;
@@ -154,18 +172,35 @@ export const makeWith = /*#__PURE__*/Effect.fnUntraced(function* ({
     ensureIdentity(identity);
     return Cache.get(authCache, identity.publicKey);
   };
+  // The next request says hello and authenticates again.
+  const resetAuthentication = identity => {
+    hello = null;
+    return Cache.invalidate(authCache, identity.publicKey);
+  };
   const retryForbidden = (effect, options) => Effect.retry(effect, {
-    while(e) {
-      hello = null;
-      const error = EventLogRemoteError.is(e) && e.method === "authenticate" ? e.cause : e;
-      const isForbidden = EventLogProtocolError.is(error) && error.code === "Forbidden";
-      return Cache.invalidate(authCache, options.identity.publicKey).pipe(Effect.as(isForbidden));
-    },
+    while: e => Effect.as(resetAuthentication(options.identity), isForbidden(e)),
     times: 5
   });
+  const toRemoteError = method => cause => EventLogRemoteError.is(cause) ? cause : new EventLogRemoteError({
+    method,
+    cause
+  });
+  const request = (method, identity, effect) => ensureAuthenticated(identity).pipe(Effect.andThen(effect), effect => retryForbidden(effect, {
+    identity
+  }), Effect.mapError(toRemoteError(method)));
+  // Not retried like `request`; a refused identity authenticates again on the
+  // next request.
+  const framed = (method, identity, frames, decode) => Stream.unwrap(Effect.map(ensureAuthenticated(identity), () => {
+    const state = ChunkedMessage.initialJoinState();
+    return frames().pipe(Stream.filterMap(frame => {
+      const data = frame._tag === "Single" ? frame.data : ChunkedMessage.join(state, frame);
+      return data === undefined ? Result.failVoid : Result.succeed(data);
+    }), Stream.mapEffect(decode), Stream.flattenIterable);
+  })).pipe(Stream.tapError(error => isForbidden(error) ? resetAuthentication(identity) : Effect.void), Stream.mapError(toRemoteError(method)));
   let chunkedIdCounter = 0;
   const remote = EventLogRemote.of({
     id: hello.remoteId,
+    firstSequence: hello.firstSequence,
     write: Effect.fnUntraced(function* (options) {
       yield* ensureAuthenticated(options.identity);
       const encoded = yield* encodeWrite(options);
@@ -174,9 +209,11 @@ export const makeWith = /*#__PURE__*/Effect.fnUntraced(function* ({
           data: encoded
         });
       }
-      for (const part of ChunkedMessage.split(chunkedIdCounter++, encoded)) {
-        yield* client["EventLog.WriteChunked"](part);
-      }
+      // Only the part the server receives last carries acknowledgements.
+      const acks = yield* Effect.forEach(ChunkedMessage.split(chunkedIdCounter++, encoded), part => client["EventLog.WriteChunked"](part), {
+        concurrency: 4
+      });
+      return acks.flat();
     }, retryForbidden, Effect.mapError(cause => new EventLogRemoteError({
       method: "write",
       cause
@@ -193,20 +230,30 @@ export const makeWith = /*#__PURE__*/Effect.fnUntraced(function* ({
         }, {
           asQueue: true
         });
+        // A batch can start before `startSequence`; its earlier entries are dropped.
+        const offer = Effect.fnUntraced(function* (data) {
+          const entries = yield* decodeChanges(options.identity, options.storeId, data, options.knownEntries);
+          const first = entries.findIndex(entry => entry.remoteSequence >= options.startSequence);
+          if (first === -1) return;
+          yield* Queue.offerAll(outgoing, entries.slice(first));
+        });
         while (true) {
           const parts = yield* Queue.takeAll(incoming);
           for (let i = 0; i < parts.length; i++) {
             const part = parts[i];
             if (part._tag === "Single") {
-              yield* Queue.offerAll(outgoing, yield* decodeChanges(options.identity, part.data));
+              yield* offer(part.data);
               continue;
             }
             const data = ChunkedMessage.join(chunkedState, part);
             if (!data) continue;
-            yield* Queue.offerAll(outgoing, yield* decodeChanges(options.identity, data));
+            yield* offer(data);
           }
         }
-      }).pipe(effect => retryForbidden(effect, options), Effect.mapError(cause => {
+      }).pipe(
+      // Forbidden retries resubscribe with the same `startSequence`. Other failures
+      // propagate to EventLog, which reconnects from the journal's committed sequence.
+      effect => retryForbidden(effect, options), Effect.mapError(cause => {
         if (cause._tag === "EventLogRemoteError") {
           return cause;
         }
@@ -217,36 +264,180 @@ export const makeWith = /*#__PURE__*/Effect.fnUntraced(function* ({
       }), Effect.catchCause(cause => Queue.failCause(outgoing, cause)), Effect.forkScoped);
       return outgoing;
     }),
-    whenAuthenticated: effect => IdentityService.use(identity => Effect.flatMap(ensureAuthenticated(identity), () => effect))
+    whenAuthenticated: effect => IdentityService.use(identity => Effect.flatMap(ensureAuthenticated(identity), () => effect)),
+    compaction: hello.compaction === true ? makeCompaction?.({
+      client,
+      request,
+      framed
+    }) : undefined
   });
   yield* registry.registerRemote(remote);
   return remote;
 });
+const isForbidden = e => {
+  const error = EventLogRemoteError.is(e) && e.method === "authenticate" ? e.cause : e;
+  return EventLogProtocolError.is(error) && error.code === "Forbidden";
+};
 /** @effect-diagnostics-next-line classSelfMismatch:off */
 class IdentityService extends /*#__PURE__*/Context.Service()("effect/eventlog/EventLog/Identity") {}
 /**
  * Creates an `EventLogRemote` that encrypts outgoing entries and decrypts
  * incoming changes with `EventLogEncryption`.
  *
+ * **Details**
+ *
+ * The remote has a `compaction` member when the server advertises compaction
+ * and the RPC client includes `EventLogCompactionRpcs`, unless built with
+ * `compaction: false`. Without it the client never calls the compaction RPCs.
+ *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
  */
-export const makeEncrypted = /*#__PURE__*/Effect.gen(function* () {
+export const makeEncryptedWith = /*#__PURE__*/Effect.fnUntraced(function* (options) {
   const encryption = yield* EventLogEncryption;
-  return yield* makeWith({
-    encodeWrite: options => encryption.encrypt(options.identity, options.entries).pipe(Effect.flatMap(encryptedEntries => new WriteEntries({
+  // Skip decryption only when every entry in a batch is already stored.
+  const decodeChanges = Effect.fnUntraced(function* (identity, storeId, data, knownEntries) {
+    const batches = yield* ChangesRpc.decodeEncrypted(data);
+    if (knownEntries === undefined) return yield* encryption.decrypt(identity, storeId, batches);
+    const stored = yield* knownEntries(batches.flatMap(batch => batch.entryIds));
+    let offset = 0;
+    const knownBatches = batches.map(batch => {
+      const entries = stored.slice(offset, offset + batch.entryIds.length);
+      offset += batch.entryIds.length;
+      return entries.every(entry => entry !== undefined) ? entries : undefined;
+    });
+    const decrypted = yield* encryption.decrypt(identity, storeId, batches.filter((_, i) => knownBatches[i] === undefined));
+    let next = 0;
+    return batches.flatMap((batch, i) => {
+      const entries = knownBatches[i];
+      return entries === undefined ? batch.entryIds.map(() => decrypted[next++]) : entries.map((entry, j) => new RemoteEntry({
+        remoteSequence: batch.sequence + j,
+        entry
+      }, {
+        disableChecks: true
+      }));
+    });
+  });
+  return yield* makeRemote({
+    encodeWrite: options => encryption.encrypt(options.identity, options.storeId, options.entries).pipe(Effect.flatMap(batches => new WriteEntries({
       publicKey: options.identity.publicKey,
       storeId: options.storeId,
-      encryptedEntries: encryptedEntries.map((entry, i) => ({
-        entryId: options.entries[i].id,
-        iv: entry.iv,
-        encryptedEntry: entry.encryptedEntry
-      }))
+      batches
     }).encoded)),
-    decodeChanges: (identity, data) => ChangesRpc.decodeEncrypted(data).pipe(Effect.flatMap(entries => encryption.decrypt(identity, entries)))
+    decodeChanges,
+    makeCompaction: options.compaction === false ? undefined : session => {
+      const client = getCompactionClient(session.client);
+      return client === undefined ? undefined : makeEncryptedCompaction({
+        session,
+        client,
+        encryption
+      });
+    }
   });
 });
+/**
+ * Creates an `EventLogRemote` that encrypts outgoing entries and decrypts
+ * incoming changes with `EventLogEncryption`.
+ *
+ * @see {@link makeEncryptedWith} for opting out of running compaction
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export const makeEncrypted = /*#__PURE__*/makeEncryptedWith({});
+// How many times a segment is sent before a dropped connection, an
+// `RpcClientError`, fails the upload.
+const segmentAttempts = 3;
+const makeEncryptedCompaction = ({
+  client,
+  encryption,
+  session: {
+    framed,
+    request
+  }
+}) => {
+  const stageRequest = stage => ({
+    publicKey: stage.identity.publicKey,
+    storeId: stage.storeId,
+    stageId: stage.stageId
+  });
+  return {
+    status: ({
+      identity,
+      storeId
+    }) => request("compactionStatus", identity, client["EventLog.CompactionStatus"]({
+      publicKey: identity.publicKey,
+      storeId
+    })),
+    begin: ({
+      identity,
+      storeId
+    }) => request("compactionBegin", identity, client["EventLog.CompactionBegin"]({
+      publicKey: identity.publicKey,
+      storeId
+    })),
+    input: stage => framed("compactionInput", stage.identity, () => client["EventLog.CompactionInput"](stageRequest(stage)), CompactionInputRpc.decodeHeaders),
+    fetch: (stage, sequences) => framed("compactionFetch", stage.identity, () => client["EventLog.CompactionFetch"]({
+      ...stageRequest(stage),
+      batches: sequences
+    }), data => Effect.flatMap(ChangesRpc.decodeEncrypted(data), batches => encryption.decrypt(stage.identity, stage.storeId, batches))),
+    upload: (stage, entries) => Effect.suspend(() => {
+      let segment = [];
+      let segmentBytes = 0;
+      let segmentCount = 0;
+      // The server forgets a segment's pieces when the connection drops, so a
+      // retry resends all of them.
+      const sendSegment = Effect.suspend(() => {
+        if (!Arr.isArrayNonEmpty(segment)) return Effect.void;
+        const batches = segment;
+        const id = segmentCount++;
+        segment = [];
+        segmentBytes = 0;
+        return Effect.flatMap(CompactionPartRpc.encodeSegment(batches), data => {
+          const pieces = ChunkedMessage.split(id, data);
+          return request("compactionUpload", stage.identity, Effect.forEach(pieces, chunk => client["EventLog.CompactionPart"]({
+            ...stageRequest(stage),
+            chunk
+          }), {
+            discard: true
+          }).pipe(Effect.retry({
+            while: error => error._tag === "RpcClientError",
+            times: segmentAttempts - 1
+          })));
+        });
+      });
+      // Whole batches go into a segment until the next one would take it
+      // past `ChunkedMessage.chunkSize`.
+      const addBatch = batch => Effect.flatMap(encryption.encrypt(stage.identity, stage.storeId, batch), encrypted => Effect.forEach(encrypted, batch => {
+        const size = encodedBatchSize(batch);
+        const send = segment.length > 0 && segmentBytes + size > ChunkedMessage.chunkSize ? sendSegment : Effect.void;
+        return Effect.andThen(send, Effect.sync(() => {
+          segment.push(batch);
+          segmentBytes += size;
+        }));
+      }, {
+        discard: true
+      }));
+      return Effect.forEach(toBatches(entries), addBatch, {
+        discard: true
+      }).pipe(Effect.andThen(sendSegment), Effect.map(() => ({
+        segmentCount
+      })), Effect.mapError(cause => EventLogRemoteError.is(cause) ? cause : new EventLogRemoteError({
+        method: "compactionUpload",
+        cause
+      })));
+    }),
+    commit: (stage, result) => request("compactionCommit", stage.identity, client["EventLog.CompactionCommit"]({
+      ...stageRequest(stage),
+      result
+    })),
+    abort: stage => request("compactionAbort", stage.identity, client["EventLog.CompactionAbort"](stageRequest(stage))).pipe(Effect.ignore)
+  };
+};
+// Ignores the segment framing.
+const encodedBatchSize = batch => batch.encryptedBatch.byteLength + batch.iv.byteLength + batch.entryIds.length * 16;
 /**
  * Creates an `EventLogRemote` that sends and receives plaintext entry payloads.
  *
@@ -260,17 +451,33 @@ export const makeUnencrypted = /*#__PURE__*/makeWith({
     storeId: options.storeId,
     entries: options.entries
   }).encoded,
-  decodeChanges: (_identity, data) => ChangesRpc.decodeUnencrypted(data)
+  decodeChanges: (_identity, _storeId, data) => ChangesRpc.decodeUnencrypted(data)
 });
 /**
  * Provides an encrypted `EventLogRemote` using the remote RPC client and the
  * default Web Crypto encryption layer.
  *
+ * **Details**
+ *
+ * `compaction: false` leaves the remote without its `compaction` member, so
+ * this client never calls the compaction RPCs.
+ *
  * @stability unstable
  * @category layers
  * @since 4.0.0
  */
-export const layerEncrypted = /*#__PURE__*/Layer.effect(EventLogRemote, makeEncrypted).pipe(/*#__PURE__*/Layer.provide(EventLogRemoteClient.layer), /*#__PURE__*/Layer.provide(layerSubtle));
+export const layerEncryptedWith = options => Layer.effect(EventLogRemote, makeEncryptedWith(options)).pipe(Layer.provide(EventLogRemoteClient.layer), Layer.provide(layerSubtle));
+/**
+ * Provides an encrypted `EventLogRemote` using the remote RPC client and the
+ * default Web Crypto encryption layer.
+ *
+ * @see {@link layerEncryptedWith} for opting out of running compaction
+ *
+ * @stability unstable
+ * @category layers
+ * @since 4.0.0
+ */
+export const layerEncrypted = /*#__PURE__*/layerEncryptedWith({});
 /**
  * Provides an unencrypted `EventLogRemote` using the remote RPC client.
  *

@@ -10,22 +10,29 @@
  * @stability unstable
  * @since 4.0.0
  */
+import * as Arr from "../Array.js";
+import * as ByteSize from "../ByteSize.js";
 import * as Sse from "../encoding/Sse.js";
 import { constVoid } from "../Function.js";
 import { hasBody } from "../http/HttpMethod.js";
 import * as HttpStatus from "../http/HttpStatus.js";
+import * as ProblemDetails from "../http/ProblemDetails.js";
 import * as Predicate from "../Predicate.js";
 import * as Schema from "../Schema.js";
 import * as SchemaAST from "../SchemaAST.js";
 import * as SchemaTransformation from "../SchemaTransformation.js";
+import * as Socket from "../socket/Socket.js";
 import * as Stream from "../Stream.js";
+import * as MediaType from "./internal/mediaType.js";
 const StreamSchemaTypeId = "~effect/http-api/HttpApiSchema/Stream";
 /**
  * @stability unstable
  */
 export function status(code) {
   const statusCode = typeof code === "string" ? HttpStatus.fromLiteral(code) : code;
-  return self => self.annotate({
+  return self => findHttpApiStatusAnnotation(self.ast) === undefined ? self.annotateKey({
+    httpApiStatus: statusCode
+  }) : self.annotate({
     httpApiStatus: statusCode
   });
 }
@@ -87,9 +94,66 @@ export function asNoContent(options) {
     })));
   };
 }
+/**
+ * Renders an error class as an RFC 9457 problem.
+ *
+ * **Details**
+ *
+ * The server encodes the error as an `application/problem+json` body carrying
+ * `type`, `title` and the status of the class. Generated clients decode a body
+ * with the same `type` back into an instance by calling `decode`, which
+ * defaults to constructing the class without arguments; a body with a
+ * different `type` is rejected.
+ *
+ * **Example** (A built-in error as a problem)
+ *
+ * ```ts
+ * import { HttpApiEndpoint, HttpApiError, HttpApiSchema } from "effect/http-api"
+ *
+ * const user = HttpApiEndpoint.get("user", "/user", {
+ *   error: HttpApiError.NotFound.pipe(HttpApiSchema.asProblem({ title: "Not Found" }))
+ * })
+ * // A NotFound failure responds with 404 and
+ * // { "type": "about:blank", "title": "Not Found", "status": 404 }
+ * ```
+ *
+ * @see {@link asNoContent} for the empty-body equivalent.
+ *
+ * @stability unstable
+ * @category encoding
+ * @since 4.0.6
+ */
+export function asProblem(options) {
+  return self => {
+    const status = getStatusError(self.ast);
+    const type = options.type ?? ProblemDetails.blankType;
+    const body = {
+      type,
+      status,
+      title: options.title
+    };
+    const decode = options.decode ?? (() => new self());
+    const problem = Schema.Struct({
+      type: Schema.tag(type),
+      status: ProblemDetails.fixedMember(status),
+      title: ProblemDetails.fixedMember(options.title)
+    });
+    return problem.pipe(Schema.decodeTo(Schema.toType(self), SchemaTransformation.transform({
+      decode,
+      encode: () => body
+    })), asJson({
+      contentType: ProblemDetails.contentType
+    }));
+  };
+}
 const streamSchema = /*#__PURE__*/Schema.declare(Stream.isStream);
+const defaultMaxElementBytes = /*#__PURE__*/ByteSize.mebibytes(1);
 /**
  * Creates a Server-Sent Events streaming success response schema.
+ *
+ * **Details**
+ *
+ * `StreamSse` is response-only. Endpoint construction rejects it in `payload`.
  *
  * @stability unstable
  * @category constructors
@@ -98,7 +162,7 @@ const streamSchema = /*#__PURE__*/Schema.declare(Stream.isStream);
 export const StreamSse = options => {
   const events = options.events ?? (options.data === undefined ? undefined : Schema.Struct({
     ...Sse.EventEncoded.fields,
-    data: Schema.fromJsonString(options.data)
+    data: Schema.fromJsonString(Schema.toCodecJson(options.data))
   }));
   if (events === undefined) {
     throw new Error("StreamSse requires either an events schema or a data schema");
@@ -108,13 +172,20 @@ export const StreamSse = options => {
     _tag: "StreamSse",
     mode: "sse",
     sseMode: options.events === undefined ? "data" : "events",
-    contentType: options.contentType ?? defaultStreamContentType("sse"),
+    ...streamContentTypes(options.contentType, "sse"),
     events,
     error: options.error ?? Schema.Never
   });
 };
 /**
- * Creates a streaming `Uint8Array` success response schema.
+ * Creates a streaming `Uint8Array` body schema.
+ *
+ * **Details**
+ *
+ * `contentType` defaults to `application/octet-stream`. Pass a list when the
+ * same stream is sent under several media types. The first entry is the
+ * default response type, and payloads are accepted under every entry.
+ * `maxBytes` only applies to request payloads and has no default.
  *
  * @stability unstable
  * @category constructors
@@ -124,7 +195,50 @@ export const StreamUint8Array = options => Schema.make(streamSchema.ast, {
   [StreamSchemaTypeId]: StreamSchemaTypeId,
   _tag: "StreamUint8Array",
   mode: "uint8array",
-  contentType: options?.contentType ?? defaultStreamContentType("uint8array")
+  ...streamContentTypes(options?.contentType, "uint8array"),
+  maxBytes: options?.maxBytes === undefined ? undefined : ByteSize.fromInputUnsafe(options.maxBytes)
+});
+/**
+ * Creates a schema for a stream of newline-delimited JSON elements.
+ *
+ * **Details**
+ *
+ * `contentType` defaults to `application/x-ndjson` and `maxElementBytes` to 1
+ * MiB. `maxBytes` has no default. Pass a list of content types to accept
+ * aliases such as `application/jsonl`. The first entry is the default.
+ *
+ * **Example** (Declaring an NDJSON request payload)
+ *
+ * ```ts import.meta.vitest
+ * import { Schema } from "effect"
+ * import { HttpApiEndpoint, HttpApiSchema } from "effect/http-api"
+ *
+ * const Event = Schema.Struct({ id: Schema.Number })
+ * const payload = HttpApiSchema.StreamNdjson({ schema: Event, maxBytes: "100 MiB" })
+ *
+ * // The handler receives a Stream of Events
+ * const importEvents = HttpApiEndpoint.post("importEvents", "/events", {
+ *   payload,
+ *   success: Schema.Number
+ * })
+ *
+ * importEvents.path // => "/events"
+ * payload.contentType // => "application/x-ndjson"
+ * payload.maxElementBytes // => 1048576n
+ * ```
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.6
+ */
+export const StreamNdjson = options => Schema.make(streamSchema.ast, {
+  [StreamSchemaTypeId]: StreamSchemaTypeId,
+  _tag: "StreamNdjson",
+  mode: "ndjson",
+  ...streamContentTypes(options.contentType, "ndjson"),
+  schema: options.schema,
+  maxBytes: options.maxBytes === undefined ? undefined : ByteSize.fromInputUnsafe(options.maxBytes),
+  maxElementBytes: options.maxElementBytes === undefined ? defaultMaxElementBytes : ByteSize.fromInputUnsafe(options.maxElementBytes)
 });
 /**
  * @internal
@@ -138,12 +252,64 @@ export const isStreamSse = u => isStreamSchema(u) && u._tag === "StreamSse";
  * @internal
  */
 export const isStreamUint8Array = u => isStreamSchema(u) && u._tag === "StreamUint8Array";
+/**
+ * @internal
+ */
+export const isStreamNdjson = u => isStreamSchema(u) && u._tag === "StreamNdjson";
+const UpgradeTypeId = "~effect/http-api/HttpApiSchema/Upgrade";
+const upgradeSchema = /*#__PURE__*/Schema.declare(Socket.isSocket).pipe(/*#__PURE__*/status(101));
+/**
+ * @stability unstable
+ */
+export function Upgrade(options) {
+  if (options.protocol.toLowerCase() === "websocket") {
+    throw new Error("Upgrade does not support WebSocket");
+  }
+  const headers = options.headers === undefined || Schema.isSchema(options.headers) ? options.headers : Schema.Struct(options.headers);
+  return rebuildUpgrade(options.protocol, headers);
+}
+/**
+ * @internal
+ */
+export const rebuildUpgrade = (protocol, headers) => Schema.make(upgradeSchema.ast, {
+  [UpgradeTypeId]: UpgradeTypeId,
+  protocol,
+  headers
+});
+/**
+ * @internal
+ */
+export const isUpgrade = u => Schema.isSchema(u) && Predicate.hasProperty(u, UpgradeTypeId);
+function streamContentTypes(contentType, mode) {
+  if (contentType === undefined) contentType = defaultStreamContentType(mode);
+  if (typeof contentType === "string") return {
+    contentType,
+    contentTypes: [contentType]
+  };
+  if (!Arr.isReadonlyArrayNonEmpty(contentType)) {
+    throw new Error("Stream schemas require at least one content type");
+  }
+  const seen = new Set();
+  for (const entry of contentType) {
+    const normalized = MediaType.normalize(entry);
+    if (seen.has(normalized)) {
+      throw new Error(`Duplicate stream content type: ${entry}`);
+    }
+    seen.add(normalized);
+  }
+  return {
+    contentType: contentType[0],
+    contentTypes: contentType
+  };
+}
 function defaultStreamContentType(mode) {
   switch (mode) {
     case "sse":
       return "text/event-stream";
     case "uint8array":
       return "application/octet-stream";
+    case "ndjson":
+      return "application/x-ndjson";
   }
 }
 /**
@@ -173,6 +339,9 @@ const withHeadersValueSchema = /*#__PURE__*/Schema.declare(isWithHeadersValue);
 export function WithHeaders(schema, headers) {
   if (isWithHeaders(schema)) {
     throw new Error("WithHeaders schemas cannot be nested");
+  }
+  if (isUpgrade(schema)) {
+    throw new Error("WithHeaders cannot wrap an upgrade");
   }
   return Schema.make(withHeadersValueSchema.ast, {
     [WithHeadersTypeId]: WithHeadersTypeId,
@@ -290,6 +459,9 @@ export function rebuildWithHeaders(self, schema, headers) {
 export function encodeToWithHeaders(options, transformation) {
   return self => {
     const body = options.body;
+    if (isUpgrade(body)) {
+      throw new Error("encodeToWithHeaders cannot wrap an upgrade");
+    }
     const headers = Schema.Struct(options.headers);
     const status = resolveHttpApiStatus(body.ast);
     const encoding = resolveHttpApiEncoding(body.ast);
@@ -405,6 +577,12 @@ export function asJson(options) {
  *
  * The schema's encoded side must be a record of strings.
  *
+ * **Gotchas**
+ *
+ * Fields are flat on the server. A field that encodes to a nested object is
+ * sent as bracket keys that the server does not read back; use an explicit
+ * codec such as `Schema.fromJsonString(...)` for structured values.
+ *
  * @stability unstable
  * @category encoding
  * @since 4.0.0
@@ -474,7 +652,26 @@ const resolveHttpApiEncoding = /*#__PURE__*/SchemaAST.resolveAt("~httpApiEncodin
  * @internal
  */
 export const getWithHeadersAnnotation = /*#__PURE__*/SchemaAST.resolveAt("~httpApiWithHeaders");
-const resolveHttpApiStatus = /*#__PURE__*/SchemaAST.resolveAt("httpApiStatus");
+function findHttpApiStatusAnnotation(ast) {
+  if (ast.checks) {
+    for (let i = ast.checks.length - 1; i >= 0; i--) {
+      const check = ast.checks[i];
+      if (check.annotations && "httpApiStatus" in check.annotations) return check.annotations;
+      if (check._tag === "FilterGroup") {
+        const annotations = findHttpApiStatusAnnotation(check);
+        if (annotations !== undefined) return annotations;
+      }
+    }
+  }
+  const annotations = ast.annotations;
+  return annotations && "httpApiStatus" in annotations ? annotations : undefined;
+}
+function resolveHttpApiStatus(ast) {
+  const annotations = findHttpApiStatusAnnotation(ast);
+  // An explicit undefined clears the status instead of falling back to key context.
+  if (annotations !== undefined) return annotations.httpApiStatus;
+  return ast.context?.annotations?.httpApiStatus;
+}
 const defaultJsonEncoding = {
   _tag: "Json",
   contentType: "application/json"

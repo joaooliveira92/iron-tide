@@ -357,7 +357,7 @@ export declare namespace TaggedEnum {
      */
     type Constructor<A extends {
         readonly _tag: string;
-    }> = Types.Simplify<{
+    }> = {
         readonly [Tag in A["_tag"]]: ConstructorFrom<Extract<A, {
             readonly _tag: Tag;
         }>, "_tag">;
@@ -377,7 +377,7 @@ export declare namespace TaggedEnum {
                 }>) => any;
             }>(value: A, cases: Cases): Unify<ReturnType<Cases[A["_tag"]]>>;
         };
-    }>;
+    };
     /**
      * Function type that constructs a tagged-union variant from its fields,
      * excluding the keys listed in `Tag`.
@@ -397,6 +397,57 @@ export declare namespace TaggedEnum {
     type ConstructorFrom<A, Tag extends keyof A = never> = (args: Types.VoidIfEmpty<{
         readonly [P in keyof A as P extends Tag ? never : P]: A[P];
     }>) => A;
+    /**
+     * The full constructors-and-matchers object type returned by {@link taggedEnum}
+     * for a {@link WithGenerics} definition.
+     *
+     * **When to use**
+     *
+     * Use when you want to annotate an exported constructor bundle for a generic
+     * tagged enum.
+     *
+     * **Details**
+     *
+     * Includes one generic constructor per variant (keyed by tag name) plus the
+     * `$is` / `$match` helpers from {@link GenericMatchers}.
+     *
+     * @see {@link Constructor} — the non-generic equivalent
+     * @see {@link GenericCaseConstructor} — the constructor for one variant
+     *
+     * @category utility types
+     * @since 4.0.7
+     */
+    type GenericConstructor<Z extends WithGenerics<1 | 2 | 3 | 4>> = {
+        readonly [Tag in Z["taggedEnum"]["_tag"]]: GenericCaseConstructor<Z, Tag>[Z["numberOfGenerics"]];
+    } & GenericMatchers<Z>;
+    /**
+     * The generic constructors for one variant of a {@link WithGenerics}
+     * definition, keyed by the number of generics.
+     *
+     * **When to use**
+     *
+     * Use to type an individual constructor for one variant of a generic tagged
+     * enum, by indexing with the definition's `numberOfGenerics`.
+     *
+     * @see {@link GenericConstructor} — the full constructor object type
+     *
+     * @category utility types
+     * @since 4.0.7
+     */
+    interface GenericCaseConstructor<Z extends WithGenerics<number>, Tag extends Z["taggedEnum"]["_tag"]> {
+        readonly 1: <A>(args: Args<Kind<Z, A>, Tag, Extract<Kind<Z, A>, {
+            readonly _tag: Tag;
+        }>>) => Value<Kind<Z, A>, Tag>;
+        readonly 2: <A, B>(args: Args<Kind<Z, A, B>, Tag, Extract<Kind<Z, A, B>, {
+            readonly _tag: Tag;
+        }>>) => Value<Kind<Z, A, B>, Tag>;
+        readonly 3: <A, B, C>(args: Args<Kind<Z, A, B, C>, Tag, Extract<Kind<Z, A, B, C>, {
+            readonly _tag: Tag;
+        }>>) => Value<Kind<Z, A, B, C>, Tag>;
+        readonly 4: <A, B, C, D>(args: Args<Kind<Z, A, B, C, D>, Tag, Extract<Kind<Z, A, B, C, D>, {
+            readonly _tag: Tag;
+        }>>) => Value<Kind<Z, A, B, C, D>, Tag>;
+    }
     /**
      * Type-guard and pattern-matching interface for generic tagged enums.
      *
@@ -580,239 +631,7 @@ export declare const taggedEnum: {
      * @category constructors
      * @since 2.0.0
      */
-    <Z extends TaggedEnum.WithGenerics<1>>(): Types.Simplify<{
-        readonly [Tag in Z["taggedEnum"]["_tag"]]: <A>(args: TaggedEnum.Args<TaggedEnum.Kind<Z, A>, Tag, Extract<TaggedEnum.Kind<Z, A>, {
-            readonly _tag: Tag;
-        }>>) => TaggedEnum.Value<TaggedEnum.Kind<Z, A>, Tag>;
-    } & TaggedEnum.GenericMatchers<Z>>;
-    /**
-     * Creates constructors and matchers for a `TaggedEnum` type.
-     *
-     * **When to use**
-     *
-     * Use when you model a closed union with plain data objects and want
-     * construction, tag checks, and exhaustive matching from the same definition.
-     *
-     * **Details**
-     *
-     * Returns an object with:
-     * - One constructor per variant (keyed by tag name)
-     * - `$is(tag)` — returns a type-guard function that checks only the `_tag` field
-     * - `$match` — exhaustive pattern matching (data-first or data-last)
-     *
-     * **Gotchas**
-     *
-     * - Constructors produce **plain objects**, not class instances.
-     * - `$is(tag)` only checks the `_tag` field, not the full structure. It relies
-     *   on the tag being globally unique and the value being produced by your
-     *   constructors. For untrusted input, validate with the `Schema` module first.
-     *
-     * **Example** (Creating and matching tagged enum values)
-     *
-     * ```ts import.meta.vitest
-     * import { Data } from "effect"
-     *
-     * type HttpError = Data.TaggedEnum<{
-     *   BadRequest: { readonly message: string }
-     *   NotFound: { readonly url: string }
-     * }>
-     *
-     * const { BadRequest, NotFound, $is, $match } = Data.taggedEnum<HttpError>()
-     *
-     * const err = NotFound({ url: "/missing" })
-     *
-     * $is("NotFound")(err) // => true
-     *
-     * $match(err, {
-     *   BadRequest: (e) => e.message,
-     *   NotFound: (e) => `${e.url} not found`
-     * }) // => "/missing not found"
-     * ```
-     *
-     * **Example** (Defining a generic tagged enum)
-     *
-     * ```ts import.meta.vitest
-     * import { Data } from "effect"
-     *
-     * type MyResult<E, A> = Data.TaggedEnum<{
-     *   Failure: { readonly error: E }
-     *   Success: { readonly value: A }
-     * }>
-     * interface MyResultDef extends Data.TaggedEnum.WithGenerics<2> {
-     *   readonly taggedEnum: MyResult<this["A"], this["B"]>
-     * }
-     * const { Failure, Success } = Data.taggedEnum<MyResultDef>()
-     *
-     * const ok = Success({ value: 42 })
-     * // ok: { readonly _tag: "Success"; readonly value: number }
-     * ok // => { value: 42, _tag: "Success" }
-     * ```
-     *
-     * @see {@link TaggedEnum} — the type-level companion
-     * @see {@link TaggedEnum.Constructor} — the returned object type
-     * @see {@link TaggedEnum.WithGenerics} — generic enum support
-     *
-     * @stability stable
-     * @category constructors
-     * @since 2.0.0
-     */
-    <Z extends TaggedEnum.WithGenerics<2>>(): Types.Simplify<{
-        readonly [Tag in Z["taggedEnum"]["_tag"]]: <A, B>(args: TaggedEnum.Args<TaggedEnum.Kind<Z, A, B>, Tag, Extract<TaggedEnum.Kind<Z, A, B>, {
-            readonly _tag: Tag;
-        }>>) => TaggedEnum.Value<TaggedEnum.Kind<Z, A, B>, Tag>;
-    } & TaggedEnum.GenericMatchers<Z>>;
-    /**
-     * Creates constructors and matchers for a `TaggedEnum` type.
-     *
-     * **When to use**
-     *
-     * Use when you model a closed union with plain data objects and want
-     * construction, tag checks, and exhaustive matching from the same definition.
-     *
-     * **Details**
-     *
-     * Returns an object with:
-     * - One constructor per variant (keyed by tag name)
-     * - `$is(tag)` — returns a type-guard function that checks only the `_tag` field
-     * - `$match` — exhaustive pattern matching (data-first or data-last)
-     *
-     * **Gotchas**
-     *
-     * - Constructors produce **plain objects**, not class instances.
-     * - `$is(tag)` only checks the `_tag` field, not the full structure. It relies
-     *   on the tag being globally unique and the value being produced by your
-     *   constructors. For untrusted input, validate with the `Schema` module first.
-     *
-     * **Example** (Creating and matching tagged enum values)
-     *
-     * ```ts import.meta.vitest
-     * import { Data } from "effect"
-     *
-     * type HttpError = Data.TaggedEnum<{
-     *   BadRequest: { readonly message: string }
-     *   NotFound: { readonly url: string }
-     * }>
-     *
-     * const { BadRequest, NotFound, $is, $match } = Data.taggedEnum<HttpError>()
-     *
-     * const err = NotFound({ url: "/missing" })
-     *
-     * $is("NotFound")(err) // => true
-     *
-     * $match(err, {
-     *   BadRequest: (e) => e.message,
-     *   NotFound: (e) => `${e.url} not found`
-     * }) // => "/missing not found"
-     * ```
-     *
-     * **Example** (Defining a generic tagged enum)
-     *
-     * ```ts import.meta.vitest
-     * import { Data } from "effect"
-     *
-     * type MyResult<E, A> = Data.TaggedEnum<{
-     *   Failure: { readonly error: E }
-     *   Success: { readonly value: A }
-     * }>
-     * interface MyResultDef extends Data.TaggedEnum.WithGenerics<2> {
-     *   readonly taggedEnum: MyResult<this["A"], this["B"]>
-     * }
-     * const { Failure, Success } = Data.taggedEnum<MyResultDef>()
-     *
-     * const ok = Success({ value: 42 })
-     * // ok: { readonly _tag: "Success"; readonly value: number }
-     * ok // => { value: 42, _tag: "Success" }
-     * ```
-     *
-     * @see {@link TaggedEnum} — the type-level companion
-     * @see {@link TaggedEnum.Constructor} — the returned object type
-     * @see {@link TaggedEnum.WithGenerics} — generic enum support
-     *
-     * @stability stable
-     * @category constructors
-     * @since 2.0.0
-     */
-    <Z extends TaggedEnum.WithGenerics<3>>(): Types.Simplify<{
-        readonly [Tag in Z["taggedEnum"]["_tag"]]: <A, B, C>(args: TaggedEnum.Args<TaggedEnum.Kind<Z, A, B, C>, Tag, Extract<TaggedEnum.Kind<Z, A, B, C>, {
-            readonly _tag: Tag;
-        }>>) => TaggedEnum.Value<TaggedEnum.Kind<Z, A, B, C>, Tag>;
-    } & TaggedEnum.GenericMatchers<Z>>;
-    /**
-     * Creates constructors and matchers for a `TaggedEnum` type.
-     *
-     * **When to use**
-     *
-     * Use when you model a closed union with plain data objects and want
-     * construction, tag checks, and exhaustive matching from the same definition.
-     *
-     * **Details**
-     *
-     * Returns an object with:
-     * - One constructor per variant (keyed by tag name)
-     * - `$is(tag)` — returns a type-guard function that checks only the `_tag` field
-     * - `$match` — exhaustive pattern matching (data-first or data-last)
-     *
-     * **Gotchas**
-     *
-     * - Constructors produce **plain objects**, not class instances.
-     * - `$is(tag)` only checks the `_tag` field, not the full structure. It relies
-     *   on the tag being globally unique and the value being produced by your
-     *   constructors. For untrusted input, validate with the `Schema` module first.
-     *
-     * **Example** (Creating and matching tagged enum values)
-     *
-     * ```ts import.meta.vitest
-     * import { Data } from "effect"
-     *
-     * type HttpError = Data.TaggedEnum<{
-     *   BadRequest: { readonly message: string }
-     *   NotFound: { readonly url: string }
-     * }>
-     *
-     * const { BadRequest, NotFound, $is, $match } = Data.taggedEnum<HttpError>()
-     *
-     * const err = NotFound({ url: "/missing" })
-     *
-     * $is("NotFound")(err) // => true
-     *
-     * $match(err, {
-     *   BadRequest: (e) => e.message,
-     *   NotFound: (e) => `${e.url} not found`
-     * }) // => "/missing not found"
-     * ```
-     *
-     * **Example** (Defining a generic tagged enum)
-     *
-     * ```ts import.meta.vitest
-     * import { Data } from "effect"
-     *
-     * type MyResult<E, A> = Data.TaggedEnum<{
-     *   Failure: { readonly error: E }
-     *   Success: { readonly value: A }
-     * }>
-     * interface MyResultDef extends Data.TaggedEnum.WithGenerics<2> {
-     *   readonly taggedEnum: MyResult<this["A"], this["B"]>
-     * }
-     * const { Failure, Success } = Data.taggedEnum<MyResultDef>()
-     *
-     * const ok = Success({ value: 42 })
-     * // ok: { readonly _tag: "Success"; readonly value: number }
-     * ok // => { value: 42, _tag: "Success" }
-     * ```
-     *
-     * @see {@link TaggedEnum} — the type-level companion
-     * @see {@link TaggedEnum.Constructor} — the returned object type
-     * @see {@link TaggedEnum.WithGenerics} — generic enum support
-     *
-     * @stability stable
-     * @category constructors
-     * @since 2.0.0
-     */
-    <Z extends TaggedEnum.WithGenerics<4>>(): Types.Simplify<{
-        readonly [Tag in Z["taggedEnum"]["_tag"]]: <A, B, C, D>(args: TaggedEnum.Args<TaggedEnum.Kind<Z, A, B, C, D>, Tag, Extract<TaggedEnum.Kind<Z, A, B, C, D>, {
-            readonly _tag: Tag;
-        }>>) => TaggedEnum.Value<TaggedEnum.Kind<Z, A, B, C, D>, Tag>;
-    } & TaggedEnum.GenericMatchers<Z>>;
+    <Z extends TaggedEnum.WithGenerics<1 | 2 | 3 | 4>>(): TaggedEnum.GenericConstructor<Z>;
     /**
      * Creates constructors and matchers for a `TaggedEnum` type.
      *

@@ -2,7 +2,7 @@
  * @stability unstable
  * @since 4.0.0
  */
-// @barrel: Auto-generated exports. Do not edit manually.
+// @barrel(!(MigratorFileSystem).ts): Auto-generated exports. Do not edit manually.
 /**
  * @stability unstable
  * @since 4.0.0

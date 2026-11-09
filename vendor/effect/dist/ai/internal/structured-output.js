@@ -29,10 +29,19 @@ export function resolveReference($ref, definitions) {
  * @internal
  */
 export function resolveTopLevelReference(document) {
-  if (typeof document.schema.$ref !== "string") return document;
+  let schema = document.schema;
+  if (typeof schema.$ref !== "string") return document;
+  const visited = new Set();
+  while (typeof schema.$ref === "string") {
+    if (visited.has(schema.$ref)) {
+      throw new Error(`Circular reference ${JSON.stringify(schema.$ref)}`);
+    }
+    visited.add(schema.$ref);
+    schema = resolveReference(schema.$ref, document.definitions);
+  }
   return {
     ...document,
-    schema: resolveReference(document.schema.$ref, document.definitions)
+    schema
   };
 }
 /**

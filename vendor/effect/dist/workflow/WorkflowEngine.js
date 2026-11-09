@@ -12,6 +12,7 @@
  */
 import * as Cause from "../Cause.js";
 import * as Context from "../Context.js";
+import * as Deferred from "../Deferred.js";
 import * as Effect from "../Effect.js";
 import * as Exit from "../Exit.js";
 import * as Fiber from "../Fiber.js";
@@ -53,16 +54,17 @@ export class WorkflowEngine extends /*#__PURE__*/Context.Service()("effect/workf
  * @since 4.0.0
  */
 export class WorkflowInstance extends /*#__PURE__*/Context.Service()("effect/workflow/WorkflowEngine/WorkflowInstance") {
-  static initial(workflow, executionId, scope = Scope.makeUnsafe()) {
+  static initial(workflow, executionId, options) {
     return WorkflowInstance.of({
       executionId,
       workflow,
-      scope,
+      scope: options?.scope ?? Scope.makeUnsafe(),
       suspended: false,
       interrupted: false,
       abandoned: false,
       cause: undefined,
-      awaitedDeferreds: new Set(),
+      failed: false,
+      awaitedDeferreds: options?.awaitedDeferreds ?? new Map(),
       completedDeferreds: new Set(),
       activityState: {
         count: 0,
@@ -128,6 +130,9 @@ export const makeUnsafe = options => WorkflowEngine.of({
     yield* options.register(workflow, (payload, executionId) => Effect.suspend(() => execute(payload, executionId)).pipe(Effect.updateContext(input => Context.merge(services, input))));
   }),
   execute: Effect.fnUntraced(function* (self, opts) {
+    if (opts.detached && !opts.discard) {
+      return yield* Effect.die(`${self._tag}.execute: detached requires discard`);
+    }
     const payload = opts.payload;
     const executionId = opts.executionId;
     const suspendedRetrySchedule = opts.suspendedRetrySchedule ?? defaultRetrySchedule;
@@ -137,7 +142,7 @@ export const makeUnsafe = options => WorkflowEngine.of({
     let result = Option.none();
     // link interruption with parent workflow
     const parentInstance = yield* Effect.serviceOption(WorkflowInstance);
-    if (Option.isSome(parentInstance)) {
+    if (Option.isSome(parentInstance) && !opts.detached) {
       const instance = parentInstance.value;
       yield* Effect.addFinalizer(() => {
         if (!instance.interrupted || Option.isSome(result) && result.value._tag === "Complete") {
@@ -150,7 +155,8 @@ export const makeUnsafe = options => WorkflowEngine.of({
       executionId,
       payload: payload,
       discard: opts.discard ?? false,
-      parent: Option.getOrUndefined(parentInstance)
+      parent: Option.getOrUndefined(parentInstance),
+      detached: opts.detached
     });
     if (opts.discard) {
       yield* run;
@@ -162,6 +168,11 @@ export const makeUnsafe = options => WorkflowEngine.of({
       if (wrapped._tag === "Suspended") {
         return yield* Workflow.suspend(parentInstance.value);
       }
+      // A child's interrupt is an outcome for the parent, not an interrupt of
+      // the parent's run, so surface it as a defect the parent can observe.
+      if (Exit.isFailure(wrapped.exit) && Cause.hasInterruptsOnly(wrapped.exit.cause)) {
+        return yield* Effect.die(`${self._tag}.execute: execution "${executionId}" was interrupted`);
+      }
       return yield* wrapped.exit;
     }
     let sleep;
@@ -172,7 +183,8 @@ export const makeUnsafe = options => WorkflowEngine.of({
         return yield* wrapped.exit;
       }
       sleep ??= (yield* Schedule.toStepWithSleep(suspendedRetrySchedule))(void 0).pipe(Effect.catch(() => Effect.die(`${self._tag}.execute: suspendedRetrySchedule exhausted`)));
-      yield* sleep;
+      // Completion wakes the caller early; the schedule is the fallback.
+      yield* options.awaitComplete ? Effect.raceFirst(sleep, options.awaitComplete(self, executionId)) : sleep;
     }
   }),
   poll: options.poll,
@@ -234,6 +246,7 @@ export const makeUnsafe = options => WorkflowEngine.of({
   }))
 });
 const defaultRetrySchedule = /*#__PURE__*/Schedule.min([/*#__PURE__*/Schedule.exponential(200, 1.5), /*#__PURE__*/Schedule.spaced(30000)]);
+const isUnwakeable = (result, mode) => result._tag === "Complete" || mode === "automatic" && result.failed === true;
 /**
  * Layer that provides an in-memory `WorkflowEngine`.
  *
@@ -257,29 +270,36 @@ export const layerMemory = /*#__PURE__*/Layer.effect(WorkflowEngine)(/*#__PURE__
   const executions = new Map();
   const activities = new Map();
   const deferredState = makeDeferredState();
-  const resume = Effect.fnUntraced(function* (executionId) {
+  const resume = Effect.fnUntraced(function* (executionId, mode) {
     const state = executions.get(executionId);
     if (!state) return;
     const exit = state.fiber?.pollUnsafe();
-    if (exit && exit._tag === "Success" && exit.value._tag === "Complete") {
+    if (exit && exit._tag === "Success" && isUnwakeable(exit.value, mode)) {
       return;
     } else if (state.fiber && !exit) {
-      // A child can finish while the parent is still releasing its activity.
-      // Preserve the wake until that run has published its suspended result.
-      if (!state.resumeRequested) {
-        state.resumeRequested = true;
+      // Queue wakes until the run finishes cleanup; explicit wakes take priority.
+      const requested = state.resumeRequested;
+      state.resumeRequested = mode === "explicit" ? mode : requested ?? mode;
+      if (requested === undefined) {
         yield* Fiber.await(state.fiber).pipe(Effect.flatMap(() => {
-          state.resumeRequested = false;
-          return resume(executionId);
+          const mode = state.resumeRequested;
+          state.resumeRequested = undefined;
+          return resume(executionId, mode);
         }), Effect.forkIn(scope));
       }
       return;
     }
     const entry = workflows.get(state.instance.workflow._tag);
-    const instance = WorkflowInstance.initial(state.instance.workflow, state.instance.executionId, state.instance.scope);
+    // Like the cluster engine, each run gets a fresh scope, so replays rebuild
+    // compensations instead of registering them again.
+    const instance = WorkflowInstance.initial(state.instance.workflow, state.instance.executionId, {
+      scope: Scope.forkUnsafe(state.scope)
+    });
     state.instance = instance;
-    state.fiber = yield* state.execute(state.payload, state.instance.executionId).pipe(Effect.onExit(() => {
-      if (!state.interrupted) {
+    state.fiber = yield* state.execute(state.payload, state.instance.executionId).pipe(Effect.onExit(exit => {
+      // Safe interrupts take effect only when the run would suspend;
+      // unsafe interrupts must also survive a replay that completes normally.
+      if (!state.interrupted || !state.interruptedUnsafe && !instance.suspended && !instance.abandoned && !(Context.get(instance.workflow.annotations, Workflow.SuspendOnFailure) && Exit.isFailure(exit))) {
         return Effect.void;
       }
       instance.interrupted = true;
@@ -289,7 +309,14 @@ export const layerMemory = /*#__PURE__*/Layer.effect(WorkflowEngine)(/*#__PURE__
       if (!state.parent || result._tag !== "Complete") {
         return Effect.void;
       }
-      return Effect.forkIn(resume(state.parent), scope);
+      return Effect.forkIn(resume(state.parent, "automatic"), scope);
+    }), Effect.onExit(exit => {
+      if (Exit.isSuccess(exit) && exit.value._tag === "Suspended") return Effect.void;
+      // The final run's scope closes with the real exit. Closing the parent
+      // then closes earlier scopes in reverse order with `Exit.void`, so their
+      // superseded compensations are skipped, which means their finalizers
+      // also observe success rather than the outcome.
+      return Effect.andThen(Scope.close(state.scope, Exit.void), Exit.isSuccess(exit) && exit.value._tag === "Complete" ? Deferred.succeed(state.done, void 0) : Effect.void);
     }), Effect.forkIn(entry.scope));
   });
   const deferredResults = new Map();
@@ -314,12 +341,15 @@ export const layerMemory = /*#__PURE__*/Layer.effect(WorkflowEngine)(/*#__PURE__
           execute: entry.execute,
           instance: WorkflowInstance.initial(workflow, options.executionId),
           interrupted: false,
-          resumeRequested: false,
+          interruptedUnsafe: false,
+          resumeRequested: undefined,
           fiber: undefined,
-          parent: options.parent?.executionId
+          done: Deferred.makeUnsafe(),
+          scope: Scope.makeUnsafe(),
+          parent: options.detached ? undefined : options.parent?.executionId
         };
         executions.set(options.executionId, state);
-        yield* resume(options.executionId);
+        yield* resume(options.executionId, "explicit");
       }
       if (options.discard) return;
       // Capture together so a wake that swaps in a replay cannot desync them.
@@ -331,22 +361,29 @@ export const layerMemory = /*#__PURE__*/Layer.effect(WorkflowEngine)(/*#__PURE__
       }
       return yield* exit;
     }),
+    awaitComplete: (_workflow, executionId) => Effect.suspend(() => {
+      const state = executions.get(executionId);
+      return state ? Deferred.await(state.done) : Effect.never;
+    }),
     interrupt: Effect.fnUntraced(function* (_workflow, executionId) {
       const state = executions.get(executionId);
       if (!state) return;
       state.interrupted = true;
-      yield* resume(executionId);
+      yield* resume(executionId, "explicit");
     }),
     interruptUnsafe: Effect.fnUntraced(function* (_workflow, executionId) {
       const state = executions.get(executionId);
       if (!state) return;
       state.interrupted = true;
+      state.interruptedUnsafe = true;
       if (state.fiber) {
         yield* Fiber.interrupt(state.fiber);
       }
+      // Replay after hard interruption to record a terminal workflow result.
+      yield* resume(executionId, "explicit");
     }),
     resume(_workflow, executionId) {
-      return resume(executionId);
+      return resume(executionId, "explicit");
     },
     activityExecute: Effect.fnUntraced(function* (activity, attempt) {
       const instance = yield* WorkflowInstance;
@@ -365,10 +402,16 @@ export const layerMemory = /*#__PURE__*/Layer.effect(WorkflowEngine)(/*#__PURE__
         };
         activities.set(activityId, state);
       }
+      // A pending interrupt replays only to rebuild compensations, so it must
+      // not run new activities. Finalizers run once `interrupted` is set.
+      if (executions.get(instance.executionId)?.interrupted && !instance.interrupted) {
+        return new Workflow.Suspended({});
+      }
       const activityInstance = WorkflowInstance.initial(instance.workflow, instance.executionId);
       activityInstance.interrupted = instance.interrupted;
       return yield* activity.executeEncoded.pipe(Workflow.intoResult, Effect.provideService(WorkflowInstance, activityInstance), Effect.onExit(exit => {
-        state.exit = exit;
+        // A preempted activity must run again on the next replay.
+        state.exit = Exit.isFailure(exit) && Cause.hasInterruptsOnly(exit.cause) ? undefined : exit;
         return Effect.void;
       }));
     }),
@@ -392,7 +435,7 @@ export const layerMemory = /*#__PURE__*/Layer.effect(WorkflowEngine)(/*#__PURE__
       const id = `${options.executionId}/${options.deferredName}`;
       if (deferredResults.has(id)) return Effect.void;
       deferredResults.set(id, options.exit);
-      const wake = Effect.andThen(deferredState.deferredDone(options.executionId, options.deferredName), resume(options.executionId));
+      const wake = Effect.andThen(deferredState.deferredDone(options.executionId, options.deferredName), resume(options.executionId, "automatic"));
       return Effect.flatMap(Effect.serviceOption(WorkflowInstance), instance =>
       // A workflow finalizer cannot wait for its own run's cleanup.
       // The engine scope owns the wake so cleanup still precedes replay.

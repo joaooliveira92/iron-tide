@@ -59,7 +59,7 @@ export const Service = () => (id, options) => {
     if (responseMode === "decoded-only") {
       const definition = groups[group].endpoints[endpoint];
       return Atom.serializable(atom, {
-        key: `AtomHttpApi:mutation:${group}:${endpoint}`,
+        key: `AtomHttpApi:mutation:${JSON.stringify([id, group, endpoint])}`,
         schema: AsyncResult.Schema({
           success: Schema.Union(HttpApiEndpoint.getSuccessSchemas(definition)),
           error: Schema.Union(HttpApiEndpoint.getErrorSchemas(definition))

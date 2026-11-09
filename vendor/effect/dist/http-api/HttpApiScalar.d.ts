@@ -29,6 +29,11 @@ export type ScalarConfig = {
     layout?: "modern" | "classic";
     /** URL to a request proxy for the API client */
     proxyUrl?: string;
+    /** Authentication preferences for the API client */
+    authentication?: {
+        /** OpenAPI security scheme names to select by default */
+        preferredSecurityScheme?: string | Array<string | Array<string>> | null;
+    };
     /** Browser JavaScript function expression used by Scalar for documents and test requests */
     customFetch?: string;
     /** Whether to show the sidebar */
@@ -107,7 +112,8 @@ export type ScalarConfig = {
  * **Details**
  *
  * The route serves the OpenAPI specification generated from the API at the
- * configured path, defaulting to `/docs`.
+ * configured path, defaulting to `/docs`. The bundled script is loaded when
+ * the layer is built, not when this module is imported.
  *
  * @stability unstable
  * @category layers

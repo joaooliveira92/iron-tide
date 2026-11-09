@@ -2,8 +2,7 @@ import * as Context from "../Context.ts";
 import * as Duration from "../Duration.ts";
 import * as Effect from "../Effect.ts";
 import * as Layer from "../Layer.ts";
-import type { PersistenceError } from "../persistence/Persistence.ts";
-import { BackingPersistence } from "../persistence/Persistence.ts";
+import { BackingPersistence, PersistenceError } from "../persistence/Persistence.ts";
 import * as Ref from "../Ref.ts";
 import * as Schema from "../Schema.ts";
 import * as Stream from "../Stream.ts";
@@ -200,7 +199,7 @@ export interface Chat {
     readonly generateText: {
         <Options extends NoExcessProperties<LanguageModel.GenerateTextOptions<{}>, Options>>(options: Options & {
             readonly toolkit?: undefined;
-        } & LanguageModel.GenerateTextOptions<{}>): Effect.Effect<LanguageModel.GenerateTextResponse<{}>, LanguageModel.ExtractError<Options>, LanguageModel.LanguageModel | LanguageModel.ExtractServices<Options>>;
+        } & LanguageModel.GenerateTextOptions<{}>): Effect.Effect<LanguageModel.GenerateTextResponse<{}, LanguageModel.ExtractToolParametersModeWithoutToolkit<Options>>, LanguageModel.ExtractError<Options>, LanguageModel.LanguageModel | LanguageModel.ExtractServices<Options>>;
         <Tools extends Record<string, Tool.Any>, Options extends NoExcessProperties<LanguageModel.GenerateTextOptions<Tools> & {
             readonly toolkit: LanguageModel.ToolkitInput<Tools>;
         }, Options>>(options: Options & LanguageModel.GenerateTextOptions<Tools> & {
@@ -256,7 +255,7 @@ export interface Chat {
     readonly streamText: {
         <Options extends NoExcessProperties<LanguageModel.GenerateTextOptions<{}>, Options>>(options: Options & {
             readonly toolkit?: undefined;
-        } & LanguageModel.GenerateTextOptions<{}>): Stream.Stream<Response.StreamPart<{}>, LanguageModel.ExtractError<Options>, LanguageModel.LanguageModel | LanguageModel.ExtractServices<Options>>;
+        } & LanguageModel.GenerateTextOptions<{}>): Stream.Stream<Response.StreamPart<{}, LanguageModel.ExtractToolParametersModeWithoutToolkit<Options>>, LanguageModel.ExtractError<Options>, LanguageModel.LanguageModel | LanguageModel.ExtractServices<Options>>;
         <Tools extends Record<string, Tool.Any>, Options extends NoExcessProperties<LanguageModel.GenerateTextOptions<Tools> & {
             readonly toolkit: LanguageModel.ToolkitInput<Tools>;
         }, Options>>(options: Options & LanguageModel.GenerateTextOptions<Tools> & {

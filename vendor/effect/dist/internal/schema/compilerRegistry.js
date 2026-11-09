@@ -55,6 +55,9 @@ class CompilerEntry extends InterpretedEntry {
   get make() {
     return this.save("make", this.operation("make"));
   }
+  get compiledMakeEffect() {
+    return this.save("compiledMakeEffect", this.operation("makeEffect"));
+  }
   get decodeEffect() {
     return this.save("decodeEffect", this.operation("decodeEffect") ?? Interpreter.compile(this.ast, ast => lazyParser(this.resolve, ast, "parser")));
   }
@@ -63,7 +66,7 @@ class CompilerEntry extends InterpretedEntry {
     return decode === undefined ? this.decodeEffect : this.save("parser", withDecode(decode, () => this.decodeEffect));
   }
   get makeEffect() {
-    const makeEffect = this.operation("makeEffect");
+    const makeEffect = this.compiledMakeEffect;
     if (makeEffect !== undefined) return this.save("makeEffect", makeEffect);
     const child = ast => lazyParser(this.resolve, ast, "makeEffect");
     return this.save("makeEffect", Interpreter.compile(this.ast, child, ast => Interpreter.compileField(ast, child)));

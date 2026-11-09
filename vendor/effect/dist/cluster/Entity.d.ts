@@ -88,7 +88,21 @@ export interface Entity<in out Type extends string, in out Rpcs extends Rpc.Any>
         readonly maxIdleTime?: Duration.Input | undefined;
         readonly concurrency?: number | "unbounded" | undefined;
         readonly mailboxCapacity?: number | "unbounded" | undefined;
+        readonly mailboxMetrics?: boolean | undefined;
+        /**
+         * When `true`, a handler defect fails only its request instead of
+         * restarting the entity and replaying its in-flight requests.
+         */
         readonly disableFatalDefects?: boolean | undefined;
+        /**
+         * Schedule for restarting an entity after a defect and for retrying failed
+         * handler construction.
+         *
+         * Backoff is tracked per entity and resets once a request completes.
+         * When the policy ends, the default (500 ms growing by 1.5x, capped at 10
+         * seconds) continues, so restarts never stop; use `disableFatalDefects` to
+         * avoid them.
+         */
         readonly defectRetryPolicy?: Schedule.Schedule<any, unknown> | undefined;
         readonly spanAttributes?: Record<string, string> | undefined;
     }): Layer.Layer<never, never, Exclude<RX, Scope | CurrentAddress | CurrentRunnerAddress> | RpcGroup.HandlersServices<Rpcs, Handlers> | Rpc.ServicesClient<Rpcs> | Rpc.ServicesServer<Rpcs> | Rpc.Middleware<Rpcs> | Sharding>;
@@ -103,7 +117,21 @@ export interface Entity<in out Type extends string, in out Rpcs extends Rpc.Any>
     toLayerQueue<R, RX = never>(build: ((queue: Queue.Dequeue<Envelope.Request<Rpcs>>, replier: Replier<Rpcs>) => Effect.Effect<never, never, R>) | Effect.Effect<(queue: Queue.Dequeue<Envelope.Request<Rpcs>>, replier: Replier<Rpcs>) => Effect.Effect<never, never, R>, never, RX>, options?: {
         readonly maxIdleTime?: Duration.Input | undefined;
         readonly mailboxCapacity?: number | "unbounded" | undefined;
+        readonly mailboxMetrics?: boolean | undefined;
+        /**
+         * When `true`, a handler defect fails only its request instead of
+         * restarting the entity and replaying its in-flight requests.
+         */
         readonly disableFatalDefects?: boolean | undefined;
+        /**
+         * Schedule for restarting an entity after a defect and for retrying failed
+         * handler construction.
+         *
+         * Backoff is tracked per entity and resets once a request completes.
+         * When the policy ends, the default (500 ms growing by 1.5x, capped at 10
+         * seconds) continues, so restarts never stop; use `disableFatalDefects` to
+         * avoid them.
+         */
         readonly defectRetryPolicy?: Schedule.Schedule<any, unknown> | undefined;
         readonly spanAttributes?: Record<string, string> | undefined;
     }): Layer.Layer<never, never, Exclude<RX, Scope | CurrentAddress | CurrentRunnerAddress> | R | Rpc.ServicesClient<Rpcs> | Rpc.ServicesServer<Rpcs> | Rpc.Middleware<Rpcs> | Sharding>;

@@ -1,16 +1,3 @@
-/**
- * Low-level SQL statement and fragment primitives.
- *
- * `SqlClient` uses this module to build executable, parameterized SQL from
- * reusable fragments. A statement can be executed, streamed, run without row
- * transformation, or compiled to SQL text and parameters for a specific
- * dialect. The module also contains helpers for identifiers, parameters,
- * inserts, updates, custom dialect fragments, statement compilation, and row
- * transformation.
- *
- * @stability unstable
- * @since 4.0.0
- */
 import { Clock } from "../Clock.js";
 import * as Context from "../Context.js";
 import * as Effect from "../Effect.js";
@@ -18,11 +5,27 @@ import * as Effectable from "../Effectable.js";
 import { constUndefined } from "../Function.js";
 import * as internalEffect from "../internal/effect.js";
 import * as InternalRecord from "../internal/record.js";
+import { recordConnectionWait, waitClock } from "../internal/sql.js";
 import { hasProperty } from "../Predicate.js";
 import { TracerTimingEnabled } from "../References.js";
 import * as Stream from "../Stream.js";
 import * as Tracer from "../Tracer.js";
-const FragmentTypeId = "~effect/sql/Statement/Fragment";
+/**
+ * Runtime type identifier for SQL `Fragment` values.
+ *
+ * @stability unstable
+ * @category Type ID
+ * @since 4.1.1
+ */
+export const FragmentTypeId = /*#__PURE__*/Symbol.for("~effect/sql/Statement/Fragment");
+/**
+ * Runtime type identifier for SQL `Segment` values.
+ *
+ * @stability unstable
+ * @category Type ID
+ * @since 4.1.1
+ */
+export const SegmentTypeId = /*#__PURE__*/Symbol.for("~effect/sql/Statement/Segment");
 /**
  * Constructs a SQL `Fragment` from low-level statement segments.
  *
@@ -47,7 +50,14 @@ export const CurrentTransformer = /*#__PURE__*/Context.Reference("effect/sql/Cur
 });
 /**
  * Parents driver spans under the statement span for every client in the current scope,
- * including acquisition and stream pulls. Defaults to `false`; ignored when tracing is disabled.
+ * including acquisition and stream pulls, and records how long each statement
+ * waited for a connection as `db.client.connection.wait_time_ms`. Defaults to
+ * `false`; ignored when tracing is disabled.
+ *
+ * **Details**
+ *
+ * A top-level transaction also records how long it waited for its
+ * connection on its `sql.transaction` span.
  *
  * @stability unstable
  * @category services
@@ -71,7 +81,7 @@ export const isFragment = u => hasProperty(u, FragmentTypeId);
  * @category guards
  * @since 4.0.0
  */
-export const isCustom = kind => u => hasProperty(u, "_tag") && u._tag === "Custom" && u.kind === kind;
+export const isCustom = kind => u => isSegment(u) && u._tag === "Custom" && u.kind === kind;
 /**
  * Constructs a raw SQL literal segment. The literal text is not escaped, so use
  * bound parameters for untrusted values.
@@ -81,6 +91,7 @@ export const isCustom = kind => u => hasProperty(u, "_tag") && u._tag === "Custo
  * @since 4.0.0
  */
 export const literal = (value, params) => ({
+  [SegmentTypeId]: SegmentTypeId,
   _tag: "Literal",
   value,
   params
@@ -94,6 +105,7 @@ export const literal = (value, params) => ({
  * @since 4.0.0
  */
 export const identifier = value => ({
+  [SegmentTypeId]: SegmentTypeId,
   _tag: "Identifier",
   value
 });
@@ -105,6 +117,7 @@ export const identifier = value => ({
  * @since 4.0.0
  */
 export const parameter = value => ({
+  [SegmentTypeId]: SegmentTypeId,
   _tag: "Parameter",
   value
 });
@@ -116,10 +129,12 @@ export const parameter = value => ({
  * @since 4.0.0
  */
 export const arrayHelper = value => ({
+  [SegmentTypeId]: SegmentTypeId,
   _tag: "ArrayHelper",
   value
 });
 const RecordInsertHelperProto = {
+  [SegmentTypeId]: SegmentTypeId,
   _tag: "RecordInsertHelper",
   returning(sql) {
     const self = Object.create(Object.getPrototypeOf(this));
@@ -183,6 +198,7 @@ export const recordUpdateHelperSingle = (value, omit) => Object.assign(Object.cr
  * @since 4.0.0
  */
 export const custom = kind => (paramA, paramB, paramC) => ({
+  [SegmentTypeId]: SegmentTypeId,
   _tag: "Custom",
   kind,
   paramA,
@@ -397,6 +413,19 @@ const CompilerProto = {
           }
         case "ArrayHelper":
           {
+            if (segment.value.length === 0) {
+              const inKeyword = emptyInKeyword.exec(sql);
+              if (inKeyword === null || isInLineComment(sql, inKeyword.index)) {
+                sql += "()";
+              } else if (this.dialect === "pg") {
+                // an empty subquery is typed as text in postgres, so compare with an
+                // empty array, which takes the type of the left operand instead
+                sql = sql.slice(0, inKeyword.index) + (inKeyword[1] ? "<> ALL('{}')" : "= ANY('{}')");
+              } else {
+                sql += "(SELECT NULL WHERE 1=0)";
+              }
+              break;
+            }
             sql += `(${placeholders(segment.value)})`;
             binds.push.apply(binds, segment.value);
             break;
@@ -499,7 +528,7 @@ const CompilerProto = {
               }
               placeholders += ")";
             }
-            const [s, b] = opts.onRecordUpdate(placeholders, segment.alias, generateColumns(keys, opts.onIdentifier, withoutTransform), values, typeof segment.returningIdentifier === "string" ? [segment.returningIdentifier, []] : segment.returningIdentifier ? this.compile(segment.returningIdentifier, withoutTransform, placeholder) : undefined);
+            const [s, b] = opts.onRecordUpdate(placeholders, opts.onIdentifier(segment.alias, true), generateColumns(keys, opts.onIdentifier, withoutTransform), values, typeof segment.returningIdentifier === "string" ? [segment.returningIdentifier, []] : segment.returningIdentifier ? this.compile(segment.returningIdentifier, withoutTransform, placeholder) : undefined);
             sql += s;
             binds.push.apply(binds, b);
             break;
@@ -611,7 +640,7 @@ export const primitiveKind = value => {
 export const defaultTransforms = (transformer, nested = true) => {
   const transformValue = value => {
     if (Array.isArray(value)) {
-      if (value.length === 0 || value[0].constructor !== Object) {
+      if (value.length === 0 || value[0]?.constructor !== Object) {
         return value;
       }
       return array(value);
@@ -633,6 +662,8 @@ export const defaultTransforms = (transformer, nested = true) => {
       const row = rows[i];
       if (Array.isArray(row)) {
         newRows[i] = transformArrayNested(row);
+      } else if (row === null || typeof row !== "object") {
+        newRows[i] = row;
       } else {
         const obj = {};
         for (const [key, value] of Object.entries(row)) {
@@ -649,6 +680,8 @@ export const defaultTransforms = (transformer, nested = true) => {
       const row = rows[i];
       if (Array.isArray(row)) {
         newRows[i] = transformArray(row);
+      } else if (row === null || typeof row !== "object") {
+        newRows[i] = row;
       } else {
         const obj = {};
         for (const [key, value] of Object.entries(row)) {
@@ -743,8 +776,16 @@ const StatementProto = {
       }
       span.attribute(ATTR_SQL_METHOD, operation);
       span.attribute(ATTR_DB_QUERY_TEXT, sql);
-      const execute = this.borrower === undefined ? Effect.scoped(Effect.flatMap(this.acquirer, _ => f(_, sql, params))) : this.borrower(connection => f(connection, sql, params));
-      return fiber.cache.tracerEnabled && fiber.getRef(SpanPropagationEnabled) ? Effect.provideService(execute, Tracer.ParentSpan, span) : execute;
+      const propagate = fiber.cache.tracerEnabled && fiber.getRef(SpanPropagationEnabled);
+      // Measured from the span's start, so the wait also covers compiling the
+      // statement and any `CurrentTransformer` run first.
+      const clock = propagate ? waitClock(fiber) : undefined;
+      const run = clock === undefined ? connection => f(connection, sql, params) : connection => Effect.suspend(() => {
+        recordConnectionWait(span, clock);
+        return f(connection, sql, params);
+      });
+      const execute = this.borrower === undefined ? Effect.scoped(Effect.flatMap(this.acquirer, run)) : this.borrower(run);
+      return propagate ? Effect.provideService(execute, Tracer.ParentSpan, span) : execute;
     });
   },
   get withoutTransform() {
@@ -764,8 +805,13 @@ const StatementProto = {
       }
       span.attribute(ATTR_SQL_METHOD, "executeStream");
       span.attribute(ATTR_DB_QUERY_TEXT, sql);
-      const acquire = Effect.map(self.acquirer, _ => _.executeStream(sql, params, self.transformRows));
-      return fiber.cache.tracerEnabled && fiber.getRef(SpanPropagationEnabled) ? Effect.succeed(Stream.provideService(Stream.unwrap(acquire), Tracer.ParentSpan, span)) : acquire;
+      const propagate = fiber.cache.tracerEnabled && fiber.getRef(SpanPropagationEnabled);
+      const clock = propagate ? waitClock(fiber) : undefined;
+      const acquire = Effect.map(self.acquirer, connection => {
+        if (clock !== undefined) recordConnectionWait(span, clock);
+        return connection.executeStream(sql, params, self.transformRows);
+      });
+      return propagate ? Effect.succeed(Stream.provideService(Stream.unwrap(acquire), Tracer.ParentSpan, span)) : acquire;
     })));
   },
   get values() {
@@ -809,24 +855,7 @@ const withStatement = (self, span, f) => Effect.withFiber(fiber => {
   }
   return Effect.flatMap(transform(self, make(self.acquirer, self.compiler, self.spanAttributes, self.transformRows, self.borrower), fiber, span), statement => f(statement, fiber));
 });
-const isSegment = u => {
-  if (!hasProperty(u, "_tag")) {
-    return false;
-  }
-  switch (u._tag) {
-    case "Literal":
-    case "Parameter":
-    case "ArrayHelper":
-    case "RecordInsertHelper":
-    case "RecordUpdateHelper":
-    case "RecordUpdateHelperSingle":
-    case "Identifier":
-    case "Custom":
-      return true;
-    default:
-      return false;
-  }
-};
+const isSegment = u => hasProperty(u, SegmentTypeId);
 function convertLiteralOrFragment(clause) {
   if (typeof clause === "string") {
     return [literal(clause)];
@@ -878,4 +907,6 @@ function in_() {
   return values.length === 0 ? neverFragment : fragment([identifier(column), literal(" IN "), arrayHelper(values)]);
 }
 const neverFragment = /*#__PURE__*/fragment([/*#__PURE__*/literal("1=0")]);
+const emptyInKeyword = /\b(NOT\s+)?IN\s*$/i;
+const isInLineComment = (sql, index) => sql.lastIndexOf("--", index) > sql.lastIndexOf("\n", index);
 //# sourceMappingURL=Statement.js.map

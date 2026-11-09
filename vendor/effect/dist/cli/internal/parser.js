@@ -106,11 +106,17 @@ const makeCursor = tokens => {
 /* Flag Registry                                                              */
 /* ========================================================================== */
 /**
+ * Long name that sets a boolean flag to `false`, or `undefined` when the flag
+ * has no negated form.
+ */
+const negatedName = param => !Primitive.isBoolean(param.primitiveType) || param.negation === false ? undefined : param.negation ?? `no-${param.name}`;
+/**
  * Creates a registry for O(1) flag lookup by name or alias.
  * @internal
  */
 export const createFlagRegistry = params => {
   const index = new Map();
+  const negations = new Map();
   for (const param of params) {
     if (index.has(param.name)) {
       throw new Error(`Duplicate flag name "${param.name}" in command definition`);
@@ -122,10 +128,18 @@ export const createFlagRegistry = params => {
       }
       index.set(alias, param);
     }
+    const negation = negatedName(param);
+    if (negation !== undefined) {
+      if (negations.has(negation)) {
+        throw new Error(`Duplicate negation "${negation}" in command definition (conflicts with "${negations.get(negation).name}")`);
+      }
+      negations.set(negation, param);
+    }
   }
   return {
     params,
-    index
+    index,
+    negations
   };
 };
 const buildSubcommandIndex = subcommands => {
@@ -188,15 +202,12 @@ const resolveFlag = (token, registry) => {
       negated: false
     };
   }
-  if (token._tag === "LongOption" && token.name.startsWith("no-")) {
-    const canonicalName = token.name.slice(3);
-    const param = registry.index.get(canonicalName);
-    if (param && param.name === canonicalName && Primitive.isBoolean(param.primitiveType)) {
-      return {
-        param,
-        negated: true
-      };
-    }
+  const negated = token._tag === "LongOption" ? registry.negations.get(token.name) : undefined;
+  if (negated) {
+    return {
+      param: negated,
+      negated: true
+    };
   }
   if (direct) {
     return {
@@ -234,8 +245,9 @@ const asBooleanLiteral = token => token?._tag === "Value" && (Primitive.isTrueLi
  *
  * Value resolution order:
  * 1. Inline value: --flag=value or -f=value
- * 2. Boolean special case: implicit "true" or explicit boolean literal
- * 3. Next token: consume following Value token if present
+ * 2. Optional value: the flag's configured value, without consuming a token
+ * 3. Boolean special case: implicit "true" or explicit boolean literal
+ * 4. Next token: consume following Value token if present
  */
 const consumeFlagValue = (cursor, token, spec, negated = false) => {
   const consumed = consumeFlagValueWithTokens(cursor, token, spec, negated);
@@ -262,7 +274,7 @@ const consumeFlagValueWithTokens = (cursor, token, spec, negated = false) => {
         tokens: []
       };
     }
-    const literal = asBooleanLiteral(cursor.peek());
+    const literal = spec.optionalValue === undefined ? asBooleanLiteral(cursor.peek()) : undefined;
     if (literal !== undefined) {
       const literalToken = cursor.take();
       return {
@@ -281,6 +293,13 @@ const consumeFlagValueWithTokens = (cursor, token, spec, negated = false) => {
     return {
       _tag: "Value",
       value: token.value,
+      tokens: []
+    };
+  }
+  if (spec.optionalValue !== undefined) {
+    return {
+      _tag: "Value",
+      value: spec.optionalValue,
       tokens: []
     };
   }
@@ -470,8 +489,9 @@ const createUnrecognizedFlagError = (token, params, commandPath) => {
     // that was intentionally kept out of --help.
     if (p.hidden) continue;
     validNames.push(p.name);
-    if (Primitive.isBoolean(p.primitiveType)) {
-      validNames.push(`no-${p.name}`);
+    const negation = negatedName(p);
+    if (negation !== undefined) {
+      validNames.push(negation);
     }
     for (const alias of p.aliases) {
       validNames.push(alias);

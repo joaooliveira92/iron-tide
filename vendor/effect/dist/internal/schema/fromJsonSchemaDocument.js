@@ -1,10 +1,12 @@
-import * as Iterable from "../../Iterable.js";
+import { escapeToken, parseUriFragment } from "../../JsonPointer.js";
 import * as JsonSchema from "../../JsonSchema.js";
-import { remainder } from "../../Number.js";
+import * as Schema from "../../Schema.js";
 import * as InternalAST from "../../SchemaAST.js";
 import { errorWithPath } from "../errors.js";
+import * as InternalJsonSchema from "../jsonSchema.js";
 import * as InternalRecord from "../record.js";
-import { fromRepresentation, fromRepresentations } from "./fromRepresentation.js";
+import * as InternalAnnotations from "./annotations.js";
+import { ReferenceSlot } from "./fromRepresentation.js";
 const never = {
   _tag: "Never",
   checks: []
@@ -16,6 +18,13 @@ const unknown = {
 const string = {
   _tag: "String",
   checks: []
+};
+const primitiveSchemas = {
+  Never: Schema.Never,
+  Null: Schema.Null,
+  String: Schema.String,
+  Number: Schema.Number,
+  Boolean: Schema.Boolean
 };
 const unsupportedStructuredValue = "Only primitive values are supported in \"const\" and \"enum\".";
 const jsonSchemaPatternFlags = "u";
@@ -38,33 +47,25 @@ function makeJsonLiteral(input, path) {
 }
 const jsonSchemaValueTypes = ["null", "string", "number", "boolean", "object", "array"];
 const jsonSchemaTypeSpecificKeys = ["minLength", "maxLength", "pattern", "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf", "properties", "required", "additionalProperties", "patternProperties", "propertyNames", "minProperties", "maxProperties", "items", "prefixItems", "minItems", "maxItems", "uniqueItems"];
+const jsonSchemaAnnotationExcludedKeys = /*#__PURE__*/new Set([...jsonSchemaTypeSpecificKeys, ...InternalAnnotations.jsonSchemaAnnotationKeys, ...InternalAnnotations.annotationExcludedKeys, "$schema", "$id", "$ref", "$defs", "$anchor", "$dynamicRef", "$dynamicAnchor", "$vocabulary", "$comment", "type", "const", "enum", "allOf", "anyOf", "oneOf", "not", "if", "then", "else", "contains", "minContains", "maxContains", "dependentRequired", "dependentSchemas", "unevaluatedItems", "unevaluatedProperties", "definitions", "dependencies", "additionalItems", "identifier", "expected", "message", "messageMissingKey", "messageUnexpectedKey"]);
 function isImportedJsonSchemaType(input) {
   return input === "integer" || typeof input === "string" && jsonSchemaValueTypes.some(type => type === input);
 }
 function hasTypeSpecificKeywords(schema) {
   return jsonSchemaTypeSpecificKeys.some(key => schema[key] !== undefined);
 }
-function jsonSchemaFilter(id, payload, schemas) {
+function makeFilter(filter) {
   return {
     _tag: "Filter",
-    aborted: false,
-    representation: {
-      id,
-      payload,
-      ...(schemas === undefined ? undefined : {
-        schemas
-      })
-    }
+    filter
   };
 }
-function addNumberCheck(checks, value, id, key) {
+function addNumberCheck(checks, value, make) {
   if (typeof value === "number") {
-    checks.push(jsonSchemaFilter(id, {
-      [key]: value
-    }));
+    checks.push(makeFilter(make(value)));
   }
 }
-function jsonSchemaAnnotations(schema) {
+function jsonSchemaAnnotations(schema, options) {
   const annotations = {};
   if (typeof schema.title === "string") annotations.title = schema.title;
   if (typeof schema.description === "string") annotations.description = schema.description;
@@ -76,110 +77,104 @@ function jsonSchemaAnnotations(schema) {
   if (typeof schema.contentEncoding === "string") annotations.contentEncoding = schema.contentEncoding;
   if (typeof schema.contentMediaType === "string") annotations.contentMediaType = schema.contentMediaType;
   if (InternalAST.isJson(schema.contentSchema)) annotations.contentSchema = schema.contentSchema;
-  return Object.keys(annotations).length === 0 ? undefined : annotations;
-}
-function jsonDeclaration(annotations) {
+  let customAnnotations;
+  if (options?.includeAnnotationKey !== undefined) {
+    for (const key of Object.keys(schema)) {
+      if (key.startsWith("~") || jsonSchemaAnnotationExcludedKeys.has(key) || !options.includeAnnotationKey(key)) continue;
+      const value = schema[key];
+      if (InternalAST.isJson(value)) InternalRecord.assignProperty(customAnnotations ??= {}, key, value);
+    }
+  }
   return {
-    _tag: "Declaration",
-    representation: {
-      id: "effect/schema/Json",
-      payload: null
-    },
-    annotations: {
-      ...annotations,
-      expected: "JSON value"
-    },
-    checks: [],
-    typeParameters: []
+    annotations: Object.keys(annotations).length === 0 ? undefined : annotations,
+    customAnnotations
   };
 }
-function translateJsonSchemaMultiDocument(document, options, singleRoot = false) {
+/** @internal */
+export function fromJsonSchemaMultiDocument(document, options, singleRoot = false) {
   const definitionCache = new Map();
-  const reachableDefinitions = new Map();
-  const objectScopesByProperties = new WeakMap();
-  const annotatedReferences = [];
+  const validatedAliases = new Set();
   const resolvingChoices = new Set();
-  const finalReferences = new Set();
+  const references = new Map();
   let inNestedResource = false;
-  function finalize(representation) {
-    switch (representation._tag) {
-      case "Unknown":
-        return jsonDeclaration(representation.annotations);
-      case "Reference":
-        finalReferences.add(representation.$ref);
-        return representation;
-      case "Suspend":
-        return {
-          ...representation,
-          thunk: finalize(representation.thunk)
-        };
-      case "Arrays":
-        return {
-          ...representation,
-          elements: representation.elements.map(element => ({
-            ...element,
-            type: finalize(element.type)
-          })),
-          rest: representation.rest.map(finalize)
-        };
-      case "Objects":
-        // Intersections may reduce open patterns to fixed properties, so reject only
-        // if an open pattern remains in the final representation.
-        const [scopes, path] = objectScopesByProperties.get(representation.propertySignatures);
-        if (representation.indexSignatures[0]?.parameter === string && scopes.some(scope => scope.patterns.length > 0)) {
-          throw errorWithPath("Cannot import open \"patternProperties\": unmatched keys cannot be typed correctly.", path);
-        }
-        return {
-          ...representation,
-          propertySignatures: representation.propertySignatures.map(property => ({
-            ...property,
-            type: finalize(property.type)
-          })),
-          indexSignatures: representation.indexSignatures.map(indexSignature => ({
-            parameter: finalize(indexSignature.parameter),
-            type: finalize(indexSignature.type)
-          })),
-          checks: representation.checks.map(finalizeCheck)
-        };
-      case "Union":
-        return {
-          ...representation,
-          types: representation.types.map(finalize)
-        };
-      default:
-        return representation;
+  function finalize(input) {
+    const annotations = mergeAnnotations(input.annotations, input.customAnnotations);
+    if (input._tag === "Reference") {
+      if (annotations !== undefined) resolveReference(input, input.path);
+      let slot = references.get(input.$ref);
+      if (slot === undefined) {
+        slot = new ReferenceSlot(input.$ref);
+        references.set(input.$ref, slot);
+        slot.body = finalize(translateDefinition(input.$ref, input.path)).annotate({
+          identifier: input.$ref
+        });
+      }
+      return annotations === undefined ? slot.body ?? slot.wrapper : slot.wrapper.annotate(annotations);
     }
+    let schema;
+    switch (input._tag) {
+      case "Unknown":
+        return Schema.Json.annotate({
+          ...annotations,
+          expected: "JSON value"
+        });
+      case "Never":
+      case "Null":
+      case "String":
+      case "Number":
+      case "Boolean":
+        schema = primitiveSchemas[input._tag];
+        break;
+      case "Literal":
+        schema = Schema.Literal(input.literal);
+        break;
+      case "Arrays":
+        {
+          const elements = input.elements.map(element => {
+            const type = finalize(element.type);
+            return element.isOptional ? Schema.optionalKey(type) : type;
+          });
+          const rest = input.rest[0] === undefined ? undefined : finalize(input.rest[0]);
+          schema = rest !== undefined ? elements.length === 0 ? Schema.Array(rest) : Schema.TupleWithRest(Schema.Tuple(elements), [rest]) : Schema.Tuple(elements);
+          break;
+        }
+      case "Objects":
+        {
+          // Intersections may remove open patterns, so check the normalized object.
+          if (input.indexSignatures[0]?.parameter === string && input.scopes.some(scope => scope.patterns.length > 0)) {
+            throw errorWithPath("Cannot import open \"patternProperties\": unmatched keys cannot be typed correctly.", input.path);
+          }
+          const fields = {};
+          for (const property of input.propertySignatures) {
+            const type = finalize(property.type);
+            InternalRecord.assignProperty(fields, property.name, property.isOptional ? Schema.optionalKey(type) : type);
+          }
+          const index = input.indexSignatures[0];
+          const record = index === undefined ? undefined : Schema.Record(finalize(index.parameter), finalize(index.type));
+          schema = record !== undefined ? input.propertySignatures.length === 0 ? record : Schema.StructWithRest(Schema.Struct(fields), [record]) : Schema.Struct(fields);
+          break;
+        }
+      case "Union":
+        schema = Schema.Union(input.types.map(finalize), input.options);
+        break;
+    }
+    if (annotations !== undefined) schema = schema.annotate(annotations);
+    const checks = input.checks.map(finalizeCheck);
+    return checks.length > 0 ? schema.check(...checks) : schema;
   }
   function finalizeCheck(check) {
-    const representation = check.representation;
-    const schemas = representation?.schemas;
-    if (representation === undefined || schemas === undefined) {
-      return check;
+    if (check._tag === "FilterGroup") {
+      return Schema.makeFilterGroup(check.checks.map(finalizeCheck), check.annotations);
     }
-    return {
-      ...check,
-      representation: {
-        ...representation,
-        schemas: schemas.map(finalize)
-      }
-    };
+    const filter = check._tag === "PropertyNames" ? Schema.isPropertyNames(finalize(check.type)) : check.filter;
+    return check.annotations === undefined ? filter : filter.annotate(check.annotations);
   }
-  function annotate(representation, annotations) {
-    if (annotations === undefined) return representation;
-    if (representation._tag === "Reference") {
-      return {
-        _tag: "Suspend",
-        annotations,
-        checks: [],
-        thunk: representation
-      };
-    }
+  function annotate(representation, source) {
+    if (source.annotations === undefined && source.customAnnotations === undefined) return representation;
     return {
       ...representation,
-      annotations: {
-        ...representation.annotations,
-        ...annotations
-      }
+      annotations: mergeAnnotations(representation.annotations, source.annotations),
+      customAnnotations: mergeAnnotations(representation.customAnnotations, source.customAnnotations)
     };
   }
   function translateDefinition(key, path, recursiveReferenceError) {
@@ -191,9 +186,35 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
       return cached;
     }
     definitionCache.set(key, null);
-    const representation = translateSchema(document.definitions[key], ["definitions", key]);
+    const pointer = pointers.get(key);
+    const wasInNestedResource = inNestedResource;
+    if (pointer !== undefined) inNestedResource = pointer.crossesResource;
+    const representation = pointer === undefined ? translateSchema(document.definitions[key], ["definitions", key]) : translateSchema(pointer.target, ["definitions", ...pointer.tokens]);
+    inNestedResource = wasInNestedResource;
     definitionCache.set(key, representation);
+    if (pointer !== undefined) {
+      validatePointerAliases(representation, path, recursiveReferenceError);
+    }
     return representation;
+  }
+  function validatePointerAliases(representation, path, recursiveReferenceError, visiting = new Set()) {
+    if (representation._tag === "Reference") {
+      const key = representation.$ref;
+      if (validatedAliases.has(key)) return;
+      if (visiting.has(key)) {
+        throw errorWithPath(`Definition ${JSON.stringify(key)} is a circular alias.`, [...path, "$ref"]);
+      }
+      visiting.add(key);
+      validatePointerAliases(translateDefinition(key, path, recursiveReferenceError), path, recursiveReferenceError, visiting);
+      visiting.delete(key);
+      validatedAliases.add(key);
+    } else if (representation._tag === "Union") {
+      // Alternatives share completed checks, but only ancestors belong to the active path.
+      for (const type of representation.types) {
+        validatePointerAliases(type, path, recursiveReferenceError, visiting);
+      }
+    }
+    // Recursion through object properties or array items consumes a child value.
   }
   function resolveReference(reference, path, recursiveReferenceError, seen = new Set()) {
     if (seen.has(reference.$ref)) {
@@ -202,12 +223,49 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
     seen.add(reference.$ref);
     const representation = translateDefinition(reference.$ref, path, recursiveReferenceError);
     if (representation._tag === "Reference") {
-      return resolveReference(representation, path, recursiveReferenceError, seen);
-    }
-    if (representation._tag === "Suspend" && representation.thunk._tag === "Reference") {
-      return annotate(resolveReference(representation.thunk, path, recursiveReferenceError, seen), representation.annotations);
+      return annotate(resolveReference(representation, path, recursiveReferenceError, seen), representation);
     }
     return representation;
+  }
+  // Pointers below a definition are registered as definitions keyed by their escaped tokens, e.g. "O/properties/v"
+  const pointers = new Map();
+  function resolvePointer($ref, path) {
+    const pointer = $ref.startsWith("#") ? parseUriFragment($ref) : undefined;
+    if (pointer === undefined || pointer.length < 3 || pointer[0] !== "$defs") {
+      throw errorWithPath(`Unsupported $ref ${JSON.stringify($ref)}. Use "#/$defs/Name".`, [...path, "$ref"]);
+    }
+    const tokens = pointer.slice(1);
+    const key = tokens.map(escapeToken).join("/");
+    if (Object.hasOwn(document.definitions, key)) {
+      throw errorWithPath(`Pointer $ref ${JSON.stringify($ref)} conflicts with definition ${JSON.stringify(key)}.`, [...path, "$ref"]);
+    }
+    if (pointers.has(key)) return key;
+    // Walk through the onEnter result of each ancestor schema, as translateSchema would see it
+    let node = document.definitions;
+    let position = "container";
+    let crossesResource = false;
+    for (const token of tokens) {
+      if (position === "container") {
+        position = "schema";
+      } else if (position === "schema" && isObject(node)) {
+        if (options?.onEnter !== undefined) node = options.onEnter(node);
+        crossesResource ||= isObject(node) && typeof node.$id === "string";
+        const kind = InternalJsonSchema.getSubschemaKind(token);
+        position = kind === "schema" ? "schema" : kind === undefined ? "value" : "container";
+      } else {
+        position = "value";
+      }
+      node = typeof node === "object" && node !== null && Object.hasOwn(node, token) ? node[token] : undefined;
+    }
+    if (!isObject(node) && typeof node !== "boolean") {
+      throw errorWithPath(`Unresolvable $ref ${JSON.stringify($ref)}. Nothing exists at that location.`, [...path, "$ref"]);
+    }
+    pointers.set(key, {
+      target: node,
+      tokens,
+      crossesResource
+    });
+    return key;
   }
   function mergeAnnotations(left, right) {
     if (left === undefined) return right;
@@ -218,20 +276,17 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
     };
   }
   function annotateIntersection(representation, left, right) {
-    return annotate(representation, mergeAnnotations(left._tag === "Reference" ? undefined : left.annotations, right._tag === "Reference" ? undefined : right.annotations));
+    return annotate(annotate(representation, left), right);
   }
   function intersectChecks(left, right, deduplicate = []) {
     let checks = right.checks;
     for (const id of deduplicate) {
-      if (left.checks.some(check => check._tag === "Filter" && check.representation?.id === id)) {
-        checks = checks.filter(check => check._tag !== "Filter" || check.representation?.id !== id);
+      if (left.checks.some(check => check._tag === "Filter" && check.filter.annotations?.representation?.id === id)) {
+        checks = checks.filter(check => check._tag !== "Filter" || check.filter.annotations?.representation?.id !== id);
       }
     }
-    if (checks.length === 0) {
-      const annotations = mergeAnnotations(left.annotations, right.annotations);
-      return [left.checks, annotations];
-    }
-    if (right.annotations !== undefined) {
+    const annotations = checks.length === 0 ? mergeAnnotations(left.annotations, right.annotations) : left.annotations;
+    if (checks.length > 0 && right.annotations !== undefined) {
       checks = checks.length === 1 && checks[0].annotations === undefined ? [{
         ...checks[0],
         annotations: right.annotations
@@ -241,38 +296,17 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
         annotations: right.annotations
       }];
     }
-    return [[...left.checks, ...checks], left.annotations];
+    return {
+      checks: [...left.checks, ...checks],
+      annotations,
+      customAnnotations: mergeAnnotations(left.customAnnotations, right.customAnnotations)
+    };
   }
   function satisfiesPrimitiveCheck(check, value) {
     if (check._tag === "FilterGroup") {
       return check.checks.every(check => satisfiesPrimitiveCheck(check, value));
     }
-    const representation = check.representation;
-    const payload = representation.payload;
-    switch (representation.id) {
-      case "effect/schema/isMinLength":
-        return value.length >= payload.minLength;
-      case "effect/schema/isMinCodePoints":
-        return Iterable.size(value) >= payload.minCodePoints;
-      case "effect/schema/isMaxCodePoints":
-        return Iterable.size(value) <= payload.maxCodePoints;
-      case "effect/schema/isPattern":
-        return new RegExp(payload.source, payload.flags).test(value);
-      case "effect/schema/isFinite":
-        return globalThis.Number.isFinite(value);
-      case "effect/schema/isInt":
-        return globalThis.Number.isSafeInteger(value);
-      case "effect/schema/isMultipleOf":
-        return remainder(value, payload.divisor) === 0;
-      case "effect/schema/isGreaterThan":
-        return value > payload.exclusiveMinimum;
-      case "effect/schema/isGreaterThanOrEqualTo":
-        return value >= payload.minimum;
-      case "effect/schema/isLessThan":
-        return value < payload.exclusiveMaximum;
-      case "effect/schema/isLessThanOrEqualTo":
-        return value <= payload.maximum;
-    }
+    return check._tag === "Filter" && check.filter.run(value, Schema.Unknown.ast, {}) === undefined;
   }
   function satisfiesLiteral(representation, literal) {
     const value = literal.literal;
@@ -333,7 +367,7 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
     }
     return out;
   }
-  function lowerObject(scopes, checks, annotations, path) {
+  function lowerObject(scopes, checked, path) {
     const names = new Set();
     let hasFiniteKeyDomain = false;
     let requiresFiniteKeyDomain = false;
@@ -370,8 +404,7 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
       properties.push({
         name,
         type,
-        isOptional,
-        isMutable: false
+        isOptional
       });
     }
     const indexSignatures = closedPattern !== undefined ? [{
@@ -384,15 +417,14 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
       parameter: string,
       type: never
     }] : [];
-    const representation = {
+    return {
       _tag: "Objects",
       propertySignatures: properties,
       indexSignatures,
-      checks,
-      annotations
+      scopes,
+      path,
+      ...checked
     };
-    objectScopesByProperties.set(properties, [scopes, path]);
-    return representation;
   }
   const jsonRootTags = ["Null", "String", "Number", "Boolean", "Objects", "Arrays"];
   const allMasks = (1 << jsonRootTags.length) - 1;
@@ -414,8 +446,6 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
           default:
             return 0;
         }
-      case "Suspend":
-        return rootMask(representation.thunk);
       case "Union":
         {
           let out = 0;
@@ -436,28 +466,27 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
           const cached = definitionCache.get(key);
           if (cached === null || resolvingChoices.has(key)) return true;
           resolvingChoices.add(key);
-          const out = hasChoices(cached ?? translateDefinition(key, reachableDefinitions.get(key)));
+          const out = hasChoices(cached ?? translateDefinition(key, representation.path));
           resolvingChoices.delete(key);
           return out;
         }
-      case "Suspend":
-        return hasChoices(representation.thunk);
       case "Union":
-        return representation.types.length > 1 || representation.types.some(type => hasChoices(type));
+        // Finite primitive literal sets intersect without expansion, so they can be duplicated across branches.
+        return !isLiteralSet(representation) && (representation.types.length > 1 || representation.types.some(hasChoices));
       case "Arrays":
-        return representation.elements.some(element => hasChoices(element.type)) || representation.rest.some(type => hasChoices(type));
+        return representation.elements.some(element => hasChoices(element.type)) || representation.rest.some(hasChoices);
       case "Objects":
-        return representation.propertySignatures.some(property => hasChoices(property.type)) || representation.indexSignatures.some(indexSignature => hasChoices(indexSignature.parameter) || hasChoices(indexSignature.type)) || objectScopesByProperties.get(representation.propertySignatures)[0].some(scope => scope.patterns.some(pattern => hasChoices(pattern.type))) || representation.checks.some(checkHasChoices);
+        return representation.propertySignatures.some(property => hasChoices(property.type)) || representation.indexSignatures.some(indexSignature => hasChoices(indexSignature.parameter) || hasChoices(indexSignature.type)) || representation.scopes.some(scope => scope.patterns.some(pattern => hasChoices(pattern.type))) || representation.checks.some(checkHasChoices);
       default:
         return false;
     }
   }
   function checkHasChoices(check) {
-    return check._tag === "FilterGroup" ? check.checks.some(checkHasChoices) : check.representation?.schemas?.some(schema => hasChoices(schema)) === true;
+    return check._tag === "FilterGroup" ? check.checks.some(checkHasChoices) : check._tag === "PropertyNames" && hasChoices(check.type);
   }
   function makeUnion(source, types) {
     if (types.length === 0) return never;
-    if (types.length === 1 && source.checks.length === 0) return annotate(types[0], source.annotations);
+    if (types.length === 1 && source.checks.length === 0) return annotate(types[0], source);
     return {
       ...source,
       types
@@ -466,27 +495,26 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
   function literalValue(representation) {
     if (representation._tag === "Null") return null;
     if (representation._tag !== "Literal") return undefined;
-    const literal = representation.literal;
-    return typeof literal === "string" || typeof literal === "number" || typeof literal === "boolean" ? literal : undefined;
+    return representation.literal;
+  }
+  function isLiteralSet(union) {
+    return (union.options?.mode ?? "anyOf") === "anyOf" && union.types.every(type => literalValue(type) !== undefined);
   }
   function intersectLiteralUnions(left, right, path) {
-    if ((left.options?.mode ?? "anyOf") !== "anyOf" || (right.options?.mode ?? "anyOf") !== "anyOf") {
-      return undefined;
-    }
+    if (!isLiteralSet(left) || !isLiteralSet(right)) return undefined;
     const rightByValue = new Map();
-    for (const type of right.types) {
-      const representation = type;
+    for (const representation of right.types) {
       const value = literalValue(representation);
-      if (value === undefined) return undefined;
-      rightByValue.set(value, representation);
+      const previous = rightByValue.get(value);
+      rightByValue.set(value, {
+        ...representation,
+        customAnnotations: mergeAnnotations(previous?.customAnnotations, representation.customAnnotations)
+      });
     }
     const types = [];
-    for (const type of left.types) {
-      const representation = type;
-      const value = literalValue(representation);
-      if (value === undefined) return undefined;
-      const match = rightByValue.get(value);
-      if (match !== undefined) types.push(intersect(representation, annotate(match, right.annotations), path));
+    for (const representation of left.types) {
+      const match = rightByValue.get(literalValue(representation));
+      if (match !== undefined) types.push(intersect(representation, annotate(match, right), path));
     }
     return makeUnion(left, types);
   }
@@ -500,7 +528,7 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
       return unsupportedIntersection(path);
     }
     if (members.length === 1 && union.checks.length === 0) {
-      const member = annotate(members[0].type, union.annotations);
+      const member = annotate(members[0].type, union);
       return unionOnLeft ? intersect(member, type, [...path, "types", members[0].index]) : intersect(type, member, [...path, "types", members[0].index]);
     }
     return makeUnion(union, members.map(member => unionOnLeft ? intersect(member.type, type, [...path, "types", member.index]) : intersect(type, member.type, [...path, "types", member.index])).filter(type => type._tag !== "Never"));
@@ -546,13 +574,16 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
     if (right._tag === "Never") return right;
     if (left._tag === "Unknown") return annotateIntersection(right, left, right);
     if (right._tag === "Unknown") return annotateIntersection(left, left, right);
-    if (left._tag === "Reference") return intersect(resolveReference(left, path), right, path);
-    if (right._tag === "Reference") return intersect(left, resolveReference(right, path), path);
-    if (left._tag === "Suspend") {
-      return annotate(intersect(left.thunk, right, path), left.annotations);
+    if (left._tag === "Reference") {
+      // Resolve an unannotated reference first. An annotated empty definition
+      // could otherwise leave the other reference unresolved during union partitioning.
+      if ((left.annotations !== undefined || left.customAnnotations !== undefined) && right._tag === "Reference" && right.annotations === undefined && right.customAnnotations === undefined) {
+        return intersect(left, resolveReference(right, path), path);
+      }
+      return annotate(intersect(resolveReference(left, path), right, path), left);
     }
-    if (right._tag === "Suspend") {
-      return annotate(intersect(left, right.thunk, path), right.annotations);
+    if (right._tag === "Reference") {
+      return annotate(intersect(left, resolveReference(right, path), path), right);
     }
     if (left._tag === "Union" && right._tag === "Union") return intersectUnions(left, right, path);
     if (left._tag === "Union") return intersectUnionWithType(left, right, path, true);
@@ -568,21 +599,19 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
           return intersectPrimitiveWithLiteral(left, right);
         }
         if (right._tag !== "String") return never;
-        const [stringChecks, stringAnnotations] = intersectChecks(left, right);
-        return annotate({
+        return {
           _tag: "String",
-          checks: stringChecks
-        }, stringAnnotations);
+          ...intersectChecks(left, right)
+        };
       case "Number":
         if (right._tag === "Literal") {
           return intersectPrimitiveWithLiteral(left, right);
         }
         if (right._tag !== "Number") return never;
-        const [numberChecks, numberAnnotations] = intersectChecks(left, right, ["effect/schema/isFinite", "effect/schema/isInt"]);
-        return annotate({
+        return {
           _tag: "Number",
-          checks: numberChecks
-        }, numberAnnotations);
+          ...intersectChecks(left, right, ["effect/schema/isFinite", "effect/schema/isInt"])
+        };
       case "Boolean":
         if (right._tag === "Literal") {
           return intersectPrimitiveWithLiteral(left, right);
@@ -607,19 +636,17 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
           if (right._tag !== "Arrays") return never;
           const arrays = intersectArrays(left, right, path);
           if (arrays === undefined) return never;
-          const [checks, annotations] = intersectChecks(left, right, ["effect/schema/isUnique"]);
-          return annotate({
+          return {
             _tag: "Arrays",
             ...arrays,
-            checks
-          }, annotations);
+            ...intersectChecks(left, right, ["effect/schema/isUnique"])
+          };
         }
       case "Objects":
         {
           if (right._tag !== "Objects") return never;
-          const [checks, annotations] = intersectChecks(left, right);
-          const scopes = [...objectScopesByProperties.get(left.propertySignatures)[0], ...objectScopesByProperties.get(right.propertySignatures)[0]];
-          return lowerObject(scopes, checks, annotations, path);
+          const scopes = [...left.scopes, ...right.scopes];
+          return lowerObject(scopes, intersectChecks(left, right), path);
         }
     }
   }
@@ -632,7 +659,7 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
     if (schema === undefined) {
       return unknown;
     }
-    if (isObject(schema.not) && Object.keys(schema.not).length === 0) return annotate(never, jsonSchemaAnnotations(schema));
+    if (isObject(schema.not) && Object.keys(schema.not).length === 0) return annotate(never, jsonSchemaAnnotations(schema, options));
     const wasInNestedResource = inNestedResource;
     inNestedResource ||= !isRoot && typeof schema.$id === "string";
     for (const keyword of Object.keys(schema)) {
@@ -667,28 +694,19 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
       if (inNestedResource) {
         throw errorWithPath("Cannot resolve $ref under a nested \"$id\". Resolve or flatten it first.", [...path, "$ref"]);
       }
-      const $ref = JsonSchema.getReferenceKey(schema.$ref);
-      if ($ref === undefined) {
-        throw errorWithPath(`Unsupported $ref ${JSON.stringify(schema.$ref)}. Use "#/$defs/Name".`, [...path, "$ref"]);
+      const key = JsonSchema.getReferenceKey(schema.$ref);
+      if (key !== undefined && !Object.hasOwn(document.definitions, key)) {
+        throw errorWithPath(`Missing definition ${JSON.stringify(key)} for $ref ${JSON.stringify(schema.$ref)}.`, [...path, "$ref"]);
       }
-      if (!Object.hasOwn(document.definitions, $ref)) {
-        throw errorWithPath(`Missing definition ${JSON.stringify($ref)} for $ref ${JSON.stringify(schema.$ref)}.`, [...path, "$ref"]);
-      }
-      if (!reachableDefinitions.has($ref)) reachableDefinitions.set($ref, path);
+      const $ref = key ?? resolvePointer(schema.$ref, path);
       const reference = {
         _tag: "Reference",
-        $ref
+        $ref,
+        path
       };
       representation = representation._tag === "Unknown" ? reference : representation._tag === "Never" ? never : intersect(resolveReference(reference, path, `Recursive $ref ${JSON.stringify(reference.$ref)} cannot have sibling constraints.`), representation, path);
     }
-    const annotations = jsonSchemaAnnotations(schema);
-    if (annotations !== undefined && representation._tag === "Reference") {
-      annotatedReferences.push({
-        reference: representation,
-        path
-      });
-    }
-    representation = annotate(representation, annotations);
+    representation = annotate(representation, jsonSchemaAnnotations(schema, options));
     if (Array.isArray(schema.allOf)) {
       for (let index = 0; index < schema.allOf.length; index++) {
         representation = intersect(representation, translateSchema(schema.allOf[index], [...path, "allOf", index]), [...path, "allOf", index]);
@@ -741,7 +759,7 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
       case "integer":
         return {
           _tag: "Number",
-          checks: [jsonSchemaFilter(type === "number" ? "effect/schema/isFinite" : "effect/schema/isInt", null), ...collectNumberChecks(schema)]
+          checks: [makeFilter(type === "number" ? Schema.isFinite() : Schema.isInt()), ...collectNumberChecks(schema)]
         };
       case "boolean":
         return {
@@ -768,7 +786,9 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
       case "object":
         {
           const scope = collectObjectScope(schema, path);
-          return lowerObject([scope], collectObjectChecks(schema, path), undefined, path);
+          return lowerObject([scope], {
+            checks: collectObjectChecks(schema, path)
+          }, path);
         }
       default:
         return unknown;
@@ -788,21 +808,18 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
           } catch {
             throw errorWithPath("Cannot import pattern using ECMAScript Unicode mode.", path);
           }
-          return jsonSchemaFilter("effect/schema/isPattern", {
-            source: regex.source,
-            flags: regex.flags
-          });
+          return makeFilter(Schema.isPattern(regex));
         }
     }
   }
   function collectStringChecks(schema, path) {
     const checks = [];
     if (schema.minLength === 1) {
-      addNumberCheck(checks, schema.minLength, "effect/schema/isMinLength", "minLength");
+      addNumberCheck(checks, schema.minLength, Schema.isMinLength);
     } else {
-      addNumberCheck(checks, schema.minLength, "effect/schema/isMinCodePoints", "minCodePoints");
+      addNumberCheck(checks, schema.minLength, Schema.isMinCodePoints);
     }
-    addNumberCheck(checks, schema.maxLength, "effect/schema/isMaxCodePoints", "maxCodePoints");
+    addNumberCheck(checks, schema.maxLength, Schema.isMaxCodePoints);
     if (typeof schema.pattern === "string") {
       const check = importPatternCheck(schema.pattern, [...path, "pattern"]);
       if (check !== undefined) checks.push(check);
@@ -811,23 +828,23 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
   }
   function collectNumberChecks(schema) {
     const checks = [];
-    addNumberCheck(checks, schema.minimum, "effect/schema/isGreaterThanOrEqualTo", "minimum");
-    addNumberCheck(checks, schema.maximum, "effect/schema/isLessThanOrEqualTo", "maximum");
-    addNumberCheck(checks, schema.exclusiveMinimum, "effect/schema/isGreaterThan", "exclusiveMinimum");
-    addNumberCheck(checks, schema.exclusiveMaximum, "effect/schema/isLessThan", "exclusiveMaximum");
-    addNumberCheck(checks, schema.multipleOf, "effect/schema/isMultipleOf", "divisor");
+    addNumberCheck(checks, schema.minimum, Schema.isGreaterThanOrEqualTo);
+    addNumberCheck(checks, schema.maximum, Schema.isLessThanOrEqualTo);
+    addNumberCheck(checks, schema.exclusiveMinimum, Schema.isGreaterThan);
+    addNumberCheck(checks, schema.exclusiveMaximum, Schema.isLessThan);
+    addNumberCheck(checks, schema.multipleOf, Schema.isMultipleOf);
     return checks;
   }
   function collectArrayChecks(schema, isMaxItemsRedundant) {
     const checks = [];
     if (!Array.isArray(schema.prefixItems) || typeof schema.minItems === "number" && schema.minItems > schema.prefixItems.length) {
-      addNumberCheck(checks, schema.minItems, "effect/schema/isMinLength", "minLength");
+      addNumberCheck(checks, schema.minItems, Schema.isMinLength);
     }
     if (!isMaxItemsRedundant) {
-      addNumberCheck(checks, schema.maxItems, "effect/schema/isMaxLength", "maxLength");
+      addNumberCheck(checks, schema.maxItems, Schema.isMaxLength);
     }
     if (schema.uniqueItems === true) {
-      checks.push(jsonSchemaFilter("effect/schema/isUnique", null));
+      checks.push(makeFilter(Schema.isUnique()));
     }
     return checks;
   }
@@ -871,45 +888,25 @@ function translateJsonSchemaMultiDocument(document, options, singleRoot = false)
   }
   function collectObjectChecks(schema, path) {
     const checks = [];
-    addNumberCheck(checks, schema.minProperties, "effect/schema/isMinProperties", "minProperties");
-    addNumberCheck(checks, schema.maxProperties, "effect/schema/isMaxProperties", "maxProperties");
+    addNumberCheck(checks, schema.minProperties, Schema.isMinProperties);
+    addNumberCheck(checks, schema.maxProperties, Schema.isMaxProperties);
     if (schema.propertyNames !== undefined) {
       const propertyNamesPath = [...path, "propertyNames"];
-      checks.push(jsonSchemaFilter("effect/schema/isPropertyNames", null, [intersect(string, translateSchema(schema.propertyNames, propertyNamesPath), propertyNamesPath)]));
+      checks.push({
+        _tag: "PropertyNames",
+        type: intersect(string, translateSchema(schema.propertyNames, propertyNamesPath), propertyNamesPath)
+      });
     }
     return checks;
   }
-  const references = {};
-  const representations = document.schemas.map((schema, index) => finalize(translateSchema(schema, singleRoot ? ["schema"] : ["schemas", index], true)));
-  // Definitions expanded away by intersections do not need a standalone output schema.
-  for (const key of finalReferences) {
-    InternalRecord.assignProperty(references, key, finalize(translateDefinition(key, reachableDefinitions.get(key))));
-  }
-  for (const {
-    reference,
-    path
-  } of annotatedReferences) {
-    resolveReference(reference, path);
-  }
-  return {
-    representations,
-    references
-  };
+  return document.schemas.map((schema, index) => finalize(translateSchema(schema, singleRoot ? ["schema"] : ["schemas", index], true)));
 }
 /** @internal */
-export function fromJsonSchemaDocument(document, options, revivers) {
-  const translated = translateJsonSchemaMultiDocument({
+export function fromJsonSchemaDocument(document, options) {
+  return fromJsonSchemaMultiDocument({
     dialect: document.dialect,
     schemas: [document.schema],
     definitions: document.definitions
-  }, options, true);
-  return fromRepresentation({
-    representation: translated.representations[0],
-    references: translated.references
-  }, revivers);
-}
-/** @internal */
-export function fromJsonSchemaMultiDocument(document, options, revivers) {
-  return fromRepresentations(translateJsonSchemaMultiDocument(document, options), revivers);
+  }, options, true)[0];
 }
 //# sourceMappingURL=fromJsonSchemaDocument.js.map

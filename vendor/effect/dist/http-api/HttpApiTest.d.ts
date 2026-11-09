@@ -3,7 +3,7 @@ import type { FileSystem } from "../FileSystem.ts";
 import type { Generator } from "../http/Etag.ts";
 import type { HttpPlatform } from "../http/HttpPlatform.ts";
 import type { Path } from "../Path.ts";
-import type { Scope } from "../Scope.ts";
+import * as Scope from "../Scope.ts";
 import type * as HttpApi from "./HttpApi.ts";
 import * as HttpApiClient from "./HttpApiClient.ts";
 import type * as HttpApiEndpoint from "./HttpApiEndpoint.ts";
@@ -16,6 +16,17 @@ import type * as HttpApiGroup from "./HttpApiGroup.ts";
  * Handlers for the selected groups are taken from the environment; unselected
  * groups are wired with placeholder handlers that fail if called.
  *
+ * Each call runs its handler in a request scope that is a child of the
+ * `Scope` the client was created in. A streaming response keeps that scope
+ * open until its body ends, and a body that is never read is closed with the
+ * owning `Scope`.
+ *
+ * A `Stream` payload reaches the handler unbuffered: each element is pulled
+ * from the caller's stream as the handler reads it. If the caller's stream
+ * fails, reading the request body fails with it. Client aborts and socket
+ * behavior such as draining unread bodies, closing the connection, or
+ * answering with `499` are not emulated.
+ *
  * @stability unstable
  * @category testing
  * @since 4.0.0
@@ -26,5 +37,5 @@ export declare const groups: <ApiId extends string, Groups extends HttpApiGroup.
     readonly baseUrl?: string | URL | undefined;
 } | undefined) => Effect.Effect<import("../Types.ts").Simplify<{ readonly [Group in Extract<Groups, {
     readonly topLevel: false;
-}> as HttpApiGroup.Identifier<Group>]: HttpApiClient.Client.GroupByEndpoint<Group, never, never>; } & HttpApiClient.Client.TopLevelMethods<Groups, never, never>>, never, FileSystem | Generator | HttpPlatform | Path | Scope | HttpApiEndpoint.Middleware<HttpApiGroup.Endpoints<Groups>> | import("./HttpApiMiddleware.ts").MiddlewareClient<HttpApiEndpoint.Middleware<HttpApiGroup.Endpoints<Groups>>> | HttpApiGroup.ToService<ApiId, SelectedGroups>>;
+}> as HttpApiGroup.Identifier<Group>]: HttpApiClient.Client.GroupByEndpoint<Group, never, never>; } & HttpApiClient.Client.TopLevelMethods<Groups, never, never>>, never, FileSystem | Generator | HttpPlatform | Path | Scope.Scope | HttpApiEndpoint.Middleware<HttpApiGroup.Endpoints<Groups>> | import("./HttpApiMiddleware.ts").MiddlewareClient<HttpApiEndpoint.Middleware<HttpApiGroup.Endpoints<Groups>>> | HttpApiGroup.ToService<ApiId, SelectedGroups>>;
 //# sourceMappingURL=HttpApiTest.d.ts.map

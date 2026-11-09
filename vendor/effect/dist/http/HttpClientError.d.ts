@@ -78,6 +78,7 @@ export declare class TransportError extends TransportError_base<{
      * @since 4.0.0
      */
     get message(): string;
+    toJSON(): unknown;
 }
 declare const EncodeError_base: new <A extends Record<string, any> = {}>(args: import("../Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => import("../Cause.ts").YieldableError & {
     readonly _tag: "EncodeError";
@@ -108,6 +109,7 @@ export declare class EncodeError extends EncodeError_base<{
      * @since 4.0.0
      */
     get message(): string;
+    toJSON(): unknown;
 }
 declare const InvalidUrlError_base: new <A extends Record<string, any> = {}>(args: import("../Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => import("../Cause.ts").YieldableError & {
     readonly _tag: "InvalidUrlError";
@@ -138,6 +140,7 @@ export declare class InvalidUrlError extends InvalidUrlError_base<{
      * @since 4.0.0
      */
     get message(): string;
+    toJSON(): unknown;
 }
 declare const StatusCodeError_base: new <A extends Record<string, any> = {}>(args: import("../Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => import("../Cause.ts").YieldableError & {
     readonly _tag: "StatusCodeError";
@@ -169,12 +172,14 @@ export declare class StatusCodeError extends StatusCodeError_base<{
      * @since 4.0.0
      */
     get message(): string;
+    toJSON(): unknown;
 }
 declare const DecodeError_base: new <A extends Record<string, any> = {}>(args: import("../Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => import("../Cause.ts").YieldableError & {
     readonly _tag: "DecodeError";
 } & Readonly<A>;
 /**
- * Response error for failures while decoding an HTTP response body.
+ * Response error for failures while decoding an HTTP response, including a
+ * response with an undeclared status.
  *
  * @stability unstable
  * @category errors
@@ -200,6 +205,7 @@ export declare class DecodeError extends DecodeError_base<{
      * @since 4.0.0
      */
     get message(): string;
+    toJSON(): unknown;
 }
 declare const EmptyBodyError_base: new <A extends Record<string, any> = {}>(args: import("../Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => import("../Cause.ts").YieldableError & {
     readonly _tag: "EmptyBodyError";
@@ -231,6 +237,7 @@ export declare class EmptyBodyError extends EmptyBodyError_base<{
      * @since 4.0.0
      */
     get message(): string;
+    toJSON(): unknown;
 }
 /**
  * Union of HTTP client errors that occur before a response is available.

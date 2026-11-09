@@ -2,6 +2,7 @@ import * as Arr from "../../Array.js";
 import * as SchemaAST from "../../SchemaAST.js";
 import * as InternalRecord from "../record.js";
 import * as InternalAnnotations from "./annotations.js";
+import * as InternalContent from "./content.js";
 const defaultReferencePolicy = ({
   identifier
 }) => identifier;
@@ -24,14 +25,12 @@ export function toRepresentation(ast, options) {
 /** @internal */
 export function toRepresentations(asts, options) {
   const references = {};
-  const referenceOwners = new Map();
-  const buildingReferences = new Set();
+  const usedReferences = new Set();
   const candidates = new Map();
-  const visitingCandidates = new Set();
   for (const ast of asts) visit(ast);
   const referencePolicy = options?.referencePolicy ?? defaultReferencePolicy;
-  for (const candidatesByIdentifier of candidates.values()) {
-    for (const candidate of candidatesByIdentifier.values()) {
+  for (const variants of candidates.values()) {
+    for (const candidate of variants) {
       const requestedReference = referencePolicy({
         ast: candidate.ast,
         occurrences: candidate.occurrences,
@@ -39,25 +38,24 @@ export function toRepresentations(asts, options) {
       });
       if (requestedReference !== undefined) {
         const separator = requestedReference === candidate.identifier || !requestedReference.endsWith("_") ? "_" : "";
-        candidate.reference = getReference(requestedReference, candidate, separator);
+        candidate.reference = getReference(requestedReference, separator);
       } else if (candidate.isRecursive) {
-        candidate.reference = getReference(`${candidate.ast._tag}_`, candidate, "");
+        candidate.reference = getReference(`${candidate.ast._tag}_`, "");
       }
     }
   }
-  const representations = Arr.map(asts, ast => recur(ast));
+  const representations = Arr.map(asts, recur);
   return {
     representations,
     references
   };
-  function getReference(prefix, owner, separator = "_") {
+  function getReference(prefix, separator) {
     let candidate = prefix;
     let suffix = 0;
-    while (referenceOwners.has(candidate)) {
-      if (referenceOwners.get(candidate) === owner) return candidate;
+    while (usedReferences.has(candidate)) {
       candidate = `${prefix}${separator}${++suffix}`;
     }
-    referenceOwners.set(candidate, owner);
+    usedReferences.add(candidate);
     return candidate;
   }
   function annotateReference(ast, candidate, reference) {
@@ -71,63 +69,64 @@ export function toRepresentations(asts, options) {
       identifier: reference
     });
   }
-  function makeReference(reference, ast) {
-    if (!Object.hasOwn(references, reference) && !buildingReferences.has(reference)) {
-      buildingReferences.add(reference);
-      const representation = on(ast);
-      buildingReferences.delete(reference);
-      InternalRecord.assignProperty(references, reference, representation);
+  function getCandidate(input, encodingLength = input.encoding?.length ?? 0) {
+    let ast = input;
+    let content;
+    while (ast.encoding !== undefined && encodingLength > 0) {
+      const last = ast.encoding[encodingLength - 1];
+      // Only retain content when this operation produces the final string.
+      if (last.to.encoding === undefined && last.to._tag === "String") {
+        const metadata = InternalContent.getContent(last.transformation.encode);
+        if (metadata !== undefined) {
+          content = {
+            mediaType: metadata.mediaType,
+            schema: metadata.preserveSchema ? getCandidate(ast, encodingLength - 1) : undefined
+          };
+        }
+      }
+      ast = last.to;
+      encodingLength = ast.encoding?.length ?? 0;
     }
-    return {
-      _tag: "Reference",
-      $ref: reference
-    };
-  }
-  function getCandidate(input) {
-    const ast = SchemaAST.getLastEncoding(input);
     const owner = SchemaAST.getContextOwner(ast);
     let identifier = InternalAnnotations.resolveIdentifier(ast);
     const fallback = identifier === undefined ? (ast !== input ? InternalAnnotations.resolveIdentifier(input) : undefined) ?? InternalAnnotations.resolveIdentifierFallback(ast) : undefined;
     if (fallback !== undefined) identifier = `${fallback}Encoded`;
-    let candidatesByIdentifier = candidates.get(owner);
-    if (candidatesByIdentifier === undefined) {
-      candidatesByIdentifier = new Map();
-      candidates.set(owner, candidatesByIdentifier);
+    let variants = candidates.get(owner);
+    if (variants === undefined) {
+      variants = [];
+      candidates.set(owner, variants);
     }
-    let candidate = candidatesByIdentifier.get(identifier);
+    let candidate = variants.find(candidate => candidate.identifier === identifier && candidate.content?.mediaType === content?.mediaType && candidate.content?.schema === content?.schema);
     if (candidate === undefined) {
       candidate = {
         ast: owner,
         identifier,
         fallback,
-        occurrences: 0,
-        isRecursive: false,
-        reference: undefined
+        content,
+        occurrences: 0
       };
-      candidatesByIdentifier.set(identifier, candidate);
+      variants.push(candidate);
     }
     return candidate;
   }
   function visit(input) {
-    const candidate = getCandidate(input);
+    visitCandidate(getCandidate(input));
+    return input;
+  }
+  function visitCandidate(candidate) {
     const ast = candidate.ast;
     candidate.occurrences++;
-    if (visitingCandidates.has(candidate)) {
+    if (candidate.visiting) {
       candidate.isRecursive = true;
       return;
     }
     if (candidate.occurrences > 1) return;
-    visitingCandidates.add(candidate);
+    candidate.visiting = true;
+    if (candidate.content?.schema !== undefined) visitCandidate(candidate.content.schema);
     visitChecks(ast.checks);
     switch (ast._tag) {
-      case "Declaration":
-      case "Arrays":
-      case "Objects":
-      case "Union":
-        ast.recur(child => {
-          visit(child);
-          return child;
-        });
+      default:
+        if ("recur" in ast) ast.recur(visit);
         break;
       case "TemplateLiteral":
         ast.parts.forEach(visit);
@@ -136,7 +135,7 @@ export function toRepresentations(asts, options) {
         visit(ast.thunk());
         break;
     }
-    visitingCandidates.delete(candidate);
+    candidate.visiting = false;
   }
   function visitChecks(checks) {
     checks?.forEach(check => {
@@ -145,73 +144,77 @@ export function toRepresentations(asts, options) {
     });
   }
   function recur(input) {
-    const candidate = getCandidate(input);
+    return recurCandidate(getCandidate(input));
+  }
+  function recurCandidate(candidate) {
     const ast = candidate.ast;
     const reference = candidate.reference;
     if (reference !== undefined) {
-      const annotated = candidate.identifier === undefined ? ast : annotateReference(ast, candidate, reference);
-      return makeReference(reference, annotated);
+      if (!candidate.emitted) {
+        candidate.emitted = true;
+        const annotated = candidate.identifier === undefined ? ast : annotateReference(ast, candidate, reference);
+        const representation = on(annotated, candidate.content);
+        InternalRecord.assignProperty(references, reference, representation);
+      }
+      return {
+        _tag: "Reference",
+        $ref: reference
+      };
     }
-    return on(ast);
+    return on(ast, candidate.content);
   }
-  function on(ast) {
-    const checks = fromChecks(ast.checks);
+  function on(ast, content) {
+    const common = {
+      checks: ast.checks?.map(fromCheck) ?? [],
+      ...(ast._tag === "Declaration" ? fromAnnotations(ast.annotations) : annotationsField(ast.annotations))
+    };
     switch (ast._tag) {
       case "Declaration":
         return {
-          _tag: "Declaration",
-          typeParameters: ast.typeParameters.map(ast => recur(ast)),
-          checks,
-          ...fromDeclarationAnnotations(ast.annotations)
+          _tag: ast._tag,
+          typeParameters: ast.typeParameters.map(recur),
+          ...common
         };
-      case "Null":
-      case "Undefined":
-      case "Void":
-      case "Never":
-      case "Unknown":
-      case "Any":
-      case "String":
-      case "Boolean":
-      case "Number":
-      case "BigInt":
-      case "Symbol":
-      case "ObjectKeyword":
+      default:
         return {
           _tag: ast._tag,
-          checks,
-          ...annotationsField(ast.annotations)
+          ...(content === undefined ? undefined : {
+            content: {
+              mediaType: content.mediaType,
+              ...(content.schema === undefined ? undefined : {
+                schema: recurCandidate(content.schema)
+              })
+            }
+          }),
+          ...common
         };
       case "Literal":
         return {
-          _tag: "Literal",
+          _tag: ast._tag,
           literal: ast.literal,
-          checks,
-          ...annotationsField(ast.annotations)
+          ...common
         };
       case "UniqueSymbol":
         return {
-          _tag: "UniqueSymbol",
+          _tag: ast._tag,
           symbol: ast.symbol,
-          checks,
-          ...annotationsField(ast.annotations)
+          ...common
         };
       case "Enum":
         return {
-          _tag: "Enum",
+          _tag: ast._tag,
           enums: ast.enums,
-          checks,
-          ...annotationsField(ast.annotations)
+          ...common
         };
       case "TemplateLiteral":
         return {
-          _tag: "TemplateLiteral",
-          parts: ast.parts.map(ast => recur(ast)),
-          checks,
-          ...annotationsField(ast.annotations)
+          _tag: ast._tag,
+          parts: ast.parts.map(recur),
+          ...common
         };
       case "Arrays":
         return {
-          _tag: "Arrays",
+          _tag: ast._tag,
           elements: ast.elements.map(element => {
             const projected = SchemaAST.getLastEncoding(element);
             const annotations = projected.context?.annotations;
@@ -221,13 +224,12 @@ export function toRepresentations(asts, options) {
               ...annotationsField(annotations)
             };
           }),
-          rest: ast.rest.map(ast => recur(ast)),
-          checks,
-          ...annotationsField(ast.annotations)
+          rest: ast.rest.map(recur),
+          ...common
         };
       case "Objects":
         return {
-          _tag: "Objects",
+          _tag: ast._tag,
           propertySignatures: ast.propertySignatures.map(property => {
             const projected = SchemaAST.getLastEncoding(property.type);
             const annotations = projected.context?.annotations;
@@ -243,72 +245,48 @@ export function toRepresentations(asts, options) {
             parameter: recur(index.parameter),
             type: recur(index.type)
           })),
-          checks,
-          ...annotationsField(ast.annotations)
+          ...common
         };
       case "Union":
         return {
-          _tag: "Union",
-          types: ast.types.map(ast => recur(ast)),
+          _tag: ast._tag,
+          types: ast.types.map(recur),
           ...(ast.options === undefined ? {} : {
             options: ast.options
           }),
-          checks,
-          ...annotationsField(ast.annotations)
+          ...common
         };
       case "Suspend":
         return {
-          _tag: "Suspend",
+          _tag: ast._tag,
+          ...common,
           checks: [],
-          thunk: recur(ast.thunk()),
-          ...annotationsField(ast.annotations)
+          thunk: recur(ast.thunk())
         };
     }
-  }
-  function fromChecks(checks) {
-    return checks?.map(fromCheck) ?? [];
   }
   function fromCheck(check) {
-    switch (check._tag) {
-      case "Filter":
-        return {
-          _tag: "Filter",
-          aborted: check.aborted,
-          ...fromCheckAnnotations(check.annotations)
-        };
-      case "FilterGroup":
-        return {
-          _tag: "FilterGroup",
-          checks: Arr.map(check.checks, fromCheck),
-          ...fromCheckAnnotations(check.annotations)
-        };
-    }
-  }
-  function fromDeclarationAnnotations(annotations) {
-    if (annotations === undefined) return undefined;
-    const {
-      representation,
-      ...ordinary
-    } = annotations;
     return {
-      ...(representation === undefined ? undefined : {
-        representation
+      ...(check._tag === "Filter" ? {
+        _tag: check._tag,
+        aborted: check.aborted
+      } : {
+        _tag: check._tag,
+        checks: Arr.map(check.checks, fromCheck)
       }),
-      ...(Object.keys(ordinary).length === 0 ? undefined : {
-        annotations: ordinary
-      })
+      ...fromAnnotations(check.annotations, true)
     };
   }
-  function fromCheckAnnotations(annotations) {
+  function fromAnnotations(annotations, projectSchemas = false) {
     if (annotations === undefined) return undefined;
     const {
       representation,
       ...ordinary
     } = annotations;
-    const projected = representation === undefined ? undefined : representation.schemas === undefined ? representation : {
+    const projected = projectSchemas && representation?.schemas !== undefined ? {
       ...representation,
       schemas: representation.schemas.map(schema => recur(SchemaAST.toType(schema)))
-    };
+    } : representation;
     return {
       ...(projected === undefined ? undefined : {
         representation: projected

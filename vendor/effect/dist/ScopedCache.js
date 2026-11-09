@@ -7,6 +7,8 @@
  * remaining entries when the cache is closed. Lookups for the same missing key
  * share one in-progress effect, and entries can expire, be refreshed, be
  * invalidated, or be evicted by capacity limits.
+ * Expiry cleanup is lazy: an expired entry is removed on access to that key or
+ * a `keys`/`values`/`entries` scan, not by a background timer.
  *
  * @stability stable
  * @since 4.0.0
@@ -25,7 +27,6 @@ import * as effect from "./internal/effect.js";
 import * as MutableHashMap from "./MutableHashMap.js";
 import * as Option from "./Option.js";
 import * as Predicate from "./Predicate.js";
-import { UnhandledLogLevel } from "./References.js";
 import * as Scope from "./Scope.js";
 const TypeId = "~effect/ScopedCache";
 /**
@@ -40,8 +41,9 @@ const TypeId = "~effect/ScopedCache";
  * **Details**
  *
  * The cache must be constructed in a `Scope`. Each lookup runs in its own entry
- * scope, and that scope is closed when the entry expires, is invalidated, is
- * evicted by capacity, or when the cache's owning scope closes.
+ * scope, and that scope is closed when the entry is invalidated, is evicted by
+ * capacity, or when the cache's owning scope closes. Expired entries are cleaned
+ * up on access to that key or a `keys`/`values`/`entries` scan, not in the background.
  * `requireServicesAt` controls whether lookup services are captured at
  * construction time or required when lookup operations run.
  *
@@ -81,8 +83,9 @@ export const makeWith = options => effect.contextWith(context => {
  *
  * This is the constant-TTL variant of `makeWith`: values are acquired by the
  * lookup effect in per-entry scopes, capacity can evict older entries, and
- * entry scopes are closed when entries expire, are invalidated, are evicted, or
- * when the cache's owning scope closes.
+ * entry scopes are closed when entries are invalidated, are evicted, or when
+ * the cache's owning scope closes. Expiry cleanup is lazy: expired entries close
+ * on access to that key or a `keys`/`values`/`entries` scan, not in the background.
  *
  * @see {@link makeWith} for computing time-to-live from each lookup result and key
  *
@@ -199,10 +202,9 @@ const hasExpired = (entry, fiber) => {
   return fiber.getRef(effect.ClockRef).currentTimeMillisUnsafe() >= entry.expiresAt;
 };
 // Expiry and capacity eviction report cleanup failures without failing unrelated readers.
-const closeEvicted = entry => effect.catchCause(Scope.close(entry.scope, effect.exitVoid), reportUnhandledError);
-const reportUnhandledError = cause => core.withFiber(fiber => {
-  const level = fiber.getRef(UnhandledLogLevel);
-  return level ? effect.logWithLevel(level)("Unhandled error in ScopedCache finalizer", cause) : effect.void;
+const closeEvicted = entry => effect.ignoreCause(Scope.close(entry.scope, effect.exitVoid), {
+  log: "Unhandled",
+  message: "Unhandled error in ScopedCache finalizer"
 });
 const checkCapacity = (parent, map, capacity) => {
   if (!Number.isFinite(capacity)) return effect.void;
@@ -507,7 +509,7 @@ const invalidateAllImpl = (parent, map) => {
   for (const entry of entries) {
     fibers.push(effect.forkUnsafe(parent, Scope.close(entry.scope, effect.exitVoid), true, true));
   }
-  return effect.fiberAwaitAll(fibers);
+  return effect.flatMap(effect.fiberAwaitAll(fibers), Exit.asVoidAll);
 };
 /**
  * Retrieves the approximate number of entries in the cache.
@@ -556,7 +558,7 @@ export const keys = self => core.withFiber(fiber => {
       keys.push(key);
     } else {
       MutableHashMap.remove(state.map, key);
-      fibers.push(effect.forkUnsafe(fiber, Scope.close(entry.scope, effect.exitVoid), true, true));
+      fibers.push(effect.forkUnsafe(fiber, closeEvicted(entry), true, true));
     }
   }
   return fibers.length === 0 ? effect.succeed(keys) : effect.as(effect.fiberAwaitAll(fibers), keys);
@@ -617,7 +619,7 @@ export const entries = self => core.withFiber(fiber => {
       }
     } else {
       MutableHashMap.remove(state.map, key);
-      fibers.push(effect.forkUnsafe(fiber, Scope.close(entry.scope, effect.exitVoid), true, true));
+      fibers.push(effect.forkUnsafe(fiber, closeEvicted(entry), true, true));
     }
   }
   return fibers.length === 0 ? effect.succeed(arr) : effect.as(effect.fiberAwaitAll(fibers), arr);

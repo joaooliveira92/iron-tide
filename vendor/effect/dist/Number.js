@@ -620,8 +620,8 @@ function toScientificInteger(n) {
  * @since 2.0.0
  */
 export const nextPow2 = n => {
-  const nextPow = Math.ceil(Math.log(n) / Math.log(2));
-  return Math.max(Math.pow(2, nextPow), 2);
+  const nextPow = Math.pow(2, Math.ceil(Math.log2(n)));
+  return Math.max(nextPow < n ? nextPow * 2 : nextPow, 2);
 };
 /**
  * Parses a `number` from a `string` safely using the `Number()` function.
