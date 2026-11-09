@@ -8,8 +8,8 @@ import {
 } from "./ConstructionContext.js";
 
 export function YardOrdersBar({ variant }: { readonly variant: "bar" | "header" }) {
-  const { screen, sessionId } = useConstructionState();
-  const { openWizard, openBatch, refresh, retryRequest } = useConstructionActions();
+  const { sessionId } = useConstructionState();
+  const { openOrderDialog, refresh, retryRequest } = useConstructionActions();
   const { selectedDesign, busy, requestOutcomeUnknown } = useConstructionMeta();
   const [rebuildOpen, setRebuildOpen] = useState(false);
   return (
@@ -17,12 +17,10 @@ export function YardOrdersBar({ variant }: { readonly variant: "bar" | "header" 
       <YardBar
         variant={variant}
         design={selectedDesign}
-        designCount={screen.designs.length}
         busy={busy}
         retryPending={requestOutcomeUnknown}
         onRetry={requestOutcomeUnknown ? retryRequest : undefined}
-        onSubmit={openWizard}
-        onBatch={openBatch}
+        onOrder={() => openOrderDialog()}
         onRebuild={() => setRebuildOpen(true)}
         onRefresh={refresh}
       />

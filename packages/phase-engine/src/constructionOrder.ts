@@ -5,6 +5,8 @@ import type {
   ConstructionProject,
   NationState,
 } from "@bluewave/campaign";
+import { cumulativeAllowance } from "@bluewave/campaign";
+import { addMonths } from "./reviseProject.js";
 import {
   constructionBatchProjectIdForCommand,
   constructionProjectIdForCommand,
@@ -110,6 +112,17 @@ export function resolveOrderTargets(
   if (!nation)
     return { ok: false, reason: "NATION_NOT_FOUND", diagnostics: [`Nation ${nationId} not found`] };
   const design = snapshot["designs"].get(designVersionId);
+  if (
+    !design &&
+    (nation.designStudies ?? []).some(
+      (s) => s.design.designVersionId === designVersionId && s.status === "IN_PROGRESS",
+    )
+  )
+    return {
+      ok: false,
+      reason: DESIGN_STUDY_IN_PROGRESS,
+      diagnostics: [`Design ${designVersionId} is still under study and cannot be ordered yet`],
+    };
   if (!design)
     return {
       ok: false,
@@ -161,6 +174,36 @@ function resolveOrderCosts(
 }
 
 const CONSTRUCTION_PLAN_MISSING = "CONSTRUCTION_PLAN_MISSING" as const;
+export const DESIGN_STUDY_IN_PROGRESS = "DESIGN_STUDY_IN_PROGRESS" as const;
+
+export interface ConstructionOrderQuote {
+  readonly unitPrice: number;
+  readonly totalPrice: number;
+  readonly buildMonths: number | null;
+  readonly monthlyInstalment: number;
+  readonly deliveryMonth: string | null;
+}
+
+export function quoteConstructionOrder(
+  content: ShipBuildingContent | undefined,
+  nationId: string,
+  design: CompiledDesignVersion,
+  monthId: string,
+  quantity: number,
+): ConstructionOrderQuote | null {
+  const costs = resolveOrderCosts(content, nationId, design, monthId);
+  if (costs === null) return null;
+  const unitPrice = costs.costs.projectedCost;
+  const buildMonths = orderBuildMonths(content, nationId, design, monthId, costs.national) ?? null;
+  return {
+    unitPrice,
+    totalPrice: unitPrice * quantity,
+    buildMonths,
+    monthlyInstalment:
+      buildMonths === null ? 0 : cumulativeAllowance(unitPrice, buildMonths, 0) * quantity,
+    deliveryMonth: buildMonths === null ? null : addMonths(monthId, buildMonths),
+  };
+}
 
 function orderBuildMonths(
   content: ShipBuildingContent | undefined,
@@ -494,6 +537,7 @@ export interface ConstructionBatchPreview {
   readonly designDisplacementKg: number;
   readonly fitsDock: boolean;
   readonly yardId: string | null;
+  readonly quote: ConstructionOrderQuote;
 }
 
 export type ConstructionBatchPreviewResult =
@@ -523,6 +567,27 @@ export function previewConstructionBatch(
   const targets = resolveOrderTargets(snapshot, nationId, designVersionId);
   if (!targets.ok) return { ok: false, reason: targets.reason, diagnostics: targets.diagnostics };
   const { design } = targets;
+  const eligibility = constructionOrderEligibility(
+    snapshot,
+    design,
+    content,
+    month,
+    undefined,
+    quantity,
+  );
+  if (!eligibility.eligible)
+    return {
+      ok: false,
+      reason: eligibility.rejections[0]!.code,
+      diagnostics: eligibility.rejections.map((r) => r.message),
+    };
+  const quote = quoteConstructionOrder(content, nationId, design, month, quantity);
+  if (quote === null)
+    return {
+      ok: false,
+      reason: "NATIONAL_SUPPLY_UNAVAILABLE",
+      diagnostics: [`Nation ${nationId} cannot obtain its main armament or armour plate`],
+    };
   const shipType = shipTypeForHullType(design["hullType"]);
   const profile = content?.navalProfileFor(nationId, month) ?? null;
   const stems =
@@ -548,6 +613,7 @@ export function previewConstructionBatch(
       designDisplacementKg,
       fitsDock: dockCeilingKg !== null && designDisplacementKg <= dockCeilingKg,
       yardId: design["constructionPlan"]?.yardId ?? null,
+      quote,
     },
   };
 }

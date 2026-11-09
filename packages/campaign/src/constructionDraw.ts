@@ -132,7 +132,11 @@ function isPaced(project: ConstructionProject): project is ConstructionProject &
   return project["buildMonths"] !== undefined && project["packages"] !== undefined;
 }
 
-function cumulativeAllowance(totalWork: number, buildMonths: number, elapsed: number): number {
+export function cumulativeAllowance(
+  totalWork: number,
+  buildMonths: number,
+  elapsed: number,
+): number {
   const months = Math.min(buildMonths, elapsed + 1);
   return Math.floor((totalWork * months) / buildMonths);
 }

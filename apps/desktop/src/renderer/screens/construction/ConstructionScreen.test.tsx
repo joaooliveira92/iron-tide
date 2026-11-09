@@ -84,6 +84,7 @@ const projectionWith = (
   },
   designs: [],
   projects,
+  studies: [],
   steering: {},
   workspace: { commands: [], treasuryReserved: 0, capacityReserved: 0 },
 });

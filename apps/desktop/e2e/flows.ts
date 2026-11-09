@@ -213,7 +213,24 @@ export async function orderDesignFromCatalog(page: Page, className: string): Pro
     .getByRole("button", { name: /^Design catalog/ })
     .click();
   await page.getByRole("radio", { name: new RegExp(className) }).click();
-  await page.getByRole("button", { name: "Submit Construction Command" }).click();
-  await page.getByRole("button", { name: "Confirm order" }).click();
-  await expect(page.getByText(/Command \S+ is submitted/)).toBeVisible();
+  await openOrderDialog(page);
+  await placeOrder(page);
+  await expect(
+    page.getByRole("status").filter({ hasText: "OrderConstruction queued" }),
+  ).toBeVisible();
+}
+
+export async function openOrderDialog(page: Page): Promise<Locator> {
+  await page.getByRole("button", { name: "Order", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Order ships" });
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+export async function placeOrder(page: Page): Promise<void> {
+  const dialog = page.getByRole("dialog", { name: "Order ships" });
+  const place = dialog.getByRole("button", { name: "Place order" });
+  await expect(place).toBeEnabled();
+  await place.click();
+  await expect(dialog).toBeHidden();
 }

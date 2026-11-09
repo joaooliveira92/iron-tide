@@ -20,6 +20,15 @@ export type ConstructionProjectEntry = ConstructionProjectQueueEntry & {
   readonly rebuild?: ConstructionRebuildTarget;
 };
 
+export interface ConstructionStudyEntry {
+  readonly designStudyId: string;
+  readonly designVersionId: string;
+  readonly className: string;
+  readonly monthsRemaining: number;
+  readonly costRemaining: number;
+  readonly readyMonth: string;
+}
+
 export interface ConstructionScreenProjection {
   readonly revision: number;
   readonly month: { readonly month: number; readonly year: number };
@@ -40,6 +49,7 @@ export interface ConstructionScreenProjection {
     }[];
   };
   readonly designs: readonly CompiledDesignVersion[];
+  readonly studies: readonly ConstructionStudyEntry[];
   readonly projects: readonly ConstructionProjectEntry[];
   readonly steering: Readonly<Record<string, ConstructionSteeringPreview>>;
   readonly workspace: {

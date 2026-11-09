@@ -2,7 +2,10 @@ import { memo, useMemo, useState } from "react";
 import type { CompiledDesignVersion } from "@bluewave/campaign-engine";
 import { Empty, EmptyDescription, EmptyIcon, EmptyTitle } from "../../../components/ui/empty.js";
 import { cn } from "../../../lib/utils.js";
-import type { ConstructionScreenProjection } from "../../../../shared/construction-contract.js";
+import type {
+  ConstructionScreenProjection,
+  ConstructionStudyEntry,
+} from "../../../../shared/construction-contract.js";
 import {
   CATALOG_SORTS,
   catalogShipTypes,
@@ -16,8 +19,10 @@ export interface CatalogStageProps {
   readonly designs: readonly CompiledDesignVersion[];
   readonly economy: ConstructionScreenProjection["economy"];
   readonly workspace: ConstructionScreenProjection["workspace"];
+  readonly studies: readonly ConstructionStudyEntry[];
   readonly selectedDesignId: string | null;
   readonly onSelectDesign: (designId: string) => void;
+  readonly onOpenStudy: (designVersionId: string) => void;
 }
 
 const CHIP =
@@ -27,8 +32,10 @@ export const CatalogStage = memo(function CatalogStage({
   designs,
   economy,
   workspace,
+  studies,
   selectedDesignId,
   onSelectDesign,
+  onOpenStudy,
 }: CatalogStageProps) {
   const [shipType, setShipType] = useState<string | null>(null);
   const [sort, setSort] = useState<CatalogSort>("year");
@@ -39,7 +46,7 @@ export const CatalogStage = memo(function CatalogStage({
     [visible, economy, workspace],
   );
 
-  if (designs.length === 0) {
+  if (designs.length === 0 && studies.length === 0) {
     return (
       <Empty>
         <EmptyIcon />
@@ -102,6 +109,28 @@ export const CatalogStage = memo(function CatalogStage({
           />
         ))}
       </div>
+      {studies.length > 0 && (
+        <div role="group" aria-label="Designs in study" className="space-y-2">
+          <h3 className="text-xs font-medium text-muted-foreground">In design study</h3>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
+            {studies.map((study) => (
+              <button
+                key={study.designStudyId}
+                type="button"
+                aria-label={`${study.className}, in design study, ready ${study.readyMonth}`}
+                className="flex flex-col items-start gap-1 rounded-md border border-dashed p-3 text-left text-sm outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => onOpenStudy(study.designVersionId)}
+              >
+                <span className="font-medium">{study.className}</span>
+                <span className="text-xs text-muted-foreground">
+                  {study.monthsRemaining} {study.monthsRemaining === 1 ? "month" : "months"} of
+                  study left, ready {study.readyMonth}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 });
