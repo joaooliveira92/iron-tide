@@ -19,6 +19,7 @@ import {
   type ConstructionBalance,
 } from "@bluewave/ship-design";
 import { constructionResumeTarget } from "./constructionHaltResume.js";
+import { resolveConstructionEvents } from "./constructionEvents.js";
 import {
   ACCELERATION_CAPACITY_PRESSURE_DELAY,
   accelerationTermsFor,
@@ -152,9 +153,23 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
       delayedByPressure = new Set(pressure.delayedProjectIds);
     }
 
+    const eventRules = ctx.engineOptions?.constructionEvents;
+    const delayedByEvent = new Map<string, string>();
+    if (eventRules !== undefined && eventRules.length > 0)
+      for (const delay of resolveConstructionEvents({
+        nationId,
+        campaignMonth,
+        projects: projects.filter((p) => !delayedByPressure.has(p["id"])),
+        rules: eventRules,
+        randomEngine: accelerationRng,
+        randomLedger: ctx.randomLedger,
+      }).delays)
+        delayedByEvent.set(delay.projectId, delay.reasonCode);
+
     const delayedAtStartIds = new Set(delayedAtStart.map((p) => p["id"]));
     const delayedProjects = projects.filter(
-      (p) => p["status"] === "DELAYED" || delayedByPressure.has(p["id"]),
+      (p) =>
+        p["status"] === "DELAYED" || delayedByPressure.has(p["id"]) || delayedByEvent.has(p["id"]),
     );
 
     for (const project of delayedProjects)
@@ -162,7 +177,8 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
         constructionDelayedEvent(
           project["id"],
           nationId,
-          project["delayReasonCode"] ??
+          delayedByEvent.get(project["id"]) ??
+            project["delayReasonCode"] ??
             (delayedByPressure.has(project["id"])
               ? ACCELERATION_CAPACITY_PRESSURE_DELAY
               : PROJECT_DELAYED_ZERO_WORK),
@@ -195,10 +211,13 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
     preservationDelta = preservationSettlement.paid as number;
 
     let updatedProjects = projects;
-    if (delayedByPressure.size > 0)
-      updatedProjects = projects.map((p) =>
-        delayedByPressure.has(p["id"]) ? transitionConstructionProject(p, "DELAYED") : p,
-      );
+    if (delayedByPressure.size > 0 || delayedByEvent.size > 0)
+      updatedProjects = projects.map((p) => {
+        const eventReason = delayedByEvent.get(p["id"]);
+        if (eventReason !== undefined)
+          return { ...transitionConstructionProject(p, "DELAYED"), delayReasonCode: eventReason };
+        return delayedByPressure.has(p["id"]) ? transitionConstructionProject(p, "DELAYED") : p;
+      });
 
     const expenseReserve = nation["expenses"];
     const available = SafeInt.sub(

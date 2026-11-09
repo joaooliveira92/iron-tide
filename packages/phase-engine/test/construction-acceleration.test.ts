@@ -6,6 +6,7 @@ import type {
   NationState,
 } from "@bluewave/campaign";
 import { campaignMonthId, transitionConstructionProject } from "@bluewave/campaign";
+import type { ConstructionEvent } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -40,6 +41,7 @@ import {
   resolveAccelerationCapacityPressure,
   weightedConstructionDemand,
 } from "../src/constructionAcceleration.js";
+import { CONSTRUCTION_EVENT_STREAM_FAMILY } from "../src/constructionEvents.js";
 import { applyHaltConstruction, applySetAcceleration } from "../src/commands.js";
 import { constructionProjectQueueWithReadouts } from "../src/constructionReadout.js";
 import { constructionSteeringPreviews } from "../src/constructionSteeringPreview.js";
@@ -1035,5 +1037,66 @@ describe("accelerating an unpaced packaged ship never lengthens it (issue 574)",
     expect(preview.monthsSaved).toBe(1);
     expect(preview.premiumUnits).toBe(2);
     expect(preview.fundsLimited).toBe(false);
+  });
+});
+
+describe("construction events in the economy pass (#584)", () => {
+  const provenance = {
+    sourceStatus: "BALANCE_TARGET" as const,
+    confidence: "LOW" as const,
+    kind: "balance_adjustment" as const,
+    sources: [],
+    note: "PROVISIONAL test fixture",
+  };
+  const rule = (probabilityBp: number): ConstructionEvent => ({
+    id: "steel_plate_shortage",
+    kind: "DELAY",
+    probabilityBp,
+    reasonCode: "STEEL_PLATE_SHORTAGE",
+    causeKey: "construction.event.steel_plate_shortage",
+    provenance,
+  });
+  const start = () =>
+    snapshot(
+      [project({ id: "proj-1", status: "ACTIVE", withPackages: true, designVersionId: "d1" })],
+      new Map([["d1", design("d1", 50)]]),
+      6_000,
+    );
+  const run = (probabilityBp: number, withRules = true) =>
+    new MonthExecutor().execute(start(), [], "event-seed", new DiagnosticCollector(), undefined, {
+      shipBuilding: content,
+      ...(withRules ? { constructionEvents: [rule(probabilityBp)] } : {}),
+    });
+
+  it("delays a building project with the rule's cause, zero work, and a random-decision record", () => {
+    const result = run(10_000);
+    const p = result.finalSnapshot.nations.get("GBR")!.constructionProjects[0]!;
+    expect(p.status).toBe("DELAYED");
+    expect(p.delayReasonCode).toBe("STEEL_PLATE_SHORTAGE");
+    expect(Number(p.completedWork)).toBe(0);
+    expect(Number(p.paidWork)).toBe(0);
+    const delay = result.eventLedger.all.find((e) => e.eventType === "ConstructionDelayed");
+    expect(delay?.body).toMatchObject({ projectId: "proj-1", reason: "STEEL_PLATE_SHORTAGE" });
+    const decision = result.randomLedger.all.find(
+      (d) => d.streamId === CONSTRUCTION_EVENT_STREAM_FAMILY,
+    );
+    expect(decision?.outcome).toBe("DELAYED");
+  });
+
+  it("leaves the project working when the draw misses", () => {
+    const result = run(0);
+    const p = result.finalSnapshot.nations.get("GBR")!.constructionProjects[0]!;
+    expect(p.status).toBe("ACTIVE");
+    expect(p.delayReasonCode).toBeUndefined();
+    expect(result.eventLedger.all.some((e) => e.eventType === "ConstructionDelayed")).toBe(false);
+  });
+
+  it("draws nothing when no rules are supplied", () => {
+    const result = run(10_000, false);
+    const p = result.finalSnapshot.nations.get("GBR")!.constructionProjects[0]!;
+    expect(p.status).toBe("ACTIVE");
+    expect(
+      result.randomLedger.all.some((d) => d.streamId === CONSTRUCTION_EVENT_STREAM_FAMILY),
+    ).toBe(false);
   });
 });
