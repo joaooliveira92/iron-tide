@@ -57,14 +57,14 @@ Nothing ever goes wrong or right during a build. A project can be `DELAYED`, but
 
 ## Approach
 
-`propose first`. This changes gameplay outcomes, so return at `waiting-for-input` with the decisions below before building. Then tracer-bullet slices:
+`agent decides`. The owner approved every bracketed recommendation below on 2026-11-09, so build without returning for those answers. Numbers stay PROVISIONAL and are tuned from the balance report. Tracer-bullet slices:
 
 1. One delay kind end to end: content row, schema, draw, `delayReasonCode`, event, inspector text. Goldens repinned.
 2. One overrun kind end to end, with the remaining-work rule.
 3. Fill a modest catalogue (about 6 kinds, grouped as materials, labour, design change, weather or yard), frequencies tuned from the balance report.
 4. Turn-report projection and the cause list.
 
-Design questions for the human before slice 1 (recommendations in brackets):
+Design decisions, approved by the owner as recommended (bracketed):
 
 - Rate shape: per project-month probability in basis points, scaled by yard capacity pressure and ship class tonnage? [flat base rate, modified by one factor: capacity pressure above 100 percent doubles the delay chance]
 - Magnitudes: delay 1 to 3 months, overrun 2 to 10 percent of remaining work? [yes, PROVISIONAL]
@@ -92,7 +92,7 @@ Balance report under the repo's report location, `pnpm snap` before and after sc
 
 ## Blockers that need a human
 
-The permanent stop conditions in `AGENTS.md`, plus: the rate and magnitude answers above; any golden hash that moves without an understood cause; a save-shape change that migrates authoritative outcomes.
+The permanent stop conditions in `AGENTS.md`, plus: any golden hash that moves without an understood cause; a save-shape change that migrates authoritative outcomes.
 
 ## Downstream work
 
