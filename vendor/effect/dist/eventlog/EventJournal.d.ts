@@ -23,6 +23,7 @@ import type { Option } from "../Option.ts";
 import * as Order from "../Order.ts";
 import * as PubSub from "../PubSub.ts";
 import * as Schema from "../Schema.ts";
+import type * as SchemaAST from "../SchemaAST.ts";
 import type { Scope } from "../Scope.ts";
 import type { StoreId } from "./EventLogMessage.ts";
 declare const EventJournal_base: Context.ServiceClass<EventJournal, "effect/eventlog/EventJournal", {
@@ -30,6 +31,11 @@ declare const EventJournal_base: Context.ServiceClass<EventJournal, "effect/even
      * Read all the entries in the journal.
      */
     readonly entries: Effect.Effect<ReadonlyArray<Entry>, EventJournalError>;
+    /**
+     * Read the stored entries with the given ids. The result is aligned with
+     * `ids`, with `undefined` for ids that are not in the journal.
+     */
+    readonly entriesById: (ids: ReadonlyArray<EntryId>) => Effect.Effect<ReadonlyArray<Entry | undefined>, EventJournalError>;
     /**
      * Write an event to the journal, performing an effect before committing the
      * event.
@@ -41,20 +47,49 @@ declare const EventJournal_base: Context.ServiceClass<EventJournal, "effect/even
         readonly effect: (entry: Entry) => Effect.Effect<A, E, R>;
     }) => Effect.Effect<A, EventJournalError | E, R>;
     /**
+     * Write several events to the journal, performing an effect before
+     * committing them.
+     *
+     * **Details**
+     *
+     * `effect` runs once with every entry, in input order and with ascending
+     * ids. The entries are committed together and then published to `changes`
+     * only after it succeeds. If it fails, nothing is committed or published.
+     */
+    readonly writeMany: <A, E, R>(options: {
+        readonly entries: Arr.NonEmptyReadonlyArray<{
+            readonly event: string;
+            readonly primaryKey: string;
+            readonly payload: Uint8Array;
+        }>;
+        readonly effect: (entries: Arr.NonEmptyReadonlyArray<Entry>) => Effect.Effect<A, E, R>;
+    }) => Effect.Effect<A, EventJournalError | E, R>;
+    /**
      * Write events from a remote source to the journal.
      *
      * **Details**
      *
-     * Effects run sequentially in compaction bracket order.
+     * `effect` runs once with every new entry after compaction, sorted by
+     * `Entry.Order`. Each entry is paired with the stored entries for the same
+     * event and primary key whose id is strictly greater, in id order. Entries
+     * in the batch never conflict with each other: applying them in id order
+     * gives the same result as delivering them one at a time. A compaction
+     * replacement written by `EventLog` takes the place and conflicts of the
+     * source entry it is anchored to, not of its own id.
+     *
+     * All conflicts are read before `effect` runs and the batch is committed
+     * after it succeeds, with no journal I/O while it runs. It is not called
+     * when the batch has no new entries. If `effect` fails, no entry from the
+     * batch is committed.
      */
     readonly writeFromRemote: (options: {
         readonly remoteId: RemoteId;
         readonly entries: ReadonlyArray<RemoteEntry>;
         readonly compact?: ((uncommitted: ReadonlyArray<RemoteEntry>) => Effect.Effect<ReadonlyArray<Entry>, EventJournalError>) | undefined;
-        readonly effect: (options: {
+        readonly effect: (entries: ReadonlyArray<{
             readonly entry: Entry;
             readonly conflicts: ReadonlyArray<Entry>;
-        }) => Effect.Effect<void, EventJournalError>;
+        }>) => Effect.Effect<void, EventJournalError>;
     }) => Effect.Effect<{
         readonly duplicateEntries: ReadonlyArray<Entry>;
     }, EventJournalError>;
@@ -66,6 +101,15 @@ declare const EventJournal_base: Context.ServiceClass<EventJournal, "effect/even
      * `Option.some()`.
      */
     readonly withRemoteUncommited: <A, E, R>(remoteId: RemoteId, f: (entries: Arr.NonEmptyReadonlyArray<Entry>) => Effect.Effect<A, E, R>) => Effect.Effect<Option<A>, EventJournalError | E, R>;
+    /**
+     * Records upload acknowledgements, advancing `nextRemoteSequence` only across
+     * contiguous sequences from the current cursor or `firstSequence`.
+     */
+    readonly writeRemoteAcks: (options: {
+        readonly remoteId: RemoteId;
+        readonly acks: ReadonlyArray<RemoteAck>;
+        readonly firstSequence?: number | undefined;
+    }) => Effect.Effect<void, EventJournalError>;
     /**
      * Retrieve the first unused sequence number for a remote source.
      */
@@ -90,6 +134,9 @@ declare const EventJournal_base: Context.ServiceClass<EventJournal, "effect/even
  *
  * The service writes local entries, imports entries from remote journals, exposes
  * a stream of local changes, and provides per-store locking.
+ *
+ * Entries written by `EventLog` carry payloads encoded with their event's
+ * `payloadSchemaBinary`; see {@link Entry} for how to decode them.
  *
  * @stability unstable
  * @category services
@@ -223,10 +270,28 @@ export declare const EntryIdOrder: Order.Order<EntryId>;
  * Use when generating an event-log entry id internally and the UUID v7 bytes
  * are trusted to satisfy the brand.
  *
+ * **Details**
+ *
+ * Ids taken from the clock are strictly ascending within the current process.
+ * Ids created in the same millisecond carry an incrementing 12-bit counter. If
+ * the clock stalls or moves backwards, ids keep the last millisecond, and
+ * after 4096 ids in one millisecond they move to the next one.
+ *
+ * The journals generate local ids from this sequence, or from a copy of it
+ * advanced past the latest id in their store, so a local id sorts after every
+ * entry committed to that store, even when the local clock is behind.
+ *
  * **Gotchas**
  *
  * This is unsafe because the generated UUID bytes are cast to the brand without
  * schema validation.
+ *
+ * Throws a `RangeError` once the sequence passes the last UUID v7 millisecond.
+ * Every later call throws too, because any id it could return would sort before
+ * one already generated.
+ *
+ * Ids created with an explicit `msecs` are not part of the sequence, and clamp
+ * to the UUID v7 range.
  *
  * @stability unstable
  * @category unsafe
@@ -257,11 +322,20 @@ declare const Entry_base: Schema.Class<Entry, Schema.Struct<{
  * An entry records its ID, event tag, primary key, and SchemaBinary-encoded
  * payload, with helpers for array SchemaBinary encoding and creation timestamps.
  *
+ * **Gotchas**
+ *
+ * `EventLog` encodes `payload` with the `payloadSchemaBinary` of the event whose
+ * tag is `entry.event`, so decode it with that event's codec. A codec with an
+ * incompatible wire layout, such as a union of a group's tagged payload schemas,
+ * cannot read it. Entries from remote journals can carry tags the local schema
+ * does not define.
+ *
  * @stability unstable
  * @category schemas
  * @since 4.0.0
  */
 export declare class Entry extends Entry_base {
+    #private;
     /**
      * SchemaBinary codec for arrays of committed event journal entries.
      *
@@ -275,14 +349,14 @@ export declare class Entry extends Entry_base {
      * @stability unstable
      * @since 4.0.0
      */
-    static encodeArray: (input: unknown, options?: import("../SchemaAST.ts").ParseOptions) => Effect.Effect<readonly Uint8Array<ArrayBuffer>[], Schema.SchemaError, never>;
+    static encodeArray: (input: unknown, options?: SchemaAST.ParseOptions) => Effect.Effect<readonly Uint8Array<ArrayBuffer>[], Schema.SchemaError, never>;
     /**
      * Decodes arrays of committed entries with the SchemaBinary entry codec.
      *
      * @stability unstable
      * @since 4.0.0
      */
-    static decodeArray: (input: unknown, options?: import("../SchemaAST.ts").ParseOptions) => Effect.Effect<readonly Entry[], Schema.SchemaError, never>;
+    static decodeArray: (input: unknown, options?: SchemaAST.ParseOptions) => Effect.Effect<Array<Entry>, Schema.SchemaError>;
     /**
      * Ordering for committed entries by their event journal entry id.
      *
@@ -311,6 +385,17 @@ export declare class Entry extends Entry_base {
      * @since 4.0.0
      */
     get createdAt(): DateTime.Utc;
+}
+/**
+ * A local entry's remote-assigned sequence.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface RemoteAck {
+    readonly entryId: EntryId;
+    readonly sequence: number;
 }
 declare const RemoteEntry_base: Schema.Class<RemoteEntry, Schema.Struct<{
     readonly remoteSequence: Schema.Natural;

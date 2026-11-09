@@ -249,8 +249,9 @@ export declare const optimize: (n: number) => number;
  *
  * **Details**
  *
- * This function determines whether a given value has the Hash symbol property,
- * indicating that it can provide its own hash value implementation.
+ * This function determines whether a given value has a function under the Hash
+ * symbol, indicating that it can provide its own hash value implementation.
+ * Data that merely carries the key, such as parsed JSON, is hashed as data.
  *
  * **Example** (Checking for Hash support)
  *

@@ -26,18 +26,18 @@ const VERIFY = process.argv.includes("--verify");
 const PIN = [
   {
     name: "effect",
-    version: "4.0.2",
+    version: "4.1.2",
     dir: "vendor/effect",
     integrity:
-      "sha512-YeYnLqSFrL4+tCOXRrfNP03w8FILoF/wDl+ukraJAGzXrjcS383W7LAAvGBbLatEyktmLxRq+9xJinx7QzXW5A==",
-    shasum: "568ce7989ece849f55f1acea644bc85b5ea88b2e",
+      "sha512-d3Oah1WyKxFLFh19yWheS5IXIVaITzxZ71JkE1rkUozq/6EcJSU5nPk5bF2QrSygZ3SQoiNQB8TsxFriyMeMaQ==",
+    shasum: "fddd855065820f449e3558b5bd02c73264f05044",
   },
   {
     name: "@effect/vitest",
-    version: "4.0.2",
+    version: "4.1.2",
     dir: "vendor/effect-vitest",
     integrity:
-      "sha512-Zb72nu7iUy3rNdBp9J1Xu5oUQGwJ8cOYsUwmYgujj88aqyvASRDjOS01SjlcPViqf77csduetKdCJTVndMNfzw==",
+      "sha512-JJPwAHkJHxvM/woW9mMW/khjasAHcmwWdOMAgMy16rfqsxcVhFDnrRsvN9VI2+kMv8zDCCyBE2q1n5hzZlfE0w==",
     shasum: "",
   },
 ];

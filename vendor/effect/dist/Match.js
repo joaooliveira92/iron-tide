@@ -332,7 +332,7 @@ export const when = internal.when;
  * @category defining patterns
  * @since 4.0.0
  */
-export const whenOr = internal.whenOr;
+export const whenOr = (...args) => internal.whenOr(...args);
 /**
  * Matches a value that satisfies all provided patterns.
  *
@@ -372,7 +372,7 @@ export const whenOr = internal.whenOr;
  * @category defining patterns
  * @since 4.0.0
  */
-export const whenAnd = internal.whenAnd;
+export const whenAnd = (...args) => internal.whenAnd(...args);
 /**
  * Matches values based on a specified discriminant field.
  *
@@ -699,6 +699,78 @@ export const tags = internal.tags;
  * @since 4.0.0
  */
 export const tagsExhaustive = internal.tagsExhaustive;
+/**
+ * Matches string and number literal values, mapping each literal to a
+ * corresponding handler.
+ *
+ * **Details**
+ *
+ * Each handler receives the matched literal. Handled literals are removed from
+ * the remaining input, while unhandled literals and any other members (such as
+ * `null`, objects, or widened `string` / `number` types) are left for later
+ * cases. Keys must be finite string or number literals of the remaining input;
+ * unions containing both a number and its string spelling, such as
+ * `1 | "1"`, are rejected because both share the same runtime key.
+ *
+ * **Example** (Mapping literal handlers)
+ *
+ * ```ts import.meta.vitest
+ * import { Match } from "effect"
+ *
+ * type Status = "draft" | "review" | "published"
+ *
+ * const isEditable = Match.type<Status>().pipe(
+ *   Match.literals({ draft: () => true, review: () => true }),
+ *   Match.orElse(() => false)
+ * )
+ *
+ * isEditable("review") // => true
+ * isEditable("published") // => false
+ * ```
+ *
+ * @see {@link literalsExhaustive} for handling every literal and finalizing the matcher
+ *
+ * @stability unstable
+ * @category defining patterns
+ * @since 4.1.0
+ */
+export const literals = internal.literals;
+/**
+ * Matches string and number literal values and requires handling of all
+ * remaining cases.
+ *
+ * **Details**
+ *
+ * This is the exhaustive variant of {@link literals}. Every remaining member
+ * must be a finite string or number literal with a corresponding handler, so a
+ * missing literal, a widened `string` / `number` type, or any other unhandled
+ * member is reported by TypeScript.
+ *
+ * **Example** (Handling all literal cases)
+ *
+ * ```ts import.meta.vitest
+ * import { Match } from "effect"
+ *
+ * type Status = "draft" | "review" | "published"
+ *
+ * const label = Match.type<Status>().pipe(
+ *   Match.literalsExhaustive({
+ *     draft: () => "Draft",
+ *     review: () => "In review",
+ *     published: () => "Live"
+ *   })
+ * )
+ *
+ * label("review") // => "In review"
+ * ```
+ *
+ * @see {@link literals} for defining literal handlers without finalizing the matcher
+ *
+ * @stability unstable
+ * @category defining patterns
+ * @since 4.1.0
+ */
+export const literalsExhaustive = internal.literalsExhaustive;
 /**
  * Creates a pattern that excludes a specific value while allowing all others.
  *

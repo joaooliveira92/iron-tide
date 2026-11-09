@@ -434,7 +434,8 @@ export declare const combine: {
  * comparison stops at the first equivalence that returns `false`. Empty
  * collections return an equivalence that always returns `true`. The result is
  * also an equivalence that satisfies reflexive, symmetric, and transitive
- * properties.
+ * properties. The collection is materialized when the equivalence is created,
+ * so it must be finite.
  *
  * **Example** (Combining multiple field equivalences)
  *

@@ -22,7 +22,6 @@ import * as Layer from "../Layer.ts";
 import * as Option from "../Option.ts";
 import * as KeyValueStore from "../persistence/KeyValueStore.ts";
 import type { Pipeable } from "../Pipeable.ts";
-import type { ReadonlyRecord } from "../Record.ts";
 import * as Schema from "../Schema.ts";
 import * as Scope from "../Scope.ts";
 import * as Stream from "../Stream.ts";
@@ -340,23 +339,23 @@ export interface AtomRuntime<R, ER = never> extends Atom<AsyncResult.AsyncResult
         <Arg>(): {
             <E, A>(fn: (arg: Arg, get: FnContext) => Effect.Effect<A, E, Scope.Scope | AtomRegistry | Reactivity.Reactivity | R>, options?: {
                 readonly initialValue?: A | undefined;
-                readonly reactivityKeys?: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>> | undefined;
+                readonly reactivityKeys?: Reactivity.KeysInput | undefined;
                 readonly concurrent?: boolean | undefined;
             }): AtomResultFn<Arg, A, E | ER>;
             <E, A>(fn: (arg: Arg, get: FnContext) => Stream.Stream<A, E, AtomRegistry | Reactivity.Reactivity | R>, options?: {
                 readonly initialValue?: A | undefined;
-                readonly reactivityKeys?: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>> | undefined;
+                readonly reactivityKeys?: Reactivity.KeysInput | undefined;
                 readonly concurrent?: boolean | undefined;
             }): AtomResultFn<Arg, A, E | ER | Cause.NoSuchElementError>;
         };
         <E, A, Arg = void>(fn: (arg: Arg, get: FnContext) => Effect.Effect<A, E, Scope.Scope | AtomRegistry | Reactivity.Reactivity | R>, options?: {
             readonly initialValue?: A | undefined;
-            readonly reactivityKeys?: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>> | undefined;
+            readonly reactivityKeys?: Reactivity.KeysInput | undefined;
             readonly concurrent?: boolean | undefined;
         }): AtomResultFn<Arg, A, E | ER>;
         <E, A, Arg = void>(fn: (arg: Arg, get: FnContext) => Stream.Stream<A, E, AtomRegistry | Reactivity.Reactivity | R>, options?: {
             readonly initialValue?: A | undefined;
-            readonly reactivityKeys?: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>> | undefined;
+            readonly reactivityKeys?: Reactivity.KeysInput | undefined;
             readonly concurrent?: boolean | undefined;
         }): AtomResultFn<Arg, A, E | ER | Cause.NoSuchElementError>;
     };
@@ -380,7 +379,7 @@ export interface RuntimeFactory {
      * Uses the `Reactivity` service from the runtime to refresh the atom whenever
      * the keys change.
      */
-    readonly withReactivity: (keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>) => <A extends Atom<any>>(atom: A) => A;
+    readonly withReactivity: (keys: Reactivity.KeysInput) => <A extends Atom<any>>(atom: A) => A;
 }
 /**
  * A `RuntimeFactory` backed by an atom whose memo map is scoped to each registry.
@@ -432,7 +431,7 @@ export declare function context(options: {
  */
 export declare const runtime: RegistryRuntimeFactory;
 /**
- * Returns `Rx.runtime.withReactivity` for refreshing an atom whenever the
+ * Alias for `Atom.runtime.withReactivity` for refreshing an atom whenever the
  * keys change in the `Reactivity` service.
  *
  * **When to use**
@@ -444,7 +443,7 @@ export declare const runtime: RegistryRuntimeFactory;
  * @category reactivity
  * @since 4.0.0
  */
-export declare const withReactivity: (keys: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>>) => <A extends Atom<any>>(atom: A) => A;
+export declare const withReactivity: (keys: Reactivity.KeysInput) => <A extends Atom<any>>(atom: A) => A;
 /**
  * Creates a writable atom backed by a `SubscriptionRef`, or by an effect that produces one, updating from ref changes and writing atom updates back to the ref.
  *
@@ -519,21 +518,7 @@ export declare const fnSync: {
      * @since 4.0.0
      */
     <Arg>(): {
-        /**
-         * Creates a writable atom for a synchronous function; writing an argument re-runs the function, returning `Option.none` before the first call unless an initial value is supplied.
-         *
-         * @stability unstable
-         * @category constructors
-         * @since 4.0.0
-         */
         <A>(f: (arg: Arg, get: FnContext) => A): Writable<Option.Option<A>, Arg>;
-        /**
-         * Creates a writable atom for a synchronous function; writing an argument re-runs the function, returning `Option.none` before the first call unless an initial value is supplied.
-         *
-         * @stability unstable
-         * @category constructors
-         * @since 4.0.0
-         */
         <A>(f: (arg: Arg, get: FnContext) => A, options: {
             readonly initialValue: A;
         }): Writable<A, Arg>;
@@ -904,6 +889,28 @@ export declare const withLabel: {
     <A extends Atom<any>>(self: A, name: string): A;
 };
 /**
+ * Options for seeding an effect or stream atom through registry initial values
+ * or hydration.
+ *
+ * **Details**
+ *
+ * By default a seeded effect or stream atom still runs its effect on mount,
+ * because the dependencies read inside the effect are only known once it has
+ * run. With `skipInitialRun`, the atom keeps the seeded value until it is
+ * refreshed or one of its dependencies changes. The factory and any wrappers
+ * still build, so `get(...)` calls in the factory and `withReactivity` keys are
+ * tracked; only the first effect or stream run is skipped. Dependencies read
+ * inside the effect are tracked from its first real run. An `Initial` seed
+ * never skips the effect.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.1.0
+ */
+export interface InitialValueOptions {
+    readonly skipInitialRun?: boolean | undefined;
+}
+/**
  * Pairs an atom with an initial value for registry initialization.
  *
  * **When to use**
@@ -913,7 +920,9 @@ export declare const withLabel: {
  * **Details**
  *
  * The returned tuple can be supplied to `AtomRegistry` initial values so the atom
- * starts with the provided value before it is first rebuilt.
+ * starts with the provided value before it is first rebuilt. Pass
+ * `{ skipInitialRun: true }` to keep the value of an effect or stream atom
+ * instead of running its effect on mount (see {@link InitialValueOptions}).
  *
  * @stability unstable
  * @category combinators
@@ -930,7 +939,9 @@ export declare const initialValue: {
      * **Details**
      *
      * The returned tuple can be supplied to `AtomRegistry` initial values so the atom
-     * starts with the provided value before it is first rebuilt.
+     * starts with the provided value before it is first rebuilt. Pass
+     * `{ skipInitialRun: true }` to keep the value of an effect or stream atom
+     * instead of running its effect on mount (see {@link InitialValueOptions}).
      *
      * @stability unstable
      * @category combinators
@@ -947,13 +958,34 @@ export declare const initialValue: {
      * **Details**
      *
      * The returned tuple can be supplied to `AtomRegistry` initial values so the atom
-     * starts with the provided value before it is first rebuilt.
+     * starts with the provided value before it is first rebuilt. Pass
+     * `{ skipInitialRun: true }` to keep the value of an effect or stream atom
+     * instead of running its effect on mount (see {@link InitialValueOptions}).
      *
      * @stability unstable
      * @category combinators
      * @since 4.0.0
      */
     <A>(self: Atom<A>, initialValue: A): readonly [Atom<A>, A];
+    /**
+     * Pairs an atom with an initial value for registry initialization.
+     *
+     * **When to use**
+     *
+     * Use to preload an atom value when constructing or seeding a registry.
+     *
+     * **Details**
+     *
+     * The returned tuple can be supplied to `AtomRegistry` initial values so the atom
+     * starts with the provided value before it is first rebuilt. Pass
+     * `{ skipInitialRun: true }` to keep the value of an effect or stream atom
+     * instead of running its effect on mount (see {@link InitialValueOptions}).
+     *
+     * @stability unstable
+     * @category combinators
+     * @since 4.0.0
+     */
+    <A>(self: Atom<A>, initialValue: A, options: InitialValueOptions): readonly [Atom<A>, A, InitialValueOptions];
 };
 /**
  * Creates a derived atom by reading another atom with a custom `AtomContext`
@@ -1560,7 +1592,8 @@ export type SerializableTypeId = "~effect-atom/atom/Atom/Serializable";
  * **Details**
  *
  * The key identifies the atom in dehydrated state, and the encode/decode
- * functions convert between the atom value and the schema encoded value.
+ * functions convert between the atom value and its JSON representation, as
+ * produced by the schema's JSON codec (`Schema.toCodecJson`).
  *
  * @stability unstable
  * @category models
@@ -1569,8 +1602,9 @@ export type SerializableTypeId = "~effect-atom/atom/Atom/Serializable";
 export interface Serializable<S extends Schema.Constraint> {
     readonly [SerializableTypeId]: {
         readonly key: string;
-        readonly encode: (value: S["Type"]) => S["Encoded"];
-        readonly decode: (value: S["Encoded"]) => S["Type"];
+        readonly encode: (value: S["Type"]) => Schema.Json;
+        readonly decode: (value: Schema.Json) => S["Type"];
+        readonly skipInitialRun?: boolean | undefined;
     };
 }
 /**
@@ -1588,6 +1622,8 @@ export declare const isSerializable: (self: Atom<any>) => self is Atom<any> & Se
  *
  * The schema is converted to a JSON codec for synchronous encode/decode, and the
  * key is also used as the atom label when the atom does not already have one.
+ * Set `skipInitialRun` to keep a hydrated value of an effect or stream atom
+ * instead of running its effect on mount (see {@link InitialValueOptions}).
  *
  * @stability unstable
  * @category combinators
@@ -1601,6 +1637,8 @@ export declare const serializable: {
      *
      * The schema is converted to a JSON codec for synchronous encode/decode, and the
      * key is also used as the atom label when the atom does not already have one.
+     * Set `skipInitialRun` to keep a hydrated value of an effect or stream atom
+     * instead of running its effect on mount (see {@link InitialValueOptions}).
      *
      * @stability unstable
      * @category combinators
@@ -1609,7 +1647,7 @@ export declare const serializable: {
     <R extends Atom<any>, S extends Schema.ConstraintCodec<Type<R>, any>>(options: {
         readonly key: string;
         readonly schema: S;
-    }): (self: R) => R & Serializable<S>;
+    } & InitialValueOptions): (self: R) => R & Serializable<S>;
     /**
      * Attaches serialization metadata to an atom using a schema and stable key.
      *
@@ -1617,6 +1655,8 @@ export declare const serializable: {
      *
      * The schema is converted to a JSON codec for synchronous encode/decode, and the
      * key is also used as the atom label when the atom does not already have one.
+     * Set `skipInitialRun` to keep a hydrated value of an effect or stream atom
+     * instead of running its effect on mount (see {@link InitialValueOptions}).
      *
      * @stability unstable
      * @category combinators
@@ -1625,7 +1665,7 @@ export declare const serializable: {
     <R extends Atom<any>, S extends Schema.ConstraintCodec<Type<R>, any>>(self: R, options: {
         readonly key: string;
         readonly schema: S;
-    }): R & Serializable<S>;
+    } & InitialValueOptions): R & Serializable<S>;
 };
 /**
  * The type id used to mark atoms with a server-side read override.

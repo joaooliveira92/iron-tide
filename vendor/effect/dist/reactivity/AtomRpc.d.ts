@@ -15,7 +15,6 @@ import * as Duration from "../Duration.ts";
 import * as Effect from "../Effect.ts";
 import * as Headers from "../http/Headers.ts";
 import * as Layer from "../Layer.ts";
-import type { ReadonlyRecord } from "../Record.ts";
 import type * as Rpc from "../rpc/Rpc.ts";
 import * as RpcClient from "../rpc/RpcClient.ts";
 import { RpcClientError } from "../rpc/RpcClientError.ts";
@@ -26,6 +25,7 @@ import type { Scope } from "../Scope.ts";
 import type { NoInfer } from "../Types.ts";
 import * as AsyncResult from "./AsyncResult.ts";
 import * as Atom from "./Atom.ts";
+import * as Reactivity from "./Reactivity.ts";
 /**
  * A `Context.Service` for a flattened RPC client integrated with atom reactivity.
  *
@@ -43,12 +43,12 @@ export interface AtomRpcClient<Self, Id extends string, Rpcs extends Rpc.Any> ex
     readonly runtime: Atom.AtomRuntime<Self>;
     readonly mutation: <Tag extends Rpc.Tag<Rpcs>>(arg: Tag) => Rpcs extends Rpc.Rpc<infer _Tag extends Tag, infer _Payload, infer _Success, infer _Error, infer _Middleware, infer _Requires> ? [_Success] extends [RpcSchema.Stream<infer _A, infer _E>] ? never : Atom.AtomResultFn<{
         readonly payload: Rpc.PayloadConstructor<Rpcs>;
-        readonly reactivityKeys?: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>> | undefined;
+        readonly reactivityKeys?: Reactivity.KeysInput | undefined;
         readonly headers?: Headers.Input | undefined;
     }, _Success["Type"], _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]> : never;
     readonly query: <Tag extends Rpc.Tag<Rpcs>>(tag: Tag, payload: Rpc.PayloadConstructor<Rpc.ExtractTag<Rpcs, Tag>>, options?: {
         readonly headers?: Headers.Input | undefined;
-        readonly reactivityKeys?: ReadonlyArray<unknown> | ReadonlyRecord<string, ReadonlyArray<unknown>> | undefined;
+        readonly reactivityKeys?: Reactivity.KeysInput | undefined;
         readonly timeToLive?: Duration.Input | undefined;
         readonly serializationKey?: string | undefined;
     }) => Rpcs extends Rpc.Rpc<infer _Tag extends Tag, infer _Payload, infer _Success, infer _Error, infer _Middleware, infer _Requires> ? [_Success] extends [RpcSchema.Stream<infer _A, infer _E>] ? Atom.Writable<Atom.PullResult<_A["Type"], _E["Type"] | _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]>, void> : Atom.Atom<AsyncResult.AsyncResult<_Success["Type"], _Error["Type"] | RpcClientError | _Middleware["error"]["Type"] | _Middleware["~ClientError"]>> : never;

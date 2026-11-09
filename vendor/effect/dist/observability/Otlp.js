@@ -13,6 +13,10 @@ import * as OtlpTracer from "./OtlpTracer.js";
  * The layer sends data to `/v1/logs`, `/v1/metrics`, and `/v1/traces` below
  * `baseUrl` and requires an `OtlpSerialization` implementation.
  *
+ * The layer provides the `OtlpExporter.Flusher` shared by all three signals,
+ * so one `flush` exports their buffered telemetry, for example before a
+ * serverless instance is suspended.
+ *
  * @stability unstable
  * @category layers
  * @since 4.0.0
@@ -24,6 +28,7 @@ export const layer = options => {
     url: url("/v1/logs"),
     resource: options.resource,
     headers: options.headers,
+    compression: options.compression,
     exportInterval: options.loggerExportInterval,
     maxBatchSize: options.maxBatchSize,
     shutdownTimeout: options.shutdownTimeout,
@@ -33,6 +38,7 @@ export const layer = options => {
     url: url("/v1/metrics"),
     resource: options.resource,
     headers: options.headers,
+    compression: options.compression,
     exportInterval: options.metricsExportInterval,
     shutdownTimeout: options.shutdownTimeout,
     temporality: options.metricsTemporality
@@ -40,6 +46,7 @@ export const layer = options => {
     url: url("/v1/traces"),
     resource: options.resource,
     headers: options.headers,
+    compression: options.compression,
     exportInterval: options.tracerExportInterval,
     maxBatchSize: options.maxBatchSize,
     context: options.tracerContext,
@@ -49,6 +56,12 @@ export const layer = options => {
 /**
  * Creates a combined OTLP layer for logs, metrics, and traces from
  * OpenTelemetry configuration.
+ *
+ * **Details**
+ *
+ * The layer provides the `OtlpExporter.Flusher` shared by all enabled signals.
+ * It is provided even when configuration disables every signal, in which case
+ * `flush` is a no-op.
  *
  * @stability unstable
  * @category layers

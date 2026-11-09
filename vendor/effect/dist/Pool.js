@@ -1,3 +1,15 @@
+/**
+ * Shares scoped resources across fibers.
+ *
+ * A `Pool<A, E>` acquires resource-backed values with a scoped effect, lets
+ * fibers borrow them with `get`, can invalidate broken values, and releases all
+ * acquired values when the pool scope closes. This module includes fixed-size
+ * pools, pools that resize with a time-to-live policy, custom strategy pools,
+ * per-item concurrency limits, and runtime state types used by pool strategies.
+ *
+ * @stability stable
+ * @since 2.0.0
+ */
 import { Clock } from "./Clock.js";
 import * as Context from "./Context.js";
 import * as Duration from "./Duration.js";
@@ -9,7 +21,6 @@ import * as internal from "./internal/effect.js";
 import { pipeArguments } from "./Pipeable.js";
 import { hasProperty } from "./Predicate.js";
 import * as Queue from "./Queue.js";
-import { UnhandledLogLevel } from "./References.js";
 import * as Scope from "./Scope.js";
 import * as Semaphore from "./Semaphore.js";
 const TypeId = "~effect/Pool";
@@ -157,7 +168,8 @@ export const makeWithTTL = options => Effect.flatMap(options.timeToLiveStrategy 
  */
 export const makeWithStrategy = options => Effect.uninterruptibleMask(Effect.fnUntraced(function* (restore) {
   const services = yield* Effect.context();
-  const scope = Context.get(services, Scope.Scope);
+  // A child scope keeps the pool usable in later finalizers of the outer scope
+  const scope = Scope.forkUnsafe(Context.get(services, Scope.Scope));
   const acquire = Effect.updateContext(options.acquire, input => Context.merge(services, input));
   const concurrency = options.concurrency ?? 1;
   const config = {
@@ -252,7 +264,7 @@ const shutdown = /*#__PURE__*/Effect.fnUntraced(function* (self) {
 export const get = self => core.withFiber(fiber => {
   const state = self.state;
   if (state.isShuttingDown) return internal.interrupt;
-  if (state.availableHead?.exit._tag === "Success") {
+  if (state.waiters.size === 0 && state.availableHead?.exit._tag === "Success") {
     state.usage++;
     if (self.config.isFixed || targetSize(self) <= activeSize(self)) {
       return leaseItem(self, state.availableHead, fiber);
@@ -293,7 +305,7 @@ export const get = self => core.withFiber(fiber => {
 export const use = /*#__PURE__*/dual(2, (self, f) => core.withFiber(fiber => {
   const state = self.state;
   if (state.isShuttingDown) return internal.interrupt;
-  if (state.availableHead?.exit._tag === "Success") {
+  if (state.waiters.size === 0 && state.availableHead?.exit._tag === "Success") {
     state.usage++;
     if (self.config.isFixed || targetSize(self) <= activeSize(self)) {
       return useItem(self, state.availableHead, f, fiber);
@@ -317,13 +329,25 @@ const useItem = (self, item, f, fiber, restore) => {
 const getSlowWith = (self, lease) => internal.uninterruptibleMask(restore => {
   const state = self.state;
   state.usage++;
-  const wait = internal.flatMap(internal.onError(restore(waitForItem(self)), () => internal.sync(() => {
+  const waiter = makeWaiter();
+  const wait = internal.flatMap(internal.onError(restore(waitForItem(self, waiter)), () => core.withFiber(fiber => {
     state.usage--;
+    // Only a woken waiter is still registered here: one cancelled while
+    // asleep already left. It passes its wake on, so the capacity it was
+    // woken for is not stranded.
+    if (state.waiters.delete(waiter)) wakeWaiters(self, fiber, 1);
+    return internal.void;
   })), () => loop);
   const step = core.withFiber(fiber => {
     if (state.isShuttingDown) {
       state.usage--;
       return internal.interrupt;
+    }
+    // A borrower that has not waited yet queues behind the borrowers already
+    // waiting. Waiters keep their place until they take an item, so this
+    // also holds while a woken waiter has yet to run.
+    if (state.waiters.size > 0 && !state.waiters.has(waiter)) {
+      return wait;
     }
     // Replace failed slots only when the pool cannot grow.
     const item = firstHealthyAvailable(self) ?? (targetSize(self) <= activeSize(self) ? state.availableHead : undefined);
@@ -334,6 +358,7 @@ const getSlowWith = (self, lease) => internal.uninterruptibleMask(restore => {
       removeFailedItem(self, item);
       return loop;
     }
+    state.waiters.delete(waiter);
     return lease(self, item, fiber, restore);
   });
   const loop = internal.suspend(() => {
@@ -393,39 +418,65 @@ const firstHealthyAvailable = self => {
   while (item !== undefined && item.exit._tag === "Failure") item = item.availableNext;
   return item;
 };
-const waitForItem = self => internal.callback(resume => {
-  const state = self.state;
-  if (firstHealthyAvailable(self) !== undefined || state.isShuttingDown) {
-    return resume(internal.void);
-  }
-  const observer = failure => {
-    state.waiters.delete(observer);
+const makeWaiter = () => {
+  const waiter = failure => {
+    const resume = waiter.resume;
+    if (resume === undefined) return;
+    waiter.resume = undefined;
     resume(failure ?? internal.void);
   };
-  state.waiters.add(observer);
+  waiter.resume = undefined;
+  return waiter;
+};
+const waitForItem = (self, waiter) => internal.callback(resume => {
+  const state = self.state;
+  if (state.isShuttingDown || state.waiters.size === 0 && firstHealthyAvailable(self) !== undefined) {
+    return resume(internal.void);
+  }
+  waiter.resume = resume;
+  // Re-adding a registered waiter keeps its position.
+  state.waiters.add(waiter);
   return internal.sync(() => {
-    state.waiters.delete(observer);
+    // Cancelled while asleep: leave at once, so no wake or failure is spent
+    // on it. Cancelled after a wake: stay until the wake is passed on.
+    if (waiter.resume !== undefined) {
+      waiter.resume = undefined;
+      state.waiters.delete(waiter);
+    }
   });
 });
 const wakeWaiters = (self, fiber, count) => {
   const waiters = self.state.waiters;
   if (waiters.size === 0) return;
   fiber.currentDispatcher.scheduleTask(() => {
+    // Walk the live set, so a waiter that leaves during the walk does not use
+    // up a wake. Skip waiters already woken, and stop once nothing is left to
+    // take.
     let remaining = count;
-    const toWake = [];
     for (const notify of waiters) {
-      if (remaining-- <= 0) break;
-      toWake.push(notify);
-    }
-    for (let i = 0; i < toWake.length; i++) {
-      toWake[i]();
+      if (remaining <= 0 || self.state.availableHead === undefined) break;
+      if (notify.resume === undefined) continue;
+      remaining--;
+      notify();
     }
   }, 0);
 };
-const wakeAll = self => core.withFiber(fiber => {
-  wakeWaiters(self, fiber, Number.POSITIVE_INFINITY);
-  return internal.void;
-});
+const firstSleepingWaiter = self => {
+  for (const notify of self.state.waiters) {
+    if (notify.resume !== undefined) return notify;
+  }
+  return undefined;
+};
+// Wakes every waiter so it can retry after a failed acquisition. A waiter that
+// could not start a resize while another was running depends on this. Waking
+// a waiter that is already awake is a no-op.
+const wakeAll = (self, fiber) => {
+  const waiters = self.state.waiters;
+  if (waiters.size === 0) return;
+  fiber.currentDispatcher.scheduleTask(() => {
+    for (const notify of Array.from(waiters)) notify();
+  }, 0);
+};
 // Reservations prevent reuse without extending the lifetime of borrowed items.
 const reservations = /*#__PURE__*/new WeakMap();
 /** Adds a freshly acquired item, which has no use behind it, at the back. */
@@ -550,6 +601,49 @@ export const reserve = /*#__PURE__*/dual(2, (self, item) => Effect.asVoid(Effect
   }
   return internal.void;
 }))));
+/**
+ * Returns a snapshot of how many items are idle or in use and how many
+ * borrowers are waiting.
+ *
+ * **When to use**
+ *
+ * Use to sample pool occupancy for metrics, such as connection counts for a
+ * database driver.
+ *
+ * **Details**
+ *
+ * - Only successfully acquired items are counted. Items still being acquired
+ *   and failed acquisitions are not.
+ * - An item is used while it has a borrower or a reservation, otherwise idle.
+ * - An invalidated item counts as used until its last borrower returns it.
+ *
+ * **Gotchas**
+ *
+ * The replacement for an invalidated item is acquired while the old one is
+ * still borrowed, so `idle + used` can briefly exceed `max`. A borrower that
+ * has been woken but has not yet taken its item is not counted as pending.
+ *
+ * @see {@link Stats} for the snapshot fields
+ *
+ * @stability unstable
+ * @category getters
+ * @since 4.0.0
+ */
+export const stats = self => Effect.sync(() => {
+  let idle = 0;
+  let used = 0;
+  for (const item of self.state.items) {
+    if (item.exit._tag !== "Success") continue;
+    if (item.refCount > 0 || reservations.has(item)) used++;else idle++;
+  }
+  return {
+    idle,
+    used,
+    pending: self.state.waiters.size,
+    min: self.config.minSize,
+    max: self.config.maxSize
+  };
+});
 const invalidatePoolItem = (self, poolItem) => Effect.suspend(() => {
   if (!self.state.items.has(poolItem)) {
     return Effect.void;
@@ -579,14 +673,25 @@ const resizeLoop = self => Effect.suspend(() => {
     return Effect.void;
   }
   const toAcquire = target - active;
-  const acquireOne = self.config.strategy === strategyNoop ? allocate(self) : Effect.flatMap(self.config.strategy.reclaim(self), item => item ? Effect.succeed(item) : allocate(self));
+  // Wake waiters as each item arrives. Waiting for the whole batch would
+  // leave acquired items idle behind a slow acquisition, with every borrower
+  // queued behind the waiters.
+  const acquireOne = Effect.tap(self.config.strategy === strategyNoop ? allocate(self) : Effect.flatMap(self.config.strategy.reclaim(self), item => item ? Effect.sync(() => {
+    // A reclaimed item rejoins circulation like a released one.
+    if (self.state.items.has(item) && !self.state.invalidated.has(item)) addAvailableFront(self, item);
+    return item;
+  }) : allocate(self)), item => core.withFiber(fiber => {
+    // A failed acquisition wakes everyone so they can retry it. A new
+    // item can only serve as many waiters as it has slots.
+    if (item.exit._tag === "Failure") wakeAll(self, fiber);else wakeWaiters(self, fiber, self.config.concurrency);
+    return internal.void;
+  }));
   if (toAcquire === 1) {
-    const acquired = Effect.tap(acquireOne, wakeAll(self));
-    return self.config.isFixed ? Effect.asVoid(acquired) : Effect.flatMap(acquired, item => item.exit._tag === "Failure" ? Effect.void : resizeLoop(self));
+    return self.config.isFixed ? Effect.asVoid(acquireOne) : Effect.flatMap(acquireOne, item => item.exit._tag === "Failure" ? Effect.void : resizeLoop(self));
   }
-  const acquired = acquireOne.pipe(Effect.replicateEffect(toAcquire, {
+  const acquired = Effect.replicateEffect(acquireOne, toAcquire, {
     concurrency: toAcquire
-  }), Effect.tap(wakeAll(self)));
+  });
   return self.config.isFixed ? Effect.asVoid(acquired) : Effect.flatMap(acquired, items => items.some(_ => _.exit._tag === "Failure") ? Effect.void : resizeLoop(self));
 });
 const allocate = self => internal.uninterruptibleMask(restore => core.withFiber(fiber => {
@@ -597,7 +702,10 @@ const allocate = self => internal.uninterruptibleMask(restore => core.withFiber(
   const use = Effect.flatMap(Effect.exit(impl[Acquire]), exit => {
     const item = {
       exit,
-      finalizer: Effect.catchCause(Scope.close(scope, exit), reportUnhandledError),
+      finalizer: Effect.ignoreCause(Scope.close(scope, exit), {
+        log: "Unhandled",
+        message: "Unhandled error in pool finalizer"
+      }),
       refCount: 0,
       idleSince: impl[PoolClock].currentTimeMillisUnsafe(),
       disableReclaim: false,
@@ -616,7 +724,7 @@ const allocate = self => internal.uninterruptibleMask(restore => core.withFiber(
       return self.config.strategy === strategyNoop ? Effect.succeed(item) : Effect.as(onAcquire, item);
     }
     // Deliver a waiting borrower its own failure; otherwise retain the slot.
-    const waiter = firstHealthyAvailable(self) === undefined ? self.state.waiters.values().next().value : undefined;
+    const waiter = firstHealthyAvailable(self) === undefined ? firstSleepingWaiter(self) : undefined;
     if (waiter !== undefined) {
       waiter(exit);
     } else {
@@ -701,12 +809,5 @@ const strategyUsageTTL = /*#__PURE__*/Effect.fnUntraced(function* (ttl) {
     onAcquire: _ => Effect.void,
     reclaim: _ => Effect.undefined
   });
-});
-const reportUnhandledError = cause => Effect.withFiber(fiber => {
-  const unhandledLogLevel = fiber.getRef(UnhandledLogLevel);
-  if (unhandledLogLevel) {
-    return Effect.logWithLevel(unhandledLogLevel)("Unhandled error in pool finalizer", cause);
-  }
-  return Effect.void;
 });
 //# sourceMappingURL=Pool.js.map

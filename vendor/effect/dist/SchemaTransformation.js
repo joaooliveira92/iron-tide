@@ -19,6 +19,7 @@ import * as Duration from "./Duration.js";
 import * as Effect from "./Effect.js";
 import { format, formatDate, formatJson } from "./Formatter.js";
 import { dual } from "./Function.js";
+import * as InternalContent from "./internal/schema/content.js";
 import * as Option from "./Option.js";
 import * as Pipeable from "./Pipeable.js";
 import * as Predicate from "./Predicate.js";
@@ -358,7 +359,10 @@ export function trim() {
  *
  * Decoding converts values such as `"my_field_name"` to `"myFieldName"`.
  * Encoding converts values such as `"myFieldName"` back to `"my_field_name"`.
- * The transformation is round-trippable for standard snake_case and camelCase.
+ * Lowercase snake_case values round-trip when single underscores separate the
+ * segments and every segment after the first starts with a letter. A segment
+ * that starts with a digit does not: `"foo_2_bar"` decodes to `"foo2Bar"`,
+ * which encodes to `"foo2_bar"`.
  *
  * **Example** (Converting snake case to camel case)
  *
@@ -533,9 +537,12 @@ export function uncapitalize() {
  * **Details**
  *
  * Decoding splits the string by `separator` (default `","`) into pairs, then
- * splits each pair by `keyValueSeparator` (default `"="`). Encoding joins the
- * record back into a string using the same separators. The transformation is
- * round-trippable when keys and values do not contain the separators.
+ * splits each pair by `keyValueSeparator` (default `"="`). Set `trim` to trim
+ * keys and values, and `keepEmptyValues` to keep pairs with an empty value as
+ * `""` instead of skipping them (see {@link SchemaGetter.splitKeyValue}).
+ * Encoding joins the record back into a string using the same separators. The
+ * transformation is round-trippable when keys and values do not contain the
+ * separators and, with `trim`, have no surrounding whitespace.
  *
  * **Example** (Parsing key-value pairs)
  *
@@ -1210,8 +1217,8 @@ export const urlFromString = /*#__PURE__*/transformEffect({
  * **Details**
  *
  * Decoding calls `BigDecimal.fromString(s)` and fails with `InvalidValue` if
- * the string is not a valid `BigDecimal` representation. Encoding returns
- * `BigDecimal.format(bd)`.
+ * the string is not a valid `BigDecimal` representation or its scale is
+ * outside ±10,000. Encoding returns `BigDecimal.format(bd)`.
  *
  * @stability stable
  * @category transforming
@@ -1363,7 +1370,7 @@ export const stringFromHexString = /*#__PURE__*/new Transformation(/*#__PURE__*/
  * **When to use**
  *
  * Use when you need a schema transformation to store structured data in URL
- * query parameters or fragments, such as composing with `Schema.parseJson` to
+ * query parameters or fragments, such as composing with `Schema.fromJsonString` to
  * round-trip JSON through a URL.
  *
  * **Details**
@@ -1426,7 +1433,10 @@ export const stringFromUriComponent = /*#__PURE__*/new Transformation(/*#__PURE_
  * @since 4.0.0
  */
 export function fromJsonString(options) {
-  return new Transformation(SchemaGetter.parseJson(options ?? {}), SchemaGetter.stringifyJson(options));
+  return new Transformation(SchemaGetter.parseJson(options ?? {}), InternalContent.setContent(SchemaGetter.stringifyJson(options), {
+    mediaType: "application/json",
+    preserveSchema: options?.reviver === undefined && options?.replacer === undefined
+  }));
 }
 /**
  * Decodes a `FormData` instance into a nested record using bracket-path keys and

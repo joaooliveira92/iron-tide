@@ -63,4 +63,9 @@ export * as Primitive from "./Primitive.js";
  * @since 4.0.0
  */
 export * as Prompt from "./Prompt.js";
+/**
+ * @stability unstable
+ * @since 4.0.0
+ */
+export * as TerminalCapabilities from "./TerminalCapabilities.js";
 //# sourceMappingURL=index.js.map

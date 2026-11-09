@@ -1,8 +1,6 @@
 import * as Rec from "../Record.js";
 import * as Schema from "../Schema.js";
 import * as InternalStructuredOutput from "./internal/structured-output.js";
-import * as LanguageModel from "./LanguageModel.js";
-import * as OpenAiStructuredOutput from "./OpenAiStructuredOutput.js";
 /**
  * Converts a `Schema.Codec` to Anthropic structured-output JSON Schema and a
  * matching codec for model output.

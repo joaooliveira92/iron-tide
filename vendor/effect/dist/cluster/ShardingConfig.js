@@ -53,6 +53,7 @@ export const defaults = {
   shardLockExpiration: /*#__PURE__*/Duration.seconds(35),
   shardLockDisableAdvisory: false,
   entityMailboxCapacity: 4096,
+  entityMailboxMetrics: false,
   maxResidentEntities: 10_000,
   unprocessedMessageBatchSize: 1024,
   entityMaxIdleTime: /*#__PURE__*/Duration.minutes(1),
@@ -62,6 +63,7 @@ export const defaults = {
   entityReplyPollInterval: /*#__PURE__*/Duration.millis(200),
   sendRetryInterval: /*#__PURE__*/Duration.millis(100),
   refreshAssignmentsInterval: /*#__PURE__*/Duration.seconds(3),
+  runnerJoinDebounce: Duration.zero,
   runnerHealthCheckInterval: /*#__PURE__*/Duration.minutes(1),
   simulateRemoteSerialization: true
 };
@@ -159,6 +161,9 @@ export const config = /*#__PURE__*/Config.all({
   entityMailboxCapacity: /*#__PURE__*/Config.Int("entityMailboxCapacity").pipe(/*#__PURE__*/Config.withDefault(defaults.entityMailboxCapacity)
   // Config.withDescription("The default capacity of the mailbox for entities.")
   ),
+  entityMailboxMetrics: /*#__PURE__*/Config.Boolean("entityMailboxMetrics").pipe(/*#__PURE__*/Config.withDefault(defaults.entityMailboxMetrics)
+  // Config.withDescription("Report the mailbox size of each resident entity.")
+  ),
   maxResidentEntities: /*#__PURE__*/Config.schema(Schema.Int.check(Schema.isGreaterThan(0)), "maxResidentEntities").pipe(/*#__PURE__*/Config.withDefault(defaults.maxResidentEntities)
   // Config.withDescription("The maximum number of entities that can be resident on this runner at the same time.")
   ),
@@ -187,6 +192,9 @@ export const config = /*#__PURE__*/Config.all({
   ),
   refreshAssignmentsInterval: /*#__PURE__*/Config.Duration("refreshAssignmentsInterval").pipe(/*#__PURE__*/Config.withDefault(defaults.refreshAssignmentsInterval)
   // Config.withDescription("The interval at which to refresh shard assignments.")
+  ),
+  runnerJoinDebounce: /*#__PURE__*/Config.Duration("runnerJoinDebounce").pipe(/*#__PURE__*/Config.withDefault(defaults.runnerJoinDebounce)
+  // Config.withDescription("How long the healthy runners must stay unchanged before joining runners are assigned shards.")
   ),
   runnerHealthCheckInterval: /*#__PURE__*/Config.Duration("runnerHealthCheckInterval").pipe(/*#__PURE__*/Config.withDefault(defaults.runnerHealthCheckInterval)
   // Config.withDescription("The interval at which to check for unhealthy runners and report them.")

@@ -290,6 +290,7 @@ export const Directory = (name: string, options?: {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -611,6 +612,224 @@ export const withDescription: {
   <A>(self: Flag<A>, description: string): Flag<A>
 } = dual(2, <A>(self: Flag<A>, description: string) => Param.withDescription(self, description))
 
+/**
+ * Lets a flag be given without a value, in which case `value` is used.
+ *
+ * **Details**
+ *
+ * Follows GNU-style optional values, like `--color[=WHEN]`. An explicit value
+ * must be attached with `=` (`--watch=until-done` or `-w=until-done`). A bare
+ * `--watch` is parsed as `--watch=<value>`, so `value` is validated like any
+ * other input. The flag never consumes the next token, so in `--watch build`,
+ * `build` stays a positional argument or subcommand. The flag is still
+ * required unless it is made optional or given a default.
+ *
+ * **Example** (Flag with an optional value)
+ *
+ * ```ts import.meta.vitest
+ * import { Flag } from "effect/cli"
+ *
+ * const watch = Flag.Literals("watch", ["first-failure", "until-done"]).pipe(
+ *   Flag.withOptionalValue("first-failure"),
+ *   Flag.optional
+ * )
+ * // --watch             => Option.some("first-failure")
+ * // --watch=until-done  => Option.some("until-done")
+ * // (absent)            => Option.none()
+ * // In help: --watch [=choice]
+ * watch.kind // => "flag"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.1.0
+ */
+export const withOptionalValue: {
+  /**
+   * Lets a flag be given without a value, in which case `value` is used.
+   *
+   * **Details**
+   *
+   * Follows GNU-style optional values, like `--color[=WHEN]`. An explicit value
+   * must be attached with `=` (`--watch=until-done` or `-w=until-done`). A bare
+   * `--watch` is parsed as `--watch=<value>`, so `value` is validated like any
+   * other input. The flag never consumes the next token, so in `--watch build`,
+   * `build` stays a positional argument or subcommand. The flag is still
+   * required unless it is made optional or given a default.
+   *
+   * **Example** (Flag with an optional value)
+   *
+   * ```ts import.meta.vitest
+   * import { Flag } from "effect/cli"
+   *
+   * const watch = Flag.Literals("watch", ["first-failure", "until-done"]).pipe(
+   *   Flag.withOptionalValue("first-failure"),
+   *   Flag.optional
+   * )
+   * // --watch             => Option.some("first-failure")
+   * // --watch=until-done  => Option.some("until-done")
+   * // (absent)            => Option.none()
+   * // In help: --watch [=choice]
+   * watch.kind // => "flag"
+   * ```
+   *
+   * @stability unstable
+   * @category combinators
+   * @since 4.1.0
+   */
+  (value: string): <A>(self: Flag<A>) => Flag<A>
+  /**
+   * Lets a flag be given without a value, in which case `value` is used.
+   *
+   * **Details**
+   *
+   * Follows GNU-style optional values, like `--color[=WHEN]`. An explicit value
+   * must be attached with `=` (`--watch=until-done` or `-w=until-done`). A bare
+   * `--watch` is parsed as `--watch=<value>`, so `value` is validated like any
+   * other input. The flag never consumes the next token, so in `--watch build`,
+   * `build` stays a positional argument or subcommand. The flag is still
+   * required unless it is made optional or given a default.
+   *
+   * **Example** (Flag with an optional value)
+   *
+   * ```ts import.meta.vitest
+   * import { Flag } from "effect/cli"
+   *
+   * const watch = Flag.Literals("watch", ["first-failure", "until-done"]).pipe(
+   *   Flag.withOptionalValue("first-failure"),
+   *   Flag.optional
+   * )
+   * // --watch             => Option.some("first-failure")
+   * // --watch=until-done  => Option.some("until-done")
+   * // (absent)            => Option.none()
+   * // In help: --watch [=choice]
+   * watch.kind // => "flag"
+   * ```
+   *
+   * @stability unstable
+   * @category combinators
+   * @since 4.1.0
+   */
+  <A>(self: Flag<A>, value: string): Flag<A>
+} = dual(2, <A>(self: Flag<A>, value: string) => Param.withOptionalValue(self, value))
+
+/**
+ * Renames the negated form of a boolean flag, which defaults to `--no-<name>`.
+ *
+ * **Details**
+ *
+ * The new name replaces the default, so `--no-<name>` is no longer accepted
+ * and shell completions offer the new name instead. Has no effect on
+ * non-boolean flags.
+ *
+ * **Example** (Renaming a boolean flag's negation)
+ *
+ * ```ts import.meta.vitest
+ * import { Flag } from "effect/cli"
+ *
+ * const validate = Flag.Boolean("validate").pipe(
+ *   Flag.withDefault(true),
+ *   Flag.withNegation("skip-validate")
+ * )
+ * // --validate       => true
+ * // --skip-validate  => false
+ * // --no-validate    => unrecognized flag
+ * validate.kind // => "flag"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.1.0
+ */
+export const withNegation: {
+  /**
+   * Renames the negated form of a boolean flag, which defaults to `--no-<name>`.
+   *
+   * **Details**
+   *
+   * The new name replaces the default, so `--no-<name>` is no longer accepted
+   * and shell completions offer the new name instead. Has no effect on
+   * non-boolean flags.
+   *
+   * **Example** (Renaming a boolean flag's negation)
+   *
+   * ```ts import.meta.vitest
+   * import { Flag } from "effect/cli"
+   *
+   * const validate = Flag.Boolean("validate").pipe(
+   *   Flag.withDefault(true),
+   *   Flag.withNegation("skip-validate")
+   * )
+   * // --validate       => true
+   * // --skip-validate  => false
+   * // --no-validate    => unrecognized flag
+   * validate.kind // => "flag"
+   * ```
+   *
+   * @stability unstable
+   * @category combinators
+   * @since 4.1.0
+   */
+  (name: string): <A>(self: Flag<A>) => Flag<A>
+  /**
+   * Renames the negated form of a boolean flag, which defaults to `--no-<name>`.
+   *
+   * **Details**
+   *
+   * The new name replaces the default, so `--no-<name>` is no longer accepted
+   * and shell completions offer the new name instead. Has no effect on
+   * non-boolean flags.
+   *
+   * **Example** (Renaming a boolean flag's negation)
+   *
+   * ```ts import.meta.vitest
+   * import { Flag } from "effect/cli"
+   *
+   * const validate = Flag.Boolean("validate").pipe(
+   *   Flag.withDefault(true),
+   *   Flag.withNegation("skip-validate")
+   * )
+   * // --validate       => true
+   * // --skip-validate  => false
+   * // --no-validate    => unrecognized flag
+   * validate.kind // => "flag"
+   * ```
+   *
+   * @stability unstable
+   * @category combinators
+   * @since 4.1.0
+   */
+  <A>(self: Flag<A>, name: string): Flag<A>
+} = dual(2, <A>(self: Flag<A>, name: string) => Param.withNegation(self, name))
+
+/**
+ * Removes the negated `--no-<name>` form of a boolean flag.
+ *
+ * **Details**
+ *
+ * The negated form is then rejected as an unrecognized flag and left out of
+ * shell completions. Has no effect on non-boolean flags.
+ *
+ * **Example** (Disabling a boolean flag's negation)
+ *
+ * ```ts import.meta.vitest
+ * import { Flag } from "effect/cli"
+ *
+ * const unsafe = Flag.Boolean("unsafe").pipe(
+ *   Flag.withDefault(false),
+ *   Flag.withoutNegation
+ * )
+ * // --unsafe     => true
+ * // --no-unsafe  => unrecognized flag
+ * unsafe.kind // => "flag"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.1.0
+ */
+export const withoutNegation = <A>(self: Flag<A>): Flag<A> => Param.withoutNegation(self)
+
 // -------------------------------------------------------------------------------------
 // metadata
 // -------------------------------------------------------------------------------------
@@ -763,6 +982,7 @@ export const withHidden = <A>(self: Flag<A>): Flag<A> => Param.withHidden(self)
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -937,6 +1157,11 @@ export const withFallbackConfig: {
 /**
  * Adds a fallback prompt that is shown when a required flag is missing.
  *
+ * **Gotchas**
+ *
+ * When `TerminalCapabilities.canPrompt` is `false`, the prompt is skipped and
+ * the original `MissingOption` error is returned.
+ *
  * **Example** (Falling back to prompts)
  *
  * ```ts import.meta.vitest
@@ -948,6 +1173,38 @@ export const withFallbackConfig: {
  * name.kind // => "flag"
  * ```
  *
+ * **Example** (Showing an introduction before fallback prompts)
+ *
+ * The prompt can be built by an effect, which only runs when the prompt is
+ * needed. Share a cached introduction between the prompt builders and
+ * `Command.provideEffectDiscard`: it runs once, before the first prompt, and
+ * also runs when every flag is supplied. Flags declared after the first
+ * prompted flag may not have been validated yet when the introduction runs.
+ *
+ * ```ts import.meta.vitest
+ * import { Console, Effect } from "effect"
+ * import { Command, Flag, Prompt } from "effect/cli"
+ *
+ * const program = Effect.gen(function*() {
+ *   const intro = yield* Effect.cached(Console.log("Welcome to demo"))
+ *
+ *   const ask = (name: string) =>
+ *     Flag.String(name).pipe(
+ *       Flag.withFallbackPrompt(
+ *         Effect.as(intro, Prompt.String({ message: `${name}?` }))
+ *       )
+ *     )
+ *
+ *   const demo = Command.make(
+ *     "demo",
+ *     { name: ask("name"), dir: ask("dir") },
+ *     (input) => Console.log(input)
+ *   ).pipe(Command.provideEffectDiscard(intro))
+ *
+ *   yield* Command.run(demo, { version: "1.0.0" })
+ * })
+ * ```
+ *
  * @stability unstable
  * @category combinators
  * @since 4.0.0
@@ -955,6 +1212,11 @@ export const withFallbackConfig: {
 export const withFallbackPrompt: {
   /**
    * Adds a fallback prompt that is shown when a required flag is missing.
+   *
+   * **Gotchas**
+   *
+   * When `TerminalCapabilities.canPrompt` is `false`, the prompt is skipped and
+   * the original `MissingOption` error is returned.
    *
    * **Example** (Falling back to prompts)
    *
@@ -967,6 +1229,38 @@ export const withFallbackPrompt: {
    * name.kind // => "flag"
    * ```
    *
+   * **Example** (Showing an introduction before fallback prompts)
+   *
+   * The prompt can be built by an effect, which only runs when the prompt is
+   * needed. Share a cached introduction between the prompt builders and
+   * `Command.provideEffectDiscard`: it runs once, before the first prompt, and
+   * also runs when every flag is supplied. Flags declared after the first
+   * prompted flag may not have been validated yet when the introduction runs.
+   *
+   * ```ts import.meta.vitest
+   * import { Console, Effect } from "effect"
+   * import { Command, Flag, Prompt } from "effect/cli"
+   *
+   * const program = Effect.gen(function*() {
+   *   const intro = yield* Effect.cached(Console.log("Welcome to demo"))
+   *
+   *   const ask = (name: string) =>
+   *     Flag.String(name).pipe(
+   *       Flag.withFallbackPrompt(
+   *         Effect.as(intro, Prompt.String({ message: `${name}?` }))
+   *       )
+   *     )
+   *
+   *   const demo = Command.make(
+   *     "demo",
+   *     { name: ask("name"), dir: ask("dir") },
+   *     (input) => Console.log(input)
+   *   ).pipe(Command.provideEffectDiscard(intro))
+   *
+   *   yield* Command.run(demo, { version: "1.0.0" })
+   * })
+   * ```
+   *
    * @stability unstable
    * @category combinators
    * @since 4.0.0
@@ -974,6 +1268,11 @@ export const withFallbackPrompt: {
   <B>(prompt: Param.FallbackPrompt<B>): <A>(self: Flag<A>) => Flag<A | B>
   /**
    * Adds a fallback prompt that is shown when a required flag is missing.
+   *
+   * **Gotchas**
+   *
+   * When `TerminalCapabilities.canPrompt` is `false`, the prompt is skipped and
+   * the original `MissingOption` error is returned.
    *
    * **Example** (Falling back to prompts)
    *
@@ -984,6 +1283,38 @@ export const withFallbackPrompt: {
    *   Flag.withFallbackPrompt(Prompt.String({ message: "Name" }))
    * )
    * name.kind // => "flag"
+   * ```
+   *
+   * **Example** (Showing an introduction before fallback prompts)
+   *
+   * The prompt can be built by an effect, which only runs when the prompt is
+   * needed. Share a cached introduction between the prompt builders and
+   * `Command.provideEffectDiscard`: it runs once, before the first prompt, and
+   * also runs when every flag is supplied. Flags declared after the first
+   * prompted flag may not have been validated yet when the introduction runs.
+   *
+   * ```ts import.meta.vitest
+   * import { Console, Effect } from "effect"
+   * import { Command, Flag, Prompt } from "effect/cli"
+   *
+   * const program = Effect.gen(function*() {
+   *   const intro = yield* Effect.cached(Console.log("Welcome to demo"))
+   *
+   *   const ask = (name: string) =>
+   *     Flag.String(name).pipe(
+   *       Flag.withFallbackPrompt(
+   *         Effect.as(intro, Prompt.String({ message: `${name}?` }))
+   *       )
+   *     )
+   *
+   *   const demo = Command.make(
+   *     "demo",
+   *     { name: ask("name"), dir: ask("dir") },
+   *     (input) => Console.log(input)
+   *   ).pipe(Command.provideEffectDiscard(intro))
+   *
+   *   yield* Command.run(demo, { version: "1.0.0" })
+   * })
    * ```
    *
    * @stability unstable
@@ -1087,6 +1418,7 @@ export const map: {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -1132,6 +1464,7 @@ export const mapEffect: {
    *   Layer.succeed(Terminal.Terminal, Terminal.make({
    *     columns: Effect.succeed(80),
    *     rows: Effect.succeed(24),
+   *     size: Effect.die("unused"),
    *     readInput: Effect.die("unused"),
    *     readLine: Effect.die("unused"),
    *     display: () => Effect.void
@@ -1177,6 +1510,7 @@ export const mapEffect: {
    *   Layer.succeed(Terminal.Terminal, Terminal.make({
    *     columns: Effect.succeed(80),
    *     rows: Effect.succeed(24),
+   *     size: Effect.die("unused"),
    *     readInput: Effect.die("unused"),
    *     readLine: Effect.die("unused"),
    *     display: () => Effect.void
@@ -1230,6 +1564,7 @@ export const mapEffect: {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -1287,6 +1622,7 @@ export const mapTryCatch: {
    *   Layer.succeed(Terminal.Terminal, Terminal.make({
    *     columns: Effect.succeed(80),
    *     rows: Effect.succeed(24),
+   *     size: Effect.die("unused"),
    *     readInput: Effect.die("unused"),
    *     readLine: Effect.die("unused"),
    *     display: () => Effect.void
@@ -1344,6 +1680,7 @@ export const mapTryCatch: {
    *   Layer.succeed(Terminal.Terminal, Terminal.make({
    *     columns: Effect.succeed(80),
    *     rows: Effect.succeed(24),
+   *     size: Effect.die("unused"),
    *     readInput: Effect.die("unused"),
    *     readLine: Effect.die("unused"),
    *     display: () => Effect.void
@@ -1913,6 +2250,7 @@ export const orElse: {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -1961,6 +2299,7 @@ export const orElseResult: {
    *   Layer.succeed(Terminal.Terminal, Terminal.make({
    *     columns: Effect.succeed(80),
    *     rows: Effect.succeed(24),
+   *     size: Effect.die("unused"),
    *     readInput: Effect.die("unused"),
    *     readLine: Effect.die("unused"),
    *     display: () => Effect.void
@@ -2009,6 +2348,7 @@ export const orElseResult: {
    *   Layer.succeed(Terminal.Terminal, Terminal.make({
    *     columns: Effect.succeed(80),
    *     rows: Effect.succeed(24),
+   *     size: Effect.die("unused"),
    *     readInput: Effect.die("unused"),
    *     readLine: Effect.die("unused"),
    *     display: () => Effect.void

@@ -40,6 +40,8 @@ export interface FiberHandle<out A = unknown, out E = unknown> extends Pipeable,
     state: {
         readonly _tag: "Open";
         fiber: Fiber.Fiber<A, E> | undefined;
+        /** Every fiber the handle still owns: the current one plus replaced fibers that are still interrupting. */
+        readonly fibers: Set<Fiber.Fiber<A, E>>;
     } | {
         readonly _tag: "Closed";
     };

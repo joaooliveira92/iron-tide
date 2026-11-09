@@ -473,6 +473,20 @@ class FileImpl extends PartBase {
   }
 }
 const defaultWriteFile = (path, file) => Effect.flatMap(FileSystem.FileSystem, fs => Effect.mapError(Stream.run(file.content, fs.sink(path)), toMultipartError));
+const maxPersistedFileNameBytes = 128;
+const fileNameEncoder = /*#__PURE__*/new TextEncoder();
+// Keeps the trailing 128 UTF-8 bytes without splitting code points. Empty and dot names fall back to "file".
+const persistedFileName = baseName => {
+  const codePoints = Array.from(baseName);
+  let fileName = "";
+  let bytes = 0;
+  for (let i = codePoints.length - 1; i >= 0; i--) {
+    bytes += fileNameEncoder.encode(codePoints[i]).length;
+    if (bytes > maxPersistedFileNameBytes) break;
+    fileName = codePoints[i] + fileName;
+  }
+  return fileName === "" || fileName === "." || fileName === ".." ? "file" : fileName;
+};
 /**
  * Runs a channel of byte chunks and collects all output into a single
  * `Uint8Array`.
@@ -526,7 +540,7 @@ export const toPersisted = (stream, writeFile = defaultWriteFile) => Effect.gen(
       return Effect.void;
     }
     const file = part;
-    const fileName = path_.basename(file.name).slice(-128);
+    const fileName = persistedFileName(path_.basename(file.name));
     let path = path_.join(dir, fileName);
     while (usedPaths.has(path)) {
       path = path_.join(dir, `${fileIndex++}-${fileName}`);

@@ -63,6 +63,9 @@ export interface Options {
     readonly headers?: Headers.Input | undefined;
     readonly cookies?: Cookies.Cookies | undefined;
     readonly contentType?: string | undefined;
+    /**
+     * Sent as `content-length`, so it must equal the body's byte length.
+     */
     readonly contentLength?: number | undefined;
 }
 /**
@@ -890,17 +893,18 @@ export declare const omitsBody: (response: HttpServerResponse, withoutBody?: boo
  * **Details**
  *
  * Cookies are appended as `Set-Cookie` headers. Stream bodies are converted using
- * the supplied context.
+ * the supplied context, and are interrupted when `signal` aborts.
  *
  * Bodies are omitted for statuses 204, 205, and 304, or when `withoutBody` is true
- * (for example, for HEAD responses). Omitted raw `ReadableStream` bodies are
- * cancelled without awaiting completion, and cancellation errors are ignored.
+ * (for example, for HEAD responses). Statuses 204 and 205 also omit
+ * `content-length`. Omitted raw `ReadableStream` bodies are cancelled without
+ * awaiting completion, and cancellation errors are ignored.
  *
- * A raw `Response` body is returned as-is after the outer headers are merged
- * into it: outer headers replace native ones, and cookies are appended. When
- * its body is omitted, the bodyless `Response` keeps those merged headers and
- * uses the outer status for 204, 205 and 304, or the raw `Response` status
- * otherwise.
+ * A raw `Response` is returned as-is unless its body or `content-length` must
+ * be omitted, or outer headers or cookies must be merged. Copies leave the
+ * original unchanged: outer headers replace native ones, and cookies append.
+ * Bodyless copies use the outer status for 204, 205 and 304; otherwise they keep
+ * the raw status.
  *
  * @stability unstable
  * @category converting
@@ -909,6 +913,7 @@ export declare const omitsBody: (response: HttpServerResponse, withoutBody?: boo
 export declare const toWeb: (response: HttpServerResponse, options?: {
     readonly withoutBody?: boolean | undefined;
     readonly context?: Context.Context<never> | undefined;
+    readonly signal?: AbortSignal | undefined;
 }) => Response;
 /**
  * Wraps an `HttpServerResponse` as an `HttpClientResponse`, using the optional
@@ -941,6 +946,12 @@ export declare const fromClientResponse: (response: HttpClientResponse.HttpClien
  *
  * `Set-Cookie` headers are parsed into the response cookie collection and removed
  * from the header map. A present Web body is exposed as a stream body.
+ *
+ * **Gotchas**
+ *
+ * Preserves `content-length`, which must match the body. When proxying a
+ * compressed response decoded by `fetch`, remove the stale length from a copy
+ * (`new Response(response.body, response)`) before converting it.
  *
  * @stability unstable
  * @category converting

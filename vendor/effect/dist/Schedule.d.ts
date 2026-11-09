@@ -559,6 +559,11 @@ export declare const max: <const Schedules extends NonEmptyReadonlyArray<Schedul
  * Returns a new `Schedule` that recurs on the specified `Cron` schedule and
  * outputs the duration between recurrences.
  *
+ * **Details**
+ *
+ * A string expression is parsed with `Cron.parse`, using the optional time zone
+ * and `onDstOverlap` policy. A pre-parsed `Cron` value keeps its own policy.
+ *
  * **Example** (Scheduling work with cron expressions)
  *
  * ```ts import.meta.vitest
@@ -576,6 +581,11 @@ export declare const cron: {
     /**
      * Returns a new `Schedule` that recurs on the specified `Cron` schedule and
      * outputs the duration between recurrences.
+     *
+     * **Details**
+     *
+     * A string expression is parsed with `Cron.parse`, using the optional time zone
+     * and `onDstOverlap` policy. A pre-parsed `Cron` value keeps its own policy.
      *
      * **Example** (Scheduling work with cron expressions)
      *
@@ -595,6 +605,11 @@ export declare const cron: {
      * Returns a new `Schedule` that recurs on the specified `Cron` schedule and
      * outputs the duration between recurrences.
      *
+     * **Details**
+     *
+     * A string expression is parsed with `Cron.parse`, using the optional time zone
+     * and `onDstOverlap` policy. A pre-parsed `Cron` value keeps its own policy.
+     *
      * **Example** (Scheduling work with cron expressions)
      *
      * ```ts import.meta.vitest
@@ -608,7 +623,9 @@ export declare const cron: {
      * @category constructors
      * @since 2.0.0
      */
-    (expression: string, tz?: string | DateTime.TimeZone): Schedule<Duration.Duration, unknown, Cron.CronParseError>;
+    (expression: string, tz?: string | DateTime.TimeZone, options?: {
+        readonly onDstOverlap?: Cron.DstOverlapPolicy | undefined;
+    }): Schedule<Duration.Duration, unknown, Cron.CronParseError>;
 };
 /**
  * Returns a schedule that recurs once after the specified duration.

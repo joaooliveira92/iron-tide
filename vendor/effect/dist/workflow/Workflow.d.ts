@@ -39,9 +39,28 @@ export interface Workflow<Tag extends string, Payload extends AnyStructSchema, S
     annotateMerge<I>(annotations: Context.Context<I>): Workflow<Tag, Payload, Success, Error>;
     /**
      * Execute the workflow with the given payload.
+     *
+     * **Details**
+     *
+     * `discard: true` returns the execution ID without waiting for the result.
+     * The child remains linked to its parent for completion wakes and interruption.
+     *
+     * With `discard: true, detached: true`, the child neither wakes its parent
+     * nor gets interrupted with it. The cluster engine retains the parent for
+     * observability.
+     *
+     * Inside a workflow, an awaited child that is interrupted fails the parent
+     * with a defect rather than an interrupt, so the parent can recover with
+     * `Effect.catchDefect` or `Effect.exit`.
+     *
+     * **Gotchas**
+     *
+     * Do not await a detached execution later. Executing the same payload joins
+     * it, but its completion will not wake the awaiting workflow.
      */
     readonly execute: <const Discard extends boolean = false>(payload: Payload["~type.make.in"], options?: {
         readonly discard?: Discard;
+        readonly detached?: [Discard] extends [true] ? boolean | undefined : undefined;
     }) => Effect.Effect<Discard extends true ? string : Success["Type"], Discard extends true ? never : Error["Type"], WorkflowEngine | Payload["EncodingServices"] | Success["DecodingServices"] | Error["DecodingServices"]>;
     /**
      * Poll the current status of a workflow execution.
@@ -136,6 +155,7 @@ export interface AnyWithProps extends Any {
     readonly errorSchema: Schema.Top;
     readonly execute: (payload: any, options?: {
         readonly discard?: boolean;
+        readonly detached?: boolean | undefined;
     }) => Effect.Effect<any, any, any>;
     readonly resume: (executionId: string) => Effect.Effect<void, never, WorkflowEngine>;
 }
@@ -266,10 +286,16 @@ export declare class Complete<A, E> extends Complete_base<{
 declare const Suspended_base: Schema.Class<Suspended, Schema.Struct<{
     readonly _tag: Schema.tag<"Suspended">;
     readonly cause: Schema.optional<Schema.Cause<Schema.Never, Schema.Defect>>;
+    readonly failed: Schema.optional<Schema.Boolean>;
 }>, {}>;
 /**
  * Represents a suspended workflow execution, optionally carrying the cause that
  * triggered suspension.
+ *
+ * **Details**
+ *
+ * `failed` marks this execution's own `SuspendOnFailure` and requires explicit
+ * `resume` or `interrupt`. Inherited child failures do not set it.
  *
  * @stability unstable
  * @category schemas

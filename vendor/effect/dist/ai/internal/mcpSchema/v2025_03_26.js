@@ -17,6 +17,7 @@ export * from "./v2024_11_05.js";
  */
 export const protocolVersion = "2025-03-26";
 const optional = Previous.optional;
+const UnknownObject = Previous.UnknownObject;
 /**
  * @internal
  */
@@ -157,7 +158,7 @@ export class CallTool extends /*#__PURE__*/Rpc.make("tools/call", {
   payload: {
     ...Previous.RequestMeta.fields,
     name: Schema.String,
-    arguments: /*#__PURE__*/optional(Schema.JsonObject)
+    arguments: /*#__PURE__*/optional(UnknownObject)
   }
 }) {}
 /**
@@ -175,7 +176,7 @@ export class CreateMessage extends /*#__PURE__*/Rpc.make("sampling/createMessage
     temperature: /*#__PURE__*/optional(Schema.Finite),
     maxTokens: Schema.Finite,
     stopSequences: /*#__PURE__*/optional(/*#__PURE__*/Schema.Array(Schema.String)),
-    metadata: /*#__PURE__*/optional(Schema.JsonObject)
+    metadata: /*#__PURE__*/optional(UnknownObject)
   }
 }) {}
 /**

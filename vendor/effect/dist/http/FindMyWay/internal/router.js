@@ -32,6 +32,11 @@ const isCleanSingleTrailingParam = path => CLEAN_SINGLE_PARAM_REGEXP.test(path);
  * @internal
  */
 export const make = (options = {}) => new RouterImpl(options);
+/** @internal */
+export const getMaxParamLengthExceeded = router => {
+  const impl = router;
+  return impl.maxParamLengthExceeded ? impl.options.maxParamLength : undefined;
+};
 class RouterImpl {
   constructor(options = {}) {
     this.options = {
@@ -43,6 +48,7 @@ class RouterImpl {
     };
   }
   options;
+  maxParamLengthExceeded = false;
   routes = [];
   trees = /*#__PURE__*/Object.create(null);
   staticRoutes = /*#__PURE__*/Object.create(null);
@@ -228,6 +234,7 @@ class RouterImpl {
     return staticNode.isLeafNode;
   }
   find(method, path) {
+    this.maxParamLengthExceeded = false;
     let currentNode = this.trees[method];
     if (currentNode === undefined) return undefined;
     let querystring = "";
@@ -248,12 +255,6 @@ class RouterImpl {
         // 47 is '/'
         path = path.replace(FULL_PATH_REGEXP, "/");
       }
-      // This must be run before sanitizeUrl as the resulting function
-      // .sliceParameter must be constructed with same URL string used
-      // throughout the rest of this function.
-      if (this.options.ignoreDuplicateSlashes) {
-        path = removeDuplicateSlashes(path);
-      }
       let sanitizedUrl;
       try {
         sanitizedUrl = safeDecodeURI(path);
@@ -262,6 +263,9 @@ class RouterImpl {
         shouldDecodeParam = sanitizedUrl.shouldDecodeParam;
       } catch (error) {
         return undefined;
+      }
+      if (this.options.ignoreDuplicateSlashes) {
+        path = removeDuplicateSlashes(path);
       }
       if (this.options.ignoreTrailingSlash) {
         path = trimLastSlash(path);
@@ -300,6 +304,7 @@ class RouterImpl {
             searchParams: QS.parse(querystring)
           };
         }
+        this.maxParamLengthExceeded = true;
       }
     }
     let pathIndex = currentNode.prefix.length;
@@ -369,6 +374,7 @@ class RouterImpl {
             const matchedParam = matchedParameters[i] ?? "";
             if (matchedParam.length > maxParamLength) {
               maxParamLengthExceeded = true;
+              this.maxParamLengthExceeded = true;
               break;
             }
           }
@@ -387,6 +393,7 @@ class RouterImpl {
           }
         } else {
           if (param.length > maxParamLength) {
+            this.maxParamLengthExceeded = true;
             if (brothersNodesStack.length === 0) {
               return undefined;
             }
@@ -622,7 +629,8 @@ function makeCreateParams(params) {
     return paramsObject;
   };
 }
-function getClosingParenthensePosition(path, idx) {
+/** @internal */
+export function getClosingParenthensePosition(path, idx) {
   // `path.indexOf()` will always return the first position of the closing parenthese,
   // but it's inefficient for grouped or wrong regexp expressions.
   // see issues #62 and #63 for more info

@@ -761,7 +761,10 @@ export const offer: {
 )
 
 /**
- * Adds a message to the queue synchronously. Returns `false` if the queue is done.
+ * Adds a message to the queue synchronously. Returns `false` without adding the
+ * message if the queue is closing or done, or if it is full with a non-sliding
+ * strategy (`"suspend"` or `"dropping"`). A queue with non-positive capacity can
+ * still accept a message when a taker is waiting.
  *
  * **When to use**
  *
@@ -929,42 +932,7 @@ export const offerAll: {
 } = dual(2, <A, E>(self: Enqueue<A, E>, messages: Iterable<A>): Effect<Array<A>> =>
   // Admitting what fits and registering the rest are one step, so no take can
   // free capacity between them
-  internalEffect.callback</**
-   * Adds multiple messages to the queue. Returns the remaining messages that
-   * were not added.
-   *
-   * **When to use**
-   *
-   * Use when producers can submit a batch at once and need to know which messages
-   * did not fit under the queue's capacity strategy.
-   *
-   * **Details**
-   *
-   * For bounded queues, this operation may suspend if the queue doesn't have
-   * enough capacity. The operation returns an array of messages that couldn't
-   * be added (empty array means all messages were successfully added).
-   *
-   * **Example** (Offering multiple values)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Queue } from "effect"
-   *
-   * const program = Effect.gen(function*() {
-   *   const queue = yield* Queue.dropping<number>(3)
-   *
-   *   // Try to add more messages than capacity without suspending
-   *   const remaining1 = yield* Queue.offerAll(queue, [1, 2, 3, 4, 5])
-   *   return remaining1
-   * })
-   *
-   * await Effect.runPromise(program) // => [4, 5]
-   * ```
-   *
-   * @stability stable
-   * @category offering
-   * @since 2.0.0
-   */
-  Array<A>>((resume) => {
+  internalEffect.callback<Array<A>>((resume) => {
     const remaining = offerAllUnsafe(self, messages)
     if (remaining.length === 0 || self.strategy === "dropping") {
       return resume(core.exitSucceed(remaining))

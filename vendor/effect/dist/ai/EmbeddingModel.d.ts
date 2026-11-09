@@ -189,7 +189,16 @@ export interface EmbeddingModel {
  * provider, while `embedMany([])` returns an empty response without calling the
  * provider.
  *
+ * Concurrent `embed` calls share one `embedMany` call when `batchKey` returns
+ * equal keys under `Equal.equals`. The batch runs with the first caller's
+ * context, so return every value `embedMany` reads from that context. Without
+ * `batchKey`, all callers share one batch.
+ *
  * **Gotchas**
+ *
+ * Context that `batchKey` does not return is not isolated. Per-call
+ * `FetchHttpClient.RequestInit`, or any service read by an injected HTTP
+ * client, takes the first caller's value for the whole batch.
  *
  * Provider responses are interpreted positionally and must contain exactly one
  * result for each requested input. If the provider returns a different number
@@ -205,6 +214,7 @@ export interface EmbeddingModel {
  */
 export declare const make: (params: {
     readonly embedMany: (options: ProviderOptions) => Effect.Effect<ProviderResponse, AiError.AiError>;
+    readonly batchKey?: ((context: Context.Context<never>) => unknown) | undefined;
 }) => Effect.Effect<EmbeddingModel>;
 export {};
 //# sourceMappingURL=EmbeddingModel.d.ts.map

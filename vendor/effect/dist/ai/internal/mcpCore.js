@@ -4,6 +4,7 @@
  * @internal
  */
 import * as Arr from "../../Array.js";
+import * as Cause from "../../Cause.js";
 import * as Data from "../../Data.js";
 import * as Effect from "../../Effect.js";
 import * as McpSchema from "../McpSchema.js";
@@ -49,6 +50,22 @@ export class ToolExecutionError extends /*#__PURE__*/Data.TaggedError("ToolExecu
  */
 export class UnsupportedByProtocol extends /*#__PURE__*/Data.TaggedError("UnsupportedByProtocol") {}
 /**
+ * A request rejected outside the handler, for example by MCP middleware.
+ * Adapters send it as a JSON-RPC error with its code, message and data, never
+ * as a tool result. `error` keeps the original failure for in-process callers.
+ *
+ * @internal
+ */
+export class RequestRejected extends /*#__PURE__*/Data.TaggedError("RequestRejected") {}
+/**
+ * @internal
+ */
+export class SkillNotFound extends /*#__PURE__*/Data.TaggedError("SkillNotFound") {}
+/**
+ * @internal
+ */
+export class DirectoryNotFound extends /*#__PURE__*/Data.TaggedError("DirectoryNotFound") {}
+/**
  * @internal
  */
 export class PromptNotFound extends /*#__PURE__*/Data.TaggedError("PromptNotFound") {}
@@ -60,6 +77,12 @@ export const ClientNotification = /*#__PURE__*/Data.taggedEnum();
  * @internal
  */
 export const ServerNotification = /*#__PURE__*/Data.taggedEnum();
+// Whether one skill directory contains the other, or both are the same.
+const skillsOverlap = (a, b) => {
+  const rootA = a.slice(0, -"/SKILL.md".length);
+  const rootB = b.slice(0, -"/SKILL.md".length);
+  return rootA === rootB || rootA.startsWith(`${rootB}/`) || rootB.startsWith(`${rootA}/`);
+};
 /**
  * @internal
  */
@@ -68,20 +91,19 @@ export const make = /*#__PURE__*/Effect.sync(() => {
   const resourceRegistrations = [];
   const resourceTemplateRegistrations = [];
   const promptRegistrations = new Map();
+  const skillRegistrations = new Map();
+  const skillFiles = new Set();
   const completionRegistrations = new Map();
+  const filterList = (registrations, invocation) => Effect.map(Effect.filter(Arr.filter(registrations, entry => entry.isVisible(invocation.protocol)), entry => entry.visible === undefined ? Effect.succeed(true) : entry.visible(invocation)), entries => entries.map(entry => entry.descriptor));
   const tools = {
     register: registration => Effect.sync(() => {
       registrations.set(registration.descriptor.name, registration);
     }),
-    list: profile => Effect.sync(() => {
-      const descriptors = [];
-      for (const registration of registrations.values()) {
-        if (registration.isVisible(profile)) {
-          descriptors.push(registration.descriptor);
-        }
-      }
-      return descriptors;
-    }),
+    list: invocation => filterList(registrations.values(), invocation),
+    find: (name, profile) => {
+      const registration = registrations.get(name);
+      return registration !== undefined && registration.isVisible(profile) ? registration.descriptor : undefined;
+    },
     call: (call, invocation) => Effect.suspend(() => {
       const registration = registrations.get(call.name);
       if (registration === undefined) {
@@ -98,14 +120,14 @@ export const make = /*#__PURE__*/Effect.sync(() => {
     })
   };
   const resources = {
-    register: registration => Effect.sync(() => {
+    register: registration => {
       const index = resourceRegistrations.findIndex(entry => entry.descriptor.uri === registration.descriptor.uri);
       if (index === -1) {
         resourceRegistrations.push(registration);
       } else {
         resourceRegistrations[index] = registration;
       }
-    }),
+    },
     registerTemplate: registration => Effect.sync(() => {
       const index = resourceTemplateRegistrations.findIndex(entry => entry.descriptor.uriTemplate === registration.descriptor.uriTemplate);
       if (index === -1) {
@@ -114,8 +136,8 @@ export const make = /*#__PURE__*/Effect.sync(() => {
         resourceTemplateRegistrations[index] = registration;
       }
     }),
-    list: profile => Effect.sync(() => resourceRegistrations.filter(entry => entry.isVisible(profile)).map(entry => entry.descriptor)),
-    listTemplates: profile => Effect.sync(() => resourceTemplateRegistrations.filter(entry => entry.isVisible(profile)).map(entry => entry.descriptor)),
+    list: invocation => filterList(resourceRegistrations, invocation),
+    listTemplates: invocation => filterList(resourceTemplateRegistrations, invocation),
     read: Effect.fnUntraced(function* (uri, invocation) {
       const resource = resourceRegistrations.find(entry => entry.descriptor.uri === uri);
       if (resource !== undefined && resource.isVisible(invocation.protocol)) {
@@ -136,7 +158,7 @@ export const make = /*#__PURE__*/Effect.sync(() => {
     register: registration => Effect.sync(() => {
       promptRegistrations.set(registration.descriptor.name, registration);
     }),
-    list: profile => Effect.sync(() => Array.from(promptRegistrations.values()).filter(entry => entry.isVisible(profile)).map(entry => entry.descriptor)),
+    list: invocation => filterList(promptRegistrations.values(), invocation),
     get: Effect.fnUntraced(function* (name, args, invocation) {
       const registration = promptRegistrations.get(name);
       if (registration === undefined || !registration.isVisible(invocation.protocol)) {
@@ -168,16 +190,68 @@ export const make = /*#__PURE__*/Effect.sync(() => {
       };
     })
   };
+  const skills = {
+    register: registration => Effect.suspend(() => {
+      const {
+        uri,
+        resources
+      } = registration.entry;
+      const fail = reason => Effect.fail(new Cause.IllegalArgumentError(`Skill ${uri}: ${reason}`));
+      for (const other of skillRegistrations.keys()) {
+        if (skillsOverlap(uri, other)) return fail(`its directory overlaps the skill ${other}`);
+      }
+      const files = resources === "dynamic" ? [] : resources.map(resource => resource.uri);
+      for (const file of files) {
+        if (resourceRegistrations.some(entry => entry.descriptor.uri === file)) {
+          return fail(`${file} is already registered as a resource`);
+        }
+      }
+      skillRegistrations.set(uri, registration);
+      for (const file of files) skillFiles.add(file);
+      return Effect.void;
+    }),
+    ownsFile: uri => skillFiles.has(uri),
+    list: invocation => filterList(Array.from(skillRegistrations.values(), registration => ({
+      descriptor: registration.entry,
+      isVisible: registration.isVisible,
+      visible: registration.visible
+    })), invocation),
+    get: (uri, invocation) => Effect.suspend(() => {
+      const registration = skillRegistrations.get(uri);
+      return registration !== undefined && registration.isVisible(invocation.protocol) ? registration.get(invocation) : Effect.fail(new SkillNotFound({
+        uri
+      }));
+    }),
+    readDirectory: Effect.fnUntraced(function* (uri, invocation) {
+      const children = new Map();
+      let found = false;
+      for (const registration of skillRegistrations.values()) {
+        const own = registration.directory(uri);
+        if (own === undefined || !registration.isVisible(invocation.protocol)) continue;
+        if (registration.visibleInDirectories !== undefined && !(yield* registration.visibleInDirectories(invocation))) continue;
+        found = true;
+        for (const child of own) children.set(child.uri, child);
+      }
+      if (!found) {
+        return yield* new DirectoryNotFound({
+          uri
+        });
+      }
+      return Array.from(children.values()).sort((a, b) => a.uri < b.uri ? -1 : a.uri > b.uri ? 1 : 0);
+    })
+  };
   const registrationPresence = Effect.sync(() => ({
     tools: registrations.size > 0,
     resources: resourceRegistrations.length > 0 || resourceTemplateRegistrations.length > 0,
-    prompts: promptRegistrations.size > 0
+    prompts: promptRegistrations.size > 0,
+    skills: skillRegistrations.size > 0
   }));
   return {
     tools,
     resources,
     prompts,
     completions,
+    skills,
     registrationPresence
   };
 });

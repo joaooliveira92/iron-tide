@@ -96,7 +96,8 @@ export declare const schemaHeaders: <A, I extends Readonly<Record<string, string
  */
 export declare const MaxBodySize: Context.Reference<ByteSize.ByteSize | undefined>;
 /**
- * Builds an inspectable object for an incoming message, redacting headers and including a synchronously readable JSON or text body when available.
+ * Builds an inspectable object for an incoming message and redacts headers.
+ * The body is left unread.
  *
  * @stability unstable
  * @category converting

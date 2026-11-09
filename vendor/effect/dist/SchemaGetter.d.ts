@@ -942,7 +942,8 @@ export declare function Boolean<E>(): Getter<boolean, E>;
  * **Details**
  *
  * - Delegates to `globalThis.BigInt`.
- * - Throws at runtime if the input cannot be converted (e.g. non-numeric string).
+ * - Fails with `SchemaIssue.InvalidValue` if the input cannot be converted
+ *   (e.g. a non-numeric string or a non-integer number).
  *
  * **Example** (Coercing to a bigint)
  *
@@ -1239,7 +1240,10 @@ export declare function stringifyJson(options?: StringifyJsonOptions): Getter<st
  * The getter is pure and never fails. It splits the string by `separator`
  * (default `,`) and then each pair at the first `keyValueSeparator` (default `=`),
  * preserving the rest of the value. An empty `keyValueSeparator` uses the first
- * two characters as the key and value. Pairs missing a key or value are skipped.
+ * two characters as the key and value. Pairs without a `keyValueSeparator` or
+ * with an empty key are skipped. Pairs with an empty value are skipped unless
+ * `keepEmptyValues` is `true`, in which case the value is `""`. When `trim` is
+ * `true`, keys and values are trimmed before these checks.
  *
  * **Example** (Parsing a key-value string)
  *
@@ -1261,6 +1265,8 @@ export declare function stringifyJson(options?: StringifyJsonOptions): Getter<st
 export declare function splitKeyValue<E extends string>(options?: {
     readonly separator?: string | undefined;
     readonly keyValueSeparator?: string | undefined;
+    readonly trim?: boolean | undefined;
+    readonly keepEmptyValues?: boolean | undefined;
 }): Getter<Record<string, string>, E>;
 /**
  * Joins a record of key-value pairs into a delimited string.
@@ -1359,7 +1365,8 @@ export declare function encodeBase64<E extends Uint8Array | string>(): Getter<st
  *
  * **Details**
  *
- * The getter is pure and never fails.
+ * The getter is pure and never fails. The output is unpadded unless
+ * `padding` is `true`.
  *
  * **Example** (Encoding to Base64Url)
  *
@@ -1379,7 +1386,10 @@ export declare function encodeBase64<E extends Uint8Array | string>(): Getter<st
  * @category encoding
  * @since 4.0.0
  */
-export declare function encodeBase64Url<E extends Uint8Array | string>(): Getter<string, E>;
+export declare function encodeBase64Url<E extends Uint8Array | string>(options?: {
+    /** Keep the `=` padding. Defaults to `false`. */
+    readonly padding?: boolean | undefined;
+}): Getter<string, E>;
 /**
  * Encodes a `Uint8Array` or string to a hexadecimal string.
  *
@@ -1798,6 +1808,10 @@ export declare function encodeURLSearchParams(): Getter<URLSearchParams, unknown
  *   - `""` → real empty key
  * - Numeric bracket segments become array indices only when they are valid
  *   JavaScript array-index strings; otherwise they remain object keys.
+ * - An indexed container becomes an array only when it has at most 20 holes
+ *   (missing indices below its highest index). Otherwise it is returned as an
+ *   object keyed by the index strings, so untrusted input such as
+ *   `a[4294967294]` cannot produce huge sparse arrays.
  * - Duplicate keys for the same path are merged into arrays.
  * - If a structural path conflicts with a previous leaf or a different container
  *   type, the later structural path replaces the conflicting value.

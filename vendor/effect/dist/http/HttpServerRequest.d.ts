@@ -28,7 +28,6 @@ import * as Stream from "../Stream.ts";
 import * as Headers from "./Headers.ts";
 import * as HttpClientRequest from "./HttpClientRequest.ts";
 import * as HttpIncomingMessage from "./HttpIncomingMessage.ts";
-import { type HttpMethod } from "./HttpMethod.ts";
 import { HttpServerError, type RequestError } from "./HttpServerError.ts";
 import * as Multipart from "./Multipart.ts";
 /**
@@ -62,8 +61,13 @@ export declare const TypeId = "~effect/http/HttpServerRequest";
  * **Details**
  *
  * It extends `HttpIncomingMessage` with request metadata, parsed cookies,
- * multipart accessors, WebSocket upgrade support, and a `modify` method for
- * creating adjusted request views.
+ * multipart accessors, connection upgrades, and a `modify` method for
+ * creating adjusted request views. `upgrade` completes a WebSocket handshake
+ * for `Upgrade: websocket`. Platforms that can hand over the connection, such
+ * as Node, answer other protocols with `101 Switching Protocols` and expose
+ * the raw connection. `upgradeWith` does the same and adds custom headers to
+ * the `101` response; `upgrade` is `upgradeWith({})`. WebSocket upgrades fail
+ * when custom headers are given.
  *
  * @stability unstable
  * @category models
@@ -74,15 +78,35 @@ export interface HttpServerRequest extends HttpIncomingMessage.HttpIncomingMessa
     readonly source: object;
     readonly url: string;
     readonly originalUrl: string;
-    readonly method: HttpMethod;
+    /**
+     * The uppercase request method as received, which may be a method outside
+     * the known `HttpMethod` literals (for example `"PROPFIND"`).
+     */
+    readonly method: string;
     readonly cookies: ReadonlyRecord<string, string>;
     readonly multipart: Effect.Effect<Multipart.Persisted, Multipart.MultipartError, Scope.Scope | FileSystem.FileSystem | Path.Path>;
     readonly multipartStream: Stream.Stream<Multipart.Part, Multipart.MultipartError>;
     readonly upgrade: Effect.Effect<Socket.Socket, HttpServerError>;
+    readonly upgradeWith: (options: {
+        readonly headers?: Headers.Input | undefined;
+    }) => Effect.Effect<Socket.Socket, HttpServerError>;
+    /**
+     * Address of the directly connected peer. Trusted proxy middleware replaces
+     * `remoteAddress` with the forwarded client address and keeps the previous
+     * value here; otherwise it equals `remoteAddress`.
+     */
+    readonly peerAddress: Option.Option<string>;
+    /**
+     * Scheme validated by trusted proxy middleware. `toURL` prefers it over the
+     * scheme of the transport connection.
+     */
+    readonly protocol: "http" | "https" | undefined;
     readonly modify: (options: {
         readonly url?: string;
         readonly headers?: Headers.Headers;
         readonly remoteAddress?: Option.Option<string>;
+        readonly peerAddress?: Option.Option<string>;
+        readonly protocol?: "http" | "https";
     }) => HttpServerRequest;
 }
 /**
@@ -274,9 +298,13 @@ export declare const toClientRequest: (request: HttpServerRequest) => HttpClient
  *
  * **Details**
  *
- * The host comes from the `host` header, defaulting to `localhost`, and the
- * protocol is `https` only when `x-forwarded-proto` is `https`; invalid URLs
- * return `Option.none`.
+ * Uses `host` (defaulting to `localhost`) and the request `protocol` set by
+ * trusted proxy middleware. Otherwise, infers HTTPS from a case-insensitive
+ * `https:` prefix in `originalUrl`, defaulting to HTTP. Forwarding headers such
+ * as `x-forwarded-proto` are never read directly; use
+ * `HttpMiddleware.xForwardedHeaders` behind a TLS-terminating proxy. An
+ * absolute `url` keeps its own protocol and host. Invalid URLs return
+ * `Option.none`.
  *
  * @stability unstable
  * @category converting

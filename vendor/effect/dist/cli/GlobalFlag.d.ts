@@ -16,6 +16,7 @@ import * as Effect from "../Effect.ts";
 import type { LogLevel as LogLevelType } from "../LogLevel.ts";
 import * as Option from "../Option.ts";
 import type * as Command from "./Command.ts";
+import * as Completions_ from "./Completions.ts";
 import * as Flag from "./Flag.ts";
 /**
  * Context passed to action handlers.
@@ -143,14 +144,14 @@ export declare const Wizard: Action<boolean>;
  *
  * **Details**
  *
- * Accepted values are `bash`, `zsh`, `fish`, and `sh`; `sh` is normalized to
- * `bash`.
+ * Accepted values are `bash`, `zsh`, `fish`, `powershell`, `sh`, and `pwsh`;
+ * `sh` is normalized to `bash` and `pwsh` to `powershell`.
  *
  * @stability unstable
  * @category references
  * @since 4.0.0
  */
-export declare const Completions: Action<Option.Option<"bash" | "zsh" | "fish">>;
+export declare const Completions: Action<Option.Option<Completions_.Shell>>;
 /**
  * Defines the global setting flag for command log level.
  *
@@ -196,7 +197,7 @@ export declare const BuiltIns: readonly [
     Action<boolean>,
     Action<boolean>,
     Action<boolean>,
-    Action<Option.Option<"bash" | "zsh" | "fish">>,
+    Action<Option.Option<Completions_.Shell>>,
     Setting<"log-level", Option.Option<LogLevelType>>
 ];
 /**

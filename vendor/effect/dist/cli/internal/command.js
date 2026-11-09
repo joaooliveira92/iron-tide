@@ -51,6 +51,7 @@ export const makeCommand = options => {
   const annotations = options.annotations ?? Context.empty();
   const globalFlags = options.globalFlags ?? [];
   const subcommands = options.subcommands ?? [];
+  const resolveExamples = options.resolveExamples ?? noExamples;
   const handle = (input, commandPath) => Predicate.isNotUndefined(options.handle) ? options.handle(input, commandPath) : Effect.fail(new CliError.ShowHelp({
     commandPath,
     errors: []
@@ -113,7 +114,7 @@ export const makeCommand = options => {
         }))
       });
     }
-    const examples = options.examples ?? [];
+    const examples = resolveExamples(commandPath);
     return {
       description: options.description ?? "",
       usage,
@@ -133,7 +134,8 @@ export const makeCommand = options => {
   return Object.assign(Object.create(Proto), {
     [TypeId]: TypeId,
     name: options.name,
-    examples: options.examples ?? [],
+    examples: resolveExamples([options.name]),
+    resolveExamples,
     annotations,
     globalFlags,
     subcommands,
@@ -159,6 +161,7 @@ export const makeCommand = options => {
 /* ========================================================================== */
 /* Helpers                                                                    */
 /* ========================================================================== */
+const noExamples = () => [];
 /**
  * Converts a single flag param into a FlagDoc for help display.
  *
@@ -166,10 +169,11 @@ export const makeCommand = options => {
  */
 export const toFlagDoc = (single, metadata) => {
   const formattedAliases = single.aliases.map(alias => alias.length === 1 ? `-${alias}` : `--${alias}`);
+  const type = single.typeName ?? Primitive.getTypeName(single.primitiveType);
   return {
     name: single.name,
     aliases: formattedAliases,
-    type: single.typeName ?? Primitive.getTypeName(single.primitiveType),
+    type: single.optionalValue === undefined ? type : `[=${type}]`,
     description: appendChoiceKeys(single.description, Primitive.getChoiceKeys(single.primitiveType)),
     required: single.primitiveType._tag !== "Boolean" && !metadata.isOptional
   };

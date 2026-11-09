@@ -678,7 +678,9 @@ export const take = n => {
     let leftover = undefined;
     return upstream.pipe(Effect.flatMap(arr => {
       if (taken.length + arr.length <= count) {
-        taken.push(...arr);
+        for (let i = 0; i < arr.length; i++) {
+          taken.push(arr[i]);
+        }
         if (taken.length === count) {
           return Cause.done();
         }
@@ -1015,7 +1017,9 @@ export const count = /*#__PURE__*/reduceArray(() => 0, (s, arr) => s + arr.lengt
  * @since 4.0.0
  */
 export const collect = () => reduceArray(Arr.empty, (s, arr) => {
-  s.push(...arr);
+  for (let i = 0; i < arr.length; i++) {
+    s.push(arr[i]);
+  }
   return s;
 });
 /**
@@ -1160,13 +1164,20 @@ export const takeWhileFilterEffect = filter => fromTransform(upstream => {
  * @category constructors
  * @since 4.0.0
  */
-export const takeUntil = predicate => suspend(() => {
-  let done = false;
-  return takeWhile(i => {
-    if (done) return false;
-    done = predicate(i);
-    return true;
-  });
+export const takeUntil = predicate => fromTransform(upstream => {
+  const out = Arr.empty();
+  return upstream.pipe(Effect.flatMap(arr => {
+    for (let i = 0; i < arr.length; i++) {
+      out.push(arr[i]);
+      if (predicate(arr[i])) {
+        const leftover = i + 1 < arr.length ? arr.slice(i + 1) : undefined;
+        return Cause.done([out, leftover]);
+      }
+    }
+    return Effect.void;
+  }), Effect.forever({
+    disableYield: true
+  }), Pull.catchDone(end => Effect.succeed(end ?? [out])));
 });
 /**
  * Collects input elements effectfully until the predicate returns `true`,
@@ -1180,17 +1191,31 @@ export const takeUntil = predicate => suspend(() => {
  * @category constructors
  * @since 4.0.0
  */
-export const takeUntilEffect = predicate => suspend(() => {
-  let done = false;
-  return takeWhileEffect(input => {
-    if (done) {
-      return Effect.succeed(false);
-    }
-    return Effect.map(predicate(input), b => {
-      done = b;
-      return true;
+export const takeUntilEffect = predicate => fromTransform(upstream => {
+  const out = Arr.empty();
+  let leftover = undefined;
+  return upstream.pipe(Effect.flatMap(arr => {
+    let i = 0;
+    return Effect.whileLoop({
+      while: () => i < arr.length,
+      body: () => {
+        const input = arr[i++];
+        return Effect.flatMap(predicate(input), matched => {
+          out.push(input);
+          if (!matched) {
+            return Effect.void;
+          }
+          if (i < arr.length) {
+            leftover = arr.slice(i);
+          }
+          return Cause.done();
+        });
+      },
+      step: constVoid
     });
-  });
+  }), Effect.forever({
+    disableYield: true
+  }), Pull.catchDone(() => Effect.succeed([out, leftover])));
 });
 /**
  * A sink that executes the provided effectful function for every item fed
@@ -1405,7 +1430,9 @@ export const orElse = /*#__PURE__*/dual(2, (self, f) => fromTransform((upstream,
  * @category error handling
  * @since 4.0.0
  */
-export const catchCause = /*#__PURE__*/dual(2, (self, f) => transformEffect(self, Effect.catchCause(cause => Effect.map(f(cause), a2 => [a2]))));
+export const catchCause = /*#__PURE__*/dual(2, (self, f) => transformEffect(self, Effect.catchCause(cause =>
+// Upstream failures are not sink errors, so they bypass the handler.
+Channel.hasUpstreamFailure(cause) ? Effect.failCause(cause) : Effect.map(f(cause), a2 => [a2]))));
 const catch_ = /*#__PURE__*/dual(2, (self, f) => transformEffect(self, Effect.catch(error => Effect.map(f(error), a2 => [a2]))));
 export {
 /**
@@ -1436,7 +1463,10 @@ catch_ as catch };
  * @category resource management
  * @since 4.0.0
  */
-export const onExit = /*#__PURE__*/dual(2, (self, f) => transformEffect(self, Effect.onExit(exit => f(Exit.map(exit, ([a]) => a)))));
+export const onExit = /*#__PURE__*/dual(2, (self, f) => transformEffect(self, Effect.onExit(exit =>
+// Upstream failures stop the sink like an interruption; they are not
+// sink errors.
+f(Exit.isFailure(exit) && Channel.hasUpstreamFailure(exit.cause) ? Exit.interrupt() : Exit.map(exit, ([a]) => a)))));
 /**
  * Runs a finalizer effect after this sink completes, fails, or is interrupted.
  *

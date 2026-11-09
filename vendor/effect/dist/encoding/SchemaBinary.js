@@ -13,6 +13,7 @@
  */
 import * as Arr from "../Array.js";
 import * as BigDecimal from "../BigDecimal.js";
+import * as Bytes from "../Bytes.js";
 import * as Cause from "../Cause.js";
 import * as Channel from "../Channel.js";
 import * as Chunk from "../Chunk.js";
@@ -39,6 +40,7 @@ const codecCache = /*#__PURE__*/new WeakMap();
 const fingerprintCodecCache = /*#__PURE__*/new WeakMap();
 const directCodecCache = /*#__PURE__*/new WeakMap();
 const directFingerprintCodecCache = /*#__PURE__*/new WeakMap();
+const strictCodecCache = /*#__PURE__*/new WeakMap();
 /**
  * Derives a compact binary codec from a schema.
  *
@@ -50,6 +52,14 @@ const directFingerprintCodecCache = /*#__PURE__*/new WeakMap();
  *
  * Encoded results are arena-backed views and may share a larger buffer. Use
  * `bytes.slice()` when independent ownership is required.
+ *
+ * **Gotchas**
+ *
+ * Bytes carry the layout of the schema that wrote them. In the default mode,
+ * decode them with that schema or a compatible evolution of it; fingerprint
+ * mode requires an identical encoded layout. Most union codecs prefix values
+ * with a member selector, so they cannot read bytes written by a member's own
+ * codec.
  *
  * **Example** (Deriving a binary codec)
  *
@@ -84,6 +94,28 @@ export function toCodec(schema, options) {
   } : undefined;
   const codec = assembleCodec(trusted === undefined ? target : withTrustedDecode(target, trusted, !recursive), layout, mode, trusted);
   cache.set(schema, codec);
+  return codec;
+}
+/**
+ * Derives the default-mode {@link toCodec} codec, except that decoding rejects
+ * struct fields the schema does not know instead of skipping them.
+ *
+ * @internal
+ */
+export function toCodecStrict(schema) {
+  const cached = strictCodecCache.get(schema);
+  if (cached !== undefined) return cached;
+  const {
+    exact,
+    layout,
+    recursive,
+    target
+  } = compileTarget(schema);
+  const trusted = exact ? {
+    value: undefined
+  } : undefined;
+  const codec = assembleCodec(trusted === undefined ? target : withTrustedDecode(target, trusted, !recursive), layout, strictMode, trusted);
+  strictCodecCache.set(schema, codec);
   return codec;
 }
 /**
@@ -190,16 +222,7 @@ export function encodeManyUnknownSync(schema, options) {
   };
 }
 function concatFrames(frames) {
-  if (frames.length === 1) return frames[0];
-  let length = 0;
-  for (const frame of frames) length += frame.length;
-  const out = new Uint8Array(length);
-  let offset = 0;
-  for (const frame of frames) {
-    out.set(frame, offset);
-    offset += frame.length;
-  }
-  return out;
+  return frames.length === 1 ? frames[0] : Bytes.concat(frames);
 }
 /**
  * Creates a stateful parser for a stream of concatenated frames.
@@ -406,7 +429,7 @@ function makeParser(layout, mode, parseOptions, maxFrameSize, decodeEncoded, dic
           issuePathLen = 0;
           const bodyStart = pos + headerLen;
           indexSignatures.beginFrame();
-          body.reset(buf, bodyStart, bodyStart + frameLen, parseOptions, indexSignatures, mode.positional, dict);
+          body.reset(buf, bodyStart, bodyStart + frameLen, parseOptions, indexSignatures, mode, dict);
           const value = decodeFrameBody(layout, body, mode);
           out.push(decodeEncoded === undefined ? value : decodeEncoded(value));
         } catch (e) {
@@ -628,6 +651,132 @@ export function fieldId(id) {
   return self => self.rebuild(annotateLastLink(SchemaAST.annotateKey(self.ast, annotations)));
 }
 const FIELD_ID_ANNOTATION_KEY = "~effect/encoding/SchemaBinary/fieldId";
+// Marks the check that opts a number or bigint into a fixed-width encoding.
+// It lives on a check, not the AST, so later annotations and checks keep it.
+const FIXED_WIDTH_ANNOTATION_KEY = "~effect/encoding/SchemaBinary/fixedWidth";
+const BIGINT_I64_MIN = /*#__PURE__*/BigInt("-9223372036854775808");
+const BIGINT_I64_MAX = /*#__PURE__*/BigInt("9223372036854775807");
+const BIGINT_U64_MAX = /*#__PURE__*/BigInt("18446744073709551615");
+/**
+ * A 32-bit signed integer written as four little-endian bytes.
+ *
+ * **When to use**
+ *
+ * Use when values regularly need more than four bytes as a varint, such as
+ * hashes or full-range ids. Small values are cheaper as `Schema.Int`.
+ *
+ * **Details**
+ *
+ * Rejects non-integers and values outside -2147483648 through 2147483647
+ * instead of truncating them. `-0` is written as `0`.
+ *
+ * **Gotchas**
+ *
+ * Switching a field between this, {@link uint32}, `Schema.Number` or
+ * `Schema.Int` changes its encoding, so it is not a compatible evolution. In
+ * default mode the other reader can decode a different value without an error,
+ * for example after a signedness swap or inside an array of structs.
+ * Fingerprint mode rejects the layout mismatch.
+ *
+ * **Example** (Declaring fixed-width integer fields)
+ *
+ * ```ts
+ * import { Schema } from "effect"
+ * import { SchemaBinary } from "effect/encoding"
+ *
+ * const Packet = Schema.Struct({
+ *   version: SchemaBinary.uint32,
+ *   offset: SchemaBinary.int32,
+ *   sequence: SchemaBinary.uint64,
+ *   timestamp: SchemaBinary.int64
+ * })
+ * ```
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export const int32 = /*#__PURE__*/Schema.Number.check(/*#__PURE__*/Schema.isInt32({
+  [FIXED_WIDTH_ANNOTATION_KEY]: "i32"
+}));
+/**
+ * A 32-bit unsigned integer written as four little-endian bytes.
+ *
+ * **Details**
+ *
+ * Rejects non-integers and values outside 0 through 4294967295 instead of
+ * wrapping them. See {@link int32} for when a fixed width pays off.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export const uint32 = /*#__PURE__*/Schema.Number.check(/*#__PURE__*/Schema.isUint32({
+  [FIXED_WIDTH_ANNOTATION_KEY]: "u32"
+}));
+/**
+ * A 64-bit signed integer, as a `bigint`, written as eight little-endian bytes.
+ *
+ * **Details**
+ *
+ * Rejects values outside -2^63 through 2^63 - 1 instead of wrapping them. As a
+ * struct field it costs one length byte more than the payload, because the
+ * eight-byte field kind belongs to floating-point numbers.
+ *
+ * **Gotchas**
+ *
+ * Switching a field between this, {@link uint64} or `Schema.BigInt` is not a
+ * compatible evolution. All three are length-prefixed struct fields, and eight
+ * bytes can be valid for each, so a default-mode reader may decode the other
+ * form as a different value without an error. Fingerprint mode rejects the
+ * layout mismatch.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export const int64 = /*#__PURE__*/Schema.BigInt.check(/*#__PURE__*/Schema.isBetweenBigInt({
+  minimum: BIGINT_I64_MIN,
+  maximum: BIGINT_I64_MAX
+}, {
+  expected: "a 64-bit integer",
+  [FIXED_WIDTH_ANNOTATION_KEY]: "i64"
+}));
+/**
+ * A 64-bit unsigned integer, as a `bigint`, written as eight little-endian
+ * bytes.
+ *
+ * **Details**
+ *
+ * Rejects values outside 0 through 2^64 - 1 instead of wrapping them. See
+ * {@link int64} for the struct field cost.
+ *
+ * **Gotchas**
+ *
+ * Switching a field between this, {@link int64} or `Schema.BigInt` can decode
+ * as a different value without an error in default mode; see {@link int64}.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export const uint64 = /*#__PURE__*/Schema.BigInt.check(/*#__PURE__*/Schema.isBetweenBigInt({
+  minimum: /*#__PURE__*/BigInt(0),
+  maximum: BIGINT_U64_MAX
+}, {
+  expected: "a 64-bit unsigned integer",
+  [FIXED_WIDTH_ANNOTATION_KEY]: "u64"
+}));
+// The fixed width the schema opted into, from any of its checks.
+function fixedWidthKind(ast) {
+  const checks = ast.checks;
+  if (checks === undefined) return undefined;
+  for (const check of checks) {
+    const kind = check.annotations?.[FIXED_WIDTH_ANNOTATION_KEY];
+    if (kind !== undefined) return kind;
+  }
+  return undefined;
+}
 // Bit 0 selects fingerprint mode; all other flag bits are reserved.
 const ENVELOPE = 0x20; // version nibble 2, flags 0
 const ENVELOPE_FINGERPRINT = 0x21; // version nibble 2, flag bit 0
@@ -756,13 +905,6 @@ function pushU64(out, n) {
   for (let i = 0; i < 8; i++) {
     out.push(Number(n >> BigInt(i * 8) & BIGINT_BYTE_MASK));
   }
-}
-function compareBytes(a, b) {
-  const len = Math.min(a.length, b.length);
-  for (let i = 0; i < len; i++) {
-    if (a[i] !== b[i]) return a[i] - b[i];
-  }
-  return a.length - b.length;
 }
 class IssueError extends Error {
   issue;
@@ -1035,6 +1177,11 @@ class Writer {
     this.view.setBigInt64(this.start + this.len, n, true);
     this.len += 8;
   }
+  u64(n) {
+    this.ensure(8);
+    this.view.setBigUint64(this.start + this.len, n, true);
+    this.len += 8;
+  }
   u32le(n) {
     this.ensure(4);
     this.view.setUint32(this.start + this.len, n >>> 0, true);
@@ -1219,12 +1366,13 @@ class Reader {
   options = SchemaAST.defaultParseOptions;
   indexSignatures;
   positional = false;
+  rejectUnknownFields = false;
   // Handed to the row-run field's immediate consumer, then cleared.
   intern;
   // String tables shared by every frame on one connection; `undefined` for a
   // one-shot decode, where each frame stands alone.
   dict;
-  reset(buf, start, end, options, indexSignatures, positional, dict) {
+  reset(buf, start, end, options, indexSignatures, mode, dict) {
     this.nesting = 0;
     this.view = undefined;
     this.buf = buf;
@@ -1232,7 +1380,8 @@ class Reader {
     this.end = end;
     this.options = options;
     this.indexSignatures = indexSignatures;
-    this.positional = positional;
+    this.positional = mode.positional;
+    this.rejectUnknownFields = mode.rejectUnknownFields;
     this.intern = undefined;
     this.dict = dict;
   }
@@ -1246,6 +1395,7 @@ class Reader {
     this.options = SchemaAST.defaultParseOptions;
     this.indexSignatures = undefined;
     this.positional = false;
+    this.rejectUnknownFields = false;
     this.intern = undefined;
     this.dict = undefined;
   }
@@ -1442,6 +1592,12 @@ class Reader {
     this.pos += 8;
     return value;
   }
+  u64() {
+    if (this.pos + 8 > this.end) invalid("complete value", undefined, this.options);
+    const value = (this.view ?? this.dataView()).getBigUint64(this.pos, true);
+    this.pos += 8;
+    return value;
+  }
   u32le() {
     if (this.pos + 4 > this.end) invalid("complete value", undefined, this.options);
     const value = (this.view ?? this.dataView()).getUint32(this.pos, true);
@@ -1486,7 +1642,12 @@ function packedSize(layout) {
       return packedSize(layout.leaf);
     case "bool":
       return 1;
+    case "i32":
+    case "u32":
+      return 4;
     case "int64":
+    case "i64":
+    case "u64":
       return 8;
     default:
       return undefined;
@@ -1590,7 +1751,7 @@ function sentinelSetHash(sentinels) {
     const bn = typeof b.key === "number";
     if (an !== bn) return an ? -1 : 1;
     if (an) return a.key - b.key;
-    return compareBytes(utf8Encode.encode(a.key), utf8Encode.encode(b.key));
+    return Bytes.Order(utf8Encode.encode(a.key), utf8Encode.encode(b.key));
   });
   const out = [];
   for (const sentinel of sorted) {
@@ -1797,9 +1958,16 @@ function compileLayout(root) {
       case "Void":
         return leaf("undefined");
       case "Number":
-        return leaf(provesInteger(ast) ? "int" : "number");
+        {
+          const fixed = fixedWidthKind(ast);
+          if (fixed === "i32" || fixed === "u32") return leaf(fixed);
+          return leaf(provesInteger(ast) ? "int" : "number");
+        }
       case "BigInt":
-        return leaf("bigint");
+        {
+          const fixed = fixedWidthKind(ast);
+          return leaf(fixed === "i64" || fixed === "u64" ? fixed : "bigint");
+        }
       case "Literal":
         return literalLayout(leaf(literalKind(ast.literal)), [ast.literal]);
       case "Unknown":
@@ -2224,7 +2392,7 @@ function isExact(root) {
   // the cycle disqualifies it, the whole cycle is exact.
   const walked = new Map();
   const exact = ast => {
-    if (ast.encoding !== undefined || ast.checks !== undefined || ast.encodingChecks !== undefined) {
+    if (ast.encoding !== undefined || ast.checks !== undefined && !isFixedWidthOnly(ast) || ast.encodingChecks !== undefined) {
       return false;
     }
     switch (ast._tag) {
@@ -2281,6 +2449,11 @@ function isExact(root) {
   };
   return exact(root);
 }
+// The binary layer enforces a fixed-width check on its own, so it is exact
+// when no other check rides along.
+function isFixedWidthOnly(ast) {
+  return (ast._tag === "Number" || ast._tag === "BigInt") && ast.checks?.length === 1 && fixedWidthKind(ast) !== undefined;
+}
 // A clean Exit whose success schema is exact: the binary layer fully produces
 // and validates success exits, so only failure exits need the schema pass for
 // their cause's error and defect encodings.
@@ -2314,7 +2487,11 @@ const F = {
   exit: 22,
   cause: 23,
   causeReason: 24,
-  literal: 25
+  literal: 25,
+  i32: 26,
+  u32: 27,
+  i64: 28,
+  u64: 29
 };
 // Hash the compiled layout graph, including cycle back-edge distances.
 function layoutFingerprint(root) {
@@ -2355,6 +2532,10 @@ function layoutFingerprint(root) {
       case "symbol":
       case "bytes":
       case "bigint":
+      case "i32":
+      case "u32":
+      case "i64":
+      case "u64":
       case "json":
       case "duration":
       case "bigDecimal":
@@ -2458,14 +2639,20 @@ function fingerprintBytes(lo, hi) {
 }
 const defaultMode = {
   positional: false,
+  rejectUnknownFields: false,
   envelope: ENVELOPE,
   expectedEnvelope: "version 2 envelope, flags 0",
   fingerprint: /*#__PURE__*/new Uint8Array(8)
+};
+const strictMode = {
+  ...defaultMode,
+  rejectUnknownFields: true
 };
 function fingerprintMode(layout) {
   const fingerprint = layoutFingerprint(layout);
   return {
     positional: true,
+    rejectUnknownFields: false,
     envelope: ENVELOPE_FINGERPRINT,
     expectedEnvelope: "version 2 envelope, flags 1",
     fingerprint: fingerprintBytes(Number(fingerprint & BIGINT_U32_MASK), Number(fingerprint >> BIGINT_THIRTY_TWO & BIGINT_U32_MASK))
@@ -2493,12 +2680,16 @@ function matchesLayout(layout, value) {
       return value === undefined;
     case "number":
     case "int":
+    case "i32":
+    case "u32":
       return typeof value === "number";
     case "string":
       return typeof value === "string";
     case "symbol":
       return typeof value === "symbol";
     case "bigint":
+    case "i64":
+    case "u64":
       return typeof value === "bigint";
     case "bytes":
       return value instanceof Uint8Array;
@@ -2688,7 +2879,7 @@ function extraPairs(ctx, layout, obj) {
     pairs.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
   } else {
     for (const pair of pairs) pair[2] = utf8Encode.encode(pair[0]);
-    pairs.sort((a, b) => compareBytes(a[2], b[2]));
+    pairs.sort((a, b) => Bytes.Order(a[2], b[2]));
   }
   if (persistent) {
     for (const pair of pairs) pair[2] ??= utf8Encode.encode(pair[0]);
@@ -2750,6 +2941,10 @@ function valueWireCode(layout, value, options) {
     case "int":
       if (!Number.isSafeInteger(value)) encodeFail("an integer", value, options);
       return FIELD_WIRE_VARINT;
+    // The payload write validates the value.
+    case "i32":
+    case "u32":
+      return FIELD_WIRE_FIXED32;
     default:
       return FIELD_WIRE_SIZED;
   }
@@ -2757,8 +2952,8 @@ function valueWireCode(layout, value, options) {
 function encodeWirePayload(ctx, layout, value, wire, w) {
   const kind = wire % FIELD_WIRE_FACTOR;
   switch (kind) {
-    // EMPTY and FIXED32 are decoder-side skip support only; `valueWireCode`
-    // never produces them.
+    // EMPTY is decoder-side skip support only; `valueWireCode` never produces
+    // it.
     case FIELD_WIRE_FALSE:
     case FIELD_WIRE_TRUE:
       return;
@@ -2767,6 +2962,9 @@ function encodeWirePayload(ctx, layout, value, wire, w) {
       return;
     case FIELD_WIRE_FIXED64:
       w.f64(value);
+      return;
+    case FIELD_WIRE_FIXED32:
+      encodeValue(ctx, layout, value, w);
       return;
     case FIELD_WIRE_DECIMAL:
       {
@@ -3412,6 +3610,29 @@ function encodeValue(ctx, layout, value, w) {
       if (typeof value !== "bigint") encodeFail("a bigint", value, ctx.options);
       w.zigzag(value);
       return;
+    // `disableChecks` can bypass the range check used to select these layouts.
+    case "i32":
+      if (typeof value !== "number" || (value | 0) !== value) encodeFail("a 32-bit integer", value, ctx.options);
+      w.i32le(value);
+      return;
+    case "u32":
+      if (typeof value !== "number" || value >>> 0 !== value) {
+        encodeFail("a 32-bit unsigned integer", value, ctx.options);
+      }
+      w.u32le(value);
+      return;
+    case "i64":
+      if (typeof value !== "bigint" || value < BIGINT_I64_MIN || value > BIGINT_I64_MAX) {
+        encodeFail("a 64-bit integer", value, ctx.options);
+      }
+      w.i64(value);
+      return;
+    case "u64":
+      if (typeof value !== "bigint" || value < BIGINT_ZERO || value > BIGINT_U64_MAX) {
+        encodeFail("a 64-bit unsigned integer", value, ctx.options);
+      }
+      w.u64(value);
+      return;
     case "int64":
       {
         if (!matchesLayout(layout, value)) {
@@ -3669,6 +3890,7 @@ function decodeExtraPair(layout, r, out, seen, keys) {
   if (seenKey(seen, key)) invalid("unique extra keys", undefined, r.options);
   const signature = layout.extraAll ?? (r.indexSignatures ??= new IndexSignatureCache(r.options)).find(layout, key);
   if (signature === undefined) {
+    if (r.rejectUnknownFields) invalid("a key matching an index signature", key, r.options);
     skipFieldPayload(kind, r);
     return;
   }
@@ -3730,6 +3952,9 @@ function fieldWireMask(layout) {
       return 1 << FIELD_WIRE_VARINT | 1 << FIELD_WIRE_FIXED64 | 1 << FIELD_WIRE_DECIMAL;
     case "int":
       return 1 << FIELD_WIRE_VARINT;
+    case "i32":
+    case "u32":
+      return 1 << FIELD_WIRE_FIXED32;
     default:
       return 1 << FIELD_WIRE_SIZED;
   }
@@ -3756,9 +3981,12 @@ function decodeScalarField(kind, r) {
 }
 function decodeFieldPayload(layout, wireMask, kind, r) {
   if ((wireMask & 1 << kind) === 0) {
+    if (r.rejectUnknownFields) invalid("matching field wire kind", kind, r.options);
     skipFieldPayload(kind, r);
     return ABSENT;
   }
+  // Only the two 32-bit layouts accept this kind, so the payload needs no window.
+  if (kind === FIELD_WIRE_FIXED32) return layout._ === "u32" ? r.u32le() : r.i32le();
   if (kind !== FIELD_WIRE_SIZED) {
     const value = decodeScalarField(kind, r);
     if (layout._ === "literal" && !hasLiteral(layout, value)) {
@@ -3811,6 +4039,7 @@ function decodeStruct(layout, r) {
       if (field !== undefined) cursor = field.index + 1;
     }
     if (field === undefined) {
+      if (r.rejectUnknownFields) invalid("a known field id", id, r.options);
       if (seenUnknown === undefined) seenUnknown = new Set();else if (seenUnknown.has(id)) invalid("unique field ids", undefined, r.options);
       seenUnknown.add(id);
       skipFieldPayload(kind, r);
@@ -4006,6 +4235,7 @@ function decodeRunRow(plan, shapes, tables, r) {
       } else {
         slot = struct.byId.get(id);
         if (slot === undefined) {
+          if (r.rejectUnknownFields) invalid("a known field id", id, r.options);
           if (seenIds === undefined) seenIds = new Set([id]);else if (seenIds.has(id)) invalid("unique field ids", undefined, r.options);else seenIds.add(id);
         } else if (slot.index < 32) {
           if ((seenMask & 1 << slot.index) !== 0) invalid("unique field ids", undefined, r.options);
@@ -4188,6 +4418,7 @@ function decodeUnion(layout, r) {
     const tag = r.u32le();
     const variant = layout.byTag.get(tag);
     if (variant === undefined) {
+      if (r.rejectUnknownFields) invalid("known union member", tag, r.options);
       r.take(r.remaining);
       return ABSENT;
     }
@@ -4202,6 +4433,7 @@ function decodeUnion(layout, r) {
   }
   const member = layout.byKind.get(kind);
   if (member === undefined) {
+    if (r.rejectUnknownFields) invalid("known union member", kind, r.options);
     r.take(r.remaining);
     return ABSENT;
   }
@@ -4302,6 +4534,18 @@ function decodeValueUnchecked(layout, r) {
       return r.takeCopy(r.end - r.pos);
     case "bigint":
       return r.zigzag();
+    case "i32":
+      if (r.remaining !== 4) invalid("a 32-bit integer", undefined, r.options);
+      return r.i32le();
+    case "u32":
+      if (r.remaining !== 4) invalid("a 32-bit unsigned integer", undefined, r.options);
+      return r.u32le();
+    case "i64":
+      if (r.remaining !== 8) invalid("a 64-bit integer", undefined, r.options);
+      return r.i64();
+    case "u64":
+      if (r.remaining !== 8) invalid("a 64-bit unsigned integer", undefined, r.options);
+      return r.u64();
     case "int64":
       {
         if (r.remaining !== 8) invalid("int64", undefined, r.options);
@@ -4438,7 +4682,7 @@ function decodeOneShot(layout, bytes, options, mode) {
   const r = pooledReader ?? new Reader();
   const pooled = r === pooledReader;
   if (pooled) pooledReader = undefined;
-  r.reset(bytes, 0, bytes.length, options, undefined, mode.positional, undefined);
+  r.reset(bytes, 0, bytes.length, options, undefined, mode, undefined);
   const savedPathLen = issuePathLen;
   issuePathLen = 0;
   try {

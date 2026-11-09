@@ -1,4 +1,4 @@
-import { getStackTraceLimit } from "./internal/stackTraceLimit.js";
+import { getStackTraceLimit, setStackTraceLimit } from "./internal/stackTraceLimit.js";
 /**
  * Yields its wrapped value exactly once, then completes with the value sent
  * back in.
@@ -80,8 +80,13 @@ const pickInternalCall = () => {
       }
     }
   };
-  const isNotOptimizedAway = getStackTraceLimit() !== 0 && standard[InternalTypeId](() => new Error().stack)?.includes(InternalTypeId) === true;
-  return isNotOptimizedAway ? standard[InternalTypeId] : forced[InternalTypeId];
+  const limit = getStackTraceLimit();
+  if (limit === 0) return forced[InternalTypeId];
+  // Only the callback and internal call frames are needed for detection.
+  setStackTraceLimit(2);
+  const error = standard[InternalTypeId](() => new Error());
+  setStackTraceLimit(limit);
+  return error.stack?.includes(InternalTypeId) === true ? standard[InternalTypeId] : forced[InternalTypeId];
 };
 /** @internal */
 export const internalCall = /*#__PURE__*/pickInternalCall();

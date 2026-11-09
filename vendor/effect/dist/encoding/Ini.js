@@ -66,6 +66,9 @@ const unquote = input => {
       output += character;
     }
   }
+  if (escaped) {
+    output += "\\";
+  }
   return output.trim();
 };
 /**

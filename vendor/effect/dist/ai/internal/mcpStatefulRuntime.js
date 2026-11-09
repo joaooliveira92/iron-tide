@@ -13,6 +13,7 @@ const makeSession = registration => ({
   negotiatedProfile: registration.negotiatedProfile,
   protocol: registration.protocol,
   resourceSubscriptions: registration.supportsResourceSubscriptions ? new Set() : undefined,
+  listChangeRevision: registration.listChangeRevision,
   logLevel: {
     _tag: "Effect",
     level: registration.logLevel
@@ -77,8 +78,12 @@ export const make = () => {
       return Effect.sync(() => subscriptions.delete(uri)).pipe(Effect.asVoid);
     },
     effectLogLevel,
-    canDeliver: (clientId, headers, notification, fallbackLogLevel) => {
+    canDeliver: (clientId, headers, notification, fallbackLogLevel, listChangeRevision) => {
       const session = resolveSession(clientId, headers);
+      if (listChangeRevision !== undefined) {
+        // A client without a session on this channel has not initialized.
+        return session !== undefined && listChangeRevision > session.listChangeRevision;
+      }
       if (notification._tag === "LoggingMessage") {
         const minimum = session?.logLevel;
         return minimum?._tag === "Mcp" ? McpProtocol.mcpLogLevels[notification.level].order >= McpProtocol.mcpLogLevels[minimum.level].order : LogLevel.isGreaterThanOrEqualTo(McpProtocol.mcpLogLevels[notification.level].effect, minimum?.level ?? fallbackLogLevel);

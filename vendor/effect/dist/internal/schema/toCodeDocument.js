@@ -10,11 +10,14 @@ export function makeCode(runtime, Type) {
     Type
   };
 }
+function formatObjectLiteralKey(key, formatted = formatPropertyKey(key)) {
+  return key === "__proto__" ? `[${formatted}]` : formatted;
+}
 function renderEmittableAnnotation(input) {
   if (input === null || typeof input === "string" || typeof input === "boolean" || typeof input === "number" || typeof input === "bigint") return format(input);
   if (typeof input === "symbol") {
     const key = globalThis.Symbol.keyFor(input);
-    return key === undefined ? undefined : `Symbol.for(${format(key)})`;
+    return key === undefined ? undefined : `globalThis.Symbol.for(${format(key)})`;
   }
   if (typeof input !== "object") return undefined;
   if (Array.isArray(input)) {
@@ -30,17 +33,23 @@ function renderEmittableAnnotation(input) {
   for (const [key, value] of Object.entries(input)) {
     const rendered = renderEmittableAnnotation(value);
     if (rendered === undefined) return undefined;
-    entries.push(`${formatPropertyKey(key)}: ${rendered}`);
+    entries.push(`${formatObjectLiteralKey(key)}: ${rendered}`);
   }
   return entries.length === 0 ? "{}" : `{ ${entries.join(", ")} }`;
 }
+// Leading checks that turn a bare `Schema.Number` into a built-in schema.
+const canonicalNumberChecks = {
+  [`Schema.isFinite().annotate({ "expected": "a finite number" })`]: "Schema.Finite",
+  ["Schema.isInt()"]: "Schema.Int",
+  [`Schema.isInt().annotate({ "expected": "an integer" })`]: "Schema.Int"
+};
 function renderAnnotations(annotations) {
   if (annotations === undefined) return undefined;
   const entries = [];
   for (const [key, value] of Object.entries(annotations)) {
     if (InternalAnnotations.annotationExcludedKeys.has(key)) continue;
     const rendered = renderEmittableAnnotation(value);
-    if (rendered !== undefined) entries.push(`${formatPropertyKey(key)}: ${rendered}`);
+    if (rendered !== undefined) entries.push(`${formatObjectLiteralKey(key)}: ${rendered}`);
   }
   return entries.length === 0 ? undefined : `{ ${entries.join(", ")} }`;
 }
@@ -172,7 +181,7 @@ export function toCodeDocument(document) {
   const artifacts = [];
   const sorted = topologicalSort(document.references);
   const sanitizedReferences = new Map();
-  const uniqueIdentifiers = new Set();
+  const uniqueIdentifiers = new Set(["Schema"]);
   let compilingRecursiveDefinition = false;
   let explicitSuspendDepth = 0;
   for (const {
@@ -231,7 +240,7 @@ export function toCodeDocument(document) {
     artifacts.push({
       _tag: "Symbol",
       identifier,
-      code: makeCode(key === undefined ? `Symbol(${description === undefined ? "" : format(description)})` : `Symbol.for(${format(key)})`, `typeof ${identifier}`)
+      code: makeCode(key === undefined ? `globalThis.Symbol(${description === undefined ? "" : format(description)})` : `globalThis.Symbol.for(${format(key)})`, `typeof ${identifier}`)
     });
     return identifier;
   }
@@ -269,7 +278,9 @@ export function toCodeDocument(document) {
     let runtime = base.runtime + runtimeAnnotate(representation.annotations);
     for (let index = 0; index < representation.checks.length; index++) {
       const check = representation.checks[index];
-      runtime += `.check(${compileCheck(check, [...path, "checks", index])})`;
+      const compiledCheck = compileCheck(check, [...path, "checks", index]);
+      // Only collapse a bare number's leading canonical check.
+      runtime = runtime === "Schema.Number" && Object.hasOwn(canonicalNumberChecks, compiledCheck) ? canonicalNumberChecks[compiledCheck] : `${runtime}.check(${compiledCheck})`;
     }
     return makeCode(runtime, base.Type);
   }
@@ -389,7 +400,7 @@ export function toCodeDocument(document) {
             if (property.isMutable) runtime = `Schema.mutableKey(${runtime})`;
             if (property.isOptional) runtime = `Schema.optionalKey(${runtime})`;
             runtime += runtimeAnnotate(property.annotations, "annotateKey");
-            const runtimeName = property.name === "__proto__" ? `[${name}]` : name;
+            const runtimeName = formatObjectLiteralKey(property.name, name);
             const typeName = `${property.isMutable ? "" : "readonly "}${name}${property.isOptional ? "?" : ""}`;
             return {
               code: makeCode(`${runtimeName}: ${runtime}`, `${typeName}: ${type.Type}`)

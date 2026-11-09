@@ -1,4 +1,5 @@
 import * as Effect from "../Effect.ts";
+import type { Identity } from "./EventLog.ts";
 /**
  * Defines the domain-separation string embedded in canonical session
  * authentication payloads.
@@ -134,7 +135,8 @@ export declare const decodeSessionAuthPayload: (payload: Uint8Array<ArrayBufferL
  *
  * **Details**
  *
- * The private key must be PKCS#8-encoded bytes importable by `SubtleCrypto`.
+ * The private key must be PKCS#8-encoded Ed25519 bytes. Signing runs on
+ * `Signature.layerWebCrypto` with the `WebCrypto` reference.
  *
  * @stability unstable
  * @category signing
@@ -151,7 +153,7 @@ export declare const signSessionAuthPayloadBytes: (options: {
  * **Details**
  *
  * The payload, signing public key, and signature lengths are validated before
- * calling `SubtleCrypto.verify`.
+ * verifying on `Signature.layerWebCrypto` with the `WebCrypto` reference.
  *
  * @stability unstable
  * @category verification
@@ -185,7 +187,8 @@ export declare const verifySessionAuthPayload: (options: SessionAuthPayload & {
     readonly signature: Uint8Array;
 }) => Effect.Effect<boolean, EventLogSessionAuthError, never>;
 /**
- * Generates a random session authentication challenge using `globalThis.crypto`.
+ * Generates a random session authentication challenge from `SecureRandom` on
+ * the `WebCrypto` reference.
  *
  * @stability unstable
  * @category constructors
@@ -208,5 +211,25 @@ export declare const verifySessionAuthenticateRequest: (options: {
     readonly signature: Uint8Array;
     readonly algorithm: string;
 }) => Effect.Effect<boolean, EventLogSessionAuthError, never>;
+/**
+ * Derives the Ed25519 signing public key an identity presents during session
+ * authentication.
+ *
+ * **When to use**
+ *
+ * Use when provisioning an identity to record its signing key, so that server
+ * authorization can reject any other key presented for the identity's
+ * `publicKey`.
+ *
+ * **Details**
+ *
+ * The key is derived from the identity's private key on the `WebCrypto`
+ * reference.
+ *
+ * @stability unstable
+ * @category signing
+ * @since 4.1.1
+ */
+export declare const deriveSigningPublicKey: (identity: Identity["Service"]) => Effect.Effect<Uint8Array<ArrayBuffer>>;
 export {};
 //# sourceMappingURL=EventLogSessionAuth.d.ts.map

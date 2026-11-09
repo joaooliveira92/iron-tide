@@ -10,8 +10,9 @@ import * as McpCore from "../mcpCore.js";
 import * as McpProtocol from "../mcpProtocol.js";
 import * as McpRuntime from "../mcpRuntime.js";
 import * as McpSchema from "../mcpSchema/v2025_03_26.js";
+import * as McpSkills from "../mcpSkills.js";
 // Pings can arrive before initialize and do not require a client session.
-const ClientRequestRpcs = /*#__PURE__*/McpSchema.ClientRequestRpcs.omit("ping").middleware(PublicMcpSchema.McpServerClientMiddleware).add(McpSchema.Ping);
+const ClientRequestRpcs = /*#__PURE__*/McpSchema.ClientRequestRpcs.omit("ping").merge(McpSkills.LegacyRpcs).middleware(PublicMcpSchema.McpServerClientMiddleware).add(McpSchema.Ping);
 const ClientRpcs = /*#__PURE__*/ClientRequestRpcs.merge(McpSchema.ClientNotificationRpcs);
 const AdapterRpcs = /*#__PURE__*/ClientRpcs.omit("ping");
 const profileFromInitialize = initialize => ({
@@ -99,6 +100,7 @@ export const protocol = /*#__PURE__*/McpProtocol.make({
   serverNotificationRpcs: McpSchema.ServerNotificationRpcs,
   handlerRpcs: AdapterRpcs,
   makeHandlers: (core, lifecycle) => AdapterRpcs.of({
+    ...McpSkills.legacyHandlers(core),
     initialize: (request, {
       client
     }) => lifecycle.initialize(McpSchema.protocolVersion, profileFromInitialize(request), client.id).pipe(Effect.map(result => McpSchema.InitializeResult.make({
@@ -140,7 +142,7 @@ export const protocol = /*#__PURE__*/McpProtocol.make({
       client,
       headers
     }) => lifecycle.clientNotification(McpCore.ClientNotification.RootsChanged(), client.id, headers),
-    "resources/list": _pageRequest => PublicMcpSchema.McpServerClient.use(request => core.resources.list(McpProtocol.profileFromClient(request))).pipe(Effect.map(resources => McpSchema.ListResourcesResult.make({
+    "resources/list": _pageRequest => McpProtocol.listForClient(core.resources.list).pipe(Effect.map(resources => McpSchema.ListResourcesResult.make({
       resources: resources.map(resource => ({
         uri: resource.uri,
         name: resource.name,
@@ -150,7 +152,7 @@ export const protocol = /*#__PURE__*/McpProtocol.make({
         annotations: resource.annotations
       }))
     }))),
-    "resources/templates/list": _pageRequest => PublicMcpSchema.McpServerClient.use(request => core.resources.listTemplates(McpProtocol.profileFromClient(request))).pipe(Effect.map(resourceTemplates => McpSchema.ListResourceTemplatesResult.make({
+    "resources/templates/list": _pageRequest => McpProtocol.listForClient(core.resources.listTemplates).pipe(Effect.map(resourceTemplates => McpSchema.ListResourceTemplatesResult.make({
       resourceTemplates: resourceTemplates.map(template => ({
         uriTemplate: template.uriTemplate,
         name: template.name,
@@ -181,7 +183,7 @@ export const protocol = /*#__PURE__*/McpProtocol.make({
       client,
       headers
     }) => lifecycle.unsubscribe(uri, client.id, headers).pipe(Effect.as({})),
-    "prompts/list": _pageRequest => PublicMcpSchema.McpServerClient.use(request => core.prompts.list(McpProtocol.profileFromClient(request))).pipe(Effect.map(prompts => McpSchema.ListPromptsResult.make({
+    "prompts/list": _pageRequest => McpProtocol.listForClient(core.prompts.list).pipe(Effect.map(prompts => McpSchema.ListPromptsResult.make({
       prompts: prompts.map(prompt => ({
         name: prompt.name,
         description: prompt.description,
@@ -238,13 +240,12 @@ export const protocol = /*#__PURE__*/McpProtocol.make({
       });
     }),
     "tools/list": Effect.fnUntraced(function* () {
-      const request = yield* PublicMcpSchema.McpServerClient;
-      const tools = yield* core.tools.list(McpProtocol.profileFromClient(request));
+      const tools = yield* McpProtocol.listForClient(core.tools.list);
       return McpSchema.ListToolsResult.make({
         tools: tools.map(tool => McpSchema.Tool.make({
           name: tool.name,
           description: tool.description,
-          inputSchema: tool.inputSchema,
+          inputSchema: McpProtocol.projectLegacyToolInputSchema(tool.inputSchema),
           annotations: tool.title === undefined && tool.annotations === undefined ? undefined : McpSchema.ToolAnnotations.make({
             ...tool.annotations,
             title: tool.title

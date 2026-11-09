@@ -51,10 +51,21 @@ export declare const Persisted: Context.Reference<boolean>;
  * The default value is `false`. When `true`, entity handling wraps server
  * writes with the configured storage transaction.
  *
+ * Persisted requests deliver terminal replies and mark requests processed only
+ * after commit or clean rollback. Success replies are saved in the transaction;
+ * failures are saved after rollback. If commit reports failure, a stored success
+ * reply is recovered. Otherwise, commit or rollback failures retry the request
+ * without delivering a reply. Handlers must tolerate retries.
+ *
  * **Gotchas**
  *
  * This annotation has transactional behavior only when the configured
  * `MessageStorage` implements it.
+ *
+ * Stream chunks are saved and delivered immediately, even if the transaction
+ * later rolls back. A handler returning a `Deferred` commits before its reply
+ * is saved. Non-persisted requests save no reply; successes are delivered when
+ * the handler exits, and failures after the transaction exits.
  *
  * @stability unstable
  * @category services
@@ -76,6 +87,23 @@ export declare const WithTransaction: Context.Reference<boolean>;
  * @since 4.0.0
  */
 export declare const Uninterruptible: Context.Reference<"client" | "server" | boolean>;
+/**
+ * Annotation that interrupts a cluster request when entity termination starts,
+ * rather than waiting for the termination grace period to expire.
+ *
+ * **Details**
+ *
+ * The default value is `false`. Use for long-lived requests that cannot finish
+ * on their own. Persisted requests resume under the next owner without saving
+ * the interruption as a reply. Non-persisted requests receive an interrupt exit.
+ *
+ * Server-side `Uninterruptible` takes precedence over this annotation.
+ *
+ * @stability unstable
+ * @category services
+ * @since 4.0.0
+ */
+export declare const InterruptOnTermination: Context.Reference<boolean>;
 /**
  * Returns whether the `Uninterruptible` annotation applies to server-side
  * request handling for the provided context.

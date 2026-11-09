@@ -66,11 +66,27 @@ export interface PersistedQueue<in out A, out R = never> {
      * **Details**
      *
      * If an element with the same id already exists in the queue, it will not be
-     * added again. De-duplication survives completion until the id is removed by
+     * added again, and the `delay` of the duplicate offer is ignored.
+     * De-duplication survives completion until the id is removed by
      * `layerCleanup`.
+     *
+     * `delay` postpones the first delivery. Measured by the store's clock, the
+     * element is never delivered before the delay elapses, and is typically
+     * delivered within the store's `pollInterval` after. The SQL store uses the
+     * database clock and rounds delays up to whole seconds. The Redis store
+     * compares the offering process's clock with the polling worker's, so it
+     * relies on those clocks agreeing.
+     * Retries still use the queue's `retrySchedule`, and the delay does not
+     * count an attempt. A zero, negative or omitted delay enqueues the element
+     * immediately.
+     *
+     * An infinite delay does nothing: the id is returned, but nothing is stored
+     * and no de-duplication record is written, so the same id can be offered
+     * again later.
      */
     readonly offer: (value: A, options?: {
-        readonly id: string | undefined;
+        readonly id?: string | undefined;
+        readonly delay?: Duration.Input | undefined;
     }) => Effect.Effect<string, PersistedQueueError | Schema.SchemaError, R>;
     /**
      * Takes an element from the queue, waiting until one is available when the
@@ -238,6 +254,7 @@ declare const PersistedQueueStore_base: Context.ServiceClass<PersistedQueueStore
         readonly id: string;
         readonly element: unknown;
         readonly isCustomId: boolean;
+        readonly delay?: Duration.Duration | undefined;
     }) => Effect.Effect<void, PersistedQueueError>;
     readonly take: (options: {
         readonly name: string;
@@ -271,6 +288,9 @@ declare const PersistedQueueStore_base: Context.ServiceClass<PersistedQueueStore
  * The store persists offered elements and returns taken elements in a scope so
  * the finalizer can complete or retry them based on the processing exit.
  *
+ * An offered `delay` is always finite and positive, and the element must not
+ * be taken before it elapses. It is `undefined` for immediate elements.
+ *
  * Claiming an element counts an attempt, so the `attempts` returned by `take`
  * is 1-based. When the take scope closes with a success the element is marked
  * completed; a failure retries it according to `retryDelay` or marks it failed
@@ -292,6 +312,9 @@ export declare class PersistedQueueStore extends PersistedQueueStore_base {
  * queue's retry schedule until the configured maximum attempts is reached,
  * after which the element is marked as failed.
  *
+ * Delayed elements are scanned on every take loop, so the store is meant for
+ * development and tests rather than large delayed backlogs.
+ *
  * @stability unstable
  * @category layers
  * @since 4.0.0
@@ -305,7 +328,18 @@ export declare const layerStoreMemory: Layer.Layer<PersistedQueueStore>;
  * The store uses Redis lists, hashes, and sorted sets with worker locks,
  * periodically refreshes locks while items are being processed, delays retried
  * items with the queue's retry schedule, and moves exhausted items to a failed
- * queue.
+ * queue. Delayed offers share the retry sorted set: they are scored with the
+ * offering process's clock and released by the polling worker's clock, so
+ * clock skew between hosts shifts their delivery.
+ * A handler whose lock lapsed can still settle or renew its claim until a
+ * reset recovers the element.
+ *
+ * **Gotchas**
+ *
+ * The lock format is incompatible with older workers on the same prefix: their
+ * settlements are not fenced and can corrupt newer claims. Stop every old
+ * worker and let its locks expire before starting upgraded workers. Keep the
+ * existing Redis data rather than flushing it.
  *
  * @stability unstable
  * @category constructors
@@ -322,6 +356,7 @@ export declare const makeStoreRedis: (options?: {
         readonly id: string;
         readonly element: unknown;
         readonly isCustomId: boolean;
+        readonly delay?: Duration.Duration | undefined;
     }) => Effect.Effect<void, PersistedQueueError>;
     readonly take: (options: {
         readonly name: string;
@@ -361,8 +396,15 @@ export declare const layerStoreRedis: (options?: {
  * **Details**
  *
  * The store creates the queue table and indexes, acquires rows with
- * per-worker locks, refreshes active locks while scoped takes are running, and
- * retries or completes rows according to the processing exit.
+ * per-acquisition locks, refreshes active locks while scoped takes are running,
+ * and retries or completes rows according to the processing exit.
+ *
+ * Settlements and refreshes only apply to the acquisition a handler received,
+ * so a handler whose lock lapsed can still settle or renew its claim until
+ * another poll re-claims the row.
+ *
+ * Offer and retry delays are measured with the database clock and rounded up
+ * to whole seconds.
  *
  * @stability unstable
  * @category constructors

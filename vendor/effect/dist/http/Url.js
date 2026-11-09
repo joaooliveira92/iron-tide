@@ -14,6 +14,7 @@ import * as Data from "../Data.js";
 import { dual } from "../Function.js";
 import * as Redacted from "../Redacted.js";
 import * as Result from "../Result.js";
+import * as internal from "./internal/urlParams.js";
 import * as UrlParams from "./UrlParams.js";
 /**
  * Error returned when constructing a `URL` fails.
@@ -40,7 +41,7 @@ export const make = (url, params, hash) => Result.try({
     for (let i = 0; i < params.params.length; i++) {
       const [key, value] = params.params[i];
       if (value !== undefined) {
-        urlInstance.searchParams.append(key, value);
+        urlInstance.searchParams.append(key, internal.unwrap(value));
       }
     }
     if (hash !== undefined) {
@@ -54,7 +55,12 @@ export const make = (url, params, hash) => Result.try({
 });
 const baseUrl = () => {
   if ("location" in globalThis && globalThis.location !== undefined && globalThis.location.origin !== undefined && globalThis.location.pathname !== undefined) {
-    return location.origin + location.pathname;
+    const base = location.origin + location.pathname;
+    try {
+      return new URL(base).href;
+    } catch {
+      return undefined;
+    }
   }
   return undefined;
 };

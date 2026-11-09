@@ -9,7 +9,8 @@ import * as InternalToCodec from "./toCodec.js";
 export function fromRepresentations(document, revivers) {
   return revivePersisted(document.representations, document.references, makeReviverMap(revivers), false);
 }
-class ReferenceSlot {
+/** @internal */
+export class ReferenceSlot {
   body;
   resolving = false;
   wrapper;

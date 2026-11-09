@@ -13,7 +13,8 @@ export * from "./v2025_11_25.js";
  */
 export const protocolVersion = "2026-07-28";
 const optional = Previous.optional;
-const Meta = /*#__PURE__*/optional(Schema.JsonObject);
+const UnknownObject = Previous.UnknownObject;
+const Meta = /*#__PURE__*/optional(UnknownObject);
 /**
  * @internal
  */
@@ -38,25 +39,25 @@ export const Implementation = Previous.Implementation;
  * @internal
  */
 export const ClientCapabilities = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
-  experimental: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, Schema.JsonObject)),
+  experimental: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, UnknownObject)),
   roots: /*#__PURE__*/optional(/*#__PURE__*/Schema.Struct({})),
   sampling: /*#__PURE__*/optional(/*#__PURE__*/Schema.Struct({
-    context: /*#__PURE__*/optional(Schema.JsonObject),
-    tools: /*#__PURE__*/optional(Schema.JsonObject)
+    context: /*#__PURE__*/optional(UnknownObject),
+    tools: /*#__PURE__*/optional(UnknownObject)
   })),
   elicitation: /*#__PURE__*/optional(/*#__PURE__*/Schema.Struct({
-    form: /*#__PURE__*/optional(Schema.JsonObject),
-    url: /*#__PURE__*/optional(Schema.JsonObject)
+    form: /*#__PURE__*/optional(UnknownObject),
+    url: /*#__PURE__*/optional(UnknownObject)
   })),
-  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, Schema.JsonObject))
-}), [Schema.JsonObject]);
+  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, UnknownObject))
+}), [UnknownObject]);
 /**
  * @internal
  */
 export const ServerCapabilities = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
-  experimental: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, Schema.JsonObject)),
-  logging: /*#__PURE__*/optional(Schema.JsonObject),
-  completions: /*#__PURE__*/optional(Schema.JsonObject),
+  experimental: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, UnknownObject)),
+  logging: /*#__PURE__*/optional(UnknownObject),
+  completions: /*#__PURE__*/optional(UnknownObject),
   prompts: /*#__PURE__*/optional(/*#__PURE__*/Schema.Struct({
     listChanged: /*#__PURE__*/optional(Schema.Boolean)
   })),
@@ -67,8 +68,8 @@ export const ServerCapabilities = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__
   tools: /*#__PURE__*/optional(/*#__PURE__*/Schema.Struct({
     listChanged: /*#__PURE__*/optional(Schema.Boolean)
   })),
-  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, Schema.JsonObject))
-}), [Schema.JsonObject]);
+  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, UnknownObject))
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -78,7 +79,7 @@ export const RequestMetaObject = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*
   "io.modelcontextprotocol/clientInfo": /*#__PURE__*/optional(Implementation),
   "io.modelcontextprotocol/clientCapabilities": ClientCapabilities,
   "io.modelcontextprotocol/logLevel": /*#__PURE__*/optional(LoggingLevel)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -90,7 +91,7 @@ export const RequestParams = /*#__PURE__*/Schema.Struct({
  */
 export const NotificationMetaObject = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
   "io.modelcontextprotocol/subscriptionId": /*#__PURE__*/optional(RequestId)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -101,13 +102,13 @@ export const NotificationParams = /*#__PURE__*/Schema.Struct({
  * @internal
  */
 export const ResultMetaObject = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
-  "io.modelcontextprotocol/serverInfo": Implementation
-}), [Schema.JsonObject]);
+  "io.modelcontextprotocol/serverInfo": /*#__PURE__*/optional(Implementation)
+}), [UnknownObject]);
 /**
  * @internal
  */
 export const ResultMeta = {
-  _meta: ResultMetaObject,
+  _meta: /*#__PURE__*/optional(ResultMetaObject),
   resultType: /*#__PURE__*/Schema.Literal("complete")
 };
 /**
@@ -116,7 +117,7 @@ export const ResultMeta = {
 export const McpError = /*#__PURE__*/Schema.Struct({
   code: Schema.Int,
   message: Schema.String,
-  data: /*#__PURE__*/optional(Schema.Json)
+  data: /*#__PURE__*/optional(Schema.Unknown)
 });
 /**
  * @internal
@@ -191,10 +192,10 @@ export const PromptMessage = /*#__PURE__*/Schema.Struct({
 const ToolInputSchema = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
   $schema: /*#__PURE__*/optional(Schema.String),
   type: /*#__PURE__*/Schema.Literal("object")
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 const ToolOutputSchema = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
   $schema: /*#__PURE__*/optional(Schema.String)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -219,7 +220,7 @@ export const ToolResultContent = /*#__PURE__*/Schema.Struct({
   type: /*#__PURE__*/Schema.Literal("tool_result"),
   toolUseId: Schema.String,
   content: /*#__PURE__*/Schema.Array(ContentBlock),
-  structuredContent: /*#__PURE__*/optional(Schema.Json),
+  structuredContent: /*#__PURE__*/optional(Schema.Unknown),
   isError: /*#__PURE__*/optional(Schema.Boolean),
   _meta: Meta
 });
@@ -240,7 +241,7 @@ export const SamplingMessage = /*#__PURE__*/Schema.Struct({
  */
 export const ModelHint = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
   name: /*#__PURE__*/optional(Schema.String)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 const ModelPriority = /*#__PURE__*/Schema.Finite.check(/*#__PURE__*/Schema.isBetween({
   minimum: 0,
   maximum: 1
@@ -272,7 +273,7 @@ export const CreateMessageRequest = /*#__PURE__*/Schema.Struct({
     temperature: /*#__PURE__*/optional(Schema.Finite),
     maxTokens: Schema.Int,
     stopSequences: /*#__PURE__*/optional(/*#__PURE__*/Schema.Array(Schema.String)),
-    metadata: /*#__PURE__*/optional(Schema.JsonObject),
+    metadata: /*#__PURE__*/optional(UnknownObject),
     tools: /*#__PURE__*/optional(/*#__PURE__*/Schema.Array(Tool)),
     toolChoice: /*#__PURE__*/optional(ToolChoice)
   })
@@ -396,7 +397,7 @@ export const InputRequests = /*#__PURE__*/Schema.Record(Schema.String, InputRequ
  */
 export const InputResponses = /*#__PURE__*/Schema.Record(Schema.String, InputResponse);
 const InputRequiredResultMeta = {
-  _meta: ResultMetaObject,
+  _meta: /*#__PURE__*/optional(ResultMetaObject),
   resultType: /*#__PURE__*/Schema.Literal("input_required")
 };
 /**
@@ -406,11 +407,11 @@ export const InputRequiredResult = /*#__PURE__*/Schema.Union([/*#__PURE__*/Schem
   ...InputRequiredResultMeta,
   inputRequests: InputRequests,
   requestState: /*#__PURE__*/optional(Schema.String)
-}), [Schema.JsonObject]), /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
+}), [UnknownObject]), /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
   ...InputRequiredResultMeta,
   inputRequests: /*#__PURE__*/optional(InputRequests),
   requestState: Schema.String
-}), [Schema.JsonObject])]);
+}), [UnknownObject])]);
 /**
  * @internal
  */
@@ -449,7 +450,7 @@ export const DiscoverResult = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Sc
   supportedVersions: /*#__PURE__*/Schema.Array(Schema.String),
   capabilities: ServerCapabilities,
   instructions: /*#__PURE__*/optional(Schema.String)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -465,7 +466,7 @@ export const ListResourcesResult = /*#__PURE__*/Schema.StructWithRest(/*#__PURE_
   ...PaginatedResult,
   ...CacheableResult,
   resources: /*#__PURE__*/Schema.Array(Resource)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -481,7 +482,7 @@ export const ListResourceTemplatesResult = /*#__PURE__*/Schema.StructWithRest(/*
   ...PaginatedResult,
   ...CacheableResult,
   resourceTemplates: /*#__PURE__*/Schema.Array(ResourceTemplate)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -496,7 +497,7 @@ export class ListResourceTemplates extends /*#__PURE__*/Rpc.make("resources/temp
 export const ReadResourceResult = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
   ...CacheableResult,
   contents: /*#__PURE__*/Schema.Array(ResourceContents)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -515,7 +516,7 @@ export const ListPromptsResult = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*
   ...PaginatedResult,
   ...CacheableResult,
   prompts: /*#__PURE__*/Schema.Array(Prompt)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -531,7 +532,7 @@ export const GetPromptResult = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/S
   ...ResultMeta,
   description: /*#__PURE__*/optional(Schema.String),
   messages: /*#__PURE__*/Schema.Array(PromptMessage)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -551,7 +552,7 @@ export const ListToolsResult = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/S
   ...PaginatedResult,
   ...CacheableResult,
   tools: /*#__PURE__*/Schema.Array(Tool)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -566,9 +567,9 @@ export class ListTools extends /*#__PURE__*/Rpc.make("tools/list", {
 export const CallToolResult = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
   ...ResultMeta,
   content: /*#__PURE__*/Schema.Array(ContentBlock),
-  structuredContent: /*#__PURE__*/optional(Schema.Json),
+  structuredContent: /*#__PURE__*/optional(Schema.Unknown),
   isError: /*#__PURE__*/optional(Schema.Boolean)
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -578,7 +579,7 @@ export class CallTool extends /*#__PURE__*/Rpc.make("tools/call", {
   payload: {
     ...InputResponseRequestParams,
     name: Schema.String,
-    arguments: /*#__PURE__*/optional(Schema.JsonObject)
+    arguments: /*#__PURE__*/optional(UnknownObject)
   }
 }) {}
 /**
@@ -599,7 +600,7 @@ export const CompleteResult = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Sc
     total: /*#__PURE__*/optional(Schema.Int),
     hasMore: /*#__PURE__*/optional(Schema.Boolean)
   })
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -631,16 +632,16 @@ export const SubscriptionFilter = /*#__PURE__*/Schema.Struct({
  * @internal
  */
 export const SubscriptionsListenResultMetaObject = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
-  "io.modelcontextprotocol/serverInfo": Implementation,
+  "io.modelcontextprotocol/serverInfo": /*#__PURE__*/optional(Implementation),
   "io.modelcontextprotocol/subscriptionId": RequestId
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
 export const SubscriptionsListenResult = /*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
   _meta: SubscriptionsListenResultMetaObject,
   resultType: /*#__PURE__*/Schema.Literal("complete")
-}), [Schema.JsonObject]);
+}), [UnknownObject]);
 /**
  * @internal
  */
@@ -682,7 +683,7 @@ export class LoggingMessageNotification extends /*#__PURE__*/Rpc.make("notificat
     ...NotificationParams.fields,
     level: LoggingLevel,
     logger: /*#__PURE__*/optional(Schema.String),
-    data: Schema.Json
+    data: Schema.Unknown
   }
 }) {}
 /**

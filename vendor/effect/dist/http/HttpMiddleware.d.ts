@@ -1,6 +1,22 @@
+/**
+ * Wraps HTTP server apps with request and response behavior.
+ *
+ * A middleware is a function from one HTTP server app effect to another. The app
+ * runs with the current `HttpServerRequest` in its context, so middleware can
+ * inspect or rewrite the request, provide request-scoped services, attach hooks
+ * before the response is sent, or observe the app exit. This module includes
+ * middleware for response logging, server tracing, forwarded proxy headers,
+ * parsed search parameters, and CORS response headers.
+ *
+ * @stability unstable
+ * @since 4.0.0
+ */
+import * as ByteSize from "../ByteSize.ts";
 import * as Context from "../Context.ts";
 import * as Effect from "../Effect.ts";
 import * as Layer from "../Layer.ts";
+import * as IpNetwork from "../net/IpNetwork.ts";
+import * as NetAddress from "../net/NetAddress.ts";
 import type { Predicate } from "../Predicate.ts";
 import type { CompressionAlgorithm } from "./HttpPlatform.ts";
 import { HttpPlatform } from "./HttpPlatform.ts";
@@ -38,6 +54,56 @@ export declare namespace HttpMiddleware {
 }
 /**
  * Defines an `HttpMiddleware` while preserving its precise type.
+ *
+ * **Gotchas**
+ *
+ * TypeScript cannot infer the `app` parameter of an `Effect.fn` or
+ * `Effect.fnUntraced` generator passed directly to `make`, so `app` becomes
+ * `any` and the middleware loses the app's error and service types. Prefer an
+ * arrow function, as in the first example. To use `Effect.fn`, declare `E`
+ * and `R` type parameters and annotate `app` with them.
+ *
+ * **Example** (Defining middleware)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect } from "effect"
+ * import { HttpMiddleware, HttpServerResponse } from "effect/http"
+ *
+ * const withHeader = HttpMiddleware.make((app) =>
+ *   Effect.gen(function*() {
+ *     const response = yield* app
+ *     return HttpServerResponse.setHeader(response, "x-service", "example")
+ *   })
+ * )
+ *
+ * const app: Effect.Effect<HttpServerResponse.HttpServerResponse, "Unauthorized"> =
+ *   Effect.fail("Unauthorized")
+ *
+ * // Effect<HttpServerResponse, "Unauthorized", HttpServerRequest>
+ * const withHeaderApp = withHeader(app)
+ * ```
+ *
+ * **Example** (Defining middleware with Effect.fn)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect } from "effect"
+ * import { HttpMiddleware, HttpServerResponse } from "effect/http"
+ *
+ * const withHeader = HttpMiddleware.make(
+ *   Effect.fn("withHeader")(function*<E, R>(
+ *     app: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>
+ *   ) {
+ *     const response = yield* app
+ *     return HttpServerResponse.setHeader(response, "x-service", "example")
+ *   })
+ * )
+ *
+ * const app: Effect.Effect<HttpServerResponse.HttpServerResponse, "Unauthorized"> =
+ *   Effect.fail("Unauthorized")
+ *
+ * // Effect<HttpServerResponse, "Unauthorized", never>
+ * const withHeaderApp = withHeader(app)
+ * ```
  *
  * @stability unstable
  * @category constructors
@@ -110,13 +176,78 @@ export declare const logger: <E, R>(httpApp: Effect.Effect<HttpServerResponse, E
  */
 export declare const tracer: <E, R>(httpApp: Effect.Effect<HttpServerResponse, E, HttpServerRequest | R>) => Effect.Effect<HttpServerResponse, E, HttpServerRequest | R>;
 /**
- * Middleware that trusts `X-Forwarded-Host` and `X-Forwarded-For`, updating the request host header and remote address.
+ * Options for `xForwardedHeaders`.
+ *
+ * **Details**
+ *
+ * `trustedProxies` is a list of networks or a predicate that decides whether an
+ * address belongs to a proxy you operate. IPv4-mapped IPv6 addresses are
+ * converted to IPv4 before matching.
  *
  * @stability unstable
  * @category proxying
  * @since 4.0.0
  */
-export declare const xForwardedHeaders: <E, R>(httpApp: Effect.Effect<HttpServerResponse, E, R | HttpServerRequest>) => Effect.Effect<HttpServerResponse, E, R | HttpServerRequest>;
+export interface TrustedProxyOptions {
+    readonly trustedProxies: ReadonlyArray<IpNetwork.IpNetwork> | Predicate<NetAddress.IpAddress>;
+}
+/**
+ * Creates middleware that applies `X-Forwarded-For`, `X-Forwarded-Host`, and
+ * `X-Forwarded-Proto` sent by trusted proxies.
+ *
+ * **When to use**
+ *
+ * Use when the app runs behind proxies that append to `X-Forwarded-For`, such
+ * as most load balancers and TLS terminators.
+ *
+ * **Details**
+ *
+ * Headers are ignored unless the original transport peer
+ * (`request.peerAddress`) is trusted. `X-Forwarded-For` is then walked from
+ * the right, skipping trusted proxies. The first untrusted address becomes
+ * `remoteAddress`. When every address is trusted, the leftmost one is used. An
+ * entry that is not an IP address, such as `unknown`, stops the walk and
+ * leaves the request unchanged.
+ *
+ * `X-Forwarded-Host` and `X-Forwarded-Proto` are only used when they list one
+ * value per `X-Forwarded-For` entry; the value at the selected position
+ * replaces the `host` header and sets `protocol` (`http` or `https`), which
+ * `HttpServerRequest.toURL` uses. Otherwise the transport values are kept.
+ *
+ * `request.peerAddress` keeps the transport peer after `remoteAddress` is
+ * replaced.
+ *
+ * **Example** (Reading the client address behind a load balancer)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect, Option } from "effect"
+ * import { HttpMiddleware, HttpServerRequest, HttpServerResponse } from "effect/http"
+ * import { IpNetwork } from "effect/net"
+ *
+ * const app = HttpServerRequest.HttpServerRequest.use((request) =>
+ *   Effect.succeed(HttpServerResponse.text(Option.getOrElse(request.remoteAddress, () => "unknown")))
+ * ).pipe(
+ *   HttpMiddleware.xForwardedHeaders({
+ *     trustedProxies: [IpNetwork.fromStringUnsafe("10.0.0.0/8")]
+ *   })
+ * )
+ *
+ * // The load balancer at 10.0.0.1 appended the client address to a spoofed entry
+ * const request = HttpServerRequest.fromWeb(
+ *   new Request("http://app.test/", { headers: { "x-forwarded-for": "6.6.6.6, 198.51.100.7" } })
+ * ).modify({ remoteAddress: Option.some("10.0.0.1") })
+ *
+ * const response = await Effect.runPromise(
+ *   Effect.provideService(app, HttpServerRequest.HttpServerRequest, request)
+ * )
+ * await HttpServerResponse.toWeb(response).text() // => "198.51.100.7"
+ * ```
+ *
+ * @stability unstable
+ * @category proxying
+ * @since 4.0.0
+ */
+export declare const xForwardedHeaders: (options: TrustedProxyOptions) => <E, R>(httpApp: Effect.Effect<HttpServerResponse, E, HttpServerRequest | R>) => Effect.Effect<HttpServerResponse, E, HttpServerRequest | R>;
 /**
  * Middleware that parses the current request URL's search parameters and provides them as `ParsedSearchParams`.
  *
@@ -205,4 +336,50 @@ export declare const compression: (options?: {
         readonly zstd?: number | undefined;
     } | undefined;
 } | undefined) => <E, R>(httpApp: Effect.Effect<HttpServerResponse, E, R>) => Effect.Effect<HttpServerResponse, E, R | HttpServerRequest | HttpPlatform>;
+/**
+ * Middleware that decompresses request bodies sent with a `Content-Encoding`
+ * of `gzip` or `deflate`.
+ *
+ * **Details**
+ *
+ * The request service is replaced with a view whose body accessors (`stream`,
+ * `text`, `json`, `arrayBuffer`, `urlParamsBody`, `multipart`) yield the
+ * decompressed body, and whose headers no longer include `Content-Encoding`
+ * or `Content-Length`. Decompression is lazy and only happens when the body
+ * is read. Stacked codings such as `deflate, gzip` are undone in reverse
+ * order, and `identity` members are ignored.
+ *
+ * Requests whose `Content-Encoding` includes any other coding are rejected
+ * with `415 Unsupported Media Type` and `Accept-Encoding: gzip, deflate`,
+ * without running the app. Malformed compressed data fails the body read
+ * with a `RequestParseError`, or a `MultipartError` with reason `Parse` when
+ * reading multipart data.
+ *
+ * The decompressed size is limited to `maxDecompressedSize`, falling back to
+ * the `MaxBodySize` reference and then to 10 MiB. Exceeding it fails the body
+ * read with a `RequestParseError`, or a `MultipartError` with reason
+ * `BodyTooLarge` when reading multipart data. The limit applies to every body
+ * accessor, including `stream`.
+ *
+ * Decompression uses the global `DecompressionStream`. `deflate` means the
+ * zlib format (RFC 1950); raw deflate data is rejected.
+ *
+ * **Gotchas**
+ *
+ * `request.source` is still the original, compressed request.
+ * `HttpServerRequest.toWeb` returns that compressed request only when the
+ * source is a Web `Request`. On other platforms, such as Node, it builds a new
+ * `Request` from the decompressed body and the stripped headers.
+ *
+ * @stability unstable
+ * @category compression
+ * @since 4.0.0
+ */
+export declare const decompression: (options?: {
+    /**
+     * Maximum number of decompressed body bytes. Defaults to the
+     * `MaxBodySize` reference, or 10 MiB when that is unset.
+     */
+    readonly maxDecompressedSize?: ByteSize.Input | undefined;
+} | undefined) => <E, R>(httpApp: Effect.Effect<HttpServerResponse, E, R>) => Effect.Effect<HttpServerResponse, E, R | HttpServerRequest>;
 //# sourceMappingURL=HttpMiddleware.d.ts.map

@@ -142,7 +142,9 @@ export declare const isRequestResolver: (u: unknown) => u is RequestResolver<any
  *
  * `batchKey` groups request entries, `delay` schedules batch execution,
  * `collectWhile` can end collection early, and `runAll` receives a non-empty
- * batch for one key.
+ * batch for one key. The batch runs with the context of the caller that created
+ * it, even when a later caller ends collection. Each entry retains its own
+ * caller context in `entry.context`.
  *
  * **Gotchas**
  *
@@ -166,6 +168,17 @@ export declare const makeWith: <A extends Request.Any>(options: {
 }) => RequestResolver<A>;
 /**
  * Constructs a request resolver with the specified method to run requests.
+ *
+ * **Details**
+ *
+ * `runAll` runs with the context of the caller that created the batch, including
+ * when `collectWhile` ends collection early (for example with `batchN`).
+ *
+ * **Gotchas**
+ *
+ * Different caller contexts do not split batches. Use `entry.context` for
+ * per-entry services, or `makeGrouped` to separate requests by the services
+ * that affect the backend operation, such as tenant or authorization settings.
  *
  * **Example** (Creating a request resolver)
  *
@@ -205,6 +218,14 @@ export declare const make: <A extends Request.Any>(runAll: (entries: NonEmptyArr
  * **Details**
  *
  * The key can use the Equal trait to determine if two keys are equal.
+ * Each batch runs with the context of the caller that created that batch,
+ * whether collection ends after the delay or at a `collectWhile` cutoff.
+ *
+ * **Gotchas**
+ *
+ * Caller services that are not included in the key do not split batches. Include
+ * tenant or authorization settings in the key when they affect the backend
+ * operation, or read each caller's services from `entry.context`.
  *
  * **Example** (Grouping requests by key)
  *
@@ -320,6 +341,15 @@ export declare const fromFunction: <A extends Request.Any>(f: (entry: Request.En
 export declare const fromFunctionBatched: <A extends Request.Any>(f: (entries: NonEmptyArray<Request.Entry<A>>) => Iterable<Request.Success<A>>) => RequestResolver<A>;
 /**
  * Constructs a request resolver from an effectual function.
+ *
+ * **Details**
+ *
+ * Each entry's effect runs with its own caller context. Services provided around
+ * `runAll` are not visible to it; provide them inside `f` instead. Entries with
+ * different caller contexts can still share a batch.
+ *
+ * With `withSpan`, spans created inside `f` are children of the caller's span,
+ * not the resolver span. The resolver span still links to each caller's span.
  *
  * **Example** (Creating a resolver from an effectful function)
  *

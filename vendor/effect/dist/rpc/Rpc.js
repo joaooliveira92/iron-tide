@@ -4,6 +4,7 @@ import { pipeArguments } from "../Pipeable.js";
 import * as Predicate from "../Predicate.js";
 import * as PrimaryKey from "../PrimaryKey.js";
 import * as Schema from "../Schema.js";
+import * as SchemaAST from "../SchemaAST.js";
 import * as RpcSchema from "./RpcSchema.js";
 const TypeId = "~effect/rpc/Rpc";
 /**
@@ -267,6 +268,25 @@ export const exitSchema = self => {
   exitSchemaCache.set(self, schema);
   return schema;
 };
+/**
+ * Annotation that sets the schema parse options used by `RpcClient` and
+ * `RpcServer` when encoding and decoding an RPC's payload, success values,
+ * stream chunks, and exits.
+ *
+ * **Details**
+ *
+ * The default value is `SchemaAST.defaultParseOptions`. Set `concurrency` to
+ * parse product elements concurrently, which lets decoding transformations that
+ * call `Effect.request` share `RequestResolver` batches. Annotate a single RPC
+ * with `annotate`, or every RPC in a group with `RpcGroup.annotateRpcs`.
+ *
+ * @stability unstable
+ * @category annotations
+ * @since 4.0.0
+ */
+export const ParseOptions = /*#__PURE__*/Context.Reference("effect/rpc/Rpc/ParseOptions", {
+  defaultValue: () => SchemaAST.defaultParseOptions
+});
 const WrapperTypeId = "~effect/rpc/Rpc/Wrapper";
 /**
  * Returns `true` when the value is an RPC `Wrapper`.

@@ -1,12 +1,16 @@
 import * as Arr from "../Array.js";
 import * as Cache from "../Cache.js";
+import * as Clock from "../Clock.js";
 import * as Context from "../Context.js";
+import * as Mac from "../crypto/Mac.js";
 import * as Data from "../Data.js";
+import * as Duration from "../Duration.js";
 import * as Effect from "../Effect.js";
 import * as Equal from "../Equal.js";
+import * as Exit from "../Exit.js";
 import * as Hash from "../Hash.js";
+import * as Uuid from "../internal/uuid.js";
 import * as Layer from "../Layer.js";
-import * as Option from "../Option.js";
 import * as Redacted from "../Redacted.js";
 import * as Stream from "../Stream.js";
 import * as EventLog from "./EventLog.js";
@@ -46,41 +50,63 @@ export const layerAuthMiddleware = /*#__PURE__*/Layer.succeed(EventLogAuthentica
  * chunked writes, delegates write and change handling to the supplied callbacks,
  * and frames large change payloads into chunks.
  *
+ * `Authenticate` calls `authorizeIdentity` with the claimed public key and the
+ * presented signing public key, then verifies the signature against the
+ * presented key. Only a verified key is passed to
+ * `getOrCreateSessionAuthBinding`, and a key that differs from the identity's
+ * existing binding is rejected.
+ *
+ * Use the connection's `ConnectionWrites.track` in `onWrite` and
+ * `ConnectionWrites.filter` in `changes` to suppress its own write echoes.
+ * `compaction` sets `HelloResponse.compaction`, advertising that the server
+ * also serves `EventLogCompactionRpcs`.
+ *
  * @stability unstable
  * @category layers
  * @since 4.0.0
  */
 export const layerRpcHandlers = options => EventLogRemoteRpcs.toLayer(Effect.gen(function* () {
-  const clientChallenges = yield* Cache.make({
-    lookup: _clientId => Effect.orDie(EventLogSessionAuth.makeSessionAuthChallenge),
-    capacity: Number.MAX_SAFE_INTEGER,
-    timeToLive: EventLogSessionAuth.SessionAuthChallengeTimeToLiveMillis
-  });
-  let chunkedIdCounter = 0;
-  const persistedSigningPublicKeys = yield* Cache.make({
-    lookup: key => options.getOrCreateSessionAuthBinding(key.publicKey, key.signingPublicKey).pipe(Effect.catchCause(_ => Effect.fail(new EventLogProtocolError({
-      requestTag: "Authenticate",
-      publicKey: key.publicKey,
-      code: "Forbidden",
-      message: "Session auth binding lookup failed"
-    })))),
-    capacity: 4096
+  const toFrames = makeFramer();
+  const persistedSigningPublicKeys = yield* Cache.makeWith(key => options.getOrCreateSessionAuthBinding(key.publicKey, key.signingPublicKey).pipe(Effect.catchCause(_ => Effect.fail(new EventLogProtocolError({
+    requestTag: "Authenticate",
+    publicKey: key.publicKey,
+    code: "Forbidden",
+    message: "Session auth binding lookup failed"
+  })))), {
+    capacity: 4096,
+    timeToLive: exit => Exit.isSuccess(exit) ? Duration.infinity : Duration.zero
   });
   return EventLogRemoteRpcs.of({
     "EventLog.Hello": Effect.fnUntraced(function* (_, {
       client
     }) {
-      const challenge = yield* Cache.get(clientChallenges, client.id);
+      // Kept on the connection, so it is released when the client disconnects
+      // and shared by overlapping Hellos until `Authenticate` consumes it.
+      let pending = getPendingChallenge(client, yield* Clock.currentTimeMillis);
+      if (pending === undefined) {
+        const challenge = yield* Effect.orDie(EventLogSessionAuth.makeSessionAuthChallenge);
+        // Read the clock again, as generating the challenge can suspend. A
+        // concurrent Hello may have stored a challenge in the meantime.
+        const now = yield* Clock.currentTimeMillis;
+        pending = getPendingChallenge(client, now) ?? {
+          challenge,
+          expiresAt: now + EventLogSessionAuth.SessionAuthChallengeTimeToLiveMillis
+        };
+        client.annotate(PendingChallenge, pending);
+      }
       return new HelloResponse({
         remoteId: options.remoteId,
-        challenge
+        challenge: pending.challenge,
+        firstSequence: options.firstSequence,
+        compaction: options.compaction === true ? true : undefined
       });
     }),
     "EventLog.Authenticate": Effect.fnUntraced(function* (request, {
       client
     }) {
-      const challenge = Option.getOrNull(yield* Cache.getOption(clientChallenges, client.id));
-      if (!challenge) {
+      const pending = getPendingChallenge(client, yield* Clock.currentTimeMillis);
+      client.annotate(PendingChallenge, undefined);
+      if (pending === undefined) {
         return yield* new EventLogProtocolError({
           requestTag: "Authenticate",
           publicKey: request.publicKey,
@@ -88,29 +114,34 @@ export const layerRpcHandlers = options => EventLogRemoteRpcs.toLayer(Effect.gen
           message: "Session auth challenge has expired"
         });
       }
-      yield* Cache.invalidate(clientChallenges, client.id);
       if (options.authorizeIdentity) {
-        yield* options.authorizeIdentity(request.publicKey);
+        yield* options.authorizeIdentity(request.publicKey, request.signingPublicKey);
       }
-      const signingPublicKey = yield* Cache.get(persistedSigningPublicKeys, new SessionAuthCacheKey({
-        publicKey: request.publicKey,
-        signingPublicKey: request.signingPublicKey
-      }));
       const verified = yield* EventLogSessionAuth.verifySessionAuthenticateRequest({
         remoteId: options.remoteId,
-        challenge,
+        challenge: pending.challenge,
         publicKey: request.publicKey,
-        signingPublicKey,
+        signingPublicKey: request.signingPublicKey,
         signature: request.signature,
         algorithm: request.algorithm
       }).pipe(Effect.catch(() => Effect.succeed(false)));
+      const verificationFailed = () => new EventLogProtocolError({
+        requestTag: "Authenticate",
+        publicKey: request.publicKey,
+        code: "Forbidden",
+        message: "Session auth signature verification failed"
+      });
       if (!verified) {
-        return yield* new EventLogProtocolError({
-          requestTag: "Authenticate",
-          publicKey: request.publicKey,
-          code: "Forbidden",
-          message: "Session auth signature verification failed"
-        });
+        return yield* verificationFailed();
+      }
+      // Only a verified key reaches the binding. A key other than the
+      // identity's bound key is rejected like a bad signature.
+      const boundSigningPublicKey = yield* Cache.get(persistedSigningPublicKeys, new SessionAuthCacheKey({
+        publicKey: request.publicKey,
+        signingPublicKey: request.signingPublicKey
+      }));
+      if (!Mac.timingSafeEqual(boundSigningPublicKey, request.signingPublicKey)) {
+        return yield* verificationFailed();
       }
       const authenticatedIdentities = new Set(Context.getOrUndefined(client.annotations, AuthenticatedIdentities));
       authenticatedIdentities.add(request.publicKey);
@@ -119,19 +150,17 @@ export const layerRpcHandlers = options => EventLogRemoteRpcs.toLayer(Effect.gen
         privateKey: constEmptyPrivateKey
       }).annotate(AuthenticatedIdentities, authenticatedIdentities).annotate(ChunkedMessageState, new Map());
     }),
-    "EventLog.WriteSingle": Effect.fnUntraced(function* (request, {
+    "EventLog.WriteSingle": (request, {
       client
-    }) {
-      yield* options.onWrite(request.data, Context.getOrUndefined(client.annotations, AuthenticatedIdentities) ?? new Set());
-    }),
-    "EventLog.WriteChunked": Effect.fnUntraced(function* (request, {
+    }) => options.onWrite(request.data, Context.getOrUndefined(client.annotations, AuthenticatedIdentities) ?? new Set(), getConnectionWrites(client)),
+    "EventLog.WriteChunked": (request, {
       client
-    }) {
+    }) => {
       const state = Context.get(client.annotations, ChunkedMessageState);
       const data = ChunkedMessage.join(state, request);
-      if (!data) return;
-      yield* options.onWrite(data, Context.getOrUndefined(client.annotations, AuthenticatedIdentities) ?? new Set());
-    }),
+      if (!data) return Effect.succeed([]);
+      return options.onWrite(data, Context.getOrUndefined(client.annotations, AuthenticatedIdentities) ?? new Set(), getConnectionWrites(client));
+    },
     "EventLog.Changes": (request, {
       client
     }) => {
@@ -147,15 +176,9 @@ export const layerRpcHandlers = options => EventLogRemoteRpcs.toLayer(Effect.gen
       return options.changes({
         publicKey: request.publicKey,
         storeId: request.storeId,
-        startSequence: request.startSequence
-      }).pipe(Stream.mapArray(Arr.flatMap(data => {
-        if (data.byteLength <= ChunkedMessage.chunkSize) {
-          return [new SingleMessage({
-            data
-          })];
-        }
-        return ChunkedMessage.split(chunkedIdCounter++, data);
-      })), Stream.catchCause(_ => Stream.fail(new EventLogProtocolError({
+        startSequence: request.startSequence,
+        writes: getConnectionWrites(client)
+      }).pipe(Stream.mapArray(Arr.flatMap(toFrames)), Stream.catchCause(_ => Stream.fail(new EventLogProtocolError({
         requestTag: "Changes",
         publicKey: request.publicKey,
         code: "InternalServerError",
@@ -181,6 +204,108 @@ export class ChunkedMessageState extends /*#__PURE__*/Context.Reference("effect/
   defaultValue: () => new Map()
 }) {}
 /**
+ * Tracks writes to suppress their echoes on the same RPC connection.
+ *
+ * **Details**
+ *
+ * Only tracks entries for stores with an open change stream.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export class ConnectionWrites {
+  streams = /*#__PURE__*/new Map();
+  /**
+   * Runs a storage write while suppressing its entries on this connection's streams.
+   *
+   * @stability unstable
+   * @since 4.0.6
+   */
+  track(options, write) {
+    const open = this.streams.get(makeStreamKey(options.publicKey, options.storeId));
+    if (open === undefined || options.entryIds.length === 0) return write;
+    const streams = Array.from(open);
+    const started = streams.map(stream => stream.position);
+    const ids = options.entryIds.map(Uuid.stringify);
+    // Track before writing: storage can publish an entry before the write
+    // returns. Each occurrence is counted, as an id can be stored more than once.
+    for (const stream of streams) {
+      for (const id of ids) stream.ids.set(id, (stream.ids.get(id) ?? 0) + 1);
+    }
+    return Effect.onExit(write, exit => Effect.sync(() => {
+      for (let i = 0; i < streams.length; i++) {
+        const stream = streams[i];
+        if (exit._tag === "Failure") {
+          for (const id of ids) release(stream.ids, id);
+          continue;
+        }
+        // Release occurrences the stream had already passed when the write began.
+        for (const ack of exit.value) {
+          if (ack.sequence <= started[i]) release(stream.ids, Uuid.stringify(ack.entryId));
+        }
+      }
+    }));
+  }
+  /**
+   * Filters this connection's writes from a store's change stream. An item can
+   * hold several entries; `sequence` returns its highest one.
+   *
+   * @stability unstable
+   * @since 4.0.6
+   */
+  filter(options, stream) {
+    return Stream.suspend(() => {
+      const key = makeStreamKey(options.publicKey, options.storeId);
+      const state = {
+        ids: new Map(),
+        position: -1
+      };
+      let open = this.streams.get(key);
+      if (open === undefined) {
+        open = new Set();
+        this.streams.set(key, open);
+      }
+      open.add(state);
+      return stream.pipe(Stream.filter(item => {
+        const sequence = options.sequence(item);
+        if (sequence > state.position) state.position = sequence;
+        if (state.ids.size === 0) return true;
+        // An item is written by one request, so it is either all or none of ours.
+        const ids = options.entryIds(item).map(Uuid.stringify);
+        if (!ids.every(id => state.ids.has(id))) return true;
+        for (const id of ids) release(state.ids, id);
+        return false;
+      }), Stream.ensuring(Effect.sync(() => {
+        open.delete(state);
+        if (open.size === 0) this.streams.delete(key);
+      })));
+    });
+  }
+}
+const release = (ids, id) => {
+  const count = ids.get(id);
+  if (count === undefined) return;
+  if (count <= 1) ids.delete(id);else ids.set(id, count - 1);
+};
+const makeStreamKey = (publicKey, storeId) => `${publicKey}/${storeId}`;
+class ConnectionWritesState extends /*#__PURE__*/Context.Service()("effect/eventlog/EventLogServer/ConnectionWrites") {}
+// The connection's unconsumed `Hello` challenge, cleared by `Authenticate`.
+const PendingChallenge = /*#__PURE__*/Context.Reference("effect/eventlog/EventLogServer/PendingChallenge", {
+  defaultValue: () => undefined
+});
+const getPendingChallenge = (client, now) => {
+  const pending = Context.get(client.annotations, PendingChallenge);
+  return pending !== undefined && pending.expiresAt > now ? pending : undefined;
+};
+const getConnectionWrites = client => {
+  const existing = Context.getOrUndefined(client.annotations, ConnectionWritesState);
+  if (existing !== undefined) return existing;
+  const writes = new ConnectionWrites();
+  client.annotate(ConnectionWritesState, writes);
+  return writes;
+};
+/**
  * Annotation containing the public keys authenticated on an RPC connection.
  *
  * @stability unstable
@@ -188,6 +313,8 @@ export class ChunkedMessageState extends /*#__PURE__*/Context.Reference("effect/
  * @since 4.0.0
  */
 export class AuthenticatedIdentities extends /*#__PURE__*/Context.Service()("effect/eventlog/EventLogServer/AuthenticatedIdentities") {}
+// Keyed by `publicKey` alone: the cache holds each identity's bound signing
+// key, and `Authenticate` rejects any presented key that differs from it.
 class SessionAuthCacheKey extends Data.Class {
   [Equal.symbol](that) {
     return this.publicKey === that.publicKey;
@@ -196,5 +323,17 @@ class SessionAuthCacheKey extends Data.Class {
     return Hash.string(this.publicKey);
   }
 }
+/**
+ * Frames one encoded message for a response stream: a `SingleMessage` when it
+ * fits, or the pieces of a `ChunkedMessage` with the next id otherwise.
+ *
+ * @internal
+ */
+export const makeFramer = () => {
+  let chunkedIdCounter = 0;
+  return data => data.byteLength <= ChunkedMessage.chunkSize ? [new SingleMessage({
+    data
+  })] : ChunkedMessage.split(chunkedIdCounter++, data);
+};
 const constEmptyPrivateKey = /*#__PURE__*/Redacted.make(/*#__PURE__*/new Uint8Array(32));
 //# sourceMappingURL=EventLogServer.js.map

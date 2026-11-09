@@ -111,7 +111,7 @@ export class CauseImpl {
   toJSON() {
     return {
       _id: "Cause",
-      failures: this.reasons.map(f => f.toJSON())
+      reasons: this.reasons.map(f => f.toJSON())
     };
   }
   toString() {
@@ -152,6 +152,8 @@ export class ReasonBase {
       if (options?.overwrite !== true && newAnnotations.has(key)) return;
       newAnnotations.set(key, value);
     });
+    // Keep the reason when nothing was added, so interrupts still match by identity.
+    if (options?.overwrite !== true && newAnnotations.size === this.annotations.size) return this;
     const self = Object.assign(Object.create(Object.getPrototypeOf(this)), this);
     self.annotations = newAnnotations;
     return self;
@@ -221,6 +223,22 @@ export const causeCombine = /*#__PURE__*/dual(2, (self, that) => {
   const newCause = new CauseImpl(dedupeReasons(self.reasons, that.reasons));
   return Equal.equals(self, newCause) ? self : newCause;
 });
+/**
+ * Appends the interrupts from `interrupts` that `self` does not contain yet.
+ * Unlike `causeCombine`, it never calls hash or equality methods, which can be
+ * user-defined, random, or throwing.
+ *
+ * @internal
+ */
+export const causeAddInterrupts = (self, interrupts) => {
+  const reasons = self.reasons.slice();
+  for (const reason of interrupts.reasons) {
+    if (isInterruptReason(reason) && !reasons.some(r => isInterruptReason(r) && r.fiberId === reason.fiberId && r.annotations === reason.annotations)) {
+      reasons.push(reason);
+    }
+  }
+  return reasons.length === self.reasons.length ? self : new CauseImpl(reasons);
+};
 /** @internal */
 export const causeEmpty = /*#__PURE__*/new CauseImpl([]);
 /** @internal */
@@ -360,7 +378,7 @@ export const exitFailCause = /*#__PURE__*/makeExit({
       if (skippedHandler) {
         cause = causeFromReasons(cause.reasons.filter(reason => reason._tag !== "Fail"));
       }
-      cause = causeCombine(cause, interruptedCause);
+      cause = causeAddInterrupts(cause, interruptedCause);
       annotated = true;
     }
     return cont ? cont[contE](cause, fiber, annotated ? undefined : this) : fiber.yieldWith(annotated ? exitFailCause(cause) : this);

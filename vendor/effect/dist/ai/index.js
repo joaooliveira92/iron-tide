@@ -44,6 +44,16 @@ export * as IdGenerator from "./IdGenerator.js";
  */
 export * as LanguageModel from "./LanguageModel.js";
 /**
+ * @stability experimental
+ * @since 4.0.6
+ */
+export * as McpClient from "./McpClient.js";
+/**
+ * @stability experimental
+ * @since 4.0.6
+ */
+export * as McpClientError from "./McpClientError.js";
+/**
  * @stability unstable
  * @since 4.0.0
  */
@@ -58,6 +68,11 @@ export * as McpSchema from "./McpSchema.js";
  * @since 4.0.0
  */
 export * as McpServer from "./McpServer.js";
+/**
+ * @stability unstable
+ * @since 4.0.0
+ */
+export * as McpTest from "./McpTest.js";
 /**
  * @stability unstable
  * @since 4.0.0

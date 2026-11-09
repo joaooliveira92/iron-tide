@@ -5,6 +5,9 @@
  * divide, round, and format decimal values such as money, quantities, and
  * measurements.
  *
+ * Parsed scales are limited to ±10,000, and operations that align scales throw
+ * a `RangeError` when the scales differ by more than 20,000.
+ *
  * @stability stable
  * @since 2.0.0
  */
@@ -141,6 +144,10 @@ export declare const normalize: (self: BigDecimal) => BigDecimal;
  * digits beyond the target scale by `bigint` division, which truncates toward
  * zero.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the scale changes by more than 20,000.
+ *
  * **Example** (Scaling decimal precision)
  *
  * ```ts import.meta.vitest
@@ -176,6 +183,10 @@ export declare const scale: {
      * Increasing the scale appends decimal zeros. Decreasing the scale discards
      * digits beyond the target scale by `bigint` division, which truncates toward
      * zero.
+     *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the scale changes by more than 20,000.
      *
      * **Example** (Scaling decimal precision)
      *
@@ -213,6 +224,10 @@ export declare const scale: {
      * digits beyond the target scale by `bigint` division, which truncates toward
      * zero.
      *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the scale changes by more than 20,000.
+     *
      * **Example** (Scaling decimal precision)
      *
      * ```ts import.meta.vitest
@@ -245,6 +260,10 @@ export declare const scale: {
  * Use when you need a decimal addition function for piping or higher-order APIs
  * while preserving decimal precision.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the operands' scales differ by more than 20,000.
+ *
  * **Example** (Adding decimals)
  *
  * ```ts import.meta.vitest
@@ -270,6 +289,10 @@ export declare const sum: {
      *
      * Use when you need a decimal addition function for piping or higher-order APIs
      * while preserving decimal precision.
+     *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the operands' scales differ by more than 20,000.
      *
      * **Example** (Adding decimals)
      *
@@ -297,6 +320,10 @@ export declare const sum: {
      * Use when you need a decimal addition function for piping or higher-order APIs
      * while preserving decimal precision.
      *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the operands' scales differ by more than 20,000.
+     *
      * **Example** (Adding decimals)
      *
      * ```ts import.meta.vitest
@@ -323,6 +350,10 @@ export declare const sum: {
  *
  * Use when you need to aggregate decimal quantities with decimal precision
  * instead of converting through JavaScript numbers.
+ *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the operands' scales differ by more than 20,000.
  *
  * **Example** (Adding multiple decimals)
  *
@@ -452,6 +483,10 @@ export declare const multiplyAll: (collection: Iterable<BigDecimal>) => BigDecim
  *
  * Use to subtract one `BigDecimal` value from another.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the operands' scales differ by more than 20,000.
+ *
  * **Example** (Subtracting decimals)
  *
  * ```ts import.meta.vitest
@@ -475,6 +510,10 @@ export declare const subtract: {
      *
      * Use to subtract one `BigDecimal` value from another.
      *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the operands' scales differ by more than 20,000.
+     *
      * **Example** (Subtracting decimals)
      *
      * ```ts import.meta.vitest
@@ -497,6 +536,10 @@ export declare const subtract: {
      * **When to use**
      *
      * Use to subtract one `BigDecimal` value from another.
+     *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the operands' scales differ by more than 20,000.
      *
      * **Example** (Subtracting decimals)
      *
@@ -1497,6 +1540,10 @@ export declare const negate: (n: BigDecimal) => BigDecimal;
  *
  * If the divisor is `0`, the result will be `Option.none()`.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the operands' scales differ by more than 20,000.
+ *
  * **Example** (Computing remainders safely)
  *
  * ```ts import.meta.vitest
@@ -1530,6 +1577,10 @@ export declare const remainder: {
      * **Details**
      *
      * If the divisor is `0`, the result will be `Option.none()`.
+     *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the operands' scales differ by more than 20,000.
      *
      * **Example** (Computing remainders safely)
      *
@@ -1565,6 +1616,10 @@ export declare const remainder: {
      *
      * If the divisor is `0`, the result will be `Option.none()`.
      *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the operands' scales differ by more than 20,000.
+     *
      * **Example** (Computing remainders safely)
      *
      * ```ts import.meta.vitest
@@ -1598,7 +1653,8 @@ export declare const remainder: {
  *
  * **Gotchas**
  *
- * Throws a `RangeError` if the divisor is `0`.
+ * Throws a `RangeError` if the divisor is `0` or the operands' scales differ by
+ * more than 20,000.
  *
  * **Example** (Computing remainders unsafely)
  *
@@ -1629,7 +1685,8 @@ export declare const remainderUnsafe: {
      *
      * **Gotchas**
      *
-     * Throws a `RangeError` if the divisor is `0`.
+     * Throws a `RangeError` if the divisor is `0` or the operands' scales differ by
+     * more than 20,000.
      *
      * **Example** (Computing remainders unsafely)
      *
@@ -1660,7 +1717,8 @@ export declare const remainderUnsafe: {
      *
      * **Gotchas**
      *
-     * Throws a `RangeError` if the divisor is `0`.
+     * Throws a `RangeError` if the divisor is `0` or the operands' scales differ by
+     * more than 20,000.
      *
      * **Example** (Computing remainders unsafely)
      *
@@ -1889,8 +1947,9 @@ export declare const fromNumber: (n: number) => Option.Option<BigDecimal>;
  * **Details**
  *
  * Returns `Option.some` for valid decimal or exponent notation and
- * `Option.none` when the string cannot be parsed or would produce an unsafe
- * scale. The empty string parses as zero.
+ * `Option.none` otherwise, including when the scale, before or after removing
+ * trailing zeros, is outside ±10,000 (for example, more than 10,000 fractional
+ * digits). The empty string parses as zero.
  *
  * **Example** (Parsing decimal strings safely)
  *
@@ -1919,8 +1978,9 @@ export declare const fromString: (s: string) => Option.Option<BigDecimal>;
  *
  * **Details**
  *
- * Accepts the same syntax as `fromString`. Use `fromString` when invalid input
- * should be represented as `Option.none` instead of throwing.
+ * Accepts the same syntax and scale limits as `fromString`. Use `fromString`
+ * when invalid input should be represented as `Option.none` instead of
+ * throwing.
  *
  * **Example** (Parsing decimal strings unsafely)
  *
@@ -2144,6 +2204,15 @@ export type RoundingMode = "ceil" | "floor" | "to-zero" | "from-zero" | "half-ce
  *
  * Use to round a decimal at a requested scale with an explicit rounding mode.
  *
+ * **Details**
+ *
+ * Values already at or below the target scale are returned unchanged.
+ *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the value's scale exceeds the target scale by more
+ * than 20,000.
+ *
  * **Example** (Rounding decimals)
  *
  * ```ts import.meta.vitest
@@ -2171,6 +2240,15 @@ export declare const round: {
      * **When to use**
      *
      * Use to round a decimal at a requested scale with an explicit rounding mode.
+     *
+     * **Details**
+     *
+     * Values already at or below the target scale are returned unchanged.
+     *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the value's scale exceeds the target scale by more
+     * than 20,000.
      *
      * **Example** (Rounding decimals)
      *
@@ -2202,6 +2280,15 @@ export declare const round: {
      * **When to use**
      *
      * Use to round a decimal at a requested scale with an explicit rounding mode.
+     *
+     * **Details**
+     *
+     * Values already at or below the target scale are returned unchanged.
+     *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the value's scale exceeds the target scale by more
+     * than 20,000.
      *
      * **Example** (Rounding decimals)
      *
@@ -2237,6 +2324,11 @@ export declare const round: {
  * Use when you need to discard fractional digits beyond a scale rather than
  * round half up, half down, or toward an infinity.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the value's scale exceeds the target scale by more
+ * than 20,000.
+ *
  * **Example** (Truncating decimals)
  *
  * ```ts import.meta.vitest
@@ -2264,6 +2356,11 @@ export declare const truncate: {
      * Use when you need to discard fractional digits beyond a scale rather than
      * round half up, half down, or toward an infinity.
      *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the value's scale exceeds the target scale by more
+     * than 20,000.
+     *
      * **Example** (Truncating decimals)
      *
      * ```ts import.meta.vitest
@@ -2290,6 +2387,11 @@ export declare const truncate: {
      *
      * Use when you need to discard fractional digits beyond a scale rather than
      * round half up, half down, or toward an infinity.
+     *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the value's scale exceeds the target scale by more
+     * than 20,000.
      *
      * **Example** (Truncating decimals)
      *
@@ -2323,6 +2425,11 @@ export declare const truncate: {
  * decimal point, and negative scales round positions to the left of the decimal
  * point.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the value's scale exceeds the target scale by more
+ * than 20,000.
+ *
  * @see {@link floor} for rounding toward negative infinity
  * @see {@link truncate} for rounding toward zero
  * @see {@link round} for configurable rounding modes
@@ -2354,6 +2461,11 @@ export declare const ceil: {
      * decimal point, and negative scales round positions to the left of the decimal
      * point.
      *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the value's scale exceeds the target scale by more
+     * than 20,000.
+     *
      * @see {@link floor} for rounding toward negative infinity
      * @see {@link truncate} for rounding toward zero
      * @see {@link round} for configurable rounding modes
@@ -2385,6 +2497,11 @@ export declare const ceil: {
      * decimal point, and negative scales round positions to the left of the decimal
      * point.
      *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the value's scale exceeds the target scale by more
+     * than 20,000.
+     *
      * @see {@link floor} for rounding toward negative infinity
      * @see {@link truncate} for rounding toward zero
      * @see {@link round} for configurable rounding modes
@@ -2411,6 +2528,11 @@ export declare const ceil: {
  *
  * Use to round a decimal toward negative infinity at a requested scale.
  *
+ * **Gotchas**
+ *
+ * Throws a `RangeError` if the value's scale exceeds the target scale by more
+ * than 20,000.
+ *
  * **Example** (Rounding decimals down)
  *
  * ```ts import.meta.vitest
@@ -2436,6 +2558,11 @@ export declare const floor: {
      *
      * Use to round a decimal toward negative infinity at a requested scale.
      *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the value's scale exceeds the target scale by more
+     * than 20,000.
+     *
      * **Example** (Rounding decimals down)
      *
      * ```ts import.meta.vitest
@@ -2460,6 +2587,11 @@ export declare const floor: {
      * **When to use**
      *
      * Use to round a decimal toward negative infinity at a requested scale.
+     *
+     * **Gotchas**
+     *
+     * Throws a `RangeError` if the value's scale exceeds the target scale by more
+     * than 20,000.
      *
      * **Example** (Rounding decimals down)
      *

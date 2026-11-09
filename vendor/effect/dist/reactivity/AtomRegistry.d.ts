@@ -117,7 +117,7 @@ export interface Node<A> {
  * @since 4.0.0
  */
 export declare const make: (options?: {
-    readonly initialValues?: Iterable<readonly [Atom.Atom<any>, any]> | undefined;
+    readonly initialValues?: Iterable<readonly [Atom.Atom<any>, any, Atom.InitialValueOptions?]> | undefined;
     readonly scheduleTask?: ((f: () => void) => () => void) | undefined;
     readonly timeoutResolution?: number | undefined;
     readonly defaultIdleTTL?: number | undefined;
@@ -148,7 +148,7 @@ export declare const AtomRegistry: Context.Service<AtomRegistry, AtomRegistry>;
  * @since 4.0.0
  */
 export declare const layerOptions: (options?: {
-    readonly initialValues?: Iterable<readonly [Atom.Atom<any>, any]> | undefined;
+    readonly initialValues?: Iterable<readonly [Atom.Atom<any>, any, Atom.InitialValueOptions?]> | undefined;
     readonly scheduleTask?: ((f: () => void) => () => void) | undefined;
     readonly timeoutResolution?: number | undefined;
     readonly defaultIdleTTL?: number | undefined;

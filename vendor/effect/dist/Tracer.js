@@ -283,7 +283,8 @@ export const nativeTracer = /*#__PURE__*/make({
  * identifiers, the attribute map, and the event list are created lazily on
  * first access, so spans that are never inspected allocate as little as
  * possible. Attributes, events, links, and status are mutated through `Span`
- * methods.
+ * methods. Once the span has ended, those methods do nothing, so a second `end`
+ * keeps the original end time and exit.
  *
  * @see {@link Span} for the interface implemented by native spans
  *
@@ -331,6 +332,7 @@ export class NativeSpan {
     return this._events ??= [];
   }
   end(endTime, exit) {
+    if (this.status._tag === "Ended") return;
     this.status = {
       _tag: "Ended",
       endTime,
@@ -339,12 +341,15 @@ export class NativeSpan {
     };
   }
   attribute(key, value) {
+    if (this.status._tag === "Ended") return;
     this.attributes.set(key, value);
   }
   event(name, startTime, attributes) {
+    if (this.status._tag === "Ended") return;
     this.events.push([name, startTime, attributes ?? {}]);
   }
   addLinks(links) {
+    if (this.status._tag === "Ended") return;
     // oxlint-disable-next-line no-restricted-syntax
     this.links.push(...links);
   }

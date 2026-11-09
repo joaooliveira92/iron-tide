@@ -49,6 +49,13 @@ export declare const make: (options: {
  * precedence over matching attributes in `OTEL_RESOURCE_ATTRIBUTES`. Missing
  * required configuration is converted to a defect.
  *
+ * Keys and values in `OTEL_RESOURCE_ATTRIBUTES` are trimmed, then
+ * percent-decoded. Entries with an empty value are kept as `""`; entries
+ * without `=` or with an empty key are skipped. When a key is repeated as
+ * written, the last entry wins and the earlier ones are not decoded. Invalid
+ * percent-encoding in the remaining entries is a `ConfigError` and is
+ * converted to a defect.
+ *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
@@ -89,7 +96,9 @@ export declare const entriesToAttributes: (entries: Iterable<[string, unknown]>)
  * **Details**
  *
  * Arrays are converted recursively, primitive values use their matching OTLP
- * fields, and unsupported values are formatted as strings.
+ * fields, and unsupported values are formatted as strings. Integers outside the
+ * signed 64-bit range fall back to `doubleValue` for numbers and `stringValue`
+ * for bigints.
  *
  * @stability unstable
  * @category attributes

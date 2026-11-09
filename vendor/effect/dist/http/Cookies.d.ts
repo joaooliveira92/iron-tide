@@ -7,6 +7,10 @@
  * `Set-Cookie` headers, and provides helpers for adding, removing, merging, and
  * expiring cookies.
  *
+ * For client-side storage, `mergeIntoArray` and `toRequestCookieHeader`
+ * work on a plain array of cookies scoped by domain, path and scheme, following
+ * RFC 6265.
+ *
  * @stability unstable
  * @since 4.0.0
  */
@@ -43,6 +47,12 @@ declare const CookieTypeId = "~effect/http/Cookies/Cookie";
  * HTTP cookie value with its decoded value, encoded value, and optional cookie
  * attributes such as domain, path, expiration, security, and same-site settings.
  *
+ * **Details**
+ *
+ * `hostOnly` marks a stored client cookie that is sent only to the exact
+ * `domain`, not its subdomains. It is not serialized, and `serializeCookie`
+ * omits `Domain` when it is set.
+ *
  * @stability unstable
  * @category cookies
  * @since 4.0.0
@@ -62,6 +72,7 @@ export interface Cookie extends Inspectable.Inspectable {
         readonly secure?: boolean | undefined;
         readonly partitioned?: boolean | undefined;
         readonly sameSite?: "lax" | "strict" | "none" | undefined;
+        readonly hostOnly?: boolean | undefined;
     } | undefined;
 }
 /**
@@ -577,6 +588,167 @@ export declare const toRecord: (self: Cookies) => Record<string, string>;
  * @since 4.0.0
  */
 export declare const toSetCookieHeaders: (self: Cookies) => Array<string>;
+/**
+ * Merges cookies set by `url` into an array of client cookies, returning a new
+ * array.
+ *
+ * **When to use**
+ *
+ * Use to record the cookies of a response, or to seed an array of client
+ * cookies from `Set-Cookie` values for a base URL.
+ *
+ * **Details**
+ *
+ * A cookie without a `Domain` attribute is scoped as `hostOnly` to the exact
+ * host of `url`. A `Domain` attribute is accepted only when the host of `url`
+ * domain-matches it. Without a `Path` attribute the cookie uses the default
+ * path of `url`. `Max-Age` takes precedence over `Expires`, and both are
+ * converted to an absolute `expires` computed from `now` (epoch milliseconds).
+ *
+ * A cookie replaces the existing cookie with the same name, domain and path,
+ * keeping its position. A cookie that is already expired removes that existing
+ * cookie instead. The array is returned unchanged when `url` is not a valid
+ * absolute URL.
+ *
+ * **Gotchas**
+ *
+ * - There is no public suffix list. A `Domain` attribute is accepted whenever
+ *   the request host domain-matches it, unless the host is an IP address or the
+ *   domain is a single label such as `com`, so `foo.co.uk` can set
+ *   `Domain=co.uk`.
+ *
+ * @stability unstable
+ * @category client storage
+ * @since 4.0.0
+ */
+export declare const mergeIntoArray: {
+    /**
+     * Merges cookies set by `url` into an array of client cookies, returning a new
+     * array.
+     *
+     * **When to use**
+     *
+     * Use to record the cookies of a response, or to seed an array of client
+     * cookies from `Set-Cookie` values for a base URL.
+     *
+     * **Details**
+     *
+     * A cookie without a `Domain` attribute is scoped as `hostOnly` to the exact
+     * host of `url`. A `Domain` attribute is accepted only when the host of `url`
+     * domain-matches it. Without a `Path` attribute the cookie uses the default
+     * path of `url`. `Max-Age` takes precedence over `Expires`, and both are
+     * converted to an absolute `expires` computed from `now` (epoch milliseconds).
+     *
+     * A cookie replaces the existing cookie with the same name, domain and path,
+     * keeping its position. A cookie that is already expired removes that existing
+     * cookie instead. The array is returned unchanged when `url` is not a valid
+     * absolute URL.
+     *
+     * **Gotchas**
+     *
+     * - There is no public suffix list. A `Domain` attribute is accepted whenever
+     *   the request host domain-matches it, unless the host is an IP address or the
+     *   domain is a single label such as `com`, so `foo.co.uk` can set
+     *   `Domain=co.uk`.
+     *
+     * @stability unstable
+     * @category client storage
+     * @since 4.0.0
+     */
+    (url: string, cookies: Cookies, now: number): (self: ReadonlyArray<Cookie>) => ReadonlyArray<Cookie>;
+    /**
+     * Merges cookies set by `url` into an array of client cookies, returning a new
+     * array.
+     *
+     * **When to use**
+     *
+     * Use to record the cookies of a response, or to seed an array of client
+     * cookies from `Set-Cookie` values for a base URL.
+     *
+     * **Details**
+     *
+     * A cookie without a `Domain` attribute is scoped as `hostOnly` to the exact
+     * host of `url`. A `Domain` attribute is accepted only when the host of `url`
+     * domain-matches it. Without a `Path` attribute the cookie uses the default
+     * path of `url`. `Max-Age` takes precedence over `Expires`, and both are
+     * converted to an absolute `expires` computed from `now` (epoch milliseconds).
+     *
+     * A cookie replaces the existing cookie with the same name, domain and path,
+     * keeping its position. A cookie that is already expired removes that existing
+     * cookie instead. The array is returned unchanged when `url` is not a valid
+     * absolute URL.
+     *
+     * **Gotchas**
+     *
+     * - There is no public suffix list. A `Domain` attribute is accepted whenever
+     *   the request host domain-matches it, unless the host is an IP address or the
+     *   domain is a single label such as `com`, so `foo.co.uk` can set
+     *   `Domain=co.uk`.
+     *
+     * @stability unstable
+     * @category client storage
+     * @since 4.0.0
+     */
+    (self: ReadonlyArray<Cookie>, url: string, cookies: Cookies, now: number): ReadonlyArray<Cookie>;
+};
+/**
+ * Serializes the client cookies to send with a request to `url` into a
+ * `Cookie` header value.
+ *
+ * **Details**
+ *
+ * Selects cookies that have not expired at `now` (epoch milliseconds) and whose
+ * domain and path match `url`, skipping `Secure` cookies unless `url` uses
+ * `https`. Every matching cookie is kept, including cookies with the same name,
+ * ordered by longest path first. Returns `undefined` when no cookie matches.
+ *
+ * A leading dot and letter case in `domain` are ignored. A cookie without a
+ * `domain` is never sent, and a cookie without a `path` matches every path.
+ *
+ * @stability unstable
+ * @category client storage
+ * @since 4.0.0
+ */
+export declare const toRequestCookieHeader: {
+    /**
+     * Serializes the client cookies to send with a request to `url` into a
+     * `Cookie` header value.
+     *
+     * **Details**
+     *
+     * Selects cookies that have not expired at `now` (epoch milliseconds) and whose
+     * domain and path match `url`, skipping `Secure` cookies unless `url` uses
+     * `https`. Every matching cookie is kept, including cookies with the same name,
+     * ordered by longest path first. Returns `undefined` when no cookie matches.
+     *
+     * A leading dot and letter case in `domain` are ignored. A cookie without a
+     * `domain` is never sent, and a cookie without a `path` matches every path.
+     *
+     * @stability unstable
+     * @category client storage
+     * @since 4.0.0
+     */
+    (url: string, now: number): (self: ReadonlyArray<Cookie>) => string | undefined;
+    /**
+     * Serializes the client cookies to send with a request to `url` into a
+     * `Cookie` header value.
+     *
+     * **Details**
+     *
+     * Selects cookies that have not expired at `now` (epoch milliseconds) and whose
+     * domain and path match `url`, skipping `Secure` cookies unless `url` uses
+     * `https`. Every matching cookie is kept, including cookies with the same name,
+     * ordered by longest path first. Returns `undefined` when no cookie matches.
+     *
+     * A leading dot and letter case in `domain` are ignored. A cookie without a
+     * `domain` is never sent, and a cookie without a `path` matches every path.
+     *
+     * @stability unstable
+     * @category client storage
+     * @since 4.0.0
+     */
+    (self: ReadonlyArray<Cookie>, url: string, now: number): string | undefined;
+};
 /**
  * Parses a cookie header into a record of key-value pairs
  *

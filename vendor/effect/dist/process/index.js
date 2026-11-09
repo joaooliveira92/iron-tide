@@ -13,4 +13,9 @@ export * as ChildProcess from "./ChildProcess.js";
  * @since 4.0.0
  */
 export * as ChildProcessSpawner from "./ChildProcessSpawner.js";
+/**
+ * @stability unstable
+ * @since 4.0.7
+ */
+export * as CommandLine from "./CommandLine.js";
 //# sourceMappingURL=index.js.map

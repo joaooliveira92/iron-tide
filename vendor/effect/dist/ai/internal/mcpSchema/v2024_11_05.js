@@ -22,7 +22,13 @@ export const optional = schema => Schema.optionalKey(schema).pipe(Schema.decodeT
   decode: SchemaGetter.passthrough(),
   encode: SchemaGetter.transformOptional(Option.flatMap(Option.fromUndefinedOr))
 }));
-const JsonObject = Schema.JsonObject;
+/**
+ * Object checked one level deep. Payloads come from `JSON.parse` or are serialized
+ * through `Schema.toCodecJson`, so deep JSON validation would be redundant.
+ *
+ * @internal
+ */
+export const UnknownObject = /*#__PURE__*/Schema.Record(Schema.String, Schema.Unknown);
 /**
  * @internal
  */
@@ -45,19 +51,19 @@ export const LoggingLevel = /*#__PURE__*/Schema.Literals(["debug", "info", "noti
 export const RequestMeta = /*#__PURE__*/Schema.Struct({
   _meta: /*#__PURE__*/optional(/*#__PURE__*/Schema.StructWithRest(/*#__PURE__*/Schema.Struct({
     progressToken: /*#__PURE__*/optional(ProgressToken)
-  }), [Schema.JsonObject]))
+  }), [UnknownObject]))
 });
 /**
  * @internal
  */
 export const NotificationMeta = /*#__PURE__*/Schema.Struct({
-  _meta: /*#__PURE__*/optional(JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 });
 /**
  * @internal
  */
 export const ResultMeta = /*#__PURE__*/Schema.Struct({
-  _meta: /*#__PURE__*/optional(JsonObject)
+  _meta: /*#__PURE__*/optional(UnknownObject)
 });
 /**
  * @internal
@@ -84,20 +90,20 @@ export const Implementation = /*#__PURE__*/Schema.Struct({
  * @internal
  */
 export const ClientCapabilities = /*#__PURE__*/Schema.Struct({
-  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(/*#__PURE__*/Schema.TemplateLiteral([Schema.String, "/", Schema.String]), Schema.Json)),
-  experimental: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, JsonObject)),
+  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(/*#__PURE__*/Schema.TemplateLiteral([Schema.String, "/", Schema.String]), Schema.Unknown)),
+  experimental: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, UnknownObject)),
   roots: /*#__PURE__*/optional(/*#__PURE__*/Schema.Struct({
     listChanged: /*#__PURE__*/optional(Schema.Boolean)
   })),
-  sampling: /*#__PURE__*/optional(JsonObject)
+  sampling: /*#__PURE__*/optional(UnknownObject)
 });
 /**
  * @internal
  */
 export const ServerCapabilities = /*#__PURE__*/Schema.Struct({
-  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(/*#__PURE__*/Schema.TemplateLiteral([Schema.String, "/", Schema.String]), Schema.Json)),
-  experimental: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, JsonObject)),
-  logging: /*#__PURE__*/optional(JsonObject),
+  extensions: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(/*#__PURE__*/Schema.TemplateLiteral([Schema.String, "/", Schema.String]), Schema.Unknown)),
+  experimental: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, UnknownObject)),
+  logging: /*#__PURE__*/optional(UnknownObject),
   prompts: /*#__PURE__*/optional(/*#__PURE__*/Schema.Struct({
     listChanged: /*#__PURE__*/optional(Schema.Boolean)
   })),
@@ -229,7 +235,7 @@ export const PromptMessage = /*#__PURE__*/Schema.Struct({
  */
 export const ToolInputSchema = /*#__PURE__*/Schema.Struct({
   type: /*#__PURE__*/Schema.Literal("object"),
-  properties: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, JsonObject)),
+  properties: /*#__PURE__*/optional(/*#__PURE__*/Schema.Record(Schema.String, UnknownObject)),
   required: /*#__PURE__*/optional(/*#__PURE__*/Schema.Array(Schema.String))
 });
 /**
@@ -506,7 +512,7 @@ export class CallTool extends /*#__PURE__*/Rpc.make("tools/call", {
   payload: {
     ...RequestMeta.fields,
     name: Schema.String,
-    arguments: /*#__PURE__*/optional(JsonObject)
+    arguments: /*#__PURE__*/optional(UnknownObject)
   }
 }) {}
 /**
@@ -532,7 +538,7 @@ export class CreateMessage extends /*#__PURE__*/Rpc.make("sampling/createMessage
     temperature: /*#__PURE__*/optional(Schema.Finite),
     maxTokens: Schema.Finite,
     stopSequences: /*#__PURE__*/optional(/*#__PURE__*/Schema.Array(Schema.String)),
-    metadata: /*#__PURE__*/optional(JsonObject)
+    metadata: /*#__PURE__*/optional(UnknownObject)
   }
 }) {}
 /**

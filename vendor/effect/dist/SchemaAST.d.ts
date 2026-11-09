@@ -389,7 +389,7 @@ export type Encoding = readonly [Link, ...Array<Link>];
  *
  * **Details**
  *
- * Pass to `Schema.decodeUnknown`, `Schema.encode`, and related APIs to customize
+ * Pass to `Schema.decodeUnknownEffect`, `Schema.encodeEffect`, and related APIs to customize
  * error reporting, excess property handling, check execution, and product
  * concurrency. Options apply throughout the parse; schema annotations do not
  * override them.
@@ -1344,8 +1344,10 @@ type IndexSignatureParameter = String | Number | Symbol | TemplateLiteral | Unio
  *
  * **Gotchas**
  *
- * Using `Schema.optionalKey` on the value type is not allowed for index
- * signatures (throws at construction); use `Schema.optional` instead.
+ * Using `Schema.optionalKey` or `Schema.optional` on the value type is not
+ * allowed for index signatures (throws at construction). Index signatures
+ * already allow keys to be absent; use `Schema.UndefinedOr` to allow
+ * `undefined` values.
  *
  * @see {@link Objects}
  * @see {@link PropertySignature}
@@ -1627,7 +1629,7 @@ export type Check<T> = Filter<T> | FilterGroup<T>;
  *
  * **Details**
  *
- * The filter can be used with `Schema.filter` or attached directly to a
+ * The filter can be used with `Schema.check` or attached directly to a
  * `String` AST node through checks. The regular expression is cloned and its
  * `lastIndex` is reset before each test, so global and sticky expressions are
  * deterministic and the provided regular expression is not mutated. The
@@ -1755,7 +1757,7 @@ export declare const toEncoded: (a: AST) => AST;
  * **Details**
  *
  * After flipping, what was decoding becomes encoding and vice versa. This is
- * the core operation behind `Schema.encode` — encoding a value is decoding
+ * the core operation behind `Schema.encodeEffect` — encoding a value is decoding
  * with a flipped SchemaAST.
  *
  * - Memoized: same input reference → same output reference.
@@ -1774,7 +1776,7 @@ export declare const flip: (ast: AST) => AST;
  * **Details**
  *
  * If the node has {@link Checks}, returns annotations from the last check
- * (which is where user-supplied annotations end up after `.pipe(Schema.annotations(...))`).
+ * (which is where user-supplied annotations end up after `.pipe(Schema.annotate(...))`).
  * Otherwise returns the node's `annotations` directly.
  *
  * **Example** (Reading annotations)
@@ -1815,7 +1817,7 @@ export declare const resolveAt: <A>(key: string) => (ast: AST) => A | undefined;
  *
  * **Details**
  *
- * The identifier is typically set by `Schema.annotations({ identifier: "..." })`
+ * The identifier is typically set by `Schema.annotate({ identifier: "..." })`
  * and is used for error messages and schema identification.
  *
  * @see {@link resolve}

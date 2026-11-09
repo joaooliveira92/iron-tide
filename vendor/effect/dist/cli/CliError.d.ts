@@ -29,6 +29,77 @@ declare const TypeId = "~effect/cli/CliError";
  */
 export declare const isCliError: (u: unknown) => u is CliError;
 /**
+ * Defines the string property key used to give an object error a user-facing
+ * message.
+ *
+ * **When to use**
+ *
+ * Use to type the property key that marks handler failures for rendering by
+ * `Command.run`.
+ *
+ * @stability unstable
+ * @category annotations
+ * @since 4.0.0
+ */
+export type userMessage = "~effect/cli/CliError/userMessage";
+/**
+ * Defines the runtime property key used to give an object error a user-facing
+ * message.
+ *
+ * **When to use**
+ *
+ * Use when a handler fails with a domain error that should be shown to the
+ * user without wrapping it in {@link UserError}.
+ *
+ * **Details**
+ *
+ * When a handler failure has a string `[CliError.userMessage]`, `Command.run`
+ * renders it with the installed formatter, sets `Runtime.errorReported` to
+ * `false`, and rethrows the original error, so its tag is preserved. The
+ * global `Error` interface declares this key as an optional string.
+ *
+ * **Example** (Rendering a tagged handler failure)
+ *
+ * ```ts import.meta.vitest
+ * import { Schema } from "effect"
+ * import { CliError } from "effect/cli"
+ *
+ * class Occupied extends Schema.TaggedError<Occupied>()("Occupied", {
+ *   path: Schema.String
+ * }) {
+ *   override get [CliError.userMessage]() {
+ *     return `${this.path} already exists`
+ *   }
+ * }
+ *
+ * const error = new Occupied({ path: "config.yaml" })
+ * CliError.getUserMessage(error) // => "config.yaml already exists"
+ * ```
+ *
+ * @see {@link getUserMessage} for reading the message stored under this key
+ *
+ * @stability unstable
+ * @category annotations
+ * @since 4.0.0
+ */
+export declare const userMessage: userMessage;
+declare global {
+    interface Error {
+        readonly [userMessage]?: string;
+    }
+}
+/**
+ * Reads the `CliError.userMessage` annotation from an error object, returning
+ * `undefined` when it is unset or not a string.
+ *
+ * @see {@link userMessage} for the annotation key this getter reads
+ *
+ * @stability unstable
+ * @category annotations
+ * @since 4.0.0
+ */
+export declare const getUserMessage: (error: object) => string | undefined;
+/**
  * Union type representing all possible CLI error conditions.
  *
  * **Example** (Handling CLI errors)
@@ -58,7 +129,7 @@ export declare const isCliError: (u: unknown) => u is CliError;
  * @category errors
  * @since 4.0.0
  */
-export type CliError = UnrecognizedOption | DuplicateOption | MissingOption | MissingArgument | UnexpectedArgument | InvalidValue | UnknownSubcommand | ShowHelp | UserError;
+export type CliError = UnrecognizedOption | DuplicateOption | MissingOption | MissingArgument | UnexpectedArgument | InvalidValue | UnknownSubcommand | ValidationError | ShowHelp | UserError;
 declare const UnrecognizedOption_base: Schema.Class<UnrecognizedOption, Schema.TaggedStruct<"UnrecognizedOption", {
     readonly option: Schema.String;
     readonly command: Schema.optional<Schema.$Array<Schema.String>>;
@@ -416,6 +487,45 @@ export declare class UnknownSubcommand extends UnknownSubcommand_base {
      */
     get message(): string;
 }
+declare const ValidationError_base: Schema.Class<ValidationError, Schema.TaggedStruct<"ValidationError", {
+    readonly message: Schema.String;
+}>, import("../Cause.ts").YieldableError>;
+/**
+ * Error for parsed input that fails a rule of your own, such as two flags
+ * that cannot be used together.
+ *
+ * **Details**
+ *
+ * Fail with it from `Command.validate`, `Flag.mapEffect` or
+ * `Argument.mapEffect`. The runner shows it with the command help, like any
+ * other parse error. Handlers report their own failures with `UserError`.
+ *
+ * **Example** (Rejecting a flag combination)
+ *
+ * ```ts import.meta.vitest
+ * import { CliError } from "effect/cli"
+ *
+ * const error = new CliError.ValidationError({
+ *   message: "--use-api and --use-docker are mutually exclusive"
+ * })
+ *
+ * error._tag // => "ValidationError"
+ * error.message // => "--use-api and --use-docker are mutually exclusive"
+ * ```
+ *
+ * @stability unstable
+ * @category errors
+ * @since 4.1.0
+ */
+export declare class ValidationError extends ValidationError_base {
+    /**
+     * Marks this value as a CLI validation error for runtime guards.
+     *
+     * @stability unstable
+     * @since 4.1.0
+     */
+    readonly [TypeId] = "~effect/cli/CliError";
+}
 declare const UserError_base: Schema.Class<UserError, Schema.TaggedStruct<"UserError", {
     readonly cause: Schema.Defect;
     readonly userMessage: Schema.optionalKey<Schema.String>;
@@ -489,6 +599,13 @@ export declare class UserError extends UserError_base {
      * @since 4.0.0
      */
     get message(): string;
+    /**
+     * Exposes `message` as the user-facing message rendered by `Command.run`.
+     *
+     * @stability unstable
+     * @since 4.0.0
+     */
+    get [userMessage](): string;
 }
 /**
  * Schema for concrete CLI errors that can be reported together with help output.
@@ -510,6 +627,7 @@ export declare const NonShowHelpErrors: Schema.Union<readonly [
     typeof UnexpectedArgument,
     typeof InvalidValue,
     typeof UnknownSubcommand,
+    typeof ValidationError,
     typeof UserError
 ]>;
 /**
@@ -528,7 +646,7 @@ export declare const NonShowHelpErrors: Schema.Union<readonly [
 export type NonShowHelpErrors = typeof NonShowHelpErrors.Type;
 declare const ShowHelp_base: Schema.Class<ShowHelp, Schema.TaggedStruct<"ShowHelp", {
     readonly commandPath: Schema.$Array<Schema.String>;
-    readonly errors: Schema.$Array<Schema.Union<readonly [typeof UnrecognizedOption, typeof DuplicateOption, typeof MissingOption, typeof MissingArgument, typeof UnexpectedArgument, typeof InvalidValue, typeof UnknownSubcommand, typeof UserError]>>;
+    readonly errors: Schema.$Array<Schema.Union<readonly [typeof UnrecognizedOption, typeof DuplicateOption, typeof MissingOption, typeof MissingArgument, typeof UnexpectedArgument, typeof InvalidValue, typeof UnknownSubcommand, typeof ValidationError, typeof UserError]>>;
 }>, import("../Cause.ts").YieldableError>;
 /**
  * Error data requesting CLI help rendering for a command path.

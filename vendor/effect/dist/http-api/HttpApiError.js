@@ -1,20 +1,9 @@
-/**
- * Built-in error schemas for common HTTP API failure responses.
- *
- * This module provides reusable `Schema.Error` values for common HTTP
- * status codes, plus `HttpApiSchemaError` for request decoding failures raised
- * by the HTTP API runtime. The status errors can be used in endpoint or
- * middleware error declarations and are understood by builders, generated
- * clients, reflection, and OpenAPI generation.
- *
- * @stability unstable
- * @since 4.0.0
- */
 import * as Data from "../Data.js";
 import * as Effect from "../Effect.js";
 import * as ErrorReporter from "../ErrorReporter.js";
 import * as HttpServerRespondable from "../http/HttpServerRespondable.js";
 import * as HttpServerResponse from "../http/HttpServerResponse.js";
+import * as ProblemDetails from "../http/ProblemDetails.js";
 import { hasProperty } from "../Predicate.js";
 import * as Schema from "../Schema.js";
 import * as HttpApiSchema from "./HttpApiSchema.js";
@@ -44,6 +33,9 @@ const conflictResponse = /*#__PURE__*/HttpServerResponse.empty({
 });
 const goneResponse = /*#__PURE__*/HttpServerResponse.empty({
   status: 410
+});
+const payloadTooLargeResponse = /*#__PURE__*/HttpServerResponse.empty({
+  status: 413
 });
 const unprocessableEntityResponse = /*#__PURE__*/HttpServerResponse.empty({
   status: 422
@@ -445,6 +437,133 @@ export class ServiceUnavailable extends /*#__PURE__*/Schema.Error("effect/HttpAp
 export const ServiceUnavailableNoContent = /*#__PURE__*/ServiceUnavailable.pipe(/*#__PURE__*/HttpApiSchema.asNoContent({
   decode: () => new ServiceUnavailable({})
 }));
+const problemEncoding = {
+  _tag: "Json",
+  contentType: ProblemDetails.contentType
+};
+/**
+ * Declares a typed RFC 9457 problem as a yieldable error class.
+ *
+ * **Details**
+ *
+ * The class is a `Schema.Error` whose `_tag` is the given tag, so `Effect.catchTag`
+ * works without `_tag` on the wire. It carries the `httpApiStatus` and
+ * `application/problem+json` annotations, so endpoints that declare it as an
+ * error render, document and decode it as a problem. Problem classes that
+ * share a status are told apart by `type`. The extension fields are validated
+ * on both sides and cannot replace `type`, `status` or `title`; unknown
+ * extensions are not kept. An undeclared instance still renders as a problem
+ * through `HttpServerRespondable`.
+ *
+ * **Example** (Declaring and using a typed problem)
+ *
+ * ```ts
+ * import { Effect, Schema } from "effect"
+ * import { HttpApiEndpoint, HttpApiError } from "effect/http-api"
+ *
+ * class OutOfCredit extends HttpApiError.Problem<OutOfCredit>()("OutOfCredit", {
+ *   type: "https://example.com/probs/out-of-credit",
+ *   status: 403,
+ *   title: "You do not have enough credit."
+ * }, {
+ *   balance: Schema.Number
+ * }) {}
+ *
+ * const buy = HttpApiEndpoint.post("buy", "/buy", { error: OutOfCredit })
+ *
+ * const failing = Effect.fail(new OutOfCredit({ balance: 30 }))
+ * // Responds with 403 and { "type": "https://example.com/probs/out-of-credit",
+ * //   "status": 403, "title": "You do not have enough credit.", "balance": 30 }
+ * ```
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.6
+ */
+export const Problem = () => (tag, declaration, fields, annotations) => {
+  const struct = Schema.Struct({
+    detail: ProblemDetails.optionalMember(Schema.String),
+    instance: ProblemDetails.optionalMember(Schema.String),
+    ...fields,
+    type: Schema.tag(declaration.type),
+    status: ProblemDetails.fixedMember(declaration.status),
+    title: ProblemDetails.fixedMember(declaration.title)
+  });
+  const encode = Schema.encodeUnknownEffect(struct);
+  const Base = Schema.Error(tag)(struct, {
+    description: declaration.title,
+    httpApiStatus: declaration.status,
+    "~httpApiEncoding": problemEncoding,
+    ...annotations
+  });
+  Object.assign(Base.prototype, {
+    _tag: tag,
+    [ErrorReporter.ignore]: declaration.status < 500,
+    [HttpServerRespondable.symbol]() {
+      return Effect.map(encode(this), body => HttpServerResponse.jsonUnsafe(body, {
+        status: declaration.status,
+        contentType: ProblemDetails.contentType
+      }));
+    }
+  });
+  Object.defineProperty(Base.prototype, "message", {
+    get() {
+      return this.detail ?? declaration.title;
+    },
+    configurable: true
+  });
+  return Base;
+};
+/**
+ * One entry of `BadRequestProblem.errors`: the location of a request value
+ * that failed decoding and the reason.
+ *
+ * **Details**
+ *
+ * The first path segment names the request slot (`params`, `headers`, `query`
+ * or `payload`).
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export const ProblemIssue = /*#__PURE__*/Schema.Struct({
+  path: /*#__PURE__*/Schema.Array(/*#__PURE__*/Schema.Union([Schema.String, Schema.Number])),
+  message: Schema.String
+});
+/**
+ * The problem rendered by `HttpApiMiddleware.layerProblemDetails` when a
+ * request fails decoding.
+ *
+ * **Details**
+ *
+ * The body is generic by default. `errors` is only filled when the layer is
+ * built with `includeDetails: true`.
+ *
+ * @stability unstable
+ * @category errors
+ * @since 4.0.6
+ */
+export class BadRequestProblem extends /*#__PURE__*/Problem()("BadRequestProblem", {
+  type: ProblemDetails.blankType,
+  status: 400,
+  title: "Bad Request"
+}, {
+  errors: /*#__PURE__*/Schema.optionalKey(/*#__PURE__*/Schema.Array(ProblemIssue))
+}) {}
+/**
+ * The problem rendered by `HttpApiMiddleware.layerProblemDetails` when a
+ * response fails encoding.
+ *
+ * @stability unstable
+ * @category errors
+ * @since 4.0.6
+ */
+export class InternalServerErrorProblem extends /*#__PURE__*/Problem()("InternalServerErrorProblem", {
+  type: ProblemDetails.blankType,
+  status: 500,
+  title: "Internal Server Error"
+}) {}
 /**
  * Runtime identifier used to mark and detect `HttpApiSchemaError` values.
  *
@@ -483,6 +602,41 @@ export class HttpApiSchemaError extends /*#__PURE__*/Data.TaggedClass("HttpApiSc
   message = this.kind;
   [HttpServerRespondable.symbol]() {
     return Effect.succeed(this[ErrorReporter.ignore] ? badRequestResponse : internalServerErrorResponse);
+  }
+}
+/**
+ * Runtime identifier used to mark and detect `HttpApiPayloadTooLarge` values.
+ *
+ * @stability unstable
+ * @category type IDs
+ * @since 4.0.6
+ */
+export const HttpApiPayloadTooLargeTypeId = "~effect/http-api/HttpApiError/HttpApiPayloadTooLarge";
+/**
+ * Error raised when a streaming request payload exceeds a limit declared on
+ * its `HttpApiSchema.StreamUint8Array` or `HttpApiSchema.StreamNdjson` schema.
+ * It responds with an empty `413 Payload Too Large` and is ignored by error
+ * reporters.
+ *
+ * **Details**
+ *
+ * `limit` names the option that was exceeded: `maxBytes` caps the whole body
+ * and `maxElementBytes` caps one NDJSON line. `size` is its configured value.
+ *
+ * @stability unstable
+ * @category errors
+ * @since 4.0.6
+ */
+export class HttpApiPayloadTooLarge extends /*#__PURE__*/Data.TaggedClass("HttpApiPayloadTooLarge") {
+  [HttpApiPayloadTooLargeTypeId] = HttpApiPayloadTooLargeTypeId;
+  [ErrorReporter.ignore] = true;
+  static is(u) {
+    return hasProperty(u, HttpApiPayloadTooLargeTypeId);
+  }
+  name = "HttpApiPayloadTooLarge";
+  message = `Payload exceeds ${this.limit} of ${this.size} bytes`;
+  [HttpServerRespondable.symbol]() {
+    return Effect.succeed(payloadTooLargeResponse);
   }
 }
 //# sourceMappingURL=HttpApiError.js.map

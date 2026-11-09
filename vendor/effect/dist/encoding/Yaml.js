@@ -2,11 +2,16 @@
  * Parses YAML configuration files.
  *
  * Supports YAML 1.2 block and flow collections, indentless sequence values,
- * multiline plain and quoted scalars, block scalars, anchors, and aliases.
+ * multiline plain and quoted scalars, block scalars, anchors, aliases, and
+ * YAML 1.1 merge keys (`<<`).
+ *
+ * Unlike YAML 1.2, the closing bracket of a multiline flow collection may sit
+ * at its parent's indentation.
  *
  * Unsupported: compact nested block sequences (`- - value` on one line),
- * multiline flow collections, explicit complex keys, tag/directive processing,
- * recursive aliases, and document streams. Mapping keys are JavaScript strings.
+ * multiline quoted scalars in flow collections, explicit complex keys,
+ * tag/directive processing, recursive aliases, and document streams. Mapping
+ * keys are JavaScript strings.
  *
  * @stability unstable
  * @since 4.0.0
@@ -20,6 +25,29 @@ const setProperty = (record, key, value) => {
     value
   });
 };
+const isMapping = value => typeof value === "object" && value !== null && !Array.isArray(value);
+// Explicit keys take precedence over merged keys, and earlier merge sources over later ones.
+class MappingBuilder {
+  output = {};
+  // Keys added by the merge key, which an explicit key may still override.
+  merged;
+  set(key, value, fail) {
+    if (hasOwn.call(this.output, key) && !this.merged?.delete(key)) fail(`Duplicate key '${key}'`);
+    setProperty(this.output, key, value);
+  }
+  merge(value, fail) {
+    if (this.merged !== undefined) fail("Duplicate key '<<'");
+    this.merged = new Set();
+    for (const source of Array.isArray(value) ? value : [value]) {
+      if (!isMapping(source)) fail("Merge key values must be mappings");
+      for (const key of Object.keys(source)) {
+        if (hasOwn.call(this.output, key)) continue;
+        setProperty(this.output, key, source[key]);
+        this.merged.add(key);
+      }
+    }
+  }
+}
 const closingQuote = (input, quote, start) => {
   for (let index = start; index < input.length; index++) {
     const character = input[index];
@@ -31,8 +59,8 @@ const closingQuote = (input, quote, start) => {
   }
   return -1;
 };
-const findIndicator = (input, indicator) => {
-  let depth = 0;
+// `depth` is the number of flow collections already open before `input`.
+const findIndicator = (input, indicator, depth = 0) => {
   let tokenStart = true;
   for (let index = 0; index < input.length; index++) {
     const character = input[index];
@@ -62,13 +90,15 @@ const findIndicator = (input, indicator) => {
   }
   return -1;
 };
-const stripComment = input => {
-  const index = findIndicator(input, "#");
+const stripComment = (input, depth = 0) => {
+  const index = findIndicator(input, "#", depth);
   return index === -1 ? input : input.slice(0, index).trimEnd();
 };
 const mappingSeparator = input => findIndicator(input, ":");
 const isSequenceEntry = text => text === "-" || text.startsWith("- ");
 const foldLineBreak = blankLines => blankLines === 0 ? " " : "\n".repeat(blankLines);
+// Folds the line breaks of a multiline plain flow scalar.
+const foldFlowLines = input => input.replace(/[ \t]*\n((?:[ \t]*\n)*)[ \t]*/g, (_, blankLines) => foldLineBreak(blankLines.split("\n").length - 1));
 const endsWithEscape = text => /\\*$/.exec(text)[0].length % 2 === 1;
 // Escaped trailing spaces are content, not folding whitespace.
 const trimFoldedEnd = (line, quote) => {
@@ -161,10 +191,13 @@ const parseKey = input => {
 class FlowParser {
   input;
   anchors;
+  nextLine;
   index = 0;
-  constructor(input, anchors) {
+  depth = 0;
+  constructor(input, anchors, nextLine) {
     this.input = input;
     this.anchors = anchors;
+    this.nextLine = nextLine;
   }
   parse() {
     const value = this.parseValue();
@@ -177,8 +210,12 @@ class FlowParser {
   parseValue() {
     this.skipWhitespace();
     const character = this.peek();
-    if (character === "[") return this.parseSequence();
-    if (character === "{") return this.parseMapping();
+    if (character === "[" || character === "{") {
+      this.depth++;
+      const collection = character === "[" ? this.parseSequence() : this.parseMapping();
+      this.depth--;
+      return collection;
+    }
     if (character === "\"" || character === "'") return parseScalar(this.readQuoted(character));
     if (character === "*") {
       this.index++;
@@ -186,7 +223,17 @@ class FlowParser {
       if (!this.anchors.has(name)) this.fail(`Unknown alias '*${name}'`);
       return this.anchors.get(name);
     }
-    return parseScalar(this.readUntil(/[,\]}]/).trim());
+    if (character === "&") {
+      this.index++;
+      const name = this.readUntil(/[\s,[\]{}]/);
+      if (name === "" || /[[{]/.test(this.peek())) this.fail("Invalid anchor");
+      this.skipWhitespace();
+      if (this.peek() === "&") this.fail("Multiple anchors on one node");
+      const value = this.parseValue();
+      this.anchors.set(name, value);
+      return value;
+    }
+    return parseScalar(foldFlowLines(this.readUntil(/[,\]}]/)).trim());
   }
   parseSequence() {
     this.expect("[");
@@ -213,28 +260,30 @@ class FlowParser {
   }
   parseMapping() {
     this.expect("{");
-    const output = {};
+    const mapping = new MappingBuilder();
+    const fail = message => this.fail(message);
     this.skipWhitespace();
     if (this.peek() === "}") {
       this.index++;
-      return output;
+      return mapping.output;
     }
     while (true) {
+      this.skipWhitespace();
+      const quoted = this.peek() === "\"" || this.peek() === "'";
       const key = this.parseKey();
       this.skipWhitespace();
       this.expect(":");
-      if (hasOwn.call(output, key)) this.fail(`Duplicate key '${key}'`);
-      setProperty(output, key, this.parseValue());
+      if (!quoted && key === "<<") mapping.merge(this.parseValue(), fail);else mapping.set(key, this.parseValue(), fail);
       this.skipWhitespace();
       if (this.peek() === "}") {
         this.index++;
-        return output;
+        return mapping.output;
       }
       this.expect(",");
       this.skipWhitespace();
       if (this.peek() === "}") {
         this.index++;
-        return output;
+        return mapping.output;
       }
     }
   }
@@ -244,7 +293,7 @@ class FlowParser {
     if (character === "\"" || character === "'") {
       return parseKey(this.readQuoted(character));
     }
-    return this.readUntil(/:/).trim();
+    return foldFlowLines(this.readUntil(/:/)).trim();
   }
   readQuoted(quote) {
     const start = this.index;
@@ -255,7 +304,7 @@ class FlowParser {
   }
   readUntil(stop) {
     const start = this.index;
-    while (this.index < this.input.length && !stop.test(this.peek())) this.index++;
+    while (!stop.test(this.peek()) && this.index < this.input.length) this.index++;
     return this.input.slice(start, this.index);
   }
   skipWhitespace() {
@@ -266,6 +315,11 @@ class FlowParser {
     this.index++;
   }
   peek() {
+    // Inside a collection, the end of the line continues on the next line.
+    if (this.index === this.input.length && this.depth > 0) {
+      const line = this.nextLine(this.depth);
+      if (line !== undefined) this.input += `\n${line}`;
+    }
     return this.input[this.index] ?? "";
   }
   fail(message) {
@@ -301,24 +355,24 @@ class YamlParser {
     this.index++;
     return this.parseNodeValue(line.text, parentIndent);
   }
-  parseMapping(indent, output = {}) {
+  parseMapping(indent, mapping = new MappingBuilder()) {
     while (true) {
       this.skipIgnored();
       const line = this.lines[this.index];
-      if (line === undefined || line.indent < indent) return output;
+      if (line === undefined || line.indent < indent) return mapping.output;
       if (line.indent > indent) this.fail(line, `Unexpected indentation of ${line.indent} spaces`);
       const separator = mappingSeparator(line.text);
-      if (separator === -1) return output;
+      if (separator === -1) return mapping.output;
       this.index++;
-      this.parseMappingEntry(output, line.text, separator, indent, line);
+      this.parseMappingEntry(mapping, line.text, separator, indent, line);
     }
   }
-  parseMappingEntry(output, text, separator, indent, line) {
-    const key = parseKey(text.slice(0, separator).trim());
+  parseMappingEntry(mapping, text, separator, indent, line) {
+    const rawKey = text.slice(0, separator).trim();
     const rawValue = text.slice(separator + 1).trimStart();
     const value = this.parseNodeValue(rawValue, indent, true);
-    if (hasOwn.call(output, key)) this.fail(line, `Duplicate key '${key}'`);
-    setProperty(output, key, value);
+    const fail = message => this.fail(line, message);
+    if (rawKey === "<<") mapping.merge(value, fail);else mapping.set(parseKey(rawKey), value, fail);
   }
   parseSequence(indent) {
     const output = [];
@@ -335,9 +389,13 @@ class YamlParser {
       if (separator === -1) {
         output.push(this.parseNodeValue(item, indent));
       } else {
-        const mapping = {};
-        this.parseMappingEntry(mapping, item, separator, indent + 2, line);
-        output.push(this.parseMapping(indent + 2, mapping));
+        // The mapping is indented to its first key, which may sit more than one space after the dash.
+        const keyOffset = line.text.length - item.length;
+        if (line.text.slice(1, keyOffset).includes("\t")) this.fail(line, "Tabs cannot be used for YAML indentation");
+        const mappingIndent = indent + keyOffset;
+        const mapping = new MappingBuilder();
+        this.parseMappingEntry(mapping, item, separator, mappingIndent, line);
+        output.push(this.parseMapping(mappingIndent, mapping));
       }
     }
   }
@@ -368,8 +426,21 @@ class YamlParser {
       if (!this.anchors.has(name)) throw new SyntaxError(`Unknown YAML alias '*${name}'`);
       return this.anchors.get(name);
     }
-    if (text.startsWith("[") || text.startsWith("{")) return new FlowParser(text, this.anchors).parse();
+    if (text.startsWith("[") || text.startsWith("{")) return this.parseFlowValue(text, parentIndent);
     return this.parsePlainValue(text, parentIndent);
+  }
+  parseFlowValue(text, parentIndent) {
+    return new FlowParser(text, this.anchors, depth => {
+      const next = this.lines[this.index];
+      if (next === undefined || next.indent === 0 && /^(?:---|\.\.\.)(?:\s|$)/.test(next.text)) return undefined;
+      // Continuation lines are more indented than the parent; a closing bracket may sit at its indentation.
+      const content = next.text.trim().length > 0;
+      if (content && next.indent < parentIndent) return undefined;
+      if (content && next.indent === parentIndent && !/^[\]}]/.test(next.text)) return undefined;
+      this.index++;
+      // Strip comments again knowing the open collections, so quoted `#` after a comma is kept.
+      return stripComment(next.raw.slice(next.indent), depth);
+    }).parse();
   }
   parsePlainValue(value, parentIndent) {
     const first = this.lines[this.index - 1];
@@ -380,12 +451,14 @@ class YamlParser {
       const blankLines = this.skipBlankLines();
       const next = this.lines[this.index];
       if (next === undefined || next.indent <= parentIndent) break;
+      this.rejectTabIndent(next);
       // Quotes in plain continuations are literal.
       const content = next.raw.slice(next.indent);
       const comment = content.search(/(?:^|[ \t])#/);
       const text = (comment === -1 ? content : content.slice(0, comment)).trimEnd();
       if (text.length === 0 || next.indent === 0 && /^(?:---|\.\.\.)(?:\s|$)/.test(text)) break;
       if (/:(?:\s|$)/.test(text)) this.fail(next, "Invalid colon in plain scalar");
+      this.rejectTabIndentedBlankLines(blankLines, parentIndent);
       output += foldLineBreak(blankLines) + text;
       this.index++;
       terminated = comment !== -1;
@@ -408,10 +481,13 @@ class YamlParser {
       if (quote === "\"" && endsWithEscape(line)) {
         output += line.slice(0, -1);
       } else {
-        output += trimFoldedEnd(line, quote) + foldLineBreak(this.skipBlankLines());
+        const blankLines = this.skipBlankLines();
+        this.rejectTabIndentedBlankLines(blankLines, parentIndent);
+        output += trimFoldedEnd(line, quote) + foldLineBreak(blankLines);
       }
       const next = this.lines[this.index++];
       if (next === undefined) throw new SyntaxError("Unterminated quoted YAML scalar");
+      this.rejectTabIndent(next);
       if (next.raw.trim().length > 0 && next.indent <= parentIndent) {
         this.fail(next, "Invalid quoted scalar indentation");
       }
@@ -424,25 +500,33 @@ class YamlParser {
     const explicitIndent = Number.parseInt(indicator.replace(/[^1-9]/g, ""), 10);
     const start = this.index;
     let end = start;
-    let contentIndent = Number.isNaN(explicitIndent) ? Number.POSITIVE_INFINITY : parentIndent + explicitIndent;
+    let contentIndent = Number.isNaN(explicitIndent) ? undefined : parentIndent + explicitIndent;
+    let hasContent = false;
     while (end < this.lines.length) {
       const line = this.lines[end];
-      if (line.raw.trim().length !== 0 && line.indent <= parentIndent) break;
-      if (line.raw.trim().length !== 0) contentIndent = Math.min(contentIndent, line.indent);
+      // Only spaces make a line empty; a tab after the indentation is content.
+      if (/[^ ]/.test(line.raw)) {
+        if (contentIndent === undefined && line.indent > parentIndent) {
+          // The first non-empty line sets the indentation, which no leading empty line may exceed.
+          const deeper = this.lines.slice(start, end).find(empty => empty.indent > line.indent);
+          if (deeper !== undefined) {
+            this.fail(deeper, "Leading empty lines cannot be more indented than the block scalar content");
+          }
+          contentIndent = line.indent;
+        }
+        if (contentIndent !== undefined && line.indent >= contentIndent) {
+          hasContent = true;
+        } else {
+          this.rejectTabIndent(line);
+          // A less indented line or comment ends the scalar.
+          if (line.indent <= parentIndent || line.text.length === 0) break;
+          this.fail(line, `Expected block scalar indentation of ${contentIndent} spaces`);
+        }
+      }
       end++;
     }
-    if (contentIndent === Number.POSITIVE_INFINITY) contentIndent = parentIndent + 1;
-    const content = [];
-    for (let index = start; index < end; index++) {
-      const line = this.lines[index];
-      if (line.raw.trim().length === 0) {
-        content.push("");
-      } else if (line.indent < contentIndent) {
-        this.fail(line, `Expected block scalar indentation of ${contentIndent} spaces`);
-      } else {
-        content.push(line.raw.slice(contentIndent));
-      }
-    }
+    // Whitespace past the indentation is content only once the scalar has a content line.
+    const content = this.lines.slice(start, end).map(line => hasContent ? line.raw.slice(contentIndent) : "");
     this.index = end;
     let contentEnd = content.length;
     while (contentEnd > 0 && content[contentEnd - 1].length === 0) contentEnd--;
@@ -458,7 +542,7 @@ class YamlParser {
         if (line.length === 0) {
           blankLines++;
         } else {
-          const moreIndented = line.startsWith(" ");
+          const moreIndented = line.startsWith(" ") || line.startsWith("\t");
           const hardBreak = moreIndented || previousMoreIndented === true;
           if (previousMoreIndented === undefined) output += "\n".repeat(blankLines);else if (blankLines === 0) output += hardBreak ? "\n" : " ";else output += "\n".repeat(blankLines + (hardBreak ? 1 : 0));
           output += line;
@@ -469,6 +553,15 @@ class YamlParser {
     }
     if (chomp === "keep") return output + "\n".repeat(trailingBreaks);
     return chomp === "clip" && contentEnd > 0 && trailingBreaks > 0 ? `${output}\n` : output;
+  }
+  rejectTabIndent(line) {
+    if (line.tabIndent) this.fail(line, "Tabs cannot be used for YAML indentation");
+  }
+  rejectTabIndentedBlankLines(count, parentIndent) {
+    for (let index = this.index - count; index < this.index; index++) {
+      const line = this.lines[index];
+      if (line.indent <= parentIndent) this.rejectTabIndent(line);
+    }
   }
   skipBlankLines() {
     const start = this.index;
@@ -492,6 +585,7 @@ class YamlParser {
           this.fail(this.lines[this.index], "Multiple YAML documents are not supported");
         }
       } else {
+        this.rejectTabIndent(line);
         return;
       }
     }
@@ -508,6 +602,12 @@ class YamlParser {
  * The core YAML 1.2 scalar schema is used, so booleans, nulls, and numbers are
  * decoded while date-like values remain strings.
  *
+ * YAML 1.1 merge keys are always enabled. An unquoted `<<` key merges a
+ * mapping, or a sequence of mappings, into the enclosing mapping. Explicit
+ * keys take precedence over merged keys, earlier merge sources over later
+ * ones, and a mapping may contain only one merge key. Quote the key (`"<<"`)
+ * to keep it as an ordinary key.
+ *
  * @stability unstable
  * @category decoding
  * @since 4.0.0
@@ -516,14 +616,13 @@ export const parse = input => {
   const source = input.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
   const lines = source.split("\n").map((raw, index) => {
     const indentation = /^( *)/.exec(raw)[1].length;
-    if (raw.slice(0, indentation + 1).includes("\t")) {
-      throw new SyntaxError(`Tabs cannot be used for YAML indentation at line ${index + 1}`);
-    }
     return {
       raw,
       text: stripComment(raw.slice(indentation)),
       indent: indentation,
-      number: index + 1
+      number: index + 1,
+      // Rejected where the line is read as structure; block scalar content may hold tabs.
+      tabIndent: raw[indentation] === "\t"
     };
   });
   return new YamlParser(lines).parse();

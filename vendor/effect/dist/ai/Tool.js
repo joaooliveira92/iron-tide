@@ -202,7 +202,8 @@ const Proto = {
   },
   setSuccess(successSchema) {
     return clone(this, {
-      successSchema
+      successSchema,
+      toModelOutput: undefined
     });
   },
   setFailure(failureSchema) {
@@ -289,7 +290,8 @@ export const make = (name, options) => {
     failureSchema,
     failureMode: options?.failureMode ?? "error",
     annotations: Context.empty(),
-    needsApproval: options?.needsApproval
+    needsApproval: options?.needsApproval,
+    toModelOutput: options?.toModelOutput
   });
 };
 /**
@@ -355,6 +357,7 @@ export const dynamic = (name, options) => {
     failureMode: options?.failureMode ?? "error",
     annotations: Context.empty(),
     needsApproval: options?.needsApproval,
+    toModelOutput: options?.toModelOutput,
     jsonSchema
   });
 };
@@ -803,8 +806,9 @@ export const getStrictMode = tool => Context.get(tool.annotations, Strict);
 // 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-const suspectProtoRx = /"__proto__"\s*:/;
-const suspectConstructorRx = /"constructor"\s*:/;
+// Text that may decode to a forbidden key. `JSON.parse` decodes Unicode
+// escapes (e.g. `"\u005f_proto__"`), so any `\u` escape also triggers the scan.
+const suspectRx = /"__proto__"\s*:|"constructor"\s*:|\\u/;
 function _parse(text) {
   // Parse normally
   const obj = JSON.parse(text);
@@ -812,11 +816,8 @@ function _parse(text) {
   if (obj === null || typeof obj !== "object") {
     return obj;
   }
-  if (suspectProtoRx.test(text) === false && suspectConstructorRx.test(text) === false) {
-    return obj;
-  }
   // Scan result for proto keys
-  return filter(obj);
+  return suspectRx.test(text) ? filter(obj) : obj;
 }
 function filter(obj) {
   let next = [obj];
@@ -827,7 +828,7 @@ function filter(obj) {
       if (Object.hasOwn(node, "__proto__")) {
         throw new SyntaxError("Object contains forbidden prototype property");
       }
-      if (Object.hasOwn(node, "constructor") && Object.hasOwn(node.constructor, "prototype")) {
+      if (Object.hasOwn(node, "constructor") && node.constructor !== null && Object.hasOwn(node.constructor, "prototype")) {
         throw new SyntaxError("Object contains forbidden prototype property");
       }
       for (const key in node) {

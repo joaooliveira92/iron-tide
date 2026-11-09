@@ -2,6 +2,8 @@
  * Defines the provider-neutral service for structured decisions.
  * `decide` encodes one input as JSON, sends its named decisions in one provider
  * call, and validates the answers. Failures are reported as `AiError` values.
+ * `decideSettled` makes the same call but reports each decision separately, so
+ * valid answers survive when others are missing, refused, or invalid.
  * @stability unstable
  * @since 4.0.0
  */
@@ -9,7 +11,8 @@ import * as Context from "../Context.ts";
 import * as Effect from "../Effect.ts";
 import * as Schema from "../Schema.ts";
 import * as AiError from "./AiError.ts";
-import type * as Decision from "./Decision.ts";
+import * as Decision from "./Decision.ts";
+import type * as Response from "./Response.ts";
 /**
  * Service key for answering decisions about an input. Create implementations
  * with `make`.
@@ -59,13 +62,9 @@ export declare class DecisionUsage extends DecisionUsage_base {
  */
 export interface DecideOptions<Input extends Schema.Constraint> {
     readonly input: Input["Type"];
-    /**
-     * Images to include with the input.
-     */
-    readonly images?: ReadonlyArray<Image> | undefined;
 }
 /**
- * An image sent to the provider with the encoded input.
+ * An image in the input, declared with a `Decision.Image` field.
  * `data` is a base64 string, a byte array, or a URL.
  *
  * @stability unstable
@@ -77,7 +76,34 @@ export interface Image {
     readonly data: string | Uint8Array | URL;
 }
 /**
- * Answers for every decision in a definition together with usage metadata.
+ * An image extracted from the encoded input. `state` holds `reference` where
+ * the image was, and `path` is where it was first found. `data` is a base64
+ * string or a URL.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.1.0
+ */
+export interface ProviderImage {
+    readonly reference: string;
+    readonly path: ReadonlyArray<string | number>;
+    readonly image: {
+        readonly mediaType: string;
+        readonly data: string | URL;
+    };
+}
+/**
+ * Provider-specific response metadata keyed by provider name. Provider
+ * packages augment this interface.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface DecideResponseMetadata extends Response.ProviderMetadata {
+}
+/**
+ * Answers for every decision in a definition with usage and response metadata.
  *
  * @see {@link DecisionUsage} for token usage metadata
  *
@@ -88,24 +114,62 @@ export interface Image {
 export interface DecideResponse<Decisions extends Record<string, Decision.Any>> {
     readonly answers: Decision.Answers<Decisions>;
     readonly usage: DecisionUsage;
+    /**
+     * Response id reported by the provider.
+     *
+     * @since 4.0.6
+     */
+    readonly id?: string | undefined;
+    /**
+     * Model that answered. Can differ from the requested model when the
+     * provider resolves an alias.
+     *
+     * @since 4.0.6
+     */
+    readonly modelId?: string | undefined;
+    /**
+     * Provider-specific metadata, such as reported cost.
+     *
+     * @since 4.0.6
+     */
+    readonly metadata: DecideResponseMetadata;
+}
+/**
+ * Per-decision outcomes, token usage, and response metadata for the whole
+ * request.
+ *
+ * @see {@link decideSettled} for producing this response
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface DecideSettledResponse<Decisions extends Record<string, Decision.Any>> {
+    readonly outcomes: Decision.Outcomes<Decisions>;
+    readonly usage: DecisionUsage;
+    readonly id?: string | undefined;
+    readonly modelId?: string | undefined;
+    readonly metadata: DecideResponseMetadata;
 }
 /**
  * Provider input options for a decision request.
  * `state` is encoded with `Schema.toCodecJson`, not stringified.
  * All `decisions` must be answered in one call.
- * `images` is omitted when no images are supplied.
+ * `images` holds the `Decision.Image` values found in the input and is omitted
+ * when there are none.
+ * `Decisions` is the union of decision kinds the provider receives.
  *
  * @stability unstable
  * @category options
  * @since 4.0.0
  */
-export interface ProviderOptions {
+export interface ProviderOptions<Decisions extends Decision.Any = Decision.Any> {
     readonly state: Schema.Json;
-    readonly decisions: Record<string, Decision.Any>;
-    readonly images?: ReadonlyArray<Image> | undefined;
+    readonly decisions: Record<string, Decisions>;
+    readonly images?: ReadonlyArray<ProviderImage> | undefined;
 }
 /**
- * Provider answer for a classify decision.
+ * Provider classify answer. Omit `probabilities` when no distribution is available.
  *
  * @stability unstable
  * @category models
@@ -114,13 +178,12 @@ export interface ProviderOptions {
 export interface ProviderClassifyAnswer {
     readonly _tag: "Classify";
     readonly label: string;
-    readonly probabilities: Readonly<Record<string, number>>;
+    readonly probabilities?: Readonly<Record<string, number>> | undefined;
     readonly confidence?: number | undefined;
 }
 /**
- * Provider answer for a rate decision.
- * The core derives the label from the highest probability, choosing the
- * first criteria entry on ties.
+ * Provider rate answer. The highest probability determines the label, with
+ * ties going to the first criterion. Omit `probabilities` when unavailable.
  *
  * @stability unstable
  * @category models
@@ -129,7 +192,7 @@ export interface ProviderClassifyAnswer {
 export interface ProviderRateAnswer {
     readonly _tag: "Rate";
     readonly rating: number;
-    readonly probabilities: Readonly<Record<string, number>>;
+    readonly probabilities?: Readonly<Record<string, number>> | undefined;
     readonly confidence?: number | undefined;
 }
 /**
@@ -144,17 +207,41 @@ export interface ProviderProbabilityAnswer {
     readonly probability: number;
 }
 /**
+ * Provider refusal to answer a decision.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface ProviderRefusalAnswer {
+    readonly _tag: "Refusal";
+}
+/**
+ * Provider answer for a locate decision.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.1.0
+ */
+export interface ProviderLocateAnswer {
+    readonly _tag: "Locate";
+    readonly box: Decision.BoundingBox;
+    readonly confidence?: number | undefined;
+}
+/**
  * Provider answer for any decision kind.
  *
  * @stability unstable
  * @category models
  * @since 4.0.0
  */
-export type ProviderAnswer = ProviderClassifyAnswer | ProviderRateAnswer | ProviderProbabilityAnswer;
+export type ProviderAnswer = ProviderClassifyAnswer | ProviderRateAnswer | ProviderProbabilityAnswer | ProviderRefusalAnswer | ProviderLocateAnswer;
 /**
  * Provider response for a decision request.
  * `answers` is keyed like the requested decisions. Each answer is validated
- * against its decision before it is returned to the caller.
+ * against its decision before it is returned to the caller. Omit the key of a
+ * decision the provider did not answer. `id`, `modelId` and `metadata` are
+ * passed through; `metadata` defaults to `{}`.
  *
  * @stability unstable
  * @category models
@@ -166,6 +253,9 @@ export interface ProviderResponse {
         readonly inputTokens: number | undefined;
         readonly outputTokens: number | undefined;
     };
+    readonly id?: string | undefined;
+    readonly modelId?: string | undefined;
+    readonly metadata?: DecideResponseMetadata | undefined;
 }
 /**
  * Decision operations over a definition.
@@ -177,18 +267,29 @@ export interface ProviderResponse {
 export interface DecisionModel {
     readonly [TypeId]: TypeId;
     readonly decide: <Input extends Schema.Constraint, Decisions extends Record<string, Decision.Any>>(definition: Decision.Definition<Input, Decisions>, options: DecideOptions<Input>) => Effect.Effect<DecideResponse<Decisions>, AiError.AiError, Input["EncodingServices"]>;
+    readonly decideSettled: <Input extends Schema.Constraint, Decisions extends Record<string, Decision.Any>>(definition: Decision.Definition<Input, Decisions>, options: DecideOptions<Input>) => Effect.Effect<DecideSettledResponse<Decisions>, AiError.AiError, Input["EncodingServices"]>;
 }
 /**
  * Creates a `DecisionModel` that encodes inputs as JSON and validates provider answers.
  * Answers must cover every decision and use its labels. Distributions must
  * sum to 1 within `1e-6`, optional confidence must be in `[0, 1]`, and ratings must be
- * in `[0, criteria.length - 1]`. Invalid answers fail with
- * `AiError.InvalidOutputError`; encoding failures use `AiError.InvalidUserInputError`.
+ * in `[0, criteria.length - 1]`, and boxes must have edges in `[0, 1]` that do
+ * not cross. With `decide`, refused decisions fail with
+ * `AiError.ContentPolicyError` and other unanswered decisions fail with
+ * `AiError.InvalidOutputError`; `decideSettled` reports them per decision
+ * instead. Encoding failures use `AiError.InvalidUserInputError`.
  *
  * **Details**
  *
- * Set `supportsImages: true` to accept images. Otherwise, nonempty image input
+ * After encoding, each `Decision.Image` in the input is replaced with a
+ * reference string, and the provider receives the images in `images`. Set
+ * `supportsImages: true` to accept images. Otherwise, an input with images
  * fails with `AiError.InvalidUserInputError`.
+ *
+ * Set `supportsLocate: true` to accept locate decisions; only then does
+ * `decide` receive them. Otherwise, a definition with a locate decision fails
+ * with `AiError.InvalidUserInputError`, as does a locate decision whose path
+ * holds no image.
  *
  * Providers that round each probability to `probabilityPrecision` decimal
  * places may return distributions whose sum drifts from 1 by up to half a unit
@@ -204,9 +305,15 @@ export interface DecisionModel {
  * @since 4.0.0
  */
 export declare const make: (params: {
+    readonly decide: (options: ProviderOptions<Exclude<Decision.Any, Decision.Locate>>) => Effect.Effect<ProviderResponse, AiError.AiError>;
+    readonly probabilityPrecision?: number | undefined;
+    readonly supportsImages?: boolean | undefined;
+    readonly supportsLocate?: false | undefined;
+} | {
     readonly decide: (options: ProviderOptions) => Effect.Effect<ProviderResponse, AiError.AiError>;
     readonly probabilityPrecision?: number | undefined;
     readonly supportsImages?: boolean | undefined;
+    readonly supportsLocate: true;
 }) => Effect.Effect<DecisionModel>;
 /**
  * Answers a decision definition using the current `DecisionModel` service.
@@ -214,6 +321,9 @@ export declare const make: (params: {
  * Explicit `undefined` fields become `null`; absent fields stay absent.
  * Custom declarations need a JSON codec annotation or encoding fails.
  * Returned answers and probability dictionaries have null prototypes.
+ * Fails with `AiError.ContentPolicyError` if the provider refuses any decision,
+ * and otherwise with `AiError.InvalidOutputError` for the first unanswered
+ * decision in definition order.
  *
  * **Example** (Triaging a ticket)
  *
@@ -240,11 +350,60 @@ export declare const make: (params: {
  * ```
  *
  * @see {@link DecisionModel} for the service this function requires
+ * @see {@link decideSettled} for keeping valid answers when others fail
  *
  * @stability unstable
  * @category decisions
  * @since 4.0.0
  */
 export declare const decide: <Input extends Schema.Constraint, Decisions extends Record<string, Decision.Any>>(definition: Decision.Definition<Input, Decisions>, options: DecideOptions<Input>) => Effect.Effect<DecideResponse<Decisions>, AiError.AiError, DecisionModel | Input["EncodingServices"]>;
+/**
+ * Answers each decision with a `Result` containing a validated answer or a
+ * `Decision.Unanswered` reason. Input encoding and provider failures still
+ * fail the effect. Token usage covers the whole call.
+ *
+ * **Details**
+ *
+ * Provider response decoding errors fail the whole call. Per-decision reasons
+ * reflect the first failed validation check; `"NoDistribution"` requires an
+ * otherwise valid answer.
+ *
+ * **Example** (Falling back for unanswered decisions)
+ *
+ * ```ts
+ * import { Effect, Result, Schema } from "effect"
+ * import { Decision, DecisionModel } from "effect/ai"
+ *
+ * const TicketTriage = Decision.make({
+ *   input: Schema.String,
+ *   decisions: {
+ *     department: Decision.classify({
+ *       instructions: "Which team should handle this",
+ *       criteria: { billing: "payments", technical: "bugs" }
+ *     }),
+ *     urgent: Decision.probability({ instructions: "The message is time-sensitive" })
+ *   }
+ * })
+ *
+ * const program = Effect.gen(function*() {
+ *   const { outcomes } = yield* DecisionModel.decideSettled(TicketTriage, {
+ *     input: "My card was charged twice, please fix this today"
+ *   })
+ *   const department = Result.isSuccess(outcomes.department) &&
+ *       outcomes.department.success.probabilities.billing >= 0.8
+ *     ? "billing"
+ *     : "needs review"
+ *   const urgent = Result.isSuccess(outcomes.urgent) ? outcomes.urgent.success.probability : undefined
+ *   return { department, urgent }
+ * })
+ * ```
+ *
+ * @see {@link decide} for failing unless every decision is answered
+ *
+ * @stability unstable
+ * @category decisions
+ * @since 4.0.6
+ */
+export declare const decideSettled: <Input extends Schema.Constraint, Decisions extends Record<string, Decision.Any>>(definition: Decision.Definition<Input, Decisions>, options: DecideOptions<Input>) => Effect.Effect<DecideSettledResponse<Decisions>, AiError.AiError, DecisionModel | Input["EncodingServices"]>;
 export {};
 //# sourceMappingURL=DecisionModel.d.ts.map

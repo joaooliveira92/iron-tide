@@ -193,6 +193,15 @@ export interface Single<Kind extends ParamKind, out A> extends Param<Kind, A> {
     readonly primitiveType: Primitive.Primitive<A>;
     readonly typeName?: string | undefined;
     readonly hidden: boolean;
+    /**
+     * Raw value used for a bare flag. See `withOptionalValue`.
+     */
+    readonly optionalValue?: string | undefined;
+    /**
+     * Long name that sets a boolean flag to `false`. `undefined` means the
+     * default `no-<name>`, `false` means no negated form. See `withNegation`.
+     */
+    readonly negation?: string | false | undefined;
 }
 /**
  * Parameter node that maps the successfully parsed value of another parameter
@@ -312,6 +321,8 @@ export declare const makeSingle: <const Kind extends ParamKind, A>(params: {
     readonly description?: Option.Option<string> | undefined;
     readonly aliases?: ReadonlyArray<string> | undefined;
     readonly hidden?: boolean | undefined;
+    readonly optionalValue?: string | undefined;
+    readonly negation?: string | false | undefined;
 }) => Single<Kind, A>;
 /**
  * Creates a string parameter.
@@ -1020,6 +1031,7 @@ export declare const map: {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -1076,6 +1088,7 @@ export declare const mapEffect: {
      *   Layer.succeed(Terminal.Terminal, Terminal.make({
      *     columns: Effect.succeed(80),
      *     rows: Effect.succeed(24),
+     *     size: Effect.die("unused"),
      *     readInput: Effect.die("unused"),
      *     readLine: Effect.die("unused"),
      *     display: () => Effect.void
@@ -1132,6 +1145,7 @@ export declare const mapEffect: {
      *   Layer.succeed(Terminal.Terminal, Terminal.make({
      *     columns: Effect.succeed(80),
      *     rows: Effect.succeed(24),
+     *     size: Effect.die("unused"),
      *     readInput: Effect.die("unused"),
      *     readLine: Effect.die("unused"),
      *     display: () => Effect.void
@@ -1190,6 +1204,7 @@ export declare const mapEffect: {
  *   Layer.succeed(Terminal.Terminal, Terminal.make({
  *     columns: Effect.succeed(80),
  *     rows: Effect.succeed(24),
+ *     size: Effect.die("unused"),
  *     readInput: Effect.die("unused"),
  *     readLine: Effect.die("unused"),
  *     display: () => Effect.void
@@ -1240,6 +1255,7 @@ export declare const mapTryCatch: {
      *   Layer.succeed(Terminal.Terminal, Terminal.make({
      *     columns: Effect.succeed(80),
      *     rows: Effect.succeed(24),
+     *     size: Effect.die("unused"),
      *     readInput: Effect.die("unused"),
      *     readLine: Effect.die("unused"),
      *     display: () => Effect.void
@@ -1290,6 +1306,7 @@ export declare const mapTryCatch: {
      *   Layer.succeed(Terminal.Terminal, Terminal.make({
      *     columns: Effect.succeed(80),
      *     rows: Effect.succeed(24),
+     *     size: Effect.die("unused"),
      *     readInput: Effect.die("unused"),
      *     readLine: Effect.die("unused"),
      *     display: () => Effect.void
@@ -1542,6 +1559,9 @@ export declare const withFallbackConfig: {
  *
  * This only handles missing options and missing arguments. Invalid values do not
  * prompt, and prompt cancellation re-fails with the original missing error.
+ * When `TerminalCapabilities.canPrompt` is `false`, the fallback is skipped
+ * entirely: no prompt is built or shown, and the original missing error is
+ * returned.
  *
  * @see {@link FallbackPrompt} for accepted fallback prompt forms
  * @see {@link withFallbackConfig} for loading a fallback from config
@@ -1569,6 +1589,9 @@ export declare const withFallbackPrompt: {
      *
      * This only handles missing options and missing arguments. Invalid values do not
      * prompt, and prompt cancellation re-fails with the original missing error.
+     * When `TerminalCapabilities.canPrompt` is `false`, the fallback is skipped
+     * entirely: no prompt is built or shown, and the original missing error is
+     * returned.
      *
      * @see {@link FallbackPrompt} for accepted fallback prompt forms
      * @see {@link withFallbackConfig} for loading a fallback from config
@@ -1596,6 +1619,9 @@ export declare const withFallbackPrompt: {
      *
      * This only handles missing options and missing arguments. Invalid values do not
      * prompt, and prompt cancellation re-fails with the original missing error.
+     * When `TerminalCapabilities.canPrompt` is `false`, the fallback is skipped
+     * entirely: no prompt is built or shown, and the original missing error is
+     * returned.
      *
      * @see {@link FallbackPrompt} for accepted fallback prompt forms
      * @see {@link withFallbackConfig} for loading a fallback from config
@@ -2182,6 +2208,189 @@ export declare const withMetavar: {
      */
     <K extends ParamKind, A>(self: Param<K, A>, metavar: string): Param<K, A>;
 };
+/**
+ * Lets a flag be given without a value, in which case `value` is used.
+ *
+ * **Details**
+ *
+ * Follows GNU-style optional values. An explicit value must be attached with
+ * `=` (`--watch=until-done`), and a bare `--watch` is parsed as
+ * `--watch=<value>`. The flag never consumes the next token. It is still
+ * required unless it is made optional or given a default.
+ *
+ * **Example** (Flag with an optional value)
+ *
+ * ```ts import.meta.vitest
+ * import { Param } from "effect/cli"
+ *
+ * const watch = Param.String(Param.flagKind, "watch").pipe(
+ *   Param.withOptionalValue("first-failure"),
+ *   Param.optional
+ * )
+ * watch.kind // => "flag"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.1.0
+ */
+export declare const withOptionalValue: {
+    /**
+     * Lets a flag be given without a value, in which case `value` is used.
+     *
+     * **Details**
+     *
+     * Follows GNU-style optional values. An explicit value must be attached with
+     * `=` (`--watch=until-done`), and a bare `--watch` is parsed as
+     * `--watch=<value>`. The flag never consumes the next token. It is still
+     * required unless it is made optional or given a default.
+     *
+     * **Example** (Flag with an optional value)
+     *
+     * ```ts import.meta.vitest
+     * import { Param } from "effect/cli"
+     *
+     * const watch = Param.String(Param.flagKind, "watch").pipe(
+     *   Param.withOptionalValue("first-failure"),
+     *   Param.optional
+     * )
+     * watch.kind // => "flag"
+     * ```
+     *
+     * @stability unstable
+     * @category combinators
+     * @since 4.1.0
+     */
+    (value: string): <A>(self: Param<typeof flagKind, A>) => Param<typeof flagKind, A>;
+    /**
+     * Lets a flag be given without a value, in which case `value` is used.
+     *
+     * **Details**
+     *
+     * Follows GNU-style optional values. An explicit value must be attached with
+     * `=` (`--watch=until-done`), and a bare `--watch` is parsed as
+     * `--watch=<value>`. The flag never consumes the next token. It is still
+     * required unless it is made optional or given a default.
+     *
+     * **Example** (Flag with an optional value)
+     *
+     * ```ts import.meta.vitest
+     * import { Param } from "effect/cli"
+     *
+     * const watch = Param.String(Param.flagKind, "watch").pipe(
+     *   Param.withOptionalValue("first-failure"),
+     *   Param.optional
+     * )
+     * watch.kind // => "flag"
+     * ```
+     *
+     * @stability unstable
+     * @category combinators
+     * @since 4.1.0
+     */
+    <A>(self: Param<typeof flagKind, A>, value: string): Param<typeof flagKind, A>;
+};
+/**
+ * Renames the negated form of a boolean flag, which defaults to `--no-<name>`.
+ *
+ * **Details**
+ *
+ * The new name replaces the default, so `--no-<name>` is no longer accepted.
+ * Has no effect on non-boolean flags.
+ *
+ * **Example** (Renaming a boolean flag's negation)
+ *
+ * ```ts import.meta.vitest
+ * import { Param } from "effect/cli"
+ *
+ * // --validate sets true, --skip-validate sets false
+ * const validate = Param.Boolean(Param.flagKind, "validate").pipe(
+ *   Param.withNegation("skip-validate")
+ * )
+ * validate.kind // => "flag"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.1.0
+ */
+export declare const withNegation: {
+    /**
+     * Renames the negated form of a boolean flag, which defaults to `--no-<name>`.
+     *
+     * **Details**
+     *
+     * The new name replaces the default, so `--no-<name>` is no longer accepted.
+     * Has no effect on non-boolean flags.
+     *
+     * **Example** (Renaming a boolean flag's negation)
+     *
+     * ```ts import.meta.vitest
+     * import { Param } from "effect/cli"
+     *
+     * // --validate sets true, --skip-validate sets false
+     * const validate = Param.Boolean(Param.flagKind, "validate").pipe(
+     *   Param.withNegation("skip-validate")
+     * )
+     * validate.kind // => "flag"
+     * ```
+     *
+     * @stability unstable
+     * @category combinators
+     * @since 4.1.0
+     */
+    (name: string): <A>(self: Param<typeof flagKind, A>) => Param<typeof flagKind, A>;
+    /**
+     * Renames the negated form of a boolean flag, which defaults to `--no-<name>`.
+     *
+     * **Details**
+     *
+     * The new name replaces the default, so `--no-<name>` is no longer accepted.
+     * Has no effect on non-boolean flags.
+     *
+     * **Example** (Renaming a boolean flag's negation)
+     *
+     * ```ts import.meta.vitest
+     * import { Param } from "effect/cli"
+     *
+     * // --validate sets true, --skip-validate sets false
+     * const validate = Param.Boolean(Param.flagKind, "validate").pipe(
+     *   Param.withNegation("skip-validate")
+     * )
+     * validate.kind // => "flag"
+     * ```
+     *
+     * @stability unstable
+     * @category combinators
+     * @since 4.1.0
+     */
+    <A>(self: Param<typeof flagKind, A>, name: string): Param<typeof flagKind, A>;
+};
+/**
+ * Removes the negated `--no-<name>` form of a boolean flag.
+ *
+ * **Details**
+ *
+ * The negated form is then rejected as an unrecognized flag and left out of
+ * shell completions. Has no effect on non-boolean flags.
+ *
+ * **Example** (Disabling a boolean flag's negation)
+ *
+ * ```ts import.meta.vitest
+ * import { Param } from "effect/cli"
+ *
+ * // --unsafe sets true, --no-unsafe is rejected
+ * const unsafe = Param.Boolean(Param.flagKind, "unsafe").pipe(
+ *   Param.withoutNegation
+ * )
+ * unsafe.kind // => "flag"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.1.0
+ */
+export declare const withoutNegation: <A>(self: Param<typeof flagKind, A>) => Param<typeof flagKind, A>;
 /**
  * Validates parsed values against a Schema, providing detailed error messages.
  *

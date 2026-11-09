@@ -948,31 +948,57 @@ function runSync(effect, message) {
     cause: issue
   });
 }
+const constructorDefectMessage = "Constructor adapter can only throw schema issues";
+function throwConstructorDefect(error) {
+  throw new Error(constructorDefectMessage, {
+    cause: Cause.die(error)
+  });
+}
 function makeConstructorSync(ast) {
   let entry;
-  let parser;
-  return (input, options) => {
-    entry ??= CompilerRegistry.resolve(ast);
-    const parseOptions = options?.disableChecks ? options.parseOptions ? {
-      ...options.parseOptions,
-      disableChecks: true
-    } : {
-      disableChecks: true
-    } : options?.parseOptions ?? SchemaAST.defaultParseOptions;
-    const make = entry.make;
-    if (make !== undefined && input !== InternalParser.missing) {
-      let output;
-      try {
-        output = make(input, parseOptions);
-      } catch (error) {
-        InternalSchemaCause.getSchemaIssueOrThrow(Cause.die(error), "Constructor adapter can only throw schema issues");
-        throw error;
-      }
-      if (output !== CompilerRegistry.invalid && output !== InternalParser.missing) return output;
+  return (input, options) => constructSync(entry ??= CompilerRegistry.resolve(ast), input, options);
+}
+function constructSync(entry, input, options) {
+  const parseOptions = options?.disableChecks ? options.parseOptions ? {
+    ...options.parseOptions,
+    disableChecks: true
+  } : {
+    disableChecks: true
+  } : options?.parseOptions ?? SchemaAST.defaultParseOptions;
+  const make = entry.make;
+  if (make !== undefined && input !== InternalParser.missing) {
+    let output;
+    try {
+      output = make(input, parseOptions);
+    } catch (error) {
+      throwConstructorDefect(error);
     }
-    const result = (parser ??= entry.makeEffect)(input, parseOptions);
-    return runSync(parserResult(result, input), "Constructor adapter can only throw schema issues");
-  };
+    if (output !== CompilerRegistry.invalid && output !== InternalParser.missing) return output;
+  }
+  return runSync(parserResult(entry.makeEffect(input, parseOptions), input), constructorDefectMessage);
+}
+/**
+ * Constructs a class instance from its type-side declaration.
+ *
+ * When the declaration has no compiled constructor, the fields are validated first
+ * and the instance is built outside the parser, so stacks captured by the
+ * class constructor keep the caller's frames.
+ *
+ * @internal
+ */
+export function makeClassSync(ast, input, options, construct) {
+  const entry = CompilerRegistry.resolve(ast);
+  const descriptor = SchemaAST.getConstructorDescriptor(ast);
+  if (descriptor === undefined || entry.make !== undefined || entry.compiledMakeEffect !== undefined) {
+    return constructSync(entry, input, options);
+  }
+  if (descriptor.isConstructed(input)) return input;
+  const fields = constructSync((entry.resolve ?? CompilerRegistry.resolve)(descriptor.link.to), input, options);
+  try {
+    return construct(fields);
+  } catch (error) {
+    throwConstructorDefect(error);
+  }
 }
 const normalCompiler = ast => CompilerRegistry.resolve(ast).parser;
 const constructorCompiler = ast => CompilerRegistry.resolve(ast).makeEffect;

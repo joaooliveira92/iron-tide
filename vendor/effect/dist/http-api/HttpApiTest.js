@@ -11,12 +11,15 @@
  */
 import * as Context from "../Context.js";
 import * as Effect from "../Effect.js";
+import * as Exit from "../Exit.js";
 import * as HttpClient from "../http/HttpClient.js";
+import * as HttpEffect from "../http/HttpEffect.js";
 import * as HttpRouter from "../http/HttpRouter.js";
 import * as HttpServerRequest from "../http/HttpServerRequest.js";
 import * as HttpServerResponse from "../http/HttpServerResponse.js";
-import * as preResponseHandler from "../http/internal/preResponseHandler.js";
+import { CurrentRequestState, RequestState } from "../http/internal/requestState.js";
 import * as Layer from "../Layer.js";
+import * as Scope from "../Scope.js";
 import * as HttpApiBuilder from "./HttpApiBuilder.js";
 import * as HttpApiClient from "./HttpApiClient.js";
 /**
@@ -26,6 +29,17 @@ import * as HttpApiClient from "./HttpApiClient.js";
  *
  * Handlers for the selected groups are taken from the environment; unselected
  * groups are wired with placeholder handlers that fail if called.
+ *
+ * Each call runs its handler in a request scope that is a child of the
+ * `Scope` the client was created in. A streaming response keeps that scope
+ * open until its body ends, and a body that is never read is closed with the
+ * owning `Scope`.
+ *
+ * A `Stream` payload reaches the handler unbuffered: each element is pulled
+ * from the caller's stream as the handler reads it. If the caller's stream
+ * fails, reading the request body fails with it. Client aborts and socket
+ * behavior such as draining unread bodies, closing the connection, or
+ * answering with `499` are not emulated.
  *
  * @stability unstable
  * @category testing
@@ -52,23 +66,31 @@ export const groups = /*#__PURE__*/Effect.fnUntraced(function* (api, groupIdenti
       handlers.set(endpointIdentifier, handler);
       routes.push(HttpApiBuilder.handlerToRoute(api, group, handler, context));
     }
-    context = Context.add(context, group, {
+    const service = {
       handlers,
       routes
-    });
+    };
+    context = Context.add(context, group, service);
   }
   const layer = HttpApiBuilder.layer(api).pipe(Layer.provide(Layer.succeedContext(context)));
   const handler = yield* HttpRouter.toHttpEffect(layer);
-  const httpClient = HttpClient.make(Effect.fnUntraced(function* (request) {
+  const scope = yield* Effect.scope;
+  const httpClient = HttpClient.make(request => {
+    const requestScope = Scope.forkUnsafe(scope);
     const serverRequest = HttpServerRequest.fromClientRequest(request);
-    const response = yield* handler.pipe(Effect.flatMap(response => {
-      const preResponse = preResponseHandler.requestPreResponseHandlers.get(serverRequest.source);
+    const state = new RequestState();
+    let transferred = false;
+    return handler.pipe(Effect.flatMap(response => {
+      const preResponse = state.preResponseHandler;
       return preResponse === undefined ? Effect.succeed(response) : preResponse(serverRequest, response);
-    }), Effect.provideService(HttpServerRequest.HttpServerRequest, serverRequest), Effect.orDie);
-    return HttpServerResponse.toClientResponse(response, {
-      request
-    });
-  }, Effect.scoped));
+    }), Effect.map(response => {
+      const transfer = HttpEffect.scopeTransferToStream(response);
+      transferred = transfer !== response;
+      return HttpServerResponse.toClientResponse(transfer, {
+        request
+      });
+    }), Effect.provideService(HttpServerRequest.HttpServerRequest, serverRequest), Effect.provideService(CurrentRequestState, state), Effect.provideService(Scope.Scope, requestScope), Effect.orDie, Effect.onExit(exit => transferred && Exit.isSuccess(exit) ? Effect.void : Scope.close(requestScope, exit)));
+  });
   return yield* HttpApiClient.makeWith(api, {
     httpClient,
     baseUrl: options?.baseUrl ?? "http://localhost:3000"

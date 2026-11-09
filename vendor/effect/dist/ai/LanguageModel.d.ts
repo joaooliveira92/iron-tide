@@ -83,7 +83,7 @@ export interface LanguageModel {
      * Generate text using the language model.
      */
     readonly generateText: {
-        <Options extends NoExcessProperties<GenerateTextOptionsWithoutToolkit, Options>>(options: Options & GenerateTextOptionsWithoutToolkit): Effect.Effect<GenerateTextResponse<{}>, ExtractError<Options>, ExtractServices<Options>>;
+        <Options extends NoExcessProperties<GenerateTextOptionsWithoutToolkit, Options>>(options: Options & GenerateTextOptionsWithoutToolkit): Effect.Effect<GenerateTextResponse<{}, ExtractToolParametersModeWithoutToolkit<Options>>, ExtractError<Options>, ExtractServices<Options>>;
         <Tools extends Record<string, Tool.Any>, Options extends NoExcessProperties<GenerateTextOptions<Tools> & {
             readonly toolkit: ToolkitInput<Tools>;
         }, Options>>(options: Options & GenerateTextOptions<Tools> & {
@@ -103,7 +103,7 @@ export interface LanguageModel {
      * Generate text using the language model with streaming output.
      */
     readonly streamText: {
-        <Options extends NoExcessProperties<GenerateTextOptionsWithoutToolkit, Options>>(options: Options & GenerateTextOptionsWithoutToolkit): Stream.Stream<Response.StreamPart<{}>, ExtractError<Options>, ExtractServices<Options>>;
+        <Options extends NoExcessProperties<GenerateTextOptionsWithoutToolkit, Options>>(options: Options & GenerateTextOptionsWithoutToolkit): Stream.Stream<Response.StreamPart<{}, ExtractToolParametersModeWithoutToolkit<Options>>, ExtractError<Options>, ExtractServices<Options>>;
         <Tools extends Record<string, Tool.Any>, Options extends NoExcessProperties<GenerateTextOptions<Tools> & {
             readonly toolkit: ToolkitInput<Tools>;
         }, Options>>(options: Options & GenerateTextOptions<Tools> & {
@@ -208,6 +208,21 @@ export interface GenerateTextOptions<Tools extends Record<string, Tool.Any>> {
      * resolver execution yourself.
      */
     readonly disableToolCallResolution?: boolean | undefined;
+    /**
+     * Controls tool call validation when `disableToolCallResolution` is `true`.
+     * Defaults to `"strict"`, which validates tool names and encoded parameters.
+     *
+     * **Details**
+     *
+     * `"deferred"` returns model-generated calls with `unknown` parameters for
+     * the caller to validate, including undeclared names and calls without a
+     * toolkit. Provider-executed calls and other response parts remain validated.
+     * Providers must support this option to return undeclared tool calls.
+     *
+     * Has no effect when resolution is enabled; `Toolkit` validates parameters
+     * according to each tool's `failureMode`.
+     */
+    readonly toolCallValidation?: "strict" | "deferred" | undefined;
 }
 type GenerateTextOptionsWithoutToolkit = Omit<GenerateTextOptions<{}>, "toolkit"> & {
     readonly toolkit?: undefined;
@@ -368,16 +383,27 @@ export type ExtractTools<Options> = Options extends {
     readonly toolkit: infer ToolkitValue;
 } ? ExtractToolsFromToolkitOption<Exclude<ToolkitValue, undefined>> : {};
 /**
- * Resolves to `"encoded"` when tool call resolution is
- * disabled, otherwise `"opaque"`.
+ * Resolves to `"deferred"` when tool call resolution may be disabled with
+ * deferred tool call validation. Otherwise resolves to `"encoded"` when tool
+ * call resolution is disabled and `"opaque"` when it may be enabled.
  *
  * @stability unstable
  * @category utility types
  * @since 4.0.0
  */
-export type ExtractToolParametersMode<Options> = Options extends {
+export type ExtractToolParametersMode<Options> = "deferred" extends Options["toolCallValidation" & keyof Options] ? true extends Options["disableToolCallResolution" & keyof Options] ? "deferred" : "opaque" : Options extends {
     readonly disableToolCallResolution: true;
 } ? "encoded" : "opaque";
+/**
+ * Resolves the tool parameters mode for requests without a toolkit:
+ * `"deferred"` when tool call validation may be deferred, otherwise
+ * `"decoded"`.
+ *
+ * @stability unstable
+ * @category utility types
+ * @since 4.0.4
+ */
+export type ExtractToolParametersModeWithoutToolkit<Options> = "deferred" extends ExtractToolParametersMode<Options> ? "deferred" : "decoded";
 type ExtractErrorFromToolkitOption<ToolkitValue, DisableToolCallResolution extends boolean> = ToolkitValue extends Toolkit.WithHandler<infer Tools> ? AiError.AiError | (DisableToolCallResolution extends true ? never : Tool.HandlerError<Tools[keyof Tools]>) : ToolkitValue extends Effect.Effect<Toolkit.WithHandler<infer _Tools>, infer E, infer _R> ? AiError.AiError | E | (DisableToolCallResolution extends true ? never : Tool.HandlerError<_Tools[keyof _Tools]>) : AiError.AiError;
 type ExtractServicesFromToolkitOption<ToolkitValue> = ToolkitValue extends Toolkit.WithHandler<infer Tools> ? Tool.HandlerServices<Tools[keyof Tools]> | Tool.ResultDecodingServices<Tools[keyof Tools]> | Tool.ParametersEncodingServices<Tools[keyof Tools]> : ToolkitValue extends Effect.Effect<Toolkit.WithHandler<infer Tools>, infer _E, infer R> ? Tool.HandlerServices<Tools[keyof Tools]> | Tool.ResultDecodingServices<Tools[keyof Tools]> | Tool.ParametersEncodingServices<Tools[keyof Tools]> | R : never;
 type ExtractDisabledResolutionServicesFromToolkitOption<ToolkitValue> = ToolkitValue extends Toolkit.WithHandler<infer Tools> ? Tool.ParametersEncodingServices<Tools[keyof Tools]> : ToolkitValue extends Toolkit.Toolkit<infer Tools> ? Tool.ParametersEncodingServices<Tools[keyof Tools]> : ToolkitValue extends Effect.Effect<Toolkit.WithHandler<infer Tools>, infer _E, infer R> ? Tool.ParametersEncodingServices<Tools[keyof Tools]> | R : never;
@@ -492,6 +518,11 @@ export interface ProviderOptions {
      * prompt after the provider rejected the incremental request.
      */
     readonly incrementalFallback?: boolean | undefined;
+    /**
+     * Defaults to `"strict"`. With `"deferred"`, return calls to tools absent
+     * from `tools` with unchanged parameters instead of `ToolNotFoundError`.
+     */
+    readonly toolCallValidation?: "strict" | "deferred" | undefined;
 }
 /**
  * Creates a LanguageModel service from provider-specific text generation and
@@ -592,7 +623,7 @@ export declare const make: (params: {
  * @since 4.0.0
  */
 export declare const generateText: {
-    <Options extends NoExcessProperties<GenerateTextOptionsWithoutToolkit, Options>>(options: Options & GenerateTextOptionsWithoutToolkit): Effect.Effect<GenerateTextResponse<{}>, ExtractError<Options>, LanguageModel | ExtractServices<Options>>;
+    <Options extends NoExcessProperties<GenerateTextOptionsWithoutToolkit, Options>>(options: Options & GenerateTextOptionsWithoutToolkit): Effect.Effect<GenerateTextResponse<{}, ExtractToolParametersModeWithoutToolkit<Options>>, ExtractError<Options>, LanguageModel | ExtractServices<Options>>;
     <Tools extends Record<string, Tool.Any>, Options extends NoExcessProperties<GenerateTextOptions<Tools> & {
         readonly toolkit: ToolkitInput<Tools>;
     }, Options>>(options: Options & GenerateTextOptions<Tools> & {
@@ -689,7 +720,7 @@ export declare const generateObject: <ObjectEncoded extends Record<string, any>,
  * @since 4.0.0
  */
 export declare const streamText: {
-    <Options extends NoExcessProperties<GenerateTextOptionsWithoutToolkit, Options>>(options: Options & GenerateTextOptionsWithoutToolkit): Stream.Stream<Response.StreamPart<{}>, ExtractError<Options>, ExtractServices<Options> | LanguageModel>;
+    <Options extends NoExcessProperties<GenerateTextOptionsWithoutToolkit, Options>>(options: Options & GenerateTextOptionsWithoutToolkit): Stream.Stream<Response.StreamPart<{}, ExtractToolParametersModeWithoutToolkit<Options>>, ExtractError<Options>, ExtractServices<Options> | LanguageModel>;
     <Tools extends Record<string, Tool.Any>, Options extends NoExcessProperties<GenerateTextOptions<Tools> & {
         readonly toolkit: ToolkitInput<Tools>;
     }, Options>>(options: Options & GenerateTextOptions<Tools> & {

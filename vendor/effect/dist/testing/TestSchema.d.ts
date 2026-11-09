@@ -161,7 +161,7 @@ export declare class Asserts<S extends Schema.Constraint> {
         fail(input: unknown, message: string): Promise<void>;
     };
     /**
-     * Runs a property-based test that encodes arbitrary values and then decodes them, asserting the decoded value equals the original.
+     * Runs a property-based test that encodes arbitrary values and then decodes them, asserting the decoded value is equivalent to the original.
      *
      * **When to use**
      *
@@ -172,6 +172,9 @@ export declare class Asserts<S extends Schema.Constraint> {
      *
      * The native Schema arbitrary generates values matching the schema's `Type`. The assertion fails with the minimized
      * shrunk input and replay token if any generated value does not round-trip.
+     *
+     * Uses {@link Schema.toEquivalence}, including custom equivalence annotations,
+     * to compare each decoded value with the original.
      *
      * **Example** (Verifying round trips)
      *
@@ -197,6 +200,9 @@ export declare class Asserts<S extends Schema.Constraint> {
      * Use to check round trips with the calling fiber's decoding and encoding services.
      *
      * **Details**
+     *
+     * Uses {@link Schema.toEquivalence}, including custom equivalence annotations,
+     * to compare each decoded value with the original.
      *
      * Assertion mismatches are defects containing the shrunk input and replay token.
      * Schema defects and interruption propagate without becoming assertion failures.

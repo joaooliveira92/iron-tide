@@ -4,8 +4,8 @@ import * as Layer from "../Layer.ts";
 import type * as Rpc from "../rpc/Rpc.ts";
 import type * as RpcGroup from "../rpc/RpcGroup.ts";
 import * as Stream from "../Stream.ts";
-import type { RemoteId } from "./EventJournal.ts";
-import { EventLogAuthentication, EventLogProtocolError, EventLogRemoteRpcs, type StoreId } from "./EventLogMessage.ts";
+import type { EntryId, RemoteId } from "./EventJournal.ts";
+import { EventLogAuthentication, EventLogProtocolError, EventLogRemoteRpcs, type StoreId, type WriteAck } from "./EventLogMessage.ts";
 /**
  * Provides RPC authentication middleware that reads the authenticated
  * `EventLog.Identity` from client annotations.
@@ -28,19 +28,33 @@ export declare const layerAuthMiddleware: Layer.Layer<EventLogAuthentication>;
  * chunked writes, delegates write and change handling to the supplied callbacks,
  * and frames large change payloads into chunks.
  *
+ * `Authenticate` calls `authorizeIdentity` with the claimed public key and the
+ * presented signing public key, then verifies the signature against the
+ * presented key. Only a verified key is passed to
+ * `getOrCreateSessionAuthBinding`, and a key that differs from the identity's
+ * existing binding is rejected.
+ *
+ * Use the connection's `ConnectionWrites.track` in `onWrite` and
+ * `ConnectionWrites.filter` in `changes` to suppress its own write echoes.
+ * `compaction` sets `HelloResponse.compaction`, advertising that the server
+ * also serves `EventLogCompactionRpcs`.
+ *
  * @stability unstable
  * @category layers
  * @since 4.0.0
  */
 export declare const layerRpcHandlers: (options: {
     readonly remoteId: RemoteId;
-    readonly authorizeIdentity?: (publicKey: string) => Effect.Effect<void, EventLogProtocolError>;
+    readonly firstSequence?: number | undefined;
+    readonly compaction?: boolean | undefined;
+    readonly authorizeIdentity?: (publicKey: string, signingPublicKey: Uint8Array<ArrayBuffer>) => Effect.Effect<void, EventLogProtocolError>;
     readonly getOrCreateSessionAuthBinding: (publicKey: string, signingPublicKey: Uint8Array<ArrayBuffer>) => Effect.Effect<Uint8Array<ArrayBuffer>>;
-    readonly onWrite: (data: Uint8Array<ArrayBuffer>, authenticatedPublicKeys: ReadonlySet<string>) => Effect.Effect<void, EventLogProtocolError>;
+    readonly onWrite: (data: Uint8Array<ArrayBuffer>, authenticatedPublicKeys: ReadonlySet<string>, writes: ConnectionWrites) => Effect.Effect<ReadonlyArray<WriteAck>, EventLogProtocolError>;
     readonly changes: (options: {
         readonly publicKey: string;
         readonly storeId: StoreId;
         readonly startSequence: number;
+        readonly writes: ConnectionWrites;
     }) => Stream.Stream<Uint8Array<ArrayBuffer>, unknown>;
 }) => Layer.Layer<Rpc.ToHandler<RpcGroup.Rpcs<typeof EventLogRemoteRpcs>> | EventLogAuthentication>;
 declare const ChunkedMessageState_base: Context.Reference<Map<number, {
@@ -62,6 +76,44 @@ declare const ChunkedMessageState_base: Context.Reference<Map<number, {
  * @since 4.0.0
  */
 export declare class ChunkedMessageState extends ChunkedMessageState_base {
+}
+/**
+ * Tracks writes to suppress their echoes on the same RPC connection.
+ *
+ * **Details**
+ *
+ * Only tracks entries for stores with an open change stream.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export declare class ConnectionWrites {
+    private readonly streams;
+    /**
+     * Runs a storage write while suppressing its entries on this connection's streams.
+     *
+     * @stability unstable
+     * @since 4.0.6
+     */
+    track<E, R>(options: {
+        readonly publicKey: string;
+        readonly storeId: StoreId;
+        readonly entryIds: ReadonlyArray<EntryId>;
+    }, write: Effect.Effect<ReadonlyArray<WriteAck>, E, R>): Effect.Effect<ReadonlyArray<WriteAck>, E, R>;
+    /**
+     * Filters this connection's writes from a store's change stream. An item can
+     * hold several entries; `sequence` returns its highest one.
+     *
+     * @stability unstable
+     * @since 4.0.6
+     */
+    filter<A, E, R>(options: {
+        readonly publicKey: string;
+        readonly storeId: StoreId;
+        readonly entryIds: (item: A) => ReadonlyArray<EntryId>;
+        readonly sequence: (item: A) => number;
+    }, stream: Stream.Stream<A, E, R>): Stream.Stream<A, E, R>;
 }
 declare const AuthenticatedIdentities_base: Context.ServiceClass<AuthenticatedIdentities, "effect/eventlog/EventLogServer/AuthenticatedIdentities", Set<string>>;
 /**

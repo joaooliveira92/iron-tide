@@ -1915,16 +1915,16 @@ export const takeUpTo: {
 } = dual(2, <A>(self: Subscription<A>, max: number): Effect.Effect<Array<A>> =>
   Effect.suspend(() => {
     if (self.shutdownFlag.current) return Effect.interrupt
-    max = Count.normalize(max)
+    let limit = Count.normalize(max)
     let replay: Array<A> | undefined = undefined
-    if (self.replayWindow.remaining >= max) {
-      return Effect.succeed(self.replayWindow.takeN(max))
+    if (self.replayWindow.remaining >= limit) {
+      return Effect.succeed(self.replayWindow.takeN(limit))
     } else if (self.replayWindow.remaining > 0) {
       replay = self.replayWindow.takeAll()
-      max = max - replay.length
+      limit = limit - replay.length
     }
     const as = self.pollers.length === 0
-      ? self.subscription.pollUpTo(max)
+      ? self.subscription.pollUpTo(limit)
       : []
     self.strategy.onPubSubEmptySpaceUnsafe(self.pubsub, self.subscribers)
     return replay ? Effect.succeed(replay.concat(as)) : Effect.succeed(as)
@@ -2051,7 +2051,9 @@ const takeRemainderLoop = <A>(
     return Effect.succeed(acc)
   }
   return Effect.flatMap(takeUpTo(self, max), (bs) => {
-    acc.push(...bs)
+    for (let i = 0; i < bs.length; i++) {
+      acc.push(bs[i])
+    }
     const remaining = min - bs.length
     if (remaining === 1) {
       return Effect.map(take(self), (b) => {
@@ -3127,14 +3129,13 @@ export class BackPressureStrategy<in out A> implements PubSub.Strategy<A> {
       if (publisher === MutableList.Empty) {
         keepPolling = false
       } else {
-        const [value, deferred] = publisher
+        const [value, deferred, last] = publisher
         const published = pubsub.publish(value)
-        if (published && publisher[2]) {
-          Deferred.doneUnsafe(deferred, Exit.succeed(true))
-        } else if (!published) {
-          MutableList.prepend(this.publishers, publisher)
-        }
+        if (!published) MutableList.prepend(this.publishers, publisher)
         this.completeSubscribersUnsafe(pubsub, subscribers)
+        // Resuming the publisher can synchronously end the PubSub, so notify
+        // waiting subscribers first.
+        if (published && last) Deferred.doneUnsafe(deferred, Exit.succeed(true))
       }
     }
   }
@@ -3449,7 +3450,10 @@ class ReplayBuffer<A> {
     }
     this.tail = this.tail.next
     if (this.size === this.capacity) {
-      this.head = this.head.next!
+      const dropped = this.head
+      this.head = dropped.next!
+      dropped.next = null
+      dropped.value = AbsentValue
     } else {
       this.size += 1
     }

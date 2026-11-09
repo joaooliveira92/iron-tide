@@ -8,6 +8,19 @@
  * grouped, id-based, and side-effect-only resolver constructors, and keeps
  * batches separated by the active SQL transaction connection.
  *
+ * The active transaction is found through the `SqlClient` in each request's
+ * context, and otherwise through the innermost transaction started with
+ * `SqlClient.makeWithTransaction`.
+ *
+ * Only the transaction connection separates batches. Other differences in
+ * caller services do not: `execute` and result decoding are provided with the
+ * first entry's context, while request encoding uses each entry's own context.
+ * In particular, callers outside a transaction can share one batch even when
+ * they provide different tenant or authorization services. Do not rely on
+ * per-caller services to isolate such SQL operations; use separate resolver
+ * instances for different tenants or authorization settings, or include those
+ * values in the request payload and handle them explicitly in `execute`.
+ *
  * @stability unstable
  * @since 4.0.0
  */
@@ -18,6 +31,7 @@ import * as Effect from "../Effect.js";
 import * as Equal from "../Equal.js";
 import * as Exit from "../Exit.js";
 import * as Hash from "../Hash.js";
+import { CurrentTransactionService } from "../internal/sql.js";
 import * as MutableHashMap from "../MutableHashMap.js";
 import * as Option from "../Option.js";
 import * as Request from "../Request.js";
@@ -251,10 +265,19 @@ const partitionRequestsById = function* (requests, schema) {
   return [inputs, byIdMap];
 };
 function transactionKey(entry) {
+  // The transaction of the request's `SqlClient`, and the innermost transaction
+  // started with `SqlClient.makeWithTransaction` by any client.
   const client = Context.getOrUndefined(entry.context, SqlClient.SqlClient);
-  if (!client) return undefined;
-  const conn = Context.getOrUndefined(entry.context, client.transactionService);
-  if (!conn) return undefined;
-  return Equal.byReferenceUnsafe(conn);
+  const clientTransaction = client && Context.getOrUndefined(entry.context, client.transactionService);
+  const currentService = Context.get(entry.context, CurrentTransactionService);
+  const currentTransaction = currentService && Context.getOrUndefined(entry.context, currentService);
+  if (clientTransaction === undefined || clientTransaction === currentTransaction) {
+    return currentTransaction && Equal.byReferenceUnsafe(currentTransaction);
+  }
+  if (currentTransaction === undefined) {
+    return Equal.byReferenceUnsafe(clientTransaction);
+  }
+  // Two different transactions are active, so neither identifies the request on its own.
+  return [Equal.byReferenceUnsafe(clientTransaction), Equal.byReferenceUnsafe(currentTransaction)];
 }
 //# sourceMappingURL=SqlResolver.js.map

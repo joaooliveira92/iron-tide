@@ -17,7 +17,7 @@ import * as Context from "./Context.ts"
 import * as Duration from "./Duration.ts"
 import type { Effect } from "./Effect.ts"
 import type { Exit } from "./Exit.ts"
-import { constUndefined, dual } from "./Function.ts"
+import { constUndefined, constVoid, dual, identity } from "./Function.ts"
 import * as InternalEffect from "./internal/effect.ts"
 import * as InternalMetric from "./internal/metric.ts"
 import * as InternalRecord from "./internal/record.ts"
@@ -576,7 +576,7 @@ export interface GaugeState<in Input extends number | bigint> {
  *         start: 1,
  *         factor: 2,
  *         count: 10
- *       }) // 1, 2, 4, 8, ..., 512
+ *       }) // 1, 2, 4, 8, ..., 256, Infinity
  *     }
  *   )
  *
@@ -696,8 +696,8 @@ export interface Histogram<Input> extends Metric<Input, HistogramState> {}
  *       totalRequests: state.count, // 5
  *       fastestResponse: state.min, // 50
  *       slowestResponse: state.max, // 750
- *       averageResponse: state.sum / state.count, // 268
- *       totalTime: state.sum, // 1340
+ *       averageResponse: state.sum / state.count, // 259
+ *       totalTime: state.sum, // 1295
  *       distribution: bucketAnalysis
  *       // Example distribution:
  *       // [{ range: "0-100ms", count: 2, percentage: 40.0 },
@@ -1678,6 +1678,7 @@ abstract class Metric$<in Input, out State> implements Metric<Input, State> {
   declare readonly State: Covariant<State>
 
   #extraAttributes: Metric.AttributeSet | undefined
+  #mergedAttributes: Metric.AttributeSet | undefined
   #key = ""
 
   readonly id: string
@@ -1709,27 +1710,59 @@ abstract class Metric$<in Input, out State> implements Metric<Input, State> {
   abstract createHooks(): Metric.Hooks<Input, State>
 
   hook(context: Context.Context<never>): Metric.Hooks<Input, State> {
+    const key = this.key(context)
+    // The registry owns the series, so it is looked up on every update.
+    const registry = Context.get(context, MetricRegistry)
+    let metadata = registry.get(key)
+    if (Predicate.isUndefined(metadata)) {
+      metadata = this.metadata(this.createHooks())
+      registry.set(key, metadata)
+    }
+    return metadata.hooks
+  }
+
+  removeUnsafe(context: Context.Context<never>): void {
+    Context.get(context, MetricRegistry).delete(this.key(context))
+  }
+
+  registerUnsafe(context: Context.Context<never>, hooks: Metric.Hooks<Input, State>): Registration {
+    const key = this.key(context)
+    // Keep the registry from registration time, so removal does not depend on
+    // the context it is called from.
+    const registry = Context.get(context, MetricRegistry)
+    const metadata = this.metadata({ get: hooks.get, update: constVoid, modify: constVoid })
+    registry.set(key, metadata)
+    return {
+      remove() {
+        if (registry.get(key) === metadata) {
+          registry.delete(key)
+        }
+      }
+    }
+  }
+
+  // Merges the attributes once per contextual attribute set, so series key and
+  // metadata share the result.
+  private key(context: Context.Context<never>): string {
     const extraAttributes = Context.get(context, CurrentMetricAttributes)
     if (extraAttributes !== this.#extraAttributes) {
       this.#extraAttributes = extraAttributes
-      this.#key = makeKey(this, mergeAttributes(this.attributes, extraAttributes))
+      const merged = mergeAttributes(this.attributes, extraAttributes)
+      this.#mergedAttributes = Object.keys(extraAttributes).length > 0 ? merged : this.attributes
+      this.#key = makeKey(this, merged)
     }
-    // The registry owns the series, so it is looked up on every update.
-    const registry = Context.get(context, MetricRegistry)
-    let metadata = registry.get(this.#key)
-    if (Predicate.isUndefined(metadata)) {
-      metadata = {
-        id: this.id,
-        type: this.type,
-        description: this.description,
-        attributes: Object.keys(extraAttributes).length > 0
-          ? mergeAttributes(this.attributes, extraAttributes)
-          : this.attributes,
-        hooks: this.createHooks()
-      }
-      registry.set(this.#key, metadata)
+    return this.#key
+  }
+
+  // Must follow `key(context)`, which computes the merged attributes.
+  private metadata(hooks: Metric.Hooks<Input, State>): Metric.Metadata<Input, State> {
+    return {
+      id: this.id,
+      type: this.type,
+      description: this.description,
+      attributes: this.#mergedAttributes,
+      hooks
     }
-    return metadata.hooks
   }
 
   pipe() {
@@ -1992,28 +2025,49 @@ class SummaryMetric extends Metric$<readonly [value: number, timestamp: number],
   }
 }
 
-class MetricTransform<in Input, out State, in Input2> extends Metric$<Input2, State> {
+// Every operation maps the context first and the input second, so wrappers
+// such as `withAttributes` address the same series for update, remove and
+// register.
+class MetricTransform<Input, out State, in Input2> extends Metric$<Input2, State> {
   type: Metric.Type
   readonly metric: Metric<Input, State>
-  override readonly valueUnsafe: (context: Context.Context<never>) => State
-  override readonly updateUnsafe: (input: Input2, context: Context.Context<never>) => void
-  override readonly modifyUnsafe: (input: Input2, context: Context.Context<never>) => void
+  readonly mapInput: (input: Input2, context: Context.Context<never>) => Input
+  readonly mapContext: (context: Context.Context<never>) => Context.Context<never>
 
   constructor(
     metric: Metric<Input, State>,
-    valueUnsafe: (context: Context.Context<never>) => State,
-    updateUnsafe: (input: Input2, context: Context.Context<never>) => void,
-    modifyUnsafe: (input: Input2, context: Context.Context<never>) => void
+    mapInput: (input: Input2, context: Context.Context<never>) => Input,
+    mapContext: (context: Context.Context<never>) => Context.Context<never>
   ) {
     super(metric.id, metric.description, metric.attributes)
     this.metric = metric
-    this.valueUnsafe = valueUnsafe
-    this.updateUnsafe = updateUnsafe
-    this.modifyUnsafe = modifyUnsafe
+    this.mapInput = mapInput
+    this.mapContext = mapContext
     this.type = metric.type
   }
   createHooks(): Metric.Hooks<Input2, State> {
     return (this.metric as any).createHooks()
+  }
+  override valueUnsafe(context: Context.Context<never>): State {
+    return this.metric.valueUnsafe(this.mapContext(context))
+  }
+  override updateUnsafe(input: Input2, context: Context.Context<never>): void {
+    const mapped = this.mapContext(context)
+    this.metric.updateUnsafe(this.mapInput(input, mapped), mapped)
+  }
+  override modifyUnsafe(input: Input2, context: Context.Context<never>): void {
+    const mapped = this.mapContext(context)
+    this.metric.modifyUnsafe(this.mapInput(input, mapped), mapped)
+  }
+  override removeUnsafe(context: Context.Context<never>): void {
+    removeUnsafe(this.metric, this.mapContext(context))
+  }
+  override registerUnsafe(context: Context.Context<never>, hooks: Metric.Hooks<Input2, State>): Registration {
+    return registerUnsafe(this.metric, this.mapContext(context), {
+      get: hooks.get,
+      update: constVoid,
+      modify: constVoid
+    })
   }
 }
 
@@ -3001,93 +3055,7 @@ export const modify: {
    */
   <Input, State>(self: Metric<Input, State>, input: Input): Effect<void>
 } = dual<
-  /**
-   * Modifies the metric with the specified input.
-   *
-   * **Details**
-   *
-   * The behavior of `modify` depends on the metric type. Counters add the input
-   * value to the current count, gauges add the input value to the current gauge
-   * value, frequencies increment the occurrence count for the input string,
-   * histograms record the input value in the appropriate bucket, and summaries
-   * record the input observation.
-   *
-   * **Example** (Modifying metric values)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Metric } from "effect"
-   *
-   * const temperatureGauge = Metric.gauge("temperature")
-   * const requestCounter = Metric.counter("requests")
-   *
-   * const program = Effect.gen(function*() {
-   *   // Set initial temperature
-   *   yield* Metric.update(temperatureGauge, 20)
-   *
-   *   // Modify by adding/subtracting values
-   *   yield* Metric.modify(temperatureGauge, 5) // Now 25
-   *   yield* Metric.modify(temperatureGauge, -3) // Now 22
-   *
-   *   // For counters, modify increments by the specified amount
-   *   yield* Metric.modify(requestCounter, 10) // Add 10 to counter
-   *   yield* Metric.modify(requestCounter, 5) // Add 5 more (total: 15)
-   *
-   *   const temp = yield* Metric.value(temperatureGauge)
-   *   const requests = yield* Metric.value(requestCounter)
-   *   return [temp.value, requests.count] as const
-   * })
-   *
-   * await Effect.runPromise(Effect.provideService(program, Metric.MetricRegistry, new Map())) // => [22, 15]
-   * ```
-   *
-   * @stability stable
-   * @category mutations
-   * @since 3.6.5
-   */
   <Input>(input: Input) => <State>(self: Metric<Input, State>) => Effect<void>,
-  /**
-   * Modifies the metric with the specified input.
-   *
-   * **Details**
-   *
-   * The behavior of `modify` depends on the metric type. Counters add the input
-   * value to the current count, gauges add the input value to the current gauge
-   * value, frequencies increment the occurrence count for the input string,
-   * histograms record the input value in the appropriate bucket, and summaries
-   * record the input observation.
-   *
-   * **Example** (Modifying metric values)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Metric } from "effect"
-   *
-   * const temperatureGauge = Metric.gauge("temperature")
-   * const requestCounter = Metric.counter("requests")
-   *
-   * const program = Effect.gen(function*() {
-   *   // Set initial temperature
-   *   yield* Metric.update(temperatureGauge, 20)
-   *
-   *   // Modify by adding/subtracting values
-   *   yield* Metric.modify(temperatureGauge, 5) // Now 25
-   *   yield* Metric.modify(temperatureGauge, -3) // Now 22
-   *
-   *   // For counters, modify increments by the specified amount
-   *   yield* Metric.modify(requestCounter, 10) // Add 10 to counter
-   *   yield* Metric.modify(requestCounter, 5) // Add 5 more (total: 15)
-   *
-   *   const temp = yield* Metric.value(temperatureGauge)
-   *   const requests = yield* Metric.value(requestCounter)
-   *   return [temp.value, requests.count] as const
-   * })
-   *
-   * await Effect.runPromise(Effect.provideService(program, Metric.MetricRegistry, new Map())) // => [22, 15]
-   * ```
-   *
-   * @stability stable
-   * @category mutations
-   * @since 3.6.5
-   */
   <Input, State>(self: Metric<Input, State>, input: Input) => Effect<void>
 >(2, (self, input) =>
   InternalEffect.flatMap(
@@ -3252,115 +3220,155 @@ export const update: {
    */
   <Input, State>(self: Metric<Input, State>, input: Input): Effect<void>
 } = dual<
-  /**
-   * Updates the metric with the specified input.
-   *
-   * **Details**
-   *
-   * The behavior of `update` depends on the metric type. Counters add the input
-   * value to the current count, gauges replace the current value with the input
-   * value, frequencies increment the occurrence count for the input string,
-   * histograms record the input value in the appropriate bucket, and summaries
-   * record the input value as a new observation.
-   *
-   * **Example** (Updating metric values)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Metric } from "effect"
-   *
-   * const cpuUsage = Metric.gauge("cpu_usage_percent")
-   * const httpStatus = Metric.frequency("http_status_codes")
-   * const responseTime = Metric.histogram("response_time_ms", {
-   *   boundaries: [100, 500, 1000, 2000]
-   * })
-   *
-   * const program = Effect.gen(function*() {
-   *   // Update gauge to specific values
-   *   yield* Metric.update(cpuUsage, 45.2)
-   *   yield* Metric.update(cpuUsage, 67.8) // Replaces previous value
-   *
-   *   // Track HTTP status code occurrences
-   *   yield* Metric.update(httpStatus, "200")
-   *   yield* Metric.update(httpStatus, "404")
-   *   yield* Metric.update(httpStatus, "200") // Increments 200 count
-   *
-   *   // Record response times
-   *   yield* Metric.update(responseTime, 250)
-   *   yield* Metric.update(responseTime, 750)
-   *   yield* Metric.update(responseTime, 1500)
-   *
-   *   // Check current states
-   *   const cpu = yield* Metric.value(cpuUsage)
-   *   const statuses = yield* Metric.value(httpStatus)
-   *   const times = yield* Metric.value(responseTime)
-   *   return [cpu.value, statuses.occurrences.get("200"), times.count] as const
-   * })
-   *
-   * await Effect.runPromise(Effect.provideService(program, Metric.MetricRegistry, new Map())) // => [67.8, 2, 3]
-   * ```
-   *
-   * @stability stable
-   * @category mutations
-   * @since 2.0.0
-   */
   <Input>(input: Input) => <State>(self: Metric<Input, State>) => Effect<void>,
-  /**
-   * Updates the metric with the specified input.
-   *
-   * **Details**
-   *
-   * The behavior of `update` depends on the metric type. Counters add the input
-   * value to the current count, gauges replace the current value with the input
-   * value, frequencies increment the occurrence count for the input string,
-   * histograms record the input value in the appropriate bucket, and summaries
-   * record the input value as a new observation.
-   *
-   * **Example** (Updating metric values)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Metric } from "effect"
-   *
-   * const cpuUsage = Metric.gauge("cpu_usage_percent")
-   * const httpStatus = Metric.frequency("http_status_codes")
-   * const responseTime = Metric.histogram("response_time_ms", {
-   *   boundaries: [100, 500, 1000, 2000]
-   * })
-   *
-   * const program = Effect.gen(function*() {
-   *   // Update gauge to specific values
-   *   yield* Metric.update(cpuUsage, 45.2)
-   *   yield* Metric.update(cpuUsage, 67.8) // Replaces previous value
-   *
-   *   // Track HTTP status code occurrences
-   *   yield* Metric.update(httpStatus, "200")
-   *   yield* Metric.update(httpStatus, "404")
-   *   yield* Metric.update(httpStatus, "200") // Increments 200 count
-   *
-   *   // Record response times
-   *   yield* Metric.update(responseTime, 250)
-   *   yield* Metric.update(responseTime, 750)
-   *   yield* Metric.update(responseTime, 1500)
-   *
-   *   // Check current states
-   *   const cpu = yield* Metric.value(cpuUsage)
-   *   const statuses = yield* Metric.value(httpStatus)
-   *   const times = yield* Metric.value(responseTime)
-   *   return [cpu.value, statuses.occurrences.get("200"), times.count] as const
-   * })
-   *
-   * await Effect.runPromise(Effect.provideService(program, Metric.MetricRegistry, new Map())) // => [67.8, 2, 3]
-   * ```
-   *
-   * @stability stable
-   * @category mutations
-   * @since 2.0.0
-   */
   <Input, State>(self: Metric<Input, State>, input: Input) => Effect<void>
 >(
   2,
   (self, input) =>
     InternalEffect.contextWith((services) => InternalEffect.sync(() => self.updateUnsafe(input, services)))
 )
+
+/**
+ * Handle for a series registered with `Metric.registerUnsafe`.
+ *
+ * **Details**
+ *
+ * `remove` deletes the series from the registry it was registered into, but
+ * only while the registry still holds this registration. Calling it again, or
+ * after another registration has replaced the series, does nothing.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface Registration {
+  readonly remove: () => void
+}
+
+/**
+ * Removes the series of a metric for the current attributes from the metric
+ * registry.
+ *
+ * **When to use**
+ *
+ * Use when a series describes something that has gone away, such as a
+ * connection or an entity, so the registry and exporters stop tracking it.
+ *
+ * **Details**
+ *
+ * The series is identified the same way `update` identifies it: by the metric
+ * and its attributes merged with `CurrentMetricAttributes`. Other series of the
+ * same metric are left alone. A later update creates the series again from its
+ * initial state. Removing a series that does not exist does nothing.
+ *
+ * **Example** (Removing a series)
+ *
+ * ```ts import.meta.vitest
+ * import { Effect, Metric } from "effect"
+ *
+ * const connections = Metric.gauge("connections")
+ *
+ * const program = Effect.gen(function*() {
+ *   yield* Metric.update(connections, 3).pipe(
+ *     Effect.provideService(Metric.CurrentMetricAttributes, { pool: "a" })
+ *   )
+ *   yield* Metric.update(connections, 5).pipe(
+ *     Effect.provideService(Metric.CurrentMetricAttributes, { pool: "b" })
+ *   )
+ *   yield* Metric.remove(connections).pipe(
+ *     Effect.provideService(Metric.CurrentMetricAttributes, { pool: "a" })
+ *   )
+ *   const snapshots = yield* Metric.snapshot
+ *   return snapshots.map((snapshot) => snapshot.attributes)
+ * })
+ *
+ * await Effect.runPromise(Effect.provideService(program, Metric.MetricRegistry, new Map())) // => [{ pool: "b" }]
+ * ```
+ *
+ * @see {@link removeUnsafe} for removing a series with an explicit `Context`
+ *
+ * @stability unstable
+ * @category mutations
+ * @since 4.0.6
+ */
+export const remove = <Input, State>(self: Metric<Input, State>): Effect<void> =>
+  InternalEffect.contextWith((context) => InternalEffect.sync(() => removeUnsafe(self, context)))
+
+/**
+ * Removes the series of a metric for the attributes in the provided `Context`
+ * from the metric registry in that `Context`.
+ *
+ * **When to use**
+ *
+ * Use when a low-level integration already holds a `Context`. Use `remove`
+ * in application code.
+ *
+ * @see {@link remove} for the `Effect` version
+ *
+ * @stability unstable
+ * @category mutations
+ * @since 4.0.6
+ */
+export const removeUnsafe = <Input, State>(self: Metric<Input, State>, context: Context.Context<never>): void =>
+  (self as Metric$<Input, State>).removeUnsafe(context)
+
+/**
+ * Registers a series backed by caller-supplied hooks, for gauges whose value is
+ * read when metrics are snapshotted rather than pushed with updates.
+ *
+ * **When to use**
+ *
+ * Use when the value already lives in some data structure, such as a queue
+ * size, and updating a metric on every change would cost more than reading the
+ * value at export time.
+ *
+ * **Details**
+ *
+ * The series is identified as in `remove`, using the attributes and registry
+ * from `context`, and replaces any series with the same identity. `hooks.get`
+ * is called each time the series is read, for example by `snapshot` or an
+ * exporter. The returned {@link Registration} removes it again.
+ * `update` and `modify` on this series do nothing; the supplied mutation hooks
+ * are ignored.
+ *
+ * **Gotchas**
+ *
+ * The registry keeps `hooks.get` reachable until the series is removed, along
+ * with anything it closes over. Call `remove` once the source goes away.
+ *
+ * **Example** (Reporting a queue size on snapshot)
+ *
+ * ```ts import.meta.vitest
+ * import { Context, Metric } from "effect"
+ *
+ * const context = Context.make(Metric.MetricRegistry, new Map())
+ * const queueSize = Metric.gauge("queue_size")
+ * const queue: Array<string> = ["a", "b"]
+ *
+ * const registration = Metric.registerUnsafe(queueSize, context, {
+ *   get: () => ({ value: queue.length }),
+ *   update: () => {},
+ *   modify: () => {}
+ * })
+ * queue.push("c")
+ * const sizes = Metric.snapshotUnsafe(context).map((snapshot) => snapshot.state)
+ * registration.remove()
+ *
+ * sizes // => [{ value: 3 }]
+ * Metric.snapshotUnsafe(context).length // => 0
+ * ```
+ *
+ * @see {@link remove} for removing a series updated with `update`
+ *
+ * @stability unstable
+ * @category mutations
+ * @since 4.0.6
+ */
+export const registerUnsafe = <Input, State>(
+  self: Metric<Input, State>,
+  context: Context.Context<never>,
+  hooks: Metric.Hooks<Input, State>
+): Registration => (self as Metric$<Input, State>).registerUnsafe(context, hooks)
 
 /**
  * Returns a new metric that is powered by this one, but which accepts updates
@@ -3471,75 +3479,9 @@ export const mapInput: {
     f: (input: Input2, context: Context.Context<never>) => Input
   ): Metric<Input2, State>
 } = dual<
-  /**
-   * Returns a new metric that is powered by this one, but which accepts updates
-   * of the specified new type, which must be transformable to the input type of
-   * this metric.
-   *
-   * **Example** (Mapping metric inputs)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Metric } from "effect"
-   *
-   * const durationHistogram = Metric.histogram("request_duration_ms", {
-   *   description: "Request duration in milliseconds",
-   *   boundaries: Metric.linearBoundaries({ start: 0, width: 100, count: 10 })
-   * })
-   *
-   * // Accept duration strings while recording numeric milliseconds
-   * const durationStringHistogram = Metric.mapInput(
-   *   durationHistogram,
-   *   (input: string) => Number(input)
-   * )
-   *
-   * const program = Effect.gen(function*() {
-   *   yield* Metric.update(durationStringHistogram, "250")
-   *   return yield* Metric.value(durationStringHistogram)
-   * })
-   *
-   * const value = await Effect.runPromise(Effect.provideService(program, Metric.MetricRegistry, new Map()))
-   * const values = [value.count, value.sum] // => [1, 250]
-   * ```
-   *
-   * @stability stable
-   * @category annotations
-   * @since 2.0.0
-   */
-  <Input, Input2 extends Input>(f: (input: Input2, context: Context.Context<never>) => Input) => <State>(self: Metric<Input, State>) => Metric<Input2, State>,
-  /**
-   * Returns a new metric that is powered by this one, but which accepts updates
-   * of the specified new type, which must be transformable to the input type of
-   * this metric.
-   *
-   * **Example** (Mapping metric inputs)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Metric } from "effect"
-   *
-   * const durationHistogram = Metric.histogram("request_duration_ms", {
-   *   description: "Request duration in milliseconds",
-   *   boundaries: Metric.linearBoundaries({ start: 0, width: 100, count: 10 })
-   * })
-   *
-   * // Accept duration strings while recording numeric milliseconds
-   * const durationStringHistogram = Metric.mapInput(
-   *   durationHistogram,
-   *   (input: string) => Number(input)
-   * )
-   *
-   * const program = Effect.gen(function*() {
-   *   yield* Metric.update(durationStringHistogram, "250")
-   *   return yield* Metric.value(durationStringHistogram)
-   * })
-   *
-   * const value = await Effect.runPromise(Effect.provideService(program, Metric.MetricRegistry, new Map()))
-   * const values = [value.count, value.sum] // => [1, 250]
-   * ```
-   *
-   * @stability stable
-   * @category annotations
-   * @since 2.0.0
-   */
+  <Input, Input2 extends Input>(
+    f: (input: Input2, context: Context.Context<never>) => Input
+  ) => <State>(self: Metric<Input, State>) => Metric<Input2, State>,
   <Input, State, Input2>(
     self: Metric<Input, State>,
     f: (input: Input2, context: Context.Context<never>) => Input
@@ -3547,13 +3489,7 @@ export const mapInput: {
 >(2, <Input, State, Input2>(
   self: Metric<Input, State>,
   f: (input: Input2, context: Context.Context<never>) => Input
-): Metric<Input2, State> =>
-  new MetricTransform(
-    self,
-    (context) => self.valueUnsafe(context),
-    (input, context) => self.updateUnsafe(f(input, context), context),
-    (input, context) => self.modifyUnsafe(f(input, context), context)
-  ))
+): Metric<Input2, State> => new MetricTransform(self, f, identity))
 
 /**
  * Returns a new metric that is powered by this one, but which accepts updates
@@ -3667,79 +3603,7 @@ export const withConstantInput: {
    */
   <Input, State>(self: Metric<Input, State>, input: Input): Metric<unknown, State>
 } = dual<
-  /**
-   * Returns a new metric that is powered by this one, but which accepts updates
-   * of any type, and translates them to updates with the specified constant
-   * update value.
-   *
-   * **Example** (Ignoring inputs with a constant value)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Metric } from "effect"
-   *
-   * // Create a counter that normally expects a number increment
-   * const requestCounter = Metric.counter("total_requests", {
-   *   description: "Total number of requests processed"
-   * })
-   *
-   * // Create a version that always increments by 1, regardless of input
-   * const simpleRequestCounter = Metric.withConstantInput(requestCounter, 1)
-   *
-   * const program = Effect.gen(function*() {
-   *   // These all increment the counter by 1, ignoring the input value
-   *   yield* Metric.update(simpleRequestCounter, "any string")
-   *   yield* Metric.update(simpleRequestCounter, { complex: "object" })
-   *   yield* Metric.update(simpleRequestCounter, 999) // Still increments by 1
-   *
-   *   const value = yield* Metric.value(simpleRequestCounter)
-   *   return value // Counter state will show count: 3
-   * })
-   *
-   * const value = await Effect.runPromise(Effect.provideService(program, Metric.MetricRegistry, new Map()))
-   * const count = value.count // => 3
-   * ```
-   *
-   * @stability stable
-   * @category mapping
-   * @since 2.0.0
-   */
   <Input>(input: Input) => <State>(self: Metric<Input, State>) => Metric<unknown, State>,
-  /**
-   * Returns a new metric that is powered by this one, but which accepts updates
-   * of any type, and translates them to updates with the specified constant
-   * update value.
-   *
-   * **Example** (Ignoring inputs with a constant value)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Metric } from "effect"
-   *
-   * // Create a counter that normally expects a number increment
-   * const requestCounter = Metric.counter("total_requests", {
-   *   description: "Total number of requests processed"
-   * })
-   *
-   * // Create a version that always increments by 1, regardless of input
-   * const simpleRequestCounter = Metric.withConstantInput(requestCounter, 1)
-   *
-   * const program = Effect.gen(function*() {
-   *   // These all increment the counter by 1, ignoring the input value
-   *   yield* Metric.update(simpleRequestCounter, "any string")
-   *   yield* Metric.update(simpleRequestCounter, { complex: "object" })
-   *   yield* Metric.update(simpleRequestCounter, 999) // Still increments by 1
-   *
-   *   const value = yield* Metric.value(simpleRequestCounter)
-   *   return value // Counter state will show count: 3
-   * })
-   *
-   * const value = await Effect.runPromise(Effect.provideService(program, Metric.MetricRegistry, new Map()))
-   * const count = value.count // => 3
-   * ```
-   *
-   * @stability stable
-   * @category mapping
-   * @since 2.0.0
-   */
   <Input, State>(self: Metric<Input, State>, input: Input) => Metric<unknown, State>
 >(2, (self, input) => mapInput(self, () => input))
 
@@ -3921,135 +3785,13 @@ export const withAttributes: {
    */
   <Input, State>(self: Metric<Input, State>, attributes: Metric.Attributes): Metric<Input, State>
 } = dual<
-  /**
-   * Returns a new metric that applies the specified attributes to all operations.
-   *
-   * **Details**
-   *
-   * Attributes are key-value pairs that provide additional context for metrics,
-   * enabling filtering, grouping, and more detailed analysis. Each combination
-   * of attribute values creates a separate metric series.
-   *
-   * **Example** (Applying metric attributes)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Metric } from "effect"
-   *
-   * const requestCounter = Metric.counter("http_requests_total", {
-   *   description: "Total HTTP requests"
-   * })
-   *
-   * // Create tagged versions of the metric
-   * const getRequests = Metric.withAttributes(requestCounter, {
-   *   method: "GET",
-   *   endpoint: "/api/users"
-   * })
-   *
-   * const postRequests = Metric.withAttributes(requestCounter, {
-   *   method: "POST",
-   *   endpoint: "/api/users"
-   * })
-   *
-   * const program = Effect.gen(function*() {
-   *   // These will be tracked as separate metric series
-   *   yield* Metric.update(getRequests, 1) // http_requests_total{method="GET", endpoint="/api/users"}
-   *   yield* Metric.update(postRequests, 1) // http_requests_total{method="POST", endpoint="/api/users"}
-   *   yield* Metric.update(getRequests, 1) // Increments the GET counter
-   *
-   *   // You can also chain attributes
-   *   const taggedMetric = requestCounter.pipe(
-   *     Metric.withAttributes({ service: "user-api" }),
-   *     Metric.withAttributes({ version: "v1" })
-   *   )
-   *
-   *   yield* Metric.update(taggedMetric, 1) // http_requests_total{service="user-api", version="v1"}
-   * })
-   *
-   * const result = Effect.gen(function*() {
-   *   yield* program
-   *   const get = yield* Metric.value(getRequests)
-   *   const post = yield* Metric.value(postRequests)
-   *   return [get.count, post.count] as const
-   * })
-   *
-   * await Effect.runPromise(Effect.provideService(result, Metric.MetricRegistry, new Map())) // => [2, 1]
-   * ```
-   *
-   * @stability stable
-   * @category mapping
-   * @since 4.0.0
-   */
   (attributes: Metric.Attributes) => <Input, State>(self: Metric<Input, State>) => Metric<Input, State>,
-  /**
-   * Returns a new metric that applies the specified attributes to all operations.
-   *
-   * **Details**
-   *
-   * Attributes are key-value pairs that provide additional context for metrics,
-   * enabling filtering, grouping, and more detailed analysis. Each combination
-   * of attribute values creates a separate metric series.
-   *
-   * **Example** (Applying metric attributes)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, Metric } from "effect"
-   *
-   * const requestCounter = Metric.counter("http_requests_total", {
-   *   description: "Total HTTP requests"
-   * })
-   *
-   * // Create tagged versions of the metric
-   * const getRequests = Metric.withAttributes(requestCounter, {
-   *   method: "GET",
-   *   endpoint: "/api/users"
-   * })
-   *
-   * const postRequests = Metric.withAttributes(requestCounter, {
-   *   method: "POST",
-   *   endpoint: "/api/users"
-   * })
-   *
-   * const program = Effect.gen(function*() {
-   *   // These will be tracked as separate metric series
-   *   yield* Metric.update(getRequests, 1) // http_requests_total{method="GET", endpoint="/api/users"}
-   *   yield* Metric.update(postRequests, 1) // http_requests_total{method="POST", endpoint="/api/users"}
-   *   yield* Metric.update(getRequests, 1) // Increments the GET counter
-   *
-   *   // You can also chain attributes
-   *   const taggedMetric = requestCounter.pipe(
-   *     Metric.withAttributes({ service: "user-api" }),
-   *     Metric.withAttributes({ version: "v1" })
-   *   )
-   *
-   *   yield* Metric.update(taggedMetric, 1) // http_requests_total{service="user-api", version="v1"}
-   * })
-   *
-   * const result = Effect.gen(function*() {
-   *   yield* program
-   *   const get = yield* Metric.value(getRequests)
-   *   const post = yield* Metric.value(postRequests)
-   *   return [get.count, post.count] as const
-   * })
-   *
-   * await Effect.runPromise(Effect.provideService(result, Metric.MetricRegistry, new Map())) // => [2, 1]
-   * ```
-   *
-   * @stability stable
-   * @category mapping
-   * @since 4.0.0
-   */
   <Input, State>(self: Metric<Input, State>, attributes: Metric.Attributes) => Metric<Input, State>
 >(2, <Input, State>(
   self: Metric<Input, State>,
   attributes: Metric.Attributes
 ): Metric<Input, State> => {
-  const attributed = addAttributesToContext(attributes)
-  return new MetricTransform(
-    self,
-    (context) => self.valueUnsafe(attributed(context)),
-    (input, context) => self.updateUnsafe(input, attributed(context)),
-    (input, context) => self.modifyUnsafe(input, attributed(context))
-  )
+  return new MetricTransform(self, identity, addAttributesToContext(attributes))
 })
 
 // Metric Snapshots

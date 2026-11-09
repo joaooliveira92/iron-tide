@@ -608,18 +608,21 @@ export const take = /*#__PURE__*/dual(2, (self, n) => {
  */
 export const takeWhile = /*#__PURE__*/dual(2, (self, predicate) => ({
   [Symbol.iterator]() {
-    const iterator = self[Symbol.iterator]();
+    let iterator = self[Symbol.iterator]();
     let i = 0;
     return {
       next() {
-        const result = iterator.next();
-        if (result.done || !predicate(result.value, i++)) {
-          return {
-            done: true,
-            value: undefined
-          };
+        if (iterator !== undefined) {
+          const result = iterator.next();
+          if (!result.done && predicate(result.value, i++)) {
+            return result;
+          }
+          iterator = undefined;
         }
-        return result;
+        return {
+          done: true,
+          value: undefined
+        };
       }
     };
   }
@@ -1639,23 +1642,22 @@ export const filterMap = /*#__PURE__*/dual(2, (self, f) => ({
  */
 export const filterMapWhile = /*#__PURE__*/dual(2, (self, f) => ({
   [Symbol.iterator]() {
-    const iterator = self[Symbol.iterator]();
+    let iterator = self[Symbol.iterator]();
     let i = 0;
     return {
       next() {
-        const result = iterator.next();
-        if (result.done) {
-          return {
-            done: true,
-            value: undefined
-          };
-        }
-        const next = f(result.value, i++);
-        if (R.isSuccess(next)) {
-          return {
-            done: false,
-            value: next.success
-          };
+        if (iterator !== undefined) {
+          const result = iterator.next();
+          if (!result.done) {
+            const next = f(result.value, i++);
+            if (R.isSuccess(next)) {
+              return {
+                done: false,
+                value: next.success
+              };
+            }
+          }
+          iterator = undefined;
         }
         return {
           done: true,
@@ -2008,20 +2010,24 @@ export const some = /*#__PURE__*/dual(2, (self, predicate) => {
 export const unfold = (b, f) => ({
   [Symbol.iterator]() {
     let next = b;
+    let done = false;
     return {
       next() {
-        const ab = f(next);
-        if (O.isNone(ab)) {
-          return {
-            done: true,
-            value: undefined
-          };
+        if (!done) {
+          const ab = f(next);
+          if (O.isSome(ab)) {
+            const [a, b] = ab.value;
+            next = b;
+            return {
+              done: false,
+              value: a
+            };
+          }
+          done = true;
         }
-        const [a, b] = ab.value;
-        next = b;
         return {
-          done: false,
-          value: a
+          done: true,
+          value: undefined
         };
       }
     };
@@ -2186,24 +2192,25 @@ export const dedupeAdjacentWith = /*#__PURE__*/dual(2, (self, isEquivalent) => (
     let first = true;
     let last;
     function next() {
-      const result = iterator.next();
-      if (result.done) {
-        return {
-          done: true,
-          value: undefined
-        };
+      while (true) {
+        const result = iterator.next();
+        if (result.done) {
+          return {
+            done: true,
+            value: undefined
+          };
+        }
+        if (first) {
+          first = false;
+          last = result.value;
+          return result;
+        }
+        const current = result.value;
+        if (!isEquivalent(last, current)) {
+          last = current;
+          return result;
+        }
       }
-      if (first) {
-        first = false;
-        last = result.value;
-        return result;
-      }
-      const current = result.value;
-      if (isEquivalent(last, current)) {
-        return next();
-      }
-      last = current;
-      return result;
     }
     return {
       next

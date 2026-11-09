@@ -6,6 +6,7 @@
  */
 import * as Equal from "../Equal.ts";
 import * as Hash from "../Hash.ts";
+import * as Inspectable from "../Inspectable.ts";
 import * as Result from "../Result.ts";
 import * as IpInterface from "./IpInterface.ts";
 import * as NetAddress from "./NetAddress.ts";
@@ -20,13 +21,11 @@ declare const TypeId: "~effect/net/IpNetwork";
  * @category models
  * @since 4.0.0
  */
-export interface IpNetwork<out A extends NetAddress.IpAddress = NetAddress.IpAddress> extends Equal.Equal, Hash.Hash {
+export interface IpNetwork<out A extends NetAddress.IpAddress = NetAddress.IpAddress> extends Equal.Equal, Hash.Hash, Inspectable.Inspectable {
     readonly _tag: "IpNetwork";
     readonly address: A;
     readonly prefixLength: number;
     readonly [TypeId]: typeof TypeId;
-    toString(): string;
-    toJSON(): string;
 }
 /**
  * An immutable canonical IPv4 network prefix.
@@ -44,6 +43,40 @@ export type Ipv4Network = IpNetwork<NetAddress.Ipv4Address>;
  * @since 4.0.0
  */
 export type Ipv6Network = IpNetwork<NetAddress.Ipv6Address>;
+/**
+ * A network address and prefix length, generic over the accepted address
+ * input. The address must have no host bits set.
+ *
+ * @see {@link make} for the checked constructor
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type IpNetworkParts<A extends NetAddress.IpAddressInput = NetAddress.IpAddressInput> = IpInterface.IpInterfaceParts<A>;
+/**
+ * An IP network prefix, or a CIDR string or parts to convert to one.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type IpNetworkInput = IpNetwork | string | IpNetworkParts;
+/**
+ * An IPv4 network prefix, or a CIDR string or parts to convert to one.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type Ipv4NetworkInput = Ipv4Network | string | IpNetworkParts<NetAddress.Ipv4AddressInput>;
+/**
+ * An IPv6 network prefix, or a CIDR string or parts to convert to one.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type Ipv6NetworkInput = Ipv6Network | string | IpNetworkParts<NetAddress.Ipv6AddressInput>;
 /**
  * Returns `true` when a value is an IPv4 network prefix.
  *
@@ -68,7 +101,6 @@ export declare const isIpv6Network: (u: unknown) => u is Ipv6Network;
  * @since 4.0.0
  */
 export declare const isIpNetwork: (u: unknown) => u is IpNetwork;
-type IpAddressFamily<A extends NetAddress.IpAddress> = A extends NetAddress.Ipv4Address ? NetAddress.Ipv4Address : A extends NetAddress.Ipv6Address ? NetAddress.Ipv6Address : never;
 /**
  * Creates a network prefix when the address has no host bits set.
  *
@@ -94,7 +126,7 @@ export declare const make: <A extends NetAddress.IpAddress>(address: A, prefixLe
  * @category constructors
  * @since 4.0.0
  */
-export declare const fromAddress: <A extends NetAddress.IpAddress>(address: A, prefixLength: number) => Result.Result<IpNetwork<IpAddressFamily<A>>, NetAddress.NetAddressError>;
+export declare const fromAddress: <A extends NetAddress.IpAddress>(address: A, prefixLength: number) => Result.Result<IpNetwork<NetAddress.Family<A>>, NetAddress.NetAddressError>;
 /**
  * Returns the canonical network containing an interface address. The derived
  * address retains its IPv4 or IPv6 family but not refinements on the input.
@@ -103,7 +135,7 @@ export declare const fromAddress: <A extends NetAddress.IpAddress>(address: A, p
  * @category conversions
  * @since 4.0.0
  */
-export declare const fromInterface: <A extends NetAddress.IpAddress>(self: IpInterface.IpInterface<A>) => IpNetwork<IpAddressFamily<A>>;
+export declare const fromInterface: <A extends NetAddress.IpAddress>(self: IpInterface.IpInterface<A>) => IpNetwork<NetAddress.Family<A>>;
 /**
  * Parses a strict IPv4 network prefix in CIDR notation.
  *
@@ -129,6 +161,48 @@ export declare const ipv6FromString: (input: string) => Result.Result<Ipv6Networ
  */
 export declare const fromString: (input: string) => Result.Result<IpNetwork, NetAddress.NetAddressError>;
 /**
+ * Converts an `Ipv4NetworkInput` to an IPv4 network prefix, parsing strings
+ * like `ipv4FromString`, converting parts like `make`, and returning network
+ * prefixes unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const ipv4FromInput: (input: Ipv4NetworkInput) => Result.Result<Ipv4Network, NetAddress.NetAddressError>;
+/**
+ * Converts an `Ipv6NetworkInput` to an IPv6 network prefix, parsing strings
+ * like `ipv6FromString`, converting parts like `make`, and returning network
+ * prefixes unchanged.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const ipv6FromInput: (input: Ipv6NetworkInput) => Result.Result<Ipv6Network, NetAddress.NetAddressError>;
+/**
+ * Converts an `IpNetworkInput` to a network prefix, parsing strings like
+ * `fromString`, converting parts like `make`, and returning network prefixes
+ * unchanged.
+ *
+ * **Gotchas**
+ *
+ * Like `make`, an address with host bits set is rejected rather than truncated.
+ *
+ * @stability unstable
+ * @category constructors
+ * @since 4.0.0
+ */
+export declare const fromInput: (input: IpNetworkInput) => Result.Result<IpNetwork, NetAddress.NetAddressError>;
+/**
+ * Converts a trusted `IpNetworkInput` to a network prefix, throwing on failure.
+ *
+ * @stability unstable
+ * @category unsafe
+ * @since 4.0.0
+ */
+export declare const fromInputUnsafe: (input: IpNetworkInput) => IpNetwork;
+/**
  * Creates a trusted network prefix, throwing when its address or prefix is invalid.
  *
  * @stability unstable
@@ -145,7 +219,7 @@ export declare const makeUnsafe: <A extends NetAddress.IpAddress>(address: A, pr
  * @category unsafe
  * @since 4.0.0
  */
-export declare const fromAddressUnsafe: <A extends NetAddress.IpAddress>(address: A, prefixLength: number) => IpNetwork<IpAddressFamily<A>>;
+export declare const fromAddressUnsafe: <A extends NetAddress.IpAddress>(address: A, prefixLength: number) => IpNetwork<NetAddress.Family<A>>;
 /**
  * Parses a trusted network prefix in CIDR notation, throwing on failure.
  *
@@ -179,7 +253,7 @@ export declare const firstAddress: <A extends NetAddress.IpAddress>(self: IpNetw
  * @category getters
  * @since 4.0.0
  */
-export declare const lastAddress: <A extends NetAddress.IpAddress>(self: IpNetwork<A>) => IpAddressFamily<A>;
+export declare const lastAddress: <A extends NetAddress.IpAddress>(self: IpNetwork<A>) => NetAddress.Family<A>;
 /**
  * Returns the exact number of addresses in a network prefix.
  *

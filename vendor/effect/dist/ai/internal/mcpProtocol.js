@@ -9,8 +9,10 @@ import * as Schema from "../../Schema.js";
 import * as PublicMcpSchema from "../McpSchema.js";
 import * as McpCore from "./mcpCore.js";
 const LEGACY_RESOURCE_NOT_FOUND_ERROR_CODE = -32002;
-const BASE64_SENTINEL_PREFIX = "=?base64?";
-const BASE64_SENTINEL_SUFFIX = "?=";
+/** @internal */
+export const BASE64_SENTINEL_PREFIX = "=?base64?";
+/** @internal */
+export const BASE64_SENTINEL_SUFFIX = "?=";
 // A leading U+FEFF belongs to the header value and must survive comparison with the JSON body.
 const routingHeaderDecoder = /*#__PURE__*/new TextDecoder("utf-8", {
   fatal: true,
@@ -95,6 +97,12 @@ export const invocationFromClient = request => ({
   serverClient: request
 });
 /**
+ * Runs a core list operation for the legacy client of the current request.
+ *
+ * @internal
+ */
+export const listForClient = list => PublicMcpSchema.McpServerClient.use(request => list(invocationFromClient(request)).pipe(Effect.mapError(ProtocolError.fromFeature)));
+/**
  * @internal
  */
 export const invocationFromRequestContext = request => ({
@@ -114,6 +122,18 @@ export const requireCompleteOperation = (protocolVersion, outcome) => outcome._t
   protocolVersion,
   feature: "Client input"
 }));
+/**
+ * Projects boolean property schemas to equivalent objects for pre-June adapters.
+ * Their dated tool descriptors require object-valued direct property schemas.
+ *
+ * @internal
+ */
+export const projectLegacyToolInputSchema = inputSchema => ({
+  ...inputSchema,
+  properties: inputSchema.properties === undefined ? undefined : Object.fromEntries(Object.entries(inputSchema.properties).map(([name, schema]) => [name, typeof schema === "boolean" ? schema ? {} : {
+    not: {}
+  } : schema]))
+});
 /**
  * Unquotes an exact text mirror when the protocol drops string `structuredContent`.
  *
@@ -150,6 +170,13 @@ export const samplingRequestRequiresTools = request => {
  */
 export class ProtocolError extends /*#__PURE__*/Data.TaggedError("ProtocolError") {
   static fromTool(error) {
+    if (error._tag === "RequestRejected") {
+      return new ProtocolError({
+        code: error.code,
+        message: error.message,
+        data: error.data
+      });
+    }
     const message = Match.value(error).pipe(Match.tag("ToolNotFound", error => `Tool '${error.name}' not found`), Match.tag("UnsupportedByProtocol", error => `${error.feature} is not supported by MCP ${error.protocolVersion}`), Match.tags({
       InvalidToolInput: error => error.message,
       InvalidToolContinuation: error => error.message,
@@ -166,6 +193,18 @@ export class ProtocolError extends /*#__PURE__*/Data.TaggedError("ProtocolError"
         return new ProtocolError({
           code: PublicMcpSchema.INVALID_PARAMS_ERROR_CODE,
           message: `Prompt '${error.name}' not found`
+        });
+      }
+      if (error._tag === "SkillNotFound" && Predicate.hasProperty(error, "uri") && Predicate.isString(error.uri)) {
+        return new ProtocolError({
+          code: PublicMcpSchema.INVALID_PARAMS_ERROR_CODE,
+          message: `Skill '${error.uri}' not found`
+        });
+      }
+      if (error._tag === "DirectoryNotFound" && Predicate.hasProperty(error, "uri") && Predicate.isString(error.uri)) {
+        return new ProtocolError({
+          code: PublicMcpSchema.INVALID_PARAMS_ERROR_CODE,
+          message: `Directory '${error.uri}' not found`
         });
       }
       if (error._tag === "ResourceNotFound" && Predicate.hasProperty(error, "uri") && Predicate.isString(error.uri)) {

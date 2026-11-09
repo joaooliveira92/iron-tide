@@ -171,7 +171,7 @@ export declare class Chunk<R extends Rpc.Any> extends Chunk_base<{
      * @stability unstable
      * @since 4.0.0
      */
-    static readonly Any: Schema.declare<Chunk<never>, Chunk<never>>;
+    static readonly Any: Schema.declare<Chunk<Rpc.Any>, Chunk<Rpc.Any>>;
     /**
      * Transformation between encoded chunk records and `Chunk` instances.
      *

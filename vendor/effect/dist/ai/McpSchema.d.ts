@@ -83,6 +83,123 @@ export declare const RequestId: Schema.Union<[
  */
 export type RequestId = typeof RequestId.Type;
 /**
+ * A JSON-RPC request.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export declare const JsonRpcRequest: Schema.Struct<{
+    readonly jsonrpc: Schema.Literal<"2.0">;
+    readonly id: Schema.Union<[Schema.String, Schema.Finite]>;
+    readonly method: Schema.String;
+    readonly params: Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>;
+}>;
+/**
+ * A JSON-RPC request.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export type JsonRpcRequest = typeof JsonRpcRequest.Type;
+/**
+ * A JSON-RPC notification without a request identifier.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export declare const JsonRpcNotification: Schema.Struct<{
+    readonly jsonrpc: Schema.Literal<"2.0">;
+    readonly method: Schema.String;
+    readonly params: Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>;
+}>;
+/**
+ * A JSON-RPC notification without a request identifier.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export type JsonRpcNotification = typeof JsonRpcNotification.Type & {
+    readonly id?: never;
+};
+/**
+ * A JSON-RPC response carrying a result or remote error.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export declare const JsonRpcResponse: Schema.Union<readonly [Schema.Struct<{
+    readonly jsonrpc: Schema.Literal<"2.0">;
+    readonly id: Schema.Union<[Schema.String, Schema.Finite]>;
+    readonly result: Schema.Unknown;
+}>, Schema.Struct<{
+    readonly jsonrpc: Schema.Literal<"2.0">;
+    readonly id: Schema.optional<Schema.Union<readonly [Schema.Union<[Schema.String, Schema.Finite]>, Schema.Null]>>;
+    readonly error: Schema.Struct<{
+        readonly code: Schema.Int;
+        readonly message: Schema.String;
+        readonly data: Schema.optional<Schema.Unknown>;
+    }>;
+}>]>;
+/**
+ * A JSON-RPC response carrying exactly one result or remote error.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export type JsonRpcResponse = (typeof JsonRpcResponse.members[0]["Type"] & {
+    readonly error?: never;
+}) | (typeof JsonRpcResponse.members[1]["Type"] & {
+    readonly result?: never;
+});
+/**
+ * Schema for JSON-RPC messages exchanged by MCP peers.
+ *
+ * **Details**
+ *
+ * Only the envelope is validated. `params`, `result` and error `data` are left
+ * for the method's own schema to decode.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export declare const JsonRpcMessage: Schema.Union<readonly [Schema.Struct<{
+    readonly jsonrpc: Schema.Literal<"2.0">;
+    readonly id: Schema.Union<[Schema.String, Schema.Finite]>;
+    readonly method: Schema.String;
+    readonly params: Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>;
+}>, Schema.Struct<{
+    readonly jsonrpc: Schema.Literal<"2.0">;
+    readonly method: Schema.String;
+    readonly params: Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>;
+}>, Schema.Union<readonly [Schema.Struct<{
+    readonly jsonrpc: Schema.Literal<"2.0">;
+    readonly id: Schema.Union<[Schema.String, Schema.Finite]>;
+    readonly result: Schema.Unknown;
+}>, Schema.Struct<{
+    readonly jsonrpc: Schema.Literal<"2.0">;
+    readonly id: Schema.optional<Schema.Union<readonly [Schema.Union<[Schema.String, Schema.Finite]>, Schema.Null]>>;
+    readonly error: Schema.Struct<{
+        readonly code: Schema.Int;
+        readonly message: Schema.String;
+        readonly data: Schema.optional<Schema.Unknown>;
+    }>;
+}>]>]>;
+/**
+ * JSON-RPC messages exchanged by MCP peers.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export type JsonRpcMessage = JsonRpcRequest | JsonRpcNotification | JsonRpcResponse;
+/**
  * Schema for MCP progress tokens that associate progress notifications with the
  * original request.
  *
@@ -112,7 +229,7 @@ declare const RequestMeta_base: Schema.Opaque<RequestMeta, Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -121,7 +238,7 @@ declare const RequestMeta_base: Schema.Opaque<RequestMeta, Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
 }>, {}> & Omit<Schema.Struct<{
     readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.StructWithRest<Schema.Struct<{
         /**
@@ -132,7 +249,7 @@ declare const RequestMeta_base: Schema.Opaque<RequestMeta, Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -141,7 +258,7 @@ declare const RequestMeta_base: Schema.Opaque<RequestMeta, Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
 }>, keyof Schema.Top>;
 /**
  * Schema for optional MCP request metadata.
@@ -162,13 +279,13 @@ declare const ResultMeta_base: Schema.Opaque<ResultMeta, Schema.Struct<{
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}> & Omit<Schema.Struct<{
     /**
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, keyof Schema.Top>;
 /**
  * Schema for optional MCP result metadata.
@@ -189,13 +306,13 @@ declare const NotificationMeta_base: Schema.Opaque<NotificationMeta, Schema.Stru
      * This parameter name is reserved by MCP to allow clients and servers to
      * attach additional metadata to their notifications.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}> & Omit<Schema.Struct<{
     /**
      * This parameter name is reserved by MCP to allow clients and servers to
      * attach additional metadata to their notifications.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, keyof Schema.Top>;
 /**
  * Schema for optional MCP notification metadata.
@@ -241,7 +358,7 @@ declare const PaginatedRequestMeta_base: Schema.Opaque<PaginatedRequestMeta, Sch
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -250,7 +367,7 @@ declare const PaginatedRequestMeta_base: Schema.Opaque<PaginatedRequestMeta, Sch
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * An opaque token representing the current pagination position.
      * If provided, the server should return results starting after this cursor.
@@ -266,7 +383,7 @@ declare const PaginatedRequestMeta_base: Schema.Opaque<PaginatedRequestMeta, Sch
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -275,7 +392,7 @@ declare const PaginatedRequestMeta_base: Schema.Opaque<PaginatedRequestMeta, Sch
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * An opaque token representing the current pagination position.
      * If provided, the server should return results starting after this cursor.
@@ -301,7 +418,7 @@ declare const PaginatedResultMeta_base: Schema.Opaque<PaginatedResultMeta, Schem
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * An opaque token representing the pagination position after the last returned result.
      * If present, there may be more results available.
@@ -312,7 +429,7 @@ declare const PaginatedResultMeta_base: Schema.Opaque<PaginatedResultMeta, Schem
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * An opaque token representing the pagination position after the last returned result.
      * If present, there may be more results available.
@@ -470,7 +587,7 @@ declare const ClientCapabilities_base: Schema.Class<ClientCapabilities, Schema.S
      * Optional extensions capabilities advertised by the client.
      * Keys are extension identifiers following <vendor-prefix>/<extension-name> (e.g. "io.modelcontextprotocol/ui").
      */
-    readonly extensions: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly extensions: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Unknown>>, never, never>;
     /**
      * Present if the client supports listing roots.
      */
@@ -558,7 +675,7 @@ declare const ServerCapabilities_base: Schema.Opaque<ServerCapabilities, Schema.
      * Optional extensions capabilities advertised by the server.
      * Keys are extension identifiers following <vendor-prefix>/<extension-name> (e.g. "io.modelcontextprotocol/ui").
      */
-    readonly extensions: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly extensions: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Unknown>>, never, never>;
     /**
      * Present if the server supports sending log messages to the client.
      */
@@ -626,7 +743,7 @@ declare const ServerCapabilities_base: Schema.Opaque<ServerCapabilities, Schema.
      * Optional extensions capabilities advertised by the server.
      * Keys are extension identifiers following <vendor-prefix>/<extension-name> (e.g. "io.modelcontextprotocol/ui").
      */
-    readonly extensions: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly extensions: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.TemplateLiteral<readonly [Schema.String, "/", Schema.String]>, Schema.Unknown>>, never, never>;
     /**
      * Present if the server supports sending log messages to the client.
      */
@@ -815,6 +932,15 @@ export declare const PARSE_ERROR_CODE: -32700;
  * @since 4.0.0
  */
 export declare const HEADER_MISMATCH_ERROR_CODE: -32020;
+/**
+ * Represents the MCP error code returned when a server does not support the
+ * protocol version requested by a client.
+ *
+ * @stability unstable
+ * @category constants
+ * @since 4.0.6
+ */
+export declare const UNSUPPORTED_PROTOCOL_VERSION_ERROR_CODE: -32022;
 declare const ParseError_base: Schema.Class<ParseError, Schema.Struct<{
     /**
      * A short description of the error. The message SHOULD be limited to a
@@ -1016,7 +1142,7 @@ declare const InitializeResult_base: Schema.Opaque<InitializeResult, Schema.Stru
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The version of the Model Context Protocol that the server wants to use.
      * This may not match the version that the client requested. If the client
@@ -1038,7 +1164,7 @@ declare const InitializeResult_base: Schema.Opaque<InitializeResult, Schema.Stru
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The version of the Model Context Protocol that the server wants to use.
      * This may not match the version that the client requested. If the client
@@ -1075,7 +1201,7 @@ declare const Initialize_base: Rpc.Rpc<"initialize", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -1084,7 +1210,7 @@ declare const Initialize_base: Rpc.Rpc<"initialize", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The latest version of the Model Context Protocol that the client
      * supports. The client MAY decide to support older versions as well.
@@ -1122,7 +1248,7 @@ declare const InitializedNotification_base: Rpc.Rpc<"notifications/initialized",
 export declare class InitializedNotification extends InitializedNotification_base {
 }
 declare const CancelledNotification_base: Rpc.Rpc<"notifications/cancelled", Schema.Struct<{
-    _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The ID of the request to cancel.
      *
@@ -1152,7 +1278,7 @@ declare const CancelledNotification_base: Rpc.Rpc<"notifications/cancelled", Sch
 export declare class CancelledNotification extends CancelledNotification_base {
 }
 declare const ProgressNotification_base: Rpc.Rpc<"notifications/progress", Schema.Struct<{
-    _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The progress token which was given in the initial request, used to
      * associate this notification with the request that is proceeding.
@@ -1226,7 +1352,7 @@ declare const Resource_base: Schema.Class<Resource, Schema.Struct<{
      * This parameter name is reserved by MCP to allow clients and servers to
      * attach additional metadata to resources.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}>;
 /**
  * Schema for a known resource that the server is capable of reading.
@@ -1273,7 +1399,7 @@ declare const ResourceTemplate_base: Schema.Class<ResourceTemplate, Schema.Struc
     /**
      * Optional additional metadata for the client.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}>;
 /**
  * Schema for a template description of resources available on the server.
@@ -1296,7 +1422,7 @@ declare const ResourceContents_base: Schema.Opaque<ResourceContents, Schema.Stru
     /**
      * Optional additional metadata for the client.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}> & Omit<Schema.Struct<{
     /**
      * The URI of this resource.
@@ -1309,7 +1435,7 @@ declare const ResourceContents_base: Schema.Opaque<ResourceContents, Schema.Stru
     /**
      * Optional additional metadata for the client.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, keyof Schema.Top>;
 /**
  * Schema for the contents of a specific resource or sub-resource.
@@ -1332,7 +1458,7 @@ declare const TextResourceContents_base: Schema.Opaque<TextResourceContents, Sch
     /**
      * Optional additional metadata for the client.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The text of the item. This must only be set if the item can actually be
      * represented as text (not binary data).
@@ -1350,7 +1476,7 @@ declare const TextResourceContents_base: Schema.Opaque<TextResourceContents, Sch
     /**
      * Optional additional metadata for the client.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The text of the item. This must only be set if the item can actually be
      * represented as text (not binary data).
@@ -1378,7 +1504,7 @@ declare const BlobResourceContents_base: Schema.Opaque<BlobResourceContents, Sch
     /**
      * Optional additional metadata for the client.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The binary data of the item decoded from a base64-encoded string.
      */
@@ -1395,7 +1521,7 @@ declare const BlobResourceContents_base: Schema.Opaque<BlobResourceContents, Sch
     /**
      * Optional additional metadata for the client.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The binary data of the item decoded from a base64-encoded string.
      */
@@ -1415,7 +1541,7 @@ declare const ListResourcesResult_base: Schema.Class<ListResourcesResult, Schema
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * An opaque token representing the pagination position after the last returned result.
      * If present, there may be more results available.
@@ -1447,7 +1573,7 @@ declare const ListResourceTemplatesResult_base: Schema.Class<ListResourceTemplat
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * An opaque token representing the pagination position after the last returned result.
      * If present, there may be more results available.
@@ -1480,14 +1606,14 @@ declare const ReadResourceResult_base: Schema.Opaque<ReadResourceResult, Schema.
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     readonly contents: Schema.$Array<Schema.Union<readonly [typeof TextResourceContents, typeof BlobResourceContents]>>;
 }>, {}> & Omit<Schema.Struct<{
     /**
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     readonly contents: Schema.$Array<Schema.Union<readonly [typeof TextResourceContents, typeof BlobResourceContents]>>;
 }>, keyof Schema.Top>;
 /**
@@ -1509,7 +1635,7 @@ declare const ReadResource_base: Rpc.Rpc<"resources/read", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -1518,7 +1644,7 @@ declare const ReadResource_base: Rpc.Rpc<"resources/read", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The URI of the resource to read. The URI can use any protocol; it is up
      * to the server how to interpret it.
@@ -1562,7 +1688,7 @@ declare const Subscribe_base: Rpc.Rpc<"resources/subscribe", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -1571,7 +1697,7 @@ declare const Subscribe_base: Rpc.Rpc<"resources/subscribe", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The URI of the resource to subscribe to. The URI can use any protocol;
      * it is up to the server how to interpret it.
@@ -1598,7 +1724,7 @@ declare const Unsubscribe_base: Rpc.Rpc<"resources/unsubscribe", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -1607,7 +1733,7 @@ declare const Unsubscribe_base: Rpc.Rpc<"resources/unsubscribe", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The URI of the resource to subscribe to. The URI can use any protocol;
      * it is up to the server how to interpret it.
@@ -1626,7 +1752,7 @@ declare const Unsubscribe_base: Rpc.Rpc<"resources/unsubscribe", Schema.Struct<{
 export declare class Unsubscribe extends Unsubscribe_base {
 }
 declare const ResourceUpdatedNotification_base: Rpc.Rpc<"notifications/resources/updated", Schema.Struct<{
-    _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The URI of the resource that has been updated. This might be a sub-resource of the one that the client actually subscribed to.
      */
@@ -1645,6 +1771,114 @@ declare const ResourceUpdatedNotification_base: Rpc.Rpc<"notifications/resources
  * @since 4.0.0
  */
 export declare class ResourceUpdatedNotification extends ResourceUpdatedNotification_base {
+}
+declare const SkillResource_base: Schema.Class<SkillResource, Schema.Struct<{
+    /**
+     * The resource URI of the file.
+     */
+    readonly uri: Schema.String;
+    /**
+     * The SHA-256 digest of the file's bytes, as `sha256:` followed by 64
+     * lowercase hexadecimal digits.
+     */
+    readonly digest: Schema.String;
+    /**
+     * The length of the file's bytes.
+     */
+    readonly size: Schema.Natural;
+}>, {}>;
+/**
+ * Schema for a file of an Agent Skill served under the MCP Skills extension
+ * (SEP-2640), with the digest and size of its content.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.1.1
+ */
+export declare class SkillResource extends SkillResource_base {
+}
+/**
+ * Schema for the YAML frontmatter of an Agent Skill's `SKILL.md`, as the
+ * Agent Skills specification defines it (https://agentskills.io/specification).
+ *
+ * **Details**
+ *
+ * Fields the specification does not define are kept unchanged. `McpServer`
+ * checks a skill's frontmatter against this schema before serving it. The
+ * frontmatter of a {@link Skill} received from a server is only checked for
+ * the `name` and `description` that the Skills extension requires; decode it
+ * with this schema for the other fields.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.1.1
+ */
+export declare const SkillFrontmatter: Schema.StructWithRest<Schema.Struct<{
+    /**
+     * 1 to 64 lowercase letters, digits and hyphens, with no leading, trailing
+     * or consecutive hyphen. It names the directory holding `SKILL.md`.
+     */
+    readonly name: Schema.String;
+    /**
+     * What the skill does and when to use it, in 1 to 1024 characters.
+     */
+    readonly description: Schema.String;
+    /**
+     * The skill's license, or the name of a bundled license file.
+     */
+    readonly license: Schema.optionalKey<Schema.String>;
+    /**
+     * Environment requirements, in 1 to 500 characters.
+     */
+    readonly compatibility: Schema.optionalKey<Schema.String>;
+    /**
+     * Additional properties not defined by the specification.
+     */
+    readonly metadata: Schema.optionalKey<Schema.$Record<Schema.String, Schema.String>>;
+    /**
+     * Space-separated tools the skill asks to run without approval. Hosts must
+     * ignore it for a skill served over MCP unless the user approved the grant.
+     */
+    readonly "allowed-tools": Schema.optionalKey<Schema.String>;
+}>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>;
+/**
+ * The YAML frontmatter of an Agent Skill's `SKILL.md`.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.1.1
+ */
+export type SkillFrontmatter = typeof SkillFrontmatter.Type;
+declare const Skill_base: Schema.Class<Skill, Schema.Struct<{
+    /**
+     * The resource URI of the skill's `SKILL.md`.
+     */
+    readonly uri: Schema.String;
+    /**
+     * The YAML frontmatter of the skill's `SKILL.md`, as a JSON object, with
+     * every field the author wrote. See {@link SkillFrontmatter} for the fields
+     * the Agent Skills specification defines.
+     */
+    readonly frontmatter: Schema.StructWithRest<Schema.Struct<{
+        readonly name: Schema.String;
+        readonly description: Schema.String;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>;
+    /**
+     * Every file of the skill, `SKILL.md` included, or `"dynamic"` when the
+     * server generates the skill's content and publishes no digests.
+     */
+    readonly resources: Schema.Union<readonly [Schema.$Array<typeof SkillResource>, Schema.Literal<"dynamic">]>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
+}>, {}>;
+/**
+ * Schema for an Agent Skill served under the MCP Skills extension (SEP-2640),
+ * as `skills/list` and `skills/get` describe it.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.1.1
+ */
+export declare class Skill extends Skill_base {
 }
 declare const PromptArgument_base: Schema.Opaque<PromptArgument, Schema.Struct<{
     /**
@@ -1702,7 +1936,7 @@ declare const Prompt_base: Schema.Class<Prompt, Schema.Struct<{
      * Icons that clients can display for this prompt.
      */
     readonly icons: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Array<typeof Icon>>>, Schema.optionalKey<Schema.$Array<typeof Icon>>, never, never>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}>;
 /**
  * Represents a prompt or prompt template that the server offers.
@@ -1723,7 +1957,7 @@ declare const TextContent_base: Schema.Opaque<TextContent, Schema.Struct<{
      * Optional annotations for the client.
      */
     readonly annotations: Schema.decodeTo<Schema.toType<Schema.optional<typeof Annotations>>, Schema.optionalKey<typeof Annotations>, never, never>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}> & Omit<Schema.Struct<{
     readonly type: Schema.tag<"text">;
     /**
@@ -1734,7 +1968,7 @@ declare const TextContent_base: Schema.Opaque<TextContent, Schema.Struct<{
      * Optional annotations for the client.
      */
     readonly annotations: Schema.decodeTo<Schema.toType<Schema.optional<typeof Annotations>>, Schema.optionalKey<typeof Annotations>, never, never>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, keyof Schema.Top>;
 /**
  * Represents text content provided to or from an LLM.
@@ -1760,7 +1994,7 @@ declare const ImageContent_base: Schema.Opaque<ImageContent, Schema.Struct<{
      * Optional annotations for the client.
      */
     readonly annotations: Schema.decodeTo<Schema.toType<Schema.optional<typeof Annotations>>, Schema.optionalKey<typeof Annotations>, never, never>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}> & Omit<Schema.Struct<{
     readonly type: Schema.tag<"image">;
     /**
@@ -1776,7 +2010,7 @@ declare const ImageContent_base: Schema.Opaque<ImageContent, Schema.Struct<{
      * Optional annotations for the client.
      */
     readonly annotations: Schema.decodeTo<Schema.toType<Schema.optional<typeof Annotations>>, Schema.optionalKey<typeof Annotations>, never, never>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, keyof Schema.Top>;
 /**
  * Represents image content provided to or from an LLM.
@@ -1802,7 +2036,7 @@ declare const AudioContent_base: Schema.Opaque<AudioContent, Schema.Struct<{
      * Optional annotations for the client.
      */
     readonly annotations: Schema.decodeTo<Schema.toType<Schema.optional<typeof Annotations>>, Schema.optionalKey<typeof Annotations>, never, never>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}> & Omit<Schema.Struct<{
     readonly type: Schema.tag<"audio">;
     /**
@@ -1818,7 +2052,7 @@ declare const AudioContent_base: Schema.Opaque<AudioContent, Schema.Struct<{
      * Optional annotations for the client.
      */
     readonly annotations: Schema.decodeTo<Schema.toType<Schema.optional<typeof Annotations>>, Schema.optionalKey<typeof Annotations>, never, never>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, keyof Schema.Top>;
 /**
  * Represents audio content provided to or from an LLM.
@@ -1836,7 +2070,7 @@ declare const EmbeddedResource_base: Schema.Opaque<EmbeddedResource, Schema.Stru
      * Optional annotations for the client.
      */
     readonly annotations: Schema.decodeTo<Schema.toType<Schema.optional<typeof Annotations>>, Schema.optionalKey<typeof Annotations>, never, never>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}> & Omit<Schema.Struct<{
     readonly type: Schema.tag<"resource">;
     readonly resource: Schema.Union<readonly [typeof TextResourceContents, typeof BlobResourceContents]>;
@@ -1844,7 +2078,7 @@ declare const EmbeddedResource_base: Schema.Opaque<EmbeddedResource, Schema.Stru
      * Optional annotations for the client.
      */
     readonly annotations: Schema.decodeTo<Schema.toType<Schema.optional<typeof Annotations>>, Schema.optionalKey<typeof Annotations>, never, never>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, keyof Schema.Top>;
 /**
  * Represents resource contents embedded into a prompt or tool call result.
@@ -1905,7 +2139,7 @@ declare const ResourceLink_base: Schema.Opaque<ResourceLink, Schema.Struct<{
      * This parameter name is reserved by MCP to allow clients and servers to
      * attach additional metadata to resources.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     readonly type: Schema.tag<"resource_link">;
 }>, {}> & Omit<Schema.Struct<{
     /**
@@ -1952,7 +2186,7 @@ declare const ResourceLink_base: Schema.Opaque<ResourceLink, Schema.Struct<{
      * This parameter name is reserved by MCP to allow clients and servers to
      * attach additional metadata to resources.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     readonly type: Schema.tag<"resource_link">;
 }>, keyof Schema.Top>;
 /**
@@ -2012,7 +2246,7 @@ declare const ListPromptsResult_base: Schema.Class<ListPromptsResult, Schema.Str
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * An opaque token representing the pagination position after the last returned result.
      * If present, there may be more results available.
@@ -2045,7 +2279,7 @@ declare const GetPromptResult_base: Schema.Class<GetPromptResult, Schema.Struct<
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     readonly messages: Schema.$Array<typeof PromptMessage>;
     /**
      * An optional description for the prompt.
@@ -2071,7 +2305,7 @@ declare const GetPrompt_base: Rpc.Rpc<"prompts/get", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -2080,7 +2314,7 @@ declare const GetPrompt_base: Rpc.Rpc<"prompts/get", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The name of the prompt or prompt template.
      */
@@ -2220,16 +2454,21 @@ export declare class ToolAnnotations extends ToolAnnotations_base {
  *
  * **Details**
  *
- * Property definitions and additional root keywords are constrained to JSON
- * values. The open root supports generated keywords such as `$defs`.
+ * Property schemas may be objects or booleans. The open root supports
+ * generated keywords such as `$defs`. Nested values are not validated when
+ * decoding.
  *
  * @stability unstable
  * @category tools
  * @since 4.0.0
  */
-export type ToolJson = Schema.JsonObject & {
+export type ToolJson = {
+    readonly [x: string]: unknown;
+} & {
     readonly type: "object";
-    readonly properties?: Readonly<Record<string, Schema.JsonObject>> | undefined;
+    readonly properties?: Readonly<Record<string, {
+        readonly [x: string]: unknown;
+    } | boolean>> | undefined;
     readonly required?: ReadonlyArray<string> | undefined;
 };
 /**
@@ -2251,7 +2490,9 @@ export declare const ToolJson: Schema.Codec<ToolJson>;
  * @category tools
  * @since 4.0.0
  */
-export type ToolOutputJson = Schema.JsonObject;
+export type ToolOutputJson = {
+    readonly [x: string]: unknown;
+};
 /**
  * Schema for {@link ToolOutputJson}.
  *
@@ -2279,7 +2520,7 @@ declare const Tool_base: Schema.Class<Tool, Schema.Struct<{
     /**
      * An optional JSON Schema object defining the structure of the tool output.
      */
-    readonly outputSchema: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Codec<Schema.JsonObject, Schema.JsonObject, never, never>>>, Schema.optionalKey<Schema.Codec<Schema.JsonObject, Schema.JsonObject, never, never>>, never, never>;
+    readonly outputSchema: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Codec<ToolOutputJson, ToolOutputJson, never, never>>>, Schema.optionalKey<Schema.Codec<ToolOutputJson, ToolOutputJson, never, never>>, never, never>;
     /**
      * Optional additional tool information.
      */
@@ -2294,7 +2535,7 @@ declare const Tool_base: Schema.Class<Tool, Schema.Struct<{
      * This parameter name is reserved by MCP to allow clients and servers to
      * attach additional metadata to resources.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}>;
 /**
  * Schema for the definition of a tool the client can call.
@@ -2310,7 +2551,7 @@ declare const ListToolsResult_base: Schema.Class<ListToolsResult, Schema.Struct<
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * An opaque token representing the pagination position after the last returned result.
      * If present, there may be more results available.
@@ -2342,12 +2583,12 @@ declare const CallToolResult_base: Schema.Class<CallToolResult, Schema.Struct<{
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     readonly content: Schema.$Array<Schema.Union<readonly [typeof TextContent, typeof ImageContent, typeof AudioContent, typeof EmbeddedResource, typeof ResourceLink]>>;
     /**
      * An optional JSON value containing the structured result of the tool call.
      */
-    readonly structuredContent: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Codec<Schema.Json, Schema.Json, never, never>>>, Schema.optionalKey<Schema.Codec<Schema.Json, Schema.Json, never, never>>, never, never>;
+    readonly structuredContent: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Unknown>>, Schema.optionalKey<Schema.Unknown>, never, never>;
     /**
      * Whether the tool call ended in an error.
      *
@@ -2383,7 +2624,7 @@ declare const CallTool_base: Rpc.Rpc<"tools/call", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -2392,7 +2633,7 @@ declare const CallTool_base: Rpc.Rpc<"tools/call", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     name: Schema.String;
     arguments: optionalWithDefault<Schema.$Record<Schema.String, Schema.Any>>;
 }>, typeof CallToolResult, Schema.Union<readonly [typeof ParseError, typeof InvalidRequest, typeof MethodNotFound, typeof InvalidParams, typeof InternalError, typeof McpErrorBase]>, never, never>;
@@ -2470,7 +2711,7 @@ declare const SetLevel_base: Rpc.Rpc<"logging/setLevel", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -2479,7 +2720,7 @@ declare const SetLevel_base: Rpc.Rpc<"logging/setLevel", Schema.Struct<{
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The level of logging that the client wants to receive from the server.
      * The server should send all logs at this level and higher (i.e., more
@@ -2501,7 +2742,7 @@ declare const LoggingMessageNotification_base: Rpc.Rpc<"notifications/message", 
      * This parameter name is reserved by MCP to allow clients and servers to
      * attach additional metadata to their notifications.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The severity of this log message.
      */
@@ -2544,7 +2785,7 @@ declare const ToolUseContent_base: Schema.Class<ToolUseContent, Schema.Struct<{
      * Arguments supplied to the tool.
      */
     readonly input: Schema.$Record<Schema.String, Schema.Unknown>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}>;
 /**
  * Schema for a tool-use request produced during MCP sampling.
@@ -2568,12 +2809,12 @@ declare const ToolResultContent_base: Schema.Class<ToolResultContent, Schema.Str
     /**
      * Optional structured result returned by the tool.
      */
-    readonly structuredContent: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Codec<Schema.Json, Schema.Json, never, never>>>, Schema.optionalKey<Schema.Codec<Schema.Json, Schema.Json, never, never>>, never, never>;
+    readonly structuredContent: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Unknown>>, Schema.optionalKey<Schema.Unknown>, never, never>;
     /**
      * Whether tool execution ended in an error.
      */
     readonly isError: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Boolean>>, Schema.optionalKey<Schema.Boolean>, never, never>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}>;
 /**
  * Schema for the result of a tool use supplied in a sampling message.
@@ -2603,11 +2844,11 @@ export type SamplingMessageContentBlock = typeof SamplingMessageContentBlock.Typ
 declare const SamplingMessage_base: Schema.Opaque<SamplingMessage, Schema.Struct<{
     readonly role: Schema.Literals<["user", "assistant"]>;
     readonly content: Schema.Union<readonly [Schema.Union<readonly [typeof TextContent, typeof ImageContent, typeof AudioContent, typeof ToolUseContent, typeof ToolResultContent]>, Schema.$Array<Schema.Union<readonly [typeof TextContent, typeof ImageContent, typeof AudioContent, typeof ToolUseContent, typeof ToolResultContent]>>]>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}> & Omit<Schema.Struct<{
     readonly role: Schema.Literals<["user", "assistant"]>;
     readonly content: Schema.Union<readonly [Schema.Union<readonly [typeof TextContent, typeof ImageContent, typeof AudioContent, typeof ToolUseContent, typeof ToolResultContent]>, Schema.$Array<Schema.Union<readonly [typeof TextContent, typeof ImageContent, typeof AudioContent, typeof ToolUseContent, typeof ToolResultContent]>>]>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, keyof Schema.Top>;
 /**
  * Describes a message issued to or received from an LLM API.
@@ -2733,7 +2974,7 @@ export declare class ModelPreferences extends ModelPreferences_base {
 declare const CreateMessageResult_base: Schema.Class<CreateMessageResult, Schema.Struct<{
     readonly role: Schema.Literals<["user", "assistant"]>;
     readonly content: Schema.Union<readonly [Schema.Union<readonly [typeof TextContent, typeof ImageContent, typeof AudioContent, typeof ToolUseContent, typeof ToolResultContent]>, Schema.$Array<Schema.Union<readonly [typeof TextContent, typeof ImageContent, typeof AudioContent, typeof ToolUseContent, typeof ToolResultContent]>>]>;
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The name of the model that generated the message.
      */
@@ -2870,7 +3111,7 @@ declare const CreateMessage_base: Rpc.Rpc<"sampling/createMessage", Schema.Struc
         /**
          * An optional JSON Schema object defining the structure of the tool output.
          */
-        readonly outputSchema: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Codec<Schema.JsonObject, Schema.JsonObject, never, never>>>, Schema.optionalKey<Schema.Codec<Schema.JsonObject, Schema.JsonObject, never, never>>, never, never>;
+        readonly outputSchema: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Codec<ToolOutputJson, ToolOutputJson, never, never>>>, Schema.optionalKey<Schema.Codec<ToolOutputJson, ToolOutputJson, never, never>>, never, never>;
         /**
          * Optional additional tool information.
          */
@@ -2885,7 +3126,7 @@ declare const CreateMessage_base: Rpc.Rpc<"sampling/createMessage", Schema.Struc
          * This parameter name is reserved by MCP to allow clients and servers to
          * attach additional metadata to resources.
          */
-        readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+        readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     }>>>>, Schema.optionalKey<Schema.$Array<Schema.Struct<{
         /**
          * The name of the tool.
@@ -2905,7 +3146,7 @@ declare const CreateMessage_base: Rpc.Rpc<"sampling/createMessage", Schema.Struc
         /**
          * An optional JSON Schema object defining the structure of the tool output.
          */
-        readonly outputSchema: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Codec<Schema.JsonObject, Schema.JsonObject, never, never>>>, Schema.optionalKey<Schema.Codec<Schema.JsonObject, Schema.JsonObject, never, never>>, never, never>;
+        readonly outputSchema: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Codec<ToolOutputJson, ToolOutputJson, never, never>>>, Schema.optionalKey<Schema.Codec<ToolOutputJson, ToolOutputJson, never, never>>, never, never>;
         /**
          * Optional additional tool information.
          */
@@ -2920,7 +3161,7 @@ declare const CreateMessage_base: Rpc.Rpc<"sampling/createMessage", Schema.Struc
          * This parameter name is reserved by MCP to allow clients and servers to
          * attach additional metadata to resources.
          */
-        readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+        readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     }>>>, never, never>;
     /**
      * Controls whether the model may or must call a tool.
@@ -3007,7 +3248,7 @@ declare const CompleteResult_base: Schema.Opaque<CompleteResult, Schema.Struct<{
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     readonly completion: Schema.Struct<{
         /**
          * An array of completion values. Must not exceed 100 items.
@@ -3029,7 +3270,7 @@ declare const CompleteResult_base: Schema.Opaque<CompleteResult, Schema.Struct<{
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     readonly completion: Schema.Struct<{
         /**
          * An array of completion values. Must not exceed 100 items.
@@ -3113,7 +3354,7 @@ declare const Root_base: Schema.Class<Root, Schema.Struct<{
     /**
      * Optional additional metadata associated with the root.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
 }>, {}>;
 /**
  * Represents a root directory or file that the server can operate on.
@@ -3398,7 +3639,7 @@ declare const ElicitRequestFormParams_base: Schema.Class<ElicitRequestFormParams
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -3407,7 +3648,7 @@ declare const ElicitRequestFormParams_base: Schema.Class<ElicitRequestFormParams
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     readonly mode: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Literal<"form">>>, Schema.optionalKey<Schema.Literal<"form">>, never, never>;
     readonly message: Schema.String;
     readonly requestedSchema: Schema.Struct<{
@@ -3436,7 +3677,7 @@ declare const ElicitRequestURLParams_base: Schema.Class<ElicitRequestURLParams, 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -3445,7 +3686,7 @@ declare const ElicitRequestURLParams_base: Schema.Class<ElicitRequestURLParams, 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     readonly mode: Schema.Literal<"url">;
     readonly message: Schema.String;
     readonly elicitationId: Schema.String;
@@ -3481,7 +3722,7 @@ declare const ElicitAcceptResult_base: Schema.Class<ElicitAcceptResult, Schema.S
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The user action in response to the elicitation.
      * - "accept": User submitted the form/confirmed the action
@@ -3509,7 +3750,7 @@ declare const ElicitDeclineResult_base: Schema.Class<ElicitDeclineResult, Schema
      * This result property is reserved by the protocol to allow clients and
      * servers to attach additional metadata to their responses.
      */
-    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>>, never, never>;
+    readonly _meta: Schema.decodeTo<Schema.toType<Schema.optional<Schema.$Record<Schema.String, Schema.Unknown>>>, Schema.optionalKey<Schema.$Record<Schema.String, Schema.Unknown>>, never, never>;
     /**
      * The user action in response to the elicitation.
      * - "accept": User submitted the form/confirmed the action
@@ -3552,13 +3793,13 @@ export type ElicitResult = typeof ElicitResult.Type;
  */
 export type McpInputRequest = {
     readonly method: "roots/list";
-    readonly params?: Schema.JsonObject | undefined;
+    readonly params?: Readonly<Record<string, unknown>> | undefined;
 } | {
     readonly method: "sampling/createMessage";
-    readonly params: Schema.JsonObject;
+    readonly params: Readonly<Record<string, unknown>>;
 } | {
     readonly method: "elicitation/create";
-    readonly params: Schema.JsonObject;
+    readonly params: Readonly<Record<string, unknown>>;
 };
 /**
  * Version-neutral response supplied by an MCP client for a prior input request.
@@ -3567,7 +3808,7 @@ export type McpInputRequest = {
  * @category models
  * @since 4.0.0
  */
-export type McpInputResponse = Schema.JsonObject;
+export type McpInputResponse = Readonly<Record<string, unknown>>;
 declare const InputRequired_base: new <A extends Record<string, any> = {}>(args: import("../Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => Readonly<A> & {
     readonly _tag: "InputRequired";
 } & import("../Pipeable.ts").Pipeable;
@@ -3698,7 +3939,7 @@ declare const McpRequestContext_base: Context.ServiceClass<McpRequestContext, "e
     readonly protocolVersion: string;
     readonly clientCapabilities: ClientCapabilities;
     readonly clientInfo?: Implementation | undefined;
-    readonly requestMetadata?: NonNullable<typeof Initialize.payloadSchema.Type["_meta"]> | Schema.JsonObject | undefined;
+    readonly requestMetadata?: NonNullable<typeof Initialize.payloadSchema.Type["_meta"]> | Readonly<Record<string, unknown>> | undefined;
     readonly inputResponses?: Readonly<Record<string, McpInputResponse>> | undefined;
     readonly requestState?: string | undefined;
 }>;
@@ -3722,7 +3963,7 @@ declare const McpServerClient_base: Context.ServiceClass<McpServerClient, "effec
     readonly clientCapabilities: ClientCapabilities;
     readonly clientInfo: Implementation;
     readonly initializePayload: typeof Initialize.payloadSchema["Type"];
-    readonly requestMetadata?: Schema.JsonObject | undefined;
+    readonly requestMetadata?: Readonly<Record<string, unknown>> | undefined;
     readonly getClient: Effect.Effect<McpReverseClient, never, Scope.Scope>;
 }>;
 /**
@@ -3837,7 +4078,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -3846,7 +4087,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The latest version of the Model Context Protocol that the client
      * supports. The client MAY decide to support older versions as well.
@@ -3872,7 +4113,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -3881,7 +4122,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The level of logging that the client wants to receive from the server.
      * The server should send all logs at this level and higher (i.e., more
@@ -3898,7 +4139,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -3907,7 +4148,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The name of the prompt or prompt template.
      */
@@ -3927,7 +4168,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -3936,7 +4177,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The URI of the resource to read. The URI can use any protocol; it is up
      * to the server how to interpret it.
@@ -3952,7 +4193,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -3961,7 +4202,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The URI of the resource to subscribe to. The URI can use any protocol;
      * it is up to the server how to interpret it.
@@ -3977,7 +4218,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -3986,7 +4227,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The URI of the resource to subscribe to. The URI can use any protocol;
      * it is up to the server how to interpret it.
@@ -4002,7 +4243,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -4011,7 +4252,7 @@ declare const ClientRequestRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/comp
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     name: Schema.String;
     arguments: optionalWithDefault<Schema.$Record<Schema.String, Schema.Any>>;
 }>, typeof CallToolResult, Schema.Union<readonly [typeof ParseError, typeof InvalidRequest, typeof MethodNotFound, typeof InvalidParams, typeof InternalError, typeof McpErrorBase]>, typeof McpServerClientMiddleware, never> | Rpc.Rpc<"tools/list", Schema.UndefinedOr<typeof PaginatedRequestMeta>, typeof ListToolsResult, Schema.Union<readonly [typeof ParseError, typeof InvalidRequest, typeof MethodNotFound, typeof InvalidParams, typeof InternalError, typeof McpErrorBase]>, typeof McpServerClientMiddleware, never>>;
@@ -4091,7 +4332,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -4100,7 +4341,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The latest version of the Model Context Protocol that the client
      * supports. The client MAY decide to support older versions as well.
@@ -4126,7 +4367,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -4135,7 +4376,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The level of logging that the client wants to receive from the server.
      * The server should send all logs at this level and higher (i.e., more
@@ -4152,7 +4393,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -4161,7 +4402,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The name of the prompt or prompt template.
      */
@@ -4181,7 +4422,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -4190,7 +4431,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The URI of the resource to read. The URI can use any protocol; it is up
      * to the server how to interpret it.
@@ -4206,7 +4447,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -4215,7 +4456,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The URI of the resource to subscribe to. The URI can use any protocol;
      * it is up to the server how to interpret it.
@@ -4231,7 +4472,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -4240,7 +4481,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     /**
      * The URI of the resource to subscribe to. The URI can use any protocol;
      * it is up to the server how to interpret it.
@@ -4256,7 +4497,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>>, Schema.optionalKey<Schema.StructWithRest<Schema.Struct<{
         /**
          * If specified, the caller is requesting out-of-band progress notifications
          * for this request (as represented by notifications/progress). The value of
@@ -4265,7 +4506,7 @@ declare const ClientRpcs_base: RpcGroup.RpcGroup<Rpc.Rpc<"completion/complete", 
          * notifications.
          */
         readonly progressToken: Schema.decodeTo<Schema.toType<Schema.optional<Schema.Union<[Schema.String, Schema.Finite]>>>, Schema.optionalKey<Schema.Union<[Schema.String, Schema.Finite]>>, never, never>;
-    }>, readonly [Schema.$Record<Schema.String, Schema.Codec<Schema.Json, Schema.Json, never, never>>]>>, never, never>;
+    }>, readonly [Schema.$Record<Schema.String, Schema.Unknown>]>>, never, never>;
     name: Schema.String;
     arguments: optionalWithDefault<Schema.$Record<Schema.String, Schema.Any>>;
 }>, typeof CallToolResult, Schema.Union<readonly [typeof ParseError, typeof InvalidRequest, typeof MethodNotFound, typeof InvalidParams, typeof InternalError, typeof McpErrorBase]>, typeof McpServerClientMiddleware, never> | Rpc.Rpc<"tools/list", Schema.UndefinedOr<typeof PaginatedRequestMeta>, typeof ListToolsResult, Schema.Union<readonly [typeof ParseError, typeof InvalidRequest, typeof MethodNotFound, typeof InvalidParams, typeof InternalError, typeof McpErrorBase]>, typeof McpServerClientMiddleware, never> | typeof InitializedNotification | typeof CancelledNotification | typeof ProgressNotification | typeof RootsListChangedNotification>;

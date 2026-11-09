@@ -61,6 +61,28 @@ export interface Config<A, E> {
     readonly targetUtilization: number;
 }
 /**
+ * A point-in-time count of a pool's items and waiting borrowers.
+ *
+ * **Details**
+ *
+ * `idle` and `used` count acquired items, not borrowers, so an item shared by
+ * several borrowers counts once. `pending` counts borrowers waiting for an
+ * item. `min` and `max` are the configured size bounds.
+ *
+ * @see {@link stats} for reading a snapshot
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface Stats {
+    readonly idle: number;
+    readonly used: number;
+    readonly pending: number;
+    readonly min: number;
+    readonly max: number;
+}
+/**
  * Mutable runtime state maintained by a `Pool`.
  *
  * **When to use**
@@ -525,5 +547,34 @@ export declare const reserve: {
      */
     <A, E>(self: Pool<A, E>, item: A): Effect.Effect<void, never, Scope.Scope>;
 };
+/**
+ * Returns a snapshot of how many items are idle or in use and how many
+ * borrowers are waiting.
+ *
+ * **When to use**
+ *
+ * Use to sample pool occupancy for metrics, such as connection counts for a
+ * database driver.
+ *
+ * **Details**
+ *
+ * - Only successfully acquired items are counted. Items still being acquired
+ *   and failed acquisitions are not.
+ * - An item is used while it has a borrower or a reservation, otherwise idle.
+ * - An invalidated item counts as used until its last borrower returns it.
+ *
+ * **Gotchas**
+ *
+ * The replacement for an invalidated item is acquired while the old one is
+ * still borrowed, so `idle + used` can briefly exceed `max`. A borrower that
+ * has been woken but has not yet taken its item is not counted as pending.
+ *
+ * @see {@link Stats} for the snapshot fields
+ *
+ * @stability unstable
+ * @category getters
+ * @since 4.0.0
+ */
+export declare const stats: <A, E>(self: Pool<A, E>) => Effect.Effect<Stats>;
 export {};
 //# sourceMappingURL=Pool.d.ts.map

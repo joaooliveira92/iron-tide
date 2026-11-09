@@ -22,6 +22,8 @@ import * as Headers from "./Headers.js";
 import * as Error from "./HttpClientError.js";
 import * as HttpClientRequest from "./HttpClientRequest.js";
 import * as HttpIncomingMessage from "./HttpIncomingMessage.js";
+import * as internalUrlParams from "./internal/urlParams.js";
+import { getWebSource, WebSourceSymbol } from "./internal/webResponse.js";
 import * as UrlParams from "./UrlParams.js";
 /**
  * @stability unstable
@@ -67,6 +69,40 @@ export const TypeId = "~effect/http/HttpClientResponse";
  * @since 4.0.0
  */
 export const fromWeb = (request, source) => new WebHttpClientResponse(request, source);
+/**
+ * Returns the original Web `Response` of a fetch-backed `HttpClientResponse`.
+ *
+ * **When to use**
+ *
+ * Use to hand a response body to a Web API without copying it, such as
+ * writing a fetched file to Cloudflare R2. The original body keeps runtime
+ * capabilities, such as workerd's known length, that a stream converted from
+ * `stream` does not.
+ *
+ * **Details**
+ *
+ * Returns `Some` for responses created with `fromWeb`, which includes every
+ * response from `FetchHttpClient`, and `None` for other backends.
+ *
+ * Calling `toWeb` hands the body over: the response is no longer aborted when
+ * the `HttpClientResponse` is garbage collected, so read or cancel the body
+ * through the returned `Response`.
+ *
+ * **Gotchas**
+ *
+ * The body can be read once. After converting, read it from the returned
+ * `Response`, not from the `HttpClientResponse`.
+ *
+ * After the hand-off, Effect aborts the request only when the scope of
+ * `HttpClient.withScope` closes. When the request streams its body, finishing
+ * or cancelling the returned body does not stop the upload; execute the
+ * request with `HttpClient.withScope` and close the scope to stop it.
+ *
+ * @stability unstable
+ * @category converting
+ * @since 4.0.0
+ */
+export const toWeb = self => Option.fromUndefinedOr(getWebSource(self));
 /**
  * Creates a decoder for a response's status, headers, and JSON body using the supplied schema.
  *
@@ -202,6 +238,9 @@ class WebHttpClientResponse extends Inspectable.Class {
   get remoteAddress() {
     return Option.none();
   }
+  [WebSourceSymbol]() {
+    return this.source;
+  }
   get stream() {
     return this.source.body ? Stream.fromReadableStream({
       evaluate: () => this.source.body,
@@ -237,8 +276,8 @@ class WebHttpClientResponse extends Inspectable.Class {
     return this.textBody ??= Effect.map(this.arrayBuffer, _ => new TextDecoder().decode(_));
   }
   get urlParamsBody() {
-    return Effect.flatMap(this.text, _ => Effect.try({
-      try: () => UrlParams.fromInput(new URLSearchParams(_)),
+    return Effect.flatMap(this.arrayBuffer, bytes => Effect.try({
+      try: () => UrlParams.fromInput(internalUrlParams.fromBody(bytes)),
       catch: cause => new Error.HttpClientError({
         reason: new Error.DecodeError({
           request: this.request,
@@ -277,6 +316,15 @@ class WebHttpClientResponse extends Inspectable.Class {
       })
     }).pipe(Effect.cached, Effect.runSync);
     return this.arrayBufferBody;
+  }
+  get upgrade() {
+    return Effect.fail(new Error.HttpClientError({
+      reason: new Error.StatusCodeError({
+        request: this.request,
+        response: this,
+        description: "fetch cannot hand over the connection of an HTTP upgrade"
+      })
+    }));
   }
   pipe() {
     return pipeArguments(this, arguments);

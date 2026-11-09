@@ -3,6 +3,11 @@
  * @since 4.0.0
  */
 /**
+ * @stability experimental
+ * @since 4.0.0
+ */
+export * as DatagramSocket from "./DatagramSocket.ts";
+/**
  * @stability unstable
  * @since 4.0.0
  */

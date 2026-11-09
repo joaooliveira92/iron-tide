@@ -60,6 +60,11 @@ export * as EventLogServerUnencrypted from "./EventLogServerUnencrypted.js";
 export * as EventLogSessionAuth from "./EventLogSessionAuth.js";
 /**
  * @stability unstable
+ * @since 4.0.6
+ */
+export * as EventRow from "./EventRow.js";
+/**
+ * @stability unstable
  * @since 4.0.0
  */
 export * as SqlEventJournal from "./SqlEventJournal.js";

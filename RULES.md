@@ -51,7 +51,7 @@ contract wins; fix this file in the same change.
 
 ## Effect source of truth
 
-- `effect@4.0.2` is vendored. Read `vendor/effect` and `repos/effect/LLMS.md`
+- `effect@4.1.2` is vendored. Read `vendor/effect` and `repos/effect/LLMS.md`
   plus the relevant `repos/effect/packages/*` source before relying on behavior;
   installed source and declarations are the truth.
 - Import `effect` (or `effect/<Subpath>`), never the npm registry and never

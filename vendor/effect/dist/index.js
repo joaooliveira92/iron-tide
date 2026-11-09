@@ -72,6 +72,11 @@ export * as Boolean from "./Boolean.js";
 export * as Brand from "./Brand.js";
 /**
  * @stability unstable
+ * @since 4.0.6
+ */
+export * as Bytes from "./Bytes.js";
+/**
+ * @stability unstable
  * @since 4.0.0
  */
 export * as ByteSize from "./ByteSize.js";
@@ -135,11 +140,6 @@ export * as Context from "./Context.js";
  * @since 2.0.0
  */
 export * as Cron from "./Cron.js";
-/**
- * @stability unstable
- * @since 4.0.0
- */
-export * as Crypto from "./Crypto.js";
 /**
  * @stability stable
  * @since 2.0.0
@@ -240,6 +240,11 @@ export * as Formatter from "./Formatter.js";
  * @since 2.0.0
  */
 export * as Function from "./Function.js";
+/**
+ * @stability experimental
+ * @since 4.0.0
+ */
+export * as Glob from "./Glob.js";
 /**
  * @stability unstable
  * @since 4.0.0
@@ -586,6 +591,16 @@ export * as ScopedRef from "./ScopedRef.js";
  */
 export * as Semaphore from "./Semaphore.js";
 /**
+ * @stability unstable
+ * @since 4.0.6
+ */
+export * as SemVer from "./SemVer.js";
+/**
+ * @stability unstable
+ * @since 4.0.6
+ */
+export * as SemVerRange from "./SemVerRange.js";
+/**
  * @stability stable
  * @since 2.0.0
  */
@@ -640,6 +655,11 @@ export * as Take from "./Take.js";
  * @since 4.0.0
  */
 export * as Terminal from "./Terminal.js";
+/**
+ * @stability experimental
+ * @since 4.0.6
+ */
+export * as TextDiff from "./TextDiff.js";
 /**
  * @stability stable
  * @since 2.0.0

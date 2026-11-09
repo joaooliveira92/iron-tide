@@ -7,6 +7,59 @@ import { type Pipeable } from "./Pipeable.ts";
 import * as Result from "./Result.ts";
 declare const TypeId = "~effect/Cron";
 /**
+ * Chooses which occurrences of a repeated wall-clock time a `Cron` schedule
+ * includes.
+ *
+ * **When to use**
+ *
+ * Use to control how a schedule behaves when clocks fall back, for example at
+ * the end of daylight saving time, and a range of local times occurs twice.
+ *
+ * **Details**
+ *
+ * Despite the name, the policy applies to every repeated local time, not only
+ * those caused by daylight saving time. For example, Antarctica/Casey repeated
+ * 00:00-02:59 on 2023-03-09 when its standard offset changed from +11:00 to
+ * +08:00.
+ *
+ * - `"earlier"` (default) includes only the first occurrence, before the
+ *   offset change.
+ * - `"later"` includes only the second occurrence, after the offset change.
+ * - `"both"` includes both occurrences, in chronological order.
+ *
+ * Time zones without repeated times, such as UTC or fixed offsets, behave the
+ * same under every policy.
+ *
+ * **Gotchas**
+ *
+ * The policy does not apply to local times skipped when clocks move forward. A
+ * matching time inside such a gap resolves to the instant after the gap, the
+ * same under every policy, and near a gap `next` and `prev` are not guaranteed
+ * to return the nearest matching instant.
+ *
+ * **Example** (Running every occurrence of a repeated hour)
+ *
+ * ```ts import.meta.vitest
+ * import { Cron } from "effect"
+ *
+ * // Europe/Berlin repeats 02:00-02:59 on 2026-10-25, first at +02:00
+ * // (00:30Z) and again at +01:00 (01:30Z)
+ * const earlier = Cron.parseUnsafe("30 2 * * *", "Europe/Berlin")
+ * const both = Cron.parseUnsafe("30 2 * * *", "Europe/Berlin", { onDstOverlap: "both" })
+ *
+ * Cron.next(earlier, "2026-10-25T00:30:00Z").toISOString() // => "2026-10-26T01:30:00.000Z"
+ * Cron.next(both, "2026-10-25T00:30:00Z").toISOString() // => "2026-10-25T01:30:00.000Z"
+ * ```
+ *
+ * @see {@link make} for setting the policy from explicit field constraints
+ * @see {@link parse} for setting the policy when parsing an expression
+ *
+ * @stability stable
+ * @category models
+ * @since 4.1.0
+ */
+export type DstOverlapPolicy = "earlier" | "later" | "both";
+/**
  * Represents a cron schedule with time constraints and timezone information.
  *
  * **When to use**
@@ -57,6 +110,7 @@ export interface Cron extends Pipeable, Equal.Equal, Inspectable {
     readonly days: ReadonlySet<number>;
     readonly months: ReadonlySet<number>;
     readonly weekdays: ReadonlySet<number>;
+    readonly onDstOverlap: DstOverlapPolicy;
 }
 /**
  * Checks whether a given value is a Cron instance.
@@ -111,8 +165,9 @@ export declare const isCron: (u: unknown) => u is Cron;
  * time unit unrestricted. If only days or weekdays are restricted, that field
  * must match. When both are restricted, the default matches either field; set
  * `and: true` to require both fields to match. Weekdays range from `0` (Sunday)
- * to `7` (also Sunday). The constructor throws a `RangeError` when a field
- * contains a non-integer or out-of-range value.
+ * to `7` (also Sunday). `onDstOverlap` chooses which occurrences of repeated
+ * local times are included and defaults to `"earlier"`. The constructor throws a
+ * `RangeError` when a field contains a non-integer or out-of-range value.
  *
  * **Example** (Creating schedules from constraints)
  *
@@ -192,6 +247,7 @@ export declare const make: (values: {
     readonly weekdays: Iterable<number>;
     readonly and?: boolean | undefined;
     readonly tz?: DateTime.TimeZone | undefined;
+    readonly onDstOverlap?: DstOverlapPolicy | undefined;
 }) => Cron;
 declare const CronParseErrorTypeId = "~effect/Cron/CronParseError";
 declare const CronParseError_base: new <A extends Record<string, any> = {}>(args: import("./Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => import("./Cause.ts").YieldableError & {
@@ -283,6 +339,8 @@ export declare const isCronParseError: (u: unknown) => u is CronParseError;
  * `CronParseError`. When both the day-of-month and weekday fields are
  * restricted, a date matches if either field matches. When either field starts
  * with `*`, both fields must match; an unrestricted field always matches.
+ * `options.onDstOverlap` chooses which occurrences of repeated local times are
+ * included and defaults to `"earlier"`.
  *
  * **Example** (Parsing cron expressions)
  *
@@ -303,7 +361,9 @@ export declare const isCronParseError: (u: unknown) => u is CronParseError;
  * @category constructors
  * @since 2.0.0
  */
-export declare const parse: (cron: string, tz?: DateTime.TimeZone | string) => Result.Result<Cron, CronParseError>;
+export declare const parse: (cron: string, tz?: DateTime.TimeZone | string, options?: {
+    readonly onDstOverlap?: DstOverlapPolicy | undefined;
+}) => Result.Result<Cron, CronParseError>;
 /**
  * Parses a cron expression into a `Cron` instance, throwing on failure.
  *
@@ -333,7 +393,9 @@ export declare const parse: (cron: string, tz?: DateTime.TimeZone | string) => R
  * @category constructors
  * @since 4.0.0
  */
-export declare const parseUnsafe: (cron: string, tz?: DateTime.TimeZone | string) => Cron;
+export declare const parseUnsafe: (cron: string, tz?: DateTime.TimeZone | string, options?: {
+    readonly onDstOverlap?: DstOverlapPolicy | undefined;
+}) => Cron;
 /**
  * Formats a `Cron` instance as a cron expression.
  *
@@ -344,8 +406,8 @@ export declare const parseUnsafe: (cron: string, tz?: DateTime.TimeZone | string
  *
  * **Gotchas**
  *
- * Formatting drops the timezone information and the `and` restriction between
- * days and weekdays. Parsing the result is therefore not guaranteed to produce
+ * Formatting drops the timezone information, the `onDstOverlap` policy, and
+ * the `and` restriction between days and weekdays. Parsing the result is therefore not guaranteed to produce
  * an equivalent schedule.
  *
  * **Example** (Formatting a cron expression)
@@ -416,7 +478,9 @@ export declare const match: (cron: Cron, date: DateTime.DateTime.Input) => boole
  *
  * Searches for the next date and time when the cron schedule should trigger,
  * starting after the specified date/time or after the current time when no
- * date is provided.
+ * date is provided. The result is always strictly after the starting point.
+ * Repeated local times are included according to the schedule's
+ * `onDstOverlap` policy.
  *
  * **Example** (Finding the next occurrence)
  *
@@ -448,11 +512,13 @@ export declare const next: (cron: Cron, now?: DateTime.DateTime.Input) => Date;
  * **Details**
  *
  * When no date/time is provided, the search starts from the current time.
+ * Repeated local times are included according to the schedule's
+ * `onDstOverlap` policy.
  *
  * **Gotchas**
  *
- * The search is strict: if the supplied date/time already matches the schedule,
- * the result is the earlier occurrence.
+ * The search is strict: if the supplied date/time is exactly an occurrence of
+ * the schedule, the result is the earlier occurrence.
  *
  * @see {@link next} for finding the next scheduled occurrence
  *
@@ -514,7 +580,8 @@ export declare const sequence: (cron: Cron, now?: DateTime.DateTime.Input) => It
  * **Details**
  *
  * This comparison checks the optional timezone, the `and` day-matching mode,
- * seconds, minutes, hours, days, months, and weekdays.
+ * the `onDstOverlap` policy, seconds, minutes, hours, days, months, and
+ * weekdays.
  *
  * **Example** (Comparing schedules with equivalence)
  *
@@ -559,7 +626,8 @@ export declare const Equivalence: Equ.Equivalence<Cron>;
  * **Details**
  *
  * The comparison checks the optional timezone, the `and` day-matching mode,
- * seconds, minutes, hours, days, months, and weekdays.
+ * the `onDstOverlap` policy, seconds, minutes, hours, days, months, and
+ * weekdays.
  *
  * **Example** (Checking schedule equality)
  *
@@ -605,7 +673,8 @@ export declare const equals: {
      * **Details**
      *
      * The comparison checks the optional timezone, the `and` day-matching mode,
-     * seconds, minutes, hours, days, months, and weekdays.
+     * the `onDstOverlap` policy, seconds, minutes, hours, days, months, and
+     * weekdays.
      *
      * **Example** (Checking schedule equality)
      *
@@ -651,7 +720,8 @@ export declare const equals: {
      * **Details**
      *
      * The comparison checks the optional timezone, the `and` day-matching mode,
-     * seconds, minutes, hours, days, months, and weekdays.
+     * the `onDstOverlap` policy, seconds, minutes, hours, days, months, and
+     * weekdays.
      *
      * **Example** (Checking schedule equality)
      *

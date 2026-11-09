@@ -23,7 +23,7 @@ import * as SchemaAST from "../SchemaAST.ts";
  *
  * The default mode supports compatible schema evolution. `fingerprint: true`
  * uses positional layouts and an 8-byte layout hash for smaller frames, but
- * requires peers to use the same schema definition.
+ * requires peers to use an identical encoded layout.
  *
  * @stability unstable
  * @category models
@@ -58,6 +58,14 @@ export interface toCodec<S extends Schema.Constraint> extends Schema.Codec<S["Ty
  *
  * Encoded results are arena-backed views and may share a larger buffer. Use
  * `bytes.slice()` when independent ownership is required.
+ *
+ * **Gotchas**
+ *
+ * Bytes carry the layout of the schema that wrote them. In the default mode,
+ * decode them with that schema or a compatible evolution of it; fingerprint
+ * mode requires an identical encoded layout. Most union codecs prefix values
+ * with a member selector, so they cannot read bytes written by a member's own
+ * codec.
  *
  * **Example** (Deriving a binary codec)
  *
@@ -291,4 +299,98 @@ export declare const duplex: {
  * @since 4.0.0
  */
 export declare function fieldId(id: number): <S extends Schema.Top>(self: S) => S["Rebuild"];
+/**
+ * A 32-bit signed integer written as four little-endian bytes.
+ *
+ * **When to use**
+ *
+ * Use when values regularly need more than four bytes as a varint, such as
+ * hashes or full-range ids. Small values are cheaper as `Schema.Int`.
+ *
+ * **Details**
+ *
+ * Rejects non-integers and values outside -2147483648 through 2147483647
+ * instead of truncating them. `-0` is written as `0`.
+ *
+ * **Gotchas**
+ *
+ * Switching a field between this, {@link uint32}, `Schema.Number` or
+ * `Schema.Int` changes its encoding, so it is not a compatible evolution. In
+ * default mode the other reader can decode a different value without an error,
+ * for example after a signedness swap or inside an array of structs.
+ * Fingerprint mode rejects the layout mismatch.
+ *
+ * **Example** (Declaring fixed-width integer fields)
+ *
+ * ```ts
+ * import { Schema } from "effect"
+ * import { SchemaBinary } from "effect/encoding"
+ *
+ * const Packet = Schema.Struct({
+ *   version: SchemaBinary.uint32,
+ *   offset: SchemaBinary.int32,
+ *   sequence: SchemaBinary.uint64,
+ *   timestamp: SchemaBinary.int64
+ * })
+ * ```
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const int32: Schema.Number;
+/**
+ * A 32-bit unsigned integer written as four little-endian bytes.
+ *
+ * **Details**
+ *
+ * Rejects non-integers and values outside 0 through 4294967295 instead of
+ * wrapping them. See {@link int32} for when a fixed width pays off.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const uint32: Schema.Number;
+/**
+ * A 64-bit signed integer, as a `bigint`, written as eight little-endian bytes.
+ *
+ * **Details**
+ *
+ * Rejects values outside -2^63 through 2^63 - 1 instead of wrapping them. As a
+ * struct field it costs one length byte more than the payload, because the
+ * eight-byte field kind belongs to floating-point numbers.
+ *
+ * **Gotchas**
+ *
+ * Switching a field between this, {@link uint64} or `Schema.BigInt` is not a
+ * compatible evolution. All three are length-prefixed struct fields, and eight
+ * bytes can be valid for each, so a default-mode reader may decode the other
+ * form as a different value without an error. Fingerprint mode rejects the
+ * layout mismatch.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const int64: Schema.BigInt;
+/**
+ * A 64-bit unsigned integer, as a `bigint`, written as eight little-endian
+ * bytes.
+ *
+ * **Details**
+ *
+ * Rejects values outside 0 through 2^64 - 1 instead of wrapping them. See
+ * {@link int64} for the struct field cost.
+ *
+ * **Gotchas**
+ *
+ * Switching a field between this, {@link int64} or `Schema.BigInt` can decode
+ * as a different value without an error in default mode; see {@link int64}.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const uint64: Schema.BigInt;
 //# sourceMappingURL=SchemaBinary.d.ts.map

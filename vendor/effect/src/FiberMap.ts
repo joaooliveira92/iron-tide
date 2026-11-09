@@ -67,6 +67,8 @@ export interface FiberMap<in out K, out A = unknown, out E = unknown>
   state: {
     readonly _tag: "Open"
     readonly backing: MutableHashMap.MutableHashMap<K, Fiber.Fiber<A, E>>
+    /** Every fiber the map still owns: the keyed ones plus replaced fibers that are still interrupting. */
+    readonly fibers: Set<Fiber.Fiber<A, E>>
   } | {
     readonly _tag: "Closed"
   }
@@ -122,7 +124,7 @@ const makeUnsafe = <K, A = unknown, E = unknown>(
   deferred: Deferred.Deferred<void, E>
 ): FiberMap<K, A, E> => {
   const self = Object.create(Proto)
-  self.state = { _tag: "Open", backing }
+  self.state = { _tag: "Open", backing, fibers: new Set() }
   self.deferred = deferred
   return self
 }
@@ -176,7 +178,7 @@ export const make = <K, A = unknown, E = unknown>(): Effect.Effect<FiberMap<K, A
         const state = map.state
         if (state._tag === "Closed") return Effect.void
         map.state = { _tag: "Closed" }
-        return Fiber.interruptAll(MutableHashMap.values(state.backing)).pipe(
+        return Fiber.interruptAll(state.fibers).pipe(
           Deferred.into(map.deferred)
         )
       })
@@ -471,6 +473,7 @@ export const setUnsafe: {
 
   // Install the replacement before interruption can re-enter the map through a finalizer.
   MutableHashMap.set(self.state.backing, key, fiber)
+  self.state.fibers.add(fiber)
   if (previous._tag === "Some") {
     previous.value.interruptUnsafe(internalFiberId)
   }
@@ -478,6 +481,7 @@ export const setUnsafe: {
     if (self.state._tag === "Closed") {
       return
     }
+    self.state.fibers.delete(fiber)
     const current = MutableHashMap.get(self.state.backing, key)
     if (Option.isSome(current) && fiber === current.value) {
       MutableHashMap.remove(self.state.backing, key)
@@ -1145,70 +1149,13 @@ export const remove: {
    */
   <K, A, E>(self: FiberMap<K, A, E>, key: K): Effect.Effect<void>
 } = dual<
-  /**
-   * Removes a fiber from the FiberMap, interrupting it if it exists.
-   *
-   * **Example** (Removing a fiber)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, FiberMap } from "effect"
-   *
-   * const program = Effect.gen(function*() {
-   *   const map = yield* FiberMap.make<string>()
-   *
-   *   // Add some fibers to the map
-   *   yield* FiberMap.run(map, "task1", Effect.never)
-   *   yield* FiberMap.run(map, "task2", Effect.never)
-   *
-   *   const sizeBefore = yield* FiberMap.size(map)
-   *
-   *   // Remove a specific fiber (this will interrupt it)
-   *   yield* FiberMap.remove(map, "task1")
-   *
-   *   return [sizeBefore, yield* FiberMap.size(map)]
-   * })
-   *
-   * const actual = await Effect.runPromise(Effect.scoped(program))
-   * actual // => [2, 1]
-   * ```
-   *
-   * @stability stable
-   * @category combinators
-   * @since 2.0.0
-   */
-  <K>(key: K) => <A, E>(self: FiberMap<K, A, E>) => Effect.Effect<void>,
-  /**
-   * Removes a fiber from the FiberMap, interrupting it if it exists.
-   *
-   * **Example** (Removing a fiber)
-   *
-   * ```ts import.meta.vitest
-   * import { Effect, FiberMap } from "effect"
-   *
-   * const program = Effect.gen(function*() {
-   *   const map = yield* FiberMap.make<string>()
-   *
-   *   // Add some fibers to the map
-   *   yield* FiberMap.run(map, "task1", Effect.never)
-   *   yield* FiberMap.run(map, "task2", Effect.never)
-   *
-   *   const sizeBefore = yield* FiberMap.size(map)
-   *
-   *   // Remove a specific fiber (this will interrupt it)
-   *   yield* FiberMap.remove(map, "task1")
-   *
-   *   return [sizeBefore, yield* FiberMap.size(map)]
-   * })
-   *
-   * const actual = await Effect.runPromise(Effect.scoped(program))
-   * actual // => [2, 1]
-   * ```
-   *
-   * @stability stable
-   * @category combinators
-   * @since 2.0.0
-   */
-  <K, A, E>(self: FiberMap<K, A, E>, key: K) => Effect.Effect<void>
+  <K>(
+    key: K
+  ) => <A, E>(self: FiberMap<K, A, E>) => Effect.Effect<void>,
+  <K, A, E>(
+    self: FiberMap<K, A, E>,
+    key: K
+  ) => Effect.Effect<void>
 >(2, (self, key) =>
   Effect.suspend(() => {
     if (self.state._tag === "Closed") {

@@ -293,55 +293,7 @@ export const duplex: {
   InDone,
   R | In["EncodingServices"] | Out["DecodingServices"]
 > =>
-  encode(options.inputSchema)</**
-   * Wraps a channel so callers work with typed input and output chunks while the
-   * wrapped channel uses encoded chunks.
-   *
-   * **When to use**
-   *
-   * Use to expose typed input and output at a bidirectional channel boundary
-   * while the wrapped channel continues to operate on schema-encoded chunks.
-   *
-   * **Details**
-   *
-   * Values sent into the resulting channel are encoded with `inputSchema` before
-   * reaching the wrapped channel. Values emitted by the wrapped channel are
-   * decoded with `outputSchema` before they are emitted downstream. Schema
-   * failures are surfaced as `SchemaError`.
-   *
-   * @see {@link duplexUnknown} for the variant whose encoded side is intentionally untyped
-   * @see {@link encode} for encoding typed chunks at one-way channel boundaries
-   * @see {@link decode} for decoding encoded chunks at one-way channel boundaries
-   *
-   * @stability unstable
-   * @category combinators
-   * @since 4.0.0
-   */
-  InErr, /**
-   * Wraps a channel so callers work with typed input and output chunks while the
-   * wrapped channel uses encoded chunks.
-   *
-   * **When to use**
-   *
-   * Use to expose typed input and output at a bidirectional channel boundary
-   * while the wrapped channel continues to operate on schema-encoded chunks.
-   *
-   * **Details**
-   *
-   * Values sent into the resulting channel are encoded with `inputSchema` before
-   * reaching the wrapped channel. Values emitted by the wrapped channel are
-   * decoded with `outputSchema` before they are emitted downstream. Schema
-   * failures are surfaced as `SchemaError`.
-   *
-   * @see {@link duplexUnknown} for the variant whose encoded side is intentionally untyped
-   * @see {@link encode} for encoding typed chunks at one-way channel boundaries
-   * @see {@link decode} for decoding encoded chunks at one-way channel boundaries
-   *
-   * @stability unstable
-   * @category combinators
-   * @since 4.0.0
-   */
-  InDone>().pipe(
+  encode(options.inputSchema)<InErr, InDone>().pipe(
     Channel.pipeTo(self),
     Channel.pipeTo(decode(options.outputSchema)())
   ))

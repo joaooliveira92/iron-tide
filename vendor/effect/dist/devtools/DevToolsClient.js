@@ -9,7 +9,6 @@
  * @stability unstable
  * @since 4.0.0
  */
-import * as Cause from "../Cause.js";
 import * as Context from "../Context.js";
 import * as Deferred from "../Deferred.js";
 import * as Effect from "../Effect.js";
@@ -18,6 +17,7 @@ import * as Fiber from "../Fiber.js";
 import * as Layer from "../Layer.js";
 import * as Metric from "../Metric.js";
 import * as Queue from "../Queue.js";
+import * as Schedule from "../Schedule.js";
 import * as Schema from "../Schema.js";
 import * as Socket from "../socket/Socket.js";
 import * as Stream from "../Stream.js";
@@ -38,7 +38,21 @@ const makeEffect = /*#__PURE__*/Effect.gen(function* () {
   const socket = yield* Socket.Socket;
   const services = yield* Effect.context();
   const requests = yield* Queue.unbounded();
+  yield* Queue.offer(requests, {
+    _tag: "Ping"
+  });
   const connected = yield* Deferred.make();
+  let closing = false;
+  let writable = false;
+  const setWritable = value => Effect.sync(() => {
+    writable = value;
+  });
+  // Tracks whether the current connection has a writer that can drain the
+  // queue on shutdown.
+  const transport = Socket.make({
+    reader: socket.reader,
+    writer: Effect.tap(socket.writer, Effect.acquireRelease(setWritable(true), () => setWritable(false)))
+  });
   const offerMetricsSnapshot = Effect.sync(() => {
     Queue.offerUnsafe(requests, toMetricsSnapshot(services));
   });
@@ -54,11 +68,24 @@ const makeEffect = /*#__PURE__*/Effect.gen(function* () {
         }
     }
   };
-  const fiber = yield* Stream.fromQueue(requests).pipe(Stream.pipeThroughChannel(Ndjson.duplexSchemaString(Socket.toChannelString(socket), {
+  const fiber = yield* Stream.fromQueue(requests).pipe(Stream.pipeThroughChannel(Ndjson.duplexSchemaString(Socket.toChannelString(transport), {
     inputSchema: RequestSchema,
     outputSchema: ResponseSchema
-  })), Stream.onFirst(() => Deferred.completeWith(connected, Effect.void)), Stream.runForEach(handleResponse), Effect.forkDetach);
-  yield* Effect.addFinalizer(() => offerMetricsSnapshot.pipe(Effect.andThen(Effect.flatMap(Effect.fiberId, id => Queue.failCause(requests, Cause.interrupt(id)))), Effect.andThen(Fiber.await(fiber))));
+  })), Stream.onFirst(() => Deferred.completeWith(connected, Effect.void)),
+  // Each run closes its stream scope, including the socket reader and writer,
+  // before retrying with a fresh connection and the same request queue.
+  Stream.runForEach(handleResponse), Effect.tapError(error => Effect.logDebug("DevTools connection failed", error)), Effect.retry({
+    schedule: Schedule.spaced("1 second"),
+    while: () => !closing
+  }), Effect.forkDetach);
+  yield* Effect.addFinalizer(Effect.fnUntraced(function* () {
+    closing = true;
+    yield* offerMetricsSnapshot;
+    yield* Queue.interrupt(requests);
+    // A ready writer drains the queue before stopping. Failed or pending
+    // acquisition cannot observe the queue interruption, so stop it directly.
+    yield* writable ? Fiber.await(fiber) : Fiber.interrupt(fiber);
+  }));
   yield* Effect.suspend(() => Queue.offer(requests, {
     _tag: "Ping"
   })).pipe(Effect.delay("3 seconds"), Effect.forever, Effect.forkScoped);
@@ -151,6 +178,7 @@ const makeTracerEffect = /*#__PURE__*/Effect.gen(function* () {
       client.sendUnsafe(spanSnapshot(span));
       const oldEvent = span.event;
       span.event = function (name, startTime, attributes) {
+        if (span.status._tag === "Ended") return;
         client.sendUnsafe({
           _tag: "SpanEvent",
           traceId: span.traceId,
@@ -163,6 +191,7 @@ const makeTracerEffect = /*#__PURE__*/Effect.gen(function* () {
       };
       const oldEnd = span.end;
       span.end = function (endTime, exit) {
+        if (span.status._tag === "Ended") return;
         oldEnd.call(this, endTime, exit);
         client.sendUnsafe(spanSnapshot(span));
       };

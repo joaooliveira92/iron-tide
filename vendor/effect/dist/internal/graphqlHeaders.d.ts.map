@@ -1,0 +1,1 @@
+{"version":3,"file":"graphqlHeaders.d.ts","sourceRoot":"","sources":["../../src/internal/graphqlHeaders.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,KAAK,QAAQ,MAAM,gBAAgB,CAAA;AAC/C,OAAO,KAAK,OAAO,MAAM,oBAAoB,CAAA;AAE7C,OAAO,KAAK,MAAM,MAAM,cAAc,CAAA;AAItC,eAAO,MAAM,aAAa,+HAKzB,CAAA;AAED;;;;GAIG;AACH,eAAO,MAAM,eAAe,UAAW,MAAM,GAAG,SAAS,OAAO,MAAM,KAAG,QAAQ,CAAC,QAAQ,GAAG,SAI5F,CAAA"}

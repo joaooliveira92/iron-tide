@@ -86,14 +86,15 @@ export const makeUnsafe = initial => ({
   value: initial
 });
 const journalEntry = (state, self) => {
-  let entry = state.journal.get(self);
+  const journal = state.journal;
+  let entry = journal.get(self);
   if (entry === undefined) {
     entry = {
       version: self.version,
       value: self.value,
       written: false
     };
-    state.journal.set(self, entry);
+    journal.set(self, entry);
   }
   return entry;
 };

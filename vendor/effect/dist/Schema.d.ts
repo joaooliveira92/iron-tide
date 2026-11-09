@@ -17,6 +17,13 @@ import type * as Brand from "./Brand.ts";
 import * as ByteSize_ from "./ByteSize.ts";
 import * as Cause_ from "./Cause.ts";
 import * as Chunk_ from "./Chunk.ts";
+import * as Aead_ from "./crypto/Aead.ts";
+import * as Cipher_ from "./crypto/Cipher.ts";
+import * as KeyAgreement_ from "./crypto/KeyAgreement.ts";
+import * as KeyFormat_ from "./crypto/KeyFormat.ts";
+import * as KeyWrap_ from "./crypto/KeyWrap.ts";
+import * as Mac_ from "./crypto/Mac.ts";
+import * as Signature_ from "./crypto/Signature.ts";
 import * as DateTime from "./DateTime.ts";
 import type { Differ } from "./Differ.ts";
 import * as Duration_ from "./Duration.ts";
@@ -30,9 +37,12 @@ import * as HashSet_ from "./HashSet.ts";
 import * as Cookies_ from "./http/Cookies.ts";
 import * as Headers_ from "./http/Headers.ts";
 import * as UrlParams_ from "./http/UrlParams.ts";
+import { NodeInspectSymbol } from "./Inspectable.ts";
 import { SchemaErrorTypeId } from "./internal/schemaError.ts";
 import type * as JsonPatch from "./JsonPatch.ts";
 import type * as JsonSchema from "./JsonSchema.ts";
+import * as Dns_ from "./net/Dns.ts";
+import * as Host_ from "./net/Host.ts";
 import * as IpInterface_ from "./net/IpInterface.ts";
 import * as IpNetwork_ from "./net/IpNetwork.ts";
 import * as NetAddress_ from "./net/NetAddress.ts";
@@ -48,6 +58,8 @@ import * as SchemaGetter from "./SchemaGetter.ts";
 import * as SchemaIssue from "./SchemaIssue.ts";
 import * as SchemaParser from "./SchemaParser.ts";
 import type * as SchemaRepresentation from "./SchemaRepresentation.ts";
+import * as SemVer_ from "./SemVer.ts";
+import * as SemVerRange_ from "./SemVerRange.ts";
 import type { StandardJSONSchemaV1, StandardSchemaV1 } from "./StandardSchema.ts";
 import type { Assign, Lambda, Mutable, Simplify } from "./Struct.ts";
 import * as Struct_ from "./Struct.ts";
@@ -91,8 +103,8 @@ export type ConstructorDefault = "no-default" | "with-default";
  *
  * **When to use**
  *
- * Use when passing `disableChecks: true` to skip validation when you trust the
- * data. Pass `parseOptions` to control parsing behavior.
+ * Use when passing `disableChecks: true` to skip filters and checks while still
+ * parsing types and structure. Pass `parseOptions` to control parsing behavior.
  *
  * @see {@link BottomWithoutNew.makeEffect}
  * @see {@link BottomWithoutNew.make}
@@ -107,7 +119,8 @@ export interface MakeOptions {
      */
     readonly parseOptions?: SchemaAST.ParseOptions | undefined;
     /**
-     * Whether to disable validation for the schema.
+     * Whether to skip filters and checks. Types and structure are still parsed,
+     * and constructor defaults still apply.
      */
     readonly disableChecks?: boolean | undefined;
 }
@@ -984,6 +997,14 @@ export declare class SchemaError extends SchemaError_base<{
     readonly [SchemaErrorTypeId]: typeof SchemaErrorTypeId;
     constructor(issue: SchemaIssue.Issue);
     get message(): string;
+    toJSON(): {
+        _tag: "SchemaError";
+        message: string;
+    };
+    [NodeInspectSymbol](): {
+        _tag: "SchemaError";
+        message: string;
+    };
     toString(): string;
 }
 /**
@@ -2413,8 +2434,8 @@ export interface Enum<A extends {
     readonly enums: A;
 }
 /**
- * Creates a schema from a TypeScript enum object. Validates that the input is one of the enum's values.
- * Numeric enum values must be finite.
+ * Creates a schema from a TypeScript enum or an object mapping names to string or number values.
+ * Validates that the input is one of those values. Numeric values must be finite.
  *
  * **Gotchas**
  *
@@ -2438,7 +2459,7 @@ export interface Enum<A extends {
  * @category constructors
  * @since 4.0.0
  */
-export declare function Enum<A extends {
+export declare function Enum<const A extends {
     [x: string]: string | number;
 }>(enums: A): Enum<A>;
 /**
@@ -3301,11 +3322,18 @@ export interface $Record<Key extends Record.Key, Value extends Constraint> exten
  *
  * **Gotchas**
  *
+ * Dynamic records reject value schemas wrapped with {@link optionalKey} or
+ * {@link optional}. Index signatures already allow keys to be absent; use
+ * {@link UndefinedOr} when existing entries may contain `undefined`. Optional
+ * value schemas remain valid for finite literal keys, which become declared
+ * properties.
+ *
  * When decoded or encoded key transformations produce the same property key,
  * sequential parsing applies selected own properties in selection order, so
  * the later selected property overwrites the earlier value. Dynamic key
- * selection always examines own properties. Finite literal keys are declared
- * fields and may therefore be inherited. Output key order is not guaranteed.
+ * selection always examines own properties. Finite literal and enum keys are
+ * declared fields and may therefore be inherited. Output key order is not
+ * guaranteed.
  *
  * **Example** (Defining a string-keyed record of numbers)
  *
@@ -3346,6 +3374,7 @@ export declare namespace StructWithRest {
      */
     type Objects = Constraint & {
         readonly ast: SchemaAST.Objects;
+        readonly Encoded: object;
     };
     /**
      * Readonly list of record schemas that provide the additional index signatures
@@ -3481,6 +3510,13 @@ export interface StructWithRest<S extends StructWithRest.Objects, Records extend
  * producing a schema whose decoded type intersects the struct and all records.
  *
  * **Gotchas**
+ *
+ * The base schema must have an object-shaped encoded type. Whole-object
+ * transformations are not supported, even with an empty rest array. Apply
+ * transformations such as `Schema.fromJsonString` to the completed
+ * `StructWithRest` schema instead. Object-shaped encoded types alone do not
+ * guarantee compatibility: unsupported encodings are still rejected at runtime.
+ * Transformations on individual fields remain supported.
  *
  * TypeScript index signatures also apply to fixed keys. `StructWithRest` does
  * not reject incompatible fixed fields at the call site; use
@@ -4610,8 +4646,8 @@ export interface compose<To extends Constraint, From extends Constraint> extends
  * **Gotchas**
  *
  * In a custom transformation, `decode` maps `From["Type"]` to `To["Encoded"]`
- * and is used on the encoding path, while `encode` maps `To["Encoded"]` to
- * `From["Type"]` and is used on the decoding path.
+ * and is used on the decoding path, while `encode` maps `To["Encoded"]` to
+ * `From["Type"]` and is used on the encoding path.
  *
  * **Example** (Transforming strings to numbers with a schema transformation)
  *
@@ -5129,7 +5165,27 @@ type Flatten<Schemas> = Schemas extends readonly [infer Head, ...infer Tail] ? H
 type MatchCasesResult<Cases> = {
     [K in keyof Cases]-?: NonNullable<Cases[K]> extends (...args: Array<any>) => infer R ? R : never;
 }[keyof Cases];
-type MatchOrElseResult<Cases, OrElse extends (...args: Array<any>) => any> = Unify<MatchCasesResult<Cases> | ReturnType<OrElse>>;
+type MatchOrElseResult<Cases, OrElse> = Unify<MatchCasesResult<Cases> | (OrElse extends (...args: Array<any>) => infer R ? R : never)>;
+type TaggedUnionMatch<Cases extends Record<PropertyKey, Constraint>, Value> = {
+    <Handlers extends {
+        [K in keyof Cases]: (value: Cases[K]["Type"]) => any;
+    }>(value: Value, cases: Handlers): Unify<ReturnType<Handlers[keyof Cases]>>;
+    <Handlers extends {
+        [K in keyof Cases]: (value: Cases[K]["Type"]) => any;
+    }>(cases: Handlers): (value: Value) => Unify<ReturnType<Handlers[keyof Cases]>>;
+};
+type TaggedUnionMatchOrElse<Cases extends Record<PropertyKey, Constraint>, Value, Tag extends PropertyKey> = {
+    <Handlers, OrElse>(value: Value, cases: Handlers & {
+        [K in keyof Cases]?: (value: Cases[K]["Type"]) => any;
+    } & (Exclude<keyof Handlers, keyof Cases> extends never ? unknown : never), orElse: OrElse & ((value: Exclude<Value, {
+        readonly [K in Tag]: keyof Handlers;
+    }>) => any)): MatchOrElseResult<Handlers, OrElse>;
+    <Handlers, OrElse>(cases: Handlers & {
+        [K in keyof Cases]?: (value: Cases[K]["Type"]) => any;
+    } & (Exclude<keyof Handlers, keyof Cases> extends never ? unknown : never), orElse: OrElse & ((value: Exclude<Value, {
+        readonly [K in Tag]: keyof Handlers;
+    }>) => any)): (value: Value) => MatchOrElseResult<Handlers, OrElse>;
+};
 type TaggedUnionUtils<Tag extends PropertyKey, Members extends ReadonlyArray<Constraint & {
     readonly Type: {
         readonly [K in Tag]: PropertyKey;
@@ -5158,30 +5214,12 @@ type TaggedUnionUtils<Tag extends PropertyKey, Members extends ReadonlyArray<Con
     readonly guards: {
         [M in Flattened[number] as M["Type"][Tag]]: (u: unknown) => u is M["Type"];
     };
-    readonly match: {
-        <Cases extends {
-            [M in Flattened[number] as M["Type"][Tag]]: (value: M["Type"]) => any;
-        }>(value: Members[number]["Type"], cases: Cases): Cases[keyof Cases] extends (value: any) => infer R ? Unify<R> : never;
-        <Cases extends {
-            [M in Flattened[number] as M["Type"][Tag]]: (value: M["Type"]) => any;
-        }>(cases: Cases): (value: Members[number]["Type"]) => Cases[keyof Cases] extends (value: any) => infer R ? Unify<R> : never;
-    };
-    readonly matchOrElse: {
-        <Cases extends {
-            [M in Flattened[number] as M["Type"][Tag]]+?: (value: M["Type"]) => any;
-        } & {
-            [K in Exclude<keyof Cases, Flattened[number]["Type"][Tag]>]: never;
-        }, OrElse extends (value: Exclude<Members[number]["Type"], {
-            readonly [K in Tag]: keyof Cases;
-        }>) => any>(value: Members[number]["Type"], cases: Cases, orElse: OrElse): MatchOrElseResult<Cases, OrElse>;
-        <Cases extends {
-            [M in Flattened[number] as M["Type"][Tag]]+?: (value: M["Type"]) => any;
-        } & {
-            [K in Exclude<keyof Cases, Flattened[number]["Type"][Tag]>]: never;
-        }, OrElse extends (value: Exclude<Members[number]["Type"], {
-            readonly [K in Tag]: keyof Cases;
-        }>) => any>(cases: Cases, orElse: OrElse): (value: Members[number]["Type"]) => MatchOrElseResult<Cases, OrElse>;
-    };
+    readonly match: TaggedUnionMatch<{
+        readonly [M in Flattened[number] as M["Type"][Tag]]: M;
+    }, Members[number]["Type"]>;
+    readonly matchOrElse: TaggedUnionMatchOrElse<{
+        readonly [M in Flattened[number] as M["Type"][Tag]]: M;
+    }, Members[number]["Type"], Tag>;
 };
 /**
  * Type-level representation returned by {@link toTaggedUnion}.
@@ -5201,7 +5239,9 @@ export type toTaggedUnion<Tag extends PropertyKey, Members extends ReadonlyArray
  *
  * **Gotchas**
  *
- * Throws if multiple members use the same discriminant property key.
+ * Throws when multiple members use the same discriminant property key,
+ * including members of nested unions. Numeric and string values such as `1`
+ * and `"1"` count as duplicates.
  *
  * **Example** (Adding tagged-union utilities to an existing union)
  *
@@ -5266,22 +5306,8 @@ export interface TaggedUnion<Cases extends Record<string, Constraint>> extends B
     readonly guards: {
         [K in keyof Cases]: (u: unknown) => u is Cases[K]["Type"];
     };
-    readonly match: {
-        <Output>(cases: {
-            [K in keyof Cases]: (value: Cases[K]["Type"]) => Output;
-        }): (value: Cases[keyof Cases]["Type"]) => Output;
-        <Output>(value: Cases[keyof Cases]["Type"], cases: {
-            [K in keyof Cases]: (value: Cases[K]["Type"]) => Output;
-        }): Output;
-    };
-    readonly matchOrElse: {
-        <Output>(value: Cases[keyof Cases]["Type"], cases: {
-            [K in keyof Cases]?: (value: Cases[K]["Type"]) => Output;
-        }, orElse: (value: Cases[keyof Cases]["Type"]) => Output): Output;
-        <Output>(cases: {
-            [K in keyof Cases]?: (value: Cases[K]["Type"]) => Output;
-        }, orElse: (value: Cases[keyof Cases]["Type"]) => Output): (value: Cases[keyof Cases]["Type"]) => Output;
-    };
+    readonly match: TaggedUnionMatch<Cases, Cases[keyof Cases]["Type"]>;
+    readonly matchOrElse: TaggedUnionMatchOrElse<Cases, Cases[keyof Cases]["Type"], "_tag">;
 }
 /**
  * Builds a discriminated union from a record of field sets, one per variant.
@@ -5427,9 +5453,8 @@ export declare function link<T>(): <To extends Constraint>(encodeTo: To, transfo
  * )
  *
  * const result = Schema.decodeUnknownResult(schema)({ password: "123456", confirmPassword: "1234567" })
- * if (Result.isFailure(result) && result.failure.issue._tag === "Filter" && result.failure.issue.issue._tag === "Pointer") {
- *   result.failure.issue.issue.path // => ["password"]
- * }
+ * const message = Result.isFailure(result) ? result.failure.message : ""
+ * message // => "password and confirmPassword must match\n  at [\"password\"]"
  * ```
  *
  * **Example** (Reporting multiple failures at once)
@@ -5449,9 +5474,8 @@ export declare function link<T>(): <To extends Constraint>(encodeTo: To, transfo
  * )
  *
  * const result = Schema.decodeUnknownResult(schema)({ a: 1, b: 0, c: 0 })
- * if (Result.isFailure(result) && result.failure.issue._tag === "Filter" && result.failure.issue.issue._tag === "Composite") {
- *   result.failure.issue.issue.issues.map((issue) => issue._tag === "Pointer" ? issue.path : []) // => [["b"], ["c"]]
- * }
+ * const message = Result.isFailure(result) ? result.failure.message : ""
+ * message // => "b must be greater than 0\n  at [\"b\"]\nc must be greater than 0\n  at [\"c\"]"
  * ```
  *
  * @stability stable
@@ -5675,6 +5699,9 @@ export declare function isGUID(annotations?: Annotations.Filter): SchemaAST.Filt
  *
  * **Details**
  *
+ * Accepts uppercase and lowercase characters. The first character must be
+ * between `0` and `7` so the value fits in 128 bits.
+ *
  * JSON Schema:
  *
  * This check corresponds to a `pattern` constraint in JSON Schema that matches
@@ -5690,6 +5717,35 @@ export declare function isGUID(annotations?: Annotations.Filter): SchemaAST.Filt
  * @since 4.0.0
  */
 export declare function isULID(annotations?: Annotations.Filter): SchemaAST.Filter<string>;
+/**
+ * Validates that a string contains only ASCII characters.
+ *
+ * **When to use**
+ *
+ * Use when a value must stay within the 7-bit ASCII range, for example
+ * identifiers, protocol tokens, or data sent to systems that reject
+ * non-ASCII input.
+ *
+ * **Details**
+ *
+ * This check accepts strings whose characters are all in the range `U+0000`
+ * to `U+007F`, including control characters and the empty string.
+ *
+ * JSON Schema:
+ *
+ * This check corresponds to a `pattern` constraint in JSON Schema that matches
+ * ASCII-only strings.
+ *
+ * Arbitrary:
+ *
+ * During arbitrary generation, this applies a `patterns`
+ * constraint to ensure generated strings match the ASCII pattern.
+ *
+ * @stability unstable
+ * @category validation
+ * @since 4.0.6
+ */
+export declare function isAscii(annotations?: Annotations.Filter): SchemaAST.Filter<string>;
 /**
  * Validates that a string is valid Base64 encoded data.
  *
@@ -6092,7 +6148,8 @@ export declare function isMultipleOf(divisor: number, annotations?: Annotations.
  *
  * JSON Schema:
  *
- * This check corresponds to the `type: "integer"` constraint in JSON Schema.
+ * This check corresponds to `type: "integer"` with `minimum: Number.MIN_SAFE_INTEGER`
+ * and `maximum: Number.MAX_SAFE_INTEGER` in JSON Schema.
  *
  * Arbitrary:
  *
@@ -7976,7 +8033,8 @@ export interface BigDecimalFromString extends decodeTo<BigDecimal, String> {
  *
  * **Gotchas**
  *
- * An empty string decodes as zero.
+ * An empty string decodes as zero. Strings with a scale outside ±10,000, such
+ * as `"1e300000000"`, are rejected.
  *
  * @see {@link BigDecimal} for validating values that are already BigDecimal values
  * @see {@link BigIntFromString} for parsing base-10 integer strings into bigint values
@@ -8337,6 +8395,42 @@ export interface DateTimeUtcFromString extends decodeTo<DateTimeUtc, String> {
  * @since 4.0.0
  */
 export declare const DateTimeUtcFromString: DateTimeUtcFromString;
+/**
+ * Type-level representation of {@link DateTimeUtcFromHttpDate}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface DateTimeUtcFromHttpDate extends decodeTo<DateTimeUtc, String> {
+    readonly "Rebuild": DateTimeUtcFromHttpDate;
+}
+/**
+ * Schema for HTTP date header values, such as `Date`, `Last-Modified` and
+ * `Expires`, decoded as `DateTime.Utc`.
+ *
+ * **When to use**
+ *
+ * Use with HTTP API header schemas that carry dates. Decoding accepts the
+ * three formats of RFC 9110 §5.6.7 and reads them as UTC; encoding emits the
+ * preferred IMF-fixdate form (`Sun, 06 Nov 1994 08:49:37 GMT`).
+ *
+ * **Example** (Decoding an HTTP date)
+ *
+ * ```ts
+ * import { DateTime, Schema } from "effect"
+ *
+ * const date = Schema.decodeSync(Schema.DateTimeUtcFromHttpDate)("Sun, 06 Nov 1994 08:49:37 GMT")
+ * const millis = DateTime.toEpochMillis(date) // => 784111777000
+ * ```
+ *
+ * @see {@link DateTimeUtcFromString} for ISO 8601 strings
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DateTimeUtcFromHttpDate: DateTimeUtcFromHttpDate;
 /**
  * Type-level representation of {@link DateTimeUtcFromMillis}.
  *
@@ -9511,6 +9605,184 @@ export interface SocketAddress extends declare<NetAddress_.SocketAddress> {
  */
 export declare const SocketAddress: SocketAddress;
 /**
+ * Type-level representation of {@link DomainName}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DomainName extends brand<String, "~effect/net/Host/DomainName"> {
+    readonly "Rebuild": DomainName;
+}
+/**
+ * Schema for normalized DNS domain names.
+ *
+ * **Details**
+ *
+ * Only names already in normalized form (lowercase ASCII, with
+ * internationalized labels in `xn--` form) are accepted. Use
+ * {@link DomainNameFromString} to normalize arbitrary input.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DomainName: DomainName;
+/**
+ * Type-level representation of {@link DomainNameFromString}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DomainNameFromString extends decodeTo<DomainName, String> {
+    readonly "Rebuild": DomainNameFromString;
+}
+/**
+ * Schema for DNS domain names decoded from strings, normalizing case and
+ * converting internationalized names to their ASCII form.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DomainNameFromString: DomainNameFromString;
+/**
+ * Type-level representation of {@link ScopedIpv6Literal}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface ScopedIpv6Literal extends brand<String, "~effect/net/NetAddress/ScopedIpv6Literal"> {
+    readonly "Rebuild": ScopedIpv6Literal;
+}
+/**
+ * Schema for canonical scoped IPv6 literals such as `fe80::1%eth0`.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const ScopedIpv6Literal: ScopedIpv6Literal;
+/**
+ * Type-level representation of {@link ScopedIpv6LiteralFromString}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface ScopedIpv6LiteralFromString extends decodeTo<ScopedIpv6Literal, String> {
+    readonly "Rebuild": ScopedIpv6LiteralFromString;
+}
+/**
+ * Schema for scoped IPv6 literals decoded from strings, normalizing the address
+ * and numeric zones.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const ScopedIpv6LiteralFromString: ScopedIpv6LiteralFromString;
+/**
+ * Type-level representation of {@link Host}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface Host extends Union<readonly [IpAddress, ScopedIpv6Literal, DomainName]> {
+    readonly "Rebuild": Host;
+}
+/**
+ * Schema for hosts: numeric IP addresses, scoped IPv6 literals, or domain names.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const Host: Host;
+/**
+ * Type-level representation of {@link HostFromString}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface HostFromString extends Union<readonly [IpAddressFromString, ScopedIpv6LiteralFromString, DomainNameFromString]> {
+    readonly "Rebuild": HostFromString;
+}
+/**
+ * Schema for hosts decoded from strings. Numeric IP strings decode to IP
+ * addresses; other strings decode to scoped IPv6 literals or domain names.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const HostFromString: HostFromString;
+/**
+ * Type-level representation of {@link HostPort}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface HostPort extends declare<Host_.HostPort> {
+    readonly "Rebuild": HostPort;
+}
+/**
+ * Schema for already-constructed unresolved host and port values.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const HostPort: HostPort;
+/**
+ * Type-level representation of {@link HostPortFromString}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface HostPortFromString extends decodeTo<HostPort, String> {
+    readonly "Rebuild": HostPortFromString;
+}
+/**
+ * Schema for unresolved endpoints encoded as `host:port` or `[IPv6]:port`
+ * strings.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const HostPortFromString: HostPortFromString;
+/**
+ * Type-level representation of {@link Port}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface Port extends Int {
+    readonly "Rebuild": Port;
+}
+/**
+ * Schema for TCP and UDP port numbers from 0 through 65535.
+ *
+ * **Details**
+ *
+ * Port 0 is accepted because it asks the operating system to choose a port
+ * when binding, and it matches the port range of `InetAddress` and `HostPort`.
+ * `Config.Port` accepts only 1 through 65535.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const Port: Port;
+/**
  * Type-level representation of {@link Duration}.
  *
  * @stability stable
@@ -9629,6 +9901,885 @@ export interface DurationFromMillis extends decodeTo<Duration, Number> {
  * @since 3.10.0
  */
 export declare const DurationFromMillis: DurationFromMillis;
+/**
+ * Type-level representation of {@link DurationFromIsoString}.
+ *
+ * @stability stable
+ * @category models
+ * @since 4.1.0
+ */
+export interface DurationFromIsoString extends decodeTo<Duration, String> {
+    readonly "Rebuild": DurationFromIsoString;
+}
+/**
+ * Schema that decodes an ISO 8601 duration string into a `Duration`.
+ *
+ * **Details**
+ *
+ * Decoding:
+ * - A string accepted by `Duration.fromIso` is decoded as a `Duration`, such
+ *   as `"PT1H30M"`, `"P1W2D"`, or `"-PT0.5S"`. Years and months are rejected
+ *   because they have no fixed length.
+ *
+ * Encoding:
+ * - A finite `Duration` is encoded with `Duration.formatIso`, using days,
+ *   hours, minutes, and seconds. Encoding fails for `Duration.infinity` and
+ *   `Duration.negativeInfinity`.
+ *
+ * @see {@link DurationFromString} for the `"5 seconds"` string format
+ *
+ * @stability stable
+ * @category schemas
+ * @since 4.1.0
+ */
+export declare const DurationFromIsoString: DurationFromIsoString;
+/**
+ * Type-level representation of {@link DnsRecordType}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsRecordType extends Literals<ReadonlyArray<Dns_.RecordType>> {
+}
+/**
+ * Schema for supported DNS record types such as `"A"` or `"SRV"`.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsRecordType: DnsRecordType;
+/**
+ * Type-level representation of {@link DnsARecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsARecord extends declare<Dns_.A> {
+    readonly "Rebuild": DnsARecord;
+}
+/**
+ * Schema for already-constructed IPv4 address (`A`) DNS records.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsARecord: DnsARecord;
+/**
+ * Type-level representation of {@link DnsAaaaRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsAaaaRecord extends declare<Dns_.Aaaa> {
+    readonly "Rebuild": DnsAaaaRecord;
+}
+/**
+ * Schema for already-constructed IPv6 address (`AAAA`) DNS records.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsAaaaRecord: DnsAaaaRecord;
+/**
+ * Type-level representation of {@link DnsCaaRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsCaaRecord extends declare<Dns_.Caa> {
+    readonly "Rebuild": DnsCaaRecord;
+}
+/**
+ * Schema for already-constructed certification authority authorization (`CAA`) DNS records.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsCaaRecord: DnsCaaRecord;
+/**
+ * Type-level representation of {@link DnsCnameRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsCnameRecord extends declare<Dns_.Cname> {
+    readonly "Rebuild": DnsCnameRecord;
+}
+/**
+ * Schema for already-constructed canonical name (`CNAME`) DNS records.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsCnameRecord: DnsCnameRecord;
+/**
+ * Type-level representation of {@link DnsMxRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsMxRecord extends declare<Dns_.Mx> {
+    readonly "Rebuild": DnsMxRecord;
+}
+/**
+ * Schema for already-constructed mail exchange (`MX`) DNS records.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsMxRecord: DnsMxRecord;
+/**
+ * Type-level representation of {@link DnsNaptrRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsNaptrRecord extends declare<Dns_.Naptr> {
+    readonly "Rebuild": DnsNaptrRecord;
+}
+/**
+ * Schema for already-constructed naming authority pointer (`NAPTR`) DNS records.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsNaptrRecord: DnsNaptrRecord;
+/**
+ * Type-level representation of {@link DnsNsRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsNsRecord extends declare<Dns_.Ns> {
+    readonly "Rebuild": DnsNsRecord;
+}
+/**
+ * Schema for already-constructed name server (`NS`) DNS records.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsNsRecord: DnsNsRecord;
+/**
+ * Type-level representation of {@link DnsPtrRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsPtrRecord extends declare<Dns_.Ptr> {
+    readonly "Rebuild": DnsPtrRecord;
+}
+/**
+ * Schema for already-constructed pointer (`PTR`) DNS records.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsPtrRecord: DnsPtrRecord;
+/**
+ * Type-level representation of {@link DnsSoaRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsSoaRecord extends declare<Dns_.Soa> {
+    readonly "Rebuild": DnsSoaRecord;
+}
+/**
+ * Schema for already-constructed start of authority (`SOA`) DNS records.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsSoaRecord: DnsSoaRecord;
+/**
+ * Type-level representation of {@link DnsSrvRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsSrvRecord extends declare<Dns_.Srv> {
+    readonly "Rebuild": DnsSrvRecord;
+}
+/**
+ * Schema for already-constructed service locator (`SRV`) DNS records.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsSrvRecord: DnsSrvRecord;
+/**
+ * Type-level representation of {@link DnsTlsaRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsTlsaRecord extends declare<Dns_.Tlsa> {
+    readonly "Rebuild": DnsTlsaRecord;
+}
+/**
+ * Schema for already-constructed TLS authentication (`TLSA`) DNS records.
+ *
+ * **Details**
+ *
+ * The default JSON serializer encodes the certificate association `data` as a
+ * hex string.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsTlsaRecord: DnsTlsaRecord;
+/**
+ * Type-level representation of {@link DnsTxtRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsTxtRecord extends declare<Dns_.Txt> {
+    readonly "Rebuild": DnsTxtRecord;
+}
+/**
+ * Schema for already-constructed text (`TXT`) DNS records.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsTxtRecord: DnsTxtRecord;
+/**
+ * Type-level representation of {@link DnsRecord}.
+ *
+ * @stability experimental
+ * @category models
+ * @since 4.0.0
+ */
+export interface DnsRecord extends Union<readonly [
+    DnsARecord,
+    DnsAaaaRecord,
+    DnsCaaRecord,
+    DnsCnameRecord,
+    DnsMxRecord,
+    DnsNaptrRecord,
+    DnsNsRecord,
+    DnsPtrRecord,
+    DnsSoaRecord,
+    DnsSrvRecord,
+    DnsTlsaRecord,
+    DnsTxtRecord
+]> {
+    readonly "Rebuild": DnsRecord;
+}
+/**
+ * Schema for already-constructed DNS records of any supported record type.
+ *
+ * **Details**
+ *
+ * The default JSON serializer encodes records as objects tagged by record type,
+ * with addresses and names as canonical strings, SOA timers as whole seconds,
+ * and TLSA data as hex, such as
+ * `{ "_tag": "SRV", "target": "db.internal", "port": 5432, "priority": 10, "weight": 5 }`.
+ * Decoding accepts only canonical addresses and normalized domain names, and
+ * reports invalid fields with their path.
+ *
+ * @stability experimental
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const DnsRecord: DnsRecord;
+type CryptoKeyOptions = {
+    readonly allowEncode?: boolean | undefined;
+};
+/**
+ * Type-level representation of {@link MacKey}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface MacKey<A extends Mac_.Algorithm = Mac_.Algorithm> extends declare<Mac_.Key<A>> {
+    readonly "Rebuild": MacKey<A>;
+}
+/**
+ * Schema for live `Mac.Key` values of an algorithm.
+ *
+ * **Details**
+ *
+ * Decoding checks the key's algorithm and returns the key itself. The key has
+ * no JSON form: `toCodecJson` fails with a `Forbidden` issue, so use
+ * {@link MacKeyFromFormat} or {@link MacKeyFromBytes} to read and write keys.
+ * Keys display redacted, compare by reference, and have no `Arbitrary`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const MacKey: <A extends Mac_.Algorithm>(algorithm: A) => MacKey<A>;
+/**
+ * Schema that decodes raw key bytes into a `Mac.Key`.
+ *
+ * **Details**
+ *
+ * Decoding runs `Mac.key`, which is synchronous, so the schema works with
+ * `Schema.decodeSync`. Under `Config.schema` the bytes are read as base64. A
+ * `CryptoError` becomes an `InvalidValue` issue whose `cause` is the error.
+ * Encoding fails with a `Forbidden` issue unless `allowEncode` is `true`.
+ *
+ * **Example** (Reading an HMAC key from the environment)
+ *
+ * ```ts import.meta.vitest
+ * import { Config, ConfigProvider, Effect, Schema } from "effect"
+ * import { Mac } from "effect/crypto"
+ *
+ * const config = Config.schema(Schema.MacKeyFromBytes(Mac.hmacSha256), "HMAC_KEY")
+ * const provider = ConfigProvider.fromEnv({ env: { HMAC_KEY: "A".repeat(43) + "=" } })
+ * const key = await Effect.runPromise(Effect.provide(config, ConfigProvider.layer(provider)))
+ * key.algorithm.name // => "hmacSha256"
+ * ```
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const MacKeyFromBytes: <A extends Mac_.Algorithm>(algorithm: A, options?: CryptoKeyOptions) => decodeTo<MacKey<A>, Uint8Array>;
+/**
+ * Schema that decodes a `Mac.Key` from a JWK with `KeyFormat.decodeSecret`.
+ *
+ * **Details**
+ *
+ * Decoding returns an Effect, so use the async decoding functions:
+ * `Schema.decodeSync` throws. A `CryptoError` becomes an `InvalidValue` issue
+ * whose `cause` is the error. Encoding fails with a `Forbidden` issue unless
+ * `allowEncode` is `true`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const MacKeyFromFormat: <A extends Mac_.Algorithm, Data>(format: KeyFormat_.Format<"secret", "decode", Data>, algorithm: A, options?: CryptoKeyOptions) => decodeTo<MacKey<A>, Codec<Data>>;
+/**
+ * Type-level representation of {@link AeadKey}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface AeadKey<A extends Aead_.Algorithm = Aead_.Algorithm> extends declare<Aead_.Key<A>> {
+    readonly "Rebuild": AeadKey<A>;
+}
+/**
+ * Schema for live `Aead.Key` values of an algorithm.
+ *
+ * **Details**
+ *
+ * Decoding checks the key's algorithm and returns the key itself. The key has
+ * no JSON form: `toCodecJson` fails with a `Forbidden` issue, so use
+ * {@link AeadKeyFromFormat} or {@link AeadKeyFromBytes} to read and write
+ * keys. Keys display redacted, compare by reference, and have no `Arbitrary`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const AeadKey: <A extends Aead_.Algorithm>(algorithm: A) => AeadKey<A>;
+/**
+ * Schema that decodes raw key bytes into an `Aead.Key`.
+ *
+ * **Details**
+ *
+ * Decoding runs `Aead.key`, which is synchronous, so the schema works with
+ * `Schema.decodeSync`. Under `Config.schema` the bytes are read as base64. A
+ * `CryptoError` becomes an `InvalidValue` issue whose `cause` is the error.
+ * Encoding fails with a `Forbidden` issue unless `allowEncode` is `true`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const AeadKeyFromBytes: <A extends Aead_.Algorithm>(algorithm: A, options?: CryptoKeyOptions) => decodeTo<AeadKey<A>, Uint8Array>;
+/**
+ * Schema that decodes an `Aead.Key` from a JWK with `KeyFormat.decodeSecret`.
+ *
+ * **Details**
+ *
+ * Decoding returns an Effect, so use the async decoding functions:
+ * `Schema.decodeSync` throws. A `CryptoError` becomes an `InvalidValue` issue
+ * whose `cause` is the error. Encoding fails with a `Forbidden` issue unless
+ * `allowEncode` is `true`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const AeadKeyFromFormat: <A extends Aead_.Algorithm, Data>(format: KeyFormat_.Format<"secret", "decode", Data>, algorithm: A, options?: CryptoKeyOptions) => decodeTo<AeadKey<A>, Codec<Data>>;
+/**
+ * Type-level representation of {@link CipherKey}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface CipherKey<A extends Cipher_.Algorithm = Cipher_.Algorithm> extends declare<Cipher_.Key<A>> {
+    readonly "Rebuild": CipherKey<A>;
+}
+/**
+ * Schema for live `Cipher.Key` values of an algorithm.
+ *
+ * **Details**
+ *
+ * Decoding checks the key's algorithm and returns the key itself. The key has
+ * no JSON form: `toCodecJson` fails with a `Forbidden` issue, so use
+ * {@link CipherKeyFromFormat} or {@link CipherKeyFromBytes} to read and
+ * write keys. Keys display redacted, compare by reference, and have no
+ * `Arbitrary`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const CipherKey: <A extends Cipher_.Algorithm>(algorithm: A) => CipherKey<A>;
+/**
+ * Schema that decodes raw key bytes into a `Cipher.Key`.
+ *
+ * **Details**
+ *
+ * Decoding runs `Cipher.key`, which is synchronous, so the schema works with
+ * `Schema.decodeSync`. Under `Config.schema` the bytes are read as base64. A
+ * `CryptoError` becomes an `InvalidValue` issue whose `cause` is the error.
+ * Encoding fails with a `Forbidden` issue unless `allowEncode` is `true`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const CipherKeyFromBytes: <A extends Cipher_.Algorithm>(algorithm: A, options?: CryptoKeyOptions) => decodeTo<CipherKey<A>, Uint8Array>;
+/**
+ * Schema that decodes a `Cipher.Key` from a JWK with
+ * `KeyFormat.decodeSecret`.
+ *
+ * **Details**
+ *
+ * Decoding returns an Effect, so use the async decoding functions:
+ * `Schema.decodeSync` throws. A `CryptoError` becomes an `InvalidValue` issue
+ * whose `cause` is the error. Encoding fails with a `Forbidden` issue unless
+ * `allowEncode` is `true`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const CipherKeyFromFormat: <A extends Cipher_.Algorithm, Data>(format: KeyFormat_.Format<"secret", "decode", Data>, algorithm: A, options?: CryptoKeyOptions) => decodeTo<CipherKey<A>, Codec<Data>>;
+/**
+ * Type-level representation of {@link SignaturePublicKey}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface SignaturePublicKey<A extends Signature_.Algorithm = Signature_.Algorithm> extends declare<Signature_.PublicKey<A>> {
+    readonly "Rebuild": SignaturePublicKey<A>;
+}
+/**
+ * Schema for live `Signature.PublicKey` values of an algorithm.
+ *
+ * **Details**
+ *
+ * Decoding checks the key's algorithm and returns the key itself. The key has
+ * no JSON form: `toCodecJson` fails with a `Forbidden` issue, so use
+ * {@link SignaturePublicKeyFromFormat} or {@link SignaturePublicKeyFromBytes}
+ * to read and write keys. Keys compare by reference and have no `Arbitrary`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const SignaturePublicKey: <A extends Signature_.Algorithm>(algorithm: A) => SignaturePublicKey<A>;
+/**
+ * Schema that decodes a raw public key into a `Signature.PublicKey`: 32 bytes
+ * for Ed25519, or an uncompressed SEC1 point for ECDSA.
+ *
+ * **Details**
+ *
+ * Decoding runs `Signature.publicKey`, which is synchronous, so the schema
+ * works with `Schema.decodeSync`. Under `Config.schema` the bytes are read as
+ * base64. A `CryptoError` becomes an `InvalidValue` issue whose `cause` is
+ * the error. RSA public keys have no raw form, so passing an RSA algorithm is
+ * a type error.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const SignaturePublicKeyFromBytes: <A extends Signature_.Ed25519 | Signature_.Ecdsa>(algorithm: A) => decodeTo<SignaturePublicKey<A>, Uint8Array>;
+/**
+ * Schema that decodes a `Signature.PublicKey` with
+ * `KeyFormat.decodePublic` and encodes it with `KeyFormat.encode`.
+ *
+ * **Details**
+ *
+ * The format must hold public keys: `KeyFormat.spki`, `KeyFormat.jwk`, or
+ * `KeyFormat.pem(KeyFormat.spki)`. A format for another role is a type
+ * error. Decoding runs the runtime's key import, so use the async decoding
+ * functions: `Schema.decodeSync` throws. A `CryptoError` becomes an
+ * `InvalidValue` issue whose `cause` is the error.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const SignaturePublicKeyFromFormat: <A extends Signature_.Algorithm, Data>(format: KeyFormat_.Format<"public", "decode", Data>, algorithm: A) => decodeTo<SignaturePublicKey<A>, Codec<Data>>;
+/**
+ * Type-level representation of {@link SignaturePrivateKey}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface SignaturePrivateKey<A extends Signature_.Algorithm = Signature_.Algorithm> extends declare<Signature_.PrivateKey<A>> {
+    readonly "Rebuild": SignaturePrivateKey<A>;
+}
+/**
+ * Schema for live `Signature.PrivateKey` values of an algorithm.
+ *
+ * **Details**
+ *
+ * Decoding checks the key's algorithm and returns the key itself. The key has
+ * no JSON form: `toCodecJson` fails with a `Forbidden` issue, so use
+ * {@link SignaturePrivateKeyFromFormat} or
+ * {@link SignaturePrivateKeyFromBytes} to read and write keys. Keys display
+ * redacted, compare by reference, and have no `Arbitrary`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const SignaturePrivateKey: <A extends Signature_.Algorithm>(algorithm: A) => SignaturePrivateKey<A>;
+/**
+ * Schema that decodes an Ed25519 seed into a `Signature.PrivateKey`.
+ *
+ * **Details**
+ *
+ * Decoding runs `Signature.privateKey`, which is synchronous, so the schema
+ * works with `Schema.decodeSync`. Under `Config.schema` the bytes are read as
+ * base64. A `CryptoError` becomes an `InvalidValue` issue whose `cause` is
+ * the error. ECDSA and RSA private keys have no raw form, so passing them is
+ * a type error. Encoding fails with a `Forbidden` issue unless `allowEncode`
+ * is `true`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const SignaturePrivateKeyFromBytes: <A extends Signature_.Ed25519>(algorithm: A, options?: CryptoKeyOptions) => decodeTo<SignaturePrivateKey<A>, Uint8Array>;
+/**
+ * Schema that decodes a `Signature.PrivateKey` with
+ * `KeyFormat.decodePrivate`.
+ *
+ * **Details**
+ *
+ * The format must hold private keys: `KeyFormat.pkcs8`, `KeyFormat.jwk`,
+ * `KeyFormat.pkcs1`, `KeyFormat.sec1`, or their PEM forms. A format for
+ * another role is a type error. Decoding runs the runtime's key import, so
+ * use the async decoding functions: `Schema.decodeSync` throws. A
+ * `CryptoError` becomes an `InvalidValue` issue whose `cause` is the error.
+ * Encoding fails with a `Forbidden` issue unless `allowEncode` is `true`,
+ * and always for the read-only PKCS#1 and SEC1 formats.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const SignaturePrivateKeyFromFormat: <A extends Signature_.Algorithm, Data>(format: KeyFormat_.Format<"private", "decode", Data>, algorithm: A, options?: CryptoKeyOptions) => decodeTo<SignaturePrivateKey<A>, Codec<Data>>;
+/**
+ * Type-level representation of {@link KeyAgreementPublicKey}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface KeyAgreementPublicKey<A extends KeyAgreement_.Algorithm = KeyAgreement_.Algorithm> extends declare<KeyAgreement_.PublicKey<A>> {
+    readonly "Rebuild": KeyAgreementPublicKey<A>;
+}
+/**
+ * Schema for live `KeyAgreement.PublicKey` values of an algorithm.
+ *
+ * **Details**
+ *
+ * Decoding checks the key's algorithm and returns the key itself. The key has
+ * no JSON form: `toCodecJson` fails with a `Forbidden` issue, so use
+ * {@link KeyAgreementPublicKeyFromFormat} or
+ * {@link KeyAgreementPublicKeyFromBytes} to read and write keys. Keys compare
+ * by reference and have no `Arbitrary`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyAgreementPublicKey: <A extends KeyAgreement_.Algorithm>(algorithm: A) => KeyAgreementPublicKey<A>;
+/**
+ * Schema that decodes a raw public key into a `KeyAgreement.PublicKey`: 32
+ * bytes for X25519, or an uncompressed SEC1 point for ECDH.
+ *
+ * **Details**
+ *
+ * Decoding runs `KeyAgreement.publicKey`, which is synchronous, so the schema
+ * works with `Schema.decodeSync`. Under `Config.schema` the bytes are read as
+ * base64. A `CryptoError` becomes an `InvalidValue` issue whose `cause` is
+ * the error.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyAgreementPublicKeyFromBytes: <A extends KeyAgreement_.Algorithm>(algorithm: A) => decodeTo<KeyAgreementPublicKey<A>, Uint8Array>;
+/**
+ * Schema that decodes a `KeyAgreement.PublicKey` with
+ * `KeyFormat.decodePublic` and encodes it with `KeyFormat.encode`.
+ *
+ * **Details**
+ *
+ * The format must hold public keys: `KeyFormat.spki`, `KeyFormat.jwk`, or
+ * `KeyFormat.pem(KeyFormat.spki)`. A format for another role is a type
+ * error. Decoding runs the runtime's key import, so use the async decoding
+ * functions: `Schema.decodeSync` throws. A `CryptoError` becomes an
+ * `InvalidValue` issue whose `cause` is the error.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyAgreementPublicKeyFromFormat: <A extends KeyAgreement_.Algorithm, Data>(format: KeyFormat_.Format<"public", "decode", Data>, algorithm: A) => decodeTo<KeyAgreementPublicKey<A>, Codec<Data>>;
+/**
+ * Type-level representation of {@link KeyAgreementPrivateKey}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface KeyAgreementPrivateKey<A extends KeyAgreement_.Algorithm = KeyAgreement_.Algorithm> extends declare<KeyAgreement_.PrivateKey<A>> {
+    readonly "Rebuild": KeyAgreementPrivateKey<A>;
+}
+/**
+ * Schema for live `KeyAgreement.PrivateKey` values of an algorithm.
+ *
+ * **Details**
+ *
+ * Decoding checks the key's algorithm and returns the key itself. The key has
+ * no JSON form: `toCodecJson` fails with a `Forbidden` issue, so use
+ * {@link KeyAgreementPrivateKeyFromFormat} or
+ * {@link KeyAgreementPrivateKeyFromBytes} to read and write keys. Keys
+ * display redacted, compare by reference, and have no `Arbitrary`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyAgreementPrivateKey: <A extends KeyAgreement_.Algorithm>(algorithm: A) => KeyAgreementPrivateKey<A>;
+/**
+ * Schema that decodes an X25519 private key into a
+ * `KeyAgreement.PrivateKey`.
+ *
+ * **Details**
+ *
+ * Decoding runs `KeyAgreement.privateKey`, which is synchronous, so the
+ * schema works with `Schema.decodeSync`. Under `Config.schema` the bytes are
+ * read as base64. A `CryptoError` becomes an `InvalidValue` issue whose
+ * `cause` is the error. ECDH private keys have no raw form, so passing them
+ * is a type error. Encoding fails with a `Forbidden` issue unless
+ * `allowEncode` is `true`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyAgreementPrivateKeyFromBytes: <A extends KeyAgreement_.X25519>(algorithm: A, options?: CryptoKeyOptions) => decodeTo<KeyAgreementPrivateKey<A>, Uint8Array>;
+/**
+ * Schema that decodes a `KeyAgreement.PrivateKey` with
+ * `KeyFormat.decodePrivate`.
+ *
+ * **Details**
+ *
+ * The format must hold private keys: `KeyFormat.pkcs8`, `KeyFormat.jwk`,
+ * `KeyFormat.sec1`, or their PEM forms. A format for another role is a type
+ * error. Decoding runs the runtime's key import, so use the async decoding
+ * functions: `Schema.decodeSync` throws. A `CryptoError` becomes an
+ * `InvalidValue` issue whose `cause` is the error. Encoding fails with a
+ * `Forbidden` issue unless `allowEncode` is `true`, and always for the
+ * read-only PKCS#1 and SEC1 formats.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyAgreementPrivateKeyFromFormat: <A extends KeyAgreement_.Algorithm, Data>(format: KeyFormat_.Format<"private", "decode", Data>, algorithm: A, options?: CryptoKeyOptions) => decodeTo<KeyAgreementPrivateKey<A>, Codec<Data>>;
+/**
+ * Type-level representation of {@link KeyWrapKey}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface KeyWrapKey<A extends KeyWrap_.AesKw = KeyWrap_.AesKw> extends declare<KeyWrap_.Key<A>> {
+    readonly "Rebuild": KeyWrapKey<A>;
+}
+/**
+ * Schema for live AES-KW `KeyWrap.Key` values of an algorithm.
+ *
+ * **Details**
+ *
+ * Decoding checks the key's algorithm and returns the key itself. The key has
+ * no JSON form: `toCodecJson` fails with a `Forbidden` issue, so use
+ * {@link KeyWrapKeyFromFormat} or {@link KeyWrapKeyFromBytes} to read and
+ * write keys. Keys display redacted, compare by reference, and have no
+ * `Arbitrary`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyWrapKey: <A extends KeyWrap_.AesKw>(algorithm: A) => KeyWrapKey<A>;
+/**
+ * Schema that decodes raw key bytes into an AES-KW `KeyWrap.Key`.
+ *
+ * **Details**
+ *
+ * Decoding runs `KeyWrap.key`, which is synchronous, so the schema works with
+ * `Schema.decodeSync`. Under `Config.schema` the bytes are read as base64. A
+ * `CryptoError` becomes an `InvalidValue` issue whose `cause` is the error.
+ * Encoding fails with a `Forbidden` issue unless `allowEncode` is `true`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyWrapKeyFromBytes: <A extends KeyWrap_.AesKw>(algorithm: A, options?: CryptoKeyOptions) => decodeTo<KeyWrapKey<A>, Uint8Array>;
+/**
+ * Schema that decodes an AES-KW `KeyWrap.Key` from a JWK with
+ * `KeyFormat.decodeSecret`.
+ *
+ * **Details**
+ *
+ * Decoding returns an Effect, so use the async decoding functions:
+ * `Schema.decodeSync` throws. A `CryptoError` becomes an `InvalidValue` issue
+ * whose `cause` is the error. Encoding fails with a `Forbidden` issue unless
+ * `allowEncode` is `true`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyWrapKeyFromFormat: <A extends KeyWrap_.AesKw, Data>(format: KeyFormat_.Format<"secret", "decode", Data>, algorithm: A, options?: CryptoKeyOptions) => decodeTo<KeyWrapKey<A>, Codec<Data>>;
+/**
+ * Type-level representation of {@link KeyWrapPublicKey}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface KeyWrapPublicKey<A extends KeyWrap_.RsaOaep = KeyWrap_.RsaOaep> extends declare<KeyWrap_.PublicKey<A>> {
+    readonly "Rebuild": KeyWrapPublicKey<A>;
+}
+/**
+ * Schema for live RSA-OAEP `KeyWrap.PublicKey` values of an algorithm.
+ *
+ * **Details**
+ *
+ * Decoding checks the key's algorithm and returns the key itself. The key has
+ * no JSON form: `toCodecJson` fails with a `Forbidden` issue, so use
+ * {@link KeyWrapPublicKeyFromFormat} to read and write keys. RSA-OAEP keys
+ * have no raw form. Keys compare by reference and have no `Arbitrary`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyWrapPublicKey: <A extends KeyWrap_.RsaOaep>(algorithm: A) => KeyWrapPublicKey<A>;
+/**
+ * Schema that decodes an RSA-OAEP `KeyWrap.PublicKey` with
+ * `KeyFormat.decodePublic` and encodes it with `KeyFormat.encode`.
+ *
+ * **Details**
+ *
+ * The format must hold public keys: `KeyFormat.spki`, `KeyFormat.jwk`, or
+ * `KeyFormat.pem(KeyFormat.spki)`. A format for another role is a type
+ * error. Decoding runs the runtime's key import, so use the async decoding
+ * functions: `Schema.decodeSync` throws. A `CryptoError` becomes an
+ * `InvalidValue` issue whose `cause` is the error.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyWrapPublicKeyFromFormat: <A extends KeyWrap_.RsaOaep, Data>(format: KeyFormat_.Format<"public", "decode", Data>, algorithm: A) => decodeTo<KeyWrapPublicKey<A>, Codec<Data>>;
+/**
+ * Type-level representation of {@link KeyWrapPrivateKey}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface KeyWrapPrivateKey<A extends KeyWrap_.RsaOaep = KeyWrap_.RsaOaep> extends declare<KeyWrap_.PrivateKey<A>> {
+    readonly "Rebuild": KeyWrapPrivateKey<A>;
+}
+/**
+ * Schema for live RSA-OAEP `KeyWrap.PrivateKey` values of an algorithm.
+ *
+ * **Details**
+ *
+ * Decoding checks the key's algorithm and returns the key itself. The key has
+ * no JSON form: `toCodecJson` fails with a `Forbidden` issue, so use
+ * {@link KeyWrapPrivateKeyFromFormat} to read and write keys. RSA-OAEP keys
+ * have no raw form. Keys display redacted, compare by reference, and have no
+ * `Arbitrary`.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyWrapPrivateKey: <A extends KeyWrap_.RsaOaep>(algorithm: A) => KeyWrapPrivateKey<A>;
+/**
+ * Schema that decodes an RSA-OAEP `KeyWrap.PrivateKey` with
+ * `KeyFormat.decodePrivate`.
+ *
+ * **Details**
+ *
+ * The format must hold private keys: `KeyFormat.pkcs8`, `KeyFormat.jwk`,
+ * `KeyFormat.pkcs1`, or their PEM forms. A format for another role is a type
+ * error. Decoding runs the runtime's key import, so use the async decoding
+ * functions: `Schema.decodeSync` throws. A `CryptoError` becomes an
+ * `InvalidValue` issue whose `cause` is the error. Encoding fails with a
+ * `Forbidden` issue unless `allowEncode` is `true`, and always for the
+ * read-only PKCS#1 format.
+ *
+ * @stability unstable
+ * @category crypto
+ * @since 4.0.0
+ */
+export declare const KeyWrapPrivateKeyFromFormat: <A extends KeyWrap_.RsaOaep, Data>(format: KeyFormat_.Format<"private", "decode", Data>, algorithm: A, options?: CryptoKeyOptions) => decodeTo<KeyWrapPrivateKey<A>, Codec<Data>>;
 /**
  * Type-level representation returned by {@link Exit}.
  *
@@ -9994,6 +11145,74 @@ export interface Headers extends declare<Headers_.Headers, {
  */
 export declare const Headers: Headers;
 /**
+ * Type-level representation of {@link RetryAfter}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface RetryAfter extends Union<readonly [
+    Struct<{
+        readonly _tag: tag<"Duration">;
+        readonly duration: Duration;
+    }>,
+    Struct<{
+        readonly _tag: tag<"DateTime">;
+        readonly dateTime: DateTimeUtc;
+    }>
+]> {
+    readonly "Rebuild": RetryAfter;
+}
+/**
+ * Schema for parsed `Retry-After` header values.
+ *
+ * **Details**
+ *
+ * Matches `Headers.RetryAfter`: either `{ _tag: "Duration", duration }` or
+ * `{ _tag: "DateTime", dateTime }`. The duration must be finite and
+ * non-negative. Use {@link RetryAfterFromString} for the header string form.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const RetryAfter: RetryAfter;
+/**
+ * Type-level representation of {@link RetryAfterFromString}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export interface RetryAfterFromString extends decodeTo<RetryAfter, String> {
+    readonly "Rebuild": RetryAfterFromString;
+}
+/**
+ * Schema for `Retry-After` header values, decoded with
+ * `Headers.parseRetryAfter`.
+ *
+ * **When to use**
+ *
+ * Use with HTTP API header schemas that carry `Retry-After`. Decoding accepts
+ * whole non-negative seconds or an HTTP date and rejects anything else;
+ * encoding emits the delay as whole seconds, rounding a fractional second up,
+ * or the date as an IMF-fixdate.
+ *
+ * **Example** (Decoding a Retry-After header)
+ *
+ * ```ts
+ * import { Schema } from "effect"
+ *
+ * const value = Schema.decodeSync(Schema.RetryAfterFromString)("120")
+ * // => { _tag: "Duration", duration: Duration.seconds(120) }
+ * ```
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const RetryAfterFromString: RetryAfterFromString;
+/**
  * Type-level representation of {@link UrlParams}.
  *
  * @stability unstable
@@ -10275,6 +11494,102 @@ export type ResultIso<A extends Constraint, E extends Constraint> = {
  */
 export declare function Result<A extends Constraint, E extends Constraint>(success: A, failure: E): Result<A, E>;
 /**
+ * Type-level representation of {@link SemVer}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface SemVer extends declare<SemVer_.SemVer> {
+    readonly "Rebuild": SemVer;
+}
+/**
+ * Schema for `SemVer` values.
+ *
+ * **Details**
+ *
+ * The JSON and StringTree codecs encode a version as its canonical string,
+ * including build metadata.
+ *
+ * @see {@link SemVerFromString} for parsing version strings
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export declare const SemVer: SemVer;
+/**
+ * Type-level representation of {@link SemVerFromString}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface SemVerFromString extends decodeTo<SemVer, String> {
+    readonly "Rebuild": SemVerFromString;
+}
+/**
+ * Schema that parses a Semantic Versioning 2.0.0 string into a `SemVer`.
+ *
+ * **Details**
+ *
+ * Decodes with `SemVer.parse`, rejecting a `v` prefix, surrounding whitespace,
+ * partial versions, and leading zeros. Encodes with `SemVer.format`, including
+ * build metadata.
+ *
+ * @see {@link SemVer} for validating values that are already SemVer values
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export declare const SemVerFromString: SemVerFromString;
+/**
+ * Type-level representation of {@link SemVerRange}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface SemVerRange extends declare<SemVerRange_.SemVerRange> {
+    readonly "Rebuild": SemVerRange;
+}
+/**
+ * Schema for `SemVerRange` values.
+ *
+ * **Details**
+ *
+ * The JSON and StringTree codecs encode a range with `SemVerRange.format`.
+ *
+ * @see {@link SemVerRangeFromString} for parsing range strings
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export declare const SemVerRange: SemVerRange;
+/**
+ * Type-level representation of {@link SemVerRangeFromString}.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.6
+ */
+export interface SemVerRangeFromString extends decodeTo<SemVerRange, String> {
+    readonly "Rebuild": SemVerRangeFromString;
+}
+/**
+ * Schema that parses an npm-style version range string into a `SemVerRange`.
+ *
+ * **Details**
+ *
+ * Decodes with `SemVerRange.parse` and encodes with `SemVerRange.format`,
+ * preserving parsed operators and normalizing wildcard spellings.
+ *
+ * @see {@link SemVerRange} for validating values that are already ranges
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.6
+ */
+export declare const SemVerRangeFromString: SemVerRangeFromString;
+/**
  * Type-level representation returned by {@link Class}.
  *
  * @stability stable
@@ -10334,6 +11649,10 @@ export interface Class<Self, S extends Constraint & {
      *
      * **Gotchas**
      *
+     * Fields with the same name replace inherited fields. Use this to refine
+     * validation or change encoding. Effect does not check compatibility; the
+     * caller must ensure the replacement preserves the base class contract.
+     *
      * Checks from a `Struct` argument are evaluated against the full subclass
      * value after inherited and extension fields are merged. Object-wide checks
      * such as `isMaxProperties` count inherited fields too.
@@ -10372,7 +11691,13 @@ type MissingSelfGeneric<Usage extends string> = `Missing \`Self\` generic - use 
  *
  * **Gotchas**
  *
- * Passing `disableChecks` in the options skips constructor validation.
+ * To subclass a `Schema.Class`, use `Base.extend<Self>(...)`, even when only
+ * adding methods or getters. Pass `{}` for the fields when none are added.
+ * Plain `class Child extends Base` is unsupported.
+ *
+ * Passing `disableChecks: true` skips filters and checks, not parsing of types
+ * and structure. Wrong types and shapes are still rejected, and constructor
+ * defaults still apply.
  *
  * **Example** (Defining a basic class)
  *
@@ -10443,7 +11768,13 @@ export declare const Class: {
      *
      * **Gotchas**
      *
-     * Passing `disableChecks` in the options skips constructor validation.
+     * To subclass a `Schema.Class`, use `Base.extend<Self>(...)`, even when only
+     * adding methods or getters. Pass `{}` for the fields when none are added.
+     * Plain `class Child extends Base` is unsupported.
+     *
+     * Passing `disableChecks: true` skips filters and checks, not parsing of types
+     * and structure. Wrong types and shapes are still rejected, and constructor
+     * defaults still apply.
      *
      * **Example** (Defining a basic class)
      *
@@ -10487,147 +11818,7 @@ export declare const Class: {
      * @since 3.10.0
      */
     <Self = never, Brand = {}>(identifier: string): {
-        /**
-         * Creates a schema-backed class whose constructor validates input against a
-         * {@link Struct} schema. Construction throws an `Error` with a
-         * `SchemaIssue.Issue` in its `cause` on invalid input.
-         *
-         * **When to use**
-         *
-         * Use when you need a schema-backed data class with validated construction,
-         * schema-derived decoding/encoding, and class-style methods or inheritance.
-         *
-         * **Details**
-         *
-         * Pass the desired class type as the first type parameter. The second optional
-         * type parameter can be used to add nominal brands.
-         *
-         * The `identifier` is the schema's stable runtime name. It is exposed on the
-         * class, stored in the schema AST, and used to label diagnostics and generated
-         * references as well as to format class instances.
-         *
-         * It also derives a runtime marker that recognizes instances across hot module
-         * reloads, where `instanceof` can fail because the constructor has been
-         * replaced. The identifier is explicit because the outer JavaScript class name
-         * is not available while the `extends` expression is evaluated and may change
-         * through renaming or minification.
-         *
-         * **Gotchas**
-         *
-         * Passing `disableChecks` in the options skips constructor validation.
-         *
-         * **Example** (Defining a basic class)
-         *
-         * ```ts import.meta.vitest
-         * import { Schema } from "effect"
-         *
-         * class Person extends Schema.Class<Person>("Person")({
-         *   name: Schema.String,
-         *   age: Schema.Number
-         * }) {}
-         *
-         * const alice = new Person({ name: "Alice", age: 30 })
-         * alice.name // => "Alice"
-         * String(alice) // => "Person({\"name\":\"Alice\",\"age\":30})"
-         * ```
-         *
-         * **Example** (Extending a class)
-         *
-         * ```ts import.meta.vitest
-         * import { Schema } from "effect"
-         *
-         * class Animal extends Schema.Class<Animal>("Animal")({
-         *   name: Schema.String
-         * }) {}
-         *
-         * class Dog extends Animal.extend<Dog>("Dog")({
-         *   breed: Schema.String
-         * }) {}
-         *
-         * const dog = new Dog({ name: "Rex", breed: "Labrador" })
-         * dog.name // => "Rex"
-         * dog.breed // => "Labrador"
-         * ```
-         *
-         * @see {@link TaggedClass} for adding a `_tag` literal field to the class schema
-         * @see {@link Error} for defining schema-backed error classes
-         * @see {@link TaggedError} for defining tagged schema-backed error classes
-         *
-         * @stability stable
-         * @category constructors
-         * @since 3.10.0
-         */
         <const Fields extends Struct.Fields>(fields: Fields, annotations?: Annotations.Declaration<Self, readonly [Struct<Fields>]>): [Self] extends [never] ? MissingSelfGeneric<"Schema.Class"> : Class<Self, Struct<Fields>, Brand>;
-        /**
-         * Creates a schema-backed class whose constructor validates input against a
-         * {@link Struct} schema. Construction throws an `Error` with a
-         * `SchemaIssue.Issue` in its `cause` on invalid input.
-         *
-         * **When to use**
-         *
-         * Use when you need a schema-backed data class with validated construction,
-         * schema-derived decoding/encoding, and class-style methods or inheritance.
-         *
-         * **Details**
-         *
-         * Pass the desired class type as the first type parameter. The second optional
-         * type parameter can be used to add nominal brands.
-         *
-         * The `identifier` is the schema's stable runtime name. It is exposed on the
-         * class, stored in the schema AST, and used to label diagnostics and generated
-         * references as well as to format class instances.
-         *
-         * It also derives a runtime marker that recognizes instances across hot module
-         * reloads, where `instanceof` can fail because the constructor has been
-         * replaced. The identifier is explicit because the outer JavaScript class name
-         * is not available while the `extends` expression is evaluated and may change
-         * through renaming or minification.
-         *
-         * **Gotchas**
-         *
-         * Passing `disableChecks` in the options skips constructor validation.
-         *
-         * **Example** (Defining a basic class)
-         *
-         * ```ts import.meta.vitest
-         * import { Schema } from "effect"
-         *
-         * class Person extends Schema.Class<Person>("Person")({
-         *   name: Schema.String,
-         *   age: Schema.Number
-         * }) {}
-         *
-         * const alice = new Person({ name: "Alice", age: 30 })
-         * alice.name // => "Alice"
-         * String(alice) // => "Person({\"name\":\"Alice\",\"age\":30})"
-         * ```
-         *
-         * **Example** (Extending a class)
-         *
-         * ```ts import.meta.vitest
-         * import { Schema } from "effect"
-         *
-         * class Animal extends Schema.Class<Animal>("Animal")({
-         *   name: Schema.String
-         * }) {}
-         *
-         * class Dog extends Animal.extend<Dog>("Dog")({
-         *   breed: Schema.String
-         * }) {}
-         *
-         * const dog = new Dog({ name: "Rex", breed: "Labrador" })
-         * dog.name // => "Rex"
-         * dog.breed // => "Labrador"
-         * ```
-         *
-         * @see {@link TaggedClass} for adding a `_tag` literal field to the class schema
-         * @see {@link Error} for defining schema-backed error classes
-         * @see {@link TaggedError} for defining tagged schema-backed error classes
-         *
-         * @stability stable
-         * @category constructors
-         * @since 3.10.0
-         */
         <S extends Struct<Struct.Fields>>(schema: S, annotations?: Annotations.Declaration<Self, readonly [S]>): [Self] extends [never] ? MissingSelfGeneric<"Schema.Class"> : Class<Self, S, Brand>;
     };
 };
@@ -10695,69 +11886,7 @@ export declare const TaggedClass: {
      * @since 3.10.0
      */
     <Self = never, Brand = {}>(identifier?: string): {
-        /**
-         * Defines a schema-backed class with an automatically populated `_tag` field.
-         *
-         * **When to use**
-         *
-         * Use to define class instances that are validated by a schema and participate
-         * in tagged union matching.
-         *
-         * **Details**
-         *
-         * The optional `identifier` parameter overrides the schema identifier;
-         * it defaults to the `tag` value.
-         *
-         * **Example** (Defining a tagged class)
-         *
-         * ```ts import.meta.vitest
-         * import { Schema } from "effect"
-         *
-         * class Circle extends Schema.TaggedClass<Circle>()("Circle", {
-         *   radius: Schema.Number
-         * }) {}
-         *
-         * const c = new Circle({ radius: 5 })
-         * c._tag // => "Circle"
-         * c.radius // => 5
-         * ```
-         *
-         * @stability stable
-         * @category constructors
-         * @since 3.10.0
-         */
         <Tag extends string, const Fields extends Struct.Fields>(tag: Tag, fields: Fields, annotations?: Annotations.Declaration<Self, readonly [TaggedStruct<Tag, Fields>]>): [Self] extends [never] ? MissingSelfGeneric<"Schema.TaggedClass"> : Class<Self, TaggedStruct<Tag, Fields>, Brand>;
-        /**
-         * Defines a schema-backed class with an automatically populated `_tag` field.
-         *
-         * **When to use**
-         *
-         * Use to define class instances that are validated by a schema and participate
-         * in tagged union matching.
-         *
-         * **Details**
-         *
-         * The optional `identifier` parameter overrides the schema identifier;
-         * it defaults to the `tag` value.
-         *
-         * **Example** (Defining a tagged class)
-         *
-         * ```ts import.meta.vitest
-         * import { Schema } from "effect"
-         *
-         * class Circle extends Schema.TaggedClass<Circle>()("Circle", {
-         *   radius: Schema.Number
-         * }) {}
-         *
-         * const c = new Circle({ radius: 5 })
-         * c._tag // => "Circle"
-         * c.radius // => 5
-         * ```
-         *
-         * @stability stable
-         * @category constructors
-         * @since 3.10.0
-         */
         <Tag extends string, S extends Struct<Struct.Fields>>(tag: Tag, schema: S, annotations?: Annotations.Declaration<Self, readonly [Struct<Simplify<{
             readonly _tag: tag<Tag>;
         } & S["fields"]>>]>): [Self] extends [never] ? MissingSelfGeneric<"Schema.TaggedClass"> : Class<Self, Struct<Simplify<{
@@ -10819,59 +11948,7 @@ export declare const Error: {
      * @since 4.0.0
      */
     <Self = never, Brand = {}>(identifier: string): {
-        /**
-         * Creates a schema-backed error class that can be used as a typed,
-         * yieldable error in Effect programs. Combines {@link Class} validation with
-         * the `YieldableError` interface so instances can be yielded directly inside
-         * `Effect.gen`.
-         *
-         * **Example** (Schema-backed error)
-         *
-         * ```ts import.meta.vitest
-         * import { Effect, Schema } from "effect"
-         *
-         * class NotFound extends Schema.Error<NotFound>("NotFound")({
-         *   id: Schema.Number
-         * }) {}
-         *
-         * const program = Effect.gen(function*() {
-         *   yield* new NotFound({ id: 1 })
-         * })
-         * const error = await Effect.runPromise(Effect.flip(program))
-         * error.id // => 1
-         * ```
-         *
-         * @stability stable
-         * @category constructors
-         * @since 4.0.0
-         */
         <const Fields extends Struct.Fields>(fields: Fields, annotations?: Annotations.Declaration<Self, readonly [Struct<Fields>]>): [Self] extends [never] ? MissingSelfGeneric<"Schema.Error"> : Class<Self, Struct<Fields>, Cause_.YieldableError & Brand>;
-        /**
-         * Creates a schema-backed error class that can be used as a typed,
-         * yieldable error in Effect programs. Combines {@link Class} validation with
-         * the `YieldableError` interface so instances can be yielded directly inside
-         * `Effect.gen`.
-         *
-         * **Example** (Schema-backed error)
-         *
-         * ```ts import.meta.vitest
-         * import { Effect, Schema } from "effect"
-         *
-         * class NotFound extends Schema.Error<NotFound>("NotFound")({
-         *   id: Schema.Number
-         * }) {}
-         *
-         * const program = Effect.gen(function*() {
-         *   yield* new NotFound({ id: 1 })
-         * })
-         * const error = await Effect.runPromise(Effect.flip(program))
-         * error.id // => 1
-         * ```
-         *
-         * @stability stable
-         * @category constructors
-         * @since 4.0.0
-         */
         <S extends Struct<Struct.Fields>>(schema: S, annotations?: Annotations.Declaration<Self, readonly [S]>): [Self] extends [never] ? MissingSelfGeneric<"Schema.Error"> : Class<Self, S, Cause_.YieldableError & Brand>;
     };
 };
@@ -10937,67 +12014,7 @@ export declare const TaggedError: {
      * @since 3.10.0
      */
     <Self = never, Brand = {}>(identifier?: string): {
-        /**
-         * Defines a schema-backed yieldable error class with an automatically populated
-         * `_tag` field.
-         *
-         * **When to use**
-         *
-         * Use to define typed errors that are schema validated, yielded in `Effect.gen`,
-         * and matched as tagged union members.
-         *
-         * **Example** (Defining a tagged error class)
-         *
-         * ```ts import.meta.vitest
-         * import { Effect, Schema } from "effect"
-         *
-         * class NotFound extends Schema.TaggedError<NotFound>()("NotFound", {
-         *   id: Schema.Number
-         * }) {}
-         *
-         * const program = Effect.gen(function*() {
-         *   yield* new NotFound({ id: 42 })
-         * })
-         * const error = await Effect.runPromise(Effect.flip(program))
-         * error._tag // => "NotFound"
-         * error.id // => 42
-         * ```
-         *
-         * @stability stable
-         * @category constructors
-         * @since 3.10.0
-         */
         <Tag extends string, const Fields extends Struct.Fields>(tag: Tag, fields: Fields, annotations?: Annotations.Declaration<Self, readonly [TaggedStruct<Tag, Fields>]>): [Self] extends [never] ? MissingSelfGeneric<"Schema.TaggedError"> : Class<Self, TaggedStruct<Tag, Fields>, Cause_.YieldableError & Brand>;
-        /**
-         * Defines a schema-backed yieldable error class with an automatically populated
-         * `_tag` field.
-         *
-         * **When to use**
-         *
-         * Use to define typed errors that are schema validated, yielded in `Effect.gen`,
-         * and matched as tagged union members.
-         *
-         * **Example** (Defining a tagged error class)
-         *
-         * ```ts import.meta.vitest
-         * import { Effect, Schema } from "effect"
-         *
-         * class NotFound extends Schema.TaggedError<NotFound>()("NotFound", {
-         *   id: Schema.Number
-         * }) {}
-         *
-         * const program = Effect.gen(function*() {
-         *   yield* new NotFound({ id: 42 })
-         * })
-         * const error = await Effect.runPromise(Effect.flip(program))
-         * error._tag // => "NotFound"
-         * error.id // => 42
-         * ```
-         *
-         * @stability stable
-         * @category constructors
-         * @since 3.10.0
-         */
         <Tag extends string, S extends Struct<Struct.Fields>>(tag: Tag, schema: S, annotations?: Annotations.Declaration<Self, readonly [Struct<Simplify<{
             readonly _tag: tag<Tag>;
         } & S["fields"]>>]>): [Self] extends [never] ? MissingSelfGeneric<"Schema.TaggedError"> : Class<Self, Struct<Simplify<{
@@ -11489,6 +12506,168 @@ export declare const toCodecArrayFromSingle: {
      * @since 4.0.0
      */
     <S extends Constraint>(schema: S): toCodecArrayFromSingle<S>;
+};
+/**
+ * Type-level representation returned by {@link toCodecGoJson}.
+ *
+ * @stability unstable
+ * @category converting
+ * @since 4.0.6
+ */
+export interface toCodecGoJson<S extends Constraint> extends BottomLazy<S["ast"], toCodecGoJson<S>, S["~type.parameters"], S["~type.mutability"], S["~type.optionality"], S["~type.constructor.default"], S["~encoded.mutability"], S["~encoded.optionality"]> {
+    readonly "Type": S["Type"];
+    readonly "Encoded": Json;
+    readonly "DecodingServices": S["DecodingServices"];
+    readonly "EncodingServices": S["EncodingServices"];
+    readonly "~type.make.in": S["~type.make.in"];
+    readonly "~type.make": S["~type.make"];
+    readonly "Iso": S["Iso"];
+    readonly schema: S;
+}
+/**
+ * Derives a JSON codec, like {@link toCodecJson}, that also accepts the
+ * `null` values Go's `encoding/json` writes for nil pointers, slices, and maps.
+ *
+ * **When to use**
+ *
+ * Use when decoding JSON produced by a Go service (for example the Docker
+ * Engine or Kubernetes APIs), where any field the API document describes as
+ * optional, or any slice or map, may arrive as `null`.
+ *
+ * **Details**
+ *
+ * Decoding applies these rules at every level of the schema:
+ *
+ * - An optional key that is `null` decodes as a missing key.
+ * - A required array (`Schema.Array`) that is `null` decodes as `[]`.
+ * - A required record (`Schema.Record`) that is `null` decodes as `{}`.
+ *
+ * Array and record rules also apply at the top level and to nested collection
+ * values. Tuples, non-empty arrays, and structs are not treated as collections;
+ * collection checks still apply to the empty value.
+ *
+ * Encoding is unchanged from {@link toCodecJson}: the added rules only decode
+ * `null` and do not emit it. A missing key stays missing.
+ *
+ * These rules also accept `encoding/json/v2` output. By default, v2 writes
+ * nil slices and maps as `[]` and `{}`, but it can be configured to emit
+ * `null` instead.
+ *
+ * **Gotchas**
+ *
+ * - Normalization deliberately discards the distinction between nil and empty
+ *   Go slices or maps. They are distinguishable in Go, and unmarshalling a
+ *   missing key, `null`, or an empty collection can affect existing values
+ *   differently. Use {@link toCodecJson} with explicit nullable schemas when
+ *   that distinction matters.
+ * - A key whose schema already accepts `null` (for example
+ *   `Schema.NullOr(X)`, `Schema.Unknown`, or `Schema.Json`) keeps `null` as a
+ *   value.
+ * - A required field that is not an array or a record (a nil pointer to a Go
+ *   struct, for example) still fails on `null`. Make it optional if the API
+ *   can omit it.
+ * - A nil `[]byte` is written as `null` by `encoding/json` (and as `""` by
+ *   version 2), but its schema is a base64 string, not an array. A required
+ *   `[]byte` field that is `null` fails; make it optional if the API can send
+ *   `null`.
+ * - Only these `null` rules are covered. Field formats such as durations,
+ *   base64 bytes, and numbers encoded as strings belong in the field schemas.
+ *
+ * **Example** (Decoding a Go response with nil fields)
+ *
+ * ```ts import.meta.vitest
+ * import { Schema } from "effect"
+ *
+ * const Container = Schema.Struct({
+ *   Id: Schema.String,
+ *   Names: Schema.Array(Schema.String),
+ *   Labels: Schema.Record(Schema.String, Schema.String),
+ *   Status: Schema.optionalKey(Schema.String)
+ * })
+ *
+ * const decode = Schema.decodeUnknownSync(Schema.toCodecGoJson(Container))
+ *
+ * decode({ Id: "a", Names: null, Labels: null, Status: null }) // => { Id: "a", Names: [], Labels: {} }
+ * ```
+ *
+ * @see {@link toCodecJson} for the canonical JSON codec
+ * @stability unstable
+ * @category converting
+ * @since 4.0.6
+ */
+export declare const toCodecGoJson: {
+    /**
+     * Derives a JSON codec, like {@link toCodecJson}, that also accepts the
+     * `null` values Go's `encoding/json` writes for nil pointers, slices, and maps.
+     *
+     * **When to use**
+     *
+     * Use when decoding JSON produced by a Go service (for example the Docker
+     * Engine or Kubernetes APIs), where any field the API document describes as
+     * optional, or any slice or map, may arrive as `null`.
+     *
+     * **Details**
+     *
+     * Decoding applies these rules at every level of the schema:
+     *
+     * - An optional key that is `null` decodes as a missing key.
+     * - A required array (`Schema.Array`) that is `null` decodes as `[]`.
+     * - A required record (`Schema.Record`) that is `null` decodes as `{}`.
+     *
+     * Array and record rules also apply at the top level and to nested collection
+     * values. Tuples, non-empty arrays, and structs are not treated as collections;
+     * collection checks still apply to the empty value.
+     *
+     * Encoding is unchanged from {@link toCodecJson}: the added rules only decode
+     * `null` and do not emit it. A missing key stays missing.
+     *
+     * These rules also accept `encoding/json/v2` output. By default, v2 writes
+     * nil slices and maps as `[]` and `{}`, but it can be configured to emit
+     * `null` instead.
+     *
+     * **Gotchas**
+     *
+     * - Normalization deliberately discards the distinction between nil and empty
+     *   Go slices or maps. They are distinguishable in Go, and unmarshalling a
+     *   missing key, `null`, or an empty collection can affect existing values
+     *   differently. Use {@link toCodecJson} with explicit nullable schemas when
+     *   that distinction matters.
+     * - A key whose schema already accepts `null` (for example
+     *   `Schema.NullOr(X)`, `Schema.Unknown`, or `Schema.Json`) keeps `null` as a
+     *   value.
+     * - A required field that is not an array or a record (a nil pointer to a Go
+     *   struct, for example) still fails on `null`. Make it optional if the API
+     *   can omit it.
+     * - A nil `[]byte` is written as `null` by `encoding/json` (and as `""` by
+     *   version 2), but its schema is a base64 string, not an array. A required
+     *   `[]byte` field that is `null` fails; make it optional if the API can send
+     *   `null`.
+     * - Only these `null` rules are covered. Field formats such as durations,
+     *   base64 bytes, and numbers encoded as strings belong in the field schemas.
+     *
+     * **Example** (Decoding a Go response with nil fields)
+     *
+     * ```ts import.meta.vitest
+     * import { Schema } from "effect"
+     *
+     * const Container = Schema.Struct({
+     *   Id: Schema.String,
+     *   Names: Schema.Array(Schema.String),
+     *   Labels: Schema.Record(Schema.String, Schema.String),
+     *   Status: Schema.optionalKey(Schema.String)
+     * })
+     *
+     * const decode = Schema.decodeUnknownSync(Schema.toCodecGoJson(Container))
+     *
+     * decode({ Id: "a", Names: null, Labels: null, Status: null }) // => { Id: "a", Names: [], Labels: {} }
+     * ```
+     *
+     * @see {@link toCodecJson} for the canonical JSON codec
+     * @stability unstable
+     * @category converting
+     * @since 4.0.6
+     */
+    <S extends Constraint>(schema: S): toCodecGoJson<S>;
 };
 type XmlEncoderOptions = {
     /** Root element name for the returned XML string. Default: "root" */
@@ -12025,7 +13204,7 @@ export declare namespace Annotations {
         readonly toCode?: SchemaRepresentation.Generation.Declaration | undefined;
     }
     /**
-     * Annotations for filter schema nodes (created via `Schema.filter`). Extends
+     * Annotations for filter checks (created via `Schema.makeFilter`). Extends
      * {@link Augment} with an optional error message, identifier, and metadata.
      * Filters are intentionally non-parametric to keep them covariant.
      *

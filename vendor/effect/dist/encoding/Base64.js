@@ -133,6 +133,15 @@ export const decode = str => {
 export const decodeString = str => Result.map(decode(str), _ => decoder.decode(_));
 const encodeBytes = bytes => {
   const length = bytes.length;
+  // Looked up on the prototype at call time, so own or subclass overrides are ignored.
+  const toBase64 = Uint8Array.prototype.toBase64;
+  // The size guard also keeps detached buffers (length 0) away from native `toBase64`, which throws on them.
+  if (length >= 32 && typeof toBase64 === "function") return toBase64.call(bytes);
+  // Below ~128 bytes, appending to a string beats filling a byte array and decoding it once.
+  return length < 128 ? encodeShort(bytes) : encodeLong(bytes);
+};
+const encodeShort = bytes => {
+  const length = bytes.length;
   let result = "";
   let i;
   for (i = 2; i < length; i += 3) {
@@ -154,10 +163,37 @@ const encodeBytes = bytes => {
   }
   return result;
 };
+const encodeLong = bytes => {
+  const length = bytes.length;
+  const result = new Uint8Array(Math.ceil(length / 3) * 4);
+  let i;
+  let j = 0;
+  for (i = 2; i < length; i += 3, j += 4) {
+    result[j] = alphabetCodes[bytes[i - 2] >> 2];
+    result[j + 1] = alphabetCodes[(bytes[i - 2] & 0x03) << 4 | bytes[i - 1] >> 4];
+    result[j + 2] = alphabetCodes[(bytes[i - 1] & 0x0f) << 2 | bytes[i] >> 6];
+    result[j + 3] = alphabetCodes[bytes[i] & 0x3f];
+  }
+  if (i === length + 1) {
+    result[j] = alphabetCodes[bytes[i - 2] >> 2];
+    result[j + 1] = alphabetCodes[(bytes[i - 2] & 0x03) << 4];
+    result[j + 2] = paddingCode;
+    result[j + 3] = paddingCode;
+  }
+  if (i === length) {
+    result[j] = alphabetCodes[bytes[i - 2] >> 2];
+    result[j + 1] = alphabetCodes[(bytes[i - 2] & 0x03) << 4 | bytes[i - 1] >> 4];
+    result[j + 2] = alphabetCodes[(bytes[i - 1] & 0x0f) << 2];
+    result[j + 3] = paddingCode;
+  }
+  return decoder.decode(result);
+};
 const encoder = /*#__PURE__*/new TextEncoder();
 const decoder = /*#__PURE__*/new TextDecoder();
 const stripCrlf = str => str.replace(/[\n\r]/g, "");
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const alphabetCodes = /*#__PURE__*/encoder.encode(alphabet);
+const paddingCode = /*#__PURE__*/"=".charCodeAt(0);
 const codes = /*#__PURE__*/new Uint8Array(123).fill(255);
 for (let i = 0; i < alphabet.length; i++) codes[/*#__PURE__*/alphabet.charCodeAt(i)] = i;
 codes[/*#__PURE__*/"=".charCodeAt(0)] = 0;

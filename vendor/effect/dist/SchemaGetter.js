@@ -714,7 +714,8 @@ export function Boolean() {
  * **Details**
  *
  * - Delegates to `globalThis.BigInt`.
- * - Throws at runtime if the input cannot be converted (e.g. non-numeric string).
+ * - Fails with `SchemaIssue.InvalidValue` if the input cannot be converted
+ *   (e.g. a non-numeric string or a non-integer number).
  *
  * **Example** (Coercing to a bigint)
  *
@@ -730,7 +731,15 @@ export function Boolean() {
  * @since 4.0.0
  */
 export function BigInt() {
-  return transform(globalThis.BigInt);
+  return transformEffect((input, options) => {
+    try {
+      return Effect.succeed(globalThis.BigInt(input));
+    } catch {
+      return Effect.fail(new SchemaIssue.InvalidValue({
+        expected: "a value that can be converted to a bigint"
+      }, input, options));
+    }
+  });
 }
 /**
  * Coerces a value to a `Date` using `new Date(input)`.
@@ -1000,7 +1009,10 @@ export function stringifyJson(options) {
  * The getter is pure and never fails. It splits the string by `separator`
  * (default `,`) and then each pair at the first `keyValueSeparator` (default `=`),
  * preserving the rest of the value. An empty `keyValueSeparator` uses the first
- * two characters as the key and value. Pairs missing a key or value are skipped.
+ * two characters as the key and value. Pairs without a `keyValueSeparator` or
+ * with an empty key are skipped. Pairs with an empty value are skipped unless
+ * `keepEmptyValues` is `true`, in which case the value is `""`. When `trim` is
+ * `true`, keys and values are trimmed before these checks.
  *
  * **Example** (Parsing a key-value string)
  *
@@ -1022,19 +1034,26 @@ export function stringifyJson(options) {
 export function splitKeyValue(options) {
   const separator = options?.separator ?? ",";
   const keyValueSeparator = options?.keyValueSeparator ?? "=";
+  const trim = options?.trim ?? false;
+  const keepEmptyValues = options?.keepEmptyValues ?? false;
   return transform(input => input.split(separator).reduce((acc, pair) => {
+    let key;
+    let value;
     if (keyValueSeparator === "") {
-      const [key, value] = pair.split("");
-      if (key && value) InternalRecord.assignProperty(acc, key, value);
-      return acc;
+      key = pair.slice(0, 1);
+      value = pair.slice(1, 2);
+    } else {
+      const index = pair.indexOf(keyValueSeparator);
+      if (index === -1) return acc;
+      key = pair.slice(0, index);
+      value = pair.slice(index + keyValueSeparator.length);
     }
-    const index = pair.indexOf(keyValueSeparator);
-    if (index <= 0) return acc;
-    const key = pair.slice(0, index);
-    const value = pair.slice(index + keyValueSeparator.length);
-    if (value) {
-      InternalRecord.assignProperty(acc, key, value);
+    if (trim) {
+      key = key.trim();
+      value = value.trim();
     }
+    if (key === "" || value === "" && !keepEmptyValues) return acc;
+    InternalRecord.assignProperty(acc, key, value);
     return acc;
   }, {}));
 }
@@ -1139,7 +1158,8 @@ export function encodeBase64() {
  *
  * **Details**
  *
- * The getter is pure and never fails.
+ * The getter is pure and never fails. The output is unpadded unless
+ * `padding` is `true`.
  *
  * **Example** (Encoding to Base64Url)
  *
@@ -1159,8 +1179,8 @@ export function encodeBase64() {
  * @category encoding
  * @since 4.0.0
  */
-export function encodeBase64Url() {
-  return transform(Base64Url.encode);
+export function encodeBase64Url(options) {
+  return transform(options?.padding ? Base64Url.encodePadded : Base64Url.encode);
 }
 /**
  * Encodes a `Uint8Array` or string to a hexadecimal string.
@@ -1648,12 +1668,14 @@ function bracketPathToTokens(bracketPath) {
   if (bracketPath === "") {
     return [""];
   }
-  const replaced = bracketPath.replace(/\[(.*?)\]/g, ".$1");
+  // Consume unmatched bracket runs too, avoiding repeated scans for a closing bracket.
+  const replaced = bracketPath.replace(/\[([^\]\r\n\u2028\u2029]*)(\])?/g, (match, content, closing) => closing ? `.${content}` : match);
   const parts = replaced.split(".");
   // if bracket path started with "[...]" we get ".foo" => ["", "foo"]; drop the synthetic first ""
   const start = replaced.startsWith(".") ? 1 : 0;
   return parts.slice(start).map(part => Arr.isCanonicalArrayIndex(part) ? globalThis.Number(part) : part);
 }
+const MAX_ARRAY_HOLES = 20;
 /**
  * Builds a nested tree object from a list of bracket-path entries.
  *
@@ -1677,6 +1699,10 @@ function bracketPathToTokens(bracketPath) {
  *   - `""` → real empty key
  * - Numeric bracket segments become array indices only when they are valid
  *   JavaScript array-index strings; otherwise they remain object keys.
+ * - An indexed container becomes an array only when it has at most 20 holes
+ *   (missing indices below its highest index). Otherwise it is returned as an
+ *   object keyed by the index strings, so untrusted input such as
+ *   `a[4294967294]` cannot produce huge sparse arrays.
  * - Duplicate keys for the same path are merged into arrays.
  * - If a structural path conflicts with a previous leaf or a different container
  *   type, the later structural path replaces the conflicting value.
@@ -1707,40 +1733,29 @@ export function makeTreeRecord(bracketPathEntries) {
   const out = {};
   const containers = new WeakSet();
   const duplicates = new WeakSet();
-  function getOrCreateContainer(self, key, shouldBeArray) {
-    const current = Object.hasOwn(self, key) ? self[key] : undefined;
-    if (containers.has(current) && Array.isArray(current) === shouldBeArray) {
-      return current;
-    }
-    const container = shouldBeArray ? [] : {};
-    containers.add(container);
-    InternalRecord.assignProperty(self, key, container);
-    return container;
-  }
+  // Indexed containers are built as plain objects so that large indices never
+  // allocate sparse arrays, and are materialized once all entries are applied
+  const indexed = new Map();
   bracketPathEntries.forEach(([key, value]) => {
     const tokens = bracketPathToTokens(key);
     let cur = out;
-    tokens.forEach((token, i) => {
-      const isLast = i === tokens.length - 1;
-      // We are inside an array and see "[]" (empty token) => append
-      if (Array.isArray(cur) && token === "") {
-        if (isLast) {
-          cur.push(value);
-        } else {
-          // bracket path: "foo[][bar]" => push a new element and descend into it
-          const next = tokens[i + 1];
-          const shouldBeArray = typeof next === "number" || next === "";
-          const index = cur.length;
-          cur = getOrCreateContainer(cur, index, shouldBeArray);
-        }
-      } else if (isLast) {
-        // If we're setting a value at a path that already exists
-        // convert it to an array to support multiple values for the same key
-        const hasOwn = Object.hasOwn(cur, token);
-        if (hasOwn && Array.isArray(cur[token]) && (containers.has(cur[token]) || duplicates.has(cur[token]))) {
-          cur[token].push(value);
+    for (let i = 0; i < tokens.length; i++) {
+      const state = indexed.get(cur);
+      // Resolve "[]" to the next index before handling leaves or containers
+      const token = tokens[i] === "" && state !== undefined ? state.length : tokens[i];
+      if (state !== undefined && typeof token === "number") {
+        state.length = Math.max(state.length, token + 1);
+      }
+      const hasOwn = Object.hasOwn(cur, token);
+      const current = hasOwn ? cur[token] : undefined;
+      if (i === tokens.length - 1) {
+        const currentState = indexed.get(current);
+        if (currentState !== undefined) {
+          InternalRecord.assignProperty(current, currentState.length++, value);
+        } else if (duplicates.has(current)) {
+          current.push(value);
         } else if (hasOwn) {
-          const values = [cur[token], value];
+          const values = [current, value];
           duplicates.add(values);
           InternalRecord.assignProperty(cur, token, values);
         } else {
@@ -1748,12 +1763,37 @@ export function makeTreeRecord(bracketPathEntries) {
         }
       } else {
         const next = tokens[i + 1];
-        // if next is a number OR "" (from []), we are building an array
         const shouldBeArray = typeof next === "number" || next === "";
-        cur = getOrCreateContainer(cur, token, shouldBeArray);
+        if (containers.has(current) && indexed.has(current) === shouldBeArray) {
+          cur = current;
+        } else {
+          const container = {};
+          containers.add(container);
+          if (shouldBeArray) {
+            indexed.set(container, {
+              parent: cur,
+              key: token,
+              length: 0
+            });
+          }
+          InternalRecord.assignProperty(cur, token, container);
+          cur = container;
+        }
       }
-    });
+    }
   });
+  // Children are created after their parents, so materializing in reverse
+  // creation order replaces every nested container before its parent is copied
+  for (const [builder, {
+    key,
+    length,
+    parent
+  }] of Array.from(indexed).reverse()) {
+    // A later conflicting path may have replaced the container in its parent
+    if (parent[key] === builder && length - Object.keys(builder).length <= MAX_ARRAY_HOLES) {
+      InternalRecord.assignProperty(parent, key, Object.assign(new Array(length), builder));
+    }
+  }
   return out;
 }
 /**

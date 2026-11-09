@@ -221,7 +221,7 @@ export declare const isFailure: <A, E>(result: AsyncResult<A, E>) => result is F
  * @category guards
  * @since 4.0.0
  */
-export declare const isInterrupted: <A, E>(result: AsyncResult<A, E>) => result is Failure<A, E>;
+export declare const isInterrupted: <A, E>(result: AsyncResult<A, E>) => boolean;
 /**
  * Creates a `Failure` result from a `Cause`, optionally preserving a previous success and marking the result as waiting.
  *
@@ -581,6 +581,12 @@ export declare const matchWithWaiting: {
 };
 /**
  * Combines an iterable or record of `AsyncResult` and plain values into one `AsyncResult`, returning the first non-success result or a success of the collected values marked waiting when any input success is waiting.
+ *
+ * **Details**
+ *
+ * If the first non-success result is a failure, its previous success is
+ * rebuilt in the combined shape from each input's current or previous value.
+ * It is omitted if any input has no value.
  *
  * @stability unstable
  * @category combinators

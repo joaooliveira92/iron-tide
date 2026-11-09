@@ -7,12 +7,12 @@ workspace as `"effect"/"@effect/vitest": "workspace:*"`.
 | Field | Value |
 | --- | --- |
 | Upstream repository | https://github.com/Effect-TS/effect (packages/effect) |
-| Git tag | `effect@4.0.2` |
-| Exact npm version | `4.0.2` |
-| npm tarball | https://registry.npmjs.org/effect/-/effect-4.0.2.tgz |
-| Tarball integrity (sha512) | `sha512-YeYnLqSFrL4+tCOXRrfNP03w8FILoF/wDl+ukraJAGzXrjcS383W7LAAvGBbLatEyktmLxRq+9xJinx7QzXW5A==` |
-| Tarball shasum (sha1) | `568ce7989ece849f55f1acea644bc85b5ea88b2e` |
-| Sync date | 2026-10-11 |
+| Git tag | `effect@4.1.2` |
+| Exact npm version | `4.1.2` |
+| npm tarball | https://registry.npmjs.org/effect/-/effect-4.1.2.tgz |
+| Tarball integrity (sha512) | `sha512-d3Oah1WyKxFLFh19yWheS5IXIVaITzxZ71JkE1rkUozq/6EcJSU5nPk5bF2QrSygZ3SQoiNQB8TsxFriyMeMaQ==` |
+| Tarball shasum (sha1) | `fddd855065820f449e3558b5bd02c73264f05044` |
+| Sync date | 2026-11-09 |
 | Patch list | none |
 
 Regenerate with `node scripts/vendor-effect-sync.mjs`; verify with

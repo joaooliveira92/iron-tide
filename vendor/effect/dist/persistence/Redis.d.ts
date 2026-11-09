@@ -1,5 +1,6 @@
-import type * as Cause from "../Cause.ts";
+import * as Cause from "../Cause.ts";
 import * as Context from "../Context.ts";
+import * as Duration from "../Duration.ts";
 import * as Effect from "../Effect.ts";
 import * as Queue from "../Queue.ts";
 import * as Schema from "../Schema.ts";
@@ -29,6 +30,19 @@ declare const Redis_base: Context.ServiceClass<Redis, "effect/persistence/Redis"
         readonly params: ReadonlyArray<unknown>;
         readonly result: unknown;
     }>(script: Script<Config>) => (...params: Config["params"]) => Effect.Effect<Config["result"], RedisError>;
+    /**
+     * Reserves a pooled connection that no other caller shares for the lifetime
+     * of the current scope.
+     *
+     * Use it for blocking commands such as `XREAD BLOCK`, `XREADGROUP BLOCK`,
+     * `BLPOP`, `BRPOP`, `BLMOVE`, `BLMPOP` and `WAIT`, which would otherwise
+     * hold up every command queued behind them on the shared connection.
+     *
+     * When the scope closes, the connection returns to the pool. If a command on
+     * it failed, was interrupted, or is still running, the connection is closed
+     * instead, because Redis may still be processing the command.
+     */
+    readonly reserve: Effect.Effect<Connection, RedisError, Scope.Scope>;
 }>;
 /**
  * Service for sending Redis commands, subscribing to channels, and evaluating
@@ -41,12 +55,56 @@ declare const Redis_base: Context.ServiceClass<Redis, "effect/persistence/Redis"
 export declare class Redis extends Redis_base {
 }
 /**
+ * A dedicated Redis connection obtained from `Redis.reserve`.
+ *
+ * **Details**
+ *
+ * `eval` loads scripts through the shared connection and runs `EVALSHA` on
+ * this connection.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.7
+ */
+export interface Connection {
+    readonly send: Redis["Service"]["send"];
+    readonly eval: Redis["Service"]["eval"];
+}
+/**
+ * Options for the pool of connections behind `Redis.reserve`.
+ *
+ * **Details**
+ *
+ * - `maxConnections`: maximum number of reserved connections, default `10`.
+ *   Further `reserve` calls wait for a connection to be released.
+ * - `minConnections`: connections kept open while idle, default `0`.
+ * - `idleTimeout`: how long a connection above `minConnections` stays idle
+ *   before it is closed, default 60 seconds.
+ * - `acquireTimeout`: how long `reserve` waits for a connection before failing
+ *   with a `RedisError`. Unbounded by default.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.7
+ */
+export interface PoolOptions {
+    readonly maxConnections?: number | undefined;
+    readonly minConnections?: number | undefined;
+    readonly idleTimeout?: Duration.Input | undefined;
+    readonly acquireTimeout?: Duration.Input | undefined;
+}
+/**
  * Creates a `Redis` service from raw command and subscription operations.
  *
  * **Details**
  *
  * Lua scripts are loaded through `SCRIPT LOAD`, cached, and then invoked with
  * `EVALSHA`.
+ *
+ * `connect` opens the dedicated connections behind `reserve`. Its `close` must
+ * fail any command still in flight on that connection. Connections are pooled
+ * according to `pool`, and closing the scope closes every connection,
+ * including reserved ones with a command in flight.
  *
  * @stability unstable
  * @category constructors
@@ -55,6 +113,11 @@ export declare class Redis extends Redis_base {
 export declare const make: (options: {
     readonly send: <A = unknown>(command: string, ...args: ReadonlyArray<string>) => Effect.Effect<A, RedisError>;
     readonly subscribe: (channel: string, onMessage: (message: RedisMessage) => void) => Effect.Effect<Effect.Effect<void, RedisError>, RedisError, Scope.Scope>;
+    readonly connect: Effect.Effect<{
+        readonly send: <A = unknown>(command: string, ...args: ReadonlyArray<string>) => Effect.Effect<A, RedisError>;
+        readonly close: Effect.Effect<void>;
+    }, RedisError>;
+    readonly pool?: PoolOptions | undefined;
 }) => Effect.Effect<{
     readonly send: <A = unknown>(command: string, ...args: ReadonlyArray<string>) => Effect.Effect<A, RedisError>;
     /**
@@ -69,7 +132,20 @@ export declare const make: (options: {
         readonly params: ReadonlyArray<unknown>;
         readonly result: unknown;
     }>(script: Script<Config>) => (...params: Config["params"]) => Effect.Effect<Config["result"], RedisError>;
-}, never, never>;
+    /**
+     * Reserves a pooled connection that no other caller shares for the lifetime
+     * of the current scope.
+     *
+     * Use it for blocking commands such as `XREAD BLOCK`, `XREADGROUP BLOCK`,
+     * `BLPOP`, `BRPOP`, `BLMOVE`, `BLMPOP` and `WAIT`, which would otherwise
+     * hold up every command queued behind them on the shared connection.
+     *
+     * When the scope closes, the connection returns to the pool. If a command on
+     * it failed, was interrupted, or is still running, the connection is closed
+     * instead, because Redis may still be processing the command.
+     */
+    readonly reserve: Effect.Effect<Connection, RedisError, Scope.Scope>;
+}, never, Scope.Scope>;
 type ErrorTypeId = "~effect/persistence/Redis/RedisError";
 declare const ErrorTypeId: ErrorTypeId;
 declare const RedisError_base: Schema.Class<RedisError, Schema.Struct<{

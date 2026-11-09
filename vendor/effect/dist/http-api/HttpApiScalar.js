@@ -14,7 +14,6 @@ import * as Function from "../Function.js";
 import * as HttpRouter from "../http/HttpRouter.js";
 import * as HttpServerResponse from "../http/HttpServerResponse.js";
 import * as Html from "./internal/html.js";
-import * as internal from "./internal/httpApiScalar.js";
 import * as OpenApi from "./OpenApi.js";
 const makeHandler = options => {
   const makeResponse = Function.memoize(api => {
@@ -60,18 +59,22 @@ const makeHandler = options => {
  * **Details**
  *
  * The route serves the OpenAPI specification generated from the API at the
- * configured path, defaulting to `/docs`.
+ * configured path, defaulting to `/docs`. The bundled script is loaded when
+ * the layer is built, not when this module is imported.
  *
  * @stability unstable
  * @category layers
  * @since 4.0.0
  */
 export const layer = (api, options) => HttpRouter.use(Effect.fnUntraced(function* (router) {
+  const {
+    javascript
+  } = yield* Effect.promise(() => import("./internal/httpApiScalar.js"));
   const handler = makeHandler({
     api,
     source: {
       _tag: "Inline",
-      source: internal.javascript
+      source: javascript
     },
     scalar: options?.scalar
   });

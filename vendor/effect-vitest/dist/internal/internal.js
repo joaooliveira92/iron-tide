@@ -6,6 +6,7 @@ import * as Cause from "effect/Cause";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Fiber from "effect/Fiber";
 import { constVoid, flow, pipe } from "effect/Function";
 import * as Layer from "effect/Layer";
 import * as Schedule from "effect/Schedule";
@@ -14,8 +15,12 @@ import * as TestClock from "effect/testing/TestClock";
 import * as TestConsole from "effect/testing/TestConsole";
 import * as V from "vitest";
 const getCurrentSuite = V.TestRunner.getCurrentSuite;
-const runPromise = /*#__PURE__*/Effect.fnUntraced(function* (effect, _ctx) {
-  const exit = yield* Effect.exit(effect);
+const runPromise = (effect, ctx) => Effect.runPromise(
+// Only the test is interruptible: once the signal aborts, the fiber stops
+// at its next interruptible step, which would skip reporting the defects
+// raised by finalizers.
+Effect.uninterruptibleMask(restore => Effect.gen(function* () {
+  const exit = yield* Effect.exit(restore(effect));
   if (Exit.isFailure(exit)) {
     const errors = Cause.prettyErrors(exit.cause);
     for (let i = 0; i < errors.length; i++) {
@@ -23,26 +28,27 @@ const runPromise = /*#__PURE__*/Effect.fnUntraced(function* (effect, _ctx) {
     }
   }
   return yield* exit;
-}, (effect, _, ctx) => Effect.runPromise(effect, {
+})), {
   signal: ctx?.signal
-}));
+});
+const settleOnAbort = (ctx, promise) => {
+  // Vitest stops awaiting the promise once the signal aborts (timeout or
+  // cancellation), so only then add a hook that waits for the finalizers.
+  // Registering it unconditionally would change the teardown of every test.
+  const onAbort = () => ctx.onTestFinished(() => promise.then(constVoid, constVoid));
+  ctx.signal.addEventListener("abort", onAbort, {
+    once: true
+  });
+  const cleanup = () => ctx.signal.removeEventListener("abort", onAbort);
+  promise.then(cleanup, cleanup);
+  // A retry after a timed-out attempt reuses the aborted signal, so no event fires.
+  if (ctx.signal.aborted) onAbort();
+  return promise;
+};
 /** @internal */
 const runTest = ctx => effect => {
   const promise = runPromise(effect, ctx);
-  if (ctx) {
-    // Vitest stops awaiting the test promise once the signal aborts (timeout or
-    // cancellation), so only then add a hook that waits for the finalizers.
-    // Registering it unconditionally would change the teardown of every test.
-    const onAbort = () => ctx.onTestFinished(() => promise.then(constVoid, constVoid));
-    ctx.signal.addEventListener("abort", onAbort, {
-      once: true
-    });
-    const cleanup = () => ctx.signal.removeEventListener("abort", onAbort);
-    promise.then(cleanup, cleanup);
-    // A retry after a timed-out attempt reuses the aborted signal, so no event fires.
-    if (ctx.signal.aborted) onAbort();
-  }
-  return promise;
+  return ctx ? settleOnAbort(ctx, promise) : promise;
 };
 const TestEnv = /*#__PURE__*/Layer.mergeAll(TestConsole.layer, /*#__PURE__*/TestClock.layer());
 /** @internal */
@@ -72,6 +78,40 @@ const runCheck = (ctx, arbitrary, property, options) => runTest(ctx)(Effect.flat
 const withFixturesOf = (source, f) => Object.defineProperty(f, "toString", {
   value: () => source.toString()
 });
+const runHook = (fn, run) => withFixturesOf(fn, (...args) => {
+  const result = fn(...args);
+  if (!Effect.isEffect(result)) {
+    return result;
+  }
+  const scope = Scope.makeUnsafe();
+  // Everything the hook leaves behind lives in the scope: the resources it
+  // acquired and, ahead of them, a cleanup function it returned. On failure
+  // the scope closes inside the fiber, so interrupting it awaits the release.
+  const effect = Scope.provide(result, scope).pipe(Effect.flatMap(cleanup => typeof cleanup === "function" ? Scope.addFinalizer(scope, Effect.promise(async () => await cleanup())) : Effect.void), Effect.onError(cause => Scope.close(scope, Exit.failCause(cause))));
+  return run(args, effect, scope);
+});
+// Closing must outlive an already-aborted signal, so it runs without one.
+const closeHookScope = scope => runPromise(Scope.close(scope, Exit.void));
+/** @internal */
+export const beforeAll = (fn, timeout) => {
+  let dispose = () => Promise.resolve();
+  // Vitest drops the cleanup of a setup that outlives its timeout, so the
+  // scope is disposed by the cleanup of a hook registered just before this
+  // one. It runs in the same cleanup phase, in the slot next to this hook's,
+  // with this hook's timeout.
+  V.beforeAll(() => () => dispose(), timeout);
+  V.beforeAll(runHook(fn, (_, effect, scope) => {
+    const fiber = Effect.runFork(effect);
+    // Interrupting a setup that Vitest stopped waiting for awaits its release.
+    dispose = () => runPromise(Effect.andThen(Fiber.interrupt(fiber), Scope.close(scope, Exit.void)));
+    return runPromise(Fiber.join(fiber));
+  }), timeout);
+};
+/** @internal */
+export const beforeEach = (fn, timeout) => V.beforeEach(runHook(fn, ([ctx], effect, scope) =>
+// The scope closes when Vitest runs the hook's cleanup after the test,
+// and the next test waits for it even if that cleanup times out.
+runTest(ctx)(effect).then(() => () => settleOnAbort(ctx, closeHookScope(scope)))), timeout);
 const makeItProxy = (it, overrides) => new Proxy(it, {
   apply(target, thisArg, argArray) {
     return Reflect.apply(target, thisArg, argArray);
@@ -95,6 +135,10 @@ const collectTasks = (tasks, acc = []) => {
   }
   return acc;
 };
+const runsMoreThanOnce = task => {
+  const retry = typeof task.retry === "number" ? task.retry : task.retry?.count;
+  return (retry ?? 0) > 0 || (task.repeats ?? 0) > 0;
+};
 const registerProp = (it, name, arbitraries, property, timeout) => {
   const arbitrary = makeArbitrary(arbitraries);
   // Property callbacks receive only the base context; the empty source requests no fixtures.
@@ -115,11 +159,45 @@ const makeTester = (mapEffect, it) => {
     prop
   });
 };
-const makeProp = it => (name, arbitraries, self, timeout) => registerProp(it, name, arbitraries, (values, ctx) => self(values, ctx) !== false, timeout);
+const makeProp = it => (name, arbitraries, self, timeout) => registerProp(it, name, arbitraries, (values, ctx) => {
+  const result = self(values, ctx);
+  if (result !== undefined && typeof result !== "boolean") {
+    throw new TypeError("it.prop callbacks must return boolean or void. Use it.effect.prop for Effect callbacks.");
+  }
+  return result !== false;
+}, timeout);
 const makeLayer = it => (layer_, options) => (...args) => {
   const excludeTestServices = options?.excludeTestServices ?? false;
   const withTestEnv = excludeTestServices ? layer_ : Layer.provideMerge(layer_, TestEnv);
   const memoMap = options?.memoMap ?? Effect.runSync(Layer.makeMemoMap);
+  const buildPerTest = options?.buildPerTest ?? false;
+  const suiteOptions = options?.concurrent === undefined ? {} : {
+    concurrent: options.concurrent
+  };
+  const makeBlockMethods = provide => makeItProxy(it, {
+    effect: makeTester(effect => provide(Effect.scoped(effect)), it),
+    prop: makeProp(it),
+    flakyTest,
+    layer(nestedLayer, nestedOptions) {
+      return makeLayer(it)(Layer.provideMerge(nestedLayer, withTestEnv), {
+        ...nestedOptions,
+        memoMap: Layer.forkMemoMapUnsafe(memoMap),
+        excludeTestServices,
+        // The services of a per-test block only exist during a test, so
+        // blocks nested in it are built per test as well.
+        buildPerTest: buildPerTest || nestedOptions?.buildPerTest === true
+      });
+    }
+  });
+  if (buildPerTest) {
+    // Each test builds into its own fork of the memo map, so it reuses the
+    // services of enclosing blocks and releases the rest when it finishes.
+    const methods = makeBlockMethods(effect => Effect.scopedWith(scope => Layer.buildWithMemoMap(withTestEnv, Layer.forkMemoMapUnsafe(memoMap), scope).pipe(Effect.orDie, Effect.flatMap(context => Effect.provide(effect, context)))));
+    if (args.length === 1) {
+      return args[0](methods);
+    }
+    return V.describe(args[0], suiteOptions, () => args[1](methods));
+  }
   const scope = Effect.runSync(Scope.make());
   const contextEffect = Layer.buildWithMemoMap(withTestEnv, memoMap, scope).pipe(Effect.orDie, Effect.cached, Effect.runSync);
   let closed = false;
@@ -131,18 +209,7 @@ const makeLayer = it => (layer_, options) => (...args) => {
     // Layer cleanup must outlive the last test's already-aborted signal.
     return runPromise(Scope.close(scope, Exit.void));
   };
-  const methods = makeItProxy(it, {
-    effect: makeTester(effect => Effect.flatMap(contextEffect, context => effect.pipe(Effect.scoped, Effect.provide(context))), it),
-    prop: makeProp(it),
-    flakyTest,
-    layer(nestedLayer, options) {
-      return makeLayer(it)(Layer.provideMerge(nestedLayer, withTestEnv), {
-        ...options,
-        memoMap: Layer.forkMemoMapUnsafe(memoMap),
-        excludeTestServices
-      });
-    }
-  });
+  const methods = makeBlockMethods(effect => Effect.flatMap(contextEffect, context => Effect.provide(effect, context)));
   if (args.length === 1) {
     const currentSuite = getCurrentSuite();
     const previousTasks = new Set(currentSuite.tasks);
@@ -153,6 +220,9 @@ const makeLayer = it => (layer_, options) => (...args) => {
       return;
     }
     const blockTaskSet = new Set(blockTasks);
+    // Vitest runs hooks once per retry and repeat attempt, so a test's last
+    // attempt cannot be counted. Blocks with such tests are released by `afterAll`.
+    const releaseAfterLastTest = !blockTasks.some(runsMoreThanOnce);
     let remaining = blockTasks.length;
     V.beforeEach(
     // Destructured so Vitest can parse the hook once the suite defines fixtures.
@@ -164,12 +234,14 @@ const makeLayer = it => (layer_, options) => (...args) => {
       if (!blockTaskSet.has(task)) {
         return;
       }
-      onTestFinished(() => {
-        remaining--;
-        if (remaining === 0) {
-          return closeScope();
-        }
-      });
+      if (releaseAfterLastTest) {
+        onTestFinished(() => {
+          remaining--;
+          if (remaining === 0) {
+            return closeScope();
+          }
+        });
+      }
       return runPromise(Effect.asVoid(contextEffect), {
         signal
       });
@@ -177,9 +249,6 @@ const makeLayer = it => (layer_, options) => (...args) => {
     V.afterAll(() => closeScope(), hookTimeout(options?.timeout));
     return;
   }
-  const suiteOptions = options?.concurrent === undefined ? {} : {
-    concurrent: options.concurrent
-  };
   return V.describe(args[0], suiteOptions, () => {
     V.beforeAll(() => runPromise(Effect.asVoid(contextEffect)), hookTimeout(options?.timeout));
     V.afterAll(() => closeScope(), hookTimeout(options?.timeout));

@@ -360,9 +360,16 @@ export interface FilePartEncoded extends BasePartEncoded<"file", FilePartOptions
      */
     readonly fileName?: string | undefined;
     /**
-     * File data as base64 string of data, a byte array, or a URL.
+     * File data as a base64 string, a byte array, a URL, or the tagged JSON
+     * form that encoding produces for byte arrays and URLs.
      */
-    readonly data: string | Uint8Array | URL;
+    readonly data: string | Uint8Array | URL | {
+        readonly _tag: "Uint8Array";
+        readonly base64: string;
+    } | {
+        readonly _tag: "URL";
+        readonly href: string;
+    };
 }
 /**
  * Represents provider-specific options that can be associated with a
@@ -385,7 +392,17 @@ export declare const FilePart: Schema.Struct<{
     readonly type: Schema.Literal<"file">;
     readonly mediaType: Schema.String;
     readonly fileName: Schema.optional<Schema.String>;
-    readonly data: Schema.Union<readonly [Schema.String, Schema.Uint8Array, Schema.URL]>;
+    readonly data: Schema.Union<readonly [
+        Schema.String,
+        Schema.decodeTo<Schema.Uint8Array, Schema.TaggedStruct<"Uint8Array", {
+            readonly base64: Schema.Uint8ArrayFromBase64;
+        }>>,
+        Schema.decodeTo<Schema.URL, Schema.TaggedStruct<"URL", {
+            readonly href: Schema.URLFromString;
+        }>>,
+        Schema.Uint8Array,
+        Schema.URL
+    ]>;
     readonly "~effect/ai/Prompt/Part": Schema.withDecodingDefaultKey<Schema.Literal<"~effect/ai/Prompt/Part">>;
     readonly options: Schema.withDecodingDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.Json>>>>;
 }>;
@@ -503,6 +520,49 @@ export declare const ToolCallPart: Schema.Struct<{
  */
 export declare const toolCallPart: (params: PartConstructorParams<ToolCallPart>) => ToolCallPart;
 /**
+ * A part returned by a tool's `toModelOutput` mapping and sent to the model in
+ * place of the serialized tool result.
+ *
+ * @stability unstable
+ * @category models
+ * @since 4.0.0
+ */
+export type ToolModelOutputPart = TextPart | FilePart;
+/**
+ * Schema for validation and encoding of tool model output parts.
+ *
+ * @stability unstable
+ * @category schemas
+ * @since 4.0.0
+ */
+export declare const ToolModelOutputPart: Schema.Union<readonly [typeof TextPart, typeof FilePart]>;
+/**
+ * Converts tool model output to text for providers that only accept text tool
+ * results.
+ *
+ * **Details**
+ *
+ * Joins text parts with newlines and replaces each file part with a placeholder
+ * naming its media type and file name.
+ *
+ * **Example** (Converting tool model output to text)
+ *
+ * ```ts import.meta.vitest
+ * import { Prompt } from "effect/ai"
+ *
+ * const text = Prompt.toolModelOutputToText([
+ *   Prompt.textPart({ text: "Screenshot" }),
+ *   Prompt.filePart({ mediaType: "image/png", fileName: "screenshot.png", data: "iVBORw0KGgo=" })
+ * ])
+ * text // => "Screenshot\n[image/png screenshot.png omitted]"
+ * ```
+ *
+ * @stability unstable
+ * @category combinators
+ * @since 4.0.0
+ */
+export declare const toolModelOutputToText: (parts: ReadonlyArray<ToolModelOutputPart>) => string;
+/**
  * Content part representing the result of a tool call.
  *
  * **Example** (Creating tool result parts)
@@ -546,6 +606,10 @@ export interface ToolResultPart extends BasePart<"tool-result", ToolResultPartOp
      */
     readonly result: unknown;
     /**
+     * Content sent to the model in place of the serialized `result`.
+     */
+    readonly modelOutput?: ReadonlyArray<ToolModelOutputPart> | undefined;
+    /**
      * Whether the tool was executed by the provider (true) or framework (false).
      */
     readonly providerExecuted: boolean;
@@ -575,6 +639,10 @@ export interface ToolResultPartEncoded extends BasePartEncoded<"tool-result", To
      */
     readonly result: unknown;
     /**
+     * Content sent to the model in place of the serialized `result`.
+     */
+    readonly modelOutput?: ReadonlyArray<TextPartEncoded | FilePartEncoded> | undefined;
+    /**
      * Whether the tool was executed by the provider (true) or framework (false).
      */
     readonly providerExecuted?: boolean | undefined;
@@ -602,6 +670,7 @@ export declare const ToolResultPart: Schema.Struct<{
     readonly name: Schema.String;
     readonly isFailure: Schema.Boolean;
     readonly result: Schema.Unknown;
+    readonly modelOutput: Schema.optional<Schema.$Array<typeof ToolModelOutputPart>>;
     readonly providerExecuted: Schema.withDecodingDefault<Schema.Boolean>;
     readonly "~effect/ai/Prompt/Part": Schema.withDecodingDefaultKey<Schema.Literal<"~effect/ai/Prompt/Part">>;
     readonly options: Schema.withDecodingDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.Json>>>>;
@@ -1104,22 +1173,7 @@ export declare const UserMessage: Schema.Struct<{
             readonly "~effect/ai/Prompt/Part": Schema.withDecodingDefaultKey<Schema.Literal<"~effect/ai/Prompt/Part">>;
             readonly options: Schema.withDecodingDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.Json>>>>;
         }>>>, Schema.String, never, never>,
-        Schema.$Array<Schema.Union<readonly [
-            Schema.Struct<{
-                readonly type: Schema.Literal<"text">;
-                readonly text: Schema.String;
-                readonly "~effect/ai/Prompt/Part": Schema.withDecodingDefaultKey<Schema.Literal<"~effect/ai/Prompt/Part">>;
-                readonly options: Schema.withDecodingDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.Json>>>>;
-            }>,
-            Schema.Struct<{
-                readonly type: Schema.Literal<"file">;
-                readonly mediaType: Schema.String;
-                readonly fileName: Schema.optional<Schema.String>;
-                readonly data: Schema.Union<readonly [Schema.String, Schema.Uint8Array, Schema.URL]>;
-                readonly "~effect/ai/Prompt/Part": Schema.withDecodingDefaultKey<Schema.Literal<"~effect/ai/Prompt/Part">>;
-                readonly options: Schema.withDecodingDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.Json>>>>;
-            }>
-        ]>>
+        Schema.$Array<Schema.Union<readonly [typeof TextPart, typeof FilePart]>>
     ]>;
     readonly "~effect/ai/Prompt/Message": Schema.withDecodingDefaultKey<Schema.Literal<"~effect/ai/Prompt/Message">>;
     readonly options: Schema.withDecodingDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.Json>>>>;

@@ -15,11 +15,13 @@ import * as Effect from "../Effect.js";
 import * as Exit from "../Exit.js";
 import * as Fiber from "../Fiber.js";
 import { constVoid, dual } from "../Function.js";
+import { shouldHydrate } from "../internal/hydration.js";
 import * as Layer from "../Layer.js";
 import * as Option from "../Option.js";
 import { hasProperty } from "../Predicate.js";
 import * as Queue from "../Queue.js";
 import { MixedScheduler } from "../Scheduler.js";
+import * as Schema from "../Schema.js";
 import * as Scope from "../Scope.js";
 import * as Stream from "../Stream.js";
 import * as Result from "./AsyncResult.js";
@@ -219,12 +221,12 @@ class RegistryImpl {
       this.timeoutResolution = timeoutResolution ?? 1000;
     }
     if (initialValues !== undefined) {
-      for (const [atom, value] of initialValues) {
+      for (const [atom, value, options] of initialValues) {
         let target = atom;
         while (target.initialValueTarget) {
           target = target.initialValueTarget;
         }
-        this.ensureNode(target).setInitialValue(value);
+        this.ensureNode(target).setInitialValue(value, options?.skipInitialRun);
       }
     }
   }
@@ -266,9 +268,15 @@ class RegistryImpl {
     const node = this.ensureNode(atom);
     if (options?.immediate) {
       f(node.value());
-    } else if (node.state === NodeState.stale) {
-      // a listener hears the next change, which only reaches an up-to-date node
-      node.value();
+    } else {
+      // build the node so the listener hears its next change. A failed build
+      // is left for the next read to report; an error raised after the value
+      // is committed has no later read to report it, so it is rethrown
+      try {
+        node.value();
+      } catch (error) {
+        if ((node.state & NodeFlags.waitingForValue) === 0) throw error;
+      }
     }
     const remove = node.subscribe(function () {
       f(node._value);
@@ -299,15 +307,21 @@ class RegistryImpl {
     if (typeof key === "string" && this.preloadedSerializable.has(key)) {
       const encoded = this.preloadedSerializable.get(key);
       this.preloadedSerializable.delete(key);
-      const decoded = atom[SerializableTypeId].decode(encoded);
+      const serializable = atom[SerializableTypeId];
+      let decoded;
+      try {
+        decoded = serializable.decode(encoded);
+      } catch (error) {
+        if (Schema.isSchemaError(error)) return node;
+        throw error;
+      }
       let target = atom;
       while (target.initialValueTarget) {
         target = target.initialValueTarget;
       }
-      if (target === atom) {
-        node.setValue(decoded);
-      } else {
-        this.ensureNode(target).setInitialValue(decoded);
+      const targetNode = target === atom ? node : this.ensureNode(target);
+      if (shouldHydrate(targetNode._value, decoded)) {
+        targetNode.setInitialValue(decoded, serializable.skipInitialRun);
       }
     }
     return node;
@@ -322,7 +336,9 @@ class RegistryImpl {
     return new NodeImpl(this, atom);
   }
   invalidateAtom = atom => {
-    this.ensureNode(atom).invalidate();
+    const node = this.ensureNode(atom);
+    node.skipInitialRun = false;
+    node.invalidate();
   };
   scheduleAtomRemoval(atom) {
     this.dispatcher.scheduleTask(() => {
@@ -449,6 +465,10 @@ class NodeImpl {
   lifetime;
   writeContext;
   preserveInitialValueOnBuild = false;
+  skipInitialRun = false;
+  // the parents, and their lifetimes, of a build that kept the seed without
+  // reaching the effect, such as one waiting for a runtime
+  keptParents;
   invalidatedDuringBuild = false;
   failed = false;
   // Every parent that holds this node as a child. A stale node keeps the
@@ -504,11 +524,15 @@ class NodeImpl {
     return this._value;
   }
   build() {
-    // a lifetime still attached to a node that needs a value belongs to a
-    // build that failed, or to one that is running and is now superseded
-    this.disposeLifetime();
-    this.invalidatedDuringBuild = false;
     const lifetime = makeLifetime(this);
+    // release a failed or superseded build; its finalizers run only once, so
+    // their failure is rethrown once this build commits
+    try {
+      this.disposeLifetime();
+    } catch (error) {
+      lifetime.failure = error;
+    }
+    this.invalidatedDuringBuild = false;
     this.lifetime = lifetime;
     let value;
     let read = false;
@@ -526,6 +550,9 @@ class NodeImpl {
     if (this.lifetime === lifetime && (this.state & NodeFlags.waitingForValue) !== 0) {
       if (this.preserveInitialValueOnBuild) {
         this.preserveInitialValueOnBuild = false;
+        if (this.skipInitialRun) {
+          this.keptParents = Array.from(this.parents, parent => [parent, parent.lifetime]);
+        }
         this.failed = false;
         this.state = NodeState.valid;
       } else {
@@ -594,9 +621,10 @@ class NodeImpl {
     }
     return Option.some(this._value);
   }
-  setInitialValue(value) {
+  setInitialValue(value, skipInitialRun = false) {
     if ((this.state & NodeFlags.initialized) === 0) {
       this.preserveInitialValueOnBuild = true;
+      this.skipInitialRun = skipInitialRun;
       this.state = NodeState.stale;
       this._value = value;
       if (this.listeners.size > 0) {
@@ -619,7 +647,9 @@ class NodeImpl {
     this._value = value;
     let failure = noFailure;
     try {
-      this.invalidateChildren();
+      // A first value cannot replace one held by a dependent. Recovery still
+      // retries dependents whose reads failed before this node had a value.
+      if (initialized || recovered) this.invalidateChildren();
     } catch (error) {
       failure = error;
     }
@@ -740,6 +770,23 @@ class NodeImpl {
     };
   }
 }
+/**
+ * Whether the build keeps the node's seeded value instead of running its
+ * effect or stream. Consumed by the first run, so later rebuilds run it. A
+ * parent rebuilt since the seed was kept, such as a reconfigured runtime, is a
+ * real change and runs it too.
+ *
+ * @internal
+ */
+export const consumeSkipInitialRun = ctx => {
+  const lifetime = ctx;
+  const node = lifetime.node;
+  if (!node.skipInitialRun) return false;
+  const keptParents = node.keptParents;
+  node.skipInitialRun = false;
+  node.keptParents = undefined;
+  return !lifetime.isFn && !Result.isInitial(node._value) && (keptParents === undefined || keptParents.every(([parent, lifetime]) => parent.lifetime === lifetime));
+};
 const LifetimeProto = {
   get registry() {
     return this.node.registry;

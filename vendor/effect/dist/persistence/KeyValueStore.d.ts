@@ -52,9 +52,17 @@ export interface KeyValueStore {
      */
     readonly clear: Effect.Effect<void, KeyValueStoreError>;
     /**
+     * Removes all entries whose key starts with the specified prefix.
+     */
+    readonly clearPrefix: (prefix: string) => Effect.Effect<void, KeyValueStoreError>;
+    /**
      * Returns the number of entries.
      */
     readonly size: Effect.Effect<number, KeyValueStoreError>;
+    /**
+     * Returns a snapshot of the keys in the store. The order is unspecified.
+     */
+    readonly keys: Effect.Effect<ReadonlyArray<string>, KeyValueStoreError>;
     /**
      * Updates the value of the specified key if it exists.
      */
@@ -109,6 +117,10 @@ export type MakeOptions = Partial<KeyValueStore> & {
      * Returns the number of entries.
      */
     readonly size: Effect.Effect<number, KeyValueStoreError>;
+    /**
+     * Returns a snapshot of the keys in the store. The order is unspecified.
+     */
+    readonly keys: Effect.Effect<ReadonlyArray<string>, KeyValueStoreError>;
 };
 /**
  * Implementation callbacks for adapting a string-only backing store into a
@@ -139,6 +151,10 @@ export type MakeStringOptions = Partial<Omit<KeyValueStore, "set">> & {
      * Returns the number of entries.
      */
     readonly size: Effect.Effect<number, KeyValueStoreError>;
+    /**
+     * Returns a snapshot of the keys in the store. The order is unspecified.
+     */
+    readonly keys: Effect.Effect<ReadonlyArray<string>, KeyValueStoreError>;
 };
 declare const ErrorTypeId: "~effect/persistence/KeyValueStore/KeyValueStoreError";
 declare const KeyValueStoreError_base: new <A extends Record<string, any> = {}>(args: import("../Types.ts").VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }>) => import("../Cause.ts").YieldableError & {
@@ -184,8 +200,12 @@ export declare const KeyValueStore: Context.Service<KeyValueStore, KeyValueStore
  *
  * **Details**
  *
- * Default implementations are derived for `has`, `isEmpty`, `modify`, and
- * `modifyUint8Array` unless they are provided in the options.
+ * Default implementations are derived for `has`, `isEmpty`, `clearPrefix`,
+ * `modify`, and `modifyUint8Array` unless they are provided in the options.
+ *
+ * If `clearPrefix` is not provided, it delegates to `clear` for an empty prefix
+ * and otherwise removes each key returned by `keys` that starts with the
+ * prefix.
  *
  * @stability unstable
  * @category constructors
@@ -209,6 +229,13 @@ export declare const makeStringOnly: (options: MakeStringOptions) => KeyValueSto
  * Returns a view of a `KeyValueStore` that prepends the given prefix to every
  * key.
  *
+ * **Details**
+ *
+ * `keys`, `size`, `isEmpty`, and `clear` only see entries whose key starts
+ * with the prefix, and `keys` returns them with the prefix removed. `keys`,
+ * `size`, and `isEmpty` list every key in the underlying store and filter the
+ * result, while `clear` delegates to `clearPrefix`.
+ *
  * @stability unstable
  * @category combinators
  * @since 4.0.0
@@ -218,6 +245,13 @@ export declare const prefix: {
      * Returns a view of a `KeyValueStore` that prepends the given prefix to every
      * key.
      *
+     * **Details**
+     *
+     * `keys`, `size`, `isEmpty`, and `clear` only see entries whose key starts
+     * with the prefix, and `keys` returns them with the prefix removed. `keys`,
+     * `size`, and `isEmpty` list every key in the underlying store and filter the
+     * result, while `clear` delegates to `clearPrefix`.
+     *
      * @stability unstable
      * @category combinators
      * @since 4.0.0
@@ -226,6 +260,13 @@ export declare const prefix: {
     /**
      * Returns a view of a `KeyValueStore` that prepends the given prefix to every
      * key.
+     *
+     * **Details**
+     *
+     * `keys`, `size`, `isEmpty`, and `clear` only see entries whose key starts
+     * with the prefix, and `keys` returns them with the prefix removed. `keys`,
+     * `size`, and `isEmpty` list every key in the underlying store and filter the
+     * result, while `clear` delegates to `clearPrefix`.
      *
      * @stability unstable
      * @category combinators
@@ -316,6 +357,10 @@ export interface SchemaStore<S extends Schema.Constraint> {
      * Returns the number of entries.
      */
     readonly size: Effect.Effect<number, KeyValueStoreError>;
+    /**
+     * Returns a snapshot of the keys in the store. The order is unspecified.
+     */
+    readonly keys: Effect.Effect<ReadonlyArray<string>, KeyValueStoreError>;
     /**
      * Updates the value of the specified key if it exists.
      */

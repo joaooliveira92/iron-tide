@@ -1,4 +1,5 @@
 import * as Cause from "./Cause.js";
+import * as SecureRandom from "./crypto/SecureRandom.js";
 import * as Effect from "./Effect.js";
 import { dual } from "./Function.js";
 import * as random from "./internal/random.js";
@@ -258,7 +259,7 @@ export const choice = elements => {
  * @category providing services
  * @since 4.0.0
  */
-export const withSeed = /*#__PURE__*/dual(2, (self, seed) => Effect.provideService(self, Random, ISAAC_CSPRNG(seed)));
+export const withSeed = /*#__PURE__*/dual(2, (self, seed) => Effect.suspend(() => Effect.provideService(self, Random, ISAAC_CSPRNG(seed))));
 /*///////////////////////////////////////////////////////////////////////////////////////////////////
 This is a derivative work copyright (c) 2025 Effectful Technologies Inc, under MIT license.
 This is a derivative work copyright (c) 2018, William P. "Mac" McMeans, under BSD license.
@@ -282,9 +283,8 @@ function ISAAC_CSPRNG(userSeed) {
   const internalSeed = Predicate.isUndefined(userSeed) ? getInitialSeed() : userSeed;
   seed(internalSeed);
   function getInitialSeed() {
-    const uint32a = new Uint32Array(2);
-    crypto.getRandomValues(uint32a);
-    return uint32a[0] + uint32a[1];
+    const view = new DataView(SecureRandom.randomBytesUnsafe(8).buffer);
+    return view.getUint32(0) + view.getUint32(4);
   }
   function reset() {
     accumulator = 0;

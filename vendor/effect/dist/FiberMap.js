@@ -71,7 +71,8 @@ const makeUnsafe = (backing, deferred) => {
   const self = Object.create(Proto);
   self.state = {
     _tag: "Open",
-    backing
+    backing,
+    fibers: new Set()
   };
   self.deferred = deferred;
   return self;
@@ -118,7 +119,7 @@ export const make = () => Effect.acquireRelease(Effect.sync(() => makeUnsafe(Mut
   map.state = {
     _tag: "Closed"
   };
-  return Fiber.interruptAll(MutableHashMap.values(state.backing)).pipe(Deferred.into(map.deferred));
+  return Fiber.interruptAll(state.fibers).pipe(Deferred.into(map.deferred));
 }));
 /**
  * Creates a scoped run function that forks effects into a new `FiberMap`.
@@ -257,6 +258,7 @@ export const setUnsafe = /*#__PURE__*/dual(args => isFiberMap(args[0]), (self, k
   }
   // Install the replacement before interruption can re-enter the map through a finalizer.
   MutableHashMap.set(self.state.backing, key, fiber);
+  self.state.fibers.add(fiber);
   if (previous._tag === "Some") {
     previous.value.interruptUnsafe(internalFiberId);
   }
@@ -264,6 +266,7 @@ export const setUnsafe = /*#__PURE__*/dual(args => isFiberMap(args[0]), (self, k
     if (self.state._tag === "Closed") {
       return;
     }
+    self.state.fibers.delete(fiber);
     const current = MutableHashMap.get(self.state.backing, key);
     if (Option.isSome(current) && fiber === current.value) {
       MutableHashMap.remove(self.state.backing, key);

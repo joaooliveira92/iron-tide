@@ -717,101 +717,9 @@ export const concatResult: {
     > {
       if (currentStep) return currentStep(now, input)
       return toStep<
-        /**
-         * Returns a schedule that runs `self` to completion, then runs `other`, and
-         * preserves which schedule produced each output.
-         *
-         * **Details**
-         *
-         * The resulting schedule emits a `Result` to indicate which phase produced
-         * each output: outputs from `self` are emitted as `Failure`, and outputs from
-         * `other` are emitted as `Success`.
-         *
-         * **Example** (Tracking sequential schedule phases)
-         *
-         * ```ts import.meta.vitest
-         * import { Schedule } from "effect"
-         *
-         * const schedule = Schedule.concatResult(Schedule.recurs(1), Schedule.recurs(2))
-         * Schedule.isSchedule(schedule) // => true
-         * ```
-         *
-         * @stability stable
-         * @category sequencing
-         * @since 4.0.0
-         */
         Result.Result<Output2, Output>,
-        /**
-         * Returns a schedule that runs `self` to completion, then runs `other`, and
-         * preserves which schedule produced each output.
-         *
-         * **Details**
-         *
-         * The resulting schedule emits a `Result` to indicate which phase produced
-         * each output: outputs from `self` are emitted as `Failure`, and outputs from
-         * `other` are emitted as `Success`.
-         *
-         * **Example** (Tracking sequential schedule phases)
-         *
-         * ```ts import.meta.vitest
-         * import { Schedule } from "effect"
-         *
-         * const schedule = Schedule.concatResult(Schedule.recurs(1), Schedule.recurs(2))
-         * Schedule.isSchedule(schedule) // => true
-         * ```
-         *
-         * @stability stable
-         * @category sequencing
-         * @since 4.0.0
-         */
         Input & Input2,
-        /**
-         * Returns a schedule that runs `self` to completion, then runs `other`, and
-         * preserves which schedule produced each output.
-         *
-         * **Details**
-         *
-         * The resulting schedule emits a `Result` to indicate which phase produced
-         * each output: outputs from `self` are emitted as `Failure`, and outputs from
-         * `other` are emitted as `Success`.
-         *
-         * **Example** (Tracking sequential schedule phases)
-         *
-         * ```ts import.meta.vitest
-         * import { Schedule } from "effect"
-         *
-         * const schedule = Schedule.concatResult(Schedule.recurs(1), Schedule.recurs(2))
-         * Schedule.isSchedule(schedule) // => true
-         * ```
-         *
-         * @stability stable
-         * @category sequencing
-         * @since 4.0.0
-         */
         Error | Error2,
-        /**
-         * Returns a schedule that runs `self` to completion, then runs `other`, and
-         * preserves which schedule produced each output.
-         *
-         * **Details**
-         *
-         * The resulting schedule emits a `Result` to indicate which phase produced
-         * each output: outputs from `self` are emitted as `Failure`, and outputs from
-         * `other` are emitted as `Success`.
-         *
-         * **Example** (Tracking sequential schedule phases)
-         *
-         * ```ts import.meta.vitest
-         * import { Schedule } from "effect"
-         *
-         * const schedule = Schedule.concatResult(Schedule.recurs(1), Schedule.recurs(2))
-         * Schedule.isSchedule(schedule) // => true
-         * ```
-         *
-         * @stability stable
-         * @category sequencing
-         * @since 4.0.0
-         */
         Env | Env2
       >(currentSide === 0 ? left : right).pipe(
         effect.flatMap((step) => {
@@ -827,8 +735,8 @@ export const concatResult: {
           currentStep = step
           return currentStep(now, input)
         })
-      );
-    };
+      )
+    }
   })))
 
 /**
@@ -901,6 +809,11 @@ const maxDuration = (results: ReadonlyArray<Duration.Duration | undefined>): Dur
  * Returns a new `Schedule` that recurs on the specified `Cron` schedule and
  * outputs the duration between recurrences.
  *
+ * **Details**
+ *
+ * A string expression is parsed with `Cron.parse`, using the optional time zone
+ * and `onDstOverlap` policy. A pre-parsed `Cron` value keeps its own policy.
+ *
  * **Example** (Scheduling work with cron expressions)
  *
  * ```ts import.meta.vitest
@@ -918,6 +831,11 @@ export const cron: {
   /**
    * Returns a new `Schedule` that recurs on the specified `Cron` schedule and
    * outputs the duration between recurrences.
+   *
+   * **Details**
+   *
+   * A string expression is parsed with `Cron.parse`, using the optional time zone
+   * and `onDstOverlap` policy. A pre-parsed `Cron` value keeps its own policy.
    *
    * **Example** (Scheduling work with cron expressions)
    *
@@ -937,6 +855,11 @@ export const cron: {
    * Returns a new `Schedule` that recurs on the specified `Cron` schedule and
    * outputs the duration between recurrences.
    *
+   * **Details**
+   *
+   * A string expression is parsed with `Cron.parse`, using the optional time zone
+   * and `onDstOverlap` policy. A pre-parsed `Cron` value keeps its own policy.
+   *
    * **Example** (Scheduling work with cron expressions)
    *
    * ```ts import.meta.vitest
@@ -950,15 +873,24 @@ export const cron: {
    * @category constructors
    * @since 2.0.0
    */
-  (expression: string, tz?: string | DateTime.TimeZone): Schedule<Duration.Duration, unknown, Cron.CronParseError>
-} = (expression: string | Cron.Cron, tz?: string | DateTime.TimeZone) => {
-  const parsed = Cron.isCron(expression) ? Result.succeed(expression) : Cron.parse(expression, tz)
+  (
+    expression: string,
+    tz?: string | DateTime.TimeZone,
+    options?: {
+      readonly onDstOverlap?: Cron.DstOverlapPolicy | undefined
+    }
+  ): Schedule<Duration.Duration, unknown, Cron.CronParseError>
+} = (expression: string | Cron.Cron, tz?: string | DateTime.TimeZone, options?: {
+  readonly onDstOverlap?: Cron.DstOverlapPolicy | undefined
+}) => {
+  const parsed = Cron.isCron(expression) ? Result.succeed(expression) : Cron.parse(expression, tz, options)
   return fromStep(effect.map(effect.fromResult(parsed), (cron) => (now, _) => {
     if (now === Number.POSITIVE_INFINITY) {
       return Cause.done(Duration.zero)
     }
     return effect.sync(() => {
-      const next = Cron.next(cron, now).getTime()
+      let next = Cron.next(cron, now).getTime()
+      if (Duration.isZero(Duration.millis(next - now))) next = Cron.next(cron, next).getTime()
       const duration = Duration.millis(next - now)
       return [duration, duration]
     })
@@ -1163,10 +1095,10 @@ export const fibonacci = (one: Duration.Input): Schedule<Duration.Duration> => {
     let a = 0
     let b = oneMillis
     return constant(effect.sync(() => {
+      const duration = Duration.millis(b)
       const next = a + b
       a = b
       b = next
-      const duration = Duration.millis(next)
       return [duration, duration]
     }))
   }))
@@ -1226,7 +1158,7 @@ export const fixed = (interval: Duration.Input): Schedule<number> => {
         }
         const runningBehind = meta.now > (lastRun + window)
         const boundary = window - ((meta.now - start) % window)
-        const delay = runningBehind ? 0 : boundary === 0 ? window : boundary
+        const delay = runningBehind ? 0 : Duration.isZero(Duration.millis(boundary)) ? window : boundary
         lastRun = runningBehind ? meta.now : meta.now + delay
         return [meta.attempt - 1, Duration.millis(delay)] as const
       })
@@ -1970,10 +1902,11 @@ export {
 export const windowed = (interval: Duration.Input): Schedule<number> => {
   const window = Duration.toMillis(Duration.fromInputUnsafe(interval))
   return fromStepWithMetadata(effect.succeed((meta) =>
-    effect.sync(() => [
-      meta.attempt - 1,
-      window === 0 ? Duration.zero : Duration.millis(window - (meta.elapsed % window))
-    ])
+    effect.sync(() => {
+      if (window === 0) return [meta.attempt - 1, Duration.zero] as const
+      const delay = Duration.millis(window - (meta.elapsed % window))
+      return [meta.attempt - 1, Duration.isZero(delay) ? Duration.millis(window) : delay] as const
+    })
   ))
 }
 

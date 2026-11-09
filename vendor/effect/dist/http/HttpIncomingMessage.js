@@ -64,38 +64,18 @@ export const MaxBodySize = /*#__PURE__*/Context.Reference("effect/http/HttpIncom
   defaultValue: () => undefined
 });
 /**
- * Builds an inspectable object for an incoming message, redacting headers and including a synchronously readable JSON or text body when available.
+ * Builds an inspectable object for an incoming message and redacts headers.
+ * The body is left unread.
  *
  * @stability unstable
  * @category converting
  * @since 4.0.0
  */
 export const inspect = (self, that) => {
-  const contentType = self.headers["content-type"] ?? "";
-  let body;
-  if (contentType.includes("application/json")) {
-    try {
-      body = Effect.runSync(self.json);
-      // oxlint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_) {
-      //
-    }
-  } else if (contentType.includes("text/") || contentType.includes("urlencoded")) {
-    try {
-      body = Effect.runSync(self.text);
-      // oxlint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_) {
-      //
-    }
-  }
-  const obj = {
+  return {
     ...that,
     headers: redact(self.headers),
     remoteAddress: self.remoteAddress
   };
-  if (body !== undefined) {
-    obj.body = body;
-  }
-  return obj;
 };
 //# sourceMappingURL=HttpIncomingMessage.js.map

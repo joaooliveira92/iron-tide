@@ -1,5 +1,6 @@
 import * as Cause from "../../Cause.js";
 import * as Context from "../../Context.js";
+import * as SecureRandom from "../../crypto/SecureRandom.js";
 import * as Effect from "../../Effect.js";
 import { appendPreResponseHandlerUnsafe } from "../../http/HttpEffect.js";
 import * as HttpServerRequest from "../../http/HttpServerRequest.js";
@@ -11,6 +12,7 @@ import * as RpcGroup from "../../rpc/RpcGroup.js";
 import * as PublicMcpSchema from "../McpSchema.js";
 import * as McpProtocol from "./mcpProtocol.js";
 import * as McpProtocolRegistry from "./mcpProtocolRegistry.js";
+import * as McpSkills from "./mcpSkills.js";
 import * as McpStatefulRuntime from "./mcpStatefulRuntime.js";
 const MCP_SESSION_ID_HEADER = "mcp-session-id";
 const MCP_PROTOCOL_VERSION_HEADER = "mcp-protocol-version";
@@ -18,7 +20,6 @@ const MCP_METHOD_HEADER = "mcp-method";
 const MCP_NAME_HEADER = "mcp-name";
 const PROTOCOL_VERSION_METADATA_KEY = "io.modelcontextprotocol/protocolVersion";
 const CLIENT_CAPABILITIES_METADATA_KEY = "io.modelcontextprotocol/clientCapabilities";
-const UNSUPPORTED_PROTOCOL_VERSION_ERROR_CODE = -32022;
 const asRecord = input => typeof input === "object" && input !== null ? input : undefined;
 const protocolVersionClaim = input => {
   const metadata = asRecord(input);
@@ -91,7 +92,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (protocols) {
   const registry = yield* McpProtocolRegistry.make(protocols);
   const sessionTerminationListeners = new Set();
   const unsupportedProtocolVersion = requested => ({
-    code: UNSUPPORTED_PROTOCOL_VERSION_ERROR_CODE,
+    code: PublicMcpSchema.UNSUPPORTED_PROTOCOL_VERSION_ERROR_CODE,
     message: `Unsupported protocol version '${requested}'`,
     data: {
       supported: protocolVersions,
@@ -210,7 +211,7 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (protocols) {
         const selected = selectStatefulProtocol(registry.protocols, offeredVersion);
         if (selected === undefined) {
           return yield* new McpProtocol.ProtocolError({
-            code: UNSUPPORTED_PROTOCOL_VERSION_ERROR_CODE,
+            code: PublicMcpSchema.UNSUPPORTED_PROTOCOL_VERSION_ERROR_CODE,
             message: `initialize is not supported by the configured MCP protocols (requested '${offeredVersion}')`
           });
         }
@@ -370,11 +371,12 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (protocols) {
       sessionTerminationListeners.delete(listener);
     })),
     deliveryClientIds: () => stateful?.initializedClientIds() ?? [],
-    canDeliver: (clientId, headers, notification, fallback) => stateful?.canDeliver(clientId, headers, notification, fallback) ?? true,
+    canDeliver: (clientId, headers, notification, fallback, listChangeRevision) => stateful?.canDeliver(clientId, headers, notification, fallback, listChangeRevision) ?? true,
     installHandlers: Effect.fnUntraced(function* (options) {
       const contextMap = new Map();
       const installationContext = {
         subscribeServerNotifications: options.subscribeServerNotifications,
+        getListChangeRevision: options.getListChangeRevision,
         ...(options.sendNotification === undefined ? {} : {
           sendNotification: options.sendNotification
         }),
@@ -423,11 +425,10 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (protocols) {
                   prompts: {
                     listChanged: true
                   }
-                } : {}),
-                ...(options.serverInfo.extensions ? {
-                  extensions: options.serverInfo.extensions
                 } : {})
               };
+              const extensions = McpSkills.declareExtension(options.serverInfo.extensions, presence.skills);
+              if (extensions !== undefined) capabilities.extensions = extensions;
               const initializePayload = PublicMcpSchema.Initialize.payloadSchema.make({
                 protocolVersion,
                 capabilities: profile.clientCapabilities,
@@ -439,12 +440,13 @@ export const make = /*#__PURE__*/Effect.fnUntraced(function* (protocols) {
                 negotiatedProfile: profile,
                 protocol: protocol,
                 supportsResourceSubscriptions: httpRequest === undefined && capabilities.resources?.subscribe === true,
-                logLevel: options.defaultLogLevel
+                logLevel: options.defaultLogLevel,
+                listChangeRevision: options.getListChangeRevision?.() ?? 0
               };
               if (httpRequest !== undefined) {
-                const sessionId = crypto.randomUUID();
+                const sessionId = SecureRandom.uuidV4Unsafe();
                 stateful.registerHttp(sessionId, registration);
-                appendPreResponseHandlerUnsafe(httpRequest, (_request, response) => Effect.succeed(HttpServerResponse.setHeaders(response, {
+                appendPreResponseHandlerUnsafe(fiber.context, (_request, response) => Effect.succeed(HttpServerResponse.setHeaders(response, {
                   [MCP_SESSION_ID_HEADER]: sessionId,
                   [MCP_PROTOCOL_VERSION_HEADER]: protocol.protocolVersion
                 })));

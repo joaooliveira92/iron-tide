@@ -16,35 +16,6 @@ import * as Duration from "../Duration.ts";
 import type * as HttpClientError from "../http/HttpClientError.ts";
 import * as Schema from "../Schema.ts";
 /**
- * Schema for HTTP requests to an AI provider.
- *
- * **Example** (Describing an HTTP request)
- *
- * ```ts import.meta.vitest
- * import type { AiError } from "effect/ai"
- *
- * const requestDetails: typeof AiError.HttpRequestDetails.Type = {
- *   method: "POST",
- *   url: "https://api.openai.com/v1/responses",
- *   urlParams: [],
- *   hash: undefined,
- *   headers: { "Content-Type": "application/json" }
- * }
- * const result = [requestDetails.method, requestDetails.urlParams] // => ["POST", []]
- * ```
- *
- * @stability unstable
- * @category schemas
- * @since 4.0.0
- */
-export declare const HttpRequestDetails: Schema.Struct<{
-    readonly method: Schema.Literals<readonly ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "QUERY"]>;
-    readonly url: Schema.String;
-    readonly urlParams: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
-    readonly hash: Schema.optional<Schema.String>;
-    readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
-}>;
-/**
  * Schema for HTTP responses from an AI provider.
  *
  * **Example** (Describing an HTTP response)
@@ -74,14 +45,10 @@ declare const ReasonTypeId: "~effect/ai/AiError/Reason";
 declare const NetworkError_base: Schema.Class<NetworkError, Schema.Struct<{
     readonly _tag: Schema.tag<"NetworkError">;
     readonly reason: Schema.Literals<readonly ["TransportError", "EncodeError", "InvalidUrlError"]>;
-    readonly request: Schema.Struct<{
-        readonly method: Schema.Literals<readonly ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "QUERY"]>;
-        readonly url: Schema.String;
-        readonly urlParams: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
-        readonly hash: Schema.optional<Schema.String>;
-        readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
-    }>;
+    readonly method: Schema.String;
+    readonly url: Schema.String;
     readonly description: Schema.optional<Schema.String>;
+    readonly cause: Schema.optional<Schema.Defect>;
 }>, import("../Cause.ts").YieldableError>;
 /**
  * Error indicating a network-level failure before receiving a response.
@@ -92,6 +59,10 @@ declare const NetworkError_base: Schema.Class<NetworkError, Schema.Struct<{
  * such as network connectivity problems, request encoding issues, or invalid
  * URLs.
  *
+ * When created with `NetworkError.fromHttpClientError`, `cause` holds the
+ * `HttpClientError` the request failed with. It is stored unchanged, so it
+ * carries the runtime's original error text without redaction.
+ *
  * **Example** (Creating a network error)
  *
  * ```ts import.meta.vitest
@@ -99,13 +70,8 @@ declare const NetworkError_base: Schema.Class<NetworkError, Schema.Struct<{
  *
  * const error = new AiError.NetworkError({
  *   reason: "TransportError",
- *   request: {
- *     method: "POST",
- *     url: "https://api.openai.com/v1/completions",
- *     urlParams: [],
- *     hash: undefined,
- *     headers: { "Content-Type": "application/json" }
- *   },
+ *   method: "POST",
+ *   url: "https://api.openai.com/v1/completions",
  *   description: "Connection timeout after 30 seconds"
  * })
  *
@@ -153,6 +119,36 @@ export declare class NetworkError extends NetworkError_base {
      * @since 4.0.0
      */
     static fromRequestError(error: HttpClientError.RequestError): NetworkError;
+    /**
+     * Creates a NetworkError from a platform HttpClientError whose reason is a
+     * request error, keeping the HttpClientError as `cause`.
+     *
+     * **Example** (Creating a network error from an HTTP client error)
+     *
+     * ```ts import.meta.vitest
+     * import { AiError } from "effect/ai"
+     * import { HttpClientError, HttpClientRequest } from "effect/http"
+     *
+     * const platformError = new HttpClientError.HttpClientError({
+     *   reason: new HttpClientError.TransportError({
+     *     request: HttpClientRequest.get("https://example.com/models"),
+     *     description: "Connection refused"
+     *   })
+     * })
+     *
+     * const aiError = AiError.NetworkError.fromHttpClientError(
+     *   platformError as HttpClientError.HttpClientError & { readonly reason: HttpClientError.RequestError }
+     * )
+     * aiError.reason // => "TransportError"
+     * aiError.cause === platformError // => true
+     * ```
+     *
+     * @stability unstable
+     * @since 4.1.0
+     */
+    static fromHttpClientError(error: HttpClientError.HttpClientError & {
+        readonly reason: HttpClientError.RequestError;
+    }): NetworkError;
     get message(): string;
 }
 /**
@@ -241,6 +237,15 @@ export interface ContentPolicyErrorMetadata extends ProviderMetadata {
 export interface InvalidRequestErrorMetadata extends ProviderMetadata {
 }
 /**
+ * Provider-specific metadata attached to `InvalidResponseError`.
+ *
+ * @stability unstable
+ * @category configuration
+ * @since 4.1.0
+ */
+export interface InvalidResponseErrorMetadata extends ProviderMetadata {
+}
+/**
  * Provider-specific metadata attached to `InternalProviderError`.
  *
  * @stability unstable
@@ -307,15 +312,9 @@ export declare const UsageInfo: Schema.Struct<{
  *
  * **When to use**
  *
- * Use to attach request details, optional response details, and optional body
- * text to AI provider errors.
+ * Use to attach optional response details and optional body text to AI
+ * provider errors.
  *
- * **Details**
- *
- * Includes the required request details plus optional response details and raw
- * response body.
- *
- * @see {@link HttpRequestDetails} for captured request details
  * @see {@link HttpResponseDetails} for captured response details
  *
  * @stability unstable
@@ -323,13 +322,6 @@ export declare const UsageInfo: Schema.Struct<{
  * @since 4.0.0
  */
 export declare const HttpContext: Schema.Struct<{
-    readonly request: Schema.Struct<{
-        readonly method: Schema.Literals<readonly ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "QUERY"]>;
-        readonly url: Schema.String;
-        readonly urlParams: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
-        readonly hash: Schema.optional<Schema.String>;
-        readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
-    }>;
     readonly response: Schema.optional<Schema.Struct<{
         readonly status: Schema.Int;
         readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
@@ -358,13 +350,6 @@ declare const RateLimitError_base: Schema.Class<RateLimitError, Schema.Struct<{
     readonly retryAfter: Schema.optional<Schema.Duration>;
     readonly metadata: Schema.withDecodingDefault<Schema.withConstructorDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.MutableJson, Schema.MutableJson, never, never>>> & Schema.Schema<RateLimitErrorMetadata>>, never>;
     readonly http: Schema.optional<Schema.Struct<{
-        readonly request: Schema.Struct<{
-            readonly method: Schema.Literals<readonly ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "QUERY"]>;
-            readonly url: Schema.String;
-            readonly urlParams: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
-            readonly hash: Schema.optional<Schema.String>;
-            readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
-        }>;
         readonly response: Schema.optional<Schema.Struct<{
             readonly status: Schema.Int;
             readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
@@ -419,13 +404,6 @@ declare const QuotaExhaustedError_base: Schema.Class<QuotaExhaustedError, Schema
     readonly resetAt: Schema.optional<Schema.DateTimeUtc>;
     readonly metadata: Schema.withDecodingDefault<Schema.withConstructorDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.MutableJson, Schema.MutableJson, never, never>>> & Schema.Schema<QuotaExhaustedErrorMetadata>>, never>;
     readonly http: Schema.optional<Schema.Struct<{
-        readonly request: Schema.Struct<{
-            readonly method: Schema.Literals<readonly ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "QUERY"]>;
-            readonly url: Schema.String;
-            readonly urlParams: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
-            readonly hash: Schema.optional<Schema.String>;
-            readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
-        }>;
         readonly response: Schema.optional<Schema.Struct<{
             readonly status: Schema.Int;
             readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
@@ -477,13 +455,6 @@ declare const AuthenticationError_base: Schema.Class<AuthenticationError, Schema
     readonly description: Schema.optional<Schema.String>;
     readonly metadata: Schema.withDecodingDefault<Schema.withConstructorDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.MutableJson, Schema.MutableJson, never, never>>> & Schema.Schema<AuthenticationErrorMetadata>>, never>;
     readonly http: Schema.optional<Schema.Struct<{
-        readonly request: Schema.Struct<{
-            readonly method: Schema.Literals<readonly ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "QUERY"]>;
-            readonly url: Schema.String;
-            readonly urlParams: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
-            readonly hash: Schema.optional<Schema.String>;
-            readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
-        }>;
         readonly response: Schema.optional<Schema.Struct<{
             readonly status: Schema.Int;
             readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
@@ -543,13 +514,6 @@ declare const ContentPolicyError_base: Schema.Class<ContentPolicyError, Schema.S
     readonly description: Schema.String;
     readonly metadata: Schema.withDecodingDefault<Schema.withConstructorDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.MutableJson, Schema.MutableJson, never, never>>> & Schema.Schema<ContentPolicyErrorMetadata>>, never>;
     readonly http: Schema.optional<Schema.Struct<{
-        readonly request: Schema.Struct<{
-            readonly method: Schema.Literals<readonly ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "QUERY"]>;
-            readonly url: Schema.String;
-            readonly urlParams: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
-            readonly hash: Schema.optional<Schema.String>;
-            readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
-        }>;
         readonly response: Schema.optional<Schema.Struct<{
             readonly status: Schema.Int;
             readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
@@ -604,13 +568,6 @@ declare const InvalidRequestError_base: Schema.Class<InvalidRequestError, Schema
     readonly description: Schema.optional<Schema.String>;
     readonly metadata: Schema.withDecodingDefault<Schema.withConstructorDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.MutableJson, Schema.MutableJson, never, never>>> & Schema.Schema<InvalidRequestErrorMetadata>>, never>;
     readonly http: Schema.optional<Schema.Struct<{
-        readonly request: Schema.Struct<{
-            readonly method: Schema.Literals<readonly ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "QUERY"]>;
-            readonly url: Schema.String;
-            readonly urlParams: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
-            readonly hash: Schema.optional<Schema.String>;
-            readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
-        }>;
         readonly response: Schema.optional<Schema.Struct<{
             readonly status: Schema.Int;
             readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
@@ -665,13 +622,6 @@ declare const InternalProviderError_base: Schema.Class<InternalProviderError, Sc
     readonly description: Schema.String;
     readonly metadata: Schema.withDecodingDefault<Schema.withConstructorDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.MutableJson, Schema.MutableJson, never, never>>> & Schema.Schema<InternalProviderErrorMetadata>>, never>;
     readonly http: Schema.optional<Schema.Struct<{
-        readonly request: Schema.Struct<{
-            readonly method: Schema.Literals<readonly ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "QUERY"]>;
-            readonly url: Schema.String;
-            readonly urlParams: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
-            readonly hash: Schema.optional<Schema.String>;
-            readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
-        }>;
         readonly response: Schema.optional<Schema.Struct<{
             readonly status: Schema.Int;
             readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
@@ -719,6 +669,53 @@ export declare class InternalProviderError extends InternalProviderError_base {
     get isRetryable(): boolean;
     get message(): string;
 }
+declare const InvalidResponseError_base: Schema.Class<InvalidResponseError, Schema.Struct<{
+    readonly _tag: Schema.tag<"InvalidResponseError">;
+    readonly description: Schema.String;
+    readonly metadata: Schema.withDecodingDefault<Schema.withConstructorDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.MutableJson, Schema.MutableJson, never, never>>> & Schema.Schema<InvalidResponseErrorMetadata>>, never>;
+    readonly http: Schema.optional<Schema.Struct<{
+        readonly response: Schema.optional<Schema.Struct<{
+            readonly status: Schema.Int;
+            readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
+        }>>;
+        readonly body: Schema.optional<Schema.String>;
+    }>>;
+}>, import("../Cause.ts").YieldableError>;
+/**
+ * Error indicating the provider response does not conform to the expected format.
+ *
+ * **Details**
+ *
+ * Invalid response errors are not retryable because retrying does not resolve an
+ * incompatible provider response format. Optional HTTP context can retain response
+ * details for diagnosis.
+ *
+ * @see {@link InvalidOutputError} for retryable model-generated output failures
+ * @stability unstable
+ * @category errors
+ * @since 4.1.0
+ */
+export declare class InvalidResponseError extends InvalidResponseError_base {
+    /**
+     * Marks `InvalidResponseError` as a semantic AI error reason for runtime guards.
+     *
+     * @since 4.1.0
+     */
+    readonly [ReasonTypeId]: "~effect/ai/AiError/Reason";
+    /**
+     * Invalid response errors are not retryable because the response format is incompatible.
+     *
+     * @since 4.1.0
+     */
+    get isRetryable(): boolean;
+    /**
+     * Creates an InvalidResponseError from a provider response schema error.
+     *
+     * @since 4.1.0
+     */
+    static fromSchemaError(error: Schema.SchemaError): InvalidResponseError;
+    get message(): string;
+}
 declare const InvalidOutputError_base: Schema.Class<InvalidOutputError, Schema.Struct<{
     readonly _tag: Schema.tag<"InvalidOutputError">;
     readonly description: Schema.String;
@@ -730,7 +727,7 @@ declare const InvalidOutputError_base: Schema.Class<InvalidOutputError, Schema.S
     }>>;
 }>, import("../Cause.ts").YieldableError>;
 /**
- * Error indicating failure to parse or validate LLM output.
+ * Error indicating failure to parse or validate model-generated output.
  *
  * **Details**
  *
@@ -914,13 +911,6 @@ declare const UnknownError_base: Schema.Class<UnknownError, Schema.Struct<{
     readonly description: Schema.optional<Schema.String>;
     readonly metadata: Schema.withDecodingDefault<Schema.withConstructorDefault<Schema.$Record<Schema.String, Schema.NullOr<Schema.Codec<Schema.MutableJson, Schema.MutableJson, never, never>>> & Schema.Schema<UnknownErrorMetadata>>, never>;
     readonly http: Schema.optional<Schema.Struct<{
-        readonly request: Schema.Struct<{
-            readonly method: Schema.Literals<readonly ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD", "OPTIONS", "TRACE", "QUERY"]>;
-            readonly url: Schema.String;
-            readonly urlParams: Schema.$Array<Schema.Tuple<readonly [Schema.String, Schema.String]>>;
-            readonly hash: Schema.optional<Schema.String>;
-            readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
-        }>;
         readonly response: Schema.optional<Schema.Struct<{
             readonly status: Schema.Int;
             readonly headers: Schema.$Record<Schema.String, Schema.Union<readonly [Schema.String, Schema.Redacted<Schema.String>]>>;
@@ -1311,7 +1301,7 @@ export declare class InvalidUserInputError extends InvalidUserInputError_base {
  * @category errors
  * @since 4.0.0
  */
-export type AiErrorReason = RateLimitError | QuotaExhaustedError | AuthenticationError | ContentPolicyError | InvalidRequestError | InternalProviderError | NetworkError | InvalidOutputError | StructuredOutputError | UnsupportedSchemaError | UnknownError | ToolNotFoundError | ToolParameterValidationError | InvalidToolResultError | ToolResultEncodingError | ToolConfigurationError | ToolkitRequiredError | InvalidUserInputError;
+export type AiErrorReason = RateLimitError | QuotaExhaustedError | AuthenticationError | ContentPolicyError | InvalidRequestError | InvalidResponseError | InternalProviderError | NetworkError | InvalidOutputError | StructuredOutputError | UnsupportedSchemaError | UnknownError | ToolNotFoundError | ToolParameterValidationError | InvalidToolResultError | ToolResultEncodingError | ToolConfigurationError | ToolkitRequiredError | InvalidUserInputError;
 /**
  * Schema for validating and parsing AI error reasons.
  *
@@ -1335,6 +1325,7 @@ export declare const AiErrorReason: Schema.Union<[
     typeof AuthenticationError,
     typeof ContentPolicyError,
     typeof InvalidRequestError,
+    typeof InvalidResponseError,
     typeof InternalProviderError,
     typeof NetworkError,
     typeof InvalidOutputError,
@@ -1354,7 +1345,7 @@ declare const AiError_base: Schema.Class<AiError, Schema.Struct<{
     readonly _tag: Schema.tag<"AiError">;
     readonly module: Schema.String;
     readonly method: Schema.String;
-    readonly reason: Schema.Union<[typeof RateLimitError, typeof QuotaExhaustedError, typeof AuthenticationError, typeof ContentPolicyError, typeof InvalidRequestError, typeof InternalProviderError, typeof NetworkError, typeof InvalidOutputError, typeof StructuredOutputError, typeof UnsupportedSchemaError, typeof UnknownError, typeof ToolNotFoundError, typeof ToolParameterValidationError, typeof InvalidToolResultError, typeof ToolResultEncodingError, typeof ToolConfigurationError, typeof ToolkitRequiredError, typeof InvalidUserInputError]>;
+    readonly reason: Schema.Union<[typeof RateLimitError, typeof QuotaExhaustedError, typeof AuthenticationError, typeof ContentPolicyError, typeof InvalidRequestError, typeof InvalidResponseError, typeof InternalProviderError, typeof NetworkError, typeof InvalidOutputError, typeof StructuredOutputError, typeof UnsupportedSchemaError, typeof UnknownError, typeof ToolNotFoundError, typeof ToolParameterValidationError, typeof InvalidToolResultError, typeof ToolResultEncodingError, typeof ToolConfigurationError, typeof ToolkitRequiredError, typeof InvalidUserInputError]>;
 }>, import("../Cause.ts").YieldableError>;
 /**
  * Schema for the top-level AI error wrapper using the `reason` pattern.
@@ -1400,7 +1391,7 @@ declare const AiError_base: Schema.Class<AiError, Schema.Struct<{
  */
 export declare class AiError extends AiError_base {
     readonly [TypeId]: "~effect/ai/AiError";
-    readonly cause: AuthenticationError | ContentPolicyError | InternalProviderError | InvalidOutputError | InvalidRequestError | InvalidToolResultError | InvalidUserInputError | NetworkError | QuotaExhaustedError | RateLimitError | StructuredOutputError | ToolConfigurationError | ToolNotFoundError | ToolParameterValidationError | ToolResultEncodingError | ToolkitRequiredError | UnknownError | UnsupportedSchemaError;
+    readonly cause: AuthenticationError | ContentPolicyError | InternalProviderError | InvalidOutputError | InvalidRequestError | InvalidResponseError | InvalidToolResultError | InvalidUserInputError | NetworkError | QuotaExhaustedError | RateLimitError | StructuredOutputError | ToolConfigurationError | ToolNotFoundError | ToolParameterValidationError | ToolResultEncodingError | ToolkitRequiredError | UnknownError | UnsupportedSchemaError;
     /**
      * Delegates to the underlying reason's `isRetryable` getter.
      *

@@ -166,6 +166,11 @@ export interface Theme {
     readonly errorColor: string;
     /** The color used for submitted values. */
     readonly submittedColor: string;
+    /**
+     * Whether prompts and the command wizard emit color and style escapes.
+     * Cursor movement and redraw controls are always emitted.
+     */
+    readonly colors: boolean;
 }
 /**
  * Options shared by built-in prompts that support theme overrides.
@@ -570,6 +575,11 @@ export interface ToggleOptions extends ThemeOptions {
 /**
  * Creates a prompt theme using the current platform defaults.
  *
+ * **Details**
+ *
+ * Unless `colors` is provided, it is detected when the theme is created:
+ * colors are enabled when stdout is a TTY and `NO_COLOR` is unset or empty.
+ *
  * @stability unstable
  * @category constructors
  * @since 4.0.0
@@ -581,7 +591,13 @@ export declare const makeTheme: (options?: Partial<Theme>) => Theme;
  * **Details**
  *
  * Provide this reference once to theme every prompt in an application. A
- * prompt's `theme` option takes precedence over the context value.
+ * prompt's `theme` option takes precedence over the context value. The
+ * command wizard also reads `colors` from this reference, so provide a theme
+ * with `colors: false` to disable wizard styling.
+ *
+ * The default value is created with `makeTheme` the first time it is read,
+ * so color detection runs once per process. Changes to `NO_COLOR` after the
+ * first prompt do not affect the default theme.
  *
  * @stability unstable
  * @category services
@@ -667,6 +683,7 @@ export declare namespace All {
  * const terminal = Terminal.make({
  *   columns: Effect.succeed(80),
  *   rows: Effect.succeed(24),
+ *   size: Effect.die("unused"),
  *   readInput: Effect.succeed({} as never),
  *   readLine: Effect.die("unused"),
  *   display: () => Effect.void

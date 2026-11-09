@@ -1,10 +1,12 @@
 import type * as Duration from "../Duration.ts";
 import type * as Effect from "../Effect.ts";
 import type * as PlatformError from "../PlatformError.ts";
+import type * as Redacted from "../Redacted.ts";
 import type * as Scope from "../Scope.ts";
 import type * as Sink from "../Sink.ts";
 import type * as Stream from "../Stream.ts";
 import { type ChildProcessHandle, ChildProcessSpawner } from "./ChildProcessSpawner.ts";
+import * as CommandLine from "./CommandLine.ts";
 /**
  * A command that can be built using `make`, combined using `pipeTo`, and executed using `exec` or `spawn`.
  *
@@ -23,7 +25,7 @@ export type Command = StandardCommand | PipedCommand;
 export interface StandardCommand extends Effect.Effect<ChildProcessHandle, PlatformError.PlatformError, ChildProcessSpawner | Scope.Scope> {
     readonly _tag: "StandardCommand";
     readonly command: string;
-    readonly args: ReadonlyArray<string>;
+    readonly args: ReadonlyArray<CommandLine.Word>;
     readonly options: CommandOptions;
 }
 /**
@@ -105,7 +107,8 @@ export interface PipeOptions {
      * **Details**
      *
      * - `"stdin"` (default): Pipe to stdin of the destination
-     * - `"fd3"`, `"fd4"`, etc.: Pipe to a custom file descriptor
+     * - `"fd3"`, `"fd4"`, etc.: Pipe to a custom file descriptor. A descriptor
+     *   configured as `"duplex"` stays duplex.
      */
     readonly to?: PipeToOption | undefined;
 }
@@ -156,7 +159,8 @@ export interface KillOptions {
     /**
      * The duration of time to wait after the child process has been terminated
      * before forcefully killing the child process by sending it the `"SIGKILL"`
-     * signal. Defaults to `undefined`, so `"SIGKILL"` is never sent.
+     * signal. Defaults to `undefined`, so `"SIGKILL"` is never sent and termination
+     * waits for the process to exit with no time limit.
      *
      * **Details**
      *
@@ -213,10 +217,17 @@ export interface StdoutConfig {
      * Can be a string indicating how the operating system should configure the
      * pipe established between the child process `stdout` and the parent process.
      *
-     * A `Sink` can also be passed, which will receive all elements produced by
-     * the `stdout` of the child process.
+     * A `Sink` can also be passed. The output is transduced through the sink as
+     * `handle.stdout` is consumed, and `handle.stdout` emits the results produced by
+     * the sink instead of the raw output.
      *
      * Defaults to "pipe".
+     *
+     * **Gotchas**
+     *
+     * A `Sink` only receives data while `handle.stdout` is being consumed. If
+     * it is never consumed, the sink receives nothing and a child process that
+     * writes more than the pipe buffer can block before it exits.
      */
     readonly stream?: CommandOutput | undefined;
 }
@@ -236,10 +247,17 @@ export interface StderrConfig {
      * Can be a string indicating how the operating system should configure the
      * pipe established between the child process `stderr` and the parent process.
      *
-     * A `Sink` can also be passed, which will receive all elements produced by
-     * the `stderr` of the child process.
+     * A `Sink` can also be passed. The output is transduced through the sink as
+     * `handle.stderr` is consumed, and `handle.stderr` emits the results produced by
+     * the sink instead of the raw output.
      *
      * Defaults to "pipe".
+     *
+     * **Gotchas**
+     *
+     * A `Sink` only receives data while `handle.stderr` is being consumed. If
+     * it is never consumed, the sink receives nothing and a child process that
+     * writes more than the pipe buffer can block before it exits.
      */
     readonly stream?: CommandOutput | undefined;
 }
@@ -272,6 +290,34 @@ export type AdditionalFdConfig = {
     /**
      * For output file descriptors, an optional sink which receives data from
      * the file descriptor.
+     *
+     * **Details**
+     *
+     * The data is transduced through the sink as `handle.getOutputFd(fd)` is
+     * consumed, and that stream emits the results produced by the sink
+     * instead of the raw output.
+     *
+     * **Gotchas**
+     *
+     * The sink only receives data while `handle.getOutputFd(fd)` is being
+     * consumed. If it is never consumed, the sink receives nothing and a child
+     * process that writes more than the pipe buffer can block before it exits.
+     */
+    readonly sink?: Sink.Sink<Uint8Array, Uint8Array, never, PlatformError.PlatformError> | undefined;
+} | {
+    /**
+     * The direction of data flow for this file descriptor.
+     * - "duplex": Data flows in both directions over the same file descriptor
+     *   (writable and readable by parent)
+     */
+    readonly type: "duplex";
+    /**
+     * An optional stream to write into the file descriptor. The write side is
+     * ended when the stream completes.
+     */
+    readonly stream?: Stream.Stream<Uint8Array, PlatformError.PlatformError> | undefined;
+    /**
+     * An optional sink which receives data read from the file descriptor.
      */
     readonly sink?: Sink.Sink<Uint8Array, Uint8Array, never, PlatformError.PlatformError> | undefined;
 };
@@ -294,14 +340,18 @@ export interface CommandOptions extends KillOptions {
      *
      * If `extendEnv` is set to `true`, the value of `env` will be merged with
      * the value of `globalThis.process.env`, prioritizing the values in `env`
-     * when conflicts exist.
+     * when conflicts exist. A variable set to `undefined` is then removed from
+     * the child environment.
+     *
+     * `Redacted` values are passed to the child unchanged and are never shown in
+     * errors.
      *
      * **Gotchas**
      *
      * Without `extendEnv: true`, providing `env` replaces the inherited child
      * environment. The child will not receive `PATH` unless `env` includes it.
      */
-    readonly env?: Record<string, string | undefined> | undefined;
+    readonly env?: Record<string, string | Redacted.Redacted<string> | undefined> | undefined;
     /**
      * If set to `true`, the child process uses both the values in `env` as well
      * as the values in `globalThis.process.env`, prioritizing the values in `env`
@@ -315,17 +365,45 @@ export interface CommandOptions extends KillOptions {
      */
     readonly extendEnv?: boolean | undefined;
     /**
-     * If set to `true`, runs the command inside of a shell, defaulting to `/bin/sh`
-     * on UNIX systems and `cmd.exe` on Windows.
+     * If set to `true`, runs the command as a script inside of a shell,
+     * defaulting to `/bin/sh` on UNIX systems and `cmd.exe` on Windows.
      *
      * **Details**
      *
      * Can also be set to a string representing the absolute path to a shell to
-     * use on the system.
+     * use on the system. The command is the whole script; build it with
+     * `CommandLine.join` or `CommandLine.quote` when it contains values.
+     *
+     * This is also the way to run a command configured as shell text, such as
+     * the `EDITOR` environment variable. The setting is trusted shell text and
+     * runs as written, so use it as the start of the script and quote the values
+     * that follow it. Name a POSIX shell, because `shell: true` runs `cmd.exe` on
+     * Windows, which POSIX quoting does not protect.
      *
      * **Gotchas**
      *
-     * It is generally disadvised to use this option.
+     * - Running a command with both `shell` and arguments fails with a
+     *   `BadArgument` error, because shells would join the arguments into the
+     *   script without quoting them.
+     * - On Windows the script runs in `cmd.exe`, which no `CommandLine` format
+     *   quotes for. `CommandLine.join` with `format: "windows"` is only safe for
+     *   arguments without `%`, `^`, `&`, `|`, `<` or `>`.
+     * - It is generally disadvised to use this option.
+     *
+     * **Example** (Running a configured editor)
+     *
+     * ```ts import.meta.vitest
+     * import { Result } from "effect"
+     * import { ChildProcess, CommandLine } from "effect/process"
+     *
+     * const editor = "code --wait" // for example, process.env.EDITOR
+     * const file = "notes from today.txt"
+     *
+     * const command = ChildProcess.make(`${editor} ${Result.getOrThrow(CommandLine.quote(file))}`, {
+     *   shell: "/bin/sh"
+     * })
+     * command.command // => "code --wait 'notes from today.txt'"
+     * ```
      */
     readonly shell?: boolean | string | undefined;
     /**
@@ -371,11 +449,21 @@ export interface CommandOptions extends KillOptions {
      *
      * **Details**
      *
-     * Keys must be in the format `"fd3"`, `"fd4"`, etc. with a file descriptor
-     * index >= 3.
+     * Keys use the descriptor index: `"fd3"`, `"fd4"`, etc. (index >= 3).
      *
-     * The file descriptor index is determined by the numeric suffix (i.e. `fd3`
-     * has a file descriptor index of 3).
+     * For `"duplex"`, use `getInputFd` to write and `getOutputFd` to read the same
+     * descriptor. `pipeTo` preserves duplex targets, replacing only their input.
+     *
+     * Duplex request/response and half-close are verified on Linux with Node.js
+     * and raw Deno `node:child_process` (not Effect's spawner). The same behavior
+     * is expected on macOS; Windows request/response is expected but unverified.
+     * Half-close is unsupported on Windows and Bun: keep the input open until
+     * all responses are read. Bun extra descriptors on Windows are unverified.
+     * Native `DenoChildProcessSpawner` does not support additional descriptors.
+     *
+     * Node.js and Deno children can use `new net.Socket({ fd: 3 })`. Deno children
+     * cannot use `node:fs` on the raw descriptor; Bun children cannot use
+     * `net.Socket` on it.
      *
      * **Example** (Configuring additional file descriptors)
      *
@@ -395,28 +483,22 @@ export interface CommandOptions extends KillOptions {
      *     fd3: { type: "input" }
      *   }
      * })
-     * const result = [cmd1.options.additionalFds?.fd3?.type, cmd2.options.additionalFds?.fd3?.type]
-     * result // => ["output", "input"]
+     * // Duplex fd3 - write and read over the same descriptor
+     * const cmd3 = ChildProcess.make("my-program", [], {
+     *   additionalFds: {
+     *     fd3: { type: "duplex" }
+     *   }
+     * })
+     * const result = [
+     *   cmd1.options.additionalFds?.fd3?.type,
+     *   cmd2.options.additionalFds?.fd3?.type,
+     *   cmd3.options.additionalFds?.fd3?.type
+     * ]
+     * result // => ["output", "input", "duplex"]
      * ```
      */
     readonly additionalFds?: Record<`fd${number}`, AdditionalFdConfig> | undefined;
 }
-/**
- * Valid template expression item types.
- *
- * @stability unstable
- * @category models
- * @since 4.0.0
- */
-export type TemplateExpressionItem = string | number | boolean;
-/**
- * Template expression type for interpolated values.
- *
- * @stability unstable
- * @category models
- * @since 4.0.0
- */
-export type TemplateExpression = TemplateExpressionItem | ReadonlyArray<TemplateExpressionItem>;
 /**
  * Checks whether a value is a `Command`.
  *
@@ -451,16 +533,33 @@ export declare const isPipedCommand: (command: Command) => command is PipedComma
  * 2. Options + template literal: `make({ cwd: "/app" })\`npm run build\``
  * 3. Array form: `make("npm", ["run", "build"], options?)`
  *
- * Template literals are not parsed until execution time, allowing parsing
- * errors to flow through Effect's error channel.
+ * Templates are split with `CommandLine.template`: quotes group words, each
+ * `${}` value is one literal argument, and an argument that contains a
+ * `Redacted` value stays `Redacted`. Arguments in the array form can be
+ * `Redacted` too.
+ *
+ * With the `shell` option, the template text is the shell script and is kept
+ * as written.
+ *
+ * **Gotchas**
+ *
+ * - A template is parsed when `make` is called. Shell syntax such as `|`,
+ *   `$HOME`, `*` or `~` throws a `CommandLine.CommandLineError`: quote it, or
+ *   pass the value with `${}`.
+ * - A template with the `shell` option cannot contain `${}` values, because
+ *   their quoting depends on the shell. Build the script with
+ *   `CommandLine.quote` and pass it as a string.
+ * - The program name, the first word, cannot be `Redacted`.
+ * - A NUL character in the command, an argument or an `env` value fails with
+ *   a `BadArgument` error when the command is spawned.
  *
  * **Example** (Creating commands)
  *
  * ```ts import.meta.vitest
  * import { ChildProcess } from "effect/process"
  *
- * // Template literal form
- * const cmd1 = ChildProcess.make`echo "hello"`
+ * // Template literal form; quotes group words
+ * const cmd1 = ChildProcess.make`echo "hello world"`
  *
  * // With options
  * const cmd2 = ChildProcess.make({ cwd: "/tmp" })`ls -la`
@@ -468,7 +567,7 @@ export declare const isPipedCommand: (command: Command) => command is PipedComma
  * // Array form
  * const cmd3 = ChildProcess.make("git", ["status"])
  *
- * const result = [cmd1.command, cmd2.options.cwd, cmd3.args[0]] // => ["echo", "/tmp", "status"]
+ * const result = [cmd1.args[0], cmd2.options.cwd, cmd3.args[0]] // => ["hello world", "/tmp", "status"]
  * ```
  *
  * @stability unstable
@@ -486,16 +585,33 @@ export declare const make: {
      * 2. Options + template literal: `make({ cwd: "/app" })\`npm run build\``
      * 3. Array form: `make("npm", ["run", "build"], options?)`
      *
-     * Template literals are not parsed until execution time, allowing parsing
-     * errors to flow through Effect's error channel.
+     * Templates are split with `CommandLine.template`: quotes group words, each
+     * `${}` value is one literal argument, and an argument that contains a
+     * `Redacted` value stays `Redacted`. Arguments in the array form can be
+     * `Redacted` too.
+     *
+     * With the `shell` option, the template text is the shell script and is kept
+     * as written.
+     *
+     * **Gotchas**
+     *
+     * - A template is parsed when `make` is called. Shell syntax such as `|`,
+     *   `$HOME`, `*` or `~` throws a `CommandLine.CommandLineError`: quote it, or
+     *   pass the value with `${}`.
+     * - A template with the `shell` option cannot contain `${}` values, because
+     *   their quoting depends on the shell. Build the script with
+     *   `CommandLine.quote` and pass it as a string.
+     * - The program name, the first word, cannot be `Redacted`.
+     * - A NUL character in the command, an argument or an `env` value fails with
+     *   a `BadArgument` error when the command is spawned.
      *
      * **Example** (Creating commands)
      *
      * ```ts import.meta.vitest
      * import { ChildProcess } from "effect/process"
      *
-     * // Template literal form
-     * const cmd1 = ChildProcess.make`echo "hello"`
+     * // Template literal form; quotes group words
+     * const cmd1 = ChildProcess.make`echo "hello world"`
      *
      * // With options
      * const cmd2 = ChildProcess.make({ cwd: "/tmp" })`ls -la`
@@ -503,7 +619,7 @@ export declare const make: {
      * // Array form
      * const cmd3 = ChildProcess.make("git", ["status"])
      *
-     * const result = [cmd1.command, cmd2.options.cwd, cmd3.args[0]] // => ["echo", "/tmp", "status"]
+     * const result = [cmd1.args[0], cmd2.options.cwd, cmd3.args[0]] // => ["hello world", "/tmp", "status"]
      * ```
      *
      * @stability unstable
@@ -521,16 +637,33 @@ export declare const make: {
      * 2. Options + template literal: `make({ cwd: "/app" })\`npm run build\``
      * 3. Array form: `make("npm", ["run", "build"], options?)`
      *
-     * Template literals are not parsed until execution time, allowing parsing
-     * errors to flow through Effect's error channel.
+     * Templates are split with `CommandLine.template`: quotes group words, each
+     * `${}` value is one literal argument, and an argument that contains a
+     * `Redacted` value stays `Redacted`. Arguments in the array form can be
+     * `Redacted` too.
+     *
+     * With the `shell` option, the template text is the shell script and is kept
+     * as written.
+     *
+     * **Gotchas**
+     *
+     * - A template is parsed when `make` is called. Shell syntax such as `|`,
+     *   `$HOME`, `*` or `~` throws a `CommandLine.CommandLineError`: quote it, or
+     *   pass the value with `${}`.
+     * - A template with the `shell` option cannot contain `${}` values, because
+     *   their quoting depends on the shell. Build the script with
+     *   `CommandLine.quote` and pass it as a string.
+     * - The program name, the first word, cannot be `Redacted`.
+     * - A NUL character in the command, an argument or an `env` value fails with
+     *   a `BadArgument` error when the command is spawned.
      *
      * **Example** (Creating commands)
      *
      * ```ts import.meta.vitest
      * import { ChildProcess } from "effect/process"
      *
-     * // Template literal form
-     * const cmd1 = ChildProcess.make`echo "hello"`
+     * // Template literal form; quotes group words
+     * const cmd1 = ChildProcess.make`echo "hello world"`
      *
      * // With options
      * const cmd2 = ChildProcess.make({ cwd: "/tmp" })`ls -la`
@@ -538,14 +671,14 @@ export declare const make: {
      * // Array form
      * const cmd3 = ChildProcess.make("git", ["status"])
      *
-     * const result = [cmd1.command, cmd2.options.cwd, cmd3.args[0]] // => ["echo", "/tmp", "status"]
+     * const result = [cmd1.args[0], cmd2.options.cwd, cmd3.args[0]] // => ["hello world", "/tmp", "status"]
      * ```
      *
      * @stability unstable
      * @category constructors
      * @since 4.0.0
      */
-    (command: string, args: ReadonlyArray<string>, options?: CommandOptions): StandardCommand;
+    (command: string, args: ReadonlyArray<CommandLine.Word>, options?: CommandOptions): StandardCommand;
     /**
      * Create a command from a template literal, options + template, or array form.
      *
@@ -556,16 +689,33 @@ export declare const make: {
      * 2. Options + template literal: `make({ cwd: "/app" })\`npm run build\``
      * 3. Array form: `make("npm", ["run", "build"], options?)`
      *
-     * Template literals are not parsed until execution time, allowing parsing
-     * errors to flow through Effect's error channel.
+     * Templates are split with `CommandLine.template`: quotes group words, each
+     * `${}` value is one literal argument, and an argument that contains a
+     * `Redacted` value stays `Redacted`. Arguments in the array form can be
+     * `Redacted` too.
+     *
+     * With the `shell` option, the template text is the shell script and is kept
+     * as written.
+     *
+     * **Gotchas**
+     *
+     * - A template is parsed when `make` is called. Shell syntax such as `|`,
+     *   `$HOME`, `*` or `~` throws a `CommandLine.CommandLineError`: quote it, or
+     *   pass the value with `${}`.
+     * - A template with the `shell` option cannot contain `${}` values, because
+     *   their quoting depends on the shell. Build the script with
+     *   `CommandLine.quote` and pass it as a string.
+     * - The program name, the first word, cannot be `Redacted`.
+     * - A NUL character in the command, an argument or an `env` value fails with
+     *   a `BadArgument` error when the command is spawned.
      *
      * **Example** (Creating commands)
      *
      * ```ts import.meta.vitest
      * import { ChildProcess } from "effect/process"
      *
-     * // Template literal form
-     * const cmd1 = ChildProcess.make`echo "hello"`
+     * // Template literal form; quotes group words
+     * const cmd1 = ChildProcess.make`echo "hello world"`
      *
      * // With options
      * const cmd2 = ChildProcess.make({ cwd: "/tmp" })`ls -la`
@@ -573,14 +723,14 @@ export declare const make: {
      * // Array form
      * const cmd3 = ChildProcess.make("git", ["status"])
      *
-     * const result = [cmd1.command, cmd2.options.cwd, cmd3.args[0]] // => ["echo", "/tmp", "status"]
+     * const result = [cmd1.args[0], cmd2.options.cwd, cmd3.args[0]] // => ["hello world", "/tmp", "status"]
      * ```
      *
      * @stability unstable
      * @category constructors
      * @since 4.0.0
      */
-    (options: CommandOptions): (templates: TemplateStringsArray, ...expressions: ReadonlyArray<TemplateExpression>) => StandardCommand;
+    (options: CommandOptions): (templates: TemplateStringsArray, ...expressions: ReadonlyArray<CommandLine.TemplateExpression>) => StandardCommand;
     /**
      * Create a command from a template literal, options + template, or array form.
      *
@@ -591,16 +741,33 @@ export declare const make: {
      * 2. Options + template literal: `make({ cwd: "/app" })\`npm run build\``
      * 3. Array form: `make("npm", ["run", "build"], options?)`
      *
-     * Template literals are not parsed until execution time, allowing parsing
-     * errors to flow through Effect's error channel.
+     * Templates are split with `CommandLine.template`: quotes group words, each
+     * `${}` value is one literal argument, and an argument that contains a
+     * `Redacted` value stays `Redacted`. Arguments in the array form can be
+     * `Redacted` too.
+     *
+     * With the `shell` option, the template text is the shell script and is kept
+     * as written.
+     *
+     * **Gotchas**
+     *
+     * - A template is parsed when `make` is called. Shell syntax such as `|`,
+     *   `$HOME`, `*` or `~` throws a `CommandLine.CommandLineError`: quote it, or
+     *   pass the value with `${}`.
+     * - A template with the `shell` option cannot contain `${}` values, because
+     *   their quoting depends on the shell. Build the script with
+     *   `CommandLine.quote` and pass it as a string.
+     * - The program name, the first word, cannot be `Redacted`.
+     * - A NUL character in the command, an argument or an `env` value fails with
+     *   a `BadArgument` error when the command is spawned.
      *
      * **Example** (Creating commands)
      *
      * ```ts import.meta.vitest
      * import { ChildProcess } from "effect/process"
      *
-     * // Template literal form
-     * const cmd1 = ChildProcess.make`echo "hello"`
+     * // Template literal form; quotes group words
+     * const cmd1 = ChildProcess.make`echo "hello world"`
      *
      * // With options
      * const cmd2 = ChildProcess.make({ cwd: "/tmp" })`ls -la`
@@ -608,14 +775,14 @@ export declare const make: {
      * // Array form
      * const cmd3 = ChildProcess.make("git", ["status"])
      *
-     * const result = [cmd1.command, cmd2.options.cwd, cmd3.args[0]] // => ["echo", "/tmp", "status"]
+     * const result = [cmd1.args[0], cmd2.options.cwd, cmd3.args[0]] // => ["hello world", "/tmp", "status"]
      * ```
      *
      * @stability unstable
      * @category constructors
      * @since 4.0.0
      */
-    (templates: TemplateStringsArray, ...expressions: ReadonlyArray<TemplateExpression>): StandardCommand;
+    (templates: TemplateStringsArray, ...expressions: ReadonlyArray<CommandLine.TemplateExpression>): StandardCommand;
 };
 /**
  * Pipes the output of one command to the input of another.
@@ -741,7 +908,7 @@ export declare const pipeTo: {
  * ```ts import.meta.vitest
  * import { ChildProcess } from "effect/process"
  *
- * const command = ChildProcess.make`echo "foo"`
+ * const command = ChildProcess.make`echo foo`
  *
  * const prefixed = command.pipe(
  *   ChildProcess.prefix`time`
@@ -769,7 +936,7 @@ export declare const prefix: {
      * ```ts import.meta.vitest
      * import { ChildProcess } from "effect/process"
      *
-     * const command = ChildProcess.make`echo "foo"`
+     * const command = ChildProcess.make`echo foo`
      *
      * const prefixed = command.pipe(
      *   ChildProcess.prefix`time`
@@ -784,7 +951,7 @@ export declare const prefix: {
      * @category combinators
      * @since 4.0.0
      */
-    (command: string, args?: ReadonlyArray<string>): (self: Command) => Command;
+    (command: string, args?: ReadonlyArray<CommandLine.Word>): (self: Command) => Command;
     /**
      * Prepends another command to a command.
      *
@@ -797,7 +964,7 @@ export declare const prefix: {
      * ```ts import.meta.vitest
      * import { ChildProcess } from "effect/process"
      *
-     * const command = ChildProcess.make`echo "foo"`
+     * const command = ChildProcess.make`echo foo`
      *
      * const prefixed = command.pipe(
      *   ChildProcess.prefix`time`
@@ -812,7 +979,7 @@ export declare const prefix: {
      * @category combinators
      * @since 4.0.0
      */
-    (templates: TemplateStringsArray, ...expressions: ReadonlyArray<TemplateExpression>): (self: Command) => Command;
+    (templates: TemplateStringsArray, ...expressions: ReadonlyArray<CommandLine.TemplateExpression>): (self: Command) => Command;
     /**
      * Prepends another command to a command.
      *
@@ -825,7 +992,7 @@ export declare const prefix: {
      * ```ts import.meta.vitest
      * import { ChildProcess } from "effect/process"
      *
-     * const command = ChildProcess.make`echo "foo"`
+     * const command = ChildProcess.make`echo foo`
      *
      * const prefixed = command.pipe(
      *   ChildProcess.prefix`time`
@@ -840,7 +1007,7 @@ export declare const prefix: {
      * @category combinators
      * @since 4.0.0
      */
-    (self: Command, command: string, args?: ReadonlyArray<string>): Command;
+    (self: Command, command: string, args?: ReadonlyArray<CommandLine.Word>): Command;
 };
 /**
  * Sets the current working directory for a command.
@@ -959,7 +1126,7 @@ export declare const setEnv: {
      * @category combinators
      * @since 4.0.0
      */
-    (env: Record<string, string>): (self: Command) => Command;
+    (env: Record<string, string | Redacted.Redacted<string>>): (self: Command) => Command;
     /**
      * Adds environment variables to a command, merging them with any existing
      * command environment and overriding duplicate keys.
@@ -983,7 +1150,7 @@ export declare const setEnv: {
      * @category combinators
      * @since 4.0.0
      */
-    (self: Command, env: Record<string, string>): Command;
+    (self: Command, env: Record<string, string | Redacted.Redacted<string>>): Command;
 };
 /**
  * Parses an fd name like "fd3" to its numeric index.

@@ -99,26 +99,54 @@ const ProtoTimeZoneOffset = {
     };
   }
 };
+const cacheSlot = {
+  value: undefined,
+  enumerable: false,
+  writable: true
+};
+// Instances sealed or frozen before their first cache write cannot receive own
+// slots, so their caches live here instead.
+const sealedCaches = /*#__PURE__*/new WeakMap();
+// Until an instance has its own slots, every cache read and write, including
+// writes through the public fields from other copies of effect, reaches these
+// accessors. The first write defines all of the instance's slots at once and in
+// a fixed order, so construction avoids `Object.defineProperty` and instances
+// keep few shapes.
+const cacheAccessor = (key, slots) => ({
+  get() {
+    return Object.isExtensible(this) ? undefined : sealedCaches.get(this)?.[key];
+  },
+  set(value) {
+    if (Object.isExtensible(this)) {
+      for (const slot of slots) {
+        Object.defineProperty(this, slot, cacheSlot);
+      }
+      this[key] = value;
+    } else {
+      let caches = sealedCaches.get(this);
+      if (caches === undefined) {
+        caches = {};
+        sealedCaches.set(this, caches);
+      }
+      caches[key] = value;
+    }
+  }
+});
+const zonedSlots = ["partsUtc", "adjustedEpochMilliseconds", "partsAdjusted"];
+Object.defineProperty(ProtoUtc, "partsUtc", cacheAccessor("partsUtc", ["partsUtc"]));
+Object.defineProperties(ProtoZoned, {
+  partsUtc: cacheAccessor("partsUtc", zonedSlots),
+  adjustedEpochMilliseconds: cacheAccessor("adjustedEpochMilliseconds", zonedSlots),
+  partsAdjusted: cacheAccessor("partsAdjusted", zonedSlots)
+});
 /** @internal */
 export const makeZonedProto = (epochMillis, zone, partsUtc) => {
   const self = Object.create(ProtoZoned);
   self.epochMilliseconds = epochMillis;
   self.zone = zone;
-  Object.defineProperty(self, "partsUtc", {
-    value: partsUtc,
-    enumerable: false,
-    writable: true
-  });
-  Object.defineProperty(self, "adjustedEpochMillis", {
-    value: undefined,
-    enumerable: false,
-    writable: true
-  });
-  Object.defineProperty(self, "partsAdjusted", {
-    value: undefined,
-    enumerable: false,
-    writable: true
-  });
+  if (partsUtc !== undefined) {
+    self.partsUtc = partsUtc;
+  }
   return self;
 };
 // =============================================================================
@@ -152,11 +180,6 @@ export const clamp = /*#__PURE__*/order.clamp(Order);
 const makeUtc = epochMillis => {
   const self = Object.create(ProtoUtc);
   self.epochMilliseconds = epochMillis;
-  Object.defineProperty(self, "partsUtc", {
-    value: undefined,
-    enumerable: false,
-    writable: true
-  });
   return self;
 };
 /** @internal */
@@ -191,8 +214,11 @@ export const makeUnsafe = input => {
  * so `makeUnsafe` appends "Z" to force UTC interpretation.
  * This check prevents appending "Z" to strings that already have a zone
  * (e.g. "2024-01-01T12:00:00Z", "...+05:30", "...GMT"), which would produce invalid dates.
+ * `Date.parse` also accepts a trailing `z` or `gmt` in any case. Only that trailing
+ * match is case-insensitive, so lowercase letters in a comment like "(xyz)" do not
+ * count as a zone.
  */
-const hasZone = input => /Z|GMT|[+-]\d{2}$|[+-]\d{2}:?\d{2}$|\]$/.test(input);
+const hasZone = input => /Z|GMT|[+-]\d{2}$|[+-]\d{2}:?\d{2}$|\]$/.test(input) || /z$|gmt$/i.test(input);
 const minEpochMillis = -8640000000000000 + 12 * 60 * 60 * 1000;
 const maxEpochMillis = 8640000000000000 - 14 * 60 * 60 * 1000;
 /** @internal */
@@ -267,6 +293,7 @@ const formatOptions = {
   day: "numeric",
   month: "numeric",
   year: "numeric",
+  era: "short",
   hour: "numeric",
   minute: "numeric",
   second: "numeric",
@@ -318,7 +345,7 @@ export const zoneMakeNamedEffect = zoneId => effect.try({
 });
 /** @internal */
 export const zoneMakeLocal = () => zoneMakeIntl(new Intl.DateTimeFormat("en-US", formatOptions));
-const offsetZoneRegExp = /^(?:GMT|[+-])/;
+const offsetZoneRegExp = /^(?:GMT)?[+-]/;
 /** @internal */
 export const zoneFromString = zone => {
   if (offsetZoneRegExp.test(zone)) {
@@ -379,9 +406,17 @@ export const toDate = self => {
   } else if (self.adjustedEpochMilliseconds !== undefined) {
     return new Date(self.adjustedEpochMilliseconds);
   }
-  const parts = self.zone.format.formatToParts(self.epochMilliseconds).filter(_ => _.type !== "literal");
+  let bc = false;
+  const parts = self.zone.format.formatToParts(self.epochMilliseconds).filter(_ => {
+    if (_.type === "era") {
+      bc = _.value === "BC";
+      return false;
+    }
+    return _.type !== "literal";
+  });
+  const year = Number(parts[2].value);
   const date = new Date(0);
-  date.setUTCFullYear(Number(parts[2].value), Number(parts[0].value) - 1, Number(parts[1].value));
+  date.setUTCFullYear(bc ? 1 - year : year, Number(parts[0].value) - 1, Number(parts[1].value));
   date.setUTCHours(Number(parts[3].value), Number(parts[4].value), Number(parts[5].value), parts[6]?.type === "fractionalSecond" ? Number(parts[6].value) : (self.epochMilliseconds % 1000 + 1000) % 1000);
   self.adjustedEpochMilliseconds = date.getTime();
   return date;
@@ -434,16 +469,18 @@ export const toParts = self => {
   } else if (self.partsAdjusted !== undefined) {
     return self.partsAdjusted;
   }
-  self.partsAdjusted = withDate(self, dateToParts);
-  return self.partsAdjusted;
+  const parts = withDate(self, dateToParts);
+  self.partsAdjusted = parts;
+  return parts;
 };
 /** @internal */
 export const toPartsUtc = self => {
   if (self.partsUtc !== undefined) {
     return self.partsUtc;
   }
-  self.partsUtc = withDateUtc(self, dateToParts);
-  return self.partsUtc;
+  const parts = withDateUtc(self, dateToParts);
+  self.partsUtc = parts;
+  return parts;
 };
 /** @internal */
 export const getPartUtc = /*#__PURE__*/dual(2, (self, part) => toPartsUtc(self)[part]);
@@ -538,7 +575,7 @@ const makeZonedFromAdjusted = (adjustedMillis, zone, disambiguation) => {
   }
   return makeZonedProto(adjustedMillis - afterOffset, zone);
 };
-const offsetRegExp = /([+-])(\d{2}):(\d{2})$/;
+const offsetRegExp = /([+-])(\d{2}):?(\d{2})$/;
 const parseOffset = offset => {
   const match = offsetRegExp.exec(offset);
   if (match === null) {
@@ -595,45 +632,50 @@ export const match = /*#__PURE__*/dual(2, (self, options) => self._tag === "Utc"
 export const addDuration = /*#__PURE__*/dual(2, (self, duration) => mapEpochMillis(self, millis => millis + Duration.toMillis(Duration.fromInputUnsafe(duration))));
 /** @internal */
 export const subtractDuration = /*#__PURE__*/dual(2, (self, duration) => mapEpochMillis(self, millis => millis - Duration.toMillis(Duration.fromInputUnsafe(duration))));
-const addMillis = (date, amount) => {
-  date.setTime(date.getTime() + amount);
-};
 /** @internal */
-export const add = /*#__PURE__*/dual(2, (self, parts) => mutate(self, date => {
-  if (parts.milliseconds) {
-    addMillis(date, parts.milliseconds);
-  }
-  if (parts.seconds) {
-    addMillis(date, parts.seconds * 1000);
-  }
-  if (parts.minutes) {
-    addMillis(date, parts.minutes * 60 * 1000);
-  }
-  if (parts.hours) {
-    addMillis(date, parts.hours * 60 * 60 * 1000);
-  }
-  if (parts.days) {
-    date.setUTCDate(date.getUTCDate() + parts.days);
-  }
-  if (parts.weeks) {
-    date.setUTCDate(date.getUTCDate() + parts.weeks * 7);
-  }
-  if (parts.months) {
-    const day = date.getUTCDate();
-    date.setUTCMonth(date.getUTCMonth() + parts.months + 1, 0);
-    if (day < date.getUTCDate()) {
-      date.setUTCDate(day);
+export const add = /*#__PURE__*/dual(2, (self, parts) => {
+  // time units move the instant, calendar units move the wall clock
+  const shifted = mutateUtc(self, date => {
+    if (parts.milliseconds) {
+      date.setTime(date.getTime() + parts.milliseconds);
     }
-  }
-  if (parts.years) {
-    const day = date.getUTCDate();
-    const month = date.getUTCMonth();
-    date.setUTCFullYear(date.getUTCFullYear() + parts.years, month + 1, 0);
-    if (day < date.getUTCDate()) {
-      date.setUTCDate(day);
+    if (parts.seconds) {
+      date.setTime(date.getTime() + parts.seconds * 1000);
     }
+    if (parts.minutes) {
+      date.setTime(date.getTime() + parts.minutes * 60 * 1000);
+    }
+    if (parts.hours) {
+      date.setTime(date.getTime() + parts.hours * 60 * 60 * 1000);
+    }
+  });
+  if (!parts.days && !parts.weeks && !parts.months && !parts.years) {
+    return shifted;
   }
-}));
+  return mutate(shifted, date => {
+    if (parts.days) {
+      date.setUTCDate(date.getUTCDate() + parts.days);
+    }
+    if (parts.weeks) {
+      date.setUTCDate(date.getUTCDate() + parts.weeks * 7);
+    }
+    if (parts.months) {
+      const day = date.getUTCDate();
+      date.setUTCMonth(date.getUTCMonth() + parts.months + 1, 0);
+      if (day < date.getUTCDate()) {
+        date.setUTCDate(day);
+      }
+    }
+    if (parts.years) {
+      const day = date.getUTCDate();
+      const month = date.getUTCMonth();
+      date.setUTCFullYear(date.getUTCFullYear() + parts.years, month + 1, 0);
+      if (day < date.getUTCDate()) {
+        date.setUTCDate(day);
+      }
+    }
+  });
+});
 /** @internal */
 export const subtract = /*#__PURE__*/dual(2, (self, parts) => {
   const newParts = {};
@@ -642,6 +684,20 @@ export const subtract = /*#__PURE__*/dual(2, (self, parts) => {
   }
   return add(self, newParts);
 });
+const mutateRounding = (self, part, f, disambiguation = "compatible") => {
+  if (self._tag === "Utc" || self.zone._tag === "Offset" || part === "day" || part === "week" || part === "month" || part === "year") {
+    return mutate(self, f, {
+      disambiguation
+    });
+  }
+  // keep the input's offset so rounding stays in the same occurrence of a repeated hour
+  const date = toDate(self);
+  const offset = date.getTime() - Math.trunc(self.epochMilliseconds);
+  f(date);
+  const adjustedMillis = date.getTime();
+  const result = makeZonedProto(adjustedMillis - offset, self.zone);
+  return zonedOffset(result) === offset ? result : makeZonedFromAdjusted(adjustedMillis, self.zone, disambiguation);
+};
 const startOfDate = (date, part, options) => {
   switch (part) {
     case "second":
@@ -688,7 +744,7 @@ const startOfDate = (date, part, options) => {
   }
 };
 /** @internal */
-export const startOf = /*#__PURE__*/dual(isDateTimeArgs, (self, part, options) => mutate(self, date => startOfDate(date, part, options)));
+export const startOf = /*#__PURE__*/dual(isDateTimeArgs, (self, part, options) => mutateRounding(self, part, date => startOfDate(date, part, options)));
 const endOfDate = (date, part, options) => {
   switch (part) {
     case "second":
@@ -735,9 +791,9 @@ const endOfDate = (date, part, options) => {
   }
 };
 /** @internal */
-export const endOf = /*#__PURE__*/dual(isDateTimeArgs, (self, part, options) => mutate(self, date => endOfDate(date, part, options)));
+export const endOf = /*#__PURE__*/dual(isDateTimeArgs, (self, part, options) => mutateRounding(self, part, date => endOfDate(date, part, options), "later"));
 /** @internal */
-export const nearest = /*#__PURE__*/dual(isDateTimeArgs, (self, part, options) => mutate(self, date => {
+export const nearest = /*#__PURE__*/dual(isDateTimeArgs, (self, part, options) => mutateRounding(self, part, date => {
   if (part === "millisecond") return;
   const millis = date.getTime();
   const start = new Date(millis);
@@ -789,9 +845,9 @@ export const formatIntl = /*#__PURE__*/dual(2, (self, format) => format.format(s
 /** @internal */
 export const formatIso = self => toDateUtc(self).toISOString();
 /** @internal */
-export const formatIsoDate = self => toDate(self).toISOString().slice(0, 10);
+export const formatIsoDate = self => toDate(self).toISOString().split("T")[0];
 /** @internal */
-export const formatIsoDateUtc = self => toDateUtc(self).toISOString().slice(0, 10);
+export const formatIsoDateUtc = self => toDateUtc(self).toISOString().split("T")[0];
 /** @internal */
 export const formatIsoOffset = self => {
   const date = toDate(self);
