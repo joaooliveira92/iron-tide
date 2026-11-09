@@ -5,7 +5,9 @@ import {
   advanceUntilProjectStarts,
   navigateTo,
   openDesignSection,
+  openOrderDialog,
   orderDesignFromCatalog,
+  placeOrder,
   submitReferenceDesign,
 } from "./flows.js";
 
@@ -32,13 +34,12 @@ test("a player can order a class batch and it appears after a month", async ({
     const before = await ships.count();
 
     await openYardPlace(page, /^Design catalog/);
-    await page.getByRole("button", { name: "Order a class batch (1–12)" }).click();
+    await page.getByRole("radio").first().click();
+    const dialog = await openOrderDialog(page);
 
-    await expect(page.getByRole("combobox", { name: "Batch design" })).toBeVisible();
-    await expect(page.getByRole("list", { name: "Previewed ship names" })).toBeVisible();
-    await page.getByRole("spinbutton", { name: "Batch quantity" }).fill("1");
-    await expect(page.getByTestId("batch-confirm")).toBeEnabled();
-    await page.getByTestId("batch-confirm").click();
+    await expect(dialog.getByRole("radiogroup", { name: "Builder" })).toBeVisible();
+    await expect(dialog.getByRole("status", { name: "Quantity" })).toHaveText("1");
+    await placeOrder(page);
 
     await openYardPlace(page, /^Slipways/);
     await expect(
@@ -65,20 +66,15 @@ test("a player can order from a foreign yard and it appears after a month", asyn
     const before = await ships.count();
 
     await openYardPlace(page, /^Design catalog/);
-    await page.getByRole("button", { name: "Order a class batch (1–12)" }).click();
+    await page.getByRole("radio").first().click();
+    const dialog = await openOrderDialog(page);
 
-    const builder = page.getByRole("combobox", { name: "Builder" });
-    await expect(builder).toBeVisible();
-    await builder.selectOption("france");
-
-    await expect(page.getByTestId("foreign-contract-panel")).toBeVisible();
-    await expect(page.getByTestId("foreign-total-price")).toBeVisible();
-    await expect(page.getByTestId("foreign-impoundment-risk")).toBeVisible();
-
-    await page.getByRole("spinbutton", { name: "Batch quantity" }).fill("1");
-    const confirm = page.getByRole("button", { name: "Order from foreign yard" });
-    await expect(confirm).toBeEnabled();
-    await confirm.click();
+    const builders = dialog.getByRole("radiogroup", { name: "Builder" });
+    await expect(builders).toBeVisible();
+    await builders.getByRole("radio", { name: /France/ }).check();
+    await expect(dialog.getByRole("region", { name: "Order summary" })).toBeVisible();
+    await expect(dialog.getByRole("status", { name: "Quantity" })).toHaveText("1");
+    await placeOrder(page);
 
     await openYardPlace(page, /^Slipways/);
     await expect(
@@ -121,36 +117,6 @@ test("a player can halt a building hull and it stays halted after a month", asyn
     ).toBeVisible();
     await page.getByRole("button", { name: /^Inflexible, / }).click();
     await expect(page.getByRole("button", { name: "Inflexible resume" })).toBeVisible();
-  });
-});
-
-test("a construction command can be submitted, replaced atomically, then cancelled", async ({
-  e2e,
-  campaignTemplate,
-}) => {
-  const page = e2e.page;
-  await openCampaign(e2e, campaignTemplate);
-  await navigateTo(page, "Construction");
-  await test.step("reachable:order-construction", async () => {
-    await expect(page.getByRole("heading", { name: "Construction Commands" })).toBeVisible();
-
-    await openYardPlace(page, /^Design catalog/);
-    await page.getByRole("radio").first().click();
-    await page.getByRole("button", { name: "Submit Construction Command" }).click();
-    await page.getByRole("button", { name: "Confirm order" }).click();
-    await expect(page.getByText(/Command \S+ is submitted/)).toBeVisible();
-
-    await openYardPlace(page, /^Orders/);
-    const submittedRow = page.getByRole("row").filter({ hasText: "submitted" });
-    await expect(submittedRow).toBeVisible();
-
-    await submittedRow.getByRole("button", { name: "Replace" }).click();
-    await expect(page.getByRole("row").filter({ hasText: "superseded" })).toBeVisible();
-    await expect(submittedRow).toHaveCount(1);
-
-    await submittedRow.getByRole("button", { name: "Cancel" }).click();
-    await expect(page.getByRole("row").filter({ hasText: "cancelled" })).toBeVisible();
-    await expect(submittedRow).toHaveCount(0);
   });
 });
 

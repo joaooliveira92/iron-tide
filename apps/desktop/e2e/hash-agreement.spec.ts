@@ -13,6 +13,8 @@ import {
   dismissTour,
   navigateTo,
   openFleetDepartment,
+  openOrderDialog,
+  placeOrder,
   startNewCampaign,
 } from "./flows.js";
 
@@ -104,9 +106,9 @@ async function queueMonthOneOrders(page: Page): Promise<void> {
   await navigateTo(page, "Construction");
   const yard = page.getByRole("navigation", { name: "Yard" });
   await yard.getByRole("button", { name: /^Design catalog/ }).click();
-  await page.getByRole("button", { name: "Order a class batch (1–12)" }).click();
-  await page.getByRole("spinbutton", { name: "Batch quantity" }).fill("1");
-  await page.getByTestId("batch-confirm").click();
+  await page.getByRole("radio").first().click();
+  await openOrderDialog(page);
+  await placeOrder(page);
   await yard.getByRole("button", { name: /^Slipways/ }).click();
   await expect(
     page.getByRole("status").filter({ hasText: "OrderConstruction queued" }),

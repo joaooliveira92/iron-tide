@@ -7,8 +7,10 @@ import {
   nameTheClass,
   navigateTo,
   openDesignSection,
+  openOrderDialog,
   openRoster,
   openShipbuilding,
+  placeOrder,
   startFromReference,
 } from "./flows.js";
 
@@ -87,9 +89,11 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
       .getByRole("button", { name: /^Design catalog/ })
       .click();
     await next.getByRole("radio", { name: new RegExp(CLASS_NAME) }).click();
-    await next.getByRole("button", { name: "Submit Construction Command" }).click();
-    await next.getByRole("button", { name: "Confirm order" }).click();
-    await expect(next.getByText(/Command \S+ is submitted/)).toBeVisible();
+    await openOrderDialog(next);
+    await placeOrder(next);
+    await expect(
+      next.getByRole("status").filter({ hasText: "OrderConstruction queued" }),
+    ).toBeVisible();
   } finally {
     await teardownHarness(second);
   }
