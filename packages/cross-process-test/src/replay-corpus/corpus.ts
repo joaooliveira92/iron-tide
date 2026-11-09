@@ -180,12 +180,19 @@ function productionTensionDrift() {
   return decoded.value;
 }
 
+function productionConstructionEvents() {
+  const rules = production().bundle.campaign?.constructionEvents;
+  return rules === undefined || rules.length === 0 ? undefined : rules;
+}
+
 export function fleetManagementOptions(playerNationId?: string) {
   const fleetManagement = productionFleetManagement();
   const tensionDrift = productionTensionDrift();
+  const constructionEvents = productionConstructionEvents();
   return {
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
     ...(tensionDrift === undefined ? {} : { tensionDrift }),
+    ...(constructionEvents === undefined ? {} : { constructionEvents }),
     ...(playerNationId === undefined ? {} : { playerNationId }),
   };
 }

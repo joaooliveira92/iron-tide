@@ -1,4 +1,5 @@
 import { hashWithContext } from "@bluewave/deterministic";
+import type { ConstructionEvent } from "@bluewave/content-schema";
 import type { EventEngineContent } from "@bluewave/phase-engine";
 import {
   battleOffersFromRulesets,
@@ -164,6 +165,19 @@ export function loadEventContent(): EventEngineContent | undefined {
         : { rules: decoded.value, catalogue },
   };
   return eventContent.content;
+}
+
+let constructionEventContent: { readonly rules: readonly ConstructionEvent[] | undefined } | null =
+  null;
+
+export function loadConstructionEvents(): readonly ConstructionEvent[] | undefined {
+  if (constructionEventContent !== null) return constructionEventContent.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const rules = bundle.campaign?.constructionEvents;
+  constructionEventContent = {
+    rules: rules === undefined || rules.length === 0 ? undefined : rules,
+  };
+  return constructionEventContent.rules;
 }
 
 export function loadShipBuildingData(): ShipBuildingData {

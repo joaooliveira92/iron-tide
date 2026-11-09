@@ -16,6 +16,7 @@ strings:
   messages.construction.delivered.body: "{shipName} was delivered after {actualMonths} month(s) of construction."
   messages.construction.delayed.title: "Construction delayed"
   messages.construction.delayed.body: "Project {projectId} was delayed ({reason}) into {delayMonth}."
+  construction.event.steel_plate_shortage: "A steel plate shortage at the supplier"
   messages.construction.cancelled.title: "Project cancelled"
   messages.construction.cancelled.body: "Project {projectId} was cancelled: {consumedWork} work consumed, {lostAmount} lost, {salvageableAmount} salvageable."
   messages.research.progress.title: "Research progressed"
