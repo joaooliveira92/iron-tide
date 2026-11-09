@@ -5,6 +5,7 @@ import type {
   ConstructionStudyEntry,
   ForeignConstructionPreviewOutcome,
 } from "../../../../shared/construction-contract.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { UseConstructionScreenReturn } from "../hooks/useConstructionScreen.js";
 import {
   ORDER_QUANTITY_MAX,
@@ -105,9 +106,18 @@ export function useOrderDialog(session: OrderSession): OrderDialog {
     screen.economy === null || screen.workspace === null
       ? 0
       : screen.economy.treasury - screen.workspace.treasuryReserved;
+  const format = usePresentationFormat();
   const model = useMemo(
-    () => orderViewModel({ study, home, foreign, builderNationId, freeTreasury }),
-    [study, home, foreign, builderNationId, freeTreasury],
+    () =>
+      orderViewModel({
+        study,
+        home,
+        foreign,
+        builderNationId,
+        freeTreasury,
+        formatMoney: format.money,
+      }),
+    [study, home, foreign, builderNationId, freeTreasury, format],
   );
 
   const openDialog = useCallback(

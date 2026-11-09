@@ -82,6 +82,8 @@ const study: ConstructionStudyEntry = {
   readyMonth: "1880-04",
 };
 
+const formatMoney = (units: number): string => `${units} NC`;
+
 describe("orderViewModel", () => {
   it("is loading until the home preview arrives", () => {
     expect(
@@ -91,6 +93,7 @@ describe("orderViewModel", () => {
         foreign: null,
         builderNationId: null,
         freeTreasury: 5_000,
+        formatMoney,
       }).status,
     ).toBe("loading");
   });
@@ -102,6 +105,7 @@ describe("orderViewModel", () => {
       foreign: foreign([builder()]),
       builderNationId: null,
       freeTreasury: 5_000,
+      formatMoney,
     });
     expect(model.status).toBe("ready");
     expect(model.summary).toEqual({
@@ -122,6 +126,7 @@ describe("orderViewModel", () => {
       foreign: foreign([builder()]),
       builderNationId: "fra",
       freeTreasury: 5_000,
+      formatMoney,
     });
     expect(model.status).toBe("ready");
     expect(model.summary).toEqual({
@@ -143,9 +148,10 @@ describe("orderViewModel", () => {
       ]),
       builderNationId: "fra",
       freeTreasury: 5_000,
+      formatMoney,
     });
     expect(model.status).toBe("blocked");
-    expect(model.reason).toBe("DOCK_TOO_SMALL");
+    expect(model.reason).toBe("The dock is too small.");
   });
 
   it("blocks the home yard with the engine's refusal reason", () => {
@@ -155,10 +161,23 @@ describe("orderViewModel", () => {
       foreign: null,
       builderNationId: null,
       freeTreasury: 5_000,
+      formatMoney,
     });
     expect(model.status).toBe("blocked");
-    expect(model.reason).toBe("SHIP_EXCEEDS_DOMESTIC_DOCK_LIMIT");
+    expect(model.reason).toBe("This hull is larger than your dock can build.");
     expect(model.summary).toBeNull();
+  });
+
+  it("never shows a raw engine code for a refusal it has no wording for", () => {
+    const model = orderViewModel({
+      study: null,
+      home: { ok: false, reason: "INSUFFICIENT_PROJECT_CAPACITY", diagnostics: [] },
+      foreign: null,
+      builderNationId: null,
+      freeTreasury: 5_000,
+      formatMoney,
+    });
+    expect(model.reason).toBe("Insufficient project capacity.");
   });
 
   it("blocks a design still in study with its ready month, ignoring previews", () => {
@@ -168,9 +187,12 @@ describe("orderViewModel", () => {
       foreign: null,
       builderNationId: null,
       freeTreasury: 5_000,
+      formatMoney,
     });
     expect(model.status).toBe("study");
-    expect(model.reason).toContain("1880-04");
+    expect(model.reason).toBe(
+      "Dreadnought is still in design study: 3 more months and 3000 NC to fund. It can be ordered from 1880-04.",
+    );
     expect(model.summary).toBeNull();
   });
 

@@ -36,6 +36,7 @@ export interface OrderViewModelInput {
   readonly foreign: ForeignConstructionPreviewOutcome | null;
   readonly builderNationId: string | null;
   readonly freeTreasury: number;
+  readonly formatMoney: (units: number) => string;
 }
 
 export const ORDER_QUANTITY_MIN = 1;
@@ -43,10 +44,28 @@ export const ORDER_QUANTITY_MAX = 12;
 
 const HOME_LABEL = "Home yard";
 
-export function studyReason(study: ConstructionStudyEntry): string {
+const REFUSAL_WORDING: Readonly<Record<string, string>> = {
+  SHIP_EXCEEDS_DOMESTIC_DOCK_LIMIT: "This hull is larger than your dock can build.",
+  DOCK_TOO_SMALL: "The dock is too small.",
+  FOREIGN_BUILDER_CAPABILITY_INSUFFICIENT: "This yard lacks the capability to build this hull.",
+  FOREIGN_BUILDER_CAPACITY_UNAVAILABLE: "This yard has no free capacity for this hull.",
+  FOREIGN_BUILDER_NATION_INVALID: "This nation cannot be used as a builder.",
+};
+
+export function refusalWording(code: string): string {
+  const known = REFUSAL_WORDING[code];
+  if (known !== undefined) return known;
+  const words = code.toLowerCase().replaceAll("_", " ");
+  return `${words.charAt(0).toUpperCase()}${words.slice(1)}.`;
+}
+
+export function studyReason(
+  study: ConstructionStudyEntry,
+  formatMoney: (units: number) => string,
+): string {
   return `${study.className} is still in design study: ${study.monthsRemaining} more ${
     study.monthsRemaining === 1 ? "month" : "months"
-  } and ${study.costRemaining} to fund. It can be ordered from ${study.readyMonth}.`;
+  } and ${formatMoney(study.costRemaining)} to fund. It can be ordered from ${study.readyMonth}.`;
 }
 
 function homeOption(home: ConstructionBatchPreviewOutcome | null): OrderBuilderOption {
@@ -58,7 +77,7 @@ function homeOption(home: ConstructionBatchPreviewOutcome | null): OrderBuilderO
       priceUnits: null,
       months: null,
       deliveryMonth: null,
-      refusal: home === null ? null : home.reason,
+      refusal: home === null ? null : refusalWording(home.reason),
     };
   }
   const { quote } = home.preview;
@@ -86,13 +105,20 @@ function foreignOptions(
     deliveryMonth: builder.quote.plannedDeliveryMonth,
     refusal: builder.capabilitySatisfied
       ? null
-      : (builder.capabilityFailureCode ?? "This yard cannot build the hull."),
+      : builder.capabilityFailureCode === null
+        ? "This yard cannot build the hull."
+        : refusalWording(builder.capabilityFailureCode),
   }));
 }
 
 export function orderViewModel(input: OrderViewModelInput): OrderViewModel {
   if (input.study !== null) {
-    return { status: "study", builders: [], summary: null, reason: studyReason(input.study) };
+    return {
+      status: "study",
+      builders: [],
+      summary: null,
+      reason: studyReason(input.study, input.formatMoney),
+    };
   }
   const builders = [homeOption(input.home), ...foreignOptions(input.foreign)];
   const chosen = builders.find((option) => option.id === input.builderNationId);

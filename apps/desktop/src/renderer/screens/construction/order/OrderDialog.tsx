@@ -43,7 +43,7 @@ function BuilderChoice({
 }) {
   const format = usePresentationFormat();
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm has-checked:border-primary/60 has-checked:bg-accent">
+    <label className="flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2 text-sm has-checked:border-primary/60 has-checked:bg-accent">
       <input
         type="radio"
         name="order-builder"
@@ -51,20 +51,22 @@ function BuilderChoice({
         checked={selected}
         onChange={onSelect}
       />
-      <span className="flex min-w-0 flex-1 flex-col gap-1">
+      <span className="flex min-w-0 flex-1 flex-col">
         <span className="flex items-baseline justify-between gap-4">
-          <span className="font-medium">{option.label}</span>
+          <span className="font-medium">
+            {option.label}
+            {option.relation !== null && (
+              <span className="ml-2 text-xs font-normal capitalize text-muted-foreground">
+                {option.relation.replaceAll("_", " ")}
+              </span>
+            )}
+          </span>
           <span className="font-mono text-xs tabular-nums text-muted-foreground">
             {option.priceUnits === null ? "Quoting" : format.money(option.priceUnits)}
             {" · "}
             {monthsLabel(option.months)}
           </span>
         </span>
-        {option.relation !== null && (
-          <span className="text-xs capitalize text-muted-foreground">
-            {option.relation.replaceAll("_", " ")}
-          </span>
-        )}
         {option.refusal !== null && (
           <span className="text-xs text-destructive">{option.refusal}</span>
         )}
@@ -117,7 +119,7 @@ export function OrderDialog() {
               <p className="text-sm">
                 {className}
                 {design !== null && (
-                  <span className="ml-2 text-xs capitalize text-muted-foreground">
+                  <span className="ml-2 text-xs text-muted-foreground">
                     {design.shipType.replaceAll("_", " ")}
                   </span>
                 )}
@@ -132,7 +134,11 @@ export function OrderDialog() {
               <>
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium">Builder</h3>
-                  <div role="radiogroup" aria-label="Builder" className="space-y-2">
+                  <div
+                    role="radiogroup"
+                    aria-label="Builder"
+                    className="max-h-40 space-y-1.5 overflow-y-auto pr-1"
+                  >
                     {model.builders.map((option) => (
                       <BuilderChoice
                         key={option.id ?? "home"}
