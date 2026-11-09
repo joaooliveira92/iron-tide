@@ -1,7 +1,8 @@
-import type {
-  ConstructionBatchPreview,
-  ForeignBuilderCandidate,
-  ForeignConstructionPreview,
+import {
+  CONSTRUCTION_BATCH_MAX_QUANTITY,
+  type ConstructionBatchPreview,
+  type ForeignBuilderCandidate,
+  type ForeignConstructionPreview,
 } from "@bluewave/phase-engine";
 import { describe, expect, it } from "vite-plus/test";
 import type {
@@ -9,7 +10,7 @@ import type {
   ConstructionStudyEntry,
   ForeignConstructionPreviewOutcome,
 } from "../../../../shared/construction-contract.js";
-import { orderViewModel } from "./order-view-model.js";
+import { ORDER_QUANTITY_MAX, ORDER_QUANTITY_MIN, orderViewModel } from "./order-view-model.js";
 
 const home = (over: Partial<ConstructionBatchPreview> = {}): ConstructionBatchPreviewOutcome => ({
   ok: true,
@@ -171,5 +172,10 @@ describe("orderViewModel", () => {
     expect(model.status).toBe("study");
     expect(model.reason).toContain("1880-04");
     expect(model.summary).toBeNull();
+  });
+
+  it("limits the quantity to the engine batch maximum", () => {
+    expect(ORDER_QUANTITY_MAX).toBe(CONSTRUCTION_BATCH_MAX_QUANTITY);
+    expect(ORDER_QUANTITY_MIN).toBe(1);
   });
 });

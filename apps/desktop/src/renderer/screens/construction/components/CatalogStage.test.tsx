@@ -47,8 +47,10 @@ const stage = (
     designs={designs}
     economy={economy}
     workspace={workspace}
+    studies={[]}
     selectedDesignId={selected}
     onSelectDesign={pick}
+    onOpenStudy={() => {}}
   />
 );
 
@@ -71,8 +73,10 @@ describe("CatalogStage", () => {
         designs={[design("Dreadnought")]}
         economy={economy}
         workspace={workspace}
+        studies={[]}
         selectedDesignId="Dreadnought"
         onSelectDesign={(id) => picked.push(id)}
+        onOpenStudy={() => {}}
       />,
     );
     const tile = screen.getByRole("radio", { name: /Dreadnought/ });

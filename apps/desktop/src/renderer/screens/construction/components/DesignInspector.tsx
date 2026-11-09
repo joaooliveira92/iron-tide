@@ -1,6 +1,7 @@
 import { memo } from "react";
 import type { CompiledDesignVersion } from "@bluewave/campaign-engine";
 import type { ConstructionScreenProjection } from "../../../../shared/construction-contract.js";
+import { Button } from "../../../components/ui/button.js";
 import { designFit } from "../yard-workspace.js";
 import { ConstructionWizard } from "./ConstructionWizard.js";
 import { DesignSpecRows } from "./DesignTile.js";
@@ -14,6 +15,7 @@ export interface DesignInspectorProps {
   readonly notice: string | null;
   readonly onConfirm: () => void;
   readonly onBackToDesign: () => void;
+  readonly onOrder: () => void;
 }
 
 export const DesignInspector = memo(function DesignInspector({
@@ -25,6 +27,7 @@ export const DesignInspector = memo(function DesignInspector({
   notice,
   onConfirm,
   onBackToDesign,
+  onOrder,
 }: DesignInspectorProps) {
   if (tab === "order") {
     return (
@@ -50,6 +53,9 @@ export const DesignInspector = memo(function DesignInspector({
   return (
     <div className="space-y-3">
       <DesignSpecRows design={design} fit={fit} />
+      <Button size="sm" onClick={onOrder} disabled={busy}>
+        Order this design
+      </Button>
       {fit.overDock && (
         <p role="note" className="text-xs text-destructive">
           This hull is larger than your dock can build.

@@ -15,8 +15,16 @@ import {
 
 export function InspectorPanel() {
   const { screen } = useConstructionState();
-  const { closeWizard, confirmOrder, halt, resume, setAcceleration, cancelProject, setTab } =
-    useConstructionActions();
+  const {
+    closeWizard,
+    confirmOrder,
+    halt,
+    resume,
+    setAcceleration,
+    cancelProject,
+    setTab,
+    openOrderDialog,
+  } = useConstructionActions();
   const {
     place,
     tab,
@@ -59,6 +67,7 @@ export function InspectorPanel() {
           notice={screen.notice}
           onConfirm={confirmOrder}
           onBackToDesign={closeWizard}
+          onOrder={() => openOrderDialog()}
         />
       );
     }

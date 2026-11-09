@@ -1,4 +1,4 @@
-import { Hammer, Layers, RefreshCw, Send } from "lucide-react";
+import { Hammer, RefreshCw, Send } from "lucide-react";
 import type { CompiledDesignVersion } from "@bluewave/campaign-engine";
 import { Button } from "../../../components/ui/button.js";
 import { ButtonGroup } from "../../../components/ui/button-group.js";
@@ -10,12 +10,10 @@ export type YardBarVariant = "bar" | "header";
 
 export interface YardBarProps {
   readonly design: CompiledDesignVersion | null;
-  readonly designCount: number;
   readonly busy: boolean;
   readonly retryPending: boolean;
   readonly onRetry: (() => void) | undefined;
-  readonly onSubmit: () => void;
-  readonly onBatch: () => void;
+  readonly onOrder: () => void;
   readonly onRebuild: () => void;
   readonly onRefresh: () => void;
   readonly variant?: YardBarVariant;
@@ -23,12 +21,10 @@ export interface YardBarProps {
 
 export function YardBar({
   design,
-  designCount,
   busy,
   retryPending,
   onRetry,
-  onSubmit,
-  onBatch,
+  onOrder,
   onRebuild,
   onRefresh,
   variant = "bar",
@@ -82,19 +78,9 @@ export function YardBar({
           </Button>
         )}
         <ButtonGroup>
-          <Button size="sm" className={btn} onClick={onSubmit} disabled={busy || design === null}>
+          <Button size="sm" className={btn} onClick={onOrder} disabled={busy || design === null}>
             <Send aria-hidden="true" />
-            Submit Construction Command
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className={btn}
-            onClick={onBatch}
-            disabled={designCount === 0}
-          >
-            <Layers aria-hidden="true" />
-            Order a class batch (1–12)
+            Order
           </Button>
           <Button variant="outline" size="sm" className={btn} onClick={onRebuild}>
             <Hammer aria-hidden="true" />

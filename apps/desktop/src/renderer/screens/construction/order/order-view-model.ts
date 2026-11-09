@@ -38,6 +38,9 @@ export interface OrderViewModelInput {
   readonly freeTreasury: number;
 }
 
+export const ORDER_QUANTITY_MIN = 1;
+export const ORDER_QUANTITY_MAX = 12;
+
 const HOME_LABEL = "Home yard";
 
 export function studyReason(study: ConstructionStudyEntry): string {

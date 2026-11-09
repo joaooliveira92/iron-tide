@@ -20,7 +20,6 @@ import {
   type YardPlaceId,
   type YardTab,
 } from "../yard-workspace.js";
-import type { BatchOrder } from "./useBatchOrder.js";
 
 export interface YardWorkspaceState {
   readonly place: YardPlaceId;
@@ -39,7 +38,6 @@ export interface YardWorkspaceActions {
   readonly openWizard: () => void;
   readonly closeWizard: () => void;
   readonly confirmOrder: () => void;
-  readonly openBatch: () => void;
   readonly refresh: () => void;
   readonly clearSelection: () => void;
   readonly toggleInspector: () => void;
@@ -75,7 +73,7 @@ export interface YardWorkspace {
 
 export function useYardWorkspace(
   session: UseConstructionScreenReturn,
-  batch: BatchOrder,
+  orderOpen: boolean,
   sessionId: string,
 ): YardWorkspace {
   const { state, selectedDesignId, setSelectedDesignId, submit, loadScreen } = session;
@@ -151,15 +149,9 @@ export function useYardWorkspace(
   const browseCatalog = useCallback(() => setPlace("catalog"), []);
   const closeWizard = useCallback(() => setTab("catalog", "design"), [setTab]);
   const openWizard = useCallback(() => {
-    batch.actions.close();
     setPlace("catalog");
     setTab("catalog", "order");
-  }, [batch.actions, setTab]);
-  const openBatch = useCallback(() => {
-    setPlace("catalog");
-    setTab("catalog", "design");
-    batch.actions.open();
-  }, [batch.actions, setTab]);
+  }, [setTab]);
   const confirmOrder = useCallback(() => {
     submit();
     closeWizard();
@@ -196,7 +188,7 @@ export function useYardWorkspace(
   );
   const selectedCommand =
     state.workspace?.commands.find((command) => command.commandId === selectedCommandId) ?? null;
-  const reviewing = place === "catalog" && (batch.state.open || tab.id === "order");
+  const reviewing = orderOpen || (place === "catalog" && tab.id === "order");
 
   return {
     state: { place, tabs, selectedProjectId, selectedCommandId },
@@ -210,7 +202,6 @@ export function useYardWorkspace(
       openWizard,
       closeWizard,
       confirmOrder,
-      openBatch,
       refresh,
       clearSelection,
       toggleInspector: inspector.toggleCollapsed,
