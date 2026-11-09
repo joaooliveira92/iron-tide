@@ -18,6 +18,13 @@ export {
   EventSchema,
   EventStanceSchema,
 } from "./event.js";
+export type { ConstructionEvent, ConstructionEventKind } from "./construction-event.js";
+export {
+  CONSTRUCTION_EVENT_KINDS,
+  ConstructionEventEraWindowSchema,
+  ConstructionEventKindSchema,
+  ConstructionEventSchema,
+} from "./construction-event.js";
 export type { Area } from "./area.js";
 export { AreaSchema } from "./area.js";
 export type { DesignTemplate } from "./design.js";

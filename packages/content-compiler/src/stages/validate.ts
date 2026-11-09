@@ -8,6 +8,7 @@ import {
   CampaignEconomySchema,
   CampaignFleetSchema,
   CampaignResearchSchema,
+  ConstructionEventSchema,
   EventSchema,
   GunFamilySchema,
   GunModelSchema,
@@ -80,6 +81,7 @@ export interface ValidateOutput {
   designs?: unknown[];
   divisions?: unknown[];
   events?: unknown[];
+  constructionEvents?: unknown[];
   presentation?: unknown;
   ui?: unknown;
 }
@@ -188,6 +190,12 @@ const CAMPAIGN_COLLECTIONS: readonly CampaignCollection[] = [
   },
   { key: "divisions", schema: CampaignDivisionSchema, label: "Division", idField: "id" },
   { key: "events", schema: EventSchema, label: "Event", idField: "id" },
+  {
+    key: "constructionEvents",
+    schema: ConstructionEventSchema,
+    label: "Construction event",
+    idField: "id",
+  },
 ];
 
 interface CampaignCollection {
@@ -282,6 +290,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
 
     const ui = validateUi(input, collector);
     validateEventReferences(campaign.events ?? [], ui, input, collector);
+    validateConstructionEventReferences(campaign.constructionEvents ?? [], ui, input, collector);
 
     if (collector.hasErrors) return undefined;
 
@@ -311,6 +320,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
       designs: [...campaign.designs],
       divisions: [...(campaign.divisions ?? [])],
       events: [...(campaign.events ?? [])],
+      constructionEvents: [...(campaign.constructionEvents ?? [])],
       ...(presentation !== undefined ? { presentation } : {}),
       ...(ui !== undefined ? { ui } : {}),
     };
@@ -515,7 +525,32 @@ function validateCampaignCollections(
     designs: out["designs"] ?? [],
     divisions: out["divisions"] ?? [],
     events: out["events"] ?? [],
+    constructionEvents: out["constructionEvents"] ?? [],
   };
+}
+
+function validateConstructionEventReferences(
+  constructionEvents: readonly unknown[],
+  ui: unknown,
+  input: ParseOutput,
+  collector: DiagnosticCollector,
+): void {
+  if (constructionEvents.length === 0) return;
+  const strings = asRecord(asRecord(ui)["strings"]);
+  const sources = sourceById(input, "constructionEvents", "id");
+  for (const event of constructionEvents as readonly { id: string; causeKey: string }[]) {
+    if (typeof strings[event.causeKey] === "string") continue;
+    collector.addError(
+      "CONSTRUCTION_EVENT_I18N_MISSING",
+      `Construction event '${event.id}' uses i18n key '${event.causeKey}' that the ui catalogue does not define`,
+      {
+        stage: "validate",
+        sourceLocation: { path: sources.get(event.id) ?? "construction-events.ts", line: 1 },
+        entityId: event.id,
+        remediation: `Add '${event.causeKey}' to the ui catalogue`,
+      },
+    );
+  }
 }
 
 interface EventReferenceSource {

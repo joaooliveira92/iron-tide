@@ -88,6 +88,7 @@ function withFileContents(input: CompilerInput): CompilerInput {
     ...(input.designFiles ?? []),
     ...(input.divisionFiles ?? []),
     ...(input.eventFiles ?? []),
+    ...(input.constructionEventFiles ?? []),
     ...(input.presentationFiles ?? []),
     ...(input.uiFiles ?? []),
   ];
