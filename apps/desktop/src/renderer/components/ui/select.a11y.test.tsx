@@ -485,6 +485,31 @@ describe("Select typeahead", () => {
   });
 });
 
+describe("Select compound namespace", () => {
+  it("exposes the parts on Select and keeps the named exports identical", () => {
+    expect(Select.Root).toBe(Select);
+    expect(Select.Trigger).toBe(SelectTrigger);
+    expect(Select.Value).toBe(SelectValue);
+    expect(Select.Content).toBe(SelectContent);
+    expect(Select.Item).toBe(SelectItem);
+  });
+
+  it("renders through the namespace parts", () => {
+    render(
+      <Select.Root defaultValue="a">
+        <Select.Trigger>
+          <Select.Value />
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Item value="a">Alpha</Select.Item>
+        </Select.Content>
+      </Select.Root>,
+    );
+
+    expect(trigger().textContent).toContain("Alpha");
+  });
+});
+
 describe("Select pointer behaviour", () => {
   it("closes on a pointerdown outside and ignores one on the trigger or list", () => {
     render(<Harness />);
