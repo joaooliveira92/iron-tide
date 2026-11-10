@@ -1,6 +1,6 @@
 import { translate } from "../../../lib/strings.js";
 import { Button } from "../../../components/ui/button.js";
-import type { MapOverlays, NameFilter } from "./TacticalMap.js";
+import type { MapOverlays, NameFilter } from "./tactical-map-types.js";
 import { TACTICAL_TIME_SCALES, type TacticalTimeScale } from "./tactical-time.js";
 
 export interface TacticalToolbarProps {
