@@ -17,7 +17,9 @@ const provenance = {
   note: "PROVISIONAL test fixture",
 };
 
-const rule = (over: Partial<ConstructionEvent> = {}): ConstructionEvent => ({
+const rule = (
+  over: Partial<Extract<ConstructionEvent, { kind: "DELAY" }>> = {},
+): ConstructionEvent => ({
   id: "steel_plate_shortage",
   kind: "DELAY",
   probabilityBp: 10_000,
