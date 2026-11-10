@@ -38,9 +38,9 @@ function cloneWithRemoteFeature() {
   return work;
 }
 
-function runHook(cwd) {
+function runHook(cwd, transcriptPath) {
   const result = spawnSync("node", [HOOK], {
-    input: JSON.stringify({ cwd }),
+    input: JSON.stringify({ cwd, transcript_path: transcriptPath }),
     encoding: "utf8",
     env: { ...process.env, CLAUDE_PROJECT_DIR: cwd },
   });
@@ -101,4 +101,45 @@ await test("hook still counts commits ahead of the upstream", () => {
 await test("counts porcelain lines", () => {
   assert.equal(parseStatusCount(" M a\n?? b\n"), 2);
   assert.equal(parseStatusCount(""), 0);
+});
+
+function commitAt(work, file, date) {
+  writeFileSync(join(work, file), `${file}\n`);
+  git(work, "add", file);
+  execFileSync("git", ["-C", work, "commit", "-q", "-m", `feat: ${file}`], {
+    env: { ...process.env, GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date },
+  });
+}
+
+function transcriptStartingAt(iso) {
+  const dir = mkdtempSync(join(tmpdir(), "stop-gate-transcript-"));
+  roots.push(dir);
+  const path = join(dir, "session.jsonl");
+  writeFileSync(path, `{"type":"queue-operation"}\n{"type":"user","timestamp":"${iso}"}\n`);
+  return path;
+}
+
+await test("hook ignores unpushed commits that predate the session", () => {
+  const work = cloneWithRemoteFeature();
+  git(work, "branch", "-q", "--set-upstream-to=origin/feat/x");
+  commitAt(work, "old.txt", "2026-11-02T10:00:00Z");
+  const transcript = transcriptStartingAt("2026-11-09T20:00:00.000Z");
+  assert.equal(runHook(work, transcript), "");
+});
+
+await test("hook still counts unpushed commits made during the session", () => {
+  const work = cloneWithRemoteFeature();
+  git(work, "branch", "-q", "--set-upstream-to=origin/feat/x");
+  commitAt(work, "old.txt", "2026-11-02T10:00:00Z");
+  commitAt(work, "new.txt", "2026-11-09T21:00:00Z");
+  const transcript = transcriptStartingAt("2026-11-09T20:00:00.000Z");
+  assert.match(runHook(work, transcript), /1 unpushed commit\(s\) on feat\/x/u);
+});
+
+await test("hook counts every unpushed commit when the transcript is unreadable", () => {
+  const work = cloneWithRemoteFeature();
+  git(work, "branch", "-q", "--set-upstream-to=origin/feat/x");
+  commitAt(work, "old.txt", "2026-11-02T10:00:00Z");
+  assert.match(runHook(work, join(tmpdir(), "missing-transcript.jsonl")), /1 unpushed commit/u);
+  assert.match(runHook(work), /1 unpushed commit/u);
 });
