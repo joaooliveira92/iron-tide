@@ -13,6 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSkeleton,
+  SidebarMenuSkeletonIcon,
 } from "./sidebar-menu.js";
 import { SidebarProvider } from "./sidebar-provider.js";
 import { SidebarRoot } from "./sidebar-root.js";
@@ -35,4 +36,5 @@ export const Sidebar = Object.assign(SidebarRoot, {
   MenuItem: SidebarMenuItem,
   MenuButton: SidebarMenuButton,
   MenuSkeleton: SidebarMenuSkeleton,
+  MenuSkeletonIcon: SidebarMenuSkeletonIcon,
 });

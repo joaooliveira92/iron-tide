@@ -14,23 +14,27 @@ export const SidebarGroup = ({ className, ref, ...props }: SidebarDivProps) => (
 SidebarGroup.displayName = "SidebarGroup";
 
 export interface SidebarGroupLabelProps extends React.ComponentProps<"div"> {
-  asChild?: boolean;
+  render?: React.ReactElement;
   ref?: React.Ref<HTMLDivElement> | undefined;
 }
 
 export const SidebarGroupLabel = ({
   className,
-  asChild = false,
+  render,
   children,
   ref,
   ...props
 }: SidebarGroupLabelProps) => {
-  if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children, {
-      ...props,
-      ref,
-      "data-sidebar": "group-label",
-    } as Partial<unknown>);
+  if (render !== undefined) {
+    return React.cloneElement(
+      render,
+      {
+        ...props,
+        ref,
+        "data-sidebar": "group-label",
+      } as Partial<unknown>,
+      children,
+    );
   }
 
   return (

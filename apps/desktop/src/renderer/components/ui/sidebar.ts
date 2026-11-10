@@ -17,6 +17,7 @@ export {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSkeleton,
+  SidebarMenuSkeletonIcon,
 } from "./sidebar/sidebar-menu.js";
 export type { SidebarMenuButtonProps, SidebarMenuSkeletonProps } from "./sidebar/sidebar-menu.js";
 export { SidebarProvider } from "./sidebar/sidebar-provider.js";

@@ -11,6 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSkeleton,
+  SidebarMenuSkeletonIcon,
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
@@ -262,13 +263,13 @@ describe("SidebarMenuButton", () => {
   it("marks the active entry through data-active", () => {
     renderButton(
       <>
-        <SidebarMenuButton isActive>On</SidebarMenuButton>
+        <SidebarMenuButton data-active>On</SidebarMenuButton>
         <SidebarMenuButton>Off</SidebarMenuButton>
       </>,
     );
 
     expect(screen.getByRole("button", { name: "On" }).dataset.active).toBe("true");
-    expect(screen.getByRole("button", { name: "Off" }).dataset.active).toBe("false");
+    expect(screen.getByRole("button", { name: "Off" }).dataset.active).toBeUndefined();
   });
 
   it("carries the size variant as data-size and class", () => {
@@ -279,10 +280,10 @@ describe("SidebarMenuButton", () => {
     expect(button.className).toContain("h-12");
   });
 
-  it("styles a child element instead of a button when asChild is set", () => {
+  it("renders the supplied element instead of a button", () => {
     const { container } = renderButton(
-      <SidebarMenuButton asChild isActive>
-        <a href="#fleet">Fleet</a>
+      <SidebarMenuButton render={<a href="#fleet" />} data-active>
+        Fleet
       </SidebarMenuButton>,
     );
     const link = screen.getByRole("link", { name: "Fleet" });
@@ -313,14 +314,12 @@ describe("Sidebar slots", () => {
   beforeEach(() => mockViewport(false));
   afterEach(cleanup);
 
-  it("renders a group label as a div, or restyles a child with asChild", () => {
+  it("renders a group label as a div, or as the supplied element", () => {
     render(
       <SidebarProvider>
         <SidebarGroup>
           <SidebarGroupLabel>Plain</SidebarGroupLabel>
-          <SidebarGroupLabel asChild>
-            <h3>Heading</h3>
-          </SidebarGroupLabel>
+          <SidebarGroupLabel render={<h3 />}>Heading</SidebarGroupLabel>
         </SidebarGroup>
       </SidebarProvider>,
     );
@@ -330,12 +329,18 @@ describe("Sidebar slots", () => {
     expect(screen.getByRole("heading", { name: "Heading" }).dataset.sidebar).toBe("group-label");
   });
 
-  it("draws the skeleton icon only when showIcon is set", () => {
+  it("draws the skeleton icon only when it is composed in", () => {
     const { container, rerender } = render(<SidebarMenuSkeleton />);
     expect(container.querySelector('[data-sidebar="menu-skeleton-icon"]')).toBeNull();
     expect(container.querySelector('[data-sidebar="menu-skeleton-text"]')).not.toBeNull();
 
-    rerender(<SidebarMenuSkeleton showIcon />);
-    expect(container.querySelector('[data-sidebar="menu-skeleton-icon"]')).not.toBeNull();
+    rerender(
+      <SidebarMenuSkeleton>
+        <SidebarMenuSkeletonIcon />
+      </SidebarMenuSkeleton>,
+    );
+    const icon = container.querySelector('[data-sidebar="menu-skeleton-icon"]');
+    expect(icon).not.toBeNull();
+    expect(icon?.nextElementSibling?.getAttribute("data-sidebar")).toBe("menu-skeleton-text");
   });
 });

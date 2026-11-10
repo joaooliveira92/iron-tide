@@ -54,15 +54,13 @@ const sidebarMenuButtonVariants = cva(
 );
 
 export interface SidebarMenuButtonProps extends React.ComponentProps<"button"> {
-  asChild?: boolean;
-  isActive?: boolean;
+  render?: React.ReactElement;
   tooltip?: string;
   ref?: React.Ref<HTMLButtonElement> | undefined;
 }
 
 export const SidebarMenuButton = ({
-  asChild = false,
-  isActive = false,
+  render,
   variant,
   size,
   tooltip,
@@ -74,21 +72,23 @@ export const SidebarMenuButton = ({
   const { isMobile, state } = useSidebar();
 
   const buttonElement =
-    asChild && React.isValidElement(children) ? (
-      React.cloneElement(children, {
-        ...props,
-        ref,
-        "data-sidebar": "menu-button",
-        "data-size": size,
-        "data-active": isActive,
-        className: cn(sidebarMenuButtonVariants({ variant, size }), className),
-      } as Partial<unknown>)
+    render !== undefined ? (
+      React.cloneElement(
+        render,
+        {
+          ...props,
+          ref,
+          "data-sidebar": "menu-button",
+          "data-size": size,
+          className: cn(sidebarMenuButtonVariants({ variant, size }), className),
+        } as Partial<unknown>,
+        children,
+      )
     ) : (
       <button
         ref={ref}
         data-sidebar="menu-button"
         data-size={size}
-        data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
       >
@@ -112,13 +112,12 @@ export const SidebarMenuButton = ({
 SidebarMenuButton.displayName = "SidebarMenuButton";
 
 export interface SidebarMenuSkeletonProps extends React.ComponentProps<"div"> {
-  showIcon?: boolean;
   ref?: React.Ref<HTMLDivElement> | undefined;
 }
 
 export const SidebarMenuSkeleton = ({
   className,
-  showIcon = false,
+  children,
   ref,
   ...props
 }: SidebarMenuSkeletonProps) => (
@@ -128,8 +127,13 @@ export const SidebarMenuSkeleton = ({
     className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
     {...props}
   >
-    {showIcon && <Skeleton className="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />}
+    {children}
     <Skeleton className="h-4 max-w-(--skeleton-width) flex-1" data-sidebar="menu-skeleton-text" />
   </div>
 );
 SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton";
+
+export const SidebarMenuSkeletonIcon = () => (
+  <Skeleton className="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />
+);
+SidebarMenuSkeletonIcon.displayName = "SidebarMenuSkeletonIcon";
