@@ -635,6 +635,9 @@ describe("tactical battle screen", () => {
     });
     fireEvent.click(screen.getByTestId("tactical-run-toggle"));
     fireEvent.click(screen.getByTestId("battle-auto"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
     expect(screen.getByTestId("tactical-run-state").textContent).toBe("PAUSED");
     expect(advances(execute)[0]?.[1]).toMatchObject({ mode: "to_end" });
   });
