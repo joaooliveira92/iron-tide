@@ -1,11 +1,5 @@
 import { Star } from "lucide-react";
-import {
-  SortableList,
-  SortableListGroup,
-  SortableListHandle,
-  SortableListItem,
-  SortableListItemContent,
-} from "../../../components/motion/sortable-list.js";
+import { SortableList } from "../../../components/motion/sortable-list.js";
 import { Button } from "../../../components/ui/button.js";
 import { Tip } from "../../../components/ui/tip.js";
 import { useDivisionCard } from "./division-card-context.js";
@@ -66,6 +60,7 @@ export function DivisionCardFleetOrder() {
   } = useDivisionCard();
   if (draftRest.length === 0) return null;
   const shipName = new Map(division.ships.map((ship) => [ship.shipId, ship.name]));
+  const items = draftRest.map((id) => ({ id, name: shipName.get(id) ?? id }));
   return (
     <>
       <p className="text-xs text-muted-foreground">
@@ -73,50 +68,47 @@ export function DivisionCardFleetOrder() {
         flagship stays first.
       </p>
       <SortableList
-        items={draftRest.map((id) => ({ id, name: shipName.get(id) ?? id }))}
-        onItemsChange={(items) => setDraftRest(items.map((item) => item.id))}
+        items={items}
+        onItemsChange={(next) => setDraftRest(next.map((item) => item.id))}
         getItemLabel={(item) => item.name}
         label={`Reorder ${title} ships`}
-        showUndo={false}
         className="max-w-none"
         itemClassName="rounded-md gap-2 p-2"
       >
-        {(items) => (
-          <SortableListGroup>
-            {items.map((item) => (
-              <SortableListItem key={item.id} id={item.id}>
-                <SortableListHandle />
-                <SortableListItemContent>
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                    <span>{item.name}</span>
-                    <span className="flex gap-1.5">
-                      <Tip
-                        label={`Changing the flagship ${costText(organization.penalties.changeFlagship)}`}
+        <SortableList.Group>
+          {items.map((item) => (
+            <SortableList.Item key={item.id} id={item.id}>
+              <SortableList.Handle />
+              <SortableList.Content>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <span>{item.name}</span>
+                  <span className="flex gap-1.5">
+                    <Tip
+                      label={`Changing the flagship ${costText(organization.penalties.changeFlagship)}`}
+                    >
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() =>
+                          send({
+                            type: "ChangeDivisionFlagship",
+                            divisionId: division.divisionId,
+                            newFlagshipShipId: item.id,
+                          })
+                        }
                       >
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() =>
-                            send({
-                              type: "ChangeDivisionFlagship",
-                              divisionId: division.divisionId,
-                              newFlagshipShipId: item.id,
-                            })
-                          }
-                        >
-                          Make flagship
-                        </Button>
-                      </Tip>
-                      <RemoveShipButton shipId={item.id} />
-                    </span>
-                  </div>
-                </SortableListItemContent>
-              </SortableListItem>
-            ))}
-          </SortableListGroup>
-        )}
+                        Make flagship
+                      </Button>
+                    </Tip>
+                    <RemoveShipButton shipId={item.id} />
+                  </span>
+                </div>
+              </SortableList.Content>
+            </SortableList.Item>
+          ))}
+        </SortableList.Group>
       </SortableList>
       {(reorderDirty || reorderSubmitted) && (
         <div className="flex flex-wrap items-center justify-between gap-2">

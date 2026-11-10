@@ -8,6 +8,8 @@ type Entry = { id: string };
 
 const ITEMS: Entry[] = [{ id: "a" }, { id: "b" }, { id: "c" }];
 
+const onItemsChange = (): void => undefined;
+
 function getItemLabel(item: Entry): string {
   return item.id.toUpperCase();
 }
@@ -18,6 +20,30 @@ function order(container: HTMLElement): string[] {
 
 function handle(id: string): HTMLElement {
   return screen.getByRole("button", { name: `Reorder ${id.toUpperCase()}` });
+}
+
+function entries(items: Entry[]) {
+  return (
+    <>
+      <SortableList.Group>
+        {items.map((item) => (
+          <SortableList.Item key={item.id} id={item.id}>
+            <SortableList.Handle />
+            <SortableList.Content>{item.id}</SortableList.Content>
+          </SortableList.Item>
+        ))}
+      </SortableList.Group>
+      <SortableList.Undo />
+    </>
+  );
+}
+
+function StaticList({ items }: { items: Entry[] }) {
+  return (
+    <SortableList items={items} onItemsChange={() => undefined} getItemLabel={getItemLabel}>
+      {entries(items)}
+    </SortableList>
+  );
 }
 
 function ControlledList({
@@ -36,9 +62,10 @@ function ControlledList({
         onItemsChange?.(next);
       }}
       getItemLabel={getItemLabel}
-      renderItem={(item) => item.id}
       disabled={disabled}
-    />
+    >
+      {entries(items)}
+    </SortableList>
   );
 }
 
@@ -54,13 +81,13 @@ describe("SortableList", () => {
     }
     const consumer = <Consumer />;
     const { rerender } = render(
-      <SortableList items={ITEMS} getItemLabel={getItemLabel}>
+      <SortableList items={ITEMS} onItemsChange={onItemsChange} getItemLabel={getItemLabel}>
         {consumer}
       </SortableList>,
     );
     const afterMount = consumerRenders;
     rerender(
-      <SortableList items={ITEMS} getItemLabel={getItemLabel}>
+      <SortableList items={ITEMS} onItemsChange={onItemsChange} getItemLabel={getItemLabel}>
         {consumer}
       </SortableList>,
     );
@@ -68,9 +95,7 @@ describe("SortableList", () => {
   });
 
   it("gives each item its 1-based position within the set", () => {
-    const { container } = render(
-      <SortableList items={ITEMS} getItemLabel={getItemLabel} renderItem={(item) => item.id} />,
-    );
+    const { container } = render(<StaticList items={ITEMS} />);
     const positions = Array.from(container.querySelectorAll("li")).map((li) =>
       li.getAttribute("aria-posinset"),
     );
@@ -148,15 +173,9 @@ describe("SortableList", () => {
   it("rejects duplicate item ids", () => {
     const quiet = vi.spyOn(console, "error").mockImplementation(() => undefined);
     try {
-      expect(() =>
-        render(
-          <SortableList
-            items={[{ id: "a" }, { id: "a" }]}
-            getItemLabel={getItemLabel}
-            renderItem={(item) => item.id}
-          />,
-        ),
-      ).toThrow("SortableList requires unique item ids.");
+      expect(() => render(<StaticList items={[{ id: "a" }, { id: "a" }]} />)).toThrow(
+        "SortableList requires unique item ids.",
+      );
     } finally {
       quiet.mockRestore();
     }
