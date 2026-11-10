@@ -1,6 +1,13 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { buildWorkshopView } from "@bluewave/ship-design";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vite-plus/test";
+import { planModel } from "../planModel.js";
+import { content } from "../test-fixtures.js";
+import { AnatomyShipFigure } from "./AnatomyShipFigure.js";
+import { buildAnatomyShip } from "./ship-anatomy.js";
 
 const css = readFileSync(
   join(
@@ -64,5 +71,41 @@ describe("anatomy motion stylesheet", () => {
 
   it("uses no timers or randomness in the stylesheet", () => {
     expect(css).not.toMatch(/random|Math\.|setTimeout/);
+  });
+
+  describe("hull section ambient motion", () => {
+    const HULL_KEYFRAMES = ["an-plating", "an-sheen", "an-glint"] as const;
+
+    it.each(HULL_KEYFRAMES)("defines %s only inside the no-preference block", (name) => {
+      const definition = `@keyframes ${name}`;
+      expect(motion).toContain(definition);
+      expect(css.replace(motion, "")).not.toContain(definition);
+    });
+
+    it.each(HULL_KEYFRAMES)("loops %s from a hull-section selector", (name) => {
+      const rule = withoutKeyframes(motion)
+        .split("}")
+        .find((candidate) => candidate.includes(`animation: ${name} `));
+      expect(rule, name).toBeDefined();
+      expect(rule).toContain('.an-ship[data-section="hull"] .an-part[data-kind="hull"]');
+      expect(rule).toContain("infinite");
+    });
+
+    it("renders the hull markup the loops select", () => {
+      const reference = content.references.find((entry) => entry.id === "majestic_like")!;
+      const view = buildWorkshopView(reference.draft, content.environmentFor(reference.month));
+      const model = planModel(reference.draft, content, view, reference.month);
+      const ship = buildAnatomyShip({ draft: reference.draft, view, model, azimuth: 135 });
+      const markup = renderToStaticMarkup(
+        createElement(AnatomyShipFigure, { ship, section: "hull" }),
+      );
+      expect(markup).toContain('data-section="hull"');
+      const hull = markup
+        .split('<g class="an-part"')
+        .find((part) => part.includes('data-kind="hull"'))!;
+      expect(hull).toContain('class="an-top"');
+      expect(hull.match(/class="an-line"/g)?.length ?? 0).toBeGreaterThan(1);
+      expect(hull.match(/class="an-dot"/g)?.length ?? 0).toBeGreaterThan(1);
+    });
   });
 });
