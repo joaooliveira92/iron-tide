@@ -3,6 +3,7 @@ import type {
   ConstructionCommand,
   ConstructionProjectQueueEntry,
 } from "@bluewave/campaign-engine";
+import type { ExplanationTree } from "@bluewave/events";
 import type {
   ConstructionBatchPreview,
   ConstructionSteeringPreview,
@@ -43,6 +44,7 @@ export interface ConstructionScreenProjection {
     readonly dockExpansionDurationMonths: number;
     readonly dockExpansionNextStepKg: number | null;
     readonly dockExpansionReadyMonth: string | null;
+    readonly dockLimitAfterExpansionExplanation?: ExplanationTree;
     readonly dockPossessions: readonly {
       readonly id: string;
       readonly name: string;
