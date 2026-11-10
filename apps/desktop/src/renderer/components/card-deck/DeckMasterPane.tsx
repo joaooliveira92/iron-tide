@@ -191,13 +191,21 @@ export function DeckMasterPane({
           />
 
           <div className="absolute inset-x-0 top-1/2 mx-auto h-[min(19.5rem,80%)] w-[min(94%,29rem)] -translate-y-1/2 sm:h-[min(21.5rem,80%)]">
-            <CardDeck
-              cards={[...cards]}
+            <CardDeck.Root
+              count={count}
               {...DECK_SETTINGS}
               topIndex={normalizedFocusedIndex}
               onCardActivate={onActivateIndex}
               onChange={onFocusIndex}
-            />
+            >
+              <CardDeck.Stack>
+                {cards.map((card, index) => (
+                  <CardDeck.Card key={index} index={index}>
+                    {card}
+                  </CardDeck.Card>
+                ))}
+              </CardDeck.Stack>
+            </CardDeck.Root>
           </div>
 
           <div

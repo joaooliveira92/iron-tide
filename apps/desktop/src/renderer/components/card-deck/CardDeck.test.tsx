@@ -1,8 +1,8 @@
 /* @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { type ComponentProps, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { CardDeck } from "./CardDeck.js";
+import { CardDeck, type CardDeckAutoplayProps, type CardDeckRootProps } from "./CardDeck.js";
 
 const LABELS = ["Alpha", "Bravo", "Charlie"] as const;
 
@@ -14,10 +14,24 @@ function cards(labels: readonly string[] = LABELS) {
   ));
 }
 
-type DeckProps = Partial<ComponentProps<typeof CardDeck>>;
+type DeckProps = Omit<CardDeckRootProps, "count" | "children"> & {
+  cards?: ReactNode[];
+  autoplay?: CardDeckAutoplayProps;
+};
 
-function deck(props: DeckProps = {}) {
-  return <CardDeck cards={cards()} layout="deck" topIndex={0} {...props} />;
+function deck({ cards: items = cards(), autoplay, ...props }: DeckProps = {}) {
+  return (
+    <CardDeck.Root count={items.length} layout="deck" topIndex={0} {...props}>
+      <CardDeck.Stack>
+        {items.map((item, index) => (
+          <CardDeck.Card key={index} index={index}>
+            {item}
+          </CardDeck.Card>
+        ))}
+      </CardDeck.Stack>
+      {autoplay ? <CardDeck.Autoplay {...autoplay} /> : null}
+    </CardDeck.Root>
+  );
 }
 
 function topLabel(container: HTMLElement): string | null {
@@ -183,11 +197,11 @@ describe("CardDeck", () => {
     expect(onCardActivate).toHaveBeenCalledTimes(1);
   });
 
-  it("sends the top card to the back on a tap when sendToBackOnClick is set", () => {
+  it("sends the top card to the back on a tap when the tap action is sendToBack", () => {
     withFakeTimers(() => {
       const onChange = vi.fn();
       const onCardActivate = vi.fn();
-      const { container } = render(deck({ sendToBackOnClick: true, onChange, onCardActivate }));
+      const { container } = render(deck({ tap: "sendToBack", onChange, onCardActivate }));
 
       fireEvent.pointerDown(cardRoot("Alpha"), { button: 0, pointerId: 1, clientX: 5, clientY: 5 });
       act(() => {
@@ -204,7 +218,7 @@ describe("CardDeck", () => {
   it("advances to the next card after the autoplay delay", () => {
     withFakeTimers(() => {
       const onChange = vi.fn();
-      const { container } = render(deck({ autoplay: true, autoplayDelay: 1000, onChange }));
+      const { container } = render(deck({ autoplay: { delay: 1000 }, onChange }));
 
       act(() => {
         vi.advanceTimersByTime(999);
@@ -222,7 +236,7 @@ describe("CardDeck", () => {
   it("never autoplays a single card", () => {
     withFakeTimers(() => {
       const onChange = vi.fn();
-      render(deck({ cards: cards(["Alpha"]), autoplay: true, autoplayDelay: 300, onChange }));
+      render(deck({ cards: cards(["Alpha"]), autoplay: { delay: 300 }, onChange }));
 
       act(() => {
         vi.advanceTimersByTime(5000);
@@ -235,9 +249,7 @@ describe("CardDeck", () => {
   it("holds autoplay while hovered when pauseOnHover is set and resumes on leave", () => {
     withFakeTimers(() => {
       const onChange = vi.fn();
-      const { container } = render(
-        deck({ autoplay: true, autoplayDelay: 1000, pauseOnHover: true, onChange }),
-      );
+      const { container } = render(deck({ autoplay: { delay: 1000, pause: "hover" }, onChange }));
       const root = container.querySelector(".card-deck") as HTMLElement;
 
       fireEvent.mouseEnter(root);
