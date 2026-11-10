@@ -359,6 +359,30 @@
     animation: an-ink-in 900ms ease-out both;
   }
 
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-top {
+    animation: an-sheen 7200ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-line {
+    animation: an-plating 5200ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-line:nth-of-type(even) {
+    animation-delay: 5000ms;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-dot {
+    animation: an-glint 4400ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-dot:nth-of-type(3n) {
+    animation-delay: 3600ms;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-dot:nth-of-type(3n + 1) {
+    animation-delay: 4800ms;
+  }
+
   .an-ship[data-section="machinery"] .an-part[data-kind="funnel"] {
     animation: an-fire 2400ms ease-in-out infinite;
   }
@@ -412,6 +436,37 @@
 
   .an-ring-halo {
     animation: an-breathe 2.4s ease-in-out infinite;
+  }
+
+  @keyframes an-sheen {
+    0%,
+    100% {
+      filter: none;
+    }
+    50% {
+      filter: brightness(1.14);
+    }
+  }
+
+  @keyframes an-plating {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  @keyframes an-glint {
+    0%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+    85% {
+      opacity: 0.3;
+    }
   }
 }
 
