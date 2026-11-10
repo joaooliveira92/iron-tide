@@ -59,7 +59,7 @@ const numberFieldInputVariants = cva(
   },
 );
 
-function NumberFieldRoot({
+function NumberField({
   id,
   className,
   size = "default",
@@ -221,15 +221,6 @@ function CursorGrowIcon(props: ComponentProps<"svg">) {
     </svg>
   );
 }
-
-const NumberField = Object.assign(NumberFieldRoot, {
-  Root: NumberFieldRoot,
-  ScrubArea: NumberFieldScrubArea,
-  Group: NumberFieldGroup,
-  Decrement: NumberFieldDecrement,
-  Increment: NumberFieldIncrement,
-  Input: NumberFieldInput,
-});
 
 export {
   NumberField,

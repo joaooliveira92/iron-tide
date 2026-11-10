@@ -54,15 +54,6 @@ function input(): HTMLInputElement {
 }
 
 describe("NumberField", () => {
-  it("exposes every part as a static that matches the named export", () => {
-    expect(NumberField.Root).toBe(NumberField);
-    expect(NumberField.Group).toBe(NumberFieldGroup);
-    expect(NumberField.Input).toBe(NumberFieldInput);
-    expect(NumberField.Increment).toBe(NumberFieldIncrement);
-    expect(NumberField.Decrement).toBe(NumberFieldDecrement);
-    expect(NumberField.ScrubArea).toBe(NumberFieldScrubArea);
-  });
-
   it("exposes the value through a named text input", () => {
     render(<Harness />);
 
