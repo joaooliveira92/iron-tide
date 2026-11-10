@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
 import type { BluewaveDesktopBridge } from "../../../../preload/index.js";
