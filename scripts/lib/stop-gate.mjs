@@ -1,4 +1,24 @@
+import { closeSync, openSync, readSync } from "node:fs";
+
 const PROTECTED_BRANCHES = new Set(["dev", "main"]);
+const TRANSCRIPT_HEAD_BYTES = 65_536;
+const FIRST_TIMESTAMP = /"timestamp":"(\d{4}-\d{2}-\d{2}T[0-9:.]+Z)"/u;
+
+export function sessionStartIso(transcriptPath) {
+  if (typeof transcriptPath !== "string" || transcriptPath === "") return null;
+  let fd;
+  try {
+    fd = openSync(transcriptPath, "r");
+    const buffer = Buffer.alloc(TRANSCRIPT_HEAD_BYTES);
+    const bytes = readSync(fd, buffer, 0, TRANSCRIPT_HEAD_BYTES, 0);
+    const match = FIRST_TIMESTAMP.exec(buffer.toString("utf8", 0, bytes));
+    return match === null ? null : match[1];
+  } catch {
+    return null;
+  } finally {
+    if (fd !== undefined) closeSync(fd);
+  }
+}
 
 export function evaluateStop({ hookActive, branch, dirtyPaths, unpushedCommits }) {
   if (hookActive) return { action: "allow" };

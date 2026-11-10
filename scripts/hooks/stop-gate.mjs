@@ -2,7 +2,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
-import { evaluateStop, parseStatusCount } from "../lib/stop-gate.mjs";
+import { evaluateStop, parseStatusCount, sessionStartIso } from "../lib/stop-gate.mjs";
 
 const STDIN_MAX_CHARS = 2_000_000;
 
@@ -22,12 +22,16 @@ function main() {
   try {
     const branch = git(cwd, ["rev-parse", "--abbrev-ref", "HEAD"]).trim();
     const dirtyPaths = parseStatusCount(git(cwd, ["status", "--porcelain"]));
+    const startedAt = sessionStartIso(payload?.transcript_path);
+    const since = startedAt === null ? [] : [`--after=${startedAt}`];
     let unpushedCommits = 0;
     try {
-      unpushedCommits = Number(git(cwd, ["rev-list", "--count", "@{upstream}..HEAD"]).trim());
+      unpushedCommits = Number(
+        git(cwd, ["rev-list", "--count", ...since, "@{upstream}..HEAD"]).trim(),
+      );
     } catch {
       unpushedCommits = Number(
-        git(cwd, ["rev-list", "--count", "HEAD", "--not", "--remotes"]).trim(),
+        git(cwd, ["rev-list", "--count", ...since, "HEAD", "--not", "--remotes"]).trim(),
       );
     }
     state = { branch, dirtyPaths, unpushedCommits };

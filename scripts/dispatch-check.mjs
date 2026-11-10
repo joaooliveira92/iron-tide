@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
+import { readFileSync, statfsSync } from "node:fs";
+import { resolve } from "node:path";
 
+import { recordStamps } from "./lib/dispatch-stamp.mjs";
+import { telemetryDir } from "./lib/hook-telemetry.mjs";
 import { isEntryPoint } from "./lib/paths.mjs";
 import { MAX_WORKTREES, TERMINAL_STATES, parseWorktreeList } from "./worktree.mjs";
 import { readRegistryFile, registryPath } from "./worktree-registry.mjs";
@@ -246,19 +250,44 @@ export function render(result) {
   ];
 }
 
+const GIB = 1024 ** 3;
+const POLICY_PATH = resolve(import.meta.dirname, "data/agent-context-policy.json");
+
+export function defaultFreeGiB() {
+  const stats = statfsSync(process.cwd());
+  return (stats.bavail * stats.bsize) / GIB;
+}
+
 export function main(
   argv,
-  { run = defaultRunner, readRegistryRows = defaultRegistryRows, out = console.log } = {},
+  {
+    run = defaultRunner,
+    readRegistryRows = defaultRegistryRows,
+    readFreeGiB = defaultFreeGiB,
+    minFreeGiB = 0,
+    stampDir = null,
+    nowMs = Date.now(),
+    out = console.log,
+  } = {},
 ) {
   try {
     const numbers = parseIssueNumbers(argv);
     const result = evaluate(numbers, collectFacts({ run, readRegistryRows }, numbers));
+    const freeGiB = readFreeGiB();
+    const diskLow = freeGiB < minFreeGiB;
     for (const line of render(result)) out(line);
-    return result.exitCode;
+    if (diskLow) out(`DISK-LOW ${freeGiB.toFixed(1)} GiB free (minimum ${minFreeGiB} GiB)`);
+    if (stampDir !== null) recordStamps(stampDir, result.verdicts, nowMs);
+    return diskLow ? EXIT_BLOCKED : result.exitCode;
   } catch (error) {
     console.error(`dispatch-check: ${error instanceof Error ? error.message : String(error)}`);
     return EXIT_TOOL_ERROR;
   }
 }
 
-if (isEntryPoint(import.meta.url)) process.exitCode = main(process.argv.slice(2));
+function entryOptions() {
+  const policy = JSON.parse(readFileSync(POLICY_PATH, "utf8"));
+  return { minFreeGiB: policy.minFreeGiB, stampDir: telemetryDir(policy) };
+}
+
+if (isEntryPoint(import.meta.url)) process.exitCode = main(process.argv.slice(2), entryOptions());
