@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import type { ProjectRow } from "../project-progress.js";
+import { setUiCatalogue } from "../../../content/uiCatalogue.js";
 import { ProjectReadout } from "./ProjectReadout.js";
 
 afterEach(cleanup);
@@ -108,6 +109,34 @@ describe("ProjectReadout", () => {
       />,
     );
     expect(screen.getByText("not building (payment default)")).toBeTruthy();
+  });
+
+  it("names a construction event's cause in words from the ui catalogue, never the raw code (#584)", () => {
+    setUiCatalogue({
+      locale: "en-US",
+      strings: {
+        "construction.event.steel_plate_shortage": "a steel plate shortage at the supplier",
+      },
+    });
+    render(
+      <ProjectReadout
+        row={row({
+          status: "DELAYED",
+          readout: {
+            totalCostUnits: 640,
+            monthlyInstalmentUnits: 0,
+            remainingMonths: 0,
+            launchMonth: null,
+            scheduleBasis: "UNAVAILABLE",
+            scheduleUnavailableReason: "DELAYED",
+            delayReasonCode: "STEEL_PLATE_SHORTAGE",
+            haltedCarryingCostUnits: null,
+          },
+        })}
+      />,
+    );
+    expect(screen.getByText("not building (a steel plate shortage at the supplier)")).toBeTruthy();
+    expect(screen.queryByText(/STEEL_PLATE_SHORTAGE/)).toBeNull();
   });
 
   it("renders the contract schedule a foreign row's readout carries", () => {

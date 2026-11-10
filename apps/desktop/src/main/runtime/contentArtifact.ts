@@ -27,6 +27,8 @@ import {
   loadMissilesRules,
   loadShipBuildingContent,
   loadShipBuildingData,
+  loadConstructionEvents,
+  type ConstructionEventRules,
   loadEventContent,
   loadTensionDriftRules,
   shipBuildingContentHash,
@@ -71,6 +73,10 @@ export class ContentArtifact extends Context.Service<
       CommandFailed
     >;
     readonly loadEventContent: () => Effect.Effect<EventEngineContent | undefined, CommandFailed>;
+    readonly loadConstructionEvents: () => Effect.Effect<
+      ConstructionEventRules | undefined,
+      CommandFailed
+    >;
     readonly loadShipBuildingData: () => Effect.Effect<ShipBuildingData, CommandFailed>;
     readonly shipBuildingContentHash: () => Effect.Effect<string, CommandFailed>;
     readonly armamentContentHash: () => Effect.Effect<string, CommandFailed>;
@@ -120,6 +126,8 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadTensionDriftRules(), catch: contentUnavailable }),
     loadEventContent: () =>
       Effect.try({ try: () => loadEventContent(), catch: contentUnavailable }),
+    loadConstructionEvents: () =>
+      Effect.try({ try: () => loadConstructionEvents(), catch: contentUnavailable }),
     loadShipBuildingData: () =>
       Effect.try({ try: () => loadShipBuildingData(), catch: contentUnavailable }),
     shipBuildingContentHash: () =>

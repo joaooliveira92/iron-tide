@@ -214,16 +214,19 @@ describe("commitMonth", () => {
 
       expect(result.value.domainEvents.some((e) => e.kind === "BattleResolved")).toBe(false);
       expect(result.value.closingSnapshot.battleOutcomes).toEqual([]);
+      expect(
+        result.value.domainEvents.filter((e) => e.kind === "ConstructionDelayed").map((e) => e.id),
+      ).toEqual(["ConstructionDelayed-con_ger_sachsen-19"]);
       const updated = getCampaignSession("session-nobattle")!;
       expect(updated.state.envelope).toEqual({
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "0e897ebe4241f12d5fe4af7c3a8032d63048cdd0f60c2fca5b7121c625783904",
-        bodyLength: 212849,
+        bodyHash: "7ed720be68cf481bf63cfd23c94fb54abd575c426c4b58fbb7678399122d6e9c",
+        bodyLength: 212767,
       });
       expect(updated.state.rawHash).toBe(
-        "d046dfaaf85ddc4cedf69a2f137166ac698a374f875d1d8bcbf23b975e6197db",
+        "a0ad376dfb8dc464d4ff24f3c5ccae544ee161d69ab7cfd6bb295b2bbc6a3b4c",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",

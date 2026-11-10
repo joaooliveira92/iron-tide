@@ -5,6 +5,7 @@ import {
   resolveMessage,
   setMissingKeyWarner,
   setUiCatalogue,
+  withConstructionCause,
 } from "./uiCatalogue.js";
 
 const catalogue = {
@@ -17,6 +18,23 @@ const catalogue = {
 
 afterEach(() => {
   setMissingKeyWarner(() => undefined);
+});
+
+describe("construction event cause words (#584)", () => {
+  it("swaps a reason code for its authored words and leaves other reasons alone", () => {
+    setUiCatalogue({
+      locale: "en-US",
+      strings: { "construction.event.steel_plate_shortage": "a steel plate shortage" },
+    });
+    expect(withConstructionCause({ reason: "STEEL_PLATE_SHORTAGE", projectId: "p1" })).toEqual({
+      reason: "a steel plate shortage",
+      projectId: "p1",
+    });
+    expect(withConstructionCause({ reason: "PAYMENT_DEFAULT_DELAYED" })).toEqual({
+      reason: "PAYMENT_DEFAULT_DELAYED",
+    });
+    expect(withConstructionCause({ count: 2 })).toEqual({ count: 2 });
+  });
 });
 
 describe("UI catalogue resolver (ADR-0209/ADR-0218)", () => {

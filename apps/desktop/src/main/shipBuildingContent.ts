@@ -1,5 +1,5 @@
 import { hashWithContext } from "@bluewave/deterministic";
-import type { EventEngineContent } from "@bluewave/phase-engine";
+import type { EventEngineContent, MonthExecutorEngineOptions } from "@bluewave/phase-engine";
 import {
   battleOffersFromRulesets,
   eventResolutionFromRulesets,
@@ -164,6 +164,20 @@ export function loadEventContent(): EventEngineContent | undefined {
         : { rules: decoded.value, catalogue },
   };
   return eventContent.content;
+}
+
+export type ConstructionEventRules = NonNullable<MonthExecutorEngineOptions["constructionEvents"]>;
+
+let constructionEventContent: { readonly rules: ConstructionEventRules | undefined } | null = null;
+
+export function loadConstructionEvents(): ConstructionEventRules | undefined {
+  if (constructionEventContent !== null) return constructionEventContent.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const rules = bundle.campaign?.constructionEvents;
+  constructionEventContent = {
+    rules: rules === undefined || rules.length === 0 ? undefined : rules,
+  };
+  return constructionEventContent.rules;
 }
 
 export function loadShipBuildingData(): ShipBuildingData {

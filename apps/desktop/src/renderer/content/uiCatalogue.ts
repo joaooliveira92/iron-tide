@@ -56,6 +56,20 @@ export function resolveMessage(
   return interpolate(template, interpolation);
 }
 
+export function constructionEventCause(reasonCode: string): string | undefined {
+  const key = `construction.event.${reasonCode.toLowerCase()}`;
+  return hasMessageKey(key) ? resolveMessage(key) : undefined;
+}
+
+export function withConstructionCause(
+  interpolation: Readonly<Record<string, string | number | boolean>>,
+): Readonly<Record<string, string | number | boolean>> {
+  const reason = interpolation["reason"];
+  if (typeof reason !== "string") return interpolation;
+  const cause = constructionEventCause(reason);
+  return cause === undefined ? interpolation : { ...interpolation, reason: cause };
+}
+
 export function hasMessageKey(key: string): boolean {
   return injected?.strings[key] !== undefined;
 }

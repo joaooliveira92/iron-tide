@@ -398,6 +398,8 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = () =>
       const tensionDrift =
         input === null ? undefined : yield* contentArtifact.loadTensionDriftRules();
       const events = input === null ? undefined : yield* contentArtifact.loadEventContent();
+      const constructionEvents =
+        input === null ? undefined : yield* contentArtifact.loadConstructionEvents();
       const engineOptions =
         shipBuilding === undefined
           ? undefined
@@ -411,6 +413,7 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = () =>
               ...(missilesRules !== undefined ? { missilesRules } : {}),
               ...(tensionDrift !== undefined ? { tensionDrift } : {}),
               ...(events !== undefined ? { events, playerNationId: metadata.playerSlotId } : {}),
+              ...(constructionEvents !== undefined ? { constructionEvents } : {}),
             };
       const result = yield* replay.verify({
         snapshot: executed,

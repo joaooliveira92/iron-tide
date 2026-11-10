@@ -3,7 +3,7 @@ import type {
   EntityReferenceDto,
   TurnMessageDto,
 } from "../../../../shared/turn-message-contract.js";
-import { resolveMessage } from "../../../content/uiCatalogue.js";
+import { resolveMessage, withConstructionCause } from "../../../content/uiCatalogue.js";
 import {
   SummaryDelta,
   SummaryRow,
@@ -65,7 +65,7 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
             {resolveMessage(message.titleKey, message.interpolation)}
           </p>
           <p className="text-muted-foreground">
-            {resolveMessage(message.bodyKey, message.interpolation)}
+            {resolveMessage(message.bodyKey, withConstructionCause(message.interpolation))}
           </p>
           {message.subjectRefs.length > 0 && (
             <div className="mt-1 flex flex-wrap gap-1">
