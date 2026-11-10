@@ -150,6 +150,38 @@ describe("ShipDelivered", () => {
   });
 });
 
+describe("ConstructionOverrun", () => {
+  const body = {
+    kind: "ConstructionOverrun",
+    projectId: "con_1",
+    nationId: "GBR",
+    reason: "DESIGN_CHANGE_REWORK",
+    amount: 30,
+    overrunMonth: "1880-03",
+  } as const;
+  it("parses as a domain event body and a full envelope", () => {
+    expect(parseDomainEventBody(body)).toEqual(body);
+    const envelope = {
+      eventId: "ConstructionOverrun-con_1-1",
+      version: "0.1.0",
+      aggregateType: "construction",
+      aggregateId: "con_1",
+      eventType: "ConstructionOverrun",
+      timestamp: "1880-03-01T00:00:00.000Z",
+      body,
+      sequenceNumber: SafeInt(1),
+    };
+    expect(parseDomainEventEnvelope(envelope)["body"]["kind"]).toBe("ConstructionOverrun");
+  });
+  it("rejects a missing cause, a non-positive amount, a malformed month and an unknown field", () => {
+    expect(() => parseDomainEventBody({ ...body, reason: "" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, amount: 0 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, amount: -4 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, overrunMonth: "1880-13" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
+  });
+});
+
 describe("ConstructionProjectCancelled", () => {
   const body = {
     kind: "ConstructionProjectCancelled",

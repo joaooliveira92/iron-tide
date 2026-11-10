@@ -243,6 +243,7 @@ function makeRichSnapshot(): CampaignSnapshot {
       foreignContractId: "fc-1",
       foreignBuilderNationId: DEFENDER_NATION,
       delayReasonCode: "PAYMENT_DEFAULT_DELAYED",
+      overruns: [{ month: "1880-03", reasonCode: "DESIGN_CHANGE_REWORK", amount: SafeInt(12) }],
     },
   ];
   gbr.aircraft = {} as any;

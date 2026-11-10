@@ -118,6 +118,25 @@ export function describeEventBody(body: DomainEventBody): EventDescription {
           },
         ],
       };
+    case "ConstructionOverrun":
+      return {
+        interpolation: {
+          projectId: body.projectId,
+          nationId: body.nationId,
+          reason: body.reason,
+          amount: body.amount,
+          overrunMonth: body.overrunMonth,
+        },
+        subjectRefs: [{ type: "constructionProject", id: body.projectId }, nation(body.nationId)],
+        effectRefs: [
+          {
+            target: { type: "constructionProject", id: body.projectId },
+            attribute: "overrunWork",
+            newValue: body.amount,
+            visibility: "exact",
+          },
+        ],
+      };
     case "ConstructionProjectCancelled":
       return {
         interpolation: {

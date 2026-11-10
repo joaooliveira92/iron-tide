@@ -54,6 +54,15 @@ export const ConstructionDelayedSchema = Schema.Struct({
   delayMonth: discoveryMonth,
 });
 
+export const ConstructionOverrunSchema = Schema.Struct({
+  kind: Schema.Literal("ConstructionOverrun"),
+  projectId: nonEmptyString,
+  nationId: nonEmptyString,
+  reason: nonEmptyString,
+  amount: positiveSafeInt,
+  overrunMonth: discoveryMonth,
+});
+
 export const ShipRebuiltSchema = Schema.Struct({
   kind: Schema.Literal("ShipRebuilt"),
   projectId: nonEmptyString,
@@ -277,6 +286,7 @@ export const DomainEventBodySchema = Schema.Union([
   NationBudgetChangedSchema,
   ConstructionProgressedSchema,
   ConstructionDelayedSchema,
+  ConstructionOverrunSchema,
   ShipRebuiltSchema,
   ShipDeliveredSchema,
   ConstructionProjectCancelledSchema,
@@ -306,6 +316,7 @@ const eventKindList = [
   "NationBudgetChanged",
   "ConstructionProgressed",
   "ConstructionDelayed",
+  "ConstructionOverrun",
   "ShipRebuilt",
   "ShipDelivered",
   "ConstructionProjectCancelled",
@@ -351,6 +362,7 @@ export const DomainEventEnvelopeSchema = Schema.Struct({
 export type NationBudgetChanged = Schema.Schema.Type<typeof NationBudgetChangedSchema>;
 export type ConstructionProgressed = Schema.Schema.Type<typeof ConstructionProgressedSchema>;
 export type ConstructionDelayed = Schema.Schema.Type<typeof ConstructionDelayedSchema>;
+export type ConstructionOverrun = Schema.Schema.Type<typeof ConstructionOverrunSchema>;
 export type ShipRebuilt = Schema.Schema.Type<typeof ShipRebuiltSchema>;
 export type ShipDelivered = Schema.Schema.Type<typeof ShipDeliveredSchema>;
 export type ConstructionProjectCancelled = Schema.Schema.Type<

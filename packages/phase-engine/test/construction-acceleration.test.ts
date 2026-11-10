@@ -6,7 +6,7 @@ import type {
   NationState,
 } from "@bluewave/campaign";
 import { campaignMonthId, transitionConstructionProject } from "@bluewave/campaign";
-import type { ConstructionEvent } from "@bluewave/content-schema";
+import type { ConstructionEvent, ConstructionOverrunEvent } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -1098,5 +1098,137 @@ describe("construction events in the economy pass (#584)", () => {
     expect(
       result.randomLedger.all.some((d) => d.streamId === CONSTRUCTION_EVENT_STREAM_FAMILY),
     ).toBe(false);
+  });
+
+  describe("overruns", () => {
+    const overrun = (over: Partial<ConstructionOverrunEvent> = {}): ConstructionOverrunEvent => ({
+      id: "design_change_rework",
+      kind: "OVERRUN",
+      probabilityBp: 10_000,
+      minBp: 1_000,
+      maxBp: 1_000,
+      capBp: 3_000,
+      reasonCode: "DESIGN_CHANGE_REWORK",
+      causeKey: "construction.event.design_change_rework",
+      provenance,
+      ...over,
+    });
+    const runMonth = (
+      from: CampaignSnapshot,
+      rules: readonly ConstructionEvent[],
+      seed = "o-seed",
+    ) => {
+      const result = new MonthExecutor().execute(
+        from,
+        [],
+        seed,
+        new DiagnosticCollector(),
+        undefined,
+        { shipBuilding: content, constructionEvents: rules },
+      );
+      return {
+        result,
+        next: {
+          ...result.finalSnapshot,
+          turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt(1)),
+        },
+      };
+    };
+    const only = (snap: CampaignSnapshot): ConstructionProject =>
+      snap.nations.get("GBR")!.constructionProjects[0]!;
+    const sumTotals = (p: ConstructionProject): number =>
+      p.packages!.reduce((a, pk) => a + Number(pk.totalWork), 0);
+
+    it("adds a share of remaining work, records cause and amount, and keeps the project building", () => {
+      const { result } = runMonth(start(), [overrun()]);
+      const p = only(result.finalSnapshot);
+      expect(p.status).toBe("ACTIVE");
+      expect(Number(p.totalWork)).toBe(660);
+      expect(sumTotals(p)).toBe(660);
+      expect(p.overruns).toEqual([
+        { month: "1880-02", reasonCode: "DESIGN_CHANGE_REWORK", amount: 60 },
+      ]);
+      const event = result.eventLedger.all.find((e) => e.eventType === "ConstructionOverrun");
+      expect(event?.body).toMatchObject({
+        kind: "ConstructionOverrun",
+        projectId: "proj-1",
+        reason: "DESIGN_CHANGE_REWORK",
+        amount: 60,
+        overrunMonth: "1880-02",
+      });
+      expect(result.eventLedger.all.some((e) => e.eventType === "ConstructionDelayed")).toBe(false);
+    });
+
+    it("never touches work already done, even when the project is half built", () => {
+      const half = (() => {
+        const base = start();
+        const nation = base.nations.get("GBR")!;
+        const built = nation.constructionProjects[0]!;
+        const done = {
+          ...built,
+          completedWork: SafeInt(300),
+          paidWork: SafeInt(300),
+          packages: built.packages!.map((pk, i) =>
+            i < 3 ? { ...pk, doneWork: pk.totalWork } : pk,
+          ),
+        };
+        return {
+          ...base,
+          nations: new Map([["GBR", { ...nation, constructionProjects: [done] }]]),
+        };
+      })();
+      const p = only(runMonth(half, [overrun()]).result.finalSnapshot);
+      expect(p.overruns).toEqual([
+        { month: "1880-02", reasonCode: "DESIGN_CHANGE_REWORK", amount: 30 },
+      ]);
+      expect(p.packages!.slice(0, 3).every((pk) => Number(pk.totalWork) === 100)).toBe(true);
+      expect(Number(p.totalWork)).toBe(630);
+    });
+
+    it("holds the cumulative overrun at the cap and still delivers the ship", () => {
+      let current = start();
+      let overruns = 0;
+      for (let m = 1; m <= 40; m++) {
+        const step = runMonth(current, [overrun({ minBp: 2_000, maxBp: 2_000, capBp: 3_000 })]);
+        overruns += step.result.eventLedger.all.filter(
+          (e) => e.eventType === "ConstructionOverrun",
+        ).length;
+        current = step.next;
+      }
+      const delivered = current.nations.get("GBR")!.constructionProjects[0]!;
+      const total = (delivered.overruns ?? []).reduce((a, o) => a + Number(o.amount), 0);
+      expect(overruns).toBeGreaterThan(1);
+      expect(total).toBeLessThanOrEqual(180);
+      expect(total).toBe(180);
+      expect(delivered.status).toBe("COMPLETED");
+      expect(Number(delivered.completedWork)).toBe(Number(delivered.totalWork));
+      expect(Number(delivered.totalWork)).toBe(780);
+    });
+
+    it("is identical across runs with the same seed", () => {
+      const a = runMonth(start(), [overrun({ minBp: 200, maxBp: 1_000 })], "same");
+      const b = runMonth(start(), [overrun({ minBp: 200, maxBp: 1_000 })], "same");
+      expect(a.result.randomLedger.hash()).toBe(b.result.randomLedger.hash());
+      expect(only(a.result.finalSnapshot)).toEqual(only(b.result.finalSnapshot));
+    });
+
+    it("leaves a foreign contract, a halted and a planned project alone", () => {
+      const base = start();
+      const nation = base.nations.get("GBR")!;
+      const built = nation.constructionProjects[0]!;
+      const variants = [
+        { ...built, id: "p-foreign", foreignContractId: "fc-1", foreignBuilderNationId: "FRA" },
+        { ...built, id: "p-halted", status: "HALTED" as const },
+        { ...built, id: "p-planned", status: "PLANNED" as const },
+      ];
+      const mixed = {
+        ...base,
+        nations: new Map([["GBR", { ...nation, constructionProjects: variants }]]),
+      };
+      const { result } = runMonth(mixed, [overrun()]);
+      expect(result.eventLedger.all.some((e) => e.eventType === "ConstructionOverrun")).toBe(false);
+      for (const p of result.finalSnapshot.nations.get("GBR")!.constructionProjects)
+        expect(p.overruns).toBeUndefined();
+    });
   });
 });
