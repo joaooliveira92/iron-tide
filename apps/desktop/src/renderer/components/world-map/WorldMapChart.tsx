@@ -7,6 +7,7 @@ import { CHART } from "./chart-theme.js";
 import { CoastlineCanvas } from "./CoastlineCanvas.js";
 import { MapControlsPanel } from "./MapControlsPanel.js";
 import { MapLayers } from "./MapLayers.js";
+import { WorldMap } from "./scene/WorldMap.js";
 import { MapLegend } from "./MapLegend.js";
 import { MapMinimap } from "./MapMinimap.js";
 import { MapScaleBar } from "./MapScaleBar.js";
@@ -284,7 +285,7 @@ export function WorldMapChart({
         onPointerCancel={handlePointerUp}
       >
         <g ref={camera.worldRef}>
-          <MapLayers
+          <WorldMap.Root
             model={model}
             palette={palette}
             width={projection.width}
@@ -295,7 +296,9 @@ export function WorldMapChart({
             pendingOrders={pendingOrders}
             draggableFleets={draggableFleets}
             selectedFleetId={activeFleetId}
-          />
+          >
+            <MapLayers />
+          </WorldMap.Root>
         </g>
       </svg>
 
