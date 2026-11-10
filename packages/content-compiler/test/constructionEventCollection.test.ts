@@ -118,4 +118,57 @@ describe("construction event collection through the compiler", () => {
     const error = collector.errors.find((d) => d.code === "CONSTRUCTION_EVENT_I18N_MISSING");
     expect(error?.message).toContain("construction.event.steel_plate_shortage");
   });
+
+  describe("overrun rows", () => {
+    const overrun = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
+      id: "design_change_rework",
+      kind: "OVERRUN",
+      probabilityBp: 120,
+      minBp: 200,
+      maxBp: 1000,
+      capBp: 3000,
+      reasonCode: "DESIGN_CHANGE_REWORK",
+      causeKey: "construction.event.design_change_rework",
+      provenance,
+      ...overrides,
+    });
+    const keys = ["construction.event.design_change_rework"];
+
+    it("compiles a well-formed overrun row", () => {
+      const { output, collector } = compile([overrun()], keys);
+      expect(collector.errors).toEqual([]);
+      expect(output?.bundle.campaign?.constructionEvents).toHaveLength(1);
+    });
+
+    it("names a schema diagnostic for a negative magnitude", () => {
+      const { output, collector } = compile([overrun({ minBp: -200 })], keys);
+      expect(output).toBeUndefined();
+      expect(collector.errors.some((d) => d.code === "SCHEMA")).toBe(true);
+    });
+
+    it("names a schema diagnostic for an inverted range", () => {
+      const { output, collector } = compile([overrun({ minBp: 900, maxBp: 100 })], keys);
+      expect(output).toBeUndefined();
+      expect(collector.errors.some((d) => d.code === "SCHEMA")).toBe(true);
+    });
+
+    it("names a schema diagnostic for a missing cap", () => {
+      const { capBp: _cap, ...open } = overrun();
+      const { output, collector } = compile([open], keys);
+      expect(output).toBeUndefined();
+      expect(collector.errors.some((d) => d.code === "SCHEMA")).toBe(true);
+    });
+
+    it("names a missing cause text key", () => {
+      const { output, collector } = compile([overrun()], []);
+      expect(output).toBeUndefined();
+      expect(
+        collector.errors.some(
+          (d) =>
+            d.code === "CONSTRUCTION_EVENT_I18N_MISSING" &&
+            d.message.includes("construction.event.design_change_rework"),
+        ),
+      ).toBe(true);
+    });
+  });
 });

@@ -18,9 +18,15 @@ export {
   EventSchema,
   EventStanceSchema,
 } from "./event.js";
-export type { ConstructionEvent, ConstructionEventKind } from "./construction-event.js";
+export type {
+  ConstructionEvent,
+  ConstructionEventKind,
+  ConstructionOverrunEvent,
+} from "./construction-event.js";
 export {
   CONSTRUCTION_EVENT_KINDS,
+  ConstructionDelayEventSchema,
+  ConstructionOverrunEventSchema,
   ConstructionEventEraWindowSchema,
   ConstructionEventKindSchema,
   ConstructionEventSchema,
