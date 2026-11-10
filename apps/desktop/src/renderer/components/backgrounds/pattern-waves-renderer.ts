@@ -1,7 +1,6 @@
 import { buildAtlas } from "./pattern-waves-atlas.js";
 import { fieldFragmentGLSL } from "./pattern-waves-field-shader.js";
 import {
-  bindTarget,
   createAtlasTexture,
   createBlankTexture,
   createPositionBinder,

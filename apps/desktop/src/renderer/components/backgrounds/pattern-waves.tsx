@@ -111,7 +111,9 @@ const PatternWaves = ({
     if (!container) return undefined;
     const renderer = createPatternWavesRenderer(container, () => settingsRef.current);
     if (!renderer) return undefined;
-    wakeRef.current = renderer.wake;
+    wakeRef.current = () => {
+      renderer.wake();
+    };
     return () => {
       wakeRef.current = null;
       renderer.dispose();
