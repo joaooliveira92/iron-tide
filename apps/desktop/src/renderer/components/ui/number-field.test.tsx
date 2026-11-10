@@ -142,15 +142,16 @@ describe("NumberField", () => {
   });
 
   it("lets a part override the size inherited from the root", () => {
-    render(
+    const { container } = render(
       <NumberField size="lg" defaultValue={1}>
         <NumberFieldGroup size="sm">
-          <NumberFieldInput aria-label="Value" size="sm" />
+          <NumberFieldInput aria-label="Value" />
         </NumberFieldGroup>
       </NumberField>,
     );
 
-    expect(screen.getByRole("textbox", { name: "Value" }).className).toContain("py-0.5");
+    expect(container.querySelector("[data-slot=number-field-group]")?.className).toContain("h-7");
+    expect(screen.getByRole("textbox", { name: "Value" }).className).toContain("py-1.5");
   });
 
   it("uses a supplied id for the input and the scrub label", () => {
