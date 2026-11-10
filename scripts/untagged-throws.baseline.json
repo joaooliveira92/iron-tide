@@ -52,7 +52,7 @@
   "apps/desktop/src/renderer/components/ui/select/context.ts": {
     "5b27331eeb31c97b9fb787ecc6beb91ea2e8c7713d336272f46cbf023684939e": 1
   },
-  "apps/desktop/src/renderer/components/ui/sidebar.tsx": {
+  "apps/desktop/src/renderer/components/ui/sidebar/context.ts": {
     "53611167802ef4250ab648b1cbac269638141995a9961eb7d655fcc31db8eb7f": 1
   },
   "apps/desktop/src/renderer/components/world-map/bake-borders.ts": {
