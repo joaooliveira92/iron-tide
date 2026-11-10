@@ -50,6 +50,8 @@ describe("content manifest verification", () => {
     ["algorithm", [] as unknown[]],
     ["bodyHash", {}],
     ["bodyLength", "12"],
+    ["bodyLength", Number.NaN],
+    ["bodyLength", Number.POSITIVE_INFINITY],
   ])("rejects a manifest whose %s is %j", (field, value) => {
     expect(verifyContentBundleArtifact(bundle, { ...manifest, [field]: value })).toMatchObject({
       ok: false,

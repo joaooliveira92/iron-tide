@@ -16,9 +16,9 @@ const ExplanationSourceSchema = Schema.Struct({
 const ExplanationTreeSchema: Schema.Codec<ExplanationTree> = Schema.Struct({
   formulaId: nonEmptyString,
   formulaVersion: nonEmptyString,
-  inputs: Schema.Record(Schema.String, Schema.Union([Schema.Number, Schema.String])),
-  intermediate: Schema.Record(Schema.String, Schema.Number),
-  result: Schema.Number,
+  inputs: Schema.Record(Schema.String, Schema.Union([Schema.Finite, Schema.String])),
+  intermediate: Schema.Record(Schema.String, Schema.Finite),
+  result: Schema.Finite,
   unit: Schema.optional(nonEmptyString),
   operation: Schema.optional(
     Schema.Literals(["identity", "add", "subtract", "multiply", "divide", "round", "clamp"]),
