@@ -1,183 +1,36 @@
 "use client";
 
-import {
-  animate,
-  motion,
-  motionValue,
-  useReducedMotion,
-  type MotionValue,
-  type ValueAnimationTransition,
-} from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import {
   type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import "./CardDeck.css";
-
-const DEFAULT_IMAGES = [
-  "https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?q=80&w=500&auto=format",
-  "https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=500&auto=format",
-  "https://images.unsplash.com/photo-1452626212852-811d58933cae?q=80&w=500&auto=format",
-  "https://images.unsplash.com/photo-1572120360610-d971b9d7767c?q=80&w=500&auto=format",
-];
-
-type Layout = "fan" | "cascade" | "deck" | "pile";
-type Placement = { x: number; y: number; rotate: number; scale: number };
-type Sample = [number, number, number];
-type Origins = Record<Layout, [number, number]>;
-
-const ORIGINS: Origins = {
-  fan: [0.9, 0.9],
-  cascade: [0.5, 0.5],
-  deck: [0.5, 0],
-  pile: [0.5, 0.5],
-};
-
-const EXITS: Partial<Record<Layout, [number, number]>> = {
-  fan: [1, -0.3],
-  cascade: [0.8, 0.6],
-  deck: [0, 1],
-};
-
-const SHADOW = "0 14px 34px -10px rgba(0, 0, 0, 0.45), 0 3px 8px -2px rgba(0, 0, 0, 0.18)";
-const CLICK_SLOP = 6;
-const FLICK_SPEED = 650;
-const LEAN_SPEED = 1300;
-const LEAN_REACH = 260;
-const PRESS_SCALE = 1.035;
-
-const SPRINGS = {
-  place: [260, 24],
-  settle: [320, 34],
-  tuck: [240, 28],
-  face: [240, 30],
-  lean: [240, 28],
-  press: [420, 34],
-  fling: [650, 42],
-} as const;
-
-type SpringKind = keyof typeof SPRINGS;
+import { DeckContext, type DeckContextValue, useDeck } from "./deckContext.js";
+import { clamp, initialOrder, ORIGINS, SHADOW } from "./deckGeometry.js";
+import type {
+  AutoplayPause,
+  Elevation,
+  Layout,
+  PlaceAllOptions,
+  Settings,
+  TapAction,
+  Vector,
+} from "./deckTypes.js";
+import { useDeckFlight } from "./useDeckFlight.js";
+import { useDeckGestures } from "./useDeckGestures.js";
+import { useDeckMotion } from "./useDeckMotion.js";
+import { useDeckRefs } from "./useDeckRefs.js";
 
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-const clamp = (value: number, min: number, max: number): number =>
-  Math.min(max, Math.max(min, value));
-
-const mix = (a: number, b: number, t: number): number => a + (b - a) * t;
-
-const noise = (seed: number): number => {
-  const value = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
-  return value - Math.floor(value);
-};
-
-function placement(
-  layout: Layout,
-  position: number,
-  card: number,
-  spread: number,
-  depth: number,
-): Placement {
-  if (layout === "cascade") {
-    return {
-      x: -position * spread * 28,
-      y: -position * spread * 28,
-      rotate: 0,
-      scale: 1 - position * depth * 0.07,
-    };
-  }
-  if (layout === "deck") {
-    return { x: 0, y: -position * spread * 32, rotate: 0, scale: 1 - position * depth * 0.1 };
-  }
-  if (layout === "pile") {
-    return {
-      x: (noise(card + 1) - 0.5) * spread * 56,
-      y: (noise(card + 2) - 0.5) * spread * 44,
-      rotate: (noise(card + 3) - 0.5) * spread * 40,
-      scale: 1 - position * depth * 0.03,
-    };
-  }
-  return { x: 0, y: 0, rotate: position * spread * 8, scale: 1 - position * depth * 0.12 };
-}
-
-function releaseVelocity(samples: Sample[], time: number): [number, number] {
-  const recent = samples.filter((sample) => time - sample[2] <= 100);
-  if (recent.length < 2) return [0, 0];
-  const first = recent[0] as Sample;
-  const last = recent[recent.length - 1] as Sample;
-  const elapsed = Math.max((last[2] - first[2]) / 1000, 0.008);
-  return [(last[0] - first[0]) / elapsed, (last[1] - first[1]) / elapsed];
-}
-
-interface Settings {
-  layout: Layout;
-  visible: number;
-  spread: number;
-  depth: number;
-  tilt: number;
-  threshold: number;
-  speed: number;
-  sendToBackOnClick: boolean;
+export interface CardDeckRootProps {
   count: number;
-  reduceMotion: boolean;
-}
-
-interface MotionValues {
-  x: MotionValue<number>;
-  y: MotionValue<number>;
-  rotate: MotionValue<number>;
-  scale: MotionValue<number>;
-  tiltX: MotionValue<number>;
-  tiltY: MotionValue<number>;
-  spin: MotionValue<number>;
-  lift: MotionValue<number>;
-  grabX: MotionValue<number>;
-  grabY: MotionValue<number>;
-  z: MotionValue<number>;
-  opacity: MotionValue<number>;
-  shade: MotionValue<number>;
-}
-
-interface DragState {
-  card: number;
-  id: number;
-  element: HTMLElement;
-  startX: number;
-  startY: number;
-  originX: number;
-  originY: number;
-  homeX: number;
-  homeY: number;
-  vx: number;
-  vy: number;
-  idle: ReturnType<typeof setTimeout> | null;
-  moved: boolean;
-  progress: number;
-  samples: Sample[];
-}
-
-interface PlaceOptions {
-  delay?: number;
-  lift?: number;
-  kind?: SpringKind;
-  velocity?: [number, number] | null;
-  keepZ?: boolean;
-}
-
-interface PlaceAllOptions {
-  stagger?: number;
-  lift?: number;
-  released?: number;
-  velocity?: [number, number] | null;
-  kind?: SpringKind;
-}
-
-export interface CardDeckProps {
-  cards?: ReactNode[];
   layout?: Layout;
   visible?: number;
   spread?: number;
@@ -185,23 +38,19 @@ export interface CardDeckProps {
   radius?: number;
   frame?: number;
   frameColor?: string;
-  shadow?: boolean;
+  elevation?: Elevation;
   tilt?: number;
   threshold?: number;
   speed?: number;
-  sendToBackOnClick?: boolean;
-  autoplay?: boolean;
-  autoplayDelay?: number;
-  pauseOnHover?: boolean;
+  tap?: TapAction;
   onChange?: (index: number) => void;
   topIndex?: number;
   onCardActivate?: (index: number) => void;
-  className?: string;
-  style?: CSSProperties;
+  children?: ReactNode;
 }
 
-export function CardDeck({
-  cards,
+function CardDeckRoot({
+  count,
   layout = "fan",
   visible = 4,
   spread = 0.5,
@@ -209,62 +58,22 @@ export function CardDeck({
   radius = 16,
   frame = 0,
   frameColor = "#ffffff",
-  shadow = true,
+  elevation = "raised",
   tilt = 30,
   threshold = 90,
   speed = 1,
-  sendToBackOnClick = false,
-  autoplay = false,
-  autoplayDelay = 3000,
-  pauseOnHover = false,
+  tap = "activate",
   onChange,
   topIndex,
   onCardActivate,
-  className = "",
-  style,
-}: CardDeckProps): React.JSX.Element {
-  const items =
-    cards && cards.length
-      ? cards
-      : DEFAULT_IMAGES.map((src, index) => (
-          <img key={src} src={src} alt={`Card ${index + 1}`} draggable={false} />
-        ));
-  const count = items.length;
+  children,
+}: CardDeckRootProps): React.JSX.Element {
   const shape: Layout = layout in ORIGINS ? layout : "fan";
   const reduceMotion = useReducedMotion();
-  const rootRef = useRef<HTMLDivElement>(null);
   const [order, setOrder] = useState<number[]>(() => initialOrder(count, topIndex));
   const [dragging, setDragging] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const orderRef = useRef(order);
-  const valuesRef = useRef(new Map<number, MotionValues>());
-  const elementsRef = useRef(new Map<number, HTMLElement>());
-  const flyingRef = useRef(new Map<number, { turned: boolean }>());
-  const dragRef = useRef<DragState | null>(null);
-  const aliveRef = useRef(true);
   const mountedRef = useRef(false);
-  const settingsRef = useRef<Settings | null>(null);
-  const actionsRef = useRef<{
-    placeAll: (options?: PlaceAllOptions) => void;
-    sendToBack: (direction: [number, number] | null, velocity?: [number, number] | null) => void;
-    onMove: (event: PointerEvent) => void;
-    onUp: (event: PointerEvent) => void;
-  } | null>(null);
-  const listenersRef = useRef<{
-    move: (event: PointerEvent) => void;
-    up: (event: PointerEvent) => void;
-  } | null>(null);
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-  const onCardActivateRef = useRef(onCardActivate);
-  onCardActivateRef.current = onCardActivate;
-
-  if (order.length !== count || order.some((index) => index >= count)) {
-    const next = order.filter((index) => index < count);
-    for (let index = 0; index < count; index++) if (!next.includes(index)) next.push(index);
-    orderRef.current = next;
-    setOrder(next);
-  }
 
   const settings: Settings = {
     layout: shape,
@@ -274,504 +83,197 @@ export function CardDeck({
     tilt: clamp(tilt, 0, 89),
     threshold: Math.max(threshold, 0),
     speed: clamp(speed, 0.2, 4),
-    sendToBackOnClick,
+    tap,
     count,
     reduceMotion: !!reduceMotion,
   };
-  settingsRef.current = settings;
+  const refs = useDeckRefs(settings, order, onChange, onCardActivate);
 
-  const valuesFor = (index: number): MotionValues => {
-    let values = valuesRef.current.get(index);
-    if (!values) {
-      const s = settingsRef.current as Settings;
-      const position = Math.max(0, orderRef.current.indexOf(index));
-      const start = placement(
-        s.layout,
-        s.reduceMotion ? Math.min(position, s.visible - 1) : 0,
-        index,
-        s.spread,
-        s.depth,
-      );
-      values = {
-        x: motionValue(start.x),
-        y: motionValue(start.y),
-        rotate: motionValue(start.rotate),
-        scale: motionValue(start.scale),
-        tiltX: motionValue(0),
-        tiltY: motionValue(0),
-        spin: motionValue(0),
-        lift: motionValue(1),
-        grabX: motionValue(0.5),
-        grabY: motionValue(0.5),
-        z: motionValue(s.count - position),
-        opacity: motionValue(position < s.visible ? 1 : 0),
-        shade: motionValue(0),
-      };
-      valuesRef.current.set(index, values);
-    }
-    return values;
-  };
-
-  const springFor = (
-    s: Settings,
-    kind: SpringKind,
-    extra: { delay?: number } = {},
-  ): ValueAnimationTransition => {
-    if (s.reduceMotion) return { duration: 0.2, ease: "easeOut", delay: extra.delay ?? 0 };
-    const [stiffness, damping] = SPRINGS[kind];
-    return {
-      type: "spring",
-      stiffness: stiffness * s.speed * s.speed,
-      damping: damping * s.speed,
-      restDelta: 0.01,
-      restSpeed: 0.5,
-      ...extra,
-    };
-  };
-
-  const settleFace = (values: MotionValues, s: Settings, delay = 0): void => {
-    const transition = springFor(s, "face", { delay });
-    animate(values.tiltX, 0, transition);
-    animate(values.tiltY, 0, transition);
-    animate(values.spin, 0, transition);
-    animate(values.lift, 1, transition);
-  };
-
-  const placeCard = (index: number, position: number, options: PlaceOptions = {}): void => {
-    const { delay = 0, lift = 0, kind = "place", velocity = null, keepZ = false } = options;
-    const s = settingsRef.current as Settings;
-    const values = valuesFor(index);
-    const shown = Math.min(position, s.visible - 1);
-    const target = placement(s.layout, shown, index, s.spread, s.depth);
-    if (lift > 0 && shown > 0) {
-      const ahead = placement(s.layout, shown - 1, index, s.spread, s.depth);
-      target.x = mix(target.x, ahead.x, lift);
-      target.y = mix(target.y, ahead.y, lift);
-      target.rotate = mix(target.rotate, ahead.rotate, lift);
-      target.scale = mix(target.scale, ahead.scale, lift);
-    }
-    const motionSpring = springFor(s, kind, { delay });
-    const fade: ValueAnimationTransition = {
-      duration: s.reduceMotion ? 0.2 : 0.35 / s.speed,
-      ease: "easeOut",
-      delay,
-    };
-    if (!keepZ) values.z.set(s.count - position);
-    animate(
-      values.x,
-      target.x,
-      velocity ? { ...motionSpring, velocity: velocity[0] } : motionSpring,
-    );
-    animate(
-      values.y,
-      target.y,
-      velocity ? { ...motionSpring, velocity: velocity[1] } : motionSpring,
-    );
-    animate(values.rotate, target.rotate, motionSpring);
-    animate(values.scale, target.scale, motionSpring);
-    settleFace(values, s, delay);
-    animate(values.opacity, position < s.visible ? 1 : 0, fade);
-    animate(values.shade, Math.min(0.6, shown * s.depth * 0.14 * (1 - lift)), fade);
-  };
-
-  const placeAll = (options: PlaceAllOptions = {}): void => {
-    const { stagger = 0, lift = 0, released = -1, velocity = null, kind = "place" } = options;
-    const drag = dragRef.current;
-    orderRef.current.forEach((index, position) => {
-      const flight = flyingRef.current.get(index);
-      if (flight && !flight.turned) return;
-      if (drag && drag.moved && drag.card === index) return;
-      const isReleased = index === released;
-      placeCard(index, position, {
-        delay: position * stagger,
-        lift: position > 0 ? lift : 0,
-        kind: flight ? "tuck" : isReleased ? "settle" : kind,
-        velocity: isReleased ? velocity : null,
-        keepZ: !!flight,
-      });
-    });
-  };
+  if (order.length !== count || order.some((index) => index >= count)) {
+    const next = order.filter((index) => index < count);
+    for (let index = 0; index < count; index++) if (!next.includes(index)) next.push(index);
+    refs.order.current = next;
+    setOrder(next);
+  }
 
   const commit = (next: number[]): void => {
-    orderRef.current = next;
+    refs.order.current = next;
     setOrder(next);
   };
 
-  const sendToBack = (
-    direction: [number, number] | null,
-    velocity: [number, number] | null = null,
-  ): void => {
-    const s = settingsRef.current as Settings;
-    const current = orderRef.current;
-    if (current.length < 2) return;
-    const top = current[0] as number;
-    if (flyingRef.current.has(top)) return;
-    const next = [...current.slice(1), top];
-    if (s.reduceMotion) {
-      commit(next);
-      onChangeRef.current?.(next[0] as number);
-      return;
-    }
-    let dx: number;
-    let dy: number;
-    if (direction) {
-      [dx, dy] = direction;
-    } else {
-      const exit = EXITS[s.layout];
-      [dx, dy] = exit ?? [Math.cos(noise(top + 9) * 6.283), Math.sin(noise(top + 9) * 6.283)];
-    }
-    const length = Math.hypot(dx, dy) || 1;
-    dx /= length;
-    dy /= length;
-    const bounds = rootRef.current?.getBoundingClientRect();
-    const width = bounds?.width || 240;
-    const height = bounds?.height || 240;
-    const clearance = Math.min(
-      width / Math.max(Math.abs(dx), 0.01),
-      height / Math.max(Math.abs(dy), 0.01),
-    );
-    const home = placement(s.layout, 0, top, s.spread, s.depth);
-    const travel = clearance * 1.12 + 40;
-    const out: [number, number] = [home.x + dx * travel, home.y + dy * travel];
-    const values = valuesFor(top);
-    const launch = springFor(s, "fling");
-    const flight = { turned: false };
-    flyingRef.current.set(top, flight);
-    values.z.set(s.count + 1);
-    animate(values.x, out[0], velocity ? { ...launch, velocity: velocity[0] } : launch);
-    animate(values.y, out[1], velocity ? { ...launch, velocity: velocity[1] } : launch);
-    settleFace(values, s);
-    commit(next);
-    onChangeRef.current?.(next[0] as number);
-    const span = Math.max(Math.hypot(out[0] - values.x.get(), out[1] - values.y.get()), 1);
-    let landed = false;
-    const turn = (): void => {
-      flight.turned = true;
-      const position = orderRef.current.indexOf(top);
-      if (position >= 0) placeCard(top, position, { kind: "tuck", keepZ: !landed });
-    };
-    const land = (): void => {
-      landed = true;
-      if (flyingRef.current.get(top) === flight) flyingRef.current.delete(top);
-      const position = orderRef.current.indexOf(top);
-      if (position >= 0) values.z.set((settingsRef.current as Settings).count - position);
-    };
-    const fallback = setTimeout(() => {
-      if (!flight.turned) turn();
-      if (!landed) land();
-    }, 1500 / s.speed);
-    const clearOfPile = (): boolean => {
-      const element = elementsRef.current.get(top);
-      if (!element) return true;
-      const mine = element.getBoundingClientRect();
-      for (const [index, other] of elementsRef.current) {
-        if (index === top || flyingRef.current.has(index) || valuesFor(index).opacity.get() < 0.5) {
-          continue;
-        }
-        const box = other.getBoundingClientRect();
-        if (
-          mine.left < box.right &&
-          mine.right > box.left &&
-          mine.top < box.bottom &&
-          mine.bottom > box.top
-        ) {
-          return false;
-        }
-      }
-      return true;
-    };
-    const watch = (): void => {
-      if (!aliveRef.current || (flight.turned && landed)) {
-        clearTimeout(fallback);
-        return;
-      }
-      const x = values.x.get();
-      const y = values.y.get();
-      const outward = values.x.getVelocity() * dx + values.y.getVelocity() * dy;
-      if (!flight.turned && (Math.hypot(out[0] - x, out[1] - y) <= span * 0.06 || outward < 0)) {
-        turn();
-      }
-      if (!landed && (clearOfPile() || (flight.turned && outward < 0))) land();
-      requestAnimationFrame(watch);
-    };
-    requestAnimationFrame(watch);
-  };
-
-  const lean = (drag: DragState): void => {
-    const s = settingsRef.current as Settings;
-    if (s.reduceMotion) return;
-    const values = valuesFor(drag.card);
-    const offsetX = values.x.get() - drag.homeX;
-    const offsetY = values.y.get() - drag.homeY;
-    const sideways =
-      clamp(drag.vx / LEAN_SPEED, -1, 1) * 0.7 + clamp(offsetX / LEAN_REACH, -1, 1) * 0.3;
-    const upward =
-      clamp(-drag.vy / LEAN_SPEED, -1, 1) * 0.7 + clamp(-offsetY / LEAN_REACH, -1, 1) * 0.3;
-    const follow = springFor(s, "lean");
-    animate(values.tiltY, sideways * s.tilt, follow);
-    animate(values.tiltX, upward * s.tilt, follow);
-    animate(values.spin, clamp(offsetX / LEAN_REACH, -1, 1) * 6, follow);
-  };
-
-  const onMove = (event: PointerEvent): void => {
-    const drag = dragRef.current;
-    if (!drag || event.pointerId !== drag.id) return;
-    const s = settingsRef.current as Settings;
-    const dx = event.clientX - drag.startX;
-    const dy = event.clientY - drag.startY;
-    const values = valuesFor(drag.card);
-    if (!drag.moved) {
-      if (Math.hypot(dx, dy) < CLICK_SLOP) return;
-      drag.moved = true;
-      values.x.stop();
-      values.y.stop();
-      drag.originX = values.x.get() - dx;
-      drag.originY = values.y.get() - dy;
-      try {
-        drag.element.setPointerCapture(drag.id);
-      } catch {}
-      setDragging(true);
-    }
-    values.x.set(drag.originX + dx);
-    values.y.set(drag.originY + dy);
-    drag.samples.push([event.clientX, event.clientY, event.timeStamp]);
-    if (drag.samples.length > 12) drag.samples.shift();
-    [drag.vx, drag.vy] = releaseVelocity(drag.samples, event.timeStamp);
-    lean(drag);
-    if (drag.idle !== null) clearTimeout(drag.idle);
-    drag.idle = setTimeout(() => {
-      if (dragRef.current !== drag) return;
-      drag.vx = 0;
-      drag.vy = 0;
-      lean(drag);
-    }, 70);
-    const progress = clamp(Math.hypot(dx, dy) / Math.max(s.threshold, 1), 0, 1);
-    if (Math.abs(progress - drag.progress) > 0.02) {
-      drag.progress = progress;
-      placeAll({ lift: progress * 0.4, kind: "settle" });
-    }
-  };
-
-  const onUp = (event: PointerEvent): void => {
-    const drag = dragRef.current;
-    if (!drag || event.pointerId !== drag.id) return;
-    dragRef.current = null;
-    if (drag.idle !== null) clearTimeout(drag.idle);
-    const listeners = listenersRef.current as {
-      move: (event: PointerEvent) => void;
-      up: (event: PointerEvent) => void;
-    };
-    window.removeEventListener("pointermove", listeners.move);
-    window.removeEventListener("pointerup", listeners.up);
-    window.removeEventListener("pointercancel", listeners.up);
-    try {
-      drag.element.releasePointerCapture(drag.id);
-    } catch {}
-    const s = settingsRef.current as Settings;
-    if (!drag.moved) {
-      if (event.type === "pointerup") {
-        if (s.sendToBackOnClick) sendToBack(null);
-        else onCardActivateRef.current?.(drag.card);
-      } else {
-        settleFace(valuesFor(drag.card), s);
-      }
-      return;
-    }
-    setDragging(false);
-    const dx = event.clientX - drag.startX;
-    const dy = event.clientY - drag.startY;
-    const [vx, vy] = releaseVelocity(drag.samples, event.timeStamp);
-    const distance = Math.hypot(dx, dy);
-    const pace = Math.hypot(vx, vy);
-    const flick = pace > FLICK_SPEED && distance > 16 && vx * dx + vy * dy > 0;
-    if (event.type === "pointerup" && s.count > 1 && (distance > s.threshold || flick)) {
-      sendToBack(pace > 300 ? [vx, vy] : [dx, dy], [vx, vy]);
-    } else {
-      placeAll({
-        released: drag.card,
-        velocity: [clamp(vx, -3000, 3000), clamp(vy, -3000, 3000)],
-      });
-    }
-  };
-
-  const onDown = (event: ReactPointerEvent<HTMLDivElement>, index: number): void => {
-    if (event.button !== 0 || dragRef.current) return;
-    if (flyingRef.current.has(index)) return;
-    if (orderRef.current[0] !== index) {
-      event.preventDefault();
-      onCardActivateRef.current?.(index);
-      return;
-    }
-    const s = settingsRef.current as Settings;
-    const values = valuesFor(index);
-    const home = placement(s.layout, 0, index, s.spread, s.depth);
-    const bounds = event.currentTarget.getBoundingClientRect();
-    values.grabX.set(clamp((event.clientX - bounds.left) / Math.max(bounds.width, 1), 0, 1));
-    values.grabY.set(clamp((event.clientY - bounds.top) / Math.max(bounds.height, 1), 0, 1));
-    if (!s.reduceMotion) animate(values.lift, PRESS_SCALE, springFor(s, "press"));
-    dragRef.current = {
-      card: index,
-      id: event.pointerId,
-      element: event.currentTarget,
-      startX: event.clientX,
-      startY: event.clientY,
-      originX: 0,
-      originY: 0,
-      homeX: home.x,
-      homeY: home.y,
-      vx: 0,
-      vy: 0,
-      idle: null,
-      moved: false,
-      progress: 0,
-      samples: [[event.clientX, event.clientY, event.timeStamp]],
-    };
-    if (event.pointerType === "mouse") event.preventDefault();
-    const listeners = listenersRef.current as {
-      move: (event: PointerEvent) => void;
-      up: (event: PointerEvent) => void;
-    };
-    window.addEventListener("pointermove", listeners.move);
-    window.addEventListener("pointerup", listeners.up);
-    window.addEventListener("pointercancel", listeners.up);
-  };
-
-  actionsRef.current = { placeAll, sendToBack, onMove, onUp };
-  if (!listenersRef.current) {
-    listenersRef.current = {
-      move: (event) => actionsRef.current?.onMove(event),
-      up: (event) => actionsRef.current?.onUp(event),
-    };
-  }
+  const motion = useDeckMotion(refs);
+  const sendToBack = useDeckFlight(refs, motion, commit);
+  const gestures = useDeckGestures(refs, motion, sendToBack, setDragging);
+  const latest = useRef({ placeAll: motion.placeAll, sendToBack, grab: gestures.onDown });
+  latest.current = { placeAll: motion.placeAll, sendToBack, grab: gestures.onDown };
 
   useIsomorphicLayoutEffect(() => {
-    orderRef.current = order;
-    actionsRef.current?.placeAll({ stagger: mountedRef.current ? 0 : 0.06 });
+    refs.order.current = order;
+    const options: PlaceAllOptions = { stagger: mountedRef.current ? 0 : 0.06 };
+    latest.current.placeAll(options);
     mountedRef.current = true;
   }, [order, shape, visible, spread, depth, speed, count]);
 
   useEffect(() => {
     if (topIndex === undefined || topIndex < 0 || topIndex >= count) return;
-    const current = orderRef.current;
+    const current = refs.order.current;
     if (current[0] === topIndex) return;
     if (!current.includes(topIndex)) return;
     commit([topIndex, ...current.filter((index) => index !== topIndex)]);
   }, [topIndex, count]);
 
   useEffect(() => {
-    if (!autoplay || count < 2 || dragging || (pauseOnHover && hovered)) return undefined;
-    const timer = setTimeout(
-      () => actionsRef.current?.sendToBack(null),
-      Math.max(300, autoplayDelay),
-    );
-    return () => clearTimeout(timer);
-  }, [autoplay, autoplayDelay, pauseOnHover, hovered, dragging, order, count]);
-
-  useEffect(() => {
-    aliveRef.current = true;
-    const values = valuesRef.current;
-    const listeners = listenersRef.current;
+    refs.alive.current = true;
+    const values = refs.values.current;
     return () => {
-      aliveRef.current = false;
-      if (dragRef.current?.idle != null) clearTimeout(dragRef.current.idle);
-      if (listeners) {
-        window.removeEventListener("pointermove", listeners.move);
-        window.removeEventListener("pointerup", listeners.up);
-        window.removeEventListener("pointercancel", listeners.up);
-      }
+      refs.alive.current = false;
+      gestures.dispose();
       values.forEach((group) => {
-        group.x.stop();
-        group.y.stop();
-        group.rotate.stop();
-        group.scale.stop();
-        group.tiltX.stop();
-        group.tiltY.stop();
-        group.spin.stop();
-        group.lift.stop();
-        group.grabX.stop();
-        group.grabY.stop();
-        group.z.stop();
-        group.opacity.stop();
-        group.shade.stop();
+        for (const value of Object.values(group)) value.stop();
       });
       values.clear();
-      elementsRef.current.clear();
-      flyingRef.current.clear();
+      refs.elements.current.clear();
+      refs.flying.current.clear();
     };
   }, []);
 
-  const [originX, originY] = ORIGINS[shape];
-  const innerRadius = Math.max(0, radius - frame);
+  const actions = useMemo<DeckContextValue["actions"]>(
+    () => ({
+      sendToBack: (direction: Vector | null) => latest.current.sendToBack(direction),
+      setHovered,
+      grab: (event, index) => latest.current.grab(event, index),
+      attach: (index, element) => {
+        if (element) refs.elements.current.set(index, element);
+        else refs.elements.current.delete(index);
+      },
+    }),
+    [refs],
+  );
 
+  const value: DeckContextValue = {
+    state: {
+      order,
+      count,
+      visible: settings.visible,
+      shape,
+      origin: ORIGINS[shape],
+      dragging,
+      hovered,
+      radius,
+      frame,
+      frameColor,
+      elevation,
+    },
+    actions,
+    meta: { rootRef: refs.root, valuesFor: motion.valuesFor },
+  };
+
+  return <DeckContext value={value}>{children}</DeckContext>;
+}
+
+export interface CardDeckStackProps {
+  className?: string;
+  style?: CSSProperties;
+  children?: ReactNode;
+}
+
+function CardDeckStack({ className = "", style, children }: CardDeckStackProps) {
+  const { actions, meta } = useDeck("CardDeck.Stack");
   return (
     <div
-      ref={rootRef}
+      ref={meta.rootRef}
       className={`card-deck ${className}`.trim()}
       style={style}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => actions.setHovered(true)}
+      onMouseLeave={() => actions.setHovered(false)}
     >
-      {items.map((card, index) => {
-        const values = valuesFor(index);
-        const isTop = order[0] === index;
-        const position = Math.max(0, order.indexOf(index));
-        return (
-          <motion.div
-            key={index}
-            ref={(element) => {
-              if (element) elementsRef.current.set(index, element);
-              else elementsRef.current.delete(index);
-            }}
-            className="card-deck-card"
-            data-top={isTop ? "" : undefined}
-            style={{
-              x: values.x,
-              y: values.y,
-              rotate: values.rotate,
-              scale: values.scale,
-              zIndex: values.z,
-              opacity: values.opacity,
-              pointerEvents: position < settings.visible ? "auto" : "none",
-              originX,
-              originY,
-              cursor: isTop ? (dragging ? "grabbing" : "grab") : "pointer",
-              touchAction: isTop ? "pan-y" : "auto",
-            }}
-            onPointerDown={(event) => onDown(event, index)}
-          >
-            <motion.div
-              className="card-deck-card-face"
-              style={{
-                rotateX: values.tiltX,
-                rotateY: values.tiltY,
-                rotate: values.spin,
-                scale: values.lift,
-                originX: values.grabX,
-                originY: values.grabY,
-                transformPerspective: 800,
-                borderRadius: radius,
-                padding: frame,
-                backgroundColor: frame > 0 ? frameColor : "transparent",
-                boxShadow: shadow ? SHADOW : "none",
-              }}
-            >
-              <div className="card-deck-card-content" style={{ borderRadius: innerRadius }}>
-                {card}
-              </div>
-              <motion.div
-                className="card-deck-card-shade"
-                style={{ opacity: values.shade, borderRadius: radius }}
-              />
-            </motion.div>
-          </motion.div>
-        );
-      })}
+      {children}
     </div>
   );
 }
 
-function initialOrder(count: number, topIndex: number | undefined): number[] {
-  const base = Array.from({ length: count }, (_, index) => index);
-  if (topIndex === undefined || topIndex <= 0 || topIndex >= count) return base;
-  return [topIndex, ...base.filter((index) => index !== topIndex)];
+export interface CardDeckCardProps {
+  index: number;
+  children?: ReactNode;
 }
+
+function CardDeckCard({ index, children }: CardDeckCardProps) {
+  const { state, actions, meta } = useDeck("CardDeck.Card");
+  const values = meta.valuesFor(index);
+  const isTop = state.order[0] === index;
+  const position = Math.max(0, state.order.indexOf(index));
+  const [originX, originY] = state.origin;
+  const innerRadius = Math.max(0, state.radius - state.frame);
+  return (
+    <motion.div
+      ref={(element) => {
+        actions.attach(index, element);
+      }}
+      className="card-deck-card"
+      data-top={isTop ? "" : undefined}
+      style={{
+        x: values.x,
+        y: values.y,
+        rotate: values.rotate,
+        scale: values.scale,
+        zIndex: values.z,
+        opacity: values.opacity,
+        pointerEvents: position < state.visible ? "auto" : "none",
+        originX,
+        originY,
+        cursor: isTop ? (state.dragging ? "grabbing" : "grab") : "pointer",
+        touchAction: isTop ? "pan-y" : "auto",
+      }}
+      onPointerDown={(event) => actions.grab(event, index)}
+    >
+      <motion.div
+        className="card-deck-card-face"
+        style={{
+          rotateX: values.tiltX,
+          rotateY: values.tiltY,
+          rotate: values.spin,
+          scale: values.lift,
+          originX: values.grabX,
+          originY: values.grabY,
+          transformPerspective: 800,
+          borderRadius: state.radius,
+          padding: state.frame,
+          backgroundColor: state.frame > 0 ? state.frameColor : "transparent",
+          boxShadow: state.elevation === "raised" ? SHADOW : "none",
+        }}
+      >
+        <div className="card-deck-card-content" style={{ borderRadius: innerRadius }}>
+          {children}
+        </div>
+        <motion.div
+          className="card-deck-card-shade"
+          style={{ opacity: values.shade, borderRadius: state.radius }}
+        />
+      </motion.div>
+    </motion.div>
+  );
+}
+
+export interface CardDeckAutoplayProps {
+  delay?: number;
+  pause?: AutoplayPause;
+}
+
+function CardDeckAutoplay({ delay = 3000, pause = "never" }: CardDeckAutoplayProps) {
+  const { state, actions } = useDeck("CardDeck.Autoplay");
+  useEffect(() => {
+    if (state.count < 2 || state.dragging || (pause === "hover" && state.hovered)) {
+      return undefined;
+    }
+    const timer = setTimeout(() => actions.sendToBack(null), Math.max(300, delay));
+    return () => clearTimeout(timer);
+  }, [delay, pause, state.hovered, state.dragging, state.order, state.count, actions]);
+  return null;
+}
+
+export const CardDeck = {
+  Root: CardDeckRoot,
+  Stack: CardDeckStack,
+  Card: CardDeckCard,
+  Autoplay: CardDeckAutoplay,
+};

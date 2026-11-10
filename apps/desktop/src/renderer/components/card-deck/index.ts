@@ -1,5 +1,11 @@
 export { CARD_PALETTES, paletteForIndex, type CardPalette } from "./cardPalettes.js";
-export { CardDeck, type CardDeckProps } from "./CardDeck.js";
+export {
+  CardDeck,
+  type CardDeckAutoplayProps,
+  type CardDeckCardProps,
+  type CardDeckRootProps,
+  type CardDeckStackProps,
+} from "./CardDeck.js";
 export {
   createWheelStepper,
   normalizeIndex,

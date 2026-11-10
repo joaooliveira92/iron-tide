@@ -28,7 +28,7 @@ describe("BouncyAccordion", () => {
     fireEvent.click(trigger("Alpha"));
     expect(trigger("Alpha").getAttribute("aria-expanded")).toBe("false");
     unmount();
-    render(<BouncyAccordion items={items} defaultValue="a" collapsible={false} />);
+    render(<BouncyAccordion items={items} defaultValue="a" collapse="blocked" />);
     fireEvent.click(trigger("Alpha"));
     expect(trigger("Alpha").getAttribute("aria-expanded")).toBe("true");
   });
@@ -40,5 +40,53 @@ describe("BouncyAccordion", () => {
     expect(onValueChange).toHaveBeenLastCalledWith("b");
     expect((trigger("Charlie") as HTMLButtonElement).disabled).toBe(true);
     expect(container.querySelector('[data-key="a"]')?.contains(trigger("Alpha"))).toBe(true);
+  });
+
+  it("follows a controlled value and ignores clicks until the parent updates it", () => {
+    const onValueChange = vi.fn();
+    const { rerender } = render(
+      <BouncyAccordion items={items} value="a" onValueChange={onValueChange} />,
+    );
+    fireEvent.click(trigger("Bravo"));
+    expect(onValueChange).toHaveBeenLastCalledWith("b");
+    expect(trigger("Alpha").getAttribute("aria-expanded")).toBe("true");
+    expect(trigger("Bravo").getAttribute("aria-expanded")).toBe("false");
+
+    rerender(<BouncyAccordion items={items} value="b" onValueChange={onValueChange} />);
+    expect(trigger("Alpha").getAttribute("aria-expanded")).toBe("false");
+    expect(trigger("Bravo").getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("reports a collapse as null and keeps closed rows out of the accessibility tree", () => {
+    const onValueChange = vi.fn();
+    const { container } = render(
+      <BouncyAccordion items={items} defaultValue="a" onValueChange={onValueChange} />,
+    );
+    const closed = container.querySelector(`#${trigger("Bravo").getAttribute("aria-controls")}`);
+    expect(closed?.getAttribute("aria-hidden")).toBe("true");
+    expect(closed?.hasAttribute("inert")).toBe(true);
+
+    fireEvent.click(trigger("Alpha"));
+    expect(onValueChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it("does not report a change when a non-collapsible open row is clicked", () => {
+    const onValueChange = vi.fn();
+    render(
+      <BouncyAccordion
+        items={items}
+        defaultValue="a"
+        collapse="blocked"
+        onValueChange={onValueChange}
+      />,
+    );
+    fireEvent.click(trigger("Alpha"));
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it("does not open a disabled row", () => {
+    render(<BouncyAccordion items={items} />);
+    fireEvent.click(trigger("Charlie"));
+    expect(trigger("Charlie").getAttribute("aria-expanded")).toBe("false");
   });
 });

@@ -1,95 +1,41 @@
 "use client";
 
-import { GripVertical, Undo2 } from "lucide-react";
-import { type HTMLMotionProps, Reorder, useDragControls, useReducedMotion } from "motion/react";
-import {
-  type ComponentPropsWithRef,
-  type ReactNode,
-  createContext,
-  useContext,
-  useId,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { SPRING_LAYOUT } from "../../lib/ease.js";
+import { type ReactNode, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils.js";
+import { ListContext, type ListContextValue, type MoveDirection } from "./sortable-list-context.js";
+import {
+  SortableListGroup,
+  SortableListHandle,
+  SortableListItem,
+  SortableListItemContent,
+  SortableListUndo,
+} from "./sortable-list-parts.js";
 
-type MoveDirection = -1 | 1 | "first" | "last";
-type ListContextValue = {
-  ids: string[];
-  positions: Map<string, number>;
-  labels: Map<string, string>;
-  label: string;
-  disabled: boolean;
-  instructions: string;
-  itemClassName?: string;
-  canUndo: boolean;
-  reorder: (ids: string[]) => void;
-  move: (id: string, direction: MoveDirection) => void;
-  undo: () => void;
-  beginDrag: () => void;
-  finishDrag: (id: string) => void;
-};
-const ListContext = createContext<ListContextValue | null>(null);
-const ItemContext = createContext<{
-  id: string;
-  label: string;
-  controls: ReturnType<typeof useDragControls>;
-  dragging: boolean;
-} | null>(null);
-
-function useListContext(part: string) {
-  const context = useContext(ListContext);
-  if (!context) throw new Error(`${part} must be used within SortableList.`);
-  return context;
-}
-
-export function useSortableList() {
-  const context = useListContext("useSortableList");
-  return {
-    ids: context.ids,
-    disabled: context.disabled,
-    canUndo: context.canUndo,
-    moveItem: context.move,
-    undo: context.undo,
-  };
-}
+export { useSortableList } from "./sortable-list-context.js";
 
 export interface SortableListProps<T extends { id: string }> {
-  items?: T[];
-  defaultItems?: T[];
-  onItemsChange?: (items: T[]) => void;
-  renderItem?: (item: T, index: number) => ReactNode;
+  items: T[];
+  onItemsChange: (items: T[]) => void;
   getItemLabel: (item: T) => string;
-  children?: ReactNode | ((items: T[]) => ReactNode);
+  children?: ReactNode;
   label?: string;
   disabled?: boolean;
-  showUndo?: boolean;
   className?: string;
   itemClassName?: string;
 }
 
-export function SortableList<T extends { id: string }>({
-  items: controlledItems,
-  defaultItems = [],
+function SortableListRoot<T extends { id: string }>({
+  items,
   onItemsChange,
-  renderItem,
   getItemLabel,
   children,
   label = "Sortable items",
   disabled = false,
-  showUndo = true,
   className,
   itemClassName,
 }: SortableListProps<T>) {
-  const [internalItems, setInternalItems] = useState(defaultItems);
-  const items = controlledItems ?? internalItems;
   const ids = useMemo(() => items.map((item) => item.id), [items]);
   if (new Set(ids).size !== ids.length) throw new Error("SortableList requires unique item ids.");
-  if (children === undefined && !renderItem)
-    throw new Error("SortableList requires children or renderItem.");
   const [previous, setPrevious] = useState<string[] | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const dragStart = useRef<string[] | null>(null);
@@ -129,8 +75,7 @@ export function SortableList<T extends { id: string }>({
   const context = useMemo<ListContextValue>(() => {
     const change = (next: T[]) => {
       live.current = next;
-      if (controlledItems === undefined) setInternalItems(next);
-      onItemsChange?.(next);
+      onItemsChange(next);
     };
     const reorder = (nextIds: string[]) => {
       if (disabled) return;
@@ -193,7 +138,6 @@ export function SortableList<T extends { id: string }>({
       },
     };
   }, [
-    controlledItems,
     onItemsChange,
     disabled,
     getItemLabel,
@@ -214,23 +158,7 @@ export function SortableList<T extends { id: string }>({
           Drag a handle to reorder. With a handle focused, use Up and Down to move, Home and End to
           move to the edges.
         </p>
-        {children === undefined ? (
-          <>
-            <SortableListGroup aria-label={label}>
-              {items.map((item, index) => (
-                <SortableListItem key={item.id} id={item.id}>
-                  <SortableListHandle />
-                  <SortableListItemContent>{renderItem?.(item, index)}</SortableListItemContent>
-                </SortableListItem>
-              ))}
-            </SortableListGroup>
-            {showUndo && <SortableListUndo />}
-          </>
-        ) : typeof children === "function" ? (
-          children(items)
-        ) : (
-          children
-        )}
+        {children}
         <span role="status" aria-live="polite" className="sr-only">
           {announcement}
         </span>
@@ -239,178 +167,10 @@ export function SortableList<T extends { id: string }>({
   );
 }
 
-export interface SortableListGroupProps extends Omit<HTMLMotionProps<"ul">, "children"> {
-  children?: ReactNode;
-}
-
-export function SortableListGroup({ className, ...props }: SortableListGroupProps) {
-  const context = useListContext("SortableListGroup");
-  return (
-    <Reorder.Group
-      {...props}
-      axis="y"
-      values={context.ids}
-      onReorder={context.reorder}
-      aria-label={props["aria-label"] ?? context.label}
-      className={cn("space-y-2", className)}
-    />
-  );
-}
-
-export interface SortableListItemProps extends Omit<
-  HTMLMotionProps<"li">,
-  "id" | "value" | "children"
-> {
-  id: string;
-  children?: ReactNode;
-}
-
-export function SortableListItem({
-  id,
-  children,
-  className,
-  onDragStart,
-  onDragEnd,
-  ...props
-}: SortableListItemProps) {
-  const context = useListContext("SortableListItem");
-  const controls = useDragControls();
-  const reduce = useReducedMotion() ?? false;
-  const [dragging, setDragging] = useState(false);
-  const label = context.labels.get(id);
-  if (label === undefined)
-    throw new Error(`SortableListItem ${id} is not present in the root items.`);
-  return (
-    <ItemContext.Provider value={{ id, label, controls, dragging }}>
-      <Reorder.Item
-        {...props}
-        value={id}
-        dragListener={false}
-        dragControls={controls}
-        layout="position"
-        transition={reduce ? { duration: 0 } : SPRING_LAYOUT}
-        onDragStart={(event, info) => {
-          setDragging(true);
-          context.beginDrag();
-          onDragStart?.(event, info);
-        }}
-        onDragEnd={(event, info) => {
-          setDragging(false);
-          context.finishDrag(id);
-          onDragEnd?.(event, info);
-        }}
-        whileDrag={reduce ? undefined : { scale: 1.025 }}
-        aria-posinset={(context.positions.get(id) ?? -1) + 1}
-        aria-setsize={context.ids.length}
-        className={cn(
-          "relative flex items-center gap-3 rounded-2xl border border-border bg-background p-3",
-          dragging && "shadow-lg",
-          context.itemClassName,
-          className,
-        )}
-      >
-        {children}
-      </Reorder.Item>
-    </ItemContext.Provider>
-  );
-}
-
-export type SortableListHandleProps = ComponentPropsWithRef<"button">;
-
-export function SortableListHandle({
-  children,
-  className,
-  disabled,
-  onPointerDown,
-  onKeyDown,
-  style,
-  ...props
-}: SortableListHandleProps) {
-  const context = useListContext("SortableListHandle");
-  const item = useContext(ItemContext);
-  if (!item) throw new Error("SortableListHandle must be used within SortableListItem.");
-  const unavailable = disabled || context.disabled;
-  return (
-    <button
-      {...props}
-      type="button"
-      disabled={unavailable}
-      data-sortable-id={item.id}
-      aria-label={props["aria-label"] ?? `Reorder ${item.label}`}
-      aria-describedby={[context.instructions, props["aria-describedby"]].filter(Boolean).join(" ")}
-      onPointerDown={(event) => {
-        onPointerDown?.(event);
-        if (!event.defaultPrevented && !unavailable && event.button === 0) {
-          event.currentTarget.focus({ preventScroll: true });
-          item.controls.start(event);
-        }
-      }}
-      onKeyDown={(event) => {
-        onKeyDown?.(event);
-        if (event.defaultPrevented || unavailable || event.altKey || event.ctrlKey || event.metaKey)
-          return;
-        const direction =
-          event.key === "ArrowUp"
-            ? -1
-            : event.key === "ArrowDown"
-              ? 1
-              : event.key === "Home"
-                ? "first"
-                : event.key === "End"
-                  ? "last"
-                  : null;
-        if (direction !== null) {
-          event.preventDefault();
-          context.move(item.id, direction);
-        }
-      }}
-      className={cn(
-        "flex size-9 shrink-0 touch-none items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40",
-        className,
-      )}
-      style={{
-        cursor: unavailable ? undefined : item.dragging ? "grabbing" : "grab",
-        ...style,
-      }}
-    >
-      {children ?? <GripVertical size={18} aria-hidden="true" />}
-    </button>
-  );
-}
-
-export type SortableListItemContentProps = ComponentPropsWithRef<"div">;
-export function SortableListItemContent({ className, ...props }: SortableListItemContentProps) {
-  return <div {...props} className={cn("min-w-0 flex-1", className)} />;
-}
-
-export type SortableListUndoProps = ComponentPropsWithRef<"button">;
-export function SortableListUndo({
-  children,
-  className,
-  disabled,
-  onClick,
-  ...props
-}: SortableListUndoProps) {
-  const context = useListContext("SortableListUndo");
-  return (
-    <button
-      {...props}
-      type="button"
-      disabled={disabled || context.disabled || !context.canUndo}
-      className={cn(
-        "mt-4 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40",
-        className,
-      )}
-      onClick={(event) => {
-        onClick?.(event);
-        if (!event.defaultPrevented) context.undo();
-      }}
-    >
-      {children ?? (
-        <>
-          <Undo2 size={13} aria-hidden="true" /> Undo reorder
-        </>
-      )}
-    </button>
-  );
-}
+export const SortableList = Object.assign(SortableListRoot, {
+  Group: SortableListGroup,
+  Item: SortableListItem,
+  Handle: SortableListHandle,
+  Content: SortableListItemContent,
+  Undo: SortableListUndo,
+});
