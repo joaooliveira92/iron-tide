@@ -49,7 +49,7 @@
     "cfc8edeaa6e715c43de1847429c80a48934f596bf27d6951de68668f8ac7c906": 1,
     "dd89e7ee6a9899461df9fa6434962910aea1d3a02cc3c0a8d2673269096b7e83": 1
   },
-  "apps/desktop/src/renderer/components/ui/select.tsx": {
+  "apps/desktop/src/renderer/components/ui/select/context.ts": {
     "5b27331eeb31c97b9fb787ecc6beb91ea2e8c7713d336272f46cbf023684939e": 1
   },
   "apps/desktop/src/renderer/components/ui/sidebar.tsx": {
