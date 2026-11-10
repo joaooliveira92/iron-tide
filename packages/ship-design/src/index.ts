@@ -101,6 +101,7 @@ export {
   type DockRecord,
   dockRecordFor,
   dockRecordFromDefinition,
+  missingDockLimits,
   newConstructionDockEligibility,
 } from "./dock.js";
 export {
