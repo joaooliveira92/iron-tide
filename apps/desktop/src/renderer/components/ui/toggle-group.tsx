@@ -18,7 +18,14 @@ interface ToggleGroupProps
   ref?: React.Ref<React.ComponentRef<typeof ToggleGroupPrimitive>> | undefined;
 }
 
-const ToggleGroup = ({ className, variant, size, children, ref, ...props }: ToggleGroupProps) => (
+const ToggleGroupRoot = ({
+  className,
+  variant,
+  size,
+  children,
+  ref,
+  ...props
+}: ToggleGroupProps) => (
   <ToggleGroupPrimitive
     ref={ref}
     className={cn("flex items-center justify-center gap-1 rounded-md bg-muted p-1", className)}
@@ -27,7 +34,7 @@ const ToggleGroup = ({ className, variant, size, children, ref, ...props }: Togg
     <ToggleGroupContext.Provider value={{ variant, size }}>{children}</ToggleGroupContext.Provider>
   </ToggleGroupPrimitive>
 );
-ToggleGroup.displayName = "ToggleGroup";
+ToggleGroupRoot.displayName = "ToggleGroup";
 
 interface ToggleGroupItemProps
   extends
@@ -64,5 +71,10 @@ const ToggleGroupItem = ({
   );
 };
 ToggleGroupItem.displayName = "ToggleGroupItem";
+
+const ToggleGroup = Object.assign(ToggleGroupRoot, {
+  Root: ToggleGroupRoot,
+  Item: ToggleGroupItem,
+});
 
 export { ToggleGroup, ToggleGroupItem };

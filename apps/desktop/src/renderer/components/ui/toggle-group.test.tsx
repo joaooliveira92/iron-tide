@@ -106,6 +106,11 @@ describe("ToggleGroup", () => {
     expect(screen.getByRole("button", { name: "A" }).className).toContain("h-");
   });
 
+  it("exposes Root and Item statics that match the named exports", () => {
+    expect(ToggleGroup.Root).toBe(ToggleGroup);
+    expect(ToggleGroup.Item).toBe(ToggleGroupItem);
+  });
+
   it("forwards a ref to the group element", () => {
     let node: HTMLDivElement | null = null;
     render(
