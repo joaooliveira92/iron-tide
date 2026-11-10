@@ -7,6 +7,7 @@ import { loadPresentationContent } from "../main/presentationContent.js";
 import { setDrawingBoardContent } from "./components/design-workspace/content.js";
 import { setPresentationContent } from "./content/presentationContent.js";
 import { setUiCatalogue } from "./content/uiCatalogue.js";
+import "./react-warning-guard.js";
 
 setDrawingBoardContent({ catalogue: loadShipBuildingData() });
 
