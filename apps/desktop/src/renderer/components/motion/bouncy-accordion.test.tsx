@@ -28,7 +28,7 @@ describe("BouncyAccordion", () => {
     fireEvent.click(trigger("Alpha"));
     expect(trigger("Alpha").getAttribute("aria-expanded")).toBe("false");
     unmount();
-    render(<BouncyAccordion items={items} defaultValue="a" collapsible={false} />);
+    render(<BouncyAccordion items={items} defaultValue="a" collapse="blocked" />);
     fireEvent.click(trigger("Alpha"));
     expect(trigger("Alpha").getAttribute("aria-expanded")).toBe("true");
   });
@@ -76,7 +76,7 @@ describe("BouncyAccordion", () => {
       <BouncyAccordion
         items={items}
         defaultValue="a"
-        collapsible={false}
+        collapse="blocked"
         onValueChange={onValueChange}
       />,
     );
