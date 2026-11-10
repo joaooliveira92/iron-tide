@@ -1205,6 +1205,21 @@ describe("construction events in the economy pass (#584)", () => {
       expect(Number(delivered.totalWork)).toBe(780);
     });
 
+    it("surfaces the cause and the cost of each overrun in the readout, newest first", () => {
+      const first = runMonth(start(), [overrun()]);
+      const second = runMonth(first.next, [overrun({ id: "later", reasonCode: "LATER_CAUSE" })]);
+      const entry = constructionProjectQueueWithReadouts(
+        second.next,
+        "GBR",
+        content,
+        "1880-03",
+      )[0]!;
+      const views = entry.readout!.overruns!;
+      expect(views.map((v) => v.reasonCode)).toEqual(["LATER_CAUSE", "DESIGN_CHANGE_REWORK"]);
+      expect(views.every((v) => v.costUnits > 0)).toBe(true);
+      expect(views.map((v) => v.month)).toEqual(["1880-03", "1880-02"]);
+    });
+
     it("is identical across runs with the same seed", () => {
       const a = runMonth(start(), [overrun({ minBp: 200, maxBp: 1_000 })], "same");
       const b = runMonth(start(), [overrun({ minBp: 200, maxBp: 1_000 })], "same");

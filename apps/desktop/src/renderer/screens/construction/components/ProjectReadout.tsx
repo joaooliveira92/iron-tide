@@ -45,15 +45,27 @@ export interface ReadoutLine {
 export function readoutLines(row: ProjectRow, format: PresentationFormat): readonly ReadoutLine[] {
   const readout = row.readout;
   if (readout === null) return [{ label: "Schedule", value: "unavailable" }];
-  const carrying: readonly ReadoutLine[] =
-    readout.haltedCarryingCostUnits === null
+  const latestOverrun = readout.overruns?.[0];
+  const overrun: readonly ReadoutLine[] =
+    latestOverrun === undefined
+      ? []
+      : [
+          {
+            label: "Cost overrun",
+            value: `${constructionEventCause(latestOverrun.reasonCode) ?? "a cost overrun"}: +${format.money(latestOverrun.costUnits)}`,
+          },
+        ];
+  const carrying: readonly ReadoutLine[] = [
+    ...overrun,
+    ...(readout.haltedCarryingCostUnits === null
       ? []
       : [
           {
             label: "Carrying cost",
             value: `${format.money(readout.haltedCarryingCostUnits)}/mo`,
           },
-        ];
+        ]),
+  ];
   if (readout.scheduleBasis === "UNAVAILABLE") {
     const unavailableReason = readout.scheduleUnavailableReason;
     const eventCause =
