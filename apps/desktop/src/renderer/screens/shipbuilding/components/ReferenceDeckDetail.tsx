@@ -39,7 +39,7 @@ export function ReferenceDeckDetail({
         <CardContent className="space-y-4 pt-0">
           <ShipTypeFacts
             entry={entry}
-            className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4"
+            className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3"
           />
           <ShipTypeDetails entry={entry} className="space-y-1.5 text-sm" />
           <div className="flex flex-wrap items-center gap-3 border-t pt-4">

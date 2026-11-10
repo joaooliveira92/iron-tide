@@ -24,6 +24,7 @@ import { colonialServiceEligibility } from "../src/colonialService.js";
 import { eraBandOf, OPENING_SHIP_TYPES, SHIP_TYPE_IDS } from "../src/shipTypes.js";
 import { naturalClass } from "../src/classification.js";
 import { shipTypeEnvelope } from "../src/shipTypeEnvelope.js";
+import { shipTypeRequirements } from "../src/shipTypeRequirements.js";
 import { starterFor } from "../src/shipTypeRoster.js";
 import { UM_PER_KNOT } from "../src/units.js";
 import {
@@ -455,6 +456,47 @@ describe("starter designs", () => {
     expect(starterFor("DD", starters, "1880-01", "uk")?.id).toBe("starter_torpedo_gunboat_1880");
     expect(starterFor("DD", starters, "1895-06", "uk")?.id).toBe("havock_like");
     expect(starterFor("DD", starters, "1879-12", "uk")).toBeNull();
+  });
+});
+
+describe("roster type card data", () => {
+  const env = shipBuildingContent.environmentFor("1880-01");
+  const roster = buildShipTypeRoster(env, starters);
+  it("carries the requirement rows of the classification rules for each type", () => {
+    for (const e of roster) {
+      expect(e.requirements).toEqual(
+        shipTypeRequirements(e.definition.id, env.ctx.balance.classification ?? DESIGN_22_EARLY),
+      );
+    }
+    expect(roster.find((x) => x.definition.id === "DD")!.requirements.status).toBe("CLASSIFIED");
+  });
+  it("derives cost and build time levels from the priced starters, not the authored ordinals", () => {
+    const priced = roster.filter((e) => e.starter?.costMicro != null);
+    expect(priced.length).toBeGreaterThan(2);
+    for (const e of priced) {
+      expect(e.costLevel).toBeGreaterThanOrEqual(1);
+      expect(e.costLevel).toBeLessThanOrEqual(5);
+    }
+    const costs = priced.map((e) => e.starter!.costMicro!);
+    const cheapest = priced.find((e) => e.starter!.costMicro === Math.min(...costs))!;
+    const dearest = priced.find((e) => e.starter!.costMicro === Math.max(...costs))!;
+    expect(cheapest.costLevel).toBe(1);
+    expect(dearest.costLevel!).toBeGreaterThan(cheapest.costLevel!);
+  });
+  it("orders levels by starter cost", () => {
+    const priced = roster.filter((e) => e.starter?.costMicro != null);
+    for (const a of priced)
+      for (const b of priced)
+        if (a.starter!.costMicro! < b.starter!.costMicro!)
+          expect(a.costLevel!).toBeLessThanOrEqual(b.costLevel!);
+  });
+  it("has no level where there is no priced starter", () => {
+    for (const e of roster.filter((x) => x.starter?.costMicro == null)) {
+      expect(e.costLevel).toBeNull();
+    }
+    for (const e of roster.filter((x) => x.starter?.months == null)) {
+      expect(e.buildTimeLevel).toBeNull();
+    }
   });
 });
 
