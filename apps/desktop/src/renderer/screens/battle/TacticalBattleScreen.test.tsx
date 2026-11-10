@@ -9,6 +9,7 @@ import { axeViolations } from "../../lib/axe.js";
 import { BridgeProvider } from "../../lib/bridge-context.js";
 import { PreferencesProvider, usePreferences } from "../../lib/preferences-context.js";
 import { PlayerBattleScreen } from "./PlayerBattleScreen.js";
+import { translate } from "../../lib/strings.js";
 import { stepIntervalMs } from "./tactical/tactical-time.js";
 
 vi.mock("../../lib/preferences-context.js", async (importOriginal) => {
@@ -106,7 +107,7 @@ function reply(view: PlayerBattleView) {
   } as never);
 }
 
-function mount(initial: PlayerBattleView = BASE) {
+function mount(initial: PlayerBattleView = BASE, onAbandon: () => void = () => {}) {
   let current = initial;
   const execute = vi.fn<CampaignCommandClient["execute"]>((command) => {
     if (command === "advancePlayerBattle") {
@@ -136,7 +137,7 @@ function mount(initial: PlayerBattleView = BASE) {
           request={REQUEST}
           sessionId="s"
           onSubmitResult={() => {}}
-          onAbandon={() => {}}
+          onAbandon={onAbandon}
         />
       </PreferencesProvider>
     </BridgeProvider>,
@@ -574,6 +575,112 @@ describe("tactical battle screen", () => {
     expect(screen.queryByTestId("tactical-standing-course")).toBeNull();
     fireEvent.click(screen.getByTestId("battle-advance"));
     expect(await screen.findByTestId("tactical-standing-course")).toBeTruthy();
+  });
+
+  it("draws range rings around the selection only, and the ring toggle hides them", async () => {
+    mount();
+    await screen.findByTestId("tactical-map");
+    expect(screen.queryByTestId("tactical-ring")).toBeNull();
+    fireEvent.click(screen.getByTestId("tactical-ship-a1"));
+    expect(screen.getAllByTestId("tactical-ring")).toHaveLength(4);
+    expect(screen.getByTestId("tactical-selection")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("tactical-overlay-rings"));
+    expect(screen.queryByTestId("tactical-ring")).toBeNull();
+  });
+
+  it("draws a track once a ship has moved, and the track toggle hides it", async () => {
+    const { setView } = mount();
+    await screen.findByTestId("tactical-ship-a1");
+    expect(screen.queryByTestId("tactical-trail")).toBeNull();
+    setView({
+      ...BASE,
+      ships: BASE.ships.map((entry) =>
+        entry.shipId === "a1" ? { ...entry, position: [NM_UM, 0] } : entry,
+      ),
+    });
+    fireEvent.click(screen.getByTestId("battle-advance"));
+    expect(await screen.findAllByTestId("tactical-trail")).toHaveLength(1);
+    fireEvent.click(screen.getByTestId("tactical-overlay-tracks"));
+    expect(screen.queryByTestId("tactical-trail")).toBeNull();
+  });
+
+  it("reports the scale bar, the selected bearing and a decorative compass", async () => {
+    mount();
+    await screen.findByTestId("tactical-map");
+    expect(screen.getByTestId("tactical-scale").textContent).not.toBe("");
+    expect(screen.queryByTestId("tactical-selected-bearing")).toBeNull();
+    fireEvent.click(screen.getByTestId("tactical-ship-a1"));
+    expect(screen.getByTestId("tactical-selected-bearing").textContent).toMatch(/\S/u);
+    expect(screen.getByTestId("tactical-map").querySelector('g[aria-hidden="true"]')).toBeTruthy();
+  });
+
+  it("explains pending orders while paused and the abandon control calls back", async () => {
+    const onAbandon = vi.fn();
+    const { execute } = mount(BASE, onAbandon);
+    await screen.findByTestId("tactical-map");
+    expect(screen.getByText(translate("tactical.status.pending_orders"))).toBeTruthy();
+    fireEvent.click(screen.getByTestId("tactical-run-toggle"));
+    expect(screen.queryByText(translate("tactical.status.pending_orders"))).toBeNull();
+    expect(screen.queryByTestId("tactical-paused-banner")).toBeNull();
+    fireEvent.click(screen.getByTestId("battle-abandon"));
+    expect(onAbandon).toHaveBeenCalledTimes(1);
+    expect(advances(execute)).toHaveLength(0);
+  });
+
+  it("fights to the end with the clock stopped", async () => {
+    vi.useFakeTimers();
+    const { execute } = mount();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    fireEvent.click(screen.getByTestId("tactical-run-toggle"));
+    fireEvent.click(screen.getByTestId("battle-auto"));
+    expect(screen.getByTestId("tactical-run-state").textContent).toBe("PAUSED");
+    expect(advances(execute)[0]?.[1]).toMatchObject({ mode: "to_end" });
+  });
+
+  it("paints the map layers in a fixed order", async () => {
+    const firing: PlayerBattleView = {
+      ...BASE,
+      minute: 2,
+      log: [2, 3].flatMap((minute) => [
+        { minute, eventType: "gunnery_salvo", actorId: "a1:MAIN", targetId: "b1:e1" },
+        { minute, eventType: "damage_impact", actorId: "a1:MAIN", targetId: "e1" },
+      ]),
+    };
+    const { setView } = mount(firing);
+    fireEvent.click(await screen.findByTestId("tactical-ship-a1"));
+    fireEvent.change(screen.getByTestId("unit-course-input"), { target: { value: "090" } });
+    fireEvent.change(screen.getByTestId("unit-speed-input"), { target: { value: "12" } });
+    fireEvent.click(screen.getByTestId("unit-apply"));
+    setView({
+      ...firing,
+      ships: firing.ships.map((entry) =>
+        entry.shipId === "a1" ? { ...entry, position: [NM_UM, 0] } : entry,
+      ),
+    });
+    fireEvent.click(screen.getByTestId("battle-advance"));
+    await screen.findByTestId("tactical-standing-course");
+    fireEvent.change(screen.getByTestId("unit-course-input"), { target: { value: "180" } });
+    const kinds: string[] = [];
+    for (const node of screen.getByTestId("tactical-map").querySelectorAll("[data-testid]")) {
+      const id = node.getAttribute("data-testid") ?? "";
+      const kind = id.replace(/^(tactical-(?:ship|label))-.*/u, "$1");
+      if (kinds.at(-1) !== kind) kinds.push(kind);
+    }
+    expect(kinds).toEqual([
+      "tactical-ring",
+      "tactical-trail",
+      "tactical-firing-line",
+      "tactical-impact",
+      "tactical-standing-course",
+      "tactical-course-preview",
+      "tactical-ship",
+      "tactical-selection",
+      "tactical-ship",
+      "tactical-label",
+      "tactical-scale",
+    ]);
   });
 
   it("passes an automated accessibility audit", async () => {
