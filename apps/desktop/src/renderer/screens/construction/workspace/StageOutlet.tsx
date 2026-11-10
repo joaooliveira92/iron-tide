@@ -84,6 +84,7 @@ function Stage() {
           dockExpansionReadyMonth={economy.dockExpansionReadyMonth}
           dockExpansionDurationMonths={economy.dockExpansionDurationMonths}
           dockExpansionNextStepKg={economy.dockExpansionNextStepKg}
+          dockLimitAfterExpansionExplanation={economy.dockLimitAfterExpansionExplanation}
           dockPossessions={economy.dockPossessions}
           pending={busy}
           onAuthorizeDockExpansion={authorizeDockExpansion}

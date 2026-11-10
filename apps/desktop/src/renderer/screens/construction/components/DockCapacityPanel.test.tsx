@@ -1,9 +1,18 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { applyDockExpansionStep, dockLimitAfterExpansionExplanation } from "@bluewave/phase-engine";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { axeViolations } from "../../../lib/axe.js";
 import { DockCapacityPanel, type DockCapacityPanelProps } from "./DockCapacityPanel.js";
 
 afterEach(cleanup);
+
+const DOCK = {
+  maximumNewConstructionMassKg: 13_000_000,
+  maximumMajorRepairMassKg: 13_000_000,
+  maximumRebuildMassKg: 13_000_000,
+  maximumConversionMassKg: 13_000_000,
+};
+const AFTER_TREE = dockLimitAfterExpansionExplanation(DOCK, 1_000_000);
 
 const props = (over: Partial<DockCapacityPanelProps> = {}): DockCapacityPanelProps => ({
   dockMaxBuildDisplacementKg: 13_000_000,
@@ -13,6 +22,7 @@ const props = (over: Partial<DockCapacityPanelProps> = {}): DockCapacityPanelPro
   dockExpansionDurationMonths: 12,
   dockExpansionNextStepKg: 1_000_000,
   dockExpansionReadyMonth: "1880-12",
+  dockLimitAfterExpansionExplanation: AFTER_TREE,
   dockPossessions: [{ id: "pos-1", name: "Portsmouth" }],
   pending: false,
   onAuthorizeDockExpansion: () => {},
@@ -73,8 +83,27 @@ describe("DockCapacityPanel (SB3-R15/R16/R18/R19/R33)", () => {
     expect(screen.getByTestId("expansion-ready-month").textContent).toContain("1880");
     expect(screen.getByTestId("expansion-duration").textContent).toContain("12");
     expect(screen.getByTestId("expansion-next-step").textContent).toBe("+1,000 t");
+    expect(screen.getByTestId("expansion-dock-limit").textContent).toBe("13,000 t → 14,000 t");
+    expect(dialog.textContent).not.toMatch(/price|instalment|cost/i);
+  });
+
+  it("shows the dock limit after expansion exactly as the engine step computes it", () => {
+    const afterKg = applyDockExpansionStep(DOCK, 1_000_000).maximumNewConstructionMassKg;
+    expect(afterKg).toBe(14_000_000);
+    expect(Number(AFTER_TREE?.result)).toBe(afterKg);
+    render(<DockCapacityPanel {...props()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Authorize dock expansion" }));
+    expect(screen.getByTestId("expansion-dock-limit").textContent).toBe("13,000 t → 14,000 t");
+    expect(screen.getByTestId("explanation-dock_limit_after_expansion").textContent).toContain(
+      "Dock limit after expansion 14,000,000",
+    );
+  });
+
+  it("shows only the current limit when no tree explains an after figure", () => {
+    render(<DockCapacityPanel {...props({ dockLimitAfterExpansionExplanation: undefined })} />);
+    fireEvent.click(screen.getByRole("button", { name: "Authorize dock expansion" }));
     expect(screen.getByTestId("expansion-dock-limit").textContent).toBe("13,000 t");
-    expect(dialog.textContent).not.toMatch(/price|instalment|cost|after/i);
+    expect(screen.queryByTestId("explanation-dock_limit_after_expansion")).toBeNull();
   });
 
   it("disables the action when there is no era step", () => {

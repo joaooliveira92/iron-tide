@@ -8,6 +8,7 @@ import {
   dockExpansionEraStepForMonth,
   dockExpansionFinalDurationMonths,
   dockExpansionProjectFor,
+  dockLimitAfterExpansionExplanation,
   nationalConstructionCapacity,
 } from "@bluewave/phase-engine";
 import type { ConstructionScreenProjection } from "../../shared/construction-contract.js";
@@ -51,6 +52,8 @@ export function constructionEconomy(
           durationMonths: expansionDurationMonths,
         });
 
+  const afterExpansion = dockLimitAfterExpansionExplanation(dock, expansionStepKg);
+
   const dockPossessions = snapshot.world.ports
     .filter((port) => port.nationId === record.playerSlotId)
     .map((port) => ({ id: port.id, name: port.name }))
@@ -68,6 +71,7 @@ export function constructionEconomy(
     dockExpansionNextStepKg: expansionStepKg,
     dockExpansionReadyMonth:
       expansionProject === null ? null : dockExpansionEarliestCompletionMonth(expansionProject),
+    ...(afterExpansion === undefined ? {} : { dockLimitAfterExpansionExplanation: afterExpansion }),
     dockPossessions,
   };
 }
