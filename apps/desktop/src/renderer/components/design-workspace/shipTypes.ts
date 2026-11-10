@@ -3,13 +3,10 @@ import {
   isShipTypeId,
   SHIP_TYPE_LIST,
   SHIP_TYPES,
-  type Range,
   type ShipContext,
   type ShipTypeCategory,
   type ShipTypeId,
 } from "@bluewave/ship-design";
-
-import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 
 export interface ShipTypeChoice {
   readonly value: string;
@@ -60,23 +57,3 @@ export const CATEGORY_LABEL: Readonly<Record<ShipTypeCategory, string>> = {
   AVIATION: "Aviation ships",
   SUBMARINE: "Submarines",
 };
-
-const fmt = (format: PresentationFormat, n: number): string =>
-  format.number(n, { maximumFractionDigits: 1 });
-
-export function describeRange(
-  r: Range,
-  unit: string,
-  scale = 1,
-  format: PresentationFormat,
-): string | null {
-  const lo = r.min === null || (r.min === 0 && !r.minInclusive) ? null : fmt(format, r.min / scale);
-  const hi = r.max === null ? null : fmt(format, r.max / scale);
-  const minPart = r.minInclusive ? `${lo} ${unit} or more` : `over ${lo} ${unit}`;
-  const maxPart = r.maxInclusive ? `up to ${hi} ${unit}` : `under ${hi} ${unit}`;
-  if (lo !== null && hi !== null)
-    return r.minInclusive && r.maxInclusive ? `${lo} to ${hi} ${unit}` : `${minPart}, ${maxPart}`;
-  if (lo !== null) return minPart;
-  if (hi !== null) return maxPart;
-  return null;
-}
