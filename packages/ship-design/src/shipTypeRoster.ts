@@ -3,6 +3,7 @@ import type { DesignDraft } from "./compile.js";
 import { evaluateShipTypeAvailability, type ShipTypeAvailability } from "./shipTypeAvailability.js";
 import { shipTypeEnvelope, type ShipTypeEnvelope } from "./shipTypeEnvelope.js";
 import { shipTypeRegistryFromRecords } from "./shipTypeRegistry.js";
+import { shipTypeRequirements, type ShipTypeRequirements } from "./shipTypeRequirements.js";
 import { SHIP_TYPE_LIST, type ShipTypeDefinition } from "./shipTypes.js";
 import { buildWorkshopView, type WorkshopEnvironment } from "./workshop.js";
 
@@ -24,11 +25,31 @@ export interface RosterStarter {
   readonly speedMilliKnots: number | null;
 }
 
+export type RosterLevel = 1 | 2 | 3 | 4 | 5;
+
 export interface RosterEntry {
   readonly definition: ShipTypeDefinition;
   readonly availability: ShipTypeAvailability;
   readonly envelope: ShipTypeEnvelope;
+  readonly requirements: ShipTypeRequirements;
   readonly starter: RosterStarter | null;
+  readonly costLevel: RosterLevel | null;
+  readonly buildTimeLevel: RosterLevel | null;
+}
+
+const LEVELS = 5;
+
+export function quantileLevels(
+  values: readonly (number | null)[],
+): readonly (RosterLevel | null)[] {
+  const priced = values.filter((v): v is number => v !== null);
+  const n = priced.length;
+  return values.map((v) => {
+    if (v === null) return null;
+    if (n < 2) return 3;
+    const below = priced.filter((p) => p < v).length;
+    return (1 + Math.min(LEVELS - 1, Math.floor((below * LEVELS) / n))) as RosterLevel;
+  });
 }
 
 export function starterFor(
@@ -56,7 +77,7 @@ export function buildShipTypeRoster(
   const registry =
     env.ctx.shipTypes === undefined ? null : shipTypeRegistryFromRecords(env.ctx.shipTypes);
   const definitions = registry?.list ?? SHIP_TYPE_LIST;
-  return definitions.map((definition) => {
+  const base = definitions.map((definition) => {
     const availability = evaluateShipTypeAvailability(definition.id, {
       month: env.ctx.month,
       unlockedTechs: env.ctx.unlockedTechs,
@@ -84,7 +105,15 @@ export function buildShipTypeRoster(
       definition,
       availability,
       envelope: shipTypeEnvelope(definition.id, effectiveRules),
+      requirements: shipTypeRequirements(definition.id, effectiveRules),
       starter,
     };
   });
+  const costLevels = quantileLevels(base.map((e) => e.starter?.costMicro ?? null));
+  const timeLevels = quantileLevels(base.map((e) => e.starter?.months ?? null));
+  return base.map((e, i) => ({
+    ...e,
+    costLevel: costLevels[i] ?? null,
+    buildTimeLevel: timeLevels[i] ?? null,
+  }));
 }
