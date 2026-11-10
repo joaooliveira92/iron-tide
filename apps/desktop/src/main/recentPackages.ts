@@ -10,8 +10,8 @@ export const MAX_RECENT_PACKAGES = 10;
 const StoredEntrySchema = Schema.Struct({
   path: Schema.String,
   campaignIdentity: Schema.String,
-  activeRevision: Schema.Number,
-  lastOpened: Schema.Number,
+  activeRevision: Schema.Finite,
+  lastOpened: Schema.Finite,
 });
 const RecentPackagesSchema = Schema.Struct({
   version: Schema.Literal(1),

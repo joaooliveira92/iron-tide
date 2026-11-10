@@ -47,6 +47,14 @@ describe("recent-packages.json fallback", () => {
       }),
     ],
     ["entries of the wrong shape", JSON.stringify({ version: 1, entries: [{ path: 7 }] })],
+    [
+      "a lastOpened that overflows to Infinity",
+      '{"version":1,"entries":[{"path":"/p","campaignIdentity":"c","activeRevision":1,"lastOpened":1e999}]}',
+    ],
+    [
+      "an activeRevision that overflows to Infinity",
+      '{"version":1,"entries":[{"path":"/p","campaignIdentity":"c","activeRevision":-1e999,"lastOpened":1}]}',
+    ],
   ])("treats %s as an empty list and approves nothing", (_label, contents) => {
     writeFileSync(file(), contents, "utf8");
 

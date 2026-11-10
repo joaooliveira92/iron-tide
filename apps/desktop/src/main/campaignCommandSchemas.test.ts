@@ -13,6 +13,7 @@ import {
   ResolveTacticalBattlePayloadSchema,
   SessionIdPayloadSchema,
   SetResearchPriorityCommandPayloadSchema,
+  SubmitBattleResultPayloadSchema,
   SubmitDesignCommandPayloadSchema,
 } from "../shared/campaignCommandSchemas.js";
 import {
@@ -129,6 +130,29 @@ describe("CommandEnvelopePayloadSchema numeric constraints", () => {
       sessionId: 123,
     });
   });
+});
+
+describe("SubmitBattleResultPayloadSchema damage report", () => {
+  const payload = (damageReport: unknown) => ({
+    ...VALID_ENVELOPE,
+    interruptionId: "i",
+    battleId: "b",
+    winnerId: null,
+    loserId: null,
+    attackerLosses: [],
+    defenderLosses: [],
+    damageReport,
+  });
+
+  it("accepts finite damage figures", () => {
+    expectSuccess(SubmitBattleResultPayloadSchema, payload({ a: 0, b: 12.5 }));
+  });
+
+  for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    it(`rejects a damage figure of ${String(bad)}`, () => {
+      expectFailure(SubmitBattleResultPayloadSchema, payload({ a: bad }));
+    });
+  }
 });
 
 describe("SessionIdPayloadSchema", () => {
@@ -634,6 +658,31 @@ describe("MonthlyReportsSchema", () => {
       ],
     });
   });
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    "rejects a non-finite explanation figure (%s) and still accepts finite ones",
+    (bad) => {
+      const tree = {
+        formulaId: "f",
+        formulaVersion: "1",
+        inputs: { a: 1, b: "x" },
+        intermediate: { c: 2 },
+        result: 3,
+      };
+      const withTree = (value: unknown) => ({
+        reports: [
+          {
+            ...VALID_MONTHLY_REPORT,
+            treasury: { ...VALID_MONTHLY_REPORT.treasury, treasuryExplanation: value },
+          },
+        ],
+      });
+      expectSuccess(MonthlyReportsSchema, withTree(tree));
+      expectFailure(MonthlyReportsSchema, withTree({ ...tree, result: bad }));
+      expectFailure(MonthlyReportsSchema, withTree({ ...tree, intermediate: { c: bad } }));
+      expectFailure(MonthlyReportsSchema, withTree({ ...tree, inputs: { a: bad } }));
+    },
+  );
 
   it("rejects a non-integer treasury figure and a non-array ledger", () => {
     expectFailure(MonthlyReportsSchema, {
