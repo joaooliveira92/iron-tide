@@ -25,6 +25,7 @@ export const SUBSYSTEMS = [
 const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   ConstructionProgressed: "construction_processing",
   ConstructionDelayed: "construction_processing",
+  ConstructionOverrun: "construction_processing",
   ConstructionProjectCancelled: "construction_processing",
   ShipRebuilt: "construction_processing",
   ShipDelivered: "construction_processing",

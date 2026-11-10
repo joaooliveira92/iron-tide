@@ -19,7 +19,8 @@ import {
   type ConstructionBalance,
 } from "@bluewave/ship-design";
 import { constructionResumeTarget } from "./constructionHaltResume.js";
-import { resolveConstructionEvents } from "./constructionEvents.js";
+import { resolveConstructionEvents, type ConstructionEventOverrun } from "./constructionEvents.js";
+import { withConstructionOverrun, constructionOverrunSubject } from "./constructionOverrun.js";
 import {
   ACCELERATION_CAPACITY_PRESSURE_DELAY,
   accelerationTermsFor,
@@ -29,7 +30,12 @@ import {
 import { fundDesignStudies } from "./designStudies.js";
 import { resolvePrivateDockExpansion } from "./dockExpansion.js";
 import { runForeignContractPhase } from "./foreignContractPhase.js";
-import { budgetChangedEvent, constructionDelayedEvent, makeLedgerEntry } from "./events.js";
+import {
+  budgetChangedEvent,
+  constructionDelayedEvent,
+  constructionOverrunEvent,
+  makeLedgerEntry,
+} from "./events.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { applyPrestigeChange } from "./prestigeApplication.js";
 import { reportOutflowShortfall } from "./outflowShortfall.js";
@@ -155,16 +161,21 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
 
     const eventRules = ctx.engineOptions?.constructionEvents;
     const delayedByEvent = new Map<string, string>();
-    if (eventRules !== undefined && eventRules.length > 0)
-      for (const delay of resolveConstructionEvents({
+    const overrunByEvent = new Map<string, ConstructionEventOverrun>();
+    if (eventRules !== undefined && eventRules.length > 0) {
+      const drawn = resolveConstructionEvents({
         nationId,
         campaignMonth,
-        projects: projects.filter((p) => !delayedByPressure.has(p["id"])),
+        projects: projects
+          .filter((p) => !delayedByPressure.has(p["id"]))
+          .map(constructionOverrunSubject),
         rules: eventRules,
         randomEngine: accelerationRng,
         randomLedger: ctx.randomLedger,
-      }).delays)
-        delayedByEvent.set(delay.projectId, delay.reasonCode);
+      });
+      for (const delay of drawn.delays) delayedByEvent.set(delay.projectId, delay.reasonCode);
+      for (const overrun of drawn.overruns) overrunByEvent.set(overrun.projectId, overrun);
+    }
 
     const delayedAtStartIds = new Set(delayedAtStart.map((p) => p["id"]));
     const delayedProjects = projects.filter(
@@ -182,6 +193,18 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
             (delayedByPressure.has(project["id"])
               ? ACCELERATION_CAPACITY_PRESSURE_DELAY
               : PROJECT_DELAYED_ZERO_WORK),
+          nextSeq(),
+          campaignMonth,
+        ),
+      );
+
+    for (const overrun of overrunByEvent.values())
+      eventLedger.append(
+        constructionOverrunEvent(
+          overrun.projectId,
+          nationId,
+          overrun.reasonCode,
+          overrun.amount,
           nextSeq(),
           campaignMonth,
         ),
@@ -217,6 +240,13 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
         if (eventReason !== undefined)
           return { ...transitionConstructionProject(p, "DELAYED"), delayReasonCode: eventReason };
         return delayedByPressure.has(p["id"]) ? transitionConstructionProject(p, "DELAYED") : p;
+      });
+    if (overrunByEvent.size > 0)
+      updatedProjects = updatedProjects.map((p) => {
+        const overrun = overrunByEvent.get(p["id"]);
+        return overrun === undefined
+          ? p
+          : withConstructionOverrun(p, overrun.amount, overrun.reasonCode, campaignMonth);
       });
 
     const expenseReserve = nation["expenses"];
@@ -260,7 +290,7 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
     }
 
     const totalCharge = SafeInt.add(totalDelta, SafeInt(preservationDelta));
-    if ((totalCharge as number) > 0 || delayedProjects.length > 0) {
+    if ((totalCharge as number) > 0 || delayedProjects.length > 0 || overrunByEvent.size > 0) {
       const previousTreasury = nation["treasury"];
       const newTreasury = SafeInt.sub(previousTreasury, totalCharge);
 

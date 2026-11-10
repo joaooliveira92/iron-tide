@@ -139,6 +139,78 @@ describe("ProjectReadout", () => {
     expect(screen.queryByText(/STEEL_PLATE_SHORTAGE/)).toBeNull();
   });
 
+  describe("cost overruns (#584)", () => {
+    const CAUSES: Readonly<Record<string, string>> = {
+      DESIGN_CHANGE_REWORK: "rework after a design change",
+      YARD_LABOUR_SHORTAGE: "a shortage of skilled yard labour",
+    };
+    const withOverrun = (reasonCode: string, costUnits: number) =>
+      row({
+        readout: {
+          totalCostUnits: 640,
+          monthlyInstalmentUnits: 120,
+          remainingMonths: 6,
+          launchMonth: "1880-07",
+          scheduleBasis: "YARD_CAPACITY",
+          scheduleUnavailableReason: null,
+          haltedCarryingCostUnits: null,
+          overruns: [{ month: "1880-03", reasonCode, costUnits }],
+        },
+      });
+    const catalogue = () =>
+      setUiCatalogue({
+        locale: "en-US",
+        strings: Object.fromEntries(
+          Object.entries(CAUSES).map(([code, words]) => [
+            `construction.event.${code.toLowerCase()}`,
+            words,
+          ]),
+        ),
+      });
+
+    for (const [code, words] of Object.entries(CAUSES))
+      it(`names ${code} in plain words with the amount, never the raw code or month key`, () => {
+        catalogue();
+        render(<ProjectReadout row={withOverrun(code, 45)} />);
+        expect(screen.getByText("Cost overrun")).toBeTruthy();
+        expect(screen.getByText(`${words}: +45 NC`)).toBeTruthy();
+        expect(screen.queryByText(new RegExp(code))).toBeNull();
+        expect(screen.queryByText(/\d{4}-\d{2}/)).toBeNull();
+      });
+
+    it("shows the newest cause when several have hit", () => {
+      catalogue();
+      const base = withOverrun("DESIGN_CHANGE_REWORK", 45);
+      render(
+        <ProjectReadout
+          row={{
+            ...base,
+            readout: {
+              ...base.readout!,
+              overruns: [
+                { month: "1880-04", reasonCode: "YARD_LABOUR_SHORTAGE", costUnits: 20 },
+                { month: "1880-03", reasonCode: "DESIGN_CHANGE_REWORK", costUnits: 45 },
+              ],
+            },
+          }}
+        />,
+      );
+      expect(screen.getByText("a shortage of skilled yard labour: +20 NC")).toBeTruthy();
+    });
+
+    it("falls back to plain words when the cause has no authored text", () => {
+      setUiCatalogue({ locale: "en-US", strings: {} });
+      render(<ProjectReadout row={withOverrun("UNKNOWN_CAUSE", 45)} />);
+      expect(screen.getByText("a cost overrun: +45 NC")).toBeTruthy();
+      expect(screen.queryByText(/UNKNOWN_CAUSE/)).toBeNull();
+    });
+
+    it("adds no overrun line when nothing has overrun", () => {
+      render(<ProjectReadout row={row()} />);
+      expect(screen.queryByText("Cost overrun")).toBeNull();
+    });
+  });
+
   it("renders the contract schedule a foreign row's readout carries", () => {
     render(
       <ProjectReadout

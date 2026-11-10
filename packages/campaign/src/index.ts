@@ -42,6 +42,7 @@ export type {
   CompiledTorpedoMount,
   ConstructionPackage,
   ConstructionMonthUsage,
+  ConstructionOverrun,
   ConstructionPackageKind,
   ConstructionPlanRecord,
   ConstructionPlanShare,

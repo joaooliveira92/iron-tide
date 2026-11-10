@@ -196,6 +196,33 @@ export function constructionDelayedEvent(
   };
 }
 
+export function constructionOverrunEvent(
+  projectId: string,
+  nationId: string,
+  reason: string,
+  amount: number,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `ConstructionOverrun-${projectId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "construction",
+    aggregateId: projectId,
+    eventType: "ConstructionOverrun",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "ConstructionOverrun",
+      projectId,
+      nationId,
+      reason,
+      amount: SafeInt(amount),
+      overrunMonth: campaignMonth,
+    },
+    sequenceNumber: seq,
+  };
+}
+
 export function researchProgressedEvent(
   nationId: string,
   techId: string,

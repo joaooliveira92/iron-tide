@@ -95,6 +95,15 @@ export function classifyEventBody(body: DomainEventBody): MessageClassification 
         bodyKey: "messages.construction.delayed.body",
         deduplicationKey: `construction:delayed:${body.projectId}:${body.reason}`,
       });
+    case "ConstructionOverrun":
+      return classification({
+        category: "CONSTRUCTION",
+        severity: "HIGH",
+        phase: "construction_processing",
+        titleKey: "messages.construction.overrun.title",
+        bodyKey: "messages.construction.overrun.body",
+        deduplicationKey: `construction:overrun:${body.projectId}:${body.overrunMonth}`,
+      });
     case "ConstructionProjectCancelled":
       return classification({
         category: "CONSTRUCTION",
