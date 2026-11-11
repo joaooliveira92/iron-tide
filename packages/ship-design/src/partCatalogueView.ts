@@ -43,30 +43,63 @@ export interface PartCatalogueEntry {
   readonly roleTags?: readonly string[];
 }
 
-type NationsByGunFamily = ReadonlyMap<string, readonly string[]>;
+type NationsByKey = ReadonlyMap<string, readonly string[]>;
 
-function nationsByGunFamily(parts: readonly FlattenedPart[]): NationsByGunFamily {
+interface NationsByPart {
+  readonly gunFamily: NationsByKey;
+  readonly torpedoPrototype: NationsByKey;
+}
+
+function sortedNationsBy(
+  parts: readonly FlattenedPart[],
+  keyOf: (part: FlattenedPart) => string | undefined,
+): NationsByKey {
   const sets = new Map<string, Set<string>>();
   for (const part of parts) {
-    if (part.family !== "gun" || part.nation === undefined) continue;
-    const family = part.spec.gunFamily;
-    if (family === undefined) continue;
-    const set = sets.get(family) ?? new Set<string>();
+    if (part.nation === undefined) continue;
+    const key = keyOf(part);
+    if (key === undefined) continue;
+    const set = sets.get(key) ?? new Set<string>();
     set.add(part.nation);
-    sets.set(family, set);
+    sets.set(key, set);
   }
-  return new Map([...sets].map(([family, set]) => [family, [...set].sort(compareCodePoints)]));
+  return new Map([...sets].map(([key, set]) => [key, [...set].sort(compareCodePoints)]));
+}
+
+function nationsOf(parts: readonly FlattenedPart[]): NationsByPart {
+  return {
+    gunFamily: sortedNationsBy(parts, (part) =>
+      part.family === "gun" ? part.spec.gunFamily : undefined,
+    ),
+    torpedoPrototype: sortedNationsBy(parts, (part) =>
+      part.family === "torpedo_launcher" ? part.origin.prototype?.id : undefined,
+    ),
+  };
+}
+
+function nationIdsOf(part: FlattenedPart, nations: NationsByPart): readonly string[] | undefined {
+  switch (part.family) {
+    case "gun":
+      return nations.gunFamily.get(part.spec.gunFamily ?? "");
+    case "torpedo_launcher":
+      return part.origin.prototype === undefined
+        ? nations.torpedoPrototype.get(part.id)
+        : undefined;
+    default:
+      return undefined;
+  }
 }
 
 function pickerFieldsOf(
   part: FlattenedPart,
-  nations: NationsByGunFamily,
+  nations: NationsByPart,
 ): Pick<PartCatalogueEntry, "nationIds" | "caliberUm" | "roleTags"> {
-  if (part.family !== "gun") return {};
-  const nationIds = nations.get(part.spec.gunFamily ?? "");
+  const nationIds = nationIdsOf(part, nations);
+  const nationFields = nationIds === undefined ? {} : { nationIds };
+  if (part.family !== "gun") return nationFields;
   const roleTags = (part.metadata?.tags ?? []).filter((tag) => tag !== "gun");
   return {
-    ...(nationIds === undefined ? {} : { nationIds }),
+    ...nationFields,
     caliberUm: part.spec.calibreUm,
     ...(roleTags.length === 0 ? {} : { roleTags }),
   };
@@ -130,7 +163,7 @@ function fcClassOf(part: FlattenedPart): string | null {
     : null;
 }
 
-function entryOfPart(part: FlattenedPart, nations: NationsByGunFamily): PartCatalogueEntry {
+function entryOfPart(part: FlattenedPart, nations: NationsByPart): PartCatalogueEntry {
   const category = categoryOf(part);
   if (category === null) {
     throw designInvariant(
@@ -166,7 +199,7 @@ const byId = (a: PartCatalogueEntry, b: PartCatalogueEntry): number =>
 
 export function buildPartCatalogueView(model: CompiledPartModel): readonly PartCatalogueEntry[] {
   const parts = Object.values(model.partIndex.byId);
-  const nations = nationsByGunFamily(parts);
+  const nations = nationsOf(parts);
   return parts
     .filter(isFamilyLevelPart)
     .map((part) => entryOfPart(part, nations))
