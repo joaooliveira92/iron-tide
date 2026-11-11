@@ -143,6 +143,25 @@ and `scripts/verify-reachability-ledger.mjs` fails when a row drifts.
   `Effect.log*`, never `console.*`. Add `Effect.fn`/`withSpan` spans with stable
   names at workflow and IO boundaries.
 
+## Module size
+
+- Handwritten `.ts`/`.tsx` counts logical lines (non-blank, non-comment). Target
+  at most 300. Above 400 is a review candidate (advisory, never a CI failure).
+  Above 600 lines or 100 KiB fails `gate:module-size` (`pnpm check:module-size`).
+  A 50 KiB file is advised for review.
+- Exempt: generated (`*.generated.ts`, `*.gen.ts`, `generated/`), `*.d.ts`,
+  fixtures, `migrations/`, static datasets (`content/`, baked map data), `vendor/`,
+  `repos/`, `.agents/`, `.worktrees/`, `node_modules`.
+- `scripts/module-size.baseline.json` grandfathers files already over the limit.
+  An entry may only fall: growth fails, and a file that shrinks or drops under the
+  limit needs `node scripts/assert-module-size.mjs --prune`. Never add an entry to
+  pass the gate; split the file instead.
+- Reviewing a large module: identify its responsibilities; extract only
+  independently cohesive units; preserve public APIs; keep domain logic
+  independent of framework and infrastructure; do not split solely to satisfy the
+  limit; no `utils.ts`, `helpers.ts` or `common.ts` dumping grounds; run
+  typecheck, lint and the relevant tests after extraction.
+
 ## Tests and gates
 
 - Red, Green, Refactor. A bug is unconfirmed until an observable regression test
