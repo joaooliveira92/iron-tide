@@ -54,6 +54,7 @@ export interface DrawingBoardActions {
   readonly generateAlternatives: () => Candidate[];
   readonly loadDraft: (draft: DesignDraft) => void;
   readonly openDesign: (draft: DesignDraft, name: string) => void;
+  readonly setDevelopedFrom: (name: string) => void;
   readonly restore: (presetId: string, log: EditLog) => boolean;
 }
 
@@ -154,6 +155,9 @@ export function useDrawingBoard(fixedMonth: string | null = null): {
         setOrigin({ name, draft: d });
         commit(newLog(d));
         setEditError(null);
+      },
+      setDevelopedFrom: (name) => {
+        setOrigin((o) => ({ ...o, name }));
       },
       restore: (presetId, saved) => {
         const p = content.references.find((r) => r.id === presetId);

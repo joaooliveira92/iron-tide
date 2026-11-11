@@ -160,6 +160,7 @@ export function useWorkspaceSession(
       generateAlternatives: actions.generateAlternatives,
       loadDraft: session.loadDraft,
       openDesign: session.openDesign,
+      setDevelopedFrom: session.setDevelopedFrom,
       loadPreset: session.loadPreset,
       requestPreset: session.requestPreset,
       setPendingPreset: session.setPendingPreset,
