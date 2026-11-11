@@ -9,8 +9,7 @@
 **Invariants:**
 
 - Save formats are frozen: schema changes need a parity test from existing fixtures.
-- A save from a different compatibility version is refused before decode, never migrated at runtime (BW-PER-001).
-- Writes are atomic; recovery must never fabricate canonical data.
+- A save from a different compatibility version is refused before decode, never migrated at runtime (BW-PER-001).- Writes are atomic; recovery must never fabricate canonical data.
 - Saves carry a file manifest and one unified snapshot hash; retention keeps active and previous saves.
 - No `AbortSignal`; typed failures leave the typed channel only at baseline-frozen sites.
 

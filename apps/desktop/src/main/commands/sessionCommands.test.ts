@@ -305,6 +305,22 @@ describe("session commands (save / close / copy)", () => {
       expect(getCampaignSession("k1")?.saveDir).toBe(saveDir);
     });
 
+    it("carries the campaign seed and data-pack version into the copy", async () => {
+      const { saveDir, state } = register("k-prov");
+      new SaveStore().save(state, saveDir, {
+        provenance: { campaignSeed: "a".repeat(32), dataPackVersion: "0.5.0" },
+      });
+      const copyDir = resolve(root, "provenance-copy");
+      chooseCopyDirectoryAnswer = copyDir;
+
+      await copyCampaign("k-prov");
+
+      expect(new SaveStore().list(copyDir)[0]).toMatchObject({
+        campaignSeed: "a".repeat(32),
+        dataPackVersion: "0.5.0",
+      });
+    });
+
     it("does nothing when the player cancels the dialog", async () => {
       register("k2");
       chooseCopyDirectoryAnswer = null;

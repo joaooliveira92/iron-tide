@@ -159,7 +159,7 @@ describe("Drawing Board draft sidecar", () => {
 
     expect(loadDrawingBoardDraft(saveDir, "6.0.0")).toBeNull();
     expect(existsSync(path)).toBe(false);
-    expect(readFileSync(`${path}.5.1.0`, "utf8")).toBe(before);
+    expect(readFileSync(`${path}.5.2.0`, "utf8")).toBe(before);
   });
 
   it("treats an unstamped legacy draft as written under 1.2.0 (refused at the current version)", () => {
