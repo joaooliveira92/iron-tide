@@ -450,6 +450,84 @@
     animation: an-strike 1300ms ease-out 200ms both;
   }
 
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-dot {
+    animation: an-prot-rivet 5600ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-dot:nth-of-type(4n + 2) {
+    animation-delay: 3000ms;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-dot:nth-of-type(4n + 3) {
+    animation-delay: 3600ms;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-dot:nth-of-type(4n) {
+    animation-delay: 4200ms;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-line[data-tone="faint"] {
+    animation: an-prot-seam 6400ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="protection"]
+    .an-part[data-kind="armour"]
+    .an-line[data-tone="faint"]:nth-of-type(even) {
+    animation-delay: 5600ms;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-line[data-heavy] {
+    animation: an-prot-ridge 4800ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-top {
+    animation: an-prot-temper 7200ms ease-in-out infinite;
+    animation-delay: calc(2400ms + var(--an-i, 0) * 1500ms);
+  }
+
+  @keyframes an-prot-rivet {
+    0%,
+    55%,
+    100% {
+      opacity: 0.24;
+    }
+    75% {
+      opacity: 0.95;
+    }
+  }
+
+  @keyframes an-prot-seam {
+    0%,
+    100% {
+      stroke: var(--an-faint);
+    }
+    50% {
+      stroke: var(--an-mid);
+    }
+  }
+
+  @keyframes an-prot-ridge {
+    0%,
+    100% {
+      stroke: var(--an-mid);
+      stroke-width: 1.15px;
+    }
+    50% {
+      stroke: var(--an-hi);
+      stroke-width: 1.5px;
+    }
+  }
+
+  @keyframes an-prot-temper {
+    0%,
+    100% {
+      filter: none;
+    }
+    50% {
+      filter: brightness(1.12);
+    }
+  }
+
   .an-ship[data-section="armament"] .an-part[data-kind="weapon"] {
     animation: an-traverse 3600ms ease-in-out infinite;
     transform-origin: 50% 70%;
