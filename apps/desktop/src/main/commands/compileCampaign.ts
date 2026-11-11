@@ -68,7 +68,12 @@ export const compileCampaignProgram: CommandHandler<"compileCampaign"> = (config
 
     const saveableState = toSaveableState(output.state);
 
-    yield* projects.save(saveableState, saveDir);
+    yield* projects.save(saveableState, saveDir, {
+      provenance: {
+        campaignSeed: configuration.campaignSeed,
+        dataPackVersion: output.pack.manifest.version,
+      },
+    });
 
     yield* projects
       .writeSessionMetadata(saveDir, {

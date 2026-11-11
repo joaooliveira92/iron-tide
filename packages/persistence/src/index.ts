@@ -49,6 +49,7 @@ export type {
   SaveExtras,
   SaveListing,
   SaveMetadata,
+  SaveProvenance,
   SaveResult,
 } from "./store.js";
 export { loadResult, SaveStore, type SaveStoreOptions } from "./store.js";

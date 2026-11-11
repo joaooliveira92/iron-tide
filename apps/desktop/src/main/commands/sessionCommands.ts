@@ -84,7 +84,17 @@ export const copyCampaignProgram = (
       };
     }
 
-    yield* projects.save(record.state, location);
+    const sourceSaves = yield* projects.list(record.saveDir);
+    const dataPackVersion = sourceSaves
+      .filter((save) => save.dataPackVersion !== undefined)
+      .sort((a, b) => b.turnNumber - a.turnNumber)[0]?.dataPackVersion;
+    yield* projects.save(
+      record.state,
+      location,
+      dataPackVersion === undefined
+        ? undefined
+        : { provenance: { campaignSeed: metadata.campaignSeed, dataPackVersion } },
+    );
     yield* projects.writeSessionMetadata(location, metadata);
 
     return {

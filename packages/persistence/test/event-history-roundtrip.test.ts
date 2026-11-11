@@ -93,8 +93,8 @@ describe("SaveStore round-trips government type, traits and fired-event history"
     if (existsSync(tmpDir)) rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("is stamped with compatibility 5.1.0", () => {
-    expect(CURRENT_COMPATIBILITY_VERSION).toBe("5.1.0");
+  it("is stamped with compatibility 5.2.0", () => {
+    expect(CURRENT_COMPATIBILITY_VERSION).toBe("5.2.0");
   });
 
   it("save -> load preserves the government, traits, fired events and flags exactly", () => {
