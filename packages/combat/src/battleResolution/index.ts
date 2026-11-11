@@ -9,6 +9,7 @@ export * from "./trainingEffects.js";
 export * from "./resolve.js";
 export * from "./capabilities.js";
 export * from "./gunneryRadar.js";
+export * from "./gunQualityRules.js";
 export * from "./causeOfLoss.js";
 
 export * from "./playerSession.js";
