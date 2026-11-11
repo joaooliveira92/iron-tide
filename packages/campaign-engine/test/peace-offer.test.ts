@@ -1,5 +1,5 @@
 import { SafeInt } from "@bluewave/contracts";
-import type { AreaData, WarDeclaration } from "@bluewave/campaign";
+import type { WarDeclaration, WorldState } from "@bluewave/campaign";
 import { describe, expect, it } from "vite-plus/test";
 import { buildDiplomacyScreenProjection } from "../src/diplomacy.js";
 import { fixtureNation, fixtureSnapshot, fixtureState } from "./fixtures.js";
@@ -23,7 +23,7 @@ function war(overrides: Partial<WarDeclaration> = {}): WarDeclaration {
   };
 }
 
-const areas: AreaData[] = [
+const areas: WorldState["areas"] = [
   { id: "fra_home", name: "France", type: "coastal", controller: "fra", cessionCost: SafeInt(2) },
   {
     id: "med_corsica",
