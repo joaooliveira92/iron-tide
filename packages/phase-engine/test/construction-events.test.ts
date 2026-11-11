@@ -133,7 +133,7 @@ describe("resolveConstructionEvents", () => {
       const { result, randomLedger } = run([rule({ minMonths: 1, maxMonths: 3 })], projects);
       const lengths = new Set(result.delays.map((d) => d.months));
       expect(result.delays).toHaveLength(80);
-      expect([...lengths].sort()).toEqual([1, 2, 3]);
+      expect([...lengths].sort((a, b) => a - b)).toEqual([1, 2, 3]);
       const recorded = randomLedger.all.filter((d) => d.outcome === "DELAY_MONTHS");
       expect(recorded).toHaveLength(80);
       expect(recorded.map((d) => d.draw)).toEqual(result.delays.map((d) => d.months));

@@ -1048,7 +1048,7 @@ describe("construction events in the economy pass (#584)", () => {
     sources: [],
     note: "PROVISIONAL test fixture",
   };
-  const rule = (probabilityBp: number): ConstructionEvent => ({
+  const rule = (probabilityBp: number): Extract<ConstructionEvent, { kind: "DELAY" }> => ({
     id: "steel_plate_shortage",
     kind: "DELAY",
     probabilityBp,
@@ -1105,7 +1105,7 @@ describe("construction events in the economy pass (#584)", () => {
 
   describe("delay length", () => {
     const FIRST_MONTH = "1880-02";
-    const once = (months: number): ConstructionEvent => ({
+    const once = (months: number): Extract<ConstructionEvent, { kind: "DELAY" }> => ({
       ...rule(10_000),
       minMonths: months,
       maxMonths: months,
