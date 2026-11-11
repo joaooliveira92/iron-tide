@@ -3,7 +3,9 @@ import type {
   EntityReferenceDto,
   TurnMessageDto,
 } from "../../../../shared/turn-message-contract.js";
-import { resolveMessage, withConstructionCause } from "../../../content/uiCatalogue.js";
+import { resolveMessage } from "../../../content/uiCatalogue.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import { constructionMessageInterpolation } from "./construction-message-text.js";
 import {
   SummaryDelta,
   SummaryRow,
@@ -31,6 +33,7 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
   readonly pinned: boolean;
   readonly read: boolean;
 }) {
+  const format = usePresentationFormat();
   const { openEntity, togglePinned, toggleRead } = useTurnSummaryActions();
   const { isEntityAvailable } = useTurnSummaryMeta();
   const [expanded, setExpanded] = useState(false);
@@ -65,7 +68,10 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
             {resolveMessage(message.titleKey, message.interpolation)}
           </p>
           <p className="text-muted-foreground">
-            {resolveMessage(message.bodyKey, withConstructionCause(message.interpolation))}
+            {resolveMessage(
+              message.bodyKey,
+              constructionMessageInterpolation(message.bodyKey, message.interpolation, format),
+            )}
           </p>
           {message.subjectRefs.length > 0 && (
             <div className="mt-1 flex flex-wrap gap-1">
