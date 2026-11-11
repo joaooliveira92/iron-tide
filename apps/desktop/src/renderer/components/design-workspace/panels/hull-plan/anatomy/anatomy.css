@@ -387,16 +387,58 @@
     animation: an-fire 2400ms ease-in-out infinite;
   }
 
+  .an-ship[data-section="machinery"] .an-part[data-kind="funnel"] .an-ink-fill {
+    animation: an-mach-cap 3800ms ease-in-out infinite;
+    animation-delay: calc(var(--an-i, 0) * 900ms);
+  }
+
+  .an-ship[data-section="machinery"] .an-part[data-kind="funnel"] .an-top {
+    animation: an-mach-heat 3000ms ease-in-out infinite;
+    animation-delay: calc(var(--an-i, 0) * 700ms);
+  }
+
   .an-ship[data-section="machinery"] .an-part[data-kind="fitting"] {
     animation: an-heartbeat 1600ms ease-in-out infinite;
     animation-delay: calc(var(--an-i, 0) * 120ms);
   }
 
   .an-ship[data-section="machinery"] .an-smoke {
-    animation: an-plume 3200ms ease-out infinite;
-    animation-delay: calc(var(--an-puff, 0) * 1050ms);
+    animation:
+      an-plume 3200ms ease-out infinite,
+      an-mach-drift 6400ms ease-in-out infinite;
+    animation-delay: calc(var(--an-puff, 0) * 1050ms), calc(var(--an-puff, 0) * 800ms);
     transform-box: fill-box;
     transform-origin: 50% 50%;
+  }
+
+  @keyframes an-mach-cap {
+    0%,
+    100% {
+      opacity: 0.7;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes an-mach-heat {
+    0%,
+    100% {
+      filter: none;
+    }
+    50% {
+      filter: brightness(1.1);
+    }
+  }
+
+  @keyframes an-mach-drift {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    50% {
+      translate: -4px 0;
+    }
   }
 
   .an-ship[data-section="protection"] .an-part[data-kind="armour"] {
