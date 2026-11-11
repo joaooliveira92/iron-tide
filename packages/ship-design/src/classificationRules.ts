@@ -1,3 +1,4 @@
+import { DESIGN_22_CLASS_FLOORS } from "@bluewave/contracts";
 import { UM_PER_INCH, UM_PER_KNOT } from "./units.js";
 import { designInvariant } from "./errors.js";
 
@@ -59,36 +60,27 @@ export interface ClassificationRules {
 }
 
 export const DESIGN_22_EARLY: ClassificationRules = {
+  ...DESIGN_22_CLASS_FLOORS,
   rulesetVersion: 1,
   ddMaxDisplacementKg: 2_000_000,
   ddMinSpeedUms: 19 * UM_PER_KNOT + 1 - 1,
   ddMaxGunUm: 6 * UM_PER_INCH,
   qualifyingArmourUm: 2 * UM_PER_INCH,
-  clMinDisplacementKg: 2_000_000,
   clMaxDisplacementKg: 8_000_000,
   clMinSpeedUms: 16 * UM_PER_KNOT,
   clMaxGunUm: 6 * UM_PER_INCH,
   clBeltMaxUm: 2 * UM_PER_INCH,
   protectedCruiserExceptionVersion: 1,
   clProtectedMaxGunUm: 8 * UM_PER_INCH,
-  caMinDisplacementKg: 4_000_000,
   caMinSpeedUms: 19 * UM_PER_KNOT,
-  caBeltMinUm: 2 * UM_PER_INCH,
   caBeltMaxUm: 12 * UM_PER_INCH,
   caGunMaxUm: 11 * UM_PER_INCH,
-  bMinDisplacementKg: 5_000_000,
-  bBeltMinUm: 6 * UM_PER_INCH,
-  bMaxSpeedUms: 20 * UM_PER_KNOT,
   bMaxTurrets: 2,
-  bbMinDisplacementKg: 8_000_000,
   bbMinTurrets: 3,
-  bbBeltMinUm: 6 * UM_PER_INCH,
-  bbGunMinUm: 10 * UM_PER_INCH,
   aircraftLimit: 4,
   keMaxDisplacementKg: 2_500_000,
   keBeltMaxUm: 2 * UM_PER_INCH,
   keGunMaxUm: 6 * UM_PER_INCH,
-  amcMinDisplacementKg: 1_700_000,
   amcGunMaxUm: 6 * UM_PER_INCH,
   amcFleetShareBp: 2_000,
   amcFleetMinAllowance: 2,

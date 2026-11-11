@@ -10,5 +10,6 @@
 
 - Reject non-integers and unsafe integers at construction; never widen to `number` arithmetic.
 - Rounding mode is always explicit.
+- `DESIGN_22_CLASS_FLOORS` is the single source of the DESIGN-22 class floors shared by ship-design and combat (combat never imports ship-design); `hullFamilyFloors.ts` is data only.
 
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/contracts test`.
