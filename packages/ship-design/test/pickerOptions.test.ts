@@ -54,6 +54,43 @@ describe("catalogue entry nation, calibre and role (#575)", () => {
     expect(entry("gun_rml_12in_25ton").nationIds).toBeUndefined();
   });
 
+  it("derives torpedo tube nationIds from the national tubes that extend each family, sorted (#618)", () => {
+    expect(entry("tube_14in_above_water").nationIds).toEqual([
+      "austria_hungary",
+      "brazil",
+      "france",
+      "germany",
+      "italy",
+      "japan",
+      "netherlands",
+      "ottoman_empire",
+      "portugal",
+      "qing",
+      "russia",
+      "spain",
+      "uk",
+      "usa",
+    ]);
+    expect(entry("tube_14in_submerged").nationIds).toEqual(["france", "germany", "uk"]);
+  });
+
+  it("leaves torpedo nationIds absent where no national tube extends the family (#618)", () => {
+    expect(entry("tube_21in_above_water").nationIds).toBeUndefined();
+  });
+
+  it("filters a torpedo family by nation through the shared picker (#618)", () => {
+    const tube = entry("tube_14in_submerged");
+    const { available, hidden } = pickerOptions(catalogue, {
+      month: "1880-01",
+      unlockedTechs: new Set(tube.requires),
+      nationId: "japan",
+      category: "TORPEDO_TUBE",
+    });
+    expect(available.map((e) => e.id)).not.toContain("tube_14in_submerged");
+    const reasons = new Map(hidden.map((h) => [h.entry.id, h.reason]));
+    expect(reasons.get("tube_14in_submerged")).toBe("other_nation");
+  });
+
   it("carries the gun calibre in micrometres and role tags without the generic gun tag", () => {
     expect(entry("gun_bl_10in_32").caliberUm).toBe(254000);
     expect(entry("gun_bl_10in_32").roleTags).toEqual(["heavy"]);
