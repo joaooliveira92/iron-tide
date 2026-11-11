@@ -1,7 +1,6 @@
 import {
-  KNOTS_TO_UMS,
   LAID_UP_CREW_CEILING,
-  MM_TO_UM,
+  shipStatsFromDesign,
   transitionConstructionProject,
 } from "@bluewave/campaign";
 import type {
@@ -257,20 +256,6 @@ function ensureNationFleet(
     locationAreaId: "unknown",
   };
   return { fleet: newFleet, fleets: [...fleets, newFleet] };
-}
-
-function shipStatsFromDesign(design: CompiledDesignVersion) {
-  return {
-    hitPoints: design["hitPoints"],
-    maxHitPoints: design["hitPoints"],
-    speed: SafeInt.div(design["normalizedSpeedUms"], SafeInt(KNOTS_TO_UMS), "floor"),
-    firepower: SafeInt.mul(
-      design["mainGunsCount"],
-      SafeInt.div(design["mainGunsCaliber"], SafeInt(100_000), "floor"),
-    ),
-    armor: SafeInt.div(design["normalizedArmorUm"], SafeInt(MM_TO_UM), "floor"),
-    className: design["className"],
-  };
 }
 
 function buildCompletedShip(

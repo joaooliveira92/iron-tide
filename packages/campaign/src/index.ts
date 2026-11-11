@@ -123,3 +123,4 @@ export * from "./researchEligibility.js";
 export * from "./economyOutlook.js";
 export * from "./economy.js";
 export * from "./designVersion.js";
+export * from "./shipBuildingData.js";
