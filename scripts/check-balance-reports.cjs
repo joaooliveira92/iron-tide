@@ -13,6 +13,7 @@ const REPORTS = [
   "docs/research/p1-tactical-benchmark.md",
   "docs/research/p1-balance-sweep.md",
   "docs/research/p5-peace-behaviour.md",
+  "docs/research/p6-construction-events.md",
 ];
 
 const run = spawnSync(
@@ -50,6 +51,30 @@ const peaceRun = spawnSync(
 if (peaceRun.status !== 0) {
   console.error("balance-report check: the peace behaviour test failed; report cannot be trusted");
   process.exit(peaceRun.status ?? 1);
+}
+
+const constructionRun = spawnSync(
+  "pnpm",
+  [
+    "--filter",
+    "@bluewave/cross-process-test",
+    "exec",
+    "vp",
+    "test",
+    "run",
+    "test/construction-events-balance.test.ts",
+  ],
+  {
+    stdio: "inherit",
+    shell: process.platform === "win32",
+    env: { ...process.env, CONSTRUCTION_EVENTS_REPORT_WRITE: "1" },
+  },
+);
+if (constructionRun.status !== 0) {
+  console.error(
+    "balance-report check: the construction events test failed; report cannot be trusted",
+  );
+  process.exit(constructionRun.status ?? 1);
 }
 
 const changed = execFileSync("git", ["diff", "--name-only", "--", ...REPORTS], {

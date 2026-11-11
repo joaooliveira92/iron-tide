@@ -19,7 +19,7 @@ export default list(ConstructionEventSchema, [
   {
     id: "steel_plate_shortage",
     kind: "DELAY",
-    probabilityBp: 150,
+    probabilityBp: 80,
     minMonths: 1,
     maxMonths: 3,
     pressureMultiplierBp: 20_000,
@@ -30,7 +30,7 @@ export default list(ConstructionEventSchema, [
   {
     id: "skilled_labour_shortage",
     kind: "DELAY",
-    probabilityBp: 100,
+    probabilityBp: 55,
     minMonths: 1,
     maxMonths: 3,
     pressureMultiplierBp: 20_000,
@@ -41,7 +41,7 @@ export default list(ConstructionEventSchema, [
   {
     id: "yard_weather_damage",
     kind: "DELAY",
-    probabilityBp: 80,
+    probabilityBp: 40,
     minMonths: 1,
     maxMonths: 3,
     pressureMultiplierBp: 20_000,
