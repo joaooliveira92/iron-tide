@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { unifiedSnapshotHash } from "@bluewave/campaign";
+import type { ConstructionEvent } from "@bluewave/content-schema";
 import { fleetManagementFromRulesets, tensionDriftFromRulesets } from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
@@ -119,7 +120,26 @@ function armedAdriaticWar(snapshot: CampaignSnapshot): CampaignSnapshot {
 
 const SETUPS: Readonly<Record<ReplaySetupId, (snapshot: CampaignSnapshot) => CampaignSnapshot>> = {
   "armed-adriatic-war": armedAdriaticWar,
+  "certain-construction-events": (snapshot) => snapshot,
 };
+
+const CERTAIN_PROBABILITY_BP = 10_000;
+const CERTAIN_OVERRUN_MIN_BP = 3_000;
+const CERTAIN_OVERRUN_MAX_BP = 5_000;
+
+function certainConstructionEvents(): readonly ConstructionEvent[] {
+  const rules = production().bundle.campaign?.constructionEvents ?? [];
+  return rules.map((rule) =>
+    rule.kind === "DELAY"
+      ? { ...rule, probabilityBp: CERTAIN_PROBABILITY_BP }
+      : {
+          ...rule,
+          probabilityBp: CERTAIN_PROBABILITY_BP,
+          minBp: CERTAIN_OVERRUN_MIN_BP,
+          maxBp: CERTAIN_OVERRUN_MAX_BP,
+        },
+  );
+}
 
 export function startSnapshot(setup?: ReplaySetupId): CampaignSnapshot {
   const snapshot = production().state.snapshot;
@@ -180,15 +200,18 @@ function productionTensionDrift() {
   return decoded.value;
 }
 
-function productionConstructionEvents() {
-  const rules = production().bundle.campaign?.constructionEvents;
+function productionConstructionEvents(setup?: ReplaySetupId) {
+  const rules =
+    setup === "certain-construction-events"
+      ? certainConstructionEvents()
+      : production().bundle.campaign?.constructionEvents;
   return rules === undefined || rules.length === 0 ? undefined : rules;
 }
 
-export function fleetManagementOptions(playerNationId?: string) {
+export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySetupId) {
   const fleetManagement = productionFleetManagement();
   const tensionDrift = productionTensionDrift();
-  const constructionEvents = productionConstructionEvents();
+  const constructionEvents = productionConstructionEvents(setup);
   return {
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
     ...(tensionDrift === undefined ? {} : { tensionDrift }),
@@ -206,6 +229,7 @@ export function advance(
   seed: string,
   perturb?: Omit<ExecutorPerturbation, "month">,
   playerNationId?: string,
+  setup?: ReplaySetupId,
 ) {
   const result = new MonthExecutor().execute(
     perturb?.snapshot?.(snapshot) ?? snapshot,
@@ -213,7 +237,7 @@ export function advance(
     perturb?.seed?.(monthSeed(seed, snapshot)) ?? monthSeed(seed, snapshot),
     new DiagnosticCollector(),
     undefined,
-    fleetManagementOptions(playerNationId),
+    fleetManagementOptions(playerNationId, setup),
   );
   perturb?.afterExecute?.(result);
   if (result.outcome === "suspended") {
@@ -266,6 +290,7 @@ export function* executeScenario(scenario: ReplayScenario): Generator<ExecutedMo
       scenario.seed,
       { commands: () => commands as CommandEnvelope<CommandBody>[] },
       scenario.playerNationId,
+      scenario.setup,
     );
     yield { turnNumber: Number(snapshot.turnNumber), result: step.result, commands };
     snapshot = step.next;
@@ -359,6 +384,7 @@ export function verifyReplay(
         ...perturb,
       },
       playerNationOf(file.engineOptions),
+      file.initial.setup,
     );
     const actual = monthCheckpoint(Number(snapshot.turnNumber), step.result, recorded.commands);
     for (const ledger of LEDGER_ORDER) {
