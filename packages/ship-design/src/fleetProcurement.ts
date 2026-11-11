@@ -208,6 +208,8 @@ export interface ProcurementInput {
   readonly accessPolicy?: ComponentAccessPolicy;
   readonly candidateCount?: number;
   readonly compilesPerArchetype?: number;
+  readonly baseCount?: number;
+  readonly skipRoles?: readonly ShipTypeId[];
 }
 
 const clampCandidateCount = (n: number | undefined): number => Math.max(12, Math.min(30, n ?? 20));
@@ -218,7 +220,11 @@ export function planProcurementDecision(input: ProcurementInput): ProcurementDec
   const { profile, month, seed, decisionId, budgetUnits, content, starters } = input;
   const accessPolicy = input.accessPolicy ?? DEFAULT_ACCESS_POLICY;
   const assessment = assessFleet(input.fleet);
-  const deficits = computeFleetDeficits(profile, assessment);
+  const rawDeficits = computeFleetDeficits(profile, assessment, input.baseCount);
+  const skipped = new Set<ShipTypeId>(input.skipRoles ?? []);
+  const deficits = Object.fromEntries(
+    PROCUREMENT_TYPES.map((t) => [t, skipped.has(t) ? 0 : rawDeficits[t]]),
+  ) as Record<ShipTypeId, number>;
   const role = chooseProcurementRole(profile, deficits);
 
   const baseDecision: Omit<
