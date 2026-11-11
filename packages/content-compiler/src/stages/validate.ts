@@ -985,6 +985,25 @@ function validateShipBuildingReferences(
     }
   }
 
+  for (const item of catalogue.shipTypes) {
+    const rec = item as Record<string, unknown>;
+    const id = String(rec["id"]);
+    const availability = rec["availability"] as Record<string, unknown> | undefined;
+    const requiresTech = availability?.["requiresTech"];
+    if (typeof requiresTech === "string" && !techIds.has(requiresTech)) {
+      collector.addError(
+        "SHIP_TYPE_UNKNOWN_TECHNOLOGY",
+        `Ship type '${id}' requires unknown technology '${requiresTech}'`,
+        {
+          stage: "validate",
+          sourceLocation: { path: sourceFor("shipTypes", id), line: 1 },
+          entityId: id,
+          remediation: "Add the missing technology or fix 'availability.requiresTech'",
+        },
+      );
+    }
+  }
+
   for (const item of catalogue.shipComponents) {
     const rec = item as Record<string, unknown>;
     const id = String(rec["id"]);
