@@ -26,6 +26,7 @@ const ACTION_ICONS: Readonly<Record<DiplomacyActionKind, LucideIcon>> = {
   DeclareBlockade: Anchor,
   DeclareWar: Swords,
   AcceptPeace: Handshake,
+  ProposePeace: Handshake,
 };
 
 export interface NationDossierProps {

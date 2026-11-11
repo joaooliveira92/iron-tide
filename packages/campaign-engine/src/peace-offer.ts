@@ -1,5 +1,9 @@
-import type { CampaignSnapshot, WarDeclaration } from "@bluewave/campaign";
-import { peaceCessionOptions, type PeaceCessionOption } from "@bluewave/commands";
+import type { WarDeclaration } from "@bluewave/campaign";
+import {
+  peaceCessionOptions,
+  type PeaceCessionOption,
+  type PeaceCheckSnapshot,
+} from "@bluewave/commands";
 import { ExplanationBuilder, type ExplanationTree } from "@bluewave/events";
 
 export const PEACE_FORMULA_VERSION = "peace_v1";
@@ -115,7 +119,7 @@ function termOf(
 }
 
 export function buildPeaceOffer(
-  snapshot: CampaignSnapshot,
+  snapshot: PeaceCheckSnapshot,
   war: WarDeclaration,
   playerNationId: string,
 ): DiplomacyPeaceOffer | undefined {

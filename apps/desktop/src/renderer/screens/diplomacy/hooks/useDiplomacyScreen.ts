@@ -1,3 +1,4 @@
+import type { DiplomacyPeaceTermRef } from "@bluewave/campaign-engine";
 import { useCallback, useRef } from "react";
 import { envelopeOf } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
@@ -13,6 +14,7 @@ import type { DiplomacyScreenState } from "../diplomacy-screen-state.js";
 import {
   diplomacyBeginAction,
   diplomacyBeginPeace,
+  diplomacyBeginPeaceTerms,
   diplomacyBeginSubmit,
   diplomacyClearDraft,
   diplomacyDraftToCommand,
@@ -30,6 +32,7 @@ export interface UseDiplomacyScreenReturn {
   readonly loadError: string | null;
   readonly setRowAction: (partnerNationId: string, kind: DiplomacyActionKind) => void;
   readonly setPeaceAction: (warId: string) => void;
+  readonly setPeaceTerms: (warId: string, term: DiplomacyPeaceTermRef) => void;
   readonly setBlockadeArea: (areaId: string) => void;
   readonly clearDraft: () => void;
   readonly submit: () => void;
@@ -81,6 +84,18 @@ export function useDiplomacyScreen(sessionId: string): UseDiplomacyScreenReturn 
     [updateState],
   );
 
+  const setPeaceTerms = useCallback(
+    (warId: string, term: DiplomacyPeaceTermRef) => {
+      updateState((current) => {
+        if (current.kind !== "loaded" && current.kind !== "submitted") return current;
+        const war = current.projection.wars.find((w) => w.warId === warId);
+        if (!war) return current;
+        return diplomacyBeginPeaceTerms(current, war, term);
+      });
+    },
+    [updateState],
+  );
+
   const setBlockadeArea = useCallback(
     (areaId: string) => {
       updateState((current) => diplomacySetBlockadeArea(current, areaId));
@@ -117,6 +132,7 @@ export function useDiplomacyScreen(sessionId: string): UseDiplomacyScreenReturn 
     loadError: workflow.loadError,
     setRowAction,
     setPeaceAction,
+    setPeaceTerms,
     setBlockadeArea,
     clearDraft,
     submit,

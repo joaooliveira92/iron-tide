@@ -1,4 +1,6 @@
-import { Anchor, Flag } from "lucide-react";
+import type { DiplomacyPeaceTermRef } from "@bluewave/campaign-engine";
+import { Anchor, Flag, Handshake } from "lucide-react";
+import { useState } from "react";
 import { Button } from "../../../components/ui/button.js";
 import { cn } from "../../../lib/utils.js";
 import { DEBUG_MODE } from "../../../shell/debug-flag.js";
@@ -6,11 +8,13 @@ import { WAR_STATUS_LABELS, capitalizeFirst, warScoreSplit } from "../diplomacy-
 import type { DiplomacyWarRow } from "../diplomacy-view-model.js";
 import { InfoHover } from "./InfoHover.js";
 import { NationFlag } from "./NationFlag.js";
+import { PeaceTermsDialog } from "./PeaceTermsDialog.js";
 
 export interface WarFrontProps {
   readonly rows: readonly DiplomacyWarRow[];
   readonly busy: boolean;
   readonly onPeaceAction: (warId: string) => void;
+  readonly onPeaceTerms: (warId: string, term: DiplomacyPeaceTermRef) => void;
 }
 
 const STANDING_COPY = {
@@ -48,7 +52,8 @@ function Combatant({
   );
 }
 
-export function WarFront({ rows, busy, onPeaceAction }: WarFrontProps) {
+export function WarFront({ rows, busy, onPeaceAction, onPeaceTerms }: WarFrontProps) {
+  const [termsWarId, setTermsWarId] = useState<string | null>(null);
   if (rows.length === 0) return null;
   return (
     <section aria-label="Wars" className="space-y-3" data-testid="war-front">
@@ -91,15 +96,37 @@ export function WarFront({ rows, busy, onPeaceAction }: WarFrontProps) {
                 {DEBUG_MODE && <span className="font-mono text-xs">{war.warId}</span>}
               </div>
               {active && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={busy}
-                  onClick={() => onPeaceAction(war.warId)}
-                >
-                  <Flag aria-hidden="true" className="size-3.5" />
-                  Accept peace
-                </Button>
+                <div className="flex items-center gap-2">
+                  {war.peaceOffer !== undefined && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => setTermsWarId(war.warId)}
+                      >
+                        <Handshake aria-hidden="true" className="size-3.5" />
+                        Peace terms
+                      </Button>
+                      <PeaceTermsDialog
+                        open={termsWarId === war.warId}
+                        onOpenChange={(next) => setTermsWarId(next ? war.warId : null)}
+                        enemyName={enemyName}
+                        offer={war.peaceOffer}
+                        onConfirm={(term) => onPeaceTerms(war.warId, term)}
+                      />
+                    </>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => onPeaceAction(war.warId)}
+                  >
+                    <Flag aria-hidden="true" className="size-3.5" />
+                    Accept peace
+                  </Button>
+                </div>
               )}
             </header>
 
