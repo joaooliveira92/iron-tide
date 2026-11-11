@@ -6,7 +6,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | --- | --- |
 | reachable | 32 |
 | dormant-by-decision | 17 |
-| internal | 15 |
+| internal | 16 |
 
 ## Reachable
 
@@ -85,5 +85,6 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | debug-tactical-sandbox | Generate, resolve and replay battles in the debug Tactical Sandbox | `generateBattle`, `resolveBattle`, `resolveTacticalBattle`, `replayBattleBoundary` |
 | debug-simulation-screen | Inspect the turn report and time-lapse through the debug Simulation screen | - |
 | debug-debugging-screen | Inspect AST and wide-event telemetry through the debug Debugging screen | - |
+| debug-generation-report-export | Copy the fleet generation report in the debug screen | `exportGenerationReport` |
 | debug-battle-drill-seed | Seed a campaign battle drill for end-to-end tests | `seedCampaignBattleDrill` |
 
