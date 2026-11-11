@@ -17,6 +17,7 @@
     "check:licenses": "node scripts/license-check.cjs",
     "check:doc-budgets": "node scripts/verify-doc-budgets.mjs",
     "check:unknown-casts": "node scripts/verify-no-unknown-casts.mjs",
+    "check:module-size": "node scripts/assert-module-size.mjs",
     "check:authoritative-determinism": "node scripts/assert-authoritative-determinism.mjs",
     "check:dependencies": "node scripts/verify-package-dependencies.mjs",
     "change-scope": "node scripts/change-scope.mjs",
