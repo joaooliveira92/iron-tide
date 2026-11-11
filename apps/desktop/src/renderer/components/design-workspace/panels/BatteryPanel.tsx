@@ -7,7 +7,7 @@ import { useDesignActions, useDesignState } from "../DesignWorkspaceContext.js";
 import { NumberField, SelectField } from "../fields.js";
 import type { ShipEntity } from "../selection/store.js";
 import { Panel } from "./Panel.js";
-import { gunQualityLine, NEUTRAL_GUN_QUALITY } from "./gun-quality.js";
+import { gunQualityLine } from "./gun-quality.js";
 import { batteryAttrs, shipLinkAttrs } from "../selection/navigation.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
@@ -86,9 +86,7 @@ export function BatteryPanel({
                 ))}
               </ul>
               {row.role !== "TORPEDO" && (
-                <p className="text-xs text-muted-foreground">
-                  {gunQualityLine(NEUTRAL_GUN_QUALITY)}
-                </p>
+                <p className="text-xs text-muted-foreground">{gunQualityLine()}</p>
               )}
               <div className="flex flex-wrap items-end gap-3">
                 {row.role !== "TORPEDO" && (
