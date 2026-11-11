@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import type { ProjectRow } from "../project-progress.js";
 import { setUiCatalogue } from "../../../content/uiCatalogue.js";
@@ -172,13 +172,12 @@ describe("ProjectReadout", () => {
       it(`names ${code} in plain words with the amount, never the raw code or month key`, () => {
         catalogue();
         render(<ProjectReadout row={withOverrun(code, 45)} />);
-        expect(screen.getByText("Cost overrun")).toBeTruthy();
-        expect(screen.getByText(`${words}: +45 NC`)).toBeTruthy();
+        expect(screen.getByText(`March 1880: ${words} added 45 NC to the cost`)).toBeTruthy();
         expect(screen.queryByText(new RegExp(code))).toBeNull();
         expect(screen.queryByText(/\d{4}-\d{2}/)).toBeNull();
       });
 
-    it("shows the newest cause when several have hit", () => {
+    it("lists every delay and overrun, newest first, with the amount", () => {
       catalogue();
       const base = withOverrun("DESIGN_CHANGE_REWORK", 45);
       render(
@@ -187,6 +186,10 @@ describe("ProjectReadout", () => {
             ...base,
             readout: {
               ...base.readout!,
+              delays: [
+                { month: "1880-05", reasonCode: "DESIGN_CHANGE_REWORK", months: 1 },
+                { month: "1880-02", reasonCode: "YARD_LABOUR_SHORTAGE", months: 3 },
+              ],
               overruns: [
                 { month: "1880-04", reasonCode: "YARD_LABOUR_SHORTAGE", costUnits: 20 },
                 { month: "1880-03", reasonCode: "DESIGN_CHANGE_REWORK", costUnits: 45 },
@@ -195,19 +198,31 @@ describe("ProjectReadout", () => {
           }}
         />,
       );
-      expect(screen.getByText("a shortage of skilled yard labour: +20 NC")).toBeTruthy();
+      const items = within(screen.getByRole("list", { name: "Havock class causes" }))
+        .getAllByRole("listitem")
+        .map((item) => item.textContent);
+      expect(items).toEqual([
+        "May 1880: rework after a design change delayed the build by 1 month",
+        "April 1880: a shortage of skilled yard labour added 20 NC to the cost",
+        "March 1880: rework after a design change added 45 NC to the cost",
+        "February 1880: a shortage of skilled yard labour delayed the build by 3 months",
+      ]);
+      for (const text of items) {
+        expect(text).not.toMatch(/\d{4}-\d{2}/);
+        expect(text).not.toMatch(/[A-Z]{2,}_[A-Z]/);
+      }
     });
 
     it("falls back to plain words when the cause has no authored text", () => {
       setUiCatalogue({ locale: "en-US", strings: {} });
       render(<ProjectReadout row={withOverrun("UNKNOWN_CAUSE", 45)} />);
-      expect(screen.getByText("a cost overrun: +45 NC")).toBeTruthy();
+      expect(screen.getByText("March 1880: a cost overrun added 45 NC to the cost")).toBeTruthy();
       expect(screen.queryByText(/UNKNOWN_CAUSE/)).toBeNull();
     });
 
-    it("adds no overrun line when nothing has overrun", () => {
+    it("adds no causes list when nothing has hit the project", () => {
       render(<ProjectReadout row={row()} />);
-      expect(screen.queryByText("Cost overrun")).toBeNull();
+      expect(screen.queryByRole("list", { name: "Havock class causes" })).toBeNull();
     });
   });
 

@@ -6,6 +6,7 @@ import type { PresentationFormat } from "../../../lib/presentation-format/index.
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { formatMonthKey } from "../month-key.js";
 import type { ProjectRow } from "../project-progress.js";
+import { causeLines } from "./project-causes.js";
 
 export interface ProjectReadoutProps {
   readonly row: ProjectRow;
@@ -45,27 +46,15 @@ export interface ReadoutLine {
 export function readoutLines(row: ProjectRow, format: PresentationFormat): readonly ReadoutLine[] {
   const readout = row.readout;
   if (readout === null) return [{ label: "Schedule", value: "unavailable" }];
-  const latestOverrun = readout.overruns?.[0];
-  const overrun: readonly ReadoutLine[] =
-    latestOverrun === undefined
-      ? []
-      : [
-          {
-            label: "Cost overrun",
-            value: `${constructionEventCause(latestOverrun.reasonCode) ?? "a cost overrun"}: +${format.money(latestOverrun.costUnits)}`,
-          },
-        ];
-  const carrying: readonly ReadoutLine[] = [
-    ...overrun,
-    ...(readout.haltedCarryingCostUnits === null
+  const carrying: readonly ReadoutLine[] =
+    readout.haltedCarryingCostUnits === null
       ? []
       : [
           {
             label: "Carrying cost",
             value: `${format.money(readout.haltedCarryingCostUnits)}/mo`,
           },
-        ]),
-  ];
+        ];
   if (readout.scheduleBasis === "UNAVAILABLE") {
     const unavailableReason = readout.scheduleUnavailableReason;
     const eventCause =
@@ -107,6 +96,7 @@ export const ProjectReadout = memo(function ProjectReadout({
   const schedule = row.readout?.scheduleExplanation;
   const instalment = row.readout?.instalmentExplanation;
   const cost = row.readout?.costExplanation;
+  const causes = row.readout === null ? [] : causeLines(row.readout, format);
   return (
     <div>
       <ul className={className} aria-label={`${row.className} cost and schedule`}>
@@ -114,6 +104,16 @@ export const ProjectReadout = memo(function ProjectReadout({
           <ReadoutItem key={line.label} label={line.label} value={line.value} />
         ))}
       </ul>
+      {causes.length > 0 && (
+        <ul
+          className="mt-1 space-y-0.5 text-xs text-muted-foreground"
+          aria-label={`${row.className} causes`}
+        >
+          {causes.map((cause) => (
+            <li key={cause.key}>{cause.text}</li>
+          ))}
+        </ul>
+      )}
       {instalment !== undefined && (
         <ExplanationDisclosure
           tree={instalment}

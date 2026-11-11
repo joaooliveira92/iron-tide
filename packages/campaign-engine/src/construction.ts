@@ -156,8 +156,15 @@ export interface ConstructionOverrunView {
   readonly costUnits: number;
 }
 
+export interface ConstructionDelayView {
+  readonly month: string;
+  readonly reasonCode: string;
+  readonly months: number;
+}
+
 export interface ConstructionProjectReadoutView extends ConstructionProjectReadout {
   readonly delayReasonCode?: string;
+  readonly delays?: readonly ConstructionDelayView[];
   readonly overruns?: readonly ConstructionOverrunView[];
   readonly haltedCarryingCostUnits: number | null;
 }
@@ -429,6 +436,15 @@ export function buildConstructionProjectQueueWithReadouts(
         ...(project.delayReasonCode === undefined
           ? {}
           : { delayReasonCode: project.delayReasonCode }),
+        ...(project.delays === undefined || project.delays.length === 0
+          ? {}
+          : {
+              delays: [...project.delays].reverse().map((d) => ({
+                month: d.month,
+                reasonCode: d.reasonCode,
+                months: d.months,
+              })),
+            }),
         ...(project.overruns === undefined || project.overruns.length === 0
           ? {}
           : {
