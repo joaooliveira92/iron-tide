@@ -1,3 +1,4 @@
+import type { LegacyFleetInput } from "@bluewave/campaign";
 import { CampaignCompiler, type CampaignCompilerOutput } from "@bluewave/campaign/compiler";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -8,6 +9,7 @@ export function compileProductionCampaignFromArtifact(
   signal: AbortSignal,
   collector: DiagnosticCollector,
   campaignStart?: { startYear: number; startMonth: number },
+  legacyFleet?: LegacyFleetInput,
 ): CampaignCompilerOutput | undefined {
   let loaded: LoadedContentArtifact;
   try {
@@ -39,6 +41,7 @@ export function compileProductionCampaignFromArtifact(
       rulesetVersion: "1.0",
       compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
       campaignStart,
+      ...(legacyFleet === undefined ? {} : { legacyFleet }),
     },
     signal,
     collector,

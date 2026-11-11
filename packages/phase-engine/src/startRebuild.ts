@@ -19,7 +19,7 @@ import {
   type DesignDraft,
   type ShipBuildingContent,
 } from "@bluewave/ship-design";
-import { buildDesignVersion, pricingFor } from "./designVersion.js";
+import { buildDesignVersion, pricingFor } from "@bluewave/campaign";
 import {
   REBUILD_BULGE_REQUIRED,
   rebuildArmamentFindings,

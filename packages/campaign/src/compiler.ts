@@ -13,6 +13,11 @@ import {
   buildDesignsFromData,
   type TorpedoResolver,
 } from "./designCompilation.js";
+import {
+  generateLegacyFleets,
+  type LegacyFleetInput,
+  type LegacyFleetReport,
+} from "./legacyFleet.js";
 import { buildNationStates, buildSlots } from "./nationCompilation.js";
 import {
   decodePrestigeValueSet,
@@ -41,12 +46,14 @@ export interface CampaignCompilerInput {
   fleetSizeSettings?: unknown;
   researchSpeedSettings?: unknown;
   campaignStart?: { startYear: number; startMonth: number };
+  legacyFleet?: LegacyFleetInput;
 }
 
 export interface CampaignCompilerOutput {
   state: CampaignState;
   contentHash: string;
   pack: ContentPack;
+  legacyFleetReport?: LegacyFleetReport;
 }
 
 export type CampaignStart = { startYear: number; startMonth: number };
@@ -112,9 +119,25 @@ export class CampaignCompiler {
     const prestigeRules = resolvePrestigeRules(pack.rulesets, collector);
     if (prestigeRules === undefined || signal.aborted) return undefined;
 
+    const legacy =
+      input.legacyFleet === undefined
+        ? undefined
+        : generateLegacyFleets({
+            ...input.legacyFleet,
+            pack,
+            bundle: input.contentBundle,
+            data,
+            month: campaignMonthId(campaignStart.startYear, campaignStart.startMonth, 0),
+            rulesetVersion: input.rulesetVersion,
+            collector,
+          });
+    if (input.legacyFleet !== undefined && (legacy === undefined || collector.hasErrors))
+      return undefined;
+    if (signal.aborted) return undefined;
+
     const builtNations = buildNationStates(
       pack,
-      data.fleets,
+      legacy === undefined ? data.fleets : [...data.fleets, ...legacy.fleets],
       data.economies,
       data.constructions,
       data.research,
@@ -136,6 +159,8 @@ export class CampaignCompiler {
       torpedoResolverFor(input.contentBundle),
     );
     const designFamilies = buildDesignFamiliesFromData(data.designs);
+    for (const design of legacy?.designs ?? []) designs.set(design.designVersionId, design);
+    for (const family of legacy?.families ?? []) designFamilies.set(family.designFamilyId, family);
 
     const nations = materialiseSeededConstructions(
       builtNations,
@@ -183,6 +208,7 @@ export class CampaignCompiler {
       state: { snapshot, envelope, rawHash },
       contentHash,
       pack,
+      ...(legacy === undefined ? {} : { legacyFleetReport: legacy.report }),
     };
   }
 }

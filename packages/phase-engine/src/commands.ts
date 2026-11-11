@@ -39,7 +39,7 @@ import {
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Result } from "effect";
-import { buildDesignVersion, pricingFor } from "./designVersion.js";
+import { buildDesignVersion, pricingFor } from "@bluewave/campaign";
 import { startDesignStudy, studyExists } from "./designStudies.js";
 import { fundConstructionProject } from "./constructionFunding.js";
 import {
