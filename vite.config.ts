@@ -46,6 +46,25 @@ export default defineConfig({
     rules: {
       "vite-plus/prefer-vite-plus-imports": "error",
     },
+    overrides: [
+      {
+        files: ["apps/desktop/src/renderer/**/*.{ts,tsx}"],
+        excludeFiles: ["**/*.test.{ts,tsx}"],
+        plugins: ["react"],
+        rules: {
+          "react/rules-of-hooks": "error",
+          "react/jsx-key": "error",
+          "react/exhaustive-deps": "warn",
+          "react/no-array-index-key": "warn",
+          "react/refs": "warn",
+          "react/set-state-in-effect": "warn",
+          "react/immutability": "warn",
+          "react/static-components": "warn",
+          "react/preserve-manual-memoization": "warn",
+          "react/use-memo": "warn",
+        },
+      },
+    ],
     env: {
       builtin: true,
     },
