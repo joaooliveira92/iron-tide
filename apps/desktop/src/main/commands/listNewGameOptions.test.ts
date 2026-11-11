@@ -41,6 +41,30 @@ describe("listNewGameOptions", () => {
     expect(uk?.regimeName).toBe("Constitutional Monarchy");
   });
 
+  it("carries each playable nation's authored budget tier, yard capacity, research and gun-quality profile", async () => {
+    const result = await listNewGameOptions(GENERATED_ARTIFACT);
+    expect(result.outcome).toBe("success");
+    if (result.outcome !== "success") return;
+
+    const playable = new Set(result.value.scenarios[0]?.playableNationIds);
+    for (const nation of result.value.nations.filter((n) => playable.has(n.id))) {
+      expect(nation.commissioning, nation.id).not.toBeNull();
+      const facts = nation.commissioning!;
+      expect(typeof facts.budgetLevel, nation.id).toBe("string");
+      expect(facts.yardCapacityKg, nation.id).toBeGreaterThan(0);
+      expect(facts.researchPriorities.length, nation.id).toBeGreaterThan(0);
+      expect(facts.gunQualityBands.length, nation.id).toBeGreaterThan(0);
+    }
+    const uk = result.value.nations.find((n) => n.id === "uk")?.commissioning;
+    expect(uk?.researchPriorities).toEqual(
+      [...(uk?.researchPriorities ?? [])].sort(
+        (a, b) => b.priority - a.priority || a.field.localeCompare(b.field),
+      ),
+    );
+    expect(uk?.researchPriorities[0]).toEqual({ field: "MACHINERY", priority: 4 });
+    expect(uk?.yardCapacityKg).toBe(13_000_000);
+  });
+
   it("offers only the content-backed 1880 scenario and the ten-nation playable roster", async () => {
     const result = await listNewGameOptions(GENERATED_ARTIFACT);
     expect(result.outcome).toBe("success");

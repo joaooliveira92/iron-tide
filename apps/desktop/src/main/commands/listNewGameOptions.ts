@@ -5,6 +5,7 @@ import {
   VARIATION_IDS,
 } from "@bluewave/campaign";
 import { supportedPlayerSlotIds } from "@bluewave/campaign-engine";
+import { compareCodePoints } from "@bluewave/deterministic";
 import { Effect } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type {
@@ -55,14 +56,37 @@ export const listNewGameOptionsProgram: Effect.Effect<
   }
 
   const nationIds = [...output.state.snapshot.nations.keys()].sort((a, b) => a.localeCompare(b));
+  const shipBuilding = yield* contentArtifact.loadShipBuildingContent();
+  const budgetById = new Map<string, string>();
+  for (const nation of output.pack.nations ?? [])
+    budgetById.set(nation.id, nation.navalAppropriation.budgetLevel);
+  const startMonth = `${scenarioDefinition.startYear}-${String(scenarioDefinition.startMonth).padStart(2, "0")}`;
+
   const nations: NewGameNation[] = nationIds.map((id) => {
     const nation = output.state.snapshot.nations.get(id)!;
     const regime = regimeById.get(id);
+    const profile = shipBuilding.navalProfileFor(id, startMonth);
     return {
       id,
       name: nation.name,
       regimeName: regime?.regimeName ?? nation.name,
       regimeType: regime?.regimeType ?? "unknown",
+      commissioning:
+        profile === null
+          ? null
+          : {
+              budgetLevel: budgetById.get(id) ?? null,
+              yardCapacityKg: profile.dock.maximumNewConstructionMassKg,
+              researchPriorities: [...profile.researchPreferences]
+                .sort((a, b) => b.priority - a.priority || compareCodePoints(a.field, b.field))
+                .map((r) => ({ field: r.field, priority: r.priority })),
+              gunQualityBands: (profile.gunQuality?.bands ?? []).map((b) => ({
+                id: b.id,
+                minCaliberUm: b.minCaliberUm,
+                maxCaliberUm: b.maxCaliberUm,
+                quality: b.quality,
+              })),
+            },
     };
   });
 
