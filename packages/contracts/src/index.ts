@@ -1,5 +1,6 @@
 export type Brand<Base, BrandTag extends string> = Base & { readonly __brand: BrandTag };
 
+export * from "./hullFamilyFloors.js";
 export * from "./turnPhases.js";
 export * from "./units.js";
 
