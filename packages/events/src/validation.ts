@@ -52,6 +52,7 @@ export const ConstructionDelayedSchema = Schema.Struct({
   nationId: nonEmptyString,
   reason: nonEmptyString,
   delayMonth: discoveryMonth,
+  months: Schema.optional(positiveSafeInt),
 });
 
 export const ConstructionOverrunSchema = Schema.Struct({

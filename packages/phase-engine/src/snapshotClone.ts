@@ -11,6 +11,7 @@ import type {
   DeclinedBattleRecord,
   DeclineCounterEntry,
   ConstructionMonthUsage,
+  ConstructionDelay,
   ConstructionOverrun,
   ConstructionPackage,
   ConstructionProject,
@@ -233,6 +234,7 @@ const F = {
     "foreignBuilderNationId",
     "delayReasonCode",
     "overruns",
+    "delays",
   ),
   ConstructionMonthUsage: fields<ConstructionMonthUsage>()("month", "used", "startDone"),
   ConstructionPackage: fields<ConstructionPackage>()(
@@ -680,6 +682,8 @@ const cloneConstructionProject = (c: ConstructionProject): ConstructionProject =
     capacityUnits: (v) => (v === undefined ? undefined : { ...(v as Record<string, SafeInt>) }),
     overruns: (v) =>
       v === undefined ? undefined : (v as ConstructionOverrun[]).map((o) => ({ ...o })),
+    delays: (v) =>
+      v === undefined ? undefined : (v as ConstructionDelay[]).map((d) => ({ ...d })),
   });
 const cloneDesignStudy = (st: DesignStudy): DesignStudy =>
   recordClone(st, F.DesignStudy, {

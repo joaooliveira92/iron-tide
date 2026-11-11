@@ -20,6 +20,9 @@ const constructionEvent = (overrides: Record<string, unknown> = {}): Record<stri
   id: "steel_plate_shortage",
   kind: "DELAY",
   probabilityBp: 150,
+  minMonths: 1,
+  maxMonths: 3,
+  pressureMultiplierBp: 20000,
   reasonCode: "STEEL_PLATE_SHORTAGE",
   causeKey: "construction.event.steel_plate_shortage",
   provenance,
@@ -117,6 +120,52 @@ describe("construction event collection through the compiler", () => {
     expect(output).toBeUndefined();
     const error = collector.errors.find((d) => d.code === "CONSTRUCTION_EVENT_I18N_MISSING");
     expect(error?.message).toContain("construction.event.steel_plate_shortage");
+  });
+
+  describe("delay rows", () => {
+    it("rejects an unknown trigger kind with a schema diagnostic", () => {
+      const { output, collector } = compile([constructionEvent({ kind: "SABOTAGE" })]);
+      expect(output).toBeUndefined();
+      expect(collector.errors.some((d) => d.code === "SCHEMA")).toBe(true);
+    });
+
+    it("names a schema diagnostic for a negative hold length", () => {
+      const { output, collector } = compile([constructionEvent({ minMonths: -1 })]);
+      expect(output).toBeUndefined();
+      expect(collector.errors.some((d) => d.code === "SCHEMA")).toBe(true);
+    });
+
+    it("names a schema diagnostic for a pressure multiplier below one", () => {
+      const { output, collector } = compile([constructionEvent({ pressureMultiplierBp: -20000 })]);
+      expect(output).toBeUndefined();
+      expect(collector.errors.some((d) => d.code === "SCHEMA")).toBe(true);
+    });
+
+    it("names a schema diagnostic when minMonths is above maxMonths", () => {
+      const { output, collector } = compile([constructionEvent({ minMonths: 4, maxMonths: 2 })]);
+      expect(output).toBeUndefined();
+      const error = collector.errors.find((d) => d.code === "SCHEMA");
+      expect(error?.message).toContain("minMonths must not be above maxMonths");
+    });
+
+    it("names a schema diagnostic for a missing hold length", () => {
+      const { maxMonths: _max, ...open } = constructionEvent();
+      const { output, collector } = compile([open]);
+      expect(output).toBeUndefined();
+      expect(collector.errors.some((d) => d.code === "SCHEMA")).toBe(true);
+    });
+
+    it("names a missing cause text key", () => {
+      const { output, collector } = compile([constructionEvent()], []);
+      expect(output).toBeUndefined();
+      expect(
+        collector.errors.some(
+          (d) =>
+            d.code === "CONSTRUCTION_EVENT_I18N_MISSING" &&
+            d.message.includes("construction.event.steel_plate_shortage"),
+        ),
+      ).toBe(true);
+    });
   });
 
   describe("overrun rows", () => {

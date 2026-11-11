@@ -23,6 +23,9 @@ const rule = (
   id: "steel_plate_shortage",
   kind: "DELAY",
   probabilityBp: 10_000,
+  minMonths: 2,
+  maxMonths: 2,
+  pressureMultiplierBp: 20_000,
   reasonCode: "STEEL_PLATE_SHORTAGE",
   causeKey: "construction.event.steel_plate_shortage",
   provenance,
@@ -82,6 +85,7 @@ describe("resolveConstructionEvents", () => {
       projectId: "p-a",
       eventId: "steel_plate_shortage",
       reasonCode: "STEEL_PLATE_SHORTAGE",
+      months: 2,
     });
   });
 
@@ -117,8 +121,99 @@ describe("resolveConstructionEvents", () => {
       [subject("p-1")],
     );
     expect(result.delays).toEqual([
-      { projectId: "p-1", eventId: "a_event", reasonCode: "A_EVENT" },
+      { projectId: "p-1", eventId: "a_event", reasonCode: "A_EVENT", months: 2 },
     ]);
+  });
+
+  describe("delay length", () => {
+    it("draws the months inside the authored range from its own stream and records it", () => {
+      const projects = Array.from({ length: 80 }, (_, i) =>
+        subject(`p-${String(i).padStart(3, "0")}`),
+      );
+      const { result, randomLedger } = run([rule({ minMonths: 1, maxMonths: 3 })], projects);
+      const lengths = new Set(result.delays.map((d) => d.months));
+      expect(result.delays).toHaveLength(80);
+      expect([...lengths].sort((a, b) => a - b)).toEqual([1, 2, 3]);
+      const recorded = randomLedger.all.filter((d) => d.outcome === "DELAY_MONTHS");
+      expect(recorded).toHaveLength(80);
+      expect(recorded.map((d) => d.draw)).toEqual(result.delays.map((d) => d.months));
+    });
+
+    it("does not move the hit draw when the length range changes", () => {
+      const projects = Array.from({ length: 60 }, (_, i) =>
+        subject(`p-${String(i).padStart(3, "0")}`),
+      );
+      const narrow = run([rule({ probabilityBp: 1_500, minMonths: 1, maxMonths: 1 })], projects);
+      const wide = run([rule({ probabilityBp: 1_500, minMonths: 1, maxMonths: 3 })], projects);
+      expect(wide.result.delays.map((d) => d.projectId)).toEqual(
+        narrow.result.delays.map((d) => d.projectId),
+      );
+    });
+  });
+
+  describe("eligibility", () => {
+    it("never delays a foreign contract, a dock expansion or any non-home build", () => {
+      const { result, randomLedger } = run(
+        [rule()],
+        [subject("p-foreign", "ACTIVE", { homeBuild: false })],
+      );
+      expect(result.delays).toEqual([]);
+      expect(randomLedger.all).toEqual([]);
+    });
+
+    it("still delays a home build beside a foreign one", () => {
+      const { result } = run(
+        [rule()],
+        [subject("p-a", "ACTIVE", { homeBuild: false }), subject("p-b")],
+      );
+      expect(result.delays.map((d) => d.projectId)).toEqual(["p-b"]);
+    });
+  });
+
+  describe("capacity pressure", () => {
+    const projects = Array.from({ length: 400 }, (_, i) =>
+      subject(`p-${String(i).padStart(3, "0")}`),
+    );
+    const withPressure = (capacityPressureBp: number, rules: readonly ConstructionEvent[]) => {
+      const randomLedger = new RandomLedger();
+      const result = resolveConstructionEvents({
+        nationId: "gbr",
+        campaignMonth: "1885-03",
+        projects,
+        rules,
+        capacityPressureBp,
+        randomEngine: new RandomEngine("pressure-seed"),
+        randomLedger,
+      });
+      return { result, randomLedger };
+    };
+    const base = rule({ probabilityBp: 1_000 });
+
+    it("doubles the delay chance only above one hundred percent", () => {
+      const calm = withPressure(10_000, [base]).result.delays.length;
+      const strained = withPressure(10_001, [base]).result.delays.length;
+      expect(calm).toBe(withPressure(0, [base]).result.delays.length);
+      expect(strained).toBeGreaterThan(calm * 1.5);
+      expect(strained).toBeLessThan(calm * 2.6);
+    });
+
+    it("hits every strained project when the multiplied chance reaches certainty", () => {
+      const sure = rule({ probabilityBp: 6_000, pressureMultiplierBp: 20_000 });
+      expect(withPressure(15_000, [sure]).result.delays).toHaveLength(400);
+    });
+
+    it("leaves overrun chances alone", () => {
+      const over = overrunRule({ probabilityBp: 1_000 });
+      expect(withPressure(20_000, [over]).result.overruns).toEqual(
+        withPressure(0, [over]).result.overruns,
+      );
+    });
+
+    it("records the effective chance in the decision input", () => {
+      const calm = withPressure(0, [base]).randomLedger.all[0]!;
+      const strained = withPressure(20_000, [base]).randomLedger.all[0]!;
+      expect(strained.inputHash).not.toBe(calm.inputHash);
+    });
   });
 
   it("skips an event outside its era window", () => {
@@ -131,7 +226,7 @@ describe("resolveConstructionEvents", () => {
 
   it("records each draw with its stream family, project and outcome", () => {
     const { randomLedger } = run([rule()], [subject("p-1")]);
-    expect(randomLedger.all).toHaveLength(1);
+    expect(randomLedger.all.map((d) => d.outcome)).toEqual(["DELAYED", "DELAY_MONTHS"]);
     const decision = randomLedger.all[0]!;
     expect(decision.streamId).toBe(CONSTRUCTION_EVENT_STREAM_FAMILY);
     expect(decision.entityKey).toBe("p-1");

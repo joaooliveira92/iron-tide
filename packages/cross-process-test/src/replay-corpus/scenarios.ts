@@ -171,6 +171,14 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
     ],
   },
   {
+    id: "production-1880-12m-certain-construction-events",
+    seed: "replay-corpus-certain-construction-events",
+    months: 12,
+    setup: "certain-construction-events",
+    purpose:
+      "Every construction event row fires with certainty: overruns climb to the 30 percent cap, then delays hold each home build in turn.",
+  },
+  {
     id: "production-1880-4m-adriatic-war",
     seed: "replay-corpus-adriatic-war",
     months: 4,

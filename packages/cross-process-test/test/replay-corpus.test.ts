@@ -241,7 +241,7 @@ describe("replay corpus mutation check", () => {
     });
     expect(outcome).toMatchObject({
       ok: false,
-      divergence: { month: 1, where: "random", entryIndex: 697, expected: "(missing)" },
+      divergence: { month: 1, where: "random", entryIndex: 733, expected: "(missing)" },
     });
   });
 

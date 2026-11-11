@@ -19,6 +19,9 @@ function validEvent(): ConstructionEvent {
     id: "steel_plate_shortage",
     kind: "DELAY",
     probabilityBp: 150,
+    minMonths: 1,
+    maxMonths: 3,
+    pressureMultiplierBp: 20_000,
     reasonCode: "STEEL_PLATE_SHORTAGE",
     causeKey: "construction.event.steel_plate_shortage",
     eraWindow: { fromMonth: "1880-01", toMonth: "1899-12" },
@@ -74,6 +77,57 @@ describe("ConstructionEventSchema", () => {
   it("requires provenance", () => {
     const { provenance: _provenance, ...bare } = validEvent();
     expect(decodeOk(ConstructionEventSchema, bare)).toBe(false);
+  });
+
+  describe("delay length and capacity pressure", () => {
+    it("requires the length range and the pressure multiplier", () => {
+      for (const key of ["minMonths", "maxMonths", "pressureMultiplierBp"]) {
+        const full: Record<string, unknown> = { ...validEvent() };
+        const { [key]: _omitted, ...bare } = full;
+        expect(decodeOk(ConstructionEventSchema, bare)).toBe(false);
+      }
+    });
+
+    it("rejects a length below one month, above a year, or fractional", () => {
+      expect(decodeOk(ConstructionEventSchema, { ...validEvent(), minMonths: 0 })).toBe(false);
+      expect(decodeOk(ConstructionEventSchema, { ...validEvent(), maxMonths: 13 })).toBe(false);
+      expect(decodeOk(ConstructionEventSchema, { ...validEvent(), maxMonths: 2.5 })).toBe(false);
+    });
+
+    it("rejects an inverted length range", () => {
+      expect(
+        decodeIssue(ConstructionEventSchema, { ...validEvent(), minMonths: 3, maxMonths: 1 }),
+      ).toContain("minMonths");
+    });
+
+    it("rejects a multiplier that would lower the chance or is absurdly high", () => {
+      expect(
+        decodeOk(ConstructionEventSchema, { ...validEvent(), pressureMultiplierBp: 9_999 }),
+      ).toBe(false);
+      expect(
+        decodeOk(ConstructionEventSchema, { ...validEvent(), pressureMultiplierBp: 100_001 }),
+      ).toBe(false);
+      expect(
+        decodeOk(ConstructionEventSchema, { ...validEvent(), pressureMultiplierBp: 10_000 }),
+      ).toBe(true);
+    });
+
+    it("rejects delay fields on an overrun event", () => {
+      expect(
+        decodeOk(ConstructionEventSchema, {
+          id: "design_change_rework",
+          kind: "OVERRUN",
+          probabilityBp: 120,
+          minBp: 200,
+          maxBp: 1000,
+          capBp: 3000,
+          minMonths: 1,
+          reasonCode: "DESIGN_CHANGE_REWORK",
+          causeKey: "construction.event.design_change_rework",
+          provenance,
+        }),
+      ).toBe(false);
+    });
   });
 
   describe("overrun events", () => {
