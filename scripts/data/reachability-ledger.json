@@ -108,7 +108,7 @@
       "player_verb": "Design and submit a ship",
       "status": "reachable",
       "engine_package": "phase-engine",
-      "engine_modules": ["designVersion"],
+      "engine_modules": [],
       "engine_symbols": ["applySubmitDesign"],
       "main_commands": [
         "submitDesignCommand",

@@ -14,7 +14,7 @@ import {
   type ShipBuildingContent,
 } from "@bluewave/ship-design";
 import { projectBuildProgress, revisePackages } from "./constructionRevision.js";
-import { buildDesignVersion, pricingFor } from "./designVersion.js";
+import { buildDesignVersion, pricingFor } from "@bluewave/campaign";
 import { FOREIGN_CONTRACT_FUNDED_BY_SCHEDULE } from "./foreignConstruction.js";
 
 export function addMonths(month: string, n: number): string {

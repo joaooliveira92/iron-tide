@@ -1,4 +1,4 @@
-import type { CompiledDesignVersion } from "@bluewave/campaign";
+import type { CompiledDesignVersion } from "./state.js";
 import type { CompiledTorpedo } from "@bluewave/armament";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -121,7 +121,7 @@ export function buildDesignVersion(
           },
         }
       : {}),
-    sourceDraft: structuredClone(draft) as unknown as Readonly<Record<string, unknown>>,
+    sourceDraft: { ...structuredClone(draft) },
     ...(draft.colonialServiceFitted === true ? { colonialServiceFitted: true as const } : {}),
     ...(e.armament ? { armament: structuredClone(e.armament) } : {}),
     ...(e.torpedoArmament
