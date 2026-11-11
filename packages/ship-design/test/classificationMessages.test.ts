@@ -80,14 +80,15 @@ const text = (t: ClassifiedShipType, r: ClassificationRules): string =>
 
 describe("classification failure text", () => {
   it("is unchanged under the early ruleset", () => {
+    const pinnedText = (t: ClassifiedShipType, f: ClassFacts) =>
+      classRuleFailures[t](f, DESIGN_22_EARLY).map(({ code, field, message, suggestion }) => ({
+        code,
+        field,
+        message,
+        ...(suggestion === undefined ? {} : { suggestion }),
+      }));
     const now = Object.fromEntries(
-      CLASSIFIED_SHIP_TYPES.map((t) => [
-        t,
-        {
-          high: classRuleFailures[t](high, DESIGN_22_EARLY),
-          low: classRuleFailures[t](low, DESIGN_22_EARLY),
-        },
-      ]),
+      CLASSIFIED_SHIP_TYPES.map((t) => [t, { high: pinnedText(t, high), low: pinnedText(t, low) }]),
     );
     expect(JSON.parse(JSON.stringify(now))).toEqual(pinned);
   });

@@ -3,6 +3,7 @@ import {
   isShipTypeId,
   SHIP_TYPE_LIST,
   SHIP_TYPES,
+  shipTypeRegistryFromRecords,
   type ShipContext,
   type ShipTypeCategory,
   type ShipTypeId,
@@ -15,13 +16,15 @@ export interface ShipTypeChoice {
 }
 
 export function shipTypeChoices(ctx: ShipContext, current: string): ShipTypeChoice[] {
-  const offered = SHIP_TYPE_LIST.filter(
+  const registry = ctx.shipTypes === undefined ? null : shipTypeRegistryFromRecords(ctx.shipTypes);
+  const offered = (registry?.list ?? SHIP_TYPE_LIST).filter(
     (t) =>
       evaluateShipTypeAvailability(t.id, {
         month: ctx.month,
         unlockedTechs: ctx.unlockedTechs,
         capabilities: ctx.capabilities,
         restrictedTypes: ctx.restrictedShipTypes,
+        ...(registry === null ? {} : { definitions: registry.byId }),
       }).available,
   );
   const choices: ShipTypeChoice[] = offered.map((t) => ({
