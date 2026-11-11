@@ -1,14 +1,33 @@
 import { bp, kg, mm } from "@bluewave/ship-design";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { useDesignActions, useDesignState } from "../DesignWorkspaceContext.js";
+import { domesticDock } from "../domesticDock.js";
 import { NumberField, SelectField } from "../fields.js";
+import { BuildStatesNotice } from "./BuildStatesNotice.js";
 import { Panel } from "./Panel.js";
 
 export function HullPanel() {
-  const { draft, content } = useDesignState();
+  const { draft, content, ctx } = useDesignState();
   const { edit, errorFor } = useDesignActions();
+  const format = usePresentationFormat();
   const h = draft.hull;
+  const dock = domesticDock(ctx);
   return (
     <Panel title="Hull and displacement">
+      {dock !== null && (
+        <p
+          className="text-xs text-muted-foreground"
+          data-max-build-kg={dock.maximumNewConstructionMassKg}
+        >
+          Largest ship your docks can build:{" "}
+          <span className="font-medium tabular-nums text-foreground">
+            {format.measurement(dock.maximumNewConstructionMassKg, "mass", {
+              maximumFractionDigits: 0,
+            })}
+          </span>
+        </p>
+      )}
+      <BuildStatesNotice kinds={["yard-too-small"]} />
       <div className="@container">
         <div className="grid grid-cols-2 gap-x-3 gap-y-4 @xl:grid-cols-3">
           <SelectField

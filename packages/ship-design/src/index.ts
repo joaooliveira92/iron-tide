@@ -98,7 +98,10 @@ export {
   type DesignTreasuryFit,
 } from "./designPrice.js";
 export {
+  type DockEligibility,
   type DockRecord,
+  type DockRejection,
+  SHIP_EXCEEDS_DOMESTIC_DOCK_LIMIT,
   dockRecordFor,
   dockRecordFromDefinition,
   missingDockLimits,
@@ -231,6 +234,7 @@ export {
 } from "./shipBuildingContent.js";
 export {
   type AvailabilityReason,
+  availabilityFindings,
   evaluateAmcFleetLimit,
   evaluateShipTypeAvailability,
 } from "./shipTypeAvailability.js";

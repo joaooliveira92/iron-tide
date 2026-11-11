@@ -4,40 +4,52 @@ import {
   SHIP_TYPE_LIST,
   SHIP_TYPES,
   shipTypeRegistryFromRecords,
+  type AvailabilityReason,
   type ShipContext,
   type ShipTypeCategory,
   type ShipTypeId,
 } from "@bluewave/ship-design";
+import { lockedSummary } from "./availabilityText.js";
 
 export interface ShipTypeChoice {
   readonly value: string;
   readonly label: string;
   readonly description?: string;
+  readonly locked: boolean;
+  readonly disabled?: boolean;
+  readonly reasons?: readonly AvailabilityReason[];
+  readonly lockedSummary?: string;
 }
 
 export function shipTypeChoices(ctx: ShipContext, current: string): ShipTypeChoice[] {
   const registry = ctx.shipTypes === undefined ? null : shipTypeRegistryFromRecords(ctx.shipTypes);
-  const offered = (registry?.list ?? SHIP_TYPE_LIST).filter(
-    (t) =>
-      evaluateShipTypeAvailability(t.id, {
-        month: ctx.month,
-        unlockedTechs: ctx.unlockedTechs,
-        capabilities: ctx.capabilities,
-        restrictedTypes: ctx.restrictedShipTypes,
-        ...(registry === null ? {} : { definitions: registry.byId }),
-      }).available,
-  );
-  const choices: ShipTypeChoice[] = offered.map((t) => ({
-    value: t.id,
-    label: `${t.id} · ${t.name}`,
-    description: `${CATEGORY_LABEL[t.category]}. ${t.recommendedUse}`,
-  }));
-  if (!offered.some((t) => t.id === current))
+  const choices: ShipTypeChoice[] = (registry?.list ?? SHIP_TYPE_LIST).map((t) => {
+    const availability = evaluateShipTypeAvailability(t.id, {
+      month: ctx.month,
+      unlockedTechs: ctx.unlockedTechs,
+      capabilities: ctx.capabilities,
+      restrictedTypes: ctx.restrictedShipTypes,
+      ...(registry === null ? {} : { definitions: registry.byId }),
+    });
+    const base = `${CATEGORY_LABEL[t.category]}. ${t.recommendedUse}`;
+    if (availability.available)
+      return { value: t.id, label: `${t.id} · ${t.name}`, description: base, locked: false };
+    const summary = lockedSummary(availability.reasons);
+    return {
+      value: t.id,
+      label: `${t.id} · ${t.name} (locked)`,
+      description: `${summary}. ${base}`,
+      locked: true,
+      disabled: true,
+      reasons: availability.reasons,
+      lockedSummary: summary,
+    };
+  });
+  if (!choices.some((c) => c.value === current))
     choices.unshift({
       value: current,
-      label: isShipTypeId(current)
-        ? `${current} · ${SHIP_TYPES[current].name} (not available)`
-        : `${current} (unknown type)`,
+      label: `${current} (unknown type)`,
+      locked: false,
     });
   return choices;
 }
