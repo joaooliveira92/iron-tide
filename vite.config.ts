@@ -181,6 +181,14 @@ export default defineConfig({
         command: "node scripts/verify-no-unknown-casts.mjs",
         dependsOn: ["gate:git-state"],
       },
+      "gate:module-size-self-test": {
+        command: "node scripts/assert-module-size.mjs --self-test",
+        dependsOn: ["gate:git-state"],
+      },
+      "gate:module-size": {
+        command: "node scripts/assert-module-size.mjs",
+        dependsOn: ["gate:module-size-self-test"],
+      },
       "gate:torpedo-model-constants-self-test": {
         command: "node scripts/verify-no-torpedo-model-constants.mjs --self-test",
         dependsOn: ["gate:git-state"],
@@ -296,6 +304,7 @@ export default defineConfig({
           "gate:dependency-policy",
           "gate:workspace-graph",
           "gate:unknown-casts",
+          "gate:module-size",
           "gate:torpedo-model-constants",
           "gate:upgradepath-refit-readers",
           "gate:test-focus",
