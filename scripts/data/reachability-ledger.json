@@ -268,7 +268,7 @@
       "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": null,
       "evidence_test": null,
-      "decision": "#422, #483, #484"
+      "decision": "#422"
     },
     {
       "id": "form-or-break-alliance",
