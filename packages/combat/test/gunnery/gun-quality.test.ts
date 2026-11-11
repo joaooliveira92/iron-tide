@@ -11,7 +11,7 @@ import {
 } from "@bluewave/combat/gunnery";
 import {
   gunQualityMultipliers,
-  gunQualityRateMultiplierBp,
+  gunQualityReloadMultiplierBp,
   computeEffectiveReloadMs,
   neutralRateFactors,
   type GunneryRateFactors,
@@ -23,21 +23,21 @@ describe("AC-6 gun quality (DESIGN-39 §5, INC-3)", () => {
     expect(GUN_QUALITY_MIN).toBe(-3);
     expect(GUN_QUALITY_MAX).toBe(2);
     const expected: Record<string, [number, number, number]> = {
-      "-3": [8_500, 8_500, 8_500],
-      "-2": [9_000, 9_000, 9_000],
-      "-1": [9_500, 9_500, 9_500],
+      "-3": [8_500, 8_500, 11_500],
+      "-2": [9_000, 9_000, 11_000],
+      "-1": [9_500, 9_500, 10_500],
       "0": [10_000, 10_000, 10_000],
-      "1": [10_500, 10_500, 10_500],
-      "2": [11_000, 11_000, 11_000],
+      "1": [10_500, 10_500, 9_500],
+      "2": [11_000, 11_000, 9_000],
     };
     expect(Object.keys(GUN_QUALITY_TABLE).sort()).toEqual(["-3", "-2", "-1", "0", "1", "2"].sort());
     for (let q = GUN_QUALITY_MIN; q <= GUN_QUALITY_MAX; q++) {
       const m = gunQualityMultipliers(q);
-      expect([m.rangeBp, m.penetrationBp, m.rateBp]).toEqual(expected[String(q)]);
-      expect([m.rangeBp, m.penetrationBp, m.rateBp]).toEqual([
+      expect([m.rangeBp, m.penetrationBp, m.reloadBp]).toEqual(expected[String(q)]);
+      expect([m.rangeBp, m.penetrationBp, m.reloadBp]).toEqual([
         GUN_QUALITY_TABLE[String(q) as keyof typeof GUN_QUALITY_TABLE].rangeBp,
         GUN_QUALITY_TABLE[String(q) as keyof typeof GUN_QUALITY_TABLE].penetrationBp,
-        GUN_QUALITY_TABLE[String(q) as keyof typeof GUN_QUALITY_TABLE].rateBp,
+        GUN_QUALITY_TABLE[String(q) as keyof typeof GUN_QUALITY_TABLE].reloadBp,
       ]);
     }
   });
@@ -63,8 +63,8 @@ describe("AC-6 gun quality (DESIGN-39 §5, INC-3)", () => {
 
   it("the no-rate-effect declaration omits the rate multiplier from the §4 product", () => {
     const withQuality = neutralRateFactors();
-    withQuality.gunQuality = gunQualityRateMultiplierBp(-3);
-    expect(computeEffectiveReloadMs(1_000, withQuality).effectiveReloadMs).toBe(850);
+    withQuality.gunQuality = gunQualityReloadMultiplierBp(-3);
+    expect(computeEffectiveReloadMs(1_000, withQuality).effectiveReloadMs).toBe(1_150);
 
     const withoutQuality = neutralRateFactors() as GunneryRateFactors & {
       gunQuality?: number;
@@ -79,11 +79,40 @@ describe("AC-6 gun quality (DESIGN-39 §5, INC-3)", () => {
   it("quality feeds the §4 rate product via computeEffectiveReloadMs with the correct multiplier", () => {
     for (const q of [GUN_QUALITY_MIN, -1, 0, 1, GUN_QUALITY_MAX]) {
       const factors = neutralRateFactors();
-      factors.gunQuality = gunQualityMultipliers(q).rateBp;
+      factors.gunQuality = gunQualityMultipliers(q).reloadBp;
       const res = computeEffectiveReloadMs(1_000, factors);
-      const ratio = (1_000 * gunQualityMultipliers(q).rateBp) / 10_000;
+      const ratio = (1_000 * gunQualityMultipliers(q).reloadBp) / 10_000;
       expect(res.effectiveReloadMs).toBe(Math.ceil(ratio));
     }
+  });
+
+  it("a better gun reloads faster: +2 is quicker than neutral and -3 is slower", () => {
+    const reloadAt = (q: number): number => {
+      const factors = neutralRateFactors();
+      factors.gunQuality = gunQualityReloadMultiplierBp(q);
+      return computeEffectiveReloadMs(1_000, factors).effectiveReloadMs;
+    };
+    expect(reloadAt(2)).toBe(900);
+    expect(reloadAt(0)).toBe(1_000);
+    expect(reloadAt(-3)).toBe(1_150);
+    expect(reloadAt(2)).toBeLessThan(reloadAt(0));
+    expect(reloadAt(-3)).toBeGreaterThan(reloadAt(0));
+  });
+
+  it("the reload multiplier falls strictly as quality rises across -3..+2 and is 10000 at 0", () => {
+    let previous = Number.POSITIVE_INFINITY;
+    for (let q = GUN_QUALITY_MIN; q <= GUN_QUALITY_MAX; q++) {
+      const bp = gunQualityReloadMultiplierBp(q);
+      expect(bp).toBeLessThan(previous);
+      previous = bp;
+    }
+    expect(gunQualityReloadMultiplierBp(0)).toBe(10_000);
+    expect(gunQualityReloadMultiplierBp(1) - 10_000).toBe(
+      10_000 - gunQualityReloadMultiplierBp(-1),
+    );
+    expect(gunQualityReloadMultiplierBp(2) - 10_000).toBe(
+      10_000 - gunQualityReloadMultiplierBp(-2),
+    );
   });
 });
 
@@ -104,7 +133,7 @@ describe("AC-14 seed: gun_quality_v1 contract + validate guard (fail closed)", (
         ...SHIPPED_GUN_QUALITY_CONTRACT,
         table: {
           ...SHIPPED_GUN_QUALITY_CONTRACT.table,
-          "0": { rangeBp: 9_999, penetrationBp: 10_000, rateBp: 10_000 },
+          "0": { rangeBp: 9_999, penetrationBp: 10_000, reloadBp: 10_000 },
         },
       });
     } catch (e) {
