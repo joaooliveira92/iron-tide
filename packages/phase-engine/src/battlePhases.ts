@@ -17,6 +17,7 @@ import {
   toCampaignBattleResult,
 } from "./battles.js";
 import { battleAbsencesFor } from "./battleAbsences.js";
+import { gunQualityRulesForBattle } from "./battleGunQuality.js";
 import { trainingEffectsFor } from "./battleTraining.js";
 import { applyBattleExperience } from "./battleExperience.js";
 import {
@@ -313,6 +314,11 @@ function resolveViaTacticalAuto(
   resolver: BattleResolver,
 ): void {
   const { campaignMonth, collector, randomLedger } = ctx;
+  const gunQuality = gunQualityRulesForBattle(
+    ctx.engineOptions?.shipBuilding,
+    [attacker["id"], defender["id"]],
+    campaignMonth,
+  );
 
   try {
     const autoResult = resolve({
@@ -344,6 +350,7 @@ function resolveViaTacticalAuto(
       ...(ctx.engineOptions?.gunneryRules === undefined
         ? {}
         : { gunneryRadar: ctx.engineOptions.gunneryRules.radar }),
+      ...(gunQuality === undefined ? {} : { gunQuality }),
       ...(ctx.engineOptions?.missilesRules === undefined
         ? {}
         : { missilesRules: ctx.engineOptions.missilesRules }),

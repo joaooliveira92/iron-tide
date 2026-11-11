@@ -8,6 +8,8 @@ import { campaignMonthId } from "@bluewave/campaign";
 import { resolve } from "@bluewave/combat";
 import type { GunneryRadarRules } from "@bluewave/combat/battleResolution";
 import type { MissilesRules } from "@bluewave/content-schema";
+import type { ShipBuildingContent } from "@bluewave/ship-design";
+import { gunQualityRulesForBattle } from "./battleGunQuality.js";
 import { computeManifestHash } from "@bluewave/combat/generation";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { RandomLedger } from "@bluewave/random";
@@ -93,6 +95,7 @@ export class TacticalReplayVerifier {
     campaignSeed: string,
     gunneryRadar?: GunneryRadarRules,
     missilesRules?: MissilesRules,
+    shipBuilding?: ShipBuildingContent,
   ): TacticalReplayResult {
     const campaignMonth = campaignMonthId(
       snapshot["startYear"],
@@ -114,6 +117,7 @@ export class TacticalReplayVerifier {
           campaignMonth,
           gunneryRadar,
           missilesRules,
+          shipBuilding,
         ),
       );
     }
@@ -128,6 +132,7 @@ export class TacticalReplayVerifier {
     campaignMonth: string,
     gunneryRadar: GunneryRadarRules | undefined,
     missilesRules: MissilesRules | undefined,
+    shipBuilding: ShipBuildingContent | undefined,
   ): TacticalBattleVerification {
     const manifest = resolveBattleManifest(snapshot, battle);
     if (!manifest) {
@@ -167,6 +172,12 @@ export class TacticalReplayVerifier {
       };
     }
 
+    const gunQuality = gunQualityRulesForBattle(
+      shipBuilding,
+      [battle["attackerId"], battle["defenderId"]],
+      campaignMonth,
+    );
+
     let auto: ReturnType<typeof resolve>;
     try {
       auto = resolve({
@@ -182,6 +193,7 @@ export class TacticalReplayVerifier {
         formulaVersion: manifest["formulaVersion"],
         rngVersion: manifest["rngVersion"],
         ...(gunneryRadar === undefined ? {} : { gunneryRadar }),
+        ...(gunQuality === undefined ? {} : { gunQuality }),
         ...(missilesRules === undefined ? {} : { missilesRules }),
         randomLedger: new RandomLedger(),
       });

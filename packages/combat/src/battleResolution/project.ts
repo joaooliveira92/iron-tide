@@ -17,12 +17,7 @@ import { projectPermanentDivision, type TacticalDivision } from "../tactical/div
 import type { TacticalBattleState } from "../tactical/state.js";
 import { computeInitialMovementStates } from "../simulation/spawn.js";
 import type { GunneryBattery } from "../gunnery/resolve.js";
-import {
-  neutralAccuracyFactors,
-  neutralRateFactors,
-  withGunneryStateHash,
-  NO_TARGET,
-} from "../gunnery/index.js";
+import { neutralAccuracyFactors, withGunneryStateHash, NO_TARGET } from "../gunnery/index.js";
 import { GUNNERY_RULESET_VERSION, GUNNERY_FORMULA_VERSION } from "../gunnery/constants.js";
 import type { BattleManifest } from "../generation/manifest.js";
 import {
@@ -44,6 +39,7 @@ import {
 } from "./constants.js";
 import { resolveRangeController } from "./engagement.js";
 import { designRadarFactors, type GunneryRadarRules } from "./gunneryRadar.js";
+import { gunQualityRateFactors, type GunQualityRules } from "./gunQualityRules.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { projectTorpedoes } from "./torpedoProjection.js";
 import type { TorpedoContext } from "../torpedoes/index.js";
@@ -77,6 +73,7 @@ export interface ProjectBattleInput {
   defender: AutoResolverNation;
   rulesetVersion: string;
   gunneryRadar?: GunneryRadarRules;
+  gunQuality?: GunQualityRules;
   missilesRules?: MissileRules;
 }
 
@@ -242,7 +239,11 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
       baseReloadMs: GUNNERY_BASE_RELOAD_MS,
       salvoCount: mainGunsCount,
       preferredType: "ARMOR_PIERCING",
-      rateFactors: neutralRateFactors(),
+      rateFactors: gunQualityRateFactors(
+        input.gunQuality,
+        (u.sideId === "ATTACKER" ? attacker : defender).nationId,
+        armament?.caliberUm ?? (design.mainGunsCaliber as number),
+      ),
       ...(radar.blindFireAllowed ? { blindFireAllowed: true } : {}),
       accuracyFactors: {
         ...neutralAccuracyFactors(GUNNERY_ACCURACY_BASE_BP),

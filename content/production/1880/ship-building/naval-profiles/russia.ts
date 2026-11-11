@@ -388,6 +388,56 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         },
       },
     ],
+    gunQuality: {
+      bands: [
+        {
+          id: "light",
+          minCaliberUm: 1,
+          maxCaliberUm: 152000,
+          quality: -1,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL -1: light guns below 152 mm were mostly foreign-pattern Hotchkiss and Baranovsky types produced in small domestic quantities.",
+          },
+        },
+        {
+          id: "medium",
+          minCaliberUm: 152000,
+          maxCaliberUm: 254000,
+          quality: 0,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL 0: Obukhov Works steel guns in 152 mm to under 254 mm followed Krupp practice and were sound at the neutral level.",
+          },
+        },
+        {
+          id: "heavy",
+          minCaliberUm: 254000,
+          maxCaliberUm: 1000000,
+          quality: 0,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL 0: Obukhov 229 mm and 305 mm guns from Krupp-licensed steel, adequate but slow to produce, neutral at 254 mm and above.",
+          },
+        },
+      ],
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [],
+        note: "PROVISIONAL gun_quality_v1 levels by caliber band (-3..+2, 0 neutral), issue 668. Relative national standing, not measured ballistics.",
+      },
+    },
     designWeights: {
       B: {
         firepowerBp: 11500,

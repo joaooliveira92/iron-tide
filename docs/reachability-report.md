@@ -6,7 +6,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | --- | --- |
 | reachable | 32 |
 | dormant-by-decision | 17 |
-| internal | 14 |
+| internal | 15 |
 
 ## Reachable
 
@@ -72,6 +72,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Row | Capability | Commands |
 | --- | --- | --- |
 | budget-project-command | Budget a project (AI command only) | - |
+| battle-gun-quality-rules | Per-nation gun quality by caliber band applied to battle reload | - |
 | command-lifecycle-definitions | Command definitions for budget, halt, resume and acceleration | - |
 | design-studies | Design study bookkeeping | - |
 | foreign-contract-monthly | Monthly foreign-contract, insight and war-policy steps | - |

@@ -132,8 +132,8 @@ export function resetReloadProgress(): number {
   return 0;
 }
 
-export function gunQualityRateMultiplierBp(quality: number): number {
-  return gunQualityMultipliers(quality).rateBp;
+export function gunQualityReloadMultiplierBp(quality: number): number {
+  return gunQualityMultipliers(quality).reloadBp;
 }
 
 export const gunQualityRulesetVersion = GUNNERY_RULESET_VERSION;

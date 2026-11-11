@@ -20,6 +20,7 @@ import { AUTO_RESOLUTION_UNAVAILABLE } from "../generation/reasonCodes.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { CauseOfLossTracker, type LossCause } from "./causeOfLoss.js";
 import type { GunneryRadarRules } from "./gunneryRadar.js";
+import type { GunQualityRules } from "./gunQualityRules.js";
 import { type AutoResolverNation, projectBattle, type ProjectBattleOutput } from "./project.js";
 import {
   projectAirCombatContext,
@@ -78,6 +79,7 @@ export interface ResolveBattleAutoInput {
   formulaVersion: string;
   rngVersion: string;
   gunneryRadar?: GunneryRadarRules;
+  gunQuality?: GunQualityRules;
   missilesRules?: MissileRules;
   maxMinutes?: number;
   randomLedger?: RandomLedger;
@@ -333,6 +335,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     defender: input.defender,
     rulesetVersion: input.rulesetVersion,
     ...(input.gunneryRadar === undefined ? {} : { gunneryRadar: input.gunneryRadar }),
+    ...(input.gunQuality === undefined ? {} : { gunQuality: input.gunQuality }),
     ...(input.missilesRules === undefined ? {} : { missilesRules: input.missilesRules }),
   });
   const attackerCount = unitsOf(projected, "ATTACKER").length;

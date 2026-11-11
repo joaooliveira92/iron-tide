@@ -431,6 +431,19 @@
       "note": "Emitted only by the AI command generator."
     },
     {
+      "id": "battle-gun-quality-rules",
+      "player_verb": "Per-nation gun quality by caliber band applied to battle reload",
+      "status": "internal",
+      "engine_package": "phase-engine",
+      "engine_modules": ["battleGunQuality"],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": null,
+      "note": "Automatic: derived from the nation's naval profile when a battle is resolved or played."
+    },
+    {
       "id": "command-lifecycle-definitions",
       "player_verb": "Command definitions for budget, halt, resume and acceleration",
       "status": "internal",

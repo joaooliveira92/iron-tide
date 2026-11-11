@@ -296,20 +296,23 @@ export const GUN_QUALITY_MAX = 2 as const;
 export interface GunQualityMultipliers {
   rangeBp: number;
   penetrationBp: number;
-  rateBp: number;
+  reloadBp: number;
 }
 
 export const GUN_QUALITY_TABLE = {
-  "-3": { rangeBp: 8_500, penetrationBp: 8_500, rateBp: 8_500 },
-  "-2": { rangeBp: 9_000, penetrationBp: 9_000, rateBp: 9_000 },
-  "-1": { rangeBp: 9_500, penetrationBp: 9_500, rateBp: 9_500 },
-  "0": { rangeBp: 10_000, penetrationBp: 10_000, rateBp: 10_000 },
-  "1": { rangeBp: 10_500, penetrationBp: 10_500, rateBp: 10_500 },
-  "2": { rangeBp: 11_000, penetrationBp: 11_000, rateBp: 11_000 },
+  "-3": { rangeBp: 8_500, penetrationBp: 8_500, reloadBp: 11_500 },
+  "-2": { rangeBp: 9_000, penetrationBp: 9_000, reloadBp: 11_000 },
+  "-1": { rangeBp: 9_500, penetrationBp: 9_500, reloadBp: 10_500 },
+  "0": { rangeBp: 10_000, penetrationBp: 10_000, reloadBp: 10_000 },
+  "1": { rangeBp: 10_500, penetrationBp: 10_500, reloadBp: 9_500 },
+  "2": { rangeBp: 11_000, penetrationBp: 11_000, reloadBp: 9_000 },
 } as const satisfies Record<string, Readonly<GunQualityMultipliers>>;
+
+export const GUN_QUALITY_TABLE_VERSION = "gun_quality_table_v2" as const;
 
 export interface GunQualityContract {
   policyId: string;
+  tableVersion: string;
   minQuality: number;
   maxQuality: number;
   table: Record<string, Readonly<GunQualityMultipliers>>;
@@ -319,6 +322,7 @@ export interface GunQualityContract {
 
 export const SHIPPED_GUN_QUALITY_CONTRACT: GunQualityContract = {
   policyId: gunneryGunQualityPolicyId,
+  tableVersion: GUN_QUALITY_TABLE_VERSION,
   minQuality: GUN_QUALITY_MIN,
   maxQuality: GUN_QUALITY_MAX,
   table: GUN_QUALITY_TABLE,
@@ -349,7 +353,7 @@ function tableEquals(
       bm !== undefined &&
       am.rangeBp === bm.rangeBp &&
       am.penetrationBp === bm.penetrationBp &&
-      am.rateBp === bm.rateBp
+      am.reloadBp === bm.reloadBp
     );
   });
 }
@@ -360,6 +364,8 @@ export function validateGunQualityContract(
   if (!c) throwGunQualityMismatch(c, "gun_quality_v1 missing contract");
   if (c.policyId !== gunneryGunQualityPolicyId)
     throwGunQualityMismatch(c, "gun_quality_v1 expectant policy id");
+  if (c.tableVersion !== GUN_QUALITY_TABLE_VERSION)
+    throwGunQualityMismatch(c, "gun_quality_v1 table version");
   if (c.minQuality !== GUN_QUALITY_MIN || c.maxQuality !== GUN_QUALITY_MAX)
     throwGunQualityMismatch(c, "gun_quality_v1 bounds (-3..+2)");
   if (!c.table || !tableEquals(c.table, GUN_QUALITY_TABLE))

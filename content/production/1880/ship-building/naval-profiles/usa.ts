@@ -410,6 +410,56 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         },
       },
     ],
+    gunQuality: {
+      bands: [
+        {
+          id: "light",
+          minCaliberUm: 1,
+          maxCaliberUm: 152000,
+          quality: -1,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL -1: the post-Civil-War fleet relied on converted smoothbores and a small Hotchkiss and Gatling stock below 152 mm.",
+          },
+        },
+        {
+          id: "medium",
+          minCaliberUm: 152000,
+          maxCaliberUm: 254000,
+          quality: -2,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL -2: 152 mm to under 254 mm guns were converted Parrott and Dahlgren pieces and early breech-loading conversions before the Gun Foundry Board reforms.",
+          },
+        },
+        {
+          id: "heavy",
+          minCaliberUm: 254000,
+          maxCaliberUm: 1000000,
+          quality: -2,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL -2: heavy muzzle-loading Rodman and Dahlgren smoothbores and few modern steel forgings in 1880, before the Gun Foundry Board of 1883.",
+          },
+        },
+      ],
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [],
+        note: "PROVISIONAL gun_quality_v1 levels by caliber band (-3..+2, 0 neutral), issue 668. Relative national standing, not measured ballistics.",
+      },
+    },
     designWeights: {
       B: {
         firepowerBp: 11500,

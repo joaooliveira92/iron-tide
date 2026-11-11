@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision.
+Decided 2026-11-11 by the owner's delegate: Option B. The ticket forbids new combat math and wires into the existing `gunQualityMultipliers` consumer only; Option A would add a reciprocal, Option B only changes table values and a field name.
 
 ## Trigger
 
@@ -52,4 +52,4 @@ Which direction is correct changes gameplay outcomes and either edits a pinned c
 
 ## Recommendation
 
-Option B if range and penetration will also be wired (one coherent table); otherwise Option A. This PR ships Option C by default.
+Option B if range and penetration will also be wired (one coherent table); otherwise Option A. Resolution: Option B, with `reloadBp` mapped as `10000 - 500 x quality` (+2 is 9000, -3 is 11500) and `GUN_QUALITY_TABLE_VERSION` set to `gun_quality_table_v2`.
