@@ -18,7 +18,51 @@ interface CauseTally {
   overrunWork: number;
 }
 
-function measure() {
+interface SeedMeasure {
+  readonly seed: string;
+  readonly projectMonths: number;
+  readonly drawn: readonly {
+    readonly entityKey: string;
+    readonly outcome: string;
+    readonly reasonCode: string | undefined;
+    readonly draw: number;
+  }[];
+  readonly overrunWork: readonly { readonly reason: string; readonly amount: number }[];
+  readonly delivered: readonly string[];
+}
+
+function measureSeed(seed: string): SeedMeasure {
+  const drawn: SeedMeasure["drawn"][number][] = [];
+  const overrunWork: { reason: string; amount: number }[] = [];
+  const delivered: string[] = [];
+  let projectMonths = 0;
+  for (const executed of executeScenario({
+    id: "construction-events-balance",
+    seed,
+    months: MONTHS,
+  })) {
+    const draws = executed.result.randomLedger.all.filter(
+      (d) => d.streamId === CONSTRUCTION_EVENT_STREAM_FAMILY,
+    );
+    projectMonths += new Set(draws.map((d) => d.entityKey)).size;
+    for (const d of draws) {
+      drawn.push({
+        entityKey: d.entityKey,
+        outcome: d.outcome,
+        reasonCode: d.reasonCode,
+        draw: d.draw,
+      });
+    }
+    for (const event of executed.result.eventLedger.all) {
+      if (event.body.kind === "ConstructionOverrun")
+        overrunWork.push({ reason: event.body.reason, amount: Number(event.body.amount) });
+      if (event.body.kind === "ShipDelivered") delivered.push(event.body.projectId);
+    }
+  }
+  return { seed, projectMonths, drawn, overrunWork, delivered };
+}
+
+function aggregate(measures: readonly SeedMeasure[]) {
   const causes = new Map<string, CauseTally>();
   const tally = (code: string): CauseTally => {
     const found = causes.get(code);
@@ -31,36 +75,23 @@ function measure() {
   const hit = new Set<string>();
   const heldMonths = new Map<string, number>();
   const deliveredIds: string[] = [];
-  for (const seed of SEEDS) {
-    for (const executed of executeScenario({
-      id: "construction-events-balance",
-      seed,
-      months: MONTHS,
-    })) {
-      const drawn = executed.result.randomLedger.all.filter(
-        (d) => d.streamId === CONSTRUCTION_EVENT_STREAM_FAMILY,
-      );
-      projectMonths += new Set(drawn.map((d) => d.entityKey)).size;
-      for (const d of drawn) {
-        const key = `${seed}/${d.entityKey}`;
-        if (d.outcome === "DELAYED") {
-          tally(d.reasonCode ?? "").delays += 1;
-          hit.add(key);
-        } else if (d.outcome === "DELAY_MONTHS") {
-          tally(d.reasonCode ?? "").delayMonths += d.draw;
-          heldMonths.set(key, (heldMonths.get(key) ?? 0) + d.draw);
-        } else if (d.outcome === "OVERRUN") {
-          tally(d.reasonCode ?? "").overruns += 1;
-          hit.add(key);
-        }
-      }
-      for (const event of executed.result.eventLedger.all) {
-        if (event.body.kind === "ConstructionOverrun")
-          tally(event.body.reason).overrunWork += Number(event.body.amount);
-        if (event.body.kind === "ShipDelivered")
-          deliveredIds.push(`${seed}/${event.body.projectId}`);
+  for (const m of measures) {
+    projectMonths += m.projectMonths;
+    for (const d of m.drawn) {
+      const key = `${m.seed}/${d.entityKey}`;
+      if (d.outcome === "DELAYED") {
+        tally(d.reasonCode ?? "").delays += 1;
+        hit.add(key);
+      } else if (d.outcome === "DELAY_MONTHS") {
+        tally(d.reasonCode ?? "").delayMonths += d.draw;
+        heldMonths.set(key, (heldMonths.get(key) ?? 0) + d.draw);
+      } else if (d.outcome === "OVERRUN") {
+        tally(d.reasonCode ?? "").overruns += 1;
+        hit.add(key);
       }
     }
+    for (const w of m.overrunWork) tally(w.reason).overrunWork += w.amount;
+    for (const id of m.delivered) deliveredIds.push(`${m.seed}/${id}`);
   }
   return { causes, projectMonths, hit, heldMonths, deliveredIds };
 }
@@ -71,8 +102,8 @@ const perHundred = (count: number, projectMonths: number): string =>
 const percent = (part: number, whole: number): string =>
   whole === 0 ? "n/a" : `${((part * 100) / whole).toFixed(1)}%`;
 
-function buildReport(): string {
-  const { causes, projectMonths, hit, heldMonths, deliveredIds } = measure();
+function buildReport(measures: readonly SeedMeasure[]): string {
+  const { causes, projectMonths, hit, heldMonths, deliveredIds } = aggregate(measures);
   const late = deliveredIds.filter((id) => (heldMonths.get(id) ?? 0) > 0).length;
   const costHit = deliveredIds.filter((id) => hit.has(id)).length;
   const rows = [...causes.entries()]
@@ -107,8 +138,14 @@ function buildReport(): string {
 }
 
 describe("construction events balance report", () => {
+  const measures = new Map<string, SeedMeasure>();
+
+  it.each(SEEDS)("simulates seed %s", (seed) => {
+    measures.set(seed, measureSeed(seed));
+  });
+
   it("matches the generated report", () => {
-    const report = buildReport();
+    const report = buildReport(SEEDS.map((seed) => measures.get(seed) ?? measureSeed(seed)));
     if (process.env["CONSTRUCTION_EVENTS_REPORT_WRITE"] === "1") writeFileSync(REPORT, report);
     expect(readFileSync(REPORT, "utf8")).toBe(report);
   });
