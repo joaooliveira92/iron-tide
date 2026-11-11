@@ -5,7 +5,7 @@ import type {
 } from "../../../../shared/turn-message-contract.js";
 import { resolveMessage } from "../../../content/uiCatalogue.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
-import { constructionMessageInterpolation } from "./construction-message-text.js";
+import { constructionMessageBody } from "./construction-message-text.js";
 import {
   SummaryDelta,
   SummaryRow,
@@ -68,10 +68,8 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
             {resolveMessage(message.titleKey, message.interpolation)}
           </p>
           <p className="text-muted-foreground">
-            {resolveMessage(
-              message.bodyKey,
-              constructionMessageInterpolation(message.bodyKey, message.interpolation, format),
-            )}
+            {constructionMessageBody(message.bodyKey, message.interpolation, format) ??
+              resolveMessage(message.bodyKey, message.interpolation)}
           </p>
           {message.subjectRefs.length > 0 && (
             <div className="mt-1 flex flex-wrap gap-1">

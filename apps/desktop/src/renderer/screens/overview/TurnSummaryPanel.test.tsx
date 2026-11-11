@@ -86,11 +86,9 @@ describe("TurnSummaryPanel construction causes (#584 slice 4)", () => {
       locale: "en-US",
       strings: {
         "messages.construction.delayed.title": "Construction delayed",
-        "messages.construction.delayed.body":
-          "A build was delayed by {months} from {delayMonth}: {reason}.",
+        "messages.construction.delayed.body": "Project {projectId} was delayed ({reason}).",
         "messages.construction.overrun.title": "Construction cost overrun",
-        "messages.construction.overrun.body":
-          "A build's cost rose by {amount} from {overrunMonth}: {reason}.",
+        "messages.construction.overrun.body": "Project {projectId} needs {amount} more work.",
         "construction.event.steel_plate_shortage": "a steel plate shortage at the supplier",
         "construction.event.design_change_rework": "rework after a design change",
         "messages.generic.body": "Something happened.",
