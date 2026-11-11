@@ -33,6 +33,7 @@ export interface CommandBarProps {
   readonly shipTypeName: string;
   readonly shipTypeIcon: ReactNode;
   readonly developedFrom: string;
+  readonly unitsText?: string;
   readonly canUndo: boolean;
   readonly canRedo: boolean;
   readonly onUndo: () => void;
@@ -59,6 +60,7 @@ export function CommandBar({
   shipTypeName,
   shipTypeIcon,
   developedFrom,
+  unitsText,
   canUndo,
   canRedo,
   onUndo,
@@ -106,6 +108,7 @@ export function CommandBar({
         </Tip>
         <p className="min-w-0 truncate text-xs text-muted-foreground">
           Developed from {developedFrom}
+          {unitsText !== undefined && <span className="tabular-nums"> · {unitsText}</span>}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">

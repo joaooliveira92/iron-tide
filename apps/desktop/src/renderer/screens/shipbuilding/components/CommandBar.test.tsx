@@ -48,6 +48,16 @@ describe("CommandBar", () => {
     expect(within(bar()).queryByText("Developed from Britain 1880 Cruiser")).toBeNull();
   });
 
+  it("shows the price in units beside the baseline name, as the forecast states it", () => {
+    const { unmount } = render(
+      <CommandBar {...props({ developedFrom: "Nelson Pilot", unitsText: "3 units" })} />,
+    );
+    expect(within(bar()).getByText("Developed from Nelson Pilot")).toBeTruthy();
+    expect(within(bar()).getByText("· 3 units")).toBeTruthy();
+    unmount();
+    render(<CommandBar {...props({ developedFrom: "Nelson Pilot" })} />);
+    expect(within(bar()).queryByText(/units/)).toBeNull();
+  });
   it("shows Autosaved only when the design autosaves, and never a save button", () => {
     const { rerender } = render(<CommandBar {...props()} />);
     expect(within(bar()).queryByText("Autosaved")).toBeNull();

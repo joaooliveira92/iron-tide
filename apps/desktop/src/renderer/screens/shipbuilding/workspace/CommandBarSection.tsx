@@ -17,6 +17,7 @@ export function CommandBarSection() {
     baseline,
     preset,
     developedFrom,
+    price,
     autosave,
     nameInputRef,
   } = useShipbuildingState();
@@ -34,6 +35,7 @@ export function CommandBarSection() {
       shipTypeName={plainShipTypeName(shipType)}
       shipTypeIcon={<ShipTypeIcon aria-hidden="true" className="size-4" />}
       developedFrom={developedFrom}
+      unitsText={price.unitsText}
       canUndo={canUndo}
       canRedo={canRedo}
       onUndo={undo}
