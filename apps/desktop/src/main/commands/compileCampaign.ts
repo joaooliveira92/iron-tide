@@ -102,6 +102,9 @@ export const compileCampaignProgram: CommandHandler<"compileCampaign"> = (config
       campaignSeed: configuration.campaignSeed,
       month: { month: session.currentMonth, year: session.currentYear },
       state: saveableState,
+      ...(output.legacyFleetReport === undefined
+        ? {}
+        : { legacyFleetReport: output.legacyFleetReport }),
     });
 
     return { outcome: "success", value: { sessionId }, diagnostics: [] };

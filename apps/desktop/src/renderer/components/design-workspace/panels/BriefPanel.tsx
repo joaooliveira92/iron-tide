@@ -2,7 +2,9 @@ import { Badge } from "../../ui/badge.js";
 import { formatExplanation } from "../../../../shared/explanation-text.js";
 import { shipTypeIcon } from "../ship-type-icon.js";
 import { NumberField, SelectField } from "../fields.js";
+import { buildStates } from "../buildStates.js";
 import { shipTypeChoices } from "../shipTypes.js";
+import { BuildStatesNotice } from "./BuildStatesNotice.js";
 import { NOT_CLASSIFIED, shipTypeValue, TERMS } from "../design-terms.js";
 import { Panel } from "./Panel.js";
 import { TypeRequirements } from "./TypeRequirements.js";
@@ -32,7 +34,7 @@ export function BriefPanel() {
     ...view.findingsBySeverity.CRITICAL,
     ...view.findingsBySeverity.WARNING,
     ...view.findingsBySeverity.ADVISORY,
-  ].filter((f) => f.subject?.settings === "brief");
+  ].filter((f) => f.subject?.settings === "brief" && buildStates([f], null, String).length === 0);
   const mismatch = view.naturalClass !== null && view.naturalClass !== r.category;
   return (
     <Panel title="Design brief">
@@ -99,6 +101,7 @@ export function BriefPanel() {
         />
       </div>
       <TypeRequirements requirements={view.requirements} />
+      <BuildStatesNotice kinds={["class-locked", "technology-unavailable", "class-mismatch"]} />
       {briefFindings.length > 0 && (
         <ul aria-label="Findings about the ship type" className="space-y-1 text-xs">
           {briefFindings.map((f, i) => (

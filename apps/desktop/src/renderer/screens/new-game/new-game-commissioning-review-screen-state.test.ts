@@ -1,7 +1,7 @@
 import { ARCHETYPE_PRESETS, type ArchetypeSelection } from "@bluewave/campaign-engine";
 import { describe, expect, it } from "vite-plus/test";
 import { PLAYABLE_SLOT_COUNTRY_IDS } from "../../content/nationAssetManifest.js";
-import type { NewGameOptions } from "../../../shared/new-game-contract.js";
+import type { NewGameNation, NewGameOptions } from "../../../shared/new-game-contract.js";
 import { defaultFleetMethod } from "./new-game-fleet-method-screen-state.js";
 import { defaultCampaignIdentity } from "./new-game-identity-screen-state.js";
 import {
@@ -75,6 +75,11 @@ describe("buildSummaryRows", () => {
       "Nation",
       "Era",
       "Fleet size",
+      "Budget tier",
+      "Yard capacity",
+      "Research profile",
+      "Gun quality",
+      "Campaign seed",
       "Research Pace",
       "Technology Variation",
       "Historical Budget",
@@ -135,6 +140,87 @@ describe("buildSummaryRows", () => {
     expect(rows.find((row) => row.label === "Difficulty")?.group).toBe("uncertainty");
     expect(rows.find((row) => row.label === "Campaign name")?.group).toBe("identity");
     expect(rows.every((row) => row.icon.length > 0)).toBe(true);
+  });
+});
+
+describe("buildSummaryRows commissioning facts", () => {
+  const withFacts = (commissioning: NewGameNation["commissioning"]): NewGameOptions => ({
+    ...options,
+    nations: [
+      {
+        id: "uk",
+        name: "United Kingdom",
+        regimeName: "Constitutional Monarchy",
+        regimeType: "monarchy",
+        commissioning,
+      },
+    ],
+  });
+  const rowsFor = (opts: NewGameOptions) =>
+    buildSummaryRows({
+      nationId: "uk",
+      options: opts,
+      preferences,
+      archetype,
+      identity,
+      fleetMethod: defaultFleetMethod(),
+    });
+  const value = (rows: ReturnType<typeof rowsFor>, label: string) =>
+    rows.find((row) => row.label === label)?.value;
+
+  it("renders the domain facts for the chosen nation and the seed", () => {
+    const rows = rowsFor(
+      withFacts({
+        budgetLevel: "high",
+        yardCapacityKg: 12_500_000,
+        researchPriorities: [
+          { field: "naval_gunnery", priority: 4 },
+          { field: "armour_plate", priority: 3 },
+          { field: "propulsion", priority: 2 },
+          { field: "fire_control", priority: 1 },
+        ],
+        gunQualityBands: [
+          { id: "light", minCaliberUm: 0, maxCaliberUm: 100_000, quality: 80 },
+          { id: "heavy", minCaliberUm: 100_000, maxCaliberUm: 400_000, quality: 95 },
+        ],
+      }),
+    );
+    expect(value(rows, "Budget tier")).toBe("High");
+    expect(value(rows, "Yard capacity")).toBe("12,500 t");
+    expect(value(rows, "Research profile")).toBe("Naval gunnery, Armour plate, Propulsion");
+    expect(value(rows, "Gun quality")).toBe("2 authored bands, quality 80–95");
+    expect(value(rows, "Campaign seed")).toBe("TEST");
+    for (const label of [
+      "Budget tier",
+      "Yard capacity",
+      "Research profile",
+      "Gun quality",
+      "Campaign seed",
+    ]) {
+      expect(rows.find((row) => row.label === label)?.group).toBe("command");
+    }
+  });
+
+  it("says Not authored when the nation has no gun-quality bands or research priorities", () => {
+    const rows = rowsFor(
+      withFacts({
+        budgetLevel: "low",
+        yardCapacityKg: 500_000,
+        researchPriorities: [],
+        gunQualityBands: [],
+      }),
+    );
+    expect(value(rows, "Gun quality")).toBe("Not authored");
+    expect(value(rows, "Research profile")).toBe("Not authored");
+  });
+
+  it("says Not available when the facts are missing", () => {
+    const rows = rowsFor(withFacts(null));
+    expect(value(rows, "Budget tier")).toBe("Not available");
+    expect(value(rows, "Yard capacity")).toBe("Not available");
+    expect(value(rows, "Research profile")).toBe("Not available");
+    expect(value(rows, "Gun quality")).toBe("Not available");
+    expect(value(rowsFor(options), "Budget tier")).toBe("Not available");
   });
 });
 

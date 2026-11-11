@@ -1,3 +1,4 @@
+import type { LegacyFleetReport } from "@bluewave/campaign";
 import type {
   BattleManifest,
   BattleResolution,
@@ -32,6 +33,10 @@ export interface SeedCampaignBattleDrillResult {
   readonly strengthScale: number;
   readonly moved: boolean;
   readonly excludedShipIds: readonly string[];
+}
+
+export interface ExportGenerationReportResult {
+  readonly report: LegacyFleetReport;
 }
 
 export interface CompileCampaignResult {

@@ -19,6 +19,7 @@ import type {
 } from "./player-battle-contract.js";
 import type {
   CompileCampaignResult,
+  ExportGenerationReportResult,
   CopyCampaignResult,
   GenerateBattleResult,
   InspectBattleHistoryResult,
@@ -212,6 +213,10 @@ export interface WriteUiStatePayload extends UiStatePatch {
 export const campaignCommandShapes = {
   listNewGameOptions: command(NO_PAYLOAD, resultType<NewGameOptions>()),
   compileCampaign: command(CampaignConfigurationPayloadSchema, resultType<CompileCampaignResult>()),
+  exportGenerationReport: command(
+    SessionIdPayloadSchema,
+    resultType<ExportGenerationReportResult>(),
+  ),
   inspectCampaign: command(SessionIdPayloadSchema, resultType<InspectCampaignResult>()),
   inspectOpeningBriefing: command(
     SessionIdPayloadSchema,

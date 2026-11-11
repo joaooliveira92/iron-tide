@@ -1,6 +1,7 @@
-import type { CampaignState } from "@bluewave/campaign";
+import type { CampaignState, LegacyFleetReport } from "@bluewave/campaign";
 
 export interface CampaignSessionRecord {
+  readonly legacyFleetReport?: LegacyFleetReport;
   readonly sessionId: string;
   readonly saveDir: string;
   readonly playerSlotId: string;

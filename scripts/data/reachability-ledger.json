@@ -840,6 +840,19 @@
       "note": "Registered only under DEBUG_MODE. Kept as internal debug tooling; not a player verb."
     },
     {
+      "id": "debug-generation-report-export",
+      "player_verb": "Copy the fleet generation report in the debug screen",
+      "status": "internal",
+      "engine_package": "desktop",
+      "engine_modules": [],
+      "engine_symbols": [],
+      "main_commands": ["exportGenerationReport"],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": null,
+      "note": "Debug builds only; a loaded save has no report until #670."
+    },
+    {
       "id": "national-traits",
       "player_verb": "Play a nation whose national traits change shipbuilding, prestige loss, budget and surprise attack",
       "status": "dormant-by-decision",

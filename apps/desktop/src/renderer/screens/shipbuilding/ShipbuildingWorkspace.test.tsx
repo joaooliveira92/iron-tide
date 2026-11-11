@@ -100,10 +100,10 @@ describe("Shipbuilding workspace shell", () => {
     expect(screen.getByRole("tab", { name: "Finish" }).getAttribute("aria-selected")).toBe("true");
   });
 
-  it("reaches the validation findings from the Review section tab", () => {
+  it("reaches the validation findings from the Review section tab", async () => {
     render(<ShipbuildingWorkspace />);
     openMap("Review");
-    expect(screen.getByRole("region", { name: "Validation" })).toBeTruthy();
+    expect(await screen.findByRole("region", { name: "Validation" })).toBeTruthy();
   });
 
   it("offers no save control: drafts autosave, and outside a campaign there is nowhere to save", () => {
@@ -252,11 +252,11 @@ describe("Section tabs and panel routing", () => {
     expect(finish.getAttribute("aria-selected")).toBe("true");
   });
 
-  it("reaches the rebuild surface from the Review section", () => {
+  it("reaches the rebuild surface from the Review section", async () => {
     render(<ShipbuildingWorkspace />);
     openMap("Review");
     openTab("Rebuild");
-    expect(within(inspector()).getByText(/open a campaign to rebuild/i)).toBeTruthy();
+    expect(await within(inspector()).findByText(/open a campaign to rebuild/i)).toBeTruthy();
   });
 
   it("offers 'Rebuild a completed ship' from the design actions menu", () => {
