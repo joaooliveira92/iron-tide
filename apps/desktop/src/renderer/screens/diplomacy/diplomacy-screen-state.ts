@@ -1,3 +1,4 @@
+import type { DiplomacyPeaceTermRef } from "@bluewave/campaign-engine";
 import type {
   DiplomacyScreenProjection,
   DiplomacyCommandBody,
@@ -44,6 +45,7 @@ export interface DiplomacyScreenRejectedWithRevision extends DiplomacyScreenActi
 export type DiplomacyActionKind =
   | "DeclareWar"
   | "AcceptPeace"
+  | "ProposePeace"
   | "FormAlliance"
   | "BreakAlliance"
   | "FormNonAggressionPact"
@@ -55,6 +57,7 @@ export interface DiplomacyDraftCommand {
   readonly partnerNationId: string;
   readonly warId?: string;
   readonly areaId?: string;
+  readonly term?: DiplomacyPeaceTermRef;
 }
 
 export function initialDiplomacyScreenState(): DiplomacyScreenState {
@@ -78,7 +81,7 @@ export function diplomacyBeginAction(
   kind: DiplomacyActionKind,
 ): DiplomacyScreenState {
   if (state.kind !== "loaded" && state.kind !== "submitted") return state;
-  if (kind === "AcceptPeace") return state;
+  if (kind === "AcceptPeace" || kind === "ProposePeace") return state;
   const draft: DiplomacyDraftCommand = {
     kind,
     partnerNationId,
@@ -100,6 +103,26 @@ export function diplomacyBeginPeace(
       kind: "AcceptPeace",
       partnerNationId: opponent,
       warId: war.warId,
+    },
+    notice: null,
+  };
+}
+
+export function diplomacyBeginPeaceTerms(
+  state: DiplomacyScreenState,
+  war: DiplomacyScreenProjection["wars"][number],
+  term: DiplomacyPeaceTermRef,
+): DiplomacyScreenState {
+  if (state.kind !== "loaded" && state.kind !== "submitted") return state;
+  if (war.status !== "ACTIVE") return state;
+  const opponent = war.playerSide === "attacker" ? war.defenderId : war.attackerId;
+  return {
+    ...state,
+    draftCommand: {
+      kind: "ProposePeace",
+      partnerNationId: opponent,
+      warId: war.warId,
+      term,
     },
     notice: null,
   };
@@ -205,6 +228,10 @@ export function diplomacyDraftToCommand(draft: DiplomacyDraftCommand): Diplomacy
       return { type: "DeclareWar", targetNationId: draft.partnerNationId };
     case "AcceptPeace":
       return draft.warId !== undefined ? { type: "AcceptPeace", warId: draft.warId } : null;
+    case "ProposePeace":
+      return draft.warId !== undefined && draft.term !== undefined
+        ? { type: "ProposePeace", warId: draft.warId, term: draft.term }
+        : null;
     case "FormAlliance":
       return { type: "FormAlliance", partnerNationId: draft.partnerNationId };
     case "BreakAlliance":

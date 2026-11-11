@@ -544,6 +544,27 @@
       }
     },
     {
+      "file": "packages/campaign-engine/src/peace-offer.ts",
+      "type": "DiplomacyPeaceTerm",
+      "area": "strategic",
+      "issue": "#484",
+      "covered": {
+        "costExplanation": "peace_cost",
+        "remainingExplanation": "peace_remaining"
+      },
+      "exempt": {}
+    },
+    {
+      "file": "packages/campaign-engine/src/peace-offer.ts",
+      "type": "DiplomacyPeaceOffer",
+      "area": "strategic",
+      "issue": "#484",
+      "covered": {
+        "budgetExplanation": "peace_budget"
+      },
+      "exempt": {}
+    },
+    {
       "file": "apps/desktop/src/shared/diplomacy-contract.ts",
       "type": "DiplomacyScreenProjection",
       "area": "strategic",

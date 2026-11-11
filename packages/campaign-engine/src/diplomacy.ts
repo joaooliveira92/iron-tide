@@ -1,6 +1,16 @@
 import type { CampaignState } from "@bluewave/campaign";
 import type { PlayerProjectionMonth } from "./projection.js";
 import { compareCodePoints } from "@bluewave/deterministic";
+import { buildPeaceOffer, type DiplomacyPeaceOffer } from "./peace-offer.js";
+
+function peaceOfferField(
+  snapshot: CampaignState["snapshot"],
+  war: CampaignState["snapshot"]["wars"]["wars"][number],
+  playerNationId: string,
+): { readonly peaceOffer?: DiplomacyPeaceOffer } {
+  const peaceOffer = buildPeaceOffer(snapshot, war, playerNationId);
+  return peaceOffer === undefined ? {} : { peaceOffer };
+}
 
 export type DiplomacyRelationKind = "neutral" | "allied" | "at_war" | "trade_agreement";
 
@@ -70,6 +80,7 @@ export interface DiplomacyWarRow {
   readonly status: DiplomacyWarStatus;
   readonly endDate?: string;
   readonly playerSide: "attacker" | "defender";
+  readonly peaceOffer?: DiplomacyPeaceOffer;
 }
 
 export interface DiplomacyBlockadeRow {
@@ -148,6 +159,7 @@ export function buildDiplomacyScreenProjection(
       playerSide: w.attackerSideMembers.includes(playerSlotId)
         ? ("attacker" as const)
         : ("defender" as const),
+      ...peaceOfferField(snapshot, w, playerSlotId),
     }))
     .sort((a, b) => compareCodePoints(a.warId, b.warId));
 

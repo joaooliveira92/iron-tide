@@ -359,6 +359,9 @@ importers:
       '@bluewave/campaign':
         specifier: workspace:*
         version: link:../campaign
+      '@bluewave/commands':
+        specifier: workspace:*
+        version: link:../commands
       '@bluewave/content-schema':
         specifier: workspace:*
         version: link:../content-schema
