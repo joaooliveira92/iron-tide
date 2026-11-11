@@ -68,6 +68,33 @@ describe("domestic new-construction eligibility (DESIGN-16 section 4.2)", () => 
     expect(r.rejections.map((x) => x.code)).toEqual([SHIP_EXCEEDS_DOMESTIC_DOCK_LIMIT]);
   });
 
+  it.each([
+    [7_999_999, true, 0],
+    [8_000_000, true, 0],
+    [8_000_001, false, 1],
+  ])(
+    "boundary at capacity: displacement %i kg eligible=%s with %i rejection(s)",
+    (displacementKg, eligible, rejectionCount) => {
+      const r = newConstructionDockEligibility(fullDock(8_000_000), demand({ displacementKg }));
+      expect(r.eligible).toBe(eligible);
+      expect(r.rejections).toHaveLength(rejectionCount);
+    },
+  );
+
+  it("carries required and capacity kilograms on the mass rejection", () => {
+    const r = newConstructionDockEligibility(
+      fullDock(8_000_000),
+      demand({ displacementKg: 8_000_001 }),
+    );
+    expect(r.rejections).toEqual([
+      expect.objectContaining({
+        code: SHIP_EXCEEDS_DOMESTIC_DOCK_LIMIT,
+        requiredKg: 8_000_001,
+        capacityKg: 8_000_000,
+      }),
+    ]);
+  });
+
   it("fails a partial dock with DOCK_LIMIT_MISSING before any mass check", () => {
     const r = newConstructionDockEligibility({ maximumNewConstructionMassKg: 1_000_000 }, demand());
     expect(r.rejections.map((x) => x.code)).toEqual([DOCK_LIMIT_MISSING]);
