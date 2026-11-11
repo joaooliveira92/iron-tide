@@ -249,6 +249,7 @@ export {
   type RosterLevel,
   type StarterDesign,
 } from "./shipTypeRoster.js";
+export { shipTypeRegistryFromRecords, type ShipTypeRegistry } from "./shipTypeRegistry.js";
 export {
   HULL_TYPE_FOR_SHIP_TYPE,
   isShipTypeId,

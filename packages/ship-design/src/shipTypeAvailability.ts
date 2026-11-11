@@ -1,6 +1,7 @@
 import type { ClassificationRules } from "./classification.js";
-import { shipTarget, type Finding } from "./findings.js";
+import { shipTarget, type DiagnosticParams, type Finding } from "./findings.js";
 import {
+  eraBandOf,
   eraBandReached,
   isShipTypeId,
   SHIP_TYPES,
@@ -38,6 +39,9 @@ export const availabilityMessage = (code: AvailabilityReasonCode): string => MES
 export interface AvailabilityReason {
   readonly code: AvailabilityReasonCode;
   readonly message: string;
+  readonly ruleId: string;
+  readonly messageKey: string;
+  readonly params: DiagnosticParams;
 }
 
 export interface ShipTypeAvailability {
@@ -54,9 +58,12 @@ export interface AvailabilityContext {
   readonly definitions?: ReadonlyMap<ShipTypeId, ShipTypeDefinition> | undefined;
 }
 
-const reason = (code: AvailabilityReasonCode): AvailabilityReason => ({
+const reason = (code: AvailabilityReasonCode, params: DiagnosticParams): AvailabilityReason => ({
   code,
   message: MESSAGES[code],
+  ruleId: `AVAILABILITY.${code}`,
+  messageKey: `design.availability.${code.replace(/^SHIP_TYPE_/, "").toLowerCase()}`,
+  params,
 });
 
 export function evaluateShipTypeAvailability(
@@ -64,20 +71,41 @@ export function evaluateShipTypeAvailability(
   ctx: AvailabilityContext,
 ): ShipTypeAvailability {
   if (!isShipTypeId(type))
-    return { type, available: false, reasons: [reason("SHIP_TYPE_UNREGISTERED")] };
+    return {
+      type,
+      available: false,
+      reasons: [reason("SHIP_TYPE_UNREGISTERED", { shipType: type })],
+    };
   const def: ShipTypeDefinition = ctx.definitions?.get(type) ?? SHIP_TYPES[type];
   const need = def.availability;
+  const shipType = { shipType: type };
   const reasons: AvailabilityReason[] = [];
-  if (!need.mechanicsImplemented) reasons.push(reason("SHIP_TYPE_MECHANICS_NOT_IMPLEMENTED"));
-  if (!eraBandReached(ctx.month, need.fromEra)) reasons.push(reason("SHIP_TYPE_ERA_NOT_REACHED"));
+  if (!need.mechanicsImplemented)
+    reasons.push(reason("SHIP_TYPE_MECHANICS_NOT_IMPLEMENTED", shipType));
+  if (!eraBandReached(ctx.month, need.fromEra))
+    reasons.push(
+      reason("SHIP_TYPE_ERA_NOT_REACHED", {
+        ...shipType,
+        fromEra: need.fromEra,
+        currentEra: eraBandOf(ctx.month) ?? "UNKNOWN",
+        month: ctx.month,
+      }),
+    );
   if (need.requiresTech !== null && !ctx.unlockedTechs.has(need.requiresTech))
-    reasons.push(reason("SHIP_TYPE_TECHNOLOGY_REQUIRED"));
+    reasons.push(
+      reason("SHIP_TYPE_TECHNOLOGY_REQUIRED", { ...shipType, techId: need.requiresTech }),
+    );
   if (
     need.requiresCapability !== null &&
     !(ctx.capabilities?.has(need.requiresCapability) ?? false)
   )
-    reasons.push(reason("SHIP_TYPE_CAPABILITY_REQUIRED"));
-  if (ctx.restrictedTypes?.includes(type)) reasons.push(reason("SHIP_TYPE_RESTRICTED"));
+    reasons.push(
+      reason("SHIP_TYPE_CAPABILITY_REQUIRED", {
+        ...shipType,
+        capabilityId: need.requiresCapability,
+      }),
+    );
+  if (ctx.restrictedTypes?.includes(type)) reasons.push(reason("SHIP_TYPE_RESTRICTED", shipType));
   return { type, available: reasons.length === 0, reasons };
 }
 
@@ -104,13 +132,23 @@ export function evaluateAmcFleetLimit(
     Math.floor((fleet.cruisers * rules.amcFleetShareBp) / 10_000),
     rules.amcFleetMinAllowance,
   );
-  if (fleet.amc + 1 > total) reasons.push(reason("AMC_FLEET_LIMIT_EXCEEDED"));
+  if (fleet.amc + 1 > total)
+    reasons.push(
+      reason("AMC_FLEET_LIMIT_EXCEEDED", { shipType: "AMC", allowed: total, current: fleet.amc }),
+    );
   if (designedSpeedUms >= rules.amcFastSpeedUms) {
     const fast = Math.max(
       Math.floor(((fleet.amc + 1) * rules.amcFastShareBp) / 10_000),
       rules.amcFastMinAllowance,
     );
-    if (fleet.fastAmc + 1 > fast) reasons.push(reason("AMC_FAST_LIMIT_EXCEEDED"));
+    if (fleet.fastAmc + 1 > fast)
+      reasons.push(
+        reason("AMC_FAST_LIMIT_EXCEEDED", {
+          shipType: "AMC",
+          allowed: fast,
+          current: fleet.fastAmc,
+        }),
+      );
   }
   return { type: "AMC", available: reasons.length === 0, reasons };
 }
@@ -129,5 +167,8 @@ export function availabilityFindings(a: ShipTypeAvailability): Finding[] {
     ],
     evidence: { formulaId: "DESIGN-22", inputs: {}, threshold: 0, value: 0 },
     subject: { targets: [shipTarget], settings: "brief" },
+    ruleId: r.ruleId,
+    messageKey: r.messageKey,
+    params: r.params,
   }));
 }

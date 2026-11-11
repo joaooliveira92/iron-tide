@@ -27,6 +27,8 @@ export interface FindingSubject {
   readonly unit?: string;
 }
 
+export type DiagnosticParams = Readonly<Record<string, string | number | boolean>>;
+
 export interface Finding {
   readonly id: string;
   readonly severity: Severity;
@@ -42,7 +44,17 @@ export interface Finding {
   };
   readonly parameters?: Readonly<Record<string, string | number | boolean>>;
   readonly subject?: FindingSubject;
+  readonly ruleId?: string;
+  readonly messageKey?: string;
+  readonly params?: DiagnosticParams;
 }
+
+const UNHASHED_FINDING_KEYS: ReadonlySet<string> = new Set([
+  "subject",
+  "ruleId",
+  "messageKey",
+  "params",
+]);
 
 export const shipTarget: FindingTarget = { kind: "ship" };
 export const placementTarget = (instanceId: string): FindingTarget => ({
@@ -82,7 +94,7 @@ export function withoutSubjects<T>(value: T): T {
     const isFinding = "severity" in o && "evidence" in o;
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(o))
-      if (!(isFinding && k === "subject")) out[k] = withoutSubjects(v);
+      if (!(isFinding && UNHASHED_FINDING_KEYS.has(k))) out[k] = withoutSubjects(v);
     return out as T;
   }
   return value;

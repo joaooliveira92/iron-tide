@@ -225,15 +225,14 @@ function compileResolved(
     rules,
     formData.traits?.includes("merchant_derived") ?? false,
   );
-  if (!availability.available) {
-    findings.push(...availabilityFindings(availability));
-    naturalClassId = naturalClass(facts, rules, shipTypes?.classified);
-  } else if (isClassifiedShipType(intended)) {
+  if (!availability.available) findings.push(...availabilityFindings(availability));
+  if (isClassifiedShipType(intended)) {
     const cls = classificationFindings(facts, intended, rules, shipTypes?.classified);
     naturalClassId = cls.natural;
     findings.push(...cls.findings);
-    if (cls.findings.length === 0) findings.push(...typeAdvisories(intended, facts));
-    if (intended === "KE" && cls.findings.length === 0)
+    if (availability.available && cls.findings.length === 0)
+      findings.push(...typeAdvisories(intended, facts));
+    if (availability.available && intended === "KE" && cls.findings.length === 0)
       findings.push(
         ...colonialServiceAdvisory(
           colonialServiceEligibility({
@@ -244,6 +243,8 @@ function compileResolved(
           }),
         ),
       );
+  } else if (!availability.available) {
+    naturalClassId = naturalClass(facts, rules, shipTypes?.classified);
   }
 
   const colonialService = colonialFitting(intent, ctx);
