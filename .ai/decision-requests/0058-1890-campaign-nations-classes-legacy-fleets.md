@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved: owner chose Option B (keep 1880 as the sole start year; port the mechanics into the 1880 pack). `DD` stays available (owner did not approve gating it). The 1890 start, the five-class start and the prompt's nation list are out of scope.
 
 ## Trigger
 
