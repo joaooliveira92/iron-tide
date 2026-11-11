@@ -6,7 +6,12 @@ import {
   nationIdToCountryId,
   nationPresentation,
 } from "../../content/presentationContent.js";
-import type { NewGameOptions } from "../../../shared/new-game-contract.js";
+import type {
+  NewGameCommissioningFacts,
+  NewGameOptions,
+} from "../../../shared/new-game-contract.js";
+import { humanizeId } from "../../lib/humanize-id.js";
+import { formatTonnes } from "../../lib/presentation-format/index.js";
 import type { FleetMethodDraft } from "./new-game-fleet-method-screen-state.js";
 import { FLEET_METHOD_CARDS } from "./fleet-method-content.js";
 import {
@@ -41,6 +46,11 @@ export type SummaryRowIcon =
   | "nation"
   | "era"
   | "fleetSize"
+  | "budgetTier"
+  | "yardCapacity"
+  | "researchProfile"
+  | "gunQuality"
+  | "campaignSeed"
   | "researchSpeed"
   | "technologyVariation"
   | "historicalBudget"
@@ -94,6 +104,79 @@ function archetypeLabel(archetype: ArchetypeSelection): string {
   return findPreset(archetype.id)?.name ?? archetype.id;
 }
 
+const NOT_AVAILABLE = "Not available";
+const NOT_AUTHORED = "Not authored";
+const RESEARCH_PROFILE_FIELDS = 3;
+
+function commissioningFacts(
+  options: NewGameOptions | null,
+  nationId: string,
+): NewGameCommissioningFacts | null {
+  return options?.nations.find((nation) => nation.id === nationId)?.commissioning ?? null;
+}
+
+function yardCapacityLabel(facts: NewGameCommissioningFacts | null): string {
+  if (facts === null || facts.yardCapacityKg === null) return NOT_AVAILABLE;
+  return `${formatTonnes(facts.yardCapacityKg)} t`;
+}
+
+function researchProfileLabel(facts: NewGameCommissioningFacts | null): string {
+  if (facts === null) return NOT_AVAILABLE;
+  if (facts.researchPriorities.length === 0) return NOT_AUTHORED;
+  return facts.researchPriorities
+    .slice(0, RESEARCH_PROFILE_FIELDS)
+    .map((entry) => humanizeId(entry.field))
+    .join(", ");
+}
+
+function gunQualityLabel(facts: NewGameCommissioningFacts | null): string {
+  if (facts === null) return NOT_AVAILABLE;
+  const qualities = facts.gunQualityBands.map((band) => band.quality);
+  if (qualities.length === 0) return NOT_AUTHORED;
+  const noun = qualities.length === 1 ? "band" : "bands";
+  return `${qualities.length} authored ${noun}, quality ${Math.min(...qualities)}–${Math.max(...qualities)}`;
+}
+
+function commissioningRows(
+  options: NewGameOptions | null,
+  nationId: string,
+  campaignSeed: string,
+): readonly SummaryRow[] {
+  const facts = commissioningFacts(options, nationId);
+  return [
+    {
+      label: "Budget tier",
+      value: facts?.budgetLevel == null ? NOT_AVAILABLE : humanizeId(facts.budgetLevel),
+      group: "command",
+      icon: "budgetTier",
+    },
+    {
+      label: "Yard capacity",
+      value: yardCapacityLabel(facts),
+      group: "command",
+      icon: "yardCapacity",
+    },
+    {
+      label: "Research profile",
+      value: researchProfileLabel(facts),
+      group: "command",
+      icon: "researchProfile",
+    },
+    {
+      label: "Gun quality",
+      value: gunQualityLabel(facts),
+      group: "command",
+      icon: "gunQuality",
+    },
+    {
+      label: "Campaign seed",
+      value: campaignSeed,
+      group: "command",
+      icon: "campaignSeed",
+    },
+  ];
+}
+
 export function buildSummaryRows(input: CommissioningReviewInput): readonly SummaryRow[] {
   const { nationId, options, preferences, archetype, identity, fleetMethod } = input;
   const uncertaintyRows: SummaryRow[] = UNCERTAINTY_FIELDS.map((field) => ({
@@ -116,6 +199,7 @@ export function buildSummaryRows(input: CommissioningReviewInput): readonly Summ
       group: "command",
       icon: "fleetSize",
     },
+    ...commissioningRows(options, nationId, preferences.campaignSeed),
     ...uncertaintyRows,
     {
       label: "Starting fleet method",
