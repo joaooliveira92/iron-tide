@@ -58,6 +58,17 @@ describe("the design's supporting panels", () => {
     expect(metric("Top speed")).toBe(before);
   });
 
+  it("shows the same price in units in the header as the forecast states", () => {
+    render(<ShipbuildingWorkspace />);
+    openSection("Overview", "Summary");
+    const panel = screen.getByRole("region", { name: "Cost and construction forecast" });
+    const forecast = within(panel).getByText(/Charged to the treasury when ordered/).parentElement!
+      .textContent!;
+    const units = /(\d[\d,]* units?)/.exec(forecast)![1]!;
+    const header = screen.getByRole("group", { name: "Design commands" });
+    expect(within(header).getByText(new RegExp(`· ${units}$`))).toBeTruthy();
+  });
+
   it("states what the order will cost the treasury, in units, and labels the development metric", () => {
     render(<ShipbuildingWorkspace />);
     openSection("Overview", "Summary");

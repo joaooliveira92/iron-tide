@@ -73,8 +73,8 @@ describe("Opening a design from the header", () => {
 
   it("asks before replacing a design with unsaved edits, and keeps it on cancel", async () => {
     render(<ShipbuildingWorkspace sessionId="s1" projects={[project]} />);
-    const before = header().textContent;
     bumpPower();
+    const before = header().textContent;
     openDesignDialog();
     fireEvent.click(
       within(screen.getByRole("dialog", { name: "Open a design" })).getByRole("button", {

@@ -66,6 +66,7 @@ export function useDesignSession(fixedMonth: string | null) {
     selection.clear();
     actions.openDesign(d, name);
   };
+  const setDevelopedFrom = (name: string) => actions.setDevelopedFrom(name);
   const [pendingPreset, setPendingPreset] = useState<string | null>(null);
   const requestPreset = (id: string) =>
     state.editCount > 0 ? setPendingPreset(id) : loadPreset(id);
@@ -94,6 +95,7 @@ export function useDesignSession(fixedMonth: string | null) {
     loadPreset,
     loadDraft,
     openDesign,
+    setDevelopedFrom,
     requestPreset,
     pendingPreset,
     setPendingPreset,
