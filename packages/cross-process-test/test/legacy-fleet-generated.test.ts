@@ -162,7 +162,7 @@ describe(`generated legacy fleet corpus (${String(CORPUS_SEEDS)} seeds)`, () => 
           const design = run.state.snapshot.designs.get(ship.designVersionId)!;
           expect(design).toBeDefined();
           expect(design.nationId).toBe(nationId);
-          const draft = design.sourceDraft as DesignDraft;
+          const draft: DesignDraft = JSON.parse(JSON.stringify(design.sourceDraft));
           const compiled = compileDesign(draft, content.environmentFor(MONTH, nationId).ctx);
           expect(compiled.valid).toBe(true);
           const shipType = shipTypeForHullType(design.hullType)!;

@@ -3,13 +3,7 @@ import {
   shipStatsFromDesign,
   transitionConstructionProject,
 } from "@bluewave/campaign";
-import type {
-  CompiledDesignVersion,
-  FleetState,
-  NationDockState,
-  NationState,
-  Ship,
-} from "@bluewave/campaign";
+import type { FleetState, NationDockState, NationState, Ship } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { raiseDockLimitsByStep } from "@bluewave/ship-design";
 import {
