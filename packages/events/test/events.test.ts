@@ -150,6 +150,27 @@ describe("ShipDelivered", () => {
   });
 });
 
+describe("ConstructionDelayed", () => {
+  const legacy = {
+    kind: "ConstructionDelayed",
+    projectId: "con_1",
+    nationId: "GBR",
+    reason: "STEEL_PLATE_SHORTAGE",
+    delayMonth: "1880-03",
+  } as const;
+  it("still parses a delay recorded before delays carried a length", () => {
+    expect(parseDomainEventBody(legacy)).toEqual(legacy);
+  });
+  it("carries the months a drawn delay adds", () => {
+    expect(parseDomainEventBody({ ...legacy, months: 3 })).toEqual({ ...legacy, months: 3 });
+  });
+  it("rejects a zero or negative length and an unknown field", () => {
+    expect(() => parseDomainEventBody({ ...legacy, months: 0 })).toThrow();
+    expect(() => parseDomainEventBody({ ...legacy, months: -1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...legacy, extra: 1 })).toThrow();
+  });
+});
+
 describe("ConstructionOverrun", () => {
   const body = {
     kind: "ConstructionOverrun",

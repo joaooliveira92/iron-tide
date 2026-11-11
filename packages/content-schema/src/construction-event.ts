@@ -32,10 +32,20 @@ const commonFields = {
   provenance: ProvenanceSchema,
 };
 
+const delayMonths = int.check(Schema.isBetween({ minimum: 1, maximum: 12 }));
+const pressureMultiplierBp = int.check(Schema.isBetween({ minimum: 10_000, maximum: 100_000 }));
+
 export const ConstructionDelayEventSchema = Schema.Struct({
   ...commonFields,
   kind: Schema.Literal("DELAY"),
-});
+  minMonths: delayMonths,
+  maxMonths: delayMonths,
+  pressureMultiplierBp,
+}).check(
+  Schema.makeFilter((rule) =>
+    rule.minMonths > rule.maxMonths ? "minMonths must not be above maxMonths" : undefined,
+  ),
+);
 
 export const ConstructionOverrunEventSchema = Schema.Struct({
   ...commonFields,

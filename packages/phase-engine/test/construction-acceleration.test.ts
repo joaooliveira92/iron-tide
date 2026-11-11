@@ -1052,6 +1052,9 @@ describe("construction events in the economy pass (#584)", () => {
     id: "steel_plate_shortage",
     kind: "DELAY",
     probabilityBp,
+    minMonths: 2,
+    maxMonths: 2,
+    pressureMultiplierBp: 20_000,
     reasonCode: "STEEL_PLATE_SHORTAGE",
     causeKey: "construction.event.steel_plate_shortage",
     provenance,
@@ -1098,6 +1101,104 @@ describe("construction events in the economy pass (#584)", () => {
     expect(
       result.randomLedger.all.some((d) => d.streamId === CONSTRUCTION_EVENT_STREAM_FAMILY),
     ).toBe(false);
+  });
+
+  describe("delay length", () => {
+    const FIRST_MONTH = "1880-02";
+    const once = (months: number): ConstructionEvent => ({
+      ...rule(10_000),
+      minMonths: months,
+      maxMonths: months,
+      eraWindow: { fromMonth: FIRST_MONTH, toMonth: FIRST_MONTH },
+    });
+    const step = (from: CampaignSnapshot, rules: readonly ConstructionEvent[]) => {
+      const result = new MonthExecutor().execute(
+        from,
+        [],
+        "length-seed",
+        new DiagnosticCollector(),
+        undefined,
+        { shipBuilding: content, constructionEvents: rules },
+      );
+      return {
+        result,
+        next: {
+          ...result.finalSnapshot,
+          turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt(1)),
+        },
+      };
+    };
+    const only = (snap: CampaignSnapshot): ConstructionProject =>
+      snap.nations.get("GBR")!.constructionProjects[0]!;
+    const monthsToDeliver = (rules: readonly ConstructionEvent[]): number => {
+      let current = start();
+      for (let m = 1; m <= 80; m++) {
+        const next = step(current, rules);
+        if (only(next.result.finalSnapshot).status === "COMPLETED") return m;
+        current = next.next;
+      }
+      throw new Error("never delivered");
+    };
+
+    it("slips delivery by exactly the drawn months against a run with no events", () => {
+      const control = monthsToDeliver([]);
+      for (const months of [1, 2, 3])
+        expect(monthsToDeliver([once(months)])).toBe(control + months);
+    });
+
+    it("holds the project delayed across month ends until the drawn months are served", () => {
+      const first = step(start(), [once(3)]);
+      expect(only(first.result.finalSnapshot).status).toBe("DELAYED");
+      expect(only(first.result.finalSnapshot).delays).toEqual([
+        { month: FIRST_MONTH, reasonCode: "STEEL_PLATE_SHORTAGE", months: 3 },
+      ]);
+      const second = step(first.next, [once(3)]);
+      expect(only(second.result.finalSnapshot).status).toBe("DELAYED");
+      expect(only(second.result.finalSnapshot).delayReasonCode).toBe("STEEL_PLATE_SHORTAGE");
+      const third = step(second.next, [once(3)]);
+      const resumed = only(third.result.finalSnapshot);
+      expect(resumed.status).toBe("ACTIVE");
+      expect(resumed.delayReasonCode).toBeUndefined();
+      expect(resumed.delays).toHaveLength(1);
+      expect(Number(resumed.completedWork)).toBe(0);
+    });
+
+    it("records a one-month delay and its event without leaving the project held", () => {
+      const first = step(start(), [once(1)]);
+      const p = only(first.result.finalSnapshot);
+      expect(p.status).toBe("ACTIVE");
+      expect(Number(p.completedWork)).toBe(0);
+      expect(p.delays).toEqual([
+        { month: FIRST_MONTH, reasonCode: "STEEL_PLATE_SHORTAGE", months: 1 },
+      ]);
+      const event = first.result.eventLedger.all.find((e) => e.eventType === "ConstructionDelayed");
+      expect(event?.body).toMatchObject({
+        reason: "STEEL_PLATE_SHORTAGE",
+        delayMonth: FIRST_MONTH,
+        months: 1,
+      });
+      expect(
+        Number(only(step(first.next, [once(1)]).result.finalSnapshot).completedWork),
+      ).toBeGreaterThan(0);
+    });
+
+    it("never delays a foreign contract or a dock expansion", () => {
+      const base = start();
+      const nation = base.nations.get("GBR")!;
+      const built = nation.constructionProjects[0]!;
+      const variants = [
+        { ...built, id: "p-foreign", foreignContractId: "fc-1", foreignBuilderNationId: "FRA" },
+        { ...built, id: "p-dock", projectType: "INFRASTRUCTURE" as const },
+      ];
+      const mixed = {
+        ...base,
+        nations: new Map([["GBR", { ...nation, constructionProjects: variants }]]),
+      };
+      const { result } = step(mixed, [once(2)]);
+      expect(result.eventLedger.all.some((e) => e.eventType === "ConstructionDelayed")).toBe(false);
+      for (const p of result.finalSnapshot.nations.get("GBR")!.constructionProjects)
+        expect(p.delays).toBeUndefined();
+    });
   });
 
   describe("overruns", () => {

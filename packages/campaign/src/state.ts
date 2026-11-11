@@ -529,6 +529,13 @@ export interface ConstructionProject {
   foreignBuilderNationId?: string;
   delayReasonCode?: string;
   overruns?: ConstructionOverrun[];
+  delays?: ConstructionDelay[];
+}
+
+export interface ConstructionDelay {
+  month: string;
+  reasonCode: string;
+  months: number;
 }
 
 export interface ConstructionOverrun {

@@ -19,7 +19,12 @@ import {
   type ConstructionBalance,
 } from "@bluewave/ship-design";
 import { constructionResumeTarget } from "./constructionHaltResume.js";
-import { resolveConstructionEvents, type ConstructionEventOverrun } from "./constructionEvents.js";
+import { constructionDelayHeld, withConstructionDelay } from "./constructionDelay.js";
+import {
+  resolveConstructionEvents,
+  type ConstructionEventDelay,
+  type ConstructionEventOverrun,
+} from "./constructionEvents.js";
 import { withConstructionOverrun, constructionOverrunSubject } from "./constructionOverrun.js";
 import {
   ACCELERATION_CAPACITY_PRESSURE_DELAY,
@@ -160,9 +165,18 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
     }
 
     const eventRules = ctx.engineOptions?.constructionEvents;
-    const delayedByEvent = new Map<string, string>();
+    const delayedByEvent = new Map<string, ConstructionEventDelay>();
     const overrunByEvent = new Map<string, ConstructionEventOverrun>();
     if (eventRules !== undefined && eventRules.length > 0) {
+      const capacityPressureBp =
+        accelerationTerms === undefined
+          ? 0
+          : nationAccelerationPressureOf(
+              projects,
+              (project) => capacityOf(designs, project),
+              campaignMonth,
+              accelerationTerms,
+            ).capacityPressureBp;
       const drawn = resolveConstructionEvents({
         nationId,
         campaignMonth,
@@ -170,10 +184,11 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
           .filter((p) => !delayedByPressure.has(p["id"]))
           .map(constructionOverrunSubject),
         rules: eventRules,
+        capacityPressureBp,
         randomEngine: accelerationRng,
         randomLedger: ctx.randomLedger,
       });
-      for (const delay of drawn.delays) delayedByEvent.set(delay.projectId, delay.reasonCode);
+      for (const delay of drawn.delays) delayedByEvent.set(delay.projectId, delay);
       for (const overrun of drawn.overruns) overrunByEvent.set(overrun.projectId, overrun);
     }
 
@@ -183,20 +198,23 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
         p["status"] === "DELAYED" || delayedByPressure.has(p["id"]) || delayedByEvent.has(p["id"]),
     );
 
-    for (const project of delayedProjects)
+    for (const project of delayedProjects) {
+      const drawnDelay = delayedByEvent.get(project["id"]);
       eventLedger.append(
         constructionDelayedEvent(
           project["id"],
           nationId,
-          delayedByEvent.get(project["id"]) ??
+          drawnDelay?.reasonCode ??
             project["delayReasonCode"] ??
             (delayedByPressure.has(project["id"])
               ? ACCELERATION_CAPACITY_PRESSURE_DELAY
               : PROJECT_DELAYED_ZERO_WORK),
           nextSeq(),
           campaignMonth,
+          drawnDelay?.months,
         ),
       );
+    }
 
     for (const overrun of overrunByEvent.values())
       eventLedger.append(
@@ -236,9 +254,9 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
     let updatedProjects = projects;
     if (delayedByPressure.size > 0 || delayedByEvent.size > 0)
       updatedProjects = projects.map((p) => {
-        const eventReason = delayedByEvent.get(p["id"]);
-        if (eventReason !== undefined)
-          return { ...transitionConstructionProject(p, "DELAYED"), delayReasonCode: eventReason };
+        const eventDelay = delayedByEvent.get(p["id"]);
+        if (eventDelay !== undefined)
+          return withConstructionDelay(p, eventDelay.months, eventDelay.reasonCode, campaignMonth);
         return delayedByPressure.has(p["id"]) ? transitionConstructionProject(p, "DELAYED") : p;
       });
     if (overrunByEvent.size > 0)
@@ -273,12 +291,13 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
     const totalDelta = allocation.delta;
     const constructionRequested = allocation.requested;
 
-    if (delayedAtStart.length > 0) {
+    if (delayedAtStart.length > 0 || delayedByEvent.size > 0) {
       updatedProjects = updatedProjects.map((p) =>
         p["status"] === "DELAYED" &&
-        delayedAtStartIds.has(p["id"]) &&
+        (delayedAtStartIds.has(p["id"]) || delayedByEvent.has(p["id"])) &&
         p["delayReasonCode"] !== FOREIGN_PAYMENT_DEFAULT_DELAYED &&
-        !foreign.capabilityDelayed.has(p["id"])
+        !foreign.capabilityDelayed.has(p["id"]) &&
+        !constructionDelayHeld(p, campaignMonth)
           ? withoutDelayReason(
               transitionConstructionProject(
                 p,

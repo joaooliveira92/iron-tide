@@ -177,6 +177,7 @@ export function constructionDelayedEvent(
   reason: string,
   seq: SafeInt,
   campaignMonth: string,
+  months?: number,
 ): DomainEventEnvelope {
   return {
     eventId: `ConstructionDelayed-${projectId}-${String(seq)}`,
@@ -191,6 +192,7 @@ export function constructionDelayedEvent(
       nationId,
       reason,
       delayMonth: campaignMonth,
+      ...(months === undefined ? {} : { months: SafeInt(months) }),
     },
     sequenceNumber: seq,
   };
