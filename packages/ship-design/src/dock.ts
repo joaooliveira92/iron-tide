@@ -32,6 +32,8 @@ export type DockRejectionCode = typeof DOCK_LIMIT_MISSING | typeof SHIP_EXCEEDS_
 export interface DockRejection {
   readonly code: DockRejectionCode;
   readonly message: string;
+  readonly requiredKg?: number;
+  readonly capacityKg?: number;
 }
 
 export interface DockEligibility {
@@ -118,6 +120,8 @@ export function newConstructionDockEligibility(
     rejections.push({
       code: SHIP_EXCEEDS_DOMESTIC_DOCK_LIMIT,
       message: `Displacement ${demand.displacementKg} kg exceeds the dock's new-construction ceiling ${dock.maximumNewConstructionMassKg!} kg.`,
+      requiredKg: demand.displacementKg,
+      capacityKg: dock.maximumNewConstructionMassKg!,
     });
   if (dock.dimensions != null && dockDimensionMisfits(dock.dimensions, demand).length > 0)
     rejections.push({
