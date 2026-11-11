@@ -108,4 +108,41 @@ describe("anatomy motion stylesheet", () => {
       expect(hull.match(/class="an-dot"/g)?.length ?? 0).toBeGreaterThan(1);
     });
   });
+
+  describe("machinery section ambient motion", () => {
+    const MACHINERY_KEYFRAMES = ["an-mach-cap", "an-mach-heat", "an-mach-drift"] as const;
+
+    it.each(MACHINERY_KEYFRAMES)("defines %s only inside the no-preference block", (name) => {
+      const definition = `@keyframes ${name}`;
+      expect(motion).toContain(definition);
+      expect(css.replace(motion, "")).not.toContain(definition);
+    });
+
+    it.each(MACHINERY_KEYFRAMES)("loops %s from a machinery-section selector", (name) => {
+      const rule = withoutKeyframes(motion)
+        .split("}")
+        .find((candidate) => new RegExp(`${name}\\s`).test(candidate));
+      expect(rule, name).toBeDefined();
+      expect(rule).toContain('.an-ship[data-section="machinery"]');
+      expect(rule).toContain("infinite");
+    });
+
+    it("renders the machinery markup the loops select", () => {
+      const reference = content.references.find((entry) => entry.id === "majestic_like")!;
+      const view = buildWorkshopView(reference.draft, content.environmentFor(reference.month));
+      const model = planModel(reference.draft, content, view, reference.month);
+      const ship = buildAnatomyShip({ draft: reference.draft, view, model, azimuth: 135 });
+      const markup = renderToStaticMarkup(
+        createElement(AnatomyShipFigure, { ship, section: "machinery" }),
+      );
+      expect(markup).toContain('data-section="machinery"');
+      const funnel = markup
+        .split('<g class="an-part"')
+        .find((part) => part.includes('data-kind="funnel"'))!;
+      expect(funnel).toContain('class="an-ink-fill"');
+      expect(funnel).toContain('class="an-top"');
+      expect(funnel.match(/class="an-smoke"/g)?.length ?? 0).toBe(3);
+      expect(funnel.match(/class="an-line"/g)?.length ?? 0).toBeGreaterThan(1);
+    });
+  });
 });
