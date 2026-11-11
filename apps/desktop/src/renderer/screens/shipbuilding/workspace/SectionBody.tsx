@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { lazy, type ReactNode } from "react";
 import { useDesignState } from "../../../components/design-workspace/DesignWorkspaceContext.js";
 import { mountNameMap } from "../../../components/design-workspace/batteryView.js";
 import { technologyMonths } from "../../../components/design-workspace/useDesignSession.js";
@@ -9,9 +9,6 @@ import { HullPanel } from "../../../components/design-workspace/panels/HullPanel
 import { LedgerPanel } from "../../../components/design-workspace/panels/LedgerPanel.js";
 import { MetricsPanel } from "../../../components/design-workspace/panels/MetricsPanel.js";
 import { PlacementsPanel } from "../../../components/design-workspace/panels/PlacementsPanel.js";
-import { RebuildPanel } from "../../../components/design-workspace/panels/RebuildPanel.js";
-import { RevisionPanel } from "../../../components/design-workspace/panels/RevisionPanel.js";
-import { SubmitPanel } from "../../../components/design-workspace/panels/SubmitPanel.js";
 import { TopsidePanel } from "../../../components/design-workspace/panels/TopsidePanel.js";
 import { AluminiumSuperstructurePanel } from "../components/AluminiumSuperstructurePanel.js";
 import { AntiAircraftPanel } from "../components/AntiAircraftPanel.js";
@@ -28,6 +25,22 @@ import { armamentEntries } from "../armament.js";
 import { categoriesOf, type InspectorPlace } from "../design-sections.js";
 import { addSystemEdit } from "../systems-view.js";
 import { TAB_BATTERY, tabLabel } from "./inspector-place.js";
+
+const RebuildPanel = lazy(() =>
+  import("../../../components/design-workspace/panels/RebuildPanel.js").then((m) => ({
+    default: m.RebuildPanel,
+  })),
+);
+const RevisionPanel = lazy(() =>
+  import("../../../components/design-workspace/panels/RevisionPanel.js").then((m) => ({
+    default: m.RevisionPanel,
+  })),
+);
+const SubmitPanel = lazy(() =>
+  import("../../../components/design-workspace/panels/SubmitPanel.js").then((m) => ({
+    default: m.SubmitPanel,
+  })),
+);
 import {
   useShipbuildingActions,
   useShipbuildingMeta,
