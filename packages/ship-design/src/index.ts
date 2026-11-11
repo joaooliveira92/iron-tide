@@ -135,6 +135,7 @@ export {
   computeFleetDeficits,
   type FleetShipView,
   planProcurementDecision,
+  PROCUREMENT_TYPES,
   type RoleGroup,
   roleGroupOf,
   shipTypeForHullType,
@@ -247,6 +248,7 @@ export {
   buildShipTypeRoster,
   type RosterEntry,
   type RosterLevel,
+  starterFor,
   type StarterDesign,
 } from "./shipTypeRoster.js";
 export { shipTypeRegistryFromRecords, type ShipTypeRegistry } from "./shipTypeRegistry.js";
