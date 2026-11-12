@@ -1,5 +1,5 @@
 /* @vitest-environment jsdom */
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { SortableList, useSortableList } from "./sortable-list.js";
@@ -157,6 +157,52 @@ describe("SortableList", () => {
     expect(order(container)).toEqual(["a", "b", "c"]);
     expect(undo.disabled).toBe(true);
     expect(screen.getByRole("status").textContent).toBe("Previous order restored.");
+  });
+
+  it("drops undo when the id set changes and does not revive the old order when the set returns", () => {
+    let setFromParent: (items: Entry[]) => void = () => undefined;
+    function Host() {
+      const [items, setItems] = useState(ITEMS);
+      setFromParent = setItems;
+      return (
+        <SortableList items={items} onItemsChange={setItems} getItemLabel={getItemLabel}>
+          {entries(items)}
+        </SortableList>
+      );
+    }
+    render(<Host />);
+    const undo = () => screen.getByRole("button", { name: "Undo reorder" }) as HTMLButtonElement;
+
+    fireEvent.keyDown(handle("a"), { key: "End" });
+    expect(undo().disabled).toBe(false);
+
+    act(() => setFromParent([{ id: "b" }, { id: "a" }]));
+    expect(undo().disabled).toBe(true);
+
+    act(() => setFromParent([{ id: "b" }, { id: "a" }, { id: "c" }]));
+    expect(undo().disabled).toBe(true);
+  });
+
+  it("keeps the context identity across announcement-only updates", () => {
+    let renders = 0;
+    function Consumer() {
+      useSortableList();
+      renders += 1;
+      return null;
+    }
+    render(
+      <SortableList items={ITEMS} onItemsChange={onItemsChange} getItemLabel={getItemLabel}>
+        {entries(ITEMS)}
+        <Consumer />
+      </SortableList>,
+    );
+
+    fireEvent.keyDown(handle("a"), { key: "ArrowDown" });
+    const afterFirstMove = renders;
+    fireEvent.keyDown(handle("a"), { key: "ArrowDown" });
+
+    expect(screen.getByRole("status").textContent).not.toBe("");
+    expect(renders).toBe(afterFirstMove);
   });
 
   it("ignores keyboard moves while disabled", () => {
