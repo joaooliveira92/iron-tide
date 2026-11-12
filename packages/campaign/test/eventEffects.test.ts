@@ -26,7 +26,7 @@ const RULES: EventAnswerEffectRules = {
       tension: -1,
     },
     {
-      trait: "aggressive",
+      trait: "surprise_attack",
       stance: "hawk",
       reasonCode: "AGGRESSIVE_ZEAL",
       budgetBp: 100,
@@ -152,25 +152,25 @@ describe("planAnswerEffects", () => {
         prestige: { kind: "FIXED_GAIN", amount: 2, reasonCode: "BORDER_STAND" },
         tension: { counterpart: "highest_tension_rival", delta: 2 },
       }),
-      ["cautious", "aggressive"],
+      ["cautious", "surprise_attack"],
       RULES,
     );
     expect(plan.lines.map((line) => [line.source, line.trait])).toEqual([
       ["DECLARED", undefined],
-      ["TRAIT", "aggressive"],
       ["TRAIT", "cautious"],
+      ["TRAIT", "surprise_attack"],
     ]);
     expect(plan.lines[0]).toMatchObject({ budgetBp: 300, unrestDelta: 1, tensionDelta: 2 });
     expect(plan.lines[0]!.prestige).toEqual({
       reasonCode: "BORDER_STAND",
       rule: { kind: "FIXED_GAIN", amount: 2 },
     });
-    expect(plan.lines[1]).toMatchObject({
+    expect(plan.lines[2]).toMatchObject({
       reasonCode: "AGGRESSIVE_ZEAL",
       budgetBp: 100,
       unrestDelta: 1,
     });
-    expect(plan.lines[2]!.prestige).toEqual({
+    expect(plan.lines[1]!.prestige).toEqual({
       reasonCode: "CAUTIOUS_ADVENTURE",
       rule: { kind: "FIXED_LOSS", amount: 2 },
     });
@@ -197,7 +197,7 @@ describe("planAnswerEffects", () => {
   });
 
   it("builds one budget modifier per non-zero budget line", () => {
-    const plan = planAnswerEffects(answer({ budgetBp: 300 }), ["aggressive"], RULES);
+    const plan = planAnswerEffects(answer({ budgetBp: 300 }), ["surprise_attack"], RULES);
     expect(plan.lines.filter((line) => line.budgetBp !== 0).map((line) => line.budgetBp)).toEqual([
       300, 100,
     ]);

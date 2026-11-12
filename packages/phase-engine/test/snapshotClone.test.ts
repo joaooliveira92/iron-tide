@@ -30,6 +30,17 @@ function minimalSnapshot(): CampaignSnapshot {
             ],
             flags: ["naval_scare_armed"],
           },
+          unrest: 3,
+          budgetModifiers: [
+            {
+              eventId: "naval_scare",
+              answerId: "arm",
+              firstMonth: "1880-03",
+              initialBp: 300,
+              decayMonths: 12,
+              capBp: 600,
+            },
+          ],
           treasury: 100,
           income: 10,
           expenses: 5,
@@ -348,6 +359,42 @@ describe("cloneSnapshot government and event history", () => {
     Object.assign(nation, { eventHistory: history });
     const without = snapshotClone.cloneSnapshot(a).nations.get("n1")!;
     expect("pending" in without.eventHistory!).toBe(false);
+  });
+
+  it("deep-copies answer effects and budget modifiers", () => {
+    const a = minimalSnapshot();
+    const nation = a.nations.get("n1")!;
+    const line = {
+      source: "DECLARED" as const,
+      budgetBp: 300,
+      prestigeDelta: 2,
+      unrestDelta: 2,
+      tensionDelta: 0,
+    };
+    nation.eventHistory = {
+      fired: [
+        {
+          eventId: "naval_scare",
+          month: "1880-02",
+          answerId: "arm",
+          resolvedBy: "AI",
+          effects: {
+            lines: [line],
+            budgetBp: 300,
+            prestigeDelta: 2,
+            unrestBefore: 0,
+            unrestAfter: 2,
+          },
+        },
+      ],
+      flags: [],
+    };
+    const copy = snapshotClone.cloneSnapshot(a).nations.get("n1")!;
+    expect(copy.eventHistory).toEqual(nation.eventHistory);
+    expect(copy.eventHistory!.fired[0]!.effects!.lines[0]).not.toBe(line);
+    expect(copy.budgetModifiers).toEqual(nation.budgetModifiers);
+    expect(copy.budgetModifiers![0]).not.toBe(nation.budgetModifiers![0]);
+    expect(copy.unrest).toBe(3);
   });
 
   it("does not invent a history for a nation that has none", () => {

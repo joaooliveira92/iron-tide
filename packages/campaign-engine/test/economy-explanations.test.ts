@@ -126,7 +126,7 @@ describe("economy explanations", () => {
       ...healthy,
       budgetModifiers: [
         { ...base, initialBp: 300 },
-        { ...base, initialBp: 100, trait: "aggressive" },
+        { ...base, initialBp: 100, trait: "surprise_attack" },
       ],
     });
     const tree = projection.economy.appropriationExplanation!;
