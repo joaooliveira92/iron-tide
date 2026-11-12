@@ -427,6 +427,15 @@ describe("PrestigeChanged (S-2 04)", () => {
     ).toBe("PrestigeChanged");
   });
 
+  it("accepts an event-authored reason code and keeps every legacy code", () => {
+    expect(parseDomainEventBody({ ...body, reasonCode: "BORDER_STAND" }).kind).toBe(
+      "PrestigeChanged",
+    );
+    for (const code of ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON", "DECLINED_BATTLE"]) {
+      expect(parseDomainEventBody({ ...body, reasonCode: code }).kind).toBe("PrestigeChanged");
+    }
+  });
+
   it("rejects excess keys, empty ids, unknown codes and kinds, and non-integer values", () => {
     expect(
       parseDomainEventBody({
@@ -440,7 +449,8 @@ describe("PrestigeChanged (S-2 04)", () => {
     expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
     expect(() => parseDomainEventBody({ ...body, nationId: "" })).toThrow();
     expect(() => parseDomainEventBody({ ...body, rulesetVersion: "" })).toThrow();
-    expect(() => parseDomainEventBody({ ...body, reasonCode: "UNKNOWN" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, reasonCode: "unknown" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, reasonCode: "" })).toThrow();
     expect(() => parseDomainEventBody({ ...body, ruleKind: "WINDFALL" })).toThrow();
     expect(() => parseDomainEventBody({ ...body, before: 1.5 })).toThrow();
     expect(() => parseDomainEventBody({ ...body, after: -1 })).toThrow();

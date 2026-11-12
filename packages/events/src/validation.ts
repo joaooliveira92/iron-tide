@@ -205,7 +205,10 @@ export const EnemyDeclinedBattleSchema = Schema.Struct({
 export const PrestigeChangedSchema = Schema.Struct({
   kind: Schema.Literal("PrestigeChanged"),
   nationId: nonEmptyString,
-  reasonCode: Schema.Literals(["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON", "DECLINED_BATTLE"]),
+  reasonCode: Schema.Union([
+    Schema.Literals(["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON", "DECLINED_BATTLE"]),
+    Schema.NonEmptyString.check(Schema.isPattern(/^[A-Z][A-Z0-9_]*$/)),
+  ]),
   ruleKind: Schema.Literals(["PROPORTIONAL_LOSS", "FIXED_GAIN", "FIXED_LOSS"]),
   before: nonNegativeSafeInt,
   after: nonNegativeSafeInt,

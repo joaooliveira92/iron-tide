@@ -19,6 +19,9 @@ const MonthRecord = Schema.Struct({
   playerPending: Schema.NullOr(Schema.String),
   playerFired: Schema.String,
   aiFired: Schema.Number,
+  unrestTotal: Schema.Number,
+  modifierCount: Schema.Number,
+  prestigeEvents: Schema.Number,
 });
 
 const ChildOutput = Schema.Union([
@@ -45,6 +48,13 @@ describe("Event draw cross-process determinism (S-4 slice 3)", () => {
     expect(second).toEqual(first);
     expect(first).toHaveLength(6);
     expect(new Set(first.map((m) => m.snapshotHash)).size).toBe(first.length);
+  });
+
+  it("applies the answer effects in both processes: unrest, budget modifiers and prestige events", () => {
+    const months = runChild();
+    expect(months[0]!.modifierCount).toBeGreaterThan(0);
+    expect(months[0]!.prestigeEvents).toBeGreaterThan(0);
+    expect(months.some((m) => m.unrestTotal !== 0)).toBe(true);
   });
 
   it("draws the player dilemma in month 1 and defaults it only after 3 elapsed months", () => {
