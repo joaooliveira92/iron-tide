@@ -84,6 +84,7 @@ export type {
   StrategicWeatherPhaseOptions,
 } from "./month.js";
 export { MonthExecutor, PLAYER_NATION_UNKNOWN } from "./month.js";
+export { dilemmaHints, type DilemmaHintContext } from "./dilemma.js";
 export {
   applyRecordedBattleResult,
   consumeBattleResult,
