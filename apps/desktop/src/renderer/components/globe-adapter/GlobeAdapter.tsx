@@ -19,6 +19,8 @@ import { deriveAdapterModel } from "./adapter-derivations.js";
 import { GlobeAdapterChrome } from "./GlobeAdapterChrome.js";
 import { GlobeAdapterStatusStrip } from "./GlobeAdapterStatusStrip.js";
 import { GlobeAdapterScreenReader } from "./GlobeAdapterScreenReader.js";
+import { useCameraSync } from "./use-camera-sync.js";
+import { useHoverTooltip } from "./use-hover-tooltip.js";
 import { useLayerSet } from "./use-layer-set.js";
 import { useMapInstance, type HoverTooltip } from "./use-map-instance.js";
 import { fleetIdFromMarker, routeAnnouncement } from "./adapter-interaction.js";
@@ -27,77 +29,8 @@ import { useMapKeyboard } from "./use-map-keyboard.js";
 import { NATURAL_EARTH_HIERARCHY, TileCache, type TileHierarchy } from "./tile-hierarchy.js";
 
 export { GLOBE_ASSET_ROOT };
-
-export interface GlobeAdapterProps {
-  readonly state: WorldMapChartProps["state"];
-  readonly route: WorldMapChartProps["route"];
-  readonly overlay: NonNullable<WorldMapChartProps["overlay"]>;
-  readonly orders?: WorldMapChartProps["orders"];
-  readonly className?: string;
-  readonly onSelect: WorldMapChartProps["onSelect"];
-  readonly onRuler: WorldMapChartProps["onRuler"];
-  readonly onToggleLayer: WorldMapChartProps["onToggleLayer"];
-  readonly onSetProjection: WorldMapChartProps["onSetProjection"];
-  readonly onSetCentre: WorldMapChartProps["onSetCentre"];
-  readonly onUnavailable: (reason: string) => void;
-  readonly forceFailure?: boolean;
-  readonly landMode?: AdapterLandMode;
-  readonly variant?: MapVariant;
-  readonly showMinimap?: boolean;
-  readonly initialFocusAreaId?: string | null;
-  readonly initialFocusNationId?: string | null;
-  readonly camera?: AppCameraState | null;
-  readonly onCameraChange?: ((camera: AppCameraState) => void) | undefined;
-}
-
-export interface AdapterDiagnostics {
-  readonly zoom: number;
-  readonly centre: readonly [number, number];
-  readonly bearing: number;
-  readonly pitch: number;
-  readonly projection: CameraProjection;
-  readonly sourceLevel: number;
-  readonly overscaled: boolean;
-  readonly visibleTiles: number;
-  readonly storeVersion: number;
-  readonly markerCount: number;
-  readonly routeCount: number;
-  readonly cache: ReturnType<TileCache["stats"]>;
-  readonly errors: readonly string[];
-}
-
-declare global {
-  interface Window {
-    __globeAdapter?: {
-      readonly diagnostics: () => AdapterDiagnostics;
-      readonly updateMarker: (id: string, lon: number, lat: number) => boolean;
-      readonly setMarkerVisible: (id: string, visible: boolean) => boolean;
-      readonly benchmarkMarkers: (count: number) => {
-        readonly requested: number;
-        readonly applied: number;
-        readonly ms: number;
-        readonly storeVersion: number;
-        readonly markerCount: number;
-      };
-      readonly benchmarkBatch: (count: number) => {
-        readonly requested: number;
-        readonly applied: number;
-        readonly ms: number;
-        readonly storeVersion: number;
-      };
-      readonly selectArea: (id: string | null) => void;
-      readonly featureIds: () => readonly string[];
-      readonly featureScreenPoint: (
-        id: string,
-      ) => { readonly x: number; readonly y: number } | null;
-      readonly areaScreenPoint: (id: string) => { readonly x: number; readonly y: number } | null;
-      readonly areaLabelsRendered: () => number;
-      readonly jumpTo: (lon: number, lat: number, zoom: number) => void;
-      readonly setProjection: (projection: CameraProjection) => void;
-      readonly whenIdle: () => Promise<void>;
-    };
-  }
-}
+export type { GlobeAdapterProps, AdapterDiagnostics } from "./globe-adapter-types.js";
+import type { GlobeAdapterProps } from "./globe-adapter-types.js";
 
 export function GlobeAdapter({
   state,
@@ -150,28 +83,7 @@ export function GlobeAdapter({
       : { ...sharedCamera, projection: adapterProjection };
   });
   const [hoveredArea, setHoveredArea] = useState<string | null>(null);
-  const [hoverText, setHoverText] = useState<string | null>(null);
-  const hoverTextRef = useRef<string | null>(null);
-  const hoverPointRef = useRef<{ readonly x: number; readonly y: number } | null>(null);
-  const hoverTooltipElRef = useRef<HTMLDivElement | null>(null);
-  const placeHoverTooltip = useCallback((element: HTMLDivElement | null) => {
-    hoverTooltipElRef.current = element;
-    const point = hoverPointRef.current;
-    if (element === null || point === null) return;
-    element.style.left = `${point.x + 12}px`;
-    element.style.top = `${point.y + 12}px`;
-  }, []);
-  const setHoverTooltip = useCallback(
-    (tooltip: HoverTooltip | null) => {
-      hoverPointRef.current = tooltip === null ? null : { x: tooltip.x, y: tooltip.y };
-      placeHoverTooltip(hoverTooltipElRef.current);
-      const text = tooltip?.text ?? null;
-      if (text === hoverTextRef.current) return;
-      hoverTextRef.current = text;
-      setHoverText(text);
-    },
-    [placeHoverTooltip],
-  );
+  const { hoverText, placeHoverTooltip, setHoverTooltip } = useHoverTooltip();
   const [selectedFleet, setSelectedFleet] = useState<string | null>(null);
   const dragRef = useRef<{
     readonly fleetId: string;
@@ -238,25 +150,20 @@ export function GlobeAdapter({
   });
 
   useEffect(() => {
-    const map = mapRef.current;
-    if (map === null || !ready) return;
-    const next = adapterProjectionFromApp(state.projection);
-    if (next !== projectionRef.current) {
-      map.setProjection({ type: next });
-      setProjection(next);
-      projectionRef.current = next;
-    }
-  }, [ready, state.projection]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map === null || !ready || restoringCameraRef.current) return;
-    map.setCenter([state.centre, map.getCenter().lat]);
-  }, [ready, state.centre]);
-
-  useEffect(() => {
     setLiveMessage(routeAnnouncement(route));
   }, [route]);
+
+  useCameraSync({
+    mapRef,
+    projectionRef,
+    restoringRef: restoringCameraRef,
+    ready,
+    appProjection: state.projection,
+    centre: state.centre,
+    initialFocusAreaId,
+    initialFocusNationId,
+    setProjection,
+  });
 
   useMapInstance({
     refs: {
@@ -341,19 +248,6 @@ export function GlobeAdapter({
     },
     [onSetCentre],
   );
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (map === null || !ready || restoringCameraRef.current) return;
-    const point = homeFocusPoint(initialFocusAreaId);
-    if (point === null) return;
-    const target = nationFocusPoint(point, initialFocusNationId);
-    map.jumpTo({ center: [target[0], target[1]], zoom: 3.5, bearing: 0, pitch: 0 });
-  }, [initialFocusAreaId, initialFocusNationId, ready]);
-
-  useEffect(() => {
-    if (ready) restoringCameraRef.current = false;
-  }, [ready]);
 
   const hierarchy: TileHierarchy = NATURAL_EARTH_HIERARCHY;
   const statusLabel = errorText === null ? status : `error ${errorText}`;
