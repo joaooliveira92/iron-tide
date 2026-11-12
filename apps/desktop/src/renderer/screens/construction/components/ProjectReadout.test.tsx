@@ -1,6 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import type { ProjectRow } from "../project-progress.js";
+import { authoredCatalogue } from "../../../../shared/authoredCatalogue.testing.js";
 import { setUiCatalogue } from "../../../content/uiCatalogue.js";
 import { ProjectReadout } from "./ProjectReadout.js";
 
@@ -112,12 +113,7 @@ describe("ProjectReadout", () => {
   });
 
   it("names a construction event's cause in words from the ui catalogue, never the raw code (#584)", () => {
-    setUiCatalogue({
-      locale: "en-US",
-      strings: {
-        "construction.event.steel_plate_shortage": "a steel plate shortage at the supplier",
-      },
-    });
+    setUiCatalogue(authoredCatalogue());
     render(
       <ProjectReadout
         row={row({
@@ -158,15 +154,16 @@ describe("ProjectReadout", () => {
         },
       });
     const catalogue = () =>
-      setUiCatalogue({
-        locale: "en-US",
-        strings: Object.fromEntries(
-          Object.entries(CAUSES).map(([code, words]) => [
-            `construction.event.${code.toLowerCase()}`,
-            words,
-          ]),
+      setUiCatalogue(
+        authoredCatalogue(
+          Object.fromEntries(
+            Object.entries(CAUSES).map(([code, words]) => [
+              `construction.event.${code.toLowerCase()}`,
+              words,
+            ]),
+          ),
         ),
-      });
+      );
 
     for (const [code, words] of Object.entries(CAUSES))
       it(`names ${code} in plain words with the amount, never the raw code or month key`, () => {
@@ -214,7 +211,7 @@ describe("ProjectReadout", () => {
     });
 
     it("falls back to plain words when the cause has no authored text", () => {
-      setUiCatalogue({ locale: "en-US", strings: {} });
+      setUiCatalogue(authoredCatalogue());
       render(<ProjectReadout row={withOverrun("UNKNOWN_CAUSE", 45)} />);
       expect(screen.getByText("March 1880: a cost overrun added 45 NC to the cost")).toBeTruthy();
       expect(screen.queryByText(/UNKNOWN_CAUSE/)).toBeNull();
