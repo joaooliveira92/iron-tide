@@ -3,6 +3,12 @@ import type { EventResolutionRules, GameEvent } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
+  computeOrderedInputsHash,
+  computeTurnId,
+  makeRecordedInput,
+  type RecordedInput,
+} from "@bluewave/messages";
+import {
   MonthExecutor,
   unifiedSnapshotHash,
   type EventEngineContent,
@@ -132,8 +138,67 @@ function run(): readonly MonthRecord[] {
   return records;
 }
 
+const ABSENT_ANSWER = {
+  turnId: "",
+  interruptionId: "",
+  hintCount: 0,
+  resumedHash: "",
+  playerFired: "",
+  playerPending: null,
+} as const;
+
+function answerDilemma() {
+  const { state } = compileProductionCampaign();
+  const events: EventEngineContent = { rules, catalogue: [incident] };
+  const start = state.snapshot;
+  const turnId = computeTurnId({
+    campaignId: start.campaignId,
+    startingRevision: 0,
+    committedOrderHash: "no-orders",
+    orderedInputsHash: computeOrderedInputsHash([]),
+  });
+  const execute = (recordedInputs: readonly RecordedInput[]) =>
+    new MonthExecutor().execute(start, [], SEED, new DiagnosticCollector(), undefined, {
+      events,
+      playerNationId: PLAYER,
+      interruptions: { turnId, recordedInputs },
+    });
+  const suspended = execute([]);
+  const request = suspended.suspended?.request;
+  if (request?.kind !== "decision") {
+    return { ...ABSENT_ANSWER, suspendedRequestKind: request?.kind ?? "none" };
+  }
+  const resumed = execute([
+    makeRecordedInput({
+      ordinal: request.ordinal,
+      kind: "decision",
+      interruptionId: request.interruptionId,
+      payload: {
+        interruptionId: request.interruptionId,
+        decisionId: request.decisionId,
+        optionId: "mobilise",
+      },
+    }),
+  ]);
+  if (resumed.outcome !== "completed") {
+    return { ...ABSENT_ANSWER, suspendedRequestKind: `resumed-${resumed.outcome}` };
+  }
+  const player = resumed.finalSnapshot.nations.get(PLAYER)!.eventHistory!;
+  return {
+    turnId: request.turnId,
+    interruptionId: request.interruptionId,
+    suspendedRequestKind: request.kind,
+    hintCount: request.options.reduce((sum, option) => sum + option.hints.length, 0),
+    resumedHash: unifiedSnapshotHash(resumed.finalSnapshot),
+    playerFired: player.fired.map((r) => `${r.month}:${r.answerId}:${r.resolvedBy}`).join(","),
+    playerPending: player.pending?.eventId ?? null,
+  };
+}
+
 try {
-  process.stdout.write(JSON.stringify({ success: true, months: run() }) + "\n");
+  process.stdout.write(
+    JSON.stringify({ success: true, months: run(), answered: answerDilemma() }) + "\n",
+  );
 } catch (err) {
   process.stdout.write(JSON.stringify({ success: false, error: String(err) }) + "\n");
 }

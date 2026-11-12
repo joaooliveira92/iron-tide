@@ -366,6 +366,18 @@
       "decision": "#422"
     },
     {
+      "id": "answer-event-dilemma",
+      "player_verb": "Answer a monthly event dilemma, hovering each answer for its declared effects",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": ["dilemma"],
+      "engine_symbols": [],
+      "main_commands": ["resolveTurn", "answerDecision"],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#428"
+    },
+    {
       "id": "assign-or-relieve-officer",
       "player_verb": "Assign or relieve an officer",
       "status": "reachable",
