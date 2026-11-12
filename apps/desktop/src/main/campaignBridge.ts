@@ -10,6 +10,7 @@ import {
 } from "./commands/battleSandboxCommands.js";
 import { commitMonthProgram } from "./commands/commitMonth.js";
 import { compileCampaignProgram } from "./commands/compileCampaign.js";
+import { exportGenerationReportProgram } from "./commands/exportGenerationReport.js";
 import {
   inspectDrawingBoardContentProgram,
   inspectPresentationContentProgram,
@@ -119,6 +120,7 @@ const CommandNameSchema = Schema.Literals(CAMPAIGN_COMMAND_NAMES);
 export const commandHandlers: CommandHandlers = {
   listNewGameOptions: () => listNewGameOptionsProgram,
   compileCampaign: compileCampaignProgram,
+  exportGenerationReport: exportGenerationReportProgram,
   inspectCampaign: inspectCampaignProgram,
   inspectMap: inspectMapProgram,
   inspectBattleHistory: inspectBattleHistoryProgram,

@@ -250,6 +250,50 @@ describe("offer request schema", () => {
     };
     expect(decodeInterruptionRequest(battle)).toEqual(battle);
   });
+
+  it("decodes a decision request without deltas as before and round-trips one with deltas", () => {
+    const option = {
+      optionId: "approve",
+      titleKey: "t",
+      bodyKey: "b",
+      hints: [],
+      effects: [{ nationId: "GBR", attribute: "treasury" as const, delta: -50 }],
+    };
+    const decision = {
+      kind: "decision" as const,
+      turnId: "t",
+      interruptionId: "i",
+      phase: "appropriation" as const,
+      ordinal: 0,
+      subjectKey: "s",
+      decisionId: "d",
+      titleKey: "k",
+      bodyKey: "k",
+      interpolation: {},
+      options: [option],
+    };
+    expect(decodeInterruptionRequest(decision)).toEqual(decision);
+
+    const withDeltas = {
+      ...decision,
+      options: [
+        {
+          ...option,
+          effects: [],
+          deltas: [
+            { target: { type: "nation" as const, id: "FRA" }, attribute: "tension", delta: 2 },
+          ],
+        },
+      ],
+    };
+    expect(decodeInterruptionRequest(JSON.parse(JSON.stringify(withDeltas)))).toEqual(withDeltas);
+    expect(() =>
+      decodeInterruptionRequest({
+        ...withDeltas,
+        options: [{ ...withDeltas.options[0], deltas: [{ attribute: "tension", delta: 2 }] }],
+      }),
+    ).toThrow();
+  });
 });
 
 describe("suspended turn refusal tag (T-1 03)", () => {

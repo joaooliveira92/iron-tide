@@ -5,8 +5,8 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Status | Rows |
 | --- | --- |
 | reachable | 32 |
-| dormant-by-decision | 17 |
-| internal | 14 |
+| dormant-by-decision | 19 |
+| internal | 16 |
 
 ## Reachable
 
@@ -50,8 +50,10 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Row | Player verb | Decision |
 | --- | --- | --- |
 | construction-events | Learn why a build slipped or cost more | #584 |
-| accept-peace | Accept a peace settlement | #422, #483, #484 |
+| event-answer-unrest | See unrest rise or fall after a crisis answer | #427 |
+| accept-peace | Accept a peace settlement | #422 |
 | fight-or-decline-battle | Accept or decline a battle offer and fight it with stance, speed and course orders | #422 |
+| answer-event-dilemma | Answer a monthly event dilemma, hovering each answer for its declared effects | #428 |
 | prestige | See and act on national prestige | #223 |
 | division-battle-experience | Divisions gain experience from the battles they fight | #276 |
 | aircraft-and-carriers | Develop aircraft and operate carriers | RULES.md#dormant-by-decision |
@@ -72,6 +74,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Row | Capability | Commands |
 | --- | --- | --- |
 | budget-project-command | Budget a project (AI command only) | - |
+| battle-gun-quality-rules | Per-nation gun quality by caliber band applied to battle reload | - |
 | command-lifecycle-definitions | Command definitions for budget, halt, resume and acceleration | - |
 | design-studies | Design study bookkeeping | - |
 | foreign-contract-monthly | Monthly foreign-contract, insight and war-policy steps | - |
@@ -84,5 +87,6 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | debug-tactical-sandbox | Generate, resolve and replay battles in the debug Tactical Sandbox | `generateBattle`, `resolveBattle`, `resolveTacticalBattle`, `replayBattleBoundary` |
 | debug-simulation-screen | Inspect the turn report and time-lapse through the debug Simulation screen | - |
 | debug-debugging-screen | Inspect AST and wide-event telemetry through the debug Debugging screen | - |
+| debug-generation-report-export | Copy the fleet generation report in the debug screen | `exportGenerationReport` |
 | debug-battle-drill-seed | Seed a campaign battle drill for end-to-end tests | `seedCampaignBattleDrill` |
 

@@ -214,16 +214,22 @@ describe("commitMonth", () => {
 
       expect(result.value.domainEvents.some((e) => e.kind === "BattleResolved")).toBe(false);
       expect(result.value.closingSnapshot.battleOutcomes).toEqual([]);
+      expect(
+        result.value.domainEvents.filter((e) => e.kind === "ConstructionDelayed").map((e) => e.id),
+      ).toEqual([]);
+      expect(
+        result.value.domainEvents.filter((e) => e.kind === "ConstructionOverrun").map((e) => e.id),
+      ).toEqual([]);
       const updated = getCampaignSession("session-nobattle")!;
       expect(updated.state.envelope).toEqual({
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "0e897ebe4241f12d5fe4af7c3a8032d63048cdd0f60c2fca5b7121c625783904",
+        bodyHash: "91515c2181e8aad9c6f8ca05b88263e18cc3f77a9af3bc1e35f469ec7fd05292",
         bodyLength: 212849,
       });
       expect(updated.state.rawHash).toBe(
-        "d046dfaaf85ddc4cedf69a2f137166ac698a374f875d1d8bcbf23b975e6197db",
+        "f186022688655c2c7d048dab8c910fc51a4cf0e8c51c6b3a1744feb1f321f4cf",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",

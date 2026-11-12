@@ -359,8 +359,42 @@
     animation: an-ink-in 900ms ease-out both;
   }
 
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-top {
+    animation: an-sheen 7200ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-line {
+    animation: an-plating 5200ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-line:nth-of-type(even) {
+    animation-delay: 5000ms;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-dot {
+    animation: an-glint 4400ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-dot:nth-of-type(3n) {
+    animation-delay: 3600ms;
+  }
+
+  .an-ship[data-section="hull"] .an-part[data-kind="hull"] .an-dot:nth-of-type(3n + 1) {
+    animation-delay: 4800ms;
+  }
+
   .an-ship[data-section="machinery"] .an-part[data-kind="funnel"] {
     animation: an-fire 2400ms ease-in-out infinite;
+  }
+
+  .an-ship[data-section="machinery"] .an-part[data-kind="funnel"] .an-ink-fill {
+    animation: an-mach-cap 3800ms ease-in-out infinite;
+    animation-delay: calc(var(--an-i, 0) * 900ms);
+  }
+
+  .an-ship[data-section="machinery"] .an-part[data-kind="funnel"] .an-top {
+    animation: an-mach-heat 3000ms ease-in-out infinite;
+    animation-delay: calc(var(--an-i, 0) * 700ms);
   }
 
   .an-ship[data-section="machinery"] .an-part[data-kind="fitting"] {
@@ -369,10 +403,42 @@
   }
 
   .an-ship[data-section="machinery"] .an-smoke {
-    animation: an-plume 3200ms ease-out infinite;
-    animation-delay: calc(var(--an-puff, 0) * 1050ms);
+    animation:
+      an-plume 3200ms ease-out infinite,
+      an-mach-drift 6400ms ease-in-out infinite;
+    animation-delay: calc(var(--an-puff, 0) * 1050ms), calc(var(--an-puff, 0) * 800ms);
     transform-box: fill-box;
     transform-origin: 50% 50%;
+  }
+
+  @keyframes an-mach-cap {
+    0%,
+    100% {
+      opacity: 0.7;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes an-mach-heat {
+    0%,
+    100% {
+      filter: none;
+    }
+    50% {
+      filter: brightness(1.1);
+    }
+  }
+
+  @keyframes an-mach-drift {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    50% {
+      translate: -4px 0;
+    }
   }
 
   .an-ship[data-section="protection"] .an-part[data-kind="armour"] {
@@ -382,6 +448,84 @@
 
   .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-edge {
     animation: an-strike 1300ms ease-out 200ms both;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-dot {
+    animation: an-prot-rivet 5600ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-dot:nth-of-type(4n + 2) {
+    animation-delay: 3000ms;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-dot:nth-of-type(4n + 3) {
+    animation-delay: 3600ms;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-dot:nth-of-type(4n) {
+    animation-delay: 4200ms;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-line[data-tone="faint"] {
+    animation: an-prot-seam 6400ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="protection"]
+    .an-part[data-kind="armour"]
+    .an-line[data-tone="faint"]:nth-of-type(even) {
+    animation-delay: 5600ms;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-line[data-heavy] {
+    animation: an-prot-ridge 4800ms ease-in-out 2400ms infinite;
+  }
+
+  .an-ship[data-section="protection"] .an-part[data-kind="armour"] .an-top {
+    animation: an-prot-temper 7200ms ease-in-out infinite;
+    animation-delay: calc(2400ms + var(--an-i, 0) * 1500ms);
+  }
+
+  @keyframes an-prot-rivet {
+    0%,
+    55%,
+    100% {
+      opacity: 0.24;
+    }
+    75% {
+      opacity: 0.95;
+    }
+  }
+
+  @keyframes an-prot-seam {
+    0%,
+    100% {
+      stroke: var(--an-faint);
+    }
+    50% {
+      stroke: var(--an-mid);
+    }
+  }
+
+  @keyframes an-prot-ridge {
+    0%,
+    100% {
+      stroke: var(--an-mid);
+      stroke-width: 1.15px;
+    }
+    50% {
+      stroke: var(--an-hi);
+      stroke-width: 1.5px;
+    }
+  }
+
+  @keyframes an-prot-temper {
+    0%,
+    100% {
+      filter: none;
+    }
+    50% {
+      filter: brightness(1.12);
+    }
   }
 
   .an-ship[data-section="armament"] .an-part[data-kind="weapon"] {
@@ -412,6 +556,37 @@
 
   .an-ring-halo {
     animation: an-breathe 2.4s ease-in-out infinite;
+  }
+
+  @keyframes an-sheen {
+    0%,
+    100% {
+      filter: none;
+    }
+    50% {
+      filter: brightness(1.14);
+    }
+  }
+
+  @keyframes an-plating {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  @keyframes an-glint {
+    0%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+    85% {
+      opacity: 0.3;
+    }
   }
 }
 

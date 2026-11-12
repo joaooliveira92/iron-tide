@@ -7,12 +7,14 @@ import {
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { ExplanationBuilder, type ExplanationTree } from "@bluewave/events";
 import type { RandomDecision, RandomEngine, RandomLedger } from "@bluewave/random";
 import {
   DOCK_EXPANSION_BASE_DURATION_MONTHS,
   dockExpansionEraStepForMonth,
   dockExpansionFinalDurationMonths,
   DOCK_EXPANSION_NEUTRAL_DURATION_MULTIPLIER_BP,
+  missingDockLimits,
   raiseDockLimitsByStep,
   type DockMassLimits,
 } from "@bluewave/ship-design";
@@ -136,6 +138,47 @@ export function authorizeDockExpansion(
 
 export function applyDockExpansionStep(dock: DockMassLimits, stepKg: number): DockMassLimits {
   return raiseDockLimitsByStep(dock, stepKg);
+}
+
+export const DOCK_LIMIT_AFTER_EXPANSION_FORMULA_ID = "dock_limit_after_expansion" as const;
+
+const DOCK_LIMIT_AFTER_EXPANSION_FORMULA_VERSION = "dock_limit_after_expansion_v1";
+const DOCK_LIMIT_AFTER_EXPANSION_SOURCE = {
+  kind: "code",
+  ref: "packages/phase-engine/src/dockExpansion.ts",
+} as const;
+
+function dockLimitLeaf(formulaId: string, amountKg: number): ExplanationTree {
+  return new ExplanationBuilder(formulaId, DOCK_LIMIT_AFTER_EXPANSION_FORMULA_VERSION)
+    .withInput("amount", amountKg)
+    .withResult(amountKg)
+    .withUnit("kg")
+    .withSource(DOCK_LIMIT_AFTER_EXPANSION_SOURCE)
+    .build();
+}
+
+export function dockLimitAfterExpansionExplanation(
+  dock: Partial<DockMassLimits> | null,
+  stepKg: number | null,
+): ExplanationTree | undefined {
+  if (dock === null || stepKg === null || missingDockLimits(dock).length > 0) return undefined;
+  const limits = dock as DockMassLimits;
+  const afterKg = applyDockExpansionStep(limits, stepKg).maximumNewConstructionMassKg;
+  return new ExplanationBuilder(
+    DOCK_LIMIT_AFTER_EXPANSION_FORMULA_ID,
+    DOCK_LIMIT_AFTER_EXPANSION_FORMULA_VERSION,
+  )
+    .withInput("currentKg", limits.maximumNewConstructionMassKg)
+    .withInput("stepKg", stepKg)
+    .withResult(afterKg)
+    .withUnit("kg")
+    .withOperation("add")
+    .withSource(DOCK_LIMIT_AFTER_EXPANSION_SOURCE)
+    .addChild(
+      dockLimitLeaf("dock_limit_after_expansion.current", limits.maximumNewConstructionMassKg),
+    )
+    .addChild(dockLimitLeaf("dock_limit_after_expansion.step", stepKg))
+    .build();
 }
 
 export const PRIVATE_DOCK_EXPANSION_EVENT_ID = "private_dock_expansion_opportunity_v1" as const;

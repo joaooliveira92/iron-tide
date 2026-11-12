@@ -159,6 +159,53 @@ function makeDesignForCosts(displacementKg: SafeInt) {
   return fixtureDesign("uk", "des_amphitrite", { normalizedDisplacementKg: displacementKg });
 }
 
+describe("buildConstructionProjectQueueWithReadouts cause history (#584 slice 4)", () => {
+  const snapshotWith = (extra: object) =>
+    fixtureSnapshot(
+      [
+        fixtureNation({
+          id: "uk",
+          constructionProjects: [
+            fixtureConstructionProject({
+              id: "con_a",
+              designVersionId: "des_a",
+              status: "ACTIVE",
+              totalWork: SafeInt(100),
+              completedWork: SafeInt(20),
+              startedAt: "1880-01",
+              ...extra,
+            }),
+          ],
+        }),
+      ],
+      [fixtureDesign("uk", "des_a", { className: "Alpha", hullType: "ironclad_turret_ship" })],
+    );
+
+  it("carries every recorded delay newest first", () => {
+    const snapshot = snapshotWith({
+      delays: [
+        { month: "1880-02", reasonCode: "STEEL_PLATE_SHORTAGE", months: 2 },
+        { month: "1880-04", reasonCode: "YARD_WEATHER_DAMAGE", months: 1 },
+      ],
+    });
+    const [entry] = buildConstructionProjectQueueWithReadouts(snapshot, "uk", "1880-05", null);
+    expect(entry?.readout?.delays).toEqual([
+      { month: "1880-04", reasonCode: "YARD_WEATHER_DAMAGE", months: 1 },
+      { month: "1880-02", reasonCode: "STEEL_PLATE_SHORTAGE", months: 2 },
+    ]);
+  });
+
+  it("omits delays when none were recorded", () => {
+    const [entry] = buildConstructionProjectQueueWithReadouts(
+      snapshotWith({}),
+      "uk",
+      "1880-05",
+      null,
+    );
+    expect(entry?.readout?.delays).toBeUndefined();
+  });
+});
+
 describe("projectedConstructionOrderCosts and designed ships", () => {
   const design = (extra: object = {}) =>
     ({ normalizedDisplacementKg: 2_000_000, ...extra }) as unknown as Parameters<

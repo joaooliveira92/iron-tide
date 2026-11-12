@@ -1,4 +1,4 @@
-import { createInitialCampaignState } from "@bluewave/campaign";
+import { createInitialCampaignState, FLEET_SIZE_BPS } from "@bluewave/campaign";
 import { supportedPlayerSlotIds } from "@bluewave/campaign-engine";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Effect } from "effect";
@@ -28,10 +28,18 @@ export const compileCampaignProgram: CommandHandler<"compileCampaign"> = (config
       };
     }
 
-    const output = yield* content.compileProductionCampaign({
-      startYear: session.currentYear,
-      startMonth: session.currentMonth,
-    });
+    const output = yield* content.compileProductionCampaign(
+      {
+        startYear: session.currentYear,
+        startMonth: session.currentMonth,
+      },
+      configuration.legacyFleetModeId === "generated"
+        ? {
+            campaignSeed: configuration.campaignSeed,
+            scaleBp: FLEET_SIZE_BPS[configuration.fleetSizeSettingId],
+          }
+        : undefined,
+    );
 
     const nation = output.state.snapshot.nations.get(configuration.playerSlotId);
     if (!nation) {
@@ -60,7 +68,12 @@ export const compileCampaignProgram: CommandHandler<"compileCampaign"> = (config
 
     const saveableState = toSaveableState(output.state);
 
-    yield* projects.save(saveableState, saveDir);
+    yield* projects.save(saveableState, saveDir, {
+      provenance: {
+        campaignSeed: configuration.campaignSeed,
+        dataPackVersion: output.pack.manifest.version,
+      },
+    });
 
     yield* projects
       .writeSessionMetadata(saveDir, {
@@ -89,6 +102,9 @@ export const compileCampaignProgram: CommandHandler<"compileCampaign"> = (config
       campaignSeed: configuration.campaignSeed,
       month: { month: session.currentMonth, year: session.currentYear },
       state: saveableState,
+      ...(output.legacyFleetReport === undefined
+        ? {}
+        : { legacyFleetReport: output.legacyFleetReport }),
     });
 
     return { outcome: "success", value: { sessionId }, diagnostics: [] };

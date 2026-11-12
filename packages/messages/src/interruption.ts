@@ -29,12 +29,20 @@ export const DecisionEffectSchema = Schema.Struct({
 });
 export type DecisionEffect = typeof DecisionEffectSchema.Type;
 
+export const DecisionDeltaSchema = Schema.Struct({
+  target: EntityReferenceSchema,
+  attribute: nonEmptyString,
+  delta: Schema.Finite,
+});
+export type DecisionDelta = typeof DecisionDeltaSchema.Type;
+
 export const DecisionOptionSchema = Schema.Struct({
   optionId: nonEmptyString,
   titleKey: nonEmptyString,
   bodyKey: nonEmptyString,
   hints: Schema.Array(EffectHintSchema),
   effects: Schema.Array(DecisionEffectSchema),
+  deltas: Schema.optional(Schema.Array(DecisionDeltaSchema)),
 });
 export type DecisionOption = typeof DecisionOptionSchema.Type;
 

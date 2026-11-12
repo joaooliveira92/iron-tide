@@ -21,6 +21,50 @@ task:
     - "pnpm snap (Seen)"
 ```
 
+## Status on dev (2026-11-12)
+
+Slices 1 to 4 below shipped (#641, #644, #658, #662, #679, #688). The engine, content, events, balance report and both readouts are on `dev`. The issue body is stale: its "Blocked by" line and its UNVERIFIED event-engine note are resolved (see Evidence). The YAML above still names the original working branch; slice 5 uses `feat/issue-584-cause-wording`.
+
+| Item                                                                           | State                          | Evidence on dev                                                                                                                                                                     |
+| ------------------------------------------------------------------------------ | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Content section, schema, parity (AC4 schema half)                              | shipped                        | `content-schema/src/construction-event.ts`, `construction-event.test.ts` (#641)                                                                                                     |
+| Compiler diagnostics (AC4)                                                     | shipped                        | `content-compiler/test/constructionEventCollection.test.ts`, DELAY-row diagnostics (#662)                                                                                           |
+| Delay draw, `delayReasonCode`, `ConstructionDelayed` (AC1, 2, 3)               | shipped                        | `phase-engine/src/constructionEvents.ts`, `packages/events` validation (#644, #662)                                                                                                 |
+| Overrun draw, remaining-work rule, cap, `ConstructionOverrun` (AC2, 3)         | shipped                        | `phase-engine/src/constructionOverrun.ts`, `construction-overrun.test.ts` (#658)                                                                                                    |
+| Six-kind PROVISIONAL catalogue, multi-month delays, capacity-pressure doubling | shipped                        | `content/production/1880/construction-events.ts` (#662)                                                                                                                             |
+| Measured (AC7)                                                                 | shipped                        | `docs/research/p6-construction-events.md`, gated by `check:balance-reports`: 8 seeds, 60 months, 1.95 delays and 1.61 overruns per hundred project-months, 18 of 47 deliveries late |
+| Replay and cross-process hash (AC1)                                            | shipped                        | `replay-construction-events.test.ts`                                                                                                                                                |
+| Reachability row (AC8)                                                         | shipped, `dormant-by-decision` | `scripts/data/reachability-ledger.json`, id `construction-events`                                                                                                                   |
+| Goldens repinned with cause (AC9)                                              | shipped per slice              | commit bodies of 6b83c421 and cc8cf322                                                                                                                                              |
+| Inspector cause list, newest first (AC5, 6)                                    | shipped                        | `project-causes.ts`, `ProjectReadout.test.tsx` (#688)                                                                                                                               |
+| Turn report cause and amount (AC5)                                             | shipped                        | `construction-message-text.ts`, `TurnSummaryPanel.test.tsx` (#688)                                                                                                                  |
+| Cause wording authored in the content catalogue                                | remaining (slice 5)            | #688 composes the sentences in the renderer to avoid a 17-replay repin; the catalogue bodies are unused fallbacks                                                                   |
+| `pnpm snap` before and after (AC10)                                            | partly met                     | #688 has an "after" only; no dev baseline was taken                                                                                                                                 |
+| Good-news events, ship-class scaling, player responses                         | deferred by decision           | out of scope below                                                                                                                                                                  |
+
+Blockers: #563 (events and prestige slice 1) is still open and is not a blocker; slices 1 to 4 used none of it. #223 was a closed readout ticket and never blocked this work.
+
+### Remaining slice 5: authored cause wording in the catalogue
+
+Scope: move the delay and overrun sentence templates out of `apps/desktop/src/renderer/screens/construction/components/project-causes.ts` and `apps/desktop/src/renderer/screens/overview/turn-summary/construction-message-text.ts` into `content/production/1880/ui/en-US.yaml` (read through `apps/desktop/src/renderer/content/uiCatalogue.ts`), so wording is content, not code. One content change, one repin: the compiled body hash moves all 17 replays, their approvals and the fuzz pin. State the cause per `docs/agents/golden-repinning.md`: "construction cause wording moved into the catalogue; no draw, row or engine change", and show by a control run that replay event streams are identical apart from the content hash.
+
+Files: `content/production/1880/ui/en-US.yaml`, `content/production/1880/content-lock.json`, `uiCatalogue.ts`, `project-causes.ts`, `construction-message-text.ts`, `golden/replay-approvals.json`, `golden/replay-fuzz.json`, `golden/replays/*`.
+
+ACS: no sentence template remains in renderer code; inspector and turn report read the same in meaning; no raw code or `YYYY-MM` (existing regex tests still pass); `PAYMENT_DEFAULT_DELAYED` and unknown codes keep a plain fallback.
+
+Tests: `ProjectReadout.test.tsx` and `TurnSummaryPanel.test.tsx` pass against catalogue text; a content test that every `causeKey` and both sentence templates exist in `en-US.yaml`; `pnpm check:replay-corpus`, `check:golden-repin`, `check:replay-approvals`.
+
+Reachability ledger: unchanged, `construction-events` stays `dormant-by-decision` (no player decision, no response).
+
+Verification: the validation list above, with `pnpm snap` taken from `dev` before and after on the Slipways stage and project inspector, which also closes AC10.
+
+### Open questions for the owner
+
+1. Is slice 5 worth a 17-replay repin now, or should the wording ride with the next content-owning change that repins anyway? Either reading changes delivery cost, not gameplay.
+2. AC10 asks for before and after captures. Take the baseline now from a pre-#688 checkout, or accept after-only and amend AC10?
+3. Close #584 when slice 5 lands, or now with slice 5 as a follow-up issue?
+4. The approved rule was that an overrun is absorbed through the existing payment path with no new payment rule. This refresh did not verify a test for an overrun the payer cannot cover feeding only the existing payment-default delay. Confirm one exists, or add it in slice 5.
+
 ## Problem
 
 Nothing ever goes wrong or right during a build. A project can be `DELAYED`, but the player is not told why, and cost never moves after the order is placed. Builds read as a timer, not as ships made by yards, suppliers and weather.

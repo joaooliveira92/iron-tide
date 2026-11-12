@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { AREAS, AREAS_BY_ID } from "./map-geometry.js";
 import { EMPTY_LIVE_OVERLAY, type LiveWorldMapOverlay } from "./campaign-map-join.js";
-import { campaignNationHue } from "../../content/presentationContent.js";
-import { buildOwnershipRows, describeArea, type AreaOwnershipRow } from "./map-a11y.js";
-import { campaignTreeRows, type AreaTreeRow } from "./area-tree.js";
+import { describeArea, type AreaOwnershipRow } from "./map-a11y.js";
+import type { AreaTreeRow } from "./area-tree.js";
+import { useAreaReadouts } from "./useAreaReadouts.js";
+import { useBorderSets } from "./useBorderSets.js";
+import { useCameraView } from "./useCameraView.js";
 import type { AreaControl, AreaSummary, MapPrototypeState, RouteReading } from "./map-state.js";
 import {
   WORLD_WRAP_TURNS,
@@ -29,16 +31,13 @@ import {
   buildRegionStrengths,
   glyphVariant as glyphVariantFor,
   type GlyphVariant,
-  describeStrength,
   type RegionStrength,
 } from "./map-strength.js";
 import { strengthExtent, strengthHalfWidth } from "./layers/StrengthLayer.js";
 import { nationFlagUrl } from "../../content/nation-flag.js";
 import type { MapPalette } from "./map-palette.js";
-import type { CameraView, MapCamera } from "./useMapCamera.js";
+import type { MapCamera } from "./useMapCamera.js";
 import type { BorderSet } from "./CoastlineCanvas.js";
-import { BORDERS_1880 } from "./borders-1880-data.js";
-import { BORDER_FRONTIERS_1880 } from "./borders-1880-frontiers-data.js";
 import { campaignWorldMapSource, type WorldMapSource } from "./world-map-source.js";
 
 export interface WorldMapModel {
@@ -99,37 +98,9 @@ export function useWorldMapModel({
   );
   const areasById = useMemo(() => new Map(areas.map((area) => [area.id, area])), [areas]);
 
-  const borderSets = useMemo<BorderSet[]>(
-    () =>
-      state.layers.borders
-        ? Object.entries(BORDERS_1880).map(([id, polygons]) => {
-            const hue = campaignNationHue(id);
-            return {
-              id,
-              polygons,
-              frontiers: BORDER_FRONTIERS_1880[id] ?? [],
-              tint: `oklch(${palette.borderTintLightness} 0.14 ${hue} / 0.16)`,
-              edge: `oklch(${palette.borderEdgeLightness} 0.15 ${hue} / 0.9)`,
-            };
-          })
-        : [],
-    [palette, state.layers.borders],
-  );
+  const borderSets = useBorderSets(state.layers.borders, palette);
 
-  const [view, setView] = useState<CameraView>(() => camera.getView());
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const bump = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => setView(camera.getView()), 120);
-    };
-    const unsubscribe = camera.subscribe(bump);
-    bump();
-    return () => {
-      clearTimeout(timer);
-      unsubscribe();
-    };
-  }, [camera.getView, camera.subscribe]);
+  const view = useCameraView(camera);
 
   const portMarks = useMemo<PortMark[]>(() => {
     const singles = portSingles(source.ports, projection, state.centre);
@@ -177,10 +148,6 @@ export function useWorldMapModel({
         flagUrlFor: (nation) => (nation === null ? null : nationFlagUrl(nation)),
       }),
     [source],
-  );
-  const strengthById = useMemo(
-    () => new Map(strengths.map((region) => [region.areaId, region])),
-    [strengths],
   );
   const compact = useMemo(() => glyphVariantFor(view.svgHeight), [view.svgHeight]);
   const glyphOffsets = useMemo(() => {
@@ -259,69 +226,16 @@ export function useWorldMapModel({
     view.wrapping,
   ]);
 
-  const ownershipRows = useMemo(
-    () =>
-      buildOwnershipRows(
-        areas.map((area) => ({ id: area.id, name: AREAS_BY_ID.get(area.id)?.name ?? area.id })),
-        (id) => {
-          const owner = source.control.get(id)?.owner ?? null;
-          return owner === null ? null : source.nameFor(owner);
-        },
-        (id) => source.fleets.filter((fleet) => fleet.area === id).length,
-        (id) => source.possessionCounts.get(id) ?? 0,
-        state.selected,
-        (id) => {
-          const region = strengthById.get(id);
-          return region === undefined ? null : describeStrength(region);
-        },
-        (id) => source.unavailable.has(id),
-      ),
-    [areas, source, state.selected, strengthById],
-  );
-  const rowById = useMemo(
-    () => new Map(ownershipRows.map((row) => [row.id, row])),
-    [ownershipRows],
-  );
+  const { ownershipRows, rowById, treeRows, summary, routePath, routeSet } = useAreaReadouts({
+    source,
+    state,
+    route,
+    areas,
+    areasById,
+    strengths,
+  });
 
   const graticule = useMemo(() => buildGraticule(projection), [projection]);
-
-  const routeSet = useMemo(() => new Set(route?.path ?? []), [route]);
-
-  const summary = useMemo(
-    () => (state.selected === null ? null : source.summarise(state.selected)),
-    [source, state.selected],
-  );
-
-  const treeRows = useMemo<AreaTreeRow[]>(() => {
-    if (source.campaignAreas !== null) {
-      return campaignTreeRows(
-        source.campaignAreas,
-        source.playerNationId,
-        (nation) => source.nameFor(nation),
-        state.selected,
-      );
-    }
-    return ownershipRows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      owner: row.owner,
-      ships: row.fleets,
-      possessed: row.possessions > 0,
-      mapAreaId: row.id,
-      selected: row.selected,
-    }));
-  }, [source, ownershipRows, state.selected]);
-
-  const routePath = useMemo(() => {
-    if (route === null || !state.layers.routes) return "";
-    return route.path
-      .map((id, index) => {
-        const point = areasById.get(id)?.label;
-        if (point === undefined) return "";
-        return `${index === 0 ? "M" : "L"}${point[0]} ${point[1]}`;
-      })
-      .join("");
-  }, [areasById, route, state.layers.routes]);
 
   const areaName = useMemo(() => (id: string) => AREAS_BY_ID.get(id)?.name ?? id, []);
 

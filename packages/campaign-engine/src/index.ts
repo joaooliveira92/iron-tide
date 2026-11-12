@@ -5,6 +5,7 @@ export * from "./construction-explanations.js";
 export * from "./debug.js";
 export * from "./design.js";
 export * from "./diplomacy.js";
+export * from "./peace-offer.js";
 export * from "./economy-explanations.js";
 export * from "./fleet.js";
 export * from "./fleet-explanations.js";

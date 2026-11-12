@@ -532,6 +532,56 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         },
       },
     ],
+    gunQuality: {
+      bands: [
+        {
+          id: "light",
+          minCaliberUm: 1,
+          maxCaliberUm: 152000,
+          quality: 1,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL +1: Elswick and Woolwich quick-firing and machine-gun output (Nordenfelt, Hotchkiss, Armstrong QF) was the broadest in the world; below 152 mm.",
+          },
+        },
+        {
+          id: "medium",
+          minCaliberUm: 152000,
+          maxCaliberUm: 254000,
+          quality: 1,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL +1: mature Armstrong and Woolwich breech-loading production for 152 mm to under 254 mm secondary and cruiser guns.",
+          },
+        },
+        {
+          id: "heavy",
+          minCaliberUm: 254000,
+          maxCaliberUm: 1000000,
+          quality: 0,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL 0: Royal Navy heavy guns in 1880 were still muzzle-loading rifles, so the strong industrial base is held at the neutral level for 254 mm and above.",
+          },
+        },
+      ],
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [],
+        note: "PROVISIONAL gun_quality_v1 levels by caliber band (-3..+2, 0 neutral), issue 668. Relative national standing, not measured ballistics.",
+      },
+    },
     designWeights: {
       B: {
         firepowerBp: 12000,

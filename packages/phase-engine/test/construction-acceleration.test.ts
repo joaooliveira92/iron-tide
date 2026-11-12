@@ -1,16 +1,15 @@
 import type {
   CampaignSnapshot,
-  CompiledDesignVersion,
   ConstructionPackage,
   ConstructionProject,
-  NationState,
 } from "@bluewave/campaign";
 import { campaignMonthId, transitionConstructionProject } from "@bluewave/campaign";
+import type { ConstructionEvent, ConstructionOverrunEvent } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { RandomEngine, RandomLedger } from "@bluewave/random";
-import { accelerationTermsOf, LINE_IDS } from "@bluewave/ship-design";
+import { accelerationTermsOf } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
 import { assertValidDefinitionOrThrow } from "@bluewave/commands";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
@@ -40,144 +39,19 @@ import {
   resolveAccelerationCapacityPressure,
   weightedConstructionDemand,
 } from "../src/constructionAcceleration.js";
+import { CONSTRUCTION_EVENT_STREAM_FAMILY } from "../src/constructionEvents.js";
 import { applyHaltConstruction, applySetAcceleration } from "../src/commands.js";
 import { constructionProjectQueueWithReadouts } from "../src/constructionReadout.js";
 import { constructionSteeringPreviews } from "../src/constructionSteeringPreview.js";
 import { fundConstructionProject } from "../src/constructionFunding.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
-import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import { capacity, design, project, snapshot } from "./helpers/constructionFixtures.js";
 
 const content = productionShipBuildingContent();
-
-const capacity = (perLine: number): Record<string, SafeInt> =>
-  Object.fromEntries(LINE_IDS.map((line) => [line, SafeInt(perLine)]));
 
 const environment = content.environmentFor("1880-02");
 const productionBalance = environment.constructionBalance;
 const terms = accelerationTermsOf(productionBalance, environment.costBalance);
-
-function packages(): ConstructionPackage[] {
-  return LINE_IDS.map((line, index) => ({
-    id: `pkg-${String(index)}`,
-    kind: "HULL",
-    line,
-    totalWork: SafeInt(100),
-    doneWork: SafeInt(0),
-    dependsOn: [],
-  }));
-}
-
-interface ProjectOverrides {
-  readonly id?: string;
-  readonly status?: ConstructionProject["status"];
-  readonly projectType?: ConstructionProject["projectType"];
-  readonly totalWork?: number;
-  readonly completedWork?: number;
-  readonly designVersionId?: string;
-  readonly withPackages?: boolean;
-}
-
-function project(over: ProjectOverrides = {}): ConstructionProject {
-  const withPackages = over.withPackages ?? false;
-  const pkgList = withPackages ? packages() : undefined;
-  const totalWork = over.totalWork ?? (withPackages ? 600 : 200);
-  return {
-    id: over.id ?? "proj-1",
-    type: "ship",
-    projectType: over.projectType ?? "NEW_CONSTRUCTION",
-    targetId: "ship-x",
-    designVersionId: over.designVersionId ?? "",
-    totalWork: SafeInt(totalWork),
-    completedWork: SafeInt(over.completedWork ?? 0),
-    paidWork: SafeInt(0),
-    status: over.status ?? "ACTIVE",
-    startedAt: "1880-01",
-    ...(pkgList === undefined ? {} : { packages: pkgList }),
-  };
-}
-
-function design(id = "d1", perLine = 10): CompiledDesignVersion {
-  return {
-    designVersionId: id,
-    designFamilyId: "fam",
-    className: "Test",
-    nationId: "GBR",
-    hullType: "DD",
-    normalizedDisplacementKg: SafeInt(1_000_000),
-    normalizedSpeedUms: SafeInt(10_000_000),
-    normalizedArmorUm: SafeInt(0),
-    hitPoints: SafeInt(100),
-    mainGunsCaliber: SafeInt(0),
-    mainGunsCount: SafeInt(0),
-    machineryType: "steam",
-    crewComplement: SafeInt(10),
-    contentVersion: "t",
-    compiledHash: "h",
-    constructionCostUnits: SafeInt(600),
-    constructionPlan: { yardId: "yard_small", packages: [], capacityUnits: capacity(perLine) },
-  };
-}
-
-function nation(projects: ConstructionProject[], baseResources = 0, treasury = 1_000): NationState {
-  return {
-    prestige: SafeInt(20),
-    id: "GBR",
-    name: "Great Britain",
-    tag: "GBR",
-    treasury: SafeInt(treasury),
-    income: SafeInt(0),
-    expenses: SafeInt(0),
-    baseResources: SafeInt(baseResources),
-    navalAppropriationRateBp: SafeInt(2_000),
-    maintenanceCost: SafeInt(0),
-    fleets: [],
-    divisions: [],
-    research: {
-      nationId: "GBR",
-      technologies: [],
-      fieldPriorities: {},
-      researchBudget: SafeInt(0),
-      activeCandidates: new Map(),
-      discoveredTechs: [],
-    },
-    constructionProjects: projects,
-    isPlayable: true,
-    isAI: false,
-  };
-}
-
-function snapshot(
-  projects: ConstructionProject[],
-  designs: Map<string, CompiledDesignVersion> = new Map(),
-  baseResources = 0,
-  treasury = 1_000,
-): CampaignSnapshot {
-  return {
-    prestigeRules: FIXTURE_PRESTIGE_RULES,
-    version: "0.1.0",
-    turnNumber: SafeInt(1),
-    campaignId: "acceleration-pressure",
-    startYear: 1880,
-    startMonth: 1,
-    strategicWeather: [],
-    slots: [{ nationId: "GBR", type: "playable" }],
-    world: { areas: [], routes: [], ports: [] },
-    nations: new Map([["GBR", nation(projects, baseResources, treasury)]]),
-    wars: {
-      wars: [],
-      battles: [],
-      participantMemberships: [],
-      blockadeState: [],
-      battleManifests: [],
-    },
-    politics: { relations: [], shells: {} },
-    intelligence: { shells: {} },
-    designs,
-    designFamilies: new Map(),
-    rulesetVersion: "0.1.0",
-    compatibilityVersion: "1.2.0",
-  };
-}
 
 const executeMonth = (
   from: CampaignSnapshot,
@@ -1035,5 +909,333 @@ describe("accelerating an unpaced packaged ship never lengthens it (issue 574)",
     expect(preview.monthsSaved).toBe(1);
     expect(preview.premiumUnits).toBe(2);
     expect(preview.fundsLimited).toBe(false);
+  });
+});
+
+describe("construction events in the economy pass (#584)", () => {
+  const provenance = {
+    sourceStatus: "BALANCE_TARGET" as const,
+    confidence: "LOW" as const,
+    kind: "balance_adjustment" as const,
+    sources: [],
+    note: "PROVISIONAL test fixture",
+  };
+  const rule = (probabilityBp: number): Extract<ConstructionEvent, { kind: "DELAY" }> => ({
+    id: "steel_plate_shortage",
+    kind: "DELAY",
+    probabilityBp,
+    minMonths: 2,
+    maxMonths: 2,
+    pressureMultiplierBp: 20_000,
+    reasonCode: "STEEL_PLATE_SHORTAGE",
+    causeKey: "construction.event.steel_plate_shortage",
+    provenance,
+  });
+  const start = () =>
+    snapshot(
+      [project({ id: "proj-1", status: "ACTIVE", withPackages: true, designVersionId: "d1" })],
+      new Map([["d1", design("d1", 50)]]),
+      6_000,
+    );
+  const run = (probabilityBp: number, withRules = true) =>
+    new MonthExecutor().execute(start(), [], "event-seed", new DiagnosticCollector(), undefined, {
+      shipBuilding: content,
+      ...(withRules ? { constructionEvents: [rule(probabilityBp)] } : {}),
+    });
+
+  it("delays a building project with the rule's cause, zero work, and a random-decision record", () => {
+    const result = run(10_000);
+    const p = result.finalSnapshot.nations.get("GBR")!.constructionProjects[0]!;
+    expect(p.status).toBe("DELAYED");
+    expect(p.delayReasonCode).toBe("STEEL_PLATE_SHORTAGE");
+    expect(Number(p.completedWork)).toBe(0);
+    expect(Number(p.paidWork)).toBe(0);
+    const delay = result.eventLedger.all.find((e) => e.eventType === "ConstructionDelayed");
+    expect(delay?.body).toMatchObject({ projectId: "proj-1", reason: "STEEL_PLATE_SHORTAGE" });
+    const decision = result.randomLedger.all.find(
+      (d) => d.streamId === CONSTRUCTION_EVENT_STREAM_FAMILY,
+    );
+    expect(decision?.outcome).toBe("DELAYED");
+  });
+
+  it("leaves the project working when the draw misses", () => {
+    const result = run(0);
+    const p = result.finalSnapshot.nations.get("GBR")!.constructionProjects[0]!;
+    expect(p.status).toBe("ACTIVE");
+    expect(p.delayReasonCode).toBeUndefined();
+    expect(result.eventLedger.all.some((e) => e.eventType === "ConstructionDelayed")).toBe(false);
+  });
+
+  it("draws nothing when no rules are supplied", () => {
+    const result = run(10_000, false);
+    const p = result.finalSnapshot.nations.get("GBR")!.constructionProjects[0]!;
+    expect(p.status).toBe("ACTIVE");
+    expect(
+      result.randomLedger.all.some((d) => d.streamId === CONSTRUCTION_EVENT_STREAM_FAMILY),
+    ).toBe(false);
+  });
+
+  describe("delay length", () => {
+    const FIRST_MONTH = "1880-02";
+    const once = (months: number): Extract<ConstructionEvent, { kind: "DELAY" }> => ({
+      ...rule(10_000),
+      minMonths: months,
+      maxMonths: months,
+      eraWindow: { fromMonth: FIRST_MONTH, toMonth: FIRST_MONTH },
+    });
+    const step = (from: CampaignSnapshot, rules: readonly ConstructionEvent[]) => {
+      const result = new MonthExecutor().execute(
+        from,
+        [],
+        "length-seed",
+        new DiagnosticCollector(),
+        undefined,
+        { shipBuilding: content, constructionEvents: rules },
+      );
+      return {
+        result,
+        next: {
+          ...result.finalSnapshot,
+          turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt(1)),
+        },
+      };
+    };
+    const only = (snap: CampaignSnapshot): ConstructionProject =>
+      snap.nations.get("GBR")!.constructionProjects[0]!;
+    const monthsToDeliver = (rules: readonly ConstructionEvent[]): number => {
+      let current = start();
+      for (let m = 1; m <= 80; m++) {
+        const next = step(current, rules);
+        if (only(next.result.finalSnapshot).status === "COMPLETED") return m;
+        current = next.next;
+      }
+      throw new Error("never delivered");
+    };
+
+    it("slips delivery by exactly the drawn months against a run with no events", () => {
+      const control = monthsToDeliver([]);
+      for (const months of [1, 2, 3])
+        expect(monthsToDeliver([once(months)])).toBe(control + months);
+    });
+
+    it("holds the project delayed across month ends until the drawn months are served", () => {
+      const first = step(start(), [once(3)]);
+      expect(only(first.result.finalSnapshot).status).toBe("DELAYED");
+      expect(only(first.result.finalSnapshot).delays).toEqual([
+        { month: FIRST_MONTH, reasonCode: "STEEL_PLATE_SHORTAGE", months: 3 },
+      ]);
+      const second = step(first.next, [once(3)]);
+      expect(only(second.result.finalSnapshot).status).toBe("DELAYED");
+      expect(only(second.result.finalSnapshot).delayReasonCode).toBe("STEEL_PLATE_SHORTAGE");
+      const third = step(second.next, [once(3)]);
+      const resumed = only(third.result.finalSnapshot);
+      expect(resumed.status).toBe("ACTIVE");
+      expect(resumed.delayReasonCode).toBeUndefined();
+      expect(resumed.delays).toHaveLength(1);
+      expect(Number(resumed.completedWork)).toBe(0);
+    });
+
+    it("records a one-month delay and its event without leaving the project held", () => {
+      const first = step(start(), [once(1)]);
+      const p = only(first.result.finalSnapshot);
+      expect(p.status).toBe("ACTIVE");
+      expect(Number(p.completedWork)).toBe(0);
+      expect(p.delays).toEqual([
+        { month: FIRST_MONTH, reasonCode: "STEEL_PLATE_SHORTAGE", months: 1 },
+      ]);
+      const event = first.result.eventLedger.all.find((e) => e.eventType === "ConstructionDelayed");
+      expect(event?.body).toMatchObject({
+        reason: "STEEL_PLATE_SHORTAGE",
+        delayMonth: FIRST_MONTH,
+        months: 1,
+      });
+      expect(
+        Number(only(step(first.next, [once(1)]).result.finalSnapshot).completedWork),
+      ).toBeGreaterThan(0);
+    });
+
+    it("never delays a foreign contract or a dock expansion", () => {
+      const base = start();
+      const nation = base.nations.get("GBR")!;
+      const built = nation.constructionProjects[0]!;
+      const variants = [
+        { ...built, id: "p-foreign", foreignContractId: "fc-1", foreignBuilderNationId: "FRA" },
+        { ...built, id: "p-dock", projectType: "INFRASTRUCTURE" as const },
+      ];
+      const mixed = {
+        ...base,
+        nations: new Map([["GBR", { ...nation, constructionProjects: variants }]]),
+      };
+      const { result } = step(mixed, [once(2)]);
+      expect(result.eventLedger.all.some((e) => e.eventType === "ConstructionDelayed")).toBe(false);
+      for (const p of result.finalSnapshot.nations.get("GBR")!.constructionProjects)
+        expect(p.delays).toBeUndefined();
+    });
+  });
+
+  describe("overruns", () => {
+    const overrun = (over: Partial<ConstructionOverrunEvent> = {}): ConstructionOverrunEvent => ({
+      id: "design_change_rework",
+      kind: "OVERRUN",
+      probabilityBp: 10_000,
+      minBp: 1_000,
+      maxBp: 1_000,
+      capBp: 3_000,
+      reasonCode: "DESIGN_CHANGE_REWORK",
+      causeKey: "construction.event.design_change_rework",
+      provenance,
+      ...over,
+    });
+    const runMonth = (
+      from: CampaignSnapshot,
+      rules: readonly ConstructionEvent[],
+      seed = "o-seed",
+    ) => {
+      const result = new MonthExecutor().execute(
+        from,
+        [],
+        seed,
+        new DiagnosticCollector(),
+        undefined,
+        { shipBuilding: content, constructionEvents: rules },
+      );
+      return {
+        result,
+        next: {
+          ...result.finalSnapshot,
+          turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt(1)),
+        },
+      };
+    };
+    const only = (snap: CampaignSnapshot): ConstructionProject =>
+      snap.nations.get("GBR")!.constructionProjects[0]!;
+    const sumTotals = (p: ConstructionProject): number =>
+      p.packages!.reduce((a, pk) => a + Number(pk.totalWork), 0);
+
+    it("adds a share of remaining work, records cause and amount, and keeps the project building", () => {
+      const { result } = runMonth(start(), [overrun()]);
+      const p = only(result.finalSnapshot);
+      expect(p.status).toBe("ACTIVE");
+      expect(Number(p.totalWork)).toBe(660);
+      expect(sumTotals(p)).toBe(660);
+      expect(p.overruns).toEqual([
+        { month: "1880-02", reasonCode: "DESIGN_CHANGE_REWORK", amount: 60 },
+      ]);
+      const event = result.eventLedger.all.find((e) => e.eventType === "ConstructionOverrun");
+      expect(event?.body).toMatchObject({
+        kind: "ConstructionOverrun",
+        projectId: "proj-1",
+        reason: "DESIGN_CHANGE_REWORK",
+        amount: 60,
+        overrunMonth: "1880-02",
+      });
+      expect(result.eventLedger.all.some((e) => e.eventType === "ConstructionDelayed")).toBe(false);
+    });
+
+    it("never touches work already done, even when the project is half built", () => {
+      const half = (() => {
+        const base = start();
+        const nation = base.nations.get("GBR")!;
+        const built = nation.constructionProjects[0]!;
+        const done = {
+          ...built,
+          completedWork: SafeInt(300),
+          paidWork: SafeInt(300),
+          packages: built.packages!.map((pk, i) =>
+            i < 3 ? { ...pk, doneWork: pk.totalWork } : pk,
+          ),
+        };
+        return {
+          ...base,
+          nations: new Map([["GBR", { ...nation, constructionProjects: [done] }]]),
+        };
+      })();
+      const p = only(runMonth(half, [overrun()]).result.finalSnapshot);
+      expect(p.overruns).toEqual([
+        { month: "1880-02", reasonCode: "DESIGN_CHANGE_REWORK", amount: 30 },
+      ]);
+      expect(p.packages!.slice(0, 3).every((pk) => Number(pk.totalWork) === 100)).toBe(true);
+      expect(Number(p.totalWork)).toBe(630);
+    });
+
+    it("holds the cumulative overrun at the cap and still delivers the ship", () => {
+      let current = start();
+      let overruns = 0;
+      for (let m = 1; m <= 40; m++) {
+        const step = runMonth(current, [overrun({ minBp: 2_000, maxBp: 2_000, capBp: 3_000 })]);
+        overruns += step.result.eventLedger.all.filter(
+          (e) => e.eventType === "ConstructionOverrun",
+        ).length;
+        current = step.next;
+      }
+      const delivered = current.nations.get("GBR")!.constructionProjects[0]!;
+      const total = (delivered.overruns ?? []).reduce((a, o) => a + Number(o.amount), 0);
+      expect(overruns).toBeGreaterThan(1);
+      expect(total).toBeLessThanOrEqual(180);
+      expect(total).toBe(180);
+      expect(delivered.status).toBe("COMPLETED");
+      expect(Number(delivered.completedWork)).toBe(Number(delivered.totalWork));
+      expect(Number(delivered.totalWork)).toBe(780);
+    });
+
+    it("surfaces the cause and the cost of each overrun in the readout, newest first", () => {
+      const first = runMonth(start(), [overrun()]);
+      const second = runMonth(first.next, [overrun({ id: "later", reasonCode: "LATER_CAUSE" })]);
+      const entry = constructionProjectQueueWithReadouts(
+        second.next,
+        "GBR",
+        content,
+        "1880-03",
+      )[0]!;
+      const views = entry.readout!.overruns!;
+      expect(views.map((v) => v.reasonCode)).toEqual(["LATER_CAUSE", "DESIGN_CHANGE_REWORK"]);
+      expect(views.every((v) => v.costUnits > 0)).toBe(true);
+      expect(views.map((v) => v.month)).toEqual(["1880-03", "1880-02"]);
+    });
+
+    it("is identical across runs with the same seed", () => {
+      const a = runMonth(start(), [overrun({ minBp: 200, maxBp: 1_000 })], "same");
+      const b = runMonth(start(), [overrun({ minBp: 200, maxBp: 1_000 })], "same");
+      expect(a.result.randomLedger.hash()).toBe(b.result.randomLedger.hash());
+      expect(only(a.result.finalSnapshot)).toEqual(only(b.result.finalSnapshot));
+    });
+
+    it("records an overrun the treasury cannot pay without a payment-default delay or any new payment rule", () => {
+      const broke = snapshot(
+        [project({ id: "proj-1", status: "ACTIVE", withPackages: true, designVersionId: "d1" })],
+        new Map([["d1", design("d1", 50)]]),
+        6_000,
+        0,
+      );
+      const { result } = runMonth(broke, [overrun()]);
+      const p = only(result.finalSnapshot);
+      expect(p.overruns).toEqual([
+        { month: "1880-02", reasonCode: "DESIGN_CHANGE_REWORK", amount: 60 },
+      ]);
+      expect(Number(p.totalWork)).toBe(660);
+      expect(p.delayReasonCode).toBeUndefined();
+      expect(p.delays).toBeUndefined();
+      expect(result.finalSnapshot.nations.get("GBR")!.treasury).toBe(0);
+      expect(result.eventLedger.all.some((e) => e.eventType === "ConstructionDelayed")).toBe(false);
+    });
+
+    it("leaves a foreign contract, a halted and a planned project alone", () => {
+      const base = start();
+      const nation = base.nations.get("GBR")!;
+      const built = nation.constructionProjects[0]!;
+      const variants = [
+        { ...built, id: "p-foreign", foreignContractId: "fc-1", foreignBuilderNationId: "FRA" },
+        { ...built, id: "p-halted", status: "HALTED" as const },
+        { ...built, id: "p-planned", status: "PLANNED" as const },
+      ];
+      const mixed = {
+        ...base,
+        nations: new Map([["GBR", { ...nation, constructionProjects: variants }]]),
+      };
+      const { result } = runMonth(mixed, [overrun()]);
+      expect(result.eventLedger.all.some((e) => e.eventType === "ConstructionOverrun")).toBe(false);
+      for (const p of result.finalSnapshot.nations.get("GBR")!.constructionProjects)
+        expect(p.overruns).toBeUndefined();
+    });
   });
 });

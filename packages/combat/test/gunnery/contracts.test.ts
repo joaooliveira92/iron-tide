@@ -164,6 +164,16 @@ describe("AC-14: gun_quality_v1 contract + validate guard (fail closed)", () => 
     expect(SHIPPED_GUN_QUALITY_CONTRACT.minQuality).toBe(-3);
     expect(SHIPPED_GUN_QUALITY_CONTRACT.maxQuality).toBe(2);
     expect(SHIPPED_GUN_QUALITY_CONTRACT.table).toEqual(GUN_QUALITY_TABLE);
+    expect(SHIPPED_GUN_QUALITY_CONTRACT.tableVersion).toBe("gun_quality_table_v2");
+  });
+
+  it("fails closed on a stale table version", () => {
+    expect(() =>
+      validateGunQualityContract({
+        ...SHIPPED_GUN_QUALITY_CONTRACT,
+        tableVersion: "gun_quality_table_v1",
+      }),
+    ).toThrow(BluewaveError);
   });
 
   it("validates the shipped contract without throwing", () => {
@@ -174,7 +184,7 @@ describe("AC-14: gun_quality_v1 contract + validate guard (fail closed)", () => 
     expect(() =>
       validateGunQualityContract({
         ...SHIPPED_GUN_QUALITY_CONTRACT,
-        table: { ...GUN_QUALITY_TABLE, "0": { rangeBp: 1, penetrationBp: 1, rateBp: 1 } },
+        table: { ...GUN_QUALITY_TABLE, "0": { rangeBp: 1, penetrationBp: 1, reloadBp: 1 } },
       }),
     ).toThrow(BluewaveError);
   });

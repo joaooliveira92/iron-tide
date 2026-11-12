@@ -102,7 +102,7 @@ export function budgetAdvice({ previousBand, tokens, policy }) {
   if (band <= previousBand) return { band, message: "" };
   const k = Math.round(tokens / 1000);
   const messages = {
-    1: `Context budget: ${k}k tokens. Do not re-read unchanged files or run unfiltered command output; call the advisor only if needed, it forwards the whole transcript.`,
+    1: `Context budget: ${k}k tokens. Keep working: the handoff is due at ${Math.round(policy.contextWarnTokens / 1000)}k, not now. Do not re-read unchanged files or run unfiltered command output; call the advisor only if needed, it forwards the whole transcript.`,
     2: `Context budget: ${k}k tokens (cap ${Math.round(policy.contextWarnTokens / 1000)}k). Finish the current step, commit, run /handoff, and recommend a fresh session.`,
     3: `Context budget exhausted: ${k}k tokens (limit ${Math.round(policy.contextBlockTokens / 1000)}k). Stop exploring, commit, and write the handoff now.`,
   };

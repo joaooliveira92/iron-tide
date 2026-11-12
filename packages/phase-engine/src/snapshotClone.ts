@@ -11,6 +11,8 @@ import type {
   DeclinedBattleRecord,
   DeclineCounterEntry,
   ConstructionMonthUsage,
+  ConstructionDelay,
+  ConstructionOverrun,
   ConstructionPackage,
   ConstructionProject,
   DesignFamily,
@@ -41,6 +43,7 @@ import type {
 } from "@bluewave/campaign";
 import type { SafeInt } from "@bluewave/contracts";
 import { PhaseEngineError } from "./errors.js";
+import { cloneBudgetModifiers, cloneEventHistory } from "./eventStateClone.js";
 
 type AreaData = WorldState["areas"][number];
 type RouteData = WorldState["routes"][number];
@@ -231,6 +234,8 @@ const F = {
     "foreignContractId",
     "foreignBuilderNationId",
     "delayReasonCode",
+    "overruns",
+    "delays",
   ),
   ConstructionMonthUsage: fields<ConstructionMonthUsage>()("month", "used", "startDone"),
   ConstructionPackage: fields<ConstructionPackage>()(
@@ -321,6 +326,8 @@ const F = {
     "governmentType",
     "traits",
     "eventHistory",
+    "unrest",
+    "budgetModifiers",
     "treasury",
     "income",
     "expenses",
@@ -676,6 +683,10 @@ const cloneConstructionProject = (c: ConstructionProject): ConstructionProject =
       v === undefined ? undefined : (v as ConstructionPackage[]).map(cloneConstructionPackage),
     monthUsage: (v) => (v === undefined ? undefined : cloneMonthUsage(v as ConstructionMonthUsage)),
     capacityUnits: (v) => (v === undefined ? undefined : { ...(v as Record<string, SafeInt>) }),
+    overruns: (v) =>
+      v === undefined ? undefined : (v as ConstructionOverrun[]).map((o) => ({ ...o })),
+    delays: (v) =>
+      v === undefined ? undefined : (v as ConstructionDelay[]).map((d) => ({ ...d })),
   });
 const cloneDesignStudy = (st: DesignStudy): DesignStudy =>
   recordClone(st, F.DesignStudy, {
@@ -707,16 +718,8 @@ const cloneForeignContractImpoundment = (
 const cloneNation = (n: NationState): NationState =>
   recordClone(n, F.NationState, {
     traits: (v) => (v === undefined ? undefined : [...(v as NonNullable<NationState["traits"]>)]),
-    eventHistory: (v) =>
-      v === undefined
-        ? undefined
-        : {
-            fired: (v as NonNullable<NationState["eventHistory"]>).fired.map((r) => ({ ...r })),
-            flags: [...(v as NonNullable<NationState["eventHistory"]>).flags],
-            ...((v as NonNullable<NationState["eventHistory"]>).pending === undefined
-              ? {}
-              : { pending: { ...(v as NonNullable<NationState["eventHistory"]>).pending! } }),
-          },
+    eventHistory: (v) => cloneEventHistory(v as NationState["eventHistory"]),
+    budgetModifiers: (v) => cloneBudgetModifiers(v as NationState["budgetModifiers"]),
     fleets: (v) => (v as FleetState[]).map(cloneFleet),
     divisions: (v) => (v as PermanentDivision[]).map(cloneDivision),
     officers: (v) => (v === undefined ? undefined : (v as Officer[]).map((o) => ({ ...o }))),

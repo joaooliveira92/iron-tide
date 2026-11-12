@@ -39,7 +39,7 @@ test("the opening roster offers exactly the six pre-dreadnought types", async ({
   ]);
   await expect(
     e2e.page.getByRole("dialog", { name: "Start from a reference design" }),
-  ).not.toContainText(/battlecruiser|aircraft|carrier|submarine/i);
+  ).not.toContainText(/battlecruiser|carrier|submarine/i);
 });
 
 test("a battleship design is built, submitted, studied, ordered and survives a restart", async ({

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Alert } from "../../../components/ui/alert.js";
 import { DepartmentDrawer } from "../../../components/slate/DepartmentDrawer.js";
 import { linkedEntities } from "../../../components/design-workspace/selection/navigation.js";
@@ -42,7 +43,9 @@ export function ShipDrawer() {
         >
           <SelectionInspector ctx={entityCtx} onGoTo={goTo} onClear={clearSelection} />
           {editError !== null && <Alert variant="destructive">{editError}</Alert>}
-          <SectionBody at={place} />
+          <Suspense fallback={null}>
+            <SectionBody at={place} />
+          </Suspense>
         </div>
       </DrawerBody>
     </DepartmentDrawer>

@@ -1,23 +1,16 @@
 import { hashWithContext } from "@bluewave/deterministic";
-import type { EventEngineContent } from "@bluewave/phase-engine";
+import type { EventEngineContent, MonthExecutorEngineOptions } from "@bluewave/phase-engine";
 import {
   battleOffersFromRulesets,
   eventResolutionFromRulesets,
   fleetManagementFromRulesets,
   gunneryFromRulesets,
   missilesFromRulesets,
-  presenceFromRulesets,
   tensionDriftFromRulesets,
-  type ShipBuildingCatalogue,
 } from "@bluewave/content-compiler";
+import { shipBuildingDataFromBundle } from "@bluewave/campaign";
 import {
   buildShipBuildingContent,
-  type AuthoredArmamentContent,
-  type ComponentDef,
-  type HullFormRecord,
-  type NationNavalProfile,
-  type PropulsionPlant,
-  type RawReferenceDesign,
   type ShipBuildingContent,
   type ShipBuildingData,
 } from "@bluewave/ship-design";
@@ -37,33 +30,13 @@ let cached: ShipBuildingContent | null = null;
 function loadShipBuilding(): LoadedShipBuilding {
   if (loaded) return loaded;
   const { bundle, manifest } = readContentArtifact(resolveGeneratedContentDir());
-  const catalogue = bundle.shipBuilding as ShipBuildingCatalogue | undefined;
-  if (catalogue === undefined) {
+  const data = shipBuildingDataFromBundle(bundle);
+  if (data === undefined) {
     throw new ContentArtifactError(
       "CONTENT_ARTIFACT_INVALID",
       "The compiled content artifact carries no ship-building catalogue.",
     );
   }
-  const presence = presenceFromRulesets(bundle.rulesets);
-  const data: ShipBuildingData = {
-    components: catalogue.components as ComponentDef[],
-    plants: catalogue.plants as unknown as PropulsionPlant[],
-    hullForms: catalogue.hullForms as HullFormRecord[],
-    balance: catalogue.balance as ShipBuildingData["balance"],
-    technologies: [...bundle.technologies] as { id: string; year: number }[],
-    navalProfiles: catalogue.navalProfiles as unknown as NationNavalProfile[],
-    armament: catalogue.armament as unknown as AuthoredArmamentContent,
-    referenceDesigns: catalogue.referenceDesigns as RawReferenceDesign[],
-    ...(catalogue.partModel !== undefined ? { partModel: catalogue.partModel } : {}),
-    ...(presence === undefined ? {} : { presence }),
-    ...(catalogue.designLoadouts !== undefined
-      ? {
-          designLoadouts: catalogue.designLoadouts as NonNullable<
-            ShipBuildingData["designLoadouts"]
-          >,
-        }
-      : {}),
-  };
   loaded = {
     data,
     hash: hashWithContext(manifest.bodyHash, "ship-building-content"),
@@ -164,6 +137,20 @@ export function loadEventContent(): EventEngineContent | undefined {
         : { rules: decoded.value, catalogue },
   };
   return eventContent.content;
+}
+
+export type ConstructionEventRules = NonNullable<MonthExecutorEngineOptions["constructionEvents"]>;
+
+let constructionEventContent: { readonly rules: ConstructionEventRules | undefined } | null = null;
+
+export function loadConstructionEvents(): ConstructionEventRules | undefined {
+  if (constructionEventContent !== null) return constructionEventContent.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const rules = bundle.campaign?.constructionEvents;
+  constructionEventContent = {
+    rules: rules === undefined || rules.length === 0 ? undefined : rules,
+  };
+  return constructionEventContent.rules;
 }
 
 export function loadShipBuildingData(): ShipBuildingData {

@@ -1,5 +1,10 @@
 /* @vitest-environment jsdom */
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  explainPeaceBudget,
+  explainPeaceRemaining,
+  explainStatusQuoCost,
+} from "@bluewave/campaign-engine";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { DiplomacyScreenState } from "./diplomacy-screen-state.js";
 import {
@@ -53,6 +58,19 @@ const fixtureProjection = {
       startDate: "1880-01",
       status: "ACTIVE",
       playerSide: "attacker",
+      peaceOffer: {
+        budgetExplanation: explainPeaceBudget(3),
+        terms: [
+          {
+            term: { _tag: "StatusQuo" },
+            label: "Status quo",
+            provisional: false,
+            affordable: true,
+            costExplanation: explainStatusQuoCost(),
+            remainingExplanation: explainPeaceRemaining(3, 0),
+          },
+        ],
+      },
     },
   ],
   blockades: [
@@ -77,6 +95,7 @@ const hookMocks = vi.hoisted(() => {
   const stateFn = vi.fn(() => makeLoaded());
   const setRowAction = vi.fn();
   const setPeaceAction = vi.fn();
+  const setPeaceTerms = vi.fn();
   const setBlockadeArea = vi.fn();
   const clearDraft = vi.fn();
   const submit = vi.fn();
@@ -86,6 +105,7 @@ const hookMocks = vi.hoisted(() => {
     stateFn,
     setRowAction,
     setPeaceAction,
+    setPeaceTerms,
     setBlockadeArea,
     clearDraft,
     submit,
@@ -124,6 +144,7 @@ vi.mock("./hooks/useDiplomacyScreen.js", () => ({
     loadError: null,
     setRowAction: hookMocks.setRowAction,
     setPeaceAction: hookMocks.setPeaceAction,
+    setPeaceTerms: hookMocks.setPeaceTerms,
     setBlockadeArea: hookMocks.setBlockadeArea,
     clearDraft: hookMocks.clearDraft,
     submit: hookMocks.submit,
@@ -138,6 +159,7 @@ afterEach(() => {
   hookMocks.stateFn.mockImplementation(() => makeLoaded());
   hookMocks.setRowAction.mockClear();
   hookMocks.setPeaceAction.mockClear();
+  hookMocks.setPeaceTerms.mockClear();
   hookMocks.submit.mockClear();
 });
 
@@ -339,6 +361,19 @@ describe("DiplomacyScreen", () => {
       within(screen.getByTestId("war-front")).getByRole("button", { name: "Accept peace" }),
     );
     expect(hookMocks.setPeaceAction).toHaveBeenCalledWith("war_uk_france_1880-01");
+    expect(dossier().getByRole("heading", { name: "France" })).not.toBeNull();
+  });
+
+  it("queues chosen peace terms through the dialog and brings that enemy's dossier forward", async () => {
+    render(<DiplomacyScreen sessionId="ses-1" />);
+    fireEvent.click(
+      within(screen.getByTestId("war-front")).getByRole("button", { name: "Peace terms" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Queue peace terms" }));
+    expect(hookMocks.setPeaceTerms).toHaveBeenCalledWith("war_uk_france_1880-01", {
+      _tag: "StatusQuo",
+    });
     expect(dossier().getByRole("heading", { name: "France" })).not.toBeNull();
   });
 

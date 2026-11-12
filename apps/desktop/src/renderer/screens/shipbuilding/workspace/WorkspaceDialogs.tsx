@@ -19,6 +19,7 @@ export function WorkspaceDialogs() {
     pendingPreset,
     shipClassName,
     preset,
+    developedFrom,
     history,
     editCount,
     nationEnv,
@@ -38,6 +39,7 @@ export function WorkspaceDialogs() {
     loadPreset,
     loadDraft,
     openDesign,
+    setDevelopedFrom,
     setShipClassName,
     requestPreset,
     jumpTo,
@@ -138,9 +140,11 @@ export function WorkspaceDialogs() {
         <FilePanel
           presetName={preset.name}
           className={shipClassName}
-          onLoad={(design, name) => {
+          developedFrom={developedFrom}
+          onLoad={(design, name, baseline) => {
             loadDraft(design);
             if (name !== null) setShipClassName(name);
+            if (baseline !== null) setDevelopedFrom(baseline);
           }}
           dirty={editCount > 0}
         />

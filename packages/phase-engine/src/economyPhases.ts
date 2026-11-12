@@ -2,6 +2,7 @@ import type { ConstructionProject, NationState } from "@bluewave/campaign";
 import {
   allocateConstructionFunds,
   capacityOf,
+  effectiveAppropriationRateBp,
   isUnpacedNewConstruction,
   monthlyRevenue,
   splitLargestRemainder,
@@ -19,6 +20,13 @@ import {
   type ConstructionBalance,
 } from "@bluewave/ship-design";
 import { constructionResumeTarget } from "./constructionHaltResume.js";
+import { constructionDelayHeld, withConstructionDelay } from "./constructionDelay.js";
+import {
+  resolveConstructionEvents,
+  type ConstructionEventDelay,
+  type ConstructionEventOverrun,
+} from "./constructionEvents.js";
+import { withConstructionOverrun, constructionOverrunSubject } from "./constructionOverrun.js";
 import {
   ACCELERATION_CAPACITY_PRESSURE_DELAY,
   accelerationTermsFor,
@@ -28,7 +36,12 @@ import {
 import { fundDesignStudies } from "./designStudies.js";
 import { resolvePrivateDockExpansion } from "./dockExpansion.js";
 import { runForeignContractPhase } from "./foreignContractPhase.js";
-import { budgetChangedEvent, constructionDelayedEvent, makeLedgerEntry } from "./events.js";
+import {
+  budgetChangedEvent,
+  constructionDelayedEvent,
+  constructionOverrunEvent,
+  makeLedgerEntry,
+} from "./events.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { applyPrestigeChange } from "./prestigeApplication.js";
 import { reportOutflowShortfall } from "./outflowShortfall.js";
@@ -42,7 +55,15 @@ export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
   for (const [nationId, nation] of ctx.snapshot.read("nations")) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
     const baseResources = nation["baseResources"] ?? (0 as SafeInt);
-    const rateBp = nation["navalAppropriationRateBp"] ?? (0 as SafeInt);
+    const rateBp = effectiveAppropriationRateBp(
+      {
+        navalAppropriationRateBp: nation["navalAppropriationRateBp"] ?? (0 as SafeInt),
+        ...(nation.budgetModifiers === undefined
+          ? {}
+          : { budgetModifiers: nation.budgetModifiers }),
+      },
+      campaignMonth,
+    );
     const revenue = monthlyRevenue(baseResources, rateBp);
     if ((revenue as number) <= 0) continue;
 
@@ -152,20 +173,65 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
       delayedByPressure = new Set(pressure.delayedProjectIds);
     }
 
+    const eventRules = ctx.engineOptions?.constructionEvents;
+    const delayedByEvent = new Map<string, ConstructionEventDelay>();
+    const overrunByEvent = new Map<string, ConstructionEventOverrun>();
+    if (eventRules !== undefined && eventRules.length > 0) {
+      const capacityPressureBp =
+        accelerationTerms === undefined
+          ? 0
+          : nationAccelerationPressureOf(
+              projects,
+              (project) => capacityOf(designs, project),
+              campaignMonth,
+              accelerationTerms,
+            ).capacityPressureBp;
+      const drawn = resolveConstructionEvents({
+        nationId,
+        campaignMonth,
+        projects: projects
+          .filter((p) => !delayedByPressure.has(p["id"]))
+          .map(constructionOverrunSubject),
+        rules: eventRules,
+        capacityPressureBp,
+        randomEngine: accelerationRng,
+        randomLedger: ctx.randomLedger,
+      });
+      for (const delay of drawn.delays) delayedByEvent.set(delay.projectId, delay);
+      for (const overrun of drawn.overruns) overrunByEvent.set(overrun.projectId, overrun);
+    }
+
     const delayedAtStartIds = new Set(delayedAtStart.map((p) => p["id"]));
     const delayedProjects = projects.filter(
-      (p) => p["status"] === "DELAYED" || delayedByPressure.has(p["id"]),
+      (p) =>
+        p["status"] === "DELAYED" || delayedByPressure.has(p["id"]) || delayedByEvent.has(p["id"]),
     );
 
-    for (const project of delayedProjects)
+    for (const project of delayedProjects) {
+      const drawnDelay = delayedByEvent.get(project["id"]);
       eventLedger.append(
         constructionDelayedEvent(
           project["id"],
           nationId,
-          project["delayReasonCode"] ??
+          drawnDelay?.reasonCode ??
+            project["delayReasonCode"] ??
             (delayedByPressure.has(project["id"])
               ? ACCELERATION_CAPACITY_PRESSURE_DELAY
               : PROJECT_DELAYED_ZERO_WORK),
+          nextSeq(),
+          campaignMonth,
+          drawnDelay?.months,
+        ),
+      );
+    }
+
+    for (const overrun of overrunByEvent.values())
+      eventLedger.append(
+        constructionOverrunEvent(
+          overrun.projectId,
+          nationId,
+          overrun.reasonCode,
+          overrun.amount,
           nextSeq(),
           campaignMonth,
         ),
@@ -195,10 +261,20 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
     preservationDelta = preservationSettlement.paid as number;
 
     let updatedProjects = projects;
-    if (delayedByPressure.size > 0)
-      updatedProjects = projects.map((p) =>
-        delayedByPressure.has(p["id"]) ? transitionConstructionProject(p, "DELAYED") : p,
-      );
+    if (delayedByPressure.size > 0 || delayedByEvent.size > 0)
+      updatedProjects = projects.map((p) => {
+        const eventDelay = delayedByEvent.get(p["id"]);
+        if (eventDelay !== undefined)
+          return withConstructionDelay(p, eventDelay.months, eventDelay.reasonCode, campaignMonth);
+        return delayedByPressure.has(p["id"]) ? transitionConstructionProject(p, "DELAYED") : p;
+      });
+    if (overrunByEvent.size > 0)
+      updatedProjects = updatedProjects.map((p) => {
+        const overrun = overrunByEvent.get(p["id"]);
+        return overrun === undefined
+          ? p
+          : withConstructionOverrun(p, overrun.amount, overrun.reasonCode, campaignMonth);
+      });
 
     const expenseReserve = nation["expenses"];
     const available = SafeInt.sub(
@@ -224,12 +300,13 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
     const totalDelta = allocation.delta;
     const constructionRequested = allocation.requested;
 
-    if (delayedAtStart.length > 0) {
+    if (delayedAtStart.length > 0 || delayedByEvent.size > 0) {
       updatedProjects = updatedProjects.map((p) =>
         p["status"] === "DELAYED" &&
-        delayedAtStartIds.has(p["id"]) &&
+        (delayedAtStartIds.has(p["id"]) || delayedByEvent.has(p["id"])) &&
         p["delayReasonCode"] !== FOREIGN_PAYMENT_DEFAULT_DELAYED &&
-        !foreign.capabilityDelayed.has(p["id"])
+        !foreign.capabilityDelayed.has(p["id"]) &&
+        !constructionDelayHeld(p, campaignMonth)
           ? withoutDelayReason(
               transitionConstructionProject(
                 p,
@@ -241,7 +318,7 @@ export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
     }
 
     const totalCharge = SafeInt.add(totalDelta, SafeInt(preservationDelta));
-    if ((totalCharge as number) > 0 || delayedProjects.length > 0) {
+    if ((totalCharge as number) > 0 || delayedProjects.length > 0 || overrunByEvent.size > 0) {
       const previousTreasury = nation["treasury"];
       const newTreasury = SafeInt.sub(previousTreasury, totalCharge);
 

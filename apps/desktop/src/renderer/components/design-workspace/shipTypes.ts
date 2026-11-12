@@ -3,41 +3,53 @@ import {
   isShipTypeId,
   SHIP_TYPE_LIST,
   SHIP_TYPES,
-  type Range,
+  shipTypeRegistryFromRecords,
+  type AvailabilityReason,
   type ShipContext,
   type ShipTypeCategory,
   type ShipTypeId,
 } from "@bluewave/ship-design";
-
-import type { PresentationFormat } from "../../lib/presentation-format/index.js";
+import { lockedSummary } from "./availabilityText.js";
 
 export interface ShipTypeChoice {
   readonly value: string;
   readonly label: string;
   readonly description?: string;
+  readonly locked: boolean;
+  readonly disabled?: boolean;
+  readonly reasons?: readonly AvailabilityReason[];
+  readonly lockedSummary?: string;
 }
 
 export function shipTypeChoices(ctx: ShipContext, current: string): ShipTypeChoice[] {
-  const offered = SHIP_TYPE_LIST.filter(
-    (t) =>
-      evaluateShipTypeAvailability(t.id, {
-        month: ctx.month,
-        unlockedTechs: ctx.unlockedTechs,
-        capabilities: ctx.capabilities,
-        restrictedTypes: ctx.restrictedShipTypes,
-      }).available,
-  );
-  const choices: ShipTypeChoice[] = offered.map((t) => ({
-    value: t.id,
-    label: `${t.id} · ${t.name}`,
-    description: `${CATEGORY_LABEL[t.category]}. ${t.recommendedUse}`,
-  }));
-  if (!offered.some((t) => t.id === current))
+  const registry = ctx.shipTypes === undefined ? null : shipTypeRegistryFromRecords(ctx.shipTypes);
+  const choices: ShipTypeChoice[] = (registry?.list ?? SHIP_TYPE_LIST).map((t) => {
+    const availability = evaluateShipTypeAvailability(t.id, {
+      month: ctx.month,
+      unlockedTechs: ctx.unlockedTechs,
+      capabilities: ctx.capabilities,
+      restrictedTypes: ctx.restrictedShipTypes,
+      ...(registry === null ? {} : { definitions: registry.byId }),
+    });
+    const base = `${CATEGORY_LABEL[t.category]}. ${t.recommendedUse}`;
+    if (availability.available)
+      return { value: t.id, label: `${t.id} · ${t.name}`, description: base, locked: false };
+    const summary = lockedSummary(availability.reasons);
+    return {
+      value: t.id,
+      label: `${t.id} · ${t.name} (locked)`,
+      description: `${summary}. ${base}`,
+      locked: true,
+      disabled: true,
+      reasons: availability.reasons,
+      lockedSummary: summary,
+    };
+  });
+  if (!choices.some((c) => c.value === current))
     choices.unshift({
       value: current,
-      label: isShipTypeId(current)
-        ? `${current} · ${SHIP_TYPES[current].name} (not available)`
-        : `${current} (unknown type)`,
+      label: `${current} (unknown type)`,
+      locked: false,
     });
   return choices;
 }
@@ -60,23 +72,3 @@ export const CATEGORY_LABEL: Readonly<Record<ShipTypeCategory, string>> = {
   AVIATION: "Aviation ships",
   SUBMARINE: "Submarines",
 };
-
-const fmt = (format: PresentationFormat, n: number): string =>
-  format.number(n, { maximumFractionDigits: 1 });
-
-export function describeRange(
-  r: Range,
-  unit: string,
-  scale = 1,
-  format: PresentationFormat,
-): string | null {
-  const lo = r.min === null || (r.min === 0 && !r.minInclusive) ? null : fmt(format, r.min / scale);
-  const hi = r.max === null ? null : fmt(format, r.max / scale);
-  const minPart = r.minInclusive ? `${lo} ${unit} or more` : `over ${lo} ${unit}`;
-  const maxPart = r.maxInclusive ? `up to ${hi} ${unit}` : `under ${hi} ${unit}`;
-  if (lo !== null && hi !== null)
-    return r.minInclusive && r.maxInclusive ? `${lo} to ${hi} ${unit}` : `${minPart}, ${maxPart}`;
-  if (lo !== null) return minPart;
-  if (hi !== null) return maxPart;
-  return null;
-}

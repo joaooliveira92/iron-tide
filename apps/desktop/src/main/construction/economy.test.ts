@@ -7,6 +7,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import {
   DOCK_EXPANSION_BASE_DURATION_MONTHS,
+  applyDockExpansionStep,
   builderDockRecord,
   constructionCapacityUtilization,
   dockExpansionEarliestCompletionMonth,
@@ -100,9 +101,21 @@ describe("constructionEconomy dock/capacity readouts", () => {
         }),
       ),
     );
+    const full = {
+      maximumNewConstructionMassKg: dock.maximumNewConstructionMassKg!,
+      maximumMajorRepairMassKg: dock.maximumMajorRepairMassKg!,
+      maximumRebuildMassKg: dock.maximumRebuildMassKg!,
+      maximumConversionMassKg: dock.maximumConversionMassKg!,
+    };
+    const afterKg = applyDockExpansionStep(full, step).maximumNewConstructionMassKg;
+    const tree = economy.dockLimitAfterExpansionExplanation;
+    expect(tree?.formulaId).toBe("dock_limit_after_expansion");
+    expect(Number(tree?.result)).toBe(afterKg);
+    expect(Number(tree?.result)).toBe(dockMaxMassKg + step);
     expect(Object.keys(economy).sort()).toEqual(
       [
         "committedNewConstructionMassKg",
+        "dockLimitAfterExpansionExplanation",
         "dockExpansionDurationMonths",
         "dockExpansionNextStepKg",
         "dockExpansionReadyMonth",
@@ -123,6 +136,7 @@ describe("constructionEconomy dock/capacity readouts", () => {
     const economy = constructionEconomy(record);
     expect(economy.dockExpansionNextStepKg).toBeNull();
     expect(economy.dockExpansionReadyMonth).toBeNull();
+    expect(economy.dockLimitAfterExpansionExplanation).toBeUndefined();
   });
 
   it("lists the nation's ports ascending by id as the expansion targets", () => {

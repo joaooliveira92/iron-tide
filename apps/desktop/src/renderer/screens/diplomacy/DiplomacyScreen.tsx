@@ -1,3 +1,4 @@
+import type { DiplomacyPeaceTermRef } from "@bluewave/campaign-engine";
 import { Handshake } from "lucide-react";
 import { useCallback, useId, useMemo, useState, type CSSProperties } from "react";
 import { ScreenStage } from "../../components/shared/ScreenStage.js";
@@ -63,6 +64,7 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
     loadError,
     setRowAction,
     setPeaceAction,
+    setPeaceTerms,
     setBlockadeArea,
     clearDraft,
     submit,
@@ -106,6 +108,17 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
       setPeaceAction(warId);
     },
     [projection, selectNation, setPeaceAction],
+  );
+
+  const proposePeaceTerms = useCallback(
+    (warId: string, term: DiplomacyPeaceTermRef) => {
+      const war = projection?.wars.find((w) => w.warId === warId);
+      if (war !== undefined) {
+        selectNation(war.playerSide === "attacker" ? war.defenderId : war.attackerId);
+      }
+      setPeaceTerms(warId, term);
+    },
+    [projection, selectNation, setPeaceTerms],
   );
 
   if (loadError !== null) {
@@ -257,7 +270,14 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
             layers={layers}
             onToggleLayer={(layer) => setLayers((current) => toggleLayer(current, layer))}
             onSelect={selectNation}
-            wars={<WarFront rows={vm.wars} busy={busy} onPeaceAction={acceptPeace} />}
+            wars={
+              <WarFront
+                rows={vm.wars}
+                busy={busy}
+                onPeaceAction={acceptPeace}
+                onPeaceTerms={proposePeaceTerms}
+              />
+            }
           />
 
           <div id={inspectorId} className="relative min-h-0">

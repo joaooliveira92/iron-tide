@@ -18,9 +18,15 @@ export {
   EventSchema,
   EventStanceSchema,
 } from "./event.js";
-export type { ConstructionEvent, ConstructionEventKind } from "./construction-event.js";
+export type {
+  ConstructionEvent,
+  ConstructionEventKind,
+  ConstructionOverrunEvent,
+} from "./construction-event.js";
 export {
   CONSTRUCTION_EVENT_KINDS,
+  ConstructionDelayEventSchema,
+  ConstructionOverrunEventSchema,
   ConstructionEventEraWindowSchema,
   ConstructionEventKindSchema,
   ConstructionEventSchema,
@@ -218,15 +224,19 @@ export {
   decodeMissilesRules,
 } from "./missiles-rules.js";
 export type {
+  EventAnswerEffectRules,
   EventResolutionRules,
   EventResolutionRulesDecoded,
   EventStanceWeights,
+  EventTraitAnswerEffect,
   EventTraitShift,
 } from "./event-resolution-rules.js";
 export {
   decodeEventResolutionRules,
+  EventAnswerEffectRulesSchema,
   EventResolutionRulesSchema,
   EventStanceWeightsSchema,
+  EventTraitAnswerEffectSchema,
   EventTraitShiftSchema,
 } from "./event-resolution-rules.js";
 export type { TensionDriftRules, TensionDriftRulesDecoded } from "./tension-drift-rules.js";

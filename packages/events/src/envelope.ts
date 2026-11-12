@@ -6,6 +6,7 @@ export type {
   BattleOfferAnswered,
   BattleResolved,
   ConstructionDelayed,
+  ConstructionOverrun,
   ConstructionProgressed,
   ConstructionProjectCancelled,
   DeclineThresholdReached,

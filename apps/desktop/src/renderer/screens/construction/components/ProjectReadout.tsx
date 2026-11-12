@@ -1,10 +1,12 @@
 import { memo } from "react";
 import type { ConstructionScheduleUnavailableReason } from "@bluewave/campaign-engine";
+import { constructionEventCause } from "../../../content/uiCatalogue.js";
 import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { formatMonthKey } from "../month-key.js";
 import type { ProjectRow } from "../project-progress.js";
+import { causeLines } from "./project-causes.js";
 
 export interface ProjectReadoutProps {
   readonly row: ProjectRow;
@@ -55,12 +57,18 @@ export function readoutLines(row: ProjectRow, format: PresentationFormat): reado
         ];
   if (readout.scheduleBasis === "UNAVAILABLE") {
     const unavailableReason = readout.scheduleUnavailableReason;
+    const eventCause =
+      unavailableReason === "DELAYED" && readout.delayReasonCode !== undefined
+        ? constructionEventCause(readout.delayReasonCode)
+        : undefined;
     const reasonLabel =
       unavailableReason === "DELAYED" && readout.delayReasonCode === "PAYMENT_DEFAULT_DELAYED"
         ? "payment default"
-        : unavailableReason === null
-          ? "unavailable"
-          : SCHEDULE_UNAVAILABLE_LABEL[unavailableReason];
+        : eventCause !== undefined
+          ? eventCause
+          : unavailableReason === null
+            ? "unavailable"
+            : SCHEDULE_UNAVAILABLE_LABEL[unavailableReason];
     return [
       { label: "Schedule", value: `not building (${reasonLabel})` },
       { label: "Total cost", value: format.money(readout.totalCostUnits) },
@@ -88,6 +96,7 @@ export const ProjectReadout = memo(function ProjectReadout({
   const schedule = row.readout?.scheduleExplanation;
   const instalment = row.readout?.instalmentExplanation;
   const cost = row.readout?.costExplanation;
+  const causes = row.readout === null ? [] : causeLines(row.readout, format);
   return (
     <div>
       <ul className={className} aria-label={`${row.className} cost and schedule`}>
@@ -95,6 +104,16 @@ export const ProjectReadout = memo(function ProjectReadout({
           <ReadoutItem key={line.label} label={line.label} value={line.value} />
         ))}
       </ul>
+      {causes.length > 0 && (
+        <ul
+          className="mt-1 space-y-0.5 text-xs text-muted-foreground"
+          aria-label={`${row.className} causes`}
+        >
+          {causes.map((cause) => (
+            <li key={cause.key}>{cause.text}</li>
+          ))}
+        </ul>
+      )}
       {instalment !== undefined && (
         <ExplanationDisclosure
           tree={instalment}

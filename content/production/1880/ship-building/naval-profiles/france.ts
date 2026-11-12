@@ -417,6 +417,56 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         },
       },
     ],
+    gunQuality: {
+      bands: [
+        {
+          id: "light",
+          minCaliberUm: 1,
+          maxCaliberUm: 152000,
+          quality: 1,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL +1: Hotchkiss at Saint-Denis made France a leading source of revolving-cannon and quick-firing guns below 152 mm.",
+          },
+        },
+        {
+          id: "medium",
+          minCaliberUm: 152000,
+          maxCaliberUm: 254000,
+          quality: 0,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL 0: Model 1870/81 steel breech-loaders from state foundries in 152 mm to under 254 mm were sound and at the neutral level.",
+          },
+        },
+        {
+          id: "heavy",
+          minCaliberUm: 254000,
+          maxCaliberUm: 1000000,
+          quality: 0,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL 0: French heavy guns of 254 mm and above were competent but delayed by slow state-arsenal steel supply, held at neutral.",
+          },
+        },
+      ],
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [],
+        note: "PROVISIONAL gun_quality_v1 levels by caliber band (-3..+2, 0 neutral), issue 668. Relative national standing, not measured ballistics.",
+      },
+    },
     designWeights: {
       B: {
         firepowerBp: 11500,

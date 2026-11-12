@@ -38,6 +38,43 @@ function tech(id: string, prerequisiteIds: readonly string[] = []): unknown {
   };
 }
 
+function shipType(id: string, requiresTech: string | null = null): unknown {
+  return {
+    id,
+    name: `Ship type ${id}`,
+    engineClass: "capital_combatant",
+    displayCategory: "CAPITAL_SHIP",
+    roles: ["BATTLE_LINE"],
+    era: "PRE_WAR",
+    availability: {
+      fromEra: "PRE_WAR",
+      requiresTech,
+      requiresCapability: null,
+      mechanicsImplemented: true,
+    },
+    classification: { precedence: 20, requires: [] },
+    torpedoPolicy: "OPTIONAL",
+    relativeCost: 5,
+    relativeBuildTime: 5,
+    auxiliary: false,
+    requiredHullTrait: null,
+    presentation: {
+      description: "The battle-line capital ship of the period.",
+      recommendedUse: "Anchor the battle line.",
+      weaknesses: "Slow and expensive.",
+      armourProfile: "Heavy belt",
+      armamentProfile: "Heavy guns",
+    },
+    order: 10,
+    provenance: {
+      sourceStatus: "DERIVED",
+      confidence: "HIGH",
+      kind: "game_conversion",
+      sources: [],
+    },
+  };
+}
+
 function component(id: string, upgradePath: readonly string[] = []): unknown {
   return {
     id,
@@ -192,6 +229,73 @@ describe("ValidateStage", () => {
     expect(ref).toBeDefined();
     expect(ref!.sourceLocation?.path).toBe("ship-building/components.json");
     expect(ref!.entityId).toBe("comp_a");
+  });
+
+  it("rejects a ship type whose requiresTech is not a known technology (SHIP_TYPE_UNKNOWN_TECHNOLOGY)", () => {
+    const collector = new DiagnosticCollector();
+    const result = new ValidateStage().run(
+      makeInput({
+        collectionDocs: new Map([
+          ["technologies", [tech("tech_a")]],
+          ["shipTypes", [shipType("BB", "missing_tech")]],
+        ]),
+        sourcePaths: new Map([
+          ["technologies", ["techs.json"]],
+          ["shipTypes", ["ship-building/ship-types.json"]],
+        ]),
+      }),
+      new AbortController().signal,
+      collector,
+    );
+
+    expect(result).toBeUndefined();
+    const unknown = collector.errors.find((d) => d.code === "SHIP_TYPE_UNKNOWN_TECHNOLOGY");
+    expect(unknown).toBeDefined();
+    expect(unknown!.message).toContain("missing_tech");
+    expect(unknown!.entityId).toBe("BB");
+    expect(unknown!.sourceLocation?.path).toBe("ship-building/ship-types.json");
+  });
+
+  it("accepts a ship type whose requiresTech names a known technology (positive control)", () => {
+    const collector = new DiagnosticCollector();
+    const result = new ValidateStage().run(
+      makeInput({
+        collectionDocs: new Map([
+          ["technologies", [tech("tech_a")]],
+          ["shipTypes", [shipType("BB", "tech_a"), shipType("CA")]],
+        ]),
+        sourcePaths: new Map([
+          ["technologies", ["techs.json"]],
+          ["shipTypes", ["ship-building/ship-types.json", "ship-building/ship-types.json"]],
+        ]),
+      }),
+      new AbortController().signal,
+      collector,
+    );
+
+    expect(collector.errors.some((d) => d.code === "SHIP_TYPE_UNKNOWN_TECHNOLOGY")).toBe(false);
+    expect(collector.hasErrors).toBe(false);
+    expect(result).toBeDefined();
+    expect(result!.shipTypes).toHaveLength(2);
+  });
+
+  it("detects a duplicate ship type id (DUP-ID)", () => {
+    const collector = new DiagnosticCollector();
+    const result = new ValidateStage().run(
+      makeInput({
+        collectionDocs: new Map([["shipTypes", [shipType("BB"), shipType("BB")]]]),
+        sourcePaths: new Map([
+          ["shipTypes", ["ship-building/ship-types.json", "ship-building/ship-types.json"]],
+        ]),
+      }),
+      new AbortController().signal,
+      collector,
+    );
+
+    expect(result).toBeUndefined();
+    const dup = collector.errors.find((d) => d.code === "DUP-ID" && d.message.includes("ShipType"));
+    expect(dup).toBeDefined();
+    expect(dup!.entityId).toBe("BB");
   });
 
   it("accepts an acyclic component upgrade chain (positive control)", () => {

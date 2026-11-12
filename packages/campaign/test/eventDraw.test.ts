@@ -63,6 +63,12 @@ const RULES = {
     eastern: { hawkBp: 4_000, doveBp: 4_000, neutralBp: 2_000 },
   },
   traitShifts: [{ trait: "cautious", stance: "hawk", deltaBp: -1_500 }],
+  answerEffects: {
+    budgetDecayMonths: 12,
+    budgetStackCapBp: 1_000,
+    tensionJumpCap: 3,
+    traitEffects: [],
+  },
   provenance,
 } as EventResolutionRules;
 

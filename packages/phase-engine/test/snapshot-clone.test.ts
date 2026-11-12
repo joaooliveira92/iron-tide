@@ -8,6 +8,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor } from "../src/index.js";
 import { CLONE_COVERAGE, cloneSnapshot } from "../src/snapshotClone.js";
+import { EVENT_STATE_FIXTURE } from "./fixtures/event-state.js";
 import {
   ATTACKER_NATION,
   DEFENDER_NATION,
@@ -137,12 +138,7 @@ function makeRichSnapshot(): CampaignSnapshot {
   };
   const gbr = snapshot.nations.get(ATTACKER_NATION)!;
   gbr.homeAreaId = "a-2";
-  gbr.governmentType = "liberal_democracy";
-  gbr.traits = ["cautious"];
-  gbr.eventHistory = {
-    fired: [{ eventId: "naval_scare", month: "1880-02", answerId: "arm", resolvedBy: "PLAYER" }],
-    flags: ["naval_scare_armed"],
-  };
+  Object.assign(gbr, EVENT_STATE_FIXTURE);
   gbr.prestigeLastChange = {
     reasonCode: "BATTLE_LOST",
     before: SafeInt(20),
@@ -243,6 +239,8 @@ function makeRichSnapshot(): CampaignSnapshot {
       foreignContractId: "fc-1",
       foreignBuilderNationId: DEFENDER_NATION,
       delayReasonCode: "PAYMENT_DEFAULT_DELAYED",
+      overruns: [{ month: "1880-03", reasonCode: "DESIGN_CHANGE_REWORK", amount: SafeInt(12) }],
+      delays: [{ month: "1880-02", reasonCode: "STEEL_PLATE_SHORTAGE", months: 2 }],
     },
   ];
   gbr.aircraft = {} as any;

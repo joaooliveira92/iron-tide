@@ -1,3 +1,4 @@
+import type { ExplanationTree } from "@bluewave/events";
 import { memo, useState } from "react";
 import { Anchor, ArrowUpFromLine } from "lucide-react";
 import {
@@ -10,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../../../components/ui/alert-dialog.js";
+import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import { Button } from "../../../components/ui/button.js";
 import { translate } from "../../../lib/strings.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
@@ -24,6 +26,7 @@ export interface DockCapacityPanelProps {
   readonly dockExpansionDurationMonths: number;
   readonly dockExpansionNextStepKg: number | null;
   readonly dockExpansionReadyMonth: string | null;
+  readonly dockLimitAfterExpansionExplanation?: ExplanationTree | undefined;
   readonly dockPossessions: readonly { readonly id: string; readonly name: string }[];
   readonly pending: boolean;
   readonly onAuthorizeDockExpansion: (possessionId: string) => void;
@@ -56,6 +59,7 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
   dockExpansionDurationMonths,
   dockExpansionNextStepKg,
   dockExpansionReadyMonth,
+  dockLimitAfterExpansionExplanation,
   dockPossessions,
   pending,
   onAuthorizeDockExpansion,
@@ -77,6 +81,10 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
     dockExpansionNextStepKg === null ? "no era step" : `+${mass(dockExpansionNextStepKg)}`;
   const currentLimitText =
     dockMaxBuildDisplacementKg === null ? "no dock" : mass(dockMaxBuildDisplacementKg);
+  const dockLimitText =
+    dockLimitAfterExpansionExplanation === undefined
+      ? currentLimitText
+      : `${currentLimitText} → ${mass(Number(dockLimitAfterExpansionExplanation.result))}`;
   const expansionValue =
     dockExpansionNextStepKg === null
       ? `${format.count(dockExpansionDurationMonths)} months · no era step`
@@ -188,9 +196,17 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
                 {translate("construction.expansion.dockLimit")}
               </dt>
               <dd className="font-mono tabular-nums" data-testid="expansion-dock-limit">
-                {currentLimitText}
+                {dockLimitText}
               </dd>
             </dl>
+            {dockLimitAfterExpansionExplanation !== undefined && (
+              <ExplanationDisclosure
+                tree={dockLimitAfterExpansionExplanation}
+                area="construction"
+                summaryKey="construction.dock_limit_after_expansion.summary"
+                format={format}
+              />
+            )}
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction

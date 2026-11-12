@@ -1,5 +1,6 @@
 import type {
   RequirementBound,
+  ShipTypeRequirement,
   ShipTypeRequirementCheck,
   WorkshopRequirements,
 } from "@bluewave/ship-design";
@@ -36,7 +37,7 @@ const UNIT_TEXT: Readonly<Record<ShipTypeRequirementCheck["unit"], string>> = {
 const amount = (format: PresentationFormat, n: number, unit: ShipTypeRequirementCheck["unit"]) =>
   `${format.number(n, { maximumFractionDigits: 2 })}${UNIT_TEXT[unit] ? ` ${UNIT_TEXT[unit]}` : ""}`;
 
-export function requirementLine(c: ShipTypeRequirementCheck, format: PresentationFormat): string {
+export function requirementLine(c: ShipTypeRequirement, format: PresentationFormat): string {
   if (c.unit === "merchantHull") return "Hull form merchant-derived";
   return `${FIELD_LABEL[c.field]} ${BOUND_TEXT[c.bound]} ${amount(format, c.value, c.unit)}`;
 }

@@ -103,6 +103,26 @@ describe("procurement decision", () => {
     expect(d.role).toBeNull();
     expect(d.noProcurementReason).toBe("no_deficit");
   });
+  it("keeps the default target size when baseCount and skipRoles are omitted", () => {
+    const implicit = decide(uk, []);
+    const explicit = decide(uk, [], { baseCount: 8, skipRoles: [] });
+    expect(explicit).toEqual(implicit);
+  });
+  it("scales the deficits with baseCount", () => {
+    const small = decide(uk, [], { baseCount: 8 });
+    const large = decide(uk, [], { baseCount: 40 });
+    const sum = (d: ProcurementDecision) => Object.values(d.deficits).reduce((a, b) => a + b, 0);
+    expect(sum(large)).toBeGreaterThan(sum(small));
+  });
+  it("never picks a skipped role and reports no_deficit when every role is skipped", () => {
+    const first = decide(uk, []).role!;
+    const skipped = decide(uk, [], { skipRoles: [first] });
+    expect(skipped.role).not.toBe(first);
+    expect(skipped.deficits[first]).toBe(0);
+    const none = decide(uk, [], { skipRoles: PROCUREMENT_TYPES });
+    expect(none.role).toBeNull();
+    expect(none.noProcurementReason).toBe("no_deficit");
+  });
 });
 
 describe("AI procurement simulation (2 nations × 3 seeds × 3 budgets × 24 months)", () => {

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { buildWorkshopView } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../content.js";
@@ -24,6 +24,7 @@ afterEach(() => {
 
 const name = (v: string) =>
   fireEvent.change(screen.getByLabelText("Class name"), { target: { value: v } });
+const settle = () => act(async () => {});
 const submit = () => fireEvent.click(screen.getByRole("button", { name: /Submit design|Queued/ }));
 
 describe("SubmitPanel", () => {
@@ -54,6 +55,7 @@ describe("SubmitPanel", () => {
     expect(
       (screen.getByRole("button", { name: "Submit design" }) as HTMLButtonElement).disabled,
     ).toBe(false);
+    await settle();
   });
 
   it("shows the design study before Submit and ignores a slower earlier answer", async () => {
@@ -219,7 +221,7 @@ describe("SubmitPanel", () => {
     expect(execute).not.toHaveBeenCalled();
   });
 
-  it("says why Submit is unavailable until the class has a name", () => {
+  it("says why Submit is unavailable until the class has a name", async () => {
     render(
       <DesignWorkspaceFixture>
         <SubmitPanel sessionId="s" />
@@ -228,9 +230,10 @@ describe("SubmitPanel", () => {
     expect(screen.getByText("Name the class to submit it.")).toBeTruthy();
     name("Arethusa");
     expect(screen.queryByText("Name the class to submit it.")).toBeNull();
+    await settle();
   });
 
-  it("shows the host's class name as text and sends the player to the one field to edit it", () => {
+  it("shows the host's class name as text and sends the player to the one field to edit it", async () => {
     const onRequestName = vi.fn();
     const panel = (name: string) => (
       <DesignWorkspaceFixture>
@@ -250,6 +253,7 @@ describe("SubmitPanel", () => {
     rerender(panel("Arethusa"));
     expect(screen.getByText("Arethusa")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Enter a class name" })).toBeNull();
+    await settle();
   });
 
   it("explains a refusal in plain words and keeps the design", async () => {

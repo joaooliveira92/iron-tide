@@ -111,6 +111,12 @@ void describe("budget transitions", () => {
     assert.equal(advice(2, POLICY.contextBlockTokens).band, 3);
   });
 
+  void test("the first band says the handoff is due at the warn cap, not at that band", () => {
+    const { message } = advice(0, POLICY.contextAdvisorTokens);
+    assert.match(message, /keep working/iu);
+    assert.ok(message.includes(`${POLICY.contextWarnTokens / 1000}k`));
+  });
+
   void test("stays silent when it falls, and re-arms after the band resets", () => {
     assert.equal(advice(3, POLICY.contextAdvisorTokens).message, "");
     assert.notEqual(advice(0, POLICY.contextWarnTokens).message, "");

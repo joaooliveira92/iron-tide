@@ -351,6 +351,56 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         },
       },
     ],
+    gunQuality: {
+      bands: [
+        {
+          id: "light",
+          minCaliberUm: 1,
+          maxCaliberUm: 152000,
+          quality: 0,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL 0: Krupp light and revolver guns were sound but not ahead of Armstrong or Hotchkiss output below 152 mm.",
+          },
+        },
+        {
+          id: "medium",
+          minCaliberUm: 152000,
+          maxCaliberUm: 254000,
+          quality: 1,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL +1: Krupp built-up steel breech-loaders with the Krupp wedge breech were the reference design for 152 mm to under 254 mm cruiser and secondary guns.",
+          },
+        },
+        {
+          id: "heavy",
+          minCaliberUm: 254000,
+          maxCaliberUm: 1000000,
+          quality: 1,
+          provenance: {
+            sourceStatus: "BALANCE_TARGET",
+            confidence: "LOW",
+            kind: "balance_adjustment",
+            sources: [],
+            note: "PROVISIONAL +1: Krupp steel and domestic heavy forging gave German 254 mm and larger guns the best breech-loading record of the period.",
+          },
+        },
+      ],
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [],
+        note: "PROVISIONAL gun_quality_v1 levels by caliber band (-3..+2, 0 neutral), issue 668. Relative national standing, not measured ballistics.",
+      },
+    },
     designWeights: {
       B: {
         firepowerBp: 11500,

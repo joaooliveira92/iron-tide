@@ -150,6 +150,59 @@ describe("ShipDelivered", () => {
   });
 });
 
+describe("ConstructionDelayed", () => {
+  const legacy = {
+    kind: "ConstructionDelayed",
+    projectId: "con_1",
+    nationId: "GBR",
+    reason: "STEEL_PLATE_SHORTAGE",
+    delayMonth: "1880-03",
+  } as const;
+  it("still parses a delay recorded before delays carried a length", () => {
+    expect(parseDomainEventBody(legacy)).toEqual(legacy);
+  });
+  it("carries the months a drawn delay adds", () => {
+    expect(parseDomainEventBody({ ...legacy, months: 3 })).toEqual({ ...legacy, months: 3 });
+  });
+  it("rejects a zero or negative length and an unknown field", () => {
+    expect(() => parseDomainEventBody({ ...legacy, months: 0 })).toThrow();
+    expect(() => parseDomainEventBody({ ...legacy, months: -1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...legacy, extra: 1 })).toThrow();
+  });
+});
+
+describe("ConstructionOverrun", () => {
+  const body = {
+    kind: "ConstructionOverrun",
+    projectId: "con_1",
+    nationId: "GBR",
+    reason: "DESIGN_CHANGE_REWORK",
+    amount: 30,
+    overrunMonth: "1880-03",
+  } as const;
+  it("parses as a domain event body and a full envelope", () => {
+    expect(parseDomainEventBody(body)).toEqual(body);
+    const envelope = {
+      eventId: "ConstructionOverrun-con_1-1",
+      version: "0.1.0",
+      aggregateType: "construction",
+      aggregateId: "con_1",
+      eventType: "ConstructionOverrun",
+      timestamp: "1880-03-01T00:00:00.000Z",
+      body,
+      sequenceNumber: SafeInt(1),
+    };
+    expect(parseDomainEventEnvelope(envelope)["body"]["kind"]).toBe("ConstructionOverrun");
+  });
+  it("rejects a missing cause, a non-positive amount, a malformed month and an unknown field", () => {
+    expect(() => parseDomainEventBody({ ...body, reason: "" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, amount: 0 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, amount: -4 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, overrunMonth: "1880-13" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
+  });
+});
+
 describe("ConstructionProjectCancelled", () => {
   const body = {
     kind: "ConstructionProjectCancelled",

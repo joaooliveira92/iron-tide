@@ -43,6 +43,41 @@ function snap(overrides: Partial<any> = {}) {
 }
 
 describe("AiPlanner", () => {
+  it("never budgets a project the engine refuses work for", () => {
+    const work = { totalWork: SafeInt(50) as SafeInt, completedWork: SafeInt(0) as SafeInt };
+    const snapshot = snap({
+      nations: new Map([
+        [
+          "usa",
+          {
+            treasury: SafeInt(100) as SafeInt,
+            constructionProjects: [
+              { id: "a", status: "DELAYED", ...work },
+              { id: "b", status: "HALTED", ...work },
+              { id: "c", status: "ACTIVE", ...work },
+            ],
+          },
+        ],
+      ]),
+    });
+    const lifecycle = { process: vi.fn(() => ({ type: "success" })) } as any;
+    const budgeted = new Set<string>();
+    for (let n = 0; n < 40; n++) {
+      const result = new AiPlanner().generate(
+        snapshot,
+        new RandomEngine(`seed-${n}`),
+        lifecycle,
+        { nationId: "usa", type: "AI" } as any,
+        new CommandIdempotencyMap(),
+      );
+      for (const e of result.envelopes) {
+        const body = e.body as { projectId?: string };
+        if (body.projectId !== undefined) budgeted.add(body.projectId);
+      }
+    }
+    expect([...budgeted]).toEqual(["c"]);
+  });
+
   it("picks project deterministically sorted by id", () => {
     const engine = new RandomEngine("seed");
     const lifecycle = { process: vi.fn(() => ({ type: "success" })) } as any;

@@ -69,6 +69,13 @@ export {
   type AccelerationPressureOutcome,
 } from "./constructionAcceleration.js";
 export {
+  ANSWER_PRESTIGE_FAILED,
+  applyAnswerEffects,
+  attachAnswerEffects,
+  type AnswerEffectInput,
+  type AnswerEffectOutcome,
+} from "./answerEffects.js";
+export {
   CONSTRUCTION_EVENT_CONTINUED,
   CONSTRUCTION_EVENT_POLICY_ID,
   CONSTRUCTION_EVENT_STREAM_FAMILY,
@@ -84,6 +91,7 @@ export type {
   StrategicWeatherPhaseOptions,
 } from "./month.js";
 export { MonthExecutor, PLAYER_NATION_UNKNOWN } from "./month.js";
+export { dilemmaHints, type DilemmaHintContext } from "./dilemma.js";
 export {
   applyRecordedBattleResult,
   consumeBattleResult,
@@ -152,10 +160,11 @@ export type {
   TacticalReplayResult,
 } from "./tacticalReplay.js";
 export { TacticalReplayVerifier } from "./tacticalReplay.js";
+export { gunQualityRulesForBattle } from "./battleGunQuality.js";
 export { AVIATION_TECHNOLOGY, resolveAircraftDevelopment } from "./aircraft.js";
 export { resolveCarrierOperations } from "./carrier-operations.js";
 export * from "./designStudies.js";
-export { buildDesignVersion, pricingFor, type DesignPricing } from "./designVersion.js";
+export { buildDesignVersion, pricingFor, type DesignPricing } from "@bluewave/campaign";
 export {
   auxiliaryFleetCounts,
   constructionOrderEligibility,
@@ -195,8 +204,10 @@ export {
   PRIVATE_DOCK_EXPANSION_STREAM_FAMILY,
   PRIVATE_DOCK_EXPANSION_TRAILING_MONTHS,
   PRIVATE_DOCK_EXPANSION_TRIGGERED,
+  DOCK_LIMIT_AFTER_EXPANSION_FORMULA_ID,
   applyDockExpansionStep,
   authorizeDockExpansion,
+  dockLimitAfterExpansionExplanation,
   dockExpansionCompletes,
   dockExpansionEarliestCompletionMonth,
   dockExpansionEraStepForMonth,

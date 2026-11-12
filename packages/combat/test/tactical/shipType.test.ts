@@ -8,6 +8,7 @@ import {
 } from "@bluewave/combat/tactical";
 import type { CompiledDesignVersion } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
+import { DESIGN_22_CLASS_FLOORS, hullFamilyFloors } from "@bluewave/contracts";
 import { makeDesign } from "../fixtures/unit-fixture.js";
 
 describe("DESIGN-22 ship-type classifier (ship_type_classifier_v2)", () => {
@@ -107,5 +108,33 @@ describe("1880 opening-era armoured families (ADR-0228, ship_type_classifier_v2)
   it("leaves the modern pre-dreadnought B floor at 5,000,000 kg", () => {
     const small = hull("des_small_pd", "pre_dreadnought", 4_500_000, 200_000, 254_000, 10);
     expect(() => classifyShip(small)).toThrow(new RegExp(InvalidShipType));
+  });
+});
+
+describe("classifier consumes the shared DESIGN-22 thresholds", () => {
+  it("a battleship at the DESIGN-22 displacement floor classifies, one kg below rejects", () => {
+    const at = makeDesign({
+      hullType: "battleship",
+      normalizedDisplacementKg: SafeInt(DESIGN_22_CLASS_FLOORS.bbMinDisplacementKg),
+    });
+    const below = makeDesign({
+      hullType: "battleship",
+      normalizedDisplacementKg: SafeInt(DESIGN_22_CLASS_FLOORS.bbMinDisplacementKg - 1),
+    });
+    expect(classifyShip(at)).toBe("BB");
+    expect(() => classifyShip(below)).toThrow(new RegExp(InvalidShipType));
+  });
+
+  it("follows the supplied floors instead of a private copy", () => {
+    const d = makeDesign({
+      hullType: "battleship",
+      normalizedDisplacementKg: SafeInt(DESIGN_22_CLASS_FLOORS.bbMinDisplacementKg),
+    });
+    const raised = hullFamilyFloors({
+      ...DESIGN_22_CLASS_FLOORS,
+      bbMinDisplacementKg: DESIGN_22_CLASS_FLOORS.bbMinDisplacementKg + 1,
+    });
+    expect(classifyShip(d)).toBe("BB");
+    expect(() => classifyShip(d, raised)).toThrow(new RegExp(InvalidShipType));
   });
 });

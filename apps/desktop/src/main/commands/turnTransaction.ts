@@ -147,6 +147,7 @@ export const runTurnTransaction = (
     const missilesRules = yield* contentArtifact.loadMissilesRules();
     const tensionDrift = yield* contentArtifact.loadTensionDriftRules();
     const events = yield* contentArtifact.loadEventContent();
+    const constructionEvents = yield* contentArtifact.loadConstructionEvents();
 
     const recordedInputs = input.recordedInputs ?? [];
     const committedOrderHash = sha256Hex(canonicalSerialize(pendingCommands));
@@ -184,6 +185,7 @@ export const runTurnTransaction = (
         ...(missilesRules !== undefined ? { missilesRules } : {}),
         ...(tensionDrift !== undefined ? { tensionDrift } : {}),
         ...(events !== undefined ? { events, playerNationId: record.playerSlotId } : {}),
+        ...(constructionEvents !== undefined ? { constructionEvents } : {}),
         ...(channel !== undefined ? { interruptions: channel } : {}),
       },
     );

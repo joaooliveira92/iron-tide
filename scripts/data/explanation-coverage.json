@@ -295,7 +295,9 @@
       "type": "ConstructionScreenProjection",
       "area": "construction",
       "issue": "#302",
-      "covered": {},
+      "covered": {
+        "economy.dockLimitAfterExpansionExplanation": "dock_limit_after_expansion"
+      },
       "exempt": {
         "revision": "Campaign revision metadata, not a derived value.",
         "month.month": "Campaign month metadata, not a derived value.",
@@ -540,6 +542,27 @@
         "attackerWarScore": "Accumulated battle and blockade score; the war state stores only the total, so a tree would invent its contributions (ADR-0307).",
         "defenderWarScore": "Accumulated battle and blockade score; the war state stores only the total, so a tree would invent its contributions (ADR-0307)."
       }
+    },
+    {
+      "file": "packages/campaign-engine/src/peace-offer.ts",
+      "type": "DiplomacyPeaceTerm",
+      "area": "strategic",
+      "issue": "#484",
+      "covered": {
+        "costExplanation": "peace_cost",
+        "remainingExplanation": "peace_remaining"
+      },
+      "exempt": {}
+    },
+    {
+      "file": "packages/campaign-engine/src/peace-offer.ts",
+      "type": "DiplomacyPeaceOffer",
+      "area": "strategic",
+      "issue": "#484",
+      "covered": {
+        "budgetExplanation": "peace_budget"
+      },
+      "exempt": {}
     },
     {
       "file": "apps/desktop/src/shared/diplomacy-contract.ts",

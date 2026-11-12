@@ -16,8 +16,10 @@ import {
   PRIVATE_DOCK_EXPANSION_EVENT_ID,
   PRIVATE_DOCK_EXPANSION_MIN_UTILIZATION_BP,
   PRIVATE_DOCK_EXPANSION_STREAM_FAMILY,
+  applyDockExpansionStep,
   authorizeDockExpansion,
   dockExpansionCompletes,
+  dockLimitAfterExpansionExplanation,
   dockExpansionEarliestCompletionMonth,
   dockExpansionMonthIsActive,
   dockExpansionProjectFor,
@@ -454,5 +456,29 @@ describe("dock expansion earliest completion month (preview parity)", () => {
     expect(
       dockExpansionEarliestCompletionMonth(expansionProject({ projectType: "NEW_CONSTRUCTION" })),
     ).toBeNull();
+  });
+});
+
+describe("dockLimitAfterExpansionExplanation", () => {
+  it("explains the post-expansion limit as the current limit plus the era step", () => {
+    const tree = dockLimitAfterExpansionExplanation(DOCK, 1_000_000)!;
+    expect(tree.formulaId).toBe("dock_limit_after_expansion");
+    expect(tree.unit).toBe("kg");
+    expect(tree.operation).toBe("add");
+    expect(Number(tree.result)).toBe(
+      applyDockExpansionStep(DOCK, 1_000_000).maximumNewConstructionMassKg,
+    );
+    expect((tree.children ?? []).map((child) => [child.formulaId, Number(child.result)])).toEqual([
+      ["dock_limit_after_expansion.current", DOCK.maximumNewConstructionMassKg],
+      ["dock_limit_after_expansion.step", 1_000_000],
+    ]);
+  });
+
+  it("has no tree without an era step or with an incomplete dock", () => {
+    expect(dockLimitAfterExpansionExplanation(DOCK, null)).toBeUndefined();
+    expect(dockLimitAfterExpansionExplanation(null, 1_000_000)).toBeUndefined();
+    expect(
+      dockLimitAfterExpansionExplanation({ maximumNewConstructionMassKg: 5 }, 1_000_000),
+    ).toBeUndefined();
   });
 });

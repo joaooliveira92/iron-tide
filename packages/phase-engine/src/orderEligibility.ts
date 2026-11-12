@@ -144,7 +144,7 @@ export function constructionOrderEligibility(
       auxiliaryFleetCounts(snapshot, design.nationId, replacingProjectId, rules.amcFastSpeedUms),
       rules,
     );
-    rejections.push(...limit.reasons);
+    rejections.push(...limit.reasons.map(({ code, message }) => ({ code, message })));
   }
   const nationDock = snapshot["nations"].get(design.nationId)?.dock;
   const profile = content?.navalProfileFor(design.nationId, month) ?? null;

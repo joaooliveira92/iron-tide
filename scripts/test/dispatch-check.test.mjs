@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
 
+import { readStamps } from "../lib/dispatch-stamp.mjs";
 import {
   DispatchCheckError,
   collectDevHealth,
@@ -65,12 +69,60 @@ function fixture(overrides = {}) {
   return { run, calls, readRegistryRows: () => base.registry };
 }
 
-function check(argv, overrides) {
+function check(argv, overrides, { freeGiB = 100, stampDir = null } = {}) {
   const { run, calls, readRegistryRows } = fixture(overrides);
   const lines = [];
-  const code = main(argv, { run, readRegistryRows, out: (line) => lines.push(line) });
+  const code = main(argv, {
+    run,
+    readRegistryRows,
+    readFreeGiB: () => freeGiB,
+    minFreeGiB: 5,
+    stampDir,
+    nowMs: 1_000,
+    out: (line) => lines.push(line),
+  });
   return { code, lines, calls };
 }
+
+void test("a nearly full disk blocks dispatch and names the free space", () => {
+  const { code, lines } = check(["10"], {}, { freeGiB: 0.16 });
+  assert.equal(code, 2);
+  assert.ok(lines.includes("DISK-LOW 0.2 GiB free (minimum 5 GiB)"));
+});
+
+void test("enough free disk adds no line and keeps exit 0", () => {
+  const { code, lines } = check(["10"], {}, { freeGiB: 5 });
+  assert.equal(code, 0);
+  assert.ok(lines.every((line) => !line.startsWith("DISK-LOW")));
+});
+
+void test("every verdict is stamped so the delegation hook can see the check ran", () => {
+  const dir = mkdtempSync(join(tmpdir(), "dispatch-check-stamps-"));
+  try {
+    const { code } = check(
+      ["10", "11"],
+      { issues: { 11: { state: "CLOSED" } } },
+      { stampDir: dir },
+    );
+    assert.equal(code, 2);
+    const stamps = readStamps(dir);
+    assert.deepEqual(stamps["10"], { verdict: "CLEAR", at: 1_000 });
+    assert.deepEqual(stamps["11"], { verdict: "STALE", at: 1_000 });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+void test("a tool error stamps nothing", () => {
+  const dir = mkdtempSync(join(tmpdir(), "dispatch-check-stamps-"));
+  try {
+    const { code } = check(["10"], { failOn: "issue view" }, { stampDir: dir });
+    assert.equal(code, 1);
+    assert.deepEqual(readStamps(dir), {});
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 void test("parseIssueNumbers accepts #N, dedupes, and rejects junk", () => {
   assert.deepEqual(parseIssueNumbers(["577", "#578", "577"]), [577, 578]);

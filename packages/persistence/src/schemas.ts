@@ -278,6 +278,9 @@ export const SaveMetadataSchema = Schema.Struct({
   nationId: Schema.optional(Schema.String),
   campaignDate: Schema.optional(Schema.Struct({ year: Schema.Finite, month: Schema.Finite })),
   monthInputHash: Schema.optional(Schema.String),
+  campaignSeed: Schema.optional(Schema.String),
+  rulesetVersion: Schema.optional(Schema.String),
+  dataPackVersion: Schema.optional(Schema.String),
 });
 
 export type SaveMetadata = Mutable<typeof SaveMetadataSchema.Type>;

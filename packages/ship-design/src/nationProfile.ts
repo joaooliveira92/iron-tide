@@ -209,6 +209,19 @@ export interface NamingPolicy {
   readonly convention: Readonly<Partial<Record<ShipTypeId, string>>>;
 }
 
+export interface GunQualityBandDef {
+  readonly id: string;
+  readonly minCaliberUm: number;
+  readonly maxCaliberUm: number;
+  readonly quality: number;
+  readonly provenance: Provenance;
+}
+
+export interface GunQualityDef {
+  readonly bands: readonly GunQualityBandDef[];
+  readonly provenance: Provenance;
+}
+
 export interface NationNavalProfile {
   readonly nationId: string;
   readonly activeFrom: string;
@@ -224,6 +237,7 @@ export interface NationNavalProfile {
   readonly gunModels: readonly GunModelDef[];
   readonly ammunitionPatterns: readonly AmmunitionPatternDef[];
   readonly componentVariants: readonly ComponentVariantDef[];
+  readonly gunQuality?: GunQualityDef;
   readonly designWeights: Readonly<Record<ShipTypeId, DesignWeights>>;
   readonly procurementPolicy: ProcurementPolicy;
   readonly namingPolicy: NamingPolicy;

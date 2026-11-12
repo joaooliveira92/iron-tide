@@ -26,7 +26,7 @@ Read in order: `README.md`, `.ai/ENGINEERING-CONTRACT.md`, `RULES.md`, `.ai/REQU
 
 ## Code conventions
 
-Determinism (no `Math.random`, wall-clock, `process.env`; canonical hashes identical across OSes), Effect usage, tagged errors, strict schema decoding at boundaries, and the content compiler are in `.claude/rules/` (loaded for `packages/`, `apps/`, `content/`) and [RULES.md](RULES.md).
+Determinism (no `Math.random`, wall-clock, `process.env`; canonical hashes identical across OSes), Effect usage, tagged errors, strict schema decoding at boundaries, and the content compiler are in `.claude/rules/` (loaded for `packages/`, `apps/`, `content/`) and [RULES.md](RULES.md). Module size (300 target, 400 review, 600 hard): [RULES.md](RULES.md#module-size).
 
 ## Tests
 

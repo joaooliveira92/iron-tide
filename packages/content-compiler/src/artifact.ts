@@ -40,7 +40,7 @@ const ContentBundleManifestSchema = Schema.Struct({
   compatibilityVersion: Schema.String,
   algorithm: Schema.String,
   bodyHash: Schema.String,
-  bodyLength: Schema.Number,
+  bodyLength: Schema.Finite,
 });
 
 const ContentLockSchema = Schema.Struct({

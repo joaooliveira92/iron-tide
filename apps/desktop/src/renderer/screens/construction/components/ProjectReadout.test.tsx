@@ -1,6 +1,8 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import type { ProjectRow } from "../project-progress.js";
+import { authoredCatalogue } from "../../../../shared/authoredCatalogue.testing.js";
+import { setUiCatalogue } from "../../../content/uiCatalogue.js";
 import { ProjectReadout } from "./ProjectReadout.js";
 
 afterEach(cleanup);
@@ -108,6 +110,117 @@ describe("ProjectReadout", () => {
       />,
     );
     expect(screen.getByText("not building (payment default)")).toBeTruthy();
+  });
+
+  it("names a construction event's cause in words from the ui catalogue, never the raw code (#584)", () => {
+    setUiCatalogue(authoredCatalogue());
+    render(
+      <ProjectReadout
+        row={row({
+          status: "DELAYED",
+          readout: {
+            totalCostUnits: 640,
+            monthlyInstalmentUnits: 0,
+            remainingMonths: 0,
+            launchMonth: null,
+            scheduleBasis: "UNAVAILABLE",
+            scheduleUnavailableReason: "DELAYED",
+            delayReasonCode: "STEEL_PLATE_SHORTAGE",
+            haltedCarryingCostUnits: null,
+          },
+        })}
+      />,
+    );
+    expect(screen.getByText("not building (a steel plate shortage at the supplier)")).toBeTruthy();
+    expect(screen.queryByText(/STEEL_PLATE_SHORTAGE/)).toBeNull();
+  });
+
+  describe("cost overruns (#584)", () => {
+    const CAUSES: Readonly<Record<string, string>> = {
+      DESIGN_CHANGE_REWORK: "rework after a design change",
+      YARD_LABOUR_SHORTAGE: "a shortage of skilled yard labour",
+    };
+    const withOverrun = (reasonCode: string, costUnits: number) =>
+      row({
+        readout: {
+          totalCostUnits: 640,
+          monthlyInstalmentUnits: 120,
+          remainingMonths: 6,
+          launchMonth: "1880-07",
+          scheduleBasis: "YARD_CAPACITY",
+          scheduleUnavailableReason: null,
+          haltedCarryingCostUnits: null,
+          overruns: [{ month: "1880-03", reasonCode, costUnits }],
+        },
+      });
+    const catalogue = () =>
+      setUiCatalogue(
+        authoredCatalogue(
+          Object.fromEntries(
+            Object.entries(CAUSES).map(([code, words]) => [
+              `construction.event.${code.toLowerCase()}`,
+              words,
+            ]),
+          ),
+        ),
+      );
+
+    for (const [code, words] of Object.entries(CAUSES))
+      it(`names ${code} in plain words with the amount, never the raw code or month key`, () => {
+        catalogue();
+        render(<ProjectReadout row={withOverrun(code, 45)} />);
+        expect(screen.getByText(`March 1880: ${words} added 45 NC to the cost`)).toBeTruthy();
+        expect(screen.queryByText(new RegExp(code))).toBeNull();
+        expect(screen.queryByText(/\d{4}-\d{2}/)).toBeNull();
+      });
+
+    it("lists every delay and overrun, newest first, with the amount", () => {
+      catalogue();
+      const base = withOverrun("DESIGN_CHANGE_REWORK", 45);
+      render(
+        <ProjectReadout
+          row={{
+            ...base,
+            readout: {
+              ...base.readout!,
+              delays: [
+                { month: "1880-05", reasonCode: "DESIGN_CHANGE_REWORK", months: 1 },
+                { month: "1880-02", reasonCode: "YARD_LABOUR_SHORTAGE", months: 3 },
+              ],
+              overruns: [
+                { month: "1880-04", reasonCode: "YARD_LABOUR_SHORTAGE", costUnits: 20 },
+                { month: "1880-03", reasonCode: "DESIGN_CHANGE_REWORK", costUnits: 45 },
+              ],
+            },
+          }}
+        />,
+      );
+      const items = within(screen.getByRole("list", { name: "Havock class causes" }))
+        .getAllByRole("listitem")
+        .map((item) => item.textContent);
+      expect(items).toEqual([
+        "May 1880: rework after a design change delayed the build by 1 month",
+        "April 1880: a shortage of skilled yard labour added 20 NC to the cost",
+        "March 1880: rework after a design change added 45 NC to the cost",
+        "February 1880: a shortage of skilled yard labour delayed the build by 3 months",
+      ]);
+      for (const text of items) {
+        expect(text).not.toMatch(/\d{4}-\d{2}/);
+        expect(text).not.toMatch(/[A-Z]{2,}_[A-Z]/);
+      }
+    });
+
+    it("falls back to plain words when the cause has no authored text", () => {
+      setUiCatalogue(authoredCatalogue());
+      render(<ProjectReadout row={withOverrun("UNKNOWN_CAUSE", 45)} />);
+      expect(screen.getByText("March 1880: a cost overrun added 45 NC to the cost")).toBeTruthy();
+      expect(screen.queryByText(/UNKNOWN_CAUSE/)).toBeNull();
+    });
+
+    it("adds no causes list when nothing has hit the project", () => {
+      render(<ProjectReadout row={row()} />);
+      expect(screen.queryByRole("list", { name: "Havock class causes" })).toBeNull();
+    });
   });
 
   it("renders the contract schedule a foreign row's readout carries", () => {

@@ -60,6 +60,8 @@ function describeDomainEventBody(body: DomainEventBody): string {
       return `${body.nationId}: project ${body.projectId} work ${String(body.previousWork)} -> ${String(body.newWork)}`;
     case "ConstructionDelayed":
       return `${body.nationId}: project ${body.projectId} delayed in ${body.delayMonth} (${body.reason})`;
+    case "ConstructionOverrun":
+      return `${body.nationId}: project ${body.projectId} overran in ${body.overrunMonth} (${body.reason}; ${String(body.amount)} work added)`;
     case "ShipDelivered":
       return `${body.nationId}: ship ${body.shipName} (${body.shipId}) delivered in ${body.deliveredMonth}`;
     case "ShipRebuilt":

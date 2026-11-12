@@ -177,6 +177,7 @@ export function constructionDelayedEvent(
   reason: string,
   seq: SafeInt,
   campaignMonth: string,
+  months?: number,
 ): DomainEventEnvelope {
   return {
     eventId: `ConstructionDelayed-${projectId}-${String(seq)}`,
@@ -191,6 +192,34 @@ export function constructionDelayedEvent(
       nationId,
       reason,
       delayMonth: campaignMonth,
+      ...(months === undefined ? {} : { months: SafeInt(months) }),
+    },
+    sequenceNumber: seq,
+  };
+}
+
+export function constructionOverrunEvent(
+  projectId: string,
+  nationId: string,
+  reason: string,
+  amount: number,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `ConstructionOverrun-${projectId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "construction",
+    aggregateId: projectId,
+    eventType: "ConstructionOverrun",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "ConstructionOverrun",
+      projectId,
+      nationId,
+      reason,
+      amount: SafeInt(amount),
+      overrunMonth: campaignMonth,
     },
     sequenceNumber: seq,
   };

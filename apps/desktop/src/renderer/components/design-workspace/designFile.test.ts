@@ -27,6 +27,29 @@ describe("design files", () => {
       className: null,
     });
   });
+  it("keeps the baseline the design was developed from, and opens an older file with none", () => {
+    const text = exportDesign(ref.draft, content.components, view.compiled, "Dido", "Gunboat");
+    expect(importDesign(text, content.components)).toMatchObject({
+      ok: true,
+      className: "Dido",
+      baselineName: "Gunboat",
+      notes: [],
+    });
+    const older = exportDesign(ref.draft, content.components, view.compiled, "Dido");
+    expect(importDesign(older, content.components)).toMatchObject({
+      ok: true,
+      baselineName: null,
+    });
+  });
+  it("can record every starting design's name, so Save never writes a file it cannot open", () => {
+    for (const r of content.references) {
+      const text = exportDesign(r.draft, content.components, view.compiled, "", r.name);
+      expect(importDesign(text, content.components)).toMatchObject({
+        ok: true,
+        baselineName: r.name.trim(),
+      });
+    }
+  });
   it("rejects garbage and foreign files with a message, never a throw", () => {
     for (const bad of ["", "not json", "{}", '{"format":"other","schemaVersion":1}'])
       expect(importDesign(bad, content.components)).toMatchObject({ ok: false });

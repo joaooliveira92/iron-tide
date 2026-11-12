@@ -20,12 +20,18 @@ import { Panel } from "./Panel.js";
 export function FilePanel({
   presetName,
   className,
+  developedFrom,
   onLoad,
   dirty,
 }: {
   readonly presetName: string;
   readonly className: string;
-  readonly onLoad: (draft: DesignDraft, className: string | null) => void;
+  readonly developedFrom: string;
+  readonly onLoad: (
+    draft: DesignDraft,
+    className: string | null,
+    baselineName: string | null,
+  ) => void;
   readonly dirty: boolean;
 }) {
   const { draft, view, content } = useDesignState();
@@ -39,7 +45,7 @@ export function FilePanel({
   } | null>(null);
   const [message, setMessage] = useState<{ tone: "ok" | "bad"; text: string } | null>(null);
   const save = () => {
-    const text = exportDesign(draft, content.components, view.compiled, className);
+    const text = exportDesign(draft, content.components, view.compiled, className, developedFrom);
     const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
     const a = document.createElement("a");
     a.href = url;
@@ -56,7 +62,7 @@ export function FilePanel({
       return setMessage({ tone: "bad", text: r.error });
     }
     setFile({ name: picked.name, bytes: picked.size, how: "Opened", state: "done" });
-    onLoad(r.draft, r.className);
+    onLoad(r.draft, r.className, r.baselineName);
     setMessage({ tone: "ok", text: ["Design opened.", ...r.notes].join(" ") });
   };
   return (

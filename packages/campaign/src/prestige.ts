@@ -219,9 +219,19 @@ export function applyPrestigeRuleDetail(
   }
   const checked = checkPrestige(current, set);
   if (Result.isFailure(checked)) return Result.fail(checked.failure);
-  const before = checked.success;
   const applied: PrestigeRule | undefined = rule ?? set.rules[reason];
   if (applied === undefined) return Result.fail(new PrestigeRuleMissing({ reason }));
+  return applyExplicitPrestigeRule(current, set, applied);
+}
+
+export function applyExplicitPrestigeRule(
+  current: number,
+  set: PrestigeValueSet,
+  applied: PrestigeRule,
+): PrestigeResult<PrestigeApplicationDetail> {
+  const checked = checkPrestige(current, set);
+  if (Result.isFailure(checked)) return Result.fail(checked.failure);
+  const before = checked.success;
   const target = prestigeTarget(before, applied);
   if (Result.isFailure(target)) return Result.fail(target.failure);
   const unclampedAfter = target.success;

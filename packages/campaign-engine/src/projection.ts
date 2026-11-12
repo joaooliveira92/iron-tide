@@ -1,5 +1,9 @@
-import type { CampaignState } from "@bluewave/campaign";
+import type { CampaignState, NationState } from "@bluewave/campaign";
 import {
+  activeBudgetModifiers,
+  budgetModifierBp,
+  campaignMonthId,
+  effectiveAppropriationRateBp,
   isPresenceExempt,
   measurePresence,
   monthId,
@@ -14,6 +18,7 @@ import { derivePlayerFacts } from "./player-facts.js";
 import { compareCodePoints } from "@bluewave/deterministic";
 import {
   explainAppropriation,
+  type AppropriationAdjustments,
   explainEconomyMonthEnd,
   explainEconomyNet,
   explainEconomyRunway,
@@ -22,6 +27,26 @@ import { explainPresenceShortfall } from "./fleet-explanations.js";
 import { explainPrestigeChange } from "./prestige-explanations.js";
 
 export type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign";
+
+function appropriationAdjustments(
+  snapshot: CampaignState["snapshot"],
+  nation: NationState,
+): AppropriationAdjustments | undefined {
+  const month = campaignMonthId(
+    snapshot.startYear,
+    snapshot.startMonth,
+    Number(snapshot.turnNumber),
+  );
+  const active = activeBudgetModifiers(nation.budgetModifiers ?? [], month);
+  if (active.length === 0) return undefined;
+  return {
+    effectiveRateBp: Number(effectiveAppropriationRateBp(nation, month)),
+    lines: active.map((modifier) => ({
+      source: modifier.trait === undefined ? "event" : "trait",
+      bp: budgetModifierBp(modifier, month),
+    })),
+  };
+}
 
 const KILOGRAMS_PER_TON = 1_000;
 
@@ -300,6 +325,7 @@ export function buildPlayerProjection(
         Number(nation.baseResources),
         Number(nation.navalAppropriationRateBp),
         outlook.revenue,
+        appropriationAdjustments(snapshot, nation),
       ),
     },
     prestige: buildPrestige(snapshot.prestigeRules.sackingThreshold, nation),

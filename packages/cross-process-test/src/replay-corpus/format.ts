@@ -3,7 +3,7 @@ import { Data, Result, Schema, SchemaIssue } from "effect";
 export const REPLAY_FORMAT_VERSION = 2;
 export const SUPPORTED_REPLAY_FORMAT_VERSIONS = [1, 2] as const;
 
-export const REPLAY_SETUP_IDS = ["armed-adriatic-war"] as const;
+export const REPLAY_SETUP_IDS = ["armed-adriatic-war", "certain-construction-events"] as const;
 export type ReplaySetupId = (typeof REPLAY_SETUP_IDS)[number];
 
 const Hash = Schema.String.check(Schema.isPattern(/^[0-9a-f]{64}$/));

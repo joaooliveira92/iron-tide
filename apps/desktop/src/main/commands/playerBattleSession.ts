@@ -12,7 +12,8 @@ import {
   type PlayerBattleSession,
 } from "@bluewave/combat/battleResolution";
 import { isBluewaveError } from "@bluewave/contracts";
-import { trainingEffectsFor } from "@bluewave/phase-engine";
+import { gunQualityRulesForBattle, trainingEffectsFor } from "@bluewave/phase-engine";
+import type { ShipBuildingContent } from "@bluewave/ship-design";
 import { Effect } from "effect";
 import type {
   AdvancePlayerBattleResult,
@@ -116,6 +117,7 @@ export function projectSession(
   fleetManagement?: FleetManagementRules,
   gunneryRules?: GunneryRules,
   missilesRules?: MissilesRules,
+  shipBuilding?: ShipBuildingContent,
 ): PlayerBattleSession | PlayerBattleRefusal {
   const manifest = (snapshot.wars.battleManifests ?? []).find(
     (candidate) => candidate.battleId === battleId,
@@ -132,6 +134,11 @@ export function projectSession(
       `No committed strategic weather for area ${manifest.areaId}`,
     );
   }
+  const gunQuality = gunQualityRulesForBattle(
+    shipBuilding,
+    [manifest.attackerId, manifest.defenderId],
+    pending.createdAt,
+  );
   try {
     return createPlayerBattleSession({
       manifest: manifest as BattleManifest,
@@ -146,6 +153,7 @@ export function projectSession(
       formulaVersion: manifest.formulaVersion,
       rngVersion: manifest.rngVersion,
       ...(gunneryRules === undefined ? {} : { gunneryRadar: gunneryRules.radar }),
+      ...(gunQuality === undefined ? {} : { gunQuality }),
       ...(missilesRules === undefined ? {} : { missilesRules }),
     });
   } catch (error) {
@@ -203,6 +211,7 @@ export const startPlayerBattle = (input: {
     const fleetManagement = yield* (yield* ContentArtifact).loadFleetManagementRules();
     const gunneryRules = yield* (yield* ContentArtifact).loadGunneryRules();
     const missilesRules = yield* (yield* ContentArtifact).loadMissilesRules();
+    const shipBuilding = yield* (yield* ContentArtifact).loadShipBuildingContent();
     const projected = projectSession(
       outcome.snapshot,
       input.battleId,
@@ -211,6 +220,7 @@ export const startPlayerBattle = (input: {
       fleetManagement,
       gunneryRules,
       missilesRules,
+      shipBuilding,
     );
     if (isRefusal(projected)) return projected;
 

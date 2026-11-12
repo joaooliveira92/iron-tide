@@ -7,6 +7,7 @@ export interface NewCampaignOptions {
   readonly admiral?: string;
   readonly campaign?: string;
   readonly seed?: string;
+  readonly fleetMethod?: string;
   readonly onBriefingPage?: (pageIndex: number) => Promise<void>;
 }
 
@@ -35,8 +36,21 @@ export async function reachFleetMethodScreen(
   await click(page, "Next");
 }
 
+async function chooseFleetMethod(page: Page, method: string): Promise<void> {
+  const listbox = page.getByRole("listbox", { name: "Starting-fleet methods" });
+  const option = listbox.getByRole("option", { name: method });
+  const target = await option.getAttribute("id");
+  for (let step = 0; step < 3; step++) {
+    if ((await listbox.getAttribute("aria-activedescendant")) === target) break;
+    await listbox.press("ArrowRight");
+  }
+  await listbox.press("Enter");
+  await expect(option).toHaveAttribute("aria-selected", "true");
+}
+
 export async function startNewCampaign(page: Page, opts: NewCampaignOptions = {}): Promise<void> {
   await reachFleetMethodScreen(page, opts);
+  if (opts.fleetMethod !== undefined) await chooseFleetMethod(page, opts.fleetMethod);
   await click(page, "Next: Review Campaign");
   await click(page, "Begin Commission");
 

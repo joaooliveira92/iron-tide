@@ -56,6 +56,7 @@ export interface DesignFile {
   readonly componentHashes: Readonly<Record<string, string>>;
   readonly compiledHash: string | null;
   readonly className?: string;
+  readonly baselineName?: string;
 }
 
 export const MAX_CLASS_NAME_LENGTH = 60;
@@ -160,9 +161,16 @@ export function encodeDesignFile(
   catalogue: readonly ComponentDef[],
   compiled: CompiledDesign | null,
   className = "",
+  baselineName = "",
 ): string {
   assertNoFloats(draft);
   const name = className.trim();
+  const baseline = baselineName.trim();
+  if (baseline.length > MAX_CLASS_NAME_LENGTH)
+    throw new PersistenceError(
+      "INVALID_DRAFT",
+      `baselineName must be a string of at most ${MAX_CLASS_NAME_LENGTH} characters`,
+    );
   const byId = new Map(catalogue.map((c) => [c.id, c]));
   const hashes: Record<string, string> = {};
   for (const p of draft.placements) {
@@ -176,6 +184,7 @@ export function encodeDesignFile(
     componentHashes: hashes,
     compiledHash: compiled?.hash ?? null,
     ...(name === "" ? {} : { className: name }),
+    ...(baseline === "" ? {} : { baselineName: baseline }),
   };
   return canonicalSerialize(file);
 }
@@ -234,14 +243,15 @@ export interface DecodedDesign {
   readonly contentDrift: readonly string[];
   readonly compiledHash: string | null;
   readonly className: string | null;
+  readonly baselineName: string | null;
 }
 
-function decodeClassName(raw: unknown): string | null {
+function decodeName(raw: unknown, key: "className" | "baselineName"): string | null {
   if (raw === undefined) return null;
   if (typeof raw !== "string" || raw.trim().length > MAX_CLASS_NAME_LENGTH)
     throw new PersistenceError(
       "INVALID_DRAFT",
-      `className must be a string of at most ${MAX_CLASS_NAME_LENGTH} characters`,
+      `${key} must be a string of at most ${MAX_CLASS_NAME_LENGTH} characters`,
     );
   const name = raw.trim();
   return name === "" ? null : name;
@@ -279,7 +289,8 @@ export function decodeDesignFile(
   const problems = validateDraftShape(cur.draft);
   if (problems.length > 0) throw new PersistenceError("INVALID_DRAFT", problems.join("; "));
   const draft = cur.draft as unknown as DesignDraft;
-  const className = decodeClassName(cur.className);
+  const className = decodeName(cur.className, "className");
+  const baselineName = decodeName(cur.baselineName, "baselineName");
   const stored = isObj(cur.componentHashes) ? (cur.componentHashes as Record<string, string>) : {};
   const byId = new Map(catalogue.map((c) => [c.id, c]));
   const drift: string[] = [];
@@ -294,6 +305,7 @@ export function decodeDesignFile(
     contentDrift: drift,
     compiledHash: typeof cur.compiledHash === "string" ? cur.compiledHash : null,
     className,
+    baselineName,
   };
 }
 

@@ -108,9 +108,17 @@ test.describe("renderer shell security (production loading path)", () => {
         await e2e.app.evaluate(({ BrowserWindow }) => {
           BrowserWindow.getAllWindows()[0]?.focus();
         });
-        return e2e.page.evaluate(() => document.hasFocus());
+        return e2e.page.evaluate(async () => {
+          if (!document.hasFocus()) {
+            return "unfocused";
+          }
+          return navigator.clipboard
+            .writeText("shell-security")
+            .then(() => "written")
+            .catch((error: unknown) => (error instanceof Error ? error.name : "denied"));
+        });
       })
-      .toBe(true);
+      .toBe("written");
     const outcome = await e2e.page.evaluate(async () => {
       const notification = await Notification.requestPermission();
       const geolocation = await new Promise<number>((resolve) => {
@@ -124,18 +132,12 @@ test.describe("renderer shell security (production loading path)", () => {
         .getUserMedia({ audio: true })
         .then(() => "granted")
         .catch((error: unknown) => (error instanceof Error ? error.name : "denied"));
-      window.focus();
-      const clipboard = await navigator.clipboard
-        .writeText("shell-security")
-        .then(() => "written")
-        .catch((error: unknown) => (error instanceof Error ? error.name : "denied"));
-      return { notification, geolocation, media, clipboard };
+      return { notification, geolocation, media };
     });
 
     expect(outcome.notification).toBe("denied");
     expect(outcome.geolocation).toBe(1);
     expect(outcome.media).not.toBe("granted");
-    expect(outcome.clipboard).toBe("written");
   });
 
   test("a new campaign and the shipbuilding workspace raise no CSP violations", async ({ e2e }) => {

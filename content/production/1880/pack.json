@@ -13,6 +13,7 @@
     "fleets": ["fleets.ts"],
     "economies": ["economies.ts"],
     "constructions": ["constructions.ts"],
+    "constructionEvents": ["construction-events.ts"],
     "diplomacy": ["diplomacy.ts"],
     "research": ["research.ts"],
     "designs": ["designs.ts"],

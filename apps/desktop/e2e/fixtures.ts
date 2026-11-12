@@ -184,7 +184,10 @@ async function compileTemplate(months: number): Promise<{ dir: string; root: str
   const dir = join(root, "package");
   const harness = await launchHarness({ saveDir: dir });
   try {
-    await startNewCampaign(harness.page, { seed: SEED });
+    await startNewCampaign(harness.page, {
+      seed: SEED,
+      fleetMethod: "Curated Historical-Inspired Fleet",
+    });
     await expectOverview(harness.page);
     await dismissTour(harness.page);
     if (months > 0) await advanceMonths(harness.page, months);

@@ -358,7 +358,7 @@ export const SubmitBattleResultPayloadSchema = Schema.Struct({
   loserId: Schema.NullOr(nonEmptyString),
   attackerLosses: Schema.Array(nonEmptyString),
   defenderLosses: Schema.Array(nonEmptyString),
-  damageReport: Schema.Record(Schema.String, Schema.Number),
+  damageReport: Schema.Record(Schema.String, Schema.Finite),
 });
 
 export const SubmitOfferResponsePayloadSchema = Schema.Struct({

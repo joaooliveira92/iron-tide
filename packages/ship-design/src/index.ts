@@ -98,9 +98,13 @@ export {
   type DesignTreasuryFit,
 } from "./designPrice.js";
 export {
+  type DockEligibility,
   type DockRecord,
+  type DockRejection,
+  SHIP_EXCEEDS_DOMESTIC_DOCK_LIMIT,
   dockRecordFor,
   dockRecordFromDefinition,
+  missingDockLimits,
   newConstructionDockEligibility,
 } from "./dock.js";
 export {
@@ -134,6 +138,7 @@ export {
   computeFleetDeficits,
   type FleetShipView,
   planProcurementDecision,
+  PROCUREMENT_TYPES,
   type RoleGroup,
   roleGroupOf,
   shipTypeForHullType,
@@ -229,6 +234,7 @@ export {
 } from "./shipBuildingContent.js";
 export {
   type AvailabilityReason,
+  availabilityFindings,
   evaluateAmcFleetLimit,
   evaluateShipTypeAvailability,
 } from "./shipTypeAvailability.js";
@@ -242,7 +248,14 @@ export {
   type ShipTypeRequirementCheck,
   type ShipTypeRequirements,
 } from "./shipTypeRequirements.js";
-export { buildShipTypeRoster, type RosterEntry, type StarterDesign } from "./shipTypeRoster.js";
+export {
+  buildShipTypeRoster,
+  type RosterEntry,
+  type RosterLevel,
+  starterFor,
+  type StarterDesign,
+} from "./shipTypeRoster.js";
+export { shipTypeRegistryFromRecords, type ShipTypeRegistry } from "./shipTypeRegistry.js";
 export {
   HULL_TYPE_FOR_SHIP_TYPE,
   isShipTypeId,

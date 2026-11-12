@@ -1,5 +1,13 @@
 import type { UiCatalogueDto } from "../../shared/content-contract.js";
-import { EN_US_MESSAGES, type MessageKey } from "../lib/en-us-messages.js";
+import { DIPLOMACY_PEACE_MESSAGES } from "../lib/diplomacy-peace-messages.js";
+import { ECONOMY_MODIFIER_MESSAGES } from "../lib/economy-modifier-messages.js";
+import { EN_US_MESSAGES } from "../lib/en-us-messages.js";
+
+const AUTHORED_MESSAGES: Readonly<Record<string, string | undefined>> = {
+  ...EN_US_MESSAGES,
+  ...DIPLOMACY_PEACE_MESSAGES,
+  ...ECONOMY_MODIFIER_MESSAGES,
+};
 
 export const CATALOGUE_FALLBACK_LOCALE = "en-US" as const;
 
@@ -47,7 +55,7 @@ export function resolveMessage(
   key: string,
   interpolation: Readonly<Record<string, string | number | boolean>> = {},
 ): string {
-  const template = injected?.strings[key] ?? EN_US_MESSAGES[key as MessageKey];
+  const template = injected?.strings[key] ?? AUTHORED_MESSAGES[key];
   if (template === undefined) {
     missingKeyWarned(key);
     const fallback = injected?.strings[GENERIC_FALLBACK_KEY];
@@ -56,13 +64,24 @@ export function resolveMessage(
   return interpolate(template, interpolation);
 }
 
+export function constructionEventCause(reasonCode: string): string | undefined {
+  const key = `construction.event.${reasonCode.toLowerCase()}`;
+  return hasMessageKey(key) ? resolveMessage(key) : undefined;
+}
+
+export function withConstructionCause(
+  interpolation: Readonly<Record<string, string | number | boolean>>,
+): Readonly<Record<string, string | number | boolean>> {
+  const reason = interpolation["reason"];
+  if (typeof reason !== "string") return interpolation;
+  const cause = constructionEventCause(reason);
+  return cause === undefined ? interpolation : { ...interpolation, reason: cause };
+}
+
 export function hasMessageKey(key: string): boolean {
   return injected?.strings[key] !== undefined;
 }
 
 export function hasAuthoredMessage(key: string): boolean {
-  return (
-    injected?.strings[key] !== undefined ||
-    (EN_US_MESSAGES as Record<string, string>)[key] !== undefined
-  );
+  return injected?.strings[key] !== undefined || AUTHORED_MESSAGES[key] !== undefined;
 }

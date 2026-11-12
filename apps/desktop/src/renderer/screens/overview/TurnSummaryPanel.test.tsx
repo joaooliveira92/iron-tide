@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { TurnMessageDto, TurnSummaryEntry } from "../../../shared/turn-message-contract.js";
+import { authoredCatalogue } from "../../../shared/authoredCatalogue.testing.js";
 import { setUiCatalogue } from "../../content/uiCatalogue.js";
 import { TurnSummaryPanel } from "./TurnSummaryPanel.js";
 
@@ -79,6 +80,97 @@ const summary = (messages: readonly TurnMessageDto[]): TurnSummaryEntry => ({
 });
 
 const emptyState = { pinnedIds: [] as string[], readIds: [] as string[] };
+
+describe("TurnSummaryPanel construction causes (#584 slice 4)", () => {
+  const renderBodies = (messages: readonly TurnMessageDto[]) => {
+    setUiCatalogue(authoredCatalogue());
+    render(
+      <TurnSummaryPanel
+        summaries={[summary(messages)]}
+        loading={false}
+        turnMessages={emptyState}
+        onTogglePinned={() => undefined}
+        onToggleRead={() => undefined}
+      />,
+    );
+    return screen.getAllByTestId("turn-message").map((node) => node.textContent ?? "");
+  };
+
+  it("names a delay's cause, length and month in plain words", () => {
+    const [text] = renderBodies([
+      message({
+        id: "d1",
+        severity: "HIGH",
+        titleKey: "messages.construction.delayed.title",
+        bodyKey: "messages.construction.delayed.body",
+        interpolation: {
+          projectId: "con_gbr_inflexible",
+          nationId: "uk",
+          reason: "STEEL_PLATE_SHORTAGE",
+          delayMonth: "1880-04",
+          months: 2,
+        },
+      }),
+    ]);
+    expect(text).toContain(
+      "A build was delayed by 2 months from April 1880: a steel plate shortage at the supplier.",
+    );
+    expect(text).not.toMatch(/STEEL_PLATE_SHORTAGE|\d{4}-\d{2}/);
+  });
+
+  it("names an overrun's cause and cost in plain words", () => {
+    const [text] = renderBodies([
+      message({
+        id: "o1",
+        severity: "HIGH",
+        titleKey: "messages.construction.overrun.title",
+        bodyKey: "messages.construction.overrun.body",
+        interpolation: {
+          projectId: "con_gbr_inflexible",
+          nationId: "uk",
+          reason: "DESIGN_CHANGE_REWORK",
+          amount: 45,
+          overrunMonth: "1880-03",
+        },
+      }),
+    ]);
+    expect(text).toContain(
+      "A build's cost rose by 45 NC from March 1880: rework after a design change.",
+    );
+    expect(text).not.toMatch(/DESIGN_CHANGE_REWORK|\d{4}-\d{2}/);
+  });
+
+  it("keeps plain words for a payment default and for an unknown cause", () => {
+    const delayed = (id: string, reason: string) =>
+      message({
+        id,
+        severity: "HIGH",
+        titleKey: "messages.construction.delayed.title",
+        bodyKey: "messages.construction.delayed.body",
+        interpolation: { reason, delayMonth: "1880-04", months: 1 },
+      });
+    const [paid, unknown] = renderBodies([
+      delayed("d3", "PAYMENT_DEFAULT_DELAYED"),
+      delayed("d4", "NOT_A_CAUSE"),
+    ]);
+    expect(paid).toContain("delayed by 1 month from April 1880: a payment default.");
+    expect(unknown).toContain("delayed by 1 month from April 1880: a delay.");
+    expect(unknown).not.toMatch(/NOT_A_CAUSE/);
+  });
+
+  it("reads a delay event without a month count as one month", () => {
+    const [text] = renderBodies([
+      message({
+        id: "d2",
+        severity: "HIGH",
+        titleKey: "messages.construction.delayed.title",
+        bodyKey: "messages.construction.delayed.body",
+        interpolation: { reason: "UNKNOWN_CAUSE", delayMonth: "1880-04" },
+      }),
+    ]);
+    expect(text).toContain("delayed by 1 month from April 1880");
+  });
+});
 
 describe("TurnSummaryPanel", () => {
   it("renders grouped, localized messages with a severity badge and an entity link", () => {

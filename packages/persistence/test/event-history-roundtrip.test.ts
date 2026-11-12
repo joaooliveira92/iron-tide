@@ -93,8 +93,8 @@ describe("SaveStore round-trips government type, traits and fired-event history"
     if (existsSync(tmpDir)) rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("is stamped with compatibility 5.1.0", () => {
-    expect(CURRENT_COMPATIBILITY_VERSION).toBe("5.1.0");
+  it("is stamped with compatibility 5.2.0", () => {
+    expect(CURRENT_COMPATIBILITY_VERSION).toBe("5.2.0");
   });
 
   it("save -> load preserves the government, traits, fired events and flags exactly", () => {
@@ -146,6 +146,80 @@ describe("SaveStore round-trips government type, traits and fired-event history"
     store.save(quietState, tmpDir);
     const reloaded = unwrapSuccess(runExit(store.load(tmpDir)));
     expect("pending" in reloaded.state.snapshot.nations.get("nation-a")!.eventHistory!).toBe(false);
+  });
+
+  it("save -> load preserves answer effects, unrest, budget modifiers and a content prestige reason", () => {
+    const effects = {
+      lines: [
+        {
+          source: "DECLARED" as const,
+          budgetBp: 300,
+          prestigeDelta: 2,
+          unrestDelta: 2,
+          tensionDelta: 2,
+        },
+        {
+          source: "TRAIT" as const,
+          trait: "cautious" as const,
+          reasonCode: "CAUTIOUS_ADVENTURE",
+          budgetBp: 0,
+          prestigeDelta: -2,
+          unrestDelta: 0,
+          tensionDelta: 0,
+        },
+      ],
+      budgetBp: 300,
+      prestigeDelta: 0,
+      unrestBefore: 0,
+      unrestAfter: 2,
+      tensionPartner: "nation-b",
+      tensionBefore: 4,
+      tensionAfter: 6,
+    };
+    const nation = makeNation({
+      governmentType: "autocratic",
+      eventHistory: {
+        fired: [
+          {
+            eventId: "border_incident",
+            month: "1880-02",
+            answerId: "mobilise",
+            resolvedBy: "AI",
+            effects,
+          },
+        ],
+        flags: [],
+      },
+      unrest: 2,
+      budgetModifiers: [
+        {
+          eventId: "border_incident",
+          answerId: "mobilise",
+          firstMonth: "1880-03",
+          initialBp: 300,
+          decayMonths: 12,
+          capBp: 600,
+        },
+      ],
+      prestigeLastChange: {
+        reasonCode: "BORDER_STAND",
+        before: SafeInt(20),
+        after: SafeInt(22),
+        delta: SafeInt(2),
+        month: "1880-02",
+      },
+    });
+    const state = makeState(nation);
+    const store = new SaveStore();
+    store.save(state, tmpDir);
+
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    const restored = loaded.state.snapshot.nations.get("nation-a")!;
+    expect(restored.unrest).toBe(2);
+    expect(restored.budgetModifiers).toEqual(nation.budgetModifiers);
+    expect(restored.eventHistory!.fired[0]!.effects).toEqual(effects);
+    expect(restored.prestigeLastChange?.reasonCode).toBe("BORDER_STAND");
+    expect(loaded.state.rawHash).toBe(state.rawHash);
   });
 
   it("save -> load keeps a nation without the new fields free of them", () => {

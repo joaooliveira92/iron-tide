@@ -1,6 +1,6 @@
-import type { CompiledDesignVersion } from "@bluewave/campaign";
+import type { CompiledDesignVersion } from "./state.js";
 import type { CompiledTorpedo } from "@bluewave/armament";
-import { SafeInt } from "@bluewave/contracts";
+import { KNOTS_TO_UMS, MM_TO_UM, SafeInt } from "@bluewave/contracts";
 import {
   compileTorpedo,
   computeCost,
@@ -55,6 +55,20 @@ export function pricingFor(content: ShipBuildingContent, month: string): DesignP
       month,
     },
     ...(torpedoOf === undefined ? {} : { torpedoOf }),
+  };
+}
+
+export function shipStatsFromDesign(design: CompiledDesignVersion) {
+  return {
+    hitPoints: design["hitPoints"],
+    maxHitPoints: design["hitPoints"],
+    speed: SafeInt.div(design["normalizedSpeedUms"], SafeInt(KNOTS_TO_UMS), "floor"),
+    firepower: SafeInt.mul(
+      design["mainGunsCount"],
+      SafeInt.div(design["mainGunsCaliber"], SafeInt(100_000), "floor"),
+    ),
+    armor: SafeInt.div(design["normalizedArmorUm"], SafeInt(MM_TO_UM), "floor"),
+    className: design["className"],
   };
 }
 
@@ -121,7 +135,7 @@ export function buildDesignVersion(
           },
         }
       : {}),
-    sourceDraft: structuredClone(draft) as unknown as Readonly<Record<string, unknown>>,
+    sourceDraft: { ...structuredClone(draft) },
     ...(draft.colonialServiceFitted === true ? { colonialServiceFitted: true as const } : {}),
     ...(e.armament ? { armament: structuredClone(e.armament) } : {}),
     ...(e.torpedoArmament

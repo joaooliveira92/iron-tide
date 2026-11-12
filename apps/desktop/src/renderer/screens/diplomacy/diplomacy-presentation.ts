@@ -18,6 +18,7 @@ export const RELATION_LABELS: Readonly<Record<DiplomacyRelationKind, string>> = 
 export const ACTION_LABELS: Readonly<Record<string, string>> = {
   DeclareWar: "Declare war",
   AcceptPeace: "Accept peace",
+  ProposePeace: "Peace terms",
   FormAlliance: "Form alliance",
   BreakAlliance: "Break alliance",
   FormNonAggressionPact: "Form NAP",
@@ -57,6 +58,11 @@ export const ACTION_BRIEFS: Readonly<Record<DiplomacyActionKind, ActionBrief>> =
   AcceptPeace: {
     label: "Accept peace",
     brief: "End the war on the current terms",
+    tone: "diplomatic",
+  },
+  ProposePeace: {
+    label: "Peace terms",
+    brief: "End the war on terms chosen within your war score",
     tone: "diplomatic",
   },
   DeclareBlockade: {
@@ -231,6 +237,14 @@ export function describeDraft(
   switch (draft.kind) {
     case "AcceptPeace":
       return `${base} with ${nationName(projection, draft.partnerNationId)}`;
+    case "ProposePeace": {
+      const opponent = nationName(projection, draft.partnerNationId);
+      return `${base} with ${opponent}: ${
+        draft.term?._tag === "CedeArea"
+          ? `cede ${areaName(projection, draft.term.areaId)}`
+          : "status quo"
+      }`;
+    }
     case "DeclareBlockade":
       return `${base} on ${nationName(projection, draft.partnerNationId)}`;
     default:

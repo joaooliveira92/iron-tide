@@ -3,6 +3,12 @@ import type { EventResolutionRules, GameEvent } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
+  computeOrderedInputsHash,
+  computeTurnId,
+  makeRecordedInput,
+  type RecordedInput,
+} from "@bluewave/messages";
+import {
   MonthExecutor,
   unifiedSnapshotHash,
   type EventEngineContent,
@@ -22,7 +28,18 @@ const provenance = {
   note: "PROVISIONAL cross-process fixture",
 } as const;
 
-const effects = { budgetBp: 0, unrest: 0 };
+const hawkEffects = {
+  budgetBp: 300,
+  unrest: 2,
+  prestige: { kind: "FIXED_GAIN", amount: 2, reasonCode: "CROSS_PROCESS_STAND" },
+  tension: { counterpart: "highest_tension_rival", delta: 2 },
+} as const;
+const doveEffects = {
+  budgetBp: -200,
+  unrest: -1,
+  prestige: { kind: "FIXED_LOSS", amount: 1, reasonCode: "CROSS_PROCESS_YIELD" },
+  tension: { counterpart: "highest_tension_rival", delta: -2 },
+} as const;
 
 const incident: GameEvent = {
   id: "cross_process_incident",
@@ -34,8 +51,8 @@ const incident: GameEvent = {
   once: false,
   defaultAnswerId: "protest",
   answers: [
-    { id: "mobilise", stance: "hawk", labelKey: "event.a", effects },
-    { id: "protest", stance: "dove", labelKey: "event.b", effects },
+    { id: "mobilise", stance: "hawk", labelKey: "event.a", effects: hawkEffects },
+    { id: "protest", stance: "dove", labelKey: "event.b", effects: doveEffects },
   ],
   provenance,
 };
@@ -54,6 +71,12 @@ const rules: EventResolutionRules = {
     eastern: evenWeights,
   },
   traitShifts: [],
+  answerEffects: {
+    budgetDecayMonths: 12,
+    budgetStackCapBp: 1_000,
+    tensionJumpCap: 3,
+    traitEffects: [],
+  },
   provenance,
 };
 
@@ -65,6 +88,9 @@ interface MonthRecord {
   readonly playerPending: string | null;
   readonly playerFired: string;
   readonly aiFired: number;
+  readonly unrestTotal: number;
+  readonly modifierCount: number;
+  readonly prestigeEvents: number;
 }
 
 function run(): readonly MonthRecord[] {
@@ -93,6 +119,16 @@ function run(): readonly MonthRecord[] {
       playerPending: player.pending?.eventId ?? null,
       playerFired: player.fired.map((r) => `${r.month}:${r.answerId}:${r.resolvedBy}`).join(","),
       aiFired,
+      unrestTotal: [...result.finalSnapshot.nations.values()].reduce(
+        (sum, nation) => sum + (nation.unrest ?? 0),
+        0,
+      ),
+      modifierCount: [...result.finalSnapshot.nations.values()].reduce(
+        (sum, nation) => sum + (nation.budgetModifiers?.length ?? 0),
+        0,
+      ),
+      prestigeEvents: result.eventLedger.all.filter((e) => e.body.kind === "PrestigeChanged")
+        .length,
     });
     current = {
       ...result.finalSnapshot,
@@ -102,8 +138,67 @@ function run(): readonly MonthRecord[] {
   return records;
 }
 
+const ABSENT_ANSWER = {
+  turnId: "",
+  interruptionId: "",
+  hintCount: 0,
+  resumedHash: "",
+  playerFired: "",
+  playerPending: null,
+} as const;
+
+function answerDilemma() {
+  const { state } = compileProductionCampaign();
+  const events: EventEngineContent = { rules, catalogue: [incident] };
+  const start = state.snapshot;
+  const turnId = computeTurnId({
+    campaignId: start.campaignId,
+    startingRevision: 0,
+    committedOrderHash: "no-orders",
+    orderedInputsHash: computeOrderedInputsHash([]),
+  });
+  const execute = (recordedInputs: readonly RecordedInput[]) =>
+    new MonthExecutor().execute(start, [], SEED, new DiagnosticCollector(), undefined, {
+      events,
+      playerNationId: PLAYER,
+      interruptions: { turnId, recordedInputs },
+    });
+  const suspended = execute([]);
+  const request = suspended.suspended?.request;
+  if (request?.kind !== "decision") {
+    return { ...ABSENT_ANSWER, suspendedRequestKind: request?.kind ?? "none" };
+  }
+  const resumed = execute([
+    makeRecordedInput({
+      ordinal: request.ordinal,
+      kind: "decision",
+      interruptionId: request.interruptionId,
+      payload: {
+        interruptionId: request.interruptionId,
+        decisionId: request.decisionId,
+        optionId: "mobilise",
+      },
+    }),
+  ]);
+  if (resumed.outcome !== "completed") {
+    return { ...ABSENT_ANSWER, suspendedRequestKind: `resumed-${resumed.outcome}` };
+  }
+  const player = resumed.finalSnapshot.nations.get(PLAYER)!.eventHistory!;
+  return {
+    turnId: request.turnId,
+    interruptionId: request.interruptionId,
+    suspendedRequestKind: request.kind,
+    hintCount: request.options.reduce((sum, option) => sum + option.hints.length, 0),
+    resumedHash: unifiedSnapshotHash(resumed.finalSnapshot),
+    playerFired: player.fired.map((r) => `${r.month}:${r.answerId}:${r.resolvedBy}`).join(","),
+    playerPending: player.pending?.eventId ?? null,
+  };
+}
+
 try {
-  process.stdout.write(JSON.stringify({ success: true, months: run() }) + "\n");
+  process.stdout.write(
+    JSON.stringify({ success: true, months: run(), answered: answerDilemma() }) + "\n",
+  );
 } catch (err) {
   process.stdout.write(JSON.stringify({ success: false, error: String(err) }) + "\n");
 }

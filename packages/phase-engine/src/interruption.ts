@@ -20,6 +20,7 @@ import {
   type RecordedInput,
   type SuspendedTurn,
 } from "@bluewave/messages";
+import { pendingDilemma, recordDilemmaAnswer } from "./dilemma.js";
 import type { MonthCheckpoint, PhaseContext } from "./pipeline.js";
 
 export interface InterruptionChannel {
@@ -150,14 +151,23 @@ function applyDecisionEffects(ctx: PhaseContext, option: DecisionOption): void {
 export function runInterruptionCheckpoint(ctx: PhaseContext): boolean {
   const state = ctx.interruption;
   if (state === undefined) return true;
-  const ordered = [...state.pendingDecisions].sort(
+  const dilemma = pendingDilemma(ctx);
+  const entries = [
+    ...state.pendingDecisions.map((pending) => ({ pending, dilemma: undefined })),
+    ...(dilemma === undefined ? [] : [{ pending: dilemma.pending, dilemma }]),
+  ].sort(
     (a, b) =>
-      phaseIndex(a.phase) - phaseIndex(b.phase) || compareCodePoints(a.subjectKey, b.subjectKey),
+      phaseIndex(a.pending.phase) - phaseIndex(b.pending.phase) ||
+      compareCodePoints(a.pending.subjectKey, b.pending.subjectKey),
   );
-  for (const pending of ordered) {
-    const resolution = consumeDecision(ctx, pending);
+  for (const entry of entries) {
+    const resolution = consumeDecision(ctx, entry.pending);
     if (state.suspended !== undefined) return false;
-    if (resolution !== null) applyDecisionEffects(ctx, resolution.option);
+    if (resolution === null) continue;
+    applyDecisionEffects(ctx, resolution.option);
+    if (entry.dilemma !== undefined) {
+      recordDilemmaAnswer(ctx, entry.dilemma, resolution.option.optionId);
+    }
   }
   return true;
 }
@@ -166,7 +176,7 @@ export const interruptionCheckpoint: MonthCheckpoint = {
   id: "interruption_checkpoint",
   name: "Interruption Checkpoint",
   after: "resolve_carrier_operations",
-  permissions: { reads: ["nations"], writes: ["nations"], rng: false },
+  permissions: { reads: ["nations", "politics"], writes: ["nations"], rng: false },
   run: runInterruptionCheckpoint,
 };
 

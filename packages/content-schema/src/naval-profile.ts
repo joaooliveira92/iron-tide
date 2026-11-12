@@ -150,6 +150,40 @@ const NamingPolicySchema = Schema.Struct({
   convention: Schema.Record(Schema.String, Schema.String),
 });
 
+const gunQualityLevel = Schema.Finite.check(
+  Schema.isInt(),
+  Schema.isBetween({ minimum: -3, maximum: 2 }),
+);
+
+const GunQualityBandSchema = Schema.Struct({
+  id: Schema.NonEmptyString,
+  minCaliberUm: positiveInt,
+  maxCaliberUm: positiveInt,
+  quality: gunQualityLevel,
+  provenance: ProvenanceSchema,
+});
+
+const bandsAreOrdered = (bands: ReadonlyArray<typeof GunQualityBandSchema.Type>): boolean => {
+  let previousMax = 0;
+  for (const band of bands) {
+    if (band.minCaliberUm >= band.maxCaliberUm || band.minCaliberUm < previousMax) return false;
+    previousMax = band.maxCaliberUm;
+  }
+  return true;
+};
+
+const GunQualitySchema = Schema.Struct({
+  bands: Schema.Array(GunQualityBandSchema).check(
+    Schema.isMinLength(1),
+    Schema.makeFilter(bandsAreOrdered, {
+      title: "gunQualityBandsOrdered",
+      description:
+        "bands are half-open [min, max) caliber ranges in ascending, non-overlapping order",
+    }),
+  ),
+  provenance: ProvenanceSchema,
+});
+
 export const NationNavalProfileSchema = Schema.Struct({
   nationId: Schema.NonEmptyString,
   activeFrom: Schema.String,
@@ -165,6 +199,7 @@ export const NationNavalProfileSchema = Schema.Struct({
   gunModels: Schema.Array(GunModelSchema),
   ammunitionPatterns: Schema.Array(AmmunitionPatternSchema),
   componentVariants: Schema.Array(ComponentVariantSchema),
+  gunQuality: Schema.optional(GunQualitySchema),
   designWeights: Schema.Record(Schema.String, DesignWeightsSchema),
   procurementPolicy: ProcurementPolicySchema,
   namingPolicy: NamingPolicySchema,

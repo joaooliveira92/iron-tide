@@ -464,7 +464,7 @@ export const diplomacyPhase: MonthPhase = {
   id: "resolve_diplomacy",
   name: "Diplomacy Resolution",
   permissions: {
-    reads: ["wars", "nations", "politics", "rulesetVersion"],
+    reads: ["wars", "nations", "politics", "rulesetVersion", "prestigeRules"],
     writes: ["wars", "politics", "nations"],
     rng: true,
   },

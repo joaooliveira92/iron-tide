@@ -150,8 +150,22 @@ export interface ConstructionProjectReadout {
   readonly costExplanation?: ExplanationTree;
 }
 
+export interface ConstructionOverrunView {
+  readonly month: string;
+  readonly reasonCode: string;
+  readonly costUnits: number;
+}
+
+export interface ConstructionDelayView {
+  readonly month: string;
+  readonly reasonCode: string;
+  readonly months: number;
+}
+
 export interface ConstructionProjectReadoutView extends ConstructionProjectReadout {
   readonly delayReasonCode?: string;
+  readonly delays?: readonly ConstructionDelayView[];
+  readonly overruns?: readonly ConstructionOverrunView[];
   readonly haltedCarryingCostUnits: number | null;
 }
 
@@ -422,6 +436,29 @@ export function buildConstructionProjectQueueWithReadouts(
         ...(project.delayReasonCode === undefined
           ? {}
           : { delayReasonCode: project.delayReasonCode }),
+        ...(project.delays === undefined || project.delays.length === 0
+          ? {}
+          : {
+              delays: [...project.delays].reverse().map((d) => ({
+                month: d.month,
+                reasonCode: d.reasonCode,
+                months: d.months,
+              })),
+            }),
+        ...(project.overruns === undefined || project.overruns.length === 0
+          ? {}
+          : {
+              overruns: [...project.overruns].reverse().map((o) => ({
+                month: o.month,
+                reasonCode: o.reasonCode,
+                costUnits:
+                  Number(project.totalWork) > 0
+                    ? Math.round(
+                        (Number(o.amount) * readout.totalCostUnits) / Number(project.totalWork),
+                      )
+                    : 0,
+              })),
+            }),
         haltedCarryingCostUnits: project.status === "HALTED" ? haltedCarryingCostUnits : null,
       },
     };

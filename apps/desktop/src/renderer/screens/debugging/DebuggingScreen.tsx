@@ -5,6 +5,7 @@ import { Badge } from "../../components/ui/badge.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs.js";
 import { AstInspector } from "./components/AstInspector.js";
 import { EngineAuditInspector } from "./components/EngineAuditInspector.js";
+import { GenerationReportExport } from "./components/GenerationReportExport.js";
 import { TelemetryInspector } from "./components/TelemetryInspector.js";
 import { useAstInspector } from "./hooks/useAstInspector.js";
 import { useEngineAuditInspector } from "./hooks/useEngineAuditInspector.js";
@@ -32,6 +33,7 @@ export function DebuggingScreen({ sessionId }: DebuggingScreenProps) {
         <TabsList>
           <TabsTrigger value="ast">AST Inspector</TabsTrigger>
           <TabsTrigger value="audit">Engine Audit</TabsTrigger>
+          <TabsTrigger value="generation">Generation Report</TabsTrigger>
           <TabsTrigger value="telemetry">
             Wide Event Telemetry
             {telemetry.events.length > 0 && (
@@ -63,6 +65,10 @@ export function DebuggingScreen({ sessionId }: DebuggingScreenProps) {
             onCloseAudit={() => engineAudit.setSelectedAudit(null)}
             onClearAudits={engineAudit.clearAudits}
           />
+        </TabsContent>
+
+        <TabsContent value="generation">
+          <GenerationReportExport sessionId={sessionId} />
         </TabsContent>
 
         <TabsContent value="telemetry">

@@ -10,7 +10,7 @@ const basisPoints = int.check(Schema.isBetween({ minimum: 1, maximum: 10_000 }))
 const identifier = Schema.NonEmptyString.check(Schema.isPattern(/^[a-z][a-z0-9_]*$/));
 const reasonCode = Schema.NonEmptyString.check(Schema.isPattern(/^[A-Z][A-Z0-9_]*$/));
 
-export const CONSTRUCTION_EVENT_KINDS = ["DELAY"] as const;
+export const CONSTRUCTION_EVENT_KINDS = ["DELAY", "OVERRUN"] as const;
 export const ConstructionEventKindSchema = Schema.Literals(CONSTRUCTION_EVENT_KINDS);
 export type ConstructionEventKind = typeof ConstructionEventKindSchema.Type;
 
@@ -23,13 +23,47 @@ export const ConstructionEventEraWindowSchema = Schema.Struct({
   ),
 );
 
-export const ConstructionEventSchema = Schema.Struct({
+const commonFields = {
   id: identifier,
-  kind: ConstructionEventKindSchema,
   probabilityBp: basisPoints,
   reasonCode,
   causeKey: Schema.NonEmptyString,
   eraWindow: Schema.optional(ConstructionEventEraWindowSchema),
   provenance: ProvenanceSchema,
-});
+};
+
+const delayMonths = int.check(Schema.isBetween({ minimum: 1, maximum: 12 }));
+const pressureMultiplierBp = int.check(Schema.isBetween({ minimum: 10_000, maximum: 100_000 }));
+
+export const ConstructionDelayEventSchema = Schema.Struct({
+  ...commonFields,
+  kind: Schema.Literal("DELAY"),
+  minMonths: delayMonths,
+  maxMonths: delayMonths,
+  pressureMultiplierBp,
+}).check(
+  Schema.makeFilter((rule) =>
+    rule.minMonths > rule.maxMonths ? "minMonths must not be above maxMonths" : undefined,
+  ),
+);
+
+export const ConstructionOverrunEventSchema = Schema.Struct({
+  ...commonFields,
+  kind: Schema.Literal("OVERRUN"),
+  minBp: basisPoints,
+  maxBp: basisPoints,
+  capBp: basisPoints,
+}).check(
+  Schema.makeFilter((rule) => {
+    if (rule.minBp > rule.maxBp) return "minBp must not be above maxBp";
+    if (rule.maxBp > rule.capBp) return "maxBp must not be above capBp";
+    return undefined;
+  }),
+);
+
+export const ConstructionEventSchema = Schema.Union([
+  ConstructionDelayEventSchema,
+  ConstructionOverrunEventSchema,
+]);
 export type ConstructionEvent = typeof ConstructionEventSchema.Type;
+export type ConstructionOverrunEvent = typeof ConstructionOverrunEventSchema.Type;

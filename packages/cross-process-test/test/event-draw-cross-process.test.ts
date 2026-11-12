@@ -19,14 +19,31 @@ const MonthRecord = Schema.Struct({
   playerPending: Schema.NullOr(Schema.String),
   playerFired: Schema.String,
   aiFired: Schema.Number,
+  unrestTotal: Schema.Number,
+  modifierCount: Schema.Number,
+  prestigeEvents: Schema.Number,
+});
+
+const AnsweredRecord = Schema.Struct({
+  turnId: Schema.String,
+  interruptionId: Schema.String,
+  suspendedRequestKind: Schema.String,
+  hintCount: Schema.Number,
+  resumedHash: Schema.String,
+  playerFired: Schema.String,
+  playerPending: Schema.NullOr(Schema.String),
 });
 
 const ChildOutput = Schema.Union([
-  Schema.Struct({ success: Schema.Literal(true), months: Schema.Array(MonthRecord) }),
+  Schema.Struct({
+    success: Schema.Literal(true),
+    months: Schema.Array(MonthRecord),
+    answered: AnsweredRecord,
+  }),
   Schema.Struct({ success: Schema.Literal(false), error: Schema.String }),
 ]);
 
-function runChild() {
+function runChildOutput() {
   const stdout = execFileSync(process.execPath, [childScript], {
     encoding: "utf8",
     timeout: 180_000,
@@ -35,8 +52,10 @@ function runChild() {
   const lines = stdout.trim().split("\n");
   const decoded = Schema.decodeUnknownSync(ChildOutput)(JSON.parse(lines[lines.length - 1]!));
   if (!decoded.success) throw new Error(decoded.error);
-  return decoded.months;
+  return decoded;
 }
+
+const runChild = () => runChildOutput().months;
 
 describe("Event draw cross-process determinism (S-4 slice 3)", () => {
   it("two clean processes produce identical hashes across the draw and the default", () => {
@@ -45,6 +64,13 @@ describe("Event draw cross-process determinism (S-4 slice 3)", () => {
     expect(second).toEqual(first);
     expect(first).toHaveLength(6);
     expect(new Set(first.map((m) => m.snapshotHash)).size).toBe(first.length);
+  });
+
+  it("applies the answer effects in both processes: unrest, budget modifiers and prestige events", () => {
+    const months = runChild();
+    expect(months[0]!.modifierCount).toBeGreaterThan(0);
+    expect(months[0]!.prestigeEvents).toBeGreaterThan(0);
+    expect(months.some((m) => m.unrestTotal !== 0)).toBe(true);
   });
 
   it("draws the player dilemma in month 1 and defaults it only after 3 elapsed months", () => {
@@ -61,5 +87,15 @@ describe("Event draw cross-process determinism (S-4 slice 3)", () => {
     const months = runChild();
     expect(months[0]!.aiFired).toBeGreaterThan(0);
     expect(months[0]!.eventDraws).toBeGreaterThan(1);
+  });
+
+  it("answers the dilemma to one hash in two clean processes with a stable turn id", () => {
+    const first = runChildOutput().answered;
+    const second = runChildOutput().answered;
+    expect(second).toEqual(first);
+    expect(first.suspendedRequestKind).toBe("decision");
+    expect(first.hintCount).toBeGreaterThan(0);
+    expect(first.playerPending).toBeNull();
+    expect(first.playerFired).toMatch(/^\d{4}-\d{2}:mobilise:PLAYER$/);
   });
 });

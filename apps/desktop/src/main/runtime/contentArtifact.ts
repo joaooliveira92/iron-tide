@@ -5,6 +5,7 @@ import type {
   MissilesRules,
   TensionDriftRules,
 } from "@bluewave/content-schema";
+import type { LegacyFleetInput } from "@bluewave/campaign";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { EventEngineContent } from "@bluewave/phase-engine";
 import type { ShipBuildingContent, ShipBuildingData } from "@bluewave/ship-design";
@@ -27,6 +28,8 @@ import {
   loadMissilesRules,
   loadShipBuildingContent,
   loadShipBuildingData,
+  loadConstructionEvents,
+  type ConstructionEventRules,
   loadEventContent,
   loadTensionDriftRules,
   shipBuildingContentHash,
@@ -50,10 +53,13 @@ function contentUnavailable(error: unknown): CommandFailed {
 export class ContentArtifact extends Context.Service<
   ContentArtifact,
   {
-    readonly compileProductionCampaign: (campaignStart?: {
-      readonly startYear: number;
-      readonly startMonth: number;
-    }) => Effect.Effect<CompiledCampaign, CommandFailed>;
+    readonly compileProductionCampaign: (
+      campaignStart?: {
+        readonly startYear: number;
+        readonly startMonth: number;
+      },
+      legacyFleet?: LegacyFleetInput,
+    ) => Effect.Effect<CompiledCampaign, CommandFailed>;
     readonly loadDrawingBoardCatalogue: () => Effect.Effect<
       DrawingBoardContentDto["catalogue"],
       CommandFailed
@@ -71,6 +77,10 @@ export class ContentArtifact extends Context.Service<
       CommandFailed
     >;
     readonly loadEventContent: () => Effect.Effect<EventEngineContent | undefined, CommandFailed>;
+    readonly loadConstructionEvents: () => Effect.Effect<
+      ConstructionEventRules | undefined,
+      CommandFailed
+    >;
     readonly loadShipBuildingData: () => Effect.Effect<ShipBuildingData, CommandFailed>;
     readonly shipBuildingContentHash: () => Effect.Effect<string, CommandFailed>;
     readonly armamentContentHash: () => Effect.Effect<string, CommandFailed>;
@@ -83,13 +93,19 @@ export function contentArtifactLayer(
   artifactDir: string = resolveGeneratedContentDir(),
 ): Layer.Layer<ContentArtifact> {
   return Layer.succeed(ContentArtifact, {
-    compileProductionCampaign: (campaignStart) =>
+    compileProductionCampaign: (campaignStart, legacyFleet) =>
       Effect.gen(function* () {
         const collector = new DiagnosticCollector();
         const signal = new AbortController().signal;
         const output = yield* Effect.try({
           try: () =>
-            compileProductionCampaignFromArtifact(artifactDir, signal, collector, campaignStart),
+            compileProductionCampaignFromArtifact(
+              artifactDir,
+              signal,
+              collector,
+              campaignStart,
+              legacyFleet,
+            ),
           catch: (error) =>
             new CommandFailed({
               reason: "COMPILE_FAILED",
@@ -120,6 +136,8 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadTensionDriftRules(), catch: contentUnavailable }),
     loadEventContent: () =>
       Effect.try({ try: () => loadEventContent(), catch: contentUnavailable }),
+    loadConstructionEvents: () =>
+      Effect.try({ try: () => loadConstructionEvents(), catch: contentUnavailable }),
     loadShipBuildingData: () =>
       Effect.try({ try: () => loadShipBuildingData(), catch: contentUnavailable }),
     shipBuildingContentHash: () =>

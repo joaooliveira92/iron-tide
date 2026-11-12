@@ -115,6 +115,32 @@ export function checkCedeArea(
   return Result.succeed(undefined);
 }
 
+export interface PeaceCessionOption {
+  readonly areaId: string;
+  readonly name: string;
+  readonly cost: number;
+}
+
+export function peaceCessionOptions(
+  snapshot: PeaceCheckSnapshot,
+  warId: string,
+  nationId: string,
+): readonly PeaceCessionOption[] {
+  const war = snapshot.wars.wars.find((w) => w.id === warId);
+  if (war === undefined || war.status !== "ACTIVE") return [];
+  const isAttacker = war.attackerId === nationId;
+  if (!isAttacker && war.defenderId !== nationId) return [];
+  const loserId = isAttacker ? war.defenderId : war.attackerId;
+  const options: PeaceCessionOption[] = [];
+  for (const area of snapshot.world.areas) {
+    if (Result.isFailure(checkCedeArea(snapshot, loserId, area.id))) continue;
+    const cost = peaceTermCost({ _tag: "CedeArea", areaId: area.id }, snapshot.world);
+    if (Result.isFailure(cost)) continue;
+    options.push({ areaId: area.id, name: area.name, cost: cost.success });
+  }
+  return options;
+}
+
 export function checkProposePeace(
   snapshot: PeaceCheckSnapshot,
   body: UncheckedProposePeace,

@@ -22,6 +22,7 @@ export * from "./trainingPreview.js";
 export * from "./fleetExercise.js";
 export * from "./tensionDrift.js";
 export * from "./eventDraw.js";
+export * from "./eventEffects.js";
 export * from "./designUnits.js";
 export * from "./fleetSize.js";
 export * from "./snapshotHash.js";
@@ -42,6 +43,8 @@ export type {
   CompiledTorpedoMount,
   ConstructionPackage,
   ConstructionMonthUsage,
+  ConstructionDelay,
+  ConstructionOverrun,
   ConstructionPackageKind,
   ConstructionPlanRecord,
   ConstructionPlanShare,
@@ -61,6 +64,9 @@ export type {
   DesignStudy,
   NationDockExpansionState,
   NationDockState,
+  AnswerEffectLine,
+  AnswerEffectRecord,
+  BudgetModifier,
   NationEventHistory,
   NationState,
   PendingDilemma,
@@ -120,3 +126,7 @@ export * from "./maintenance.js";
 export * from "./researchEligibility.js";
 export * from "./economyOutlook.js";
 export * from "./economy.js";
+export * from "./designVersion.js";
+export * from "./shipBuildingData.js";
+export * from "./legacyFleet.js";
+export * from "./legacyFleetConstants.js";

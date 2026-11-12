@@ -108,7 +108,7 @@
       "player_verb": "Design and submit a ship",
       "status": "reachable",
       "engine_package": "phase-engine",
-      "engine_modules": ["designVersion"],
+      "engine_modules": [],
       "engine_symbols": ["applySubmitDesign"],
       "main_commands": [
         "submitDesignCommand",
@@ -211,6 +211,19 @@
       "decision": "#584"
     },
     {
+      "id": "event-answer-unrest",
+      "player_verb": "See unrest rise or fall after a crisis answer",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": ["answerEffects"],
+      "engine_symbols": ["applyAnswerEffects"],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#427",
+      "note": "Unrest deltas are recorded and tested, not consumed. Consumer: S-3 (#421)."
+    },
+    {
       "id": "authorize-dock-expansion",
       "player_verb": "Authorize a dock expansion",
       "status": "reachable",
@@ -268,7 +281,7 @@
       "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": null,
       "evidence_test": null,
-      "decision": "#422, #483, #484"
+      "decision": "#422"
     },
     {
       "id": "form-or-break-alliance",
@@ -353,6 +366,18 @@
       "decision": "#422"
     },
     {
+      "id": "answer-event-dilemma",
+      "player_verb": "Answer a monthly event dilemma, hovering each answer for its declared effects",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": ["dilemma"],
+      "engine_symbols": [],
+      "main_commands": ["resolveTurn", "answerDecision"],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#428"
+    },
+    {
       "id": "assign-or-relieve-officer",
       "player_verb": "Assign or relieve an officer",
       "status": "reachable",
@@ -429,6 +454,19 @@
       "evidence_test": null,
       "decision": null,
       "note": "Emitted only by the AI command generator."
+    },
+    {
+      "id": "battle-gun-quality-rules",
+      "player_verb": "Per-nation gun quality by caliber band applied to battle reload",
+      "status": "internal",
+      "engine_package": "phase-engine",
+      "engine_modules": ["battleGunQuality"],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": null,
+      "note": "Automatic: derived from the nation's naval profile when a battle is resolved or played."
     },
     {
       "id": "command-lifecycle-definitions",
@@ -825,6 +863,19 @@
       "evidence_test": null,
       "decision": null,
       "note": "Registered only under DEBUG_MODE. Kept as internal debug tooling; not a player verb."
+    },
+    {
+      "id": "debug-generation-report-export",
+      "player_verb": "Copy the fleet generation report in the debug screen",
+      "status": "internal",
+      "engine_package": "desktop",
+      "engine_modules": [],
+      "engine_symbols": [],
+      "main_commands": ["exportGenerationReport"],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": null,
+      "note": "Debug builds only; a loaded save has no report until #670."
     },
     {
       "id": "national-traits",

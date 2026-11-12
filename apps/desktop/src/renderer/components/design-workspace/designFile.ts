@@ -12,6 +12,7 @@ export type ImportResult =
       readonly ok: true;
       readonly draft: DesignDraft;
       readonly className: string | null;
+      readonly baselineName: string | null;
       readonly notes: readonly string[];
     }
   | { readonly ok: false; readonly error: string };
@@ -21,8 +22,9 @@ export function exportDesign(
   catalogue: readonly ComponentDef[],
   compiled: CompiledDesign,
   className = "",
+  baselineName = "",
 ): string {
-  return encodeDesignFile(draft, catalogue, compiled, className);
+  return encodeDesignFile(draft, catalogue, compiled, className, baselineName);
 }
 
 export function importDesign(text: string, catalogue: readonly ComponentDef[]): ImportResult {
@@ -34,7 +36,13 @@ export function importDesign(text: string, catalogue: readonly ComponentDef[]): 
       notes.push(
         `Component definitions changed since this file was saved (${d.contentDrift.join(", ")}); the design was recompiled.`,
       );
-    return { ok: true, draft: d.draft, className: d.className, notes };
+    return {
+      ok: true,
+      draft: d.draft,
+      className: d.className,
+      baselineName: d.baselineName,
+      notes,
+    };
   } catch (e) {
     return {
       ok: false,

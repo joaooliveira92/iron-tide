@@ -78,8 +78,14 @@ function isContainedIn(parent: string, child: string): boolean {
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
 }
 
+export interface SaveProvenance {
+  readonly campaignSeed: string;
+  readonly dataPackVersion: string;
+}
+
 export interface SaveExtras {
   readonly monthInput?: unknown;
+  readonly provenance?: SaveProvenance;
 }
 
 export type MonthInputLoad =
@@ -187,6 +193,13 @@ export class SaveStore {
       : [];
     const monthInput =
       extras.monthInput === undefined ? undefined : canonicalSerialize(extras.monthInput);
+    const carried =
+      previousSaveId === undefined ? null : this.readMetadata(saveDir, previousSaveId);
+    const provenance: SaveProvenance | undefined =
+      extras.provenance ??
+      (carried?.campaignSeed !== undefined && carried.dataPackVersion !== undefined
+        ? { campaignSeed: carried.campaignSeed, dataPackVersion: carried.dataPackVersion }
+        : undefined);
 
     const metadata: SaveMetadata = {
       saveId,
@@ -209,6 +222,8 @@ export class SaveStore {
         return { year, month };
       })(),
       ...(monthInput === undefined ? {} : { monthInputHash: sha256Hex(monthInput) }),
+      ...(provenance === undefined ? {} : provenance),
+      rulesetVersion: state.snapshot.rulesetVersion,
     };
 
     let published = false;
@@ -307,6 +322,11 @@ export class SaveStore {
 
   list(saveDir: string): SaveMetadata[] {
     return this.listing(saveDir).saves;
+  }
+
+  private readMetadata(saveDir: string, saveId: string): SaveMetadata | null {
+    const metaPath = join(saveDir, saveId, "metadata.json");
+    return existsSync(metaPath) ? readSaveMetadata(metaPath) : null;
   }
 
   private listing(saveDir: string): SaveListing {

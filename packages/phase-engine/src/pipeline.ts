@@ -11,6 +11,7 @@ import type { EventLedger } from "@bluewave/events";
 import { RandomEngine, type RandomLedger } from "@bluewave/random";
 import type {
   BattleOfferRules,
+  ConstructionEvent,
   FleetManagementRules,
   GunneryRules,
   MissilesRules,
@@ -68,6 +69,7 @@ export interface MonthExecutorEngineOptions {
   readonly missilesRules?: MissilesRules;
   readonly tensionDrift?: TensionDriftRules;
   readonly events?: EventEngineContent;
+  readonly constructionEvents?: readonly ConstructionEvent[];
 }
 
 export interface MonthRunState {

@@ -124,7 +124,7 @@ describe("revision tier badge", () => {
     fireEvent.change(input, { target: { value: String(Number(input.value) + 100) } });
     fireEvent.blur(input);
     openSection("Review", "Finish");
-    const preview = screen.getByRole("region", { name: "Revision preview" });
+    const preview = await screen.findByRole("region", { name: "Revision preview" });
     const status = await within(preview).findByRole("status");
     expect(within(status).getByText(/^(Redesign|Revision)$/)).toBeTruthy();
     expect(within(preview).getByLabelText("Selected ship").textContent).toMatch(/authored design/);

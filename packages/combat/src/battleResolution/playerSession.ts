@@ -20,6 +20,7 @@ import { BATTLE_SEED_FORMULA_VERSION, deriveBattleSeed } from "../generation/see
 import type { BattleManifest } from "../generation/manifest.js";
 import { AUTO_RESOLUTION_MAX_MINUTES } from "./constants.js";
 import type { GunneryRadarRules } from "./gunneryRadar.js";
+import type { GunQualityRules } from "./gunQualityRules.js";
 import { type AutoResolverNation, projectBattle, type ProjectBattleOutput } from "./project.js";
 import { buildBattleWeather } from "../weather/neighbour.js";
 import {
@@ -155,6 +156,7 @@ export interface CreatePlayerBattleInput {
   readonly formulaVersion: string;
   readonly rngVersion: string;
   readonly gunneryRadar?: GunneryRadarRules;
+  readonly gunQuality?: GunQualityRules;
   readonly missilesRules?: MissileRules;
   readonly maxMinutes?: number;
 }
@@ -207,6 +209,7 @@ function project(input: CreatePlayerBattleInput): ProjectedBattle {
     defender: input.defender,
     rulesetVersion: input.rulesetVersion,
     ...(input.gunneryRadar === undefined ? {} : { gunneryRadar: input.gunneryRadar }),
+    ...(input.gunQuality === undefined ? {} : { gunQuality: input.gunQuality }),
     ...(input.missilesRules === undefined ? {} : { missilesRules: input.missilesRules }),
   });
   const battleSeed = deriveBattleSeed(
