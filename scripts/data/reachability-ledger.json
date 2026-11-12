@@ -211,6 +211,19 @@
       "decision": "#584"
     },
     {
+      "id": "event-answer-unrest",
+      "player_verb": "See unrest rise or fall after a crisis answer",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": ["answerEffects"],
+      "engine_symbols": ["applyAnswerEffects"],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#427",
+      "note": "Unrest deltas are recorded and tested, not consumed. Consumer: S-3 (#421)."
+    },
+    {
       "id": "authorize-dock-expansion",
       "player_verb": "Authorize a dock expansion",
       "status": "reachable",

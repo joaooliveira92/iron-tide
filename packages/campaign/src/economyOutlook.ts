@@ -9,6 +9,7 @@ import {
   runwayMonths,
   settleOutflow,
 } from "./economy.js";
+import { effectiveAppropriationRateBp } from "./eventEffects.js";
 import { nationIsAtWar, nationMaintenanceAdders, nationMonthlyMaintenance } from "./maintenance.js";
 import { eligibleResearchFields, technologyCatalogueOf } from "./researchEligibility.js";
 import type { CampaignSnapshot, NationState } from "./state.js";
@@ -104,7 +105,10 @@ export function economyOutlook(
     snapshot["startMonth"],
     snapshot["turnNumber"] as number,
   );
-  const revenue = monthlyRevenue(nation["baseResources"], nation["navalAppropriationRateBp"]);
+  const revenue = monthlyRevenue(
+    nation["baseResources"],
+    effectiveAppropriationRateBp(nation, month),
+  );
   const maintenance = nationMonthlyMaintenance(
     nation["fleets"],
     nationIsAtWar(snapshot["wars"]["wars"], nationId),

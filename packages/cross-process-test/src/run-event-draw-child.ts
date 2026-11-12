@@ -22,7 +22,18 @@ const provenance = {
   note: "PROVISIONAL cross-process fixture",
 } as const;
 
-const effects = { budgetBp: 0, unrest: 0 };
+const hawkEffects = {
+  budgetBp: 300,
+  unrest: 2,
+  prestige: { kind: "FIXED_GAIN", amount: 2, reasonCode: "CROSS_PROCESS_STAND" },
+  tension: { counterpart: "highest_tension_rival", delta: 2 },
+} as const;
+const doveEffects = {
+  budgetBp: -200,
+  unrest: -1,
+  prestige: { kind: "FIXED_LOSS", amount: 1, reasonCode: "CROSS_PROCESS_YIELD" },
+  tension: { counterpart: "highest_tension_rival", delta: -2 },
+} as const;
 
 const incident: GameEvent = {
   id: "cross_process_incident",
@@ -34,8 +45,8 @@ const incident: GameEvent = {
   once: false,
   defaultAnswerId: "protest",
   answers: [
-    { id: "mobilise", stance: "hawk", labelKey: "event.a", effects },
-    { id: "protest", stance: "dove", labelKey: "event.b", effects },
+    { id: "mobilise", stance: "hawk", labelKey: "event.a", effects: hawkEffects },
+    { id: "protest", stance: "dove", labelKey: "event.b", effects: doveEffects },
   ],
   provenance,
 };
@@ -71,6 +82,9 @@ interface MonthRecord {
   readonly playerPending: string | null;
   readonly playerFired: string;
   readonly aiFired: number;
+  readonly unrestTotal: number;
+  readonly modifierCount: number;
+  readonly prestigeEvents: number;
 }
 
 function run(): readonly MonthRecord[] {
@@ -99,6 +113,16 @@ function run(): readonly MonthRecord[] {
       playerPending: player.pending?.eventId ?? null,
       playerFired: player.fired.map((r) => `${r.month}:${r.answerId}:${r.resolvedBy}`).join(","),
       aiFired,
+      unrestTotal: [...result.finalSnapshot.nations.values()].reduce(
+        (sum, nation) => sum + (nation.unrest ?? 0),
+        0,
+      ),
+      modifierCount: [...result.finalSnapshot.nations.values()].reduce(
+        (sum, nation) => sum + (nation.budgetModifiers?.length ?? 0),
+        0,
+      ),
+      prestigeEvents: result.eventLedger.all.filter((e) => e.body.kind === "PrestigeChanged")
+        .length,
     });
     current = {
       ...result.finalSnapshot,

@@ -69,6 +69,13 @@ export {
   type AccelerationPressureOutcome,
 } from "./constructionAcceleration.js";
 export {
+  ANSWER_PRESTIGE_FAILED,
+  applyAnswerEffects,
+  attachAnswerEffects,
+  type AnswerEffectInput,
+  type AnswerEffectOutcome,
+} from "./answerEffects.js";
+export {
   CONSTRUCTION_EVENT_CONTINUED,
   CONSTRUCTION_EVENT_POLICY_ID,
   CONSTRUCTION_EVENT_STREAM_FAMILY,

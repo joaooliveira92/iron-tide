@@ -114,6 +114,40 @@ describe("economy explanations", () => {
     expect(Number(tree?.children?.[0]?.result)).toBe(6000);
   });
 
+  it("shows the event budget modifier and a trait line in the appropriation tree", () => {
+    const base = {
+      eventId: "border_incident",
+      answerId: "mobilise",
+      firstMonth: "1880-02",
+      decayMonths: 12,
+      capBp: 600,
+    };
+    const projection = projectionWith({
+      ...healthy,
+      budgetModifiers: [
+        { ...base, initialBp: 300 },
+        { ...base, initialBp: 100, trait: "aggressive" },
+      ],
+    });
+    const tree = projection.economy.appropriationExplanation!;
+    const ids = (tree.children ?? []).map((child) => child.formulaId);
+    expect(ids).toEqual([
+      "economy_appropriation.baseResources",
+      "economy_appropriation.appropriationRate",
+      "economy_appropriation.eventModifier",
+      "economy_appropriation.traitModifier",
+    ]);
+    expect(tree.inputs["appropriationRateBp"]).toBe(2_400);
+    expect(Number(tree.children![2]!.result)).toBe(300);
+    expect(Number(tree.children![3]!.result)).toBe(100);
+    expect(Number(tree.children![1]!.result)).toBe(2_000);
+  });
+
+  it("keeps the plain appropriation tree when no modifier is active", () => {
+    const tree = projectionWith(healthy).economy.appropriationExplanation!;
+    expect(tree.children).toHaveLength(2);
+  });
+
   it("explains the runway only while the treasury is shrinking", () => {
     const projection = projectionWith({
       ...healthy,

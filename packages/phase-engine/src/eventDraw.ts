@@ -1,4 +1,10 @@
-import type { NationEventHistory, NationState } from "@bluewave/campaign";
+import type { DiplomaticRelation, NationEventHistory, NationState } from "@bluewave/campaign";
+import type { GameEvent } from "@bluewave/content-schema";
+import {
+  ANSWER_PRESTIGE_FAILED,
+  applyAnswerEffects,
+  attachAnswerEffects,
+} from "./answerEffects.js";
 import {
   aiStanceWeights,
   EVENT_DRAW_RANGE_BP,
@@ -27,17 +33,59 @@ export function applyEventsForMonth(ctx: PhaseContext): void {
   if (content === undefined || content.catalogue.length === 0) return;
   const { rules, catalogue } = content;
   const nations = ctx.snapshot.read("nations");
-  const relations = ctx.snapshot.read("politics").relations;
+  const politics = ctx.snapshot.read("politics");
+  const relations = politics.relations;
+  let workingRelations: readonly DiplomaticRelation[] = relations;
   const rulesetVersion = ctx.snapshot.read("rulesetVersion");
   const month = ctx.campaignMonth;
   const updated = new Map<string, NationState>();
 
   const nationIds = [...nations.keys()].sort(compareCodePoints);
   for (const nationId of nationIds) {
-    const nation = nations.get(nationId)!;
-    if (nation.governmentType === undefined) continue;
+    const original0 = nations.get(nationId)!;
+    if (original0.governmentType === undefined) continue;
+    let nation: NationState = original0;
     const original: NationEventHistory = nation.eventHistory ?? { fired: [], flags: [] };
     let history = original;
+
+    const answer = (
+      event: GameEvent,
+      answerId: string,
+      resolvedBy: "AI" | "DEFAULT",
+    ): NationEventHistory => {
+      const recorded = recordEventAnswer(history, {
+        eventId: event.id,
+        month,
+        answerId,
+        resolvedBy,
+      });
+      const outcome = applyAnswerEffects({
+        nation,
+        relations: workingRelations,
+        event,
+        answerId,
+        rules: rules.answerEffects,
+        prestigeRules: ctx.snapshot.read("prestigeRules"),
+        month,
+        rulesetVersion,
+        nextSeq: ctx.nextSeq,
+      });
+      if (outcome === undefined) return recorded;
+      nation = outcome.nation;
+      workingRelations = outcome.relations;
+      for (const ledgerEvent of outcome.ledgerEvents) ctx.eventLedger.append(ledgerEvent);
+      for (const failure of outcome.failures) {
+        ctx.collector.addError(ANSWER_PRESTIGE_FAILED, failure, {
+          stage: "events",
+          entityId: nationId,
+        });
+      }
+      const quiet = outcome.effects.lines.every(
+        (line) => line.budgetBp === 0 && line.unrestDelta === 0 && line.tensionDelta === 0,
+      );
+      const silent = quiet && outcome.effects.prestigeDelta === 0;
+      return silent ? recorded : attachAnswerEffects(recorded, outcome.effects);
+    };
 
     if (history.pending !== undefined && isDilemmaOverdue(history.pending, month, rules)) {
       const overdue = catalogue.find((event) => event.id === history.pending?.eventId);
@@ -45,12 +93,7 @@ export function applyEventsForMonth(ctx: PhaseContext): void {
         const { pending: _dropped, ...rest } = history;
         history = rest;
       } else {
-        history = recordEventAnswer(history, {
-          eventId: overdue.id,
-          month,
-          answerId: overdue.defaultAnswerId,
-          resolvedBy: "DEFAULT",
-        });
+        history = answer(overdue, overdue.defaultAnswerId, "DEFAULT");
       }
     }
 
@@ -109,20 +152,20 @@ export function applyEventsForMonth(ctx: PhaseContext): void {
               outcome: choice.answerId,
               reasonCode: choice.reasonCode,
             });
-            history = recordEventAnswer(history, {
-              eventId: drawn.id,
-              month,
-              answerId: choice.answerId,
-              resolvedBy: "AI",
-            });
+            history = answer(drawn, choice.answerId, "AI");
           }
         }
       }
     }
 
-    if (history !== original) updated.set(nationId, { ...nation, eventHistory: history });
+    if (history !== original || nation !== original0) {
+      updated.set(nationId, { ...nation, eventHistory: history });
+    }
   }
 
+  if (workingRelations !== relations) {
+    ctx.snapshot.write("politics", { ...politics, relations: [...workingRelations] });
+  }
   if (updated.size === 0) return;
   ctx.snapshot.write("nations", new Map([...nations, ...updated]));
 }

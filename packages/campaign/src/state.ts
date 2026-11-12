@@ -10,6 +10,7 @@ import type {
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { BattleAbsence } from "./battleAbsence.js";
+import type { BudgetModifier, NationEventHistory } from "./eventState.js";
 import type { FleetExerciseRecord } from "./fleetExercise.js";
 import type { TrainingSubjectEntry } from "./specialTraining.js";
 import type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
@@ -355,25 +356,7 @@ export interface ForeignContractImpoundmentRecord {
   month: string;
 }
 
-export type EventResolver = "PLAYER" | "AI" | "DEFAULT";
-
-export interface FiredEventRecord {
-  eventId: string;
-  month: string;
-  answerId: string;
-  resolvedBy: EventResolver;
-}
-
-export interface PendingDilemma {
-  eventId: string;
-  drawnMonth: string;
-}
-
-export interface NationEventHistory {
-  fired: FiredEventRecord[];
-  flags: string[];
-  pending?: PendingDilemma;
-}
+export type * from "./eventState.js";
 
 export interface NationState {
   id: string;
@@ -382,6 +365,8 @@ export interface NationState {
   governmentType?: GovernmentType;
   traits?: NationTrait[];
   eventHistory?: NationEventHistory;
+  unrest?: number;
+  budgetModifiers?: BudgetModifier[];
   treasury: SafeInt;
   income: SafeInt;
   expenses: SafeInt;
@@ -636,7 +621,7 @@ export interface CampaignWeatherState {
 }
 
 export interface PrestigeLastChange {
-  reasonCode: PrestigeReasonCode;
+  reasonCode: PrestigeReasonCode | (string & {});
   before: SafeInt;
   after: SafeInt;
   delta: SafeInt;

@@ -79,14 +79,26 @@ export function explainEconomyRunway(
     .build();
 }
 
+export interface AppropriationModifierLine {
+  readonly source: "event" | "trait";
+  readonly bp: number;
+}
+
+export interface AppropriationAdjustments {
+  readonly effectiveRateBp: number;
+  readonly lines: readonly AppropriationModifierLine[];
+}
+
 export function explainAppropriation(
   baseResources: number,
   rateBp: number,
   revenue: number,
+  adjustments?: AppropriationAdjustments,
 ): ExplanationTree {
-  return new ExplanationBuilder("economy_appropriation", ECONOMY_FORMULA_VERSION)
+  const lines = adjustments?.lines ?? [];
+  const builder = new ExplanationBuilder("economy_appropriation", ECONOMY_FORMULA_VERSION)
     .withInput("baseResources", baseResources)
-    .withInput("appropriationRateBp", rateBp)
+    .withInput("appropriationRateBp", adjustments?.effectiveRateBp ?? rateBp)
     .withIntermediate("rateDenominator", ECONOMY_RATE_DENOMINATOR)
     .withResult(revenue)
     .withUnit(UNIT_MONEY)
@@ -100,6 +112,21 @@ export function explainAppropriation(
         .withUnit("bp")
         .withSource(SOURCE)
         .build(),
-    )
-    .build();
+    );
+  for (const line of lines) {
+    builder.addChild(
+      new ExplanationBuilder(
+        line.source === "trait"
+          ? "economy_appropriation.traitModifier"
+          : "economy_appropriation.eventModifier",
+        ECONOMY_FORMULA_VERSION,
+      )
+        .withInput("modifierBp", Math.abs(line.bp))
+        .withResult(line.bp)
+        .withUnit("bp")
+        .withSource(SOURCE)
+        .build(),
+    );
+  }
+  return builder.build();
 }
