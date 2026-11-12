@@ -43,6 +43,10 @@ export function useDeckFlight(
     );
     const home = placement(s.layout, 0, top, s.spread, s.depth);
     const travel = clearance * 1.12 + 40;
+    const resting = new Map<number, DOMRect>();
+    for (const [index, element] of refs.elements.current) {
+      if (index !== top) resting.set(index, element.getBoundingClientRect());
+    }
     const out: Vector = [home.x + dx * travel, home.y + dy * travel];
     const values = valuesFor(top);
     const launch = springFor("fling");
@@ -75,15 +79,10 @@ export function useDeckFlight(
       const element = refs.elements.current.get(top);
       if (!element) return true;
       const mine = element.getBoundingClientRect();
-      for (const [index, other] of refs.elements.current) {
-        if (
-          index === top ||
-          refs.flying.current.has(index) ||
-          valuesFor(index).opacity.get() < 0.5
-        ) {
+      for (const [index, box] of resting) {
+        if (refs.flying.current.has(index) || valuesFor(index).opacity.get() < 0.5) {
           continue;
         }
-        const box = other.getBoundingClientRect();
         if (
           mine.left < box.right &&
           mine.right > box.left &&
