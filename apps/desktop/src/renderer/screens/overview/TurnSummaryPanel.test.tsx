@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { TurnMessageDto, TurnSummaryEntry } from "../../../shared/turn-message-contract.js";
+import { authoredCatalogue } from "../../../shared/authoredCatalogue.testing.js";
 import { setUiCatalogue } from "../../content/uiCatalogue.js";
 import { TurnSummaryPanel } from "./TurnSummaryPanel.js";
 
@@ -82,20 +83,7 @@ const emptyState = { pinnedIds: [] as string[], readIds: [] as string[] };
 
 describe("TurnSummaryPanel construction causes (#584 slice 4)", () => {
   const renderBodies = (messages: readonly TurnMessageDto[]) => {
-    setUiCatalogue({
-      locale: "en-US",
-      strings: {
-        "messages.construction.delayed.title": "Construction delayed",
-        "messages.construction.delayed.body": "Project {projectId} was delayed ({reason}).",
-        "messages.construction.overrun.title": "Construction cost overrun",
-        "messages.construction.overrun.body": "Project {projectId} needs {amount} more work.",
-        "construction.event.steel_plate_shortage": "a steel plate shortage at the supplier",
-        "construction.event.design_change_rework": "rework after a design change",
-        "messages.generic.body": "Something happened.",
-        "ui.turnSummary.category.CONSTRUCTION": "Construction",
-        "ui.turnSummary.severity.HIGH": "High",
-      },
-    });
+    setUiCatalogue(authoredCatalogue());
     render(
       <TurnSummaryPanel
         summaries={[summary(messages)]}
@@ -150,6 +138,24 @@ describe("TurnSummaryPanel construction causes (#584 slice 4)", () => {
       "A build's cost rose by 45 NC from March 1880: rework after a design change.",
     );
     expect(text).not.toMatch(/DESIGN_CHANGE_REWORK|\d{4}-\d{2}/);
+  });
+
+  it("keeps plain words for a payment default and for an unknown cause", () => {
+    const delayed = (id: string, reason: string) =>
+      message({
+        id,
+        severity: "HIGH",
+        titleKey: "messages.construction.delayed.title",
+        bodyKey: "messages.construction.delayed.body",
+        interpolation: { reason, delayMonth: "1880-04", months: 1 },
+      });
+    const [paid, unknown] = renderBodies([
+      delayed("d3", "PAYMENT_DEFAULT_DELAYED"),
+      delayed("d4", "NOT_A_CAUSE"),
+    ]);
+    expect(paid).toContain("delayed by 1 month from April 1880: a payment default.");
+    expect(unknown).toContain("delayed by 1 month from April 1880: a delay.");
+    expect(unknown).not.toMatch(/NOT_A_CAUSE/);
   });
 
   it("reads a delay event without a month count as one month", () => {

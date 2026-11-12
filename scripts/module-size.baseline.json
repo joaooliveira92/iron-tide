@@ -38,7 +38,7 @@
   "packages/phase-engine/src/events.ts": { "lines": 664 },
   "packages/phase-engine/src/foreignConstruction.ts": { "lines": 669 },
   "packages/phase-engine/src/snapshotClone.ts": { "lines": 890 },
-  "packages/phase-engine/test/construction-acceleration.test.ts": { "lines": 1259 },
+  "packages/phase-engine/test/construction-acceleration.test.ts": { "lines": 1156 },
   "packages/phase-engine/test/diplomacy-war.test.ts": { "lines": 896 },
   "packages/phase-engine/test/foreign-construction.test.ts": { "lines": 1027 },
   "packages/phase-engine/test/integration.test.ts": { "lines": 951 },

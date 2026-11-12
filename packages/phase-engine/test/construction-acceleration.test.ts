@@ -1,9 +1,7 @@
 import type {
   CampaignSnapshot,
-  CompiledDesignVersion,
   ConstructionPackage,
   ConstructionProject,
-  NationState,
 } from "@bluewave/campaign";
 import { campaignMonthId, transitionConstructionProject } from "@bluewave/campaign";
 import type { ConstructionEvent, ConstructionOverrunEvent } from "@bluewave/content-schema";
@@ -11,7 +9,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { RandomEngine, RandomLedger } from "@bluewave/random";
-import { accelerationTermsOf, LINE_IDS } from "@bluewave/ship-design";
+import { accelerationTermsOf } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
 import { assertValidDefinitionOrThrow } from "@bluewave/commands";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
@@ -47,139 +45,13 @@ import { constructionProjectQueueWithReadouts } from "../src/constructionReadout
 import { constructionSteeringPreviews } from "../src/constructionSteeringPreview.js";
 import { fundConstructionProject } from "../src/constructionFunding.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
-import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import { capacity, design, project, snapshot } from "./helpers/constructionFixtures.js";
 
 const content = productionShipBuildingContent();
-
-const capacity = (perLine: number): Record<string, SafeInt> =>
-  Object.fromEntries(LINE_IDS.map((line) => [line, SafeInt(perLine)]));
 
 const environment = content.environmentFor("1880-02");
 const productionBalance = environment.constructionBalance;
 const terms = accelerationTermsOf(productionBalance, environment.costBalance);
-
-function packages(): ConstructionPackage[] {
-  return LINE_IDS.map((line, index) => ({
-    id: `pkg-${String(index)}`,
-    kind: "HULL",
-    line,
-    totalWork: SafeInt(100),
-    doneWork: SafeInt(0),
-    dependsOn: [],
-  }));
-}
-
-interface ProjectOverrides {
-  readonly id?: string;
-  readonly status?: ConstructionProject["status"];
-  readonly projectType?: ConstructionProject["projectType"];
-  readonly totalWork?: number;
-  readonly completedWork?: number;
-  readonly designVersionId?: string;
-  readonly withPackages?: boolean;
-}
-
-function project(over: ProjectOverrides = {}): ConstructionProject {
-  const withPackages = over.withPackages ?? false;
-  const pkgList = withPackages ? packages() : undefined;
-  const totalWork = over.totalWork ?? (withPackages ? 600 : 200);
-  return {
-    id: over.id ?? "proj-1",
-    type: "ship",
-    projectType: over.projectType ?? "NEW_CONSTRUCTION",
-    targetId: "ship-x",
-    designVersionId: over.designVersionId ?? "",
-    totalWork: SafeInt(totalWork),
-    completedWork: SafeInt(over.completedWork ?? 0),
-    paidWork: SafeInt(0),
-    status: over.status ?? "ACTIVE",
-    startedAt: "1880-01",
-    ...(pkgList === undefined ? {} : { packages: pkgList }),
-  };
-}
-
-function design(id = "d1", perLine = 10): CompiledDesignVersion {
-  return {
-    designVersionId: id,
-    designFamilyId: "fam",
-    className: "Test",
-    nationId: "GBR",
-    hullType: "DD",
-    normalizedDisplacementKg: SafeInt(1_000_000),
-    normalizedSpeedUms: SafeInt(10_000_000),
-    normalizedArmorUm: SafeInt(0),
-    hitPoints: SafeInt(100),
-    mainGunsCaliber: SafeInt(0),
-    mainGunsCount: SafeInt(0),
-    machineryType: "steam",
-    crewComplement: SafeInt(10),
-    contentVersion: "t",
-    compiledHash: "h",
-    constructionCostUnits: SafeInt(600),
-    constructionPlan: { yardId: "yard_small", packages: [], capacityUnits: capacity(perLine) },
-  };
-}
-
-function nation(projects: ConstructionProject[], baseResources = 0, treasury = 1_000): NationState {
-  return {
-    prestige: SafeInt(20),
-    id: "GBR",
-    name: "Great Britain",
-    tag: "GBR",
-    treasury: SafeInt(treasury),
-    income: SafeInt(0),
-    expenses: SafeInt(0),
-    baseResources: SafeInt(baseResources),
-    navalAppropriationRateBp: SafeInt(2_000),
-    maintenanceCost: SafeInt(0),
-    fleets: [],
-    divisions: [],
-    research: {
-      nationId: "GBR",
-      technologies: [],
-      fieldPriorities: {},
-      researchBudget: SafeInt(0),
-      activeCandidates: new Map(),
-      discoveredTechs: [],
-    },
-    constructionProjects: projects,
-    isPlayable: true,
-    isAI: false,
-  };
-}
-
-function snapshot(
-  projects: ConstructionProject[],
-  designs: Map<string, CompiledDesignVersion> = new Map(),
-  baseResources = 0,
-  treasury = 1_000,
-): CampaignSnapshot {
-  return {
-    prestigeRules: FIXTURE_PRESTIGE_RULES,
-    version: "0.1.0",
-    turnNumber: SafeInt(1),
-    campaignId: "acceleration-pressure",
-    startYear: 1880,
-    startMonth: 1,
-    strategicWeather: [],
-    slots: [{ nationId: "GBR", type: "playable" }],
-    world: { areas: [], routes: [], ports: [] },
-    nations: new Map([["GBR", nation(projects, baseResources, treasury)]]),
-    wars: {
-      wars: [],
-      battles: [],
-      participantMemberships: [],
-      blockadeState: [],
-      battleManifests: [],
-    },
-    politics: { relations: [], shells: {} },
-    intelligence: { shells: {} },
-    designs,
-    designFamilies: new Map(),
-    rulesetVersion: "0.1.0",
-    compatibilityVersion: "1.2.0",
-  };
-}
 
 const executeMonth = (
   from: CampaignSnapshot,
@@ -1326,6 +1198,25 @@ describe("construction events in the economy pass (#584)", () => {
       const b = runMonth(start(), [overrun({ minBp: 200, maxBp: 1_000 })], "same");
       expect(a.result.randomLedger.hash()).toBe(b.result.randomLedger.hash());
       expect(only(a.result.finalSnapshot)).toEqual(only(b.result.finalSnapshot));
+    });
+
+    it("records an overrun the treasury cannot pay without a payment-default delay or any new payment rule", () => {
+      const broke = snapshot(
+        [project({ id: "proj-1", status: "ACTIVE", withPackages: true, designVersionId: "d1" })],
+        new Map([["d1", design("d1", 50)]]),
+        6_000,
+        0,
+      );
+      const { result } = runMonth(broke, [overrun()]);
+      const p = only(result.finalSnapshot);
+      expect(p.overruns).toEqual([
+        { month: "1880-02", reasonCode: "DESIGN_CHANGE_REWORK", amount: 60 },
+      ]);
+      expect(Number(p.totalWork)).toBe(660);
+      expect(p.delayReasonCode).toBeUndefined();
+      expect(p.delays).toBeUndefined();
+      expect(result.finalSnapshot.nations.get("GBR")!.treasury).toBe(0);
+      expect(result.eventLedger.all.some((e) => e.eventType === "ConstructionDelayed")).toBe(false);
     });
 
     it("leaves a foreign contract, a halted and a planned project alone", () => {
