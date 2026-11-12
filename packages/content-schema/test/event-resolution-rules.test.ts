@@ -24,6 +24,14 @@ function rules(overrides: Record<string, unknown> = {}): Record<string, unknown>
       eastern: even,
     },
     traitShifts: [{ trait: "cautious", stance: "hawk", deltaBp: -1_500 }],
+    answerEffects: {
+      budgetDecayMonths: 12,
+      budgetStackCapBp: 1_000,
+      tensionJumpCap: 3,
+      traitEffects: [
+        { trait: "cautious", stance: "hawk", reasonCode: "CAUTIOUS_ADVENTURE", prestige: -2 },
+      ],
+    },
     provenance,
     ...overrides,
   };
@@ -34,15 +42,18 @@ describe("decodeEventResolutionRules", () => {
     expect(decodeEventResolutionRules(rules()).ok).toBe(true);
   });
 
-  it.each(["defaultAnswerAfterMonths", "aiStanceWeightsBp", "traitShifts", "provenance"])(
-    "requires %s with no default",
-    (key) => {
-      const { [key]: _removed, ...partial } = rules();
-      const decoded = decodeEventResolutionRules(partial);
-      expect(decoded.ok).toBe(false);
-      if (!decoded.ok) expect(decoded.field).toContain(key);
-    },
-  );
+  it.each([
+    "defaultAnswerAfterMonths",
+    "aiStanceWeightsBp",
+    "traitShifts",
+    "answerEffects",
+    "provenance",
+  ])("requires %s with no default", (key) => {
+    const { [key]: _removed, ...partial } = rules();
+    const decoded = decodeEventResolutionRules(partial);
+    expect(decoded.ok).toBe(false);
+    if (!decoded.ok) expect(decoded.field).toContain(key);
+  });
 
   it("requires a weight row for every government type", () => {
     const { eastern: _removed, ...partial } = rules()["aiStanceWeightsBp"] as Record<
@@ -87,5 +98,33 @@ describe("decodeEventResolutionRules", () => {
       ).ok,
     ).toBe(false);
     expect(decodeEventResolutionRules(rules({ surprise: 1 })).ok).toBe(false);
+  });
+
+  it("rejects a non-positive decay window, an oversized jump cap and a negative stack cap", () => {
+    const effects = rules()["answerEffects"] as Record<string, unknown>;
+    for (const [key, value] of [
+      ["budgetDecayMonths", 0],
+      ["tensionJumpCap", 11],
+      ["budgetStackCapBp", -1],
+    ] as const) {
+      const decoded = decodeEventResolutionRules(
+        rules({ answerEffects: { ...effects, [key]: value } }),
+      );
+      expect(decoded.ok).toBe(false);
+      if (!decoded.ok) expect(decoded.field).toContain(key);
+    }
+  });
+
+  it("rejects a trait answer effect declared twice for one trait and stance", () => {
+    const effects = rules()["answerEffects"] as { traitEffects: unknown[] };
+    const decoded = decodeEventResolutionRules(
+      rules({
+        answerEffects: {
+          ...effects,
+          traitEffects: [...effects.traitEffects, ...effects.traitEffects],
+        },
+      }),
+    );
+    expect(decoded.ok).toBe(false);
   });
 });
