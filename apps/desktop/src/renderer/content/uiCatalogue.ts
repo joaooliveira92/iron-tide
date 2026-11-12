@@ -1,10 +1,12 @@
 import type { UiCatalogueDto } from "../../shared/content-contract.js";
 import { DIPLOMACY_PEACE_MESSAGES } from "../lib/diplomacy-peace-messages.js";
+import { ECONOMY_MODIFIER_MESSAGES } from "../lib/economy-modifier-messages.js";
 import { EN_US_MESSAGES } from "../lib/en-us-messages.js";
 
 const AUTHORED_MESSAGES: Readonly<Record<string, string | undefined>> = {
   ...EN_US_MESSAGES,
   ...DIPLOMACY_PEACE_MESSAGES,
+  ...ECONOMY_MODIFIER_MESSAGES,
 };
 
 export const CATALOGUE_FALLBACK_LOCALE = "en-US" as const;

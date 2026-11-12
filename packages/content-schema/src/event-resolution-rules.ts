@@ -28,6 +28,41 @@ export const EventTraitShiftSchema = Schema.Struct({
 });
 export type EventTraitShift = typeof EventTraitShiftSchema.Type;
 
+const reasonCode = Schema.NonEmptyString.check(Schema.isPattern(/^[A-Z][A-Z0-9_]*$/));
+const signedInt = Schema.Finite.check(Schema.isInt());
+
+export const EventTraitAnswerEffectSchema = Schema.Struct({
+  trait: NationTraitSchema,
+  stance: EventStanceSchema,
+  reasonCode,
+  budgetBp: Schema.optional(signedBasisPoints),
+  prestige: Schema.optional(signedInt),
+  unrest: Schema.optional(signedInt),
+  tension: Schema.optional(signedInt),
+});
+export type EventTraitAnswerEffect = typeof EventTraitAnswerEffectSchema.Type;
+
+export const EventAnswerEffectRulesSchema = Schema.Struct({
+  budgetDecayMonths: Schema.Finite.check(
+    Schema.isInt(),
+    Schema.isBetween({ minimum: 1, maximum: 60 }),
+  ),
+  budgetStackCapBp: basisPoints,
+  tensionJumpCap: Schema.Finite.check(
+    Schema.isInt(),
+    Schema.isBetween({ minimum: 1, maximum: 10 }),
+  ),
+  traitEffects: Schema.Array(EventTraitAnswerEffectSchema).check(
+    Schema.makeFilter((effects) => {
+      const keys = effects.map((effect) => `${effect.trait}/${effect.stance}`);
+      return new Set(keys).size === keys.length
+        ? undefined
+        : "a trait may adjust a stance answer at most once";
+    }),
+  ),
+});
+export type EventAnswerEffectRules = typeof EventAnswerEffectRulesSchema.Type;
+
 export const EventResolutionRulesSchema = Schema.Struct({
   sectionVersion: Schema.Literal(1),
   defaultAnswerAfterMonths: Schema.Finite.check(
@@ -50,6 +85,7 @@ export const EventResolutionRulesSchema = Schema.Struct({
         : "a trait may shift a stance at most once";
     }),
   ),
+  answerEffects: EventAnswerEffectRulesSchema,
   provenance: ProvenanceSchema,
 }).check(
   Schema.makeFilter((rules) => {

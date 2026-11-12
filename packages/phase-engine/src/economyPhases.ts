@@ -2,6 +2,7 @@ import type { ConstructionProject, NationState } from "@bluewave/campaign";
 import {
   allocateConstructionFunds,
   capacityOf,
+  effectiveAppropriationRateBp,
   isUnpacedNewConstruction,
   monthlyRevenue,
   splitLargestRemainder,
@@ -54,7 +55,15 @@ export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
   for (const [nationId, nation] of ctx.snapshot.read("nations")) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
     const baseResources = nation["baseResources"] ?? (0 as SafeInt);
-    const rateBp = nation["navalAppropriationRateBp"] ?? (0 as SafeInt);
+    const rateBp = effectiveAppropriationRateBp(
+      {
+        navalAppropriationRateBp: nation["navalAppropriationRateBp"] ?? (0 as SafeInt),
+        ...(nation.budgetModifiers === undefined
+          ? {}
+          : { budgetModifiers: nation.budgetModifiers }),
+      },
+      campaignMonth,
+    );
     const revenue = monthlyRevenue(baseResources, rateBp);
     if ((revenue as number) <= 0) continue;
 

@@ -5,7 +5,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Status | Rows |
 | --- | --- |
 | reachable | 32 |
-| dormant-by-decision | 18 |
+| dormant-by-decision | 19 |
 | internal | 16 |
 
 ## Reachable
@@ -50,6 +50,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Row | Player verb | Decision |
 | --- | --- | --- |
 | construction-events | Learn why a build slipped or cost more | #584 |
+| event-answer-unrest | See unrest rise or fall after a crisis answer | #427 |
 | accept-peace | Accept a peace settlement | #422 |
 | fight-or-decline-battle | Accept or decline a battle offer and fight it with stance, speed and course orders | #422 |
 | answer-event-dilemma | Answer a monthly event dilemma, hovering each answer for its declared effects | #428 |

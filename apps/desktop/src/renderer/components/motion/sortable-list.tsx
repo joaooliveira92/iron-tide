@@ -43,8 +43,10 @@ function SortableListRoot<T extends { id: string }>({
   const root = useRef<HTMLDivElement>(null);
   const pendingFocus = useRef<string | null>(null);
   const live = useRef(items);
+  const previousRef = useRef(previous);
   useLayoutEffect(() => {
     live.current = items;
+    previousRef.current = previous;
     if (pendingFocus.current !== null) {
       const target = Array.from(
         root.current?.querySelectorAll<HTMLButtonElement>("button[data-sortable-id]") ?? [],
@@ -102,9 +104,10 @@ function SortableListRoot<T extends { id: string }>({
       setAnnouncement(`${getItemLabel(item)} moved to position ${to + 1} of ${current.length}.`);
     };
     const undo = () => {
-      if (disabled || !previous || !canUndo) return;
-      pendingFocus.current = previous.find((id, index) => id !== ids[index]) ?? previous[0] ?? null;
-      reorder(previous);
+      const restore = previousRef.current;
+      if (disabled || !restore || !canUndo) return;
+      pendingFocus.current = restore.find((id, index) => id !== ids[index]) ?? restore[0] ?? null;
+      reorder(restore);
       setPrevious(null);
       setAnnouncement("Previous order restored.");
     };
@@ -147,7 +150,6 @@ function SortableListRoot<T extends { id: string }>({
     label,
     instructions,
     itemClassName,
-    previous,
     canUndo,
   ]);
 

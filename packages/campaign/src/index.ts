@@ -22,6 +22,7 @@ export * from "./trainingPreview.js";
 export * from "./fleetExercise.js";
 export * from "./tensionDrift.js";
 export * from "./eventDraw.js";
+export * from "./eventEffects.js";
 export * from "./designUnits.js";
 export * from "./fleetSize.js";
 export * from "./snapshotHash.js";
@@ -63,6 +64,9 @@ export type {
   DesignStudy,
   NationDockExpansionState,
   NationDockState,
+  AnswerEffectLine,
+  AnswerEffectRecord,
+  BudgetModifier,
   NationEventHistory,
   NationState,
   PendingDilemma,
