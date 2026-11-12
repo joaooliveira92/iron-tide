@@ -39,6 +39,12 @@ const RULES: EventResolutionRules = {
     eastern: { hawkBp: 5_000, doveBp: 5_000, neutralBp: 0 },
   },
   traitShifts: [],
+  answerEffects: {
+    budgetDecayMonths: 12,
+    budgetStackCapBp: 1_000,
+    tensionJumpCap: 3,
+    traitEffects: [],
+  },
   provenance,
 };
 
