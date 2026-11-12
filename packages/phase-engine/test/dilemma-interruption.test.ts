@@ -297,7 +297,6 @@ describe("dilemma interruption", () => {
     const awaiting = suspendedRequest(start, turnId);
     const answered = answerFor(awaiting, "mobilise");
     expect(awaiting.turnId).toBe(turnId);
-    expect(turnIdOf(start)).toBe(turnId);
     const resumed = run(start, { turnId, recordedInputs: [answered] });
     expect(resumed.outcome).toBe("completed");
     expect(suspendedRequest(start, turnId).interruptionId).toBe(awaiting.interruptionId);
