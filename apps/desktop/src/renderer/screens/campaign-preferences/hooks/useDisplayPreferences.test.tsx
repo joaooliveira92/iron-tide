@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 import { act, renderHook, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { StrictMode, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 
 import { BridgeProvider } from "../../../lib/bridge-context.js";
@@ -33,6 +33,55 @@ describe("useDisplayPreferences campaign scope (U-2 ticket 05)", () => {
     await waitFor(() => expect(stub.campaignWrites).toHaveLength(1));
     expect(stub.currentCampaign(SESSION).campaign.showSupplyOverlay).toBe(true);
     expect(localStorage.getItem(LEGACY_KEY)).toBeNull();
+  });
+
+  it("writes once per toggle under StrictMode double-invoked updaters", async () => {
+    const stub = createPreferencesBridgeStub();
+    const strict = ({ children }: { children: ReactNode }) => (
+      <StrictMode>{wrapper(stub)({ children })}</StrictMode>
+    );
+    const { result } = renderHook(() => useDisplayPreferences(SESSION), { wrapper: strict });
+    await waitFor(() => expect(result.current.displayPrefs.showSupplyOverlay).toBe(false));
+    act(() => result.current.togglePref("showSupplyOverlay"));
+    await waitFor(() => expect(stub.campaignWrites).toHaveLength(1));
+    expect(result.current.displayPrefs.showSupplyOverlay).toBe(true);
+    expect(stub.campaignWrites).toHaveLength(1);
+  });
+
+  it("keeps displayPrefs and togglePref referentially stable across unrelated renders", async () => {
+    const stub = createPreferencesBridgeStub();
+    const { result, rerender } = renderHook(() => useDisplayPreferences(SESSION), {
+      wrapper: wrapper(stub),
+    });
+    await act(async () => {});
+    const before = result.current;
+    rerender();
+    expect(result.current.displayPrefs).toBe(before.displayPrefs);
+    expect(result.current.togglePref).toBe(before.togglePref);
+  });
+
+  it("keeps togglePref stable when a session override changes", async () => {
+    const stub = createPreferencesBridgeStub();
+    const { result } = renderHook(() => useDisplayPreferences(SESSION), {
+      wrapper: wrapper(stub),
+    });
+    await waitFor(() => expect(result.current.displayPrefs.showSupplyOverlay).toBe(false));
+    const before = result.current.togglePref;
+    act(() => result.current.setSessionOverride("confirmBeforeTurn", false));
+    expect(result.current.togglePref).toBe(before);
+  });
+
+  it("drops a session override when its preference is toggled", async () => {
+    const stub = createPreferencesBridgeStub();
+    const { result } = renderHook(() => useDisplayPreferences(SESSION), {
+      wrapper: wrapper(stub),
+    });
+    await waitFor(() => expect(result.current.displayPrefs.confirmBeforeTurn).toBe(true));
+    act(() => result.current.setSessionOverride("confirmBeforeTurn", false));
+    act(() => result.current.togglePref("confirmBeforeTurn"));
+    await waitFor(() => expect(stub.campaignWrites).toHaveLength(1));
+    expect(stub.campaignWrites[0]?.campaign.confirmBeforeTurn).toBe(true);
+    expect(result.current.displayPrefs.confirmBeforeTurn).toBe(true);
   });
 
   it("resolves a session override ahead of campaign and drops it on remount", async () => {

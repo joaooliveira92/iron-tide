@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  DEFAULT_CAMPAIGN_PREFERENCES,
   decodeCampaignPreferences,
   resolveCampaignPreferences,
   type CampaignPreferences,
@@ -36,52 +35,64 @@ export function useDisplayPreferences(sessionId?: string): UseDisplayPreferences
   const bridge = useBridge();
   const [campaign, setCampaign] = useState<CampaignPreferences | undefined>(undefined);
   const [session, setSession] = useState<Partial<CampaignPreferences>>({});
+  const campaignRef = useRef<CampaignPreferences | undefined>(undefined);
+  const sessionRef = useRef<Partial<CampaignPreferences>>({});
   const loadedFor = useRef<string | undefined>(undefined);
+
+  const commitCampaign = useCallback((next: CampaignPreferences) => {
+    campaignRef.current = next;
+    setCampaign(next);
+  }, []);
+
+  const commitSession = useCallback((next: Partial<CampaignPreferences>) => {
+    sessionRef.current = next;
+    setSession(next);
+  }, []);
 
   useEffect(() => {
     if (sessionId === undefined || bridge === undefined || loadedFor.current === sessionId) return;
     loadedFor.current = sessionId;
     const legacy = takeLegacy();
     if (legacy !== null) {
-      setCampaign(legacy);
+      commitCampaign(legacy);
       void bridge.preferences.writeCampaign(sessionId, { campaign: legacy });
       return;
     }
     void bridge.preferences.readCampaign(sessionId).then((result) => {
-      if (result.outcome === "success") setCampaign(result.value.campaign);
+      if (result.outcome === "success") commitCampaign(result.value.campaign);
     });
-  }, [bridge, sessionId]);
+  }, [bridge, commitCampaign, sessionId]);
 
   const togglePref = useCallback(
     (key: keyof CampaignPreferences) => {
-      setCampaign((prev) => {
-        const current = { ...DEFAULT_CAMPAIGN_PREFERENCES, ...prev, ...session };
-        const next = { ...current, [key]: !current[key] };
-        setSession((s) => {
-          if (!(key in s)) return s;
-          const rest = { ...s };
-          delete rest[key];
-          return rest;
-        });
-        if (sessionId !== undefined && bridge !== undefined) {
-          void bridge.preferences.writeCampaign(sessionId, { campaign: next });
-        }
-        return next;
-      });
+      const current = resolveCampaignPreferences(campaignRef.current, sessionRef.current);
+      const next = { ...current, [key]: !current[key] };
+      if (key in sessionRef.current) {
+        const rest = { ...sessionRef.current };
+        delete rest[key];
+        commitSession(rest);
+      }
+      commitCampaign(next);
+      if (sessionId !== undefined && bridge !== undefined) {
+        void bridge.preferences.writeCampaign(sessionId, { campaign: next });
+      }
     },
-    [bridge, session, sessionId],
+    [bridge, commitCampaign, commitSession, sessionId],
   );
 
-  const setSessionOverride = useCallback((key: keyof CampaignPreferences, value: boolean) => {
-    setSession((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const setSessionOverride = useCallback(
+    (key: keyof CampaignPreferences, value: boolean) => {
+      commitSession({ ...sessionRef.current, [key]: value });
+    },
+    [commitSession],
+  );
 
-  const clearSessionOverrides = useCallback(() => setSession({}), []);
+  const clearSessionOverrides = useCallback(() => commitSession({}), [commitSession]);
 
-  return {
-    displayPrefs: resolveCampaignPreferences(campaign, session),
-    togglePref,
-    setSessionOverride,
-    clearSessionOverrides,
-  };
+  const displayPrefs = useMemo(
+    () => resolveCampaignPreferences(campaign, session),
+    [campaign, session],
+  );
+
+  return { displayPrefs, togglePref, setSessionOverride, clearSessionOverrides };
 }
