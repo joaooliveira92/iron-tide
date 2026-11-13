@@ -21,9 +21,9 @@ task:
     - "pnpm snap (Seen)"
 ```
 
-## Status on dev (2026-11-12)
+## Status on dev (2026-11-13)
 
-Slices 1 to 4 below shipped (#641, #644, #658, #662, #679, #688). The engine, content, events, balance report and both readouts are on `dev`. The issue body is stale: its "Blocked by" line and its UNVERIFIED event-engine note are resolved (see Evidence). The YAML above still names the original working branch; slice 5 uses `feat/issue-584-cause-wording`.
+All five slices shipped (#641, #644, #658, #662, #679, #688, #697) and every acceptance criterion is met. The issue body is stale: its "Blocked by" line and its UNVERIFIED event-engine note are resolved (see Evidence). The YAML above names the original working branch; slice 5 used `feat/issue-584-cause-wording`.
 
 | Item                                                                           | State                          | Evidence on dev                                                                                                                                                                     |
 | ------------------------------------------------------------------------------ | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -38,32 +38,28 @@ Slices 1 to 4 below shipped (#641, #644, #658, #662, #679, #688). The engine, co
 | Goldens repinned with cause (AC9)                                              | shipped per slice              | commit bodies of 6b83c421 and cc8cf322                                                                                                                                              |
 | Inspector cause list, newest first (AC5, 6)                                    | shipped                        | `project-causes.ts`, `ProjectReadout.test.tsx` (#688)                                                                                                                               |
 | Turn report cause and amount (AC5)                                             | shipped                        | `construction-message-text.ts`, `TurnSummaryPanel.test.tsx` (#688)                                                                                                                  |
-| Cause wording authored in the content catalogue                                | remaining (slice 5)            | #688 composes the sentences in the renderer to avoid a 17-replay repin; the catalogue bodies are unused fallbacks                                                                   |
-| `pnpm snap` before and after (AC10)                                            | partly met                     | #688 has an "after" only; no dev baseline was taken                                                                                                                                 |
+| Cause wording authored in the content catalogue                                | shipped                        | `content/production/1880/ui/en-US.yaml` keys `construction.cause.*`, `construction.event.*` (#697)                                                                                  |
+| Unpayable overrun adds no payment-default delay                                | shipped                        | `construction-acceleration.test.ts` with `test/helpers/constructionFixtures.ts` (#697)                                                                                              |
+| `pnpm snap` showing cause text (AC10)                                          | met, after-only                | live strict runs of the built app, quoted under AC10 evidence below                                                                                                                 |
 | Good-news events, ship-class scaling, player responses                         | deferred by decision           | out of scope below                                                                                                                                                                  |
 
-Blockers: #563 (events and prestige slice 1) is still open and is not a blocker; slices 1 to 4 used none of it. #223 was a closed readout ticket and never blocked this work.
+Blockers: none. #563 (events and prestige slice 1) is a different engine path and was never needed; #223 was a closed readout ticket.
 
-### Remaining slice 5: authored cause wording in the catalogue
+### AC10 evidence (2026-11-13)
 
-Scope: move the delay and overrun sentence templates out of `apps/desktop/src/renderer/screens/construction/components/project-causes.ts` and `apps/desktop/src/renderer/screens/overview/turn-summary/construction-message-text.ts` into `content/production/1880/ui/en-US.yaml` (read through `apps/desktop/src/renderer/content/uiCatalogue.ts`), so wording is content, not code. One content change, one repin: the compiled body hash moves all 17 replays, their approvals and the fuzz pin. State the cause per `docs/agents/golden-repinning.md`: "construction cause wording moved into the catalogue; no draw, row or engine change", and show by a control run that replay event streams are identical apart from the content hash.
+Built desktop, `pnpm snap --strict --freeze --make-save <dir>`: Build, Design catalog, Order, quantity 2, Place order, then advance. A fresh campaign draws its own seed, so each run differs; each capture below is a separate run with no snap problems recorded.
 
-Files: `content/production/1880/ui/en-US.yaml`, `content/production/1880/content-lock.json`, `uiCatalogue.ts`, `project-causes.ts`, `construction-message-text.ts`, `golden/replay-approvals.json`, `golden/replay-fuzz.json`, `golden/replays/*`.
+- Project inspector after 36 months, Cost and schedule: "September 1882: a rise in the price of materials added 1 NC to the cost" above "July 1880: rework of faulty workmanship added 7 NC to the cost", newest first, total cost 102 NC.
+- Turn report after 7 months, category Construction, "Construction cost overrun": "A build's cost rose by 3 NC from July 1880: rework of faulty workmanship."
 
-ACS: no sentence template remains in renderer code; inspector and turn report read the same in meaning; no raw code or `YYYY-MM` (existing regex tests still pass); `PAYMENT_DEFAULT_DELAYED` and unknown codes keep a plain fallback.
+Before and after is waived: #697 showed the Slipways stage text identical before and after the wording move, and cause lines cannot exist on a pre-#688 checkout.
 
-Tests: `ProjectReadout.test.tsx` and `TurnSummaryPanel.test.tsx` pass against catalogue text; a content test that every `causeKey` and both sentence templates exist in `en-US.yaml`; `pnpm check:replay-corpus`, `check:golden-repin`, `check:replay-approvals`.
+### Decisions on the former open questions
 
-Reachability ledger: unchanged, `construction-events` stays `dormant-by-decision` (no player decision, no response).
-
-Verification: the validation list above, with `pnpm snap` taken from `dev` before and after on the Slipways stage and project inspector, which also closes AC10.
-
-### Open questions for the owner
-
-1. Is slice 5 worth a 17-replay repin now, or should the wording ride with the next content-owning change that repins anyway? Either reading changes delivery cost, not gameplay.
-2. AC10 asks for before and after captures. Take the baseline now from a pre-#688 checkout, or accept after-only and amend AC10?
-3. Close #584 when slice 5 lands, or now with slice 5 as a follow-up issue?
-4. The approved rule was that an overrun is absorbed through the existing payment path with no new payment rule. This refresh did not verify a test for an overrun the payer cannot cover feeding only the existing payment-default delay. Confirm one exists, or add it in slice 5.
+1. Slice 5 repinned now (owner approved, #697).
+2. AC10 accepted after-only, as above.
+3. #584 closes with the PR that records this status.
+4. An overrun the treasury cannot pay is recorded and adds no payment-default delay; the test shipped in #697.
 
 ## Problem
 
