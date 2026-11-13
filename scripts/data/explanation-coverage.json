@@ -655,7 +655,7 @@
       }
     },
     {
-      "file": "packages/combat/src/battleResolution/playerSession.ts",
+      "file": "packages/combat/src/battleResolution/playerSessionTypes.ts",
       "type": "PlayerBattleShipView",
       "area": "battle",
       "issue": "#305",
@@ -675,7 +675,7 @@
       }
     },
     {
-      "file": "packages/combat/src/battleResolution/playerSession.ts",
+      "file": "packages/combat/src/battleResolution/playerSessionTypes.ts",
       "type": "PlayerBattleView",
       "area": "battle",
       "issue": "#305",
@@ -687,7 +687,7 @@
       }
     },
     {
-      "file": "packages/combat/src/battleResolution/playerSession.ts",
+      "file": "packages/combat/src/battleResolution/playerSessionTypes.ts",
       "type": "PlayerBattleEvent",
       "area": "battle",
       "issue": "#305",
