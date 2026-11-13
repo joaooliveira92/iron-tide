@@ -43,6 +43,7 @@ const summary = (messages: readonly TurnMessageDto[]): TurnSummaryEntry => ({
 const renderPanel = (
   messages: readonly TurnMessageDto[],
   onAssignToFleet?: (shipId: string) => void,
+  assignableNationId?: string,
 ) =>
   render(
     <TurnSummaryPanel
@@ -52,10 +53,25 @@ const renderPanel = (
       onTogglePinned={() => undefined}
       onToggleRead={() => undefined}
       {...(onAssignToFleet === undefined ? {} : { onAssignToFleet })}
+      {...(assignableNationId === undefined ? {} : { assignableNationId })}
     />,
   );
 
+const withNation = (nationId: string): TurnMessageDto => ({
+  ...base,
+  subjectRefs: [...base.subjectRefs, { type: "nation", id: nationId }],
+});
+
 describe("TurnSummaryPanel Assign to fleet (#623)", () => {
+  it("offers the link only on deliveries of the assignable nation", () => {
+    const handler = vi.fn<(shipId: string) => void>();
+    renderPanel([withNation("germany")], handler, "uk");
+    expect(screen.queryByRole("button", { name: "Assign to fleet" })).toBeNull();
+    cleanup();
+    renderPanel([withNation("uk")], handler, "uk");
+    expect(screen.getByRole("button", { name: "Assign to fleet" })).toBeTruthy();
+  });
+
   it("offers Assign to fleet on a delivery message and passes the ship id", () => {
     const onAssignToFleet = vi.fn<(shipId: string) => void>();
     renderPanel([base], onAssignToFleet);

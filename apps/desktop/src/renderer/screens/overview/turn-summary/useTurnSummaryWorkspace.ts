@@ -27,6 +27,7 @@ export interface TurnSummaryInput {
   readonly onOpenEntity?: (ref: EntityReferenceDto) => void;
   readonly isEntityAvailable?: (ref: EntityReferenceDto) => boolean;
   readonly onAssignToFleet?: (shipId: string) => void;
+  readonly assignableNationId?: string;
 }
 
 export interface TurnSummaryState {
@@ -59,6 +60,7 @@ export interface TurnSummaryMeta {
   readonly isEmpty: boolean;
   readonly noMatch: boolean;
   readonly isEntityAvailable: (ref: EntityReferenceDto) => boolean;
+  readonly assignableNationId: string | undefined;
 }
 
 export interface TurnSummaryWorkspace {
@@ -122,6 +124,7 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
       isEmpty: !input.loading && input.summaries.length === 0,
       noMatch: !input.loading && messages.length > 0 && visible.length === 0,
       isEntityAvailable: input.isEntityAvailable ?? ALWAYS_AVAILABLE,
+      assignableNationId: input.assignableNationId,
     }),
     [
       selected,
@@ -134,6 +137,7 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
       input.summaries,
       input.loading,
       input.isEntityAvailable,
+      input.assignableNationId,
     ],
   );
 

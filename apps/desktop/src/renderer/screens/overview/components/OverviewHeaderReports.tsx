@@ -20,6 +20,7 @@ export interface OverviewHeaderReportsProps {
   readonly onToggleRead: (id: string) => void;
   readonly onOpenEntity: (ref: EntityReferenceDto) => void;
   readonly onAssignToFleet?: (shipId: string) => void;
+  readonly assignableNationId?: string;
   readonly isEntityAvailable: (ref: EntityReferenceDto) => boolean;
 }
 
@@ -61,6 +62,7 @@ export function OverviewHeaderReports({
   onToggleRead,
   onOpenEntity,
   onAssignToFleet,
+  assignableNationId,
   isEntityAvailable,
 }: OverviewHeaderReportsProps) {
   return (
@@ -78,6 +80,7 @@ export function OverviewHeaderReports({
           onToggleRead={onToggleRead}
           onOpenEntity={onOpenEntity}
           {...(onAssignToFleet === undefined ? {} : { onAssignToFleet })}
+          {...(assignableNationId === undefined ? {} : { assignableNationId })}
           isEntityAvailable={isEntityAvailable}
         />
       </ReportChip>

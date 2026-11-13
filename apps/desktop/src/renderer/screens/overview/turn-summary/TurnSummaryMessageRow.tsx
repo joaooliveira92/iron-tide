@@ -38,11 +38,13 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
 }) {
   const format = usePresentationFormat();
   const { openEntity, togglePinned, toggleRead, assignToFleet } = useTurnSummaryActions();
+  const { isEntityAvailable, assignableNationId } = useTurnSummaryMeta();
+  const deliveredNationId = message.subjectRefs.find((ref) => ref.type === "nation")?.id;
   const deliveredShipId =
-    message.titleKey === CONSTRUCTION_DELIVERED_TITLE_KEY
+    message.titleKey === CONSTRUCTION_DELIVERED_TITLE_KEY &&
+    (assignableNationId === undefined || assignableNationId === deliveredNationId)
       ? message.subjectRefs.find((ref) => ref.type === "ship")?.id
       : undefined;
-  const { isEntityAvailable } = useTurnSummaryMeta();
   const [expanded, setExpanded] = useState(false);
   const [historicalRef, setHistoricalRef] = useState<EntityReferenceDto | null>(null);
 

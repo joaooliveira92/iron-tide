@@ -102,6 +102,7 @@ export function OverviewScreen({ sessionId, onNavigate, onAssignToFleet }: Overv
         if (screen !== null && screen !== "overview") onNavigate(screen);
       }}
       {...(onAssignToFleet === undefined ? {} : { onAssignToFleet })}
+      assignableNationId={projection.playerNationId}
       isEntityAvailable={entityAvailability(projection)}
     />
   );
