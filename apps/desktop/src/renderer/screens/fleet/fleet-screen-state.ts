@@ -60,6 +60,19 @@ export function pendingRouteFor(
   );
 }
 
+export function divisionIdForShip(
+  shipId: string,
+  divisions: readonly {
+    readonly divisionId: string;
+    readonly ships: readonly { readonly shipId: string }[];
+  }[],
+): string | null {
+  return (
+    divisions.find((division) => division.ships.some((ship) => ship.shipId === shipId))
+      ?.divisionId ?? null
+  );
+}
+
 export function nextDivisionSelection(
   current: string | null,
   divisions: readonly FleetDivisionView[],

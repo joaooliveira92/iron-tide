@@ -111,6 +111,7 @@ strings:
   ui.turnSummary.actionable: "Actionable ({count})"
   ui.turnSummary.details: "Details"
   ui.turnSummary.less: "Less"
+  ui.turnSummary.assignToFleet: "Assign to fleet"
   ui.turnSummary.pin: "Pin"
   ui.turnSummary.unpin: "Unpin"
   ui.turnSummary.read: "Read"

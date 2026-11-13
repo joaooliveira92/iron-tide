@@ -26,6 +26,7 @@ export interface TurnSummaryInput {
   readonly onToggleRead: (id: string) => void;
   readonly onOpenEntity?: (ref: EntityReferenceDto) => void;
   readonly isEntityAvailable?: (ref: EntityReferenceDto) => boolean;
+  readonly onAssignToFleet?: (shipId: string) => void;
 }
 
 export interface TurnSummaryState {
@@ -42,6 +43,7 @@ export interface TurnSummaryActions {
   readonly togglePinned: (id: string) => void;
   readonly toggleRead: (id: string) => void;
   readonly openEntity: (ref: EntityReferenceDto) => void;
+  readonly assignToFleet?: (shipId: string) => void;
 }
 
 export interface TurnSummaryMeta {
@@ -101,8 +103,9 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
       togglePinned: input.onTogglePinned,
       toggleRead: input.onToggleRead,
       openEntity: input.onOpenEntity ?? NEVER_HANDLED,
+      ...(input.onAssignToFleet === undefined ? {} : { assignToFleet: input.onAssignToFleet }),
     }),
-    [input.onTogglePinned, input.onToggleRead, input.onOpenEntity],
+    [input.onTogglePinned, input.onToggleRead, input.onOpenEntity, input.onAssignToFleet],
   );
 
   const meta = useMemo<TurnSummaryMeta>(

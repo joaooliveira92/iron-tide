@@ -5,7 +5,10 @@ import type {
 } from "../../../../shared/turn-message-contract.js";
 import { resolveMessage } from "../../../content/uiCatalogue.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
-import { constructionMessageBody } from "./construction-message-text.js";
+import {
+  CONSTRUCTION_DELIVERED_TITLE_KEY,
+  constructionMessageBody,
+} from "./construction-message-text.js";
 import {
   SummaryDelta,
   SummaryRow,
@@ -34,7 +37,11 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
   readonly read: boolean;
 }) {
   const format = usePresentationFormat();
-  const { openEntity, togglePinned, toggleRead } = useTurnSummaryActions();
+  const { openEntity, togglePinned, toggleRead, assignToFleet } = useTurnSummaryActions();
+  const deliveredShipId =
+    message.titleKey === CONSTRUCTION_DELIVERED_TITLE_KEY
+      ? message.subjectRefs.find((ref) => ref.type === "ship")?.id
+      : undefined;
   const { isEntityAvailable } = useTurnSummaryMeta();
   const [expanded, setExpanded] = useState(false);
   const [historicalRef, setHistoricalRef] = useState<EntityReferenceDto | null>(null);
@@ -71,6 +78,16 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
             {constructionMessageBody(message.bodyKey, message.interpolation, format) ??
               resolveMessage(message.bodyKey, message.interpolation)}
           </p>
+          {assignToFleet !== undefined && deliveredShipId !== undefined && (
+            <button
+              type="button"
+              data-testid="assign-to-fleet"
+              className="mt-1 rounded border border-border/60 px-1.5 py-0.5 text-xs hover:bg-accent"
+              onClick={() => assignToFleet(deliveredShipId)}
+            >
+              {resolveMessage("ui.turnSummary.assignToFleet")}
+            </button>
+          )}
           {message.subjectRefs.length > 0 && (
             <div className="mt-1 flex flex-wrap gap-1">
               {message.subjectRefs.map((ref) => (
