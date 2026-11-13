@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision. Blocks GitHub issue #485 only; #483 and #484 are unaffected.
+Resolved: Option A (margin rule) shipped in #554. The margin (`acceptanceScoreMargin`, 20) is PROVISIONAL and unsourced, and each AI decision records its reason code. The rule has no engine caller until #422; production areas author no `cessionCost` (see `docs/research/p5-peace-behaviour.md`).
 
 ## Trigger
 
