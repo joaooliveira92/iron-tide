@@ -1,4 +1,4 @@
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { AlertTriangle, Eye, Globe, Settings2, SlidersHorizontal } from "lucide-react";
 import { useBridge } from "../../lib/bridge-context.js";
 import { useCampaignProjection } from "../../lib/use-campaign-projection.js";
@@ -101,15 +101,18 @@ export function CampaignPreferencesScreen({
     setConfirmClose(true);
   }, []);
 
+  const config = useMemo(
+    () => (projection === null ? null : inferConfig(projection)),
+    [projection],
+  );
+
   if (loadError !== null) {
     return <PreferencesErrorState message={loadError} onRetry={reload} />;
   }
 
-  if (projection === null) {
+  if (projection === null || config === null) {
     return <PreferencesLoadingState />;
   }
-
-  const config = inferConfig(projection);
 
   const panels: Readonly<Record<PreferencesSectionId, ReactNode>> = {
     scenario: (
