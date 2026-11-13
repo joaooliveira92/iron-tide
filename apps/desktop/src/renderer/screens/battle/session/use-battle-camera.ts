@@ -47,7 +47,7 @@ export function useBattleCamera(
   useEffect(() => {
     if (view === null) return;
     const points = knownPositions(view);
-    const key = `${String(points.length)}:${String(view.ended)}`;
+    const key = `${String(points.length)}:${String(view.ended)}:${String(viewport.width)}x${String(viewport.height)}`;
     if (!userMoved.current && key !== fittedKey.current) {
       fittedKey.current = key;
       setCamera((current) => fitCamera(points, viewport, current));
