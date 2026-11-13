@@ -37,7 +37,7 @@ const speedTextFor = (speedKnots: number | undefined): string =>
   speedKnots === undefined ? "" : String(speedKnots);
 
 export const UnitCommandPanel = memo(function UnitCommandPanel(props: UnitCommandPanelProps) {
-  const { view, selectedShipId, orderFor, acceptedOrders } = props;
+  const { view, selectedShipId, orderFor, acceptedOrders, onPreviewCourse } = props;
   const ship = selectedShip(view, selectedShipId);
   const divisionId = ship === null ? null : divisionOfShip(view, ship.shipId);
   const own = ship !== null && ship.sideId === playerSideOf(view);
@@ -61,9 +61,9 @@ export const UnitCommandPanel = memo(function UnitCommandPanel(props: UnitComman
 
   useEffect(() => {
     const parsed = parseCourse(courseText);
-    props.onPreviewCourse(parsed.ok && touched ? headingFromCompass(parsed.value) : null);
-    return () => props.onPreviewCourse(null);
-  }, [courseText, touched, props.onPreviewCourse]);
+    onPreviewCourse(parsed.ok && touched ? headingFromCompass(parsed.value) : null);
+    return () => onPreviewCourse(null);
+  }, [courseText, touched, onPreviewCourse]);
 
   if (ship === null) {
     return (
