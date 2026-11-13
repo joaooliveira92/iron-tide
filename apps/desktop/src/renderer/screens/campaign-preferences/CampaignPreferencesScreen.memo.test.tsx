@@ -89,4 +89,19 @@ describe("CampaignPreferencesScreen danger zone memo", () => {
 
     expect(settingsModal.SettingsSection).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ["Ruleset options", "Ruleset options"],
+    ["Display preferences", "Display"],
+  ])("does not re-render the %s panel when the screen re-renders", (navLabel, sectionTitle) => {
+    const props = { sessionId: "ses-1", onCloseCampaign: vi.fn(), onClose: vi.fn() };
+    const { rerender } = render(<CampaignPreferencesScreen {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: navLabel }));
+    vi.mocked(settingsModal.SettingsSection).mockClear();
+
+    rerender(<CampaignPreferencesScreen {...props} />);
+
+    const titles = vi.mocked(settingsModal.SettingsSection).mock.calls.map(([p]) => p.title);
+    expect(titles).not.toContain(sectionTitle);
+  });
 });
