@@ -58,6 +58,7 @@ import {
   LoadProjectDraftPayloadSchema,
   PreviewDesignStudyPayloadSchema,
   LoadShipDraftPayloadSchema,
+  OptionalPackageTargetPayloadSchema,
   OrderConstructionBatchCommandPayloadSchema,
   PlaceForeignConstructionCommandPayloadSchema,
   PreviewConstructionBatchCommandPayloadSchema,
@@ -253,10 +254,26 @@ export const campaignCommandShapes = {
     resultType<readonly RecentCampaignEntry[]>(),
     { strict: true },
   ),
-  listCampaigns: command(NO_PAYLOAD, resultType<readonly SaveMetadata[]>()),
-  verifyCampaign: command(NO_PAYLOAD, resultType<VerifyCampaignResponse>()),
-  replayCampaign: command(NO_PAYLOAD, resultType<ReplayCampaignResponse>()),
-  recoverCampaign: command(NO_PAYLOAD, resultType<RecoverCampaignResponse>()),
+  listCampaigns: command(
+    OptionalPackageTargetPayloadSchema,
+    resultType<readonly SaveMetadata[]>(),
+    { strict: true },
+  ),
+  verifyCampaign: command(
+    OptionalPackageTargetPayloadSchema,
+    resultType<VerifyCampaignResponse>(),
+    { strict: true },
+  ),
+  replayCampaign: command(
+    OptionalPackageTargetPayloadSchema,
+    resultType<ReplayCampaignResponse>(),
+    { strict: true },
+  ),
+  recoverCampaign: command(
+    OptionalPackageTargetPayloadSchema,
+    resultType<RecoverCampaignResponse>(),
+    { strict: true },
+  ),
   inspectConstructionScreen: command(
     SessionIdPayloadSchema,
     resultType<ConstructionScreenProjection>(),

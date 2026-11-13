@@ -343,6 +343,8 @@ export const RecentPackagePayloadSchema = Schema.Struct({
   packagePath: Schema.NonEmptyString,
 });
 
+export const OptionalPackageTargetPayloadSchema = Schema.UndefinedOr(RecentPackagePayloadSchema);
+
 export const AnswerDecisionPayloadSchema = Schema.Struct({
   ...CommandEnvelopePayloadSchema.fields,
   interruptionId: nonEmptyString,
