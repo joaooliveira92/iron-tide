@@ -96,6 +96,11 @@ export function CampaignPreferencesScreen({
     }
   }, [bridge, sessionId]);
 
+  const handleRequestCloseCampaign = useCallback(() => {
+    setOpen(false);
+    setConfirmClose(true);
+  }, []);
+
   if (loadError !== null) {
     return <PreferencesErrorState message={loadError} onRetry={reload} />;
   }
@@ -146,14 +151,7 @@ export function CampaignPreferencesScreen({
       <DangerZonePanel
         onExportConfig={handleExportConfig}
         onReloadSnapshot={reload}
-        onCloseCampaign={
-          onCloseCampaign === undefined
-            ? undefined
-            : () => {
-                setOpen(false);
-                setConfirmClose(true);
-              }
-        }
+        onCloseCampaign={onCloseCampaign === undefined ? undefined : handleRequestCloseCampaign}
       />
     ),
   };

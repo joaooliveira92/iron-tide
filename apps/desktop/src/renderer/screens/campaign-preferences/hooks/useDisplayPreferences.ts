@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   DEFAULT_CAMPAIGN_PREFERENCES,
+  decodeCampaignPreferences,
   resolveCampaignPreferences,
   type CampaignPreferences,
 } from "../../../../shared/preferences-contract.js";
@@ -9,13 +10,19 @@ import { useBridge } from "../../../lib/bridge-context.js";
 
 const LEGACY_STORAGE_KEY = "bluewave-display-preferences";
 
-function readLegacy(): CampaignPreferences | null {
+function parseLegacy(raw: string): CampaignPreferences | null {
   try {
-    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
-    return raw === null ? null : (JSON.parse(raw) as CampaignPreferences);
+    return decodeCampaignPreferences(JSON.parse(raw));
   } catch {
     return null;
   }
+}
+
+function takeLegacy(): CampaignPreferences | null {
+  const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+  if (raw === null) return null;
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
+  return parseLegacy(raw);
 }
 
 export interface UseDisplayPreferencesReturn {
@@ -34,9 +41,8 @@ export function useDisplayPreferences(sessionId?: string): UseDisplayPreferences
   useEffect(() => {
     if (sessionId === undefined || bridge === undefined || loadedFor.current === sessionId) return;
     loadedFor.current = sessionId;
-    const legacy = readLegacy();
+    const legacy = takeLegacy();
     if (legacy !== null) {
-      localStorage.removeItem(LEGACY_STORAGE_KEY);
       setCampaign(legacy);
       void bridge.preferences.writeCampaign(sessionId, { campaign: legacy });
       return;
