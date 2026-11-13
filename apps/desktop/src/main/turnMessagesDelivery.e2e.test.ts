@@ -62,7 +62,7 @@ describe("ship delivery turn message on a real production month (#623)", () => {
 
     const found: { turn: number; shipId: string; nationId: string | undefined }[] = [];
     for (let turn = 0; turn < DELIVERY_TURNS && found.length === 0; turn++) {
-      const result = (await projectCommandExit(
+      const result = projectCommandExit(
         await runtime.runPromiseExit(
           programFor(resolveTurnProgram)({
             sessionId: "session-delivery",
@@ -70,7 +70,7 @@ describe("ship delivery turn message on a real production month (#623)", () => {
             transportRequestId: `req-${String(turn)}`,
           }),
         ),
-      )) as BridgeResult<ResolveTurnResult>;
+      ) as BridgeResult<ResolveTurnResult>;
       if (result.outcome !== "success" || result.value.status !== "completed") break;
       for (const message of result.value.summary.messages) {
         const ship = message.subjectRefs.find((ref) => ref.type === "ship");
