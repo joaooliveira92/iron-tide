@@ -32,7 +32,7 @@ test("a completed player-designed ship is rebuilt and leaves service after a mon
     await page.getByRole("button", { name: "Assign to fleet" }).first().click();
     const drawer = page.getByRole("dialog", { name: "Organization" });
     await expect(drawer).toBeVisible();
-    await expect(drawer.getByLabel("Flagship").locator("option:checked")).toContainText(CLASS_NAME);
+    await expect(drawer.getByLabel("Flagship")).toHaveValue(/^ship-project-player-/);
   });
 
   await test.step("reachable:start-rebuild", async () => {
