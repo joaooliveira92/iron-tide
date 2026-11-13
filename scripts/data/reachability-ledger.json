@@ -92,6 +92,18 @@
       "decision": null
     },
     {
+      "id": "assign-delivered-ship",
+      "player_verb": "Assign a newly delivered ship to a division from the turn report",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": [],
+      "main_commands": ["inspectDivisionScreen", "submitDivisionCommand"],
+      "renderer_screen": "screens/fleet/organization/FleetOrganizationSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/FleetScreen.render.test.tsx",
+      "decision": null
+    },
+    {
       "id": "set-budget-allocation",
       "player_verb": "Set the budget allocation across spending categories",
       "status": "reachable",
