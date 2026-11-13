@@ -9,7 +9,7 @@ workflow.
 - **Git hooks** (`.githooks/`, installed by `prepare` → `install-hooks.mjs` →
   `core.hooksPath`): `pre-commit` blocks `dev`/`main` commits
   (`check-branch-discipline.mjs`), format-checks staged files
-  (`precommit-staged.mjs`), then `preflight`; `pre-push` adds `lint:effect`; `commit-msg` checks the Conventional-Commit subject
+  (`precommit-staged.mjs`), then `precommit-scope.mjs` (Markdown-only stops; code runs `preflight`); `pre-push` adds `lint:effect`; `commit-msg` checks the Conventional-Commit subject
   (`check-commit-msgs.cjs`; CI re-runs it in `commit-convention.yml`).
 - **`pnpm preflight`** runs `vp run gates:preflight`, the `gate:*` DAG in
   `vite.config.ts`.
