@@ -9,6 +9,7 @@ import { resolveMessage } from "../../../content/uiCatalogue.js";
 import { HeaderToolbar } from "../../../shell/screen-header.js";
 import { MonthReportCard } from "../MonthReportCard.js";
 import { TurnSummaryPanel } from "../TurnSummaryPanel.js";
+import type { EntityLabeler } from "../turn-summary/entity-labels.js";
 
 export interface OverviewHeaderReportsProps {
   readonly reports: readonly MonthlyReportEntry[];
@@ -22,6 +23,7 @@ export interface OverviewHeaderReportsProps {
   readonly onAssignToFleet?: (shipId: string) => void;
   readonly assignableNationId?: string;
   readonly isEntityAvailable: (ref: EntityReferenceDto) => boolean;
+  readonly entityLabel: EntityLabeler;
 }
 
 function ReportChip({
@@ -64,6 +66,7 @@ export function OverviewHeaderReports({
   onAssignToFleet,
   assignableNationId,
   isEntityAvailable,
+  entityLabel,
 }: OverviewHeaderReportsProps) {
   return (
     <HeaderToolbar>
@@ -82,6 +85,7 @@ export function OverviewHeaderReports({
           {...(onAssignToFleet === undefined ? {} : { onAssignToFleet })}
           {...(assignableNationId === undefined ? {} : { assignableNationId })}
           isEntityAvailable={isEntityAvailable}
+          entityLabel={entityLabel}
         />
       </ReportChip>
       <ReportChip

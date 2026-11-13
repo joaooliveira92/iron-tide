@@ -71,6 +71,7 @@ export function OverviewScreen({ sessionId, onNavigate, onAssignToFleet }: Overv
     monthReports,
     turnSummaries,
     turnSummariesLoading,
+    entityLabel,
     turnMessages,
     togglePinned,
     toggleRead,
@@ -104,6 +105,7 @@ export function OverviewScreen({ sessionId, onNavigate, onAssignToFleet }: Overv
       {...(onAssignToFleet === undefined ? {} : { onAssignToFleet })}
       assignableNationId={projection.playerNationId}
       isEntityAvailable={entityAvailability(projection)}
+      entityLabel={entityLabel}
     />
   );
   const nationsPanel = (

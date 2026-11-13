@@ -14,6 +14,8 @@ import {
   type TurnSummaryFilters,
 } from "../turn-summary-format.js";
 
+import { NO_ENTITY_LABELS, type EntityLabeler } from "./entity-labels.js";
+
 const EMPTY_MESSAGES: readonly TurnMessageDto[] = [];
 const ALWAYS_AVAILABLE = () => true;
 const NEVER_HANDLED = () => undefined;
@@ -26,6 +28,7 @@ export interface TurnSummaryInput {
   readonly onToggleRead: (id: string) => void;
   readonly onOpenEntity?: (ref: EntityReferenceDto) => void;
   readonly isEntityAvailable?: (ref: EntityReferenceDto) => boolean;
+  readonly entityLabel?: EntityLabeler;
   readonly onAssignToFleet?: (shipId: string) => void;
   readonly assignableNationId?: string;
 }
@@ -60,6 +63,7 @@ export interface TurnSummaryMeta {
   readonly isEmpty: boolean;
   readonly noMatch: boolean;
   readonly isEntityAvailable: (ref: EntityReferenceDto) => boolean;
+  readonly entityLabel: EntityLabeler;
   readonly assignableNationId: string | undefined;
 }
 
@@ -124,6 +128,7 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
       isEmpty: !input.loading && input.summaries.length === 0,
       noMatch: !input.loading && messages.length > 0 && visible.length === 0,
       isEntityAvailable: input.isEntityAvailable ?? ALWAYS_AVAILABLE,
+      entityLabel: input.entityLabel ?? NO_ENTITY_LABELS,
       assignableNationId: input.assignableNationId,
     }),
     [
@@ -137,6 +142,7 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
       input.summaries,
       input.loading,
       input.isEntityAvailable,
+      input.entityLabel,
       input.assignableNationId,
     ],
   );
