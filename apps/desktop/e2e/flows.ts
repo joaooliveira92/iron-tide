@@ -68,6 +68,18 @@ export async function startNewCampaign(page: Page, opts: NewCampaignOptions = {}
   }
 }
 
+async function answerDilemmas(page: Page, calendar: Locator, before: string): Promise<void> {
+  const dilemma = page.getByRole("alertdialog");
+  for (let answered = 0; answered < 8; answered++) {
+    await expect
+      .poll(async () => (await dilemma.isVisible()) || (await calendar.textContent()) !== before)
+      .toBe(true);
+    if (!(await dilemma.isVisible())) return;
+    await dilemma.getByRole("button", { name: "Choose" }).first().click();
+    await dilemma.waitFor({ state: "hidden" });
+  }
+}
+
 export async function advanceMonths(page: Page, count: number): Promise<void> {
   const calendar = page.getByText(/^Bluewave — [A-Za-z]+ \d{4}$/).first();
   for (let i = 0; i < count; i++) {
@@ -76,6 +88,7 @@ export async function advanceMonths(page: Page, count: number): Promise<void> {
     await page.getByRole("button", { name: /^advance month$/i }).click();
     await page.getByRole("button", { name: /^advance to /i }).click();
     await page.getByRole("dialog", { name: "Pre-turn review" }).waitFor({ state: "hidden" });
+    await answerDilemmas(page, calendar, before!);
     await expect(calendar).not.toHaveText(before!);
   }
 }
