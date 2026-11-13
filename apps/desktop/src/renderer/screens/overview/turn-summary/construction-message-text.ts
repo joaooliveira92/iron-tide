@@ -10,6 +10,8 @@ import {
 export const CONSTRUCTION_DELAYED_BODY_KEY = "messages.construction.delayed.body";
 export const CONSTRUCTION_OVERRUN_BODY_KEY = "messages.construction.overrun.body";
 
+export const CONSTRUCTION_DELIVERED_TITLE_KEY = "messages.construction.delivered.title";
+
 type Interpolation = Readonly<Record<string, string | number | boolean>>;
 
 export function constructionMessageBody(

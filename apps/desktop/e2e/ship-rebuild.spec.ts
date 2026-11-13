@@ -2,6 +2,7 @@ import { test, expect, openCampaign } from "./fixtures.js";
 import {
   advanceMonths,
   advanceUntilShipLaunches,
+  navigateTo,
   openDesignSection,
   openShipbuilding,
   orderDesignFromCatalog,
@@ -24,6 +25,17 @@ test("a completed player-designed ship is rebuilt and leaves service after a mon
   await advanceMonths(page, 4);
   await orderDesignFromCatalog(page, CLASS_NAME);
   await advanceUntilShipLaunches(page, CLASS_NAME);
+
+  await test.step("reachable:assign-delivered-ship", async () => {
+    await navigateTo(page, "Overview");
+    await page.getByTestId("home-turn-summary").click();
+    await page.getByRole("button", { name: "Assign to fleet" }).first().click();
+    const drawer = page.getByRole("dialog", { name: "Organization" });
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByRole("combobox", { name: "Flagship" })).toHaveValue(
+      /^ship-project-player-/,
+    );
+  });
 
   await test.step("reachable:start-rebuild", async () => {
     const rebuildWorkspace = await openShipbuilding(page);

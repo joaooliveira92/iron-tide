@@ -1,5 +1,6 @@
 import { lazy, useCallback } from "react";
 import { useCampaignShellActions, useCampaignShellContext } from "./CampaignShellContext.js";
+import { useFleetFocus } from "./fleet-focus.js";
 import { OptionsScreen } from "../screens/options/OptionsScreen.js";
 import type {
   CampaignScreen,
@@ -78,7 +79,21 @@ const TacticalSandboxScreen = DEBUG_MODE
 
 function OverviewRoute({ sessionId }: CampaignScreenRouteProps) {
   const actions = useCampaignShellActions();
-  return <OverviewScreen sessionId={sessionId} onNavigate={actions.selectScreen} />;
+  const { focusShip } = useFleetFocus();
+  const onAssignToFleet = useCallback(
+    (shipId: string) => {
+      focusShip(shipId);
+      actions.selectScreen("fleet");
+    },
+    [focusShip, actions.selectScreen],
+  );
+  return (
+    <OverviewScreen
+      sessionId={sessionId}
+      onNavigate={actions.selectScreen}
+      onAssignToFleet={onAssignToFleet}
+    />
+  );
 }
 
 function ConstructionRoute({ sessionId }: CampaignScreenRouteProps) {
@@ -90,7 +105,10 @@ function ShipDesignRoute({ sessionId }: CampaignScreenRouteProps) {
 }
 
 function FleetRoute({ sessionId }: CampaignScreenRouteProps) {
-  return <FleetScreen sessionId={sessionId} />;
+  const { focusShipId, clearFocus } = useFleetFocus();
+  return (
+    <FleetScreen sessionId={sessionId} focusShipId={focusShipId} onFocusHandled={clearFocus} />
+  );
 }
 
 function SimulationRoute({ sessionId }: CampaignScreenRouteProps) {

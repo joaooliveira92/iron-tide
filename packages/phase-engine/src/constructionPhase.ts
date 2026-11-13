@@ -118,7 +118,7 @@ function applyConstructionToNation(ctx: PhaseContext, nationId: string, nation: 
       );
       hasChanges = true;
 
-      const ensured = ensureNationFleet(updatedFleets, nationId, nation);
+      const ensured = ensureDeliveryFleet(updatedFleets, nationId, nation);
       updatedFleets = ensured.fleets;
       const newShip = buildCompletedShip(ctx, project, ensured.fleet);
       updatedFleets = updatedFleets.map((f) =>
@@ -235,19 +235,39 @@ function monthsInBuild(startedAt: string, campaignMonth: string): number {
   return Math.max(0, monthOrdinal(campaignMonth) - monthOrdinal(startedAt) + 1);
 }
 
-function ensureNationFleet(
+const NEWLY_DELIVERED_FLEET_NAME = "Newly delivered";
+
+function buildPortAreaId(fleets: FleetState[], nationId: string, nation: NationState): string {
+  return (
+    nation["homeAreaId"] ??
+    fleets.find((f) => f["nationId"] === nationId)?.["locationAreaId"] ??
+    "unknown"
+  );
+}
+
+function ensureDeliveryFleet(
   fleets: FleetState[],
   nationId: string,
   nation: NationState,
 ): { fleet: FleetState; fleets: FleetState[] } {
-  const existing = fleets.find((f) => f["nationId"] === nationId);
+  const areaId = buildPortAreaId(fleets, nationId, nation);
+  const baseId = `fleet-${nationId}-delivered-${areaId}`;
+  const existing = fleets.find(
+    (f) =>
+      f["nationId"] === nationId &&
+      f["name"] === NEWLY_DELIVERED_FLEET_NAME &&
+      f["locationAreaId"] === areaId,
+  );
   if (existing) return { fleet: existing, fleets };
+  const taken = new Set(fleets.map((f) => f["id"]));
+  let id = baseId;
+  for (let ordinal = 2; taken.has(id); ordinal += 1) id = `${baseId}-${String(ordinal)}`;
   const newFleet: FleetState = {
-    id: `fleet-${nationId}`,
+    id,
     nationId,
-    name: `${nation["name"]} Fleet`,
+    name: NEWLY_DELIVERED_FLEET_NAME,
     ships: [],
-    locationAreaId: "unknown",
+    locationAreaId: areaId,
   };
   return { fleet: newFleet, fleets: [...fleets, newFleet] };
 }

@@ -15,6 +15,7 @@ export interface FleetOrganizationViewProps {
   readonly onRetry: () => void;
   readonly onReload: () => void;
   readonly send: (command: DivisionCommandBody) => Promise<CommandOutcome>;
+  readonly preferredFlagshipId?: string;
 }
 
 export function FleetOrganizationView({
@@ -25,6 +26,7 @@ export function FleetOrganizationView({
   onRetry,
   onReload,
   send,
+  preferredFlagshipId,
 }: FleetOrganizationViewProps) {
   return (
     <section className="space-y-4" data-testid="fleet-organization">
@@ -86,12 +88,23 @@ export function FleetOrganizationView({
         </div>
       )}
 
-      <CreateDivisionForm state={state} busy={busy} send={send} />
+      <CreateDivisionForm
+        state={state}
+        busy={busy}
+        send={send}
+        {...(preferredFlagshipId === undefined ? {} : { preferredFlagshipId })}
+      />
     </section>
   );
 }
 
-export function FleetOrganizationSection({ sessionId }: { readonly sessionId: string }) {
+export function FleetOrganizationSection({
+  sessionId,
+  preferredFlagshipId,
+}: {
+  readonly sessionId: string;
+  readonly preferredFlagshipId?: string;
+}) {
   const organization = useDivisionOrganization(sessionId);
   return (
     <FleetOrganizationView
@@ -102,6 +115,7 @@ export function FleetOrganizationSection({ sessionId }: { readonly sessionId: st
       onRetry={organization.request.retry}
       onReload={() => void organization.loadScreen()}
       send={organization.send}
+      {...(preferredFlagshipId === undefined ? {} : { preferredFlagshipId })}
     />
   );
 }

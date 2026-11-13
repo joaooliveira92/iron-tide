@@ -1,4 +1,4 @@
-import type { CampaignSnapshot, ConstructionProject } from "@bluewave/campaign";
+import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
@@ -41,6 +41,77 @@ function snapshotWith(project: ConstructionProject): CampaignSnapshot {
 
 const run = (snapshot: CampaignSnapshot) =>
   new MonthExecutor().execute(snapshot, [], "ship-delivered", new DiagnosticCollector());
+
+const withNation = (snapshot: CampaignSnapshot, patch: Partial<NationState>): CampaignSnapshot => {
+  const nation = snapshot.nations.get(ATTACKER_NATION)!;
+  return {
+    ...snapshot,
+    nations: new Map([...snapshot.nations, [ATTACKER_NATION, { ...nation, ...patch }]]),
+  };
+};
+
+const fleetsOf = (snapshot: CampaignSnapshot) => snapshot.nations.get(ATTACKER_NATION)!.fleets;
+const newlyDelivered = (snapshot: CampaignSnapshot) =>
+  fleetsOf(snapshot).filter((f) => f.name === "Newly delivered");
+const secondProject = newConstruction({
+  id: "con-batch-2",
+  shipName: "HMS Second",
+  batchOrdinal: 2,
+});
+
+describe("ShipDelivered placement", () => {
+  it("lands the ship in a Newly delivered fleet at the home port", () => {
+    const result = run(withNation(snapshotWith(newConstruction()), { homeAreaId: "a-home" }));
+    const delivered = fleetsOf(result.finalSnapshot).find((f) =>
+      f.ships.some((s) => s.id === "ship-con-batch-1"),
+    )!;
+    expect(delivered).toMatchObject({
+      id: `fleet-${ATTACKER_NATION}-delivered-a-home`,
+      nationId: ATTACKER_NATION,
+      name: "Newly delivered",
+      locationAreaId: "a-home",
+    });
+    expect(delivered.ships.map((s) => s.id)).toEqual(["ship-con-batch-1"]);
+    expect(delivered.ships[0]!.locationAreaId).toBe("a-home");
+    const defaultFleet = fleetsOf(result.finalSnapshot).find(
+      (f) => f.id === `fleet-${ATTACKER_NATION}`,
+    )!;
+    expect(defaultFleet.ships.some((s) => s.id === "ship-con-batch-1")).toBe(false);
+  });
+
+  it("falls back to the existing fleet's area when the nation has no home area", () => {
+    const base = snapshotWith(newConstruction());
+    const area = fleetsOf(base)[0]!.locationAreaId;
+    const [delivered] = newlyDelivered(run(base).finalSnapshot);
+    expect(delivered!.locationAreaId).toBe(area);
+    expect(delivered!.id).toBe(`fleet-${ATTACKER_NATION}-delivered-${area}`);
+  });
+
+  it("reuses the Newly delivered fleet for a later delivery at the same port", () => {
+    const first = run(withNation(snapshotWith(newConstruction()), { homeAreaId: "a-home" }));
+    const again = withNation(first.finalSnapshot, { constructionProjects: [secondProject] });
+    const fleets = newlyDelivered(run(again).finalSnapshot);
+    expect(fleets).toHaveLength(1);
+    expect(fleets[0]!.ships.map((s) => s.id)).toEqual(["ship-con-batch-1", "ship-con-batch-2"]);
+  });
+
+  it("opens a second Newly delivered fleet when the first has moved away", () => {
+    const first = run(withNation(snapshotWith(newConstruction()), { homeAreaId: "a-home" }));
+    const moved = fleetsOf(first.finalSnapshot).map((f) =>
+      f.name === "Newly delivered" ? { ...f, locationAreaId: "a-1" } : f,
+    );
+    const again = withNation(first.finalSnapshot, {
+      fleets: moved,
+      constructionProjects: [secondProject],
+    });
+    expect(
+      newlyDelivered(run(again).finalSnapshot).map((f) => [f.id, f.locationAreaId, f.ships.length]),
+    ).toEqual([
+      [`fleet-${ATTACKER_NATION}-delivered-a-home`, "a-1", 1],
+      [`fleet-${ATTACKER_NATION}-delivered-a-home-2`, "a-home", 1],
+    ]);
+  });
+});
 
 describe("ShipDelivered", () => {
   it("is appended exactly once when a new construction project completes", () => {
