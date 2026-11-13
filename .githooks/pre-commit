@@ -10,9 +10,15 @@ if ! command -v node >/dev/null 2>&1 || ! command -v pnpm >/dev/null 2>&1; then
 fi
 # Fast gates before a commit. Refuse a direct commit on a protected
 # integration branch (`dev`/`main`) first, then format-check the
-# staged files so unformatted code cannot enter history, then run the preflight
-# gate set. Bypass with `git commit --no-verify` only when justified; CI re-runs
-# everything.
+# staged files so unformatted code cannot enter history. A Markdown-only staged
+# set stops here; any code change also needs a supported Node and then runs the
+# preflight gate set. Bypass with `git commit --no-verify` only when justified;
+# pre-push and CI re-run everything.
 node scripts/check-branch-discipline.mjs || exit 1
 node scripts/precommit-staged.mjs || exit 1
+scope=$(node scripts/precommit-scope.mjs) || exit 1
+if [ "$scope" = "docs" ]; then
+  echo "pre-commit: docs-only change; code gates skipped (pre-push and CI run preflight)"
+  exit 0
+fi
 exec pnpm preflight:quiet
