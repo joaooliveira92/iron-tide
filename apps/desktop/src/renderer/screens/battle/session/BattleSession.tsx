@@ -1,6 +1,6 @@
 import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { BluewaveError } from "@bluewave/contracts";
-import { createContext, use, useMemo, type ReactNode } from "react";
+import { createContext, use, useCallback, useMemo, type ReactNode } from "react";
 import type { PlayerBattleResultDto } from "../../../../shared/player-battle-contract.js";
 import type { DivisionOrder, DivisionOrders } from "../../../../shared/player-battle-orders.js";
 import type { AppPreferences } from "../../../../shared/preferences-contract.js";
@@ -120,6 +120,13 @@ export function BattleSessionProvider({
     onStep: () => advance("minute"),
   });
 
+  const { pause } = clock;
+  const step = useCallback(() => advance("minute"), [advance]);
+  const fightToEnd = useCallback(() => {
+    pause();
+    advance("to_end");
+  }, [pause, advance]);
+
   const entries = useMemo(() => (view === null ? [] : projectCombatLog(view)), [view]);
   const markers = useMemo(
     () => (view === null ? { firing: [], impacts: [] } : transientMarkers(entries, view.minute)),
@@ -160,11 +167,8 @@ export function BattleSessionProvider({
     actions: {
       toggleRunning: clock.toggleRunning,
       setScale: clock.setScale,
-      step: () => advance("minute"),
-      fightToEnd: () => {
-        clock.pause();
-        advance("to_end");
-      },
+      step,
+      fightToEnd,
       zoomIn: camera.zoomIn,
       zoomOut: camera.zoomOut,
       fit: camera.fit,

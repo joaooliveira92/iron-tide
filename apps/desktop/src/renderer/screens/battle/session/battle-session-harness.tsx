@@ -76,9 +76,13 @@ export const BASE_VIEW: PlayerBattleView = {
   log: [],
 };
 
-export function mountSession(children: ReactNode, advanced: PlayerBattleView = BASE_VIEW) {
+export function mountSession(
+  children: ReactNode,
+  advanced: PlayerBattleView = BASE_VIEW,
+  initial: PlayerBattleView = BASE_VIEW,
+) {
   const execute = vi.fn<CampaignCommandClient["execute"]>((command) => {
-    const view = command === "advancePlayerBattle" ? advanced : BASE_VIEW;
+    const view = command === "advancePlayerBattle" ? advanced : initial;
     return Promise.resolve({
       outcome: "success",
       value: { view, sessionHash: "h", resumed: false, lastOrders: [], result: null },

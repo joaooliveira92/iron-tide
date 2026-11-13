@@ -1,5 +1,5 @@
 import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import {
   MAX_SPEED_KNOTS,
   MIN_SPEED_KNOTS,
@@ -36,7 +36,7 @@ const courseTextFor = (headingDeg: number | undefined): string =>
 const speedTextFor = (speedKnots: number | undefined): string =>
   speedKnots === undefined ? "" : String(speedKnots);
 
-export function UnitCommandPanel(props: UnitCommandPanelProps) {
+export const UnitCommandPanel = memo(function UnitCommandPanel(props: UnitCommandPanelProps) {
   const { view, selectedShipId, orderFor, acceptedOrders } = props;
   const ship = selectedShip(view, selectedShipId);
   const divisionId = ship === null ? null : divisionOfShip(view, ship.shipId);
@@ -232,4 +232,4 @@ export function UnitCommandPanel(props: UnitCommandPanelProps) {
       )}
     </section>
   );
-}
+});

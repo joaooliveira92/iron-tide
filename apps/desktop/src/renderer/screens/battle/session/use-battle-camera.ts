@@ -59,29 +59,24 @@ export function useBattleCamera(
     setCamera(next);
   }, []);
 
-  const zoomBy = (factor: number): void => {
+  const zoomIn = useCallback((): void => {
     const centre: WorldPoint = [viewport.width / 2, viewport.height / 2];
-    setCamera((current) => zoomCameraAt(current, viewport, factor, centre));
-  };
+    setCamera((current) => zoomCameraAt(current, viewport, PROVISIONAL_ZOOM_STEP, centre));
+  }, [viewport]);
 
-  const fit = (): void => {
+  const zoomOut = useCallback((): void => {
+    const centre: WorldPoint = [viewport.width / 2, viewport.height / 2];
+    setCamera((current) => zoomCameraAt(current, viewport, 1 / PROVISIONAL_ZOOM_STEP, centre));
+  }, [viewport]);
+
+  const fit = useCallback((): void => {
     if (view === null) return;
     setCamera((current) => fitCamera(knownPositions(view), viewport, current));
-  };
+  }, [view, viewport]);
 
-  const focus = (): void => {
+  const focus = useCallback((): void => {
     if (focusPoint !== null) setCamera((current) => centreCameraOn(current, focusPoint));
-  };
+  }, [focusPoint]);
 
-  return {
-    camera,
-    viewport,
-    trails,
-    changeCamera,
-    setViewport,
-    zoomIn: () => zoomBy(PROVISIONAL_ZOOM_STEP),
-    zoomOut: () => zoomBy(1 / PROVISIONAL_ZOOM_STEP),
-    fit,
-    focus,
-  };
+  return { camera, viewport, trails, changeCamera, setViewport, zoomIn, zoomOut, fit, focus };
 }

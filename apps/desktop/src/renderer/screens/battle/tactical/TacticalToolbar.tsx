@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { translate } from "../../../lib/strings.js";
 import { Button } from "../../../components/ui/button.js";
 import type { MapOverlays, NameFilter } from "./tactical-map-types.js";
@@ -25,7 +26,7 @@ export interface TacticalToolbarProps {
 const OVERLAY_KEYS = ["tracks", "rings", "fire"] as const;
 const NAME_FILTERS = ["all", "selected", "none"] as const;
 
-export function TacticalToolbar(props: TacticalToolbarProps) {
+export const TacticalToolbar = memo(function TacticalToolbar(props: TacticalToolbarProps) {
   const { running, scale, busy, ended } = props;
   return (
     <div
@@ -160,4 +161,4 @@ export function TacticalToolbar(props: TacticalToolbarProps) {
       </fieldset>
     </div>
   );
-}
+});

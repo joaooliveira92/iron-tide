@@ -1,5 +1,5 @@
 import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { WorldPoint } from "../tactical/tactical-geometry.js";
 import type {
   CoursePreview,
@@ -31,6 +31,7 @@ export function useBattleSelection(view: PlayerBattleView | null): BattleSelecti
   const [overlays, setOverlays] = useState<MapOverlays>(INITIAL_OVERLAYS);
 
   const selected = view === null ? null : selectedShip(view, selectedShipId);
+  const selectedPoint = useMemo(() => (selected === null ? null : shipPoint(selected)), [selected]);
   const preview: CoursePreview | null =
     selected !== null && coursePreview !== null
       ? { shipId: selected.shipId, headingDeg: coursePreview }
@@ -55,7 +56,7 @@ export function useBattleSelection(view: PlayerBattleView | null): BattleSelecti
   return {
     selectedShipId,
     selected,
-    selectedPoint: selected === null ? null : shipPoint(selected),
+    selectedPoint,
     selectedDivisionId: selected?.divisionId ?? null,
     preview,
     overlays,
