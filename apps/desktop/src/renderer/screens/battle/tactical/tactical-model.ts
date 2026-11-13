@@ -15,14 +15,18 @@ export type Trails = Readonly<Record<string, readonly WorldPoint[]>>;
 
 export function appendTrails(trails: Trails, view: PlayerBattleView): Trails {
   const next: Record<string, readonly WorldPoint[]> = {};
+  let changed = false;
   for (const ship of view.ships) {
     if (ship.position === null) continue;
-    const history = trails[ship.shipId] ?? [];
+    const previous = trails[ship.shipId];
+    const history = previous ?? [];
     const last = history.at(-1);
     const point: WorldPoint = [ship.position[0], ship.position[1]];
     const moved = last === undefined || last[0] !== point[0] || last[1] !== point[1];
+    if (moved || previous === undefined) changed = true;
     next[ship.shipId] = moved ? [...history, point].slice(-PROVISIONAL_TRAIL_LENGTH) : history;
   }
+  if (!changed && Object.keys(next).length === Object.keys(trails).length) return trails;
   return next;
 }
 

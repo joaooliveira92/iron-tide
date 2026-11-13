@@ -32,13 +32,20 @@ export function useBattleCamera(
 ): BattleCamera {
   const [camera, setCamera] = useState<TacticalCamera>(INITIAL_CAMERA);
   const [viewport, setViewport] = useState<TacticalViewport>(INITIAL_VIEWPORT);
-  const [trails, setTrails] = useState<Trails>({});
+  const [trailed, setTrailed] = useState<{
+    readonly view: PlayerBattleView | null;
+    readonly trails: Trails;
+  }>({ view: null, trails: {} });
   const fittedKey = useRef("");
   const userMoved = useRef(false);
 
+  if (view !== null && trailed.view !== view) {
+    setTrailed({ view, trails: appendTrails(trailed.trails, view) });
+  }
+  const trails = trailed.trails;
+
   useEffect(() => {
     if (view === null) return;
-    setTrails((previous) => appendTrails(previous, view));
     const points = knownPositions(view);
     const key = `${String(points.length)}:${String(view.ended)}`;
     if (!userMoved.current && key !== fittedKey.current) {
