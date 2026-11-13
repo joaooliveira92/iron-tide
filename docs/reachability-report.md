@@ -4,7 +4,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 
 | Status | Rows |
 | --- | --- |
-| reachable | 32 |
+| reachable | 33 |
 | dormant-by-decision | 19 |
 | internal | 16 |
 
@@ -19,6 +19,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | fund-special-training | Fund up to two special-training subjects | `screens/fleet/training/FleetTrainingSection.tsx` | `apps/desktop/src/renderer/screens/fleet/training/FleetTrainingView.test.tsx` |
 | hold-fleet-exercise | Hold the annual fleet exercise with chosen ships | `screens/fleet/exercise/FleetExerciseSection.tsx` | `apps/desktop/src/renderer/screens/fleet/exercise/FleetExerciseView.test.tsx` |
 | organise-divisions | Create, change and dissolve divisions and pick flagships | `screens/fleet/organization/FleetOrganizationSection.tsx` | `apps/desktop/src/main/commands/divisionCommands.test.ts` |
+| assign-delivered-ship | Assign a newly delivered ship to a division from the turn report | `screens/fleet/organization/FleetOrganizationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/FleetScreen.render.test.tsx` |
 | set-budget-allocation | Set the budget allocation across spending categories | `screens/treasury/TreasuryScreen.tsx` | `apps/desktop/src/renderer/screens/treasury/components/BudgetPolicyPanel.test.tsx` |
 | submit-design | Design and submit a ship | `components/design-workspace/panels/SubmitPanel.tsx` | `apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx` |
 | revise-project | Revise a ship project that is already ordered | `components/design-workspace/panels/RevisionPanel.tsx` | `apps/desktop/src/renderer/screens/shipbuilding/ShipDesignRevision.test.tsx` |

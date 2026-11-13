@@ -29,6 +29,7 @@ import { useBackground } from "./BackgroundContext.js";
 import { prioritiesStateFromReads } from "./campaign-reads.js";
 import { CampaignUnavailableView } from "./CampaignUnavailableView.js";
 import { CampaignShellProvider, useCampaignShellContext } from "./CampaignShellContext.js";
+import { FleetFocusProvider } from "./fleet-focus.js";
 import { GuidedInspectionOverlay } from "./GuidedInspectionOverlay.js";
 import { UiCatalogueGate } from "../content/UiCatalogueGate.js";
 import { CampaignInterruptions } from "./interruptions/CampaignInterruptions.js";
@@ -297,7 +298,9 @@ export function App({
         <UiCatalogueGate>
           <CampaignShellProvider bridge={bridge}>
             <CampaignWorldMap>
-              <CampaignShellApplication bridge={bridge} initialWindowState={initialWindowState} />
+              <FleetFocusProvider>
+                <CampaignShellApplication bridge={bridge} initialWindowState={initialWindowState} />
+              </FleetFocusProvider>
             </CampaignWorldMap>
           </CampaignShellProvider>
         </UiCatalogueGate>

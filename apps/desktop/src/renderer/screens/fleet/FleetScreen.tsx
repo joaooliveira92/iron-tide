@@ -1,10 +1,18 @@
-import { useCallback, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { DEBUG_MODE } from "../../shell/debug-flag.js";
 import { Ship } from "lucide-react";
 import { PageHeader } from "../../components/shared/PageHeader.js";
 import { Badge } from "../../components/ui/badge.js";
 import {
   buildAreaOverview,
+  divisionIdForShip,
   divisionPickerRows,
   movementCommandRows,
   orderStatusView,
@@ -38,11 +46,25 @@ import { COMMAND_OVERLAY_MIN_WIDTH } from "../overview/hooks/useOverviewModel.js
 import { LoadErrorCard } from "./components/LoadErrorCard.js";
 import { LoadingState } from "./components/LoadingState.js";
 
-function FleetScreen({ sessionId }: { readonly sessionId: string }) {
+interface FleetFocusProps {
+  readonly focusShipId?: string | null;
+  readonly onFocusHandled?: () => void;
+}
+
+function FleetScreen({
+  sessionId,
+  focusShipId = null,
+  onFocusHandled,
+}: { readonly sessionId: string } & FleetFocusProps) {
   const load = useFleetInspectionCache(sessionId);
   return (
     <FleetInspectionContext value={load}>
-      <FleetScreenContent sessionId={sessionId} load={load} />
+      <FleetScreenContent
+        sessionId={sessionId}
+        load={load}
+        focusShipId={focusShipId}
+        {...(onFocusHandled === undefined ? {} : { onFocusHandled })}
+      />
     </FleetInspectionContext>
   );
 }
@@ -50,9 +72,13 @@ function FleetScreen({ sessionId }: { readonly sessionId: string }) {
 function FleetScreenContent({
   sessionId,
   load,
+  focusShipId,
+  onFocusHandled,
 }: {
   readonly sessionId: string;
   readonly load: LoadFleetInspection;
+  readonly focusShipId: string | null;
+  readonly onFocusHandled?: () => void;
 }) {
   const {
     state,
@@ -72,6 +98,17 @@ function FleetScreenContent({
   } = useFleetScreen(sessionId, load);
   const wide = useMinWidth(COMMAND_OVERLAY_MIN_WIDTH);
   const [department, setDepartment] = useState<FleetDepartment | null>(null);
+  const [preferredFlagshipId, setPreferredFlagshipId] = useState<string | null>(null);
+
+  const loadedForFocus = state.playerNationId !== null;
+  useEffect(() => {
+    if (focusShipId === null || !loadedForFocus) return;
+    const divisionId = divisionIdForShip(focusShipId, state.divisions);
+    if (divisionId !== null) setSelectedDivisionId(divisionId);
+    setPreferredFlagshipId(focusShipId);
+    setDepartment("organization");
+    onFocusHandled?.();
+  }, [focusShipId, loadedForFocus, state.divisions, setSelectedDivisionId, onFocusHandled]);
 
   const areaNameMap = useMemo(() => new Map(state.areas.map((a) => [a.id, a.name])), [state.areas]);
   const divisionNameMap = useMemo(
@@ -214,7 +251,13 @@ function FleetScreenContent({
   );
 
   const panels: Readonly<Record<FleetDepartment, ReactNode>> = {
-    organization: <FleetOrganizationSection sessionId={sessionId} />,
+    organization: (
+      <FleetOrganizationSection
+        key={preferredFlagshipId ?? "none"}
+        sessionId={sessionId}
+        {...(preferredFlagshipId === null ? {} : { preferredFlagshipId })}
+      />
+    ),
     station: <FleetStationSection sessionId={sessionId} />,
     training: <FleetTrainingSection sessionId={sessionId} />,
     exercises: <FleetExerciseSection sessionId={sessionId} />,

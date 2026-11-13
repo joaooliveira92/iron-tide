@@ -1,5 +1,5 @@
 /* @vitest-environment jsdom */
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { Screen } from "./campaign-screen-registry.js";
 
@@ -40,15 +40,22 @@ vi.mock("../screens/overview/OverviewScreen.js", async () => {
     OverviewScreen: ({
       sessionId,
       onNavigate,
+      onAssignToFleet,
     }: {
       sessionId: string;
       onNavigate: (screen: Screen) => void;
+      onAssignToFleet: (shipId: string) => void;
     }) =>
       React.createElement(
         "section",
         { "data-testid": "overview-screen" },
         React.createElement("span", null, sessionId),
         React.createElement("button", { onClick: () => onNavigate("fleet") }, "Open fleet"),
+        React.createElement(
+          "button",
+          { onClick: () => onAssignToFleet("ship-con-1") },
+          "Assign delivered ship",
+        ),
       ),
   };
 });
@@ -62,8 +69,22 @@ vi.mock("../screens/construction/ConstructionScreen.js", async () => {
 vi.mock("../screens/fleet/FleetScreen.js", async () => {
   const React = await import("react");
   return {
-    FleetScreen: ({ sessionId }: { sessionId: string }) =>
-      React.createElement("section", { "data-testid": "fleet-screen" }, sessionId),
+    FleetScreen: ({
+      sessionId,
+      focusShipId,
+      onFocusHandled,
+    }: {
+      sessionId: string;
+      focusShipId: string | null;
+      onFocusHandled: () => void;
+    }) =>
+      React.createElement(
+        "section",
+        { "data-testid": "fleet-screen" },
+        sessionId,
+        React.createElement("output", { "data-testid": "fleet-focus" }, focusShipId ?? "none"),
+        React.createElement("button", { onClick: onFocusHandled }, "Handle focus"),
+      ),
   };
 });
 vi.mock("../screens/simulation/SimulationScreen.js", async () => {
@@ -160,9 +181,18 @@ import {
   CAMPAIGN_SCREEN_REGISTRY,
   CAMPAIGN_SCREEN_SEARCH_TARGETS,
   CAMPAIGN_SCREENS,
-  CampaignScreenOutlet,
+  CampaignScreenOutlet as RoutedOutlet,
   SETTINGS_SCREENS,
 } from "./campaign-screen-registry.js";
+import { FleetFocusProvider } from "./fleet-focus.js";
+
+function CampaignScreenOutlet({ screen }: { readonly screen: Screen }) {
+  return (
+    <FleetFocusProvider>
+      <RoutedOutlet screen={screen} />
+    </FleetFocusProvider>
+  );
+}
 
 describe("CampaignScreenOutlet", () => {
   beforeEach(() => {
@@ -205,6 +235,16 @@ describe("CampaignScreenOutlet", () => {
     render(<CampaignScreenOutlet screen="overview" />);
     (await screen.findByRole("button", { name: "Open fleet" })).click();
     expect(shell.actions.selectScreen).toHaveBeenCalledWith("fleet");
+  });
+
+  it("carries an assigned delivered ship from the overview to the fleet route until handled", async () => {
+    const view = render(<CampaignScreenOutlet screen="overview" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Assign delivered ship" }));
+    expect(shell.actions.selectScreen).toHaveBeenCalledWith("fleet");
+    view.rerender(<CampaignScreenOutlet screen="fleet" />);
+    expect((await screen.findByTestId("fleet-focus")).textContent).toBe("ship-con-1");
+    fireEvent.click(screen.getByRole("button", { name: "Handle focus" }));
+    expect(screen.getByTestId("fleet-focus").textContent).toBe("none");
   });
 
   it("connects simulation primary action registration", async () => {

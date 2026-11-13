@@ -3,6 +3,7 @@ import type { FleetScreenProjection } from "../../../shared/fleet-contract.js";
 import type { FleetScreenState } from "./fleet-screen-state.js";
 import {
   acceptMovementCommand,
+  divisionIdForShip,
   divisionPickerRows,
   initialFleetScreenState,
   movementCommandRows,
@@ -264,6 +265,21 @@ describe("orderStatusView", () => {
       routeFromName: null,
       routeToName: null,
     });
+  });
+});
+
+describe("divisionIdForShip", () => {
+  const divisions = [
+    { divisionId: "d1", fleetName: "One", areaId: "a", ships: [{ shipId: "s1", name: "A" }] },
+    { divisionId: "d2", fleetName: "Two", areaId: "a", ships: [{ shipId: "s2", name: "B" }] },
+  ];
+
+  it("finds the fleet that holds the ship", () => {
+    expect(divisionIdForShip("s2", divisions)).toBe("d2");
+  });
+
+  it("is null for an unknown ship", () => {
+    expect(divisionIdForShip("s9", divisions)).toBeNull();
   });
 });
 
