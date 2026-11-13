@@ -66,4 +66,21 @@ describe("useDisplayPreferences campaign scope (U-2 ticket 05)", () => {
       expect(stub.currentCampaign(SESSION).campaign.showSupplyOverlay).toBe(true),
     );
   });
+
+  it.each([
+    ["malformed JSON", "{not json"],
+    ["a wrong-shaped object", JSON.stringify({ showSupplyOverlay: "yes", extra: 1 })],
+    ["a partial object", JSON.stringify({ showSupplyOverlay: true })],
+    ["a non-object value", JSON.stringify([true, false])],
+  ])("discards %s in the legacy key without writing the sidecar", async (_label, raw) => {
+    localStorage.setItem(LEGACY_KEY, raw);
+    const stub = createPreferencesBridgeStub();
+    const { result } = renderHook(() => useDisplayPreferences(SESSION), {
+      wrapper: wrapper(stub),
+    });
+    await waitFor(() => expect(localStorage.getItem(LEGACY_KEY)).toBeNull());
+    await waitFor(() => expect(result.current.displayPrefs.confirmBeforeTurn).toBe(true));
+    expect(stub.campaignWrites).toHaveLength(0);
+    expect(result.current.displayPrefs.showSupplyOverlay).toBe(false);
+  });
 });
