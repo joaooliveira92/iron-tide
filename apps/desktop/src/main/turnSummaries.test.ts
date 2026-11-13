@@ -8,7 +8,11 @@ import { SaveStore } from "@bluewave/persistence";
 import { ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import type { BridgeResult } from "../shared/bridge-contract.js";
-import type { ReadTurnSummariesResult, TurnSummaryEntry } from "../shared/turn-message-contract.js";
+import type {
+  ReadTurnSummariesResult,
+  TurnMessageDto,
+  TurnSummaryEntry,
+} from "../shared/turn-message-contract.js";
 import {
   clearCampaignSessionsForTest,
   getCampaignSession,
@@ -20,6 +24,7 @@ import { projectCommandExit } from "./runtime/bridgeResult.js";
 import { programFor, type AnyCommandHandler } from "./commandProgramFixtures.js";
 import { desktopMainLayer } from "./runtime/desktopMainLayer.js";
 import { toSaveableState } from "./saveHelpers.js";
+import { technologyNames } from "./technologyNames.js";
 import {
   TURN_SUMMARIES_FILENAME,
   TURN_SUMMARIES_LIMIT,
@@ -150,6 +155,61 @@ describe("turn-summaries sidecar", () => {
     expect(read.outcome).toBe("success");
     if (read.outcome !== "success") return;
     expect((read.value as ReadTurnSummariesResult).summaries).toEqual([]);
+  });
+
+  it("labels technology, construction project and ship refs from content and snapshot, and omits unknown ids", async () => {
+    const saveDir = join(saveRoot, "labels");
+    registerProductionSession("session-labels", saveDir);
+    const snapshot = getCampaignSession("session-labels")!.state.snapshot;
+    const project = snapshot.nations.get("austria_hungary")!.constructionProjects[0]!;
+    const className = snapshot.designs.get(project.designVersionId)!.className;
+    const ship = [...snapshot.nations.values()].flatMap((nation) =>
+      nation.fleets.flatMap((fleet) => fleet.ships),
+    )[0]!;
+    const refMessage = (refs: TurnMessageDto["subjectRefs"]): TurnMessageDto => ({
+      id: "msg-1",
+      turnId: "turn-1",
+      occurredAt: "1880-01",
+      phase: "construction_processing",
+      category: "RESEARCH",
+      severity: "LOW",
+      titleKey: "messages.research.progressed.title",
+      bodyKey: "messages.research.progressed.body",
+      interpolation: {},
+      subjectRefs: refs,
+      effectRefs: [],
+      blocking: false,
+      requiresAcknowledgement: false,
+      playerVisible: true,
+    });
+    saveTurnSummaries(saveDir, {
+      summaries: [
+        {
+          ...entry(1),
+          messages: [
+            refMessage([
+              { type: "technology", id: "dc_iron_subdivision" },
+              { type: "technology", id: "no_such_technology" },
+              { type: "constructionProject", id: project.id },
+              { type: "constructionProject", id: "project-gone" },
+              { type: "ship", id: ship.id },
+              { type: "battle", id: "battle-1" },
+            ]),
+          ],
+        },
+      ],
+    });
+
+    const read = await runProgram(readTurnSummariesProgram, "session-labels");
+    expect(read.outcome).toBe("success");
+    if (read.outcome !== "success") return;
+    const { entityLabels } = read.value as ReadTurnSummariesResult;
+    expect(entityLabels).toEqual({
+      "technology:dc_iron_subdivision": technologyNames().get("dc_iron_subdivision"),
+      [`constructionProject:${project.id}`]: className,
+      [`ship:${ship.id}`]: ship.name,
+    });
+    expect(entityLabels[`constructionProject:${project.id}`]).not.toBe(project.id);
   });
 
   it("never affects the authoritative envelope/hash", async () => {
