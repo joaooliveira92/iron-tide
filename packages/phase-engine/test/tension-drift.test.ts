@@ -150,6 +150,16 @@ describe("monthly tension drift", () => {
     expect(driftDecisions[0]).toMatchObject({ reasonCode: "NAVAL_RATIO" });
   });
 
+  it("kills mutation: navalBudgetOf divisor (budget is floor(income * rateBp / 10000) at the 2:1 threshold)", () => {
+    const belowThreshold = month(snapshot([relation({})], [19, 10]), { tensionDrift: RULES });
+    expect(tensionOf(belowThreshold.next)).toBe(5);
+    expect(belowThreshold.driftDecisions).toEqual([]);
+
+    const atThreshold = month(snapshot([relation({})], [10, 6]), { tensionDrift: RULES });
+    expect(tensionOf(atThreshold.next)).toBe(6);
+    expect(atThreshold.driftDecisions[0]).toMatchObject({ reasonCode: "NAVAL_RATIO" });
+  });
+
   it("stops applying naval imbalance pressure once a pair is at the ceiling", () => {
     const { next, driftDecisions } = month(snapshot([relation({ tension: 6 })], [900, 100]), {
       tensionDrift: RULES,
