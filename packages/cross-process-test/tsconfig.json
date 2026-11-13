@@ -12,6 +12,7 @@
     { "path": "../deterministic" },
     { "path": "../content-schema" },
     { "path": "../content-compiler" },
+    { "path": "../ai" },
     { "path": "../campaign" },
     { "path": "../campaign-engine" },
     { "path": "../ship-design" },
