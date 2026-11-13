@@ -38,6 +38,7 @@ export function useDisplayPreferences(sessionId?: string): UseDisplayPreferences
   const campaignRef = useRef<CampaignPreferences | undefined>(undefined);
   const sessionRef = useRef<Partial<CampaignPreferences>>({});
   const loadedFor = useRef<string | undefined>(undefined);
+  const locallyCommittedFor = useRef<string | undefined>(undefined);
 
   const commitCampaign = useCallback((next: CampaignPreferences) => {
     campaignRef.current = next;
@@ -59,7 +60,9 @@ export function useDisplayPreferences(sessionId?: string): UseDisplayPreferences
       return;
     }
     void bridge.preferences.readCampaign(sessionId).then((result) => {
-      if (result.outcome === "success") commitCampaign(result.value.campaign);
+      if (result.outcome !== "success") return;
+      if (locallyCommittedFor.current === sessionId) return;
+      commitCampaign(result.value.campaign);
     });
   }, [bridge, commitCampaign, sessionId]);
 
@@ -73,6 +76,7 @@ export function useDisplayPreferences(sessionId?: string): UseDisplayPreferences
         commitSession(rest);
       }
       commitCampaign(next);
+      if (sessionId !== undefined) locallyCommittedFor.current = sessionId;
       if (sessionId !== undefined && bridge !== undefined) {
         void bridge.preferences.writeCampaign(sessionId, { campaign: next });
       }

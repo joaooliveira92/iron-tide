@@ -116,6 +116,34 @@ describe("useDisplayPreferences campaign scope (U-2 ticket 05)", () => {
     );
   });
 
+  it("keeps a toggle made before the initial campaign read resolves", async () => {
+    const stub = createPreferencesBridgeStub();
+    const realRead = stub.bridge.preferences.readCampaign;
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let readSettled: Promise<void> = Promise.resolve();
+    stub.bridge.preferences.readCampaign = (sessionId) => {
+      const pending = realRead(sessionId);
+      const delayed = gate.then(() => pending);
+      readSettled = delayed.then(() => undefined);
+      return delayed;
+    };
+    const { result } = renderHook(() => useDisplayPreferences(SESSION), {
+      wrapper: wrapper(stub),
+    });
+    act(() => result.current.togglePref("showSupplyOverlay"));
+    expect(result.current.displayPrefs.showSupplyOverlay).toBe(true);
+    await waitFor(() => expect(stub.campaignWrites).toHaveLength(1));
+    await act(async () => {
+      release();
+      await readSettled;
+    });
+    expect(result.current.displayPrefs.showSupplyOverlay).toBe(true);
+    expect(stub.currentCampaign(SESSION).campaign.showSupplyOverlay).toBe(true);
+  });
+
   it.each([
     ["malformed JSON", "{not json"],
     ["a wrong-shaped object", JSON.stringify({ showSupplyOverlay: "yes", extra: 1 })],
