@@ -9,6 +9,7 @@ import { humanizeId } from "../../../lib/humanize-id.js";
 import { useCampaignProjection } from "../../../lib/use-campaign-projection.js";
 import { useMinWidth } from "../../../lib/use-min-width.js";
 import { useDensity } from "../../../shell/DensityContext.js";
+import { createEntityLabeler, type EntityLabeler } from "../turn-summary/entity-labels.js";
 import { useMonthlyReports } from "../useMonthlyReports.js";
 import { useTurnMessageState } from "../useTurnMessageState.js";
 import { useTurnSummaries } from "../useTurnSummaries.js";
@@ -25,6 +26,7 @@ export interface OverviewModel {
   readonly monthReports: readonly MonthlyReportEntry[];
   readonly turnSummaries: readonly TurnSummaryEntry[];
   readonly turnSummariesLoading: boolean;
+  readonly entityLabel: EntityLabeler;
   readonly turnMessages: UiStateTurnMessages;
   readonly togglePinned: (id: string) => void;
   readonly toggleRead: (id: string) => void;
@@ -52,6 +54,15 @@ export function useOverviewModel(sessionId: string): OverviewModel {
     [areaNames],
   );
 
+  const entityLabel = useMemo(
+    () =>
+      createEntityLabeler({
+        labels: turnSummaries.entityLabels,
+        regionName: (id) => areaNames.get(id) ?? null,
+      }),
+    [turnSummaries.entityLabels, areaNames],
+  );
+
   return {
     loadError,
     projection,
@@ -61,6 +72,7 @@ export function useOverviewModel(sessionId: string): OverviewModel {
     monthReports: monthReports.reports,
     turnSummaries: turnSummaries.summaries,
     turnSummariesLoading: turnSummaries.loading,
+    entityLabel,
     turnMessages: turnMessageState.turnMessages,
     togglePinned: turnMessageState.togglePinned,
     toggleRead: turnMessageState.toggleRead,

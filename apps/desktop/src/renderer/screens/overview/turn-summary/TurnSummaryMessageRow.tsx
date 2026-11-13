@@ -1,7 +1,8 @@
 import { memo, useState } from "react";
-import type {
-  EntityReferenceDto,
-  TurnMessageDto,
+import {
+  entityLabelKey,
+  type EntityReferenceDto,
+  type TurnMessageDto,
 } from "../../../../shared/turn-message-contract.js";
 import { resolveMessage } from "../../../content/uiCatalogue.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
@@ -38,7 +39,11 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
 }) {
   const format = usePresentationFormat();
   const { openEntity, togglePinned, toggleRead, assignToFleet } = useTurnSummaryActions();
-  const { isEntityAvailable, assignableNationId } = useTurnSummaryMeta();
+  const { isEntityAvailable, assignableNationId, entityLabel } = useTurnSummaryMeta();
+  const chips = message.subjectRefs.flatMap((ref) => {
+    const label = entityLabel(ref);
+    return label === null ? [] : [{ ref, label }];
+  });
   const deliveredNationId = message.subjectRefs.find((ref) => ref.type === "nation")?.id;
   const deliveredShipId =
     message.titleKey === CONSTRUCTION_DELIVERED_TITLE_KEY &&
@@ -90,17 +95,17 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
               {resolveMessage("ui.turnSummary.assignToFleet")}
             </button>
           )}
-          {message.subjectRefs.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-1">
-              {message.subjectRefs.map((ref) => (
+          {chips.length > 0 && (
+            <div data-testid="entity-chips" className="mt-1 flex flex-wrap gap-1">
+              {chips.map(({ ref, label }) => (
                 <button
-                  key={`${ref.type}:${ref.id}`}
+                  key={entityLabelKey(ref)}
                   type="button"
                   data-testid="entity-link"
                   className="rounded border border-border/60 px-1.5 py-0.5 text-xs hover:bg-accent"
                   onClick={() => handleOpenEntity(ref)}
                 >
-                  {ref.type}: {ref.id}
+                  {label}
                 </button>
               ))}
             </div>
@@ -112,7 +117,7 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
             <div data-testid="message-detail" className="mt-1 space-y-1">
               {message.effectRefs.map((effect, index) => (
                 <p key={index} className="text-xs text-muted-foreground">
-                  {effect.target.type}:{effect.target.id} {effect.attribute}:{" "}
+                  {entityLabel(effect.target)} {effect.attribute}:{" "}
                   <SummaryDelta
                     from={summaryValueLabel(effect.previousValue)}
                     to={summaryValueLabel(effect.newValue)}

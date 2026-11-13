@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test"
 import type { TurnSummaryEntry } from "../../../../shared/turn-message-contract.js";
 import { authoredCatalogue } from "../../../../shared/authoredCatalogue.testing.js";
 import { setUiCatalogue } from "../../../content/uiCatalogue.js";
+import { NO_ENTITY_LABELS } from "../turn-summary/entity-labels.js";
 import { OverviewHeaderReports } from "./OverviewHeaderReports.js";
 
 beforeEach(() => {
@@ -54,6 +55,7 @@ describe("OverviewHeaderReports Assign to fleet (#623)", () => {
         onOpenEntity={() => undefined}
         onAssignToFleet={onAssignToFleet}
         isEntityAvailable={() => true}
+        entityLabel={NO_ENTITY_LABELS}
       />,
     );
     fireEvent.click(screen.getByTestId("home-turn-summary"));

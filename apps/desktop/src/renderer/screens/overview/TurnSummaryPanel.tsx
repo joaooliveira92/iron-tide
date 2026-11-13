@@ -3,6 +3,7 @@ import type {
   TurnSummaryEntry,
 } from "../../../shared/turn-message-contract.js";
 import type { UiStateTurnMessages } from "../../../shared/ui-state-contract.js";
+import type { EntityLabeler } from "./turn-summary/entity-labels.js";
 import {
   TurnSummaryFilterBar,
   TurnSummaryGroups,
@@ -23,6 +24,7 @@ export interface TurnSummaryPanelProps {
   readonly onAssignToFleet?: (shipId: string) => void;
   readonly assignableNationId?: string;
   readonly isEntityAvailable?: (ref: EntityReferenceDto) => boolean;
+  readonly entityLabel?: EntityLabeler;
 }
 
 function TurnSummarySurface() {

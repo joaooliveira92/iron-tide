@@ -11,6 +11,7 @@ import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import type { CommandHandler } from "./runtime/commandProgram.js";
 import { defineSidecar, prependBounded } from "./runtime/sidecar.js";
 import { TurnSummariesStore } from "./runtime/sidecarStores.js";
+import { buildEntityLabels } from "./turnSummaryLabels.js";
 
 export const TURN_SUMMARIES_FILENAME = "turn-summaries.json";
 
@@ -100,6 +101,9 @@ export const readTurnSummariesProgram: CommandHandler<"readTurnSummaries"> = (se
     const record = yield* sessions.get(sessionId);
     const store = yield* TurnSummariesStore;
     const data = yield* store.load(record.saveDir);
-    const value: ReadTurnSummariesResult = { summaries: data.summaries };
+    const value: ReadTurnSummariesResult = {
+      summaries: data.summaries,
+      entityLabels: buildEntityLabels(record.state.snapshot, data.summaries),
+    };
     return { outcome: "success" as const, value, diagnostics: [] };
   });
