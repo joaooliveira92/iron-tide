@@ -1,5 +1,6 @@
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { parseUiCatalogue } from "@bluewave/content-schema";
+import { EventSchema, parseUiCatalogue } from "@bluewave/content-schema";
+import { Schema } from "effect";
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,7 +28,9 @@ const MIN_EVENTS_PER_GOVERNMENT_TYPE = 2;
 
 describe("1880 event catalogue", () => {
   const { bundle, errors } = compileProduction();
-  const events = bundle.campaign?.events ?? [];
+  const events = (bundle.campaign?.events ?? []).map((event) =>
+    Schema.decodeUnknownSync(EventSchema)(event),
+  );
   const presentTypes = [
     ...new Set(
       (bundle.nations as readonly { regime: { governmentType: string } }[]).map(
