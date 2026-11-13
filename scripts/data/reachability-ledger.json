@@ -913,7 +913,7 @@
       "renderer_screen": null,
       "evidence_test": null,
       "decision": "#426",
-      "note": "The diplomacy phase draws events and resolves AI and default answers, but the production pack authors no events or eventResolution section, so nothing fires. The dialog is #428 and the catalogue is #429."
+      "note": "The diplomacy phase draws events; the 1880 pack authors a provisional catalogue (#436) so events fire. No player dialog yet (#428): a player dilemma lapses to its default answer."
     },
     {
       "id": "debug-battle-drill-seed",
