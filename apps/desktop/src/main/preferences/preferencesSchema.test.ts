@@ -2,13 +2,16 @@ import { Result, Schema } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import {
   DEFAULT_APP_PREFERENCES,
+  DEFAULT_CAMPAIGN_PREFERENCES,
   PREFERENCES_SCHEMA_VERSION,
   TEXT_SCALE_MAX,
   TEXT_SCALE_MIN,
+  decodeCampaignPreferences,
   type AppPreferences,
 } from "../../shared/preferences-contract.js";
 import {
   AppPreferencesSchema,
+  CampaignPreferencesSchema,
   PreferencesFileSchema,
   WriteAppPreferencesRequestSchema,
   type AppPreferencesDecoded,
@@ -131,5 +134,32 @@ describe("preferences schema", () => {
         }),
       ),
     ).toBe(true);
+  });
+});
+
+describe("renderer campaign preferences decoder parity", () => {
+  const decodeCampaign = Schema.decodeUnknownResult(CampaignPreferencesSchema, {
+    onExcessProperty: "error",
+  });
+  const samples: readonly unknown[] = [
+    DEFAULT_CAMPAIGN_PREFERENCES,
+    { ...DEFAULT_CAMPAIGN_PREFERENCES, showSupplyOverlay: true },
+    { ...DEFAULT_CAMPAIGN_PREFERENCES, extra: true },
+    { ...DEFAULT_CAMPAIGN_PREFERENCES, showUnitFatigue: "yes" },
+    { showSupplyOverlay: true },
+    {},
+    [],
+    null,
+    "text",
+    42,
+  ];
+
+  it("accepts and rejects exactly what the strict schema does", () => {
+    for (const sample of samples) {
+      const decoded = decodeCampaignPreferences(sample);
+      const result = decodeCampaign(sample);
+      expect(decoded !== null).toBe(Result.isSuccess(result));
+      if (decoded !== null && Result.isSuccess(result)) expect(decoded).toEqual(result.success);
+    }
   });
 });
