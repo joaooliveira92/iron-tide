@@ -20,6 +20,7 @@ export interface TurnSummaryPanelProps {
   readonly onTogglePinned: (id: string) => void;
   readonly onToggleRead: (id: string) => void;
   readonly onOpenEntity?: (ref: EntityReferenceDto) => void;
+  readonly onAssignToFleet?: (shipId: string) => void;
   readonly isEntityAvailable?: (ref: EntityReferenceDto) => boolean;
 }
 

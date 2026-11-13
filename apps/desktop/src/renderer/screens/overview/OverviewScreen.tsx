@@ -58,9 +58,10 @@ const MapSurface = lazy(() =>
 export interface OverviewScreenProps {
   readonly sessionId: string;
   readonly onNavigate: (screen: Screen) => void;
+  readonly onAssignToFleet?: (shipId: string) => void;
 }
 
-export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
+export function OverviewScreen({ sessionId, onNavigate, onAssignToFleet }: OverviewScreenProps) {
   const {
     loadError,
     projection,
@@ -100,6 +101,7 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
         const screen = screenForEntity(ref);
         if (screen !== null && screen !== "overview") onNavigate(screen);
       }}
+      {...(onAssignToFleet === undefined ? {} : { onAssignToFleet })}
       isEntityAvailable={entityAvailability(projection)}
     />
   );

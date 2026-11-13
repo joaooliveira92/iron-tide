@@ -15,13 +15,15 @@ export function CreateDivisionForm({
   state,
   busy,
   send,
+  preferredFlagshipId,
 }: {
   readonly state: DivisionOrganizationState;
   readonly busy: boolean;
   readonly send: (command: DivisionCommandBody) => void;
+  readonly preferredFlagshipId?: string;
 }) {
   const groups = groupUnassignedByArea(state.unassignedShips);
-  const [flagship, setFlagship] = useState("");
+  const [flagship, setFlagship] = useState(preferredFlagshipId ?? "");
   const [role, setRole] = useState("");
   const [formation, setFormation] = useState("");
 
