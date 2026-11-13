@@ -59,6 +59,26 @@ describe("economy calculators", () => {
       expect(monthlyRevenue(SafeInt(base), SafeInt(rate))).toBe(expected);
   });
 
+  it("kills mutation: monthlyRevenue rounding (floor of base*rate/120000 at exact .5 and just-off-integer values)", () => {
+    for (const [base, rate, expected] of [
+      [30, 2000, 0],
+      [90, 2000, 1],
+      [36, 5000, 1],
+      [59, 2000, 0],
+      [60, 2000, 1],
+      [61, 2000, 1],
+      [119, 2000, 1],
+      [120, 2000, 2],
+      [1, 5000, 0],
+      [23, 5000, 0],
+      [24, 5000, 1],
+      [1000, 2000, 16],
+    ] as const)
+      expect(monthlyRevenue(SafeInt(base), SafeInt(rate)), `base=${base} rate=${rate}`).toBe(
+        expected,
+      );
+  });
+
   it("is monotone in base and rate", () => {
     expect(monthlyRevenue(SafeInt(6000), SafeInt(2500))).toBeGreaterThanOrEqual(
       monthlyRevenue(SafeInt(6000), SafeInt(2000)),
