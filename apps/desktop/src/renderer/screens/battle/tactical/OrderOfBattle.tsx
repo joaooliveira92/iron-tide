@@ -1,5 +1,5 @@
 import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import {
   MAX_SPEED_PERCENT,
   MIN_SPEED_PERCENT,
@@ -33,17 +33,19 @@ function Damage({ ship }: { readonly ship: PlayerBattleShipView }) {
   );
 }
 
-export function OrderOfBattle(props: OrderOfBattleProps) {
+export const OrderOfBattle = memo(function OrderOfBattle(props: OrderOfBattleProps) {
   const { view, locale, orderFor, setOrder, selectedShipId, selectedDivisionId } = props;
-  const playerSide = playerSideOf(view);
-  const shipsById = useMemo(
-    () => new Map(view.ships.map((ship) => [ship.shipId, ship])),
-    [view.ships],
-  );
-  const divisions = view.divisions.filter((division) => division.sideId === playerSide);
-  const unassignedHostile = view.ships.filter(
-    (ship) => ship.sideId !== playerSide && ship.divisionId === null,
-  );
+  const { shipsById, divisions, enemyDivisions, unassignedHostile } = useMemo(() => {
+    const playerSide = playerSideOf(view);
+    return {
+      shipsById: new Map(view.ships.map((ship) => [ship.shipId, ship])),
+      divisions: view.divisions.filter((division) => division.sideId === playerSide),
+      enemyDivisions: view.divisions.filter((division) => division.sideId !== playerSide),
+      unassignedHostile: view.ships.filter(
+        (ship) => ship.sideId !== playerSide && ship.divisionId === null,
+      ),
+    };
+  }, [view]);
 
   return (
     <div className="space-y-4">
@@ -167,39 +169,37 @@ export function OrderOfBattle(props: OrderOfBattleProps) {
       <section aria-label="Enemy divisions">
         <h3 className="text-xs font-semibold uppercase text-muted-foreground">Enemy divisions</h3>
         <div className="mt-2 space-y-2">
-          {view.divisions
-            .filter((division) => division.sideId !== playerSide)
-            .map((division) => (
-              <div key={division.divisionId} className="rounded border border-border p-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold">
-                    {shortDivisionId(division.divisionId)}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {division.role} · {division.formation}
-                  </span>
-                </div>
-                <ul className="mt-1 space-y-0.5 text-xs">
-                  {division.unitIds.map((unitId) => {
-                    const ship = shipsById.get(unitId);
-                    if (ship === undefined) return null;
-                    return (
-                      <li key={unitId} className="flex justify-between gap-2">
-                        <button
-                          type="button"
-                          aria-pressed={selectedShipId === unitId}
-                          className="text-left hover:underline"
-                          onClick={() => props.onSelectShip(unitId)}
-                        >
-                          {ship.name}
-                        </button>
-                        <Damage ship={ship} />
-                      </li>
-                    );
-                  })}
-                </ul>
+          {enemyDivisions.map((division) => (
+            <div key={division.divisionId} className="rounded border border-border p-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold">
+                  {shortDivisionId(division.divisionId)}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {division.role} · {division.formation}
+                </span>
               </div>
-            ))}
+              <ul className="mt-1 space-y-0.5 text-xs">
+                {division.unitIds.map((unitId) => {
+                  const ship = shipsById.get(unitId);
+                  if (ship === undefined) return null;
+                  return (
+                    <li key={unitId} className="flex justify-between gap-2">
+                      <button
+                        type="button"
+                        aria-pressed={selectedShipId === unitId}
+                        className="text-left hover:underline"
+                        onClick={() => props.onSelectShip(unitId)}
+                      >
+                        {ship.name}
+                      </button>
+                      <Damage ship={ship} />
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
           {unassignedHostile.length > 0 && (
             <div className="rounded border border-border p-2">
               <span className="text-xs font-semibold">Not in a division</span>
@@ -230,4 +230,4 @@ export function OrderOfBattle(props: OrderOfBattleProps) {
       </section>
     </div>
   );
-}
+});

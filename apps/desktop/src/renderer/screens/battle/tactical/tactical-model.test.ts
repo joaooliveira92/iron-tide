@@ -68,6 +68,13 @@ describe("trails", () => {
     ]);
   });
 
+  it("hands back the same trails when no ship moved or appeared", () => {
+    const first = appendTrails({}, viewOf([ship({ position: [1, 1] })]));
+    expect(appendTrails(first, viewOf([ship({ position: [1, 1] })]))).toBe(first);
+    expect(appendTrails(first, viewOf([ship({ position: [2, 1] })]))).not.toBe(first);
+    expect(appendTrails(first, viewOf([]))).not.toBe(first);
+  });
+
   it("bounds the history and forgets ships with no known position", () => {
     let trails = {};
     for (let step = 0; step < PROVISIONAL_TRAIL_LENGTH + 5; step += 1) {
