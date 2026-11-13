@@ -119,6 +119,29 @@ describe("useCommandScreenWorkflow refreshKey", () => {
     expect(result.current.state.value).toBe("rev 1");
   });
 
+  it("loads once on mount when the initial state already requires a refresh", async () => {
+    const load = vi.fn(async () => ({
+      outcome: "success" as const,
+      value: { revision: 3, items: ["rev 3"] },
+      diagnostics: [] as [],
+    }));
+    const adapter = {
+      ...makeAdapter(load),
+      initialState: (): State => ({
+        revision: 0,
+        items: [],
+        pendingRequest: null,
+        requiresRefresh: true,
+        notice: null,
+      }),
+    };
+    const { result } = renderHook(() => useCommandScreenWorkflow(adapter));
+    await act(async () => {});
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(result.current.state.items).toEqual(["rev 3"]);
+    expect(result.current.state.requiresRefresh).toBe(false);
+  });
+
   it("does not reload for screens that pass no key", async () => {
     const load = vi.fn(async () => ({
       outcome: "success" as const,
