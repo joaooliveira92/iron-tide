@@ -9,7 +9,7 @@
   "apps/desktop/src/main/commands/designCommands.test.ts": { "lines": 792 },
   "apps/desktop/src/main/commands/designCommands.ts": { "lines": 673 },
   "apps/desktop/src/main/commands/diplomacyCommands.test.ts": { "lines": 627 },
-  "apps/desktop/src/renderer/lib/en-us-messages.ts": { "lines": 691 },
+  "apps/desktop/src/renderer/lib/en-us-messages.ts": { "lines": 689 },
   "apps/desktop/src/renderer/screens/battle/TacticalBattleScreen.test.tsx": { "lines": 651 },
   "apps/desktop/src/renderer/screens/shipbuilding/ShipbuildingWorkspace.test.tsx": { "lines": 781 },
   "apps/desktop/src/renderer/shell/App.test.tsx": { "lines": 752 },
