@@ -6,6 +6,7 @@ import { cn } from "../../../lib/utils.js";
 import { DEBUG_MODE } from "../../../shell/debug-flag.js";
 import { WAR_STATUS_LABELS, capitalizeFirst, warScoreSplit } from "../diplomacy-presentation.js";
 import type { DiplomacyWarRow } from "../diplomacy-view-model.js";
+import { IncomingPeaceOffer } from "./IncomingPeaceOffer.js";
 import { InfoHover } from "./InfoHover.js";
 import { NationFlag } from "./NationFlag.js";
 import { PeaceTermsDialog } from "./PeaceTermsDialog.js";
@@ -129,6 +130,15 @@ export function WarFront({ rows, busy, onPeaceAction, onPeaceTerms }: WarFrontPr
                 </div>
               )}
             </header>
+
+            {active && war.incomingPeaceOffer !== undefined && (
+              <IncomingPeaceOffer
+                offer={war.incomingPeaceOffer}
+                enemyName={enemyName}
+                busy={busy}
+                onAccept={() => onPeaceAction(war.warId)}
+              />
+            )}
 
             <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3 px-3 py-3">
               <Combatant

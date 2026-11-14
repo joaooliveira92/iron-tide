@@ -45,6 +45,7 @@ import type {
 import type { SafeInt } from "@bluewave/contracts";
 import { PhaseEngineError } from "./errors.js";
 import { cloneBudgetModifiers, cloneEventHistory } from "./eventStateClone.js";
+import { cloneDeclineCounters, clonePeaceOffers } from "./warRecordsClone.js";
 
 type AreaData = WorldState["areas"][number];
 type RouteData = WorldState["routes"][number];
@@ -486,21 +487,6 @@ const F = {
     "declineCounters",
     "peaceOffers",
   ),
-  PeaceOffer: fields<PeaceOffer>()(
-    "warId",
-    "proposerId",
-    "targetId",
-    "month",
-    "term",
-    "reasonCode",
-  ),
-  DeclineCounterEntry: fields<DeclineCounterEntry>()(
-    "key",
-    "nationId",
-    "lastWarId",
-    "count",
-    "decayAnchorMonth",
-  ),
   CampaignSlot: fields<CampaignSlot>()("nationId", "type"),
   CompiledDesignVersion: fields<CompiledDesignVersion>()(
     "designVersionId",
@@ -610,8 +596,6 @@ const _assert: [
   _Assert<BattleManifest, typeof F.BattleManifest>,
   _Assert<BattleManifestSide, typeof F.BattleManifestSide>,
   _Assert<DeclinedBattleRecord, typeof F.DeclinedBattleRecord>,
-  _Assert<DeclineCounterEntry, typeof F.DeclineCounterEntry>,
-  _Assert<PeaceOffer, typeof F.PeaceOffer>,
   _Assert<WarState, typeof F.WarState>,
   _Assert<CampaignSlot, typeof F.CampaignSlot>,
   _Assert<CompiledDesignVersion, typeof F.CompiledDesignVersion>,
@@ -624,8 +608,6 @@ const _assert: [
   _Assert<CampaignWeatherState, typeof F.CampaignWeatherState>,
   _Assert<CampaignSnapshot, typeof F.CampaignSnapshot>,
 ] = [
-  true,
-  true,
   true,
   true,
   true,
@@ -880,18 +862,8 @@ export function cloneSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
                     recordClone(r, F.DeclinedBattleRecord),
                   ),
             declineCounters: (entries) =>
-              entries === undefined
-                ? undefined
-                : (entries as DeclineCounterEntry[]).map((e) =>
-                    recordClone(e, F.DeclineCounterEntry),
-                  ),
-            peaceOffers: (offers) =>
-              offers === undefined
-                ? undefined
-                : (offers as PeaceOffer[]).map((o) => ({
-                    ...recordClone(o, F.PeaceOffer),
-                    term: { ...o.term },
-                  })),
+              cloneDeclineCounters(entries as DeclineCounterEntry[] | undefined),
+            peaceOffers: (offers) => clonePeaceOffers(offers as PeaceOffer[] | undefined),
           },
           seen,
         ),

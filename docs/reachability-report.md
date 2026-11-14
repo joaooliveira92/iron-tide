@@ -4,8 +4,8 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 
 | Status | Rows |
 | --- | --- |
-| reachable | 35 |
-| dormant-by-decision | 17 |
+| reachable | 36 |
+| dormant-by-decision | 16 |
 | internal | 16 |
 
 ## Reachable
@@ -31,6 +31,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | order-foreign-construction | Preview and place a ship order with a foreign builder | `screens/construction/order/OrderDialog.tsx` | `apps/desktop/src/renderer/screens/construction/ConstructionScreen.order.test.tsx` |
 | cancel-construction-project | Cancel a construction project; work done is forfeited and nothing is refunded | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
 | declare-war | Declare war on a nation | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
+| accept-peace | Accept a peace settlement | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | form-or-break-alliance | Form or break an alliance | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | form-or-break-non-aggression-pact | Form or break a non-aggression pact | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | declare-blockade | Declare a blockade of a nation in an area | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
@@ -54,7 +55,6 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | --- | --- | --- |
 | construction-events | Learn why a build slipped or cost more | #584 |
 | event-answer-unrest | See unrest rise or fall after a crisis answer | #427 |
-| accept-peace | Accept a peace settlement | #777 |
 | answer-event-dilemma | Answer a monthly event dilemma, hovering each answer for its declared effects | #428 |
 | prestige | See and act on national prestige | #223 |
 | division-battle-experience | Divisions gain experience from the battles they fight | #276 |
