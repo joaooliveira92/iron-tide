@@ -1,5 +1,5 @@
 import type { DivisionView } from "@bluewave/campaign-engine";
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import type { DivisionCommandBody } from "../../../../shared/division-contract.js";
 import { Card, CardContent } from "../../../components/ui/card.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
@@ -45,7 +45,7 @@ export const DivisionCard = {
 
 export type DivisionCardProps = Omit<DivisionCardRootProps, "children">;
 
-export function DefaultDivisionCard(props: DivisionCardProps) {
+export const DefaultDivisionCard = memo(function DefaultDivisionCard(props: DivisionCardProps) {
   return (
     <DivisionCard.Root {...props}>
       <DivisionCard.Header />
@@ -57,4 +57,4 @@ export function DefaultDivisionCard(props: DivisionCardProps) {
       <DivisionCard.Actions />
     </DivisionCard.Root>
   );
-}
+});
