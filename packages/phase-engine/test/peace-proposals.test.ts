@@ -74,7 +74,13 @@ function snapshot(
     world: {
       areas: [
         { id: "gbr_home", name: "Britain", type: "coastal", controller: "GBR" },
-        { id: "gbr_malta", name: "Malta", type: "coastal", controller: "GBR", cessionCost: 10 },
+        {
+          id: "gbr_malta",
+          name: "Malta",
+          type: "coastal",
+          controller: "GBR",
+          cessionCost: SafeInt(10),
+        },
         { id: "fra_home", name: "France", type: "coastal", controller: "FRA" },
         { id: "ger_home", name: "Germany", type: "coastal", controller: "GER" },
       ],
