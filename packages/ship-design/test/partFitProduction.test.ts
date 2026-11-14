@@ -582,12 +582,12 @@ describe("fit over every production design (characterization)", () => {
     ).findings.map((f) => f.id),
   }));
 
-  it("evaluates all 98 designs, 922 placements, 267 gun placements and 33 tube placements", () => {
+  it("evaluates all 98 designs, 924 placements, 267 gun placements and 35 tube placements", () => {
     expect(fits).toHaveLength(98);
-    expect(fits.reduce((n, d) => n + d.design.draft.placements.length, 0)).toBe(922);
+    expect(fits.reduce((n, d) => n + d.design.draft.placements.length, 0)).toBe(924);
     const slotKinds = fits.flatMap((d) => d.entries.map((e) => e.slot.split(".").at(-1)));
     expect(slotKinds.filter((k) => k === "gun_mount")).toHaveLength(267);
-    expect(slotKinds.filter((k) => k === "torpedo_launcher")).toHaveLength(33);
+    expect(slotKinds.filter((k) => k === "torpedo_launcher")).toHaveLength(35);
   });
 
   it("accepts every design: nothing is excluded, and nothing is rejected silently", () => {

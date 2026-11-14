@@ -36,6 +36,8 @@ export const TORPEDO_ROWS: readonly (readonly [string, string, string, number, n
   ["starter_torpedoboat_de_1880", "tubes", "tube_14in_above_water", 4, 4],
   ["starter_armed_liner_de_1880", "tubes", "tube_14in_above_water", 2, 2],
   ["starter_dd_italy_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_cl_japan_1880", "tubes_p", "tube_14in_above_water", 1, 1],
+  ["starter_cl_japan_1880", "tubes_s", "tube_14in_above_water", 1, 1],
   ["starter_dd_japan_1880", "tubes", "tube_14in_above_water", 4, 4],
   ["starter_dd_netherlands_1880", "tubes", "tube_14in_above_water", 4, 4],
   ["starter_dd_ottoman_empire_1880", "tubes", "tube_14in_above_water", 4, 4],
