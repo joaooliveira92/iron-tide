@@ -92,6 +92,18 @@
       "decision": null
     },
     {
+      "id": "assign-delivered-ship",
+      "player_verb": "Assign a newly delivered ship to a division from the turn report",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": [],
+      "main_commands": ["inspectDivisionScreen", "submitDivisionCommand"],
+      "renderer_screen": "screens/fleet/organization/FleetOrganizationSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/FleetScreen.render.test.tsx",
+      "decision": null
+    },
+    {
       "id": "set-budget-allocation",
       "player_verb": "Set the budget allocation across spending categories",
       "status": "reachable",
@@ -281,7 +293,8 @@
       "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": null,
       "evidence_test": null,
-      "decision": "#422"
+      "decision": "#422",
+      "note": "AI rule decidePeaceProposal and decidePeaceResponse (packages/ai) has no engine caller until #422."
     },
     {
       "id": "form-or-break-alliance",
@@ -901,7 +914,7 @@
       "renderer_screen": null,
       "evidence_test": null,
       "decision": "#426",
-      "note": "The diplomacy phase draws events and resolves AI and default answers, but the production pack authors no events or eventResolution section, so nothing fires. The dialog is #428 and the catalogue is #429."
+      "note": "The diplomacy phase draws events; the 1880 pack authors a provisional catalogue (#436) so events fire. No player dialog yet (#428): a player dilemma lapses to its default answer."
     },
     {
       "id": "debug-battle-drill-seed",

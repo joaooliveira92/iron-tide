@@ -75,9 +75,21 @@ jobs:
       # needs a committed, hash-bound approval. CI only verifies; it never
       # writes approvals (`pnpm replay:approve` refuses to run under CI).
       - name: Replay approvals
+        if: github.event_name != 'pull_request'
         env:
           REPLAY_APPROVALS_BASE: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/dev' }}
         run: pnpm check:replay-approvals
+      # A promotion is gated per first-parent hop from the merge base, with the
+      # main tip and the PR head bound to the chain's ends. The checkout is the
+      # merge ref, so both endpoints are passed explicitly and HEAD is the tree
+      # that must equal the chain end.
+      - name: Replay approvals (promotion chain)
+        if: github.event_name == 'pull_request'
+        run: >-
+          node packages/cross-process-test/dist/replay-approvals-cli.js check-chain
+          --main ${{ github.event.pull_request.base.sha }}
+          --head ${{ github.event.pull_request.head.sha }}
+          --tree HEAD
       - name: Legacy probe retirement register
         run: pnpm check:probe-retirement
       # --no-cache: the typecheck step's build populates the Vite Task cache

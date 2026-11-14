@@ -328,5 +328,45 @@ export default list(RulesetManifestSchema, [
         note: "ADR-0266. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (docs/research/s-5-presence-and-base-limits.md, decisions 0016-0023, 0026).",
       },
     },
+    eventResolution: {
+      sectionVersion: 1,
+      defaultAnswerAfterMonths: 3,
+      aiStanceWeightsBp: {
+        liberal_democracy: { hawkBp: 2_500, doveBp: 5_500, neutralBp: 2_000 },
+        limited_democracy: { hawkBp: 4_000, doveBp: 4_000, neutralBp: 2_000 },
+        autocratic: { hawkBp: 5_000, doveBp: 3_000, neutralBp: 2_000 },
+        eastern: { hawkBp: 4_500, doveBp: 3_500, neutralBp: 2_000 },
+        fascist: { hawkBp: 6_000, doveBp: 2_000, neutralBp: 2_000 },
+        communist: { hawkBp: 5_000, doveBp: 3_000, neutralBp: 2_000 },
+      },
+      traitShifts: [
+        { trait: "cautious", stance: "hawk", deltaBp: -1_500 },
+        { trait: "cautious", stance: "dove", deltaBp: 1_500 },
+        { trait: "kamikaze", stance: "hawk", deltaBp: 2_000 },
+        { trait: "kamikaze", stance: "dove", deltaBp: -2_000 },
+      ],
+      answerEffects: {
+        budgetDecayMonths: 12,
+        budgetStackCapBp: 1_500,
+        tensionJumpCap: 3,
+        traitEffects: [
+          { trait: "cautious", stance: "hawk", reasonCode: "CAUTIOUS_HAWK_RESTRAINT", tension: -1 },
+          { trait: "kamikaze", stance: "hawk", reasonCode: "KAMIKAZE_HAWK_ZEAL", prestige: 1 },
+          {
+            trait: "inconsistent_naval_policy",
+            stance: "dove",
+            reasonCode: "POLICY_DRIFT_DOVE",
+            unrest: 1,
+          },
+        ],
+      },
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [],
+        note: "PROVISIONAL: default-answer delay, AI stance weights, trait shifts and answer-effect caps are Bluewave tuning placeholders for the first 1880 event catalogue (#436). No source gives these values; set from the generated balance report once the catalogue is tuned. The fascist and communist rows are required by the schema and unused in the 1880 pack.",
+      },
+    },
   },
 ]);

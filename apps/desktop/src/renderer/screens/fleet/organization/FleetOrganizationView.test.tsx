@@ -61,6 +61,7 @@ function renderView(
     loadError?: string | null;
     outcomeUnknown?: boolean;
     send?: (command: unknown) => Promise<CommandOutcome>;
+    preferredFlagshipId?: string;
   } = {},
 ) {
   const send = over.send ?? vi.fn((): Promise<CommandOutcome> => Promise.resolve("accepted"));
@@ -75,6 +76,9 @@ function renderView(
       onRetry={onRetry}
       onReload={onReload}
       send={send}
+      {...(over.preferredFlagshipId === undefined
+        ? {}
+        : { preferredFlagshipId: over.preferredFlagshipId })}
     />,
   );
   return { send, onRetry, onReload };
@@ -100,6 +104,18 @@ describe("FleetOrganizationView", () => {
       "Malta",
     ]);
     expect(screen.getByText(/starts at 20 experience and 30 cohesion/)).toBeTruthy();
+  });
+
+  it("preselects the preferred flagship when it is unassigned, else the first ship", () => {
+    const unassignedShips = [
+      ship("alex", "HMS Alexandra", "home", "English Home Waters"),
+      ship("dread", "HMS Dreadnought", "home", "English Home Waters"),
+    ];
+    renderView(makeState({ unassignedShips }), { preferredFlagshipId: "dread" });
+    expect((screen.getByLabelText("Flagship") as HTMLSelectElement).value).toBe("dread");
+    cleanup();
+    renderView(makeState({ unassignedShips }), { preferredFlagshipId: "gone" });
+    expect((screen.getByLabelText("Flagship") as HTMLSelectElement).value).toBe("alex");
   });
 
   it("creates a division from the chosen flagship, role and formation", () => {

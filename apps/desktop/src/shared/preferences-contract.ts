@@ -149,6 +149,35 @@ export const DEFAULT_CAMPAIGN_PREFERENCES: CampaignPreferences = Object.freeze({
   showSupplyOverlay: false,
 });
 
+const CAMPAIGN_PREFERENCE_KEYS = [
+  "showDetailedTooltips",
+  "confirmBeforeTurn",
+  "showUnitFatigue",
+  "showSupplyOverlay",
+] as const satisfies readonly (keyof CampaignPreferences)[];
+
+export function decodeCampaignPreferences(value: unknown): CampaignPreferences | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+  if (Object.keys(value).length !== CAMPAIGN_PREFERENCE_KEYS.length) return null;
+  const [tooltips, confirm, fatigue, supply] = CAMPAIGN_PREFERENCE_KEYS.map((key) =>
+    Reflect.get(value, key),
+  );
+  if (
+    typeof tooltips !== "boolean" ||
+    typeof confirm !== "boolean" ||
+    typeof fatigue !== "boolean" ||
+    typeof supply !== "boolean"
+  ) {
+    return null;
+  }
+  return {
+    showDetailedTooltips: tooltips,
+    confirmBeforeTurn: confirm,
+    showUnitFatigue: fatigue,
+    showSupplyOverlay: supply,
+  };
+}
+
 export interface WriteCampaignPreferencesRequest {
   readonly campaign: CampaignPreferences;
 }

@@ -98,6 +98,10 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
           ),
     [vm, battleHistory],
   );
+  const partnerNationIds = useMemo(
+    () => vm?.relations.map((row) => row.partnerNationId) ?? [],
+    [vm],
+  );
   const selectNation = useCallback((nationId: string) => setPlace(nationPlace(nationId)), []);
   const acceptPeace = useCallback(
     (warId: string) => {
@@ -133,10 +137,7 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
   const queued = state.kind === "submitted";
   const declaringWar = state.draftCommand?.kind === "DeclareWar" && !queued;
   const draftPartnerId = state.draftCommand?.partnerNationId ?? null;
-  const currentPlace = reconcilePlace(
-    place,
-    vm.relations.map((row) => row.partnerNationId),
-  );
+  const currentPlace = reconcilePlace(place, partnerNationIds);
   const selected =
     currentPlace.kind === "nation"
       ? resolveSelectedNation(vm.relations, currentPlace.nationId, null)

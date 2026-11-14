@@ -14,6 +14,8 @@ import {
   type TurnSummaryFilters,
 } from "../turn-summary-format.js";
 
+import { NO_ENTITY_LABELS, type EntityLabeler } from "./entity-labels.js";
+
 const EMPTY_MESSAGES: readonly TurnMessageDto[] = [];
 const ALWAYS_AVAILABLE = () => true;
 const NEVER_HANDLED = () => undefined;
@@ -26,6 +28,9 @@ export interface TurnSummaryInput {
   readonly onToggleRead: (id: string) => void;
   readonly onOpenEntity?: (ref: EntityReferenceDto) => void;
   readonly isEntityAvailable?: (ref: EntityReferenceDto) => boolean;
+  readonly entityLabel?: EntityLabeler;
+  readonly onAssignToFleet?: (shipId: string) => void;
+  readonly assignableNationId?: string;
 }
 
 export interface TurnSummaryState {
@@ -42,6 +47,7 @@ export interface TurnSummaryActions {
   readonly togglePinned: (id: string) => void;
   readonly toggleRead: (id: string) => void;
   readonly openEntity: (ref: EntityReferenceDto) => void;
+  readonly assignToFleet?: (shipId: string) => void;
 }
 
 export interface TurnSummaryMeta {
@@ -57,6 +63,8 @@ export interface TurnSummaryMeta {
   readonly isEmpty: boolean;
   readonly noMatch: boolean;
   readonly isEntityAvailable: (ref: EntityReferenceDto) => boolean;
+  readonly entityLabel: EntityLabeler;
+  readonly assignableNationId: string | undefined;
 }
 
 export interface TurnSummaryWorkspace {
@@ -72,8 +80,12 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
   const selected =
     input.summaries.find((entry) => entry.turnId === selectedTurnId) ?? input.summaries[0] ?? null;
 
+  const entityLabel = input.entityLabel ?? NO_ENTITY_LABELS;
   const messages = useMemo(() => selected?.messages ?? EMPTY_MESSAGES, [selected]);
-  const visible = useMemo(() => filterTurnMessages(messages, filters), [messages, filters]);
+  const visible = useMemo(
+    () => filterTurnMessages(messages, filters, entityLabel),
+    [messages, filters, entityLabel],
+  );
   const groups = useMemo(() => groupTurnMessages(visible), [visible]);
   const actionableCount = useMemo(() => messages.filter(isActionable).length, [messages]);
   const pinnedIds = useMemo(
@@ -101,8 +113,9 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
       togglePinned: input.onTogglePinned,
       toggleRead: input.onToggleRead,
       openEntity: input.onOpenEntity ?? NEVER_HANDLED,
+      ...(input.onAssignToFleet === undefined ? {} : { assignToFleet: input.onAssignToFleet }),
     }),
-    [input.onTogglePinned, input.onToggleRead, input.onOpenEntity],
+    [input.onTogglePinned, input.onToggleRead, input.onOpenEntity, input.onAssignToFleet],
   );
 
   const meta = useMemo<TurnSummaryMeta>(
@@ -119,6 +132,8 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
       isEmpty: !input.loading && input.summaries.length === 0,
       noMatch: !input.loading && messages.length > 0 && visible.length === 0,
       isEntityAvailable: input.isEntityAvailable ?? ALWAYS_AVAILABLE,
+      entityLabel,
+      assignableNationId: input.assignableNationId,
     }),
     [
       selected,
@@ -131,6 +146,8 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
       input.summaries,
       input.loading,
       input.isEntityAvailable,
+      entityLabel,
+      input.assignableNationId,
     ],
   );
 

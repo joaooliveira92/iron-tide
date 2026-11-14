@@ -1,5 +1,5 @@
 import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import {
   MAX_SPEED_KNOTS,
   MIN_SPEED_KNOTS,
@@ -36,8 +36,8 @@ const courseTextFor = (headingDeg: number | undefined): string =>
 const speedTextFor = (speedKnots: number | undefined): string =>
   speedKnots === undefined ? "" : String(speedKnots);
 
-export function UnitCommandPanel(props: UnitCommandPanelProps) {
-  const { view, selectedShipId, orderFor, acceptedOrders } = props;
+export const UnitCommandPanel = memo(function UnitCommandPanel(props: UnitCommandPanelProps) {
+  const { view, selectedShipId, orderFor, acceptedOrders, onPreviewCourse } = props;
   const ship = selectedShip(view, selectedShipId);
   const divisionId = ship === null ? null : divisionOfShip(view, ship.shipId);
   const own = ship !== null && ship.sideId === playerSideOf(view);
@@ -61,9 +61,9 @@ export function UnitCommandPanel(props: UnitCommandPanelProps) {
 
   useEffect(() => {
     const parsed = parseCourse(courseText);
-    props.onPreviewCourse(parsed.ok && touched ? headingFromCompass(parsed.value) : null);
-    return () => props.onPreviewCourse(null);
-  }, [courseText, touched, props.onPreviewCourse]);
+    onPreviewCourse(parsed.ok && touched ? headingFromCompass(parsed.value) : null);
+    return () => onPreviewCourse(null);
+  }, [courseText, touched, onPreviewCourse]);
 
   if (ship === null) {
     return (
@@ -232,4 +232,4 @@ export function UnitCommandPanel(props: UnitCommandPanelProps) {
       )}
     </section>
   );
-}
+});

@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { TurnMessageDto, TurnSummaryEntry } from "../../../../shared/turn-message-contract.js";
 import { setUiCatalogue } from "../../../content/uiCatalogue.js";
+import { createEntityLabeler } from "./entity-labels.js";
 import {
   TurnSummaryFilterBar,
   TurnSummaryGroups,
@@ -84,6 +85,11 @@ const entry = (turnId: string, occurredAt: string, messages: readonly TurnMessag
   }) satisfies TurnSummaryEntry;
 
 const emptyState = { pinnedIds: [] as string[], readIds: [] as string[] };
+
+const shipLabels = createEntityLabeler({
+  labels: { "ship:s1": "Tegetthoff" },
+  regionName: () => null,
+});
 
 function Panel() {
   const { showHistory, showFilters } = useTurnSummaryMeta();
@@ -259,6 +265,7 @@ describe("TurnSummaryProvider", () => {
         onToggleRead={() => undefined}
         onOpenEntity={onOpenEntity}
         isEntityAvailable={() => false}
+        entityLabel={shipLabels}
       >
         <Panel />
       </TurnSummaryProvider>,
@@ -269,7 +276,9 @@ describe("TurnSummaryProvider", () => {
     expect(screen.getByTestId("entity-historical").textContent).toContain("hull: 10 → 4");
 
     fireEvent.click(screen.getByTestId("toggle-detail"));
-    expect(screen.getByTestId("message-detail").textContent).toContain("ship:s1 hull: 10 → 4 (-6)");
+    expect(screen.getByTestId("message-detail").textContent).toContain(
+      "Tegetthoff hull: 10 → 4 (-6)",
+    );
   });
 
   it("opens the entity when it is available", () => {
@@ -287,6 +296,7 @@ describe("TurnSummaryProvider", () => {
         onToggleRead={() => undefined}
         onOpenEntity={onOpenEntity}
         isEntityAvailable={() => true}
+        entityLabel={shipLabels}
       >
         <Panel />
       </TurnSummaryProvider>,
@@ -309,6 +319,7 @@ describe("TurnSummaryProvider", () => {
         turnMessages={emptyState}
         onTogglePinned={() => undefined}
         onToggleRead={() => undefined}
+        entityLabel={shipLabels}
       >
         <Panel />
       </TurnSummaryProvider>,

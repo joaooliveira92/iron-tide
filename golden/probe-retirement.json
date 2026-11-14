@@ -1,25 +1,33 @@
 {
   "probes": {
     "contentArtifactHash": {
-      "mutation": null,
-      "reason": "No corpus mutation test perturbs compiled content; replays record only the bundle hash."
+      "mutation": {
+        "file": "packages/cross-process-test/test/replay-corpus.test.ts",
+        "test": "detects a changed compiled artifact hash at the content check"
+      }
     },
     "contentBundleHash": {
-      "mutation": null,
-      "reason": "No corpus mutation test perturbs the content bundle."
+      "mutation": {
+        "file": "packages/cross-process-test/test/replay-corpus.test.ts",
+        "test": "detects a changed content bundle at the content check"
+      }
     },
     "initialSnapshotHash": {
-      "mutation": null,
-      "reason": "No corpus mutation test perturbs the initial snapshot of a replay."
+      "mutation": {
+        "file": "packages/cross-process-test/test/replay-corpus.test.ts",
+        "test": "detects a changed initial snapshot at the initial check"
+      }
     },
     "closingSnapshotHash": {
-      "mutation": null,
-      "reason": "Mutation tests localise state changes at ledgers; none asserts the snapshot checkpoint itself."
+      "mutation": {
+        "file": "packages/cross-process-test/test/replay-corpus.test.ts",
+        "test": "detects a changed closing snapshot at the snapshot checkpoint"
+      }
     },
     "commandLedgerHash": {
       "mutation": {
         "file": "packages/cross-process-test/test/replay-corpus.test.ts",
-        "test": "detects an injected command at the command ledger"
+        "test": "detects a symmetric change to the command ledger digest in a checked-in replay"
       }
     },
     "eventLedgerHash": {
@@ -41,12 +49,16 @@
       }
     },
     "replayVerificationHash": {
-      "mutation": null,
-      "reason": "No corpus mutation test targets the engine replay-verification hash."
+      "mutation": {
+        "file": "packages/cross-process-test/test/replay-corpus.test.ts",
+        "test": "detects a changed replay verifier output in a checked-in replay"
+      }
     },
     "battleGenerationHash": {
-      "mutation": null,
-      "reason": "No corpus mutation test targets battle generation output."
+      "mutation": {
+        "file": "packages/cross-process-test/test/replay-corpus.test.ts",
+        "test": "detects changed battle generation output in a checked-in replay"
+      }
     }
   }
 }

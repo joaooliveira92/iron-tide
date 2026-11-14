@@ -8,6 +8,6 @@
   "apps/desktop/src/renderer/components/world-map/bake-coastline.ts:122:toFixed:flat.push(Number(x.toFixed(decimals)), Number(y.toFixed(decimals)));",
   "apps/desktop/src/renderer/components/world-map/projection.ts:80:toFixed:path += `${i === 0 ? \"M\" : \"L\"}${x.toFixed(1)} ${y.toFixed(1)}`;",
   "apps/desktop/src/renderer/components/world-map/useFrameMeter.ts:29:toFixed:: `p50 ${p50.toFixed(1)} ms · p95 ${p95.toFixed(1)} ms · n=${sorted.length}`;",
-  "apps/desktop/src/renderer/screens/campaign-preferences/hooks/useDisplayPreferences.ts:14:localStorage:const raw = localStorage.getItem(LEGACY_STORAGE_KEY);",
-  "apps/desktop/src/renderer/screens/campaign-preferences/hooks/useDisplayPreferences.ts:39:localStorage:localStorage.removeItem(LEGACY_STORAGE_KEY);"
+  "apps/desktop/src/renderer/screens/campaign-preferences/hooks/useDisplayPreferences.ts:21:localStorage:const raw = localStorage.getItem(LEGACY_STORAGE_KEY);",
+  "apps/desktop/src/renderer/screens/campaign-preferences/hooks/useDisplayPreferences.ts:23:localStorage:localStorage.removeItem(LEGACY_STORAGE_KEY);"
 ]

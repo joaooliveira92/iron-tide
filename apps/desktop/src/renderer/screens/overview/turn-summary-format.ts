@@ -1,4 +1,9 @@
 import type { TurnMessageDto, TurnSummaryEntry } from "../../../shared/turn-message-contract.js";
+import {
+  NO_ENTITY_LABELS,
+  resolveInterpolation,
+  type EntityLabeler,
+} from "./turn-summary/entity-labels.js";
 
 export const SEVERITY_ORDER = ["CRITICAL", "HIGH", "NORMAL", "LOW", "TRACE"] as const;
 
@@ -42,23 +47,32 @@ export const DEFAULT_FILTERS: TurnSummaryFilters = {
   search: "",
 };
 
-function searchCorpus(message: TurnMessageDto): string {
+function searchCorpus(message: TurnMessageDto, labeler: EntityLabeler): string {
   const parts = [message.category, message.severity, message.titleKey, message.bodyKey];
   for (const value of Object.values(message.interpolation)) parts.push(String(value));
-  for (const ref of message.subjectRefs) parts.push(`${ref.type}:${ref.id}`);
+  for (const value of Object.values(resolveInterpolation(message, labeler))) {
+    parts.push(String(value));
+  }
+  const refs = [...message.subjectRefs, ...message.effectRefs.map((effect) => effect.target)];
+  for (const ref of refs) {
+    parts.push(`${ref.type}:${ref.id}`);
+    const label = labeler(ref);
+    if (label !== null) parts.push(label);
+  }
   return parts.join(" ").toLowerCase();
 }
 
 export function filterTurnMessages(
   messages: readonly TurnMessageDto[],
   filters: TurnSummaryFilters,
+  labeler: EntityLabeler = NO_ENTITY_LABELS,
 ): TurnMessageDto[] {
   const needle = filters.search.trim().toLowerCase();
   return messages.filter((message) => {
     if (filters.actionableOnly && !isActionable(message)) return false;
     if (filters.category !== "ALL" && message.category !== filters.category) return false;
     if (filters.severity !== "ALL" && message.severity !== filters.severity) return false;
-    if (needle.length > 0 && !searchCorpus(message).includes(needle)) return false;
+    if (needle.length > 0 && !searchCorpus(message, labeler).includes(needle)) return false;
     return true;
   });
 }

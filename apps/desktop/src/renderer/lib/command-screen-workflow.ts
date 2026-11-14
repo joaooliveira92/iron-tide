@@ -310,13 +310,12 @@ export function useCommandScreenWorkflow<
     [run],
   );
 
-  useEffect(() => {
-    void loadScreen();
-  }, [loadScreen]);
-
   const needsRefresh = adapter.requiresRefresh(state);
+  const hasLoadedOnMount = useRef(false);
   useEffect(() => {
-    if (needsRefresh) void loadScreen();
+    const isMount = !hasLoadedOnMount.current;
+    hasLoadedOnMount.current = true;
+    if (isMount || needsRefresh) void loadScreen();
   }, [needsRefresh, loadScreen]);
 
   const seenRefreshKey = useRef(options.refreshKey);

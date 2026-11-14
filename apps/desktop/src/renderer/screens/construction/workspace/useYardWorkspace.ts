@@ -76,7 +76,15 @@ export function useYardWorkspace(
   const { state, selectedDesignId, setSelectedDesignId, loadScreen } = session;
   const format = usePresentationFormat();
   const hosted = useScreenHeaderHost();
-  const inspector = useInspectorLayout(sessionId);
+  const inspectorLayout = useInspectorLayout(sessionId);
+  const inspector = useMemo<UseInspectorLayoutResult>(
+    () => ({
+      layout: inspectorLayout.layout,
+      setWidth: inspectorLayout.setWidth,
+      toggleCollapsed: inspectorLayout.toggleCollapsed,
+    }),
+    [inspectorLayout.layout, inspectorLayout.setWidth, inspectorLayout.toggleCollapsed],
+  );
   const inspectorId = useId();
   const [place, setPlace] = useState<YardPlaceId>("slipways");
   const [tabs, setTabs] = useState<Readonly<Record<YardPlaceId, string>>>(() => ({
@@ -165,7 +173,7 @@ export function useYardWorkspace(
         if (place === "orders") setSelectedCommandId(null);
       }
     },
-    [inspector, place],
+    [inspector.toggleCollapsed, place],
   );
 
   const currentPlace = placeOf(place);
@@ -177,9 +185,15 @@ export function useYardWorkspace(
   const selectedCommand =
     state.workspace?.commands.find((command) => command.commandId === selectedCommandId) ?? null;
 
-  return {
-    state: { place, tabs, selectedProjectId, selectedCommandId },
-    actions: {
+  const monthLabel = `${state.month?.year ?? ""}-${String(state.month?.month ?? 0).padStart(2, "0")}`;
+  const busy = state.pendingRequest !== null || state.requiresRefresh;
+
+  const workspaceState = useMemo<YardWorkspaceState>(
+    () => ({ place, tabs, selectedProjectId, selectedCommandId }),
+    [place, tabs, selectedProjectId, selectedCommandId],
+  );
+  const workspaceActions = useMemo<YardWorkspaceActions>(
+    () => ({
       navigate,
       setTab,
       selectProject,
@@ -191,8 +205,23 @@ export function useYardWorkspace(
       toggleInspector: inspector.toggleCollapsed,
       setInspectorWidth: inspector.setWidth,
       onKeyDownCapture,
-    },
-    meta: {
+    }),
+    [
+      navigate,
+      setTab,
+      selectProject,
+      selectDesign,
+      selectCommand,
+      browseCatalog,
+      refresh,
+      clearSelection,
+      inspector.toggleCollapsed,
+      inspector.setWidth,
+      onKeyDownCapture,
+    ],
+  );
+  const workspaceMeta = useMemo<YardWorkspaceMeta>(
+    () => ({
       hosted,
       place,
       rows,
@@ -206,10 +235,31 @@ export function useYardWorkspace(
       tab,
       selectedCommandId,
       reviewing: orderOpen,
-      monthLabel: `${state.month?.year ?? ""}-${String(state.month?.month ?? 0).padStart(2, "0")}`,
-      busy: state.pendingRequest !== null || state.requiresRefresh,
+      monthLabel,
+      busy,
       inspector,
       inspectorId,
-    },
-  };
+    }),
+    [
+      hosted,
+      place,
+      rows,
+      selectedDesign,
+      selectedRow,
+      selectedCommand,
+      figures,
+      marks,
+      readouts,
+      currentPlace,
+      tab,
+      selectedCommandId,
+      orderOpen,
+      monthLabel,
+      busy,
+      inspector,
+      inspectorId,
+    ],
+  );
+
+  return { state: workspaceState, actions: workspaceActions, meta: workspaceMeta };
 }

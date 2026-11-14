@@ -1,10 +1,8 @@
-import { useBattleSession } from "./session/BattleSession.js";
+import { useBattleMeta, useBattleState } from "./session/battle-session-contexts.js";
 
 export function BattleHeader({ onAbandon }: { readonly onAbandon: () => void }) {
-  const {
-    state: { view, resume, error },
-    meta,
-  } = useBattleSession();
+  const { view, resume, error } = useBattleState();
+  const meta = useBattleMeta();
   return (
     <>
       <div className="flex items-start justify-between gap-4">

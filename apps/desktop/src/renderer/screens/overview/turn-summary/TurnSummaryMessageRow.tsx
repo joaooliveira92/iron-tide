@@ -1,11 +1,15 @@
 import { memo, useState } from "react";
-import type {
-  EntityReferenceDto,
-  TurnMessageDto,
+import {
+  entityLabelKey,
+  type EntityReferenceDto,
+  type TurnMessageDto,
 } from "../../../../shared/turn-message-contract.js";
 import { resolveMessage } from "../../../content/uiCatalogue.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
-import { constructionMessageBody } from "./construction-message-text.js";
+import {
+  CONSTRUCTION_DELIVERED_TITLE_KEY,
+  constructionMessageBody,
+} from "./construction-message-text.js";
 import {
   SummaryDelta,
   SummaryRow,
@@ -14,6 +18,7 @@ import {
 } from "../components/summary/index.js";
 import { severityLabelKey } from "../turn-summary-format.js";
 import { TurnSummaryHistoricalRecord } from "./TurnSummaryHistoricalRecord.js";
+import { effectTargetLabel, resolveInterpolation } from "./entity-labels.js";
 import { useTurnSummaryActions, useTurnSummaryMeta } from "./TurnSummaryContext.js";
 
 const SEVERITY_CLASS: Readonly<Record<string, string>> = {
@@ -34,8 +39,19 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
   readonly read: boolean;
 }) {
   const format = usePresentationFormat();
-  const { openEntity, togglePinned, toggleRead } = useTurnSummaryActions();
-  const { isEntityAvailable } = useTurnSummaryMeta();
+  const { openEntity, togglePinned, toggleRead, assignToFleet } = useTurnSummaryActions();
+  const { isEntityAvailable, assignableNationId, entityLabel } = useTurnSummaryMeta();
+  const interpolation = resolveInterpolation(message, entityLabel);
+  const chips = message.subjectRefs.flatMap((ref) => {
+    const label = entityLabel(ref);
+    return label === null ? [] : [{ ref, label }];
+  });
+  const deliveredNationId = message.subjectRefs.find((ref) => ref.type === "nation")?.id;
+  const deliveredShipId =
+    message.titleKey === CONSTRUCTION_DELIVERED_TITLE_KEY &&
+    (assignableNationId === undefined || assignableNationId === deliveredNationId)
+      ? message.subjectRefs.find((ref) => ref.type === "ship")?.id
+      : undefined;
   const [expanded, setExpanded] = useState(false);
   const [historicalRef, setHistoricalRef] = useState<EntityReferenceDto | null>(null);
 
@@ -65,23 +81,33 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
         </span>
         <div className="min-w-0 flex-1">
           <p className={`font-medium ${read ? "text-muted-foreground" : ""}`}>
-            {resolveMessage(message.titleKey, message.interpolation)}
+            {resolveMessage(message.titleKey, interpolation)}
           </p>
           <p className="text-muted-foreground">
-            {constructionMessageBody(message.bodyKey, message.interpolation, format) ??
-              resolveMessage(message.bodyKey, message.interpolation)}
+            {constructionMessageBody(message.bodyKey, interpolation, format) ??
+              resolveMessage(message.bodyKey, interpolation)}
           </p>
-          {message.subjectRefs.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-1">
-              {message.subjectRefs.map((ref) => (
+          {assignToFleet !== undefined && deliveredShipId !== undefined && (
+            <button
+              type="button"
+              data-testid="assign-to-fleet"
+              className="mt-1 rounded border border-border/60 px-1.5 py-0.5 text-xs hover:bg-accent"
+              onClick={() => assignToFleet(deliveredShipId)}
+            >
+              {resolveMessage("ui.turnSummary.assignToFleet")}
+            </button>
+          )}
+          {chips.length > 0 && (
+            <div data-testid="entity-chips" className="mt-1 flex flex-wrap gap-1">
+              {chips.map(({ ref, label }) => (
                 <button
-                  key={`${ref.type}:${ref.id}`}
+                  key={entityLabelKey(ref)}
                   type="button"
                   data-testid="entity-link"
                   className="rounded border border-border/60 px-1.5 py-0.5 text-xs hover:bg-accent"
                   onClick={() => handleOpenEntity(ref)}
                 >
-                  {ref.type}: {ref.id}
+                  {label}
                 </button>
               ))}
             </div>
@@ -93,7 +119,7 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
             <div data-testid="message-detail" className="mt-1 space-y-1">
               {message.effectRefs.map((effect, index) => (
                 <p key={index} className="text-xs text-muted-foreground">
-                  {effect.target.type}:{effect.target.id} {effect.attribute}:{" "}
+                  {effectTargetLabel(effect.target, entityLabel)} {effect.attribute}:{" "}
                   <SummaryDelta
                     from={summaryValueLabel(effect.previousValue)}
                     to={summaryValueLabel(effect.newValue)}

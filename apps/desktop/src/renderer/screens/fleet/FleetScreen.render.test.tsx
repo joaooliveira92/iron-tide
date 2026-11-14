@@ -5,7 +5,10 @@ import type { FleetScreenState } from "./fleet-screen-state.js";
 import { initialFleetScreenState } from "./fleet-screen-state.js";
 import { FleetScreen } from "./FleetScreen.js";
 
-const hook = vi.hoisted(() => ({ state: null as unknown }));
+const hook = vi.hoisted(() => ({
+  state: null as unknown,
+  setSelectedDivisionId: vi.fn<(id: string) => void>(),
+}));
 vi.mock("./hooks/useFleetScreen.js", () => ({
   useFleetScreen: () => ({
     state: hook.state,
@@ -17,7 +20,7 @@ vi.mock("./hooks/useFleetScreen.js", () => ({
     reachableAreas: [{ id: "channel", name: "English Channel" }],
     request: { outcomeUnknown: false, retry: () => undefined },
     loadScreen: async () => undefined,
-    setSelectedDivisionId: () => undefined,
+    setSelectedDivisionId: hook.setSelectedDivisionId,
     setDestinationAreaId: () => undefined,
     submit: () => undefined,
     replace: () => undefined,
@@ -33,7 +36,9 @@ vi.mock("./components/FleetMap.js", () => ({
   ),
 }));
 vi.mock("./organization/FleetOrganizationSection.js", () => ({
-  FleetOrganizationSection: () => <div data-testid="organization-stub" />,
+  FleetOrganizationSection: ({ preferredFlagshipId }: { preferredFlagshipId?: string }) => (
+    <div data-testid="organization-stub" data-preferred={preferredFlagshipId ?? ""} />
+  ),
 }));
 
 vi.mock("./station/FleetStationSection.js", () => ({
@@ -118,6 +123,40 @@ describe("FleetScreen", () => {
     expect(await screen.findByTestId("report-sections-stub")).toBeTruthy();
     fireEvent.click(affairs.getByRole("button", { name: /^Areas/ }));
     expect(await screen.findByRole("columnheader", { name: "Area" })).toBeTruthy();
+  });
+
+  it("selects the fleet holding the focused ship, opens Organization and clears the focus", async () => {
+    hook.state = {
+      ...loaded,
+      divisions: [
+        ...loaded.divisions,
+        {
+          divisionId: "fleet-uk-delivered-home",
+          fleetName: "Newly delivered",
+          areaId: "home",
+          ships: [{ shipId: "ship-con-1" }],
+        },
+      ] as FleetScreenState["divisions"],
+    };
+    hook.setSelectedDivisionId.mockClear();
+    const onFocusHandled = vi.fn<() => void>();
+    render(
+      <FleetScreen sessionId="ses-1" focusShipId="ship-con-1" onFocusHandled={onFocusHandled} />,
+    );
+    const drawer = await screen.findByRole("dialog", { name: "Organization" });
+    expect(hook.setSelectedDivisionId).toHaveBeenCalledExactlyOnceWith("fleet-uk-delivered-home");
+    expect(within(drawer).getByTestId("organization-stub").dataset["preferred"]).toBe("ship-con-1");
+    expect(onFocusHandled).toHaveBeenCalledOnce();
+  });
+
+  it("ignores a null focus", () => {
+    hook.state = loaded;
+    hook.setSelectedDivisionId.mockClear();
+    const onFocusHandled = vi.fn<() => void>();
+    render(<FleetScreen sessionId="ses-1" focusShipId={null} onFocusHandled={onFocusHandled} />);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(hook.setSelectedDivisionId).not.toHaveBeenCalled();
+    expect(onFocusHandled).not.toHaveBeenCalled();
   });
 
   it("closes the drawer with its close button and with Escape, restoring the dispatch strip", async () => {

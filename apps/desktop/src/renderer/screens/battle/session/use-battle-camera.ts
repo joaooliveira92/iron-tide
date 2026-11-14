@@ -32,15 +32,22 @@ export function useBattleCamera(
 ): BattleCamera {
   const [camera, setCamera] = useState<TacticalCamera>(INITIAL_CAMERA);
   const [viewport, setViewport] = useState<TacticalViewport>(INITIAL_VIEWPORT);
-  const [trails, setTrails] = useState<Trails>({});
+  const [trailed, setTrailed] = useState<{
+    readonly view: PlayerBattleView | null;
+    readonly trails: Trails;
+  }>({ view: null, trails: {} });
   const fittedKey = useRef("");
   const userMoved = useRef(false);
 
+  if (view !== null && trailed.view !== view) {
+    setTrailed({ view, trails: appendTrails(trailed.trails, view) });
+  }
+  const trails = trailed.trails;
+
   useEffect(() => {
     if (view === null) return;
-    setTrails((previous) => appendTrails(previous, view));
     const points = knownPositions(view);
-    const key = `${String(points.length)}:${String(view.ended)}`;
+    const key = `${String(points.length)}:${String(view.ended)}:${String(viewport.width)}x${String(viewport.height)}`;
     if (!userMoved.current && key !== fittedKey.current) {
       fittedKey.current = key;
       setCamera((current) => fitCamera(points, viewport, current));
@@ -52,29 +59,24 @@ export function useBattleCamera(
     setCamera(next);
   }, []);
 
-  const zoomBy = (factor: number): void => {
+  const zoomIn = useCallback((): void => {
     const centre: WorldPoint = [viewport.width / 2, viewport.height / 2];
-    setCamera((current) => zoomCameraAt(current, viewport, factor, centre));
-  };
+    setCamera((current) => zoomCameraAt(current, viewport, PROVISIONAL_ZOOM_STEP, centre));
+  }, [viewport]);
 
-  const fit = (): void => {
+  const zoomOut = useCallback((): void => {
+    const centre: WorldPoint = [viewport.width / 2, viewport.height / 2];
+    setCamera((current) => zoomCameraAt(current, viewport, 1 / PROVISIONAL_ZOOM_STEP, centre));
+  }, [viewport]);
+
+  const fit = useCallback((): void => {
     if (view === null) return;
     setCamera((current) => fitCamera(knownPositions(view), viewport, current));
-  };
+  }, [view, viewport]);
 
-  const focus = (): void => {
+  const focus = useCallback((): void => {
     if (focusPoint !== null) setCamera((current) => centreCameraOn(current, focusPoint));
-  };
+  }, [focusPoint]);
 
-  return {
-    camera,
-    viewport,
-    trails,
-    changeCamera,
-    setViewport,
-    zoomIn: () => zoomBy(PROVISIONAL_ZOOM_STEP),
-    zoomOut: () => zoomBy(1 / PROVISIONAL_ZOOM_STEP),
-    fit,
-    focus,
-  };
+  return { camera, viewport, trails, changeCamera, setViewport, zoomIn, zoomOut, fit, focus };
 }

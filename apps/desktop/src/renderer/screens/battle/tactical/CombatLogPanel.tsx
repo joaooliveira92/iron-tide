@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { CombatLogEntry } from "./tactical-log.js";
 import { translate } from "../../../lib/strings.js";
 import { formatTacticalClock } from "./tactical-time.js";
@@ -9,7 +10,7 @@ const CATEGORY_MARK: Record<CombatLogEntry["category"], string> = {
   damage: "▼",
 };
 
-export function CombatLogPanel({
+export const CombatLogPanel = memo(function CombatLogPanel({
   entries,
   onSelectShip,
 }: {
@@ -51,4 +52,4 @@ export function CombatLogPanel({
       })}
     </ol>
   );
-}
+});

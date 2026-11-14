@@ -2,19 +2,20 @@ import { useSyncExternalStore } from "react";
 import { formatMeasurement } from "../../../../lib/presentation-format/format.js";
 import { UM_PER_NAUTICAL_MILE } from "../../../../lib/presentation-format/units.js";
 import { translate } from "../../../../lib/strings.js";
-import { useBattleSession } from "../../session/BattleSession.js";
+import { useBattleCameraState, useBattleState } from "../../session/battle-session-contexts.js";
 import { compassFromHeading, screenToWorld } from "../tactical-geometry.js";
 import { shipPoint } from "../tactical-model.js";
 import { useTacticalMap } from "./tactical-map-context.js";
 
 function CursorDistance() {
   const { cursor, viewport, measurement, shipsById } = useTacticalMap();
-  const { state } = useBattleSession();
+  const state = useBattleState();
+  const { camera } = useBattleCameraState();
   const point = useSyncExternalStore(cursor.subscribe, cursor.read);
   const selected = state.selectedShipId === null ? undefined : shipsById.get(state.selectedShipId);
   const origin = selected === undefined ? null : shipPoint(selected);
   if (point === null || origin === null) return null;
-  const world = screenToWorld(state.camera, viewport, point);
+  const world = screenToWorld(camera, viewport, point);
   const distance = formatMeasurement(
     Math.round(Math.hypot(world[0] - origin[0], world[1] - origin[1])),
     measurement,
@@ -52,7 +53,7 @@ export function TacticalMapConditions() {
 
 export function TacticalMapBearing() {
   const { shipsById } = useTacticalMap();
-  const { state } = useBattleSession();
+  const state = useBattleState();
   const selected = state.selectedShipId === null ? undefined : shipsById.get(state.selectedShipId);
   if (selected?.headingDeg == null) return null;
   return (

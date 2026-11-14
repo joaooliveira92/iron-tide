@@ -2,8 +2,10 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { TurnMessageDto, TurnSummaryEntry } from "../../../shared/turn-message-contract.js";
 import { authoredCatalogue } from "../../../shared/authoredCatalogue.testing.js";
+import { nationDisplayName } from "../../content/presentationContent.js";
 import { setUiCatalogue } from "../../content/uiCatalogue.js";
 import { TurnSummaryPanel } from "./TurnSummaryPanel.js";
+import { createEntityLabeler } from "./turn-summary/entity-labels.js";
 
 beforeEach(() => {
   setUiCatalogue({
@@ -80,6 +82,11 @@ const summary = (messages: readonly TurnMessageDto[]): TurnSummaryEntry => ({
 });
 
 const emptyState = { pinnedIds: [] as string[], readIds: [] as string[] };
+
+const projectLabels = createEntityLabeler({
+  labels: { "constructionProject:p1": "Tegetthoff" },
+  regionName: () => null,
+});
 
 describe("TurnSummaryPanel construction causes (#584 slice 4)", () => {
   const renderBodies = (messages: readonly TurnMessageDto[]) => {
@@ -193,12 +200,13 @@ describe("TurnSummaryPanel", () => {
         turnMessages={emptyState}
         onTogglePinned={() => undefined}
         onToggleRead={() => undefined}
+        entityLabel={createEntityLabeler({ labels: {}, regionName: () => null })}
       />,
     );
     expect(screen.getByTestId("turn-message-group").getAttribute("data-category")).toBe("FINANCE");
     expect(screen.getByTestId("severity-badge").textContent).toBe("Critical");
-    expect(screen.getByText("uk changed by 5.")).toBeTruthy();
-    expect(screen.getByTestId("entity-link").textContent).toContain("uk");
+    expect(screen.getByText(`${nationDisplayName("uk")} changed by 5.`)).toBeTruthy();
+    expect(screen.getByTestId("entity-link").textContent).toBe("United Kingdom");
     expect(screen.getByText("Finance (1)")).toBeTruthy();
   });
 
@@ -263,6 +271,7 @@ describe("TurnSummaryPanel", () => {
         onTogglePinned={() => undefined}
         onToggleRead={() => undefined}
         onOpenEntity={onOpenEntity}
+        entityLabel={projectLabels}
       />,
     );
     fireEvent.click(screen.getByTestId("entity-link"));
@@ -282,6 +291,7 @@ describe("TurnSummaryPanel", () => {
         onTogglePinned={() => undefined}
         onToggleRead={() => undefined}
         onOpenEntity={onOpenEntity}
+        entityLabel={projectLabels}
         isEntityAvailable={() => true}
       />,
     );
@@ -318,6 +328,7 @@ describe("TurnSummaryPanel", () => {
         onTogglePinned={() => undefined}
         onToggleRead={() => undefined}
         onOpenEntity={onOpenEntity}
+        entityLabel={projectLabels}
         isEntityAvailable={() => false}
       />,
     );

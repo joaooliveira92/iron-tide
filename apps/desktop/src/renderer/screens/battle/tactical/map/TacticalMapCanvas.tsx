@@ -6,7 +6,7 @@ import {
   type WheelEvent,
 } from "react";
 import { translate } from "../../../../lib/strings.js";
-import { useBattleSession } from "../../session/BattleSession.js";
+import { useBattleActions, useBattleCameraState } from "../../session/battle-session-contexts.js";
 import { PROVISIONAL_ZOOM_STEP, panCamera, zoomCameraAt } from "../tactical-geometry.js";
 import { TACTICAL_PALETTE } from "../tactical-palette.js";
 import { useTacticalMap } from "./tactical-map-context.js";
@@ -15,9 +15,8 @@ const PAN_KEY_PIXELS = 48;
 
 export function TacticalMapCanvas({ children }: { readonly children: ReactNode }) {
   const { viewport, cursor } = useTacticalMap();
-  const { state, actions } = useBattleSession();
-  const { camera } = state;
-  const { changeCamera, selectShip } = actions;
+  const { camera } = useBattleCameraState();
+  const { changeCamera, selectShip } = useBattleActions();
   const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const centre: readonly [number, number] = [viewport.width / 2, viewport.height / 2];
 

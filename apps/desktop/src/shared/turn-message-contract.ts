@@ -58,6 +58,11 @@ export interface TurnSummaryEntry {
 
 export interface ReadTurnSummariesResult {
   readonly summaries: readonly TurnSummaryEntry[];
+  readonly entityLabels: Readonly<Record<string, string>>;
+}
+
+export function entityLabelKey(ref: EntityReferenceDto): string {
+  return `${ref.type}:${ref.id}`;
 }
 
 export interface TurnSummaries {

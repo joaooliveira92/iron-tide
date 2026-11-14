@@ -489,6 +489,9 @@ importers:
 
   packages/cross-process-test:
     dependencies:
+      '@bluewave/ai':
+        specifier: workspace:*
+        version: link:../ai
       '@bluewave/campaign':
         specifier: workspace:*
         version: link:../campaign
