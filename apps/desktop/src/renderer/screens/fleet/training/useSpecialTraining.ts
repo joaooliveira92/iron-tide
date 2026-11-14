@@ -63,13 +63,16 @@ export function useSpecialTraining(sessionId: string): UseSpecialTrainingReturn 
     [bridge, sessionId, workflow.execute],
   );
 
+  const { loadScreen } = workflow;
+  const reload = useCallback(() => void loadScreen(), [loadScreen]);
+
   return {
     state: workflow.state,
     loadError: workflow.loadError,
     busy: workflow.state.pendingRequest !== null || workflow.state.requiresRefresh,
     outcomeUnknown: workflow.request.outcomeUnknown,
     retry: workflow.request.retry,
-    reload: () => void workflow.loadScreen(),
+    reload,
     fund,
   };
 }
