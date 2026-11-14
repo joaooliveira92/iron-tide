@@ -5,11 +5,16 @@ import { WorkspaceLayout } from "./workspace/WorkspaceLayout.js";
 export interface ShipbuildingWorkspaceProps {
   readonly sessionId?: string;
   readonly projects?: readonly RevisionProject[];
+  readonly catalogue?: readonly RevisionProject[];
 }
 
-export function ShipbuildingWorkspace({ sessionId, projects = [] }: ShipbuildingWorkspaceProps) {
+export function ShipbuildingWorkspace({
+  sessionId,
+  projects = [],
+  catalogue,
+}: ShipbuildingWorkspaceProps) {
   return (
-    <ShipbuildingProvider sessionId={sessionId} projects={projects}>
+    <ShipbuildingProvider sessionId={sessionId} projects={projects} catalogue={catalogue}>
       <WorkspaceLayout />
     </ShipbuildingProvider>
   );

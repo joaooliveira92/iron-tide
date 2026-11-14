@@ -8,6 +8,8 @@ import {
 import { useDraftAutosave } from "../../../components/design-workspace/useDraftAutosave.js";
 import { useRestoredDraftToast } from "../../../components/design-workspace/useRestoredDraftToast.js";
 import { plural } from "../../../components/design-workspace/plural.js";
+import { useBridge } from "../../../lib/bridge-context.js";
+import { useStudyPreview } from "../../../components/design-workspace/panels/SubmitPanel.js";
 import { useCampaignMonthId } from "../../../shell/CampaignShellContext.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { RevisionProject } from "../../../components/design-workspace/revisionPreview.js";
@@ -21,7 +23,9 @@ import { sectionStatuses } from "../section-status.js";
 export function useWorkspaceSession(
   sessionId: string | undefined,
   projects: readonly RevisionProject[],
+  catalogue: readonly RevisionProject[] = projects,
 ) {
+  const bridge = useBridge();
   const campaignMonth = useCampaignMonthId();
   const format = usePresentationFormat();
   const session = useDesignSession(campaignMonth);
@@ -93,6 +97,18 @@ export function useWorkspaceSession(
 
   const findingsSummary = `${view.counts.BLOCKING} blocking · ${view.counts.CRITICAL} critical · ${plural(view.counts.WARNING, "warning")}`;
   const needsName = sessionId !== undefined && shipClassName.trim() === "";
+  const studyOutcome = useStudyPreview(
+    bridge,
+    sessionId ?? "",
+    shipClassName.trim(),
+    draft,
+    view.valid && sessionId !== undefined,
+  );
+  const variantStudy = studyOutcome?.study;
+  const variantText =
+    variantStudy?.derived === true && variantStudy.baselineClassName !== null
+      ? `Variant of ${variantStudy.baselineClassName}: ${format.percent(variantStudy.discountBp, 0)} shorter and cheaper`
+      : undefined;
   const status: DesignStatus =
     view.valid && needsName
       ? { label: "Needs a class name", tone: "warn", detail: findingsSummary }
@@ -113,6 +129,8 @@ export function useWorkspaceSession(
     state: {
       sessionId,
       projects,
+      catalogue,
+      variantText,
       campaignMonth,
       format,
       price,

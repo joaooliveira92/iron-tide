@@ -3,7 +3,7 @@ import type { DesignDraft } from "@bluewave/ship-design";
 import { useBridge } from "../../../lib/bridge-context.js";
 import { Button } from "../../ui/button.js";
 import { ConfirmDialog } from "../ConfirmAction.js";
-import { revisableProjects, type RevisionProject } from "../revisionPreview.js";
+import { openableProjects, type RevisionProject } from "../revisionPreview.js";
 
 export function OpenDesignPanel({
   sessionId,
@@ -19,7 +19,7 @@ export function OpenDesignPanel({
   const bridge = useBridge();
   const [pending, setPending] = useState<RevisionProject | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const open = revisableProjects(projects);
+  const open = openableProjects(projects);
 
   const load = (project: RevisionProject) => {
     if (!bridge || sessionId === undefined) return;
@@ -39,14 +39,18 @@ export function OpenDesignPanel({
   return (
     <div className="flex flex-col gap-2 p-3">
       {open.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No ships are under construction to open.</p>
+        <p className="text-sm text-muted-foreground">
+          No ships are under construction or completed yet. Ships you order appear here.
+        </p>
       ) : (
         <ul className="flex flex-col gap-2">
           {open.map((p) => (
             <li key={p.projectId}>
               <Button variant="outline" className="w-full justify-start" onClick={() => choose(p)}>
                 {p.className}
-                <span className="ml-auto text-xs text-muted-foreground">Under construction</span>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {p.status === "COMPLETED" ? "Completed" : "Under construction"}
+                </span>
               </Button>
             </li>
           ))}
