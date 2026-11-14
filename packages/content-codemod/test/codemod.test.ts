@@ -40,9 +40,9 @@ describe("content codemod planner (ticket 11c)", () => {
   it("migrates the whole catalogue and every design", () => {
     expect(planned.manifest.records.parts).toBe(330);
     expect(planned.manifest.records.designs).toBe(98);
-    expect(planned.manifest.records.placements).toBe(922);
+    expect(planned.manifest.records.placements).toBe(924);
     expect(planned.manifest.records.gunPlacements).toBe(267);
-    expect(planned.manifest.records.tubePlacements).toBe(33);
+    expect(planned.manifest.records.tubePlacements).toBe(35);
     expect(planned.manifest.records.fittingPlacements).toBe(622);
     const familyTotal = Object.values(planned.manifest.records.partsByFamily).reduce(
       (a, b) => a + b,
@@ -231,7 +231,7 @@ describe("content codemod planner (ticket 11c)", () => {
     }
   });
 
-  it("keeps torpedo mountCount equal to the legacy tubes for the 33 tube placements", () => {
+  it("keeps torpedo mountCount equal to the legacy tubes for the 35 tube placements", () => {
     const source = new Map(
       legacySource.designs.flatMap((d) =>
         d.draft.placements.map((p) => [`${d.id}:${p.instanceId}`, p] as const),
@@ -242,7 +242,7 @@ describe("content codemod planner (ticket 11c)", () => {
         .filter((e) => partsById.get(e.part)?.family === "torpedo_launcher")
         .map((e) => ({ designId: d.id, entry: e })),
     );
-    expect(tubes).toHaveLength(33);
+    expect(tubes).toHaveLength(35);
     for (const { designId, entry } of tubes) {
       const placement = source.get(`${designId}:${entry.id}`);
       expect(entry.mountCount).toBe(placement?.params?.["tubes"] ?? 1);
