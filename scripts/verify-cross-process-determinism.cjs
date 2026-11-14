@@ -2,10 +2,8 @@
 // Cross-process determinism proof: run the reference child twice in
 // separate processes and assert the two canonical hash reports are byte-identical.
 //
-// `verify-golden-hashes.cjs` compares one run against the committed reference;
-// this additionally proves repeatability across processes without relying on the
-// committed golden, so a corrupted/incorrect re-pin cannot hide a nondeterminism.
-// Both are now part of `pnpm check` so local green equals CI green.
+// It proves repeatability across processes; drift against committed values is
+// the replay corpus's job (`pnpm check:replay-corpus`).
 
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");

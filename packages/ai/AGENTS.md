@@ -9,6 +9,6 @@
 **Invariants:**
 
 - Plan only commands the engine accepts as legal; never read `Math.random`.
-- Outcome changes move goldens: follow golden repinning.
+- Outcome changes move replay hashes: follow the [replay corpus](../../docs/agents/replay-corpus.md) approvals.
 
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/ai test`.

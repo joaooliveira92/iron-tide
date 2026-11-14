@@ -46,14 +46,14 @@ void test("ignores comment lines", () => {
 });
 
 void test("matches whole tokens only, never a prefix", () => {
-  assert.equal(isStepInvoked("check:golden", "      - run: pnpm check:golden-repin\n"), false);
+  assert.equal(isStepInvoked("check:replay", "      - run: pnpm check:replay-corpus\n"), false);
   assert.equal(isStepInvoked("lint", "      - run: pnpm lint:effect\n"), false);
 });
 
 void test("allowlisted steps are covered without a workflow invocation", () => {
-  const allowlist = { "check:golden": "determinism.yml raw command" };
+  const allowlist = { "check:determinism": "determinism.yml raw command" };
   assert.deepEqual(
-    findUncoveredSteps({ steps: ["check:golden"], workflowTexts: [""], allowlist }),
+    findUncoveredSteps({ steps: ["check:determinism"], workflowTexts: [""], allowlist }),
     [],
   );
 });
@@ -72,7 +72,6 @@ void test("the allowlist is seeded with the check steps covered by raw commands"
   assert.deepEqual(Object.keys(ALLOWLIST).sort(), [
     "check:determinism",
     "check:explanation-coverage",
-    "check:golden",
     "check:reachability-ledger",
     "check:ui-acceptance-map",
   ]);
