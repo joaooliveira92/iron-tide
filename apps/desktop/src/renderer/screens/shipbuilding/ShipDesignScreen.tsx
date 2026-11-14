@@ -7,22 +7,31 @@ import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
 const NOTICE =
   "p-6 pt-[calc(var(--chrome-top,0px)+1.5rem)] text-sm pb-[calc(var(--chrome-bottom,0px)+1.5rem)]";
 
-function RevisingWorkspace({
+function LoadedWorkspace({
   sessionId,
   projectId,
 }: {
   readonly sessionId: string;
-  readonly projectId: string;
+  readonly projectId: string | null;
 }) {
   const { state, loadScreen } = useConstructionScreen(sessionId);
   useEffect(() => {
     void loadScreen();
   }, [loadScreen]);
   const projects = useMemo(
-    () => state.projects.filter((project) => project.projectId === projectId),
+    () =>
+      projectId === null
+        ? undefined
+        : state.projects.filter((project) => project.projectId === projectId),
     [state.projects, projectId],
   );
-  return <ShipbuildingWorkspace sessionId={sessionId} projects={projects} />;
+  return (
+    <ShipbuildingWorkspace
+      sessionId={sessionId}
+      catalogue={state.projects}
+      {...(projects === undefined ? {} : { projects })}
+    />
+  );
 }
 
 export function ShipDesignScreen({ sessionId }: { readonly sessionId: string }) {
@@ -41,9 +50,5 @@ export function ShipDesignScreen({ sessionId }: { readonly sessionId: string }) 
         Loading ship-building content…
       </p>
     );
-  return projectId === null ? (
-    <ShipbuildingWorkspace sessionId={sessionId} />
-  ) : (
-    <RevisingWorkspace sessionId={sessionId} projectId={projectId} />
-  );
+  return <LoadedWorkspace sessionId={sessionId} projectId={projectId} />;
 }

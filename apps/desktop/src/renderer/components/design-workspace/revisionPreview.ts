@@ -19,6 +19,7 @@ import {
 
 export interface RevisionProject {
   readonly projectId: string;
+  readonly designVersionId?: string;
   readonly className: string;
   readonly status: string;
   readonly totalWork: number;
@@ -39,6 +40,18 @@ export interface RevisionPackage {
 
 export const revisableProjects = (projects: readonly RevisionProject[]): RevisionProject[] =>
   projects.filter((p) => p.status !== "COMPLETED");
+
+export const openableProjects = (projects: readonly RevisionProject[]): RevisionProject[] => {
+  const seen = new Set<string>();
+  const completed = projects.filter((p) => {
+    if (p.status !== "COMPLETED") return false;
+    const key = p.designVersionId ?? p.projectId;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return [...revisableProjects(projects).filter((p) => p.status !== "CANCELLED"), ...completed];
+};
 
 const isPackageKind = (k: string): k is PackageKind =>
   (PACKAGE_ORDER as readonly string[]).includes(k);

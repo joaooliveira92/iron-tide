@@ -30,7 +30,7 @@ export function WorkspaceDialogs() {
     draft,
     choiceCheck,
     sessionId,
-    projects,
+    catalogue,
   } = useShipbuildingState();
   const { dialog, pendingLeave } = useShipbuildingMeta();
   const {
@@ -119,11 +119,11 @@ export function WorkspaceDialogs() {
         open={dialog === "open"}
         onClose={() => setDialog(null)}
         title="Open a design"
-        description="Ships under construction. Opening one makes it the design you compare against."
+        description="Your ships, under construction and completed. Opening one makes it the design you compare against."
       >
         <OpenDesignPanel
           sessionId={sessionId}
-          projects={projects}
+          projects={catalogue}
           dirty={editCount > 0}
           onOpen={(design, name) => {
             setDialog(null);

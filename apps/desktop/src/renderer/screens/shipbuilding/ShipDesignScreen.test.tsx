@@ -57,11 +57,17 @@ describe("ShipDesignScreen", () => {
     expect(screen.getByRole("alert").textContent).toMatch(/Could not load ship-building content/);
   });
 
-  it("opens the workspace for the campaign when the content is ready", () => {
+  it("opens the workspace with every project as the Open design catalogue, and none revised", () => {
     render(<ShipDesignScreen sessionId="s1" />);
     expect(screen.getByTestId("workspace")).toBeTruthy();
-    expect(mocks.workspace).toHaveBeenCalledWith({ sessionId: "s1" });
-    expect(mocks.loadScreen).not.toHaveBeenCalled();
+    expect(mocks.loadScreen).toHaveBeenCalled();
+    expect(mocks.workspace).toHaveBeenCalledWith({
+      sessionId: "s1",
+      catalogue: [
+        { projectId: "p1", className: "Havock class" },
+        { projectId: "p2", className: "Other class" },
+      ],
+    });
   });
 
   it("hands only the project being revised to the workspace, and loads the yard to find it", () => {
@@ -71,6 +77,10 @@ describe("ShipDesignScreen", () => {
     expect(mocks.workspace).toHaveBeenCalledWith({
       sessionId: "s1",
       projects: [{ projectId: "p2", className: "Other class" }],
+      catalogue: [
+        { projectId: "p1", className: "Havock class" },
+        { projectId: "p2", className: "Other class" },
+      ],
     });
   });
 
