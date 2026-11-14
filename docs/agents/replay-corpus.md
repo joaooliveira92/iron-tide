@@ -1,8 +1,9 @@
 # Replay corpus
 
-Replay files in `golden/replays/` are the determinism baseline. They are not re-pinned:
-the `Golden-Repin` trailer and the ratchet baseline do not apply to them
-(see [golden repinning](golden-repinning.md)).
+Replay files in `golden/replays/` are the determinism baseline, the only committed golden. A change
+that moves an authoritative outcome re-records the affected replays and is approved below, stating the
+old value, the new value, the cause and a migration assessment. A hash that moves without an understood
+authoritative cause is a stop condition (see `AGENTS.md`).
 
 ## Approvals
 
@@ -21,11 +22,3 @@ entry. CI only verifies; entries are append-only relative to the gate base. A `d
 New scenarios go in `scenarios.ts` with a one-line `purpose`; a new replay file needs no approval. `pnpm replay:coverage` lists the subsystems each replay exercises, and those none do.
 
 Fuzz cases (`FUZZ_CASES`, pinned in `golden/replay-fuzz.json`) run on three OSes; reproduce a failure with `pnpm replay:fuzz run <seed> <months>`. Only `pnpm replay:fuzz record` (local, refused under CI) rewrites the pin; approvals do not cover it. Generated plans: ADR-0280.
-
-## Retiring a legacy probe
-
-A probe pinned in `golden/hashes.json` may be retired once a corpus mutation test catches the same
-class of break. `golden/probe-retirement.json` classifies every pinned probe: it either cites the
-mutation test (file and exact title) in `replay-corpus.test.ts`, or states why none exists.
-`pnpm check:probe-retirement` fails on an unclassified probe or a missing cited test, and lists retire-eligible probes. It never removes anything: retiring a probe is a separate, reviewed change
-that updates the register, the guards that read it, and this doc. The golden file stays until every probe is retired.

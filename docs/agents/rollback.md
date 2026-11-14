@@ -14,8 +14,8 @@ pnpm preflight && pnpm test:scripts && pnpm check
 ```
 
 Merge the revert branch into `dev` like any other change. Never reset `dev` or
-force-push. A revert that changes golden or replay hashes is a re-pin and follows
-[golden repinning](golden-repinning.md).
+force-push. A revert that changes replay hashes needs hash-bound approvals and follows
+the [replay corpus](replay-corpus.md).
 
 Any agent may prepare a revert branch. Merging it follows the same merge
 authority as the change it reverts. For a broken `dev`, the brief's owner or the

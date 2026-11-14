@@ -32,7 +32,7 @@ Determinism (no `Math.random`, wall-clock, `process.env`; canonical hashes ident
 
 - Red, Green, Refactor; a bug is unconfirmed until a regression test fails before the fix and passes after.
 - `vite-plus/test`; exercise production composition, replace only true external boundaries; no sleeps or wall-clock.
-- Never weaken gates. [Golden repinning](docs/agents/golden-repinning.md).
+- Never weaken gates. [Replay corpus](docs/agents/replay-corpus.md).
 
 ## Delivery
 
