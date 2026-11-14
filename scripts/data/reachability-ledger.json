@@ -285,7 +285,7 @@
     },
     {
       "id": "accept-peace",
-      "player_verb": "Accept a peace settlement",
+      "player_verb": "Accept peace",
       "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],

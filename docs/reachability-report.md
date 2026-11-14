@@ -31,7 +31,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | order-foreign-construction | Preview and place a ship order with a foreign builder | `screens/construction/order/OrderDialog.tsx` | `apps/desktop/src/renderer/screens/construction/ConstructionScreen.order.test.tsx` |
 | cancel-construction-project | Cancel a construction project; work done is forfeited and nothing is refunded | `screens/construction/ConstructionScreen.tsx` | `apps/desktop/src/main/commands/constructionStatusCommands.test.ts` |
 | declare-war | Declare war on a nation | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
-| accept-peace | Accept a peace settlement | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
+| accept-peace | Accept peace | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | form-or-break-alliance | Form or break an alliance | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | form-or-break-non-aggression-pact | Form or break a non-aggression pact | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | declare-blockade | Declare a blockade of a nation in an area | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
