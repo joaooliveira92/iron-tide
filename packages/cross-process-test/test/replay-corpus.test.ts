@@ -339,11 +339,13 @@ describe("replay corpus pinned probe mutations", () => {
 
   it("detects a symmetric change to the command ledger digest in a checked-in replay", () => {
     expect(verified(maltaWar)).toEqual({ ok: true, months: 4 });
-    const original = CommandLedger.prototype.hash;
+    const original: unknown = Reflect.get(CommandLedger.prototype, "hash");
+    if (typeof original !== "function") throw new Error("CommandLedger.hash is not a function");
     const spy = vi.spyOn(CommandLedger.prototype, "hash").mockImplementation(function (
       this: CommandLedger,
     ) {
-      return `${original.call(this).slice(0, 63)}${original.call(this).endsWith("0") ? "1" : "0"}`;
+      const digest = String(Reflect.apply(original, this, []));
+      return `${digest.slice(0, 63)}${digest.endsWith("0") ? "1" : "0"}`;
     });
     try {
       expect(verified(maltaWar)).toMatchObject({
@@ -356,12 +358,13 @@ describe("replay corpus pinned probe mutations", () => {
   });
 
   it("detects a changed replay verifier output in a checked-in replay", () => {
-    const original = ReplayVerifier.prototype.verify;
+    const original: unknown = Reflect.get(ReplayVerifier.prototype, "verify");
+    if (typeof original !== "function") throw new Error("ReplayVerifier.verify is not a function");
     const spy = vi.spyOn(ReplayVerifier.prototype, "verify").mockImplementation(function (
       this: ReplayVerifier,
       ...args: Parameters<ReplayVerifier["verify"]>
     ) {
-      const outcome = original.apply(this, args);
+      const outcome: ReturnType<ReplayVerifier["verify"]> = Reflect.apply(original, this, args);
       return { ...outcome, steps: outcome.steps.slice(1) };
     });
     try {
