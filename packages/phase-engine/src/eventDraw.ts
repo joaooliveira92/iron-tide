@@ -1,11 +1,6 @@
 import type { DiplomaticRelation, NationEventHistory, NationState } from "@bluewave/campaign";
 import type { GameEvent } from "@bluewave/content-schema";
 import {
-  ANSWER_PRESTIGE_FAILED,
-  applyAnswerEffects,
-  attachAnswerEffects,
-} from "./answerEffects.js";
-import {
   aiStanceWeights,
   EVENT_DRAW_RANGE_BP,
   eligibleEvents,
@@ -14,11 +9,11 @@ import {
   EVENT_STREAM_FAMILY,
   isDilemmaOverdue,
   pickAiAnswer,
-  recordEventAnswer,
   selectEvent,
   withPendingDilemma,
 } from "@bluewave/campaign";
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
+import { resolveEventAnswer } from "./eventAnswer.js";
 import type { PhaseContext } from "./pipeline.js";
 
 const EVENT_PHASE = "resolve_diplomacy";
@@ -53,38 +48,17 @@ export function applyEventsForMonth(ctx: PhaseContext): void {
       answerId: string,
       resolvedBy: "AI" | "DEFAULT",
     ): NationEventHistory => {
-      const recorded = recordEventAnswer(history, {
-        eventId: event.id,
-        month,
+      const resolved = resolveEventAnswer(ctx, {
+        nation,
+        relations: workingRelations,
+        history,
+        event,
         answerId,
         resolvedBy,
       });
-      const outcome = applyAnswerEffects({
-        nation,
-        relations: workingRelations,
-        event,
-        answerId,
-        rules: rules.answerEffects,
-        prestigeRules: ctx.snapshot.read("prestigeRules"),
-        month,
-        rulesetVersion,
-        nextSeq: ctx.nextSeq,
-      });
-      if (outcome === undefined) return recorded;
-      nation = outcome.nation;
-      workingRelations = outcome.relations;
-      for (const ledgerEvent of outcome.ledgerEvents) ctx.eventLedger.append(ledgerEvent);
-      for (const failure of outcome.failures) {
-        ctx.collector.addError(ANSWER_PRESTIGE_FAILED, failure, {
-          stage: "events",
-          entityId: nationId,
-        });
-      }
-      const quiet = outcome.effects.lines.every(
-        (line) => line.budgetBp === 0 && line.unrestDelta === 0 && line.tensionDelta === 0,
-      );
-      const silent = quiet && outcome.effects.prestigeDelta === 0;
-      return silent ? recorded : attachAnswerEffects(recorded, outcome.effects);
+      nation = resolved.nation;
+      workingRelations = resolved.relations;
+      return resolved.history;
     };
 
     if (history.pending !== undefined && isDilemmaOverdue(history.pending, month, rules)) {
