@@ -10,6 +10,7 @@ import type {
   CompiledDesignVersion,
   DeclinedBattleRecord,
   DeclineCounterEntry,
+  PeaceOffer,
   ConstructionMonthUsage,
   ConstructionDelay,
   ConstructionOverrun,
@@ -483,6 +484,15 @@ const F = {
     "battleManifests",
     "declinedBattles",
     "declineCounters",
+    "peaceOffers",
+  ),
+  PeaceOffer: fields<PeaceOffer>()(
+    "warId",
+    "proposerId",
+    "targetId",
+    "month",
+    "term",
+    "reasonCode",
   ),
   DeclineCounterEntry: fields<DeclineCounterEntry>()(
     "key",
@@ -601,6 +611,7 @@ const _assert: [
   _Assert<BattleManifestSide, typeof F.BattleManifestSide>,
   _Assert<DeclinedBattleRecord, typeof F.DeclinedBattleRecord>,
   _Assert<DeclineCounterEntry, typeof F.DeclineCounterEntry>,
+  _Assert<PeaceOffer, typeof F.PeaceOffer>,
   _Assert<WarState, typeof F.WarState>,
   _Assert<CampaignSlot, typeof F.CampaignSlot>,
   _Assert<CompiledDesignVersion, typeof F.CompiledDesignVersion>,
@@ -613,6 +624,7 @@ const _assert: [
   _Assert<CampaignWeatherState, typeof F.CampaignWeatherState>,
   _Assert<CampaignSnapshot, typeof F.CampaignSnapshot>,
 ] = [
+  true,
   true,
   true,
   true,
@@ -873,6 +885,13 @@ export function cloneSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
                 : (entries as DeclineCounterEntry[]).map((e) =>
                     recordClone(e, F.DeclineCounterEntry),
                   ),
+            peaceOffers: (offers) =>
+              offers === undefined
+                ? undefined
+                : (offers as PeaceOffer[]).map((o) => ({
+                    ...recordClone(o, F.PeaceOffer),
+                    term: { ...o.term },
+                  })),
           },
           seen,
         ),

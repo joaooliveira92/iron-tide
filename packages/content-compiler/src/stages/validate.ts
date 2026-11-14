@@ -43,6 +43,7 @@ import {
   decodePresenceRules,
 } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { validatePeaceBehaviourRules } from "./validatePeaceBehaviour.js";
 
 import type { CampaignCollections, CompilerStage } from "../index.js";
 import type { ParseOutput } from "./parse.js";
@@ -274,6 +275,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     validateGunneryRules(validated["rulesets"] ?? [], collector);
     validateMissilesRules(validated["rulesets"] ?? [], collector);
     validateTensionDriftRules(validated["rulesets"] ?? [], collector);
+    validatePeaceBehaviourRules(validated["rulesets"] ?? [], collector);
     validateMissingReferences(validated, collector);
     validateTechnologyGraph(validated, input, collector);
 

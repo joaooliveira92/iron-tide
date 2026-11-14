@@ -14,6 +14,7 @@ import type { BudgetModifier, NationEventHistory } from "./eventState.js";
 import type { FleetExerciseRecord } from "./fleetExercise.js";
 import type { TrainingSubjectEntry } from "./specialTraining.js";
 import type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
+import type { PeaceOffer } from "./peaceOffer.js";
 import type { PermanentDivision } from "./division.js";
 import type { Officer } from "./officers.js";
 import type { ConstructionProjectStatus } from "./constructionStatus.js";
@@ -235,6 +236,7 @@ export interface WarState {
   battleManifests: BattleManifest[];
   declinedBattles?: DeclinedBattleRecord[];
   declineCounters?: DeclineCounterEntry[];
+  peaceOffers?: PeaceOffer[];
 }
 
 export interface WarDeclaration {

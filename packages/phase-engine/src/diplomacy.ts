@@ -31,6 +31,7 @@ import { Result } from "effect";
 import { possessionTransferredEvent } from "./events.js";
 import { applyEventsForMonth } from "./eventDraw.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
+import { runPeaceProposals } from "./peaceProposals.js";
 
 function pairKey(a: string, b: string): string {
   return [a, b].sort().join("\u0000");
@@ -167,9 +168,15 @@ export function applyAcceptPeace(
       : m,
   );
 
+  const remaining = snapshot["wars"].peaceOffers?.filter((o) => o.warId !== war["id"]);
   let next = {
     ...snapshot,
-    wars: { ...snapshot["wars"], wars, participantMemberships },
+    wars: {
+      ...snapshot["wars"],
+      wars,
+      participantMemberships,
+      ...(remaining === undefined ? {} : { peaceOffers: remaining }),
+    },
   };
 
   next = updateRelation(next, war["attackerId"], war["defenderId"], {
@@ -456,6 +463,7 @@ export function runDiplomacyPhase(ctx: PhaseContext): PhaseRunOutcome {
   if (next !== wars) ctx.snapshot.write("wars", next);
   applyExerciseTensionForMonth(ctx);
   applyTensionDriftForMonth(ctx);
+  runPeaceProposals(ctx);
   applyEventsForMonth(ctx);
   return { status: "continue" };
 }
@@ -464,7 +472,7 @@ export const diplomacyPhase: MonthPhase = {
   id: "resolve_diplomacy",
   name: "Diplomacy Resolution",
   permissions: {
-    reads: ["wars", "nations", "politics", "rulesetVersion", "prestigeRules"],
+    reads: ["wars", "nations", "politics", "world", "rulesetVersion", "prestigeRules"],
     writes: ["wars", "politics", "nations"],
     rng: true,
   },
