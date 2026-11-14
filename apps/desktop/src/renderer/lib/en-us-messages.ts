@@ -1,3 +1,5 @@
+import { PRESTIGE_REASON_MESSAGES } from "./prestige-reason-messages.js";
+
 export const EN_US_MESSAGES = {
   "settings.title": "Options",
   "settings.description": "Appearance, display, measurements, currency and accessibility.",
@@ -257,10 +259,7 @@ export const EN_US_MESSAGES = {
     "Your standing as Grand Admiral. Defeats and unpaid funds lower it, victories raise it; at {threshold} or below you risk dismissal.",
   "shell.prestige.lastChange": "Last change: {delta} ({reason}, {month}).",
   "shell.prestige.riskNote": "At or below {threshold} there is a monthly chance of being sacked.",
-  "shell.prestige.reason.UNPAID_FUNDS": "unpaid funds",
-  "shell.prestige.reason.BATTLE_LOST": "battle lost",
-  "shell.prestige.reason.BATTLE_WON": "battle won",
-  "shell.prestige.reason.DECLINED_BATTLE": "repeated declined battles",
+  ...PRESTIGE_REASON_MESSAGES,
   "shell.career.label": "Career result",
   "shell.career.note":
     "Final score {score} (the prestige you held), ended {month} {year}: {reason}.",
