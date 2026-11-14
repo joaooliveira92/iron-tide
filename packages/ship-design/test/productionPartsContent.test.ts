@@ -151,7 +151,7 @@ describe("production parts content → compile (ticket 11d)", () => {
         ).toBeDefined();
       }
     }
-    expect(placements).toBe(922);
+    expect(placements).toBe(924);
   });
 
   it("executes the four D17 designs through the production barrier and pins their central batteries", () => {

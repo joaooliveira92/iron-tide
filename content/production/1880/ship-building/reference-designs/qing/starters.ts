@@ -102,7 +102,7 @@ export default collection("designs", ReferenceDesignSchema, [
       placements: [
         {
           instanceId: "main_fwd",
-          componentId: "gun_rml_11in_25ton",
+          componentId: "gun_rml_125in_38ton",
           zoneId: "FORECASTLE",
           stationPermille: 40,
           params: {
@@ -237,7 +237,7 @@ export default collection("designs", ReferenceDesignSchema, [
         installedKw: 8000,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 400,
-        fuelCapacityKg: 700000,
+        fuelCapacityKg: 630000,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 450,
         foulingBp: 0,
@@ -288,7 +288,7 @@ export default collection("designs", ReferenceDesignSchema, [
       placements: [
         {
           instanceId: "main_fwd",
-          componentId: "gun_rml_10in_18ton",
+          componentId: "gun_rml_11in_25ton",
           zoneId: "FORECASTLE",
           stationPermille: 40,
           params: {
@@ -299,7 +299,7 @@ export default collection("designs", ReferenceDesignSchema, [
         },
         {
           instanceId: "main_aft",
-          componentId: "gun_rml_10in_18ton",
+          componentId: "gun_rml_11in_25ton",
           zoneId: "QUARTERDECK",
           stationPermille: 940,
           params: {
@@ -419,7 +419,7 @@ export default collection("designs", ReferenceDesignSchema, [
         installedKw: 6200,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 400,
-        fuelCapacityKg: 780000,
+        fuelCapacityKg: 702000,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 450,
         foulingBp: 0,
@@ -551,7 +551,7 @@ export default collection("designs", ReferenceDesignSchema, [
         installedKw: 3500,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 400,
-        fuelCapacityKg: 250000,
+        fuelCapacityKg: 225000,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 450,
         foulingBp: 0,
@@ -687,7 +687,7 @@ export default collection("designs", ReferenceDesignSchema, [
         installedKw: 700,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 500,
-        fuelCapacityKg: 130000,
+        fuelCapacityKg: 117000,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 510,
         foulingBp: 0,
@@ -809,7 +809,7 @@ export default collection("designs", ReferenceDesignSchema, [
         installedKw: 2600,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 500,
-        fuelCapacityKg: 900000,
+        fuelCapacityKg: 810000,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 480,
         foulingBp: 0,
