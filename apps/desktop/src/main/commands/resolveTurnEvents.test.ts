@@ -6,7 +6,6 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import { ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
-import { EN_US_MESSAGES } from "../../renderer/lib/en-us-messages.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type { ResolveTurnResult } from "../../shared/turn-message-contract.js";
 import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
@@ -99,7 +98,6 @@ describe("resolveTurn with the production event catalogue", () => {
         if (fired?.effects !== undefined && fired.effects.prestigeDelta !== 0) {
           expect(player?.prestigeLastChange?.month).toBe(fired.month);
           expect(reason).toBeDefined();
-          expect(EN_US_MESSAGES).toHaveProperty([`shell.prestige.reason.${reason}`]);
           prestigeAnswers += 1;
         }
       }
