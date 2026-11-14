@@ -45,7 +45,7 @@ import type {
 import type { SafeInt } from "@bluewave/contracts";
 import { PhaseEngineError } from "./errors.js";
 import { cloneBudgetModifiers, cloneEventHistory } from "./eventStateClone.js";
-import { cloneDeclineCounters, clonePeaceOffers } from "./warRecordsClone.js";
+import { WAR_RECORD_FIELDS, cloneDeclineCounters, clonePeaceOffers } from "./warRecordsClone.js";
 
 type AreaData = WorldState["areas"][number];
 type RouteData = WorldState["routes"][number];
@@ -890,7 +890,7 @@ export function cloneSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
 }
 
 export const CLONE_COVERAGE: Readonly<Record<string, readonly string[]>> = (() => {
-  const entries = Object.entries(F).map(
+  const entries = Object.entries({ ...F, ...WAR_RECORD_FIELDS }).map(
     ([k, v]) => [k, Object.freeze([...(v as readonly string[])])] as const,
   );
   return Object.freeze(Object.fromEntries(entries)) as Readonly<Record<string, readonly string[]>>;

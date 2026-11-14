@@ -40,7 +40,7 @@
   "packages/phase-engine/test/diplomacy-war.test.ts": { "lines": 896 },
   "packages/phase-engine/test/foreign-construction.test.ts": { "lines": 1027 },
   "packages/phase-engine/test/integration.test.ts": { "lines": 951 },
-  "packages/phase-engine/test/snapshot-clone.test.ts": { "lines": 709 },
+  "packages/phase-engine/test/snapshot-clone.test.ts": { "lines": 658 },
   "packages/ship-design/src/armamentContent.ts": { "lines": 766 },
   "packages/ship-design/src/compile/stages.ts": { "lines": 643 },
   "packages/ship-design/src/loadoutResolution.ts": { "lines": 673 },
