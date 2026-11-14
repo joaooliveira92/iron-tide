@@ -86,5 +86,20 @@ describe("BattleGenerator / generateBattles (AC-12 / INC-5)", () => {
       const result = generateBattles(strengthBySide(1_000, 1_000));
       expect(result.manifests.length).toBeGreaterThan(0);
     });
+
+    it("applies a content-supplied floor in place of the defaults", () => {
+      const small = strengthBySide(40, 40);
+      expect(generateBattles(small).manifests).toEqual([]);
+      const lowered = generateBattles({
+        ...small,
+        minimumStrength: { FLEET_BATTLE: 30, CRUISER_BATTLE: 15 },
+      });
+      expect(lowered.manifests.length).toBeGreaterThan(0);
+      const raised = generateBattles({
+        ...strengthBySide(1_000, 1_000),
+        minimumStrength: { FLEET_BATTLE: 100_000, CRUISER_BATTLE: 50_000 },
+      });
+      expect(raised.manifests).toEqual([]);
+    });
   });
 });

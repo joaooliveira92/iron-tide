@@ -13,7 +13,7 @@ import { createForceRequirements, assignMandatoryRoles } from "./force.js";
 import { optionalAssetSelectionV1, optionalAssetStreamKey } from "./optional.js";
 import { revalidateReachabilityAndLegality } from "./reachability.js";
 import { battleCompositionRepairV1 } from "./repair.js";
-import { FLEET_BATTLE_MIN_STRENGTH, CRUISER_BATTLE_MIN_STRENGTH } from "./mission.js";
+import { minimumStrengthFor, type BattleMinimumStrength } from "./mission.js";
 import {
   BATTLE_MANDATORY_ROLE_UNFILLED,
   BATTLE_COMPOSITION_IRREPARABLE,
@@ -99,6 +99,7 @@ export interface BattleGenerationInputs {
   resolveShipType: (shipId: string) => string;
   resolveReadiness: (shipId: string) => number;
   reservedAssetIds?: ReadonlySet<string>;
+  minimumStrength?: BattleMinimumStrength;
 }
 
 export interface BattleGenerationResult {
@@ -202,7 +203,7 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    const forcePolicy = createForceRequirements(opp.missionType);
+    const forcePolicy = createForceRequirements(opp.missionType, inputs.minimumStrength);
     stageRecords.push(
       stageRecord(
         opp,
@@ -255,8 +256,7 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
 
     const attackerStrength = attackerEligible.reduce((s, e) => s + e.effectiveStrength, 0);
     const defenderStrength = defenderEligible.reduce((s, e) => s + e.effectiveStrength, 0);
-    const minStrength =
-      opp.missionType === "FLEET_BATTLE" ? FLEET_BATTLE_MIN_STRENGTH : CRUISER_BATTLE_MIN_STRENGTH;
+    const minStrength = minimumStrengthFor(opp.missionType, inputs.minimumStrength);
     if (attackerStrength < minStrength || defenderStrength < minStrength) {
       stageRecords.push(
         stageRecord(

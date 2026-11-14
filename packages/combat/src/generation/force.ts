@@ -1,7 +1,7 @@
 import { BluewaveError } from "@bluewave/contracts";
 import { BATTLE_FORCE_REQUIREMENT_MISSING, BATTLE_MANDATORY_ROLE_UNFILLED } from "./reasonCodes.js";
-import type { BattleMissionType } from "./mission.js";
-import { getMission, FLEET_BATTLE_MIN_STRENGTH, CRUISER_BATTLE_MIN_STRENGTH } from "./mission.js";
+import type { BattleMinimumStrength, BattleMissionType } from "./mission.js";
+import { getMission, minimumStrengthFor } from "./mission.js";
 import { compareStrings } from "../core/ordering.js";
 
 export type TacticalRole = "CORE" | "SUPPORT" | "SCOUT" | "SCREEN" | "PATROL" | "INDEPENDENT";
@@ -18,10 +18,10 @@ export interface BattleForceRequirementPolicy {
 
 export function createForceRequirements(
   missionType: BattleMissionType,
+  minimumStrength?: BattleMinimumStrength,
 ): BattleForceRequirementPolicy {
   const def = getMission(missionType);
-  const minStrength =
-    missionType === "FLEET_BATTLE" ? FLEET_BATTLE_MIN_STRENGTH : CRUISER_BATTLE_MIN_STRENGTH;
+  const minStrength = minimumStrengthFor(missionType, minimumStrength);
   return {
     policyId: def.forceRequirementPolicyId,
     missionType,
