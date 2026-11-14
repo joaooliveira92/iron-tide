@@ -18,7 +18,8 @@
       "events/liberal-democracy.ts",
       "events/limited-democracy.ts",
       "events/autocratic.ts",
-      "events/eastern.ts"
+      "events/eastern.ts",
+      "events/crises.ts"
     ],
     "diplomacy": ["diplomacy.ts"],
     "research": ["research.ts"],
