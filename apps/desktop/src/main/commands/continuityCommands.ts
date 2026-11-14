@@ -351,6 +351,8 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
           input === null ? undefined : yield* contentArtifact.loadMissilesRules();
         const tensionDrift =
           input === null ? undefined : yield* contentArtifact.loadTensionDriftRules();
+        const peaceBehaviour =
+          input === null ? undefined : yield* contentArtifact.loadPeaceBehaviourRules();
         const events = input === null ? undefined : yield* contentArtifact.loadEventContent();
         const constructionEvents =
           input === null ? undefined : yield* contentArtifact.loadConstructionEvents();
@@ -366,6 +368,9 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
                 ...(gunneryRules !== undefined ? { gunneryRules } : {}),
                 ...(missilesRules !== undefined ? { missilesRules } : {}),
                 ...(tensionDrift !== undefined ? { tensionDrift } : {}),
+                ...(peaceBehaviour !== undefined
+                  ? { peaceBehaviour, playerNationId: metadata.playerSlotId }
+                  : {}),
                 ...(events !== undefined ? { events, playerNationId: metadata.playerSlotId } : {}),
                 ...(constructionEvents !== undefined ? { constructionEvents } : {}),
               };

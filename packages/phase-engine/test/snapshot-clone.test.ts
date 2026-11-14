@@ -1,6 +1,3 @@
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import type { CampaignSnapshot, ForeignConstructionContract, Ship } from "@bluewave/campaign";
 import { bp, money, SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize } from "@bluewave/deterministic";
@@ -9,6 +6,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor } from "../src/index.js";
 import { CLONE_COVERAGE, cloneSnapshot } from "../src/snapshotClone.js";
 import { EVENT_STATE_FIXTURE } from "./fixtures/event-state.js";
+import { declaredFields } from "./fixtures/campaign-type-source.js";
 import {
   ATTACKER_NATION,
   DEFENDER_NATION,
@@ -18,75 +16,6 @@ import {
   makeShip,
   makeWar,
 } from "./battle-fixtures.js";
-
-const STATE_PATH = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "campaign",
-  "src",
-  "state.ts",
-);
-const DIVISION_PATH = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "campaign",
-  "src",
-  "division.ts",
-);
-
-const OFFICER_PATH = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "campaign",
-  "src",
-  "officers.ts",
-);
-
-const DECLINE_RECORDS_PATH = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "campaign",
-  "src",
-  "declineRecords.ts",
-);
-
-const STATE_SOURCE = readFileSync(STATE_PATH, "utf8");
-const OFFICER_SOURCE = readFileSync(OFFICER_PATH, "utf8");
-const DIVISION_SOURCE = readFileSync(DIVISION_PATH, "utf8");
-const DECLINE_RECORDS_SOURCE = readFileSync(DECLINE_RECORDS_PATH, "utf8");
-
-function sourceForType(typeName: string): string {
-  if (typeName === "PermanentDivision") return DIVISION_SOURCE;
-  if (typeName === "Officer") return OFFICER_SOURCE;
-  if (typeName === "DeclinedBattleRecord" || typeName === "DeclineCounterEntry")
-    return DECLINE_RECORDS_SOURCE;
-  return STATE_SOURCE;
-}
-
-function declaredFields(name: string): string[] {
-  const source = sourceForType(name);
-  const schemaHeader = new RegExp(`export const ${name}Schema = Schema\\.Struct\\(\\{`);
-  const interfaceHeader = new RegExp(`export interface ${name}\\s*\\{`);
-  const schemaStart = source.search(schemaHeader);
-  const start = schemaStart === -1 ? source.search(interfaceHeader) : schemaStart;
-  expect(start, `no declaration for ${name} in the campaign type source`).toBeGreaterThanOrEqual(0);
-  const bodyStart = source.indexOf("{", start) + 1;
-  const close = source.indexOf("\n}", bodyStart);
-  expect(close, `${name} block not closed in source`).toBeGreaterThanOrEqual(0);
-  const fields: string[] = [];
-  for (const line of source.slice(bodyStart, close).split("\n")) {
-    const match = line.match(/^\s*([A-Za-z_$][\w$]*)(\?)?:/);
-    if (match) {
-      const field = match[1]!;
-      if (!fields.includes(field)) fields.push(field);
-    }
-  }
-  return fields;
-}
 
 type RefNode = object;
 
@@ -424,6 +353,16 @@ function makeRichSnapshot(): CampaignSnapshot {
       decayAnchorMonth: "1880-01",
     },
   ];
+  snapshot.wars.peaceOffers = [
+    {
+      warId: "war_1",
+      proposerId: DEFENDER_NATION,
+      targetId: ATTACKER_NATION,
+      month: "1880-01",
+      term: { _tag: "StatusQuo" },
+      reasonCode: "PROPOSER_TRAILS_BY_MARGIN",
+    },
+  ];
   snapshot.wars.battleManifests = [
     {
       battleId: "battle-1",
@@ -560,6 +499,7 @@ const CANONICAL_CLONE_TYPES = [
   "BattleManifestSide",
   "DeclineCounterEntry",
   "DeclinedBattleRecord",
+  "PeaceOffer",
   "WarState",
   "CampaignSlot",
   "CompiledDesignVersion",
@@ -633,6 +573,9 @@ describe("snapshotClone — field-exhaustive clone coverage audit", () => {
     );
     expect(Object.keys(clone.wars.declinedBattles![0]!).sort()).toEqual(
       [...CLONE_COVERAGE.DeclinedBattleRecord!].sort(),
+    );
+    expect(Object.keys(clone.wars.peaceOffers![0]!).sort()).toEqual(
+      [...CLONE_COVERAGE.PeaceOffer!].sort(),
     );
   });
 });
