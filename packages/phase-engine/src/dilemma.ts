@@ -1,5 +1,5 @@
 import type { NationState } from "@bluewave/campaign";
-import { recordEventAnswer, resolveEventCounterpart } from "@bluewave/campaign";
+import { resolveEventCounterpart } from "@bluewave/campaign";
 import type { EventAnswer, GameEvent } from "@bluewave/content-schema";
 import type {
   DecisionDelta,
@@ -8,6 +8,7 @@ import type {
   EffectMagnitude,
   PendingDecision,
 } from "@bluewave/messages";
+import { resolveEventAnswer } from "./eventAnswer.js";
 import type { PhaseContext } from "./pipeline.js";
 
 export const DILEMMA_PHASE = "resolve_diplomacy" as const;
@@ -137,12 +138,24 @@ export function pendingDilemma(ctx: PhaseContext): DilemmaDecision | undefined {
 export function recordDilemmaAnswer(ctx: PhaseContext, dilemma: DilemmaDecision, answerId: string) {
   const nations = ctx.snapshot.read("nations");
   const nation = nations.get(dilemma.nationId);
-  if (nation?.eventHistory === undefined) return;
-  const eventHistory = recordEventAnswer(nation.eventHistory, {
-    eventId: dilemma.eventId,
-    month: ctx.campaignMonth,
+  const event = ctx.engineOptions?.events?.catalogue.find(
+    (candidate) => candidate.id === dilemma.eventId,
+  );
+  if (nation?.eventHistory === undefined || event === undefined) return;
+  const politics = ctx.snapshot.read("politics");
+  const resolved = resolveEventAnswer(ctx, {
+    nation,
+    relations: politics.relations,
+    history: nation.eventHistory,
+    event,
     answerId,
     resolvedBy: "PLAYER",
   });
-  ctx.snapshot.write("nations", new Map(nations).set(nation.id, { ...nation, eventHistory }));
+  if (resolved.relations !== politics.relations) {
+    ctx.snapshot.write("politics", { ...politics, relations: [...resolved.relations] });
+  }
+  ctx.snapshot.write(
+    "nations",
+    new Map(nations).set(nation.id, { ...resolved.nation, eventHistory: resolved.history }),
+  );
 }
