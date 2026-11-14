@@ -4,8 +4,8 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 
 | Status | Rows |
 | --- | --- |
-| reachable | 33 |
-| dormant-by-decision | 19 |
+| reachable | 35 |
+| dormant-by-decision | 17 |
 | internal | 16 |
 
 ## Reachable
@@ -35,8 +35,10 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | form-or-break-non-aggression-pact | Form or break a non-aggression pact | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | declare-blockade | Declare a blockade of a nation in an area | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | advance-month | Advance the campaign month and answer interruptions | `shell/App.tsx` | `apps/desktop/src/renderer/shell/useCampaignShell.test.ts` |
+| fight-or-decline-battle | Accept or decline a battle offer, then fight with stance, speed, course orders | `screens/battle/PlayerBattleScreen.tsx` | `apps/desktop/src/renderer/shell/App.test.tsx` |
 | assign-or-relieve-officer | Assign or relieve an officer | `screens/fleet/organization/FleetOrganizationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/organization/FleetOrganizationView.test.tsx` |
 | ship-readiness | See and manage ship readiness | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
+| combat-fought-battle | Fight a battle: gunnery, spotting, contact, movement, weather, damage, torpedoes under stance, speed and course orders | `screens/battle/PlayerBattleScreen.tsx` | `apps/desktop/src/main/commands/battleOfferCommands.test.ts` |
 | read-campaign-overview | Read the campaign overview | `screens/overview/OverviewScreen.tsx` | `apps/desktop/src/main/commands/inspectCampaign.test.ts` |
 | read-world-map | Read the world map (Map, Overview, F1, Fleet) | `screens/strategic-map/StrategicMapScreen.tsx` | `apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.test.tsx` |
 | read-battle-history | Read the battle history | `screens/diplomacy/components/BattleHistorySection.tsx` | `apps/desktop/src/renderer/screens/diplomacy/components/BattleHistorySection.test.tsx` |
@@ -52,13 +54,11 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | --- | --- | --- |
 | construction-events | Learn why a build slipped or cost more | #584 |
 | event-answer-unrest | See unrest rise or fall after a crisis answer | #427 |
-| accept-peace | Accept a peace settlement | #422 |
-| fight-or-decline-battle | Accept or decline a battle offer and fight it with stance, speed and course orders | #422 |
+| accept-peace | Accept a peace settlement | #777 |
 | answer-event-dilemma | Answer a monthly event dilemma, hovering each answer for its declared effects | #428 |
 | prestige | See and act on national prestige | #223 |
 | division-battle-experience | Divisions gain experience from the battles they fight | #276 |
 | aircraft-and-carriers | Develop aircraft and operate carriers | RULES.md#dormant-by-decision |
-| combat-fought-battle | Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under stance, speed and course orders | #422 |
 | combat-air-combat | Air combat and air defence in a battle | RULES.md#dormant-by-decision |
 | combat-carrier-operations | Carrier operations in a battle | RULES.md#dormant-by-decision |
 | combat-mines | Mine laying and sweeping | RULES.md#dormant-by-decision |
