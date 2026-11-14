@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { StrategicMapView } from "@bluewave/campaign-engine";
+import { confirmMapRead } from "../../lib/map-read.js";
 import { useRead } from "../../lib/use-read.js";
 import { EMPTY_LIVE_OVERLAY, joinWorldMap, type LiveWorldMapOverlay } from "./campaign-map-join.js";
 
@@ -15,7 +16,7 @@ export function useLiveWorldMapOverlay(
   revision: number | null = null,
   refreshToken = 0,
 ): LiveWorldMapRead {
-  const read = useRead("inspectMap", sessionId ?? "", sessionId === null ? null : revision, {
+  const raw = useRead("inspectMap", sessionId ?? "", sessionId === null ? null : revision, {
     enabled: sessionId !== null,
     refreshToken,
   });
@@ -24,9 +25,10 @@ export function useLiveWorldMapOverlay(
     if (sessionId === null) {
       return { overlay: EMPTY_LIVE_OVERLAY, strategic: null, status: "unavailable", reason: null };
     }
-    if (read.status === "loading") {
+    if (raw.status === "loading") {
       return { overlay: EMPTY_LIVE_OVERLAY, strategic: null, status: "loading", reason: null };
     }
+    const read = confirmMapRead(raw);
     if (read.status === "unavailable") {
       return {
         overlay: EMPTY_LIVE_OVERLAY,
@@ -42,5 +44,5 @@ export function useLiveWorldMapOverlay(
       status: "ready",
       reason: null,
     };
-  }, [read, sessionId]);
+  }, [raw, sessionId]);
 }
