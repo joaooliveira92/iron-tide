@@ -63,6 +63,7 @@ describe("resolveTurn with the production event catalogue", () => {
     });
 
     let dilemmas = 0;
+    let prestigeAnswers = 0;
     let revision = 0;
     for (let guard = 0; guard < MONTHS * 4 && revision < MONTHS; guard += 1) {
       const result = await run(resolveTurnProgram, {
@@ -87,6 +88,18 @@ describe("resolveTurn with the production event catalogue", () => {
         });
         expect(answered.outcome).toBe("success");
         value = (answered as { value: ResolveTurnResult }).value;
+        const player =
+          getCampaignSession("session-dilemma")!.state.snapshot.nations.get(PLAYER_NATION);
+        const fired = player?.eventHistory?.fired.at(-1);
+        expect(fired?.eventId).toBe(request!.decisionId);
+        expect(fired?.answerId).toBe(request!.options![0]!.optionId);
+        expect(fired?.resolvedBy).toBe("PLAYER");
+        const reason = player?.prestigeLastChange?.reasonCode;
+        if (fired?.effects !== undefined && fired.effects.prestigeDelta !== 0) {
+          expect(player?.prestigeLastChange?.month).toBe(fired.month);
+          expect(reason).toBeDefined();
+          prestigeAnswers += 1;
+        }
       }
       expect(value.status).toBe("completed");
       revision += 1;
@@ -97,5 +110,6 @@ describe("resolveTurn with the production event catalogue", () => {
 
     expect(revision).toBe(MONTHS);
     expect(dilemmas).toBeGreaterThan(0);
+    expect(prestigeAnswers).toBeGreaterThan(0);
   }, 600_000);
 });

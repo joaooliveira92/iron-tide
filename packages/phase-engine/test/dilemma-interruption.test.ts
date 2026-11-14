@@ -271,9 +271,49 @@ describe("dilemma interruption", () => {
     expect(resumed.outcome).toBe("completed");
     const history = resumed.finalSnapshot.nations.get("GBR")?.eventHistory;
     expect(history?.pending).toBeUndefined();
-    expect(history?.fired).toEqual([
-      { eventId: "border_incident", month: "1880-02", answerId: "mobilise", resolvedBy: "PLAYER" },
-    ]);
+    expect(history?.fired).toHaveLength(1);
+    expect(history?.fired[0]).toMatchObject({
+      eventId: "border_incident",
+      month: "1880-02",
+      answerId: "mobilise",
+      resolvedBy: "PLAYER",
+    });
+  });
+
+  it("applies the declared effects of the answer the player chose", () => {
+    const request = suspendedRequest(start, turnId);
+    const resumed = run(start, { turnId, recordedInputs: [answerFor(request, "mobilise")] });
+    const final = resumed.finalSnapshot;
+    const gbr = final.nations.get("GBR");
+    expect(Number(gbr?.prestige)).toBe(25);
+    expect(gbr?.prestigeLastChange).toMatchObject({
+      reasonCode: "MOBILISED",
+      month: "1880-02",
+      delta: 5,
+    });
+    expect(gbr?.eventHistory?.fired[0]?.effects?.prestigeDelta).toBe(5);
+    const relation = final.politics.relations.find((entry) => entry.nationB === "GBR");
+    const effects = gbr?.eventHistory?.fired[0]?.effects;
+    expect(Number(effects?.tensionAfter)).toBe(Number(effects?.tensionBefore) + 2);
+    expect(relation?.tension).toBe(effects?.tensionAfter);
+    expect(gbr?.budgetModifiers?.some((modifier) => modifier.eventId === "border_incident")).toBe(
+      true,
+    );
+  });
+
+  it("applies a different effect set for the other answer", () => {
+    const request = suspendedRequest(start, turnId);
+    const resumed = run(start, { turnId, recordedInputs: [answerFor(request, "protest")] });
+    const gbr = resumed.finalSnapshot.nations.get("GBR");
+    expect(Number(gbr?.prestige)).toBeLessThan(20);
+    expect(gbr?.prestigeLastChange?.reasonCode).toBe("BACKED_DOWN");
+    const relation = resumed.finalSnapshot.politics.relations.find(
+      (entry) => entry.nationB === "GBR",
+    );
+    const effects = gbr?.eventHistory?.fired[0]?.effects;
+    expect(effects?.tensionPartner).toBe("FRA");
+    expect(Number(effects?.tensionAfter)).toBe(Number(effects?.tensionBefore) - 2);
+    expect(relation?.tension).toBe(effects?.tensionAfter);
   });
 
   it("replays the recorded input to an identical hash", () => {

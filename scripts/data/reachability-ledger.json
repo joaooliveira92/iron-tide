@@ -380,15 +380,15 @@
     },
     {
       "id": "answer-event-dilemma",
-      "player_verb": "Answer a monthly event dilemma, hovering each answer for its declared effects",
-      "status": "dormant-by-decision",
+      "player_verb": "Answer a monthly event dilemma, weighing each answer's effects",
+      "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": ["dilemma"],
       "engine_symbols": [],
       "main_commands": ["resolveTurn", "answerDecision"],
-      "renderer_screen": null,
-      "evidence_test": null,
-      "decision": "#428"
+      "renderer_screen": "shell/interruptions/DecisionDialog.tsx",
+      "evidence_test": "apps/desktop/src/main/commands/resolveTurnEvents.test.ts",
+      "decision": null
     },
     {
       "id": "assign-or-relieve-officer",
@@ -406,15 +406,15 @@
     {
       "id": "prestige",
       "player_verb": "See and act on national prestige",
-      "status": "dormant-by-decision",
+      "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
       "engine_symbols": ["applyPrestigeChange"],
-      "main_commands": [],
-      "renderer_screen": null,
-      "evidence_test": null,
-      "decision": "#223",
-      "note": "The engine changes prestige in the monthly pipeline; the player sees only the header metric."
+      "main_commands": ["resolveTurn", "answerDecision"],
+      "renderer_screen": "shell/status-strip/cards/PrestigeCard.tsx",
+      "evidence_test": "apps/desktop/src/renderer/shell/PrestigeCardEvent.test.tsx",
+      "decision": null,
+      "note": "An answered event moves prestige; the status strip names the last change. Explanation tree and sacking end state: brief slice 3."
     },
     {
       "id": "division-battle-experience",
@@ -905,16 +905,16 @@
     },
     {
       "id": "national-events",
-      "player_verb": "Answer a monthly event dilemma, or let it lapse to its default",
-      "status": "dormant-by-decision",
+      "player_verb": "Answer a monthly event dilemma, or let it lapse",
+      "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
       "engine_symbols": ["applyEventsForMonth"],
-      "main_commands": [],
-      "renderer_screen": null,
-      "evidence_test": null,
-      "decision": "#426",
-      "note": "The diplomacy phase draws events; the 1880 pack authors a provisional catalogue (#436) so events fire. No player dialog yet (#428): a player dilemma lapses to its default answer."
+      "main_commands": ["resolveTurn", "answerDecision"],
+      "renderer_screen": "shell/interruptions/DecisionDialog.tsx",
+      "evidence_test": "apps/desktop/src/main/commands/resolveTurnEvents.test.ts",
+      "decision": null,
+      "note": "A provisional 1880 event (#436) suspends the turn; the chosen answer applies its effects."
     },
     {
       "id": "debug-battle-drill-seed",

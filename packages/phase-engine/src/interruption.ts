@@ -176,7 +176,11 @@ export const interruptionCheckpoint: MonthCheckpoint = {
   id: "interruption_checkpoint",
   name: "Interruption Checkpoint",
   after: "resolve_carrier_operations",
-  permissions: { reads: ["nations", "politics"], writes: ["nations"], rng: false },
+  permissions: {
+    reads: ["nations", "politics", "rulesetVersion", "prestigeRules"],
+    writes: ["nations", "politics"],
+    rng: false,
+  },
   run: runInterruptionCheckpoint,
 };
 
