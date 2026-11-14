@@ -13,6 +13,10 @@
       "types": "./src/compiler-public.ts",
       "default": "./dist/compiler-public.js"
     },
+    "./timeline": {
+      "types": "./src/timeline.ts",
+      "default": "./dist/timeline.js"
+    },
     "./decline-records": {
       "types": "./src/declineRecords.ts",
       "default": "./dist/declineRecords.js"
