@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 
 import { CommandLedger } from "@bluewave/commands";
 import { canonicalSerialize } from "@bluewave/deterministic";
-import { ReplayVerifier } from "@bluewave/phase-engine";
+import { ReplayVerifier, type MonthResult } from "@bluewave/phase-engine";
 import { Result } from "effect";
 import { describe, expect, it, vi } from "vite-plus/test";
 
@@ -372,6 +372,44 @@ describe("replay corpus pinned probe mutations", () => {
     } finally {
       spy.mockRestore();
     }
+  });
+
+  it("detects changed battle generation output in a checked-in replay", () => {
+    const manifestHashes = (run: (capture: (result: MonthResult) => void) => unknown) => {
+      let hashes: string[] = [];
+      run((result) => {
+        hashes = (result.finalSnapshot.wars.battleManifests ?? []).map((m) => m.manifestHash);
+      });
+      return hashes;
+    };
+    const baseline = manifestHashes((afterExecute) =>
+      verifyReplay(maltaWar, { perturb: { month: 2, afterExecute } }),
+    );
+    expect(baseline.length).toBeGreaterThan(0);
+    const perturbed = manifestHashes((afterExecute) =>
+      verifyReplay(maltaWar, {
+        perturb: {
+          month: 2,
+          afterExecute,
+          snapshot: (snapshot) => {
+            const nations = new Map(snapshot.nations);
+            for (const [id, nation] of nations) {
+              nations.set(id, {
+                ...nation,
+                fleets: nation.fleets.map((fleet) => ({
+                  ...fleet,
+                  ships: fleet.ships.map((ship, index) =>
+                    index === 0 ? { ...ship, isUnderConstruction: true } : ship,
+                  ),
+                })),
+              });
+            }
+            return { ...snapshot, nations };
+          },
+        },
+      }),
+    );
+    expect(perturbed).not.toEqual(baseline);
   });
 });
 
