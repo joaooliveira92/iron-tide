@@ -799,7 +799,7 @@ export default collection("designs", ReferenceDesignSchema, [
   },
   // HMS TB2 class first-class torpedo boat (TB2-TB9, 1878-79; in service Jan 1880): 28 t normal,
   // 26.3 m pp / 3.1 m / 1.60 m, 1 x 2-cyl VCE + 1 locomotive boiler, 460 ihp = 343 kW, 20 kn, 1 x 406 mm
-  // (16-in) tube, crew 15 (navypedia uk/brit_dd_tb2.htm; docs/research/ship-building-1880-ships-by-nation.md
+  // (16-in) tube, crew 15 (navypedia uk/brit_dd_tb2.htm; Research index #456 [ship-building-1880-ships-by-nation, not migrated]
   // section 1, SINGLE-SOURCE). This is the design that the new light plant (compound_locomotive_tb,
   // 46 kg/kW) makes possible: at the only-1880 plant (compound_cylindrical, 195 kg/kW, 300 kW minimum)
   // the machinery alone would weigh 58 t, more than the whole boat.

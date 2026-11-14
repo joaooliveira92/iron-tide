@@ -1,6 +1,6 @@
 // National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
 // Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
-// target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+// target is labelled `balance_adjustment`. Grounding: Research index #456 [<nation>-naval-profile, not migrated].
 // Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
 // steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
 import { NationNavalProfileSchema, collection } from "@bluewave/content-authoring";

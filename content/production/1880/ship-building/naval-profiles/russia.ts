@@ -1,11 +1,11 @@
 // National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
 // Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
-// target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+// target is labelled `balance_adjustment`. Grounding: Research index #456 [<nation>-naval-profile, not migrated].
 // Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
 // steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
 // Russia (canonical id "russia"). A huge, poor, technologically lagging empire with three separated fleets
 // (Baltic, Black Sea, Pacific): a coastal-defence and torpedo tradition, a real commerce-raiding cruiser force, and
-// heavy dependence on foreign machinery with weak domestic reliability. Grounding: docs/research/russia-naval-profile.md.
+// heavy dependence on foreign machinery with weak domestic reliability. Grounding: Research index #456 [russia-naval-profile, not migrated].
 import { NationNavalProfileSchema, collection } from "@bluewave/content-authoring";
 
 export default collection("navalProfiles", NationNavalProfileSchema, [

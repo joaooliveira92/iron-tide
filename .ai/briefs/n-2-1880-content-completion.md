@@ -23,8 +23,8 @@ and a deterministic twelve-month smoke run over all fourteen nations.
   classification), #28 (classifier v2), #29 (Custoza and Temeraire designs), #30
   (Courbet sister-ship reuse), #31 (acceptance harness), #40 (the 14-inch
   Whitehead model identity).
-- Research: `docs/research/n-2-1880-ship-classification.md`,
-  `docs/research/n-2-whitehead-14in-identity.md`; intake
+- Research: `Research discussion #443`,
+  `Research discussion #444`; intake
   `.ai/reports/n-1-1880-scenario-audit.md`.
 
 ## Starting state
@@ -79,7 +79,7 @@ Verify, do not assume:
   full linkage.
 - `con_fra_courbet` provenance records deliberate sister-ship reuse.
 - The torpedo id documented at its definition site and in
-  `docs/research/n-2-whitehead-14in-identity.md`; unavailable legacy citations
+  `Research discussion #444`; unavailable legacy citations
   removed from the model.
 - `packages/content-compiler/test/perNationViability.test.ts` extended with the
   ten-playable roster, unconditional design linkage, and post-1880 reference

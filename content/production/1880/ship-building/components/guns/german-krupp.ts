@@ -1,5 +1,5 @@
 // Ship-building component catalogue: German (Krupp) ordnance.
-// Source of record: docs/research/ship-building-1880-pre-era-armament.md.
+// Source of record: Research index #456 [ship-building-1880-pre-era-armament, not migrated].
 // Units: kg, mm, litres, kW, budget micro-units, bp. Formulas use the restricted grammar of
 // @bluewave/ship-design. Every component id is unique across this directory; the compiler
 // discovers nothing on its own: pack.json's `shipBuilding.shipComponents` lists every file.
@@ -64,7 +64,7 @@ export default defineShipComponentCatalogue([
   }),
   // --- ADR-0119 coast-defence / casemate ordnance (1880 scenario) ------------------------------------------------------------
   // Bore + mount from navypedia (SINGLE-SOURCE); gun mass where a print source exists; every value not in a print source is
-  // ESTIMATE (see docs/research/ship-building-1880-coast-defence-armament.md and -followups.md). Each family has its own
+  // ESTIMATE (see Research index #456 [ship-building-1880-coast-defence-armament, not migrated] and ship-building-1880-coast-defence-followups). Each family has its own
   // component with the same id and category (the release gate requires `lintArmamentContent` family/category parity).
   // Dutch 28 cm (283 mm) Krupp Ringkanone No.1 (*Matador*): gun mass approaches the Von Müller 28 cm RK L/22 (labelled analogy,
   // different mark); shell 253 kg and charge 56 kg borrow the sourced Austrian Krupp 28 cm row (docs/...-armament.md §2.1).

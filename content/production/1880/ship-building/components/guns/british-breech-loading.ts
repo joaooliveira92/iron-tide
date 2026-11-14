@@ -1,6 +1,6 @@
 // Ship-building component catalogue: British breech-loading (BL) ordnance.
-// Source of record: docs/research/ship-building-early-band.md and
-// docs/research/ship-building-early-band-2.md. Confidence labels are kept beside each record.
+// Source of record: Research index #456 [ship-building-early-band, not migrated] and
+// Research index #456 [ship-building-early-band-2, not migrated]. Confidence labels are kept beside each record.
 // Units: kg, mm, litres, kW, budget micro-units, bp. Formulas use the restricted grammar of
 // @bluewave/ship-design. Every component id is unique across this directory; the compiler
 // discovers nothing on its own: pack.json's `shipBuilding.shipComponents` lists every file.

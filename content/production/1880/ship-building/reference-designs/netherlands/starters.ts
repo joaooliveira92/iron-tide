@@ -3,8 +3,8 @@
 // Fittings (magazines, quarters, pumps, ventilation) weigh nothing extra (White 1894, ADR-0083).
 // Matador (1879, in service Jan 1880): Dutch coast-defence monitor, 1,968 t, 7.5 kn, 1 x 2 283 mm Krupp
 // No.1 in a turret, 140 mm side / 305 mm turret wrought iron. Promoted to the Dutch capital (B) starter (ADR-0119),
-// replacing the British doctrine clone. Source: docs/research/ship-building-1880-ships-by-nation.md §6.9; gun:
-// docs/research/ship-building-1880-coast-defence-armament.md §2.1.
+// replacing the British doctrine clone. Source: Research index #456 [ship-building-1880-ships-by-nation, not migrated] §6.9; gun:
+// Research index #456 [ship-building-1880-coast-defence-armament, not migrated] §2.1.
 import { ReferenceDesignSchema, collection } from "@bluewave/content-authoring";
 
 export default collection("designs", ReferenceDesignSchema, [

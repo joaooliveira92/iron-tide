@@ -1,6 +1,6 @@
 // Shared armament gun families (ADR-0093 Step 2). One record per shared physical/technical family;
 // national models reference these and never duplicate them. Units are in field names.
-// Source of record: docs/research/ship-building-1880-pre-era-armament.md and the components.yaml comments.
+// Source of record: Research index #456 [ship-building-1880-pre-era-armament, not migrated] and the components.yaml comments.
 import { GunFamilySchema, collection } from "@bluewave/content-authoring";
 
 export default collection("gunFamilies", GunFamilySchema, [

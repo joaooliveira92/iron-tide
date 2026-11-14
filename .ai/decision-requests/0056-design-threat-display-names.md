@@ -14,7 +14,7 @@ Issue #582 (Plain-language Overview terms) requires the Overview "expected enemy
 - `packages/content-schema/src/reference-design.ts:48` stores `designThreatId` as a plain non-empty string.
 - `apps/desktop/src/renderer/lib/en-us-messages.ts` has no threat strings. No `*.yaml` under `content/` contains `qf_6in`.
 - `apps/desktop/src/renderer/components/design-workspace/RequirementChip.tsx:27` shows the same id as "Designed against" via `words(id)`, so the raw id also appears outside Overview.
-- The ids are grounded in the penetration table comment in `balance.ts`, which cites Brassey's Naval Annual 1886 and `docs/research/ship-building-1880-pre-era-armament.md`. That is the source a name would need to match.
+- The ids are grounded in the penetration table comment in `balance.ts`, which cites Brassey's Naval Annual 1886 and `Research index #456 [ship-building-1880-pre-era-armament, not migrated]`. That is the source a name would need to match.
 
 ## Why agent judgment is insufficient
 
