@@ -1,5 +1,5 @@
 import { defaultArchetypeSelection } from "@bluewave/campaign-engine";
-import { useCallback, useMemo, type ReactNode } from "react";
+import { memo, useCallback, useMemo, type ReactNode } from "react";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type { InspectOpeningBriefingResult } from "../../shared/campaign-contract.js";
@@ -15,7 +15,7 @@ import { NewGameNationScreen } from "../screens/new-game/NewGameNationScreen.js"
 import { RulesOfTheNavalAgeScreen } from "../screens/new-game/RulesOfTheNavalAgeScreen.js";
 import { defaultFleetMethod } from "../screens/new-game/new-game-fleet-method-screen-state.js";
 import { defaultCampaignIdentity } from "../screens/new-game/new-game-identity-screen-state.js";
-import { useCampaignShellContext } from "./CampaignShellContext.js";
+import { useCampaignShellActions, useCampaignShellState } from "./CampaignShellContext.js";
 import type { CampaignShellMode } from "./campaign-shell-state.js";
 import type { PrimaryAction } from "./primary-action.js";
 import { type NewGameFlow, type NewGameNavigation, useNewGameFlow } from "./useNewGameFlow.js";
@@ -128,8 +128,18 @@ export function CampaignUnavailableView({
 }: {
   readonly bridge: BluewaveDesktopBridge | undefined;
 }) {
-  const { state, actions } = useCampaignShellContext();
-  const mode = state.mode;
+  const { mode } = useCampaignShellState();
+  return <CampaignUnavailableBody bridge={bridge} mode={mode} />;
+}
+
+const CampaignUnavailableBody = memo(function CampaignUnavailableBody({
+  bridge,
+  mode,
+}: {
+  readonly bridge: BluewaveDesktopBridge | undefined;
+  readonly mode: CampaignShellMode;
+}) {
+  const actions = useCampaignShellActions();
 
   const navigation = useMemo<NewGameNavigation>(
     () => ({
@@ -187,7 +197,7 @@ export function CampaignUnavailableView({
     default:
       return <>{NEW_GAME_STEP_RENDERERS[mode.kind](stepContext)}</>;
   }
-}
+});
 
 function CampaignLoadingView() {
   return (
