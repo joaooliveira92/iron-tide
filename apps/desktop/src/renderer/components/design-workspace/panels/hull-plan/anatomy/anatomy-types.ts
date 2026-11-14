@@ -34,6 +34,7 @@ export interface AnatomyInk {
 export type PartKind =
   | "slipway"
   | "hull"
+  | "waterline"
   | "deck"
   | "mast"
   | "armour"
