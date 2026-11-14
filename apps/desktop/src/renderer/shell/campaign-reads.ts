@@ -3,6 +3,7 @@ import type { PlayerProjection, StrategicPriority } from "@bluewave/campaign-eng
 import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
 import type { MonthlyReportEntry } from "../../shared/reports-contract.js";
 import type { BridgeRead } from "../lib/bridge-read.js";
+import { confirmMapRead } from "../lib/map-read.js";
 import { countActiveAlerts } from "../lib/priorities.js";
 import { primeQuery, readQuery } from "../lib/read-queries.js";
 import type { PrioritiesState } from "../screens/overview/usePriorities.js";
@@ -28,12 +29,13 @@ export async function readCampaign(
   client: CampaignCommandClient,
   sessionId: string,
 ): Promise<CampaignReads> {
-  const [campaign, map, reports, priorities] = await Promise.all([
+  const [campaign, rawMap, reports, priorities] = await Promise.all([
     readQuery(client, "inspectCampaign", sessionId, null),
     readQuery(client, "inspectMap", sessionId, null),
     readQuery(client, "readMonthlyReports", sessionId, null),
     readQuery(client, "inspectPriorities", sessionId, null),
   ]);
+  const map = confirmMapRead(rawMap);
   const revision = campaign.status === "ready" ? campaign.value.projection?.revision : undefined;
   if (campaign.status === "ready" && revision !== undefined) {
     primeQuery(client, "inspectCampaign", sessionId, revision, campaign.value);
@@ -47,7 +49,7 @@ export async function readCampaign(
   }
   return {
     projection: view(campaign, (value) => value.projection),
-    areas: view(map, (value) => value.strategic?.world?.areas ?? []),
+    areas: view(map, (value) => value.strategic.world.areas),
     reports: view(reports, (value) => value.reports ?? []),
     priorities: view(priorities, (value) => value.priorities),
   };

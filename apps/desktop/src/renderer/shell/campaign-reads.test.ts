@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vite-plus/test";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
 import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
+import { inspectMapFixture } from "../lib/inspect-map-fixture.js";
+import { MAP_SHAPE_REJECTED_MESSAGE } from "../lib/map-read.js";
 import { readQuery } from "../lib/read-queries.js";
 import { activeAlertsCount, readCampaign } from "./campaign-reads.js";
 
@@ -64,7 +66,7 @@ describe("readCampaign", () => {
   it("reads every campaign view exactly once for the session", async () => {
     const { client, execute } = clientWith((command) => {
       if (command === "inspectCampaign") return ok({ projection });
-      if (command === "inspectMap") return ok({ strategic: { world: { areas: [] } } });
+      if (command === "inspectMap") return ok(inspectMapFixture());
       if (command === "readMonthlyReports") return ok({ reports: [] });
       return ok({ priorities });
     });
@@ -82,10 +84,24 @@ describe("readCampaign", () => {
     expect(reads.priorities).toEqual({ status: "ready", value: priorities });
   });
 
+  it("reports a map result that violates the contract as unavailable instead of an empty area list", async () => {
+    const { client } = clientWith((command) => {
+      if (command === "inspectCampaign") return ok({ projection });
+      if (command === "inspectMap") return ok({ revision: 4 });
+      if (command === "readMonthlyReports") return ok({ reports: [] });
+      return ok({ priorities });
+    });
+
+    const reads = await readCampaign(client, "ses-1");
+
+    expect(reads.areas).toEqual({ status: "unavailable", reason: MAP_SHAPE_REJECTED_MESSAGE });
+    expect(reads.projection).toEqual({ status: "ready", value: projection });
+  });
+
   it("leaves the reads retained for the projected revision so later readers do not hit the bridge", async () => {
     const { client, execute } = clientWith((command) => {
       if (command === "inspectCampaign") return ok({ projection });
-      if (command === "inspectMap") return ok({ strategic: { world: { areas: [] } } });
+      if (command === "inspectMap") return ok(inspectMapFixture());
       if (command === "readMonthlyReports") return ok({ reports: [] });
       return ok({ priorities });
     });
