@@ -1,7 +1,11 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine } from "@bluewave/random";
-import { determineMissionOpportunities, type BattleMissionOpportunity } from "./opportunity.js";
+import {
+  determineMissionOpportunities,
+  MAX_BATTLES_PER_AREA_PER_MONTH,
+  type BattleMissionOpportunity,
+} from "./opportunity.js";
 import { determineParticipatingSides } from "./sides.js";
 import { buildManifest, type BattleManifest } from "./manifest.js";
 import { GENERATION_SEED_FORMULA_VERSION, deriveBattleSeed } from "./seed.js";
@@ -152,7 +156,9 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
     campaignMonth: inputs.campaignMonth,
     acceptedOpportunityIds: new Set(),
     acceptedWarAreaPairs: new Set(),
+    deferAreaLimit: true,
   });
+  const generatedPerArea = new Map<string, number>();
 
   const records: BattleGenerationRecord[] = [];
   const manifests: BattleManifest[] = [];
@@ -281,6 +287,11 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
           },
         ),
       );
+      continue;
+    }
+
+    if ((generatedPerArea.get(opp.areaId) ?? 0) >= MAX_BATTLES_PER_AREA_PER_MONTH) {
+      rejections.push(opp.opportunityId);
       continue;
     }
 
@@ -581,6 +592,7 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
 
     reserveAssets(manifestWithSeed.battleId, manifestWithSeed.persistentAssets, new Set());
 
+    generatedPerArea.set(opp.areaId, (generatedPerArea.get(opp.areaId) ?? 0) + 1);
     manifests.push(manifestWithSeed);
     battleIds.push(manifestWithSeed.battleId);
 

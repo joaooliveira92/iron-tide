@@ -42,6 +42,7 @@ export interface OpportunityInputs {
   campaignMonth: string;
   acceptedOpportunityIds: ReadonlySet<string>;
   acceptedWarAreaPairs: ReadonlySet<string>;
+  deferAreaLimit?: boolean;
 }
 
 function presenceByArea(snapshot: CampaignSnapshot, nationId: string): Set<string> {
@@ -113,6 +114,8 @@ export function determineMissionOpportunities(
     if (a.missionPriority !== b.missionPriority) return a.missionPriority - b.missionPriority;
     return compareStrings(a.opportunityId, b.opportunityId);
   });
+
+  if (inputs.deferAreaLimit === true) return opportunities;
 
   const perArea = new Map<string, number>();
   const limited: BattleMissionOpportunity[] = [];
