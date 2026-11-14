@@ -11,7 +11,9 @@ const openMap = async (page: Page) => {
 
 const sail = async (page: Page, destination: string) => {
   const panel = await openMap(page);
-  await panel.getByRole("button", { name: /Home Fleet/ }).click();
+  const fleet = panel.getByRole("button", { name: /Home Fleet/ });
+  if ((await fleet.getAttribute("aria-pressed")) !== "true") await fleet.click();
+  await expect(fleet).toHaveAttribute("aria-pressed", "true");
   await panel.getByRole("button", { name: destination }).click();
   await expect(panel.getByText(new RegExp(`Ordered: sails for ${destination}`))).toBeVisible();
 };
