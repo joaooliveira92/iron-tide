@@ -20,11 +20,10 @@ local markdown. The repo keeps code, canonical authority (`README.md`,
 `RULES.md`, `.ai/ENGINEERING-CONTRACT.md`), agent instructions, and generated
 gate artifacts (`docs/research/p1-*.md`, `docs/reachability-report.md`).
 
-- **Create**: `gh discussion create --category Research --title "<slug>: <topic>" --body-file <note>`
+- **Create**: `gh discussion create --category Research --title "<slug>: <topic>" --body-file <note>`; header and labels per #456, then `pnpm research:index --write`
 - **Read**: `gh discussion view <n|url> --json number,title,body,category,comments`
-- **List**: `gh discussion list --category Research --json number,title,url`
 - **Comment/edit**: `gh discussion comment|edit <n> --body-file <note>`
-- **Index**: discussion #456 lists every migrated note.
+- **Index**: #456 is generated: read it first, never hand-edit. `pnpm research:index --check` validates.
 
 ## Pipeline artifacts
 
