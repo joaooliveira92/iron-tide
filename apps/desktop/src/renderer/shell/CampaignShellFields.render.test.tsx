@@ -28,11 +28,11 @@ const probe = vi.hoisted(() => {
   return {
     counts,
     get: () => snapshot,
-    set(next: Record<string, unknown>) {
+    set: (next: Record<string, unknown>) => {
       snapshot = next;
       for (const listener of listeners) listener();
     },
-    subscribe(listener: () => void) {
+    subscribe: (listener: () => void) => {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
