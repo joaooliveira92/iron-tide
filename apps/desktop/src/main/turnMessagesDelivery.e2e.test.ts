@@ -14,7 +14,7 @@ import {
   registerCampaignSession,
 } from "./campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "./compiler.js";
-import { resolveTurnProgram } from "./commands/resolveTurn.js";
+import { answerDecisionProgram, resolveTurnProgram } from "./commands/resolveTurn.js";
 import { programFor } from "./commandProgramFixtures.js";
 import { projectCommandExit } from "./runtime/bridgeResult.js";
 import { desktopMainLayer } from "./runtime/desktopMainLayer.js";
@@ -62,7 +62,7 @@ describe("ship delivery turn message on a real production month (#623)", () => {
 
     const found: { turn: number; shipId: string; nationId: string | undefined }[] = [];
     for (let turn = 0; turn < DELIVERY_TURNS && found.length === 0; turn++) {
-      const result = projectCommandExit(
+      let result = projectCommandExit(
         await runtime.runPromiseExit(
           programFor(resolveTurnProgram)({
             sessionId: "session-delivery",
@@ -71,6 +71,26 @@ describe("ship delivery turn message on a real production month (#623)", () => {
           }),
         ),
       ) as BridgeResult<ResolveTurnResult>;
+      for (let answers = 0; result.outcome === "success" && result.value.status === "suspended";) {
+        const request = result.value.request;
+        const option = request?.options?.[0];
+        if (request === null || request.decisionId === undefined || option === undefined) {
+          throw new Error(`turn ${String(turn)} suspended on a non-decision interruption`);
+        }
+        answers += 1;
+        result = projectCommandExit(
+          await runtime.runPromiseExit(
+            programFor(answerDecisionProgram)({
+              sessionId: "session-delivery",
+              expectedRevision: turn,
+              transportRequestId: `answer-${String(turn)}-${String(answers)}`,
+              interruptionId: request.interruptionId,
+              decisionId: request.decisionId,
+              optionId: option.optionId,
+            }),
+          ),
+        ) as BridgeResult<ResolveTurnResult>;
+      }
       if (result.outcome !== "success" || result.value.status !== "completed") break;
       for (const message of result.value.summary.messages) {
         const ship = message.subjectRefs.find((ref) => ref.type === "ship");
