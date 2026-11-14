@@ -231,12 +231,12 @@ export default collection("ammunition", AmmunitionPatternSchema, [
         {
           title: "navypedia.org Daring class destroyers",
           archiveOrUrl: "https://www.navypedia.org/ships/uk/brit_dd_daring.htm",
-          section: "docs/research/e-1-1950s-gun-ships.md section 1",
+          section: "Research discussion #440 section 1",
         },
         {
           title: "navweaps.com UK 4.5-inch/45 (12 cm) QF Mark 6",
           archiveOrUrl: "http://www.navweaps.com/Weapons/WNBR_45-45_mk6.php",
-          section: "docs/research/e-1-1950s-gun-ships.md section 1",
+          section: "Research discussion #440 section 1",
         },
       ],
     },

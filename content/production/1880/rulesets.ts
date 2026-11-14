@@ -139,7 +139,7 @@ export default list(RulesetManifestSchema, [
               "Battle offers: force estimate, declining costs victory points and may cost prestige after several declines, the enemy may decline, a friendly support force sometimes joins",
           },
         ],
-        note: "ADR-0254. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (docs/research/t-1-battle-offer-values.md, decisions 0028-0034).",
+        note: "ADR-0254. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (Research discussion #451, decisions 0028-0034).",
       },
     },
     // The fleet-management section (spec #265). Every value is a Bluewave balance decision recorded by ADR-0283 under the
@@ -209,7 +209,7 @@ export default list(RulesetManifestSchema, [
               "Special training takes twelve months, at most two subjects, with maintenance surcharges; an annual fleet exercise costs twice the active maintenance; division experience has a slight impact on crew quality in battle",
           },
         ],
-        note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (docs/research/fleet-management-values.md). ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence.",
+        note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (Research discussion #442). ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence.",
       },
     },
     // The gunnery radar section (#292). The manual (pp.121, 127) grounds fire-control radar, blind fire from level 3, and the
@@ -325,7 +325,7 @@ export default list(RulesetManifestSchema, [
               "Colonial service takes a proportion of displacement; base limits by base value; tonnage required per area; cramped and short-range ships count for less",
           },
         ],
-        note: "ADR-0266. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (docs/research/s-5-presence-and-base-limits.md, decisions 0016-0023, 0026).",
+        note: "ADR-0266. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (Research discussion #450, decisions 0016-0023, 0026).",
       },
     },
     eventResolution: {
