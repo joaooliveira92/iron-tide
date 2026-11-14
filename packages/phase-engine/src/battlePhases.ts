@@ -43,6 +43,12 @@ export function runBattleGenerationPhase(ctx: PhaseContext): PhaseRunOutcome {
   );
   if (!hadWars) return { status: "continue" };
 
+  const engagement = ctx.battleOffers?.engagementMinimumStrength;
+  const minimumStrength =
+    engagement === undefined
+      ? undefined
+      : { FLEET_BATTLE: engagement.fleetBattle, CRUISER_BATTLE: engagement.cruiserBattle };
+
   const generated = generate({
     snapshot: ctx.snapshot.current,
     campaignMonth,
@@ -54,6 +60,7 @@ export function runBattleGenerationPhase(ctx: PhaseContext): PhaseRunOutcome {
     resolveStrength: (shipId) => resolveShipStrength(ctx.snapshot.current, shipId),
     resolveShipType: resolveGenerationShipType,
     resolveReadiness: (shipId) => resolveCampaignBattleReadiness(ctx.snapshot.current, shipId),
+    ...(minimumStrength === undefined ? {} : { minimumStrength }),
   });
 
   const surviving = applyEnemyDeclines(ctx, generated);

@@ -293,8 +293,8 @@
       "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": null,
       "evidence_test": null,
-      "decision": "#422",
-      "note": "AI rule decidePeaceProposal and decidePeaceResponse (packages/ai) has no engine caller until #422."
+      "decision": "#777",
+      "note": "AI rule decidePeaceProposal and decidePeaceResponse (packages/ai) has no engine caller."
     },
     {
       "id": "form-or-break-alliance",
@@ -354,8 +354,8 @@
     },
     {
       "id": "fight-or-decline-battle",
-      "player_verb": "Accept or decline a battle offer and fight it with stance, speed and course orders",
-      "status": "dormant-by-decision",
+      "player_verb": "Accept or decline a battle offer, then fight with stance, speed, course orders",
+      "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": ["battleOffer", "battles", "interruption"],
       "engine_symbols": [
@@ -374,9 +374,9 @@
         "finishPlayerBattle",
         "submitBattleResult"
       ],
-      "renderer_screen": null,
-      "evidence_test": null,
-      "decision": "#422"
+      "renderer_screen": "screens/battle/PlayerBattleScreen.tsx",
+      "evidence_test": "apps/desktop/src/renderer/shell/App.test.tsx",
+      "decision": null
     },
     {
       "id": "answer-event-dilemma",
@@ -539,8 +539,8 @@
     },
     {
       "id": "combat-fought-battle",
-      "player_verb": "Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under stance, speed and course orders",
-      "status": "dormant-by-decision",
+      "player_verb": "Fight a battle: gunnery, spotting, contact, movement, weather, damage, torpedoes under stance, speed and course orders",
+      "status": "reachable",
       "engine_package": "combat",
       "engine_modules": [
         "gunnery",
@@ -554,9 +554,9 @@
       ],
       "engine_symbols": [],
       "main_commands": ["startPlayerBattle", "advancePlayerBattle", "finishPlayerBattle"],
-      "renderer_screen": null,
-      "evidence_test": null,
-      "decision": "#422",
+      "renderer_screen": "screens/battle/PlayerBattleScreen.tsx",
+      "evidence_test": "apps/desktop/src/main/commands/battleOfferCommands.test.ts",
+      "decision": null,
       "note": "The player orders stance, speed and course per division; both wire shapes compile through the versioned division order model, and fire control and torpedo doctrine are automatic."
     },
     {

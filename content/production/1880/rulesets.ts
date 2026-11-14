@@ -75,6 +75,14 @@ export default list(RulesetManifestSchema, [
     // ruleset version change with a golden re-pin. Removing this section returns the pack to the dormant behaviour.
     battleOffers: {
       sectionVersion: 1,
+      // PROVISIONAL (#422): the smallest summed firepower per side in one area at which a fleet or cruiser battle can be
+      // generated. The engine defaults (300 and 150) are unreachable in 1880, where a ship carries 12 to 34 firepower and no
+      // nation holds more than 34 in one area. 15 is the largest value at which the weakest great-power home squadron
+      // (Austria-Hungary, 15) can still be engaged; the cruiser value keeps the engine's 2 to 1 ratio, rounded up.
+      engagementMinimumStrength: {
+        fleetBattle: 15,
+        cruiserBattle: 8,
+      },
       // G1 (ADR-0254): a perturbed strength-only estimate, symmetric error of 2000 bp of the true strength.
       estimateModel: {
         kind: "PERTURBED",

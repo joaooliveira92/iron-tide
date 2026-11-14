@@ -472,6 +472,7 @@ describe("T-1 09 (#118): the battle-offer section is configured on the productio
     declineCounter: { threshold: 3, scope: "WAR", reset: { kind: "ON_WAR_END" } },
     enemyDecline: { comparison: "LESS_THAN", thresholdBp: 5_000, probabilityBp: 5_000 },
     supportForce: { presenceChanceBp: 2_000, shareOfCapBp: 5_000, source: "ALLIED_ONLY" },
+    engagementMinimumStrength: { fleetBattle: 15, cruiserBattle: 8 },
     declinedBattlePrestige: {
       rule: { kind: "PROPORTIONAL_LOSS", basisPoints: 300 },
       repeat: "EACH_FURTHER_DECLINE",
