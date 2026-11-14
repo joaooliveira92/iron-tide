@@ -6,6 +6,7 @@ import { CampaignCompiler } from "@bluewave/campaign/compiler";
 import {
   buildContentBundleArtifact,
   buildFullSurfaceInput,
+  type CompilerInput,
   type ContentBundleArtifact,
 } from "@bluewave/content-compiler";
 import {
@@ -28,11 +29,20 @@ export const PRODUCTION_PACK_DIR = resolve(
   "1880",
 );
 
-function buildProductionArtifact(packDir: string): ContentBundleArtifact {
+export type ContentInputPerturbation = (input: CompilerInput) => CompilerInput;
+
+function buildProductionArtifact(
+  packDir: string,
+  perturbInput?: ContentInputPerturbation,
+): ContentBundleArtifact {
   const collector = new DiagnosticCollector();
   const input = buildFullSurfaceInput(resolve(packDir, "pack.json"), packDir, collector);
   const artifact = input
-    ? buildContentBundleArtifact(input, new AbortController().signal, collector)
+    ? buildContentBundleArtifact(
+        perturbInput?.(input) ?? input,
+        new AbortController().signal,
+        collector,
+      )
     : undefined;
   if (!artifact || collector.hasErrors) {
     throw new Error(
@@ -67,12 +77,15 @@ export function compileProductionBundle(): {
   return { bundle: decodeBundle(artifact), contentHash: artifact.envelope.bodyHash };
 }
 
-export function compileProductionCampaign(packDir: string = PRODUCTION_PACK_DIR): {
+export function compileProductionCampaign(
+  packDir: string = PRODUCTION_PACK_DIR,
+  perturbInput?: ContentInputPerturbation,
+): {
   readonly state: CampaignState;
   readonly contentHash: string;
   readonly bundle: CompiledContentBundle;
 } {
-  const artifact = buildProductionArtifact(packDir);
+  const artifact = buildProductionArtifact(packDir, perturbInput);
   const bundle = decodeBundle(artifact);
   const collector = new DiagnosticCollector();
   const output = new CampaignCompiler().compile(

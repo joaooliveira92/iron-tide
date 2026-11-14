@@ -28,7 +28,6 @@ import { createPreferencesBridge } from "./preferencesBridge.js";
 import { migratePreferencesFileData, preferencesStoreLayer } from "./preferencesStore.js";
 
 const DIR = import.meta.dirname;
-const GOLDEN = join(DIR, "..", "..", "..", "..", "..", "golden", "hashes.json");
 const CROSS_PROCESS_CHILD = join(
   DIR,
   "..",
@@ -145,7 +144,6 @@ describe("presentation invariance (U-5 ticket 01)", () => {
 
   it("no display preference moves the compiled snapshot, the save, or the canonical money", async () => {
     const bridge = createPreferencesBridge(() => runtime);
-    const goldenBefore = readFileSync(GOLDEN, "utf8");
 
     const baselineApp: AppPreferences = { ...DEFAULT_APP_PREFERENCES };
     expect((await bridge.write({ app: baselineApp })).outcome).toBe("success");
@@ -196,8 +194,6 @@ describe("presentation invariance (U-5 ticket 01)", () => {
         expect(artifact.campaignJson).not.toContain(forbidden);
       }
     }
-
-    expect(readFileSync(GOLDEN, "utf8")).toBe(goldenBefore);
   }, 120_000);
 
   it("re-asserts the consolidated per-clause proofs (default, fallback, migration, locale/language split)", () => {
@@ -231,19 +227,25 @@ describe("presentation invariance (U-5 ticket 01)", () => {
   });
 
   it.skipIf(!existsSync(CROSS_PROCESS_CHILD))(
-    "the cross-process reference run still matches the golden baseline",
-    () => {
-      const stdout = execFileSync(process.execPath, [CROSS_PROCESS_CHILD], {
-        encoding: "utf8",
-        timeout: 60_000,
-        env: { ...process.env, NODE_OPTIONS: "" },
-      });
-      const lines = stdout.trim().split("\n");
-      const actual = JSON.parse(lines[lines.length - 1]!) as Record<string, string | boolean>;
-      const golden = JSON.parse(readFileSync(GOLDEN, "utf8")) as Record<string, string | boolean>;
-      for (const key of Object.keys(golden)) {
-        expect(actual[key]).toBe(golden[key]);
+    "the cross-process reference run is unchanged by exercising preferences",
+    async () => {
+      const reference = (): Record<string, string | boolean> => {
+        const stdout = execFileSync(process.execPath, [CROSS_PROCESS_CHILD], {
+          encoding: "utf8",
+          timeout: 60_000,
+          env: { ...process.env, NODE_OPTIONS: "" },
+        });
+        const lines = stdout.trim().split("\n");
+        return JSON.parse(lines[lines.length - 1]!) as Record<string, string | boolean>;
+      };
+      const before = reference();
+      const bridge = createPreferencesBridge(() => runtime);
+      for (const theme of THEME_PREFERENCES) {
+        expect((await bridge.write({ app: { ...DEFAULT_APP_PREFERENCES, theme } })).outcome).toBe(
+          "success",
+        );
       }
+      expect(reference()).toEqual(before);
     },
   );
 });

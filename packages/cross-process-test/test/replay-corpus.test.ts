@@ -1,11 +1,15 @@
 import { readFileSync, readdirSync } from "node:fs";
 
+import { CommandLedger } from "@bluewave/commands";
 import { canonicalSerialize } from "@bluewave/deterministic";
+import { ReplayVerifier, type MonthResult } from "@bluewave/phase-engine";
 import { Result } from "effect";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope, SetResearchPriorityCommand } from "@bluewave/commands";
+import type { CompilerInput } from "@bluewave/content-compiler";
+import type { ContentInputPerturbation } from "../src/production-pack.js";
 import {
   decodeReplayFile,
   formatDivergence,
@@ -256,6 +260,159 @@ describe("replay corpus mutation check", () => {
       ok: false,
       divergence: { month: 1, where: "event", entryIndex: 0 },
     });
+  });
+});
+
+describe("replay corpus pinned probe mutations", () => {
+  const recorded = recordReplay(SCENARIO);
+  const maltaWar = readFileSync(
+    new URL(
+      "../../../golden/replays/production-1880-4m-malta-war-engine-digests.replay.json",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  function withInput(text: string, contentInput: ContentInputPerturbation) {
+    const result = verifyReplay(text, { contentInput });
+    if (Result.isFailure(result)) throw new Error(result.failure.message);
+    return result.success;
+  }
+
+  function treasuryPlusOne(snapshot: CampaignSnapshot): CampaignSnapshot {
+    const nations = new Map(snapshot.nations);
+    const [id, nation] = [...nations][0]!;
+    nations.set(id, {
+      ...nation,
+      treasury: (Number(nation.treasury) + 1) as typeof nation.treasury,
+    });
+    return { ...snapshot, nations };
+  }
+
+  function editFirstRow(
+    input: CompilerInput,
+    files: readonly string[] | undefined,
+    edit: (row: Record<string, unknown>) => Record<string, unknown>,
+  ): CompilerInput {
+    const key = files?.[0] ?? "";
+    const rows = input.documents?.[key];
+    if (!Array.isArray(rows)) throw new Error(`content document ${key} is not a list`);
+    const [first, ...rest] = rows as Record<string, unknown>[];
+    return { ...input, documents: { ...input.documents, [key]: [edit(first!), ...rest] } };
+  }
+
+  it("detects a changed content bundle at the content check", () => {
+    const outcome = withInput(recorded, (input) =>
+      editFirstRow(input, input.technologyFiles, (row) => ({
+        ...row,
+        cost: Number(row["cost"]) + 1,
+      })),
+    );
+    expect(outcome).toMatchObject({ ok: false, divergence: { month: 0, where: "content" } });
+    if (!outcome.ok) expect(outcome.divergence.actual).not.toBe(outcome.divergence.expected);
+  });
+
+  it("detects a changed compiled artifact hash at the content check", () => {
+    const outcome = withInput(recorded, (input) =>
+      editFirstRow(input, input.areaFiles, (row) => ({ ...row, name: `${String(row["name"])}!` })),
+    );
+    expect(outcome).toMatchObject({ ok: false, divergence: { month: 0, where: "content" } });
+  });
+
+  it("detects a changed initial snapshot at the initial check", () => {
+    const result = verifyReplay(recorded, { initial: treasuryPlusOne });
+    if (Result.isFailure(result)) throw new Error(result.failure.message);
+    expect(result.success).toMatchObject({
+      ok: false,
+      divergence: { month: 0, where: "initial" },
+    });
+  });
+
+  it("detects a changed closing snapshot at the snapshot checkpoint", () => {
+    const result = verifyReplay(recorded, { perturb: { month: 2, closing: treasuryPlusOne } });
+    if (Result.isFailure(result)) throw new Error(result.failure.message);
+    expect(result.success).toMatchObject({
+      ok: false,
+      divergence: { month: 2, where: "snapshot" },
+    });
+  });
+
+  it("detects a symmetric change to the command ledger digest in a checked-in replay", () => {
+    expect(verified(maltaWar)).toEqual({ ok: true, months: 4 });
+    const original: unknown = Reflect.get(CommandLedger.prototype, "hash");
+    if (typeof original !== "function") throw new Error("CommandLedger.hash is not a function");
+    const spy = vi.spyOn(CommandLedger.prototype, "hash").mockImplementation(function (
+      this: CommandLedger,
+    ) {
+      const digest = String(Reflect.apply(original, this, []));
+      return `${digest.slice(0, 63)}${digest.endsWith("0") ? "1" : "0"}`;
+    });
+    try {
+      expect(verified(maltaWar)).toMatchObject({
+        ok: false,
+        divergence: { month: 1, where: "commandDigest" },
+      });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("detects a changed replay verifier output in a checked-in replay", () => {
+    const original: unknown = Reflect.get(ReplayVerifier.prototype, "verify");
+    if (typeof original !== "function") throw new Error("ReplayVerifier.verify is not a function");
+    const spy = vi.spyOn(ReplayVerifier.prototype, "verify").mockImplementation(function (
+      this: ReplayVerifier,
+      ...args: Parameters<ReplayVerifier["verify"]>
+    ) {
+      const outcome: ReturnType<ReplayVerifier["verify"]> = Reflect.apply(original, this, args);
+      return { ...outcome, steps: outcome.steps.slice(1) };
+    });
+    try {
+      expect(verified(maltaWar)).toMatchObject({
+        ok: false,
+        divergence: { month: 1, where: "verifier" },
+      });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("detects changed battle generation output in a checked-in replay", () => {
+    const manifestHashes = (run: (capture: (result: MonthResult) => void) => unknown) => {
+      let hashes: string[] = [];
+      run((result) => {
+        hashes = (result.finalSnapshot.wars.battleManifests ?? []).map((m) => m.manifestHash);
+      });
+      return hashes;
+    };
+    const baseline = manifestHashes((afterExecute) =>
+      verifyReplay(maltaWar, { perturb: { month: 2, afterExecute } }),
+    );
+    expect(baseline.length).toBeGreaterThan(0);
+    const perturbed = manifestHashes((afterExecute) =>
+      verifyReplay(maltaWar, {
+        perturb: {
+          month: 2,
+          afterExecute,
+          snapshot: (snapshot) => {
+            const nations = new Map(snapshot.nations);
+            for (const [id, nation] of nations) {
+              nations.set(id, {
+                ...nation,
+                fleets: nation.fleets.map((fleet) => ({
+                  ...fleet,
+                  ships: fleet.ships.map((ship, index) =>
+                    index === 0 ? { ...ship, isUnderConstruction: true } : ship,
+                  ),
+                })),
+              });
+            }
+            return { ...snapshot, nations };
+          },
+        },
+      }),
+    );
+    expect(perturbed).not.toEqual(baseline);
   });
 });
 
