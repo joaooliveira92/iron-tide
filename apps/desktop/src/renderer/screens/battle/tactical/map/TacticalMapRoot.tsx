@@ -5,7 +5,11 @@ import { niceScaleBar } from "../../../../components/world-map/map-scale.js";
 import { UM_PER_METRE, UM_PER_NAUTICAL_MILE } from "../../../../lib/presentation-format/units.js";
 import { usePreferences } from "../../../../lib/preferences-context.js";
 import { lodBandFor } from "../../../tactical-map/tacticalScale.js";
-import { useBattleSession } from "../../session/BattleSession.js";
+import {
+  useBattleActions,
+  useBattleCameraState,
+  useBattleState,
+} from "../../session/battle-session-contexts.js";
 import { worldToScreen, type TacticalViewport } from "../tactical-geometry.js";
 import {
   TacticalMapContext,
@@ -24,9 +28,7 @@ function symbolSizeFor(band: ReturnType<typeof lodBandFor>): number {
 }
 
 export function TacticalMapRoot({ children }: { readonly children: ReactNode }) {
-  const {
-    state: { view },
-  } = useBattleSession();
+  const { view } = useBattleState();
   if (view === null) return null;
   return <TacticalMapFrame view={view}>{children}</TacticalMapFrame>;
 }
@@ -38,9 +40,9 @@ function TacticalMapFrame({
   readonly view: PlayerBattleView;
   readonly children: ReactNode;
 }) {
-  const { state, actions } = useBattleSession();
-  const { camera, running } = state;
-  const { setViewport: reportViewport } = actions;
+  const { running, stepIntervalMs } = useBattleState();
+  const { camera } = useBattleCameraState();
+  const { setViewport: reportViewport } = useBattleActions();
   const { preferences } = usePreferences();
   const frame = useRef<HTMLDivElement | null>(null);
   const [viewport, setViewport] = useState<TacticalViewport>(FALLBACK_VIEWPORT);
@@ -94,7 +96,7 @@ function TacticalMapFrame({
     pixelsPerNm,
     bar: niceScaleBar(pixelsPerNm, SCALE_BAR_MAX_PX),
     measurement,
-    moveStyle: running ? `transform ${String(state.stepIntervalMs)}ms linear` : undefined,
+    moveStyle: running ? `transform ${String(stepIntervalMs)}ms linear` : undefined,
     cursor,
   };
 

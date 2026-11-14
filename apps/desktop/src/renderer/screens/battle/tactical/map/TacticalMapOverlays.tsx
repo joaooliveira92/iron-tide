@@ -1,6 +1,6 @@
 import { formatMeasurement } from "../../../../lib/presentation-format/format.js";
 import { UM_PER_NAUTICAL_MILE } from "../../../../lib/presentation-format/units.js";
-import { useBattleSession } from "../../session/BattleSession.js";
+import { useBattleState } from "../../session/battle-session-contexts.js";
 import { shipPoint } from "../tactical-model.js";
 import { TACTICAL_PALETTE } from "../tactical-palette.js";
 import { useTacticalMap } from "./tactical-map-context.js";
@@ -11,7 +11,7 @@ const RING_COUNT = 4;
 
 function RangeRings() {
   const { shipsById, project, bar, pixelsPerNm, measurement } = useTacticalMap();
-  const { state } = useBattleSession();
+  const state = useBattleState();
   const selected = state.selectedShipId === null ? undefined : shipsById.get(state.selectedShipId);
   if (!state.overlays.rings || !selected?.position) return null;
   return Array.from({ length: RING_COUNT }, (_, index) => {
@@ -46,7 +46,7 @@ function RangeRings() {
 
 function Tracks() {
   const { visibleShips, project, playerSide } = useTacticalMap();
-  const { state } = useBattleSession();
+  const state = useBattleState();
   if (!state.overlays.tracks) return null;
   return visibleShips.map((ship) => {
     const history = state.trails[ship.shipId] ?? [];
@@ -69,7 +69,7 @@ function Tracks() {
 
 function FiringLines() {
   const { shipsById, project } = useTacticalMap();
-  const { state } = useBattleSession();
+  const state = useBattleState();
   if (!state.overlays.fire) return null;
   return state.markers.firing.map((line) => {
     const from = shipsById.get(line.actorShipId);
@@ -99,7 +99,7 @@ function FiringLines() {
 
 function Impacts() {
   const { shipsById, project, symbolSize } = useTacticalMap();
-  const { state } = useBattleSession();
+  const state = useBattleState();
   if (!state.overlays.fire) return null;
   return state.markers.impacts.map((targetId) => {
     const target = shipsById.get(targetId);
@@ -124,7 +124,7 @@ function Impacts() {
 
 function StandingCourses() {
   const { shipsById, project } = useTacticalMap();
-  const { state } = useBattleSession();
+  const state = useBattleState();
   return state.standingCourses.map((course) => {
     const target = shipsById.get(course.shipId);
     const point = target === undefined ? null : shipPoint(target);
@@ -151,7 +151,7 @@ function StandingCourses() {
 
 function CoursePreviewLine() {
   const { shipsById, project } = useTacticalMap();
-  const { state } = useBattleSession();
+  const state = useBattleState();
   const { preview } = state;
   if (preview === null) return null;
   const target = shipsById.get(preview.shipId);

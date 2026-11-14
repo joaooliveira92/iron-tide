@@ -1,11 +1,9 @@
 import { translate } from "../../lib/strings.js";
-import { useBattleSession } from "./session/BattleSession.js";
+import { useBattleState } from "./session/battle-session-contexts.js";
 import { TacticalMap } from "./tactical/TacticalMap.js";
 
 export function BattleMapPane() {
-  const {
-    state: { running, ended },
-  } = useBattleSession();
+  const { running, ended } = useBattleState();
   return (
     <div className="relative h-[24rem] min-w-0 lg:h-full">
       <TacticalMap>

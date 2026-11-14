@@ -1,95 +1,24 @@
-import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
-import { BluewaveError } from "@bluewave/contracts";
-import { createContext, use, useCallback, useMemo, type ReactNode } from "react";
 import type { PlayerBattleResultDto } from "../../../../shared/player-battle-contract.js";
-import type { DivisionOrder, DivisionOrders } from "../../../../shared/player-battle-orders.js";
-import type { AppPreferences } from "../../../../shared/preferences-contract.js";
+import { useMemo, type ReactNode } from "react";
 import { usePreferences } from "../../../lib/preferences-context.js";
-import type {
-  TacticalCamera,
-  TacticalViewport,
-  WorldPoint,
-} from "../tactical/tactical-geometry.js";
 import { projectCombatLog, transientMarkers } from "../tactical/tactical-log.js";
-import type { CombatLogEntry, TransientMarkers } from "../tactical/tactical-log.js";
-import type {
-  CoursePreview,
-  MapOverlays,
-  NameFilter,
-  OverlayKey,
-  StandingCourse,
-} from "../tactical/tactical-map-types.js";
-import type { Trails } from "../tactical/tactical-model.js";
-import { stepIntervalMs, type TacticalTimeScale } from "../tactical/tactical-time.js";
-import { usePlayerBattle, type BattleResume } from "../usePlayerBattle.js";
+import type { StandingCourse } from "../tactical/tactical-map-types.js";
+import { stepIntervalMs } from "../tactical/tactical-time.js";
+import { usePlayerBattle } from "../usePlayerBattle.js";
+import {
+  BattleActionsContext,
+  BattleCameraContext,
+  BattleMetaContext,
+  BattleStateContext,
+  type BattleSessionActions,
+  type BattleSessionCamera,
+  type BattleSessionMeta,
+  type BattleSessionState,
+} from "./battle-session-contexts.js";
 import { useBattleCamera } from "./use-battle-camera.js";
 import { useBattleClock } from "./use-battle-clock.js";
 import { useBattleSelection } from "./use-battle-selection.js";
-
-export interface BattleSessionState {
-  readonly view: PlayerBattleView | null;
-  readonly resume: BattleResume;
-  readonly error: string | null;
-  readonly busy: boolean;
-  readonly ended: boolean;
-  readonly running: boolean;
-  readonly scale: TacticalTimeScale;
-  readonly stepIntervalMs: number;
-  readonly selectedShipId: string | null;
-  readonly selected: PlayerBattleShipView | null;
-  readonly selectedPoint: WorldPoint | null;
-  readonly selectedDivisionId: string | null;
-  readonly preview: CoursePreview | null;
-  readonly overlays: MapOverlays;
-  readonly camera: TacticalCamera;
-  readonly viewport: TacticalViewport;
-  readonly trails: Trails;
-  readonly entries: readonly CombatLogEntry[];
-  readonly markers: TransientMarkers;
-  readonly standingCourses: readonly StandingCourse[];
-  readonly acceptedOrders: DivisionOrders;
-}
-
-export interface BattleSessionActions {
-  readonly toggleRunning: () => void;
-  readonly setScale: (scale: TacticalTimeScale) => void;
-  readonly step: () => void;
-  readonly fightToEnd: () => void;
-  readonly zoomIn: () => void;
-  readonly zoomOut: () => void;
-  readonly fit: () => void;
-  readonly focus: () => void;
-  readonly changeCamera: (camera: TacticalCamera) => void;
-  readonly setViewport: (viewport: TacticalViewport) => void;
-  readonly setOverlay: (overlay: OverlayKey, on: boolean) => void;
-  readonly setNames: (labels: NameFilter) => void;
-  readonly selectShip: (shipId: string | null) => void;
-  readonly selectDivision: (divisionId: string) => void;
-  readonly previewCourse: (headingDeg: number | null) => void;
-  readonly orderFor: (divisionId: string) => DivisionOrder;
-  readonly setOrder: (divisionId: string, patch: Partial<DivisionOrder>) => void;
-  readonly releaseCourse: (divisionId: string) => void;
-  readonly submit: () => void;
-}
-
-export interface BattleSessionMeta {
-  readonly areaId: string | undefined;
-  readonly locale: AppPreferences["formattingLocale"];
-}
-
-export interface BattleSessionValue {
-  readonly state: BattleSessionState;
-  readonly actions: BattleSessionActions;
-  readonly meta: BattleSessionMeta;
-}
-
-const BattleSessionContext = createContext<BattleSessionValue | null>(null);
-
-export function useBattleSession(): BattleSessionValue {
-  const value = use(BattleSessionContext);
-  if (value === null) throw new BluewaveError("BATTLE_SESSION_PROVIDER_MISSING", {});
-  return value;
-}
+import { useStableCallback } from "./use-stable-callback.js";
 
 export interface BattleSessionProviderProps {
   readonly sessionId: string;
@@ -121,11 +50,19 @@ export function BattleSessionProvider({
   });
 
   const { pause } = clock;
-  const step = useCallback(() => advance("minute"), [advance]);
-  const fightToEnd = useCallback(() => {
+  const step = useStableCallback(() => advance("minute"));
+  const fightToEnd = useStableCallback(() => {
     pause();
     advance("to_end");
-  }, [pause, advance]);
+  });
+  const zoomIn = useStableCallback(camera.zoomIn);
+  const zoomOut = useStableCallback(camera.zoomOut);
+  const fit = useStableCallback(camera.fit);
+  const focus = useStableCallback(camera.focus);
+  const selectDivision = useStableCallback(selection.selectDivision);
+  const setOrder = useStableCallback(battle.setOrder);
+  const releaseCourse = useStableCallback(battle.releaseCourse);
+  const submit = useStableCallback(battle.submit);
 
   const entries = useMemo(() => (view === null ? [] : projectCombatLog(view)), [view]);
   const markers = useMemo(
@@ -140,53 +77,118 @@ export function BattleSessionProvider({
     });
   }, [view, acceptedOrders]);
 
-  const value: BattleSessionValue = {
-    state: {
+  const { running, scale } = clock;
+  const state = useMemo<BattleSessionState>(
+    () => ({
       view,
       resume: battle.resume,
       error: battle.error,
       busy,
       ended,
-      running: clock.running,
-      scale: clock.scale,
-      stepIntervalMs: stepIntervalMs(clock.scale),
+      running,
+      scale,
+      stepIntervalMs: stepIntervalMs(scale),
       selectedShipId: selection.selectedShipId,
       selected: selection.selected,
       selectedPoint: selection.selectedPoint,
       selectedDivisionId: selection.selectedDivisionId,
       preview: selection.preview,
       overlays: selection.overlays,
-      camera: camera.camera,
-      viewport: camera.viewport,
       trails: camera.trails,
       entries,
       markers,
       standingCourses,
       acceptedOrders,
-    },
-    actions: {
-      toggleRunning: clock.toggleRunning,
-      setScale: clock.setScale,
+      orderFor: battle.orderFor,
+    }),
+    [
+      view,
+      battle.resume,
+      battle.error,
+      battle.orderFor,
+      busy,
+      ended,
+      running,
+      scale,
+      selection.selectedShipId,
+      selection.selected,
+      selection.selectedPoint,
+      selection.selectedDivisionId,
+      selection.preview,
+      selection.overlays,
+      camera.trails,
+      entries,
+      markers,
+      standingCourses,
+      acceptedOrders,
+    ],
+  );
+
+  const cameraState = useMemo<BattleSessionCamera>(
+    () => ({ camera: camera.camera, viewport: camera.viewport }),
+    [camera.camera, camera.viewport],
+  );
+
+  const { toggleRunning, setScale } = clock;
+  const { changeCamera, setViewport } = camera;
+  const { setOverlay, setNames, selectShip, previewCourse } = selection;
+  const actions = useMemo<BattleSessionActions>(
+    () => ({
+      toggleRunning,
+      setScale,
       step,
       fightToEnd,
-      zoomIn: camera.zoomIn,
-      zoomOut: camera.zoomOut,
-      fit: camera.fit,
-      focus: camera.focus,
-      changeCamera: camera.changeCamera,
-      setViewport: camera.setViewport,
-      setOverlay: selection.setOverlay,
-      setNames: selection.setNames,
-      selectShip: selection.selectShip,
-      selectDivision: selection.selectDivision,
-      previewCourse: selection.previewCourse,
-      orderFor: battle.orderFor,
-      setOrder: battle.setOrder,
-      releaseCourse: battle.releaseCourse,
-      submit: battle.submit,
-    },
-    meta: { areaId: view?.areaId ?? areaId, locale: preferences.formattingLocale },
-  };
+      zoomIn,
+      zoomOut,
+      fit,
+      focus,
+      changeCamera,
+      setViewport,
+      setOverlay,
+      setNames,
+      selectShip,
+      selectDivision,
+      previewCourse,
+      setOrder,
+      releaseCourse,
+      submit,
+    }),
+    [
+      toggleRunning,
+      setScale,
+      step,
+      fightToEnd,
+      zoomIn,
+      zoomOut,
+      fit,
+      focus,
+      changeCamera,
+      setViewport,
+      setOverlay,
+      setNames,
+      selectShip,
+      selectDivision,
+      previewCourse,
+      setOrder,
+      releaseCourse,
+      submit,
+    ],
+  );
 
-  return <BattleSessionContext value={value}>{children}</BattleSessionContext>;
+  const locale = preferences.formattingLocale;
+  const resolvedAreaId = view?.areaId ?? areaId;
+  const meta = useMemo<BattleSessionMeta>(
+    () => ({ areaId: resolvedAreaId, locale }),
+    [resolvedAreaId, locale],
+  );
+
+  return (
+    <BattleActionsContext value={actions}>
+      <BattleMetaContext value={meta}>
+        <BattleStateContext value={state}>
+          <BattleCameraContext value={cameraState}>{children}</BattleCameraContext>
+        </BattleStateContext>
+      </BattleMetaContext>
+    </BattleActionsContext>
+  );
 }

@@ -1,8 +1,13 @@
 import { act, cleanup, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
-import { useBattleSession, type BattleSessionValue } from "./BattleSession.js";
-import { BASE_VIEW, mountSession, ship } from "./battle-session-harness.js";
+import {
+  BASE_VIEW,
+  mountSession,
+  ship,
+  useBattleSessionSnapshot,
+  type BattleSessionSnapshot,
+} from "./battle-session-harness.js";
 
 interface Frame {
   readonly minute: number | null;
@@ -10,10 +15,10 @@ interface Frame {
 }
 
 const frames: Frame[] = [];
-let session: BattleSessionValue | null = null;
+let session: BattleSessionSnapshot | null = null;
 
 function Probe() {
-  const value = useBattleSession();
+  const value = useBattleSessionSnapshot();
   session = value;
   frames.push({
     minute: value.state.view?.minute ?? null,
@@ -22,7 +27,7 @@ function Probe() {
   return null;
 }
 
-const current = (): BattleSessionValue => {
+const current = (): BattleSessionSnapshot => {
   if (session === null) throw new Error("probe not rendered");
   return session;
 };

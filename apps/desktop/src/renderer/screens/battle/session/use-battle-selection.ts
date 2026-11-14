@@ -32,10 +32,14 @@ export function useBattleSelection(view: PlayerBattleView | null): BattleSelecti
 
   const selected = view === null ? null : selectedShip(view, selectedShipId);
   const selectedPoint = useMemo(() => (selected === null ? null : shipPoint(selected)), [selected]);
-  const preview: CoursePreview | null =
-    selected !== null && coursePreview !== null
-      ? { shipId: selected.shipId, headingDeg: coursePreview }
-      : null;
+  const previewShipId = selected?.shipId ?? null;
+  const preview = useMemo<CoursePreview | null>(
+    () =>
+      previewShipId !== null && coursePreview !== null
+        ? { shipId: previewShipId, headingDeg: coursePreview }
+        : null,
+    [previewShipId, coursePreview],
+  );
 
   const selectDivision = useCallback(
     (divisionId: string) => {
