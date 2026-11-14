@@ -6,6 +6,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import { ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
+import { EN_US_MESSAGES } from "../../renderer/lib/en-us-messages.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type { ResolveTurnResult } from "../../shared/turn-message-contract.js";
 import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
@@ -63,6 +64,7 @@ describe("resolveTurn with the production event catalogue", () => {
     });
 
     let dilemmas = 0;
+    let prestigeAnswers = 0;
     let revision = 0;
     for (let guard = 0; guard < MONTHS * 4 && revision < MONTHS; guard += 1) {
       const result = await run(resolveTurnProgram, {
@@ -87,6 +89,19 @@ describe("resolveTurn with the production event catalogue", () => {
         });
         expect(answered.outcome).toBe("success");
         value = (answered as { value: ResolveTurnResult }).value;
+        const player =
+          getCampaignSession("session-dilemma")!.state.snapshot.nations.get(PLAYER_NATION);
+        const fired = player?.eventHistory?.fired.at(-1);
+        expect(fired?.eventId).toBe(request!.decisionId);
+        expect(fired?.answerId).toBe(request!.options![0]!.optionId);
+        expect(fired?.resolvedBy).toBe("PLAYER");
+        const reason = player?.prestigeLastChange?.reasonCode;
+        if (fired?.effects !== undefined && fired.effects.prestigeDelta !== 0) {
+          expect(player?.prestigeLastChange?.month).toBe(fired.month);
+          expect(reason).toBeDefined();
+          expect(EN_US_MESSAGES).toHaveProperty([`shell.prestige.reason.${reason}`]);
+          prestigeAnswers += 1;
+        }
       }
       expect(value.status).toBe("completed");
       revision += 1;
@@ -97,5 +112,6 @@ describe("resolveTurn with the production event catalogue", () => {
 
     expect(revision).toBe(MONTHS);
     expect(dilemmas).toBeGreaterThan(0);
+    expect(prestigeAnswers).toBeGreaterThan(0);
   }, 600_000);
 });

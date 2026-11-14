@@ -4,8 +4,8 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 
 | Status | Rows |
 | --- | --- |
-| reachable | 35 |
-| dormant-by-decision | 17 |
+| reachable | 38 |
+| dormant-by-decision | 14 |
 | internal | 16 |
 
 ## Reachable
@@ -36,7 +36,9 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | declare-blockade | Declare a blockade of a nation in an area | `screens/diplomacy/DiplomacyScreen.tsx` | `apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx` |
 | advance-month | Advance the campaign month and answer interruptions | `shell/App.tsx` | `apps/desktop/src/renderer/shell/useCampaignShell.test.ts` |
 | fight-or-decline-battle | Accept or decline a battle offer, then fight with stance, speed, course orders | `screens/battle/PlayerBattleScreen.tsx` | `apps/desktop/src/renderer/shell/App.test.tsx` |
+| answer-event-dilemma | Answer a monthly event dilemma, weighing each answer's effects | `shell/interruptions/DecisionDialog.tsx` | `apps/desktop/src/main/commands/resolveTurnEvents.test.ts` |
 | assign-or-relieve-officer | Assign or relieve an officer | `screens/fleet/organization/FleetOrganizationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/organization/FleetOrganizationView.test.tsx` |
+| prestige | See and act on national prestige | `shell/status-strip/cards/PrestigeCard.tsx` | `apps/desktop/src/renderer/shell/PrestigeCardEvent.test.tsx` |
 | ship-readiness | See and manage ship readiness | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
 | combat-fought-battle | Fight a battle: gunnery, spotting, contact, movement, weather, damage, torpedoes under stance, speed and course orders | `screens/battle/PlayerBattleScreen.tsx` | `apps/desktop/src/main/commands/battleOfferCommands.test.ts` |
 | read-campaign-overview | Read the campaign overview | `screens/overview/OverviewScreen.tsx` | `apps/desktop/src/main/commands/inspectCampaign.test.ts` |
@@ -47,6 +49,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | start-new-game | Choose a nation and options and start a new campaign | `screens/new-game/NewGameLaunchingScreen.tsx` | `apps/desktop/src/renderer/screens/new-game/NewGameLaunchingScreen.test.tsx` |
 | manage-campaign-files | Save, copy, close, load, verify, replay and recover a campaign | `screens/campaign-file/CampaignFileScreen.tsx` | `apps/desktop/src/renderer/screens/campaign-file/CampaignFileScreen.test.tsx` |
 | persist-ui-state | Remember inspector layout, preferences and dismissed messages | `screens/campaign-preferences/CampaignPreferencesScreen.tsx` | `apps/desktop/src/main/uiState.test.ts` |
+| national-events | Answer a monthly event dilemma, or let it lapse | `shell/interruptions/DecisionDialog.tsx` | `apps/desktop/src/main/commands/resolveTurnEvents.test.ts` |
 
 ## Dormant by decision
 
@@ -55,8 +58,6 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | construction-events | Learn why a build slipped or cost more | #584 |
 | event-answer-unrest | See unrest rise or fall after a crisis answer | #427 |
 | accept-peace | Accept a peace settlement | #777 |
-| answer-event-dilemma | Answer a monthly event dilemma, hovering each answer for its declared effects | #428 |
-| prestige | See and act on national prestige | #223 |
 | division-battle-experience | Divisions gain experience from the battles they fight | #276 |
 | aircraft-and-carriers | Develop aircraft and operate carriers | RULES.md#dormant-by-decision |
 | combat-air-combat | Air combat and air defence in a battle | RULES.md#dormant-by-decision |
@@ -68,7 +69,6 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | combat-coastal-defense | Coastal defence batteries | RULES.md#dormant-by-decision |
 | combat-smoke | Smokescreens and funnel smoke | RULES.md#dormant-by-decision |
 | national-traits | Play a nation whose national traits change shipbuilding, prestige loss, budget and surprise attack | #424 |
-| national-events | Answer a monthly event dilemma, or let it lapse to its default | #426 |
 
 ## Internal
 
