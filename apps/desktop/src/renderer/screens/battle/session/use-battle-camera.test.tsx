@@ -1,18 +1,22 @@
 import { act, cleanup, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
-import { useBattleSession, type BattleSessionValue } from "./BattleSession.js";
-import { BASE_VIEW, mountSession } from "./battle-session-harness.js";
+import {
+  BASE_VIEW,
+  mountSession,
+  useBattleSessionSnapshot,
+  type BattleSessionSnapshot,
+} from "./battle-session-harness.js";
 import { fitCamera } from "../tactical/tactical-geometry.js";
 import { knownPositions } from "../tactical/tactical-model.js";
 
-let session: BattleSessionValue | null = null;
+let session: BattleSessionSnapshot | null = null;
 
 function Probe() {
-  session = useBattleSession();
+  session = useBattleSessionSnapshot();
   return null;
 }
 
-const current = (): BattleSessionValue => {
+const current = (): BattleSessionSnapshot => {
   if (session === null) throw new Error("probe not rendered");
   return session;
 };

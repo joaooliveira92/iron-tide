@@ -4,8 +4,13 @@ import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { translate } from "../../../lib/strings.js";
 import { BattleBoard } from "../BattleBoard.js";
 import { AccuracyDisclosure } from "../AccuracyDisclosure.js";
-import { useBattleSession, type BattleSessionValue } from "./BattleSession.js";
-import { BASE_VIEW, mountSession, ship } from "./battle-session-harness.js";
+import {
+  BASE_VIEW,
+  mountSession,
+  ship,
+  useBattleSessionSnapshot,
+  type BattleSessionSnapshot,
+} from "./battle-session-harness.js";
 
 vi.mock("../../../lib/strings.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../lib/strings.js")>();
@@ -32,14 +37,14 @@ const VIEW: PlayerBattleView = {
   ),
 };
 
-let session: BattleSessionValue | null = null;
+let session: BattleSessionSnapshot | null = null;
 
 function Probe() {
-  session = useBattleSession();
+  session = useBattleSessionSnapshot();
   return null;
 }
 
-const current = (): BattleSessionValue => {
+const current = (): BattleSessionSnapshot => {
   if (session === null) throw new Error("probe not rendered");
   return session;
 };

@@ -1,12 +1,18 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs.js";
 import { translate } from "../../lib/strings.js";
-import { useBattleSession } from "./session/BattleSession.js";
+import {
+  useBattleActions,
+  useBattleMeta,
+  useBattleState,
+} from "./session/battle-session-contexts.js";
 import { CombatLogPanel } from "./tactical/CombatLogPanel.js";
 import { OrderOfBattle } from "./tactical/OrderOfBattle.js";
 import { UnitCommandPanel } from "./tactical/UnitCommandPanel.js";
 
 export function BattleSidebar() {
-  const { state, actions, meta } = useBattleSession();
+  const state = useBattleState();
+  const actions = useBattleActions();
+  const meta = useBattleMeta();
   const { view } = state;
   if (view === null) return null;
   return (
@@ -24,7 +30,7 @@ export function BattleSidebar() {
             <OrderOfBattle
               view={view}
               locale={meta.locale}
-              orderFor={actions.orderFor}
+              orderFor={state.orderFor}
               setOrder={actions.setOrder}
               selectedShipId={state.selectedShipId}
               selectedDivisionId={state.selectedDivisionId}
@@ -51,7 +57,7 @@ export function BattleSidebar() {
           view={view}
           locale={meta.locale}
           selectedShipId={state.selectedShipId}
-          orderFor={actions.orderFor}
+          orderFor={state.orderFor}
           acceptedOrders={state.acceptedOrders}
           setOrder={actions.setOrder}
           releaseCourse={actions.releaseCourse}

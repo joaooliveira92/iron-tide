@@ -7,7 +7,29 @@ import { DEFAULT_APP_PREFERENCES } from "../../../../shared/preferences-contract
 import { BridgeProvider } from "../../../lib/bridge-context.js";
 import { PreferencesProvider } from "../../../lib/preferences-context.js";
 import { BattleSessionProvider } from "./BattleSession.js";
+import {
+  useBattleActions,
+  useBattleCameraState,
+  useBattleMeta,
+  useBattleState,
+  type BattleSessionActions,
+  type BattleSessionCamera,
+  type BattleSessionMeta,
+  type BattleSessionState,
+} from "./battle-session-contexts.js";
 import type { ReactNode } from "react";
+
+export interface BattleSessionSnapshot {
+  readonly state: BattleSessionState & BattleSessionCamera;
+  readonly actions: BattleSessionActions;
+  readonly meta: BattleSessionMeta;
+}
+
+export function useBattleSessionSnapshot(): BattleSessionSnapshot {
+  const state = useBattleState();
+  const camera = useBattleCameraState();
+  return { state: { ...state, ...camera }, actions: useBattleActions(), meta: useBattleMeta() };
+}
 
 export const NM_UM = 1_852_000_000;
 

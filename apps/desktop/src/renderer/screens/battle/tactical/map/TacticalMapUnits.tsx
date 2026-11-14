@@ -1,7 +1,7 @@
 import type { PlayerBattleShipView } from "@bluewave/combat/battleResolution";
 import { useMemo, type KeyboardEvent } from "react";
 import { translate } from "../../../../lib/strings.js";
-import { useBattleSession } from "../../session/BattleSession.js";
+import { useBattleActions, useBattleState } from "../../session/battle-session-contexts.js";
 import { visibleLabelKeys, type LabelCandidate } from "../tactical-geometry.js";
 import { shipPoint, shipStatus } from "../tactical-model.js";
 import { TACTICAL_PALETTE } from "../tactical-palette.js";
@@ -12,7 +12,8 @@ const LABEL_HEIGHT_PX = 16;
 
 function Ship({ ship }: { readonly ship: PlayerBattleShipView }) {
   const { view, project, playerSide, symbolSize: size, moveStyle } = useTacticalMap();
-  const { state, actions } = useBattleSession();
+  const state = useBattleState();
+  const actions = useBattleActions();
   const [x, y] = project(shipPoint(ship)!);
   const own = ship.sideId === playerSide;
   const status = shipStatus(ship);
@@ -104,8 +105,7 @@ function Ships() {
 
 function ShipNames() {
   const { view, visibleShips, project, playerSide, symbolSize: size, moveStyle } = useTacticalMap();
-  const { state } = useBattleSession();
-  const { selectedShipId, overlays } = state;
+  const { selectedShipId, overlays } = useBattleState();
 
   const labelKeys = useMemo(() => {
     if (overlays.labels === "none") return new Set<string>();

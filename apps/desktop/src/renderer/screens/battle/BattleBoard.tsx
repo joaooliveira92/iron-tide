@@ -3,12 +3,12 @@ import { translate } from "../../lib/strings.js";
 import { BattleMapPane } from "./BattleMapPane.js";
 import { BattleSidebar } from "./BattleSidebar.js";
 import { BattleToolbar } from "./BattleToolbar.js";
-import { useBattleSession } from "./session/BattleSession.js";
+import { useBattleActions, useBattleState } from "./session/battle-session-contexts.js";
 import { TacticalStatusBar } from "./tactical/TacticalStatusBar.js";
 
 export function BattleBoard() {
-  const { state, actions } = useBattleSession();
-  const { view, running, scale, ended, busy } = state;
+  const { view, running, scale, ended, busy } = useBattleState();
+  const actions = useBattleActions();
   if (view === null) return null;
   return (
     <div className="mt-2 flex flex-col gap-2">

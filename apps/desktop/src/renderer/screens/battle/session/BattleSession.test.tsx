@@ -6,11 +6,8 @@ import type { CampaignCommandClient } from "../../../../shared/campaign-contract
 import { DEFAULT_APP_PREFERENCES } from "../../../../shared/preferences-contract.js";
 import { BridgeProvider } from "../../../lib/bridge-context.js";
 import { PreferencesProvider } from "../../../lib/preferences-context.js";
-import {
-  BattleSessionProvider,
-  useBattleSession,
-  type BattleSessionValue,
-} from "./BattleSession.js";
+import { BattleSessionProvider } from "./BattleSession.js";
+import { useBattleSessionSnapshot, type BattleSessionSnapshot } from "./battle-session-harness.js";
 
 const NM_UM = 1_852_000_000;
 
@@ -79,14 +76,14 @@ const VIEW: PlayerBattleView = {
   log: [],
 };
 
-let session: BattleSessionValue | null = null;
+let session: BattleSessionSnapshot | null = null;
 
 function Probe() {
-  session = useBattleSession();
+  session = useBattleSessionSnapshot();
   return null;
 }
 
-const current = (): BattleSessionValue => {
+const current = (): BattleSessionSnapshot => {
   if (session === null) throw new Error("probe not rendered");
   return session;
 };
@@ -229,8 +226,8 @@ describe("BattleSessionProvider", () => {
     mount();
     await waitFor(() => expect(current().state.view).not.toBeNull());
     act(() => current().actions.setOrder("d1", { courseDeg: 90, speedKnots: 10 }));
-    expect(current().actions.orderFor("d1")).toMatchObject({ courseDeg: 90, speedKnots: 10 });
+    expect(current().state.orderFor("d1")).toMatchObject({ courseDeg: 90, speedKnots: 10 });
     act(() => current().actions.releaseCourse("d1"));
-    expect(current().actions.orderFor("d1").courseDeg).toBeUndefined();
+    expect(current().state.orderFor("d1").courseDeg).toBeUndefined();
   });
 });

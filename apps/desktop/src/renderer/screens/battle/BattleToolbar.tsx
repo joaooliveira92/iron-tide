@@ -1,8 +1,9 @@
-import { useBattleSession } from "./session/BattleSession.js";
+import { useBattleActions, useBattleState } from "./session/battle-session-contexts.js";
 import { TacticalToolbar } from "./tactical/TacticalToolbar.js";
 
 export function BattleToolbar() {
-  const { state, actions } = useBattleSession();
+  const state = useBattleState();
+  const actions = useBattleActions();
   return (
     <TacticalToolbar
       running={state.running}
