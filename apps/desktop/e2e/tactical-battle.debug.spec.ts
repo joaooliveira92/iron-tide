@@ -13,6 +13,9 @@ interface BluewaveBridgeLike {
   };
 }
 
+const TICK_MS_AT_8X = 125;
+const PACED_MINUTES = 4;
+
 async function readSessionId(page: Page): Promise<string> {
   const heading = page.locator("h1").first();
   await expect(heading).toContainText("Session");
@@ -98,14 +101,22 @@ test("fight a real-time tactical battle through the production app", async ({ e2
   await expect(page.getByTestId("unit-order-state")).toHaveAttribute("data-state", "accepted");
   expect(await elapsedMinute(page)).toBe(startMinute + 1);
 
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 60_000));
   await page.getByTestId("tactical-speed-8").click();
   await page.getByTestId("tactical-run-toggle").click();
   await expect(page.getByTestId("tactical-run-state")).toContainText("Running at 8");
-  await expect.poll(() => elapsedMinute(page), { timeout: 30_000 }).toBeGreaterThanOrEqual(5);
+  await expect
+    .poll(async () => {
+      await page.clock.runFor(TICK_MS_AT_8X);
+      return elapsedMinute(page);
+    })
+    .toBeGreaterThanOrEqual(startMinute + 1 + PACED_MINUTES);
   await shot("04-running");
 
   await page.getByTestId("tactical-run-toggle").click();
   await expect(page.getByTestId("tactical-run-state")).toHaveText("PAUSED");
+  await page.clock.resume();
   await expect(page.getByTestId("battle-advance")).toBeEnabled();
   const frozen = await elapsedMinute(page);
   await page.waitForTimeout(2_000);
