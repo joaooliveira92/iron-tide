@@ -31,6 +31,7 @@
     "worktrees": "node scripts/worktree.mjs",
     "worktrees:prune": "node scripts/worktree.mjs prune",
     "dispatch:check": "node scripts/dispatch-check.mjs",
+    "research:index": "node scripts/research-index.mjs",
     "replay:record": "pnpm --filter @bluewave/cross-process-test build && node packages/cross-process-test/dist/replay-corpus-cli.js record",
     "replay:verify": "pnpm --filter @bluewave/cross-process-test build && node packages/cross-process-test/dist/replay-corpus-cli.js verify",
     "replay:coverage": "pnpm --filter @bluewave/cross-process-test build && node packages/cross-process-test/dist/replay-corpus-cli.js coverage",
