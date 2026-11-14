@@ -285,16 +285,15 @@
     },
     {
       "id": "accept-peace",
-      "player_verb": "Accept a peace settlement",
-      "status": "dormant-by-decision",
+      "player_verb": "Accept peace",
+      "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
       "engine_symbols": ["applyAcceptPeace", "applyProposePeace"],
       "main_commands": ["submitDiplomacyCommand"],
-      "renderer_screen": null,
-      "evidence_test": null,
-      "decision": "#777",
-      "note": "AI rule decidePeaceProposal and decidePeaceResponse (packages/ai) has no engine caller."
+      "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
+      "decision": null
     },
     {
       "id": "form-or-break-alliance",

@@ -15,6 +15,7 @@ import type {
   FleetManagementRules,
   GunneryRules,
   MissilesRules,
+  PeaceBehaviourRules,
   TensionDriftRules,
   EventResolutionRules,
   GameEvent,
@@ -68,6 +69,7 @@ export interface MonthExecutorEngineOptions {
   readonly gunneryRules?: GunneryRules;
   readonly missilesRules?: MissilesRules;
   readonly tensionDrift?: TensionDriftRules;
+  readonly peaceBehaviour?: PeaceBehaviourRules;
   readonly events?: EventEngineContent;
   readonly constructionEvents?: readonly ConstructionEvent[];
 }

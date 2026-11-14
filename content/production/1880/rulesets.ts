@@ -70,6 +70,30 @@ export default list(RulesetManifestSchema, [
         note: "PROVISIONAL. With the authored pair frictions the monthly probabilities give one tension step about every nine years for the most hostile pairs and about every eighty for the quietest; they await a sourcing pass and the balance report.",
       },
     },
+    // The peace-behaviour section (#777, decisions 0054 and 0055). Every value is a PROVISIONAL Bluewave balance target:
+    // the manual (p.66) describes peace but gives no acceptance rule or frequency. The margin is the 0055 placeholder
+    // carried over from #554 (acceptSurplus and cession costs stay unsourced, #708). Removing this section returns AI
+    // nations to never proposing peace and the player's peace terms to always succeeding.
+    peaceBehaviour: {
+      sectionVersion: 1,
+      acceptanceScoreMargin: 20,
+      proposalChanceBp: 3_000,
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [
+          {
+            title: "Rule the Waves 3 manual",
+            author: "Naval War Simulations / Matrix Games",
+            year: 2023,
+            page: "66",
+            section: "Peace and possession choice",
+          },
+        ],
+        note: "PROVISIONAL. The margin of 20 war-score points is the unsourced decision 0055 placeholder; the monthly proposal chance of 30 percent once a side leads by the margin is a Bluewave balance target awaiting a sourcing pass (#708).",
+      },
+    },
     // The battle-offer section (T-1, spec #109). Every value is a Bluewave balance decision recorded by ADR-0254 (decision
     // requests 0028-0034, Option C): the manual (p.67) says each quantity exists but supplies no number. Retuning is a
     // ruleset version change with a golden re-pin. Removing this section returns the pack to the dormant behaviour.

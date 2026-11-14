@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
-import { PEACE_BEHAVIOUR } from "@bluewave/content-schema";
 import { decidePeaceProposal, decidePeaceResponse } from "../src/peaceBehaviour";
 
-const margin = PEACE_BEHAVIOUR.acceptanceScoreMargin;
+const margin = 20;
 
 function snapshot(attackerWarScore: number, defenderWarScore: number, status = "ACTIVE") {
   return {

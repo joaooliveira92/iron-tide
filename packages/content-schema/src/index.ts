@@ -196,7 +196,8 @@ export {
   MAX_HIGH_PRIORITY_FIELDS,
   RESEARCH_FIELD_PRIORITY_WEIGHTS,
 } from "./research-fields.js";
-export { PEACE_BEHAVIOUR } from "./peace-behaviour.js";
+export type { PeaceBehaviourRules, PeaceBehaviourRulesDecoded } from "./peace-behaviour.js";
+export { decodePeaceBehaviourRules, PeaceBehaviourRulesSchema } from "./peace-behaviour.js";
 export type { RouteEdge } from "./route.js";
 export { RouteEdgeSchema } from "./route.js";
 export { validateAgainstSchema } from "./schema-validator.js";

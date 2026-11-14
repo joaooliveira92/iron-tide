@@ -20,6 +20,10 @@
     "./decline-records": {
       "types": "./src/declineRecords.ts",
       "default": "./dist/declineRecords.js"
+    },
+    "./peace-offer": {
+      "types": "./src/peaceOffer.ts",
+      "default": "./dist/peaceOffer.js"
     }
   },
   "dependencies": {
