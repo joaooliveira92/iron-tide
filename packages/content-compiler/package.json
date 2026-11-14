@@ -7,6 +7,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.js"
+    },
+    "./presence-rules": {
+      "types": "./src/presenceRules.ts",
+      "default": "./dist/presenceRules.js"
     }
   },
   "dependencies": {
