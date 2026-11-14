@@ -10,6 +10,7 @@ import type {
   CompiledDesignVersion,
   DeclinedBattleRecord,
   DeclineCounterEntry,
+  PeaceOffer,
   ConstructionMonthUsage,
   ConstructionDelay,
   ConstructionOverrun,
@@ -44,6 +45,7 @@ import type {
 import type { SafeInt } from "@bluewave/contracts";
 import { PhaseEngineError } from "./errors.js";
 import { cloneBudgetModifiers, cloneEventHistory } from "./eventStateClone.js";
+import { WAR_RECORD_FIELDS, cloneDeclineCounters, clonePeaceOffers } from "./warRecordsClone.js";
 
 type AreaData = WorldState["areas"][number];
 type RouteData = WorldState["routes"][number];
@@ -483,13 +485,7 @@ const F = {
     "battleManifests",
     "declinedBattles",
     "declineCounters",
-  ),
-  DeclineCounterEntry: fields<DeclineCounterEntry>()(
-    "key",
-    "nationId",
-    "lastWarId",
-    "count",
-    "decayAnchorMonth",
+    "peaceOffers",
   ),
   CampaignSlot: fields<CampaignSlot>()("nationId", "type"),
   CompiledDesignVersion: fields<CompiledDesignVersion>()(
@@ -600,7 +596,6 @@ const _assert: [
   _Assert<BattleManifest, typeof F.BattleManifest>,
   _Assert<BattleManifestSide, typeof F.BattleManifestSide>,
   _Assert<DeclinedBattleRecord, typeof F.DeclinedBattleRecord>,
-  _Assert<DeclineCounterEntry, typeof F.DeclineCounterEntry>,
   _Assert<WarState, typeof F.WarState>,
   _Assert<CampaignSlot, typeof F.CampaignSlot>,
   _Assert<CompiledDesignVersion, typeof F.CompiledDesignVersion>,
@@ -613,7 +608,6 @@ const _assert: [
   _Assert<CampaignWeatherState, typeof F.CampaignWeatherState>,
   _Assert<CampaignSnapshot, typeof F.CampaignSnapshot>,
 ] = [
-  true,
   true,
   true,
   true,
@@ -868,11 +862,8 @@ export function cloneSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
                     recordClone(r, F.DeclinedBattleRecord),
                   ),
             declineCounters: (entries) =>
-              entries === undefined
-                ? undefined
-                : (entries as DeclineCounterEntry[]).map((e) =>
-                    recordClone(e, F.DeclineCounterEntry),
-                  ),
+              cloneDeclineCounters(entries as DeclineCounterEntry[] | undefined),
+            peaceOffers: (offers) => clonePeaceOffers(offers as PeaceOffer[] | undefined),
           },
           seen,
         ),
@@ -899,7 +890,7 @@ export function cloneSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
 }
 
 export const CLONE_COVERAGE: Readonly<Record<string, readonly string[]>> = (() => {
-  const entries = Object.entries(F).map(
+  const entries = Object.entries({ ...F, ...WAR_RECORD_FIELDS }).map(
     ([k, v]) => [k, Object.freeze([...(v as readonly string[])])] as const,
   );
   return Object.freeze(Object.fromEntries(entries)) as Readonly<Record<string, readonly string[]>>;

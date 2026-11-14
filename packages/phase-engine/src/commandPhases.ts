@@ -46,13 +46,12 @@ import {
   applySubmitDesign,
 } from "./commands.js";
 import {
-  applyAcceptPeace,
-  applyProposePeace,
   applyDeclareBlockade,
   applyDeclareWar,
   applySetNap,
   applySetRelation,
 } from "./diplomacy.js";
+import { handleAcceptPeace, handleProposePeace } from "./peaceCommands.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { applyReviseProject } from "./reviseProject.js";
 import { applyStartRebuild } from "./startRebuild.js";
@@ -183,26 +182,12 @@ function applyDiplomacyCommand(ctx: PhaseContext, body: CommandBody): boolean {
   }
 
   if (body["type"] === "ProposePeace") {
-    ctx.snapshot.current = applyProposePeace(
-      ctx.snapshot.current,
-      body as ProposePeaceCommand,
-      campaignMonth,
-      {
-        nextSeq: () => ctx.nextSeq(),
-        append: (event) => ctx.eventLedger.append(event),
-        reject: (code, message) =>
-          ctx.collector.addError(code, message, { stage: "command-collection" }),
-      },
-    );
+    handleProposePeace(ctx, body as ProposePeaceCommand);
     return true;
   }
 
   if (body["type"] === "AcceptPeace") {
-    ctx.snapshot.current = applyAcceptPeace(
-      ctx.snapshot.current,
-      body as AcceptPeaceCommand,
-      campaignMonth,
-    );
+    handleAcceptPeace(ctx, body as AcceptPeaceCommand);
     return true;
   }
 

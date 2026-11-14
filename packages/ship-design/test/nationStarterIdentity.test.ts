@@ -6,14 +6,11 @@ const OPENING_MONTH = "1880-01";
 const REFERENCE_NATION = "uk";
 
 const PENDING_NATIONAL_IDENTITY: ReadonlySet<string> = new Set([
-  "austria_hungary",
   "brazil",
   "france",
   "germany",
   "italy",
-  "netherlands",
   "ottoman_empire",
-  "portugal",
   "spain",
   "usa",
 ]);

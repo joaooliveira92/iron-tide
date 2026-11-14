@@ -35,7 +35,6 @@ import {
   validateAgainstSchema,
   type ContentSchema,
   decodeBattleOfferRules,
-  decodeTensionDriftRules,
   decodeEventResolutionRules,
   decodeFleetManagementRules,
   decodeGunneryRules,
@@ -43,6 +42,7 @@ import {
   decodePresenceRules,
 } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { validateDiplomacyRules } from "./validateDiplomacyRules.js";
 
 import type { CampaignCollections, CompilerStage } from "../index.js";
 import type { ParseOutput } from "./parse.js";
@@ -273,7 +273,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     validateFleetManagementRules(validated["rulesets"] ?? [], collector);
     validateGunneryRules(validated["rulesets"] ?? [], collector);
     validateMissilesRules(validated["rulesets"] ?? [], collector);
-    validateTensionDriftRules(validated["rulesets"] ?? [], collector);
+    validateDiplomacyRules(validated["rulesets"] ?? [], collector);
     validateMissingReferences(validated, collector);
     validateTechnologyGraph(validated, input, collector);
 
@@ -1340,37 +1340,6 @@ function validateBattleOfferRules(
         stage: "validate",
         entityId: rulesetId,
         remediation: `Author every battleOffers value in ruleset '${rulesetId}', or remove the section to leave it dormant`,
-      },
-    );
-  }
-}
-
-function validateTensionDriftRules(
-  rulesets: readonly unknown[],
-  collector: DiagnosticCollector,
-): void {
-  const carriers = rulesets.filter(
-    (ruleset) => (ruleset as Record<string, unknown>)["tensionDrift"] !== undefined,
-  );
-  if (carriers.length > 1)
-    collector.addError(
-      "TENSION_DRIFT_RULES_AMBIGUOUS",
-      `More than one ruleset carries a tensionDrift section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
-      { stage: "validate" },
-    );
-  for (const ruleset of rulesets) {
-    const record = ruleset as Record<string, unknown>;
-    if (record["tensionDrift"] === undefined) continue;
-    const rulesetId = String(record["id"]);
-    const decoded = decodeTensionDriftRules(record["tensionDrift"]);
-    if (decoded.ok) continue;
-    collector.addError(
-      "TENSION_DRIFT_RULES_INVALID",
-      `Ruleset '${rulesetId}' tensionDrift section is invalid at '${decoded.field}': ${decoded.message}`,
-      {
-        stage: "validate",
-        entityId: rulesetId,
-        remediation: `Author every tensionDrift value in ruleset '${rulesetId}', or remove the section to leave drift dormant`,
       },
     );
   }

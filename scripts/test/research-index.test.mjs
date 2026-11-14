@@ -31,7 +31,7 @@ const indexOf = (notes) => {
   };
 };
 
-test("a well-formed note parses and validates", () => {
+void test("a well-formed note parses and validates", () => {
   const note = parseNote(discussion(10, "alpha", "values", "reference"));
   assert.equal(note.slug, "alpha");
   assert.equal(note.kind, "values");
@@ -39,7 +39,7 @@ test("a well-formed note parses and validates", () => {
   assert.deepEqual(validateNote(note), []);
 });
 
-test("a prose title is rejected", () => {
+void test("a prose title is rejected", () => {
   const note = parseNote(discussion(11, "alpha", "values", "reference", { title: "Alpha notes" }));
   assert.deepEqual(
     validateNote(note).map((p) => p.code),
@@ -47,7 +47,7 @@ test("a prose title is rejected", () => {
   );
 });
 
-test("a missing header, unknown kind, missing TL;DR and missing label are each reported", () => {
+void test("a missing header, unknown kind, missing TL;DR and missing label are each reported", () => {
   const bare = parseNote(discussion(12, "beta", "values", "reference", { body: "no header" }));
   assert.deepEqual(
     validateNote(bare).map((p) => p.code),
@@ -65,7 +65,7 @@ test("a missing header, unknown kind, missing TL;DR and missing label are each r
   );
 });
 
-test("the header must sit within the first lines", () => {
+void test("the header must sit within the first lines", () => {
   const late = parseNote(
     discussion(14, "delta", "values", "reference", {
       body: `${"filler\n".repeat(20)}> **Kind:** values · **Status:** reference · **Refs:** none\n> **TL;DR:** late\n`,
@@ -77,7 +77,7 @@ test("the header must sit within the first lines", () => {
   );
 });
 
-test("duplicate slugs and a missing index are reported", () => {
+void test("duplicate slugs and a missing index are reported", () => {
   const notes = [
     parseNote(discussion(20, "same", "values", "reference")),
     parseNote(discussion(21, "same", "values", "reference")),
@@ -88,7 +88,7 @@ test("duplicate slugs and a missing index are reported", () => {
   );
 });
 
-test("the rendered index groups by kind, links by number and escapes pipes", () => {
+void test("the rendered index groups by kind, links by number and escapes pipes", () => {
   const notes = [
     parseNote(
       discussion(30, "zeta", "engineering", "active", {
@@ -107,7 +107,7 @@ test("the rendered index groups by kind, links by number and escapes pipes", () 
   assert.ok(text.indexOf("Values") < text.indexOf("Engineering"));
 });
 
-test("drift is reported until the index body matches the render", () => {
+void test("drift is reported until the index body matches the render", () => {
   const raw = [discussion(40, "alpha", "values", "reference")];
   const stale = [...raw, discussion(1, INDEX_SLUG, "index", "active")];
   assert.deepEqual(
@@ -118,7 +118,7 @@ test("drift is reported until the index body matches the render", () => {
   assert.deepEqual(indexDrift(fresh.map(parseNote)), []);
 });
 
-test("--check exits non-zero on drift and zero when current", () => {
+void test("--check exits non-zero on drift and zero when current", () => {
   const raw = [discussion(50, "alpha", "values", "reference")];
   const lines = [];
   const stale = main(["--check"], {
@@ -130,7 +130,7 @@ test("--check exits non-zero on drift and zero when current", () => {
   assert.equal(main(["--check"], { fetch: () => [...raw, indexOf(raw)], out: () => {} }), 0);
 });
 
-test("--write updates only the index and is idempotent", () => {
+void test("--write updates only the index and is idempotent", () => {
   const raw = [discussion(60, "alpha", "values", "reference")];
   const writes = [];
   const store = [...raw, discussion(1, INDEX_SLUG, "index", "active")];
@@ -148,7 +148,7 @@ test("--write updates only the index and is idempotent", () => {
   assert.deepEqual(writes, [1]);
 });
 
-test("--write refuses to publish while a note is malformed", () => {
+void test("--write refuses to publish while a note is malformed", () => {
   const store = [
     discussion(70, "alpha", "values", "reference", { title: "prose title" }),
     discussion(1, INDEX_SLUG, "index", "active"),
@@ -165,6 +165,6 @@ test("--write refuses to publish while a note is malformed", () => {
   assert.equal(wrote, false);
 });
 
-test("unknown flags print usage and fail", () => {
+void test("unknown flags print usage and fail", () => {
   assert.equal(main(["--bogus"], { fetch: () => [], out: () => {} }), 1);
 });

@@ -87,6 +87,25 @@ describe("BattleGenerator / generateBattles (AC-12 / INC-5)", () => {
       expect(result.manifests.length).toBeGreaterThan(0);
     });
 
+    it("evaluates a cruiser-sized engagement against the cruiser floor when it is below the fleet floor", () => {
+      const cruiserSized = strengthBySide(60, 80);
+      const result = generateBattles(cruiserSized);
+      expect(result.manifests.map((m) => m.missionType)).toEqual(["CRUISER_BATTLE"]);
+      expect(result.rejections).toEqual(["opp_war_1_area_battle_fleet_battle_1880-02"]);
+    });
+
+    it("rejects a cruiser-sized engagement below the cruiser floor", () => {
+      const result = generateBattles(strengthBySide(60, 40));
+      expect(result.manifests).toEqual([]);
+      expect(result.rejections).toHaveLength(2);
+    });
+
+    it("still limits an area to one battle per month when both floors are cleared", () => {
+      const result = generateBattles(strengthBySide(1_000, 1_000));
+      expect(result.manifests.map((m) => m.missionType)).toEqual(["FLEET_BATTLE"]);
+      expect(result.rejections).toEqual(["opp_war_1_area_battle_cruiser_battle_1880-02"]);
+    });
+
     it("applies a content-supplied floor in place of the defaults", () => {
       const small = strengthBySide(40, 40);
       expect(generateBattles(small).manifests).toEqual([]);

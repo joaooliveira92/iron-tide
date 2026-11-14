@@ -198,11 +198,11 @@ function designLoadout(design: Design): { platform: string; entries: LoadoutEntr
 }
 
 describe("fittings and sensors through the read path (ship-part-model 05)", () => {
-  it("covers the 622 non-gun, non-tube placements; with 267 guns and 35 tubes that is all 924", () => {
+  it("covers the 622 non-gun, non-tube placements; with 267 guns and 37 tubes that is all 926", () => {
     const all = designs.flatMap((d) => d.draft.placements);
-    expect(all.length).toBe(924);
+    expect(all.length).toBe(926);
     expect(fittingRows.length).toBe(622);
-    expect(gunPlacements.length + 35 + fittingRows.length).toBe(924);
+    expect(gunPlacements.length + 37 + fittingRows.length).toBe(926);
     expect(fittingModel.unread).toEqual([]);
   });
 
@@ -689,7 +689,7 @@ describe("gun and launcher crew, volume and footprint (ship-part-model 05 over 0
         .filter((p) => categoryOf(p.componentId) === "TORPEDO_TUBE")
         .map((placement) => ({ design, placement })),
     );
-    expect(tubeRows.length).toBe(35);
+    expect(tubeRows.length).toBe(37);
     for (const { design, placement } of tubeRows) {
       const profile = present(
         navalProfiles.find((p) => p.nationId === design.draft.nationId),

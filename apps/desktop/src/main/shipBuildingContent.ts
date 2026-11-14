@@ -6,6 +6,7 @@ import {
   fleetManagementFromRulesets,
   gunneryFromRulesets,
   missilesFromRulesets,
+  peaceBehaviourFromRulesets,
   tensionDriftFromRulesets,
 } from "@bluewave/content-compiler";
 import { shipBuildingDataFromBundle } from "@bluewave/campaign";
@@ -116,6 +117,26 @@ export function loadTensionDriftRules(): TensionDriftRules | undefined {
     );
   tensionDrift = { rules: decoded?.value };
   return tensionDrift.rules;
+}
+
+type PeaceBehaviourRules = Extract<
+  NonNullable<ReturnType<typeof peaceBehaviourFromRulesets>>,
+  { readonly ok: true }
+>["value"];
+
+let peaceBehaviour: { readonly rules: PeaceBehaviourRules | undefined } | null = null;
+
+export function loadPeaceBehaviourRules(): PeaceBehaviourRules | undefined {
+  if (peaceBehaviour !== null) return peaceBehaviour.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const decoded = peaceBehaviourFromRulesets(bundle.rulesets);
+  if (decoded !== undefined && !decoded.ok)
+    throw new ContentArtifactError(
+      "CONTENT_ARTIFACT_INVALID",
+      `ruleset peaceBehaviour section is invalid at '${decoded.field}': ${decoded.message}`,
+    );
+  peaceBehaviour = { rules: decoded?.value };
+  return peaceBehaviour.rules;
 }
 
 let eventContent: { readonly content: EventEngineContent | undefined } | null = null;

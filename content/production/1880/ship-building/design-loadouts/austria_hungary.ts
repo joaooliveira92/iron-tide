@@ -191,7 +191,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 900000,
+        fuelCapacityKg: 810000,
         fuelStationPermille: 480,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -309,7 +309,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 2600,
+            installedKw: 2650,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -341,7 +341,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 700000,
+        fuelCapacityKg: 630000,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -386,14 +386,14 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
                 params: {
                   rounds: 100,
                 },
-                part: "standard_gun_rml_10in_18ton",
+                part: "standard_gun_bl_209mm_gl20",
               },
             ],
           },
           id: "main_fwd",
           magazineEntry: "mag_fwd",
           mountCount: 1,
-          part: "gun_rml_10in_18ton_barbette",
+          part: "gun_bl_209mm_gl20_casemate",
           slot: "forecastle.gun_mount",
           stationPermille: 40,
         },
@@ -405,14 +405,14 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
                 params: {
                   rounds: 100,
                 },
-                part: "standard_gun_rml_10in_18ton",
+                part: "standard_gun_bl_209mm_gl20",
               },
             ],
           },
           id: "main_aft",
           magazineEntry: "mag_aft",
           mountCount: 1,
-          part: "gun_rml_10in_18ton_barbette",
+          part: "gun_bl_209mm_gl20_casemate",
           slot: "quarterdeck.gun_mount",
           stationPermille: 940,
         },
@@ -576,7 +576,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 780000,
+        fuelCapacityKg: 702000,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -661,6 +661,22 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
           stationPermille: 560,
         },
         {
+          id: "tubes_p",
+          mountCount: 1,
+          part: "ah_tube_350_aw",
+          side: "PORT",
+          slot: "superstructure.torpedo_launcher",
+          stationPermille: 560,
+        },
+        {
+          id: "tubes_s",
+          mountCount: 1,
+          part: "ah_tube_350_aw",
+          side: "STBD",
+          slot: "superstructure.torpedo_launcher",
+          stationPermille: 560,
+        },
+        {
           id: "dyn",
           mountCount: 1,
           part: "dynamo_small",
@@ -737,7 +753,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 250000,
+        fuelCapacityKg: 225000,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -867,7 +883,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 3500,
+            installedKw: 3600,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -899,7 +915,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 130000,
+        fuelCapacityKg: 117000,
         fuelStationPermille: 510,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -1017,7 +1033,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 700,
+            installedKw: 720,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
