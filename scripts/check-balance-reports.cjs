@@ -41,7 +41,15 @@ if (run.status !== 0) {
 
 const peaceRun = spawnSync(
   "pnpm",
-  ["--filter", "@bluewave/ai", "exec", "vp", "test", "run", "test/peaceBehaviour.test.ts"],
+  [
+    "--filter",
+    "@bluewave/cross-process-test",
+    "exec",
+    "vp",
+    "test",
+    "run",
+    "test/peace-behaviour-balance.test.ts",
+  ],
   {
     stdio: "inherit",
     shell: process.platform === "win32",
