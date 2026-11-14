@@ -34,6 +34,27 @@ const submitOrder = async (page: Page, label: string) => {
   await expect(page.getByRole("alert").filter({ hasText: "Command queued" })).toBeVisible();
 };
 
+const advanceDelegatingBattles = async (page: Page) => {
+  const calendar = page.getByText(/^Bluewave — [A-Za-z]+ \d{4}$/).first();
+  const before = await calendar.textContent();
+  await page.getByRole("button", { name: /^advance month$/i }).click();
+  await page.getByRole("button", { name: /^advance to /i }).click();
+  const interruption = page.getByRole("alertdialog");
+  const battleOffer = page.getByTestId("offer-dialog");
+  for (let answered = 0; answered < 8; answered++) {
+    await expect
+      .poll(
+        async () => (await interruption.isVisible()) || (await calendar.textContent()) !== before,
+      )
+      .toBe(true);
+    if (!(await interruption.isVisible())) return;
+    if (await battleOffer.isVisible()) await battleOffer.getByTestId("offer-delegate").click();
+    else await interruption.getByRole("button", { name: "Choose" }).first().click();
+    await interruption.waitFor({ state: "hidden" });
+  }
+  await expect(calendar).not.toHaveText(before!);
+};
+
 test("a beaten AI nation proposes peace and the player accepts the offer", async ({
   e2e,
   campaignTemplate,
@@ -70,15 +91,16 @@ test("a beaten AI nation proposes peace and the player accepts the offer", async
   for (let month = 0; month < 12; month++) {
     await navigateTo(page, "Diplomacy & War");
     if (await offer.isVisible()) break;
-    await advanceMonths(page, 1);
+    await advanceDelegatingBattles(page);
   }
 
   await test.step("reachable:accept-peace", async () => {
     await expect(offer).toBeVisible();
-    await expect(offer).toContainText("German Empire proposes peace");
+    await expect(offer).toHaveAccessibleName(/^Peace offer from German Empire\b/);
+    await expect(offer).toContainText("proposes peace");
     await page.getByTestId("accept-peace-offer").click();
     await submitOrder(page, "Submit command");
-    await advanceMonths(page, 1);
+    await advanceDelegatingBattles(page);
     await navigateTo(page, "Diplomacy & War");
     await expect(war).toContainText("Ended");
     await expect(offer).toHaveCount(0);
