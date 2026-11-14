@@ -13,9 +13,9 @@ import {
   Ship,
   Terminal,
 } from "lucide-react";
-import { Suspense } from "react";
+import { memo, Suspense } from "react";
 import { translate } from "../lib/strings.js";
-import { useCampaignShellContext } from "./CampaignShellContext.js";
+import { useCampaignShellState } from "./CampaignShellContext.js";
 import { CAMPAIGN_SCREEN_ROUTES } from "./campaign-screen-routes.js";
 import type { CampaignScreen, CampaignScreenDefinition, Screen } from "./campaign-screen-types.js";
 import { DEBUG_MODE } from "./debug-flag.js";
@@ -166,13 +166,23 @@ export interface CampaignScreenOutletProps {
 }
 
 export function CampaignScreenOutlet({ screen }: CampaignScreenOutletProps) {
-  const { state } = useCampaignShellContext();
-  if (state.mode.kind !== "campaign") return null;
+  const { mode } = useCampaignShellState();
+  if (mode.kind !== "campaign") return null;
+  return <RoutedScreen screen={screen} sessionId={mode.campaign.sessionId} />;
+}
+
+const RoutedScreen = memo(function RoutedScreen({
+  screen,
+  sessionId,
+}: {
+  readonly screen: Screen;
+  readonly sessionId: string;
+}) {
   const Route = ROUTE_COMPONENTS.get(screen as CampaignScreen);
   if (Route === undefined) return null;
   return (
     <Suspense fallback={<div className="text-sm text-muted-foreground">Loading screen…</div>}>
-      <Route sessionId={state.mode.campaign.sessionId} />
+      <Route sessionId={sessionId} />
     </Suspense>
   );
-}
+});

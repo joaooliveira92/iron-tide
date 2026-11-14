@@ -1,7 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, memo, Suspense, useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../components/ui/sheet.js";
 import { useWorldMapController } from "../components/world-map/useWorldMapController.js";
-import { useCampaignShellContext } from "./CampaignShellContext.js";
+import { useCampaignShellState } from "./CampaignShellContext.js";
 
 const WorldMapChart = lazy(() =>
   import("../components/world-map/WorldMapChart.js").then((module) => ({
@@ -10,9 +10,16 @@ const WorldMapChart = lazy(() =>
 );
 
 export function MapSheet() {
+  const { mode } = useCampaignShellState();
+  return <MapSheetBody sessionId={mode.kind === "campaign" ? mode.campaign.sessionId : null} />;
+}
+
+const MapSheetBody = memo(function MapSheetBody({
+  sessionId,
+}: {
+  readonly sessionId: string | null;
+}) {
   const [open, setOpen] = useState(false);
-  const { state: shell } = useCampaignShellContext();
-  const sessionId = shell.mode.kind === "campaign" ? shell.mode.campaign.sessionId : null;
   const map = useWorldMapController(sessionId);
 
   useEffect(() => {
@@ -48,4 +55,4 @@ export function MapSheet() {
       </SheetContent>
     </Sheet>
   );
-}
+});
