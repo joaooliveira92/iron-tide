@@ -80,8 +80,12 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
   const selected =
     input.summaries.find((entry) => entry.turnId === selectedTurnId) ?? input.summaries[0] ?? null;
 
+  const entityLabel = input.entityLabel ?? NO_ENTITY_LABELS;
   const messages = useMemo(() => selected?.messages ?? EMPTY_MESSAGES, [selected]);
-  const visible = useMemo(() => filterTurnMessages(messages, filters), [messages, filters]);
+  const visible = useMemo(
+    () => filterTurnMessages(messages, filters, entityLabel),
+    [messages, filters, entityLabel],
+  );
   const groups = useMemo(() => groupTurnMessages(visible), [visible]);
   const actionableCount = useMemo(() => messages.filter(isActionable).length, [messages]);
   const pinnedIds = useMemo(
@@ -128,7 +132,7 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
       isEmpty: !input.loading && input.summaries.length === 0,
       noMatch: !input.loading && messages.length > 0 && visible.length === 0,
       isEntityAvailable: input.isEntityAvailable ?? ALWAYS_AVAILABLE,
-      entityLabel: input.entityLabel ?? NO_ENTITY_LABELS,
+      entityLabel,
       assignableNationId: input.assignableNationId,
     }),
     [
@@ -142,7 +146,7 @@ export function useTurnSummaryWorkspace(input: TurnSummaryInput): TurnSummaryWor
       input.summaries,
       input.loading,
       input.isEntityAvailable,
-      input.entityLabel,
+      entityLabel,
       input.assignableNationId,
     ],
   );

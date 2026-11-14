@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { TurnMessageDto, TurnSummaryEntry } from "../../../shared/turn-message-contract.js";
 import { authoredCatalogue } from "../../../shared/authoredCatalogue.testing.js";
+import { nationDisplayName } from "../../content/presentationContent.js";
 import { setUiCatalogue } from "../../content/uiCatalogue.js";
 import { TurnSummaryPanel } from "./TurnSummaryPanel.js";
 import { createEntityLabeler } from "./turn-summary/entity-labels.js";
@@ -204,7 +205,7 @@ describe("TurnSummaryPanel", () => {
     );
     expect(screen.getByTestId("turn-message-group").getAttribute("data-category")).toBe("FINANCE");
     expect(screen.getByTestId("severity-badge").textContent).toBe("Critical");
-    expect(screen.getByText("uk changed by 5.")).toBeTruthy();
+    expect(screen.getByText(`${nationDisplayName("uk")} changed by 5.`)).toBeTruthy();
     expect(screen.getByTestId("entity-link").textContent).toBe("United Kingdom");
     expect(screen.getByText("Finance (1)")).toBeTruthy();
   });
