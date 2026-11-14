@@ -254,6 +254,14 @@ describe("AI peace proposals", () => {
     };
     expect(run()).toBe(run());
   });
+
+  it("pins the offer month across platforms", () => {
+    const result = month(snapshot(30, 0));
+    expect(offersOf(result.next)).toHaveLength(1);
+    expect(sha256Hex(canonicalSerialize([result.next, result.draws]))).toBe(
+      "4d24a9db33d266d95f28bae8c08ca747994ce8232635f608d3acae051c2547e9",
+    );
+  });
 });
 
 describe("accepting an AI peace offer", () => {
