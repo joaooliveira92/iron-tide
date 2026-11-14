@@ -40,7 +40,7 @@ const PLAYABLE = [
 const GOLDEN_SEEDS = ["uk", "austria_hungary", "russia", "spain", "qing"] as const;
 const GOLDEN_DIGESTS: Readonly<Record<(typeof GOLDEN_SEEDS)[number], string>> = {
   uk: "7aedb39c73a2b683141c244eaecb8e747103e960fd31d69ec4734e97ff782650",
-  austria_hungary: "dc70a8aeb4dafd2557746396a93c56a3ae8e6bb198bb17bc2c25dcf84f4f7c48",
+  austria_hungary: "60c6cf52100fc594a44dc44600d49075df4ff18a09aa4dd0ede6c7e4afda23a6",
   russia: "50c4ee129a0a58756a5917c9fa089c1c209ff7f7f79f419114a9fbcdaefea199",
   spain: "9eb18904f648f56eb20eeed100a1e11a259f8a71e0c05420330fd210888df1ea",
   qing: "4025a87d379e86a8e61d3be54aba52c2595c22122adccad48e3d9926570d9a85",
