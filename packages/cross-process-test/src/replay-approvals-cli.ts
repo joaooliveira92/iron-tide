@@ -3,7 +3,14 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { approvalsCommand, type ApprovalsIo, type CorpusState } from "./replay-corpus/index.js";
+import { readChainInput } from "./replay-approvals-chain-git.js";
+import {
+  approvalsCommand,
+  checkApprovalChain,
+  formatChainFailures,
+  type ApprovalsIo,
+  type CorpusState,
+} from "./replay-corpus/index.js";
 
 const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "..");
 const REPLAYS = "golden/replays";
@@ -46,6 +53,35 @@ function readHead(): CorpusState {
   return existsSync(file) ? { replays, approvals: readFileSync(file, "utf8") } : { replays };
 }
 
+function optionOf(argv: readonly string[], name: string): string | undefined {
+  const index = argv.indexOf(name);
+  const value = index >= 0 ? argv[index + 1] : undefined;
+  return value === undefined || value.startsWith("--") ? undefined : value;
+}
+
+function checkChain(argv: readonly string[]): number {
+  const main = optionOf(argv, "--main") ?? process.env["REPLAY_APPROVALS_BASE"];
+  const head = optionOf(argv, "--head");
+  if (main === undefined || head === undefined) {
+    process.stdout.write(
+      "usage: replay-approvals check-chain --main <ref> --head <ref> [--tree <ref>] [--repo <dir>]\n",
+    );
+    return 2;
+  }
+  const tree = optionOf(argv, "--tree") ?? "HEAD";
+  const input = readChainInput(optionOf(argv, "--repo") ?? ROOT, { main, head, tree });
+  process.stdout.write(
+    `approval chain: ${main} to ${head} (${String(input.steps.length - 1)} first-parent hops, tree ${tree})\n`,
+  );
+  const outcome = checkApprovalChain(input);
+  if (outcome.ok) {
+    process.stdout.write("replay approvals: every promotion hop is fully approved\n");
+    return 0;
+  }
+  process.stdout.write(formatChainFailures(outcome.failures));
+  return 1;
+}
+
 const argv = process.argv.slice(2);
 const gateBase = process.env["REPLAY_APPROVALS_BASE"] ?? "origin/dev";
 const base = baseOf(argv, gateBase);
@@ -59,7 +95,8 @@ const io: ApprovalsIo = {
 };
 
 try {
-  process.exitCode = approvalsCommand(argv, process.env, io);
+  process.exitCode =
+    argv[0] === "check-chain" ? checkChain(argv) : approvalsCommand(argv, process.env, io);
 } catch (error) {
   process.stderr.write(
     `replay-approvals: ${error instanceof Error ? error.message : String(error)}\n`,

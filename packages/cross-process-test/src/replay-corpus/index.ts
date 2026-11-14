@@ -37,6 +37,8 @@ export type {
   CorpusState,
   ProposalInput,
 } from "./approvals.js";
+export { checkApprovalChain, formatChainFailures } from "./approvals-chain.js";
+export type { ChainCheck, ChainFailure, ChainInput, ChainStep } from "./approvals-chain.js";
 export { approvalsCommand } from "./approvals-command.js";
 export type { ApprovalsIo } from "./approvals-command.js";
 export {
