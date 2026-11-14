@@ -83,7 +83,7 @@ export function approvalsCommand(
     return 0;
   }
   io.print(
-    "usage:\n  replay-approvals check [--base <ref>]\n  replay-approvals propose --cause <text> --migration <text> --class <class> [--base <ref>]\n",
+    "usage:\n  replay-approvals check [--base <ref>]\n  replay-approvals check-chain --main <ref> --head <ref> [--tree <ref>] [--repo <dir>]\n  replay-approvals propose --cause <text> --migration <text> --class <class> [--base <ref>]\n",
   );
   return 2;
 }

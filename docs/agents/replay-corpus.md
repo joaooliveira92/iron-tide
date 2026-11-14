@@ -11,15 +11,16 @@ replay and month. After `pnpm replay:record <id>`, run `pnpm replay:approve --ca
 "<assessment>" --class <class>` to propose entries from the diff against `origin/dev` (`--base <ref>`);
 the class is `EXPECTED_GAMEPLAY_CHANGE`, `SERIALIZATION_ONLY` or `RULESET_VERSION_CHANGE`.
 `pnpm check:replay-approvals` fails an unapproved, mismatched, orphaned, reused, rewritten or misclassed
-entry. CI only verifies; entries are append-only relative to the gate base.
+entry. CI only verifies; entries are append-only relative to the gate base. A `dev` to `main` PR runs
+`check-chain --main <ref> --head <ref>`: per first-parent hop.
 
 ## Verifying and extending
 
-`pnpm check:replay-corpus` (in `pnpm check`; three OSes in `determinism.yml`) verifies replays twice and via save/load, printing divergence.
+`pnpm check:replay-corpus` (in `pnpm check`; three OSes in `determinism.yml`) verifies replays twice and via save/load.
 
 New scenarios go in `scenarios.ts` with a one-line `purpose`; a new replay file needs no approval. `pnpm replay:coverage` lists the subsystems each replay exercises, and those none do.
 
-Fuzz cases (`FUZZ_CASES`, pinned in `golden/replay-fuzz.json`) run on three OSes. A failure prints its seed; reproduce with `pnpm replay:fuzz run <seed> <months>`. Only `pnpm replay:fuzz record` (local, refused under CI) rewrites the pin; approvals do not cover it. Each fuzzed month also passes `invariants.ts`. Generated plans: ADR-0280.
+Fuzz cases (`FUZZ_CASES`, pinned in `golden/replay-fuzz.json`) run on three OSes; reproduce a failure with `pnpm replay:fuzz run <seed> <months>`. Only `pnpm replay:fuzz record` (local, refused under CI) rewrites the pin; approvals do not cover it. Generated plans: ADR-0280.
 
 ## Retiring a legacy probe
 
