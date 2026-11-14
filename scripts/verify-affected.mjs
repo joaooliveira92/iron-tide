@@ -165,7 +165,9 @@ export function unitCommands(unit) {
     ];
   }
   if (unit.kind === "content") return [{ label: "content:check", argv: ["pnpm", "content:check"] }];
-  if (unit.kind === "golden") return [{ label: "check:golden", argv: ["pnpm", "check:golden"] }];
+  if (unit.kind === "golden") {
+    return [{ label: "check:replay-corpus", argv: ["pnpm", "check:replay-corpus"] }];
+  }
   const order = ["build", "typecheck", "test", "lint"];
   return order
     .filter((script) => typeof unit.scripts[script] === "string")

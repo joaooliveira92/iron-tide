@@ -90,8 +90,6 @@ jobs:
           --main ${{ github.event.pull_request.base.sha }}
           --head ${{ github.event.pull_request.head.sha }}
           --tree HEAD
-      - name: Legacy probe retirement register
-        run: pnpm check:probe-retirement
       # --no-cache: the typecheck step's build populates the Vite Task cache
       # first, and a replayed desktop build then reads a stale phase-engine
       # `dist`. Build from source here so the gate is not at the mercy of cache
