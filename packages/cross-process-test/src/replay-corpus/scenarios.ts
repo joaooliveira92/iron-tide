@@ -211,4 +211,38 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
       },
     ],
   },
+  {
+    id: "production-1880-4m-malta-war-engine-digests",
+    seed: "replay-corpus-malta-war",
+    months: 4,
+    playerNationId: "austria_hungary",
+    setup: "armed-malta-war",
+    engineDigests: true,
+    purpose:
+      "Austria-Hungary at war with Britain at Malta: battle generation against a different enemy and sea area, with the command ledger digest and the replay verifier output pinned.",
+    commands: [
+      {
+        month: 1,
+        body: { type: "DeclareWar", nationId: "austria_hungary", targetNationId: "uk" },
+      },
+      {
+        month: 1,
+        body: {
+          type: "MoveFleet",
+          nationId: "austria_hungary",
+          fleetId: "fleet_aut_adriatic",
+          toAreaId: "sea_mediterranean_c",
+        },
+      },
+      {
+        month: 2,
+        body: {
+          type: "MoveFleet",
+          nationId: "austria_hungary",
+          fleetId: "fleet_aut_adriatic",
+          toAreaId: "med_malta",
+        },
+      },
+    ],
+  },
 ];

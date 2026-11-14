@@ -14,8 +14,13 @@ import { loadResult, SaveStore, restampState } from "@bluewave/persistence";
 import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 import { Result } from "effect";
 
-import { compileProductionCampaign } from "../production-pack.js";
+import {
+  PRODUCTION_PACK_DIR,
+  compileProductionCampaign,
+  type ContentInputPerturbation,
+} from "../production-pack.js";
 import { LEDGER_ORDER, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
+import { commandLedgerDigest, replayVerificationHash } from "./engine-digests.js";
 import {
   REPLAY_FORMAT_VERSION,
   ReplayFileError,
@@ -38,12 +43,20 @@ export interface ReplayScenario {
   readonly commands?: readonly ScenarioCommand[];
   readonly playerNationId?: string;
   readonly setup?: ReplaySetupId;
+  readonly engineDigests?: boolean;
 }
 
 export interface ReplayDivergence {
   readonly month: number;
   readonly turnNumber: number;
-  readonly where: "content" | "initial" | "snapshot" | "roundtrip" | LedgerName;
+  readonly where:
+    | "content"
+    | "initial"
+    | "snapshot"
+    | "commandDigest"
+    | "verifier"
+    | "roundtrip"
+    | LedgerName;
   readonly entryIndex?: number;
   readonly expected: string;
   readonly actual: string;
@@ -96,11 +109,12 @@ export function productionStartSnapshot(): CampaignSnapshot {
 
 const ARMED_FIREPOWER = SafeInt(400);
 const COMMISSIONED_SHIP = "aut_tegetthoff";
-const ARMED_NATIONS: readonly string[] = ["austria_hungary", "italy"];
+const ADRIATIC_NATIONS: readonly string[] = ["austria_hungary", "italy"];
+const MALTA_NATIONS: readonly string[] = ["austria_hungary", "uk"];
 
-function armedAdriaticWar(snapshot: CampaignSnapshot): CampaignSnapshot {
+function armedWar(armedNations: readonly string[], snapshot: CampaignSnapshot): CampaignSnapshot {
   const nations = new Map(snapshot.nations);
-  for (const nationId of ARMED_NATIONS) {
+  for (const nationId of armedNations) {
     const nation = nations.get(nationId);
     if (nation === undefined) continue;
     nations.set(nationId, {
@@ -119,7 +133,8 @@ function armedAdriaticWar(snapshot: CampaignSnapshot): CampaignSnapshot {
 }
 
 const SETUPS: Readonly<Record<ReplaySetupId, (snapshot: CampaignSnapshot) => CampaignSnapshot>> = {
-  "armed-adriatic-war": armedAdriaticWar,
+  "armed-adriatic-war": (snapshot) => armedWar(ADRIATIC_NATIONS, snapshot),
+  "armed-malta-war": (snapshot) => armedWar(MALTA_NATIONS, snapshot),
   "certain-construction-events": (snapshot) => snapshot,
 };
 
@@ -156,6 +171,7 @@ export interface ExecutorPerturbation {
   readonly seed?: (seed: string) => string;
   readonly commands?: (snapshot: CampaignSnapshot) => CommandEnvelope<CommandBody>[];
   readonly afterExecute?: (result: MonthResult) => void;
+  readonly closing?: (snapshot: CampaignSnapshot) => CampaignSnapshot;
 }
 
 export interface RoundTripOptions {
@@ -165,6 +181,8 @@ export interface RoundTripOptions {
 export interface VerifyOptions {
   readonly perturb?: ExecutorPerturbation;
   readonly roundTrip?: RoundTripOptions;
+  readonly contentInput?: ContentInputPerturbation;
+  readonly initial?: (snapshot: CampaignSnapshot) => CampaignSnapshot;
 }
 
 export type RoundTrip =
@@ -231,7 +249,7 @@ export function advance(
   playerNationId?: string,
   setup?: ReplaySetupId,
 ) {
-  const result = new MonthExecutor().execute(
+  const executed = new MonthExecutor().execute(
     perturb?.snapshot?.(snapshot) ?? snapshot,
     perturb?.commands?.(snapshot) ?? [],
     perturb?.seed?.(monthSeed(seed, snapshot)) ?? monthSeed(seed, snapshot),
@@ -239,7 +257,11 @@ export function advance(
     undefined,
     fleetManagementOptions(playerNationId, setup),
   );
-  perturb?.afterExecute?.(result);
+  perturb?.afterExecute?.(executed);
+  const result =
+    perturb?.closing === undefined
+      ? executed
+      : { ...executed, finalSnapshot: perturb.closing(executed.finalSnapshot) };
   if (result.outcome === "suspended") {
     throw new Error(
       `Month ${String(snapshot.turnNumber)} suspended for an interruption; replay format v${String(REPLAY_FORMAT_VERSION)} cannot record it`,
@@ -258,6 +280,7 @@ export interface ExecutedMonth {
   readonly turnNumber: number;
   readonly result: MonthResult;
   readonly commands: readonly ReplayCommandEnvelope[];
+  readonly startSnapshot: CampaignSnapshot;
 }
 
 export function scenarioEnvelopes(
@@ -292,7 +315,12 @@ export function* executeScenario(scenario: ReplayScenario): Generator<ExecutedMo
       scenario.playerNationId,
       scenario.setup,
     );
-    yield { turnNumber: Number(snapshot.turnNumber), result: step.result, commands };
+    yield {
+      turnNumber: Number(snapshot.turnNumber),
+      result: step.result,
+      commands,
+      startSnapshot: snapshot,
+    };
     snapshot = step.next;
   }
 }
@@ -301,7 +329,27 @@ export function recordReplay(scenario: ReplayScenario): string {
   const { state, contentHash } = production();
   const months: ReplayFile["months"][number][] = [];
   for (const executed of executeScenario(scenario)) {
-    months.push(monthCheckpoint(executed.turnNumber, executed.result, executed.commands));
+    const checkpoint = monthCheckpoint(executed.turnNumber, executed.result, executed.commands);
+    const isLast = months.length === scenario.months - 1;
+    months.push(
+      scenario.engineDigests === true
+        ? {
+            ...checkpoint,
+            commandLedgerDigest: commandLedgerDigest(executed.result),
+            ...(isLast || executed.commands.length > 0
+              ? {
+                  replayVerificationHash: replayVerificationHash({
+                    snapshot: executed.startSnapshot,
+                    commands: executed.commands,
+                    result: executed.result,
+                    seed: monthSeed(scenario.seed, executed.startSnapshot),
+                    engineOptions: fleetManagementOptions(scenario.playerNationId, scenario.setup),
+                  }),
+                }
+              : {}),
+          }
+        : checkpoint,
+    );
   }
   const file: ReplayFile = {
     formatVersion: REPLAY_FORMAT_VERSION,
@@ -349,7 +397,10 @@ export function verifyReplay(
   const decoded = decodeReplayFile(text);
   if (Result.isFailure(decoded)) return Result.fail(decoded.failure);
   const file = decoded.success;
-  const { contentHash } = production();
+  const { contentHash } =
+    options.contentInput === undefined
+      ? production()
+      : compileProductionCampaign(PRODUCTION_PACK_DIR, options.contentInput);
   const fail = (divergence: ReplayDivergence) =>
     Result.succeed<VerifyOutcome>({ ok: false, divergence });
 
@@ -362,7 +413,8 @@ export function verifyReplay(
       actual: contentHash,
     });
   }
-  let snapshot = startSnapshot(file.initial.setup);
+  let snapshot =
+    options.initial?.(startSnapshot(file.initial.setup)) ?? startSnapshot(file.initial.setup);
   const initialHash = unifiedSnapshotHash(snapshot);
   if (initialHash !== file.initial.snapshotHash) {
     return fail({
@@ -413,6 +465,39 @@ export function verifyReplay(
         expected: recorded.snapshotHash,
         actual: actual.snapshotHash,
       });
+    }
+    if (recorded.commandLedgerDigest !== undefined) {
+      const digest = commandLedgerDigest(step.result);
+      if (digest !== recorded.commandLedgerDigest) {
+        return fail({
+          month,
+          turnNumber: actual.turnNumber,
+          where: "commandDigest",
+          expected: recorded.commandLedgerDigest,
+          actual: digest,
+        });
+      }
+    }
+    if (recorded.replayVerificationHash !== undefined) {
+      const verification = replayVerificationHash({
+        snapshot: perturb?.snapshot?.(snapshot) ?? snapshot,
+        commands: recorded.commands,
+        result: step.result,
+        seed: perturb?.seed?.(monthSeed(file.seed, snapshot)) ?? monthSeed(file.seed, snapshot),
+        engineOptions: fleetManagementOptions(
+          playerNationOf(file.engineOptions),
+          file.initial.setup,
+        ),
+      });
+      if (verification !== recorded.replayVerificationHash) {
+        return fail({
+          month,
+          turnNumber: actual.turnNumber,
+          where: "verifier",
+          expected: recorded.replayVerificationHash,
+          actual: verification,
+        });
+      }
     }
     snapshot = step.next;
     if (options.roundTrip !== undefined && month < file.months.length) {
