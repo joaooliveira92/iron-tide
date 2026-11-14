@@ -19,9 +19,9 @@ const mean = (total: number): string => (total / SEED_COUNT).toFixed(2);
 function buildReport(runs: readonly EventRun[]): string {
   const first = runs[0]!;
   const nations = first.nationIds;
-  const decades = [
-    ...new Set(runs.flatMap((run) => run.fired.map((f) => decadeOf(f.month)))),
-  ].sort();
+  const decades = [...new Set(runs.flatMap((run) => run.fired.map((f) => decadeOf(f.month))))].sort(
+    (a, b) => a - b,
+  );
   const cell = new Map<string, number>();
   const perEvent = new Map<string, { total: number; ai: number; fallback: number }>();
   for (const run of runs) {
