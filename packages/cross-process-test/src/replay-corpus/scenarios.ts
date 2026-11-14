@@ -219,7 +219,7 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
     setup: "armed-malta-war",
     engineDigests: true,
     purpose:
-      "Austria-Hungary at war with Britain at Malta: battle generation against a different enemy and sea area, with the command ledger digest and the replay verifier output pinned.",
+      "Austria-Hungary at war with Britain at Malta: battle generation against another enemy and area, with the command digest and verifier output pinned.",
     commands: [
       {
         month: 1,
