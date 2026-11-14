@@ -1,6 +1,8 @@
 import type { WorkshopView } from "@bluewave/ship-design";
 
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
+import { diffAspects } from "./designFeedbackAspects.js";
+import { diffFindings } from "./designFeedbackFindings.js";
 import type { DesignFeedback } from "./designFeedbackTypes.js";
 
 export type {
@@ -14,11 +16,11 @@ export type {
 export function diffViews(
   before: WorkshopView,
   after: WorkshopView,
-  _format: PresentationFormat,
+  format: PresentationFormat,
 ): DesignFeedback {
   return {
-    aspects: [],
-    findings: [],
+    aspects: diffAspects(before, after, format),
+    findings: diffFindings(before, after),
     hashBefore: before.compiled.hash,
     hashAfter: after.compiled.hash,
   };
