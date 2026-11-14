@@ -118,7 +118,7 @@ describe("useDisplayPreferences campaign scope (U-2 ticket 05)", () => {
 
   it("keeps a toggle made before the initial campaign read resolves", async () => {
     const stub = createPreferencesBridgeStub();
-    const realRead = stub.bridge.preferences.readCampaign;
+    const realRead = stub.bridge.preferences.readCampaign.bind(stub.bridge.preferences);
     let release: () => void = () => {};
     const gate = new Promise<void>((resolve) => {
       release = resolve;
