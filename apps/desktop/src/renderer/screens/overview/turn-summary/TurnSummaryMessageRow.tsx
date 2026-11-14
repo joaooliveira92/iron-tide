@@ -18,6 +18,7 @@ import {
 } from "../components/summary/index.js";
 import { severityLabelKey } from "../turn-summary-format.js";
 import { TurnSummaryHistoricalRecord } from "./TurnSummaryHistoricalRecord.js";
+import { effectTargetLabel, resolveInterpolation } from "./entity-labels.js";
 import { useTurnSummaryActions, useTurnSummaryMeta } from "./TurnSummaryContext.js";
 
 const SEVERITY_CLASS: Readonly<Record<string, string>> = {
@@ -40,6 +41,7 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
   const format = usePresentationFormat();
   const { openEntity, togglePinned, toggleRead, assignToFleet } = useTurnSummaryActions();
   const { isEntityAvailable, assignableNationId, entityLabel } = useTurnSummaryMeta();
+  const interpolation = resolveInterpolation(message, entityLabel);
   const chips = message.subjectRefs.flatMap((ref) => {
     const label = entityLabel(ref);
     return label === null ? [] : [{ ref, label }];
@@ -79,11 +81,11 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
         </span>
         <div className="min-w-0 flex-1">
           <p className={`font-medium ${read ? "text-muted-foreground" : ""}`}>
-            {resolveMessage(message.titleKey, message.interpolation)}
+            {resolveMessage(message.titleKey, interpolation)}
           </p>
           <p className="text-muted-foreground">
-            {constructionMessageBody(message.bodyKey, message.interpolation, format) ??
-              resolveMessage(message.bodyKey, message.interpolation)}
+            {constructionMessageBody(message.bodyKey, interpolation, format) ??
+              resolveMessage(message.bodyKey, interpolation)}
           </p>
           {assignToFleet !== undefined && deliveredShipId !== undefined && (
             <button
@@ -117,7 +119,7 @@ export const TurnSummaryMessageRow = memo(function TurnSummaryMessageRow({
             <div data-testid="message-detail" className="mt-1 space-y-1">
               {message.effectRefs.map((effect, index) => (
                 <p key={index} className="text-xs text-muted-foreground">
-                  {entityLabel(effect.target)} {effect.attribute}:{" "}
+                  {effectTargetLabel(effect.target, entityLabel)} {effect.attribute}:{" "}
                   <SummaryDelta
                     from={summaryValueLabel(effect.previousValue)}
                     to={summaryValueLabel(effect.newValue)}
