@@ -1,11 +1,11 @@
 // National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
 // Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
-// target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+// target is labelled `balance_adjustment`. Grounding: Research index #456 [<nation>-naval-profile, not migrated].
 // Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
 // steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
 // Italy (canonical id "italy"). A young Mediterranean power whose Regia Marina exists for the Mare Nostrum: a
 // coastal-defence and regional posture, a small but ambitious battle line built on imported Armstrong/Elswick guns
-// and Creusot armour, speed-and-gun over armour, and a strong torpedo emphasis. Grounding: docs/research/italy-naval-profile.md.
+// and Creusot armour, speed-and-gun over armour, and a strong torpedo emphasis. Grounding: Research index #456 [italy-naval-profile, not migrated].
 import { NationNavalProfileSchema, collection } from "@bluewave/content-authoring";
 
 export default collection("navalProfiles", NationNavalProfileSchema, [

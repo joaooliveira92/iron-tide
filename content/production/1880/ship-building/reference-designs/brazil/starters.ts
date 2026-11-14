@@ -4,7 +4,7 @@
 // Sete de Setembro (1874, in service Jan 1880): Brazilian casemate ironclad, 2,174 t, 12 kn, 4 x 300-pdr Whitworth
 // 9-in (229 mm) RML in a central casemate, 114 mm belt/casemate. Modelled as two side mounts of two guns to satisfy
 // B's 1-2 main-mount rule. Promoted to the Brazilian capital (B) starter (ADR-0119), replacing the doctrine clone.
-// Source: docs/research/ship-building-1880-ships-by-nation.md §6.11; armament §2.3.
+// Source: Research index #456 [ship-building-1880-ships-by-nation, not migrated] §6.11; armament §2.3.
 import { ReferenceDesignSchema, collection } from "@bluewave/content-authoring";
 
 export default collection("designs", ReferenceDesignSchema, [

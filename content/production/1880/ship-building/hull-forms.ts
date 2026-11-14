@@ -6,7 +6,7 @@ export default collection("hullForms", ShipHullFormSchema, [
   {
     id: "torpedo_boat_form",
     // Lowered from 30000 to admit the 1877-79 first-class torpedo boats (HMS Lightning 24.7 m pp,
-    // TB2-TB9 26.3 m pp; docs/research/ship-building-1880-ships-by-nation.md section 1).
+    // TB2-TB9 26.3 m pp; Research index #456 [ship-building-1880-ships-by-nation, not migrated] section 1).
     lengthMinMm: 24000,
     lengthMaxMm: 70000,
     lbMinX100: 800,
@@ -357,7 +357,7 @@ export default collection("hullForms", ShipHullFormSchema, [
   // passenger-steamer hull-and-outfit fraction of displacement (VERIFIED: 45-55 % iron, 47.6 % steel for a 500 ft / 12,500 t
   // liner, pp. 411-413), the same source and definition as the warship forms: formBp 13400 at the Oregon's dimensions
   // (152.4 x 16.46 x 12.19 m) and 12,500 t returns 47.6 %. ESTIMATE (a derived fraction, not a weighed liner; see
-  // docs/research/ship-building-merchant-liner.md section 9). L/B band from Oregon 9.26 and Campania 9.09 (SINGLE-SOURCE);
+  // Research index #456 [ship-building-merchant-liner, not migrated] section 9). L/B band from Oregon 9.26 and Campania 9.09 (SINGLE-SOURCE);
   // waterplane coefficient, sheer, fullness and LCB have no source and stay BALANCE TARGET; zone shares are the shared
   // gameplay abstraction.
   {
@@ -449,7 +449,7 @@ export default collection("hullForms", ShipHullFormSchema, [
     ],
   },
   // Destroyer hull (E-1 1940-1949, ADR-0284). Length band anchored on Fletcher (112.5 m pp) and Gearing (116.7 m wl) and L/B
-  // on their 9.34-9.38 (docs/research/e-1-1940s-hull-and-part-values.md section 10); band edges, formBp and the five
+  // on their 9.34-9.38 (Research discussion #439 section 10); band edges, formBp and the five
   // coefficient fields are BALANCE TARGET: waterplane, sheer, fullness and LCB are copied from torpedo_boat_form, and formBp is fitted so the
   // reference destroyer closes on the sourced 3,460 t full load with the fitted plant mass, until a hull-weight fraction is sourced.
   {
@@ -540,7 +540,7 @@ export default collection("hullForms", ShipHullFormSchema, [
     ],
   },
   // Light cruiser hull (E-1 1940-1949, ADR-0290). Length band anchored on Worcester (202.4 m wl) and L/B on its 9.41
-  // (docs/research/e-1-1940s-hull-and-part-values.md section 10); band edges, formBp and the five coefficient fields are BALANCE TARGET: waterplane,
+  // (Research discussion #439 section 10); band edges, formBp and the five coefficient fields are BALANCE TARGET: waterplane,
   // sheer, fullness and LCB are copied from destroyer_form, and formBp is fitted so the reference closes on its sourced full-load displacement
   // with the fitted plant mass, until a hull-weight fraction is sourced.
   {
@@ -631,7 +631,7 @@ export default collection("hullForms", ShipHullFormSchema, [
     ],
   },
   // Heavy cruiser hull (E-1 1940-1949, ADR-0290). Length band anchored on Des Moines (213.4 m wl) and L/B on its 9.28
-  // (docs/research/e-1-1940s-hull-and-part-values.md section 10); band edges, formBp and the five coefficient fields are BALANCE TARGET: waterplane,
+  // (Research discussion #439 section 10); band edges, formBp and the five coefficient fields are BALANCE TARGET: waterplane,
   // sheer, fullness and LCB are copied from destroyer_form, and formBp is fitted so the reference closes on its sourced full-load displacement
   // with the fitted plant mass, until a hull-weight fraction is sourced.
   {
@@ -722,7 +722,7 @@ export default collection("hullForms", ShipHullFormSchema, [
     ],
   },
   // Fast battleship hull (E-1 1940-1949, ADR-0332). Length band anchored on Iowa (262.1 m wl) and L/B on its 7.94
-  // (docs/research/e-1-1940s-hull-and-part-values.md section 14); band edges, formBp and the five coefficient fields are BALANCE TARGET:
+  // (Research discussion #439 section 14); band edges, formBp and the five coefficient fields are BALANCE TARGET:
   // waterplane, sheer, fullness and LCB are copied from heavy_cruiser_form, and formBp is fitted so the reference closes on its sourced
   // 57,540 t full load with the fitted plant mass, until a hull-weight fraction is sourced.
   {
@@ -812,7 +812,7 @@ export default collection("hullForms", ShipHullFormSchema, [
       },
     ],
   },
-  // Postwar destroyer hull (E-1 1950-1959, ADR-0291). Length band anchored on Forrest Sherman (124.1 m wl) and L/B on its 9.06 (docs/research/e-1-1940s-hull-and-part-values.md
+  // Postwar destroyer hull (E-1 1950-1959, ADR-0291). Length band anchored on Forrest Sherman (124.1 m wl) and L/B on its 9.06 (Research discussion #439
   // section 13); band edges, formBp and the five coefficient fields are BALANCE TARGET: waterplane, sheer, fullness and LCB are copied from destroyer_form, and
   // formBp is fitted so the reference closes on its sourced 4,916 t full load, until a hull-weight fraction is sourced.
   {

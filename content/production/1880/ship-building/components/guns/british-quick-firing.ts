@@ -1,5 +1,5 @@
 // Ship-building component catalogue: British quick-firing (QF) and machine guns.
-// Source of record: docs/research/ship-building-early-band-2.md. Confidence labels are kept
+// Source of record: Research index #456 [ship-building-early-band-2, not migrated]. Confidence labels are kept
 // beside each record; an unsourced figure is marked as such on its own line.
 // Units: kg, mm, litres, kW, budget micro-units, bp. Formulas use the restricted grammar of
 // @bluewave/ship-design. Every component id is unique across this directory; the compiler
@@ -396,7 +396,7 @@ export default defineShipComponentCatalogue([
     maintenanceMonthlyBp: 20,
   }),
   // --- E-1 1950-1959 (ticket #256) ---------------------------------------------------------------------------------------------
-  // UK 4.5-inch/45 (120 mm) QF Mark 6 gun in Mark 6 twin mount (docs/research/e-1-1950s-gun-ships.md section 1).
+  // UK 4.5-inch/45 (120 mm) QF Mark 6 gun in Mark 6 twin mount (Research discussion #440 section 1).
   // Sourced (navypedia.org, navweaps.com, SINGLE-SOURCE): 120 mm bore, 29.1 kg AP shell, gun mass ~2,800 kg,
   // twin mount ~15,000 kg, 14-16 rounds per minute, service 1952. The charge (1,706 bp) is DERIVED from 4.64 kg.
   // The mount splits as 6,100 kg per barrel and 2,800 kg fixed. BALANCE TARGET on volume, footprint, cost, crew.

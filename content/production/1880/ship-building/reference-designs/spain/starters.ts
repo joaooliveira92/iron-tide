@@ -3,8 +3,8 @@
 // Fittings (magazines, quarters, pumps, ventilation) weigh nothing extra (White 1894, ADR-0083).
 // Numancia (1864, refit 1876, in service Jan 1880): Spanish broadside ironclad, 7,189 t, 10 kn, 2 x 1 254 mm
 // Armstrong 12-ton 300-pdr RML + 8 x 160 mm Palliser RML, 130 mm belt. Promoted to the Spanish capital (B) starter
-// (ADR-0119). The 254 mm 300-pdr is a DISTINCT family from gun_rml_10in_18ton (research -followups.md §1).
-// Source: docs/research/ship-building-1880-ships-by-nation.md §6.8.
+// (ADR-0119). The 254 mm 300-pdr is a DISTINCT family from gun_rml_10in_18ton (Research index #456 [ship-building-1880-coast-defence-followups, not migrated] §1).
+// Source: Research index #456 [ship-building-1880-ships-by-nation, not migrated] §6.8.
 import { ReferenceDesignSchema, collection } from "@bluewave/content-authoring";
 
 export default collection("designs", ReferenceDesignSchema, [

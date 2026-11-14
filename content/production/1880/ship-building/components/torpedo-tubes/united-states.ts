@@ -1,5 +1,5 @@
 // Ship-building component catalogue: United States torpedo tubes.
-// Source of record: docs/research/e-1-1940s-hull-and-part-values.md.
+// Source of record: Research discussion #439.
 // Units: kg, mm, litres, kW, budget micro-units, bp. Formulas use the restricted grammar of
 // @bluewave/ship-design. Every component id is unique across this directory; the compiler
 // discovers nothing on its own: pack.json's `shipBuilding.shipComponents` lists every file.

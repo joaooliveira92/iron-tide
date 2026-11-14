@@ -5,7 +5,7 @@
 // Wks), 2,384 t, 10.3 kn, 2 x 1 263 mm Krupp RK L/20 in a casemate + 1 x 149 mm + 4 x 67 mm, 229 mm belt. Promoted
 // to the Portuguese capital (B) starter (ADR-0119). The 263 mm is the exact `gun_bl_263mm_rkl20` family in a new
 // CASEMATE use; the ship exceeds Portugal's domestic build ceiling and is a foreign-built reconstruction.
-// Source: docs/research/ship-building-1880-ships-by-nation.md §6.10; armament §2.6/§3.
+// Source: Research index #456 [ship-building-1880-ships-by-nation, not migrated] §6.10; armament §2.6/§3.
 import { ReferenceDesignSchema, collection } from "@bluewave/content-authoring";
 
 export default collection("designs", ReferenceDesignSchema, [

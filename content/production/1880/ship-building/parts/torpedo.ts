@@ -18,12 +18,12 @@ export default collection("parts", PartSchema, [
       sourceStatus: "BALANCE_TARGET",
       sources: [
         {
-          archiveOrUrl: "docs/research/ship-building-early-band-2.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§2 14-inch Whitehead torpedo and its launching gear",
           title: "Ship-building catalogue — EARLY band (1880–1899), second pass",
         },
         {
-          archiveOrUrl: "docs/research/c1-m3-torpedoes.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§3.1 Torpedo model table (1880–1945)",
           title: "Torpedo model research (c1-m3)",
         },
@@ -88,12 +88,12 @@ export default collection("parts", PartSchema, [
       sourceStatus: "BALANCE_TARGET",
       sources: [
         {
-          archiveOrUrl: "docs/research/ship-building-early-band-2.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§2 14-inch Whitehead torpedo and its launching gear",
           title: "Ship-building catalogue — EARLY band (1880–1899), second pass",
         },
         {
-          archiveOrUrl: "docs/research/c1-m3-torpedoes.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§3.1 Torpedo model table (1880–1945)",
           title: "Torpedo model research (c1-m3)",
         },
@@ -153,12 +153,12 @@ export default collection("parts", PartSchema, [
       sourceStatus: "BALANCE_TARGET",
       sources: [
         {
-          archiveOrUrl: "docs/research/ship-building-early-band-2.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§2 14-inch Whitehead torpedo and its launching gear",
           title: "Ship-building catalogue — EARLY band (1880–1899), second pass",
         },
         {
-          archiveOrUrl: "docs/research/c1-m3-torpedoes.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§3.1 Torpedo model table (1880–1945)",
           title: "Torpedo model research (c1-m3)",
         },
@@ -224,12 +224,12 @@ export default collection("parts", PartSchema, [
       sourceStatus: "BALANCE_TARGET",
       sources: [
         {
-          archiveOrUrl: "docs/research/ship-building-early-band-2.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§2 14-inch Whitehead torpedo and its launching gear",
           title: "Ship-building catalogue — EARLY band (1880–1899), second pass",
         },
         {
-          archiveOrUrl: "docs/research/c1-m3-torpedoes.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§3.1 Torpedo model table (1880–1945)",
           title: "Torpedo model research (c1-m3)",
         },
@@ -294,12 +294,12 @@ export default collection("parts", PartSchema, [
       sourceStatus: "BALANCE_TARGET",
       sources: [
         {
-          archiveOrUrl: "docs/research/ship-building-early-band-2.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§2 14-inch Whitehead torpedo and its launching gear",
           title: "Ship-building catalogue — EARLY band (1880–1899), second pass",
         },
         {
-          archiveOrUrl: "docs/research/c1-m3-torpedoes.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§3.1 Torpedo model table (1880–1945)",
           title: "Torpedo model research (c1-m3)",
         },
@@ -354,12 +354,12 @@ export default collection("parts", PartSchema, [
       sourceStatus: "BALANCE_TARGET",
       sources: [
         {
-          archiveOrUrl: "docs/research/ship-building-early-band-2.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§2 14-inch Whitehead torpedo and its launching gear",
           title: "Ship-building catalogue — EARLY band (1880–1899), second pass",
         },
         {
-          archiveOrUrl: "docs/research/c1-m3-torpedoes.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§3.1 Torpedo model table (1880–1945)",
           title: "Torpedo model research (c1-m3)",
         },
@@ -423,7 +423,7 @@ export default collection("parts", PartSchema, [
           title: "NW-TP — US Post-WWII Torpedoes (dossier §7)",
         },
         {
-          archiveOrUrl: "docs/research/e-1-1940s-hull-and-part-values.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/439",
           section: "§7 21-inch acoustic homing torpedo",
           title: "E-1 research: 1940-1949 hull forms and part values",
         },
@@ -478,7 +478,7 @@ export default collection("parts", PartSchema, [
       sourceStatus: "BALANCE_TARGET",
       sources: [
         {
-          archiveOrUrl: "docs/research/n-2-whitehead-14in-identity.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/444",
           section:
             "§4–§5 (the id is a canonical repository identifier; historical object and marks)",
           title: "N-2 — The 14-inch Whitehead torpedo model identity",
@@ -504,7 +504,7 @@ export default collection("parts", PartSchema, [
           sourceStatus: "VERIFIED",
           sources: [
             {
-              archiveOrUrl: "docs/research/n-2-whitehead-14in-identity.md",
+              archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/444",
               section: "§3.2 (1877 26 lb → 1884 Mark IV 58–70 lb)",
               title: "N-2 — The 14-inch Whitehead torpedo model identity",
             },
@@ -555,12 +555,12 @@ export default collection("parts", PartSchema, [
       sourceStatus: "BALANCE_TARGET",
       sources: [
         {
-          archiveOrUrl: "docs/research/ship-building-early-band-2.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§2 14-inch Whitehead torpedo and its launching gear",
           title: "Ship-building catalogue — EARLY band (1880–1899), second pass",
         },
         {
-          archiveOrUrl: "docs/research/c1-m3-torpedoes.md",
+          archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
           section: "§3.1 Torpedo model table (1880–1945)",
           title: "Torpedo model research (c1-m3)",
         },

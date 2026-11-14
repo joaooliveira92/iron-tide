@@ -4,7 +4,7 @@
 // Fusō (1878, in service Jan 1880): Japanese central-battery ironclad, 3,717 t, 13 kn, 4 x 235 mm Krupp RKL/22 in a
 // central battery + 2 x 173 mm RKL/25, 229 mm belt/battery. The 235 mm main battery is modelled as two side mounts of
 // two guns to satisfy B's 1-2 main-mount rule. Promoted to the Japanese capital (B) starter (ADR-0119). Source:
-// docs/research/ship-building-1880-ships-by-nation.md §6.4; armament §2.4.
+// Research index #456 [ship-building-1880-ships-by-nation, not migrated] §6.4; armament §2.4.
 import { ReferenceDesignSchema, collection } from "@bluewave/content-authoring";
 
 export default collection("designs", ReferenceDesignSchema, [

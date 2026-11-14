@@ -1,6 +1,6 @@
 // Ship-building component catalogue: United States ordnance.
-// Source of record: docs/research/ship-building-early-band.md and
-// docs/research/e-1-1940s-hull-and-part-values.md. Provenance is carried per record.
+// Source of record: Research index #456 [ship-building-early-band, not migrated] and
+// Research discussion #439. Provenance is carried per record.
 // Units: kg, mm, litres, kW, budget micro-units, bp. Formulas use the restricted grammar of
 // @bluewave/ship-design. Every component id is unique across this directory; the compiler
 // discovers nothing on its own: pack.json's `shipBuilding.shipComponents` lists every file.
@@ -70,7 +70,7 @@ export default defineShipComponentCatalogue([
     maintenanceMonthlyBp: 20,
   }),
   // --- E-1 1940-1949 (ADR-0284) ---------------------------------------------------------------------------------------------
-  // US 5-inch/38 Mark 12 in the Mark 38 twin dual-purpose mount (docs/research/e-1-1940s-hull-and-part-values.md sections 1-2).
+  // US 5-inch/38 Mark 12 in the Mark 38 twin dual-purpose mount (Research discussion #439 sections 1-2).
   // Sourced (navweaps.com WNUS_5-38_mk12, SINGLE-SOURCE): 127 mm bore, 25.0 kg shell, 1,810 kg gun without breech, Mk 38 Mod 0 mount
   // 43,409 kg with two guns, rate 15-22 rpm for base-ring mounts with hoists (the lower bound is used, BALANCE TARGET), arc about 300 deg
   // on a destroyer. The charge (2,800 bp) is DERIVED from 6.9-7.03 kg over the shell. The mount splits as 19,894 kg per barrel and no
@@ -119,7 +119,7 @@ export default defineShipComponentCatalogue([
     maintenanceMonthlyBp: 20,
   }),
   // US 6-inch/47 Mark 16 dual-purpose gun in the twin turret of the Worcester class, E-1 1940-1949 (ADR-0284, ADR-0290;
-  // docs/research/e-1-1940s-hull-and-part-values.md sections 3-4). Sourced (navweaps.com WNUS_6-47DP_mk16, SINGLE-SOURCE): 152 mm bore, 59.0 kg AP shell,
+  // Research discussion #439 sections 3-4). Sourced (navweaps.com WNUS_6-47DP_mk16, SINGLE-SOURCE): 152 mm bore, 59.0 kg AP shell,
   // 6,600 kg gun, 212,000 kg twin turret (208.5 tons), 12 rounds per minute, about 300 deg of train, 21 crew per mounting (modelled as 11 per barrel, 22, because the part model needs a whole crew per barrel), service 1948. The charge
   // (2,542 bp) is DERIVED from 15.0 kg over the AP shell. The turret splits as 99,400 kg per barrel and no fixed mass, so the twin returns 212,000 kg.
   // Round volume follows the 0.5 mL per gram convention. Mount cost scales gun_qf_6in_40 by mount mass (197,368 micro per kg), volume and footprint
@@ -258,7 +258,7 @@ export default defineShipComponentCatalogue([
     fcClass: "heavy",
     maintenanceMonthlyBp: 40,
   }),
-  // US 5-inch/54 Mark 18 gun in the Mark 42 single mount, E-1 1950-1959 (ADR-0291; docs/research/e-1-1940s-hull-and-part-values.md section 13). Sourced
+  // US 5-inch/54 Mark 18 gun in the Mark 42 single mount, E-1 1950-1959 (ADR-0291; Research discussion #439 section 13). Sourced
   // (navweaps.com WNUS_5-54_mk42, SINGLE-SOURCE): 127 mm bore, 31.45 kg HC projectile, 2,550 kg gun, 58,586 kg mount without ammunition and fluids, 40 rounds per
   // minute as designed, about 300 deg of train, 20 crew in the original Mod 0, service 1954. The charge (2,604 bp) is DERIVED from 8.19 kg over the projectile. The
   // mount splits as 56,036 kg per barrel and no fixed mass (58,586 kg). Round volume follows the 0.5 mL per gram convention; mount cost scales gun_qf_6in_40 by

@@ -19,7 +19,7 @@ export default list(CampaignDesignSchema, [
     machineryType: "reciprocating_compound",
     hitPoints: 60,
     crewComplement: 460,
-    // As-built fit — docs/research/p1-1880-torpedo-armament.md
+    // As-built fit — Research index #456 [p1-1880-torpedo-armament, not migrated]
     torpedoArmament: [
       {
         mountType: "UNDERWATER_FIXED",
@@ -72,7 +72,7 @@ export default list(CampaignDesignSchema, [
     machineryType: "reciprocating_compound",
     hitPoints: 38,
     crewComplement: 400,
-    // As-built fit — docs/research/p1-1880-torpedo-armament.md
+    // As-built fit — Research index #456 [p1-1880-torpedo-armament, not migrated]
     torpedoArmament: [
       {
         mountType: "ABOVE_WATER_TRAINABLE",
@@ -120,7 +120,7 @@ export default list(CampaignDesignSchema, [
     machineryType: "reciprocating_compound",
     hitPoints: 40,
     crewComplement: 710,
-    // As-built fit — docs/research/p1-1880-torpedo-armament.md
+    // As-built fit — Research index #456 [p1-1880-torpedo-armament, not migrated]
     torpedoArmament: [
       {
         mountType: "ABOVE_WATER_TRAINABLE",
@@ -148,7 +148,7 @@ export default list(CampaignDesignSchema, [
     machineryType: "reciprocating_compound",
     hitPoints: 46,
     crewComplement: 700,
-    // As-built fit — docs/research/p1-1880-torpedo-armament.md
+    // As-built fit — Research index #456 [p1-1880-torpedo-armament, not migrated]
     torpedoArmament: [
       {
         mountType: "ABOVE_WATER_TRAINABLE",
@@ -243,7 +243,7 @@ export default list(CampaignDesignSchema, [
     machineryType: "reciprocating_compound",
     hitPoints: 42,
     crewComplement: 440,
-    // As-built fit — docs/research/p1-1880-torpedo-armament.md
+    // As-built fit — Research index #456 [p1-1880-torpedo-armament, not migrated]
     torpedoArmament: [
       {
         mountType: "UNDERWATER_FIXED",
@@ -276,7 +276,7 @@ export default list(CampaignDesignSchema, [
     machineryType: "reciprocating_compound",
     hitPoints: 44,
     crewComplement: 600,
-    // As-built fit — docs/research/p1-1880-torpedo-armament.md
+    // As-built fit — Research index #456 [p1-1880-torpedo-armament, not migrated]
     torpedoArmament: [
       {
         mountType: "ABOVE_WATER_TRAINABLE",
@@ -324,7 +324,7 @@ export default list(CampaignDesignSchema, [
     machineryType: "reciprocating_compound",
     hitPoints: 52,
     crewComplement: 480,
-    // As-built fit — docs/research/p1-1880-torpedo-armament.md
+    // As-built fit — Research index #456 [p1-1880-torpedo-armament, not migrated]
     torpedoArmament: [
       {
         mountType: "ABOVE_WATER_TRAINABLE",
@@ -352,7 +352,7 @@ export default list(CampaignDesignSchema, [
     machineryType: "reciprocating_compound",
     hitPoints: 44,
     crewComplement: 760,
-    // As-built fit — docs/research/p1-1880-torpedo-armament.md
+    // As-built fit — Research index #456 [p1-1880-torpedo-armament, not migrated]
     torpedoArmament: [
       {
         mountType: "ABOVE_WATER_TRAINABLE",
@@ -420,7 +420,7 @@ export default list(CampaignDesignSchema, [
     machineryType: "reciprocating_compound",
     hitPoints: 40,
     crewComplement: 330,
-    // As-built fit — docs/research/p1-1880-torpedo-armament.md
+    // As-built fit — Research index #456 [p1-1880-torpedo-armament, not migrated]
     torpedoArmament: [
       {
         mountType: "ABOVE_WATER_TRAINABLE",

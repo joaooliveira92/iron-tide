@@ -3,7 +3,7 @@
 // Fittings (magazines, quarters, pumps, ventilation) weigh nothing extra (White 1894, ADR-0083).
 // Canonicus (1864, in service Jan 1880): US coast-defence monitor, 2,100 t, 8 kn, 1 x 2 15-in Dahlgren SMOOTHBORE in
 // a turret, 127 mm side / 254 mm turret iron. Promoted to the US capital (B) starter (ADR-0117), replacing the British
-// doctrine clone. Source: docs/research/ship-building-1880-ships-by-nation.md §6.5; gun: docs/research/ship-building-1880-coast-defence-armament.md §2.5.
+// doctrine clone. Source: Research index #456 [ship-building-1880-ships-by-nation, not migrated] §6.5; gun: Research index #456 [ship-building-1880-coast-defence-armament, not migrated] §2.5.
 import { ReferenceDesignSchema, collection } from "@bluewave/content-authoring";
 
 export default collection("designs", ReferenceDesignSchema, [
@@ -901,7 +901,7 @@ export default collection("designs", ReferenceDesignSchema, [
     },
   },
   // Destroyer starter for the United States, 1945 (E-1 1940-1949, ADR-0284). Hull dimensions, 3,460 t full-load displacement (2,616 t standard), 60,000 shp
-  // (44,742 kW), 36.8 kn and 740 t of oil are the Gearing figures of docs/research/e-1-1940s-hull-and-part-values.md section 10
+  // (44,742 kW), 36.8 kn and 740 t of oil are the Gearing figures of Research discussion #439 section 10
   // (Navypedia, SINGLE-SOURCE); the gun and tube fit, rounds, quarters and fire-control fit are ESTIMATES, not the class's recorded outfit.
   {
     id: "starter_dd_usa_1945",
@@ -1057,7 +1057,7 @@ export default collection("designs", ReferenceDesignSchema, [
   },
   // Light cruiser starter for the United States, 1948 (E-1 1940-1949, ADR-0290). Hull dimensions, 14,700 t standard and 17,997 t full-load displacement,
   // 120,000 shp (89,484 kW), 33 kn, 2,400 t of oil, 127 mm belt, 89 mm deck, 165 mm turret faces and 127 mm magazines are the Worcester figures of
-  // docs/research/e-1-1940s-hull-and-part-values.md section 10 (Navypedia, SINGLE-SOURCE); six 6-inch twin turrets are the class armament. The armour
+  // Research discussion #439 section 10 (Navypedia, SINGLE-SOURCE); six 6-inch twin turrets are the class armament. The armour
   // lengths and widths, rounds, quarters, moulded depth and fire-control fit are ESTIMATES, not recorded outfit, and the armour is modelled as krupp plate.
   {
     id: "starter_cl_usa_1948",
@@ -1291,7 +1291,7 @@ export default collection("designs", ReferenceDesignSchema, [
   },
   // Heavy cruiser starter for the United States, 1948 (E-1 1940-1949, ADR-0290). Hull dimensions, 17,255 t standard and 20,934 t full-load displacement,
   // 120,000 shp (89,484 kW), 33 kn, 3,006 t of oil, 152 mm belt, 95 mm deck, 203 mm turret faces are the Des Moines figures of
-  // docs/research/e-1-1940s-hull-and-part-values.md section 10 (Navypedia, SINGLE-SOURCE); three 8-inch triple turrets and six 5-inch twin mounts are the
+  // Research discussion #439 section 10 (Navypedia, SINGLE-SOURCE); three 8-inch triple turrets and six 5-inch twin mounts are the
   // class armament. The armour lengths and widths, rounds, the 7,500 nm range requirement (the sourced 8,000 nm at 15 kn is not reached by the fitted plant), quarters, moulded depth and fire-control fit are ESTIMATES, not recorded outfit.
   {
     id: "starter_ca_usa_1948",
@@ -1557,7 +1557,7 @@ export default collection("designs", ReferenceDesignSchema, [
     },
   },
   // Destroyer starter for the United States, 1955 (E-1 1950-1959, ADR-0291). Hull dimensions, 2,800 t standard and 4,916 t full-load displacement, 70,000 hp
-  // (52,199 kW), 33 kn, 500 t of oil and the three 5-inch/54 single mounts are the Forrest Sherman figures of docs/research/e-1-1940s-hull-and-part-values.md
+  // (52,199 kW), 33 kn, 500 t of oil and the three 5-inch/54 single mounts are the Forrest Sherman figures of Research discussion #439
   // section 13 (Navypedia, SINGLE-SOURCE); the four 533 mm tubes are those of DD931 and DD932 only. The 76 mm twin AA mounts, the 324 mm ASW tubes and the
   // Hedgehogs have no part family (#283) and are not modelled. Rounds, quarters, moulded depth and fire-control fit are ESTIMATES, not recorded outfit. The 1,500 nm range requirement is what the plant fitted for the 1945 destroyer returns
   // at 20 kn on 500 t (1,725 nm); the sourced 4,500 nm is not reached, because the fuel-rate curve is a balance target (ADR-0284 decision 8).
@@ -1724,7 +1724,7 @@ export default collection("designs", ReferenceDesignSchema, [
   },
   // Battleship starter for the United States, 1945 (E-1 1940-1949, ADR-0332). Hull dimensions, 48,110 t standard and 57,540 t full-load
   // displacement, 212,000 shp (158,084 kW), 32.5 kn, 7,621 t of oil, 307 mm belt, 178 mm deck, 432 mm turret faces and 317 kg torpedo
-  // protection are the Iowa figures of docs/research/e-1-1940s-hull-and-part-values.md section 14 (Navypedia, SINGLE-SOURCE); three 16-inch
+  // protection are the Iowa figures of Research discussion #439 section 14 (Navypedia, SINGLE-SOURCE); three 16-inch
   // triple turrets and ten 5-inch twin mounts are the class armament. The armour lengths and widths, rounds, quarters, moulded depth and
   // fire-control fit are ESTIMATES, not recorded outfit. The date is 1945-01 because the pack's 5-inch/38 twin mount is dated 1945
   // (ADR-0284 decision 2), not because the class entered service then.

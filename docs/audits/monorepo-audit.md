@@ -196,7 +196,7 @@ Legend: Impact / Effort / Confidence / Scope. QW = quick win.
 - **Priority** P2. **Category** Hygiene / legal. **Impact** medium. **Effort** small. **Confidence** confirmed presence; licence status unknown. **Scope** local.
 - **Evidence:** `docs/Rule the Waves 3 Manual EBOOK.pdf` (about 13 MB) and `docs/research/Steam Community __ Guide __ Ship Design Guide (1890 to 1970).mhtml` (about 4.7 MB) are tracked; `docs/campaign-review.mhtml` also. These are the largest tracked files outside `vendor/`.
 - **Why it matters:** redistributing a commercial manual and community guide in a repo that will ship a game is a licence risk and bloats every clone.
-- **Remediation:** confirm rights; if not clearly held, remove from the tree (history rewrite is out of scope and forbidden by policy, so stop and raise a decision before purging history), keep extracted facts with citations in `docs/research`, and gitignore the originals.
+- **Remediation:** confirm rights; if not clearly held, remove from the tree (history rewrite is out of scope and forbidden by policy, so stop and raise a decision before purging history), keep extracted facts with citations in the Research discussions (#456), and gitignore the originals.
 - **Acceptance:** repository contains no unlicensed third-party documents, or a recorded licence note.
 - **Validation:** `pnpm preflight` (docs link check), `git ls-files -z | xargs -0 du -k | sort -rn | head`.
 - **Risks:** docs may link to these files; the history question needs the owner's decision.
