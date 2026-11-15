@@ -40,4 +40,15 @@ describe("DeltaPreview", () => {
     const { container } = render(<DeltaPreview deltas={[]} />);
     expect(container.firstChild).toBeNull();
   });
+
+  it("announces the deltas politely and whole, led by what they describe", () => {
+    render(<DeltaPreview deltas={rows} label="Effect of the highlighted gun" />);
+    const region = screen.getByRole("status");
+    expect(region.getAttribute("aria-live")).toBe("polite");
+    expect(region.getAttribute("aria-atomic")).toBe("true");
+    expect(region.textContent).toMatch(/^Effect of the highlighted gun: /);
+    expect(within(region).getByTestId("delta-preview")).toBeTruthy();
+    expect(region.textContent).toMatch(/Speed.*up.*\+1\.2 kn.*better/);
+    expect(region.textContent).toMatch(/Cost.*up.*\+4%.*worse/);
+  });
 });

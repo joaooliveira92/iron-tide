@@ -18,25 +18,28 @@ export function DeltaPreview({
 }) {
   if (deltas.length === 0) return null;
   return (
-    <ul
-      data-testid="delta-preview"
-      aria-label={label}
-      className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground"
-    >
-      {deltas.map((d) => {
-        const tone = d.tone ?? "neutral";
-        return (
-          <li key={d.id} data-delta={d.id} data-tone={tone} className="flex items-baseline gap-1">
-            <span>{d.label}</span>
-            <span className={cn("tabular-nums", TONE_CLASS[tone])}>
-              <span aria-hidden="true">{ARROW[d.direction]} </span>
-              <span className="sr-only">{DIRECTION[d.direction]} </span>
-              {d.text}
-              {tone !== "neutral" && <span className="font-medium"> ({tone})</span>}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
+    <div role="status" aria-live="polite" aria-atomic="true">
+      <span className="sr-only">{label}: </span>
+      <ul
+        data-testid="delta-preview"
+        aria-label={label}
+        className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground"
+      >
+        {deltas.map((d) => {
+          const tone = d.tone ?? "neutral";
+          return (
+            <li key={d.id} data-delta={d.id} data-tone={tone} className="flex items-baseline gap-1">
+              <span>{d.label}</span>
+              <span className={cn("tabular-nums", TONE_CLASS[tone])}>
+                <span aria-hidden="true">{ARROW[d.direction]} </span>
+                <span className="sr-only">{DIRECTION[d.direction]} </span>
+                {d.text}
+                {tone !== "neutral" && <span className="font-medium"> ({tone})</span>}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
