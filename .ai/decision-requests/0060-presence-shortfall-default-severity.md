@@ -2,7 +2,9 @@
 
 ## Status
 
-Blocked pending owner decision. The #576 code is complete and merged (PR #827, #834) and is live on `dev`. #833 investigated the data-only calibration and found no data-only lever that clears the opening; see [Calibration finding (#833)](#calibration-finding-833). The choice is between Option C (about 42 seeded station ships) and a new engine rule (Option B or the surplus-ship variant); Option E is the interim that removes the drain.
+Option E applied as the interim (PR #837, #833, coordinator decision): `rules.presence.shortfallPrestige` is deleted from the 1880 ruleset, so the #576 prestige charge is off in the shipped pack. `penaltyRequests`, the shortfall events, the #573 order warnings and the engine path stay live, and the PROVISIONAL penalty keeps its tests through test rulesets. The durable choice stays open: Option C (about 42 seeded station ships) or a new rule (Option B, a surplus-ship rule or a grace), decided together with #826. Follow-up: #838. Reversal: restore the block (`lossBpPerWholeShortfall` 200, `maxLossBp` 500), re-pin the content lock and the `presence-shortfall-prestige` reachability row.
+
+The #576 code is complete and merged (PR #827, #834). #833 measured that no data-only lever clears the opening; see [Calibration finding (#833)](#calibration-finding-833).
 
 ## Trigger
 
