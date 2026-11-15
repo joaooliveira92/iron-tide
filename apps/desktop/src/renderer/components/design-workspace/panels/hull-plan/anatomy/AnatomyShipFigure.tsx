@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import "./anatomy.css";
+import "./anatomy-changed.css";
 import "./anatomy-feedback.css";
+import type { ChangedParts } from "./changed-parts.js";
 import type { PartState } from "./part-state.js";
 import type { AnatomyShip } from "./ship-anatomy.js";
 
@@ -11,6 +13,7 @@ export function AnatomyShipFigure({
   highlight,
   section,
   states,
+  changed,
   className,
   style,
 }: {
@@ -18,6 +21,7 @@ export function AnatomyShipFigure({
   readonly highlight?: string | undefined;
   readonly section?: string | undefined;
   readonly states?: ReadonlyMap<string, PartState> | undefined;
+  readonly changed?: ChangedParts | undefined;
   readonly className?: string;
   readonly style?: CSSProperties;
 }) {
@@ -51,6 +55,7 @@ export function AnatomyShipFigure({
             data-kind={part.kind}
             data-lit={lit ? "" : undefined}
             data-state={states?.get(part.id)}
+            data-changed={changed?.kinds.has(part.kind) === true ? changed.phase : undefined}
             style={{ "--an-i": order(part.kind) } as CSSProperties}
           >
             {smokeAt !== undefined &&
