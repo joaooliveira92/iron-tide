@@ -20,10 +20,11 @@ export interface DrawingBoardContent extends ShipBuildingContent {
 export function catalogueView(
   components: readonly ComponentDef[],
   partModel: ShipBuildingData["partModel"],
+  navalProfiles: ShipBuildingData["navalProfiles"] = [],
 ): readonly PartCatalogueEntry[] {
   return partModel === undefined
     ? legacyCatalogueView(components)
-    : buildPartCatalogueView(partModel);
+    : buildPartCatalogueView(partModel, navalProfiles);
 }
 
 let injected: DrawingBoardContentDto | null = null;
@@ -42,7 +43,11 @@ function buildDrawingBoardContent(dto: DrawingBoardContentDto): DrawingBoardCont
   return {
     ...buildShipBuildingContent(dto.catalogue),
     references: dto.catalogue.referenceDesigns ?? [],
-    catalogue: catalogueView(dto.catalogue.components, dto.catalogue.partModel),
+    catalogue: catalogueView(
+      dto.catalogue.components,
+      dto.catalogue.partModel,
+      dto.catalogue.navalProfiles,
+    ),
   };
 }
 

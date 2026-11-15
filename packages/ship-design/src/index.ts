@@ -173,6 +173,7 @@ export { buildPartCatalogue, PART_SOURCE_FIELDS, type SourceCatalogue } from "./
 export {
   buildPartCatalogueView,
   legacyCatalogueView,
+  type NationAccessSource,
   type PartCatalogueEntry,
 } from "./partCatalogueView.js";
 export {
