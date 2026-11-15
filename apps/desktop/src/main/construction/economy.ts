@@ -7,6 +7,8 @@ import {
   dockExpansionEarliestCompletionMonth,
   dockExpansionEraStepForMonth,
   dockExpansionFinalDurationMonths,
+  dockExpansionInstalmentExplanation,
+  dockExpansionPriceExplanation,
   dockExpansionProjectFor,
   dockLimitAfterExpansionExplanation,
   nationalConstructionCapacity,
@@ -72,6 +74,12 @@ export function constructionEconomy(
     dockExpansionReadyMonth:
       expansionProject === null ? null : dockExpansionEarliestCompletionMonth(expansionProject),
     ...(afterExpansion === undefined ? {} : { dockLimitAfterExpansionExplanation: afterExpansion }),
+    ...(expansionProject === null
+      ? {}
+      : {
+          dockExpansionPriceExplanation: dockExpansionPriceExplanation(expansionProject),
+          dockExpansionInstalmentExplanation: dockExpansionInstalmentExplanation(expansionProject),
+        }),
     dockPossessions,
   };
 }

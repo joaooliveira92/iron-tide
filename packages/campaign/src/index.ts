@@ -13,6 +13,7 @@ export * from "./continuity.js";
 export * from "./constructionStatus.js";
 export * from "./constructionDraw.js";
 export * from "./constructionFunding.js";
+export * from "./dockExpansionFunding.js";
 export * from "./division.js";
 export * from "./divisionCohesionGrowth.js";
 export * from "./divisionDoctrine.js";

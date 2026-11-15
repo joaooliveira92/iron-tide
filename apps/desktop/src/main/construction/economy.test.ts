@@ -10,9 +10,11 @@ import {
   applyDockExpansionStep,
   builderDockRecord,
   constructionCapacityUtilization,
+  dockExpansionDueUnits,
   dockExpansionEarliestCompletionMonth,
   dockExpansionEraStepForMonth,
   dockExpansionProjectFor,
+  dockExpansionTotalUnits,
   nationalConstructionCapacity,
 } from "@bluewave/phase-engine";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
@@ -112,9 +114,26 @@ describe("constructionEconomy dock/capacity readouts", () => {
     expect(tree?.formulaId).toBe("dock_limit_after_expansion");
     expect(Number(tree?.result)).toBe(afterKg);
     expect(Number(tree?.result)).toBe(dockMaxMassKg + step);
+    const previewProject = dockExpansionProjectFor({
+      projectId: "dock-expansion-preview",
+      possessionId: "preview",
+      authorizedMonth: monthId,
+      stepKg: step,
+      durationMonths: economy.dockExpansionDurationMonths,
+    });
+    expect(Number(economy.dockExpansionPriceExplanation?.result)).toBe(
+      dockExpansionTotalUnits(previewProject),
+    );
+    expect(Number(economy.dockExpansionInstalmentExplanation?.result)).toBe(
+      dockExpansionDueUnits(previewProject),
+    );
+    expect(economy.dockExpansionPriceExplanation?.formulaId).toBe("dock_expansion_price");
+    expect(economy.dockExpansionInstalmentExplanation?.formulaId).toBe("dock_expansion_instalment");
     expect(Object.keys(economy).sort()).toEqual(
       [
         "committedNewConstructionMassKg",
+        "dockExpansionInstalmentExplanation",
+        "dockExpansionPriceExplanation",
         "dockLimitAfterExpansionExplanation",
         "dockExpansionDurationMonths",
         "dockExpansionNextStepKg",
@@ -137,6 +156,8 @@ describe("constructionEconomy dock/capacity readouts", () => {
     expect(economy.dockExpansionNextStepKg).toBeNull();
     expect(economy.dockExpansionReadyMonth).toBeNull();
     expect(economy.dockLimitAfterExpansionExplanation).toBeUndefined();
+    expect(economy.dockExpansionPriceExplanation).toBeUndefined();
+    expect(economy.dockExpansionInstalmentExplanation).toBeUndefined();
   });
 
   it("lists the nation's ports ascending by id as the expansion targets", () => {

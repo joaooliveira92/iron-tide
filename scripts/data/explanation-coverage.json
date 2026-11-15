@@ -296,7 +296,9 @@
       "area": "construction",
       "issue": "#302",
       "covered": {
-        "economy.dockLimitAfterExpansionExplanation": "dock_limit_after_expansion"
+        "economy.dockLimitAfterExpansionExplanation": "dock_limit_after_expansion",
+        "economy.dockExpansionPriceExplanation": "dock_expansion_price",
+        "economy.dockExpansionInstalmentExplanation": "dock_expansion_instalment"
       },
       "exempt": {
         "revision": "Campaign revision metadata, not a derived value.",

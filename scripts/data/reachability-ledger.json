@@ -240,7 +240,7 @@
       "player_verb": "Authorize a dock expansion",
       "status": "reachable",
       "engine_package": "phase-engine",
-      "engine_modules": ["dockExpansion"],
+      "engine_modules": ["dockExpansion", "dockExpansionExplanation"],
       "engine_symbols": ["applyAuthorizeDockExpansion", "applyDockExpansionStep"],
       "main_commands": ["authorizeDockExpansionCommand"],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
