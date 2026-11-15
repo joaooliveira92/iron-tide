@@ -65,3 +65,16 @@ problems, produced artifact names, and `result.classification`
 Parsing lives in `snap-args.ts`, problem tracking in `snap-problems.ts`, settling in
 `snap-quiet.ts`, the manifest in `snap-manifest.ts`, stale-output cleanup in `snap-output.ts`;
 each has unit tests beside it.
+
+## Recipe: Last change strip
+
+Run for light and dark, at the default size and `--size=1100x700` (the `=` form), wrapped in
+`xvfb-run -a` on headless Linux. Keep the edit small: a large one opens the "breaks the design" dialog.
+
+```
+pnpm snap --strict --make-save /tmp/save --out /tmp/lc --theme dark --click "Ship design" \
+  --click "Machinery" --fill "Installed power=3300" --press Tab
+```
+
+`aria.txt` shows a "Last change" status with one button per moved aspect ("Speed +1.3 kn, better.
+Open Machinery") and New/Resolved finding items. Check arrow plus word (not colour alone) and a visible plan.
