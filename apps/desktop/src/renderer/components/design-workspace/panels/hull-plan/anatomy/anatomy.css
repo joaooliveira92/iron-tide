@@ -1,7 +1,6 @@
 .an-ship {
   --an-paper: #fbfbfa;
   --an-face: #ffffff;
-  --an-plate: #b4bac2;
   --an-top: #ffffff;
   --an-shade-0: #d8d8d4;
   --an-shade-1: #e3e3df;
@@ -37,7 +36,6 @@
 .dark .an-ship {
   --an-paper: #38383b;
   --an-face: #424246;
-  --an-plate: #6c737d;
   --an-top: #5b5b61;
   --an-shade-0: #29292c;
   --an-shade-1: #333336;
@@ -61,7 +59,7 @@
   --an-ink: #0b0b0d;
   --an-glass: #7c7c82;
   --an-boot: #5a4038;
-  --an-plate: #2d3136;
+  --an-plate: #55606b;
   --an-halo: #000000;
   --an-halo-opacity: 0.7;
 }
