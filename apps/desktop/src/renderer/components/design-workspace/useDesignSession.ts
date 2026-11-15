@@ -8,6 +8,7 @@ import { boardFindings } from "./validation/boardFindings.js";
 import { describeEdit } from "./describeEdit.js";
 import { useChoiceCheck } from "./useChoiceCheck.js";
 import { useDrawingBoard } from "./useDrawingBoard.js";
+import { useLastChange } from "./useLastChange.js";
 
 export const TECHNOLOGY_MONTHS = [
   "1885-01",
@@ -48,6 +49,15 @@ export function useDesignSession(fixedMonth: string | null) {
     [guard, boardEdit, format, draft, nameOf],
   );
   const actions = useMemo(() => ({ ...boardActions, edit }), [boardActions, edit]);
+  const describe = useCallback(
+    (e: DraftEdit, before: DesignDraft) => describeEdit(e, { draft: before, nameOf }, format),
+    [nameOf, format],
+  );
+  const { lastChange, clearLastChange } = useLastChange(
+    { log: state.log, draft, view },
+    describe,
+    format,
+  );
   const [selection] = useState(createSelectionStore);
   useEffect(() => selection.prune((e) => entityExists(e, draft, zones)), [selection, draft, zones]);
   useEffect(
@@ -91,6 +101,8 @@ export function useDesignSession(fixedMonth: string | null) {
     batteries,
     findings,
     choiceCheck,
+    lastChange,
+    clearLastChange,
     selection,
     loadPreset,
     loadDraft,

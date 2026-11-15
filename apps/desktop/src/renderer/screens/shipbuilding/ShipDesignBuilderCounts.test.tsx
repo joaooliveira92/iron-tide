@@ -33,7 +33,12 @@ const builders = [
   "armamentEntries",
   "systemsModel",
   "colonialServiceModel",
+  "previewOptionFeedback",
 ] as const;
+
+vi.mock("../../components/design-workspace/optionFeedback.js", async (importOriginal) =>
+  S.wrap(await importOriginal<Record<string, unknown>>()),
+);
 
 vi.mock("../../components/design-workspace/index.js", async (importOriginal) =>
   S.wrap(await importOriginal<Record<string, unknown>>()),
@@ -120,6 +125,7 @@ describe("Typing the class name does not re-run the model builders", () => {
       armamentEntries: 0,
       systemsModel: 0,
       colonialServiceModel: 0,
+      previewOptionFeedback: 0,
     });
   });
 
@@ -166,6 +172,17 @@ describe("Typing the class name does not re-run the model builders", () => {
     typeClassName();
     expect(callsOf("systemsModel")).toHaveLength(0);
     expect(callsOf("colonialServiceModel")).toHaveLength(0);
+  });
+
+  it("compiles no option preview while the picker sections are open and untouched", () => {
+    render(<ShipbuildingWorkspace />);
+    resetCounts();
+    openSection("Hull");
+    openSection("Protection");
+    openSection("Armament");
+    openTab("Main battery");
+    typeClassName();
+    expect(callsOf("previewOptionFeedback")).toHaveLength(0);
   });
 
   it("re-runs the overview builder when the technology month changes", () => {
