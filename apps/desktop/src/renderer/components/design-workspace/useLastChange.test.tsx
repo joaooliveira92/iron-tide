@@ -1,6 +1,20 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 import type { DraftEdit } from "@bluewave/ship-design";
+
+const builds = vi.hoisted(() => ({ count: 0 }));
+
+vi.mock("@bluewave/ship-design", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@bluewave/ship-design")>();
+  return {
+    ...actual,
+    buildWorkshopView: (...args: Parameters<typeof actual.buildWorkshopView>) => {
+      builds.count += 1;
+      return actual.buildWorkshopView(...args);
+    },
+  };
+});
+
 import { useDesignSession } from "./useDesignSession.js";
 
 function morePower(kw: number): DraftEdit {
@@ -80,9 +94,14 @@ describe("last change after a committed edit", () => {
 
   it("does not compile again while the strip is read", () => {
     const { result, rerender, kw } = firstEdit();
+    const beforeEdit = builds.count;
     act(() => result.current.actions.edit(morePower(Math.round(kw * 1.3))));
+    expect(builds.count).toBeGreaterThan(beforeEdit);
     const view = result.current.state.view;
+    const afterEdit = builds.count;
     rerender();
+    rerender();
+    expect(builds.count).toBe(afterEdit);
     expect(result.current.state.view).toBe(view);
     expect(result.current.lastChange?.feedback.hashAfter).toBe(view.compiled.hash);
   });
