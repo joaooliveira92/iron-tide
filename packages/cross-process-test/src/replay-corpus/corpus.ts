@@ -244,7 +244,9 @@ function productionEvents(): EventEngineContent | undefined {
   return catalogue.length === 0 ? undefined : { rules: decoded.value, catalogue };
 }
 
+let answerPrestigeCodes: ReadonlySet<string> | undefined;
 export function eventAnswerPrestigeReasonCodes(): ReadonlySet<string> {
+  if (answerPrestigeCodes !== undefined) return answerPrestigeCodes;
   const codes = new Set<string>();
   for (const event of productionEvents()?.catalogue ?? []) {
     for (const answer of event.answers) {
@@ -252,6 +254,7 @@ export function eventAnswerPrestigeReasonCodes(): ReadonlySet<string> {
       if (prestige !== undefined) codes.add(prestige.reasonCode);
     }
   }
+  answerPrestigeCodes = codes;
   return codes;
 }
 
