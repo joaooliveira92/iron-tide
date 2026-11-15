@@ -157,6 +157,7 @@ function month(
   } as CampaignSnapshot;
   return {
     next,
+    success: result.success,
     collector,
     draws: result.randomLedger.all.filter((d) => d.streamId === "diplomacy/peace_proposal"),
   };
@@ -288,6 +289,33 @@ describe("accepting an AI peace offer", () => {
     const { next } = month(start, options(), [accept]);
     expect(next.wars.wars[0]!.status).toBe("ENDED");
   });
+
+  it("AcceptPeace with no pending offer is refused with PEACE_REFUSED when the AI leads by the margin", () => {
+    const start = snapshot(0, 30);
+    const accept = command(start, { type: "AcceptPeace", nationId: "GBR", warId: WAR_ID });
+    const { next, collector, success } = month(start, options(), [accept]);
+    expect(success).toBe(true);
+    expect(next.wars.wars[0]!.status).toBe("ACTIVE");
+    const refusal = collector.all.find((d) => d.code === "PEACE_REFUSED");
+    expect(refusal?.message).toContain("PROPOSER_TRAILS_BY_MARGIN");
+    expect(refusal?.entityId).toBe(WAR_ID);
+  });
+
+  it("AcceptPeace with no pending offer ends the war when the AI does not lead by the margin", () => {
+    const start = snapshot(10, 0);
+    const accept = command(start, { type: "AcceptPeace", nationId: "GBR", warId: WAR_ID });
+    const { next, collector } = month(start, options(), [accept]);
+    expect(next.wars.wars[0]!.status).toBe("ENDED");
+    expect(collector.all.some((d) => d.code === "PEACE_REFUSED")).toBe(false);
+  });
+
+  it("AcceptPeace with no pending offer stays unconditional without a peaceBehaviour section", () => {
+    const start = snapshot(0, 30);
+    const accept = command(start, { type: "AcceptPeace", nationId: "GBR", warId: WAR_ID });
+    const { next, collector } = month(start, options({ peaceBehaviour: undefined }), [accept]);
+    expect(next.wars.wars[0]!.status).toBe("ENDED");
+    expect(collector.all.some((d) => d.code === "PEACE_REFUSED")).toBe(false);
+  });
 });
 
 describe("player peace proposals under AI consent", () => {
@@ -301,7 +329,8 @@ describe("player peace proposals under AI consent", () => {
 
   it("refuses with PEACE_REFUSED and the reason code when the AI is winning", () => {
     const start = snapshot(0, 30);
-    const { next, collector } = month(start, options(), [propose(start)]);
+    const { next, collector, success } = month(start, options(), [propose(start)]);
+    expect(success).toBe(true);
     expect(next.wars.wars[0]!.status).toBe("ACTIVE");
     const refusal = collector.all.find((d) => d.code === "PEACE_REFUSED");
     expect(refusal?.message).toContain("PROPOSER_TRAILS_BY_MARGIN");
