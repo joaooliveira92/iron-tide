@@ -256,7 +256,7 @@ export const EN_US_MESSAGES = {
   "shell.prestige.careerSacked": "{score} — sacked",
   "shell.prestige.careerCampaignEnd": "{score} — campaign ended",
   "shell.prestige.description":
-    "Your standing as Grand Admiral. Defeats and unpaid funds lower it, victories raise it; at {threshold} or below you risk dismissal.",
+    "Your standing as Grand Admiral. Defeats, unpaid funds and stations left short of ships lower it, victories raise it; at {threshold} or below you risk dismissal.",
   "shell.prestige.lastChange": "Last change: {delta} ({reason}, {month}).",
   "shell.prestige.riskNote": "At or below {threshold} there is a monthly chance of being sacked.",
   ...PRESTIGE_REASON_MESSAGES,
