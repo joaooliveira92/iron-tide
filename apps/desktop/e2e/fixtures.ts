@@ -177,15 +177,20 @@ type HarnessFixtures = { e2e: E2EHarness };
 type WorkerFixtures = {
   campaignTemplate: string;
   advancedCampaignTemplate: string;
+  passiveCampaignTemplate: string;
 };
 
-async function compileTemplate(months: number): Promise<{ dir: string; root: string }> {
+async function compileTemplate(
+  months: number,
+  nation?: string,
+): Promise<{ dir: string; root: string }> {
   const root = await mkdtemp(join(tmpdir(), "bluewave-template-"));
   const dir = join(root, "package");
   const harness = await launchHarness({ saveDir: dir });
   try {
     await startNewCampaign(harness.page, {
       seed: SEED,
+      ...(nation === undefined ? {} : { nation }),
       fleetMethod: "Curated Historical-Inspired Fleet",
     });
     await expectOverview(harness.page);
@@ -211,6 +216,15 @@ export const test = base.extend<HarnessFixtures, WorkerFixtures>({
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
       const { dir, root } = await compileTemplate(1);
+      await use(dir);
+      await rm(root, { recursive: true, force: true }).catch(() => {});
+    },
+    { scope: "worker" },
+  ],
+  passiveCampaignTemplate: [
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, use) => {
+      const { dir, root } = await compileTemplate(0, "German Empire");
       await use(dir);
       await rm(root, { recursive: true, force: true }).catch(() => {});
     },

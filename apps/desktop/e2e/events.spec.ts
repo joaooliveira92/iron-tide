@@ -5,10 +5,10 @@ const MAX_MONTHS = 36;
 
 test("a monthly event dilemma is answered and its prestige change is explained", async ({
   e2e,
-  campaignTemplate,
+  passiveCampaignTemplate,
 }) => {
   const page = e2e.page;
-  await openCampaign(e2e, campaignTemplate);
+  await openCampaign(e2e, passiveCampaignTemplate);
   const calendar = page.getByText(/^Bluewave — [A-Za-z]+ \d{4}$/).first();
   const dilemma = page.getByRole("alertdialog");
 
