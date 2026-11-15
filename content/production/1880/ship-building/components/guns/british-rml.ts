@@ -1,12 +1,12 @@
 // Ship-building component catalogue: British muzzle-loading (RML) ordnance.
-// Source of record: docs/research/ship-building-1880-pre-era-armament.md. Confidence labels
+// Source of record: Research index #456 [ship-building-1880-pre-era-armament, not migrated]. Confidence labels
 // (VERIFIED / SINGLE-SOURCE / ESTIMATE / UNVERIFIED) are kept beside each record; an
 // unsourced figure is marked as such on its own line.
 // Units: kg, mm, litres, kW, budget micro-units, bp. Formulas use the restricted grammar of
 // @bluewave/ship-design. Every component id is unique across this directory; the compiler
 // discovers nothing on its own: pack.json's `shipBuilding.shipComponents` lists every file.
 // --- Pre-1880 ordnance (guns in service by January 1880) -------------------------------------------------------------------
-// Source of record: docs/research/ship-building-1880-pre-era-armament.md. Masses, charges, projectiles and muzzle velocity of
+// Source of record: Research index #456 [ship-building-1880-pre-era-armament, not migrated]. Masses, charges, projectiles and muzzle velocity of
 // the British RMLs are VERIFIED from Mackinlay, Text Book of Gunnery 1887, Table XVI (primary); penetration is Brassey's Naval
 // Annual 1886 French Commission table (point-blank, wrought iron). Mount masses and rates of fire are ESTIMATE (no source).
 // `requires: []` because these muzzle-loaders predate the breech-loading technology; the introduction month gates them to 1880+.
@@ -547,7 +547,7 @@ export default defineShipComponentCatalogue([
     maintenanceMonthlyBp: 20,
   }),
   // Spanish Armstrong 10-inch 12-ton 300-pdr RML (*Numancia*, *Vitoria*). A DISTINCT gun from gun_rml_10in_18ton: 12 tons and
-  // a 300 lb shell, not 18 tons and 400 lb (docs/...-followups.md §1). Charge/MV ESTIMATE.
+  // a 300 lb shell, not 18 tons and 400 lb (Research index #456 [ship-building-1880-coast-defence-followups, not migrated] §1). Charge/MV ESTIMATE.
   defineShipComponent({
     id: "gun_rml_10in_12ton_300pdr",
     displayName: "RML 10-inch 12-ton 300-pdr (Armstrong) in broadside",

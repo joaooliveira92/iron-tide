@@ -130,7 +130,7 @@ describe("production pack (content/production/1880) full loop", () => {
   });
 });
 
-describe("P-1 AC-3: 1880 roster torpedo armament (docs/research/p1-1880-torpedo-armament.md)", () => {
+describe("P-1 AC-3: 1880 roster torpedo armament (Research index #456: p1-1880-torpedo-armament, not migrated)", () => {
   it("compiles the as-built tube counts and leaves unsourced/post-1880 fits unarmed", () => {
     const { state } = compileProductionPack();
     const tubes = (id: string): number =>
@@ -472,6 +472,7 @@ describe("T-1 09 (#118): the battle-offer section is configured on the productio
     declineCounter: { threshold: 3, scope: "WAR", reset: { kind: "ON_WAR_END" } },
     enemyDecline: { comparison: "LESS_THAN", thresholdBp: 5_000, probabilityBp: 5_000 },
     supportForce: { presenceChanceBp: 2_000, shareOfCapBp: 5_000, source: "ALLIED_ONLY" },
+    engagementMinimumStrength: { fleetBattle: 15, cruiserBattle: 8 },
     declinedBattlePrestige: {
       rule: { kind: "PROPORTIONAL_LOSS", basisPoints: 300 },
       repeat: "EACH_FURTHER_DECLINE",

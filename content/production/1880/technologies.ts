@@ -1166,7 +1166,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1981",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: no design carries radar, so it has no effect on gunnery or detection (#279); see .ai/reports/e-1-era-mechanics-audit.md.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: no design carries radar, so it has no effect on gunnery or detection (#279); see .ai/reports/e-1-era-mechanics-audit.md.",
     },
   },
   {
@@ -1195,7 +1195,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1981",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from rad_search_radar, the nearest existing technology. Inert in the engine: no design carries radar, so it has no effect on gunnery (#279); see .ai/reports/e-1-era-mechanics-audit.md.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from rad_search_radar, the nearest existing technology. Inert in the engine: no design carries radar, so it has no effect on gunnery (#279); see .ai/reports/e-1-era-mechanics-audit.md.",
     },
   },
   {
@@ -1221,7 +1221,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1981",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from rad_gunnery_fire_control_radar, the nearest existing technology. Inert in the engine: no blind-fire rule exists (#279); see .ai/reports/e-1-era-mechanics-audit.md.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from rad_gunnery_fire_control_radar, the nearest existing technology. Inert in the engine: no blind-fire rule exists (#279); see .ai/reports/e-1-era-mechanics-audit.md.",
     },
   },
   {
@@ -1247,7 +1247,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1983",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: campaign battles run no air defence (#280); see .ai/reports/e-1-era-mechanics-audit.md.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: campaign battles run no air defence (#280); see .ai/reports/e-1-era-mechanics-audit.md.",
     },
   },
   {
@@ -1273,7 +1273,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1983",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: campaign battles run no air defence and designs carry no radar (#279, #280); see .ai/reports/e-1-era-mechanics-audit.md.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: campaign battles run no air defence and designs carry no radar (#279, #280); see .ai/reports/e-1-era-mechanics-audit.md.",
     },
   },
   {
@@ -1299,7 +1299,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1983",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from gun_quadruple_turret, the nearest existing technology.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from gun_quadruple_turret, the nearest existing technology.",
     },
   },
   {
@@ -1325,7 +1325,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1986",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from gun_quadruple_turret, the nearest existing technology.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from gun_quadruple_turret, the nearest existing technology.",
     },
   },
   {
@@ -1351,7 +1351,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1983",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from torp_improved_long_range, the nearest existing technology.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from torp_improved_long_range, the nearest existing technology.",
     },
   },
   {
@@ -1377,7 +1377,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "R. Gardiner (ed.)",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from m_asw_improved_contact_mine, the nearest existing technology. Inert in the engine: the engine reads other mine technology ids and mines are outside campaign battles (#278, #282); see .ai/reports/e-1-era-mechanics-audit.md.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from m_asw_improved_contact_mine, the nearest existing technology. Inert in the engine: the engine reads other mine technology ids and mines are outside campaign battles (#278, #282); see .ai/reports/e-1-era-mechanics-audit.md.",
     },
   },
   {
@@ -1403,7 +1403,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 2006",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from m_asw_improved_contact_mine, the nearest existing technology. Inert in the engine: no surface anti-submarine weapon model exists (#282); see .ai/reports/e-1-era-mechanics-audit.md.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from m_asw_improved_contact_mine, the nearest existing technology. Inert in the engine: no surface anti-submarine weapon model exists (#282); see .ai/reports/e-1-era-mechanics-audit.md.",
     },
   },
   {
@@ -1429,7 +1429,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "R. Gardiner (ed.)",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from sub_fleet_ocean_boat, the nearest existing technology. Inert in the engine: submarines are outside campaign battles (#282); see .ai/reports/e-1-era-mechanics-audit.md.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from sub_fleet_ocean_boat, the nearest existing technology. Inert in the engine: submarines are outside campaign battles (#282); see .ai/reports/e-1-era-mechanics-audit.md.",
     },
   },
   {
@@ -1455,7 +1455,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "R. Gardiner (ed.)",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from hc_thickened_belt_deck, the nearest existing technology.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from hc_thickened_belt_deck, the nearest existing technology.",
     },
   },
   {
@@ -1482,7 +1482,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           page: "121-123",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: the engine reads other jet technology ids and campaign battles run no air groups (#278, #280); see .ai/reports/e-1-era-mechanics-audit.md.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: the engine reads other jet technology ids and campaign battles run no air groups (#278, #280); see .ai/reports/e-1-era-mechanics-audit.md.",
     },
   },
   {
@@ -1509,7 +1509,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           page: "121-123",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. ADR-0312 gives it a combat consumer for all three SSM launcher parts.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. ADR-0312 gives it a combat consumer for all three SSM launcher parts.",
     },
   },
   {
@@ -1541,7 +1541,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           page: "121-123",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from m_asw_ahead_throwing, the nearest existing technology. The dossier year is 1952; the community anchor of 1955 for enhanced sonar overrides it (ADR-0283 D2).",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from m_asw_ahead_throwing, the nearest existing technology. The dossier year is 1952; the community anchor of 1955 for enhanced sonar overrides it (ADR-0283 D2).",
     },
   },
   {
@@ -1567,7 +1567,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1986",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from sub_snorkel, the nearest existing technology.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from sub_snorkel, the nearest existing technology.",
     },
   },
   {
@@ -1593,7 +1593,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "R. Gardiner (ed.)",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mac_improved_geared_turbines, the nearest existing technology.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from mac_improved_geared_turbines, the nearest existing technology.",
     },
   },
   {
@@ -1619,7 +1619,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1983",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from torp_acoustic_homing, the nearest existing technology.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from torp_acoustic_homing, the nearest existing technology.",
     },
   },
   {
@@ -1645,7 +1645,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "R. Gardiner (ed.)",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from sd_fast_battleship_design, the nearest existing technology. The sources pin only the decade, so 1955 is a balance target (ADR-0283 D3h).",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from sd_fast_battleship_design, the nearest existing technology. The sources pin only the decade, so 1955 is a balance target (ADR-0283 D3h).",
     },
   },
   {
@@ -1677,7 +1677,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           page: "121-123",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from av_carrier_jet, the nearest existing technology. Year is the community anchor for carrier size limit and angled decks (ADR-0283 D2).",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from av_carrier_jet, the nearest existing technology. Year is the community anchor for carrier size limit and angled decks (ADR-0283 D2).",
     },
   },
   {
@@ -1709,7 +1709,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           page: "121-123",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from av_carrier_jet, the nearest existing technology. Year is the community anchor for the 30-knot carrier jet conversion with steam catapults (ADR-0283 D2).",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from av_carrier_jet, the nearest existing technology. Year is the community anchor for the 30-knot carrier jet conversion with steam catapults (ADR-0283 D2).",
     },
   },
   {
@@ -1735,7 +1735,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1983",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology.",
     },
   },
   {
@@ -1767,7 +1767,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           page: "121-123",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for quadruple heavy SSM launchers (ADR-0283 D2).",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for quadruple heavy SSM launchers (ADR-0283 D2).",
     },
   },
   {
@@ -1799,7 +1799,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           page: "121-123",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for cruise missiles (ADR-0283 D2); the dossier year for data link is 1960 as well.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for cruise missiles (ADR-0283 D2); the dossier year for data link is 1960 as well.",
     },
   },
   {
@@ -1825,7 +1825,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           author: "N. Friedman, 1983",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology.",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology.",
     },
   },
   {
@@ -1857,7 +1857,7 @@ export default list(TechnologyPrerequisiteChainSchema, [
           page: "121-123",
         },
       ],
-      note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for quadruple medium SSM launchers; it overrides the 1967 historical-analogue date of the first medium anti-ship missile (ADR-0283 D2).",
+      note: "ADR-0283 D2 and D5. Year from Research discussion #438; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for quadruple medium SSM launchers; it overrides the 1967 historical-analogue date of the first medium anti-ship missile (ADR-0283 D2).",
     },
   },
   {

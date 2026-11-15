@@ -245,4 +245,45 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
       },
     ],
   },
+  {
+    id: "production-1880-5m-peace-offer-accepted",
+    seed: "replay-corpus-peace-offer",
+    months: 5,
+    playerNationId: "austria_hungary",
+    setup: "armed-adriatic-war",
+    purpose:
+      "Austria-Hungary beats Italy past the peace margin: Italy's status-quo offer is drawn with its reason code, then the player accepts it and the war ends.",
+    commands: [
+      {
+        month: 1,
+        body: { type: "DeclareWar", nationId: "austria_hungary", targetNationId: "italy" },
+      },
+      {
+        month: 1,
+        body: {
+          type: "MoveFleet",
+          nationId: "austria_hungary",
+          fleetId: "fleet_aut_adriatic",
+          toAreaId: "sea_mediterranean_c",
+        },
+      },
+      {
+        month: 2,
+        body: {
+          type: "MoveFleet",
+          nationId: "austria_hungary",
+          fleetId: "fleet_aut_adriatic",
+          toAreaId: "ita_tyrrhenian_coast",
+        },
+      },
+      {
+        month: 5,
+        body: {
+          type: "AcceptPeace",
+          nationId: "austria_hungary",
+          warId: "war_austria_hungary_italy_1880-01",
+        },
+      },
+    ],
+  },
 ];

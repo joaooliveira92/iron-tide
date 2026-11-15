@@ -88,4 +88,45 @@ export default list(EventSchema, [
     ],
     provenance,
   },
+  {
+    id: "foreign_advisers_contract",
+    titleKey: "event.foreign_advisers_contract.title",
+    bodyKey: "event.foreign_advisers_contract.body",
+    gates: { governmentTypes: ["eastern"] },
+    weightBp: 80,
+    cooldownMonths: 48,
+    once: false,
+    defaultAnswerId: "renew_a_small_mission",
+    answers: [
+      {
+        id: "engage_a_full_mission",
+        stance: "hawk",
+        labelKey: "event.foreign_advisers_contract.answer.engage_a_full_mission",
+        effects: {
+          budgetBp: 300,
+          unrest: 1,
+          prestige: { kind: "FIXED_GAIN", amount: 1, reasonCode: "FOREIGN_MISSION_ENGAGED" },
+          tension: { counterpart: "highest_tension_rival", delta: 1 },
+        },
+      },
+      {
+        id: "dismiss_the_advisers",
+        stance: "dove",
+        labelKey: "event.foreign_advisers_contract.answer.dismiss_the_advisers",
+        effects: {
+          budgetBp: -200,
+          unrest: 0,
+          prestige: { kind: "FIXED_LOSS", amount: 1, reasonCode: "FOREIGN_MISSION_DISMISSED" },
+          tension: { counterpart: "highest_tension_rival", delta: -1 },
+        },
+      },
+      {
+        id: "renew_a_small_mission",
+        stance: "neutral",
+        labelKey: "event.foreign_advisers_contract.answer.renew_a_small_mission",
+        effects: { budgetBp: 0, unrest: 0 },
+      },
+    ],
+    provenance,
+  },
 ]);

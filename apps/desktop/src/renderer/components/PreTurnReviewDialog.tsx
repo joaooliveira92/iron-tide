@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronsRight, OctagonAlert } from "lucide-react";
 
-import { advanceMonth } from "@bluewave/campaign";
+import { advanceMonth } from "@bluewave/campaign/timeline";
 import type { StrategicPriority } from "@bluewave/campaign-engine";
 
 import { cn } from "../lib/utils.js";

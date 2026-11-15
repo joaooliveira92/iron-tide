@@ -87,8 +87,14 @@ export const BattleOfferDeclinedPrestigeSchema = Schema.Struct({
   repeat: Schema.Literals(["ONCE_AT_THRESHOLD", "EACH_FURTHER_DECLINE"]),
 });
 
+export const BattleEngagementMinimumStrengthSchema = Schema.Struct({
+  fleetBattle: positiveInt,
+  cruiserBattle: positiveInt,
+});
+
 export const BattleOfferRulesSchema = Schema.Struct({
   sectionVersion: Schema.Literal(1),
+  engagementMinimumStrength: Schema.optional(BattleEngagementMinimumStrengthSchema),
   estimateModel: BattleOfferEstimateModelSchema,
   declineVictoryPoints: BattleOfferDeclineVictoryPointsSchema,
   declineCounter: BattleOfferDeclineCounterSchema,

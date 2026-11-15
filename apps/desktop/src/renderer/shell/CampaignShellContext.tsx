@@ -3,7 +3,7 @@ import { BluewaveError } from "@bluewave/contracts";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { ActiveCampaignCurrencyContext } from "../lib/presentation-format/index.js";
 import type { useCampaignShell } from "./useCampaignShell.js";
-import { useCampaignShell as useCampaignShellState } from "./useCampaignShell.js";
+import { useCampaignShell as useCampaignShellModel } from "./useCampaignShell.js";
 import type { LeaveGuard, LeaveTarget } from "./campaign-screen-types.js";
 
 type CampaignShell = ReturnType<typeof useCampaignShell>;
@@ -63,7 +63,7 @@ export function CampaignShellProvider({
   readonly bridge: BluewaveDesktopBridge | undefined;
   readonly children: ReactNode;
 }) {
-  const shell = useCampaignShellState(bridge);
+  const shell = useCampaignShellModel(bridge);
   const state = useMemo(
     () => ({
       campaign: shell.campaign,
@@ -157,6 +157,16 @@ export function useCampaignShellActions(): CampaignShellContextValue["actions"] 
     });
   }
   return actions;
+}
+
+export function useCampaignShellState(): CampaignShellContextValue["state"] {
+  const state = use(CampaignShellStateContext);
+  if (state === null) {
+    throw new BluewaveError("CAMPAIGN_SHELL_STATE_MISSING", {
+      hook: "useCampaignShellState",
+    });
+  }
+  return state;
 }
 
 export function useCampaignShellContext(): CampaignShellContextValue {

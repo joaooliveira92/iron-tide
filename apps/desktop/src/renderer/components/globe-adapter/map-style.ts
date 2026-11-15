@@ -52,12 +52,17 @@ function featureCollection(features: readonly OverlayFeature[]): GeoJSON.Feature
   };
 }
 
-export function markerCollection(snapshot: OverlaySnapshot): GeoJSON.FeatureCollection {
-  return featureCollection(snapshot.features.filter((feature) => feature.kind === "marker"));
-}
-
-export function routeCollection(snapshot: OverlaySnapshot): GeoJSON.FeatureCollection {
-  return featureCollection(snapshot.features.filter((feature) => feature.kind === "route"));
+export function overlayCollections(snapshot: OverlaySnapshot): {
+  readonly markers: GeoJSON.FeatureCollection;
+  readonly routes: GeoJSON.FeatureCollection;
+} {
+  const markers: OverlayFeature[] = [];
+  const routes: OverlayFeature[] = [];
+  for (const feature of snapshot.features) {
+    if (feature.kind === "marker") markers.push(feature);
+    else if (feature.kind === "route") routes.push(feature);
+  }
+  return { markers: featureCollection(markers), routes: featureCollection(routes) };
 }
 
 function mapSources(plan: BakedLandPlan): Record<string, SourceSpecification> {

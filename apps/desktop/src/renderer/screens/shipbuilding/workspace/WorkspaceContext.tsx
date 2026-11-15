@@ -17,15 +17,17 @@ const MetaContext = createContext<ShipbuildingMeta | null>(null);
 export interface ShipbuildingProviderProps {
   readonly sessionId?: string;
   readonly projects?: readonly RevisionProject[];
+  readonly catalogue?: readonly RevisionProject[];
   readonly children: ReactNode;
 }
 
 export function ShipbuildingProvider({
   sessionId,
   projects = [],
+  catalogue,
   children,
 }: ShipbuildingProviderProps) {
-  const session = useWorkspaceSession(sessionId, projects);
+  const session = useWorkspaceSession(sessionId, projects, catalogue);
   const navigation = useWorkspaceNavigation(session);
   const state = session.state;
   const actions = useMemo(

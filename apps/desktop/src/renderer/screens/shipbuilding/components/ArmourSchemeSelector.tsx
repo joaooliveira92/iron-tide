@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { DraftEdit } from "@bluewave/ship-design";
+import { DeltaPreview } from "../../../components/design-workspace/DeltaPreview.js";
+import { useOptionPreview } from "../../../components/design-workspace/useOptionPreview.js";
 import { Badge } from "../../../components/ui/badge.js";
 import { Button } from "../../../components/ui/button.js";
 import { schemeEdit, type ProtectionModel, type SchemeChoice } from "../protection-view.js";
@@ -41,6 +43,12 @@ export function ArmourSchemeSelector({
   readonly edit: (e: DraftEdit) => void;
 }) {
   const [picked, setPicked] = useState<SchemeChoice["id"] | null>(null);
+  const preview = useOptionPreview((id) => {
+    const scheme = model.schemes.find((s) => s.id === id);
+    return scheme === undefined || scheme.active || scheme.locked
+      ? null
+      : schemeEdit(model, scheme.id);
+  });
   const shown = model.schemes.find((s) => s.id === picked) ?? model.schemes.find((s) => s.active);
   const apply = () => {
     if (shown === undefined) return;
@@ -63,6 +71,10 @@ export function ArmourSchemeSelector({
               aria-pressed={shown?.id === s.id}
               disabled={s.locked}
               onClick={() => setPicked(s.id)}
+              onMouseEnter={() => preview.setActive(s.id)}
+              onMouseLeave={() => preview.setActive(null)}
+              onFocus={() => preview.setActive(s.id)}
+              onBlur={() => preview.setActive(null)}
             >
               {s.label}
               {s.locked && (
@@ -74,6 +86,7 @@ export function ArmourSchemeSelector({
           </li>
         ))}
       </ul>
+      <DeltaPreview deltas={preview.deltas} label="Effect of the highlighted scheme" />
       {shown !== undefined && (
         <div className="flex flex-wrap items-center gap-3">
           <SchemeDiagramView diagram={shown.diagram} />

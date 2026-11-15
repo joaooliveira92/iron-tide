@@ -11,6 +11,7 @@ import { drawHull } from "./draw-hull.js";
 import { drawMasts } from "./draw-masts.js";
 import { drawSlipway } from "./draw-slipway.js";
 import { drawSuperstructure } from "./draw-superstructure.js";
+import { drawWaterline } from "./draw-waterline.js";
 import { drawWeapons } from "./draw-weapons.js";
 
 export type {
@@ -35,6 +36,7 @@ export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
   };
   stage("slipway", drawSlipway);
   stage("hull", drawHull);
+  stage("waterline", (target) => drawWaterline(target, input.view));
   stage("deck", drawDeck);
   stage("mast", drawMasts);
   stage("armour", drawArmour);

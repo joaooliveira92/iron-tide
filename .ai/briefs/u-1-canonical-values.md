@@ -26,7 +26,7 @@ hashes.
   en-US fallback is complete.
 - Supporting ADRs: 0202, 0203, 0206, 0207, 0208, 0209, 0211; DESIGN-22 §2.
 - Spec: `.scratch/u-1-canonical-values/spec.md` (map `D1`-`D7`); research:
-  `docs/research/u-1-canonical-values.md`.
+  `Research discussion #453`.
 
 ## Starting state
 

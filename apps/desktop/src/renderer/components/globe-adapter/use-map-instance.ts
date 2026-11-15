@@ -18,7 +18,7 @@ import { DisposalRegistry } from "./disposal.js";
 import { FLEET_GLYPH_ID, buildFleetGlyph } from "./fleet-glyph.js";
 import { adapterFailureRequested, type AdapterLandMode } from "./globe-adapter-flag.js";
 import { attachMapPointer, mapHealth } from "./map-pointer.js";
-import { buildStyle, markerCollection, routeCollection } from "./map-style.js";
+import { buildStyle, overlayCollections } from "./map-style.js";
 import { OverlayStore } from "./overlay-store.js";
 import {
   NATURAL_EARTH_HIERARCHY,
@@ -178,8 +178,9 @@ export function useMapInstance({
       const snapshot = store.snapshot();
       const markers = active.getSource("adapter-markers") as GeoJSONSource | undefined;
       const routes = active.getSource("adapter-routes") as GeoJSONSource | undefined;
-      void markers?.setData(markerCollection(snapshot));
-      void routes?.setData(routeCollection(snapshot));
+      const collections = overlayCollections(snapshot);
+      void markers?.setData(collections.markers);
+      void routes?.setData(collections.routes);
     });
     disposal.add(unsubscribe);
     const unsubscribeVisibility = store.subscribeVisibility((change) => {

@@ -19,7 +19,7 @@ function fixture() {
   mkdirSync(join(dir, "packages", "a", "src"), { recursive: true });
   mkdirSync(join(dir, "packages", "a", "test"), { recursive: true });
   mkdirSync(join(dir, "golden"), { recursive: true });
-  writeFileSync(join(dir, "golden", "hashes.json"), "{}\n");
+  writeFileSync(join(dir, "golden", "replay-approvals.json"), "{}\n");
   writeFileSync(
     join(dir, "packages", "a", "package.json"),
     `${JSON.stringify(
@@ -86,7 +86,10 @@ void test("agent:map resolves a path with spaces and reports ownership, tests an
       "pnpm --filter @bluewave/a build",
       "pnpm --filter @bluewave/a test",
     ]);
-    assert.deepEqual(report.goldens, ["golden/hashes.json", "docs/agents/golden-repin.md"]);
+    assert.deepEqual(report.goldens, [
+      "golden/replay-approvals.json",
+      "docs/agents/replay-corpus.md",
+    ]);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

@@ -54,11 +54,9 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 
 - `license-check.cjs` (`check:licenses`) — deny strong-copyleft/source-available prod licences.
 - `run-heavy-tests.mjs` (`test:heavy`) — heavy phase-engine suites, bounded workers.
-- `verify-golden-hashes.cjs` (`check:golden`) — reference run matches `golden/hashes.json`.
 - `verify-cross-process-determinism.cjs` (`check:determinism`) — child hash reports byte-identical.
 - `verify-equivalence-determinism.mjs` (`check:equivalence`) — equivalence/part-build SHA-256 stable (SPM-R24).
 - `verify-replay-corpus.mjs` (`check:replay-corpus`) — replays verified twice, identical output.
-- `verify-golden-repin.mjs` (`check:golden-repin`) — authoritative edits re-pin golden or carry `Golden-Repin: not-needed`.
 - `check-balance-reports.cjs` (`check:balance-reports`) — committed reports match the regenerated ones.
 
 ## Manual tools
@@ -72,14 +70,13 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `optimize-artwork.mjs` — regenerate downscaled AVIF card artwork (macOS `sips`).
 - `sweep-comments.mjs` (`pnpm sweep:comments [--apply]`) — deterministic comment/banner sweep, dry-run.
 - `vendor-effect-sync.mjs` (`[--verify]`) — regenerate/verify vendored Effect artifacts.
-- `regenerate-golden-hashes.cjs` — re-bake `golden/hashes.json` ([golden repinning](../docs/agents/golden-repinning.md)).
 - `release-signing-wizard.sh` — guided release signing ([desktop signing](../docs/delivery/desktop-signing.md)).
 
 ## Fixtures and support
 
 `scripts/test/` (`pnpm test:scripts`, Node's test runner) covers the gates.
 Tracked inputs: `doc-budgets.manifest.json`, `no-unknown-casts.baseline.json`,
-`authoritative-determinism.baseline.json`, `golden-repin.baseline`,
+`authoritative-determinism.baseline.json`,
 `lib/doc-anchors.cjs`, `vitest-shared.mjs`.
 
 New scripts: fail closed, own your fixtures, wire into a hook

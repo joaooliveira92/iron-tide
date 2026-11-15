@@ -83,6 +83,11 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
   const rows = useMemo(() => stationRows(state.divisions, areaName), [state.divisions, areaName]);
   const selected = useMemo(() => pruneSelection(selection, rows), [selection, rows]);
 
+  const toggle = useCallback(
+    (shipId: string) => setSelection((current) => toggleSelection(current, shipId)),
+    [],
+  );
+
   const send = useCallback(
     (intent: StationAssignmentIntent): Promise<CommandOutcome> => {
       if (!bridge || selected.length === 0) return Promise.resolve("transport-failure");
@@ -146,7 +151,7 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
     busy: state.pendingRequest !== null || state.requiresRefresh,
     request: workflow.request,
     loadScreen: workflow.loadScreen,
-    toggle: (shipId) => setSelection((current) => toggleSelection(current, shipId)),
+    toggle,
     send,
     sendReadiness,
   };

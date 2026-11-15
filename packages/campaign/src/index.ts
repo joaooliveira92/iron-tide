@@ -90,6 +90,7 @@ export type {
 } from "./state.js";
 export { isShipOperational } from "./state.js";
 export type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
+export type { PeaceOffer } from "./peaceOffer.js";
 export { BattleAbsenceSchema, type BattleAbsence } from "./battleAbsence.js";
 export { isSeaArea } from "./seaArea.js";
 export { stationAreaIds } from "./presence.js";

@@ -144,8 +144,10 @@ describe("AI procurement simulation (2 nations × 3 seeds × 3 budgets × 24 mon
     const orders: Record<string, number> = {};
     let totalCost = 0;
     let declines = 0;
+    let decisions = 0;
     let timeline = "";
     for (let m = 0; m < MONTHS; m++) {
+      decisions += 1;
       for (const s of fleet) if (s.status === "BUILDING") s.monthsLeft -= 1;
       for (const s of fleet) if (s.status === "BUILDING" && s.monthsLeft <= 0) s.status = "ACTIVE";
       const view: FleetShipView[] = fleet.map((s) => ({
@@ -161,6 +163,7 @@ describe("AI procurement simulation (2 nations × 3 seeds × 3 budgets × 24 mon
         compilesPerArchetype: 8,
       });
       if (decision.selectedDraft !== null && decision.role !== null) {
+        expect(decision.costUnits ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(budget);
         orders[decision.role] = (orders[decision.role] ?? 0) + 1;
         totalCost += decision.costUnits ?? 0;
         timeline += `${decision.role}:${(decision.selectedDesignId ?? "").slice(-6)}|`;
@@ -172,18 +175,22 @@ describe("AI procurement simulation (2 nations × 3 seeds × 3 budgets × 24 mon
     }
     const finalFleet: Record<string, number> = {};
     for (const s of fleet) finalFleet[s.type] = (finalFleet[s.type] ?? 0) + 1;
-    return { orders, totalCost, decisions: MONTHS, declines, finalFleet, timeline };
+    return { orders, totalCost, decisions, declines, finalFleet, timeline };
   }
 
-  it("never throws, stays affordable, and returns a structured decline when it cannot afford a ship", () => {
-    for (const profile of [uk, france])
-      for (const seed of SEEDS) {
-        const r = simulate(profile, seed, BUDGETS.low);
-        expect(r.decisions).toBe(MONTHS);
-        expect(r.orders).toBeDefined();
-        expect(r.declines).toBeGreaterThan(0);
-      }
-  });
+  const declineCases = [uk, france].flatMap((profile) =>
+    SEEDS.map((seed) => [profile.nationId, seed] as const),
+  );
+  it.each(declineCases)(
+    "never throws, stays affordable, and returns a structured decline when it cannot afford a ship (%s, %s)",
+    (nationId, seed) => {
+      const profile = navalProfiles.find((p) => p.nationId === nationId)!;
+      const r = simulate(profile, seed, BUDGETS.low);
+      expect(r.decisions).toBe(MONTHS);
+      expect(Object.values(r.orders).reduce((a, b) => a + b, 0) + r.declines).toBe(MONTHS);
+      expect(r.declines).toBeGreaterThan(0);
+    },
+  );
 
   it("replays identically for the same (nation, seed, budget)", () => {
     for (const profile of [uk, france]) {

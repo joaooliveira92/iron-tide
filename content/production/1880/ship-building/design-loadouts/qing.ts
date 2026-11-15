@@ -20,7 +20,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 900000,
+        fuelCapacityKg: 810000,
         fuelStationPermille: 480,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -215,14 +215,14 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
                 params: {
                   rounds: 100,
                 },
-                part: "standard_gun_rml_11in_25ton",
+                part: "standard_gun_rml_125in_38ton",
               },
             ],
           },
           id: "main_fwd",
           magazineEntry: "mag_fwd",
           mountCount: 1,
-          part: "gun_rml_11in_25ton_barbette_x2",
+          part: "gun_rml_125in_38ton_turret_x2",
           slot: "forecastle.gun_mount",
           stationPermille: 40,
         },
@@ -411,7 +411,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 700000,
+        fuelCapacityKg: 630000,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -456,14 +456,14 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
                 params: {
                   rounds: 100,
                 },
-                part: "standard_gun_rml_10in_18ton",
+                part: "standard_gun_rml_11in_25ton",
               },
             ],
           },
           id: "main_fwd",
           magazineEntry: "mag_fwd",
           mountCount: 1,
-          part: "gun_rml_10in_18ton_barbette",
+          part: "gun_rml_11in_25ton_barbette",
           slot: "forecastle.gun_mount",
           stationPermille: 40,
         },
@@ -475,14 +475,14 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
                 params: {
                   rounds: 100,
                 },
-                part: "standard_gun_rml_10in_18ton",
+                part: "standard_gun_rml_11in_25ton",
               },
             ],
           },
           id: "main_aft",
           magazineEntry: "mag_aft",
           mountCount: 1,
-          part: "gun_rml_10in_18ton_barbette",
+          part: "gun_rml_11in_25ton_barbette",
           slot: "quarterdeck.gun_mount",
           stationPermille: 940,
         },
@@ -646,7 +646,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 780000,
+        fuelCapacityKg: 702000,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -807,7 +807,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 250000,
+        fuelCapacityKg: 225000,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -969,7 +969,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 130000,
+        fuelCapacityKg: 117000,
         fuelStationPermille: 510,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [

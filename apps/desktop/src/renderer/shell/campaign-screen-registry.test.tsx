@@ -30,7 +30,8 @@ afterEach(() => {
 });
 
 vi.mock("./CampaignShellContext.js", () => ({
-  useCampaignShellContext: () => shell,
+  useCampaignShellState: () => shell.state,
+  useCampaignRevision: () => null,
   useCampaignShellActions: () => shell.actions,
 }));
 

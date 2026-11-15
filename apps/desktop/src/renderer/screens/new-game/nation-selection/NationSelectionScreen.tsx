@@ -165,7 +165,7 @@ export function NationSelectionScreen({
 
         <GlobePanel focusedSlotId={focusedSlotId} onNationClick={handleNationClick} />
 
-        {failure !== null ? (
+        {failure !== null && failure.length > 0 ? (
           <div
             role="alert"
             className="absolute inset-x-0 bottom-4 z-40 mx-auto w-full max-w-md rounded-xl border border-destructive/40 p-4 shadow-2xl backdrop-blur-md"

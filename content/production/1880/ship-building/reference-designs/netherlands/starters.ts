@@ -3,8 +3,8 @@
 // Fittings (magazines, quarters, pumps, ventilation) weigh nothing extra (White 1894, ADR-0083).
 // Matador (1879, in service Jan 1880): Dutch coast-defence monitor, 1,968 t, 7.5 kn, 1 x 2 283 mm Krupp
 // No.1 in a turret, 140 mm side / 305 mm turret wrought iron. Promoted to the Dutch capital (B) starter (ADR-0119),
-// replacing the British doctrine clone. Source: docs/research/ship-building-1880-ships-by-nation.md §6.9; gun:
-// docs/research/ship-building-1880-coast-defence-armament.md §2.1.
+// replacing the British doctrine clone. Source: Research index #456 [ship-building-1880-ships-by-nation, not migrated] §6.9; gun:
+// Research index #456 [ship-building-1880-coast-defence-armament, not migrated] §2.1.
 import { ReferenceDesignSchema, collection } from "@bluewave/content-authoring";
 
 export default collection("designs", ReferenceDesignSchema, [
@@ -226,7 +226,7 @@ export default collection("designs", ReferenceDesignSchema, [
         installedKw: 8000,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 400,
-        fuelCapacityKg: 700000,
+        fuelCapacityKg: 735000,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 450,
         foulingBp: 0,
@@ -277,7 +277,7 @@ export default collection("designs", ReferenceDesignSchema, [
       placements: [
         {
           instanceId: "main_fwd",
-          componentId: "gun_rml_10in_18ton",
+          componentId: "gun_rml_11in_25ton",
           zoneId: "FORECASTLE",
           stationPermille: 40,
           params: {
@@ -288,7 +288,7 @@ export default collection("designs", ReferenceDesignSchema, [
         },
         {
           instanceId: "main_aft",
-          componentId: "gun_rml_10in_18ton",
+          componentId: "gun_rml_11in_25ton",
           zoneId: "QUARTERDECK",
           stationPermille: 940,
           params: {
@@ -405,7 +405,7 @@ export default collection("designs", ReferenceDesignSchema, [
       },
       machinery: {
         plantId: "compound_cylindrical",
-        installedKw: 6200,
+        installedKw: 5900,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 400,
         fuelCapacityKg: 780000,
@@ -537,10 +537,10 @@ export default collection("designs", ReferenceDesignSchema, [
       },
       machinery: {
         plantId: "compound_cylindrical",
-        installedKw: 3500,
+        installedKw: 3300,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 400,
-        fuelCapacityKg: 250000,
+        fuelCapacityKg: 262500,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 450,
         foulingBp: 0,
@@ -673,10 +673,10 @@ export default collection("designs", ReferenceDesignSchema, [
       },
       machinery: {
         plantId: "compound_cylindrical",
-        installedKw: 700,
+        installedKw: 660,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 500,
-        fuelCapacityKg: 130000,
+        fuelCapacityKg: 136500,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 510,
         foulingBp: 0,
@@ -795,10 +795,10 @@ export default collection("designs", ReferenceDesignSchema, [
       },
       machinery: {
         plantId: "compound_cylindrical",
-        installedKw: 2600,
+        installedKw: 2450,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 500,
-        fuelCapacityKg: 900000,
+        fuelCapacityKg: 945000,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 480,
         foulingBp: 0,

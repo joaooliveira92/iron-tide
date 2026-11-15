@@ -1,12 +1,12 @@
 // National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
 // Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
-// target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+// target is labelled `balance_adjustment`. Grounding: Research index #456 [<nation>-naval-profile, not migrated].
 // Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
 // steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
 // Portugal (canonical id "portugal"). The oldest and poorest western-European empire: one small British-built,
 // Krupp-armed coast-defence ironclad plus sloops, colonial gunboats and a spar torpedo boat, guarding Lisbon and
 // the African/Asian colonies with no domestic heavy-gun or armour industry. Non-playable in 1880 but in the
-// scenario. Grounding: docs/research/portugal-naval-profile.md.
+// scenario. Grounding: Research index #456 [portugal-naval-profile, not migrated].
 import { NationNavalProfileSchema, collection } from "@bluewave/content-authoring";
 
 export default collection("navalProfiles", NationNavalProfileSchema, [

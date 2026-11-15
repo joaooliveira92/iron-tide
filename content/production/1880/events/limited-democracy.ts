@@ -89,4 +89,45 @@ export default list(EventSchema, [
     ],
     provenance,
   },
+  {
+    id: "naval_review_invitation",
+    titleKey: "event.naval_review_invitation.title",
+    bodyKey: "event.naval_review_invitation.body",
+    gates: { governmentTypes: ["limited_democracy"] },
+    weightBp: 80,
+    cooldownMonths: 48,
+    once: false,
+    defaultAnswerId: "send_a_small_squadron",
+    answers: [
+      {
+        id: "stage_a_grand_review",
+        stance: "hawk",
+        labelKey: "event.naval_review_invitation.answer.stage_a_grand_review",
+        effects: {
+          budgetBp: 250,
+          unrest: 0,
+          prestige: { kind: "FIXED_GAIN", amount: 1, reasonCode: "GRAND_FLEET_REVIEW" },
+          tension: { counterpart: "highest_tension_rival", delta: 1 },
+        },
+      },
+      {
+        id: "decline_the_invitation",
+        stance: "dove",
+        labelKey: "event.naval_review_invitation.answer.decline_the_invitation",
+        effects: {
+          budgetBp: -100,
+          unrest: 0,
+          prestige: { kind: "FIXED_LOSS", amount: 1, reasonCode: "REVIEW_DECLINED" },
+          tension: { counterpart: "highest_tension_rival", delta: -1 },
+        },
+      },
+      {
+        id: "send_a_small_squadron",
+        stance: "neutral",
+        labelKey: "event.naval_review_invitation.answer.send_a_small_squadron",
+        effects: { budgetBp: 0, unrest: 0 },
+      },
+    ],
+    provenance,
+  },
 ]);

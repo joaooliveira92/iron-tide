@@ -14,6 +14,7 @@ const REPORTS = [
   "docs/research/p1-balance-sweep.md",
   "docs/research/p5-peace-behaviour.md",
   "docs/research/p6-construction-events.md",
+  "docs/research/p7-event-catalogue.md",
 ];
 
 const run = spawnSync(
@@ -83,6 +84,28 @@ if (constructionRun.status !== 0) {
     "balance-report check: the construction events test failed; report cannot be trusted",
   );
   process.exit(constructionRun.status ?? 1);
+}
+
+const eventCatalogueRun = spawnSync(
+  "pnpm",
+  [
+    "--filter",
+    "@bluewave/cross-process-test",
+    "exec",
+    "vp",
+    "test",
+    "run",
+    "test/event-catalogue-balance.test.ts",
+  ],
+  {
+    stdio: "inherit",
+    shell: process.platform === "win32",
+    env: { ...process.env, EVENT_CATALOGUE_REPORT_WRITE: "1" },
+  },
+);
+if (eventCatalogueRun.status !== 0) {
+  console.error("balance-report check: the event catalogue test failed; report cannot be trusted");
+  process.exit(eventCatalogueRun.status ?? 1);
 }
 
 const changed = execFileSync("git", ["diff", "--name-only", "--", ...REPORTS], {

@@ -83,6 +83,20 @@ describe("T-1 battle-offer ruleset section", () => {
     expect(validate([ruleset(withPrestige)]).hasErrors).toBe(false);
   });
 
+  it("accepts an optional engagement minimum strength and rejects non-positive or partial values", () => {
+    expect(
+      invalid(complete({ engagementMinimumStrength: { fleetBattle: 15, cruiserBattle: 8 } })),
+    ).toBe(false);
+    const bad = [
+      { fleetBattle: 0, cruiserBattle: 8 },
+      { fleetBattle: 15, cruiserBattle: 7.5 },
+      { fleetBattle: 15 },
+      { fleetBattle: 15, cruiserBattle: 8, extra: 1 },
+    ];
+    for (const engagementMinimumStrength of bad)
+      expect(invalid(complete({ engagementMinimumStrength }))).toBe(true);
+  });
+
   it("accepts every estimate-model and counter-reset variant", () => {
     for (const estimateModel of [
       { kind: "EXACT", showComposition: true },

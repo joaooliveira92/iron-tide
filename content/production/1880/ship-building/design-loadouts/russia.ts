@@ -226,7 +226,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 900000,
+        fuelCapacityKg: 945000,
         fuelStationPermille: 480,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -376,7 +376,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 700000,
+        fuelCapacityKg: 735000,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -546,7 +546,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 8000,
+            installedKw: 7600,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -729,7 +729,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 6200,
+            installedKw: 6000,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -772,7 +772,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 250000,
+        fuelCapacityKg: 262500,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -934,7 +934,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 130000,
+        fuelCapacityKg: 136500,
         fuelStationPermille: 510,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [

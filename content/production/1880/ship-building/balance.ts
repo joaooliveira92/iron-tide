@@ -31,7 +31,7 @@ export default {
         protected_cruiser_form: 26000,
         coast_defence_form: 15500,
         pre_dreadnought_form: 26500,
-        // BALANCE TARGET fitted so the Gearing returns its 36.8 kn at 44,742 kW and 3,460 t full load (docs/research/e-1-1940s-hull-and-part-values.md section 10: C = D^(2/3) V^3 / shp = 190 before the speed-length penalty)
+        // BALANCE TARGET fitted so the Gearing returns its 36.8 kn at 44,742 kW and 3,460 t full load (Research discussion #439 section 10: C = D^(2/3) V^3 / shp = 190 before the speed-length penalty)
         destroyer_form: 19400,
         // BALANCE TARGET copied from destroyer_form; fitted so the Forrest Sherman returns its 33 kn at 52,199 kW and 4,916 t full load (ADR-0291)
         postwar_destroyer_form: 14946,
@@ -41,7 +41,7 @@ export default {
         heavy_cruiser_form: 22749,
         // BALANCE TARGET fitted so the Iowa returns its 32.5 kn at 158,084 kW and 57,540 t full load (ADR-0332)
         fast_battleship_form: 24200,
-        // ESTIMATE/SINGLE-SOURCE: C2 x100 for Etruria (14,000 ihp/18.8 kn), Campania and City of Paris; range 25,000-29,000 (docs/research/ship-building-merchant-liner.md section 5)
+        // ESTIMATE/SINGLE-SOURCE: C2 x100 for Etruria (14,000 ihp/18.8 kn), Campania and City of Paris; range 25,000-29,000 (Research index #456 [ship-building-merchant-liner, not migrated] section 5)
         merchant_liner_form: 26000,
       },
       slr0X1000: 1300,
@@ -59,7 +59,7 @@ export default {
       // 40 x 28.3168 L / 1016.05 kg = 1.1148 L/kg. In bp of a litre per kg so the figure is not rounded to an integer.
       bunkerLitreBpPerKg: 11148,
       // Engine priority (speed <-> reliability axis, RTW3 manual p.41): the manual names the axis, never a magnitude.
-      // BALANCE TARGETs (ADR-0213), bp of the base value at full priority; provenance in docs/research/rtw-designer-parity-values.md.
+      // BALANCE TARGETs (ADR-0213), bp of the base value at full priority; provenance in Research discussion #446.
       enginePriorityWeightSwingBp: 1500,
       enginePriorityPowerSwingBp: 500,
       enginePriorityReliabilitySwingBp: 2500,
@@ -123,7 +123,7 @@ export default {
         krupp: 23000,
       },
       // Armour material availability (ticket 25). Dates and technology ids come from the shipped tech tree
-      // (technologies.yaml; research: docs/research/content-1-research-tech-tree.md section 1.1, sourced to the Wikipedia
+      // (technologies.yaml; research: Research index #456 [content-1-research-tech-tree, not migrated] section 1.1, sourced to the Wikipedia
       // "Harvey armor" article), so the Research screen and the Drawing Board agree. Maximum plate thickness is deliberately
       // NOT set: no source gives a per-material limit (UNVERIFIED), and an invented cap would block legitimate designs.
       // Iron and mild steel are open from the start: mild-steel deck and splinter plating predates the all-steel hull
@@ -300,7 +300,7 @@ export default {
         gmMaxMm: 3500,
       },
       // ESTIMATE (no source): KE takes the CL window (a small cruiser-type hull). AMC gmMin is White 1894's laden-merchant
-      // lower bound 1.5 ft = 457 mm (VERIFIED, docs/research/ship-building-merchant-liner.md section 7); the AMC ceiling and
+      // lower bound 1.5 ft = 457 mm (VERIFIED, Research index #456 [ship-building-merchant-liner, not migrated] section 7); the AMC ceiling and
       // the KE window are BALANCE TARGET.
       KE: {
         gmMinMm: 450,
@@ -366,7 +366,7 @@ export default {
       amcFastSpeedUms: 11317768,
     },
     // From 1940 a destroyer may displace up to 4,000 t (ADR-0284). Anchor: the model counts the full fuel load, and Gearing is 3,460 t at full
-    // load (2,616 t standard), both above the 2,000 t of the 1880-1939 rules (docs/research/e-1-1940s-hull-and-part-values.md section 10).
+    // load (2,616 t standard), both above the 2,000 t of the 1880-1939 rules (Research discussion #439 section 10).
     // The 4,000 t edge is a BALANCE TARGET; the light-cruiser upper edge is 19,000 t (Worcester is 17,997 t at full load, 14,700 t standard) and
     // its belt limit is 6 in (Worcester's belt is 127 mm), both BALANCE TARGET (ADR-0290); a light cruiser stays defined by guns of 6 in or less.
     // From 1950 a destroyer may displace up to 6,000 t and a light cruiser starts there (Forrest Sherman is 4,916 t at full load, 2,800 t standard; ADR-0291), both BALANCE TARGET.
@@ -577,7 +577,7 @@ export default {
     // Each point carries machine-readable provenance in buildMonthsProvenance (same order): VERIFIED = months read in a primary
     // contemporary source for a ship of about that displacement; SECONDARY = compilation, derived, or the displacement itself is
     // unverified; ESTIMATE = no source. The Drawing Board shows the build time as provisional unless both points bracketing the
-    // displacement are VERIFIED. Full source notes: docs/research/ship-building-build-times.md.
+    // displacement are VERIFIED. Full source notes: Research index #456 [ship-building-build-times, not migrated].
     // Brassey's Naval Annual 1901 = archive.org id brassey-s-naval-annual-1901 (OCR text read in full for the pages cited);
     // 1902 = brasseysnavala1902brasuoft; 1908 = navalannual1908; 1910 = navalannual1910; 1907 = brassey-s-naval-annual-1907.
     // Torpedo-boat destroyer ~330 t: Whiting completed in 14 months and Bat in 16 (Brassey 1901 p. 263); the same page-264 passage
@@ -1043,7 +1043,7 @@ export default {
         penetrationUm: 50000,
       },
       // Pre-1880 rifled muzzle-loaders (point-blank wrought-iron perforation, Brassey's Naval Annual 1886 French
-      // Commission table; docs/research/ship-building-1880-pre-era-armament.md). The expected adversary of the 1880 ships.
+      // Commission table; Research index #456 [ship-building-1880-pre-era-armament, not migrated]). The expected adversary of the 1880 ships.
       {
         id: "rml_16in",
         penetrationUm: 740000,

@@ -533,6 +533,59 @@
     transform-origin: 50% 70%;
   }
 
+  .an-ship[data-section="armament"] .an-part[data-kind="weapon"] .an-dot {
+    animation: an-arm-muzzle 4800ms ease-in-out infinite;
+    animation-delay: calc(var(--an-i, 0) * 650ms);
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+  }
+
+  .an-ship[data-section="armament"] .an-part[data-kind="weapon"] .an-dot:nth-of-type(even) {
+    animation-delay: calc(var(--an-i, 0) * 650ms + 1200ms);
+  }
+
+  .an-ship[data-section="armament"] .an-part[data-kind="weapon"] .an-line[data-tone="faint"] {
+    stroke-dasharray: 2 4.5;
+    animation: an-arm-ring 5200ms linear infinite;
+  }
+
+  .an-ship[data-section="armament"] .an-part[data-kind="weapon"] .an-solid[data-fill="face"] {
+    animation: an-arm-ready 6400ms ease-in-out infinite;
+    animation-delay: calc(var(--an-i, 0) * 800ms);
+  }
+
+  @keyframes an-arm-muzzle {
+    0%,
+    60%,
+    100% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    80% {
+      opacity: 1;
+      transform: scale(1.35);
+    }
+  }
+
+  @keyframes an-arm-ring {
+    from {
+      stroke-dashoffset: 0;
+    }
+    to {
+      stroke-dashoffset: -6.5;
+    }
+  }
+
+  @keyframes an-arm-ready {
+    0%,
+    100% {
+      filter: none;
+    }
+    50% {
+      filter: brightness(1.18);
+    }
+  }
+
   .an-ship[data-section="systems"] .an-part[data-kind="mast"] {
     animation: an-sway 4200ms ease-in-out infinite;
   }

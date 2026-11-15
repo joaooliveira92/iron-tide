@@ -40,7 +40,7 @@
       "collection": "shipBuilding.partModel.parts",
       "recordId": "hp_steam_geared_turbine",
       "field": "provenance",
-      "justification": "Legacy catalogue record authored for E-1 1940-1949 (ADR-0284) with no structured provenance field; its BALANCE TARGET labels and sources sit in the source comments and docs/research/e-1-1940s-hull-and-part-values.md, and the parts migration surfaces the legacy PLACEHOLDER status so it stays visible pending a sourcing pass."
+      "justification": "Legacy catalogue record authored for E-1 1940-1949 (ADR-0284) with no structured provenance field; its BALANCE TARGET labels and sources sit in the source comments and Research discussion #439, and the parts migration surfaces the legacy PLACEHOLDER status so it stays visible pending a sourcing pass."
     },
     {
       "collection": "shipBuilding.partModel.parts",
@@ -142,7 +142,7 @@
       "collection": "shipBuilding.partModel.parts",
       "recordId": "tube_21in_above_water",
       "field": "provenance",
-      "justification": "Legacy catalogue record authored for E-1 1940-1949 (ADR-0284) with no structured provenance field; its BALANCE TARGET labels and sources sit in the source comments and docs/research/e-1-1940s-hull-and-part-values.md, and the parts migration surfaces the legacy PLACEHOLDER status so it stays visible pending a sourcing pass."
+      "justification": "Legacy catalogue record authored for E-1 1940-1949 (ADR-0284) with no structured provenance field; its BALANCE TARGET labels and sources sit in the source comments and Research discussion #439, and the parts migration surfaces the legacy PLACEHOLDER status so it stays visible pending a sourcing pass."
     },
     {
       "collection": "shipBuilding.partModel.parts",

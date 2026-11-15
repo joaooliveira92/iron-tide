@@ -1,4 +1,4 @@
-import { presenceFromRulesets } from "@bluewave/content-compiler";
+import { presenceFromRulesets } from "@bluewave/content-compiler/presence-rules";
 import type { CompiledContentBundle } from "@bluewave/content-schema";
 import type {
   AuthoredArmamentContent,

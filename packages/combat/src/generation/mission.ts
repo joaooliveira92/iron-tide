@@ -38,6 +38,25 @@ export const REACHABLE_MISSION_SUBSET_V1: ReadonlySet<BattleMissionType> = new S
 export const FLEET_BATTLE_MIN_STRENGTH = 300;
 export const CRUISER_BATTLE_MIN_STRENGTH = 150;
 
+export interface BattleMinimumStrength {
+  readonly FLEET_BATTLE: number;
+  readonly CRUISER_BATTLE: number;
+}
+
+export const DEFAULT_BATTLE_MINIMUM_STRENGTH: BattleMinimumStrength = {
+  FLEET_BATTLE: FLEET_BATTLE_MIN_STRENGTH,
+  CRUISER_BATTLE: CRUISER_BATTLE_MIN_STRENGTH,
+};
+
+export function minimumStrengthFor(
+  missionType: BattleMissionType,
+  minimumStrength: BattleMinimumStrength = DEFAULT_BATTLE_MINIMUM_STRENGTH,
+): number {
+  return missionType === "FLEET_BATTLE"
+    ? minimumStrength.FLEET_BATTLE
+    : minimumStrength.CRUISER_BATTLE;
+}
+
 export interface BattleMissionDefinition {
   missionType: BattleMissionType;
   priority: number;

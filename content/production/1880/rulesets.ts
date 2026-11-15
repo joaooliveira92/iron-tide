@@ -70,11 +70,43 @@ export default list(RulesetManifestSchema, [
         note: "PROVISIONAL. With the authored pair frictions the monthly probabilities give one tension step about every nine years for the most hostile pairs and about every eighty for the quietest; they await a sourcing pass and the balance report.",
       },
     },
+    // The peace-behaviour section (#777, decisions 0054 and 0055). Every value is a PROVISIONAL Bluewave balance target:
+    // the manual (p.66) describes peace but gives no acceptance rule or frequency. The margin is the 0055 placeholder
+    // carried over from #554 (acceptSurplus and cession costs stay unsourced, #708). Removing this section returns AI
+    // nations to never proposing peace and the player's peace terms to always succeeding.
+    peaceBehaviour: {
+      sectionVersion: 1,
+      acceptanceScoreMargin: 20,
+      proposalChanceBp: 3_000,
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [
+          {
+            title: "Rule the Waves 3 manual",
+            author: "Naval War Simulations / Matrix Games",
+            year: 2023,
+            page: "66",
+            section: "Peace and possession choice",
+          },
+        ],
+        note: "PROVISIONAL. The margin of 20 war-score points is the unsourced decision 0055 placeholder; the monthly proposal chance of 30 percent once a side leads by the margin is a Bluewave balance target awaiting a sourcing pass (#708).",
+      },
+    },
     // The battle-offer section (T-1, spec #109). Every value is a Bluewave balance decision recorded by ADR-0254 (decision
     // requests 0028-0034, Option C): the manual (p.67) says each quantity exists but supplies no number. Retuning is a
     // ruleset version change with a golden re-pin. Removing this section returns the pack to the dormant behaviour.
     battleOffers: {
       sectionVersion: 1,
+      // PROVISIONAL (#422): the smallest summed firepower per side in one area at which a fleet or cruiser battle can be
+      // generated. The engine defaults (300 and 150) are unreachable in 1880, where a ship carries 12 to 34 firepower and no
+      // nation holds more than 34 in one area. 15 is the largest value at which the weakest great-power home squadron
+      // (Austria-Hungary, 15) can still be engaged; the cruiser value keeps the engine's 2 to 1 ratio, rounded up.
+      engagementMinimumStrength: {
+        fleetBattle: 15,
+        cruiserBattle: 8,
+      },
       // G1 (ADR-0254): a perturbed strength-only estimate, symmetric error of 2000 bp of the true strength.
       estimateModel: {
         kind: "PERTURBED",
@@ -139,7 +171,7 @@ export default list(RulesetManifestSchema, [
               "Battle offers: force estimate, declining costs victory points and may cost prestige after several declines, the enemy may decline, a friendly support force sometimes joins",
           },
         ],
-        note: "ADR-0254. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (docs/research/t-1-battle-offer-values.md, decisions 0028-0034).",
+        note: "ADR-0254. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (Research discussion #451, decisions 0028-0034).",
       },
     },
     // The fleet-management section (spec #265). Every value is a Bluewave balance decision recorded by ADR-0283 under the
@@ -209,7 +241,7 @@ export default list(RulesetManifestSchema, [
               "Special training takes twelve months, at most two subjects, with maintenance surcharges; an annual fleet exercise costs twice the active maintenance; division experience has a slight impact on crew quality in battle",
           },
         ],
-        note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (docs/research/fleet-management-values.md). ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence.",
+        note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (Research discussion #442). ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence.",
       },
     },
     // The gunnery radar section (#292). The manual (pp.121, 127) grounds fire-control radar, blind fire from level 3, and the
@@ -325,7 +357,7 @@ export default list(RulesetManifestSchema, [
               "Colonial service takes a proportion of displacement; base limits by base value; tonnage required per area; cramped and short-range ships count for less",
           },
         ],
-        note: "ADR-0266. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (docs/research/s-5-presence-and-base-limits.md, decisions 0016-0023, 0026).",
+        note: "ADR-0266. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (Research discussion #450, decisions 0016-0023, 0026).",
       },
     },
     eventResolution: {

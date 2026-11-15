@@ -20,8 +20,6 @@ const WORKFLOWS_DIR = resolve(ROOT, ".github/workflows");
 // stands in for it. Keep this list as small as possible: prefer making a
 // workflow run the real `pnpm <step>`.
 export const ALLOWLIST = {
-  "check:golden":
-    "determinism.yml runs `node scripts/verify-golden-hashes.cjs` (Verify golden hashes)",
   "check:determinism":
     "determinism.yml runs `node packages/cross-process-test/dist/run-child.js` (Cross-process determinism)",
   "check:reachability-ledger":
@@ -57,7 +55,7 @@ export function parseCheckSteps(checkScript) {
  * Does a workflow file invoke `pnpm <step>`? Matches the `pnpm` and step as
  * whole whitespace-separated tokens on the same line, so `pnpm lint:effect`,
  * `pnpm --filter @bluewave/desktop test:e2e`, and `… pnpm lint && pnpm format`
- * all count while `check:golden` is not falsely covered by `check:golden-repin`.
+ * all count while `check:replay` is not falsely covered by `check:replay-corpus`.
  * Comment lines are ignored so a documented example is not mistaken for a run.
  * @param {string} step
  * @param {string} workflowText

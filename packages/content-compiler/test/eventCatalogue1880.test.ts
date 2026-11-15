@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
 import type { ContentBundle } from "../src/index.js";
-import { Compiler } from "../src/index.js";
+import { Compiler, eventResolutionFromRulesets } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
@@ -25,6 +25,8 @@ function compileProduction(): { bundle: ContentBundle; errors: readonly string[]
 }
 
 const MIN_EVENTS_PER_GOVERNMENT_TYPE = 2;
+const MIN_CATALOGUE_EVENTS = 12;
+const MAX_CATALOGUE_EVENTS = 20;
 
 describe("1880 event catalogue", () => {
   const { bundle, errors } = compileProduction();
@@ -57,6 +59,31 @@ describe("1880 event catalogue", () => {
     for (const type of presentTypes) {
       const gated = events.filter((event) => event.gates.governmentTypes?.includes(type as never));
       expect(gated.length, type).toBeGreaterThanOrEqual(MIN_EVENTS_PER_GOVERNMENT_TYPE);
+    }
+  });
+
+  it("holds between 12 and 20 events", () => {
+    expect(events.length).toBeGreaterThanOrEqual(MIN_CATALOGUE_EVENTS);
+    expect(events.length).toBeLessThanOrEqual(MAX_CATALOGUE_EVENTS);
+  });
+
+  it("carries a sudden-tension event whose hawk answer jumps tension by the ruleset cap", () => {
+    const resolution = eventResolutionFromRulesets(bundle.rulesets);
+    expect(resolution?.ok).toBe(true);
+    if (resolution === undefined || !resolution.ok) return;
+    const cap = resolution.value.answerEffects.tensionJumpCap;
+    const sudden = events.filter((event) => {
+      const hawk = event.answers.find((answer) => answer.stance === "hawk");
+      const dove = event.answers.find((answer) => answer.stance === "dove");
+      return hawk?.effects.tension?.delta === cap && (dove?.effects.tension?.delta ?? 0) < 0;
+    });
+    expect(sudden.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("authors no flag gates while the engine does not apply setFlag", () => {
+    for (const event of events) {
+      expect(event.gates.requiredFlags ?? [], event.id).toEqual([]);
+      for (const answer of event.answers) expect(answer.effects.setFlag, event.id).toBeUndefined();
     }
   });
 

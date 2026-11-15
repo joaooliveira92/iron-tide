@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Button } from "../../../components/ui/button.js";
 import { Badge } from "../../../components/ui/badge.js";
 import { Card, CardContent } from "../../../components/ui/card.js";
@@ -244,7 +244,8 @@ export function FleetStationView({
 
 export function FleetStationSection({ sessionId }: { readonly sessionId: string }) {
   const station = useStationAssignment(sessionId);
-  const { selected, busy, sendReadiness } = station;
+  const { selected, busy, sendReadiness, loadScreen } = station;
+  const onReload = useCallback(() => void loadScreen(), [loadScreen]);
   useFleetHotkeys({
     "reserve-selected": () => {
       if (selected.length === 0 || busy) return;
@@ -264,7 +265,7 @@ export function FleetStationSection({ sessionId }: { readonly sessionId: string 
       onSend={station.send}
       onSendReadiness={station.sendReadiness}
       onRetry={station.request.retry}
-      onReload={() => void station.loadScreen()}
+      onReload={onReload}
     />
   );
 }

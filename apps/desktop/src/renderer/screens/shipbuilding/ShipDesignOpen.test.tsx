@@ -71,6 +71,92 @@ describe("Opening a design from the header", () => {
     expect((screen.getByRole("button", { name: "Undo" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it("lists completed ships as a catalogue and opens one as the baseline", async () => {
+    const built = {
+      ...project,
+      projectId: "con_done",
+      designVersionId: "dv_orlando",
+      className: "Orlando",
+      status: "COMPLETED",
+      completedWork: 20,
+      revisable: false,
+    };
+    execute.mockImplementation(async (command: string) =>
+      command === "loadProjectDraft"
+        ? {
+            outcome: "success",
+            value: { className: "Orlando", draft: otherDraft },
+            diagnostics: [],
+          }
+        : { outcome: "error", reason: "UNEXPECTED", diagnostics: [] },
+    );
+    render(
+      <ShipbuildingWorkspace
+        sessionId="s1"
+        catalogue={[project, built, { ...built, projectId: "con_done2" }]}
+      />,
+    );
+    openDesignDialog();
+    const dialog = screen.getByRole("dialog", { name: "Open a design" });
+    expect(within(dialog).getAllByRole("button", { name: /Orlando/ })).toHaveLength(1);
+    expect(within(dialog).getByText("Completed")).toBeTruthy();
+    expect(within(dialog).getByText("Under construction")).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: /Orlando/ }));
+    await waitFor(() => expect(header().textContent).toContain("Developed from Orlando"));
+    expect(execute).toHaveBeenCalledWith("loadProjectDraft", {
+      sessionId: "s1",
+      projectId: "con_done",
+    });
+  });
+
+  it("says plainly when a ship cannot be opened", async () => {
+    execute.mockImplementation(async () => ({
+      outcome: "error",
+      reason: "PROJECT_NOT_REVISABLE",
+      diagnostics: [],
+    }));
+    render(<ShipbuildingWorkspace sessionId="s1" catalogue={[project]} />);
+    openDesignDialog();
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Open a design" })).getByRole("button", {
+        name: /Nelson Pilot/,
+      }),
+    );
+    expect((await screen.findByRole("alert")).textContent).toMatch(
+      /Nelson Pilot could not be opened/,
+    );
+  });
+
+  it("names the variant discount in the header once the class is named, matching the submit review", async () => {
+    execute.mockImplementation(async (command: string) =>
+      command === "previewDesignStudy"
+        ? {
+            outcome: "success",
+            value: {
+              study: {
+                months: 4,
+                cost: 8,
+                derived: true,
+                discountBp: 2500,
+                baselineClassName: "Orlando",
+                newFamily: false,
+                failedCriteria: [],
+              },
+              freeTreasury: 100,
+              affordable: true,
+            },
+            diagnostics: [],
+          }
+        : { outcome: "error", reason: "UNEXPECTED", diagnostics: [] },
+    );
+    render(<ShipbuildingWorkspace sessionId="s1" />);
+    expect(header().textContent).not.toMatch(/shorter and cheaper/);
+    fireEvent.change(screen.getByLabelText("Class name"), { target: { value: "Orlando" } });
+    await waitFor(() =>
+      expect(header().textContent).toContain("Variant of Orlando: 25% shorter and cheaper"),
+    );
+  });
+
   it("asks before replacing a design with unsaved edits, and keeps it on cancel", async () => {
     render(<ShipbuildingWorkspace sessionId="s1" projects={[project]} />);
     bumpPower();

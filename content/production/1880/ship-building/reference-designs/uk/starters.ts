@@ -1454,7 +1454,7 @@ export default collection("designs", ReferenceDesignSchema, [
   },
   // HMS Daring (Daring-class destroyer, 1952): destroyer starter for the United Kingdom, E-1 1950-1959 (ticket #256).
   // 2,830 t standard / 3,580 t full-load displacement, 54,000 shp (40,268 kW), 34.75 kn, 590 t oil and 4,400 nm at
-  // 20 kn are the navypedia figures of docs/research/e-1-1950s-gun-ships.md section 1 (SINGLE-SOURCE); the three
+  // 20 kn are the navypedia figures of Research discussion #440 section 1 (SINGLE-SOURCE); the three
   // twin 4.5-inch/45 QF Mark 6 turrets and two quintuple 533 mm tubes are the class armament. The 40 mm STAAG and
   // Squid have no part family (#283) and are not modelled. The 34.75 kn requirement and the 4,400 nm range are not
   // reached by the balance-target speed and fuel-rate curves (WARNINGS; ADR-0284 decision 8 precedent), so

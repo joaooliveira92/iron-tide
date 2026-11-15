@@ -88,4 +88,43 @@ export default list(EventSchema, [
     ],
     provenance,
   },
+  {
+    id: "arsenal_contract_scandal",
+    titleKey: "event.arsenal_contract_scandal.title",
+    bodyKey: "event.arsenal_contract_scandal.body",
+    gates: { governmentTypes: ["autocratic"] },
+    weightBp: 70,
+    cooldownMonths: 60,
+    once: false,
+    defaultAnswerId: "prosecute_the_director",
+    answers: [
+      {
+        id: "shield_the_arsenal_director",
+        stance: "hawk",
+        labelKey: "event.arsenal_contract_scandal.answer.shield_the_arsenal_director",
+        effects: {
+          budgetBp: 200,
+          unrest: 1,
+          prestige: { kind: "FIXED_GAIN", amount: 1, reasonCode: "ARSENAL_PROTECTED" },
+        },
+      },
+      {
+        id: "prosecute_the_director",
+        stance: "dove",
+        labelKey: "event.arsenal_contract_scandal.answer.prosecute_the_director",
+        effects: {
+          budgetBp: -200,
+          unrest: -1,
+          prestige: { kind: "FIXED_LOSS", amount: 1, reasonCode: "ARSENAL_SCANDAL_EXPOSED" },
+        },
+      },
+      {
+        id: "quiet_reassignment",
+        stance: "neutral",
+        labelKey: "event.arsenal_contract_scandal.answer.quiet_reassignment",
+        effects: { budgetBp: 0, unrest: 0 },
+      },
+    ],
+    provenance,
+  },
 ]);

@@ -1,5 +1,5 @@
 // Ship-building component catalogue: British torpedo tubes.
-// Source of record: docs/research/ship-building-early-band-2.md.
+// Source of record: Research index #456 [ship-building-early-band-2, not migrated].
 // Units: kg, mm, litres, kW, budget micro-units, bp. Formulas use the restricted grammar of
 // @bluewave/ship-design. Every component id is unique across this directory; the compiler
 // discovers nothing on its own: pack.json's `shipBuilding.shipComponents` lists every file.

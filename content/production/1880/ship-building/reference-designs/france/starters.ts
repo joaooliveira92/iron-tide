@@ -1,7 +1,7 @@
 // Reference designs for the EARLY band (starting points for the Drawing Board and regression fixtures).
 // One directory per nation: starters.yaml (a `starterFor` opening design) and historical.yaml.
 // Fittings (magazines, quarters, pumps, ventilation) weigh nothing extra (White 1894, ADR-0083).
-// --- French 1880 opening starters (docs/research/national-naval-profiles-uk-france.md C.2) --------------------------
+// --- French 1880 opening starters (Research index #456 [national-naval-profiles-uk-france, not migrated] C.2) --------------------------
 // 1880 ordnance is limited to RMLs / the French 27 cm Mle 1875 / machine guns, so the French cruisers, gunboat and
 // armed liner are shared doctrine templates that take their national character from the profile (variants, doctrine
 // weights, procurement). The B starter is the historical Redoutable (below). Non-historical; ESTIMATE dimensions.

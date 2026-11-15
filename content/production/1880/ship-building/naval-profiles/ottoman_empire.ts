@@ -1,11 +1,11 @@
 // National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
 // Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
-// target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+// target is labelled `balance_adjustment`. Grounding: Research index #456 [<nation>-naval-profile, not migrated].
 // Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
 // steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
 // Ottoman Empire (canonical id "ottoman_empire"). The besieged Straits guardian: a large-on-paper but decaying
 // foreign-built ironclad fleet, coast-defence and Black-Sea/Straits focus, imported Armstrong guns, weak finances
-// and industry. Non-playable in 1880 but present in the scenario. Grounding: docs/research/ottoman_empire-naval-profile.md.
+// and industry. Non-playable in 1880 but present in the scenario. Grounding: Research index #456 [ottoman_empire-naval-profile, not migrated].
 import { NationNavalProfileSchema, collection } from "@bluewave/content-authoring";
 
 export default collection("navalProfiles", NationNavalProfileSchema, [

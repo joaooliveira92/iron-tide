@@ -1,5 +1,5 @@
 // Ship-building component catalogue: French ordnance.
-// Source of record: docs/research/ship-building-1880-pre-era-armament.md.
+// Source of record: Research index #456 [ship-building-1880-pre-era-armament, not migrated].
 // Units: kg, mm, litres, kW, budget micro-units, bp. Formulas use the restricted grammar of
 // @bluewave/ship-design. Every component id is unique across this directory; the compiler
 // discovers nothing on its own: pack.json's `shipBuilding.shipComponents` lists every file.

@@ -131,7 +131,7 @@ describe("the 1884 Whitehead revision (13a, ticket AC 4)", () => {
     expect(revision).toBeDefined();
     expect(revision?.provenance.sourceStatus).toBe("VERIFIED");
     expect(revision?.provenance.sources[0]?.archiveOrUrl).toBe(
-      "docs/research/ship-building-early-band-2.md",
+      "https://github.com/joaooliveira92/iron-tide/discussions/456",
     );
   });
 

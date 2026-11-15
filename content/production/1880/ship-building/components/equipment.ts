@@ -1,6 +1,6 @@
 // Ship-building component catalogue: nation-neutral fittings (magazines, fire control,
 // electrical, accommodation, ventilation and damage control).
-// Source of record: docs/research/ship-building-early-band.md. Unsourced figures are marked as
+// Source of record: Research index #456 [ship-building-early-band, not migrated]. Unsourced figures are marked as
 // such on their own line.
 // Units: kg, mm, litres, kW, budget micro-units, bp. Formulas use the restricted grammar of
 // @bluewave/ship-design. Every component id is unique across this directory; the compiler

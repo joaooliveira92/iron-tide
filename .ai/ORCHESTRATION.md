@@ -79,8 +79,8 @@ the sprint's validation report (`.ai/reports/<slug>.md`):
 - clean uncached build (`vp run -r build --no-cache`);
 - `tsc -b`, `pnpm lint`, `pnpm format`;
 - full test suite;
-- determinism: cross-process child run twice (byte-identical) + golden verify
-  (`node scripts/verify-golden-hashes.cjs`);
+- determinism: cross-process child run twice (byte-identical) + replay corpus
+  (`pnpm check:replay-corpus`);
 - any authoritative hash changes get old/new + cause + migration assessment. A build alone is not acceptance (ENGINEERING-CONTRACT §Tests).
 
 ## Concurrent worktrees

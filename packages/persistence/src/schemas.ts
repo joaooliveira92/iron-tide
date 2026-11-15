@@ -2,6 +2,7 @@ import {
   DeclinedBattleRecordSchema,
   DeclineCounterEntrySchema,
 } from "@bluewave/campaign/decline-records";
+import { PeaceOfferSchema } from "@bluewave/campaign/peace-offer";
 import { Effect, Schema } from "effect";
 
 type Mutable<T> =
@@ -195,6 +196,7 @@ const StorableSnapshotSchema = Schema.Struct({
     battleManifests: Schema.Array(Schema.Unknown),
     declinedBattles: Schema.optional(Schema.Array(DeclinedBattleRecordSchema)),
     declineCounters: Schema.optional(Schema.Array(DeclineCounterEntrySchema)),
+    peaceOffers: Schema.optional(Schema.Array(PeaceOfferSchema)),
   }),
   politics: Schema.Struct({
     relations: Schema.Array(Schema.Unknown),

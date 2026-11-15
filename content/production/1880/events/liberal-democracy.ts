@@ -90,4 +90,45 @@ export default list(EventSchema, [
     ],
     provenance,
   },
+  {
+    id: "coaling_station_petition",
+    titleKey: "event.coaling_station_petition.title",
+    bodyKey: "event.coaling_station_petition.body",
+    gates: { governmentTypes: ["liberal_democracy"] },
+    weightBp: 70,
+    cooldownMonths: 60,
+    once: false,
+    defaultAnswerId: "refer_to_the_board",
+    answers: [
+      {
+        id: "fund_overseas_stations",
+        stance: "hawk",
+        labelKey: "event.coaling_station_petition.answer.fund_overseas_stations",
+        effects: {
+          budgetBp: 300,
+          unrest: 0,
+          prestige: { kind: "FIXED_GAIN", amount: 1, reasonCode: "COALING_STATIONS_FUNDED" },
+          tension: { counterpart: "highest_tension_rival", delta: 1 },
+        },
+      },
+      {
+        id: "decline_the_petition",
+        stance: "dove",
+        labelKey: "event.coaling_station_petition.answer.decline_the_petition",
+        effects: {
+          budgetBp: -200,
+          unrest: 0,
+          prestige: { kind: "FIXED_LOSS", amount: 1, reasonCode: "COALING_STATIONS_DECLINED" },
+          tension: { counterpart: "highest_tension_rival", delta: -1 },
+        },
+      },
+      {
+        id: "refer_to_the_board",
+        stance: "neutral",
+        labelKey: "event.coaling_station_petition.answer.refer_to_the_board",
+        effects: { budgetBp: 0, unrest: 0 },
+      },
+    ],
+    provenance,
+  },
 ]);

@@ -89,6 +89,9 @@ export function useFleetExercise(sessionId: string): UseFleetExerciseReturn {
       });
   }, [bridge, rows, selected, sessionId, workflow.execute]);
 
+  const { loadScreen } = workflow;
+  const reload = useCallback(() => void loadScreen(), [loadScreen]);
+
   return {
     state: workflow.state,
     rows,
@@ -97,7 +100,7 @@ export function useFleetExercise(sessionId: string): UseFleetExerciseReturn {
     busy: workflow.state.pendingRequest !== null || workflow.state.requiresRefresh,
     outcomeUnknown: workflow.request.outcomeUnknown,
     retry: workflow.request.retry,
-    reload: () => void workflow.loadScreen(),
+    reload,
     toggle,
     hold,
   };

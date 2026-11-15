@@ -1,0 +1,38 @@
+.an-ship {
+  --an-changed: var(--color-info);
+}
+
+.an-part[data-changed] .an-solid .an-edge {
+  stroke: var(--an-changed);
+  stroke-width: 1.3px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes an-changed-0 {
+    0% {
+      filter: drop-shadow(0 0 5px var(--an-changed));
+    }
+
+    100% {
+      filter: drop-shadow(0 0 0 transparent);
+    }
+  }
+
+  @keyframes an-changed-1 {
+    0% {
+      filter: drop-shadow(0 0 5px var(--an-changed));
+    }
+
+    100% {
+      filter: drop-shadow(0 0 0 transparent);
+    }
+  }
+
+  .an-part[data-changed="0"] {
+    animation: an-changed-0 1.4s ease-out 1;
+  }
+
+  .an-part[data-changed="1"] {
+    animation: an-changed-1 1.4s ease-out 1;
+  }
+}

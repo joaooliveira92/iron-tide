@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 
 import { MonthlyResolutionLoading } from "../../components/MonthlyResolutionLoading.js";
-import { useCampaignShellContext } from "../CampaignShellContext.js";
+import { useCampaignShellActions, useCampaignShellState } from "../CampaignShellContext.js";
 import { DecisionDialog } from "./DecisionDialog.js";
 import { OfferDialog } from "./OfferDialog.js";
 import { PendingTurnRecoveryPrompt } from "./PendingTurnRecoveryPrompt.js";
@@ -13,9 +13,8 @@ const PlayerBattleScreen = lazy(() =>
 );
 
 export function CampaignInterruptions() {
-  const shell = useCampaignShellContext();
-  const campaign = shell.state.campaign;
-  const interruption = shell.state.interruption;
+  const { campaign, interruption } = useCampaignShellState();
+  const actions = useCampaignShellActions();
   if (campaign === null || interruption === null) return null;
   if (interruption.unavailable) {
     return (
@@ -23,7 +22,7 @@ export function CampaignInterruptions() {
         pending={interruption.pending}
         unavailable
         onResume={() => undefined}
-        onAbandon={shell.actions.abandonPendingTurn}
+        onAbandon={actions.abandonPendingTurn}
       />
     );
   }
@@ -32,8 +31,8 @@ export function CampaignInterruptions() {
       <PendingTurnRecoveryPrompt
         pending={interruption.pending}
         unavailable={false}
-        onResume={shell.actions.advanceMonth}
-        onAbandon={shell.actions.abandonPendingTurn}
+        onResume={actions.advanceMonth}
+        onAbandon={actions.abandonPendingTurn}
       />
     );
   }
@@ -41,10 +40,8 @@ export function CampaignInterruptions() {
     return (
       <DecisionDialog
         request={interruption.request}
-        onAnswer={(optionId) =>
-          void shell.actions.answerInterruption({ kind: "decision", optionId })
-        }
-        onAbandon={shell.actions.abandonPendingTurn}
+        onAnswer={(optionId) => void actions.answerInterruption({ kind: "decision", optionId })}
+        onAbandon={actions.abandonPendingTurn}
       />
     );
   }
@@ -52,8 +49,8 @@ export function CampaignInterruptions() {
     return (
       <OfferDialog
         request={interruption.request}
-        onChoose={(choice) => void shell.actions.answerInterruption({ kind: "offer", choice })}
-        onAbandon={shell.actions.abandonPendingTurn}
+        onChoose={(choice) => void actions.answerInterruption({ kind: "offer", choice })}
+        onAbandon={actions.abandonPendingTurn}
       />
     );
   }
@@ -63,9 +60,9 @@ export function CampaignInterruptions() {
         request={interruption.request}
         sessionId={campaign.sessionId}
         onSubmitResult={(outcome) =>
-          void shell.actions.answerInterruption({ kind: "battle-outcome", outcome })
+          void actions.answerInterruption({ kind: "battle-outcome", outcome })
         }
-        onAbandon={shell.actions.abandonPendingTurn}
+        onAbandon={actions.abandonPendingTurn}
       />
     </Suspense>
   );

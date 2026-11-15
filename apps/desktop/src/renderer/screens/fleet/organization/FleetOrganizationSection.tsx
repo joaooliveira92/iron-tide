@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Button } from "../../../components/ui/button.js";
 import { Badge } from "../../../components/ui/badge.js";
 import type { DivisionCommandBody } from "../../../../shared/division-contract.js";
@@ -106,6 +107,8 @@ export function FleetOrganizationSection({
   readonly preferredFlagshipId?: string;
 }) {
   const organization = useDivisionOrganization(sessionId);
+  const { loadScreen } = organization;
+  const onReload = useCallback(() => void loadScreen(), [loadScreen]);
   return (
     <FleetOrganizationView
       state={organization.state}
@@ -113,7 +116,7 @@ export function FleetOrganizationSection({
       busy={organization.busy}
       outcomeUnknown={organization.request.outcomeUnknown}
       onRetry={organization.request.retry}
-      onReload={() => void organization.loadScreen()}
+      onReload={onReload}
       send={organization.send}
       {...(preferredFlagshipId === undefined ? {} : { preferredFlagshipId })}
     />

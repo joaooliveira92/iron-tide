@@ -97,11 +97,38 @@ describe("NewGameBriefingScreen", () => {
     cleanup();
   });
 
+  it("holds the appointment text back until the projection resolves", async () => {
+    let resolveInspect: (value: unknown) => void = () => {};
+    const pending = new Promise((resolve) => {
+      resolveInspect = resolve;
+    });
+    render(
+      <NewGameBriefingScreen
+        sessionId="s1"
+        onInspectOpeningBriefing={vi.fn().mockReturnValue(pending)}
+        onTakeCommand={vi.fn()}
+        onPrimaryActionChange={vi.fn()}
+      />,
+    );
+    await screen.findByText("Opening Strategic Briefing");
+    expect(screen.queryByText(/You have been appointed First Sea Lord/)).toBeNull();
+
+    await act(async () => {
+      resolveInspect({
+        outcome: "success",
+        value: { projection: fixtureProjection() },
+        diagnostics: [],
+      });
+    });
+    expect(
+      await screen.findByText(/You have been appointed First Sea Lord — United Kingdom/),
+    ).toBeTruthy();
+  });
+
   it("loads the projection and renders the Appointment page first with title and start date", async () => {
     const { primaryLabel } = renderScreen(fixtureProjection());
-    await screen.findByText("Opening Strategic Briefing");
     expect(
-      screen.getByText(/You have been appointed First Sea Lord — United Kingdom/),
+      await screen.findByText(/You have been appointed First Sea Lord — United Kingdom/),
     ).toBeTruthy();
     expect(screen.getByText("Appointment confirmed · January 1880")).toBeTruthy();
     await waitFor(() => expect(primaryLabel()).toBe("Review Naval Estimates"));

@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
+import { inspectMapFixture } from "../lib/inspect-map-fixture.js";
 import { COSMETIC_MINIMUM_DURATION_MS } from "../screens/new-game/world-generation-presentation.js";
 import type { Screen } from "./campaign-screen-registry.js";
 
@@ -447,14 +448,7 @@ function createCampaignClient(execute?: CampaignCommandClient["execute"]): Campa
       execute ??
       (vi.fn(async (name: string) => ({
         outcome: "success" as const,
-        value:
-          name === "inspectMap"
-            ? {
-                sessionId: "ses-created",
-                playerNationId: "uk",
-                strategic: { world: { areas: [], ports: [], fleets: [], routes: [] } },
-              }
-            : { sessionId: "ses-created" },
+        value: name === "inspectMap" ? inspectMapFixture() : { sessionId: "ses-created" },
       })) as unknown as CampaignCommandClient["execute"]),
   };
 }

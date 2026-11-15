@@ -1,6 +1,6 @@
 // Shared armament gun families (ADR-0093 Step 2). One record per shared physical/technical family;
 // national models reference these and never duplicate them. Units are in field names.
-// Source of record: docs/research/ship-building-1880-pre-era-armament.md and the components.yaml comments.
+// Source of record: Research index #456 [ship-building-1880-pre-era-armament, not migrated] and the components.yaml comments.
 import { GunFamilySchema, collection } from "@bluewave/content-authoring";
 
 export default collection("gunFamilies", GunFamilySchema, [
@@ -524,7 +524,8 @@ export default collection("gunFamilies", GunFamilySchema, [
         },
         {
           sourceId: "coast-defence-armament-1880",
-          title: "docs/research/ship-building-1880-coast-defence-armament.md §2.1",
+          title:
+            "Research index #456 (ship-building-1880-coast-defence-armament, not migrated) §2.1",
         },
       ],
     },
@@ -573,7 +574,8 @@ export default collection("gunFamilies", GunFamilySchema, [
         },
         {
           sourceId: "coast-defence-armament-1880",
-          title: "docs/research/ship-building-1880-coast-defence-armament.md §2.6",
+          title:
+            "Research index #456 (ship-building-1880-coast-defence-armament, not migrated) §2.6",
         },
       ],
     },
@@ -597,7 +599,8 @@ export default collection("gunFamilies", GunFamilySchema, [
         },
         {
           sourceId: "coast-defence-armament-1880",
-          title: "docs/research/ship-building-1880-coast-defence-armament.md §2.3",
+          title:
+            "Research index #456 (ship-building-1880-coast-defence-armament, not migrated) §2.3",
         },
       ],
     },
@@ -672,7 +675,8 @@ export default collection("gunFamilies", GunFamilySchema, [
         },
         {
           sourceId: "coast-defence-followups-1880",
-          title: "docs/research/ship-building-1880-coast-defence-followups.md §1",
+          title:
+            "Research index #456 (ship-building-1880-coast-defence-followups, not migrated) §1",
         },
       ],
     },
@@ -716,7 +720,7 @@ export default collection("gunFamilies", GunFamilySchema, [
         {
           title: "navweaps.com US 5-inch/38 (12.7 cm) Mark 12",
           archiveOrUrl: "https://www.navweaps.com/Weapons/WNUS_5-38_mk12.php",
-          section: "docs/research/e-1-1940s-hull-and-part-values.md sections 1-2",
+          section: "Research discussion #439 sections 1-2",
         },
       ],
     },
@@ -735,7 +739,7 @@ export default collection("gunFamilies", GunFamilySchema, [
         {
           title: "navweaps.com US 6-inch/47 (15.2 cm) Mark 16 DP",
           archiveOrUrl: "https://www.navweaps.com/Weapons/WNUS_6-47DP_mk16.php",
-          section: "docs/research/e-1-1940s-hull-and-part-values.md sections 3-4",
+          section: "Research discussion #439 sections 3-4",
         },
       ],
     },
@@ -754,7 +758,7 @@ export default collection("gunFamilies", GunFamilySchema, [
         {
           title: "navweaps.com US 16-inch/50 (40.6 cm) Mark 7",
           archiveOrUrl: "https://www.navweaps.com/Weapons/WNUS_16-50_mk7.php",
-          section: "docs/research/e-1-1940s-hull-and-part-values.md section 14",
+          section: "Research discussion #439 section 14",
         },
       ],
     },
@@ -773,7 +777,7 @@ export default collection("gunFamilies", GunFamilySchema, [
         {
           title: "navweaps.com US 8-inch/55 (20.3 cm) Mark 16",
           archiveOrUrl: "https://www.navweaps.com/Weapons/WNUS_8-55_mk16.php",
-          section: "docs/research/e-1-1940s-hull-and-part-values.md sections 5-6",
+          section: "Research discussion #439 sections 5-6",
         },
       ],
     },
@@ -792,7 +796,7 @@ export default collection("gunFamilies", GunFamilySchema, [
         {
           title: "navweaps.com US 5-inch/54 (12.7 cm) Mark 18 and Mark 42 mount",
           archiveOrUrl: "https://www.navweaps.com/Weapons/WNUS_5-54_mk42.php",
-          section: "docs/research/e-1-1940s-hull-and-part-values.md section 13",
+          section: "Research discussion #439 section 13",
         },
       ],
     },
@@ -811,7 +815,7 @@ export default collection("gunFamilies", GunFamilySchema, [
         {
           title: "navypedia.org Daring class destroyers",
           archiveOrUrl: "https://www.navypedia.org/ships/uk/brit_dd_daring.htm",
-          section: "docs/research/e-1-1950s-gun-ships.md section 1",
+          section: "Research discussion #440 section 1",
         },
       ],
     },

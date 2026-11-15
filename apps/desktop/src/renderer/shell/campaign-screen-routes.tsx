@@ -1,5 +1,5 @@
-import { lazy, useCallback } from "react";
-import { useCampaignShellActions, useCampaignShellContext } from "./CampaignShellContext.js";
+import { type ComponentProps, lazy, memo, useCallback } from "react";
+import { useCampaignRevision, useCampaignShellActions } from "./CampaignShellContext.js";
 import { useFleetFocus } from "./fleet-focus.js";
 import { OptionsScreen } from "../screens/options/OptionsScreen.js";
 import type {
@@ -112,21 +112,28 @@ function FleetRoute({ sessionId }: CampaignScreenRouteProps) {
 }
 
 function SimulationRoute({ sessionId }: CampaignScreenRouteProps) {
-  const { state, actions } = useCampaignShellContext();
+  const actions = useCampaignShellActions();
+  const revision = useCampaignRevision();
   const onMonthCommitted = useCallback(
     () => void actions.refreshCampaign(sessionId),
     [actions.refreshCampaign, sessionId],
   );
-  if (SimulationScreen === null) return null;
   return (
-    <SimulationScreen
+    <SimulationView
       sessionId={sessionId}
       onPrimaryActionChange={actions.setPrimaryAction}
-      campaignRevision={state.campaign?.revision}
+      campaignRevision={revision ?? undefined}
       onMonthCommitted={onMonthCommitted}
     />
   );
 }
+
+const SimulationView = memo(function SimulationView(
+  props: ComponentProps<NonNullable<typeof SimulationScreen>>,
+) {
+  if (SimulationScreen === null) return null;
+  return <SimulationScreen {...props} />;
+});
 
 function ResearchRoute({ sessionId }: CampaignScreenRouteProps) {
   return <ResearchScreen sessionId={sessionId} />;

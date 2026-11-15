@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { loadDrawingBoardContent } from "./content.js";
 import {
   changeKinds,
+  openableProjects,
   previewRevision,
   progressOf,
   revisableProjects,
@@ -74,6 +75,33 @@ describe("revision preview", () => {
     expect(
       revisableProjects([project(10), project(100, "COMPLETED")]).map((p) => p.status),
     ).toEqual(["ACTIVE"]);
+  });
+});
+
+describe("openable projects", () => {
+  const named = (id: string, status: string, designVersionId?: string): RevisionProject => ({
+    ...project(status === "COMPLETED" ? 100 : 10, status),
+    projectId: id,
+    className: `Class ${id}`,
+    ...(designVersionId === undefined ? {} : { designVersionId }),
+  });
+  it("lists ships under construction before completed ships and leaves cancelled ones out", () => {
+    expect(
+      openableProjects([
+        named("a", "COMPLETED"),
+        named("b", "CANCELLED"),
+        named("c", "ACTIVE"),
+      ]).map((p) => p.projectId),
+    ).toEqual(["c", "a"]);
+  });
+  it("shows a completed design once however many of its ships were built", () => {
+    expect(
+      openableProjects([
+        named("a", "COMPLETED", "dv1"),
+        named("b", "COMPLETED", "dv1"),
+        named("c", "COMPLETED", "dv2"),
+      ]).map((p) => p.projectId),
+    ).toEqual(["a", "c"]);
   });
 });
 

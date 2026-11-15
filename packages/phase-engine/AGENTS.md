@@ -8,7 +8,7 @@
 
 **Invariants:**
 
-- The canonical phase order is `TURN_PHASES` in `@bluewave/contracts`; `src/phases.ts` composes the implementations in that order, and `MonthPipeline` observes each phase's real reads, writes and RNG use against its declared aggregate permissions. Reordering or adding a phase moves authoritative outcomes, so follow golden repinning.
+- The canonical phase order is `TURN_PHASES` in `@bluewave/contracts`; `src/phases.ts` composes the implementations in that order, and `MonthPipeline` observes each phase's real reads, writes and RNG use against its declared aggregate permissions. Reordering or adding a phase moves authoritative outcomes, so needs [replay approvals](../../docs/agents/replay-corpus.md).
 - Phases reach snapshot aggregates only through recorded handles with declared permissions; event body types derive from Effect schemas with no mirrored interfaces.
 - The replay verifier must reproduce identical hashes.
 

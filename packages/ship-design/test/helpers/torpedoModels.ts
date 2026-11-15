@@ -20,12 +20,12 @@ export const TORPEDO_PROVENANCE: Provenance = {
     {
       title: "Ship-building catalogue — EARLY band (1880–1899), second pass",
       section: "§2 14-inch Whitehead torpedo and its launching gear",
-      archiveOrUrl: "docs/research/ship-building-early-band-2.md",
+      archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
     },
     {
       title: "Torpedo model research (c1-m3)",
       section: "§3.1 Torpedo model table (1880–1945)",
-      archiveOrUrl: "docs/research/c1-m3-torpedoes.md",
+      archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
     },
   ],
   note: "Mirrors the shipped combat torpedo_models_v1 constants; values grounded in the cited research.",
@@ -39,7 +39,7 @@ export const WHITEHEAD_1884_RE_RATING: Provenance = {
     {
       title: "Ship-building catalogue — EARLY band (1880–1899), second pass",
       section: "§2 (1877 14-in 26 lb → 1884 Mk IV 58–70 lb)",
-      archiveOrUrl: "docs/research/ship-building-early-band-2.md",
+      archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/456",
     },
   ],
   note: "The 1877 14-inch Whitehead carried a 26 lb (12 kg) wet-guncotton charge; the 1884 Mk IV re-rated it to the 58–70 lb (26–27 kg) charge the shipped model carries.",

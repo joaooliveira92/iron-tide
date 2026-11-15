@@ -116,7 +116,7 @@ void test("verify:affected routes shared configuration to full scope", () => {
   assert.equal(plan.units.find((unit) => unit.name === "@x/a").scripts.lint, undefined);
   assert.deepEqual(
     unitCommands(plan.units.find((unit) => unit.kind === "golden")).map((command) => command.label),
-    ["check:golden"],
+    ["check:replay-corpus"],
   );
 });
 
@@ -131,7 +131,7 @@ void test("verify:affected routes docs, scripts, goldens and content to their ow
     scripts.units.map((unit) => unit.kind),
     ["scripts"],
   );
-  const golden = planAffected({ paths: ["golden/hashes.json"], workspaces: WORKSPACES });
+  const golden = planAffected({ paths: ["golden/replay-approvals.json"], workspaces: WORKSPACES });
   assert.deepEqual(
     golden.units.map((unit) => unit.kind),
     ["golden"],
