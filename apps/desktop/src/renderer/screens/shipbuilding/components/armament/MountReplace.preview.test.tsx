@@ -1,6 +1,23 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { buildWorkshopView, type BatteryRole } from "@bluewave/ship-design";
+import { buildWorkshopView, type BatteryRole, type DraftEdit } from "@bluewave/ship-design";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+
+const previewed = vi.hoisted((): DraftEdit[] => []);
+
+vi.mock("../../../../components/design-workspace/optionFeedback.js", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("../../../../components/design-workspace/optionFeedback.js")
+    >();
+  return {
+    ...actual,
+    previewOptionFeedback: (...args: Parameters<typeof actual.previewOptionFeedback>) => {
+      previewed.push(args[3]);
+      return actual.previewOptionFeedback(...args);
+    },
+  };
+});
+
 import { DesignWorkspaceFixture } from "../../../../components/design-workspace/DesignWorkspaceFixture.js";
 import { batteryCards } from "../../../../components/design-workspace/batteryView.js";
 import { loadDrawingBoardContent } from "../../../../components/design-workspace/content.js";
@@ -76,9 +93,12 @@ describe("armament replace hover preview", () => {
     const edit = mountPicker();
     const option = firstOption();
     const componentId = option.getAttribute("data-value")!;
+    previewed.length = 0;
     fireEvent.pointerMove(option);
+    expect(previewed).toEqual([replaceEdit(mount, componentId)]);
     fireEvent.click(option);
     fireEvent.click(screen.getByRole("button", { name: "Replace" }));
-    expect(edit).toHaveBeenCalledWith(replaceEdit(mount, componentId));
+    expect(edit).toHaveBeenCalledTimes(1);
+    expect(edit).toHaveBeenCalledWith(previewed[0]);
   });
 });
