@@ -32,7 +32,7 @@
   "packages/content-schema/test/ship-parts.test.ts": { "lines": 616 },
   "packages/cross-process-test/src/run-child.ts": { "lines": 781 },
   "packages/phase-engine/src/battleOffer.ts": { "lines": 850 },
-  "packages/phase-engine/src/commands.ts": { "lines": 728 },
+  "packages/phase-engine/src/commands.ts": { "lines": 709 },
   "packages/phase-engine/src/events.ts": { "lines": 664 },
   "packages/phase-engine/src/foreignConstruction.ts": { "lines": 669 },
   "packages/phase-engine/src/snapshotClone.ts": { "lines": 881 },
