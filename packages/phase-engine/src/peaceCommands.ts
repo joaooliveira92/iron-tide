@@ -45,7 +45,7 @@ function refusesPeace(
   if (decision.accept) {
     return false;
   }
-  ctx.collector.addError(
+  ctx.collector.addWarning(
     PEACE_REFUSED,
     `${responderId} refused the peace term (${decision.reason})`,
     { stage: "command-collection", entityId: warId },
