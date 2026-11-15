@@ -848,7 +848,7 @@ export default collection("designs", ReferenceDesignSchema, [
         installedKw: 2600,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 500,
-        fuelCapacityKg: 900000,
+        fuelCapacityKg: 810000,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 480,
         foulingBp: 0,
