@@ -74,9 +74,9 @@ export interface Coverage {
 
 export const PINNED_COVERAGE: Coverage = {
   designs: 98,
-  placements: 926,
+  placements: 928,
   gunPlacements: 267,
-  tubePlacements: 37,
+  tubePlacements: 39,
   fittingPlacements: 622,
 };
 

@@ -1,5 +1,5 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
-import { stationAssignmentProblems } from "@bluewave/campaign";
+import { stationAssignmentProblems, stationTargetFor } from "@bluewave/campaign";
 import type {
   AssignForeignStationCommand,
   ClearForeignStationCommand,
@@ -32,7 +32,21 @@ export function validateStationAssignment(
       "INVALID_COMMAND_PAYLOAD",
       "shipIds must be an array of ship ids",
     );
-  const problems = stationAssignmentProblems(nation, body.nationId, body.shipIds, intent);
+  const stationAreaId = "stationAreaId" in body ? body.stationAreaId : undefined;
+  if (stationAreaId !== undefined && typeof stationAreaId !== "string")
+    return rejectValidation(
+      envelope,
+      snapshot,
+      "INVALID_COMMAND_PAYLOAD",
+      "stationAreaId must be an area id",
+    );
+  const problems = stationAssignmentProblems(
+    nation,
+    body.nationId,
+    body.shipIds,
+    intent,
+    stationTargetFor(snapshot.world, body.nationId, stationAreaId),
+  );
   if (problems.length === 0) return { ok: true };
   const detail = problems.map((p) => `${p.shipId || "<batch>"}=${p.reason}`).join(", ");
   return rejectValidation(

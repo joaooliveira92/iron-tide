@@ -13,6 +13,7 @@ export * from "./continuity.js";
 export * from "./constructionStatus.js";
 export * from "./constructionDraw.js";
 export * from "./constructionFunding.js";
+export * from "./dockExpansionFunding.js";
 export * from "./division.js";
 export * from "./divisionCohesionGrowth.js";
 export * from "./divisionDoctrine.js";
@@ -94,6 +95,15 @@ export type { PeaceOffer } from "./peaceOffer.js";
 export { BattleAbsenceSchema, type BattleAbsence } from "./battleAbsence.js";
 export { isSeaArea } from "./seaArea.js";
 export { stationAreaIds } from "./presence.js";
+export {
+  applyPresenceOrder,
+  presenceAfterOrders,
+  type PresenceAfterOrders,
+  type PresenceOrder,
+  type PresenceWarning,
+  type PresenceWarningSnapshot,
+} from "./presenceAfterOrders.js";
+export { chargeablePresenceRows, surplusShips } from "./presenceSurplus.js";
 export {
   contributesToPresence,
   isPresenceExempt,

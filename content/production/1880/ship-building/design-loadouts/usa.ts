@@ -193,7 +193,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 900000,
+        fuelCapacityKg: 855000,
         fuelStationPermille: 480,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -311,7 +311,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 2600,
+            installedKw: 2640,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -388,14 +388,14 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
                 params: {
                   rounds: 100,
                 },
-                part: "standard_gun_rml_10in_18ton",
+                part: "standard_gun_rml_11in_25ton",
               },
             ],
           },
           id: "main_fwd",
           magazineEntry: "mag_fwd",
           mountCount: 1,
-          part: "gun_rml_10in_18ton_barbette",
+          part: "gun_rml_11in_25ton_barbette",
           slot: "forecastle.gun_mount",
           stationPermille: 40,
         },
@@ -407,14 +407,14 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
                 params: {
                   rounds: 100,
                 },
-                part: "standard_gun_rml_10in_18ton",
+                part: "standard_gun_rml_11in_25ton",
               },
             ],
           },
           id: "main_aft",
           magazineEntry: "mag_aft",
           mountCount: 1,
-          part: "gun_rml_10in_18ton_barbette",
+          part: "gun_rml_11in_25ton_barbette",
           slot: "quarterdeck.gun_mount",
           stationPermille: 940,
         },
@@ -989,18 +989,18 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
           entries: {
             guns: [
               {
-                mountCount: 5,
+                mountCount: 2,
                 params: {
                   rounds: 150,
                 },
-                part: "standard_gun_rml_64pdr_71cwt",
+                part: "standard_gun_rml_7in_7ton",
               },
             ],
           },
           id: "sec_p",
           magazineEntry: "mag_sec",
-          mountCount: 5,
-          part: "gun_rml_64pdr_71cwt_deck_open",
+          mountCount: 2,
+          part: "gun_rml_7in_7ton_deck_open",
           side: "PORT",
           slot: "superstructure.gun_mount",
           stationPermille: 560,
@@ -1009,18 +1009,18 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
           entries: {
             guns: [
               {
-                mountCount: 5,
+                mountCount: 2,
                 params: {
                   rounds: 150,
                 },
-                part: "standard_gun_rml_64pdr_71cwt",
+                part: "standard_gun_rml_7in_7ton",
               },
             ],
           },
           id: "sec_s",
           magazineEntry: "mag_sec",
-          mountCount: 5,
-          part: "gun_rml_64pdr_71cwt_deck_open",
+          mountCount: 2,
+          part: "gun_rml_7in_7ton_deck_open",
           side: "STBD",
           slot: "superstructure.gun_mount",
           stationPermille: 560,
@@ -1538,7 +1538,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 3500,
+            installedKw: 3560,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -2074,7 +2074,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 700,
+            installedKw: 715,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",

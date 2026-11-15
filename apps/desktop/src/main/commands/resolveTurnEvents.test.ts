@@ -22,7 +22,7 @@ import { answerDecisionProgram, resolveTurnProgram } from "./resolveTurn.js";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
-const PLAYER_NATION = "austria_hungary";
+const PLAYER_NATION = "germany";
 const MONTHS = 36;
 
 const runtime = ManagedRuntime.make(desktopMainLayer());

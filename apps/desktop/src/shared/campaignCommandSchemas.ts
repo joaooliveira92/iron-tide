@@ -289,6 +289,7 @@ export const SubmitStationAssignmentPayloadSchema = Schema.Struct({
   ...CommandEnvelopePayloadSchema.fields,
   intent: Schema.Literals(["assign", "clear"]),
   shipIds: Schema.Array(nonEmptyString).check(Schema.isMinLength(1), Schema.isMaxLength(256)),
+  stationAreaId: Schema.optional(nonEmptyString),
 });
 
 export const SubmitShipReadinessPayloadSchema = Schema.Struct({

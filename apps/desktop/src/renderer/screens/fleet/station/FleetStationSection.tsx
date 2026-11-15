@@ -16,8 +16,14 @@ import type {
 } from "../../../../shared/fleet-contract.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
 import { translate } from "../../../lib/strings.js";
-import { format, presenceReadout, type StationRow } from "./fleet-station-state.js";
+import {
+  format,
+  presenceReadout,
+  type StationOption,
+  type StationRow,
+} from "./fleet-station-state.js";
 import { PresenceReadout } from "./PresenceReadout.js";
+import { PresenceWarnings } from "../components/PresenceWarnings.js";
 import type { FleetStationState } from "./fleet-station-model.js";
 import { useFleetHotkeys } from "../hooks/useFleetHotkeys.js";
 import { useStationAssignment } from "./useStationAssignment.js";
@@ -31,6 +37,9 @@ export interface FleetStationViewProps {
   readonly busy: boolean;
   readonly outcomeUnknown: boolean;
   readonly onToggle: (shipId: string) => void;
+  readonly stations: readonly StationOption[];
+  readonly station: string;
+  readonly onStationChange: (areaId: string) => void;
   readonly onSend: (intent: StationAssignmentIntent) => Promise<CommandOutcome>;
   readonly onSendReadiness: (readiness: CommandableReadiness) => Promise<CommandOutcome>;
   readonly onRetry: () => void;
@@ -81,6 +90,9 @@ export function FleetStationView({
   busy,
   outcomeUnknown,
   onToggle,
+  stations,
+  station,
+  onStationChange,
   onSend,
   onSendReadiness,
   onRetry,
@@ -124,6 +136,8 @@ export function FleetStationView({
           )}
         </div>
       )}
+
+      <PresenceWarnings warnings={state.presenceWarnings} areaName={areaName} />
 
       {outcomeUnknown && (
         <div role="alert" className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
@@ -200,6 +214,23 @@ export function FleetStationView({
       )}
 
       <div className="flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          {translate("fleet.station.picker.label")}
+          <select
+            className="h-8 rounded-md border bg-background px-2 text-sm text-foreground"
+            data-testid="fleet-station-picker"
+            value={station}
+            disabled={busy}
+            onChange={(event) => onStationChange(event.target.value)}
+          >
+            <option value="">{translate("fleet.station.picker.any")}</option>
+            {stations.map((option) => (
+              <option key={option.areaId} value={option.areaId}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </label>
         <Button
           type="button"
           size="sm"
@@ -262,6 +293,9 @@ export function FleetStationSection({ sessionId }: { readonly sessionId: string 
       busy={station.busy}
       outcomeUnknown={station.request.outcomeUnknown}
       onToggle={station.toggle}
+      stations={station.stations}
+      station={station.station}
+      onStationChange={station.setStation}
       onSend={station.send}
       onSendReadiness={station.sendReadiness}
       onRetry={station.request.retry}

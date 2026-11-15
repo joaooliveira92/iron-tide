@@ -3,7 +3,15 @@ import type { BaseLimitRules } from "./baseLimits.js";
 import { stationAreaIds } from "./presence.js";
 import { isShipOperational, type CampaignSnapshot, type Ship } from "./state.js";
 
+export interface ShortfallPrestigeRules {
+  readonly lossBpPerWholeShortfall: number;
+  readonly maxLossBp: number;
+  readonly openingGraceMonths?: number;
+  readonly surplusShipsOnly?: true;
+}
+
 export interface PresenceMeasurementRules {
+  readonly shortfallPrestige?: ShortfallPrestigeRules;
   readonly requiredTonsPerPossessionWeight: number;
   readonly noPortValueWeight: number;
   readonly crampedOrShortRangeCountBp: number;

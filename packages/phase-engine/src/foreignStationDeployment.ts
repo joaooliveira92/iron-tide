@@ -88,28 +88,33 @@ export function runForeignStationDeploymentPhase(ctx: PhaseContext): PhaseRunOut
     rules,
     ctx.campaignMonth,
   );
-  if (demand.length === 0) return { status: "continue" };
 
   const adjacency = seaAdjacency(ctx.snapshot.view());
-  const nationIds = [...new Set(demand.map((r) => r.nationId))].sort(byId);
+  const nationIds = [...ctx.snapshot.view().nations.keys()].sort(byId);
   for (const nationId of nationIds) {
-    const rows = demand.filter((r) => r.nationId === nationId);
-    const target = largestShortfall(rows);
-    if (target === undefined) continue;
-    const shortAreas = new Set(rows.map((r) => r.areaId));
     const nation = ctx.snapshot.view().nations.get(nationId);
     if (nation === undefined) continue;
-    const stationed = nation.fleets
+    const posted = nation.fleets
       .flatMap((fleet) => fleet.ships)
       .filter(
         (s) =>
           s.nationId === nationId &&
           s.stationAssignment === "FOREIGN_STATION" &&
-          s.readiness === "ACTIVE" &&
-          !shortAreas.has(s.locationAreaId),
+          s.readiness === "ACTIVE",
       )
       .sort((a, b) => byId(a.id, b.id));
-    for (const ship of stationed) deployShip(ctx, nationId, ship.id, target.areaId, adjacency);
+    if (posted.length === 0) continue;
+    const rows = demand.filter((r) => r.nationId === nationId);
+    const target = largestShortfall(rows);
+    const shortAreas = new Set(rows.map((r) => r.areaId));
+    for (const ship of posted) {
+      if (ship.stationAreaId !== undefined) {
+        if (ship.locationAreaId === ship.stationAreaId) continue;
+        deployShip(ctx, nationId, ship.id, ship.stationAreaId, adjacency);
+      } else if (target !== undefined && !shortAreas.has(ship.locationAreaId)) {
+        deployShip(ctx, nationId, ship.id, target.areaId, adjacency);
+      }
+    }
   }
   return { status: "continue" };
 }

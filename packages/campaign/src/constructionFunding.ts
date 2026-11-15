@@ -13,6 +13,7 @@ import {
   remainingMonthlyCapacityUnits,
 } from "./constructionDraw.js";
 import { transitionConstructionProject } from "./constructionStatus.js";
+import { dockExpansionDueUnits, isDockExpansionProject } from "./dockExpansionFunding.js";
 import type { CampaignSnapshot, ConstructionProject } from "./state.js";
 
 export interface FundingResult {
@@ -59,6 +60,13 @@ export function isUnpacedNewConstruction(project: ConstructionProject): boolean 
     project["packages"] === undefined &&
     project["foreignContractId"] === undefined
   );
+}
+
+function absorbableWork(project: ConstructionProject): number {
+  const remaining = (project["totalWork"] as number) - (project["completedWork"] as number);
+  return isDockExpansionProject(project)
+    ? Math.min(remaining, dockExpansionDueUnits(project))
+    : remaining;
 }
 
 export function capacityOf(
@@ -178,7 +186,7 @@ function applyLeftoverFunding(
     (p) =>
       p["packages"] === undefined &&
       !isUnpacedNewConstruction(p) &&
-      (p["completedWork"] as number) < (p["totalWork"] as number) &&
+      absorbableWork(p) > 0 &&
       p["status"] !== "COMPLETED" &&
       p["status"] !== "CANCELLED" &&
       p["status"] !== "HALTED" &&
@@ -187,7 +195,7 @@ function applyLeftoverFunding(
   );
   if (!firstIncomplete) return { projects, delta: SafeInt.ZERO };
 
-  const remainingWork = SafeInt.sub(firstIncomplete["totalWork"], firstIncomplete["completedWork"]);
+  const remainingWork = SafeInt(absorbableWork(firstIncomplete));
   const extra = remainingFunds > remainingWork ? remainingWork : remainingFunds;
   if ((extra as number) <= 0) return { projects, delta: SafeInt.ZERO };
 
@@ -227,7 +235,7 @@ export function allocateConstructionFunds(input: {
     (available as number) > 0
       ? updatedProjects.filter(
           (p) =>
-            (p["completedWork"] as number) < (p["totalWork"] as number) &&
+            absorbableWork(p) > 0 &&
             p["status"] !== "COMPLETED" &&
             p["status"] !== "CANCELLED" &&
             p["status"] !== "HALTED" &&
@@ -237,7 +245,7 @@ export function allocateConstructionFunds(input: {
         )
       : [];
   const requested = fundable.reduce((sum: number, p) => {
-    const remaining = (p["totalWork"] as number) - (p["completedWork"] as number);
+    const remaining = absorbableWork(p);
     if (p["packages"] === undefined) return sum + remaining;
     const absorbable = fundConstructionProject(
       p,
@@ -249,22 +257,17 @@ export function allocateConstructionFunds(input: {
     return sum + Math.min(remaining, absorbable);
   }, 0);
   if (fundable.length > 0) {
-    const totalRemainingWork = fundable.reduce(
-      (sum: SafeInt, p) => SafeInt.add(sum, SafeInt.sub(p["totalWork"], p["completedWork"])),
-      SafeInt.ZERO,
-    );
-    if ((totalRemainingWork as number) > 0) {
+    const remainingWorks = fundable.map(absorbableWork);
+    const totalRemainingWork = remainingWorks.reduce((sum, work) => sum + work, 0);
+    if (totalRemainingWork > 0) {
       let remainingFunds = available;
-      const remainingWorks = fundable.map((p) =>
-        Number(SafeInt.sub(p["totalWork"], p["completedWork"])),
-      );
       const allocations = splitLargestRemainder(available as number, remainingWorks);
 
       for (let fi = 0; fi < fundable.length; fi += 1) {
         const project = fundable[fi]!;
         if ((remainingFunds as number) <= 0) break;
 
-        const remainingWork = SafeInt.sub(project["totalWork"], project["completedWork"]);
+        const remainingWork = SafeInt(absorbableWork(project));
         const alloc = SafeInt(allocations[fi]!);
         const clampedAlloc = alloc > remainingWork ? remainingWork : alloc;
         if ((clampedAlloc as number) <= 0) continue;

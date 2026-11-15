@@ -2,7 +2,9 @@ import {
   type CampaignSnapshot,
   type ConstructionProject,
   type NationState,
+  DOCK_EXPANSION_PROJECT_TYPE,
   fromLinear,
+  isDockExpansionProject,
   monthId,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
@@ -19,7 +21,13 @@ import {
   type DockMassLimits,
 } from "@bluewave/ship-design";
 
-export const DOCK_EXPANSION_PROJECT_TYPE = "INFRASTRUCTURE" as const;
+export {
+  DOCK_EXPANSION_PROJECT_TYPE,
+  dockExpansionDueUnits,
+  dockExpansionInstalmentUnits,
+  dockExpansionTotalUnits,
+  isDockExpansionProject,
+} from "@bluewave/campaign";
 
 export {
   DOCK_EXPANSION_BASE_DURATION_MONTHS,
@@ -31,12 +39,6 @@ export {
 export const DOCK_EXPANSION_COST_FORMULA_ID = "dock_expansion_work_v1" as const;
 
 export const DOCK_EXPANSION_BASE_TOTAL_WORK_UNITS = 1_200 as const;
-
-export function isDockExpansionProject(project: ConstructionProject): boolean {
-  return (
-    project.projectType === DOCK_EXPANSION_PROJECT_TYPE && project.dockExpansionStepKg !== undefined
-  );
-}
 
 export function dockExpansionCompletes(project: ConstructionProject): boolean {
   const duration = project.dockExpansionDurationMonths;

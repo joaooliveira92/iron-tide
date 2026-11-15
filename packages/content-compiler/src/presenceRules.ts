@@ -6,6 +6,12 @@ export interface PresenceValues {
   readonly noPortValueWeight: number;
   readonly crampedOrShortRangeCountBp: number;
   readonly penaltyRequests?: true;
+  readonly shortfallPrestige?: {
+    readonly lossBpPerWholeShortfall: number;
+    readonly maxLossBp: number;
+    readonly openingGraceMonths?: number;
+    readonly surplusShipsOnly?: true;
+  };
   readonly baseLimits?: {
     readonly limitByBaseLevel: readonly number[];
     readonly noBaseLimit: number;
@@ -37,6 +43,20 @@ export function presenceFromRulesets(rulesets: readonly unknown[]): PresenceValu
       noPortValueWeight: value.noPortValueWeight,
       crampedOrShortRangeCountBp: value.crampedOrShortRangeCountBp,
       ...(value.penaltyRequests === true ? { penaltyRequests: true as const } : {}),
+      ...(value.shortfallPrestige === undefined
+        ? {}
+        : {
+            shortfallPrestige: {
+              lossBpPerWholeShortfall: value.shortfallPrestige.lossBpPerWholeShortfall,
+              maxLossBp: value.shortfallPrestige.maxLossBp,
+              ...(value.shortfallPrestige.openingGraceMonths === undefined
+                ? {}
+                : { openingGraceMonths: value.shortfallPrestige.openingGraceMonths }),
+              ...(value.shortfallPrestige.surplusShipsOnly === true
+                ? { surplusShipsOnly: true as const }
+                : {}),
+            },
+          }),
       ...(value.baseLimits === undefined
         ? {}
         : {

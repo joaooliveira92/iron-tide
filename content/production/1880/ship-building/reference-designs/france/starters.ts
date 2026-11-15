@@ -631,7 +631,7 @@ export default collection("designs", ReferenceDesignSchema, [
       },
       machinery: {
         plantId: "compound_cylindrical",
-        installedKw: 2600,
+        installedKw: 2700,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 500,
         fuelCapacityKg: 900000,

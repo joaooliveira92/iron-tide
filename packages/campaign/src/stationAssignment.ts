@@ -1,5 +1,6 @@
 import { firstGateReason, type GateReasonTag } from "./eligibility.js";
-import type { Ship } from "./state.js";
+import { stationAreaIds } from "./presence.js";
+import type { PossessionData, Ship } from "./state.js";
 import type { ShipReadinessState } from "./readiness.js";
 
 export const STATION_ASSIGNMENTS = ["FOREIGN_STATION", "EXERCISE"] as const;
@@ -14,6 +15,7 @@ export const STATION_ASSIGNMENT_REASONS = [
   "NOT_ACTIVE",
   "ALREADY_ASSIGNED",
   "NOT_ASSIGNED",
+  "UNKNOWN_STATION",
 ] as const;
 export type StationAssignmentReason = (typeof STATION_ASSIGNMENT_REASONS)[number];
 
@@ -25,16 +27,41 @@ export interface StationAssignmentProblem {
 export type StationAssignmentIntent = "assign" | "clear";
 
 export const STATION_ASSIGNED_REASON = "ASSIGNED" as const;
+export const STATION_RETARGETED_REASON = "RETARGETED" as const;
 export const STATION_CLEARED_BY_COMMAND_REASON = "CLEARED_BY_COMMAND" as const;
 export const STATION_CLEARED_BY_READINESS_REASON = "READINESS_LEFT_ACTIVE" as const;
+
+export interface StationTarget {
+  readonly stationAreaId?: string | undefined;
+  readonly knownStationAreaIds: readonly string[];
+}
+
+export function stationTargetFor(
+  world: { readonly possessions?: readonly PossessionData[] | undefined },
+  nationId: string,
+  stationAreaId: string | undefined,
+): StationTarget {
+  return {
+    stationAreaId,
+    knownStationAreaIds: stationAreaIds(world.possessions ?? [], nationId),
+  };
+}
 
 export function stationAssignmentProblems(
   nation: { readonly fleets: readonly { readonly ships: readonly Ship[] }[] },
   nationId: string,
   shipIds: readonly string[],
   intent: StationAssignmentIntent,
+  target?: StationTarget,
 ): StationAssignmentProblem[] {
   if (shipIds.length === 0) return [{ shipId: "", reason: "EMPTY_BATCH" }];
+  if (
+    intent === "assign" &&
+    target?.stationAreaId !== undefined &&
+    !target.knownStationAreaIds.includes(target.stationAreaId)
+  ) {
+    return [{ shipId: "", reason: "UNKNOWN_STATION" }];
+  }
   const seen = new Set<string>();
   const duplicates = new Set<string>();
   for (const id of shipIds) {
@@ -54,7 +81,7 @@ export function stationAssignmentProblems(
 
   const problems: StationAssignmentProblem[] = [];
   for (const shipId of [...seen].sort(byId)) {
-    const reason = shipProblem(owned.get(shipId), intent);
+    const reason = shipProblem(owned.get(shipId), intent, target?.stationAreaId);
     if (reason !== null) problems.push({ shipId, reason });
   }
   return problems;
@@ -75,11 +102,15 @@ const STATION_REASON_BY_GATE: Readonly<Record<GateReasonTag, StationAssignmentRe
 function shipProblem(
   ship: Ship | undefined,
   intent: StationAssignmentIntent,
+  stationAreaId: string | undefined,
 ): StationAssignmentReason | null {
   if (ship === undefined) return "NOT_OWNED";
   if (intent === "clear")
     return ship.stationAssignment === "FOREIGN_STATION" ? null : "NOT_ASSIGNED";
-  const reason = firstGateReason(ship, "HOLD_STATION");
+  const retarget =
+    ship.stationAssignment === "FOREIGN_STATION" && ship.stationAreaId !== stationAreaId;
+  const { stationAssignment: _posted, ...unposted } = ship;
+  const reason = firstGateReason(retarget ? unposted : ship, "HOLD_STATION");
   if (reason !== null) return STATION_REASON_BY_GATE[reason._tag];
   return null;
 }
@@ -88,10 +119,16 @@ function byId(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-export function withStationAssignment(ship: Ship, intent: StationAssignmentIntent): Ship {
-  if (intent === "assign") return { ...ship, stationAssignment: "FOREIGN_STATION" };
-  const { stationAssignment: _cleared, ...rest } = ship;
-  return rest;
+export function withStationAssignment(
+  ship: Ship,
+  intent: StationAssignmentIntent,
+  stationAreaId?: string,
+): Ship {
+  const { stationAssignment: _cleared, stationAreaId: _station, ...rest } = ship;
+  if (intent === "clear") return rest;
+  return stationAreaId === undefined
+    ? { ...rest, stationAssignment: "FOREIGN_STATION" }
+    : { ...rest, stationAssignment: "FOREIGN_STATION", stationAreaId };
 }
 
 export interface ShipReadinessSetResult {

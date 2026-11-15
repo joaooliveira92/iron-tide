@@ -209,11 +209,14 @@ export {
   authorizeDockExpansion,
   dockLimitAfterExpansionExplanation,
   dockExpansionCompletes,
+  dockExpansionDueUnits,
   dockExpansionEarliestCompletionMonth,
   dockExpansionEraStepForMonth,
   dockExpansionFinalDurationMonths,
+  dockExpansionInstalmentUnits,
   dockExpansionMonthIsActive,
   dockExpansionProjectFor,
+  dockExpansionTotalUnits,
   hasActivePrivateDockExpansion,
   isDockExpansionProject,
   privateDockExpansionEligibility,
@@ -228,6 +231,12 @@ export {
   type PrivateDockExpansionReason,
   type PrivateDockExpansionTrigger,
 } from "./dockExpansion.js";
+export {
+  DOCK_EXPANSION_INSTALMENT_FORMULA_ID,
+  DOCK_EXPANSION_PRICE_FORMULA_ID,
+  dockExpansionInstalmentExplanation,
+  dockExpansionPriceExplanation,
+} from "./dockExpansionExplanation.js";
 export {
   FOREIGN_CONTRACT_PRIORITY_DEFERRED,
   FOREIGN_CONTRACT_PRIORITY_POLICY_ID,

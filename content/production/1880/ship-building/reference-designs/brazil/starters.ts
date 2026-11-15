@@ -240,7 +240,7 @@ export default collection("designs", ReferenceDesignSchema, [
         installedKw: 8000,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 400,
-        fuelCapacityKg: 700000,
+        fuelCapacityKg: 665000,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 450,
         foulingBp: 0,
@@ -291,7 +291,7 @@ export default collection("designs", ReferenceDesignSchema, [
       placements: [
         {
           instanceId: "main_fwd",
-          componentId: "gun_rml_10in_18ton",
+          componentId: "gun_rml_229mm_whitworth",
           zoneId: "FORECASTLE",
           stationPermille: 40,
           params: {
@@ -302,7 +302,7 @@ export default collection("designs", ReferenceDesignSchema, [
         },
         {
           instanceId: "main_aft",
-          componentId: "gun_rml_10in_18ton",
+          componentId: "gun_rml_229mm_whitworth",
           zoneId: "QUARTERDECK",
           stationPermille: 940,
           params: {
@@ -419,10 +419,10 @@ export default collection("designs", ReferenceDesignSchema, [
       },
       machinery: {
         plantId: "compound_cylindrical",
-        installedKw: 6200,
+        installedKw: 6150,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 400,
-        fuelCapacityKg: 780000,
+        fuelCapacityKg: 741000,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 450,
         foulingBp: 0,
@@ -551,10 +551,10 @@ export default collection("designs", ReferenceDesignSchema, [
       },
       machinery: {
         plantId: "compound_cylindrical",
-        installedKw: 3500,
+        installedKw: 3450,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 400,
-        fuelCapacityKg: 250000,
+        fuelCapacityKg: 237500,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 450,
         foulingBp: 0,
@@ -687,10 +687,10 @@ export default collection("designs", ReferenceDesignSchema, [
       },
       machinery: {
         plantId: "compound_cylindrical",
-        installedKw: 700,
+        installedKw: 690,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 500,
-        fuelCapacityKg: 130000,
+        fuelCapacityKg: 123500,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 510,
         foulingBp: 0,
@@ -809,10 +809,10 @@ export default collection("designs", ReferenceDesignSchema, [
       },
       machinery: {
         plantId: "compound_cylindrical",
-        installedKw: 2600,
+        installedKw: 2560,
         zoneId: "CENTRAL_MACHINERY",
         stationPermille: 500,
-        fuelCapacityKg: 900000,
+        fuelCapacityKg: 855000,
         fuelZoneId: "CENTRAL_MACHINERY",
         fuelStationPermille: 480,
         foulingBp: 0,

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { MovementCommand } from "@bluewave/campaign-engine";
 import { useMovementOrders } from "../../../lib/movement-orders.js";
 import type {
@@ -46,6 +46,12 @@ export function useFleetScreen(sessionId: string, load: LoadFleetInspection): Us
   const [selectedDivisionId, setSelectedDivisionId] = useState<string | null>(null);
   const [destinationAreaId, setDestinationAreaId] = useState<string | null>(null);
   const campaignRevision = useCampaignRevision();
+  const freshNext = useRef(false);
+  const loadInspection = useCallback(() => {
+    const fresh = freshNext.current;
+    freshNext.current = false;
+    return load({ fresh });
+  }, [load]);
   const workflow = useCommandScreenWorkflow<
     FleetScreenState,
     FleetScreenProjection,
@@ -53,7 +59,7 @@ export function useFleetScreen(sessionId: string, load: LoadFleetInspection): Us
   >(
     requestLifecycleAdapter({
       initialState: initialFleetScreenState,
-      load,
+      load: loadInspection,
       project: projectFleetScreen,
       accept: acceptMovementCommand,
       onProjection: (projection) => {
@@ -63,7 +69,7 @@ export function useFleetScreen(sessionId: string, load: LoadFleetInspection): Us
     }),
     { refreshKey: campaignRevision },
   );
-  const { state, execute, loadScreen, loadError, request } = workflow;
+  const { state, execute, loadScreen, updateState, loadError, request } = workflow;
 
   const selectedDivision = useMemo(
     () => state.divisions.find((division) => division.divisionId === selectedDivisionId) ?? null,
@@ -103,7 +109,28 @@ export function useFleetScreen(sessionId: string, load: LoadFleetInspection): Us
     };
   }, [selectedDivision, effectiveDestinationAreaId]);
 
-  const orders = useMovementOrders(sessionId, execute);
+  const executeThenReload = useCallback<typeof execute>(
+    async (kind, send) => {
+      let notice: string | null = null;
+      const outcome = await execute(kind, async (context) => {
+        const result = await send(context);
+        if (result.outcome === "success") notice = acceptMovementCommand(result.value).notice;
+        return result;
+      });
+      if (outcome === "accepted") {
+        freshNext.current = true;
+        await loadScreen();
+        if (notice !== null) {
+          const kept = notice;
+          updateState((current) => ({ ...current, notice: kept }));
+        }
+      }
+      return outcome;
+    },
+    [execute, loadScreen, updateState],
+  );
+
+  const orders = useMovementOrders(sessionId, executeThenReload);
 
   const submit = useCallback(() => {
     if (routeTarget === null) return;

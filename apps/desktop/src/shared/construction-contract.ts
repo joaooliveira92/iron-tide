@@ -45,6 +45,8 @@ export interface ConstructionScreenProjection {
     readonly dockExpansionNextStepKg: number | null;
     readonly dockExpansionReadyMonth: string | null;
     readonly dockLimitAfterExpansionExplanation?: ExplanationTree;
+    readonly dockExpansionPriceExplanation?: ExplanationTree;
+    readonly dockExpansionInstalmentExplanation?: ExplanationTree;
     readonly dockPossessions: readonly {
       readonly id: string;
       readonly name: string;

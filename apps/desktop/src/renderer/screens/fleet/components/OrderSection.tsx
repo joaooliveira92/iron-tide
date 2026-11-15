@@ -1,12 +1,16 @@
 import type { MovementCommand } from "@bluewave/campaign-engine";
 import { memo } from "react";
-import type { FleetScreenProjection } from "../../../../shared/fleet-contract.js";
+import type {
+  FleetScreenProjection,
+  PresenceWarningView,
+} from "../../../../shared/fleet-contract.js";
 import { DispatchSlip } from "../../../components/slate/DispatchSlip.js";
 import type { OrderStatusView } from "../fleet-screen-state.js";
 import { DestinationPicker } from "./DestinationPicker.js";
 import { OrderActions } from "./OrderActions.js";
 import { OrderNotice } from "./OrderNotice.js";
 import { OrderStatusSummary } from "./OrderStatusSummary.js";
+import { PresenceWarnings } from "./PresenceWarnings.js";
 
 export interface OrderSectionOrder {
   readonly status: OrderStatusView;
@@ -23,7 +27,13 @@ export interface OrderSectionActions {
   readonly onRetry: () => void;
 }
 
+export interface OrderSectionPresence {
+  readonly warnings: readonly PresenceWarningView[];
+  readonly areaName: (areaId: string) => string;
+}
+
 export interface OrderSectionProps {
+  readonly presence?: OrderSectionPresence;
   readonly destinations: FleetScreenProjection["areas"];
   readonly destinationAreaId: string | null;
   readonly onDestinationChange: (areaId: string) => void;
@@ -39,6 +49,7 @@ export const OrderSection = memo(function OrderSection({
   order,
   actions,
   notice,
+  presence,
 }: OrderSectionProps) {
   return (
     <DispatchSlip label="Fleet dispatch" sealed={order.pendingRoute !== null} testId="fleet-order">
@@ -63,6 +74,9 @@ export const OrderSection = memo(function OrderSection({
         />
       </div>
       <OrderNotice notice={notice} />
+      {presence === undefined ? null : (
+        <PresenceWarnings warnings={presence.warnings} areaName={presence.areaName} />
+      )}
     </DispatchSlip>
   );
 });

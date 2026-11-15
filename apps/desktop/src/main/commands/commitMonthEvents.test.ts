@@ -69,7 +69,7 @@ describe("commitMonth with the production event catalogue", () => {
     registerCampaignSession({
       sessionId: "session-events",
       saveDir,
-      playerSlotId: "uk",
+      playerSlotId: "germany",
       campaignSeed: "a".repeat(32),
       month: { month: 1, year: 1880 },
       state,

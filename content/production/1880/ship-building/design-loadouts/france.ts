@@ -358,7 +358,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 2600,
+            installedKw: 2700,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",

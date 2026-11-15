@@ -10,6 +10,7 @@ export type { DiplomacyIncomingPeaceOffer } from "./incoming-peace-offer.js";
 export * from "./economy-explanations.js";
 export * from "./fleet.js";
 export * from "./fleet-explanations.js";
+export * from "./presence-warnings.js";
 export * from "./ledger-reconciliation.js";
 export * from "./report-explanations.js";
 export * from "./opening-briefing.js";

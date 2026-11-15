@@ -130,6 +130,22 @@ describe("monthly-reports sidecar", () => {
     expect(JSON.parse(readFileSync(path, "utf8"))).toEqual(data);
   });
 
+  it("round-trips the additive presence section and still loads a report stored without it", () => {
+    const saveDir = join(saveRoot, "presence");
+    registerProductionSession("session-presence", saveDir);
+    const withPresence: MonthlyReportEntry = {
+      ...entry(2),
+      presence: {
+        shortfalls: [
+          { areaId: "med_malta", requiredTons: 1200, presentTons: 300, shortfallTons: 900 },
+        ],
+        prestigeDelta: -2,
+      },
+    };
+    saveMonthlyReports(saveDir, { reports: [withPresence, entry(1)] });
+    expect(loadMonthlyReports(saveDir)).toEqual({ reports: [withPresence, entry(1)] });
+  });
+
   it("removes the tmp artifact when the write fails (non-existent save dir)", () => {
     const saveDir = join(saveRoot, "does-not-exist");
     expect(existsSync(saveDir)).toBe(false);

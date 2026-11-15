@@ -19,6 +19,20 @@ export const BaseLimitRulesSchema = Schema.Struct({
   ),
 });
 
+const basisPointsRate = Schema.Finite.check(
+  Schema.isInt(),
+  Schema.isBetween({ minimum: 1, maximum: 10_000 }),
+);
+
+export const ShortfallPrestigeRulesSchema = Schema.Struct({
+  lossBpPerWholeShortfall: basisPointsRate,
+  maxLossBp: basisPointsRate,
+  openingGraceMonths: Schema.optional(
+    Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 0, maximum: 120 })),
+  ),
+  surplusShipsOnly: Schema.optional(Schema.Literal(true)),
+});
+
 export const PresenceRulesSchema = Schema.Struct({
   colonialServiceDisplacementBp: Schema.Finite.check(
     Schema.isInt(),
@@ -31,6 +45,7 @@ export const PresenceRulesSchema = Schema.Struct({
     Schema.isBetween({ minimum: 1, maximum: 9_999 }),
   ),
   penaltyRequests: Schema.optional(Schema.Literal(true)),
+  shortfallPrestige: Schema.optional(ShortfallPrestigeRulesSchema),
   baseLimits: Schema.optional(BaseLimitRulesSchema),
   provenance: ProvenanceSchema,
 });

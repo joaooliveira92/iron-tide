@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { envelopeOf } from "../../../lib/command-envelope.js";
 import type {
   FleetScreenProjection,
@@ -20,8 +20,10 @@ import {
   explainStationRejection,
   format,
   pruneSelection,
+  stationOptions,
   stationRows,
   toggleSelection,
+  type StationOption,
   type StationRow,
 } from "./fleet-station-state.js";
 import type { FleetStationState } from "./fleet-station-model.js";
@@ -40,6 +42,9 @@ export interface UseStationAssignmentReturn {
   };
   readonly loadScreen: () => Promise<void>;
   readonly toggle: (shipId: string) => void;
+  readonly stations: readonly StationOption[];
+  readonly station: string;
+  readonly setStation: (areaId: string) => void;
   readonly send: (intent: StationAssignmentIntent) => Promise<CommandOutcome>;
   readonly sendReadiness: (readiness: CommandableReadiness) => Promise<CommandOutcome>;
 }
@@ -49,6 +54,8 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
   const campaignRevision = useCampaignRevision();
   const load = useFleetInspectionLoader(sessionId);
   const [selection, setSelection] = useState<readonly string[]>([]);
+  const [station, setStation] = useState("");
+  const areaNameRef = useRef<(areaId: string) => string>((areaId) => areaId);
   const workflow = useCommandScreenWorkflow<
     FleetStationState,
     FleetScreenProjection,
@@ -66,9 +73,14 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
                 readiness: format(`fleet.readiness.state.${value.readiness}`),
                 n: value.shipCount,
               })
-            : format(`fleet.station.queued.${value.intent}`, {
-                n: value.shipCount,
-              }),
+            : value.stationAreaId === undefined
+              ? format(`fleet.station.queued.${value.intent}`, {
+                  n: value.shipCount,
+                })
+              : format("fleet.station.queued.assign.named", {
+                  n: value.shipCount,
+                  station: areaNameRef.current(value.stationAreaId),
+                }),
       }),
     }),
     { refreshKey: campaignRevision },
@@ -80,6 +92,12 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
     [state.areas],
   );
   const areaName = useCallback((areaId: string) => areaNames.get(areaId) ?? areaId, [areaNames]);
+  areaNameRef.current = areaName;
+  const stations = useMemo(
+    () => stationOptions(state.presence, areaName),
+    [state.presence, areaName],
+  );
+  const chosenStation = stations.some((option) => option.areaId === station) ? station : "";
   const rows = useMemo(() => stationRows(state.divisions, areaName), [state.divisions, areaName]);
   const selected = useMemo(() => pruneSelection(selection, rows), [selection, rows]);
 
@@ -98,6 +116,9 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
             ...envelopeOf(sessionId, stamp),
             intent,
             shipIds,
+            ...(intent === "assign" && chosenStation !== ""
+              ? { stationAreaId: chosenStation }
+              : {}),
           });
           if (result.outcome !== "rejected" || result.reason !== "STATION_ASSIGNMENT_REJECTED") {
             return result;
@@ -112,7 +133,7 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
           return outcome;
         });
     },
-    [bridge, rows, selected, sessionId, workflow.execute],
+    [bridge, chosenStation, rows, selected, sessionId, workflow.execute],
   );
 
   const sendReadiness = useCallback(
@@ -152,6 +173,9 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
     request: workflow.request,
     loadScreen: workflow.loadScreen,
     toggle,
+    stations,
+    station: chosenStation,
+    setStation,
     send,
     sendReadiness,
   };

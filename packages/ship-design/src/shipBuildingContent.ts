@@ -82,6 +82,10 @@ export interface PresenceRuleValues {
   readonly noPortValueWeight: number;
   readonly crampedOrShortRangeCountBp: number;
   readonly penaltyRequests?: true;
+  readonly shortfallPrestige?: {
+    readonly lossBpPerWholeShortfall: number;
+    readonly maxLossBp: number;
+  };
   readonly baseLimits?: {
     readonly limitByBaseLevel: readonly number[];
     readonly noBaseLimit: number;
