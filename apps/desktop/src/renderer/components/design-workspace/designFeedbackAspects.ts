@@ -4,6 +4,7 @@ import type { PresentationFormat } from "../../lib/presentation-format/index.js"
 import type { DesignSectionId } from "../../screens/shipbuilding/design-sections.js";
 import type { PartKind } from "./panels/hull-plan/anatomy/anatomy-types.js";
 import type { AspectChange, FeedbackAspect, FeedbackTone } from "./designFeedbackTypes.js";
+import { requirementLine } from "./panels/TypeRequirements.js";
 
 type RequirementField = ShipTypeRequirementCheck["field"];
 type MetricTone = WorkshopView["metrics"][number]["tone"];
@@ -217,24 +218,39 @@ const SPECS: readonly AspectSpec[] = [
 const metricTone = (view: WorkshopView, id: string): MetricTone | null =>
   view.metrics.find((m) => m.id === id)?.tone ?? null;
 
+interface RequirementFlip {
+  readonly tone: FeedbackTone;
+  readonly broken: readonly ShipTypeRequirementCheck[];
+}
+
 const requirementFlip = (
   before: WorkshopView,
   after: WorkshopView,
   fields: readonly RequirementField[],
-): FeedbackTone => {
+): RequirementFlip => {
   if (before.requirements.status !== "CLASSIFIED" || after.requirements.status !== "CLASSIFIED")
-    return "neutral";
+    return { tone: "neutral", broken: [] };
+  const broken: ShipTypeRequirementCheck[] = [];
   let better = false;
-  let worse = false;
   for (const check of after.requirements.checks) {
     if (!fields.includes(check.field)) continue;
     const prior = before.requirements.checks.find((c) => c.field === check.field);
     if (prior === undefined || prior.met === check.met) continue;
     if (check.met) better = true;
-    else worse = true;
+    else broken.push(check);
   }
-  return worse ? "worse" : better ? "better" : "neutral";
+  const tone: FeedbackTone = broken.length > 0 ? "worse" : better ? "better" : "neutral";
+  return { tone, broken };
 };
+
+const withBrokenRequirements = (
+  text: string,
+  flip: RequirementFlip,
+  format: PresentationFormat,
+): string =>
+  flip.broken.length === 0
+    ? text
+    : `${text}, breaks ${flip.broken.map((c) => requirementLine(c, format)).join(" and ")}`;
 
 const byDirection = (rule: AspectSpec["better"], delta: number): FeedbackTone => {
   if (rule === "none" || delta === 0) return "neutral";
@@ -244,12 +260,12 @@ const byDirection = (rule: AspectSpec["better"], delta: number): FeedbackTone =>
 const toneOf = (
   spec: AspectSpec,
   measured: Measured,
+  flip: RequirementFlip,
   before: WorkshopView,
   after: WorkshopView,
 ): FeedbackTone => {
   if (measured.tone !== undefined) return measured.tone;
-  const flip = requirementFlip(before, after, spec.requirementFields);
-  if (flip !== "neutral") return flip;
+  if (flip.tone !== "neutral") return flip.tone;
   if (spec.metricId !== undefined) {
     const b = metricTone(before, spec.metricId);
     const a = metricTone(after, spec.metricId);
@@ -269,12 +285,13 @@ export function diffAspects(
     const measured = spec.measure(before, after, format);
     if (measured === null) continue;
     if (measured.delta === 0 && measured.tone === undefined) continue;
+    const flip = requirementFlip(before, after, spec.requirementFields);
     const change: AspectChange = {
       aspect: spec.aspect,
       label: spec.label,
-      text: measured.text,
+      text: withBrokenRequirements(measured.text, flip, format),
       direction: direction(measured.delta),
-      tone: toneOf(spec, measured, before, after),
+      tone: toneOf(spec, measured, flip, before, after),
       parts: spec.parts,
       section: spec.section,
       ...(spec.metricId === undefined ? {} : { metricId: spec.metricId }),
