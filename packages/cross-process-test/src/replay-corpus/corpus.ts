@@ -6,6 +6,7 @@ import type { CampaignSnapshot } from "@bluewave/campaign";
 import { unifiedSnapshotHash } from "@bluewave/campaign";
 import type { ConstructionEvent } from "@bluewave/content-schema";
 import {
+  eventResolutionFromRulesets,
   fleetManagementFromRulesets,
   peaceBehaviourFromRulesets,
   tensionDriftFromRulesets,
@@ -15,7 +16,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { loadResult, SaveStore, restampState } from "@bluewave/persistence";
-import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
+import { MonthExecutor, type EventEngineContent, type MonthResult } from "@bluewave/phase-engine";
 import { Result } from "effect";
 
 import {
@@ -232,6 +233,28 @@ function productionPeaceBehaviour() {
   return decoded.value;
 }
 
+function productionEvents(): EventEngineContent | undefined {
+  const decoded = eventResolutionFromRulesets(production().bundle.rulesets);
+  if (decoded === undefined) return undefined;
+  if (!decoded.ok)
+    throw new ReplayFileError({
+      message: `production eventResolution section is invalid at '${decoded.field}'`,
+    });
+  const catalogue = production().bundle.campaign?.events ?? [];
+  return catalogue.length === 0 ? undefined : { rules: decoded.value, catalogue };
+}
+
+export function eventAnswerPrestigeReasonCodes(): ReadonlySet<string> {
+  const codes = new Set<string>();
+  for (const event of productionEvents()?.catalogue ?? []) {
+    for (const answer of event.answers) {
+      const prestige = answer.effects.prestige;
+      if (prestige !== undefined) codes.add(prestige.reasonCode);
+    }
+  }
+  return codes;
+}
+
 function productionConstructionEvents(setup?: ReplaySetupId) {
   const rules =
     setup === "certain-construction-events"
@@ -244,11 +267,13 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
   const fleetManagement = productionFleetManagement();
   const tensionDrift = productionTensionDrift();
   const peaceBehaviour = productionPeaceBehaviour();
+  const events = productionEvents();
   const constructionEvents = productionConstructionEvents(setup);
   return {
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
     ...(tensionDrift === undefined ? {} : { tensionDrift }),
     ...(peaceBehaviour === undefined ? {} : { peaceBehaviour }),
+    ...(events === undefined ? {} : { events }),
     ...(constructionEvents === undefined ? {} : { constructionEvents }),
     ...(playerNationId === undefined ? {} : { playerNationId }),
   };
