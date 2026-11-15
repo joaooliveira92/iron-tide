@@ -61,15 +61,36 @@ describe("last change strip in the design workspace", () => {
     expect(screen.getByTestId("last-change-strip").dataset["kind"]).toBe("edit");
   });
 
-  it("opens the owning section from a delta, and clears on a section change", () => {
+  it("opens the owning section from a delta, keeps the strip and moves focus to that section", () => {
     render(<ShipbuildingWorkspace />);
     editHull();
     const target = region().querySelector<HTMLElement>("li[data-aspect='speed'] button");
     expect(target).not.toBeNull();
+    target!.focus();
     fireEvent.click(target!);
     expect(within(screen.getByTestId("design-drawer")).getByRole("tablist")).toBeTruthy();
     expect(screen.getByLabelText(/^Installed power/)).toBeTruthy();
+    expect(strip()).not.toBeNull();
+    expect(document.activeElement).not.toBe(document.body);
+    expect(document.activeElement?.textContent).toBe("Machinery");
+  });
+
+  it("clears after a strip navigation once the player navigates from elsewhere", () => {
+    render(<ShipbuildingWorkspace />);
+    editHull();
+    fireEvent.click(region().querySelector<HTMLElement>("li[data-aspect='speed'] button")!);
+    expect(strip()).not.toBeNull();
+    openMap("Armament");
     expect(strip()).toBeNull();
+  });
+
+  it("replaces the strip on the next edit after a strip navigation", () => {
+    render(<ShipbuildingWorkspace />);
+    editHull();
+    const before = screen.getByTestId("last-change-label").textContent;
+    fireEvent.click(region().querySelector<HTMLElement>("li[data-aspect='speed'] button")!);
+    commit(/^Installed power/, "1000");
+    expect(screen.getByTestId("last-change-label").textContent).not.toBe(before);
   });
 
   it("clears when another section is opened, and can be dismissed", () => {

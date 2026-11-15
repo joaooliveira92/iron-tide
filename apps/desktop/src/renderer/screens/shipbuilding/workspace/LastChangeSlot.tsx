@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { LastChangeStrip } from "../components/LastChangeStrip.js";
+import type { DesignSectionId } from "../design-sections.js";
 import {
   useShipbuildingActions,
   useShipbuildingMeta,
@@ -11,11 +12,19 @@ export function LastChangeSlot() {
   const { place } = useShipbuildingMeta();
   const { clearLastChange, openSection } = useShipbuildingActions();
   const section = place?.section ?? null;
-  useEffect(() => clearLastChange(), [section, clearLastChange]);
+  const opened = useRef<DesignSectionId | null>(null);
+  useEffect(() => {
+    const own = opened.current === section;
+    opened.current = null;
+    if (!own) clearLastChange();
+  }, [section, clearLastChange]);
   return (
     <LastChangeStrip
       change={lastChange}
-      onOpenSection={(id) => openSection(id)}
+      onOpenSection={(id) => {
+        opened.current = id === section ? null : id;
+        openSection(id);
+      }}
       onDismiss={clearLastChange}
     />
   );
