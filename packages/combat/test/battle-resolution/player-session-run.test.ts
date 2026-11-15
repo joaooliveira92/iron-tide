@@ -181,7 +181,7 @@ describe("battle run and pause control", () => {
           ...base.damage,
           targets: {
             ...base.damage.targets,
-            [shipId]: { ...target, state: { ...target.state, terminalStatus: "SUNK" } },
+            [shipId]: { ...target, state: { ...target.state, terminalStatus: "SINKING" } },
           },
         },
       };
