@@ -103,6 +103,7 @@ export {
   type PresenceWarning,
   type PresenceWarningSnapshot,
 } from "./presenceAfterOrders.js";
+export { chargeablePresenceRows, surplusShips } from "./presenceSurplus.js";
 export {
   contributesToPresence,
   isPresenceExempt,

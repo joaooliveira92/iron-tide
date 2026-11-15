@@ -27,6 +27,10 @@ const basisPointsRate = Schema.Finite.check(
 export const ShortfallPrestigeRulesSchema = Schema.Struct({
   lossBpPerWholeShortfall: basisPointsRate,
   maxLossBp: basisPointsRate,
+  openingGraceMonths: Schema.optional(
+    Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 0, maximum: 120 })),
+  ),
+  surplusShipsOnly: Schema.optional(Schema.Literal(true)),
 });
 
 export const PresenceRulesSchema = Schema.Struct({
