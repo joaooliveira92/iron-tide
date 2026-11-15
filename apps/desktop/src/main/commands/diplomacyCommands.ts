@@ -1,5 +1,6 @@
 import { buildDiplomacyScreenProjection } from "@bluewave/campaign-engine";
 import type { CommandBody } from "@bluewave/commands";
+import { peaceRefusal } from "@bluewave/phase-engine";
 import { Effect } from "effect";
 import type {
   DiplomacyCommandBody,
@@ -7,6 +8,7 @@ import type {
 } from "../../shared/diplomacy-contract.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
+import { ContentArtifact } from "../runtime/contentArtifact.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
 import { currentRevision, submitPlayerCommand } from "./playerCommandSupport.js";
 
@@ -29,8 +31,32 @@ export const inspectDiplomacyScreenProgram: CommandHandler<"inspectDiplomacyScre
       });
     }
 
+    const contentArtifact = yield* ContentArtifact;
+    const peaceBehaviour = yield* contentArtifact.loadPeaceBehaviourRules();
     const value: DiplomacyScreenProjection = {
       ...projection,
+      wars:
+        peaceBehaviour === undefined
+          ? projection.wars
+          : projection.wars.map((war) => {
+              if (war.incomingPeaceOffer !== undefined) return war;
+              const refusal = peaceRefusal(
+                record.state.snapshot,
+                peaceBehaviour.acceptanceScoreMargin,
+                record.playerSlotId,
+                war.warId,
+                { _tag: "StatusQuo" },
+              );
+              return refusal === undefined
+                ? war
+                : {
+                    ...war,
+                    peaceRefusal: {
+                      reasonCode: refusal.reason,
+                      margin: peaceBehaviour.acceptanceScoreMargin,
+                    },
+                  };
+            }),
       revision: currentRevision(record),
       month: record.month,
     };

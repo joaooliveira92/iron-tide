@@ -1,6 +1,6 @@
 import type { MonthResult } from "@bluewave/phase-engine";
 
-import { executeScenario, type ReplayScenario } from "./corpus.js";
+import { eventAnswerPrestigeReasonCodes, executeScenario, type ReplayScenario } from "./corpus.js";
 
 export const SUBSYSTEMS = [
   { id: "opening_validation", label: "Opening validation" },
@@ -63,8 +63,12 @@ export function monthCoverage(result: MonthResult): MonthCoverage {
   for (const entry of result.financialLedger.all) add(entry.phaseId);
   for (const entry of result.randomLedger.all) add(entry.phase);
   if (result.commandLedger.all.length > 0) add("command_collection");
+  const eventPrestige = eventAnswerPrestigeReasonCodes();
   for (const entry of result.eventLedger.all) {
     const type = entry.eventType;
+    if (entry.body.kind === "PrestigeChanged" && eventPrestige.has(entry.body.reasonCode)) {
+      continue;
+    }
     const subsystem = EVENT_SUBSYSTEM[type];
     if (subsystem !== undefined) add(subsystem);
     else if (!NEUTRAL_EVENT_TYPES.has(type)) unattributed.add(type);

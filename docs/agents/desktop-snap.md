@@ -46,6 +46,15 @@ Read `aria.txt` first. The default window is 1280x800 and screenshots are in CSS
   checkout into separate `--out` directories and compare yourself.
 - A tour (`End inspection`) is dismissed on launch and after every action unless `--tour`.
 
+## Recipe: Open design menu and dialog
+
+```
+pnpm snap --make-save DIR --out OUT --freeze --strict --advance 24 \
+  --click "Ship design" --click "More design actions" --click "Open design"
+```
+
+`aria.txt` lists the completed ship in "Open a design"; `--advance 12` shows "Under construction".
+
 ## Output directory and `steps.json`
 
 Before running, `snap` deletes only files it owns (the captures, `steps.json`, this run's
