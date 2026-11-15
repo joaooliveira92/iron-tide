@@ -55,7 +55,13 @@ describe("armour scheme hover preview", () => {
   it("renders without a design workspace and simply shows no preview", () => {
     const model = protectionModel(ref.draft, view, materials, 1880);
     render(<ArmourSchemeSelector model={model} edit={vi.fn()} />);
-    fireEvent.mouseEnter(screen.getByRole("button", { name: /Protected cruiser/ }));
+    const button = screen.getByRole("button", { name: /Protected cruiser/ });
+    expect(button.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.mouseEnter(button);
+    fireEvent.focus(button);
     expect(screen.queryByTestId("delta-preview")).toBeNull();
+    expect(screen.queryByRole("status")).toBeNull();
+    fireEvent.click(button);
+    expect(button.getAttribute("aria-pressed")).toBe("true");
   });
 });
