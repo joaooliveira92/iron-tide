@@ -11,12 +11,12 @@ import { runEquivalence } from "../../ship-design/test/helpers/equivalenceRun.js
 const report = runEquivalence();
 
 describe("equivalence totals are unchanged by the codemod (ticket 11c)", () => {
-  it("covers 98/98 designs and 926/926 placements", () => {
+  it("covers 98/98 designs and 928/928 placements", () => {
     expect(report.coverage.baseline).toEqual({
       designs: 98,
-      placements: 926,
+      placements: 928,
       gunPlacements: 267,
-      tubePlacements: 37,
+      tubePlacements: 39,
       fittingPlacements: 622,
     });
     expect(report.summary.rows.changed).toBe(0);
@@ -45,7 +45,7 @@ describe("equivalence totals are unchanged by the codemod (ticket 11c)", () => {
       expect(entry.gunsPerMount).toBe(entry.legacyUnits);
     }
     const tubes = report.designs.flatMap((d) => d.entries.filter((e) => e.kind === "tube"));
-    expect(tubes).toHaveLength(37);
+    expect(tubes).toHaveLength(39);
     for (const entry of tubes) expect(entry.mountCount).toBe(entry.legacyUnits);
   });
 

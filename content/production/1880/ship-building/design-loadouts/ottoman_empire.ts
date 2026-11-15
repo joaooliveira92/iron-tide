@@ -241,7 +241,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 900000,
+        fuelCapacityKg: 855000,
         fuelStationPermille: 480,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -359,7 +359,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 2600,
+            installedKw: 2500,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -391,7 +391,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 700000,
+        fuelCapacityKg: 665000,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -491,18 +491,18 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
           entries: {
             guns: [
               {
-                mountCount: 3,
+                mountCount: 1,
                 params: {
                   rounds: 150,
                 },
-                part: "standard_gun_rml_64pdr_71cwt",
+                part: "standard_gun_rml_7in_7ton",
               },
             ],
           },
           id: "sec_p",
           magazineEntry: "mag_sec",
-          mountCount: 3,
-          part: "gun_rml_64pdr_71cwt_deck_open",
+          mountCount: 1,
+          part: "gun_rml_7in_7ton_deck_open",
           side: "PORT",
           slot: "superstructure.gun_mount",
           stationPermille: 560,
@@ -511,18 +511,18 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
           entries: {
             guns: [
               {
-                mountCount: 3,
+                mountCount: 1,
                 params: {
                   rounds: 150,
                 },
-                part: "standard_gun_rml_64pdr_71cwt",
+                part: "standard_gun_rml_7in_7ton",
               },
             ],
           },
           id: "sec_s",
           magazineEntry: "mag_sec",
-          mountCount: 3,
-          part: "gun_rml_64pdr_71cwt_deck_open",
+          mountCount: 1,
+          part: "gun_rml_7in_7ton_deck_open",
           side: "STBD",
           slot: "superstructure.gun_mount",
           stationPermille: 560,
@@ -561,7 +561,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 8000,
+            installedKw: 7800,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -626,7 +626,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 780000,
+        fuelCapacityKg: 741000,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -744,7 +744,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 6200,
+            installedKw: 5950,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -787,7 +787,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 250000,
+        fuelCapacityKg: 237500,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -917,7 +917,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 3500,
+            installedKw: 3380,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -949,7 +949,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 130000,
+        fuelCapacityKg: 123500,
         fuelStationPermille: 510,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -1067,7 +1067,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 700,
+            installedKw: 675,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
