@@ -1,14 +1,20 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { CompiledPartModelSchema, decodeStrict } from "@bluewave/content-schema";
+import {
+  CompiledPartModelSchema,
+  FlattenedPartSchema,
+  decodeStrict,
+} from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
 import {
   buildPartCatalogueView,
   pickerOptions,
+  type NationAccessSource,
   type PartCatalogueEntry,
   type PickerQuery,
 } from "../src/index.js";
+import { navalProfiles } from "./helpers/earlyContext.js";
 
 const artifact: unknown = JSON.parse(
   readFileSync(
@@ -19,7 +25,7 @@ const artifact: unknown = JSON.parse(
 const shipBuilding = (artifact as { readonly shipBuilding: Readonly<Record<string, unknown>> })
   .shipBuilding;
 const model = decodeStrict(CompiledPartModelSchema, shipBuilding["partModel"]);
-const catalogue = buildPartCatalogueView(model);
+const catalogue = buildPartCatalogueView(model, navalProfiles);
 const byId = new Map(catalogue.map((e) => [e.id, e]));
 const entry = (id: string): PartCatalogueEntry => {
   const found = byId.get(id);
@@ -50,8 +56,71 @@ describe("catalogue entry nation, calibre and role (#575)", () => {
     expect(entry("gun_bl_274mm_m1875").nationIds).toEqual(["france"]);
   });
 
-  it("leaves nationIds absent where the part model carries no national variant", () => {
-    expect(entry("gun_rml_12in_25ton").nationIds).toBeUndefined();
+  it("derives nationIds from profile component access for a family with no national variant (#618)", () => {
+    expect(entry("gun_rml_12in_25ton").nationIds).toEqual(["france", "germany", "russia", "uk"]);
+    expect(entry("gun_rml_12in_35ton").nationIds).toEqual(["france", "germany", "uk"]);
+    expect(entry("gun_rml_16in_80ton").nationIds).toEqual(["france", "germany", "uk", "usa"]);
+  });
+
+  it("excludes only nations whose profile marks a quick-firing family unavailable (#618)", () => {
+    for (const id of ["gun_qf_6pdr", "gun_hotchkiss_3pdr", "gun_maxim_303"]) {
+      const nations = entry(id).nationIds ?? [];
+      expect(nations, id).toContain("brazil");
+      expect(nations, id).not.toContain("usa");
+    }
+  });
+
+  it("keeps variant-derived nations for a family that has national variants (#618)", () => {
+    expect(entry("gun_bl_10in_32").nationIds).toEqual(["uk"]);
+  });
+
+  it("hides a family-level gun from a nation whose profile marks it unavailable (#618)", () => {
+    const { available, hidden } = pickerOptions(catalogue, {
+      month: "1880-01",
+      unlockedTechs: new Set(entry("gun_rml_16in_80ton").requires),
+      nationId: "japan",
+      category: "MAIN_GUN",
+    });
+    expect(available.map((e) => e.id)).not.toContain("gun_rml_16in_80ton");
+    expect(hidden.find((h) => h.entry.id === "gun_rml_16in_80ton")?.reason).toBe("other_nation");
+  });
+
+  it("derives anti-aircraft nationIds from profile component access (#618)", () => {
+    const radar = Object.values(model.partIndex.byId).find((part) => part.family === "radar");
+    if (radar === undefined) throw new Error("no radar part to adapt");
+    const aaId = "aa_probe_gun";
+    const aaModel = {
+      ...model,
+      partIndex: {
+        ...model.partIndex,
+        byId: {
+          ...model.partIndex.byId,
+          [aaId]: decodeStrict(FlattenedPartSchema, {
+            ...radar,
+            id: aaId,
+            family: "aa_weapon",
+            provides: "aa_weapon",
+            spec: {},
+          }),
+        },
+      },
+    };
+    const profiles: readonly NationAccessSource[] = [
+      { nationId: "uk", componentAccess: {} },
+      { nationId: "japan", componentAccess: { [aaId]: { status: "UNAVAILABLE" } } },
+    ];
+    const probe = buildPartCatalogueView(aaModel, profiles).find((e) => e.id === aaId);
+    expect(probe?.category).toBe("AA_WEAPON");
+    expect(probe?.nationIds).toEqual(["uk"]);
+  });
+
+  it("filters an anti-aircraft entry by nation through the shared picker (#618)", () => {
+    const aa = entryOf({ id: "aa_x", category: "AA_WEAPON", nationIds: ["uk"] });
+    const query = { ...base, category: "AA_WEAPON" as const };
+    expect(pickerOptions([aa], { ...query, nationId: "uk" }).available).toEqual([aa]);
+    expect(pickerOptions([aa], { ...query, nationId: "france" }).hidden).toEqual([
+      { entry: aa, reason: "other_nation" },
+    ]);
   });
 
   it("derives torpedo tube nationIds from the national tubes that extend each family, sorted (#618)", () => {
