@@ -96,6 +96,14 @@ export { BattleAbsenceSchema, type BattleAbsence } from "./battleAbsence.js";
 export { isSeaArea } from "./seaArea.js";
 export { stationAreaIds } from "./presence.js";
 export {
+  applyPresenceOrder,
+  presenceAfterOrders,
+  type PresenceAfterOrders,
+  type PresenceOrder,
+  type PresenceWarning,
+  type PresenceWarningSnapshot,
+} from "./presenceAfterOrders.js";
+export {
   contributesToPresence,
   isPresenceExempt,
   measurePresence,
