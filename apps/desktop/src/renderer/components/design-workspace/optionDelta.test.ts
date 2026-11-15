@@ -37,6 +37,21 @@ describe("viewDeltas", () => {
     expect(byId.speed!.text).toMatch(/ kn$/);
   });
 
+  it("keeps the four legacy aspects in their original order and drops the new ones", () => {
+    const after = buildWorkshopView(
+      applyEdit(ref.draft, {
+        kind: "set_machinery",
+        patch: { installedKw: ref.draft.machinery.installedKw - 500 },
+      }),
+      env,
+    );
+    const ids = viewDeltas(view, after, FORMAT).map((d) => d.id);
+    expect(ids.length).toBeGreaterThan(0);
+    const legacy = ["speed", "displacement", "cost", "stability"];
+    expect(ids.every((id) => legacy.includes(id))).toBe(true);
+    expect(ids).toEqual(legacy.filter((id) => ids.includes(id)));
+  });
+
   it("is empty when the two views are identical", () => {
     expect(viewDeltas(view, view, FORMAT)).toEqual([]);
   });
