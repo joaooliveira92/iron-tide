@@ -58,9 +58,48 @@ describe("hull form hover preview", () => {
     expect(builds.count - start).toBe(1);
   });
 
-  it("builds nothing while no option is highlighted", () => {
+  it("builds only the mount view while no option is highlighted", () => {
     const start = builds.count;
     mount();
-    expect(builds.count - start).toBe(1);
+    const mounted = builds.count;
+    expect(mounted - start).toBe(1);
+    fireEvent.keyDown(screen.getByRole("combobox", { name: "Hull form" }), { key: "Escape" });
+    expect(builds.count).toBe(mounted);
+  });
+});
+
+describe("hull material preview", () => {
+  const materialBox = () => screen.getByRole("combobox", { name: "Material" });
+  const openMaterial = () => {
+    render(
+      <DesignWorkspaceFixture content={content} draft={ref.draft} month={ref.month}>
+        <HullPanel />
+      </DesignWorkspaceFixture>,
+    );
+    fireEvent.click(materialBox());
+  };
+
+  it("shows toned deltas for a highlighted material and clears them on close", () => {
+    openMaterial();
+    expect(screen.queryByTestId("delta-preview")).toBeNull();
+    const other = ["iron", "mild_steel", "high_tensile"].find(
+      (m) => m !== ref.draft.hull.materialId,
+    )!;
+    fireEvent.pointerMove(optionFor(other));
+    const preview = screen.getByTestId("delta-preview");
+    expect(preview.getAttribute("aria-label")).toBe("Effect of the highlighted material");
+    expect(preview.querySelectorAll("li[data-tone]").length).toBeGreaterThan(0);
+    fireEvent.keyDown(materialBox(), { key: "Escape" });
+    expect(screen.queryByTestId("delta-preview")).toBeNull();
+  });
+
+  it("previews the option the keyboard highlight lands on", () => {
+    openMaterial();
+    expect(screen.queryByTestId("delta-preview")).toBeNull();
+    fireEvent.keyDown(materialBox(), { key: "ArrowDown" });
+    expect(screen.getByTestId("delta-preview").getAttribute("aria-label")).toBe(
+      "Effect of the highlighted material",
+    );
+    expect(screen.getByRole("status").textContent).toMatch(/^Effect of the highlighted material: /);
   });
 });
