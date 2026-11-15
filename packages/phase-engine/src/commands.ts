@@ -8,6 +8,7 @@ import {
   applyCommanderChange,
   DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE,
   fleetMoveProblem,
+  relocateFleet,
   isTerminalConstructionProjectStatus,
   monthlyRevenue,
   researchCap,
@@ -158,27 +159,7 @@ export function applyMoveFleet(
     collector.addError(problem.code, problem.message, { stage: "command_collection" });
     return currentSnapshot;
   }
-  const nation = currentSnapshot["nations"].get(body["nationId"])!;
-  const moved = nation["fleets"].find((f) => f["id"] === body["fleetId"])!;
-  const movedShipIds = new Set(moved["ships"].map((s) => s["id"]));
-  const updatedNation: NationState = {
-    ...nation,
-    fleets: nation["fleets"].map((fleet) =>
-      fleet["id"] === body["fleetId"]
-        ? {
-            ...fleet,
-            locationAreaId: body["toAreaId"],
-            ships: fleet["ships"].map((s) => ({ ...s, locationAreaId: body["toAreaId"] })),
-          }
-        : fleet,
-    ),
-    divisions: nation["divisions"].map((d) =>
-      movedShipIds.has(d["flagshipShipId"]) ? { ...d, locationAreaId: body["toAreaId"] } : d,
-    ),
-  };
-  const updatedNations = new Map(currentSnapshot["nations"]);
-  updatedNations.set(body["nationId"], updatedNation);
-  return { ...currentSnapshot, nations: updatedNations };
+  return relocateFleet(currentSnapshot, body["nationId"], body["fleetId"], body["toAreaId"]);
 }
 
 export function applySetBudgetAllocation(
