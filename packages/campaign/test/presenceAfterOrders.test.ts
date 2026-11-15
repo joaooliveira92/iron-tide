@@ -2,7 +2,6 @@ import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import type {
   BlockadeState,
-  CampaignSnapshot,
   CompiledDesignVersion,
   FleetState,
   NationState,
