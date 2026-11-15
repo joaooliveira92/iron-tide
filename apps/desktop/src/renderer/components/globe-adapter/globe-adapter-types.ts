@@ -2,7 +2,7 @@ import type { WorldMapChartProps } from "../world-map/WorldMapChart.js";
 import type { MapVariant } from "../world-map/map-variant-layout.js";
 import type { AdapterLandMode } from "./globe-adapter-flag.js";
 import type { AppCameraState, CameraProjection } from "./camera-contract.js";
-import type { TileCache } from "./tile-hierarchy.js";
+import type { TileCache } from "./tile-cache.js";
 
 export interface GlobeAdapterProps {
   readonly state: WorldMapChartProps["state"];

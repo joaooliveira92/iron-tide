@@ -1,17 +1,19 @@
 import { describe, expect, it } from "vite-plus/test";
 
+import { TileCache } from "./tile-cache.js";
 import {
   NATURAL_EARTH_HIERARCHY,
-  TileCache,
   TileHierarchyError,
   decodeTileHierarchy,
   hierarchyForManifest,
+} from "./tile-hierarchy.js";
+import {
   isOverscaled,
   selectTiles,
   sourceLevelForDisplay,
   tileCacheKey,
   tileKey,
-} from "./tile-hierarchy.js";
+} from "./tile-selection.js";
 
 const BASE = {
   centre: [10, 30] as const,

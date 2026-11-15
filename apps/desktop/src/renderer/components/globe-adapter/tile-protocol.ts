@@ -1,7 +1,9 @@
 import { addProtocol } from "maplibre-gl";
 import { BAKED_PROTOCOL, createBakedTileLoader } from "../globe-spike/baked-tiles.js";
 import type { LandPlan } from "../globe-spike/use-land-plan.js";
-import { tileCacheKey, type TileCache, type TileHierarchy } from "./tile-hierarchy.js";
+import type { TileCache } from "./tile-cache.js";
+import type { TileHierarchy } from "./tile-hierarchy.js";
+import { tileCacheKey } from "./tile-selection.js";
 
 export interface BakedProtocolInput {
   readonly tiles: Extract<LandPlan, { readonly kind: "baked" }>["tiles"];
