@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved as Option A: no new 1960-1970 ship content for now. Recorded in the closing comment on #258 (#256 delivered the 1950s destroyer content via PR #391).
 
 ## Trigger
 
