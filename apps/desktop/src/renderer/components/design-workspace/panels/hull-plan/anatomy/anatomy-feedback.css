@@ -1,0 +1,75 @@
+.an-ship {
+  --an-warn: var(--color-warning);
+  --an-bad: var(--color-destructive);
+}
+
+.an-part[data-state="warn"] .an-solid .an-edge {
+  stroke: var(--an-warn);
+  stroke-width: 1.15px;
+}
+
+.an-part[data-state="bad"] .an-solid .an-edge {
+  stroke: var(--an-bad);
+  stroke-width: 1.6px;
+}
+
+.an-part[data-kind="waterline"] .an-line[data-heavy]:not([data-dotted]) {
+  stroke-width: 1.5px;
+}
+
+.an-part[data-kind="waterline"] .an-solid .an-fill {
+  opacity: 0.5;
+}
+
+.an-part[data-kind="waterline"] .an-solid .an-edge {
+  stroke: none;
+}
+
+.an-part[data-kind="waterline"][data-state="warn"] .an-line {
+  stroke: var(--an-warn);
+}
+
+.an-part[data-kind="waterline"][data-state="bad"] .an-line {
+  stroke: var(--an-bad);
+}
+
+.an-part[data-kind="waterline"][data-state="warn"] .an-solid .an-fill {
+  fill: var(--an-warn);
+}
+
+.an-part[data-kind="waterline"][data-state="bad"] .an-solid .an-fill {
+  fill: var(--an-bad);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes an-state-bad {
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.68;
+    }
+  }
+
+  @keyframes an-state-lap {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+
+    50% {
+      opacity: 0.22;
+    }
+  }
+
+  .an-part[data-state="bad"]:not([data-kind="waterline"]) .an-solid {
+    animation: an-state-bad 2.4s ease-in-out infinite;
+  }
+
+  .an-part[data-kind="waterline"][data-state="warn"] .an-solid .an-fill,
+  .an-part[data-kind="waterline"][data-state="bad"] .an-solid .an-fill {
+    animation: an-state-lap 3.2s ease-in-out infinite;
+  }
+}

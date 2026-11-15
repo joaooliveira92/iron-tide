@@ -16,6 +16,10 @@ import {
 } from "../../validation/FindingsControl.js";
 import { DEFAULT_VIEW, SHIP_VIEW_DEFS, type ShipOverlay, type ShipView } from "./ship-view.js";
 import { AnatomyShipFigure } from "./anatomy/AnatomyShipFigure.js";
+import { changedKinds } from "./anatomy/changed-parts.js";
+import { anatomyPartStates } from "./anatomy/part-state.js";
+import { usePresentationFormat } from "../../../../shell/usePresentationFormat.js";
+import { useLatestFeedback } from "../../useLatestFeedback.js";
 import { buildAnatomyShip } from "./anatomy/ship-anatomy.js";
 import { planModel, type PlanModel } from "./planModel.js";
 import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.js";
@@ -112,6 +116,16 @@ export function HullPlanPanel({
   );
   const anatomy = starboard !== null && port !== null ? { starboard, port } : undefined;
   const isoShip = isoSide === "port" ? port : starboard;
+  const partStates = useMemo(
+    () => (isoShip === null ? undefined : anatomyPartStates(isoShip.parts, model.findings, view)),
+    [isoShip, model.findings, view],
+  );
+  const format = usePresentationFormat();
+  const latest = useLatestFeedback(view, format);
+  const changed = useMemo(
+    () => ({ kinds: changedKinds(latest.feedback), phase: latest.phase }),
+    [latest.feedback, latest.phase],
+  );
   const panelClassName = "rounded-none border-0 bg-transparent";
   const panelBody = (
     <>
@@ -188,6 +202,8 @@ export function HullPlanPanel({
             ship={isoShip}
             highlight={highlightId}
             section={section}
+            states={partStates}
+            changed={changed}
             className="mx-auto min-h-64"
             style={{ height: ISO_HEIGHT }}
           />
