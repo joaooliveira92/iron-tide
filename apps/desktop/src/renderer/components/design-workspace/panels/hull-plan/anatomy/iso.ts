@@ -215,10 +215,14 @@ export function loft(
 
   const outline: string[] = [];
   const crease: string[] = [];
+  const reaching = (run: readonly number[]): number[] => [
+    ...run,
+    run.length === count ? run[0]! : (run[run.length - 1]! + 1) % count,
+  ];
   for (const run of runsOf(facing, false)) {
     outline.push(
       pathOf(
-        run.map((index) => flatsTop[index]!),
+        reaching(run).map((index) => flatsTop[index]!),
         false,
       ),
     );
@@ -226,13 +230,13 @@ export function loft(
   for (const run of runsOf(facing, true)) {
     crease.push(
       pathOf(
-        run.map((index) => flatsTop[index]!),
+        reaching(run).map((index) => flatsTop[index]!),
         false,
       ),
     );
     outline.push(
       pathOf(
-        run.map((index) => flatsBottom[index]!),
+        reaching(run).map((index) => flatsBottom[index]!),
         false,
       ),
     );
