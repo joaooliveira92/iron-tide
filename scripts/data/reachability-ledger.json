@@ -33,7 +33,7 @@
     },
     {
       "id": "assign-station",
-      "player_verb": "Post ships to a named foreign station",
+      "player_verb": "Post ships to a named station",
       "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
