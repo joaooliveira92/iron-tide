@@ -22,7 +22,7 @@ interface UseCampaignFilesResult {
   readonly openCampaign: () => void;
   readonly openRecentCampaign: (file: RecentCampaignEntry) => void;
   readonly removeRecentCampaign: (packagePath: string) => void;
-  readonly runPackageOperation: (kind: OperationKind) => void;
+  readonly runPackageOperation: (kind: OperationKind, packagePath?: string) => void;
   readonly dismissResult: () => void;
 }
 
@@ -114,22 +114,24 @@ export function useCampaignFiles({
   );
 
   const runPackageOperation = useCallback(
-    async (kind: OperationKind) => {
+    async (kind: OperationKind, packagePath?: string) => {
       if (bridge === undefined) return;
+      const payload = packagePath === undefined ? undefined : { packagePath };
       setPendingOperation(kind);
       setPendingLabel(operationPendingLabel(kind));
       const operationResult =
         kind === "verify"
-          ? verificationResultFromBridge(await bridge.campaign.execute("verifyCampaign", undefined))
+          ? verificationResultFromBridge(await bridge.campaign.execute("verifyCampaign", payload))
           : kind === "replay"
-            ? replayResultFromBridge(await bridge.campaign.execute("replayCampaign", undefined))
-            : recoveryResultFromBridge(await bridge.campaign.execute("recoverCampaign", undefined));
+            ? replayResultFromBridge(await bridge.campaign.execute("replayCampaign", payload))
+            : recoveryResultFromBridge(await bridge.campaign.execute("recoverCampaign", payload));
 
       setPendingOperation(null);
       setPendingLabel(null);
       showResult(operationResult);
+      if (packagePath !== undefined) await refreshRecents();
     },
-    [bridge, showResult],
+    [bridge, refreshRecents, showResult],
   );
 
   const dismissResult = useCallback(() => setResult(null), []);
@@ -142,7 +144,7 @@ export function useCampaignFiles({
     openCampaign: () => void openCampaign(),
     openRecentCampaign: (file) => void openRecentCampaign(file),
     removeRecentCampaign: (packagePath) => void removeRecentCampaign(packagePath),
-    runPackageOperation: (kind) => void runPackageOperation(kind),
+    runPackageOperation: (kind, packagePath) => void runPackageOperation(kind, packagePath),
     dismissResult,
   };
 }
