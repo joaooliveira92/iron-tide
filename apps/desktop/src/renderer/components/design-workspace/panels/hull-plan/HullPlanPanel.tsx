@@ -20,6 +20,7 @@ import { changedKinds } from "./anatomy/changed-parts.js";
 import { anatomyPartStates } from "./anatomy/part-state.js";
 import { usePresentationFormat } from "../../../../shell/usePresentationFormat.js";
 import { useLatestFeedback } from "../../useLatestFeedback.js";
+import { usePreviewKinds } from "../../previewMarks.js";
 import { buildAnatomyShip } from "./anatomy/ship-anatomy.js";
 import { planModel, type PlanModel } from "./planModel.js";
 import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.js";
@@ -122,9 +123,13 @@ export function HullPlanPanel({
   );
   const format = usePresentationFormat();
   const latest = useLatestFeedback(view, format);
+  const previewKinds = usePreviewKinds();
   const changed = useMemo(
-    () => ({ kinds: changedKinds(latest.feedback), phase: latest.phase }),
-    [latest.feedback, latest.phase],
+    () =>
+      previewKinds.size > 0
+        ? { kinds: previewKinds, phase: "preview" as const }
+        : { kinds: changedKinds(latest.feedback), phase: latest.phase },
+    [previewKinds, latest.feedback, latest.phase],
   );
   const panelClassName = "rounded-none border-0 bg-transparent";
   const panelBody = (

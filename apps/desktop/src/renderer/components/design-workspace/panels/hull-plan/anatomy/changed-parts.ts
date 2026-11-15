@@ -3,7 +3,7 @@ import type { PartKind } from "./anatomy-types.js";
 
 export interface ChangedParts {
   readonly kinds: ReadonlySet<PartKind>;
-  readonly phase: 0 | 1;
+  readonly phase: 0 | 1 | "preview";
 }
 
 export const changedKinds = (feedback: DesignFeedback | null): ReadonlySet<PartKind> =>

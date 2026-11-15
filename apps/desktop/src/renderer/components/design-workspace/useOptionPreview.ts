@@ -3,6 +3,8 @@ import type { DraftEdit, WorkshopEnvironment } from "@bluewave/ship-design";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { useOptionalDesignState } from "./DesignWorkspaceContext.js";
 import { feedbackDeltas } from "./feedbackDeltas.js";
+import { changedKinds } from "./panels/hull-plan/anatomy/changed-parts.js";
+import { usePublishPreviewKinds } from "./previewMarks.js";
 import { createOptionFeedbackCache, previewOptionFeedback } from "./optionFeedback.js";
 import type { Delta } from "./optionDelta.js";
 
@@ -35,5 +37,7 @@ export function useOptionPreview(editFor: (option: string) => DraftEdit | null):
       ? null
       : cache.feedbackFor(state.draft, env, state.view, edit, format);
   const deltas = useMemo(() => feedbackDeltas(feedback), [feedback]);
+  const kinds = useMemo(() => changedKinds(feedback), [feedback]);
+  usePublishPreviewKinds(kinds);
   return { active, setActive, deltas };
 }

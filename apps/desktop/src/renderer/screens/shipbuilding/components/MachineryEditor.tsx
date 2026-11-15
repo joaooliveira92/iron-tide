@@ -1,7 +1,7 @@
-import { useState } from "react";
 import type { DraftEdit } from "@bluewave/ship-design";
 import { Advanced } from "../../../components/design-workspace/Advanced.js";
 import { DeltaPreview } from "../../../components/design-workspace/DeltaPreview.js";
+import { useOptionPreview } from "../../../components/design-workspace/useOptionPreview.js";
 import { Panel } from "../../../components/design-workspace/panels/Panel.js";
 import { NumberField, SelectField } from "../../../components/design-workspace/fields.js";
 import type { Delta } from "../../../components/design-workspace/optionDelta.js";
@@ -27,8 +27,10 @@ export function MachineryEditor({
   readonly recommended?: MachineryRecommended;
 }) {
   const { inputs, outputs, notes } = model;
-  const [previewPlant, setPreviewPlant] = useState<string | null>(null);
-  const plantPreview = previewPlant === null ? [] : (previewDeltas?.get(previewPlant) ?? []);
+  const plant = useOptionPreview((plantId) =>
+    plantId === inputs.plantId ? null : { kind: "set_machinery", patch: { plantId } },
+  );
+  const plantPreview = plant.active === null ? [] : (previewDeltas?.get(plant.active) ?? []);
   return (
     <Panel.Root label="Machinery, fuel and range">
       <Panel.Body variant="standalone">
@@ -86,7 +88,7 @@ export function MachineryEditor({
                 }))}
                 error={errorFor?.("set_machinery:plantId")}
                 onChange={(v) => edit({ kind: "set_machinery", patch: { plantId: v } })}
-                onActiveValueChange={setPreviewPlant}
+                onActiveValueChange={plant.setActive}
               />
               <NumberField
                 label="Installed power"
