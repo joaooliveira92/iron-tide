@@ -1,5 +1,5 @@
 import { test, expect, openCampaign } from "./fixtures.js";
-import { expandStatusStrip } from "./flows.js";
+import { expandStatusStrip, postIdleShipToStation } from "./flows.js";
 
 const MAX_MONTHS = 36;
 
@@ -9,6 +9,7 @@ test("a monthly event dilemma is answered and its prestige change is explained",
 }) => {
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
+  await postIdleShipToStation(page);
   const calendar = page.getByText(/^Bluewave — [A-Za-z]+ \d{4}$/).first();
   const dilemma = page.getByRole("alertdialog");
 

@@ -6,6 +6,7 @@ import {
   openDesignSection,
   openShipbuilding,
   orderDesignFromCatalog,
+  postIdleShipToStation,
   submitReferenceDesign,
 } from "./flows.js";
 
@@ -19,6 +20,7 @@ test("a completed player-designed ship is rebuilt and leaves service after a mon
   test.setTimeout(600_000);
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
+  await postIdleShipToStation(page);
 
   await submitReferenceDesign(page, CORVETTE, CLASS_NAME);
 

@@ -125,6 +125,20 @@ export async function expandStatusStrip(page: Page): Promise<Locator> {
 export const navigateTo = (page: Page, label: string) =>
   page.getByTestId("bottom-nav").getByRole("button", { name: label, exact: true }).click();
 
+export async function postIdleShipToStation(page: Page): Promise<void> {
+  await navigateTo(page, "Fleet");
+  await openFleetDepartment(page, "Station");
+  const section = page.getByTestId("fleet-station");
+  const row = section.getByTestId("fleet-station-row-gbr_dreadnought");
+  await expect(row.getByText("Active fleet")).toBeVisible();
+  await row.getByRole("checkbox").focus();
+  await page.keyboard.press("Space");
+  await section.getByRole("button", { name: "Assign to foreign station" }).click();
+  await expect(section.getByTestId("fleet-station-notice")).toContainText("queued for 1 ship(s)");
+  await closeFleetDepartment(page, "Station");
+  await navigateTo(page, "Overview");
+}
+
 export async function openFleetDepartment(page: Page, department: string): Promise<Locator> {
   const drawer = page.getByRole("dialog", { name: department });
   if (!(await drawer.isVisible())) {
