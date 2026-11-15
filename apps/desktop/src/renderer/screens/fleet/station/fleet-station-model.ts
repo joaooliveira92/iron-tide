@@ -1,4 +1,7 @@
-import type { FleetScreenProjection } from "../../../../shared/fleet-contract.js";
+import type {
+  FleetScreenProjection,
+  PresenceWarningView,
+} from "../../../../shared/fleet-contract.js";
 import type { RequestLifecycle } from "../../../lib/command-screen-workflow.js";
 
 export interface FleetStationState extends RequestLifecycle {
@@ -6,6 +9,7 @@ export interface FleetStationState extends RequestLifecycle {
   readonly areas: FleetScreenProjection["areas"];
   readonly presence: FleetScreenProjection["presence"];
   readonly overBaseShips: FleetScreenProjection["overBaseShips"];
+  readonly presenceWarnings: readonly PresenceWarningView[];
 }
 
 export function initialFleetStationState(): FleetStationState {
@@ -15,6 +19,7 @@ export function initialFleetStationState(): FleetStationState {
     areas: [],
     presence: { configured: false },
     overBaseShips: [],
+    presenceWarnings: [],
     pendingRequest: null,
     requiresRefresh: false,
     notice: null,
@@ -27,5 +32,6 @@ export function projectFleetStation(projection: FleetScreenProjection): Partial<
     areas: projection.areas,
     presence: projection.presence,
     overBaseShips: projection.overBaseShips,
+    presenceWarnings: projection.presenceWarnings ?? [],
   };
 }

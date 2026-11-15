@@ -23,6 +23,7 @@ import {
   type StationRow,
 } from "./fleet-station-state.js";
 import { PresenceReadout } from "./PresenceReadout.js";
+import { PresenceWarnings } from "../components/PresenceWarnings.js";
 import type { FleetStationState } from "./fleet-station-model.js";
 import { useFleetHotkeys } from "../hooks/useFleetHotkeys.js";
 import { useStationAssignment } from "./useStationAssignment.js";
@@ -135,6 +136,8 @@ export function FleetStationView({
           )}
         </div>
       )}
+
+      <PresenceWarnings warnings={state.presenceWarnings} areaName={areaName} />
 
       {outcomeUnknown && (
         <div role="alert" className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">

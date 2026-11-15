@@ -125,6 +125,10 @@ function FleetScreenContent({
     (areaId: string) => areaNameMap.get(areaId) ?? areaId,
     [areaNameMap],
   );
+  const presenceView = useMemo(
+    () => ({ warnings: state.presenceWarnings, areaName }),
+    [state.presenceWarnings, areaName],
+  );
   const divisionName = useCallback(
     (divisionId: string) => divisionNameMap.get(divisionId) ?? divisionId,
     [divisionNameMap],
@@ -231,6 +235,7 @@ function FleetScreenContent({
       order={order}
       actions={orderActions}
       notice={state.notice}
+      presence={presenceView}
     />
   );
 
