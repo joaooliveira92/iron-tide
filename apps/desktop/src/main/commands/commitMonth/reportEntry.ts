@@ -11,6 +11,8 @@ import type {
   MonthlyReportConstructionProgress,
   MonthlyReportDiscovery,
   MonthlyReportEntry,
+  MonthlyReportPresence,
+  MonthlyReportPresenceShortfall,
   MonthlyReportResearchProgress,
   MonthlyReportShip,
 } from "../../../shared/reports-contract.js";
@@ -104,6 +106,34 @@ export function discoveriesFromEvents(
   });
 }
 
+export function presenceFromEvents(
+  events: readonly DomainEventEnvelope[],
+  nationId: string,
+): MonthlyReportPresence | undefined {
+  const shortfalls: MonthlyReportPresenceShortfall[] = [];
+  let prestigeDelta: number | undefined;
+  for (const envelope of events) {
+    const body = envelope.body;
+    if (body.kind === "PresenceShortfall") {
+      if (body.nationId !== nationId) continue;
+      shortfalls.push({
+        areaId: body.areaId,
+        requiredTons: Number(body.requiredTons),
+        presentTons: Number(body.presentTons),
+        shortfallTons: Number(body.shortfallTons),
+      });
+    } else if (
+      body.kind === "PrestigeChanged" &&
+      body.nationId === nationId &&
+      body.reasonCode === "PRESENCE_SHORTFALL"
+    ) {
+      prestigeDelta = (prestigeDelta ?? 0) + Number(body.delta);
+    }
+  }
+  if (shortfalls.length === 0) return undefined;
+  return { shortfalls, ...(prestigeDelta === undefined ? {} : { prestigeDelta }) };
+}
+
 export function activeShipCount(nation: FleetSnapshot): number {
   return nation.fleets.flatMap((fleet) => fleet.ships).filter((ship) => !ship.isUnderConstruction)
     .length;
@@ -140,6 +170,8 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
     response.report.openingTreasury,
     response.report.closingTreasury,
   );
+
+  const presence = presenceFromEvents(input.domainEvents, playerNationId);
 
   return {
     reportId: input.reportId,
@@ -195,5 +227,6 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
       defenderLosses: [...outcome.defenderLosses],
       explanation: [...outcome.explanation],
     })),
+    ...(presence === undefined ? {} : { presence }),
   };
 }

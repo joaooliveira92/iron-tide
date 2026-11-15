@@ -67,6 +67,18 @@ export interface MonthlyReportFleet {
   readonly totalActiveShips: number;
 }
 
+export interface MonthlyReportPresenceShortfall {
+  readonly areaId: string;
+  readonly requiredTons: number;
+  readonly presentTons: number;
+  readonly shortfallTons: number;
+}
+
+export interface MonthlyReportPresence {
+  readonly shortfalls: readonly MonthlyReportPresenceShortfall[];
+  readonly prestigeDelta?: number;
+}
+
 export interface MonthlyReportPeriod {
   readonly from: { readonly year: number; readonly month: number };
   readonly to: { readonly year: number; readonly month: number };
@@ -84,6 +96,7 @@ export interface MonthlyReportEntry {
   readonly fleet: MonthlyReportFleet;
   readonly priorities: readonly StrategicPriority[];
   readonly battleOutcomes: readonly BattleOutcome[];
+  readonly presence?: MonthlyReportPresence;
 }
 
 export interface MonthlyReports {
