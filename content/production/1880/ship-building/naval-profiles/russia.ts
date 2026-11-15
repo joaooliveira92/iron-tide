@@ -24,9 +24,14 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         "protected_cruiser_form",
         "coast_defence_form",
         "pre_dreadnought_form",
+        "destroyer_form",
         "merchant_liner_form",
       ],
-      domesticPlants: ["compound_cylindrical", "triple_expansion_cylindrical"],
+      domesticPlants: [
+        "compound_cylindrical",
+        "triple_expansion_cylindrical",
+        "hp_steam_geared_turbine",
+      ],
       restrictedShipTypes: [],
       grants: [],
     },
@@ -258,6 +263,9 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
       tube_14in_above_water: {
         status: "DOMESTIC",
         producer: "Obukhov / Whitehead",
+      },
+      tube_21in_above_water: {
+        status: "DOMESTIC",
       },
     },
     gunModels: [

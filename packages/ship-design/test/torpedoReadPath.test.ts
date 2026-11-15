@@ -104,8 +104,8 @@ const WAIVED_VARIANTS = [
 ];
 
 describe("torpedo launchers through the read path (ship-part-model 04)", () => {
-  it("covers the 39 tube placements, none of them defaulted", () => {
-    expect(tubeRows.length).toBe(39);
+  it("covers the 41 tube placements, none of them defaulted", () => {
+    expect(tubeRows.length).toBe(41);
     expect(model.unread).toEqual([]);
     for (const { row, t } of translated) {
       expect(t.defaulted, whereTube(row)).toBe(false);

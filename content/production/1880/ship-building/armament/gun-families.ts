@@ -820,4 +820,23 @@ export default collection("gunFamilies", GunFamilySchema, [
       ],
     },
   },
+  {
+    id: "gun_130mm_50_twin",
+    designation: "Soviet 130 mm/50 M-1954 gun in SM-2-1 twin mount",
+    category: "SECONDARY_GUN",
+    defaultMountType: "TURRET",
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #851. Navypedia and navweaps data of Research discussion #440 section 3; the component carries the derivations.",
+      sources: [
+        {
+          title: "navypedia.org Kotlin class destroyers",
+          archiveOrUrl: "https://www.navypedia.org/ships/russia/rus_dd_kotlin.htm",
+          section: "Research discussion #440 section 3",
+        },
+      ],
+    },
+  },
 ]);

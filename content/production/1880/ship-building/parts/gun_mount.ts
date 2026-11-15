@@ -12865,4 +12865,90 @@ export default collection("parts", PartSchema, [
       mountType: "TURRET",
     },
   },
+  {
+    family: "gun_mount",
+    id: "gun_130mm_50_twin_turret_x2",
+    lifecycle: {
+      availableFrom: "1954-01",
+      availableUntil: null,
+    },
+    name: "gun_130mm_50_twin_turret_x2",
+    origin: {
+      sourceFile: "ship-building/components/guns/soviet.ts",
+    },
+    provenance: {
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #851. The 35.2 t twin mount is SINGLE-SOURCE (Research discussion #440 section 3); its split into 13,600 kg per barrel and no fixed mass, the 6 crew per barrel, and the volume, footprint and cost conventions (3 L and 470 mm2 per kg, 197,368 micro per kg) are BALANCE TARGET.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "https://www.navypedia.org/ships/russia/rus_dd_kotlin.htm",
+          section: "Research discussion #440 section 3",
+          title: "navypedia.org Kotlin class destroyers",
+        },
+        {
+          archiveOrUrl: "http://www.navweaps.com/Weapons/WNRussian_5-50_m1946.php",
+          section: "Research discussion #440 section 3",
+          title: "navweaps.com Russian 130 mm/50 (5.1-inch) M1946",
+        },
+      ],
+    },
+    provides: "gun_mount",
+    quantities: [
+      {
+        basis: "PER_LOADOUT_ENTRY",
+        id: "installation_fixed",
+        kind: "massKg",
+        value: 0,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "installation_per_gun",
+        kind: "massKg",
+        value: 13600,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "mount_cost_per_gun",
+        kind: "costMicro",
+        value: 2684000000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "crew_per_gun",
+        kind: "crew",
+        value: 6,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "volume_per_gun",
+        kind: "volumeLitre",
+        value: 52800,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "deck_footprint_per_gun",
+        kind: "deckFootprintMm2",
+        value: 8272000,
+      },
+    ],
+    revisions: [],
+    slots: [
+      {
+        accepts: ["gun"],
+        id: "guns",
+        mountCount: {
+          max: 2,
+          min: 2,
+        },
+      },
+    ],
+    spec: {
+      compatibleGunFamilies: ["gun_130mm_50_twin"],
+      firingArcDeg: 150,
+      gunsPerMount: 2,
+      mountType: "TURRET",
+    },
+  },
 ]);

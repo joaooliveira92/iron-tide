@@ -100,7 +100,7 @@ describe("equivalence harness over current content (ticket 08)", () => {
   });
 
   it("keeps data quality separate with independent armament, magazine and waiver counts", () => {
-    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(196);
+    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(198);
     expect(
       report.dataQuality.unresolvedGunPlacements.every(
         (u) => u.code === "PART_READ_PATH_NO_FIRST_CLASS_ARMAMENT",
